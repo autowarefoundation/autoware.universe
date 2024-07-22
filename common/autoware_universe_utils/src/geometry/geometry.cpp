@@ -436,7 +436,7 @@ std::optional<alt::Polygon> convexHull(const alt::PointList & points)
     return std::nullopt;
   }
 
-  // quick hull algorithm
+  // QuickHull algorithm
 
   const auto p_minmax_itr =
     std::minmax_element(points.begin(), points.end(), [](const auto & a, const auto & b) {
@@ -503,12 +503,8 @@ std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & pol
     return true;
   }
 
-  for (size_t i = 0; i < poly.size(); ++i) {
-    if (
-      distance(point, poly.at(i), poly.at((i + 1) % poly.size())) <
-      std::numeric_limits<double>::epsilon()) {
-      return true;
-    }
+  if (touches(point, poly).value_or(false)) {
+    return true;
   }
 
   return false;
@@ -544,7 +540,7 @@ double distance(const alt::Point & point, const alt::Point & seg_start, const al
   const double seg_vec_norm = seg_vec.length();
   const double seg_point_dot = seg_vec.dot(point_vec);
 
-  if (seg_vec_norm < std::numeric_limits<double>::epsilon() || seg_point_dot < 0) {
+  if (seg_vec_norm <= std::numeric_limits<double>::epsilon() || seg_point_dot < 0) {
     return point_vec.length();
   } else if (seg_point_dot > std::pow(seg_vec_norm, 2)) {
     return (point - seg_end).length();
@@ -708,7 +704,6 @@ std::optional<bool> touches(const alt::Point & point, const alt::Polygon & poly)
 
 std::optional<bool> within(const alt::Point & point, const alt::Polygon & poly)
 {
-  // check if the polygon is valid
   if (poly.size() < 3) {
     return std::nullopt;
   }
