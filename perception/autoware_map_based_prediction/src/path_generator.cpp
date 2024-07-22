@@ -33,7 +33,7 @@ PathGenerator::PathGenerator(
 
 PredictedPath PathGenerator::shiftPath(const PredictedPath & path, const double shift_distance)
 {
-  //lateral shift of the path by shift_distance
+  // lateral shift of the path by shift_distance
   PredictedPath shifted_path;
   shifted_path.time_step = path.time_step;
   shifted_path.confidence = path.confidence;
