@@ -10,7 +10,6 @@
     <param from="$(var filter_param_file)"/>
     <remap from="input" to="$(var input_topic_name)"/>
     <remap from="output" to="$(var output_topic_name)"/>
-    <param name="filter_field_name" value="$(var filter_field_name)"/>
     <param name="input_frame" value="$(var input_frame)"/>
     <param name="output_frame" value="$(var output_frame)"/>
   </node>
