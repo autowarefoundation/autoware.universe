@@ -104,7 +104,7 @@ if(BUILD_TESTING)
     test/test_ransac_ground_filter.cpp
   )
   target_link_libraries(test_ransac_ground_filter
-    ground_segmentation
+    autoware_ground_segmentation
     ${YAML_CPP_LIBRARIES})
 
 endif()
