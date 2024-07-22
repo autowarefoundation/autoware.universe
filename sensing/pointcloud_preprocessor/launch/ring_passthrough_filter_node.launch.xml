@@ -11,7 +11,5 @@
     <param name="filter_field_name" value="$(var filter_field_name)"/>
     <param name="input_frame" value="$(var input_frame)"/>
     <param name="output_frame" value="$(var output_frame)"/>
-    <param from="$(var passthrough_filter_uint16_param_file)"/>
-    <param from="$(var filter_param_file)"/>
   </node>
 </launch>
