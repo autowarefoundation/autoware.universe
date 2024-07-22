@@ -104,6 +104,11 @@ class EKFLocalizer : public rclcpp::Node
 public:
   explicit EKFLocalizer(const rclcpp::NodeOptions & options);
 
+  std::chrono::nanoseconds time_until_trigger() const
+  {
+    return timer_control_->time_until_trigger();
+  }
+
 private:
   const std::shared_ptr<Warning> warning_;
 

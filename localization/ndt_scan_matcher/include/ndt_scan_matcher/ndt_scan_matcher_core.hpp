@@ -81,6 +81,11 @@ class NDTScanMatcher : public rclcpp::Node
 public:
   explicit NDTScanMatcher(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
+  std::chrono::nanoseconds time_until_trigger() const
+  {
+    return map_update_timer_->time_until_trigger();
+  }
+
 private:
   void callback_timer();
 
