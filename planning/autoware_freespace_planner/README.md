@@ -80,7 +80,7 @@ None
 | `adapt_expansion_distance`  | bool   | if true, adapt expansion distance based on environment  |
 | `expansion_distance`        | double | length of expansion for node transitions                |
 | `distance_heuristic_weight` | double | heuristic weight for estimating node's cost             |
-| `steering_change_weight`    | double | cost factor for change in steering angle                |
+| `smoothness_weight`         | double | cost factor for change in curvature                     |
 | `obstacle_distance_weight`  | double | cost factor for distance to obstacle                    |
 
 #### RRT\* search parameters
