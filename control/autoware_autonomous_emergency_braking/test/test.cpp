@@ -24,6 +24,9 @@
 
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <thread>
+
 namespace autoware::motion::control::autonomous_emergency_braking::test
 {
 using autoware::universe_utils::Polygon2d;
@@ -83,6 +86,27 @@ std::shared_ptr<AEB> generateNode()
   return std::make_shared<AEB>(node_options);
 };
 
+std::shared_ptr<PubSubNode> generatePubSubNode()
+{
+  auto node_options = rclcpp::NodeOptions{};
+  node_options.arguments({"--ros-args"});
+  return std::make_shared<PubSubNode>(node_options);
+};
+
+PubSubNode::PubSubNode(const rclcpp::NodeOptions & node_options)
+: Node("test_aeb_pubsub", node_options)
+{
+  rclcpp::QoS qos{1};
+  qos.transient_local();
+
+  pub_imu_ = create_publisher<Imu>("~/input/imu", qos);
+  pub_point_cloud_ = create_publisher<PointCloud2>("~/input/pointcloud", qos);
+  pub_velocity_ = create_publisher<VelocityReport>("~/input/velocity", qos);
+  pub_predicted_traj_ = create_publisher<Trajectory>("~/input/predicted_trajectory", qos);
+  pub_predicted_objects_ = create_publisher<PredictedObjects>("~/input/objects", qos);
+  pub_autoware_state_ = create_publisher<AutowareState>("autoware/state", qos);
+}
+
 TEST_F(TestAEB, checkCollision)
 {
   constexpr double longitudinal_velocity = 3.0;
@@ -107,6 +131,32 @@ TEST_F(TestAEB, checkImuPathGeneration)
   const double dt = aeb_node_->imu_prediction_time_interval_;
   const double horizon = aeb_node_->imu_prediction_time_horizon_;
   ASSERT_TRUE(imu_path.size() >= static_cast<size_t>(horizon / dt));
+
+  const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
+  ASSERT_FALSE(footprint.empty());
+  ASSERT_TRUE(footprint.size() == imu_path.size() - 1);
+
+  const auto stamp = rclcpp::Time();
+  pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr =
+    pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  {
+    const double x_start{0.0};
+    const double y_start{0.0};
+
+    for (size_t i = 0; i < 15; ++i) {
+      pcl::PointXYZ p1(
+        x_start + static_cast<double>(i / 100.0), y_start - static_cast<double>(i / 100.0), 0.5);
+      pcl::PointXYZ p2(
+        x_start + static_cast<double>((i + 10) / 100.0), y_start - static_cast<double>(i / 100.0),
+        0.5);
+      obstacle_points_ptr->push_back(p1);
+      obstacle_points_ptr->push_back(p2);
+    }
+  }
+  std::vector<ObjectData> objects;
+  aeb_node_->createObjectDataUsingPointCloudClusters(
+    imu_path, footprint, stamp, objects, obstacle_points_ptr);
+  ASSERT_FALSE(objects.empty());
 }
 
 TEST_F(TestAEB, checkIncompleteImuPathGeneration)
@@ -172,18 +222,43 @@ TEST_F(TestAEB, checkConvertObjectToPolygon)
   ASSERT_FALSE(box_polygon.outer().empty());
 }
 
-TEST_F(TestAEB, checkDataFetch)
+TEST_F(TestAEB, CollisionDataKeeper)
 {
-  pub_sub_node_->publishDefaultTopicsNoSpin();
-  for (int j = 0; j < 20; ++j) {
-    rclcpp::spin_some(pub_sub_node_->get_node_base_interface());
-    rclcpp::spin_some(aeb_node_->get_node_base_interface());
-    aeb_node_->fetchLatestData();
-  }
+  using namespace std::literals::chrono_literals;
+  constexpr double collision_keeping_sec{1.0}, previous_obstacle_keep_time{1.0};
+  CollisionDataKeeper collision_data_keeper_(aeb_node_->get_clock());
+  collision_data_keeper_.setTimeout(collision_keeping_sec, previous_obstacle_keep_time);
+  ASSERT_TRUE(collision_data_keeper_.checkCollisionExpired());
+  ASSERT_TRUE(collision_data_keeper_.checkPreviousObjectDataExpired());
 
-  bool g{false};
-  if (aeb_node_->current_velocity_ptr_) g = true;
+  ObjectData obj;
+  obj.stamp = aeb_node_->now();
+  obj.velocity = 0.0;
+  obj.position.x = 0.0;
+  rclcpp::sleep_for(100ms);
 
-  ASSERT_TRUE(g);
+  ObjectData obj2;
+  obj2.stamp = aeb_node_->now();
+  obj2.velocity = 0.0;
+  obj2.position.x = 0.1;
+  rclcpp::sleep_for(100ms);
+
+  constexpr double ego_longitudinal_velocity = 3.0;
+  constexpr double yaw_rate = 0.0;
+  const auto imu_path = aeb_node_->generateEgoPath(ego_longitudinal_velocity, yaw_rate);
+
+  const auto speed_null =
+    collision_data_keeper_.calcObjectSpeedFromHistory(obj, imu_path, ego_longitudinal_velocity);
+  ASSERT_FALSE(speed_null.has_value());
+
+  const auto median_velocity =
+    collision_data_keeper_.calcObjectSpeedFromHistory(obj2, imu_path, ego_longitudinal_velocity);
+  ASSERT_TRUE(median_velocity.has_value());
+
+  // object speed is 1.0 m/s greater than ego's = 0.1 [m] / 0.1 [s] + longitudinal_velocity
+  ASSERT_TRUE(std::abs(median_velocity.value() - 4.0) < 1e-2);
+  rclcpp::sleep_for(1100ms);
+  ASSERT_TRUE(collision_data_keeper_.checkCollisionExpired());
 }
+
 }  // namespace autoware::motion::control::autonomous_emergency_braking::test

@@ -61,18 +61,7 @@ VelocityReport make_velocity_report_msg(
 class PubSubNode : public rclcpp::Node
 {
 public:
-  PubSubNode() : Node{"test_aeb_pubsub"}
-  {
-    rclcpp::QoS qos{1};
-    qos.transient_local();
-
-    pub_imu_ = create_publisher<Imu>("~/input/imu", qos);
-    pub_point_cloud_ = create_publisher<PointCloud2>("~/input/pointcloud", qos);
-    pub_velocity_ = create_publisher<VelocityReport>("~/input/velocity", qos);
-    pub_predicted_traj_ = create_publisher<Trajectory>("~/input/predicted_trajectory", qos);
-    pub_predicted_objects_ = create_publisher<PredictedObjects>("~/input/objects", qos);
-    pub_autoware_state_ = create_publisher<AutowareState>("autoware/state", qos);
-  }
+  explicit PubSubNode(const rclcpp::NodeOptions & node_options);
   // publisher
   rclcpp::Publisher<Imu>::SharedPtr pub_imu_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_point_cloud_;
@@ -80,7 +69,8 @@ public:
   rclcpp::Publisher<Trajectory>::SharedPtr pub_predicted_traj_;
   rclcpp::Publisher<PredictedObjects>::SharedPtr pub_predicted_objects_;
   rclcpp::Publisher<AutowareState>::SharedPtr pub_autoware_state_;
-
+  // timer
+  // rclcpp::TimerBase::SharedPtr timer_;
   void publishDefaultTopicsNoSpin()
   {
     const auto header = get_header("base_link", now());
@@ -91,6 +81,8 @@ public:
     pub_velocity_->publish(velocity_msg);
   };
 };
+
+std::shared_ptr<PubSubNode> generatePubSubNode();
 
 class TestAEB : public ::testing::Test
 {
@@ -105,7 +97,7 @@ public:
   void SetUp() override
   {
     rclcpp::init(0, nullptr);
-    pub_sub_node_ = std::make_shared<PubSubNode>();
+    pub_sub_node_ = generatePubSubNode();
     aeb_node_ = generateNode();
   }
 
