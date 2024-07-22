@@ -705,9 +705,8 @@ std::optional<bool> is_clockwise(const alt::ConvexPolygon & poly)
 {
   if (const auto s = area(poly)) {
     return *s > 0;
-  } else {
-    return std::nullopt;
   }
+  return std::nullopt;
 }
 
 std::optional<bool> touches(const alt::Point & point, const alt::ConvexPolygon & poly)
