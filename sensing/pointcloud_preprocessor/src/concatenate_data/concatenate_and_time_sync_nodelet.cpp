@@ -117,7 +117,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     publish_synchronized_pointcloud_ = declare_parameter<bool>("publish_synchronized_pointcloud");
     keep_input_frame_in_synchronized_pointcloud_ =
       declare_parameter<bool>("keep_input_frame_in_synchronized_pointcloud");
-    synchronized_pointcloud_postfix_ = declare_parameter<string>("synchronized_pointcloud_postfix");
+    synchronized_pointcloud_postfix_ = declare_parameter<std::string>("synchronized_pointcloud_postfix");
   }
 
   // Initialize not_subscribed_topic_names_
