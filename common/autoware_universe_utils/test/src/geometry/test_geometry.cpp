@@ -2044,6 +2044,42 @@ TEST(geometry, coveredBy)
   }
 }
 
+TEST(geometry, disjoint)
+{
+  using autoware::universe_utils::disjoint;
+  using autoware::universe_utils::alt::Point;
+
+  {  // Disjoint
+    const Point p1 = {0.0, 2.0, 0.0};
+    const Point p2 = {-2.0, 0.0, 0.0};
+    const Point p3 = {-4.0, 2.0, 0.0};
+    const Point p4 = {-2.0, 4.0, 0.0};
+    const Point p5 = {2.0, 2.0, 0.0};
+    const Point p6 = {4.0, 4.0, 0.0};
+    const Point p7 = {6.0, 2.0, 0.0};
+    const Point p8 = {4.0, 0.0, 0.0};
+    const auto result = disjoint({p1, p2, p3, p4}, {p5, p6, p7, p8});
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(*result);
+  }
+
+  {  // Not disjoint (two polygons share a vertex)
+    const Point p1 = {0.0, 2.0, 0.0};
+    const Point p2 = {-2.0, 0.0, 0.0};
+    const Point p3 = {-4.0, 2.0, 0.0};
+    const Point p4 = {-2.0, 4.0, 0.0};
+    const Point p5 = {0.0, 2.0, 0.0};
+    const Point p6 = {2.0, 4.0, 0.0};
+    const Point p7 = {4.0, 2.0, 0.0};
+    const Point p8 = {2.0, 0.0, 0.0};
+    const auto result = disjoint({p1, p2, p3, p4}, {p5, p6, p7, p8});
+
+    EXPECT_TRUE(result);
+    EXPECT_FALSE(*result);
+  }
+}
+
 TEST(geometry, distance)
 {
   using autoware::universe_utils::distance;
@@ -2621,6 +2657,68 @@ TEST(geometry, coveredByRand)
       "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
       (ground_truth_not_covered_ns + ground_truth_covered_ns) / 1e6,
       (alt_not_covered_ns + alt_covered_ns) / 1e6);
+  }
+}
+
+TEST(geometry, disjointRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_disjoint_ns = 0.0;
+    double ground_truth_not_disjoint_ns = 0.0;
+    double alt_disjoint_ns = 0.0;
+    double alt_not_disjoint_ns = 0.0;
+    int disjoint_count = 0;
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (auto j = 0UL; j < polygons.size(); ++j) {
+        sw.tic();
+        const auto ground_truth = boost::geometry::disjoint(polygons[i], polygons[j]);
+        if (ground_truth) {
+          ++disjoint_count;
+          ground_truth_disjoint_ns += sw.toc();
+        } else {
+          ground_truth_not_disjoint_ns += sw.toc();
+        }
+        sw.tic();
+        const auto alt = autoware::universe_utils::disjoint(
+          autoware::universe_utils::alt::fromBoost(polygons[i]),
+          autoware::universe_utils::alt::fromBoost(polygons[j]));
+        if (alt.value_or(false)) {
+          alt_disjoint_ns += sw.toc();
+        } else {
+          alt_not_disjoint_ns += sw.toc();
+        }
+        if (!alt || ground_truth != *alt) {
+          std::cout << "Failed for the 2 polygons: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
+        EXPECT_TRUE(alt);
+        EXPECT_EQ(ground_truth, *alt);
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %d disjoint pairs\n", polygons_nb, vertices,
+      disjoint_count, polygons_nb * polygons_nb);
+    std::printf(
+      "\tDisjoint:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_disjoint_ns / 1e6, alt_disjoint_ns / 1e6);
+    std::printf(
+      "\tNot disjoint:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_not_disjoint_ns / 1e6, alt_not_disjoint_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      (ground_truth_not_disjoint_ns + ground_truth_disjoint_ns) / 1e6,
+      (alt_not_disjoint_ns + alt_disjoint_ns) / 1e6);
   }
 }
 

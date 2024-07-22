@@ -608,6 +608,8 @@ void correct(alt::Polygon & poly);
 
 std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & poly);
 
+std::optional<bool> disjoint(const alt::Polygon & poly1, const alt::Polygon & poly2);
+
 double distance(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
 
 double distance(const alt::Point & point, const alt::Polygon & poly);

@@ -514,6 +514,28 @@ std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & pol
   return false;
 }
 
+std::optional<bool> disjoint(const alt::Polygon & poly1, const alt::Polygon & poly2)
+{
+  const auto is_equal = equals(poly1, poly2);
+  if (is_equal.value_or(false)) {
+    return false;
+  } else if (!is_equal) {
+    return std::nullopt;
+  }
+
+  if (intersects(poly1, poly2).value_or(false)) {
+    return false;
+  }
+
+  for (const auto & point : poly1) {
+    if (touches(point, poly2).value_or(false)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 double distance(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end)
 {
   const auto seg_vec = seg_end - seg_start;
