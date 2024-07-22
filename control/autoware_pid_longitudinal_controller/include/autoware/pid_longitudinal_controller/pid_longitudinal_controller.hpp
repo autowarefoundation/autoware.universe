@@ -203,7 +203,6 @@ private:
   // jerk limit
   double m_max_jerk;
   double m_min_jerk;
-
   double m_max_acc_cmd_diff_rate;
 
   // slope compensation
@@ -228,8 +227,8 @@ private:
   Shift m_prev_shift{Shift::Forward};
 
   // diff limit
-  Motion m_prev_raw_ctrl_cmd{};  // without slope compensation
   Motion m_prev_ctrl_cmd{};      // with slope compensation
+  Motion m_prev_raw_ctrl_cmd{};  // without slope compensation
   std::vector<std::pair<rclcpp::Time, double>> m_vel_hist;
 
   // debug values

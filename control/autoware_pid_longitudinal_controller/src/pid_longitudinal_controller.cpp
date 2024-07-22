@@ -575,14 +575,15 @@ PidLongitudinalController::Motion PidLongitudinalController::calcEmergencyCtrlCm
 
   raw_ctrl_cmd.vel =
     longitudinal_utils::applyDiffLimitFilter(raw_ctrl_cmd.vel, m_prev_raw_ctrl_cmd.vel, dt, p.acc);
-  raw_ctrl_cmd.acc = std::clamp(raw_ctrl_cmd.acc, m_emergency_state_params.jerk, m_max_acc);
+  raw_ctrl_cmd.acc = std::clamp(raw_ctrl_cmd.acc, m_min_acc, m_max_acc);
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, raw_ctrl_cmd.acc);
   raw_ctrl_cmd.acc =
     longitudinal_utils::applyDiffLimitFilter(raw_ctrl_cmd.acc, m_prev_raw_ctrl_cmd.acc, dt, p.jerk);
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, raw_ctrl_cmd.acc);
 
   RCLCPP_ERROR_THROTTLE(
-    logger_, *clock_, 3000, "[Emergency stop] vel: %3.3f, acc: %3.3f", p.vel, p.acc);
+    logger_, *clock_, 3000, "[Emergency stop] vel: %3.3f, acc: %3.3f", raw_ctrl_cmd.vel,
+    raw_ctrl_cmd.acc);
 
   return raw_ctrl_cmd;
 }
