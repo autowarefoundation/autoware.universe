@@ -45,7 +45,7 @@ struct ResidualEdge
 
 void SSP::maximizeLinearAssignment(
   const std::vector<std::vector<double>> & cost, std::unordered_map<int, int> * direct_assignment,
-  std::unordered_map<int, int> * reverse_assignment)
+  std::unordered_map<int, int> * reverse_assignment, const bool sparse_cost = true)
 {
   // Hyperparameters
   // double MAX_COST = 6;
@@ -61,7 +61,14 @@ void SSP::maximizeLinearAssignment(
   // Construct a bipartite graph from the cost matrix
   int n_agents = cost.size();
   int n_tasks = cost.at(0).size();
-  int n_dummies = n_agents;
+
+  int n_dummies;
+  if (sparse_cost) {
+    n_dummies = n_agents;
+  } else {
+    n_dummies = 0;
+  }
+
   int source = 0;
   int sink = n_agents + n_tasks + 1;
   int n_nodes = n_agents + n_tasks + n_dummies + 2;
@@ -86,7 +93,7 @@ void SSP::maximizeLinearAssignment(
   //     - {n_agents+1, ...,  n_agents+n_tasks}: task nodes
   //     - n_agents+n_tasks+1: sink node
   //     - {n_agents+n_tasks+2, ..., n_agents+n_tasks+1+n_agents}:
-  //       dummy node
+  //       dummy node (when sparse_cost is true)
   std::vector<std::vector<ResidualEdge>> adjacency_list(n_nodes);
 
   // Reserve memory
@@ -121,7 +128,7 @@ void SSP::maximizeLinearAssignment(
   // Add edges from agents
   for (int agent = 0; agent < n_agents; ++agent) {
     for (int task = 0; task < n_tasks; ++task) {
-      if (cost.at(agent).at(task) > EPS) {
+      if (!sparse_cost || cost.at(agent).at(task) > EPS) {
         // From agent to task
         adjacency_list.at(agent + 1).emplace_back(
           task + n_agents + 1, 1, MAX_COST - cost.at(agent).at(task), 0,
@@ -148,24 +155,26 @@ void SSP::maximizeLinearAssignment(
   }
 
   // Add edges from dummy
-  for (int agent = 0; agent < n_agents; ++agent) {
-    // From agent to dummy
-    adjacency_list.at(agent + 1).emplace_back(
-      agent + n_agents + n_tasks + 2, 1, MAX_COST, 0,
-      adjacency_list.at(agent + n_agents + n_tasks + 2).size());
+  if (sparse_cost) {
+    for (int agent = 0; agent < n_agents; ++agent) {
+      // From agent to dummy
+      adjacency_list.at(agent + 1).emplace_back(
+        agent + n_agents + n_tasks + 2, 1, MAX_COST, 0,
+        adjacency_list.at(agent + n_agents + n_tasks + 2).size());
 
-    // From dummy to agent
-    adjacency_list.at(agent + n_agents + n_tasks + 2)
-      .emplace_back(agent + 1, 0, -MAX_COST, 0, adjacency_list.at(agent + 1).size() - 1);
+      // From dummy to agent
+      adjacency_list.at(agent + n_agents + n_tasks + 2)
+        .emplace_back(agent + 1, 0, -MAX_COST, 0, adjacency_list.at(agent + 1).size() - 1);
 
-    // From dummy to sink
-    adjacency_list.at(agent + n_agents + n_tasks + 2)
-      .emplace_back(sink, 1, 0, 0, adjacency_list.at(sink).size());
+      // From dummy to sink
+      adjacency_list.at(agent + n_agents + n_tasks + 2)
+        .emplace_back(sink, 1, 0, 0, adjacency_list.at(sink).size());
 
-    // From sink to dummy
-    adjacency_list.at(sink).emplace_back(
-      agent + n_agents + n_tasks + 2, 0, 0, 0,
-      adjacency_list.at(agent + n_agents + n_tasks + 2).size() - 1);
+      // From sink to dummy
+      adjacency_list.at(sink).emplace_back(
+        agent + n_agents + n_tasks + 2, 0, 0, 0,
+        adjacency_list.at(agent + n_agents + n_tasks + 2).size() - 1);
+    }
   }
 
   // Maximum flow value
