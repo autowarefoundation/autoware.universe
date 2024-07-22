@@ -606,8 +606,6 @@ Control VehicleCmdGate::filterControlCommand(const Control & in)
   const double dt = getDt();
   const auto mode = current_operation_mode_;
   const auto current_status_cmd = getActualStatusAsCommand();
-  const auto ego_is_stopped = vehicle_stop_checker_->isVehicleStopped(stop_check_duration_);
-  const auto input_cmd_is_stopping = in.longitudinal.acceleration < 0.0;
 
   filter_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
   filter_on_transition_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
