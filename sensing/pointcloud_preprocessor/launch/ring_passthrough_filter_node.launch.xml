@@ -1,7 +1,6 @@
 <launch>
   <arg name="input_topic_name" default="/sensing/lidar/top/pointcloud_raw"/>
   <arg name="output_topic_name" default="/sensing/lidar/top/ring_passthrough_filtered/pointcloud"/>
-  <arg name="filter_field_name" default="ring"/>
   <arg name="input_frame" default=""/>
   <arg name="output_frame" default="base_link"/>
   <arg name="passthrough_filter_uint16_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/passthrough_filter_unit16.param.yaml"/>
