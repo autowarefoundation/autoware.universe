@@ -1,4 +1,4 @@
-</launch>
+<launch>
   <arg name="input_topic_name" default="/velodyne_points_ex"/>
   <arg name="output_topic_name" default="/crop_box_filted"/>
   <arg name="input_frame" default="base_link"/>
