@@ -179,7 +179,8 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
 
   autoware::lidar_centerpoint::NetworkParam encoder_param(
     encoder_onnx_path, encoder_engine_path, trt_precision);
-  autoware::lidar_centerpoint::NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
+  autoware::lidar_centerpoint::NetworkParam head_param(
+    head_onnx_path, head_engine_path, trt_precision);
   autoware::lidar_centerpoint::DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
   autoware::lidar_centerpoint::CenterPointConfig config(

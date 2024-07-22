@@ -88,7 +88,8 @@ TEST(NonMaximumSuppressionTest, Apply)
   input_objects[3].shape.dimensions.x = 0.5;
   input_objects[3].shape.dimensions.y = 0.5;
 
-  std::vector<autoware::lidar_centerpoint::DetectedObject> output_objects = nms.apply(input_objects);
+  std::vector<autoware::lidar_centerpoint::DetectedObject> output_objects =
+    nms.apply(input_objects);
 
   // Assert the expected number of output objects
   EXPECT_EQ(output_objects.size(), 3);
