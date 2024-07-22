@@ -1734,6 +1734,111 @@ TEST(geometry, isTwistCovarianceValid)
   EXPECT_EQ(autoware::universe_utils::isTwistCovarianceValid(twist_with_covariance), true);
 }
 
+TEST(geometry, intersect)
+{
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::intersect;
+
+  {  // Normally crossing
+    const auto p1 = createPoint(0.0, -1.0, 0.0);
+    const auto p2 = createPoint(0.0, 1.0, 0.0);
+    const auto p3 = createPoint(-1.0, 0.0, 0.0);
+    const auto p4 = createPoint(1.0, 0.0, 0.0);
+    const auto result = intersect(p1, p2, p3, p4);
+
+    EXPECT_TRUE(result);
+    EXPECT_NEAR(result->x, 0.0, epsilon);
+    EXPECT_NEAR(result->y, 0.0, epsilon);
+    EXPECT_NEAR(result->z, 0.0, epsilon);
+  }
+
+  {  // No crossing
+    const auto p1 = createPoint(0.0, -1.0, 0.0);
+    const auto p2 = createPoint(0.0, 1.0, 0.0);
+    const auto p3 = createPoint(1.0, 0.0, 0.0);
+    const auto p4 = createPoint(3.0, 0.0, 0.0);
+    const auto result = intersect(p1, p2, p3, p4);
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // One segment is the point on the other's segment
+    const auto p1 = createPoint(0.0, -1.0, 0.0);
+    const auto p2 = createPoint(0.0, 1.0, 0.0);
+    const auto p3 = createPoint(0.0, 0.0, 0.0);
+    const auto p4 = createPoint(0.0, 0.0, 0.0);
+    const auto result = intersect(p1, p2, p3, p4);
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // One segment is the point not on the other's segment
+    const auto p1 = createPoint(0.0, -1.0, 0.0);
+    const auto p2 = createPoint(0.0, 1.0, 0.0);
+    const auto p3 = createPoint(1.0, 0.0, 0.0);
+    const auto p4 = createPoint(1.0, 0.0, 0.0);
+    const auto result = intersect(p1, p2, p3, p4);
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // Both segments are the points which are the same position
+    const auto p1 = createPoint(0.0, 0.0, 0.0);
+    const auto p2 = createPoint(0.0, 0.0, 0.0);
+    const auto p3 = createPoint(0.0, 0.0, 0.0);
+    const auto p4 = createPoint(0.0, 0.0, 0.0);
+    const auto result = intersect(p1, p2, p3, p4);
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // Both segments are the points which are different position
+    const auto p1 = createPoint(0.0, 1.0, 0.0);
+    const auto p2 = createPoint(0.0, 1.0, 0.0);
+    const auto p3 = createPoint(1.0, 0.0, 0.0);
+    const auto p4 = createPoint(1.0, 0.0, 0.0);
+    const auto result = intersect(p1, p2, p3, p4);
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // Segments are the same
+    const auto p1 = createPoint(0.0, -1.0, 0.0);
+    const auto p2 = createPoint(0.0, 1.0, 0.0);
+    const auto p3 = createPoint(0.0, -1.0, 0.0);
+    const auto p4 = createPoint(0.0, 1.0, 0.0);
+    const auto result = intersect(p1, p2, p3, p4);
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // One's edge is on the other's segment
+    const auto p1 = createPoint(0.0, -1.0, 0.0);
+    const auto p2 = createPoint(0.0, 1.0, 0.0);
+    const auto p3 = createPoint(0.0, 0.0, 0.0);
+    const auto p4 = createPoint(1.0, 0.0, 0.0);
+    const auto result = intersect(p1, p2, p3, p4);
+
+    EXPECT_TRUE(result);
+    EXPECT_NEAR(result->x, 0.0, epsilon);
+    EXPECT_NEAR(result->y, 0.0, epsilon);
+    EXPECT_NEAR(result->z, 0.0, epsilon);
+  }
+
+  {  // One's edge is the same as the other's edge.
+    const auto p1 = createPoint(0.0, -1.0, 0.0);
+    const auto p2 = createPoint(0.0, 1.0, 0.0);
+    const auto p3 = createPoint(0.0, -1.0, 0.0);
+    const auto p4 = createPoint(2.0, -1.0, 0.0);
+    const auto result = intersect(p1, p2, p3, p4);
+
+    EXPECT_TRUE(result);
+    EXPECT_NEAR(result->x, 0.0, epsilon);
+    EXPECT_NEAR(result->y, -1.0, epsilon);
+    EXPECT_NEAR(result->z, 0.0, epsilon);
+  }
+}
+
 TEST(geometry, intersectPolygon)
 {
   {  // 2 triangles with intersection
@@ -2211,9 +2316,9 @@ TEST(geometry, divideBySegment)
   }
 }
 
-TEST(geometry, intersect)
+TEST(geometry, intersects)
 {
-  using autoware::universe_utils::intersect;
+  using autoware::universe_utils::intersects;
   using autoware::universe_utils::alt::Point;
 
   {  // Normally crossing
@@ -2221,12 +2326,9 @@ TEST(geometry, intersect)
     const Point p2 = {0.0, 1.0, 0.0};
     const Point p3 = {-1.0, 0.0, 0.0};
     const Point p4 = {1.0, 0.0, 0.0};
-    const auto result = intersect(p1, p2, p3, p4);
+    const auto result = intersects(p1, p2, p3, p4);
 
     EXPECT_TRUE(result);
-    EXPECT_NEAR(result->x(), 0.0, epsilon);
-    EXPECT_NEAR(result->y(), 0.0, epsilon);
-    EXPECT_NEAR(result->z(), 0.0, epsilon);
   }
 
   {  // No crossing
@@ -2234,7 +2336,7 @@ TEST(geometry, intersect)
     const Point p2 = {0.0, 1.0, 0.0};
     const Point p3 = {1.0, 0.0, 0.0};
     const Point p4 = {3.0, 0.0, 0.0};
-    const auto result = intersect(p1, p2, p3, p4);
+    const auto result = intersects(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
@@ -2244,7 +2346,7 @@ TEST(geometry, intersect)
     const Point p2 = {0.0, 1.0, 0.0};
     const Point p3 = {0.0, 0.0, 0.0};
     const Point p4 = {0.0, 0.0, 0.0};
-    const auto result = intersect(p1, p2, p3, p4);
+    const auto result = intersects(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
@@ -2254,7 +2356,7 @@ TEST(geometry, intersect)
     const Point p2 = {0.0, 1.0, 0.0};
     const Point p3 = {1.0, 0.0, 0.0};
     const Point p4 = {1.0, 0.0, 0.0};
-    const auto result = intersect(p1, p2, p3, p4);
+    const auto result = intersects(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
@@ -2264,7 +2366,7 @@ TEST(geometry, intersect)
     const Point p2 = {0.0, 0.0, 0.0};
     const Point p3 = {0.0, 0.0, 0.0};
     const Point p4 = {0.0, 0.0, 0.0};
-    const auto result = intersect(p1, p2, p3, p4);
+    const auto result = intersects(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
@@ -2274,7 +2376,7 @@ TEST(geometry, intersect)
     const Point p2 = {0.0, 1.0, 0.0};
     const Point p3 = {1.0, 0.0, 0.0};
     const Point p4 = {1.0, 0.0, 0.0};
-    const auto result = intersect(p1, p2, p3, p4);
+    const auto result = intersects(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
@@ -2284,7 +2386,7 @@ TEST(geometry, intersect)
     const Point p2 = {0.0, 1.0, 0.0};
     const Point p3 = {0.0, -1.0, 0.0};
     const Point p4 = {0.0, 1.0, 0.0};
-    const auto result = intersect(p1, p2, p3, p4);
+    const auto result = intersects(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
@@ -2294,12 +2396,9 @@ TEST(geometry, intersect)
     const Point p2 = {0.0, 1.0, 0.0};
     const Point p3 = {0.0, 0.0, 0.0};
     const Point p4 = {1.0, 0.0, 0.0};
-    const auto result = intersect(p1, p2, p3, p4);
+    const auto result = intersects(p1, p2, p3, p4);
 
     EXPECT_TRUE(result);
-    EXPECT_NEAR(result->x(), 0.0, epsilon);
-    EXPECT_NEAR(result->y(), 0.0, epsilon);
-    EXPECT_NEAR(result->z(), 0.0, epsilon);
   }
 
   {  // One's edge is the same as the other's edge.
@@ -2307,19 +2406,10 @@ TEST(geometry, intersect)
     const Point p2 = {0.0, 1.0, 0.0};
     const Point p3 = {0.0, -1.0, 0.0};
     const Point p4 = {2.0, -1.0, 0.0};
-    const auto result = intersect(p1, p2, p3, p4);
+    const auto result = intersects(p1, p2, p3, p4);
 
     EXPECT_TRUE(result);
-    EXPECT_NEAR(result->x(), 0.0, epsilon);
-    EXPECT_NEAR(result->y(), -1.0, epsilon);
-    EXPECT_NEAR(result->z(), 0.0, epsilon);
   }
-}
-
-TEST(geometry, intersects)
-{
-  using autoware::universe_utils::intersects;
-  using autoware::universe_utils::alt::Point;
 
   {  // One polygon intersects the other
     const Point p1 = {1.0, 1.0, 0.0};
