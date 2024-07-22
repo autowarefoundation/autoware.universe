@@ -792,10 +792,10 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
   if (m_control_state == ControlState::STOPPED) {
     const auto & p = m_stopped_state_params;
     ctrl_cmd_as_pedal_pos.vel = p.vel;
-    ctrl_cmd_as_pedal_pos.acc = p.acc;  // store brake pedal position corresponding value
+    ctrl_cmd_as_pedal_pos.acc = p.acc;
 
-    m_prev_raw_ctrl_cmd.vel = ctrl_cmd_as_pedal_pos.vel;
-    m_prev_raw_ctrl_cmd.acc = 0.0;  // store acceleration value
+    m_prev_raw_ctrl_cmd.vel = 0.0;
+    m_prev_raw_ctrl_cmd.acc = 0.0;
 
     m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, ctrl_cmd_as_pedal_pos.acc);
     m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, ctrl_cmd_as_pedal_pos.acc);
