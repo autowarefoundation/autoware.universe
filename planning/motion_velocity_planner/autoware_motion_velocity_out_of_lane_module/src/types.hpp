@@ -24,6 +24,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <boost/geometry/geometries/multi_polygon.hpp>
+#include <boost/geometry/index/parameters.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/LaneletMap.h>
@@ -32,6 +33,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane
@@ -84,6 +86,16 @@ struct PlannerParam
   double max_arc_length = 100.0;                // TODO(Maxime): param
 };
 
+namespace bgi = boost::geometry::index;
+struct StopLine
+{
+  universe_utils::LineString2d stop_line;
+  lanelet::ConstLanelets lanelets;
+};
+using StopLineNode = std::pair<universe_utils::Box2d, StopLine>;
+using StopLinesRtree = bgi::rtree<StopLineNode, bgi::rstar<16>>;
+using OutAreaRtree = bgi::rtree<std::pair<universe_utils::Box2d, size_t>, bgi::rstar<16>>;
+
 /// @brief data related to the ego vehicle
 struct EgoData
 {
@@ -103,6 +115,7 @@ struct EgoData
   lanelet::ConstLanelets route_lanelets;
   lanelet::ConstLanelets ignored_lanelets;
   lanelet::ConstLanelets out_of_lane_lanelets;
+  StopLinesRtree stop_lines_rtree;
 };
 
 struct OutOfLanePoint
@@ -119,6 +132,7 @@ struct OutOfLaneData
 {
   std::vector<OutOfLanePoint> outside_points;
   lanelet::ConstLanelets out_of_lane_lanelets;
+  OutAreaRtree outside_areas_rtree;
 };
 
 /// @brief debug data
@@ -131,6 +145,8 @@ struct DebugData
   size_t prev_drivable_lane_polygons = 0;
   size_t prev_out_of_lane_areas = 0;
   size_t prev_ttcs = 0;
+  size_t prev_objects = 0;
+  size_t prev_stop_line = 0;
 };
 
 }  // namespace autoware::motion_velocity_planner::out_of_lane

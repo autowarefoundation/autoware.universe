@@ -24,7 +24,8 @@
 namespace autoware::motion_velocity_planner::out_of_lane::debug
 {
 visualization_msgs::msg::MarkerArray create_debug_marker_array(
-  const EgoData & ego_data, const OutOfLaneData & out_of_lane_data, DebugData & debug_data);
+  const EgoData & ego_data, const OutOfLaneData & out_of_lane_data,
+  const autoware_perception_msgs::msg::PredictedObjects & objects, DebugData & debug_data);
 motion_utils::VirtualWalls create_virtual_walls(
   const geometry_msgs::msg::Pose & pose, const bool stop, const PlannerParam & params);
 }  // namespace autoware::motion_velocity_planner::out_of_lane::debug

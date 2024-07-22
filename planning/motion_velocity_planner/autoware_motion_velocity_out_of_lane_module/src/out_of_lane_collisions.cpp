@@ -14,6 +14,8 @@
 
 #include "out_of_lane_collisions.hpp"
 
+#include "types.hpp"
+
 #include <boost/geometry/algorithms/disjoint.hpp>
 
 #include <algorithm>
@@ -25,13 +27,16 @@ void calculate_object_time_collisions(
   OutOfLaneData & out_of_lane_data,
   const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects)
 {
+  OutAreaRtree rtree;
+  // TODO(Maxime): try using a rtree for the outside_rings for better performance
+  universe_utils::Polygon2d object_footprint;
   for (const auto & object : objects) {
     for (const auto & object_path : object.kinematics.predicted_paths) {
       const auto time_step = rclcpp::Duration(object_path.time_step).seconds();
       auto t = time_step;
       for (const auto & object_pose : object_path.path) {
         t += time_step;
-        const auto object_footprint = universe_utils::toPolygon2d(object_pose, object.shape);
+        object_footprint = universe_utils::toPolygon2d(object_pose, object.shape);
         for (auto & out_of_lane_point : out_of_lane_data.outside_points) {
           for (const auto & outside_ring : out_of_lane_point.outside_rings) {
             if (!boost::geometry::disjoint(outside_ring, object_footprint.outer())) {
@@ -79,16 +84,17 @@ void calculate_collisions_to_avoid(
 
 void calculate_out_of_lane_areas(OutOfLaneData & out_of_lane_data, const EgoData & ego_data)
 {
+  out_of_lane::OutOfLanePoint p;
   for (auto i = 0UL; i < ego_data.trajectory_footprints.size(); ++i) {
     const auto & footprint = ego_data.trajectory_footprints[i];
-    if (!boost::geometry::within(footprint, ego_data.drivable_lane_polygons)) {
-      out_of_lane::OutOfLanePoint p;
+    p.outside_rings.clear();
+    out_of_lane::Polygons out_of_lane_polygons;
+    boost::geometry::difference(footprint, ego_data.drivable_lane_polygons, out_of_lane_polygons);
+    for (const auto & area : out_of_lane_polygons) {
+      p.outside_rings.push_back(area.outer);
+    }
+    if (!p.outside_rings.empty()) {
       p.trajectory_index = i + ego_data.first_trajectory_idx;
-      out_of_lane::Polygons out_of_lane_polygons;
-      boost::geometry::difference(footprint, ego_data.drivable_lane_polygons, out_of_lane_polygons);
-      for (const auto & area : out_of_lane_polygons) {
-        p.outside_rings.push_back(area.outer);
-      }
       out_of_lane_data.outside_points.push_back(p);
     }
   }

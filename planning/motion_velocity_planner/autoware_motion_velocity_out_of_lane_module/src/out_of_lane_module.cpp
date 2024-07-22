@@ -24,22 +24,27 @@
 
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/motion_velocity_planner_common/planner_data.hpp>
 #include <autoware/motion_velocity_planner_common/ttc_utils.hpp>
+#include <autoware/route_handler/route_handler.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
-
-#include <geometry_msgs/msg/detail/point__struct.hpp>
-#include <geometry_msgs/msg/detail/pose__struct.hpp>
+#include <traffic_light_utils/traffic_light_utils.hpp>
 
 #include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
+#include <boost/geometry/algorithms/detail/envelope/interface.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 #include <boost/geometry/geometries/multi_polygon.hpp>
 
+#include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 #include <lanelet2_core/primitives/CompoundPolygon.h>
+#include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
 #include <algorithm>
@@ -196,6 +201,42 @@ void OutOfLaneModule::calculate_min_stop_and_slowdown_distances(
   }
 }
 
+void prepare_stop_lines_rtree(
+  out_of_lane::EgoData & ego_data, const PlannerData & planner_data, const double search_distance)
+{
+  std::vector<out_of_lane::StopLineNode> rtree_nodes;
+  const auto bbox = lanelet::BoundingBox2d(
+    lanelet::BasicPoint2d{
+      ego_data.pose.position.x - search_distance, ego_data.pose.position.y - search_distance},
+    lanelet::BasicPoint2d{
+      ego_data.pose.position.x + search_distance, ego_data.pose.position.y + search_distance});
+  out_of_lane::StopLineNode stop_line_node;
+  for (const auto & ll :
+       planner_data.route_handler->getLaneletMapPtr()->laneletLayer.search(bbox)) {
+    for (const auto & element : ll.regulatoryElementsAs<lanelet::TrafficLight>()) {
+      const auto traffic_signal_stamped = planner_data.get_traffic_signal(element->id());
+      if (
+        traffic_signal_stamped.has_value() && element->stopLine().has_value() &&
+        traffic_light_utils::isTrafficSignalStop(ll, traffic_signal_stamped.value().signal)) {
+        stop_line_node.second.stop_line.clear();
+        for (const auto & p : element->stopLine()->basicLineString()) {
+          stop_line_node.second.stop_line.emplace_back(p.x(), p.y());
+        }
+        // use a longer stop line to also cut predicted paths that slightly go around the stop line
+        const auto diff =
+          stop_line_node.second.stop_line.back() - stop_line_node.second.stop_line.front();
+        stop_line_node.second.stop_line.front() -= diff * 0.5;
+        stop_line_node.second.stop_line.back() += diff * 0.5;
+        stop_line_node.second.lanelets = planner_data.route_handler->getPreviousLanelets(ll);
+        stop_line_node.first =
+          boost::geometry::return_envelope<universe_utils::Box2d>(stop_line_node.second.stop_line);
+        rtree_nodes.push_back(stop_line_node);
+      }
+    }
+  }
+  ego_data.stop_lines_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
+}
+
 VelocityPlanningResult OutOfLaneModule::plan(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
@@ -210,6 +251,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   limit_trajectory_size(ego_data, ego_trajectory_points, params_.max_arc_length);
   calculate_min_stop_and_slowdown_distances(
     ego_data, *planner_data, previous_slowdown_pose_, params_.slow_velocity);
+  prepare_stop_lines_rtree(ego_data, *planner_data, params_.max_arc_length);
   const auto preprocessing_us = stopwatch.toc("preprocessing");
 
   stopwatch.tic("calculate_trajectory_footprints");
@@ -223,6 +265,8 @@ VelocityPlanningResult OutOfLaneModule::plan(
   // same lane, keep the stop point with lowest arc length out_of_lane_data.out_of_lane_lanelets =
   // out_of_lane::calculate_out_of_lane_lanelets(
   //   ego_data, route_lanelets, ignored_lanelets, planner_data->route_handler, params_);
+  // TODO(Maxime): support parameter 'ignore_overlaps_over_lane_changeable_lanelets' even when using
+  // the route
   stopwatch.tic("calculate_lanelets");
   calculate_drivable_lane_polygons(ego_data, *planner_data->route_handler, params_);
   const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");
@@ -251,8 +295,8 @@ VelocityPlanningResult OutOfLaneModule::plan(
     params_.skip_if_already_overlapping && !ego_data.drivable_lane_polygons.empty() &&
     !lanelet::geometry::within(ego_data.current_footprint, ego_data.drivable_lane_polygons)) {
     RCLCPP_WARN(logger_, "Ego is already overlapping a lane, skipping the module\n");
-    debug_publisher_->publish(
-      out_of_lane::debug::create_debug_marker_array(ego_data, out_of_lane_data, debug_data_));
+    debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(
+      ego_data, out_of_lane_data, objects, debug_data_));
     return result;
   }
 
@@ -327,8 +371,8 @@ VelocityPlanningResult OutOfLaneModule::plan(
     RCLCPP_WARN(logger_, "Could not insert slowdown point because of jerk or deceleration limits");
   }
   const auto total_time_us = stopwatch.toc();
-  debug_publisher_->publish(
-    out_of_lane::debug::create_debug_marker_array(ego_data, out_of_lane_data, debug_data_));
+  debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(
+    ego_data, out_of_lane_data, objects, debug_data_));
   std::map<std::string, double> processing_times;
   processing_times["preprocessing"] = preprocessing_us / 1000;
   processing_times["calculate_lanelets"] = calculate_lanelets_us / 1000;

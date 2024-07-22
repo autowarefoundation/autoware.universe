@@ -167,10 +167,73 @@ void add_lanelet_markers(
   for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id)
     debug_marker_array.markers.push_back(debug_marker);
 }
+
+size_t add_objects_markers(
+  visualization_msgs::msg::MarkerArray & debug_marker_array,
+  const autoware_perception_msgs::msg::PredictedObjects & objects, const double z,
+  const size_t prev_nb)
+{
+  auto debug_marker = get_base_marker();
+  debug_marker.ns = "objects";
+  for (const auto & o : objects.objects) {
+    for (const auto & path : o.kinematics.predicted_paths) {
+      for (const auto & pose : path.path) {
+        const auto object_footprint = universe_utils::toPolygon2d(pose, o.shape);
+        debug_marker.points.clear();
+        for (const auto & p : object_footprint.outer())
+          debug_marker.points.push_back(
+            universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
+        debug_marker.points.push_back(debug_marker.points.front());
+        debug_marker_array.markers.push_back(debug_marker);
+        ++debug_marker.id;
+      }
+    }
+  }
+  const auto max_id = debug_marker.id;
+  debug_marker.action = visualization_msgs::msg::Marker::DELETE;
+  for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id) {
+    debug_marker_array.markers.push_back(debug_marker);
+  }
+  return max_id;
+}
+size_t add_stop_line_markers(
+  visualization_msgs::msg::MarkerArray & debug_marker_array, const StopLinesRtree & rtree,
+  const double z, const size_t prev_nb)
+{
+  auto debug_marker = get_base_marker();
+  debug_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+  debug_marker.ns = "stop_lines";
+  for (const auto & [_, stop_line] : rtree) {
+    debug_marker.points.clear();
+    debug_marker.color.r = 1.0;
+    for (const auto & p : stop_line.stop_line) {
+      debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
+    }
+    debug_marker_array.markers.push_back(debug_marker);
+    ++debug_marker.id;
+    debug_marker.color.r = 0.0;
+    for (const auto & ll : stop_line.lanelets) {
+      debug_marker.points.clear();
+      for (const auto & p : ll.polygon2d().basicPolygon()) {
+        debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
+      }
+      debug_marker.points.push_back(debug_marker.points.front());
+      debug_marker_array.markers.push_back(debug_marker);
+      ++debug_marker.id;
+    }
+  }
+  const auto max_id = debug_marker.id;
+  debug_marker.action = visualization_msgs::msg::Marker::DELETE;
+  for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id) {
+    debug_marker_array.markers.push_back(debug_marker);
+  }
+  return max_id;
+}
 }  // namespace
 
 visualization_msgs::msg::MarkerArray create_debug_marker_array(
-  const EgoData & ego_data, const OutOfLaneData & out_of_lane_data, DebugData & debug_data)
+  const EgoData & ego_data, const OutOfLaneData & out_of_lane_data,
+  const autoware_perception_msgs::msg::PredictedObjects & objects, DebugData & debug_data)
 {
   constexpr auto z = 0.0;
   visualization_msgs::msg::MarkerArray debug_marker_array;
@@ -210,12 +273,18 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
       out_of_lane_areas.end(), p.outside_rings.begin(), p.outside_rings.end());
   }
 
+  debug_data.prev_objects =
+    add_objects_markers(debug_marker_array, objects, z, debug_data.prev_objects);
+
   add_out_of_lane_markers(debug_marker_array, out_of_lane_data, z, debug_data);
 
   add_current_overlap_marker(debug_marker_array, ego_data.current_footprint, z);
 
   add_ttc_markers(debug_marker_array, ego_data, out_of_lane_data, debug_data.prev_ttcs);
   debug_data.prev_ttcs = out_of_lane_data.outside_points.size();
+
+  debug_data.prev_stop_line = add_stop_line_markers(
+    debug_marker_array, ego_data.stop_lines_rtree, z, debug_data.prev_stop_line);
 
   return debug_marker_array;
 }
