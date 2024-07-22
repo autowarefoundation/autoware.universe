@@ -32,6 +32,9 @@
 #include <memory>
 #include <vector>
 
+namespace autoware::ekf_localizer
+{
+
 struct EKFDiagnosticInfo
 {
   size_t no_update_count{0};
@@ -88,5 +91,7 @@ private:
   std::vector<double> accumulated_delay_times_;
   const HyperParameters params_;
 };
+
+}  // namespace autoware::ekf_localizer
 
 #endif  // EKF_LOCALIZER__EKF_MODULE_HPP_
