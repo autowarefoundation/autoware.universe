@@ -293,8 +293,8 @@ void expand_bound(
         bound[idx - 1], bound[idx], bound[succ_idx - 1], bound[succ_idx]);
       if (
         intersection &&
-        autoware::universe_utils::calcDistance2d(*intersection, bound[idx - 1]) < 1e-3 &&
-        autoware::universe_utils::calcDistance2d(*intersection, bound[idx]) < 1e-3) {
+        autoware::universe_utils::calcDistance2d(*intersection, bound[idx - 1]) > 1e-3 &&
+        autoware::universe_utils::calcDistance2d(*intersection, bound[idx]) > 1e-3) {
         idx = succ_idx;
         is_intersecting = true;
       }
@@ -382,8 +382,8 @@ void add_bound_point(std::vector<Point> & bound, const Pose & pose)
   new_point.y = nearest_projection.point.y();
   new_point.z = bound[nearest_idx].z;
   if (
-    universe_utils::calcDistance2d(new_point, bound[nearest_idx]) > 1.0 &&
-    universe_utils::calcDistance2d(new_point, bound[nearest_idx + 1]) > 1.0) {
+    universe_utils::calcDistance2d(new_point, bound[nearest_idx]) > 0.1 &&
+    universe_utils::calcDistance2d(new_point, bound[nearest_idx + 1]) > 0.1) {
     bound.insert(bound.begin() + nearest_idx + 1, new_point);
   }
 }
