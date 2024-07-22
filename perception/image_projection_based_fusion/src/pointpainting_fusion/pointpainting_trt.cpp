@@ -27,11 +27,11 @@
 namespace autoware::image_projection_based_fusion
 {
 PointPaintingTRT::PointPaintingTRT(
-  const autoware::centerpoint::NetworkParam & encoder_param,
-  const autoware::centerpoint::NetworkParam & head_param,
-  const autoware::centerpoint::DensificationParam & densification_param,
-  const autoware::centerpoint::CenterPointConfig & config)
-: autoware::centerpoint::CenterPointTRT(encoder_param, head_param, densification_param, config)
+  const autoware::lidar_centerpoint::NetworkParam & encoder_param,
+  const autoware::lidar_centerpoint::NetworkParam & head_param,
+  const autoware::lidar_centerpoint::DensificationParam & densification_param,
+  const autoware::lidar_centerpoint::CenterPointConfig & config)
+: autoware::lidar_centerpoint::CenterPointTRT(encoder_param, head_param, densification_param, config)
 {
   vg_ptr_pp_ =
     std::make_unique<image_projection_based_fusion::VoxelGenerator>(densification_param, config_);

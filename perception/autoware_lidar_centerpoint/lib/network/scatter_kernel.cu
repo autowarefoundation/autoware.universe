@@ -20,7 +20,7 @@ namespace
 const std::size_t THREADS_PER_BLOCK = 32;
 }  // namespace
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 __global__ void scatterFeatures_kernel(
   const float * pillar_features, const int * coords, const unsigned int * num_pillars,
@@ -64,4 +64,4 @@ cudaError_t scatterFeatures_launch(
   return cudaGetLastError();
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

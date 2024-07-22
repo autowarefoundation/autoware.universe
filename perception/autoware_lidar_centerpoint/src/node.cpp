@@ -34,7 +34,7 @@
 #include "autoware/lidar_centerpoint/ros_utils.hpp"
 #include "autoware/lidar_centerpoint/utils.hpp"
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_options)
 : Node("lidar_center_point", node_options), tf_buffer_(this->get_clock())
@@ -191,7 +191,7 @@ void LidarCenterPointNode::pointCloudCallback(
   }
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::centerpoint::LidarCenterPointNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::lidar_centerpoint::LidarCenterPointNode)

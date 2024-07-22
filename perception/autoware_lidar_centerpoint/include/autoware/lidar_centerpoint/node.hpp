@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 class LidarCenterPointNode : public rclcpp::Node
@@ -69,6 +69,6 @@ private:
   std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__NODE_HPP_

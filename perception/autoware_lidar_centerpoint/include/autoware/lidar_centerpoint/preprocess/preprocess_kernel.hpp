@@ -18,7 +18,7 @@
 #include "cuda.h"
 #include "cuda_runtime_api.h"
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 cudaError_t generateSweepPoints_launch(
   const float * input_points, size_t points_size, int input_point_step, float time_lag,
@@ -41,6 +41,6 @@ cudaError_t generateFeatures_launch(
   const float voxel_size_y, const float voxel_size_z, const float range_min_x,
   const float range_min_y, const float range_min_z, float * features, cudaStream_t stream);
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__PREPROCESS__PREPROCESS_KERNEL_HPP_

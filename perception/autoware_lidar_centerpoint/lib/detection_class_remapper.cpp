@@ -14,7 +14,7 @@
 
 #include "autoware/lidar_centerpoint/detection_class_remapper.hpp"
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 void DetectionClassRemapper::setParameters(
@@ -68,4 +68,4 @@ void DetectionClassRemapper::mapClasses(autoware_perception_msgs::msg::DetectedO
   }
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

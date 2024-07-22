@@ -23,7 +23,7 @@ namespace
 const std::size_t THREADS_PER_BLOCK = 32;
 }  // namespace
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 struct is_score_greater
@@ -192,4 +192,4 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
   return cudaGetLastError();
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

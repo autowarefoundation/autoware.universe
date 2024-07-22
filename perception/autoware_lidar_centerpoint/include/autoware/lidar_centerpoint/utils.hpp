@@ -17,7 +17,7 @@
 
 #include <cstddef>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 struct Box3D
 {
@@ -49,6 +49,6 @@ struct Box3D
 // cspell: ignore divup
 std::size_t divup(const std::size_t a, const std::size_t b);
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__UTILS_HPP_

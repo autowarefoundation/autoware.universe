@@ -16,7 +16,7 @@
 
 #include <stdexcept>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 // cspell: ignore divup
 std::size_t divup(const std::size_t a, const std::size_t b)
@@ -31,4 +31,4 @@ std::size_t divup(const std::size_t a, const std::size_t b)
   return (a + b - 1) / b;
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

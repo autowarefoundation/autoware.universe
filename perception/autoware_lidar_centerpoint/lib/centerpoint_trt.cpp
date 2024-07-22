@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 CenterPointTRT::CenterPointTRT(
   const NetworkParam & encoder_param, const NetworkParam & head_param,
@@ -200,4 +200,4 @@ void CenterPointTRT::postProcess(std::vector<Box3D> & det_boxes3d)
   }
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

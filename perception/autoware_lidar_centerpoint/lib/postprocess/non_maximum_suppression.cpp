@@ -18,7 +18,7 @@
 #include <object_recognition_utils/geometry.hpp>
 #include <object_recognition_utils/object_recognition_utils.hpp>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 void NonMaximumSuppression::setParameters(const NMSParams & params)
@@ -101,4 +101,4 @@ std::vector<DetectedObject> NonMaximumSuppression::apply(
 
   return output_objects;
 }
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

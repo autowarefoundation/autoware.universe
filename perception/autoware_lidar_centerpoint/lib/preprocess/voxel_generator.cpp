@@ -21,7 +21,7 @@
 
 #include <type_traits>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 VoxelGeneratorTemplate::VoxelGeneratorTemplate(
   const DensificationParam & param, const CenterPointConfig & config)
@@ -81,4 +81,4 @@ std::size_t VoxelGenerator::generateSweepPoints(float * points_d, cudaStream_t s
   return point_counter;
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

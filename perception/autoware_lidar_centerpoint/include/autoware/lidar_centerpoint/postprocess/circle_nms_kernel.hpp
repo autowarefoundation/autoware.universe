@@ -18,7 +18,7 @@
 #include "autoware/lidar_centerpoint/utils.hpp"
 #include "thrust/device_vector.h"
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 // Non-maximum suppression (NMS) uses the distance on the xy plane instead of
 // intersection over union (IoU) to suppress overlapped objects.
@@ -26,6 +26,6 @@ std::size_t circleNMS(
   thrust::device_vector<Box3D> & boxes3d, const float distance_threshold,
   thrust::device_vector<bool> & keep_mask, cudaStream_t stream);
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__POSTPROCESS__CIRCLE_NMS_KERNEL_HPP_

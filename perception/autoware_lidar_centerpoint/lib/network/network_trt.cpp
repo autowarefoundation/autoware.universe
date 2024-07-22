@@ -14,7 +14,7 @@
 
 #include "autoware/lidar_centerpoint/network/network_trt.hpp"
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 bool VoxelEncoderTRT::setProfile(
   nvinfer1::IBuilder & builder, nvinfer1::INetworkDefinition & network,
@@ -79,4 +79,4 @@ bool HeadTRT::setProfile(
   return true;
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

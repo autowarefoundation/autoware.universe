@@ -18,7 +18,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 class CenterPointConfig
 {
@@ -132,6 +132,6 @@ public:
   std::size_t down_grid_size_y_ = grid_size_y_ / downsample_factor_;
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__CENTERPOINT_CONFIG_HPP_

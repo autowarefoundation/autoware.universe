@@ -18,7 +18,7 @@
 #include "cuda.h"
 #include "cuda_runtime_api.h"
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 cudaError_t scatterFeatures_launch(
   const float * pillar_features, const int * coords, const unsigned int * num_pillars,
@@ -26,6 +26,6 @@ cudaError_t scatterFeatures_launch(
   const std::size_t grid_size_x, const std::size_t grid_size_y, float * scattered_features,
   cudaStream_t stream);
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__NETWORK__SCATTER_KERNEL_HPP_

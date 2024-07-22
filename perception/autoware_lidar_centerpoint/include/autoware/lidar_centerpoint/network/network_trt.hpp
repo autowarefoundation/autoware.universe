@@ -20,7 +20,7 @@
 
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 class VoxelEncoderTRT : public TensorRTWrapper
 {
@@ -48,6 +48,6 @@ protected:
   std::vector<std::size_t> out_channel_sizes_;
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__NETWORK__NETWORK_TRT_HPP_

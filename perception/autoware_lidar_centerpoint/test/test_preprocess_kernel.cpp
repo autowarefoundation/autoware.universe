@@ -24,7 +24,7 @@
 #include <memory>
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 void PreprocessKernelTest::SetUp()
@@ -101,7 +101,7 @@ TEST_F(PreprocessKernelTest, EmptyVoxelTest)
     points_d_.get(), points.data(), points_num * point_feature_size_ * sizeof(float),
     cudaMemcpyHostToDevice));
 
-  cudaError_t code = autoware::centerpoint::generateVoxels_random_launch(
+  cudaError_t code = autoware::lidar_centerpoint::generateVoxels_random_launch(
     points_d_.get(), points_num, range_min_x_, range_max_x_, range_min_y_, range_max_y_,
     range_min_z_, range_max_z_, voxel_size_x_, voxel_size_y_, voxel_size_z_, grid_size_y_,
     grid_size_x_, mask_d_.get(), voxels_buffer_d_.get(), stream_);
@@ -127,7 +127,7 @@ TEST_F(PreprocessKernelTest, BasicTest)
     points_d_.get(), points.data(), points_num * point_feature_size_ * sizeof(float),
     cudaMemcpyHostToDevice));
 
-  cudaError_t code = autoware::centerpoint::generateVoxels_random_launch(
+  cudaError_t code = autoware::lidar_centerpoint::generateVoxels_random_launch(
     points_d_.get(), points_num, range_min_x_, range_max_x_, range_min_y_, range_max_y_,
     range_min_z_, range_max_z_, voxel_size_x_, voxel_size_y_, voxel_size_z_, grid_size_y_,
     grid_size_x_, mask_d_.get(), voxels_buffer_d_.get(), stream_);
@@ -242,7 +242,7 @@ TEST_F(PreprocessKernelTest, OutOfRangeTest)
     points_d_.get(), points.data(), points_num * point_feature_size_ * sizeof(float),
     cudaMemcpyHostToDevice));
 
-  cudaError_t code = autoware::centerpoint::generateVoxels_random_launch(
+  cudaError_t code = autoware::lidar_centerpoint::generateVoxels_random_launch(
     points_d_.get(), points_num, range_min_x_, range_max_x_, range_min_y_, range_max_y_,
     range_min_z_, range_max_z_, voxel_size_x_, voxel_size_y_, voxel_size_z_, grid_size_y_,
     grid_size_x_, mask_d_.get(), voxels_buffer_d_.get(), stream_);
@@ -275,7 +275,7 @@ TEST_F(PreprocessKernelTest, VoxelOverflowTest)
 
   // Note: due to atomic operations in the kernel, generateVoxels does not handle overflows in the
   // counter, and instead is done in the following kernel
-  cudaError_t code = autoware::centerpoint::generateVoxels_random_launch(
+  cudaError_t code = autoware::lidar_centerpoint::generateVoxels_random_launch(
     points_d_.get(), points_num, range_min_x_, range_max_x_, range_min_y_, range_max_y_,
     range_min_z_, range_max_z_, voxel_size_x_, voxel_size_y_, voxel_size_z_, grid_size_y_,
     grid_size_x_, mask_d_.get(), voxels_buffer_d_.get(), stream_);
@@ -394,7 +394,7 @@ TEST_F(PreprocessKernelTest, VoxelOverflowTest)
   }
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 int main(int argc, char ** argv)
 {

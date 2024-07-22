@@ -18,7 +18,7 @@
 #include "autoware/universe_utils/math/constants.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
@@ -120,4 +120,4 @@ std::array<double, 36> convertTwistCovarianceMatrix(const Box3D & box3d)
   return twist_covariance;
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

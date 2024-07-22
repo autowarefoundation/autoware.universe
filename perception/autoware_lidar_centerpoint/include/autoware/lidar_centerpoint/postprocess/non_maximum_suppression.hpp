@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 using autoware_perception_msgs::msg::DetectedObject;
 
@@ -76,6 +76,6 @@ private:
   std::vector<bool> target_class_mask_{};
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__POSTPROCESS__NON_MAXIMUM_SUPPRESSION_HPP_

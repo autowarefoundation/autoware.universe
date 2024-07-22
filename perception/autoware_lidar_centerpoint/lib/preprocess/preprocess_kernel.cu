@@ -41,7 +41,7 @@ const std::size_t WARPS_PER_BLOCK = 4;
 const std::size_t ENCODER_IN_FEATURE_SIZE = 9;  // the same as encoder_in_feature_size_ in config
 }  // namespace
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 __global__ void generateSweepPoints_kernel(
@@ -305,4 +305,4 @@ cudaError_t generateFeatures_launch(
   return cudaGetLastError();
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

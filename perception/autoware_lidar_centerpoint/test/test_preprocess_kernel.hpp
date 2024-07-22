@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 class PreprocessKernelTest : public testing::Test
@@ -74,6 +74,6 @@ public:
   cuda::unique_ptr<unsigned int[]> num_voxels_d_{};
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // TEST_PREPROCESS_KERNEL_HPP_

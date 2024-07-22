@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 void box3DToDetectedObject(
@@ -39,6 +39,6 @@ std::array<double, 36> convertTwistCovarianceMatrix(const Box3D & box3d);
 
 bool isCarLikeVehicleLabel(const uint8_t label);
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__ROS_UTILS_HPP_

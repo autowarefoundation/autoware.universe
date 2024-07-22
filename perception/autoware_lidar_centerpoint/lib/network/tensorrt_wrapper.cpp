@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 TensorRTWrapper::TensorRTWrapper(const CenterPointConfig & config) : config_(config)
 {
@@ -164,4 +164,4 @@ bool TensorRTWrapper::loadEngine(const std::string & engine_path)
   return true;
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

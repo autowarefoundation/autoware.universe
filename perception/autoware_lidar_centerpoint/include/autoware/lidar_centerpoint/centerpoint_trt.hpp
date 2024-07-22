@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 class NetworkParam
 {
@@ -107,6 +107,6 @@ protected:
   cuda::unique_ptr<unsigned int[]> num_voxels_d_{nullptr};
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__CENTERPOINT_TRT_HPP_

@@ -53,7 +53,7 @@ Eigen::Affine3f transformToEigen(const geometry_msgs::msg::Transform & t)
 
 }  // namespace
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 PointCloudDensification::PointCloudDensification(const DensificationParam & param) : param_(param)
 {
@@ -111,4 +111,4 @@ void PointCloudDensification::dequeue()
   }
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

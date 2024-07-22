@@ -38,8 +38,8 @@ public:
   std::unique_ptr<sensor_msgs::msg::PointCloud2> cloud1_{}, cloud2_{};
   geometry_msgs::msg::TransformStamped transform1_{}, transform2_{};
 
-  std::unique_ptr<autoware::centerpoint::DensificationParam> densification_param_ptr_{};
-  std::unique_ptr<autoware::centerpoint::CenterPointConfig> config_ptr_{};
+  std::unique_ptr<autoware::lidar_centerpoint::DensificationParam> densification_param_ptr_{};
+  std::unique_ptr<autoware::lidar_centerpoint::CenterPointConfig> config_ptr_{};
 
   std::unique_ptr<tf2_ros::Buffer> tf2_buffer_{};
 

@@ -23,7 +23,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 class TensorRTWrapper
@@ -62,6 +62,6 @@ private:
   tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine> engine_{nullptr};
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__NETWORK__TENSORRT_WRAPPER_HPP_

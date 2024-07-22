@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 void PostprocessKernelTest::SetUp()
@@ -39,7 +39,7 @@ void PostprocessKernelTest::SetUp()
   const std::vector<double> yaw_norm_thresholds{0.5, 0.5, 0.5};
   constexpr bool has_variance{false};
 
-  config_ptr_ = std::make_unique<autoware::centerpoint::CenterPointConfig>(
+  config_ptr_ = std::make_unique<autoware::lidar_centerpoint::CenterPointConfig>(
     class_size, point_feature_size, max_voxel_size, point_cloud_range, voxel_size,
     downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold,
     yaw_norm_thresholds, has_variance);
@@ -358,7 +358,7 @@ TEST_F(PostprocessKernelTest, CircleNMSTest)
   ASSERT_EQ(1, det_boxes3d.size());
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 int main(int argc, char ** argv)
 {

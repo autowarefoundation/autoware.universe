@@ -24,7 +24,7 @@
 
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 class DetectionClassRemapper
@@ -42,6 +42,6 @@ protected:
   int num_labels_;
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__DETECTION_CLASS_REMAPPER_HPP_

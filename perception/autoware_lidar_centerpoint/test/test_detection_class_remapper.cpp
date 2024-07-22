@@ -18,7 +18,7 @@
 
 TEST(DetectionClassRemapperTest, MapClasses)
 {
-  autoware::centerpoint::DetectionClassRemapper remapper;
+  autoware::lidar_centerpoint::DetectionClassRemapper remapper;
 
   // Set up the parameters for the remapper
   // Labels: CAR, TRUCK, TRAILER

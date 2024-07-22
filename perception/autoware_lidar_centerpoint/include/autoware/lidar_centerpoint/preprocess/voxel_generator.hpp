@@ -23,7 +23,7 @@
 #include <memory>
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 class VoxelGeneratorTemplate
 {
@@ -54,6 +54,6 @@ public:
   std::size_t generateSweepPoints(float * d_points, cudaStream_t stream) override;
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__PREPROCESS__VOXEL_GENERATOR_HPP_

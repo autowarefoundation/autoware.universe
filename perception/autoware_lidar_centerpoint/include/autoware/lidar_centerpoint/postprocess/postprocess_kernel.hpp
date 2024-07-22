@@ -23,7 +23,7 @@
 
 #include <vector>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 class PostProcessCUDA
 {
@@ -41,6 +41,6 @@ private:
   thrust::device_vector<float> yaw_norm_thresholds_d_;
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__POSTPROCESS__POSTPROCESS_KERNEL_HPP_

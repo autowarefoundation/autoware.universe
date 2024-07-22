@@ -71,8 +71,8 @@ protected:
   bool has_variance_{false};
   bool has_twist_{false};
 
-  autoware::centerpoint::NonMaximumSuppression iou_bev_nms_;
-  autoware::centerpoint::DetectionClassRemapper detection_class_remapper_;
+  autoware::lidar_centerpoint::NonMaximumSuppression iou_bev_nms_;
+  autoware::lidar_centerpoint::DetectionClassRemapper detection_class_remapper_;
 
   std::unique_ptr<image_projection_based_fusion::PointPaintingTRT> detector_ptr_{nullptr};
 

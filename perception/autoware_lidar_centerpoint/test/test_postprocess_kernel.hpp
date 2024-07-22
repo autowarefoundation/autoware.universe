@@ -22,7 +22,7 @@
 
 #include <memory>
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 class PostprocessKernelTest : public testing::Test
@@ -34,7 +34,7 @@ public:
   cudaStream_t stream_{};
 
   std::unique_ptr<PostProcessCUDA> postprocess_cuda_ptr_{};
-  std::unique_ptr<autoware::centerpoint::CenterPointConfig> config_ptr_{};
+  std::unique_ptr<autoware::lidar_centerpoint::CenterPointConfig> config_ptr_{};
 
   cuda::unique_ptr<float[]> head_out_heatmap_d_{};
   cuda::unique_ptr<float[]> head_out_offset_d_{};
@@ -44,6 +44,6 @@ public:
   cuda::unique_ptr<float[]> head_out_vel_d_{};
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // TEST_POSTPROCESS_KERNEL_HPP_

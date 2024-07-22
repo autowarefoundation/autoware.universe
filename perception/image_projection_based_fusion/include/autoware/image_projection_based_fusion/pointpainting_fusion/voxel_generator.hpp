@@ -30,8 +30,8 @@ class VoxelGenerator
 {
 public:
   explicit VoxelGenerator(
-    const autoware::centerpoint::DensificationParam & param,
-    const autoware::centerpoint::CenterPointConfig & config);
+    const autoware::lidar_centerpoint::DensificationParam & param,
+    const autoware::lidar_centerpoint::CenterPointConfig & config);
 
   bool enqueuePointCloud(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
@@ -41,7 +41,7 @@ public:
 protected:
   std::unique_ptr<PointCloudDensification> pd_ptr_{nullptr};
 
-  autoware::centerpoint::CenterPointConfig config_;
+  autoware::lidar_centerpoint::CenterPointConfig config_;
   std::array<float, 6> range_;
   std::array<int, 3> grid_size_;
   std::array<float, 3> recip_voxel_size_;

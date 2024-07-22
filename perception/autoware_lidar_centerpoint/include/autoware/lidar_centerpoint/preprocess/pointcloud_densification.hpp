@@ -29,7 +29,7 @@
 
 #include "autoware/lidar_centerpoint/cuda_utils.hpp"
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 class DensificationParam
 {
@@ -89,6 +89,6 @@ private:
   std::list<PointCloudWithTransform> pointcloud_cache_;
 };
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__PREPROCESS__POINTCLOUD_DENSIFICATION_HPP_

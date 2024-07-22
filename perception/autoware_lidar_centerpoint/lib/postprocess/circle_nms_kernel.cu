@@ -31,7 +31,7 @@ namespace
 const std::size_t THREADS_PER_BLOCK_NMS = 16;
 }  // namespace
 
-namespace autoware::centerpoint
+namespace autoware::lidar_centerpoint
 {
 
 __device__ inline float dist2dPow(const Box3D * a, const Box3D * b)
@@ -140,4 +140,4 @@ std::size_t circleNMS(
   return num_to_keep;
 }
 
-}  // namespace autoware::centerpoint
+}  // namespace autoware::lidar_centerpoint

@@ -23,7 +23,7 @@ TEST(TestSuite, box3DToDetectedObject)
 
   // Test case 1: Test with valid label, has_twist=true, has_variance=true
   {
-    autoware::centerpoint::Box3D box3d;
+    autoware::lidar_centerpoint::Box3D box3d;
     box3d.score = 0.8f;
     box3d.label = 0;  // CAR
     box3d.x = 1.0;
@@ -43,7 +43,7 @@ TEST(TestSuite, box3DToDetectedObject)
     box3d.vel_y_variance = 0.6;
 
     autoware_perception_msgs::msg::DetectedObject obj;
-    autoware::centerpoint::box3DToDetectedObject(box3d, class_names, true, true, obj);
+    autoware::lidar_centerpoint::box3DToDetectedObject(box3d, class_names, true, true, obj);
 
     EXPECT_FLOAT_EQ(obj.existence_probability, 0.8f);
     EXPECT_EQ(
@@ -61,12 +61,12 @@ TEST(TestSuite, box3DToDetectedObject)
 
   // Test case 2: Test with invalid label, has_twist=false, has_variance=false
   {
-    autoware::centerpoint::Box3D box3d;
+    autoware::lidar_centerpoint::Box3D box3d;
     box3d.score = 0.5f;
     box3d.label = 10;  // Invalid
 
     autoware_perception_msgs::msg::DetectedObject obj;
-    autoware::centerpoint::box3DToDetectedObject(box3d, class_names, false, false, obj);
+    autoware::lidar_centerpoint::box3DToDetectedObject(box3d, class_names, false, false, obj);
 
     EXPECT_FLOAT_EQ(obj.existence_probability, 0.5f);
     EXPECT_EQ(
@@ -80,41 +80,41 @@ TEST(TestSuite, box3DToDetectedObject)
 TEST(TestSuite, getSemanticType)
 {
   EXPECT_EQ(
-    autoware::centerpoint::getSemanticType("CAR"),
+    autoware::lidar_centerpoint::getSemanticType("CAR"),
     autoware_perception_msgs::msg::ObjectClassification::CAR);
   EXPECT_EQ(
-    autoware::centerpoint::getSemanticType("TRUCK"),
+    autoware::lidar_centerpoint::getSemanticType("TRUCK"),
     autoware_perception_msgs::msg::ObjectClassification::TRUCK);
   EXPECT_EQ(
-    autoware::centerpoint::getSemanticType("BUS"),
+    autoware::lidar_centerpoint::getSemanticType("BUS"),
     autoware_perception_msgs::msg::ObjectClassification::BUS);
   EXPECT_EQ(
-    autoware::centerpoint::getSemanticType("TRAILER"),
+    autoware::lidar_centerpoint::getSemanticType("TRAILER"),
     autoware_perception_msgs::msg::ObjectClassification::TRAILER);
   EXPECT_EQ(
-    autoware::centerpoint::getSemanticType("BICYCLE"),
+    autoware::lidar_centerpoint::getSemanticType("BICYCLE"),
     autoware_perception_msgs::msg::ObjectClassification::BICYCLE);
   EXPECT_EQ(
-    autoware::centerpoint::getSemanticType("MOTORBIKE"),
+    autoware::lidar_centerpoint::getSemanticType("MOTORBIKE"),
     autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE);
   EXPECT_EQ(
-    autoware::centerpoint::getSemanticType("PEDESTRIAN"),
+    autoware::lidar_centerpoint::getSemanticType("PEDESTRIAN"),
     autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN);
   EXPECT_EQ(
-    autoware::centerpoint::getSemanticType("UNKNOWN"),
+    autoware::lidar_centerpoint::getSemanticType("UNKNOWN"),
     autoware_perception_msgs::msg::ObjectClassification::UNKNOWN);
 }
 
 TEST(TestSuite, convertPoseCovarianceMatrix)
 {
-  autoware::centerpoint::Box3D box3d;
+  autoware::lidar_centerpoint::Box3D box3d;
   box3d.x_variance = 0.1;
   box3d.y_variance = 0.2;
   box3d.z_variance = 0.3;
   box3d.yaw_variance = 0.4;
 
   std::array<double, 36> pose_covariance =
-    autoware::centerpoint::convertPoseCovarianceMatrix(box3d);
+    autoware::lidar_centerpoint::convertPoseCovarianceMatrix(box3d);
 
   EXPECT_FLOAT_EQ(pose_covariance[0], 0.1);
   EXPECT_FLOAT_EQ(pose_covariance[7], 0.2);
@@ -124,12 +124,12 @@ TEST(TestSuite, convertPoseCovarianceMatrix)
 
 TEST(TestSuite, convertTwistCovarianceMatrix)
 {
-  autoware::centerpoint::Box3D box3d;
+  autoware::lidar_centerpoint::Box3D box3d;
   box3d.vel_x_variance = 0.1;
   box3d.vel_y_variance = 0.2;
 
   std::array<double, 36> twist_covariance =
-    autoware::centerpoint::convertTwistCovarianceMatrix(box3d);
+    autoware::lidar_centerpoint::convertTwistCovarianceMatrix(box3d);
 
   EXPECT_FLOAT_EQ(twist_covariance[0], 0.1);
   EXPECT_FLOAT_EQ(twist_covariance[7], 0.2);

@@ -57,7 +57,7 @@ Eigen::Affine3f transformToEigen(const geometry_msgs::msg::Transform & t)
 namespace autoware::image_projection_based_fusion
 {
 PointCloudDensification::PointCloudDensification(
-  const autoware::centerpoint::DensificationParam & param)
+  const autoware::lidar_centerpoint::DensificationParam & param)
 : param_(param)
 {
 }

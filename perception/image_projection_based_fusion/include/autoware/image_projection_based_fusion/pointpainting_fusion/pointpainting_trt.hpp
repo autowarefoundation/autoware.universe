@@ -23,16 +23,16 @@
 
 namespace autoware::image_projection_based_fusion
 {
-class PointPaintingTRT : public autoware::centerpoint::CenterPointTRT
+class PointPaintingTRT : public autoware::lidar_centerpoint::CenterPointTRT
 {
 public:
-  using autoware::centerpoint::CenterPointTRT::CenterPointTRT;
+  using autoware::lidar_centerpoint::CenterPointTRT::CenterPointTRT;
 
   explicit PointPaintingTRT(
-    const autoware::centerpoint::NetworkParam & encoder_param,
-    const autoware::centerpoint::NetworkParam & head_param,
-    const autoware::centerpoint::DensificationParam & densification_param,
-    const autoware::centerpoint::CenterPointConfig & config);
+    const autoware::lidar_centerpoint::NetworkParam & encoder_param,
+    const autoware::lidar_centerpoint::NetworkParam & head_param,
+    const autoware::lidar_centerpoint::DensificationParam & densification_param,
+    const autoware::lidar_centerpoint::CenterPointConfig & config);
 
 protected:
   bool preprocess(

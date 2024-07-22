@@ -18,15 +18,15 @@
 
 TEST(NonMaximumSuppressionTest, Apply)
 {
-  autoware::centerpoint::NonMaximumSuppression nms;
-  autoware::centerpoint::NMSParams params;
+  autoware::lidar_centerpoint::NonMaximumSuppression nms;
+  autoware::lidar_centerpoint::NMSParams params;
   params.search_distance_2d_ = 1.0;
   params.iou_threshold_ = 0.2;
-  params.nms_type_ = autoware::centerpoint::NMS_TYPE::IoU_BEV;
+  params.nms_type_ = autoware::lidar_centerpoint::NMS_TYPE::IoU_BEV;
   params.target_class_names_ = {"CAR"};
   nms.setParameters(params);
 
-  std::vector<autoware::centerpoint::DetectedObject> input_objects(4);
+  std::vector<autoware::lidar_centerpoint::DetectedObject> input_objects(4);
 
   // Object 1
   autoware_perception_msgs::msg::ObjectClassification obj1_classification;
@@ -88,7 +88,7 @@ TEST(NonMaximumSuppressionTest, Apply)
   input_objects[3].shape.dimensions.x = 0.5;
   input_objects[3].shape.dimensions.y = 0.5;
 
-  std::vector<autoware::centerpoint::DetectedObject> output_objects = nms.apply(input_objects);
+  std::vector<autoware::lidar_centerpoint::DetectedObject> output_objects = nms.apply(input_objects);
 
   // Assert the expected number of output objects
   EXPECT_EQ(output_objects.size(), 3);
