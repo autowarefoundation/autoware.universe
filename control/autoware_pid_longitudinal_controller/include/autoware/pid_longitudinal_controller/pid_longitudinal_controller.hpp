@@ -293,7 +293,7 @@ private:
    * @brief calculate control command in emergency state
    * @param [in] dt time between previous and current one
    */
-  Motion calcEmergencyCtrlCmd() const;
+  Motion calcEmergencyCtrlCmd(const double dt);
 
   /**
    * @brief update control state according to the current situation

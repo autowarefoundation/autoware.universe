@@ -159,9 +159,9 @@ PidLongitudinalController::PidLongitudinalController(
   // parameters for emergency state
   {
     auto & p = m_emergency_state_params;
-    p.vel = node.declare_parameter<double>("emergency_vel");   // [m/s]
-    p.acc = node.declare_parameter<double>("emergency_acc");   // [m/s^2]
-    p.acc = node.declare_parameter<double>("emergency_jerk");  // [m/s^3]
+    p.vel = node.declare_parameter<double>("emergency_vel");    // [m/s]
+    p.acc = node.declare_parameter<double>("emergency_acc");    // [m/s^2]
+    p.jerk = node.declare_parameter<double>("emergency_jerk");  // [m/s^3]
   }
 
   // parameters for acceleration limit
@@ -409,7 +409,7 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
     if (m_enable_large_tracking_error_emergency) {
       m_control_state = ControlState::EMERGENCY;  // update control state
     }
-    const Motion raw_ctrl_cmd = calcEmergencyCtrlCmd();  // calculate control command
+    const Motion raw_ctrl_cmd = calcEmergencyCtrlCmd(control_data.dt);  // calculate control command
     m_prev_raw_ctrl_cmd = raw_ctrl_cmd;
     const auto cmd_msg =
       createCtrlCmdMsg(raw_ctrl_cmd, control_data.current_motion.vel);  // create control command
@@ -567,15 +567,24 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   return control_data;
 }
 
-PidLongitudinalController::Motion PidLongitudinalController::calcEmergencyCtrlCmd() const
+PidLongitudinalController::Motion PidLongitudinalController::calcEmergencyCtrlCmd(const double dt)
 {
   // These accelerations are without slope compensation
   const auto & p = m_emergency_state_params;
+  Motion raw_ctrl_cmd{p.vel, p.acc};
+
+  raw_ctrl_cmd.vel =
+    longitudinal_utils::applyDiffLimitFilter(raw_ctrl_cmd.vel, m_prev_raw_ctrl_cmd.vel, dt, p.acc);
+  raw_ctrl_cmd.acc = std::clamp(raw_ctrl_cmd.acc, m_emergency_state_params.jerk, m_max_acc);
+  m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, raw_ctrl_cmd.acc);
+  raw_ctrl_cmd.acc =
+    longitudinal_utils::applyDiffLimitFilter(raw_ctrl_cmd.acc, m_prev_raw_ctrl_cmd.acc, dt, p.jerk);
+  m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, raw_ctrl_cmd.acc);
 
   RCLCPP_ERROR_THROTTLE(
     logger_, *clock_, 3000, "[Emergency stop] vel: %3.3f, acc: %3.3f", p.vel, p.acc);
 
-  return Motion{p.vel, p.acc};
+  return raw_ctrl_cmd;
 }
 
 void PidLongitudinalController::updateControlState(const ControlData & control_data)
@@ -799,12 +808,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
       control_data.interpolated_traj.points.at(target_idx).longitudinal_velocity_mps,
       control_data.interpolated_traj.points.at(target_idx).acceleration_mps2};
     if (m_control_state == ControlState::EMERGENCY) {
-      raw_ctrl_cmd = calcEmergencyCtrlCmd();
-      raw_ctrl_cmd.acc = std::clamp(raw_ctrl_cmd.acc, m_emergency_state_params.jerk, m_max_acc);
-      m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, raw_ctrl_cmd.acc);
-      raw_ctrl_cmd.acc = longitudinal_utils::applyDiffLimitFilter(
-        raw_ctrl_cmd.acc, m_prev_raw_ctrl_cmd.acc, control_data.dt, m_max_jerk, m_min_jerk);
-      m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, raw_ctrl_cmd.acc);
+      raw_ctrl_cmd = calcEmergencyCtrlCmd(control_data.dt);
     } else {
       if (m_control_state == ControlState::DRIVE) {
         raw_ctrl_cmd.vel = control_data.interpolated_traj.points.at(control_data.target_idx)
