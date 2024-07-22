@@ -38,7 +38,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     concatenate_and_time_sync_node_param = ParameterFile(
-        param_file=LaunchConfiguration("concatendate_and_time_sync_node_param_path").perform(
+        param_file=LaunchConfiguration("concatenate_and_time_sync_node_param_path").perform(
             context
         ),
         allow_substs=True,
@@ -185,7 +185,7 @@ def generate_launch_description():
     add_launch_arg("output_points_raw", "/points_raw/cropbox/filtered")
     add_launch_arg("tf_output_frame", "base_link")
     add_launch_arg(
-        "concatendate_and_time_sync_node_param_path",
+        "concatenate_and_time_sync_node_param_path",
         os.path.join(
             autoware_pointcloud_preprocessor_share_dir,
             "config",
