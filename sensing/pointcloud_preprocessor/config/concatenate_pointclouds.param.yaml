@@ -1,6 +1,5 @@
 /**:
   ros__parameters:
-    ## Paramters in concatenate_pointclouds.cpp
     output_frame: ""
     input_topics: [""]
     max_queue_size: 5
