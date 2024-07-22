@@ -192,6 +192,7 @@ private:
   {
     double vel;
     double acc;
+    double jerk;
   };
   EmergencyStateParams m_emergency_state_params;
 
@@ -203,7 +204,7 @@ private:
   double m_max_jerk;
   double m_min_jerk;
 
-  double m_max_pedal_pos_diff_rate;
+  double m_max_acc_cmd_diff_rate;
 
   // slope compensation
   enum class SlopeSource { RAW_PITCH = 0, TRAJECTORY_PITCH, TRAJECTORY_ADAPTIVE };

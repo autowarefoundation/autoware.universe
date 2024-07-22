@@ -159,8 +159,9 @@ PidLongitudinalController::PidLongitudinalController(
   // parameters for emergency state
   {
     auto & p = m_emergency_state_params;
-    p.vel = node.declare_parameter<double>("emergency_vel");  // [m/s]
-    p.acc = node.declare_parameter<double>("emergency_acc");  // [m/s^2]
+    p.vel = node.declare_parameter<double>("emergency_vel");   // [m/s]
+    p.acc = node.declare_parameter<double>("emergency_acc");   // [m/s^2]
+    p.acc = node.declare_parameter<double>("emergency_jerk");  // [m/s^3]
   }
 
   // parameters for acceleration limit
@@ -168,9 +169,9 @@ PidLongitudinalController::PidLongitudinalController(
   m_min_acc = node.declare_parameter<double>("min_acc");  // [m/s^2]
 
   // parameters for jerk limit
-  m_max_jerk = node.declare_parameter<double>("max_jerk");                                // [m/s^3]
-  m_min_jerk = node.declare_parameter<double>("min_jerk");                                // [m/s^3]
-  m_max_pedal_pos_diff_rate = node.declare_parameter<double>("max_pedal_pos_diff_rate");  // [m/s^3]
+  m_max_jerk = node.declare_parameter<double>("max_jerk");                            // [m/s^3]
+  m_min_jerk = node.declare_parameter<double>("min_jerk");                            // [m/s^3]
+  m_max_acc_cmd_diff_rate = node.declare_parameter<double>("max_acc_cmd_diff_rate");  // [m/s^3]
 
   // parameters for slope compensation
   m_adaptive_trajectory_velocity_th =
@@ -361,6 +362,7 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
     auto & p = m_emergency_state_params;
     update_param("emergency_vel", p.vel);
     update_param("emergency_acc", p.acc);
+    update_param("emergency_jerk", p.jerk);
   }
 
   // acceleration limit
@@ -369,7 +371,7 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
   // jerk limit
   update_param("max_jerk", m_max_jerk);
   update_param("min_jerk", m_min_jerk);
-  update_param("max_pedal_pos_diff_rate", m_max_pedal_pos_diff_rate);
+  update_param("max_acc_cmd_diff_rate", m_max_acc_cmd_diff_rate);
 
   // slope compensation
   update_param("max_pitch_rad", m_max_pitch_rad);
@@ -594,8 +596,7 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
 
   const bool stopping_condition = stop_dist < p.stopping_state_stop_dist;
 
-  const bool is_stopped = std::abs(current_vel) < p.stopped_state_entry_vel &&
-                          std::abs(current_acc) < p.stopped_state_entry_acc;
+  const bool is_stopped = std::abs(current_vel) < p.stopped_state_entry_vel;
 
   // Case where the ego slips in the opposite direction of the gear due to e.g. a slope is also
   // considered as a stop
@@ -797,37 +798,44 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     Motion raw_ctrl_cmd{
       control_data.interpolated_traj.points.at(target_idx).longitudinal_velocity_mps,
       control_data.interpolated_traj.points.at(target_idx).acceleration_mps2};
-    if (m_control_state == ControlState::DRIVE) {
-      raw_ctrl_cmd.vel =
-        control_data.interpolated_traj.points.at(control_data.target_idx).longitudinal_velocity_mps;
-      raw_ctrl_cmd.acc = applyVelocityFeedback(control_data);
-      raw_ctrl_cmd = keepBrakeBeforeStop(control_data, raw_ctrl_cmd, target_idx);
-
-      RCLCPP_DEBUG(
-        logger_,
-        "[feedback control]  vel: %3.3f, acc: %3.3f, dt: %3.3f, v_curr: %3.3f, v_ref: %3.3f "
-        "feedback_ctrl_cmd.ac: %3.3f",
-        raw_ctrl_cmd.vel, raw_ctrl_cmd.acc, control_data.dt, control_data.current_motion.vel,
-        control_data.interpolated_traj.points.at(control_data.target_idx).longitudinal_velocity_mps,
-        raw_ctrl_cmd.acc);
-    } else if (m_control_state == ControlState::STOPPING) {
-      raw_ctrl_cmd.acc = m_smooth_stop.calculate(
-        control_data.stop_dist, control_data.current_motion.vel, control_data.current_motion.acc,
-        m_vel_hist, m_delay_compensation_time);
-      raw_ctrl_cmd.vel = m_stopped_state_params.vel;
-
-      RCLCPP_DEBUG(
-        logger_, "[smooth stop]: Smooth stopping. vel: %3.3f, acc: %3.3f", raw_ctrl_cmd.vel,
-        raw_ctrl_cmd.acc);
-    } else if (m_control_state == ControlState::EMERGENCY) {
+    if (m_control_state == ControlState::EMERGENCY) {
       raw_ctrl_cmd = calcEmergencyCtrlCmd();
-    }
+      raw_ctrl_cmd.acc = std::clamp(raw_ctrl_cmd.acc, m_emergency_state_params.jerk, m_max_acc);
+      m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, raw_ctrl_cmd.acc);
+      raw_ctrl_cmd.acc = longitudinal_utils::applyDiffLimitFilter(
+        raw_ctrl_cmd.acc, m_prev_raw_ctrl_cmd.acc, control_data.dt, m_max_jerk, m_min_jerk);
+      m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, raw_ctrl_cmd.acc);
+    } else {
+      if (m_control_state == ControlState::DRIVE) {
+        raw_ctrl_cmd.vel = control_data.interpolated_traj.points.at(control_data.target_idx)
+                             .longitudinal_velocity_mps;
+        raw_ctrl_cmd.acc = applyVelocityFeedback(control_data);
+        raw_ctrl_cmd = keepBrakeBeforeStop(control_data, raw_ctrl_cmd, target_idx);
 
-    raw_ctrl_cmd.acc = std::clamp(raw_ctrl_cmd.acc, m_min_acc, m_max_acc);
-    m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, raw_ctrl_cmd.acc);
-    raw_ctrl_cmd.acc = longitudinal_utils::applyDiffLimitFilter(
-      raw_ctrl_cmd.acc, m_prev_raw_ctrl_cmd.acc, control_data.dt, m_max_jerk, m_min_jerk);
-    m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, raw_ctrl_cmd.acc);
+        RCLCPP_DEBUG(
+          logger_,
+          "[feedback control]  vel: %3.3f, acc: %3.3f, dt: %3.3f, v_curr: %3.3f, v_ref: %3.3f "
+          "feedback_ctrl_cmd.ac: %3.3f",
+          raw_ctrl_cmd.vel, raw_ctrl_cmd.acc, control_data.dt, control_data.current_motion.vel,
+          control_data.interpolated_traj.points.at(control_data.target_idx)
+            .longitudinal_velocity_mps,
+          raw_ctrl_cmd.acc);
+      } else if (m_control_state == ControlState::STOPPING) {
+        raw_ctrl_cmd.acc = m_smooth_stop.calculate(
+          control_data.stop_dist, control_data.current_motion.vel, control_data.current_motion.acc,
+          m_vel_hist, m_delay_compensation_time);
+        raw_ctrl_cmd.vel = m_stopped_state_params.vel;
+
+        RCLCPP_DEBUG(
+          logger_, "[smooth stop]: Smooth stopping. vel: %3.3f, acc: %3.3f", raw_ctrl_cmd.vel,
+          raw_ctrl_cmd.acc);
+      }
+      raw_ctrl_cmd.acc = std::clamp(raw_ctrl_cmd.acc, m_min_acc, m_max_acc);
+      m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, raw_ctrl_cmd.acc);
+      raw_ctrl_cmd.acc = longitudinal_utils::applyDiffLimitFilter(
+        raw_ctrl_cmd.acc, m_prev_raw_ctrl_cmd.acc, control_data.dt, m_max_jerk, m_min_jerk);
+      m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, raw_ctrl_cmd.acc);
+    }
 
     // store acceleration without slope compensation
     m_prev_raw_ctrl_cmd = raw_ctrl_cmd;
@@ -841,13 +849,13 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
   storeAccelCmd(m_prev_raw_ctrl_cmd.acc);
 
   ctrl_cmd_as_pedal_pos.acc = longitudinal_utils::applyDiffLimitFilter(
-    ctrl_cmd_as_pedal_pos.acc, m_prev_ctrl_cmd.acc, control_data.dt, m_max_pedal_pos_diff_rate);
+    ctrl_cmd_as_pedal_pos.acc, m_prev_ctrl_cmd.acc, control_data.dt, m_max_acc_cmd_diff_rate);
 
   // update debug visualization
   updateDebugVelAcc(control_data);
 
   RCLCPP_DEBUG(
-    logger_, "[final pedal output]: acc: %3.3f, vel: %3.3f", ctrl_cmd_as_pedal_pos.acc,
+    logger_, "[final output]: acc: %3.3f, v_curr: %3.3f", ctrl_cmd_as_pedal_pos.acc,
     control_data.current_motion.vel);
 
   return ctrl_cmd_as_pedal_pos;

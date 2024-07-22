@@ -58,6 +58,7 @@
     # emergency state
     emergency_vel: 0.0
     emergency_acc: -5.0 # denotes acceleration
+    emergency_jerk: -3.0
 
     # acceleration limit
     max_acc: 3.0
@@ -66,7 +67,7 @@
     # jerk limit
     max_jerk: 2.0
     min_jerk: -5.0
-    max_pedal_pos_diff_rate: 50.0 # [m/s^2 * s^-1]
+    max_acc_cmd_diff_rate: 50.0 # [m/s^2 * s^-1]
 
     # slope compensation
     lpf_pitch_gain: 0.95
