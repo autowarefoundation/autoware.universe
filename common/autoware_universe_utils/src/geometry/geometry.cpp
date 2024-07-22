@@ -377,9 +377,9 @@ Point fromGeom(const geometry_msgs::msg::Point & point)
   return _point;
 }
 
-Polygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon)
+CvxPolygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon)
 {
-  Polygon _polygon;
+  CvxPolygon _polygon;
   for (const auto & point : polygon) {
     _polygon.push_back(fromGeom(point));
   }
@@ -391,9 +391,9 @@ Point fromBoost(const Point2d & point)
   return Point(point.x(), point.y(), 0.0);
 }
 
-Polygon fromBoost(const Polygon2d & polygon)
+CvxPolygon fromBoost(const Polygon2d & polygon)
 {
-  Polygon _polygon;
+  CvxPolygon _polygon;
   for (const auto & point : polygon.outer()) {
     _polygon.push_back(fromBoost(point));
   }
@@ -406,7 +406,7 @@ Point2d toBoost(const Point & point)
   return Point2d(point.x(), point.y());
 }
 
-Polygon2d toBoost(const Polygon & polygon)
+Polygon2d toBoost(const CvxPolygon & polygon)
 {
   Polygon2d _polygon;
   for (const auto & point : polygon) {
@@ -416,7 +416,7 @@ Polygon2d toBoost(const Polygon & polygon)
 }
 }  // namespace alt
 
-std::optional<double> area(const alt::Polygon & poly)
+std::optional<double> area(const alt::CvxPolygon & poly)
 {
   if (poly.size() < 3) {
     return std::nullopt;
@@ -430,7 +430,7 @@ std::optional<double> area(const alt::Polygon & poly)
   return area;
 }
 
-std::optional<alt::Polygon> convexHull(const alt::PointList & points)
+std::optional<alt::CvxPolygon> convexHull(const alt::PointList & points)
 {
   if (points.size() < 3) {
     return std::nullopt;
@@ -445,7 +445,7 @@ std::optional<alt::Polygon> convexHull(const alt::PointList & points)
   const auto & p_min = *p_minmax_itr.first;
   const auto & p_max = *p_minmax_itr.second;
 
-  alt::Polygon hull;
+  alt::CvxPolygon hull;
 
   auto make_hull = [&hull](
                      auto self, const alt::Point & p1, const alt::Point & p2,
@@ -476,7 +476,7 @@ std::optional<alt::Polygon> convexHull(const alt::PointList & points)
   return hull;
 }
 
-void correct(alt::Polygon & poly)
+void correct(alt::CvxPolygon & poly)
 {
   if (poly.size() < 3) {
     return;
@@ -494,7 +494,7 @@ void correct(alt::Polygon & poly)
   }
 }
 
-std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & poly)
+std::optional<bool> coveredBy(const alt::Point & point, const alt::CvxPolygon & poly)
 {
   const auto is_point_within = within(point, poly);
   if (!is_point_within) {
@@ -510,7 +510,7 @@ std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & pol
   return false;
 }
 
-std::optional<bool> disjoint(const alt::Polygon & poly1, const alt::Polygon & poly2)
+std::optional<bool> disjoint(const alt::CvxPolygon & poly1, const alt::CvxPolygon & poly2)
 {
   const auto is_equal = equals(poly1, poly2);
   if (is_equal.value_or(false)) {
@@ -549,7 +549,7 @@ double distance(const alt::Point & point, const alt::Point & seg_start, const al
   }
 }
 
-double distance(const alt::Point & point, const alt::Polygon & poly)
+double distance(const alt::Point & point, const alt::CvxPolygon & poly)
 {
   if (coveredBy(point, poly).value_or(false)) {
     return 0.0;
@@ -581,7 +581,7 @@ std::array<alt::PointList, 2> divideBySegment(
   return {above_points, below_points};
 }
 
-std::optional<bool> equals(const alt::Polygon & poly1, const alt::Polygon & poly2)
+std::optional<bool> equals(const alt::CvxPolygon & poly1, const alt::CvxPolygon & poly2)
 {
   if (poly1.size() < 3 || poly2.size() < 3) {
     return std::nullopt;
@@ -617,7 +617,7 @@ std::optional<alt::Point> intersect(
   return t * seg1_start + (1.0 - t) * seg1_end;
 }
 
-std::optional<bool> intersects(const alt::Polygon & poly1, const alt::Polygon & poly2)
+std::optional<bool> intersects(const alt::CvxPolygon & poly1, const alt::CvxPolygon & poly2)
 {
   // if the polygons are equal, return true
   const auto is_equal = equals(poly1, poly2);
@@ -627,15 +627,16 @@ std::optional<bool> intersects(const alt::Polygon & poly1, const alt::Polygon & 
 
   // GJK algorithm
 
-  auto find_support_vertex =
-    [](const alt::Polygon & poly1, const alt::Polygon & poly2, const tf2::Vector3 & direction) {
-      auto find_farthest_vertex = [](const alt::Polygon & poly, const tf2::Vector3 & direction) {
-        return std::max_element(poly.begin(), poly.end(), [&](const auto & a, const auto & b) {
-          return direction.dot(a) <= direction.dot(b);
-        });
-      };
-      return *find_farthest_vertex(poly1, direction) - *find_farthest_vertex(poly2, -direction);
+  auto find_support_vertex = [](
+                               const alt::CvxPolygon & poly1, const alt::CvxPolygon & poly2,
+                               const tf2::Vector3 & direction) {
+    auto find_farthest_vertex = [](const alt::CvxPolygon & poly, const tf2::Vector3 & direction) {
+      return std::max_element(poly.begin(), poly.end(), [&](const auto & a, const auto & b) {
+        return direction.dot(a) <= direction.dot(b);
+      });
     };
+    return *find_farthest_vertex(poly1, direction) - *find_farthest_vertex(poly2, -direction);
+  };
 
   tf2::Vector3 direction = {1.0, 0.0, 0.0};
   auto a = find_support_vertex(poly1, poly2, direction);
@@ -675,7 +676,7 @@ bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::
   return (seg_end - seg_start).cross(point - seg_start).z() > 0;
 }
 
-std::optional<bool> isClockwise(const alt::Polygon & poly)
+std::optional<bool> isClockwise(const alt::CvxPolygon & poly)
 {
   if (const auto s = area(poly)) {
     return *s > 0;
@@ -684,7 +685,7 @@ std::optional<bool> isClockwise(const alt::Polygon & poly)
   }
 }
 
-std::optional<bool> touches(const alt::Point & point, const alt::Polygon & poly)
+std::optional<bool> touches(const alt::Point & point, const alt::CvxPolygon & poly)
 {
   if (poly.size() < 3) {
     return std::nullopt;
@@ -702,7 +703,7 @@ std::optional<bool> touches(const alt::Point & point, const alt::Polygon & poly)
   return false;
 }
 
-std::optional<bool> within(const alt::Point & point, const alt::Polygon & poly)
+std::optional<bool> within(const alt::Point & point, const alt::CvxPolygon & poly)
 {
   if (poly.size() < 3) {
     return std::nullopt;
@@ -731,7 +732,7 @@ std::optional<bool> within(const alt::Point & point, const alt::Polygon & poly)
 }
 
 std::optional<bool> within(
-  const alt::Polygon & poly_contained, const alt::Polygon & poly_containing)
+  const alt::CvxPolygon & poly_contained, const alt::CvxPolygon & poly_containing)
 {
   if (equals(poly_contained, poly_containing).value_or(false)) {
     return true;

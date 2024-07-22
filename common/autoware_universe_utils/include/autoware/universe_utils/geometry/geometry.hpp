@@ -584,57 +584,57 @@ bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & conv
 namespace alt
 {
 using Point = tf2::Vector3;
-using Polygon = std::vector<tf2::Vector3>;
+using CvxPolygon = std::vector<tf2::Vector3>;
 using PointList = std::vector<tf2::Vector3>;
 
 alt::Point fromGeom(const geometry_msgs::msg::Point & point);
 
-alt::Polygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon);
+alt::CvxPolygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon);
 
 alt::Point fromBoost(const Point2d & point);
 
-alt::Polygon fromBoost(const Polygon2d & polygon);
+alt::CvxPolygon fromBoost(const Polygon2d & polygon);
 
 Point2d toBoost(const alt::Point & point);
 
-Polygon2d toBoost(const alt::Polygon & polygon);
+Polygon2d toBoost(const alt::CvxPolygon & polygon);
 }  // namespace alt
 
-std::optional<double> area(const alt::Polygon & poly);
+std::optional<double> area(const alt::CvxPolygon & poly);
 
-std::optional<alt::Polygon> convexHull(const alt::PointList & points);
+std::optional<alt::CvxPolygon> convexHull(const alt::PointList & points);
 
-void correct(alt::Polygon & poly);
+void correct(alt::CvxPolygon & poly);
 
-std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & poly);
+std::optional<bool> coveredBy(const alt::Point & point, const alt::CvxPolygon & poly);
 
-std::optional<bool> disjoint(const alt::Polygon & poly1, const alt::Polygon & poly2);
+std::optional<bool> disjoint(const alt::CvxPolygon & poly1, const alt::CvxPolygon & poly2);
 
 double distance(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
 
-double distance(const alt::Point & point, const alt::Polygon & poly);
+double distance(const alt::Point & point, const alt::CvxPolygon & poly);
 
 std::array<alt::PointList, 2> divideBySegment(
   const alt::PointList & points, const alt::Point & seg_start, const alt::Point & seg_end);
 
-std::optional<bool> equals(const alt::Polygon & poly1, const alt::Polygon & poly2);
+std::optional<bool> equals(const alt::CvxPolygon & poly1, const alt::CvxPolygon & poly2);
 
 std::optional<alt::Point> intersect(
   const alt::Point & seg1_start, const alt::Point & seg1_end, const alt::Point & seg2_start,
   const alt::Point & seg2_end);
 
-std::optional<bool> intersects(const alt::Polygon & poly1, const alt::Polygon & poly2);
+std::optional<bool> intersects(const alt::CvxPolygon & poly1, const alt::CvxPolygon & poly2);
 
 bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
 
-std::optional<bool> isClockwise(const alt::Polygon & poly);
+std::optional<bool> isClockwise(const alt::CvxPolygon & poly);
 
-std::optional<bool> touches(const alt::Point & point, const alt::Polygon & poly);
+std::optional<bool> touches(const alt::Point & point, const alt::CvxPolygon & poly);
 
-std::optional<bool> within(const alt::Point & point, const alt::Polygon & poly);
+std::optional<bool> within(const alt::Point & point, const alt::CvxPolygon & poly);
 
 std::optional<bool> within(
-  const alt::Polygon & poly_contained, const alt::Polygon & poly_containing);
+  const alt::CvxPolygon & poly_contained, const alt::CvxPolygon & poly_containing);
 
 }  // namespace autoware::universe_utils
 
