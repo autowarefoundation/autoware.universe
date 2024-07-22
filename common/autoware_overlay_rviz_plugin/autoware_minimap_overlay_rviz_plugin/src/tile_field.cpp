@@ -122,7 +122,7 @@ QImage TileField::getTileFieldImage()
         QRectF source(0, 0, 256, 256);
         painter.drawImage(target, tile_it->second->getImage(), source);
         // Draw the latitude and longitude on the tile
-        painter.drawText(target, Qt::AlignCenter, tile_text);
+        // painter.drawText(target, Qt::AlignCenter, tile_text);
       }
     }
   }
