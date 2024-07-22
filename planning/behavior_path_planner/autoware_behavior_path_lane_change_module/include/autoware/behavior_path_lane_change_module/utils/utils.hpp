@@ -299,8 +299,6 @@ double calcPhaseLength(
 
 LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr);
 
-lanelet::ConstLanelets get_target_lanes_up_to_terminal(const CommonDataPtr & common_data_ptr);
-
 bool is_same_lane_with_prev_iteration(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
@@ -309,10 +307,13 @@ Pose to_pose(
   const autoware::universe_utils::Point2d & point,
   const geometry_msgs::msg::Quaternion & orientation);
 
-double calc_ego_dist_to_lane_change_end(const CommonDataPtr & common_data_ptr);
+bool is_ahead_of_ego(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
+  const PredictedObject & object);
 
-double calc_obj_dist_to_lane_change_end(
-  const CommonDataPtr & common_data_ptr, const PredictedObject & object);
+bool is_before_terminal(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
+  const PredictedObject & object);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 namespace autoware::behavior_path_planner::utils::lane_change::debug

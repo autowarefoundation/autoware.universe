@@ -1018,9 +1018,11 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
     return {};
   }
 
+  const auto path =
+    route_handler->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+
   filterObjectsByLanelets(
-    objects, current_lanes, target_lanes, current_lane_objects, target_lane_objects,
-    other_lane_objects);
+    objects, path, current_lane_objects, target_lane_objects, other_lane_objects);
 
   const auto is_within_vel_th = [](const auto & object) -> bool {
     constexpr double min_vel_th = 1.0;
@@ -1028,36 +1030,25 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
     return utils::path_safety_checker::filter::velocity_filter(object, min_vel_th, max_vel_th);
   };
 
-  const auto dist_ego_to_end =
-    utils::lane_change::calc_ego_dist_to_lane_change_end(common_data_ptr_);
-
   utils::path_safety_checker::filterObjects(
     target_lane_objects, [&](const PredictedObject & object) {
-      const auto dist_obj_to_end =
-        utils::lane_change::calc_obj_dist_to_lane_change_end(common_data_ptr_, object);
-      const auto is_ahead_of_ego = (dist_ego_to_end - dist_obj_to_end) > 0.0;
-      const auto is_ahead_terminal = dist_obj_to_end < 0.0;
-      return !is_ahead_terminal && (is_within_vel_th(object) || is_ahead_of_ego);
+      const auto ahead_of_ego = utils::lane_change::is_ahead_of_ego(common_data_ptr_, path, object);
+      return is_within_vel_th(object) || ahead_of_ego;
     });
 
   if (lane_change_parameters_->check_objects_on_other_lanes) {
     utils::path_safety_checker::filterObjects(
       other_lane_objects, [&](const PredictedObject & object) {
-        const auto dist_obj_to_end =
-          utils::lane_change::calc_obj_dist_to_lane_change_end(common_data_ptr_, object);
-        const auto is_ahead_of_ego = (dist_ego_to_end - dist_obj_to_end) > 0.0;
-        const auto is_ahead_terminal = dist_obj_to_end < 0.0;
-        return !is_ahead_terminal && is_within_vel_th(object) && is_ahead_of_ego;
+        const auto ahead_of_ego =
+          utils::lane_change::is_ahead_of_ego(common_data_ptr_, path, object);
+        return is_within_vel_th(object) && ahead_of_ego;
       });
   }
 
   utils::path_safety_checker::filterObjects(
     current_lane_objects, [&](const PredictedObject & object) {
-      const auto dist_obj_to_end =
-        utils::lane_change::calc_obj_dist_to_lane_change_end(common_data_ptr_, object);
-      const auto is_ahead_of_ego = (dist_ego_to_end - dist_obj_to_end) > 0.0;
-      const auto is_ahead_terminal = dist_obj_to_end < 0.0;
-      return !is_ahead_terminal && is_within_vel_th(object) && is_ahead_of_ego;
+      const auto ahead_of_ego = utils::lane_change::is_ahead_of_ego(common_data_ptr_, path, object);
+      return is_within_vel_th(object) && ahead_of_ego;
     });
 
   LaneChangeLanesFilteredObjects lane_change_target_objects;
@@ -1114,12 +1105,14 @@ void NormalLaneChange::filterOncomingObjects(PredictedObjects & objects) const
 }
 
 void NormalLaneChange::filterObjectsByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, std::vector<PredictedObject> & current_lane_objects,
+  const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path,
+  std::vector<PredictedObject> & current_lane_objects,
   std::vector<PredictedObject> & target_lane_objects,
   std::vector<PredictedObject> & other_lane_objects) const
 {
   const auto & current_pose = getEgoPose();
+  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
   const auto & route_handler = getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
   const auto check_optional_polygon = [](const auto & object, const auto & polygon) {
@@ -1164,7 +1157,14 @@ void NormalLaneChange::filterObjectsByLanelets(
       return std::abs(lateral) > (common_parameters.vehicle_width / 2);
     });
 
-    if (check_optional_polygon(object, lanes_polygon.expanded_target) && is_lateral_far) {
+    const auto is_before_terminal = [&]() {
+      return utils::lane_change::is_before_terminal(
+        common_data_ptr_, current_lanes_ref_path, object);
+    };
+
+    if (
+      check_optional_polygon(object, lanes_polygon.expanded_target) && is_lateral_far &&
+      is_before_terminal()) {
       target_lane_objects.push_back(object);
       continue;
     }
@@ -1775,8 +1775,11 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     return {true, true};
   }
 
+  RCLCPP_INFO(logger_, "%s start filtering", __func__);
+
   const auto filtered_objects = filterObjects();
   const auto target_objects = getTargetObjects(filtered_objects, current_lanes);
+  RCLCPP_INFO(logger_, "%s size of target object %lu", __func__, target_objects.size());
 
   CollisionCheckDebugMap debug_data;
 
@@ -1810,6 +1813,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     }
   }
 
+  RCLCPP_INFO(logger_, "%s finished checking", __func__);
   return safety_status;
 }
 
