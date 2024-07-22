@@ -9,7 +9,6 @@
 
   <depend>GeographicLib</depend>
   <depend>OGRE</depend>
-  <depend>Qt5Network</depend>
   <depend>angles</depend>
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_cmake</depend>
