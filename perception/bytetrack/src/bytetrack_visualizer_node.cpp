@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "bytetrack/bytetrack_visualizer_node.hpp"
+#include "autoware/bytetrack/bytetrack_visualizer_node.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>

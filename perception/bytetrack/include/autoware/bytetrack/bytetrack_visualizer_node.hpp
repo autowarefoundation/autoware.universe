@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BYTETRACK__BYTETRACK_VISUALIZER_NODE_HPP_
-#define BYTETRACK__BYTETRACK_VISUALIZER_NODE_HPP_
+#ifndef AUTOWARE__BYTETRACK__BYTETRACK_VISUALIZER_NODE_HPP_
+#define AUTOWARE__BYTETRACK__BYTETRACK_VISUALIZER_NODE_HPP_
 
 #include <image_transport/image_transport.hpp>
 #include <image_transport/subscriber_filter.hpp>
@@ -101,4 +101,4 @@ protected:
 };
 }  // namespace autoware::bytetrack
 
-#endif  // BYTETRACK__BYTETRACK_VISUALIZER_NODE_HPP_
+#endif  // AUTOWARE__BYTETRACK__BYTETRACK_VISUALIZER_NODE_HPP_
