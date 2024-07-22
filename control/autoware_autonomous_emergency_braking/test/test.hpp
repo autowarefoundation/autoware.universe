@@ -24,6 +24,7 @@
 #include <autoware/autonomous_emergency_braking/utils.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logging.hpp>
+#include <rclcpp/time.hpp>
 
 #include <memory>
 #include <string>
@@ -47,7 +48,16 @@ using Path = std::vector<geometry_msgs::msg::Pose>;
 using Vector3 = geometry_msgs::msg::Vector3;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
+using std_msgs::msg::Header;
 
+std::shared_ptr<AEB> generateNode();
+Header get_header(const char * const frame_id, rclcpp::Time t);
+Imu make_imu_message(
+  const Header & header, const double ax, const double ay, const double yaw,
+  const double angular_velocity_z);
+VelocityReport make_velocity_report_msg(
+  const Header & header, const double lat_velocity, const double long_velocity,
+  const double heading_rate);
 class PubSubNode : public rclcpp::Node
 {
 public:
@@ -70,9 +80,17 @@ public:
   rclcpp::Publisher<Trajectory>::SharedPtr pub_predicted_traj_;
   rclcpp::Publisher<PredictedObjects>::SharedPtr pub_predicted_objects_;
   rclcpp::Publisher<AutowareState>::SharedPtr pub_autoware_state_;
-};
 
-std::shared_ptr<AEB> generateNode();
+  void publishDefaultTopicsNoSpin()
+  {
+    const auto header = get_header("base_link", now());
+    const auto imu_msg = make_imu_message(header, 0.0, 0.0, 0.0, 0.05);
+    const auto velocity_msg = make_velocity_report_msg(header, 0.0, 3.0, 0.0);
+
+    pub_imu_->publish(imu_msg);
+    pub_velocity_->publish(velocity_msg);
+  };
+};
 
 class TestAEB : public ::testing::Test
 {

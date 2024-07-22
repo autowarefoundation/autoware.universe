@@ -14,9 +14,11 @@
 
 #include "test.hpp"
 
+#include "autoware/autonomous_emergency_braking/node.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/time.hpp>
 
 #include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
 
@@ -31,6 +33,40 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::Vector3;
+using std_msgs::msg::Header;
+
+Header get_header(const char * const frame_id, rclcpp::Time t)
+{
+  std_msgs::msg::Header header;
+  header.stamp = t;
+  header.frame_id = frame_id;
+  return header;
+};
+
+Imu make_imu_message(
+  const Header & header, const double ax, const double ay, const double yaw,
+  const double angular_velocity_z)
+{
+  Imu imu_msg;
+  imu_msg.header = header;
+  imu_msg.orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
+  imu_msg.angular_velocity.z = angular_velocity_z;
+  imu_msg.linear_acceleration.x = ax;
+  imu_msg.linear_acceleration.y = ay;
+  return imu_msg;
+};
+
+VelocityReport make_velocity_report_msg(
+  const Header & header, const double lat_velocity, const double long_velocity,
+  const double heading_rate)
+{
+  VelocityReport velocity_msg;
+  velocity_msg.header = header;
+  velocity_msg.lateral_velocity = lat_velocity;
+  velocity_msg.longitudinal_velocity = long_velocity;
+  velocity_msg.heading_rate = heading_rate;
+  return velocity_msg;
+}
 
 std::shared_ptr<AEB> generateNode()
 {
@@ -136,4 +172,18 @@ TEST_F(TestAEB, checkConvertObjectToPolygon)
   ASSERT_FALSE(box_polygon.outer().empty());
 }
 
+TEST_F(TestAEB, checkDataFetch)
+{
+  pub_sub_node_->publishDefaultTopicsNoSpin();
+  for (int j = 0; j < 20; ++j) {
+    rclcpp::spin_some(pub_sub_node_->get_node_base_interface());
+    rclcpp::spin_some(aeb_node_->get_node_base_interface());
+    aeb_node_->fetchLatestData();
+  }
+
+  bool g{false};
+  if (aeb_node_->current_velocity_ptr_) g = true;
+
+  ASSERT_TRUE(g);
+}
 }  // namespace autoware::motion::control::autonomous_emergency_braking::test
