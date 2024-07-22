@@ -39,12 +39,12 @@ std::pair<double, double> PathOverlay::localToGeographic(
   double local_x, double local_y, double origin_lat, double origin_lon)
 {
   int zone;
-  bool northp;
+  bool north_p;
   double origin_x, origin_y, gamma, k;
 
   // Convert origin coordinates to UTM
   GeographicLib::UTMUPS::Forward(
-    origin_lat, origin_lon, zone, northp, origin_x, origin_y, gamma, k);
+    origin_lat, origin_lon, zone, north_p, origin_x, origin_y, gamma, k);
 
   // Add local coordinates to origin UTM coordinates
   double goal_x = origin_x + local_x;
@@ -52,7 +52,7 @@ std::pair<double, double> PathOverlay::localToGeographic(
 
   // Convert UTM coordinates back to geographic coordinates
   double goal_lat, goal_lon;
-  GeographicLib::UTMUPS::Reverse(zone, northp, goal_x, goal_y, goal_lat, goal_lon);
+  GeographicLib::UTMUPS::Reverse(zone, north_p, goal_x, goal_y, goal_lat, goal_lon);
 
   return {goal_lat, goal_lon};
 }

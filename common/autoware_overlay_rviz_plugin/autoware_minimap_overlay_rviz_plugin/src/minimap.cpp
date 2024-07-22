@@ -472,14 +472,14 @@ void VehicleMapDisplay::goalPoseCallback(const geometry_msgs::msg::PoseStamped::
 std::pair<double, double> VehicleMapDisplay::localXYZToLatLon(double x, double y)
 {
   int zone;
-  bool northp;
+  bool north_p;
   double origin_lat = property_origin_lat_->getFloat();
   double origin_lon = property_origin_lon_->getFloat();
   double origin_x, origin_y, gamma, k;
 
   // Convert origin to UTM coordinates
   GeographicLib::UTMUPS::Forward(
-    origin_lat, origin_lon, zone, northp, origin_x, origin_y, gamma, k);
+    origin_lat, origin_lon, zone, north_p, origin_x, origin_y, gamma, k);
 
   // Calculate global UTM coordinates by adding local offsets
   double global_x = origin_x + x;
@@ -487,7 +487,7 @@ std::pair<double, double> VehicleMapDisplay::localXYZToLatLon(double x, double y
 
   // Convert back to geographic coordinates
   double lat, lon;
-  GeographicLib::UTMUPS::Reverse(zone, northp, global_x, global_y, lat, lon);
+  GeographicLib::UTMUPS::Reverse(zone, north_p, global_x, global_y, lat, lon);
 
   return {lat, lon};
 }
