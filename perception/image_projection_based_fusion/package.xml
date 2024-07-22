@@ -16,8 +16,8 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <depend>autoware_lidar_centerpoint</depend>
   <depend>autoware_euclidean_cluster</depend>
+  <depend>autoware_lidar_centerpoint</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_point_types</depend>
   <depend>autoware_universe_utils</depend>
