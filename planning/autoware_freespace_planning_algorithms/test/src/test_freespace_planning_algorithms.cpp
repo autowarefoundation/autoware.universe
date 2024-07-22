@@ -178,10 +178,9 @@ fpa::PlannerCommonParam get_default_planner_params()
 
   const int theta_size = 144;
 
-  // Setting weight to 1.0 to fairly compare all algorithms
-  const double curve_weight = 1.0;
+  const double curve_weight = 0.5;
   const double reverse_weight = 1.0;
-  const double direction_change_weight = 1.0;
+  const double direction_change_weight = 1.5;
 
   const double lateral_goal_range = 0.5;
   const double longitudinal_goal_range = 2.0;
@@ -213,11 +212,11 @@ std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi)
   const bool only_behind_solutions = false;
   const bool use_back = true;
   const double expansion_distance = 0.4;
-  const double distance_heuristic_weight = 1.0;
-  const double steering_change_weight = 1.0;
+  const double distance_heuristic_weight = 2.0;
+  const double smoothness_weight = 0.5;
   const auto astar_param = fpa::AstarParam{
     only_behind_solutions, use_back, expansion_distance, distance_heuristic_weight,
-    steering_change_weight};
+    smoothness_weight};
 
   auto algo = std::make_unique<fpa::AstarSearch>(planner_common_param, vehicle_shape, astar_param);
   return algo;
