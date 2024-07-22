@@ -30,6 +30,7 @@
 #include <lanelet2_core/geometry/Polygon.h>
 
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -108,7 +109,7 @@ struct OutOfLanePoint
 {
   size_t trajectory_index;
   lanelet::BasicPolygons2d outside_rings;
-  TimeCollisions time_collisions;
+  std::set<double> collision_times;
   std::optional<double> min_object_arrival_time;
   std::optional<double> max_object_arrival_time;
   std::optional<double> ttc;

@@ -14,24 +14,32 @@
 
 #include "out_of_lane_collisions.hpp"
 
+#include <boost/geometry/algorithms/disjoint.hpp>
+
 #include <algorithm>
 #include <limits>
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
 void calculate_object_time_collisions(
-  OutOfLaneData & out_of_lane_data, const CollisionChecker & ego_trajectory_collision_checker,
+  OutOfLaneData & out_of_lane_data,
   const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects)
 {
   for (const auto & object : objects) {
-    // TODO(Maxime): do not calculate intersections with all the trajectory, only check the out of
-    // lane areas
-    const auto time_collisions =
-      calculate_time_collisions_along_trajectory(ego_trajectory_collision_checker, object);
-    for (auto & out_of_lane_point : out_of_lane_data.outside_points) {
-      for (const auto & [t, points] : time_collisions[out_of_lane_point.trajectory_index]) {
-        auto & collision_points = out_of_lane_point.time_collisions[t];
-        collision_points.insert(collision_points.end(), points.begin(), points.end());
+    for (const auto & object_path : object.kinematics.predicted_paths) {
+      const auto time_step = rclcpp::Duration(object_path.time_step).seconds();
+      auto t = time_step;
+      for (const auto & object_pose : object_path.path) {
+        t += time_step;
+        const auto object_footprint = universe_utils::toPolygon2d(object_pose, object.shape);
+        for (auto & out_of_lane_point : out_of_lane_data.outside_points) {
+          for (const auto & outside_ring : out_of_lane_point.outside_rings) {
+            if (!boost::geometry::disjoint(outside_ring, object_footprint.outer())) {
+              out_of_lane_point.collision_times.insert(t);
+              break;
+            }
+          }
+        }
       }
     }
   }
@@ -43,14 +51,9 @@ void calculate_collisions_to_avoid(
   for (auto & out_of_lane_point : out_of_lane_data.outside_points) {
     auto min_time = std::numeric_limits<double>::infinity();
     auto max_time = -std::numeric_limits<double>::infinity();
-    for (const auto & [t, points] : out_of_lane_point.time_collisions) {
-      for (const auto & out_of_lane_area : out_of_lane_point.outside_rings) {
-        if (!boost::geometry::disjoint(out_of_lane_area, points)) {
-          min_time = std::min(t, min_time);
-          max_time = std::max(t, max_time);
-          break;
-        }
-      }
+    for (const auto & t : out_of_lane_point.collision_times) {
+      min_time = std::min(t, min_time);
+      max_time = std::max(t, max_time);
     }
     if (min_time <= max_time) {
       out_of_lane_point.min_object_arrival_time = min_time;

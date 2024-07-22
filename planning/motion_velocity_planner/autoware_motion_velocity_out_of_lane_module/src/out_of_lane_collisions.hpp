@@ -27,7 +27,7 @@ namespace autoware::motion_velocity_planner::out_of_lane
 {
 /// @brief calculate the times and points where ego collides with an object outside of its lane
 void calculate_object_time_collisions(
-  OutOfLaneData & out_of_lane_data, const CollisionChecker & ego_trajectory_collision_checker,
+  OutOfLaneData & out_of_lane_data,
   const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects);
 
 /// @brief calculate the collisions to avoid
