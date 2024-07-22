@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-namespace bytetrack
+namespace autoware::bytetrack
 {
 // A helper class to generate bright color instance
 class ColorMapper
@@ -99,6 +99,6 @@ protected:
   bool use_raw_;
   ColorMapper color_map_;
 };
-}  // namespace bytetrack
+}  // namespace autoware::bytetrack
 
 #endif  // BYTETRACK__BYTETRACK_VISUALIZER_NODE_HPP_

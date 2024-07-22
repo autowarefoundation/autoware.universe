@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 
-namespace bytetrack
+namespace autoware::bytetrack
 {
 using LabelMap = std::map<int, std::string>;
 
@@ -55,9 +55,9 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
 
-  std::unique_ptr<bytetrack::ByteTrack> bytetrack_;
+  std::unique_ptr<autoware::bytetrack::ByteTrack> bytetrack_;
 };
 
-}  // namespace bytetrack
+}  // namespace autoware::bytetrack
 
 #endif  // BYTETRACK__BYTETRACK_NODE_HPP_

@@ -16,20 +16,20 @@ find_package(Boost REQUIRED)
 #
 # Core library
 #
-file(GLOB bytetrack_lib_src
+file(GLOB project_lib_src
   "lib/src/*.cpp"
 )
 
-ament_auto_add_library(bytetrack_lib SHARED
-  ${bytetrack_lib_src}
+ament_auto_add_library(${PROJECT_NAME}_lib SHARED
+  ${project_lib_src}
 )
 
-target_include_directories(bytetrack_lib
+target_include_directories(${PROJECT_NAME}_lib
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/include>
   $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(bytetrack_lib
+target_link_libraries(${PROJECT_NAME}_lib
   Eigen3::Eigen
   yaml-cpp
 )
@@ -72,7 +72,7 @@ target_compile_definitions(${PROJECT_NAME}_node PRIVATE
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_node
-  PLUGIN "bytetrack::ByteTrackNode"
+  PLUGIN "autoware::bytetrack::ByteTrackNode"
   EXECUTABLE ${PROJECT_NAME}_node_exe
 )
 
@@ -88,7 +88,7 @@ ament_target_dependencies(${PROJECT_NAME}_visualizer
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_visualizer
-  PLUGIN "bytetrack::ByteTrackVisualizerNode"
+  PLUGIN "autoware::bytetrack::ByteTrackVisualizerNode"
   EXECUTABLE ${PROJECT_NAME}_visualizer_node_exe
 )
 

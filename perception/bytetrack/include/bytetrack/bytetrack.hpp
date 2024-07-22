@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-namespace bytetrack
+namespace autoware::bytetrack
 {
 struct Object
 {
@@ -57,6 +57,6 @@ private:
   ObjectArray latest_objects_;
 };
 
-}  // namespace bytetrack
+}  // namespace autoware::bytetrack
 
 #endif  // BYTETRACK__BYTETRACK_HPP_
