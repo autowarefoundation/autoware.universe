@@ -1,6 +1,5 @@
 /**:
   ros__parameters:
-    ## Paramters in filter.cpp
     input_frame: ""
     output_frame: ""
     max_queue_size: 5
