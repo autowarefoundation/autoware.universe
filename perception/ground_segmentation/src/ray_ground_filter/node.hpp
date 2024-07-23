@@ -58,8 +58,8 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
+#include "autoware/pointcloud_preprocessor/filter.hpp"
 #include "gencolors.hpp"
-#include "pointcloud_preprocessor/filter.hpp"
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
@@ -81,7 +81,7 @@ using Polygon = bg::model::polygon<Point>;
 
 namespace autoware::ground_segmentation
 {
-class RayGroundFilterComponent : public pointcloud_preprocessor::Filter
+class RayGroundFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
   typedef pcl::PointXYZ PointType_;
 
@@ -185,16 +185,16 @@ private:
    * @param out_removed_indices_cloud_ptr Resulting PointCloud with the indices removed
    */
   void ExtractPointsIndices(
-    const PointCloud2::ConstSharedPtr in_cloud_ptr, pcl::PointIndices & in_indices,
-    PointCloud2::SharedPtr out_only_indices_cloud_ptr,
-    PointCloud2::SharedPtr out_removed_indices_cloud_ptr);
+    const PointCloud2::ConstSharedPtr in_cloud_ptr, const pcl::PointIndices & in_indices,
+    PointCloud2::SharedPtr ground_cloud_msg_ptr, PointCloud2::SharedPtr no_ground_cloud_msg_ptr);
 
   boost::optional<float> calcPointVehicleIntersection(const Point & point);
 
   void setVehicleFootprint(
     const double min_x, const double max_x, const double min_y, const double max_y);
   void initializePointCloud2(
-    const PointCloud2::ConstSharedPtr & in_cloud_ptr, PointCloud2::SharedPtr & out_cloud_msg_ptr);
+    const PointCloud2::ConstSharedPtr & in_cloud_ptr,
+    const PointCloud2::SharedPtr & out_cloud_msg_ptr);
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 

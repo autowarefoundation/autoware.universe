@@ -15,9 +15,9 @@
 #ifndef SCAN_GROUND_FILTER__NODE_HPP_
 #define SCAN_GROUND_FILTER__NODE_HPP_
 
+#include "autoware/pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/transform_info.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
-#include "pointcloud_preprocessor/filter.hpp"
-#include "pointcloud_preprocessor/transform_info.hpp"
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -44,7 +44,7 @@ namespace autoware::ground_segmentation
 {
 using autoware::vehicle_info_utils::VehicleInfo;
 
-class ScanGroundFilterComponent : public pointcloud_preprocessor::Filter
+class ScanGroundFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
 private:
   // classified point label
@@ -152,7 +152,7 @@ private:
   // conform to new API
   virtual void faster_filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
-    const pointcloud_preprocessor::TransformInfo & transform_info);
+    const autoware::pointcloud_preprocessor::TransformInfo & transform_info);
 
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
@@ -211,15 +211,15 @@ private:
   /*!
    * Convert sensor_msgs::msg::PointCloud2 to sorted PointCloudVector
    * @param[in] in_cloud Input Point Cloud to be organized in radial segments
-   * @param[out] out_radial_ordered_points_manager Vector of Points Clouds,
+   * @param[out] out_radial_ordered_points Vector of Points Clouds,
    *     each element will contain the points ordered
    */
   void convertPointcloud(
     const PointCloud2ConstPtr & in_cloud,
-    std::vector<PointCloudVector> & out_radial_ordered_points_manager);
+    std::vector<PointCloudVector> & out_radial_ordered_points);
   void convertPointcloudGridScan(
     const PointCloud2ConstPtr & in_cloud,
-    std::vector<PointCloudVector> & out_radial_ordered_points_manager);
+    std::vector<PointCloudVector> & out_radial_ordered_points);
   /*!
    * Output ground center of front wheels as the virtual ground point
    * @param[out] point Virtual ground origin point
@@ -240,18 +240,19 @@ private:
     const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids);
 
   void checkContinuousGndGrid(
-    PointData & p, pcl::PointXYZ & p_orig_point, const std::vector<GridCenter> & gnd_grids_list);
+    PointData & p, const pcl::PointXYZ & p_orig_point,
+    const std::vector<GridCenter> & gnd_grids_list);
   void checkDiscontinuousGndGrid(
-    PointData & p, pcl::PointXYZ & p_orig_point, const std::vector<GridCenter> & gnd_grids_list);
+    PointData & p, const pcl::PointXYZ & p_orig_point,
+    const std::vector<GridCenter> & gnd_grids_list);
   void checkBreakGndGrid(
-    PointData & p, pcl::PointXYZ & p_orig_point, const std::vector<GridCenter> & gnd_grids_list);
+    PointData & p, const pcl::PointXYZ & p_orig_point,
+    const std::vector<GridCenter> & gnd_grids_list);
   void classifyPointCloud(
-    const PointCloud2ConstPtr & in_cloud_ptr,
-    std::vector<PointCloudVector> & in_radial_ordered_clouds,
+    const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
   void classifyPointCloudGridScan(
-    const PointCloud2ConstPtr & in_cloud_ptr,
-    std::vector<PointCloudVector> & in_radial_ordered_clouds,
+    const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
   /*!
    * Re-classifies point of ground cluster based on their height
