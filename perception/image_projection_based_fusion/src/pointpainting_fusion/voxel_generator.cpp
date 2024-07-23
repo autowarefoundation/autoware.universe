@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "image_projection_based_fusion/pointpainting_fusion/voxel_generator.hpp"
+#include "autoware/image_projection_based_fusion/pointpainting_fusion/voxel_generator.hpp"
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 
 VoxelGenerator::VoxelGenerator(
-  const centerpoint::DensificationParam & param, const centerpoint::CenterPointConfig & config)
+  const autoware::lidar_centerpoint::DensificationParam & param,
+  const autoware::lidar_centerpoint::CenterPointConfig & config)
 : config_(config)
 {
   pd_ptr_ = std::make_unique<PointCloudDensification>(param);
@@ -83,4 +84,4 @@ size_t VoxelGenerator::generateSweepPoints(std::vector<float> & points)
   return point_counter;
 }
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
