@@ -310,7 +310,7 @@ ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(
   debug_publisher_ = std::make_unique<autoware::universe_utils::DebugPublisher>(
     this, "obstacle_pointcloud_based_validator");
 
-  const bool enable_debugger = declare_parameter<bool>("enable_debugger", false);
+  const bool enable_debugger = declare_parameter<bool>("enable_debugger");
   if (enable_debugger) debugger_ = std::make_shared<Debugger>(this);
   published_time_publisher_ =
     std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
