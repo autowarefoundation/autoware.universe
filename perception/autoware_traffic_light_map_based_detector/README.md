@@ -1,8 +1,8 @@
-# The `traffic_light_map_based_detector` Package
+# The `autoware_traffic_light_map_based_detector` Package
 
 ## Overview
 
-`traffic_light_map_based_detector` calculates where the traffic lights will appear in the image based on the HD map.
+`autoware_traffic_light_map_based_detector` calculates where the traffic lights will appear in the image based on the HD map.
 
 Calibration and vibration errors can be entered as parameters, and the size of the detected RegionOfInterest will change according to the error.
 

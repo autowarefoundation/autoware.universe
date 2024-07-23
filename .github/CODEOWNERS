@@ -141,7 +141,7 @@ perception/tensorrt_yolox/** dan.umeda@tier4.jp manato.hirabayashi@tier4.jp
 perception/traffic_light_arbiter/** kenzo.lobos@tier4.jp shunsuke.miura@tier4.jp
 perception/autoware_traffic_light_classifier/** shunsuke.miura@tier4.jp tao.zhong@tier4.jp yukihiro.saito@tier4.jp
 perception/autoware_traffic_light_fine_detector/** shintaro.tomie@tier4.jp shunsuke.miura@tier4.jp tao.zhong@tier4.jp
-perception/traffic_light_map_based_detector/** shunsuke.miura@tier4.jp tao.zhong@tier4.jp yukihiro.saito@tier4.jp
+perception/autoware_traffic_light_map_based_detector/** shunsuke.miura@tier4.jp tao.zhong@tier4.jp yukihiro.saito@tier4.jp
 perception/autoware_traffic_light_multi_camera_fusion/** shunsuke.miura@tier4.jp tao.zhong@tier4.jp
 perception/autoware_traffic_light_occlusion_predictor/** shunsuke.miura@tier4.jp tao.zhong@tier4.jp
 perception/traffic_light_visualization/** tao.zhong@tier4.jp yukihiro.saito@tier4.jp

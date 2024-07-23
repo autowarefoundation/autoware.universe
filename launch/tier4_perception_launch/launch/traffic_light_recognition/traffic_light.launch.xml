@@ -44,7 +44,7 @@
       <node pkg="topic_tools" exec="relay" name="traffic_light_camera_info_relay" args="$(var input/camera_info) camera_info"/>
       <group>
         <push-ros-namespace namespace="detection"/>
-        <include file="$(find-pkg-share traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch.xml">
+        <include file="$(find-pkg-share autoware_traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch.xml">
           <arg name="input/camera_info" value="$(var input/camera_info)"/>
           <arg name="expect/rois" value="expect/rois"/>
           <arg name="output/rois" value="$(var map_based_detector_output_topic)"/>
@@ -99,7 +99,7 @@
       <node pkg="topic_tools" exec="relay" name="traffic_light_camera_info_relay" args="$(var input/camera_info) camera_info"/>
       <group>
         <push-ros-namespace namespace="detection"/>
-        <include file="$(find-pkg-share traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch.xml">
+        <include file="$(find-pkg-share autoware_traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch.xml">
           <arg name="input/camera_info" value="$(var input/camera_info)"/>
           <arg name="expect/rois" value="expect/rois"/>
           <arg name="output/rois" value="$(var map_based_detector_output_topic)"/>
