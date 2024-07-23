@@ -61,6 +61,7 @@
 #include <vector>
 
 // ROS includes
+#include "autoware/pointcloud_preprocessor/static_transform_buffer.hpp"
 #include "autoware_point_types/types.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
@@ -144,9 +145,7 @@ private:
   // XmlRpc::XmlRpcValue input_topics_;
   std::vector<std::string> input_topics_;
 
-  /** \brief TF listener object. */
-  std::shared_ptr<tf2_ros::Buffer> tf2_buffer_;
-  std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
+  std::shared_ptr<pointcloud_preprocessor::StaticTransformBuffer> static_tf_buffer_{nullptr};
 
   std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_ptr_queue_;
 
@@ -157,10 +156,6 @@ private:
   std::vector<double> input_offset_;
   std::map<std::string, double> offset_map_;
 
-  void transformPointCloud(const PointCloud2::ConstSharedPtr & in, PointCloud2::SharedPtr & out);
-  void transformPointCloud(
-    const PointCloud2::ConstSharedPtr & in, PointCloud2::SharedPtr & out,
-    const std::string & target_frame);
   Eigen::Matrix4f computeTransformToAdjustForOldTimestamp(
     const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
   std::map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> synchronizeClouds();
