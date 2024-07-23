@@ -15,6 +15,9 @@
 
 #include <QDebug>
 
+#include <iomanip>
+#include <sstream>
+
 PathOverlay::PathOverlay() : vehicle_lat_(0.0), vehicle_lon_(0.0)
 {
 }
@@ -35,7 +38,24 @@ void PathOverlay::setPathPoints(
   }
 }
 
+void PathOverlay::setProjectionInfo(
+  const std::string & projector_type, const std::string & mgrs_grid)
+{
+  projector_type_ = projector_type;
+  mgrs_grid_ = mgrs_grid;
+}
+
 std::pair<double, double> PathOverlay::localToGeographic(
+  double local_x, double local_y, double origin_lat, double origin_lon)
+{
+  if (projector_type_ == "MGRS") {
+    return localToGeographicMGRS(local_x, local_y, origin_lat, origin_lon, mgrs_grid_);
+  } else {
+    return localToGeographicUTM(local_x, local_y, origin_lat, origin_lon);
+  }
+}
+
+std::pair<double, double> PathOverlay::localToGeographicUTM(
   double local_x, double local_y, double origin_lat, double origin_lon)
 {
   int zone;
@@ -53,6 +73,34 @@ std::pair<double, double> PathOverlay::localToGeographic(
   // Convert UTM coordinates back to geographic coordinates
   double goal_lat, goal_lon;
   GeographicLib::UTMUPS::Reverse(zone, north_p, goal_x, goal_y, goal_lat, goal_lon);
+
+  return {goal_lat, goal_lon};
+}
+
+std::pair<double, double> PathOverlay::localToGeographicMGRS(
+  double local_x, double local_y, double origin_lat, double origin_lon,
+  const std::string & mgrs_grid)
+{
+  int zone;
+  bool north_p;
+  double origin_x, origin_y, gamma, k, mgrs_x, mgrs_y;
+
+  // Convert origin coordinates to UTM
+  GeographicLib::UTMUPS::Forward(
+    origin_lat, origin_lon, zone, north_p, origin_x, origin_y, gamma, k);
+
+  // Convert MGRS grid string to UTM coordinates
+  std::string mgrs_string = mgrs_grid + "0000000000000000";
+  int prec;
+  GeographicLib::MGRS::Reverse(mgrs_string, zone, north_p, mgrs_x, mgrs_y, prec);
+
+  // Calculate the global UTM coordinates by adding local offsets
+  double global_x = mgrs_x + local_x;
+  double global_y = mgrs_y + local_y;
+
+  // Convert global UTM coordinates to geographic coordinates
+  double goal_lat, goal_lon;
+  GeographicLib::UTMUPS::Reverse(zone, north_p, global_x, global_y, goal_lat, goal_lon);
 
   return {goal_lat, goal_lon};
 }
