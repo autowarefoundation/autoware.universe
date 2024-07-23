@@ -72,7 +72,7 @@
 
     <group>
       <push-ros-namespace namespace="classification"/>
-      <include file="$(find-pkg-share traffic_light_occlusion_predictor)/launch/traffic_light_occlusion_predictor.launch.xml">
+      <include file="$(find-pkg-share autoware_traffic_light_occlusion_predictor)/launch/traffic_light_occlusion_predictor.launch.xml">
         <arg name="input/camera_info" value="$(var input/camera_info)"/>
         <arg name="input/cloud" value="$(var input/cloud)"/>
         <arg name="input/rois" value="$(var output/rois1)"/>
@@ -127,7 +127,7 @@
 
     <group>
       <push-ros-namespace namespace="classification"/>
-      <include file="$(find-pkg-share traffic_light_occlusion_predictor)/launch/traffic_light_occlusion_predictor.launch.xml">
+      <include file="$(find-pkg-share autoware_traffic_light_occlusion_predictor)/launch/traffic_light_occlusion_predictor.launch.xml">
         <arg name="input/camera_info" value="$(var input/camera_info)"/>
         <arg name="input/cloud" value="$(var input/cloud)"/>
         <arg name="input/rois" value="$(var output/rois2)"/>
