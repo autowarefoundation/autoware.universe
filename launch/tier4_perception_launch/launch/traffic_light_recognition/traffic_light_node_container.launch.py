@@ -136,7 +136,7 @@ def launch_setup(context, *args, **kwargs):
     fine_detector_loader = LoadComposableNodes(
         composable_node_descriptions=[
             ComposableNode(
-                package="traffic_light_fine_detector",
+                package="autoware_traffic_light_fine_detector",
                 plugin="autoware::traffic_light::TrafficLightFineDetectorNode",
                 name="traffic_light_fine_detector",
                 namespace="detection",
@@ -168,7 +168,7 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    fine_detector_share_dir = get_package_share_directory("traffic_light_fine_detector")
+    fine_detector_share_dir = get_package_share_directory("autoware_traffic_light_fine_detector")
     classifier_share_dir = get_package_share_directory("traffic_light_classifier")
     add_launch_arg("enable_image_decompressor", "True")
     add_launch_arg("enable_fine_detection", "True")
