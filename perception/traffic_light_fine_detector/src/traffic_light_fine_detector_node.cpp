@@ -213,7 +213,7 @@ void TrafficLightFineDetectorNode::callback(
 }
 
 float TrafficLightFineDetectorNode::evalMatchScore(
-  std::map<int, TrafficLightRoi> & id2expectRoi,
+  const std::map<int, TrafficLightRoi> & id2expectRoi,
   std::map<int, tensorrt_yolox::ObjectArray> & id2detections,
   std::map<int, tensorrt_yolox::Object> & id2bestDetection)
 {
@@ -236,7 +236,7 @@ float TrafficLightFineDetectorNode::evalMatchScore(
 }
 
 void TrafficLightFineDetectorNode::detectionMatch(
-  std::map<int, TrafficLightRoi> & id2expectRoi,
+  const std::map<int, TrafficLightRoi> & id2expectRoi,
   std::map<int, tensorrt_yolox::ObjectArray> & id2detections, TrafficLightRoiArray & out_rois)
 {
   float max_score = 0.0f;
