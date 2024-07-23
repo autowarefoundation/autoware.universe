@@ -7,11 +7,12 @@
   <maintainer email="khalil@leodrive.ai">khalil</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>GeographicLib</depend>
+  <depend>geographiclib</depend>
   <depend>angles</depend>
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_cmake</depend>
   <depend>autoware_planning_msgs</depend>
+  <depend>tier4_map_msgs</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>rcpputils</depend>
