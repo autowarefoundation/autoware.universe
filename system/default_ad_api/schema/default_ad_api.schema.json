@@ -1,0 +1,92 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Parameters for default_ad_api",
+    "type": "object",
+    "definitions": {
+      "default_ad_api_node": {
+        "type": "object",
+        "properties": {
+          "update_rate": {
+            "type": "number",
+            "default": 10.0,
+            "description": "Update rate for the node."
+          },
+          "require_accept_start": {
+            "type": "boolean",
+            "default": false,
+            "description": "Require acceptance to start."
+          },
+          "stop_check_duration": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Duration for stop check."
+          },
+          "stop_distance": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Stop distance."
+          },
+          "stop_duration": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Stop duration."
+          }
+        }
+      }
+    },
+    "properties": {
+      "/default_ad_api/node/autoware_state": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "type": "object",
+            "properties": {
+              "update_rate": {
+                "$ref": "#/definitions/default_ad_api_node/properties/update_rate"
+              }
+            },
+            "required": ["update_rate"]
+          }
+        },
+        "required": ["ros__parameters"]
+      },
+      "/default_ad_api/node/motion": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "type": "object",
+            "properties": {
+              "require_accept_start": {
+                "$ref": "#/definitions/default_ad_api_node/properties/require_accept_start"
+              },
+              "stop_check_duration": {
+                "$ref": "#/definitions/default_ad_api_node/properties/stop_check_duration"
+              }
+            },
+            "required": ["require_accept_start", "stop_check_duration"]
+          }
+        },
+        "required": ["ros__parameters"]
+      },
+      "/default_ad_api/node/planning": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "type": "object",
+            "properties": {
+              "stop_distance": {
+                "$ref": "#/definitions/default_ad_api_node/properties/stop_distance"
+              },
+              "stop_duration": {
+                "$ref": "#/definitions/default_ad_api_node/properties/stop_duration"
+              }
+            },
+            "required": ["stop_distance", "stop_duration"]
+          }
+        },
+        "required": ["ros__parameters"]
+      }
+    },
+    "required": ["/default_ad_api/node/autoware_state", "/default_ad_api/node/motion", "/default_ad_api/node/planning"]
+  }
+  
