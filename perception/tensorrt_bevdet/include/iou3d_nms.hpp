@@ -17,6 +17,8 @@ Written by Shaoshuai Shi
 All Rights Reserved 2019-2022.
 */
 #pragma once
+#ifndef IOU3D_NMS_HPP_
+#define IOU3D_NMS_HPP_
 
 #include <stdio.h>
 #include <thrust/count.h>
@@ -26,9 +28,9 @@ All Rights Reserved 2019-2022.
 #include <thrust/sequence.h>
 #include <thrust/sort.h>
 #include <thrust/transform.h>
-
 #include <iostream>
 #include <vector>
+
 #include "common.hpp"
 
 const int THREADS_PER_BLOCK = 16;
@@ -68,3 +70,4 @@ struct Box
   int label;
   bool is_drop;  // for nms
 };
+#endif //IOU3D_NMS_HPP_

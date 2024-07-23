@@ -14,8 +14,9 @@
 #ifndef POSTPROCESS_HPP_
 #define POSTPROCESS_HPP_
 
-#include <vector>
 #include "iou3d_nms.hpp"
+
+#include <vector>
 
 class PostprocessGPU
 {
