@@ -169,9 +169,9 @@ PidLongitudinalController::PidLongitudinalController(
   m_min_acc = node.declare_parameter<double>("min_acc");  // [m/s^2]
 
   // parameters for jerk limit
-  m_max_jerk = node.declare_parameter<double>("max_jerk");                            // [m/s^3]
-  m_min_jerk = node.declare_parameter<double>("min_jerk");                            // [m/s^3]
-  m_max_acc_cmd_diff_rate = node.declare_parameter<double>("max_acc_cmd_diff_rate");  // [m/s^3]
+  m_max_jerk = node.declare_parameter<double>("max_jerk");                  // [m/s^3]
+  m_min_jerk = node.declare_parameter<double>("min_jerk");                  // [m/s^3]
+  m_max_acc_cmd_diff = node.declare_parameter<double>("max_acc_cmd_diff");  // [m/s^3]
 
   // parameters for slope compensation
   m_adaptive_trajectory_velocity_th =
@@ -371,7 +371,7 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
   // jerk limit
   update_param("max_jerk", m_max_jerk);
   update_param("min_jerk", m_min_jerk);
-  update_param("max_acc_cmd_diff_rate", m_max_acc_cmd_diff_rate);
+  update_param("max_acc_cmd_diff", m_max_acc_cmd_diff);
 
   // slope compensation
   update_param("max_pitch_rad", m_max_pitch_rad);
@@ -853,7 +853,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
   storeAccelCmd(m_prev_raw_ctrl_cmd.acc);
 
   ctrl_cmd_as_pedal_pos.acc = longitudinal_utils::applyDiffLimitFilter(
-    ctrl_cmd_as_pedal_pos.acc, m_prev_ctrl_cmd.acc, control_data.dt, m_max_acc_cmd_diff_rate);
+    ctrl_cmd_as_pedal_pos.acc, m_prev_ctrl_cmd.acc, control_data.dt, m_max_acc_cmd_diff);
 
   // update debug visualization
   updateDebugVelAcc(control_data);
