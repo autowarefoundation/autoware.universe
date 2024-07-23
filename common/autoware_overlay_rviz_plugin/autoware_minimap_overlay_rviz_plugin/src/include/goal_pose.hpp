@@ -14,6 +14,7 @@
 #ifndef GOAL_POSE_HPP_
 #define GOAL_POSE_HPP_
 
+#include "GeographicLib/MGRS.hpp"
 #include "GeographicLib/UTMUPS.hpp"
 
 #include <QImage>
@@ -29,6 +30,7 @@ public:
   GoalPose();
   void setGoalPosition(double local_x, double local_y, double origin_lat, double origin_lon);
   void setVehiclePosition(double lat, double lon);
+  void setProjectionInfo(const std::string & projector_type, const std::string & mgrs_grid);
   void draw(QPainter & painter, const QRectF & backgroundRect, int zoom);
   // Getter methods for the goal latitude and longitude
   double getGoalLatitude() const;
@@ -41,8 +43,16 @@ private:
   double vehicle_lon_;
   QImage goal_image_;
 
+  std::string projector_type_;
+  std::string mgrs_grid_;
+
   std::pair<double, double> localToGeographic(
     double local_x, double local_y, double origin_lat, double origin_lon);
+  std::pair<double, double> localToGeographicUTM(
+    double local_x, double local_y, double origin_lat, double origin_lon);
+  std::pair<double, double> localToGeographicMGRS(
+    double local_x, double local_y, double origin_lat, double origin_lon,
+    const std::string & mgrs_grid);
   std::pair<int, int> getTileOffsets(
     double lat, double lon, int zoom, const QRectF & backgroundRect);
 };
