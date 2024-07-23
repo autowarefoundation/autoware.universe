@@ -43,6 +43,7 @@
 
 #include <cmath>
 #include <functional>
+#include <iostream>
 #include <limits>
 #include <optional>
 #ifdef ROS_DISTRO_GALACTIC
@@ -643,7 +644,8 @@ void AEB::createObjectDataUsingPredictedObjects(
   std::vector<ObjectData> & object_data_vector)
 {
   if (predicted_objects_ptr_->objects.empty()) return;
-
+  std::cerr << "-----------------------------------------\n";
+  std::cerr << "HERE 0\n";
   const double current_ego_speed = current_velocity_ptr_->longitudinal_velocity;
   const auto & objects = predicted_objects_ptr_->objects;
   const auto & stamp = predicted_objects_ptr_->header.stamp;
@@ -669,6 +671,8 @@ void AEB::createObjectDataUsingPredictedObjects(
       return obj_vel_norm * std::cos(obj_yaw - path_yaw);
     };
 
+  std::cerr << "HERE 1\n";
+
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
@@ -678,6 +682,7 @@ void AEB::createObjectDataUsingPredictedObjects(
     RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
     return;
   }
+  std::cerr << "HERE 2\n";
 
   // Check which objects collide with the ego footprints
   std::for_each(objects.begin(), objects.end(), [&](const auto & predicted_object) {
@@ -693,6 +698,7 @@ void AEB::createObjectDataUsingPredictedObjects(
       std::vector<Point2d> collision_points_bg;
       bg::intersection(ego_poly, obj_poly, collision_points_bg);
       if (collision_points_bg.empty()) continue;
+      std::cerr << "Skip collision poinbts\n";
 
       // Create an object for each intersection point
       bool collision_points_added{false};
@@ -723,6 +729,7 @@ void AEB::createObjectDataUsingPredictedObjects(
       if (collision_points_added) break;
     }
   });
+  std::cerr << "-----------------------------------------\n";
 }
 
 void AEB::createObjectDataUsingPointCloudClusters(

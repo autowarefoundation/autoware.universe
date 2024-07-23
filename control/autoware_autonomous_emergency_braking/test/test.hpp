@@ -51,7 +51,7 @@ using autoware_perception_msgs::msg::PredictedObjects;
 using std_msgs::msg::Header;
 
 std::shared_ptr<AEB> generateNode();
-Header get_header(const char * const frame_id, rclcpp::Time t);
+Header make_header(const char * const frame_id, rclcpp::Time t);
 Imu make_imu_message(
   const Header & header, const double ax, const double ay, const double yaw,
   const double angular_velocity_z);
@@ -73,7 +73,7 @@ public:
   // rclcpp::TimerBase::SharedPtr timer_;
   void publishDefaultTopicsNoSpin()
   {
-    const auto header = get_header("base_link", now());
+    const auto header = make_header("base_link", now());
     const auto imu_msg = make_imu_message(header, 0.0, 0.0, 0.0, 0.05);
     const auto velocity_msg = make_velocity_report_msg(header, 0.0, 3.0, 0.0);
 

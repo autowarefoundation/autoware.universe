@@ -18,14 +18,18 @@
 #include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/subscription_factory.hpp>
 #include <rclcpp/time.hpp>
 
+#include <autoware_perception_msgs/msg/detail/predicted_objects__struct.hpp>
 #include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
 
 #include <gtest/gtest.h>
 
 #include <memory>
+#include <string>
 #include <thread>
+#include <vector>
 
 namespace autoware::motion::control::autonomous_emergency_braking::test
 {
@@ -38,7 +42,7 @@ using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::Vector3;
 using std_msgs::msg::Header;
 
-Header get_header(const char * const frame_id, rclcpp::Time t)
+Header make_header(const char * const frame_id, rclcpp::Time t)
 {
   std_msgs::msg::Header header;
   header.stamp = t;
@@ -132,9 +136,9 @@ TEST_F(TestAEB, checkImuPathGeneration)
   const double horizon = aeb_node_->imu_prediction_time_horizon_;
   ASSERT_TRUE(imu_path.size() >= static_cast<size_t>(horizon / dt));
 
-  const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
-  ASSERT_FALSE(footprint.empty());
-  ASSERT_TRUE(footprint.size() == imu_path.size() - 1);
+  const auto footprints = aeb_node_->generatePathFootprint(imu_path, 0.0);
+  ASSERT_FALSE(footprints.empty());
+  ASSERT_TRUE(footprints.size() == imu_path.size() - 1);
 
   const auto stamp = rclcpp::Time();
   pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr =
@@ -155,7 +159,7 @@ TEST_F(TestAEB, checkImuPathGeneration)
   }
   std::vector<ObjectData> objects;
   aeb_node_->createObjectDataUsingPointCloudClusters(
-    imu_path, footprint, stamp, objects, obstacle_points_ptr);
+    imu_path, footprints, stamp, objects, obstacle_points_ptr);
   ASSERT_FALSE(objects.empty());
 }
 
@@ -172,9 +176,9 @@ TEST_F(TestAEB, checkIncompleteImuPathGeneration)
   ASSERT_TRUE(imu_path.size() >= static_cast<size_t>(horizon / dt));
   ASSERT_TRUE(autoware::motion_utils::calcArcLength(imu_path) >= min_generated_path_length);
 
-  const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
-  ASSERT_FALSE(footprint.empty());
-  ASSERT_TRUE(footprint.size() == imu_path.size() - 1);
+  const auto footprints = aeb_node_->generatePathFootprint(imu_path, 0.0);
+  ASSERT_FALSE(footprints.empty());
+  ASSERT_TRUE(footprints.size() == imu_path.size() - 1);
 }
 
 TEST_F(TestAEB, checkEmptyPathAtZeroSpeed)
@@ -259,6 +263,80 @@ TEST_F(TestAEB, CollisionDataKeeper)
   ASSERT_TRUE(std::abs(median_velocity.value() - 4.0) < 1e-2);
   rclcpp::sleep_for(1100ms);
   ASSERT_TRUE(collision_data_keeper_.checkCollisionExpired());
+}
+
+TEST_F(TestAEB, CheckPredictedObjectToObjectData)
+{
+  using autoware_perception_msgs::msg::Shape;
+  using TFMessage = tf2_msgs::msg::TFMessage;
+
+  constexpr double ego_longitudinal_velocity = 3.0;
+  constexpr double yaw_rate = 0.0;
+  const auto imu_path = aeb_node_->generateEgoPath(ego_longitudinal_velocity, yaw_rate);
+  const auto footprints = aeb_node_->generatePathFootprint(imu_path, 0.0);
+
+  PredictedObject obj_box;
+  obj_box.shape.type = Shape::BOUNDING_BOX;
+  obj_box.shape.dimensions.x = 1.0;
+  obj_box.shape.dimensions.y = 2.0;
+  Pose obj_box_pose;
+  obj_box_pose.position.x = 4.0;
+  obj_box_pose.position.y = 0.0;
+  obj_box.kinematics.initial_pose_with_covariance.pose = obj_box_pose;
+  obj_box.kinematics.initial_twist_with_covariance.twist.linear.x = -1.0;
+  PredictedObjects objs;
+  std::vector<PredictedObject> objs_v{obj_box};
+  objs.set__objects(objs_v);
+  objs.header.frame_id = "map";
+  objs.header.stamp = aeb_node_->now();
+  aeb_node_->predicted_objects_ptr_ = std::make_shared<PredictedObjects>(objs);
+  const auto header = make_header("base_link", aeb_node_->now());
+  const auto velocity_report =
+    std::make_shared<VelocityReport>(make_velocity_report_msg(header, 0.0, 3.0, 0.0));
+  aeb_node_->current_velocity_ptr_ = velocity_report;
+
+  rclcpp::NodeOptions options;
+  auto tf_pub = rclcpp::create_publisher<TFMessage>(pub_sub_node_, "/tf", 1);
+
+  geometry_msgs::msg::TransformStamped tf;
+  tf.header.frame_id = "map";
+  tf.header.stamp = aeb_node_->now();
+  tf.child_frame_id = "base_link";
+
+  geometry_msgs::msg::Quaternion quaternion;
+  quaternion.x = 0.;
+  quaternion.y = 0.;
+  quaternion.z = 0.;
+  quaternion.w = 1.;
+  tf.transform.rotation = quaternion;
+
+  tf.transform.translation.x = 0.;
+  tf.transform.translation.y = 0.;
+  tf.transform.translation.z = 0.;
+
+  TFMessage tf_msg;
+  tf_msg.transforms.push_back(tf);
+
+  std::vector<ObjectData> object_data_vector;
+  while (object_data_vector.empty()) {
+    tf_pub->publish(tf_msg);
+    rclcpp::spin_some(pub_sub_node_);
+    rclcpp::spin_some(aeb_node_);
+
+    aeb_node_->createObjectDataUsingPredictedObjects(imu_path, footprints, object_data_vector);
+    rclcpp::sleep_for(std::chrono::milliseconds(100));
+  }
+  const std::string topic_name = "/tf";
+  auto subscribers_info = pub_sub_node_->get_subscriptions_info_by_topic(topic_name);
+
+  std::cerr << "Subscribers on topic " << topic_name << ":\n";
+  for (const auto & info : subscribers_info) {
+    std::cerr << "Node Name: " << info.node_name() << "\n";
+    std::cerr << "Node Namespace: " << info.node_namespace() << "\n";
+    std::cerr << "Topic Type: " << info.topic_type() << "\n";
+  }
+
+  ASSERT_FALSE(object_data_vector.empty());
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking::test
