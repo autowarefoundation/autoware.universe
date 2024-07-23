@@ -1876,9 +1876,6 @@ double ObstacleCruisePlannerNode::calcCollisionTimeMargin(
   const Odometry & odometry, const std::vector<PointWithStamp> & collision_points,
   const std::vector<TrajectoryPoint> & traj_points, const bool is_driving_forward) const
 {
-  const auto & ego_pose = odometry.pose.pose;
-  const double ego_vel = odometry.twist.twist.linear.x;
-
   const double abs_ego_offset = is_driving_forward
                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
