@@ -23,6 +23,7 @@
 #include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
 
 #include <gtest/gtest.h>
+#include <pcl/memory.h>
 
 #include <memory>
 #include <thread>
@@ -259,6 +260,43 @@ TEST_F(TestAEB, CollisionDataKeeper)
   ASSERT_TRUE(std::abs(median_velocity.value() - 4.0) < 1e-2);
   rclcpp::sleep_for(1100ms);
   ASSERT_TRUE(collision_data_keeper_.checkCollisionExpired());
+}
+
+TEST_F(TestAEB, TestCropPointCLoud)
+{
+  constexpr double longitudinal_velocity = 3.0;
+  constexpr double yaw_rate = 0.05;
+  const auto imu_path = aeb_node_->generateEgoPath(longitudinal_velocity, yaw_rate);
+  ASSERT_FALSE(imu_path.empty());
+
+  constexpr size_t n_points{15};
+  // include points within path
+  pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr =
+    pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  {
+    const double x_start{0.0};
+    const double y_start{0.0};
+
+    for (size_t i = 0; i < n_points; ++i) {
+      pcl::PointXYZ p1(
+        x_start + static_cast<double>(i / 100.0), y_start - static_cast<double>(i / 100.0), 0.5);
+      pcl::PointXYZ p2(
+        x_start + static_cast<double>((i + 10) / 100.0), y_start - static_cast<double>(i / 100.0),
+        0.5);
+      obstacle_points_ptr->push_back(p1);
+      obstacle_points_ptr->push_back(p2);
+    }
+    pcl::PointXYZ p_out(x_start + 100.0, y_start + 100, 0.5);
+    obstacle_points_ptr->push_back(p_out);
+  }
+  aeb_node_->obstacle_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
+  pcl::toROSMsg(*obstacle_points_ptr, *aeb_node_->obstacle_ros_pointcloud_ptr_);
+  const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects =
+    pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  aeb_node_->cropPointCloudWithEgoFootprintPath(footprint, filtered_objects);
+  ASSERT_TRUE(filtered_objects->points.size() == 2 * n_points);
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking::test
