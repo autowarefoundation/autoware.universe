@@ -284,7 +284,7 @@ bool EKFModule::measurement_update_pose(
   return true;
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_roll_pitch_height_with_delay(
+geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_rph_with_delay(
   const PoseWithCovariance & pose, const double delay_time)
 {
   const auto rpy = autoware::universe_utils::getRPY(pose.pose.pose.orientation);
