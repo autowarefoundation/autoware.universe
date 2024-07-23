@@ -102,8 +102,6 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
   pp.overlap_min_dist = getOrDeclareParameter<double>(node, ns_ + ".overlap.minimum_distance");
   pp.overlap_extra_length = getOrDeclareParameter<double>(node, ns_ + ".overlap.extra_length");
 
-  pp.skip_if_over_max_decel =
-    getOrDeclareParameter<bool>(node, ns_ + ".action.skip_if_over_max_decel");
   pp.precision = getOrDeclareParameter<double>(node, ns_ + ".action.precision");
   pp.min_decision_duration = getOrDeclareParameter<double>(node, ns_ + ".action.min_duration");
   pp.lon_dist_buffer =
@@ -147,7 +145,6 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(parameters, ns_ + ".overlap.minimum_distance", pp.overlap_min_dist);
   updateParam(parameters, ns_ + ".overlap.extra_length", pp.overlap_extra_length);
 
-  updateParam(parameters, ns_ + ".action.skip_if_over_max_decel", pp.skip_if_over_max_decel);
   updateParam(parameters, ns_ + ".action.precision", pp.precision);
   updateParam(parameters, ns_ + ".action.min_duration", pp.min_decision_duration);
   updateParam(parameters, ns_ + ".action.longitudinal_distance_buffer", pp.lon_dist_buffer);
@@ -278,7 +275,6 @@ VelocityPlanningResult OutOfLaneModule::plan(
   const auto calculate_out_of_lane_areas_us = stopwatch.toc("calculate_out_of_lane_areas");
 
   stopwatch.tic("filter_predicted_objects");
-  // TODO(Maxime): improve performance
   const auto objects = out_of_lane::filter_predicted_objects(*planner_data, ego_data, params_);
   const auto filter_predicted_objects_us = stopwatch.toc("filter_predicted_objects");
 

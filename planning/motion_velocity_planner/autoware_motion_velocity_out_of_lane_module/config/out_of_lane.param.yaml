@@ -1,14 +1,11 @@
 /**:
   ros__parameters:
     out_of_lane:  # module to stop or slowdown before overlapping another lane with other objects
-      mode: ttc # mode used to consider a conflict with an object. "threshold", "intervals", or "ttc"
+      mode: ttc # mode used to consider a conflict with an object. "threshold", or "ttc"
       skip_if_already_overlapping: true # do not run this module when ego already overlaps another lane
 
       threshold:
         time_threshold: 5.0  # [s] consider objects that will reach an overlap within this time
-      intervals:  # consider objects if their estimated time interval spent on the overlap intersect the estimated time interval of ego
-        ego_time_buffer: 0.5 # [s] extend the ego time interval by this buffer
-        objects_time_buffer: 0.5 # [s] extend the time intervals of objects by this buffer
       ttc:
         threshold: 3.0 # [s] consider objects with an estimated time to collision bellow this value while on the overlap
 
@@ -26,7 +23,6 @@
         extra_length: 0.0  # [m] extra arc length to add to the front and back of an overlap (used to calculate enter/exit times)
 
       action:  # action to insert in the trajectory if an object causes a conflict at an overlap
-        skip_if_over_max_decel: true  # if true, do not take an action that would cause more deceleration than the maximum allowed
         precision: 0.1  # [m] precision when inserting a stop pose in the trajectory
         longitudinal_distance_buffer: 1.5  # [m] safety distance buffer to keep in front of the ego vehicle
         lateral_distance_buffer: 1.0  # [m] safety distance buffer to keep on the side of the ego vehicle

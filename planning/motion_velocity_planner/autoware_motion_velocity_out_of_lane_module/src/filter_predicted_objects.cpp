@@ -140,23 +140,21 @@ autoware_perception_msgs::msg::PredictedObjects filter_predicted_objects(
                                             params.right_offset + params.extra_right_offset);
       return is_low_confidence || is_crossing_ego;
     };
-    if (params.objects_use_predicted_paths) {
-      auto & predicted_paths = filtered_object.kinematics.predicted_paths;
-      const auto new_end =
-        std::remove_if(predicted_paths.begin(), predicted_paths.end(), is_invalid_predicted_path);
-      predicted_paths.erase(new_end, predicted_paths.end());
-      if (params.objects_cut_predicted_paths_beyond_red_lights)
-        for (auto & predicted_path : predicted_paths)
-          cut_predicted_path_beyond_red_lights(
-            predicted_path, ego_data, filtered_object.shape.dimensions.x);
-      predicted_paths.erase(
-        std::remove_if(
-          predicted_paths.begin(), predicted_paths.end(),
-          [](const auto & p) { return p.path.empty(); }),
-        predicted_paths.end());
-    }
+    auto & predicted_paths = filtered_object.kinematics.predicted_paths;
+    const auto new_end =
+      std::remove_if(predicted_paths.begin(), predicted_paths.end(), is_invalid_predicted_path);
+    predicted_paths.erase(new_end, predicted_paths.end());
+    if (params.objects_cut_predicted_paths_beyond_red_lights)
+      for (auto & predicted_path : predicted_paths)
+        cut_predicted_path_beyond_red_lights(
+          predicted_path, ego_data, filtered_object.shape.dimensions.x);
+    predicted_paths.erase(
+      std::remove_if(
+        predicted_paths.begin(), predicted_paths.end(),
+        [](const auto & p) { return p.path.empty(); }),
+      predicted_paths.end());
 
-    if (!params.objects_use_predicted_paths || !filtered_object.kinematics.predicted_paths.empty())
+    if (!filtered_object.kinematics.predicted_paths.empty())
       filtered_objects.objects.push_back(filtered_object);
   }
   return filtered_objects;

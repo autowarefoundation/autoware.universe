@@ -47,13 +47,10 @@ struct PlannerParam
   bool skip_if_already_overlapping;  // if true, do not run the module when ego already overlaps
                                      // another lane
 
-  double time_threshold;        // [s](mode="threshold") objects time threshold
-  double intervals_ego_buffer;  // [s](mode="intervals") buffer to extend the ego time range
-  double intervals_obj_buffer;  // [s](mode="intervals") buffer to extend the objects time range
+  double time_threshold;  // [s](mode="threshold") objects time threshold
   double ttc_threshold;  // [s](mode="ttc") threshold on time to collision between ego and an object
   double ego_min_velocity;  // [m/s] minimum velocity of ego used to calculate its ttc or time range
 
-  bool objects_use_predicted_paths;  // whether to use the objects' predicted paths
   bool objects_cut_predicted_paths_beyond_red_lights;  // whether to cut predicted paths beyond red
                                                        // lights' stop lines
   double objects_min_vel;         // [m/s] objects lower than this velocity will be ignored
