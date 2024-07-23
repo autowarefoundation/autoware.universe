@@ -21,10 +21,10 @@
 #include <QPainterPath>
 #include <QRectF>
 
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-
 struct PathPoint
 {
   double x;
