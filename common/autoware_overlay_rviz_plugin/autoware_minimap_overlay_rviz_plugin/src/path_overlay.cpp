@@ -18,8 +18,7 @@
 #include <iomanip>
 #include <sstream>
 
-PathOverlay::PathOverlay()
-: vehicle_lat_(0.0), vehicle_lon_(0.0)
+PathOverlay::PathOverlay() : vehicle_lat_(0.0), vehicle_lon_(0.0)
 {
 }
 
@@ -162,8 +161,7 @@ void PathOverlay::draw(QPainter & painter, const QRectF & backgroundRect, int zo
     // Skip points that are too far out of bounds
     if (
       adjusted_x < backgroundRect.width() * 0.25 || adjusted_x > backgroundRect.width() * 0.75 ||
-      adjusted_y < backgroundRect.height() * 0.25 || adjusted_y > backgroundRect.height() * 0.75)
-    {
+      adjusted_y < backgroundRect.height() * 0.25 || adjusted_y > backgroundRect.height() * 0.75) {
       first_point = true;
       continue;
     }
