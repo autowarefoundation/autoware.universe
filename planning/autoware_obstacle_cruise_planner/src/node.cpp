@@ -1518,7 +1518,7 @@ ObstacleCruisePlannerNode::createCollisionPointForOutsideStopObstacle(
   if (collision_points.empty()) {
     RCLCPP_INFO_EXPRESSION(
       get_logger(), enable_debug_info_,
-      "[Stop] Ignore inside obstacle (%s) since there is no collision point between the "
+      "[Stop] Ignore outside obstacle (%s) since there is no collision point between the "
       "predicted path "
       "and the ego.",
       object_id.c_str());
@@ -1531,7 +1531,7 @@ ObstacleCruisePlannerNode::createCollisionPointForOutsideStopObstacle(
   if (p.collision_time_margin < collision_time_margin) {
     RCLCPP_INFO_EXPRESSION(
       get_logger(), enable_debug_info_,
-      "[Stop] Ignore inside obstacle (%s) since it will not collide with the ego.",
+      "[Stop] Ignore outside obstacle (%s) since it will not collide with the ego.",
       object_id.c_str());
     debug_data_ptr_->intentionally_ignored_obstacles.push_back(obstacle);
     return std::nullopt;
