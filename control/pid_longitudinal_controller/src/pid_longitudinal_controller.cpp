@@ -1083,25 +1083,25 @@ double PidLongitudinalController::applyVelocityFeedback(const ControlData & cont
     control_data.interpolated_traj.points.at(control_data.target_idx).longitudinal_velocity_mps,
     control_data.interpolated_traj.points.at(control_data.target_idx).acceleration_mps2};
   const double diff_vel = (target_motion.vel - current_vel) * vel_sign;
-  const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&	
-                                m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;	
+  const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&
+                                m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
 
-  const bool vehicle_is_moving = std::abs(current_vel) > m_current_vel_threshold_pid_integrate;	
-  const double time_under_control = getTimeUnderControl();	
-  const bool vehicle_is_stuck =	
-    !vehicle_is_moving && time_under_control > m_time_threshold_before_pid_integrate;	
+  const bool vehicle_is_moving = std::abs(current_vel) > m_current_vel_threshold_pid_integrate;
+  const double time_under_control = getTimeUnderControl();
+  const bool vehicle_is_stuck =
+    !vehicle_is_moving && time_under_control > m_time_threshold_before_pid_integrate;
 
-  const bool enable_integration =	
-    (vehicle_is_moving || (m_enable_integration_at_low_speed && vehicle_is_stuck)) &&	
+  const bool enable_integration =
+    (vehicle_is_moving || (m_enable_integration_at_low_speed && vehicle_is_stuck)) &&
     is_under_control;
-  
-  const bool erase_integration = !enable_integration;
+
+  const bool erase_integral = !enable_integration;
 
   const double error_vel_filtered = m_lpf_vel_error->filter(diff_vel);
 
   std::vector<double> pid_contributions(3);
   const double pid_acc =
-    m_pid_vel.calculate(error_vel_filtered, control_data.dt, erase_integration, pid_contributions);
+    m_pid_vel.calculate(error_vel_filtered, control_data.dt, erase_integral, pid_contributions);
 
   // Feedforward scaling:
   // This is for the coordinate conversion where feedforward is applied, from Time to Arclength.
