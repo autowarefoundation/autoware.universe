@@ -94,6 +94,8 @@ void PIDController::setLimits(
 
 void PIDController::reset()
 {
+  m_virtual_displacement_error = 0.0;
+  m_virtual_displacement_error_integral = 0.0;
   m_prev_error = 0.0;
 }
 }  // namespace autoware::motion::control::pid_longitudinal_controller
