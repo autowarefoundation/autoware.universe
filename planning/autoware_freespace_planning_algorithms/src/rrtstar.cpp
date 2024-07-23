@@ -50,8 +50,8 @@ bool RRTStar::makePlan(
   goal_pose_ = global2local(costmap_, goal_pose);
 
   const auto is_obstacle_free = [&](const rrtstar_core::Pose & pose) {
-    const int index_x = pose.x / costmap_.info.resolution;
-    const int index_y = pose.y / costmap_.info.resolution;
+    const int index_x = std::round(pose.x / costmap_.info.resolution);
+    const int index_y = std::round(pose.y / costmap_.info.resolution);
     const int index_theta = discretizeAngle(pose.yaw, planner_common_param_.theta_size);
     return !detectCollision(IndexXYT{index_x, index_y, index_theta});
   };
