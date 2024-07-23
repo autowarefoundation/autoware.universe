@@ -366,7 +366,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   std::vector<Pose> preventing_check_pose{current_pose};
   const auto min_stop_distance =
-    autoware::behavior_path_planner::utils::parking_departure::calcFeasibleDecelDistance(
+    behavior_path_planner::utils::parking_departure::calcFeasibleDecelDistance(
       planner_data_, parameters_->maximum_deceleration_for_stop, parameters_->maximum_jerk_for_stop,
       0.0);
   debug_data_.estimated_stop_pose.reset();  // debug
@@ -500,7 +500,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
     // Check backwards just in case the Vehicle behind ego is in a different lanelet
     constexpr double backwards_length = 200.0;
     const auto prev_lanes = behavior_path_planner::utils::getBackwardLanelets(
-      *route_handler, target_lanes, current_pose, backwards_length);
+      *route_handler, target_lanes, ego_pose, backwards_length);
     // return all the relevant lanelets
     lanelet::ConstLanelets relevant_lanelets{closest_lanelet_const};
     relevant_lanelets.insert(relevant_lanelets.end(), prev_lanes.begin(), prev_lanes.end());
@@ -527,7 +527,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
       target_objects_on_lane.on_current_lane.begin(), target_objects_on_lane.on_current_lane.end(),
       [&](const auto & o) {
         const auto arc_length = motion_utils::calcSignedArcLength(
-          centerline_path.points, current_pose.position, o.initial_pose.pose.position);
+          centerline_path.points, ego_pose.position, o.initial_pose.pose.position);
         if (arc_length > 0.0) return;
         if (std::abs(arc_length) >= std::abs(arc_length_to_closet_object)) return;
         arc_length_to_closet_object = arc_length;

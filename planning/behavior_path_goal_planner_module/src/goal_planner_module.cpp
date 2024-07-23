@@ -276,7 +276,7 @@ void GoalPlannerModule::onTimer()
       // calculate absolute maximum curvature of parking path(start pose to end pose) for path
       // priority
       const std::vector<double> curvatures =
-        autoware::motion_utils::calcCurvature(pull_over_path->getParkingPath().points);
+        motion_utils::calcCurvature(pull_over_path->getParkingPath().points);
       pull_over_path->max_curvature = std::abs(*std::max_element(
         curvatures.begin(), curvatures.end(),
         [](const double & a, const double & b) { return std::abs(a) < std::abs(b); }));
