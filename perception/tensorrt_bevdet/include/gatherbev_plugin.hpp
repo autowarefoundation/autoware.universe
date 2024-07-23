@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef GATHERBEV_PLUGIN_HPP_
+#define GATHERBEV_PLUGIN_HPP_
 
 #include <NvInfer.h>
 #include <unistd.h>
@@ -115,3 +117,4 @@ public:
 };
 
 }  // namespace nvinfer1
+#endif  //GATHERBEV_PLUGIN_HPP_

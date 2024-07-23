@@ -21,8 +21,12 @@
   <arg name="input/camera7/image"/>
   <arg name="input/camera7/info"/>
   <arg name="number_of_cameras"/>
-  <arg name="bev_detection_model" default="bevdet" description="options: `bevdet`"/>
 
+  <!-- Model parameters -->
+  <arg name="bev_detection_model" default="bevdet" description="options: `bevdet`"/>
+  <arg name="data_path" default="$(env HOME)/autoware_data/tensorrt_bevdet" description="packages data and artifacts directory path"/>
+  <arg name="onnx_file" default="$(var data_path)/bevdet_one_lt_d.onnx" description="onnx model file path"/>
+  <arg name="engine_file" default="$(var data_path)/bevdet_one_lt_d.engine" description="engine model file path"/>
   <!-- BEVDet -->
   <group if="$(eval &quot;'$(var bev_detection_model)'=='bevdet'&quot;)">
     <push-ros-namespace namespace="bevdet"/>
@@ -36,7 +40,10 @@
         <arg name="input/img_b" value="$(var input/camera4/image)"/>
         <arg name="input/img_br" value="$(var input/camera5/image)"/>
         <arg name="output/pointcloud" value="points_painting"/>
-        <arg name="output/pointcboxesloud" value="boxes"/>
+        <arg name="output/boxes" value="boxes"/>
+        <arg name="data_path" value="$(var data_path)/"/>
+        <arg name="onnx_file" value="$(var onnx_file)"/>
+        <arg name="engine_file" value="$(var engine_file)"/>
       </include>
     </group>
   </group>

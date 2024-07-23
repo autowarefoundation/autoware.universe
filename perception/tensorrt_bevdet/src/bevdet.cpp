@@ -1,3 +1,16 @@
+// Copyright 2024 TIER IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #include "bevdet.hpp"
 
 #include "alignbev_plugin.hpp"
@@ -164,7 +177,7 @@ void BEVDet::InitParams(const std::string & config_file)
   std::vector<std::vector<float>> nms_factor_temp =
     model_config["test_cfg"]["nms_rescale_factor"].as<std::vector<std::vector<float>>>();
   nms_rescale_factor.clear();
-  for (auto task_factors : nms_factor_temp) {
+  for (const auto& task_factors : nms_factor_temp) {
     for (float factor : task_factors) {
       nms_rescale_factor.push_back(factor);
     }

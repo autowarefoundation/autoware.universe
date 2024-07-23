@@ -11,8 +11,9 @@
   <arg name="output/pointcloud" default="points_painting"/>
   <arg name="output/boxes" default="boxes"/>
 
-  <arg name="onnx_file" default="$(find-pkg-share tensorrt_bevdet)/data/bevdet_one_lt_d.onnx"/>
-  <arg name="engine_file" default="$(find-pkg-share tensorrt_bevdet)/data/bevdet_one_lt_d.engine"/>
+  <arg name="data_path" default="$(env HOME)/autoware_data/tensorrt_bevdet"/>
+  <arg name="onnx_file" default="$(var data_path)/bevdet_one_lt_d.onnx"/>
+  <arg name="engine_file" default="$(var data_path)/bevdet_one_lt_d.engine"/>
   <arg name="cam_config" default="$(find-pkg-share tensorrt_bevdet)/config/cams_param.yaml"/>
   <arg name="model_config" default="$(find-pkg-share tensorrt_bevdet)/config/bevdet_r50_4dlongterm_depth.yaml"/>
   <arg name="param_file" default="$(find-pkg-share tensorrt_bevdet)/config/bevdet.param.yaml"/>
