@@ -236,7 +236,7 @@ float TrafficLightFineDetectorNode::evalMatchScore(
 }
 
 void TrafficLightFineDetectorNode::detectionMatch(
-  const std::map<int, TrafficLightRoi> & id2expectRoi,
+  std::map<int, TrafficLightRoi> & id2expectRoi,  // cppcheck-suppress constParameterReference
   std::map<int, tensorrt_yolox::ObjectArray> & id2detections, TrafficLightRoiArray & out_rois)
 {
   float max_score = 0.0f;
