@@ -23,7 +23,9 @@
 namespace autoware::motion::control::pid_longitudinal_controller
 {
 PIDController::PIDController()
-: m_prev_error(0.0),
+: m_virtual_displacement_error(0.0),
+  m_virtual_displacement_error_integral(0.0),
+  m_prev_error(0.0),
   m_is_gains_set(false),
   m_is_limits_set(false)
 {
@@ -39,16 +41,14 @@ double PIDController::calculate(
 
   const auto & p = m_params;
 
-  static double virtual_displacement_error {0.0};
-  virtual_displacement_error += error * dt ;
+  m_virtual_displacement_error += error * dt ;
 
-  double ret_p = p.kp * virtual_displacement_error;
+  double ret_p = p.kp * m_virtual_displacement_error;
   ret_p = std::min(std::max(ret_p, p.min_ret_p), p.max_ret_p);
 
-  static double virtual_displacement_error_integral {0.0};
-  virtual_displacement_error_integral += virtual_displacement_error * dt;
+  m_virtual_displacement_error_integral += m_virtual_displacement_error * dt;
 
-  const double ret_i = std::min(std::max(p.ki *virtual_displacement_error_integral, p.min_ret_i), p.max_ret_i);
+  const double ret_i = std::min(std::max(p.ki * m_virtual_displacement_error_integral, p.min_ret_i), p.max_ret_i);
 
   double ret_d = p.kd * error;
   ret_d = std::min(std::max(ret_d, p.min_ret_d), p.max_ret_d);
