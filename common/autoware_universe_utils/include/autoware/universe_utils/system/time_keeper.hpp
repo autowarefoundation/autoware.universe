@@ -17,13 +17,10 @@
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
 #include <rclcpp/publisher.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 #include <std_msgs/msg/string.hpp>
 #include <tier4_debug_msgs/msg/processing_time_node.hpp>
 #include <tier4_debug_msgs/msg/processing_time_tree.hpp>
-
-#include <fmt/format.h>
 
 #include <memory>
 #include <ostream>
@@ -90,6 +87,13 @@ public:
   void set_time(const double processing_time);
 
   /**
+   * @brief Set the comment for the node
+   *
+   * @param comment Comment to be set
+   */
+  void set_comment(const std::string & comment);
+
+  /**
    * @brief Get the name of the node
    *
    * @return std::string Name of the node
@@ -99,6 +103,7 @@ public:
 private:
   const std::string name_;                                    //!< Name of the node
   double processing_time_{0.0};                               //!< Processing time of the node
+  std::string comment_;                                       //!< Comment for the node
   std::shared_ptr<ProcessingTimeNode> parent_node_{nullptr};  //!< Shared pointer to the parent node
   std::vector<std::shared_ptr<ProcessingTimeNode>>
     child_nodes_;  //!< Vector of shared pointers to the child nodes
@@ -135,14 +140,6 @@ public:
   void add_reporter(rclcpp::Publisher<ProcessingTimeDetail>::SharedPtr publisher);
 
   /**
-   * @brief Add a reporter to publish processing times to an rclcpp publisher with
-   * std_msgs::msg::String
-   *
-   * @param publisher Shared pointer to the rclcpp publisher
-   */
-  void add_reporter(rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher);
-
-  /**
    * @brief Start tracking the processing time of a function
    *
    * @param func_name Name of the function to be tracked
@@ -155,6 +152,13 @@ public:
    * @param func_name Name of the function to end tracking
    */
   void end_track(const std::string & func_name);
+
+  /**
+   * @brief Comment the current time node
+   *
+   * @param comment Comment to be added to the current time node
+   */
+  void comment(const std::string & comment);
 
 private:
   /**
@@ -186,6 +190,11 @@ public:
    * @param time_keeper Reference to the TimeKeeper object
    */
   ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keeper);
+
+  ScopedTimeTrack(const ScopedTimeTrack &) = delete;
+  ScopedTimeTrack & operator=(const ScopedTimeTrack &) = delete;
+  ScopedTimeTrack(ScopedTimeTrack &&) = delete;
+  ScopedTimeTrack & operator=(ScopedTimeTrack &&) = delete;
 
   /**
    * @brief Destroy the ScopedTimeTrack object, ending the tracking of the function

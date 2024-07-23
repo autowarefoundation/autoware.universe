@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "image_projection_based_fusion/pointpainting_fusion/pointcloud_densification.hpp"
+#include "autoware/image_projection_based_fusion/pointpainting_fusion/pointcloud_densification.hpp"
 
 #include <pcl_ros/transforms.hpp>
 
@@ -54,9 +54,10 @@ Eigen::Affine3f transformToEigen(const geometry_msgs::msg::Transform & t)
 
 }  // namespace
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
-PointCloudDensification::PointCloudDensification(const centerpoint::DensificationParam & param)
+PointCloudDensification::PointCloudDensification(
+  const autoware::lidar_centerpoint::DensificationParam & param)
 : param_(param)
 {
 }
@@ -100,4 +101,4 @@ void PointCloudDensification::dequeue()
   }
 }
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion

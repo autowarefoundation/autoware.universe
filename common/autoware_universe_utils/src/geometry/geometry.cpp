@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2023-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
+
+#include "autoware/universe_utils/geometry/gjk_2d.hpp"
 
 #include <Eigen/Geometry>
 
@@ -225,7 +227,7 @@ geometry_msgs::msg::Pose transformPose(
 }
 
 geometry_msgs::msg::Pose transformPose(
-  const geometry_msgs::msg::Pose & pose, geometry_msgs::msg::Transform & transform)
+  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Transform & transform)
 {
   geometry_msgs::msg::TransformStamped transform_stamped;
   transform_stamped.transform = transform;
@@ -381,6 +383,11 @@ std::optional<geometry_msgs::msg::Point> intersect(
   intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
   intersect_point.z = t * p1.z + (1.0 - t) * p2.z;
   return intersect_point;
+}
+
+bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
+{
+  return gjk::intersects(convex_polygon1, convex_polygon2);
 }
 
 }  // namespace autoware::universe_utils
