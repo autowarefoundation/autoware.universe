@@ -281,7 +281,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
       const auto ref_traj_length = autoware::motion_utils::calcSignedArcLength(
         planner_data.traj_points, 0, planner_data.traj_points.size() - 1);
       if (dist_to_collide_on_ref_traj > ref_traj_length) {
-        return longitudinal_info_.terminal_safe_distance_margin;
+        return longitudinal_info_.terminal_stop_safe_distance_margin;
       }
 
       // If behavior stop point is ahead of the closest_obstacle_stop point within a certain
@@ -444,7 +444,7 @@ double PlannerInterface::calculateMarginFromObstacleOnCurve(
   const PlannerData & planner_data, const StopObstacle & stop_obstacle) const
 {
   if (!enable_approaching_on_curve_ || use_pointcloud_) {
-    return longitudinal_info_.safe_distance_margin;
+    return longitudinal_info_.stop_safe_distance_margin;
   }
 
   const double abs_ego_offset = planner_data.is_driving_forward
@@ -461,7 +461,7 @@ double PlannerInterface::calculateMarginFromObstacleOnCurve(
 
     if (
       1 < short_traj_points.size() &&
-      longitudinal_info_.safe_distance_margin + abs_ego_offset < sum_short_traj_length) {
+      longitudinal_info_.stop_safe_distance_margin + abs_ego_offset < sum_short_traj_length) {
       break;
     }
     sum_short_traj_length += autoware::universe_utils::calcDistance2d(
@@ -469,14 +469,14 @@ double PlannerInterface::calculateMarginFromObstacleOnCurve(
   }
   std::reverse(short_traj_points.begin(), short_traj_points.end());
   if (short_traj_points.size() < 2) {
-    return longitudinal_info_.safe_distance_margin;
+    return longitudinal_info_.stop_safe_distance_margin;
   }
 
   // calculate collision index between straight line from ego pose and object
   const auto calculate_distance_from_straight_ego_path =
     [&](const auto & ego_pose, const auto & object_polygon) {
       const auto forward_ego_pose = autoware::universe_utils::calcOffsetPose(
-        ego_pose, longitudinal_info_.safe_distance_margin + 3.0, 0.0, 0.0);
+        ego_pose, longitudinal_info_.stop_safe_distance_margin + 3.0, 0.0, 0.0);
       const auto ego_straight_segment = autoware::universe_utils::Segment2d{
         convertPoint(ego_pose.position), convertPoint(forward_ego_pose.position)};
       return boost::geometry::distance(ego_straight_segment, object_polygon);
@@ -498,7 +498,7 @@ double PlannerInterface::calculateMarginFromObstacleOnCurve(
     return min_safe_distance_margin_on_curve_;
   }
   if (*collision_idx == 0) {
-    return longitudinal_info_.safe_distance_margin;
+    return longitudinal_info_.stop_safe_distance_margin;
   }
 
   // calculate margin from obstacle
@@ -521,7 +521,7 @@ double PlannerInterface::calculateMarginFromObstacleOnCurve(
     abs_ego_offset + additional_safe_distance_margin_on_curve_;
 
   return std::min(
-    longitudinal_info_.safe_distance_margin,
+    longitudinal_info_.stop_safe_distance_margin,
     std::max(min_safe_distance_margin_on_curve_, short_margin_from_obstacle));
 }
 

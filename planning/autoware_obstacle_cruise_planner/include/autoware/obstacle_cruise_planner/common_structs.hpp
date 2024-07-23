@@ -208,9 +208,10 @@ struct LongitudinalInfo
     min_ego_accel_for_rss = node.declare_parameter<double>("common.min_ego_accel_for_rss");
     min_object_accel_for_rss = node.declare_parameter<double>("common.min_object_accel_for_rss");
 
-    safe_distance_margin = node.declare_parameter<double>("common.safe_distance_margin");
-    terminal_safe_distance_margin =
-      node.declare_parameter<double>("common.terminal_safe_distance_margin");
+    cruise_safe_distance_margin = node.declare_parameter<double>("common.cruise_safe_distance_margin");
+    stop_safe_distance_margin = node.declare_parameter<double>("common.stop_safe_distance_margin");
+    terminal_stop_safe_distance_margin =
+      node.declare_parameter<double>("common.terminal_stop_safe_distance_margin");
 
     hold_stop_velocity_threshold =
       node.declare_parameter<double>("common.hold_stop_velocity_threshold");
@@ -240,9 +241,12 @@ struct LongitudinalInfo
       parameters, "common.min_object_accel_for_rss", min_object_accel_for_rss);
 
     autoware::universe_utils::updateParam<double>(
-      parameters, "common.safe_distance_margin", safe_distance_margin);
+      parameters, "common.cruise_safe_distance_margin", cruise_safe_distance_margin);
+
     autoware::universe_utils::updateParam<double>(
-      parameters, "common.terminal_safe_distance_margin", terminal_safe_distance_margin);
+      parameters, "common.stop_safe_distance_margin", stop_safe_distance_margin);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "common.terminal_stop_safe_distance_margin", terminal_stop_safe_distance_margin);
 
     autoware::universe_utils::updateParam<double>(
       parameters, "common.hold_stop_velocity_threshold", hold_stop_velocity_threshold);
@@ -268,8 +272,9 @@ struct LongitudinalInfo
   double min_object_accel_for_rss;
 
   // distance margin
-  double safe_distance_margin;
-  double terminal_safe_distance_margin;
+  double cruise_safe_distance_margin;
+  double stop_safe_distance_margin;
+  double terminal_stop_safe_distance_margin;
 
   // hold stop
   double hold_stop_velocity_threshold;

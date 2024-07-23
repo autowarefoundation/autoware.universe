@@ -434,7 +434,7 @@ std::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
     const double obj_vel = std::abs(obj.velocity);
     const double rss_dist = calcRSSDistance(planner_data.ego_vel, obj_vel);
 
-    const auto & safe_distance_margin = longitudinal_info_.safe_distance_margin;
+    const auto & safe_distance_margin = longitudinal_info_.stop_safe_distance_margin;
     const double ego_obj_length = autoware::motion_utils::calcSignedArcLength(
       stop_traj_points, planner_data.ego_pose.position, obj.collision_points.front().point);
     const double slow_down_point_length = ego_obj_length - (rss_dist + safe_distance_margin);
@@ -477,7 +477,7 @@ std::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
 
   const bool onEgoTrajectory =
     checkOnTrajectory(planner_data, stop_traj_points, object.collision_points.front());
-  const auto & safe_distance_margin = longitudinal_info_.safe_distance_margin;
+  const auto & safe_distance_margin = longitudinal_info_.stop_safe_distance_margin;
 
   // If the object is on the current ego trajectory,
   // we assume the object travels along ego trajectory
