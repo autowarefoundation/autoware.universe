@@ -32,7 +32,7 @@ PIDController::PIDController()
 }
 
 double PIDController::calculate(
-  const double error, const double dt,
+  const double error, const double dt, const bool erase_integration,
   std::vector<double> & pid_contributions)
 {
   if (!m_is_gains_set || !m_is_limits_set) {
@@ -41,12 +41,12 @@ double PIDController::calculate(
 
   const auto & p = m_params;
 
-  m_virtual_displacement_error += error * dt ;
+  m_virtual_displacement_error = erase_integration? 0.0 : m_virtual_displacement_error + error * dt ;
 
   double ret_p = p.kp * m_virtual_displacement_error;
   ret_p = std::min(std::max(ret_p, p.min_ret_p), p.max_ret_p);
 
-  m_virtual_displacement_error_integral += m_virtual_displacement_error * dt;
+  m_virtual_displacement_error_integral = erase_integration? 0.0 : m_virtual_displacement_error_integral + m_virtual_displacement_error * dt;
 
   const double ret_i = std::min(std::max(p.ki * m_virtual_displacement_error_integral, p.min_ret_i), p.max_ret_i);
 
