@@ -2,11 +2,9 @@
 
 checkersReport
 constParameterReference
-constVariableReference
 funcArgNamesDifferent
 functionConst
 functionStatic
-invalidPointerCast
 knownConditionTrueFalse
 missingInclude
 missingIncludeSystem
