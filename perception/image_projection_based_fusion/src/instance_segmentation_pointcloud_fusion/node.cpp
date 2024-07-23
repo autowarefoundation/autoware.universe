@@ -142,7 +142,8 @@ void InstanceSegmentationPointCloudFusionNode::fuseOnSingleImage(
                            projected_point.y() > 0 && projected_point.y() < camera_info.height;
     if (!is_inside_image) {
       copyPointCloud(
-        input_pointcloud_msg, point_step, global_offset, output_pointcloud_msg, output_pointcloud_size);
+        input_pointcloud_msg, point_step, global_offset, output_pointcloud_msg,
+        output_pointcloud_size);
       continue;
     }
 

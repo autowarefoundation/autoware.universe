@@ -24,8 +24,8 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
-#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <tier4_perception_msgs/msg/detected_object_with_mask.hpp>
+#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_mask.hpp>
 
 #include <message_filters/pass_through.h>
@@ -54,8 +54,8 @@ using sensor_msgs::msg::CameraInfo;
 using sensor_msgs::msg::Image;
 using sensor_msgs::msg::PointCloud2;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
-using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectsWithMask;
+using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithMask;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 using autoware_perception_msgs::msg::ObjectClassification;
