@@ -15,6 +15,8 @@
 
   <exec_depend>autoware_cluster_merger</exec_depend>
   <exec_depend>autoware_crosswalk_traffic_light_estimator</exec_depend>
+  <exec_depend>autoware_detected_object_feature_remover</exec_depend>
+  <exec_depend>autoware_detected_object_validation</exec_depend>
   <exec_depend>autoware_detection_by_tracker</exec_depend>
   <exec_depend>autoware_euclidean_cluster</exec_depend>
   <exec_depend>autoware_ground_segmentation</exec_depend>
@@ -31,8 +33,6 @@
   <exec_depend>autoware_raindrop_cluster_filter</exec_depend>
   <exec_depend>autoware_tracking_object_merger</exec_depend>
   <exec_depend>compare_map_segmentation</exec_depend>
-  <exec_depend>detected_object_feature_remover</exec_depend>
-  <exec_depend>detected_object_validation</exec_depend>
   <exec_depend>elevation_map_loader</exec_depend>
   <exec_depend>image_projection_based_fusion</exec_depend>
   <exec_depend>image_transport_decompressor</exec_depend>
