@@ -191,9 +191,9 @@ void EKFLocalizer::timer_callback()
         // measurement pose delay
         const double delay_time =
           (current_time - pose->header.stamp).seconds() + params_.pose_additional_delay;
-        auto pose_with_delay =
+        auto pose_with_rph_delay_compensation =
           ekf_module_->compensate_roll_pitch_height_with_delay(*pose, delay_time);
-        update_simple_1d_filters(pose_with_delay, params_.pose_smoothing_steps);
+        update_simple_1d_filters(pose_with_rph_delay_compensation, params_.pose_smoothing_steps);
       }
     }
     DEBUG_INFO(
