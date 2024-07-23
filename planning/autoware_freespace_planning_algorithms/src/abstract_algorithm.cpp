@@ -38,15 +38,15 @@ geometry_msgs::msg::Pose transformPose(
 int discretizeAngle(const double theta, const int theta_size)
 {
   const double angle_resolution = 2.0 * M_PI / theta_size;
-  return static_cast<int>(std::rint(normalizeRadian(theta, 0.0) / angle_resolution)) % theta_size;
+  return static_cast<int>(std::round(normalizeRadian(theta, 0.0) / angle_resolution)) % theta_size;
 }
 
 IndexXYT pose2index(
   const nav_msgs::msg::OccupancyGrid & costmap, const geometry_msgs::msg::Pose & pose_local,
   const int theta_size)
 {
-  const int index_x = std::rint(pose_local.position.x / costmap.info.resolution);
-  const int index_y = std::rint(pose_local.position.y / costmap.info.resolution);
+  const int index_x = std::round(pose_local.position.x / costmap.info.resolution);
+  const int index_y = std::round(pose_local.position.y / costmap.info.resolution);
   const int index_theta = discretizeAngle(tf2::getYaw(pose_local.orientation), theta_size);
   return {index_x, index_y, index_theta};
 }
