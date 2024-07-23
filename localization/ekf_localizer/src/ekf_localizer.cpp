@@ -190,7 +190,7 @@ void EKFLocalizer::timer_callback()
         // Update Simple 1D filter with considering change of z value due to measurement pose delay
         const double delay_time =
           (current_time - pose->header.stamp).seconds() + params_.pose_additional_delay;
-        auto pose_with_delay = ekf_module_->compensate_pose_with_delay(*pose, delay_time);
+        auto pose_with_delay = ekf_module_->compensate_roll_pitch_height_with_delay(*pose, delay_time);
         update_simple_1d_filters(pose_with_delay, params_.pose_smoothing_steps);
       }
     }

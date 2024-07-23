@@ -77,7 +77,7 @@ public:
   bool measurement_update_twist(
     const TwistWithCovariance & twist, const rclcpp::Time & t_curr,
     EKFDiagnosticInfo & twist_diag_info);
-  geometry_msgs::msg::PoseWithCovarianceStamped compensate_pose_with_delay(
+  geometry_msgs::msg::PoseWithCovarianceStamped compensate_roll_pitch_height_with_delay(
     const PoseWithCovariance & pose, const double delay_time);
 
 private:
