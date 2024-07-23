@@ -111,7 +111,7 @@ public:
     std::string * tf_map_input_frame, std::mutex * mutex);
 
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
-  bool is_close_to_neighbor_voxels(
+  static bool is_close_to_neighbor_voxels(
     const pcl::PointXYZ & point, const double distance_threshold, VoxelGridPointXYZ & voxel,
     pcl::search::Search<pcl::PointXYZ>::Ptr tree) const;
   bool is_close_to_neighbor_voxels(
@@ -122,7 +122,7 @@ public:
     const double distance_threshold, const PointCloudPtr & map, VoxelGridPointXYZ & voxel) const;
 
   void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
-  bool is_close_points(
+  static bool is_close_points(
     const pcl::PointXYZ point, const pcl::PointXYZ target_point,
     const double distance_threshold) const;
   std::string * tf_map_input_frame_;
