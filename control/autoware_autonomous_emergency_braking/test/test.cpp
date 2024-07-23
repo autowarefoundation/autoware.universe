@@ -21,9 +21,11 @@
 #include <rclcpp/time.hpp>
 
 #include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
+#include <geometry_msgs/msg/detail/pose__struct.hpp>
 
 #include <gtest/gtest.h>
 #include <pcl/memory.h>
+#include <tf2/LinearMath/Transform.h>
 
 #include <memory>
 #include <thread>
@@ -221,6 +223,28 @@ TEST_F(TestAEB, checkConvertObjectToPolygon)
   obj_box.kinematics.initial_pose_with_covariance.pose = obj_box_pose;
   const auto box_polygon = utils::convertObjToPolygon(obj_box);
   ASSERT_FALSE(box_polygon.outer().empty());
+
+  geometry_msgs::msg::TransformStamped tf_stamped;
+  geometry_msgs::msg::Transform transform;
+
+  constexpr double yaw{0.0};
+  transform.rotation = autoware::universe_utils::createQuaternionFromYaw(yaw);
+  geometry_msgs::msg::Vector3 translation;
+  translation.x = 1.0;
+  translation.y = 0.0;
+  translation.z = 0.0;
+  transform.translation = translation;
+  tf_stamped.set__transform(transform);
+  const auto t_obj_box = utils::transformObjectFrame(obj_box, tf_stamped);
+  const auto t_pose = t_obj_box.kinematics.initial_pose_with_covariance.pose;
+  Pose expected_pose;
+  expected_pose.position.x = obj_box_pose.position.x + translation.x;
+  expected_pose.position.y = obj_box_pose.position.y + translation.y;
+  expected_pose.position.z = obj_box_pose.position.z + translation.z;
+
+  ASSERT_DOUBLE_EQ(expected_pose.position.x, t_pose.position.x);
+  ASSERT_DOUBLE_EQ(expected_pose.position.y, t_pose.position.y);
+  ASSERT_DOUBLE_EQ(expected_pose.position.z, t_pose.position.z);
 }
 
 TEST_F(TestAEB, CollisionDataKeeper)
@@ -263,6 +287,43 @@ TEST_F(TestAEB, CollisionDataKeeper)
 }
 
 TEST_F(TestAEB, TestCropPointCLoud)
+{
+  constexpr double longitudinal_velocity = 3.0;
+  constexpr double yaw_rate = 0.05;
+  const auto imu_path = aeb_node_->generateEgoPath(longitudinal_velocity, yaw_rate);
+  ASSERT_FALSE(imu_path.empty());
+
+  constexpr size_t n_points{15};
+  // include points within path
+  pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr =
+    pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  {
+    const double x_start{0.0};
+    const double y_start{0.0};
+
+    for (size_t i = 0; i < n_points; ++i) {
+      pcl::PointXYZ p1(
+        x_start + static_cast<double>(i / 100.0), y_start - static_cast<double>(i / 100.0), 0.5);
+      pcl::PointXYZ p2(
+        x_start + static_cast<double>((i + 10) / 100.0), y_start - static_cast<double>(i / 100.0),
+        0.5);
+      obstacle_points_ptr->push_back(p1);
+      obstacle_points_ptr->push_back(p2);
+    }
+    pcl::PointXYZ p_out(x_start + 100.0, y_start + 100, 0.5);
+    obstacle_points_ptr->push_back(p_out);
+  }
+  aeb_node_->obstacle_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
+  pcl::toROSMsg(*obstacle_points_ptr, *aeb_node_->obstacle_ros_pointcloud_ptr_);
+  const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects =
+    pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  aeb_node_->cropPointCloudWithEgoFootprintPath(footprint, filtered_objects);
+  ASSERT_TRUE(filtered_objects->points.size() == 2 * n_points);
+}
+
+TEST_F(TestAEB, TestTransformObjectFrame)
 {
   constexpr double longitudinal_velocity = 3.0;
   constexpr double yaw_rate = 0.05;
