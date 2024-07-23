@@ -288,17 +288,17 @@ geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_roll_pitch_h
   const PoseWithCovariance & pose, const double delay_time)
 {
   const auto rpy = autoware::universe_utils::getRPY(pose.pose.pose.orientation);
-  const double dz_delay = kalman_filter_.getXelement(IDX::VX) * delay_time * std::sin(-rpy.y);
+  const double delta_z = kalman_filter_.getXelement(IDX::VX) * delay_time * std::sin(-rpy.y);
+  const double delta_roll = roll_rate_ * delay_time;
+  const double delta_pitch = pitch_rate_ * delay_time;
+
   PoseWithCovariance pose_with_delay;
   pose_with_delay = pose;
-  pose_with_delay.pose.pose.position.z += dz_delay;
-
-  const double roll_delay = roll_rate_ * delay_time;
-  const double pitch_delay = pitch_rate_ * delay_time;
-  const double new_roll = rpy.x + roll_delay;
-  const double new_pitch = rpy.y + pitch_delay;
+  pose_with_delay.pose.pose.position.z += delta_z;
+  const double corrected_roll = rpy.x + delta_roll;
+  const double corrected_pitch = rpy.y + delta_pitch;
   tf2::Quaternion quat;
-  quat.setRPY(new_roll, new_pitch, rpy.z);
+  quat.setRPY(corrected_roll, corrected_pitch, rpy.z);
   quat.normalize();
   pose_with_delay.pose.pose.orientation = tf2::toMsg(quat);
 
