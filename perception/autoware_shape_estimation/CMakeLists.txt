@@ -54,7 +54,7 @@ target_include_directories(${PROJECT_NAME}
 ament_target_dependencies(${PROJECT_NAME} ${SHAPE_ESTIMATION_DEPENDENCIES})
 
 target_link_libraries(${PROJECT_NAME}
-  shape_estimation_lib
+  ${PROJECT_NAME}_lib
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
