@@ -140,7 +140,7 @@
 
   <!-- traffic_light_multi_camera_fusion -->
   <group>
-    <node pkg="traffic_light_multi_camera_fusion" exec="traffic_light_multi_camera_fusion_node" name="traffic_light_multi_camera_fusion" output="screen">
+    <node pkg="autoware_traffic_light_multi_camera_fusion" exec="traffic_light_multi_camera_fusion_node" name="traffic_light_multi_camera_fusion" output="screen">
       <param name="camera_namespaces" value="$(var all_camera_namespaces)"/>
       <param name="perform_group_fusion" value="true"/>
       <remap from="~/input/vector_map" to="/map/vector_map"/>
