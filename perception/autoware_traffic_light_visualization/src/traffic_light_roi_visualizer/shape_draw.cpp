@@ -24,8 +24,8 @@ void drawShape(
   bool flipVertically, int x_offset, int y_offset, double scale_factor)
 {
   std::string filepath =
-    ament_index_cpp::get_package_share_directory("traffic_light_visualization") + "/images/" +
-    filename;
+    ament_index_cpp::get_package_share_directory("autoware_traffic_light_visualization") +
+    "/images/" + filename;
   cv::Mat shapeImg = cv::imread(filepath, cv::IMREAD_UNCHANGED);
   if (shapeImg.empty()) {
     std::cerr << "Failed to load image: " << filepath << std::endl;

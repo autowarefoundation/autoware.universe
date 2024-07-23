@@ -177,6 +177,6 @@
 
   <!-- visualizer -->
   <group>
-    <include file="$(find-pkg-share traffic_light_visualization)/launch/traffic_light_map_visualizer.launch.xml"/>
+    <include file="$(find-pkg-share autoware_traffic_light_visualization)/launch/traffic_light_map_visualizer.launch.xml"/>
   </group>
 </launch>

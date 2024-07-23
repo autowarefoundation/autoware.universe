@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(traffic_light_visualization)
+project(autoware_traffic_light_visualization)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

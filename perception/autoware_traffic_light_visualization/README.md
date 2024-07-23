@@ -1,8 +1,8 @@
-# traffic_light_visualization
+# autoware_traffic_light_visualization
 
 ## Purpose
 
-The `traffic_light_visualization` is a package that includes two visualizing nodes:
+The `autoware_traffic_light_visualization` is a package that includes two visualizing nodes:
 
 - **traffic_light_map_visualizer** is a node that shows traffic lights color status and position on rviz as markers.
 - **traffic_light_roi_visualizer** is a node that draws the result of traffic light recognition nodes (traffic light status, position and classification probability) on the input image as shown in the following figure and publishes it.
