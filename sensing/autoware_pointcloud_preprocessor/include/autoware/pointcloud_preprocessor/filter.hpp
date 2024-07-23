@@ -52,6 +52,7 @@
 #ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__FILTER_HPP_
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__FILTER_HPP_
 
+#include "autoware/pointcloud_preprocessor/static_transform_buffer.hpp"
 #include "autoware/pointcloud_preprocessor/transform_info.hpp"
 
 #include <memory>
@@ -239,8 +240,7 @@ protected:
    * versus an exact one (false by default). */
   bool approximate_sync_ = false;
 
-  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+  std::shared_ptr<pointcloud_preprocessor::StaticTransformBuffer> static_tf_buffer_{nullptr};
 
   inline bool isValid(
     const PointCloud2ConstPtr & cloud, const std::string & /*topic_name*/ = "input")
@@ -288,10 +288,6 @@ private:
   bool calculate_transform_matrix(
     const std::string & target_frame, const sensor_msgs::msg::PointCloud2 & from,
     TransformInfo & transform_info /*output*/);
-
-  bool _calculate_transform_matrix(
-    const std::string & target_frame, const sensor_msgs::msg::PointCloud2 & from,
-    const tf2_ros::Buffer & tf_buffer, Eigen::Matrix4f & eigen_transform /*output*/);
 
   bool convert_output_costly(std::unique_ptr<PointCloud2> & output);
 
