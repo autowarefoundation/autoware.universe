@@ -1,14 +1,14 @@
 // Copyright (c) OpenMMLab. All rights reserved.
-#ifndef TRT_PLUGIN_HELPER_HPP
-#define TRT_PLUGIN_HELPER_HPP
+#ifndef TENSORRT_RTMDET__TRT_BATCHED_NMS__COMMON__TRT_PLUGIN_HELPER_HPP_
+#define TENSORRT_RTMDET__TRT_BATCHED_NMS__COMMON__TRT_PLUGIN_HELPER_HPP_
+#include "NvInferRuntime.h"
+
 #include <cudnn.h>
 
 #include <iostream>
 #include <stdexcept>
 
-#include "NvInferRuntime.h"
-
-cudnnStatus_t convert_trt2cudnn_dtype(nvinfer1::DataType trt_dtype, cudnnDataType_t* cudnn_dtype);
+cudnnStatus_t convert_trt2cudnn_dtype(nvinfer1::DataType trt_dtype, cudnnDataType_t * cudnn_dtype);
 
 // Enumerator for status
 typedef enum {
@@ -119,17 +119,20 @@ typedef enum {
 
 #endif
 
-namespace mmdeploy {
+namespace mmdeploy
+{
 
 const int MAXTENSORDIMS = 10;
 
-struct TensorDesc {
+struct TensorDesc
+{
   int shape[MAXTENSORDIMS];
   int stride[MAXTENSORDIMS];
   int dim;
 };
 
-inline unsigned int getElementSize(nvinfer1::DataType t) {
+inline unsigned int getElementSize(nvinfer1::DataType t)
+{
   switch (t) {
     case nvinfer1::DataType::kINT32:
       return 4;
@@ -147,9 +150,10 @@ inline unsigned int getElementSize(nvinfer1::DataType t) {
   return 0;
 }
 
-inline size_t getAlignedSize(size_t origin_size, size_t aligned_number = 16) {
+inline size_t getAlignedSize(size_t origin_size, size_t aligned_number = 16)
+{
   return size_t((origin_size + aligned_number - 1) / aligned_number) * aligned_number;
 }
 
 }  // namespace mmdeploy
-#endif  // TRT_PLUGIN_HELPER_HPP
+#endif  // TENSORRT_RTMDET__TRT_BATCHED_NMS__COMMON__TRT_PLUGIN_HELPER_HPP_

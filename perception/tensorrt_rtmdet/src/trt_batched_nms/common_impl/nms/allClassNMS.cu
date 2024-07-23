@@ -1,14 +1,15 @@
 // Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
 // modify from
 // https://github.com/NVIDIA/TensorRT/tree/master/plugin/batchedNMSPlugin
-#include <vector>
-
 #include "tensorrt_rtmdet/trt_batched_nms/common/nms/kernel.h"
+
+#include <vector>
 
 const static int BS = 512;
 
 template <typename T_BBOX>
-__device__ T_BBOX bboxSize(const Bbox<T_BBOX> &bbox, const bool normalized, T_BBOX offset) {
+__device__ T_BBOX bboxSize(const Bbox<T_BBOX> & bbox, const bool normalized, T_BBOX offset)
+{
   if (bbox.xmax < bbox.xmin || bbox.ymax < bbox.ymin) {
     // If bbox is invalid (e.g. xmax < xmin or ymax < ymin), return 0.
     return 0;
@@ -25,10 +26,12 @@ __device__ T_BBOX bboxSize(const Bbox<T_BBOX> &bbox, const bool normalized, T_BB
 }
 
 template <typename T_BBOX>
-__device__ void intersectBbox(const Bbox<T_BBOX> &bbox1, const Bbox<T_BBOX> &bbox2,
-                              Bbox<T_BBOX> *intersect_bbox) {
-  if (bbox2.xmin > bbox1.xmax || bbox2.xmax < bbox1.xmin || bbox2.ymin > bbox1.ymax ||
-      bbox2.ymax < bbox1.ymin) {
+__device__ void intersectBbox(
+  const Bbox<T_BBOX> & bbox1, const Bbox<T_BBOX> & bbox2, Bbox<T_BBOX> * intersect_bbox)
+{
+  if (
+    bbox2.xmin > bbox1.xmax || bbox2.xmax < bbox1.xmin || bbox2.ymin > bbox1.ymax ||
+    bbox2.ymax < bbox1.ymin) {
     // Return [0, 0, 0, 0] if there is no intersection.
     intersect_bbox->xmin = T_BBOX(0);
     intersect_bbox->ymin = T_BBOX(0);
@@ -43,8 +46,9 @@ __device__ void intersectBbox(const Bbox<T_BBOX> &bbox1, const Bbox<T_BBOX> &bbo
 }
 
 template <typename T_BBOX>
-__device__ float jaccardOverlap(const Bbox<T_BBOX> &bbox1, const Bbox<T_BBOX> &bbox2,
-                                const bool normalized, T_BBOX offset) {
+__device__ float jaccardOverlap(
+  const Bbox<T_BBOX> & bbox1, const Bbox<T_BBOX> & bbox2, const bool normalized, T_BBOX offset)
+{
   Bbox<T_BBOX> intersect_bbox;
   intersectBbox(bbox1, bbox2, &intersect_bbox);
   float intersect_width, intersect_height;
@@ -89,7 +93,7 @@ allClassNMS_kernel(const int num, const int num_classes, const int num_preds_per
     const int offset = i * num_classes * num_preds_per_class + blockIdx.x * num_preds_per_class;
     const int max_idx = offset + top_k;  // put top_k bboxes into NMS calculation
     const int bbox_idx_offset =
-        share_location ? (i * num_preds_per_class) : (i * num_classes * num_preds_per_class);
+      share_location ? (i * num_preds_per_class) : (i * num_classes * num_preds_per_class);
 
     // local thread data
     int loc_bboxIndex[TSIZE];
@@ -110,17 +114,17 @@ allClassNMS_kernel(const int num, const int num_classes, const int num_preds_per
         // if (loc_bboxIndex[t] != -1)
         {
           const int bbox_data_idx = share_location
-                                        ? (loc_bboxIndex[t] % num_preds_per_class + bbox_idx_offset)
-                                        : loc_bboxIndex[t];
+                                      ? (loc_bboxIndex[t] % num_preds_per_class + bbox_idx_offset)
+                                      : loc_bboxIndex[t];
 
           loc_bbox[t].xmin =
-              flipXY ? bbox_data[bbox_data_idx * 4 + 1] : bbox_data[bbox_data_idx * 4 + 0];
+            flipXY ? bbox_data[bbox_data_idx * 4 + 1] : bbox_data[bbox_data_idx * 4 + 0];
           loc_bbox[t].ymin =
-              flipXY ? bbox_data[bbox_data_idx * 4 + 0] : bbox_data[bbox_data_idx * 4 + 1];
+            flipXY ? bbox_data[bbox_data_idx * 4 + 0] : bbox_data[bbox_data_idx * 4 + 1];
           loc_bbox[t].xmax =
-              flipXY ? bbox_data[bbox_data_idx * 4 + 3] : bbox_data[bbox_data_idx * 4 + 2];
+            flipXY ? bbox_data[bbox_data_idx * 4 + 3] : bbox_data[bbox_data_idx * 4 + 2];
           loc_bbox[t].ymax =
-              flipXY ? bbox_data[bbox_data_idx * 4 + 2] : bbox_data[bbox_data_idx * 4 + 3];
+            flipXY ? bbox_data[bbox_data_idx * 4 + 2] : bbox_data[bbox_data_idx * 4 + 3];
           kept_bboxinfo_flag[cur_idx] = true;
         } else {
           kept_bboxinfo_flag[cur_idx] = false;
@@ -133,9 +137,8 @@ allClassNMS_kernel(const int num, const int num_classes, const int num_preds_per
     // filter out overlapped boxes with lower scores
     int ref_item_idx = offset;
     int ref_bbox_idx =
-        share_location
-            ? (beforeNMS_index_array[ref_item_idx] % num_preds_per_class + bbox_idx_offset)
-            : beforeNMS_index_array[ref_item_idx];
+      share_location ? (beforeNMS_index_array[ref_item_idx] % num_preds_per_class + bbox_idx_offset)
+                     : beforeNMS_index_array[ref_item_idx];
 
     while ((ref_bbox_idx != -1) && ref_item_idx < max_idx) {
       Bbox<T_BBOX> ref_bbox;
@@ -166,9 +169,9 @@ allClassNMS_kernel(const int num, const int num_classes, const int num_preds_per
       } while (ref_item_idx < max_idx && !kept_bboxinfo_flag[ref_item_idx - offset]);
 
       ref_bbox_idx =
-          share_location
-              ? (beforeNMS_index_array[ref_item_idx] % num_preds_per_class + bbox_idx_offset)
-              : beforeNMS_index_array[ref_item_idx];
+        share_location
+          ? (beforeNMS_index_array[ref_item_idx] % num_preds_per_class + bbox_idx_offset)
+          : beforeNMS_index_array[ref_item_idx];
     }
 
     // store data
@@ -183,7 +186,7 @@ allClassNMS_kernel(const int num, const int num_classes, const int num_preds_per
        */
       if (read_item_idx < max_idx) {
         afterNMS_scores[write_item_idx] =
-            kept_bboxinfo_flag[cur_idx] ? beforeNMS_scores[read_item_idx] : 0.0f;
+          kept_bboxinfo_flag[cur_idx] ? beforeNMS_scores[read_item_idx] : 0.0f;
         afterNMS_index_array[write_item_idx] = kept_bboxinfo_flag[cur_idx] ? loc_bboxIndex[t] : -1;
       }
     }
@@ -191,17 +194,18 @@ allClassNMS_kernel(const int num, const int num_classes, const int num_preds_per
 }
 
 template <typename T_SCORE, typename T_BBOX>
-pluginStatus_t allClassNMS_gpu(cudaStream_t stream, const int num, const int num_classes,
-                               const int num_preds_per_class, const int top_k,
-                               const float nms_threshold, const bool share_location,
-                               const bool isNormalized, void *bbox_data, void *beforeNMS_scores,
-                               void *beforeNMS_index_array, void *afterNMS_scores,
-                               void *afterNMS_index_array, bool flipXY = false) {
+pluginStatus_t allClassNMS_gpu(
+  cudaStream_t stream, const int num, const int num_classes, const int num_preds_per_class,
+  const int top_k, const float nms_threshold, const bool share_location, const bool isNormalized,
+  void * bbox_data, void * beforeNMS_scores, void * beforeNMS_index_array, void * afterNMS_scores,
+  void * afterNMS_index_array, bool flipXY = false)
+{
 #define P(tsize) allClassNMS_kernel<T_SCORE, T_BBOX, (tsize)>
 
-  void (*kernel[10])(const int, const int, const int, const int, const float, const bool,
-                     const bool, float *, T_SCORE *, int *, T_SCORE *, int *, bool) = {
-      P(1), P(2), P(3), P(4), P(5), P(6), P(7), P(8), P(9), P(10),
+  void (*kernel[10])(
+    const int, const int, const int, const int, const float, const bool, const bool, float *,
+    T_SCORE *, int *, T_SCORE *, int *, bool) = {
+    P(1), P(2), P(3), P(4), P(5), P(6), P(7), P(8), P(9), P(10),
   };
 
   const int GS = num_classes;
@@ -209,9 +213,9 @@ pluginStatus_t allClassNMS_gpu(cudaStream_t stream, const int num, const int num
 
   ASSERT(t_size <= 10);
   kernel[t_size - 1]<<<GS, BS, 0, stream>>>(
-      num, num_classes, num_preds_per_class, top_k, nms_threshold, share_location, isNormalized,
-      (T_BBOX *)bbox_data, (T_SCORE *)beforeNMS_scores, (int *)beforeNMS_index_array,
-      (T_SCORE *)afterNMS_scores, (int *)afterNMS_index_array, flipXY);
+    num, num_classes, num_preds_per_class, top_k, nms_threshold, share_location, isNormalized,
+    (T_BBOX *)bbox_data, (T_SCORE *)beforeNMS_scores, (int *)beforeNMS_index_array,
+    (T_SCORE *)afterNMS_scores, (int *)afterNMS_index_array, flipXY);
 
   cudaError_t code = cudaGetLastError();
   CUASSERT(code);
@@ -220,47 +224,52 @@ pluginStatus_t allClassNMS_gpu(cudaStream_t stream, const int num, const int num
 }
 
 // allClassNMS LAUNCH CONFIG
-typedef pluginStatus_t (*nmsFunc)(cudaStream_t, const int, const int, const int, const int,
-                                  const float, const bool, const bool, void *, void *, void *,
-                                  void *, void *, bool);
+typedef pluginStatus_t (*nmsFunc)(
+  cudaStream_t, const int, const int, const int, const int, const float, const bool, const bool,
+  void *, void *, void *, void *, void *, bool);
 
-struct nmsLaunchConfigSSD {
+struct nmsLaunchConfigSSD
+{
   DataType t_score;
   DataType t_bbox;
   nmsFunc function;
 
   nmsLaunchConfigSSD(DataType t_score, DataType t_bbox) : t_score(t_score), t_bbox(t_bbox) {}
   nmsLaunchConfigSSD(DataType t_score, DataType t_bbox, nmsFunc function)
-      : t_score(t_score), t_bbox(t_bbox), function(function) {}
-  bool operator==(const nmsLaunchConfigSSD &other) {
+  : t_score(t_score), t_bbox(t_bbox), function(function)
+  {
+  }
+  bool operator==(const nmsLaunchConfigSSD & other)
+  {
     return t_score == other.t_score && t_bbox == other.t_bbox;
   }
 };
 
 static std::vector<nmsLaunchConfigSSD> nmsFuncVec;
 
-bool nmsInit() {
+bool nmsInit()
+{
   nmsFuncVec.push_back(
-      nmsLaunchConfigSSD(DataType::kFLOAT, DataType::kFLOAT, allClassNMS_gpu<float, float>));
+    nmsLaunchConfigSSD(DataType::kFLOAT, DataType::kFLOAT, allClassNMS_gpu<float, float>));
   return true;
 }
 
 static bool initialized = nmsInit();
 
-pluginStatus_t allClassNMS(cudaStream_t stream, const int num, const int num_classes,
-                           const int num_preds_per_class, const int top_k,
-                           const float nms_threshold, const bool share_location,
-                           const bool isNormalized, const DataType DT_SCORE, const DataType DT_BBOX,
-                           void *bbox_data, void *beforeNMS_scores, void *beforeNMS_index_array,
-                           void *afterNMS_scores, void *afterNMS_index_array, bool flipXY) {
+pluginStatus_t allClassNMS(
+  cudaStream_t stream, const int num, const int num_classes, const int num_preds_per_class,
+  const int top_k, const float nms_threshold, const bool share_location, const bool isNormalized,
+  const DataType DT_SCORE, const DataType DT_BBOX, void * bbox_data, void * beforeNMS_scores,
+  void * beforeNMS_index_array, void * afterNMS_scores, void * afterNMS_index_array, bool flipXY)
+{
   nmsLaunchConfigSSD lc(DT_SCORE, DT_BBOX);
   for (unsigned i = 0; i < nmsFuncVec.size(); ++i) {
     if (lc == nmsFuncVec[i]) {
       DEBUG_PRINTF("all class nms kernel %d\n", i);
-      return nmsFuncVec[i].function(stream, num, num_classes, num_preds_per_class, top_k,
-                                    nms_threshold, share_location, isNormalized, bbox_data,
-                                    beforeNMS_scores, beforeNMS_index_array, afterNMS_scores,
-                                    afterNMS_index_array, flipXY);
+      return nmsFuncVec[i].function(
+        stream, num, num_classes, num_preds_per_class, top_k, nms_threshold, share_location,
+        isNormalized, bbox_data, beforeNMS_scores, beforeNMS_index_array, afterNMS_scores,
+        afterNMS_index_array, flipXY);
     }
   }
   return STATUS_BAD_PARAM;

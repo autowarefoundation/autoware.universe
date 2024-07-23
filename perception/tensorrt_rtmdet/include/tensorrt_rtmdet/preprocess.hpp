@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BUILD_PREPROCESS_HPP
-#define BUILD_PREPROCESS_HPP
+#ifndef TENSORRT_RTMDET__PREPROCESS_HPP_
+#define TENSORRT_RTMDET__PREPROCESS_HPP_
 
 #include <cublas_v2.h>
 #include <cuda.h>
@@ -23,13 +23,13 @@
 
 namespace tensorrt_rtmdet
 {
-    struct Roi
-    {
-        int x;
-        int y;
-        int w;
-        int h;
-    };
+struct Roi
+{
+  int x;
+  int y;
+  int w;
+  int h;
+};
 
 /**
  * @brief Resize a image using bilinear interpolation on gpus
@@ -43,9 +43,9 @@ namespace tensorrt_rtmdet
  * @param[in] s_c channel for input image
  * @param[in] stream cuda stream
  */
-    extern void resize_bilinear_gpu(
-            unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
-            cudaStream_t stream);
+extern void resize_bilinear_gpu(
+  unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
+  cudaStream_t stream);
 
 /**
  * @brief Letterbox a image on gpus
@@ -59,9 +59,9 @@ namespace tensorrt_rtmdet
  * @param[in] s_c channel for input image
  * @param[in] stream cuda stream
  */
-    extern void letterbox_gpu(
-            unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
-            cudaStream_t stream);
+extern void letterbox_gpu(
+  unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
+  cudaStream_t stream);
 
 /**
  * @brief NHWC to NHWC conversion
@@ -72,8 +72,8 @@ namespace tensorrt_rtmdet
  * @param[in] d_c channel for a image
  * @param[in] stream cuda stream
  */
-    extern void nchw_to_nhwc_gpu(
-            unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, cudaStream_t stream);
+extern void nchw_to_nhwc_gpu(
+  unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, cudaStream_t stream);
 
 /**
  * @brief Unsigned char to float32 for inference
@@ -84,8 +84,8 @@ namespace tensorrt_rtmdet
  * @param[in] d_c channel for a image
  * @param[in] stream cuda stream
  */
-    extern void to_float_gpu(
-            float * dst32, unsigned char * src, int d_w, int d_h, int d_c, cudaStream_t stream);
+extern void to_float_gpu(
+  float * dst32, unsigned char * src, int d_w, int d_h, int d_c, cudaStream_t stream);
 
 /**
  * @brief Resize and letterbox a image using bilinear interpolation on gpus
@@ -99,9 +99,9 @@ namespace tensorrt_rtmdet
  * @param[in] s_c channel for input
  * @param[in] stream cuda stream
  */
-    extern void resize_bilinear_letterbox_gpu(
-            unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
-            cudaStream_t stream);
+extern void resize_bilinear_letterbox_gpu(
+  unsigned char * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
+  cudaStream_t stream);
 
 /**
  * @brief Optimized preprocessing including resize, letterbox, nhwc2nchw, toFloat and normalization
@@ -117,9 +117,9 @@ namespace tensorrt_rtmdet
  * @param[in] norm normalization
  * @param[in] stream cuda stream
  */
-    extern void resize_bilinear_letterbox_nhwc_to_nchw32_gpu(
-            float * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
-            float norm, cudaStream_t stream);
+extern void resize_bilinear_letterbox_nhwc_to_nchw32_gpu(
+  float * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c,
+  float norm, cudaStream_t stream);
 
 /**
  * @brief Optimized preprocessing including resize, letterbox, nhwc2nchw, toFloat and normalization
@@ -136,9 +136,9 @@ namespace tensorrt_rtmdet
  * @param[in] norm normalization
  * @param[in] stream cuda stream
  */
-    extern void resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
-            float * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c, int batch,
-            float norm, cudaStream_t stream);
+extern void resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
+  float * dst, unsigned char * src, int d_w, int d_h, int d_c, int s_w, int s_h, int s_c, int batch,
+  float norm, cudaStream_t stream);
 
 /**
  * @brief Optimized preprocessing including crop, resize, letterbox, nhwc2nchw, toFloat and
@@ -156,9 +156,9 @@ namespace tensorrt_rtmdet
  * @param[in] norm normalization
  * @param[in] stream cuda stream
  */
-    extern void crop_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
-            float * dst, unsigned char * src, int d_w, int d_h, int d_c, Roi * d_roi, int s_w, int s_h,
-            int s_c, int batch, float norm, cudaStream_t stream);
+extern void crop_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
+  float * dst, unsigned char * src, int d_w, int d_h, int d_c, Roi * d_roi, int s_w, int s_h,
+  int s_c, int batch, float norm, cudaStream_t stream);
 
 /**
  * @brief Optimized multi-scale preprocessing including crop, resize, letterbox, nhwc2nchw, toFloat
@@ -176,9 +176,9 @@ namespace tensorrt_rtmdet
  * @param[in] norm normalization
  * @param[in] stream cuda stream
  */
-    extern void multi_scale_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
-            float * dst, unsigned char * src, int d_w, int d_h, int d_c, Roi * d_roi, int s_w, int s_h,
-            int s_c, int batch, float norm, cudaStream_t stream);
+extern void multi_scale_resize_bilinear_letterbox_nhwc_to_nchw32_batch_gpu(
+  float * dst, unsigned char * src, int d_w, int d_h, int d_c, Roi * d_roi, int s_w, int s_h,
+  int s_c, int batch, float norm, cudaStream_t stream);
 
 /**
  * @brief Argmax on GPU
@@ -192,9 +192,9 @@ namespace tensorrt_rtmdet
  * @param[in] batch batch size
  * @param[in] stream cuda stream
  */
-    extern void argmax_gpu(
-            unsigned char * dst, float * src, int d_w, int d_h, int s_w, int s_h, int s_c, int batch,
-            cudaStream_t stream);
+extern void argmax_gpu(
+  unsigned char * dst, float * src, int d_w, int d_h, int s_w, int s_h, int s_c, int batch,
+  cudaStream_t stream);
 }  // namespace tensorrt_rtmdet
 
-#endif //BUILD_PREPROCESS_HPP
+#endif  // TENSORRT_RTMDET__PREPROCESS_HPP_

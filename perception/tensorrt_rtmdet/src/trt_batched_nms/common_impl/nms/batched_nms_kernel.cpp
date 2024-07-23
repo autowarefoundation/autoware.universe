@@ -3,15 +3,15 @@
 // https://github.com/NVIDIA/TensorRT/tree/master/plugin/batchedNMSPlugin
 #include "tensorrt_rtmdet/trt_batched_nms/common/nms/batched_nms_kernel.hpp"
 
-pluginStatus_t nmsInference(cudaStream_t stream, const int N, const int perBatchBoxesSize,
-                            const int perBatchScoresSize, const bool shareLocation,
-                            const int backgroundLabelId, const int numPredsPerClass,
-                            const int numClasses, const int topK, const int keepTopK,
-                            const float scoreThreshold, const float iouThreshold,
-                            [[maybe_unused]] const DataType DT_BBOX, const void* locData, [[maybe_unused]] const DataType DT_SCORE,
-                            const void* confData, void* nmsedDets, void* nmsedLabels,
-                            void* nmsedIndex, void* workspace, bool isNormalized, bool confSigmoid,
-                            bool clipBoxes, bool rotated) {
+pluginStatus_t nmsInference(
+  cudaStream_t stream, const int N, const int perBatchBoxesSize, const int perBatchScoresSize,
+  const bool shareLocation, const int backgroundLabelId, const int numPredsPerClass,
+  const int numClasses, const int topK, const int keepTopK, const float scoreThreshold,
+  const float iouThreshold, [[maybe_unused]] const DataType DT_BBOX, const void * locData,
+  [[maybe_unused]] const DataType DT_SCORE, const void * confData, void * nmsedDets,
+  void * nmsedLabels, void * nmsedIndex, void * workspace, bool isNormalized, bool confSigmoid,
+  bool clipBoxes, bool rotated)
+{
   const int topKVal = topK < 0 ? numPredsPerClass : topK;
   const int keepTopKVal = keepTopK < 0 ? numPredsPerClass : keepTopK;
   // locCount = batch_size * number_boxes_per_sample * 4
@@ -26,7 +26,7 @@ pluginStatus_t nmsInference(cudaStream_t stream, const int N, const int perBatch
   const int numLocClasses = shareLocation ? 1 : numClasses;
 
   size_t bboxDataSize = detectionForwardBBoxDataSize(N, perBatchBoxesSize, DataType::kFLOAT);
-  void* bboxDataRaw = workspace;
+  void * bboxDataRaw = workspace;
   cudaMemcpyAsync(bboxDataRaw, locData, bboxDataSize, cudaMemcpyDeviceToDevice, stream);
   pluginStatus_t status;
 
@@ -35,10 +35,10 @@ pluginStatus_t nmsInference(cudaStream_t stream, const int N, const int perBatch
    * [batch size, numPriors (per sample), numLocClasses, 4]
    */
   // float for now
-  void* bboxData;
+  void * bboxData;
   size_t bboxPermuteSize =
-      detectionForwardBBoxPermuteSize(shareLocation, N, perBatchBoxesSize, DataType::kFLOAT);
-  void* bboxPermute = nextWorkspacePtr((int8_t*)bboxDataRaw, bboxDataSize);
+    detectionForwardBBoxPermuteSize(shareLocation, N, perBatchBoxesSize, DataType::kFLOAT);
+  void * bboxPermute = nextWorkspacePtr((int8_t *)bboxDataRaw, bboxDataSize);
 
   /*
    * After permutation, bboxData format:
@@ -46,8 +46,9 @@ pluginStatus_t nmsInference(cudaStream_t stream, const int N, const int perBatch
    * This is equivalent to swapping axis
    */
   if (!shareLocation) {
-    status = permuteData(stream, locCount, numLocClasses, numPredsPerClass, rotated ? 5 : 4,
-                         DataType::kFLOAT, false, bboxDataRaw, bboxPermute);
+    status = permuteData(
+      stream, locCount, numLocClasses, numPredsPerClass, rotated ? 5 : 4, DataType::kFLOAT, false,
+      bboxDataRaw, bboxPermute);
     ASSERT_FAILURE(status == STATUS_SUCCESS);
     bboxData = bboxPermute;
   }
@@ -65,30 +66,32 @@ pluginStatus_t nmsInference(cudaStream_t stream, const int N, const int perBatch
    */
   const int numScores = N * perBatchScoresSize;
   size_t totalScoresSize = detectionForwardPreNMSSize(N, perBatchScoresSize);
-  void* scores = nextWorkspacePtr((int8_t*)bboxPermute, bboxPermuteSize);
+  void * scores = nextWorkspacePtr((int8_t *)bboxPermute, bboxPermuteSize);
 
   // need a conf_scores
   /*
    * After permutation, bboxData format:
    * [batch_size, numClasses, numPredsPerClass, 1]
    */
-  status = permuteData(stream, numScores, numClasses, numPredsPerClass, 1, DataType::kFLOAT,
-                       confSigmoid, confData, scores);
+  status = permuteData(
+    stream, numScores, numClasses, numPredsPerClass, 1, DataType::kFLOAT, confSigmoid, confData,
+    scores);
   ASSERT_FAILURE(status == STATUS_SUCCESS);
 
   size_t indicesSize = detectionForwardPreNMSSize(N, perBatchScoresSize);
-  void* indices = nextWorkspacePtr((int8_t*)scores, totalScoresSize);
+  void * indices = nextWorkspacePtr((int8_t *)scores, totalScoresSize);
 
   size_t postNMSScoresSize = detectionForwardPostNMSSize(N, numClasses, topKVal);
   size_t postNMSIndicesSize = detectionForwardPostNMSSize(N, numClasses, topKVal);
-  void* postNMSScores = nextWorkspacePtr((int8_t*)indices, indicesSize);
-  void* postNMSIndices = nextWorkspacePtr((int8_t*)postNMSScores, postNMSScoresSize);
+  void * postNMSScores = nextWorkspacePtr((int8_t *)indices, indicesSize);
+  void * postNMSIndices = nextWorkspacePtr((int8_t *)postNMSScores, postNMSScoresSize);
 
-  void* sortingWorkspace = nextWorkspacePtr((int8_t*)postNMSIndices, postNMSIndicesSize);
+  void * sortingWorkspace = nextWorkspacePtr((int8_t *)postNMSIndices, postNMSIndicesSize);
   // Sort the scores so that the following NMS could be applied.
 
-  status = sortScoresPerClass(stream, N, numClasses, numPredsPerClass, backgroundLabelId,
-                              scoreThreshold, DataType::kFLOAT, scores, indices, sortingWorkspace);
+  status = sortScoresPerClass(
+    stream, N, numClasses, numPredsPerClass, backgroundLabelId, scoreThreshold, DataType::kFLOAT,
+    scores, indices, sortingWorkspace);
   ASSERT_FAILURE(status == STATUS_SUCCESS);
 
   // This is set to true as the input bounding boxes are of the format [ymin,
@@ -97,27 +100,31 @@ pluginStatus_t nmsInference(cudaStream_t stream, const int N, const int perBatch
   bool flipXY = false;
   // NMS
   if (rotated) {
-    status = allClassRotatedNMS(stream, N, numClasses, numPredsPerClass, topKVal, iouThreshold,
-                                shareLocation, isNormalized, DataType::kFLOAT, DataType::kFLOAT,
-                                bboxData, scores, indices, postNMSScores, postNMSIndices, flipXY);
+    status = allClassRotatedNMS(
+      stream, N, numClasses, numPredsPerClass, topKVal, iouThreshold, shareLocation, isNormalized,
+      DataType::kFLOAT, DataType::kFLOAT, bboxData, scores, indices, postNMSScores, postNMSIndices,
+      flipXY);
   } else {
-    status = allClassNMS(stream, N, numClasses, numPredsPerClass, topKVal, iouThreshold,
-                         shareLocation, isNormalized, DataType::kFLOAT, DataType::kFLOAT, bboxData,
-                         scores, indices, postNMSScores, postNMSIndices, flipXY);
+    status = allClassNMS(
+      stream, N, numClasses, numPredsPerClass, topKVal, iouThreshold, shareLocation, isNormalized,
+      DataType::kFLOAT, DataType::kFLOAT, bboxData, scores, indices, postNMSScores, postNMSIndices,
+      flipXY);
   }
 
   ASSERT_FAILURE(status == STATUS_SUCCESS);
 
   // Sort the bounding boxes after NMS using scores
-  status = sortScoresPerImage(stream, N, numClasses * topKVal, DataType::kFLOAT, postNMSScores,
-                              postNMSIndices, scores, indices, sortingWorkspace);
+  status = sortScoresPerImage(
+    stream, N, numClasses * topKVal, DataType::kFLOAT, postNMSScores, postNMSIndices, scores,
+    indices, sortingWorkspace);
 
   ASSERT_FAILURE(status == STATUS_SUCCESS);
 
   // Gather data from the sorted bounding boxes after NMS
-  status = gatherNMSOutputs(stream, shareLocation, N, numPredsPerClass, numClasses, topKVal,
-                            keepTopKVal, DataType::kFLOAT, DataType::kFLOAT, indices, scores,
-                            bboxData, nmsedDets, nmsedLabels, nmsedIndex, clipBoxes, rotated);
+  status = gatherNMSOutputs(
+    stream, shareLocation, N, numPredsPerClass, numClasses, topKVal, keepTopKVal, DataType::kFLOAT,
+    DataType::kFLOAT, indices, scores, bboxData, nmsedDets, nmsedLabels, nmsedIndex, clipBoxes,
+    rotated);
 
   ASSERT_FAILURE(status == STATUS_SUCCESS);
 
