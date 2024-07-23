@@ -16,10 +16,14 @@
 
 #include "types.hpp"
 
+#include <boost/geometry/algorithms/detail/envelope/interface.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
+#include <boost/geometry/index/predicates.hpp>
 
 #include <algorithm>
+#include <iterator>
 #include <limits>
+#include <unordered_set>
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
@@ -27,8 +31,6 @@ void calculate_object_time_collisions(
   OutOfLaneData & out_of_lane_data,
   const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects)
 {
-  OutAreaRtree rtree;
-  // TODO(Maxime): try using a rtree for the outside_rings for better performance
   universe_utils::Polygon2d object_footprint;
   for (const auto & object : objects) {
     for (const auto & object_path : object.kinematics.predicted_paths) {
@@ -37,11 +39,22 @@ void calculate_object_time_collisions(
       for (const auto & object_pose : object_path.path) {
         t += time_step;
         object_footprint = universe_utils::toPolygon2d(object_pose, object.shape);
-        for (auto & out_of_lane_point : out_of_lane_data.outside_points) {
-          for (const auto & outside_ring : out_of_lane_point.outside_rings) {
-            if (!boost::geometry::disjoint(outside_ring, object_footprint.outer())) {
-              out_of_lane_point.collision_times.insert(t);
-              break;
+        std::vector<OutAreaNode> query_results;
+        out_of_lane_data.outside_areas_rtree.query(
+          boost::geometry::index::intersects(object_footprint.outer()),
+          std::back_inserter(query_results));
+        std::unordered_set<size_t> out_of_lane_indexes;
+        for (const auto & query_result : query_results) {
+          out_of_lane_indexes.insert(query_result.second);
+        }
+        for (const auto index : out_of_lane_indexes) {
+          auto & out_of_lane_point = out_of_lane_data.outside_points[index];
+          if (out_of_lane_point.collision_times.count(t) == 0UL) {
+            for (const auto & ring : out_of_lane_point.outside_rings) {
+              if (!boost::geometry::disjoint(ring, object_footprint.outer())) {
+                out_of_lane_point.collision_times.insert(t);
+                break;
+              }
             }
           }
         }
@@ -98,5 +111,16 @@ void calculate_out_of_lane_areas(OutOfLaneData & out_of_lane_data, const EgoData
       out_of_lane_data.outside_points.push_back(p);
     }
   }
+
+  std::vector<OutAreaNode> rtree_nodes;
+  for (auto i = 0UL; i < out_of_lane_data.outside_points.size(); ++i) {
+    for (const auto & ring : out_of_lane_data.outside_points[i].outside_rings) {
+      OutAreaNode n;
+      n.first = boost::geometry::return_envelope<universe_utils::Box2d>(ring);
+      n.second = i;
+      rtree_nodes.push_back(n);
+    }
+  }
+  out_of_lane_data.outside_areas_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
 }
 }  // namespace autoware::motion_velocity_planner::out_of_lane

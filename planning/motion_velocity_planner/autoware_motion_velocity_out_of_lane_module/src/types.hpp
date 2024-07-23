@@ -94,7 +94,8 @@ struct StopLine
 };
 using StopLineNode = std::pair<universe_utils::Box2d, StopLine>;
 using StopLinesRtree = bgi::rtree<StopLineNode, bgi::rstar<16>>;
-using OutAreaRtree = bgi::rtree<std::pair<universe_utils::Box2d, size_t>, bgi::rstar<16>>;
+using OutAreaNode = std::pair<universe_utils::Box2d, size_t>;
+using OutAreaRtree = bgi::rtree<OutAreaNode, bgi::rstar<16>>;
 
 /// @brief data related to the ego vehicle
 struct EgoData
