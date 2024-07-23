@@ -31,7 +31,7 @@
 #include "autoware/image_projection_based_fusion/pointpainting_fusion/preprocess_kernel.hpp"
 
 #include <stdexcept>
-// #include <lidar_centerpoint/utils.hpp>
+// #include <autoware/lidar_centerpoint/utils.hpp>
 
 namespace
 {
