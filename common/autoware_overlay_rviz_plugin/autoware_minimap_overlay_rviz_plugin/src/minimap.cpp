@@ -112,7 +112,7 @@ void VehicleMapDisplay::onInitialize()
   static int count = 0;
   std::stringstream ss;
   ss << "AerialMapDisplayObject" << count++;
-  overlay_.reset(new rviz_satellite::OverlayObject(ss.str()));
+  overlay_.reset(new autoware_minimap_overlay_rviz_plugin::OverlayObject(ss.str()));
   overlay_->show();
   updateOverlaySize();
   updateOverlayPosition();
@@ -140,9 +140,36 @@ void VehicleMapDisplay::onInitialize()
     "/planning/scenario_planning/trajectory", 10,
     std::bind(&VehicleMapDisplay::routePointsCallback, this, std::placeholders::_1));
 
+  // Subscribe to the map projector info topic
+  rclcpp::QoS qos_settings = rclcpp::QoS(1).reliable().transient_local();
+
+  map_projector_info_sub_ = node_->create_subscription<tier4_map_msgs::msg::MapProjectorInfo>(
+    "/map/map_projector_info", qos_settings,
+    std::bind(&VehicleMapDisplay::mapProjectorInfoCallback, this, std::placeholders::_1));
+
   // Timer for smooth update
   node_->create_wall_timer(
     std::chrono::milliseconds(16), std::bind(&VehicleMapDisplay::smoothUpdate, this));
+}
+
+void VehicleMapDisplay::mapProjectorInfoCallback(
+  const tier4_map_msgs::msg::MapProjectorInfo::SharedPtr msg)
+{
+  map_projector_info_msg_ = msg;
+
+  projector_type_ = msg->projector_type;
+  mgrs_grid_ = msg->mgrs_grid;
+
+  // For some reason this always returns 0,0 so we need to set it manually in the properties
+  // according to the map used
+  // property_origin_lat_->setFloat(msg->map_origin.latitude);
+  // property_origin_lon_->setFloat(msg->map_origin.longitude);
+
+  goal_pose_.setProjectionInfo(projector_type_, mgrs_grid_);
+  path_overlay_.setProjectionInfo(projector_type_, mgrs_grid_);
+
+  updateGoalPose();
+  updateMapPosition();
 }
 
 void VehicleMapDisplay::reset()
@@ -169,7 +196,7 @@ void VehicleMapDisplay::update(float, float)
     return;
   }
 
-  rviz_satellite::ScopedPixelBuffer buffer = overlay_->getBuffer();
+  autoware_minimap_overlay_rviz_plugin::ScopedPixelBuffer buffer = overlay_->getBuffer();
   QImage hud = buffer.getQImage(*overlay_);
   hud.fill(Qt::transparent);
   drawWidget(hud);
@@ -195,8 +222,9 @@ void VehicleMapDisplay::updateOverlayPosition()
 
   std::lock_guard<std::mutex> lock(mutex_);
   overlay_->setPosition(
-    property_left_->getInt(), property_top_->getInt(), rviz_satellite::HorizontalAlignment::LEFT,
-    rviz_satellite::VerticalAlignment::BOTTOM);
+    property_left_->getInt(), property_top_->getInt(),
+    autoware_minimap_overlay_rviz_plugin::HorizontalAlignment::LEFT,
+    autoware_minimap_overlay_rviz_plugin::VerticalAlignment::BOTTOM);
   queueRender();
 }
 
@@ -471,6 +499,15 @@ void VehicleMapDisplay::goalPoseCallback(const geometry_msgs::msg::PoseStamped::
 
 std::pair<double, double> VehicleMapDisplay::localXYZToLatLon(double x, double y)
 {
+  if (projector_type_ == "MGRS") {
+    return localXYZToLatLonMGRS(x, y);
+  } else {
+    return localXYZToLatLonUTM(x, y);
+  }
+}
+
+std::pair<double, double> VehicleMapDisplay::localXYZToLatLonUTM(double x, double y)
+{
   int zone;
   bool north_p;
   double origin_lat = property_origin_lat_->getFloat();
@@ -488,6 +525,35 @@ std::pair<double, double> VehicleMapDisplay::localXYZToLatLon(double x, double y
   // Convert back to geographic coordinates
   double lat, lon;
   GeographicLib::UTMUPS::Reverse(zone, north_p, global_x, global_y, lat, lon);
+
+  return {lat, lon};
+}
+
+std::pair<double, double> VehicleMapDisplay::localXYZToLatLonMGRS(double x, double y)
+{
+  // Assuming we have the origin_lat_ and origin_lon_ set
+  int zone;
+  bool north_p;
+  double origin_x, origin_y, gamma, k;
+
+  // Convert origin to UTM coordinates
+  GeographicLib::UTMUPS::Forward(
+    property_origin_lat_->getFloat(), property_origin_lon_->getFloat(), zone, north_p, origin_x,
+    origin_y, gamma, k);
+
+  // Calculate global UTM coordinates by adding local offsets
+  double global_x = origin_x + x;
+  double global_y = origin_y + y;
+
+  // Convert global UTM coordinates to MGRS
+  std::string mgrs;
+  GeographicLib::MGRS::Forward(zone, north_p, global_x, global_y, 5, mgrs);
+
+  // Convert MGRS coordinates to geographic coordinates
+  double lat, lon;
+  int prec;
+  bool northp;
+  GeographicLib::MGRS::Reverse(mgrs, zone, northp, lat, lon, prec);
 
   return {lat, lon};
 }

@@ -24,6 +24,8 @@
 #include "rviz_common/properties/string_property.hpp"
 #include "tile_field.hpp"
 
+#include <GeographicLib/MGRS.hpp>
+#include <GeographicLib/UTMUPS.hpp>
 #include <QImage>
 #include <QVBoxLayout>
 #include <rclcpp/rclcpp.hpp>
@@ -43,6 +45,7 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <tier4_map_msgs/msg/map_projector_info.hpp>
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
@@ -91,10 +94,12 @@ private:
   void poseCallback(const autoware_adapi_v1_msgs::msg::VehicleKinematics::SharedPtr msg);
   void routeStateCallback(const autoware_adapi_v1_msgs::msg::RouteState::SharedPtr msg);
   void routePointsCallback(const autoware_planning_msgs::msg::Trajectory::SharedPtr msg);
+  void mapProjectorInfoCallback(const tier4_map_msgs::msg::MapProjectorInfo::SharedPtr msg);
+
   std::pair<double, double> localXYZToLatLon(double local_x, double local_y);
   void smoothUpdate();
 
-  rviz_satellite::OverlayObject::SharedPtr overlay_;
+  autoware_minimap_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
 
   std::mutex mutex_;
   std::mutex property_mutex_;
@@ -142,6 +147,10 @@ private:
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr route_points_sub_;
   autoware_planning_msgs::msg::Trajectory::SharedPtr route_points_msg_;
 
+  // subscription ptr and msg ptr
+  rclcpp::Subscription<tier4_map_msgs::msg::MapProjectorInfo>::SharedPtr map_projector_info_sub_;
+  tier4_map_msgs::msg::MapProjectorInfo::SharedPtr map_projector_info_msg_;
+
   GoalPose goal_pose_;
   PathOverlay path_overlay_;
 
@@ -152,6 +161,11 @@ private:
   double target_longitude_;
 
   void drawGoalPose(QPainter & painter, const QRectF & backgroundRect);
+  std::pair<double, double> localXYZToLatLonUTM(double x, double y);
+  std::pair<double, double> localXYZToLatLonMGRS(double x, double y);
+
+  std::string projector_type_;
+  std::string mgrs_grid_;
 };
 
 }  // namespace autoware_minimap_overlay_rviz_plugin
