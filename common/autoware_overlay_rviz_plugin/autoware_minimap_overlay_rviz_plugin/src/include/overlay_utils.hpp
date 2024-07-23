@@ -68,7 +68,7 @@
 #include <memory>
 #include <string>
 
-namespace rviz_satellite
+namespace autoware_minimap_overlay_rviz_plugin
 {
 class OverlayObject;
 
@@ -126,6 +126,6 @@ protected:
   Ogre::MaterialPtr panel_material_;
   Ogre::TexturePtr texture_;
 };
-}  // namespace rviz_satellite
+}  // namespace autoware_minimap_overlay_rviz_plugin
 
 #endif  // OVERLAY_UTILS_HPP_

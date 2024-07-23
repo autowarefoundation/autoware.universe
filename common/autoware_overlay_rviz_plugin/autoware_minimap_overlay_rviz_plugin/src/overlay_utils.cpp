@@ -52,7 +52,7 @@
 
 #include <rviz_common/logging.hpp>
 
-namespace rviz_satellite
+namespace autoware_minimap_overlay_rviz_plugin
 {
 ScopedPixelBuffer::ScopedPixelBuffer(Ogre::HardwarePixelBufferSharedPtr pixel_buffer)
 : pixel_buffer_(pixel_buffer)
@@ -265,4 +265,4 @@ unsigned int OverlayObject::getTextureHeight() const
     return 0;
   }
 }
-}  // namespace rviz_satellite
+}  // namespace autoware_minimap_overlay_rviz_plugin

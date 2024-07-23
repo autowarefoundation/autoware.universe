@@ -48,7 +48,7 @@ Visualization Manager:
       Value: true
     - Alpha: 0.699999988079071
       Blocks: 3
-      Class: rviz_satellite/AerialMap
+      Class: autoware_minimap_overlay_rviz_plugin/AerialMap
       Draw Behind: false
       Enabled: true
       Name: AerialMap
