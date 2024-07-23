@@ -181,9 +181,9 @@ When this time margin is smaller than `behavior_determination.stop.crossing_obst
 
 ### Stop planning
 
-| Parameter                              | Type   | Description                                                                                |
-| -------------------------------------- | ------ | ------------------------------------------------------------------------------------------ |
-| `common.min_strong_accel`              | double | ego's minimum acceleration to stop [m/ss]                                                  |
+| Parameter                                   | Type   | Description                                                                                |
+| ------------------------------------------- | ------ | ------------------------------------------------------------------------------------------ |
+| `common.min_strong_accel`                   | double | ego's minimum acceleration to stop [m/ss]                                                  |
 | `common.stop_safe_distance_margin`          | double | distance with obstacles for stop [m]                                                       |
 | `common.terminal_stop_safe_distance_margin` | double | terminal_distance with obstacles for stop, which cannot be exceed safe distance margin [m] |
 
@@ -198,8 +198,8 @@ If the acceleration is less than `common.min_strong_accel`, the stop planning wi
 
 ### Cruise planning
 
-| Parameter                     | Type   | Description                                    |
-| ----------------------------- | ------ | ---------------------------------------------- |
+| Parameter                            | Type   | Description                                    |
+| ------------------------------------ | ------ | ---------------------------------------------- |
 | `common.cruise_safe_distance_margin` | double | minimum distance with obstacles for cruise [m] |
 
 The role of the cruise planning is keeping a safe distance with dynamic vehicle objects with smoothed velocity transition.

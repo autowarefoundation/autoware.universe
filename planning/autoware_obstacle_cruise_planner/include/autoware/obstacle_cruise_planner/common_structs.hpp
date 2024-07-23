@@ -208,7 +208,8 @@ struct LongitudinalInfo
     min_ego_accel_for_rss = node.declare_parameter<double>("common.min_ego_accel_for_rss");
     min_object_accel_for_rss = node.declare_parameter<double>("common.min_object_accel_for_rss");
 
-    cruise_safe_distance_margin = node.declare_parameter<double>("common.cruise_safe_distance_margin");
+    cruise_safe_distance_margin =
+      node.declare_parameter<double>("common.cruise_safe_distance_margin");
     stop_safe_distance_margin = node.declare_parameter<double>("common.stop_safe_distance_margin");
     terminal_stop_safe_distance_margin =
       node.declare_parameter<double>("common.terminal_stop_safe_distance_margin");
