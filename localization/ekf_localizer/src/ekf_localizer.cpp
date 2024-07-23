@@ -187,7 +187,8 @@ void EKFLocalizer::timer_callback()
       if (is_updated) {
         pose_is_updated = true;
 
-        // Update Simple 1D filter with considering change of z value due to measurement pose delay
+        // Update Simple 1D filter with considering change of roll, pitch and z values due to
+        // measurement pose delay
         const double delay_time =
           (current_time - pose->header.stamp).seconds() + params_.pose_additional_delay;
         auto pose_with_delay =
