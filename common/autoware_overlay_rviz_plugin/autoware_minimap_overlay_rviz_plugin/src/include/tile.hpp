@@ -33,9 +33,9 @@ public:
   QImage getImage() const;
   bool isValidUrl(const std::string & url) const;
 
-  int getZoom() const {return zoom_;}
-  int getX() const {return x_;}
-  int getY() const {return y_;}
+  int getZoom() const { return zoom_; }
+  int getX() const { return x_; }
+  int getY() const { return y_; }
 
 Q_SIGNALS:
   void tileFetched();
