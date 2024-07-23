@@ -120,4 +120,4 @@ public:
 };
 
 }  // namespace nvinfer1
-#endif  //BEVPOOL_PLUGIN_HPP_
+#endif  // BEVPOOL_PLUGIN_HPP_

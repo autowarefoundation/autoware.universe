@@ -142,4 +142,4 @@ public:
     const sensor_msgs::msg::Image::ConstSharedPtr & msg_br_img);
 };
 
-#endif  //BEVDET_NODE_HPP_
+#endif  // BEVDET_NODE_HPP_

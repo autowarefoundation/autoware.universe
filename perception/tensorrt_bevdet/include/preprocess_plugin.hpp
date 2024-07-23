@@ -119,4 +119,4 @@ public:
 };
 
 }  // namespace nvinfer1
-#endif //PREPROCESS_PLUGIN_HPP_
+#endif  // PREPROCESS_PLUGIN_HPP_

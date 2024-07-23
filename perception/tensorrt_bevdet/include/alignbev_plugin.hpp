@@ -116,4 +116,4 @@ public:
 };
 
 }  // namespace nvinfer1
-#endif  //ALIGNBEV_PLUGIN_HPP_
+#endif  // ALIGNBEV_PLUGIN_HPP_

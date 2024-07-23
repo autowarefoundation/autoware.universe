@@ -177,7 +177,7 @@ void BEVDet::InitParams(const std::string & config_file)
   std::vector<std::vector<float>> nms_factor_temp =
     model_config["test_cfg"]["nms_rescale_factor"].as<std::vector<std::vector<float>>>();
   nms_rescale_factor.clear();
-  for (const auto& task_factors : nms_factor_temp) {
+  for (const auto & task_factors : nms_factor_temp) {
     for (float factor : task_factors) {
       nms_rescale_factor.push_back(factor);
     }

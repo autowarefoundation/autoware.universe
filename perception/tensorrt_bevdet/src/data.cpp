@@ -47,7 +47,7 @@ camParams::camParams(const YAML::Node & config, int n, std::vector<std::string> 
   cams2ego_rot.clear();
   cams2ego_trans.clear();
 
-  for (const std::string& name : cams_name) {
+  for (const std::string & name : cams_name) {
     imgs_file.push_back("." + config["cams"][name]["data_path"].as<std::string>());
 
     //

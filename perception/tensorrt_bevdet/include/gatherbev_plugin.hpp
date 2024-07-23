@@ -117,4 +117,4 @@ public:
 };
 
 }  // namespace nvinfer1
-#endif  //GATHERBEV_PLUGIN_HPP_
+#endif  // GATHERBEV_PLUGIN_HPP_
