@@ -2495,9 +2495,7 @@ private:
 
       // unlikely that this evaluates to true
       if (ROBIN_HOOD_UNLIKELY(mNumElements >= mMaxNumElementsAllowed)) {
-        if (!increase_size()) {
-          return std::make_pair(size_t(0), InsertionState::overflow_error);
-        }
+        increase_size();
         continue;
       }
 
