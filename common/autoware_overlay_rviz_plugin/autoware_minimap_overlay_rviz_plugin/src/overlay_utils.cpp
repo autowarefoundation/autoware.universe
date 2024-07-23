@@ -99,7 +99,8 @@ QImage ScopedPixelBuffer::getQImage(OverlayObject & overlay, QColor & bg_color)
   return getQImage(overlay.getTextureWidth(), overlay.getTextureHeight(), bg_color);
 }
 
-OverlayObject::OverlayObject(const std::string & name) : name_(name)
+OverlayObject::OverlayObject(const std::string & name) 
+: name_(name)
 {
   std::string material_name = name_ + "Material";
   Ogre::OverlayManager * mOverlayMgr = Ogre::OverlayManager::getSingletonPtr();

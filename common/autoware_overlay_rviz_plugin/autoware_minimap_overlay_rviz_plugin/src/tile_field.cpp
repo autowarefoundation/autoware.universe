@@ -18,7 +18,8 @@
 
 #include <cmath>
 
-TileField::TileField(QObject * parent) : QObject(parent), center_x_tile_(0), center_y_tile_(0)
+TileField::TileField(QObject * parent)
+: QObject(parent), center_x_tile_(0), center_y_tile_(0)
 {
 }
 

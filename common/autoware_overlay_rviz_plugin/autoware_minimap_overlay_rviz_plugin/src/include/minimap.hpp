@@ -65,6 +65,7 @@ namespace autoware_minimap_overlay_rviz_plugin
 class VehicleMapDisplay : public rviz_common::Display
 {
   Q_OBJECT
+
 public:
   VehicleMapDisplay();
   virtual ~VehicleMapDisplay();

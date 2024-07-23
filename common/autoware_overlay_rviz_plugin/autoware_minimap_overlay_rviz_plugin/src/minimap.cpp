@@ -425,8 +425,9 @@ void VehicleMapDisplay::updateGoalPose()
   }
   goalPoseCallback(goal_pose_msg_);
 
-  if (route_points_msg_) routePointsCallback(route_points_msg_);
-
+  if (route_points_msg_) {
+    routePointsCallback(route_points_msg_);
+  }
   queueRender();
 }
 
