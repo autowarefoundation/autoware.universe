@@ -6,7 +6,7 @@
   <arg name="traffic_light_fine_detector_model_path" default="$(find-pkg-share autoware_traffic_light_fine_detector)/data" description="fine detector label path"/>
   <arg name="traffic_light_fine_detector_label_name" default="tlr_labels.txt" description="fine detector label filename"/>
   <arg name="traffic_light_fine_detector_model_name" default="tlr_yolox_s_batch_6" description="fine detector onnx model filename"/>
-  <arg name="traffic_light_classifier_model_path" default="$(find-pkg-share traffic_light_classifier)/data" description="classifier label path"/>
+  <arg name="traffic_light_classifier_model_path" default="$(find-pkg-share autoware_traffic_light_classifier)/data" description="classifier label path"/>
   <arg name="car_traffic_light_classifier_label_name" default="lamp_labels.txt" description="classifier label filename"/>
   <arg name="pedestrian_traffic_light_classifier_label_name" default="lamp_labels_ped.txt" description="classifier label filename"/>
   <arg name="car_traffic_light_classifier_model_name" default="traffic_light_classifier_mobilenetv2_batch_6.onnx" description="classifier onnx model filename"/>
@@ -25,8 +25,8 @@
   <let name="all_camera_namespaces" value="[$(var namespace1), $(var namespace2)]" if="$(eval &quot; '$(var image_number)' >= '2' &quot;)"/>
 
   <arg name="fine_detector_param_path" default="$(find-pkg-share autoware_traffic_light_fine_detector)/config/traffic_light_fine_detector.param.yaml"/>
-  <arg name="car_classifier_param_path" default="$(find-pkg-share traffic_light_classifier)/config/car_traffic_light_classifier.param.yaml"/>
-  <arg name="pedestrian_classifier_param_path" default="$(find-pkg-share traffic_light_classifier)/config/pedestrian_traffic_light_classifier.param.yaml"/>
+  <arg name="car_classifier_param_path" default="$(find-pkg-share autoware_traffic_light_classifier)/config/car_traffic_light_classifier.param.yaml"/>
+  <arg name="pedestrian_classifier_param_path" default="$(find-pkg-share autoware_traffic_light_classifier)/config/pedestrian_traffic_light_classifier.param.yaml"/>
 
   <!-- namespace1 camera TLR pipeline -->
   <group>
