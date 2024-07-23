@@ -98,7 +98,7 @@
     <!-- TODO multi_localizer_mode -->
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/lidar_marker_localizer.launch.xml">
       <arg name="lidar_container_name" value="/sensing/lidar/top/pointcloud_preprocessor/pointcloud_container"/>
-      <arg name="input_pointcloud" value="/sensing/lidar/top/rectified/pointcloud_ex"/>
+      <arg name="input_pointcloud" value="/sensing/lidar/top/pointcloud"/>
     </include>
   </group>
 

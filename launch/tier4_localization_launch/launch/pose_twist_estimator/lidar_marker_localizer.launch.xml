@@ -14,16 +14,16 @@
     <group>
       <push-ros-namespace namespace="pointcloud_preprocessor"/>
       <load_composable_node target="$(var lidar_container_name)">
-        <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::CropBoxFilterComponent" name="crop_box_filter_measurement_range">
+        <composable_node pkg="autoware_pointcloud_preprocessor" plugin="autoware::pointcloud_preprocessor::CropBoxFilterComponent" name="crop_box_filter_measurement_range">
           <remap from="input" to="$(var input_pointcloud)"/>
-          <remap from="output" to="measurement_range/pointcloud_ex"/>
+          <remap from="output" to="measurement_range/pointcloud"/>
           <param from="$(var lidar_marker_localizer/pointcloud_preprocessor/crop_box_filter_measurement_range_param_path)"/>
           <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
         </composable_node>
 
-        <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::PassThroughFilterUInt16Component" name="ring_filter">
-          <remap from="input" to="measurement_range/pointcloud_ex"/>
-          <remap from="output" to="ring_filter/pointcloud_ex"/>
+        <composable_node pkg="autoware_pointcloud_preprocessor" plugin="autoware::pointcloud_preprocessor::PassThroughFilterUInt16Component" name="ring_filter">
+          <remap from="input" to="measurement_range/pointcloud"/>
+          <remap from="output" to="ring_filter/pointcloud"/>
           <param from="$(var lidar_marker_localizer/pointcloud_preprocessor/ring_filter_param_path)"/>
           <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
         </composable_node>
@@ -34,7 +34,7 @@
     <include file="$(find-pkg-share lidar_marker_localizer)/launch/lidar_marker_localizer.launch.xml">
       <arg name="input_lanelet2_map" value="/map/vector_map"/>
       <arg name="input_ekf_pose" value="/localization/pose_twist_fusion_filter/biased_pose_with_covariance"/>
-      <arg name="input_pointcloud" value="pointcloud_preprocessor/ring_filter/pointcloud_ex"/>
+      <arg name="input_pointcloud" value="pointcloud_preprocessor/ring_filter/pointcloud"/>
       <arg name="output_pose_with_covariance" value="/localization/pose_estimator/pose_with_covariance"/>
       <arg name="service_trigger_node_srv" value="trigger_node_srv"/>
       <arg name="param_file" value="$(var lidar_marker_localizer/lidar_marker_localizer_param_path)"/>
