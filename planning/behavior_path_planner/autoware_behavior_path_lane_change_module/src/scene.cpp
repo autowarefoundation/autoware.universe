@@ -1775,11 +1775,8 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     return {true, true};
   }
 
-  RCLCPP_INFO(logger_, "%s start filtering", __func__);
-
   const auto filtered_objects = filterObjects();
   const auto target_objects = getTargetObjects(filtered_objects, current_lanes);
-  RCLCPP_INFO(logger_, "%s size of target object %lu", __func__, target_objects.size());
 
   CollisionCheckDebugMap debug_data;
 
@@ -1813,7 +1810,6 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     }
   }
 
-  RCLCPP_INFO(logger_, "%s finished checking", __func__);
   return safety_status;
 }
 
