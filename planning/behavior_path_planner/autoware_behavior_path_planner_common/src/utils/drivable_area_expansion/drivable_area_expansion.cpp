@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2023-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -388,16 +388,14 @@ void add_bound_point(std::vector<Point> & bound, const Pose & pose)
   }
 }
 
-void add_bound_points_if_non_zero_curvature(
+void add_bound_points(
   std::vector<Point> & left_bound, std::vector<Point> & right_bound,
   const std::vector<Pose> & path_poses, const std::vector<double> & curvatures)
 {
   for (auto i = 0UL; i < path_poses.size(); ++i) {
     const auto k = curvatures[i];
-    if (k > 1e-2) {
-      add_bound_point(left_bound, path_poses[i]);
-      add_bound_point(right_bound, path_poses[i]);
-    }
+    add_bound_point(left_bound, path_poses[i]);
+    add_bound_point(right_bound, path_poses[i]);
   }
 }
 
@@ -439,7 +437,7 @@ void expand_drivable_area(
     std::cerr << "[drivable_area_expansion] could not calculate path curvatures\n";
     curvatures.resize(path_poses.size(), 0.0);
   }
-  add_bound_points_if_non_zero_curvature(path.left_bound, path.right_bound, path_poses, curvatures);
+  add_bound_points(path.left_bound, path.right_bound, path_poses, curvatures);
   auto expansion =
     calculate_expansion(path_poses, path.left_bound, path.right_bound, curvatures, params);
   const auto curvature_expansion_ms = stop_watch.toc("curvatures_expansion");
