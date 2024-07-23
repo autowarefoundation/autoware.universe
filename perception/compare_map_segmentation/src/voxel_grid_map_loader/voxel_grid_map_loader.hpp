@@ -123,7 +123,12 @@ public:
 
   void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
   static bool is_close_points(
+<<<<<<< HEAD
     const pcl::PointXYZ point, const pcl::PointXYZ target_point, const double distance_threshold);
+=======
+    const pcl::PointXYZ point, const pcl::PointXYZ target_point,
+    const double distance_threshold) const;
+>>>>>>> c041afe141ea9ab870e16da9d6ddb1eeeb3de3a7
   std::string * tf_map_input_frame_;
 };
 
