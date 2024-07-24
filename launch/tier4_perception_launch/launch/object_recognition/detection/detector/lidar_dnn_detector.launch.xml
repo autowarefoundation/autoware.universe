@@ -37,10 +37,10 @@
   <!-- CenterPoint -->
   <group if="$(eval &quot;'$(var lidar_detection_model)'=='centerpoint'&quot;)">
     <push-ros-namespace namespace="centerpoint"/>
-    <arg name="lidar_model_param_path" default="$(find-pkg-share lidar_centerpoint)/config"/>
+    <arg name="lidar_model_param_path" default="$(find-pkg-share autoware_lidar_centerpoint)/config"/>
 
     <group>
-      <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
+      <include file="$(find-pkg-share autoware_lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
         <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
         <arg name="output/objects" value="$(var output/objects)"/>
         <arg name="model_name" value="$(var centerpoint_model_name)"/>
@@ -66,7 +66,7 @@
     </group>
 
     <group>
-      <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
+      <include file="$(find-pkg-share autoware_shape_estimation)/launch/shape_estimation.launch.xml">
         <arg name="input/objects" value="labeled_clusters"/>
         <arg name="output/objects" value="objects_with_feature"/>
         <arg name="use_vehicle_reference_yaw" value="true"/>
@@ -76,7 +76,7 @@
 
     <!-- convert DynamicObjectsWithFeatureArray to DynamicObjects -->
     <group>
-      <include file="$(find-pkg-share detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml">
+      <include file="$(find-pkg-share autoware_detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml">
         <arg name="input" value="objects_with_feature"/>
         <arg name="output" value="$(var output/objects)"/>
       </include>
