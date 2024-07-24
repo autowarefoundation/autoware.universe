@@ -362,7 +362,7 @@ void calculate_expansion_distances(
   }
 }
 
-void add_bound_point(std::vector<Point> & bound, const Pose & pose)
+void add_bound_point(std::vector<Point> & bound, const Pose & pose, const double min_bound_interval)
 {
   const auto p = convert_point(pose.position);
   PointDistance nearest_projection;
@@ -382,20 +382,21 @@ void add_bound_point(std::vector<Point> & bound, const Pose & pose)
   new_point.y = nearest_projection.point.y();
   new_point.z = bound[nearest_idx].z;
   if (
-    universe_utils::calcDistance2d(new_point, bound[nearest_idx]) > 0.1 &&
-    universe_utils::calcDistance2d(new_point, bound[nearest_idx + 1]) > 0.1) {
+    universe_utils::calcDistance2d(new_point, bound[nearest_idx]) > min_bound_interval &&
+    universe_utils::calcDistance2d(new_point, bound[nearest_idx + 1]) > min_bound_interval) {
     bound.insert(bound.begin() + nearest_idx + 1, new_point);
   }
 }
 
 void add_bound_points(
   std::vector<Point> & left_bound, std::vector<Point> & right_bound,
-  const std::vector<Pose> & path_poses, const std::vector<double> & curvatures)
+  const std::vector<Pose> & path_poses, const std::vector<double> & curvatures,
+  const double min_bound_interval)
 {
   for (auto i = 0UL; i < path_poses.size(); ++i) {
     const auto k = curvatures[i];
-    add_bound_point(left_bound, path_poses[i]);
-    add_bound_point(right_bound, path_poses[i]);
+    add_bound_point(left_bound, path_poses[i], min_bound_interval);
+    add_bound_point(right_bound, path_poses[i], min_bound_interval);
   }
 }
 
@@ -437,7 +438,8 @@ void expand_drivable_area(
     std::cerr << "[drivable_area_expansion] could not calculate path curvatures\n";
     curvatures.resize(path_poses.size(), 0.0);
   }
-  add_bound_points(path.left_bound, path.right_bound, path_poses, curvatures);
+  add_bound_points(
+    path.left_bound, path.right_bound, path_poses, curvatures, params.min_bound_interval);
   auto expansion =
     calculate_expansion(path_poses, path.left_bound, path.right_bound, curvatures, params);
   const auto curvature_expansion_ms = stop_watch.toc("curvatures_expansion");
