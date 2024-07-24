@@ -1,5 +1,0 @@
-/**:
-  ros__parameters:
-    ## Paramters in distortion_corrector.cpp
-    time_stamp_field_name: "time_stamp"
-    use_imu: true
