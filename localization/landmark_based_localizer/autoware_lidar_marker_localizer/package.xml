@@ -18,14 +18,13 @@
   <depend>autoware_map_msgs</depend>
   <depend>autoware_point_types</depend>
   <depend>autoware_universe_utils</depend>
-  <depend>lanelet2_extension</depend>
   <depend>localization_util</depend>
   <depend>pcl_conversions</depend>
   <depend>pcl_msgs</depend>
   <depend>pcl_ros</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>tf2</depend>
   <depend>tf2_eigen</depend>

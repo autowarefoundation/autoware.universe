@@ -94,7 +94,7 @@ class LidarMarkerLocalizer : public rclcpp::Node
   };
 
 public:
-  LidarMarkerLocalizer();
+  LidarMarkerLocalizer(const rclcpp::NodeOptions & node_options);
 
 private:
   void self_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & self_pose_msg_ptr);

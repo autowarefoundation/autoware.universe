@@ -9,15 +9,21 @@ find_package(PCL REQUIRED COMPONENTS common io)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 
-ament_auto_add_executable(lidar_marker_localizer
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/lidar_marker_localizer.cpp
   src/diagnostics/diagnostics_module.cpp
-  src/main.cpp
 )
 
-target_link_libraries(lidar_marker_localizer
+target_link_libraries(${PROJECT_NAME}
   ${PCL_LIBRARIES}
 )
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "autoware::lidar_marker_localizer::LidarMarkerLocalizer"
+  EXECUTABLE ${PROJECT_NAME}_node
+  EXECUTOR SingleThreadedExecutor
+)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

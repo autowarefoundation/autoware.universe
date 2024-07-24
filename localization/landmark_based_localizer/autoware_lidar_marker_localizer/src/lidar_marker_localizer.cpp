@@ -37,7 +37,9 @@
 namespace autoware::lidar_marker_localizer
 {
 
-LidarMarkerLocalizer::LidarMarkerLocalizer() : Node("lidar_marker_localizer"), is_activated_(false)
+LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_options)
+ : Node("lidar_marker_localizer", node_options)
+ ,is_activated_(false)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -607,3 +609,6 @@ void LidarMarkerLocalizer::transform_sensor_measurement(
 }
 
 }  // namespace autoware::lidar_marker_localizer
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::lidar_marker_localizer::LidarMarkerLocalizer)
