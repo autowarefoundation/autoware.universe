@@ -225,7 +225,7 @@ private:
   std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
     detailed_processing_time_publisher_;
-  mutable std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
+  mutable autoware::universe_utils::TimeKeeper time_keeper_;
 
   // Member Functions
   void mapCallback(const LaneletMapBin::ConstSharedPtr msg);
