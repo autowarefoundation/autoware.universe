@@ -38,8 +38,7 @@ namespace autoware::lidar_marker_localizer
 {
 
 LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_options)
- : Node("lidar_marker_localizer", node_options)
- ,is_activated_(false)
+: Node("lidar_marker_localizer", node_options), is_activated_(false)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
