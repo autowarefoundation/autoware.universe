@@ -15,7 +15,6 @@
 #include "autoware/pointcloud_preprocessor/concatenate_data/concatenate_pointclouds.hpp"
 
 #include "autoware/pointcloud_preprocessor/utility/memory.hpp"
-
 #include "pointcloud_preprocessor/utility/memory.hpp"
 
 #include <pcl_ros/transforms.hpp>

@@ -39,8 +39,10 @@ This node calculates a refined object shape (bounding box, cylinder, convex hull
 <<<<<<< HEAD:perception/shape_estimation/README.md
 {{ json_to_markdown("perception/autoware/shape_estimation/schema/shape_estimation.schema.json") }}
 =======
+
 {{ json_to_markdown("perception/autoware_shape_estimation/schema/shape_estimation.schema.json") }}
->>>>>>> original/main:perception/autoware_shape_estimation/README.md
+
+> > > > > > > original/main:perception/autoware_shape_estimation/README.md
 
 ## Assumptions / Known limits
 

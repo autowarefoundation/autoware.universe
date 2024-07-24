@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-<<<<<<<< HEAD:sensing/autoware_pointcloud_preprocessor/include/pointcloud_preprocessor/utility/geometry.hpp
-#ifndef POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
-#define POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
-========
+<<<<<<<<
+  HEAD : sensing / autoware_pointcloud_preprocessor / include / pointcloud_preprocessor / utility /
+    geometry.hpp
 #ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
->>>>>>>> original/main:sensing/autoware_pointcloud_preprocessor/include/autoware/pointcloud_preprocessor/utility/geometry.hpp
+  == == == ==
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
+  >>>>>>>> original /
+  main : sensing / autoware_pointcloud_preprocessor / include / autoware / pointcloud_preprocessor /
+         utility /
+         geometry.hpp
 
 #include <geometry_msgs/msg/polygon.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -34,7 +39,7 @@
 #include <optional>
 #include <vector>
 
-using K = CGAL::Exact_predicates_inexact_constructions_kernel;
+         using K = CGAL::Exact_predicates_inexact_constructions_kernel;
 using PointCgal = K::Point_2;
 using PolygonCgal = std::vector<PointCgal>;
 
@@ -86,12 +91,14 @@ void remove_polygon_cgal_from_cloud(
 bool point_within_cgal_polys(
   const pcl::PointXYZ & point, const std::vector<PolygonCgal> & polyline_polygons);
 
-<<<<<<<< HEAD:sensing/autoware_pointcloud_preprocessor/include/pointcloud_preprocessor/utility/geometry.hpp
+< < < < < < < < HEAD : sensing / autoware_pointcloud_preprocessor / include /
+                       pointcloud_preprocessor / utility / geometry.hpp
 }  // namespace pointcloud_preprocessor::utils
 
 #endif  // POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
-========
+== == == ==
 }  // namespace autoware::pointcloud_preprocessor::utils
 
 #endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
->>>>>>>> original/main:sensing/autoware_pointcloud_preprocessor/include/autoware/pointcloud_preprocessor/utility/geometry.hpp
+>>>>>>>> original / main : sensing / autoware_pointcloud_preprocessor / include / autoware /
+                           pointcloud_preprocessor / utility / geometry.hpp

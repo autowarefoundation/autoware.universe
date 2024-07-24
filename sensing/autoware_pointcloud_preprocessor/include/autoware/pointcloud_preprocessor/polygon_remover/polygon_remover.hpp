@@ -15,13 +15,18 @@
 #ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__POLYGON_REMOVER__POLYGON_REMOVER_HPP_
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__POLYGON_REMOVER__POLYGON_REMOVER_HPP_
 
-<<<<<<<< HEAD:sensing/autoware_pointcloud_preprocessor/include/pointcloud_preprocessor/polygon_remover/polygon_remover.hpp
+<<<<<<<<
+  HEAD : sensing / autoware_pointcloud_preprocessor / include / pointcloud_preprocessor /
+    polygon_remover / polygon_remover.hpp
 #include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/utility/geometry.hpp"
-========
+  == == == ==
 #include "autoware/pointcloud_preprocessor/filter.hpp"
 #include "autoware/pointcloud_preprocessor/utility/geometry.hpp"
->>>>>>>> original/main:sensing/autoware_pointcloud_preprocessor/include/autoware/pointcloud_preprocessor/polygon_remover/polygon_remover.hpp
+  >>>>>>>> original /
+  main : sensing / autoware_pointcloud_preprocessor / include / autoware / pointcloud_preprocessor /
+         polygon_remover /
+         polygon_remover.hpp
 
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
@@ -32,39 +37,39 @@
 
 #include <vector>
 
-namespace autoware::pointcloud_preprocessor
+         namespace autoware::pointcloud_preprocessor
 {
-class PolygonRemoverComponent : public autoware::pointcloud_preprocessor::Filter
-{
-protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  class PolygonRemoverComponent : public autoware::pointcloud_preprocessor::Filter
+  {
+  protected:
+    virtual void filter(
+      const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
 
-  void publishRemovedPolygon();
+    void publishRemovedPolygon();
 
-  void update_polygon(const geometry_msgs::msg::Polygon::ConstSharedPtr & polygon_in);
-  static PolygonCgal polygon_geometry_to_cgal(
-    const geometry_msgs::msg::Polygon::ConstSharedPtr & polygon_in);
-  PointCloud2 remove_updated_polygon_from_cloud(const PointCloud2ConstPtr & cloud_in);
-  PointCloud2 remove_polygon_cgal_from_cloud(
-    const PointCloud2::ConstSharedPtr & cloud_in_ptr, const PolygonCgal & polyline_polygon);
+    void update_polygon(const geometry_msgs::msg::Polygon::ConstSharedPtr & polygon_in);
+    static PolygonCgal polygon_geometry_to_cgal(
+      const geometry_msgs::msg::Polygon::ConstSharedPtr & polygon_in);
+    PointCloud2 remove_updated_polygon_from_cloud(const PointCloud2ConstPtr & cloud_in);
+    PointCloud2 remove_polygon_cgal_from_cloud(
+      const PointCloud2::ConstSharedPtr & cloud_in_ptr, const PolygonCgal & polyline_polygon);
 
-private:
-  rclcpp::Parameter param;
-  std::vector<double> polygon_vertices_;
-  geometry_msgs::msg::Polygon::SharedPtr polygon_;
+  private:
+    rclcpp::Parameter param;
+    std::vector<double> polygon_vertices_;
+    geometry_msgs::msg::Polygon::SharedPtr polygon_;
 
-  bool polygon_is_initialized_;
-  bool will_visualize_;
-  PolygonCgal polygon_cgal_;
-  visualization_msgs::msg::Marker marker_;
+    bool polygon_is_initialized_;
+    bool will_visualize_;
+    PolygonCgal polygon_cgal_;
+    visualization_msgs::msg::Marker marker_;
 
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_marker_ptr_;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_marker_ptr_;
 
-public:
-  PCL_MAKE_ALIGNED_OPERATOR_NEW
-  explicit PolygonRemoverComponent(const rclcpp::NodeOptions & options);
-};
+  public:
+    PCL_MAKE_ALIGNED_OPERATOR_NEW
+    explicit PolygonRemoverComponent(const rclcpp::NodeOptions & options);
+  };
 }  // namespace autoware::pointcloud_preprocessor
 
 #endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__POLYGON_REMOVER__POLYGON_REMOVER_HPP_

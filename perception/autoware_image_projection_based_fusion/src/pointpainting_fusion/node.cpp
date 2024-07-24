@@ -25,29 +25,28 @@
 #include <lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <lidar_centerpoint/ros_utils.hpp>
 #include <lidar_centerpoint/utils.hpp>
-=======
+  =======
 #include <autoware/lidar_centerpoint/centerpoint_config.hpp>
 #include <autoware/lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <autoware/lidar_centerpoint/ros_utils.hpp>
 #include <autoware/lidar_centerpoint/utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/constants.hpp>
->>>>>>> original/main:perception/autoware_image_projection_based_fusion/src/pointpainting_fusion/node.cpp
+  >>>>>>> original/main:perception/autoware_image_projection_based_fusion/src/pointpainting_fusion/node.cpp
 #include <pcl_ros/transforms.hpp>
 
 #include <omp.h>
 
 #include <chrono>
 
-namespace
+  namespace
 {
-
-Eigen::Affine3f _transformToEigen(const geometry_msgs::msg::Transform & t)
-{
-  Eigen::Affine3f a;
-  a.matrix() = tf2::transformToEigen(t).matrix().cast<float>();
-  return a;
-}
+  Eigen::Affine3f _transformToEigen(const geometry_msgs::msg::Transform & t)
+  {
+    Eigen::Affine3f a;
+    a.matrix() = tf2::transformToEigen(t).matrix().cast<float>();
+    return a;
+  }
 
 }  // namespace
 

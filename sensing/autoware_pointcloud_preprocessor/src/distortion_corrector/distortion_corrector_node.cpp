@@ -19,9 +19,8 @@
 
 namespace pointcloud_preprocessor
 =======
-#include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector_node.hpp"
-
 #include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
+#include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector_node.hpp"
 
 namespace autoware::pointcloud_preprocessor
 >>>>>>> original/main

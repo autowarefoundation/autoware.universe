@@ -16,41 +16,46 @@
 #define AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__VOXEL_GENERATOR_HPP_
 
 #include <autoware/image_projection_based_fusion/pointpainting_fusion/pointcloud_densification.hpp>
-<<<<<<<< HEAD:perception/image_projection_based_fusion/include/autoware/image_projection_based_fusion/pointpainting_fusion/voxel_generator.hpp
+<<<<<<<<
+  HEAD : perception / image_projection_based_fusion / include / autoware /
+    image_projection_based_fusion / pointpainting_fusion / voxel_generator.hpp
 #include <lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <lidar_centerpoint/preprocess/voxel_generator.hpp>
-========
+  == == == ==
 #include <autoware/lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <autoware/lidar_centerpoint/preprocess/voxel_generator.hpp>
->>>>>>>> original/main:perception/autoware_image_projection_based_fusion/include/autoware/image_projection_based_fusion/pointpainting_fusion/voxel_generator.hpp
+  >>>>>>>> original /
+  main : perception / autoware_image_projection_based_fusion / include / autoware /
+         image_projection_based_fusion / pointpainting_fusion /
+         voxel_generator.hpp
 
 #include <bitset>
 #include <memory>
 #include <vector>
 
-namespace autoware::image_projection_based_fusion
+         namespace autoware::image_projection_based_fusion
 {
+  class VoxelGenerator
+  {
+  public:
+    explicit VoxelGenerator(
+      const autoware::lidar_centerpoint::DensificationParam & param,
+      const autoware::lidar_centerpoint::CenterPointConfig & config);
 
-class VoxelGenerator
-{
-public:
-  explicit VoxelGenerator(
-    const autoware::lidar_centerpoint::DensificationParam & param,
-    const autoware::lidar_centerpoint::CenterPointConfig & config);
+    bool enqueuePointCloud(
+      const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
+      const tf2_ros::Buffer & tf_buffer);
 
-  bool enqueuePointCloud(
-    const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
+    std::size_t generateSweepPoints(std::vector<float> & points);
 
-  std::size_t generateSweepPoints(std::vector<float> & points);
+  protected:
+    std::unique_ptr<PointCloudDensification> pd_ptr_{nullptr};
 
-protected:
-  std::unique_ptr<PointCloudDensification> pd_ptr_{nullptr};
-
-  autoware::lidar_centerpoint::CenterPointConfig config_;
-  std::array<float, 6> range_;
-  std::array<int, 3> grid_size_;
-  std::array<float, 3> recip_voxel_size_;
-};
+    autoware::lidar_centerpoint::CenterPointConfig config_;
+    std::array<float, 6> range_;
+    std::array<int, 3> grid_size_;
+    std::array<float, 3> recip_voxel_size_;
+  };
 }  // namespace autoware::image_projection_based_fusion
 
 #endif  // AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__VOXEL_GENERATOR_HPP_

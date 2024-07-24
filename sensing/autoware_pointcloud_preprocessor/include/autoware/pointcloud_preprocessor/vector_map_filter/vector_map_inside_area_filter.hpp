@@ -15,13 +15,18 @@
 #ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__VECTOR_MAP_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__VECTOR_MAP_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_
 
-<<<<<<<< HEAD:sensing/autoware_pointcloud_preprocessor/include/pointcloud_preprocessor/vector_map_filter/vector_map_inside_area_filter.hpp
+<<<<<<<<
+  HEAD : sensing / autoware_pointcloud_preprocessor / include / pointcloud_preprocessor /
+    vector_map_filter / vector_map_inside_area_filter.hpp
 #include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/utility/geometry.hpp"
-========
+  == == == ==
 #include "autoware/pointcloud_preprocessor/filter.hpp"
 #include "autoware/pointcloud_preprocessor/utility/geometry.hpp"
->>>>>>>> original/main:sensing/autoware_pointcloud_preprocessor/include/autoware/pointcloud_preprocessor/vector_map_filter/vector_map_inside_area_filter.hpp
+  >>>>>>>> original /
+  main : sensing / autoware_pointcloud_preprocessor / include / autoware / pointcloud_preprocessor /
+         vector_map_filter /
+         vector_map_inside_area_filter.hpp
 
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
@@ -31,7 +36,7 @@
 
 #include <string>
 
-using autoware::universe_utils::MultiPoint2d;
+         using autoware::universe_utils::MultiPoint2d;
 
 namespace autoware::pointcloud_preprocessor
 {

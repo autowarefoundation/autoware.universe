@@ -58,13 +58,16 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
-<<<<<<<< HEAD:perception/ground_segmentation/src/ray_ground_filter/node.hpp
+<<<<<<<<
+  HEAD : perception / ground_segmentation / src / ray_ground_filter / node.hpp
 #include "gencolors.hpp"
 #include "pointcloud_preprocessor/filter.hpp"
-========
+  == == == ==
 #include "autoware/pointcloud_preprocessor/filter.hpp"
 #include "gencolors.hpp"
->>>>>>>> original/main:perception/autoware_ground_segmentation/src/ray_ground_filter/node.hpp
+  >>>>>>>> original /
+  main : perception / autoware_ground_segmentation / src / ray_ground_filter /
+         node.hpp
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
@@ -80,7 +83,7 @@
 #include <string>
 #include <vector>
 
-namespace bg = boost::geometry;
+         namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;
 using Polygon = bg::model::polygon<Point>;
 
@@ -189,31 +192,33 @@ private:
    * @param out_only_indices_cloud_ptr Resulting PointCloud with the indices kept
    * @param out_removed_indices_cloud_ptr Resulting PointCloud with the indices removed
    */
-  void ExtractPointsIndices(
-    const PointCloud2::ConstSharedPtr in_cloud_ptr, const pcl::PointIndices & in_indices,
-<<<<<<<< HEAD:perception/ground_segmentation/src/ray_ground_filter/node.hpp
-    PointCloud2::SharedPtr out_only_indices_cloud_ptr,
-    PointCloud2::SharedPtr out_removed_indices_cloud_ptr);
+  void ExtractPointsIndices(const PointCloud2::ConstSharedPtr in_cloud_ptr,
+                            const pcl::PointIndices & in_indices, < < < < < < < < HEAD
+                            : perception / ground_segmentation / src / ray_ground_filter /
+                                node.hpp PointCloud2::SharedPtr out_only_indices_cloud_ptr,
+                              PointCloud2::SharedPtr out_removed_indices_cloud_ptr);
 ========
     PointCloud2::SharedPtr ground_cloud_msg_ptr, PointCloud2::SharedPtr no_ground_cloud_msg_ptr);
->>>>>>>> original/main:perception/autoware_ground_segmentation/src/ray_ground_filter/node.hpp
+>>>>>>>> original / main : perception / autoware_ground_segmentation / src / ray_ground_filter /
+                           node.hpp
 
-  boost::optional<float> calcPointVehicleIntersection(const Point & point);
+                             boost::optional<float>
+                             calcPointVehicleIntersection(const Point & point);
 
-  void setVehicleFootprint(
-    const double min_x, const double max_x, const double min_y, const double max_y);
-  void initializePointCloud2(
-    const PointCloud2::ConstSharedPtr & in_cloud_ptr,
-    const PointCloud2::SharedPtr & out_cloud_msg_ptr);
-  /** \brief Parameter service callback result : needed to be hold */
-  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+void setVehicleFootprint(
+  const double min_x, const double max_x, const double min_y, const double max_y);
+void initializePointCloud2(
+  const PointCloud2::ConstSharedPtr & in_cloud_ptr,
+  const PointCloud2::SharedPtr & out_cloud_msg_ptr);
+/** \brief Parameter service callback result : needed to be hold */
+OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
-  /** \brief Parameter service callback */
-  rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
+/** \brief Parameter service callback */
+rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  explicit RayGroundFilterComponent(const rclcpp::NodeOptions & options);
+EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+explicit RayGroundFilterComponent(const rclcpp::NodeOptions & options);
 };
 }  // namespace autoware::ground_segmentation
 

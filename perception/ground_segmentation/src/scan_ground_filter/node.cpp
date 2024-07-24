@@ -32,12 +32,11 @@ using autoware::universe_utils::normalizeDegree;
 using autoware::universe_utils::normalizeRadian;
 using autoware::vehicle_info_utils::VehicleInfoUtils;
 
-ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions & options)
-<<<<<<<< HEAD:perception/ground_segmentation/src/scan_ground_filter/node.cpp
-: pointcloud_preprocessor::Filter("ScanGroundFilter", options)
-========
-: autoware::pointcloud_preprocessor::Filter("ScanGroundFilter", options)
->>>>>>>> original/main:perception/autoware_ground_segmentation/src/scan_ground_filter/node.cpp
+ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions & options)<<<<<<<<
+  HEAD : perception / ground_segmentation / src / scan_ground_filter /
+    node.cpp : pointcloud_preprocessor::Filter("ScanGroundFilter", options) ==
+  == == == : autoware::pointcloud_preprocessor::Filter("ScanGroundFilter", options)>>>>>>>> original
+  / main : perception / autoware_ground_segmentation / src / scan_ground_filter / node.cpp
 {
   // set initial parameters
   {

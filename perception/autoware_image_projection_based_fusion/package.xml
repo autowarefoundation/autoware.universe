@@ -17,10 +17,7 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_euclidean_cluster</depend>
-<<<<<<< HEAD:perception/image_projection_based_fusion/package.xml
-=======
   <depend>autoware_lidar_centerpoint</depend>
->>>>>>> original/main:perception/autoware_image_projection_based_fusion/package.xml
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_point_types</depend>
   <depend>autoware_universe_utils</depend>
@@ -36,6 +33,9 @@
   <depend>tf2_ros</depend>
   <depend>tf2_sensor_msgs</depend>
   <depend>tier4_perception_msgs</depend>
+<<<<<<< HEAD:perception/image_projection_based_fusion/package.xml
+=======
+>>>>>>> original/main:perception/autoware_image_projection_based_fusion/package.xml
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>

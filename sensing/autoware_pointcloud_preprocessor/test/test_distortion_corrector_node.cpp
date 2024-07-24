@@ -31,7 +31,7 @@
 =======
 #include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 #include "autoware/universe_utils/math/trigonometry.hpp"
->>>>>>> original/main
+  >>>>>>> original/main
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -46,7 +46,7 @@
 
 #include <cassert>
 
-class DistortionCorrectorTest : public ::testing::Test
+  class DistortionCorrectorTest : public ::testing::Test
 {
 protected:
   void SetUp() override

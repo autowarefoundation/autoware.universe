@@ -80,13 +80,16 @@ PlaneBasis getPlaneBasis(const Eigen::Vector3d & plane_normal)
   return basis;
 }
 
-<<<<<<<< HEAD:perception/ground_segmentation/src/ransac_ground_filter/node.cpp
-using pointcloud_preprocessor::get_param;
-========
-using autoware::pointcloud_preprocessor::get_param;
->>>>>>>> original/main:perception/autoware_ground_segmentation/src/ransac_ground_filter/node.cpp
+< < < < < < < < HEAD : perception / ground_segmentation / src / ransac_ground_filter /
+                       node.cpp using pointcloud_preprocessor::get_param;
+== == == == using autoware::pointcloud_preprocessor::get_param;
+>>>>>>>> original /
+           main
+: perception /
+  autoware_ground_segmentation / src / ransac_ground_filter /
+  node.cpp
 
-RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptions & options)
+  RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptions & options)
 : Filter("RANSACGroundFilter", options)
 {
   base_frame_ = declare_parameter<std::string>("base_frame", "base_link");

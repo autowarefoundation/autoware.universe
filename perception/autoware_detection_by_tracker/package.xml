@@ -14,10 +14,7 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_euclidean_cluster</depend>
-<<<<<<< HEAD
-=======
   <depend>autoware_shape_estimation</depend>
->>>>>>> original/main
   <depend>autoware_universe_utils</depend>
   <depend>eigen</depend>
   <depend>object_recognition_utils</depend>
@@ -27,6 +24,9 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_perception_msgs</depend>
+<<<<<<< HEAD
+=======
+>>>>>>> original/main
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

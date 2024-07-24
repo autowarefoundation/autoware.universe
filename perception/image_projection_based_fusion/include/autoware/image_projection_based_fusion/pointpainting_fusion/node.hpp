@@ -17,75 +17,80 @@
 
 #include "autoware/image_projection_based_fusion/fusion_node.hpp"
 #include "autoware/image_projection_based_fusion/pointpainting_fusion/pointpainting_trt.hpp"
-<<<<<<<< HEAD:perception/image_projection_based_fusion/include/autoware/image_projection_based_fusion/pointpainting_fusion/node.hpp
+<<<<<<<<
+  HEAD : perception / image_projection_based_fusion / include / autoware /
+    image_projection_based_fusion / pointpainting_fusion / node.hpp
 #include "lidar_centerpoint/postprocess/non_maximum_suppression.hpp"
 
 #include <autoware/image_projection_based_fusion/utils/geometry.hpp>
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 #include <lidar_centerpoint/centerpoint_trt.hpp>
 #include <lidar_centerpoint/detection_class_remapper.hpp>
-========
+  == == == ==
 #include "autoware/lidar_centerpoint/postprocess/non_maximum_suppression.hpp"
 
 #include <autoware/image_projection_based_fusion/utils/geometry.hpp>
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 #include <autoware/lidar_centerpoint/centerpoint_trt.hpp>
 #include <autoware/lidar_centerpoint/detection_class_remapper.hpp>
->>>>>>>> original/main:perception/autoware_image_projection_based_fusion/include/autoware/image_projection_based_fusion/pointpainting_fusion/node.hpp
+  >>>>>>>> original /
+  main : perception / autoware_image_projection_based_fusion / include / autoware /
+         image_projection_based_fusion / pointpainting_fusion /
+         node.hpp
 
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace autoware::image_projection_based_fusion
+         namespace autoware::image_projection_based_fusion
 {
-using Label = autoware_perception_msgs::msg::ObjectClassification;
+  using Label = autoware_perception_msgs::msg::ObjectClassification;
 
-inline bool isInsideBbox(
-  float proj_x, float proj_y, sensor_msgs::msg::RegionOfInterest roi, float zc)
-{
-  // z_c is scaling to normalize projection point
-  return proj_x >= roi.x_offset * zc && proj_x <= (roi.x_offset + roi.width) * zc &&
-         proj_y >= roi.y_offset * zc && proj_y <= (roi.y_offset + roi.height) * zc;
-}
+  inline bool isInsideBbox(
+    float proj_x, float proj_y, sensor_msgs::msg::RegionOfInterest roi, float zc)
+  {
+    // z_c is scaling to normalize projection point
+    return proj_x >= roi.x_offset * zc && proj_x <= (roi.x_offset + roi.width) * zc &&
+           proj_y >= roi.y_offset * zc && proj_y <= (roi.y_offset + roi.height) * zc;
+  }
 
-class PointPaintingFusionNode
-: public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects, DetectedObjectsWithFeature>
-{
-public:
-  explicit PointPaintingFusionNode(const rclcpp::NodeOptions & options);
+  class PointPaintingFusionNode
+  : public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects, DetectedObjectsWithFeature>
+  {
+  public:
+    explicit PointPaintingFusionNode(const rclcpp::NodeOptions & options);
 
-protected:
-  void preprocess(sensor_msgs::msg::PointCloud2 & pointcloud_msg) override;
+  protected:
+    void preprocess(sensor_msgs::msg::PointCloud2 & pointcloud_msg) override;
 
-  void fuseOnSingleImage(
-    const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
-    const DetectedObjectsWithFeature & input_roi_msg,
-    const sensor_msgs::msg::CameraInfo & camera_info,
-    sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
+    void fuseOnSingleImage(
+      const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
+      const DetectedObjectsWithFeature & input_roi_msg,
+      const sensor_msgs::msg::CameraInfo & camera_info,
+      sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
-  void postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
+    void postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
-  rclcpp::Publisher<DetectedObjects>::SharedPtr obj_pub_ptr_;
+    rclcpp::Publisher<DetectedObjects>::SharedPtr obj_pub_ptr_;
 
-  std::vector<double> tan_h_;  // horizontal field of view
+    std::vector<double> tan_h_;  // horizontal field of view
 
-  int omp_num_threads_{1};
-  float score_threshold_{0.0};
-  std::vector<std::string> class_names_;
-  std::map<std::string, float> class_index_;
-  std::map<std::string, std::function<bool(int)>> isClassTable_;
-  std::vector<double> pointcloud_range;
-  bool has_variance_{false};
-  bool has_twist_{false};
+    int omp_num_threads_{1};
+    float score_threshold_{0.0};
+    std::vector<std::string> class_names_;
+    std::map<std::string, float> class_index_;
+    std::map<std::string, std::function<bool(int)>> isClassTable_;
+    std::vector<double> pointcloud_range;
+    bool has_variance_{false};
+    bool has_twist_{false};
 
-  autoware::lidar_centerpoint::NonMaximumSuppression iou_bev_nms_;
-  autoware::lidar_centerpoint::DetectionClassRemapper detection_class_remapper_;
+    autoware::lidar_centerpoint::NonMaximumSuppression iou_bev_nms_;
+    autoware::lidar_centerpoint::DetectionClassRemapper detection_class_remapper_;
 
-  std::unique_ptr<image_projection_based_fusion::PointPaintingTRT> detector_ptr_{nullptr};
+    std::unique_ptr<image_projection_based_fusion::PointPaintingTRT> detector_ptr_{nullptr};
 
-  bool out_of_scope(const DetectedObjects & obj);
-};
+    bool out_of_scope(const DetectedObjects & obj);
+  };
 }  // namespace autoware::image_projection_based_fusion
 #endif  // AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__NODE_HPP_

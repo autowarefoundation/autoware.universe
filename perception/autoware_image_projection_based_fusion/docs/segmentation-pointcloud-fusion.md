@@ -35,8 +35,10 @@ The node `segmentation_pointcloud_fusion` is a package for filtering pointcloud 
 <<<<<<< HEAD:perception/image_projection_based_fusion/docs/segmentation-pointcloud-fusion.md
 {{ json_to_markdown("perception/image_projection_based_fusion/schema/segmentation_pointcloud_fusion.schema.json") }}
 =======
+
 {{ json_to_markdown("perception/autoware_image_projection_based_fusion/schema/segmentation_pointcloud_fusion.schema.json") }}
->>>>>>> original/main:perception/autoware_image_projection_based_fusion/docs/segmentation-pointcloud-fusion.md
+
+> > > > > > > original/main:perception/autoware_image_projection_based_fusion/docs/segmentation-pointcloud-fusion.md
 
 ## Assumptions / Known limits
 

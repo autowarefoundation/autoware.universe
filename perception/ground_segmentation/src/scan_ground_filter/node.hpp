@@ -15,15 +15,18 @@
 #ifndef SCAN_GROUND_FILTER__NODE_HPP_
 #define SCAN_GROUND_FILTER__NODE_HPP_
 
-<<<<<<<< HEAD:perception/ground_segmentation/src/scan_ground_filter/node.hpp
+<<<<<<<<
+  HEAD : perception / ground_segmentation / src / scan_ground_filter / node.hpp
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
 #include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/transform_info.hpp"
-========
+  == == == ==
 #include "autoware/pointcloud_preprocessor/filter.hpp"
 #include "autoware/pointcloud_preprocessor/transform_info.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
->>>>>>>> original/main:perception/autoware_ground_segmentation/src/scan_ground_filter/node.hpp
+  >>>>>>>> original /
+  main : perception / autoware_ground_segmentation / src / scan_ground_filter /
+         node.hpp
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -44,7 +47,7 @@
 #include <string>
 #include <vector>
 
-class ScanGroundFilterTest;
+         class ScanGroundFilterTest;
 
 namespace autoware::ground_segmentation
 {

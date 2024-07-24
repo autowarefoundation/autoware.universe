@@ -16,7 +16,7 @@
 #include "pointcloud_preprocessor/utility/geometry.hpp"
 =======
 #include "autoware/pointcloud_preprocessor/utility/geometry.hpp"
->>>>>>> original/main
+  >>>>>>> original/main
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -29,7 +29,7 @@
 
 #include <optional>
 
-constexpr double EPSILON = 1e-6;
+  constexpr double EPSILON = 1e-6;
 
 class RemovePolygonCgalFromCloudTest : public ::testing::Test
 {

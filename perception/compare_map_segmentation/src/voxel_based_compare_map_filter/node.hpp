@@ -16,11 +16,14 @@
 #define VOXEL_BASED_COMPARE_MAP_FILTER__NODE_HPP_
 
 #include "../voxel_grid_map_loader/voxel_grid_map_loader.hpp"
-<<<<<<<< HEAD:perception/compare_map_segmentation/src/voxel_based_compare_map_filter/node.hpp
+<<<<<<<<
+  HEAD : perception / compare_map_segmentation / src / voxel_based_compare_map_filter / node.hpp
 #include "pointcloud_preprocessor/filter.hpp"
-========
+  == == == ==
 #include "autoware/pointcloud_preprocessor/filter.hpp"
->>>>>>>> original/main:perception/autoware_compare_map_segmentation/src/voxel_based_compare_map_filter/node.hpp
+  >>>>>>>> original /
+  main : perception / autoware_compare_map_segmentation / src / voxel_based_compare_map_filter /
+         node.hpp
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
@@ -28,27 +31,27 @@
 #include <memory>
 #include <vector>
 
-namespace autoware::compare_map_segmentation
+         namespace autoware::compare_map_segmentation
 {
-class VoxelBasedCompareMapFilterComponent : public autoware::pointcloud_preprocessor::Filter
-{
-protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  class VoxelBasedCompareMapFilterComponent : public autoware::pointcloud_preprocessor::Filter
+  {
+  protected:
+    virtual void filter(
+      const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
 
-private:
-  // pcl::SegmentDifferences<pcl::PointXYZ> impl_;
-  std::unique_ptr<VoxelGridMapLoader> voxel_grid_map_loader_;
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
-  double distance_threshold_;
-  bool set_map_in_voxel_grid_;
+  private:
+    // pcl::SegmentDifferences<pcl::PointXYZ> impl_;
+    std::unique_ptr<VoxelGridMapLoader> voxel_grid_map_loader_;
+    rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
+    double distance_threshold_;
+    bool set_map_in_voxel_grid_;
 
-  bool dynamic_map_load_enable_;
+    bool dynamic_map_load_enable_;
 
-public:
-  PCL_MAKE_ALIGNED_OPERATOR_NEW
-  explicit VoxelBasedCompareMapFilterComponent(const rclcpp::NodeOptions & options);
-};
+  public:
+    PCL_MAKE_ALIGNED_OPERATOR_NEW
+    explicit VoxelBasedCompareMapFilterComponent(const rclcpp::NodeOptions & options);
+  };
 }  // namespace autoware::compare_map_segmentation
 
 #endif  // VOXEL_BASED_COMPARE_MAP_FILTER__NODE_HPP_
