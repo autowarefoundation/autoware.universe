@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>simple_object_merger</name>
+  <name>autoware_simple_object_merger</name>
   <version>0.1.0</version>
-  <description>simple_object_merger</description>
+  <description>autoware_simple_object_merger</description>
   <maintainer email="satoshi.tanaka@tier4.jp">Sathshi Tanaka</maintainer>
   <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
