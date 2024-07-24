@@ -51,6 +51,9 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+namespace autoware::lidar_marker_localizer
+{
+
 class LidarMarkerLocalizer : public rclcpp::Node
 {
   using HADMapBin = autoware_map_msgs::msg::LaneletMapBin;
@@ -140,5 +143,7 @@ private:
 
   landmark_manager::LandmarkManager landmark_manager_;
 };
+
+}  // namespace autoware::lidar_marker_localizer
 
 #endif  // LIDAR_MARKER_LOCALIZER_HPP_

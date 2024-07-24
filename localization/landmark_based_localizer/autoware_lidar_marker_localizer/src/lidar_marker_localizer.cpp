@@ -34,6 +34,9 @@
 #include <string>
 #include <utility>
 
+namespace autoware::lidar_marker_localizer
+{
+
 LidarMarkerLocalizer::LidarMarkerLocalizer() : Node("lidar_marker_localizer"), is_activated_(false)
 {
   using std::placeholders::_1;
@@ -602,3 +605,5 @@ void LidarMarkerLocalizer::transform_sensor_measurement(
   autoware::universe_utils::transformPointCloud(
     *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }
+
+}  // namespace autoware::lidar_marker_localizer

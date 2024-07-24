@@ -19,7 +19,7 @@
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node_ptr = std::make_shared<LidarMarkerLocalizer>();
+  auto node_ptr = std::make_shared<autoware::lidar_marker_localizer::LidarMarkerLocalizer>();
   rclcpp::executors::MultiThreadedExecutor exec;
   exec.add_node(node_ptr);
   exec.spin();

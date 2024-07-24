@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(lidar_marker_localizer)
+project(autoware_lidar_marker_localizer)
 
 # find dependencies
 find_package(autoware_cmake REQUIRED)
