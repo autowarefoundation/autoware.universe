@@ -161,6 +161,7 @@ public:
     const std::vector<geometry_msgs::msg::Pose> & goal_candidates) = 0;
   virtual bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory) const;
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
+  double getDistanceToObstacle(const geometry_msgs::msg::Pose & pose) const;
 
   virtual ~AbstractPlanningAlgorithm() {}
 
