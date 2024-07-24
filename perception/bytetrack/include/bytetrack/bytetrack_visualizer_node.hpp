@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -52,13 +51,7 @@ public:
     cv::applyColorMap(src, color_table_, cv::COLORMAP_HSV);
   }
 
-  cv::Scalar operator()(size_t idx)
-  {
-    if (kColorNum <= idx) {
-      throw std::runtime_error("idx should be between [0, 255]");
-    }
-    return color_table_.at<cv::Vec3b>(0, idx);
-  }
+  cv::Scalar operator()(size_t idx) { return color_table_.at<cv::Vec3b>(0, idx % kColorNum); }
 
 protected:
   cv::Mat color_table_;
