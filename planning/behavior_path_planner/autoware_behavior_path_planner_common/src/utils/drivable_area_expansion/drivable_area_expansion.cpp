@@ -390,13 +390,11 @@ void add_bound_point(std::vector<Point> & bound, const Pose & pose, const double
 
 void add_bound_points(
   std::vector<Point> & left_bound, std::vector<Point> & right_bound,
-  const std::vector<Pose> & path_poses, const std::vector<double> & curvatures,
-  const double min_bound_interval)
+  const std::vector<Pose> & path_poses, const double min_bound_interval)
 {
-  for (auto i = 0UL; i < path_poses.size(); ++i) {
-    const auto k = curvatures[i];
-    add_bound_point(left_bound, path_poses[i], min_bound_interval);
-    add_bound_point(right_bound, path_poses[i], min_bound_interval);
+  for (const auto & p : path_poses) {
+    add_bound_point(left_bound, p, min_bound_interval);
+    add_bound_point(right_bound, p, min_bound_interval);
   }
 }
 
@@ -415,7 +413,6 @@ void expand_drivable_area(
     *route_handler.getLaneletMapPtr(), planner_data->self_odometry->pose.pose.position, params);
   const auto uncrossable_polygons = create_object_footprints(*planner_data->dynamic_object, params);
   const auto preprocessing_ms = stop_watch.toc("preprocessing");
-
   stop_watch.tic("crop");
   std::vector<Pose> path_poses = planner_data->drivable_area_expansion_prev_path_poses;
   std::vector<double> curvatures = planner_data->drivable_area_expansion_prev_curvatures;
@@ -423,6 +420,7 @@ void expand_drivable_area(
   reuse_previous_poses(
     path, path_poses, curvatures, planner_data->self_odometry->pose.pose.position, params);
   const auto crop_ms = stop_watch.toc("crop");
+  add_bound_points(path.left_bound, path.right_bound, path_poses, params.min_bound_interval);
 
   stop_watch.tic("curvatures_expansion");
   // Only add curvatures for the new points. Curvatures of reused path points are not updated.
@@ -438,8 +436,6 @@ void expand_drivable_area(
     std::cerr << "[drivable_area_expansion] could not calculate path curvatures\n";
     curvatures.resize(path_poses.size(), 0.0);
   }
-  add_bound_points(
-    path.left_bound, path.right_bound, path_poses, curvatures, params.min_bound_interval);
   auto expansion =
     calculate_expansion(path_poses, path.left_bound, path.right_bound, curvatures, params);
   const auto curvature_expansion_ms = stop_watch.toc("curvatures_expansion");
