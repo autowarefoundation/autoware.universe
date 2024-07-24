@@ -2129,8 +2129,8 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
 
         const auto collision_in_current_lanes =
           utils::lane_change::isCollidedPolygonsInLanelet(collided_polygons, current_lanes_polygon);
-        const auto collision_in_target_lanes =
-          utils::lane_change::isCollidedPolygonsInLanelet(collided_polygons, expanded_target_polygon);
+        const auto collision_in_target_lanes = utils::lane_change::isCollidedPolygonsInLanelet(
+          collided_polygons, expanded_target_polygon);
 
         if (!collision_in_current_lanes && !collision_in_target_lanes) {
           utils::path_safety_checker::updateCollisionCheckDebugMap(
