@@ -5,8 +5,13 @@
   <arg name="output/pointcloud" default="/sensing/lidar/top/rectified/pointcloud_ex"/>
 
   <!-- Parameter -->
+<<<<<<< HEAD
   <arg name="param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/distortion_corrector_node.param.yaml"/>
   <node pkg="pointcloud_preprocessor" exec="distortion_corrector_node" name="distortion_corrector_node" output="screen">
+=======
+  <arg name="param_file" default="$(find-pkg-share autoware_pointcloud_preprocessor)/config/distortion_corrector_node.param.yaml"/>
+  <node pkg="autoware_pointcloud_preprocessor" exec="distortion_corrector_node" name="distortion_corrector_node" output="screen">
+>>>>>>> original/main
     <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>
     <remap from="~/input/twist" to="$(var input/twist)"/>
     <remap from="~/input/imu" to="$(var input/imu)"/>

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/downsample_filter/pickup_based_voxel_grid_downsample_filter.hpp"
+#include "autoware/pointcloud_preprocessor/downsample_filter/pickup_based_voxel_grid_downsample_filter.hpp"
 
 #include "robin_hood.h"
 
@@ -49,7 +49,7 @@ struct VoxelKeyEqual
 };
 }  // namespace
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 PickupBasedVoxelGridDownsampleFilterComponent::PickupBasedVoxelGridDownsampleFilterComponent(
   const rclcpp::NodeOptions & options)
@@ -186,8 +186,8 @@ PickupBasedVoxelGridDownsampleFilterComponent::paramCallback(
   return result;
 }
 
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
-  pointcloud_preprocessor::PickupBasedVoxelGridDownsampleFilterComponent)
+  autoware::pointcloud_preprocessor::PickupBasedVoxelGridDownsampleFilterComponent)

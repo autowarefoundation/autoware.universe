@@ -24,13 +24,13 @@ This algorithm samples a single actual point existing within the voxel, not the 
 
 ## Inputs / Outputs
 
-These implementations inherit `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+These implementations inherit `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ## Parameters
 
 ### Note Parameters
 
-These implementations inherit `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+These implementations inherit `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ### Core Parameters
 

@@ -12,14 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+<<<<<<< HEAD
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
 #include "pointcloud_preprocessor/utility/memory.hpp"
+=======
+#include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
+
+#include "autoware/pointcloud_preprocessor/utility/memory.hpp"
+>>>>>>> original/main
 
 #include <autoware/universe_utils/math/trigonometry.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
+<<<<<<< HEAD
 namespace pointcloud_preprocessor
+=======
+namespace autoware::pointcloud_preprocessor
+>>>>>>> original/main
 {
 
 template <class T>
@@ -463,4 +473,8 @@ inline void DistortionCorrector3D::undistortPointImplementation(
   prev_transformation_matrix_ = transformation_matrix_;
 }
 
+<<<<<<< HEAD
 }  // namespace pointcloud_preprocessor
+=======
+}  // namespace autoware::pointcloud_preprocessor
+>>>>>>> original/main

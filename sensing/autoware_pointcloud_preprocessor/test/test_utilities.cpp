@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+<<<<<<< HEAD
 #include "pointcloud_preprocessor/utility/geometry.hpp"
+=======
+#include "autoware/pointcloud_preprocessor/utility/geometry.hpp"
+>>>>>>> original/main
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -58,7 +62,8 @@ TEST_F(RemovePolygonCgalFromCloudTest, PointsInsidePolygonAreRemoved)
   sensor_msgs::msg::PointCloud2 cloud_in;
   CreatePointCloud2(cloud_in, 0.5, 0.5, 0.1);  // point inside the polygon
 
-  pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(cloud_in, polygon, cloud_out);
+  autoware::pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
+    cloud_in, polygon, cloud_out);
 
   pcl::PointCloud<pcl::PointXYZ> pcl_output;
   pcl::fromROSMsg(cloud_out, pcl_output);
@@ -72,7 +77,8 @@ TEST_F(RemovePolygonCgalFromCloudTest, PointsOutsidePolygonRemain)
   sensor_msgs::msg::PointCloud2 cloud_in;
   CreatePointCloud2(cloud_in, 1.5, 1.5, 0.1);  // point outside the polygon
 
-  pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(cloud_in, polygon, cloud_out);
+  autoware::pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
+    cloud_in, polygon, cloud_out);
 
   pcl::PointCloud<pcl::PointXYZ> pcl_output;
   pcl::fromROSMsg(cloud_out, pcl_output);
@@ -90,7 +96,7 @@ TEST_F(RemovePolygonCgalFromCloudTest, PointsBelowMaxZAreRemoved)
   CreatePointCloud2(cloud_in, 0.5, 0.5, 0.1);  // point inside the polygon, below max_z
 
   std::optional<float> max_z = 1.0f;
-  pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
+  autoware::pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
     cloud_in, polygon, cloud_out, max_z);
 
   pcl::PointCloud<pcl::PointXYZ> pcl_output;
@@ -106,7 +112,7 @@ TEST_F(RemovePolygonCgalFromCloudTest, PointsAboveMaxZRemain)
   CreatePointCloud2(cloud_in, 0.5, 0.5, 1.5);  // point inside the polygon, above max_z
 
   std::optional<float> max_z = 1.0f;
-  pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
+  autoware::pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
     cloud_in, polygon, cloud_out, max_z);
 
   pcl::PointCloud<pcl::PointXYZ> pcl_output;

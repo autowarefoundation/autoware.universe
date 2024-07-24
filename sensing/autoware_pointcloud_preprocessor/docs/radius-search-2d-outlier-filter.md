@@ -14,13 +14,13 @@ The description above is quoted from [1]. `pcl::search::KdTree` [2] is used to i
 
 ## Inputs / Outputs
 
-This implementation inherits `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+This implementation inherits `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ## Parameters
 
 ### Node Parameters
 
-This implementation inherits `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+This implementation inherits `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ### Core Parameters
 

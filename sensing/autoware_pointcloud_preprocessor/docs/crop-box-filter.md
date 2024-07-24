@@ -10,13 +10,13 @@ The `crop_box_filter` is a node that removes points with in a given box region. 
 
 ## Inputs / Outputs
 
-This implementation inherit `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+This implementation inherit `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ## Parameters
 
 ### Node Parameters
 
-This implementation inherit `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+This implementation inherit `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ### Core Parameters
 

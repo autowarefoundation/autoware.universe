@@ -28,7 +28,7 @@ The area of noise is found by erosion and dilation these black pixels.
 
 ## Inputs / Outputs
 
-This implementation inherits `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+This implementation inherits `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ### Input
 

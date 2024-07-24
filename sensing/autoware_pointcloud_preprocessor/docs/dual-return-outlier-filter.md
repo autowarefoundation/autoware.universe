@@ -32,7 +32,7 @@ The below picture shows the ROI options.
 
 ## Inputs / Outputs
 
-This implementation inherits `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+This implementation inherits `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ### Output
 
@@ -46,9 +46,13 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ### Node Parameters
 
+<<<<<<< HEAD
 {{ json_to_markdown("sensing/pointcloud_preprocessor/schema/dual_return_outlier_filter.schema.json") }}
 
 This implementation inherits `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+=======
+This implementation inherits `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+>>>>>>> original/main
 
 ### Core Parameters
 

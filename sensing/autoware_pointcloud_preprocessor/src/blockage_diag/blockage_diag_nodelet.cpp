@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/blockage_diag/blockage_diag_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/blockage_diag/blockage_diag_nodelet.hpp"
 
 #include "autoware_point_types/types.hpp"
 
 #include <algorithm>
 #include <numeric>
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 using autoware_point_types::PointXYZIRCAEDT;
 using diagnostic_msgs::msg::DiagnosticStatus;
@@ -462,7 +462,7 @@ rcl_interfaces::msg::SetParametersResult BlockageDiagComponent::paramCallback(
   result.reason = "success";
   return result;
 }
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::BlockageDiagComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::BlockageDiagComponent)

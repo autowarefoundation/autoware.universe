@@ -9,7 +9,7 @@
   <arg name="output_points_raw" default="/points_raw/cropbox/filtered" description=""/>
   <arg name="tf_output_frame" default="base_link" description=""/>
 
-  <include file="$(find-pkg-share pointcloud_preprocessor)/launch/preprocessor.launch.py">
+  <include file="$(find-pkg-share autoware_pointcloud_preprocessor)/launch/preprocessor.launch.py">
     <arg name="input_points_raw_list" value="$(var input_points_raw_list)"/>
     <arg name="output_points_raw" value="$(var output_points_raw)"/>
     <arg name="tf_output_frame" value="$(var tf_output_frame)"/>

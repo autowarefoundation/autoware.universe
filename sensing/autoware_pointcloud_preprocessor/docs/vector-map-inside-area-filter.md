@@ -16,7 +16,7 @@ The `vector_map_inside_area_filter` is a node that removes points inside the vec
 
 ## Inputs / Outputs
 
-This implementation inherits `pointcloud_preprocessor::Filter` class, so please see also [README](../README.md).
+This implementation inherits `autoware::pointcloud_preprocessor::Filter` class, so please see also [README](../README.md).
 
 ### Input
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/vector_map_filter/vector_map_inside_area_filter.hpp"
+#include "autoware/pointcloud_preprocessor/vector_map_filter/vector_map_inside_area_filter.hpp"
 
 namespace
 {
@@ -48,12 +48,12 @@ pcl::PointCloud<pcl::PointXYZ> removePointsWithinPolygons(
   for (const auto & polygon : polygons) {
     const auto lanelet_poly = lanelet::utils::to2D(polygon).basicPolygon();
     PolygonCgal cgal_poly;
-    pointcloud_preprocessor::utils::to_cgal_polygon(lanelet_poly, cgal_poly);
+    autoware::pointcloud_preprocessor::utils::to_cgal_polygon(lanelet_poly, cgal_poly);
     cgal_polys.emplace_back(cgal_poly);
   }
 
   pcl::PointCloud<pcl::PointXYZ> filtered_cloud;
-  pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
+  autoware::pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
     *cloud_in, cgal_polys, filtered_cloud, z_threshold_);
 
   return filtered_cloud;
@@ -61,7 +61,7 @@ pcl::PointCloud<pcl::PointXYZ> removePointsWithinPolygons(
 
 }  // anonymous namespace
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 VectorMapInsideAreaFilterComponent::VectorMapInsideAreaFilterComponent(
   const rclcpp::NodeOptions & node_options)
@@ -138,7 +138,8 @@ void VectorMapInsideAreaFilterComponent::mapCallback(
   polygon_lanelets_ = lanelet::utils::query::getAllPolygonsByType(lanelet_map_ptr, polygon_type_);
 }
 
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::VectorMapInsideAreaFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::pointcloud_preprocessor::VectorMapInsideAreaFilterComponent)

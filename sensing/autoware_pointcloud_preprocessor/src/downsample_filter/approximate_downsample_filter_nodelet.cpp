@@ -49,7 +49,7 @@
  *
  */
 
-#include "pointcloud_preprocessor/downsample_filter/approximate_downsample_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/downsample_filter/approximate_downsample_filter_nodelet.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
@@ -57,7 +57,7 @@
 
 #include <vector>
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 ApproximateDownsampleFilterComponent::ApproximateDownsampleFilterComponent(
   const rclcpp::NodeOptions & options)
@@ -117,7 +117,8 @@ rcl_interfaces::msg::SetParametersResult ApproximateDownsampleFilterComponent::p
   return result;
 }
 
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::ApproximateDownsampleFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::pointcloud_preprocessor::ApproximateDownsampleFilterComponent)

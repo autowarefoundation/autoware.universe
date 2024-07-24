@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/polygon_remover/polygon_remover.hpp"
+#include "autoware/pointcloud_preprocessor/polygon_remover/polygon_remover.hpp"
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 PolygonRemoverComponent::PolygonRemoverComponent(const rclcpp::NodeOptions & options)
 : Filter("PolygonRemover", options)
@@ -70,7 +70,7 @@ void PolygonRemoverComponent::filter(
 void PolygonRemoverComponent::update_polygon(
   const geometry_msgs::msg::Polygon::ConstSharedPtr & polygon_in)
 {
-  pointcloud_preprocessor::utils::to_cgal_polygon(*polygon_in, polygon_cgal_);
+  autoware::pointcloud_preprocessor::utils::to_cgal_polygon(*polygon_in, polygon_cgal_);
   if (will_visualize_) {
     marker_.ns = "";
     marker_.id = 0;
@@ -132,11 +132,11 @@ sensor_msgs::msg::PointCloud2 PolygonRemoverComponent::remove_updated_polygon_fr
   }
 
   PointCloud2 cloud_out;
-  pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
+  autoware::pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
     *cloud_in, polygon_cgal_, cloud_out);
   return cloud_out;
 }
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::PolygonRemoverComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::PolygonRemoverComponent)

@@ -32,7 +32,7 @@ def load_parameter_dic(package_share_directory, yaml_file_path):
 
 def generate_launch_description():
     ns = "pointcloud_preprocessor"
-    pkg = "pointcloud_preprocessor"
+    pkg = "autoware_pointcloud_preprocessor"
 
     polygon_remover_param = load_parameter_dic(
         "autoware_vehicle_info_utils", "config/polygon_remover.yaml"
@@ -44,7 +44,7 @@ def generate_launch_description():
 
     my_component = ComposableNode(
         package=pkg,
-        plugin="pointcloud_preprocessor::PolygonRemoverComponent",
+        plugin="autoware::pointcloud_preprocessor::PolygonRemoverComponent",
         name="polygon_remover",
         parameters=[param],
     )

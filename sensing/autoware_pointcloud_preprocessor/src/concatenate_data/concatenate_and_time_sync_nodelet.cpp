@@ -49,7 +49,9 @@
  *
  */
 
-#include "pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_nodelet.hpp"
+
+#include "autoware/pointcloud_preprocessor/utility/memory.hpp"
 
 #include "pointcloud_preprocessor/utility/memory.hpp"
 
@@ -68,7 +70,7 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchronizerComponent(
   const rclcpp::NodeOptions & node_options)
@@ -728,8 +730,8 @@ void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
                                 : "Some topics are not concatenated";
   stat.summary(level, message);
 }
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
-  pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent)
+  autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent)

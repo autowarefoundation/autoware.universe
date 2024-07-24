@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(pointcloud_preprocessor)
+project(autoware_pointcloud_preprocessor)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -98,99 +98,99 @@ target_link_libraries(pointcloud_preprocessor_filter
 
 # ========== Time synchronizer ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::PointCloudDataSynchronizerComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::PointCloudDataSynchronizerComponent"
   EXECUTABLE time_synchronizer_node)
 
 # ========== Concatenate data ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::PointCloudConcatenationComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::PointCloudConcatenationComponent"
   EXECUTABLE concatenate_pointclouds_node)
 
 # ========== Concatenate and Sync data ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent"
   EXECUTABLE concatenate_data_node)
 
 # ========== CropBox ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::CropBoxFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::CropBoxFilterComponent"
   EXECUTABLE crop_box_filter_node)
 
 # ========== Down Sampler Filter ==========
 # -- Voxel Grid Downsample Filter --
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::VoxelGridDownsampleFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::VoxelGridDownsampleFilterComponent"
   EXECUTABLE voxel_grid_downsample_filter_node)
 
 # -- Pickup Based Voxel Grid Downsample Filter --
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::PickupBasedVoxelGridDownsampleFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::PickupBasedVoxelGridDownsampleFilterComponent"
   EXECUTABLE pickup_based_voxel_grid_downsample_filter_node)
 
 # -- Random Downsample Filter --
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::RandomDownsampleFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::RandomDownsampleFilterComponent"
   EXECUTABLE random_downsample_filter_node)
 
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::ApproximateDownsampleFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::ApproximateDownsampleFilterComponent"
   EXECUTABLE approximate_downsample_filter_node)
 
 # ========== Outlier Filter ==========
 # -- Ring Outlier Filter --
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::RingOutlierFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::RingOutlierFilterComponent"
   EXECUTABLE ring_outlier_filter_node)
 
 # -- Voxel Grid Outlier Filter --
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::VoxelGridOutlierFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::VoxelGridOutlierFilterComponent"
   EXECUTABLE voxel_grid_outlier_filter_node)
 
 # -- Radius Search 2D Outlier Filter --
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::RadiusSearch2DOutlierFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::RadiusSearch2DOutlierFilterComponent"
   EXECUTABLE radius_search_2d_outlier_filter_node)
 
 # -- DualReturn Outlier Filter--
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::DualReturnOutlierFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::DualReturnOutlierFilterComponent"
   EXECUTABLE dual_return_outlier_filter_node)
 
 # ========== Passthrough Filter ==========
 # -- Passthrough Filter --
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::PassThroughFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::PassThroughFilterComponent"
   EXECUTABLE passthrough_filter_node)
 
 # -- Passthrough Filter Uint16 --
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::PassThroughFilterUInt16Component"
+  PLUGIN "autoware::pointcloud_preprocessor::PassThroughFilterUInt16Component"
   EXECUTABLE passthrough_filter_uint16_node)
 
 # ========== Pointcloud Accumulator Filter ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::PointcloudAccumulatorComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::PointcloudAccumulatorComponent"
   EXECUTABLE pointcloud_accumulator_node)
 
 # ========== Vector Map Filter ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::Lanelet2MapFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::Lanelet2MapFilterComponent"
   EXECUTABLE vector_map_filter_node)
 
 # ========== Distortion Corrector ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::DistortionCorrectorComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::DistortionCorrectorComponent"
   EXECUTABLE distortion_corrector_node)
 
 # ========== Blockage Diagnostics ===========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::BlockageDiagComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::BlockageDiagComponent"
   EXECUTABLE blockage_diag_node)
 
 # ========== PolygonRemover ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::PolygonRemoverComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::PolygonRemoverComponent"
   EXECUTABLE polygon_remover_node)
 
 set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
@@ -198,7 +198,7 @@ target_link_libraries(polygon_remover_node gmp CGAL CGAL::CGAL CGAL::CGAL_Core)
 
 # ========== Vector Map Inside Area Filter ===========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "pointcloud_preprocessor::VectorMapInsideAreaFilterComponent"
+  PLUGIN "autoware::pointcloud_preprocessor::VectorMapInsideAreaFilterComponent"
   EXECUTABLE vector_map_inside_area_filter_node)
 
 install(

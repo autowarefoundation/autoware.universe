@@ -21,7 +21,7 @@
  * @author Yoshi Ri
  */
 
-#include "pointcloud_preprocessor/time_synchronizer/time_synchronizer_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/time_synchronizer/time_synchronizer_nodelet.hpp"
 
 #include <pcl_ros/transforms.hpp>
 
@@ -37,7 +37,7 @@
 #define DEFAULT_SYNC_TOPIC_POSTFIX "_synchronized"
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 PointCloudDataSynchronizerComponent::PointCloudDataSynchronizerComponent(
   const rclcpp::NodeOptions & node_options)
@@ -648,7 +648,8 @@ void PointCloudDataSynchronizerComponent::checkSyncStatus(
                                 : "Some topics are not concatenated";
   stat.summary(level, message);
 }
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::PointCloudDataSynchronizerComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::pointcloud_preprocessor::PointCloudDataSynchronizerComponent)

@@ -36,12 +36,20 @@ Please note that the processing time difference between the two distortion metho
 
 ### Core Parameters
 
+<<<<<<< HEAD
 {{ json_to_markdown("sensing/pointcloud_preprocessor/schema/distortion_corrector_node.schema.json") }}
+=======
+{{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/distortion_corrector_node.schema.json") }}
+>>>>>>> original/main
 
 ## Launch
 
 ```bash
+<<<<<<< HEAD
 ros2 launch pointcloud_preprocessor distortion_corrector.launch.xml
+=======
+ros2 launch autoware_pointcloud_preprocessor distortion_corrector.launch.xml
+>>>>>>> original/main
 ```
 
 ## Assumptions / Known limits

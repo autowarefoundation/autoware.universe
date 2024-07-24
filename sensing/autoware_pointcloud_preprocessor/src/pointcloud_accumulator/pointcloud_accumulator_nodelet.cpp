@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/pointcloud_accumulator/pointcloud_accumulator_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/pointcloud_accumulator/pointcloud_accumulator_nodelet.hpp"
 
 #include <vector>
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 PointcloudAccumulatorComponent::PointcloudAccumulatorComponent(const rclcpp::NodeOptions & options)
 : Filter("PointcloudAccumulator", options)
@@ -74,7 +74,7 @@ rcl_interfaces::msg::SetParametersResult PointcloudAccumulatorComponent::paramCa
 
   return result;
 }
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::PointcloudAccumulatorComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::PointcloudAccumulatorComponent)

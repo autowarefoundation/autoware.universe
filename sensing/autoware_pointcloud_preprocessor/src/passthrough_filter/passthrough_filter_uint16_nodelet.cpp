@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/passthrough_filter/passthrough_filter_uint16_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/passthrough_filter/passthrough_filter_uint16_nodelet.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 PassThroughFilterUInt16Component::PassThroughFilterUInt16Component(
   const rclcpp::NodeOptions & options)
@@ -119,7 +119,7 @@ rcl_interfaces::msg::SetParametersResult PassThroughFilterUInt16Component::param
 
   return result;
 }
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::PassThroughFilterUInt16Component)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::PassThroughFilterUInt16Component)

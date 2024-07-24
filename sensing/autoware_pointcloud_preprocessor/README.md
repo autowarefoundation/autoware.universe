@@ -1,8 +1,8 @@
-# pointcloud_preprocessor
+# autoware_pointcloud_preprocessor
 
 ## Purpose
 
-The `pointcloud_preprocessor` is a package that includes the following filters:
+The `autoware_pointcloud_preprocessor` is a package that includes the following filters:
 
 - removing outlier points
 - cropping
@@ -47,7 +47,7 @@ Detail description of each filter's algorithm is in the following links.
 
 ## Assumptions / Known limits
 
-`pointcloud_preprocessor::Filter` is implemented based on pcl_perception [1] because
+`autoware::pointcloud_preprocessor::Filter` is implemented based on pcl_perception [1] because
 of [this issue](https://github.com/ros-perception/perception_pcl/issues/9).
 
 ## Measuring the performance

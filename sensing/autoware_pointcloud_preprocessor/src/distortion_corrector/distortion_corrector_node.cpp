@@ -12,11 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+<<<<<<< HEAD
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector_node.hpp"
 
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
 namespace pointcloud_preprocessor
+=======
+#include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector_node.hpp"
+
+#include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
+
+namespace autoware::pointcloud_preprocessor
+>>>>>>> original/main
 {
 /** @brief Constructor. */
 DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOptions & options)
@@ -118,7 +126,14 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointclou
   }
 }
 
+<<<<<<< HEAD
 }  // namespace pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::DistortionCorrectorComponent)
+=======
+}  // namespace autoware::pointcloud_preprocessor
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::DistortionCorrectorComponent)
+>>>>>>> original/main

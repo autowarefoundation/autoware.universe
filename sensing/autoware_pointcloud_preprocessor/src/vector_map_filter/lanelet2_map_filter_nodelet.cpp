@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/vector_map_filter/lanelet2_map_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/vector_map_filter/lanelet2_map_filter_nodelet.hpp"
 
-#include "pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/filter.hpp"
 
 #include <pcl_ros/transforms.hpp>
 
@@ -30,7 +30,7 @@
 #include <utility>
 #include <vector>
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 Lanelet2MapFilterComponent::Lanelet2MapFilterComponent(const rclcpp::NodeOptions & node_options)
 : Node("LaneletMapFilter", node_options)
@@ -269,7 +269,7 @@ void Lanelet2MapFilterComponent::mapCallback(
   road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
 }
 
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::Lanelet2MapFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::Lanelet2MapFilterComponent)

@@ -16,7 +16,11 @@
 #define DISTANCE_BASED_COMPARE_MAP_FILTER__NODE_HPP_
 
 #include "../voxel_grid_map_loader/voxel_grid_map_loader.hpp"
+<<<<<<<< HEAD:perception/compare_map_segmentation/src/distance_based_compare_map_filter/node.hpp
 #include "pointcloud_preprocessor/filter.hpp"
+========
+#include "autoware/pointcloud_preprocessor/filter.hpp"
+>>>>>>>> original/main:perception/autoware_compare_map_segmentation/src/distance_based_compare_map_filter/node.hpp
 
 #include <pcl/common/point_tests.h>  // for pcl::isFinite
 #include <pcl/filters/voxel_grid.h>
@@ -100,7 +104,7 @@ public:
   }
 };
 
-class DistanceBasedCompareMapFilterComponent : public pointcloud_preprocessor::Filter
+class DistanceBasedCompareMapFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
 protected:
   virtual void filter(

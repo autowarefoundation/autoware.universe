@@ -25,8 +25,13 @@
 // imu (6msgs):
 // 10.09, 10.117, 10.144, 10.171, 10.198, 10.225
 
+<<<<<<< HEAD
 #include "autoware/universe_utils/math/trigonometry.hpp"
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
+=======
+#include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
+#include "autoware/universe_utils/math/trigonometry.hpp"
+>>>>>>> original/main
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -48,9 +53,15 @@ protected:
   {
     node_ = std::make_shared<rclcpp::Node>("test_node");
     distortion_corrector_2d_ =
+<<<<<<< HEAD
       std::make_shared<pointcloud_preprocessor::DistortionCorrector2D>(node_.get());
     distortion_corrector_3d_ =
       std::make_shared<pointcloud_preprocessor::DistortionCorrector3D>(node_.get());
+=======
+      std::make_shared<autoware::pointcloud_preprocessor::DistortionCorrector2D>(node_.get());
+    distortion_corrector_3d_ =
+      std::make_shared<autoware::pointcloud_preprocessor::DistortionCorrector3D>(node_.get());
+>>>>>>> original/main
 
     // Setup TF
     tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);
@@ -246,8 +257,15 @@ protected:
   }
 
   std::shared_ptr<rclcpp::Node> node_;
+<<<<<<< HEAD
   std::shared_ptr<pointcloud_preprocessor::DistortionCorrector2D> distortion_corrector_2d_;
   std::shared_ptr<pointcloud_preprocessor::DistortionCorrector3D> distortion_corrector_3d_;
+=======
+  std::shared_ptr<autoware::pointcloud_preprocessor::DistortionCorrector2D>
+    distortion_corrector_2d_;
+  std::shared_ptr<autoware::pointcloud_preprocessor::DistortionCorrector3D>
+    distortion_corrector_3d_;
+>>>>>>> original/main
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
   static constexpr float standard_tolerance_{1e-4};

@@ -49,13 +49,13 @@
  *
  */
 
-#include "pointcloud_preprocessor/crop_box_filter/crop_box_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/crop_box_filter/crop_box_filter_nodelet.hpp"
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <vector>
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & options)
 : Filter("CropBoxFilter", options)
@@ -296,7 +296,7 @@ rcl_interfaces::msg::SetParametersResult CropBoxFilterComponent::paramCallback(
   return result;
 }
 
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::CropBoxFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::CropBoxFilterComponent)

@@ -46,11 +46,11 @@
  *
  */
 
-#include "pointcloud_preprocessor/downsample_filter/random_downsample_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/downsample_filter/random_downsample_filter_nodelet.hpp"
 
 #include <vector>
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 RandomDownsampleFilterComponent::RandomDownsampleFilterComponent(
   const rclcpp::NodeOptions & options)
@@ -103,6 +103,6 @@ rcl_interfaces::msg::SetParametersResult RandomDownsampleFilterComponent::paramC
   return result;
 }
 
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::RandomDownsampleFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::RandomDownsampleFilterComponent)

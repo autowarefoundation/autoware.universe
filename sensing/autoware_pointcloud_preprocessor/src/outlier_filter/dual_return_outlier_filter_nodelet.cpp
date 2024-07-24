@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/outlier_filter/dual_return_outlier_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/outlier_filter/dual_return_outlier_filter_nodelet.hpp"
 
 #include "autoware_point_types/types.hpp"
 
@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 using autoware_point_types::PointXYZIRCAEDT;
 using autoware_point_types::ReturnType;
@@ -369,7 +369,7 @@ rcl_interfaces::msg::SetParametersResult DualReturnOutlierFilterComponent::param
 
   return result;
 }
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::DualReturnOutlierFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::DualReturnOutlierFilterComponent)

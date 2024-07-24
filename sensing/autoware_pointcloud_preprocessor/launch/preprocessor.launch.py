@@ -37,7 +37,7 @@ def load_parameter_dic(package_share_directory, yaml_file_path):
 
 def launch_setup(context, *args, **kwargs):
     ns = "pointcloud_preprocessor"
-    pkg = "pointcloud_preprocessor"
+    pkg = "autoware_pointcloud_preprocessor"
 
     separate_concatenate_node_and_time_sync_node = LaunchConfiguration(
         "separate_concatenate_node_and_time_sync_node"
@@ -104,7 +104,7 @@ def launch_setup(context, *args, **kwargs):
     if not is_separate_concatenate_node_and_time_sync_node:
         sync_and_concat_component = ComposableNode(
             package=pkg,
-            plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
+            plugin="autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
             name="sync_and_concatenate_filter",
             remappings=[
                 ("~/input/twist", "/sensing/vehicle_velocity_converter/twist_with_covariance"),
@@ -116,7 +116,7 @@ def launch_setup(context, *args, **kwargs):
     else:
         time_sync_component = ComposableNode(
             package=pkg,
-            plugin="pointcloud_preprocessor::PointCloudDataSynchronizerComponent",
+            plugin="autoware::pointcloud_preprocessor::PointCloudDataSynchronizerComponent",
             name="synchronizer_filter",
             remappings=[
                 ("~/input/twist", "/sensing/vehicle_velocity_converter/twist_with_covariance"),
@@ -127,7 +127,7 @@ def launch_setup(context, *args, **kwargs):
 
         concat_component = ComposableNode(
             package=pkg,
-            plugin="pointcloud_preprocessor::PointCloudConcatenationComponent",
+            plugin="autoware::pointcloud_preprocessor::PointCloudConcatenationComponent",
             name="concatenate_filter",
             remappings=[("output", "points_raw/concatenated")],
             parameters=[concat_param_updated],
@@ -137,7 +137,7 @@ def launch_setup(context, *args, **kwargs):
     # set crop box filter as a component
     cropbox_component = ComposableNode(
         package=pkg,
-        plugin="pointcloud_preprocessor::CropBoxFilterComponent",
+        plugin="autoware::pointcloud_preprocessor::CropBoxFilterComponent",
         name="crop_box_filter",
         remappings=[
             (

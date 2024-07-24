@@ -48,9 +48,9 @@
  *
  */
 
-#include "pointcloud_preprocessor/downsample_filter/voxel_grid_downsample_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/downsample_filter/voxel_grid_downsample_filter_nodelet.hpp"
 
-#include "pointcloud_preprocessor/downsample_filter/faster_voxel_grid_downsample_filter.hpp"
+#include "autoware/pointcloud_preprocessor/downsample_filter/faster_voxel_grid_downsample_filter.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
@@ -58,7 +58,7 @@
 
 #include <vector>
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 VoxelGridDownsampleFilterComponent::VoxelGridDownsampleFilterComponent(
   const rclcpp::NodeOptions & options)
@@ -133,7 +133,8 @@ rcl_interfaces::msg::SetParametersResult VoxelGridDownsampleFilterComponent::par
 
   return result;
 }
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::VoxelGridDownsampleFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::pointcloud_preprocessor::VoxelGridDownsampleFilterComponent)

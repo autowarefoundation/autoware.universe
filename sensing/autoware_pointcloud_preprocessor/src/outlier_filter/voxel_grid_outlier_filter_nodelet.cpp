@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/outlier_filter/voxel_grid_outlier_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/outlier_filter/voxel_grid_outlier_filter_nodelet.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
@@ -20,7 +20,7 @@
 
 #include <vector>
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 VoxelGridOutlierFilterComponent::VoxelGridOutlierFilterComponent(
   const rclcpp::NodeOptions & options)
@@ -93,7 +93,7 @@ rcl_interfaces::msg::SetParametersResult VoxelGridOutlierFilterComponent::paramC
 
   return result;
 }
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::VoxelGridOutlierFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::VoxelGridOutlierFilterComponent)

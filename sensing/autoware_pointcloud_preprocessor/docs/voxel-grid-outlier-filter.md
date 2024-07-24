@@ -13,13 +13,13 @@ The [radius_search_2d_outlier_filter](./radius-search-2d-outlier-filter.md) is b
 
 ## Inputs / Outputs
 
-This implementation inherits `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+This implementation inherits `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ## Parameters
 
 ### Node Parameters
 
-This implementation inherits `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
+This implementation inherits `autoware::pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ### Core Parameters
 

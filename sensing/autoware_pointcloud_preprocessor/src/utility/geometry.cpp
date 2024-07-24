@@ -12,9 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+<<<<<<< HEAD
 #include "pointcloud_preprocessor/utility/geometry.hpp"
 
 namespace pointcloud_preprocessor::utils
+=======
+#include "autoware/pointcloud_preprocessor/utility/geometry.hpp"
+
+namespace autoware::pointcloud_preprocessor::utils
+>>>>>>> original/main
 {
 void to_cgal_polygon(const geometry_msgs::msg::Polygon & polygon_in, PolygonCgal & polygon_out)
 {
@@ -155,4 +161,8 @@ bool point_within_cgal_polys(
   return false;
 }
 
+<<<<<<< HEAD
 }  // namespace pointcloud_preprocessor::utils
+=======
+}  // namespace autoware::pointcloud_preprocessor::utils
+>>>>>>> original/main

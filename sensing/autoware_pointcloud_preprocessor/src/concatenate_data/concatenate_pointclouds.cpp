@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/concatenate_data/concatenate_pointclouds.hpp"
+#include "autoware/pointcloud_preprocessor/concatenate_data/concatenate_pointclouds.hpp"
+
+#include "autoware/pointcloud_preprocessor/utility/memory.hpp"
 
 #include "pointcloud_preprocessor/utility/memory.hpp"
 
@@ -31,7 +33,7 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace pointcloud_preprocessor
+namespace autoware::pointcloud_preprocessor
 {
 PointCloudConcatenationComponent::PointCloudConcatenationComponent(
   const rclcpp::NodeOptions & node_options)
@@ -504,7 +506,7 @@ void PointCloudConcatenationComponent::checkConcatStatus(
                                 : "Some topics are not concatenated";
   stat.summary(level, message);
 }
-}  // namespace pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::PointCloudConcatenationComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::PointCloudConcatenationComponent)
