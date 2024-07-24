@@ -21,6 +21,12 @@
           "default": "fp16",
           "enum": ["fp16", "fp32"]
         },
+        "cloud_capacity": {
+          "type": "integer",
+          "description": "Capacity of the point cloud buffer (should be set to at least the maximum theoretical number of points).",
+          "default": 2000000,
+          "minimum": 1
+        },
         "voxels_num": {
           "type": "array",
           "items": {
@@ -60,6 +66,12 @@
           "description": "A path to TensorRT engine file.",
           "default": "$(var model_path)/transfusion.engine",
           "pattern": "\\.engine$"
+        },
+        "num_proposals": {
+          "type": "integer",
+          "description": "Number of proposals at TransHead.",
+          "default": 500,
+          "minimum": 1
         },
         "down_sample_factor": {
           "type": "integer",

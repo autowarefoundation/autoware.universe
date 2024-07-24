@@ -1017,7 +1017,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   std::unordered_set<std::string> predicted_crosswalk_users_ids;
 
   for (const auto & object : in_objects->objects) {
-    std::string object_id = autoware::universe_utils::toHexString(object.object_id);
     TrackedObject transformed_object = object;
 
     // transform object frame if it's based on map frame
@@ -1309,10 +1308,14 @@ std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
 
 bool MapBasedPredictionNode::doesPathCrossAnyFence(const PredictedPath & predicted_path)
 {
-  const lanelet::ConstLineStrings3d & all_fences =
-    lanelet::utils::query::getAllFences(lanelet_map_ptr_);
-  for (const auto & fence_line : all_fences) {
-    if (doesPathCrossFence(predicted_path, fence_line)) {
+  lanelet::BasicLineString2d predicted_path_ls;
+  for (const auto & p : predicted_path.path)
+    predicted_path_ls.emplace_back(p.position.x, p.position.y);
+  const auto candidates =
+    lanelet_map_ptr_->lineStringLayer.search(lanelet::geometry::boundingBox2d(predicted_path_ls));
+  for (const auto & candidate : candidates) {
+    const std::string type = candidate.attributeOr(lanelet::AttributeName::Type, "none");
+    if (type == "fence" && doesPathCrossFence(predicted_path, candidate)) {
       return true;
     }
   }

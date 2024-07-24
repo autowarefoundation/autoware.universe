@@ -45,13 +45,6 @@ Eigen::Affine3f _transformToEigen(const geometry_msgs::msg::Transform & t)
 namespace image_projection_based_fusion
 {
 
-inline bool isInsideBbox(
-  float proj_x, float proj_y, sensor_msgs::msg::RegionOfInterest roi, float zc)
-{
-  return proj_x >= roi.x_offset * zc && proj_x <= (roi.x_offset + roi.width) * zc &&
-         proj_y >= roi.y_offset * zc && proj_y <= (roi.y_offset + roi.height) * zc;
-}
-
 inline bool isVehicle(int label2d)
 {
   return label2d == autoware_perception_msgs::msg::ObjectClassification::CAR ||
@@ -110,6 +103,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     this->declare_parameter<int>("densification_params.num_past_frames");
   // network param
   const std::string trt_precision = this->declare_parameter<std::string>("trt_precision");
+  const std::size_t cloud_capacity = this->declare_parameter<std::int64_t>("cloud_capacity");
   const std::string encoder_onnx_path = this->declare_parameter<std::string>("encoder_onnx_path");
   const std::string encoder_engine_path =
     this->declare_parameter<std::string>("encoder_engine_path");
@@ -188,9 +182,9 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   centerpoint::DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
   centerpoint::CenterPointConfig config(
-    class_names_.size(), point_feature_size, max_voxel_size, pointcloud_range, voxel_size,
-    downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold,
-    yaw_norm_thresholds, has_variance_);
+    class_names_.size(), point_feature_size, cloud_capacity, max_voxel_size, pointcloud_range,
+    voxel_size, downsample_factor, encoder_in_feature_size, score_threshold,
+    circle_nms_dist_threshold, yaw_norm_thresholds, has_variance_);
 
   // create detector
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
@@ -296,13 +290,13 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   // tf2::doTransform(painted_pointcloud_msg, transformed_pointcloud, transform_stamped);
 
   const auto x_offset =
-    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointIndex::X))
+    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointXYZIRCIndex::X))
       .offset;
   const auto y_offset =
-    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Y))
+    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointXYZIRCIndex::Y))
       .offset;
   const auto z_offset =
-    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Z))
+    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointXYZIRCIndex::Z))
       .offset;
   const auto class_offset = painted_pointcloud_msg.fields.at(4).offset;
   const auto p_step = painted_pointcloud_msg.point_step;
@@ -329,9 +323,11 @@ dc   | dc dc dc  dc ||zc|
     int stride = p_step * i;
     unsigned char * data = &painted_pointcloud_msg.data[0];
     unsigned char * output = &painted_pointcloud_msg.data[0];
+    // cppcheck-suppress-begin invalidPointerCast
     float p_x = *reinterpret_cast<const float *>(&data[stride + x_offset]);
     float p_y = *reinterpret_cast<const float *>(&data[stride + y_offset]);
     float p_z = *reinterpret_cast<const float *>(&data[stride + z_offset]);
+    // cppcheck-suppress-end invalidPointerCast
     point_lidar << p_x, p_y, p_z;
     point_camera = lidar2cam_affine * point_lidar;
     p_x = point_camera.x();
@@ -352,6 +348,7 @@ dc   | dc dc dc  dc ||zc|
       int label2d = feature_object.object.classification.front().label;
       if (!isUnknown(label2d) && isInsideBbox(projected_point.x(), projected_point.y(), roi, p_z)) {
         data = &painted_pointcloud_msg.data[0];
+        // cppcheck-suppress invalidPointerCast
         auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
         for (const auto & cls : isClassTable_) {
           // add up the class values if the point belongs to multiple classes
