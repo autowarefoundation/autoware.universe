@@ -28,8 +28,8 @@
   <exec_depend>autoware_object_merger</exec_depend>
   <exec_depend>autoware_object_range_splitter</exec_depend>
   <exec_depend>autoware_object_velocity_splitter</exec_depend>
-  <exec_depend>autoware_pointcloud_preprocessor</exec_depend>
   <exec_depend>autoware_occupancy_grid_map_outlier_filter</exec_depend>
+  <exec_depend>autoware_pointcloud_preprocessor</exec_depend>
   <exec_depend>autoware_probabilistic_occupancy_grid_map</exec_depend>
   <exec_depend>autoware_radar_crossing_objects_noise_filter</exec_depend>
   <exec_depend>autoware_radar_fusion_to_detected_object</exec_depend>
