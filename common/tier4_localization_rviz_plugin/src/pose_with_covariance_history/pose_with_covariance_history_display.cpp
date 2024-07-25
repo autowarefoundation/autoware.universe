@@ -31,33 +31,32 @@ namespace rviz_plugins
 {
 PoseWithCovarianceHistory::PoseWithCovarianceHistory() : last_stamp_(0, 0, RCL_ROS_TIME)
 {
-  property_shape_view_ = new rviz_common::properties::BoolProperty("Covariance", true, "", this);
-  property_shape_scale_ =
-    new rviz_common::properties::FloatProperty("Scale", 1.0, "", property_shape_view_);
-  property_shape_alpha_ =
-    new rviz_common::properties::FloatProperty("Alpha", 1.0, "", property_shape_view_);
-  property_shape_alpha_->setMin(0.0);
-  property_shape_alpha_->setMax(1.0);
-  property_shape_color_ =
-    new rviz_common::properties::ColorProperty("Color", Qt::white, "", property_shape_view_);
+  property_buffer_size_ = new rviz_common::properties::IntProperty("Buffer Size", 100, "", this);
 
-  property_shape_type_ = new rviz_common::properties::EnumProperty("Shape Type", "Line", "", this);
+  property_sphere_view_ = new rviz_common::properties::BoolProperty("Covariance", true, "", this);
+  property_sphere_scale_ =
+    new rviz_common::properties::FloatProperty("Scale", 1.0, "", property_sphere_view_);
+  property_sphere_alpha_ =
+    new rviz_common::properties::FloatProperty("Alpha", 0.5, "", property_sphere_view_);
+  property_sphere_alpha_->setMin(0.0);
+  property_sphere_alpha_->setMax(1.0);
+  property_sphere_color_ =
+    new rviz_common::properties::ColorProperty("Color", QColor(204, 51, 204), "", property_sphere_view_);
+
+  property_shape_view_ = new rviz_common::properties::BoolProperty("Shape", true, "", this);
+  property_shape_type_ = new rviz_common::properties::EnumProperty("Shape Type", "Line", "", property_shape_view_);
   property_shape_type_->addOption("Line", 0);
   property_shape_type_->addOption("Arrow", 1);
 
-  property_buffer_size_ = new rviz_common::properties::IntProperty("Buffer Size", 100, "", this);
-  
-  //property_line_view_ = new rviz_common::properties::BoolProperty("Line", true, "", this);
   property_line_width_ =
     new rviz_common::properties::FloatProperty("Width", 0.1, "", property_shape_type_);
   property_line_alpha_ =
-    new rviz_common::properties::FloatProperty("Alpha", 0.5, "", property_shape_type_);
+    new rviz_common::properties::FloatProperty("Alpha", 1.0, "", property_shape_type_);
   property_line_alpha_->setMin(0.0);
   property_line_alpha_->setMax(1.0);
   property_line_color_ =
-    new rviz_common::properties::ColorProperty("Color", Qt::white, "", property_shape_type_);
+    new rviz_common::properties::ColorProperty("Color", QColor(204, 51, 204), "", property_shape_type_);
   
-  //property_arrow_view_ = new rviz_common::properties::BoolProperty("Arrow", true, "", this);
   property_arrow_shaft_length_ =
     new rviz_common::properties::FloatProperty("Shaft Length", 0.6, "", property_shape_type_);
   property_arrow_shaft_diameter_ =
@@ -71,13 +70,13 @@ PoseWithCovarianceHistory::PoseWithCovarianceHistory() : last_stamp_(0, 0, RCL_R
   property_arrow_alpha_->setMin(0.0);
   property_arrow_alpha_->setMax(1.0);
   property_arrow_color_ =
-    new rviz_common::properties::ColorProperty("Color", Qt::white, "", property_shape_type_);
+    new rviz_common::properties::ColorProperty("Color", QColor(204, 51, 204), "", property_shape_type_);
   
   property_buffer_size_->setMin(0);
   property_buffer_size_->setMax(10000);
   property_line_width_->setMin(0.0);
-  property_shape_scale_->setMin(0.0);
-  property_shape_scale_->setMax(1000);
+  property_sphere_scale_->setMin(0.0);
+  property_sphere_scale_->setMax(1000);
   property_arrow_shaft_length_->setMin(0.0);
   property_arrow_shaft_diameter_->setMin(0.0);
   property_arrow_head_length_->setMin(0.0);
@@ -110,7 +109,7 @@ void PoseWithCovarianceHistory::update(float wall_dt, float ros_dt)
   if (!history_.empty()) {
     lines_->clear();
     spheres_.clear();
-    if (property_shape_view_->getBool()) {
+    if (property_sphere_view_->getBool()) {
       updateShapes();
     }
   }
@@ -158,11 +157,11 @@ void PoseWithCovarianceHistory::updateHistory()
 
 void PoseWithCovarianceHistory::updateShapes()
 {
-   int shape_type = property_shape_type_->getOptionInt();
+  int shape_type = property_shape_type_->getOptionInt();
   Ogre::ColourValue color_line = rviz_common::properties::qtToOgre(property_line_color_->getColor());
   color_line.a = property_line_alpha_->getFloat();
-  Ogre::ColourValue color_shape = rviz_common::properties::qtToOgre(property_shape_color_->getColor());
-  color_shape.a = property_shape_alpha_->getFloat();
+  Ogre::ColourValue color_sphere = rviz_common::properties::qtToOgre(property_sphere_color_->getColor());
+  color_sphere.a = property_sphere_alpha_->getFloat();
   Ogre::ColourValue color_arrow = rviz_common::properties::qtToOgre(property_arrow_color_->getColor());
   color_arrow.a = property_arrow_alpha_->getFloat();
 
@@ -196,9 +195,6 @@ void PoseWithCovarianceHistory::updateShapes()
     position.x = message->pose.pose.position.x;
     position.y = message->pose.pose.position.y;
     position.z = message->pose.pose.position.z;
-    if (shape_type == 0) {
-      lines_->addPoint(position);
-    }
 
     Ogre::Quaternion orientation;
     orientation.w = message->pose.pose.orientation.w;
@@ -217,25 +213,30 @@ void PoseWithCovarianceHistory::updateShapes()
     Eigen::Quaternionf rotation(message->pose.pose.orientation.w, message->pose.pose.orientation.x, message->pose.pose.orientation.y, message->pose.pose.orientation.z);
     Eigen::Matrix4f pose_matrix4f = (translation * rotation).matrix();
     const Eigen::Matrix2d rot = pose_matrix4f.topLeftCorner<2, 2>().cast<double>();
-    covariance_2d_base_link = rot.transpose() * covariance_2d_map * rot;//対角化
+    covariance_2d_base_link = rot.transpose() * covariance_2d_map * rot;
 
     auto& sphere = spheres_[i];
     sphere->setPosition(position);
     sphere->setOrientation(orientation);
-    sphere->setColor(color_shape.r, color_shape.g, color_shape.b, color_shape.a);
+    sphere->setColor(color_sphere.r, color_sphere.g, color_sphere.b, color_sphere.a);
     sphere->setScale(Ogre::Vector3(
-      property_shape_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(0, 0)),
-      property_shape_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(1, 1)),
-      property_shape_scale_->getFloat() * 2 * std::sqrt(message->pose.covariance[14])));
+      property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(0, 0)),
+      property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(1, 1)),
+      property_sphere_scale_->getFloat() * 2 * std::sqrt(message->pose.covariance[14])));
     
-    if (shape_type == 1) {
-      auto& arrow = arrows_[i];
-      arrow->set(property_arrow_shaft_length_->getFloat(), property_arrow_shaft_diameter_->getFloat(), 
-        property_arrow_head_length_->getFloat(), property_arrow_head_diameter_->getFloat());
-      arrow->setPosition(position);
-      Ogre::Quaternion y90(Ogre::Degree(-90), Ogre::Vector3::UNIT_Y);
-      arrow->setOrientation(orientation * y90);
-      arrow->setColor(color_arrow.r, color_arrow.g, color_arrow.b, color_arrow.a);
+    if (property_shape_view_->getBool()){
+      if (shape_type == 0) {
+        lines_->addPoint(position);
+      }
+      if (shape_type == 1) {
+        auto& arrow = arrows_[i];
+        arrow->set(property_arrow_shaft_length_->getFloat(), property_arrow_shaft_diameter_->getFloat(), 
+          property_arrow_head_length_->getFloat(), property_arrow_head_diameter_->getFloat());
+        arrow->setPosition(position);
+        Ogre::Quaternion y90(Ogre::Degree(-90), Ogre::Vector3::UNIT_Y);
+        arrow->setOrientation(orientation * y90);
+        arrow->setColor(color_arrow.r, color_arrow.g, color_arrow.b, color_arrow.a);
+      }
     }
   }
 }

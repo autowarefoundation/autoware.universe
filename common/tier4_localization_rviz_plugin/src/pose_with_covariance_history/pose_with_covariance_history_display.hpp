@@ -60,11 +60,6 @@ protected:
   void onDisable() override;
   void update(float wall_dt, float ros_dt) override;
 
-private Q_SLOTS:
-  void updateShapeType();
-  void updateLineProperties();
-  void updateArrowProperties();
-
 private:
   void subscribe() override;
   void unsubscribe() override;
@@ -85,11 +80,11 @@ private:
   rviz_common::properties::ColorProperty * property_line_color_;
   rviz_common::properties::IntProperty * property_buffer_size_;
 
-  rviz_common::properties::BoolProperty * property_shape_view_;
-  rviz_common::properties::FloatProperty * property_shape_width_;
-  rviz_common::properties::FloatProperty * property_shape_alpha_;
-  rviz_common::properties::ColorProperty * property_shape_color_;
-  rviz_common::properties::FloatProperty * property_shape_scale_;
+  rviz_common::properties::BoolProperty * property_sphere_view_;
+  rviz_common::properties::FloatProperty * property_sphere_width_;
+  rviz_common::properties::FloatProperty * property_sphere_alpha_;
+  rviz_common::properties::ColorProperty * property_sphere_color_;
+  rviz_common::properties::FloatProperty * property_sphere_scale_;
 
   rviz_common::properties::BoolProperty * property_arrow_view_;
   rviz_common::properties::FloatProperty * property_arrow_shaft_length_;
@@ -99,6 +94,7 @@ private:
   rviz_common::properties::FloatProperty * property_arrow_alpha_;
   rviz_common::properties::ColorProperty * property_arrow_color_;
   
+  rviz_common::properties::BoolProperty * property_shape_view_;
   rviz_common::properties::EnumProperty * property_shape_type_;
 };
 
