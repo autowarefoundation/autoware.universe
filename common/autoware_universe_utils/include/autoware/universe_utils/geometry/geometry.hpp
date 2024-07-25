@@ -588,58 +588,155 @@ bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & conv
 // TODO(mitukou1109): remove namespace when migrating to alternatives
 namespace alt
 {
-using Point = tf2::Vector3;
-using ConvexPolygon = std::vector<tf2::Vector3>;
-using PointList = std::vector<tf2::Vector3>;
+struct Point2d
+{
+  double x;
+  double y;
+};
 
-alt::Point from_geom(const geometry_msgs::msg::Point & point);
+using PointList = std::vector<Point2d>;
 
-alt::ConvexPolygon from_geom(const std::vector<geometry_msgs::msg::Point> & polygon);
+class Vector2d
+{
+public:
+  Vector2d() : x_(0.0), y_(0.0){};
 
-alt::Point from_boost(const Point2d & point);
+  Vector2d(const double x, const double y) : x_(x), y_(y) {}
 
-alt::ConvexPolygon from_boost(const Polygon2d & polygon);
+  Vector2d(const Point2d & point) : Vector2d(point.x, point.y) {}
 
-Point2d to_boost(const alt::Point & point);
+  double cross(const Vector2d & other) const { return x_ * other.y() - y_ * other.x(); }
 
-Polygon2d to_boost(const alt::ConvexPolygon & polygon);
+  double dot(const Vector2d & other) const { return x_ * other.x() + y_ * other.y(); }
+
+  double norm() const { return std::hypot(x_, y_); }
+
+  Vector2d vector_triple(const Vector2d & v1, const Vector2d & v2) const
+  {
+    const auto tmp = this->cross(v1);
+    return {-v2.y() * tmp, v2.x() * tmp};
+  }
+
+  const double & x() const { return x_; }
+
+  double & x() { return x_; }
+
+  const double & y() const { return y_; }
+
+  double & y() { return y_; }
+
+private:
+  double x_;
+  double y_;
+};
+
+class ConvexPolygon2d
+{
+public:
+  explicit ConvexPolygon2d(const PointList & vertices)
+  {
+    if (vertices.size() < 3) {
+      throw std::invalid_argument("At least 3 points are required for vertices.");
+    }
+    vertices_ = vertices;
+  }
+
+  explicit ConvexPolygon2d(PointList && vertices)
+  {
+    if (vertices.size() < 3) {
+      throw std::invalid_argument("At least 3 points are required for vertices.");
+    }
+    vertices_ = std::move(vertices);
+  }
+
+  const PointList & vertices() const { return vertices_; }
+
+  PointList & vertices() { return vertices_; }
+
+private:
+  PointList vertices_;
+};
+
+inline Vector2d operator+(const Point2d & p1, const Point2d & p2)
+{
+  return {p1.x + p2.x, p1.y + p2.y};
+}
+
+inline Vector2d operator-(const Point2d & p1, const Point2d & p2)
+{
+  return {p1.x - p2.x, p1.y - p2.y};
+}
+
+inline Vector2d operator+(const Vector2d & v1, const Vector2d & v2)
+{
+  return {v1.x() + v2.x(), v1.y() + v2.y()};
+}
+
+inline Vector2d operator-(const Vector2d & v1, const Vector2d & v2)
+{
+  return {v1.x() - v2.x(), v1.y() - v2.y()};
+}
+
+inline Vector2d operator-(const Vector2d & v)
+{
+  return {-v.x(), -v.y()};
+}
+
+inline Vector2d operator*(const double & s, const Vector2d & v)
+{
+  return {s * v.x(), s * v.y()};
+}
+
+Point2d from_geom(const geometry_msgs::msg::Point & point);
+
+Point2d from_boost(const autoware::universe_utils::Point2d & point);
+
+ConvexPolygon2d from_boost(const autoware::universe_utils::Polygon2d & polygon);
+
+autoware::universe_utils::Point2d to_boost(const Point2d & point);
+
+autoware::universe_utils::Polygon2d to_boost(const ConvexPolygon2d & polygon);
 }  // namespace alt
 
-std::optional<double> area(const alt::ConvexPolygon & poly);
+double area(const alt::ConvexPolygon2d & poly);
 
-std::optional<alt::ConvexPolygon> convex_hull(const alt::PointList & points);
+alt::ConvexPolygon2d convex_hull(const alt::PointList & points);
 
-void correct(alt::ConvexPolygon & poly);
+void correct(alt::ConvexPolygon2d & poly);
 
-std::optional<bool> covered_by(const alt::Point & point, const alt::ConvexPolygon & poly);
+bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
 
-std::optional<bool> disjoint(const alt::ConvexPolygon & poly1, const alt::ConvexPolygon & poly2);
+bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2);
 
-double distance(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
+double distance(
+  const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 
-double distance(const alt::Point & point, const alt::ConvexPolygon & poly);
+double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
 
 std::array<alt::PointList, 2> divide_by_segment(
-  const alt::PointList & points, const alt::Point & seg_start, const alt::Point & seg_end);
+  const alt::PointList & points, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 
-std::optional<bool> equals(const alt::ConvexPolygon & poly1, const alt::ConvexPolygon & poly2);
+bool equals(const alt::Point2d & point1, const alt::Point2d & point2);
+
+bool equals(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2);
 
 bool intersects(
-  const alt::Point & seg1_start, const alt::Point & seg1_end, const alt::Point & seg2_start,
-  const alt::Point & seg2_end);
+  const alt::Point2d & seg1_start, const alt::Point2d & seg1_end, const alt::Point2d & seg2_start,
+  const alt::Point2d & seg2_end);
 
-std::optional<bool> intersects(const alt::ConvexPolygon & poly1, const alt::ConvexPolygon & poly2);
+bool intersects(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2);
 
-bool is_above(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
+bool is_above(
+  const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 
-std::optional<bool> is_clockwise(const alt::ConvexPolygon & poly);
+bool is_clockwise(const alt::ConvexPolygon2d & poly);
 
-std::optional<bool> touches(const alt::Point & point, const alt::ConvexPolygon & poly);
+bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
 
-std::optional<bool> within(const alt::Point & point, const alt::ConvexPolygon & poly);
+bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
 
-std::optional<bool> within(
-  const alt::ConvexPolygon & poly_contained, const alt::ConvexPolygon & poly_containing);
+bool within(
+  const alt::ConvexPolygon2d & poly_contained, const alt::ConvexPolygon2d & poly_containing);
 
 }  // namespace autoware::universe_utils
 
