@@ -19,6 +19,7 @@ set(
   src/include/goal_pose.hpp
   src/include/tile.hpp
   src/include/tile_field.hpp
+  src/include/tile_provider.hpp
   src/include/overlay_utils.hpp
   src/include/path_overlay.hpp
 )
@@ -33,6 +34,7 @@ set(
     src/minimap.cpp
     src/tile.cpp
     src/tile_field.cpp
+    src/tile_provider.cpp
     src/goal_pose.cpp
     src/path_overlay.cpp
 )
