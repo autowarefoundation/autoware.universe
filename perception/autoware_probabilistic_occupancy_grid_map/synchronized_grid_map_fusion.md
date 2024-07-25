@@ -96,7 +96,7 @@ You need to generate OGMs in each sensor frame before achieving grid map fusion.
 <summary> Example launch.xml (click to expand) </summary>
 
 ```xml
-<include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/autoware_probabilistic_occupancy_grid_map.launch.xml">
+<include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/probabilistic_occupancy_grid_map.launch.xml">
     <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/single_frame/pointcloud"/>
     <arg name="input/raw_pointcloud" value="/sensing/lidar/right/outlier_filtered/pointcloud_synchronized"/>
     <arg name="output" value="/perception/occupancy_grid_map/right_lidar/map"/>
