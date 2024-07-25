@@ -228,6 +228,8 @@ public:
   DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<BehaviorModuleOutput>, last_previous_module_output)
   DEFINE_SETTER_GETTER_WITH_MUTEX(PreviousPullOverData, prev_data)
   DEFINE_SETTER_GETTER_WITH_MUTEX(CollisionCheckDebugMap, collision_check)
+  DEFINE_SETTER_GETTER_WITH_MUTEX(PredictedObjects, static_target_objects)
+  DEFINE_SETTER_GETTER_WITH_MUTEX(PredictedObjects, dynamic_target_objects)
 
 private:
   std::shared_ptr<PullOverPath> pull_over_path_{nullptr};
@@ -241,6 +243,8 @@ private:
   std::optional<BehaviorModuleOutput> last_previous_module_output_{};
   PreviousPullOverData prev_data_{};
   CollisionCheckDebugMap collision_check_{};
+  PredictedObjects static_target_objects_{};
+  PredictedObjects dynamic_target_objects_{};
 
   std::recursive_mutex & mutex_;
   rclcpp::Clock::SharedPtr clock_;
@@ -520,7 +524,9 @@ private:
     const PathWithLaneId & path,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const;
   bool checkObjectsCollision(
-    const PathWithLaneId & path, const std::shared_ptr<const PlannerData> planner_data,
+    const PathWithLaneId & path,
+    const std::vector<double> & curvatures,
+    const std::shared_ptr<const PlannerData> planner_data,
     const GoalPlannerParameters & parameters, const double collision_check_margin,
     const bool extract_static_objects, const bool update_debug_data = false) const;
 
