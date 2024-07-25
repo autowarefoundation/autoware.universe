@@ -278,7 +278,13 @@ void expand_bound(
       const auto projection = point_to_linestring_projection(bound_p, path_ls);
       const auto expansion_ratio = (expansions[idx] + projection.distance) / projection.distance;
       const auto & path_p = projection.projected_point;
-      const auto expanded_p = lerp_point(path_p, bound_p, expansion_ratio);
+      auto expanded_p = lerp_point(path_p, bound_p, expansion_ratio);
+      // push the bound again if it got too close to another part of the path
+      const auto new_projection = point_to_linestring_projection(expanded_p, path_ls);
+      if (new_projection.distance < projection.distance) {
+        const auto new_expansion_ratio = (projection.distance) / new_projection.distance;
+        expanded_p = lerp_point(new_projection.projected_point, expanded_p, new_expansion_ratio);
+      }
       bound[idx].x = expanded_p.x();
       bound[idx].y = expanded_p.y();
     }
