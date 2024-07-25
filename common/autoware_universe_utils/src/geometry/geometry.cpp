@@ -431,6 +431,18 @@ autoware::universe_utils::Polygon2d to_boost(const ConvexPolygon2d & polygon)
 }
 }  // namespace alt
 
+double area(const alt::ConvexPolygon2d & poly)
+{
+  const auto & vertices = poly.vertices();
+
+  double area = 0.;
+  for (size_t i = 1; i < vertices.size() - 1; ++i) {
+    area += (vertices.at(i + 1) - vertices.front()).cross(vertices.at(i) - vertices.front()) / 2;
+  }
+
+  return area;
+}
+
 void correct(alt::ConvexPolygon2d & poly)
 {
   auto & vertices = poly.vertices();

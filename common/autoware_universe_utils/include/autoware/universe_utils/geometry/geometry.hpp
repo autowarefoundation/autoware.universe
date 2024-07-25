@@ -682,6 +682,8 @@ autoware::universe_utils::Point2d to_boost(const Point2d & point);
 autoware::universe_utils::Polygon2d to_boost(const ConvexPolygon2d & polygon);
 }  // namespace alt
 
+double area(const alt::ConvexPolygon2d & poly);
+
 void correct(alt::ConvexPolygon2d & poly);
 
 bool equals(const alt::Point2d & point1, const alt::Point2d & point2);
