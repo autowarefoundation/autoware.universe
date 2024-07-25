@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Elevation Map Loader Params",
+  "definitions": {
+    "cluster_extraction": {
+      "type": "object",
+      "properties": {
+        "cluster_tolerance": {
+          "type": "number",
+          "description": "Distance between points below which they will still be considered part of one cluster",
+          "default": 0.2
+        },
+        "min_num_points": {
+          "type": "integer",
+          "description": "Min number of points that a cluster needs to have (otherwise it will be discarded)",
+          "default": 3
+        },
+        "max_num_points": {
+          "type": "integer",
+          "description": "Max number of points that a cluster can have (otherwise it will be discarded)",
+          "default": 1000000
+        }
+      },
+      "required": ["cluster_tolerance", "min_num_points", "max_num_points"],
+      "additionalProperties": false
+    }
+  }
+}
