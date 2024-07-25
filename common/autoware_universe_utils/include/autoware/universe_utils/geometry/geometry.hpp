@@ -22,6 +22,7 @@
 
 #include <exception>
 #include <string>
+#include <utility>
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
