@@ -2031,20 +2031,20 @@ TEST(geometry, convexHull)
     const auto result = convex_hull(points);
 
     EXPECT_EQ(result.vertices().size(), 7);
-    EXPECT_NEAR(result.vertices().at(0).x, 2.0, epsilon);
-    EXPECT_NEAR(result.vertices().at(0).y, 1.3, epsilon);
-    EXPECT_NEAR(result.vertices().at(1).x, 2.4, epsilon);
-    EXPECT_NEAR(result.vertices().at(1).y, 1.7, epsilon);
-    EXPECT_NEAR(result.vertices().at(2).x, 4.1, epsilon);
-    EXPECT_NEAR(result.vertices().at(2).y, 3.0, epsilon);
-    EXPECT_NEAR(result.vertices().at(3).x, 5.3, epsilon);
-    EXPECT_NEAR(result.vertices().at(3).y, 2.6, epsilon);
-    EXPECT_NEAR(result.vertices().at(4).x, 5.4, epsilon);
-    EXPECT_NEAR(result.vertices().at(4).y, 1.2, epsilon);
-    EXPECT_NEAR(result.vertices().at(5).x, 4.9, epsilon);
-    EXPECT_NEAR(result.vertices().at(5).y, 0.8, epsilon);
-    EXPECT_NEAR(result.vertices().at(6).x, 2.9, epsilon);
-    EXPECT_NEAR(result.vertices().at(6).y, 0.7, epsilon);
+    EXPECT_NEAR(result.vertices().at(0).x(), 2.0, epsilon);
+    EXPECT_NEAR(result.vertices().at(0).y(), 1.3, epsilon);
+    EXPECT_NEAR(result.vertices().at(1).x(), 2.4, epsilon);
+    EXPECT_NEAR(result.vertices().at(1).y(), 1.7, epsilon);
+    EXPECT_NEAR(result.vertices().at(2).x(), 4.1, epsilon);
+    EXPECT_NEAR(result.vertices().at(2).y(), 3.0, epsilon);
+    EXPECT_NEAR(result.vertices().at(3).x(), 5.3, epsilon);
+    EXPECT_NEAR(result.vertices().at(3).y(), 2.6, epsilon);
+    EXPECT_NEAR(result.vertices().at(4).x(), 5.4, epsilon);
+    EXPECT_NEAR(result.vertices().at(4).y(), 1.2, epsilon);
+    EXPECT_NEAR(result.vertices().at(5).x(), 4.9, epsilon);
+    EXPECT_NEAR(result.vertices().at(5).y(), 0.8, epsilon);
+    EXPECT_NEAR(result.vertices().at(6).x(), 2.9, epsilon);
+    EXPECT_NEAR(result.vertices().at(6).y(), 0.7, epsilon);
   }
 }
 
@@ -2063,14 +2063,14 @@ TEST(geometry, correct)
     ConvexPolygon2d poly(vertices);
     correct(poly);
 
-    EXPECT_NEAR(poly.vertices().at(0).x, 1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(0).y, 1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(1).x, 1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(1).y, -1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(2).x, -1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(2).y, -1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(3).x, -1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(3).y, 1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(0).x(), 1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(0).y(), 1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(1).x(), 1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(1).y(), -1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(2).x(), -1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(2).y(), -1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(3).x(), -1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(3).y(), 1.0, epsilon);
   }
 
   {  // Wrongly oriented
@@ -2082,14 +2082,14 @@ TEST(geometry, correct)
     ConvexPolygon2d poly(vertices);
     correct(poly);
 
-    EXPECT_NEAR(poly.vertices().at(0).x, 1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(0).y, 1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(1).x, 1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(1).y, -1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(2).x, -1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(2).y, -1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(3).x, -1.0, epsilon);
-    EXPECT_NEAR(poly.vertices().at(3).y, 1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(0).x(), 1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(0).y(), 1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(1).x(), 1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(1).y(), -1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(2).x(), -1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(2).y(), -1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(3).x(), -1.0, epsilon);
+    EXPECT_NEAR(poly.vertices().at(3).y(), 1.0, epsilon);
   }
 }
 
@@ -2283,17 +2283,17 @@ TEST(geometry, divideBySegment)
     const auto result = divide_by_segment({p1, p2, p3, p4, p5}, seg_start, seg_end);
 
     EXPECT_EQ(result.at(0).size(), 2);
-    EXPECT_NEAR(result.at(0).at(0).x, -1.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(0).y, 1.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(1).x, 2.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(1).y, 2.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(0).x(), -1.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(0).y(), 1.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).x(), 2.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).y(), 2.0, epsilon);
     EXPECT_EQ(result.at(1).size(), 3);
-    EXPECT_NEAR(result.at(1).at(0).x, 0.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(0).y, 0.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(1).x, -2.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(1).y, -2.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(2).x, 1.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(2).y, -1.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(0).x(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(0).y(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).x(), -2.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).y(), -2.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).x(), 1.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).y(), -1.0, epsilon);
   }
 }
 
@@ -2652,8 +2652,8 @@ TEST(geometry, convexHullRand)
       }
       EXPECT_EQ(ground_truth.outer().size() - 1, alt.vertices().size());
       for (size_t i = 0; i < alt.vertices().size(); i++) {
-        EXPECT_NEAR(ground_truth.outer().at(i).x(), alt.vertices().at(i).x, epsilon);
-        EXPECT_NEAR(ground_truth.outer().at(i).y(), alt.vertices().at(i).y, epsilon);
+        EXPECT_NEAR(ground_truth.outer().at(i).x(), alt.vertices().at(i).x(), epsilon);
+        EXPECT_NEAR(ground_truth.outer().at(i).y(), alt.vertices().at(i).y(), epsilon);
       }
     }
     std::printf("polygons_nb = %d, vertices = %ld\n", polygons_nb, vertices);

@@ -418,7 +418,7 @@ ConvexPolygon2d from_boost(const autoware::universe_utils::Polygon2d & polygon)
 
 autoware::universe_utils::Point2d to_boost(const Point2d & point)
 {
-  return {point.x, point.y};
+  return {point.x(), point.y()};
 }
 
 autoware::universe_utils::Polygon2d to_boost(const ConvexPolygon2d & polygon)
@@ -437,7 +437,7 @@ double area(const alt::ConvexPolygon2d & poly)
 
   double area = 0.;
   for (size_t i = 0; i < vertices.size(); ++i) {
-    area += alt::Vector2d(vertices.at((i + 1) % vertices.size())).cross(vertices.at(i)) / 2;
+    area += vertices.at((i + 1) % vertices.size()).cross(vertices.at(i)) / 2;
   }
 
   return area;
@@ -448,7 +448,7 @@ alt::ConvexPolygon2d convex_hull(const alt::PointList & points)
   // QuickHull algorithm
 
   const auto p_minmax_itr = std::minmax_element(
-    points.begin(), points.end(), [](const auto & a, const auto & b) { return a.x < b.x; });
+    points.begin(), points.end(), [](const auto & a, const auto & b) { return a.x() < b.x(); });
   const auto & p_min = *p_minmax_itr.first;
   const auto & p_max = *p_minmax_itr.second;
 
@@ -584,8 +584,8 @@ std::array<alt::PointList, 2> divide_by_segment(
 
 bool equals(const alt::Point2d & point1, const alt::Point2d & point2)
 {
-  return std::abs(point1.x - point2.x) <= std::numeric_limits<double>::epsilon() &&
-         std::abs(point1.y - point2.y) <= std::numeric_limits<double>::epsilon();
+  return std::abs(point1.x() - point2.x()) <= std::numeric_limits<double>::epsilon() &&
+         std::abs(point1.y() - point2.y()) <= std::numeric_limits<double>::epsilon();
 }
 
 bool equals(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
@@ -710,11 +710,11 @@ bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
     // check if the point is to the left of the edge
     auto x_dist_to_edge = [&]() { return (p2 - p1).cross(point - p1) / (p2 - p1).y(); };
 
-    if (p1.y <= point.y && p2.y > point.y) {  // upward edge
+    if (p1.y() <= point.y() && p2.y() > point.y()) {  // upward edge
       if (x_dist_to_edge() >= 0) {
         winding_number++;
       }
-    } else if (p1.y > point.y && p2.y <= point.y) {  // downward edge
+    } else if (p1.y() > point.y() && p2.y() <= point.y()) {  // downward edge
       if (x_dist_to_edge() >= 0) {
         winding_number--;
       }

@@ -588,22 +588,12 @@ bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & conv
 // TODO(mitukou1109): remove namespace when migrating to alternatives
 namespace alt
 {
-struct Point2d
-{
-  double x;
-  double y;
-};
-
-using PointList = std::vector<Point2d>;
-
 class Vector2d
 {
 public:
-  Vector2d() : x_(0.0), y_(0.0) {};
+  Vector2d() : x_(0.0), y_(0.0) {}
 
   Vector2d(const double x, const double y) : x_(x), y_(y) {}
-
-  Vector2d(const Point2d & point) : Vector2d(point.x, point.y) {}
 
   double cross(const Vector2d & other) const { return x_ * other.y() - y_ * other.x(); }
 
@@ -629,6 +619,9 @@ private:
   double x_;
   double y_;
 };
+
+using Point2d = Vector2d;
+using PointList = std::vector<Point2d>;
 
 class ConvexPolygon2d
 {
@@ -656,16 +649,6 @@ public:
 private:
   PointList vertices_;
 };
-
-inline Vector2d operator+(const Point2d & p1, const Point2d & p2)
-{
-  return {p1.x + p2.x, p1.y + p2.y};
-}
-
-inline Vector2d operator-(const Point2d & p1, const Point2d & p2)
-{
-  return {p1.x - p2.x, p1.y - p2.y};
-}
 
 inline Vector2d operator+(const Vector2d & v1, const Vector2d & v2)
 {
