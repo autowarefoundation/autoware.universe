@@ -42,7 +42,7 @@
   <exec_depend>pointcloud_to_laserscan</exec_depend>
   <exec_depend>probabilistic_occupancy_grid_map</exec_depend>
   <exec_depend>topic_tools</exec_depend>
-  <exec_depend>traffic_light_arbiter</exec_depend>
+  <exec_depend>autoware_traffic_light_arbiter</exec_depend>
   <exec_depend>traffic_light_classifier</exec_depend>
   <exec_depend>traffic_light_fine_detector</exec_depend>
   <exec_depend>traffic_light_map_based_detector</exec_depend>
