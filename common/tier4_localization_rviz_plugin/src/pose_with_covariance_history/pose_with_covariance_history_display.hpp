@@ -60,6 +60,9 @@ protected:
   void onDisable() override;
   void update(float wall_dt, float ros_dt) override;
 
+private Q_SLOTS:
+  void updateShapeType();
+
 private:
   void subscribe() override;
   void unsubscribe() override;
@@ -94,7 +97,7 @@ private:
   rviz_common::properties::FloatProperty * property_arrow_alpha_;
   rviz_common::properties::ColorProperty * property_arrow_color_;
   
-  rviz_common::properties::BoolProperty * property_shape_view_;
+  rviz_common::properties::BoolProperty * property_path_view_;
   rviz_common::properties::EnumProperty * property_shape_type_;
 };
 

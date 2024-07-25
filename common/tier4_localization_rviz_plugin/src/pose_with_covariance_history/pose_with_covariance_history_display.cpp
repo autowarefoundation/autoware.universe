@@ -33,18 +33,8 @@ PoseWithCovarianceHistory::PoseWithCovarianceHistory() : last_stamp_(0, 0, RCL_R
 {
   property_buffer_size_ = new rviz_common::properties::IntProperty("Buffer Size", 100, "", this);
 
-  property_sphere_view_ = new rviz_common::properties::BoolProperty("Covariance", true, "", this);
-  property_sphere_scale_ =
-    new rviz_common::properties::FloatProperty("Scale", 1.0, "", property_sphere_view_);
-  property_sphere_alpha_ =
-    new rviz_common::properties::FloatProperty("Alpha", 0.5, "", property_sphere_view_);
-  property_sphere_alpha_->setMin(0.0);
-  property_sphere_alpha_->setMax(1.0);
-  property_sphere_color_ =
-    new rviz_common::properties::ColorProperty("Color", QColor(204, 51, 204), "", property_sphere_view_);
-
-  property_shape_view_ = new rviz_common::properties::BoolProperty("Shape", true, "", this);
-  property_shape_type_ = new rviz_common::properties::EnumProperty("Shape Type", "Line", "", property_shape_view_);
+  property_path_view_ = new rviz_common::properties::BoolProperty("Path", true, "", this);
+  property_shape_type_ = new rviz_common::properties::EnumProperty("Shape Type", "Line", "", property_path_view_, SLOT(updateShapeType()));
   property_shape_type_->addOption("Line", 0);
   property_shape_type_->addOption("Arrow", 1);
 
@@ -55,22 +45,32 @@ PoseWithCovarianceHistory::PoseWithCovarianceHistory() : last_stamp_(0, 0, RCL_R
   property_line_alpha_->setMin(0.0);
   property_line_alpha_->setMax(1.0);
   property_line_color_ =
-    new rviz_common::properties::ColorProperty("Color", QColor(204, 51, 204), "", property_shape_type_);
+    new rviz_common::properties::ColorProperty("Color", Qt::white, "", property_shape_type_);
   
   property_arrow_shaft_length_ =
-    new rviz_common::properties::FloatProperty("Shaft Length", 0.6, "", property_shape_type_);
+    new rviz_common::properties::FloatProperty("Shaft Length", 0.3, "", property_shape_type_);
   property_arrow_shaft_diameter_ =
-    new rviz_common::properties::FloatProperty("Shaft Radius", 0.3, "", property_shape_type_);
+    new rviz_common::properties::FloatProperty("Shaft diameter", 0.15, "", property_shape_type_);
   property_arrow_head_length_ =
-    new rviz_common::properties::FloatProperty("Head Length", 0.4, "", property_shape_type_);
+    new rviz_common::properties::FloatProperty("Head Length", 0.2, "", property_shape_type_);
   property_arrow_head_diameter_ =
-    new rviz_common::properties::FloatProperty("Head Radius", 0.6, "", property_shape_type_);
+    new rviz_common::properties::FloatProperty("Head diameter", 0.3, "", property_shape_type_);
   property_arrow_alpha_ =
     new rviz_common::properties::FloatProperty("Alpha", 1.0, "", property_shape_type_);
   property_arrow_alpha_->setMin(0.0);
   property_arrow_alpha_->setMax(1.0);
   property_arrow_color_ =
-    new rviz_common::properties::ColorProperty("Color", QColor(204, 51, 204), "", property_shape_type_);
+    new rviz_common::properties::ColorProperty("Color", Qt::white, "", property_shape_type_);
+  
+  property_sphere_view_ = new rviz_common::properties::BoolProperty("Covariance", true, "", this);
+  property_sphere_scale_ =
+    new rviz_common::properties::FloatProperty("Scale", 1.0, "", property_sphere_view_);
+  property_sphere_alpha_ =
+    new rviz_common::properties::FloatProperty("Alpha", 0.5, "", property_sphere_view_);
+  property_sphere_alpha_->setMin(0.0);
+  property_sphere_alpha_->setMax(1.0);
+  property_sphere_color_ =
+    new rviz_common::properties::ColorProperty("Color", QColor(204, 51, 204), "", property_sphere_view_);
   
   property_buffer_size_->setMin(0);
   property_buffer_size_->setMax(10000);
@@ -109,9 +109,8 @@ void PoseWithCovarianceHistory::update(float wall_dt, float ros_dt)
   if (!history_.empty()) {
     lines_->clear();
     spheres_.clear();
-    if (property_sphere_view_->getBool()) {
-      updateShapes();
-    }
+    updateShapeType();
+    updateShapes();
   }
 }
 
@@ -127,6 +126,23 @@ void PoseWithCovarianceHistory::unsubscribe()
   history_.clear();
   lines_->clear();
   spheres_.clear();
+}
+
+void PoseWithCovarianceHistory::updateShapeType()
+{
+  bool is_line = property_shape_type_->getOptionInt() == 0;
+  bool is_arrow = property_shape_type_->getOptionInt() == 1;
+
+  property_line_width_->setHidden(!is_line);
+  property_line_alpha_->setHidden(!is_line);
+  property_line_color_->setHidden(!is_line);
+
+  property_arrow_shaft_length_->setHidden(!is_arrow);
+  property_arrow_shaft_diameter_->setHidden(!is_arrow);
+  property_arrow_head_length_->setHidden(!is_arrow);
+  property_arrow_head_diameter_->setHidden(!is_arrow);
+  property_arrow_alpha_->setHidden(!is_arrow);
+  property_arrow_color_->setHidden(!is_arrow);
 }
 
 void PoseWithCovarianceHistory::processMessage(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr message)
@@ -208,23 +224,25 @@ void PoseWithCovarianceHistory::updateShapes()
     covariance_2d_map(1, 0) = message->pose.covariance[1 + 6 * 0];
     covariance_2d_map(0, 1) = message->pose.covariance[0 + 6 * 1];
 
-    Eigen::Matrix2d covariance_2d_base_link;
-    Eigen::Translation3f translation(message->pose.pose.position.x, message->pose.pose.position.y, message->pose.pose.position.z);
-    Eigen::Quaternionf rotation(message->pose.pose.orientation.w, message->pose.pose.orientation.x, message->pose.pose.orientation.y, message->pose.pose.orientation.z);
-    Eigen::Matrix4f pose_matrix4f = (translation * rotation).matrix();
-    const Eigen::Matrix2d rot = pose_matrix4f.topLeftCorner<2, 2>().cast<double>();
-    covariance_2d_base_link = rot.transpose() * covariance_2d_map * rot;
+    if (property_sphere_view_->getBool()) {
+      Eigen::Matrix2d covariance_2d_base_link;
+      Eigen::Translation3f translation(message->pose.pose.position.x, message->pose.pose.position.y, message->pose.pose.position.z);
+      Eigen::Quaternionf rotation(message->pose.pose.orientation.w, message->pose.pose.orientation.x, message->pose.pose.orientation.y, message->pose.pose.orientation.z);
+      Eigen::Matrix4f pose_matrix4f = (translation * rotation).matrix();
+      const Eigen::Matrix2d rot = pose_matrix4f.topLeftCorner<2, 2>().cast<double>();
+      covariance_2d_base_link = rot.transpose() * covariance_2d_map * rot;
 
-    auto& sphere = spheres_[i];
-    sphere->setPosition(position);
-    sphere->setOrientation(orientation);
-    sphere->setColor(color_sphere.r, color_sphere.g, color_sphere.b, color_sphere.a);
-    sphere->setScale(Ogre::Vector3(
-      property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(0, 0)),
-      property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(1, 1)),
-      property_sphere_scale_->getFloat() * 2 * std::sqrt(message->pose.covariance[14])));
+      auto& sphere = spheres_[i];
+      sphere->setPosition(position);
+      sphere->setOrientation(orientation);
+      sphere->setColor(color_sphere.r, color_sphere.g, color_sphere.b, color_sphere.a);
+      sphere->setScale(Ogre::Vector3(
+         property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(0, 0)),
+         property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(1, 1)),
+         property_sphere_scale_->getFloat() * 2 * std::sqrt(message->pose.covariance[14])));
+    }
     
-    if (property_shape_view_->getBool()){
+    if (property_path_view_->getBool()){
       if (shape_type == 0) {
         lines_->addPoint(position);
       }
