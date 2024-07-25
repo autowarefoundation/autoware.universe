@@ -431,60 +431,6 @@ autoware::universe_utils::Polygon2d to_boost(const ConvexPolygon2d & polygon)
 }
 }  // namespace alt
 
-double area(const alt::ConvexPolygon2d & poly)
-{
-  const auto & vertices = poly.vertices();
-
-  double area = 0.;
-  for (size_t i = 0; i < vertices.size(); ++i) {
-    area += vertices.at((i + 1) % vertices.size()).cross(vertices.at(i)) / 2;
-  }
-
-  return area;
-}
-
-alt::ConvexPolygon2d convex_hull(const alt::PointList & points)
-{
-  // QuickHull algorithm
-
-  const auto p_minmax_itr = std::minmax_element(
-    points.begin(), points.end(), [](const auto & a, const auto & b) { return a.x() < b.x(); });
-  const auto & p_min = *p_minmax_itr.first;
-  const auto & p_max = *p_minmax_itr.second;
-
-  alt::PointList vertices;
-
-  auto make_hull = [&vertices](
-                     auto self, const alt::Point2d & p1, const alt::Point2d & p2,
-                     const alt::PointList & points) {
-    if (points.empty()) {
-      return;
-    }
-
-    const auto farthest = *std::max_element(
-      points.begin(), points.end(),
-      [&](const auto & a, const auto & b) { return distance(p1, p2, a) < distance(p1, p2, b); });
-
-    const auto subsets_1 = divide_by_segment(points, p1, farthest);
-    const auto subsets_2 = divide_by_segment(points, farthest, p2);
-
-    self(self, p1, farthest, subsets_1.at(0));
-    vertices.push_back(farthest);
-    self(self, farthest, p2, subsets_2.at(0));
-  };
-
-  const auto [above_points, below_points] = divide_by_segment(points, p_min, p_max);
-  vertices.push_back(p_min);
-  make_hull(make_hull, p_min, p_max, above_points);
-  vertices.push_back(p_max);
-  make_hull(make_hull, p_max, p_min, below_points);
-
-  alt::ConvexPolygon2d hull(vertices);
-  correct(hull);
-
-  return hull;
-}
-
 void correct(alt::ConvexPolygon2d & poly)
 {
   auto & vertices = poly.vertices();
@@ -497,89 +443,6 @@ void correct(alt::ConvexPolygon2d & poly)
   if (equals(vertices.front(), vertices.back())) {
     vertices.pop_back();
   }
-}
-
-bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
-{
-  if (within(point, poly)) {
-    return true;
-  }
-
-  if (touches(point, poly)) {
-    return true;
-  }
-
-  return false;
-}
-
-bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
-{
-  if (equals(poly1, poly2)) {
-    return false;
-  }
-
-  if (intersects(poly1, poly2)) {
-    return false;
-  }
-
-  for (const auto & vertex : poly1.vertices()) {
-    if (touches(vertex, poly2)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-double distance(
-  const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end)
-{
-  const auto seg_vec = seg_end - seg_start;
-  const auto point_vec = point - seg_start;
-
-  const double seg_vec_norm = seg_vec.norm();
-  const double seg_point_dot = seg_vec.dot(point_vec);
-
-  if (seg_vec_norm <= std::numeric_limits<double>::epsilon() || seg_point_dot < 0) {
-    return point_vec.norm();
-  } else if (seg_point_dot > std::pow(seg_vec_norm, 2)) {
-    return (point - seg_end).norm();
-  } else {
-    return std::abs(seg_vec.cross(point_vec)) / seg_vec_norm;
-  }
-}
-
-double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
-{
-  if (covered_by(point, poly)) {
-    return 0.0;
-  }
-
-  // TODO(mitukou1109): Use plane sweep method to improve performance?
-  const auto & vertices = poly.vertices();
-  double min_distance = std::numeric_limits<double>::max();
-  for (size_t i = 0; i < vertices.size(); ++i) {
-    min_distance = std::min(
-      min_distance, distance(point, vertices.at(i), vertices.at((i + 1) % vertices.size())));
-  }
-
-  return min_distance;
-}
-
-std::array<alt::PointList, 2> divide_by_segment(
-  const alt::PointList & points, const alt::Point2d & seg_start, const alt::Point2d & seg_end)
-{
-  alt::PointList above_points, below_points;
-
-  for (const auto & point : points) {
-    if (is_above(point, seg_start, seg_end)) {
-      above_points.push_back(point);
-    } else {
-      below_points.push_back(point);
-    }
-  }
-
-  return {above_points, below_points};
 }
 
 bool equals(const alt::Point2d & point1, const alt::Point2d & point2)
@@ -671,32 +534,6 @@ bool intersects(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d &
   }
 
   return true;
-}
-
-bool is_above(
-  const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end)
-{
-  return (seg_end - seg_start).cross(point - seg_start) > 0;
-}
-
-bool is_clockwise(const alt::ConvexPolygon2d & poly)
-{
-  return area(poly) > 0;
-}
-
-bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
-{
-  const auto & vertices = poly.vertices();
-  for (size_t i = 0; i < vertices.size(); ++i) {
-    // check if the point is on each edge of the polygon
-    if (
-      distance(point, vertices.at(i), vertices.at((i + 1) % vertices.size())) <=
-      std::numeric_limits<double>::epsilon()) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)

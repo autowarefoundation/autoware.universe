@@ -681,23 +681,7 @@ autoware::universe_utils::Point2d to_boost(const Point2d & point);
 autoware::universe_utils::Polygon2d to_boost(const ConvexPolygon2d & polygon);
 }  // namespace alt
 
-double area(const alt::ConvexPolygon2d & poly);
-
-alt::ConvexPolygon2d convex_hull(const alt::PointList & points);
-
 void correct(alt::ConvexPolygon2d & poly);
-
-bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
-
-bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2);
-
-double distance(
-  const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
-
-double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
-
-std::array<alt::PointList, 2> divide_by_segment(
-  const alt::PointList & points, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 
 bool equals(const alt::Point2d & point1, const alt::Point2d & point2);
 
@@ -708,13 +692,6 @@ bool intersects(
   const alt::Point2d & seg2_end);
 
 bool intersects(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2);
-
-bool is_above(
-  const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
-
-bool is_clockwise(const alt::ConvexPolygon2d & poly);
-
-bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
 
 bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
 
