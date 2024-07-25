@@ -436,8 +436,8 @@ double area(const alt::ConvexPolygon2d & poly)
   const auto & vertices = poly.vertices();
 
   double area = 0.;
-  for (size_t i = 0; i < vertices.size(); ++i) {
-    area += vertices.at((i + 1) % vertices.size()).cross(vertices.at(i)) / 2;
+  for (size_t i = 1; i < vertices.size() - 1; ++i) {
+    area += (vertices.at(i + 1) - vertices.front()).cross(vertices.at(i) - vertices.front()) / 2;
   }
 
   return area;
@@ -711,6 +711,7 @@ bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 {
   const auto & vertices = poly.vertices();
   int64_t winding_number = 0;
+
   for (size_t i = 0; i < vertices.size(); ++i) {
     const auto & p1 = vertices.at(i);
     const auto & p2 = vertices.at((i + 1) % vertices.size());
