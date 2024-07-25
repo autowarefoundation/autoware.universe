@@ -18,11 +18,13 @@
 #include "overlay_utils.hpp"
 #include "path_overlay.hpp"
 #include "rviz_common/properties/color_property.hpp"
+#include "rviz_common/properties/enum_property.hpp"
 #include "rviz_common/properties/float_property.hpp"
 #include "rviz_common/properties/int_property.hpp"
 #include "rviz_common/properties/ros_topic_property.hpp"
 #include "rviz_common/properties/string_property.hpp"
 #include "tile_field.hpp"
+#include "tile_provider.hpp"  // Include the TileProvider header
 
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
@@ -83,6 +85,7 @@ protected Q_SLOTS:
   void updateLongitude();
   void updateGoalPose();
   void updateMapPosition();
+  void updateTileProvider();  // Add this slot
 
 protected:
   void onEnable() override;
@@ -108,11 +111,17 @@ private:
 
   rviz_common::properties::IntProperty * property_width_;
   rviz_common::properties::IntProperty * property_height_;
-  rviz_common::properties::IntProperty * property_left_;
-  rviz_common::properties::IntProperty * property_top_;
+
+  rviz_common::properties::IntProperty * property_horizontal_margin_;
+  rviz_common::properties::IntProperty * property_vertical_margin_;
+
+  rviz_common::properties::EnumProperty * property_tile_provider_;
+  rviz_common::properties::EnumProperty * property_anchor_vertical_;
+  rviz_common::properties::EnumProperty * property_anchor_horizontal_;
+  rviz_common::properties::IntProperty * property_border_radius_;
+
   rviz_common::properties::IntProperty * property_zoom_;
   rviz_common::properties::FloatProperty * alpha_property_;
-  rviz_common::properties::ColorProperty * background_color_property_;
   rviz_common::properties::FloatProperty * property_latitude_;
   rviz_common::properties::FloatProperty * property_longitude_;
   rviz_common::properties::FloatProperty * property_goal_lat;
@@ -167,6 +176,8 @@ private:
 
   std::string projector_type_;
   std::string mgrs_grid_;
+
+  TileProvider::Provider current_tile_provider_;  // Add this line
 };
 
 }  // namespace autoware_minimap_overlay_rviz_plugin

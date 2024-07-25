@@ -40,7 +40,8 @@ VehicleMapDisplay::VehicleMapDisplay()
   prev_latitude_(0.0),
   prev_longitude_(0.0),
   target_latitude_(0.0),
-  target_longitude_(0.0)
+  target_longitude_(0.0),
+  current_tile_provider_(TileProvider::OpenStreetMap)
 {
   property_width_ = new rviz_common::properties::IntProperty(
     "Width", 256, "Width of the overlay max:500", this, SLOT(updateOverlaySize()));
@@ -54,17 +55,46 @@ VehicleMapDisplay::VehicleMapDisplay()
   property_height_->setMax(500);
   property_height_->setShouldBeSaved(true);
 
-  property_left_ = new rviz_common::properties::IntProperty(
-    "Left", 10, "Left position of the overlay", this, SLOT(updateOverlayPosition()));
-  property_top_ = new rviz_common::properties::IntProperty(
-    "Top", 10, "Top position of the overlay", this, SLOT(updateOverlayPosition()));
+  property_vertical_margin_ = new rviz_common::properties::IntProperty(
+    "Vertical Margin", 10, "Vertical margin of the overlay", this, SLOT(updateOverlayPosition()));
+  property_horizontal_margin_ = new rviz_common::properties::IntProperty(
+    "Horizontal Margin", 10, "Horizontal margin of the overlay", this,
+    SLOT(updateOverlayPosition()));
+
+  property_anchor_vertical_ = new rviz_common::properties::EnumProperty(
+    "Vertical Anchor", "Bottom", "Vertical anchor of the overlay", this,
+    SLOT(updateOverlayPosition()));
+
+  property_anchor_vertical_->addOption(
+    "Top", static_cast<int>(autoware_minimap_overlay_rviz_plugin::VerticalAlignment::TOP));
+  property_anchor_vertical_->addOption(
+    "Center", static_cast<int>(autoware_minimap_overlay_rviz_plugin::VerticalAlignment::CENTER));
+  property_anchor_vertical_->addOption(
+    "Bottom", static_cast<int>(autoware_minimap_overlay_rviz_plugin::VerticalAlignment::BOTTOM));
+
+  property_anchor_horizontal_ = new rviz_common::properties::EnumProperty(
+    "Horizontal Anchor", "Left", "Horizontal anchor of the overlay", this,
+    SLOT(updateOverlayPosition()));
+
+  property_anchor_horizontal_->addOption(
+    "Left", static_cast<int>(autoware_minimap_overlay_rviz_plugin::HorizontalAlignment::LEFT));
+  property_anchor_horizontal_->addOption(
+    "Center", static_cast<int>(autoware_minimap_overlay_rviz_plugin::HorizontalAlignment::CENTER));
+  property_anchor_horizontal_->addOption(
+    "Right", static_cast<int>(autoware_minimap_overlay_rviz_plugin::HorizontalAlignment::RIGHT));
+
+  property_border_radius_ = new rviz_common::properties::IntProperty(
+    "Border Radius", property_height_->getInt() / 2.0, "Border radius of the overlay", this,
+    SLOT(updateOverlaySize()));
 
   alpha_property_ = new rviz_common::properties::FloatProperty(
-    "Alpha", 0, "Amount of transparency to apply to the overlay.", this, SLOT(updateOverlaySize()));
-
-  background_color_property_ = new rviz_common::properties::ColorProperty(
-    "Background Color", QColor(0, 0, 0), "Color to draw the background.", this,
+    "Alpha", 1.0, "Amount of transparency to apply to the overlay.", this,
     SLOT(updateOverlaySize()));
+
+  property_tile_provider_ = new rviz_common::properties::EnumProperty(
+    "Tile Provider", "OpenStreetMap", "Select the tile provider", this, SLOT(updateTileProvider()));
+
+  property_tile_provider_->addOption("OpenStreetMap", TileProvider::OpenStreetMap);
 
   property_zoom_ = new rviz_common::properties::IntProperty(
     "Zoom", 15, "Zoom level of the map 15-18", this, SLOT(updateZoomLevel()));
@@ -99,6 +129,9 @@ VehicleMapDisplay::VehicleMapDisplay()
   longitude_ = property_longitude_->getFloat();
 
   tile_field_ = std::make_unique<TileField>(this);
+  tile_field_->setUrlTemplate(
+    TileProvider::getUrlTemplate(current_tile_provider_));  // Set the URL template
+
   connect(tile_field_.get(), &TileField::tilesUpdated, this, &VehicleMapDisplay::onTilesUpdated);
 }
 
@@ -202,6 +235,21 @@ void VehicleMapDisplay::update(float, float)
   drawWidget(hud);
 }
 
+void VehicleMapDisplay::updateTileProvider()
+{
+  // Update the current tile provider based on the selected option
+  current_tile_provider_ =
+    static_cast<TileProvider::Provider>(property_tile_provider_->getOptionInt());
+
+  // Get the URL template based on the selected tile provider
+  std::string url_template = TileProvider::getUrlTemplate(current_tile_provider_);
+
+  tile_field_->setUrlTemplate(url_template);
+
+  updateMapPosition();
+  queueRender();
+}
+
 void VehicleMapDisplay::updateOverlaySize()
 {
   if (!overlay_) {
@@ -222,9 +270,9 @@ void VehicleMapDisplay::updateOverlayPosition()
 
   std::lock_guard<std::mutex> lock(mutex_);
   overlay_->setPosition(
-    property_left_->getInt(), property_top_->getInt(),
-    autoware_minimap_overlay_rviz_plugin::HorizontalAlignment::LEFT,
-    autoware_minimap_overlay_rviz_plugin::VerticalAlignment::BOTTOM);
+    property_horizontal_margin_->getInt(), property_vertical_margin_->getInt(),
+    static_cast<HorizontalAlignment>(property_anchor_horizontal_->getOptionInt()),
+    static_cast<VerticalAlignment>(property_anchor_vertical_->getOptionInt()));
   queueRender();
 }
 
@@ -248,14 +296,7 @@ void VehicleMapDisplay::drawWidget(QImage & hud)
 void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & backgroundRect)
 {
   painter.setRenderHint(QPainter::Antialiasing, true);
-  QColor colorFromHSV;
-  colorFromHSV.setHsv(
-    background_color_property_->getColor().hue(),
-    background_color_property_->getColor().saturation(),
-    background_color_property_->getColor().value());
-  colorFromHSV.setAlphaF(alpha_property_->getFloat());
-
-  painter.setBrush(colorFromHSV);
+  painter.setOpacity(alpha_property_->getFloat());
 
   // Define the visible rectangle
   QRectF visibleRect(
@@ -265,8 +306,15 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
 
   // Define the circular clipping path
   QPainterPath path;
-  path.addEllipse(backgroundRect);
-  painter.setClipPath(path);
+  path.setFillRule(Qt::WindingFill);
+
+  // Define the rectangle dimensions and radius for the bottom-left corner
+  QRectF rect = backgroundRect;
+  qreal radius = property_border_radius_->getInt();
+
+  // Add a rounded rectangle covering the entire area with all corners rounded
+  path.addRoundedRect(rect, radius, radius);
+  painter.setClipPath(path.simplified());
 
   // Draw the background
   painter.setPen(Qt::NoPen);
@@ -376,6 +424,7 @@ void VehicleMapDisplay::updateZoomLevel()
   }
 
   tile_field_->fetchTiles(zoom_, center_x_tile_, center_y_tile_);
+  updateMapPosition();
   queueRender();  // Request re-rendering
 }
 
