@@ -730,17 +730,17 @@ bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
     const auto & p1 = vertices.at(i);
     const auto & p2 = vertices.at((i + 1) % vertices.size());
 
-    // check if the point is to the left of the edge
-    auto x_dist_to_edge = [&]() { return (p2 - p1).cross(point - p1) / (p2 - p1).y(); };
+    double cross = (p2 - p1).cross(point - p1);
+    if (std::abs(cross) <= std::numeric_limits<double>::epsilon()) {
+      return false;
+    }
 
-    if (p1.y() <= point.y() && p2.y() > point.y()) {  // upward edge
-      if (x_dist_to_edge() >= 0) {
-        winding_number++;
-      }
-    } else if (p1.y() > point.y() && p2.y() <= point.y()) {  // downward edge
-      if (x_dist_to_edge() >= 0) {
-        winding_number--;
-      }
+    if (p1.y() <= point.y() && p2.y() > point.y() && cross > 0) {  // the point is to the left of
+                                                                   // upward edge
+      winding_number++;
+    } else if (p1.y() > point.y() && p2.y() <= point.y() && cross < 0) {  // the point is to the
+                                                                          // left of downward edge
+      winding_number--;
     }
   }
 
