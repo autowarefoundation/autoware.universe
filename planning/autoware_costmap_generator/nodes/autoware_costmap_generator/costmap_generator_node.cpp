@@ -45,10 +45,10 @@
 #include "autoware_costmap_generator/costmap_generator.hpp"
 #include "autoware_costmap_generator/object_map_utils.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <pcl_ros/transforms.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
@@ -95,11 +95,9 @@ std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
   const lanelet::BasicPoint2d & current_position)
 {
-  const auto all_parking_lots = lanelet::utils::query::getAllParkingLots(lanelet_map_ptr);
-
   const auto linked_parking_lot = std::make_shared<lanelet::ConstPolygon3d>();
   const auto result = lanelet::utils::query::getLinkedParkingLot(
-    current_position, all_parking_lots, linked_parking_lot.get());
+    current_position, lanelet_map_ptr, linked_parking_lot.get());
 
   if (result) {
     return linked_parking_lot;

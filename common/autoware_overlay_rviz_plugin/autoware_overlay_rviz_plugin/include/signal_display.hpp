@@ -76,6 +76,13 @@ private:
   rviz_common::properties::IntProperty * property_left_;
   rviz_common::properties::IntProperty * property_top_;
   rviz_common::properties::ColorProperty * property_signal_color_;
+  rviz_common::properties::FloatProperty * property_handle_angle_scale_;
+  rviz_common::properties::ColorProperty * property_background_color_;
+  rviz_common::properties::FloatProperty * property_background_alpha_;
+  rviz_common::properties::ColorProperty * property_primary_color_;
+  rviz_common::properties::ColorProperty * property_light_limit_color_;
+  rviz_common::properties::ColorProperty * property_dark_limit_color_;
+
   std::unique_ptr<rviz_common::properties::RosTopicProperty> steering_topic_property_;
   std::unique_ptr<rviz_common::properties::RosTopicProperty> gear_topic_property_;
   std::unique_ptr<rviz_common::properties::RosTopicProperty> speed_topic_property_;
@@ -102,8 +109,7 @@ private:
     turn_signals_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::HazardLightsReport>::SharedPtr
     hazard_lights_sub_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::TrafficLightGroupArray>::SharedPtr
-    traffic_sub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::TrafficLightGroup>::SharedPtr traffic_sub_;
   rclcpp::Subscription<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr speed_limit_sub_;
 
   std::mutex property_mutex_;
@@ -117,7 +123,7 @@ private:
     const autoware_vehicle_msgs::msg::HazardLightsReport::ConstSharedPtr & msg);
   void updateSpeedLimitData(const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
   void updateTrafficLightData(
-    const autoware_perception_msgs::msg::TrafficLightGroupArray::ConstSharedPtr msg);
+    const autoware_perception_msgs::msg::TrafficLightGroup::ConstSharedPtr msg);
   void drawWidget(QImage & hud);
 };
 }  // namespace autoware_overlay_rviz_plugin

@@ -22,6 +22,7 @@
         lateral_offset_interval: 0.25
         ignore_distance_from_lane_start: 0.0
         margin_from_boundary: 0.5
+        high_curvature_threshold: 0.1
 
       # occupancy grid map
       occupancy_grid:
@@ -180,6 +181,7 @@
             time_horizon: 10.0
           # hysteresis factor to expand/shrink polygon with the value
           hysteresis_factor_expand_rate: 1.0
+          collision_check_yaw_diff_threshold: 3.1416
           # temporary
           backward_path_length: 100.0
           forward_path_length: 100.0

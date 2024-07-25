@@ -131,10 +131,7 @@ void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 {
   AbstractPlanningAlgorithm::setMap(costmap);
 
-  clearNodes();
-
   x_scale_ = costmap_.info.height;
-  graph_.reserve(100000);
 }
 
 bool AstarSearch::makePlan(
@@ -142,6 +139,9 @@ bool AstarSearch::makePlan(
 {
   start_pose_ = global2local(costmap_, start_pose);
   goal_pose_ = global2local(costmap_, goal_pose);
+
+  clearNodes();
+  graph_.reserve(100000);
 
   if (!setStartNode()) {
     return false;
@@ -294,14 +294,16 @@ void AstarSearch::setPath(const AstarNode & goal_node)
   const AstarNode * node = &goal_node;
 
   // push exact goal pose first
-  geometry_msgs::msg::PoseStamped pose;
-  pose.header = header;
-  pose.pose = local2global(costmap_, goal_pose_);
+  {
+    geometry_msgs::msg::PoseStamped pose;
+    pose.header = header;
+    pose.pose = local2global(costmap_, goal_pose_);
 
-  PlannerWaypoint pw;
-  pw.pose = pose;
-  pw.is_back = node->is_back;
-  waypoints_.waypoints.push_back(pw);
+    PlannerWaypoint pw;
+    pw.pose = pose;
+    pw.is_back = node->is_back;
+    waypoints_.waypoints.push_back(pw);
+  }
 
   // push astar nodes poses
   while (node != nullptr) {

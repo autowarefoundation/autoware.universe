@@ -36,12 +36,12 @@
 #include "lanelet2_local_projector.hpp"
 
 #include <ament_index_cpp/get_package_prefix.hpp>
+#include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
+#include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
+#include <autoware_lanelet2_extension/projection/transverse_mercator_projector.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <geography_utils/lanelet2_projector.hpp>
-#include <lanelet2_extension/io/autoware_osm_parser.hpp>
-#include <lanelet2_extension/projection/mgrs_projector.hpp>
-#include <lanelet2_extension/projection/transverse_mercator_projector.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -49,7 +49,11 @@
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
 
+#include <stdexcept>
 #include <string>
+
+using autoware_map_msgs::msg::LaneletMapBin;
+using tier4_map_msgs::msg::MapProjectorInfo;
 
 Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options)
 : Node("lanelet2_map_loader", options)
@@ -61,6 +65,7 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
     sub_map_projector_info_,
     [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { on_map_projector_info(msg); });
 
+  declare_parameter<bool>("allow_unsupported_version");
   declare_parameter<std::string>("lanelet2_map_path");
   declare_parameter<double>("center_line_resolution");
   declare_parameter<bool>("use_waypoints");
@@ -69,6 +74,7 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
 void Lanelet2MapLoaderNode::on_map_projector_info(
   const MapProjectorInfo::Message::ConstSharedPtr msg)
 {
+  const auto allow_unsupported_version = get_parameter("allow_unsupported_version").as_bool();
   const auto lanelet2_filename = get_parameter("lanelet2_map_path").as_string();
   const auto center_line_resolution = get_parameter("center_line_resolution").as_double();
   const auto use_waypoints = get_parameter("use_waypoints").as_bool();
@@ -79,6 +85,35 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
     RCLCPP_ERROR(get_logger(), "Failed to load lanelet2_map. Not published.");
     return;
   }
+
+  std::string format_version{"null"}, map_version{""};
+  lanelet::io_handlers::AutowareOsmParser::parseVersions(
+    lanelet2_filename, &format_version, &map_version);
+  if (format_version == "null" || format_version.empty() || !isdigit(format_version[0])) {
+    RCLCPP_WARN(
+      get_logger(),
+      "%s has no format_version(null) or non semver-style format_version(%s) information",
+      lanelet2_filename.c_str(), format_version.c_str());
+    if (!allow_unsupported_version) {
+      throw std::invalid_argument(
+        "allow_unsupported_version is false, so stop loading lanelet map");
+    }
+  } else if (const auto map_major_ver_opt = lanelet::io_handlers::parseMajorVersion(format_version);
+             map_major_ver_opt.has_value()) {
+    const auto map_major_ver = map_major_ver_opt.value();
+    if (map_major_ver > static_cast<uint64_t>(lanelet::autoware::version)) {
+      RCLCPP_WARN(
+        get_logger(),
+        "format_version(%ld) of the provided map(%s) is larger than the supported version(%ld)",
+        map_major_ver, lanelet2_filename.c_str(),
+        static_cast<uint64_t>(lanelet::autoware::version));
+      if (!allow_unsupported_version) {
+        throw std::invalid_argument(
+          "allow_unsupported_version is false, so stop loading lanelet map");
+      }
+    }
+  }
+  RCLCPP_INFO(get_logger(), "Loaded map format_version: %s", format_version.c_str());
 
   // overwrite centerline
   if (use_waypoints) {
@@ -105,13 +140,13 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
   if (projector_info.projector_type != tier4_map_msgs::msg::MapProjectorInfo::LOCAL) {
     std::unique_ptr<lanelet::Projector> projector =
       geography_utils::get_lanelet2_projector(projector_info);
-    const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, *projector, &errors);
+    lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, *projector, &errors);
     if (errors.empty()) {
       return map;
     }
   } else {
     const lanelet::projection::LocalProjector projector;
-    const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
+    lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
 
     if (!errors.empty()) {
       for (const auto & error : errors) {
@@ -150,7 +185,8 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
 LaneletMapBin Lanelet2MapLoaderNode::create_map_bin_msg(
   const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
 {
-  std::string format_version{}, map_version{};
+  std::string format_version{};
+  std::string map_version{};
   lanelet::io_handlers::AutowareOsmParser::parseVersions(
     lanelet2_filename, &format_version, &map_version);
 

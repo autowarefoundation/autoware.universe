@@ -64,7 +64,8 @@ class PidLongitudinalController : public trajectory_follower::LongitudinalContro
 {
 public:
   /// \param node Reference to the node used only for the component and parameter initialization.
-  explicit PidLongitudinalController(rclcpp::Node & node);
+  explicit PidLongitudinalController(
+    rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater);
 
 private:
   struct Motion
@@ -183,7 +184,6 @@ private:
   {
     double vel;
     double acc;
-    double jerk;
   };
   StoppedStateParams m_stopped_state_params;
 
@@ -203,6 +203,7 @@ private:
   // jerk limit
   double m_max_jerk;
   double m_min_jerk;
+  double m_max_acc_cmd_diff;
 
   // slope compensation
   enum class SlopeSource { RAW_PITCH = 0, TRAJECTORY_PITCH, TRAJECTORY_ADAPTIVE };
@@ -233,11 +234,13 @@ private:
   // debug values
   DebugValues m_debug_values;
 
+  std::optional<bool> m_prev_keep_stopped_condition{std::nullopt};
+
   std::shared_ptr<rclcpp::Time> m_last_running_time{std::make_shared<rclcpp::Time>(clock_->now())};
 
   // Diagnostic
-
-  diagnostic_updater::Updater diagnostic_updater_;
+  std::shared_ptr<diagnostic_updater::Updater>
+    diag_updater_{};  // Diagnostic updater for publishing diagnostic data.
   struct DiagnosticData
   {
     double trans_deviation{0.0};  // translation deviation between nearest point and current_pose
@@ -289,7 +292,7 @@ private:
    * @brief calculate control command in emergency state
    * @param [in] dt time between previous and current one
    */
-  Motion calcEmergencyCtrlCmd(const double dt) const;
+  Motion calcEmergencyCtrlCmd(const double dt);
 
   /**
    * @brief update control state according to the current situation

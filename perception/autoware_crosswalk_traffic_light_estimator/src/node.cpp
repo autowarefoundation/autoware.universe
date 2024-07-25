@@ -13,8 +13,8 @@
 // limitations under the License.
 #include "autoware_crosswalk_traffic_light_estimator/node.hpp"
 
-#include <lanelet2_extension/regulatory_elements/Forward.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/Forward.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 
 #include <iostream>
 #include <memory>
@@ -209,7 +209,7 @@ void CrosswalkTrafficLightEstimatorNode::updateLastDetectedSignal(
   }
 
   std::vector<int32_t> erase_id_list;
-  for (auto & last_traffic_signal : last_detect_color_) {
+  for (const auto & last_traffic_signal : last_detect_color_) {
     const auto & id = last_traffic_signal.second.first.traffic_light_group_id;
 
     if (traffic_light_id_map.count(id) == 0) {

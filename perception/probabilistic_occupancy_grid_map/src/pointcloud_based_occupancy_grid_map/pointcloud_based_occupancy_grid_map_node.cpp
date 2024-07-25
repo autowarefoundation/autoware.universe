@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/pointcloud_based_occupancy_grid_map_node.hpp"
+#include "pointcloud_based_occupancy_grid_map_node.hpp"
 
-#include "probabilistic_occupancy_grid_map/cost_value.hpp"
-#include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_fixed.hpp"
-#include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_projective.hpp"
-#include "probabilistic_occupancy_grid_map/utils/utils.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/cost_value/cost_value.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/costmap_2d/occupancy_grid_map_fixed.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/costmap_2d/occupancy_grid_map_projective.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/utils/utils.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -37,10 +37,11 @@
 #endif
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
 
-namespace occupancy_grid_map
+namespace autoware::occupancy_grid_map
 {
 using costmap_2d::OccupancyGridMapBBFUpdater;
 using costmap_2d::OccupancyGridMapFixedBlindSpot;
@@ -141,33 +142,46 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     scan_origin_frame_ = input_raw_msg->header.frame_id;
   }
 
-  // Apply height filter
-  PointCloud2 cropped_obstacle_pc{};
-  PointCloud2 cropped_raw_pc{};
+  PointCloud2 trans_input_raw{}, trans_input_obstacle{};
+  bool is_raw_transformed = false;
+  bool is_obstacle_transformed = false;
+
+  // Prepare for applying height filter
   if (use_height_filter_) {
-    if (!utils::cropPointcloudByHeight(
-          *input_obstacle_msg, *tf2_, base_link_frame_, min_height_, max_height_,
-          cropped_obstacle_pc)) {
-      return;
+    // Make sure that the frame is base_link
+    if (input_raw_msg->header.frame_id != base_link_frame_) {
+      if (!utils::transformPointcloud(*input_raw_msg, *tf2_, base_link_frame_, trans_input_raw)) {
+        return;
+      }
+      is_raw_transformed = true;
     }
-    if (!utils::cropPointcloudByHeight(
-          *input_raw_msg, *tf2_, base_link_frame_, min_height_, max_height_, cropped_raw_pc)) {
-      return;
+    if (input_obstacle_msg->header.frame_id != base_link_frame_) {
+      if (!utils::transformPointcloud(
+            *input_obstacle_msg, *tf2_, base_link_frame_, trans_input_obstacle)) {
+        return;
+      }
+      is_obstacle_transformed = true;
     }
+    occupancy_grid_map_ptr_->setHeightLimit(min_height_, max_height_);
+  } else {
+    occupancy_grid_map_ptr_->setHeightLimit(
+      -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
   }
-  const PointCloud2 & filtered_obstacle_pc =
-    use_height_filter_ ? cropped_obstacle_pc : *input_obstacle_msg;
-  const PointCloud2 & filtered_raw_pc = use_height_filter_ ? cropped_raw_pc : *input_raw_msg;
+
+  const PointCloud2::ConstSharedPtr input_raw_use =
+    is_raw_transformed ? std::make_shared<PointCloud2>(trans_input_raw) : input_raw_msg;
+  const PointCloud2::ConstSharedPtr input_obstacle_use =
+    is_obstacle_transformed ? std::make_shared<PointCloud2>(trans_input_obstacle)
+                            : input_obstacle_msg;
 
   // Filter obstacle pointcloud by raw pointcloud
-  PointCloud2 filtered_obstacle_pc_common{};
+  PointCloud2 input_obstacle_pc_common{};
+  bool use_input_obstacle_pc_common = false;
   if (filter_obstacle_pointcloud_by_raw_pointcloud_) {
-    if (!utils::extractCommonPointCloud(
-          filtered_obstacle_pc, filtered_raw_pc, filtered_obstacle_pc_common)) {
-      filtered_obstacle_pc_common = filtered_obstacle_pc;
+    if (utils::extractCommonPointCloud(
+          *input_obstacle_use, *input_raw_use, input_obstacle_pc_common)) {
+      use_input_obstacle_pc_common = true;
     }
-  } else {
-    filtered_obstacle_pc_common = filtered_obstacle_pc;
   }
 
   // Get from map to sensor frame pose
@@ -191,7 +205,8 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     gridmap_origin.position.x - occupancy_grid_map_ptr_->getSizeInMetersX() / 2,
     gridmap_origin.position.y - occupancy_grid_map_ptr_->getSizeInMetersY() / 2);
   occupancy_grid_map_ptr_->updateWithPointCloud(
-    filtered_raw_pc, filtered_obstacle_pc_common, robot_pose, scan_origin);
+    *input_raw_use, (use_input_obstacle_pc_common ? input_obstacle_pc_common : *input_obstacle_use),
+    robot_pose, scan_origin);
 
   if (enable_single_frame_mode_) {
     // publish
@@ -250,12 +265,12 @@ OccupancyGrid::UniquePtr PointcloudBasedOccupancyGridMapNode::OccupancyGridMapTo
 
   unsigned char * data = occupancy_grid_map.getCharMap();
   for (unsigned int i = 0; i < msg_ptr->data.size(); ++i) {
-    msg_ptr->data[i] = occupancy_cost_value::cost_translation_table[data[i]];
+    msg_ptr->data[i] = cost_value::cost_translation_table[data[i]];
   }
   return msg_ptr;
 }
 
-}  // namespace occupancy_grid_map
+}  // namespace autoware::occupancy_grid_map
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(occupancy_grid_map::PointcloudBasedOccupancyGridMapNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::occupancy_grid_map::PointcloudBasedOccupancyGridMapNode)

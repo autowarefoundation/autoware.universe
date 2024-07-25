@@ -22,7 +22,7 @@
 
 #include <autoware/behavior_path_lane_change_module/utils/utils.hpp>
 #include <autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/logging.hpp>
 
 #include <boost/geometry/algorithms/centroid.hpp>
@@ -40,7 +40,6 @@ using autoware::behavior_path_planner::LaneChangeModuleType;
 using autoware::behavior_path_planner::ObjectInfo;
 using autoware::behavior_path_planner::Point2d;
 using autoware::behavior_path_planner::utils::lane_change::debug::createExecutionArea;
-namespace utils = autoware::behavior_path_planner::utils;
 
 AvoidanceByLaneChange::AvoidanceByLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters,
@@ -114,10 +113,8 @@ void AvoidanceByLaneChange::updateSpecialData()
                    : Direction::RIGHT;
   }
 
-  utils::static_obstacle_avoidance::updateRegisteredObject(
-    registered_objects_, avoidance_data_.target_objects, p);
-  utils::static_obstacle_avoidance::compensateDetectionLost(
-    registered_objects_, avoidance_data_.target_objects, avoidance_data_.other_objects);
+  utils::static_obstacle_avoidance::compensateLostTargetObjects(
+    registered_objects_, avoidance_data_, clock_.now(), planner_data_, p);
 
   std::sort(
     avoidance_data_.target_objects.begin(), avoidance_data_.target_objects.end(),
@@ -137,7 +134,7 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
   const auto resample_interval = avoidance_parameters_->resample_interval_for_planning;
   data.reference_path = utils::resamplePathWithSpline(data.reference_path_rough, resample_interval);
 
-  data.current_lanelets = getCurrentLanes();
+  data.current_lanelets = get_current_lanes();
 
   fillAvoidanceTargetObjects(data, debug);
 
@@ -152,8 +149,8 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
   const auto [object_within_target_lane, object_outside_target_lane] =
     utils::path_safety_checker::separateObjectsByLanelets(
       *planner_data_->dynamic_object, data.current_lanelets,
-      [](const auto & obj, const auto & lane) {
-        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane);
+      [](const auto & obj, const auto & lane, const auto yaw_threshold) {
+        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane, yaw_threshold);
       });
 
   // Assume that the maximum allocation for data.other object is the sum of
@@ -277,7 +274,7 @@ double AvoidanceByLaneChange::calcMinAvoidanceLength(const ObjectData & nearest_
 
 double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
 {
-  const auto current_lanes = getCurrentLanes();
+  const auto current_lanes = get_current_lanes();
   if (current_lanes.empty()) {
     RCLCPP_DEBUG(logger_, "no empty lanes");
     return std::numeric_limits<double>::infinity();

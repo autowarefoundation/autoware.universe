@@ -22,10 +22,10 @@
 #include "autoware/behavior_path_start_planner_module/util.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -34,7 +34,9 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -65,7 +67,7 @@ StartPlannerModule::StartPlannerModule(
 {
   lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(vehicle_info_);
-  autoware::lane_departure_checker::Param lane_departure_checker_params;
+  autoware::lane_departure_checker::Param lane_departure_checker_params{};
   lane_departure_checker_params.footprint_extra_margin =
     parameters->lane_departure_check_expansion_margin;
 
@@ -104,7 +106,7 @@ void StartPlannerModule::onFreespacePlannerTimer()
   std::optional<ModuleStatus> current_status_opt{std::nullopt};
   std::optional<StartPlannerParameters> parameters_opt{std::nullopt};
   std::optional<PullOutStatus> pull_out_status_opt{std::nullopt};
-  bool is_stopped;
+  bool is_stopped{false};
 
   // making a local copy of thread sensitive data
   {
@@ -366,7 +368,35 @@ bool StartPlannerModule::isCurrentPoseOnMiddleOfTheRoad() const
 
 bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
 {
+  // prepare poses for preventing check
+  // - current_pose
+  // - estimated_stop_pose (The position assumed when stopped with the minimum stop distance,
+  // although it is NOT actually stopped)
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
+  std::vector<Pose> preventing_check_pose{current_pose};
+  const auto min_stop_distance =
+    autoware::behavior_path_planner::utils::parking_departure::calcFeasibleDecelDistance(
+      planner_data_, parameters_->maximum_deceleration_for_stop, parameters_->maximum_jerk_for_stop,
+      0.0);
+  debug_data_.estimated_stop_pose.reset();  // debug
+  if (min_stop_distance.has_value()) {
+    const auto current_path = getCurrentPath();
+    const auto estimated_stop_pose = calcLongitudinalOffsetPose(
+      current_path.points, current_pose.position, min_stop_distance.value());
+    if (estimated_stop_pose.has_value()) {
+      preventing_check_pose.push_back(estimated_stop_pose.value());
+      debug_data_.estimated_stop_pose = estimated_stop_pose.value();  // debug
+    }
+  }
+
+  // check if any of the preventing check poses are preventing rear vehicle from passing through
+  return std::any_of(
+    preventing_check_pose.begin(), preventing_check_pose.end(),
+    [&](const auto & pose) { return isPreventingRearVehicleFromPassingThrough(pose); });
+}
+
+bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & ego_pose) const
+{
   const auto & dynamic_object = planner_data_->dynamic_object;
   const auto & route_handler = planner_data_->route_handler;
   const Pose start_pose = planner_data_->route_handler->getOriginalStartPose();
@@ -412,8 +442,8 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
       geometry_msgs::msg::Pose & ego_overhang_point_as_pose,
       const bool ego_is_merging_from_the_left) -> std::optional<std::pair<double, double>> {
     const auto local_vehicle_footprint = vehicle_info_.createFootprint();
-    const auto vehicle_footprint = transformVector(
-      local_vehicle_footprint, autoware::universe_utils::pose2transform(current_pose));
+    const auto vehicle_footprint =
+      transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
     double smallest_lateral_gap_between_ego_and_border = std::numeric_limits<double>::max();
     double corresponding_lateral_gap_with_other_lane_bound = std::numeric_limits<double>::max();
 
@@ -479,7 +509,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
     // Check backwards just in case the Vehicle behind ego is in a different lanelet
     constexpr double backwards_length = 200.0;
     const auto prev_lanes = autoware::behavior_path_planner::utils::getBackwardLanelets(
-      *route_handler, target_lanes, current_pose, backwards_length);
+      *route_handler, target_lanes, ego_pose, backwards_length);
     // return all the relevant lanelets
     lanelet::ConstLanelets relevant_lanelets{closest_lanelet_const};
     relevant_lanelets.insert(relevant_lanelets.end(), prev_lanes.begin(), prev_lanes.end());
@@ -489,7 +519,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
 
   // filtering objects with velocity, position and class
   const auto filtered_objects = utils::path_safety_checker::filterObjects(
-    dynamic_object, route_handler, relevant_lanelets.value(), current_pose.position,
+    dynamic_object, route_handler, relevant_lanelets.value(), ego_pose.position,
     objects_filtering_params_);
   if (filtered_objects.objects.empty()) return false;
 
@@ -501,18 +531,17 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   // Get the closest target obj width in the relevant lanes
   const auto closest_object_width = std::invoke([&]() -> std::optional<double> {
     double arc_length_to_closet_object = std::numeric_limits<double>::max();
-    double closest_object_width = -1.0;
+    std::optional<double> closest_object_width = std::nullopt;
     std::for_each(
       target_objects_on_lane.on_current_lane.begin(), target_objects_on_lane.on_current_lane.end(),
       [&](const auto & o) {
         const auto arc_length = autoware::motion_utils::calcSignedArcLength(
-          centerline_path.points, current_pose.position, o.initial_pose.pose.position);
+          centerline_path.points, ego_pose.position, o.initial_pose.pose.position);
         if (arc_length > 0.0) return;
         if (std::abs(arc_length) >= std::abs(arc_length_to_closet_object)) return;
         arc_length_to_closet_object = arc_length;
         closest_object_width = o.shape.dimensions.y;
       });
-    if (closest_object_width < 0.0) return std::nullopt;
     return closest_object_width;
   });
   if (!closest_object_width) return false;
@@ -623,7 +652,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
     resetPathReference();
   }
 
-  BehaviorModuleOutput output;
   if (!status_.found_pull_out_path) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
@@ -673,6 +701,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
     return getCurrentPath();
   });
 
+  BehaviorModuleOutput output;
   output.path = path;
   output.reference_path = getPreviousModuleOutput().reference_path;
   output.turn_signal_info = calcTurnSignalInfo();
@@ -748,7 +777,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 {
   updatePullOutStatus();
 
-  BehaviorModuleOutput output;
   if (!status_.found_pull_out_path) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
@@ -777,6 +805,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     p.point.longitudinal_velocity_mps = 0.0;
   }
 
+  BehaviorModuleOutput output;
   output.path = stop_path;
   output.reference_path = getPreviousModuleOutput().reference_path;
   output.turn_signal_info = calcTurnSignalInfo();
@@ -837,7 +866,7 @@ PathWithLaneId StartPlannerModule::getCurrentPath() const
 
 void StartPlannerModule::planWithPriority(
   const std::vector<Pose> & start_pose_candidates, const Pose & refined_start_pose,
-  const Pose & goal_pose, const std::string search_priority)
+  const Pose & goal_pose, const std::string & search_priority)
 {
   if (start_pose_candidates.empty()) return;
 
@@ -1112,8 +1141,8 @@ void StartPlannerModule::updateStatusAfterBackwardDriving()
   waitApproval();
   // To enable approval of the forward path, the RTC status is removed.
   removeRTCStatus();
-  for (auto itr = uuid_map_.begin(); itr != uuid_map_.end(); ++itr) {
-    itr->second = generateUUID();
+  for (auto & itr : uuid_map_) {
+    itr.second = generateUUID();
   }
 }
 
@@ -1216,8 +1245,9 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   // filter for objects located in pull out lanes and moving at a speed below the threshold
   auto [stop_objects_in_pull_out_lanes, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
-      stop_objects, pull_out_lanes, [](const auto & obj, const auto & lane) {
-        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane);
+      stop_objects, pull_out_lanes,
+      [](const auto & obj, const auto & lane, const auto yaw_threshold) {
+        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane, yaw_threshold);
       });
 
   const auto path = planner_data_->route_handler->getCenterLinePath(
@@ -1303,7 +1333,7 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
     return ignore_signal_.value() == id;
   };
 
-  const auto update_ignore_signal = [this](const lanelet::Id & id, const bool is_ignore) {
+  const auto update_ignore_signal = [](const lanelet::Id & id, const bool is_ignore) {
     return is_ignore ? std::make_optional(id) : std::nullopt;
   };
 
@@ -1422,10 +1452,12 @@ bool StartPlannerModule::isSafePath() const
   merged_target_object.insert(
     merged_target_object.end(), target_objects_on_lane.on_shoulder_lane.begin(),
     target_objects_on_lane.on_shoulder_lane.end());
+
   return autoware::behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
     pull_out_path, ego_predicted_path, merged_target_object, debug_data_.collision_check,
     planner_data_->parameters, safety_check_params_->rss_params,
-    objects_filtering_params_->use_all_predicted_path, hysteresis_factor);
+    objects_filtering_params_->use_all_predicted_path, hysteresis_factor,
+    safety_check_params_->collision_check_yaw_diff_threshold);
 }
 
 bool StartPlannerModule::isGoalBehindOfEgoInSameRouteSegment() const
@@ -1693,7 +1725,7 @@ void StartPlannerModule::setDebugData()
 
   // safety check
   if (parameters_->safety_check_params.enable_safety_check) {
-    if (debug_data_.ego_predicted_path.size() > 0) {
+    if (!debug_data_.ego_predicted_path.empty()) {
       const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
         debug_data_.ego_predicted_path, ego_predicted_path_params_->time_resolution);
       add(
@@ -1702,7 +1734,7 @@ void StartPlannerModule::setDebugData()
         debug_marker_);
     }
 
-    if (debug_data_.filtered_objects.objects.size() > 0) {
+    if (!debug_data_.filtered_objects.objects.empty()) {
       add(
         createObjectsMarkerArray(
           debug_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9),
@@ -1714,6 +1746,16 @@ void StartPlannerModule::setDebugData()
       showPredictedPath(debug_data_.collision_check, "predicted_path_for_safety_check"),
       info_marker_);
     add(showPolygon(debug_data_.collision_check, "ego_and_target_polygon_relation"), info_marker_);
+
+    // visualize estimated_stop_pose for isPreventingRearVehicleFromPassingThrough()
+    if (debug_data_.estimated_stop_pose.has_value()) {
+      auto footprint_marker = createDefaultMarker(
+        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "estimated_stop_pose", 0, Marker::LINE_STRIP,
+        createMarkerScale(0.2, 0.2, 0.2), purple_color);
+      footprint_marker.lifetime = rclcpp::Duration::from_seconds(1.5);
+      addFootprintMarker(footprint_marker, debug_data_.estimated_stop_pose.value(), vehicle_info_);
+      debug_marker_.markers.push_back(footprint_marker);
+    }
 
     // set objects of interest
     for (const auto & [uuid, data] : debug_data_.collision_check) {

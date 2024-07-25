@@ -85,6 +85,7 @@ public:
 
     observer.lock()->setData(planner_data_);
     observer.lock()->setPreviousModuleOutput(previous_module_output);
+    observer.lock()->getTimeKeeper()->add_reporter(this->pub_processing_time_);
     observer.lock()->onEntry();
 
     observers_.push_back(observer);
@@ -205,7 +206,16 @@ public:
     });
   }
 
-  bool canLaunchNewModule() const { return observers_.size() < config_.max_module_size; }
+  /**
+   * Determine if a new module can be launched. It ensures that only one instance of a particular
+   * scene module type is registered at a time.
+   *
+   * When this returns true:
+   * - A new instance of the scene module can be launched.
+   * - No other instance of the same name of scene module is currently active or registered.
+   *
+   */
+  bool canLaunchNewModule() const { return observers_.empty(); }
 
   /**
    * Determine if the module is always executable, regardless of the state of other modules.
@@ -290,7 +300,6 @@ protected:
         *node, ns + "enable_simultaneous_execution_as_candidate_module");
       config_.keep_last = getOrDeclareParameter<bool>(*node, ns + "keep_last");
       config_.priority = getOrDeclareParameter<int>(*node, ns + "priority");
-      config_.max_module_size = getOrDeclareParameter<int>(*node, ns + "max_module_size");
     }
 
     // init rtc configuration
@@ -310,6 +319,8 @@ protected:
       pub_debug_marker_ = node->create_publisher<MarkerArray>("~/debug/" + name_, 20);
       pub_virtual_wall_ = node->create_publisher<MarkerArray>("~/virtual_wall/" + name_, 20);
       pub_drivable_lanes_ = node->create_publisher<MarkerArray>("~/drivable_lanes/" + name_, 20);
+      pub_processing_time_ = node->create_publisher<universe_utils::ProcessingTimeDetail>(
+        "~/processing_time/" + name_, 20);
     }
 
     // misc
@@ -329,6 +340,8 @@ protected:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_drivable_lanes_;
+
+  rclcpp::Publisher<universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_;
 
   std::string name_;
 

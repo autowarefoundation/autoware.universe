@@ -49,6 +49,23 @@ SignalDisplay::SignalDisplay()
   property_signal_color_ = new rviz_common::properties::ColorProperty(
     "Signal Color", QColor(QString("#00E678")), "Color of the signal arrows", this,
     SLOT(updateOverlayColor()));
+  property_handle_angle_scale_ = new rviz_common::properties::FloatProperty(
+    "Handle Angle Scale", 17.0, "Scale of the steering wheel handle angle", this,
+    SLOT(updateOverlaySize()));
+  property_background_color_ = new rviz_common::properties::ColorProperty(
+    "Background Color", QColor(0, 0, 0), "Color of the signal arrows", this,
+    SLOT(updateOverlayColor()));
+  property_background_alpha_ = new rviz_common::properties::FloatProperty(
+    "Background Alpha", 0.3, "Background Color Alpha", this, SLOT(updateOverlayColor()));
+  property_primary_color_ = new rviz_common::properties::ColorProperty(
+    "Primary Color", QColor(174, 174, 174), "Color of the signal arrows", this,
+    SLOT(updateOverlayColor()));
+  property_light_limit_color_ = new rviz_common::properties::ColorProperty(
+    "Light Traffic Color", QColor(255, 153, 153), "Color of the signal arrows", this,
+    SLOT(updateOverlayColor()));
+  property_dark_limit_color_ = new rviz_common::properties::ColorProperty(
+    "Dark Traffic Color", QColor(255, 51, 51), "Color of the signal arrows", this,
+    SLOT(updateOverlayColor()));
 
   // Initialize the component displays
   steering_wheel_display_ = std::make_unique<SteeringWheelDisplay>();
@@ -109,9 +126,10 @@ void SignalDisplay::onInitialize()
   speed_limit_topic_property_->initialize(rviz_ros_node);
 
   traffic_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>(
-    "Traffic Topic", "/perception/traffic_light_recognition/traffic_signals",
-    "autoware_perception_msgs/msgs/msg/TrafficLightGroupArray", "Topic for Traffic Light Data",
-    this, SLOT(topic_updated_traffic()));
+    "Traffic Topic",
+    "/planning/scenario_planning/lane_driving/behavior_planning/debug/traffic_signal",
+    "autoware_perception_msgs/msgs/msg/TrafficLightGroup", "Topic for Traffic Light Data", this,
+    SLOT(topic_updated_traffic()));
   traffic_topic_property_->initialize(rviz_ros_node);
 }
 
@@ -189,7 +207,7 @@ void SignalDisplay::onDisable()
 }
 
 void SignalDisplay::updateTrafficLightData(
-  const autoware_perception_msgs::msg::TrafficLightGroupArray::ConstSharedPtr msg)
+  const autoware_perception_msgs::msg::TrafficLightGroup::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(property_mutex_);
 
@@ -276,20 +294,23 @@ void SignalDisplay::drawWidget(QImage & hud)
   QPainter painter(&hud);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  QRectF backgroundRect(0, 0, 550, hud.height());
+  QRectF backgroundRect(0, 0, hud.width(), hud.height());
   drawHorizontalRoundedRectangle(painter, backgroundRect);
 
   // Draw components
   if (gear_display_) {
-    gear_display_->drawGearIndicator(painter, backgroundRect);
+    gear_display_->drawGearIndicator(
+      painter, backgroundRect, property_primary_color_->getColor(),
+      property_background_color_->getColor());
   }
 
   if (steering_wheel_display_) {
-    steering_wheel_display_->drawSteeringWheel(painter, backgroundRect);
+    steering_wheel_display_->drawSteeringWheel(
+      painter, backgroundRect, property_handle_angle_scale_->getFloat());
   }
 
   if (speed_display_) {
-    speed_display_->drawSpeedDisplay(painter, backgroundRect);
+    speed_display_->drawSpeedDisplay(painter, backgroundRect, property_primary_color_->getColor());
   }
   if (turn_signals_display_) {
     turn_signals_display_->drawArrows(painter, backgroundRect, property_signal_color_->getColor());
@@ -300,7 +321,10 @@ void SignalDisplay::drawWidget(QImage & hud)
   }
 
   if (speed_limit_display_) {
-    speed_limit_display_->drawSpeedLimitIndicator(painter, backgroundRect);
+    speed_limit_display_->drawSpeedLimitIndicator(
+      painter, backgroundRect, property_primary_color_->getColor(),
+      property_light_limit_color_->getColor(), property_dark_limit_color_->getColor(),
+      property_background_color_->getColor(), property_background_alpha_->getFloat());
   }
 
   painter.end();
@@ -311,9 +335,11 @@ void SignalDisplay::drawHorizontalRoundedRectangle(
 {
   painter.setRenderHint(QPainter::Antialiasing, true);
   QColor colorFromHSV;
-  colorFromHSV.setHsv(0, 0, 29);  // Hue, Saturation, Value
-  colorFromHSV.setAlphaF(0.60);   // Transparency
-
+  colorFromHSV.setHsv(
+    property_background_color_->getColor().hue(),
+    property_background_color_->getColor().saturation(),
+    property_background_color_->getColor().value());
+  colorFromHSV.setAlphaF(property_background_alpha_->getFloat());
   painter.setBrush(colorFromHSV);
 
   painter.setPen(Qt::NoPen);
@@ -324,8 +350,11 @@ void SignalDisplay::drawVerticalRoundedRectangle(QPainter & painter, const QRect
 {
   painter.setRenderHint(QPainter::Antialiasing, true);
   QColor colorFromHSV;
-  colorFromHSV.setHsv(0, 0, 0);  // Hue, Saturation, Value
-  colorFromHSV.setAlphaF(0.65);  // Transparency
+  colorFromHSV.setHsv(
+    property_background_color_->getColor().hue(),
+    property_background_color_->getColor().saturation(),
+    property_background_color_->getColor().value());
+  colorFromHSV.setAlphaF(property_background_alpha_->getFloat());
 
   painter.setBrush(colorFromHSV);
 
@@ -454,14 +483,13 @@ void SignalDisplay::topic_updated_traffic()
   // resubscribe to the topic
   traffic_sub_.reset();
   auto rviz_ros_node = context_->getRosNodeAbstraction().lock();
-  traffic_sub_ =
-    rviz_ros_node->get_raw_node()
-      ->create_subscription<autoware_perception_msgs::msg::TrafficLightGroupArray>(
-        traffic_topic_property_->getTopicStd(),
-        rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-        [this](const autoware_perception_msgs::msg::TrafficLightGroupArray::SharedPtr msg) {
-          updateTrafficLightData(msg);
-        });
+  traffic_sub_ = rviz_ros_node->get_raw_node()
+                   ->create_subscription<autoware_perception_msgs::msg::TrafficLightGroup>(
+                     traffic_topic_property_->getTopicStd(),
+                     rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
+                     [this](const autoware_perception_msgs::msg::TrafficLightGroup::SharedPtr msg) {
+                       updateTrafficLightData(msg);
+                     });
 }
 
 }  // namespace autoware_overlay_rviz_plugin

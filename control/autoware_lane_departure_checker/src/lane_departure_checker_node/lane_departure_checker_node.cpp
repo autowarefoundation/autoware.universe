@@ -17,11 +17,11 @@
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/route_checker.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/route_checker.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
 
@@ -170,6 +170,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   lane_departure_checker_->setParam(param_, vehicle_info);
 
   // Publisher
+  processing_time_publisher_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
   // Nothing
 
   // Diagnostic Updater
@@ -259,7 +261,7 @@ void LaneDepartureCheckerNode::onTimer()
   reference_trajectory_ = sub_reference_trajectory_.takeData();
   predicted_trajectory_ = sub_predicted_trajectory_.takeData();
 
-  const auto lanelet_map_bin_msg = sub_lanelet_map_bin_.takeNewData();
+  const auto lanelet_map_bin_msg = sub_lanelet_map_bin_.takeData();
   if (lanelet_map_bin_msg) {
     lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
     lanelet::utils::conversion::fromBinMsg(
@@ -347,7 +349,11 @@ void LaneDepartureCheckerNode::onTimer()
   }
 
   processing_time_map["Total"] = stop_watch.toc("Total");
-  processing_time_publisher_.publish(processing_time_map);
+  processing_diag_publisher_.publish(processing_time_map);
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = processing_time_map["Total"];
+  processing_time_publisher_->publish(processing_time_msg);
 }
 
 rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(

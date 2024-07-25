@@ -24,7 +24,11 @@
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
-#include <cv_bridge/cv_bridge.h>
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>  // for ROS 2 Jazzy or newer
+#else
+#include <cv_bridge/cv_bridge.h>  // for ROS 2 Humble or older
+#endif
 
 #include <optional>
 
@@ -49,14 +53,13 @@ public:
       qos = rclcpp::QoS(10).durability_volatile().best_effort();
     }
 
-    auto on_image = std::bind(&UndistortNode::on_image, this, _1);
-    auto on_compressed_image = std::bind(&UndistortNode::on_compressed_image, this, _1);
-    auto on_info = std::bind(&UndistortNode::on_info, this, _1);
-    sub_image_ = create_subscription<Image>("~/input/image_raw", qos, std::move(on_image));
+    sub_image_ = create_subscription<Image>(
+      "~/input/image_raw", qos, std::bind(&UndistortNode::on_image, this, _1));
     sub_compressed_image_ = create_subscription<CompressedImage>(
-      "~/input/image_raw/compressed", qos, std::move(on_compressed_image));
-
-    sub_info_ = create_subscription<CameraInfo>("~/input/camera_info", qos, std::move(on_info));
+      "~/input/image_raw/compressed", qos,
+      std::bind(&UndistortNode::on_compressed_image, this, _1));
+    sub_info_ = create_subscription<CameraInfo>(
+      "~/input/camera_info", qos, std::bind(&UndistortNode::on_info, this, _1));
 
     pub_info_ = create_publisher<CameraInfo>("~/output/resized_info", 10);
     pub_image_ = create_publisher<Image>("~/output/resized_image", 10);

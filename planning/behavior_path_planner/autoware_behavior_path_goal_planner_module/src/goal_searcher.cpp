@@ -19,9 +19,9 @@
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
-#include "lanelet2_extension/regulatory_elements/no_parking_area.hpp"
-#include "lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
+#include "autoware_lanelet2_extension/regulatory_elements/no_parking_area.hpp"
+#include "autoware_lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
+#include "autoware_lanelet2_extension/utility/utilities.hpp"
 
 #include <boost/geometry/algorithms/union.hpp>
 
@@ -161,9 +161,7 @@ GoalCandidates GoalSearcher::search(
     original_search_poses.push_back(original_search_pose);  // for createAreaPolygon
     Pose search_pose{};
     // search goal_pose in lateral direction
-    double lateral_offset = 0.0;
     for (double dy = 0; dy <= max_lateral_offset; dy += lateral_offset_interval) {
-      lateral_offset = dy;
       search_pose = calcOffsetPose(original_search_pose, 0, sign * dy, 0);
 
       const auto transformed_vehicle_footprint =
@@ -185,7 +183,7 @@ GoalCandidates GoalSearcher::search(
 
       GoalCandidate goal_candidate{};
       goal_candidate.goal_pose = search_pose;
-      goal_candidate.lateral_offset = lateral_offset;
+      goal_candidate.lateral_offset = dy;
       goal_candidate.id = goal_id;
       goal_id++;
       // use longitudinal_distance as distance_from_original_goal
