@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 
-#include "autoware/pointcloud_preprocessor/static_transform_buffer.hpp"
+#include "autoware/universe_utils/ros/static_transform_buffer.hpp"
 
 #include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
@@ -75,7 +75,7 @@ protected:
   bool pointcloud_transform_exists_{false};
   bool imu_transform_exists_{false};
   rclcpp::Node * node_;
-  std::shared_ptr<pointcloud_preprocessor::StaticTransformBuffer> static_tf_buffer_{nullptr};
+  std::shared_ptr<autoware::universe_utils::StaticTransformBuffer> static_tf_buffer_{nullptr};
 
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
@@ -102,7 +102,7 @@ protected:
 public:
   explicit DistortionCorrector(rclcpp::Node * node) : node_(node)
   {
-    static_tf_buffer_ = std::make_shared<pointcloud_preprocessor::StaticTransformBuffer>();
+    static_tf_buffer_ = std::make_shared<autoware::universe_utils::StaticTransformBuffer>();
   }
   bool pointcloud_transform_exists();
   bool pointcloud_transform_needed();

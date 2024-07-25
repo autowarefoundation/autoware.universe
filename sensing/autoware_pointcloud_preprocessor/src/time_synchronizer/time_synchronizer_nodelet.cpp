@@ -110,7 +110,7 @@ PointCloudDataSynchronizerComponent::PointCloudDataSynchronizerComponent(
 
   // tf2 listener
   {
-    static_tf_buffer_ = std::make_shared<pointcloud_preprocessor::StaticTransformBuffer>();
+    static_tf_buffer_ = std::make_shared<autoware::universe_utils::StaticTransformBuffer>();
   }
 
   // Subscribers
@@ -321,7 +321,7 @@ PointCloudDataSynchronizerComponent::synchronizeClouds()
         continue;
       }
       // transform pointcloud to output frame
-      static_tf_buffer_->transform_pointcloud(
+      static_tf_buffer_->transformPointcloud(
         this, output_frame_, *e.second, *transformed_cloud_ptr);
 
       // calculate transforms to oldest stamp and transform pointcloud to oldest stamp
@@ -342,7 +342,7 @@ PointCloudDataSynchronizerComponent::synchronizeClouds()
         sensor_msgs::msg::PointCloud2::SharedPtr
           transformed_delay_compensated_cloud_ptr_in_input_frame(
             new sensor_msgs::msg::PointCloud2());
-        static_tf_buffer_->transform_pointcloud(
+        static_tf_buffer_->transformPointcloud(
           this, e.second->header.frame_id, *transformed_delay_compensated_cloud_ptr,
           *transformed_delay_compensated_cloud_ptr_in_input_frame);
         transformed_delay_compensated_cloud_ptr =

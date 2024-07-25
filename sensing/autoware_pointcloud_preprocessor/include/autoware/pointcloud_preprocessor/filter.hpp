@@ -52,8 +52,8 @@
 #ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__FILTER_HPP_
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__FILTER_HPP_
 
-#include "autoware/pointcloud_preprocessor/static_transform_buffer.hpp"
 #include "autoware/pointcloud_preprocessor/transform_info.hpp"
+#include "autoware/universe_utils/ros/static_transform_buffer.hpp"
 
 #include <memory>
 #include <string>
@@ -240,7 +240,7 @@ protected:
    * versus an exact one (false by default). */
   bool approximate_sync_ = false;
 
-  std::shared_ptr<pointcloud_preprocessor::StaticTransformBuffer> static_tf_buffer_{nullptr};
+  std::shared_ptr<autoware::universe_utils::StaticTransformBuffer> static_tf_buffer_{nullptr};
 
   inline bool isValid(
     const PointCloud2ConstPtr & cloud, const std::string & /*topic_name*/ = "input")

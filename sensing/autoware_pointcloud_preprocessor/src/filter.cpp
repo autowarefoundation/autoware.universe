@@ -115,7 +115,7 @@ autoware::pointcloud_preprocessor::Filter::Filter(
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void autoware::pointcloud_preprocessor::Filter::setupTF()
 {
-  static_tf_buffer_ = std::make_shared<pointcloud_preprocessor::StaticTransformBuffer>();
+  static_tf_buffer_ = std::make_shared<autoware::universe_utils::StaticTransformBuffer>();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -270,8 +270,7 @@ void autoware::pointcloud_preprocessor::Filter::input_indices_callback(
     // Convert the cloud into the different frame
     PointCloud2 cloud_transformed;
 
-    if (!static_tf_buffer_->transform_pointcloud(
-          this, tf_input_frame_, *cloud, cloud_transformed)) {
+    if (!static_tf_buffer_->transformPointcloud(this, tf_input_frame_, *cloud, cloud_transformed)) {
       return;
     }
     cloud_tf = std::make_shared<PointCloud2>(cloud_transformed);
@@ -300,7 +299,7 @@ bool autoware::pointcloud_preprocessor::Filter::calculate_transform_matrix(
     this->get_logger(), "[get_transform_matrix] Transforming input dataset from %s to %s.",
     from.header.frame_id.c_str(), target_frame.c_str());
 
-  if (!static_tf_buffer_->get_transform(
+  if (!static_tf_buffer_->getTransform(
         this, target_frame, from.header.frame_id, transform_info.eigen_transform)) {
     return false;
   }
@@ -323,7 +322,7 @@ bool autoware::pointcloud_preprocessor::Filter::convert_output_costly(
     // Convert the cloud into the different frame
     auto cloud_transformed = std::make_unique<PointCloud2>();
 
-    if (!static_tf_buffer_->transform_pointcloud(
+    if (!static_tf_buffer_->transformPointcloud(
           this, tf_output_frame_, *output, *cloud_transformed)) {
       RCLCPP_ERROR(
         this->get_logger(),
@@ -344,7 +343,7 @@ bool autoware::pointcloud_preprocessor::Filter::convert_output_costly(
 
     auto cloud_transformed = std::make_unique<PointCloud2>();
 
-    if (!static_tf_buffer_->transform_pointcloud(
+    if (!static_tf_buffer_->transformPointcloud(
           this, tf_input_orig_frame_, *output, *cloud_transformed)) {
       return false;
     }
