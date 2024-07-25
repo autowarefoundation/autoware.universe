@@ -178,10 +178,10 @@ bool isParkedObject(
   const ExtendedPredictedObject & object, const double buffer_to_bound,
   const double ratio_threshold);
 
-bool passParkedObject(
+bool passed_parked_objects(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
   const std::vector<ExtendedPredictedObject> & objects, const double minimum_lane_change_length,
-  const bool is_goal_in_route, CollisionCheckDebugMap & object_debug);
+  CollisionCheckDebugMap & object_debug);
 
 std::optional<size_t> getLeadingStaticObjectIdx(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
@@ -302,6 +302,18 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr);
 bool is_same_lane_with_prev_iteration(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
+
+Pose to_pose(
+  const autoware::universe_utils::Point2d & point,
+  const geometry_msgs::msg::Quaternion & orientation);
+
+bool is_ahead_of_ego(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
+  const PredictedObject & object);
+
+bool is_before_terminal(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
+  const PredictedObject & object);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 namespace autoware::behavior_path_planner::utils::lane_change::debug

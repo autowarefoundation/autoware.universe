@@ -115,7 +115,7 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="ground_segmentation",
+                package="autoware_ground_segmentation",
                 plugin="autoware::ground_segmentation::" + ground_segmentation_plugin_name,
                 name=f"{lidar_name}_ground_filter",
                 remappings=[
@@ -208,7 +208,7 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="ground_segmentation",
+                package="autoware_ground_segmentation",
                 plugin="autoware::ground_segmentation::" + "RANSACGroundFilterComponent",
                 name="ransac_ground_filter",
                 namespace="plane_fitting",
@@ -267,7 +267,7 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="ground_segmentation",
+                package="autoware_ground_segmentation",
                 plugin="autoware::ground_segmentation::" + ground_segmentation_plugin_name,
                 name="common_ground_filter",
                 remappings=[
@@ -390,7 +390,7 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="compare_map_segmentation",
+                package="autoware_compare_map_segmentation",
                 plugin="autoware::compare_map_segmentation::CompareElevationMapFilterComponent",
                 name="compare_elevation_map_filter",
                 namespace="elevation_map",
