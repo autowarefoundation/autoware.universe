@@ -621,6 +621,8 @@ private:
   double y_;
 };
 
+// We use Vector2d to represent points, but we do not name the class Point2d directly
+// as it has some vector operation functions.
 using Point2d = Vector2d;
 using PointList = std::vector<Point2d>;
 
