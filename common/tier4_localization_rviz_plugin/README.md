@@ -13,13 +13,13 @@ If the uncertainty of the estimated pose is given, it can also be displayed.
 
 | Name         | Type                              | Description                                                                                    |
 | ------------ | --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `input/pose` | `geometry_msgs::msg::PoseStamped` | In input/pose, put the result of localization calculated by ekf_localizer ,ndt_scan_matching, or GNSS |
+| `input/pose` | `geometry_msgs::msg::PoseStamped` | In input/pose, put the result of localization calculated by ekf_localizer, ndt_scan_matching, or GNSS |
 
 ### Pose Eith Covariance History 
 
 | Name         | Type                              | Description                                                                                    |
 | ------------ | --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `input/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | In input/pose_with_covariance, put the result of localization calculated by ekf_localizer ,ndt_scan_matching, or GNSS |
+| `input/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | In input/pose_with_covariance, put the result of localization calculated by ekf_localizer, ndt_scan_matching, or GNSS |
 
 ## Parameters
 
@@ -52,8 +52,8 @@ If the uncertainty of the estimated pose is given, it can also be displayed.
 | `property_arrow_alpha_`         | float  | 1.0            | Alpha of Arrow property          |
 | `property_arrow_color_`         | QColor | Qt::white      | Color of Arrow property          |
 | `property_sphere_scale_`        | float  | 1.0            | Scale of Sphere property         |
-| `property_arrow_alpha_`         | float  | 0.5            | Alpha of Sphere property         |
-| `property_arrow_color_`         | QColor | (204, 51, 204) | Color of Sphere property         |
+| `property_sphere_alpha_`        | float  | 0.5            | Alpha of Sphere property         |
+| `property_sphere_color_`        | QColor | (204, 51, 204) | Color of Sphere property         |
 
 ## Assumptions / Known limits
 
