@@ -30,6 +30,8 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 ### ML Model Parameters
 
+Note that these parameters are associated with ONNX file. Be careful to change ONNX file as well when changing this parameter.
+
 | Name                                             | Type         | Default Value             | Description                                                   |
 | ------------------------------------------------ | ------------ | ------------------------- | ------------------------------------------------------------- |
 | `model_params.class_names`                       | list[string] | ["CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"] | list of class names for model outputs  |
@@ -37,7 +39,7 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 | `model_params.max_voxel_size`                    | int          | `40000`                   | maximum number of voxels                                      |
 | `model_params.point_cloud_range`                 | list[double] | [-76.8, -76.8, -4.0, 76.8, 76.8, 6.0] | range of the input point cloud for ML inference [min_x, min_y, min_z, max_x, max_y, max_z] |
 | `model_params.voxel_size`                        | list[double] | [0.32, 0.32, 10.0]        | size of each voxel for voxelization [x, y, z]                    |
-| `model_params.downsample_factor`                 | int          | `1`                       | downsample factor for input pointcloud               |
+| `model_params.downsample_factor`                 | int          | `1`                       | downsample factor for coordinates      |
 | `model_params.encoder_in_feature_size`           | int          | `9`                       | number of input features to the encoder                       |
 | `model_params.has_variance`                      | bool         | `false`                   | true if the model outputs pose variance as well as pose for each bbox  |
 | `model_params.has_twist`                         | bool         | `false`                   | true if the model outputs velocity as well as pose for each bbox  |
