@@ -183,7 +183,6 @@ private:
   {
     double vel;
     double acc;
-    double jerk;
   };
   StoppedStateParams m_stopped_state_params;
 
@@ -203,6 +202,7 @@ private:
   // jerk limit
   double m_max_jerk;
   double m_min_jerk;
+  double m_max_acc_cmd_diff;
 
   // slope compensation
   enum class SlopeSource { RAW_PITCH = 0, TRAJECTORY_PITCH, TRAJECTORY_ADAPTIVE };
@@ -291,7 +291,7 @@ private:
    * @brief calculate control command in emergency state
    * @param [in] dt time between previous and current one
    */
-  Motion calcEmergencyCtrlCmd(const double dt) const;
+  Motion calcEmergencyCtrlCmd(const double dt);
 
   /**
    * @brief update control state according to the current situation
