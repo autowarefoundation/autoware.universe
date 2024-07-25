@@ -39,7 +39,6 @@
       "required": [
         "covariance_estimation_type",
         "initial_pose_offset_model_x",
-        "initial_pose_offset_model_y"
         "initial_pose_offset_model_y",
         "temperature",
         "scale_factor"
