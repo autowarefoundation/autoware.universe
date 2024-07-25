@@ -36,6 +36,11 @@ struct IndexXYT
   int x;
   int y;
   int theta;
+
+  bool operator==(const IndexXYT & index) const
+  {
+    return (x == index.x && y == index.y && theta == index.theta);
+  }
 };
 
 struct IndexXY

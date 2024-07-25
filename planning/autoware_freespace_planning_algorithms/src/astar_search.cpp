@@ -450,6 +450,11 @@ bool AstarSearch::isGoal(const AstarNode & node) const
 
   auto checkGoal = [this, &node_pose, &lateral_goal_range, &longitudinal_goal_range,
                     &goal_angle](const Pose & pose) {
+    const auto node_index = pose2index(costmap_, node_pose, planner_common_param_.theta_size);
+    const auto goal_index = pose2index(costmap_, pose, planner_common_param_.theta_size);
+
+    if (node_index == goal_index) return true;
+
     const auto relative_pose = calcRelativePose(pose, node_pose);
 
     if (astar_param_.only_behind_solutions && relative_pose.position.x > 0) {
