@@ -73,7 +73,7 @@ target_compile_definitions(${PROJECT_NAME}_node PRIVATE
 
 rclcpp_components_register_node(${PROJECT_NAME}_node
   PLUGIN "autoware::bytetrack::ByteTrackNode"
-  EXECUTABLE ${PROJECT_NAME}_node_exe
+  EXECUTABLE bytetrack_node_exe
 )
 
 #
@@ -89,7 +89,7 @@ ament_target_dependencies(${PROJECT_NAME}_visualizer
 
 rclcpp_components_register_node(${PROJECT_NAME}_visualizer
   PLUGIN "autoware::bytetrack::ByteTrackVisualizerNode"
-  EXECUTABLE ${PROJECT_NAME}_visualizer_node_exe
+  EXECUTABLE bytetrack_visualizer_node_exe
 )
 
 ament_auto_package(INSTALL_TO_SHARE
