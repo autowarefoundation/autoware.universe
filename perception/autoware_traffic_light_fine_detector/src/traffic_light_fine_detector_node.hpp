@@ -113,7 +113,7 @@ private:
    * @param out_rois        output rois converted from the selected detections
    */
   void detectionMatch(
-    std::map<int, TrafficLightRoi> & id2expectRoi,
+    const std::map<int, TrafficLightRoi> & id2expectRoi,
     std::map<int, tensorrt_yolox::ObjectArray> & id2detections, TrafficLightRoiArray & out_rois);
 
   /**
