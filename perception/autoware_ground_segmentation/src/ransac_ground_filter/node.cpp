@@ -115,6 +115,9 @@ RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptio
     std::bind(&RANSACGroundFilterComponent::paramCallback, this, _1));
 
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
+
+  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
+  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 }
 
 void RANSACGroundFilterComponent::setDebugPublisher()
