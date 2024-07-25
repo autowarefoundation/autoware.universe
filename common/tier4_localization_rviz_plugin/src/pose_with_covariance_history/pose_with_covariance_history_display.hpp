@@ -27,8 +27,9 @@
 
 namespace rviz_rendering
 {
-class BillboardLine;
 class Shape;
+class BillboardLine;
+class Arrow;
 }  // namespace rviz_rendering
 namespace rviz_common::properties
 {
@@ -36,6 +37,7 @@ class ColorProperty;
 class FloatProperty;
 class IntProperty;
 class BoolProperty;
+class EnumProperty;
 }  // namespace rviz_common::properties
 
 namespace rviz_plugins
@@ -58,6 +60,11 @@ protected:
   void onDisable() override;
   void update(float wall_dt, float ros_dt) override;
 
+private Q_SLOTS:
+  void updateShapeType();
+  void updateLineProperties();
+  void updateArrowProperties();
+
 private:
   void subscribe() override;
   void unsubscribe() override;
@@ -68,7 +75,8 @@ private:
   std::string target_frame_;
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> history_;
   std::unique_ptr<rviz_rendering::BillboardLine> lines_;
-  std::vector<std::unique_ptr<rviz_rendering::Shape>> shapes_;
+  std::vector<std::unique_ptr<rviz_rendering::Shape>> spheres_;
+  std::vector<std::unique_ptr<rviz_rendering::Arrow>> arrows_;
   rclcpp::Time last_stamp_;
 
   rviz_common::properties::BoolProperty * property_line_view_;
@@ -76,11 +84,22 @@ private:
   rviz_common::properties::FloatProperty * property_line_alpha_;
   rviz_common::properties::ColorProperty * property_line_color_;
   rviz_common::properties::IntProperty * property_buffer_size_;
+
   rviz_common::properties::BoolProperty * property_shape_view_;
   rviz_common::properties::FloatProperty * property_shape_width_;
   rviz_common::properties::FloatProperty * property_shape_alpha_;
   rviz_common::properties::ColorProperty * property_shape_color_;
   rviz_common::properties::FloatProperty * property_shape_scale_;
+
+  rviz_common::properties::BoolProperty * property_arrow_view_;
+  rviz_common::properties::FloatProperty * property_arrow_shaft_length_;
+  rviz_common::properties::FloatProperty * property_arrow_shaft_diameter_;
+  rviz_common::properties::FloatProperty * property_arrow_head_length_;
+  rviz_common::properties::FloatProperty * property_arrow_head_diameter_;
+  rviz_common::properties::FloatProperty * property_arrow_alpha_;
+  rviz_common::properties::ColorProperty * property_arrow_color_;
+  
+  rviz_common::properties::EnumProperty * property_shape_type_;
 };
 
 }  // namespace rviz_plugins
