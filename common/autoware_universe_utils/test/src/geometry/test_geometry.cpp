@@ -2815,10 +2815,10 @@ TEST(geometry, intersectsRand)
         } else {
           ground_truth_no_intersect_ns += sw.toc();
         }
+        const auto poly1 = autoware::universe_utils::alt::from_boost(polygons[i]);
+        const auto poly2 = autoware::universe_utils::alt::from_boost(polygons[j]);
         sw.tic();
-        const auto alt = autoware::universe_utils::intersects(
-          autoware::universe_utils::alt::from_boost(polygons[i]),
-          autoware::universe_utils::alt::from_boost(polygons[j]));
+        const auto alt = autoware::universe_utils::intersects(poly1, poly2);
         if (alt) {
           alt_intersect_ns += sw.toc();
         } else {
@@ -2876,10 +2876,10 @@ TEST(geometry, withinPolygonRand)
         } else {
           ground_truth_not_within_ns += sw.toc();
         }
+        const auto poly1 = autoware::universe_utils::alt::from_boost(polygons[i]);
+        const auto poly2 = autoware::universe_utils::alt::from_boost(polygons[j]);
         sw.tic();
-        const auto alt = autoware::universe_utils::within(
-          autoware::universe_utils::alt::from_boost(polygons[i]),
-          autoware::universe_utils::alt::from_boost(polygons[j]));
+        const auto alt = autoware::universe_utils::within(poly1, poly2);
         if (alt) {
           alt_within_ns += sw.toc();
         } else {
