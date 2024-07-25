@@ -501,15 +501,29 @@ void correct(alt::ConvexPolygon2d & poly)
 
 bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 {
-  if (within(point, poly)) {
-    return true;
+  const auto & vertices = poly.vertices();
+  int64_t winding_number = 0;
+
+  for (size_t i = 0; i < vertices.size(); ++i) {
+    const auto & p1 = vertices.at(i);
+    const auto & p2 = vertices.at((i + 1) % vertices.size());
+
+    double cross = (p2 - p1).cross(point - p1);
+    if (std::abs(cross) <= std::numeric_limits<double>::epsilon()) {
+      // return true if the point is on the edge
+      return (point - p1).dot(point - p2) <= 0;
+    }
+
+    if (p1.y() <= point.y() && p2.y() > point.y() && cross > 0) {  // the point is to the left of
+                                                                   // upward edge
+      winding_number++;
+    } else if (p1.y() > point.y() && p2.y() <= point.y() && cross < 0) {  // the point is to the
+                                                                          // left of downward edge
+      winding_number--;
+    }
   }
 
-  if (touches(point, poly)) {
-    return true;
-  }
-
-  return false;
+  return winding_number != 0;
 }
 
 bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
