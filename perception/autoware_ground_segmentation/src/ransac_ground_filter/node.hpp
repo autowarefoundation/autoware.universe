@@ -80,6 +80,8 @@ private:
   bool debug_ = false;
   bool is_initialized_debug_message_ = false;
   Eigen::Vector3d unit_vec_ = Eigen::Vector3d::UnitZ();
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_{nullptr};
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
 
   /*!
    * Output transformed PointCloud from in_cloud_ptr->header.frame_id to in_target_frame
