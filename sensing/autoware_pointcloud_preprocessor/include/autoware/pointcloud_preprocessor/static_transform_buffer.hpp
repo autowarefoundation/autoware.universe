@@ -65,11 +65,11 @@ public:
   StaticTransformBuffer() = default;
 
   bool get_transform(
-    rclcpp::Node * node, const std::string & from, const std::string & to,
+    rclcpp::Node * node, const std::string & target_frame, const std::string & source_frame,
     Eigen::Matrix4f & eigen_transform)
   {
-    auto key = std::make_pair(from, to);
-    auto key_inv = std::make_pair(to, from);
+    auto key = std::make_pair(target_frame, source_frame);
+    auto key_inv = std::make_pair(source_frame, target_frame);
 
     // Check if the transform is already in the buffer
     auto it = buffer_.find(key);
@@ -87,7 +87,7 @@ public:
     }
 
     // Check if transform is needed
-    if (from == to) {
+    if (target_frame == source_frame) {
       eigen_transform = Eigen::Matrix4f::Identity();
       buffer_[key] = eigen_transform;
       return true;
@@ -95,10 +95,11 @@ public:
 
     // Get the transform from the TF tree
     auto tf_listener = std::make_shared<autoware::universe_utils::TransformListener>(node);
-    auto tf = tf_listener->getTransform(from, to, rclcpp::Time(0), rclcpp::Duration(1000ms));
+    auto tf = tf_listener->getTransform(
+      target_frame, source_frame, rclcpp::Time(0), rclcpp::Duration(1000ms));
     RCLCPP_DEBUG(
       node->get_logger(), "Trying to enqueue %s -> %s transform to static TFs buffer...",
-      from.c_str(), to.c_str());
+      target_frame.c_str(), source_frame.c_str());
     if (tf == nullptr) {
       eigen_transform = Eigen::Matrix4f::Identity();
       return false;
@@ -109,7 +110,7 @@ public:
   }
 
   bool transform_pointcloud(
-    rclcpp::Node * node, const std::string & to_frame,
+    rclcpp::Node * node, const std::string & target_frame,
     const sensor_msgs::msg::PointCloud2 & cloud_in, sensor_msgs::msg::PointCloud2 & cloud_out)
   {
     if (
@@ -119,11 +120,11 @@ public:
       return false;
     }
     Eigen::Matrix4f eigen_transform;
-    if (!get_transform(node, cloud_in.header.frame_id, to_frame, eigen_transform)) {
+    if (!get_transform(node, target_frame, cloud_in.header.frame_id, eigen_transform)) {
       return false;
     }
     pcl_ros::transformPointCloud(eigen_transform, cloud_in, cloud_out);
-    cloud_out.header.frame_id = to_frame;
+    cloud_out.header.frame_id = target_frame;
     return true;
   }
 
