@@ -27,7 +27,6 @@
 
 #include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 #include "autoware/universe_utils/math/trigonometry.hpp"
-#include "utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -84,16 +83,31 @@ protected:
     return stamp - ms_in_ns;
   }
 
+  geometry_msgs::msg::TransformStamped generateTransformMsg(
+    const std::string & parent_frame, const std::string & child_frame, double x, double y, double z,
+    double qx, double qy, double qz, double qw)
+  {
+    rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
+    geometry_msgs::msg::TransformStamped tf_msg;
+    tf_msg.header.stamp = timestamp;
+    tf_msg.header.frame_id = parent_frame;
+    tf_msg.child_frame_id = child_frame;
+    tf_msg.transform.translation.x = x;
+    tf_msg.transform.translation.y = y;
+    tf_msg.transform.translation.z = z;
+    tf_msg.transform.rotation.x = qx;
+    tf_msg.transform.rotation.y = qy;
+    tf_msg.transform.rotation.z = qz;
+    tf_msg.transform.rotation.w = qw;
+    return tf_msg;
+  }
+
   std::vector<geometry_msgs::msg::TransformStamped> generateStaticTransformMsg()
   {
     // generate defined transformations
     return {
-      generateTransformMsg(
-        timestamp_seconds_, timestamp_nanoseconds_, "base_link", "lidar_top", 5.0, 5.0, 5.0, 0.683,
-        0.5, 0.183, 0.499),
-      generateTransformMsg(
-        timestamp_seconds_, timestamp_nanoseconds_, "base_link", "imu_link", 1.0, 1.0, 3.0, 0.278,
-        0.717, 0.441, 0.453)};
+      generateTransformMsg("base_link", "lidar_top", 5.0, 5.0, 5.0, 0.683, 0.5, 0.183, 0.499),
+      generateTransformMsg("base_link", "imu_link", 1.0, 1.0, 3.0, 0.278, 0.717, 0.441, 0.453)};
   }
 
   std::shared_ptr<geometry_msgs::msg::TwistWithCovarianceStamped> generateTwistMsg(

@@ -16,7 +16,7 @@
 #define RANSAC_GROUND_FILTER__NODE_HPP_
 
 #include "autoware/pointcloud_preprocessor/filter.hpp"
-#include "autoware/pointcloud_preprocessor/static_transform_buffer.hpp"
+#include "autoware/universe_utils/ros/static_transform_buffer.hpp"
 
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -82,8 +82,7 @@ private:
   bool debug_ = false;
   bool is_initialized_debug_message_ = false;
   Eigen::Vector3d unit_vec_ = Eigen::Vector3d::UnitZ();
-  std::shared_ptr<autoware::pointcloud_preprocessor::StaticTransformBuffer> static_tf_buffer_{
-    nullptr};
+  std::shared_ptr<autoware::universe_utils::StaticTransformBuffer> static_tf_buffer_{nullptr};
 
   /*!
    * Output transformed PointCloud from in_cloud_ptr->header.frame_id to in_target_frame

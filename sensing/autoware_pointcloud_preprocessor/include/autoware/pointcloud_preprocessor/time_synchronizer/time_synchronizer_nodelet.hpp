@@ -61,7 +61,7 @@
 #include <vector>
 
 // ROS includes
-#include "autoware/pointcloud_preprocessor/static_transform_buffer.hpp"
+#include "autoware/universe_utils/ros/static_transform_buffer.hpp"
 #include "autoware_point_types/types.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
@@ -145,7 +145,7 @@ private:
   // XmlRpc::XmlRpcValue input_topics_;
   std::vector<std::string> input_topics_;
 
-  std::shared_ptr<pointcloud_preprocessor::StaticTransformBuffer> static_tf_buffer_{nullptr};
+  std::shared_ptr<autoware::universe_utils::StaticTransformBuffer> static_tf_buffer_{nullptr};
 
   std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_ptr_queue_;
 

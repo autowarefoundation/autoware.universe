@@ -116,7 +116,7 @@ RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptio
 
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
-  static_tf_buffer_ = std::make_shared<autoware::pointcloud_preprocessor::StaticTransformBuffer>();
+  static_tf_buffer_ = std::make_shared<autoware::universe_utils::StaticTransformBuffer>();
 }
 
 void RANSACGroundFilterComponent::setDebugPublisher()
@@ -163,7 +163,7 @@ bool RANSACGroundFilterComponent::transformPointCloud(
     return true;
   }
 
-  return static_tf_buffer_->transform_pointcloud(
+  return static_tf_buffer_->transformPointcloud(
     this, in_target_frame, *in_cloud_ptr, *out_cloud_ptr);
 }
 

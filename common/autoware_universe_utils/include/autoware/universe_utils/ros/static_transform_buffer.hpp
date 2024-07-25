@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__STATIC_TRANSFORM_BUFFER_HPP_
-#define AUTOWARE__POINTCLOUD_PREPROCESSOR__STATIC_TRANSFORM_BUFFER_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__ROS__STATIC_TRANSFORM_BUFFER_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__ROS__STATIC_TRANSFORM_BUFFER_HPP_
 
 #include "autoware/universe_utils/ros/transform_listener.hpp"
 
@@ -46,7 +46,7 @@ struct hash<std::pair<std::string, std::string>>
 };
 }  // namespace std
 
-namespace autoware::pointcloud_preprocessor
+namespace autoware::universe_utils
 {
 using std::chrono_literals::operator""ms;
 using Key = std::pair<std::string, std::string>;
@@ -64,7 +64,7 @@ class StaticTransformBuffer
 public:
   StaticTransformBuffer() = default;
 
-  bool get_transform(
+  bool getTransform(
     rclcpp::Node * node, const std::string & target_frame, const std::string & source_frame,
     Eigen::Matrix4f & eigen_transform)
   {
@@ -109,7 +109,7 @@ public:
     return true;
   }
 
-  bool transform_pointcloud(
+  bool transformPointcloud(
     rclcpp::Node * node, const std::string & target_frame,
     const sensor_msgs::msg::PointCloud2 & cloud_in, sensor_msgs::msg::PointCloud2 & cloud_out)
   {
@@ -120,7 +120,7 @@ public:
       return false;
     }
     Eigen::Matrix4f eigen_transform;
-    if (!get_transform(node, target_frame, cloud_in.header.frame_id, eigen_transform)) {
+    if (!getTransform(node, target_frame, cloud_in.header.frame_id, eigen_transform)) {
       return false;
     }
     pcl_ros::transformPointCloud(eigen_transform, cloud_in, cloud_out);
@@ -132,6 +132,6 @@ private:
   TFMap buffer_;
 };
 
-}  // namespace autoware::pointcloud_preprocessor
+}  // namespace autoware::universe_utils
 
-#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__STATIC_TRANSFORM_BUFFER_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__ROS__STATIC_TRANSFORM_BUFFER_HPP_

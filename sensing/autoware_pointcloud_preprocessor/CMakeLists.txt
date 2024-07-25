@@ -237,16 +237,11 @@ if(BUILD_TESTING)
     test/test_utilities.cpp
   )
 
-  ament_add_gtest(test_static_transform_buffer
-    test/test_static_transform_buffer.cpp
-  )
-
   ament_add_gtest(test_distortion_corrector_node
     test/test_distortion_corrector_node.cpp
   )
 
   target_link_libraries(test_utilities pointcloud_preprocessor_filter)
-  target_link_libraries(test_static_transform_buffer pointcloud_preprocessor_filter)
   target_link_libraries(test_distortion_corrector_node pointcloud_preprocessor_filter)
 
 
