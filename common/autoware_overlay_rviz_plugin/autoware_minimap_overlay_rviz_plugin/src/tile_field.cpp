@@ -14,20 +14,34 @@
 #include "include/tile_field.hpp"
 
 #include <QPainter>
+#include <QTimer>
 #include <QUrl>
 
 #include <cmath>
+#include <stdexcept>
 
 TileField::TileField(QObject * parent) : QObject(parent), center_x_tile_(0), center_y_tile_(0)
 {
+  url_template_ =
+    TileProvider::getUrlTemplate(TileProvider::OpenStreetMap);  // Default URL template
 }
 
 TileField::~TileField()
 {
   std::lock_guard<std::mutex> lock(tile_mutex_);
+  clearTiles();
+}
+
+void TileField::clearTiles()
+{
+  std::lock_guard<std::mutex> lock(tile_mutex_);
   for (auto & tile : tiles_) {
-    delete tile.second;
+    if (tile.second) {
+      disconnect(tile.second.get(), &Tile::tileFetched, this, &TileField::onTileFetched);
+      tile.second.reset();
+    }
   }
+  tiles_.clear();
 }
 
 void TileField::fetchTiles(int zoom, int center_x_tile, int center_y_tile)
@@ -41,14 +55,21 @@ void TileField::fetchTiles(int zoom, int center_x_tile, int center_y_tile)
     for (int dy = -1; dy <= 1; ++dy) {
       int x_tile = center_x_tile_ + dx;
       int y_tile = center_y_tile_ + dy;
-      std::string tile_key =
-        std::to_string(zoom) + "/" + std::to_string(x_tile) + "/" + std::to_string(y_tile) + ".png";
+      // std::string tile_key =
+      //   std::to_string(zoom) + "/" + std::to_string(x_tile) + "/" + std::to_string(y_tile) +
+      //   ".png";
+      std::string tile_key = getTileKey(zoom_, x_tile, y_tile, url_template_);
 
       if (tiles_.find(tile_key) == tiles_.end()) {
-        Tile * tile = new Tile(zoom, x_tile, y_tile);
-        tiles_[tile_key] = tile;
-        connect(tile, &Tile::tileFetched, this, &TileField::onTileFetched);
+        // Tile * tile = new Tile(zoom, x_tile, y_tile);
+        // tiles_[tile_key] = tile;
+        auto tile = std::make_unique<Tile>(zoom, x_tile, y_tile);
+
+        connect(tile.get(), &Tile::tileFetched, this, &TileField::onTileFetched);
+        tile->setUrlTemplate(url_template_);
+
         tile->fetch();
+        tiles_[tile_key] = std::move(tile);
       }
     }
   }
@@ -77,16 +98,49 @@ void TileField::updateTiles(int new_center_x_tile, int new_center_y_tile)
       int x_tile = center_x_tile_ + dx;
       int y_tile = center_y_tile_ + dy;
 
-      auto tile_key = QString("%1/%2/%3.png").arg(zoom_).arg(x_tile).arg(y_tile).toStdString();
+      // auto tile_key = QString("%1/%2/%3.png").arg(zoom_).arg(x_tile).arg(y_tile).toStdString();
+      std::string tile_key = getTileKey(zoom_, x_tile, y_tile, url_template_);
 
       if (tiles_.find(tile_key) == tiles_.end()) {
-        Tile * tile = new Tile(zoom_, x_tile, y_tile);
-        tiles_[tile_key] = tile;
-        connect(tile, &Tile::tileFetched, this, &TileField::onTileFetched);
+        // Tile * tile = new Tile(zoom_, x_tile, y_tile);
+        // tiles_[tile_key] = tile;
+        auto tile = std::make_unique<Tile>(zoom_, x_tile, y_tile);
+
+        connect(tile.get(), &Tile::tileFetched, this, &TileField::onTileFetched);
+        tile->setUrlTemplate(url_template_);
+
         tile->fetch();
+        tiles_[tile_key] = std::move(tile);
       }
     }
   }
+}
+
+void TileField::setUrlTemplate(const std::string & url_template)
+{
+  std::lock_guard<std::mutex> lock(tile_mutex_);
+
+  if (url_template_ == url_template) {
+    return;
+  }
+
+  updating_url_template_ = true;  // Indicate that the URL template is being updated
+
+  // Clear existing tiles before fetching new ones, this crashes rviz
+  // clearTiles();
+
+  url_template_ = url_template;
+
+  updating_url_template_ = false;  // Indicate that the URL template update is complete
+
+  // Re-fetch tiles with the new URL template after a short delay
+  QTimer::singleShot(100, this, [this]() { fetchTiles(zoom_, center_x_tile_, center_y_tile_); });
+}
+
+std::string TileField::getTileKey(int zoom, int x, int y, const std::string & url_template) const
+{
+  return url_template + "/" + std::to_string(zoom) + "/" + std::to_string(x) + "/" +
+         std::to_string(y) + ".png";
 }
 
 QImage TileField::getTileFieldImage()
@@ -105,7 +159,8 @@ QImage TileField::getTileFieldImage()
       int x_tile = center_x_tile_ + dx;
       int y_tile = center_y_tile_ + dy;
 
-      auto tile_key = QString("%1/%2/%3.png").arg(zoom_).arg(x_tile).arg(y_tile).toStdString();
+      // auto tile_key = QString("%1/%2/%3.png").arg(zoom_).arg(x_tile).arg(y_tile).toStdString();
+      std::string tile_key = getTileKey(zoom_, x_tile, y_tile, url_template_);
 
       float lon = tile_x_to_long(x_tile, zoom_);
       // Round the longitude to 2 decimal places

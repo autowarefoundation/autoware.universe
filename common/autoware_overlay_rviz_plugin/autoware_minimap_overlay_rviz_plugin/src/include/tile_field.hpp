@@ -15,6 +15,7 @@
 #define TILE_FIELD_HPP_
 
 #include "tile.hpp"
+#include "tile_provider.hpp"
 
 #include <QImage>
 #include <QObject>
@@ -34,10 +35,15 @@ public:
   explicit TileField(QObject * parent = nullptr);
   ~TileField();
 
+  void clearTiles();
+  void resetTileImages();
+  void setUrlTemplate(const std::string & url_template);
   void initializeTiles(int center_x_tile, int center_y_tile);
   void fetchTiles(int zoom, int center_x_tile, int center_y_tile);
   void updateTiles(int center_x_tile, int center_y_tile);
   QImage getTileFieldImage();
+  std::string getTileKey(int zoom, int x, int y, const std::string & url_template) const;
+
   std::pair<int, int> getTileOffsets(double lat, double lon);
   std::pair<double, double> latLonToTile(double lat, double lon, int zoom);
 
@@ -56,9 +62,11 @@ private:
   int zoom_ = 15;
   int center_x_tile_;
   int center_y_tile_;
-  std::map<std::string, Tile *> tiles_;
+  std::map<std::string, std::unique_ptr<Tile>> tiles_;
   QImage tile_field_image_;
   std::mutex tile_mutex_;
+  std::string url_template_;
+  bool updating_url_template_ = false;  // Flag to indicate URL template is being updated
 };
 
 #endif  // TILE_FIELD_HPP_

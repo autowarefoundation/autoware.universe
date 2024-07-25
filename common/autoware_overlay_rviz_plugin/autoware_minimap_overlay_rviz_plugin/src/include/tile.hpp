@@ -14,6 +14,8 @@
 #ifndef TILE_HPP_
 #define TILE_HPP_
 
+#include "tile_provider.hpp"
+
 #include <QImage>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -32,6 +34,9 @@ public:
   void fetch();
   QImage getImage() const;
   bool isValidUrl(const std::string & url) const;
+  void setUrlTemplate(const std::string & url_template);
+  void resetImage();
+  void markStale() { stale_ = true; }
 
   int getZoom() const { return zoom_; }
   int getX() const { return x_; }
@@ -50,6 +55,9 @@ private:
   std::string last_url_;
   QImage image_;
   QNetworkAccessManager * network_manager_;
+
+  std::string url_template_;
+  bool stale_ = false;
 
   std::promise<QImage> tile_promise_;
 

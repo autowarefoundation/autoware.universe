@@ -21,15 +21,25 @@ Tile::Tile(int zoom, int x, int y, QObject * parent)
 : QObject(parent), zoom_(zoom), x_(x), y_(y), network_manager_(new QNetworkAccessManager(this))
 {
   connect(network_manager_, &QNetworkAccessManager::finished, this, &Tile::onTileFetched);
+  url_template_ =
+    TileProvider::getUrlTemplate(TileProvider::OpenStreetMap);  // Default URL template
 }
 
 Tile::~Tile()
 {
 }
 
+void Tile::resetImage()
+{
+  image_ = QImage();  // Reset the image to an empty QImage
+}
+
 void Tile::fetch()
 {
-  requestRemote();
+  if (stale_ || image_.isNull()) {
+    stale_ = false;  // Reset the stale flag
+    requestRemote();
+  }
 }
 
 bool Tile::isValidUrl(const std::string & url) const
@@ -42,10 +52,18 @@ QImage Tile::getImage() const
   return image_;
 }
 
+void Tile::setUrlTemplate(const std::string & url_template)
+{
+  url_template_ = url_template;
+}
+
 std::future<QImage> Tile::requestRemote()
 {
-  auto const url =
-    QUrl(QString("http://tile.openstreetmap.org/%1/%2/%3.png").arg(zoom_).arg(x_).arg(y_));
+  QString formatted_url = QString::fromStdString(url_template_)
+                            .replace("{z}", QString::number(zoom_))
+                            .replace("{x}", QString::number(x_))
+                            .replace("{y}", QString::number(y_));
+  QUrl url(formatted_url);
   QNetworkRequest request(url);
   char constexpr agent[] = "autoware_minimap_overlay_rviz_plugin";
   request.setHeader(QNetworkRequest::UserAgentHeader, agent);
@@ -73,8 +91,7 @@ void Tile::onTileFetched(QNetworkReply * reply)
       if (image_.isNull()) {
         // qDebug() << "Failed to decode the image.";
       } else {
-        // qDebug() << "Image successfully fetched. Image size: " <<
-        // image_.size();
+        // qDebug() << "Image successfully fetched. Image size: " << image_.size();
         tile_promise_.set_value(image_);
         Q_EMIT tileFetched();
       }
