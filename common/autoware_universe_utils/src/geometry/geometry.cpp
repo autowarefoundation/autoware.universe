@@ -702,7 +702,7 @@ bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 {
   const auto & vertices = poly.vertices();
-  long winding_number = 0;
+  int64_t winding_number = 0;
   for (size_t i = 0; i < vertices.size(); ++i) {
     const auto & p1 = vertices.at(i);
     const auto & p2 = vertices.at((i + 1) % vertices.size());
