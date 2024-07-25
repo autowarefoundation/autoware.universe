@@ -699,9 +699,7 @@ bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
   const auto & vertices = poly.vertices();
   for (size_t i = 0; i < vertices.size(); ++i) {
     // check if the point is on each edge of the polygon
-    if (
-      distance(point, vertices.at(i), vertices.at((i + 1) % vertices.size())) <=
-      std::numeric_limits<double>::epsilon()) {
+    if (touches(point, vertices.at(i), vertices.at((i + 1) % vertices.size()))) {
       return true;
     }
   }
