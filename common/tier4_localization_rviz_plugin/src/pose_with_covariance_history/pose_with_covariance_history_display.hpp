@@ -15,6 +15,8 @@
 #ifndef POSE_WITH_COVARIANCE_HISTORY__POSE_WITH_COVARIANCE_HISTORY_DISPLAY_HPP_
 #define POSE_WITH_COVARIANCE_HISTORY__POSE_WITH_COVARIANCE_HISTORY_DISPLAY_HPP_
 
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <rviz_common/message_filter_display.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -22,8 +24,6 @@
 #include <deque>
 #include <memory>
 #include <string>
-#include <Eigen/Core>
-#include <Eigen/Geometry>
 
 namespace rviz_rendering
 {
@@ -42,7 +42,8 @@ class EnumProperty;
 
 namespace rviz_plugins
 {
-class PoseWithCovarianceHistory : public rviz_common::MessageFilterDisplay<geometry_msgs::msg::PoseWithCovarianceStamped>
+class PoseWithCovarianceHistory
+: public rviz_common::MessageFilterDisplay<geometry_msgs::msg::PoseWithCovarianceStamped>
 {
   Q_OBJECT
 
@@ -66,7 +67,8 @@ private Q_SLOTS:
 private:
   void subscribe() override;
   void unsubscribe() override;
-  void processMessage(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr message) override;
+  void processMessage(
+    const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr message) override;
   void updateHistory();
   void updateShapes();
 
@@ -96,11 +98,11 @@ private:
   rviz_common::properties::FloatProperty * property_arrow_head_diameter_;
   rviz_common::properties::FloatProperty * property_arrow_alpha_;
   rviz_common::properties::ColorProperty * property_arrow_color_;
-  
+
   rviz_common::properties::BoolProperty * property_path_view_;
   rviz_common::properties::EnumProperty * property_shape_type_;
 };
 
 }  // namespace rviz_plugins
 
-#endif  // POSE_HISTORY__POSE_HISTORY_DISPLAY_HPP_
+#endif  // POSE_WITH_COVARIANCE_HISTORY__POSE_WITH_COVARIANCE_HISTORY_DISPLAY_HPP_

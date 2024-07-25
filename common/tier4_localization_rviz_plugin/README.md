@@ -11,14 +11,14 @@ If the uncertainty of the estimated pose is given, it can also be displayed.
 
 ### Pose History
 
-| Name         | Type                              | Description                                                                                    |
-| ------------ | --------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Name         | Type                              | Description                                                                                           |
+| ------------ | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `input/pose` | `geometry_msgs::msg::PoseStamped` | In input/pose, put the result of localization calculated by ekf_localizer, ndt_scan_matching, or GNSS |
 
-### Pose Eith Covariance History 
+### Pose Eith Covariance History
 
-| Name         | Type                              | Description                                                                                    |
-| ------------ | --------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Name                         | Type                                            | Description                                                                                                           |
+| ---------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `input/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | In input/pose_with_covariance, put the result of localization calculated by ekf_localizer, ndt_scan_matching, or GNSS |
 
 ## Parameters
@@ -35,7 +35,7 @@ If the uncertainty of the estimated pose is given, it can also be displayed.
 | `property_line_alpha_`  | float  | 1.0           | Alpha of Line property     |
 | `property_line_color_`  | QColor | Qt::white     | Color of Line property     |
 
-### Pose Eith Covariance History 
+### Pose Eith Covariance History
 
 | Name                            | Type   | Default Value  | Description                      |
 | ------------------------------- | ------ | -------------- | -------------------------------- |
