@@ -2595,6 +2595,7 @@ TEST(geometry, areaRand)
   for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
     double ground_truth_area_ns = 0.0;
     double alt_area_ns = 0.0;
+
     for (auto i = 0; i < polygons_nb; ++i) {
       polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
     }
@@ -2602,10 +2603,12 @@ TEST(geometry, areaRand)
       sw.tic();
       const auto ground_truth = boost::geometry::area(polygons[i]);
       ground_truth_area_ns += sw.toc();
+
+      const auto alt_poly = autoware::universe_utils::alt::from_boost(polygons[i]);
       sw.tic();
-      const auto alt =
-        autoware::universe_utils::area(autoware::universe_utils::alt::from_boost(polygons[i]));
+      const auto alt = autoware::universe_utils::area(alt_poly);
       alt_area_ns += sw.toc();
+
       if (std::abs(alt - ground_truth) > epsilon) {
         std::cout << "Alt failed for the polygon: ";
         std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
@@ -2630,6 +2633,7 @@ TEST(geometry, convexHullRand)
   for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
     double ground_truth_hull_ns = 0.0;
     double alt_hull_ns = 0.0;
+
     for (auto i = 0; i < polygons_nb; ++i) {
       polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
     }
@@ -2642,10 +2646,12 @@ TEST(geometry, convexHullRand)
       sw.tic();
       boost::geometry::convex_hull(outer, ground_truth);
       ground_truth_hull_ns += sw.toc();
+
       const auto vertices = autoware::universe_utils::alt::from_boost(polygons[i]).vertices();
       sw.tic();
       const auto alt = autoware::universe_utils::convex_hull(vertices);
       alt_hull_ns += sw.toc();
+
       if (ground_truth.outer().size() - 1 != alt.vertices().size()) {
         std::cout << "Alt failed for the polygon: ";
         std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
@@ -2677,6 +2683,7 @@ TEST(geometry, coveredByRand)
     double alt_covered_ns = 0.0;
     double alt_not_covered_ns = 0.0;
     int covered_count = 0;
+
     polygons.clear();
     for (auto i = 0; i < polygons_nb; ++i) {
       polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
@@ -2692,15 +2699,17 @@ TEST(geometry, coveredByRand)
           } else {
             ground_truth_not_covered_ns += sw.toc();
           }
+
+          const auto alt_point = autoware::universe_utils::alt::from_boost(point);
+          const auto alt_poly = autoware::universe_utils::alt::from_boost(polygons[j]);
           sw.tic();
-          const auto alt = autoware::universe_utils::covered_by(
-            autoware::universe_utils::alt::from_boost(point),
-            autoware::universe_utils::alt::from_boost(polygons[j]));
+          const auto alt = autoware::universe_utils::covered_by(alt_point, alt_poly);
           if (alt) {
             alt_covered_ns += sw.toc();
           } else {
             alt_not_covered_ns += sw.toc();
           }
+
           if (ground_truth != alt) {
             std::cout << "Alt failed for the 2 polygons: ";
             std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
@@ -2740,6 +2749,7 @@ TEST(geometry, disjointRand)
     double alt_disjoint_ns = 0.0;
     double alt_not_disjoint_ns = 0.0;
     int disjoint_count = 0;
+
     polygons.clear();
     for (auto i = 0; i < polygons_nb; ++i) {
       polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
@@ -2754,15 +2764,17 @@ TEST(geometry, disjointRand)
         } else {
           ground_truth_not_disjoint_ns += sw.toc();
         }
+
+        const auto alt_poly1 = autoware::universe_utils::alt::from_boost(polygons[i]);
+        const auto alt_poly2 = autoware::universe_utils::alt::from_boost(polygons[j]);
         sw.tic();
-        const auto alt = autoware::universe_utils::disjoint(
-          autoware::universe_utils::alt::from_boost(polygons[i]),
-          autoware::universe_utils::alt::from_boost(polygons[j]));
+        const auto alt = autoware::universe_utils::disjoint(alt_poly1, alt_poly2);
         if (alt) {
           alt_disjoint_ns += sw.toc();
         } else {
           alt_not_disjoint_ns += sw.toc();
         }
+
         if (ground_truth != alt) {
           std::cout << "Failed for the 2 polygons: ";
           std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
@@ -2801,6 +2813,7 @@ TEST(geometry, intersectsRand)
     double alt_intersect_ns = 0.0;
     double alt_no_intersect_ns = 0.0;
     int intersect_count = 0;
+
     polygons.clear();
     for (auto i = 0; i < polygons_nb; ++i) {
       polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
@@ -2815,15 +2828,17 @@ TEST(geometry, intersectsRand)
         } else {
           ground_truth_no_intersect_ns += sw.toc();
         }
-        const auto poly1 = autoware::universe_utils::alt::from_boost(polygons[i]);
-        const auto poly2 = autoware::universe_utils::alt::from_boost(polygons[j]);
+
+        const auto alt_poly1 = autoware::universe_utils::alt::from_boost(polygons[i]);
+        const auto alt_poly2 = autoware::universe_utils::alt::from_boost(polygons[j]);
         sw.tic();
-        const auto alt = autoware::universe_utils::intersects(poly1, poly2);
+        const auto alt = autoware::universe_utils::intersects(alt_poly1, alt_poly2);
         if (alt) {
           alt_intersect_ns += sw.toc();
         } else {
           alt_no_intersect_ns += sw.toc();
         }
+
         if (ground_truth != alt) {
           std::cout << "Failed for the 2 polygons: ";
           std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
@@ -2862,6 +2877,7 @@ TEST(geometry, withinPolygonRand)
     double alt_within_ns = 0.0;
     double alt_not_within_ns = 0.0;
     int within_count = 0;
+
     polygons.clear();
     for (auto i = 0; i < polygons_nb; ++i) {
       polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
@@ -2876,15 +2892,17 @@ TEST(geometry, withinPolygonRand)
         } else {
           ground_truth_not_within_ns += sw.toc();
         }
-        const auto poly1 = autoware::universe_utils::alt::from_boost(polygons[i]);
-        const auto poly2 = autoware::universe_utils::alt::from_boost(polygons[j]);
+
+        const auto alt_poly1 = autoware::universe_utils::alt::from_boost(polygons[i]);
+        const auto alt_poly2 = autoware::universe_utils::alt::from_boost(polygons[j]);
         sw.tic();
-        const auto alt = autoware::universe_utils::within(poly1, poly2);
+        const auto alt = autoware::universe_utils::within(alt_poly1, alt_poly2);
         if (alt) {
           alt_within_ns += sw.toc();
         } else {
           alt_not_within_ns += sw.toc();
         }
+
         if (ground_truth != alt) {
           std::cout << "Alt failed for the 2 polygons: ";
           std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
