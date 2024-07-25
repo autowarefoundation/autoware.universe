@@ -159,7 +159,7 @@ private:
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_stop_planning_info_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_cruise_planning_info_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_slow_down_planning_info_pub_;
-  rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_pub_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr debug_calculation_time_pub_;
 
   // subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
@@ -192,10 +192,13 @@ private:
   // planner
   std::unique_ptr<PlannerInterface> planner_ptr_{nullptr};
 
-  // previous obstacles
-  std::vector<StopObstacle> prev_stop_obstacles_;
-  std::vector<CruiseObstacle> prev_cruise_obstacles_;
-  std::vector<SlowDownObstacle> prev_slow_down_obstacles_;
+  // previous PredictedObject-based obstacles
+  std::vector<StopObstacle> prev_stop_object_obstacles_;
+  std::vector<CruiseObstacle> prev_cruise_object_obstacles_;
+  std::vector<SlowDownObstacle> prev_slow_down_object_obstacles_;
+
+  // PointCloud-based stop obstacle history
+  std::vector<StopObstacle> stop_pc_obstacle_history_;
 
   // behavior determination parameter
   struct BehaviorDeterminationParam
@@ -303,7 +306,7 @@ private:
   bool enable_slow_down_planning_{false};
   bool use_pointcloud_{false};
 
-  std::vector<StopObstacle> prev_closest_stop_obstacles_{};
+  std::vector<StopObstacle> prev_closest_stop_object_obstacles_{};
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 

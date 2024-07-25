@@ -21,6 +21,7 @@
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -43,6 +44,7 @@ LaneChangeInterface::LaneChangeInterface(
   module_type_{std::move(module_type)},
   prev_approved_path_{std::make_unique<PathWithLaneId>()}
 {
+  module_type_->setTimeKeeper(getTimeKeeper());
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, name);
   logger_ = utils::lane_change::getLogger(module_type_->getModuleTypeStr());
 }
@@ -71,7 +73,9 @@ bool LaneChangeInterface::isExecutionReady() const
 
 void LaneChangeInterface::updateData()
 {
+  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
+  module_type_->update_lanes(getCurrentStatus() == ModuleStatus::RUNNING);
   module_type_->updateSpecialData();
 
   if (isWaitingApproval() || module_type_->isAbortState()) {
@@ -94,6 +98,7 @@ void LaneChangeInterface::postProcess()
 
 BehaviorModuleOutput LaneChangeInterface::plan()
 {
+  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   resetPathCandidate();
   resetPathReference();
 
@@ -119,9 +124,18 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   } else {
     const auto path =
       assignToCandidate(module_type_->getLaneChangePath(), module_type_->getEgoPosition());
-    updateRTCStatus(
-      path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
-      State::RUNNING);
+    const auto force_activated = std::any_of(
+      rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+      [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
+    if (!force_activated) {
+      updateRTCStatus(
+        path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
+        State::RUNNING);
+    } else {
+      updateRTCStatus(
+        path.start_distance_to_path_change, path.finish_distance_to_path_change, false,
+        State::RUNNING);
+    }
   }
 
   return output;
@@ -132,7 +146,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   *prev_approved_path_ = getPreviousModuleOutput().path;
 
   BehaviorModuleOutput out = getPreviousModuleOutput();
-  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().current_lanes, out.path);
+  module_type_->insertStopPoint(module_type_->get_current_lanes(), out.path);
   out.turn_signal_info = module_type_->get_current_turn_signal_info();
 
   const auto & lane_change_debug = module_type_->getDebugData();
@@ -165,6 +179,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 
 CandidateOutput LaneChangeInterface::planCandidate() const
 {
+  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   const auto selected_path = module_type_->getLaneChangePath();
 
   if (selected_path.path.points.empty()) {
@@ -220,6 +235,15 @@ bool LaneChangeInterface::canTransitFailureState()
 
   updateDebugMarker();
   log_debug_throttled(__func__);
+
+  const auto force_activated = std::any_of(
+    rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+    [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
+
+  if (force_activated) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "unsafe but force executed");
+    return false;
+  }
 
   if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has on going.");
@@ -340,6 +364,7 @@ MarkerArray LaneChangeInterface::getModuleVirtualWall()
 
 void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & output)
 {
+  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   const auto steering_factor_direction = std::invoke([&]() {
     if (module_type_->getDirection() == Direction::LEFT) {
       return SteeringFactor::LEFT;

@@ -2,13 +2,9 @@
 
 checkersReport
 constParameterReference
-constVariableReference
-// cspell: ignore cstyle
-cstyleCast
 funcArgNamesDifferent
 functionConst
 functionStatic
-invalidPointerCast
 knownConditionTrueFalse
 missingInclude
 missingIncludeSystem
