@@ -2499,6 +2499,74 @@ TEST(geometry, isClockwise)
   }
 }
 
+TEST(geometry, touches)
+{
+  using autoware::universe_utils::touches;
+  using autoware::universe_utils::alt::ConvexPolygon2d;
+  using autoware::universe_utils::alt::Point2d;
+
+  {
+    // The point is on the segment
+    const Point2d p = {0.0, 0.0};
+    const Point2d p1 = {-1.0, 0.0};
+    const Point2d p2 = {1.0, 0.0};
+    const auto result = touches(p, p1, p2);
+
+    EXPECT_TRUE(result);
+  }
+
+  {
+    // The point is the start point of the segment
+    const Point2d p = {-1.0, 0.0};
+    const Point2d p1 = {-1.0, 0.0};
+    const Point2d p2 = {1.0, 0.0};
+    const auto result = touches(p, p1, p2);
+
+    EXPECT_TRUE(result);
+  }
+
+  {
+    // The point is the end point of the segment
+    const Point2d p = {1.0, 0.0};
+    const Point2d p1 = {-1.0, 0.0};
+    const Point2d p2 = {1.0, 0.0};
+    const auto result = touches(p, p1, p2);
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // The point is not on the segment
+    const Point2d p = {0.0, 1.0};
+    const Point2d p1 = {-1.0, 0.0};
+    const Point2d p2 = {1.0, 0.0};
+    const auto result = touches(p, p1, p2);
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // The point is on the edge of the polygon
+    const Point2d point = {0.0, 0.0};
+    const Point2d p1 = {2.0, 1.0};
+    const Point2d p2 = {2.0, -1.0};
+    const Point2d p3 = {0.0, -1.0};
+    const Point2d p4 = {0.0, 1.0};
+    const auto result = touches(point, ConvexPolygon2d({p1, p2, p3, p4}));
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // The point is outside the polygon
+    const Point2d point = {0.0, 0.0};
+    const Point2d p1 = {2.0, 2.0};
+    const Point2d p2 = {2.0, 1.0};
+    const Point2d p3 = {1.0, 1.0};
+    const Point2d p4 = {1.0, 2.0};
+    const auto result = touches(point, ConvexPolygon2d({p1, p2, p3, p4}));
+
+    EXPECT_FALSE(result);
+  }
+}
+
 TEST(geometry, within)
 {
   using autoware::universe_utils::within;

@@ -684,6 +684,16 @@ bool is_clockwise(const alt::ConvexPolygon2d & poly)
   return area(poly) > 0;
 }
 
+bool touches(
+  const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end)
+{
+  // if the cross product of the vectors from the start point and the end point to the point is 0
+  // and the vectors opposite each other, the point is on the segment
+  return std::abs((point - seg_start).cross(point - seg_end)) <=
+           std::numeric_limits<double>::epsilon() &&
+         (point - seg_start).dot(point - seg_end) <= 0;
+}
+
 bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 {
   const auto & vertices = poly.vertices();
