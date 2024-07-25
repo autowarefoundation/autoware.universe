@@ -15,9 +15,9 @@
 #ifndef PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
 #define PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
 
-#include <vehicle_info_util/vehicle_info.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
-#include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
+#include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include <geometry_msgs/msg/polygon.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -30,11 +30,11 @@
 namespace marker_utils
 {
 
-using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware::universe_utils::Polygon2d;
+using autoware_perception_msgs::msg::PredictedObject;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using std_msgs::msg::ColorRGBA;
-using tier4_autoware_utils::Polygon2d;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
@@ -45,10 +45,10 @@ inline int64_t bitShift(int64_t original_id)
 
 void addFootprintMarker(
   visualization_msgs::msg::Marker & marker, const geometry_msgs::msg::Pose & pose,
-  const vehicle_info_util::VehicleInfo & vehicle_info);
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 
 MarkerArray createFootprintMarkerArray(
-  const Pose & base_link_pose, const vehicle_info_util::VehicleInfo vehicle_info,
+  const Pose & base_link_pose, const autoware::vehicle_info_utils::VehicleInfo vehicle_info,
   const std::string && ns, const int32_t & id, const float & r, const float & g, const float & b);
 
 MarkerArray createPointsMarkerArray(

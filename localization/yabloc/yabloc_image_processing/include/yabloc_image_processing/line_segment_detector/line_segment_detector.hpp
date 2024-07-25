@@ -42,7 +42,7 @@ public:
   using Image = sensor_msgs::msg::Image;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
 
-  LineSegmentDetector();
+  explicit LineSegmentDetector(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
@@ -51,8 +51,8 @@ private:
 
   cv::Ptr<cv::LineSegmentDetector> line_segment_detector_;
 
-  std::vector<cv::Mat> remove_too_outer_elements(
-    const cv::Mat & lines, const cv::Size & size) const;
+  static std::vector<cv::Mat> remove_too_outer_elements(
+    const cv::Mat & lines, const cv::Size & size);
   void on_image(const sensor_msgs::msg::Image & msg);
   void execute(const cv::Mat & image, const rclcpp::Time & stamp);
 };

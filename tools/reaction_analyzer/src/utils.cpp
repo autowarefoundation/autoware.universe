@@ -18,22 +18,22 @@ namespace reaction_analyzer
 {
 SubscriberMessageType get_subscriber_message_type(const std::string & message_type)
 {
-  if (message_type == "autoware_auto_control_msgs/msg/AckermannControlCommand") {
-    return SubscriberMessageType::ACKERMANN_CONTROL_COMMAND;
+  if (message_type == "autoware_control_msgs/msg/Control") {
+    return SubscriberMessageType::CONTROL;
   }
-  if (message_type == "autoware_auto_planning_msgs/msg/Trajectory") {
+  if (message_type == "autoware_planning_msgs/msg/Trajectory") {
     return SubscriberMessageType::TRAJECTORY;
   }
   if (message_type == "sensor_msgs/msg/PointCloud2") {
     return SubscriberMessageType::POINTCLOUD2;
   }
-  if (message_type == "autoware_auto_perception_msgs/msg/PredictedObjects") {
+  if (message_type == "autoware_perception_msgs/msg/PredictedObjects") {
     return SubscriberMessageType::PREDICTED_OBJECTS;
   }
-  if (message_type == "autoware_auto_perception_msgs/msg/DetectedObjects") {
+  if (message_type == "autoware_perception_msgs/msg/DetectedObjects") {
     return SubscriberMessageType::DETECTED_OBJECTS;
   }
-  if (message_type == "autoware_auto_perception_msgs/msg/TrackedObjects") {
+  if (message_type == "autoware_perception_msgs/msg/TrackedObjects") {
     return SubscriberMessageType::TRACKED_OBJECTS;
   }
   return SubscriberMessageType::UNKNOWN;
@@ -62,22 +62,22 @@ PublisherMessageType get_publisher_message_type(const std::string & message_type
   if (message_type == "sensor_msgs/msg/Imu") {
     return PublisherMessageType::IMU;
   }
-  if (message_type == "autoware_auto_vehicle_msgs/msg/ControlModeReport") {
+  if (message_type == "autoware_vehicle_msgs/msg/ControlModeReport") {
     return PublisherMessageType::CONTROL_MODE_REPORT;
   }
-  if (message_type == "autoware_auto_vehicle_msgs/msg/GearReport") {
+  if (message_type == "autoware_vehicle_msgs/msg/GearReport") {
     return PublisherMessageType::GEAR_REPORT;
   }
-  if (message_type == "autoware_auto_vehicle_msgs/msg/HazardLightsReport") {
+  if (message_type == "autoware_vehicle_msgs/msg/HazardLightsReport") {
     return PublisherMessageType::HAZARD_LIGHTS_REPORT;
   }
-  if (message_type == "autoware_auto_vehicle_msgs/msg/SteeringReport") {
+  if (message_type == "autoware_vehicle_msgs/msg/SteeringReport") {
     return PublisherMessageType::STEERING_REPORT;
   }
-  if (message_type == "autoware_auto_vehicle_msgs/msg/TurnIndicatorsReport") {
+  if (message_type == "autoware_vehicle_msgs/msg/TurnIndicatorsReport") {
     return PublisherMessageType::TURN_INDICATORS_REPORT;
   }
-  if (message_type == "autoware_auto_vehicle_msgs/msg/VelocityReport") {
+  if (message_type == "autoware_vehicle_msgs/msg/VelocityReport") {
     return PublisherMessageType::VELOCITY_REPORT;
   }
   return PublisherMessageType::UNKNOWN;
@@ -136,8 +136,8 @@ visualization_msgs::msg::Marker create_polyhedron_marker(const EntityParams & pa
 
   tf2::Quaternion quaternion;
   quaternion.setRPY(
-    tier4_autoware_utils::deg2rad(params.roll), tier4_autoware_utils::deg2rad(params.pitch),
-    tier4_autoware_utils::deg2rad(params.yaw));
+    autoware::universe_utils::deg2rad(params.roll), autoware::universe_utils::deg2rad(params.pitch),
+    autoware::universe_utils::deg2rad(params.yaw));
   marker.pose.orientation = tf2::toMsg(quaternion);
 
   marker.scale.x = 0.1;  // Line width
@@ -224,7 +224,7 @@ size_t get_index_after_distance(
   size_t target_id = curr_id;
   double current_distance = 0.0;
   for (size_t traj_id = curr_id + 1; traj_id < traj.points.size(); ++traj_id) {
-    current_distance = tier4_autoware_utils::calcDistance3d(traj.points.at(traj_id), curr_p);
+    current_distance = autoware::universe_utils::calcDistance3d(traj.points.at(traj_id), curr_p);
     if (current_distance >= distance) {
       break;
     }
@@ -286,9 +286,9 @@ geometry_msgs::msg::Pose create_entity_pose(const EntityParams & entity_params)
 
   tf2::Quaternion entity_q_orientation;
   entity_q_orientation.setRPY(
-    tier4_autoware_utils::deg2rad(entity_params.roll),
-    tier4_autoware_utils::deg2rad(entity_params.pitch),
-    tier4_autoware_utils::deg2rad(entity_params.yaw));
+    autoware::universe_utils::deg2rad(entity_params.roll),
+    autoware::universe_utils::deg2rad(entity_params.pitch),
+    autoware::universe_utils::deg2rad(entity_params.yaw));
   entity_pose.orientation = tf2::toMsg(entity_q_orientation);
   return entity_pose;
 }
@@ -302,9 +302,9 @@ geometry_msgs::msg::Pose pose_params_to_pose(const PoseParams & pose_params)
 
   tf2::Quaternion pose_q_orientation;
   pose_q_orientation.setRPY(
-    tier4_autoware_utils::deg2rad(pose_params.roll),
-    tier4_autoware_utils::deg2rad(pose_params.pitch),
-    tier4_autoware_utils::deg2rad(pose_params.yaw));
+    autoware::universe_utils::deg2rad(pose_params.roll),
+    autoware::universe_utils::deg2rad(pose_params.pitch),
+    autoware::universe_utils::deg2rad(pose_params.yaw));
   pose.orientation = tf2::toMsg(pose_q_orientation);
   return pose;
 }
@@ -316,9 +316,9 @@ PointCloud2::SharedPtr create_entity_pointcloud_ptr(
   tf2::Quaternion entity_q_orientation;
 
   entity_q_orientation.setRPY(
-    tier4_autoware_utils::deg2rad(entity_params.roll),
-    tier4_autoware_utils::deg2rad(entity_params.pitch),
-    tier4_autoware_utils::deg2rad(entity_params.yaw));
+    autoware::universe_utils::deg2rad(entity_params.roll),
+    autoware::universe_utils::deg2rad(entity_params.pitch),
+    autoware::universe_utils::deg2rad(entity_params.yaw));
   tf2::Transform tf(entity_q_orientation);
   const auto origin = tf2::Vector3(entity_params.x, entity_params.y, entity_params.z);
   tf.setOrigin(origin);
@@ -360,17 +360,17 @@ PredictedObjects::SharedPtr create_entity_predicted_objects_ptr(const EntityPara
   dimension.set__z(entity_params.z_l);
   obj.shape.set__dimensions(dimension);
 
-  obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  obj.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
   obj.existence_probability = 1.0;
   obj.kinematics.initial_pose_with_covariance.pose = entity_pose;
 
-  autoware_auto_perception_msgs::msg::PredictedPath path;
+  autoware_perception_msgs::msg::PredictedPath path;
   path.confidence = 1.0;
   path.path.emplace_back(entity_pose);
   obj.kinematics.predicted_paths.emplace_back(path);
 
-  autoware_auto_perception_msgs::msg::ObjectClassification classification;
-  classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
+  autoware_perception_msgs::msg::ObjectClassification classification;
+  classification.label = autoware_perception_msgs::msg::ObjectClassification::CAR;
   classification.probability = 1.0;
   obj.classification.emplace_back(classification);
   obj.set__object_id(generate_uuid_msg("test_obstacle"));
@@ -395,7 +395,7 @@ bool search_pointcloud_near_pose(
   return std::any_of(
     pcl_pointcloud.points.begin(), pcl_pointcloud.points.end(),
     [pose, search_radius](const auto & point) {
-      return tier4_autoware_utils::calcDistance3d(pose.position, point) <= search_radius;
+      return autoware::universe_utils::calcDistance3d(pose.position, point) <= search_radius;
     });
 }
 
@@ -406,7 +406,7 @@ bool search_predicted_objects_near_pose(
   return std::any_of(
     predicted_objects.objects.begin(), predicted_objects.objects.end(),
     [pose, search_radius](const PredictedObject & object) {
-      return tier4_autoware_utils::calcDistance3d(
+      return autoware::universe_utils::calcDistance3d(
                pose.position, object.kinematics.initial_pose_with_covariance.pose.position) <=
              search_radius;
     });
@@ -420,7 +420,7 @@ bool search_detected_objects_near_pose(
   return std::any_of(
     detected_objects.objects.begin(), detected_objects.objects.end(),
     [pose, search_radius](const DetectedObject & object) {
-      return tier4_autoware_utils::calcDistance3d(
+      return autoware::universe_utils::calcDistance3d(
                pose.position, object.kinematics.pose_with_covariance.pose.position) <=
              search_radius;
     });
@@ -433,7 +433,7 @@ bool search_tracked_objects_near_pose(
   return std::any_of(
     tracked_objects.objects.begin(), tracked_objects.objects.end(),
     [pose, search_radius](const TrackedObject & object) {
-      return tier4_autoware_utils::calcDistance3d(
+      return autoware::universe_utils::calcDistance3d(
                pose.position, object.kinematics.pose_with_covariance.pose.position) <=
              search_radius;
     });

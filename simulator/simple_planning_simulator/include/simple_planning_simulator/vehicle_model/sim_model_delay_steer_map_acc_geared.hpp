@@ -21,8 +21,6 @@
 #include "simple_planning_simulator/utils/csv_loader.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
-#include <autoware_auto_common/common/types.hpp>
-
 #include <deque>
 #include <iostream>
 #include <queue>
@@ -202,7 +200,7 @@ private:
    * @brief update state considering current gear
    * @param [in] state current state
    * @param [in] prev_state previous state
-   * @param [in] gear current gear (defined in autoware_auto_msgs/GearCommand)
+   * @param [in] gear current gear (defined in autoware_msgs/GearCommand)
    * @param [in] dt delta time to update state
    */
   void updateStateWithGear(

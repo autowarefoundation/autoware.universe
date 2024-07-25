@@ -18,15 +18,15 @@
 #include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/utility/utilities.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 
 #include <string>
 
-using tier4_autoware_utils::MultiPoint2d;
+using autoware::universe_utils::MultiPoint2d;
 
 namespace pointcloud_preprocessor
 {
@@ -36,13 +36,15 @@ private:
   void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
+  rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr map_sub_;
   lanelet::ConstPolygons3d polygon_lanelets_;
 
-  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+  void mapCallback(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg);
 
   // parameter
   std::string polygon_type_;
+  bool use_z_filter_ = false;
+  float z_threshold_;
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW

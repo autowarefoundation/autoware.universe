@@ -47,7 +47,7 @@ void SegmentPointCloudFusionNode::postprocess(__attribute__((unused)) PointCloud
 void SegmentPointCloudFusionNode::fuseOnSingleImage(
   const PointCloud2 & input_pointcloud_msg, __attribute__((unused)) const std::size_t image_id,
   [[maybe_unused]] const Image & input_mask, __attribute__((unused)) const CameraInfo & camera_info,
-  __attribute__((unused)) PointCloud2 & output_pointcloud_msg)
+  __attribute__((unused)) PointCloud2 & output_cloud)
 {
   if (input_pointcloud_msg.data.empty()) {
     return;
@@ -65,11 +65,13 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   if (mask.cols == 0 || mask.rows == 0) {
     return;
   }
-  Eigen::Matrix4d projection;
-  projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2), camera_info.p.at(3),
-    camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6), camera_info.p.at(7),
-    camera_info.p.at(8), camera_info.p.at(9), camera_info.p.at(10), camera_info.p.at(11), 0.0, 0.0,
-    0.0, 1.0;
+  const int orig_width = camera_info.width;
+  const int orig_height = camera_info.height;
+  // resize mask to the same size as the camera image
+  cv::resize(mask, mask, cv::Size(orig_width, orig_height), 0, 0, cv::INTER_NEAREST);
+  image_geometry::PinholeCameraModel pinhole_camera_model;
+  pinhole_camera_model.fromCameraInfo(camera_info);
+
   geometry_msgs::msg::TransformStamped transform_stamped;
   // transform pointcloud from frame id to camera optical frame id
   {
@@ -85,47 +87,62 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   PointCloud2 transformed_cloud;
   tf2::doTransform(input_pointcloud_msg, transformed_cloud, transform_stamped);
 
-  PointCloud output_cloud;
-
-  for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cloud, "x"),
-       iter_y(transformed_cloud, "y"), iter_z(transformed_cloud, "z"),
-       iter_orig_x(input_pointcloud_msg, "x"), iter_orig_y(input_pointcloud_msg, "y"),
-       iter_orig_z(input_pointcloud_msg, "z");
-       iter_x != iter_x.end();
-       ++iter_x, ++iter_y, ++iter_z, ++iter_orig_x, ++iter_orig_y, ++iter_orig_z) {
+  int point_step = input_pointcloud_msg.point_step;
+  int x_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "x")].offset;
+  int y_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "y")].offset;
+  int z_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "z")].offset;
+  size_t output_pointcloud_size = 0;
+  output_cloud.data.clear();
+  output_cloud.data.resize(input_pointcloud_msg.data.size());
+  output_cloud.fields = input_pointcloud_msg.fields;
+  output_cloud.header = input_pointcloud_msg.header;
+  output_cloud.height = input_pointcloud_msg.height;
+  output_cloud.point_step = input_pointcloud_msg.point_step;
+  output_cloud.is_bigendian = input_pointcloud_msg.is_bigendian;
+  output_cloud.is_dense = input_pointcloud_msg.is_dense;
+  for (size_t global_offset = 0; global_offset < transformed_cloud.data.size();
+       global_offset += point_step) {
+    float transformed_x =
+      *reinterpret_cast<float *>(&transformed_cloud.data[global_offset + x_offset]);
+    float transformed_y =
+      *reinterpret_cast<float *>(&transformed_cloud.data[global_offset + y_offset]);
+    float transformed_z =
+      *reinterpret_cast<float *>(&transformed_cloud.data[global_offset + z_offset]);
     // skip filtering pointcloud behind the camera or too far from camera
-    if (*iter_z <= 0.0 || *iter_z > filter_distance_threshold_) {
-      output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
+    if (transformed_z <= 0.0 || transformed_z > filter_distance_threshold_) {
+      copyPointCloud(
+        input_pointcloud_msg, point_step, global_offset, output_cloud, output_pointcloud_size);
       continue;
     }
 
-    Eigen::Vector4d projected_point = projection * Eigen::Vector4d(*iter_x, *iter_y, *iter_z, 1.0);
-    Eigen::Vector2d normalized_projected_point = Eigen::Vector2d(
-      projected_point.x() / projected_point.z(), projected_point.y() / projected_point.z());
+    Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
+      pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z));
 
-    bool is_inside_image =
-      normalized_projected_point.x() > 0 && normalized_projected_point.x() < camera_info.width &&
-      normalized_projected_point.y() > 0 && normalized_projected_point.y() < camera_info.height;
+    bool is_inside_image = projected_point.x() > 0 && projected_point.x() < camera_info.width &&
+                           projected_point.y() > 0 && projected_point.y() < camera_info.height;
     if (!is_inside_image) {
-      output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
+      copyPointCloud(
+        input_pointcloud_msg, point_step, global_offset, output_cloud, output_pointcloud_size);
       continue;
     }
 
     // skip filtering pointcloud where semantic id out of the defined list
     uint8_t semantic_id = mask.at<uint8_t>(
-      static_cast<uint16_t>(normalized_projected_point.y()),
-      static_cast<uint16_t>(normalized_projected_point.x()));
+      static_cast<uint16_t>(projected_point.y()), static_cast<uint16_t>(projected_point.x()));
     if (static_cast<size_t>(semantic_id) >= filter_semantic_label_target_.size()) {
-      output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
+      copyPointCloud(
+        input_pointcloud_msg, point_step, global_offset, output_cloud, output_pointcloud_size);
       continue;
     }
     if (!filter_semantic_label_target_.at(semantic_id)) {
-      output_cloud.push_back(pcl::PointXYZ(*iter_orig_x, *iter_orig_y, *iter_orig_z));
+      copyPointCloud(
+        input_pointcloud_msg, point_step, global_offset, output_cloud, output_pointcloud_size);
     }
   }
 
-  pcl::toROSMsg(output_cloud, output_pointcloud_msg);
-  output_pointcloud_msg.header = input_pointcloud_msg.header;
+  output_cloud.data.resize(output_pointcloud_size);
+  output_cloud.row_step = output_pointcloud_size / output_cloud.height;
+  output_cloud.width = output_pointcloud_size / output_cloud.point_step / output_cloud.height;
 }
 
 bool SegmentPointCloudFusionNode::out_of_scope(__attribute__((unused))

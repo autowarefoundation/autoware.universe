@@ -13,21 +13,21 @@
 
 ### Input topics
 
-| Name                        | Type                                            | Description         |
-| --------------------------- | ----------------------------------------------- | ------------------- |
-| `~/input/pointcloud`        | sensor_msgs::PointCloud2                        | obstacle pointcloud |
-| `~/input/trajectory`        | autoware_auto_planning_msgs::Trajectory         | trajectory          |
-| `~/input/vector_map`        | autoware_auto_mapping_msgs::HADMapBin           | vector map          |
-| `~/input/odometry`          | nav_msgs::Odometry                              | vehicle velocity    |
-| `~/input/dynamic_objects`   | autoware_auto_perception_msgs::PredictedObjects | dynamic objects     |
-| `~/input/expand_stop_range` | tier4_planning_msgs::msg::ExpandStopRange       | expand stop range   |
+| Name                        | Type                                       | Description         |
+| --------------------------- | ------------------------------------------ | ------------------- |
+| `~/input/pointcloud`        | sensor_msgs::PointCloud2                   | obstacle pointcloud |
+| `~/input/trajectory`        | autoware_planning_msgs::Trajectory         | trajectory          |
+| `~/input/vector_map`        | autoware_map_msgs::msg::LaneletMapBin      | vector map          |
+| `~/input/odometry`          | nav_msgs::Odometry                         | vehicle velocity    |
+| `~/input/dynamic_objects`   | autoware_perception_msgs::PredictedObjects | dynamic objects     |
+| `~/input/expand_stop_range` | tier4_planning_msgs::msg::ExpandStopRange  | expand stop range   |
 
 ### Output topics
 
-| Name                   | Type                                    | Description                            |
-| ---------------------- | --------------------------------------- | -------------------------------------- |
-| `~output/trajectory`   | autoware_auto_planning_msgs::Trajectory | trajectory to be followed              |
-| `~output/stop_reasons` | tier4_planning_msgs::StopReasonArray    | reasons that cause the vehicle to stop |
+| Name                   | Type                                 | Description                            |
+| ---------------------- | ------------------------------------ | -------------------------------------- |
+| `~output/trajectory`   | autoware_planning_msgs::Trajectory   | trajectory to be followed              |
+| `~output/stop_reasons` | tier4_planning_msgs::StopReasonArray | reasons that cause the vehicle to stop |
 
 ### Common Parameter
 
@@ -411,5 +411,5 @@ If the target velocity exceeds the value of `thresh_vel_to_stop`, the target vel
   dangerously.
 
 - It does not work for backward driving, but publishes the path of the input as it is. Please
-  use [obstacle_cruise_planner](../obstacle_cruise_planner/README.md) if you want to stop against an obstacle when
+  use [obstacle_cruise_planner](../autoware_obstacle_cruise_planner/README.md) if you want to stop against an obstacle when
   backward driving.

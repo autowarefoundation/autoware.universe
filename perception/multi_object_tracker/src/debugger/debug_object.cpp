@@ -14,7 +14,7 @@
 
 #include "multi_object_tracker/debugger/debug_object.hpp"
 
-#include "autoware_auto_perception_msgs/msg/tracked_object.hpp"
+#include "autoware_perception_msgs/msg/tracked_object.hpp"
 
 #include <boost/uuid/uuid.hpp>
 
@@ -75,7 +75,7 @@ void TrackerObjectDebugger::reset()
 void TrackerObjectDebugger::collect(
   const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
   const uint & channel_index,
-  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
+  const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
   const std::unordered_map<int, int> & direct_assignment,
   const std::unordered_map<int, int> & /*reverse_assignment*/)
 {
@@ -90,7 +90,7 @@ void TrackerObjectDebugger::collect(
     object_data.time = message_time;
     object_data.channel_id = channel_index;
 
-    autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
+    autoware_perception_msgs::msg::TrackedObject tracked_object;
     (*(tracker_itr))->getTrackedObject(message_time, tracked_object);
     object_data.uuid = uuidToBoostUuid(tracked_object.object_id);
     object_data.uuid_int = uuidToInt(object_data.uuid);
@@ -133,6 +133,9 @@ void TrackerObjectDebugger::collect(
 void TrackerObjectDebugger::process()
 {
   if (!is_initialized_) return;
+
+  // Check if object_data_list_ is empty
+  if (object_data_list_.empty()) return;
 
   // update uuid_int
   for (auto & object_data : object_data_list_) {
@@ -233,8 +236,9 @@ void TrackerObjectDebugger::draw(
       stream << std::fixed << std::setprecision(0) << object_data_front.existence_vector[i] * 100;
       existence_probability_text += channel_names_[i] + stream.str() + ":";
     }
-    existence_probability_text =
-      existence_probability_text.substr(0, existence_probability_text.size() - 1);
+    if (!existence_probability_text.empty()) {
+      existence_probability_text.pop_back();
+    }
     existence_probability_text += "\n" + object_data_front.uuid_str.substr(0, 6);
 
     text_marker.text = existence_probability_text;

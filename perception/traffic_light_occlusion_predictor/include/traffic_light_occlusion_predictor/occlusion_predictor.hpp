@@ -16,15 +16,20 @@
 #ifndef TRAFFIC_LIGHT_OCCLUSION_PREDICTOR__OCCLUSION_PREDICTOR_HPP_
 #define TRAFFIC_LIGHT_OCCLUSION_PREDICTOR__OCCLUSION_PREDICTOR_HPP_
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/pcl_conversion.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/pcl_conversion.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 
-#include <image_geometry/pinhole_camera_model.h>
+#if __has_include(<image_geometry/pinhole_camera_model.hpp>)
+#include <image_geometry/pinhole_camera_model.hpp>  // for ROS 2 Jazzy or newer
+#else
+#include <image_geometry/pinhole_camera_model.h>  // for ROS 2 Humble or older
+#endif
+
 #include <lanelet2_core/Forward.h>
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>

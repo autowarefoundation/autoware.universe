@@ -16,7 +16,7 @@
 
 namespace
 {
-tier4_autoware_utils::Box2d calcBoundingBox(
+autoware::universe_utils::Box2d calcBoundingBox(
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_cloud)
 {
   MultiPoint2d candidate_points;
@@ -24,11 +24,11 @@ tier4_autoware_utils::Box2d calcBoundingBox(
     candidate_points.emplace_back(p.x, p.y);
   }
 
-  return boost::geometry::return_envelope<tier4_autoware_utils::Box2d>(candidate_points);
+  return boost::geometry::return_envelope<autoware::universe_utils::Box2d>(candidate_points);
 }
 
 lanelet::ConstPolygons3d calcIntersectedPolygons(
-  const tier4_autoware_utils::Box2d & bounding_box, const lanelet::ConstPolygons3d & polygons)
+  const autoware::universe_utils::Box2d & bounding_box, const lanelet::ConstPolygons3d & polygons)
 {
   lanelet::ConstPolygons3d intersected_polygons;
   for (const auto & polygon : polygons) {
@@ -40,7 +40,8 @@ lanelet::ConstPolygons3d calcIntersectedPolygons(
 }
 
 pcl::PointCloud<pcl::PointXYZ> removePointsWithinPolygons(
-  const pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud_in, const lanelet::ConstPolygons3d & polygons)
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud_in, const lanelet::ConstPolygons3d & polygons,
+  const std::optional<float> & z_threshold_)
 {
   std::vector<PolygonCgal> cgal_polys;
 
@@ -53,7 +54,7 @@ pcl::PointCloud<pcl::PointXYZ> removePointsWithinPolygons(
 
   pcl::PointCloud<pcl::PointXYZ> filtered_cloud;
   pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
-    *cloud_in, cgal_polys, filtered_cloud);
+    *cloud_in, cgal_polys, filtered_cloud, z_threshold_);
 
   return filtered_cloud;
 }
@@ -71,9 +72,13 @@ VectorMapInsideAreaFilterComponent::VectorMapInsideAreaFilterComponent(
 
   using std::placeholders::_1;
   // Set subscriber
-  map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+  map_sub_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&VectorMapInsideAreaFilterComponent::mapCallback, this, _1));
+
+  // Set parameters
+  use_z_filter_ = declare_parameter<bool>("use_z_filter", false);
+  z_threshold_ = declare_parameter<float>("z_threshold", 0.0f);  // defined in the base_link frame
 }
 
 void VectorMapInsideAreaFilterComponent::filter(
@@ -99,7 +104,25 @@ void VectorMapInsideAreaFilterComponent::filter(
   const auto intersected_lanelets = calcIntersectedPolygons(bounding_box, polygon_lanelets_);
 
   // filter pointcloud by lanelet
-  const auto filtered_pc = removePointsWithinPolygons(pc_input, intersected_lanelets);
+  std::optional<float> z_threshold_in_base_link = std::nullopt;
+  if (use_z_filter_) {
+    // assume z_max is defined in the base_link frame
+    const std::string base_link_frame = "base_link";
+    z_threshold_in_base_link = z_threshold_;
+    if (input->header.frame_id != base_link_frame) {
+      try {
+        // get z difference from baselink to input frame
+        const auto transform =
+          tf_buffer_->lookupTransform(input->header.frame_id, base_link_frame, input->header.stamp);
+        *z_threshold_in_base_link += transform.transform.translation.z;
+      } catch (const tf2::TransformException & e) {
+        RCLCPP_WARN(get_logger(), "Failed to transform z_threshold to base_link frame");
+        z_threshold_in_base_link = std::nullopt;
+      }
+    }
+  }
+  const auto filtered_pc =
+    removePointsWithinPolygons(pc_input, intersected_lanelets, z_threshold_in_base_link);
 
   // convert to ROS message
   pcl::toROSMsg(filtered_pc, output);
@@ -107,7 +130,7 @@ void VectorMapInsideAreaFilterComponent::filter(
 }
 
 void VectorMapInsideAreaFilterComponent::mapCallback(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr map_msg)
+  const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr map_msg)
 {
   tf_input_frame_ = map_msg->header.frame_id;
 

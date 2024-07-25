@@ -14,9 +14,9 @@
 
 #include "pose_estimator_arbiter/switch_rule/vector_map_based_rule.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 
 #include <gtest/gtest.h>
 #include <lanelet2_core/LaneletMap.h>
@@ -24,10 +24,10 @@
 
 #include <unordered_set>
 
-class MockNode : public ::testing::Test
+class VectorMapBasedRuleMockNode : public ::testing::Test
 {
 protected:
-  virtual void SetUp()
+  void SetUp() override
   {
     rclcpp::init(0, nullptr);
     node = std::make_shared<rclcpp::Node>("test_node");
@@ -49,10 +49,10 @@ protected:
   std::shared_ptr<pose_estimator_arbiter::SharedData> shared_data_;
   std::shared_ptr<pose_estimator_arbiter::switch_rule::VectorMapBasedRule> rule_;
 
-  virtual void TearDown() { rclcpp::shutdown(); }
+  void TearDown() override { rclcpp::shutdown(); }
 };
 
-TEST_F(MockNode, vectorMapBasedRule)
+TEST_F(VectorMapBasedRuleMockNode, vectorMapBasedRule)
 {
   // Create dummy lanelet2 and set
   {
@@ -71,7 +71,7 @@ TEST_F(MockNode, vectorMapBasedRule)
     lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
     lanelet_map->add(create_polygon3d());
 
-    using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+    using HADMapBin = autoware_map_msgs::msg::LaneletMapBin;
     HADMapBin msg;
     lanelet::utils::conversion::toBinMsg(lanelet_map, &msg);
 

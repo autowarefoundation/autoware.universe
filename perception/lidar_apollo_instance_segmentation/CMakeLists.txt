@@ -2,12 +2,13 @@ cmake_minimum_required(VERSION 3.17)
 project(lidar_apollo_instance_segmentation)
 
 find_package(ament_cmake REQUIRED)
+find_package(autoware_perception_msgs REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 find_package(pcl_conversions REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(tf2_eigen REQUIRED)
-find_package(tier4_autoware_utils REQUIRED)
+find_package(autoware_universe_utils REQUIRED)
 find_package(tier4_debug_msgs REQUIRED)
 find_package(tier4_perception_msgs REQUIRED)
 
@@ -39,7 +40,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
   ${cuda_utils_INCLUDE_DIRS}
   ${pcl_conversions_INCLUDE_DIRS}
-  ${tier4_autoware_utils_INCLUDE_DIRS}
+  ${autoware_universe_utils_INCLUDE_DIRS}
+  ${autoware_perception_msgs_INCLUDE_DIRS}
 )
 
 target_link_libraries(${PROJECT_NAME}

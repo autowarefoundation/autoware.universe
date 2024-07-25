@@ -33,7 +33,7 @@
 
 namespace yabloc::modularized_particle_filter
 {
-cv::Point2f cv2pt(const Eigen::Vector3f v);
+cv::Point2f cv2pt(const Eigen::Vector3f & v);
 float abs_cos(const Eigen::Vector3f & t, float deg);
 
 class CameraParticleCorrector : public modularized_particle_filter::AbstractCorrector
@@ -49,7 +49,7 @@ public:
   using Bool = std_msgs::msg::Bool;
   using String = std_msgs::msg::String;
   using SetBool = std_srvs::srv::SetBool;
-  CameraParticleCorrector();
+  explicit CameraParticleCorrector(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
   const float min_prob_;

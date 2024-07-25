@@ -18,7 +18,7 @@
 #include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/transform_info.hpp"
 
-#include <vehicle_info_util/vehicle_info.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -43,7 +43,7 @@ class ScanGroundFilterTest;
 
 namespace ground_segmentation
 {
-using vehicle_info_util::VehicleInfo;
+using autoware::vehicle_info_utils::VehicleInfo;
 
 class ScanGroundFilterComponent : public pointcloud_preprocessor::Filter
 {
@@ -280,9 +280,9 @@ private:
   rcl_interfaces::msg::SetParametersResult onParameter(const std::vector<rclcpp::Parameter> & p);
 
   // debugger
-  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{
+  std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{
     nullptr};
-  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_ptr_{nullptr};
+  std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_ptr_{nullptr};
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

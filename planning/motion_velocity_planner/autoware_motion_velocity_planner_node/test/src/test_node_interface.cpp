@@ -23,7 +23,7 @@
 #include <vector>
 
 using autoware::motion_velocity_planner::MotionVelocityPlannerNode;
-using planning_test_utils::PlanningInterfaceTestManager;
+using autoware::planning_test_manager::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {
@@ -45,12 +45,12 @@ std::shared_ptr<MotionVelocityPlannerNode> generateNode()
 {
   auto node_options = rclcpp::NodeOptions{};
 
-  const auto planning_test_utils_dir =
-    ament_index_cpp::get_package_share_directory("planning_test_utils");
+  const auto autoware_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("autoware_test_utils");
   const auto motion_velocity_planner_dir =
     ament_index_cpp::get_package_share_directory("autoware_motion_velocity_planner_node");
-  const auto motion_velocity_smoother_dir =
-    ament_index_cpp::get_package_share_directory("motion_velocity_smoother");
+  const auto velocity_smoother_dir =
+    ament_index_cpp::get_package_share_directory("autoware_velocity_smoother");
 
   const auto get_motion_velocity_module_config = [](const std::string & module) {
     const auto package_name = "autoware_motion_velocity_" + module + "_module";
@@ -60,21 +60,24 @@ std::shared_ptr<MotionVelocityPlannerNode> generateNode()
 
   std::vector<std::string> module_names;
   module_names.emplace_back("autoware::motion_velocity_planner::OutOfLaneModule");
+  module_names.emplace_back("autoware::motion_velocity_planner::ObstacleVelocityLimiterModule");
+  module_names.emplace_back("autoware::motion_velocity_planner::DynamicObstacleStopModule");
 
   std::vector<rclcpp::Parameter> params;
   params.emplace_back("launch_modules", module_names);
   params.emplace_back("is_simulation", false);
   node_options.parameter_overrides(params);
 
-  test_utils::updateNodeOptions(
-    node_options,
-    {planning_test_utils_dir + "/config/test_common.param.yaml",
-     planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
-     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
-     motion_velocity_smoother_dir + "/config/default_motion_velocity_smoother.param.yaml",
-     motion_velocity_smoother_dir + "/config/Analytical.param.yaml",
-     motion_velocity_planner_dir + "/config/motion_velocity_planner.param.yaml",
-     get_motion_velocity_module_config("out_of_lane")});
+  autoware::test_utils::updateNodeOptions(
+    node_options, {autoware_test_utils_dir + "/config/test_common.param.yaml",
+                   autoware_test_utils_dir + "/config/test_nearest_search.param.yaml",
+                   autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml",
+                   velocity_smoother_dir + "/config/default_velocity_smoother.param.yaml",
+                   velocity_smoother_dir + "/config/Analytical.param.yaml",
+                   motion_velocity_planner_dir + "/config/motion_velocity_planner.param.yaml",
+                   get_motion_velocity_module_config("out_of_lane"),
+                   get_motion_velocity_module_config("obstacle_velocity_limiter"),
+                   get_motion_velocity_module_config("dynamic_obstacle_stop")});
 
   return std::make_shared<MotionVelocityPlannerNode>(node_options);
 }

@@ -13,8 +13,18 @@
 // limitations under the License.
 
 #include "image_projection_based_fusion/utils/utils.hpp"
+
 namespace image_projection_based_fusion
 {
+Eigen::Vector2d calcRawImageProjectedPoint(
+  const image_geometry::PinholeCameraModel & pinhole_camera_model, const cv::Point3d & point3d)
+{
+  const cv::Point2d rectified_image_point = pinhole_camera_model.project3dToPixel(point3d);
+
+  const cv::Point2d raw_image_point = pinhole_camera_model.unrectifyPoint(rectified_image_point);
+
+  return Eigen::Vector2d(raw_image_point.x, raw_image_point.y);
+}
 
 std::optional<geometry_msgs::msg::TransformStamped> getTransformStamped(
   const tf2_ros::Buffer & tf_buffer, const std::string & target_frame_id,
@@ -70,7 +80,7 @@ void closest_cluster(
     std::memcpy(&point.y, &cluster.data[i * point_step + y_offset], sizeof(float));
     std::memcpy(&point.z, &cluster.data[i * point_step + z_offset], sizeof(float));
 
-    point_data.distance = tier4_autoware_utils::calcDistance2d(center, point);
+    point_data.distance = autoware::universe_utils::calcDistance2d(center, point);
     point_data.orig_index = i;
     points_data.push_back(point_data);
   }
@@ -204,7 +214,7 @@ void addShapeAndKinematic(
   polygon_centroid.x = polygon_centroid.x / static_cast<double>(cluster2d_convex.size());
   polygon_centroid.y = polygon_centroid.y / static_cast<double>(cluster2d_convex.size());
 
-  autoware_auto_perception_msgs::msg::Shape shape;
+  autoware_perception_msgs::msg::Shape shape;
   for (size_t i = 0; i < cluster2d_convex.size(); ++i) {
     geometry_msgs::msg::Point32 point;
     point.x = cluster2d_convex.at(i).x / 1000.0;
@@ -212,7 +222,7 @@ void addShapeAndKinematic(
     point.z = 0.0;
     shape.footprint.points.push_back(point);
   }
-  shape.type = autoware_auto_perception_msgs::msg::Shape::POLYGON;
+  shape.type = autoware_perception_msgs::msg::Shape::POLYGON;
   constexpr float eps = 0.01;
   shape.dimensions.x = 0;
   shape.dimensions.y = 0;
@@ -258,7 +268,7 @@ pcl::PointXYZ getClosestPoint(const pcl::PointCloud<pcl::PointXYZ> & cluster)
   pcl::PointXYZ orig_point = pcl::PointXYZ(0.0, 0.0, 0.0);
   for (std::size_t i = 0; i < cluster.points.size(); ++i) {
     pcl::PointXYZ point = cluster.points.at(i);
-    double dist_closest_point = tier4_autoware_utils::calcDistance2d(point, orig_point);
+    double dist_closest_point = autoware::universe_utils::calcDistance2d(point, orig_point);
     if (min_dist > dist_closest_point) {
       min_dist = dist_closest_point;
       closest_point = pcl::PointXYZ(point.x, point.y, point.z);
