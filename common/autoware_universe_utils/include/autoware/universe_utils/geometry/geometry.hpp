@@ -599,7 +599,7 @@ using PointList = std::vector<Point2d>;
 class Vector2d
 {
 public:
-  Vector2d() : x_(0.0), y_(0.0){};
+  Vector2d() : x_(0.0), y_(0.0) {};
 
   Vector2d(const double x, const double y) : x_(x), y_(y) {}
 
