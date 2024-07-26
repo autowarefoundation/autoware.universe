@@ -30,7 +30,8 @@ public:
    * @brief calculate the output of this PID
    * @param [in] error previous error
    * @param [in] dt time step [s]
-   * @param [in] is_integrated if true, will use the integral component for calculation
+   * @param [in] erase_integral if true, will erase the calculated integral (P (proportional) and I
+   * (integral))
    * @param [out] pid_contributions values of the proportional, integral, and derivative components
    * @return PID output
    * @throw std::runtime_error if gains or limits have not been set
