@@ -49,15 +49,14 @@ using DebugPublisher = autoware::universe_utils::DebugPublisher;
 using DebugDoubleMsg = tier4_debug_msgs::msg::Float64Stamped;
 using DebugStringMsg = tier4_debug_msgs::msg::StringStamped;
 
-enum Action {
-  ADD = 0,
-  DELETE,
-  MOVE,
-};
-
-struct ModuleUpdateInfo
+struct SceneModuleUpdateInfo
 {
-  explicit ModuleUpdateInfo(
+  enum Action {
+    ADD = 0,
+    DELETE,
+    MOVE,
+  };
+  explicit SceneModuleUpdateInfo(
     const SceneModulePtr & module_ptr, const Action & action, const std::string & description)
   : status(module_ptr->getCurrentStatus()),
     action(action),
@@ -66,7 +65,7 @@ struct ModuleUpdateInfo
   {
   }
 
-  explicit ModuleUpdateInfo(
+  explicit SceneModuleUpdateInfo(
     const std::string & name, const Action & action, const ModuleStatus & status,
     const std::string & description)
   : status(status), action(action), module_name(name), description(description)
@@ -80,6 +79,19 @@ struct ModuleUpdateInfo
   std::string module_name;
 
   std::string description;
+};
+
+enum SlotStatus {
+  NORMAL = 0,
+  UPSTREAM_APPROVED_FAILED,
+  UPSTREAM_WAITING_APPROVED,
+  UPSTREAM_EXCLUSIVE_CANDIDATE
+};
+
+struct ModuleUpdateInfo
+{
+  std::vector<SceneModuleUpdateInfo> scene_status;
+  std::vector<SlotStatus> slot_status;
 };
 
 struct SceneModuleStatus
@@ -117,8 +129,10 @@ class SubPlannerManager
 public:
   explicit SubPlannerManager(
     std::shared_ptr<std::optional<lanelet::ConstLanelet>> lanelet,
-    std::vector<ModuleUpdateInfo> & debug_info)
-  : current_route_lanelet_(lanelet), debug_info_(std::ref(debug_info))
+    std::unordered_map<std::string, double> & processing_time, ModuleUpdateInfo & debug_info)
+  : current_route_lanelet_(lanelet),
+    processing_time_(std::ref(processing_time)),
+    debug_info_(std::ref(debug_info))
   {
   }
 
@@ -341,11 +355,13 @@ private:
   // it, it is reflected to later calculations as well
   std::shared_ptr<std::optional<lanelet::ConstLanelet>> current_route_lanelet_{nullptr};
 
+  std::unordered_map<std::string, double> & processing_time_;
+
   std::vector<SceneModulePtr> approved_module_ptrs_;
 
   std::vector<SceneModulePtr> candidate_module_ptrs_;
 
-  std::vector<ModuleUpdateInfo> & debug_info_;
+  ModuleUpdateInfo & debug_info_;
 };
 
 class PlannerManager
@@ -502,7 +518,7 @@ public:
    * @brief check if reroutable approved module is running(namely except for fixed_goal_planner and
    * dynamic_avoidance)
    */
-  bool hasMaybeRerouteApprovedModules(const std::shared_ptr<PlannerData> & data) const;
+  bool hasPossibleRerouteApprovedModules(const std::shared_ptr<PlannerData> & data) const;
 
   /**
    * @brief show planner manager internal condition.
@@ -578,17 +594,15 @@ private:
 
   pluginlib::ClassLoader<SceneModuleManagerInterface> plugin_loader_;
 
-  mutable rclcpp::Logger logger_;
+  rclcpp::Logger logger_;
 
   mutable rclcpp::Clock clock_;
 
-  mutable StopWatch<std::chrono::milliseconds> stop_watch_;
+  std::unordered_map<std::string, double> processing_time_;
 
-  mutable std::unordered_map<std::string, double> processing_time_;
+  ModuleUpdateInfo debug_info_;
 
-  mutable std::vector<ModuleUpdateInfo> debug_info_;
-
-  mutable std::shared_ptr<SceneModuleVisitor> debug_msg_ptr_;
+  std::shared_ptr<SceneModuleVisitor> debug_msg_ptr_;
 };
 }  // namespace autoware::behavior_path_planner
 

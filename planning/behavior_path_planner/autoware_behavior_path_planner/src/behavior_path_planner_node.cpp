@@ -431,7 +431,7 @@ void BehaviorPathPlannerNode::run()
     planner_data_->operation_mode->is_autoware_control_enabled;
   if (
     !controlled_by_autoware_autonomously &&
-    !planner_manager_->hasMaybeRerouteApprovedModules(planner_data_))
+    !planner_manager_->hasPossibleRerouteApprovedModules(planner_data_))
     planner_manager_->resetCurrentRouteLanelet(planner_data_);
 
   // run behavior planner
@@ -560,7 +560,7 @@ void BehaviorPathPlannerNode::publish_reroute_availability() const
   // always-executable module is approved and running, rerouting will not be possible.
   RerouteAvailability is_reroute_available;
   is_reroute_available.stamp = this->now();
-  if (planner_manager_->hasMaybeRerouteApprovedModules(planner_data_)) {
+  if (planner_manager_->hasPossibleRerouteApprovedModules(planner_data_)) {
     is_reroute_available.availability = false;
   } else {
     is_reroute_available.availability = true;

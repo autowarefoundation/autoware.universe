@@ -23,7 +23,7 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <magic_enum.hpp>
 
-#include <boost/format.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <memory>
 #include <string>
@@ -75,7 +75,7 @@ void PlannerManager::configureModuleSlot(
   }
 
   for (const auto & slot : slot_configuration) {
-    SubPlannerManager sub_manager(current_route_lanelet_, debug_info_);
+    SubPlannerManager sub_manager(current_route_lanelet_, processing_time_, debug_info_);
     for (const auto & module_name : slot) {
       if (const auto it = registered_modules.find(module_name); it != registered_modules.end()) {
         sub_manager.addSceneModuleManager(it->second);
@@ -97,8 +97,16 @@ void PlannerManager::configureModuleSlot(
 BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & data)
 {
   resetProcessingTime();
-  stop_watch_.tic("total_time");
-  debug_info_.clear();
+  StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("total_time");
+  BOOST_SCOPE_EXIT((&processing_time_)(&stop_watch))
+  {
+    processing_time_.at("total_time") += stop_watch.toc("total_time", true);
+  }
+  BOOST_SCOPE_EXIT_END;
+
+  debug_info_.scene_status.clear();
+  debug_info_.slot_status.clear();
 
   if (!current_route_lanelet_->has_value()) resetCurrentRouteLanelet(data);
 
@@ -138,7 +146,6 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     RCLCPP_WARN_THROTTLE(
       logger_, clock_, 5000,
       "Ego is out of route, no module is running. Skip running scene modules.");
-    stop_watch_.toc("total_time");
     generateCombinedDrivableArea(result_output, data);
     return result_output;
   }
@@ -156,12 +163,16 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     if (result_output.is_upstream_failed_approved) {
       // clear all candidate/approved modules of all subsequent slots, and keep result_output as is
       planner_manager_slot.propagateWithFailedApproved();
+      debug_info_.slot_status.push_back(SlotStatus::UPSTREAM_APPROVED_FAILED);
     } else if (result_output.is_upstream_waiting_approved) {
       result_output = planner_manager_slot.propagateWithWaitingApproved(data, result_output);
+      debug_info_.slot_status.push_back(SlotStatus::UPSTREAM_WAITING_APPROVED);
     } else if (result_output.is_upstream_candidate_exclusive) {
       result_output = planner_manager_slot.propagateWithExclusiveCandidate(data, result_output);
+      debug_info_.slot_status.push_back(SlotStatus::UPSTREAM_EXCLUSIVE_CANDIDATE);
     } else {
       result_output = planner_manager_slot.propagateFull(data, result_output);
+      debug_info_.slot_status.push_back(SlotStatus::NORMAL);
     }
   }
 
@@ -171,7 +182,6 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
   });
 
   generateCombinedDrivableArea(result_output.valid_output, data);
-  processing_time_.at("total_time") = stop_watch_.toc("total_time", true);
   return result_output.valid_output;
 }
 
@@ -279,10 +289,11 @@ void PlannerManager::publishDebugRootReferencePath(
   debug_publisher_ptr_->publish<MarkerArray>("root_reference_path", array);
 }
 
-bool PlannerManager::hasMaybeRerouteApprovedModules(const std::shared_ptr<PlannerData> & data) const
+bool PlannerManager::hasPossibleRerouteApprovedModules(
+  const std::shared_ptr<PlannerData> & data) const
 {
   const auto & approved_module = approved_modules();
-  const auto not_maybe_reroute_module = [&](const SceneModulePtr m) {
+  const auto not_possible_reroute_module = [&](const SceneModulePtr m) {
     if (m->name() == "dynamic_avoidance") {
       return false;
     }
@@ -292,7 +303,7 @@ bool PlannerManager::hasMaybeRerouteApprovedModules(const std::shared_ptr<Planne
     return true;
   };
 
-  return std::any_of(approved_module.begin(), approved_module.end(), not_maybe_reroute_module);
+  return std::any_of(approved_module.begin(), approved_module.end(), not_possible_reroute_module);
 }
 
 void PlannerManager::print() const
@@ -319,21 +330,43 @@ void PlannerManager::print() const
 
   string_stream << "\n";
   string_stream << "approved modules  : ";
-  for (const auto & m : approved_module_ptrs) {
-    string_stream << "[" << m->name() << "(" << get_status(m) << ")"
-                  << "]->";
+  std::string delimiter = "";
+  for (const auto & planner_manager_slot : planner_manager_slots_) {
+    string_stream << std::exchange(delimiter, " ==> ") << "[[ ";
+    std::string delimiter_sub = "";
+    for (const auto & m : planner_manager_slot.approved_modules()) {
+      string_stream << std::exchange(delimiter_sub, "->") << "[" << m->name() << "("
+                    << get_status(m) << ")"
+                    << "]";
+    }
+    string_stream << " ]]";
   }
 
   string_stream << "\n";
-  string_stream << "candidate module  : ";
-  for (const auto & m : candidate_module_ptrs) {
-    string_stream << "[" << m->name() << "(" << get_status(m) << ")"
-                  << "]->";
+  string_stream << "candidate modules : ";
+  delimiter = "";
+  for (const auto & planner_manager_slot : planner_manager_slots_) {
+    string_stream << std::exchange(delimiter, " ==> ") << "[[ ";
+    std::string delimiter_sub = "";
+    for (const auto & m : planner_manager_slot.candidate_modules()) {
+      string_stream << std::exchange(delimiter_sub, "->") << "[" << m->name() << "("
+                    << get_status(m) << ")"
+                    << "]";
+    }
+    string_stream << " ]]";
+  }
+
+  string_stream << "\n";
+  string_stream << "slot_status       : ";
+  delimiter = "";
+  for (const auto & slot_status : debug_info_.slot_status) {
+    string_stream << std::exchange(delimiter, "->") << "[" << magic_enum::enum_name(slot_status)
+                  << "]";
   }
 
   string_stream << "\n";
   string_stream << "update module info: ";
-  for (const auto & i : debug_info_) {
+  for (const auto & i : debug_info_.scene_status) {
     string_stream << "[Module:" << i.module_name << " Status:" << magic_enum::enum_name(i.status)
                   << " Action:" << magic_enum::enum_name(i.action)
                   << " Description:" << i.description << "]\n"
@@ -383,8 +416,16 @@ std::vector<SceneModulePtr> SubPlannerManager::getRequestModules(
   const std::vector<SceneModulePtr> & deleted_modules) const
 {
   std::vector<SceneModulePtr> request_modules{};
+  StopWatch<std::chrono::milliseconds> stop_watch;
 
   for (const auto & manager_ptr : manager_ptrs_) {
+    stop_watch.tic(manager_ptr->name());
+    BOOST_SCOPE_EXIT((&manager_ptr)(&processing_time_)(&stop_watch))
+    {
+      processing_time_.at(manager_ptr->name()) += stop_watch.toc(manager_ptr->name(), true);
+    }
+    BOOST_SCOPE_EXIT_END;
+
     if (const auto deleted_it = std::find_if(
           deleted_modules.begin(), deleted_modules.end(),
           [&](const auto & m) { return m->name() == manager_ptr->name(); });
@@ -498,7 +539,8 @@ SceneModulePtr SubPlannerManager::selectHighestPriorityModule(
 void SubPlannerManager::clearApprovedModules()
 {
   std::for_each(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [this](auto & m) {
-    debug_info_.emplace_back(m, Action::DELETE, "From Approved");
+    debug_info_.scene_status.emplace_back(
+      m, SceneModuleUpdateInfo::Action::DELETE, "From Approved");
     deleteExpiredModules(m);
   });
   approved_module_ptrs_.clear();
@@ -694,6 +736,9 @@ BehaviorModuleOutput SubPlannerManager::run(
   const SceneModulePtr & module_ptr, const std::shared_ptr<PlannerData> & planner_data,
   const BehaviorModuleOutput & previous_module_output) const
 {
+  StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic(module_ptr->name());
+
   module_ptr->setData(planner_data);
   module_ptr->setPreviousModuleOutput(previous_module_output);
 
@@ -709,6 +754,7 @@ BehaviorModuleOutput SubPlannerManager::run(
 
   module_ptr->publishObjectsOfInterestMarker();
 
+  processing_time_.at(module_ptr->name()) += stop_watch.toc(module_ptr->name(), true);
   return result;
 }
 
@@ -756,8 +802,9 @@ SlotOutput SubPlannerManager::runApprovedModules(
     std::for_each(
       waiting_approval_modules_itr, approved_module_ptrs_.end(),
       [&results](const auto & m) { results.erase(m->name()); });
-    debug_info_.emplace_back(
-      *waiting_approval_modules_itr, Action::MOVE, "Back To Waiting Approval");
+    debug_info_.scene_status.emplace_back(
+      *waiting_approval_modules_itr, SceneModuleUpdateInfo::Action::MOVE,
+      "Back To Waiting Approval");
     approved_module_ptrs_.erase(waiting_approval_modules_itr);
 
     std::for_each(
@@ -779,7 +826,8 @@ SlotOutput SubPlannerManager::runApprovedModules(
     // delete both subsequent result and modules
     std::for_each(failed_itr, approved_module_ptrs_.end(), [&](auto & m) {
       results.erase(m->name());
-      debug_info_.emplace_back(m, Action::DELETE, "From Approved");
+      debug_info_.scene_status.emplace_back(
+        m, SceneModuleUpdateInfo::Action::DELETE, "From Approved");
       deleteExpiredModules(m);
     });
     approved_module_ptrs_.erase(failed_itr, approved_module_ptrs_.end());
@@ -819,7 +867,8 @@ SlotOutput SubPlannerManager::runApprovedModules(
        success_itr != approved_module_ptrs_.end();
        /* success_itr++ */) {
     if ((*success_itr)->getCurrentStatus() == ModuleStatus::SUCCESS) {
-      debug_info_.emplace_back(*success_itr, Action::DELETE, "From Approved");
+      debug_info_.scene_status.emplace_back(
+        *success_itr, SceneModuleUpdateInfo::Action::DELETE, "From Approved");
       deleteExpiredModules(*success_itr);
       success_itr = approved_module_ptrs_.erase(success_itr);
     } else {
