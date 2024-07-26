@@ -29,6 +29,8 @@
 
 namespace autoware::freespace_planning_algorithms
 {
+geometry_msgs::msg::Pose transformPose(
+  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::TransformStamped & transform);
 int discretizeAngle(const double theta, const int theta_size);
 
 struct IndexXYT

@@ -23,6 +23,8 @@
 #include <nav_msgs/msg/path.hpp>
 #include <std_msgs/msg/header.hpp>
 
+#include <boost/optional/optional.hpp>
+
 #include <cmath>
 #include <functional>
 #include <iostream>
@@ -132,6 +134,7 @@ private:
   void setStartNode(const double cost_offset = 0.0);
   double estimateCost(const Pose & pose, const IndexXYT & index) const;
   bool isGoal(const AstarNode & node) const;
+  void setShiftedGoalPose(const Pose & goal_pose, const double lat_offset) const;
   Pose node2pose(const AstarNode & node) const;
 
   double getExpansionDistance(const AstarNode & current_node) const;
@@ -151,6 +154,8 @@ private:
 
   // goal node, which may helpful in testing and debugging
   AstarNode * goal_node_;
+
+  mutable boost::optional<Pose> shifted_goal_pose_;
 
   // alternate goals for when multiple goal candidates are given
   std::vector<Pose> alternate_goals_;

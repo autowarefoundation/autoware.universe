@@ -14,11 +14,16 @@
 
 #include "autoware/freespace_planning_algorithms/astar_search.hpp"
 
+#include "autoware/freespace_planning_algorithms/abstract_algorithm.hpp"
 #include "autoware/freespace_planning_algorithms/kinematic_bicycle_model.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 
+#include <geometry_msgs/msg/detail/point__struct.hpp>
+#include <geometry_msgs/msg/detail/quaternion__struct.hpp>
+
+#include <tf2/LinearMath/Transform.h>
 #include <tf2/utils.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -109,6 +114,7 @@ void AstarSearch::resetData()
   graph_.resize(total_astar_node_count);
   col_free_distance_map_.clear();
   col_free_distance_map_.resize(nb_of_grid_nodes, std::numeric_limits<double>::max());
+  shifted_goal_pose_ = {};
 }
 
 bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
@@ -391,6 +397,11 @@ void AstarSearch::setPath(const AstarNode & goal_node)
   geometry_msgs::msg::PoseStamped pose;
   pose.header = header;
 
+  if (shifted_goal_pose_) {
+    pose.pose = local2global(costmap_, shifted_goal_pose_.get());
+    waypoints.push_back({pose, goal_node.is_back});
+  }
+
   const auto interpolate = [this, &waypoints, &pose](const AstarNode & node) {
     if (node.parent == nullptr || !astar_param_.adapt_expansion_distance) return;
     const auto parent_pose = node2pose(*node.parent);
@@ -448,8 +459,8 @@ bool AstarSearch::isGoal(const AstarNode & node) const
 
   const auto node_pose = node2pose(node);
 
-  auto checkGoal = [this, &node_pose, &lateral_goal_range, &longitudinal_goal_range,
-                    &goal_angle](const Pose & pose) {
+  auto checkGoal = [this, &node_pose, &lateral_goal_range, &longitudinal_goal_range, &goal_angle,
+                    &is_back = node.is_back](const Pose & pose) {
     const auto node_index = pose2index(costmap_, node_pose, planner_common_param_.theta_size);
     const auto goal_index = pose2index(costmap_, pose, planner_common_param_.theta_size);
 
@@ -457,7 +468,9 @@ bool AstarSearch::isGoal(const AstarNode & node) const
 
     const auto relative_pose = calcRelativePose(pose, node_pose);
 
-    if (astar_param_.only_behind_solutions && relative_pose.position.x > 0) {
+    bool is_behind_goal = relative_pose.position.x <= 0.0;
+
+    if (astar_param_.only_behind_solutions && !is_behind_goal) {
       return false;
     }
 
@@ -473,6 +486,10 @@ bool AstarSearch::isGoal(const AstarNode & node) const
       return false;
     }
 
+    if (is_behind_goal != is_back) {
+      setShiftedGoalPose(pose, relative_pose.position.y);
+    }
+
     return true;
   };
 
@@ -481,6 +498,22 @@ bool AstarSearch::isGoal(const AstarNode & node) const
   return std::any_of(
     alternate_goals_.begin(), alternate_goals_.end(),
     [&checkGoal](const Pose & pose) { return checkGoal(pose); });
+}
+
+void AstarSearch::setShiftedGoalPose(const Pose & goal_pose, const double lat_offset) const
+{
+  tf2::Transform tf;
+  tf2::convert(goal_pose, tf);
+
+  geometry_msgs::msg::TransformStamped transform;
+  transform.transform = tf2::toMsg(tf);
+
+  Pose lat_pose;
+  lat_pose.position = geometry_msgs::build<geometry_msgs::msg::Point>().x(0.0).y(lat_offset).z(0.0);
+  lat_pose.orientation =
+    geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(0.0).w(1.0);
+
+  shifted_goal_pose_ = transformPose(lat_pose, transform);
 }
 
 Pose AstarSearch::node2pose(const AstarNode & node) const
