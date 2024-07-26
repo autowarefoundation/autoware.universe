@@ -60,7 +60,7 @@ struct AstarNode
   double theta;                          // theta
   double gc = 0.0;                       // actual motion cost
   double fc = 0.0;                       // total node cost
-  double dir_distance = 0.0;             // distance travelled from last direction change
+  double dir_distance = 0.0;             // distance traveled from last direction change
   double dist_to_goal = 0.0;             // euclidean distance to goal pose
   double dist_to_obs = 0.0;              // euclidean distance to nearest obstacle
   int steering_index;                    // steering index

@@ -21,6 +21,8 @@
 
 #include <tf2/utils.h>
 
+#include <limits>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -106,18 +108,16 @@ bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
 
   if (!setStartNode()) {
     throw std::logic_error("Invalid start pose");
-    return false;
   }
 
   if (detectCollision(goal_pose_)) {
     throw std::logic_error("Invalid goal pose");
-    return false;
   }
 
   if (!search()) {
     throw std::logic_error("HA* failed to find path to goal");
-    return false;
   }
+
   return true;
 }
 
@@ -126,12 +126,11 @@ void AstarSearch::resetData()
   // clearing openlist is necessary because otherwise remaining elements of openlist
   // point to deleted node.
   openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
-  graph_.clear();
   int nb_of_grid_nodes = costmap_.info.width * costmap_.info.height;
   int total_astar_node_count = nb_of_grid_nodes * planner_common_param_.theta_size;
-  graph_.resize(total_astar_node_count);
-  col_free_distance_map_.clear();
-  col_free_distance_map_.resize(nb_of_grid_nodes, std::numeric_limits<double>::max());
+  graph_ = std::vector<AstarNode>(total_astar_node_count);
+  col_free_distance_map_ =
+    std::vector<double>(nb_of_grid_nodes, std::numeric_limits<double>::max());
 }
 
 void AstarSearch::setCollisionFreeDistanceMap()
