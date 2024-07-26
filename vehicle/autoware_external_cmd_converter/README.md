@@ -3,12 +3,16 @@
 `external_cmd_converter` is a node that converts desired mechanical input to acceleration and velocity by using accel/brake map.
 
 ## Algorithm
+
 ### How to calculate reference acceleration and velocity
+
 A reference acceleration and velocity are derived from the throttle and brake values of external control commands.
+
 #### Reference Acceleration
-A reference acceleration is calculated from accel_brake_map besed on values of a desired_pedal and a current velocity;
+
+A reference acceleration is calculated from accel*brake_map besed on values of a desired_pedal and a current velocity;
 $$ pedal_d = throttle_d - brake_d, $$
-$$ acc_{ref} = Acc(pedal_d, v_{x,current}). $$
+$$ acc*{ref} = Acc(pedal*d, v*{x,current}). $$
 
 | Parameter       | Description                                                                               |
 | --------------- | ----------------------------------------------------------------------------------------- |
@@ -16,10 +20,16 @@ $$ acc_{ref} = Acc(pedal_d, v_{x,current}). $$
 | $brake_d$       | brake value of external control command (`~/in/external_control_cmd.control.brake`)       |
 | $v_{x,current}$ | current longitudinal velocity (`~/in/odometry.twist.twist.linear.x`)                      |
 | Acc             | accel_brake_map                                                                           |
+
 #### Reference Velocity
+
 A reference velocity is calculated based on a current velocity and a reference acceleration:
-$$ v_{ref} =
-    v_{x,current} + k_{v_{ref}} \cdot \text{sign}_{gear} \cdot acc_{ref}.$$
+
+$$
+v_{ref} =
+    v_{x,current} + k_{v_{ref}} \cdot \text{sign}_{gear} \cdot acc_{ref}.
+$$
+
 | Parameter            | Description                                                           |
 | -------------------- | --------------------------------------------------------------------- |
 | $acc_{ref}$          | reference acceleration                                                |
