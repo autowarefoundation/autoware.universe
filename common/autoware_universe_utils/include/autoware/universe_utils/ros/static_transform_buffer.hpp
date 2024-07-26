@@ -113,6 +113,10 @@ public:
     rclcpp::Node * node, const std::string & target_frame,
     const sensor_msgs::msg::PointCloud2 & cloud_in, sensor_msgs::msg::PointCloud2 & cloud_out)
   {
+    if (target_frame == cloud_in.header.frame_id) {
+      cloud_out = cloud_in;
+      return true;
+    }
     if (
       pcl::getFieldIndex(cloud_in, "x") == -1 || pcl::getFieldIndex(cloud_in, "y") == -1 ||
       pcl::getFieldIndex(cloud_in, "z") == -1) {
