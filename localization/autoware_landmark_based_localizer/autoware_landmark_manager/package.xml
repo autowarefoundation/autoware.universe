@@ -19,6 +19,7 @@
   <build_depend>eigen</build_depend>
 
   <depend>autoware_lanelet2_extension</depend>
+  <depend>autoware_universe_utils</depend>
   <depend>autoware_map_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>localization_util</depend>
