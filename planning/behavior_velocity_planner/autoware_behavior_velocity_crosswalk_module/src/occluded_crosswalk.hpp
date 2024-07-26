@@ -80,7 +80,7 @@ double calculate_detection_range(
 /// @return selected and inflated objects
 std::vector<autoware_perception_msgs::msg::PredictedObject> select_and_inflate_objects(
   const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects,
-  const double velocity_threshold, const bool skip_pedestrians, const double inflate_size);
+  const double & velocity_threshold, const bool skip_pedestrians, const double inflate_size);
 
 /// @brief clear occlusions behind the given objects
 /// @details masks behind the object assuming rays from the center of the grid map
