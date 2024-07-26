@@ -16,6 +16,9 @@
 #define AUTOWARE__TENSORRT_YOLOX__UTILS_HPP_
 #include <opencv2/opencv.hpp>
 
+#include <utility>
+#include <vector>
+
 namespace autoware::tensorrt_yolox
 {
 std::vector<std::pair<uint8_t, int>> runLengthEncoder(const cv::Mat & mask);
