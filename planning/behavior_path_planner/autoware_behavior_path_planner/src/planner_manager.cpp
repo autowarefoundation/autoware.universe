@@ -900,8 +900,10 @@ SlotOutput SubPlannerManager::propagateFull(
 
     // these status needs to be propagated to downstream slots
     // if any of the slots returned following statuses, keep it
-    is_waiting_approved_slot |= approved_module_result.is_upstream_waiting_approved;
-    is_failed_approved_slot |= approved_module_result.is_upstream_failed_approved;
+    is_waiting_approved_slot =
+      is_waiting_approved_slot || approved_module_result.is_upstream_waiting_approved;
+    is_failed_approved_slot =
+      is_failed_approved_slot || approved_module_result.is_upstream_failed_approved;
 
     const auto request_modules = getRequestModules(approved_module_output, deleted_modules);
     if (request_modules.empty()) {
