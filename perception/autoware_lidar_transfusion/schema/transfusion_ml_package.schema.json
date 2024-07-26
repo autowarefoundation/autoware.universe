@@ -50,13 +50,7 @@
           "minimum": 1
         }
       },
-      "required": [
-        "class_names",
-        "voxels_num",
-        "point_cloud_range",
-        "voxel_size",
-        "num_proposals"
-      ],
+      "required": ["class_names", "voxels_num", "point_cloud_range", "voxel_size", "num_proposals"],
       "additionalProperties": false
     }
   },
