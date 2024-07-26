@@ -20,6 +20,7 @@
   <depend>autoware_lidar_centerpoint</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_point_types</depend>
+  <depend>autoware_tensorrt_yolox</depend>
   <depend>autoware_universe_utils</depend>
   <depend>cv_bridge</depend>
   <depend>image_geometry</depend>

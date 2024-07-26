@@ -16,6 +16,7 @@
 
 #include "autoware/image_projection_based_fusion/utils/geometry.hpp"
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
+#include "autoware/tensorrt_yolox/utils.hpp"
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -38,6 +39,8 @@ SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptio
     RCLCPP_INFO(
       this->get_logger(), "filter_semantic_label_target: %s %d", item.first.c_str(), item.second);
   }
+  is_publish_debug_mask_ = declare_parameter<bool>("is_publish_debug_mask");
+  pub_debug_mask_ptr_ = image_transport::create_publisher(this, "debug/mask");
 }
 
 void SegmentPointCloudFusionNode::preprocess(__attribute__((unused)) PointCloud2 & pointcloud_msg)
@@ -48,32 +51,6 @@ void SegmentPointCloudFusionNode::preprocess(__attribute__((unused)) PointCloud2
 void SegmentPointCloudFusionNode::postprocess(__attribute__((unused)) PointCloud2 & pointcloud_msg)
 {
   return;
-}
-cv::Mat SegmentPointCloudFusionNode::rle_decompress(
-  const std::vector<uint8_t> & rle_data, const int rows, const int cols)
-{
-  cv::Mat mask(rows, cols, CV_8UC1, cv::Scalar(0));
-  int idx = 0;
-  int step = sizeof(uint8_t) + sizeof(int);
-  int nb_pixels = 0;
-  for (size_t i = 0; i < rle_data.size(); i += step) {
-    uint8_t value;
-    int length;
-    std::memcpy(&value, &rle_data[i], sizeof(uint8_t));
-    std::memcpy(&length, &rle_data[i + sizeof(uint8_t)], sizeof(int));
-    nb_pixels += length;
-    for (int j = 0; j < length; ++j) {
-      int row_idx = static_cast<int>(idx / cols);
-      int col_idx = static_cast<int>(idx % cols);
-      mask.at<uint8_t>(row_idx, col_idx) = value;
-      idx++;
-      if (idx > rows * cols) {
-        RCLCPP_ERROR(this->get_logger(), "RLE decompression error: idx out of bound");
-        break;
-      }
-    }
-  }
-  return mask;
 }
 void SegmentPointCloudFusionNode::fuseOnSingleImage(
   const PointCloud2 & input_pointcloud_msg, __attribute__((unused)) const std::size_t image_id,
@@ -86,9 +63,20 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   if (input_mask.height == 0 || input_mask.width == 0) {
     return;
   }
-  cv::Mat mask = SegmentPointCloudFusionNode::rle_decompress(
+  cv::Mat mask = autoware::tensorrt_yolox::runLengthDecoder(
     input_mask.data, input_mask.height, input_mask.width);
-
+  // publish debug mask
+  if (is_publish_debug_mask_) {
+    sensor_msgs::msg::Image::SharedPtr debug_mask_msg =
+      cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", mask).toImageMsg();
+    debug_mask_msg->header = input_mask.header;
+    pub_debug_mask_ptr_.publish(debug_mask_msg);
+  }
+  Eigen::Matrix4d projection;
+  projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2), camera_info.p.at(3),
+    camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6), camera_info.p.at(7),
+    camera_info.p.at(8), camera_info.p.at(9), camera_info.p.at(10), camera_info.p.at(11), 0.0, 0.0,
+    0.0, 1.0;
   const int orig_width = camera_info.width;
   const int orig_height = camera_info.height;
   // resize mask to the same size as the camera image
