@@ -37,11 +37,11 @@
 namespace autoware::lidar_marker_localizer
 {
 
-  landmark_manager::Landmark get_nearest_landmark(
-    const geometry_msgs::msg::Pose & self_pose,
-    const std::vector<landmark_manager::Landmark> & landmarks);
-  std::array<double, 36> rotate_covariance(
-    const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation);
+landmark_manager::Landmark get_nearest_landmark(
+  const geometry_msgs::msg::Pose & self_pose,
+  const std::vector<landmark_manager::Landmark> & landmarks);
+std::array<double, 36> rotate_covariance(
+  const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation);
 
 LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_options)
 : Node("lidar_marker_localizer", node_options), is_activated_(false)
