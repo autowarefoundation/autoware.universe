@@ -58,7 +58,7 @@ struct AstarNode
   double theta;                          // theta
   double gc = 0;                         // actual motion cost
   double fc = 0;                         // total node cost
-  double dir_distance = 0;               // distance travelled from last direction change
+  double dir_distance = 0;               // distance traveled from last direction change
   int steering_index;                    // steering index
   bool is_back;                          // true if the current direction of the vehicle is back
   AstarNode * parent = nullptr;          // parent node
