@@ -37,6 +37,12 @@
 namespace autoware::lidar_marker_localizer
 {
 
+  landmark_manager::Landmark get_nearest_landmark(
+    const geometry_msgs::msg::Pose & self_pose,
+    const std::vector<landmark_manager::Landmark> & landmarks);
+  std::array<double, 36> rotate_covariance(
+    const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation);
+
 LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_options)
 : Node("lidar_marker_localizer", node_options), is_activated_(false)
 {
@@ -105,7 +111,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
   pub_marker_detected_ = this->create_publisher<PoseArray>("~/debug/marker_detected", 10);
   pub_debug_pose_with_covariance_ =
     this->create_publisher<PoseWithCovarianceStamped>("~/debug/pose_with_covariance", 10);
-  pub_marker_pointcloud = this->create_publisher<PointCloud2>("~/debug/marker_pointcloud", 10);
+  pub_marker_pointcloud_ = this->create_publisher<PointCloud2>("~/debug/marker_pointcloud", 10);
   service_trigger_node_ = this->create_service<SetBool>(
     "~/service/trigger_node_srv",
     std::bind(&LidarMarkerLocalizer::service_trigger_node, this, _1, _2),
@@ -133,9 +139,9 @@ void LidarMarkerLocalizer::initialize_diagnostics()
     param_.limit_distance_from_self_pose_to_marker);
 }
 
-void LidarMarkerLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & msg)
+void LidarMarkerLocalizer::map_bin_callback(const HADMapBin::ConstSharedPtr & map_bin_msg_ptr)
 {
-  landmark_manager_.parse_landmarks(msg, param_.marker_name);
+  landmark_manager_.parse_landmarks(map_bin_msg_ptr, param_.marker_name);
   const MarkerArray marker_msg = landmark_manager_.get_landmarks_as_marker_array_msg();
   pub_marker_mapped_->publish(marker_msg);
 }
@@ -159,11 +165,13 @@ void LidarMarkerLocalizer::self_pose_callback(
 
 void LidarMarkerLocalizer::points_callback(const PointCloud2::ConstSharedPtr & points_msg_ptr)
 {
+  const auto sensor_ros_time = points_msg_ptr->header.stamp;
+
   initialize_diagnostics();
 
-  main_process(std::move(points_msg_ptr));
+  main_process(points_msg_ptr);
 
-  diagnostics_module_->publish(points_msg_ptr->header.stamp);
+  diagnostics_module_->publish(sensor_ros_time);
 }
 
 void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & points_msg_ptr)
@@ -309,7 +317,6 @@ void LidarMarkerLocalizer::service_trigger_node(
   is_activated_ = req->data;
   if (is_activated_) {
     ekf_pose_buffer_->clear();
-  } else {
   }
   res->success = true;
 }
@@ -400,14 +407,14 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
           // check positive
           if (
             average_intensity[i + j] >
-            center_intensity + param_.match_intensity_difference_threshold) {
+            center_intensity + static_cast<double>(param_.match_intensity_difference_threshold)) {
             pos++;
           }
         } else if (param_.intensity_pattern[j] == -1) {
           // check negative
           if (
             average_intensity[i + j] <
-            center_intensity - param_.match_intensity_difference_threshold) {
+            center_intensity - static_cast<double>(param_.match_intensity_difference_threshold)) {
             neg++;
           }
         } else {
@@ -441,9 +448,9 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   return detected_landmarks;
 }
 
-landmark_manager::Landmark LidarMarkerLocalizer::get_nearest_landmark(
+landmark_manager::Landmark get_nearest_landmark(
   const geometry_msgs::msg::Pose & self_pose,
-  const std::vector<landmark_manager::Landmark> & landmarks) const
+  const std::vector<landmark_manager::Landmark> & landmarks)
 {
   landmark_manager::Landmark nearest_landmark;
   double min_distance = std::numeric_limits<double>::max();
@@ -462,8 +469,8 @@ landmark_manager::Landmark LidarMarkerLocalizer::get_nearest_landmark(
   return nearest_landmark;
 }
 
-std::array<double, 36> LidarMarkerLocalizer::rotate_covariance(
-  const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation) const
+std::array<double, 36> rotate_covariance(
+  const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation)
 {
   std::array<double, 36> ret_covariance = src_covariance;
 
@@ -485,7 +492,8 @@ std::array<double, 36> LidarMarkerLocalizer::rotate_covariance(
 }
 
 void LidarMarkerLocalizer::save_intensity(
-  const PointCloud2::ConstSharedPtr & points_msg_ptr, const Pose marker_pose)
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr,
+  const geometry_msgs::msg::Pose marker_pose)
 {
   if (!param_.enable_save_log) {
     return;
@@ -499,7 +507,7 @@ void LidarMarkerLocalizer::save_intensity(
   pcl::PointCloud<autoware_point_types::PointXYZIRC>::Ptr marker_points_ptr(
     new pcl::PointCloud<autoware_point_types::PointXYZIRC>);
   pcl::PointCloud<pcl::PointXYZI>::Ptr marker_points_xyzi_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-  std::vector<int> ring_array;
+  std::vector<int> ring_array{};
 
   // extract marker pointcloud
   for (const autoware_point_types::PointXYZIRC & point : points_ptr->points) {
@@ -545,10 +553,10 @@ void LidarMarkerLocalizer::save_intensity(
 
   // create file name
   const double times_seconds = rclcpp::Time(points_msg_ptr->header.stamp).seconds();
-  double time_integer_tmp;
+  double time_integer_tmp = 0.0;
   double time_decimal = std::modf(times_seconds, &time_integer_tmp);
-  long int time_integer = static_cast<long int>(time_integer_tmp);
-  struct tm * time_info;
+  auto time_integer = static_cast<int64_t>(time_integer_tmp);
+  struct tm * time_info{};
   time_info = std::localtime(&time_integer);
   std::stringstream file_name;
   file_name << param_.savefile_name << std::put_time(time_info, "%Y%m%d-%H%M%S") << "-"
@@ -568,12 +576,12 @@ void LidarMarkerLocalizer::save_intensity(
   marker_points_sensor_frame_ptr->height = 1;
   marker_points_sensor_frame_ptr->is_dense = false;
 
-  PointCloud2 viz_pointcloud_msg;
+  sensor_msgs::msg::PointCloud2 viz_pointcloud_msg;
   pcl::toROSMsg(*marker_points_sensor_frame_ptr, viz_pointcloud_msg);
   viz_pointcloud_msg.header = points_msg_ptr->header;
   viz_pointcloud_msg.header.frame_id = param_.save_frame_id;
 
-  pub_marker_pointcloud->publish(viz_pointcloud_msg);
+  pub_marker_pointcloud_->publish(viz_pointcloud_msg);
 }
 
 template <typename PointType>

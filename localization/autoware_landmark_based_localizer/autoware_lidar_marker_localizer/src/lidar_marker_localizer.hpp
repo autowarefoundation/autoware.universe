@@ -94,12 +94,12 @@ class LidarMarkerLocalizer : public rclcpp::Node
   };
 
 public:
-  LidarMarkerLocalizer(const rclcpp::NodeOptions & node_options);
+  explicit LidarMarkerLocalizer(const rclcpp::NodeOptions & node_options);
 
 private:
   void self_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & self_pose_msg_ptr);
   void points_callback(const PointCloud2::ConstSharedPtr & points_msg_ptr);
-  void map_bin_callback(const HADMapBin::ConstSharedPtr & msg);
+  void map_bin_callback(const HADMapBin::ConstSharedPtr & map_bin_msg_ptr);
   void service_trigger_node(
     const SetBool::Request::SharedPtr req, SetBool::Response::SharedPtr res);
 
@@ -107,12 +107,9 @@ private:
   void main_process(const PointCloud2::ConstSharedPtr & points_msg_ptr);
   std::vector<landmark_manager::Landmark> detect_landmarks(
     const PointCloud2::ConstSharedPtr & points_msg_ptr);
-  landmark_manager::Landmark get_nearest_landmark(
-    const geometry_msgs::msg::Pose & self_pose,
-    const std::vector<landmark_manager::Landmark> & landmarks) const;
-  std::array<double, 36> rotate_covariance(
-    const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation) const;
-  void save_intensity(const PointCloud2::ConstSharedPtr & points_msg_ptr, const Pose marker_pose);
+  void save_intensity(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr,
+    const geometry_msgs::msg::Pose marker_pose);
 
   template <typename PointType>
   void transform_sensor_measurement(
@@ -133,7 +130,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_mapped_;
   rclcpp::Publisher<PoseArray>::SharedPtr pub_marker_detected_;
   rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pub_debug_pose_with_covariance_;
-  rclcpp::Publisher<PointCloud2>::SharedPtr pub_marker_pointcloud;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_marker_pointcloud_;
 
   std::shared_ptr<DiagnosticsModule> diagnostics_module_;
 
