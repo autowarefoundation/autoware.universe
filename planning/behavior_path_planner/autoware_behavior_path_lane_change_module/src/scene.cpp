@@ -1202,18 +1202,16 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
       continue;
     }
 
-    if (
-      check_optional_polygon(object, lanes_polygon.expanded_target) && is_before_terminal()) {
+    if (check_optional_polygon(object, lanes_polygon.expanded_target) && is_before_terminal()) {
       const auto ahead_of_ego =
         utils::lane_change::is_ahead_of_ego(common_data_ptr_, current_lanes_ref_path, object);
-      if(object.kinematics.initial_twist_with_covariance.twist.linear.x < 1.0){
-      if (ahead_of_ego) {
-        target_lane_leading_objects.push_back(object);
-      } else {
-        target_lane_trailing_objects.push_back(object);
-      }
-      continue;
-
+      if (object.kinematics.initial_twist_with_covariance.twist.linear.x < 1.0) {
+        if (ahead_of_ego) {
+          target_lane_leading_objects.push_back(object);
+        } else {
+          target_lane_trailing_objects.push_back(object);
+        }
+        continue;
       }
     }
 

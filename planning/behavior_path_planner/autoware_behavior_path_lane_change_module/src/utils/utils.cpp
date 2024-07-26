@@ -1232,8 +1232,8 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
   std::vector<lanelet::BasicPolygon2d> difference;
   boost::geometry::difference(*expanded_target_polygon, *lanes_polygon.target, difference);
 
-  if(!difference.empty()){
-  lanes_polygon.expanded_target = std::make_optional<lanelet::BasicPolygon2d>(difference.front());
+  if (!difference.empty()) {
+    lanes_polygon.expanded_target = std::make_optional<lanelet::BasicPolygon2d>(difference.front());
   }
 
   const auto & route_handler = *common_data_ptr->route_handler_ptr;
