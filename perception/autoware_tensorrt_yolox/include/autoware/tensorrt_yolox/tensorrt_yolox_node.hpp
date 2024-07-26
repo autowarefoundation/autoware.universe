@@ -71,7 +71,6 @@ class TrtYoloXNode : public rclcpp::Node
 
 public:
   explicit TrtYoloXNode(const rclcpp::NodeOptions & node_options);
-  std::vector<std::pair<uint8_t, int>> rle_compress(const cv::Mat & mask);
 
 private:
   void onConnect();
