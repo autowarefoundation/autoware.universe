@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gyro_bias_estimation_module.hpp"
+#include "autoware/imu_corrector/gyro_bias_estimation_module.hpp"
 
-#include "autoware/universe_utils/geometry/geometry.hpp"
-
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-namespace imu_corrector
+namespace autoware::imu_corrector
 {
 
 /**
@@ -116,4 +115,4 @@ geometry_msgs::msg::Vector3 GyroBiasEstimationModule::get_bias_base_link() const
   return gyro_bias_base;
 }
 
-}  // namespace imu_corrector
+}  // namespace autoware::imu_corrector

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../src/gyro_bias_estimation_module.hpp"
+#include "../include/autoware/imu_corrector/gyro_bias_estimation_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <gtest/gtest.h>
 
-namespace imu_corrector
+namespace autoware::imu_corrector
 {
 class GyroBiasEstimationModuleTest : public ::testing::Test
 {
@@ -88,4 +88,4 @@ TEST_F(GyroBiasEstimationModuleTest, GetInsufficientDataExceptionWhenVehicleMovi
     ASSERT_THROW(module.update_bias(pose_list, gyro_list), std::runtime_error);
   }
 }
-}  // namespace imu_corrector
+}  // namespace autoware::imu_corrector

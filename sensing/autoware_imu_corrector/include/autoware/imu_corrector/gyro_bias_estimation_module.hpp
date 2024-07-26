@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GYRO_BIAS_ESTIMATION_MODULE_HPP_
-#define GYRO_BIAS_ESTIMATION_MODULE_HPP_
+#ifndef AUTOWARE__IMU_CORRECTOR__GYRO_BIAS_ESTIMATION_MODULE_HPP_
+#define AUTOWARE__IMU_CORRECTOR__GYRO_BIAS_ESTIMATION_MODULE_HPP_
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/vector3_stamped.hpp>
@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace imu_corrector
+namespace autoware::imu_corrector
 {
 class GyroBiasEstimationModule
 {
@@ -36,6 +36,6 @@ public:
 private:
   std::pair<geometry_msgs::msg::Vector3, geometry_msgs::msg::Vector3> gyro_bias_pair_;
 };
-}  // namespace imu_corrector
+}  // namespace autoware::imu_corrector
 
-#endif  // GYRO_BIAS_ESTIMATION_MODULE_HPP_
+#endif  // AUTOWARE__IMU_CORRECTOR__GYRO_BIAS_ESTIMATION_MODULE_HPP_

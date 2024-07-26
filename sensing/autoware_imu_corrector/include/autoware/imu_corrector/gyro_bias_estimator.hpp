@@ -11,12 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef GYRO_BIAS_ESTIMATOR_HPP_
-#define GYRO_BIAS_ESTIMATOR_HPP_
+#ifndef AUTOWARE__IMU_CORRECTOR__GYRO_BIAS_ESTIMATOR_HPP_
+#define AUTOWARE__IMU_CORRECTOR__GYRO_BIAS_ESTIMATOR_HPP_
 
-#include "autoware/universe_utils/ros/transform_listener.hpp"
-#include "gyro_bias_estimation_module.hpp"
+#include "autoware/imu_corrector/gyro_bias_estimation_module.hpp"
 
+#include <autoware/universe_utils/ros/transform_listener.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace imu_corrector
+namespace autoware::imu_corrector
 {
 class GyroBiasEstimator : public rclcpp::Node
 {
@@ -97,6 +97,6 @@ private:
 
   DiagnosticsInfo diagnostics_info_;
 };
-}  // namespace imu_corrector
+}  // namespace autoware::imu_corrector
 
-#endif  // GYRO_BIAS_ESTIMATOR_HPP_
+#endif  // AUTOWARE__IMU_CORRECTOR__GYRO_BIAS_ESTIMATOR_HPP_
