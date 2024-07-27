@@ -17,14 +17,14 @@
 #include "control_performance_analysis/msg/driving_monitor_stamped.hpp"
 #include "control_performance_analysis/msg/error_stamped.hpp"
 
-#include <vehicle_info_util/vehicle_info_util.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <memory>
 #include <utility>
 
 namespace
 {
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_control_msgs::msg::Control;
 using control_performance_analysis::msg::DrivingMonitorStamped;
 using control_performance_analysis::msg::ErrorStamped;
 
@@ -32,7 +32,7 @@ using control_performance_analysis::msg::ErrorStamped;
 
 namespace control_performance_analysis
 {
-using vehicle_info_util::VehicleInfoUtil;
+using autoware::vehicle_info_utils::VehicleInfoUtils;
 
 ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
   const rclcpp::NodeOptions & node_options)
@@ -41,7 +41,7 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
   using std::placeholders::_1;
 
   // Implement Reading Global and Local Variables.
-  const auto & vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+  const auto & vehicle_info = VehicleInfoUtils(*this).getVehicleInfo();
   param_.wheelbase_ = vehicle_info.wheel_base_m;
 
   // Node Parameters.
@@ -62,7 +62,7 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
     "~/input/reference_trajectory", 1,
     std::bind(&ControlPerformanceAnalysisNode::onTrajectory, this, _1));
 
-  sub_control_cmd_ = create_subscription<AckermannControlCommand>(
+  sub_control_cmd_ = create_subscription<Control>(
     "~/input/control_raw", 1, std::bind(&ControlPerformanceAnalysisNode::onControlRaw, this, _1));
 
   sub_vehicle_steering_ = create_subscription<SteeringReport>(
@@ -93,8 +93,7 @@ void ControlPerformanceAnalysisNode::onTrajectory(const Trajectory::ConstSharedP
   current_trajectory_ptr_ = msg;
 }
 
-void ControlPerformanceAnalysisNode::onControlRaw(
-  const AckermannControlCommand::ConstSharedPtr control_msg)
+void ControlPerformanceAnalysisNode::onControlRaw(const Control::ConstSharedPtr control_msg)
 {
   if (last_control_cmd_) {
     const rclcpp::Duration & duration =

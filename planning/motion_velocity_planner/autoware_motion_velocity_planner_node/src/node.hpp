@@ -17,19 +17,22 @@
 
 #include "planner_manager.hpp"
 
-#include <autoware_motion_velocity_planner_common/planner_data.hpp>
+#include <autoware/motion_velocity_planner_common/planner_data.hpp>
+#include <autoware/universe_utils/ros/logger_level_configure.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <autoware_motion_velocity_planner_node/srv/load_plugin.hpp>
 #include <autoware_motion_velocity_planner_node/srv/unload_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/logger_level_configure.hpp>
-#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -42,11 +45,11 @@
 
 namespace autoware::motion_velocity_planner
 {
-using autoware_auto_mapping_msgs::msg::HADMapBin;
-using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_motion_velocity_planner_node::srv::LoadPlugin;
 using autoware_motion_velocity_planner_node::srv::UnloadPlugin;
-using TrajectoryPoints = std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>;
+using autoware_planning_msgs::msg::Trajectory;
+using TrajectoryPoints = std::vector<autoware_planning_msgs::msg::TrajectoryPoint>;
 
 class MotionVelocityPlannerNode : public rclcpp::Node
 {
@@ -59,38 +62,45 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   // subscriber
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr sub_trajectory_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
-    sub_predicted_objects_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_no_ground_pointcloud_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_vehicle_odometry_;
-  rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_acceleration_;
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_map_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::TrafficSignalArray>::SharedPtr
-    sub_traffic_signals_;
-  rclcpp::Subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
-    sub_virtual_traffic_light_states_;
-  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_occupancy_grid_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_trajectory_;
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    autoware_perception_msgs::msg::PredictedObjects>
+    sub_predicted_objects_{this, "~/input/dynamic_objects"};
+  autoware::universe_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
+    sub_no_ground_pointcloud_{
+      this, "~/input/no_ground_pointcloud", autoware::universe_utils::SingleDepthSensorQoS()};
+  autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>
+    sub_vehicle_odometry_{this, "~/input/vehicle_odometry"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    geometry_msgs::msg::AccelWithCovarianceStamped>
+    sub_acceleration_{this, "~/input/accel"};
+  autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid>
+    sub_occupancy_grid_{this, "~/input/occupancy_grid"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    autoware_perception_msgs::msg::TrafficLightGroupArray>
+    sub_traffic_signals_{this, "~/input/traffic_signals"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>
+    sub_virtual_traffic_light_states_{this, "~/input/virtual_traffic_light_states"};
+  rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_map_;
 
   void on_trajectory(
-    const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr input_trajectory_msg);
-  void on_predicted_objects(
-    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg);
-  void on_no_ground_pointcloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-  void on_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
-  void on_acceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
-  void on_lanelet_map(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
-  void on_traffic_signals(
-    const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
-  void on_virtual_traffic_light_states(
-    const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg);
-  void on_occupancy_grid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
+    const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr input_trajectory_msg);
+  std::optional<pcl::PointCloud<pcl::PointXYZ>> process_no_ground_pointcloud(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+  void on_lanelet_map(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg);
+  void process_traffic_signals(
+    const autoware_perception_msgs::msg::TrafficLightGroupArray::ConstSharedPtr msg);
 
   // publishers
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
     velocity_factor_publisher_;
+  autoware::universe_utils::ProcessingTimePublisher processing_diag_publisher_{
+    this, "~/debug/processing_time_ms_diag"};
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_publisher_;
+  autoware::universe_utils::PublishedTimePublisher published_time_publisher_{this};
 
   //  parameters
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_callback_;
@@ -101,7 +111,7 @@ private:
   // members
   PlannerData planner_data_;
   MotionVelocityPlannerManager planner_manager_;
-  HADMapBin::ConstSharedPtr map_ptr_{nullptr};
+  LaneletMapBin::ConstSharedPtr map_ptr_{nullptr};
   bool has_received_map_ = false;
 
   rclcpp::Service<LoadPlugin>::SharedPtr srv_load_plugin_;
@@ -118,22 +128,22 @@ private:
   std::mutex mutex_;
 
   // function
-  bool is_data_ready() const;
+  /// @brief update the PlannerData instance with the latest messages received
+  /// @return false if some data is not available
+  bool update_planner_data();
   void insert_stop(
-    autoware_auto_planning_msgs::msg::Trajectory & trajectory,
+    autoware_planning_msgs::msg::Trajectory & trajectory,
     const geometry_msgs::msg::Point & stop_point) const;
   void insert_slowdown(
-    autoware_auto_planning_msgs::msg::Trajectory & trajectory,
+    autoware_planning_msgs::msg::Trajectory & trajectory,
     const autoware::motion_velocity_planner::SlowdownInterval & slowdown_interval) const;
   autoware::motion_velocity_planner::TrajectoryPoints smooth_trajectory(
     const autoware::motion_velocity_planner::TrajectoryPoints & trajectory_points,
     const autoware::motion_velocity_planner::PlannerData & planner_data) const;
-  autoware_auto_planning_msgs::msg::Trajectory generate_trajectory(
+  autoware_planning_msgs::msg::Trajectory generate_trajectory(
     autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points);
 
-  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
-
-  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace autoware::motion_velocity_planner
 

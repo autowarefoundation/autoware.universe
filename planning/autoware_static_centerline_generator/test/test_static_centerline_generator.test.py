@@ -38,7 +38,7 @@ def generate_test_description():
         output="screen",
         parameters=[
             {"lanelet2_map_path": lanelet2_map_path},
-            {"run_background": False},
+            {"mode": "AUTO"},
             {"rviz": False},
             {"centerline_source": "optimization_trajectory_base"},
             {"lanelet2_input_file_path": lanelet2_map_path},
@@ -46,7 +46,7 @@ def generate_test_description():
             {"start_lanelet_id": 215},
             {"end_lanelet_id": 216},
             os.path.join(
-                get_package_share_directory("mission_planner"),
+                get_package_share_directory("autoware_mission_planner"),
                 "config",
                 "mission_planner.param.yaml",
             ),
@@ -55,7 +55,7 @@ def generate_test_description():
                 "config/static_centerline_generator.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("behavior_path_planner"),
+                get_package_share_directory("autoware_behavior_path_planner"),
                 "config/behavior_path_planner.param.yaml",
             ),
             os.path.join(
@@ -63,12 +63,12 @@ def generate_test_description():
                 "config/behavior_velocity_planner.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("path_smoother"),
+                get_package_share_directory("autoware_path_smoother"),
                 "config/elastic_band_smoother.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("obstacle_avoidance_planner"),
-                "config/obstacle_avoidance_planner.param.yaml",
+                get_package_share_directory("autoware_path_optimizer"),
+                "config/path_optimizer.param.yaml",
             ),
             os.path.join(
                 get_package_share_directory("map_loader"),

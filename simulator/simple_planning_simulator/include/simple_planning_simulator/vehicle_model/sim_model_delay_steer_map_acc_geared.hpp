@@ -21,8 +21,6 @@
 #include "simple_planning_simulator/utils/csv_loader.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
-#include <autoware_auto_common/common/types.hpp>
-
 #include <deque>
 #include <iostream>
 #include <queue>
@@ -55,7 +53,7 @@ public:
   double getAcceleration(const double acc_des, const double vel) const
   {
     std::vector<double> interpolated_acc_vec;
-    const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "acc: vel");
+    const double clamped_vel = CSVLoader::clampValue(vel, vel_index_);
 
     // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
     for (const auto & acc_vec : acceleration_map_) {
@@ -64,7 +62,7 @@ public:
     // calculate throttle
     // When the desired acceleration is smaller than the throttle area, return min acc
     // When the desired acceleration is greater than the throttle area, return max acc
-    const double clamped_acc = CSVLoader::clampValue(acc_des, acc_index_, "acceleration: acc");
+    const double clamped_acc = CSVLoader::clampValue(acc_des, acc_index_);
     const double acc = interpolation::lerp(acc_index_, interpolated_acc_vec, clamped_acc);
 
     return acc;
@@ -202,7 +200,7 @@ private:
    * @brief update state considering current gear
    * @param [in] state current state
    * @param [in] prev_state previous state
-   * @param [in] gear current gear (defined in autoware_auto_msgs/GearCommand)
+   * @param [in] gear current gear (defined in autoware_msgs/GearCommand)
    * @param [in] dt delta time to update state
    */
   void updateStateWithGear(

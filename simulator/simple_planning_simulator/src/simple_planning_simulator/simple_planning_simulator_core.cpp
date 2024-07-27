@@ -14,17 +14,16 @@
 
 #include "simple_planning_simulator/simple_planning_simulator_core.hpp"
 
-#include "autoware_auto_tf2/tf2_autoware_auto_msgs.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
-#include "tier4_autoware_utils/ros/msg_covariance.hpp"
-#include "tier4_autoware_utils/ros/update_param.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
@@ -44,10 +43,10 @@ using namespace std::literals::chrono_literals;
 namespace
 {
 
-autoware_auto_vehicle_msgs::msg::VelocityReport to_velocity_report(
+autoware_vehicle_msgs::msg::VelocityReport to_velocity_report(
   const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
 {
-  autoware_auto_vehicle_msgs::msg::VelocityReport velocity;
+  autoware_vehicle_msgs::msg::VelocityReport velocity;
   velocity.longitudinal_velocity = static_cast<double>(vehicle_model_ptr->getVx());
   velocity.lateral_velocity = 0.0F;
   velocity.heading_rate = static_cast<double>(vehicle_model_ptr->getWz());
@@ -60,7 +59,7 @@ nav_msgs::msg::Odometry to_odometry(
   nav_msgs::msg::Odometry odometry;
   odometry.pose.pose.position.x = vehicle_model_ptr->getX();
   odometry.pose.pose.position.y = vehicle_model_ptr->getY();
-  odometry.pose.pose.orientation = tier4_autoware_utils::createQuaternionFromRPY(
+  odometry.pose.pose.orientation = autoware::universe_utils::createQuaternionFromRPY(
     0.0, ego_pitch_angle, vehicle_model_ptr->getYaw());
   odometry.twist.twist.linear.x = vehicle_model_ptr->getVx();
   odometry.twist.twist.angular.z = vehicle_model_ptr->getWz();
@@ -68,10 +67,10 @@ nav_msgs::msg::Odometry to_odometry(
   return odometry;
 }
 
-autoware_auto_vehicle_msgs::msg::SteeringReport to_steering_report(
+autoware_vehicle_msgs::msg::SteeringReport to_steering_report(
   const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
 {
-  autoware_auto_vehicle_msgs::msg::SteeringReport steer;
+  autoware_vehicle_msgs::msg::SteeringReport steer;
   steer.steering_tire_angle = static_cast<double>(vehicle_model_ptr->getSteer());
   return steer;
 }
@@ -109,21 +108,16 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   using std::placeholders::_1;
   using std::placeholders::_2;
 
-  sub_map_ = create_subscription<HADMapBin>(
+  sub_map_ = create_subscription<LaneletMapBin>(
     "input/vector_map", rclcpp::QoS(10).transient_local(),
     std::bind(&SimplePlanningSimulator::on_map, this, _1));
   sub_init_pose_ = create_subscription<PoseWithCovarianceStamped>(
     "input/initialpose", QoS{1}, std::bind(&SimplePlanningSimulator::on_initialpose, this, _1));
   sub_init_twist_ = create_subscription<TwistStamped>(
     "input/initialtwist", QoS{1}, std::bind(&SimplePlanningSimulator::on_initialtwist, this, _1));
-  sub_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
-    "input/ackermann_control_command", QoS{1},
-    [this](const AckermannControlCommand::ConstSharedPtr msg) { current_ackermann_cmd_ = *msg; });
-  sub_manual_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
+  sub_manual_ackermann_cmd_ = create_subscription<Control>(
     "input/manual_ackermann_control_command", QoS{1},
-    [this](const AckermannControlCommand::ConstSharedPtr msg) {
-      current_manual_ackermann_cmd_ = *msg;
-    });
+    [this](const Control::ConstSharedPtr msg) { current_manual_ackermann_cmd_ = *msg; });
   sub_gear_cmd_ = create_subscription<GearCommand>(
     "input/gear_command", QoS{1},
     [this](const GearCommand::ConstSharedPtr msg) { current_gear_cmd_ = *msg; });
@@ -146,6 +140,23 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   // TODO(Horibe): should be replaced by mode_request. Keep for the backward compatibility.
   sub_engage_ = create_subscription<Engage>(
     "input/engage", rclcpp::QoS{1}, std::bind(&SimplePlanningSimulator::on_engage, this, _1));
+
+  // Determine input command type based on vehicle_model_type
+  // NOTE:
+  // Initial value must be set to current_input_command_ with the correct type.
+  // If not, the vehicle_model will not be updated, and it will die when publishing the state.
+  const auto vehicle_model_type_str = declare_parameter("vehicle_model_type", "IDEAL_STEER_VEL");
+  if (vehicle_model_type_str == "ACTUATION_CMD") {
+    current_input_command_ = ActuationCommandStamped();
+    sub_actuation_cmd_ = create_subscription<ActuationCommandStamped>(
+      "input/actuation_command", QoS{1},
+      [this](const ActuationCommandStamped::ConstSharedPtr msg) { current_input_command_ = *msg; });
+  } else {  // default command type is ACKERMANN
+    current_input_command_ = Control();
+    sub_ackermann_cmd_ = create_subscription<Control>(
+      "input/ackermann_control_command", QoS{1},
+      [this](const Control::ConstSharedPtr msg) { current_input_command_ = *msg; });
+  }
 
   pub_control_mode_report_ =
     create_publisher<ControlModeReport>("output/control_mode_report", QoS{1});
@@ -178,7 +189,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     rmw_qos_profile_services_default, group_api_service_);
 
   // set vehicle model type
-  initialize_vehicle_model();
+  initialize_vehicle_model(vehicle_model_type_str);
 
   // set initialize source
   const auto initialize_source = declare_parameter("initialize_source", "INITIAL_POSE_TOPIC");
@@ -214,12 +225,8 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   current_manual_gear_cmd_.command = GearCommand::PARK;
 }
 
-void SimplePlanningSimulator::initialize_vehicle_model()
+void SimplePlanningSimulator::initialize_vehicle_model(const std::string & vehicle_model_type_str)
 {
-  const auto vehicle_model_type_str = declare_parameter("vehicle_model_type", "IDEAL_STEER_VEL");
-
-  RCLCPP_DEBUG(this->get_logger(), "vehicle_model_type = %s", vehicle_model_type_str.c_str());
-
   const double vel_lim = declare_parameter("vel_lim", 50.0);
   const double vel_rate_lim = declare_parameter("vel_rate_lim", 7.0);
   const double steer_lim = declare_parameter("steer_lim", 1.0);
@@ -235,7 +242,7 @@ void SimplePlanningSimulator::initialize_vehicle_model()
 
   const double debug_acc_scaling_factor = declare_parameter("debug_acc_scaling_factor", 1.0);
   const double debug_steer_scaling_factor = declare_parameter("debug_steer_scaling_factor", 1.0);
-  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
   const double wheelbase = vehicle_info.wheel_base_m;
 
   std::vector<std::string> model_module_paths = declare_parameter<std::vector<std::string>>(
@@ -272,6 +279,12 @@ void SimplePlanningSimulator::initialize_vehicle_model()
       vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
       acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_dead_band,
       steer_bias, debug_acc_scaling_factor, debug_steer_scaling_factor);
+  } else if (vehicle_model_type_str == "DELAY_STEER_ACC_GEARED_WO_FALL_GUARD") {
+    vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC_GEARED_WO_FALL_GUARD;
+    vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAccGearedWoFallGuard>(
+      vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
+      acc_time_delay, acc_time_constant, steer_time_delay, steer_time_constant, steer_dead_band,
+      steer_bias, debug_acc_scaling_factor, debug_steer_scaling_factor);
   } else if (vehicle_model_type_str == "DELAY_STEER_MAP_ACC_GEARED") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_MAP_ACC_GEARED;
     const std::string acceleration_map_path =
@@ -293,7 +306,30 @@ void SimplePlanningSimulator::initialize_vehicle_model()
 
     vehicle_model_ptr_ = std::make_shared<SimModelLearnedSteerVel>(
       timer_sampling_time_ms_ / 1000.0, model_module_paths, model_param_paths, model_class_names);
+  } else if (vehicle_model_type_str == "ACTUATION_CMD") {
+    vehicle_model_type_ = VehicleModelType::ACTUATION_CMD;
 
+    // time delay
+    const double accel_time_delay = declare_parameter<double>("accel_time_delay");
+    const double accel_time_constant = declare_parameter<double>("accel_time_constant");
+    const double brake_time_delay = declare_parameter<double>("brake_time_delay");
+    const double brake_time_constant = declare_parameter<double>("brake_time_constant");
+
+    // command conversion flag
+    const bool convert_accel_cmd = declare_parameter<bool>("convert_accel_cmd");
+    const bool convert_brake_cmd = declare_parameter<bool>("convert_brake_cmd");
+    const bool convert_steer_cmd = declare_parameter<bool>("convert_steer_cmd");
+
+    // actuation conversion map
+    const std::string accel_map_path = declare_parameter<std::string>("accel_map_path");
+    const std::string brake_map_path = declare_parameter<std::string>("brake_map_path");
+    const std::string steer_map_path = declare_parameter<std::string>("steer_map_path");
+
+    vehicle_model_ptr_ = std::make_shared<SimModelActuationCmd>(
+      vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
+      accel_time_delay, accel_time_constant, brake_time_delay, brake_time_constant,
+      steer_time_delay, steer_time_constant, steer_bias, convert_accel_cmd, convert_brake_cmd,
+      convert_steer_cmd, accel_map_path, brake_map_path, steer_map_path);
   } else {
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
@@ -307,8 +343,8 @@ rcl_interfaces::msg::SetParametersResult SimplePlanningSimulator::on_parameter(
   result.reason = "success";
 
   try {
-    tier4_autoware_utils::updateParam(parameters, "x_stddev", x_stddev_);
-    tier4_autoware_utils::updateParam(parameters, "y_stddev", y_stddev_);
+    autoware::universe_utils::updateParam(parameters, "x_stddev", x_stddev_);
+    autoware::universe_utils::updateParam(parameters, "y_stddev", y_stddev_);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();
@@ -326,7 +362,7 @@ double SimplePlanningSimulator::calculate_ego_pitch() const
   geometry_msgs::msg::Pose ego_pose;
   ego_pose.position.x = ego_x;
   ego_pose.position.y = ego_y;
-  ego_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ego_yaw);
+  ego_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(ego_yaw);
 
   // calculate prev/next point of lanelet centerline nearest to ego pose.
   lanelet::Lanelet ego_lanelet;
@@ -336,7 +372,7 @@ double SimplePlanningSimulator::calculate_ego_pitch() const
   }
   const auto centerline_points = convert_centerline_to_points(ego_lanelet);
   const size_t ego_seg_idx =
-    motion_utils::findNearestSegmentIndex(centerline_points, ego_pose.position);
+    autoware::motion_utils::findNearestSegmentIndex(centerline_points, ego_pose.position);
 
   const auto & prev_point = centerline_points.at(ego_seg_idx);
   const auto & next_point = centerline_points.at(ego_seg_idx + 1);
@@ -375,7 +411,7 @@ void SimplePlanningSimulator::on_timer()
 
     if (current_control_mode_.mode == ControlModeReport::AUTONOMOUS) {
       vehicle_model_ptr_->setGear(current_gear_cmd_.command);
-      set_input(current_ackermann_cmd_, acc_by_slope);
+      set_input(current_input_command_, acc_by_slope);
     } else {
       vehicle_model_ptr_->setGear(current_manual_gear_cmd_.command);
       set_input(current_manual_ackermann_cmd_, acc_by_slope);
@@ -401,7 +437,7 @@ void SimplePlanningSimulator::on_timer()
 
   // add estimate covariance
   {
-    using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using COV_IDX = autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     current_odometry_.pose.covariance[COV_IDX::X_X] = x_stddev_;
     current_odometry_.pose.covariance[COV_IDX::Y_Y] = y_stddev_;
   }
@@ -420,7 +456,7 @@ void SimplePlanningSimulator::on_timer()
   publish_tf(current_odometry_);
 }
 
-void SimplePlanningSimulator::on_map(const HADMapBin::ConstSharedPtr msg)
+void SimplePlanningSimulator::on_map(const LaneletMapBin::ConstSharedPtr msg)
 {
   auto lanelet_map_ptr = std::make_shared<lanelet::LaneletMap>();
 
@@ -470,25 +506,58 @@ void SimplePlanningSimulator::on_set_pose(
   response->status = tier4_api_utils::response_success();
 }
 
+void SimplePlanningSimulator::set_input(const InputCommand & cmd, const double acc_by_slope)
+{
+  std::visit(
+    [this, acc_by_slope](auto && arg) {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_same_v<T, Control>) {
+        set_input(arg, acc_by_slope);
+      } else if constexpr (std::is_same_v<T, ActuationCommandStamped>) {
+        set_input(arg, acc_by_slope);
+      } else {
+        throw std::invalid_argument("Invalid input command type");
+      }
+    },
+    cmd);
+}
+
 void SimplePlanningSimulator::set_input(
-  const AckermannControlCommand & cmd, const double acc_by_slope)
+  const ActuationCommandStamped & cmd, const double acc_by_slope)
+{
+  const auto accel = cmd.actuation.accel_cmd;
+  const auto brake = cmd.actuation.brake_cmd;
+  const auto steer = cmd.actuation.steer_cmd;
+  const auto gear = vehicle_model_ptr_->getGear();
+
+  Eigen::VectorXd input(vehicle_model_ptr_->getDimU());
+  input << accel, brake, acc_by_slope, steer, gear;
+
+  // VehicleModelType::ACTUATION_COMMAND
+  vehicle_model_ptr_->setInput(input);
+}
+
+void SimplePlanningSimulator::set_input(const Control & cmd, const double acc_by_slope)
 {
   const auto steer = cmd.lateral.steering_tire_angle;
-  const auto vel = cmd.longitudinal.speed;
-  const auto accel = cmd.longitudinal.acceleration;
+  const auto vel = cmd.longitudinal.velocity;
+  const auto acc_by_cmd = cmd.longitudinal.acceleration;
 
-  using autoware_auto_vehicle_msgs::msg::GearCommand;
+  using autoware_vehicle_msgs::msg::GearCommand;
   Eigen::VectorXd input(vehicle_model_ptr_->getDimU());
   const auto gear = vehicle_model_ptr_->getGear();
 
   // TODO(Watanabe): The definition of the sign of acceleration in REVERSE mode is different
   // between .auto and proposal.iv, and will be discussed later.
-  float acc = accel + acc_by_slope;
-  if (gear == GearCommand::NONE) {
-    acc = 0.0;
-  } else if (gear == GearCommand::REVERSE || gear == GearCommand::REVERSE_2) {
-    acc = -accel - acc_by_slope;
-  }
+  const float combined_acc = [&] {
+    if (gear == GearCommand::NONE) {
+      return 0.0;
+    } else if (gear == GearCommand::REVERSE || gear == GearCommand::REVERSE_2) {
+      return -acc_by_cmd + acc_by_slope;
+    } else {
+      return acc_by_cmd + acc_by_slope;
+    }
+  }();
 
   if (
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_VEL ||
@@ -498,12 +567,15 @@ void SimplePlanningSimulator::set_input(
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC) {
-    input << acc, steer;
+    input << combined_acc, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_MAP_ACC_GEARED) {
-    input << acc, steer;
+    input << combined_acc, steer;
+  } else if (  // NOLINT
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_WO_FALL_GUARD) {
+    input << acc_by_cmd, gear, acc_by_slope, steer;
   }
   vehicle_model_ptr_->setInput(input);
 }
@@ -557,7 +629,7 @@ void SimplePlanningSimulator::add_measurement_noise(
   odom.twist.twist.linear.x += velocity_noise;
   double yaw = tf2::getYaw(odom.pose.pose.orientation);
   yaw += static_cast<float>((*n.rpy_dist_)(*n.rand_engine_));
-  odom.pose.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
+  odom.pose.pose.orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
 
   vel.longitudinal_velocity += static_cast<double>(velocity_noise);
 
@@ -603,7 +675,9 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_MAP_ACC_GEARED) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED_WO_FALL_GUARD ||
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_MAP_ACC_GEARED ||
+    vehicle_model_type_ == VehicleModelType::ACTUATION_CMD) {
     state << x, y, yaw, vx, steer, accx;
   }
   vehicle_model_ptr_->setState(state);
@@ -690,7 +764,7 @@ void SimplePlanningSimulator::publish_acceleration()
   msg.accel.accel.linear.x = vehicle_model_ptr_->getAx();
   msg.accel.accel.linear.y = vehicle_model_ptr_->getWz() * vehicle_model_ptr_->getVx();
 
-  using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  using COV_IDX = autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   constexpr auto COV = 0.001;
   msg.accel.covariance.at(COV_IDX::X_X) = COV;          // linear x
   msg.accel.covariance.at(COV_IDX::Y_Y) = COV;          // linear y
@@ -703,7 +777,7 @@ void SimplePlanningSimulator::publish_acceleration()
 
 void SimplePlanningSimulator::publish_imu()
 {
-  using COV_IDX = tier4_autoware_utils::xyz_covariance_index::XYZ_COV_IDX;
+  using COV_IDX = autoware::universe_utils::xyz_covariance_index::XYZ_COV_IDX;
 
   sensor_msgs::msg::Imu imu;
   imu.header.frame_id = "base_link";

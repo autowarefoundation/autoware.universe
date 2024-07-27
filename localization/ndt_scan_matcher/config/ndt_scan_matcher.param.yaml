@@ -12,6 +12,9 @@
 
 
     sensor_points:
+      # Tolerance of timestamp difference between current time and sensor pointcloud. [sec]
+      timeout_sec: 1.0
+
       # Required distance of input sensor points. [m]
       # If the max distance of input sensor points is lower than this value, the scan matching will not be performed.
       required_distance: 10.0
@@ -52,17 +55,20 @@
 
 
     validation:
-      # Tolerance of timestamp difference between current time and sensor pointcloud. [sec]
-      lidar_topic_timeout_sec: 1.0
-
       # Tolerance of timestamp difference between initial_pose and sensor pointcloud. [sec]
       initial_pose_timeout_sec: 1.0
 
       # Tolerance of distance difference between two initial poses used for linear interpolation. [m]
       initial_pose_distance_tolerance_m: 10.0
 
+      # Tolerance of distance difference from initial pose to result pose. [m]
+      initial_to_result_distance_tolerance_m: 3.0
+
       # The execution time which means probably NDT cannot matches scans properly. [ms]
       critical_upper_bound_exe_time_ms: 100.0
+
+      # Tolerance for the number of times rejected estimation results consecutively
+      skipping_publish_num: 5
 
 
     score_estimation:
@@ -101,12 +107,20 @@
 
       # 2D Real-time covariance estimation with multiple searches (output_pose_covariance is the minimum value)
       covariance_estimation:
-        enable: false
+        # Covariance estimation type
+        # 0=FIXED_VALUE, 1=LAPLACE_APPROXIMATION, 2=MULTI_NDT, 3=MULTI_NDT_SCORE
+        covariance_estimation_type: 0
 
         # Offset arrangement in covariance estimation [m]
         # initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.
         initial_pose_offset_model_x: [0.0, 0.0, 0.5, -0.5, 1.0, -1.0]
         initial_pose_offset_model_y: [0.5, -0.5, 0.0, 0.0, 0.0, 0.0]
+
+        # In MULTI_NDT_SCORE, the parameter that adjusts the estimated 2D covariance
+        temperature: 0.1
+
+        # Scale value for adjusting the estimated covariance by a constant multiplication
+        scale_factor: 1.0
 
 
     dynamic_map_loading:

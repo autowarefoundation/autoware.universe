@@ -14,10 +14,10 @@
 
 #include "map_height_fitter/map_height_fitter.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_map_msgs/srv/get_partial_point_cloud_map.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -29,6 +29,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <memory>
+
 namespace map_height_fitter
 {
 
@@ -38,7 +40,7 @@ struct MapHeightFitter::Impl
 
   explicit Impl(rclcpp::Node * node);
   void on_pcd_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-  void on_vector_map(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+  void on_vector_map(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg);
   bool get_partial_point_cloud_map(const Point & point);
   double get_ground_height(const Point & point) const;
   std::optional<Point> fit(const Point & position, const std::string & frame);
@@ -59,7 +61,7 @@ struct MapHeightFitter::Impl
 
   // for fitting by vector_map_loader
   lanelet::LaneletMapPtr vector_map_;
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_vector_map_;
+  rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_vector_map_;
 };
 
 MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), node_(node)
@@ -95,7 +97,7 @@ MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), n
 
   } else if (fit_target_ == "vector_map") {
     const auto durable_qos = rclcpp::QoS(1).transient_local();
-    sub_vector_map_ = node_->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+    sub_vector_map_ = node_->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
       "~/vector_map", durable_qos,
       std::bind(&MapHeightFitter::Impl::on_vector_map, this, std::placeholders::_1));
 
@@ -107,7 +109,7 @@ MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), n
 void MapHeightFitter::Impl::on_pcd_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
   map_frame_ = msg->header.frame_id;
-  map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  map_cloud_ = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   pcl::fromROSMsg(*msg, *map_cloud_);
 }
 
@@ -125,8 +127,8 @@ bool MapHeightFitter::Impl::get_partial_point_cloud_map(const Point & point)
   }
 
   const auto req = std::make_shared<autoware_map_msgs::srv::GetPartialPointCloudMap::Request>();
-  req->area.center_x = point.x;
-  req->area.center_y = point.y;
+  req->area.center_x = static_cast<float>(point.x);
+  req->area.center_y = static_cast<float>(point.y);
   req->area.radius = 50;
 
   RCLCPP_DEBUG(logger, "Send request to map_loader");
@@ -157,13 +159,13 @@ bool MapHeightFitter::Impl::get_partial_point_cloud_map(const Point & point)
     }
   }
   map_frame_ = res->header.frame_id;
-  map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  map_cloud_ = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   pcl::fromROSMsg(pcd_msg, *map_cloud_);
   return true;
 }
 
 void MapHeightFitter::Impl::on_vector_map(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
+  const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg)
 {
   vector_map_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, vector_map_);
@@ -276,9 +278,7 @@ MapHeightFitter::MapHeightFitter(rclcpp::Node * node)
   impl_ = std::make_unique<Impl>(node);
 }
 
-MapHeightFitter::~MapHeightFitter()
-{
-}
+MapHeightFitter::~MapHeightFitter() = default;
 
 std::optional<Point> MapHeightFitter::fit(const Point & position, const std::string & frame)
 {

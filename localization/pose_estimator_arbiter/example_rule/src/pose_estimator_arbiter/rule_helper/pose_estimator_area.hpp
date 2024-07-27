@@ -18,7 +18,7 @@
 #include <rclcpp/logger.hpp>
 #include <rclcpp/node.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -29,7 +29,7 @@ namespace pose_estimator_arbiter::rule_helper
 {
 class PoseEstimatorArea
 {
-  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using HADMapBin = autoware_map_msgs::msg::LaneletMapBin;
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
@@ -40,10 +40,10 @@ public:
   // This is assumed to be called only once in the vector map callback.
   void init(const HADMapBin::ConstSharedPtr msg);
 
-  bool within(
+  [[nodiscard]] bool within(
     const geometry_msgs::msg::Point & point, const std::string & pose_estimator_name) const;
 
-  MarkerArray debug_marker_array() const;
+  [[nodiscard]] MarkerArray debug_marker_array() const;
 
 private:
   struct Impl;

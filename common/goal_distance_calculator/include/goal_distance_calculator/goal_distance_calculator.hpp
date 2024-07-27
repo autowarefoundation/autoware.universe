@@ -15,17 +15,17 @@
 #ifndef GOAL_DISTANCE_CALCULATOR__GOAL_DISTANCE_CALCULATOR_HPP_
 #define GOAL_DISTANCE_CALCULATOR__GOAL_DISTANCE_CALCULATOR_HPP_
 
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/geometry/pose_deviation.hpp>
 
-#include <autoware_auto_planning_msgs/msg/route.hpp>
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <boost/optional.hpp>
 
 namespace goal_distance_calculator
 {
-using tier4_autoware_utils::PoseDeviation;
+using autoware::universe_utils::PoseDeviation;
 
 struct Param
 {
@@ -34,7 +34,7 @@ struct Param
 struct Input
 {
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose;
-  autoware_auto_planning_msgs::msg::Route::ConstSharedPtr route;
+  autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr route;
 };
 
 struct Output

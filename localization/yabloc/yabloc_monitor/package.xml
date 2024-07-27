@@ -5,7 +5,6 @@
   <version>0.1.0</version>
   <description>YabLoc monitor package</description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
-  <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
   <maintainer email="masahiro.sakamoto@tier4.jp">Masahiro Sakamoto</maintainer>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
   <maintainer email="anh.nguyen.2@tier4.jp">NGUYEN Viet Anh</maintainer>
@@ -20,6 +19,7 @@
   <depend>diagnostic_updater</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>

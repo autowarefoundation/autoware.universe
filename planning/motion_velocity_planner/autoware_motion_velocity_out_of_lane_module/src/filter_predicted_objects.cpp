@@ -14,7 +14,7 @@
 
 #include "filter_predicted_objects.hpp"
 
-#include <motion_utils/trajectory/trajectory.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <traffic_light_utils/traffic_light_utils.hpp>
 
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -27,7 +27,7 @@
 namespace autoware::motion_velocity_planner::out_of_lane
 {
 void cut_predicted_path_beyond_line(
-  autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
+  autoware_perception_msgs::msg::PredictedPath & predicted_path,
   const lanelet::BasicLineString2d & stop_line, const double object_front_overhang)
 {
   if (predicted_path.path.empty() || stop_line.size() < 2) return;
@@ -50,7 +50,7 @@ void cut_predicted_path_beyond_line(
     auto cut_idx = stop_line_idx;
     double arc_length = 0;
     while (cut_idx > 0 && arc_length < object_front_overhang) {
-      arc_length += tier4_autoware_utils::calcDistance2d(
+      arc_length += autoware::universe_utils::calcDistance2d(
         predicted_path.path[cut_idx], predicted_path.path[cut_idx - 1]);
       --cut_idx;
     }
@@ -59,7 +59,7 @@ void cut_predicted_path_beyond_line(
 }
 
 std::optional<const lanelet::BasicLineString2d> find_next_stop_line(
-  const autoware_auto_perception_msgs::msg::PredictedPath & path,
+  const autoware_perception_msgs::msg::PredictedPath & path,
   const std::shared_ptr<const PlannerData> planner_data)
 {
   lanelet::ConstLanelets lanelets;
@@ -84,7 +84,7 @@ std::optional<const lanelet::BasicLineString2d> find_next_stop_line(
 }
 
 void cut_predicted_path_beyond_red_lights(
-  autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
+  autoware_perception_msgs::msg::PredictedPath & predicted_path,
   const std::shared_ptr<const PlannerData> planner_data, const double object_front_overhang)
 {
   const auto stop_line = find_next_stop_line(predicted_path, planner_data);
@@ -98,26 +98,34 @@ void cut_predicted_path_beyond_red_lights(
   }
 }
 
-autoware_auto_perception_msgs::msg::PredictedObjects filter_predicted_objects(
+autoware_perception_msgs::msg::PredictedObjects filter_predicted_objects(
   const std::shared_ptr<const PlannerData> planner_data, const EgoData & ego_data,
   const PlannerParam & params)
 {
-  autoware_auto_perception_msgs::msg::PredictedObjects filtered_objects;
-  filtered_objects.header = planner_data->predicted_objects->header;
-  for (const auto & object : planner_data->predicted_objects->objects) {
+  autoware_perception_msgs::msg::PredictedObjects filtered_objects;
+  filtered_objects.header = planner_data->predicted_objects.header;
+  for (const auto & object : planner_data->predicted_objects.objects) {
     const auto is_pedestrian =
       std::find_if(object.classification.begin(), object.classification.end(), [](const auto & c) {
-        return c.label == autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
+        return c.label == autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
       }) != object.classification.end();
     if (is_pedestrian) continue;
+
+    const auto is_coming_from_behind =
+      motion_utils::calcSignedArcLength(
+        ego_data.trajectory_points, ego_data.first_trajectory_idx,
+        object.kinematics.initial_pose_with_covariance.pose.position) < 0.0;
+    if (params.objects_ignore_behind_ego && is_coming_from_behind) {
+      continue;
+    }
 
     auto filtered_object = object;
     const auto is_invalid_predicted_path = [&](const auto & predicted_path) {
       const auto is_low_confidence = predicted_path.confidence < params.objects_min_confidence;
-      const auto no_overlap_path = motion_utils::removeOverlapPoints(predicted_path.path);
+      const auto no_overlap_path = autoware::motion_utils::removeOverlapPoints(predicted_path.path);
       if (no_overlap_path.size() <= 1) return true;
-      const auto lat_offset_to_current_ego =
-        std::abs(motion_utils::calcLateralOffset(no_overlap_path, ego_data.pose.position));
+      const auto lat_offset_to_current_ego = std::abs(
+        autoware::motion_utils::calcLateralOffset(no_overlap_path, ego_data.pose.position));
       const auto is_crossing_ego =
         lat_offset_to_current_ego <=
         object.shape.dimensions.y / 2.0 + std::max(

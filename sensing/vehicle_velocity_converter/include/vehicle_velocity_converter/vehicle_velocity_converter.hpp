@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
+#include "autoware_vehicle_msgs/msg/velocity_report.hpp"
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 
@@ -28,14 +28,12 @@
 class VehicleVelocityConverter : public rclcpp::Node
 {
 public:
-  VehicleVelocityConverter();
-  ~VehicleVelocityConverter() = default;
+  explicit VehicleVelocityConverter(const rclcpp::NodeOptions & options);
 
 private:
-  void callbackVelocityReport(const autoware_auto_vehicle_msgs::msg::VelocityReport::SharedPtr msg);
+  void callback_velocity_report(const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg);
 
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>::SharedPtr
-    vehicle_report_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::VelocityReport>::SharedPtr vehicle_report_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     twist_with_covariance_pub_;
@@ -44,7 +42,6 @@ private:
   double stddev_vx_;
   double stddev_wz_;
   double speed_scale_factor_;
-  std::array<double, 36> twist_covariance_;
 };
 
 #endif  // VEHICLE_VELOCITY_CONVERTER__VEHICLE_VELOCITY_CONVERTER_HPP_

@@ -68,10 +68,10 @@ FileLoader::FileLoader(const PathConfig * path)
   }
 
   TreeData tree = TreeData::Load(path->resolved);
-  const auto paths = tree.optional("files").children("files");
+  const auto files = tree.optional("files").children("files");
   const auto edits = tree.optional("edits").children("edits");
   const auto units = tree.optional("units").children("units");
-  for (const auto & data : paths) create_path_config(data);
+  for (const auto & data : files) create_path_config(data);
   for (const auto & data : edits) create_edit_config(data);
   for (const auto & data : units) create_unit_config(data);
 }
@@ -102,8 +102,8 @@ UnitConfig * FileLoader::create_unit_config(const TreeData & data)
     unit->item = create_link_config(item, unit);
   }
   const auto list = unit->data.optional("list").children();
-  for (const auto & data : list) {
-    unit->list.push_back(create_link_config(data, unit));
+  for (const auto & tree_data : list) {
+    unit->list.push_back(create_link_config(tree_data, unit));
   }
   return unit;
 }
@@ -253,7 +253,7 @@ void apply_edits(FileConfig & config)
   config.links = std::move(filtered_links);
 }
 
-void topological_sort(FileConfig & config)
+void topological_sort(const FileConfig & config)
 {
   std::unordered_map<UnitConfig *, int> degrees;
   std::deque<UnitConfig *> units;
@@ -264,9 +264,9 @@ void topological_sort(FileConfig & config)
   for (const auto & unit : config.units) units.push_back(unit.get());
 
   // Count degrees of each unit.
-  for (const auto & unit : units) {
-    if (const auto & link = unit->item) ++degrees[link->child];
-    for (const auto & link : unit->list) ++degrees[link->child];
+  for (const auto * const unit : units) {
+    if (const auto * const link = unit->item) ++degrees[link->child];
+    for (const auto * const link : unit->list) ++degrees[link->child];
   }
 
   // Find initial units that are zero degrees.

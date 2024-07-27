@@ -29,66 +29,78 @@ enum class ConvergedParamType {
   NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
 };
 
+enum class CovarianceEstimationType {
+  FIXED_VALUE = 0,
+  LAPLACE_APPROXIMATION = 1,
+  MULTI_NDT = 2,
+  MULTI_NDT_SCORE = 3,
+};
+
 struct HyperParameters
 {
   struct Frame
   {
-    std::string base_frame;
-    std::string ndt_base_frame;
-    std::string map_frame;
-  } frame;
+    std::string base_frame{};
+    std::string ndt_base_frame{};
+    std::string map_frame{};
+  } frame{};
 
   struct SensorPoints
   {
-    double required_distance;
-  } sensor_points;
+    double timeout_sec{};
+    double required_distance{};
+  } sensor_points{};
 
-  pclomp::NdtParams ndt;
-  bool ndt_regularization_enable;
+  pclomp::NdtParams ndt{};
+  bool ndt_regularization_enable{};
 
   struct InitialPoseEstimation
   {
-    int64_t particles_num;
-    int64_t n_startup_trials;
-  } initial_pose_estimation;
+    int64_t particles_num{};
+    int64_t n_startup_trials{};
+  } initial_pose_estimation{};
 
   struct Validation
   {
-    double lidar_topic_timeout_sec;
-    double initial_pose_timeout_sec;
-    double initial_pose_distance_tolerance_m;
-    double critical_upper_bound_exe_time_ms;
-  } validation;
+    double initial_pose_timeout_sec{};
+    double initial_pose_distance_tolerance_m{};
+    double initial_to_result_distance_tolerance_m{};
+    double critical_upper_bound_exe_time_ms{};
+    int64_t skipping_publish_num{};
+  } validation{};
 
   struct ScoreEstimation
   {
-    ConvergedParamType converged_param_type;
-    double converged_param_transform_probability;
-    double converged_param_nearest_voxel_transformation_likelihood;
+    ConvergedParamType converged_param_type{};
+    double converged_param_transform_probability{};
+    double converged_param_nearest_voxel_transformation_likelihood{};
     struct NoGroundPoints
     {
-      bool enable;
-      double z_margin_for_ground_removal;
-    } no_ground_points;
-  } score_estimation;
+      bool enable{};
+      double z_margin_for_ground_removal{};
+    } no_ground_points{};
+  } score_estimation{};
 
   struct Covariance
   {
-    std::array<double, 36> output_pose_covariance;
+    std::array<double, 36> output_pose_covariance{};
 
     struct CovarianceEstimation
     {
-      bool enable;
-      std::vector<Eigen::Vector2d> initial_pose_offset_model;
-    } covariance_estimation;
-  } covariance;
+      CovarianceEstimationType covariance_estimation_type{};
+      std::vector<double> initial_pose_offset_model_x{};
+      std::vector<double> initial_pose_offset_model_y{};
+      double temperature{};
+      double scale_factor{};
+    } covariance_estimation{};
+  } covariance{};
 
   struct DynamicMapLoading
   {
-    double update_distance;
-    double map_radius;
-    double lidar_radius;
-  } dynamic_map_loading;
+    double update_distance{};
+    double map_radius{};
+    double lidar_radius{};
+  } dynamic_map_loading{};
 
 public:
   explicit HyperParameters(rclcpp::Node * node)
@@ -97,6 +109,7 @@ public:
     frame.ndt_base_frame = node->declare_parameter<std::string>("frame.ndt_base_frame");
     frame.map_frame = node->declare_parameter<std::string>("frame.map_frame");
 
+    sensor_points.timeout_sec = node->declare_parameter<double>("sensor_points.timeout_sec");
     sensor_points.required_distance =
       node->declare_parameter<double>("sensor_points.required_distance");
 
@@ -115,14 +128,16 @@ public:
     initial_pose_estimation.n_startup_trials =
       node->declare_parameter<int64_t>("initial_pose_estimation.n_startup_trials");
 
-    validation.lidar_topic_timeout_sec =
-      node->declare_parameter<double>("validation.lidar_topic_timeout_sec");
     validation.initial_pose_timeout_sec =
       node->declare_parameter<double>("validation.initial_pose_timeout_sec");
     validation.initial_pose_distance_tolerance_m =
       node->declare_parameter<double>("validation.initial_pose_distance_tolerance_m");
+    validation.initial_to_result_distance_tolerance_m =
+      node->declare_parameter<double>("validation.initial_to_result_distance_tolerance_m");
     validation.critical_upper_bound_exe_time_ms =
       node->declare_parameter<double>("validation.critical_upper_bound_exe_time_ms");
+    validation.skipping_publish_num =
+      node->declare_parameter<int64_t>("validation.skipping_publish_num");
 
     const int64_t converged_param_type_tmp =
       node->declare_parameter<int64_t>("score_estimation.converged_param_type");
@@ -143,33 +158,29 @@ public:
     for (std::size_t i = 0; i < output_pose_covariance.size(); ++i) {
       covariance.output_pose_covariance[i] = output_pose_covariance[i];
     }
-    covariance.covariance_estimation.enable =
-      node->declare_parameter<bool>("covariance.covariance_estimation.enable");
-    if (covariance.covariance_estimation.enable) {
-      std::vector<double> initial_pose_offset_model_x =
-        node->declare_parameter<std::vector<double>>(
-          "covariance.covariance_estimation.initial_pose_offset_model_x");
-      std::vector<double> initial_pose_offset_model_y =
-        node->declare_parameter<std::vector<double>>(
-          "covariance.covariance_estimation.initial_pose_offset_model_y");
-
-      if (initial_pose_offset_model_x.size() == initial_pose_offset_model_y.size()) {
-        const size_t size = initial_pose_offset_model_x.size();
-        covariance.covariance_estimation.initial_pose_offset_model.resize(size);
-        for (size_t i = 0; i < size; i++) {
-          covariance.covariance_estimation.initial_pose_offset_model[i].x() =
-            initial_pose_offset_model_x[i];
-          covariance.covariance_estimation.initial_pose_offset_model[i].y() =
-            initial_pose_offset_model_y[i];
-        }
-      } else {
-        std::stringstream message;
-        message << "Invalid initial pose offset model parameters."
-                << "Please make sure that the number of elements in "
-                << "initial_pose_offset_model_x and initial_pose_offset_model_y are the same.";
-        throw std::runtime_error(message.str());
-      }
+    const int64_t covariance_estimation_type_tmp = node->declare_parameter<int64_t>(
+      "covariance.covariance_estimation.covariance_estimation_type");
+    covariance.covariance_estimation.covariance_estimation_type =
+      static_cast<CovarianceEstimationType>(covariance_estimation_type_tmp);
+    covariance.covariance_estimation.initial_pose_offset_model_x =
+      node->declare_parameter<std::vector<double>>(
+        "covariance.covariance_estimation.initial_pose_offset_model_x");
+    covariance.covariance_estimation.initial_pose_offset_model_y =
+      node->declare_parameter<std::vector<double>>(
+        "covariance.covariance_estimation.initial_pose_offset_model_y");
+    if (
+      covariance.covariance_estimation.initial_pose_offset_model_x.size() !=
+      covariance.covariance_estimation.initial_pose_offset_model_y.size()) {
+      std::stringstream message;
+      message << "Invalid initial pose offset model parameters."
+              << "Please make sure that the number of elements in "
+              << "initial_pose_offset_model_x and initial_pose_offset_model_y are the same.";
+      throw std::runtime_error(message.str());
     }
+    covariance.covariance_estimation.temperature =
+      node->declare_parameter<double>("covariance.covariance_estimation.temperature");
+    covariance.covariance_estimation.scale_factor =
+      node->declare_parameter<double>("covariance.covariance_estimation.scale_factor");
 
     dynamic_map_loading.update_distance =
       node->declare_parameter<double>("dynamic_map_loading.update_distance");

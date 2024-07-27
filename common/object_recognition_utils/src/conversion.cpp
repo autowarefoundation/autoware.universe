@@ -16,10 +16,10 @@
 
 namespace object_recognition_utils
 {
-using autoware_auto_perception_msgs::msg::DetectedObject;
-using autoware_auto_perception_msgs::msg::DetectedObjects;
-using autoware_auto_perception_msgs::msg::TrackedObject;
-using autoware_auto_perception_msgs::msg::TrackedObjects;
+using autoware_perception_msgs::msg::DetectedObject;
+using autoware_perception_msgs::msg::DetectedObjects;
+using autoware_perception_msgs::msg::TrackedObject;
+using autoware_perception_msgs::msg::TrackedObjects;
 
 DetectedObject toDetectedObject(const TrackedObject & tracked_object)
 {
@@ -43,10 +43,10 @@ DetectedObject toDetectedObject(const TrackedObject & tracked_object)
 
 DetectedObjects toDetectedObjects(const TrackedObjects & tracked_objects)
 {
-  autoware_auto_perception_msgs::msg::DetectedObjects detected_objects;
+  autoware_perception_msgs::msg::DetectedObjects detected_objects;
   detected_objects.header = tracked_objects.header;
 
-  for (auto & tracked_object : tracked_objects.objects) {
+  for (const auto & tracked_object : tracked_objects.objects) {
     detected_objects.objects.push_back(toDetectedObject(tracked_object));
   }
   return detected_objects;
@@ -74,7 +74,7 @@ TrackedObjects toTrackedObjects(const DetectedObjects & detected_objects)
   TrackedObjects tracked_objects;
   tracked_objects.header = detected_objects.header;
 
-  for (auto & detected_object : detected_objects.objects) {
+  for (const auto & detected_object : detected_objects.objects) {
     tracked_objects.objects.push_back(toTrackedObject(detected_object));
   }
   return tracked_objects;

@@ -17,7 +17,6 @@
 /// \copyright Copyright 2021 Apex.AI, Inc.
 /// All rights reserved.
 
-#include <autoware_auto_common/common/types.hpp>
 #include <fake_test_node/fake_test_node.hpp>
 
 #include <std_msgs/msg/bool.hpp>
@@ -29,7 +28,7 @@
 #include <string>
 #include <vector>
 
-using autoware::common::types::bool8_t;
+using bool8_t = bool;
 
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 using FakeNodeFixtureParametrized = autoware::tools::testing::FakeTestNodeParametrized<bool8_t>;
@@ -97,9 +96,7 @@ TEST_F(FakeNodeFixture, Test)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-  FakeNodeFixtureTests, FakeNodeFixtureParametrized,
-  // cppcheck-suppress syntaxError  // cppcheck doesn't like the trailing comma.
-  ::testing::Values(-5, 0, 42));
+  FakeNodeFixtureTests, FakeNodeFixtureParametrized, ::testing::Values(-5, 0, 42));
 
 /// @test Test that we can use a parametrized test.
 TEST_P(FakeNodeFixtureParametrized, Test)

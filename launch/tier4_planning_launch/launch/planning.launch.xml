@@ -32,8 +32,8 @@
 
     <!-- planning validator -->
     <group>
-      <include file="$(find-pkg-share planning_validator)/launch/planning_validator.launch.xml">
-        <arg name="input_trajectory" value="/planning/scenario_planning/motion_velocity_smoother/trajectory"/>
+      <include file="$(find-pkg-share autoware_planning_validator)/launch/planning_validator.launch.xml">
+        <arg name="input_trajectory" value="/planning/scenario_planning/velocity_smoother/trajectory"/>
         <arg name="output_trajectory" value="/planning/scenario_planning/trajectory"/>
         <arg name="planning_validator_param_path" value="$(var planning_validator_param_path)"/>
       </include>
@@ -41,7 +41,7 @@
 
     <!-- planning evaluator -->
     <group>
-      <include file="$(find-pkg-share planning_evaluator)/launch/planning_evaluator.launch.xml"/>
+      <include file="$(find-pkg-share autoware_planning_evaluator)/launch/planning_evaluator.launch.xml"/>
     </group>
 
     <!-- mission remaining distance and time calculator -->

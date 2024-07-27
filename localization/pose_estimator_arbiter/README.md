@@ -45,7 +45,7 @@ The following video demonstrates the switching of four different pose estimators
 
 Users can reproduce the demonstration using the following data and launch command:
 
-[sample data (rosbag & map)](https://drive.google.com/file/d/1MxLo1Sw6PdvfkyOYf_9A5dZ9uli1vPvS/view)
+[sample data (rosbag & map)](https://drive.google.com/file/d/1ZNlkyCtwe04iKFREdeZ5xuMU_jWpwM3W/view)
 The rosbag is simulated data created by [AWSIM](https://tier4.github.io/AWSIM/).
 The map is an edited version of the [original map data](https://github.com/tier4/AWSIM/releases/download/v1.1.0/nishishinjuku_autoware_map.zip) published on the AWSIM documentation page to make it suitable for multiple pose_estimators.
 
@@ -93,7 +93,7 @@ For switching rule:
 
 | Name                          | Type                                                         | Description                       |
 | ----------------------------- | ------------------------------------------------------------ | --------------------------------- |
-| `/input/vector_map`           | autoware_auto_mapping_msgs::msg::HADMapBin                   | vector map                        |
+| `/input/vector_map`           | autoware_map_msgs::msg::LaneletMapBin                        | vector map                        |
 | `/input/pose_with_covariance` | geometry_msgs::msg::PoseWithCovarianceStamped                | localization final output         |
 | `/input/initialization_state` | autoware_adapi_v1_msgs::msg::LocalizationInitializationState | localization initialization state |
 
