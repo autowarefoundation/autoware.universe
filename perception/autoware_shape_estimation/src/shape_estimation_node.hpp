@@ -19,6 +19,7 @@
 
 #ifdef USE_CUDA
 #include "autoware/shape_estimation/tensorrt_shape_estimator.hpp"
+
 #include <tensorrt_common/tensorrt_common.hpp>
 #endif
 
