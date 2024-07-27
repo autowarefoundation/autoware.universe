@@ -58,8 +58,8 @@ bool is_not_too_close(
   const auto obj_arc_length = autoware::motion_utils::calcSignedArcLength(
     ego_data.trajectory, ego_data.pose.position,
     object.kinematics.initial_pose_with_covariance.pose.position);
-  return obj_arc_length > ego_data.longitudinal_offset_to_first_trajectory_idx +
-                            ego_longitudinal_offset + object.shape.dimensions.x / 2.0;
+  return std::abs(obj_arc_length) > ego_data.longitudinal_offset_to_first_trajectory_idx +
+                                      ego_longitudinal_offset + object.shape.dimensions.x / 2.0;
 };
 
 bool is_unavoidable(
