@@ -98,3 +98,40 @@ TEST(TestObjectFiltering, isInRange)
     }
   }
 }
+
+TEST(TestObjectFiltering, isNotTooClose)
+{
+  using autoware::motion_velocity_planner::dynamic_obstacle_stop::is_not_too_close;
+
+  double ego_longitudinal_offset = 1.0;
+  autoware::motion_velocity_planner::dynamic_obstacle_stop::EgoData ego_data;
+  ego_data.longitudinal_offset_to_first_trajectory_idx = 0.0;
+  ego_data.pose.position.x = 0.0;
+  ego_data.pose.position.y = 0.0;
+  autoware_planning_msgs::msg::TrajectoryPoint trajectory_p;
+  trajectory_p.pose.position.y = 0.0;
+  for (auto x = -10.0; x <= 10.0; x += 1.0) {
+    trajectory_p.pose.position.x = x;
+    ego_data.trajectory.push_back(trajectory_p);
+  }
+  autoware_perception_msgs::msg::PredictedObject object;
+  object.shape.dimensions.x = 2.0;
+  object.kinematics.initial_pose_with_covariance.pose.position.y = 2.0;
+  // object ego with 1m offset = too close if poses are within 2m of arc length
+  for (auto obj_x = -2.0; obj_x <= 2.0; obj_x += 0.1) {
+    object.kinematics.initial_pose_with_covariance.pose.position.x = obj_x;
+    EXPECT_FALSE(is_not_too_close(object, ego_data, ego_longitudinal_offset));
+  }
+  for (auto obj_x = -2.1; obj_x >= -10.0; obj_x -= 0.1) {
+    object.kinematics.initial_pose_with_covariance.pose.position.x = obj_x;
+    EXPECT_TRUE(is_not_too_close(object, ego_data, ego_longitudinal_offset));
+  }
+  for (auto obj_x = 2.1; obj_x <= 10.0; obj_x += 0.1) {
+    object.kinematics.initial_pose_with_covariance.pose.position.x = obj_x;
+    EXPECT_TRUE(is_not_too_close(object, ego_data, ego_longitudinal_offset));
+  }
+}
+
+TEST(TestObjectFiltering, isUnavoidable)
+{
+}
