@@ -37,8 +37,7 @@ EKFModule::EKFModule(std::shared_ptr<Warning> warning, const HyperParameters & p
 : warning_(std::move(warning)),
   dim_x_(6),  // x, y, yaw, yaw_bias, vx, wz
   accumulated_delay_times_(params.extend_state_step, 1.0E15),
-  roll_rate_(0.0),
-  pitch_rate_(0.0),
+  last_rotation_axis_(0, 0, 0),
   params_(params)
 {
   Eigen::MatrixXd x = Eigen::MatrixXd::Zero(dim_x_, 1);
@@ -287,20 +286,28 @@ bool EKFModule::measurement_update_pose(
 geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_rph_with_delay(
   const PoseWithCovariance & pose, const double delay_time)
 {
-  const auto rpy = autoware::universe_utils::getRPY(pose.pose.pose.orientation);
-  const double delta_z = kalman_filter_.getXelement(IDX::VX) * delay_time * std::sin(-rpy.y);
-  const double delta_roll = roll_rate_ * delay_time;
-  const double delta_pitch = pitch_rate_ * delay_time;
+  tf2::Quaternion delta_orientation;
+  if (last_rotation_axis_.length() > 0.0) {
+    delta_orientation.setRotation(
+      last_rotation_axis_.normalized(), last_rotation_axis_.length() * delay_time);
+  } else {
+    delta_orientation.setValue(0.0, 0.0, 0.0, 1.0);
+  }
+
+  tf2::Quaternion prew_orientation = tf2::Quaternion(
+    pose.pose.pose.orientation.x, pose.pose.pose.orientation.y, pose.pose.pose.orientation.z,
+    pose.pose.pose.orientation.w);
+
+  tf2::Quaternion curr_orientation;
+  curr_orientation = prew_orientation * delta_orientation;
+  curr_orientation.normalize();
 
   PoseWithCovariance pose_with_delay;
   pose_with_delay = pose;
-  pose_with_delay.pose.pose.position.z += delta_z;
-  const double corrected_roll = rpy.x + delta_roll;
-  const double corrected_pitch = rpy.y + delta_pitch;
-  tf2::Quaternion quat;
-  quat.setRPY(corrected_roll, corrected_pitch, rpy.z);
-  quat.normalize();
-  pose_with_delay.pose.pose.orientation = tf2::toMsg(quat);
+  pose_with_delay.pose.pose.orientation.x = curr_orientation.x();
+  pose_with_delay.pose.pose.orientation.y = curr_orientation.y();
+  pose_with_delay.pose.pose.orientation.z = curr_orientation.z();
+  pose_with_delay.pose.pose.orientation.w = curr_orientation.w();
 
   return pose_with_delay;
 }
@@ -341,8 +348,9 @@ bool EKFModule::measurement_update_twist(
   /* Set measurement matrix */
   Eigen::MatrixXd y(dim_y, 1);
   y << twist.twist.twist.linear.x, twist.twist.twist.angular.z;
-  roll_rate_ = twist.twist.twist.angular.x;
-  pitch_rate_ = twist.twist.twist.angular.y;
+
+  last_rotation_axis_ = tf2::Vector3(
+    twist.twist.twist.angular.x, twist.twist.twist.angular.y, twist.twist.twist.angular.z);
 
   if (has_nan(y) || has_inf(y)) {
     warning_->warn(

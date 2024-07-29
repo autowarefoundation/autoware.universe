@@ -29,6 +29,8 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 
+#include <tf2/utils.h>
+
 #include <memory>
 #include <vector>
 
@@ -86,8 +88,7 @@ private:
   std::shared_ptr<Warning> warning_;
   const int dim_x_;
   std::vector<double> accumulated_delay_times_;
-  double roll_rate_;
-  double pitch_rate_;
+  tf2::Vector3 last_rotation_axis_;
   const HyperParameters params_;
 };
 
