@@ -286,7 +286,7 @@ TEST_F(TestAEB, CollisionDataKeeper)
   ASSERT_TRUE(collision_data_keeper_.checkCollisionExpired());
 }
 
-TEST_F(TestAEB, TestCropPointCLoud)
+TEST_F(TestAEB, TestCropPointCloud)
 {
   constexpr double longitudinal_velocity = 3.0;
   constexpr double yaw_rate = 0.05;
@@ -294,19 +294,18 @@ TEST_F(TestAEB, TestCropPointCLoud)
   ASSERT_FALSE(imu_path.empty());
 
   constexpr size_t n_points{15};
-  // include points within path
+  // Create n_points inside the path and 1 point outside.
   pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr =
     pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   {
-    const double x_start{0.0};
-    const double y_start{0.0};
+    constexpr double x_start{0.0};
+    constexpr double y_start{0.0};
 
     for (size_t i = 0; i < n_points; ++i) {
-      pcl::PointXYZ p1(
-        x_start + static_cast<double>(i / 100.0), y_start - static_cast<double>(i / 100.0), 0.5);
-      pcl::PointXYZ p2(
-        x_start + static_cast<double>((i + 10) / 100.0), y_start - static_cast<double>(i / 100.0),
-        0.5);
+      const double offset_1 = static_cast<double>(i / 100.0);
+      const double offset_2 = static_cast<double>((i + 10) / 100.0);
+      pcl::PointXYZ p1(x_start + offset_1, y_start - offset_1, 0.5);
+      pcl::PointXYZ p2(x_start + offset_2, y_start - offset_1, 0.5);
       obstacle_points_ptr->push_back(p1);
       obstacle_points_ptr->push_back(p2);
     }
@@ -320,43 +319,7 @@ TEST_F(TestAEB, TestCropPointCLoud)
   pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects =
     pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   aeb_node_->cropPointCloudWithEgoFootprintPath(footprint, filtered_objects);
-  ASSERT_TRUE(filtered_objects->points.size() == 2 * n_points);
-}
-
-TEST_F(TestAEB, TestTransformObjectFrame)
-{
-  constexpr double longitudinal_velocity = 3.0;
-  constexpr double yaw_rate = 0.05;
-  const auto imu_path = aeb_node_->generateEgoPath(longitudinal_velocity, yaw_rate);
-  ASSERT_FALSE(imu_path.empty());
-
-  constexpr size_t n_points{15};
-  // include points within path
-  pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr =
-    pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
-  {
-    const double x_start{0.0};
-    const double y_start{0.0};
-
-    for (size_t i = 0; i < n_points; ++i) {
-      pcl::PointXYZ p1(
-        x_start + static_cast<double>(i / 100.0), y_start - static_cast<double>(i / 100.0), 0.5);
-      pcl::PointXYZ p2(
-        x_start + static_cast<double>((i + 10) / 100.0), y_start - static_cast<double>(i / 100.0),
-        0.5);
-      obstacle_points_ptr->push_back(p1);
-      obstacle_points_ptr->push_back(p2);
-    }
-    pcl::PointXYZ p_out(x_start + 100.0, y_start + 100, 0.5);
-    obstacle_points_ptr->push_back(p_out);
-  }
-  aeb_node_->obstacle_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
-  pcl::toROSMsg(*obstacle_points_ptr, *aeb_node_->obstacle_ros_pointcloud_ptr_);
-  const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects =
-    pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
-  aeb_node_->cropPointCloudWithEgoFootprintPath(footprint, filtered_objects);
+  // Check if the point outside the path was excluded
   ASSERT_TRUE(filtered_objects->points.size() == 2 * n_points);
 }
 
