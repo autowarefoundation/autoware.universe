@@ -95,9 +95,9 @@ bool TrtShapeEstimator::inference(
     DetectedObjectsWithFeature output_batch;
     result = feed_forward_and_decode(input_batch, output_batch);
 
-    output.feature_objects.insert(output.feature_objects.end(),
-                                  output_batch.feature_objects.begin(),
-                                  output_batch.feature_objects.end());
+    output.feature_objects.insert(
+      output.feature_objects.end(), output_batch.feature_objects.begin(),
+      output_batch.feature_objects.end());
   }
 
   return result;
