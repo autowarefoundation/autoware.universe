@@ -100,6 +100,10 @@ public:
     const TrackedObject & object, const PosePath & ref_paths, const double duration,
     const double lateral_duration, const double speed_limit = 0.0) const;
 
+  PredictedPath generateShiftedPathForOnLaneVehicle(
+    const TrackedObject & object, const PredictedPath & predicted_path, const double duration,
+    const double lateral_duration, const double shift_length, const double speed_limit = 0.0);
+
   PredictedPath generatePathForCrosswalkUser(
     const TrackedObject & object, const CrosswalkEdgePoints & reachable_crosswalk,
     const double duration) const;

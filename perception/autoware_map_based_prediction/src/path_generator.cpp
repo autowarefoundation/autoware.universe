@@ -203,6 +203,17 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
   return generatePolynomialPath(object, ref_paths, duration, lateral_duration, speed_limit);
 }
 
+PredictedPath PathGenerator::generateShiftedPathForOnLaneVehicle(
+  const TrackedObject & object, const PredictedPath & predicted_path, const double duration,
+  const double lateral_duration, const double shift_length, const double speed_limit)
+{
+  if (predicted_path.path.size() < 2) {
+    return generateStraightPath(object, duration);
+  }
+  const PosePath & ref_path = shiftPath(predicted_path, shift_length).path;
+  return generatePolynomialPath(object, ref_path, duration, lateral_duration, speed_limit);
+}
+
 PredictedPath PathGenerator::generateStraightPath(
   const TrackedObject & object, const double longitudinal_duration) const
 {

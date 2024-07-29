@@ -1071,48 +1071,18 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
       case ObjectClassification::TRUCK: {
         // Update object yaw and velocity
         updateObjectData(transformed_object);
-
-        double prev_left_bound_dist = 0;
-        double next_left_bound_dist = 0;
-        double prev_right_bound_dist = 0;
-        double next_right_bound_dist = 0;
-        double bound_to_centerline = 0;
         lanelet::BasicPoint2d search_point(
           object.kinematics.pose_with_covariance.pose.position.x,
           object.kinematics.pose_with_covariance.pose.position.y);
 
-        // nearest lanelet
-        std::vector<std::pair<double, lanelet::Lanelet>> surrounding_lanelets =
-          lanelet::geometry::findNearest(lanelet_map_ptr_->laneletLayer, search_point, 10);
-
         // Get Closest Lanelet
         const auto current_lanelets = getCurrentLanelets(transformed_object);
-        for (const auto & current_lanelet : current_lanelets) {
+        double bound_to_centerline = 0.0;
+          for (const auto & current_lanelet : current_lanelets) {
           // Check if the lanelet is bidirectional
           if (current_lanelet.is_bidirectional) {
-            for (size_t t = 0; t < surrounding_lanelets.size(); t++) {
-              for (size_t j = t + 1; j < surrounding_lanelets.size(); j++) {
-                prev_left_bound_dist = lanelet::geometry::distance2d(
-                  lanelet::utils::to2D(
-                    surrounding_lanelets[t].second.leftBound().basicLineString()),
-                  search_point);
-                prev_right_bound_dist = lanelet::geometry::distance2d(
-                  lanelet::utils::to2D(
-                    surrounding_lanelets[t].second.rightBound().basicLineString()),
-                  search_point);
-                next_left_bound_dist = lanelet::geometry::distance2d(
-                  lanelet::utils::to2D(
-                    surrounding_lanelets[j].second.leftBound().basicLineString()),
-                  search_point);
-                next_right_bound_dist = lanelet::geometry::distance2d(
-                  lanelet::utils::to2D(
-                    surrounding_lanelets[j].second.rightBound().basicLineString()),
-                  search_point);
-                bound_to_centerline = lanelet::geometry::distance2d(
-                  lanelet::utils::to2D(current_lanelet.lanelet.leftBound().basicLineString()),
-                  lanelet::utils::to2D(current_lanelet.lanelet.centerline().basicLineString()));
-              }
-            }
+            bound_to_centerline = lanelet::geometry::distance2d(lanelet::utils::to2D(current_lanelet.lanelet.leftBound().basicLineString()),
+                                                                       lanelet::utils::to2D(current_lanelet.lanelet.centerline().basicLineString()));
           }
         }
         // Update Objects History
@@ -1190,64 +1160,45 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         std::vector<PredictedPath> predicted_paths;
         double min_avg_curvature = std::numeric_limits<double>::max();
         PredictedPath path_with_smallest_avg_curvature;
-        PredictedPath shifted_predicted_path{};
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path{};
           // convert PredictedRefPath to PredictedPath
           predicted_path.path = ref_path.path;
           predicted_path.confidence = ref_path.probability;
 
-          if (
-            prev_left_bound_dist != 0 && prev_right_bound_dist != 0 && next_left_bound_dist != 0 &&
-            next_right_bound_dist != 0) {
-            if (
-              (prev_right_bound_dist < prev_left_bound_dist) &&
-              (next_left_bound_dist < next_right_bound_dist)) {
-              predicted_path = path_generator_->shiftPath(predicted_path, -bound_to_centerline / 2);
-              shifted_predicted_path = path_generator_->generatePathForOnLaneVehicle(
-                yaw_fixed_transformed_object, predicted_path.path, prediction_time_horizon_.vehicle,
-                lateral_control_time_horizon_, ref_path.speed_limit);
-              shifted_predicted_path.confidence = 1.0;
-              if (shifted_predicted_path.path.empty()) break;
-              auto predicted_object_vehicle = convertToPredictedObject(transformed_object);
-              predicted_object_vehicle.kinematics.predicted_paths.push_back(shifted_predicted_path);
-              output.objects.push_back(predicted_object_vehicle);
+          if (current_lanelets.front().is_bidirectional) {
+            if (isRelativelyLeft(transformed_object)) {
+              predicted_path = path_generator_->generateShiftedPathForOnLaneVehicle(
+                yaw_fixed_transformed_object, predicted_path, prediction_time_horizon_.vehicle,
+                lateral_control_time_horizon_, -bound_to_centerline/2, ref_path.speed_limit);
 
-            } else if (
-              (prev_right_bound_dist > prev_left_bound_dist) &&
-              (next_left_bound_dist > next_right_bound_dist)) {
-              predicted_path = path_generator_->shiftPath(predicted_path, bound_to_centerline / 2);
-              shifted_predicted_path = path_generator_->generatePathForOnLaneVehicle(
-                yaw_fixed_transformed_object, predicted_path.path, prediction_time_horizon_.vehicle,
-                lateral_control_time_horizon_, ref_path.speed_limit);
-              shifted_predicted_path.confidence = 1.0;
-              if (shifted_predicted_path.path.empty()) break;
-              auto predicted_object_vehicle = convertToPredictedObject(transformed_object);
-              predicted_object_vehicle.kinematics.predicted_paths.push_back(shifted_predicted_path);
-              output.objects.push_back(predicted_object_vehicle);
+            } else if (!isRelativelyLeft(transformed_object)) {
+              predicted_path = path_generator_->generateShiftedPathForOnLaneVehicle(
+                yaw_fixed_transformed_object, predicted_path, prediction_time_horizon_.vehicle,
+                lateral_control_time_horizon_, bound_to_centerline/2, ref_path.speed_limit);
             }
           } else {
-            shifted_predicted_path = path_generator_->generatePathForOnLaneVehicle(
+            predicted_path = path_generator_->generatePathForOnLaneVehicle(
               yaw_fixed_transformed_object, ref_path.path, prediction_time_horizon_.vehicle,
               lateral_control_time_horizon_, ref_path.speed_limit);
           }
 
-          if (shifted_predicted_path.path.empty()) continue;
+          if (predicted_path.path.empty()) continue;
 
           if (!check_lateral_acceleration_constraints_) {
-            shifted_predicted_path.confidence = ref_path.probability;
-            predicted_paths.push_back(shifted_predicted_path);
+            predicted_path.confidence = ref_path.probability;
+            predicted_paths.push_back(predicted_path);
             continue;
           }
 
           // Check lat. acceleration constraints
           const auto trajectory_with_const_velocity =
-            toTrajectoryPoints(shifted_predicted_path, abs_obj_speed);
+            toTrajectoryPoints(predicted_path, abs_obj_speed);
 
           if (isLateralAccelerationConstraintSatisfied(
                 trajectory_with_const_velocity, prediction_sampling_time_interval_)) {
-            shifted_predicted_path.confidence = ref_path.probability;
-            predicted_paths.push_back(shifted_predicted_path);
+            predicted_path.confidence = ref_path.probability;
+            predicted_paths.push_back(predicted_path);
             continue;
           }
 
@@ -1267,7 +1218,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
             std::accumulate(curvature_v.begin(), curvature_v.end(), 0.0) / curvature_v.size();
           if (curvature_avg < min_avg_curvature) {
             min_avg_curvature = curvature_avg;
-            path_with_smallest_avg_curvature = shifted_predicted_path;
+            path_with_smallest_avg_curvature = predicted_path;
             path_with_smallest_avg_curvature.confidence = ref_path.probability;
           }
         }
@@ -1473,6 +1424,37 @@ bool MapBasedPredictionNode::isIntersecting(
   const auto p4 = autoware::universe_utils::createPoint(point4.x(), point4.y(), 0.0);
   const auto intersection = autoware::universe_utils::intersect(p1, p2, p3, p4);
   return intersection.has_value();
+}
+
+bool MapBasedPredictionNode::isRelativelyLeft(
+  const TrackedObject & object)
+{
+  lanelet::BasicPoint2d search_point(
+    object.kinematics.pose_with_covariance.pose.position.x,
+    object.kinematics.pose_with_covariance.pose.position.y);
+
+  // nearest lanelet
+  std::vector<std::pair<double, lanelet::Lanelet>> surrounding_lanelets =
+    lanelet::geometry::findNearest(lanelet_map_ptr_->laneletLayer, search_point, 10);
+
+  double prev_left_bound_dist = 0;
+  double next_left_bound_dist = 0;
+  double prev_right_bound_dist = 0;
+  double next_right_bound_dist = 0;
+
+  for (size_t t = 0; t < surrounding_lanelets.size(); t++) {
+    for (size_t j = t + 1; j < surrounding_lanelets.size(); j++) {
+      prev_left_bound_dist = lanelet::geometry::distance2d(lanelet::utils::to2D(surrounding_lanelets[t].second.leftBound().basicLineString()),search_point);
+      prev_right_bound_dist = lanelet::geometry::distance2d(lanelet::utils::to2D(surrounding_lanelets[t].second.rightBound().basicLineString()),search_point);
+      next_left_bound_dist = lanelet::geometry::distance2d(lanelet::utils::to2D(surrounding_lanelets[j].second.leftBound().basicLineString()),search_point);
+      next_right_bound_dist = lanelet::geometry::distance2d(lanelet::utils::to2D(surrounding_lanelets[j].second.rightBound().basicLineString()),search_point);
+
+    }
+  }
+  if((prev_right_bound_dist < prev_left_bound_dist) && (next_left_bound_dist < next_right_bound_dist)){
+    return true;
+  }
+  return false;
 }
 
 PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
