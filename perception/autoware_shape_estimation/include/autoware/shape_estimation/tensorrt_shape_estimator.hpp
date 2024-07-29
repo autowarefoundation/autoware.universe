@@ -87,6 +87,7 @@ private:
   CudaUniquePtrHost<float[]> out_pred_prob_h_;
 
   std::vector<std::vector<float>> g_type_mean_size_;
+  size_t batch_size_;
 };
 }  // namespace autoware::shape_estimation
 #endif  // AUTOWARE__SHAPE_ESTIMATION__TENSORRT_SHAPE_ESTIMATOR_HPP_

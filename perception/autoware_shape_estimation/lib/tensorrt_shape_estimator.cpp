@@ -42,7 +42,7 @@ TrtShapeEstimator::TrtShapeEstimator(
   const auto pc_input_size = std::accumulate(
     pc_input_dims.d + 1, pc_input_dims.d + pc_input_dims.nbDims, 1, std::multiplies<int>());
   input_pc_d_ = cuda_utils::make_unique<float[]>(pc_input_size * batch_config[2]);
-
+  batch_size_ = batch_config[2];
   const auto one_hot_input_dims = trt_common_->getBindingDimensions(1);
   const auto one_hot_input_size = std::accumulate(
     one_hot_input_dims.d + 1, one_hot_input_dims.d + one_hot_input_dims.nbDims, 1,
@@ -81,10 +81,26 @@ bool TrtShapeEstimator::inference(
     return false;
   }
 
-  preprocess(input);
-  bool res = feed_forward_and_decode(input, output);
+  bool result = false;
 
-  return res;
+  for (size_t i = 0; i < input.feature_objects.size(); i += batch_size_) {
+    DetectedObjectsWithFeature input_batch;
+    input_batch.header = input.header;
+
+    for (size_t j = 0; j < batch_size_ && (i + j) < input.feature_objects.size(); ++j) {
+      input_batch.feature_objects.push_back(input.feature_objects[i + j]);
+    }
+
+    preprocess(input_batch);
+    DetectedObjectsWithFeature output_batch;
+    result = feed_forward_and_decode(input_batch, output_batch);
+
+    output.feature_objects.insert(output.feature_objects.end(),
+                                  output_batch.feature_objects.begin(),
+                                  output_batch.feature_objects.end());
+  }
+
+  return result;
 }
 
 void TrtShapeEstimator::preprocess(const DetectedObjectsWithFeature & input)
