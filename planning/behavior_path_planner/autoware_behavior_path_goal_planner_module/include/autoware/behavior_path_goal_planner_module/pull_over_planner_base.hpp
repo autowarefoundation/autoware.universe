@@ -71,9 +71,10 @@ struct PullOverPath
     updatePathData();
   }
 
-  const PathWithLaneId & getFullPath() const { return full_path; }
+  // Note: return copy value (not const&) because the value is used in multi threads
+  PathWithLaneId getFullPath() const { return full_path; }
 
-  const PathWithLaneId & getParkingPath() const { return parking_path; }
+  PathWithLaneId getParkingPath() const { return parking_path; }
 
   PathWithLaneId getCurrentPath() const
   {
