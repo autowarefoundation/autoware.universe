@@ -71,9 +71,9 @@ struct PullOverPath
     updatePathData();
   }
 
-  PathWithLaneId getFullPath() { return full_path; }
+  const PathWithLaneId & getFullPath() const { return full_path; }
 
-  PathWithLaneId getParkingPath() const { return parking_path; }
+  const PathWithLaneId & getParkingPath() const { return parking_path; }
 
   PathWithLaneId getCurrentPath() const
   {
