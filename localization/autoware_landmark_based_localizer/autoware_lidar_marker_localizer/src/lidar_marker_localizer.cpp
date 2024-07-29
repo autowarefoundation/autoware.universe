@@ -87,7 +87,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
   auto points_sub_opt = rclcpp::SubscriptionOptions();
   points_sub_opt.callback_group = points_callback_group;
   sub_points_ = this->create_subscription<PointCloud2>(
-    "~/input/pointcloud_ex", rclcpp::QoS(1).best_effort(),
+    "~/input/pointcloud", rclcpp::QoS(1).best_effort(),
     std::bind(&LidarMarkerLocalizer::points_callback, this, _1), points_sub_opt);
 
   rclcpp::CallbackGroup::SharedPtr self_pose_callback_group;

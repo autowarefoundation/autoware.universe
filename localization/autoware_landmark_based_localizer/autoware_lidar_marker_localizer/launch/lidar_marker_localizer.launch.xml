@@ -11,7 +11,7 @@
   <arg name="service_trigger_node_srv" default="~/service/trigger_node_srv"/>
 
   <node pkg="autoware_lidar_marker_localizer" exec="autoware_lidar_marker_localizer_node" output="both">
-    <remap from="~/input/pointcloud_ex" to="$(var input_pointcloud)"/>
+    <remap from="~/input/pointcloud" to="$(var input_pointcloud)"/>
     <remap from="~/input/ekf_pose" to="$(var input_ekf_pose)"/>
     <remap from="~/input/lanelet2_map" to="$(var input_lanelet2_map)"/>
 
