@@ -121,14 +121,14 @@ bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
   start_pose_ = global2local(costmap_, start_pose);
   goal_pose_ = global2local(costmap_, goal_pose);
 
+  if (!setGoalNode()) {
+    throw std::logic_error("Invalid goal pose");
+  }
+
   setCollisionFreeDistanceMap();
 
   if (!setStartNode()) {
     throw std::logic_error("Invalid start pose");
-  }
-
-  if (!setGoalNode()) {
-    throw std::logic_error("Invalid goal pose");
   }
 
   if (!search()) {
