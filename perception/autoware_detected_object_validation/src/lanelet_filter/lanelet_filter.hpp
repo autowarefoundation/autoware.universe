@@ -19,7 +19,6 @@
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/ros/debug_publisher.hpp"
 #include "autoware/universe_utils/ros/published_time_publisher.hpp"
-#include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
 
 #include <boost/geometry/index/rtree.hpp>
@@ -86,7 +85,7 @@ private:
   bool filterObject(
     const autoware_perception_msgs::msg::DetectedObject & transformed_object,
     const autoware_perception_msgs::msg::DetectedObject & input_object,
-    const boost::geometry::index::rtree<BoxAndLanelet, RtreeAlgo> & local_rtree,
+    const bg::index::rtree<BoxAndLanelet, RtreeAlgo> & local_rtree,
     autoware_perception_msgs::msg::DetectedObjects & output_object_msg);
   LinearRing2d getConvexHull(const autoware_perception_msgs::msg::DetectedObjects &);
   LinearRing2d getConvexHullFromObjectFootprint(
@@ -94,7 +93,7 @@ private:
   std::vector<BoxAndLanelet> getIntersectedLanelets(const LinearRing2d &);
   bool isObjectOverlapLanelets(
     const autoware_perception_msgs::msg::DetectedObject & object,
-    const boost::geometry::index::rtree<BoxAndLanelet, RtreeAlgo> & local_rtree);
+    const bg::index::rtree<BoxAndLanelet, RtreeAlgo> & local_rtree);
   bool isPolygonOverlapLanelets(
   const Polygon2d & polygon,
   const bgi::rtree<BoxAndLanelet, RtreeAlgo> & local_rtree);
