@@ -437,7 +437,7 @@ double area(const alt::ConvexPolygon2d & poly)
 
   double area = 0.;
   for (size_t i = 1; i < vertices.size() - 1; ++i) {
-    area += (vertices.at(i + 1) - vertices.front()).cross(vertices.at(i) - vertices.front()) / 2;
+    area += (vertices[i + 1] - vertices.front()).cross(vertices[i] - vertices.front()) / 2;
   }
 
   return area;
