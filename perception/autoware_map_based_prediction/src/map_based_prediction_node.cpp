@@ -2395,9 +2395,15 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
             continue;
           }
 
-          const double lane_yaw = std::atan2(
-            current_p.position.y - prev_p.position.y, current_p.position.x - prev_p.position.x);
-          current_p.orientation = autoware::universe_utils::createQuaternionFromYaw(lane_yaw);
+          const double dx = current_p.position.x - prev_p.position.x;
+          const double dy = current_p.position.y - prev_p.position.y;
+          const double sin_yaw_half = dy / (std::sqrt(dx * dx + dy * dy) + dx);
+          const double cos_yaw_half = std::sqrt(1 - sin_yaw_half * sin_yaw_half);
+          current_p.orientation.x = 0.0;
+          current_p.orientation.y = 0.0;
+          current_p.orientation.z = sin_yaw_half;
+          current_p.orientation.w = cos_yaw_half;
+
           converted_path.push_back(current_p);
           prev_p = current_p;
         }
@@ -2426,9 +2432,15 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
           }
         }
 
-        const double lane_yaw = std::atan2(
-          current_p.position.y - prev_p.position.y, current_p.position.x - prev_p.position.x);
-        current_p.orientation = autoware::universe_utils::createQuaternionFromYaw(lane_yaw);
+        const double dx = current_p.position.x - prev_p.position.x;
+        const double dy = current_p.position.y - prev_p.position.y;
+        const double sin_yaw_half = dy / (std::sqrt(dx * dx + dy * dy) + dx);
+        const double cos_yaw_half = std::sqrt(1 - sin_yaw_half * sin_yaw_half);
+        current_p.orientation.x = 0.0;
+        current_p.orientation.y = 0.0;
+        current_p.orientation.z = sin_yaw_half;
+        current_p.orientation.w = cos_yaw_half;
+        
         converted_path.push_back(current_p);
         prev_p = current_p;
       }
