@@ -2779,8 +2779,8 @@ TEST(geometry, coveredByRand)
           }
 
           if (ground_truth != alt) {
-            std::cout << "Alt failed for the 2 polygons: ";
-            std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+            std::cout << "Alt failed for the point and polygon: ";
+            std::cout << boost::geometry::wkt(point) << boost::geometry::wkt(polygons[j])
                       << std::endl;
           }
           EXPECT_EQ(ground_truth, alt);
