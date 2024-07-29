@@ -178,9 +178,7 @@ bool AstarSearch::setStartNode()
 {
   const auto index = pose2index(costmap_, start_pose_, planner_common_param_.theta_size);
 
-  if (detectCollision(index)) {
-    return false;
-  }
+  if (detectCollision(index)) return false;
 
   // Set start node
   AstarNode * start_node = &graph_[getKey(index)];
