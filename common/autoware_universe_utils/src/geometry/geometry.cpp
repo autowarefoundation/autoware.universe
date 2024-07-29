@@ -551,22 +551,38 @@ bool intersects(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d &
 bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 {
   const auto & vertices = poly.vertices();
+  const auto num_of_vertices = vertices.size();
   int64_t winding_number = 0;
-  for (size_t i = 0; i < vertices.size(); ++i) {
-    const auto & p1 = vertices.at(i);
-    const auto & p2 = vertices.at((i + 1) % vertices.size());
 
-    double cross = (p2 - p1).cross(point - p1);
-    if (std::abs(cross) <= std::numeric_limits<double>::epsilon()) {
-      return false;
+  const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
+    vertices.begin(), vertices.end(), [](const auto & a, const auto & b) { return a.y() < b.y(); });
+  if (point.y() <= y_min_vertex->y() || point.y() >= y_max_vertex->y()) {
+    return false;
+  }
+
+  double cross;
+  for (size_t i = 0; i < num_of_vertices; ++i) {
+    const auto & p1 = vertices[i];
+    const auto & p2 = vertices[(i + 1) % num_of_vertices];
+
+    if (p1.y() < point.y() && p2.y() > point.y()) {  // upward edge
+      cross = (p2 - p1).cross(point - p1);
+      if (cross > 0) {  // point is to the left of edge
+        winding_number++;
+        continue;
+      }
+    } else if (p1.y() > point.y() && p2.y() < point.y()) {  // downward edge
+      cross = (p2 - p1).cross(point - p1);
+      if (cross < 0) {  // point is to the left of edge
+        winding_number--;
+        continue;
+      }
+    } else {
+      continue;
     }
 
-    if (p1.y() <= point.y() && p2.y() > point.y() && cross > 0) {  // the point is to the left of
-                                                                   // upward edge
-      winding_number++;
-    } else if (p1.y() > point.y() && p2.y() <= point.y() && cross < 0) {  // the point is to the
-                                                                          // left of downward edge
-      winding_number--;
+    if (std::abs(cross) <= std::numeric_limits<double>::epsilon()) {  // point is on edge
+      return false;
     }
   }
 
