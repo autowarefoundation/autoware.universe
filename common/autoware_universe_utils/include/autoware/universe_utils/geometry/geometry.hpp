@@ -600,7 +600,9 @@ public:
 
   double dot(const Vector2d & other) const { return x_ * other.x() + y_ * other.y(); }
 
-  double norm() const { return std::hypot(x_, y_); }
+  double norm2() const { return x_ * x_ + y_ * y_; }
+
+  double norm() const { return std::sqrt(norm2()); }
 
   Vector2d vector_triple(const Vector2d & v1, const Vector2d & v2) const
   {
