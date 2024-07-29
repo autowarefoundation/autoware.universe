@@ -2634,6 +2634,7 @@ TEST(geometry, areaRand)
     double ground_truth_area_ns = 0.0;
     double alt_area_ns = 0.0;
 
+    polygons.clear();
     for (auto i = 0; i < polygons_nb; ++i) {
       polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
     }
@@ -2672,6 +2673,7 @@ TEST(geometry, convexHullRand)
     double ground_truth_hull_ns = 0.0;
     double alt_hull_ns = 0.0;
 
+    polygons.clear();
     for (auto i = 0; i < polygons_nb; ++i) {
       polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
     }
@@ -2695,7 +2697,7 @@ TEST(geometry, convexHullRand)
         std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
       }
       EXPECT_EQ(ground_truth.outer().size() - 1, alt.vertices().size());
-      for (size_t i = 0; i < alt.vertices().size(); i++) {
+      for (size_t i = 0; i < alt.vertices().size(); ++i) {
         EXPECT_NEAR(ground_truth.outer().at(i).x(), alt.vertices().at(i).x(), epsilon);
         EXPECT_NEAR(ground_truth.outer().at(i).y(), alt.vertices().at(i).y(), epsilon);
       }
