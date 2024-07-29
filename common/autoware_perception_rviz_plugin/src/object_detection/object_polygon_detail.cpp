@@ -546,11 +546,17 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->ns = std::string("shape");
+  marker_ptr->scale.x = line_width;
 
   using autoware_perception_msgs::msg::Shape;
   if (shape_msg.type == Shape::BOUNDING_BOX) {
-    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
-    calc_2d_bounding_box_bottom_line_list(shape_msg, marker_ptr->points);
+    // marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
+    // calc_2d_bounding_box_bottom_line_list(shape_msg, marker_ptr->points);
+    marker_ptr->type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
+    calc_2d_bounding_box_bottom_triangle_list(shape_msg, marker_ptr->points);
+    marker_ptr->scale.x = 1.0;  // Set scale to 1 for TRIANGLE_LIST
+    marker_ptr->scale.y = 1.0;  // Set scale to 1 for TRIANGLE_LIST
+    marker_ptr->scale.z = 1.0;  // Set scale to 1 for TRIANGLE_LIST
     if (is_orientation_available) {
       calc_2d_bounding_box_bottom_direction_line_list(shape_msg, marker_ptr->points);
     } else {
@@ -567,10 +573,106 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   marker_ptr->action = visualization_msgs::msg::Marker::MODIFY;
   marker_ptr->pose = to_pose(centroid, orientation);
   marker_ptr->lifetime = rclcpp::Duration::from_seconds(0.15);
-  marker_ptr->scale.x = line_width;
   marker_ptr->color = color_rgba;
+  marker_ptr->color.a = 0.75f;
 
   return marker_ptr;
+}
+
+void calc_2d_bounding_box_bottom_triangle_list(
+  const autoware_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points)
+{
+  const double length_half = shape.dimensions.x * 0.5;
+  const double width_half = shape.dimensions.y * 0.5;
+  const double height_half = shape.dimensions.z * 0.5;
+  const double thickness = 0.1;  // Adjust this value to set the desired thickness of the shape
+
+  // Define Boost.Geometry types
+  using BoostPoint = boost::geometry::model::d2::point_xy<double>;
+  using BoostPolygon = boost::geometry::model::polygon<BoostPoint>;
+
+  // Create a rectangle polygon
+  BoostPolygon boost_polygon;
+  boost::geometry::append(boost_polygon.outer(), BoostPoint(length_half, width_half));
+  boost::geometry::append(boost_polygon.outer(), BoostPoint(length_half, -width_half));
+  boost::geometry::append(boost_polygon.outer(), BoostPoint(-length_half, -width_half));
+  boost::geometry::append(boost_polygon.outer(), BoostPoint(-length_half, width_half));
+  boost::geometry::append(boost_polygon.outer(), BoostPoint(length_half, width_half));
+  boost::geometry::correct(boost_polygon);
+
+  // Define buffer strategy with larger rounded corners and smoother approximation
+  boost::geometry::strategy::buffer::distance_symmetric<double> distance_strategy(
+    0.3);  // Adjust distance as needed
+  boost::geometry::strategy::buffer::join_round join_strategy(
+    20);  // Increase points per circle for smoother roundness
+  boost::geometry::strategy::buffer::end_flat end_strategy;
+  boost::geometry::strategy::buffer::point_circle point_strategy(20);  // Points per circle
+  boost::geometry::strategy::buffer::side_straight side_strategy;
+
+  // Create buffered polygon with rounded corners
+  std::vector<BoostPolygon> buffered_polygons;
+  boost::geometry::buffer(
+    boost_polygon, buffered_polygons, distance_strategy, side_strategy, join_strategy, end_strategy,
+    point_strategy);
+
+  if (buffered_polygons.empty()) {
+    RCLCPP_WARN(rclcpp::get_logger("ObjectPolygonDisplayBase"), "Buffering produced no output.");
+    return;
+  }
+
+  // Convert buffered polygon to RViz marker points
+  const auto & outer_ring = buffered_polygons.front().outer();
+  std::vector<geometry_msgs::msg::Point> bottom_polygon_points;
+  std::vector<geometry_msgs::msg::Point> top_polygon_points;
+
+  for (const auto & point : outer_ring) {
+    geometry_msgs::msg::Point bottom_p;
+    bottom_p.x = point.x();
+    bottom_p.y = point.y();
+    bottom_p.z = -height_half;  // Bottom part of the shape
+    bottom_polygon_points.push_back(bottom_p);
+
+    geometry_msgs::msg::Point top_p;
+    top_p.x = point.x();
+    top_p.y = point.y();
+    top_p.z = -height_half + thickness;  // Top part of the shape
+    top_polygon_points.push_back(top_p);
+  }
+
+  // Create triangles from bottom polygon points
+  for (size_t i = 1; i < bottom_polygon_points.size() - 1; ++i) {
+    // Add bottom face
+    points.push_back(bottom_polygon_points[0]);
+    points.push_back(bottom_polygon_points[i]);
+    points.push_back(bottom_polygon_points[i + 1]);
+
+    // Add top face
+    points.push_back(top_polygon_points[0]);
+    points.push_back(top_polygon_points[i + 1]);
+    points.push_back(top_polygon_points[i]);
+  }
+
+  // Create triangles for the sides connecting top and bottom faces
+  for (size_t i = 0; i < bottom_polygon_points.size() - 1; ++i) {
+    // Add side face
+    points.push_back(bottom_polygon_points[i]);
+    points.push_back(bottom_polygon_points[i + 1]);
+    points.push_back(top_polygon_points[i + 1]);
+
+    points.push_back(bottom_polygon_points[i]);
+    points.push_back(top_polygon_points[i + 1]);
+    points.push_back(top_polygon_points[i]);
+  }
+
+  // Connect the last points to form the final side
+  points.push_back(bottom_polygon_points.back());
+  points.push_back(bottom_polygon_points.front());
+  points.push_back(top_polygon_points.front());
+
+  points.push_back(bottom_polygon_points.back());
+  points.push_back(top_polygon_points.front());
+  points.push_back(top_polygon_points.back());
 }
 
 void calc_line_list_from_points(
