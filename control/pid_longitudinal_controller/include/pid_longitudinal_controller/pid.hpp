@@ -30,14 +30,14 @@ public:
    * @brief calculate the output of this PID
    * @param [in] error previous error
    * @param [in] dt time step [s]
-   * @param [in] erase_integral if true, will erase the calculated integral (P (proportional) and I
+   * @param [in] is_integrated if false, will erase the calculated integral (P (proportional) and I
    * (integral))
    * @param [out] pid_contributions values of the proportional, integral, and derivative components
    * @return PID output
    * @throw std::runtime_error if gains or limits have not been set
    */
   double calculate(
-    const double error, const double dt, const bool erase_integral,
+    const double error, const double dt, const bool is_integrated,
     std::vector<double> & pid_contributions);
   /**
    * @brief set the coefficients for the P (proportional) I (integral) D (derivative) terms

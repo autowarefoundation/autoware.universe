@@ -1095,13 +1095,11 @@ double PidLongitudinalController::applyVelocityFeedback(const ControlData & cont
     (vehicle_is_moving || (m_enable_integration_at_low_speed && vehicle_is_stuck)) &&
     is_under_control;
 
-  const bool erase_integral = !enable_integration;
-
   const double error_vel_filtered = m_lpf_vel_error->filter(diff_vel);
 
   std::vector<double> pid_contributions(3);
   const double pid_acc =
-    m_pid_vel.calculate(error_vel_filtered, control_data.dt, erase_integral, pid_contributions);
+    m_pid_vel.calculate(error_vel_filtered, control_data.dt, enable_integration, pid_contributions);
 
   // Feedforward scaling:
   // This is for the coordinate conversion where feedforward is applied, from Time to Arclength.
