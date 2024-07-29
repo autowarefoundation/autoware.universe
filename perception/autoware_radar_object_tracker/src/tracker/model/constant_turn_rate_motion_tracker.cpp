@@ -283,7 +283,8 @@ bool ConstantTurnRateMotionTracker::predict(const double dt, KalmanFilter & ekf)
   Q_xy_local << ekf_params_.q_cov_x, 0.0, 0.0, ekf_params_.q_cov_y;
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(2, 2);
   R << cos(yaw), -sin(yaw), sin(yaw), cos(yaw);
-  Q.block<2, 2>(IDX::X, IDX::X) = R * Q_xy_local * R.transpose();
+  Eigen::MatrixXd Q_xy_global = R * Q_xy_local * R.transpose();
+  Q.block<2, 2>(IDX::X, IDX::X) = Q_xy_global;
 
   Q(IDX::YAW, IDX::YAW) = ekf_params_.q_cov_yaw;
   Q(IDX::VX, IDX::VX) = ekf_params_.q_cov_vx;
