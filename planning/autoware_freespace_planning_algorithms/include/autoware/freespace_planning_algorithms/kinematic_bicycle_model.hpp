@@ -43,8 +43,8 @@ inline geometry_msgs::msg::Pose getPoseShift(
     pose.position.y = distance * sin(yaw);
     return pose;
   }
-  double R = getTurningRadius(base_length, steering_angle);
-  double beta = distance / R;
+  const double R = getTurningRadius(base_length, steering_angle);
+  const double beta = distance / R;
   pose.position.x = R * sin(yaw + beta) - R * sin(yaw);
   pose.position.y = R * cos(yaw) - R * cos(yaw + beta);
   pose.orientation = autoware::universe_utils::createQuaternionFromYaw(beta);
