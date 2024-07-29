@@ -7,7 +7,6 @@
   <arg name="yolox_param_path" default="$(find-pkg-share autoware_tensorrt_yolox)/config/yolox_tiny.param.yaml"/>
   <arg name="use_decompress" default="true" description="use image decompress"/>
   <arg name="build_only" default="false" description="exit after trt engine is built"/>
-  <arg name="gpu_id" default="0" description="GPU ID to select CUDA Device"/>
 
   <arg name="param_file" default="$(find-pkg-share autoware_image_transport_decompressor)/config/image_transport_decompressor.param.yaml"/>
   <node pkg="autoware_image_transport_decompressor" exec="image_transport_decompressor_node" name="image_transport_decompressor_node" if="$(var use_decompress)">
@@ -21,6 +20,5 @@
     <remap from="~/out/objects" to="$(var output/objects)"/>
     <param from="$(var yolox_param_path)" allow_substs="true"/>
     <param name="build_only" value="$(var build_only)"/>
-    <param name="gpu_id" value="$(var gpu_id)"/>
   </node>
 </launch>
