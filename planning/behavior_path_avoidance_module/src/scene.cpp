@@ -277,13 +277,21 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
   data.to_start_point = utils::avoidance::calcDistanceToAvoidStartLine(
     data.current_lanelets, data.reference_path_rough, planner_data_, parameters_);
 
-  // target objects for avoidance
+  // filter only for the latest detected objects.
   fillAvoidanceTargetObjects(data, debug);
 
-  // lost object compensation
-  utils::avoidance::updateRegisteredObject(registered_objects_, data.target_objects, parameters_);
-  utils::avoidance::compensateDetectionLost(
-    registered_objects_, data.target_objects, data.other_objects);
+  // compensate lost object which was avoidance target. if the time hasn't passed more than
+  // threshold since perception module lost the target yet, this module keeps it as avoidance
+  // target.
+  utils::avoidance::compensateLostTargetObjects(
+    registered_objects_, data, clock_->now(), planner_data_, parameters_);
+
+  // once an object filtered for boundary clipping, this module keeps the information until the end
+  // of execution.
+  utils::avoidance::updateClipObject(clip_objects_, data);
+
+  // calculate various data for each target objects.
+  fillAvoidanceTargetData(data.target_objects);
 
   // sort object order by longitudinal distance
   std::sort(data.target_objects.begin(), data.target_objects.end(), [](auto a, auto b) {
@@ -297,8 +305,6 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
 void AvoidanceModule::fillAvoidanceTargetObjects(
   AvoidancePlanningData & data, DebugData & debug) const
 {
-  using utils::avoidance::fillAvoidanceNecessity;
-  using utils::avoidance::fillObjectStoppableJudge;
   using utils::avoidance::filterTargetObjects;
   using utils::avoidance::separateObjectsByPath;
   using utils::avoidance::updateRoadShoulderDistance;
@@ -334,15 +340,6 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   filterTargetObjects(objects, data, forward_detection_range, planner_data_, parameters_);
   updateRoadShoulderDistance(data, planner_data_, parameters_);
 
-  // Calculate the distance needed to safely decelerate the ego vehicle to a stop line.
-  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto feasible_stop_distance = helper_->getFeasibleDecelDistance(0.0, false);
-  std::for_each(data.target_objects.begin(), data.target_objects.end(), [&, this](auto & o) {
-    fillAvoidanceNecessity(o, registered_objects_, vehicle_width, parameters_);
-    o.to_stop_line = calcDistanceToStopLine(o);
-    fillObjectStoppableJudge(o, registered_objects_, feasible_stop_distance, parameters_);
-  });
-
   // debug
   {
     std::vector<AvoidanceDebugMsg> debug_info_array;
@@ -358,6 +355,21 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
 
     updateAvoidanceDebugData(debug_info_array);
   }
+}
+
+void AvoidanceModule::fillAvoidanceTargetData(ObjectDataArray & objects) const
+{
+  using utils::avoidance::fillAvoidanceNecessity;
+  using utils::avoidance::fillObjectStoppableJudge;
+
+  // Calculate the distance needed to safely decelerate the ego vehicle to a stop line.
+  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
+  const auto feasible_stop_distance = helper_->getFeasibleDecelDistance(0.0, false);
+  std::for_each(objects.begin(), objects.end(), [&, this](auto & o) {
+    fillAvoidanceNecessity(o, registered_objects_, vehicle_width, parameters_);
+    o.to_stop_line = calcDistanceToStopLine(o);
+    fillObjectStoppableJudge(o, registered_objects_, feasible_stop_distance, parameters_);
+  });
 }
 
 ObjectData AvoidanceModule::createObjectData(
@@ -660,7 +672,7 @@ AvoidanceState AvoidanceModule::updateEgoState(const AvoidancePlanningData & dat
 
 void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, ShiftedPath & path)
 {
-  if (parameters_->disable_path_update) {
+  if (parameters_->path_generation_method == "optimization_base") {
     return;
   }
 
@@ -996,19 +1008,14 @@ BehaviorModuleOutput AvoidanceModule::plan()
     // expand freespace areas
     current_drivable_area_info.enable_expanding_freespace_areas = parameters_->use_freespace_areas;
     // generate obstacle polygons
-    if (parameters_->enable_bound_clipping) {
-      ObjectDataArray clip_objects;
-      // If avoidance is executed by both behavior and motion, only non-avoidable object will be
-      // extracted from the drivable area.
-      std::for_each(
-        data.target_objects.begin(), data.target_objects.end(), [&](const auto & object) {
-          if (!object.is_avoidable) clip_objects.push_back(object);
-        });
+    current_drivable_area_info.obstacles.clear();
+
+    if (
+      parameters_->path_generation_method == "optimization_base" ||
+      parameters_->path_generation_method == "both") {
       current_drivable_area_info.obstacles =
         utils::avoidance::generateObstaclePolygonsForDrivableArea(
-          clip_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
-    } else {
-      current_drivable_area_info.obstacles.clear();
+          clip_objects_, parameters_, planner_data_->parameters.vehicle_width / 2.0);
     }
 
     output.drivable_area_info = utils::combineDrivableAreaInfo(
@@ -1075,7 +1082,7 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
 
 void AvoidanceModule::updatePathShifter(const AvoidLineArray & shift_lines)
 {
-  if (parameters_->disable_path_update) {
+  if (parameters_->path_generation_method == "optimization_base") {
     return;
   }
 
@@ -1378,11 +1385,18 @@ void AvoidanceModule::updateRTCData()
 
 void AvoidanceModule::updateInfoMarker(const AvoidancePlanningData & data) const
 {
+  using utils::avoidance::createAmbiguousObjectsMarkerArray;
+  using utils::avoidance::createStopTargetObjectMarkerArray;
   using utils::avoidance::createTargetObjectsMarkerArray;
 
   info_marker_.markers.clear();
   appendMarkerArray(
     createTargetObjectsMarkerArray(data.target_objects, "target_objects"), &info_marker_);
+  appendMarkerArray(createStopTargetObjectMarkerArray(data), &info_marker_);
+  appendMarkerArray(
+    createAmbiguousObjectsMarkerArray(
+      data.target_objects, getEgoPose(), parameters_->policy_ambiguous_vehicle),
+    &info_marker_);
 }
 
 void AvoidanceModule::updateDebugMarker(

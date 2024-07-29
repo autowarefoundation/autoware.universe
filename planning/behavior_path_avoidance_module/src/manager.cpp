@@ -131,10 +131,9 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
 
   {
     const std::string ns = "avoidance.avoidance.lateral.avoidance_for_ambiguous_vehicle.";
-    updateParam<bool>(parameters, ns + "enable", p->enable_avoidance_for_ambiguous_vehicle);
+    updateParam<std::string>(parameters, ns + "policy", p->policy_ambiguous_vehicle);
     updateParam<double>(
-      parameters, ns + "closest_distance_to_wait_and_see",
-      p->closest_distance_to_wait_and_see_for_ambiguous_vehicle);
+      parameters, ns + "wait_and_see.th_closest_distance", p->wait_and_see_th_closest_distance);
     updateParam<double>(
       parameters, ns + "condition.th_stopped_time", p->time_threshold_for_ambiguous_vehicle);
     updateParam<double>(
@@ -148,6 +147,12 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
     updateParam<double>(
       parameters, ns + "ignore_area.crosswalk.behind_distance",
       p->object_ignore_section_crosswalk_behind_distance);
+  }
+
+  {
+    const std::string ns = "avoidance.target_filtering.freespace.";
+    updateParam<double>(
+      parameters, ns + "condition.th_stopped_time", p->freespace_condition_th_stopped_time);
   }
 
   {

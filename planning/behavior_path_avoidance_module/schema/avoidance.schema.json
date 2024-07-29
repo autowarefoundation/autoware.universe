@@ -16,25 +16,17 @@
           "description": "Path resample interval for output path. Too short interval increases computational cost for latter modules.",
           "default": "4.0"
         },
-        "enable_bound_clipping": {
-          "type": "boolean",
-          "description": "Enable clipping left and right bound of drivable area when obstacles are in the drivable area.",
-          "default": "false"
+        "path_generation_method": {
+          "type": "string",
+          "enum": ["shift_line_base", "optimization_base", "both"],
+          "description": "Path generation method.",
+          "default": "shift_line_base"
         },
-        "disable_path_update": {
-          "type": "boolean",
-          "description": "Disable path update.",
-          "default": "false"
-        },
-        "use_adjacent_lane": {
-          "type": "boolean",
-          "description": "Extend avoidance trajectory to adjacent lanes that has same direction. If false, avoidance only happen in current lane.",
-          "default": "true"
-        },
-        "use_opposite_lane": {
-          "type": "boolean",
-          "description": "Extend avoidance trajectory to opposite direction lane. `use_adjacent_lane` must be `true` to take effects.",
-          "default": "true"
+        "use_lane_type": {
+          "type": "string",
+          "enum": ["current_lane", "same_direction_lane", "opposite_direction_lane"],
+          "description": "Drivable lane configuration.",
+          "default": "opposite_direction_lane"
         },
         "use_hatched_road_markings": {
           "type": "boolean",
@@ -724,9 +716,10 @@
             "avoidance_for_ambiguous_vehicle": {
               "type": "object",
               "properties": {
-                "enable": {
-                  "type": "boolean",
-                  "description": "Enable avoidance maneuver for ambiguous vehicles.",
+                "policy": {
+                  "type": "string",
+                  "enum": ["auto", "manual", "ignore"],
+                  "description": "Ego behavior policy for ambiguous vehicle.",
                   "default": "true"
                 },
                 "closest_distance_to_wait_and_see": {
@@ -786,14 +779,26 @@
                   },
                   "required": ["traffic_light", "crosswalk"],
                   "additionalProperties": false
+                },
+                "wait_and_see": {
+                  "type": "object",
+                  "properties": {
+                    "target_behaviors": {
+                      "type": "array",
+                      "default": ["MERGING", "DEVIATING"],
+                      "description": "This module doesn't avoid these behaviors vehicle until it gets closer than threshold."
+                    },
+                    "th_closest_distance": {
+                      "type": "number",
+                      "default": 10.0,
+                      "description": "Threshold to check whether the ego gets close enough the ambiguous vehicle."
+                    }
+                  },
+                  "required": ["target_behaviors", "th_closest_distance"],
+                  "additionalProperties": false
                 }
               },
-              "required": [
-                "enable",
-                "closest_distance_to_wait_and_see",
-                "condition",
-                "ignore_area"
-              ],
+              "required": ["policy", "condition", "ignore_area", "wait_and_see"],
               "additionalProperties": false
             },
             "intersection": {
@@ -807,6 +812,25 @@
               },
               "required": ["yaw_deviation"],
               "additionalProperties": false
+            },
+            "freespace": {
+              "type": "object",
+              "properties": {
+                "condition": {
+                  "type": "object",
+                  "properties": {
+                    "th_stopped_time": {
+                      "type": "number",
+                      "description": "This module delays avoidance maneuver to see vehicle behavior in freespace.",
+                      "default": 5.0
+                    }
+                  },
+                  "required": ["th_stopped_time"],
+                  "additionalProperties": false
+                }
+              },
+              "required": ["condition"],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -818,7 +842,8 @@
             "merging_vehicle",
             "parked_vehicle",
             "avoidance_for_ambiguous_vehicle",
-            "intersection"
+            "intersection",
+            "freespace"
           ],
           "additionalProperties": false
         },
@@ -1445,9 +1470,8 @@
       "required": [
         "resample_interval_for_planning",
         "resample_interval_for_output",
-        "enable_bound_clipping",
-        "use_adjacent_lane",
-        "use_opposite_lane",
+        "path_generation_method",
+        "use_lane_type",
         "use_hatched_road_markings",
         "use_intersection_areas",
         "use_freespace_areas",

@@ -47,6 +47,11 @@ MarkerArray createTargetObjectsMarkerArray(const ObjectDataArray & objects, cons
 MarkerArray createOtherObjectsMarkerArray(
   const ObjectDataArray & objects, const ObjectInfo & info, const bool verbose);
 
+MarkerArray createAmbiguousObjectsMarkerArray(
+  const ObjectDataArray & objects, const Pose & ego_pose, const std::string & policy);
+
+MarkerArray createStopTargetObjectMarkerArray(const AvoidancePlanningData & data);
+
 MarkerArray createDebugMarkerArray(
   const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug,
   const std::shared_ptr<AvoidanceParameters> & parameters);
