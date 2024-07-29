@@ -78,7 +78,7 @@ AstarSearch::AstarSearch(
     collision_vehicle_shape_.max_steering / planner_common_param_.turning_steps;
   heading_resolution_ = 2.0 * M_PI / planner_common_param_.theta_size;
 
-  double avg_steering =
+  const double avg_steering =
     steering_resolution_ + (collision_vehicle_shape_.max_steering - steering_resolution_) / 2.0;
   avg_turning_radius_ =
     kinematic_bicycle_model::getTurningRadius(collision_vehicle_shape_.base_length, avg_steering);
@@ -126,8 +126,8 @@ void AstarSearch::resetData()
   // clearing openlist is necessary because otherwise remaining elements of openlist
   // point to deleted node.
   openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
-  int nb_of_grid_nodes = costmap_.info.width * costmap_.info.height;
-  int total_astar_node_count = nb_of_grid_nodes * planner_common_param_.theta_size;
+  const int nb_of_grid_nodes = costmap_.info.width * costmap_.info.height;
+  const int total_astar_node_count = nb_of_grid_nodes * planner_common_param_.theta_size;
   graph_ = std::vector<AstarNode>(total_astar_node_count);
   col_free_distance_map_ =
     std::vector<double>(nb_of_grid_nodes, std::numeric_limits<double>::max());
@@ -151,21 +151,21 @@ void AstarSearch::setCollisionFreeDistanceMap()
   while (!heap.empty()) {
     current = heap.top();
     heap.pop();
-    int id = indexToId(current.first);
+    const int id = indexToId(current.first);
     if (closed[id]) continue;
     closed[id] = true;
 
     const auto & index = current.first;
     for (const auto & offset_x : offsets) {
-      int x = index.x + offset_x;
+      const int x = index.x + offset_x;
       for (const auto & offset_y : offsets) {
-        int y = index.y + offset_y;
-        IndexXY n_index{x, y};
-        double offset = std::abs(offset_x) + std::abs(offset_y);
-        if (isOutOfRange(n_index) || offset < 1) continue;
+        const int y = index.y + offset_y;
+        const IndexXY n_index{x, y};
+        const double offset = std::abs(offset_x) + std::abs(offset_y);
+        if (isOutOfRange(n_index) || isObs(n_index) || offset < 1) continue;
         if (getObstacleEDT(n_index) < 0.5 * collision_vehicle_shape_.width) continue;
-        int n_id = indexToId(n_index);
-        double dist = current.second + (sqrt(offset) * costmap_.info.resolution);
+        const int n_id = indexToId(n_index);
+        const double dist = current.second + (sqrt(offset) * costmap_.info.resolution);
         if (closed[n_id] || col_free_distance_map_[n_id] < dist) continue;
         col_free_distance_map_[n_id] = dist;
         heap.push({n_index, dist});

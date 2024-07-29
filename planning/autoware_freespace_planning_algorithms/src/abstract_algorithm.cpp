@@ -108,7 +108,7 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
 {
   costmap_ = costmap;
 
-  uint32_t nb_of_cells = costmap_.data.size();
+  const uint32_t nb_of_cells = costmap_.data.size();
   // Initialize status
   std::vector<bool> is_obstacle_table;
   is_obstacle_table.resize(nb_of_cells);
