@@ -22,6 +22,7 @@
 
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/algorithms/touches.hpp>
 #include <boost/geometry/io/wkt/write.hpp>
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
@@ -2900,6 +2901,72 @@ TEST(geometry, intersectsRand)
       "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
       (ground_truth_no_intersect_ns + ground_truth_intersect_ns) / 1e6,
       (alt_no_intersect_ns + alt_intersect_ns) / 1e6);
+  }
+}
+
+TEST(geometry, touchesRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_touching_ns = 0.0;
+    double ground_truth_not_touching_ns = 0.0;
+    double alt_touching_ns = 0.0;
+    double alt_not_touching_ns = 0.0;
+    int touching_count = 0;
+
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (const auto & point : polygons[i].outer()) {
+        for (auto j = 0UL; j < polygons.size(); ++j) {
+          sw.tic();
+          const auto ground_truth = boost::geometry::touches(point, polygons[j]);
+          if (ground_truth) {
+            ++touching_count;
+            ground_truth_touching_ns += sw.toc();
+          } else {
+            ground_truth_not_touching_ns += sw.toc();
+          }
+
+          const auto alt_point = autoware::universe_utils::alt::from_boost(point);
+          const auto alt_poly = autoware::universe_utils::alt::from_boost(polygons[j]);
+          sw.tic();
+          const auto alt = autoware::universe_utils::touches(alt_point, alt_poly);
+          if (alt) {
+            alt_touching_ns += sw.toc();
+          } else {
+            alt_not_touching_ns += sw.toc();
+          }
+
+          if (ground_truth != alt) {
+            std::cout << "Alt failed for the point and polygon: ";
+            std::cout << boost::geometry::wkt(point) << boost::geometry::wkt(polygons[j])
+                      << std::endl;
+          }
+          EXPECT_EQ(ground_truth, alt);
+        }
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %ld touching pairs\n", polygons_nb, vertices,
+      touching_count, polygons_nb * vertices * polygons_nb);
+    std::printf(
+      "\tTouching:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_touching_ns / 1e6, alt_touching_ns / 1e6);
+    std::printf(
+      "\tNot touching:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_not_touching_ns / 1e6, alt_not_touching_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      (ground_truth_not_touching_ns + ground_truth_touching_ns) / 1e6,
+      (alt_not_touching_ns + alt_touching_ns) / 1e6);
   }
 }
 
