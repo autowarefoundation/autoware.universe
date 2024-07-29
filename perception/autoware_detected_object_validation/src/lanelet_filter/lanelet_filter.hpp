@@ -21,14 +21,15 @@
 #include "autoware/universe_utils/ros/published_time_publisher.hpp"
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
 
-#include <boost/geometry/index/rtree.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include "autoware_map_msgs/msg/lanelet_map_bin.hpp"
 #include "autoware_perception_msgs/msg/detected_objects.hpp"
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include <boost/geometry/index/rtree.hpp>
+
 #include <lanelet2_core/Forward.h>
+#include <lanelet2_core/geometry/Lanelet.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -95,8 +96,7 @@ private:
     const autoware_perception_msgs::msg::DetectedObject & object,
     const bg::index::rtree<BoxAndLanelet, RtreeAlgo> & local_rtree);
   bool isPolygonOverlapLanelets(
-  const Polygon2d & polygon,
-  const bgi::rtree<BoxAndLanelet, RtreeAlgo> & local_rtree);
+    const Polygon2d & polygon, const bgi::rtree<BoxAndLanelet, RtreeAlgo> & local_rtree);
   bool isSameDirectionWithLanelets(
     const autoware_perception_msgs::msg::DetectedObject & object,
     const bgi::rtree<BoxAndLanelet, RtreeAlgo> & local_rtree);
