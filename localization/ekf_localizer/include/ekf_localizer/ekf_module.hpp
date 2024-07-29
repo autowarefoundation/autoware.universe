@@ -88,7 +88,7 @@ private:
   std::shared_ptr<Warning> warning_;
   const int dim_x_;
   std::vector<double> accumulated_delay_times_;
-  tf2::Vector3 last_rotation_axis_;
+  tf2::Vector3 last_angular_velocity_;
   const HyperParameters params_;
 };
 
