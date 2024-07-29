@@ -1930,16 +1930,21 @@ TEST(geometry, intersectPolygonRand)
   constexpr auto max_values = 1000;
 
   autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  
   for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
     double ground_truth_intersect_ns = 0.0;
     double ground_truth_no_intersect_ns = 0.0;
     double gjk_intersect_ns = 0.0;
     double gjk_no_intersect_ns = 0.0;
+    double sat_intersect_ns = 0.0;
+    double sat_no_intersect_ns = 0.0;
     int intersect_count = 0;
     polygons.clear();
+    
     for (auto i = 0; i < polygons_nb; ++i) {
       polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
     }
+    
     for (auto i = 0UL; i < polygons.size(); ++i) {
       for (auto j = 0UL; j < polygons.size(); ++j) {
         sw.tic();
@@ -1950,6 +1955,7 @@ TEST(geometry, intersectPolygonRand)
         } else {
           ground_truth_no_intersect_ns += sw.toc();
         }
+
         sw.tic();
         const auto gjk = autoware::universe_utils::intersects_convex(polygons[i], polygons[j]);
         if (gjk) {
@@ -1957,26 +1963,48 @@ TEST(geometry, intersectPolygonRand)
         } else {
           gjk_no_intersect_ns += sw.toc();
         }
+
+        sw.tic();
+        const auto sat = autoware::universe_utils::sat::intersects(polygons[i], polygons[j]);
+        if (sat) {
+          sat_intersect_ns += sw.toc();
+        } else {
+          sat_no_intersect_ns += sw.toc();
+        }
+
+        EXPECT_EQ(ground_truth, gjk);
+        EXPECT_EQ(ground_truth, sat);
+
         if (ground_truth != gjk) {
-          std::cout << "Failed for the 2 polygons: ";
+          std::cout << "Failed for the 2 polygons with GJK: ";
           std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
                     << std::endl;
         }
-        EXPECT_EQ(ground_truth, gjk);
+
+        if (ground_truth != sat) {
+          std::cout << "Failed for the 2 polygons with SAT: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
       }
     }
+
     std::printf(
       "polygons_nb = %d, vertices = %ld, %d / %d pairs with intersects\n", polygons_nb, vertices,
       intersect_count, polygons_nb * polygons_nb);
+
     std::printf(
-      "\tIntersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
-      ground_truth_intersect_ns / 1e6, gjk_intersect_ns / 1e6);
+      "\tIntersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
+      ground_truth_intersect_ns / 1e6, gjk_intersect_ns / 1e6, sat_intersect_ns / 1e6);
+    
     std::printf(
-      "\tNo Intersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
-      ground_truth_no_intersect_ns / 1e6, gjk_no_intersect_ns / 1e6);
+      "\tNo Intersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
+      ground_truth_no_intersect_ns / 1e6, gjk_no_intersect_ns / 1e6, sat_no_intersect_ns / 1e6);
+    
     std::printf(
-      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
       (ground_truth_no_intersect_ns + ground_truth_intersect_ns) / 1e6,
-      (gjk_no_intersect_ns + gjk_intersect_ns) / 1e6);
+      (gjk_no_intersect_ns + gjk_intersect_ns) / 1e6,
+      (sat_no_intersect_ns + sat_intersect_ns) / 1e6);
   }
 }
