@@ -437,7 +437,7 @@ double area(const alt::ConvexPolygon2d & poly)
 
   double area = 0.;
   for (size_t i = 1; i < vertices.size() - 1; ++i) {
-    area += (vertices.at(i + 1) - vertices.front()).cross(vertices.at(i) - vertices.front()) / 2;
+    area += (vertices[i + 1] - vertices.front()).cross(vertices[i] - vertices.front()) / 2;
   }
 
   return area;
@@ -468,9 +468,9 @@ alt::ConvexPolygon2d convex_hull(const alt::PointList & points)
     const auto subsets_1 = divide_by_segment(points, p1, farthest);
     const auto subsets_2 = divide_by_segment(points, farthest, p2);
 
-    self(self, p1, farthest, subsets_1.at(0));
+    self(self, p1, farthest, subsets_1[0]);
     vertices.push_back(farthest);
-    self(self, farthest, p2, subsets_2.at(0));
+    self(self, farthest, p2, subsets_2[0]);
   };
 
   const auto [above_points, below_points] = divide_by_segment(points, p_min, p_max);
@@ -587,8 +587,8 @@ double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
   const auto & vertices = poly.vertices();
   double min_distance = std::numeric_limits<double>::max();
   for (size_t i = 0; i < vertices.size(); ++i) {
-    min_distance = std::min(
-      min_distance, distance(point, vertices.at(i), vertices.at((i + 1) % vertices.size())));
+    min_distance =
+      std::min(min_distance, distance(point, vertices[i], vertices[(i + 1) % vertices.size()]));
   }
 
   return min_distance;
@@ -727,7 +727,7 @@ bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
   const auto & vertices = poly.vertices();
   for (size_t i = 0; i < vertices.size(); ++i) {
     // check if the point is on each edge of the polygon
-    if (touches(point, vertices.at(i), vertices.at((i + 1) % vertices.size()))) {
+    if (touches(point, vertices[i], vertices[(i + 1) % vertices.size()])) {
       return true;
     }
   }
