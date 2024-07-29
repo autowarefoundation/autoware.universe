@@ -19,7 +19,8 @@
 #include <vector>
 
 std::vector<double> fillVectorUsingMap(
-  std::vector<double> vector1, std::vector<double> vector2, const std::vector<int> & map, bool inverse);
+  std::vector<double> vector1, std::vector<double> vector2, const std::vector<int> & map,
+  bool inverse);
 
 std::vector<int> createConnectionsMap(
   const std::vector<char *> & connection_names_1, const std::vector<char *> & connection_names_2);
