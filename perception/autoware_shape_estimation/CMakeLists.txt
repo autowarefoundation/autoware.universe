@@ -21,18 +21,18 @@ set(SHAPE_ESTIMATION_DEPENDENCIES
 )
 
 set(${PROJECT_NAME}_SOURCES
-        lib/shape_estimator.cpp
-        lib/model/bounding_box.cpp
-        lib/model/convex_hull.cpp
-        lib/model/cylinder.cpp
-        lib/filter/car_filter.cpp
-        lib/filter/bus_filter.cpp
-        lib/filter/truck_filter.cpp
-        lib/filter/trailer_filter.cpp
-        lib/filter/no_filter.cpp
-        lib/filter/utils.cpp
-        lib/corrector/utils.cpp
-        lib/corrector/no_corrector.cpp
+  lib/shape_estimator.cpp
+  lib/model/bounding_box.cpp
+  lib/model/convex_hull.cpp
+  lib/model/cylinder.cpp
+  lib/filter/car_filter.cpp
+  lib/filter/bus_filter.cpp
+  lib/filter/truck_filter.cpp
+  lib/filter/trailer_filter.cpp
+  lib/filter/no_filter.cpp
+  lib/filter/utils.cpp
+  lib/corrector/utils.cpp
+  lib/corrector/no_corrector.cpp
 )
 
 if(${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND})
@@ -44,9 +44,9 @@ else()
 endif()
 
 ament_auto_add_library(${PROJECT_NAME}_lib
-        SHARED
-        ${${PROJECT_NAME}_SOURCES}
-        )
+  SHARED
+  ${${PROJECT_NAME}_SOURCES}
+)
 
 ament_target_dependencies(${PROJECT_NAME}_lib ${SHAPE_ESTIMATION_DEPENDENCIES})
 
@@ -83,7 +83,7 @@ target_link_libraries(${PROJECT_NAME}
 
 if(${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND})
   target_link_libraries(${PROJECT_NAME}
-          ${TENSORRT_LIBRARIES}
+    ${TENSORRT_LIBRARIES}
   )
 endif()
 
@@ -92,13 +92,13 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-        PLUGIN "autoware::shape_estimation::ShapeEstimationNode"
-        EXECUTABLE shape_estimation_node
+  PLUGIN "autoware::shape_estimation::ShapeEstimationNode"
+  EXECUTABLE shape_estimation_node
 )
 
 ament_auto_package(INSTALL_TO_SHARE
-        launch
-        config
+  launch
+  config
 )
 
 ## Tests
@@ -113,6 +113,6 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_shape_estimation ${test_files})
 
   target_link_libraries(test_shape_estimation
-          ${PROJECT_NAME}
+    ${PROJECT_NAME}
   )
 endif()
