@@ -33,14 +33,27 @@ PathGenerator::PathGenerator(
 
 PredictedPath PathGenerator::shiftPath(const PredictedPath & path, const double shift_distance)
 {
-  // lateral shift of the path by shift_distance
   PredictedPath shifted_path;
   shifted_path.time_step = path.time_step;
   shifted_path.confidence = path.confidence;
   shifted_path.path.reserve(path.path.size());
   for (const auto & pose : path.path) {
     geometry_msgs::msg::Pose shifted_pose = pose;
-    shifted_pose.position.x += shift_distance;
+
+    // Get yaw from quaternion
+    tf2::Quaternion quat(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+    tf2::Matrix3x3 mat(quat);
+    double roll, pitch, yaw;
+    mat.getRPY(roll, pitch, yaw);
+
+    // Calculate the lateral shift
+    double delta_x = shift_distance * cos(yaw + M_PI_2);
+    double delta_y = shift_distance * sin(yaw + M_PI_2);
+
+    // Apply the shift
+    shifted_pose.position.x += delta_x;
+    shifted_pose.position.y += delta_y;
+
     shifted_path.path.push_back(shifted_pose);
   }
 
