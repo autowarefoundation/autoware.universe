@@ -1092,24 +1092,22 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
           if (current_lanelet.is_bidirectional) {
             for (size_t t = 0; t < surrounding_lanelets.size(); t++) {
               for (size_t j = t + 1; j < surrounding_lanelets.size(); j++) {
-                const auto & obj_pos = object.kinematics.pose_with_covariance.pose.position;
-                const lanelet::BasicPoint2d obj_point(obj_pos.x, obj_pos.y);
                 prev_left_bound_dist = lanelet::geometry::distance2d(
                   lanelet::utils::to2D(
                     surrounding_lanelets[t].second.leftBound().basicLineString()),
-                  obj_point);
+                  search_point);
                 prev_right_bound_dist = lanelet::geometry::distance2d(
                   lanelet::utils::to2D(
                     surrounding_lanelets[t].second.rightBound().basicLineString()),
-                  obj_point);
+                  search_point);
                 next_left_bound_dist = lanelet::geometry::distance2d(
                   lanelet::utils::to2D(
                     surrounding_lanelets[j].second.leftBound().basicLineString()),
-                  obj_point);
+                  search_point);
                 next_right_bound_dist = lanelet::geometry::distance2d(
                   lanelet::utils::to2D(
                     surrounding_lanelets[j].second.rightBound().basicLineString()),
-                  obj_point);
+                  search_point);
                 bound_to_centerline = lanelet::geometry::distance2d(
                   lanelet::utils::to2D(current_lanelet.lanelet.leftBound().basicLineString()),
                   lanelet::utils::to2D(current_lanelet.lanelet.centerline().basicLineString()));
