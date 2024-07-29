@@ -619,22 +619,6 @@ double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
   return min_distance;
 }
 
-std::array<alt::PointList, 2> divide_by_segment(
-  const alt::PointList & points, const alt::Point2d & seg_start, const alt::Point2d & seg_end)
-{
-  alt::PointList above_points, below_points;
-
-  for (const auto & point : points) {
-    if (is_above(point, seg_start, seg_end)) {
-      above_points.push_back(point);
-    } else {
-      below_points.push_back(point);
-    }
-  }
-
-  return {above_points, below_points};
-}
-
 bool equals(const alt::Point2d & point1, const alt::Point2d & point2)
 {
   return std::abs(point1.x() - point2.x()) <= std::numeric_limits<double>::epsilon() &&

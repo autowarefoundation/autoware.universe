@@ -701,9 +701,6 @@ double distance(
 
 double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
 
-std::array<alt::PointList, 2> divide_by_segment(
-  const alt::PointList & points, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
-
 bool equals(const alt::Point2d & point1, const alt::Point2d & point2);
 
 bool equals(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2);
