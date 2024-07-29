@@ -75,8 +75,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
   }
 
   param_.enable_save_log = this->declare_parameter<bool>("enable_save_log");
-  param_.savefile_directory_path = this->declare_parameter<std::string>("savefile_directory_path");
-  param_.savefile_name = this->declare_parameter<std::string>("savefile_name");
+  param_.save_file_directory_path = this->declare_parameter<std::string>("save_file_directory_path");
+  param_.save_file_name = this->declare_parameter<std::string>("save_file_name");
   param_.save_frame_id = this->declare_parameter<std::string>("save_frame_id");
 
   ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
@@ -559,17 +559,17 @@ void LidarMarkerLocalizer::save_intensity(
   struct tm * time_info{};
   time_info = std::localtime(&time_integer);
   std::stringstream file_name;
-  file_name << param_.savefile_name << std::put_time(time_info, "%Y%m%d-%H%M%S") << "-"
+  file_name << param_.save_file_name << std::put_time(time_info, "%Y%m%d-%H%M%S") << "-"
             << std::setw(3) << std::setfill('0') << static_cast<int>((time_decimal) * 1000)
             << ".csv";
 
   // write log_message to file
-  std::filesystem::path savefile_directory_path = param_.savefile_directory_path;
-  std::filesystem::create_directories(savefile_directory_path);
-  std::ofstream csv_file(savefile_directory_path.append(file_name.str()));
+  std::filesystem::path save_file_directory_path = param_.save_file_directory_path;
+  std::filesystem::create_directories(save_file_directory_path);
+  std::ofstream csv_file(save_file_directory_path.append(file_name.str()));
   csv_file << log_message.str();
   csv_file.close();
-  std::cerr << savefile_directory_path.c_str() << std::endl;
+  std::cerr << save_file_directory_path.c_str() << std::endl;
 
   // visualize for debug
   marker_points_sensor_frame_ptr->width = marker_points_sensor_frame_ptr->size();

@@ -34,6 +34,6 @@
 
     # for save log
     enable_save_log: false
-    savefile_directory_path: detected_reflector_intensity
-    savefile_name: detected_reflector_intensity
+    save_file_directory_path: detected_reflector_intensity
+    save_file_name: detected_reflector_intensity
     save_frame_id: velodyne_top

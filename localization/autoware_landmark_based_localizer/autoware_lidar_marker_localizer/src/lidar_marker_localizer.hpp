@@ -88,8 +88,8 @@ class LidarMarkerLocalizer : public rclcpp::Node
     std::array<double, 36> base_covariance;
 
     bool enable_save_log;
-    std::string savefile_directory_path;
-    std::string savefile_name;
+    std::string save_file_directory_path;
+    std::string save_file_name;
     std::string save_frame_id;
   };
 
