@@ -726,17 +726,19 @@ bool touches(
 {
   // if the cross product of the vectors from the start point and the end point to the point is 0
   // and the vectors opposite each other, the point is on the segment
-  return std::abs((point - seg_start).cross(point - seg_end)) <=
-           std::numeric_limits<double>::epsilon() &&
-         (point - seg_start).dot(point - seg_end) <= 0;
+  const auto start_vec = point - seg_start;
+  const auto end_vec = point - seg_end;
+  return std::abs(start_vec.cross(end_vec)) <= std::numeric_limits<double>::epsilon() &&
+         start_vec.dot(end_vec) <= 0;
 }
 
 bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 {
   const auto & vertices = poly.vertices();
-  for (size_t i = 0; i < vertices.size(); ++i) {
+  const auto num_of_vertices = vertices.size();
+  for (size_t i = 0; i < num_of_vertices; ++i) {
     // check if the point is on each edge of the polygon
-    if (touches(point, vertices[i], vertices[(i + 1) % vertices.size()])) {
+    if (touches(point, vertices[i], vertices[(i + 1) % num_of_vertices])) {
       return true;
     }
   }
