@@ -58,11 +58,9 @@ bool projections_overlap(
 
 /// @brief check if two convex polygons intersect using the SAT algorithm
 /// @details this function uses the Separating Axis Theorem (SAT) to determine if two convex
-/// polygons intersect. projects both polygons onto the axes defined by the normals of their edges.
-/// if the projections on any axis do not overlap, the polygons do not intersect.
-/// if projections overlap on all tested axes, the function returns `true`; otherwise, it returns
-/// `false`. note that touching polygons (e.g., at a point or along an edge) will be considered as
-/// not intersecting.
+/// polygons intersect. If projections overlap on all tested axes, the function returns `true`;
+/// otherwise, it returns `false`. Note that touching polygons (e.g., at a point or along an edge)
+/// will be considered as not intersecting.
 
 bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
 {
