@@ -524,11 +524,10 @@ private:
     const PathWithLaneId & path,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const;
   bool checkObjectsCollision(
-    const PathWithLaneId & path,
-    const std::vector<double> & curvatures,
-    const std::shared_ptr<const PlannerData> planner_data,
-    const GoalPlannerParameters & parameters, const double collision_check_margin,
-    const bool extract_static_objects, const bool update_debug_data = false) const;
+    const PathWithLaneId & path, const std::vector<double> & curvatures,
+    const std::shared_ptr<const PlannerData> planner_data, const GoalPlannerParameters & parameters,
+    const double collision_check_margin, const bool extract_static_objects,
+    const bool update_debug_data = false) const;
 
   // goal seach
   Pose calcRefinedGoal(const Pose & goal_pose) const;
