@@ -1930,7 +1930,7 @@ TEST(geometry, intersectPolygonRand)
   constexpr auto max_values = 1000;
 
   autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
-  
+
   for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
     double ground_truth_intersect_ns = 0.0;
     double ground_truth_no_intersect_ns = 0.0;
@@ -1940,11 +1940,11 @@ TEST(geometry, intersectPolygonRand)
     double sat_no_intersect_ns = 0.0;
     int intersect_count = 0;
     polygons.clear();
-    
+
     for (auto i = 0; i < polygons_nb; ++i) {
       polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
     }
-    
+
     for (auto i = 0UL; i < polygons.size(); ++i) {
       for (auto j = 0UL; j < polygons.size(); ++j) {
         sw.tic();
@@ -1996,11 +1996,11 @@ TEST(geometry, intersectPolygonRand)
     std::printf(
       "\tIntersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
       ground_truth_intersect_ns / 1e6, gjk_intersect_ns / 1e6, sat_intersect_ns / 1e6);
-    
+
     std::printf(
       "\tNo Intersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
       ground_truth_no_intersect_ns / 1e6, gjk_no_intersect_ns / 1e6, sat_no_intersect_ns / 1e6);
-    
+
     std::printf(
       "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
       (ground_truth_no_intersect_ns + ground_truth_intersect_ns) / 1e6,

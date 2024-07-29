@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_UNIVERSE_UTILS_GEOMETRY_SAT_2D_HPP_
-#define AUTOWARE_UNIVERSE_UTILS_GEOMETRY_SAT_2D_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__SAT_2D_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__SAT_2D_HPP_
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
@@ -27,4 +27,4 @@ bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_poly
 
 }  // namespace autoware::universe_utils::sat
 
-#endif  // AUTOWARE_UNIVERSE_UTILS_GEOMETRY_SAT_2D_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__SAT_2D_HPP_
