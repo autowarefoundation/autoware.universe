@@ -50,7 +50,7 @@ void ImageDiagNode::onImageDiagChecker(DiagnosticStatusWrapper & stat)
   stat.add("number backlight  regions ", std::to_string(params_.num_of_regions_backlight));
 
   auto level = DiagnosticStatusWrapper::OK;
-  std::string "OK";
+  std::string msg = "OK";
 
   if (params_.diagnostic_status < 0) {
     level = DiagnosticStatusWrapper::STALE;
