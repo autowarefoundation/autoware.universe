@@ -445,6 +445,10 @@ double area(const alt::ConvexPolygon2d & poly)
 
 alt::ConvexPolygon2d convex_hull(const alt::PointList & points)
 {
+  if (points.size() < 3) {
+    throw std::invalid_argument("At least 3 points are required for calculating convex hull.");
+  }
+
   // QuickHull algorithm
 
   const auto p_minmax_itr = std::minmax_element(
@@ -454,30 +458,51 @@ alt::ConvexPolygon2d convex_hull(const alt::PointList & points)
 
   alt::PointList vertices;
 
-  auto make_hull = [&vertices](
-                     auto self, const alt::Point2d & p1, const alt::Point2d & p2,
-                     const alt::PointList & points) {
-    if (points.empty()) {
-      return;
+  if (points.size() == 3) {
+    std::rotate_copy(
+      points.begin(), p_minmax_itr.first, points.end(), std::back_inserter(vertices));
+  } else {
+    auto make_hull = [&vertices](
+                       auto self, const alt::Point2d & p1, const alt::Point2d & p2,
+                       const alt::PointList & points) {
+      if (points.empty()) {
+        return;
+      }
+
+      const auto farthest =
+        *std::max_element(points.begin(), points.end(), [&](const auto & a, const auto & b) {
+          const auto seg_vec = p2 - p1;
+          return seg_vec.cross(a - p1) < seg_vec.cross(b - p1);
+        });
+
+      alt::PointList subset1, subset2;
+      for (const auto & point : points) {
+        if (is_above(point, p1, farthest)) {
+          subset1.push_back(point);
+        } else if (is_above(point, farthest, p2)) {
+          subset2.push_back(point);
+        }
+      }
+
+      self(self, p1, farthest, subset1);
+      vertices.push_back(farthest);
+      self(self, farthest, p2, subset2);
+    };
+
+    alt::PointList above_points, below_points;
+    for (const auto & point : points) {
+      if (is_above(point, p_min, p_max)) {
+        above_points.push_back(point);
+      } else if (is_above(point, p_max, p_min)) {
+        below_points.push_back(point);
+      }
     }
 
-    const auto farthest = *std::max_element(
-      points.begin(), points.end(),
-      [&](const auto & a, const auto & b) { return distance(p1, p2, a) < distance(p1, p2, b); });
-
-    const auto subsets_1 = divide_by_segment(points, p1, farthest);
-    const auto subsets_2 = divide_by_segment(points, farthest, p2);
-
-    self(self, p1, farthest, subsets_1[0]);
-    vertices.push_back(farthest);
-    self(self, farthest, p2, subsets_2[0]);
-  };
-
-  const auto [above_points, below_points] = divide_by_segment(points, p_min, p_max);
-  vertices.push_back(p_min);
-  make_hull(make_hull, p_min, p_max, above_points);
-  vertices.push_back(p_max);
-  make_hull(make_hull, p_max, p_min, below_points);
+    vertices.push_back(p_min);
+    make_hull(make_hull, p_min, p_max, above_points);
+    vertices.push_back(p_max);
+    make_hull(make_hull, p_max, p_min, below_points);
+  }
 
   alt::ConvexPolygon2d hull(vertices);
   correct(hull);
