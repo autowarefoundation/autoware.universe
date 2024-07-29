@@ -41,7 +41,8 @@ JerkFilteredSmoother::JerkFilteredSmoother(
   p.over_j_weight = node.declare_parameter<double>("over_j_weight");
   p.jerk_filter_ds = node.declare_parameter<double>("jerk_filter_ds");
 
-  qp_interface_ = std::make_shared<autoware::common::ProxQPInterface>(true, 1.0e-8, 1.0e-6, false);
+  qp_interface_ =
+    std::make_shared<autoware::common::ProxQPInterface>(true, 20000, 1.0e-8, 1.0e-6, false);
 }
 
 void JerkFilteredSmoother::setParam(const Param & smoother_param)
