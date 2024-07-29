@@ -41,7 +41,8 @@ PredictedPath PathGenerator::shiftPath(const PredictedPath & path, const double 
     geometry_msgs::msg::Pose shifted_pose = pose;
 
     // Get yaw from quaternion
-    tf2::Quaternion quat(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+    tf2::Quaternion quat(
+      pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
     tf2::Matrix3x3 mat(quat);
     double roll, pitch, yaw;
     mat.getRPY(roll, pitch, yaw);

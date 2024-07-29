@@ -1078,11 +1078,12 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         // Get Closest Lanelet
         const auto current_lanelets = getCurrentLanelets(transformed_object);
         double bound_to_centerline = 0.0;
-          for (const auto & current_lanelet : current_lanelets) {
+        for (const auto & current_lanelet : current_lanelets) {
           // Check if the lanelet is bidirectional
           if (current_lanelet.is_bidirectional) {
-            bound_to_centerline = lanelet::geometry::distance2d(lanelet::utils::to2D(current_lanelet.lanelet.leftBound().basicLineString()),
-                                                                       lanelet::utils::to2D(current_lanelet.lanelet.centerline().basicLineString()));
+            bound_to_centerline = lanelet::geometry::distance2d(
+              lanelet::utils::to2D(current_lanelet.lanelet.leftBound().basicLineString()),
+              lanelet::utils::to2D(current_lanelet.lanelet.centerline().basicLineString()));
           }
         }
         // Update Objects History
@@ -1170,12 +1171,12 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
             if (isRelativelyLeft(transformed_object)) {
               predicted_path = path_generator_->generateShiftedPathForOnLaneVehicle(
                 yaw_fixed_transformed_object, predicted_path, prediction_time_horizon_.vehicle,
-                lateral_control_time_horizon_, -bound_to_centerline/2, ref_path.speed_limit);
+                lateral_control_time_horizon_, -bound_to_centerline / 2, ref_path.speed_limit);
 
             } else if (!isRelativelyLeft(transformed_object)) {
               predicted_path = path_generator_->generateShiftedPathForOnLaneVehicle(
                 yaw_fixed_transformed_object, predicted_path, prediction_time_horizon_.vehicle,
-                lateral_control_time_horizon_, bound_to_centerline/2, ref_path.speed_limit);
+                lateral_control_time_horizon_, bound_to_centerline / 2, ref_path.speed_limit);
             }
           } else {
             predicted_path = path_generator_->generatePathForOnLaneVehicle(
@@ -1426,8 +1427,7 @@ bool MapBasedPredictionNode::isIntersecting(
   return intersection.has_value();
 }
 
-bool MapBasedPredictionNode::isRelativelyLeft(
-  const TrackedObject & object)
+bool MapBasedPredictionNode::isRelativelyLeft(const TrackedObject & object)
 {
   lanelet::BasicPoint2d search_point(
     object.kinematics.pose_with_covariance.pose.position.x,
@@ -1444,14 +1444,23 @@ bool MapBasedPredictionNode::isRelativelyLeft(
 
   for (size_t t = 0; t < surrounding_lanelets.size(); t++) {
     for (size_t j = t + 1; j < surrounding_lanelets.size(); j++) {
-      prev_left_bound_dist = lanelet::geometry::distance2d(lanelet::utils::to2D(surrounding_lanelets[t].second.leftBound().basicLineString()),search_point);
-      prev_right_bound_dist = lanelet::geometry::distance2d(lanelet::utils::to2D(surrounding_lanelets[t].second.rightBound().basicLineString()),search_point);
-      next_left_bound_dist = lanelet::geometry::distance2d(lanelet::utils::to2D(surrounding_lanelets[j].second.leftBound().basicLineString()),search_point);
-      next_right_bound_dist = lanelet::geometry::distance2d(lanelet::utils::to2D(surrounding_lanelets[j].second.rightBound().basicLineString()),search_point);
-
+      prev_left_bound_dist = lanelet::geometry::distance2d(
+        lanelet::utils::to2D(surrounding_lanelets[t].second.leftBound().basicLineString()),
+        search_point);
+      prev_right_bound_dist = lanelet::geometry::distance2d(
+        lanelet::utils::to2D(surrounding_lanelets[t].second.rightBound().basicLineString()),
+        search_point);
+      next_left_bound_dist = lanelet::geometry::distance2d(
+        lanelet::utils::to2D(surrounding_lanelets[j].second.leftBound().basicLineString()),
+        search_point);
+      next_right_bound_dist = lanelet::geometry::distance2d(
+        lanelet::utils::to2D(surrounding_lanelets[j].second.rightBound().basicLineString()),
+        search_point);
     }
   }
-  if((prev_right_bound_dist < prev_left_bound_dist) && (next_left_bound_dist < next_right_bound_dist)){
+  if (
+    (prev_right_bound_dist < prev_left_bound_dist) &&
+    (next_left_bound_dist < next_right_bound_dist)) {
     return true;
   }
   return false;
