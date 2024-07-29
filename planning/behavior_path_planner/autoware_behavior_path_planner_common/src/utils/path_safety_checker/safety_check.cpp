@@ -742,6 +742,7 @@ double calcObstacleMinLength(const Shape & shape)
         min_length_to_point = length_to_point;
       }
     }
+    return min_length_to_point;
   }
 
   throw std::logic_error("The shape type is not supported in obstacle_cruise_planner.");
