@@ -32,7 +32,7 @@ class UnitLink
 public:
   void initialize_object(BaseUnit * parent, BaseUnit * child);
   void initialize_struct();
-  void initialize_status();
+  static void initialize_status();
   DiagLinkStruct create_struct() const { return struct_; }
   DiagLinkStatus create_status() const { return status_; }
   BaseUnit * parent() const { return parent_; }
