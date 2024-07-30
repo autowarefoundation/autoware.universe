@@ -1549,8 +1549,6 @@ std::optional<PullOutStatus> StartPlannerModule::planFreespacePath(
   const StartPlannerParameters & parameters,
   const std::shared_ptr<const PlannerData> & planner_data, const PullOutStatus & pull_out_status)
 {
-  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-
   const Pose & current_pose = planner_data->self_odometry->pose.pose;
   const auto & route_handler = planner_data->route_handler;
 
