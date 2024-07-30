@@ -301,16 +301,16 @@ geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_rph_with_del
   curr_orientation = prev_orientation * delta_orientation;
   curr_orientation.normalize();
 
-  const auto rpy = autoware::universe_utils::getRPY(pose.pose.pose.orientation);
-  const double delta_z = kalman_filter_.getXelement(IDX::VX) * delay_time * std::sin(-rpy.y);
-
   PoseWithCovariance pose_with_delay;
   pose_with_delay = pose;
-  pose_with_delay.pose.pose.position.z += delta_z;
   pose_with_delay.pose.pose.orientation.x = curr_orientation.x();
   pose_with_delay.pose.pose.orientation.y = curr_orientation.y();
   pose_with_delay.pose.pose.orientation.z = curr_orientation.z();
   pose_with_delay.pose.pose.orientation.w = curr_orientation.w();
+
+  const auto rpy = autoware::universe_utils::getRPY(pose_with_delay.pose.pose.orientation);
+  const double delta_z = kalman_filter_.getXelement(IDX::VX) * delay_time * std::sin(-rpy.y);
+  pose_with_delay.pose.pose.position.z += delta_z;
 
   return pose_with_delay;
 }

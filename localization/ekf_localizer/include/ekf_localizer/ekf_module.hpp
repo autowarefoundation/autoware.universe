@@ -80,7 +80,7 @@ public:
     const TwistWithCovariance & twist, const rclcpp::Time & t_curr,
     EKFDiagnosticInfo & twist_diag_info);
   geometry_msgs::msg::PoseWithCovarianceStamped compensate_rph_with_delay(
-    const PoseWithCovariance & pose,tf2::Vector3 last_angular_velocity, const double delay_time);
+    const PoseWithCovariance & pose, tf2::Vector3 last_angular_velocity, const double delay_time);
 
 private:
   TimeDelayKalmanFilter kalman_filter_;

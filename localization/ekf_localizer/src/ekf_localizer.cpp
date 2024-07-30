@@ -225,8 +225,9 @@ void EKFLocalizer::timer_callback()
         ekf_module_->measurement_update_twist(*twist, current_time, twist_diag_info_);
       if (is_updated) {
         twist_is_updated = true;
-        last_angular_velocity_ = tf2::Vector3(twist->twist.twist.angular.x, twist->twist.twist.angular.y, twist->twist.twist.angular.z);
-      }else {
+        last_angular_velocity_ = tf2::Vector3(
+          twist->twist.twist.angular.x, twist->twist.twist.angular.y, twist->twist.twist.angular.z);
+      } else {
         last_angular_velocity_ = tf2::Vector3(0.0, 0.0, 0.0);
       }
     }
