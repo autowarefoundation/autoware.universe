@@ -24,11 +24,15 @@
 namespace autoware::motion_velocity_planner::dynamic_obstacle_stop
 {
 /// @brief check if the object is a vehicle
+/// @details the object classification labels are used to determine if the object is a vehicle
+/// (classification probabilities are ignored)
 /// @param object a predicted object with a label to check
 /// @return true if the object is a vehicle
 bool is_vehicle(const autoware_perception_msgs::msg::PredictedObject & object);
 
 /// @brief check if the object is within the lateral range of the ego trajectory
+/// @details the lateral offset of the object position to the ego trajectory is compared to the ego
+/// + object width + minimum_object_distance_from_ego_trajectory parameter + hysteresis
 /// @param object a predicted object with its pose and the lateral offset of its shape
 /// @param ego_trajectory trajectory of the ego vehicle
 /// @param params parameters with the minimum lateral range and the ego lateral offset
@@ -39,6 +43,8 @@ bool is_in_range(
   const TrajectoryPoints & ego_trajectory, const PlannerParam & params, const double hysteresis);
 
 /// @brief check if an object is not too close to the ego vehicle
+/// @details the arc length difference of the ego and of the object position on the ego trajectory
+/// are compared with the ego and object length
 /// @param object a predicted object with its pose and shape
 /// @param ego_data ego data with its trajectory, pose, and arc length of the pose on the trajectory
 /// @param ego_earliest_stop_pose pose the ego vehicle would reach if it were to stop now
