@@ -87,6 +87,8 @@ class LidarMarkerLocalizer : public rclcpp::Node
     double limit_distance_from_self_pose_to_marker;
     std::array<double, 36> base_covariance;
 
+    double marker_width;
+
     bool enable_save_log;
     std::string save_file_directory_path;
     std::string save_file_name;
@@ -107,15 +109,16 @@ private:
   void main_process(const PointCloud2::ConstSharedPtr & points_msg_ptr);
   std::vector<landmark_manager::Landmark> detect_landmarks(
     const PointCloud2::ConstSharedPtr & points_msg_ptr);
-  void save_intensity(
+  sensor_msgs::msg::PointCloud2::SharedPtr extract_marker_pointcloud(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr,
-    const geometry_msgs::msg::Pose marker_pose);
+    const geometry_msgs::msg::Pose marker_pose) const;
+  void save_detected_marker_log(
+    const sensor_msgs::msg::PointCloud2::SharedPtr & points_msg_ptr);
 
-  template <typename PointType>
   void transform_sensor_measurement(
-    const std::string & source_frame, const std::string & target_frame,
-    const pcl::shared_ptr<pcl::PointCloud<PointType>> & sensor_points_input_ptr,
-    pcl::shared_ptr<pcl::PointCloud<PointType>> & sensor_points_output_ptr);
+  const std::string & source_frame, const std::string & target_frame,
+  const sensor_msgs::msg::PointCloud2::SharedPtr & sensor_points_input_ptr,
+  sensor_msgs::msg::PointCloud2::SharedPtr & sensor_points_output_ptr);
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;

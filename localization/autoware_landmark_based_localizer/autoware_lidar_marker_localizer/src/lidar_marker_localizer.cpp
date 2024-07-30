@@ -23,6 +23,7 @@
 
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl_ros/transforms.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -73,9 +74,10 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
   for (std::size_t i = 0; i < base_covariance.size(); ++i) {
     param_.base_covariance[i] = base_covariance[i];
   }
-
+  param_.marker_width = this->declare_parameter<double>("marker_width");
   param_.enable_save_log = this->declare_parameter<bool>("enable_save_log");
-  param_.save_file_directory_path = this->declare_parameter<std::string>("save_file_directory_path");
+  param_.save_file_directory_path
+    = this->declare_parameter<std::string>("save_file_directory_path");
   param_.save_file_name = this->declare_parameter<std::string>("save_file_name");
   param_.save_frame_id = this->declare_parameter<std::string>("save_frame_id");
 
@@ -285,10 +287,6 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
     return;
   }
 
-  if (distance_from_self_pose_to_nearest_marker < 2.0) {
-    save_intensity(points_msg_ptr, detected_landmarks.at(0).pose);
-  }
-
   // (5) Apply diff pose to self pose
   // only x and y is changed
   PoseWithCovarianceStamped result;
@@ -309,6 +307,18 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
 
   pub_base_link_pose_with_covariance_on_map_->publish(result);
   pub_debug_pose_with_covariance_->publish(result);
+
+  // for debug
+  const landmark_manager::Landmark nearest_detected_landmark
+    = get_nearest_landmark(self_pose, detected_landmarks);
+  const auto marker_pointcloud_msg_ptr
+    = extract_marker_pointcloud(points_msg_ptr, nearest_detected_landmark.pose);
+  pub_marker_pointcloud_->publish(*marker_pointcloud_msg_ptr);
+
+  // save log
+  if (param_.enable_save_log) {
+    save_detected_marker_log(marker_pointcloud_msg_ptr);
+  }
 }
 
 void LidarMarkerLocalizer::service_trigger_node(
@@ -491,63 +501,65 @@ std::array<double, 36> rotate_covariance(
   return ret_covariance;
 }
 
-void LidarMarkerLocalizer::save_intensity(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr,
-  const geometry_msgs::msg::Pose marker_pose)
-{
-  if (!param_.enable_save_log) {
-    return;
-  }
 
+sensor_msgs::msg::PointCloud2::SharedPtr LidarMarkerLocalizer::extract_marker_pointcloud(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr,
+  const geometry_msgs::msg::Pose marker_pose) const
+{
   // convert from ROSMsg to PCL
-  pcl::PointCloud<autoware_point_types::PointXYZIRC>::Ptr points_ptr(
-    new pcl::PointCloud<autoware_point_types::PointXYZIRC>);
+  pcl::shared_ptr<pcl::PointCloud<autoware_point_types::PointXYZIRC>>
+    points_ptr(new pcl::PointCloud<autoware_point_types::PointXYZIRC>);
   pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
 
-  pcl::PointCloud<autoware_point_types::PointXYZIRC>::Ptr marker_points_ptr(
-    new pcl::PointCloud<autoware_point_types::PointXYZIRC>);
-  pcl::PointCloud<pcl::PointXYZI>::Ptr marker_points_xyzi_ptr(new pcl::PointCloud<pcl::PointXYZI>);
-  std::vector<int> ring_array{};
+  pcl::shared_ptr<pcl::PointCloud<autoware_point_types::PointXYZIRC>>
+    marker_points_ptr(new pcl::PointCloud<autoware_point_types::PointXYZIRC>);
 
   // extract marker pointcloud
   for (const autoware_point_types::PointXYZIRC & point : points_ptr->points) {
     const double xy_distance = std::sqrt(
       std::pow(point.x - marker_pose.position.x, 2.0) +
       std::pow(point.y - marker_pose.position.y, 2.0));
-    // const double z_distance = std::fabs(point.z - marker_pose.position.z);
-    // if (xy_distance < 0.40 && z_distance < 0.55) {
-    if (xy_distance < 0.40) {
+    if (xy_distance < param_.marker_width / 2.0) {
       marker_points_ptr->push_back(point);
-
-      pcl::PointXYZI xyzi;
-      xyzi.x = point.x;
-      xyzi.y = point.y;
-      xyzi.z = point.z;
-      xyzi.intensity = point.intensity;
-      marker_points_xyzi_ptr->push_back(xyzi);
-
-      ring_array.push_back(point.channel);
     }
   }
 
+  marker_points_ptr->width = marker_points_ptr->size();
+  marker_points_ptr->height = 1;
+  marker_points_ptr->is_dense = false;
+
+  sensor_msgs::msg::PointCloud2::SharedPtr marker_points_msg_ptr(new sensor_msgs::msg::PointCloud2);
+  pcl::toROSMsg(*marker_points_ptr, *marker_points_msg_ptr);
+  marker_points_msg_ptr->header = points_msg_ptr->header;
+
+  return marker_points_msg_ptr;
+}
+
+void LidarMarkerLocalizer::save_detected_marker_log(
+  const sensor_msgs::msg::PointCloud2::SharedPtr & points_msg_ptr)
+{
   // transform input_frame to save_frame_id
-  pcl::PointCloud<pcl::PointXYZI>::Ptr marker_points_sensor_frame_ptr(
-    new pcl::PointCloud<pcl::PointXYZI>);
+  sensor_msgs::msg::PointCloud2::SharedPtr
+    marker_points_msg_sensor_frame_ptr(new sensor_msgs::msg::PointCloud2);
   transform_sensor_measurement(
-    param_.save_frame_id, points_msg_ptr->header.frame_id, marker_points_xyzi_ptr,
-    marker_points_sensor_frame_ptr);
+    param_.save_frame_id, points_msg_ptr->header.frame_id, points_msg_ptr,
+    marker_points_msg_sensor_frame_ptr);
+
+  // convert from ROSMsg to PCL
+  pcl::shared_ptr<pcl::PointCloud<autoware_point_types::PointXYZIRC>>
+    marker_points_sensor_frame_ptr(new pcl::PointCloud<autoware_point_types::PointXYZIRC>);
+  pcl::fromROSMsg(*marker_points_msg_sensor_frame_ptr, *marker_points_sensor_frame_ptr);
 
   // to csv format
   std::stringstream log_message;
-  size_t i = 0;
-  log_message << "point.position.x,point.position.y,point.position.z,point.intensity,point.channel"
+  log_message << "point.position.x,point.position.y,point.position.z,point.intensity,point.ring"
               << std::endl;
   for (const auto & point : marker_points_sensor_frame_ptr->points) {
     log_message << point.x;
     log_message << "," << point.y;
     log_message << "," << point.z;
     log_message << "," << point.intensity;
-    log_message << "," << ring_array.at(i++);
+    log_message << "," << point.channel;
     log_message << std::endl;
   }
 
@@ -569,26 +581,12 @@ void LidarMarkerLocalizer::save_intensity(
   std::ofstream csv_file(save_file_directory_path.append(file_name.str()));
   csv_file << log_message.str();
   csv_file.close();
-  std::cerr << save_file_directory_path.c_str() << std::endl;
-
-  // visualize for debug
-  marker_points_sensor_frame_ptr->width = marker_points_sensor_frame_ptr->size();
-  marker_points_sensor_frame_ptr->height = 1;
-  marker_points_sensor_frame_ptr->is_dense = false;
-
-  sensor_msgs::msg::PointCloud2 viz_pointcloud_msg;
-  pcl::toROSMsg(*marker_points_sensor_frame_ptr, viz_pointcloud_msg);
-  viz_pointcloud_msg.header = points_msg_ptr->header;
-  viz_pointcloud_msg.header.frame_id = param_.save_frame_id;
-
-  pub_marker_pointcloud_->publish(viz_pointcloud_msg);
 }
 
-template <typename PointType>
 void LidarMarkerLocalizer::transform_sensor_measurement(
   const std::string & source_frame, const std::string & target_frame,
-  const pcl::shared_ptr<pcl::PointCloud<PointType>> & sensor_points_input_ptr,
-  pcl::shared_ptr<pcl::PointCloud<PointType>> & sensor_points_output_ptr)
+  const sensor_msgs::msg::PointCloud2::SharedPtr & sensor_points_input_ptr,
+  sensor_msgs::msg::PointCloud2::SharedPtr & sensor_points_output_ptr)
 {
   if (source_frame == target_frame) {
     sensor_points_output_ptr = sensor_points_input_ptr;
@@ -611,8 +609,8 @@ void LidarMarkerLocalizer::transform_sensor_measurement(
     autoware::universe_utils::transform2pose(transform);
   const Eigen::Matrix4f base_to_sensor_matrix =
     pose_to_matrix4f(target_to_source_pose_stamped.pose);
-  autoware::universe_utils::transformPointCloud(
-    *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
+  pcl_ros::transformPointCloud(
+    base_to_sensor_matrix, *sensor_points_input_ptr, *sensor_points_output_ptr);
 }
 
 }  // namespace autoware::lidar_marker_localizer
