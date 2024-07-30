@@ -22,6 +22,7 @@
 | `~/debug/pose_with_covariance`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | [debug topic] Estimated pose                                       |
 | `~/debug/marker_detected`       | `geometry_msgs::msg::PoseArray`                 | [debug topic] Detected marker poses                                |
 | `~/debug/marker_mapped`         | `visualization_msgs::msg::MarkerArray`          | [debug topic] Loaded landmarks to visualize in Rviz as thin boards |
+| `~/debug/marker_pointcloud`     | `sensor_msgs::msg::PointCloud2`                 | [debug topic] PointCloud of the detected marker                    |
 | `/diagnostics`                  | `diagnostic_msgs::msg::DiagnosticArray`         | Diagnostics outputs                                                |
 
 ## Parameters
