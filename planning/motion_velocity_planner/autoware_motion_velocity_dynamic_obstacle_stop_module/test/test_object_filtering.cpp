@@ -172,7 +172,7 @@ TEST(TestObjectFiltering, isUnavoidable)
     EXPECT_TRUE(is_unavoidable(object, ego_pose, ego_earliest_stop_pose, params));
   }
 
-  // shift the object : even if they drive in opposite direction they are no longer alligned
+  // shift the object : even if they drive in opposite direction they are no longer aligned
   object.kinematics.initial_pose_with_covariance.pose.position.x = 5.0;
   object.kinematics.initial_pose_with_covariance.pose.position.y = 5.0;
   for (auto ego_yaw = -0.4; ego_yaw <= 0.4; ego_yaw += 0.1) {
