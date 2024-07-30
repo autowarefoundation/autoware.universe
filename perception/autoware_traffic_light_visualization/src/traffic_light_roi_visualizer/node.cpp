@@ -31,8 +31,8 @@ TrafficLightRoiVisualizerNode::TrafficLightRoiVisualizerNode(const rclcpp::NodeO
   using std::placeholders::_2;
   using std::placeholders::_3;
   using std::placeholders::_4;
-  enable_fine_detection_ = this->declare_parameter<bool>("enable_fine_detection", false);
-  use_image_transport_ = this->declare_parameter<bool>("use_image_transport", false);
+  enable_fine_detection_ = this->declare_parameter<bool>("enable_fine_detection");
+  use_image_transport_ = this->declare_parameter<bool>("use_image_transport");
 
   if (enable_fine_detection_) {
     sync_with_rough_roi_.reset(new SyncWithRoughRoi(
