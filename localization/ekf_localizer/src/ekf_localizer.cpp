@@ -47,7 +47,8 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
   params_(this),
   ekf_dt_(params_.ekf_dt),
   pose_queue_(params_.pose_smoothing_steps),
-  twist_queue_(params_.twist_smoothing_steps)
+  twist_queue_(params_.twist_smoothing_steps),
+  last_angular_velocity_(0.0, 0.0, 0.0)
 {
   /* convert to continuous to discrete */
   proc_cov_vx_d_ = std::pow(params_.proc_stddev_vx_c * ekf_dt_, 2.0);
@@ -192,7 +193,7 @@ void EKFLocalizer::timer_callback()
         const double delay_time =
           (current_time - pose->header.stamp).seconds() + params_.pose_additional_delay;
         auto pose_with_rph_delay_compensation =
-          ekf_module_->compensate_rph_with_delay(*pose, delay_time);
+          ekf_module_->compensate_rph_with_delay(*pose, last_angular_velocity_, delay_time);
         update_simple_1d_filters(pose_with_rph_delay_compensation, params_.pose_smoothing_steps);
       }
     }
@@ -224,6 +225,9 @@ void EKFLocalizer::timer_callback()
         ekf_module_->measurement_update_twist(*twist, current_time, twist_diag_info_);
       if (is_updated) {
         twist_is_updated = true;
+        last_angular_velocity_ = tf2::Vector3(twist->twist.twist.angular.x, twist->twist.twist.angular.y, twist->twist.twist.angular.z);
+      }else {
+        last_angular_velocity_ = tf2::Vector3(0.0, 0.0, 0.0);
       }
     }
     DEBUG_INFO(

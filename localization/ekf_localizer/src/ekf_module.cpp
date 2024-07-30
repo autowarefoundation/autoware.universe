@@ -37,7 +37,6 @@ EKFModule::EKFModule(std::shared_ptr<Warning> warning, const HyperParameters & p
 : warning_(std::move(warning)),
   dim_x_(6),  // x, y, yaw, yaw_bias, vx, wz
   accumulated_delay_times_(params.extend_state_step, 1.0E15),
-  last_angular_velocity_(0, 0, 0),
   params_(params)
 {
   Eigen::MatrixXd x = Eigen::MatrixXd::Zero(dim_x_, 1);
@@ -284,7 +283,7 @@ bool EKFModule::measurement_update_pose(
 }
 
 geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_rph_with_delay(
-  const PoseWithCovariance & pose, const double delay_time)
+  const PoseWithCovariance & pose, tf2::Vector3 last_angular_velocity_, const double delay_time)
 {
   tf2::Quaternion delta_orientation;
   if (last_angular_velocity_.length() > 0.0) {
@@ -352,9 +351,6 @@ bool EKFModule::measurement_update_twist(
   /* Set measurement matrix */
   Eigen::MatrixXd y(dim_y, 1);
   y << twist.twist.twist.linear.x, twist.twist.twist.angular.z;
-
-  last_angular_velocity_ = tf2::Vector3(
-    twist.twist.twist.angular.x, twist.twist.twist.angular.y, twist.twist.twist.angular.z);
 
   if (has_nan(y) || has_inf(y)) {
     warning_->warn(
