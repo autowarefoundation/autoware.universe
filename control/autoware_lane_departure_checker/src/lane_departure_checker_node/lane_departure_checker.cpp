@@ -415,10 +415,8 @@ PathWithLaneId LaneDepartureChecker::cropPointsOutsideOfLanes(
 }
 
 bool LaneDepartureChecker::isOutOfLane(
-  const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint) const
+  const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint)
 {
-  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-
   for (const auto & point : vehicle_footprint) {
     if (!isInAnyLane(candidate_lanelets, point)) {
       return true;

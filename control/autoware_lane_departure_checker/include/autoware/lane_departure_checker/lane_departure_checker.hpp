@@ -139,9 +139,8 @@ public:
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
     const size_t end_index);
 
-  bool isOutOfLane(
-    const lanelet::ConstLanelets & candidate_lanelets,
-    const LinearRing2d & vehicle_footprint) const;
+  static bool isOutOfLane(
+    const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint);
 
 private:
   Param param_;
