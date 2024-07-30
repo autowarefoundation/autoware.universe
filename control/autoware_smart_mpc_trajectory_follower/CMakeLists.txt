@@ -2,12 +2,22 @@ cmake_minimum_required(VERSION 3.14)
 project(autoware_smart_mpc_trajectory_follower)
 
 find_package(autoware_cmake REQUIRED)
+find_package(python_cmake_module REQUIRED)
 autoware_package()
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package(pybind11_vendor REQUIRED)
+find_package(pybind11 REQUIRED)
+
+execute_process(COMMAND bash -c "pip3 install numba==0.58.1 --force-reinstall")
+execute_process(COMMAND bash -c "pip3 install GPy")
+
+ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
-  autoware_smart_mpc_trajectory_follower/scripts/pympc_trajectory_follower.py
+  scripts/pympc_trajectory_follower.py
   DESTINATION lib/${PROJECT_NAME}
 )
 ament_auto_package(
   INSTALL_TO_SHARE
+  autoware_smart_mpc_trajectory_follower/param
 )
