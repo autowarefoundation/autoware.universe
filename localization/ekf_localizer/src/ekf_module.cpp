@@ -303,7 +303,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_rph_with_del
 
   PoseWithCovariance pose_with_delay;
   pose_with_delay = pose;
-  pose_with_delay.header.stamp = rclcpp::Time(pose.header.stamp) + rclcpp::Duration::from_seconds(delay_time);
+  pose_with_delay.header.stamp =
+    rclcpp::Time(pose.header.stamp) + rclcpp::Duration::from_seconds(delay_time);
   pose_with_delay.pose.pose.orientation.x = curr_orientation.x();
   pose_with_delay.pose.pose.orientation.y = curr_orientation.y();
   pose_with_delay.pose.pose.orientation.z = curr_orientation.z();
