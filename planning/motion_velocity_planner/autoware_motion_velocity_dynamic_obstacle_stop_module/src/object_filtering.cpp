@@ -45,7 +45,7 @@ bool is_in_range(
   const autoware_perception_msgs::msg::PredictedObject & object,
   const TrajectoryPoints & ego_trajectory, const PlannerParam & params, const double hysteresis)
 {
-  const auto distance = std::abs(autoware::motion_utils::calcLateralOffset(
+  const auto distance = std::abs(motion_utils::calcLateralOffset(
     ego_trajectory, object.kinematics.initial_pose_with_covariance.pose.position));
   return distance <= params.minimum_object_distance_from_ego_trajectory +
                        params.ego_lateral_offset + object.shape.dimensions.y / 2.0 + hysteresis;
@@ -55,7 +55,7 @@ bool is_not_too_close(
   const autoware_perception_msgs::msg::PredictedObject & object, const EgoData & ego_data,
   const double & ego_longitudinal_offset)
 {
-  const auto obj_arc_length = autoware::motion_utils::calcSignedArcLength(
+  const auto obj_arc_length = motion_utils::calcSignedArcLength(
     ego_data.trajectory, ego_data.pose.position,
     object.kinematics.initial_pose_with_covariance.pose.position);
   return std::abs(obj_arc_length) > ego_data.longitudinal_offset_to_first_trajectory_idx +
@@ -71,7 +71,7 @@ bool is_unavoidable(
   const auto & o_pose = object.kinematics.initial_pose_with_covariance.pose;
   const auto o_yaw = tf2::getYaw(o_pose.orientation);
   const auto ego_yaw = tf2::getYaw(ego_pose.orientation);
-  const auto yaw_diff = std::abs(autoware::universe_utils::normalizeRadian(o_yaw - ego_yaw));
+  const auto yaw_diff = std::abs(universe_utils::normalizeRadian(o_yaw - ego_yaw));
   const auto opposite_heading = yaw_diff > M_PI_2 + M_PI_4;
   const auto collision_distance_threshold =
     params.ego_lateral_offset + object.shape.dimensions.y / 2.0 + params.hysteresis;

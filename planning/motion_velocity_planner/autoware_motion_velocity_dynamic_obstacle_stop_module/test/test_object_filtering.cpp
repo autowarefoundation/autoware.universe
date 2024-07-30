@@ -29,6 +29,7 @@ TEST(TestObjectFiltering, isVehicle)
   using autoware::motion_velocity_planner::dynamic_obstacle_stop::is_vehicle;
   using autoware_perception_msgs::msg::ObjectClassification;
   autoware_perception_msgs::msg::PredictedObject object;
+  EXPECT_NO_THROW(is_vehicle(object));
   ObjectClassification classification;
   object.classification = {};
   EXPECT_FALSE(is_vehicle(object));
@@ -59,6 +60,7 @@ TEST(TestObjectFiltering, isInRange)
   autoware::motion_velocity_planner::dynamic_obstacle_stop::TrajectoryPoints ego_trajectory;
   autoware_planning_msgs::msg::TrajectoryPoint trajectory_p;
   autoware::motion_velocity_planner::dynamic_obstacle_stop::PlannerParam params;
+  EXPECT_NO_THROW(is_in_range(object, ego_trajectory, params, {}));
   trajectory_p.pose.position.y = 0.0;
   for (auto x = -10.0; x <= 10.0; x += 1.0) {
     trajectory_p.pose.position.x = x;
@@ -102,9 +104,11 @@ TEST(TestObjectFiltering, isInRange)
 TEST(TestObjectFiltering, isNotTooClose)
 {
   using autoware::motion_velocity_planner::dynamic_obstacle_stop::is_not_too_close;
+  autoware_perception_msgs::msg::PredictedObject object;
+  autoware::motion_velocity_planner::dynamic_obstacle_stop::EgoData ego_data;
+  EXPECT_NO_THROW(is_not_too_close(object, ego_data, {}));
 
   double ego_longitudinal_offset = 1.0;
-  autoware::motion_velocity_planner::dynamic_obstacle_stop::EgoData ego_data;
   ego_data.longitudinal_offset_to_first_trajectory_idx = 0.0;
   ego_data.pose.position.x = 0.0;
   ego_data.pose.position.y = 0.0;
@@ -114,7 +118,6 @@ TEST(TestObjectFiltering, isNotTooClose)
     trajectory_p.pose.position.x = x;
     ego_data.trajectory.push_back(trajectory_p);
   }
-  autoware_perception_msgs::msg::PredictedObject object;
   object.shape.dimensions.x = 2.0;
   object.kinematics.initial_pose_with_covariance.pose.position.y = 2.0;
   // object ego with 1m offset = too close if poses are within 2m of arc length
@@ -134,4 +137,21 @@ TEST(TestObjectFiltering, isNotTooClose)
 
 TEST(TestObjectFiltering, isUnavoidable)
 {
+  using autoware::motion_velocity_planner::dynamic_obstacle_stop::is_unavoidable;
+  autoware_perception_msgs::msg::PredictedObject object;
+  geometry_msgs::msg::Pose ego_pose;
+  std::optional<geometry_msgs::msg::Pose> ego_earliest_stop_pose;
+  autoware::motion_velocity_planner::dynamic_obstacle_stop::PlannerParam params;
+  EXPECT_NO_THROW(is_unavoidable(object, ego_pose, ego_earliest_stop_pose, params));
+}
+
+TEST(TestObjectFiltering, filterPredictedObjects)
+{
+  using autoware::motion_velocity_planner::dynamic_obstacle_stop::filter_predicted_objects;
+  autoware_perception_msgs::msg::PredictedObjects objects;
+  autoware_perception_msgs::msg::PredictedObject object;
+  autoware::motion_velocity_planner::dynamic_obstacle_stop::EgoData ego_data;
+  autoware::motion_velocity_planner::dynamic_obstacle_stop::PlannerParam params;
+  double hysteresis{};
+  EXPECT_NO_THROW(filter_predicted_objects(objects, ego_data, params, hysteresis));
 }
