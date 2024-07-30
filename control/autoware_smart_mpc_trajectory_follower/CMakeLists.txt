@@ -17,6 +17,10 @@ pybind11_add_module(proxima_calc SHARED
   ${PROJECT_NAME}/src/proxima_calc.cpp
 )
 ament_target_dependencies(proxima_calc Eigen3)
+ament_get_python_install_dir(PYTHON_INSTALL_DIR)
+install(TARGETS proxima_calc
+  LIBRARY DESTINATION ${PYTHON_INSTALL_DIR}/${PROJECT_NAME}
+)
 
 ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
