@@ -68,27 +68,31 @@ bool is_unavoidable(
   const std::optional<geometry_msgs::msg::Pose> & ego_earliest_stop_pose,
   const PlannerParam & params)
 {
+  constexpr auto same_direction_diff_threshold = M_PI_2 + M_PI_4;
   const auto & o_pose = object.kinematics.initial_pose_with_covariance.pose;
   const auto o_yaw = tf2::getYaw(o_pose.orientation);
   const auto ego_yaw = tf2::getYaw(ego_pose.orientation);
   const auto yaw_diff = std::abs(universe_utils::normalizeRadian(o_yaw - ego_yaw));
-  const auto opposite_heading = yaw_diff > M_PI_2 + M_PI_4;
+  const auto opposite_heading = yaw_diff > same_direction_diff_threshold;
   const auto collision_distance_threshold =
     params.ego_lateral_offset + object.shape.dimensions.y / 2.0 + params.hysteresis;
-  // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_point_and_angle
-  const auto lat_distance = std::abs(
-    (o_pose.position.y - ego_pose.position.y) * std::cos(o_yaw) -
-    (o_pose.position.x - ego_pose.position.x) * std::sin(o_yaw));
-  auto has_collision = lat_distance <= collision_distance_threshold;
+  const auto lat_distance =
+    std::abs(universe_utils::calcLateralDeviation(o_pose, ego_pose.position));
+  auto has_collision = opposite_heading && lat_distance <= collision_distance_threshold;
   if (ego_earliest_stop_pose) {
+    const auto direction_yaw = std::atan2(
+      o_pose.position.y - ego_earliest_stop_pose->position.y,
+      o_pose.position.x - ego_earliest_stop_pose->position.x);
+    const auto yaw_diff_at_earliest_stop_pose =
+      std::abs(universe_utils::normalizeRadian(o_yaw - direction_yaw));
+    const auto lat_distance_at_earliest_stop_pose =
+      std::abs(universe_utils::calcLateralDeviation(o_pose, ego_earliest_stop_pose->position));
     const auto collision_at_earliest_stop_pose =
-      std::abs(
-        (o_pose.position.y - ego_earliest_stop_pose->position.y) * std::cos(o_yaw) -
-        (o_pose.position.x - ego_earliest_stop_pose->position.x) * std::sin(o_yaw)) <=
-      collision_distance_threshold;
+      yaw_diff_at_earliest_stop_pose > same_direction_diff_threshold &&
+      lat_distance_at_earliest_stop_pose <= collision_distance_threshold;
     has_collision |= collision_at_earliest_stop_pose;
   }
-  return opposite_heading && has_collision;
+  return has_collision;
 };
 
 std::vector<autoware_perception_msgs::msg::PredictedObject> filter_predicted_objects(

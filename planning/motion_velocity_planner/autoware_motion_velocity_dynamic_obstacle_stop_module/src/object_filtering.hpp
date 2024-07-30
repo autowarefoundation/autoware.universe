@@ -49,6 +49,7 @@ bool is_not_too_close(
   const double & ego_longitudinal_offset);
 
 /// @brief check if a collision would occur with the object, even if ego were stopping now
+/// @details we roughly check for a collision at the current ego pose or the earliest stop pose
 /// @param object a predicted object with a label to check
 /// @param ego_pose pose of the ego vehicle
 /// @param ego_earliest_stop_pose pose the ego vehicle would reach if it were to stop now
