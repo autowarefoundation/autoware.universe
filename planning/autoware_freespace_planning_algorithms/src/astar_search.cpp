@@ -112,9 +112,8 @@ void AstarSearch::resetData()
   openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
   const int nb_of_grid_nodes = costmap_.info.width * costmap_.info.height;
   const int total_astar_node_count = nb_of_grid_nodes * planner_common_param_.theta_size;
-  graph_ = std::vector<AstarNode>(total_astar_node_count);
-  col_free_distance_map_ =
-    std::vector<double>(nb_of_grid_nodes, std::numeric_limits<double>::max());
+  graph_.assign(total_astar_node_count, AstarNode{});
+  col_free_distance_map_.assign(nb_of_grid_nodes, std::numeric_limits<double>::max());
   shifted_goal_pose_ = {};
 }
 
