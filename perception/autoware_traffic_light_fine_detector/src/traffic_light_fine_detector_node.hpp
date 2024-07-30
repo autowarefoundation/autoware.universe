@@ -68,7 +68,7 @@ public:
    * @param expect_roi_msg   expect rois message
    */
   void callback(
-    const sensor_msgs::msg::Image::ConstSharedPtr image_msg,
+    const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg,
     const TrafficLightRoiArray::ConstSharedPtr rough_roi_msg,
     const TrafficLightRoiArray::ConstSharedPtr expect_roi_msg);
 
@@ -93,7 +93,7 @@ private:
    * @return float
    */
   float evalMatchScore(
-    std::map<int, TrafficLightRoi> & id2expectRoi,
+    const std::map<int, TrafficLightRoi> & id2expectRoi,
     std::map<int, autoware::tensorrt_yolox::ObjectArray> & id2detections,
     std::map<int, autoware::tensorrt_yolox::Object> & id2bestDetection);
   /**
@@ -113,7 +113,7 @@ private:
    * @param out_rois        output rois converted from the selected detections
    */
   void detectionMatch(
-    std::map<int, TrafficLightRoi> & id2expectRoi,
+    const std::map<int, TrafficLightRoi> & id2expectRoi,
     std::map<int, autoware::tensorrt_yolox::ObjectArray> & id2detections,
     TrafficLightRoiArray & out_rois);
 
