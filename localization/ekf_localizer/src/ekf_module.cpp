@@ -294,12 +294,12 @@ geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_rph_with_del
     delta_orientation.setValue(0.0, 0.0, 0.0, 1.0);
   }
 
-  tf2::Quaternion prew_orientation = tf2::Quaternion(
+  tf2::Quaternion prev_orientation = tf2::Quaternion(
     pose.pose.pose.orientation.x, pose.pose.pose.orientation.y, pose.pose.pose.orientation.z,
     pose.pose.pose.orientation.w);
 
   tf2::Quaternion curr_orientation;
-  curr_orientation = prew_orientation * delta_orientation;
+  curr_orientation = prev_orientation * delta_orientation;
   curr_orientation.normalize();
 
   const auto rpy = autoware::universe_utils::getRPY(pose.pose.pose.orientation);
