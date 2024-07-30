@@ -93,7 +93,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   const size_t max_workspace_size = (1 << 30);
 
   if (!setCudaDeviceId(gpu_id_)) {
-    RCLCPP_ERROR(this->get_logger(), "Given GPU doesn't exist or suitable");
+    RCLCPP_ERROR(this->get_logger(), "GPU %d does not exist or is not suitable.", gpu_id_);
   }
 
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
@@ -135,7 +135,7 @@ void TrtYoloXNode::onConnect()
 void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
   if (!setCudaDeviceId(gpu_id_)) {
-    RCLCPP_ERROR(this->get_logger(), "Given GPU doesn't exist or suitable");
+    RCLCPP_ERROR(this->get_logger(), "GPU %d does not exist or is not suitable.", gpu_id_);
     return;
   }
 
