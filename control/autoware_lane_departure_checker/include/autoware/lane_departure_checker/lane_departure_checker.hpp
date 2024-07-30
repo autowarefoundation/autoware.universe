@@ -17,6 +17,7 @@
 
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/pose_deviation.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rosidl_runtime_cpp/message_initialization.hpp>
 
@@ -101,6 +102,12 @@ struct Output
 class LaneDepartureChecker
 {
 public:
+  LaneDepartureChecker(
+    std::shared_ptr<universe_utils::TimeKeeper> time_keeper =
+      std::make_shared<universe_utils::TimeKeeper>())
+  : time_keeper_(time_keeper)
+  {
+  }
   Output update(const Input & input);
 
   void setParam(const Param & param, const autoware::vehicle_info_utils::VehicleInfo vehicle_info)
@@ -132,8 +139,9 @@ public:
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
     const size_t end_index);
 
-  static bool isOutOfLane(
-    const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint);
+  bool isOutOfLane(
+    const lanelet::ConstLanelets & candidate_lanelets,
+    const LinearRing2d & vehicle_footprint) const;
 
 private:
   Param param_;
@@ -156,9 +164,9 @@ private:
   static std::vector<LinearRing2d> createVehiclePassingAreas(
     const std::vector<LinearRing2d> & vehicle_footprints);
 
-  static bool willLeaveLane(
+  bool willLeaveLane(
     const lanelet::ConstLanelets & candidate_lanelets,
-    const std::vector<LinearRing2d> & vehicle_footprints);
+    const std::vector<LinearRing2d> & vehicle_footprints) const;
 
   double calcMaxSearchLengthForBoundaries(const Trajectory & trajectory) const;
 
@@ -166,9 +174,11 @@ private:
     const lanelet::LaneletMap & lanelet_map, const geometry_msgs::msg::Point & ego_point,
     const double max_search_length, const std::vector<std::string> & boundary_types_to_detect);
 
-  static bool willCrossBoundary(
+  bool willCrossBoundary(
     const std::vector<LinearRing2d> & vehicle_footprints,
-    const SegmentRtree & uncrossable_segments);
+    const SegmentRtree & uncrossable_segments) const;
+
+  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
 };
 }  // namespace autoware::lane_departure_checker
 
