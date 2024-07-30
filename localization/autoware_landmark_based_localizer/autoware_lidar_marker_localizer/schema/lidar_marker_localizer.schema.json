@@ -86,7 +86,7 @@
         },
         "marker_width": {
           "type": "number",
-          "description": "Witdh of a marker. This param is uesd for visualizing the detected marker pointcloud[m]",
+          "description": "Width of a marker. This param is used for visualizing the detected marker pointcloud[m]",
           "default": 0.8,
           "minimum": 0.0
         },
@@ -123,6 +123,7 @@
         "limit_distance_from_self_pose_to_nearest_marker",
         "limit_distance_from_self_pose_to_marker",
         "base_covariance",
+        "marker_width",
         "enable_save_log",
         "save_file_directory_path",
         "save_file_name",
