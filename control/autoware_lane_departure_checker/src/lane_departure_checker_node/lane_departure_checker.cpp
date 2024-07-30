@@ -397,7 +397,7 @@ PathWithLaneId LaneDepartureChecker::cropPointsOutsideOfLanes(
   const auto vehicle_footprints = createVehicleFootprints(path);
 
   {
-    universe_utils::ScopedTimeTrack st(
+    universe_utils::ScopedTimeTrack st2(
       "check if footprint is within fused_lanlets_polygon", *time_keeper_);
 
     size_t idx = 0;

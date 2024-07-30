@@ -671,7 +671,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
   }
 
   const auto path = std::invoke([&]() {
-    universe_utils::ScopedTimeTrack st("plan path", *time_keeper_);
+    universe_utils::ScopedTimeTrack st2("plan path", *time_keeper_);
 
     if (!status_.driving_forward && !status_.backward_driving_complete) {
       return status_.backward_path;
@@ -900,7 +900,7 @@ void StartPlannerModule::planWithPriority(
 
   std::vector<PlannerDebugData> debug_data_vector;
   {  // create a scope for the scoped time track
-    universe_utils::ScopedTimeTrack st("findPullOutPaths", *time_keeper_);
+    universe_utils::ScopedTimeTrack st2("findPullOutPaths", *time_keeper_);
 
     for (const auto & collision_check_margin : parameters_->collision_check_margins) {
       for (const auto & [index, planner] : order_priority) {
