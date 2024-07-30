@@ -112,13 +112,12 @@ private:
   sensor_msgs::msg::PointCloud2::SharedPtr extract_marker_pointcloud(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr,
     const geometry_msgs::msg::Pose marker_pose) const;
-  void save_detected_marker_log(
-    const sensor_msgs::msg::PointCloud2::SharedPtr & points_msg_ptr);
+  void save_detected_marker_log(const sensor_msgs::msg::PointCloud2::SharedPtr & points_msg_ptr);
 
   void transform_sensor_measurement(
-  const std::string & source_frame, const std::string & target_frame,
-  const sensor_msgs::msg::PointCloud2::SharedPtr & sensor_points_input_ptr,
-  sensor_msgs::msg::PointCloud2::SharedPtr & sensor_points_output_ptr);
+    const std::string & source_frame, const std::string & target_frame,
+    const sensor_msgs::msg::PointCloud2::SharedPtr & sensor_points_input_ptr,
+    sensor_msgs::msg::PointCloud2::SharedPtr & sensor_points_output_ptr);
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
