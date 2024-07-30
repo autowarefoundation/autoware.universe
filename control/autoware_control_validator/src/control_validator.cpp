@@ -15,9 +15,8 @@
 #include "autoware/control_validator/control_validator.hpp"
 
 #include "autoware/control_validator/utils.hpp"
+#include "autoware/motion_utils/trajectory/interpolation.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
-
-#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
 
@@ -64,6 +63,8 @@ void ControlValidator::setup_parameters()
     auto & p = validation_params_;
     const std::string t = "thresholds.";
     p.max_distance_deviation_threshold = declare_parameter<double>(t + "max_distance_deviation");
+    p.max_reverse_velocity_threshold = declare_parameter<double>(t + "max_reverse_velocity");
+    p.max_over_velocity_ratio_threshold = declare_parameter<double>(t + "max_over_velocity_ratio");
   }
 
   try {
@@ -105,6 +106,11 @@ void ControlValidator::setup_diag()
       stat, validation_status_.is_valid_max_distance_deviation,
       "control output is deviated from trajectory");
   });
+  d.add(ns + "velocity_deviation", [&](auto & stat) {
+    set_status(
+      stat, validation_status_.is_valid_velocity_deviation,
+      "current velocity is deviated from the desired velocity");
+  });
 }
 
 bool ControlValidator::is_data_ready()
@@ -114,12 +120,11 @@ bool ControlValidator::is_data_ready()
     return false;
   };
 
-  // TODO(hisaki): get topic name from object
   if (!current_kinematics_) {
-    return waiting("~/input/kinematics");
+    return waiting(sub_kinematics_->subscriber()->get_topic_name());
   }
   if (!current_reference_trajectory_) {
-    return waiting("~/input/reference_trajectory");
+    return waiting(sub_reference_traj_->subscriber()->get_topic_name());
   }
   if (!current_predicted_trajectory_) {
     return waiting(sub_predicted_traj_->get_topic_name());
@@ -137,7 +142,7 @@ void ControlValidator::on_predicted_trajectory(const Trajectory::ConstSharedPtr 
 
   debug_pose_publisher_->clear_markers();
 
-  validate(*current_predicted_trajectory_);
+  validate(*current_predicted_trajectory_, *current_reference_trajectory_, *current_kinematics_);
 
   diag_updater_.force_update();
 
@@ -159,7 +164,9 @@ void ControlValidator::publish_debug_info()
   debug_pose_publisher_->publish();
 }
 
-void ControlValidator::validate(const Trajectory & predicted_trajectory)
+void ControlValidator::validate(
+  const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory,
+  const Odometry & kinematics)
 {
   if (predicted_trajectory.points.size() < 2) {
     RCLCPP_ERROR_THROTTLE(
@@ -167,17 +174,29 @@ void ControlValidator::validate(const Trajectory & predicted_trajectory)
       "predicted_trajectory size is less than 2. Cannot validate.");
     return;
   }
-  auto [deviation, is_valid] =
-    calc_deviation_and_condition(predicted_trajectory, *current_reference_trajectory_);
+  if (reference_trajectory.points.size() < 2) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 1000,
+      "reference_trajectory size is less than 2. Cannot validate.");
+    return;
+  }
 
   validation_status_.stamp = get_clock()->now();
-  validation_status_.max_distance_deviation = deviation;
-  validation_status_.is_valid_max_distance_deviation = is_valid;
+
+  std::tie(
+    validation_status_.max_distance_deviation, validation_status_.is_valid_max_distance_deviation) =
+    calc_lateral_deviation_status(predicted_trajectory, *current_reference_trajectory_);
+
+  std::tie(
+    validation_status_.current_velocity, validation_status_.desired_velocity,
+    validation_status_.is_valid_velocity_deviation) =
+    calc_velocity_deviation_status(*current_reference_trajectory_, kinematics);
+
   validation_status_.invalid_count =
     is_all_valid(validation_status_) ? 0 : validation_status_.invalid_count + 1;
 }
 
-std::pair<double, bool> ControlValidator::calc_deviation_and_condition(
+std::pair<double, bool> ControlValidator::calc_lateral_deviation_status(
   const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory) const
 {
   auto max_distance_deviation =
@@ -187,9 +206,28 @@ std::pair<double, bool> ControlValidator::calc_deviation_and_condition(
     max_distance_deviation <= validation_params_.max_distance_deviation_threshold};
 }
 
+std::tuple<double, double, bool> ControlValidator::calc_velocity_deviation_status(
+  const Trajectory & reference_trajectory, const Odometry & kinematics) const
+{
+  const double current_vel = kinematics.twist.twist.linear.x;
+  const double desired_vel =
+    autoware::motion_utils::calcInterpolatedPoint(reference_trajectory, kinematics.pose.pose)
+      .longitudinal_velocity_mps;
+
+  const bool is_over_velocity =
+    std::abs(current_vel) >
+    std::abs(desired_vel) * (1.0 + validation_params_.max_over_velocity_ratio_threshold) +
+      validation_params_.max_reverse_velocity_threshold;
+  const bool is_reverse_velocity =
+    std::signbit(current_vel * desired_vel) &&
+    std::abs(current_vel) > validation_params_.max_reverse_velocity_threshold;
+
+  return {current_vel, desired_vel, !(is_over_velocity || is_reverse_velocity)};
+}
+
 bool ControlValidator::is_all_valid(const ControlValidatorStatus & s)
 {
-  return s.is_valid_max_distance_deviation;
+  return s.is_valid_max_distance_deviation && s.is_valid_velocity_deviation;
 }
 
 void ControlValidator::display_status()

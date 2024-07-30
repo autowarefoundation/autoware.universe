@@ -46,7 +46,7 @@ Trajectory make_linear_trajectory(
   trajectory.points.reserve(num_points);
 
   for (size_t i = 0; i < num_points; ++i) {
-    double ratio = static_cast<double>(i) / (num_points - 1);
+    double ratio = static_cast<double>(i) / static_cast<double>(num_points - 1);
 
     TrajectoryPoint point;
     point.pose.position.x =
@@ -54,7 +54,7 @@ Trajectory make_linear_trajectory(
     point.pose.position.y =
       start.pose.position.y + ratio * (end.pose.position.y - start.pose.position.y);
     point.pose.orientation = create_quaternion(yaw);
-    point.longitudinal_velocity_mps = velocity;
+    point.longitudinal_velocity_mps = static_cast<float>(velocity);
     point.lateral_velocity_mps = 0.0;
 
     trajectory.points.emplace_back(point);
@@ -95,12 +95,12 @@ protected:
   std::shared_ptr<autoware::control_validator::ControlValidator> node;
 };
 
-TEST_P(ControlValidatorTest, test_calc_deviation_and_condition)
+TEST_P(ControlValidatorTest, test_calc_lateral_deviation_status)
 {
   auto [reference_trajectory, predicted_trajectory, expected_deviation, expected_condition] =
     GetParam();
   auto [deviation, is_valid] =
-    node->calc_deviation_and_condition(predicted_trajectory, reference_trajectory);
+    node->calc_lateral_deviation_status(predicted_trajectory, reference_trajectory);
 
   EXPECT_EQ(is_valid, expected_condition);
   EXPECT_NEAR(deviation, expected_deviation, 1e-5);

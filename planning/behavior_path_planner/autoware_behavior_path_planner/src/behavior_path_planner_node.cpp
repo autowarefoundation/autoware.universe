@@ -14,8 +14,6 @@
 
 #include "autoware/behavior_path_planner/behavior_path_planner_node.hpp"
 
-#include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
-#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 
@@ -70,16 +68,18 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
     const std::lock_guard<std::mutex> lock(mutex_manager_);  // for planner_manager_
 
-    const auto & p = planner_data_->parameters;
-    planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num);
+    planner_manager_ = std::make_shared<PlannerManager>(*this);
 
+    size_t scene_module_num = 0;
     for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
       // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
       if (name == "") {
         break;
       }
       planner_manager_->launchScenePlugin(*this, name);
+      scene_module_num++;
     }
+    planner_manager_->calculateMaxIterationNum(scene_module_num);
 
     for (const auto & manager : planner_manager_->getSceneModuleManagers()) {
       path_candidate_publishers_.emplace(
@@ -147,7 +147,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
   BehaviorPathPlannerParameters p{};
 
-  p.max_iteration_num = declare_parameter<int>("max_iteration_num");
   p.traffic_light_signal_timeout = declare_parameter<double>("traffic_light_signal_timeout");
 
   // vehicle info
@@ -217,7 +216,7 @@ void BehaviorPathPlannerNode::takeData()
 {
   // route
   {
-    const auto msg = route_subscriber_.takeNewData();
+    const auto msg = route_subscriber_.takeData();
     if (msg) {
       if (msg->segments.empty()) {
         RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
@@ -229,7 +228,7 @@ void BehaviorPathPlannerNode::takeData()
   }
   // map
   {
-    const auto msg = vector_map_subscriber_.takeNewData();
+    const auto msg = vector_map_subscriber_.takeData();
     if (msg) {
       map_ptr_ = msg;
       has_received_map_ = true;
@@ -909,6 +908,9 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     updateParam(
       parameters, DrivableAreaExpansionParameters::SMOOTHING_ARC_LENGTH_RANGE_PARAM,
       planner_data_->drivable_area_expansion_parameters.arc_length_range);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::MIN_BOUND_INTERVAL,
+      planner_data_->drivable_area_expansion_parameters.min_bound_interval);
     updateParam(
       parameters, DrivableAreaExpansionParameters::PRINT_RUNTIME_PARAM,
       planner_data_->drivable_area_expansion_parameters.print_runtime);

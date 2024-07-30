@@ -36,7 +36,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace autoware::motion_velocity_planner
@@ -85,6 +84,8 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
   pp.objects_dist_buffer = getOrDeclareParameter<double>(node, ns_ + ".objects.distance_buffer");
   pp.objects_cut_predicted_paths_beyond_red_lights =
     getOrDeclareParameter<bool>(node, ns_ + ".objects.cut_predicted_paths_beyond_red_lights");
+  pp.objects_ignore_behind_ego =
+    getOrDeclareParameter<bool>(node, ns_ + ".objects.ignore_behind_ego");
 
   pp.overlap_min_dist = getOrDeclareParameter<double>(node, ns_ + ".overlap.minimum_distance");
   pp.overlap_extra_length = getOrDeclareParameter<double>(node, ns_ + ".overlap.extra_length");
@@ -93,7 +94,9 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns_ + ".action.skip_if_over_max_decel");
   pp.precision = getOrDeclareParameter<double>(node, ns_ + ".action.precision");
   pp.min_decision_duration = getOrDeclareParameter<double>(node, ns_ + ".action.min_duration");
-  pp.dist_buffer = getOrDeclareParameter<double>(node, ns_ + ".action.distance_buffer");
+  pp.lon_dist_buffer =
+    getOrDeclareParameter<double>(node, ns_ + ".action.longitudinal_distance_buffer");
+  pp.lat_dist_buffer = getOrDeclareParameter<double>(node, ns_ + ".action.lateral_distance_buffer");
   pp.slow_velocity = getOrDeclareParameter<double>(node, ns_ + ".action.slowdown.velocity");
   pp.slow_dist_threshold =
     getOrDeclareParameter<double>(node, ns_ + ".action.slowdown.distance_threshold");
@@ -132,14 +135,15 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(
     parameters, ns_ + ".objects.cut_predicted_paths_beyond_red_lights",
     pp.objects_cut_predicted_paths_beyond_red_lights);
-
+  updateParam(parameters, ns_ + ".objects.ignore_behind_ego", pp.objects_ignore_behind_ego);
   updateParam(parameters, ns_ + ".overlap.minimum_distance", pp.overlap_min_dist);
   updateParam(parameters, ns_ + ".overlap.extra_length", pp.overlap_extra_length);
 
   updateParam(parameters, ns_ + ".action.skip_if_over_max_decel", pp.skip_if_over_max_decel);
   updateParam(parameters, ns_ + ".action.precision", pp.precision);
   updateParam(parameters, ns_ + ".action.min_duration", pp.min_decision_duration);
-  updateParam(parameters, ns_ + ".action.distance_buffer", pp.dist_buffer);
+  updateParam(parameters, ns_ + ".action.longitudinal_distance_buffer", pp.lon_dist_buffer);
+  updateParam(parameters, ns_ + ".action.lateral_distance_buffer", pp.lat_dist_buffer);
   updateParam(parameters, ns_ + ".action.slowdown.velocity", pp.slow_velocity);
   updateParam(parameters, ns_ + ".action.slowdown.distance_threshold", pp.slow_dist_threshold);
   updateParam(parameters, ns_ + ".action.stop.distance_threshold", pp.stop_dist_threshold);

@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 
 namespace autoware::control_validator
@@ -44,46 +45,95 @@ using nav_msgs::msg::Odometry;
 struct ValidationParams
 {
   double max_distance_deviation_threshold;
+  double max_reverse_velocity_threshold;
+  double max_over_velocity_ratio_threshold;
 };
 
 /**
  * @class ControlValidator
+ * @brief Validates control commands by comparing predicted trajectories against reference
+ * trajectories.
  */
 class ControlValidator : public rclcpp::Node
 {
 public:
   /**
    * @brief Constructor
+   * @param options Node options
    */
   explicit ControlValidator(const rclcpp::NodeOptions & options);
 
   /**
-   * @brief Callback function for predicted trajectory
+   * @brief Callback function for the predicted trajectory.
+   * @param msg Predicted trajectory message
    */
   void on_predicted_trajectory(const Trajectory::ConstSharedPtr msg);
 
   /**
    * @brief Calculate the maximum lateral distance between the reference trajectory and predicted
-   trajectory
-    * @param reference_trajectory reference trajectory
-    * @param predicted_trajectory predicted trajectory
+   * trajectory.
+   * @param predicted_trajectory Predicted trajectory
+   * @param reference_trajectory Reference trajectory
+   * @return A pair consisting of the maximum lateral deviation and a boolean indicating validity
    */
-  std::pair<double, bool> calc_deviation_and_condition(
+  std::pair<double, bool> calc_lateral_deviation_status(
     const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory) const;
 
+  /**
+   * @brief Calculate the velocity deviation between the reference trajectory and the current
+   * vehicle kinematics.
+   * @param reference_trajectory Reference trajectory
+   * @param kinematics Current vehicle kinematics
+   * @return A tuple containing the current velocity, desired velocity, and a boolean indicating
+   * validity
+   */
+  std::tuple<double, double, bool> calc_velocity_deviation_status(
+    const Trajectory & reference_trajectory, const Odometry & kinematics) const;
+
 private:
+  /**
+   * @brief Setup diagnostic updater
+   */
   void setup_diag();
 
+  /**
+   * @brief Setup parameters from the parameter server
+   */
   void setup_parameters();
 
+  /**
+   * @brief Check if all required data is ready for validation
+   * @return Boolean indicating readiness of data
+   */
   bool is_data_ready();
 
-  void validate(const Trajectory & predicted_trajectory);
+  /**
+   * @brief Validate the predicted trajectory against the reference trajectory and current
+   * kinematics
+   * @param predicted_trajectory Predicted trajectory
+   * @param reference_trajectory Reference trajectory
+   * @param kinematics Current vehicle kinematics
+   */
+  void validate(
+    const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory,
+    const Odometry & kinematics);
 
+  /**
+   * @brief Publish debug information
+   */
   void publish_debug_info();
 
+  /**
+   * @brief Display validation status on terminal
+   */
   void display_status();
 
+  /**
+   * @brief Set the diagnostic status
+   * @param stat Diagnostic status wrapper
+   * @param is_ok Boolean indicating if the status is okay
+   * @param msg Status message
+   */
   void set_status(
     DiagnosticStatusWrapper & stat, const bool & is_ok, const std::string & msg) const;
 
@@ -105,6 +155,11 @@ private:
 
   vehicle_info_utils::VehicleInfo vehicle_info_;
 
+  /**
+   * @brief Check if all validation criteria are met
+   * @param status Validation status
+   * @return Boolean indicating if all criteria are met
+   */
   static bool is_all_valid(const ControlValidatorStatus & status);
 
   Trajectory::ConstSharedPtr current_reference_trajectory_;
