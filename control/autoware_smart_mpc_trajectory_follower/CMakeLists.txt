@@ -12,6 +12,12 @@ find_package(pybind11 REQUIRED)
 execute_process(COMMAND bash -c "pip3 install numba==0.58.1 --force-reinstall")
 execute_process(COMMAND bash -c "pip3 install GPy")
 
+find_package(Eigen3 REQUIRED)
+pybind11_add_module(proxima_calc SHARED
+  ${PROJECT_NAME}/src/proxima_calc.cpp
+)
+ament_target_dependencies(proxima_calc Eigen3)
+
 ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/pympc_trajectory_follower.py
