@@ -27,7 +27,7 @@
 
 ## Parameters
 
-{{ json_to_markdown("localization/landmark_based_localizer/lidar_marker_localizer/schema/lidar_marker_localizer.schema.json") }}
+{{ json_to_markdown("localization/autoware_landmark_based_localizer/autoware_lidar_marker_localizer/schema/lidar_marker_localizer.schema.json") }}
 
 ## How to launch
 
