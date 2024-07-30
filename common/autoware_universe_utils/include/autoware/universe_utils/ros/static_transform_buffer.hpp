@@ -64,6 +64,21 @@ class StaticTransformBuffer
 public:
   StaticTransformBuffer() = default;
 
+  /**
+   * @brief Retrieves a transform between two static frames.
+   *
+   * This function attempts to retrieve a transform between the target frame and the source frame.
+   * If success, the transform matrix is set to the output parameter and the function returns true.
+   * Otherwise, transform matrix is set to identity and the function returns false. Transform
+   * Listener is destroyed after function call.
+   *
+   * @param node A pointer to the ROS node.
+   * @param target_frame The target frame.
+   * @param source_frame The source frame.
+   * @param eigen_transform The output Eigen transform matrix. Is set to identity if the transform
+   * is not found.
+   * @return True if the transform was successfully retrieved, false otherwise.
+   */
   bool getTransform(
     rclcpp::Node * node, const std::string & target_frame, const std::string & source_frame,
     Eigen::Matrix4f & eigen_transform)
@@ -109,6 +124,15 @@ public:
     return true;
   }
 
+  /**
+   * Transforms a point cloud from one frame to another.
+   *
+   * @param node A pointer to the ROS node.
+   * @param target_frame The target frame to transform the point cloud to.
+   * @param cloud_in The input point cloud to be transformed.
+   * @param cloud_out The transformed point cloud.
+   * @return True if the transformation is successful, false otherwise.
+   */
   bool transformPointcloud(
     rclcpp::Node * node, const std::string & target_frame,
     const sensor_msgs::msg::PointCloud2 & cloud_in, sensor_msgs::msg::PointCloud2 & cloud_out)
