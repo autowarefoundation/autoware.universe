@@ -103,7 +103,7 @@ void ObjectLaneletFilterNode::objectCallback(
     return;
   }
 
-  if (transformed_objects.objects.size() > 0) {
+  if (!transformed_objects.objects.empty()) {
     // calculate convex hull
     const auto convex_hull = getConvexHull(transformed_objects);
 
@@ -146,7 +146,7 @@ bool ObjectLaneletFilterNode::filterObject(
   const auto & label = transformed_object.classification.front().label;
   if (filter_target_.isTarget(label)) {
     // no tree, then no intersection
-    if (local_rtree.size() == 0) {
+    if (local_rtree.empty()) {
       return false;
     }
 
