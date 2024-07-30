@@ -9,7 +9,7 @@
       <remap from="~/input/diagnostics" to="$(var input/diagnostics)"/>
       <remap from="~/input/odometry" to="$(var input/odometry)"/>
       <remap from="~/input/trajectory" to="$(var input/trajectory)"/>
-      <remap from="~/metrics" to="/diagnostic/control_evaluator/metrics"/>
+      <remap from="~/metrics" to="/control/control_evaluator/metrics"/>
     </node>
   </group>
 </launch>
