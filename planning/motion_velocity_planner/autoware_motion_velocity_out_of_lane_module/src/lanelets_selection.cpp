@@ -17,6 +17,7 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <lanelet2_core/geometry/LaneletMap.h>
+#include <lanelet2_core/primitives/BoundingBox.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
 #include <algorithm>
@@ -68,13 +69,15 @@ lanelet::ConstLanelets calculate_trajectory_lanelets(
 {
   const auto lanelet_map_ptr = route_handler->getLaneletMapPtr();
   lanelet::ConstLanelets trajectory_lanelets;
-  lanelet::BasicLineString2d trajectory_ls;
-  for (const auto & p : ego_data.trajectory_points)
-    trajectory_ls.emplace_back(p.pose.position.x, p.pose.position.y);
-  for (const auto & dist_lanelet :
-       lanelet::geometry::findWithin2d(lanelet_map_ptr->laneletLayer, trajectory_ls)) {
-    if (!contains_lanelet(trajectory_lanelets, dist_lanelet.second.id()))
-      trajectory_lanelets.push_back(dist_lanelet.second);
+  for (const auto & p : ego_data.trajectory_points) {
+    const lanelet::BasicPoint2d point(p.pose.position.x, p.pose.position.y);
+    lanelet::BoundingBox2d bbox(point);
+    for (const auto & ll : lanelet_map_ptr->laneletLayer.search(bbox)) {
+      if (
+        !contains_lanelet(trajectory_lanelets, ll.id()) &&
+        lanelet::geometry::within(point, ll.polygon2d().basicPolygon()))
+        trajectory_lanelets.push_back(ll);
+    }
   }
   const auto missing_lanelets =
     get_missing_lane_change_lanelets(trajectory_lanelets, route_handler);
