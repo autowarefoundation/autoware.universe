@@ -165,6 +165,7 @@ void PoseInitializer::on_initialize(
 
       diagnostics_pose_reliability_->clear();
 
+      // check initial pose result and publish diagnostics
       diagnostics_pose_reliability_->add_key_value("initial_pose_reliability", reliability);
       if (!reliability) {
         std::stringstream message;

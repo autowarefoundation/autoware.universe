@@ -999,15 +999,13 @@ void NDTScanMatcher::service_ndt_align_main(
 
   // check reliability of initial pose result
   res->reliability =
-    (param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood < score)
-      ? true
-      : false;
+    (param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood < score);
   if (!res->reliability) {
     RCLCPP_WARN_STREAM(
       this->get_logger(), "Initial Pose Estimation is Unstable. Score is " << score);
   }
-  res->pose_with_covariance = pose_with_covariance;
   res->success = true;
+  res->pose_with_covariance = pose_with_covariance;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
@@ -1100,13 +1098,6 @@ std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> NDTScanMatcher
   auto best_particle_ptr = std::max_element(
     std::begin(particle_array), std::end(particle_array),
     [](const Particle & lhs, const Particle & rhs) { return lhs.score < rhs.score; });
-
-  if (
-    best_particle_ptr->score <
-    param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood)
-    RCLCPP_WARN_STREAM(
-      this->get_logger(),
-      "Initial Pose Estimation is Unstable. Score is " << best_particle_ptr->score);
 
   geometry_msgs::msg::PoseWithCovarianceStamped result_pose_with_cov_msg;
   result_pose_with_cov_msg.header.stamp = initial_pose_with_cov.header.stamp;
