@@ -90,18 +90,7 @@ struct Commands
   GearCommand gear;
   explicit Commands(const uint8_t & default_gear = GearCommand::PARK)
   {
-    control.stamp.sec = 0;
-    control.stamp.nanosec = 0;
-
-    turn_indicator.stamp.sec = 0;
-    turn_indicator.stamp.nanosec = 0;
-
-    hazard_light.stamp.sec = 0;
-    hazard_light.stamp.nanosec = 0;
-
     gear.command = default_gear;
-    gear.stamp.sec = 0;
-    gear.stamp.nanosec = 0;
   }
 };
 
@@ -194,8 +183,10 @@ private:
     this, "input/emergency/gear_cmd"};
   void onEmergencyCtrlCmd(Control::ConstSharedPtr msg);
 
-  // Previous Commands
-  Commands prev_commands_;
+  // Previous Turn Indicators, Hazard Lights and Gear
+  TurnIndicatorsCommand::SharedPtr prev_turn_indicator;
+  HazardLightsCommand::SharedPtr prev_hazard_light;
+  GearCommand::SharedPtr prev_gear;
 
   // Parameter
   bool use_emergency_handling_;

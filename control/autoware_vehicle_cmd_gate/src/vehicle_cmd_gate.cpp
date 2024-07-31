@@ -53,6 +53,10 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   using std::placeholders::_2;
   using std::placeholders::_3;
 
+  prev_turn_indicator = nullptr;
+  prev_hazard_light = nullptr;
+  prev_gear = nullptr;
+
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
 
@@ -459,20 +463,45 @@ void VehicleCmdGate::onTimer()
     }
   }
 
-  const auto getContinuousTopic = []<class T>(const T & prev_topic, const T & current_topic) {
-    return (rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic.stamp)).seconds() > 0.0
-             ? current_topic
-             : prev_topic;
-  };
+  const auto getContinuousTopic =
+    []<class T>(const std::shared_ptr<T> & prev_topic, const T & current_topic) {
+      return (rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() > 0.0
+               ? current_topic
+               : *prev_topic;
+    };
 
-  prev_commands_.turn_indicator = getContinuousTopic(prev_commands_.turn_indicator, turn_indicator);
-  prev_commands_.hazard_light = getContinuousTopic(prev_commands_.hazard_light, hazard_light);
-  prev_commands_.gear = getContinuousTopic(prev_commands_.gear, gear);
+  // Publish Turn Indicators, Hazard Lights and Gear Command
+  if (prev_turn_indicator != nullptr) {
+    *prev_turn_indicator = getContinuousTopic(prev_turn_indicator, turn_indicator);
+    turn_indicator_cmd_pub_->publish(*prev_turn_indicator);
+  } else {
+    if (msg_auto_command_turn_indicator || msg_remote_command_turn_indicator) {
+      prev_turn_indicator = std::make_shared<TurnIndicatorsCommand>(turn_indicator);
+    }
+    turn_indicator_cmd_pub_->publish(turn_indicator);
+  }
 
-  // Publish topics
-  turn_indicator_cmd_pub_->publish(prev_commands_.turn_indicator);
-  hazard_light_cmd_pub_->publish(prev_commands_.hazard_light);
-  gear_cmd_pub_->publish(prev_commands_.gear);
+  if (prev_hazard_light != nullptr) {
+    *prev_hazard_light = getContinuousTopic(prev_hazard_light, hazard_light);
+    hazard_light_cmd_pub_->publish(*prev_hazard_light);
+  } else {
+    if (
+      msg_auto_command_hazard_light || msg_remote_command_hazard_light ||
+      msg_emergency_command_hazard_light) {
+      prev_hazard_light = std::make_shared<HazardLightsCommand>(hazard_light);
+    }
+    hazard_light_cmd_pub_->publish(hazard_light);
+  }
+
+  if (prev_gear != nullptr) {
+    *prev_gear = getContinuousTopic(prev_gear, gear);
+    gear_cmd_pub_->publish(*prev_gear);
+  } else {
+    if (msg_auto_command_gear || msg_remote_command_gear || msg_emergency_command_gear) {
+      prev_gear = std::make_shared<GearCommand>(gear);
+    }
+    gear_cmd_pub_->publish(gear);
+  }
 }
 
 void VehicleCmdGate::publishControlCommands(const Commands & commands)
