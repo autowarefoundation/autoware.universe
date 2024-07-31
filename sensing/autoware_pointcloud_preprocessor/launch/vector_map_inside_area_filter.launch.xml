@@ -1,0 +1,12 @@
+<launch>
+  <arg name="input_frame" default="base_link"/>
+  <arg name="output_frame" default="base_link"/>
+  <arg name="vector_map_inside_area_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/vector_map_inside_area_filter.param.yaml"/>
+  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter.param.yaml"/>
+  <node pkg="pointcloud_preprocessor" exec="vector_map_inside_area_filter_node" name="vector_map_inside_area_filter">
+    <param from="$(var vector_map_inside_area_filter_param_file)"/>
+    <param from="$(var filter_param_file)"/>
+    <param name="input_frame" value="$(var input_frame)"/>
+    <param name="output_frame" value="$(var output_frame)"/>
+  </node>
+</launch>

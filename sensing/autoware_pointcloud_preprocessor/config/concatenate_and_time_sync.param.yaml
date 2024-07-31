@@ -1,0 +1,11 @@
+/**:
+  ros__parameters:
+    input_twist_topic_type: "twist"
+    output_frame: ""
+    input_topics: [""]
+    max_queue_size: 5
+    timeout_sec: 0.1
+    input_offset: {}
+    publish_synchronized_pointcloud: true
+    keep_input_frame_in_synchronized_pointcloud: true
+    synchronized_pointcloud_postfix: "pointcloud"

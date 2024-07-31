@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameter for lanelet2 map filter",
+  "type": "object",
+  "definitions": {
+    "lanelet2_map_filter": {
+      "type": "object",
+      "properties": {
+        "voxel_size_x": {
+          "type": "number",
+          "description": "voxel size along x-axis [m]",
+          "default": "0.04"
+        },
+        "voxel_size_y": {
+          "type": "number",
+          "description": "voxel size along y-axis [m]",
+          "default": "0.04"
+        }
+      },
+      "required": ["voxel_size_x", "voxel_size_y"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/lanelet2_map_filter"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
