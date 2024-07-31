@@ -153,9 +153,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // If the delay compensation is enabled, the timer is used to publish the output at the correct
   // time.
   if (enable_delay_compensation) {
-    publisher_period_ = 1.0 / publish_rate;   // [s]
-    constexpr double timer_multiplier = 1.0;  // 2 times frequent for publish timing check
-    const auto timer_period = rclcpp::Rate(publish_rate * timer_multiplier).period();
+    const auto timer_period = rclcpp::Rate(publish_rate).period();
     publish_timer_ = rclcpp::create_timer(
       this, get_clock(), timer_period, std::bind(&MultiObjectTracker::onTimer, this));
   }
