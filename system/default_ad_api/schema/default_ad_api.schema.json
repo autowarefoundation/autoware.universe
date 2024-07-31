@@ -1,92 +1,58 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Parameters for default_ad_api",
-    "type": "object",
-    "definitions": {
-      "default_ad_api_node": {
-        "type": "object",
-        "properties": {
-          "update_rate": {
-            "type": "number",
-            "default": 10.0,
-            "description": "Update rate for the node."
-          },
-          "require_accept_start": {
-            "type": "boolean",
-            "default": false,
-            "description": "Require acceptance to start."
-          },
-          "stop_check_duration": {
-            "type": "number",
-            "default": 1.0,
-            "description": "Duration for stop check."
-          },
-          "stop_distance": {
-            "type": "number",
-            "default": 1.0,
-            "description": "Stop distance."
-          },
-          "stop_duration": {
-            "type": "number",
-            "default": 1.0,
-            "description": "Stop duration."
-          }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for default_ad_api",
+  "type": "object",
+  "definitions": {
+    "default_ad_api_node": {
+      "type": "object",
+      "properties": {
+        "update_rate": {
+          "type": "number",
+          "default": 10.0,
+          "description": "Update rate for the node."
+        },
+        "require_accept_start": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require acceptance to start motion."
+        },
+        "stop_check_duration": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Duration for stop check in seconds."
+        },
+        "stop_distance": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Distance to stop before an obstacle in meters."
+        },
+        "stop_duration": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Duration to remain stopped in seconds."
         }
-      }
-    },
-    "properties": {
-      "/default_ad_api/node/autoware_state": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "type": "object",
-            "properties": {
-              "update_rate": {
-                "$ref": "#/definitions/default_ad_api_node/properties/update_rate"
-              }
-            },
-            "required": ["update_rate"]
-          }
-        },
-        "required": ["ros__parameters"]
       },
-      "/default_ad_api/node/motion": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "type": "object",
-            "properties": {
-              "require_accept_start": {
-                "$ref": "#/definitions/default_ad_api_node/properties/require_accept_start"
-              },
-              "stop_check_duration": {
-                "$ref": "#/definitions/default_ad_api_node/properties/stop_check_duration"
-              }
-            },
-            "required": ["require_accept_start", "stop_check_duration"]
-          }
-        },
-        "required": ["ros__parameters"]
+      "required": [
+        "update_rate",
+        "require_accept_start",
+        "stop_check_duration",
+        "stop_distance",
+        "stop_duration"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters":{
+          "$ref": "#definitions/default_ad_api_node"
+        }
       },
-      "/default_ad_api/node/planning": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "type": "object",
-            "properties": {
-              "stop_distance": {
-                "$ref": "#/definitions/default_ad_api_node/properties/stop_distance"
-              },
-              "stop_duration": {
-                "$ref": "#/definitions/default_ad_api_node/properties/stop_duration"
-              }
-            },
-            "required": ["stop_distance", "stop_duration"]
-          }
-        },
-        "required": ["ros__parameters"]
-      }
-    },
-    "required": ["/default_ad_api/node/autoware_state", "/default_ad_api/node/motion", "/default_ad_api/node/planning"]
-  }
-  
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
