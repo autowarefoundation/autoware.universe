@@ -22,8 +22,8 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <string>
 #include <vector>
-#include <string> 
 
 struct camParams
 {

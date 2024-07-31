@@ -25,11 +25,11 @@
 #include <NvOnnxParser.h>
 #include <yaml-cpp/yaml.h>
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <algorithm>
 
 class adjFrame
 {
