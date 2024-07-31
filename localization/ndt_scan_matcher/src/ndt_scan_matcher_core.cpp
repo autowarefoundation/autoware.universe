@@ -994,12 +994,24 @@ void NDTScanMatcher::service_ndt_align_main(
     return;
   }
 
-  res->pose_with_covariance = align_pose(initial_pose_msg_in_map_frame);
+  // estimate initial pose
+  const auto [pose_with_covariance, score] = align_pose(initial_pose_msg_in_map_frame);
+
+  // check reliability of initial pose result
+  res->reliability =
+    (param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood < score)
+      ? true
+      : false;
+  if (!res->reliability) {
+    RCLCPP_WARN_STREAM(
+      this->get_logger(), "Initial Pose Estimation is Unstable. Score is " << score);
+  }
+  res->pose_with_covariance = pose_with_covariance;
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
+std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> NDTScanMatcher::align_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
   output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
@@ -1104,7 +1116,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
   diagnostics_ndt_align_->add_key_value("best_particle_score", best_particle_ptr->score);
 
-  return result_pose_with_cov_msg;
+  return std::make_tuple(result_pose_with_cov_msg, best_particle_ptr->score);
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
