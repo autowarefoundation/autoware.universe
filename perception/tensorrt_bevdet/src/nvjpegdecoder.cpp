@@ -22,22 +22,22 @@ using std::chrono::high_resolution_clock;
 
 int dev_malloc(void ** p, size_t s)
 {
-  return (int)cudaMalloc(p, s);
+  return static_cast<int>(cudaMalloc(p, s));
 }
 
 int dev_free(void * p)
 {
-  return (int)cudaFree(p);
+  return static_cast<int>(cudaFree(p));
 }
 
 int host_malloc(void ** p, size_t s, unsigned int f)
 {
-  return (int)cudaHostAlloc(p, s, f);
+  return static_cast<int>(cudaHostAlloc(p, s, f));
 }
 
 int host_free(void * p)
 {
-  return (int)cudaFreeHost(p);
+  return static_cast<int>(cudaFreeHost(p));
 }
 
 int prepare_buffers(
@@ -52,7 +52,7 @@ int prepare_buffers(
 
   for (size_t i = 0; i < file_data.size(); i++) {
     CHECK_NVJPEG(nvjpegGetImageInfo(
-      share_param.nvjpeg_handle, (uchar *)file_data[i].data(), file_data[i].size(), &channels,
+      share_param.nvjpeg_handle, reinterpret_cast<uchar *>(file_data[i].data()), file_data[i].size(), &channels,
       &subsampling, widths, heights));
 
     int mul = 1;
@@ -82,7 +82,7 @@ int prepare_buffers(
           if (ibuf[i].channel[c]) {
             CHECK_CUDA(cudaFree(ibuf[i].channel[c]));
           }
-          CHECK_CUDA(cudaMalloc((void **)&ibuf[i].channel[c], sz));
+          CHECK_CUDA(cudaMalloc(reinterpret_cast<void **>(&ibuf[i].channel[c]), sz));
           isz[i].pitch[c] = sz;
         }
       }
@@ -146,13 +146,13 @@ int get_img(
   size_t step = width * height;
 
   CHECK_CUDA(cudaMemcpy2D(
-    img + 0 * step, (size_t)width, d_chanR, (size_t)pitchR, width, height,
+    img + 0 * step, static_cast<size_t>(width), d_chanR, static_cast<size_t>(pitchR), width, height,
     cudaMemcpyDeviceToDevice));
   CHECK_CUDA(cudaMemcpy2D(
-    img + 1 * step, (size_t)width, d_chanG, (size_t)pitchG, width, height,
+    img + 1 * step, static_cast<size_t>(width), d_chanG, static_cast<size_t>(pitchG), width, height,
     cudaMemcpyDeviceToDevice));
   CHECK_CUDA(cudaMemcpy2D(
-    img + 2 * step, (size_t)width, d_chanB, (size_t)pitchB, width, height,
+    img + 2 * step, static_cast<size_t>(width), d_chanB, static_cast<size_t>(pitchB), width, height,
     cudaMemcpyDeviceToDevice));
 
   return EXIT_SUCCESS;

@@ -36,7 +36,7 @@ int decode_jpeg(const std::vector<char> & buffer, uchar * output)
   cinfo.err = jpeg_std_error(&jerr.pub);
 
   jerr.pub.error_exit = [](j_common_ptr cinfo) {
-    jpeg_error_handler * myerr = (jpeg_error_handler *)cinfo->err;
+    jpeg_error_handler * myerr = reinterpret_cast<jpeg_error_handler *>(cinfo->err);
     longjmp(myerr->setjmp_buffer, 1);
   };
 
@@ -53,7 +53,7 @@ int decode_jpeg(const std::vector<char> & buffer, uchar * output)
     printf("buffer size is 0");
     return EXIT_FAILURE;
   }
-  jpeg_mem_src(&cinfo, (uchar *)buffer.data(), buffer.size());
+  jpeg_mem_src(&cinfo, reinterpret_cast<const unsigned char *>(buffer.data()), buffer.size());
   if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK) {
     printf("\033[31mFailed to read jpeg header\033[0m\n");
     return EXIT_FAILURE;

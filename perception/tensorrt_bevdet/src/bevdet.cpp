@@ -143,6 +143,7 @@ void BEVDet::InitParams(const std::string & config_file)
   src_img_w = model_config["data_config"]["src_size"][1].as<int>();
   input_img_h = model_config["data_config"]["input_size"][0].as<int>();
   input_img_w = model_config["data_config"]["input_size"][1].as<int>();
+  resize_radio = model_config["data_config"]["resize_radio"].as<float>();
   crop_h = model_config["data_config"]["crop"][0].as<int>();
   crop_w = model_config["data_config"]["crop"][1].as<int>();
   mean[0] = model_config["mean"][0].as<float>();
@@ -200,7 +201,6 @@ void BEVDet::InitParams(const std::string & config_file)
     out_num_task_head[common_head_name[i].as<std::string>()] = common_head_channel[i].as<int>();
   }
 
-  resize_radio = (float)input_img_w / src_img_w;
   feat_h = input_img_h / down_sample;
   feat_w = input_img_w / down_sample;
   depth_num = (depth_end - depth_start) / depth_step;
@@ -226,7 +226,7 @@ void BEVDet::InitParams(const std::string & config_file)
 void BEVDet::MallocDeviceMemory()
 {
   trt_buffer_sizes.resize(trt_engine->getNbBindings());
-  trt_buffer_dev = (void **)new void *[trt_engine->getNbBindings()];
+  trt_buffer_dev = reinterpret_cast<void **>(new void *[trt_engine->getNbBindings()]);
   for (int i = 0; i < trt_engine->getNbBindings(); i++) {
     nvinfer1::Dims32 dim = trt_context->getBindingDimensions(i);
     size_t size = 1;
@@ -240,7 +240,7 @@ void BEVDet::MallocDeviceMemory()
 
   std::cout << "img num binding : " << trt_engine->getNbBindings() << std::endl;
 
-  post_buffer = (void **)new void *[class_num_pre_task.size() * 6];
+  post_buffer = reinterpret_cast<void **>(new void *[class_num_pre_task.size() * 6]);
   for (size_t i = 0; i < class_num_pre_task.size(); i++) {
     post_buffer[i * 6 + 0] = trt_buffer_dev[buffer_map["reg_" + std::to_string(i)]];
     post_buffer[i * 6 + 1] = trt_buffer_dev[buffer_map["height_" + std::to_string(i)]];
@@ -266,9 +266,9 @@ void BEVDet::InitViewTransformer(
       for (int h_ = 0; h_ < feat_h; h_++) {
         for (int w_ = 0; w_ < feat_w; w_++) {
           int offset = i * depth_num * feat_h * feat_w + d_ * feat_h * feat_w + h_ * feat_w + w_;
-          (frustum + offset)->x() = (float)w_ * (input_img_w - 1) / (feat_w - 1);
-          (frustum + offset)->y() = (float)h_ * (input_img_h - 1) / (feat_h - 1);
-          (frustum + offset)->z() = (float)d_ * depth_step + depth_start;
+          (frustum + offset)->x() = static_cast<float>(w_) * (input_img_w - 1) / (feat_w - 1);
+          (frustum + offset)->y() = static_cast<float>(h_) * (input_img_h - 1) / (feat_h - 1);
+          (frustum + offset)->z() = static_cast<float>(d_) * depth_step + depth_start;
 
           // eliminate post transformation
           *(frustum + offset) -= post_trans.translation();
@@ -282,9 +282,9 @@ void BEVDet::InitViewTransformer(
 
           // voxelization
           *(frustum + offset) -= Eigen::Vector3f(x_start, y_start, z_start);
-          (frustum + offset)->x() = (int)((frustum + offset)->x() / x_step);
-          (frustum + offset)->y() = (int)((frustum + offset)->y() / y_step);
-          (frustum + offset)->z() = (int)((frustum + offset)->z() / z_step);
+          (frustum + offset)->x() = static_cast<int>((frustum + offset)->x() / x_step);
+          (frustum + offset)->y() = static_cast<int>((frustum + offset)->y() / y_step);
+          (frustum + offset)->z() = static_cast<int>((frustum + offset)->z() / z_step);
         }
       }
     }
@@ -308,9 +308,9 @@ void BEVDet::InitViewTransformer(
   std::vector<int> kept;
   for (int i = 0; i < num_points; i++) {
     if (
-      (int)(frustum + i)->x() >= 0 && (int)(frustum + i)->x() < xgrid_num &&
-      (int)(frustum + i)->y() >= 0 && (int)(frustum + i)->y() < ygrid_num &&
-      (int)(frustum + i)->z() >= 0 && (int)(frustum + i)->z() < zgrid_num) {
+      static_cast<int>((frustum + i)->x()) >= 0 && static_cast<int>((frustum + i)->x()) < xgrid_num &&
+      static_cast<int>((frustum + i)->y()) >= 0 && static_cast<int>((frustum + i)->y()) < ygrid_num &&
+      static_cast<int>((frustum + i)->z()) >= 0 && static_cast<int>((frustum + i)->z()) < zgrid_num) {
       kept.push_back(i);
     }
   }
@@ -323,7 +323,7 @@ void BEVDet::InitViewTransformer(
 
   for (int i = 0; i < valid_feat_num; i++) {
     Eigen::Vector3f & p = frustum[kept[i]];
-    ranks_bev_host[i] = (int)p.z() * xgrid_num * ygrid_num + (int)p.y() * xgrid_num + (int)p.x();
+    ranks_bev_host[i] = static_cast<int>(p.z()) * xgrid_num * ygrid_num + static_cast<int>(p.y()) * xgrid_num + static_cast<int>(p.x());
     order[i] = i;
   }
 
@@ -436,7 +436,7 @@ void save_tensor(size_t size, const void * ptr, const std::string & file)
   float * tensor = new float[size];
   CHECK_CUDA(cudaMemcpy(tensor, ptr, size * sizeof(float), cudaMemcpyDeviceToHost));
   std::ofstream out(file, std::ios::out | std::ios::binary);
-  out.write((char *)tensor, size * sizeof(float));
+  out.write(reinterpret_cast<char *>(tensor), size * sizeof(float));
   out.close();
   delete[] tensor;
 }
@@ -463,7 +463,7 @@ int BEVDet::DeserializeTRTEngine(
 
   engine_stream.seekg(0, std::ios::beg);
   void * engine_str = malloc(engine_size);
-  engine_stream.read((char *)engine_str, engine_size);
+  engine_stream.read(reinterpret_cast<char *>(engine_str), engine_size);
 
   nvinfer1::ICudaEngine * engine = runtime->deserializeCudaEngine(engine_str, engine_size, NULL);
   if (engine == nullptr) {
@@ -499,7 +499,7 @@ void BEVDet::GetAdjBEVFeature(
     size_t buf_size = trt_buffer_sizes[buffer_map["adj_feats"]] / adj_num;
 
     CHECK_CUDA(cudaMemcpy(
-      (char *)trt_buffer_dev[buffer_map["adj_feats"]] + i * buf_size, adj_buffer, buf_size,
+      reinterpret_cast<char *>(trt_buffer_dev[buffer_map["adj_feats"]]) + i * buf_size, adj_buffer, buf_size,
       cudaMemcpyDeviceToDevice));
 
     Eigen::Quaternion<float> adj_ego2global_rot;
@@ -508,7 +508,7 @@ void BEVDet::GetAdjBEVFeature(
 
     GetCurr2AdjTransform(
       ego2global_rot, adj_ego2global_rot, ego2global_trans, adj_ego2global_trans,
-      (float *)trt_buffer_dev[buffer_map["transforms"]] + i * transform_size);
+      reinterpret_cast<float *>(trt_buffer_dev[buffer_map["transforms"]]) + i * transform_size);
   }
   CHECK_CUDA(cudaMemcpy(
     trt_buffer_dev[buffer_map["flag"]], &flag, trt_buffer_sizes[buffer_map["flag"]],
@@ -576,10 +576,6 @@ int BEVDet::DoInfer(
   const camsData & cam_data, std::vector<Box> & out_detections, float & cost_time, int idx)
 {
   printf("-------------------%d-------------------\n", idx + 1);
-
-  printf(
-    "scenes_token : %s, timestamp : %lld\n", cam_data.param.scene_token.data(),
-    cam_data.param.timestamp);
 
   auto start = high_resolution_clock::now();
   CHECK_CUDA(cudaMemcpy(
@@ -650,11 +646,11 @@ void BEVDet::ExportEngine(const std::string & onnxFile, const std::string & trtF
 
   nvonnxparser::IParser * parser = nvonnxparser::createParser(*network, g_logger);
 
-  if (!parser->parseFromFile(onnxFile.c_str(), int(g_logger.reportable_severity))) {
+  if (!parser->parseFromFile(onnxFile.c_str(), static_cast<int>(g_logger.reportable_severity))) {
     std::cout << std::string("Failed parsing .onnx file!") << std::endl;
     for (int i = 0; i < parser->getNbErrors(); ++i) {
       auto * error = parser->getError(i);
-      std::cout << std::to_string(int(error->code())) << std::string(":")
+      std::cout << std::to_string(static_cast<int>(error->code())) << std::string(":")
                 << std::string(error->desc()) << std::endl;
     }
 

@@ -160,7 +160,7 @@ TRTBEVDetNode::TRTBEVDetNode(
 
   RCLCPP_INFO_STREAM(this->get_logger(), "Successful create bevdet!");
 
-  CHECK_CUDA(cudaMalloc((void **)&imgs_dev_, img_N_ * 3 * img_w_ * img_h_ * sizeof(uchar)));
+  CHECK_CUDA(cudaMalloc(reinterpret_cast<void **>(&imgs_dev_), img_N_ * 3 * img_w_ * img_h_ * sizeof(uchar)));
 
   pub_cloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "~/output/painting_cloud", rclcpp::SensorDataQoS());

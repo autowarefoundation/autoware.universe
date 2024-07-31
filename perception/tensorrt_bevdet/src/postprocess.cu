@@ -108,7 +108,7 @@ PostprocessGPU::PostprocessGPU(
   CHECK_CUDA(cudaMallocHost((void **)&score_host, nms_pre_maxnum * sizeof(float)));
   CHECK_CUDA(cudaMallocHost((void **)&cls_host, map_size * sizeof(float)));
   CHECK_CUDA(cudaMallocHost((void **)&sorted_indices_host, nms_pre_maxnum * sizeof(int)));
-  CHECK_CUDA(cudaMallocHost((void **)&keep_data_host, nms_pre_maxnum * sizeof(long)));
+  CHECK_CUDA(cudaMallocHost((void **)&keep_data_host, nms_pre_maxnum * sizeof(std::int64_t)));
 
   CHECK_CUDA(cudaMemcpy(
     nms_rescale_factor_dev, nms_rescale_factor.data(), class_num * sizeof(float),

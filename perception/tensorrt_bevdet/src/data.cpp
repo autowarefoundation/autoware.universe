@@ -28,7 +28,7 @@ using std::chrono::high_resolution_clock;
 camParams::camParams(const YAML::Node & config, int n, std::vector<std::string> & cams_name)
 : N_img(n)
 {
-  if ((size_t)n != cams_name.size()) {
+  if (static_cast<size_t>(n) != cams_name.size()) {
     std::cerr << "Error! Need " << n << " camera param, bug given " << cams_name.size()
               << " camera names!" << std::endl;
   }
@@ -38,7 +38,7 @@ camParams::camParams(const YAML::Node & config, int n, std::vector<std::string> 
   lidar2ego_rot = fromYamlQuater(config["lidar2ego_rotation"]);
   lidar2ego_trans = fromYamlTrans(config["lidar2ego_translation"]);
 
-  timestamp = config["timestamp"].as<unsigned long long>();
+  timestamp = config["timestamp"].as<std::int64_t>();
   scene_token = config["scene_token"].as<std::string>();
 
   imgs_file.clear();
@@ -106,7 +106,7 @@ DataLoader::DataLoader(
     lidar2ego_trans = fromYamlTrans(config0["lidar2ego_translation"]);
   }
 
-  CHECK_CUDA(cudaMalloc((void **)&imgs_dev, n_img * img_h * img_w * 3 * sizeof(uchar)));
+  CHECK_CUDA(cudaMalloc(reinterpret_cast<void **>(&imgs_dev), n_img * img_h * img_w * 3 * sizeof(uchar)));
 }
 
 const camsData & DataLoader::data(int idx, bool time_order)
@@ -153,7 +153,7 @@ int read_image(std::string & image_names, std::vector<char> & raw_data)
 
   std::streamsize file_size = input.tellg();
   input.seekg(0, std::ios::beg);
-  if (raw_data.size() < (size_t)file_size) {
+  if (raw_data.size() < static_cast<size_t>(file_size)) {
     raw_data.resize(file_size);
   }
   if (!input.read(raw_data.data(), file_size)) {

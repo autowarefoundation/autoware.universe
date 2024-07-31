@@ -314,7 +314,7 @@ __global__ void boxes_iou_bev_kernel(
 
 __global__ void RotatedNmsKernel(
   const int boxes_num, const float nms_overlap_thresh, const float * boxes,
-  unsigned long long * mask)
+  std::int64_t * mask)
 {
   // params: boxes (N, 7) [x, y, z, dx, dy, dz, heading]
   // params: mask (N, N/THREADS_PER_BLOCK_NMS)
@@ -352,7 +352,7 @@ __global__ void RotatedNmsKernel(
     const float * cur_box = boxes + cur_box_idx * kBoxBlockSize;
 
     int i = 0;
-    unsigned long long t = 0;
+    std::int64_t t = 0;
     int start = 0;
     if (row_start == col_start) {
       start = threadIdx.x + 1;
@@ -369,7 +369,7 @@ __global__ void RotatedNmsKernel(
 
 __global__ void NmsKernel(
   const int boxes_num, const float nms_overlap_thresh, const float * boxes,
-  unsigned long long * mask)
+  std::int64_t * mask)
 {
   // params: boxes (N, 7) [x, y, z, dx, dy, dz, heading]
   // params: mask (N, N/THREADS_PER_BLOCK_NMS)
@@ -407,7 +407,7 @@ __global__ void NmsKernel(
     const float * cur_box = boxes + cur_box_idx * kBoxBlockSize;
 
     int i = 0;
-    unsigned long long t = 0;
+    std::int64_t t = 0;
     int start = 0;
     if (row_start == col_start) {
       start = threadIdx.x + 1;
@@ -424,7 +424,7 @@ __global__ void NmsKernel(
 
 __global__ void RotatedNmsWithIndicesKernel(
   const int boxes_num, const float nms_overlap_thresh, const float * res_box,
-  const int * res_sorted_indices, unsigned long long * mask)
+  const int * res_sorted_indices, std::int64_t * mask)
 {
   const int row_start = blockIdx.y;
   const int col_start = blockIdx.x;
@@ -460,7 +460,7 @@ __global__ void RotatedNmsWithIndicesKernel(
     cur_box[6] = res_box[row_actual_idx * kBoxBlockSize + 6];
 
     int i = 0;
-    unsigned long long t = 0;
+    std::int64_t t = 0;
     int start = 0;
     if (row_start == col_start) {
       start = threadIdx.x + 1;  // Isn't it right now to compare with [0~threadIdx. x)? FIXME
@@ -565,7 +565,7 @@ void boxes_iou_bev_launcher(
 }
 
 void nms_launcher(
-  const float * boxes, unsigned long long * mask, int boxes_num, float nms_overlap_thresh)
+  const float * boxes, std::int64_t * mask, int boxes_num, float nms_overlap_thresh)
 {
   dim3 blocks(DIVUP(boxes_num, THREADS_PER_BLOCK_NMS), DIVUP(boxes_num, THREADS_PER_BLOCK_NMS));
   dim3 threads(THREADS_PER_BLOCK_NMS);
@@ -574,7 +574,7 @@ void nms_launcher(
 }
 
 void nms_normal_launcher(
-  const float * boxes, unsigned long long * mask, int boxes_num, float nms_overlap_thresh)
+  const float * boxes, std::int64_t * mask, int boxes_num, float nms_overlap_thresh)
 {
   dim3 blocks(DIVUP(boxes_num, THREADS_PER_BLOCK_NMS), DIVUP(boxes_num, THREADS_PER_BLOCK_NMS));
   dim3 threads(THREADS_PER_BLOCK_NMS);
@@ -589,26 +589,26 @@ Iou3dNmsCuda::Iou3dNmsCuda(
 
 int Iou3dNmsCuda::DoIou3dNms(
   const int box_num_pre, const float * res_box, const int * res_sorted_indices,
-  long * host_keep_data)
+  std::int64_t * host_keep_data)
 {
   const int col_blocks = DIVUP(box_num_pre, THREADS_PER_BLOCK_NMS);  // How many blocks are divided
   // printf("box_num_pre=%d, col_blocks=%d\n", box_num_pre, col_blocks);
-  unsigned long long * dev_mask = NULL;
-  cudaMalloc((void **)&dev_mask, box_num_pre * col_blocks * sizeof(unsigned long long));  //
+  std::int64_t * dev_mask = NULL;
+  cudaMalloc((void **)&dev_mask, box_num_pre * col_blocks * sizeof(std::int64_t));  //
   // THREADS_PER_BLOCK_NMS 掩码的长度
   dim3 blocks(DIVUP(box_num_pre, THREADS_PER_BLOCK_NMS), DIVUP(box_num_pre, THREADS_PER_BLOCK_NMS));
   dim3 threads(THREADS_PER_BLOCK_NMS);
   RotatedNmsWithIndicesKernel<<<blocks, threads>>>(
     box_num_pre, nms_overlap_thresh_, res_box, res_sorted_indices, dev_mask);
 
-  unsigned long long host_mask[box_num_pre * col_blocks];
+  std::int64_t host_mask[box_num_pre * col_blocks];
   cudaMemcpy(
-    host_mask, dev_mask, box_num_pre * col_blocks * sizeof(unsigned long long),
+    host_mask, dev_mask, box_num_pre * col_blocks * sizeof(std::int64_t),
     cudaMemcpyDeviceToHost);
   cudaFree(dev_mask);
 
-  unsigned long long host_remv[col_blocks];
-  memset(host_remv, 0, col_blocks * sizeof(unsigned long long));
+  std::int64_t host_remv[col_blocks];
+  memset(host_remv, 0, col_blocks * sizeof(std::int64_t));
   int num_to_keep = 0;
   for (int i = 0; i < box_num_pre; i++) {
     int nblock = i / THREADS_PER_BLOCK_NMS;

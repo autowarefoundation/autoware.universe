@@ -44,7 +44,7 @@ private:
 
 public:
   GatherBEVPlugin() = delete;
-  GatherBEVPlugin(const std::string & name);
+  explicit GatherBEVPlugin(const std::string & name);
   GatherBEVPlugin(const std::string & name, const void * buffer, size_t length);
   ~GatherBEVPlugin();
 

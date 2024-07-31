@@ -80,16 +80,16 @@ __inline__ std::string dataTypeToString(nvinfer1::DataType dataType)
 
 __inline__ size_t dataTypeToSize(nvinfer1::DataType dataType)
 {
-  switch ((int)dataType) {
-    case int(nvinfer1::DataType::kFLOAT):
+  switch (dataType) {
+    case nvinfer1::DataType::kFLOAT:
       return 4;
-    case int(nvinfer1::DataType::kHALF):
+    case nvinfer1::DataType::kHALF:
       return 2;
-    case int(nvinfer1::DataType::kINT8):
+    case nvinfer1::DataType::kINT8:
       return 1;
-    case int(nvinfer1::DataType::kINT32):
+    case nvinfer1::DataType::kINT32:
       return 4;
-    case int(nvinfer1::DataType::kBOOL):
+    case nvinfer1::DataType::kBOOL:
       return 1;
     default:
       return 4;

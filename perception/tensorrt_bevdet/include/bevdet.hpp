@@ -37,7 +37,7 @@ public:
   adjFrame(int _n, size_t _buf_size)
   : n(_n), buf_size(_buf_size), scenes_token(_n), ego2global_rot(_n), ego2global_trans(_n)
   {
-    CHECK_CUDA(cudaMalloc((void **)&adj_buffer, _n * _buf_size));
+    CHECK_CUDA(cudaMalloc(reinterpret_cast<void **>(&adj_buffer), _n * _buf_size));
     CHECK_CUDA(cudaMemset(adj_buffer, 0, _n * _buf_size));
     last = 0;
     buffer_num = 0;
@@ -68,7 +68,7 @@ public:
     while (iters--) {
       last = (last + 1) % n;
       CHECK_CUDA(cudaMemcpy(
-        (char *)adj_buffer + last * buf_size, curr_buffer, buf_size, cudaMemcpyDeviceToDevice));
+        reinterpret_cast<char *>(adj_buffer) + last * buf_size, curr_buffer, buf_size, cudaMemcpyDeviceToDevice));
       scenes_token[last] = curr_token;
       ego2global_rot[last] = _ego2global_rot;
       ego2global_trans[last] = _ego2global_trans;
@@ -81,7 +81,7 @@ public:
   const void * getFrameBuffer(int idx)
   {
     idx = (-idx + last + n) % n;
-    return (char *)adj_buffer + idx * buf_size;
+    return reinterpret_cast<char *>(adj_buffer) + idx * buf_size;
   }
   void getEgo2Global(
     int idx, Eigen::Quaternion<float> & adj_ego2global_rot,

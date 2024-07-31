@@ -70,7 +70,7 @@ struct decode_params_t
 struct share_params
 {
   share_params() { fmt = NVJPEG_OUTPUT_UNCHANGED; }
-  share_params(size_t _fmt)
+  explicit share_params(size_t _fmt)
   {
     if (
       _fmt == DECODE_RGB || _fmt == DECODE_BGR || _fmt == DECODE_RGBI || _fmt == DECODE_BGRI ||

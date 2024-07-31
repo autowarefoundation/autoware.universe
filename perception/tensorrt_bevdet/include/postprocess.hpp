@@ -21,7 +21,7 @@
 class PostprocessGPU
 {
 public:
-  PostprocessGPU() {};
+  PostprocessGPU() {}
   PostprocessGPU(
     const int _class_num, const float _score_thresh, const float _nms_thresh,
     const int _nms_pre_maxnum, const int _nms_post_maxnum, const int _down_sample,
@@ -58,7 +58,7 @@ private:
   int * cls_dev = nullptr;
   int * valid_box_num = nullptr;
   int * sorted_indices_dev = nullptr;
-  long * keep_data_host = nullptr;
+  std::int64_t * keep_data_host = nullptr;
   int * sorted_indices_host = nullptr;
   float * boxes_host = nullptr;
   float * score_host = nullptr;

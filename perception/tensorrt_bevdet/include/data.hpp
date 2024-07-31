@@ -43,14 +43,14 @@ struct camParams
   //
   std::vector<std::string> imgs_file;
 
-  unsigned long long timestamp;
+  std::int64_t timestamp;
   std::string scene_token;
 };
 
 struct camsData
 {
   camsData() = default;
-  camsData(const camParams & _param) : param(_param), imgs_dev(nullptr) {};
+  explicit camsData(const camParams & _param) : param(_param), imgs_dev(nullptr) {}
   camParams param;
   uchar * imgs_dev;
 };
