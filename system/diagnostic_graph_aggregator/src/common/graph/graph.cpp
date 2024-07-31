@@ -37,7 +37,7 @@ void Graph::create(const std::string & file, const std::string & id)
   id_ = id;
 }
 
-void Graph::update(const rclcpp::Time & stamp)
+void Graph::update(const rclcpp::Time & stamp) const
 {
   for (const auto & diag : diags_) diag->on_time(stamp);
 }
