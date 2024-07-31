@@ -1269,7 +1269,7 @@
               "properties": {
                 "duration_time": {
                   "type": "number",
-                  "description": "force deactive duration time",
+                  "description": "force deactivate duration time",
                   "default": 2.0
                 }
               }
