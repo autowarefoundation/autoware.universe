@@ -204,6 +204,15 @@ TEST_F(TestRouteHandler, testGetCenterLinePath)
     ASSERT_EQ(center_line_path.points.back().lane_ids.at(1), 4785);
   }
   {
+    // The input is in middle of range.
+    const auto center_line_path = route_handler_->getCenterLinePath(current_lanes, 14.5, 60.5);
+    ASSERT_EQ(center_line_path.points.size(), 48);
+    ASSERT_EQ(center_line_path.points.front().lane_ids.size(), 1);
+    ASSERT_EQ(center_line_path.points.back().lane_ids.size(), 1);
+    ASSERT_EQ(center_line_path.points.front().lane_ids.at(0), 4424);
+    ASSERT_EQ(center_line_path.points.back().lane_ids.at(0), 4785);
+  }
+  {
     // The input is broken.
     // s_start is negative, and s_end is over the boundary.
     const auto center_line_path = route_handler_->getCenterLinePath(current_lanes, -1.0, 200.0);
@@ -292,7 +301,7 @@ TEST_F(TestRouteHandler, testGetLaneChangeTargetLanes)
 
 TEST_F(TestRouteHandler, testGetShoulderLaneletsAtPose)
 {
-  set_route_handler("overlap_map.osm"); 
+  set_route_handler("overlap_map.osm");
 
   geometry_msgs::msg::Pose pose;
   pose.position.x = 3719.5;
