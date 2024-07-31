@@ -45,7 +45,7 @@
     "/**": {
       "type": "object",
       "properties": {
-        "ros__parameters":{
+        "ros__parameters": {
           "$ref": "#definitions/default_ad_api_node"
         }
       },
