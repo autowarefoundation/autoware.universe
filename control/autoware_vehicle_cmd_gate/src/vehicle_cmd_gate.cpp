@@ -463,16 +463,23 @@ void VehicleCmdGate::onTimer()
     }
   }
 
-  const auto getContinuousTopic =
-    []<class T>(const std::shared_ptr<T> & prev_topic, const T & current_topic) {
-      return (rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() > 0.0
-               ? current_topic
-               : *prev_topic;
-    };
+  const auto getContinuousTopic = [&]<class T>(
+                                    const std::shared_ptr<T> & prev_topic, const T & current_topic,
+                                    const std::string & topic_name) {
+    if ((rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() > 0.0) {
+      return current_topic;
+    } else {
+      RCLCPP_INFO(
+        get_logger(),
+        "The operation mode is changed, but the %s is not received yet:", topic_name.c_str());
+      return *prev_topic;
+    }
+  };
 
   // Publish Turn Indicators, Hazard Lights and Gear Command
   if (prev_turn_indicator != nullptr) {
-    *prev_turn_indicator = getContinuousTopic(prev_turn_indicator, turn_indicator);
+    *prev_turn_indicator =
+      getContinuousTopic(prev_turn_indicator, turn_indicator, "TurnIndicatorsCommand");
     turn_indicator_cmd_pub_->publish(*prev_turn_indicator);
   } else {
     if (msg_auto_command_turn_indicator || msg_remote_command_turn_indicator) {
@@ -482,7 +489,7 @@ void VehicleCmdGate::onTimer()
   }
 
   if (prev_hazard_light != nullptr) {
-    *prev_hazard_light = getContinuousTopic(prev_hazard_light, hazard_light);
+    *prev_hazard_light = getContinuousTopic(prev_hazard_light, hazard_light, "HazardLightsCommand");
     hazard_light_cmd_pub_->publish(*prev_hazard_light);
   } else {
     if (
@@ -494,7 +501,7 @@ void VehicleCmdGate::onTimer()
   }
 
   if (prev_gear != nullptr) {
-    *prev_gear = getContinuousTopic(prev_gear, gear);
+    *prev_gear = getContinuousTopic(prev_gear, gear, "GearCommand");
     gear_cmd_pub_->publish(*prev_gear);
   } else {
     if (msg_auto_command_gear || msg_remote_command_gear || msg_emergency_command_gear) {
