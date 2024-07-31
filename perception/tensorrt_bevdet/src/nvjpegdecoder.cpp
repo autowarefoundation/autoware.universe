@@ -52,8 +52,8 @@ int prepare_buffers(
 
   for (size_t i = 0; i < file_data.size(); i++) {
     CHECK_NVJPEG(nvjpegGetImageInfo(
-      share_param.nvjpeg_handle, reinterpret_cast<uchar *>(file_data[i].data()), file_data[i].size(), &channels,
-      &subsampling, widths, heights));
+      share_param.nvjpeg_handle, reinterpret_cast<uchar *>(file_data[i].data()),
+      file_data[i].size(), &channels, &subsampling, widths, heights));
 
     int mul = 1;
     // in the case of interleaved RGB output, write only to single channel, but

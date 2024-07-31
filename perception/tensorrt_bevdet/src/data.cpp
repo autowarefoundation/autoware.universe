@@ -106,7 +106,8 @@ DataLoader::DataLoader(
     lidar2ego_trans = fromYamlTrans(config0["lidar2ego_translation"]);
   }
 
-  CHECK_CUDA(cudaMalloc(reinterpret_cast<void **>(&imgs_dev), n_img * img_h * img_w * 3 * sizeof(uchar)));
+  CHECK_CUDA(
+    cudaMalloc(reinterpret_cast<void **>(&imgs_dev), n_img * img_h * img_w * 3 * sizeof(uchar)));
 }
 
 const camsData & DataLoader::data(int idx, bool time_order)

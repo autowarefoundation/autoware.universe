@@ -68,7 +68,8 @@ public:
     while (iters--) {
       last = (last + 1) % n;
       CHECK_CUDA(cudaMemcpy(
-        reinterpret_cast<char *>(adj_buffer) + last * buf_size, curr_buffer, buf_size, cudaMemcpyDeviceToDevice));
+        reinterpret_cast<char *>(adj_buffer) + last * buf_size, curr_buffer, buf_size,
+        cudaMemcpyDeviceToDevice));
       scenes_token[last] = curr_token;
       ego2global_rot[last] = _ego2global_rot;
       ego2global_trans[last] = _ego2global_trans;
