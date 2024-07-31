@@ -289,4 +289,20 @@ TEST_F(TestRouteHandler, testGetLaneChangeTargetLanes)
     ASSERT_EQ(lane_change_lane.value().id(), 9598ul);
   }
 }
+
+TEST_F(TestRouteHandler, testGetShoulderLaneletsAtPose)
+{
+  set_route_handler("overlap_map.osm"); 
+
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = 3719.5;
+  pose.position.y = 73765.6;
+  auto shoulder_lanelets = route_handler_->getShoulderLaneletsAtPose(pose);
+  ASSERT_FALSE(shoulder_lanelets.empty());
+  ASSERT_EQ(shoulder_lanelets.front().id(), 359ul);
+
+  pose.position.y = 73768.6;
+  shoulder_lanelets = route_handler_->getShoulderLaneletsAtPose(pose);
+  ASSERT_TRUE(shoulder_lanelets.empty());
+}
 }  // namespace autoware::route_handler::test
