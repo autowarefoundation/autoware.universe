@@ -10,7 +10,7 @@ A reference acceleration and velocity are derived from the throttle and brake va
 
 #### Reference Acceleration
 
-A reference acceleration is calculated from accel*brake_map besed on values of a desired_pedal and a current velocity;
+A reference acceleration is calculated from accel_brake_map based on values of a desired_pedal and a current velocity;
 $$ pedal_d = throttle_d - brake_d, $$
 $$ acc*{ref} = Acc(pedal*d, v*{x,current}). $$
 
