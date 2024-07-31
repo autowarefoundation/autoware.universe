@@ -465,8 +465,7 @@ void VehicleCmdGate::onTimer()
              : prev_topic;
   };
 
-  prev_commands_.turn_indicator =
-    getContinuousTopic(prev_commands_.turn_indicator, turn_indicator);
+  prev_commands_.turn_indicator = getContinuousTopic(prev_commands_.turn_indicator, turn_indicator);
   prev_commands_.hazard_light = getContinuousTopic(prev_commands_.hazard_light, hazard_light);
   prev_commands_.gear = getContinuousTopic(prev_commands_.gear, gear);
 
