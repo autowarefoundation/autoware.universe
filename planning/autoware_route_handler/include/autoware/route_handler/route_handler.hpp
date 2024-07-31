@@ -318,6 +318,12 @@ public:
     const lanelet::ConstLanelet & lanelet) const;
   std::optional<lanelet::ConstLanelet> getRightShoulderLanelet(
     const lanelet::ConstLanelet & lanelet) const;
+
+  /**
+   * @brief Search and return shoulder lanelets that intersect with a given pose.
+   * @param pose reference pose at which to search for shoulder lanelets.
+   * @return vector of shoulder lanelets intersecting with given pose.
+   */
   lanelet::ConstLanelets getShoulderLaneletsAtPose(const Pose & pose) const;
 
 private:
