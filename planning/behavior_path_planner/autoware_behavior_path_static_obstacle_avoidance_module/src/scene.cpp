@@ -570,7 +570,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
     return;
   }
 
-  auto registered_sl_force_deactivated =
+  const auto registered_sl_force_deactivated =
     [&](const std::string & direction, const RegisteredShiftLineArray shift_line_array) {
       return std::any_of(
         shift_line_array.begin(), shift_line_array.end(), [&](const auto & shift_line) {
@@ -578,8 +578,8 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
         });
     };
 
-  auto is_force_deactivated = registered_sl_force_deactivated("left", left_shift_array_) ||
-                              registered_sl_force_deactivated("right", right_shift_array_);
+  const auto is_force_deactivated = registered_sl_force_deactivated("left", left_shift_array_) ||
+                                    registered_sl_force_deactivated("right", right_shift_array_);
   if (is_force_deactivated && can_yield_maneuver) {
     data.yield_required = true;
     data.safe_shift_line = data.new_shift_line;
