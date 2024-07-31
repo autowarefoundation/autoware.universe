@@ -35,81 +35,29 @@ using motion_utils::trajectory_container::detail::ManipulableInterpolatedArray;
  * @brief Trajectory class for PathPoint
  */
 template <>
-class TrajectoryContainer<PathPoint> : public TrajectoryContainer<geometry_msgs::msg::Pose>,
-                                       public detail::CropTrajectoryImpl<PathPoint>
+class TrajectoryContainer<PathPoint>
+: public TrajectoryContainer<geometry_msgs::msg::Pose>,
+  public detail::CropTrajectoryImpl<TrajectoryContainer<PathPoint>>,
+  public detail::SetXYZInterpolatorImpl<TrajectoryContainer<PathPoint>>,
+  public detail::SetOrientationInterpolatorImpl<TrajectoryContainer<PathPoint>>,
+  public detail::SetLongitudinalVelocityInterpolatorImpl<TrajectoryContainer<PathPoint>>,
+  public detail::SetLateralVelocityInterpolatorImpl<TrajectoryContainer<PathPoint>>,
+  public detail::SetHeadingRateInterpolatorImpl<TrajectoryContainer<PathPoint>>
 {
-  friend class CropTrajectoryImpl<PathPoint>;
+  friend class detail::CropTrajectoryImpl<TrajectoryContainer<PathPoint>>;
+  friend class detail::SetXYZInterpolatorImpl<TrajectoryContainer<PathPoint>>;
+  friend class detail::SetOrientationInterpolatorImpl<TrajectoryContainer<PathPoint>>;
   using BaseClass = TrajectoryContainer<geometry_msgs::msg::Pose>;
 
 public:
-  ManipulableInterpolatedArray<double> longitudinal_velocity_mps;
-  ManipulableInterpolatedArray<double> lateral_velocity_mps;
-  ManipulableInterpolatedArray<double> heading_rate_rps;
+  ManipulableInterpolatedArray<double> longitudinal_velocity_mps;  //!< Longitudinal velocity in m/s
+  ManipulableInterpolatedArray<double> lateral_velocity_mps;       //!< Lateral velocity in m/s
+  ManipulableInterpolatedArray<double> heading_rate_rps;           //!< Heading rate in rad/s
 
   /**
    * @brief Constructor
    */
   TrajectoryContainer();
-
-  /**
-   * @brief Set interpolator for x and y coordinates
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_xy_interpolator(const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_xy_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set interpolator for z coordinate
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_z_interpolator(const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_z_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set the interpolator for orientation
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-
-  TrajectoryContainer & set_orientation_interpolator(
-    const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_orientation_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set the interpolator for longitudinal velocity
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_longitudinal_velocity_mps_interpolator(
-    const interpolator::Interpolator<double> & interpolator);
-
-  /**
-   * @brief Set the interpolator for lateral velocity
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_lateral_velocity_mps_interpolator(
-    const interpolator::Interpolator<double> & interpolator);
-
-  /**
-   * @brief Set the interpolator for heading rate
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_heading_rate_rps_interpolator(
-    const interpolator::Interpolator<double> & interpolator);
-
   /**
    * @brief Build trajectory from path points
    * @param points Vector of path points
@@ -130,8 +78,12 @@ public:
    */
   std::vector<PathPoint> restore() const;
 
-  using CropTrajectoryImpl<PathPoint>::crop;
-  using CropTrajectoryImpl<PathPoint>::cropInPlace;
+  using detail::CropTrajectoryImpl<TrajectoryContainer<PathPoint>>::crop;
+  using detail::CropTrajectoryImpl<TrajectoryContainer<PathPoint>>::cropInPlace;
+  using detail::SetXYZInterpolatorImpl<TrajectoryContainer<PathPoint>>::set_xy_interpolator;
+  using detail::SetXYZInterpolatorImpl<TrajectoryContainer<PathPoint>>::set_z_interpolator;
+  using detail::SetOrientationInterpolatorImpl<
+    TrajectoryContainer<PathPoint>>::set_orientation_interpolator;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory

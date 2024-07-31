@@ -34,22 +34,35 @@ namespace autoware::motion_utils::trajectory_container::trajectory
  */
 template <>
 class TrajectoryContainer<geometry_msgs::msg::Point>
-: public detail::CropTrajectoryImpl<geometry_msgs::msg::Point>
+: public detail::CropTrajectoryImpl<TrajectoryContainer<geometry_msgs::msg::Point>>,
+  public detail::SetXYZInterpolatorImpl<TrajectoryContainer<geometry_msgs::msg::Point>>
 {
-  friend class CropTrajectoryImpl<geometry_msgs::msg::Point>;
+  friend class detail::CropTrajectoryImpl<TrajectoryContainer<geometry_msgs::msg::Point>>;
+  friend class detail::SetXYZInterpolatorImpl<TrajectoryContainer<geometry_msgs::msg::Point>>;
 
 protected:
-  Eigen::VectorXd axis_;
-  double start_, end_;
-  std::shared_ptr<interpolator::Interpolator<double>> x_interpolator_;
-  std::shared_ptr<interpolator::Interpolator<double>> y_interpolator_;
-  std::shared_ptr<interpolator::Interpolator<double>> z_interpolator_;
+  Eigen::VectorXd axis_;  //!< Interpolation axis of the trajectory. It is approximately same as the
+                          //!< length of the trajectory.
+  double start_, end_;    //!< Start and end of the arc length of the trajectory
+  std::shared_ptr<interpolator::Interpolator<double>> x_interpolator_;  //!< Interpolator for x
+  std::shared_ptr<interpolator::Interpolator<double>> y_interpolator_;  //!< Interpolator for y
+  std::shared_ptr<interpolator::Interpolator<double>> z_interpolator_;  //!< Interpolator for z
 
   using ConstraintFunction = std::function<bool(const double & s)>;
+
+  /**
+   * @brief Validate the arc length is within the trajectory
+   * @param s Arc length
+   */
+  void validate_s(const double & s) const;
 
 public:
   TrajectoryContainer();
 
+  /**
+   * @brief Copy constructor
+   * @param other Other object
+   */
   TrajectoryContainer(const TrajectoryContainer & other) = default;
 
   /**
@@ -58,21 +71,6 @@ public:
    * @return Reference to this object
    */
   TrajectoryContainer & build(const std::vector<geometry_msgs::msg::Point> & points);
-
-  /**
-   * @brief Set interpolator for x and y coordinates
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_xy_interpolator(
-    const interpolator::Interpolator<double> & interpolator);
-
-  /**
-   * @brief Set interpolator for z coordinate
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_z_interpolator(const interpolator::Interpolator<double> & interpolator);
 
   /**
    * @brief Get the length of the trajectory

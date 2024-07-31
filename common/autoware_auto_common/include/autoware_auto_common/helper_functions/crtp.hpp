@@ -25,7 +25,7 @@ namespace common
 {
 namespace helper_functions
 {
-template <typename Derived>
+template <typename Derived, typename CRTP = void>
 class crtp
 {
 protected:

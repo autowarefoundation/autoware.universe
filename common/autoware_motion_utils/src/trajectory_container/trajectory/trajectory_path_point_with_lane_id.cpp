@@ -25,14 +25,6 @@ TrajectoryContainer<PathPointWithLaneId>::TrajectoryContainer() : BaseClass()
   set_lane_ids_interpolator(interpolator::ZeroOrderHold<std::vector<int64_t>>());
 }
 
-TrajectoryContainer<PathPointWithLaneId> &
-TrajectoryContainer<PathPointWithLaneId>::set_lane_ids_interpolator(
-  const interpolator::Interpolator<std::vector<int64_t>> & interpolator)
-{
-  lane_ids.set_interpolator(interpolator);
-  return *this;
-}
-
 TrajectoryContainer<PathPointWithLaneId> & TrajectoryContainer<PathPointWithLaneId>::build(
   const std::vector<PathPointWithLaneId> & points)
 {

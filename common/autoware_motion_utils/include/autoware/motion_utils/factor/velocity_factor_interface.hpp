@@ -39,9 +39,14 @@ public:
   void init(const VelocityFactorBehavior & behavior) { behavior_ = behavior; }
   void reset() { velocity_factor_.behavior = PlanningBehavior::UNKNOWN; }
 
+  // TODO(hisaki): remove points from the interface
   template <class PointType>
   void set(
     const std::vector<PointType> & points, const Pose & curr_pose, const Pose & stop_pose,
+    const VelocityFactorStatus status, const std::string & detail = "");
+
+  void set(
+    const double & distance_from_cur_to_stop, const Pose & stop_pose,
     const VelocityFactorStatus status, const std::string & detail = "");
 
 private:

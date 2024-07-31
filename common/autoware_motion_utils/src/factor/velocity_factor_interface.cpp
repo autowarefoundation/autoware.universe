@@ -36,6 +36,17 @@ void VelocityFactorInterface::set(
   velocity_factor_.detail = detail;
 }
 
+void VelocityFactorInterface::set(
+  const double & distance_from_cur_to_stop, const Pose & stop_pose,
+  const VelocityFactorStatus status, const std::string & detail)
+{
+  velocity_factor_.behavior = behavior_;
+  velocity_factor_.pose = stop_pose;
+  velocity_factor_.distance = static_cast<float>(distance_from_cur_to_stop);
+  velocity_factor_.status = status;
+  velocity_factor_.detail = detail;
+}
+
 template void VelocityFactorInterface::set<tier4_planning_msgs::msg::PathPointWithLaneId>(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> &, const Pose &, const Pose &,
   const VelocityFactorStatus, const std::string &);

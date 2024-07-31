@@ -33,10 +33,20 @@ namespace autoware::motion_utils::trajectory_container::trajectory
 template <>
 class TrajectoryContainer<geometry_msgs::msg::Pose>
 : public TrajectoryContainer<geometry_msgs::msg::Point>,
-  public detail::CropTrajectoryImpl<geometry_msgs::msg::Pose>
+  public detail::CropTrajectoryImpl<TrajectoryContainer<geometry_msgs::msg::Pose>>,
+  public detail::SetXYZInterpolatorImpl<TrajectoryContainer<geometry_msgs::msg::Pose>>,
+  public detail::SetOrientationInterpolatorImpl<TrajectoryContainer<geometry_msgs::msg::Pose>>
 {
-  friend class CropTrajectoryImpl<geometry_msgs::msg::Pose>;
+  friend class detail::CropTrajectoryImpl<TrajectoryContainer<geometry_msgs::msg::Pose>>;
+  friend class detail::SetXYZInterpolatorImpl<TrajectoryContainer<geometry_msgs::msg::Pose>>;
+  friend class detail::SetOrientationInterpolatorImpl<
+    TrajectoryContainer<geometry_msgs::msg::Pose>>;
+
   using BaseClass = TrajectoryContainer<geometry_msgs::msg::Point>;
+  using CropTrajectoryImpl =
+    detail::CropTrajectoryImpl<TrajectoryContainer<geometry_msgs::msg::Pose>>;
+  using SetXYZInterpolatorImpl =
+    detail::SetXYZInterpolatorImpl<TrajectoryContainer<geometry_msgs::msg::Pose>>;
 
 private:
   std::shared_ptr<interpolator::Interpolator<double>> orientation_x_interpolator_;
@@ -49,36 +59,6 @@ public:
    * @brief Constructor
    */
   TrajectoryContainer();
-
-  /**
-   * @brief Set interpolator for x and y coordinates
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_xy_interpolator(const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_xy_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set interpolator for z coordinate
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_z_interpolator(const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_z_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set the interpolator for orientation
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_orientation_interpolator(
-    const interpolator::Interpolator<double> & interpolator);
 
   /**
    * @brief Build trajectory from poses
@@ -100,8 +80,10 @@ public:
    */
   std::vector<geometry_msgs::msg::Pose> restore() const;
 
-  using CropTrajectoryImpl<geometry_msgs::msg::Pose>::crop;
-  using CropTrajectoryImpl<geometry_msgs::msg::Pose>::cropInPlace;
+  using CropTrajectoryImpl::crop;
+  using CropTrajectoryImpl::cropInPlace;
+  using SetXYZInterpolatorImpl::set_xy_interpolator;
+  using SetXYZInterpolatorImpl::set_z_interpolator;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory
