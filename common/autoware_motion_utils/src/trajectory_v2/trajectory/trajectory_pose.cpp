@@ -19,13 +19,13 @@
 namespace autoware::motion_utils::trajectory_container::trajectory
 {
 
-TrajectoryV2<geometry_msgs::msg::Pose>::TrajectoryV2() : BaseClass()
+TrajectoryContainer<geometry_msgs::msg::Pose>::TrajectoryContainer() : BaseClass()
 {
   set_orientation_interpolator(interpolator::Linear());
 }
 
-TrajectoryV2<geometry_msgs::msg::Pose> &
-TrajectoryV2<geometry_msgs::msg::Pose>::set_orientation_interpolator(
+TrajectoryContainer<geometry_msgs::msg::Pose> &
+TrajectoryContainer<geometry_msgs::msg::Pose>::set_orientation_interpolator(
   const interpolator::Interpolator<double> & interpolator)
 {
   orientation_x_interpolator_ =
@@ -39,8 +39,8 @@ TrajectoryV2<geometry_msgs::msg::Pose>::set_orientation_interpolator(
   return *this;
 }
 
-TrajectoryV2<geometry_msgs::msg::Pose> & TrajectoryV2<geometry_msgs::msg::Pose>::build(
-  const std::vector<geometry_msgs::msg::Pose> & points)
+TrajectoryContainer<geometry_msgs::msg::Pose> & TrajectoryContainer<
+  geometry_msgs::msg::Pose>::build(const std::vector<geometry_msgs::msg::Pose> & points)
 {
   std::vector<geometry_msgs::msg::Point> path_points;
   for (const auto & point : points) {
@@ -65,7 +65,8 @@ TrajectoryV2<geometry_msgs::msg::Pose> & TrajectoryV2<geometry_msgs::msg::Pose>:
   return *this;
 }
 
-geometry_msgs::msg::Pose TrajectoryV2<geometry_msgs::msg::Pose>::compute(const double & s) const
+geometry_msgs::msg::Pose TrajectoryContainer<geometry_msgs::msg::Pose>::compute(
+  const double & s) const
 {
   geometry_msgs::msg::Pose result;
   result.position = BaseClass::compute(s);
@@ -76,7 +77,7 @@ geometry_msgs::msg::Pose TrajectoryV2<geometry_msgs::msg::Pose>::compute(const d
   return result;
 }
 
-std::vector<geometry_msgs::msg::Pose> TrajectoryV2<geometry_msgs::msg::Pose>::restore() const
+std::vector<geometry_msgs::msg::Pose> TrajectoryContainer<geometry_msgs::msg::Pose>::restore() const
 {
   std::vector<geometry_msgs::msg::Pose> points;
   for (auto & s : axis_) {

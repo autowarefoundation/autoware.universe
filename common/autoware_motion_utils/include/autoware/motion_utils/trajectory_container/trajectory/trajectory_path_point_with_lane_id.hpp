@@ -32,11 +32,11 @@ using tier4_planning_msgs::msg::PathPointWithLaneId;
  * @brief Trajectory class for PathPointWithLaneId
  */
 template <>
-class TrajectoryV2<PathPointWithLaneId> : public TrajectoryV2<PathPoint>,
-                                          public detail::CropTrajectoryImpl<PathPointWithLaneId>
+class TrajectoryContainer<PathPointWithLaneId>
+: public TrajectoryContainer<PathPoint>, public detail::CropTrajectoryImpl<PathPointWithLaneId>
 {
   friend class CropTrajectoryImpl<PathPointWithLaneId>;
-  using BaseClass = TrajectoryV2<PathPoint>;
+  using BaseClass = TrajectoryContainer<PathPoint>;
 
 public:
   ManipulableInterpolatedArray<std::vector<int64_t>> lane_ids;
@@ -44,7 +44,7 @@ public:
   /**
    * @brief Constructor
    */
-  TrajectoryV2();
+  TrajectoryContainer();
 
   /**
    * @brief Set the interpolator for lane ids
@@ -52,7 +52,7 @@ public:
    * @return Reference to this object
    */
 
-  TrajectoryV2 & set_lane_ids_interpolator(
+  TrajectoryContainer & set_lane_ids_interpolator(
     const interpolator::Interpolator<std::vector<int64_t>> & interpolator);
 
   /**
@@ -60,7 +60,7 @@ public:
    * @param points Vector of path points with lane ids
    * @return Reference to this object
    */
-  TrajectoryV2 & build(const std::vector<PathPointWithLaneId> & points);
+  TrajectoryContainer & build(const std::vector<PathPointWithLaneId> & points);
 
   /**
    * @brief Compute the path point on the trajectory at a given s value

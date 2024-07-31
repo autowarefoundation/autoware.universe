@@ -20,19 +20,20 @@
 namespace autoware::motion_utils::trajectory_container::trajectory
 {
 
-TrajectoryV2<PathPointWithLaneId>::TrajectoryV2() : BaseClass()
+TrajectoryContainer<PathPointWithLaneId>::TrajectoryContainer() : BaseClass()
 {
   set_lane_ids_interpolator(interpolator::ZeroOrderHold<std::vector<int64_t>>());
 }
 
-TrajectoryV2<PathPointWithLaneId> & TrajectoryV2<PathPointWithLaneId>::set_lane_ids_interpolator(
+TrajectoryContainer<PathPointWithLaneId> &
+TrajectoryContainer<PathPointWithLaneId>::set_lane_ids_interpolator(
   const interpolator::Interpolator<std::vector<int64_t>> & interpolator)
 {
   lane_ids.set_interpolator(interpolator);
   return *this;
 }
 
-TrajectoryV2<PathPointWithLaneId> & TrajectoryV2<PathPointWithLaneId>::build(
+TrajectoryContainer<PathPointWithLaneId> & TrajectoryContainer<PathPointWithLaneId>::build(
   const std::vector<PathPointWithLaneId> & points)
 {
   std::vector<PathPoint> path_points;
@@ -49,7 +50,7 @@ TrajectoryV2<PathPointWithLaneId> & TrajectoryV2<PathPointWithLaneId>::build(
   return *this;
 }
 
-PathPointWithLaneId TrajectoryV2<PathPointWithLaneId>::compute(const double & s) const
+PathPointWithLaneId TrajectoryContainer<PathPointWithLaneId>::compute(const double & s) const
 {
   PathPointWithLaneId result;
   result.point = BaseClass::compute(s);
@@ -57,7 +58,7 @@ PathPointWithLaneId TrajectoryV2<PathPointWithLaneId>::compute(const double & s)
   return result;
 }
 
-std::vector<PathPointWithLaneId> TrajectoryV2<PathPointWithLaneId>::restore() const
+std::vector<PathPointWithLaneId> TrajectoryContainer<PathPointWithLaneId>::restore() const
 {
   auto new_axis = trajectory_container::detail::merge_vectors(
     axis_, lane_ids.axis_, longitudinal_velocity_mps.axis_, lateral_velocity_mps.axis_,

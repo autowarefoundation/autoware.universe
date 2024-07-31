@@ -33,7 +33,7 @@ namespace autoware::motion_utils::trajectory_container::trajectory
  * @brief Trajectory class for geometry_msgs::msg::Point
  */
 template <>
-class TrajectoryV2<geometry_msgs::msg::Point>
+class TrajectoryContainer<geometry_msgs::msg::Point>
 : public detail::CropTrajectoryImpl<geometry_msgs::msg::Point>
 {
   friend class CropTrajectoryImpl<geometry_msgs::msg::Point>;
@@ -48,30 +48,31 @@ protected:
   using ConstraintFunction = std::function<bool(const double & s)>;
 
 public:
-  TrajectoryV2();
+  TrajectoryContainer();
 
-  TrajectoryV2(const TrajectoryV2 & other) = default;
+  TrajectoryContainer(const TrajectoryContainer & other) = default;
 
   /**
    * @brief Build trajectory from points
    * @param points Vector of points
    * @return Reference to this object
    */
-  TrajectoryV2 & build(const std::vector<geometry_msgs::msg::Point> & points);
+  TrajectoryContainer & build(const std::vector<geometry_msgs::msg::Point> & points);
 
   /**
    * @brief Set interpolator for x and y coordinates
    * @param interpolator Interpolator object
    * @return Reference to this object
    */
-  TrajectoryV2 & set_xy_interpolator(const interpolator::Interpolator<double> & interpolator);
+  TrajectoryContainer & set_xy_interpolator(
+    const interpolator::Interpolator<double> & interpolator);
 
   /**
    * @brief Set interpolator for z coordinate
    * @param interpolator Interpolator object
    * @return Reference to this object
    */
-  TrajectoryV2 & set_z_interpolator(const interpolator::Interpolator<double> & interpolator);
+  TrajectoryContainer & set_z_interpolator(const interpolator::Interpolator<double> & interpolator);
 
   /**
    * @brief Get the length of the trajectory
