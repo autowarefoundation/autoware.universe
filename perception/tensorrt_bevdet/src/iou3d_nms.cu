@@ -313,8 +313,7 @@ __global__ void boxes_iou_bev_kernel(
 }
 
 __global__ void RotatedNmsKernel(
-  const int boxes_num, const float nms_overlap_thresh, const float * boxes,
-  std::int64_t * mask)
+  const int boxes_num, const float nms_overlap_thresh, const float * boxes, std::int64_t * mask)
 {
   // params: boxes (N, 7) [x, y, z, dx, dy, dz, heading]
   // params: mask (N, N/THREADS_PER_BLOCK_NMS)
@@ -368,8 +367,7 @@ __global__ void RotatedNmsKernel(
 }
 
 __global__ void NmsKernel(
-  const int boxes_num, const float nms_overlap_thresh, const float * boxes,
-  std::int64_t * mask)
+  const int boxes_num, const float nms_overlap_thresh, const float * boxes, std::int64_t * mask)
 {
   // params: boxes (N, 7) [x, y, z, dx, dy, dz, heading]
   // params: mask (N, N/THREADS_PER_BLOCK_NMS)
@@ -564,8 +562,7 @@ void boxes_iou_bev_launcher(
 #endif
 }
 
-void nms_launcher(
-  const float * boxes, std::int64_t * mask, int boxes_num, float nms_overlap_thresh)
+void nms_launcher(const float * boxes, std::int64_t * mask, int boxes_num, float nms_overlap_thresh)
 {
   dim3 blocks(DIVUP(boxes_num, THREADS_PER_BLOCK_NMS), DIVUP(boxes_num, THREADS_PER_BLOCK_NMS));
   dim3 threads(THREADS_PER_BLOCK_NMS);
@@ -603,8 +600,7 @@ int Iou3dNmsCuda::DoIou3dNms(
 
   std::int64_t host_mask[box_num_pre * col_blocks];
   cudaMemcpy(
-    host_mask, dev_mask, box_num_pre * col_blocks * sizeof(std::int64_t),
-    cudaMemcpyDeviceToHost);
+    host_mask, dev_mask, box_num_pre * col_blocks * sizeof(std::int64_t), cudaMemcpyDeviceToHost);
   cudaFree(dev_mask);
 
   std::int64_t host_remv[col_blocks];

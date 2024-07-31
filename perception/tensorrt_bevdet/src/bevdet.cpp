@@ -308,9 +308,12 @@ void BEVDet::InitViewTransformer(
   std::vector<int> kept;
   for (int i = 0; i < num_points; i++) {
     if (
-      static_cast<int>((frustum + i)->x()) >= 0 && static_cast<int>((frustum + i)->x()) < xgrid_num &&
-      static_cast<int>((frustum + i)->y()) >= 0 && static_cast<int>((frustum + i)->y()) < ygrid_num &&
-      static_cast<int>((frustum + i)->z()) >= 0 && static_cast<int>((frustum + i)->z()) < zgrid_num) {
+      static_cast<int>((frustum + i)->x()) >= 0 &&
+      static_cast<int>((frustum + i)->x()) < xgrid_num &&
+      static_cast<int>((frustum + i)->y()) >= 0 &&
+      static_cast<int>((frustum + i)->y()) < ygrid_num &&
+      static_cast<int>((frustum + i)->z()) >= 0 &&
+      static_cast<int>((frustum + i)->z()) < zgrid_num) {
       kept.push_back(i);
     }
   }
@@ -323,7 +326,8 @@ void BEVDet::InitViewTransformer(
 
   for (int i = 0; i < valid_feat_num; i++) {
     Eigen::Vector3f & p = frustum[kept[i]];
-    ranks_bev_host[i] = static_cast<int>(p.z()) * xgrid_num * ygrid_num + static_cast<int>(p.y()) * xgrid_num + static_cast<int>(p.x());
+    ranks_bev_host[i] = static_cast<int>(p.z()) * xgrid_num * ygrid_num +
+                        static_cast<int>(p.y()) * xgrid_num + static_cast<int>(p.x());
     order[i] = i;
   }
 
@@ -499,8 +503,8 @@ void BEVDet::GetAdjBEVFeature(
     size_t buf_size = trt_buffer_sizes[buffer_map["adj_feats"]] / adj_num;
 
     CHECK_CUDA(cudaMemcpy(
-      reinterpret_cast<char *>(trt_buffer_dev[buffer_map["adj_feats"]]) + i * buf_size, adj_buffer, buf_size,
-      cudaMemcpyDeviceToDevice));
+      reinterpret_cast<char *>(trt_buffer_dev[buffer_map["adj_feats"]]) + i * buf_size, adj_buffer,
+      buf_size, cudaMemcpyDeviceToDevice));
 
     Eigen::Quaternion<float> adj_ego2global_rot;
     Eigen::Translation3f adj_ego2global_trans;
