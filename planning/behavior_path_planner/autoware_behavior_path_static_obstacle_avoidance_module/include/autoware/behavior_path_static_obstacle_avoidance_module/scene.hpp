@@ -480,7 +480,6 @@ private:
 
   bool force_deactivated_{false};
   rclcpp::Time last_deactivation_triggered_time_;
-
 };
 
 }  // namespace autoware::behavior_path_planner

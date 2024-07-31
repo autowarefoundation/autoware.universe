@@ -578,8 +578,9 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
         });
     };
 
-  auto is_force_deactivated = registered_sl_force_deactivated("left", left_shift_array_) || registered_sl_force_deactivated("right", right_shift_array_);
-  if(is_force_deactivated && can_yield_maneuver) {
+  auto is_force_deactivated = registered_sl_force_deactivated("left", left_shift_array_) ||
+                              registered_sl_force_deactivated("right", right_shift_array_);
+  if (is_force_deactivated && can_yield_maneuver) {
     data.yield_required = true;
     data.safe_shift_line = data.new_shift_line;
     data.force_deactivated = true;
@@ -1393,17 +1394,18 @@ void StaticObstacleAvoidanceModule::updateData()
 
   safe_ = avoid_data_.safe;
 
-  if(!force_deactivated_) {
+  if (!force_deactivated_) {
     last_deactivation_triggered_time_ = clock_->now();
     force_deactivated_ = avoid_data_.force_deactivated;
     return;
   }
-  
-  if((clock_->now() - last_deactivation_triggered_time_).seconds() > parameters_->force_deactivate_duration_time) {
+
+  if (
+    (clock_->now() - last_deactivation_triggered_time_).seconds() >
+    parameters_->force_deactivate_duration_time) {
     RCLCPP_INFO(getLogger(), "The force deactivation is released");
     force_deactivated_ = false;
   }
- 
 }
 
 void StaticObstacleAvoidanceModule::processOnEntry()
