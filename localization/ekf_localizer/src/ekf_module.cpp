@@ -283,12 +283,12 @@ bool EKFModule::measurement_update_pose(
 }
 
 geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_rph_with_delay(
-  const PoseWithCovariance & pose, tf2::Vector3 last_angular_velocity_, const double delay_time)
+  const PoseWithCovariance & pose, tf2::Vector3 last_angular_velocity, const double delay_time)
 {
   tf2::Quaternion delta_orientation;
-  if (last_angular_velocity_.length() > 0.0) {
+  if (last_angular_velocity.length() > 0.0) {
     delta_orientation.setRotation(
-      last_angular_velocity_.normalized(), last_angular_velocity_.length() * delay_time);
+      last_angular_velocity.normalized(), last_angular_velocity.length() * delay_time);
   } else {
     delta_orientation.setValue(0.0, 0.0, 0.0, 1.0);
   }
