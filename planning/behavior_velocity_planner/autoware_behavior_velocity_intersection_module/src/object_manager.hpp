@@ -127,8 +127,8 @@ public:
    */
   void initialize(
     const autoware_perception_msgs::msg::PredictedObject & object,
-    std::optional<lanelet::ConstLanelet> attention_lanelet_opt_,
-    std::optional<lanelet::ConstLineString3d> stopline_opt_);
+    std::optional<lanelet::ConstLanelet> attention_lanelet_opt,
+    std::optional<lanelet::ConstLineString3d> stopline_opt);
 
   /**
    * @brief update unsafe_knowledge
@@ -195,13 +195,13 @@ private:
   autoware_perception_msgs::msg::PredictedObject predicted_object_;
 
   //! null if the object in intersection_area but not in attention_area
-  std::optional<lanelet::ConstLanelet> attention_lanelet_opt{std::nullopt};
+  std::optional<lanelet::ConstLanelet> attention_lanelet_opt_{std::nullopt};
 
   //! null if the object in intersection_area but not in attention_area
-  std::optional<lanelet::ConstLineString3d> stopline_opt{std::nullopt};
+  std::optional<lanelet::ConstLineString3d> stopline_opt_{std::nullopt};
 
   //! null if the object in intersection_area but not in attention_area
-  std::optional<double> dist_to_stopline_opt{std::nullopt};
+  std::optional<double> dist_to_stopline_opt_{std::nullopt};
 
   //! store the information if judged as UNSAFE
   std::optional<CollisionInterval> unsafe_interval_{std::nullopt};
