@@ -15,6 +15,8 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__TYPES_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__TYPES_HPP_
 
+#include "lanelet2_core/primitives/Point.h"
+
 #include <Eigen/Dense>
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
@@ -52,6 +54,20 @@ geometry_msgs::msg::Point to_point(const tier4_planning_msgs::msg::PathPointWith
   geometry_msgs::msg::Point point;
   point.x = p.point.pose.position.x;
   point.y = p.point.pose.position.y;
+  return point;
+}
+geometry_msgs::msg::Point to_point(const lanelet::BasicPoint2d & p)
+{
+  geometry_msgs::msg::Point point;
+  point.x = p.x();
+  point.y = p.y();
+  return point;
+}
+geometry_msgs::msg::Point to_point(const lanelet::ConstPoint3d & p)
+{
+  geometry_msgs::msg::Point point;
+  point.x = p.x();
+  point.y = p.y();
   return point;
 }
 }  // namespace autoware::motion_utils::trajectory_container::detail

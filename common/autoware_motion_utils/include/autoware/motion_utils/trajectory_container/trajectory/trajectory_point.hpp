@@ -120,20 +120,6 @@ public:
    */
   template <typename InputPointType>
   double nearest(const InputPointType & p) const;
-
-  /**
-   * @brief Find the crossing point with constraint
-   * @tparam InputPointType Type of input point
-   * @param start Start point
-   * @param end End point
-   * @param constraints Constraint function
-   * @return Optional arc length of the crossing point
-   */
-  template <typename InputPointType>
-  std::optional<double> crossed_with_constraint(
-    const InputPointType & start, const InputPointType & end,
-    const ConstraintFunction & constraints) const;
-
   /**
    * @brief Find the crossing point
    * @tparam InputPointType Type of input point
