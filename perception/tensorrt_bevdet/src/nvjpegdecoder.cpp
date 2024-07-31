@@ -61,12 +61,12 @@ int prepare_buffers(
     if (share_param.fmt == NVJPEG_OUTPUT_RGBI || share_param.fmt == NVJPEG_OUTPUT_BGRI) {
       channels = 1;
       mul = 3;
-    }else if (share_param.fmt == NVJPEG_OUTPUT_RGB || share_param.fmt == NVJPEG_OUTPUT_BGR) {
+    } else if (share_param.fmt == NVJPEG_OUTPUT_RGB || share_param.fmt == NVJPEG_OUTPUT_BGR) {
       // in the case of rgb create 3 buffers with sizes of original image
       channels = 3;
       widths[1] = widths[2] = widths[0];
       heights[1] = heights[2] = heights[0];
-    } 
+    }
 
     if (img_width[i] != widths[0] || img_height[i] != heights[0]) {
       img_width[i] = widths[0];
