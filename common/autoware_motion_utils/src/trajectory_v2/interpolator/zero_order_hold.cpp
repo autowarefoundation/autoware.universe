@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/motion_utils/trajectory_v2/interpolator/zero_order_hold.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/zero_order_hold.hpp"
 
 #include <Eigen/Dense>
 
 #include <algorithm>
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_v2::interpolator
+namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
 namespace detail
@@ -49,4 +49,4 @@ template class ZeroOrderHold_<std::vector<std::vector<int64_t>>>;
 
 }  // namespace detail
 
-}  // namespace autoware::motion_utils::trajectory_v2::interpolator
+}  // namespace autoware::motion_utils::trajectory_container::interpolator

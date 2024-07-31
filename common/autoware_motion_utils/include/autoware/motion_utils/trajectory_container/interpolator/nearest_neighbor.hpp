@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__INTERPOLATOR__NEAREST_NEIGHBOR_HPP_
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__INTERPOLATOR__NEAREST_NEIGHBOR_HPP_
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__NEAREST_NEIGHBOR_HPP_
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__NEAREST_NEIGHBOR_HPP_
 
-#include "autoware/motion_utils/trajectory_v2/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
 
 #include <Eigen/Dense>
 
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_v2::interpolator
+namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
 /**
@@ -127,6 +127,6 @@ private:
   double compute_second_derivative_(const double &) const override { return 0.0; }
 };
 
-}  // namespace autoware::motion_utils::trajectory_v2::interpolator
+}  // namespace autoware::motion_utils::trajectory_container::interpolator
 
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__INTERPOLATOR__NEAREST_NEIGHBOR_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__NEAREST_NEIGHBOR_HPP_

@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__TRAJECTORY__TRAJECTORY_PATH_POINT_HPP_
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__TRAJECTORY__TRAJECTORY_PATH_POINT_HPP_
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_PATH_POINT_HPP_
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_PATH_POINT_HPP_
 
-#include "autoware/motion_utils/trajectory_v2/detail/manipulable_interpolated_array.hpp"
-#include "autoware/motion_utils/trajectory_v2/trajectory/trajectory.hpp"
-#include "autoware/motion_utils/trajectory_v2/trajectory/trajectory_point.hpp"
-#include "autoware/motion_utils/trajectory_v2/trajectory/trajectory_pose.hpp"
+#include "autoware/motion_utils/trajectory_container/detail/manipulable_interpolated_array.hpp"
+#include "autoware/motion_utils/trajectory_container/trajectory/trajectory.hpp"
+#include "autoware/motion_utils/trajectory_container/trajectory/trajectory_point.hpp"
+#include "autoware/motion_utils/trajectory_container/trajectory/trajectory_pose.hpp"
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
 
 #include <memory>
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_v2::trajectory
+namespace autoware::motion_utils::trajectory_container::trajectory
 {
 
 using autoware_planning_msgs::msg::PathPoint;
-using motion_utils::trajectory_v2::detail::ManipulableInterpolatedArray;
+using motion_utils::trajectory_container::detail::ManipulableInterpolatedArray;
 
 /**
  * @brief Trajectory class for PathPoint
@@ -99,6 +99,6 @@ public:
   using CropTrajectoryImpl<PathPoint>::cropInPlace;
 };
 
-}  // namespace autoware::motion_utils::trajectory_v2::trajectory
+}  // namespace autoware::motion_utils::trajectory_container::trajectory
 
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__TRAJECTORY__TRAJECTORY_PATH_POINT_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_PATH_POINT_HPP_

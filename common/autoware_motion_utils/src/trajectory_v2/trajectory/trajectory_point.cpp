@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/motion_utils/trajectory_v2/trajectory/trajectory_point.hpp"
+#include "autoware/motion_utils/trajectory_container/trajectory/trajectory_point.hpp"
 
-#include "autoware/motion_utils/trajectory_v2/detail/types.hpp"
-#include "autoware/motion_utils/trajectory_v2/interpolator/cubic_spline.hpp"
+#include "autoware/motion_utils/trajectory_container/detail/types.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
 
-namespace autoware::motion_utils::trajectory_v2::trajectory
+namespace autoware::motion_utils::trajectory_container::trajectory
 {
 TrajectoryV2<geometry_msgs::msg::Point>::TrajectoryV2()
 {
@@ -101,7 +101,7 @@ double TrajectoryV2<geometry_msgs::msg::Point>::curvature(const double & s) cons
   return std::abs(dx * ddy - dy * ddx) / std::pow(dx * dx + dy * dy, 1.5);
 }
 
-using motion_utils::trajectory_v2::detail::to_point;
+using motion_utils::trajectory_container::detail::to_point;
 
 template <typename InputPointType>
 std::optional<double> TrajectoryV2<geometry_msgs::msg::Point>::nearest_with_constraint(
@@ -280,4 +280,4 @@ template std::optional<double> TrajectoryV2<geometry_msgs::msg::Point>::crossed(
   const tier4_planning_msgs::msg::PathPointWithLaneId & start,
   const tier4_planning_msgs::msg::PathPointWithLaneId & end) const;
 
-}  // namespace autoware::motion_utils::trajectory_v2::trajectory
+}  // namespace autoware::motion_utils::trajectory_container::trajectory

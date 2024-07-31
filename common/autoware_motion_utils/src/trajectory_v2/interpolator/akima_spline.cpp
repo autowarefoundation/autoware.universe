@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/motion_utils/trajectory_v2/interpolator/akima_spline.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/akima_spline.hpp"
 
 #include <Eigen/Dense>
 
@@ -20,7 +20,7 @@
 #include <cmath>
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_v2::interpolator
+namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
 void AkimaSpline::compute_parameters(
@@ -105,4 +105,4 @@ double AkimaSpline::compute_second_derivative_(const double & s) const
   return 2 * c[i] + 6 * d[i] * dx;
 }
 
-}  // namespace autoware::motion_utils::trajectory_v2::interpolator
+}  // namespace autoware::motion_utils::trajectory_container::interpolator

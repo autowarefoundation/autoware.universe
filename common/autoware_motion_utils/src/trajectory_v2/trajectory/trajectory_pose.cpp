@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/motion_utils/trajectory_v2/trajectory/trajectory_pose.hpp"
+#include "autoware/motion_utils/trajectory_container/trajectory/trajectory_pose.hpp"
 
-#include "autoware/motion_utils/trajectory_v2/interpolator/linear.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/linear.hpp"
 
-namespace autoware::motion_utils::trajectory_v2::trajectory
+namespace autoware::motion_utils::trajectory_container::trajectory
 {
 
 TrajectoryV2<geometry_msgs::msg::Pose>::TrajectoryV2() : BaseClass()
@@ -91,4 +91,4 @@ std::vector<geometry_msgs::msg::Pose> TrajectoryV2<geometry_msgs::msg::Pose>::re
   return points;
 }
 
-}  // namespace autoware::motion_utils::trajectory_v2::trajectory
+}  // namespace autoware::motion_utils::trajectory_container::trajectory
