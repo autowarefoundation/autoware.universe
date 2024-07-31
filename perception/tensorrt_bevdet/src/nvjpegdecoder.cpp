@@ -68,6 +68,7 @@ int prepare_buffers(
       widths[1] = widths[2] = widths[0];
       heights[1] = heights[2] = heights[0];
     }
+    else{}
 
     if (img_width[i] != widths[0] || img_height[i] != heights[0]) {
       img_width[i] = widths[0];

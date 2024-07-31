@@ -43,7 +43,7 @@ private:
 
 public:
   AlignBEVPlugin() = delete;
-  AlignBEVPlugin(const std::string & name);
+  explicit AlignBEVPlugin(const std::string & name);
   AlignBEVPlugin(const std::string & name, const void * buffer, size_t length);
   ~AlignBEVPlugin();
 

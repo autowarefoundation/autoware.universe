@@ -48,6 +48,8 @@
 #include <map>
 #include <string>
 #include <thread>
+#include <vector>
+#include <memory>
 
 typedef pcl::PointXYZI PointT;
 

@@ -17,6 +17,7 @@
 #include "iou3d_nms.hpp"
 
 #include <vector>
+#include <memory>
 
 class PostprocessGPU
 {
