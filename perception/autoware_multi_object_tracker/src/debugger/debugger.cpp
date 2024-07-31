@@ -94,7 +94,7 @@ void TrackerDebugger::publishTentativeObjects(
 
 // Time measurement functions
 
-void TrackerDebugger::checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void TrackerDebugger::checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat) const
 {
   if (!is_initialized_) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Measurement time is not set.");
