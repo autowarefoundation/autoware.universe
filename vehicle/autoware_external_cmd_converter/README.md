@@ -15,8 +15,9 @@ A reference acceleration is calculated from accel_brake_map based on values of a
 $$
     pedal_d = throttle_d - brake_d,
 $$
+
 $$
-    acc_{ref} = Acc(pedal_d, v_{x,current}). 
+    acc_{ref} = Acc(pedal_d, v_{x,current}).
 $$
 
 | Parameter       | Description                                                                               |
