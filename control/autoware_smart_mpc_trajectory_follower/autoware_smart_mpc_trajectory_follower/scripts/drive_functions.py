@@ -32,7 +32,7 @@ PACKAGE_NAME = "autoware_smart_mpc_trajectory_follower"
 param_path = Path(get_package_share_directory(PACKAGE_NAME)) / "param"
 
 mpc_param_path = param_path / "mpc_param.yaml"
-with open(str(mpc_param_path), "r") as yml:
+with open(mpc_param_path, "r") as yml:
     mpc_param = yaml.safe_load(yml)
 
 mpc_freq = int(
@@ -101,7 +101,7 @@ mppi_step = int(mpc_param["mpc_parameter"]["mppi"]["mppi_step"])
 cap_pred_error = np.array(mpc_param["mpc_parameter"]["preprocessing"]["cap_pred_error"])
 
 nominal_param_path = param_path / "nominal_param.yaml"
-with open(str(nominal_param_path), "r") as yml:
+with open(nominal_param_path, "r") as yml:
     nominal_param = yaml.safe_load(yml)
 # Vehicle body information given by default.
 L = float(nominal_param["nominal_parameter"]["vehicle_info"]["wheel_base"])  # Length of vehicle [m]
@@ -170,7 +170,7 @@ steer_fb_sec_order_ratio = float(
 max_error_steer = float(mpc_param["mpc_parameter"]["compensation"]["max_error_steer"])
 
 trained_model_param_path = param_path / "trained_model_param.yaml"
-with open(str(trained_model_param_path), "r") as yml:
+with open(trained_model_param_path, "r") as yml:
     trained_model_param = yaml.safe_load(yml)
 use_trained_model_diff = bool(
     trained_model_param["trained_model_parameter"]["control_application"]["use_trained_model_diff"]
