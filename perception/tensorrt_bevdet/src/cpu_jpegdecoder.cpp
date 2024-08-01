@@ -53,7 +53,7 @@ int decode_jpeg(const std::vector<char> & buffer, uchar * output)
     printf("buffer size is 0");
     return EXIT_FAILURE;
   }
-  jpeg_mem_src(&cinfo, reinterpret_cast<const unsigned char *>(buffer.data()), buffer.size());
+  jpeg_mem_src(&cinfo, reinterpret_cast<const uchar *>(buffer.data()), buffer.size());
   if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK) {
     printf("\033[31mFailed to read jpeg header\033[0m\n");
     return EXIT_FAILURE;
