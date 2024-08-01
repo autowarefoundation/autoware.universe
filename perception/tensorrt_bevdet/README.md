@@ -44,8 +44,9 @@ The model was trained in NuScenes database for 20 epochs.
 If you want to train model using the [TIER IV's internal database(~2600 key frames)](https://drive.google.com/file/d/1UaarK88HZu09sf7Ix-bEVl9zGNGFwTVL/view?usp=sharing), please refer to the following repositories:[BEVDet adapted to TIER IV dataset](https://github.com/cyn-liu/BEVDet/tree/train_export)
 
 ## References/External links
-[1] https://github.com/HuangJunJie2017/BEVDet/tree/dev2.1
 
-[2] https://github.com/LCH1238/BEVDet/tree/export
+[1] <https://github.com/HuangJunJie2017/BEVDet/tree/dev2.1>
 
-[3] https://github.com/LCH1238/bevdet-tensorrt-cpp/tree/one
+[2] <https://github.com/LCH1238/BEVDet/tree/export>
+
+[3] <https://github.com/LCH1238/bevdet-tensorrt-cpp/tree/one>
