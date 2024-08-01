@@ -433,7 +433,7 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
   // receive data
   current_odometry_ptr_ = sub_current_odometry_.takeData();
   current_acceleration_ptr_ = sub_current_acceleration_.takeData();
-  external_velocity_limit_ptr_ = sub_external_velocity_limit_.takeNewData();
+  external_velocity_limit_ptr_ = sub_external_velocity_limit_.takeData();
   const auto operation_mode_ptr = sub_operation_mode_.takeData();
   if (operation_mode_ptr) {
     operation_mode_ = *operation_mode_ptr;
@@ -629,7 +629,8 @@ bool VelocitySmootherNode::smoothVelocity(
 
   std::vector<TrajectoryPoints> debug_trajectories;
   if (!smoother_->apply(
-        initial_motion.vel, initial_motion.acc, clipped, traj_smoothed, debug_trajectories)) {
+        initial_motion.vel, initial_motion.acc, clipped, traj_smoothed, debug_trajectories,
+        publish_debug_trajs_)) {
     RCLCPP_WARN(get_logger(), "Fail to solve optimization.");
   }
 
@@ -669,15 +670,13 @@ bool VelocitySmootherNode::smoothVelocity(
       pub_trajectory_steering_rate_limited_->publish(toTrajectoryMsg(tmp));
     }
 
-    if (!debug_trajectories.empty()) {
-      for (auto & debug_trajectory : debug_trajectories) {
-        debug_trajectory.insert(
-          debug_trajectory.begin(), traj_resampled.begin(),
-          traj_resampled.begin() + traj_resampled_closest);
-        for (size_t i = 0; i < traj_resampled_closest; ++i) {
-          debug_trajectory.at(i).longitudinal_velocity_mps =
-            debug_trajectory.at(traj_resampled_closest).longitudinal_velocity_mps;
-        }
+    for (auto & debug_trajectory : debug_trajectories) {
+      debug_trajectory.insert(
+        debug_trajectory.begin(), traj_resampled.begin(),
+        traj_resampled.begin() + traj_resampled_closest);
+      for (size_t i = 0; i < traj_resampled_closest; ++i) {
+        debug_trajectory.at(i).longitudinal_velocity_mps =
+          debug_trajectory.at(traj_resampled_closest).longitudinal_velocity_mps;
       }
     }
     publishDebugTrajectories(debug_trajectories);
@@ -1079,7 +1078,7 @@ bool VelocitySmootherNode::isReverse(const TrajectoryPoints & points) const
   if (points.empty()) return true;
 
   return std::any_of(
-    points.begin(), points.end(), [](auto & pt) { return pt.longitudinal_velocity_mps < 0; });
+    points.begin(), points.end(), [](const auto & pt) { return pt.longitudinal_velocity_mps < 0; });
 }
 void VelocitySmootherNode::flipVelocity(TrajectoryPoints & points) const
 {
