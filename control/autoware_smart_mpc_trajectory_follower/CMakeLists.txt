@@ -3,16 +3,15 @@ project(autoware_smart_mpc_trajectory_follower)
 
 find_package(autoware_cmake REQUIRED)
 find_package(python_cmake_module REQUIRED)
-autoware_package()
-
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11_vendor REQUIRED)
 find_package(pybind11 REQUIRED)
+find_package(Eigen3 REQUIRED)
+autoware_package()
 
 execute_process(COMMAND bash -c "pip3 install numba==0.58.1 --force-reinstall")
 execute_process(COMMAND bash -c "pip3 install GPy")
 
-find_package(Eigen3 REQUIRED)
 pybind11_add_module(proxima_calc SHARED
   ${PROJECT_NAME}/src/proxima_calc.cpp
 )
