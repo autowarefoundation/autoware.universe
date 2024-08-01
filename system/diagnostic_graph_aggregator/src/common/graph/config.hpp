@@ -54,7 +54,7 @@ struct UnitConfig
   std::string path;
   LinkConfig * item = nullptr;
   std::vector<LinkConfig *> list;
-  size_t index;
+  size_t index = 0;
 };
 
 struct FileConfig
