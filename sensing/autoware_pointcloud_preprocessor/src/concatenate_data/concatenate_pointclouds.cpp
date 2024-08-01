@@ -93,7 +93,7 @@ PointCloudConcatenationComponent::PointCloudConcatenationComponent(
 
   // tf2 listener
   {
-    static_tf_buffer_ = std::make_shared<autoware::universe_utils::StaticTransformBuffer>();
+    static_tf_buffer_ = std::make_unique<autoware::universe_utils::StaticTransformBuffer>();
   }
 
   // Output Publishers
