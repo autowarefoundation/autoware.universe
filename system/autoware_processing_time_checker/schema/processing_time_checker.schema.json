@@ -14,6 +14,7 @@
         },
         "processing_time_topic_name_list": {
           "type": "array",
+          "default": [],
           "items": {
             "type": "string"
           },
