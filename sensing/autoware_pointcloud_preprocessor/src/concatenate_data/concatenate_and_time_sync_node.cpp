@@ -182,7 +182,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   RCLCPP_DEBUG_STREAM(
     get_logger(),
     "Subscribing to " << params_.input_topics.size() << " user given topics as inputs:");
-  for (auto & input_topic : params_.input_topics) {
+  for (const auto & input_topic : params_.input_topics) {
     RCLCPP_DEBUG_STREAM(get_logger(), " - " << input_topic);
   }
 
@@ -438,8 +438,6 @@ void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
   diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   if (publish_pointcloud_ || drop_previous_but_late_pointcloud_) {
-    std::set<std::string> missed_cloud;
-
     stat.add("concatenated cloud timestamp", formatTimestamp(current_concat_cloud_timestamp_));
     stat.add("reference timestamp min", formatTimestamp(diagnostic_reference_timestamp_min_));
     stat.add("reference timestamp max", formatTimestamp(diagnostic_reference_timestamp_max_));
