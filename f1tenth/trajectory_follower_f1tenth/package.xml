@@ -6,7 +6,7 @@
   <description>Nodes to follow a trajectory by generating control commands separated into lateral and longitudinal commands</description>
 
   <!-- f1tenth adaptation -->
-  <maintainer email="pojen.wang@autoware.org">Zhijie Qiao</maintainer>
+  <maintainer email="pojen.wang@autoware.org">Po-Jen Wang</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
