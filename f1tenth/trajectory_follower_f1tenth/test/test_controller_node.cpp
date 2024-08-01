@@ -13,18 +13,17 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
+#include "trajectory_follower_f1tenth/controller_node.hpp"
 #include "fake_test_node/fake_test_node.hpp"
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
-#include "trajectory_follower_f1tenth/controller_node.hpp"
 #include "trajectory_follower_test_utils.hpp"
 
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
-#include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
+#include "autoware_control_msgs/msg/control.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -35,11 +34,11 @@
 #include <vector>
 
 using Controller = autoware::motion::control::trajectory_follower_node::Controller;
-using AckermannControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
-using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
-using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using Control = autoware_control_msgs::msg::Control;
+using Trajectory = autoware_planning_msgs::msg::Trajectory;
+using TrajectoryPoint = autoware_planning_msgs::msg::TrajectoryPoint;
 using VehicleOdometry = nav_msgs::msg::Odometry;
-using SteeringReport = autoware_auto_vehicle_msgs::msg::SteeringReport;
+using SteeringReport = autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 
@@ -50,14 +49,13 @@ const rclcpp::Duration one_second(1, 0);
 rclcpp::NodeOptions makeNodeOptions(const bool enable_keep_stopped_until_steer_convergence = false)
 {
   // Pass default parameter file to the node
-  const auto share_dir = ament_index_cpp::get_package_share_directory("trajectory_follower_node");
+  const auto share_dir =
+    ament_index_cpp::get_package_share_directory("autoware_trajectory_follower_node");
   const auto longitudinal_share_dir =
-    ament_index_cpp::get_package_share_directory("pid_longitudinal_controller");
+    ament_index_cpp::get_package_share_directory("autoware_pid_longitudinal_controller");
   const auto lateral_share_dir =
-    ament_index_cpp::get_package_share_directory("mpc_lateral_controller");
+    ament_index_cpp::get_package_share_directory("autoware_mpc_lateral_controller");
   rclcpp::NodeOptions node_options;
-  node_options.append_parameter_override("ctrl_period", 0.03);
-  node_options.append_parameter_override("timeout_thr_sec", 0.5);
   node_options.append_parameter_override("lateral_controller_mode", "mpc");
   node_options.append_parameter_override("longitudinal_controller_mode", "pid");
   node_options.append_parameter_override(
@@ -98,7 +96,7 @@ public:
   FakeNodeFixture * fnf;
   std::shared_ptr<Controller> node;
 
-  AckermannControlCommand::SharedPtr cmd_msg;
+  Control::SharedPtr cmd_msg;
   bool received_control_command = false;
 
   void publish_default_odom()
@@ -180,13 +178,11 @@ public:
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_pub =
     fnf->create_publisher<OperationModeState>("controller/input/current_operation_mode");
 
-  rclcpp::Subscription<AckermannControlCommand>::SharedPtr cmd_sub =
-    fnf->create_subscription<AckermannControlCommand>(
-      "controller/output/control_cmd", *fnf->get_fake_node(),
-      [this](const AckermannControlCommand::SharedPtr msg) {
-        cmd_msg = msg;
-        received_control_command = true;
-      });
+  rclcpp::Subscription<Control>::SharedPtr cmd_sub = fnf->create_subscription<Control>(
+    "controller/output/control_cmd", *fnf->get_fake_node(), [this](const Control::SharedPtr msg) {
+      cmd_msg = msg;
+      received_control_command = true;
+    });
 
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> br =
     std::make_shared<tf2_ros::StaticTransformBroadcaster>(fnf->get_fake_node());
@@ -254,8 +250,10 @@ TEST_F(FakeNodeFixture, straight_trajectory)
 
   test_utils::waitForMessage(tester.node, this, tester.received_control_command);
   ASSERT_TRUE(tester.received_control_command);
+  // following conditions will pass even if the MPC solution does not converge
   EXPECT_EQ(tester.cmd_msg->lateral.steering_tire_angle, 0.0f);
   EXPECT_EQ(tester.cmd_msg->lateral.steering_tire_rotation_rate, 0.0f);
+  EXPECT_GT(tester.cmd_msg->longitudinal.velocity, 0.0f);
   EXPECT_GT(rclcpp::Time(tester.cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
 }
 
@@ -369,14 +367,14 @@ TEST_F(FakeNodeFixture, longitudinal_keep_velocity)
   test_utils::waitForMessage(tester.node, this, tester.received_control_command);
 
   ASSERT_TRUE(tester.received_control_command);
-  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.speed, 1.0);
+  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 1.0);
   EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.acceleration, 0.0);
 
   // Generate another control message
   tester.traj_pub->publish(traj_msg);
   test_utils::waitForMessage(tester.node, this, tester.received_control_command);
   ASSERT_TRUE(tester.received_control_command);
-  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.speed, 1.0);
+  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 1.0);
   EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.acceleration, 0.0);
 }
 
@@ -406,14 +404,14 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down)
   test_utils::waitForMessage(tester.node, this, tester.received_control_command);
 
   ASSERT_TRUE(tester.received_control_command);
-  EXPECT_LT(tester.cmd_msg->longitudinal.speed, static_cast<float>(odom_vx));
+  EXPECT_LT(tester.cmd_msg->longitudinal.velocity, static_cast<float>(odom_vx));
   EXPECT_LT(tester.cmd_msg->longitudinal.acceleration, 0.0f);
 
   // Generate another control message
   tester.traj_pub->publish(traj);
   test_utils::waitForMessage(tester.node, this, tester.received_control_command);
   ASSERT_TRUE(tester.received_control_command);
-  EXPECT_LT(tester.cmd_msg->longitudinal.speed, static_cast<float>(odom_vx));
+  EXPECT_LT(tester.cmd_msg->longitudinal.velocity, static_cast<float>(odom_vx));
   EXPECT_LT(tester.cmd_msg->longitudinal.acceleration, 0.0f);
 }
 
@@ -443,14 +441,14 @@ TEST_F(FakeNodeFixture, longitudinal_accelerate)
   test_utils::waitForMessage(tester.node, this, tester.received_control_command);
 
   ASSERT_TRUE(tester.received_control_command);
-  EXPECT_GT(tester.cmd_msg->longitudinal.speed, static_cast<float>(odom_vx));
+  EXPECT_GT(tester.cmd_msg->longitudinal.velocity, static_cast<float>(odom_vx));
   EXPECT_GT(tester.cmd_msg->longitudinal.acceleration, 0.0f);
 
   // Generate another control message
   tester.traj_pub->publish(traj);
   test_utils::waitForMessage(tester.node, this, tester.received_control_command);
   ASSERT_TRUE(tester.received_control_command);
-  EXPECT_GT(tester.cmd_msg->longitudinal.speed, static_cast<float>(odom_vx));
+  EXPECT_GT(tester.cmd_msg->longitudinal.velocity, static_cast<float>(odom_vx));
   EXPECT_GT(tester.cmd_msg->longitudinal.acceleration, 0.0f);
 }
 
@@ -477,7 +475,7 @@ TEST_F(FakeNodeFixture, longitudinal_stopped)
   test_utils::waitForMessage(tester.node, this, tester.received_control_command);
 
   ASSERT_TRUE(tester.received_control_command);
-  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.speed, 0.0f);
+  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 0.0f);
   EXPECT_LT(
     tester.cmd_msg->longitudinal.acceleration,
     0.0f);  // when stopped negative acceleration to brake
@@ -507,7 +505,7 @@ TEST_F(FakeNodeFixture, longitudinal_reverse)
   test_utils::waitForMessage(tester.node, this, tester.received_control_command);
 
   ASSERT_TRUE(tester.received_control_command);
-  EXPECT_LT(tester.cmd_msg->longitudinal.speed, 0.0f);
+  EXPECT_LT(tester.cmd_msg->longitudinal.velocity, 0.0f);
   EXPECT_GT(tester.cmd_msg->longitudinal.acceleration, 0.0f);
 }
 
@@ -535,7 +533,7 @@ TEST_F(FakeNodeFixture, longitudinal_emergency)
 
   ASSERT_TRUE(tester.received_control_command);
   // Emergencies (e.g., far from trajectory) produces braking command (0 vel, negative accel)
-  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.speed, 0.0f);
+  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 0.0f);
   EXPECT_LT(tester.cmd_msg->longitudinal.acceleration, 0.0f);
 }
 
@@ -566,7 +564,7 @@ TEST_F(FakeNodeFixture, longitudinal_not_check_steer_converged)
 
   ASSERT_TRUE(tester.received_control_command);
   // Not keep stopped state when the lateral control is not converged.
-  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.speed, 1.0f);
+  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 1.0f);
 }
 
 TEST_F(FakeNodeFixture, longitudinal_check_steer_converged)
@@ -597,5 +595,5 @@ TEST_F(FakeNodeFixture, longitudinal_check_steer_converged)
 
   ASSERT_TRUE(tester.received_control_command);
   // Keep stopped state when the lateral control is not converged.
-  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.speed, 0.0f);
+  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 0.0f);
 }

@@ -4,6 +4,7 @@ project(trajectory_follower_f1tenth)
 find_package(autoware_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(ackermann_msgs REQUIRED)
+
 autoware_package()
 
 set(CONTROLLER_NODE controller_node)

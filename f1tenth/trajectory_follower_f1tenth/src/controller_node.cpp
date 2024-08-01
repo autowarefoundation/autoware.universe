@@ -14,10 +14,10 @@
 
 #include "trajectory_follower_f1tenth/controller_node.hpp"
 
-#include "mpc_lateral_controller/mpc_lateral_controller.hpp"
-#include "pid_longitudinal_controller/pid_longitudinal_controller.hpp"
-#include "pure_pursuit/pure_pursuit_lateral_controller.hpp"
-#include "tier4_autoware_utils/ros/marker_helper.hpp"
+#include "autoware/mpc_lateral_controller/mpc_lateral_controller.hpp"
+#include "autoware/pid_longitudinal_controller/pid_longitudinal_controller.hpp"
+#include "autoware/pure_pursuit/autoware_pure_pursuit_lateral_controller.hpp"
+#include "autoware/universe_utils/ros/marker_helper.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -39,11 +39,13 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
     getLateralControllerMode(declare_parameter<std::string>("lateral_controller_mode"));
   switch (lateral_controller_mode) {
     case LateralControllerMode::MPC: {
-      lateral_controller_ = std::make_shared<mpc_lateral_controller::MpcLateralController>(*this);
+      lateral_controller_ =
+        std::make_shared<mpc_lateral_controller::MpcLateralController>(*this, diag_updater_);
       break;
     }
     case LateralControllerMode::PURE_PURSUIT: {
-      lateral_controller_ = std::make_shared<pure_pursuit::PurePursuitLateralController>(*this);
+      lateral_controller_ =
+        std::make_shared<autoware::pure_pursuit::PurePursuitLateralController>(*this);
       break;
     }
     default:
@@ -55,25 +57,15 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
   switch (longitudinal_controller_mode) {
     case LongitudinalControllerMode::PID: {
       longitudinal_controller_ =
-        std::make_shared<pid_longitudinal_controller::PidLongitudinalController>(*this);
+        std::make_shared<pid_longitudinal_controller::PidLongitudinalController>(
+          *this, diag_updater_);
       break;
     }
     default:
       throw std::domain_error("[LongitudinalController] invalid algorithm");
   }
 
-  sub_ref_path_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
-    "~/input/reference_trajectory", rclcpp::QoS{1}, std::bind(&Controller::onTrajectory, this, _1));
-  sub_steering_ = create_subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>(
-    "~/input/current_steering", rclcpp::QoS{1}, std::bind(&Controller::onSteering, this, _1));
-  sub_odometry_ = create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/current_odometry", rclcpp::QoS{1}, std::bind(&Controller::onOdometry, this, _1));
-  sub_accel_ = create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
-    "~/input/current_accel", rclcpp::QoS{1}, std::bind(&Controller::onAccel, this, _1));
-  sub_operation_mode_ = create_subscription<OperationModeState>(
-    "~/input/current_operation_mode", rclcpp::QoS{1},
-    [this](const OperationModeState::SharedPtr msg) { current_operation_mode_ptr_ = msg; });
-  control_cmd_pub_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+  control_cmd_pub_ = create_publisher<autoware_control_msgs::msg::Control>(
     "~/output/control_cmd", rclcpp::QoS{1}.transient_local());
   pub_processing_time_lat_ms_ =
     create_publisher<Float64Stamped>("~/lateral/debug/processing_time_ms", 1);
@@ -90,7 +82,10 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
       this, get_clock(), period_ns, std::bind(&Controller::callbackTimerControl, this));
   }
 
-  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
+
+  published_time_publisher_ =
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 Controller::LateralControllerMode Controller::getLateralControllerMode(
@@ -110,24 +105,32 @@ Controller::LongitudinalControllerMode Controller::getLongitudinalControllerMode
   return LongitudinalControllerMode::INVALID;
 }
 
-void Controller::onTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg)
+bool Controller::processData(rclcpp::Clock & clock)
 {
-  current_trajectory_ptr_ = msg;
-}
+  bool is_ready = true;
 
-void Controller::onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg)
-{
-  current_odometry_ptr_ = msg;
-}
+  const auto & logData = [&clock, this](const std::string & data_type) {
+    std::string msg = "Waiting for " + data_type + " data";
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, logger_throttle_interval, msg.c_str());
+  };
 
-void Controller::onSteering(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr msg)
-{
-  current_steering_ptr_ = msg;
-}
+  const auto & getData = [&logData](auto & dest, auto & sub, const std::string & data_type = "") {
+    const auto temp = sub.takeData();
+    if (temp) {
+      dest = temp;
+      return true;
+    }
+    if (!data_type.empty()) logData(data_type);
+    return false;
+  };
 
-void Controller::onAccel(const geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr msg)
-{
-  current_accel_ptr_ = msg;
+  is_ready &= getData(current_accel_ptr_, sub_accel_, "acceleration");
+  is_ready &= getData(current_steering_ptr_, sub_steering_, "steering");
+  is_ready &= getData(current_trajectory_ptr_, sub_ref_path_, "trajectory");
+  is_ready &= getData(current_odometry_ptr_, sub_odometry_, "odometry");
+  is_ready &= getData(current_operation_mode_ptr_, sub_operation_mode_, "operation mode");
+
+  return is_ready;
 }
 
 bool Controller::isTimeOut(
@@ -150,31 +153,9 @@ bool Controller::isTimeOut(
   return false;
 }
 
-boost::optional<trajectory_follower::InputData> Controller::createInputData(
-  rclcpp::Clock & clock) const
+boost::optional<trajectory_follower::InputData> Controller::createInputData(rclcpp::Clock & clock)
 {
-  if (!current_trajectory_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for trajectory.");
-    return {};
-  }
-
-  if (!current_odometry_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current odometry.");
-    return {};
-  }
-
-  if (!current_steering_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current steering.");
-    return {};
-  }
-
-  if (!current_accel_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current accel.");
-    return {};
-  }
-
-  if (!current_operation_mode_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current operation mode.");
+  if (!processData(clock)) {
     return {};
   }
 
@@ -225,13 +206,14 @@ void Controller::callbackTimerControl()
   if (isTimeOut(lon_out, lat_out)) return;
 
   // 5. publish control command
-  autoware_auto_control_msgs::msg::AckermannControlCommand out;
+  autoware_control_msgs::msg::Control out;
   out.stamp = this->now();
   out.lateral = lat_out.control_cmd;
   out.longitudinal = lon_out.control_cmd;
   control_cmd_pub_->publish(out);
 
-  // 6. publish debug marker
+  // 6. publish debug
+  published_time_publisher_->publish_if_subscribed(control_cmd_pub_, out.stamp);
   publishDebugMarker(*input_data, lat_out);
 }
 
@@ -243,10 +225,10 @@ void Controller::publishDebugMarker(
 
   // steer converged marker
   {
-    auto marker = tier4_autoware_utils::createDefaultMarker(
+    auto marker = autoware::universe_utils::createDefaultMarker(
       "map", this->now(), "steer_converged", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-      tier4_autoware_utils::createMarkerScale(0.0, 0.0, 1.0),
-      tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 0.99));
+      autoware::universe_utils::createMarkerScale(0.0, 0.0, 1.0),
+      autoware::universe_utils::createMarkerColor(1.0, 1.0, 1.0, 0.99));
     marker.pose = input_data.current_odometry.pose.pose;
 
     std::stringstream ss;
