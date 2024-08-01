@@ -14,8 +14,8 @@
 #ifndef POSTPROCESS_HPP_
 #define POSTPROCESS_HPP_
 
-#include "iou3d_nms.hpp"
 #include "common.hpp"
+#include "iou3d_nms.hpp"
 
 #include <memory>
 #include <vector>

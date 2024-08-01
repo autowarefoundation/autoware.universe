@@ -16,10 +16,11 @@
 
 #include <NvInfer.h>
 #include <assert.h>
-#include <thrust/sort.h>
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <thrust/sort.h>
+
 #include <iostream>
 #include <string>
 

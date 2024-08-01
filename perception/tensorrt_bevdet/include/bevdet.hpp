@@ -14,10 +14,10 @@
 #ifndef BEVDET_HPP_
 #define BEVDET_HPP_
 
+#include "NvInfer.h"
 #include "common.hpp"
 #include "data.hpp"
 #include "postprocess.hpp"
-#include "NvInfer.h"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
