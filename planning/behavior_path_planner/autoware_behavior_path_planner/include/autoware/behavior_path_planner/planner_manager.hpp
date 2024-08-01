@@ -515,7 +515,7 @@ public:
   }
 
   /**
-   * @brief check if reroute-able approved module is running(namely except for fixed_goal_planner
+   * @brief check if re-routable approved module is running(namely except for fixed_goal_planner
    * and dynamic_avoidance)
    */
   bool hasPossibleRerouteApprovedModules(const std::shared_ptr<PlannerData> & data) const;
