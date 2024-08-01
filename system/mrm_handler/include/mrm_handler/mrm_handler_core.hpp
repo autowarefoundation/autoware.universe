@@ -29,6 +29,7 @@
 #include <autoware_vehicle_msgs/msg/control_mode_report.hpp>
 #include <autoware_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <tier4_external_api_msgs/srv/set_emergency.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/msg/operation_mode_availability.hpp>
 #include <tier4_system_msgs/srv/operate_mrm.hpp>
@@ -123,6 +124,12 @@ private:
   void logMrmCallingResult(
     const tier4_system_msgs::srv::OperateMrm::Response & result, const std::string & behavior,
     bool is_call) const;
+
+  // Service
+  rclcpp::Service<tier4_external_api_msgs::srv::SetEmergency>::SharedPtr srv_clear_emergency_;
+  void onClearEmergencyService(
+    tier4_external_api_msgs::srv::SetEmergency::Request::SharedPtr request,
+    tier4_external_api_msgs::srv::SetEmergency::Response::SharedPtr response);
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
