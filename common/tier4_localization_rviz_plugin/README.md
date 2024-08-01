@@ -15,7 +15,7 @@ If the uncertainty of the estimated pose is given, it can also be displayed.
 | ------------ | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `input/pose` | `geometry_msgs::msg::PoseStamped` | In input/pose, put the result of localization calculated by ekf_localizer, ndt_scan_matching, or GNSS |
 
-### Pose Eith Covariance History
+### Pose With Covariance History
 
 | Name                         | Type                                            | Description                                                                                                           |
 | ---------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
