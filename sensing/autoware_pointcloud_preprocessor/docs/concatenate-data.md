@@ -90,7 +90,93 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --package
 colcon test --packages-select autoware_pointcloud_preprocessor --event-handlers console_cohesion+
 ```
 
-### Node separation options
+## Debug and Diagnostics
+
+To verify whether the node has successfully concatenated the point clouds, the user can examine the `/diagnostics` topic using the following command:
+
+```bash
+ros2 topic echo /diagnostics
+```
+
+Below is an example output when the point clouds are concatenated successfully:
+
+- Each point cloud has a value of `1`.
+- The `concatenate status` is `1`.
+- The `level` value is `\0`. (diagnostic_msgs::msg::DiagnosticStatus::OK)
+
+```bash
+header:
+  stamp:
+    sec: 1722492015
+    nanosec: 848508777
+  frame_id: ''
+status:
+- level: "\0"
+  name: 'concatenate_and_time_sync_node: concat_status'
+  message: Concatenated pointcloud is published and include all topics
+  hardware_id: concatenate_data_checker
+  values:
+  - key: concatenated cloud timestamp
+    value: '1718260240.159229994'
+  - key: reference timestamp min
+    value: '1718260240.149230003'
+  - key: reference timestamp max
+    value: '1718260240.169229984'
+  - key: /sensing/lidar/left/pointcloud_before_sync timestamp
+    value: '1718260240.159229994'
+  - key: /sensing/lidar/left/pointcloud_before_sync
+    value: '1'
+  - key: /sensing/lidar/right/pointcloud_before_sync timestamp
+    value: '1718260240.194104910'
+  - key: /sensing/lidar/right/pointcloud_before_sync
+    value: '1'
+  - key: /sensing/lidar/top/pointcloud_before_sync timestamp
+    value: '1718260240.234578133'
+  - key: /sensing/lidar/top/pointcloud_before_sync
+    value: '1'
+  - key: concatenate status
+    value: '1'
+```
+
+Below is an example when point clouds fail to concatenate successfully.
+
+- Some point clouds might have values of `0`.
+- The `concatenate status` is `0`.
+- The `level` value is `\x02`. (diagnostic_msgs::msg::DiagnosticStatus::ERROR)
+
+```bash
+header:
+  stamp:
+    sec: 1722492663
+    nanosec: 344942959
+  frame_id: ''
+status:
+- level: "\x02"
+  name: 'concatenate_and_time_sync_node: concat_status'
+  message: Concatenated pointcloud is published but miss some topics
+  hardware_id: concatenate_data_checker
+  values:
+  - key: concatenated cloud timestamp
+    value: '1718260240.859827995'
+  - key: reference timestamp min
+    value: '1718260240.849828005'
+  - key: reference timestamp max
+    value: '1718260240.869827986'
+  - key: /sensing/lidar/left/pointcloud_before_sync timestamp
+    value: '1718260240.859827995'
+  - key: /sensing/lidar/left/pointcloud_before_sync
+    value: '1'
+  - key: /sensing/lidar/right/pointcloud_before_sync timestamp
+    value: '1718260240.895193815'
+  - key: /sensing/lidar/right/pointcloud_before_sync
+    value: '1'
+  - key: /sensing/lidar/top/pointcloud_before_sync
+    value: '0'
+  - key: concatenate status
+    value: '0'
+```
+
+## Node separation options
 
 There is also an option to separate the concatenate_and_time_sync_node into two nodes: one for `time synchronization` and another for `concatenate pointclouds` ([See this PR](https://github.com/autowarefoundation/autoware.universe/pull/3312)).
 
