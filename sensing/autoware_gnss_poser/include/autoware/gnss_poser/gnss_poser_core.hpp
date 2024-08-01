@@ -101,6 +101,6 @@ private:
     msg_gnss_ins_orientation_stamped_;
   int gnss_pose_pub_method_;
 };
-}  // namespace gnss_poser
+}  // namespace autoware::gnss_poser
 
 #endif  // AUTOWARE__GNSS_POSER__GNSS_POSER_CORE_HPP_
