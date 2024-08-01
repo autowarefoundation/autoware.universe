@@ -33,7 +33,7 @@ jobs:
           - -cuda
         include:
           - rosdistro: humble
-            container: ghcr.io/autowarefoundation/autoware:latest-prebuilt
+            container: ghcr.io/autowarefoundation/autoware:latest-autoware-universe
             build-depends-repos: build_depends.repos
     steps:
       - name: Set PR fetch depth
@@ -69,6 +69,14 @@ jobs:
           key: ccache-main-${{ runner.arch }}-${{ matrix.rosdistro }}-${{ github.event.pull_request.base.sha }}
           restore-keys: |
             ccache-main-${{ runner.arch }}-${{ matrix.rosdistro }}-
+
+      # Limit ccache size only for CUDA builds to avoid running out of disk space
+      - name: Limit ccache size
+        if: ${{ matrix.container-suffix == '-cuda' }}
+        run: |
+          rm -f "${CCACHE_DIR}/ccache.conf"
+          echo -e "# Set maximum cache size\nmax_size = 1MB" >> "${CCACHE_DIR}/ccache.conf"
+        shell: bash
 
       - name: Show ccache stats before build
         run: du -sh ${CCACHE_DIR} && ccache -s
@@ -122,7 +130,7 @@ jobs:
   clang-tidy-differential:
     needs: build-and-test-differential
     runs-on: ubuntu-latest
-    container: ghcr.io/autowarefoundation/autoware:latest-prebuilt-cuda
+    container: ghcr.io/autowarefoundation/autoware:latest-autoware-universe-cuda
     steps:
       - name: Set PR fetch depth
         run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"

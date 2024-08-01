@@ -61,6 +61,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
     p.ignore_distance_from_lane_start =
       node->declare_parameter<double>(ns + "ignore_distance_from_lane_start");
     p.margin_from_boundary = node->declare_parameter<double>(ns + "margin_from_boundary");
+    p.high_curvature_threshold = node->declare_parameter<double>(ns + "high_curvature_threshold");
 
     const std::string parking_policy_name =
       node->declare_parameter<std::string>(ns + "parking_policy");
@@ -200,17 +201,10 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
     p.vehicle_shape_margin = node->declare_parameter<double>(ns + "vehicle_shape_margin");
     p.freespace_parking_common_parameters.time_limit =
       node->declare_parameter<double>(ns + "time_limit");
-    p.freespace_parking_common_parameters.minimum_turning_radius =
-      node->declare_parameter<double>(ns + "minimum_turning_radius");
-    p.freespace_parking_common_parameters.maximum_turning_radius =
-      node->declare_parameter<double>(ns + "maximum_turning_radius");
-    p.freespace_parking_common_parameters.turning_radius_size =
-      node->declare_parameter<int>(ns + "turning_radius_size");
-    p.freespace_parking_common_parameters.maximum_turning_radius = std::max(
-      p.freespace_parking_common_parameters.maximum_turning_radius,
-      p.freespace_parking_common_parameters.minimum_turning_radius);
-    p.freespace_parking_common_parameters.turning_radius_size =
-      std::max(p.freespace_parking_common_parameters.turning_radius_size, 1);
+    p.freespace_parking_common_parameters.max_turning_ratio =
+      node->declare_parameter<double>(ns + "max_turning_ratio");
+    p.freespace_parking_common_parameters.turning_steps =
+      node->declare_parameter<int>(ns + "turning_steps");
   }
 
   //  freespace parking search config
@@ -589,19 +583,10 @@ void GoalPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "time_limit", p->freespace_parking_common_parameters.time_limit);
     updateParam<double>(
-      parameters, ns + "minimum_turning_radius",
-      p->freespace_parking_common_parameters.minimum_turning_radius);
-    updateParam<double>(
-      parameters, ns + "maximum_turning_radius",
-      p->freespace_parking_common_parameters.maximum_turning_radius);
+      parameters, ns + "max_turning_ratio",
+      p->freespace_parking_common_parameters.max_turning_ratio);
     updateParam<int>(
-      parameters, ns + "turning_radius_size",
-      p->freespace_parking_common_parameters.turning_radius_size);
-    p->freespace_parking_common_parameters.maximum_turning_radius = std::max(
-      p->freespace_parking_common_parameters.maximum_turning_radius,
-      p->freespace_parking_common_parameters.minimum_turning_radius);
-    p->freespace_parking_common_parameters.turning_radius_size =
-      std::max(p->freespace_parking_common_parameters.turning_radius_size, 1);
+      parameters, ns + "turning_steps", p->freespace_parking_common_parameters.turning_steps);
   }
 
   //  freespace parking search config
@@ -842,23 +827,8 @@ void GoalPlannerModuleManager::updateModuleParams(
   });
 }
 
-bool GoalPlannerModuleManager::isAlwaysExecutableModule() const
-{
-  // enable AlwaysExecutable whenever goal modification is not allowed
-  // because only minor path refinements are made for fixed goals
-  if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
-    return true;
-  }
-
-  return false;
-}
-
 bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 {
-  if (isAlwaysExecutableModule()) {
-    return true;
-  }
-
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
   if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
@@ -870,10 +840,6 @@ bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 
 bool GoalPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
 {
-  if (isAlwaysExecutableModule()) {
-    return true;
-  }
-
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
   if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {

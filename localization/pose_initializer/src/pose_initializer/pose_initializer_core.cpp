@@ -17,11 +17,10 @@
 #include "copy_vector_to_array.hpp"
 #include "ekf_localization_trigger_module.hpp"
 #include "gnss_module.hpp"
+#include "localization_module.hpp"
 #include "ndt_localization_trigger_module.hpp"
-#include "ndt_module.hpp"
 #include "nerf_module.hpp"
 #include "stop_check_module.hpp"
-#include "yabloc_module.hpp"
 
 #include <memory>
 #include <sstream>
@@ -46,10 +45,10 @@ PoseInitializer::PoseInitializer(const rclcpp::NodeOptions & options)
     gnss_ = std::make_unique<GnssModule>(this);
   }
   if (declare_parameter<bool>("yabloc_enabled")) {
-    yabloc_ = std::make_unique<YabLocModule>(this);
+    yabloc_ = std::make_unique<LocalizationModule>(this, "yabloc_align");
   }
   if (declare_parameter<bool>("ndt_enabled")) {
-    ndt_ = std::make_unique<NdtModule>(this);
+    ndt_ = std::make_unique<LocalizationModule>(this, "ndt_align");
     ndt_localization_trigger_ = std::make_unique<NdtLocalizationTriggerModule>(this);
   }
   if (declare_parameter<bool>("nerf_enabled", false)) {

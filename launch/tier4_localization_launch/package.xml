@@ -5,7 +5,6 @@
   <version>0.1.0</version>
   <description>The tier4_localization_launch package</description>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
-  <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
   <maintainer email="ryu.yamamoto@tier4.jp">Ryu Yamamoto</maintainer>
   <maintainer email="anh.nguyen.2@tier4.jp">NGUYEN Viet Anh</maintainer>
@@ -20,6 +19,7 @@
 
   <exec_depend>automatic_pose_initializer</exec_depend>
   <exec_depend>autoware_ar_tag_based_localizer</exec_depend>
+  <exec_depend>autoware_pointcloud_preprocessor</exec_depend>
   <exec_depend>eagleye_geo_pose_fusion</exec_depend>
   <exec_depend>eagleye_gnss_converter</exec_depend>
   <exec_depend>eagleye_rt</exec_depend>
@@ -28,7 +28,6 @@
   <exec_depend>gyro_odometer</exec_depend>
   <exec_depend>ndt_scan_matcher</exec_depend>
   <exec_depend>nerf_based_localizer</exec_depend>
-  <exec_depend>pointcloud_preprocessor</exec_depend>
   <exec_depend>pose_estimator_arbiter</exec_depend>
   <exec_depend>pose_initializer</exec_depend>
   <exec_depend>pose_instability_detector</exec_depend>

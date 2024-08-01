@@ -22,6 +22,7 @@
         lateral_offset_interval: 0.25
         ignore_distance_from_lane_start: 0.0
         margin_from_boundary: 0.5
+        high_curvature_threshold: 0.1
 
       # occupancy grid map
       occupancy_grid:
@@ -89,9 +90,8 @@
           velocity: 1.0
           vehicle_shape_margin: 1.0
           time_limit: 3000.0
-          minimum_turning_radius: 5.0
-          maximum_turning_radius: 5.0
-          turning_radius_size: 1
+          max_turning_ratio: 0.7
+          turning_steps: 1
           # search configs
           search_configs:
             theta_size: 144

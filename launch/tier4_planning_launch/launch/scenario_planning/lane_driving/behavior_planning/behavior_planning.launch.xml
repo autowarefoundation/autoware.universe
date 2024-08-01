@@ -260,7 +260,12 @@
   <group if="$(var launch_compare_map_pipeline)">
     <!-- use pointcloud container -->
     <load_composable_node target="$(var pointcloud_container_name)">
-      <composable_node pkg="compare_map_segmentation" plugin="compare_map_segmentation::VoxelDistanceBasedCompareMapFilterComponent" name="voxel_distance_based_compare_map_filter_node" namespace="">
+      <composable_node
+        pkg="autoware_compare_map_segmentation"
+        plugin="autoware::compare_map_segmentation::VoxelDistanceBasedCompareMapFilterComponent"
+        name="voxel_distance_based_compare_map_filter_node"
+        namespace=""
+      >
         <!-- topic remap -->
         <remap from="map" to="$(var input_pointcloud_map_topic_name)"/>
         <remap from="kinematic_state" to="/localization/kinematic_state"/>
@@ -272,7 +277,7 @@
         <extra_arg name="use_intra_process_comms" value="false"/>
       </composable_node>
 
-      <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::VectorMapInsideAreaFilterComponent" name="vector_map_inside_area_filter_node" namespace="">
+      <composable_node pkg="autoware_pointcloud_preprocessor" plugin="autoware::pointcloud_preprocessor::VectorMapInsideAreaFilterComponent" name="vector_map_inside_area_filter_node" namespace="">
         <!-- topic remap -->
         <remap from="input/vector_map" to="$(var input_vector_map_topic_name)"/>
         <remap from="input" to="compare_map_filtered/pointcloud"/>

@@ -17,8 +17,8 @@
 
 #define FMT_HEADER_ONLY
 
+#include "localization_util/diagnostics_module.hpp"
 #include "localization_util/smart_pose_buffer.hpp"
-#include "ndt_scan_matcher/diagnostics_module.hpp"
 #include "ndt_scan_matcher/hyper_parameters.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
 
@@ -131,7 +131,7 @@ private:
 
   static int count_oscillation(const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array);
 
-  std::array<double, 36> estimate_covariance(
+  Eigen::Matrix2d estimate_covariance(
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
     const rclcpp::Time & sensor_ros_time);
 

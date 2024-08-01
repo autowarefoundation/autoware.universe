@@ -278,7 +278,6 @@ void TrtCommon::printNetworkInfo(const std::string & onnx_file_path)
   for (int i = 0; i < num; i++) {
     nvinfer1::ILayer * layer = network->getLayer(i);
     auto layer_type = layer->getType();
-    std::string name = layer->getName();
     if (build_config_->profile_per_layer) {
       model_profiler_.setProfDict(layer);
     }
@@ -427,18 +426,18 @@ bool TrtCommon::buildEngineFromOnnx(
             layer->setPrecision(nvinfer1::DataType::kHALF);
             std::cout << "Set kHALF in " << name << std::endl;
           }
-          for (int i = num - 1; i >= 0; i--) {
-            nvinfer1::ILayer * layer = network->getLayer(i);
-            auto layer_type = layer->getType();
-            std::string name = layer->getName();
-            if (layer_type == nvinfer1::LayerType::kCONVOLUTION) {
-              layer->setPrecision(nvinfer1::DataType::kHALF);
-              std::cout << "Set kHALF in " << name << std::endl;
+          for (int j = num - 1; j >= 0; j--) {
+            nvinfer1::ILayer * inner_layer = network->getLayer(j);
+            auto inner_layer_type = inner_layer->getType();
+            std::string inner_name = inner_layer->getName();
+            if (inner_layer_type == nvinfer1::LayerType::kCONVOLUTION) {
+              inner_layer->setPrecision(nvinfer1::DataType::kHALF);
+              std::cout << "Set kHALF in " << inner_name << std::endl;
               break;
             }
-            if (layer_type == nvinfer1::LayerType::kMATRIX_MULTIPLY) {
-              layer->setPrecision(nvinfer1::DataType::kHALF);
-              std::cout << "Set kHALF in " << name << std::endl;
+            if (inner_layer_type == nvinfer1::LayerType::kMATRIX_MULTIPLY) {
+              inner_layer->setPrecision(nvinfer1::DataType::kHALF);
+              std::cout << "Set kHALF in " << inner_name << std::endl;
               break;
             }
           }

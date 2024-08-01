@@ -32,13 +32,14 @@
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <diagnostic_msgs/msg/detail/diagnostic_status__struct.hpp>
 
 #include <array>
 #include <deque>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
-
 namespace planning_diagnostics
 {
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -70,7 +71,8 @@ public:
    * @brief callback on receiving a trajectory
    * @param [in] traj_msg received trajectory message
    */
-  void onTrajectory(const Trajectory::ConstSharedPtr traj_msg);
+  void onTrajectory(
+    const Trajectory::ConstSharedPtr traj_msg, const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
    * @brief callback on receiving a reference trajectory
@@ -88,7 +90,14 @@ public:
    * @brief callback on receiving a modified goal
    * @param [in] modified_goal_msg received modified goal message
    */
-  void onModifiedGoal(const PoseWithUuidStamped::ConstSharedPtr modified_goal_msg);
+  void onModifiedGoal(
+    const PoseWithUuidStamped::ConstSharedPtr modified_goal_msg,
+    const Odometry::ConstSharedPtr ego_state_ptr);
+
+  /**
+   * @brief obtain diagnostics information
+   */
+  void onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg);
 
   /**
    * @brief publish the given metric statistic
@@ -99,30 +108,58 @@ public:
   /**
    * @brief publish current ego lane info
    */
-  DiagnosticStatus generateLaneletDiagnosticStatus();
+  DiagnosticStatus generateDiagnosticEvaluationStatus(const DiagnosticStatus & diag);
+
+  /**
+   * @brief publish current ego lane info
+   */
+  DiagnosticStatus generateLaneletDiagnosticStatus(const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
    * @brief publish current ego kinematic state
    */
   DiagnosticStatus generateKinematicStateDiagnosticStatus(
-    const AccelWithCovarianceStamped & accel_stamped);
+    const AccelWithCovarianceStamped & accel_stamped, const Odometry::ConstSharedPtr ego_state_ptr);
 
 private:
   static bool isFinite(const TrajectoryPoint & p);
-  void publishModifiedGoalDeviationMetrics();
-  // update Route Handler
+
+  /**
+   * @brief update route handler data
+   */
   void getRouteData();
 
+  /**
+   * @brief fetch data and publish diagnostics
+   */
+  void onTimer();
+
+  /**
+   * @brief fetch topic data
+   */
+  void fetchData();
+  // The diagnostics cycle is faster than timer, and each node publishes diagnostic separately.
+  // takeData() in onTimer() with a polling subscriber will miss a topic, so save all topics with
+  // onDiagnostics().
+  rclcpp::Subscription<DiagnosticArray>::SharedPtr planning_diag_sub_;
+
   // ROS
-  rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
-  rclcpp::Subscription<Trajectory>::SharedPtr ref_sub_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
-  rclcpp::Subscription<PoseWithUuidStamped>::SharedPtr modified_goal_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
-  autoware::universe_utils::InterProcessPollingSubscriber<LaneletRoute> route_subscriber_{
-    this, "~/input/route", rclcpp::QoS{1}.transient_local()};
-  autoware::universe_utils::InterProcessPollingSubscriber<LaneletMapBin> vector_map_subscriber_{
-    this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
+  autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{
+    this, "~/input/trajectory"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> ref_sub_{
+    this, "~/input/reference_trajectory"};
+  autoware::universe_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
+    this, "~/input/objects"};
+  autoware::universe_utils::InterProcessPollingSubscriber<PoseWithUuidStamped> modified_goal_sub_{
+    this, "~/input/modified_goal"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> odometry_sub_{
+    this, "~/input/odometry"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    LaneletRoute, autoware::universe_utils::polling_policy::Newest>
+    route_subscriber_{this, "~/input/route", rclcpp::QoS{1}.transient_local()};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    LaneletMapBin, autoware::universe_utils::polling_policy::Newest>
+    vector_map_subscriber_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
   autoware::universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> accel_sub_{
     this, "~/input/acceleration"};
 
@@ -131,6 +168,7 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   autoware::route_handler::RouteHandler route_handler_;
 
+  DiagnosticArray metrics_msg_;
   // Parameters
   std::string output_file_str_;
   std::string ego_frame_str_;
@@ -142,8 +180,12 @@ private:
   std::deque<rclcpp::Time> stamps_;
   std::array<std::deque<Stat<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
 
-  Odometry::ConstSharedPtr ego_state_ptr_;
-  PoseWithUuidStamped::ConstSharedPtr modified_goal_ptr_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  // queue for diagnostics and time stamp
+  std::deque<std::pair<DiagnosticStatus, rclcpp::Time>> diag_queue_;
+  const std::vector<std::string> target_functions_ = {
+    "obstacle_cruise_planner_stop", "obstacle_cruise_planner_slow_down",
+    "obstacle_cruise_planner_cruise"};
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
 };
 }  // namespace planning_diagnostics
