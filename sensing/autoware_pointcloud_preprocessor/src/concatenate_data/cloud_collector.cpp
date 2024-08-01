@@ -149,7 +149,7 @@ void CloudCollector::deleteCollector()
 }
 
 std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
-CloudCollector::get_topic_to_cloud_map()
+CloudCollector::getTopicToCloudMap()
 {
   return topic_to_cloud_map_;
 }

@@ -16,11 +16,6 @@
           "default": 0.0,
           "description": "Timeout in seconds."
         },
-        "offset_tolerance": {
-          "type": "number",
-          "default": 0.0,
-          "description": "Tolerance for offset."
-        },
         "is_motion_compensated": {
           "type": "boolean",
           "default": true,
@@ -35,6 +30,11 @@
           "type": "boolean",
           "default": true,
           "description": "Flag to indicate if input frame should be kept in synchronized point cloud."
+        },
+        "publish_previous_but_late_pointcloud": {
+          "type": "boolean",
+          "default": false,
+          "description": "Flag to indicate if a concatenated point cloud should be published if its timestamp is earlier than the previous published concatenated point cloud."
         },
         "synchronized_pointcloud_postfix": {
           "type": "string",
@@ -56,7 +56,7 @@
         },
         "output_frame": {
           "type": "string",
-          "default": "",
+          "default": "base_link",
           "description": "Output frame."
         },
         "lidar_timestamp_offsets": {
@@ -66,20 +66,29 @@
           },
           "default": [],
           "description": "List of LiDAR timestamp offsets."
+        },
+        "lidar_timestamp_noise_window": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "default": [],
+          "description": "List of LiDAR timestamp noise window."
         }
       },
       "required": [
         "maximum_queue_size",
         "timeout_sec",
-        "offset_tolerance",
         "is_motion_compensated",
         "publish_synchronized_pointcloud",
         "keep_input_frame_in_synchronized_pointcloud",
+        "publish_previous_but_late_pointcloud",
         "synchronized_pointcloud_postfix",
         "input_twist_topic_type",
         "input_topics",
         "output_frame",
-        "lidar_timestamp_offsets"
+        "lidar_timestamp_offsets",
+        "lidar_timestamp_noise_window"
       ]
     }
   },

@@ -243,16 +243,16 @@ if(BUILD_TESTING)
     test/test_distortion_corrector_node.cpp
   )
 
-  ament_add_gtest(test_cloud_collector
-    test/test_cloud_collector.cpp
+  ament_add_gtest(test_concatenate_node_unit
+    test/test_concatenate_node_unit.cpp
   )
 
   target_link_libraries(test_utilities pointcloud_preprocessor_filter)
   target_link_libraries(test_distortion_corrector_node pointcloud_preprocessor_filter)
-  target_link_libraries(test_cloud_collector pointcloud_preprocessor_filter)
+  target_link_libraries(test_concatenate_node_unit pointcloud_preprocessor_filter)
 
   add_ros_test(
-    test/test_concatenate_node.py
+    test/test_concatenate_node_component.py
     TIMEOUT "50"
   )
 

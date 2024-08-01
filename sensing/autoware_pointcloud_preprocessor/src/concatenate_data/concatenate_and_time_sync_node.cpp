@@ -147,23 +147,25 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   }
 
   // Subscribers
-  if (params_.input_twist_topic_type == "twist") {
-    twist_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
-      "~/input/twist", rclcpp::QoS{100},
-      std::bind(
-        &PointCloudConcatenateDataSynchronizerComponent::twist_callback, this,
-        std::placeholders::_1));
-  } else if (params_.input_twist_topic_type == "odom") {
-    odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-      "~/input/odom", rclcpp::QoS{100},
-      std::bind(
-        &PointCloudConcatenateDataSynchronizerComponent::odom_callback, this,
-        std::placeholders::_1));
-  } else {
-    RCLCPP_ERROR_STREAM(
-      get_logger(), "input_twist_topic_type is invalid: " << params_.input_twist_topic_type);
-    throw std::runtime_error(
-      "input_twist_topic_type is invalid: " + params_.input_twist_topic_type);
+  if (params_.is_motion_compensated) {
+    if (params_.input_twist_topic_type == "twist") {
+      twist_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
+        "~/input/twist", rclcpp::QoS{100},
+        std::bind(
+          &PointCloudConcatenateDataSynchronizerComponent::twist_callback, this,
+          std::placeholders::_1));
+    } else if (params_.input_twist_topic_type == "odom") {
+      odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+        "~/input/odom", rclcpp::QoS{100},
+        std::bind(
+          &PointCloudConcatenateDataSynchronizerComponent::odom_callback, this,
+          std::placeholders::_1));
+    } else {
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "input_twist_topic_type is invalid: " << params_.input_twist_topic_type);
+      throw std::runtime_error(
+        "input_twist_topic_type is invalid: " + params_.input_twist_topic_type);
+    }
   }
 
   pointcloud_subs.resize(params_.input_topics.size());
@@ -184,7 +186,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     RCLCPP_DEBUG_STREAM(get_logger(), " - " << input_topic);
   }
 
-  // Cloud handler
+  // Combine cloud handler
   combine_cloud_handler_ = std::make_shared<CombineCloudHandler>(
     this, params_.input_topics, params_.output_frame, params_.is_motion_compensated,
     params_.keep_input_frame_in_synchronized_pointcloud);
