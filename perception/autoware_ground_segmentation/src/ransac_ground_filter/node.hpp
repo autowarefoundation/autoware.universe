@@ -16,6 +16,7 @@
 #define RANSAC_GROUND_FILTER__NODE_HPP_
 
 #include "autoware/pointcloud_preprocessor/filter.hpp"
+
 #include <autoware/universe_utils/ros/static_transform_buffer.hpp>
 
 #include <geometry_msgs/msg/pose_array.hpp>
