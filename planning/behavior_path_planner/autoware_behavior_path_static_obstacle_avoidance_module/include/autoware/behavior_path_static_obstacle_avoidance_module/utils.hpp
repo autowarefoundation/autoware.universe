@@ -43,7 +43,7 @@ double calcShiftLength(
   const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin);
 
 bool isWithinLanes(
-  const lanelet::ConstLanelets & lanelets, std::shared_ptr<const PlannerData> & planner_data);
+  const lanelet::ConstLanelets & lanelets, const std::shared_ptr<const PlannerData> & planner_data);
 
 bool isShiftNecessary(const bool & is_object_on_right, const double & shift_length);
 
@@ -118,15 +118,12 @@ void fillObjectStoppableJudge(
   ObjectData & object_data, const ObjectDataArray & registered_objects,
   const double feasible_stop_distance, const std::shared_ptr<AvoidanceParameters> & parameters);
 
-void updateRegisteredObject(
-  ObjectDataArray & registered_objects, const ObjectDataArray & now_objects,
-  const std::shared_ptr<AvoidanceParameters> & parameters);
-
 void updateClipObject(ObjectDataArray & clip_objects, AvoidancePlanningData & data);
 
-void compensateDetectionLost(
-  const ObjectDataArray & registered_objects, ObjectDataArray & now_objects,
-  ObjectDataArray & other_objects);
+void compensateLostTargetObjects(
+  ObjectDataArray & stored_objects, AvoidancePlanningData & data, const rclcpp::Time & now,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters);
 
 void filterTargetObjects(
   ObjectDataArray & objects, AvoidancePlanningData & data, const double forward_detection_range,

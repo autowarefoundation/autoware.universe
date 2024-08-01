@@ -132,10 +132,9 @@ void StaticObstacleAvoidanceModuleManager::updateModuleParams(
 
   {
     const std::string ns = "avoidance.avoidance.lateral.avoidance_for_ambiguous_vehicle.";
-    updateParam<bool>(parameters, ns + "enable", p->enable_avoidance_for_ambiguous_vehicle);
+    updateParam<std::string>(parameters, ns + "policy", p->policy_ambiguous_vehicle);
     updateParam<double>(
-      parameters, ns + "closest_distance_to_wait_and_see",
-      p->closest_distance_to_wait_and_see_for_ambiguous_vehicle);
+      parameters, ns + "wait_and_see.th_closest_distance", p->wait_and_see_th_closest_distance);
     updateParam<double>(
       parameters, ns + "condition.th_stopped_time", p->time_threshold_for_ambiguous_vehicle);
     updateParam<double>(
@@ -149,6 +148,12 @@ void StaticObstacleAvoidanceModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "ignore_area.crosswalk.behind_distance",
       p->object_ignore_section_crosswalk_behind_distance);
+  }
+
+  {
+    const std::string ns = "avoidance.target_filtering.freespace.";
+    updateParam<double>(
+      parameters, ns + "condition.th_stopped_time", p->freespace_condition_th_stopped_time);
   }
 
   {
@@ -175,6 +180,11 @@ void StaticObstacleAvoidanceModuleManager::updateModuleParams(
     updateParam<double>(parameters, ns + "buf_slow_down_speed", p->buf_slow_down_speed);
     updateParam<bool>(parameters, ns + "consider_front_overhang", p->consider_front_overhang);
     updateParam<bool>(parameters, ns + "consider_rear_overhang", p->consider_rear_overhang);
+  }
+
+  {
+    const std::string ns = "avoidance.cancel.";
+    updateParam<double>(parameters, ns + "force.duration_time", p->force_deactivate_duration_time);
   }
 
   {
