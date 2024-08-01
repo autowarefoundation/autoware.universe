@@ -14,6 +14,8 @@
 
 #include "autoware/universe_utils/geometry/sat_2d.hpp"
 
+#include <boost/geometry/algorithms/for_each.hpp>
+
 namespace autoware::universe_utils::sat
 {
 
@@ -48,6 +50,22 @@ bool projections_overlap(
 {
   return proj1.second >= proj2.first && proj2.second >= proj1.first;
 }
+
+/// @brief check is all edges of a polygon can be separated from the other polygon with a separating
+/// axis
+bool has_separating_axis(const Polygon2d & polygon, const Polygon2d & other)
+{
+  for (size_t i = 0; i < polygon.outer().size(); ++i) {
+    const size_t next_i = (i + 1) % polygon.outer().size();
+    const Point2d edge = edge_normal(polygon.outer()[i], polygon.outer()[next_i]);
+    const auto projection1 = project_polygon(polygon, edge);
+    const auto projection2 = project_polygon(other, edge);
+    if (!projections_overlap(projection1, projection2)) {
+      return false;
+    }
+  }
+  return true;
+}
 }  // namespace
 
 /// @brief check if two convex polygons intersect using the SAT algorithm
@@ -55,32 +73,10 @@ bool projections_overlap(
 /// polygons intersect. If projections overlap on all tested axes, the function returns `true`;
 /// otherwise, it returns `false`. Note that touching polygons (e.g., at a point or along an edge)
 /// will be considered as not intersecting.
-
 bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
 {
-  // check all edges of polygon1
-  for (size_t i = 0; i < convex_polygon1.outer().size(); ++i) {
-    const size_t next_i = (i + 1) % convex_polygon1.outer().size();
-    const Point2d edge = edge_normal(convex_polygon1.outer()[i], convex_polygon1.outer()[next_i]);
-    const auto projection1 = project_polygon(convex_polygon1, edge);
-    const auto projection2 = project_polygon(convex_polygon2, edge);
-    if (!projections_overlap(projection1, projection2)) {
-      return false;
-    }
-  }
-
-  // check all edges of polygon2
-  for (size_t i = 0; i < convex_polygon2.outer().size(); ++i) {
-    const size_t next_i = (i + 1) % convex_polygon2.outer().size();
-    const Point2d edge = edge_normal(convex_polygon2.outer()[i], convex_polygon2.outer()[next_i]);
-    const auto projection1 = project_polygon(convex_polygon1, edge);
-    const auto projection2 = project_polygon(convex_polygon2, edge);
-    if (!projections_overlap(projection1, projection2)) {
-      return false;
-    }
-  }
-
-  return true;  // no separating axis found, polygons must be intersecting
+  return has_separating_axis(convex_polygon1, convex_polygon2) &&
+         has_separating_axis(convex_polygon2, convex_polygon1);
 }
 
 }  // namespace autoware::universe_utils::sat
