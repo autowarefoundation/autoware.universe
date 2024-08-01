@@ -31,7 +31,8 @@ NoDrivableLaneModule::NoDrivableLaneModule(
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   planner_param_(planner_param),
-  state_(State::INIT)
+  debug_data_(),
+  state_(State::INIT),
 {
   velocity_factor_.init(PlanningBehavior::NO_DRIVABLE_LANE);
 }
