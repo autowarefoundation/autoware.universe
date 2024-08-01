@@ -57,7 +57,6 @@
 
 #include <pcl/io/io.h>
 
-#include <cstddef>
 #include <memory>
 #include <set>
 #include <string>
