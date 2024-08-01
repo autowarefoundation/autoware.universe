@@ -54,7 +54,7 @@ Autoware objects label is defined in [ObjectClassification](https://github.com/a
 
 #### Parameter Summary
 
-{{ json_to_markdown("perception/radar_tracks_msgs_converter/schema/radar_tracks_msgs_converter.schema.json") }}
+{{ json_to_markdown("perception/autoware_radar_tracks_msgs_converter/schema/radar_tracks_msgs_converter.schema.json") }}
 
 #### Parameter Description
 
