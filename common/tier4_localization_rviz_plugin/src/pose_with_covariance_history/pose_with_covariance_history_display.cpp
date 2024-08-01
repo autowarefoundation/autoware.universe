@@ -228,14 +228,19 @@ void PoseWithCovarianceHistory::updateShapes()
     orientation.y = message->pose.pose.orientation.y;
     orientation.z = message->pose.pose.orientation.z;
 
-    Eigen::Matrix2d covariance_2d_map;
-    covariance_2d_map(0, 0) = message->pose.covariance[0];
-    covariance_2d_map(1, 1) = message->pose.covariance[1 + 6 * 1];
-    covariance_2d_map(1, 0) = message->pose.covariance[1 + 6 * 0];
-    covariance_2d_map(0, 1) = message->pose.covariance[0 + 6 * 1];
+    Eigen::Matrix3d covariance_3d_map;
+    covariance_3d_map(0, 0) = message->pose.covariance[0];
+    covariance_3d_map(0, 1) = message->pose.covariance[1 + 6 * 0];
+    covariance_3d_map(0, 2) = message->pose.covariance[2 + 6 * 0];
+    covariance_3d_map(1, 0) = message->pose.covariance[1 + 6 * 0];
+    covariance_3d_map(1, 1) = message->pose.covariance[1 + 6 * 1];
+    covariance_3d_map(1, 2) = message->pose.covariance[2 + 6 * 1];
+    covariance_3d_map(2, 0) = message->pose.covariance[0 + 6 * 2];
+    covariance_3d_map(2, 1) = message->pose.covariance[1 + 6 * 2];
+    covariance_3d_map(2, 2) = message->pose.covariance[2 + 6 * 2];
 
     if (property_sphere_view_->getBool()) {
-      Eigen::Matrix2d covariance_2d_base_link;
+      Eigen::Matrix3d covariance_3d_base_link;
       Eigen::Translation3f translation(
         message->pose.pose.position.x, message->pose.pose.position.y,
         message->pose.pose.position.z);
@@ -243,18 +248,18 @@ void PoseWithCovarianceHistory::updateShapes()
         message->pose.pose.orientation.w, message->pose.pose.orientation.x,
         message->pose.pose.orientation.y, message->pose.pose.orientation.z);
       Eigen::Matrix4f pose_matrix4f = (translation * rotation).matrix();
-      const Eigen::Matrix2d rot = pose_matrix4f.topLeftCorner<2, 2>().cast<double>();
-      covariance_2d_base_link = rot.transpose() * covariance_2d_map * rot;
+      const Eigen::Matrix3d rot = pose_matrix4f.topLeftCorner<3, 3>().cast<double>();
+      covariance_3d_base_link = rot.transpose() * covariance_3d_map * rot;
 
       auto & sphere = spheres_[i];
       sphere->setPosition(position);
       sphere->setOrientation(orientation);
       sphere->setColor(color_sphere.r, color_sphere.g, color_sphere.b, color_sphere.a);
       sphere->setScale(Ogre::Vector3(
-        property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(0, 0)),
-        property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(1, 1)),
-        property_sphere_scale_->getFloat() * 2 * std::sqrt(message->pose.covariance[14])));
-    }
+        property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_3d_base_link(0, 0)),
+        property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_3d_base_link(1, 1)),
+        property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_3d_base_link(2, 2))));
+      }
 
     if (property_path_view_->getBool()) {
       if (shape_type == 0) {
