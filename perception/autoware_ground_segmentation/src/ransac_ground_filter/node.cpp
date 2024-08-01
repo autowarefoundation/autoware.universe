@@ -116,7 +116,7 @@ RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptio
 
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
-  static_tf_buffer_ = std::make_shared<autoware::universe_utils::StaticTransformBuffer>();
+  static_tf_buffer_ = std::make_unique<autoware::universe_utils::StaticTransformBuffer>();
 }
 
 void RANSACGroundFilterComponent::setDebugPublisher()

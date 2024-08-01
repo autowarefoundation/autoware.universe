@@ -109,7 +109,7 @@ public:
     }
 
     // Get the transform from the TF tree
-    auto tf_listener = std::make_shared<autoware::universe_utils::TransformListener>(node);
+    auto tf_listener = std::make_unique<autoware::universe_utils::TransformListener>(node);
     auto tf = tf_listener->getTransform(
       target_frame, source_frame, rclcpp::Time(0), rclcpp::Duration(1000ms));
     RCLCPP_DEBUG(
