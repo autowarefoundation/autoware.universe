@@ -109,6 +109,7 @@ void PoseWithCovarianceHistory::update(float wall_dt, float ros_dt)
 
   if (!history_.empty()) {
     lines_->clear();
+    arrows_.clear();
     spheres_.clear();
     updateShapeType();
     updateShapes();
@@ -126,6 +127,7 @@ void PoseWithCovarianceHistory::unsubscribe()
 
   history_.clear();
   lines_->clear();
+  arrows_.clear();
   spheres_.clear();
 }
 
