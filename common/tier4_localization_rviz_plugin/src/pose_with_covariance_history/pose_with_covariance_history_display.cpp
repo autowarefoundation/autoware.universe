@@ -259,7 +259,7 @@ void PoseWithCovarianceHistory::updateShapes()
         property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_3d_base_link(0, 0)),
         property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_3d_base_link(1, 1)),
         property_sphere_scale_->getFloat() * 2 * std::sqrt(covariance_3d_base_link(2, 2))));
-      }
+    }
 
     if (property_path_view_->getBool()) {
       if (shape_type == 0) {
