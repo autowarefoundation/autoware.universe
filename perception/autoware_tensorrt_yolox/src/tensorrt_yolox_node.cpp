@@ -135,7 +135,8 @@ void TrtYoloXNode::onConnect()
 void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
   if (!setCudaDeviceId(gpu_id_)) {
-    RCLCPP_ERROR(this->get_logger(), "GPU %d does not exist or is not suitable.", gpu_id_);
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 2000, "GPU %d does not exist or is not suitable.", gpu_id_);
     return;
   }
 
@@ -234,11 +235,12 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
   }
 }
 
-bool TrtYoloXNode::setCudaDeviceId(const int gpu_id)
+bool TrtYoloXNode::setCudaDeviceId(const uint8_t gpu_id)
 {
   cudaError_t cuda_err = cudaSetDevice(gpu_id);
   if (cuda_err != cudaSuccess) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to set gpu device with id: %d ", gpu_id);
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 2000, "Failed to set gpu device with id: %d ", gpu_id);
     return false;
   } else {
     return true;
