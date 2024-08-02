@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <limits>
 
 namespace diagnostic_graph_aggregator
 {
@@ -54,7 +55,7 @@ struct UnitConfig
   std::string path;
   LinkConfig * item = nullptr;
   std::vector<LinkConfig *> list;
-  size_t index{};
+  size_t index = std::numeric_limits<size_t>::max();
 };
 
 struct FileConfig
