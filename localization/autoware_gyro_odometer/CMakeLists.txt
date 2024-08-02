@@ -1,11 +1,15 @@
 cmake_minimum_required(VERSION 3.14)
-project(gyro_odometer)
+project(autoware_gyro_odometer)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/gyro_odometer_core.cpp
+)
+
+include_directories(
+  src
 )
 
 target_link_libraries(${PROJECT_NAME} fmt)
