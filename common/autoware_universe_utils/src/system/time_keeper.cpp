@@ -14,7 +14,8 @@
 
 #include "autoware/universe_utils/system/time_keeper.hpp"
 
-#include <iostream>
+#include <fmt/format.h>
+
 #include <stdexcept>
 
 namespace autoware::universe_utils
@@ -42,7 +43,11 @@ std::string ProcessingTimeNode::to_string() const
       if (!is_root) {
         oss << prefix << (is_last ? "└── " : "├── ");
       }
-      oss << node.name_ << " (" << node.processing_time_ << "ms)\n";
+      if (!node.comment_.empty()) {
+        oss << node.name_ << " (" << node.processing_time_ << "ms) : " << node.comment_ << "\n";
+      } else {
+        oss << node.name_ << " (" << node.processing_time_ << "ms)\n";
+      }
       for (size_t i = 0; i < node.child_nodes_.size(); ++i) {
         const auto & child = node.child_nodes_[i];
         construct_string(
@@ -67,8 +72,9 @@ tier4_debug_msgs::msg::ProcessingTimeTree ProcessingTimeNode::to_msg() const
       tier4_debug_msgs::msg::ProcessingTimeNode time_node_msg;
       time_node_msg.name = node.name_;
       time_node_msg.processing_time = node.processing_time_;
-      time_node_msg.id = tree_msg.nodes.size() + 1;
+      time_node_msg.id = static_cast<int>(tree_msg.nodes.size() + 1);
       time_node_msg.parent_id = parent_id;
+      time_node_msg.comment = node.comment_;
       tree_msg.nodes.emplace_back(time_node_msg);
 
       for (const auto & child : node.child_nodes_) {
@@ -92,6 +98,12 @@ void ProcessingTimeNode::set_time(const double processing_time)
 {
   processing_time_ = processing_time;
 }
+
+void ProcessingTimeNode::set_comment(const std::string & comment)
+{
+  comment_ = comment;
+}
+
 std::string ProcessingTimeNode::get_name() const
 {
   return name_;
@@ -112,15 +124,6 @@ void TimeKeeper::add_reporter(rclcpp::Publisher<ProcessingTimeDetail>::SharedPtr
   });
 }
 
-void TimeKeeper::add_reporter(rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher)
-{
-  reporters_.emplace_back([publisher](const std::shared_ptr<ProcessingTimeNode> & node) {
-    std_msgs::msg::String msg;
-    msg.data = node->to_string();
-    publisher->publish(msg);
-  });
-}
-
 void TimeKeeper::start_track(const std::string & func_name)
 {
   if (current_time_node_ == nullptr) {
@@ -130,6 +133,14 @@ void TimeKeeper::start_track(const std::string & func_name)
     current_time_node_ = current_time_node_->add_child(func_name);
   }
   stop_watch_.tic(func_name);
+}
+
+void TimeKeeper::comment(const std::string & comment)
+{
+  if (current_time_node_ == nullptr) {
+    throw std::runtime_error("You must call start_track() first, but comment() is called");
+  }
+  current_time_node_->set_comment(comment);
 }
 
 void TimeKeeper::end_track(const std::string & func_name)

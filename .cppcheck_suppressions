@@ -2,20 +2,14 @@
 
 checkersReport
 constParameterReference
-constVariableReference
-// cspell: ignore cstyle
-cstyleCast
 funcArgNamesDifferent
 functionConst
 functionStatic
-invalidPointerCast
-knownConditionTrueFalse
 missingInclude
 missingIncludeSystem
 noConstructor
 passedByValue
 redundantInitialization
-shadowVariable
 // cspell: ignore uninit
 uninitMemberVar
 unknownMacro

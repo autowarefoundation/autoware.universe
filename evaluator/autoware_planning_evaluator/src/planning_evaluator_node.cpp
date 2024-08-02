@@ -122,7 +122,21 @@ DiagnosticStatus PlanningEvaluatorNode::generateDiagnosticEvaluationStatus(
   });
   const bool found = it != diag.values.end();
   status.level = (found) ? status.OK : status.ERROR;
-  status.values.push_back((found) ? *it : diagnostic_msgs::msg::KeyValue{});
+
+  auto get_key_value = [&]() {
+    if (!found) {
+      return diagnostic_msgs::msg::KeyValue{};
+    }
+    if (it->value.find("none") != std::string::npos) {
+      return *it;
+    }
+    diagnostic_msgs::msg::KeyValue key_value;
+    key_value.key = "decision";
+    key_value.value = "deceleration";
+    return key_value;
+  };
+
+  status.values.push_back(get_key_value());
   return status;
 }
 
@@ -130,7 +144,7 @@ void PlanningEvaluatorNode::getRouteData()
 {
   // route
   {
-    const auto msg = route_subscriber_.takeNewData();
+    const auto msg = route_subscriber_.takeData();
     if (msg) {
       if (msg->segments.empty()) {
         RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
@@ -142,7 +156,7 @@ void PlanningEvaluatorNode::getRouteData()
 
   // map
   {
-    const auto msg = vector_map_subscriber_.takeNewData();
+    const auto msg = vector_map_subscriber_.takeData();
     if (msg) {
       route_handler_.setMap(*msg);
     }
