@@ -411,7 +411,7 @@ void GNSSPoser::publish_tf(
 
   tf2_broadcaster_.sendTransform(transform_stamped);
 }
-}  // namespace gnss_poser
+}  // namespace autoware::gnss_poser
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(autoware::gnss_poser::GNSSPoser)
