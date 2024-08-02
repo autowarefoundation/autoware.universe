@@ -28,10 +28,10 @@ VoxelGridOutlierFilterComponent::VoxelGridOutlierFilterComponent(
 {
   // set initial parameters
   {
-    voxel_size_x_ = static_cast<double>(declare_parameter("voxel_size_x", 0.3));
-    voxel_size_y_ = static_cast<double>(declare_parameter("voxel_size_y", 0.3));
-    voxel_size_z_ = static_cast<double>(declare_parameter("voxel_size_z", 0.1));
-    voxel_points_threshold_ = static_cast<int>(declare_parameter("voxel_points_threshold", 2));
+    voxel_size_x_ = declare_parameter<double>("voxel_size_x");
+    voxel_size_y_ = declare_parameter<double>("voxel_size_y");
+    voxel_size_z_ = declare_parameter<double>("voxel_size_z");
+    voxel_points_threshold_ = declare_parameter<int>("voxel_points_threshold");
   }
 
   using std::placeholders::_1;

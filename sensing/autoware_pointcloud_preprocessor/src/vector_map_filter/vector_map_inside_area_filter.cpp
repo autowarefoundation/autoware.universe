@@ -67,8 +67,7 @@ VectorMapInsideAreaFilterComponent::VectorMapInsideAreaFilterComponent(
   const rclcpp::NodeOptions & node_options)
 : Filter("VectorMapInsideAreaFilter", node_options)
 {
-  polygon_type_ =
-    static_cast<std::string>(declare_parameter("polygon_type", "no_obstacle_segmentation_area"));
+  polygon_type_ = declare_parameter<std::string>("polygon_type");
 
   using std::placeholders::_1;
   // Set subscriber
@@ -77,8 +76,8 @@ VectorMapInsideAreaFilterComponent::VectorMapInsideAreaFilterComponent(
     std::bind(&VectorMapInsideAreaFilterComponent::mapCallback, this, _1));
 
   // Set parameters
-  use_z_filter_ = declare_parameter<bool>("use_z_filter", false);
-  z_threshold_ = declare_parameter<float>("z_threshold", 0.0f);  // defined in the base_link frame
+  use_z_filter_ = declare_parameter<bool>("use_z_filter");
+  z_threshold_ = declare_parameter<float>("z_threshold");  // defined in the base_link frame
 }
 
 void VectorMapInsideAreaFilterComponent::filter(

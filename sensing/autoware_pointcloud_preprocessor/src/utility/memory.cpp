@@ -12,11 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+<<<<<<< HEAD
+#include "pointcloud_preprocessor/utility/memory.hpp"
+
+#include <autoware_point_types/types.hpp>
+
+namespace pointcloud_preprocessor::utils
+=======
 #include "autoware/pointcloud_preprocessor/utility/memory.hpp"
 
 #include <autoware_point_types/types.hpp>
 
 namespace autoware::pointcloud_preprocessor::utils
+>>>>>>> original/main
 {
 bool is_data_layout_compatible_with_point_xyzi(const sensor_msgs::msg::PointCloud2 & input)
 {
@@ -208,4 +216,8 @@ bool is_data_layout_compatible_with_point_xyzircaedt(const sensor_msgs::msg::Poi
   return same_layout;
 }
 
+<<<<<<< HEAD
+}  // namespace pointcloud_preprocessor::utils
+=======
 }  // namespace autoware::pointcloud_preprocessor::utils
+>>>>>>> original/main

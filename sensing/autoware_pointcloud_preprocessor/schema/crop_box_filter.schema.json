@@ -35,9 +35,14 @@
           "type": "number",
           "description": "z-coordinate maximum value for crop range",
           "default": "1.0"
+        },
+        "negative": {
+          "type": "boolean",
+          "description": "if negative then choose the point outside the box",
+          "default": "false"
         }
       },
-      "required": ["min_x", "min_y", "min_z", "max_x", "max_y", "max_z"],
+      "required": ["min_x", "min_y", "min_z", "max_x", "max_y", "max_z", "negative"],
       "additionalProperties": false
     }
   },
