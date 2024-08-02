@@ -32,7 +32,7 @@ NoDrivableLaneModule::NoDrivableLaneModule(
   lane_id_(lane_id),
   planner_param_(planner_param),
   debug_data_(),
-  state_(State::INIT),
+  state_(State::INIT)
 {
   velocity_factor_.init(PlanningBehavior::NO_DRIVABLE_LANE);
 }
