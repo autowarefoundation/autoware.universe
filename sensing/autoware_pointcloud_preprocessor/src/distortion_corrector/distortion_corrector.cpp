@@ -19,12 +19,12 @@
 =======
 #include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 #include "autoware/pointcloud_preprocessor/utility/memory.hpp"
-  >>>>>>> original/main
+  >>>>>>> original / main
 
 #include <autoware/universe_utils/math/trigonometry.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
-  <<<<<<< HEAD namespace pointcloud_preprocessor
+  < < < < < < < HEAD namespace pointcloud_preprocessor
 =======
 namespace autoware::pointcloud_preprocessor
 >>>>>>> original/main
