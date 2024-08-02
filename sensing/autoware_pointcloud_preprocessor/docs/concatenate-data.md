@@ -65,9 +65,11 @@ The figure below demonstrates how `lidar_timestamp_offsets` works with `concaten
 
 #### lidar_timestamp_noise_window
 
-Additionally, due to the mechanical design of LiDARs, there may be some jitter in the timestamps of each scan. For example, if the scan frequency is set to 10 Hz (scanning every 100 ms), the timestamps between each scan might not be exactly 100 ms apart. To handle this noise, the `lidar_timestamp_noise_window` parameter is provided.
+Additionally, due to the mechanical design of LiDARs, there may be some jitter in the timestamps of each scan like the image shown below. For example, if the scan frequency is set to 10 Hz (scanning every 100 ms), the timestamps between each scan might not be exactly 100 ms apart. To handle this noise, the `lidar_timestamp_noise_window` parameter is provided.
 
-Take the left LiDAR from the above example: if the timestamps of the left point clouds are 0.01, 0.11, and 0.21 seconds, the timestamp is ideal without any noise. Then the example will be the same as above. However, if the timestamps of the left point clouds are 0.010, 0.115, and 0.210 seconds respectively, resulting in differences of 105 ms and 95 ms, the noise is 5 ms (compared to 100 ms). In this case, the user should set 0.005 in the `lidar_timestamp_noise_window` parameter.
+![jitter](./image/jitter.png)
+
+From the example above, the noise is from 0 to 8 ms, the user should set 0.008 in the `lidar_timestamp_noise_window` parameter.
 
 The figure below demonstrates how `lidar_timestamp_noise_window` works with `concatenate_and_time_sync_node`. If the green `X` is in the range of the red triangles, it means that the point cloud matches the reference timestamp of the collector.
 
@@ -180,7 +182,7 @@ status:
 
 There is also an option to separate the concatenate_and_time_sync_node into two nodes: one for `time synchronization` and another for `concatenate pointclouds` ([See this PR](https://github.com/autowarefoundation/autoware.universe/pull/3312)).
 
-Note that the `concatenate_pointclouds` and `time_synchronizer_nodelet` are using the old design of the concatenate node.
+Note that the `concatenate_pointclouds` and `time_synchronizer_nodelet` are using the [old design](https://github.com/autowarefoundation/autoware.universe/blob/9bb228fe5b7fa4c6edb47e4713c73489a02366e1/sensing/autoware_pointcloud_preprocessor/docs/concatenate-data.md) of the concatenate node.
 
 ## Assumptions / Known Limits
 
