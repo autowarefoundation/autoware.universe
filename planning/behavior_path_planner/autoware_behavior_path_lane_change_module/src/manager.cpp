@@ -122,6 +122,23 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
   p.rss_params.lateral_distance_max_threshold = getOrDeclareParameter<double>(
     *node, parameter("safety_check.execution.lateral_distance_max_threshold"));
 
+  p.rss_params_for_parked.longitudinal_distance_min_threshold = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.longitudinal_distance_min_threshold"));
+  p.rss_params_for_parked.longitudinal_distance_min_threshold = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.longitudinal_distance_min_threshold"));
+  p.rss_params_for_parked.longitudinal_velocity_delta_time = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.longitudinal_velocity_delta_time"));
+  p.rss_params_for_parked.front_vehicle_deceleration = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.expected_front_deceleration"));
+  p.rss_params_for_parked.rear_vehicle_deceleration = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.expected_rear_deceleration"));
+  p.rss_params_for_parked.rear_vehicle_reaction_time = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.rear_vehicle_reaction_time"));
+  p.rss_params_for_parked.rear_vehicle_safety_time_margin = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.rear_vehicle_safety_time_margin"));
+  p.rss_params_for_parked.lateral_distance_max_threshold = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.lateral_distance_max_threshold"));
+
   p.rss_params_for_abort.longitudinal_distance_min_threshold = getOrDeclareParameter<double>(
     *node, parameter("safety_check.cancel.longitudinal_distance_min_threshold"));
   p.rss_params_for_abort.longitudinal_velocity_delta_time = getOrDeclareParameter<double>(
@@ -166,8 +183,6 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
     getOrDeclareParameter<double>(*node, parameter("minimum_lane_changing_velocity"));
   p.minimum_lane_changing_velocity =
     std::min(p.minimum_lane_changing_velocity, max_acc * p.lane_change_prepare_duration);
-  p.lane_change_finish_judge_buffer =
-    getOrDeclareParameter<double>(*node, parameter("lane_change_finish_judge_buffer"));
 
   if (p.backward_length_buffer_for_end_of_lane < 1.0) {
     RCLCPP_WARN_STREAM(
@@ -224,8 +239,15 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
   p.cancel.unsafe_hysteresis_threshold =
     getOrDeclareParameter<int>(*node, parameter("cancel.unsafe_hysteresis_threshold"));
 
+  // finish judge parameters
+  p.lane_change_finish_judge_buffer =
+    getOrDeclareParameter<double>(*node, parameter("lane_change_finish_judge_buffer"));
   p.finish_judge_lateral_threshold =
     getOrDeclareParameter<double>(*node, parameter("finish_judge_lateral_threshold"));
+  const auto finish_judge_lateral_angle_deviation =
+    getOrDeclareParameter<double>(*node, parameter("finish_judge_lateral_angle_deviation"));
+  p.finish_judge_lateral_angle_deviation =
+    autoware::universe_utils::deg2rad(finish_judge_lateral_angle_deviation);
 
   // debug marker
   p.publish_debug_marker = getOrDeclareParameter<bool>(*node, parameter("publish_debug_marker"));
