@@ -526,6 +526,8 @@ void correct(alt::ConvexPolygon2d & poly)
 
 bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 {
+  constexpr double epsilon = 1e-6;
+
   const auto & vertices = poly.vertices();
   const auto num_of_vertices = vertices.size();
   int64_t winding_number = 0;
@@ -557,7 +559,7 @@ bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
       continue;
     }
 
-    if (std::abs(cross) <= std::numeric_limits<double>::epsilon()) {  // point is on edge
+    if (std::abs(cross) < epsilon) {  // point is on edge
       return true;
     }
   }
@@ -587,13 +589,15 @@ bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & p
 double distance(
   const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end)
 {
+  constexpr double epsilon = 1e-3;
+
   const auto seg_vec = seg_end - seg_start;
   const auto point_vec = point - seg_start;
 
   const double seg_vec_norm = seg_vec.norm();
   const double seg_point_dot = seg_vec.dot(point_vec);
 
-  if (seg_vec_norm <= std::numeric_limits<double>::epsilon() || seg_point_dot < 0) {
+  if (seg_vec_norm < epsilon || seg_point_dot < 0) {
     return point_vec.norm();
   } else if (seg_point_dot > std::pow(seg_vec_norm, 2)) {
     return (point - seg_end).norm();
@@ -621,8 +625,8 @@ double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 
 bool equals(const alt::Point2d & point1, const alt::Point2d & point2)
 {
-  return std::abs(point1.x() - point2.x()) <= std::numeric_limits<double>::epsilon() &&
-         std::abs(point1.y() - point2.y()) <= std::numeric_limits<double>::epsilon();
+  constexpr double epsilon = 1e-3;
+  return std::abs(point1.x() - point2.x()) < epsilon && std::abs(point1.y() - point2.y()) < epsilon;
 }
 
 bool equals(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
@@ -638,11 +642,13 @@ bool intersects(
   const alt::Point2d & seg1_start, const alt::Point2d & seg1_end, const alt::Point2d & seg2_start,
   const alt::Point2d & seg2_end)
 {
+  constexpr double epsilon = 1e-6;
+
   const auto v1 = seg1_end - seg1_start;
   const auto v2 = seg2_end - seg2_start;
 
   const auto det = v1.cross(v2);
-  if (std::abs(det) <= std::numeric_limits<double>::epsilon()) {
+  if (std::abs(det) < epsilon) {
     return false;
   }
 
@@ -724,12 +730,13 @@ bool is_clockwise(const alt::ConvexPolygon2d & poly)
 bool touches(
   const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end)
 {
+  constexpr double epsilon = 1e-6;
+
   // if the cross product of the vectors from the start point and the end point to the point is 0
   // and the vectors opposite each other, the point is on the segment
   const auto start_vec = point - seg_start;
   const auto end_vec = point - seg_end;
-  return std::abs(start_vec.cross(end_vec)) <= std::numeric_limits<double>::epsilon() &&
-         start_vec.dot(end_vec) <= 0;
+  return std::abs(start_vec.cross(end_vec)) < epsilon && start_vec.dot(end_vec) <= 0;
 }
 
 bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
@@ -755,6 +762,8 @@ bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 
 bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 {
+  constexpr double epsilon = 1e-6;
+
   const auto & vertices = poly.vertices();
   const auto num_of_vertices = vertices.size();
   int64_t winding_number = 0;
@@ -786,7 +795,7 @@ bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
       continue;
     }
 
-    if (std::abs(cross) <= std::numeric_limits<double>::epsilon()) {  // point is on edge
+    if (std::abs(cross) < epsilon) {  // point is on edge
       return false;
     }
   }
