@@ -51,7 +51,7 @@ Three parameters, `timeout_sec`, `lidar_timestamp_offsets`, and `lidar_timestamp
 
 #### timeout_sec
 
-When network issues occur or when point clouds experience delays in the previous processing pipeline, some point clouds may be delayed or dropped. To address this, the `timeout_sec` parameter is used. If the timer reaches zero, the collector will not wait for delayed or dropped point clouds but will concatenate the remaining point clouds in the collector directly. The figure below demonstrates how `timeout_sec` works with `concatenate_and_time_sync_node`.
+When network issues occur or when point clouds experience delays in the previous processing pipeline, some point clouds may be delayed or dropped. To address this, the `timeout_sec` parameter is used. Once the timer is created, it will start counting down from `timeout_sec`. If the timer reaches zero, the collector will not wait for delayed or dropped point clouds but will concatenate the remaining point clouds in the collector directly. The figure below demonstrates how `timeout_sec` works with `concatenate_and_time_sync_node`.
 
 ![concatenate_edge_case](./image/concatenate_edge_case.drawio.svg)
 
@@ -65,13 +65,15 @@ The figure below demonstrates how `lidar_timestamp_offsets` works with `concaten
 
 #### lidar_timestamp_noise_window
 
-Additionally, due to the mechanical design of LiDARs, there may be some jitter in the timestamps of each scan like the image shown below. For example, if the scan frequency is set to 10 Hz (scanning every 100 ms), the timestamps between each scan might not be exactly 100 ms apart. To handle this noise, the `lidar_timestamp_noise_window` parameter is provided.
+Additionally, due to the mechanical design of LiDARs, there may be some jitter in the timestamps of each scan, as shown in the image below. For example, if the scan frequency is set to 10 Hz (scanning every 100 ms), the timestamps between each scan might not be exactly 100 ms apart. To handle this noise, the `lidar_timestamp_noise_window` parameter is provided.
+
+User can use [this tool](https://github.com/tier4/timestamp_analyzer) to visualize the noise betweeen each scan.
 
 ![jitter](./image/jitter.png)
 
-From the example above, the noise is from 0 to 8 ms, the user should set 0.008 in the `lidar_timestamp_noise_window` parameter.
+From the example above, the noise ranges from 0 to 8 ms, so the user should set `lidar_timestamp_noise_window` to `0.008`.
 
-The figure below demonstrates how `lidar_timestamp_noise_window` works with `concatenate_and_time_sync_node`. If the green `X` is in the range of the red triangles, it means that the point cloud matches the reference timestamp of the collector.
+The figure below demonstrates how `lidar_timestamp_noise_window` works with the `concatenate_and_time_sync_node`. If the green `X` is within the range of the red triangles, it indicates that the point cloud matches the reference timestamp of the collector.
 
 ![noise_timestamp_offset](./image/noise_timestamp_offset.drawio.svg)
 
