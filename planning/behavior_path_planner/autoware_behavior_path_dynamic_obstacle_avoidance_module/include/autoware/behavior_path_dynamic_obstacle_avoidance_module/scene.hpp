@@ -16,6 +16,7 @@
 #define AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
 
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "data_structs.hpp"
 
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -91,6 +92,257 @@ enum class ObjectType {
 
 struct DynamicAvoidanceParameters
 {
+  // path resample interval for avoidance planning path.
+  double resample_interval_for_planning = 0.3;
+
+  // path resample interval for output path. Too short interval increases
+  // computational cost for latter modules.
+  double resample_interval_for_output = 3.0;
+
+  // drivable lane config
+  std::string use_lane_type{"opposite_direction_lane"};
+
+  // if this param is true, it reverts avoidance path when the path is no longer needed.
+  bool enable_cancel_maneuver{false};
+
+  // enable avoidance for all parking vehicle
+  std::string policy_ambiguous_vehicle{"ignore"};
+
+  // enable yield maneuver.
+  bool enable_yield_maneuver{false};
+
+  // enable yield maneuver.
+  bool enable_yield_maneuver_during_shifting{false};
+
+  // use hatched road markings for avoidance
+
+  // use intersection area for avoidance
+  bool use_intersection_areas{false};
+
+  // use freespace area for avoidance
+  bool use_freespace_areas{false};
+
+  // consider avoidance return dead line
+  bool enable_dead_line_for_goal{false};
+  bool enable_dead_line_for_traffic_light{false};
+
+  // module try to return original path to keep this distance from edge point of the path.
+  double dead_line_buffer_for_goal{0.0};
+  double dead_line_buffer_for_traffic_light{0.0};
+
+  // max deceleration for
+  double max_deceleration{0.0};
+
+  // max jerk
+  double max_jerk{0.0};
+
+  // comfortable deceleration
+  double nominal_deceleration{0.0};
+
+  // comfortable jerk
+  double nominal_jerk{0.0};
+
+  // To prevent large acceleration while avoidance.
+  double max_acceleration{0.0};
+
+  // To prevent large acceleration while avoidance.
+  double min_velocity_to_limit_max_acceleration{0.0};
+
+  // upper distance for envelope polygon expansion.
+  double upper_distance_for_polygon_expansion{0.0};
+
+  // lower distance for envelope polygon expansion.
+  double lower_distance_for_polygon_expansion{0.0};
+
+  // Vehicles whose distance to the center of the path is
+  // less than this will not be considered for avoidance.
+  double threshold_distance_object_is_on_center{0.0};
+
+  // execute only when there is no intersection behind of the stopped vehicle.
+  double object_ignore_section_traffic_light_in_front_distance{0.0};
+
+  // execute only when there is no crosswalk near the stopped vehicle.
+  double object_ignore_section_crosswalk_in_front_distance{0.0};
+
+  // execute only when there is no crosswalk near the stopped vehicle.
+  double object_ignore_section_crosswalk_behind_distance{0.0};
+
+  // distance to avoid object detection
+  bool use_static_detection_area{true};
+  double object_check_min_forward_distance{0.0};
+  double object_check_max_forward_distance{0.0};
+  double object_check_backward_distance{0.0};
+  double object_check_yaw_deviation{0.0};
+
+  // if the distance between object and goal position is less than this parameter, the module do not
+  // return center line.
+  double object_check_goal_distance{0.0};
+
+  // if the distance between object and return position is less than this parameter, the module do
+  // not return center line.
+  double object_check_return_pose_distance{0.0};
+
+  // use in judge whether the vehicle is parking object on road shoulder
+  double object_check_shiftable_ratio{0.0};
+
+  // minimum road shoulder width. maybe 0.5 [m]
+  double object_check_min_road_shoulder_width{0.0};
+
+  // time threshold for vehicle in freespace.
+  double freespace_condition_th_stopped_time{0.0};
+
+  // force avoidance
+  std::vector<std::string> wait_and_see_target_behaviors{"NONE", "MERGING", "DEVIATING"};
+  double wait_and_see_th_closest_distance{0.0};
+  double time_threshold_for_ambiguous_vehicle{0.0};
+  double distance_threshold_for_ambiguous_vehicle{0.0};
+
+  // for merging/deviating vehicle
+  double th_overhang_distance{0.0};
+
+  // parameters for safety check area
+  bool enable_safety_check{false};
+  bool check_current_lane{false};
+  bool check_shift_side_lane{false};
+  bool check_other_side_lane{false};
+
+  // parameters for safety check target.
+  bool check_unavoidable_object{false};
+  bool check_other_object{false};
+
+  // parameters for collision check.
+  bool check_all_predicted_path{false};
+
+  // find adjacent lane vehicles
+  double safety_check_backward_distance{0.0};
+
+  // transit hysteresis (unsafe to safe)
+  size_t hysteresis_factor_safe_count;
+  double hysteresis_factor_expand_rate{0.0};
+
+  double collision_check_yaw_diff_threshold{3.1416};
+
+  bool consider_front_overhang{true};
+  bool consider_rear_overhang{true};
+
+  // maximum stop distance
+  double stop_max_distance{0.0};
+
+  // stop buffer
+  double stop_buffer{0.0};
+
+  // start avoidance after this time to avoid sudden path change
+  double min_prepare_time{0.0};
+  double max_prepare_time{0.0};
+
+  // Even if the vehicle speed is zero, avoidance will start after a distance of this much.
+  double min_prepare_distance{0.0};
+
+  // minimum slow down speed
+  double min_slow_down_speed{0.0};
+
+  // slow down speed buffer
+  double buf_slow_down_speed{0.0};
+
+  // nominal avoidance sped
+  double nominal_avoidance_speed{0.0};
+
+  // The margin is configured so that the generated avoidance trajectory does not come near to the
+  // road shoulder.
+  double soft_drivable_bound_margin{1.0};
+
+  // The margin is configured so that the generated avoidance trajectory does not come near to the
+  // road shoulder.
+  double hard_drivable_bound_margin{1.0};
+
+  // Even if the obstacle is very large, it will not avoid more than this length for right direction
+  double max_right_shift_length{0.0};
+
+  // Even if the obstacle is very large, it will not avoid more than this length for left direction
+  double max_left_shift_length{0.0};
+
+  // Validate vehicle departure from driving lane.
+  double max_deviation_from_lane{0.0};
+
+  // To prevent large acceleration while avoidance.
+  double max_lateral_acceleration{0.0};
+
+  // For the compensation of the detection lost. Once an object is observed, it is registered and
+  // will be used for planning from the next time. If the object is not observed, it counts up the
+  // lost_count and the registered object will be removed when the count exceeds this max count.
+  double object_last_seen_threshold{0.0};
+
+  // The avoidance path generation is performed when the shift distance of the
+  // avoidance points is greater than this threshold.
+  // In multiple targets case: if there are multiple vehicles in a row to be avoided, no new
+  // avoidance path will be generated unless their lateral margin difference exceeds this value.
+  double lateral_execution_threshold{0.0};
+
+  // shift lines whose shift length is less than threshold is added a request with other large shift
+  // line.
+  double lateral_small_shift_threshold{0.0};
+
+  // use for return shift approval.
+  double ratio_for_return_shift_approval{0.0};
+
+  // For shift line generation process. The continuous shift length is quantized by this value.
+  double quantize_size{0.0};
+
+  // For shift line generation process. Merge small shift lines. (First step)
+  double th_similar_grad_1{0.0};
+
+  // For shift line generation process. Merge small shift lines. (Second step)
+  double th_similar_grad_2{0.0};
+
+  // For shift line generation process. Merge small shift lines. (Third step)
+  double th_similar_grad_3{0.0};
+
+  // policy
+  bool use_shorten_margin_immediately{false};
+
+  // policy
+  std::string policy_approval{"per_shift_line"};
+
+  // policy
+  std::string policy_deceleration{"best_effort"};
+
+  // policy
+  std::string policy_lateral_margin{"best_effort"};
+
+  // path generation method.
+  std::string path_generation_method{"shift_line_base"};
+
+  // target velocity matrix
+  std::vector<double> velocity_map;
+
+  // Minimum lateral jerk limitation map.
+  std::vector<double> lateral_min_jerk_map;
+
+  // Maximum lateral jerk limitation map.
+  std::vector<double> lateral_max_jerk_map;
+
+  // Maximum lateral acceleration limitation map.
+  std::vector<double> lateral_max_accel_map;
+
+  // parameters depend on object class
+  std::unordered_map<uint8_t, ObjectParameter> object_parameters;
+
+  // ego predicted path params.
+  utils::path_safety_checker::EgoPredictedPathParams ego_predicted_path_params{};
+
+  // rss parameters
+  utils::path_safety_checker::RSSparams rss_params{};
+
+  // debug
+  bool enable_other_objects_marker{false};
+  bool enable_other_objects_info{false};
+  bool enable_detection_area_marker{false};
+  bool enable_drivable_bound_marker{false};
+  bool enable_safety_check_marker{false};
+  bool enable_shift_line_marker{false};
+  bool enable_lane_marker{false};
+  bool enable_misc_marker{false};
+
   // common
   bool enable_debug_info{true};
   bool use_hatched_road_markings{true};

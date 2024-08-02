@@ -14,6 +14,7 @@
 
 #include "autoware/behavior_path_dynamic_obstacle_avoidance_module/scene.hpp"
 
+#include "autoware/behavior_path_dynamic_obstacle_avoidance_module/utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
@@ -63,7 +64,8 @@ MinMaxValue combineMinMaxValues(const MinMaxValue & r1, const MinMaxValue & r2)
   return MinMaxValue{std::min(r1.min_value, r2.min_value), std::max(r1.max_value, r2.max_value)};
 }
 
-void appendObjectMarker(MarkerArray & marker_array, const geometry_msgs::msg::Pose & obj_pose)
+[[maybe_unused]] void appendObjectMarker(
+  MarkerArray & marker_array, const geometry_msgs::msg::Pose & obj_pose)
 {
   auto marker = autoware::universe_utils::createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "dynamic_objects_to_avoid",
@@ -75,7 +77,7 @@ void appendObjectMarker(MarkerArray & marker_array, const geometry_msgs::msg::Po
   marker_array.markers.push_back(marker);
 }
 
-void appendExtractedPolygonMarker(
+[[maybe_unused]] void appendExtractedPolygonMarker(
   MarkerArray & marker_array, const autoware::universe_utils::Polygon2d & obj_poly,
   const double obj_z)
 {
@@ -342,6 +344,7 @@ DynamicObstacleAvoidanceModule::DynamicObstacleAvoidanceModule(
 
 bool DynamicObstacleAvoidanceModule::isExecutionRequested() const
 {
+  std::cout << "DynamicObstacleAvoidanceModule::isExecutionRequested()" << std::endl;
   RCLCPP_DEBUG(getLogger(), "DYNAMIC AVOIDANCE isExecutionRequested.");
 
   const auto input_path = getPreviousModuleOutput().path;
@@ -372,6 +375,7 @@ bool DynamicObstacleAvoidanceModule::isExecutionReady() const
 
 void DynamicObstacleAvoidanceModule::updateData()
 {
+  std::cout << "DynamicObstacleAvoidanceModule::updateData()" << std::endl;
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   info_marker_.markers.clear();
@@ -391,6 +395,53 @@ void DynamicObstacleAvoidanceModule::updateData()
   determineWhetherToAvoidAgainstRegulatedObjects(prev_objects);
   determineWhetherToAvoidAgainstUnregulatedObjects(prev_objects);
 
+  // generate drivable lanes
+  std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
+
+  // generate drivable lanes
+  auto current_lanelets = utils::dynamic_obstacle_avoidance::getCurrentLanesFromPath(
+    getPreviousModuleOutput().reference_path, planner_data_);
+  //  std::for_each(
+  //    current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
+  //      current_drivable_area_info.drivable_lanes.push_back(
+  //        utils::dynamic_obstacle_avoidance::generateExpandedDrivableLanes(
+  //          lanelet, planner_data_, parameters_));
+  //    });
+
+  DrivableAreaInfo current_drivable_area_info;
+  BehaviorModuleOutput output;
+  output.path = getPreviousModuleOutput().path;
+  output.drivable_area_info = utils::combineDrivableAreaInfo(
+    current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+  output.reference_path = getPreviousModuleOutput().reference_path;
+  output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+  output.modified_goal = getPreviousModuleOutput().modified_goal;
+
+  {
+    // generate drivable lanes
+    std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
+      current_drivable_area_info.drivable_lanes.push_back(
+        utils::dynamic_obstacle_avoidance::generateExpandedDrivableLanes(
+          lanelet, planner_data_, parameters_));
+    });
+    // expand hatched road markings
+    current_drivable_area_info.enable_expanding_hatched_road_markings =
+      parameters_->use_hatched_road_markings;
+    // expand intersection areas
+    current_drivable_area_info.enable_expanding_intersection_areas =
+      parameters_->use_intersection_areas;
+    // expand freespace areas
+    current_drivable_area_info.enable_expanding_freespace_areas = parameters_->use_freespace_areas;
+    // generate obstacle polygons
+    current_drivable_area_info.obstacles.clear();
+    current_drivable_area_info.obstacles = obstacles_for_drivable_area;
+
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+
+    setDrivableLanes(output.drivable_area_info.drivable_lanes);
+  }
+
   const auto target_objects_candidate = target_objects_manager_.getValidObjects();
   target_objects_.clear();
   for (const auto & target_object_candidate : target_objects_candidate) {
@@ -407,6 +458,7 @@ bool DynamicObstacleAvoidanceModule::canTransitSuccessState()
 
 BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
 {
+  std::cout << "DynamicObstacleAvoidanceModule::plan()" << std::endl;
   const auto & input_path = getPreviousModuleOutput().path;
   if (input_path.points.empty()) {
     throw std::runtime_error("input path is empty");
@@ -416,36 +468,18 @@ BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
 
   // create obstacles to avoid (= extract from the drivable area)
   std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
-  for (const auto & object : target_objects_) {
-    const auto obstacle_poly = [&]() {
-      if (getObjectType(object.label) == ObjectType::UNREGULATED) {
-        return calcPredictedPathBasedDynamicObstaclePolygon(object, ego_path_reserve_poly);
-      }
 
-      if (parameters_->polygon_generation_method == PolygonGenerationMethod::EGO_PATH_BASE) {
-        return calcEgoPathBasedDynamicObstaclePolygon(object);
-      }
-      if (parameters_->polygon_generation_method == PolygonGenerationMethod::OBJECT_PATH_BASE) {
-        return calcObjectPathBasedDynamicObstaclePolygon(object);
-      }
-      throw std::logic_error("The polygon_generation_method's string is invalid.");
-    }();
-    if (obstacle_poly) {
-      obstacles_for_drivable_area.push_back(
-        {object.pose, obstacle_poly.value(), object.is_collision_left});
-
-      appendObjectMarker(info_marker_, object.pose);
-      appendExtractedPolygonMarker(debug_marker_, obstacle_poly.value(), object.pose.position.z);
-    }
-  }
+  // generate drivable lanes
+  auto current_lanelets = utils::dynamic_obstacle_avoidance::getCurrentLanesFromPath(
+    getPreviousModuleOutput().reference_path, planner_data_);
+  //  std::for_each(
+  //    current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
+  //      current_drivable_area_info.drivable_lanes.push_back(
+  //        utils::dynamic_obstacle_avoidance::generateExpandedDrivableLanes(
+  //          lanelet, planner_data_, parameters_));
+  //    });
 
   DrivableAreaInfo current_drivable_area_info;
-  current_drivable_area_info.drivable_lanes =
-    getPreviousModuleOutput().drivable_area_info.drivable_lanes;
-  current_drivable_area_info.obstacles = obstacles_for_drivable_area;
-  current_drivable_area_info.enable_expanding_hatched_road_markings =
-    parameters_->use_hatched_road_markings;
-
   BehaviorModuleOutput output;
   output.path = input_path;
   output.drivable_area_info = utils::combineDrivableAreaInfo(
@@ -454,6 +488,53 @@ BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
   output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   output.modified_goal = getPreviousModuleOutput().modified_goal;
 
+  {
+    // generate drivable lanes
+    std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
+      current_drivable_area_info.drivable_lanes.push_back(
+        utils::dynamic_obstacle_avoidance::generateExpandedDrivableLanes(
+          lanelet, planner_data_, parameters_));
+    });
+    // expand hatched road markings
+    current_drivable_area_info.enable_expanding_hatched_road_markings =
+      parameters_->use_hatched_road_markings;
+    // expand intersection areas
+    current_drivable_area_info.enable_expanding_intersection_areas =
+      parameters_->use_intersection_areas;
+    // expand freespace areas
+    current_drivable_area_info.enable_expanding_freespace_areas = parameters_->use_freespace_areas;
+    // generate obstacle polygons
+    current_drivable_area_info.obstacles.clear();
+
+    for (const auto & object : target_objects_) {
+      const auto obstacle_poly = [&]() {
+        if (getObjectType(object.label) == ObjectType::UNREGULATED) {
+          return calcPredictedPathBasedDynamicObstaclePolygon(object, ego_path_reserve_poly);
+        }
+
+        if (parameters_->polygon_generation_method == PolygonGenerationMethod::EGO_PATH_BASE) {
+          return calcEgoPathBasedDynamicObstaclePolygon(object);
+        }
+        if (parameters_->polygon_generation_method == PolygonGenerationMethod::OBJECT_PATH_BASE) {
+          return calcObjectPathBasedDynamicObstaclePolygon(object);
+        }
+        throw std::logic_error("The polygon_generation_method's string is invalid.");
+      }();
+      if (obstacle_poly) {
+        obstacles_for_drivable_area.push_back(
+          {object.pose, obstacle_poly.value(), object.is_collision_left});
+
+        appendObjectMarker(info_marker_, object.pose);
+        appendExtractedPolygonMarker(debug_marker_, obstacle_poly.value(), object.pose.position.z);
+      }
+    }
+    current_drivable_area_info.obstacles = obstacles_for_drivable_area;
+
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+
+    setDrivableLanes(output.drivable_area_info.drivable_lanes);
+  }
   return output;
 }
 
@@ -465,10 +546,51 @@ CandidateOutput DynamicObstacleAvoidanceModule::planCandidate() const
 
 BehaviorModuleOutput DynamicObstacleAvoidanceModule::planWaitingApproval()
 {
-  BehaviorModuleOutput out = plan();
-  return out;
-}
+  auto current_lanelets = utils::dynamic_obstacle_avoidance::getCurrentLanesFromPath(
+    getPreviousModuleOutput().reference_path, planner_data_);
+  //  std::for_each(
+  //    current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
+  //      current_drivable_area_info.drivable_lanes.push_back(
+  //        utils::dynamic_obstacle_avoidance::generateExpandedDrivableLanes(
+  //          lanelet, planner_data_, parameters_));
+  //    });
 
+  DrivableAreaInfo current_drivable_area_info;
+  BehaviorModuleOutput output;
+  output.path = getPreviousModuleOutput().path;
+  output.drivable_area_info = utils::combineDrivableAreaInfo(
+    current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+  output.reference_path = getPreviousModuleOutput().reference_path;
+  output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+  output.modified_goal = getPreviousModuleOutput().modified_goal;
+
+  {
+    // generate drivable lanes
+    std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
+      current_drivable_area_info.drivable_lanes.push_back(
+        utils::dynamic_obstacle_avoidance::generateExpandedDrivableLanes(
+          lanelet, planner_data_, parameters_));
+    });
+    // expand hatched road markings
+    current_drivable_area_info.enable_expanding_hatched_road_markings =
+      parameters_->use_hatched_road_markings;
+    // expand intersection areas
+    current_drivable_area_info.enable_expanding_intersection_areas =
+      parameters_->use_intersection_areas;
+    // expand freespace areas
+    current_drivable_area_info.enable_expanding_freespace_areas = parameters_->use_freespace_areas;
+    // generate obstacle polygons
+    current_drivable_area_info.obstacles.clear();
+
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+
+    setDrivableLanes(output.drivable_area_info.drivable_lanes);
+    BehaviorModuleOutput out = plan();
+
+    return out;
+  }
+}
 ObjectType DynamicObstacleAvoidanceModule::getObjectType(const uint8_t label) const
 {
   using autoware_perception_msgs::msg::ObjectClassification;

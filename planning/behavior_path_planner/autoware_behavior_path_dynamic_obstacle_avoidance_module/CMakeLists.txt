@@ -8,6 +8,7 @@ pluginlib_export_plugin_description_file(autoware_behavior_path_planner plugins.
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/scene.cpp
   src/manager.cpp
+  src/utils.cpp
 )
 
 if(BUILD_TESTING)
