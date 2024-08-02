@@ -626,12 +626,12 @@ private:
 // We use Vector2d to represent points, but we do not name the class Point2d directly
 // as it has some vector operation functions.
 using Point2d = Vector2d;
-using PointList = std::vector<Point2d>;
+using Points2d = std::vector<Point2d>;
 
 class ConvexPolygon2d
 {
 public:
-  explicit ConvexPolygon2d(const PointList & vertices)
+  explicit ConvexPolygon2d(const Points2d & vertices)
   {
     if (vertices.size() < 3) {
       throw std::invalid_argument("At least 3 points are required for vertices.");
@@ -639,7 +639,7 @@ public:
     vertices_ = vertices;
   }
 
-  explicit ConvexPolygon2d(PointList && vertices)
+  explicit ConvexPolygon2d(Points2d && vertices)
   {
     if (vertices.size() < 3) {
       throw std::invalid_argument("At least 3 points are required for vertices.");
@@ -647,12 +647,12 @@ public:
     vertices_ = std::move(vertices);
   }
 
-  const PointList & vertices() const { return vertices_; }
+  const Points2d & vertices() const { return vertices_; }
 
-  PointList & vertices() { return vertices_; }
+  Points2d & vertices() { return vertices_; }
 
 private:
-  PointList vertices_;
+  Points2d vertices_;
 };
 
 inline Vector2d operator+(const Vector2d & v1, const Vector2d & v2)
@@ -688,7 +688,7 @@ autoware::universe_utils::Polygon2d to_boost(const ConvexPolygon2d & polygon);
 
 double area(const alt::ConvexPolygon2d & poly);
 
-alt::ConvexPolygon2d convex_hull(const alt::PointList & points);
+alt::ConvexPolygon2d convex_hull(const alt::Points2d & points);
 
 void correct(alt::ConvexPolygon2d & poly);
 

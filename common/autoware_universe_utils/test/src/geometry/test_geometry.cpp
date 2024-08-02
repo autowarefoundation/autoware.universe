@@ -2014,10 +2014,10 @@ TEST(geometry, area)
 TEST(geometry, convexHull)
 {
   using autoware::universe_utils::convex_hull;
-  using autoware::universe_utils::alt::PointList;
+  using autoware::universe_utils::alt::Points2d;
 
   {
-    PointList points;
+    Points2d points;
     points.push_back({2.0, 1.3});
     points.push_back({2.4, 1.7});
     points.push_back({2.8, 1.8});
@@ -2053,10 +2053,10 @@ TEST(geometry, correct)
 {
   using autoware::universe_utils::correct;
   using autoware::universe_utils::alt::ConvexPolygon2d;
-  using autoware::universe_utils::alt::PointList;
+  using autoware::universe_utils::alt::Points2d;
 
   {  // Correctly oriented
-    PointList vertices;
+    Points2d vertices;
     vertices.push_back({1.0, 1.0});
     vertices.push_back({1.0, -1.0});
     vertices.push_back({-1.0, -1.0});
@@ -2075,7 +2075,7 @@ TEST(geometry, correct)
   }
 
   {  // Wrongly oriented
-    PointList vertices;
+    Points2d vertices;
     vertices.push_back({1.0, 1.0});
     vertices.push_back({-1.0, 1.0});
     vertices.push_back({1.0, -1.0});

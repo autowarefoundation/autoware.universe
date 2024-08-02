@@ -406,7 +406,7 @@ Point2d from_boost(const autoware::universe_utils::Point2d & point)
 
 ConvexPolygon2d from_boost(const autoware::universe_utils::Polygon2d & polygon)
 {
-  PointList points;
+  Points2d points;
   for (const auto & point : polygon.outer()) {
     points.push_back(from_boost(point));
   }
@@ -443,7 +443,7 @@ double area(const alt::ConvexPolygon2d & poly)
   return area;
 }
 
-alt::ConvexPolygon2d convex_hull(const alt::PointList & points)
+alt::ConvexPolygon2d convex_hull(const alt::Points2d & points)
 {
   if (points.size() < 3) {
     throw std::invalid_argument("At least 3 points are required for calculating convex hull.");
@@ -456,7 +456,7 @@ alt::ConvexPolygon2d convex_hull(const alt::PointList & points)
   const auto & p_min = *p_minmax_itr.first;
   const auto & p_max = *p_minmax_itr.second;
 
-  alt::PointList vertices;
+  alt::Points2d vertices;
 
   if (points.size() == 3) {
     std::rotate_copy(
@@ -464,7 +464,7 @@ alt::ConvexPolygon2d convex_hull(const alt::PointList & points)
   } else {
     auto make_hull = [&vertices](
                        auto self, const alt::Point2d & p1, const alt::Point2d & p2,
-                       const alt::PointList & points) {
+                       const alt::Points2d & points) {
       if (points.empty()) {
         return;
       }
@@ -475,7 +475,7 @@ alt::ConvexPolygon2d convex_hull(const alt::PointList & points)
           return seg_vec.cross(a - p1) < seg_vec.cross(b - p1);
         });
 
-      alt::PointList subset1, subset2;
+      alt::Points2d subset1, subset2;
       for (const auto & point : points) {
         if (is_above(point, p1, farthest)) {
           subset1.push_back(point);
@@ -489,7 +489,7 @@ alt::ConvexPolygon2d convex_hull(const alt::PointList & points)
       self(self, farthest, p2, subset2);
     };
 
-    alt::PointList above_points, below_points;
+    alt::Points2d above_points, below_points;
     for (const auto & point : points) {
       if (is_above(point, p_min, p_max)) {
         above_points.push_back(point);
