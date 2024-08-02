@@ -164,7 +164,11 @@ struct PossibleCollisionInfo
   Pose intersection_pose;                              // For egp path and hidden obstacle
   lanelet::ArcCoordinates arc_lane_dist_at_collision;  // For ego distance to obstacle in s-d
   PossibleCollisionInfo()
-    : obstacle_info(), collision_with_margin(), collision_pose(), intersection_pose(), arc_lane_dist_at_collision()
+  : obstacle_info(),
+    collision_with_margin(),
+    collision_pose(),
+    intersection_pose(),
+    arc_lane_dist_at_collision()
   {
   }
   PossibleCollisionInfo(
