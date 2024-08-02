@@ -197,6 +197,7 @@
       "required" : ["adaptive_cruise_control"],
       "additionalProperties": false
       }
+    }
   },
   "properties": {
     "/**": {
