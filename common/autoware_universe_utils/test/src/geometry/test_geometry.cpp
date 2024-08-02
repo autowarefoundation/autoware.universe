@@ -2031,7 +2031,7 @@ TEST(geometry, convexHull)
     points.push_back({2.9, 0.7});
     const auto result = convex_hull(points);
 
-    EXPECT_EQ(result.vertices().size(), 7);
+    ASSERT_EQ(result.vertices().size(), 7);
     EXPECT_NEAR(result.vertices().at(0).x(), 2.0, epsilon);
     EXPECT_NEAR(result.vertices().at(0).y(), 1.3, epsilon);
     EXPECT_NEAR(result.vertices().at(1).x(), 2.4, epsilon);
@@ -2064,6 +2064,7 @@ TEST(geometry, correct)
     ConvexPolygon2d poly(vertices);
     correct(poly);
 
+    ASSERT_EQ(poly.vertices().size(), 4);
     EXPECT_NEAR(poly.vertices().at(0).x(), 1.0, epsilon);
     EXPECT_NEAR(poly.vertices().at(0).y(), 1.0, epsilon);
     EXPECT_NEAR(poly.vertices().at(1).x(), 1.0, epsilon);
@@ -2083,6 +2084,7 @@ TEST(geometry, correct)
     ConvexPolygon2d poly(vertices);
     correct(poly);
 
+    ASSERT_EQ(poly.vertices().size(), 4);
     EXPECT_NEAR(poly.vertices().at(0).x(), 1.0, epsilon);
     EXPECT_NEAR(poly.vertices().at(0).y(), 1.0, epsilon);
     EXPECT_NEAR(poly.vertices().at(1).x(), 1.0, epsilon);
@@ -2697,7 +2699,9 @@ TEST(geometry, convexHullRand)
         std::cout << "Alt failed for the polygon: ";
         std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
       }
-      EXPECT_EQ(ground_truth.outer().size() - 1, alt.vertices().size());
+      ASSERT_EQ(
+        ground_truth.outer().size() - 1,
+        alt.vertices().size());  // alt::ConvexPolygon2d does not have closing point
       for (size_t i = 0; i < alt.vertices().size(); ++i) {
         EXPECT_NEAR(ground_truth.outer().at(i).x(), alt.vertices().at(i).x(), epsilon);
         EXPECT_NEAR(ground_truth.outer().at(i).y(), alt.vertices().at(i).y(), epsilon);
