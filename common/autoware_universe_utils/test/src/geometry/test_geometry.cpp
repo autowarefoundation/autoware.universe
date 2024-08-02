@@ -2012,10 +2012,10 @@ TEST(geometry, correct)
 {
   using autoware::universe_utils::correct;
   using autoware::universe_utils::alt::ConvexPolygon2d;
-  using autoware::universe_utils::alt::PointList;
+  using autoware::universe_utils::alt::Points2d;
 
   {  // Correctly oriented
-    PointList vertices;
+    Points2d vertices;
     vertices.push_back({1.0, 1.0});
     vertices.push_back({1.0, -1.0});
     vertices.push_back({-1.0, -1.0});
@@ -2034,7 +2034,7 @@ TEST(geometry, correct)
   }
 
   {  // Wrongly oriented
-    PointList vertices;
+    Points2d vertices;
     vertices.push_back({1.0, 1.0});
     vertices.push_back({-1.0, 1.0});
     vertices.push_back({1.0, -1.0});

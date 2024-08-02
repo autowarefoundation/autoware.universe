@@ -406,7 +406,7 @@ Point2d from_boost(const autoware::universe_utils::Point2d & point)
 
 ConvexPolygon2d from_boost(const autoware::universe_utils::Polygon2d & polygon)
 {
-  PointList points;
+  Points2d points;
   for (const auto & point : polygon.outer()) {
     points.push_back(from_boost(point));
   }
