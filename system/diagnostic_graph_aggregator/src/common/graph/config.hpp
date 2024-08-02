@@ -18,10 +18,10 @@
 #include "data.hpp"
 #include "types.hpp"
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
-#include <limits>
 
 namespace diagnostic_graph_aggregator
 {
