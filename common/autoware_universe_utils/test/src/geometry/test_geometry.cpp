@@ -2023,6 +2023,7 @@ TEST(geometry, correct)
     ConvexPolygon2d poly(vertices);
     correct(poly);
 
+    ASSERT_EQ(poly.vertices().size(), 4);
     EXPECT_NEAR(poly.vertices().at(0).x(), 1.0, epsilon);
     EXPECT_NEAR(poly.vertices().at(0).y(), 1.0, epsilon);
     EXPECT_NEAR(poly.vertices().at(1).x(), 1.0, epsilon);
@@ -2042,6 +2043,7 @@ TEST(geometry, correct)
     ConvexPolygon2d poly(vertices);
     correct(poly);
 
+    ASSERT_EQ(poly.vertices().size(), 4);
     EXPECT_NEAR(poly.vertices().at(0).x(), 1.0, epsilon);
     EXPECT_NEAR(poly.vertices().at(0).y(), 1.0, epsilon);
     EXPECT_NEAR(poly.vertices().at(1).x(), 1.0, epsilon);
