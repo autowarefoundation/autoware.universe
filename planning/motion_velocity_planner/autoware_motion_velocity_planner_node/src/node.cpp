@@ -178,7 +178,7 @@ bool MotionVelocityPlannerNode::update_planner_data()
 
   // optional data
   if (planner_data_.route_handler) {
-    const auto route_ptr = route_subscriber_.takeNewData();
+    const auto route_ptr = route_subscriber_.takeData();
     if (route_ptr) {
       planner_data_.route_handler->setRoute(*route_ptr);
     }
@@ -400,10 +400,10 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   stop_watch.tic("time_from_start");
   motion_utils::calculate_time_from_start(
     resampled_trajectory.points, planner_data_.current_odometry.pose.pose.position);
-  RCLCPP_WARN(get_logger(), "time_from_start: %2.2f us", stop_watch.toc("time_from_start"));
+  // RCLCPP_WARN(get_logger(), "time_from_start: %2.2f us", stop_watch.toc("time_from_start"));
   stop_watch.tic("collision_checker");
   planner_data_.reset_collision_checker(resampled_trajectory.points);
-  RCLCPP_WARN(get_logger(), "collision_checker: %2.2f us", stop_watch.toc("collision_checker"));
+  // RCLCPP_WARN(get_logger(), "collision_checker: %2.2f us", stop_watch.toc("collision_checker"));
   // TODO(Maxime): remove debug markers or move to separate function
   visualization_msgs::msg::MarkerArray markers;
   visualization_msgs::msg::Marker marker;
@@ -439,8 +439,8 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   //   }
   //   planner_data_.collision_time_ranges_per_object.push_back(collision_time_ranges);
   // }
-  RCLCPP_WARN(
-    get_logger(), "collision_time_ranges: %2.2f us\n", stop_watch.toc("collision_time_ranges"));
+  // RCLCPP_WARN(
+  //   get_logger(), "collision_time_ranges: %2.2f us\n", stop_watch.toc("collision_time_ranges"));
   debug_viz_pub_->publish(markers);
 
   const auto planning_results = planner_manager_.plan_velocities(

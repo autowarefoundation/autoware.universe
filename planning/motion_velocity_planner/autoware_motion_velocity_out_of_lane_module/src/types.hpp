@@ -49,7 +49,6 @@ struct PlannerParam
 
   double time_threshold;  // [s](mode="threshold") objects time threshold
   double ttc_threshold;  // [s](mode="ttc") threshold on time to collision between ego and an object
-  double ego_min_velocity;  // [m/s] minimum velocity of ego used to calculate its ttc or time range
 
   bool objects_cut_predicted_paths_beyond_red_lights;  // whether to cut predicted paths beyond red
                                                        // lights' stop lines
@@ -61,14 +60,17 @@ struct PlannerParam
 
   double overlap_extra_length;  // [m] extra length to add around an overlap range
   double overlap_min_dist;      // [m] min distance inside another lane to consider an overlap
-  // action to insert in the trajectory if an object causes a conflict at an overlap
-  bool skip_if_over_max_decel;  // if true, skip the action if it causes more than the max decel
-  double lon_dist_buffer;       // [m] safety distance buffer to keep in front of the ego vehicle
-  double lat_dist_buffer;       // [m] safety distance buffer to keep on the side of the ego vehicle
-  double slow_velocity;
-  double stop_dist_threshold;
-  double precision;              // [m] precision when inserting a stop pose in the trajectory
-  double min_decision_duration;  // [s] minimum duration needed a decision can be canceled
+
+  // action to insert in the trajectory if an object causes a collision at an overlap
+  double lon_dist_buffer;      // [m] safety distance buffer to keep in front of the ego vehicle
+  double lat_dist_buffer;      // [m] safety distance buffer to keep on the side of the ego vehicle
+  double slow_velocity;        // [m/s] slowdown velocity
+  double stop_dist_threshold;  // [m] if a collision is detected bellow this distance ahead of ego,
+                               // try to insert a stop point
+  double precision;            // [m] precision when inserting a stop pose in the trajectory
+  double
+    min_decision_duration;  // [s] duration needed before a stop or slowdown point can be removed
+
   // ego dimensions used to create its polygon footprint
   double front_offset;        // [m]  front offset (from vehicle info)
   double rear_offset;         // [m]  rear offset (from vehicle info)
@@ -79,8 +81,10 @@ struct PlannerParam
   double extra_right_offset;  // [m] extra right distance
   double extra_left_offset;   // [m] extra left distance
 
-  bool use_route_to_get_route_lanelets = true;  // TODO(Maxime): param
-  double max_arc_length = 100.0;                // TODO(Maxime): param
+  bool use_route_to_get_route_lanelets = true;  // TODO(Maxime): param  [-] if true, the route is
+                                                // used to calculate the trajectory lanelets
+  double max_arc_length = 100.0;  // TODO(Maxime): param  [m] maximum arc length along the
+                                  // trajectory to check for collision
 };
 
 namespace bgi = boost::geometry::index;

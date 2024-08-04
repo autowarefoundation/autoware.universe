@@ -20,9 +20,13 @@
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
+#include <geometry_msgs/msg/detail/pose__struct.hpp>
+
 #include <boost/geometry/algorithms/disjoint.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
+
+#include <optional>
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
@@ -43,7 +47,25 @@ std::optional<geometry_msgs::msg::Pose> calculate_last_in_lane_pose(
     const auto interpolated_footprint = project_to_pose(footprint, interpolated_pose);
     const auto is_inside_ego_lane =
       boost::geometry::within(interpolated_footprint, ego_data.drivable_lane_polygons);
-    if (is_inside_ego_lane) return interpolated_pose;
+    if (is_inside_ego_lane) {
+      return interpolated_pose;
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<geometry_msgs::msg::Pose> calculate_first_slowdown_point(
+  const EgoData & ego_data, const std::vector<OutOfLanePoint> & out_of_lane_points,
+  const universe_utils::Polygon2d & footprint, const PlannerParam & params)
+{
+  for (const auto & out_of_lane_point : out_of_lane_points) {
+    if (out_of_lane_point.to_avoid) {
+      const auto last_in_lane_pose =
+        calculate_last_in_lane_pose(ego_data, out_of_lane_point, footprint, params);
+      if (last_in_lane_pose) {
+        return last_in_lane_pose;
+      }
+    }
   }
   return std::nullopt;
 }
@@ -51,21 +73,28 @@ std::optional<geometry_msgs::msg::Pose> calculate_last_in_lane_pose(
 std::optional<geometry_msgs::msg::Pose> calculate_slowdown_point(
   const EgoData & ego_data, const OutOfLaneData & out_of_lane_data, PlannerParam params)
 {
+  const auto raw_footprint = make_base_footprint(params, true);  // ignore extra footprint offsets
+  const auto base_footprint = make_base_footprint(params);
   params.extra_front_offset += params.lon_dist_buffer;
   params.extra_right_offset += params.lat_dist_buffer;
   params.extra_left_offset += params.lat_dist_buffer;
-  const auto base_footprint = make_base_footprint(params);
+  const auto expanded_footprint = make_base_footprint(params);  // with added distance buffers
 
+  std::optional<geometry_msgs::msg::Pose> slowdown_point;
   // search for the first slowdown decision for which a stop point can be inserted
-  for (const auto & out_of_lane_point : out_of_lane_data.outside_points) {
-    if (out_of_lane_point.to_avoid) {
-      const auto last_in_lane_pose =
-        calculate_last_in_lane_pose(ego_data, out_of_lane_point, base_footprint, params);
-      if (last_in_lane_pose) {
-        return last_in_lane_pose;
-      }
-    }
+  // we first try to use the expanded footprint (distance buffers + extra footprint offsets)
+  slowdown_point = calculate_first_slowdown_point(
+    ego_data, out_of_lane_data.outside_points, expanded_footprint, params);
+  if (!slowdown_point) {
+    // fallback to using the base footprint (only extra footprint offsets)
+    slowdown_point = calculate_first_slowdown_point(
+      ego_data, out_of_lane_data.outside_points, base_footprint, params);
   }
-  return std::nullopt;
+  if (!slowdown_point) {
+    // fallback to using the raw footprint (no distance buffer and no extra offsets)
+    slowdown_point = calculate_first_slowdown_point(
+      ego_data, out_of_lane_data.outside_points, raw_footprint, params);
+  }
+  return slowdown_point;
 }
 }  // namespace autoware::motion_velocity_planner::out_of_lane

@@ -89,8 +89,6 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
   pp.ttc_threshold = getOrDeclareParameter<double>(node, ns_ + ".ttc.threshold");
 
   pp.objects_min_vel = getOrDeclareParameter<double>(node, ns_ + ".objects.minimum_velocity");
-  pp.objects_use_predicted_paths =
-    getOrDeclareParameter<bool>(node, ns_ + ".objects.use_predicted_paths");
   pp.objects_min_confidence =
     getOrDeclareParameter<double>(node, ns_ + ".objects.predicted_path_min_confidence");
   pp.objects_dist_buffer = getOrDeclareParameter<double>(node, ns_ + ".objects.distance_buffer");
@@ -111,7 +109,6 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
   pp.stop_dist_threshold =
     getOrDeclareParameter<double>(node, ns_ + ".action.stop.distance_threshold");
 
-  pp.ego_min_velocity = getOrDeclareParameter<double>(node, ns_ + ".ego.min_assumed_velocity");
   pp.extra_front_offset = getOrDeclareParameter<double>(node, ns_ + ".ego.extra_front_offset");
   pp.extra_rear_offset = getOrDeclareParameter<double>(node, ns_ + ".ego.extra_rear_offset");
   pp.extra_left_offset = getOrDeclareParameter<double>(node, ns_ + ".ego.extra_left_offset");
@@ -134,7 +131,6 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(parameters, ns_ + ".ttc.threshold", pp.ttc_threshold);
 
   updateParam(parameters, ns_ + ".objects.minimum_velocity", pp.objects_min_vel);
-  updateParam(parameters, ns_ + ".objects.use_predicted_paths", pp.objects_use_predicted_paths);
   updateParam(
     parameters, ns_ + ".objects.predicted_path_min_confidence", pp.objects_min_confidence);
   updateParam(parameters, ns_ + ".objects.distance_buffer", pp.objects_dist_buffer);
@@ -152,7 +148,6 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(parameters, ns_ + ".action.slowdown.velocity", pp.slow_velocity);
   updateParam(parameters, ns_ + ".action.stop.distance_threshold", pp.stop_dist_threshold);
 
-  updateParam(parameters, ns_ + ".ego.min_assumed_velocity", pp.ego_min_velocity);
   updateParam(parameters, ns_ + ".ego.extra_front_offset", pp.extra_front_offset);
   updateParam(parameters, ns_ + ".ego.extra_rear_offset", pp.extra_rear_offset);
   updateParam(parameters, ns_ + ".ego.extra_left_offset", pp.extra_left_offset);
@@ -299,11 +294,6 @@ VelocityPlanningResult OutOfLaneModule::plan(
   if (  // reset the previous inserted point if the timer expired
     previous_slowdown_pose_ &&
     (clock_->now() - previous_slowdown_time_).seconds() > params_.min_decision_duration) {
-    RCLCPP_WARN(
-      logger_, "%s - %s = %s", std::to_string(clock_->now().seconds()).c_str(),
-      std::to_string(previous_slowdown_time_.seconds()).c_str(),
-      std::to_string((clock_->now() - previous_slowdown_time_).seconds()).c_str());
-    RCLCPP_WARN(logger_, "reset prev_pose");
     previous_slowdown_pose_.reset();
   }
 
@@ -313,7 +303,6 @@ VelocityPlanningResult OutOfLaneModule::plan(
 
   if (  // reset the timer if there is no previous inserted point
     slowdown_pose && (!previous_slowdown_pose_)) {
-    RCLCPP_WARN(logger_, "reset timer");
     previous_slowdown_time_ = clock_->now();
   }
   // reuse previous stop pose if there is no new one or if its velocity is not higher than the new
