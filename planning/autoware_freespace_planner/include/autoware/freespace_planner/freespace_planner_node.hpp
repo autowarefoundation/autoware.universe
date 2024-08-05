@@ -111,10 +111,10 @@ private:
 
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_sub_;
 
-  autoware::universe_utils::InterProcessPollingSubscriber<OccupancyGrid>
-    occupancy_grid_sub_{this, "~/input/occupancy_grid"};
-  autoware::universe_utils::InterProcessPollingSubscriber<Scenario>
-    scenario_sub_{this, "~/input/scenario"};
+  autoware::universe_utils::InterProcessPollingSubscriber<OccupancyGrid> occupancy_grid_sub_{
+    this, "~/input/occupancy_grid"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Scenario> scenario_sub_{
+    this, "~/input/scenario"};
   autoware::universe_utils::InterProcessPollingSubscriber<
     Odometry, autoware::universe_utils::polling_policy::All>
     odom_sub_{this, "~/input/odometry", rclcpp::QoS{100}};
