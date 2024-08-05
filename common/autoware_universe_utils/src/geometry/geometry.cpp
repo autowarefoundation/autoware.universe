@@ -390,4 +390,224 @@ bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & conv
   return gjk::intersects(convex_polygon1, convex_polygon2);
 }
 
+// Alternatives for Boost.Geometry ----------------------------------------------------------------
+
+namespace alt
+{
+Point2d from_geom(const geometry_msgs::msg::Point & point)
+{
+  return {point.x, point.y};
+}
+
+Point2d from_boost(const autoware::universe_utils::Point2d & point)
+{
+  return {point.x(), point.y()};
+}
+
+ConvexPolygon2d from_boost(const autoware::universe_utils::Polygon2d & polygon)
+{
+  Points2d points;
+  for (const auto & point : polygon.outer()) {
+    points.push_back(from_boost(point));
+  }
+
+  ConvexPolygon2d _polygon(points);
+  correct(_polygon);
+  return _polygon;
+}
+
+autoware::universe_utils::Point2d to_boost(const Point2d & point)
+{
+  return {point.x(), point.y()};
+}
+
+autoware::universe_utils::Polygon2d to_boost(const ConvexPolygon2d & polygon)
+{
+  autoware::universe_utils::Polygon2d _polygon;
+  for (const auto & vertex : polygon.vertices()) {
+    _polygon.outer().push_back(to_boost(vertex));
+  }
+  return _polygon;
+}
+}  // namespace alt
+
+double area(const alt::ConvexPolygon2d & poly)
+{
+  const auto & vertices = poly.vertices();
+
+  double area = 0.;
+  for (size_t i = 1; i < vertices.size() - 1; ++i) {
+    area += (vertices[i + 1] - vertices.front()).cross(vertices[i] - vertices.front()) / 2;
+  }
+
+  return area;
+}
+
+void correct(alt::ConvexPolygon2d & poly)
+{
+  auto & vertices = poly.vertices();
+
+  // sort points in clockwise order with respect to the first point
+  std::sort(vertices.begin() + 1, vertices.end(), [&](const auto & a, const auto & b) {
+    return (a - vertices.front()).cross(b - vertices.front()) < 0;
+  });
+
+  if (equals(vertices.front(), vertices.back())) {
+    vertices.pop_back();
+  }
+}
+
+bool equals(const alt::Point2d & point1, const alt::Point2d & point2)
+{
+  constexpr double epsilon = 1e-3;
+  return std::abs(point1.x() - point2.x()) < epsilon && std::abs(point1.y() - point2.y()) < epsilon;
+}
+
+bool equals(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
+{
+  return std::all_of(poly1.vertices().begin(), poly1.vertices().end(), [&](const auto & a) {
+    return std::any_of(poly2.vertices().begin(), poly2.vertices().end(), [&](const auto & b) {
+      return equals(a, b);
+    });
+  });
+}
+
+bool intersects(
+  const alt::Point2d & seg1_start, const alt::Point2d & seg1_end, const alt::Point2d & seg2_start,
+  const alt::Point2d & seg2_end)
+{
+  constexpr double epsilon = 1e-6;
+
+  const auto v1 = seg1_end - seg1_start;
+  const auto v2 = seg2_end - seg2_start;
+
+  const auto det = v1.cross(v2);
+  if (std::abs(det) < epsilon) {
+    return false;
+  }
+
+  const auto v12 = seg2_end - seg1_end;
+  const double t = v2.cross(v12) / det;
+  const double s = v1.cross(v12) / det;
+  if (t < 0 || 1 < t || s < 0 || 1 < s) {
+    return false;
+  }
+
+  return true;
+}
+
+bool intersects(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
+{
+  if (equals(poly1, poly2)) {
+    return true;
+  }
+
+  // GJK algorithm
+
+  auto find_support_vector = [](
+                               const alt::ConvexPolygon2d & poly1,
+                               const alt::ConvexPolygon2d & poly2,
+                               const alt::Vector2d & direction) {
+    auto find_farthest_vertex =
+      [](const alt::ConvexPolygon2d & poly, const alt::Vector2d & direction) {
+        return std::max_element(
+          poly.vertices().begin(), poly.vertices().end(),
+          [&](const auto & a, const auto & b) { return direction.dot(a) <= direction.dot(b); });
+      };
+    return *find_farthest_vertex(poly1, direction) - *find_farthest_vertex(poly2, -direction);
+  };
+
+  alt::Vector2d direction = {1.0, 0.0};
+  auto a = find_support_vector(poly1, poly2, direction);
+  direction = -a;
+  auto b = find_support_vector(poly1, poly2, direction);
+  if (b.dot(direction) <= 0.0) {
+    return false;
+  }
+
+  direction = (b - a).vector_triple(-a, b - a);
+  while (true) {
+    auto c = find_support_vector(poly1, poly2, direction);
+    if (c.dot(direction) <= 0.0) {
+      return false;
+    }
+
+    auto n_ca = (b - c).vector_triple(a - c, a - c);
+    if (n_ca.dot(-c) > 0.0) {
+      b = c;
+      direction = n_ca;
+    } else {
+      auto n_cb = (a - c).vector_triple(b - c, b - c);
+      if (n_cb.dot(-c) > 0.0) {
+        a = c;
+        direction = n_cb;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
+{
+  constexpr double epsilon = 1e-6;
+
+  const auto & vertices = poly.vertices();
+  const auto num_of_vertices = vertices.size();
+  int64_t winding_number = 0;
+
+  const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
+    vertices.begin(), vertices.end(), [](const auto & a, const auto & b) { return a.y() < b.y(); });
+  if (point.y() <= y_min_vertex->y() || point.y() >= y_max_vertex->y()) {
+    return false;
+  }
+
+  double cross;
+  for (size_t i = 0; i < num_of_vertices; ++i) {
+    const auto & p1 = vertices[i];
+    const auto & p2 = vertices[(i + 1) % num_of_vertices];
+
+    if (p1.y() < point.y() && p2.y() > point.y()) {  // upward edge
+      cross = (p2 - p1).cross(point - p1);
+      if (cross > 0) {  // point is to the left of edge
+        winding_number++;
+        continue;
+      }
+    } else if (p1.y() > point.y() && p2.y() < point.y()) {  // downward edge
+      cross = (p2 - p1).cross(point - p1);
+      if (cross < 0) {  // point is to the left of edge
+        winding_number--;
+        continue;
+      }
+    } else {
+      continue;
+    }
+
+    if (std::abs(cross) < epsilon) {  // point is on edge
+      return false;
+    }
+  }
+
+  return winding_number != 0;
+}
+
+bool within(
+  const alt::ConvexPolygon2d & poly_contained, const alt::ConvexPolygon2d & poly_containing)
+{
+  if (equals(poly_contained, poly_containing)) {
+    return true;
+  }
+
+  // check if all points of poly_contained are within poly_containing
+  for (const auto & vertex : poly_contained.vertices()) {
+    if (!within(vertex, poly_containing)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 }  // namespace autoware::universe_utils
