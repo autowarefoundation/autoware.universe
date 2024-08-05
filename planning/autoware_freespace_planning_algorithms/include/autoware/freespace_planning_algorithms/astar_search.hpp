@@ -157,6 +157,10 @@ private:
   double min_expansion_dist_;
   double max_expansion_dist_;
 
+  // the following constexpr values were found to be best by trial and error, through multiple
+  // tests, and are not expected to be changed regularly, therefore they were not made into ros
+  // parameters.
+
   // expansion distance factors
   static constexpr double base_length_max_expansion_factor_ = 0.5;
   static constexpr double dist_to_goal_expansion_factor_ = 0.15;
