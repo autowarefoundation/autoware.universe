@@ -93,8 +93,14 @@ struct VehicleShape
 
   void setMinMaxDimension()
   {
-    min_dimension = std::min(0.5 * width, base2back);
-    max_dimension = std::hypot(length - base2back, 0.5 * width);
+    const auto base2front = length - base2back;
+    if (base2back <= base2front) {
+      min_dimension = std::min(0.5 * width, base2back);
+      max_dimension = std::hypot(base2front, 0.5 * width);
+    } else {
+      min_dimension = std::min(0.5 * width, base2front);
+      max_dimension = std::hypot(base2back, 0.5 * width);
+    }
   }
 };
 
