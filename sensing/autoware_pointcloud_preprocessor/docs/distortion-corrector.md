@@ -44,6 +44,14 @@ Please note that the processing time difference between the two distortion metho
 ros2 launch autoware_pointcloud_preprocessor distortion_corrector.launch.xml
 ```
 
+## Test
+
+```bash
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to autoware_pointcloud_preprocessor
+
+colcon test --packages-select autoware_pointcloud_preprocessor --event-handlers console_cohesion+
+```
+
 ## Assumptions / Known limits
 
 - The node requires time synchronization between the topics from lidars, twist, and IMU.
