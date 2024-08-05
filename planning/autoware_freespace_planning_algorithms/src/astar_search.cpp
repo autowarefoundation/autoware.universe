@@ -141,7 +141,7 @@ void AstarSearch::setCollisionFreeDistanceMap()
   using Entry = std::pair<IndexXY, double>;
   struct CompareEntry
   {
-    bool operator()(const Entry & a, const Entry & b) { return a.second > b.second; }
+    bool operator()(const Entry & a, const Entry & b) const { return a.second > b.second; }
   };
   std::priority_queue<Entry, std::vector<Entry>, CompareEntry> heap;
   std::vector<bool> closed(col_free_distance_map_.size(), false);
@@ -262,7 +262,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
     AstarNode * next_node = &graph_[getKey(next_index)];
     if (next_node->status == NodeStatus::Closed || detectCollision(next_index)) continue;
 
-    double distance_to_obs = getObstacleEDT(next_index);
+    const double distance_to_obs = getObstacleEDT(next_index);
     const bool is_direction_switch =
       (current_node.parent != nullptr) && (is_back != current_node.is_back);
 
@@ -345,12 +345,12 @@ void AstarSearch::setPath(const AstarNode & goal_node)
     if (node.parent == nullptr || !astar_param_.adapt_expansion_distance) return;
     const auto parent_pose = node2pose(*node.parent);
     const double distance_2d = calcDistance2d(node2pose(node), parent_pose);
-    int n = static_cast<int>(distance_2d / min_expansion_dist_);
+    const int n = static_cast<int>(distance_2d / min_expansion_dist_);
     for (int i = 1; i < n; ++i) {
       double dist = ((distance_2d * i) / n) * (node.is_back ? -1.0 : 1.0);
       if (is_backward_search_) dist *= -1.0;
-      double steering = node.steering_index * steering_resolution_;
-      auto local_pose = kinematic_bicycle_model::getPose(
+      const double steering = node.steering_index * steering_resolution_;
+      const auto local_pose = kinematic_bicycle_model::getPose(
         parent_pose, collision_vehicle_shape_.base_length, steering, dist);
       pose.pose = local2global(costmap_, local_pose);
       waypoints.push_back({pose, node.is_back});
