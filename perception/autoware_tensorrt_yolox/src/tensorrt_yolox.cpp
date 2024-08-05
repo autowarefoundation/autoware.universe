@@ -186,8 +186,6 @@ TrtYoloX::TrtYoloX(
     }
     tensorrt_yolox::ImageStream stream(max_batch_size, input_dims, calibration_images);
     fs::path calibration_table{model_path};
-    // cppcheck-suppress unreadVariable
-    std::string calibName = "";
     std::string ext = "";
     if (build_config.calib_type_str == "Entropy") {
       ext = "EntropyV2-";
