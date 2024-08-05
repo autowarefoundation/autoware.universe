@@ -36,7 +36,7 @@ jobs:
             container: ghcr.io/autowarefoundation/autoware:latest-autoware-universe
             build-depends-repos: build_depends.repos
           - container-suffix: -cuda
-            runner: [self-hosted, linux, X64]
+            runner: [self-hosted, linux, X64, cpu]
           - container-suffix: ""
             runner: ubuntu-latest
     steps:
