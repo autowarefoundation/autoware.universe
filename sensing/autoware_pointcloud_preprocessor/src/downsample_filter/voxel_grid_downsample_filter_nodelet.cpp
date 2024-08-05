@@ -66,9 +66,9 @@ VoxelGridDownsampleFilterComponent::VoxelGridDownsampleFilterComponent(
 {
   // set initial parameters
   {
-    voxel_size_x_ = static_cast<float>(declare_parameter("voxel_size_x", 0.3));
-    voxel_size_y_ = static_cast<float>(declare_parameter("voxel_size_y", 0.3));
-    voxel_size_z_ = static_cast<float>(declare_parameter("voxel_size_z", 0.1));
+    voxel_size_x_ = declare_parameter<float>("voxel_size_x");
+    voxel_size_y_ = declare_parameter<float>("voxel_size_y");
+    voxel_size_z_ = declare_parameter<float>("voxel_size_z");
   }
 
   using std::placeholders::_1;

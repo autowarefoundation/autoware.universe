@@ -29,15 +29,13 @@ PassThroughFilterUInt16Component::PassThroughFilterUInt16Component(
 {
   // set initial parameters
   {
-    int filter_min = static_cast<int>(declare_parameter("filter_limit_min", 0));
-    int filter_max = static_cast<int>(declare_parameter("filter_limit_max", 127));
+    int filter_min = declare_parameter<int>("filter_limit_min");
+    int filter_max = declare_parameter<int>("filter_limit_max");
     impl_.setFilterLimits(filter_min, filter_max);
 
-    impl_.setFilterFieldName(
-      static_cast<std::string>(declare_parameter("filter_field_name", "ring")));
-    impl_.setKeepOrganized(static_cast<bool>(declare_parameter("keep_organized", false)));
-    impl_.setFilterLimitsNegative(
-      static_cast<bool>(declare_parameter("filter_limit_negative", false)));
+    impl_.setFilterFieldName(declare_parameter<std::string>("filter_field_name"));
+    impl_.setKeepOrganized(declare_parameter<bool>("keep_organized"));
+    impl_.setFilterLimitsNegative(declare_parameter<bool>("filter_limit_negative"));
   }
 
   using std::placeholders::_1;

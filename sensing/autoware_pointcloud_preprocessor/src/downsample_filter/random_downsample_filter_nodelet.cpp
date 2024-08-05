@@ -58,7 +58,7 @@ RandomDownsampleFilterComponent::RandomDownsampleFilterComponent(
 {
   // set initial parameters
   {
-    sample_num_ = static_cast<size_t>(declare_parameter("sample_num", 1500));
+    sample_num_ = declare_parameter<int64_t>("sample_num");
   }
 
   using std::placeholders::_1;
