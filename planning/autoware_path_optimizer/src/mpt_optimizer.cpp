@@ -1433,8 +1433,6 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
       lb(A_rows_end + i) = ref_steer_angle - mpt_param_.max_steer_rad;
       ub(A_rows_end + i) = ref_steer_angle + mpt_param_.max_steer_rad;
     }
-
-    A_rows_end += N_u;
   }
 
   return ConstraintMatrix{A, lb, ub};
