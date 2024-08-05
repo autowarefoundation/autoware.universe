@@ -208,10 +208,8 @@ void CSC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath & 
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[13], t, u, v);
     L_min = L;
   }
-  if (
-    LpSpRp(-x, -y, phi, t, u, v) &&
-    L_min > (std::abs(t) + std::abs(u) + std::abs(v)))  // time flip + reflect
-  {
+  // time flip + reflect
+  if (LpSpRp(-x, -y, phi, t, u, v) && L_min > (std::abs(t) + std::abs(u) + std::abs(v))) {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[13], -t, -u, -v);
   }
