@@ -356,6 +356,7 @@ std::vector<double> OSQPInterface::optimizeImpl()
   double * sol_x = work_->solution->x;
   double * sol_y = work_->solution->y;
   std::vector<double> sol_primal(sol_x, sol_x + param_n_);
+  // cppcheck-suppress unreadVariable
   std::vector<double> sol_lagrange_multiplier(sol_y, sol_y + data_->m);
 
   latest_work_info_ = *(work_->info);
