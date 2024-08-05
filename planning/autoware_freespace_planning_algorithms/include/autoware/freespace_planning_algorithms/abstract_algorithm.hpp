@@ -100,8 +100,14 @@ struct VehicleShape
 
   void setMinMaxDimension()
   {
-    min_dimension = std::min(0.5 * width, base2back);
-    max_dimension = std::hypot(length - base2back, 0.5 * width);
+    const auto base2front = length - base2back;
+    if (base2back <= base2front) {
+      min_dimension = std::min(0.5 * width, base2back);
+      max_dimension = std::hypot(base2front, 0.5 * width);
+    } else {
+      min_dimension = std::min(0.5 * width, base2front);
+      max_dimension = std::hypot(base2back, 0.5 * width);
+    }
   }
 };
 
@@ -179,6 +185,13 @@ protected:
   bool detectBoundaryExit(const IndexXYT & base_index) const;
   bool detectCollision(const IndexXYT & base_index) const;
   bool detectCollision(const geometry_msgs::msg::Pose & base_pose) const;
+
+  /// @brief Computes the euclidean distance to the nearest obstacle for each grid cell.
+  /// @cite T., Saito, and J., Toriwaki "New algorithms for euclidean distance transformation of an
+  /// n-dimensional digitized picture with applications," Pattern Recognition 27, 1994
+  /// https://doi.org/10.1016/0031-3203(94)90133-3
+  /// @details first, distance values are computed along each row. Then, the computed values are
+  /// used to to compute the minimum distance along each column.
   void computeEDTMap();
 
   template <typename IndexType>

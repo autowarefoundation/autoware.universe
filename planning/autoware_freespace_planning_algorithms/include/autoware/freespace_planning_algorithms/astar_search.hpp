@@ -86,7 +86,7 @@ struct AstarNode
 
 struct NodeComparison
 {
-  bool operator()(const AstarNode * lhs, const AstarNode * rhs) { return lhs->fc > rhs->fc; }
+  bool operator()(const AstarNode * lhs, const AstarNode * rhs) const { return lhs->fc > rhs->fc; }
 };
 
 class AstarSearch : public AbstractPlanningAlgorithm
@@ -169,6 +169,10 @@ private:
   double min_expansion_dist_;
   double max_expansion_dist_;
   bool is_backward_search_;
+
+  // the following constexpr values were found to be best by trial and error, through multiple
+  // tests, and are not expected to be changed regularly, therefore they were not made into ros
+  // parameters.
 
   // expansion distance factors
   static constexpr double base_length_max_expansion_factor_ = 0.5;
