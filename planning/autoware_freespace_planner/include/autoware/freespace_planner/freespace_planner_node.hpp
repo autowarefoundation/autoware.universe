@@ -35,6 +35,7 @@
 
 #include <autoware/freespace_planning_algorithms/astar_search.hpp>
 #include <autoware/freespace_planning_algorithms/rrtstar.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -109,9 +110,14 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr parking_state_pub_;
 
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_sub_;
-  rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_sub_;
-  rclcpp::Subscription<Scenario>::SharedPtr scenario_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
+
+  autoware::universe_utils::InterProcessPollingSubscriber<OccupancyGrid>
+    occupancy_grid_sub_{this, "~/input/occupancy_grid"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Scenario>
+    scenario_sub_{this, "~/input/scenario"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    Odometry, autoware::universe_utils::polling_policy::All>
+    odom_sub_{this, "~/input/odometry", rclcpp::QoS{100}};
 
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -149,9 +155,10 @@ private:
 
   // functions, callback
   void onRoute(const LaneletRoute::ConstSharedPtr msg);
-  void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
-  void onScenario(const Scenario::ConstSharedPtr msg);
   void onOdometry(const Odometry::ConstSharedPtr msg);
+
+  void updateData();
+  bool isDataReady();
 
   void onTimer();
 
