@@ -379,8 +379,6 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
 {
   autoware_planning_msgs::msg::Trajectory output_trajectory_msg;
   output_trajectory_msg.points = {input_trajectory_points.begin(), input_trajectory_points.end()};
-  if (smooth_velocity_before_planning_)
-    input_trajectory_points = smooth_trajectory(input_trajectory_points, planner_data_);
   const auto resampled_trajectory =
     autoware::motion_utils::resampleTrajectory(output_trajectory_msg, 0.5);
 
