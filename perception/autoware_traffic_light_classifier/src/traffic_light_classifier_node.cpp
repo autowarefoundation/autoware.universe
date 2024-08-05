@@ -121,11 +121,11 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
     // crop the roi image to be classified
     const auto & roi_img = cv_ptr->image(cv::Rect(
       input_roi.roi.x_offset, input_roi.roi.y_offset, input_roi.roi.width, input_roi.roi.height));
-    images.push_back(roi_img);
+    images.emplace_back(roi_img);
 
     // check if the roi is a harsh backlight
     if (is_harsh_backlight(roi_img)) {
-      backlight_indices.push_back(output_msg.signals.size() - 1);
+      backlight_indices.emplace_back(output_msg.signals.size() - 1);
     }
   }
 
