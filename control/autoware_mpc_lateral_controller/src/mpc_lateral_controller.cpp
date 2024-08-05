@@ -104,7 +104,6 @@ MpcLateralController::MpcLateralController(
   m_mpc->setVehicleModel(vehicle_model_ptr);
 
   /* QP solver setup */
-  m_mpc->setVehicleModel(vehicle_model_ptr);
   auto qpsolver_ptr = createQPSolverInterface(node);
   m_mpc->setQPSolver(qpsolver_ptr);
 
