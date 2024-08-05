@@ -2,18 +2,14 @@
 
 checkersReport
 constParameterReference
-constVariableReference
 funcArgNamesDifferent
 functionConst
 functionStatic
-invalidPointerCast
-knownConditionTrueFalse
 missingInclude
 missingIncludeSystem
 noConstructor
 passedByValue
 redundantInitialization
-shadowVariable
 // cspell: ignore uninit
 uninitMemberVar
 unknownMacro

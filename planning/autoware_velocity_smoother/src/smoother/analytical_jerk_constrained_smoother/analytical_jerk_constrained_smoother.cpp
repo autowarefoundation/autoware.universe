@@ -103,7 +103,8 @@ AnalyticalJerkConstrainedSmoother::Param AnalyticalJerkConstrainedSmoother::getP
 
 bool AnalyticalJerkConstrainedSmoother::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-  TrajectoryPoints & output, [[maybe_unused]] std::vector<TrajectoryPoints> & debug_trajectories)
+  TrajectoryPoints & output, [[maybe_unused]] std::vector<TrajectoryPoints> & debug_trajectories,
+  [[maybe_unused]] const bool publish_debug_trajs)
 {
   RCLCPP_DEBUG(logger_, "-------------------- Start --------------------");
 
@@ -374,14 +375,14 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilt
 
   for (size_t i = 0; i < output.size(); ++i) {
     for (const auto & lat_acc_filtered_range : latacc_filtered_ranges) {
-      const size_t start_index = std::get<0>(lat_acc_filtered_range);
-      const size_t end_index = std::get<1>(lat_acc_filtered_range);
-      const double min_latacc_velocity = std::get<2>(lat_acc_filtered_range);
+      const size_t filtered_start_index = std::get<0>(lat_acc_filtered_range);
+      const size_t filtered_end_index = std::get<1>(lat_acc_filtered_range);
+      const double filtered_min_latacc_velocity = std::get<2>(lat_acc_filtered_range);
 
       if (
-        start_index <= i && i <= end_index &&
+        filtered_start_index <= i && i <= filtered_end_index &&
         smoother_param_.latacc.enable_constant_velocity_while_turning) {
-        output.at(i).longitudinal_velocity_mps = min_latacc_velocity;
+        output.at(i).longitudinal_velocity_mps = filtered_min_latacc_velocity;
         break;
       }
     }
@@ -415,15 +416,15 @@ bool AnalyticalJerkConstrainedSmoother::searchDecelTargetIndices(
   }
 
   if (!tmp_indices.empty()) {
-    for (unsigned int i = 0; i < tmp_indices.size() - 1; ++i) {
+    for (unsigned int j = 0; j < tmp_indices.size() - 1; ++j) {
       const size_t index_err = 10;
       if (
-        (tmp_indices.at(i + 1).first - tmp_indices.at(i).first < index_err) &&
-        (tmp_indices.at(i + 1).second < tmp_indices.at(i).second)) {
+        (tmp_indices.at(j + 1).first - tmp_indices.at(j).first < index_err) &&
+        (tmp_indices.at(j + 1).second < tmp_indices.at(j).second)) {
         continue;
       }
 
-      decel_target_indices.emplace_back(tmp_indices.at(i).first, tmp_indices.at(i).second);
+      decel_target_indices.emplace_back(tmp_indices.at(j).first, tmp_indices.at(j).second);
     }
   }
   if (!tmp_indices.empty()) {

@@ -107,6 +107,8 @@ struct AvoidanceParameters
   // if this param is true, it reverts avoidance path when the path is no longer needed.
   bool enable_cancel_maneuver{false};
 
+  double force_deactivate_duration_time{0.0};
+
   // enable avoidance for all parking vehicle
   std::string policy_ambiguous_vehicle{"ignore"};
 
@@ -190,6 +192,9 @@ struct AvoidanceParameters
 
   // minimum road shoulder width. maybe 0.5 [m]
   double object_check_min_road_shoulder_width{0.0};
+
+  // time threshold for vehicle in freespace.
+  double freespace_condition_th_stopped_time{0.0};
 
   // force avoidance
   std::vector<std::string> wait_and_see_target_behaviors{"NONE", "MERGING", "DEVIATING"};
@@ -577,6 +582,8 @@ struct AvoidancePlanningData
   bool yield_required{false};
 
   bool found_avoidance_path{false};
+
+  bool force_deactivated{false};
 
   double to_stop_line{std::numeric_limits<double>::max()};
 

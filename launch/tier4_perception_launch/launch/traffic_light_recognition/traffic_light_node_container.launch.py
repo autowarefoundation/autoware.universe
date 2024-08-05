@@ -55,8 +55,8 @@ def launch_setup(context, *args, **kwargs):
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
             ComposableNode(
-                package="traffic_light_classifier",
-                plugin="traffic_light::TrafficLightClassifierNodelet",
+                package="autoware_traffic_light_classifier",
+                plugin="autoware::traffic_light::TrafficLightClassifierNodelet",
                 name="car_traffic_light_classifier",
                 namespace="classification",
                 parameters=[car_traffic_light_classifier_model_param],
@@ -70,8 +70,8 @@ def launch_setup(context, *args, **kwargs):
                 ],
             ),
             ComposableNode(
-                package="traffic_light_classifier",
-                plugin="traffic_light::TrafficLightClassifierNodelet",
+                package="autoware_traffic_light_classifier",
+                plugin="autoware::traffic_light::TrafficLightClassifierNodelet",
                 name="pedestrian_traffic_light_classifier",
                 namespace="classification",
                 parameters=[pedestrian_traffic_light_classifier_model_param],
@@ -85,10 +85,10 @@ def launch_setup(context, *args, **kwargs):
                 ],
             ),
             ComposableNode(
-                package="traffic_light_visualization",
-                plugin="traffic_light::TrafficLightRoiVisualizerNodelet",
+                package="autoware_traffic_light_visualization",
+                plugin="autoware::traffic_light::TrafficLightRoiVisualizerNode",
                 name="traffic_light_roi_visualizer",
-                parameters=[create_parameter_dict("enable_fine_detection")],
+                parameters=[create_parameter_dict("enable_fine_detection", "use_image_transport")],
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", LaunchConfiguration("output/rois")),
@@ -113,8 +113,8 @@ def launch_setup(context, *args, **kwargs):
     decompressor_loader = LoadComposableNodes(
         composable_node_descriptions=[
             ComposableNode(
-                package="image_transport_decompressor",
-                plugin="image_preprocessor::ImageTransportDecompressor",
+                package="autoware_image_transport_decompressor",
+                plugin="autoware::image_preprocessor::ImageTransportDecompressor",
                 name="traffic_light_image_decompressor",
                 parameters=[{"encoding": "rgb8"}],
                 remappings=[
@@ -136,8 +136,8 @@ def launch_setup(context, *args, **kwargs):
     fine_detector_loader = LoadComposableNodes(
         composable_node_descriptions=[
             ComposableNode(
-                package="traffic_light_fine_detector",
-                plugin="traffic_light::TrafficLightFineDetectorNodelet",
+                package="autoware_traffic_light_fine_detector",
+                plugin="autoware::traffic_light::TrafficLightFineDetectorNode",
                 name="traffic_light_fine_detector",
                 namespace="detection",
                 parameters=[fine_detector_model_param],
@@ -168,10 +168,11 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    fine_detector_share_dir = get_package_share_directory("traffic_light_fine_detector")
-    classifier_share_dir = get_package_share_directory("traffic_light_classifier")
+    fine_detector_share_dir = get_package_share_directory("autoware_traffic_light_fine_detector")
+    classifier_share_dir = get_package_share_directory("autoware_traffic_light_classifier")
     add_launch_arg("enable_image_decompressor", "True")
     add_launch_arg("enable_fine_detection", "True")
+    add_launch_arg("use_image_transport", "True")
     add_launch_arg("input/image", "/sensing/camera/traffic_light/image_raw")
     add_launch_arg("output/rois", "/perception/traffic_light_recognition/rois")
     add_launch_arg(

@@ -14,8 +14,6 @@
 
 #include "autoware/behavior_path_planner/behavior_path_planner_node.hpp"
 
-#include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
-#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 
@@ -70,8 +68,17 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
     const std::lock_guard<std::mutex> lock(mutex_manager_);  // for planner_manager_
 
-    const auto & p = planner_data_->parameters;
-    planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num);
+    const auto slots = declare_parameter<std::vector<std::string>>("slots");
+    std::vector<std::vector<std::string>> slot_configuration{slots.size()};
+    for (size_t i = 0; i < slots.size(); ++i) {
+      const auto & slot = slots.at(i);
+      const auto modules = declare_parameter<std::vector<std::string>>(slot);
+      for (const auto & module_name : modules) {
+        slot_configuration.at(i).push_back(module_name);
+      }
+    }
+
+    planner_manager_ = std::make_shared<PlannerManager>(*this);
 
     for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
       // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
@@ -80,6 +87,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       }
       planner_manager_->launchScenePlugin(*this, name);
     }
+
+    // NOTE: this needs to be after launchScenePlugin()
+    planner_manager_->configureModuleSlot(slot_configuration);
 
     for (const auto & manager : planner_manager_->getSceneModuleManagers()) {
       path_candidate_publishers_.emplace(
@@ -147,7 +157,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
   BehaviorPathPlannerParameters p{};
 
-  p.max_iteration_num = declare_parameter<int>("max_iteration_num");
   p.traffic_light_signal_timeout = declare_parameter<double>("traffic_light_signal_timeout");
 
   // vehicle info
@@ -217,7 +226,7 @@ void BehaviorPathPlannerNode::takeData()
 {
   // route
   {
-    const auto msg = route_subscriber_.takeNewData();
+    const auto msg = route_subscriber_.takeData();
     if (msg) {
       if (msg->segments.empty()) {
         RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
@@ -229,7 +238,7 @@ void BehaviorPathPlannerNode::takeData()
   }
   // map
   {
-    const auto msg = vector_map_subscriber_.takeNewData();
+    const auto msg = vector_map_subscriber_.takeData();
     if (msg) {
       map_ptr_ = msg;
       has_received_map_ = true;
@@ -420,7 +429,7 @@ void BehaviorPathPlannerNode::run()
     planner_data_->operation_mode->is_autoware_control_enabled;
   if (
     !controlled_by_autoware_autonomously &&
-    !planner_manager_->hasNonAlwaysExecutableApprovedModules())
+    !planner_manager_->hasPossibleRerouteApprovedModules(planner_data_))
     planner_manager_->resetCurrentRouteLanelet(planner_data_);
 
   // run behavior planner
@@ -549,7 +558,7 @@ void BehaviorPathPlannerNode::publish_reroute_availability() const
   // always-executable module is approved and running, rerouting will not be possible.
   RerouteAvailability is_reroute_available;
   is_reroute_available.stamp = this->now();
-  if (planner_manager_->hasNonAlwaysExecutableApprovedModules()) {
+  if (planner_manager_->hasPossibleRerouteApprovedModules(planner_data_)) {
     is_reroute_available.availability = false;
   } else {
     is_reroute_available.availability = true;
@@ -909,6 +918,9 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     updateParam(
       parameters, DrivableAreaExpansionParameters::SMOOTHING_ARC_LENGTH_RANGE_PARAM,
       planner_data_->drivable_area_expansion_parameters.arc_length_range);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::MIN_BOUND_INTERVAL,
+      planner_data_->drivable_area_expansion_parameters.min_bound_interval);
     updateParam(
       parameters, DrivableAreaExpansionParameters::PRINT_RUNTIME_PARAM,
       planner_data_->drivable_area_expansion_parameters.print_runtime);

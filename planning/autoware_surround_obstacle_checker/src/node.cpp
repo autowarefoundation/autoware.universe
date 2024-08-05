@@ -69,7 +69,7 @@ std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
 }
 
 diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
-  const std::string no_start_reason, const geometry_msgs::msg::Pose & stop_pose)
+  const std::string & no_start_reason, const geometry_msgs::msg::Pose & stop_pose)
 {
   diagnostic_msgs::msg::DiagnosticStatus no_start_reason_diag;
   diagnostic_msgs::msg::KeyValue no_start_reason_diag_kv;
@@ -506,7 +506,7 @@ std::optional<geometry_msgs::msg::TransformStamped> SurroundObstacleCheckerNode:
   try {
     transform_stamped =
       tf_buffer_.lookupTransform(source, target, stamp, tf2::durationFromSec(duration_sec));
-  } catch (tf2::TransformException & ex) {
+  } catch (const tf2::TransformException & ex) {
     return {};
   }
 
