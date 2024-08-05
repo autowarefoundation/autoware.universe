@@ -84,8 +84,6 @@ std::optional<universe_utils::LineString2d> find_next_stop_line(
           std::any_of(stop_line.lanelets.begin(), stop_line.lanelets.end(), [&](const auto & ll) {
             return boost::geometry::within(path_segment.first, ll.polygon2d().basicPolygon());
           });
-        for (const auto & ll : stop_line.lanelets) {
-        }
         if (within_stop_line_lanelet) {
           earliest_intersecting_index = std::min(index, earliest_intersecting_index);
           earliest_stop_line = stop_line.stop_line;

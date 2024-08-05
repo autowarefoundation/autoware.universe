@@ -176,7 +176,7 @@ void OutOfLaneModule::limit_trajectory_size(
 }
 
 void OutOfLaneModule::calculate_min_stop_and_slowdown_distances(
-  out_of_lane::EgoData ego_data, const PlannerData & planner_data,
+  out_of_lane::EgoData & ego_data, const PlannerData & planner_data,
   std::optional<geometry_msgs::msg::Pose> & previous_slowdown_pose_, const double slow_velocity)
 {
   ego_data.min_stop_distance = planner_data.calculate_min_deceleration_distance(0.0).value_or(0.0);
@@ -353,7 +353,10 @@ VelocityPlanningResult OutOfLaneModule::plan(
   } else if (std::any_of(
                out_of_lane_data.outside_points.begin(), out_of_lane_data.outside_points.end(),
                [](const auto & p) { return p.to_avoid; })) {
-    RCLCPP_WARN(logger_, "Could not insert slowdown point because of jerk or deceleration limits");
+    RCLCPP_WARN(
+      logger_,
+      "Could not insert slowdown point preventing ego from going out of lane while respecint the "
+      "deceleration limits");
   }
   const auto total_time_us = stopwatch.toc();
   debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(
