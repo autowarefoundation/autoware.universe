@@ -83,7 +83,7 @@ struct AstarNode
 
 struct NodeComparison
 {
-  bool operator()(const AstarNode * lhs, const AstarNode * rhs) { return lhs->fc > rhs->fc; }
+  bool operator()(const AstarNode * lhs, const AstarNode * rhs) const { return lhs->fc > rhs->fc; }
 };
 
 class AstarSearch : public AbstractPlanningAlgorithm
