@@ -467,6 +467,7 @@ void ScanGroundFilterComponent::classifyPointCloud(
   for (size_t i = 0; i < in_radial_ordered_clouds.size(); ++i) {
     float prev_gnd_radius = 0.0f;
     float prev_gnd_slope = 0.0f;
+    // cppcheck-suppress unreadVariable
     float points_distance = 0.0f;
     PointsCentroid ground_cluster, non_ground_cluster;
     PointLabel prev_point_label = PointLabel::INIT;
