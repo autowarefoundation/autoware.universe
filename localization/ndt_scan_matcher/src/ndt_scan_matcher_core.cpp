@@ -998,9 +998,9 @@ void NDTScanMatcher::service_ndt_align_main(
   const auto [pose_with_covariance, score] = align_pose(initial_pose_msg_in_map_frame);
 
   // check reliability of initial pose result
-  res->reliability =
+  res->reliable =
     (param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood < score);
-  if (!res->reliability) {
+  if (!res->reliable) {
     RCLCPP_WARN_STREAM(
       this->get_logger(), "Initial Pose Estimation is Unstable. Score is " << score);
   }

@@ -48,5 +48,5 @@ std::tuple<PoseWithCovarianceStamped, bool> LocalizationModule::align_pose(
   RCLCPP_INFO(logger_, "align server succeeded.");
 
   // Overwrite the covariance.
-  return std::make_tuple(res->pose_with_covariance, res->reliability);
+  return std::make_tuple(res->pose_with_covariance, res->reliable);
 }
