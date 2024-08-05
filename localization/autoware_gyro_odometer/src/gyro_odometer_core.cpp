@@ -23,6 +23,7 @@
 #endif
 #include <fmt/core.h>
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <sstream>
