@@ -23,13 +23,13 @@ namespace autoware::pointcloud_preprocessor
 {
 
 template <class T>
-bool DistortionCorrector<T>::pointcloud_transform_exists()
+bool DistortionCorrector<T>::pointcloudTransformExists()
 {
   return pointcloud_transform_exists_;
 }
 
 template <class T>
-bool DistortionCorrector<T>::pointcloud_transform_needed()
+bool DistortionCorrector<T>::pointcloudTransformNeeded()
 {
   return pointcloud_transform_needed_;
 }
@@ -203,13 +203,15 @@ bool DistortionCorrector<T>::isInputValid(sensor_msgs::msg::PointCloud2 & pointc
 
 template <class T>
 void DistortionCorrector<T>::undistortPointCloud(
-  bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud)
+  bool use_imu, std::string sensor_azimuth_coordinate, sensor_msgs::msg::PointCloud2 & pointcloud)
 {
   if (!isInputValid(pointcloud)) return;
 
   sensor_msgs::PointCloud2Iterator<float> it_x(pointcloud, "x");
   sensor_msgs::PointCloud2Iterator<float> it_y(pointcloud, "y");
   sensor_msgs::PointCloud2Iterator<float> it_z(pointcloud, "z");
+  sensor_msgs::PointCloud2Iterator<float> it_azimuth(pointcloud, "azimuth");
+  sensor_msgs::PointCloud2Iterator<float> it_distance(pointcloud, "distance");
   sensor_msgs::PointCloud2ConstIterator<std::uint32_t> it_time_stamp(pointcloud, "time_stamp");
 
   double prev_time_stamp_sec{
@@ -271,6 +273,25 @@ void DistortionCorrector<T>::undistortPointCloud(
 
     // Undistort a single point based on the strategy
     undistortPoint(it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
+
+    if (!sensor_azimuth_coordinate.empty() && pointcloudTransformNeeded()) {
+      // Input frame should be in the sensor frame.
+      *it_distance = sqrt(*it_x * *it_x + *it_y * *it_y + *it_z * *it_z);
+      float cartesian_coordinate_azimuth = cv::fastAtan2(*it_y, *it_x);
+      if (sensor_azimuth_coordinate == "velodyne") {
+        *it_azimuth = (360 - cartesian_coordinate_azimuth) * M_PI / 180;
+      } else if (sensor_azimuth_coordinate == "hesai") {
+        *it_azimuth = (90 - cartesian_coordinate_azimuth) < 0
+                        ? (90 - cartesian_coordinate_azimuth + 360) * M_PI / 180
+                        : (90 - cartesian_coordinate_azimuth) * M_PI / 180;
+      } else {
+        throw std::runtime_error(
+          sensor_azimuth_coordinate + " azimuth coordinate is not supported");
+      }
+
+      ++it_azimuth;
+      ++it_distance;
+    }
 
     prev_time_stamp_sec = global_point_stamp;
   }

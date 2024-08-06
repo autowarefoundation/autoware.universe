@@ -211,16 +211,22 @@ protected:
       sensor_msgs::PointCloud2Iterator<float> iter_x(pointcloud_msg, "x");
       sensor_msgs::PointCloud2Iterator<float> iter_y(pointcloud_msg, "y");
       sensor_msgs::PointCloud2Iterator<float> iter_z(pointcloud_msg, "z");
+      sensor_msgs::PointCloud2Iterator<float> iter_azimuth(pointcloud_msg, "azimuth");
+      sensor_msgs::PointCloud2Iterator<float> iter_distance(pointcloud_msg, "distance");
       sensor_msgs::PointCloud2Iterator<std::uint32_t> iter_t(pointcloud_msg, "time_stamp");
 
       for (size_t i = 0; i < number_of_points_; ++i) {
         *iter_x = points[i].x();
         *iter_y = points[i].y();
         *iter_z = points[i].z();
+        *iter_azimuth = std::atan2(points[i].y(), points[i].x());
+        *iter_distance = points[i].norm();
         *iter_t = timestamps[i];
         ++iter_x;
         ++iter_y;
         ++iter_z;
+        ++iter_azimuth;
+        ++iter_distance;
         ++iter_t;
       }
     } else {
@@ -277,7 +283,7 @@ protected:
   static constexpr int imu_msgs_interval_ms_{27};
 
   // for debugging or regenerating the ground truth point cloud
-  bool debug_{false};
+  bool debug_{true};
 };
 
 TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
@@ -329,22 +335,22 @@ TEST_F(DistortionCorrectorTest, TestIsInputValid)
 TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithBaseLink)
 {
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_exists());
-  EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_needed());
+  EXPECT_TRUE(distortion_corrector_2d_->pointcloudTransformExists());
+  EXPECT_FALSE(distortion_corrector_2d_->pointcloudTransformNeeded());
 }
 
 TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithLidarFrame)
 {
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
-  EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_exists());
-  EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_needed());
+  EXPECT_TRUE(distortion_corrector_2d_->pointcloudTransformExists());
+  EXPECT_TRUE(distortion_corrector_2d_->pointcloudTransformNeeded());
 }
 
 TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithMissingFrame)
 {
   distortion_corrector_2d_->setPointCloudTransform("base_link", "missing_lidar_frame");
-  EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_exists());
-  EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_needed());
+  EXPECT_FALSE(distortion_corrector_2d_->pointcloudTransformExists());
+  EXPECT_FALSE(distortion_corrector_2d_->pointcloudTransformNeeded());
 }
 
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
@@ -355,7 +361,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
 
   // Process empty twist queue
   distortion_corrector_2d_->initialize();
-  distortion_corrector_2d_->undistortPointCloud(false, pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(false, "", pointcloud);
 
   // Verify the point cloud is not changed
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
@@ -398,7 +404,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyPointCloud)
 
   // Process empty point cloud
   distortion_corrector_2d_->initialize();
-  distortion_corrector_2d_->undistortPointCloud(true, empty_pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(true, "", empty_pointcloud);
 
   // Verify the point cloud is still empty
   EXPECT_EQ(empty_pointcloud.width, 0);
@@ -420,7 +426,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
   // Test using only twist
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_2d_->undistortPointCloud(false, pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(false, "", pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -471,7 +477,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_2d_->undistortPointCloud(true, pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(true, "", pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -522,7 +528,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
-  distortion_corrector_2d_->undistortPointCloud(true, pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(true, "", pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -573,7 +579,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
   // Test using only twist
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_3d_->undistortPointCloud(false, pointcloud);
+  distortion_corrector_3d_->undistortPointCloud(false, "", pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -624,7 +630,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
 
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_3d_->undistortPointCloud(true, pointcloud);
+  distortion_corrector_3d_->undistortPointCloud(true, "", pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -679,7 +685,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
 
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "lidar_top");
-  distortion_corrector_3d_->undistortPointCloud(true, pointcloud);
+  distortion_corrector_3d_->undistortPointCloud(true, "", pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -726,12 +732,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
   distortion_corrector_2d_->processTwistMessage(twist_msg);
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_2d_->undistortPointCloud(false, test2d_pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(false, "", test2d_pointcloud);
 
   distortion_corrector_3d_->processTwistMessage(twist_msg);
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_3d_->undistortPointCloud(false, test3d_pointcloud);
+  distortion_corrector_3d_->undistortPointCloud(false, "", test3d_pointcloud);
 
   // Generate expected point cloud for testing
   sensor_msgs::msg::PointCloud2 expected_pointcloud_msg =
@@ -813,12 +819,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
   distortion_corrector_2d_->processTwistMessage(twist_msg);
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_2d_->undistortPointCloud(false, test2d_pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(false, "", test2d_pointcloud);
 
   distortion_corrector_3d_->processTwistMessage(twist_msg);
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_3d_->undistortPointCloud(false, test3d_pointcloud);
+  distortion_corrector_3d_->undistortPointCloud(false, "", test3d_pointcloud);
 
   // Generate expected point cloud for testing
   sensor_msgs::msg::PointCloud2 expected_pointcloud_msg =
@@ -894,6 +900,244 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
     EXPECT_NEAR(*test2d_iter_x, *test3d_iter_x, coarse_tolerance_);
     EXPECT_NEAR(*test2d_iter_y, *test3d_iter_y, coarse_tolerance_);
     EXPECT_NEAR(*test2d_iter_z, *test3d_iter_z, coarse_tolerance_);
+  }
+
+  if (debug_) {
+    RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
+  }
+}
+
+TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdateAzimuthAndDistance)
+{
+  // Test the case when the cloud will not update the azimuth and distance values
+  // 1. when pointcloud is in the base_link
+  // 2. when user didn't specify the sensor azimuth coordinate
+
+  // Generate the point cloud message in base_link
+  rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
+  sensor_msgs::msg::PointCloud2 pointcloud_base_link =
+    generatePointCloudMsg(true, false, timestamp);
+
+  // Generate and process multiple twist messages
+  auto twist_msgs = generateTwistMsgs(timestamp);
+  for (const auto & twist_msg : twist_msgs) {
+    distortion_corrector_2d_->processTwistMessage(twist_msg);
+  }
+
+  // Generate and process multiple IMU messages
+  auto imu_msgs = generateImuMsgs(timestamp);
+  for (const auto & imu_msg : imu_msgs) {
+    distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
+  }
+
+  distortion_corrector_2d_->initialize();
+  distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
+  // set the azimuth coordinate system
+  distortion_corrector_2d_->undistortPointCloud(true, "velodyne", pointcloud_base_link);
+
+  sensor_msgs::msg::PointCloud2 original_pointcloud_base_link =
+    generatePointCloudMsg(true, false, timestamp);
+
+  sensor_msgs::PointCloud2ConstIterator<float> test_iter_azimuth_base_link(
+    pointcloud_base_link, "azimuth");
+  sensor_msgs::PointCloud2ConstIterator<float> test_iter_distance_base_link(
+    pointcloud_base_link, "distance");
+
+  sensor_msgs::PointCloud2ConstIterator<float> original_iter_azimuth_base_link(
+    original_pointcloud_base_link, "azimuth");
+  sensor_msgs::PointCloud2ConstIterator<float> original_iter_distance_base_link(
+    original_pointcloud_base_link, "distance");
+
+  size_t i = 0;
+  std::ostringstream oss;
+
+  oss << "Expected pointcloud:\n";
+  for (; test_iter_azimuth_base_link != test_iter_azimuth_base_link.end();
+       ++test_iter_azimuth_base_link, ++test_iter_distance_base_link,
+       ++original_iter_azimuth_base_link, ++original_iter_distance_base_link, ++i) {
+    oss << "Point " << i << " - Output azimuth and distance: (" << *test_iter_azimuth_base_link
+        << ", " << *test_iter_distance_base_link << ")"
+        << " vs Original azimuth and distance: (" << *original_iter_azimuth_base_link << ", "
+        << *original_iter_distance_base_link << ")\n";
+
+    EXPECT_FLOAT_EQ(*test_iter_azimuth_base_link, *original_iter_azimuth_base_link);
+    EXPECT_FLOAT_EQ(*test_iter_distance_base_link, *original_iter_distance_base_link);
+  }
+
+  if (debug_) {
+    RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
+  }
+
+  // Generate the point cloud message in sensor frame
+  sensor_msgs::msg::PointCloud2 pointcloud_lidar_top = generatePointCloudMsg(true, true, timestamp);
+
+  // Generate and process multiple twist messages
+  twist_msgs = generateTwistMsgs(timestamp);
+  for (const auto & twist_msg : twist_msgs) {
+    distortion_corrector_2d_->processTwistMessage(twist_msg);
+  }
+
+  // Generate and process multiple IMU messages
+  imu_msgs = generateImuMsgs(timestamp);
+  for (const auto & imu_msg : imu_msgs) {
+    distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
+  }
+
+  distortion_corrector_2d_->initialize();
+  distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
+  // set the empty coordinate system
+  distortion_corrector_2d_->undistortPointCloud(true, "", pointcloud_lidar_top);
+
+  sensor_msgs::msg::PointCloud2 original_pointcloud_lidar_top =
+    generatePointCloudMsg(true, true, timestamp);
+
+  sensor_msgs::PointCloud2ConstIterator<float> test_iter_azimuth_lidar_top(
+    pointcloud_lidar_top, "azimuth");
+  sensor_msgs::PointCloud2ConstIterator<float> test_iter_distance_lidar_top(
+    pointcloud_lidar_top, "distance");
+
+  sensor_msgs::PointCloud2ConstIterator<float> original_iter_azimuth_lidar_top(
+    original_pointcloud_lidar_top, "azimuth");
+  sensor_msgs::PointCloud2ConstIterator<float> original_iter_distance_lidar_top(
+    original_pointcloud_lidar_top, "distance");
+
+  i = 0;
+  oss.str("");
+  oss.clear();
+
+  oss << "Expected pointcloud:\n";
+  for (; test_iter_azimuth_lidar_top != test_iter_azimuth_lidar_top.end();
+       ++test_iter_azimuth_lidar_top, ++test_iter_distance_lidar_top,
+       ++original_iter_azimuth_lidar_top, ++original_iter_distance_lidar_top, ++i) {
+    oss << "Point " << i << " - Output azimuth and distance: (" << *test_iter_azimuth_lidar_top
+        << ", " << *test_iter_distance_lidar_top << ")"
+        << " vs Original azimuth and distance: (" << *original_iter_azimuth_lidar_top << ", "
+        << *original_iter_distance_lidar_top << ")\n";
+
+    EXPECT_FLOAT_EQ(*test_iter_azimuth_lidar_top, *original_iter_azimuth_lidar_top);
+    EXPECT_FLOAT_EQ(*test_iter_distance_lidar_top, *original_iter_distance_lidar_top);
+  }
+
+  if (debug_) {
+    RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
+  }
+}
+
+TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceInVelodyne)
+{
+  // Generate the point cloud message in sensor frame
+  rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
+  sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(true, true, timestamp);
+
+  // Generate and process multiple twist messages
+  auto twist_msgs = generateTwistMsgs(timestamp);
+  for (const auto & twist_msg : twist_msgs) {
+    distortion_corrector_2d_->processTwistMessage(twist_msg);
+  }
+
+  // Generate and process multiple IMU messages
+  auto imu_msgs = generateImuMsgs(timestamp);
+  for (const auto & imu_msg : imu_msgs) {
+    distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
+  }
+
+  distortion_corrector_2d_->initialize();
+  distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
+  // set the azimuth coordinate system
+  distortion_corrector_2d_->undistortPointCloud(true, "velodyne", pointcloud);
+
+  sensor_msgs::msg::PointCloud2 original_pointcloud = generatePointCloudMsg(true, false, timestamp);
+
+  sensor_msgs::PointCloud2ConstIterator<float> iter_azimuth(pointcloud, "azimuth");
+  sensor_msgs::PointCloud2ConstIterator<float> iter_distance(pointcloud, "distance");
+
+  // Expected undistorted azimuth and distance values
+  std::array<std::array<float, 2>, 10> expected_distance_azimuth = {{
+    {0.0f, 10.0f},         // points: (10.0f, -1.77636e-15f, -4.44089e-16f)
+    {4.71736f, 10.0614f},  // points: (0.049989f, 10.0608f, 0.0924992f)
+    {5.39603f, 10.2f},     // points: (0.106107f, 0.130237f, 10.1986f)
+    {6.27278f, 20.1745f},  // points: (20.1709f, 0.210011f, 0.32034f)
+    {4.72327f, 20.2789f},  // points: (0.220674f, 20.2734f, 0.417974f)
+    {5.38091f, 20.5389f},  // points: (0.274146f, 0.347043f, 20.5341f)
+    {6.26812f, 30.3789f},  // points: (30.3673f, 0.457564f, 0.700818f)
+    {4.72608f, 30.5395f},  // points: (0.418014f, 30.5259f, 0.807963f)
+    {5.3706f, 30.9385f},   // points: (0.464088f, 0.600081f, 30.9292f)
+    {5.49086f, 18.6938f}   // points: (10.5657f, 10.7121f, 11.094f)
+  }};
+
+  size_t i = 0;
+  std::ostringstream oss;
+
+  oss << "Expected pointcloud:\n";
+  for (; iter_azimuth != iter_azimuth.end(); ++iter_azimuth, ++iter_distance, ++i) {
+    oss << "Point " << i << " - Output azimuth and distance: (" << *iter_azimuth << ", "
+        << *iter_distance << ")"
+        << " vs Original azimuth and distance: (" << expected_distance_azimuth[i][0] << ", "
+        << expected_distance_azimuth[i][1] << ")\n";
+
+    EXPECT_NEAR(*iter_azimuth, expected_distance_azimuth[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_distance, expected_distance_azimuth[i][1], standard_tolerance_);
+  }
+
+  if (debug_) {
+    RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
+  }
+}
+
+TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceInHesai)
+{
+  // Generate the point cloud message in sensor frame
+  rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
+  sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(true, true, timestamp);
+
+  // Generate and process multiple twist messages
+  auto twist_msgs = generateTwistMsgs(timestamp);
+  for (const auto & twist_msg : twist_msgs) {
+    distortion_corrector_2d_->processTwistMessage(twist_msg);
+  }
+
+  // Generate and process multiple IMU messages
+  auto imu_msgs = generateImuMsgs(timestamp);
+  for (const auto & imu_msg : imu_msgs) {
+    distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
+  }
+
+  distortion_corrector_2d_->initialize();
+  distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
+  // set the azimuth coordinate system
+  distortion_corrector_2d_->undistortPointCloud(true, "hesai", pointcloud);
+
+  sensor_msgs::msg::PointCloud2 original_pointcloud = generatePointCloudMsg(true, false, timestamp);
+
+  sensor_msgs::PointCloud2ConstIterator<float> iter_azimuth(pointcloud, "azimuth");
+  sensor_msgs::PointCloud2ConstIterator<float> iter_distance(pointcloud, "distance");
+
+  // Expected undistorted azimuth and distance values
+  std::array<std::array<float, 2>, 10> expected_distance_azimuth = {{
+    {1.5708f, 10.0f},         // points: (10.0f, -1.77636e-15f, -4.44089e-16f)
+    {0.00496759f, 10.0614f},  // points: (0.049989f, 10.0608f, 0.0924992f)
+    {0.683643f, 10.2f},       // points: (0.106107f, 0.130237f, 10.1986f)
+    {1.56039f, 20.1745f},     // points: (20.1709f, 0.210011f, 0.32034f)
+    {0.0108822f, 20.2789f},   // points: (0.220674f, 20.2734f, 0.417974f)
+    {0.668525f, 20.5389f},    // points: (0.274146f, 0.347043f, 20.5341f)
+    {1.55573f, 30.3789f},     // points: (30.3673f, 0.457564f, 0.700818f)
+    {0.01369f, 30.5395f},     // points: (0.418014f, 30.5259f, 0.807963f)
+    {0.658213f, 30.9385f},    // points: (0.464088f, 0.600081f, 30.9292f)
+    {0.778473f, 18.6938f}     // points: (10.5657f, 10.7121f, 11.094f)
+  }};
+
+  size_t i = 0;
+  std::ostringstream oss;
+
+  oss << "Expected pointcloud:\n";
+  for (; iter_azimuth != iter_azimuth.end(); ++iter_azimuth, ++iter_distance, ++i) {
+    oss << "Point " << i << " - Output azimuth and distance: (" << *iter_azimuth << ", "
+        << *iter_distance << ")"
+        << " vs Original azimuth and distance: (" << expected_distance_azimuth[i][0] << ", "
+        << expected_distance_azimuth[i][1] << ")\n";
+
+    EXPECT_NEAR(*iter_azimuth, expected_distance_azimuth[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_distance, expected_distance_azimuth[i][1], standard_tolerance_);
   }
 
   if (debug_) {

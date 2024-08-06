@@ -20,9 +20,19 @@
           "type": "boolean",
           "description": "Use 3d distortion correction algorithm, otherwise, use 2d distortion correction algorithm.",
           "default": "false"
+        },
+        "sensor_azimuth_coordinate": {
+          "type": "string",
+          "description": "The azimuth coordinate of sensor. Currently support Hesai and Velodyne. ",
+          "default": ""
         }
       },
-      "required": ["base_frame", "use_imu", "use_3d_distortion_correction"]
+      "required": [
+        "base_frame",
+        "use_imu",
+        "use_3d_distortion_correction",
+        "sensor_azimuth_coordinate"
+      ]
     }
   },
   "properties": {

@@ -34,6 +34,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include <opencv2/opencv.hpp>
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/buffer_interface.h>
 #include <tf2_ros/transform_listener.h>
@@ -48,8 +50,8 @@ namespace autoware::pointcloud_preprocessor
 class DistortionCorrectorBase
 {
 public:
-  virtual bool pointcloud_transform_exists() = 0;
-  virtual bool pointcloud_transform_needed() = 0;
+  virtual bool pointcloudTransformExists() = 0;
+  virtual bool pointcloudTransformNeeded() = 0;
   virtual std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue() = 0;
   virtual std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue() = 0;
 
@@ -60,7 +62,9 @@ public:
   virtual void setPointCloudTransform(
     const std::string & base_frame, const std::string & lidar_frame) = 0;
   virtual void initialize() = 0;
-  virtual void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
+  virtual void undistortPointCloud(
+    bool use_imu, std::string sensor_azimuth_coordinate,
+    sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
 };
 
 template <class T>
@@ -101,8 +105,8 @@ public:
   : node_(node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
   {
   }
-  bool pointcloud_transform_exists();
-  bool pointcloud_transform_needed();
+  bool pointcloudTransformExists();
+  bool pointcloudTransformNeeded();
   std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue();
   std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue();
   void processTwistMessage(
@@ -110,7 +114,9 @@ public:
 
   void processIMUMessage(
     const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
-  void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) override;
+  void undistortPointCloud(
+    bool use_imu, std::string sensor_azimuth_coordinate,
+    sensor_msgs::msg::PointCloud2 & pointcloud) override;
   bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
 };
 
