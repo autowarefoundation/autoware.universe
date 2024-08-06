@@ -112,6 +112,13 @@ double l2Norm(const Vector3 vector);
 
 double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
 
+/// @brief Finds the last center line point at which lane width is over the threshold,
+/// returns the distance from the center point to end of lane.
+/// @param lane target lane to check width condition
+/// @param width_threshold threshold value for width check
+/// @return distance from last center line point satisfying width condition to end of lane
+double getDistanceFromLastFitWidthToEnd(const lanelet::ConstLanelet & lane, const double width_threshold);
+
 double getDistanceToNextIntersection(
   const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
 
@@ -253,6 +260,8 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 
 PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path);
 
+double getSignedDistanceFromLaneBoundary(
+  const lanelet::ConstLanelet & lanelet, const geometry_msgs::msg::Point & position, const bool left_side);
 double getSignedDistanceFromBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose, const bool left_side);
 std::optional<double> getSignedDistanceFromBoundary(

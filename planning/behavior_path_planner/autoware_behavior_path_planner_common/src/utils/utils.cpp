@@ -655,6 +655,25 @@ double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLan
   return lanelet_length - arc_coordinates.length;
 }
 
+double getDistanceFromLastFitWidthToEnd(const lanelet::ConstLanelet & lane, const double width_threshold)
+{
+  const auto center_line = lane.centerline3d().basicLineString();
+  double distance = 0.0;
+  if (center_line.size() <= 1){
+    return distance;
+  }
+  auto it = center_line.rbegin() + 1;
+  for (; it < center_line.rend(); ++it) {
+    const auto point = lanelet::utils::conversion::toGeomMsgPt(*it);
+    double width = std::abs(getSignedDistanceFromLaneBoundary(lane, point, true));
+    width += std::abs(getSignedDistanceFromLaneBoundary(lane, point, false));
+    if (width > width_threshold) break;
+    const auto next_point = lanelet::utils::conversion::toGeomMsgPt(*std::prev(it));
+    distance += autoware::universe_utils::calcDistance2d(point, next_point);
+  }
+  return distance;
+}
+
 double getDistanceToNextIntersection(
   const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
 {
@@ -823,25 +842,30 @@ PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path)
   return path.points.at(*insert_idx);
 }
 
+double getSignedDistanceFromLaneBoundary(
+  const lanelet::ConstLanelet & lanelet, const geometry_msgs::msg::Point & position, bool left_side)
+{
+  const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(position);
+  const auto & boundary_line_2d = left_side ? lanelet.leftBound2d() : lanelet.rightBound2d();
+  const auto arc_coordinates = lanelet::geometry::toArcCoordinates(
+      boundary_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
+  return arc_coordinates.distance;
+}
+
 double getSignedDistanceFromBoundary(
   const lanelet::ConstLanelets & lanelets, const Pose & pose, bool left_side)
 {
   lanelet::ConstLanelet closest_lanelet;
-  lanelet::ArcCoordinates arc_coordinates;
+
   if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
-    const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
-    const auto & boundary_line_2d = left_side
-                                      ? lanelet::utils::to2D(closest_lanelet.leftBound3d())
-                                      : lanelet::utils::to2D(closest_lanelet.rightBound3d());
-    arc_coordinates = lanelet::geometry::toArcCoordinates(
-      boundary_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
-  } else {
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
-      "closest shoulder lanelet not found.");
+    return getSignedDistanceFromLaneBoundary(closest_lanelet, pose.position, left_side);
   }
 
-  return arc_coordinates.distance;
+  RCLCPP_ERROR_STREAM(
+    rclcpp::get_logger("behavior_path_planner").get_child("utils"),
+    "closest shoulder lanelet not found.");
+
+  return 0.0;
 }
 
 std::optional<double> getSignedDistanceFromBoundary(
