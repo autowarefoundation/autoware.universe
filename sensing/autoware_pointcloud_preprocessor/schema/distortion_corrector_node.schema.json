@@ -23,7 +23,7 @@
         },
         "sensor_azimuth_coordinate": {
           "type": "string",
-          "description": "The azimuth coordinate of sensor. Currently support Hesai and Velodyne. ",
+          "description": "The azimuth coordinate of sensor. Currently support Hesai and Velodyne.",
           "default": ""
         }
       },
