@@ -582,9 +582,13 @@ bool isEgoWithinOriginalLane(
 
 bool isMergingLane(const lanelet::ConstLanelet & lane)
 {
-  const auto right_boundy_last_point = lane.rightBound2d().back().basicPoint();
-  const auto left_boundy_last_point = lane.rightBound2d().back().basicPoint();
-  const auto dist = boost::geometry::distance(right_boundy_last_point, left_boundy_last_point);
+  const auto right_bound = lane.rightBound2d();
+  const auto left_bound = lane.leftBound2d();
+  if (right_bound.empty() || left_bound.empty()) {
+    return false;
+  }
+  const auto dist =
+    boost::geometry::distance(right_bound.back().basicPoint(), left_bound.back().basicPoint());
   return dist < eps;
 }
 
