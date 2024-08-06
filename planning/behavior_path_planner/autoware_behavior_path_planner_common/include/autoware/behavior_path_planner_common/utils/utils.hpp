@@ -55,6 +55,8 @@ using geometry_msgs::msg::Vector3;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
+static constexpr double eps = 0.01;
+
 struct PolygonPoint
 {
   geometry_msgs::msg::Point point;
@@ -240,6 +242,8 @@ bool isEgoOutOfRoute(
 bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
   const BehaviorPathPlannerParameters & common_param, const double outer_margin = 0.0);
+
+bool isMergingLane(const lanelet::ConstLanelet & lane);
 
 // path management
 

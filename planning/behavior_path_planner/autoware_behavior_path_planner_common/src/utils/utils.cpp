@@ -580,6 +580,13 @@ bool isEgoWithinOriginalLane(
   return true;  // inside polygon
 }
 
+bool isMergingLane(const lanelet::ConstLanelet & lane) {
+  const auto right_boundy_last_point = lane.rightBound2d().back().basicPoint();
+  const auto left_boundy_last_point = lane.rightBound2d().back().basicPoint();
+  const auto dist = boost::geometry::distance(right_boundy_last_point, left_boundy_last_point);
+  return dist < eps;
+}
+
 lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes)
 {
   lanelet::ConstLanelets lanes;
@@ -1211,7 +1218,6 @@ PathWithLaneId setDecelerationVelocity(
   const auto stop_point_length =
     autoware::motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position) +
     buffer;
-  constexpr double eps{0.01};
   if (std::abs(target_velocity) < eps && stop_point_length > 0.0) {
     const auto stop_point = utils::insertStopPoint(stop_point_length, reference_path);
   }
