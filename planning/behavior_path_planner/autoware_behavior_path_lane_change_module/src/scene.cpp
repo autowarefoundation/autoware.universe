@@ -1419,7 +1419,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
       if (!is_valid_start_point(common_data_ptr_, prepare_segment.points.back().point.pose)) {
         debug_print(
-          "Reject: lane changing start point are not within the preferred lanes or its neighbors");
+          "Reject: lane changing start point is not within the preferred lanes or its neighbors");
         continue;
       }
 
