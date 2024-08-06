@@ -183,7 +183,7 @@ private:
   };
   Param param_;
 
-  double getMedianVel(const std::vector<nav_msgs::msg::Odometry> vel_que);
+  double getMedianVel(const std::vector<nav_msgs::msg::Odometry> & vel_que);
   static double lowpass_filter(
     const double current_value, const double prev_value, const double gain);
   void calcDistanceToNearestPointOnPath(
@@ -205,7 +205,7 @@ private:
   double calcUpperVelocity(const double dist_to_col, const double obj_vel, const double self_vel);
   double calcThreshDistToForwardObstacle(const double current_vel, const double obj_vel);
   double calcBaseDistToForwardObstacle(const double current_vel, const double obj_vel);
-  double calcTargetVelocity_P(const double target_dist, const double current_dist);
+  double calcTargetVelocity_P(const double target_dist, const double current_dist) const;
   static double calcTargetVelocity_I(const double target_dist, const double current_dist);
   double calcTargetVelocity_D(const double target_dist, const double current_dist);
   double calcTargetVelocityByPID(
