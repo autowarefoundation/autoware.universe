@@ -283,7 +283,7 @@ protected:
   static constexpr int imu_msgs_interval_ms_{27};
 
   // for debugging or regenerating the ground truth point cloud
-  bool debug_{true};
+  bool debug_{false};
 };
 
 TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)

@@ -1,5 +1,5 @@
 <launch>
-  <arg name="input/pointcloud" default="/sensing/lidar/top/pointcloud_raw_ex"/>
+  <arg name="input/pointcloud" default="/sensing/lidar/top/mirror_cropped/pointcloud_ex"/>
   <arg name="input/twist" default="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
   <arg name="input/imu" default="/sensing/imu/imu_data"/>
   <arg name="output/pointcloud" default="/sensing/lidar/top/rectified/pointcloud_ex"/>
