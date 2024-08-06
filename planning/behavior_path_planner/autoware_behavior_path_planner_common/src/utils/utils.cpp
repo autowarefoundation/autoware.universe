@@ -580,7 +580,8 @@ bool isEgoWithinOriginalLane(
   return true;  // inside polygon
 }
 
-bool isMergingLane(const lanelet::ConstLanelet & lane) {
+bool isMergingLane(const lanelet::ConstLanelet & lane)
+{
   const auto right_boundy_last_point = lane.rightBound2d().back().basicPoint();
   const auto left_boundy_last_point = lane.rightBound2d().back().basicPoint();
   const auto dist = boost::geometry::distance(right_boundy_last_point, left_boundy_last_point);
@@ -655,11 +656,12 @@ double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLan
   return lanelet_length - arc_coordinates.length;
 }
 
-double getDistanceFromLastFitWidthToEnd(const lanelet::ConstLanelet & lane, const double width_threshold)
+double getDistanceFromLastFitWidthToEnd(
+  const lanelet::ConstLanelet & lane, const double width_threshold)
 {
   const auto center_line = lane.centerline3d().basicLineString();
   double distance = 0.0;
-  if (center_line.size() <= 1){
+  if (center_line.size() <= 1) {
     return distance;
   }
   auto it = center_line.rbegin() + 1;
@@ -848,7 +850,7 @@ double getSignedDistanceFromLaneBoundary(
   const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(position);
   const auto & boundary_line_2d = left_side ? lanelet.leftBound2d() : lanelet.rightBound2d();
   const auto arc_coordinates = lanelet::geometry::toArcCoordinates(
-      boundary_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
+    boundary_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
   return arc_coordinates.distance;
 }
 
