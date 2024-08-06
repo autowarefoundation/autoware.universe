@@ -1,25 +1,25 @@
 <launch>
   <arg name="input/camera_number" default="1"/>
   <arg name="input/mask0" default="/perception/object_recognition/detection/rois0"/>
-  <arg name="input/camera_info0" default="/lucid_vision/front_camera/camera_info"/>
+  <arg name="input/camera_info0" default="/sensing/camera/camera0/camera_info"/>
   <arg name="input/mask1" default="/perception/object_recognition/detection/rois1"/>
-  <arg name="input/camera_info1" default="/lucid_vision/front_left_camera/camera_info"/>
+  <arg name="input/camera_info1" default="/sensing/camera/camera1/camera_info"/>
   <arg name="input/mask2" default="/perception/object_recognition/detection/rois2"/>
-  <arg name="input/camera_info2" default="/lucid_vision/front_right_camera/camera_info"/>
+  <arg name="input/camera_info2" default="/sensing/camera/camera2/camera_info"/>
   <arg name="input/mask3" default="/perception/object_recognition/detection/rois3"/>
-  <arg name="input/camera_info3" default="/lucid_vision/middle_left_camera/camera_info"/>
+  <arg name="input/camera_info3" default="/sensing/camera/camera3/camera_info"/>
   <arg name="input/mask4" default="/perception/object_recognition/detection/rois4"/>
-  <arg name="input/camera_info4" default="/lucid_vision/middle_right_camera/camera_info"/>
+  <arg name="input/camera_info4" default="/sensing/camera/camera4/camera_info"/>
   <arg name="input/mask5" default="/perception/object_recognition/detection/rois5"/>
-  <arg name="input/camera_info5" default="/lucid_vision/rear_left_camera/camera_info"/>
+  <arg name="input/camera_info5" default="/sensing/camera/camera5/camera_info"/>
   <arg name="input/mask6" default="/perception/object_recognition/detection/rois6"/>
-  <arg name="input/camera_info6" default="/lucid_vision/rear_right_camera/camera_info"/>
+  <arg name="input/camera_info6" default="/sensing/camera/camera6/camera_info"/>
   <arg name="input/mask7" default="/perception/object_recognition/detection/rois7"/>
-  <arg name="input/camera_info7" default="/lucid_vision/rear_camera/camera_info"/>
+  <arg name="input/camera_info7" default="/sensing/camera/camera7/camera_info"/>
   <arg name="input/pointcloud" default="/sensing/lidar/top/pointcloud_raw"/>
   <arg name="output/pointcloud" default="output/pointcloud"/>
-  <arg name="sync_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/fusion_common.param.yaml"/>
-  <arg name="instance_segmentation_based_filter_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/instance_segmentation_pointcloud_fusion.param.yaml"/>
+  <arg name="sync_param_path" default="$(find-pkg-share autoware_image_projection_based_fusion)/config/fusion_common.param.yaml"/>
+  <arg name="instance_segmentation_based_filter_param_path" default="$(find-pkg-share autoware_image_projection_based_fusion)/config/instance_segmentation_pointcloud_fusion.param.yaml"/>
   <arg name="input/image0" default="/image_raw0"/>
   <arg name="input/image1" default="/image_raw1"/>
   <arg name="input/image2" default="/image_raw2"/>
@@ -29,7 +29,7 @@
   <arg name="input/image6" default="/image_raw6"/>
   <arg name="input/image7" default="/image_raw7"/>
   <group>
-    <node pkg="image_projection_based_fusion" exec="instance_segmentation_pointcloud_fusion_node" name="instance_segmentation_pointcloud_fusion" output="screen">
+    <node pkg="autoware_image_projection_based_fusion" exec="instance_segmentation_pointcloud_fusion_node" name="instance_segmentation_pointcloud_fusion" output="screen">
       <param name="rois_number" value="$(var input/camera_number)"/>
       <param from="$(var instance_segmentation_based_filter_param_path)"/>
       <param from="$(var sync_param_path)"/>
