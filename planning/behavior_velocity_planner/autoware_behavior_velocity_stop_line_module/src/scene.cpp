@@ -24,7 +24,7 @@ namespace autoware::behavior_velocity_planner
 
 StopLineModule::StopLineModule(
   const int64_t module_id, const int64_t lane_id, const lanelet::ConstLineString3d & stop_line,
-  const PlannerParam & planner_param, const rclcpp::Logger& logger,
+  const PlannerParam & planner_param, const rclcpp::Logger & logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
