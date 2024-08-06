@@ -8,10 +8,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/pose2twist_core.cpp
 )
 
-include_directories(
-  src
-)
-
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::pose2twist::Pose2Twist"
   EXECUTABLE ${PROJECT_NAME}_node
@@ -22,6 +18,9 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   ament_auto_add_gtest(test_angular_velocity
     test/test_angular_velocity.cpp
+  )
+  target_include_directories(test_angular_velocity PRIVATE
+    src
   )
 endif()
 
