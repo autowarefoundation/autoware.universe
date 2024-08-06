@@ -21,7 +21,6 @@
 #include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <autoware/interpolation/linear_interpolation.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
 
