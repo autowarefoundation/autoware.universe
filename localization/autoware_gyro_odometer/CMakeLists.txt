@@ -8,10 +8,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/gyro_odometer_core.cpp
 )
 
-include_directories(
-  src
-)
-
 target_link_libraries(${PROJECT_NAME} fmt)
 
 if(BUILD_TESTING)
@@ -25,6 +21,9 @@ if(BUILD_TESTING)
   )
   target_link_libraries(test_gyro_odometer
     ${PROJECT_NAME}
+  )
+  target_include_directories(test_gyro_odometer PRIVATE
+    src
   )
 endif()
 
