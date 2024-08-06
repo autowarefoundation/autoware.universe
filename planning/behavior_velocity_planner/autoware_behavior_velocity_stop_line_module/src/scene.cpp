@@ -14,31 +14,33 @@
 
 #include "scene.hpp"
 
-#include <autoware/behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
-#include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/system/time_keeper.hpp>
-
-#include <algorithm>
-#include <vector>
+#include "autoware/behavior_velocity_planner_common/utilization/arc_lane_util.hpp"
+#include "autoware/behavior_velocity_planner_common/utilization/util.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/universe_utils/system/time_keeper.hpp"
 
 namespace autoware::behavior_velocity_planner
 {
-namespace bg = boost::geometry;
 
 StopLineModule::StopLineModule(
-  const int64_t module_id, const size_t lane_id, const lanelet::ConstLineString3d & stop_line,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const int64_t module_id, const int64_t lane_id, const lanelet::ConstLineString3d & stop_line,
+  const PlannerParam & planner_param, const rclcpp::Logger& logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   stop_line_(stop_line),
   state_(State::APPROACH),
+  planner_param_(planner_param),
   debug_data_()
 {
   velocity_factor_.init(PlanningBehavior::STOP_SIGN);
-  planner_param_ = planner_param;
 }
+
+struct SegmentIndexWithPose
+{
+  size_t index = 0;
+  geometry_msgs::msg::Pose pose;
+};
 
 bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
