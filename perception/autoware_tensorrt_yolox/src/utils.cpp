@@ -41,13 +41,11 @@ cv::Mat runLengthDecoder(const std::vector<uint8_t> & rle_data, const int rows, 
   cv::Mat mask(rows, cols, CV_8UC1, cv::Scalar(0));
   int idx = 0;
   int step = sizeof(uint8_t) + sizeof(int);
-  int nb_pixels = 0;
   for (size_t i = 0; i < rle_data.size(); i += step) {
     uint8_t value;
     int length;
     std::memcpy(&value, &rle_data[i], sizeof(uint8_t));
     std::memcpy(&length, &rle_data[i + sizeof(uint8_t)], sizeof(int));
-    nb_pixels += length;
     for (int j = 0; j < length; ++j) {
       int row_idx = static_cast<int>(idx / cols);
       int col_idx = static_cast<int>(idx % cols);
