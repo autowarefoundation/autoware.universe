@@ -189,9 +189,7 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     out_mask_msg->data.resize(static_cast<int>(compressed_data.size()) * step);
     for (size_t i = 0; i < compressed_data.size(); ++i) {
       std::memcpy(&out_mask_msg->data[i * step], &compressed_data.at(i).first, sizeof(uint8_t));
-      std::memcpy(
-        &out_mask_msg->data[i * step + 1], &compressed_data.at(i).second,
-        sizeof(int));
+      std::memcpy(&out_mask_msg->data[i * step + 1], &compressed_data.at(i).second, sizeof(int));
     }
     mask_pub_.publish(out_mask_msg);
   }
