@@ -3,9 +3,7 @@
 <package format="3">
   <name>vesc_ackermann</name>
   <version>1.1.0</version>
-  <description>
-    Translate between VESC messages and ROS ackermann and odometry messages.
-  </description>
+  <description>Translate between VESC messages and ROS ackermann and odometry messages.</description>
   <maintainer email="joebetz@seas.upenn.edu">Johannes Betz</maintainer>
   <license>BSD</license>
   <url type="website">http://www.ros.org/wiki/vesc_ackermann</url>

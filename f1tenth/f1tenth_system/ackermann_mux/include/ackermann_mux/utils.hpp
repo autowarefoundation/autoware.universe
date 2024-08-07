@@ -45,7 +45,7 @@
  * @param max Max value of the range [min, max]
  * @return Value clamped to the range [min, max]
  */
-template<typename T>
+template <typename T>
 static T clamp(T x, T min, T max)
 {
   if (x < min) {

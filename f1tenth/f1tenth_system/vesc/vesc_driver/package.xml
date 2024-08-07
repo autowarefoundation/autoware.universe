@@ -3,9 +3,7 @@
 <package format="3">
   <name>vesc_driver</name>
   <version>1.1.0</version>
-  <description>
-    ROS device driver for the Vedder VESC open source motor driver.
-  </description>
+  <description>ROS device driver for the Vedder VESC open source motor driver.</description>
   <maintainer email="joebetz@seas.upenn.edu">Johannes Betz</maintainer>
   <license>BSD</license>
   <url type="website">http://www.ros.org/wiki/vesc_driver</url>
@@ -17,14 +15,13 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>std_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>vesc_msgs</depend>
-  <depend>serial_driver</depend>
   <depend>sensor_msgs</depend>
-
+  <depend>serial_driver</depend>
+  <depend>std_msgs</depend>
+  <depend>vesc_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

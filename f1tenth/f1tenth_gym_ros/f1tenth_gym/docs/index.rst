@@ -2,7 +2,7 @@
   :width: 60
   :align: left
 
-F1TENTH Gym Documentation 
+F1TENTH Gym Documentation
 ================================================
 
 Overview
@@ -42,7 +42,7 @@ Citing
 If you find this Gym environment useful, please consider citing:
 
 .. code::
-  
+
   @inproceedings{o2020textscf1tenth,
     title={textscF1TENTH: An Open-source Evaluation Environment for Continuous Control and Reinforcement Learning},
     author={O’Kelly, Matthew and Zheng, Hongrui and Karthik, Dhruv and Mangharam, Rahul},

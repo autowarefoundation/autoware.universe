@@ -33,7 +33,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import action_tutorials_interfaces.action
-from joy_teleop_testing_common import generate_joy_test_description, TestJoyTeleop
+from joy_teleop_testing_common import TestJoyTeleop
+from joy_teleop_testing_common import generate_joy_test_description
 import pytest
 import rclpy
 
@@ -41,17 +42,16 @@ import rclpy
 @pytest.mark.rostest
 def generate_test_description():
     parameters = {}
-    parameters['fibonacci.type'] = 'action'
-    parameters['fibonacci.interface_type'] = 'action_tutorials_interfaces/action/Fibonacci'
-    parameters['fibonacci.action_name'] = '/fibonacci'
-    parameters['fibonacci.buttons'] = [2]
-    parameters['fibonacci.action_goal'] = {'order': 5}
+    parameters["fibonacci.type"] = "action"
+    parameters["fibonacci.interface_type"] = "action_tutorials_interfaces/action/Fibonacci"
+    parameters["fibonacci.action_name"] = "/fibonacci"
+    parameters["fibonacci.buttons"] = [2]
+    parameters["fibonacci.action_goal"] = {"order": 5}
 
     return generate_joy_test_description(parameters)
 
 
 class TestJoyTeleopActionFibonacci(TestJoyTeleop):
-
     def publish_message(self):
         self.joy_publisher.publish(self.joy_msg)
         self.joy_msg.buttons[2] = int(not self.joy_msg.buttons[2])
@@ -66,7 +66,7 @@ class TestJoyTeleopActionFibonacci(TestJoyTeleop):
             sequence.append(0)
             sequence.append(1)
             for i in range(1, goal_handle.request.order):
-                sequence.append(sequence[i] + sequence[i-1])
+                sequence.append(sequence[i] + sequence[i - 1])
 
             goal_handle.succeed()
             result = action_tutorials_interfaces.action.Fibonacci.Result()
@@ -75,10 +75,8 @@ class TestJoyTeleopActionFibonacci(TestJoyTeleop):
             return result
 
         action_server = rclpy.action.ActionServer(
-            self.node,
-            action_tutorials_interfaces.action.Fibonacci,
-            'fibonacci',
-            fibonacci_callback)
+            self.node, action_tutorials_interfaces.action.Fibonacci, "fibonacci", fibonacci_callback
+        )
 
         try:
             # Above we set the button to be used as '2', so here we set the '2' button active.
@@ -87,8 +85,9 @@ class TestJoyTeleopActionFibonacci(TestJoyTeleop):
             self.executor.spin_until_future_complete(future, timeout_sec=10)
 
             # Check
-            self.assertTrue(future.done() and future.result(),
-                            'Timed out waiting for action to complete')
+            self.assertTrue(
+                future.done() and future.result(), "Timed out waiting for action to complete"
+            )
             self.assertEqual(sequence, [0, 1, 1, 2, 3, 5])
         finally:
             # Cleanup

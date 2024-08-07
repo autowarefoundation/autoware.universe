@@ -31,31 +31,32 @@
 #ifndef VESC_DRIVER__VESC_DRIVER_HPP_
 #define VESC_DRIVER__VESC_DRIVER_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/imu.hpp>
-#include <std_msgs/msg/float64.hpp>
-#include <vesc_msgs/msg/vesc_state.hpp>
-#include <vesc_msgs/msg/vesc_state_stamped.hpp>
-#include <vesc_msgs/msg/vesc_imu.hpp>
-#include <vesc_msgs/msg/vesc_imu_stamped.hpp>
-#include <experimental/optional>
-#include <memory>
-#include <string>
-
 #include "vesc_driver/vesc_interface.hpp"
 #include "vesc_driver/vesc_packet.hpp"
+
+#include <experimental/optional>
+#include <rclcpp/rclcpp.hpp>
+
+#include <sensor_msgs/msg/imu.hpp>
+#include <std_msgs/msg/float64.hpp>
+#include <vesc_msgs/msg/vesc_imu.hpp>
+#include <vesc_msgs/msg/vesc_imu_stamped.hpp>
+#include <vesc_msgs/msg/vesc_state.hpp>
+#include <vesc_msgs/msg/vesc_state_stamped.hpp>
+
+#include <memory>
+#include <string>
 
 namespace vesc_driver
 {
 
+using sensor_msgs::msg::Imu;
 using std_msgs::msg::Float64;
+using vesc_msgs::msg::VescImuStamped;
 using vesc_msgs::msg::VescState;
 using vesc_msgs::msg::VescStateStamped;
-using vesc_msgs::msg::VescImuStamped;
-using sensor_msgs::msg::Imu;
 
-class VescDriver
-  : public rclcpp::Node
+class VescDriver : public rclcpp::Node
 {
 public:
   explicit VescDriver(const rclcpp::NodeOptions & options);
@@ -70,11 +71,10 @@ private:
   struct CommandLimit
   {
     CommandLimit(
-      rclcpp::Node * node_ptr,
-      const std::string & str,
+      rclcpp::Node * node_ptr, const std::string & str,
       const std::experimental::optional<double> & min_lower = std::experimental::optional<double>(),
       const std::experimental::optional<double> & max_upper =
-      std::experimental::optional<double>());
+        std::experimental::optional<double>());
     double clip(double value);
     rclcpp::Node * node_ptr;
     rclcpp::Logger logger;
@@ -105,17 +105,12 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   // driver modes (possible states)
-  typedef enum
-  {
-    MODE_INITIALIZING,
-    MODE_OPERATING
-  }
-  driver_mode_t;
+  typedef enum { MODE_INITIALIZING, MODE_OPERATING } driver_mode_t;
 
   // other variables
-  driver_mode_t driver_mode_;           ///< driver state machine mode (state)
-  int fw_version_major_;                ///< firmware major version reported by vesc
-  int fw_version_minor_;                ///< firmware minor version reported by vesc
+  driver_mode_t driver_mode_;  ///< driver state machine mode (state)
+  int fw_version_major_;       ///< firmware major version reported by vesc
+  int fw_version_minor_;       ///< firmware minor version reported by vesc
 
   // ROS callbacks
   void brakeCallback(const Float64::SharedPtr brake);

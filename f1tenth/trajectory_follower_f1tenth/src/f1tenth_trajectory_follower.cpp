@@ -16,8 +16,9 @@
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/pose_deviation.hpp>
-#include <iostream>
+
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
@@ -38,9 +39,10 @@ F1tenthTrajectoryFollower::F1tenthTrajectoryFollower(const rclcpp::NodeOptions &
   sub_kinematics_ = create_subscription<Odometry>(
     "input/kinematics", 1, [this](const Odometry::SharedPtr msg) { odometry_ = msg; });
   sub_trajectory_ = create_subscription<AutowareAutoPlanningMsgs::Trajectory>(
-    "input/trajectory", 1, [this](const AutowareAutoPlanningMsgs::Trajectory::SharedPtr msg) { 
-    autoware_auto_trajectory_ = msg; 
-    convertTrajectoryMsg();});
+    "input/trajectory", 1, [this](const AutowareAutoPlanningMsgs::Trajectory::SharedPtr msg) {
+      autoware_auto_trajectory_ = msg;
+      convertTrajectoryMsg();
+    });
 
   use_external_target_vel_ = declare_parameter<bool>("use_external_target_vel", false);
   external_target_vel_ = declare_parameter<float>("external_target_vel", 0.0);
@@ -51,67 +53,69 @@ F1tenthTrajectoryFollower::F1tenthTrajectoryFollower(const rclcpp::NodeOptions &
     this, get_clock(), 30ms, std::bind(&F1tenthTrajectoryFollower::onTimer, this));
 }
 
-void F1tenthTrajectoryFollower::createTrajectoryMarker(){
-    scale.x = 0.1;
-    scale.y = 0.1;
-    scale.z = 0.1;
+void F1tenthTrajectoryFollower::createTrajectoryMarker()
+{
+  scale.x = 0.1;
+  scale.y = 0.1;
+  scale.z = 0.1;
 
-    header.frame_id = "map";
+  header.frame_id = "map";
 
-    marker.type = marker.POINTS;
-    marker.pose = pose;
-    marker.scale = scale;
-    marker.header = header;
-    marker.points.clear();
-    marker.lifetime = rclcpp::Duration::from_nanoseconds(0.03 * 1e9);
+  marker.type = marker.POINTS;
+  marker.pose = pose;
+  marker.scale = scale;
+  marker.header = header;
+  marker.points.clear();
+  marker.lifetime = rclcpp::Duration::from_nanoseconds(0.03 * 1e9);
 
-    for(int i = 0; i < (int)trajectory_.points.size(); i++){
-      point.x = trajectory_.points[i].pose.position.x;
-      point.y = trajectory_.points[i].pose.position.y;
-      point.z = 0.0;
-      marker.points.push_back(point);
-    }
-
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    marker.color.a = 1.0;
-    traj_marker_pub_->publish(marker);
-
-    scale.x = 0.2;
-    scale.y = 0.2;
-    scale.z = 0.2;
-
-    goal_marker.type = goal_marker.POINTS;
-    goal_marker.pose = pose;
-    goal_marker.scale = scale;
-    goal_marker.header = header;
-    goal_marker.lifetime = rclcpp::Duration::from_nanoseconds(0.03 * 1e9);
-
-    point.x = closest_traj_point_.pose.position.x;
-    point.y = closest_traj_point_.pose.position.y;
+  for (int i = 0; i < (int)trajectory_.points.size(); i++) {
+    point.x = trajectory_.points[i].pose.position.x;
+    point.y = trajectory_.points[i].pose.position.y;
     point.z = 0.0;
-    
-    goal_marker.points.clear();
-    goal_marker.points.push_back(point);
+    marker.points.push_back(point);
+  }
 
-    goal_marker.color.r = 0.0;
-    goal_marker.color.g = 0.0;
-    goal_marker.color.b = 1.0;
-    goal_marker.color.a = 1.0;
+  marker.color.r = 1.0;
+  marker.color.g = 0.0;
+  marker.color.b = 0.0;
+  marker.color.a = 1.0;
+  traj_marker_pub_->publish(marker);
 
-    goal_marker_pub_->publish(goal_marker);
+  scale.x = 0.2;
+  scale.y = 0.2;
+  scale.z = 0.2;
+
+  goal_marker.type = goal_marker.POINTS;
+  goal_marker.pose = pose;
+  goal_marker.scale = scale;
+  goal_marker.header = header;
+  goal_marker.lifetime = rclcpp::Duration::from_nanoseconds(0.03 * 1e9);
+
+  point.x = closest_traj_point_.pose.position.x;
+  point.y = closest_traj_point_.pose.position.y;
+  point.z = 0.0;
+
+  goal_marker.points.clear();
+  goal_marker.points.push_back(point);
+
+  goal_marker.color.r = 0.0;
+  goal_marker.color.g = 0.0;
+  goal_marker.color.b = 1.0;
+  goal_marker.color.a = 1.0;
+
+  goal_marker_pub_->publish(goal_marker);
 }
 
 // convert trajectory from autoware_auto_planning_msgs to autoware_planning_msgs
-void F1tenthTrajectoryFollower::convertTrajectoryMsg(){
+void F1tenthTrajectoryFollower::convertTrajectoryMsg()
+{
   size_t num_points = autoware_auto_trajectory_->points.size();
-  AutowarePlanningMsgs::TrajectoryPoint* trajectory_points = 
+  AutowarePlanningMsgs::TrajectoryPoint * trajectory_points =
     new AutowarePlanningMsgs::TrajectoryPoint[num_points];
-  
-  for(int i = 0; i < (int)num_points; i++){
-    AutowarePlanningMsgs::TrajectoryPoint& point = trajectory_points[i];
-    AutowareAutoPlanningMsgs::TrajectoryPoint& auto_point = autoware_auto_trajectory_->points[i];
+
+  for (int i = 0; i < (int)num_points; i++) {
+    AutowarePlanningMsgs::TrajectoryPoint & point = trajectory_points[i];
+    AutowareAutoPlanningMsgs::TrajectoryPoint & auto_point = autoware_auto_trajectory_->points[i];
     point.time_from_start = auto_point.time_from_start;
     point.pose = auto_point.pose;
     point.longitudinal_velocity_mps = auto_point.longitudinal_velocity_mps;
@@ -137,8 +141,9 @@ void F1tenthTrajectoryFollower::onTimer()
   Control cmd;
   cmd.stamp = cmd.lateral.stamp = cmd.longitudinal.stamp = get_clock()->now();
   cmd.lateral.steering_tire_angle = static_cast<float>(calcSteerCmd());
-  cmd.longitudinal.velocity = use_external_target_vel_ ? static_cast<float>(external_target_vel_)
-                                                    : closest_traj_point_.longitudinal_velocity_mps;
+  cmd.longitudinal.velocity = use_external_target_vel_
+                                ? static_cast<float>(external_target_vel_)
+                                : closest_traj_point_.longitudinal_velocity_mps;
   cmd.longitudinal.acceleration = static_cast<float>(calcAccCmd());
 
   ackermann_msgs::msg::AckermannDriveStamped ackermann_msg;
@@ -146,7 +151,7 @@ void F1tenthTrajectoryFollower::onTimer()
   ackermann_msg.drive.steering_angle = cmd.lateral.steering_tire_angle * 10;
   drive_cmd_->publish(ackermann_msg);
 
-  cout << "velocity: " << ackermann_msg.drive.speed << "m/s"<< endl;
+  cout << "velocity: " << ackermann_msg.drive.speed << "m/s" << endl;
 }
 
 void F1tenthTrajectoryFollower::updateClosest()
@@ -173,7 +178,7 @@ double F1tenthTrajectoryFollower::calcSteerCmd()
   constexpr auto steer_lim = 1.0;
 
   const auto steer = std::clamp(-kp * lat_err - kd * yaw_err, -steer_lim, steer_lim);
-  
+
   return steer;
 }
 
@@ -193,7 +198,10 @@ double F1tenthTrajectoryFollower::calcAccCmd()
   return acc;
 }
 
-bool F1tenthTrajectoryFollower::checkData() { return (autoware_auto_trajectory_ && odometry_); }
+bool F1tenthTrajectoryFollower::checkData()
+{
+  return (autoware_auto_trajectory_ && odometry_);
+}
 
 }  // namespace f1tenth_trajectory_follower
 

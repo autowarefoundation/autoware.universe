@@ -12,10 +12,10 @@
 
   <exec_depend>control_msgs</exec_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>rosidl_runtime_py</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>teleop_tools_msgs</exec_depend>
   <exec_depend>trajectory_msgs</exec_depend>
-  <exec_depend>rosidl_runtime_py</exec_depend>
 
   <test_depend>action_tutorials_interfaces</test_depend>
   <test_depend>ament_copyright</test_depend>
@@ -24,14 +24,13 @@
   <test_depend>ament_xmllint</test_depend>
   <test_depend>example_interfaces</test_depend>
   <test_depend>geometry_msgs</test_depend>
+  <test_depend>launch_ros</test_depend>
+  <test_depend>launch_testing</test_depend>
   <test_depend>std_msgs</test_depend>
   <test_depend>std_srvs</test_depend>
   <test_depend>test_msgs</test_depend>
-  <test_depend>launch_ros</test_depend>
-  <test_depend>launch_testing</test_depend>
 
   <export>
     <build_type>ament_python</build_type>
   </export>
-
 </package>

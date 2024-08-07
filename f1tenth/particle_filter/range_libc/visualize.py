@@ -1,11 +1,13 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import yaml
-from yaml import CLoader as Loader, CDumper as Dumper
-import ujson
-import itertools
 import argparse
+import itertools
+
+import matplotlib.pyplot as plt
+import numpy as np
 import scipy.misc
+import ujson
+import yaml
+from yaml import CDumper as Dumper
+from yaml import CLoader as Loader
 
 # dump = yaml.dump(dummy_data, fh, encoding='utf-8', default_flow_style=False, Dumper=Dumper)
 # data = yaml.load(fh, Loader=Loader)
@@ -167,9 +169,9 @@ class SliceScroller(object):
 
         # self.get_viz()
         # print self.ddt.shape
-        # self.im = ax.imshow(self.ddt, cmap="gray")        
+        # self.im = ax.imshow(self.ddt, cmap="gray")
         # self.im.axes.figure.canvas.draw()
-        
+
 
     def onscroll(self, evt):
         print("Slice: %s  Theta: %s" % (self.ind, self.cddt.slices[self.ind].theta))
@@ -186,15 +188,15 @@ class SliceScroller(object):
         if not isinstance(self.ddts[self.ind], np.ndarray):
         # if self.ddts[self.ind] == None:
             self.ddts[self.ind] = np.sqrt(self.cddt.slices[self.ind].make_ddt(True)).transpose()
-       
+
         ys = map(len, self.cddt.slices[self.ind].zeros)
         compression_factor = 2*self.cddt.map.width * self.cddt.map.height / (sum(ys))
 
         self.ax1.set_title("DDT - Reconstructed from a slice of the PCDDT, compression factor: " + str(compression_factor))
         self.ax1.set_ylabel('Theta = %s' % self.cddt.slices[self.ind].theta)
         self.ax1.imshow(self.ddts[self.ind],cmap="gray",interpolation='nearest', aspect='auto')
-        
-       
+
+
         self.ax2.set_title("Number of entries projected into each PCDDT bin")
         self.ax2.plot(ys)
         self.fig.canvas.draw()
@@ -208,7 +210,7 @@ class SliceScroller(object):
 #   ddt = cddt.slices[10].make_ddt()
 #   # im = plt.imshow(np.sqrt(ddt), cmap="gray")
 #   im = plt.imshow(np.ones((100,100)), cmap="gray")
-    
+
 #   def onscroll(evt):
 #       global ind
 #       print "Slice:", ind, "theta:", cddt.slices[ind].theta
@@ -219,7 +221,7 @@ class SliceScroller(object):
 #       # cddt.slices[0].visualize()
 #       # plt.show()
 
-    
+
 #   fig.canvas.mpl_connect('scroll_event', onscroll)
 #   plt.show()
 
@@ -237,11 +239,11 @@ if __name__ == '__main__':
     ax1.axis('off')
     ax2.set_ylim([0,200])
     ax2.set_xlim([0,ddt_img.shape[1]])
-    
+
     ddt_img_color = np.zeros((ddt_img.shape[0], ddt_img.shape[1], 3), dtype=np.uint8)
     ddt_img_color[:, :, :] = ddt_img[:, :, np.newaxis]
     ax2.plot(ddt_img[row_num,:])
-    
+
     ddt_img_color[row_num-2:row_num+2,:,:] = (0,0,255)
     ddt_img_color[:3,:,:] = (0,0,0)
     ddt_img_color[-3:,:,:] = (0,0,0)
@@ -265,9 +267,9 @@ if __name__ == '__main__':
     lut_img_color[:3,:,:] = (0,0,0)
     lut_img_color[-3:,:,:] = (0,0,0)
     ax1.imshow(lut_img_color, cmap="gray")
-    
 
-    
+
+
 
     # plt.ylim([0,250])
     # plt.plot(lut_img[600,:])
@@ -293,7 +295,7 @@ if __name__ == '__main__':
     # plt.imshow(cddt.slices[3].make_ddt(reversed_dir=True), cmap="gray")
     plt.show()
 
-    
+
     # X = np.random.rand(20, 20, 40)
     # tracker = SliceScroller(cddt)
     # plt.show()
@@ -321,4 +323,3 @@ if __name__ == '__main__':
 # from __future__ import print_function
 # import numpy as np
 # import matplotlib.pyplot as plt
-

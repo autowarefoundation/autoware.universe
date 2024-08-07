@@ -20,7 +20,7 @@ cmake ..
 make
 ```
 
-If you get an error about having the wrong version of CMake, install a version of CMake that is less than or equal to 3.6 (I use 3.6) from here: https://cmake.org/download/
+If you get an error about having the wrong version of CMake, install a version of CMake that is less than or equal to 3.6 (I use 3.6) from here: <https://cmake.org/download/>
 
 If you don't want to update your system's version of CMake, simply:
 
@@ -77,9 +77,9 @@ sudo WITH_CUDA=ON python setup.py install
 
 ## License
 
-This code is licensed under Apache 2.0. Copyright 2017 Corey H. Walsh. 
+This code is licensed under Apache 2.0. Copyright 2017 Corey H. Walsh.
 
-You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
+You may obtain a copy of the License at: <http://www.apache.org/licenses/LICENSE-2.0>
 
 Enjoy!
 
@@ -88,7 +88,7 @@ Enjoy!
 This library accompanies the following [publication](http://arxiv.org/abs/1705.01167).
 
     @article{walsh17,
-        author = {Corey Walsh and 
+        author = {Corey Walsh and
                   Sertac Karaman},
         title  = {CDDT: Fast Approximate 2D Ray Casting for Accelerated Localization},
         volume = {abs/1705.01167},
@@ -127,10 +127,10 @@ range_libc_dist/
 
 ## RangeLibc Algorithms Overview
 
-  * [Bresenham's Line (BL)](#bresenhams-line-bl)
-  * [Ray Marching (RM/RMGPU)](#ray-marching-rm)
-  * [Compressed Directional Distance Transform (CDDT/PCDDT)](#compressed-directional-distance-transform-cddt-ours)
-  * [Giant Lookup Table (GLT)](#giant-lookup-table-glt)
+- [Bresenham's Line (BL)](#bresenhams-line-bl)
+- [Ray Marching (RM/RMGPU)](#ray-marching-rm)
+- [Compressed Directional Distance Transform (CDDT/PCDDT)](#compressed-directional-distance-transform-cddt-ours)
+- [Giant Lookup Table (GLT)](#giant-lookup-table-glt)
 
 ![Range Method Performance Comparison](./media/comparison.png)
 
@@ -140,9 +140,10 @@ The above benchmarks were performed on an NVIDIA Jetson TX1 with a single thread
 
 ### Bresenham's Line (BL)
 
-Bresenham's line algorithm [1] is one of the most widely used methods for two dimensional ray casting in occupancy grids. The algorithm incrementally determines the set of pixels that approximate the trajectory of a query ray starting from the query point (x,y)_{query} and progressing in the theta_{query} direction one pixel at a time. The algorithm terminates once the nearest occupied pixel is discovered, and the euclidean distance between that occupied pixel and (x,y)_{query} is reported. This algorithm is widely implemented in particle filters due to its simplicity and ability to operate on a dynamic map. The primary disadvantage is that it is slow, potentially requiring hundreds of memory accesses for a single ray cast. While average performance is highly environment dependent, Bresenham's Line algorithm is linear in map size in the worst case.
+Bresenham's line algorithm [1] is one of the most widely used methods for two dimensional ray casting in occupancy grids. The algorithm incrementally determines the set of pixels that approximate the trajectory of a query ray starting from the query point (x,y)_{query} and progressing in the theta_{query} direction one pixel at a time. The algorithm terminates once the nearest occupied pixel is discovered, and the euclidean distance between that occupied pixel and (x,y)\_{query} is reported. This algorithm is widely implemented in particle filters due to its simplicity and ability to operate on a dynamic map. The primary disadvantage is that it is slow, potentially requiring hundreds of memory accesses for a single ray cast. While average performance is highly environment dependent, Bresenham's Line algorithm is linear in map size in the worst case.
 
 <!--- /////////////////////////////// Ray Marching Description //////////////////////////////// -->
+
 ### Ray Marching (RM/RMGPU)
 
 Ray marching [2] is a well known algorithm, frequently used to accelerate fractal or volumetric graphical rendering applications. The basic idea can be understood very intuitively. Imagine that you are in an unknown environment, with a blindfold on. If an oracle tells you the distance to the nearest obstacle, you can surely move in any direction by at most that distance without colliding with any obstacle. By applying this concept recursively, one can step along a particular ray by the minimum distance to the nearest obstacle until colliding with some obstacle. The following figure demonstrates this idea graphically (from [3]).
@@ -153,28 +154,28 @@ In the occupancy grid world, it is possible to precompute the distance to the ne
 
 This method is implemented both for the CPU and GPU in RangeLibc. The GPU implementation is the fastest available method for large batches of queries.
 
-#### Pseudocode:
+#### Pseudocode
 
 ```
 # compute the distance transform of the map
 def precomputation(omap):
-	distance_transform = euclidean_dt(omap)
+ distance_transform = euclidean_dt(omap)
 
 # step along the (x,y,theta) ray until colliding with an obstacle
 def calc_range(x,y,theta):
-	t = 0.0
-	coeff = 0.99
-	while t < max_range:
-		px, py = x + cos(theta) * t, y + sin(theta) * t
+ t = 0.0
+ coeff = 0.99
+ while t < max_range:
+  px, py = x + cos(theta) * t, y + sin(theta) * t
 
-		if px or py out of map bounds:
-			return max_range
+  if px or py out of map bounds:
+   return max_range
 
-		dist = distance_transform[px,py]
-		if dist == 0.0:
-			return sqrt((x - px)^2 + (y - py)^2)
+  dist = distance_transform[px,py]
+  if dist == 0.0:
+   return sqrt((x - px)^2 + (y - py)^2)
 
-		t += max(dist*coeff, 1.0)
+  t += max(dist*coeff, 1.0)
 
 ```
 
@@ -205,94 +206,94 @@ Memory: O(|theta_discretization|\*|edge pixels|) - in practice much smaller, due
 
 The Compressed Directional Distance Transform (CDDT) algorithm uses a compressed data structure to represent map geometry in a way which allows for fast queries. An optional pruning step removes unneeded elements in the data structure for slightly faster operation (PCDDT). For a full description of the algorithm, see the associated paper: [http://arxiv.org/abs/1705.01167](http://arxiv.org/abs/1705.01167)
 
-#### Pseudocode:
+#### Pseudocode
 
 ```
-# for the given theta, determine a translation that will ensure the 
+# for the given theta, determine a translation that will ensure the
 # y coordinate of every pixel in the rotated map will be positive
 def y_offset(theta):
-	pass
+ pass
 
 # give the range of y coordinates that the pixel overlaps with
 def y_bounds(pixel):
-	return range(min(pixel.corners.y), max(pixel.corners.y))
+ return range(min(pixel.corners.y), max(pixel.corners.y))
 
 # build the CDDT datastructure
 def precomputation(omap):
-	# prune any unimportant geometry from the map
-	edgeMap = morphological_edge_transform(omap)
+ # prune any unimportant geometry from the map
+ edgeMap = morphological_edge_transform(omap)
 
-	# build the empty LUT data structure
-	compressed_lut = []
-	for each theta in |theta_discretization|:
-		projection_lut = []
-		for each i in range(lut_widths[theta]):
-			projection_lut.append([])
-		compressed_lut.append(projection_lut)
+ # build the empty LUT data structure
+ compressed_lut = []
+ for each theta in |theta_discretization|:
+  projection_lut = []
+  for each i in range(lut_widths[theta]):
+   projection_lut.append([])
+  compressed_lut.append(projection_lut)
 
-	# populate the LUT data structure
-	for each theta in |theta_discretization|:
-		for each occupied pixel (x,y) in omap:
-			pixel.rotate(theta)
-			pixel.translate(y_offset(theta))
-			lut_indices = y_bounds(pixel)
-			
-			for each index in lut_indices:
-				compressed_lut[theta][index].append(pixel.center.x)
+ # populate the LUT data structure
+ for each theta in |theta_discretization|:
+  for each occupied pixel (x,y) in omap:
+   pixel.rotate(theta)
+   pixel.translate(y_offset(theta))
+   lut_indices = y_bounds(pixel)
 
-	# sort each LUT bin for faster access via binary search
-	for each theta in |theta_discretization|:
-		for each i in compressed_lut[theta].size():
-			sort(compressed_lut[theta][i])
+   for each index in lut_indices:
+    compressed_lut[theta][index].append(pixel.center.x)
+
+ # sort each LUT bin for faster access via binary search
+ for each theta in |theta_discretization|:
+  for each i in compressed_lut[theta].size():
+   sort(compressed_lut[theta][i])
 
 # (optional) remove unused entries from the LUT to save space
 # highly recommended for static maps
 def prune():
-	# build an empty table of sets to keep track of which
-	# indices in the CDDT data structure are used
-	collision_table = []
-	for theta in range(theta_discretization):
-		collision_row = []
-		for i in range(compressed_lut[theta].size()):
-			collision_row.append(set())
-		collision_table.append(collision_row)
+ # build an empty table of sets to keep track of which
+ # indices in the CDDT data structure are used
+ collision_table = []
+ for theta in range(theta_discretization):
+  collision_row = []
+  for i in range(compressed_lut[theta].size()):
+   collision_row.append(set())
+  collision_table.append(collision_row)
 
-	# ray cast from every possible (x,y,theta) state, keeping track
-	# of which LUT entries are used
-	for x in range(omap.width):
-		for y in range(omap.height):
-			for theta in range(theta_discretization):
-				# keep track of which object in the LUT is found to collide
-				# with the following ray cast query
-				calc_range(x,y,theta) implies (lut_bin, lut_bin_index)
-				collision_table[theta][lut_bin].add(lut_bin_index)
+ # ray cast from every possible (x,y,theta) state, keeping track
+ # of which LUT entries are used
+ for x in range(omap.width):
+  for y in range(omap.height):
+   for theta in range(theta_discretization):
+    # keep track of which object in the LUT is found to collide
+    # with the following ray cast query
+    calc_range(x,y,theta) implies (lut_bin, lut_bin_index)
+    collision_table[theta][lut_bin].add(lut_bin_index)
 
-	# remove any element of the LUT that is not in the collision table
-	for theta in range(theta_discretization):
-		for i in range(compressed_lut[theta].size()):
-			new_lut_bin = []
-			for obstacle in compressed_lut[theta][i]:
-				if obstacle in collision_table:
-					new_lut_bin.append(obstacle)
-				else: continue
-			compressed_lut[theta][i] = new_lut_bin
+ # remove any element of the LUT that is not in the collision table
+ for theta in range(theta_discretization):
+  for i in range(compressed_lut[theta].size()):
+   new_lut_bin = []
+   for obstacle in compressed_lut[theta][i]:
+    if obstacle in collision_table:
+     new_lut_bin.append(obstacle)
+    else: continue
+   compressed_lut[theta][i] = new_lut_bin
 
 # compute the distance to the nearest obstacle in the (x,y,theta) direction
 def calc_range(x,y,theta):
-	angle_index, discrete_angle, flipped_search = discretize_theta(theta)
-	lut_x, lut_y = rotate(x, y, discrete_angle)
+ angle_index, discrete_angle, flipped_search = discretize_theta(theta)
+ lut_x, lut_y = rotate(x, y, discrete_angle)
 
-	if omap.occupied(x,y):
-		return 0.0
+ if omap.occupied(x,y):
+  return 0.0
 
-	lut_bin = compressed_lut[angle_index][(int)lut_y]
-	if flipped_search:
-		nearest_obstacle_x = lut_bin.next_lesser_element(lut_x)
-	else:
-		nearest_obstacle_x = lut_bin.next_greater_element(lut_x)
-	
-	distance = abs(nearest_obstacle_x - lut_x)
-	return distance
+ lut_bin = compressed_lut[angle_index][(int)lut_y]
+ if flipped_search:
+  nearest_obstacle_x = lut_bin.next_lesser_element(lut_x)
+ else:
+  nearest_obstacle_x = lut_bin.next_greater_element(lut_x)
+
+ distance = abs(nearest_obstacle_x - lut_x)
+ return distance
 ```
 
 #### Analysis
@@ -316,30 +317,29 @@ Memory: O(|width|\*|height|) for 2D grid. In general O(k) where k is the number 
 - Can be difficult to implement well
 - Curse of dimensionality in higher dimensions
 
-
 <!--- //////////////////////////////////// LUT Description //////////////////////////////////// -->
 
 ### Giant Lookup Table (GLT)
 
 Precompute distances for all possible (x,y,theta) states and store the results in a big table for fast lookup.
 
-#### Pseudocode:
+#### Pseudocode
 
 ```
-# For every (x,y,theta) in a predefined grid, use Besenham's line or 
+# For every (x,y,theta) in a predefined grid, use Besenham's line or
 # ray maching to build the table
 def precomputation(omap):
-	giant_LUT[width][height][theta_discretization] = -1
-	for x in range(omap.width):
-		for y in range(omap.height):
-			for theta in range(theta_discretization):
-				giant_LUT[x][y][theta] = calc_range(x,y,theta)
+ giant_LUT[width][height][theta_discretization] = -1
+ for x in range(omap.width):
+  for y in range(omap.height):
+   for theta in range(theta_discretization):
+    giant_LUT[x][y][theta] = calc_range(x,y,theta)
 
 # simply read from the table
-# note: interpolation between the two closest discrete 
+# note: interpolation between the two closest discrete
 #       thetas would be more accurate but slower
 def calc_range(x,y,theta):
-	return giant_LUT[int(x), int(y), discrete(theta)]
+ return giant_LUT[int(x), int(y), discrete(theta)]
 ```
 
 #### Analysis
@@ -360,9 +360,8 @@ Calc range: O(1)
 - Very large memory requirement
 - Curse of dimensionality in higher dimensions
 
-
 ## References
 
-1.  J. Bresenham. "Algorithm for Computer Control of a Digital Plotter," IBM Systems Journal, vol. 4, no. 1, pp. 25-30, 1965.
-2.  K. Perlin and E. M. Hoffert. "Hypertexture," Computer Graphics, vol 23, no. 3, pp. 297-306, 1989.
+1. J. Bresenham. "Algorithm for Computer Control of a Digital Plotter," IBM Systems Journal, vol. 4, no. 1, pp. 25-30, 1965.
+2. K. Perlin and E. M. Hoffert. "Hypertexture," Computer Graphics, vol 23, no. 3, pp. 297-306, 1989.
 3. M. Pharr, and R. Fernando. "Chapter 8. Per-Pixel Displacement Mapping with Distance Functions" in GPU gems 2: Programming techniques for high-performance graphics and general-purpose computation, 3rd ed. United States: Addison-Wesley Educational Publishers, 2005.

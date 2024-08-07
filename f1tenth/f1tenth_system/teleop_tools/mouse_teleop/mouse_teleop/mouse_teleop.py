@@ -41,24 +41,24 @@
 import signal
 import tkinter
 
-from geometry_msgs.msg import Twist, Vector3
+from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Vector3
 import numpy
 import rclpy
 from rclpy.node import Node
 
 
 class MouseTeleop(Node):
-
     def __init__(self):
-        super().__init__('mouse_teleop')
+        super().__init__("mouse_teleop")
 
         # Retrieve params:
-        self._frequency = self.declare_parameter('frequency', 0.0).value
-        self._scale = self.declare_parameter('scale', 1.0).value
-        self._holonomic = self.declare_parameter('holonomic', False).value
+        self._frequency = self.declare_parameter("frequency", 0.0).value
+        self._scale = self.declare_parameter("scale", 1.0).value
+        self._holonomic = self.declare_parameter("holonomic", False).value
 
         # Create twist publisher:
-        self._pub_cmd = self.create_publisher(Twist, 'mouse_vel', 10)
+        self._pub_cmd = self.create_publisher(Twist, "mouse_vel", 10)
 
         # Initialize twist components to zero:
         self._v_x = 0.0
@@ -73,21 +73,31 @@ class MouseTeleop(Node):
 
         # Create window:
         self._root = tkinter.Tk()
-        self._root.title('Mouse Teleop')
+        self._root.title("Mouse Teleop")
 
         # Make window non-resizable:
         self._root.resizable(0, 0)
 
         # Create canvas:
-        self._canvas = tkinter.Canvas(self._root, bg='white')
+        self._canvas = tkinter.Canvas(self._root, bg="white")
 
         # Create canvas objects:
-        self._canvas.create_arc(0, 0, 0, 0, fill='red', outline='red',
-                                width=1, style=tkinter.PIESLICE, start=90.0, tag='w')
-        self._canvas.create_line(0, 0, 0, 0, fill='blue', width=4, tag='v_x')
+        self._canvas.create_arc(
+            0,
+            0,
+            0,
+            0,
+            fill="red",
+            outline="red",
+            width=1,
+            style=tkinter.PIESLICE,
+            start=90.0,
+            tag="w",
+        )
+        self._canvas.create_line(0, 0, 0, 0, fill="blue", width=4, tag="v_x")
 
         if self._holonomic:
-            self._canvas.create_line(0, 0, 0, 0, fill='blue', width=4, tag='v_y')
+            self._canvas.create_line(0, 0, 0, 0, fill="blue", width=4, tag="v_y")
 
         # Create canvas text objects:
         self._text_v_x = tkinter.StringVar()
@@ -98,16 +108,17 @@ class MouseTeleop(Node):
         self._label_v_x = tkinter.Label(self._root, anchor=tkinter.W, textvariable=self._text_v_x)
         if self._holonomic:
             self._label_v_y = tkinter.Label(
-                self._root, anchor=tkinter.W, textvariable=self._text_v_y)
+                self._root, anchor=tkinter.W, textvariable=self._text_v_y
+            )
         self._label_w = tkinter.Label(self._root, anchor=tkinter.W, textvariable=self._text_w)
 
         if self._holonomic:
-            self._text_v_x.set('v_x = %0.2f m/s' % self._v_x)
-            self._text_v_y.set('v_y = %0.2f m/s' % self._v_y)
-            self._text_w.set('w   = %0.2f deg/s' % self._w)
+            self._text_v_x.set("v_x = %0.2f m/s" % self._v_x)
+            self._text_v_y.set("v_y = %0.2f m/s" % self._v_y)
+            self._text_w.set("w   = %0.2f deg/s" % self._w)
         else:
-            self._text_v_x.set('v = %0.2f m/s' % self._v_x)
-            self._text_w.set('w = %0.2f deg/s' % self._w)
+            self._text_v_x.set("v = %0.2f m/s" % self._v_x)
+            self._text_w.set("w = %0.2f deg/s" % self._w)
 
         self._label_v_x.pack()
         if self._holonomic:
@@ -115,19 +126,19 @@ class MouseTeleop(Node):
         self._label_w.pack()
 
         # Bind event handlers:
-        self._canvas.bind('<Button-1>', self._start)
-        self._canvas.bind('<ButtonRelease-1>', self._release)
+        self._canvas.bind("<Button-1>", self._start)
+        self._canvas.bind("<ButtonRelease-1>", self._release)
 
-        self._canvas.bind('<Configure>', self._configure)
+        self._canvas.bind("<Configure>", self._configure)
 
         if self._holonomic:
-            self._canvas.bind('<B1-Motion>', self._mouse_motion_linear)
-            self._canvas.bind('<Shift-B1-Motion>', self._mouse_motion_angular)
+            self._canvas.bind("<B1-Motion>", self._mouse_motion_linear)
+            self._canvas.bind("<Shift-B1-Motion>", self._mouse_motion_angular)
 
-            self._root.bind('<Shift_L>', self._change_to_motion_angular)
-            self._root.bind('<KeyRelease-Shift_L>', self._change_to_motion_linear)
+            self._root.bind("<Shift_L>", self._change_to_motion_angular)
+            self._root.bind("<KeyRelease-Shift_L>", self._change_to_motion_linear)
         else:
-            self._canvas.bind('<B1-Motion>', self._mouse_motion_angular)
+            self._canvas.bind("<B1-Motion>", self._mouse_motion_angular)
 
         self._canvas.pack()
 
@@ -139,7 +150,7 @@ class MouseTeleop(Node):
             self._timer = self.create_timer(period, self._publish_twist)
 
         # Handle ctrl+c on the window
-        self._root.bind('<Control-c>', self._quit)
+        self._root.bind("<Control-c>", self._quit)
 
         # Nasty polling-trick to handle ctrl+c in terminal
         self._root.after(50, self._check)
@@ -202,37 +213,36 @@ class MouseTeleop(Node):
     def _draw_v_x(self, v):
         x = -v * float(self._width)
 
-        self._update_coords('v_x', 0, 0, 0, x)
+        self._update_coords("v_x", 0, 0, 0, x)
 
     def _draw_v_y(self, v):
         y = -v * float(self._height)
 
-        self._update_coords('v_y', 0, 0, y, 0)
+        self._update_coords("v_y", 0, 0, y, 0)
 
     def _draw_w(self, w):
         x0 = y0 = -self._r
         x1 = y1 = self._r
 
-        self._update_coords('w', x0, y0, x1, y1)
+        self._update_coords("w", x0, y0, x1, y1)
 
         yaw = w * numpy.rad2deg(self._scale)
 
-        self._canvas.itemconfig('w', extent=yaw)
+        self._canvas.itemconfig("w", extent=yaw)
 
     def _send_motion(self):
-
         self._draw_v_x(self._v_x)
         if self._holonomic:
             self._draw_v_y(self._v_y)
         self._draw_w(self._w)
 
         if self._holonomic:
-            self._text_v_x.set('v_x = %0.2f m/s' % self._v_x)
-            self._text_v_y.set('v_y = %0.2f m/s' % self._v_y)
-            self._text_w.set('w   = %0.2f deg/s' % numpy.rad2deg(self._w))
+            self._text_v_x.set("v_x = %0.2f m/s" % self._v_x)
+            self._text_v_y.set("v_y = %0.2f m/s" % self._v_y)
+            self._text_w.set("w   = %0.2f deg/s" % numpy.rad2deg(self._w))
         else:
-            self._text_v_x.set('v = %0.2f m/s' % self._v_x)
-            self._text_w.set('w = %0.2f deg/s' % numpy.rad2deg(self._w))
+            self._text_v_x.set("v = %0.2f m/s" % self._v_x)
+            self._text_w.set("w = %0.2f deg/s" % numpy.rad2deg(self._w))
 
         v_x = self._v_x * self._scale
         v_y = self._v_y * self._scale
@@ -286,5 +296,5 @@ def main():
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

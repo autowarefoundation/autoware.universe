@@ -13,11 +13,11 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "trajectory_follower_f1tenth/controller_node.hpp"
 #include "fake_test_node/fake_test_node.hpp"
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
+#include "trajectory_follower_f1tenth/controller_node.hpp"
 #include "trajectory_follower_test_utils.hpp"
 
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"

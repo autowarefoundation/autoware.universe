@@ -36,93 +36,96 @@
 /*
     CRC++ can be configured by setting various #defines before #including this header file:
 
-        #define crcpp_uint8                             - Specifies the type used to store CRCs that have a width of 8 bits or less.
-                                                          This type is not used in CRC calculations. Defaults to ::std::uint8_t.
-        #define crcpp_uint16                            - Specifies the type used to store CRCs that have a width between 9 and 16 bits (inclusive).
-                                                          This type is not used in CRC calculations. Defaults to ::std::uint16_t.
-        #define crcpp_uint32                            - Specifies the type used to store CRCs that have a width between 17 and 32 bits (inclusive).
-                                                          This type is not used in CRC calculations. Defaults to ::std::uint32_t.
-        #define crcpp_uint64                            - Specifies the type used to store CRCs that have a width between 33 and 64 bits (inclusive).
-                                                          This type is not used in CRC calculations. Defaults to ::std::uint64_t.
-        #define crcpp_size                              - This type is used for loop iteration and function signatures only. Defaults to ::std::size_t.
-        #define CRCPP_USE_NAMESPACE                     - Define to place all CRC++ code within the ::CRCPP namespace.
-        #define CRCPP_BRANCHLESS                        - Define to enable a branchless CRC implementation. The branchless implementation uses a single integer
-                                                          multiplication in the bit-by-bit calculation instead of a small conditional. The branchless implementation
-                                                          may be faster on processor architectures which support single-instruction integer multiplication.
-        #define CRCPP_USE_CPP11                         - Define to enables C++11 features (move semantics, constexpr, static_assert, etc.).
-        #define CRCPP_INCLUDE_ESOTERIC_CRC_DEFINITIONS  - Define to include definitions for little-used CRCs.
+        #define crcpp_uint8                             - Specifies the type used to store CRCs that
+   have a width of 8 bits or less. This type is not used in CRC calculations. Defaults to
+   ::std::uint8_t. #define crcpp_uint16                            - Specifies the type used to
+   store CRCs that have a width between 9 and 16 bits (inclusive). This type is not used in CRC
+   calculations. Defaults to ::std::uint16_t. #define crcpp_uint32                            -
+   Specifies the type used to store CRCs that have a width between 17 and 32 bits (inclusive). This
+   type is not used in CRC calculations. Defaults to ::std::uint32_t. #define crcpp_uint64 -
+   Specifies the type used to store CRCs that have a width between 33 and 64 bits (inclusive). This
+   type is not used in CRC calculations. Defaults to ::std::uint64_t. #define crcpp_size - This type
+   is used for loop iteration and function signatures only. Defaults to ::std::size_t. #define
+   CRCPP_USE_NAMESPACE                     - Define to place all CRC++ code within the ::CRCPP
+   namespace. #define CRCPP_BRANCHLESS                        - Define to enable a branchless CRC
+   implementation. The branchless implementation uses a single integer multiplication in the
+   bit-by-bit calculation instead of a small conditional. The branchless implementation may be
+   faster on processor architectures which support single-instruction integer multiplication.
+        #define CRCPP_USE_CPP11                         - Define to enables C++11 features (move
+   semantics, constexpr, static_assert, etc.). #define CRCPP_INCLUDE_ESOTERIC_CRC_DEFINITIONS  -
+   Define to include definitions for little-used CRCs.
 */
 
 #ifndef VESC_DRIVER__CRC_HPP_
 #define VESC_DRIVER__CRC_HPP_
 
-#include <climits>   // Includes CHAR_BIT
+#include <climits>  // Includes CHAR_BIT
 #ifdef CRCPP_USE_CPP11
-#include <cstddef>   // Includes ::std::size_t
-#include <cstdint>   // Includes ::std::uint8_t, ::std::uint16_t, ::std::uint32_t, ::std::uint64_t
+#include <cstddef>  // Includes ::std::size_t
+#include <cstdint>  // Includes ::std::uint8_t, ::std::uint16_t, ::std::uint32_t, ::std::uint64_t
 #else
 #include <stddef.h>  // Includes size_t
 #include <stdint.h>  // Includes uint8_t, uint16_t, uint32_t, uint64_t
 #endif
-#include <limits>    // Includes ::std::numeric_limits
-#include <utility>   // Includes ::std::move
+#include <limits>   // Includes ::std::numeric_limits
+#include <utility>  // Includes ::std::move
 
 #ifndef crcpp_uint8
-#   ifdef CRCPP_USE_CPP11
+#ifdef CRCPP_USE_CPP11
 /// @brief Unsigned 8-bit integer definition, used primarily for parameter definitions.
-#       define crcpp_uint8 ::std::uint8_t
-#   else
+#define crcpp_uint8 ::std::uint8_t
+#else
 /// @brief Unsigned 8-bit integer definition, used primarily for parameter definitions.
-#       define crcpp_uint8 uint8_t
-#   endif
+#define crcpp_uint8 uint8_t
+#endif
 #endif
 
 #ifndef crcpp_uint16
-#   ifdef CRCPP_USE_CPP11
+#ifdef CRCPP_USE_CPP11
 /// @brief Unsigned 16-bit integer definition, used primarily for parameter definitions.
-#       define crcpp_uint16 ::std::uint16_t
-#   else
+#define crcpp_uint16 ::std::uint16_t
+#else
 /// @brief Unsigned 16-bit integer definition, used primarily for parameter definitions.
-#       define crcpp_uint16 uint16_t
-#   endif
+#define crcpp_uint16 uint16_t
+#endif
 #endif
 
 #ifndef crcpp_uint32
-#   ifdef CRCPP_USE_CPP11
+#ifdef CRCPP_USE_CPP11
 /// @brief Unsigned 32-bit integer definition, used primarily for parameter definitions.
-#       define crcpp_uint32 ::std::uint32_t
-#   else
+#define crcpp_uint32 ::std::uint32_t
+#else
 /// @brief Unsigned 32-bit integer definition, used primarily for parameter definitions.
-#       define crcpp_uint32 uint32_t
-#   endif
+#define crcpp_uint32 uint32_t
+#endif
 #endif
 
 #ifndef crcpp_uint64
-#   ifdef CRCPP_USE_CPP11
+#ifdef CRCPP_USE_CPP11
 /// @brief Unsigned 64-bit integer definition, used primarily for parameter definitions.
-#       define crcpp_uint64 ::std::uint64_t
-#   else
+#define crcpp_uint64 ::std::uint64_t
+#else
 /// @brief Unsigned 64-bit integer definition, used primarily for parameter definitions.
-#       define crcpp_uint64 uint64_t
-#   endif
+#define crcpp_uint64 uint64_t
+#endif
 #endif
 
 #ifndef crcpp_size
-#   ifdef CRCPP_USE_CPP11
+#ifdef CRCPP_USE_CPP11
 /// @brief Unsigned size definition, used for specifying data sizes.
-#       define crcpp_size ::std::size_t
-#   else
+#define crcpp_size ::std::size_t
+#else
 /// @brief Unsigned size definition, used for specifying data sizes.
-#       define crcpp_size size_t
-#   endif
+#define crcpp_size size_t
+#endif
 #endif
 
 #ifdef CRCPP_USE_CPP11
 /// @brief Compile-time expression definition.
-#   define crcpp_constexpr constexpr
+#define crcpp_constexpr constexpr
 #else
 /// @brief Compile-time expression definition.
-#   define crcpp_constexpr const
+#define crcpp_constexpr const
 #endif
 
 #ifdef CRCPP_USE_NAMESPACE
@@ -132,29 +135,30 @@ namespace CRCPP
 
 /**
     @brief Static class for computing CRCs.
-    @note This class supports computation of full and multi-part CRCs, using a bit-by-bit algorithm or a
-        byte-by-byte lookup table. The CRCs are calculated using as many optimizations as is reasonable.
-        If compiling with C++11, the constexpr keyword is used liberally so that many calculations are
-        performed at compile-time instead of at runtime.
+    @note This class supports computation of full and multi-part CRCs, using a bit-by-bit algorithm
+   or a byte-by-byte lookup table. The CRCs are calculated using as many optimizations as is
+   reasonable. If compiling with C++11, the constexpr keyword is used liberally so that many
+   calculations are performed at compile-time instead of at runtime.
 */
 class CRC
 {
 public:
   // Forward declaration
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   struct Table;
 
   /**
       @brief CRC parameters.
   */
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   struct Parameters
   {
-    CRCType polynomial;       ///< CRC polynomial
-    CRCType initialValue;     ///< Initial CRC value
-    CRCType finalXOR;         ///< Value to XOR with the final CRC
-    bool reflectInput;        ///< true to reflect all input bytes
-    bool reflectOutput;       ///< true to reflect the output CRC (reflection occurs before the final XOR)  // NOLINT
+    CRCType polynomial;    ///< CRC polynomial
+    CRCType initialValue;  ///< Initial CRC value
+    CRCType finalXOR;      ///< Value to XOR with the final CRC
+    bool reflectInput;     ///< true to reflect all input bytes
+    bool reflectOutput;    ///< true to reflect the output CRC (reflection occurs before the final
+                           ///< XOR)  // NOLINT
 
     Table<CRCType, CRCWidth> MakeTable() const;
   };
@@ -163,7 +167,7 @@ public:
       @brief CRC lookup table. After construction, the CRC parameters are fixed.
       @note A CRC table can be used for multiple CRC calculations.
   */
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   struct Table
   {
     // Constructors are intentionally NOT marked explicit.
@@ -179,34 +183,31 @@ public:
 
     CRCType operator[](unsigned char index) const;
 
-private:
+  private:
     void InitTable();
 
-    Parameters<CRCType, CRCWidth> parameters;     ///< CRC parameters used to construct the table
-    CRCType table[1 << CHAR_BIT];                 ///< CRC lookup table
+    Parameters<CRCType, CRCWidth> parameters;  ///< CRC parameters used to construct the table
+    CRCType table[1 << CHAR_BIT];              ///< CRC lookup table
   };
 
   // The number of bits in CRCType must be at least as large as CRCWidth.
   // CRCType must be an unsigned integer type or a custom type with operator overloads.
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   static CRCType Calculate(
-    const void * data, crcpp_size size, const Parameters<CRCType,
-    CRCWidth> & parameters);
+    const void * data, crcpp_size size, const Parameters<CRCType, CRCWidth> & parameters);
 
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   static CRCType Calculate(
-    const void * data, crcpp_size size, const Parameters<CRCType,
-    CRCWidth> & parameters, CRCType crc);
+    const void * data, crcpp_size size, const Parameters<CRCType, CRCWidth> & parameters,
+    CRCType crc);
 
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   static CRCType Calculate(
-    const void * data, crcpp_size size, const Table<CRCType,
-    CRCWidth> & lookupTable);
+    const void * data, crcpp_size size, const Table<CRCType, CRCWidth> & lookupTable);
 
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   static CRCType Calculate(
-    const void * data, crcpp_size size, const Table<CRCType,
-    CRCWidth> & lookupTable, CRCType crc);
+    const void * data, crcpp_size size, const Table<CRCType, CRCWidth> & lookupTable, CRCType crc);
 
   // Common CRCs up to 64 bits.
   // Note: Check values are the computed CRCs when given an ASCII input of "123456789"
@@ -292,24 +293,24 @@ private:
   CRC & operator=(const CRC & other);
 #endif
 
-  template<typename IntegerType>
+  template <typename IntegerType>
   static IntegerType Reflect(IntegerType value, crcpp_uint16 numBits);
 
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   static CRCType Finalize(CRCType remainder, CRCType finalXOR, bool reflectOutput);
 
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   static CRCType UndoFinalize(CRCType remainder, CRCType finalXOR, bool reflectOutput);
 
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   static CRCType CalculateRemainder(
-    const void * data, crcpp_size size, const Parameters<CRCType,
-    CRCWidth> & parameters, CRCType remainder);
+    const void * data, crcpp_size size, const Parameters<CRCType, CRCWidth> & parameters,
+    CRCType remainder);
 
-  template<typename CRCType, crcpp_uint16 CRCWidth>
+  template <typename CRCType, crcpp_uint16 CRCWidth>
   static CRCType CalculateRemainder(
-    const void * data, crcpp_size size, const Table<CRCType,
-    CRCWidth> & lookupTable, CRCType remainder);
+    const void * data, crcpp_size size, const Table<CRCType, CRCWidth> & lookupTable,
+    CRCType remainder);
 };
 
 /**
@@ -320,7 +321,7 @@ private:
     @tparam CRCWidth Number of bits in the CRC
     @return CRC lookup table
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRC::Table<CRCType, CRCWidth> CRC::Parameters<CRCType, CRCWidth>::MakeTable() const
 {
   // This should take advantage of RVO and optimize out the copy.
@@ -333,7 +334,7 @@ inline CRC::Table<CRCType, CRCWidth> CRC::Parameters<CRCType, CRCWidth>::MakeTab
     @tparam CRCType Integer type for storing the CRC result
     @tparam CRCWidth Number of bits in the CRC
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRC::Table<CRCType, CRCWidth>::Table(const Parameters<CRCType, CRCWidth> & params)
 : parameters(params)
 {
@@ -347,7 +348,7 @@ inline CRC::Table<CRCType, CRCWidth>::Table(const Parameters<CRCType, CRCWidth> 
     @tparam CRCType Integer type for storing the CRC result
     @tparam CRCWidth Number of bits in the CRC
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRC::Table<CRCType, CRCWidth>::Table(Parameters<CRCType, CRCWidth> && params)
 : parameters(::std::move(params))
 {
@@ -361,9 +362,9 @@ inline CRC::Table<CRCType, CRCWidth>::Table(Parameters<CRCType, CRCWidth> && par
     @tparam CRCWidth Number of bits in the CRC
     @return CRC parameters
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
-inline const CRC::Parameters<CRCType, CRCWidth> & CRC::Table<CRCType,
-  CRCWidth>::GetParameters() const
+template <typename CRCType, crcpp_uint16 CRCWidth>
+inline const CRC::Parameters<CRCType, CRCWidth> & CRC::Table<CRCType, CRCWidth>::GetParameters()
+  const
 {
   return parameters;
 }
@@ -374,7 +375,7 @@ inline const CRC::Parameters<CRCType, CRCWidth> & CRC::Table<CRCType,
     @tparam CRCWidth Number of bits in the CRC
     @return CRC table
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline const CRCType * CRC::Table<CRCType, CRCWidth>::GetTable() const
 {
   return table;
@@ -387,7 +388,7 @@ inline const CRCType * CRC::Table<CRCType, CRCWidth>::GetTable() const
     @tparam CRCWidth Number of bits in the CRC
     @return CRC table entry
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRCType CRC::Table<CRCType, CRCWidth>::operator[](unsigned char index) const
 {
   return table[index];
@@ -398,12 +399,13 @@ inline CRCType CRC::Table<CRCType, CRCWidth>::operator[](unsigned char index) co
     @tparam CRCType Integer type for storing the CRC result
     @tparam CRCWidth Number of bits in the CRC
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline void CRC::Table<CRCType, CRCWidth>::InitTable()
 {
   // For masking off the bits for the CRC
   // (in the event that the number of bits in CRCType is larger than CRCWidth)
-  static crcpp_constexpr CRCType BIT_MASK((CRCType(1) << (CRCWidth - CRCType(1))) |
+  static crcpp_constexpr CRCType BIT_MASK(
+    (CRCType(1) << (CRCWidth - CRCType(1))) |
     ((CRCType(1) << (CRCWidth - CRCType(1))) - CRCType(1)));
 
   // The conditional expression is used to avoid a -Wshift-count-overflow warning.
@@ -442,18 +444,16 @@ inline void CRC::Table<CRCType, CRCWidth>::InitTable()
     @tparam CRCWidth Number of bits in the CRC
     @return CRC
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRCType CRC::Calculate(
-  const void * data, crcpp_size size, const Parameters<CRCType,
-  CRCWidth> & parameters)
+  const void * data, crcpp_size size, const Parameters<CRCType, CRCWidth> & parameters)
 {
   CRCType remainder = CalculateRemainder(data, size, parameters, parameters.initialValue);
 
   // No need to mask the remainder here; the mask will be applied in the Finalize() function.
 
   return Finalize<CRCType, CRCWidth>(
-    remainder, parameters.finalXOR,
-    parameters.reflectInput != parameters.reflectOutput);
+    remainder, parameters.finalXOR, parameters.reflectInput != parameters.reflectOutput);
 }
 /**
     @brief Appends additional data to a previous CRC calculation.
@@ -466,23 +466,19 @@ inline CRCType CRC::Calculate(
     @tparam CRCWidth Number of bits in the CRC
     @return CRC
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRCType CRC::Calculate(
-  const void * data, crcpp_size size, const Parameters<CRCType,
-  CRCWidth> & parameters, CRCType crc)
+  const void * data, crcpp_size size, const Parameters<CRCType, CRCWidth> & parameters, CRCType crc)
 {
   CRCType remainder = UndoFinalize<CRCType, CRCWidth>(
-    crc, parameters.finalXOR,
-    parameters.reflectInput !=
-    parameters.reflectOutput);
+    crc, parameters.finalXOR, parameters.reflectInput != parameters.reflectOutput);
 
   remainder = CalculateRemainder(data, size, parameters, remainder);
 
   // No need to mask the remainder here; the mask will be applied in the Finalize() function.
 
   return Finalize<CRCType, CRCWidth>(
-    remainder, parameters.finalXOR,
-    parameters.reflectInput != parameters.reflectOutput);
+    remainder, parameters.finalXOR, parameters.reflectInput != parameters.reflectOutput);
 }
 
 /**
@@ -494,10 +490,9 @@ inline CRCType CRC::Calculate(
     @tparam CRCWidth Number of bits in the CRC
     @return CRC
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRCType CRC::Calculate(
-  const void * data, crcpp_size size, const Table<CRCType,
-  CRCWidth> & lookupTable)
+  const void * data, crcpp_size size, const Table<CRCType, CRCWidth> & lookupTable)
 {
   const Parameters<CRCType, CRCWidth> & parameters = lookupTable.GetParameters();
 
@@ -506,8 +501,7 @@ inline CRCType CRC::Calculate(
   // No need to mask the remainder here; the mask will be applied in the Finalize() function.
 
   return Finalize<CRCType, CRCWidth>(
-    remainder, parameters.finalXOR,
-    parameters.reflectInput != parameters.reflectOutput);
+    remainder, parameters.finalXOR, parameters.reflectInput != parameters.reflectOutput);
 }
 
 /**
@@ -521,25 +515,21 @@ inline CRCType CRC::Calculate(
     @tparam CRCWidth Number of bits in the CRC
     @return CRC
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRCType CRC::Calculate(
-  const void * data, crcpp_size size, const Table<CRCType,
-  CRCWidth> & lookupTable, CRCType crc)
+  const void * data, crcpp_size size, const Table<CRCType, CRCWidth> & lookupTable, CRCType crc)
 {
   const Parameters<CRCType, CRCWidth> & parameters = lookupTable.GetParameters();
 
   CRCType remainder = UndoFinalize<CRCType, CRCWidth>(
-    crc, parameters.finalXOR,
-    parameters.reflectInput !=
-    parameters.reflectOutput);
+    crc, parameters.finalXOR, parameters.reflectInput != parameters.reflectOutput);
 
   remainder = CalculateRemainder(data, size, lookupTable, remainder);
 
   // No need to mask the remainder here; the mask will be applied in the Finalize() function.
 
   return Finalize<CRCType, CRCWidth>(
-    remainder, parameters.finalXOR,
-    parameters.reflectInput != parameters.reflectOutput);
+    remainder, parameters.finalXOR, parameters.reflectInput != parameters.reflectOutput);
 }
 
 /**
@@ -549,7 +539,7 @@ inline CRCType CRC::Calculate(
     @tparam IntegerType Integer type of the value being reflected
     @return Reflected value
 */
-template<typename IntegerType>
+template <typename IntegerType>
 inline IntegerType CRC::Reflect(IntegerType value, crcpp_uint16 numBits)
 {
   IntegerType reversedValue(0);
@@ -571,13 +561,13 @@ inline IntegerType CRC::Reflect(IntegerType value, crcpp_uint16 numBits)
     @tparam CRCWidth Number of bits in the CRC
     @return Final CRC
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRCType CRC::Finalize(CRCType remainder, CRCType finalXOR, bool reflectOutput)
 {
   // For masking off the bits for the CRC
   // (in the event that the number of bits in CRCType is larger than CRCWidth)
   static crcpp_constexpr CRCType BIT_MASK = (CRCType(1) << (CRCWidth - CRCType(1))) |
-    ((CRCType(1) << (CRCWidth - CRCType(1))) - CRCType(1));
+                                            ((CRCType(1) << (CRCWidth - CRCType(1))) - CRCType(1));
 
   if (reflectOutput) {
     remainder = Reflect(remainder, CRCWidth);
@@ -604,13 +594,13 @@ inline CRCType CRC::Finalize(CRCType remainder, CRCType finalXOR, bool reflectOu
     @tparam CRCWidth Number of bits in the CRC
     @return Un-finalized CRC remainder
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRCType CRC::UndoFinalize(CRCType crc, CRCType finalXOR, bool reflectOutput)
 {
   // For masking off the bits for the CRC
   // (in the event that the number of bits in CRCType is larger than CRCWidth)
   static crcpp_constexpr CRCType BIT_MASK = (CRCType(1) << (CRCWidth - CRCType(1))) |
-    ((CRCType(1) << (CRCWidth - CRCType(1))) - CRCType(1));
+                                            ((CRCType(1) << (CRCWidth - CRCType(1))) - CRCType(1));
 
   crc = (crc & BIT_MASK) ^ finalXOR;
 
@@ -626,15 +616,16 @@ inline CRCType CRC::UndoFinalize(CRCType crc, CRCType finalXOR, bool reflectOutp
     @param[in] data Data over which the remainder will be computed
     @param[in] size Size of the data
     @param[in] parameters CRC parameters
-    @param[in] remainder Running CRC remainder. Can be an initial value or the result of a previous CRC remainder calculation.
+    @param[in] remainder Running CRC remainder. Can be an initial value or the result of a previous
+   CRC remainder calculation.
     @tparam CRCType Integer type for storing the CRC result
     @tparam CRCWidth Number of bits in the CRC
     @return CRC remainder
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRCType CRC::CalculateRemainder(
-  const void * data, crcpp_size size, const Parameters<CRCType,
-  CRCWidth> & parameters, CRCType remainder)
+  const void * data, crcpp_size size, const Parameters<CRCType, CRCWidth> & parameters,
+  CRCType remainder)
 {
 #ifdef CRCPP_USE_CPP11
   // This static_assert is put here because this function will always be compiled in no matter what
@@ -646,8 +637,10 @@ inline CRCType CRC::CalculateRemainder(
   // Catching this compile-time error is very important. Sadly,
   // the compiler error will be very cryptic, but it's better than nothing.
   // cppcheck-suppress zerodiv
-  enum { static_assert_failed_CRCType_is_too_small_to_contain_a_CRC_of_width_CRCWidth = 1 /
-      (::std::numeric_limits<CRCType>::digits >= CRCWidth ? 1 : 0) };
+  enum {
+    static_assert_failed_CRCType_is_too_small_to_contain_a_CRC_of_width_CRCWidth =
+      1 / (::std::numeric_limits<CRCType>::digits >= CRCWidth ? 1 : 0)
+  };
 #endif
 
   const unsigned char * current = reinterpret_cast<const unsigned char *>(data);
@@ -671,9 +664,8 @@ inline CRCType CRC::CalculateRemainder(
         //     remainder >>= 1;
         remainder = static_cast<CRCType>((remainder >> 1) ^ ((remainder & 1) * polynomial));
 #else
-        remainder =
-          static_cast<CRCType>((remainder & 1) ? ((remainder >> 1) ^ polynomial) : (remainder >>
-          1));
+        remainder = static_cast<CRCType>(
+          (remainder & 1) ? ((remainder >> 1) ^ polynomial) : (remainder >> 1));
 #endif
       }
     }
@@ -698,13 +690,12 @@ inline CRCType CRC::CalculateRemainder(
         //     remainder = (remainder << 1) ^ parameters.polynomial;
         // else
         //     remainder <<= 1;
-        remainder =
-          static_cast<CRCType>((remainder <<
-          1) ^ (((remainder >> CRC_WIDTH_MINUS_ONE) & 1) * parameters.polynomial));
+        remainder = static_cast<CRCType>(
+          (remainder << 1) ^ (((remainder >> CRC_WIDTH_MINUS_ONE) & 1) * parameters.polynomial));
 #else
-        remainder =
-          static_cast<CRCType>((remainder &
-          CRC_HIGHEST_BIT_MASK) ? ((remainder << 1) ^ parameters.polynomial) : (remainder << 1));
+        remainder = static_cast<CRCType>(
+          (remainder & CRC_HIGHEST_BIT_MASK) ? ((remainder << 1) ^ parameters.polynomial)
+                                             : (remainder << 1));
 #endif
       }
     }
@@ -732,13 +723,12 @@ inline CRCType CRC::CalculateRemainder(
         //     remainder = (remainder << 1) ^ polynomial;
         // else
         //     remainder <<= 1;
-        remainder =
-          static_cast<CRCType>((remainder <<
-          1) ^ (((remainder >> CHAR_BIT_MINUS_ONE) & 1) * polynomial));
+        remainder = static_cast<CRCType>(
+          (remainder << 1) ^ (((remainder >> CHAR_BIT_MINUS_ONE) & 1) * polynomial));
 #else
-        remainder =
-          static_cast<CRCType>((remainder &
-          CHAR_BIT_HIGHEST_BIT_MASK) ? ((remainder << 1) ^ polynomial) : (remainder << 1));
+        remainder = static_cast<CRCType>(
+          (remainder & CHAR_BIT_HIGHEST_BIT_MASK) ? ((remainder << 1) ^ polynomial)
+                                                  : (remainder << 1));
 #endif
       }
     }
@@ -760,10 +750,10 @@ inline CRCType CRC::CalculateRemainder(
     @tparam CRCWidth Number of bits in the CRC
     @return CRC remainder
 */
-template<typename CRCType, crcpp_uint16 CRCWidth>
+template <typename CRCType, crcpp_uint16 CRCWidth>
 inline CRCType CRC::CalculateRemainder(
-  const void * data, crcpp_size size, const Table<CRCType,
-  CRCWidth> & lookupTable, CRCType remainder)
+  const void * data, crcpp_size size, const Table<CRCType, CRCWidth> & lookupTable,
+  CRCType remainder)
 {
   const unsigned char * current = reinterpret_cast<const unsigned char *>(data);
 
@@ -773,14 +763,13 @@ inline CRCType CRC::CalculateRemainder(
       // Disable warning about data loss when doing (remainder >> CHAR_BIT) when
       // remainder is one byte long. The algorithm is still correct in this case,
       // though it's possible that one additional machine instruction will be executed.
-#   pragma warning (push)
-#   pragma warning (disable : 4333)
+#pragma warning(push)
+#pragma warning(disable : 4333)
 #endif
-      remainder =
-        static_cast<CRCType>((remainder >>
-        CHAR_BIT) ^ lookupTable[static_cast<unsigned char>(remainder ^ *current++)]);
+      remainder = static_cast<CRCType>(
+        (remainder >> CHAR_BIT) ^ lookupTable[static_cast<unsigned char>(remainder ^ *current++)]);
 #if defined(WIN32) || defined(_WIN32) || defined(WINCE)
-#   pragma warning (pop)
+#pragma warning(pop)
 #endif
     }
   } else if (CRCWidth >= CHAR_BIT) {
@@ -789,9 +778,9 @@ inline CRCType CRC::CalculateRemainder(
       (CRCWidth >= CHAR_BIT) ? static_cast<CRCType>(CRCWidth - CHAR_BIT) : 0);
 
     while (size--) {
-      remainder =
-        static_cast<CRCType>((remainder <<
-        CHAR_BIT) ^ lookupTable[static_cast<unsigned char>((remainder >> SHIFT) ^ *current++)]);
+      remainder = static_cast<CRCType>(
+        (remainder << CHAR_BIT) ^
+        lookupTable[static_cast<unsigned char>((remainder >> SHIFT) ^ *current++)]);
     }
   } else {
     // The conditional expression is used to avoid a -Wshift-count-overflow warning.
@@ -1340,7 +1329,8 @@ inline const CRC::Parameters<crcpp_uint16, 16> & CRC::CRC_16_DNP()
 #endif  // CRCPP_INCLUDE_ESOTERIC_CRC_DEFINITIONS
 
 /**
-    @brief Returns a set of parameters for CRC-16 GENIBUS (aka CRC-16 EPC, CRC-16 I-CODE, CRC-16 DARC).
+    @brief Returns a set of parameters for CRC-16 GENIBUS (aka CRC-16 EPC, CRC-16 I-CODE, CRC-16
+   DARC).
     @note The parameters are static and are delayed-constructed to reduce memory footprint.
     @note CRC-16 GENIBUS has the following parameters and check value:
         - polynomial     = 0x1021
@@ -1451,7 +1441,8 @@ inline const CRC::Parameters<crcpp_uint16, 16> & CRC::CRC_16_USB()
 #endif  // CRCPP_INCLUDE_ESOTERIC_CRC_DEFINITIONS
 
 /**
-    @brief Returns a set of parameters for CRC-16 X-25 (aka CRC-16 IBM-SDLC, CRC-16 ISO-HDLC, CRC-16 B).
+    @brief Returns a set of parameters for CRC-16 X-25 (aka CRC-16 IBM-SDLC, CRC-16 ISO-HDLC, CRC-16
+   B).
     @note The parameters are static and are delayed-constructed to reduce memory footprint.
     @note CRC-16 X-25 has the following parameters and check value:
         - polynomial     = 0x1021
@@ -1469,7 +1460,8 @@ inline const CRC::Parameters<crcpp_uint16, 16> & CRC::CRC_16_X25()
 }
 
 /**
-    @brief Returns a set of parameters for CRC-16 XMODEM (aka CRC-16 ZMODEM, CRC-16 ACORN, CRC-16 LTE).
+    @brief Returns a set of parameters for CRC-16 XMODEM (aka CRC-16 ZMODEM, CRC-16 ACORN, CRC-16
+   LTE).
     @note The parameters are static and are delayed-constructed to reduce memory footprint.
     @note CRC-16 XMODEM has the following parameters and check value:
         - polynomial     = 0x1021
@@ -1519,8 +1511,8 @@ inline const CRC::Parameters<crcpp_uint32, 17> & CRC::CRC_17_CAN()
 */
 inline const CRC::Parameters<crcpp_uint32, 21> & CRC::CRC_21_CAN()
 {
-  static const Parameters<crcpp_uint32,
-    21> parameters = {0x102899, 0x000000, 0x000000, false, false};
+  static const Parameters<crcpp_uint32, 21> parameters = {
+    0x102899, 0x000000, 0x000000, false, false};
   return parameters;
 }
 
@@ -1538,8 +1530,8 @@ inline const CRC::Parameters<crcpp_uint32, 21> & CRC::CRC_21_CAN()
 */
 inline const CRC::Parameters<crcpp_uint32, 24> & CRC::CRC_24()
 {
-  static const Parameters<crcpp_uint32,
-    24> parameters = {0x864CFB, 0xB704CE, 0x000000, false, false};
+  static const Parameters<crcpp_uint32, 24> parameters = {
+    0x864CFB, 0xB704CE, 0x000000, false, false};
   return parameters;
 }
 
@@ -1557,8 +1549,8 @@ inline const CRC::Parameters<crcpp_uint32, 24> & CRC::CRC_24()
 */
 inline const CRC::Parameters<crcpp_uint32, 24> & CRC::CRC_24_FLEXRAYA()
 {
-  static const Parameters<crcpp_uint32,
-    24> parameters = {0x5D6DCB, 0xFEDCBA, 0x000000, false, false};
+  static const Parameters<crcpp_uint32, 24> parameters = {
+    0x5D6DCB, 0xFEDCBA, 0x000000, false, false};
   return parameters;
 }
 
@@ -1576,8 +1568,8 @@ inline const CRC::Parameters<crcpp_uint32, 24> & CRC::CRC_24_FLEXRAYA()
 */
 inline const CRC::Parameters<crcpp_uint32, 24> & CRC::CRC_24_FLEXRAYB()
 {
-  static const Parameters<crcpp_uint32,
-    24> parameters = {0x5D6DCB, 0xABCDEF, 0x000000, false, false};
+  static const Parameters<crcpp_uint32, 24> parameters = {
+    0x5D6DCB, 0xABCDEF, 0x000000, false, false};
   return parameters;
 }
 
@@ -1595,8 +1587,8 @@ inline const CRC::Parameters<crcpp_uint32, 24> & CRC::CRC_24_FLEXRAYB()
 */
 inline const CRC::Parameters<crcpp_uint32, 30> & CRC::CRC_30()
 {
-  static const Parameters<crcpp_uint32,
-    30> parameters = {0x2030B9C7, 0x3FFFFFFF, 0x00000000, false, false};
+  static const Parameters<crcpp_uint32, 30> parameters = {
+    0x2030B9C7, 0x3FFFFFFF, 0x00000000, false, false};
   return parameters;
 }
 #endif  // CRCPP_INCLUDE_ESOTERIC_CRC_DEFINITIONS
@@ -1615,13 +1607,14 @@ inline const CRC::Parameters<crcpp_uint32, 30> & CRC::CRC_30()
 */
 inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32()
 {
-  static const Parameters<crcpp_uint32,
-    32> parameters = {0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true, true};
+  static const Parameters<crcpp_uint32, 32> parameters = {
+    0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true, true};
   return parameters;
 }
 
 /**
-    @brief Returns a set of parameters for CRC-32 BZIP2 (aka CRC-32 AAL5, CRC-32 DECT-B, CRC-32 B-CRC).
+    @brief Returns a set of parameters for CRC-32 BZIP2 (aka CRC-32 AAL5, CRC-32 DECT-B, CRC-32
+   B-CRC).
     @note The parameters are static and are delayed-constructed to reduce memory footprint.
     @note CRC-32 BZIP2 has the following parameters and check value:
         - polynomial     = 0x04C11DB7
@@ -1634,14 +1627,15 @@ inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32()
 */
 inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32_BZIP2()
 {
-  static const Parameters<crcpp_uint32,
-    32> parameters = {0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, false, false};
+  static const Parameters<crcpp_uint32, 32> parameters = {
+    0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, false, false};
   return parameters;
 }
 
 #ifdef CRCPP_INCLUDE_ESOTERIC_CRC_DEFINITIONS
 /**
-    @brief Returns a set of parameters for CRC-32 C (aka CRC-32 ISCSI, CRC-32 Castagnoli, CRC-32 Interlaken).
+    @brief Returns a set of parameters for CRC-32 C (aka CRC-32 ISCSI, CRC-32 Castagnoli, CRC-32
+   Interlaken).
     @note The parameters are static and are delayed-constructed to reduce memory footprint.
     @note CRC-32 C has the following parameters and check value:
         - polynomial     = 0x1EDC6F41
@@ -1654,8 +1648,8 @@ inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32_BZIP2()
 */
 inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32_C()
 {
-  static const Parameters<crcpp_uint32,
-    32> parameters = {0x1EDC6F41, 0xFFFFFFFF, 0xFFFFFFFF, true, true};
+  static const Parameters<crcpp_uint32, 32> parameters = {
+    0x1EDC6F41, 0xFFFFFFFF, 0xFFFFFFFF, true, true};
   return parameters;
 }
 #endif
@@ -1674,8 +1668,8 @@ inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32_C()
 */
 inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32_MPEG2()
 {
-  static const Parameters<crcpp_uint32,
-    32> parameters = {0x04C11DB7, 0xFFFFFFFF, 0x00000000, false, false};
+  static const Parameters<crcpp_uint32, 32> parameters = {
+    0x04C11DB7, 0xFFFFFFFF, 0x00000000, false, false};
   return parameters;
 }
 
@@ -1693,8 +1687,8 @@ inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32_MPEG2()
 */
 inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32_POSIX()
 {
-  static const Parameters<crcpp_uint32,
-    32> parameters = {0x04C11DB7, 0x00000000, 0xFFFFFFFF, false, false};
+  static const Parameters<crcpp_uint32, 32> parameters = {
+    0x04C11DB7, 0x00000000, 0xFFFFFFFF, false, false};
   return parameters;
 }
 
@@ -1713,8 +1707,8 @@ inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32_POSIX()
 */
 inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32_Q()
 {
-  static const Parameters<crcpp_uint32,
-    32> parameters = {0x814141AB, 0x00000000, 0x00000000, false, false};
+  static const Parameters<crcpp_uint32, 32> parameters = {
+    0x814141AB, 0x00000000, 0x00000000, false, false};
   return parameters;
 }
 
@@ -1732,8 +1726,8 @@ inline const CRC::Parameters<crcpp_uint32, 32> & CRC::CRC_32_Q()
 */
 inline const CRC::Parameters<crcpp_uint64, 40> & CRC::CRC_40_GSM()
 {
-  static const Parameters<crcpp_uint64,
-    40> parameters = {0x0004820009, 0x0000000000, 0xFFFFFFFFFF, false, false};
+  static const Parameters<crcpp_uint64, 40> parameters = {
+    0x0004820009, 0x0000000000, 0xFFFFFFFFFF, false, false};
   return parameters;
 }
 
@@ -1751,8 +1745,8 @@ inline const CRC::Parameters<crcpp_uint64, 40> & CRC::CRC_40_GSM()
 */
 inline const CRC::Parameters<crcpp_uint64, 64> & CRC::CRC_64()
 {
-  static const Parameters<crcpp_uint64,
-    64> parameters = {0x42F0E1EBA9EA3693, 0x0000000000000000, 0x0000000000000000, false, false};
+  static const Parameters<crcpp_uint64, 64> parameters = {
+    0x42F0E1EBA9EA3693, 0x0000000000000000, 0x0000000000000000, false, false};
   return parameters;
 }
 #endif  // CRCPP_INCLUDE_ESOTERIC_CRC_DEFINITIONS

@@ -33,7 +33,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import example_interfaces.srv
-from joy_teleop_testing_common import generate_joy_test_description, TestJoyTeleop
+from joy_teleop_testing_common import TestJoyTeleop
+from joy_teleop_testing_common import generate_joy_test_description
 import pytest
 import rclpy
 
@@ -41,18 +42,17 @@ import rclpy
 @pytest.mark.rostest
 def generate_test_description():
     parameters = {}
-    parameters['addtwoints.type'] = 'service'
-    parameters['addtwoints.interface_type'] = 'example_interfaces/srv/AddTwoInts'
-    parameters['addtwoints.service_name'] = '/addtwoints'
-    parameters['addtwoints.buttons'] = [4]
-    parameters['addtwoints.service_request.a'] = 5
-    parameters['addtwoints.service_request.b'] = 4
+    parameters["addtwoints.type"] = "service"
+    parameters["addtwoints.interface_type"] = "example_interfaces/srv/AddTwoInts"
+    parameters["addtwoints.service_name"] = "/addtwoints"
+    parameters["addtwoints.buttons"] = [4]
+    parameters["addtwoints.service_request.a"] = 5
+    parameters["addtwoints.service_request.b"] = 4
 
     return generate_joy_test_description(parameters)
 
 
 class TestJoyTeleopServiceAddTwoInts(TestJoyTeleop):
-
     def publish_message(self):
         self.joy_publisher.publish(self.joy_msg)
         self.joy_msg.buttons[4] = int(not self.joy_msg.buttons[4])
@@ -71,8 +71,7 @@ class TestJoyTeleopServiceAddTwoInts(TestJoyTeleop):
 
             return response
 
-        srv = self.node.create_service(example_interfaces.srv.AddTwoInts, '/addtwoints',
-                                       addtwoints)
+        srv = self.node.create_service(example_interfaces.srv.AddTwoInts, "/addtwoints", addtwoints)
 
         try:
             # Above we set the button to be used as '4', so here we set the '4' button active.
@@ -81,8 +80,10 @@ class TestJoyTeleopServiceAddTwoInts(TestJoyTeleop):
             self.executor.spin_until_future_complete(future, timeout_sec=10)
 
             # Check
-            self.assertTrue(future.done() and future.result(),
-                            'Timed out waiting for addtwoints service to complete')
+            self.assertTrue(
+                future.done() and future.result(),
+                "Timed out waiting for addtwoints service to complete",
+            )
             self.assertEqual(service_result, 9)
         finally:
             # Cleanup

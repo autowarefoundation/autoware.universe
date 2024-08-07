@@ -30,11 +30,11 @@
 
 #include "vesc_ackermann/vesc_to_odom.hpp"
 
-#include <cmath>
-#include <string>
-
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <vesc_msgs/msg/vesc_state_stamped.hpp>
+
+#include <cmath>
+#include <string>
 
 namespace vesc_ackermann
 {
@@ -64,10 +64,8 @@ VescToOdom::VescToOdom(const rclcpp::NodeOptions & options)
   speed_to_erpm_offset_ = declare_parameter<double>("speed_to_erpm_offset");
 
   if (use_servo_cmd_) {
-    steering_to_servo_gain_ =
-      declare_parameter<double>("steering_angle_to_servo_gain");
-    steering_to_servo_offset_ =
-      declare_parameter<double>("steering_angle_to_servo_offset");
+    steering_to_servo_gain_ = declare_parameter<double>("steering_angle_to_servo_gain");
+    steering_to_servo_offset_ = declare_parameter<double>("steering_angle_to_servo_offset");
     wheelbase_ = declare_parameter<double>("wheelbase");
   }
 

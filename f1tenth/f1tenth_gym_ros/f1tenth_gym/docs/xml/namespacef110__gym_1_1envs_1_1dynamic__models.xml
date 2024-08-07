@@ -210,7 +210,7 @@
             x5: yaw angle
         u (numpy.ndarray (2, )): control input vector (u1, u2)
             u1: steering angle velocity of front wheels
-            u2: longitudinal acceleration 
+            u2: longitudinal acceleration
 
     Returns:
         f (numpy.ndarray): right hand side of differential equations
@@ -313,7 +313,7 @@
             x7: slip angle at vehicle center
         u (numpy.ndarray (2, )): control input vector (u1, u2)
             u1: steering angle velocity of front wheels
-            u2: longitudinal acceleration 
+            u2: longitudinal acceleration
 
     Returns:
         f (numpy.ndarray): right hand side of differential equations

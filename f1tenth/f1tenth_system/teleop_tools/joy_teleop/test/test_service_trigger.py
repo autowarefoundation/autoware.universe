@@ -32,7 +32,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from joy_teleop_testing_common import generate_joy_test_description, TestJoyTeleop
+from joy_teleop_testing_common import TestJoyTeleop
+from joy_teleop_testing_common import generate_joy_test_description
 import pytest
 import rclpy
 import std_srvs.srv
@@ -41,16 +42,15 @@ import std_srvs.srv
 @pytest.mark.rostest
 def generate_test_description():
     parameters = {}
-    parameters['trigger.type'] = 'service'
-    parameters['trigger.interface_type'] = 'std_srvs/srv/Trigger'
-    parameters['trigger.service_name'] = '/trigger'
-    parameters['trigger.buttons'] = [4]
+    parameters["trigger.type"] = "service"
+    parameters["trigger.interface_type"] = "std_srvs/srv/Trigger"
+    parameters["trigger.service_name"] = "/trigger"
+    parameters["trigger.buttons"] = [4]
 
     return generate_joy_test_description(parameters)
 
 
 class TestJoyTeleopServiceTrigger(TestJoyTeleop):
-
     def publish_message(self):
         self.joy_publisher.publish(self.joy_msg)
         self.joy_msg.buttons[4] = int(not self.joy_msg.buttons[4])
@@ -63,13 +63,13 @@ class TestJoyTeleopServiceTrigger(TestJoyTeleop):
             nonlocal saw_trigger
             nonlocal future
             response.success = True
-            response.message = 'service_response'
+            response.message = "service_response"
             saw_trigger = True
             future.set_result(True)
 
             return response
 
-        srv = self.node.create_service(std_srvs.srv.Trigger, '/trigger', trigger)
+        srv = self.node.create_service(std_srvs.srv.Trigger, "/trigger", trigger)
 
         try:
             # Above we set the button to be used as '4', so here we set the '4' button active.
@@ -78,8 +78,10 @@ class TestJoyTeleopServiceTrigger(TestJoyTeleop):
             self.executor.spin_until_future_complete(future, timeout_sec=10)
 
             # Check
-            self.assertTrue(future.done() and future.result(),
-                            'Timed out waiting for trigger service to complete')
+            self.assertTrue(
+                future.done() and future.result(),
+                "Timed out waiting for trigger service to complete",
+            )
             self.assertTrue(saw_trigger)
         finally:
             # Cleanup

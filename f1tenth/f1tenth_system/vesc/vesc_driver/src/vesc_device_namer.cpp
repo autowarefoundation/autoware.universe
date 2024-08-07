@@ -14,11 +14,13 @@
 # limitations under the License.
 */
 
-#include <unistd.h>
-#include <stdlib.h>
 #include <vesc_driver/vesc_device_uuid_lookup.hpp>
-#include <string>
+
+#include <stdlib.h>
+#include <unistd.h>
+
 #include <iostream>
+#include <string>
 
 int main(int argc, char ** argv)
 {
@@ -30,7 +32,9 @@ int main(int argc, char ** argv)
   int maxRetry = stoi(maxRetry_);
   for (int i = 0; i < maxRetry; i++) {
     usleep(20);
-    if (lookup.isReady()) {break;}
+    if (lookup.isReady()) {
+      break;
+    }
   }
 
   if (lookup.isReady()) {

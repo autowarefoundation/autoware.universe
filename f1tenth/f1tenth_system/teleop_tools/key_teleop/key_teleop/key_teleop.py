@@ -45,7 +45,8 @@ import os
 import signal
 import time
 
-from geometry_msgs.msg import Twist, TwistStamped
+from geometry_msgs.msg import Twist
+from geometry_msgs.msg import TwistStamped
 import rclpy
 from rclpy.duration import Duration
 from rclpy.node import Node
@@ -54,7 +55,6 @@ from std_msgs.msg import Header
 
 
 class Velocity(object):
-
     def __init__(self, min_velocity, max_velocity, num_steps):
         assert min_velocity > 0 and max_velocity > 0 and num_steps > 0
         self._min = min_velocity
@@ -81,8 +81,7 @@ class Velocity(object):
         return value * max_value
 
 
-class TextWindow():
-
+class TextWindow:
     _screen = None
     _window = None
     _num_lines = None
@@ -103,11 +102,11 @@ class TextWindow():
 
     def write_line(self, lineno, message):
         if lineno < 0 or lineno >= self._num_lines:
-            raise ValueError('lineno out of bounds')
+            raise ValueError("lineno out of bounds")
         height, width = self._screen.getmaxyx()
         y = (height / self._num_lines) * lineno
         x = 10
-        for text in message.split('\n'):
+        for text in message.split("\n"):
             text = text.ljust(width)
             # TODO(artivis) Why are those floats ??
             self._screen.addstr(int(y), int(x), text)
@@ -121,33 +120,33 @@ class TextWindow():
 
 
 class SimpleKeyTeleop(Node):
-
     def __init__(self, interface):
-        super().__init__('key_teleop')
+        super().__init__("key_teleop")
 
         self._interface = interface
 
-        self._publish_stamped_twist = self.declare_parameter('twist_stamped_enabled', False).value
+        self._publish_stamped_twist = self.declare_parameter("twist_stamped_enabled", False).value
 
         if self._publish_stamped_twist:
-            self._pub_cmd = self.create_publisher(TwistStamped, 'key_vel',
-                                                  qos_profile_system_default)
+            self._pub_cmd = self.create_publisher(
+                TwistStamped, "key_vel", qos_profile_system_default
+            )
         else:
-            self._pub_cmd = self.create_publisher(Twist, 'key_vel', qos_profile_system_default)
+            self._pub_cmd = self.create_publisher(Twist, "key_vel", qos_profile_system_default)
 
-        self._hz = self.declare_parameter('hz', 10).value
+        self._hz = self.declare_parameter("hz", 10).value
 
-        self._forward_rate = self.declare_parameter('forward_rate', 0.8).value
-        self._backward_rate = self.declare_parameter('backward_rate', 0.5).value
-        self._rotation_rate = self.declare_parameter('rotation_rate', 1.0).value
+        self._forward_rate = self.declare_parameter("forward_rate", 0.8).value
+        self._backward_rate = self.declare_parameter("backward_rate", 0.5).value
+        self._rotation_rate = self.declare_parameter("rotation_rate", 1.0).value
         self._last_pressed = {}
         self._angular = 0
         self._linear = 0
 
     movement_bindings = {
-        curses.KEY_UP:    (1,  0),
-        curses.KEY_DOWN:  (-1,  0),
-        curses.KEY_LEFT:  (0,  1),
+        curses.KEY_UP: (1, 0),
+        curses.KEY_DOWN: (-1, 0),
+        curses.KEY_LEFT: (0, 1),
         curses.KEY_RIGHT: (0, -1),
     }
 
@@ -162,7 +161,7 @@ class SimpleKeyTeleop(Node):
             self._set_velocity()
             self._publish()
             # TODO(artivis) use Rate once available
-            time.sleep(1.0/self._hz)
+            time.sleep(1.0 / self._hz)
 
     def _make_twist(self, linear, angular):
         twist = Twist()
@@ -174,7 +173,7 @@ class SimpleKeyTeleop(Node):
         twist_stamped = TwistStamped()
         header = Header()
         header.stamp = rclpy.clock.Clock().now().to_msg()
-        header.frame_id = 'key_teleop'
+        header.frame_id = "key_teleop"
 
         twist_stamped.header = header
         twist_stamped.twist.linear.x = linear
@@ -202,7 +201,7 @@ class SimpleKeyTeleop(Node):
         self._linear = linear
 
     def _key_pressed(self, keycode):
-        if keycode == ord('q'):
+        if keycode == ord("q"):
             self._running = False
             # TODO(artivis) no rclpy.signal_shutdown ?
             os.kill(os.getpid(), signal.SIGINT)
@@ -211,8 +210,8 @@ class SimpleKeyTeleop(Node):
 
     def _publish(self):
         self._interface.clear()
-        self._interface.write_line(2, 'Linear: %f, Angular: %f' % (self._linear, self._angular))
-        self._interface.write_line(5, 'Use arrow keys to move, q to exit.')
+        self._interface.write_line(2, "Linear: %f, Angular: %f" % (self._linear, self._angular))
+        self._interface.write_line(5, "Use arrow keys to move, q to exit.")
         self._interface.refresh()
 
         if self._publish_stamped_twist:
@@ -240,5 +239,5 @@ def main():
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

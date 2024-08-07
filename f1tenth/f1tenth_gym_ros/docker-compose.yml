@@ -20,20 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-version: '3'
+version: "3"
 services:
   sim:
     image: f1tenth_gym_ros
     build: ./
-    volumes: 
+    volumes:
       - .:/sim_ws/src/f1tenth_gym_ros
     environment:
       - DISPLAY=novnc:0.0
     networks:
       - x11
     stdin_open: true
-    tty: true 
-  novnc:  
+    tty: true
+  novnc:
     image: theasp/novnc:latest
     environment:
       - DISPLAY_WIDTH=1728

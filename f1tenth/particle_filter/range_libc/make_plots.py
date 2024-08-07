@@ -1,9 +1,11 @@
 import csv
+
+from matplotlib import cm
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from scipy.ndimage.morphology import distance_transform_edt
-import matplotlib.pyplot as plt
-from matplotlib import cm
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 
 def reject_outliers(data, m = 12.):
     d = np.abs(data - np.median(data))

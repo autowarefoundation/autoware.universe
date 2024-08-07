@@ -182,7 +182,7 @@ if (BUILD_NC_TESTS OR BUILD_CONFIG_TESTS)
     set (srcdir "${CMAKE_CURRENT_SOURCE_DIR}/${srcdir}")
     add_test (
       NAME    "${name}"
-      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/build.py" 
+      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/build.py"
                     ${name} ${srcdir} ${expect_fail}
     )
   endfunction ()

@@ -73,8 +73,7 @@ public:
    * @return Pointer to a valid VescPacket if successful. Otherwise, an empty pointer.
    */
   static VescPacketPtr createPacket(
-    const Buffer::const_iterator & begin,
-    const Buffer::const_iterator & end,
+    const Buffer::const_iterator & begin, const Buffer::const_iterator & end,
     int * num_bytes_needed, std::string * what);
 
   typedef std::function<VescPacketPtr(std::shared_ptr<VescFrame>)> CreateFn;
@@ -94,7 +93,7 @@ private:
   static FactoryMap * getMap();
 };
 
-template<typename PACKETTYPE>
+template <typename PACKETTYPE>
 class PacketFactoryTemplate
 {
 public:
@@ -111,7 +110,7 @@ public:
 
 /** Use this macro to register packets */
 #define REGISTER_PACKET_TYPE(id, klass) \
-  static PacketFactoryTemplate<klass> global_ ## klass ## Factory((id));
+  static PacketFactoryTemplate<klass> global_##klass##Factory((id));
 
 }  // namespace vesc_driver
 

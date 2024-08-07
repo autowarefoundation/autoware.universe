@@ -1,21 +1,17 @@
-var indexSectionsWithContent =
-{
+var indexSectionsWithContent = {
   0: "_acdefimoprsuz",
   1: "acdefrs",
-  2: "_cimoprsuz"
+  2: "_cimoprsuz",
 };
 
-var indexSectionNames =
-{
+var indexSectionNames = {
   0: "all",
   1: "classes",
-  2: "functions"
+  2: "functions",
 };
 
-var indexSectionLabels =
-{
+var indexSectionLabels = {
   0: "All",
   1: "Classes",
-  2: "Functions"
+  2: "Functions",
 };
-

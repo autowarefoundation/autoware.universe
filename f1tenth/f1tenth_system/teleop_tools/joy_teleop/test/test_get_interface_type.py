@@ -32,44 +32,42 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from joy_teleop.joy_teleop import get_interface_type
 from joy_teleop.joy_teleop import JoyTeleopException
-
+from joy_teleop.joy_teleop import get_interface_type
 import pytest
-
 import sensor_msgs.msg
 import std_srvs.srv
 import test_msgs.action
 
 
 def test_message():
-    interface_type = get_interface_type('sensor_msgs/msg/Joy', 'msg')
+    interface_type = get_interface_type("sensor_msgs/msg/Joy", "msg")
     msg = interface_type()
     assert isinstance(msg, sensor_msgs.msg.Joy)
 
 
 def test_service():
-    interface_type = get_interface_type('std_srvs/srv/Trigger', 'srv')
+    interface_type = get_interface_type("std_srvs/srv/Trigger", "srv")
     srv = interface_type.Request()
     assert isinstance(srv, std_srvs.srv.Trigger.Request)
 
 
 def test_action():
-    interface_type = get_interface_type('test_msgs/action/Fibonacci', 'action')
+    interface_type = get_interface_type("test_msgs/action/Fibonacci", "action")
     action = interface_type.Goal()
     assert isinstance(action, test_msgs.action.Fibonacci.Goal)
 
 
 def test_bad_message():
     with pytest.raises(JoyTeleopException):
-        get_interface_type('sensor_msgs/msg', 'msg')
+        get_interface_type("sensor_msgs/msg", "msg")
 
 
 def test_invalid_type():
     with pytest.raises(JoyTeleopException):
-        get_interface_type('sensor_msgs/msg/Joy', 'ms')
+        get_interface_type("sensor_msgs/msg/Joy", "ms")
 
 
 def test_bad_import():
     with pytest.raises(ModuleNotFoundError):
-        get_interface_type('foo_msgs/msg/Bar', 'msg')
+        get_interface_type("foo_msgs/msg/Bar", "msg")

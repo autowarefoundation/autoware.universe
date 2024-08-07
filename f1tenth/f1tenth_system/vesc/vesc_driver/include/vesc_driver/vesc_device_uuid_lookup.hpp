@@ -17,13 +17,12 @@
 #ifndef VESC_DRIVER__VESC_DEVICE_UUID_LOOKUP_HPP_
 #define VESC_DRIVER__VESC_DEVICE_UUID_LOOKUP_HPP_
 
-
-#include <string>
-#include <memory>
-
 #include "vesc_driver/datatypes.hpp"
 #include "vesc_driver/vesc_interface.hpp"
 #include "vesc_driver/vesc_packet.hpp"
+
+#include <memory>
+#include <string>
 
 namespace vesc_driver
 {
@@ -58,13 +57,9 @@ private:
     char uuid_data[100] = "";
     std::string uuid_founded;
     snprintf(
-      uuid_data, sizeof(uuid_data),
-      "%02x%02x%02x-%02x%02x%02x-%02x%02x%02x-%02x%02x%02x",
-      uuid[0], uuid[1], uuid[2],
-      uuid[3], uuid[4], uuid[5],
-      uuid[6], uuid[7], uuid[8],
-      uuid[9], uuid[10], uuid[11]
-    );
+      uuid_data, sizeof(uuid_data), "%02x%02x%02x-%02x%02x%02x-%02x%02x%02x-%02x%02x%02x", uuid[0],
+      uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7], uuid[8], uuid[9], uuid[10],
+      uuid[11]);
     return uuid_data;
   }
 };

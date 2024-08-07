@@ -30,12 +30,12 @@
 
 #include "vesc_ackermann/ackermann_to_vesc.hpp"
 
+#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
+#include <std_msgs/msg/float64.hpp>
+
 #include <cmath>
 #include <sstream>
 #include <string>
-
-#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
-#include <std_msgs/msg/float64.hpp>
 
 namespace vesc_ackermann
 {
@@ -50,10 +50,8 @@ AckermannToVesc::AckermannToVesc(const rclcpp::NodeOptions & options)
   // get conversion parameters
   speed_to_erpm_gain_ = declare_parameter<double>("speed_to_erpm_gain");
   speed_to_erpm_offset_ = declare_parameter<double>("speed_to_erpm_offset");
-  steering_to_servo_gain_ =
-    declare_parameter<double>("steering_angle_to_servo_gain");
-  steering_to_servo_offset_ =
-    declare_parameter<double>("steering_angle_to_servo_offset");
+  steering_to_servo_gain_ = declare_parameter<double>("steering_angle_to_servo_gain");
+  steering_to_servo_offset_ = declare_parameter<double>("steering_angle_to_servo_offset");
 
   // create publishers to vesc electric-RPM (speed) and servo commands
   erpm_pub_ = create_publisher<Float64>("commands/motor/speed", 10);

@@ -34,11 +34,11 @@
  */
 
 #include <ackermann_mux/ackermann_mux.hpp>
-#include <ackermann_mux/topic_handle.hpp>
 #include <ackermann_mux/ackermann_mux_diagnostics.hpp>
 #include <ackermann_mux/ackermann_mux_diagnostics_status.hpp>
-#include <ackermann_mux/utils.hpp>
 #include <ackermann_mux/params_helpers.hpp>
+#include <ackermann_mux/topic_handle.hpp>
+#include <ackermann_mux/utils.hpp>
 
 #include <list>
 #include <memory>
@@ -71,9 +71,11 @@ namespace ackermann_mux
 constexpr std::chrono::duration<int64_t> AckermannMux::DIAGNOSTICS_PERIOD;
 
 AckermannMux::AckermannMux()
-: Node("ackermann_mux", "",
-    rclcpp::NodeOptions().allow_undeclared_parameters(
-      true).automatically_declare_parameters_from_overrides(true))
+: Node(
+    "ackermann_mux", "",
+    rclcpp::NodeOptions()
+      .allow_undeclared_parameters(true)
+      .automatically_declare_parameters_from_overrides(true))
 {
 }
 
@@ -86,10 +88,8 @@ void AckermannMux::init()
   getTopicHandles("locks", *lock_hs_);
 
   /// Publisher for output topic:
-  cmd_pub_ =
-    this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(
-    "ackermann_cmd",
-    rclcpp::QoS(rclcpp::KeepLast(1)));
+  cmd_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(
+    "ackermann_cmd", rclcpp::QoS(rclcpp::KeepLast(1)));
 
   /// Diagnostics:
   diagnostics_ = std::make_shared<diagnostics_type>(this);
@@ -97,10 +97,8 @@ void AckermannMux::init()
   status_->velocity_hs = velocity_hs_;
   status_->lock_hs = lock_hs_;
 
-  diagnostics_timer_ = this->create_wall_timer(
-    DIAGNOSTICS_PERIOD, [this]() -> void {
-      updateDiagnostics();
-    });
+  diagnostics_timer_ =
+    this->create_wall_timer(DIAGNOSTICS_PERIOD, [this]() -> void { updateDiagnostics(); });
 }
 
 void AckermannMux::updateDiagnostics()
@@ -109,12 +107,13 @@ void AckermannMux::updateDiagnostics()
   diagnostics_->updateStatus(status_);
 }
 
-void AckermannMux::publishAckermann(const ackermann_msgs::msg::AckermannDriveStamped::ConstSharedPtr & msg)
+void AckermannMux::publishAckermann(
+  const ackermann_msgs::msg::AckermannDriveStamped::ConstSharedPtr & msg)
 {
   cmd_pub_->publish(*msg);
 }
 
-template<typename T>
+template <typename T>
 void AckermannMux::getTopicHandles(const std::string & param_name, std::list<T> & topic_hs)
 {
   RCLCPP_DEBUG(get_logger(), "getTopicHandles: %s", param_name.c_str());

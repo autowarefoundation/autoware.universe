@@ -63,7 +63,7 @@ Multiple Agents
 You can instantiate an environment with any number of agents (default is 2). For example:
 
 .. code:: python
-    
+
     env = gym.make('f110_gym:f110-v0',
                    num_agents=3)
 
@@ -114,7 +114,7 @@ You can change the default paramters (identified on concrete floor with the defa
 2. Or you could update the parameters of a specific vehicle in the list of vehicles (or all vehicles):
 
 .. code:: python
-        
+
     # env with default params and 2 agents
     env = gym.make('f110_gym:f110-v0')
 

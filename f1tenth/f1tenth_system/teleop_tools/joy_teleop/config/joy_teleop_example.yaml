@@ -1,6 +1,5 @@
 joy_teleop:
   ros__parameters:
-
     walk:
       type: topic
       interface_type: geometry_msgs/msg/TwistStamped
@@ -23,7 +22,7 @@ joy_teleop:
           button: 2
           scale: 3.0
         header-frame_id:
-          value: 'my_tf_frame'
+          value: "my_tf_frame"
 
     force_push:
       type: topic
@@ -60,7 +59,7 @@ joy_teleop:
       deadman_buttons: [2]
       message_value:
         data:
-          value: 'Hello'
+          value: "Hello"
 
     array:
       type: topic
@@ -69,7 +68,7 @@ joy_teleop:
       deadman_buttons: [5]
       message_value:
         data:
-          value: [1,3,3,7]
+          value: [1, 3, 3, 7]
 
     array2:
       type: topic

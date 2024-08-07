@@ -48,22 +48,23 @@ class JoyTeleopException(Exception):
 
 
 def get_interface_type(type_name: str, interface_type: str) -> typing.Any:
-    split = type_name.split('/')
+    split = type_name.split("/")
     if len(split) != 3:
         raise JoyTeleopException("Invalid type_name '{}'".format(type_name))
     package = split[0]
     interface = split[1]
     message = split[2]
     if interface != interface_type:
-        raise JoyTeleopException("Cannot use interface of type '{}' for an '{}'"
-                                 .format(interface, interface_type))
+        raise JoyTeleopException(
+            "Cannot use interface of type '{}' for an '{}'".format(interface, interface_type)
+        )
 
-    mod = importlib.import_module(package + '.' + interface_type)
+    mod = importlib.import_module(package + "." + interface_type)
     return getattr(mod, message)
 
 
 def set_member(msg: typing.Any, member: str, value: typing.Any) -> None:
-    ml = member.split('-')
+    ml = member.split("-")
     if len(ml) < 1:
         return
     target = msg
@@ -73,9 +74,9 @@ def set_member(msg: typing.Any, member: str, value: typing.Any) -> None:
 
 
 class JoyTeleopCommand:
-
-    def __init__(self, name: str, config: typing.Dict[str, typing.Any],
-                 button_name: str, axes_name: str) -> None:
+    def __init__(
+        self, name: str, config: typing.Dict[str, typing.Any], button_name: str, axes_name: str
+    ) -> None:
         self.buttons: typing.List[str] = []
         if button_name in config:
             self.buttons = config[button_name]
@@ -102,8 +103,9 @@ class JoyTeleopCommand:
     def update_active_from_buttons_and_axes(self, joy_state: sensor_msgs.msg.Joy) -> None:
         self.active = False
 
-        if (self.min_button is not None and len(joy_state.buttons) <= self.min_button) and \
-           (self.min_axis is not None and len(joy_state.axes) <= self.min_axis):
+        if (self.min_button is not None and len(joy_state.buttons) <= self.min_button) and (
+            self.min_axis is not None and len(joy_state.axes) <= self.min_axis
+        ):
             # Not enough buttons or axes, so it can't possibly be a message for this command.
             return
 
@@ -125,61 +127,68 @@ class JoyTeleopCommand:
 
 
 class JoyTeleopTopicCommand(JoyTeleopCommand):
-
     def __init__(self, name: str, config: typing.Dict[str, typing.Any], node: Node) -> None:
-        super().__init__(name, config, 'deadman_buttons', 'deadman_axes')
+        super().__init__(name, config, "deadman_buttons", "deadman_axes")
 
         self.name = name
 
-        self.topic_type = get_interface_type(config['interface_type'], 'msg')
+        self.topic_type = get_interface_type(config["interface_type"], "msg")
 
         # A 'message_value' is a fixed message that is sent in response to an activation.  It is
         # mutually exclusive with an 'axis_mapping'.
         self.msg_value = None
-        if 'message_value' in config:
-            msg_config = config['message_value']
+        if "message_value" in config:
+            msg_config = config["message_value"]
 
             # Construct the fixed message and try to fill it in.  This message will be reused
             # during runtime, and has the side benefit of giving the user early feedback if the
             # config can't work.
             self.msg_value = self.topic_type()
             for target, param in msg_config.items():
-                set_member(self.msg_value, target, param['value'])
+                set_member(self.msg_value, target, param["value"])
 
         # An 'axis_mapping' takes data from one part of the message and scales and offsets it to
         # lish if an activation happens.  This is typically used to take joystick analog data
         # and republish it as a cmd_vel.  It is mutually exclusive with a 'message_value'.
         self.axis_mappings = {}
-        if 'axis_mappings' in config:
-            self.axis_mappings = config['axis_mappings']
+        if "axis_mappings" in config:
+            self.axis_mappings = config["axis_mappings"]
             # Now check that the mappings have all of the required configuration.
             for mapping, values in self.axis_mappings.items():
-                if 'axis' not in values and 'button' not in values and 'value' not in values:
-                    raise JoyTeleopException("Axis mapping for '{}' must have an axis, button, "
-                                             'or value'.format(name))
+                if "axis" not in values and "button" not in values and "value" not in values:
+                    raise JoyTeleopException(
+                        "Axis mapping for '{}' must have an axis, button, " "or value".format(name)
+                    )
 
-                if 'axis' in values:
-                    if 'offset' not in values:
-                        raise JoyTeleopException("Axis mapping for '{}' must have an offset"
-                                                 .format(name))
+                if "axis" in values:
+                    if "offset" not in values:
+                        raise JoyTeleopException(
+                            "Axis mapping for '{}' must have an offset".format(name)
+                        )
 
-                    if 'scale' not in values:
-                        raise JoyTeleopException("Axis mapping for '{}' must have a scale"
-                                                 .format(name))
+                    if "scale" not in values:
+                        raise JoyTeleopException(
+                            "Axis mapping for '{}' must have a scale".format(name)
+                        )
 
         if self.msg_value is None and not self.axis_mappings:
-            raise JoyTeleopException("No 'message_value' or 'axis_mappings' "
-                                     "configured for command '{}'".format(name))
+            raise JoyTeleopException(
+                "No 'message_value' or 'axis_mappings' " "configured for command '{}'".format(name)
+            )
         if self.msg_value is not None and self.axis_mappings:
-            raise JoyTeleopException("Only one of 'message_value' or 'axis_mappings' "
-                                     "can be configured for command '{}'".format(name))
+            raise JoyTeleopException(
+                "Only one of 'message_value' or 'axis_mappings' "
+                "can be configured for command '{}'".format(name)
+            )
 
-        qos = rclpy.qos.QoSProfile(history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
-                                   depth=1,
-                                   reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
-                                   durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
+        qos = rclpy.qos.QoSProfile(
+            history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
+            durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE,
+        )
 
-        self.pub = node.create_publisher(self.topic_type, config['topic_name'], qos)
+        self.pub = node.create_publisher(self.topic_type, config["topic_name"], qos)
 
     def run(self, node: Node, joy_state: sensor_msgs.msg.Joy) -> None:
         # The logic for responding to this joystick press is:
@@ -206,59 +215,67 @@ class JoyTeleopTopicCommand(JoyTeleopCommand):
             # This is the case to forward along mappings.
             msg = self.topic_type()
             for mapping, values in self.axis_mappings.items():
-                if 'axis' in values:
-                    if len(joy_state.axes) > values['axis']:
-                        val = joy_state.axes[values['axis']] * values.get('scale', 1.0) + \
-                            values.get('offset', 0.0)
+                if "axis" in values:
+                    if len(joy_state.axes) > values["axis"]:
+                        val = joy_state.axes[values["axis"]] * values.get(
+                            "scale", 1.0
+                        ) + values.get("offset", 0.0)
                     else:
-                        node.get_logger().error('Joystick has only {} axes (indexed from 0),'
-                                                'but #{} was referenced in config.'.format(
-                                                    len(joy_state.axes), values['axis']))
+                        node.get_logger().error(
+                            "Joystick has only {} axes (indexed from 0),"
+                            "but #{} was referenced in config.".format(
+                                len(joy_state.axes), values["axis"]
+                            )
+                        )
                         val = 0.0
-                elif 'button' in values:
-                    if len(joy_state.buttons) > values['button']:
-                        val = joy_state.buttons[values['button']] * values.get('scale', 1.0) + \
-                            values.get('offset', 0.0)
+                elif "button" in values:
+                    if len(joy_state.buttons) > values["button"]:
+                        val = joy_state.buttons[values["button"]] * values.get(
+                            "scale", 1.0
+                        ) + values.get("offset", 0.0)
                     else:
-                        node.get_logger().error('Joystick has only {} buttons (indexed from 0),'
-                                                'but #{} was referenced in config.'.format(
-                                                    len(joy_state.buttons), values['button']))
+                        node.get_logger().error(
+                            "Joystick has only {} buttons (indexed from 0),"
+                            "but #{} was referenced in config.".format(
+                                len(joy_state.buttons), values["button"]
+                            )
+                        )
                         val = 0.0
-                elif 'value' in values:
+                elif "value" in values:
                     # Pass on the value as its Python-implicit type
-                    val = values.get('value')
+                    val = values.get("value")
                 else:
                     node.get_logger().error(
-                        'No Supported axis_mappings type found in: {}'.format(mapping))
+                        "No Supported axis_mappings type found in: {}".format(mapping)
+                    )
                     val = 0.0
 
                 set_member(msg, mapping, val)
 
         # If there is a stamp field, fill it with now().
-        if hasattr(msg, 'header'):
+        if hasattr(msg, "header"):
             msg.header.stamp = node.get_clock().now().to_msg()
 
         self.pub.publish(msg)
 
 
 class JoyTeleopServiceCommand(JoyTeleopCommand):
-
     def __init__(self, name: str, config: typing.Dict[str, typing.Any], node: Node) -> None:
-        super().__init__(name, config, 'buttons', 'axes')
+        super().__init__(name, config, "buttons", "axes")
 
         self.name = name
 
-        service_name = config['service_name']
+        service_name = config["service_name"]
 
-        service_type = get_interface_type(config['interface_type'], 'srv')
+        service_type = get_interface_type(config["interface_type"], "srv")
 
         self.request = service_type.Request()
 
-        if 'service_request' in config:
+        if "service_request" in config:
             # Set the message fields in the request in the constructor.  This request will be used
             # during runtime, and has the side benefit of giving the user early feedback if the
             # config can't work.
-            set_message_fields(self.request, config['service_request'])
+            set_message_fields(self.request, config["service_request"])
 
         self.service_client = node.create_client(service_type, service_name)
         self.client_ready = False
@@ -291,23 +308,22 @@ class JoyTeleopServiceCommand(JoyTeleopCommand):
 
 
 class JoyTeleopActionCommand(JoyTeleopCommand):
-
     def __init__(self, name: str, config: typing.Dict[str, typing.Any], node: Node) -> None:
-        super().__init__(name, config, 'buttons', 'axes')
+        super().__init__(name, config, "buttons", "axes")
 
         self.name = name
 
-        action_type = get_interface_type(config['interface_type'], 'action')
+        action_type = get_interface_type(config["interface_type"], "action")
 
         self.goal = action_type.Goal()
 
-        if 'action_goal' in config:
+        if "action_goal" in config:
             # Set the message fields for the goal in the constructor.  This goal will be used
             # during runtime, and has hte side benefit of giving the user early feedback if the
             # config can't work.
-            set_message_fields(self.goal, config['action_goal'])
+            set_message_fields(self.goal, config["action_goal"])
 
-        action_name = config['action_name']
+        action_name = config["action_name"]
 
         self.action_client = ActionClient(node, action_type, action_name)
         self.client_ready = False
@@ -348,8 +364,11 @@ class JoyTeleop(Node):
     """
 
     def __init__(self):
-        super().__init__('joy_teleop', allow_undeclared_parameters=True,
-                         automatically_declare_parameters_from_overrides=True)
+        super().__init__(
+            "joy_teleop",
+            allow_undeclared_parameters=True,
+            automatically_declare_parameters_from_overrides=True,
+        )
 
         self.commands = []
 
@@ -360,30 +379,35 @@ class JoyTeleop(Node):
                 raise JoyTeleopException("command '{}' was duplicated".format(name))
 
             try:
-                interface_group = config['type']
+                interface_group = config["type"]
 
-                if interface_group == 'topic':
+                if interface_group == "topic":
                     self.commands.append(JoyTeleopTopicCommand(name, config, self))
-                elif interface_group == 'service':
+                elif interface_group == "service":
                     self.commands.append(JoyTeleopServiceCommand(name, config, self))
-                elif interface_group == 'action':
+                elif interface_group == "action":
                     self.commands.append(JoyTeleopActionCommand(name, config, self))
                 else:
-                    raise JoyTeleopException("unknown type '{interface_group}' "
-                                             "for command '{name}'".format_map(locals()))
+                    raise JoyTeleopException(
+                        "unknown type '{interface_group}' "
+                        "for command '{name}'".format_map(locals())
+                    )
             except TypeError:
                 # This can happen on parameters we don't control, like 'use_sim_time'.
-                self.get_logger().debug('parameter {} is not a dict'.format(name))
+                self.get_logger().debug("parameter {} is not a dict".format(name))
 
             names.append(name)
 
         # Don't subscribe until everything has been initialized.
-        qos = rclpy.qos.QoSProfile(history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
-                                   depth=1,
-                                   reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
-                                   durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
+        qos = rclpy.qos.QoSProfile(
+            history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
+            durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE,
+        )
         self._subscription = self.create_subscription(
-            sensor_msgs.msg.Joy, 'joy', self.joy_callback, qos)
+            sensor_msgs.msg.Joy, "joy", self.joy_callback, qos
+        )
 
     def retrieve_config(self):
         config = {}
@@ -394,7 +418,7 @@ class JoyTeleop(Node):
 
     def insert_dict(self, dictionary: typing.Dict[str, typing.Any], key: str, value: str) -> None:
         split = key.partition(PARAMETER_SEPARATOR_STRING)
-        if split[0] == key and split[1] == '' and split[2] == '':
+        if split[0] == key and split[1] == "" and split[2] == "":
             dictionary[key] = value
         else:
             if not split[0] in dictionary:

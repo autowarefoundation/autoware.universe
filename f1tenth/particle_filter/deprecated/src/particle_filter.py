@@ -1,28 +1,41 @@
 #!/usr/bin/env python
 
 # packages
-import rospy
-import numpy as np
-import range_libc
-import time
 from threading import Lock
-import tf.transformations
-import tf
-import utils as Utils
+import time
 
-# messages
-from std_msgs.msg import String, Header, Float32MultiArray
-from sensor_msgs.msg import LaserScan
-from visualization_msgs.msg import Marker
-from geometry_msgs.msg import Point, Pose, PoseStamped, PoseArray, Quaternion, PolygonStamped,Polygon, Point32, PoseWithCovarianceStamped, PointStamped
-from nav_msgs.msg import Odometry
-from nav_msgs.srv import GetMap
+from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point32
+from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import Polygon
+from geometry_msgs.msg import PolygonStamped
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseArray
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import Quaternion
+from matplotlib import cm
 
 # visualization packages
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
+from matplotlib.ticker import LinearLocator
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
+from nav_msgs.msg import Odometry
+from nav_msgs.srv import GetMap
+import numpy as np
+import range_libc
+import rospy
+from sensor_msgs.msg import LaserScan
+
+# messages
+from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Header
+from std_msgs.msg import String
+import tf
+import tf.transformations
+import utils as Utils
+from visualization_msgs.msg import Marker
 
 '''
 These flags indicate several variants of the sensor model. Only one of them is used at a time.
@@ -63,7 +76,7 @@ class ParticleFiler():
         self.MOTION_DISPERSION_X = float(rospy.get_param("~motion_dispersion_x", 0.05))
         self.MOTION_DISPERSION_Y = float(rospy.get_param("~motion_dispersion_y", 0.025))
         self.MOTION_DISPERSION_THETA = float(rospy.get_param("~motion_dispersion_theta", 0.25))
-        
+
         # various data containers used in the MCL algorithm
         self.MAX_RANGE_PX = None
         self.odometry_data = np.array([0.0,0.0,0.0])
@@ -173,7 +186,7 @@ class ParticleFiler():
             stamp = rospy.Time.now()
 
         # this may cause issues with the TF tree. If so, see the below code.
-        self.pub_tf.sendTransform((pose[0],pose[1],0),tf.transformations.quaternion_from_euler(0, 0, pose[2]), 
+        self.pub_tf.sendTransform((pose[0],pose[1],0),tf.transformations.quaternion_from_euler(0, 0, pose[2]),
                stamp , "/laser", "/map")
 
         # also publish odometry to facilitate getting the localization pose
@@ -187,7 +200,7 @@ class ParticleFiler():
             odom.pose.covariance[:cov_mat.shape[0]] = cov_mat
             odom.twist.twist.linear.x = self.current_speed
             self.odom_pub.publish(odom)
-        
+
         return # below this line is disabled
 
         """
@@ -300,7 +313,7 @@ class ParticleFiler():
             rot = Utils.rotation_matrix(-self.last_pose[2])
             delta = np.array([position - self.last_pose[0:2]]).transpose()
             local_delta = (rot*delta).transpose()
-            
+
             self.odometry_data = np.array([local_delta[0,0], local_delta[0,1], orientation - self.last_pose[2]])
             self.last_pose = pose
             self.last_stamp = msg.header.stamp
@@ -369,7 +382,7 @@ class ParticleFiler():
         z_rand  = self.Z_RAND
         z_hit   = self.Z_HIT
         sigma_hit = self.SIGMA_HIT
-        
+
         table_width = int(self.MAX_RANGE_PX) + 1
         self.sensor_model_table = np.zeros((table_width,table_width))
 
@@ -447,7 +460,7 @@ class ParticleFiler():
         Vectorized motion model. Computing the motion model over all particles is thousands of times
         faster than doing it for each particle individually due to vectorization and reduction in
         function call overhead
-        
+
         TODO this could be better, but it works for now
             - fixed random noise is not very realistic
             - ackermann model provides bad estimates at high speed
@@ -480,7 +493,7 @@ class ParticleFiler():
                                         optimizations to CDDT which simultaneously performs ray casting
                                         in two directions, reducing the amount of work by roughly a third
         '''
-        
+
         num_rays = self.downsampled_angles.shape[0]
         # only allocate buffers once to avoid slowness
         if self.first_sensor_update:
@@ -610,14 +623,14 @@ class ParticleFiler():
 
         # save the particles
         self.particles = proposal_distribution
-    
+
     def expected_pose(self):
         # returns the expected value of the pose given the particle distribution
         return np.dot(self.particles.transpose(), self.weights)
 
     def update(self):
         '''
-        Apply the MCL function to update particle filter state. 
+        Apply the MCL function to update particle filter state.
 
         Ensures the state is correctly initialized, and acquires the state lock before proceeding.
         '''
@@ -655,6 +668,7 @@ class ParticleFiler():
 
 import argparse
 import sys
+
 parser = argparse.ArgumentParser(description='Particle filter.')
 parser.add_argument('--config', help='Path to yaml file containing config parameters. Helpful for calling node directly with Python for profiling.')
 
@@ -668,7 +682,9 @@ def load_params_from_yaml(fp):
 
 # this function can be used to generate flame graphs easily
 def make_flamegraph(filterx=None):
-    import flamegraph, os
+    import os
+
+    import flamegraph
     perf_log_path = os.path.join(os.path.dirname(__file__), "../tmp/perf.log")
     flamegraph.start_profile_thread(fd=open(perf_log_path, "w"),
                                     filter=filterx,

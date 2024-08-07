@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-
 /*
  * @author Enrique Fernandez
  * @author Brighten Lee
@@ -35,7 +34,6 @@
 
 #include <ackermann_mux/ackermann_mux_diagnostics.hpp>
 #include <ackermann_mux/ackermann_mux_diagnostics_status.hpp>
-
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <memory>
@@ -83,16 +81,15 @@ void AckermannMuxDiagnostics::diagnostics(diagnostic_updater::DiagnosticStatusWr
     stat.addf(
       "velocity " + velocity_h.getName(), " %s (listening to %s @ %fs with priority #%d)",
       (velocity_h.isMasked(status_->priority) ? "masked" : "unmasked"),
-      velocity_h.getTopic().c_str(),
-      velocity_h.getTimeout().seconds(), static_cast<int>(velocity_h.getPriority()));
+      velocity_h.getTopic().c_str(), velocity_h.getTimeout().seconds(),
+      static_cast<int>(velocity_h.getPriority()));
   }
 
   for (const auto & lock_h : *status_->lock_hs) {
     stat.addf(
       "lock " + lock_h.getName(), " %s (listening to %s @ %fs with priority #%d)",
       (lock_h.isLocked() ? "locked" : "free"), lock_h.getTopic().c_str(),
-      lock_h.getTimeout().seconds(),
-      static_cast<int>(lock_h.getPriority()));
+      lock_h.getTimeout().seconds(), static_cast<int>(lock_h.getPriority()));
   }
 
   stat.add("current priority", static_cast<int>(status_->priority));

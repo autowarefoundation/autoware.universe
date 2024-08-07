@@ -31,8 +31,9 @@
 #ifndef VESC_ACKERMANN__ACKERMANN_TO_VESC_HPP_
 #define VESC_ACKERMANN__ACKERMANN_TO_VESC_HPP_
 
-#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include <std_msgs/msg/float64.hpp>
 
 namespace vesc_ackermann
