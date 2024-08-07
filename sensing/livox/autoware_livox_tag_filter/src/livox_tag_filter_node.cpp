@@ -26,8 +26,7 @@ struct EIGEN_ALIGN16 LivoxPoint
   std::uint8_t line;
 };
 
-POINT_CLOUD_REGISTER_POINT_STRUCT(
-  LivoxPoint, (std::uint8_t, tag, tag)(std::uint8_t, line, line))
+POINT_CLOUD_REGISTER_POINT_STRUCT(LivoxPoint, (std::uint8_t, tag, tag)(std::uint8_t, line, line))
 
 namespace autoware::livox_tag_filter
 {
