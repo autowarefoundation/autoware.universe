@@ -13,11 +13,13 @@
 // limitations under the License.
 
 #include "autoware/tensorrt_yolox/utils.hpp"
+
 #include <opencv2/opencv.hpp>
+
 #include <gtest/gtest.h>
 
-using autoware::tensorrt_yolox::runLengthEncoder;
 using autoware::tensorrt_yolox::runLengthDecoder;
+using autoware::tensorrt_yolox::runLengthEncoder;
 
 // Test case 1: Test if the decoded image is the same as the original image
 TEST(UtilsTest, runLengthEncoderDecoderTest)
@@ -39,10 +41,9 @@ TEST(UtilsTest, runLengthEncoderDecoderTest)
   cv::Mat image = cv::Mat::zeros(10, 20, CV_8UC1);
   for (int i = 0; i < height; ++i) {
     for (int j = 0; j < width; ++j) {
-      if (j < i){
+      if (j < i) {
         image.at<uint8_t>(i, j) = i % number_cls;
-      }
-      else{
+      } else {
         image.at<uint8_t>(i, j) = 0;
       }
     }
@@ -53,9 +54,7 @@ TEST(UtilsTest, runLengthEncoderDecoderTest)
   std::vector<uint8_t> data(compressed_data.size() * step);
   for (size_t i = 0; i < compressed_data.size(); ++i) {
     std::memcpy(&data[i * step], &compressed_data.at(i).first, sizeof(uint8_t));
-    std::memcpy(
-      &data[i * step + sizeof(uint8_t)], &compressed_data.at(i).second,
-      sizeof(int));
+    std::memcpy(&data[i * step + sizeof(uint8_t)], &compressed_data.at(i).second, sizeof(int));
   }
   // Decompress the image
   cv::Mat decoded_image = runLengthDecoder(data, height, width);
@@ -65,7 +64,7 @@ TEST(UtilsTest, runLengthEncoderDecoderTest)
   bool image_eq = true;
   for (int i = 0; i < image.rows; ++i) {
     for (int j = 0; j < image.cols; ++j) {
-      if (image.at<uint8_t>(i, j) != decoded_image.at<uint8_t>(i, j)){
+      if (image.at<uint8_t>(i, j) != decoded_image.at<uint8_t>(i, j)) {
         image_eq = false;
         break;
       }
