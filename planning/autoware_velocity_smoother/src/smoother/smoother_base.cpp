@@ -97,6 +97,21 @@ void SmootherBase::setWheelBase(const double wheel_base)
   base_param_.wheel_base = wheel_base;
 }
 
+void SmootherBase::setMaxAccel(const double max_accel)
+{
+  base_param_.max_accel = max_accel;
+}
+
+void SmootherBase::setMaxJerk(const double max_jerk)
+{
+  base_param_.max_jerk = max_jerk;
+}
+
+void SmootherBase::setMaxLatAccel(const double max_accel)
+{
+  base_param_.max_lateral_accel = max_accel;
+}
+
 void SmootherBase::setParam(const BaseParam & param)
 {
   base_param_ = param;
