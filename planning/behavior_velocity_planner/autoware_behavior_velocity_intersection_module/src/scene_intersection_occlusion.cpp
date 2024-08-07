@@ -402,8 +402,7 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
         if (acc_dist < min_dist) {
           min_dist = acc_dist;
           nearest_occlusion_point = {
-            division_index,
-            std::distance(division.begin(), point_it),
+            division_index, std::distance(division.begin(), point_it),
             autoware::universe_utils::createPoint(point_it->x(), point_it->y(), origin.z),
             autoware::universe_utils::createPoint(projection_it->x(), projection_it->y(), origin.z),
             autoware::universe_utils::createPoint(
