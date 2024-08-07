@@ -634,11 +634,11 @@ Env should be initialized by calling gym.make(&apos;f110_gym:f110-v0&apos;, **kw
 Args:
     kwargs:
         seed (int): seed for random state and reproducibility
-        
+
         map (str, default=&apos;vegas&apos;): name of the map used for the environment. Currently, available environments include: &apos;berlin&apos;, &apos;vegas&apos;, &apos;skirk&apos;. You could use a string of the absolute path to the yaml file of your custom map.
-    
+
         map_ext (str, default=&apos;png&apos;): image extension of the map image file. For example &apos;png&apos;, &apos;pgm&apos;
-    
+
         params (dict, default={&apos;mu&apos;: 1.0489, &apos;C_Sf&apos;:, &apos;C_Sr&apos;:, &apos;lf&apos;: 0.15875, &apos;lr&apos;: 0.17145, &apos;h&apos;: 0.074, &apos;m&apos;: 3.74, &apos;I&apos;: 0.04712, &apos;s_min&apos;: -0.4189, &apos;s_max&apos;: 0.4189, &apos;sv_min&apos;: -3.2, &apos;sv_max&apos;: 3.2, &apos;v_switch&apos;:7.319, &apos;a_max&apos;: 9.51, &apos;v_min&apos;:-5.0, &apos;v_max&apos;: 20.0, &apos;width&apos;: 0.31, &apos;length&apos;: 0.58}): dictionary of vehicle parameters.
         mu: surface friction coefficient
         C_Sf: Cornering stiffness coefficient, front

@@ -19,29 +19,37 @@ from launch import LaunchDescription
 import launch.actions
 import launch_ros.actions
 
-
 # Please note that this is only an example!
 # It is not guaranteed to work with your setup but can be used as a starting point.
 
 
 def generate_launch_description():
-
     parameters_file = os.path.join(
-        get_package_share_directory('joy_teleop'),
-        'config', 'joy_teleop_example.yaml'
+        get_package_share_directory("joy_teleop"), "config", "joy_teleop_example.yaml"
     )
 
-    ld = LaunchDescription([
-        launch.actions.DeclareLaunchArgument('cmd_vel', default_value='input_joy/cmd_vel'),
-        launch.actions.DeclareLaunchArgument('teleop_config', default_value=parameters_file),
-    ])
+    ld = LaunchDescription(
+        [
+            launch.actions.DeclareLaunchArgument("cmd_vel", default_value="input_joy/cmd_vel"),
+            launch.actions.DeclareLaunchArgument("teleop_config", default_value=parameters_file),
+        ]
+    )
 
-    ld.add_action(launch_ros.actions.Node(
-            package='joy_teleop', executable='joy_teleop',
-            parameters=[launch.substitutions.LaunchConfiguration('teleop_config')]))
+    ld.add_action(
+        launch_ros.actions.Node(
+            package="joy_teleop",
+            executable="joy_teleop",
+            parameters=[launch.substitutions.LaunchConfiguration("teleop_config")],
+        )
+    )
 
-    ld.add_action(launch_ros.actions.Node(
-            package='joy_teleop', executable='incrementer_server',
-            name='incrementer', namespace='torso_controller'))
+    ld.add_action(
+        launch_ros.actions.Node(
+            package="joy_teleop",
+            executable="incrementer_server",
+            name="incrementer",
+            namespace="torso_controller",
+        )
+    )
 
     return ld

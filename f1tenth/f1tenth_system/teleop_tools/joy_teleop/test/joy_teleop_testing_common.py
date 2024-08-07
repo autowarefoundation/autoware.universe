@@ -44,45 +44,47 @@ import sensor_msgs.msg
 
 def generate_joy_test_description(parameters):
     joy_teleop_node = launch_ros.actions.Node(
-        package='joy_teleop',
-        executable='joy_teleop',
-        output='both',
-        parameters=[parameters])
+        package="joy_teleop", executable="joy_teleop", output="both", parameters=[parameters]
+    )
 
     return (
-        launch.LaunchDescription([
-            joy_teleop_node,
-            launch_testing.actions.ReadyToTest(),
-        ]), {}
+        launch.LaunchDescription(
+            [
+                joy_teleop_node,
+                launch_testing.actions.ReadyToTest(),
+            ]
+        ),
+        {},
     )
 
 
 class TestJoyTeleop(unittest.TestCase):
-
     def publish_message(self):
         pass
 
     def setUp(self):
         self.context = rclpy.context.Context()
         rclpy.init(context=self.context)
-        node_name = re.sub('(.)([A-Z]{1})', r'\1_\2', self.__class__.__name__).lower()
+        node_name = re.sub("(.)([A-Z]{1})", r"\1_\2", self.__class__.__name__).lower()
         self.node = rclpy.create_node(node_name, context=self.context)
         self.executor = rclpy.executors.SingleThreadedExecutor(context=self.context)
         self.executor.add_node(self.node)
-        qos = rclpy.qos.QoSProfile(history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
-                                   depth=1,
-                                   reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
-                                   durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
+        qos = rclpy.qos.QoSProfile(
+            history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
+            durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE,
+        )
         self.joy_publisher = self.node.create_publisher(
             msg_type=sensor_msgs.msg.Joy,
-            topic='joy',
+            topic="joy",
             qos_profile=qos,
         )
 
         self.joy_msg = sensor_msgs.msg.Joy()
         self.joy_msg.header.stamp.sec = 0
         self.joy_msg.header.stamp.nanosec = 0
-        self.joy_msg.header.frame_id = ''
+        self.joy_msg.header.frame_id = ""
         self.joy_msg.axes = []
         self.joy_msg.buttons = []
 

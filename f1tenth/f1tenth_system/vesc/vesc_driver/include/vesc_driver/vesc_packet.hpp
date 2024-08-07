@@ -34,8 +34,8 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #define CRCPP_USE_CPP11
 #include "vesc_driver/crc.hpp"
@@ -54,14 +54,11 @@ public:
   virtual ~VescFrame() {}
 
   // getters
-  virtual const Buffer & frame() const
-  {
-    return *frame_;
-  }
+  virtual const Buffer & frame() const { return *frame_; }
 
   // VESC packet properties
-  static const int VESC_MAX_PAYLOAD_SIZE = 1024;           ///< Maximum VESC payload size, in bytes
-  static const int VESC_MIN_FRAME_SIZE = 5;                ///< Smallest VESC frame size, in bytes
+  static const int VESC_MAX_PAYLOAD_SIZE = 1024;  ///< Maximum VESC payload size, in bytes
+  static const int VESC_MIN_FRAME_SIZE = 5;       ///< Smallest VESC frame size, in bytes
   // v Largest VESC frame size, in bytes
   static const int VESC_MAX_FRAME_SIZE = 6 + VESC_MAX_PAYLOAD_SIZE;
   static const unsigned int VESC_SOF_VAL_SMALL_FRAME = 2;  ///< VESC start of "small" frame value
@@ -69,15 +66,15 @@ public:
   static const unsigned int VESC_EOF_VAL = 3;              ///< VESC end-of-frame value
 
   /** CRC parameters for the VESC */
-  static constexpr CRC::Parameters<crcpp_uint16,
-    16> CRC_TYPE = {0x1021, 0x0000, 0x0000, false, false};
+  static constexpr CRC::Parameters<crcpp_uint16, 16> CRC_TYPE = {
+    0x1021, 0x0000, 0x0000, false, false};
 
 protected:
   /** Construct frame with specified payload size. */
   explicit VescFrame(int payload_size);
 
   std::shared_ptr<Buffer> frame_;  ///< Stores frame data, shared_ptr for shallow copy
-  BufferRange payload_;              ///< View into frame's payload section
+  BufferRange payload_;            ///< View into frame's payload section
 
 private:
   /** Construct from buffer. Used by VescPacketFactory factory. */
@@ -95,10 +92,7 @@ class VescPacket : public VescFrame
 public:
   virtual ~VescPacket() {}
 
-  virtual const std::string & name() const
-  {
-    return name_;
-  }
+  virtual const std::string & name() const { return name_; }
 
 protected:
   VescPacket(const std::string & name, int payload_size, int payload_id);
@@ -121,10 +115,10 @@ public:
   int fwMajor() const;
   int fwMinor() const;
 
-  std::string     hwname() const;
-  const uint8_t * uuid()  const;
-  bool     paired() const;
-  uint8_t  devVersion() const;
+  std::string hwname() const;
+  const uint8_t * uuid() const;
+  bool paired() const;
+  uint8_t devVersion() const;
 
 private:
   int minor_;
@@ -148,31 +142,31 @@ class VescPacketValues : public VescPacket
 public:
   explicit VescPacketValues(std::shared_ptr<VescFrame> raw);
 
-  double  temp_fet() const;
-  double  temp_motor() const;
-  double  avg_motor_current() const;
-  double  avg_input_current() const;
-  double  avg_id() const;
-  double  avg_iq() const;
-  double  duty_cycle_now() const;
-  double  rpm() const;
-  double  duty_now() const;
-  double  v_in() const;
-  double  amp_hours() const;
-  double  amp_hours_charged() const;
-  double  watt_hours() const;
-  double  watt_hours_charged() const;
+  double temp_fet() const;
+  double temp_motor() const;
+  double avg_motor_current() const;
+  double avg_input_current() const;
+  double avg_id() const;
+  double avg_iq() const;
+  double duty_cycle_now() const;
+  double rpm() const;
+  double duty_now() const;
+  double v_in() const;
+  double amp_hours() const;
+  double amp_hours_charged() const;
+  double watt_hours() const;
+  double watt_hours_charged() const;
   int32_t tachometer() const;
   int32_t tachometer_abs() const;
-  int     fault_code() const;
-  double  pid_pos_now() const;
+  int fault_code() const;
+  double pid_pos_now() const;
   int32_t controller_id() const;
 
-  double  temp_mos1() const;
-  double  temp_mos2() const;
-  double  temp_mos3() const;
-  double  avg_vd() const;
-  double  avg_vq()  const;
+  double temp_mos1() const;
+  double temp_mos2() const;
+  double temp_mos3() const;
+  double avg_vd() const;
+  double avg_vq() const;
 };
 
 class VescPacketRequestValues : public VescPacket
@@ -252,11 +246,11 @@ class VescPacketImu : public VescPacket
 public:
   explicit VescPacketImu(std::shared_ptr<VescFrame> raw);
 
-  int    mask()  const;
+  int mask() const;
 
-  double yaw()   const;
+  double yaw() const;
   double pitch() const;
-  double roll()  const;
+  double roll() const;
 
   double acc_x() const;
   double acc_y() const;

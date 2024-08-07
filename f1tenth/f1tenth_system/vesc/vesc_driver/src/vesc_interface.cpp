@@ -30,6 +30,9 @@
 
 #include "vesc_driver/vesc_interface.hpp"
 
+#include "serial_driver/serial_driver.hpp"
+#include "vesc_driver/vesc_packet_factory.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <iomanip>
@@ -41,9 +44,6 @@
 #include <thread>
 #include <vector>
 
-#include "vesc_driver/vesc_packet_factory.hpp"
-#include "serial_driver/serial_driver.hpp"
-
 namespace vesc_driver
 {
 
@@ -53,7 +53,8 @@ public:
   Impl()
   : owned_ctx{new IoContext(2)},
     serial_driver_{new drivers::serial_driver::SerialDriver(*owned_ctx)}
-  {}
+  {
+  }
   void packet_creation_thread();
   void on_configure();
   void connect(const std::string & port);
@@ -92,9 +93,9 @@ void VescInterface::Impl::packet_creation_thread()
       auto iter_begin = buffer_.begin();
       while (iter != buffer_.end()) {
         // check if valid start-of-frame character
-        if (VescFrame::VESC_SOF_VAL_SMALL_FRAME == *iter ||
-          VescFrame::VESC_SOF_VAL_LARGE_FRAME == *iter)
-        {
+        if (
+          VescFrame::VESC_SOF_VAL_SMALL_FRAME == *iter ||
+          VescFrame::VESC_SOF_VAL_LARGE_FRAME == *iter) {
           // good start, now attempt to create packet
           std::string error;
           VescPacketConstPtr packet =
@@ -103,8 +104,8 @@ void VescInterface::Impl::packet_creation_thread()
             // good packet, check if we skipped any data
             if (std::distance(iter_begin, iter) > 0) {
               std::ostringstream ss;
-              ss << "Out-of-sync with VESC, unknown data leading valid frame. Discarding " <<
-                std::distance(iter_begin, iter) << " bytes.";
+              ss << "Out-of-sync with VESC, unknown data leading valid frame. Discarding "
+                 << std::distance(iter_begin, iter) << " bytes.";
               error_handler_(ss.str());
             }
             // call packet handler
@@ -159,8 +160,7 @@ void VescInterface::Impl::connect(const std::string & port)
 }
 
 VescInterface::VescInterface(
-  const std::string & port,
-  const PacketHandlerFunction & packet_handler,
+  const std::string & port, const PacketHandlerFunction & packet_handler,
   const ErrorHandlerFunction & error_handler)
 : impl_(new Impl())
 {
@@ -209,8 +209,7 @@ void VescInterface::connect(const std::string & port)
   // start up a monitoring thread
   impl_->packet_thread_run_ = true;
   impl_->packet_thread_ = std::unique_ptr<std::thread>(
-    new std::thread(
-      &VescInterface::Impl::packet_creation_thread, impl_.get()));
+    new std::thread(&VescInterface::Impl::packet_creation_thread, impl_.get()));
 }
 
 void VescInterface::disconnect()

@@ -87,7 +87,7 @@ Uses scipy.ndimage, cannot be JITted.
         y (float): coordinate in y (m)
         orig_x (float): x coordinate of the map origin (m)
         orig_y (float): y coordinate of the map origin (m)
-    
+
     Returns:
         r (int): row number in the transform matrix of the given point
         c (int): column number in the transform matrix of the given point

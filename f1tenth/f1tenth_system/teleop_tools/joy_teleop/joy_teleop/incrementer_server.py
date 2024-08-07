@@ -47,27 +47,27 @@ from rclpy.action import ActionServer
 from rclpy.duration import Duration
 from rclpy.node import Node
 from teleop_tools_msgs.action import Increment as TTIA
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from trajectory_msgs.msg import JointTrajectory
+from trajectory_msgs.msg import JointTrajectoryPoint
 
 
 class IncrementerServer(Node):
-
     def __init__(self, controller_ns):
-        super().__init__('incrementer_server')
+        super().__init__("incrementer_server")
 
         self._has_new_message = False
 
-        self._as = ActionServer(self, TTIA, 'increment', self._as_cb)
+        self._as = ActionServer(self, TTIA, "increment", self._as_cb)
 
-        self._command_pub = self.create_publisher(JointTrajectory, 'command', 1)
+        self._command_pub = self.create_publisher(JointTrajectory, "command", 1)
 
-        self._state_sub = self.create_subscription(JTCS, 'state', self._state_cb, 1)
+        self._state_sub = self.create_subscription(JTCS, "state", self._state_cb, 1)
 
         state = self._wait_for_new_message()
         self._value = state.actual.positions
         self._goal = JointTrajectory()
         self._goal.joint_names = state.joint_names
-        self.get_logger().info('Connected to %s', controller_ns)
+        self.get_logger().info("Connected to %s", controller_ns)
 
     def _as_cb(self, goal):
         self.increment_by(goal.increment_by)
@@ -90,7 +90,7 @@ class IncrementerServer(Node):
         state = self._wait_for_new_message()
         self._value = state.actual.positions
         self._value = [x + y for x, y in zip(self._value, increment)]
-        self.get_logger().info('Sent goal of %s', str(self._value))
+        self.get_logger().info("Sent goal of %s", str(self._value))
         point = JointTrajectoryPoint()
         point.positions = self._value
         point.time_from_start = Duration(seconds=0.1)
@@ -102,7 +102,7 @@ def main():
     try:
         rclpy.init()
 
-        node = IncrementerServer('spine_controller')
+        node = IncrementerServer("spine_controller")
 
         rclpy.spin(node)
 
@@ -112,5 +112,5 @@ def main():
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

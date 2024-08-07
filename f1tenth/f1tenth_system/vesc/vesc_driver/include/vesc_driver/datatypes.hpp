@@ -26,7 +26,6 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-
 /*
   Some parts of this code, Copyright 2016 - 2019 Benjamin Vedder    benjamin@vedder.se
 
@@ -49,8 +48,8 @@
 #ifndef VESC_DRIVER__DATATYPES_HPP_
 #define VESC_DRIVER__DATATYPES_HPP_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <cstdint>
 
@@ -60,22 +59,18 @@ namespace vesc_driver
 typedef struct
 {
   bool isVesc;
-}
-VSerialInfo_t;
+} VSerialInfo_t;
 
-typedef enum
-{
+typedef enum {
   CFG_T_UNDEFINED = 0,
   CFG_T_DOUBLE,
   CFG_T_INT,
   CFG_T_QSTRING,
   CFG_T_ENUM,
   CFG_T_BOOL
-}
-CFG_T;
+} CFG_T;
 
-typedef enum
-{
+typedef enum {
   VESC_TX_UNDEFINED = 0,
   VESC_TX_UINT8,
   VESC_TX_INT8,
@@ -89,39 +84,31 @@ typedef enum
 } VESC_TX_T;
 
 // #include "ch.h"
-typedef uint32_t systime_t;    // defined in ch.h
+typedef uint32_t systime_t;  // defined in ch.h
 
 // Data types
-typedef enum
-{
+typedef enum {
   MC_STATE_OFF = 0,
   MC_STATE_DETECTING,
   MC_STATE_RUNNING,
   MC_STATE_FULL_BRAKE,
 } mc_state;
 
-typedef enum
-{
-  PWM_MODE_NONSYNCHRONOUS_HISW = 0,    // This mode is not recommended
-  PWM_MODE_SYNCHRONOUS,                // The recommended and most tested mode
-  PWM_MODE_BIPOLAR                     // Some glitches occasionally, can kill MOSFETs
+typedef enum {
+  PWM_MODE_NONSYNCHRONOUS_HISW = 0,  // This mode is not recommended
+  PWM_MODE_SYNCHRONOUS,              // The recommended and most tested mode
+  PWM_MODE_BIPOLAR                   // Some glitches occasionally, can kill MOSFETs
 } mc_pwm_mode;
 
-typedef enum
-{
-  COMM_MODE_INTEGRATE = 0,
-  COMM_MODE_DELAY
-} mc_comm_mode;
+typedef enum { COMM_MODE_INTEGRATE = 0, COMM_MODE_DELAY } mc_comm_mode;
 
-typedef enum
-{
+typedef enum {
   SENSOR_MODE_SENSORLESS = 0,
   SENSOR_MODE_SENSORED,
   SENSOR_MODE_HYBRID
 } mc_sensor_mode;
 
-typedef enum
-{
+typedef enum {
   FOC_SENSOR_MODE_SENSORLESS = 0,
   FOC_SENSOR_MODE_ENCODER,
   FOC_SENSOR_MODE_HALL,
@@ -129,8 +116,7 @@ typedef enum
 } mc_foc_sensor_mode;
 
 // Auxiliary output mode
-typedef enum
-{
+typedef enum {
   OUT_AUX_MODE_OFF = 0,
   OUT_AUX_MODE_ON_AFTER_2S,
   OUT_AUX_MODE_ON_AFTER_5S,
@@ -139,47 +125,36 @@ typedef enum
 } out_aux_mode;
 
 // Temperature sensor type
-typedef enum
-{
+typedef enum {
   TEMP_SENSOR_NTC_10K_25C = 0,
   TEMP_SENSOR_PTC_1K_100C,
   TEMP_SENSOR_KTY83_122,
 } temp_sensor_type;
 
 // General purpose drive output mode
-typedef enum
-{
+typedef enum {
   GPD_OUTPUT_MODE_NONE = 0,
   GPD_OUTPUT_MODE_MODULATION,
   GPD_OUTPUT_MODE_VOLTAGE,
   GPD_OUTPUT_MODE_CURRENT
 } gpd_output_mode;
 
-typedef enum
-{
-  MOTOR_TYPE_BLDC = 0,
-  MOTOR_TYPE_DC,
-  MOTOR_TYPE_FOC,
-  MOTOR_TYPE_GPD
-} mc_motor_type;
+typedef enum { MOTOR_TYPE_BLDC = 0, MOTOR_TYPE_DC, MOTOR_TYPE_FOC, MOTOR_TYPE_GPD } mc_motor_type;
 
 // FOC current controller decoupling mode.
-typedef enum
-{
+typedef enum {
   FOC_CC_DECOUPLING_DISABLED = 0,
   FOC_CC_DECOUPLING_CROSS,
   FOC_CC_DECOUPLING_BEMF,
   FOC_CC_DECOUPLING_CROSS_BEMF
 } mc_foc_cc_decoupling_mode;
 
-typedef enum
-{
+typedef enum {
   FOC_OBSERVER_ORTEGA_ORIGINAL = 0,
   FOC_OBSERVER_ORTEGA_ITERATIVE
 } mc_foc_observer_type;
 
-typedef enum
-{
+typedef enum {
   FAULT_CODE_NONE = 0,
   FAULT_CODE_OVER_VOLTAGE,
   FAULT_CODE_UNDER_VOLTAGE,
@@ -205,8 +180,7 @@ typedef enum
   FAULT_CODE_RESOLVER_LOS
 } mc_fault_code;
 
-typedef enum
-{
+typedef enum {
   CONTROL_MODE_DUTY = 0,
   CONTROL_MODE_SPEED,
   CONTROL_MODE_CURRENT,
@@ -220,8 +194,7 @@ typedef enum
   CONTROL_MODE_NONE
 } mc_control_mode;
 
-typedef enum
-{
+typedef enum {
   DISP_POS_MODE_NONE = 0,
   DISP_POS_MODE_INDUCTANCE,
   DISP_POS_MODE_OBSERVER,
@@ -231,8 +204,7 @@ typedef enum
   DISP_POS_MODE_ENCODER_OBSERVER_ERROR
 } disp_pos_mode;
 
-typedef enum
-{
+typedef enum {
   SENSOR_PORT_MODE_HALL = 0,
   SENSOR_PORT_MODE_ABI,
   SENSOR_PORT_MODE_AS5047_SPI,
@@ -253,16 +225,14 @@ typedef struct
   float time_at_comm;
 } mc_rpm_dep_struct;
 
-typedef enum
-{
+typedef enum {
   DRV8301_OC_LIMIT = 0,
   DRV8301_OC_LATCH_SHUTDOWN,
   DRV8301_OC_REPORT_ONLY,
   DRV8301_OC_DISABLED
 } drv8301_oc_mode;
 
-typedef enum
-{
+typedef enum {
   DEBUG_SAMPLING_OFF = 0,
   DEBUG_SAMPLING_NOW,
   DEBUG_SAMPLING_START,
@@ -273,8 +243,7 @@ typedef enum
   DEBUG_SAMPLING_SEND_LAST_SAMPLES
 } debug_sampling_mode;
 
-typedef enum
-{
+typedef enum {
   CAN_BAUD_125K = 0,
   CAN_BAUD_250K,
   CAN_BAUD_500K,
@@ -285,19 +254,13 @@ typedef enum
   CAN_BAUD_75K
 } CAN_BAUD;
 
-typedef enum
-{
+typedef enum {
   BATTERY_TYPE_LIION_3_0__4_2,
   BATTERY_TYPE_LIIRON_2_6__3_6,
   BATTERY_TYPE_LEAD_ACID
 } BATTERY_TYPE;
 
-typedef enum
-{
-  HFI_SAMPLES_8 = 0,
-  HFI_SAMPLES_16,
-  HFI_SAMPLES_32
-} FOC_HFI_SAMPLES;
+typedef enum { HFI_SAMPLES_8 = 0, HFI_SAMPLES_16, HFI_SAMPLES_32 } FOC_HFI_SAMPLES;
 
 typedef struct
 {
@@ -447,8 +410,7 @@ typedef struct
 } mc_configuration;
 
 // Applications to use
-typedef enum
-{
+typedef enum {
   APP_NONE = 0,
   APP_PPM,
   APP_ADC,
@@ -462,16 +424,10 @@ typedef enum
 } app_use;
 
 // Throttle curve mode
-typedef enum
-{
-  THR_EXP_EXPO = 0,
-  THR_EXP_NATURAL,
-  THR_EXP_POLY
-} thr_exp_mode;
+typedef enum { THR_EXP_EXPO = 0, THR_EXP_NATURAL, THR_EXP_POLY } thr_exp_mode;
 
 // PPM control types
-typedef enum
-{
+typedef enum {
   PPM_CTRL_TYPE_NONE = 0,
   PPM_CTRL_TYPE_CURRENT,
   PPM_CTRL_TYPE_CURRENT_NOREV,
@@ -508,8 +464,7 @@ typedef struct
 } ppm_config;
 
 // ADC control types
-typedef enum
-{
+typedef enum {
   ADC_CTRL_TYPE_NONE = 0,
   ADC_CTRL_TYPE_CURRENT,
   ADC_CTRL_TYPE_CURRENT_REV_CENTER,
@@ -554,8 +509,7 @@ typedef struct
 } adc_config;
 
 // Nunchuk control types
-typedef enum
-{
+typedef enum {
   CHUK_CTRL_TYPE_NONE = 0,
   CHUK_CTRL_TYPE_CURRENT,
   CHUK_CTRL_TYPE_CURRENT_NOREV
@@ -580,15 +534,9 @@ typedef struct
 } chuk_config;
 
 // NRF Datatypes
-typedef enum
-{
-  NRF_SPEED_250K = 0,
-  NRF_SPEED_1M,
-  NRF_SPEED_2M
-} NRF_SPEED;
+typedef enum { NRF_SPEED_250K = 0, NRF_SPEED_1M, NRF_SPEED_2M } NRF_SPEED;
 
-typedef enum
-{
+typedef enum {
   NRF_POWER_M18DBM = 0,
   NRF_POWER_M12DBM,
   NRF_POWER_M6DBM,
@@ -596,22 +544,11 @@ typedef enum
   NRF_POWER_OFF
 } NRF_POWER;
 
-typedef enum
-{
-  NRF_AW_3 = 0,
-  NRF_AW_4,
-  NRF_AW_5
-} NRF_AW;
+typedef enum { NRF_AW_3 = 0, NRF_AW_4, NRF_AW_5 } NRF_AW;
 
-typedef enum
-{
-  NRF_CRC_DISABLED = 0,
-  NRF_CRC_1B,
-  NRF_CRC_2B
-} NRF_CRC;
+typedef enum { NRF_CRC_DISABLED = 0, NRF_CRC_1B, NRF_CRC_2B } NRF_CRC;
 
-typedef enum
-{
+typedef enum {
   NRF_RETR_DELAY_250US = 0,
   NRF_RETR_DELAY_500US,
   NRF_RETR_DELAY_750US,
@@ -681,8 +618,7 @@ typedef struct
 } balance_config;
 
 // CAN status modes
-typedef enum
-{
+typedef enum {
   CAN_STATUS_DISABLED = 0,
   CAN_STATUS_1,
   CAN_STATUS_1_2,
@@ -691,8 +627,7 @@ typedef enum
   CAN_STATUS_1_2_3_4_5
 } CAN_STATUS_MODE;
 
-typedef enum
-{
+typedef enum {
   SHUTDOWN_MODE_ALWAYS_OFF = 0,
   SHUTDOWN_MODE_ALWAYS_ON,
   SHUTDOWN_MODE_TOGGLE_BUTTON_ONLY,
@@ -705,8 +640,7 @@ typedef enum
   SHUTDOWN_MODE_OFF_AFTER_5H,
 } SHUTDOWN_MODE;
 
-typedef enum
-{
+typedef enum {
   IMU_TYPE_OFF = 0,
   IMU_TYPE_INTERNAL,
   IMU_TYPE_EXTERNAL_MPU9X50,
@@ -714,11 +648,7 @@ typedef enum
   IMU_TYPE_EXTERNAL_BMI160
 } IMU_TYPE;
 
-typedef enum
-{
-  AHRS_MODE_MADGWICK = 0,
-  AHRS_MODE_MAHONY
-} AHRS_MODE;
+typedef enum { AHRS_MODE_MADGWICK = 0, AHRS_MODE_MAHONY } AHRS_MODE;
 
 typedef struct
 {
@@ -738,12 +668,7 @@ typedef struct
   float gyro_offset_comp_clamp;
 } imu_config;
 
-typedef enum
-{
-  CAN_MODE_VESC = 0,
-  CAN_MODE_UAVCAN,
-  CAN_MODE_COMM_BRIDGE
-} CAN_MODE;
+typedef enum { CAN_MODE_VESC = 0, CAN_MODE_UAVCAN, CAN_MODE_COMM_BRIDGE } CAN_MODE;
 
 typedef struct
 {
@@ -788,8 +713,7 @@ typedef struct
 } app_configuration;
 
 // Communication commands
-typedef enum
-{
+typedef enum {
   COMM_FW_VERSION = 0,
   COMM_JUMP_TO_BOOTLOADER,
   COMM_ERASE_NEW_APP,
@@ -884,8 +808,7 @@ typedef enum
 } COMM_PACKET_ID;
 
 // CAN commands
-typedef enum
-{
+typedef enum {
   CAN_PACKET_SET_DUTY = 0,
   CAN_PACKET_SET_CURRENT,
   CAN_PACKET_SET_CURRENT_BRAKE,
@@ -942,8 +865,7 @@ typedef struct
 } fault_data;
 
 // External LED state
-typedef enum
-{
+typedef enum {
   LED_EXT_OFF = 0,
   LED_EXT_NORMAL,
   LED_EXT_BRAKE,
@@ -1022,8 +944,7 @@ typedef struct
   float vbat;
 } mote_state;
 
-typedef enum
-{
+typedef enum {
   MOTE_PACKET_BATT_LEVEL = 0,
   MOTE_PACKET_BUTTONS,
   MOTE_PACKET_ALIVE,
@@ -1061,12 +982,7 @@ typedef struct
   float vq;
 } mc_values;
 
-typedef enum
-{
-  NRF_PAIR_STARTED = 0,
-  NRF_PAIR_OK,
-  NRF_PAIR_FAIL
-} NRF_PAIR_RES;
+typedef enum { NRF_PAIR_STARTED = 0, NRF_PAIR_OK, NRF_PAIR_FAIL } NRF_PAIR_RES;
 
 // Orientation data
 typedef struct
@@ -1089,8 +1005,8 @@ typedef union {
   float as_float;
 } eeprom_var;
 
-#define EEPROM_VARS_HW            64
-#define EEPROM_VARS_CUSTOM        64
+#define EEPROM_VARS_HW 64
+#define EEPROM_VARS_CUSTOM 64
 
 typedef struct
 {

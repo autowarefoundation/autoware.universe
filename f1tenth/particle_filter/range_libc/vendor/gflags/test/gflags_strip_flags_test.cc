@@ -36,16 +36,15 @@
 
 #define STRIP_FLAG_HELP 1
 #include <gflags/gflags.h>
-
 #include <stdio.h>
 
-using GFLAGS_NAMESPACE::SetUsageMessage;
 using GFLAGS_NAMESPACE::ParseCommandLineFlags;
-
+using GFLAGS_NAMESPACE::SetUsageMessage;
 
 DEFINE_bool(test, true, "This text should be stripped out");
 
-int main(int argc, char** argv) {
+int main(int argc, char ** argv)
+{
   SetUsageMessage("Usage message");
   ParseCommandLineFlags(&argc, &argv, false);
 

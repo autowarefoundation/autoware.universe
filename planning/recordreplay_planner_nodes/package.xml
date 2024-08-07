@@ -9,12 +9,13 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <build_depend>autoware_auto_common</build_depend>
   <build_depend>autoware_cmake</build_depend>
 
-  <depend>autoware_planning_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_tf2</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_planning_msgs</depend>
   <depend>behavior_planner</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
@@ -25,8 +26,6 @@
   <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
 
-
-  <build_depend>autoware_auto_common</build_depend>
 
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>

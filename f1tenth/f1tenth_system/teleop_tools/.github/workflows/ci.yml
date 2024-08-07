@@ -4,7 +4,7 @@ on:
   push:
   schedule:
     # Run every morning to detect flakiness and broken dependencies
-    - cron: '17 8 * * *'
+    - cron: "17 8 * * *"
 
 jobs:
   ci:
@@ -22,8 +22,7 @@ jobs:
         with:
           target-ros2-distro: foxy
           # build all packages listed in the meta package
-          package-name:
-            joy_teleop
+          package-name: joy_teleop
             key_teleop
             mouse_teleop
             teleop_tools

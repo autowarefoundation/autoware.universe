@@ -1,6 +1,6 @@
 # Particle Filter Localization
 
-This code implements the MCL algorithm for the RACECAR. 
+This code implements the MCL algorithm for the RACECAR.
 
 [![YouTube Demo](./media/thumb.jpg)](https://www.youtube.com/watch?v=-c_0hSjgLYw)
 
@@ -11,6 +11,7 @@ For high efficiency in Python, it uses Numpy arrays and [RangeLibc](https://gith
 To run this, you need to ensure that both the map_server ROS package, and the python wrappers for RangeLibc are installed.
 
 For the map server:
+
 ```
 sudo apt-get update
 rosdep install -r --from-paths src --ignore-src --rosdistro galactic -y
@@ -56,7 +57,7 @@ The code itself also contains comments describing purpose of each method.
 This library accompanies the following [publication](http://arxiv.org/abs/1705.01167).
 
     @article{walsh17,
-        author = {Corey Walsh and 
+        author = {Corey Walsh and
                   Sertac Karaman},
         title  = {CDDT: Fast Approximate 2D Ray Casting for Accelerated Localization},
         volume = {abs/1705.01167},

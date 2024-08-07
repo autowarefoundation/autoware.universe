@@ -1,18 +1,21 @@
-import range_libc
+import itertools
+import time
+
 import numpy as np
-import itertools, time
+import range_libc
+
 # import matplotlib.mlab as mlab
 # import matplotlib.pyplot as plt
 
 ####################################################################################################
 #
 #                                              WARNING
-#  
+#
 #
 #                    This file uses range_libc in it's native coordinate space.
 #                      Use this method at your own peril since the coordinate
 #                      conversions are nontrivial from ROS's coordinate space.
-#                       Ignore this warning if you intend to use range_libc's 
+#                       Ignore this warning if you intend to use range_libc's
 #                                   left handed coordinate space
 #
 #
@@ -28,11 +31,11 @@ import itertools, time
 # print range_libc.LRU_CACHE_SIZE
 
 # testMap = range_libc.PyOMap("../maps/basement_hallways_5cm.png",1)
-testMap = range_libc.PyOMap(b"../maps/synthetic.map.png",1)
+testMap = range_libc.PyOMap(b"../maps/synthetic.map.png", 1)
 # testMap = range_libc.PyOMap("/home/racecar/racecar-ws/src/TA_examples/lab5/maps/basement.png",1)
 
 if testMap.error():
-	exit()
+    exit()
 # testMap.save("./test.png")
 
 num_vals = 100000
@@ -69,64 +72,68 @@ glt = range_libc.PyGiantLUTCast(testMap, 500, 108)
 # null = range_libc.PyNull(testMap, 500, 108)
 
 for x in range(10):
-	vals = np.random.random((3,num_vals)).astype(np.float32)
-	vals[0,:] *= (testMap.width() - 2.0)
-	vals[1,:] *= (testMap.height() - 2.0)
-	vals[0,:] += 1.0
-	vals[1,:] += 1.0
-	vals[2,:] *= np.pi * 2.0
-	ranges = np.zeros(num_vals, dtype=np.float32)
+    vals = np.random.random((3, num_vals)).astype(np.float32)
+    vals[0, :] *= testMap.width() - 2.0
+    vals[1, :] *= testMap.height() - 2.0
+    vals[0, :] += 1.0
+    vals[1, :] += 1.0
+    vals[2, :] *= np.pi * 2.0
+    ranges = np.zeros(num_vals, dtype=np.float32)
 
-	test_states = [None]*num_vals
-	for i in range(num_vals):
-		test_states[i] = (vals[0,i], vals[1,i], vals[2,i])
+    test_states = [None] * num_vals
+    for i in range(num_vals):
+        test_states[i] = (vals[0, i], vals[1, i], vals[2, i])
 
-	def bench(obj,name):
-		print("Running:", name)
-		start = time.perf_counter()
-		obj.calc_range_many(vals, ranges)
-		end = time.perf_counter()
-		dur_np = end - start
-		print(",,,"+name+" np: finished computing", ranges.shape[0], "ranges in", dur_np, "sec")
-		start = time.perf_counter()
-		ranges_slow = list(map(lambda x: obj.calc_range(*x), test_states))
-		end = time.perf_counter()
-		dur = end - start
+    def bench(obj, name):
+        print("Running:", name)
+        start = time.perf_counter()
+        obj.calc_range_many(vals, ranges)
+        end = time.perf_counter()
+        dur_np = end - start
+        print(",,," + name + " np: finished computing", ranges.shape[0], "ranges in", dur_np, "sec")
+        start = time.perf_counter()
+        ranges_slow = list(map(lambda x: obj.calc_range(*x), test_states))
+        end = time.perf_counter()
+        dur = end - start
 
-		diff = np.linalg.norm(ranges - np.array(ranges_slow, dtype=np.float32))
-		if diff > 0.001:
-			print(",,,"+"Numpy result different from slow result, investigation possibly required. norm:", diff)
-		# print "DIFF:", diff
+        diff = np.linalg.norm(ranges - np.array(ranges_slow, dtype=np.float32))
+        if diff > 0.001:
+            print(
+                ",,,"
+                + "Numpy result different from slow result, investigation possibly required. norm:",
+                diff,
+            )
+        # print "DIFF:", diff
 
-		print(",,,"+name+": finished computing", ranges.shape[0], "ranges in", dur, "sec")
-		print(",,,"+"Numpy speedup:", dur/dur_np)
+        print(",,," + name + ": finished computing", ranges.shape[0], "ranges in", dur, "sec")
+        print(",,," + "Numpy speedup:", dur / dur_np)
 
-	bench(bl, "bl")
-	bench(rm, "rm")
-	bench(cddt, "cddt")
-	bench(glt, "glt")
+    bench(bl, "bl")
+    bench(rm, "rm")
+    bench(cddt, "cddt")
+    bench(glt, "glt")
 
-	# ranges_bl = np.zeros(num_vals, dtype=np.float32)
-	# ranges_rm = np.zeros(num_vals, dtype=np.float32)
-	# ranges_cddt = np.zeros(num_vals, dtype=np.float32)
-	# ranges_glt = np.zeros(num_vals, dtype=np.float32)
+    # ranges_bl = np.zeros(num_vals, dtype=np.float32)
+    # ranges_rm = np.zeros(num_vals, dtype=np.float32)
+    # ranges_cddt = np.zeros(num_vals, dtype=np.float32)
+    # ranges_glt = np.zeros(num_vals, dtype=np.float32)
 
-	# bl.calc_range_np(vals, ranges_bl)
-	# rm.calc_range_np(vals, ranges_rm)
-	# cddt.calc_range_np(vals, ranges_cddt)
-	# glt.calc_range_np(vals, ranges_glt)
+    # bl.calc_range_np(vals, ranges_bl)
+    # rm.calc_range_np(vals, ranges_rm)
+    # cddt.calc_range_np(vals, ranges_cddt)
+    # glt.calc_range_np(vals, ranges_glt)
 
-	# diff = ranges_rm - ranges_cddt
-	# norm = np.linalg.norm(diff)
-	# avg = np.mean(diff)
-	# min_v = np.min(diff)
-	# max_v = np.max(diff)
-	# median = np.median(diff)
-	# print avg, min_v, max_v, median
+    # diff = ranges_rm - ranges_cddt
+    # norm = np.linalg.norm(diff)
+    # avg = np.mean(diff)
+    # min_v = np.min(diff)
+    # max_v = np.max(diff)
+    # median = np.median(diff)
+    # print avg, min_v, max_v, median
 
-	# plt.hist(diff, bins=1000, normed=1, facecolor='green', alpha=0.75)
-	# plt.show()
+    # plt.hist(diff, bins=1000, normed=1, facecolor='green', alpha=0.75)
+    # plt.show()
 
-	# this is for testing the amount of raw functional call overhead, does not compute ranges
-	# bench(null, "null")
+    # this is for testing the amount of raw functional call overhead, does not compute ranges
+    # bench(null, "null")
 print("DONE")

@@ -37,12 +37,12 @@
 #ifndef ACKERMANN_MUX__TOPIC_HANDLE_HPP_
 #define ACKERMANN_MUX__TOPIC_HANDLE_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/bool.hpp>
-#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
-
-#include <ackermann_mux/utils.hpp>
 #include <ackermann_mux/ackermann_mux.hpp>
+#include <ackermann_mux/utils.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <memory>
 #include <string>
@@ -50,7 +50,7 @@
 
 namespace ackermann_mux
 {
-template<typename T>
+template <typename T>
 class TopicHandle_
 {
 public:
@@ -86,8 +86,8 @@ public:
   {
     RCLCPP_INFO(
       mux_->get_logger(),
-      "Topic handler '%s' subscribed to topic '%s': timeout = %s , priority = %d.",
-      name_.c_str(), topic_.c_str(),
+      "Topic handler '%s' subscribed to topic '%s': timeout = %s , priority = %d.", name_.c_str(),
+      topic_.c_str(),
       ((timeout_.seconds() > 0) ? std::to_string(timeout_.seconds()) + "s" : "None").c_str(),
       static_cast<int>(priority_));
   }
@@ -102,43 +102,25 @@ public:
    */
   bool hasExpired() const
   {
-    return (timeout_.seconds() > 0.0) && (
-      (mux_->now().seconds() - stamp_.seconds()) > timeout_.seconds());
+    return (timeout_.seconds() > 0.0) &&
+           ((mux_->now().seconds() - stamp_.seconds()) > timeout_.seconds());
   }
 
-  const std::string & getName() const
-  {
-    return name_;
-  }
+  const std::string & getName() const { return name_; }
 
-  const std::string & getTopic() const
-  {
-    return topic_;
-  }
+  const std::string & getTopic() const { return topic_; }
 
-  const rclcpp::Duration & getTimeout() const
-  {
-    return timeout_;
-  }
+  const rclcpp::Duration & getTimeout() const { return timeout_; }
 
   /**
    * @brief getPriority Priority getter
    * @return Priority
    */
-  const priority_type & getPriority() const
-  {
-    return priority_;
-  }
+  const priority_type & getPriority() const { return priority_; }
 
-  const T & getStamp() const
-  {
-    return stamp_;
-  }
+  const T & getStamp() const { return stamp_; }
 
-  const T & getMessage() const
-  {
-    return msg_;
-  }
+  const T & getMessage() const { return msg_; }
 
 protected:
   std::string name_;
@@ -225,10 +207,7 @@ public:
    * @brief isLocked
    * @return true if has expired or locked (i.e. bool message data is true)
    */
-  bool isLocked() const
-  {
-    return hasExpired() || getMessage().data;
-  }
+  bool isLocked() const { return hasExpired() || getMessage().data; }
 
   void callback(const std_msgs::msg::Bool::ConstSharedPtr msg)
   {

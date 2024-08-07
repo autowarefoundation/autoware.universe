@@ -1,15 +1,17 @@
-import numpy as np
-from PIL import Image
-import yaml
-
-from pyglet.gl import *
-import pyglet
-from pyglet import font, graphics, window
-
 import argparse
 
+from PIL import Image
+import numpy as np
+import pyglet
+from pyglet import font
+from pyglet import graphics
+from pyglet import window
+from pyglet.gl import *
+import yaml
+
+
 class Camera:
-    """ A simple 2D camera that contains the speed and offset."""
+    """A simple 2D camera that contains the speed and offset."""
 
     def __init__(self, window: pyglet.window.Window, scroll_speed=1, min_zoom=1, max_zoom=4):
         assert min_zoom <= max_zoom, "Minimum zoom must not be greater than maximum zoom"
@@ -27,7 +29,7 @@ class Camera:
 
     @zoom.setter
     def zoom(self, value):
-        """ Here we set zoom, clamp value to minimum of min_zoom and max of max_zoom."""
+        """Here we set zoom, clamp value to minimum of min_zoom and max of max_zoom."""
         self._zoom = max(min(value, self.max_zoom), self.min_zoom)
 
     @property
@@ -41,9 +43,9 @@ class Camera:
         self.offset_x, self.offset_y = value
 
     def move(self, axis_x, axis_y):
-        """ Move axis direction with scroll_speed.
-            Example: Move left -> move(-1, 0)
-         """
+        """Move axis direction with scroll_speed.
+        Example: Move left -> move(-1, 0)
+        """
         self.offset_x += self.scroll_speed * axis_x
         self.offset_y += self.scroll_speed * axis_y
 
@@ -51,7 +53,9 @@ class Camera:
         # Set the current camera offset so you can draw your scene.
 
         # Translate using the offset.
-        view_matrix = self._window.view.translate(-self.offset_x * self._zoom, -self.offset_y * self._zoom, 0)
+        view_matrix = self._window.view.translate(
+            -self.offset_x * self._zoom, -self.offset_y * self._zoom, 0
+        )
         # Scale by zoom level.
         view_matrix = view_matrix.scale(self._zoom, self._zoom, 1)
 
@@ -64,7 +68,9 @@ class Camera:
         # Reverse scale, since that was the last transform.
         view_matrix = self._window.view.scale(1 / self._zoom, 1 / self._zoom, 1)
         # Reverse translate.
-        view_matrix = view_matrix.translate(self.offset_x * self._zoom, self.offset_y * self._zoom, 0)
+        view_matrix = view_matrix.translate(
+            self.offset_x * self._zoom, self.offset_y * self._zoom, 0
+        )
 
         self._window.view = view_matrix
 
@@ -95,25 +101,28 @@ class CenteredCamera(Camera):
         self._window.view = view_matrix
 
 
-
 parser = argparse.ArgumentParser()
-parser.add_argument('--map_path', type=str, required=True, help='Path to the map without extensions')
-parser.add_argument('--map_ext', type=str, required=True, help='Extension of the map image file')
+parser.add_argument(
+    "--map_path", type=str, required=True, help="Path to the map without extensions"
+)
+parser.add_argument("--map_ext", type=str, required=True, help="Extension of the map image file")
 args = parser.parse_args()
 
 # load map yaml
-with open(args.map_path + '.yaml', 'r') as yaml_stream:
+with open(args.map_path + ".yaml", "r") as yaml_stream:
     try:
         map_metada = yaml.safe_load(yaml_stream)
-        map_resolution = map_metada['resolution']
-        origin = map_metada['origin']
+        map_resolution = map_metada["resolution"]
+        origin = map_metada["origin"]
         origin_x = origin[0]
         origin_y = origin[1]
     except yaml.YAMLError as ex:
         print(ex)
 
 # load map image
-map_img = np.array(Image.open(args.map_path + args.map_ext).transpose(Image.FLIP_TOP_BOTTOM)).astype(np.float64)
+map_img = np.array(
+    Image.open(args.map_path + args.map_ext).transpose(Image.FLIP_TOP_BOTTOM)
+).astype(np.float64)
 map_height = map_img.shape[0]
 map_width = map_img.shape[1]
 
@@ -134,18 +143,23 @@ map_points = map_coords[:, map_mask_flat].T
 # prep opengl
 try:
     # Try and create a window with multisampling (antialiasing)
-    config = Config(sample_buffers=1, samples=4,
-                    depth_size=16, double_buffer=True, )
+    config = Config(
+        sample_buffers=1,
+        samples=4,
+        depth_size=16,
+        double_buffer=True,
+    )
     window = window.Window(resizable=True, config=config)
 except window.NoSuchConfigException:
     # Fall back to no multisampling for old hardware
     window = window.Window(resizable=True)
 
-glClearColor(18/255, 4/255, 88/255, 1.)
+glClearColor(18 / 255, 4 / 255, 88 / 255, 1.0)
 glEnable(GL_DEPTH_TEST)
 glTranslatef(25, -5, -60)
 
 cam = Camera(window)
+
 
 @window.event
 def on_resize(width, height):
@@ -153,28 +167,34 @@ def on_resize(width, height):
     glViewport(0, 0, width, height)
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    gluPerspective(60., width / float(height), .1, 1000.)
+    gluPerspective(60.0, width / float(height), 0.1, 1000.0)
     glMatrixMode(GL_MODELVIEW)
     return pyglet.event.EVENT_HANDLED
+
 
 batch = graphics.Batch()
 
 points = []
 for i in range(map_points.shape[0]):
-    particle = batch.add(1, GL_POINTS, None, ('v3f/stream', [map_points[i, 0], map_points[i, 1], map_points[i, 2]]))
+    particle = batch.add(
+        1, GL_POINTS, None, ("v3f/stream", [map_points[i, 0], map_points[i, 1], map_points[i, 2]])
+    )
     points.append(particle)
+
 
 def loop(dt):
     print(pyglet.clock.get_fps())
     pass
 
+
 @window.event
 def on_draw():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glColor3f(254/255, 117/255, 254/255)
+    glColor3f(254 / 255, 117 / 255, 254 / 255)
     cam.begin()
     batch.draw()
     cam.end()
+
 
 pyglet.clock.schedule(loop)
 pyglet.app.run()

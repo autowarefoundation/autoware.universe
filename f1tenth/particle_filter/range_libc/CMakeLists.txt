@@ -3,8 +3,8 @@ PROJECT(range_lib)
 # cmake_minimum_required(VERSION 2.8.0)
 cmake_minimum_required(VERSION 3.3)
 
-file(GLOB SRCS 
-	main.cpp 
+file(GLOB SRCS
+	main.cpp
 	"vendor/lodepng/lodepng.cpp" )
 
 option(WITH_CUDA "Compile CUDA ray cast varients" ON)
@@ -21,7 +21,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-SET(BASEPATH "${CMAKE_SOURCE_DIR}") 
+SET(BASEPATH "${CMAKE_SOURCE_DIR}")
 add_definitions ( -DBASEPATH=${BASEPATH} )
 add_subdirectory(${BASEPATH}/vendor/gflags)
 
@@ -52,8 +52,8 @@ if (WITH_CUDA)
 	add_definitions(-DCHUNK_SIZE=${CHUNK_SIZE})
 	add_definitions(-DNUM_THREADS=${CHUNK_THREADS})
 
-	file(GLOB CUDA_SRCS 
-		main.cpp 
+	file(GLOB CUDA_SRCS
+		main.cpp
 		"includes/kernels.cu"
 		"vendor/lodepng/lodepng.cpp" )
 
