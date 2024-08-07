@@ -648,6 +648,56 @@ double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLan
   return lanelet_length - arc_coordinates.length;
 }
 
+double getDistanceToLastFitWidth(
+  const Pose & current_pose, const lanelet::ConstLanelets & lanelets, const double width_threshold)
+{
+  if (lanelets.empty()) return 0.0;
+  const double distance_to_end_of_lane = getDistanceToEndOfLane(current_pose, lanelets);
+  const double distance_from_last_fit_width_to_end =
+    getDistanceFromLastFitWidthToEnd(lanelets.back(), width_threshold);
+  return distance_to_end_of_lane - distance_from_last_fit_width_to_end;
+}
+
+double getDistanceFromLastFitWidthToEnd(
+  const lanelet::ConstLanelet & lane, const double width_threshold)
+{
+  const auto center_line = lane.centerline3d().basicLineString();
+  double distance = 0.0;
+
+  if (center_line.size() <= 1) return distance;
+
+  auto checkWidth = [&lane, &width_threshold](const Point & point) {
+    const double left_width = std::abs(getSignedDistanceFromLaneBoundary(lane, point, true));
+    const double right_width = std::abs(getSignedDistanceFromLaneBoundary(lane, point, false));
+    return (left_width > 0.5 * width_threshold && right_width > 0.5 * width_threshold);
+  };
+
+  auto it = center_line.rbegin() + 1;
+  Point point, next_point;
+  for (; it < center_line.rend(); ++it) {
+    point = lanelet::utils::conversion::toGeomMsgPt(*it);
+    next_point = lanelet::utils::conversion::toGeomMsgPt(*std::prev(it));
+    distance += autoware::universe_utils::calcDistance2d(point, next_point);
+    if (checkWidth(point)) break;
+  }
+
+  constexpr double step_length{1.0};
+  const double seg_length = autoware::universe_utils::calcDistance2d(point, next_point);
+  if (seg_length <= step_length) return distance;
+
+  double yaw = atan2(next_point.y - point.y, next_point.x - point.x);
+  double length = step_length;
+  for (; length < seg_length; length += step_length) {
+    auto mid_point = point;
+    mid_point.x += length * cos(yaw);
+    mid_point.y += length * sin(yaw);
+    if (!checkWidth(mid_point)) break;
+    distance -= step_length;
+  }
+
+  return distance;
+}
+
 double getDistanceToNextIntersection(
   const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
 {
@@ -816,25 +866,29 @@ PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path)
   return path.points.at(*insert_idx);
 }
 
+double getSignedDistanceFromLaneBoundary(
+  const lanelet::ConstLanelet & lanelet, const Point & position, bool left_side)
+{
+  const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(position);
+  const auto & boundary_line_2d = left_side ? lanelet.leftBound2d() : lanelet.rightBound2d();
+  const auto arc_coordinates = lanelet::geometry::toArcCoordinates(
+    boundary_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
+  return arc_coordinates.distance;
+}
+
 double getSignedDistanceFromBoundary(
   const lanelet::ConstLanelets & lanelets, const Pose & pose, bool left_side)
 {
   lanelet::ConstLanelet closest_lanelet;
-  lanelet::ArcCoordinates arc_coordinates;
+
   if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
-    const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
-    const auto & boundary_line_2d = left_side
-                                      ? lanelet::utils::to2D(closest_lanelet.leftBound3d())
-                                      : lanelet::utils::to2D(closest_lanelet.rightBound3d());
-    arc_coordinates = lanelet::geometry::toArcCoordinates(
-      boundary_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
-  } else {
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
-      "closest shoulder lanelet not found.");
+    return getSignedDistanceFromLaneBoundary(closest_lanelet, pose.position, left_side);
   }
 
-  return arc_coordinates.distance;
+  RCLCPP_ERROR_STREAM(
+    rclcpp::get_logger("behavior_path_planner").get_child("utils"), "closest lanelet not found.");
+
+  return 0.0;
 }
 
 std::optional<double> getSignedDistanceFromBoundary(
@@ -1211,7 +1265,6 @@ PathWithLaneId setDecelerationVelocity(
   const auto stop_point_length =
     autoware::motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position) +
     buffer;
-  constexpr double eps{0.01};
   if (std::abs(target_velocity) < eps && stop_point_length > 0.0) {
     const auto stop_point = utils::insertStopPoint(stop_point_length, reference_path);
   }

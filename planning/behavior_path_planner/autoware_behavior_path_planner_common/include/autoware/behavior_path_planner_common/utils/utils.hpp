@@ -55,6 +55,8 @@ using geometry_msgs::msg::Vector3;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
+static constexpr double eps = 0.01;
+
 struct PolygonPoint
 {
   geometry_msgs::msg::Point point;
@@ -109,6 +111,21 @@ std::vector<lanelet::Id> getIds(const lanelet::ConstLanelets & lanelets);
 double l2Norm(const Vector3 vector);
 
 double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
+
+/// @brief Computes distance to last center line point at which lane width is over the threshold
+/// @param lanelets current ego lanelets
+/// @param width_threshold threshold value for width check
+/// @return distance to last center line point satisfying width condition
+double getDistanceToLastFitWidth(
+  const Pose & current_pose, const lanelet::ConstLanelets & lanelets, const double width_threshold);
+
+/// @brief Finds the last center line point at which lane width is over the width threshold,
+/// returns the distance from the center point to end of lane.
+/// @param lane target lane to check width condition
+/// @param width_threshold threshold value for width check
+/// @return distance from last center line point satisfying width condition to end of lane
+double getDistanceFromLastFitWidthToEnd(
+  const lanelet::ConstLanelet & lane, const double width_threshold);
 
 double getDistanceToNextIntersection(
   const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
@@ -249,8 +266,10 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 
 PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path);
 
+double getSignedDistanceFromLaneBoundary(
+  const lanelet::ConstLanelet & lanelet, const Point & position, const bool left_side);
 double getSignedDistanceFromBoundary(
-  const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose, const bool left_side);
+  const lanelet::ConstLanelets & lanelets, const Pose & pose, const bool left_side);
 std::optional<double> getSignedDistanceFromBoundary(
   const lanelet::ConstLanelets & lanelets, const double vehicle_width, const double base_link2front,
   const double base_link2rear, const Pose & vehicle_pose, const bool left_side);
