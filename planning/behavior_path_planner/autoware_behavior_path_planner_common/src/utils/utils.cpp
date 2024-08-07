@@ -580,18 +580,6 @@ bool isEgoWithinOriginalLane(
   return true;  // inside polygon
 }
 
-bool isMergingLane(const lanelet::ConstLanelet & lane)
-{
-  const auto right_bound = lane.rightBound2d();
-  const auto left_bound = lane.leftBound2d();
-  if (right_bound.empty() || left_bound.empty()) {
-    return false;
-  }
-  const auto dist =
-    boost::geometry::distance(right_bound.back().basicPoint(), left_bound.back().basicPoint());
-  return dist < eps;
-}
-
 lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes)
 {
   lanelet::ConstLanelets lanes;
@@ -660,23 +648,53 @@ double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLan
   return lanelet_length - arc_coordinates.length;
 }
 
+double getDistanceToLastFitWidth(
+  const Pose & current_pose, const lanelet::ConstLanelets & lanelets, const double width_threshold)
+{
+  if (lanelets.empty()) return 0.0;
+  const double distance_to_end_of_lane = getDistanceToEndOfLane(current_pose, lanelets);
+  const double distance_from_last_fit_width_to_end =
+    getDistanceFromLastFitWidthToEnd(lanelets.back(), width_threshold);
+  return distance_to_end_of_lane - distance_from_last_fit_width_to_end;
+}
+
 double getDistanceFromLastFitWidthToEnd(
   const lanelet::ConstLanelet & lane, const double width_threshold)
 {
   const auto center_line = lane.centerline3d().basicLineString();
   double distance = 0.0;
-  if (center_line.size() <= 1) {
-    return distance;
-  }
+
+  if (center_line.size() <= 1) return distance;
+
+  auto checkWidth = [&lane, &width_threshold](const Point & point) {
+    const double left_width = std::abs(getSignedDistanceFromLaneBoundary(lane, point, true));
+    const double right_width = std::abs(getSignedDistanceFromLaneBoundary(lane, point, false));
+    return (left_width > 0.5 * width_threshold && right_width > 0.5 * width_threshold);
+  };
+
   auto it = center_line.rbegin() + 1;
+  Point point, next_point;
   for (; it < center_line.rend(); ++it) {
-    const auto point = lanelet::utils::conversion::toGeomMsgPt(*it);
-    double width = std::abs(getSignedDistanceFromLaneBoundary(lane, point, true));
-    width += std::abs(getSignedDistanceFromLaneBoundary(lane, point, false));
-    if (width > width_threshold) break;
-    const auto next_point = lanelet::utils::conversion::toGeomMsgPt(*std::prev(it));
+    point = lanelet::utils::conversion::toGeomMsgPt(*it);
+    next_point = lanelet::utils::conversion::toGeomMsgPt(*std::prev(it));
     distance += autoware::universe_utils::calcDistance2d(point, next_point);
+    if (checkWidth(point)) break;
   }
+
+  constexpr double step_length{1.0};
+  const double seg_length = autoware::universe_utils::calcDistance2d(point, next_point);
+  if (seg_length <= step_length) return distance;
+
+  double yaw = atan2(next_point.y - point.y, next_point.x - point.x);
+  double length = step_length;
+  for (; length < seg_length; length += step_length) {
+    auto mid_point = point;
+    mid_point.x += length * cos(yaw);
+    mid_point.y += length * sin(yaw);
+    if (!checkWidth(mid_point)) break;
+    distance -= step_length;
+  }
+
   return distance;
 }
 
@@ -849,7 +867,7 @@ PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path)
 }
 
 double getSignedDistanceFromLaneBoundary(
-  const lanelet::ConstLanelet & lanelet, const geometry_msgs::msg::Point & position, bool left_side)
+  const lanelet::ConstLanelet & lanelet, const Point & position, bool left_side)
 {
   const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(position);
   const auto & boundary_line_2d = left_side ? lanelet.leftBound2d() : lanelet.rightBound2d();
@@ -868,8 +886,7 @@ double getSignedDistanceFromBoundary(
   }
 
   RCLCPP_ERROR_STREAM(
-    rclcpp::get_logger("behavior_path_planner").get_child("utils"),
-    "closest shoulder lanelet not found.");
+    rclcpp::get_logger("behavior_path_planner").get_child("utils"), "closest lanelet not found.");
 
   return 0.0;
 }

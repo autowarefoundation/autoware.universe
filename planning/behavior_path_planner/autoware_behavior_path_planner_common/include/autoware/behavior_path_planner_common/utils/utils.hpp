@@ -112,7 +112,14 @@ double l2Norm(const Vector3 vector);
 
 double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
 
-/// @brief Finds the last center line point at which lane width is over the threshold,
+/// @brief Computes distance to last center line point at which lane width is over the threshold
+/// @param lanelets current ego lanelets
+/// @param width_threshold threshold value for width check
+/// @return distance to last center line point satisfying width condition
+double getDistanceToLastFitWidth(
+  const Pose & current_pose, const lanelet::ConstLanelets & lanelets, const double width_threshold);
+
+/// @brief Finds the last center line point at which lane width is over the width threshold,
 /// returns the distance from the center point to end of lane.
 /// @param lane target lane to check width condition
 /// @param width_threshold threshold value for width check
@@ -251,8 +258,6 @@ bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
   const BehaviorPathPlannerParameters & common_param, const double outer_margin = 0.0);
 
-bool isMergingLane(const lanelet::ConstLanelet & lane);
-
 // path management
 
 // TODO(Horibe) There is a similar function in route_handler. Check.
@@ -262,10 +267,9 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path);
 
 double getSignedDistanceFromLaneBoundary(
-  const lanelet::ConstLanelet & lanelet, const geometry_msgs::msg::Point & position,
-  const bool left_side);
+  const lanelet::ConstLanelet & lanelet, const Point & position, const bool left_side);
 double getSignedDistanceFromBoundary(
-  const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose, const bool left_side);
+  const lanelet::ConstLanelets & lanelets, const Pose & pose, const bool left_side);
 std::optional<double> getSignedDistanceFromBoundary(
   const lanelet::ConstLanelets & lanelets, const double vehicle_width, const double base_link2front,
   const double base_link2rear, const Pose & vehicle_pose, const bool left_side);

@@ -386,15 +386,18 @@ void NormalLaneChange::insertStopPoint(
     distance_to_terminal = getDistanceAlongLanelet(goal);
   } else {
     distance_to_terminal = utils::getDistanceToEndOfLane(path.points.front().point.pose, lanelets);
-    if (utils::isMergingLane(lanelets.back())) {
-      distance_to_terminal -= utils::getDistanceFromLastFitWidthToEnd(
-        lanelets.back(), planner_data_->parameters.vehicle_width);
-    }
   }
 
   const double stop_point_buffer = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
   const auto target_objects = filterObjects();
   double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
+
+  const double distance_to_last_fit_width =
+    utils::getDistanceToLastFitWidth(
+      path.points.front().point.pose, lanelets, planner_data_->parameters.vehicle_width) -
+    planner_data_->parameters.vehicle_length;
+
+  stopping_distance = std::min(stopping_distance, distance_to_last_fit_width);
 
   const auto is_valid_start_point = std::invoke([&]() -> bool {
     auto lc_start_point = lanelet::utils::conversion::toLaneletPoint(
