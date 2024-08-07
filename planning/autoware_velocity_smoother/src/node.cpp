@@ -68,8 +68,7 @@ VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_opti
     "~/input/trajectory", 1, std::bind(&VelocitySmootherNode::onCurrentTrajectory, this, _1));
 
   srv_force_acceleration_ = create_service<SetBool>(
-    "~/adjust_common_param",
-    std::bind(&VelocitySmootherNode::onForceAcceleration, this, _1, _2));
+    "~/adjust_common_param", std::bind(&VelocitySmootherNode::onForceAcceleration, this, _1, _2));
   srv_slow_driving_ = create_service<SetBool>(
     "~/slow_driving", std::bind(&VelocitySmootherNode::onSlowDriving, this, _1, _2));
   force_acceleration_mode_ = false;
@@ -1201,7 +1200,7 @@ void VelocitySmootherNode::onSlowDriving(
   if (request->data && force_slow_driving_mode_ == ForceSlowDrivingType::DEACTIVATED) {
     force_slow_driving_mode_ = ForceSlowDrivingType::READY;
 
-    message = "Activated force slow drving";
+    message = "Activated force slow driving";
   } else if (!request->data) {
     force_slow_driving_mode_ = ForceSlowDrivingType::DEACTIVATED;
     message = "Deactivated force slow driving";
