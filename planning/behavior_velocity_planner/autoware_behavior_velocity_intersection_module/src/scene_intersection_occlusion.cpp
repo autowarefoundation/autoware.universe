@@ -352,7 +352,6 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
   {
     int64 division_index{0};
     int64 point_index{0};
-    double dist{0.0};
     geometry_msgs::msg::Point point;
     geometry_msgs::msg::Point projection;
     geometry_msgs::msg::Point visible_end;
