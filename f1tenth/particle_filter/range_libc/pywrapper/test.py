@@ -28,7 +28,7 @@ import itertools, time
 # print range_libc.LRU_CACHE_SIZE
 
 # testMap = range_libc.PyOMap("../maps/basement_hallways_5cm.png",1)
-testMap = range_libc.PyOMap("../maps/synthetic.map.png",1)
+testMap = range_libc.PyOMap(b"../maps/synthetic.map.png",1)
 # testMap = range_libc.PyOMap("/home/racecar/racecar-ws/src/TA_examples/lab5/maps/basement.png",1)
 
 if testMap.error():
@@ -56,19 +56,19 @@ num_vals = 100000
 
 # make_scan(510,520,np.pi/2.0,61)
 
-print "Init: bl"
+print("Init: bl")
 bl = range_libc.PyBresenhamsLine(testMap, 500)
-print "Init: rm"
+print("Init: rm")
 rm = range_libc.PyRayMarching(testMap, 500)
-print "Init: cddt"
+print("Init: cddt")
 cddt = range_libc.PyCDDTCast(testMap, 500, 108)
 cddt.prune()
-print "Init: glt"
+print("Init: glt")
 glt = range_libc.PyGiantLUTCast(testMap, 500, 108)
 # this is for testing the amount of raw functional call overhead, does not compute ranges
 # null = range_libc.PyNull(testMap, 500, 108)
 
-for x in xrange(10):
+for x in range(10):
 	vals = np.random.random((3,num_vals)).astype(np.float32)
 	vals[0,:] *= (testMap.width() - 2.0)
 	vals[1,:] *= (testMap.height() - 2.0)
@@ -78,28 +78,28 @@ for x in xrange(10):
 	ranges = np.zeros(num_vals, dtype=np.float32)
 
 	test_states = [None]*num_vals
-	for i in xrange(num_vals):
+	for i in range(num_vals):
 		test_states[i] = (vals[0,i], vals[1,i], vals[2,i])
 
 	def bench(obj,name):
-		print "Running:", name
-		start = time.clock()
+		print("Running:", name)
+		start = time.perf_counter()
 		obj.calc_range_many(vals, ranges)
-		end = time.clock()
+		end = time.perf_counter()
 		dur_np = end - start
-		print ",,,"+name+" np: finished computing", ranges.shape[0], "ranges in", dur_np, "sec"
-		start = time.clock()
-		ranges_slow = map(lambda x: obj.calc_range(*x), test_states)
-		end = time.clock()
+		print(",,,"+name+" np: finished computing", ranges.shape[0], "ranges in", dur_np, "sec")
+		start = time.perf_counter()
+		ranges_slow = list(map(lambda x: obj.calc_range(*x), test_states))
+		end = time.perf_counter()
 		dur = end - start
 
-		diff = np.linalg.norm(ranges - np.array(ranges_slow))
+		diff = np.linalg.norm(ranges - np.array(ranges_slow, dtype=np.float32))
 		if diff > 0.001:
-			print ",,,"+"Numpy result different from slow result, investigation possibly required. norm:", diff
+			print(",,,"+"Numpy result different from slow result, investigation possibly required. norm:", diff)
 		# print "DIFF:", diff
 
-		print ",,,"+name+": finished computing", ranges.shape[0], "ranges in", dur, "sec"
-		print ",,,"+"Numpy speedup:", dur/dur_np
+		print(",,,"+name+": finished computing", ranges.shape[0], "ranges in", dur, "sec")
+		print(",,,"+"Numpy speedup:", dur/dur_np)
 
 	bench(bl, "bl")
 	bench(rm, "rm")
@@ -129,4 +129,4 @@ for x in xrange(10):
 
 	# this is for testing the amount of raw functional call overhead, does not compute ranges
 	# bench(null, "null")
-print "DONE"
+print("DONE")
