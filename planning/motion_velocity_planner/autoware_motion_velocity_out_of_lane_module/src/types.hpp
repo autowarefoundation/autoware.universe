@@ -56,12 +56,14 @@ struct PlannerParam
   double objects_min_confidence;  // minimum confidence to consider a predicted path
   double objects_dist_buffer;  // [m] distance buffer used to determine if a collision will occur in
                                // the other lane
+  bool objects_ignore_behind_ego;  // if true, objects behind the ego vehicle are ignored
 
   double overlap_extra_length;  // [m] extra length to add around an overlap range
   double overlap_min_dist;      // [m] min distance inside another lane to consider an overlap
   // action to insert in the trajectory if an object causes a conflict at an overlap
   bool skip_if_over_max_decel;  // if true, skip the action if it causes more than the max decel
-  double dist_buffer;
+  double lon_dist_buffer;       // [m] safety distance buffer to keep in front of the ego vehicle
+  double lat_dist_buffer;       // [m] safety distance buffer to keep on the side of the ego vehicle
   double slow_velocity;
   double slow_dist_threshold;
   double stop_dist_threshold;

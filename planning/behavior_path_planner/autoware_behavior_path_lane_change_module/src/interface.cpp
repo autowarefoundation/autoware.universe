@@ -124,9 +124,18 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   } else {
     const auto path =
       assignToCandidate(module_type_->getLaneChangePath(), module_type_->getEgoPosition());
-    updateRTCStatus(
-      path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
-      State::RUNNING);
+    const auto force_activated = std::any_of(
+      rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+      [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
+    if (!force_activated) {
+      updateRTCStatus(
+        path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
+        State::RUNNING);
+    } else {
+      updateRTCStatus(
+        path.start_distance_to_path_change, path.finish_distance_to_path_change, false,
+        State::RUNNING);
+    }
   }
 
   return output;
@@ -227,6 +236,15 @@ bool LaneChangeInterface::canTransitFailureState()
   updateDebugMarker();
   log_debug_throttled(__func__);
 
+  const auto force_activated = std::any_of(
+    rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+    [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
+
+  if (force_activated) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "unsafe but force executed");
+    return false;
+  }
+
   if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has on going.");
     return false;
@@ -250,6 +268,19 @@ bool LaneChangeInterface::canTransitFailureState()
   if (module_type_->isCancelEnabled() && module_type_->isEgoOnPreparePhase()) {
     if (module_type_->isStoppedAtRedTrafficLight()) {
       log_debug_throttled("Stopping at traffic light while in prepare phase. Cancel lane change");
+      module_type_->toCancelState();
+      updateRTCStatus(
+        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+        State::FAILED);
+      return true;
+    }
+
+    const auto force_deactivated = std::any_of(
+      rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+      [&](const auto & rtc) { return rtc.second->isForceDeactivated(uuid_map_.at(rtc.first)); });
+
+    if (force_deactivated && module_type_->isAbleToReturnCurrentLane()) {
+      log_debug_throttled("Cancel lane change due to force deactivation");
       module_type_->toCancelState();
       updateRTCStatus(
         std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
