@@ -45,7 +45,7 @@ cv::Mat runLengthDecoder(const std::vector<uint8_t> & rle_data, const int rows, 
     uint8_t value;
     int length;
     std::memcpy(&value, &rle_data[i], sizeof(uint8_t));
-    std::memcpy(&length, &rle_data[i + sizeof(uint8_t)], sizeof(int));
+    std::memcpy(&length, &rle_data[i + 1], sizeof(int));    // under the condition that we know rle_data[i] only consume 1 element of the vector
     for (int j = 0; j < length; ++j) {
       int row_idx = static_cast<int>(idx / cols);
       int col_idx = static_cast<int>(idx % cols);
