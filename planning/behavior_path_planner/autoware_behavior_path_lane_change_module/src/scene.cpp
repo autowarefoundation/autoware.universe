@@ -14,6 +14,7 @@
 
 #include "autoware/behavior_path_lane_change_module/scene.hpp"
 
+#include "autoware/behavior_path_lane_change_module/utils/calculation.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
@@ -45,6 +46,7 @@ using utils::lane_change::calcMinimumLaneChangeLength;
 using utils::lane_change::create_lanes_polygon;
 using utils::path_safety_checker::isPolygonOverlapLanelet;
 using utils::traffic_light::getDistanceToNextTrafficLight;
+namespace calculation = utils::lane_change::calculation;
 
 NormalLaneChange::NormalLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters, LaneChangeModuleType type,
@@ -1226,8 +1228,6 @@ PathWithLaneId NormalLaneChange::getTargetSegment(
         std::min(dist_from_start, dist_from_end), s_start + std::numeric_limits<double>::epsilon());
     });
 
-  RCLCPP_DEBUG(logger_, "in %s start: %f, end: %f", __func__, s_start, s_end);
-
   PathWithLaneId target_segment = route_handler.getCenterLinePath(target_lanes, s_start, s_end);
   for (auto & point : target_segment.points) {
     point.point.longitudinal_velocity_mps =
@@ -1363,7 +1363,7 @@ bool NormalLaneChange::getLaneChangePaths(
     route_handler.getLateralIntervalsToPreferredLane(target_lanes.back()));
 
   const auto dist_to_end_of_current_lanes =
-    utils::getDistanceToEndOfLane(getEgoPose(), current_lanes);
+    calculation::calc_ego_dist_to_terminal_end(common_data_ptr_);
 
   const auto target_lane_length = lanelet::utils::getLaneletLength2d(target_lanes);
 
@@ -1391,12 +1391,6 @@ bool NormalLaneChange::getLaneChangePaths(
 
   for (const auto & prepare_duration : prepare_durations) {
     for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
-      const auto debug_print = [&](const auto & s) {
-        RCLCPP_DEBUG_STREAM(
-          logger_, "  -  " << s << " : prep_time = " << prepare_duration
-                           << ", lon_acc = " << sampled_longitudinal_acc);
-      };
-
       // get path on original lanes
       const auto prepare_velocity = std::clamp(
         current_velocity + sampled_longitudinal_acc * prepare_duration,
@@ -1410,7 +1404,23 @@ bool NormalLaneChange::getLaneChangePaths(
       const auto prepare_length = utils::lane_change::calcPhaseLength(
         current_velocity, getCommonParam().max_vel, longitudinal_acc_on_prepare, prepare_duration);
 
+      const auto ego_dist_to_terminal_start = dist_to_end_of_current_lanes - lane_change_buffer;
+      if (prepare_length > ego_dist_to_terminal_start) {
+        RCLCPP_DEBUG(
+          logger_,
+          "Reject: Prepare length exceed distance to terminal start. prep_len: %.5f,  ego dist to "
+          "terminal start: %.5f",
+          prepare_length, ego_dist_to_terminal_start);
+        continue;
+      }
+
       auto prepare_segment = getPrepareSegment(current_lanes, backward_path_length, prepare_length);
+
+      const auto debug_print = [&](const auto & s) {
+        RCLCPP_DEBUG(
+          logger_, "%s | prep_time: %.5f | lon_acc sampled: %.5f, actual: %.5f | prep_len: %.5f", s,
+          prepare_duration, sampled_longitudinal_acc, longitudinal_acc_on_prepare, prepare_length);
+      };
 
       if (prepare_segment.points.empty()) {
         debug_print("prepare segment is empty...? Unexpected.");
@@ -1453,13 +1463,8 @@ bool NormalLaneChange::getLaneChangePaths(
       }
       RCLCPP_DEBUG(logger_, "  -  sampling num for lat_acc: %lu", sample_lat_acc.size());
 
+      debug_print("Prepare path satisfy constraints");
       for (const auto & lateral_acc : sample_lat_acc) {
-        const auto debug_print_lat = [&](const auto & s) {
-          RCLCPP_DEBUG_STREAM(
-            logger_, "    -  " << s << " : prep_time = " << prepare_duration << ", lon_acc = "
-                               << sampled_longitudinal_acc << ", lat_acc = " << lateral_acc);
-        };
-
         const auto lane_changing_time = PathShifter::calcShiftTimeFromJerk(
           shift_length, lane_change_parameters_->lane_changing_lateral_jerk, lateral_acc);
         const double longitudinal_acc_on_lane_changing =
@@ -1474,6 +1479,14 @@ bool NormalLaneChange::getLaneChangePaths(
           getCommonParam().max_vel);
         utils::lane_change::setPrepareVelocity(
           prepare_segment, current_velocity, terminal_lane_changing_velocity);
+
+        const auto debug_print_lat = [&](const auto & s) {
+          RCLCPP_DEBUG(
+            logger_,
+            "    -  %s | lc_time: %.5f | lon_acc sampled: %.5f, actual: %.5f | lc_len: %.5f", s,
+            lane_changing_time, sampled_longitudinal_acc, longitudinal_acc_on_lane_changing,
+            lane_changing_length);
+        };
 
         if (lane_changing_length + prepare_length > dist_to_end_of_current_lanes) {
           debug_print_lat("Reject: length of lane changing path is longer than length to goal!!");
