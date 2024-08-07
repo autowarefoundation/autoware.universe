@@ -84,7 +84,7 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
   if (classifier_ptr_.use_count() == 0) {
     return;
   }
-  if (input_rois_msg->rois.size() == 0) {
+  if (input_rois_msg->rois.empty()) {
     return;
   }
 
