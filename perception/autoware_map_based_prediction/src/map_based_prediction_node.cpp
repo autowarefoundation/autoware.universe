@@ -1379,7 +1379,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
   const auto & obj_vel = object.kinematics.twist_with_covariance.twist.linear;
   const auto estimated_velocity = std::hypot(obj_vel.x, obj_vel.y);
   const auto velocity = std::max(min_crosswalk_user_velocity_, estimated_velocity);
-  // TODO(Mamoru Sobue): 3rd argument of findNerest is the number of lanelets, not radius, so past
+  // TODO(Mamoru Sobue): 3rd argument of findNearest is the number of lanelets, not radius, so past
   // implementation has been wrong.
   const auto surrounding_lanelets_with_dist = lanelet::geometry::findNearest(
     lanelet_map_ptr_->laneletLayer, lanelet::BasicPoint2d{obj_pos.x, obj_pos.y},
