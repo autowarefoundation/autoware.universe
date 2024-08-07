@@ -527,7 +527,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
 }
 
 std::vector<DrivableLanes> generateDrivableLanes(
-  const std::vector<DrivableLanes> original_drivable_lanes, const RouteHandler & route_handler,
+  const std::vector<DrivableLanes> & original_drivable_lanes, const RouteHandler & route_handler,
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & lane_change_lanes)
 {
   const auto has_same_lane =
@@ -1342,6 +1342,17 @@ bool is_before_terminal(
     current_max_dist = std::max(dist_obj_to_terminal, current_max_dist);
   }
   return current_max_dist >= 0.0;
+}
+
+double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, const Pose & pose)
+{
+  lanelet::ConstLanelet closest_lanelet;
+
+  if (!lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
+    return autoware::universe_utils::deg2rad(180);
+  }
+  const auto closest_pose = lanelet::utils::getClosestCenterPose(closest_lanelet, pose.position);
+  return std::abs(autoware::universe_utils::calcYawDeviation(closest_pose, pose));
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
