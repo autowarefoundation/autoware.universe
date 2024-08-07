@@ -102,9 +102,8 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
 
   std::vector<cv::Mat> images;
   std::vector<size_t> backlight_indices;
-  for (size_t i = 0; i < input_rois_msg->rois.size(); i++) {
-    const auto & input_roi = input_rois_msg->rois.at(i);
-
+  size_t idx_valid_roi = 0;
+  for (const auto & input_roi : input_rois_msg->rois) {
     // ignore if the roi is not the type to be classified
     if (input_roi.traffic_light_type != classify_traffic_light_type_) {
       continue;
@@ -115,15 +114,16 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
     }
 
     // set traffic light id and type
-    output_msg.signals[images.size()].traffic_light_id = input_roi.traffic_light_id;
-    output_msg.signals[images.size()].traffic_light_type = input_roi.traffic_light_type;
+    output_msg.signals[idx_valid_roi].traffic_light_id = input_roi.traffic_light_id;
+    output_msg.signals[idx_valid_roi].traffic_light_type = input_roi.traffic_light_type;
 
     const sensor_msgs::msg::RegionOfInterest & roi = input_roi.roi;
     auto roi_img = cv_ptr->image(cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
     if (is_harsh_backlight(roi_img)) {
-      backlight_indices.emplace_back(i);
+      backlight_indices.emplace_back(idx_valid_roi);
     }
     images.emplace_back(roi_img);
+    idx_valid_roi++;
   }
 
   // classify the images
