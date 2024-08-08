@@ -312,9 +312,7 @@ private:
   double calculateSteeringTireCommand(
     const double vel, const double steer, const double steer_wheel_des) const;
 
-  double calculateSteeringWheelState(
-    const double target_tire_angle, const double vel, const double tolerance = 1e-3,
-    const size_t max_iterations = 1000) const;
+  double calculateSteeringWheelState(const double target_tire_angle, const double vel) const;
 
   /**
    * @brief calculate variable gear ratio

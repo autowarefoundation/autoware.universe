@@ -411,31 +411,10 @@ double SimModelActuationCmd::calculateSteeringTireCommand(
 }
 
 double SimModelActuationCmd::calculateSteeringWheelState(
-  const double vel, const double target_steer_tire, const double tolerance,
-  const size_t max_iterations) const
+  const double vel, const double target_steer_tire) const
 {
-  // set the range of steering wheel angle
-  double lower_bound = -10.0;
-  double upper_bound = 10.0;
-
-  for (size_t i = 0; i < max_iterations; ++i) {
-    const double mid = (lower_bound + upper_bound) / 2.0;  // estimated steering wheel angle
-    const double vgr = calculateVariableGearRatio(vel, mid);
-    const double estimated_steer_tire = mid / vgr;
-    if (std::abs(estimated_steer_tire - target_steer_tire) < tolerance) {
-      return mid;
-    }
-    if (estimated_steer_tire < target_steer_tire) {
-      lower_bound = mid;
-    } else {
-      upper_bound = mid;
-    }
-    if (upper_bound - lower_bound < tolerance) {
-      break;
-    }
-  }
-
-  return (lower_bound + upper_bound) / 2.0;
+  return (vgr_coef_a_ + vgr_coef_b_ * vel * vel) * target_tire_angle /
+         (1.0 + vgr_coef_c * std::abs(target_tire_angle));
 }
 
 double SimModelActuationCmd::calculateVariableGearRatio(
