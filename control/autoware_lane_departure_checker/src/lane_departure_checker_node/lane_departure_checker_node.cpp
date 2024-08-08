@@ -217,14 +217,12 @@ bool LaneDepartureCheckerNode::isDataReady()
   }
 
   if (!operation_mode_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for operation_mode msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for operation_mode msg...");
     return false;
   }
 
   if (!control_mode_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for control_mode msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for control_mode msg...");
     return false;
   }
 
@@ -458,13 +456,14 @@ void LaneDepartureCheckerNode::checkTrajectoryDeviation(
   }
 
   std::string msg = "OK";
-  if (level == DiagStatus::ERROR && operation_mode_->mode == OperationModeStatus::AUTONOMOUS && control_mode_->mode == ControlModeStatus::AUTONOMOUS) {
+  if (
+    level == DiagStatus::ERROR && operation_mode_->mode == OperationModeStatus::AUTONOMOUS &&
+    control_mode_->mode == ControlModeStatus::AUTONOMOUS) {
     msg = "trajectory deviation is too large";
-  }
-  else {
+  } else {
     level = DiagStatus::OK;
   }
-  
+
   stat.addf("max lateral deviation", "%.3f", param_.max_lateral_deviation);
   stat.addf("lateral deviation", "%.3f", output_.trajectory_deviation.lateral);
 
