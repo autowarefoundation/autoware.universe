@@ -23,6 +23,8 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode_report.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
@@ -78,7 +80,11 @@ private:
     this, "~/input/reference_trajectory"};
   autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> sub_predicted_trajectory_{
     this, "~/input/predicted_trajectory"};
-
+  autoware::universe_utils::InterProcessPollingSubscriber<autoware_adapi_v1_msgs::msg::OperationModeState> sub_operation_mode_{
+    this, "/api/operation_mode/state"};
+  autoware::universe_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::ControlModeReport> sub_control_mode_{
+    this, "/vehicle/status/control_mode"};
+  
   // Data Buffer
   nav_msgs::msg::Odometry::ConstSharedPtr current_odom_;
   lanelet::LaneletMapPtr lanelet_map_;
@@ -91,6 +97,9 @@ private:
   lanelet::ConstLanelets route_lanelets_;
   Trajectory::ConstSharedPtr reference_trajectory_;
   Trajectory::ConstSharedPtr predicted_trajectory_;
+  autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr operation_mode_;
+  autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
+
 
   // Callback
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
@@ -98,6 +107,8 @@ private:
   void onRoute(const LaneletRoute::ConstSharedPtr msg);
   void onReferenceTrajectory(const Trajectory::ConstSharedPtr msg);
   void onPredictedTrajectory(const Trajectory::ConstSharedPtr msg);
+  void onOperationMode(const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg);
+  void onControlMode(const autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
 
   // Publisher
   autoware::universe_utils::DebugPublisher debug_publisher_{this, "~/debug"};
