@@ -60,7 +60,7 @@ public:
   void getObjectsOlderThan(
     const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
     ObjectsList & objects_list);
-  void getNames(std::string & long_name, std::string & short_name)
+  void getNames(std::string & long_name, std::string & short_name) const
   {
     long_name = long_name_;
     short_name = short_name_;
@@ -94,7 +94,7 @@ private:
   std::string input_topic_;
   std::string long_name_;
   std::string short_name_;
-  bool is_spawn_enabled_;
+  bool is_spawn_enabled_{};
 
   size_t que_size_{30};
   std::deque<DetectedObjects> objects_que_;
@@ -103,11 +103,11 @@ private:
 
   // bool is_time_initialized_{false};
   int initial_count_{0};
-  double expected_interval_;
-  double latency_mean_;
-  double latency_var_;
-  double interval_mean_;
-  double interval_var_;
+  double expected_interval_{};
+  double latency_mean_{};
+  double latency_var_{};
+  double interval_mean_{};
+  double interval_var_{};
 
   rclcpp::Time latest_measurement_time_;
   rclcpp::Time latest_message_time_;
@@ -136,7 +136,7 @@ private:
   bool is_initialized_{false};
   rclcpp::Time latest_exported_object_time_;
 
-  size_t input_size_;
+  size_t input_size_{};
   std::vector<std::shared_ptr<InputStream>> input_streams_;
 
   std::function<void()> func_trigger_;
