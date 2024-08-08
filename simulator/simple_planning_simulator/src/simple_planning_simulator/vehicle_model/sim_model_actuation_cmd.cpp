@@ -411,10 +411,10 @@ double SimModelActuationCmd::calculateSteeringTireCommand(
 }
 
 double SimModelActuationCmd::calculateSteeringWheelState(
-  const double vel, const double target_steer_tire) const
+  const double vel, const double steer_state) const
 {
-  return (vgr_coef_a_ + vgr_coef_b_ * vel * vel) * target_tire_angle /
-         (1.0 + vgr_coef_c * std::abs(target_tire_angle));
+  return (vgr_coef_a_ + vgr_coef_b_ * vel * vel) * steer_state /
+         (1.0 + vgr_coef_c_ * std::abs(steer_state));
 }
 
 double SimModelActuationCmd::calculateVariableGearRatio(
