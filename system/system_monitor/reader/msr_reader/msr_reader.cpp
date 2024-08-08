@@ -64,8 +64,8 @@ typedef struct
   // cppcheck-suppress unusedStructMember
   uint64_t pkg_critical_temperature_status_ : 1;  //!< @brief 4 Pkg Critical Temperature Status (RO)
   uint64_t                                        //!< @brief 5 Pkg Critical Temperature
-            // cppcheck-suppress unusedStructMember
-    pkg_critical_temperature_status_log_ : 1;  //!<   Status Log (R/WC0)
+                                                  // cppcheck-suppress unusedStructMember
+    pkg_critical_temperature_status_log_ : 1;     //!<   Status Log (R/WC0)
   // cppcheck-suppress unusedStructMember
   uint64_t pkg_thermal_threshold_1_status_ : 1;  //!< @brief 6 Pkg Thermal Threshold #1 Status (RO)
   // cppcheck-suppress unusedStructMember
