@@ -97,7 +97,7 @@ protected:
   rclcpp::Logger logger_;
   std::mutex * mutex_ptr_;
   double voxel_leaf_size_;
-  double voxel_leaf_size_z_;
+  double voxel_leaf_size_z_{};
   double downsize_ratio_z_axis_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_map_pub_;
   bool debug_ = false;
@@ -111,9 +111,9 @@ public:
     std::string * tf_map_input_frame, std::mutex * mutex);
 
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
-  bool is_close_to_neighbor_voxels(
+  static bool is_close_to_neighbor_voxels(
     const pcl::PointXYZ & point, const double distance_threshold, VoxelGridPointXYZ & voxel,
-    pcl::search::Search<pcl::PointXYZ>::Ptr tree) const;
+    pcl::search::Search<pcl::PointXYZ>::Ptr tree);
   bool is_close_to_neighbor_voxels(
     const pcl::PointXYZ & point, const double distance_threshold, const PointCloudPtr & map,
     VoxelGridPointXYZ & voxel) const;
@@ -122,9 +122,8 @@ public:
     const double distance_threshold, const PointCloudPtr & map, VoxelGridPointXYZ & voxel) const;
 
   void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
-  bool is_close_points(
-    const pcl::PointXYZ point, const pcl::PointXYZ target_point,
-    const double distance_threshold) const;
+  static bool is_close_points(
+    const pcl::PointXYZ point, const pcl::PointXYZ target_point, const double distance_threshold);
   std::string * tf_map_input_frame_;
 };
 
@@ -224,7 +223,7 @@ public:
   }
   inline void updateDifferentialMapCells(
     const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & map_cells_to_add,
-    std::vector<std::string> map_cell_ids_to_remove)
+    const std::vector<std::string> & map_cell_ids_to_remove)
   {
     for (const auto & map_cell_to_add : map_cells_to_add) {
       addMapCellAndFilter(map_cell_to_add);
@@ -271,7 +270,7 @@ public:
     (*mutex_ptr_).unlock();
   }
 
-  inline void removeMapCell(const std::string map_cell_id_to_remove)
+  inline void removeMapCell(const std::string & map_cell_id_to_remove)
   {
     (*mutex_ptr_).lock();
     current_voxel_grid_dict_.erase(map_cell_id_to_remove);
