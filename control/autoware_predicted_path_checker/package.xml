@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>predicted_path_checker</name>
+  <name>autoware_predicted_path_checker</name>
   <version>1.0.0</version>
-  <description>The predicted_path_checker package</description>
+  <description>The autoware_predicted_path_checker package</description>
 
   <maintainer email="berkay@leodrive.ai">Berkay Karaman</maintainer>
   <license>Apache 2.0</license>
