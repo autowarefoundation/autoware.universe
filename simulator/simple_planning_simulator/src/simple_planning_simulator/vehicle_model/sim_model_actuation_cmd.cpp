@@ -219,8 +219,9 @@ void SimModelActuationCmd::update(const double & dt)
   const auto prev_state = state_;
   updateRungeKutta(dt, delayed_input);
 
-  // take velocity limit explicitly
-  state_(IDX::VX) = std::max(-vx_lim_, std::min(state_(IDX::VX), vx_lim_));
+  // take velocity/steer limit explicitly
+  state_(IDX::VX) = std::clamp(state_(IDX::VX), -vx_lim_, vx_lim_);
+  state_(IDX::STEER) = std::clamp(state_(IDX::STEER), -steer_lim_, steer_lim_);
 
   // consider gear
   // update position and velocity first, and then acceleration is calculated naturally
@@ -293,6 +294,10 @@ Eigen::VectorXd SimModelActuationCmd::calcModel(
           // convert steer wheel command to steer rate
           const double steer_des =
             calculateSteeringTireCommand(vel, steer, input(IDX_U::STEER_DES));
+
+          std::cerr << "[hoge sim]: "
+                    << ", steer_state" << steer << ", steer_des: " << steer_des
+                    << ", input_steer_des: " << input(IDX_U::STEER_DES) << std::endl;
           return -(getSteer() - steer_des) / steer_time_constant_;
         } else if (actuation_sim_type_ == ActuationSimType::STEER_MAP) {
           // convert steer command to steer rate
@@ -399,6 +404,9 @@ double SimModelActuationCmd::calculateSteeringTireCommand(
 
   // steer_wheel_des -> steer_tire_des
   const double adaptive_gear_ratio = calculateVariableGearRatio(vel, steer_wheel);
+  std::cerr << "[hoge sim]: "
+            << ", adaptive_gear_ratio: " << adaptive_gear_ratio
+            << ", steer_wheel_state: " << steer_wheel << std::endl;
   return steer_wheel_des / adaptive_gear_ratio;
 }
 

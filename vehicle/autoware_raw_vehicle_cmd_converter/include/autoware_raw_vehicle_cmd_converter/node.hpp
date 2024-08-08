@@ -77,22 +77,28 @@ public:
 
   //!< @brief topic publisher for low level vehicle command
   rclcpp::Publisher<ActuationCommandStamped>::SharedPtr pub_actuation_cmd_;
+  rclcpp::Publisher<Steering>::SharedPtr pub_steering_status_;
   //!< @brief subscriber for vehicle command
-  rclcpp::Subscription<Control>::SharedPtr sub_control_cmd_;
+  // rclcpp::Subscription<Control>::SharedPtr sub_control_cmd_;
+  rclcpp::Subscription<ActuationStatusStamped>::SharedPtr sub_actuation_status_;
   // polling subscribers
   autoware::universe_utils::InterProcessPollingSubscriber<Odometry> sub_odometry_{
     this, "~/input/odometry"};
-  autoware::universe_utils::InterProcessPollingSubscriber<Steering> sub_steering_{
-    this, "~/input/steering"};
-  autoware::universe_utils::InterProcessPollingSubscriber<ActuationStatusStamped>
-    actuation_status_sub_{this, "~/input/actuation_status"};
+  // autoware::universe_utils::InterProcessPollingSubscriber<Steering> sub_steering_{
+  //   this, "~/input/steering"};
+  // autoware::universe_utils::InterProcessPollingSubscriber<ActuationStatusStamped>
+  //   sub_actuation_status_{this, "~/input/actuation_status"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Control> sub_control_cmd_{
+    this, "~/input/control_cmd"};
 
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::unique_ptr<TwistStamped> current_twist_ptr_;  // [m/s]
   std::unique_ptr<double> current_steer_ptr_;
-  std::unique_ptr<ActuationStatusStamped> actuation_status_ptr_;
-  Control::ConstSharedPtr control_cmd_ptr_;
+  // std::unique_ptr<ActuationStatusStamped> actuation_status_ptr_;
+  // Control::ConstSharedPtr control_cmd_ptr_;
+  ActuationStatusStamped::ConstSharedPtr actuation_status_ptr_;
+  std::unique_ptr<Control> control_cmd_ptr_;
   AccelMap accel_map_;
   BrakeMap brake_map_;
   SteerMap steer_map_;
@@ -119,9 +125,11 @@ public:
     const double current_velocity, const double desired_acc, bool & accel_cmd_is_zero);
   double calculateBrakeMap(const double current_velocity, const double desired_acc);
   double calculateSteer(const double vel, const double steering, const double steer_rate);
-  void onControlCmd(const Control::ConstSharedPtr msg);
+  // void onControlCmd(const Control::ConstSharedPtr msg);
+  void onActuationStatus(const ActuationStatusStamped::ConstSharedPtr msg);
   void publishActuationCmd();
-  double calculateVariableGearRatio(const double vel, const double steer_wheel);
+  double calculateVariableGearRatio(const double vel, const double steer_wheel) const;
+  double calculateSteeringTireState(const double vel, const double steer_wheel) const;
   // for debugging
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_pub_steer_pid_;
   DebugValues debug_steer_;

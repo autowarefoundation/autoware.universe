@@ -89,8 +89,6 @@ def launch_setup(context, *args, **kwargs):
         == "ACTUATION_CMD"
     )
 
-    # launch_vehicle_cmd_converter = False # tmp
-
     # 1) Launch only simple_planning_simulator_node
     if not launch_vehicle_cmd_converter:
         return [simple_planning_simulator_node]

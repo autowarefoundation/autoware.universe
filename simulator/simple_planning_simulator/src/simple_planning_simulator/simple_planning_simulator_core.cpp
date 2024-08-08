@@ -463,7 +463,6 @@ void SimplePlanningSimulator::on_timer()
   // publish vehicle state
   publish_odometry(current_odometry_);
   publish_velocity(current_velocity_);
-  publish_steering(current_steer_);
   publish_acceleration();
   publish_imu();
 
@@ -472,7 +471,12 @@ void SimplePlanningSimulator::on_timer()
   publish_turn_indicators_report();
   publish_hazard_lights_report();
   publish_tf(current_odometry_);
-  publish_actuation_status();
+
+  if (vehicle_model_type_ == VehicleModelType::ACTUATION_CMD) {
+    publish_actuation_status();
+  } else {
+    publish_steering(current_steer_);
+  }
 }
 
 void SimplePlanningSimulator::on_map(const LaneletMapBin::ConstSharedPtr msg)
