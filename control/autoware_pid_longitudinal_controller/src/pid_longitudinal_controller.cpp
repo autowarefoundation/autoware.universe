@@ -104,7 +104,7 @@ PidLongitudinalController::PidLongitudinalController(
 
     // set lowpass filter for vel error and pitch
     const double lpf_vel_error_gain{node.declare_parameter<double>("lpf_vel_error_gain")};
-    m_lpf_vel_error = std::make_shared<LowpassFilter1d>(0.0, lpf_vel_error_gain);
+    m_lpf_vel_error = std::make_unique<LowpassFilter1d>(0.0, lpf_vel_error_gain);
 
     m_enable_integration_at_low_speed =
       node.declare_parameter<bool>("enable_integration_at_low_speed");
@@ -164,6 +164,13 @@ PidLongitudinalController::PidLongitudinalController(
     p.jerk = node.declare_parameter<double>("emergency_jerk");  // [m/s^3]
   }
 
+  // parameters for acc feedback
+  {
+    const double lpf_acc_error_gain{node.declare_parameter<double>("lpf_acc_error_gain")};
+    m_lpf_acc_error = std::make_unique<LowpassFilter1d>(0.0, lpf_acc_error_gain);
+    m_acc_feedback_gain = node.declare_parameter<double>("acc_feedback_gain");
+  }
+
   // parameters for acceleration limit
   m_max_acc = node.declare_parameter<double>("max_acc");  // [m/s^2]
   m_min_acc = node.declare_parameter<double>("min_acc");  // [m/s^2]
@@ -177,7 +184,7 @@ PidLongitudinalController::PidLongitudinalController(
   m_adaptive_trajectory_velocity_th =
     node.declare_parameter<double>("adaptive_trajectory_velocity_th");  // [m/s^2]
   const double lpf_pitch_gain{node.declare_parameter<double>("lpf_pitch_gain")};
-  m_lpf_pitch = std::make_shared<LowpassFilter1d>(0.0, lpf_pitch_gain);
+  m_lpf_pitch = std::make_unique<LowpassFilter1d>(0.0, lpf_pitch_gain);
   m_max_pitch_rad = node.declare_parameter<double>("max_pitch_rad");  // [rad]
   m_min_pitch_rad = node.declare_parameter<double>("min_pitch_rad");  // [rad]
 
@@ -364,6 +371,9 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
     update_param("emergency_acc", p.acc);
     update_param("emergency_jerk", p.jerk);
   }
+
+  // acceleration limit
+  update_param("acc_feedback_gain", m_acc_feedback_gain);
 
   // acceleration limit
   update_param("min_acc", m_min_acc);
@@ -844,8 +854,22 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     // store acceleration without slope compensation
     m_prev_raw_ctrl_cmd = raw_ctrl_cmd;
 
+    // calc acc feedback
+    const double acc_err = control_data.current_motion.acc - raw_ctrl_cmd.acc;
+    m_debug_values.setValues(DebugValues::TYPE::ERROR_ACC, acc_err);
+    m_lpf_acc_error->filter(acc_err);
+    m_debug_values.setValues(DebugValues::TYPE::ERROR_ACC_FILTERED, m_lpf_acc_error->getValue());
+
+    const double acc_cmd = raw_ctrl_cmd.acc - m_lpf_acc_error->getValue() * m_acc_feedback_gain;
+    m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_FB_APPLIED, acc_cmd);
+    RCLCPP_DEBUG(
+      logger_,
+      "[acc feedback]: raw_ctrl_cmd.acc: %1.3f, control_data.current_motion.acc: %1.3f, "
+      "m_lpf_acc_error.getValue(): %1.3f, acc_cmd: %1.3f",
+      raw_ctrl_cmd.acc, control_data.current_motion.acc, 0.0, acc_cmd);
+
     ctrl_cmd_as_pedal_pos.acc =
-      applySlopeCompensation(raw_ctrl_cmd.acc, control_data.slope_angle, control_data.shift);
+      applySlopeCompensation(acc_cmd, control_data.slope_angle, control_data.shift);
     m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_SLOPE_APPLIED, ctrl_cmd_as_pedal_pos.acc);
     ctrl_cmd_as_pedal_pos.vel = raw_ctrl_cmd.vel;
   }
