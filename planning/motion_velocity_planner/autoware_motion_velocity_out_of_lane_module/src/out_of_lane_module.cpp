@@ -91,14 +91,12 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
   pp.objects_min_vel = getOrDeclareParameter<double>(node, ns_ + ".objects.minimum_velocity");
   pp.objects_min_confidence =
     getOrDeclareParameter<double>(node, ns_ + ".objects.predicted_path_min_confidence");
-  pp.objects_dist_buffer = getOrDeclareParameter<double>(node, ns_ + ".objects.distance_buffer");
   pp.objects_cut_predicted_paths_beyond_red_lights =
     getOrDeclareParameter<bool>(node, ns_ + ".objects.cut_predicted_paths_beyond_red_lights");
   pp.objects_ignore_behind_ego =
     getOrDeclareParameter<bool>(node, ns_ + ".objects.ignore_behind_ego");
 
   pp.overlap_min_dist = getOrDeclareParameter<double>(node, ns_ + ".overlap.minimum_distance");
-  pp.overlap_extra_length = getOrDeclareParameter<double>(node, ns_ + ".overlap.extra_length");
 
   pp.precision = getOrDeclareParameter<double>(node, ns_ + ".action.precision");
   pp.min_decision_duration = getOrDeclareParameter<double>(node, ns_ + ".action.min_duration");
@@ -133,13 +131,11 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(parameters, ns_ + ".objects.minimum_velocity", pp.objects_min_vel);
   updateParam(
     parameters, ns_ + ".objects.predicted_path_min_confidence", pp.objects_min_confidence);
-  updateParam(parameters, ns_ + ".objects.distance_buffer", pp.objects_dist_buffer);
   updateParam(
     parameters, ns_ + ".objects.cut_predicted_paths_beyond_red_lights",
     pp.objects_cut_predicted_paths_beyond_red_lights);
   updateParam(parameters, ns_ + ".objects.ignore_behind_ego", pp.objects_ignore_behind_ego);
   updateParam(parameters, ns_ + ".overlap.minimum_distance", pp.overlap_min_dist);
-  updateParam(parameters, ns_ + ".overlap.extra_length", pp.overlap_extra_length);
 
   updateParam(parameters, ns_ + ".action.precision", pp.precision);
   updateParam(parameters, ns_ + ".action.min_duration", pp.min_decision_duration);

@@ -52,14 +52,11 @@ struct PlannerParam
 
   bool objects_cut_predicted_paths_beyond_red_lights;  // whether to cut predicted paths beyond red
                                                        // lights' stop lines
-  double objects_min_vel;         // [m/s] objects lower than this velocity will be ignored
-  double objects_min_confidence;  // minimum confidence to consider a predicted path
-  double objects_dist_buffer;  // [m] distance buffer used to determine if a collision will occur in
-                               // the other lane
+  double objects_min_vel;          // [m/s] objects lower than this velocity will be ignored
+  double objects_min_confidence;   // minimum confidence to consider a predicted path
   bool objects_ignore_behind_ego;  // if true, objects behind the ego vehicle are ignored
 
-  double overlap_extra_length;  // [m] extra length to add around an overlap range
-  double overlap_min_dist;      // [m] min distance inside another lane to consider an overlap
+  double overlap_min_dist;  // [m] min distance inside another lane to consider an overlap
 
   // action to insert in the trajectory if an object causes a collision at an overlap
   double lon_dist_buffer;      // [m] safety distance buffer to keep in front of the ego vehicle

@@ -18,7 +18,6 @@
 
       overlap:
         minimum_distance: 0.0  # [m] minimum distance inside a lanelet for an overlap to be considered
-        extra_length: 0.0  # [m] extra arc length to add to the front and back of an overlap (used to calculate enter/exit times)
 
       action:  # action to insert in the trajectory if an object causes a conflict at an overlap
         precision: 0.1  # [m] precision when inserting a stop pose in the trajectory
