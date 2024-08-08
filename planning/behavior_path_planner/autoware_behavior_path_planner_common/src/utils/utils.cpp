@@ -685,12 +685,10 @@ double getDistanceFromLastFitWidthToEnd(
   const double seg_length = autoware::universe_utils::calcDistance2d(point, next_point);
   if (seg_length <= step_length) return distance;
 
-  double yaw = atan2(next_point.y - point.y, next_point.x - point.x);
   double length = step_length;
   for (; length < seg_length; length += step_length) {
-    auto mid_point = point;
-    mid_point.x += length * cos(yaw);
-    mid_point.y += length * sin(yaw);
+    const auto mid_point =
+      universe_utils::calcInterpolatedPoint(point, next_point, length / seg_length);
     if (!checkWidth(mid_point)) break;
     distance -= step_length;
   }
