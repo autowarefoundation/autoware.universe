@@ -7,7 +7,7 @@
   <arg name="output" default="/output" description="output topic name"/>
   <arg name="map_loader_service" default="/map/get_differential_pointcloud_map" description="map loader service name"/>
 
-  <node pkg="autoware_compare_map_segmentation" exec="voxel_based_compare_map_filter_node" name="voxel_based_compare_map_filter_node" output="screen">
+  <node pkg="autoware_compare_map_segmentation" exec="voxel_based_compare_map_filter_node" name="voxel_based_compare_map_filter_node" output="both">
     <remap from="input" to="$(var input)"/>
     <remap from="map" to="$(var input_map)"/>
     <remap from="output" to="$(var output)"/>
