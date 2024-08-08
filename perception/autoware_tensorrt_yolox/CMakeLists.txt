@@ -167,12 +167,6 @@ rclcpp_components_register_node(${PROJECT_NAME}_node
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
-
-  if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
-    ament_auto_add_gtest(test_utils
-      test/test_utils.cpp
-    )
-  endif()
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE
