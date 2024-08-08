@@ -37,7 +37,8 @@ void calculate_collisions_to_avoid(
   OutOfLaneData & out_of_lane_data, const EgoData & ego_data, const PlannerParam & params);
 
 /// @brief calculate the areas where ego will drive outside of its lane
-void calculate_out_of_lane_areas(OutOfLaneData & out_of_lane_data, const EgoData & ego_data);
+/// @details the OutOfLaneData points and rtree are filled
+OutOfLaneData calculate_out_of_lane_areas(const EgoData & ego_data);
 }  // namespace autoware::motion_velocity_planner::out_of_lane
 
 #endif  // OUT_OF_LANE_COLLISIONS_HPP_

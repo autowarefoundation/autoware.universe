@@ -95,8 +95,9 @@ void calculate_collisions_to_avoid(
   }
 }
 
-void calculate_out_of_lane_areas(OutOfLaneData & out_of_lane_data, const EgoData & ego_data)
+OutOfLaneData calculate_out_of_lane_areas(const EgoData & ego_data)
 {
+  OutOfLaneData out_of_lane_data;
   out_of_lane::OutOfLanePoint p;
   for (auto i = 0UL; i < ego_data.trajectory_footprints.size(); ++i) {
     const auto & footprint = ego_data.trajectory_footprints[i];
@@ -122,5 +123,6 @@ void calculate_out_of_lane_areas(OutOfLaneData & out_of_lane_data, const EgoData
     }
   }
   out_of_lane_data.outside_areas_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
+  return out_of_lane_data;
 }
 }  // namespace autoware::motion_velocity_planner::out_of_lane

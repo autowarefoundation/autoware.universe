@@ -25,15 +25,16 @@
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
-/// @brief calculate the last pose along the trajectory where ego does not overlap the lane to avoid
+/// @brief calculate the last pose along the trajectory where ego does not go out of lane
 /// @param [in] ego_data ego data
-/// @param [in] decision the input decision (i.e., which lane to avoid and at what speed)
 /// @param [in] footprint the ego footprint
-/// @param [in] params parameters
+/// @param [in] min_arc_length minimum arc length for the search
+/// @param [in] max_arc_length maximum arc length for the search
+/// @param [in] precision [m] search precision
 /// @return the last pose that is not out of lane (if found)
 std::optional<geometry_msgs::msg::Pose> calculate_last_in_lane_pose(
-  const EgoData & ego_data, const OutOfLanePoint & out_of_lane_point,
-  const autoware::universe_utils::Polygon2d & footprint, const PlannerParam & params);
+  const EgoData & ego_data, const autoware::universe_utils::Polygon2d & footprint,
+  const double min_arc_length, const double max_arc_length, const double precision);
 
 /// @brief calculate the slowdown point to insert in the trajectory
 /// @param ego_data ego data (trajectory, velocity, etc)

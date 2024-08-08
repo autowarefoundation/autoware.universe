@@ -191,6 +191,10 @@ void OutOfLaneModule::calculate_min_stop_and_slowdown_distances(
     ego_data.min_slowdown_distance =
       std::min(previous_slowdown_pose_arc_length, ego_data.min_slowdown_distance);
   }
+  ego_data.min_stop_arc_length = motion_utils::calcSignedArcLength(
+                                   ego_data.trajectory_points, 0UL, ego_data.first_trajectory_idx) +
+                                 ego_data.longitudinal_offset_to_first_trajectory_index +
+                                 ego_data.min_stop_distance;
 }
 
 void prepare_stop_lines_rtree(
@@ -265,8 +269,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
 
   // Calculate overlapping ranges
   stopwatch.tic("calculate_out_of_lane_areas");
-  out_of_lane::OutOfLaneData out_of_lane_data;
-  calculate_out_of_lane_areas(out_of_lane_data, ego_data);
+  auto out_of_lane_data = calculate_out_of_lane_areas(ego_data);
   const auto calculate_out_of_lane_areas_us = stopwatch.toc("calculate_out_of_lane_areas");
 
   stopwatch.tic("filter_predicted_objects");
@@ -285,7 +288,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   if (
     params_.skip_if_already_overlapping && !ego_data.drivable_lane_polygons.empty() &&
     !lanelet::geometry::within(ego_data.current_footprint, ego_data.drivable_lane_polygons)) {
-    RCLCPP_WARN(logger_, "Ego is already overlapping a lane, skipping the module\n");
+    RCLCPP_WARN(logger_, "Ego is already out of lane, skipping the module\n");
     debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(
       ego_data, out_of_lane_data, objects, debug_data_));
     return result;
@@ -358,9 +361,11 @@ VelocityPlanningResult OutOfLaneModule::plan(
       "Could not insert slowdown point preventing ego from going out of lane while respecint the "
       "deceleration limits");
   }
-  const auto total_time_us = stopwatch.toc();
+  stopwatch.tic("pub");
   debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(
     ego_data, out_of_lane_data, objects, debug_data_));
+  const auto pub_markers_us = stopwatch.toc("pub");
+  const auto total_time_us = stopwatch.toc();
   std::map<std::string, double> processing_times;
   processing_times["preprocessing"] = preprocessing_us / 1000;
   processing_times["calculate_lanelets"] = calculate_lanelets_us / 1000;
@@ -370,6 +375,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   processing_times["calculate_time_collisions"] = calculate_time_collisions_us / 1000;
   processing_times["calculate_times"] = calculate_times_us / 1000;
   processing_times["calculate_slowdown_point"] = calculate_slowdown_point_us / 1000;
+  processing_times["publish_markers"] = pub_markers_us / 1000;
   processing_times["Total"] = total_time_us / 1000;
   processing_diag_publisher_->publish(processing_times);
   tier4_debug_msgs::msg::Float64Stamped processing_time_msg;

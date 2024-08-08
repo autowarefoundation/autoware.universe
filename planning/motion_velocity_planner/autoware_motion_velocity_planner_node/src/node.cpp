@@ -443,7 +443,7 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   // }
   // RCLCPP_WARN(
   //   get_logger(), "collision_time_ranges: %2.2f us\n", stop_watch.toc("collision_time_ranges"));
-  debug_viz_pub_->publish(markers);
+  // debug_viz_pub_->publish(markers);
 
   const auto planning_results = planner_manager_.plan_velocities(
     resampled_trajectory.points, std::make_shared<const PlannerData>(planner_data_));

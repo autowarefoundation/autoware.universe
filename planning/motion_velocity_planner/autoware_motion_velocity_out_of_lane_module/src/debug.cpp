@@ -26,7 +26,6 @@
 #include <lanelet2_core/Forward.h>
 
 #include <string>
-#include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane::debug
 {
@@ -75,19 +74,21 @@ void add_out_of_lane_markers(
 {
   auto debug_marker = get_base_marker();
   debug_marker.ns = "out_of_lane_areas";
-  for (const auto & p : data.outside_points) {
-    if (p.to_avoid) {
+  for (const auto & pt : data.outside_points) {
+    if (pt.to_avoid) {
       debug_marker.color.r = 1.0;
       debug_marker.color.g = 0.0;
     } else {
       debug_marker.color.r = 0.0;
       debug_marker.color.g = 1.0;
     }
-    for (const auto & f : p.outside_rings) {
+    for (const auto & f : pt.outside_rings) {
       debug_marker.points.clear();
       for (const auto & p : f)
         debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
-      debug_marker.points.push_back(debug_marker.points.front());
+      if (!debug_marker.points.empty()) {
+        debug_marker.points.push_back(debug_marker.points.front());
+      }
       debug_marker_array.markers.push_back(debug_marker);
       debug_marker.id++;
     }

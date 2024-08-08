@@ -107,6 +107,7 @@ struct EgoData
   double longitudinal_offset_to_first_trajectory_index{};
   double min_stop_distance{};
   double min_slowdown_distance{};
+  double min_stop_arc_length{};
 
   Polygons drivable_lane_polygons;
 
