@@ -356,6 +356,21 @@ void VehicleCmdGate::onEmergencyCtrlCmd(Control::ConstSharedPtr msg)
   }
 }
 
+// check the continuity of topics
+template <typename T>
+T VehicleCmdGate::getContinuousTopic(
+  const std::shared_ptr<T> & prev_topic, const T & current_topic, const std::string & topic_name)
+{
+  if ((rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() > 0.0) {
+    return current_topic;
+  } else {
+    RCLCPP_INFO(
+      get_logger(),
+      "The operation mode is changed, but the %s is not received yet:", topic_name.c_str());
+    return *prev_topic;
+  }
+}
+
 void VehicleCmdGate::onTimer()
 {
   // Subscriber for auto
@@ -462,19 +477,6 @@ void VehicleCmdGate::onTimer()
       throw std::runtime_error("invalid mode");
     }
   }
-
-  const auto getContinuousTopic = [&]<class T>(
-                                    const std::shared_ptr<T> & prev_topic, const T & current_topic,
-                                    const std::string & topic_name) {
-    if ((rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() > 0.0) {
-      return current_topic;
-    } else {
-      RCLCPP_INFO(
-        get_logger(),
-        "The operation mode is changed, but the %s is not received yet:", topic_name.c_str());
-      return *prev_topic;
-    }
-  };
 
   // Publish Turn Indicators, Hazard Lights and Gear Command
   if (prev_turn_indicator != nullptr) {

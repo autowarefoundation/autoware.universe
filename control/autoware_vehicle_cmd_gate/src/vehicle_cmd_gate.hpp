@@ -237,6 +237,10 @@ private:
 
   void checkExternalEmergencyStop(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
+  template <typename T>
+  T getContinuousTopic(
+    const std::shared_ptr<T> & prev_topic, const T & current_topic, const std::string & topic_name);
+
   // Algorithm
   Control prev_control_cmd_;
   Control createStopControlCmd() const;
