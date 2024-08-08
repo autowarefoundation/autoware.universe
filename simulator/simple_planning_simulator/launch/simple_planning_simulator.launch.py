@@ -77,6 +77,7 @@ def launch_setup(context, *args, **kwargs):
             ("output/turn_indicators_report", "/vehicle/status/turn_indicators_status"),
             ("output/hazard_lights_report", "/vehicle/status/hazard_lights_status"),
             ("output/control_mode_report", "/vehicle/status/control_mode"),
+            ("output/actuation_status", "/vehicle/status/actuation_status"),
         ],
     )
 

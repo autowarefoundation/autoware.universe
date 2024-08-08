@@ -45,6 +45,7 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "tier4_external_api_msgs/srv/initialize_pose.hpp"
 #include "tier4_vehicle_msgs/msg/actuation_command_stamped.hpp"
+#include "tier4_vehicle_msgs/msg/actuation_status_stamped.hpp"
 
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <tf2_ros/buffer.h>
@@ -86,6 +87,7 @@ using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::Imu;
 using tier4_external_api_msgs::srv::InitializePose;
 using tier4_vehicle_msgs::msg::ActuationCommandStamped;
+using tier4_vehicle_msgs::msg::ActuationStatusStamped;
 
 class DeltaTime
 {
@@ -138,6 +140,7 @@ private:
   rclcpp::Publisher<HazardLightsReport>::SharedPtr pub_hazard_lights_report_;
   rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr pub_tf_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pub_current_pose_;
+  rclcpp::Publisher<ActuationStatusStamped>::SharedPtr pub_actuation_status_;
 
   rclcpp::Subscription<GearCommand>::SharedPtr sub_gear_cmd_;
   rclcpp::Subscription<GearCommand>::SharedPtr sub_manual_gear_cmd_;
@@ -381,6 +384,8 @@ private:
    * @brief publish hazard lights report
    */
   void publish_hazard_lights_report();
+
+  void publish_actuation_status();
 
   /**
    * @brief publish tf

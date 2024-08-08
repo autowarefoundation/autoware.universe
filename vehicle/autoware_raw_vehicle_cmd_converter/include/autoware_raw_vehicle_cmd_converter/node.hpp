@@ -30,6 +30,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <tier4_vehicle_msgs/msg/actuation_command_stamped.hpp>
+#include <tier4_vehicle_msgs/msg/actuation_status_stamped.hpp>
 
 #include <memory>
 #include <string>
@@ -40,6 +41,7 @@ namespace autoware::raw_vehicle_cmd_converter
 using Control = autoware_control_msgs::msg::Control;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_vehicle_msgs::msg::ActuationCommandStamped;
+using tier4_vehicle_msgs::msg::ActuationStatusStamped;
 using TwistStamped = geometry_msgs::msg::TwistStamped;
 using Odometry = nav_msgs::msg::Odometry;
 using Steering = autoware_vehicle_msgs::msg::SteeringReport;
@@ -82,11 +84,14 @@ public:
     this, "~/input/odometry"};
   autoware::universe_utils::InterProcessPollingSubscriber<Steering> sub_steering_{
     this, "~/input/steering"};
+  autoware::universe_utils::InterProcessPollingSubscriber<ActuationStatusStamped>
+    actuation_status_sub_{this, "~/input/actuation_status"};
 
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::unique_ptr<TwistStamped> current_twist_ptr_;  // [m/s]
   std::unique_ptr<double> current_steer_ptr_;
+  std::unique_ptr<ActuationStatusStamped> actuation_status_ptr_;
   Control::ConstSharedPtr control_cmd_ptr_;
   AccelMap accel_map_;
   BrakeMap brake_map_;
@@ -102,9 +107,12 @@ public:
   bool use_steer_ff_;
   bool use_steer_fb_;
   bool is_debugging_;
-  bool convert_accel_cmd_;  //!< @brief use accel or not
-  bool convert_brake_cmd_;  //!< @brief use brake or not
-  bool convert_steer_cmd_;  //!< @brief use steer or not
+  bool convert_accel_cmd_;                                             //!< @brief use accel or not
+  bool convert_brake_cmd_;                                             //!< @brief use brake or not
+  std::optional<std::string> convert_steer_cmd_method_{std::nullopt};  //!< @brief method to convert
+  double vgr_coef_a_{0.0};
+  double vgr_coef_b_{0.0};
+  double vgr_coef_c_{0.0};
   rclcpp::Time prev_time_steer_calculation_{0, 0, RCL_ROS_TIME};
 
   double calculateAccelMap(
@@ -113,6 +121,7 @@ public:
   double calculateSteer(const double vel, const double steering, const double steer_rate);
   void onControlCmd(const Control::ConstSharedPtr msg);
   void publishActuationCmd();
+  double calculateVariableGearRatio(const double vel, const double steer_wheel);
   // for debugging
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_pub_steer_pid_;
   DebugValues debug_steer_;
