@@ -50,6 +50,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace autoware::vehicle_cmd_gate
