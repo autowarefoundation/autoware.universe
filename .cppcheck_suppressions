@@ -2,14 +2,11 @@
 
 checkersReport
 constParameterReference
-funcArgNamesDifferent
 functionConst
 functionStatic
 missingInclude
 missingIncludeSystem
 noConstructor
-passedByValue
-redundantInitialization
 // cspell: ignore uninit
 uninitMemberVar
 unknownMacro
