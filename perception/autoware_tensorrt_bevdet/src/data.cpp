@@ -79,7 +79,7 @@ int read_image(const std::string & image_names, std::vector<char> & raw_data)
   return EXIT_SUCCESS;
 }
 
-int read_sample(std::vector<std::string> & imgs_file, std::vector<std::vector<char>> & imgs_data)
+int read_sample(const std::vector<std::string> & imgs_file, std::vector<std::vector<char>> & imgs_data)
 {
   imgs_data.resize(imgs_file.size());
 
