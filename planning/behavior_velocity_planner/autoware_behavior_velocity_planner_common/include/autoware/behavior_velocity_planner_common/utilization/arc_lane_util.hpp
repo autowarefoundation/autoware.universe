@@ -21,8 +21,10 @@
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <algorithm>
+#include <cstdint>
 #include <optional>
 #include <utility>
+#include <vector>
 
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
@@ -31,7 +33,7 @@ namespace autoware::behavior_velocity_planner
 {
 namespace
 {
-geometry_msgs::msg::Point convertToGeomPoint(const autoware::universe_utils::Point2d & p)
+inline geometry_msgs::msg::Point convertToGeomPoint(const autoware::universe_utils::Point2d & p)
 {
   geometry_msgs::msg::Point geom_p;
   geom_p.x = p.x();
@@ -61,9 +63,27 @@ std::optional<geometry_msgs::msg::Point> checkCollision(
 template <class T>
 std::optional<PathIndexWithPoint> findCollisionSegment(
   const T & path, const geometry_msgs::msg::Point & stop_line_p1,
-  const geometry_msgs::msg::Point & stop_line_p2)
+  const geometry_msgs::msg::Point & stop_line_p2, const std::vector<int64_t> & target_lane_ids)
 {
   for (size_t i = 0; i < path.points.size() - 1; ++i) {
+    const auto & prev_lane_ids = path.points.at(i).lane_ids;
+    const auto & next_lane_ids = path.points.at(i + 1).lane_ids;
+
+    const bool is_target_lane_in_prev_lane = std::any_of(
+      target_lane_ids.begin(), target_lane_ids.end(), [&prev_lane_ids](size_t target_lane_id) {
+        return std::find(prev_lane_ids.begin(), prev_lane_ids.end(), target_lane_id) !=
+               prev_lane_ids.end();
+      });
+    const bool is_target_lane_in_next_lane = std::any_of(
+      target_lane_ids.begin(), target_lane_ids.end(), [&next_lane_ids](size_t target_lane_id) {
+        return std::find(next_lane_ids.begin(), next_lane_ids.end(), target_lane_id) !=
+               next_lane_ids.end();
+      });
+
+    if (!is_target_lane_in_prev_lane && !is_target_lane_in_next_lane) {
+      continue;
+    }
+
     const auto & p1 =
       autoware::universe_utils::getPoint(path.points.at(i));  // Point before collision point
     const auto & p2 =
@@ -81,12 +101,12 @@ std::optional<PathIndexWithPoint> findCollisionSegment(
 
 template <class T>
 std::optional<PathIndexWithPoint> findCollisionSegment(
-  const T & path, const LineString2d & stop_line)
+  const T & path, const LineString2d & stop_line, const std::vector<int64_t> & target_lane_ids)
 {
   const auto stop_line_p1 = convertToGeomPoint(stop_line.at(0));
   const auto stop_line_p2 = convertToGeomPoint(stop_line.at(1));
 
-  return findCollisionSegment(path, stop_line_p1, stop_line_p2);
+  return findCollisionSegment(path, stop_line_p1, stop_line_p2, target_lane_ids);
 }
 
 template <class T>
@@ -183,7 +203,7 @@ geometry_msgs::msg::Pose calcTargetPose(const T & path, const PathIndexWithOffse
 
 std::optional<PathIndexWithPose> createTargetPoint(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
-  const double margin, const double vehicle_offset);
+  const std::vector<int64_t> & lane_ids, const double margin, const double vehicle_offset);
 
 }  // namespace arc_lane_utils
 }  // namespace autoware::behavior_velocity_planner
