@@ -971,23 +971,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     return;
   }
 
-  auto world2map_transform = transform_listener_.getTransform(
-    "map",                        // target
-    in_objects->header.frame_id,  // src
-    in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
-  auto map2world_transform = transform_listener_.getTransform(
-    in_objects->header.frame_id,  // target
-    "map",                        // src
-    in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
-  auto debug_map2lidar_transform = transform_listener_.getTransform(
-    "base_link",  // target
-    "map",        // src
-    rclcpp::Time(), rclcpp::Duration::from_seconds(0.1));
-
-  if (!world2map_transform || !map2world_transform || !debug_map2lidar_transform) {
-    return;
-  }
-
   // Remove old objects information in object history
   const double objects_detected_time = rclcpp::Time(in_objects->header.stamp).seconds();
   removeOldObjectsHistory(objects_detected_time, object_buffer_time_length_, road_users_history);
@@ -1025,6 +1008,12 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     }
   }
   std::unordered_set<std::string> predicted_crosswalk_users_ids;
+
+  // get world to map transform
+  auto world2map_transform = transform_listener_.getTransform(
+    "map",                        // target
+    in_objects->header.frame_id,  // src
+    in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
 
   for (const auto & object : in_objects->objects) {
     TrackedObject transformed_object = object;
