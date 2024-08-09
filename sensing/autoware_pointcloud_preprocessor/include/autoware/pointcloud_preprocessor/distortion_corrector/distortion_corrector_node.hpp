@@ -52,6 +52,7 @@ private:
   std::string base_frame_;
   bool use_imu_;
   bool use_3d_distortion_correction_;
+  std::string sensor_azimuth_coordinate_;
 
   std::unique_ptr<DistortionCorrectorBase> distortion_corrector_;
 
