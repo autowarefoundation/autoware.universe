@@ -254,17 +254,9 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
   initializePlanningAlgorithm();
 
   // Subscribers
-  {
-    route_sub_ = create_subscription<LaneletRoute>(
-      "~/input/route", rclcpp::QoS{1}.transient_local(),
-      std::bind(&FreespacePlannerNode::onRoute, this, _1));
-    occupancy_grid_sub_ = create_subscription<OccupancyGrid>(
-      "~/input/occupancy_grid", 1, std::bind(&FreespacePlannerNode::onOccupancyGrid, this, _1));
-    scenario_sub_ = create_subscription<Scenario>(
-      "~/input/scenario", 1, std::bind(&FreespacePlannerNode::onScenario, this, _1));
-    odom_sub_ = create_subscription<Odometry>(
-      "~/input/odometry", 100, std::bind(&FreespacePlannerNode::onOdometry, this, _1));
-  }
+  route_sub_ = create_subscription<LaneletRoute>(
+    "~/input/route", rclcpp::QoS{1}.transient_local(),
+    std::bind(&FreespacePlannerNode::onRoute, this, _1));
 
   // Publishers
   {
@@ -313,47 +305,6 @@ PlannerCommonParam FreespacePlannerNode::getPlannerCommonParam()
   p.obstacle_threshold = declare_parameter<int>("obstacle_threshold");
 
   return p;
-}
-
-void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
-{
-  route_ = msg;
-
-  goal_pose_.header = msg->header;
-  goal_pose_.pose = msg->goal_pose;
-
-  is_new_parking_cycle_ = true;
-
-  reset();
-}
-
-void FreespacePlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg)
-{
-  occupancy_grid_ = msg;
-}
-
-void FreespacePlannerNode::onScenario(const Scenario::ConstSharedPtr msg)
-{
-  scenario_ = msg;
-}
-
-void FreespacePlannerNode::onOdometry(const Odometry::ConstSharedPtr msg)
-{
-  odom_ = msg;
-
-  odom_buffer_.push_back(msg);
-
-  // Delete old data in buffer
-  while (true) {
-    const auto time_diff =
-      rclcpp::Time(msg->header.stamp) - rclcpp::Time(odom_buffer_.front()->header.stamp);
-
-    if (time_diff.seconds() < node_param_.th_stopped_time_sec) {
-      break;
-    }
-
-    odom_buffer_.pop_front();
-  }
 }
 
 bool FreespacePlannerNode::isPlanRequired()
@@ -420,10 +371,82 @@ void FreespacePlannerNode::updateTargetIndex()
   }
 }
 
+void FreespacePlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
+{
+  route_ = msg;
+
+  goal_pose_.header = msg->header;
+  goal_pose_.pose = msg->goal_pose;
+
+  is_new_parking_cycle_ = true;
+
+  reset();
+}
+
+void FreespacePlannerNode::onOdometry(const Odometry::ConstSharedPtr msg)
+{
+  odom_ = msg;
+
+  odom_buffer_.push_back(msg);
+
+  // Delete old data in buffer
+  while (true) {
+    const auto time_diff =
+      rclcpp::Time(msg->header.stamp) - rclcpp::Time(odom_buffer_.front()->header.stamp);
+
+    if (time_diff.seconds() < node_param_.th_stopped_time_sec) {
+      break;
+    }
+
+    odom_buffer_.pop_front();
+  }
+}
+
+void FreespacePlannerNode::updateData()
+{
+  occupancy_grid_ = occupancy_grid_sub_.takeData();
+  scenario_ = scenario_sub_.takeData();
+
+  {
+    auto msgs = odom_sub_.takeData();
+    for (const auto & msg : msgs) {
+      onOdometry(msg);
+    }
+  }
+}
+
+bool FreespacePlannerNode::isDataReady()
+{
+  bool is_ready = true;
+
+  if (!route_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Waiting for route data.");
+    is_ready = false;
+  }
+
+  if (!occupancy_grid_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Waiting for occupancy grid.");
+    is_ready = false;
+  }
+
+  if (!scenario_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Waiting for scenario.");
+    is_ready = false;
+  }
+
+  if (!odom_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Waiting for odometry.");
+    is_ready = false;
+  }
+
+  return is_ready;
+}
+
 void FreespacePlannerNode::onTimer()
 {
-  // Check all inputs are ready
-  if (!occupancy_grid_ || !route_ || !scenario_ || !odom_) {
+  updateData();
+
+  if (!isDataReady()) {
     return;
   }
 
