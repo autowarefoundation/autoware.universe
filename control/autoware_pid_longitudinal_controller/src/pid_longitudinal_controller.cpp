@@ -298,6 +298,10 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
     update_param("kd", kd);
     m_pid_vel.setGains(kp, ki, kd);
 
+    double lpf_vel_error_gain{node_parameters_->get_parameter("lpf_vel_error_gain").as_double()};
+    update_param("lpf_vel_error_gain", lpf_vel_error_gain);
+    m_lpf_vel_error->setGain(lpf_vel_error_gain);
+
     double max_pid{node_parameters_->get_parameter("max_out").as_double()};
     double min_pid{node_parameters_->get_parameter("min_out").as_double()};
     double max_p{node_parameters_->get_parameter("max_p_effort").as_double()};
@@ -372,8 +376,11 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
     update_param("emergency_jerk", p.jerk);
   }
 
-  // acceleration limit
+  // acceleration feedback
   update_param("acc_feedback_gain", m_acc_feedback_gain);
+  double lpf_acc_error_gain{node_parameters_->get_parameter("lpf_acc_error_gain").as_double()};
+  update_param("lpf_acc_error_gain", lpf_acc_error_gain);
+  m_lpf_acc_error->setGain(lpf_acc_error_gain);
 
   // acceleration limit
   update_param("min_acc", m_min_acc);
