@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "autoware/pid_longitudinal_controller/pid.hpp"
-
+#include <iostream>
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
@@ -23,9 +23,7 @@
 namespace autoware::motion::control::pid_longitudinal_controller
 {
 PIDController::PIDController()
-: m_error_integral(0.0),
-  m_prev_error(0.0),
-  m_is_first_time(true),
+: m_prev_error(0.0),
   m_is_gains_set(false),
   m_is_limits_set(false)
 {
@@ -41,24 +39,22 @@ double PIDController::calculate(
 
   const auto & p = m_params;
 
-  double ret_p = p.kp * error;
+  static double virtual_displacement_error {0.0};
+  virtual_displacement_error += error * dt ;
+
+  double ret_p = p.kp * virtual_displacement_error;
   ret_p = std::min(std::max(ret_p, p.min_ret_p), p.max_ret_p);
+  std::cerr << "ret_p: " << ret_p << ", max: " << p.max_ret_p << ", min: " << p.min_ret_p << std::endl;
 
-  if (enable_integration) {
-    m_error_integral += error * dt;
-    m_error_integral = std::min(std::max(m_error_integral, p.min_ret_i / p.ki), p.max_ret_i / p.ki);
-  }
-  const double ret_i = p.ki * m_error_integral;
+  static double virtual_displacement_error_integral {0.0};
+  virtual_displacement_error_integral += virtual_displacement_error * dt;
+  
+  const double ret_i = enable_integration ? std::min(std::max(p.ki *virtual_displacement_error_integral, p.min_ret_i), p.max_ret_i) : 0.0;
+  std::cerr << "ret_i: " << ret_i << ", max: " << p.max_ret_i << ", min: " << p.min_ret_i << std::endl;
 
-  double error_differential;
-  if (m_is_first_time) {
-    error_differential = 0;
-    m_is_first_time = false;
-  } else {
-    error_differential = (error - m_prev_error) / dt;
-  }
-  double ret_d = p.kd * error_differential;
+  double ret_d = p.kd * error;
   ret_d = std::min(std::max(ret_d, p.min_ret_d), p.max_ret_d);
+  std::cerr << "ret_d: " << ret_d << ", max: " << p.max_ret_d << ", min: " << p.min_ret_d << std::endl;
 
   m_prev_error = error;
 
@@ -98,8 +94,6 @@ void PIDController::setLimits(
 
 void PIDController::reset()
 {
-  m_error_integral = 0.0;
   m_prev_error = 0.0;
-  m_is_first_time = true;
 }
 }  // namespace autoware::motion::control::pid_longitudinal_controller
