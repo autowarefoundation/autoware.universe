@@ -23,9 +23,9 @@
 namespace autoware::motion::control::pid_longitudinal_controller
 {
 PIDController::PIDController()
-: m_error_integral(0.0),
+: m_virtual_displacement_error(0.0),
+  m_virtual_displacement_error_integral(0.0),
   m_prev_error(0.0),
-  m_is_first_time(true),
   m_is_gains_set(false),
   m_is_limits_set(false)
 {
@@ -41,23 +41,20 @@ double PIDController::calculate(
 
   const auto & p = m_params;
 
-  double ret_p = p.kp * error;
+  m_virtual_displacement_error =
+    enable_integration ? m_virtual_displacement_error + error * dt : 0.0;
+
+  double ret_p = p.kp * m_virtual_displacement_error;
   ret_p = std::min(std::max(ret_p, p.min_ret_p), p.max_ret_p);
 
-  if (enable_integration) {
-    m_error_integral += error * dt;
-    m_error_integral = std::min(std::max(m_error_integral, p.min_ret_i / p.ki), p.max_ret_i / p.ki);
-  }
-  const double ret_i = p.ki * m_error_integral;
+  m_virtual_displacement_error_integral =
+    enable_integration ? m_virtual_displacement_error_integral + m_virtual_displacement_error * dt
+                       : 0.0;
 
-  double error_differential;
-  if (m_is_first_time) {
-    error_differential = 0;
-    m_is_first_time = false;
-  } else {
-    error_differential = (error - m_prev_error) / dt;
-  }
-  double ret_d = p.kd * error_differential;
+  const double ret_i =
+    std::min(std::max(p.ki * m_virtual_displacement_error_integral, p.min_ret_i), p.max_ret_i);
+
+  double ret_d = p.kd * error;
   ret_d = std::min(std::max(ret_d, p.min_ret_d), p.max_ret_d);
 
   m_prev_error = error;
@@ -98,8 +95,8 @@ void PIDController::setLimits(
 
 void PIDController::reset()
 {
-  m_error_integral = 0.0;
+  m_virtual_displacement_error = 0.0;
+  m_virtual_displacement_error_integral = 0.0;
   m_prev_error = 0.0;
-  m_is_first_time = true;
 }
 }  // namespace autoware::motion::control::pid_longitudinal_controller
