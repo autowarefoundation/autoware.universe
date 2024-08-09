@@ -49,15 +49,19 @@ class Lanelet2DifferentialLoaderModule
 {
 public:
   explicit Lanelet2DifferentialLoaderModule(
-    rclcpp::Node * node,
-    const std::map<std::string, Lanelet2FileMetaData> & lanelet2_file_metadata_dict, double & x_res,
-    double & y_res, const double & center_line_resolution);
+    rclcpp::Node * node, const double & center_line_resolution);
+
+  void setLaneletMapMetadata(
+    std::map<std::string, Lanelet2FileMetaData> & lanelet2_metadata_dict, double x_res,
+    double y_res);
+
+  void setProjectionInfo(const tier4_map_msgs::msg::MapProjectorInfo & projector_info);
+
+  lanelet::LaneletMapPtr differentialLanelet2Load(std::vector<std::string> & lanelet2_paths);
 
 private:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
-
-  rclcpp::Publisher<LaneletMapBin>::SharedPtr pub_whole_map_bin_;
 
   std::map<std::string, Lanelet2FileMetaData> lanelet2_file_metadata_dict_;
 
@@ -66,9 +70,6 @@ private:
   component_interface_utils::Publisher<map_interface::LaneletMapMetaData>::SharedPtr
     pub_lanelet_map_meta_data_;
 
-  component_interface_utils::Subscription<map_interface::MapProjectorInfo>::SharedPtr
-    sub_map_projector_info_;
-
   std::optional<tier4_map_msgs::msg::MapProjectorInfo> projector_info_;
 
   double center_line_resolution_;
@@ -76,12 +77,6 @@ private:
   bool onServiceGetDifferentialLanelet2Map(
     GetDifferentialLanelet2Map::Request::SharedPtr req,
     GetDifferentialLanelet2Map::Response::SharedPtr res);
-
-  LaneletMapBin loadWholeMap();
-
-  bool differentialLanelet2Load(
-    GetDifferentialLanelet2Map::Request::SharedPtr & request,
-    GetDifferentialLanelet2Map::Response::SharedPtr & response);
 
   autoware_map_msgs::msg::LaneletMapMetaData getLaneletMapMetaDataMsg(
     const double & x_res, const double & y_res) const;

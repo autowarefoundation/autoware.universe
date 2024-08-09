@@ -77,39 +77,22 @@ using tier4_map_msgs::msg::MapProjectorInfo;
 Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options)
 : Node("lanelet2_map_loader", options)
 {
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+
+  // subscription
+  adaptor.init_sub(
+    sub_map_projector_info_,
+    [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { on_map_projector_info(msg); });
+
+  declare_parameter<bool>("allow_unsupported_version");
   declare_parameter<std::string>("lanelet2_map_path");
   declare_parameter<double>("center_line_resolution");
   declare_parameter<bool>("use_waypoints");
-  declare_parameter<bool>("allow_unsupported_version");
   declare_parameter<bool>("enable_differential_map_loading");
 
-  if (!get_parameter("enable_differential_map_loading").as_bool()) {
-    RCLCPP_INFO(get_logger(), "Single osm file provided. Dynamic loading is disabled.");
-
-    const auto adaptor = component_interface_utils::NodeAdaptor(this);
-    adaptor.init_sub(
-      sub_map_projector_info_,
-      [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { on_map_projector_info(msg); });
-  } else {
-    RCLCPP_INFO(get_logger(), "Multiple osm file provided. Dynamic loading is enabled.");
-
-    std::vector<std::string> lanelet2_paths_or_directory = {
-      get_parameter("lanelet2_map_path").as_string()};
-    std::string lanelet2_map_metadata_path =
-      declare_parameter<std::string>("lanelet2_map_metadata_path");
-    double x_resolution, y_resolution;
-
-    std::map<std::string, Lanelet2FileMetaData> lanelet2_metadata_dict;
-    try {
-      lanelet2_metadata_dict = get_lanelet2_metadata(
-        lanelet2_map_metadata_path, get_lanelet2_paths(lanelet2_paths_or_directory), x_resolution,
-        y_resolution);
-    } catch (std::runtime_error & e) {
-      RCLCPP_ERROR_STREAM(get_logger(), "Failed to load lanelet2 metadata");
-    }
+  if (get_parameter("enable_differential_map_loading").as_bool()) {
     differential_loader_module_ = std::make_unique<Lanelet2DifferentialLoaderModule>(
-      this, lanelet2_metadata_dict, x_resolution, y_resolution,
-      get_parameter("center_line_resolution").as_double());
+      this, get_parameter("center_line_resolution").as_double());
   }
 }
 
@@ -117,15 +100,66 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
   const MapProjectorInfo::Message::ConstSharedPtr msg)
 {
   const auto allow_unsupported_version = get_parameter("allow_unsupported_version").as_bool();
-  const auto lanelet2_filename = get_parameter("lanelet2_map_path").as_string();
+  auto lanelet2_filename = get_parameter("lanelet2_map_path").as_string();
   const auto center_line_resolution = get_parameter("center_line_resolution").as_double();
   const auto use_waypoints = get_parameter("use_waypoints").as_bool();
+  const auto enable_differential_map_loading =
+    get_parameter("enable_differential_map_loading").as_bool();
 
-  // load map from file
-  const auto map = load_map(lanelet2_filename, *msg);
-  if (!map) {
-    RCLCPP_ERROR(get_logger(), "Failed to load lanelet2_map. Not published.");
-    return;
+  lanelet::LaneletMapPtr map;
+
+  if (!enable_differential_map_loading) {
+    map = load_map(lanelet2_filename, *msg);
+    if (!map) {
+      RCLCPP_ERROR(get_logger(), "Failed to load lanelet2_map. Not published.");
+      return;
+    }
+  } else {
+    RCLCPP_INFO(get_logger(), "Differential lanelet2 map loading is enabled.");
+
+    std::vector<std::string> lanelet2_paths_or_directory = {
+      get_parameter("lanelet2_map_path").as_string()};
+    std::string lanelet2_metadata_path =
+      declare_parameter<std::string>("lanelet2_map_metadata_path");
+    double x_resolution, y_resolution;
+
+    std::map<std::string, Lanelet2FileMetaData> lanelet2_metadata_dict;
+    if (std::filesystem::exists(lanelet2_metadata_path)) {
+      lanelet2_metadata_dict = get_lanelet2_metadata(
+        lanelet2_metadata_path, get_lanelet2_paths(lanelet2_paths_or_directory), x_resolution,
+        y_resolution);
+    } else {
+      if (lanelet2_paths_or_directory.size() == 1) {
+        // Create a dummy metadata for a single osm file
+        lanelet2_metadata_dict =
+          get_dummy_lanelet2_metadata(lanelet2_filename, msg, x_resolution, y_resolution);
+      } else {
+        throw std::runtime_error("Lanelet2 metadata file not found: " + lanelet2_metadata_path);
+      }
+    }
+
+    {
+      // set metadata and projection info to differential loader module
+      differential_loader_module_->setLaneletMapMetadata(
+        lanelet2_metadata_dict, x_resolution, y_resolution);
+      differential_loader_module_->setProjectionInfo(*msg);
+    }
+
+    {
+      // load whole map for once
+      std::vector<std::string> lanelet2_paths;
+      lanelet2_paths.reserve(lanelet2_metadata_dict.size());
+      for (const auto & [lanelet2_path, _] : lanelet2_metadata_dict) {
+        lanelet2_paths.push_back(lanelet2_path);
+      }
+      map = differential_loader_module_->differentialLanelet2Load(lanelet2_paths);
+    }
+    lanelet2_filename =
+      lanelet2_metadata_dict.begin()
+        ->first;  // TODO: find better way: `parseVersions` function read the osm
+                  // file to get map version info, so `lanelet2_filename` should
+                  // be osm file path, it changes `lanelet2_filename` hard coded.
+                  // Because of this, `lanelet2_filename` can't be const in line 103.
   }
 
   std::string format_version{"null"}, map_version{""};
@@ -273,22 +307,28 @@ std::map<std::string, Lanelet2FileMetaData> Lanelet2MapLoaderNode::get_lanelet2_
   double & x_resolution, double & y_resolution) const
 {
   std::map<std::string, Lanelet2FileMetaData> lanelet2_metadata_dict;
-  if (std::filesystem::exists(lanelet2_metadata_path)) {
-    lanelet2_metadata_dict =
-      loadLanelet2Metadata(lanelet2_metadata_path, x_resolution, y_resolution);
-    lanelet2_metadata_dict = replaceWithAbsolutePath(lanelet2_metadata_dict, lanelet2_paths);
-    RCLCPP_INFO_STREAM(get_logger(), "Loaded Lanelet2 metadata: " << lanelet2_metadata_path);
+  lanelet2_metadata_dict = loadLanelet2Metadata(lanelet2_metadata_path, x_resolution, y_resolution);
+  lanelet2_metadata_dict = replaceWithAbsolutePath(lanelet2_metadata_dict, lanelet2_paths);
+  RCLCPP_INFO_STREAM(get_logger(), "Loaded Lanelet2 metadata: " << lanelet2_metadata_path);
 
-    return lanelet2_metadata_dict;
-  }
+  return lanelet2_metadata_dict;
+}
 
-  if (lanelet2_paths.size() == 1) {
-    // TODO: create a dummy metadata file for single osm file.
-    throw std::runtime_error(
-      "Differential lanelet2 loading enabled but single lanelet2 file provided: " +
-      lanelet2_metadata_path);
-  }
-  throw std::runtime_error("Lanelet2 metadata file not found: " + lanelet2_metadata_path);
+std::map<std::string, Lanelet2FileMetaData> Lanelet2MapLoaderNode::get_dummy_lanelet2_metadata(
+  const std::string & lanelet2_path,
+  const MapProjectorInfo::Message::ConstSharedPtr projection_info, double & x_resolution,
+  double & y_resolution) const
+{
+  const auto map = load_map(lanelet2_path, *projection_info);
+
+  Lanelet2FileMetaData tile;
+  tile.id = "0";
+  tile.min_x = map->pointLayer.begin()->x() - (map->pointLayer.begin()->x() / 3);
+  tile.min_y = map->pointLayer.begin()->y() - (map->pointLayer.begin()->y() / 3);
+  x_resolution = (map->pointLayer.begin()->x() * 2) / 3;
+  y_resolution = (map->pointLayer.begin()->y() * 2) / 3;
+
+  return std::map<std::string, Lanelet2FileMetaData>{{lanelet2_path, tile}};
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
