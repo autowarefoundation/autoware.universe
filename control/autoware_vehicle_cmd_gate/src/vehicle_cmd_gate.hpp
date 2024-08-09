@@ -185,9 +185,9 @@ private:
   void onEmergencyCtrlCmd(Control::ConstSharedPtr msg);
 
   // Previous Turn Indicators, Hazard Lights and Gear
-  TurnIndicatorsCommand::SharedPtr prev_turn_indicator;
-  HazardLightsCommand::SharedPtr prev_hazard_light;
-  GearCommand::SharedPtr prev_gear;
+  TurnIndicatorsCommand::SharedPtr prev_turn_indicator_;
+  HazardLightsCommand::SharedPtr prev_hazard_light_;
+  GearCommand::SharedPtr prev_gear_;
 
   // Parameter
   bool use_emergency_handling_;
