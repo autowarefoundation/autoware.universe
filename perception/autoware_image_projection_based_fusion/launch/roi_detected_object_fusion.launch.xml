@@ -35,7 +35,7 @@
   <arg name="input/image7" default="/image_raw7"/>
 
   <group>
-    <node pkg="autoware_image_projection_based_fusion" exec="roi_detected_object_fusion_node" name="roi_detected_object_fusion" output="screen">
+    <node pkg="autoware_image_projection_based_fusion" exec="roi_detected_object_fusion_node" name="roi_detected_object_fusion" output="both">
       <param name="rois_number" value="$(var input/rois_number)"/>
       <param from="$(var sync_param_path)"/>
       <param from="$(var param_path)"/>
