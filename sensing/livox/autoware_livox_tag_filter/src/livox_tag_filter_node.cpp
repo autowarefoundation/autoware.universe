@@ -22,17 +22,11 @@
 
 struct EIGEN_ALIGN16 LivoxPoint
 {
-  float x;
-  float y;
-  float z;
-  float intensity;
   std::uint8_t tag;
   std::uint8_t line;
 };
 
-POINT_CLOUD_REGISTER_POINT_STRUCT(
-  LivoxPoint, (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(
-                std::uint8_t, tag, tag)(std::uint8_t, line, line))
+POINT_CLOUD_REGISTER_POINT_STRUCT(LivoxPoint, (std::uint8_t, tag, tag)(std::uint8_t, line, line))
 
 namespace autoware::livox_tag_filter
 {
