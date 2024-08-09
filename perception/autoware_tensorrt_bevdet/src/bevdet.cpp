@@ -435,15 +435,6 @@ int BEVDet::InitEngine(const std::string & engine_file)
 
   return EXIT_SUCCESS;
 }
-void save_tensor(size_t size, const void * ptr, const std::string & file)
-{
-  float * tensor = new float[size];
-  CHECK_CUDA(cudaMemcpy(tensor, ptr, size * sizeof(float), cudaMemcpyDeviceToHost));
-  std::ofstream out(file, std::ios::out | std::ios::binary);
-  out.write(reinterpret_cast<char *>(tensor), size * sizeof(float));
-  out.close();
-  delete[] tensor;
-}
 
 int BEVDet::DeserializeTRTEngine(
   const std::string & engine_file, nvinfer1::ICudaEngine ** engine_ptr)

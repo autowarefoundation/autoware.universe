@@ -175,7 +175,7 @@ void decode_single_image(
   CHECK_NVJPEG(nvjpegDecodeParamsSetOutputFormat(params.nvjpeg_decode_params, share_param.fmt));
 
   CHECK_NVJPEG(nvjpegJpegStreamParse(
-    share_param.nvjpeg_handle, (const uchar *)img_data.data(), img_data.size(), 0, 0,
+    share_param.nvjpeg_handle, reinterpret_cast<const uchar *>(img_data.data()), img_data.size(), 0, 0,
     params.jpeg_streams[buffer_index]));
 
   CHECK_NVJPEG(nvjpegStateAttachPinnedBuffer(
