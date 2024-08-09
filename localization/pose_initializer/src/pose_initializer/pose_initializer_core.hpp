@@ -29,6 +29,7 @@ class LocalizationModule;
 class GnssModule;
 class EkfLocalizationTriggerModule;
 class NdtLocalizationTriggerModule;
+class NeRFModule;
 
 class PoseInitializer : public rclcpp::Node
 {
@@ -49,6 +50,7 @@ private:
   std::array<double, 36> output_pose_covariance_{};
   std::array<double, 36> gnss_particle_covariance_{};
   std::unique_ptr<GnssModule> gnss_;
+  std::unique_ptr<NeRFModule> nerf_;
   std::unique_ptr<LocalizationModule> ndt_;
   std::unique_ptr<LocalizationModule> yabloc_;
   std::unique_ptr<StopCheckModule> stop_check_;

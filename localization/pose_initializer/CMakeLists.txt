@@ -7,6 +7,7 @@ autoware_package()
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/pose_initializer/pose_initializer_core.cpp
   src/pose_initializer/gnss_module.cpp
+  src/pose_initializer/nerf_module.cpp
   src/pose_initializer/localization_module.cpp
   src/pose_initializer/stop_check_module.cpp
   src/pose_initializer/ekf_localization_trigger_module.cpp
