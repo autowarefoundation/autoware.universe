@@ -37,6 +37,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace autoware::motion_planning
@@ -79,6 +80,11 @@ private:
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
     const double precise_lateral_dist) const;
+  std::optional<std::pair<geometry_msgs::msg::Point, double>>
+  createCollisionPointForOutsideStopObstacle(
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
+    const PredictedPath & resampled_predicted_path, double max_lat_margin_for_stop) const;
   std::optional<StopObstacle> createStopObstacleForPointCloud(
     const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle,
     const double precise_lateral_dist) const;
@@ -87,9 +93,6 @@ private:
   bool isOutsideCruiseObstacle(const uint8_t label) const;
   bool isCruiseObstacle(const uint8_t label) const;
   bool isSlowDownObstacle(const uint8_t label) const;
-  std::optional<geometry_msgs::msg::Point> createCollisionPointForStopObstacle(
-    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle) const;
   std::optional<CruiseObstacle> createYieldCruiseObstacle(
     const Obstacle & obstacle, const std::vector<TrajectoryPoint> & traj_points);
   std::optional<std::vector<CruiseObstacle>> findYieldCruiseObstacles(
@@ -129,7 +132,9 @@ private:
   bool isFrontCollideObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle,
     const size_t first_collision_idx) const;
-
+  double calcTimeToReachCollisionPoint(
+    const Odometry & odometry, const geometry_msgs::msg::Point & collision_point,
+    const std::vector<TrajectoryPoint> & traj_points, const double abs_ego_offset) const;
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
   bool use_pointcloud_for_stop_;
@@ -226,6 +231,7 @@ private:
     double ego_obstacle_overlap_time_threshold;
     double max_prediction_time_for_collision_check;
     double crossing_obstacle_traj_angle_threshold;
+    double max_lateral_time_margin;
     // obstacle hold
     double stop_obstacle_hold_time_threshold;
     // prediction resampling
