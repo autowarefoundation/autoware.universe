@@ -491,7 +491,8 @@ void VehicleCmdGate::onTimer()
   }
 
   if (prev_hazard_light_ != nullptr) {
-    *prev_hazard_light_ = getContinuousTopic(prev_hazard_light_, hazard_light, "HazardLightsCommand");
+    *prev_hazard_light_ =
+      getContinuousTopic(prev_hazard_light_, hazard_light, "HazardLightsCommand");
     hazard_light_cmd_pub_->publish(*prev_hazard_light_);
   } else {
     if (
