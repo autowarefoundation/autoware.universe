@@ -1500,6 +1500,8 @@ bool NormalLaneChange::getLaneChangePaths(
           const auto lc_length_diff =
             candidate_paths->back().info.length.lane_changing - lane_changing_length;
 
+          // We only check lc_length_diff if and only if the current prepare_length is equal to the
+          // previous prepare_length.
           if (
             std::abs(prev_prep_diff) < eps &&
             std::abs(lc_length_diff) <
