@@ -304,7 +304,8 @@ TrackerState::~TrackerState()
 }
 
 TrackedObjects getTrackedObjectsFromTrackerStates(
-  std::vector<TrackerState> & tracker_states, const rclcpp::Time & current_time, const std::string & frame_id)
+  std::vector<TrackerState> & tracker_states, const rclcpp::Time & current_time,
+  const std::string & frame_id)
 {
   TrackedObjects tracked_objects;
 
