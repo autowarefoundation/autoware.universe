@@ -437,4 +437,5 @@ template class FusionNode<
 template class FusionNode<PointCloud2, DetectedObjects, DetectedObjectsWithFeature>;
 template class FusionNode<PointCloud2, DetectedObjectWithFeature, DetectedObjectsWithFeature>;
 template class FusionNode<PointCloud2, PointCloud2, Image>;
+template class FusionNode<PointCloud2, PointCloud2, DetectedObjectsWithMask>;
 }  // namespace autoware::image_projection_based_fusion
