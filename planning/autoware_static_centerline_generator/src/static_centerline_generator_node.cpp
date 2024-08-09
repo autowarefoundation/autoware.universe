@@ -14,6 +14,7 @@
 
 #include "static_centerline_generator_node.hpp"
 
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
@@ -23,7 +24,6 @@
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
 #include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
 #include "centerline_source/bag_ego_trajectory_based_centerline.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "map_loader/lanelet2_map_loader_node.hpp"
 #include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 #include "map_projection_loader/map_projection_loader.hpp"

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolation/spherical_linear_interpolation.hpp"
+#include "autoware/interpolation/spherical_linear_interpolation.hpp"
 
-namespace interpolation
+namespace autoware::interpolation
 {
 geometry_msgs::msg::Quaternion slerp(
   const geometry_msgs::msg::Quaternion & src_quat, const geometry_msgs::msg::Quaternion & dst_quat,
@@ -68,4 +68,4 @@ geometry_msgs::msg::Quaternion lerpOrientation(
   const auto q_interpolated = q_from.slerp(q_to, ratio);
   return tf2::toMsg(q_interpolated);
 }
-}  // namespace interpolation
+}  // namespace autoware::interpolation

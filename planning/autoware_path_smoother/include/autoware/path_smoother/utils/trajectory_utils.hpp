@@ -15,12 +15,12 @@
 #ifndef AUTOWARE__PATH_SMOOTHER__UTILS__TRAJECTORY_UTILS_HPP_
 #define AUTOWARE__PATH_SMOOTHER__UTILS__TRAJECTORY_UTILS_HPP_
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/path_smoother/common_structs.hpp"
 #include "autoware/path_smoother/type_alias.hpp"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 
 #include <Eigen/Core>
 

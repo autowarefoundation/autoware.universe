@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERPOLATION__ZERO_ORDER_HOLD_HPP_
-#define INTERPOLATION__ZERO_ORDER_HOLD_HPP_
+#ifndef AUTOWARE__INTERPOLATION__ZERO_ORDER_HOLD_HPP_
+#define AUTOWARE__INTERPOLATION__ZERO_ORDER_HOLD_HPP_
 
-#include "interpolation/interpolation_utils.hpp"
+#include "autoware/interpolation/interpolation_utils.hpp"
 
 #include <vector>
 
-namespace interpolation
+namespace autoware::interpolation
 {
 inline std::vector<size_t> calc_closest_segment_indices(
   const std::vector<double> & base_keys, const std::vector<double> & query_keys,
@@ -76,6 +76,6 @@ std::vector<T> zero_order_hold(
   return zero_order_hold(
     base_keys, base_values, calc_closest_segment_indices(base_keys, query_keys, overlap_threshold));
 }
-}  // namespace interpolation
+}  // namespace autoware::interpolation
 
-#endif  // INTERPOLATION__ZERO_ORDER_HOLD_HPP_
+#endif  // AUTOWARE__INTERPOLATION__ZERO_ORDER_HOLD_HPP_

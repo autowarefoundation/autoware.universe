@@ -17,8 +17,8 @@
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
+#include <autoware/interpolation/linear_interpolation.hpp>
 #include <eigen3/Eigen/Core>
-#include <interpolation/linear_interpolation.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 

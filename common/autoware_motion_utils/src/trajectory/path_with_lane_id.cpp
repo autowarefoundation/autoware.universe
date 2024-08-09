@@ -14,8 +14,8 @@
 
 #include "autoware/motion_utils/trajectory/path_with_lane_id.hpp"
 
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 
 #include <algorithm>
 #include <utility>

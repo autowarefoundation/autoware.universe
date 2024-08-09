@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERPOLATION__SPLINE_INTERPOLATION_POINTS_2D_HPP_
-#define INTERPOLATION__SPLINE_INTERPOLATION_POINTS_2D_HPP_
+#ifndef AUTOWARE__INTERPOLATION__SPLINE_INTERPOLATION_POINTS_2D_HPP_
+#define AUTOWARE__INTERPOLATION__SPLINE_INTERPOLATION_POINTS_2D_HPP_
 
-#include "interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
 
 #include <vector>
 
-namespace interpolation
+namespace autoware::interpolation
 {
 std::array<std::vector<double>, 3> slerp2dFromXY(
   const std::vector<double> & base_keys, const std::vector<double> & base_x_values,
@@ -27,7 +27,6 @@ std::array<std::vector<double>, 3> slerp2dFromXY(
 
 template <typename T>
 std::vector<double> splineYawFromPoints(const std::vector<T> & points);
-}  // namespace interpolation
 
 // non-static points spline interpolation
 // NOTE: We can calculate yaw from the x and y by interpolation derivatives.
@@ -88,5 +87,6 @@ private:
 
   std::vector<double> base_s_vec_;
 };
+}  // namespace autoware::interpolation
 
-#endif  // INTERPOLATION__SPLINE_INTERPOLATION_POINTS_2D_HPP_
+#endif  // AUTOWARE__INTERPOLATION__SPLINE_INTERPOLATION_POINTS_2D_HPP_

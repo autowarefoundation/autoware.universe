@@ -15,10 +15,10 @@
 #ifndef AUTOWARE__PID_LONGITUDINAL_CONTROLLER__LONGITUDINAL_CONTROLLER_UTILS_HPP_
 #define AUTOWARE__PID_LONGITUDINAL_CONTROLLER__LONGITUDINAL_CONTROLLER_UTILS_HPP_
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spherical_linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spherical_linear_interpolation.hpp"
 #include "tf2/utils.h"
 
 #include <Eigen/Core>

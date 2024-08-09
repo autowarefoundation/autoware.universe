@@ -14,10 +14,10 @@
 
 #include "autoware/mpc_lateral_controller/mpc.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/mpc_lateral_controller/mpc_utils.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
-#include "interpolation/linear_interpolation.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include <algorithm>

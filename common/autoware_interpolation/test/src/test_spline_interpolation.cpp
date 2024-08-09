@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/interpolation/spline_interpolation.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/spline_interpolation.hpp"
 
 #include <gtest/gtest.h>
 
@@ -30,7 +30,7 @@ TEST(spline_interpolation, spline)
     const std::vector<double> query_keys = base_keys;
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
+    const auto query_values = autoware::interpolation::spline(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -42,7 +42,7 @@ TEST(spline_interpolation, spline)
     const std::vector<double> query_keys{0.0, 0.7, 1.9, 4.0};
     const std::vector<double> ans{0.0, 1.05, 2.85, 6.0};
 
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
+    const auto query_values = autoware::interpolation::spline(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -54,7 +54,7 @@ TEST(spline_interpolation, spline)
     const std::vector<double> query_keys = base_keys;
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
+    const auto query_values = autoware::interpolation::spline(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -66,7 +66,7 @@ TEST(spline_interpolation, spline)
     const std::vector<double> query_keys{0.0, 8.0, 18.0};
     const std::vector<double> ans{-0.075611, 0.997242, 1.573258};
 
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
+    const auto query_values = autoware::interpolation::spline(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -78,7 +78,7 @@ TEST(spline_interpolation, spline)
     const std::vector<double> query_keys = base_keys;
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
+    const auto query_values = autoware::interpolation::spline(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -90,7 +90,7 @@ TEST(spline_interpolation, spline)
     const std::vector<double> query_keys = base_keys;
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
+    const auto query_values = autoware::interpolation::spline(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -102,7 +102,7 @@ TEST(spline_interpolation, spline)
     const std::vector<double> query_keys{-1.0, 0.0, 4.0};
     const std::vector<double> ans{-0.808769, -0.077539, 1.035096};
 
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
+    const auto query_values = autoware::interpolation::spline(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -114,7 +114,7 @@ TEST(spline_interpolation, spline)
     const std::vector<double> query_keys = {0.0, 1.0, 1.5, 2.0, 3.0, 4.0};
     const std::vector<double> ans = {0.0, 0.0, 137.591789, 0.1, 0.1, 0.1};
 
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
+    const auto query_values = autoware::interpolation::spline(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -129,7 +129,8 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys = base_keys;
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::splineByAkima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -141,7 +142,8 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys{0.0, 0.7, 1.9, 4.0};
     const std::vector<double> ans{0.0, 1.05, 2.85, 6.0};
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::splineByAkima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -153,7 +155,8 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys = base_keys;
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::splineByAkima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -165,7 +168,8 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys{0.0, 8.0, 18.0};
     const std::vector<double> ans{-0.0801, 1.110749, 1.4864};
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::splineByAkima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -177,7 +181,8 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys = base_keys;
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::splineByAkima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -189,7 +194,8 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys = base_keys;
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::splineByAkima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -201,7 +207,8 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys{-1.0, 0.0, 4.0};
     const std::vector<double> ans{-0.8378, -0.0801, 0.927031};
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::splineByAkima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -213,7 +220,8 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys = {0.0, 1.0, 1.5, 2.0, 3.0, 4.0};
     const std::vector<double> ans = {0.0, 0.0, 0.1, 0.1, 0.1, 0.1};
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::splineByAkima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }

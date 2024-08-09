@@ -14,7 +14,7 @@
 
 #include "autoware_raw_vehicle_cmd_converter/accel_map.hpp"
 
-#include "interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
 
 #include <algorithm>
 #include <chrono>

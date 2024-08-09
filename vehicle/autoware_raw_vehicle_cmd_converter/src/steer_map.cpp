@@ -14,7 +14,7 @@
 
 #include "autoware_raw_vehicle_cmd_converter/steer_map.hpp"
 
-#include "interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
 
 #include <string>
 #include <vector>

@@ -14,9 +14,9 @@
 
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/linear_interpolation.hpp"
 
 #include <algorithm>
 #include <limits>

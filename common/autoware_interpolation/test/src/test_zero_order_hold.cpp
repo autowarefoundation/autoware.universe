@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolation/zero_order_hold.hpp"
+#include "autoware/interpolation/zero_order_hold.hpp"
 
 #include <gtest/gtest.h>
 
@@ -29,7 +29,8 @@ TEST(zero_order_hold_interpolation, vector_interpolation)
     const std::vector<double> query_keys = base_keys;
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::zero_order_hold(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::zero_order_hold(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -41,7 +42,8 @@ TEST(zero_order_hold_interpolation, vector_interpolation)
     const std::vector<double> query_keys{0.0, 0.7, 1.9, 4.0};
     const std::vector<double> ans{0.0, 0.0, 1.5, 6.0};
 
-    const auto query_values = interpolation::zero_order_hold(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::zero_order_hold(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -53,7 +55,8 @@ TEST(zero_order_hold_interpolation, vector_interpolation)
     const std::vector<double> query_keys = base_keys;
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::zero_order_hold(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::zero_order_hold(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -65,7 +68,8 @@ TEST(zero_order_hold_interpolation, vector_interpolation)
     const std::vector<double> query_keys{0.0, 8.0, 18.0};
     const std::vector<double> ans{-1.2, 1.0, 2.0};
 
-    const auto query_values = interpolation::zero_order_hold(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::zero_order_hold(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -77,7 +81,8 @@ TEST(zero_order_hold_interpolation, vector_interpolation)
     const std::vector<double> query_keys{0.0, 1.0, 2.0, 3.0, 4.0 - 0.001};
     const std::vector<double> ans = {0.0, 1.5, 2.5, 3.5, 3.5};
 
-    const auto query_values = interpolation::zero_order_hold(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::zero_order_hold(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -89,7 +94,8 @@ TEST(zero_order_hold_interpolation, vector_interpolation)
     const std::vector<double> query_keys{0.0, 1.0, 2.0, 3.0, 4.0 - 0.0001};
     const std::vector<double> ans = {0.0, 1.5, 2.5, 3.5, 0.0};
 
-    const auto query_values = interpolation::zero_order_hold(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::zero_order_hold(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -104,7 +110,8 @@ TEST(zero_order_hold_interpolation, vector_interpolation_no_double_interpolation
     const std::vector<double> query_keys = base_keys;
     const auto ans = base_values;
 
-    const auto query_values = interpolation::zero_order_hold(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::zero_order_hold(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_EQ(query_values.at(i), ans.at(i));
     }
@@ -116,7 +123,8 @@ TEST(zero_order_hold_interpolation, vector_interpolation_no_double_interpolation
     const std::vector<double> query_keys{0.0, 0.7, 1.9, 4.0};
     const std::vector<bool> ans = {true, true, false, false};
 
-    const auto query_values = interpolation::zero_order_hold(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::zero_order_hold(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_EQ(query_values.at(i), ans.at(i));
     }
@@ -128,7 +136,8 @@ TEST(zero_order_hold_interpolation, vector_interpolation_no_double_interpolation
     const std::vector<double> query_keys{0.0, 1.0, 2.0, 3.0, 4.0 - 0.001};
     const std::vector<double> ans = {true, true, false, true, true};
 
-    const auto query_values = interpolation::zero_order_hold(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::zero_order_hold(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -140,7 +149,8 @@ TEST(zero_order_hold_interpolation, vector_interpolation_no_double_interpolation
     const std::vector<double> query_keys{0.0, 1.0, 2.0, 3.0, 4.0 - 0.0001};
     const std::vector<double> ans = base_values;
 
-    const auto query_values = interpolation::zero_order_hold(base_keys, base_values, query_keys);
+    const auto query_values =
+      autoware::interpolation::zero_order_hold(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }

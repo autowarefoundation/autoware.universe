@@ -14,7 +14,7 @@
 
 #include "include/pose_covariance_modifier.hpp"
 
-#include <interpolation/linear_interpolation.hpp>
+#include <autoware/interpolation/linear_interpolation.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>

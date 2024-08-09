@@ -14,6 +14,7 @@
 
 #include "autoware_path_sampler/node.hpp"
 
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/marker/marker_helper.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware_path_sampler/path_generation.hpp"
@@ -22,7 +23,6 @@
 #include "autoware_path_sampler/utils/trajectory_utils.hpp"
 #include "autoware_sampler_common/constraints/hard_constraint.hpp"
 #include "autoware_sampler_common/constraints/soft_constraint.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "rclcpp/time.hpp"
 
 #include <boost/geometry/algorithms/distance.hpp>
