@@ -1,5 +1,10 @@
 /**:
   ros__parameters:
+    temp_timeout: 5
+    usage_timeout: 5
+    load_timeout: 5
+    freq_timeout: 5
+    throttle_timeout: 5
     usage_warn: 0.96
     usage_error: 0.96
     usage_warn_count: 1
