@@ -1000,7 +1000,6 @@ lane_change::TargetObjects NormalLaneChange::getTargetObjects(
 FilteredByLanesExtendedObjects NormalLaneChange::filterObjects() const
 {
   const auto & route_handler = getRouteHandler();
-  const auto & common_parameters = planner_data_->parameters;
   auto objects = *planner_data_->dynamic_object;
   utils::path_safety_checker::filterObjectsByClass(
     objects, lane_change_parameters_->object_types_to_check);
@@ -1057,46 +1056,21 @@ FilteredByLanesExtendedObjects NormalLaneChange::filterObjects() const
       return is_within_vel_th(object) && ahead_of_ego;
     });
 
-  ExtendedPredictedObjects extended_target_lane_leading_objects;
   const auto is_check_prepare_phase = check_prepare_phase();
-  std::for_each(
-    filtered_by_lanes_objects.target_lane_leading.begin(),
-    filtered_by_lanes_objects.target_lane_leading.end(), [&](const auto & object) {
-      auto extended_predicted_object = utils::lane_change::transform(
-        object, common_parameters, *lane_change_parameters_, is_check_prepare_phase);
-      extended_target_lane_leading_objects.push_back(extended_predicted_object);
-    });
-
-  ExtendedPredictedObjects extended_target_lane_trailing_objects;
-  std::for_each(
-    filtered_by_lanes_objects.target_lane_trailing.begin(),
-    filtered_by_lanes_objects.target_lane_trailing.end(), [&](const auto & object) {
-      auto extended_predicted_object = utils::lane_change::transform(
-        object, common_parameters, *lane_change_parameters_, is_check_prepare_phase);
-      extended_target_lane_trailing_objects.push_back(extended_predicted_object);
-    });
-
-  ExtendedPredictedObjects extended_current_lane_objects;
-  std::for_each(
-    filtered_by_lanes_objects.current_lane.begin(), filtered_by_lanes_objects.current_lane.end(),
-    [&](const auto & object) {
-      auto extended_predicted_object = utils::lane_change::transform(
-        object, common_parameters, *lane_change_parameters_, is_check_prepare_phase);
-      extended_current_lane_objects.push_back(extended_predicted_object);
-    });
-
-  ExtendedPredictedObjects extended_other_lane_objects;
-  std::for_each(
-    filtered_by_lanes_objects.other_lane.begin(), filtered_by_lanes_objects.other_lane.end(),
-    [&](const auto & object) {
-      auto extended_predicted_object = utils::lane_change::transform(
-        object, common_parameters, *lane_change_parameters_, is_check_prepare_phase);
-      extended_other_lane_objects.push_back(extended_predicted_object);
-    });
+  const auto target_lane_leading_extended_objects =
+    utils::lane_change::transform_to_extended_objects(
+      common_data_ptr_, filtered_by_lanes_objects.target_lane_leading, is_check_prepare_phase);
+  const auto target_lane_trailing_extended_objects =
+    utils::lane_change::transform_to_extended_objects(
+      common_data_ptr_, filtered_by_lanes_objects.target_lane_trailing, is_check_prepare_phase);
+  const auto current_lane_extended_objects = utils::lane_change::transform_to_extended_objects(
+    common_data_ptr_, filtered_by_lanes_objects.current_lane, is_check_prepare_phase);
+  const auto other_lane_extended_objects = utils::lane_change::transform_to_extended_objects(
+    common_data_ptr_, filtered_by_lanes_objects.other_lane, is_check_prepare_phase);
 
   FilteredByLanesExtendedObjects lane_change_target_objects(
-    extended_current_lane_objects, extended_target_lane_leading_objects,
-    extended_target_lane_trailing_objects, extended_other_lane_objects);
+    current_lane_extended_objects, target_lane_leading_extended_objects,
+    target_lane_trailing_extended_objects, other_lane_extended_objects);
   lane_change_debug_.filtered_objects = lane_change_target_objects;
   return lane_change_target_objects;
 }
