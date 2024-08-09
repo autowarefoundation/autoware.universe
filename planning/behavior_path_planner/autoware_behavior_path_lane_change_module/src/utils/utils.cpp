@@ -38,6 +38,7 @@
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
 
 #include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
+#include <boost/geometry/algorithms/difference.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/LineString.h>
@@ -1224,8 +1225,16 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
   const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
     lanes->target, common_data_ptr->direction, lc_param_ptr->lane_expansion_left_offset,
     lc_param_ptr->lane_expansion_right_offset);
-  lanes_polygon.expanded_target = utils::lane_change::createPolygon(
+
+  const auto expanded_target_polygon = utils::lane_change::createPolygon(
     expanded_target_lanes, 0.0, std::numeric_limits<double>::max());
+
+  std::vector<lanelet::BasicPolygon2d> difference;
+  boost::geometry::difference(*expanded_target_polygon, *lanes_polygon.target, difference);
+
+  if (!difference.empty()) {
+    lanes_polygon.expanded_target = std::make_optional<lanelet::BasicPolygon2d>(difference.front());
+  }
 
   const auto & route_handler = *common_data_ptr->route_handler_ptr;
   lanes_polygon.target_neighbor =
