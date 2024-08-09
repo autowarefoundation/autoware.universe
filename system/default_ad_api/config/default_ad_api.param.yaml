@@ -6,3 +6,8 @@
   ros__parameters:
     require_accept_start: false
     stop_check_duration: 1.0
+
+/default_ad_api/node/planning:
+  ros__parameters:
+    stop_distance: 1.0
+    stop_duration: 1.0

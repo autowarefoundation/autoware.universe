@@ -34,3 +34,7 @@ The vehicle is ready. Please change the operation mode to autonomous.
 The vehicle is driving autonomously.
 The vehicle has reached the goal of the route. Please reset a route.
 ```
+
+## Parameters
+
+{{json_to_markdown("/system/default_ad_api/schema/default_ad_api.schema.json")}}

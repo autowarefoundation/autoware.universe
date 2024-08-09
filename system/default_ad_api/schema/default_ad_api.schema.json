@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for default_ad_api",
+  "type": "object",
+  "definitions": {
+    "default_ad_api_node": {
+      "type": "object",
+      "properties": {
+        "update_rate": {
+          "type": "number",
+          "default": 10.0,
+          "description": "Update rate for the node."
+        },
+        "require_accept_start": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require acceptance to start motion."
+        },
+        "stop_check_duration": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Duration for stop check in seconds."
+        },
+        "stop_distance": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Distance to stop before an obstacle in meters."
+        },
+        "stop_duration": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Duration to remain stopped in seconds."
+        }
+      },
+      "required": [
+        "update_rate",
+        "require_accept_start",
+        "stop_check_duration",
+        "stop_distance",
+        "stop_duration"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#definitions/default_ad_api_node"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}

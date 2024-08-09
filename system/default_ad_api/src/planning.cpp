@@ -66,8 +66,8 @@ T merge_factors(const rclcpp::Time stamp, const std::vector<typename T::ConstSha
 PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning", options)
 {
   // TODO(Takagi, Isamu): remove default value
-  stop_distance_ = declare_parameter<double>("stop_distance", 1.0);
-  stop_duration_ = declare_parameter<double>("stop_duration", 1.0);
+  stop_distance_ = declare_parameter<double>("stop_distance");
+  stop_duration_ = declare_parameter<double>("stop_duration");
   stop_checker_ = std::make_unique<VehicleStopChecker>(this, stop_duration_ + 1.0);
 
   std::vector<std::string> velocity_factor_topics = {
