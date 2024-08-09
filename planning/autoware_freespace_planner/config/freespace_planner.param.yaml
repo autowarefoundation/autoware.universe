@@ -30,11 +30,14 @@
 
     # -- A* search Configurations --
     astar:
+      search_method: "forward"  # options: forward, backward
       only_behind_solutions: false
       use_back: true
+      adapt_expansion_distance: true
       expansion_distance: 0.5
-      distance_heuristic_weight: 1.0
+      distance_heuristic_weight: 1.5
       smoothness_weight: 0.5
+      obstacle_distance_weight: 1.5
 
     # -- RRT* search Configurations --
     rrtstar:
