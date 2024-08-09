@@ -2457,7 +2457,7 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
     const bool use_akima_spline_for_xy = true;
     const bool use_lerp_for_z = true;
     // the options use_akima_spline_for_xy and use_lerp_for_z are set to true
-    // but the implementation of use_akima_slpine_for_xy in resamplePoseVector and
+    // but the implementation of use_akima_spline_for_xy in resamplePoseVector and
     // resamplePointVector is opposite to the options so the options are set to true to use linear
     // interpolation for xy
     const auto resampled_converted_path = autoware::motion_utils::resamplePoseVector(
