@@ -172,6 +172,8 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   pub_acc_ = create_publisher<AccelWithCovarianceStamped>("output/acceleration", QoS{1});
   pub_imu_ = create_publisher<Imu>("output/imu", QoS{1});
   pub_tf_ = create_publisher<tf2_msgs::msg::TFMessage>("/tf", QoS{1});
+  pub_actuation_status_ =
+    create_publisher<ActuationStatusStamped>("output/actuation_status", QoS{1});
 
   /* set param callback */
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -323,13 +325,29 @@ void SimplePlanningSimulator::initialize_vehicle_model(const std::string & vehic
     // actuation conversion map
     const std::string accel_map_path = declare_parameter<std::string>("accel_map_path");
     const std::string brake_map_path = declare_parameter<std::string>("brake_map_path");
-    const std::string steer_map_path = declare_parameter<std::string>("steer_map_path");
 
-    vehicle_model_ptr_ = std::make_shared<SimModelActuationCmd>(
-      vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
-      accel_time_delay, accel_time_constant, brake_time_delay, brake_time_constant,
-      steer_time_delay, steer_time_constant, steer_bias, convert_accel_cmd, convert_brake_cmd,
-      convert_steer_cmd, accel_map_path, brake_map_path, steer_map_path);
+    const std::string convert_steer_cmd_method =
+      declare_parameter<std::string>("convert_steer_cmd_method", "vgr");
+    if (convert_steer_cmd_method == "vgr") {
+      const double vgr_coef_a = declare_parameter("vgr_coef_a", 15.713);
+      const double vgr_coef_b = declare_parameter("vgr_coef_b", 0.053);
+      const double vgr_coef_c = declare_parameter("vgr_coef_c", 0.042);
+      vehicle_model_ptr_ = std::make_shared<SimModelActuationCmd>(
+        vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase,
+        timer_sampling_time_ms_ / 1000.0, accel_time_delay, accel_time_constant, brake_time_delay,
+        brake_time_constant, steer_time_delay, steer_time_constant, steer_bias, convert_accel_cmd,
+        convert_brake_cmd, convert_steer_cmd, accel_map_path, brake_map_path, vgr_coef_a,
+        vgr_coef_b, vgr_coef_c);
+    } else if (convert_steer_cmd_method == "steer_map") {
+      const std::string steer_map_path = declare_parameter<std::string>("steer_map_path");
+      vehicle_model_ptr_ = std::make_shared<SimModelActuationCmd>(
+        vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase,
+        timer_sampling_time_ms_ / 1000.0, accel_time_delay, accel_time_constant, brake_time_delay,
+        brake_time_constant, steer_time_delay, steer_time_constant, steer_bias, convert_accel_cmd,
+        convert_brake_cmd, convert_steer_cmd, accel_map_path, brake_map_path, steer_map_path);
+    } else {
+      throw std::invalid_argument("Invalid convert_steer_cmd_method: " + convert_steer_cmd_method);
+    }
   } else {
     throw std::invalid_argument("Invalid vehicle_model_type: " + vehicle_model_type_str);
   }
@@ -445,7 +463,6 @@ void SimplePlanningSimulator::on_timer()
   // publish vehicle state
   publish_odometry(current_odometry_);
   publish_velocity(current_velocity_);
-  publish_steering(current_steer_);
   publish_acceleration();
   publish_imu();
 
@@ -454,6 +471,12 @@ void SimplePlanningSimulator::on_timer()
   publish_turn_indicators_report();
   publish_hazard_lights_report();
   publish_tf(current_odometry_);
+
+  if (vehicle_model_type_ == VehicleModelType::ACTUATION_CMD) {
+    publish_actuation_status();
+  } else {
+    publish_steering(current_steer_);
+  }
 }
 
 void SimplePlanningSimulator::on_map(const LaneletMapBin::ConstSharedPtr msg)
@@ -849,6 +872,25 @@ void SimplePlanningSimulator::publish_tf(const Odometry & odometry)
   tf2_msgs::msg::TFMessage tf_msg{};
   tf_msg.transforms.emplace_back(std::move(tf));
   pub_tf_->publish(tf_msg);
+}
+
+void SimplePlanningSimulator::publish_actuation_status()
+{
+  if (vehicle_model_type_ != VehicleModelType::ACTUATION_CMD) {
+    return;
+  }
+  const auto model = std::dynamic_pointer_cast<SimModelActuationCmd>(vehicle_model_ptr_);
+  if (!model) {
+    return;
+  }
+  auto actuation_status = model->getActuationStatus();
+  if (!actuation_status.has_value()) {
+    return;
+  }
+
+  actuation_status.value().header.stamp = get_clock()->now();
+  actuation_status.value().header.frame_id = simulated_frame_id_;
+  pub_actuation_status_->publish(actuation_status.value());
 }
 }  // namespace simple_planning_simulator
 }  // namespace simulation
