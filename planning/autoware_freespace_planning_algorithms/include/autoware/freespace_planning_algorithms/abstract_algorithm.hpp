@@ -24,10 +24,13 @@
 #include <tf2/utils.h>
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 namespace autoware::freespace_planning_algorithms
 {
+geometry_msgs::msg::Pose transformPose(
+  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::TransformStamped & transform);
 int discretizeAngle(const double theta, const int theta_size);
 
 struct IndexXYT
@@ -35,6 +38,11 @@ struct IndexXYT
   int x;
   int y;
   int theta;
+
+  bool operator==(const IndexXYT & index) const
+  {
+    return (x == index.x && y == index.y && theta == index.theta);
+  }
 };
 
 struct IndexXY
@@ -63,6 +71,8 @@ struct VehicleShape
   double base_length;
   double max_steering;
   double base2back;  // base_link to rear [m]
+  double min_dimension;
+  double max_dimension;
 
   VehicleShape() = default;
 
@@ -74,6 +84,7 @@ struct VehicleShape
     max_steering(max_steering),
     base2back(base2back)
   {
+    setMinMaxDimension();
   }
 
   explicit VehicleShape(
@@ -84,6 +95,19 @@ struct VehicleShape
     max_steering(vehicle_info.max_steer_angle_rad),
     base2back(vehicle_info.rear_overhang_m + margin / 2.0)
   {
+    setMinMaxDimension();
+  }
+
+  void setMinMaxDimension()
+  {
+    const auto base2front = length - base2back;
+    if (base2back <= base2front) {
+      min_dimension = std::min(0.5 * width, base2back);
+      max_dimension = std::hypot(base2front, 0.5 * width);
+    } else {
+      min_dimension = std::min(0.5 * width, base2front);
+      max_dimension = std::hypot(base2back, 0.5 * width);
+    }
   }
 };
 
@@ -145,8 +169,12 @@ public:
   virtual void setMap(const nav_msgs::msg::OccupancyGrid & costmap);
   virtual bool makePlan(
     const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose) = 0;
+  virtual bool makePlan(
+    const geometry_msgs::msg::Pose & start_pose,
+    const std::vector<geometry_msgs::msg::Pose> & goal_candidates) = 0;
   virtual bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory) const;
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
+  double getDistanceToObstacle(const geometry_msgs::msg::Pose & pose) const;
 
   virtual ~AbstractPlanningAlgorithm() {}
 
@@ -156,6 +184,15 @@ protected:
     std::vector<IndexXY> & vertex_indexes_2d) const;
   bool detectBoundaryExit(const IndexXYT & base_index) const;
   bool detectCollision(const IndexXYT & base_index) const;
+  bool detectCollision(const geometry_msgs::msg::Pose & base_pose) const;
+
+  /// @brief Computes the euclidean distance to the nearest obstacle for each grid cell.
+  /// @cite T., Saito, and J., Toriwaki "New algorithms for euclidean distance transformation of an
+  /// n-dimensional digitized picture with applications," Pattern Recognition 27, 1994
+  /// https://doi.org/10.1016/0031-3203(94)90133-3
+  /// @details first, distance values are computed along each row. Then, the computed values are
+  /// used to to compute the minimum distance along each column.
+  void computeEDTMap();
 
   template <typename IndexType>
   inline bool isOutOfRange(const IndexType & index) const
@@ -194,6 +231,12 @@ protected:
     return is_obstacle_table_[indexToId(index)];
   }
 
+  template <typename IndexType>
+  inline double getObstacleEDT(const IndexType & index) const
+  {
+    return edt_map_[indexToId(index)];
+  }
+
   // compute single dimensional grid cell index from 2 dimensional index
   template <typename IndexType>
   inline int indexToId(const IndexType & index) const
@@ -215,6 +258,9 @@ protected:
 
   // is_obstacle's table
   std::vector<bool> is_obstacle_table_;
+
+  // Euclidean distance transform map (distance to nearest obstacle cell)
+  std::vector<double> edt_map_;
 
   // pose in costmap frame
   geometry_msgs::msg::Pose start_pose_;
