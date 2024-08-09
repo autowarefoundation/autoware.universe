@@ -12,14 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/tensorrt_yolox/utils.hpp"
+#include "perception_utils/run_length_encoder.hpp"
 
 #include <opencv2/opencv.hpp>
 
 #include <gtest/gtest.h>
-
-using autoware::tensorrt_yolox::runLengthDecoder;
-using autoware::tensorrt_yolox::runLengthEncoder;
 
 // Test case 1: Test if the decoded image is the same as the original image
 TEST(UtilsTest, runLengthEncoderDecoderTest)
@@ -49,7 +46,7 @@ TEST(UtilsTest, runLengthEncoderDecoderTest)
     }
   }
   // Compress the image
-  std::vector<std::pair<uint8_t, int>> compressed_data = runLengthEncoder(image);
+  std::vector<std::pair<uint8_t, int>> compressed_data = perception_utils::runLengthEncoder(image);
   int step = sizeof(uint8_t) + sizeof(int);
   std::vector<uint8_t> data(compressed_data.size() * step);
   for (size_t i = 0; i < compressed_data.size(); ++i) {
@@ -57,7 +54,7 @@ TEST(UtilsTest, runLengthEncoderDecoderTest)
     std::memcpy(&data[i * step + sizeof(uint8_t)], &compressed_data.at(i).second, sizeof(int));
   }
   // Decompress the image
-  cv::Mat decoded_image = runLengthDecoder(data, height, width);
+  cv::Mat decoded_image = perception_utils::runLengthDecoder(data, height, width);
   // Compare the original image and the decoded image
   ASSERT_EQ(image.rows, decoded_image.rows);
   ASSERT_EQ(image.cols, decoded_image.cols);
