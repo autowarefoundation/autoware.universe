@@ -60,7 +60,7 @@ Eigen::Translation3f fromYamlTrans(YAML::Node x);
 Eigen::Quaternion<float> fromYamlQuater(YAML::Node x);
 Eigen::Matrix3f fromYamlMatrix3f(YAML::Node x);
 
-int read_image(std::string & image_names, std::vector<char> & raw_data);
+int read_image(const std::string & image_names, std::vector<char> & raw_data);
 
 int read_sample(std::vector<std::string> & imgs_file, std::vector<std::vector<char>> & imgs_data);
 

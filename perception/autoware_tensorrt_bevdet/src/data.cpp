@@ -58,7 +58,7 @@ camParams::camParams(const YAML::Node & config, int n, std::vector<std::string> 
   }
 }
 
-int read_image(std::string & image_names, std::vector<char> & raw_data)
+int read_image(const std::string & image_names, std::vector<char> & raw_data)
 {
   std::ifstream input(image_names.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
 
