@@ -202,7 +202,7 @@ std::optional<PIDBasedPlanner::CruiseObstacleInfo> PIDBasedPlanner::calcObstacle
 
     // calculate distance between ego and obstacle based on RSS
     const double target_dist_to_obstacle = calcRSSDistance(
-      planner_data.ego_vel, obstacle.velocity, longitudinal_info_.safe_distance_margin);
+      planner_data.ego_vel, obstacle.velocity, longitudinal_info_.cruise_safe_distance_margin);
 
     // calculate error distance and normalized one
     const double error_cruise_dist = dist_to_obstacle - target_dist_to_obstacle;

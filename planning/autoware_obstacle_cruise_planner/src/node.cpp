@@ -1132,7 +1132,7 @@ std::vector<TrajectoryPoint> ObstacleCruisePlannerNode::decimateTrajectoryPoints
 
   // extend trajectory
   const auto extended_traj_points = extendTrajectoryPoints(
-    decimated_traj_points, planner_ptr_->getSafeDistanceMargin(),
+    decimated_traj_points, planner_ptr_->getStopSafeDistanceMargin(),
     p.decimate_trajectory_step_length);
   if (extended_traj_points.size() < 2) {
     return traj_points;
