@@ -188,8 +188,54 @@ bool DistortionCorrector<T>::isInputValid(sensor_msgs::msg::PointCloud2 & pointc
 }
 
 template <class T>
+std::pair<float, float> DistortionCorrector<T>::getAzimuthConversion(
+  float point1_azimuth_rad, float point1_cartesian_deg, float point2_azimuth_rad,
+  float point2_cartesian_deg)
+{
+  float point1_azimuth_deg = point1_azimuth_rad * 180 / M_PI;
+  float point2_azimuth_deg = point2_azimuth_rad * 180 / M_PI;
+
+  float b =
+    (point2_azimuth_deg - point1_azimuth_deg) / (point2_cartesian_deg - point1_cartesian_deg);
+  float a = point1_azimuth_deg - b * point1_cartesian_deg;
+
+  bool error_flag = false;
+  // Check if b can be adjusted to 1 or -1
+  if (std::abs(b - 1) <= 0.1) {
+    b = 1;
+  } else if (std::abs(b + 1) <= 0.1) {
+    b = -1;
+  } else {
+    error_flag = true;
+  }
+
+  // Check if a can be adjusted to a multiple of 90
+  int nearest_multiple_of_90 = static_cast<int>(round(a / 90.0)) * 90;
+  if (std::abs(a - nearest_multiple_of_90) <= 5) {
+    a = nearest_multiple_of_90;
+    if (a > 360) {
+      a -= 360;
+    } else if (a < -360) {
+      a += 360;
+    }
+  } else {
+    error_flag = true;
+  }
+
+  if (error_flag) {
+    a = 0;
+    b = 1;
+    std::cerr << "ERROR!!!" << std::endl;
+    // print error message!!!!
+  }
+
+  std::cout << "Adjusted a: " << a << " Adjusted b: " << b << std::endl;
+  return {a, b};
+}
+
+template <class T>
 void DistortionCorrector<T>::undistortPointCloud(
-  bool use_imu, std::string sensor_azimuth_coordinate, sensor_msgs::msg::PointCloud2 & pointcloud)
+  bool use_imu, bool update_azimuth_and_distance, sensor_msgs::msg::PointCloud2 & pointcloud)
 {
   if (!isInputValid(pointcloud)) return;
 
@@ -257,24 +303,38 @@ void DistortionCorrector<T>::undistortPointCloud(
 
     float time_offset = static_cast<float>(global_point_stamp - prev_time_stamp_sec);
 
+    std::cout << "before" << std::endl;
+    std::cout << " *it_x: " << *it_x << " *it_y: " << *it_y << " *it_azimuth: " << *it_azimuth
+              << std::endl;
+
     // Undistort a single point based on the strategy
     undistortPoint(it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
 
-    if (!sensor_azimuth_coordinate.empty() && pointcloudTransformNeeded()) {
+    if (update_azimuth_and_distance && pointcloudTransformNeeded()) {
       // Input frame should be in the sensor frame.
       *it_distance = sqrt(*it_x * *it_x + *it_y * *it_y + *it_z * *it_z);
-      float cartesian_coordinate_azimuth = cv::fastAtan2(*it_y, *it_x);
-      if (sensor_azimuth_coordinate == "velodyne") {
-        *it_azimuth = (360 - cartesian_coordinate_azimuth) * M_PI / 180;
-      } else if (sensor_azimuth_coordinate == "hesai") {
-        *it_azimuth = (90 - cartesian_coordinate_azimuth) < 0
-                        ? (90 - cartesian_coordinate_azimuth + 360) * M_PI / 180
-                        : (90 - cartesian_coordinate_azimuth) * M_PI / 180;
-      } else {
-        throw std::runtime_error(
-          sensor_azimuth_coordinate + " azimuth coordinate is not supported");
+
+      if (first_time_) {
+        // std::cout << "*it_x: " << *it_x << " *it_y: " << *it_y << " *it_azimuth: " << *it_azimuth
+        // << std::endl;
+        auto next_azimuth = it_azimuth + 1;
+        auto next_x = it_x + 1;
+        auto next_y = it_y + 1;
+        // std::cout << "after" << std::endl;
+        // std::cout << "*it_x: " << *it_x << " *it_y: " << *it_y << " *it_azimuth: " << *it_azimuth
+        // << std::endl; std::cout << "*next_x: " << *next_x << " *next_y: " << *next_y << "
+        // *next_azimuth: " << *next_azimuth << std::endl;
+        std::tie(a_, b_) = getAzimuthConversion(
+          *it_azimuth, cv::fastAtan2(*it_y, *it_x), *next_azimuth, cv::fastAtan2(*next_y, *next_x));
+        first_time_ = false;
       }
 
+      float cartesian_coordinate_azimuth = cv::fastAtan2(*it_y, *it_x);
+      float updated_azimuth = (a_ + b_ * cartesian_coordinate_azimuth) * M_PI / 180;
+      *it_azimuth = updated_azimuth;
+      // std::cout << "after" << std::endl;
+      // std::cout << " *it_x: " << *it_x << " *it_y: " << *it_y << " *it_azimuth: " << *it_azimuth
+      // << std::endl;
       ++it_azimuth;
       ++it_distance;
     }

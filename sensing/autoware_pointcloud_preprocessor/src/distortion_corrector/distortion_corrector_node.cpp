@@ -35,7 +35,7 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   base_frame_ = declare_parameter<std::string>("base_frame");
   use_imu_ = declare_parameter<bool>("use_imu");
   use_3d_distortion_correction_ = declare_parameter<bool>("use_3d_distortion_correction");
-  sensor_azimuth_coordinate_ = declare_parameter<std::string>("sensor_azimuth_coordinate");
+  update_azimuth_and_distance_ = declare_parameter<bool>("update_azimuth_and_distance");
 
   // Publisher
   {
@@ -93,7 +93,8 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointclou
 
   distortion_corrector_->setPointCloudTransform(base_frame_, pointcloud_msg->header.frame_id);
   distortion_corrector_->initialize();
-  distortion_corrector_->undistortPointCloud(use_imu_, sensor_azimuth_coordinate_, *pointcloud_msg);
+  distortion_corrector_->undistortPointCloud(
+    use_imu_, update_azimuth_and_distance_, *pointcloud_msg);
 
   if (debug_publisher_) {
     auto pipeline_latency_ms =

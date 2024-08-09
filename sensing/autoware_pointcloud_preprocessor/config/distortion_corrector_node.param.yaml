@@ -3,4 +3,4 @@
     base_frame: base_link
     use_imu: true
     use_3d_distortion_correction: false
-    sensor_azimuth_coordinate: ""
+    update_azimuth_and_distance: true

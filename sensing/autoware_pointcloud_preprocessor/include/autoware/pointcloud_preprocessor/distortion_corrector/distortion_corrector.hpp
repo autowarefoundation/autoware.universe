@@ -45,6 +45,7 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace autoware::pointcloud_preprocessor
 {
@@ -65,8 +66,7 @@ public:
     const std::string & base_frame, const std::string & lidar_frame) = 0;
   virtual void initialize() = 0;
   virtual void undistortPointCloud(
-    bool use_imu, std::string sensor_azimuth_coordinate,
-    sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
+    bool use_imu, bool update_azimuth_and_distance, sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
 };
 
 template <class T>
@@ -82,6 +82,13 @@ protected:
 
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
+
+  // Equation of converion between sensor azimuth coordinates and cartesian coordinates:
+  // sensor azimuth coordinates = a + b * cartesian coordinates;
+  // a is restricted to be a multiple of 90, and b is restricted to be 1 or -1.
+  bool first_time_{true};
+  float a_{0};
+  float b_{1};
 
   void getIMUTransformation(const std::string & base_frame, const std::string & imu_frame);
   void enqueueIMU(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
@@ -117,8 +124,12 @@ public:
   void processIMUMessage(
     const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
   void undistortPointCloud(
-    bool use_imu, std::string sensor_azimuth_coordinate,
+    bool use_imu, bool update_azimuth_and_distance,
     sensor_msgs::msg::PointCloud2 & pointcloud) override;
+  std::pair<float, float> getAzimuthConversion(
+    float point1_azimuth_rad, float point1_cartesian_deg, float point2_azimuth_rad,
+    float point2_cartesian_deg);
+
   bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
 };
 
