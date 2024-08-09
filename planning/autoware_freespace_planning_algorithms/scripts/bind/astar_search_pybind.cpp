@@ -96,6 +96,22 @@ public:
     waypoints_vector.length = waypoints.compute_length();
     return waypoints_vector;
   }
+
+  double getDistanceToObstacle(const std::string & pose_byte)
+  {
+    rclcpp::SerializedMessage serialized_msg;
+    static constexpr size_t message_header_length = 8u;
+    serialized_msg.reserve(message_header_length + pose_byte.size());
+    serialized_msg.get_rcl_serialized_message().buffer_length = pose_byte.size();
+    for (size_t i = 0; i < pose_byte.size(); ++i) {
+      serialized_msg.get_rcl_serialized_message().buffer[i] = pose_byte[i];
+    }
+    geometry_msgs::msg::Pose pose;
+    static rclcpp::Serialization<geometry_msgs::msg::Pose> serializer;
+    serializer.deserialize_message(&serialized_msg, &pose);
+
+    return freespace_planning_algorithms::AstarSearch::getDistanceToObstacle(pose);
+  }
 };
 
 namespace py = pybind11;
@@ -183,6 +199,7 @@ PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
          freespace_planning_algorithms::AstarParam &>())
     .def("setMap", &AstarSearchPython::setMapByte)
     .def("makePlan", &AstarSearchPython::makePlanByte)
-    .def("getWaypoints", &AstarSearchPython::getWaypointsAsVector);
+    .def("getWaypoints", &AstarSearchPython::getWaypointsAsVector)
+    .def("getDistanceToObstacle", &AstarSearchPython::getDistanceToObstacle);
 }
 }  // namespace autoware::freespace_planning_algorithms
