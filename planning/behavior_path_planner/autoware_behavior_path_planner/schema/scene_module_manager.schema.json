@@ -1,0 +1,450 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for scene_module_manager",
+  "type": "object",
+  "definitions": {
+    "scene_module_manager": {
+      "type": "object",
+      "properties": {
+        "external_request_lane_change_left": {
+          "type": "object",
+          "properties": {
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for external request lane change left."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as approved module for external request lane change left."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable simultaneous execution as candidate module for external request lane change left."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": false,
+              "description": "Keep the last state for external request lane change left."
+            },
+            "priority": {
+              "type": "number",
+              "default": 6,
+              "description": "Priority for external request lane change left."
+            }
+          },
+          "required": [
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        },
+        "external_request_lane_change_right": {
+          "type": "object",
+          "properties": {
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for external request lane change right."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as approved module for external request lane change right."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable simultaneous execution as candidate module for external request lane change right."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": false,
+              "description": "Keep the last state for external request lane change right."
+            },
+            "priority": {
+              "type": "number",
+              "default": 6,
+              "description": "Priority for external request lane change right."
+            }
+          },
+          "required": [
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        },
+        "lane_change_left": {
+          "type": "object",
+          "properties": {
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for lane change left."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable simultaneous execution as approved module for lane change left."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable simultaneous execution as candidate module for lane change left."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": false,
+              "description": "Keep the last state for lane change left."
+            },
+            "priority": {
+              "type": "number",
+              "default": 5,
+              "description": "Priority for lane change left."
+            }
+          },
+          "required": [
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        },
+        "lane_change_right": {
+          "type": "object",
+          "properties": {
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for lane change right."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable simultaneous execution as approved module for lane change right."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable simultaneous execution as candidate module for lane change right."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": false,
+              "description": "Keep the last state for lane change right."
+            },
+            "priority": {
+              "type": "number",
+              "default": 5,
+              "description": "Priority for lane change right."
+            }
+          },
+          "required": [
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        },
+        "start_planner": {
+          "type": "object",
+          "properties": {
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for start planner."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as approved module for start planner."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as candidate module for start planner."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": false,
+              "description": "Keep the last state for start planner."
+            },
+            "priority": {
+              "type": "number",
+              "default": 0,
+              "description": "Priority for start planner."
+            }
+          },
+          "required": [
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        },
+        "side_shift": {
+          "type": "object",
+          "properties": {
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for side shift."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as approved module for side shift."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as candidate module for side shift."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": false,
+              "description": "Keep the last state for side shift."
+            },
+            "priority": {
+              "type": "number",
+              "default": 2,
+              "description": "Priority for side shift."
+            }
+          },
+          "required": [
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        },
+        "goal_planner": {
+          "type": "object",
+          "properties": {
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for goal planner."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as approved module for goal planner."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as candidate module for goal planner."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": true,
+              "description": "Keep the last state for goal planner."
+            },
+            "priority": {
+              "type": "number",
+              "default": 1,
+              "description": "Priority for goal planner."
+            }
+          },
+          "required": [
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        },
+        "static_obstacle_avoidance": {
+          "type": "object",
+          "properties": {
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for static obstacle avoidance."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable simultaneous execution as approved module for static obstacle avoidance."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as candidate module for static obstacle avoidance."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": false,
+              "description": "Keep the last state for static obstacle avoidance."
+            },
+            "priority": {
+              "type": "number",
+              "default": 4,
+              "description": "Priority for static obstacle avoidance."
+            }
+          },
+          "required": [
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        },
+        "avoidance_by_lane_change": {
+          "type": "object",
+          "properties": {
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for avoidance by lane change."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as approved module for avoidance by lane change."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as candidate module for avoidance by lane change."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": false,
+              "description": "Keep the last state for avoidance by lane change."
+            },
+            "priority": {
+              "type": "number",
+              "default": 3,
+              "description": "Priority for avoidance by lane change."
+            }
+          },
+          "required": [
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        },
+        "dynamic_obstacle_avoidance": {
+          "type": "object",
+          "properties": {
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for dynamic obstacle avoidance."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable simultaneous execution as approved module for dynamic obstacle avoidance."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable simultaneous execution as candidate module for dynamic obstacle avoidance."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": false,
+              "description": "Keep the last state for dynamic obstacle avoidance."
+            },
+            "priority": {
+              "type": "number",
+              "default": 7,
+              "description": "Priority for dynamic obstacle avoidance."
+            }
+          },
+          "required": [
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        },
+        "sampling_planner": {
+          "type": "object",
+          "properties": {
+            "enable_module": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable the sampling planner module."
+            },
+            "enable_rtc": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Real-Time Clock for sampling planner."
+            },
+            "enable_simultaneous_execution_as_approved_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as approved module for sampling planner."
+            },
+            "enable_simultaneous_execution_as_candidate_module": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable simultaneous execution as candidate module for sampling planner."
+            },
+            "keep_last": {
+              "type": "boolean",
+              "default": true,
+              "description": "Keep the last state for sampling planner."
+            },
+            "priority": {
+              "type": "number",
+              "default": 16,
+              "description": "Priority for sampling planner."
+            }
+          },
+          "required": [
+            "enable_module",
+            "enable_rtc",
+            "enable_simultaneous_execution_as_approved_module",
+            "enable_simultaneous_execution_as_candidate_module",
+            "keep_last",
+            "priority"
+          ]
+        }
+      },
+      "required": [
+        "external_request_lane_change_left",
+        "external_request_lane_change_right",
+        "lane_change_left",
+        "lane_change_right",
+        "start_planner",
+        "side_shift",
+        "goal_planner",
+        "static_obstacle_avoidance",
+        "avoidance_by_lane_change",
+        "dynamic_obstacle_avoidance",
+        "sampling_planner"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/scene_module_manager"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}

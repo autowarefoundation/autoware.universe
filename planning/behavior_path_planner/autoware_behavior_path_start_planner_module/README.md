@@ -544,3 +544,7 @@ To run this feature, you need to set `parking_lot` to the map, `activate_by_scen
 | end_pose_search_interval       | [m]  | bool   | interval to search for the end point in the freespace_pull_out driving lane                                                              | 2.0           |
 
 See [freespace_planner](../autoware_freespace_planner/README.md) for other parameters.
+
+## Appendix: All Parameters
+
+{{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_start_planner_module/schema/start_planner.schema.json") }}
