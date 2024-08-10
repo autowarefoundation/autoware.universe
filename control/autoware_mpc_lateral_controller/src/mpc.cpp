@@ -35,6 +35,8 @@ MPC::MPC(rclcpp::Node & node)
     "~/debug/predicted_trajectory_in_frenet_coordinate", rclcpp::QoS(1));
   m_debug_predicted_trajectory_with_delay_pub =
     node.create_publisher<Trajectory>("~/debug/predicted_trajectory_with_delay", rclcpp::QoS(1));
+  m_debug_resampled_reference_trajectory_pub =
+    node.create_publisher<Trajectory>("~/debug/resampled_reference_trajectory", rclcpp::QoS(1));
 }
 
 bool MPC::calculateMPC(
@@ -328,6 +330,13 @@ std::pair<bool, MPCTrajectory> MPC::resampleMPCTrajectoryByTime(
   if (!MPCUtils::linearInterpMPCTrajectory(input.relative_time, input, mpc_time_v, output)) {
     warn_throttle("calculateMPC: mpc resample error. stop mpc calculation. check code!");
     return {false, {}};
+  }
+  // Publish resampled reference trajectory for debug purpose.
+  if (m_debug_publish_resampled_reference_trajectory) {
+    auto converted_output = MPCUtils::convertToAutowareTrajectory(output);
+    converted_output.header.stamp = m_clock->now();
+    converted_output.header.frame_id = "map";
+    m_debug_resampled_reference_trajectory_pub->publish(converted_output);
   }
   return {true, output};
 }
