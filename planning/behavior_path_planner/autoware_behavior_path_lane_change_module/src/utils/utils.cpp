@@ -290,21 +290,6 @@ lanelet::ConstLanelets getTargetNeighborLanes(
   return neighbor_lanes;
 }
 
-lanelet::BasicPolygon2d getTargetNeighborLanesPolygon(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const LaneChangeModuleType & type)
-{
-  const auto target_neighbor_lanelets =
-    utils::lane_change::getTargetNeighborLanes(route_handler, current_lanes, type);
-  if (target_neighbor_lanelets.empty()) {
-    return {};
-  }
-  const auto target_neighbor_preferred_lane_poly = lanelet::utils::getPolygonFromArcLength(
-    target_neighbor_lanelets, 0, std::numeric_limits<double>::max());
-
-  return lanelet::utils::to2D(target_neighbor_preferred_lane_poly).basicPolygon();
-}
-
 bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes)
@@ -1227,9 +1212,8 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
   lanes_polygon.expanded_target = utils::lane_change::createPolygon(
     expanded_target_lanes, 0.0, std::numeric_limits<double>::max());
 
-  const auto & route_handler = *common_data_ptr->route_handler_ptr;
-  lanes_polygon.target_neighbor =
-    getTargetNeighborLanesPolygon(route_handler, lanes->current, common_data_ptr->lc_type);
+  lanes_polygon.target_neighbor = *utils::lane_change::createPolygon(
+    lanes->target_neighbor, 0.0, std::numeric_limits<double>::max());
 
   lanes_polygon.preceding_target.reserve(lanes->preceding_target.size());
   for (const auto & preceding_lane : lanes->preceding_target) {
@@ -1342,6 +1326,17 @@ bool is_before_terminal(
     current_max_dist = std::max(dist_obj_to_terminal, current_max_dist);
   }
   return current_max_dist >= 0.0;
+}
+
+double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, const Pose & pose)
+{
+  lanelet::ConstLanelet closest_lanelet;
+
+  if (!lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
+    return autoware::universe_utils::deg2rad(180);
+  }
+  const auto closest_pose = lanelet::utils::getClosestCenterPose(closest_lanelet, pose.position);
+  return std::abs(autoware::universe_utils::calcYawDeviation(closest_pose, pose));
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
