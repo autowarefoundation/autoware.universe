@@ -221,6 +221,7 @@ private:
 
   double m_min_prediction_length = 5.0;  // Minimum prediction distance.
 
+  rclcpp::Publisher<Trajectory>::SharedPtr m_debug_predicted_trajectory_with_delay_pub;
   rclcpp::Publisher<Trajectory>::SharedPtr m_debug_frenet_predicted_trajectory_pub;
   /**
    * @brief Get variables for MPC calculation.
@@ -341,11 +342,14 @@ private:
    * @param Uex optimized input.
    * @param mpc_resampled_ref_traj reference trajectory resampled in the mpc time-step
    * @param dt delta time used in the mpc problem.
+   * @param coordinate String specifying the coordinate system ("world" or "frenet", default is
+   * "world")
    * @return predicted path
    */
   Trajectory calculatePredictedTrajectory(
     const MPCMatrix & mpc_matrix, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
-    const MPCTrajectory & mpc_resampled_ref_traj, const double dt) const;
+    const MPCTrajectory & reference_trajectory, const double dt,
+    const std::string & coordinate = "world") const;
 
   /**
    * @brief Check if the MPC matrix has any invalid values.

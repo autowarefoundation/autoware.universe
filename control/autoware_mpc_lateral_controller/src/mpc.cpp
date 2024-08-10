@@ -33,6 +33,8 @@ MPC::MPC(rclcpp::Node & node)
 {
   m_debug_frenet_predicted_trajectory_pub = node.create_publisher<Trajectory>(
     "~/debug/predicted_trajectory_in_frenet_coordinate", rclcpp::QoS(1));
+  m_debug_predicted_trajectory_with_delay_pub =
+    node.create_publisher<Trajectory>("~/debug/predicted_trajectory_with_delay", rclcpp::QoS(1));
 }
 
 bool MPC::calculateMPC(
@@ -104,8 +106,25 @@ bool MPC::calculateMPC(
   m_raw_steer_cmd_prev = Uex(0);
 
   /* calculate predicted trajectory */
-  predicted_trajectory =
-    calculatePredictedTrajectory(mpc_matrix, x0, Uex, mpc_resampled_ref_trajectory, prediction_dt);
+  predicted_trajectory = calculatePredictedTrajectory(
+    mpc_matrix, x0, Uex, mpc_resampled_ref_trajectory, prediction_dt, "world");
+
+  // Publish predicted trajectories in different coordinates for debugging purposes
+  if (m_debug_publish_predicted_trajectory) {
+    // Calculate and publish predicted trajectory in Frenet coordinate
+    auto predicted_trajectory_frenet = calculatePredictedTrajectory(
+      mpc_matrix, x0, Uex, reference_trajectory, prediction_dt, "frenet");
+    predicted_trajectory_frenet.header.stamp = m_clock->now();
+    predicted_trajectory_frenet.header.frame_id = "map";
+    m_debug_frenet_predicted_trajectory_pub->publish(predicted_trajectory_frenet);
+
+    // Calculate and publish predicted trajectory in world coordinate with delay
+    auto predicted_trajectory_world_with_delay = calculatePredictedTrajectory(
+      mpc_matrix, x0_delayed, Uex, mpc_resampled_ref_trajectory, prediction_dt, "world");
+    predicted_trajectory_world_with_delay.header.stamp = m_clock->now();
+    predicted_trajectory_world_with_delay.header.frame_id = "map";
+    m_debug_predicted_trajectory_with_delay_pub->publish(predicted_trajectory_world_with_delay);
+  }
 
   // prepare diagnostic message
   diagnostic =
@@ -785,12 +804,21 @@ VectorXd MPC::calcSteerRateLimitOnTrajectory(
 
 Trajectory MPC::calculatePredictedTrajectory(
   const MPCMatrix & mpc_matrix, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
-  const MPCTrajectory & reference_trajectory, const double dt) const
+  const MPCTrajectory & reference_trajectory, const double dt, const std::string & coordinate) const
 {
-  const auto predicted_mpc_trajectory =
-    m_vehicle_model_ptr->calculatePredictedTrajectoryInWorldCoordinate(
+  MPCTrajectory predicted_mpc_trajectory;
+
+  if (coordinate == "world") {
+    predicted_mpc_trajectory = m_vehicle_model_ptr->calculatePredictedTrajectoryInWorldCoordinate(
       mpc_matrix.Aex, mpc_matrix.Bex, mpc_matrix.Cex, mpc_matrix.Wex, x0, Uex, reference_trajectory,
       dt);
+  } else if (coordinate == "frenet") {
+    predicted_mpc_trajectory = m_vehicle_model_ptr->calculatePredictedTrajectoryInFrenetCoordinate(
+      mpc_matrix.Aex, mpc_matrix.Bex, mpc_matrix.Cex, mpc_matrix.Wex, x0, Uex, reference_trajectory,
+      dt);
+  } else {
+    throw std::invalid_argument("Invalid coordinate system specified. Use 'world' or 'frenet'.");
+  }
 
   // do not over the reference trajectory
   const auto predicted_length = MPCUtils::calcMPCTrajectoryArcLength(reference_trajectory);
@@ -798,18 +826,6 @@ Trajectory MPC::calculatePredictedTrajectory(
     MPCUtils::clipTrajectoryByLength(predicted_mpc_trajectory, predicted_length);
 
   const auto predicted_trajectory = MPCUtils::convertToAutowareTrajectory(clipped_trajectory);
-
-  // Publish trajectory in relative coordinate for debug purpose.
-  if (m_debug_publish_predicted_trajectory) {
-    const auto frenet = m_vehicle_model_ptr->calculatePredictedTrajectoryInFrenetCoordinate(
-      mpc_matrix.Aex, mpc_matrix.Bex, mpc_matrix.Cex, mpc_matrix.Wex, x0, Uex, reference_trajectory,
-      dt);
-    auto frenet_clipped = MPCUtils::convertToAutowareTrajectory(
-      MPCUtils::clipTrajectoryByLength(frenet, predicted_length));
-    frenet_clipped.header.stamp = m_clock->now();
-    frenet_clipped.header.frame_id = "map";
-    m_debug_frenet_predicted_trajectory_pub->publish(frenet_clipped);
-  }
 
   return predicted_trajectory;
 }
