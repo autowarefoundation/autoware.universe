@@ -23,7 +23,6 @@
 #include "overlapping_range.hpp"
 #include "types.hpp"
 
-#include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/motion_velocity_planner_common/planner_data.hpp>
