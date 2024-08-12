@@ -8,17 +8,20 @@
         "x": {
           "type": "number",
           "description": "Voxel size(x) in meters",
-          "default": 0.02
+          "default": 0.02,
+          "minimum": 0.001
         },
         "y": {
           "type": "number",
           "description": "Voxel size(y) in meters",
-          "default": 0.02
+          "default": 0.02,
+          "minimum": 0.001
         },
         "z": {
           "type": "number",
           "description": "Voxel size(z) in meters",
-          "default": 0.02
+          "default": 0.02,
+          "minimum": 0.001
         }
       },
       "required": ["x", "y", "z"],
