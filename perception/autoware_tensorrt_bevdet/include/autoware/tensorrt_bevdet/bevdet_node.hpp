@@ -51,8 +51,6 @@
 #include <thread>
 #include <vector>
 
-typedef pcl::PointXYZI PointT;
-
 uint8_t getSemanticType(const std::string & class_name);
 void Getinfo(void);
 
@@ -109,11 +107,9 @@ private:
   uchar * imgs_dev_ = nullptr;
   float score_thre_;
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     pub_boxes_;  // ros2无该消息类型
 
-  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> sub_cloud_;
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_f_img_;
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_fl_img_;
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_fr_img_;
@@ -122,7 +118,7 @@ private:
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_br_img_;
 
   typedef message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::msg::PointCloud2, sensor_msgs::msg::Image, sensor_msgs::msg::Image,
+    sensor_msgs::msg::Image, sensor_msgs::msg::Image,
     sensor_msgs::msg::Image, sensor_msgs::msg::Image, sensor_msgs::msg::Image,
     sensor_msgs::msg::Image>
     MySyncPolicy;
@@ -135,7 +131,6 @@ public:
   ~TRTBEVDetNode();
 
   void callback(
-    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & msg_cloud,
     const sensor_msgs::msg::Image::ConstSharedPtr & msg_fl_img,
     const sensor_msgs::msg::Image::ConstSharedPtr & msg_f_img,
     const sensor_msgs::msg::Image::ConstSharedPtr & msg_fr_img,

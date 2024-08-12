@@ -1,8 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- Lidar parameters -->
-  <arg name="input/pointcloud"/>
-
   <!-- Camera parameters -->
   <arg name="input/camera0/image"/>
   <arg name="input/camera0/info"/>
@@ -32,14 +29,12 @@
     <push-ros-namespace namespace="bevdet"/>
     <group>
       <include file="$(find-pkg-share autoware_tensorrt_bevdet)/launch/tensorrt_bevdet.launch.xml">
-        <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
         <arg name="input/img_fl" value="$(var input/camera0/image)"/>
         <arg name="input/img_f" value="$(var input/camera1/image)"/>
         <arg name="input/img_fr" value="$(var input/camera2/image)"/>
         <arg name="input/img_bl" value="$(var input/camera3/image)"/>
         <arg name="input/img_b" value="$(var input/camera4/image)"/>
         <arg name="input/img_br" value="$(var input/camera5/image)"/>
-        <arg name="output/pointcloud" value="points_painting"/>
         <arg name="output/boxes" value="boxes"/>
         <arg name="data_path" value="$(var data_path)/"/>
         <arg name="onnx_file" value="$(var onnx_file)"/>

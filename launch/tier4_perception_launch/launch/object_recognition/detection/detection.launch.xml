@@ -219,7 +219,6 @@
   <group if="$(var switch/detector/camera_bev)">
     <!-- Camera-based bev detectors-->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/camera_bev_detector.launch.xml">
-      <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="input/camera0/image" value="$(var input/camera0/image)"/>
       <arg name="input/camera0/info" value="$(var input/camera0/info)"/>
       <arg name="input/camera1/image" value="$(var input/camera1/image)"/>

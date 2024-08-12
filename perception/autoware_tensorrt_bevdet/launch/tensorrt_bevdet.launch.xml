@@ -1,14 +1,12 @@
 <?xml version="1.0"?>
 <launch>
   <!-- input topic name -->
-  <arg name="input/pointcloud" default="/lidar_top"/>
   <arg name="input/img_fl" default="/cam_front_left/raw"/>
   <arg name="input/img_f" default="/cam_front/raw"/>
   <arg name="input/img_fr" default="/cam_front_right/raw"/>
   <arg name="input/img_bl" default="/cam_back_left/raw"/>
   <arg name="input/img_b" default="/cam_back/raw"/>
   <arg name="input/img_br" default="/cam_back_right/raw"/>
-  <arg name="output/pointcloud" default="points_painting"/>
   <arg name="output/boxes" default="boxes"/>
 
   <arg name="data_path" default="$(env HOME)/autoware_data/autoware_tensorrt_bevdet"/>
@@ -21,7 +19,6 @@
   <!-- bevdet node -->
   <node pkg="autoware_tensorrt_bevdet" exec="autoware_tensorrt_bevdet_node" name="tensorrt_bevdet_node" output="screen">
     <!-- ros topic name -->
-    <remap from="~/input/topic_cloud" to="$(var input/pointcloud)"/>
     <remap from="~/input/topic_img_fl" to="$(var input/img_fl)"/>
     <remap from="~/input/topic_img_f" to="$(var input/img_f)"/>
     <remap from="~/input/topic_img_fr" to="$(var input/img_fr)"/>
@@ -29,7 +26,6 @@
     <remap from="~/input/topic_img_b" to="$(var input/img_b)"/>
     <remap from="~/input/topic_img_br" to="$(var input/img_br)"/>
 
-    <remap from="~/output/painting_cloud" to="$(var output/pointcloud)"/>
     <remap from="~/output/boxes" to="$(var output/boxes)"/>
 
     <param name="onnx_file" value="$(var onnx_file)"/>

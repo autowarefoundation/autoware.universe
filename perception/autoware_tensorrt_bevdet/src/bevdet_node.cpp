@@ -129,7 +129,6 @@ TRTBEVDetNode::TRTBEVDetNode(
   using std::placeholders::_4;
   using std::placeholders::_5;
   using std::placeholders::_6;
-  using std::placeholders::_7;
 
   score_thre_ = this->declare_parameter<float>("post_process_params.score_thre", 0.2);
 
@@ -163,14 +162,9 @@ TRTBEVDetNode::TRTBEVDetNode(
   CHECK_CUDA(cudaMalloc(
     reinterpret_cast<void **>(&imgs_dev_), img_N_ * 3 * img_w_ * img_h_ * sizeof(uchar)));
 
-  pub_cloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "~/output/painting_cloud", rclcpp::SensorDataQoS());
   pub_boxes_ = this->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
     "~/output/boxes", rclcpp::QoS{1});
 
-  sub_cloud_.subscribe(
-    this, "~/input/topic_cloud",
-    rclcpp::QoS{1}.get_rmw_qos_profile());  // rclcpp::QoS{1}.get_rmw_qos_profile()
   sub_f_img_.subscribe(
     this, "~/input/topic_img_f",
     rclcpp::QoS{1}.get_rmw_qos_profile());  // rmw_qos_profile_sensor_data
@@ -183,15 +177,14 @@ TRTBEVDetNode::TRTBEVDetNode(
   sub_br_img_.subscribe(this, "~/input/topic_img_br", rclcpp::QoS{1}.get_rmw_qos_profile());
 
   sync_ = std::make_shared<Sync>(
-    MySyncPolicy(10), sub_cloud_, sub_fl_img_, sub_f_img_, sub_fr_img_, sub_bl_img_, sub_b_img_,
+    MySyncPolicy(10), sub_fl_img_, sub_f_img_, sub_fr_img_, sub_bl_img_, sub_b_img_,
     sub_br_img_);
 
   sync_->registerCallback(
-    std::bind(&TRTBEVDetNode::callback, this, _1, _2, _3, _4, _5, _6, _7));  // 绑定回调函数
+    std::bind(&TRTBEVDetNode::callback, this, _1, _2, _3, _4, _5, _6));  // 绑定回调函数
 }
 
 void TRTBEVDetNode::callback(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & msg_cloud,
   const sensor_msgs::msg::Image::ConstSharedPtr & msg_fl_img,
   const sensor_msgs::msg::Image::ConstSharedPtr & msg_f_img,
   const sensor_msgs::msg::Image::ConstSharedPtr & msg_fr_img,
@@ -199,9 +192,6 @@ void TRTBEVDetNode::callback(
   const sensor_msgs::msg::Image::ConstSharedPtr & msg_b_img,
   const sensor_msgs::msg::Image::ConstSharedPtr & msg_br_img)
 {
-  pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
-
-  pcl::fromROSMsg(*msg_cloud, *cloud);
 
   cv::Mat img_fl, img_f, img_fr, img_bl, img_b, img_br;
   std::vector<cv::Mat> imgs;
@@ -237,18 +227,11 @@ void TRTBEVDetNode::callback(
 
   autoware_perception_msgs::msg::DetectedObjects bevdet_objects;
   bevdet_objects.header.frame_id = "base_link";
-  bevdet_objects.header.stamp = msg_cloud->header.stamp;
+  bevdet_objects.header.stamp = msg_f_img->header.stamp;
 
   box3DToDetectedObjects(ego_boxes, bevdet_objects, class_names_, score_thre_);
 
   pub_boxes_->publish(bevdet_objects);
-
-  sensor_msgs::msg::PointCloud2 msg_cloud_painting;
-  pcl::toROSMsg(*cloud, msg_cloud_painting);
-
-  msg_cloud_painting.header.frame_id = msg_cloud->header.frame_id;
-  msg_cloud_painting.header.stamp = msg_cloud->header.stamp;
-  pub_cloud_->publish(msg_cloud_painting);
 }
 
 TRTBEVDetNode::~TRTBEVDetNode()
