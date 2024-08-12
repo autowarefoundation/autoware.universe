@@ -177,8 +177,7 @@ TRTBEVDetNode::TRTBEVDetNode(
   sub_br_img_.subscribe(this, "~/input/topic_img_br", rclcpp::QoS{1}.get_rmw_qos_profile());
 
   sync_ = std::make_shared<Sync>(
-    MySyncPolicy(10), sub_fl_img_, sub_f_img_, sub_fr_img_, sub_bl_img_, sub_b_img_,
-    sub_br_img_);
+    MySyncPolicy(10), sub_fl_img_, sub_f_img_, sub_fr_img_, sub_bl_img_, sub_b_img_, sub_br_img_);
 
   sync_->registerCallback(
     std::bind(&TRTBEVDetNode::callback, this, _1, _2, _3, _4, _5, _6));  // 绑定回调函数
@@ -192,7 +191,6 @@ void TRTBEVDetNode::callback(
   const sensor_msgs::msg::Image::ConstSharedPtr & msg_b_img,
   const sensor_msgs::msg::Image::ConstSharedPtr & msg_br_img)
 {
-
   cv::Mat img_fl, img_f, img_fr, img_bl, img_b, img_br;
   std::vector<cv::Mat> imgs;
   img_fl = cv_bridge::toCvShare(msg_fl_img, "bgr8")->image;

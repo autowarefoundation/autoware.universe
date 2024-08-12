@@ -118,9 +118,8 @@ private:
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_br_img_;
 
   typedef message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::msg::Image, sensor_msgs::msg::Image,
     sensor_msgs::msg::Image, sensor_msgs::msg::Image, sensor_msgs::msg::Image,
-    sensor_msgs::msg::Image>
+    sensor_msgs::msg::Image, sensor_msgs::msg::Image, sensor_msgs::msg::Image>
     MySyncPolicy;
 
   typedef message_filters::Synchronizer<MySyncPolicy> Sync;
