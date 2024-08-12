@@ -8,7 +8,8 @@
         "cluster_tolerance": {
           "type": "number",
           "description": "Distance between points below which they will still be considered part of one cluster",
-          "default": 0.2
+          "default": 0.2,
+          "minimum": 0.01
         },
         "min_num_points": {
           "type": "integer",

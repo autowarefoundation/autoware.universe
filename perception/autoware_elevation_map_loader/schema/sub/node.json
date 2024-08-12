@@ -8,17 +8,20 @@
         "map_layer_name": {
           "type": "string",
           "description": "elevation_map layer name",
-          "default": "elevation"
+          "default": "elevation",
+          "maxLength": 100
         },
         "param_file_path": {
           "type": "string",
           "description": "GridMap parameters config",
-          "default": "path_default"
+          "default": "path_default",
+          "maxLength": 200
         },
         "map_frame": {
           "type": "string",
           "description": "map_frame when loading elevation_map file",
-          "default": "map"
+          "default": "map",
+          "maxLength": 100
         },
         "use_sequential_load": {
           "type": "boolean",
@@ -28,17 +31,20 @@
         "sequential_map_load_num": {
           "type": "integer",
           "description": "The number of point cloud maps to load at once (only used when use_sequential_load is set true). This should not be larger than number of all point cloud map cells",
-          "default": 1
+          "default": 1,
+          "$comment": "This should not be larger than number of all point cloud map cells"
         },
         "use_inpaint": {
           "type": "boolean",
           "description": "Whether to inpaint empty cells",
-          "default": true
+          "default": true,
+          "$comment": "If true, inpainting is performed"
         },
         "inpaint_radius": {
           "type": "number",
           "description": "Radius of a circular neighborhood of each point inpainted that is considered by the algorithm [m]",
-          "default": 0.3
+          "default": 0.3,
+          "minimum": 0
         },
         "use_elevation_map_cloud_publisher": {
           "type": "boolean",
@@ -48,17 +54,20 @@
         "elevation_map_directory": {
           "type": "string",
           "description": "elevation_map file (bag2)",
-          "default": "path_default"
+          "default": "path_default",
+          "maxLength": 200
         },
         "use_lane_filter": {
           "type": "boolean",
           "description": "Whether to filter elevation_map with vector_map",
-          "default": false
+          "default": false,
+          "$comment": "If true, lane filter is performed"
         },
         "lane_margin": {
           "type": "number",
           "description": "Margin distance from the lane polygon of the area to be included in the inpainting mask [m]. Used only when use_lane_filter=True",
-          "default": 0.0
+          "default": 0.0,
+          "minimum": 0
         }
       },
       "required": [

@@ -8,17 +8,20 @@
         "r": {
           "type": "number",
           "description": "Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation.",
-          "default": 0.0
+          "default": 0.0,
+          "$comment": "This is the rotation around the X-axis"
         },
         "p": {
           "type": "number",
           "description": "Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation.",
-          "default": 0.0
+          "default": 0.0,
+          "$comment": "This is the rotation around the Y-axis"
         },
         "y": {
           "type": "number",
           "description": "Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation.",
-          "default": 0.0
+          "default": 0.0,
+          "$comment": "This is the rotation around the Z-axis"
         }
       },
       "required": ["r", "p", "y"],
