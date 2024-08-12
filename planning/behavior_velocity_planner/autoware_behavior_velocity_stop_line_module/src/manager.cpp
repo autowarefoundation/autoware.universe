@@ -14,7 +14,9 @@
 
 #include "manager.hpp"
 
+#include "autoware/behavior_velocity_planner_common/plugin_interface.hpp"
 #include "autoware/universe_utils/ros/parameter.hpp"
+#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
 
 #include <memory>
 #include <set>
@@ -27,7 +29,7 @@ using autoware::universe_utils::getOrDeclareParameter;
 using lanelet::TrafficSign;
 
 StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterface(node, getModuleName()), planner_param_()
 {
   const std::string ns(getModuleName());
   auto & p = planner_param_;
@@ -57,7 +59,7 @@ std::vector<StopLineWithLaneId> StopLineModuleManager::getStopLinesWithLaneIdOnP
     }
 
     for (const auto & stop_line : traffic_sign_reg_elem->refLines()) {
-      stop_lines_with_lane_id.push_back(std::make_pair(stop_line, lane_id));
+      stop_lines_with_lane_id.emplace_back(stop_line, lane_id);
     }
   }
 
