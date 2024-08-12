@@ -32,7 +32,7 @@
           "type": "integer",
           "description": "The number of point cloud maps to load at once (only used when use_sequential_load is set true). This should not be larger than number of all point cloud map cells",
           "default": 1,
-          "$comment": "This should not be larger than number of all point cloud map cells"
+          "minimum": 1
         },
         "use_inpaint": {
           "type": "boolean",

@@ -14,7 +14,8 @@
         "min_num_points_per_cell": {
           "type": "integer",
           "description": "Minimum number of points in the point cloud that have to fall within any of the grid map cells. Otherwise the cell elevation will be set to NaN",
-          "default": 3
+          "default": 3,
+          "minimum": 1
         },
         "resolution": {
           "type": "number",

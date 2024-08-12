@@ -14,7 +14,8 @@
         "min_num_points": {
           "type": "integer",
           "description": "Min number of points that a cluster needs to have (otherwise it will be discarded)",
-          "default": 3
+          "default": 3,
+          "minimum": 1
         },
         "max_num_points": {
           "type": "integer",
