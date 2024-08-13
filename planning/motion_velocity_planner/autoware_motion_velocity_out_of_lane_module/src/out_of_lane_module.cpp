@@ -76,6 +76,9 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
   pp.mode = getOrDeclareParameter<std::string>(node, ns_ + ".mode");
   pp.skip_if_already_overlapping =
     getOrDeclareParameter<bool>(node, ns_ + ".skip_if_already_overlapping");
+  pp.ignore_lane_changeable_lanelets =
+    getOrDeclareParameter<bool>(node, ns_ + ".ignore_overlaps_over_lane_changeable_lanelets");
+  pp.max_arc_length = getOrDeclareParameter<double>(node, ns_ + ".max_arc_length");
 
   pp.time_threshold = getOrDeclareParameter<double>(node, ns_ + ".threshold.time_threshold");
   pp.ttc_threshold = getOrDeclareParameter<double>(node, ns_ + ".ttc.threshold");
@@ -87,8 +90,6 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns_ + ".objects.cut_predicted_paths_beyond_red_lights");
   pp.objects_ignore_behind_ego =
     getOrDeclareParameter<bool>(node, ns_ + ".objects.ignore_behind_ego");
-
-  pp.overlap_min_dist = getOrDeclareParameter<double>(node, ns_ + ".overlap.minimum_distance");
 
   pp.precision = getOrDeclareParameter<double>(node, ns_ + ".action.precision");
   pp.min_decision_duration = getOrDeclareParameter<double>(node, ns_ + ".action.min_duration");
@@ -116,6 +117,10 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   auto & pp = params_;
   updateParam(parameters, ns_ + ".mode", pp.mode);
   updateParam(parameters, ns_ + ".skip_if_already_overlapping", pp.skip_if_already_overlapping);
+  updateParam(parameters, ns_ + ".max_arc_length", pp.max_arc_length);
+  updateParam(
+    parameters, ns_ + ".ignore_overlaps_over_lane_changeable_lanelets",
+    pp.ignore_lane_changeable_lanelets);
 
   updateParam(parameters, ns_ + ".threshold.time_threshold", pp.time_threshold);
   updateParam(parameters, ns_ + ".ttc.threshold", pp.ttc_threshold);
@@ -127,7 +132,6 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
     parameters, ns_ + ".objects.cut_predicted_paths_beyond_red_lights",
     pp.objects_cut_predicted_paths_beyond_red_lights);
   updateParam(parameters, ns_ + ".objects.ignore_behind_ego", pp.objects_ignore_behind_ego);
-  updateParam(parameters, ns_ + ".overlap.minimum_distance", pp.overlap_min_dist);
 
   updateParam(parameters, ns_ + ".action.precision", pp.precision);
   updateParam(parameters, ns_ + ".action.min_duration", pp.min_decision_duration);
@@ -247,8 +251,6 @@ VelocityPlanningResult OutOfLaneModule::plan(
   // Calculate lanelets to ignore and consider
   // TODO(Maxime): use the out_of_lane lanelets to find which lane is avoided. When avoiding the
   // same lane, keep the stop point with lowest arc length out_of_lane_data.out_of_lane_lanelets =
-  // out_of_lane::calculate_out_of_lane_lanelets(
-  //   ego_data, route_lanelets, ignored_lanelets, planner_data->route_handler, params_);
   stopwatch.tic("calculate_lanelets");
   calculate_drivable_lane_polygons(ego_data, *planner_data->route_handler);
   const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");
@@ -343,9 +345,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
                out_of_lane_data.outside_points.begin(), out_of_lane_data.outside_points.end(),
                [](const auto & p) { return p.to_avoid; })) {
     RCLCPP_WARN(
-      logger_,
-      "Could not insert slowdown point preventing ego from going out of lane while respecint the "
-      "deceleration limits");
+      logger_, "[out_of_lane] Could not insert slowdown point because of deceleration limits");
   }
   stopwatch.tic("pub");
   debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(

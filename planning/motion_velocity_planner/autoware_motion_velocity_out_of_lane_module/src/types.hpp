@@ -47,6 +47,8 @@ struct PlannerParam
   std::string mode;                  // mode used to consider a conflict with an object
   bool skip_if_already_overlapping;  // if true, do not run the module when ego already overlaps
                                      // another lane
+  double max_arc_length;  // [m] maximum arc length along the trajectory to check for collision
+  bool ignore_lane_changeable_lanelets;  // if true, ignore overlaps on lane changeable lanelets
 
   double time_threshold;  // [s](mode="threshold") objects time threshold
   double ttc_threshold;  // [s](mode="ttc") threshold on time to collision between ego and an object
@@ -56,8 +58,6 @@ struct PlannerParam
   double objects_min_vel;          // [m/s] objects lower than this velocity will be ignored
   double objects_min_confidence;   // minimum confidence to consider a predicted path
   bool objects_ignore_behind_ego;  // if true, objects behind the ego vehicle are ignored
-
-  double overlap_min_dist;  // [m] min distance inside another lane to consider an overlap
 
   // action to insert in the trajectory if an object causes a collision at an overlap
   double lon_dist_buffer;      // [m] safety distance buffer to keep in front of the ego vehicle
@@ -78,9 +78,6 @@ struct PlannerParam
   double extra_rear_offset;   // [m] extra rear distance
   double extra_right_offset;  // [m] extra right distance
   double extra_left_offset;   // [m] extra left distance
-
-  double max_arc_length = 100.0;  // TODO(Maxime): param  [m] maximum arc length along the
-                                  // trajectory to check for collision
 };
 
 namespace bgi = boost::geometry::index;

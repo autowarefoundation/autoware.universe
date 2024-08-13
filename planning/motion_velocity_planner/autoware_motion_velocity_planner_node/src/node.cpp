@@ -391,52 +391,9 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
     input_trajectory_points.begin(), input_trajectory_points.end()};
   auto resampled_trajectory =
     autoware::motion_utils::resampleTrajectory(smooth_velocity_trajectory, 0.5);
-  stop_watch.tic("time_from_start");
   motion_utils::calculate_time_from_start(
     resampled_trajectory.points, planner_data_.current_odometry.pose.pose.position);
-  // RCLCPP_WARN(get_logger(), "time_from_start: %2.2f us", stop_watch.toc("time_from_start"));
-  stop_watch.tic("collision_checker");
   planner_data_.reset_collision_checker(resampled_trajectory.points);
-  // RCLCPP_WARN(get_logger(), "collision_checker: %2.2f us", stop_watch.toc("collision_checker"));
-  // TODO(Maxime): remove debug markers or move to separate function
-  visualization_msgs::msg::MarkerArray markers;
-  visualization_msgs::msg::Marker marker;
-  marker.header.frame_id = "map";
-  marker.action = visualization_msgs::msg::Marker::ADD;
-  marker.scale.z = 0.1;
-  marker.color.set__a(1.0).set__r(0.5).set__b(0.5).set__g(0.5);
-  marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-  marker.ns = "time_from_start";
-  for (const auto & p : resampled_trajectory.points) {
-    marker.pose = p.pose;
-    marker.text = std::to_string(rclcpp::Duration(p.time_from_start).seconds());
-    markers.markers.push_back(marker);
-    marker.id++;
-  }
-  marker.ns = "time_ranges";
-  marker.id = 0;
-  stop_watch.tic("collision_time_ranges");
-  // planner_data_.collision_time_ranges_per_object.clear();
-  // planner_data_.collision_time_ranges_per_object.reserve(
-  //   planner_data_.predicted_objects.objects.size());
-  // for (const auto & object : planner_data_.predicted_objects.objects) {
-  //   const auto collision_time_ranges = calculate_collision_time_ranges_along_trajectory(
-  //     *planner_data_.ego_trajectory_collision_checker, resampled_trajectory.points, object);
-  //   for (auto i = 0UL; i < collision_time_ranges.size(); ++i) {
-  //     const auto & collision_time_range = collision_time_ranges[i];
-  //     if (collision_time_range) {
-  //       marker.pose = resampled_trajectory.points[i].pose;
-  //       marker.text = collision_time_range->to_string();
-  //       markers.markers.push_back(marker);
-  //       marker.id++;
-  //     }
-  //   }
-  //   planner_data_.collision_time_ranges_per_object.push_back(collision_time_ranges);
-  // }
-  // RCLCPP_WARN(
-  //   get_logger(), "collision_time_ranges: %2.2f us\n", stop_watch.toc("collision_time_ranges"));
-  // debug_viz_pub_->publish(markers);
-
   const auto planning_results = planner_manager_.plan_velocities(
     resampled_trajectory.points, std::make_shared<const PlannerData>(planner_data_));
 
