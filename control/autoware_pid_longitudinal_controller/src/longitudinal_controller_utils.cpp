@@ -67,9 +67,6 @@ double calcStopDistance(
     traj.points, current_pose.position, seg_idx, traj.points.at(end_idx).pose.position,
     std::min(end_idx, traj.points.size() - 2));
 
-  if (std::isnan(signed_length_on_traj)) {
-    return 0.0;
-  }
   return signed_length_on_traj;
 }
 
