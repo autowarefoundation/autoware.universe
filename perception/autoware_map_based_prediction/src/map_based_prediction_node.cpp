@@ -1010,16 +1010,22 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   std::unordered_set<std::string> predicted_crosswalk_users_ids;
 
   // get world to map transform
-  auto world2map_transform = transform_listener_.getTransform(
-    "map",                        // target
-    in_objects->header.frame_id,  // src
-    in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr world2map_transform;
+
+  bool is_object_not_in_map_frame = in_objects->header.frame_id != "map";
+  if (is_object_not_in_map_frame) {
+    world2map_transform = transform_listener_.getTransform(
+      "map",                        // target
+      in_objects->header.frame_id,  // src
+      in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
+    if (!world2map_transform) return;
+  }
 
   for (const auto & object : in_objects->objects) {
     TrackedObject transformed_object = object;
 
     // transform object frame if it's based on map frame
-    if (in_objects->header.frame_id != "map") {
+    if (is_object_not_in_map_frame) {
       geometry_msgs::msg::PoseStamped pose_in_map;
       geometry_msgs::msg::PoseStamped pose_orig;
       pose_orig.pose = object.kinematics.pose_with_covariance.pose;
