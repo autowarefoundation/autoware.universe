@@ -24,20 +24,19 @@
   <arg name="onnx_file" default="$(var data_path)/bevdet_one_lt_d.onnx" description="onnx model file path"/>
   <arg name="engine_file" default="$(var data_path)/bevdet_one_lt_d.engine" description="engine model file path"/>
   <!-- BEVDet -->
-    <group>
-      <push-ros-namespace namespace="bevdet"/>
-      <include file="$(find-pkg-share autoware_tensorrt_bevdet)/launch/tensorrt_bevdet.launch.xml">
-        <arg name="input/img_fl" value="$(var input/camera0/image)"/>
-        <arg name="input/img_f" value="$(var input/camera1/image)"/>
-        <arg name="input/img_fr" value="$(var input/camera2/image)"/>
-        <arg name="input/img_bl" value="$(var input/camera3/image)"/>
-        <arg name="input/img_b" value="$(var input/camera4/image)"/>
-        <arg name="input/img_br" value="$(var input/camera5/image)"/>
-        <arg name="output/boxes" value="boxes"/>
-        <arg name="data_path" value="$(var data_path)/"/>
-        <arg name="onnx_file" value="$(var onnx_file)"/>
-        <arg name="engine_file" value="$(var engine_file)"/>
-      </include>
-    </group>
+  <group>
+    <push-ros-namespace namespace="bevdet"/>
+    <include file="$(find-pkg-share autoware_tensorrt_bevdet)/launch/tensorrt_bevdet.launch.xml">
+      <arg name="input/img_fl" value="$(var input/camera0/image)"/>
+      <arg name="input/img_f" value="$(var input/camera1/image)"/>
+      <arg name="input/img_fr" value="$(var input/camera2/image)"/>
+      <arg name="input/img_bl" value="$(var input/camera3/image)"/>
+      <arg name="input/img_b" value="$(var input/camera4/image)"/>
+      <arg name="input/img_br" value="$(var input/camera5/image)"/>
+      <arg name="output/boxes" value="boxes"/>
+      <arg name="data_path" value="$(var data_path)/"/>
+      <arg name="onnx_file" value="$(var onnx_file)"/>
+      <arg name="engine_file" value="$(var engine_file)"/>
+    </include>
   </group>
 </launch>
