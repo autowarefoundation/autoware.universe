@@ -25,27 +25,19 @@
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/motion_velocity_planner_common/planner_data.hpp>
-#include <autoware/motion_velocity_planner_common/ttc_utils.hpp>
-#include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <traffic_light_utils/traffic_light_utils.hpp>
 
-#include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
-#include <boost/geometry/algorithms/detail/envelope/interface.hpp>
+#include <boost/geometry/algorithms/envelope.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 #include <boost/geometry/geometries/multi_polygon.hpp>
 
 #include <lanelet2_core/geometry/BoundingBox.h>
-#include <lanelet2_core/geometry/LaneletMap.h>
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
-#include <lanelet2_core/primitives/CompoundPolygon.h>
-#include <lanelet2_core/primitives/Lanelet.h>
-#include <lanelet2_core/primitives/Polygon.h>
 
 #include <algorithm>
 #include <map>

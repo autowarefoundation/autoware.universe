@@ -17,6 +17,7 @@
 
 #include <autoware/motion_velocity_planner_common/ttc_utils.hpp>
 #include <autoware/route_handler/route_handler.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
@@ -24,7 +25,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <boost/geometry/geometries/multi_polygon.hpp>
-#include <boost/geometry/index/parameters.hpp>
+#include <boost/geometry/index/rtree.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/LaneletMap.h>

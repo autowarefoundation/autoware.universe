@@ -26,7 +26,6 @@
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <algorithm>
-#include <iterator>
 #include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane
@@ -74,8 +73,7 @@ std::optional<universe_utils::LineString2d> find_next_stop_line(
   auto earliest_intersecting_index = query_path.size();
   std::optional<universe_utils::LineString2d> earliest_stop_line;
   universe_utils::Segment2d path_segment;
-  for (const auto & stop_line_node : query_results) {
-    const auto & stop_line = stop_line_node.second;
+  for (const auto & [_, stop_line] : query_results) {
     for (auto index = 0UL; index + 1 < query_path.size(); ++index) {
       path_segment.first = query_path[index];
       path_segment.second = query_path[index + 1];
