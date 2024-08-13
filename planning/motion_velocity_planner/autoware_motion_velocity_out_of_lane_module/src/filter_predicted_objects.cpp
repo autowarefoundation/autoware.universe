@@ -74,8 +74,7 @@ std::optional<universe_utils::LineString2d> find_next_stop_line(
   auto earliest_intersecting_index = query_path.size();
   std::optional<universe_utils::LineString2d> earliest_stop_line;
   universe_utils::Segment2d path_segment;
-  for (const auto & stop_line_node : query_results) {
-    const auto & stop_line = stop_line_node.second;
+  for (const auto & [_, stop_line] : query_results) {
     for (auto index = 0UL; index + 1 < query_path.size(); ++index) {
       path_segment.first = query_path[index];
       path_segment.second = query_path[index + 1];
@@ -84,8 +83,6 @@ std::optional<universe_utils::LineString2d> find_next_stop_line(
           std::any_of(stop_line.lanelets.begin(), stop_line.lanelets.end(), [&](const auto & ll) {
             return boost::geometry::within(path_segment.first, ll.polygon2d().basicPolygon());
           });
-        for (const auto & ll : stop_line.lanelets) {
-        }
         if (within_stop_line_lanelet) {
           earliest_intersecting_index = std::min(index, earliest_intersecting_index);
           earliest_stop_line = stop_line.stop_line;
