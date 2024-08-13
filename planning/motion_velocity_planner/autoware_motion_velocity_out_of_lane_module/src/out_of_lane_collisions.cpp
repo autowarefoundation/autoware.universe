@@ -16,6 +16,9 @@
 
 #include "types.hpp"
 
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <rclcpp/duration.hpp>
+
 #include <boost/geometry/algorithms/detail/envelope/interface.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
 #include <boost/geometry/index/predicates.hpp>

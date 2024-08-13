@@ -16,7 +16,6 @@
 
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/motion_velocity_planner_common/ttc_utils.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/ros/wait_for_param.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -393,7 +392,6 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
     autoware::motion_utils::resampleTrajectory(smooth_velocity_trajectory, 0.5);
   motion_utils::calculate_time_from_start(
     resampled_trajectory.points, planner_data_.current_odometry.pose.pose.position);
-  planner_data_.reset_collision_checker(resampled_trajectory.points);
   const auto planning_results = planner_manager_.plan_velocities(
     resampled_trajectory.points, std::make_shared<const PlannerData>(planner_data_));
 

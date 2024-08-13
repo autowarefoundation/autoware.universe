@@ -17,6 +17,7 @@
 #include "types.hpp"
 
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 
 #include <geometry_msgs/msg/detail/pose__struct.hpp>

@@ -17,7 +17,6 @@
 
 #include <autoware/motion_utils/distance/distance.hpp>
 #include <autoware/motion_velocity_planner_common/collision_checker.hpp>
-#include <autoware/motion_velocity_planner_common/ttc_utils.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/velocity_smoother/smoother/smoother_base.hpp>
@@ -64,11 +63,9 @@ struct PlannerData
   nav_msgs::msg::Odometry current_odometry;
   geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration;
   autoware_perception_msgs::msg::PredictedObjects predicted_objects;
-  std::vector<CollisionTimeRanges> collision_time_ranges_per_object;
   pcl::PointCloud<pcl::PointXYZ> no_ground_pointcloud;
   nav_msgs::msg::OccupancyGrid occupancy_grid;
   std::shared_ptr<route_handler::RouteHandler> route_handler;
-  std::shared_ptr<CollisionChecker> ego_trajectory_collision_checker;
 
   // nearest search
   double ego_nearest_dist_threshold{};
@@ -101,19 +98,6 @@ struct PlannerData
       return std::nullopt;
     }
     return std::make_optional<TrafficSignalStamped>(traffic_light_id_map.at(id));
-  }
-
-  void reset_collision_checker(
-    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points)
-  {
-    autoware::universe_utils::MultiPolygon2d footprints;
-    footprints.reserve(ego_trajectory_points.size());
-    for (const auto & p : ego_trajectory_points) {
-      footprints.push_back(autoware::universe_utils::toFootprint(
-        p.pose, vehicle_info_.max_longitudinal_offset_m, -vehicle_info_.min_longitudinal_offset_m,
-        vehicle_info_.vehicle_width_m));
-    }
-    ego_trajectory_collision_checker = std::make_shared<CollisionChecker>(footprints);
   }
 
   [[nodiscard]] std::optional<double> calculate_min_deceleration_distance(

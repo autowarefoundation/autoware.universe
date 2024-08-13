@@ -13,7 +13,6 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
     test/test_collision_checker.cpp
     test/test_planner_data.cpp
-    test/test_ttc_utils.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
     gtest_main

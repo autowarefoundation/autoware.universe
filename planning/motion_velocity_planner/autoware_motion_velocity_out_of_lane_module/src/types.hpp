@@ -15,7 +15,6 @@
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
-#include <autoware/motion_velocity_planner_common/ttc_utils.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
