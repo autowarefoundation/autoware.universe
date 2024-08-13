@@ -140,7 +140,8 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
 
 double AbstractPlanningAlgorithm::getDistanceToObstacle(const geometry_msgs::msg::Pose & pose) const
 {
-  const auto index = pose2index(costmap_, pose, planner_common_param_.theta_size);
+  const auto local_pose = global2local(costmap_, pose);
+  const auto index = pose2index(costmap_, local_pose, planner_common_param_.theta_size);
   if (indexToId(index) >= static_cast<int>(edt_map_.size())) {
     return std::numeric_limits<double>::max();
   }
