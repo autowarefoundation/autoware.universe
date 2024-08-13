@@ -390,22 +390,20 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   if (smooth_velocity_before_planning_) {
     stop_watch.tic("smooth");
     input_trajectory_points = smooth_trajectory(input_trajectory_points, planner_data_);
-    RCLCPP_WARN(get_logger(), "smooth: %2.2f us", stop_watch.toc("smooth"));
+    RCLCPP_DEBUG(get_logger(), "smooth: %2.2f us", stop_watch.toc("smooth"));
   }
   autoware_planning_msgs::msg::Trajectory smooth_velocity_trajectory;
   smooth_velocity_trajectory.points = {
     input_trajectory_points.begin(), input_trajectory_points.end()};
-  stop_watch.tic("resample");
   auto resampled_trajectory =
     autoware::motion_utils::resampleTrajectory(smooth_velocity_trajectory, 0.5);
-  RCLCPP_WARN(get_logger(), "resample : %2.2f us", stop_watch.toc("resample"));
   stop_watch.tic("time_from_start");
   motion_utils::calculate_time_from_start(
     resampled_trajectory.points, planner_data_.current_odometry.pose.pose.position);
-  RCLCPP_WARN(get_logger(), "time_from_start: %2.2f us", stop_watch.toc("time_from_start"));
+  // RCLCPP_WARN(get_logger(), "time_from_start: %2.2f us", stop_watch.toc("time_from_start"));
   stop_watch.tic("collision_checker");
   planner_data_.reset_collision_checker(resampled_trajectory.points);
-  RCLCPP_WARN(get_logger(), "collision_checker: %2.2f us", stop_watch.toc("collision_checker"));
+  // RCLCPP_WARN(get_logger(), "collision_checker: %2.2f us", stop_watch.toc("collision_checker"));
   // TODO(Maxime): remove debug markers or move to separate function
   visualization_msgs::msg::MarkerArray markers;
   visualization_msgs::msg::Marker marker;

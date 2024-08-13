@@ -250,13 +250,13 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   const auto jerk_at_wp = interpolation::lerp(xs, js, distances);
 
   // for debug
-  // std::stringstream ssi;
-  // for (unsigned int i = 0; i < distances.size(); ++i) {
-  //   ssi << "d: " << distances.at(i) << ", v: " << vel_at_wp.at(i) << ", a: " << acc_at_wp.at(i)
-  //       << ", j: " << jerk_at_wp.at(i) << std::endl;
-  // }
-  // RCLCPP_DEBUG(
-  //   rclcpp::get_logger("velocity_planning_utils"), "Interpolated = %s", ssi.str().c_str());
+  std::stringstream ssi;
+  for (unsigned int i = 0; i < distances.size(); ++i) {
+    ssi << "d: " << distances.at(i) << ", v: " << vel_at_wp.at(i) << ", a: " << acc_at_wp.at(i)
+        << ", j: " << jerk_at_wp.at(i) << std::endl;
+  }
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("velocity_planning_utils"), "Interpolated = %s", ssi.str().c_str());
 
   for (size_t i = 0; i < vel_at_wp.size(); ++i) {
     output_trajectory.at(start_index + i).longitudinal_velocity_mps = vel_at_wp.at(i);
