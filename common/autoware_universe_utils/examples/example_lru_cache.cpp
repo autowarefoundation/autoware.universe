@@ -26,7 +26,7 @@ int64_t fibonacci_with_cache(int n, LRUCache<int, int64_t> * cache)
   if (n <= 1) return n;
 
   if (cache->contains(n)) {
-    return cache->get(n);
+    return *cache->get(n);
   }
   int64_t result = fibonacci_with_cache(n - 1, cache) + fibonacci_with_cache(n - 2, cache);
   cache->put(n, result);

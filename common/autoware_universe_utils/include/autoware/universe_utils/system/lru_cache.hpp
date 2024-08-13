@@ -16,7 +16,7 @@
 
 #include <cstddef>
 #include <list>
-#include <stdexcept>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 
@@ -84,18 +84,17 @@ public:
   /**
    * @brief Retrieve a value from the cache.
    *
-   * If the key is found, the corresponding value is returned and the element is moved to the front.
-   * If the key is not found, a runtime exception is thrown.
+   * If the key does not exist in the cache, std::nullopt is returned.
+   * If the key exists, the value is returned and the element is moved to the front.
    *
    * @param key The key to retrieve.
-   * @return The value associated with the key.
-   * @throws std::runtime_error if the key is not found.
+   * @return The value associated with the key, or std::nullopt if the key does not exist.
    */
-  Value get(const Key & key)
+  std::optional<Value> get(const Key & key)
   {
     auto it = cache_map_.find(key);
     if (it == cache_map_.end()) {
-      throw std::runtime_error("Key not found");
+      return std::nullopt;
     }
     cache_list_.splice(cache_list_.begin(), cache_list_, it->second);
     return it->second->second;
