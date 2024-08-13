@@ -1199,27 +1199,56 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
   const auto & lanes = common_data_ptr->lanes_ptr;
   LanesPolygon lanes_polygon;
 
-  lanes_polygon.current =
-    utils::lane_change::createPolygon(lanes->current, 0.0, std::numeric_limits<double>::max());
+  const auto get_polygon_with_cache = [&](const auto & lls) {
+    lanelet::Ids ids;
+    for (const auto & ll : lls) {
+      ids.push_back(ll.id());
+    }
+    const auto cached = common_data_ptr->lanelets_polygon_cache.get(ids);
+    if (cached.has_value()) {
+      return *cached;
+    } else {
+      const auto value =
+        utils::lane_change::createPolygon(lanes->current, 0.0, std::numeric_limits<double>::max());
+      common_data_ptr->lanelets_polygon_cache.insert(ids, value);
+      return value;
+    }
+  };
+  const auto get_expanded_polygon_with_cache = [&](const auto & lls) {
+    const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
+    auto & cached_params = common_data_ptr->expanded_cache_parameters;
+    const auto has_same_parameters =
+      common_data_ptr->direction == cached_params.direction &&
+      lc_param_ptr->lane_expansion_left_offset == cached_params.left_offset &&
+      lc_param_ptr->lane_expansion_right_offset == cached_params.right_offset;
 
-  lanes_polygon.target =
-    utils::lane_change::createPolygon(lanes->target, 0.0, std::numeric_limits<double>::max());
+    lanelet::Ids ids;
+    for (const auto & ll : lls) {
+      ids.push_back(ll.id());
+    }
+    if (has_same_parameters && common_data_ptr->expanded_lanelets_polygon_cache.contains(ids)) {
+      return *common_data_ptr->expanded_lanelets_polygon_cache.get(ids);
+    } else {
+      const auto value = utils::lane_change::generateExpandedLanelets(
+        lls, common_data_ptr->direction, lc_param_ptr->lane_expansion_left_offset,
+        lc_param_ptr->lane_expansion_right_offset);
+      common_data_ptr->expanded_lanelets_polygon_cache.insert(ids, value);
+      return value;
+    }
+  };
+
+  lanes_polygon.current = get_polygon_with_cache(lanes->current);
+  lanes_polygon.target = get_polygon_with_cache(lanes->target);
 
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
-  const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
-    lanes->target, common_data_ptr->direction, lc_param_ptr->lane_expansion_left_offset,
-    lc_param_ptr->lane_expansion_right_offset);
-  lanes_polygon.expanded_target = utils::lane_change::createPolygon(
-    expanded_target_lanes, 0.0, std::numeric_limits<double>::max());
-
-  lanes_polygon.target_neighbor = *utils::lane_change::createPolygon(
-    lanes->target_neighbor, 0.0, std::numeric_limits<double>::max());
+  const auto expanded_target_lanes = get_expanded_polygon_with_cache(lanes->target);
+  lanes_polygon.expanded_target = get_polygon_with_cache(expanded_target_lanes);
+  lanes_polygon.target_neighbor =
+    get_polygon_with_cache(lanes->target_neighbor).value_or(lanelet::BasicPolygon2d());
 
   lanes_polygon.preceding_target.reserve(lanes->preceding_target.size());
   for (const auto & preceding_lane : lanes->preceding_target) {
-    auto lane_polygon =
-      utils::lane_change::createPolygon(preceding_lane, 0.0, std::numeric_limits<double>::max());
-
+    auto lane_polygon = get_polygon_with_cache(preceding_lane);
     if (lane_polygon) {
       lanes_polygon.preceding_target.push_back(*lane_polygon);
     }

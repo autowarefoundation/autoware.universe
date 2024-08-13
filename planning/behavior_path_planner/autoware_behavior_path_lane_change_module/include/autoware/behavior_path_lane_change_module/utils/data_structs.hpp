@@ -24,6 +24,8 @@
 
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <boost/compute/detail/lru_cache.hpp>
+
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
@@ -277,6 +279,10 @@ using LCParamPtr = std::shared_ptr<Parameters>;
 using LanesPtr = std::shared_ptr<Lanes>;
 using LanesPolygonPtr = std::shared_ptr<LanesPolygon>;
 
+using LaneletsPolygonCache =
+  boost::compute::detail::lru_cache<lanelet::Ids, std::optional<lanelet::BasicPolygon2d>>;
+using LaneletsCache = boost::compute::detail::lru_cache<lanelet::Ids, lanelet::ConstLanelets>;
+
 struct CommonData
 {
   RouteHandlerPtr route_handler_ptr;
@@ -287,6 +293,14 @@ struct CommonData
   LanesPolygonPtr lanes_polygon_ptr;
   ModuleType lc_type;
   Direction direction;
+  mutable LaneletsPolygonCache lanelets_polygon_cache{100};
+  mutable LaneletsCache expanded_lanelets_polygon_cache{10};
+  mutable struct
+  {
+    Direction direction{};
+    double left_offset{};
+    double right_offset{};
+  } expanded_cache_parameters;
 
   [[nodiscard]] Pose get_ego_pose() const { return self_odometry_ptr->pose.pose; }
 
