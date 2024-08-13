@@ -78,8 +78,6 @@ struct PlannerParam
   double extra_right_offset;  // [m] extra right distance
   double extra_left_offset;   // [m] extra left distance
 
-  bool use_route_to_get_route_lanelets = true;  // TODO(Maxime): param  [-] if true, the route is
-                                                // used to calculate the trajectory lanelets
   double max_arc_length = 100.0;  // TODO(Maxime): param  [m] maximum arc length along the
                                   // trajectory to check for collision
 };

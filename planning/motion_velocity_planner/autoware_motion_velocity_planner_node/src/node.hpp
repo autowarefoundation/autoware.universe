@@ -82,8 +82,6 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<
     tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>
     sub_virtual_traffic_light_states_{this, "~/input/virtual_traffic_light_states"};
-  autoware::universe_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::LaneletRoute>
-    route_subscriber_{this, "~/input/route", rclcpp::QoS{1}.transient_local()};
   rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_map_;
 
   void on_trajectory(

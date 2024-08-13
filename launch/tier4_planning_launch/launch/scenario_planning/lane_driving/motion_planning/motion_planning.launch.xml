@@ -123,7 +123,6 @@
         <!-- topic remap -->
         <remap from="~/input/trajectory" to="path_optimizer/trajectory"/>
         <remap from="~/input/vector_map" to="/map/vector_map"/>
-        <remap from="~/input/route" to="/planning/mission_planning/route"/>
         <remap from="~/input/vehicle_odometry" to="/localization/kinematic_state"/>
         <remap from="~/input/accel" to="/localization/acceleration"/>
         <remap from="~/input/dynamic_objects" to="/perception/object_recognition/objects"/>
