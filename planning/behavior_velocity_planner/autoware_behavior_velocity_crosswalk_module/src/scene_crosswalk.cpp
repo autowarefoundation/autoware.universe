@@ -618,9 +618,17 @@ std::optional<double> CrosswalkModule::findEgoPassageDirectionAlongPath(
   if (!intersect_pt1 || !intersect_pt2) {
     return std::nullopt;
   }
-  const auto idx1 = intersect_pt1.value().first, idx2 = intersect_pt2.value().first;
-  const auto & front = idx1 > idx2 ? intersect_pt2.value().second : intersect_pt1.value().second;
-  const auto & back = idx1 > idx2 ? intersect_pt1.value().second : intersect_pt2.value().second;
+
+  const auto idx1 = intersect_pt1.value().first;
+  const auto idx2 = intersect_pt2.value().first;
+
+  const auto min_idx = std::min(idx1, idx2);
+  const auto dist1 = calcSignedArcLength(path.points, min_idx, intersect_pt1.value().second);
+  const auto dist2 = calcSignedArcLength(path.points, min_idx, intersect_pt2.value().second);
+
+  const auto & front = dist1 > dist2 ? intersect_pt2.value().second : intersect_pt1.value().second;
+  const auto & back = dist1 > dist2 ? intersect_pt1.value().second : intersect_pt2.value().second;
+
   return std::atan2(back.y - front.y, back.x - front.x);
 }
 
