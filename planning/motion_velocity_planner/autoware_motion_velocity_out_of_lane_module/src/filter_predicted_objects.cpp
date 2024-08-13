@@ -18,7 +18,6 @@
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <traffic_light_utils/traffic_light_utils.hpp>
 
-#include <boost/geometry/algorithms/detail/intersects/interface.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 #include <boost/geometry/index/predicates.hpp>
 
@@ -26,7 +25,6 @@
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <algorithm>
-#include <iterator>
 #include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane

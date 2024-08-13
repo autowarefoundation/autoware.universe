@@ -16,7 +16,7 @@
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
-#include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
+#include <boost/geometry/algorithms/disjoint.hpp>
 
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/geometry/LaneletMap.h>

@@ -26,25 +26,18 @@
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/motion_velocity_planner_common/planner_data.hpp>
-#include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <traffic_light_utils/traffic_light_utils.hpp>
 
-#include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
-#include <boost/geometry/algorithms/detail/envelope/interface.hpp>
+#include <boost/geometry/algorithms/envelope.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 
 #include <lanelet2_core/geometry/BoundingBox.h>
-#include <lanelet2_core/geometry/LaneletMap.h>
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
-#include <lanelet2_core/primitives/CompoundPolygon.h>
-#include <lanelet2_core/primitives/Lanelet.h>
-#include <lanelet2_core/primitives/Polygon.h>
 
 #include <map>
 #include <memory>
@@ -218,7 +211,9 @@ VelocityPlanningResult OutOfLaneModule::plan(
     autoware::motion_utils::findNearestSegmentIndex(ego_trajectory_points, ego_data.pose.position);
   ego_data.velocity = planner_data->current_odometry.twist.twist.linear.x;
   ego_data.max_decel = planner_data->velocity_smoother_->getMinDecel();
+  stopwatch.tic("preprocessing");
   prepare_stop_lines_rtree(ego_data, *planner_data, 100.0);
+  const auto preprocessing_us = stopwatch.toc("preprocessing");
 
   stopwatch.tic("calculate_trajectory_footprints");
   const auto current_ego_footprint =
@@ -340,6 +335,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   RCLCPP_DEBUG(
     logger_,
     "Total time = %2.2fus\n"
+    "\tpreprocessing = %2.0fus\n"
     "\tcalculate_lanelets = %2.0fus\n"
     "\tcalculate_trajectory_footprints = %2.0fus\n"
     "\tcalculate_overlapping_ranges = %2.0fus\n"
@@ -347,7 +343,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
     "\tcalculate_decisions = %2.0fus\n"
     "\tcalc_slowdown_points = %2.0fus\n"
     "\tinsert_slowdown_points = %2.0fus\n",
-    total_time_us, calculate_lanelets_us, calculate_trajectory_footprints_us,
+    preprocessing_us, total_time_us, calculate_lanelets_us, calculate_trajectory_footprints_us,
     calculate_overlapping_ranges_us, filter_predicted_objects_us, calculate_decisions_us,
     calc_slowdown_points_us, insert_slowdown_points_us);
   debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(debug_data_));
@@ -355,6 +351,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
     out_of_lane::debug::create_virtual_walls(debug_data_, params_));
   virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
   std::map<std::string, double> processing_times;
+  processing_times["preprocessing"] = preprocessing_us / 1000;
   processing_times["calculate_lanelets"] = calculate_lanelets_us / 1000;
   processing_times["calculate_trajectory_footprints"] = calculate_trajectory_footprints_us / 1000;
   processing_times["calculate_overlapping_ranges"] = calculate_overlapping_ranges_us / 1000;
