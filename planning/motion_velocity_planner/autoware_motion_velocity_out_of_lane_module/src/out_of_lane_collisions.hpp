@@ -20,13 +20,22 @@
 #include <autoware/motion_velocity_planner_common/collision_checker.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_planning_msgs/msg/detail/trajectory_point__struct.hpp>
 
 #include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
+
+/// @brief calculate the times and points where ego collides with an object's path outside of its
+/// lane
+void calculate_object_path_time_collisions(
+  OutOfLaneData & out_of_lane_data,
+  const autoware_perception_msgs::msg::PredictedPath & object_path,
+  const autoware_perception_msgs::msg::Shape & object_shape);
+
 /// @brief calculate the times and points where ego collides with an object outside of its lane
-void calculate_object_time_collisions(
+void calculate_objects_time_collisions(
   OutOfLaneData & out_of_lane_data,
   const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects);
 
@@ -34,7 +43,9 @@ void calculate_object_time_collisions(
 /// @details either uses the time to collision or just the time when the object will arrive at the
 /// point
 void calculate_collisions_to_avoid(
-  OutOfLaneData & out_of_lane_data, const EgoData & ego_data, const PlannerParam & params);
+  OutOfLaneData & out_of_lane_data,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const PlannerParam & params);
 
 /// @brief calculate the areas where ego will drive outside of its lane
 /// @details the OutOfLaneData points and rtree are filled

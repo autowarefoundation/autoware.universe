@@ -19,6 +19,8 @@
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <rclcpp/duration.hpp>
 
+#include <autoware_planning_msgs/msg/detail/trajectory_point__struct.hpp>
+
 #include <boost/geometry/algorithms/detail/envelope/interface.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
 #include <boost/geometry/index/predicates.hpp>
@@ -27,78 +29,95 @@
 #include <iterator>
 #include <limits>
 #include <unordered_set>
+#include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
-void calculate_object_time_collisions(
+
+void calculate_object_path_time_collisions(
   OutOfLaneData & out_of_lane_data,
-  const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects)
+  const autoware_perception_msgs::msg::PredictedPath & object_path,
+  const autoware_perception_msgs::msg::Shape & object_shape)
 {
-  universe_utils::Polygon2d object_footprint;
-  for (const auto & object : objects) {
-    for (const auto & object_path : object.kinematics.predicted_paths) {
-      const auto time_step = rclcpp::Duration(object_path.time_step).seconds();
-      auto t = time_step;
-      for (const auto & object_pose : object_path.path) {
-        t += time_step;
-        object_footprint = universe_utils::toPolygon2d(object_pose, object.shape);
-        std::vector<OutAreaNode> query_results;
-        out_of_lane_data.outside_areas_rtree.query(
-          boost::geometry::index::intersects(object_footprint.outer()),
-          std::back_inserter(query_results));
-        std::unordered_set<size_t> out_of_lane_indexes;
-        for (const auto & query_result : query_results) {
-          out_of_lane_indexes.insert(query_result.second);
-        }
-        for (const auto index : out_of_lane_indexes) {
-          auto & out_of_lane_point = out_of_lane_data.outside_points[index];
-          if (out_of_lane_point.collision_times.count(t) == 0UL) {
-            for (const auto & ring : out_of_lane_point.outside_rings) {
-              if (!boost::geometry::disjoint(ring, object_footprint.outer())) {
-                out_of_lane_point.collision_times.insert(t);
-                break;
-              }
-            }
+  const auto time_step = rclcpp::Duration(object_path.time_step).seconds();
+  auto t = time_step;
+  for (const auto & object_pose : object_path.path) {
+    t += time_step;
+    const auto object_footprint = universe_utils::toPolygon2d(object_pose, object_shape);
+    std::vector<OutAreaNode> query_results;
+    out_of_lane_data.outside_areas_rtree.query(
+      boost::geometry::index::intersects(object_footprint.outer()),
+      std::back_inserter(query_results));
+    std::unordered_set<size_t> out_of_lane_indexes;
+    for (const auto & query_result : query_results) {
+      out_of_lane_indexes.insert(query_result.second);
+    }
+    for (const auto index : out_of_lane_indexes) {
+      auto & out_of_lane_point = out_of_lane_data.outside_points[index];
+      if (out_of_lane_point.collision_times.count(t) == 0UL) {
+        for (const auto & ring : out_of_lane_point.outside_rings) {
+          if (!boost::geometry::disjoint(ring, object_footprint.outer())) {
+            out_of_lane_point.collision_times.insert(t);
+            break;
           }
         }
       }
     }
   }
 }
-
-void calculate_collisions_to_avoid(
-  OutOfLaneData & out_of_lane_data, const EgoData & ego_data, const PlannerParam & params)
+void calculate_objects_time_collisions(
+  OutOfLaneData & out_of_lane_data,
+  const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects)
 {
-  for (auto & out_of_lane_point : out_of_lane_data.outside_points) {
-    auto min_time = std::numeric_limits<double>::infinity();
-    auto max_time = -std::numeric_limits<double>::infinity();
-    for (const auto & t : out_of_lane_point.collision_times) {
-      min_time = std::min(t, min_time);
-      max_time = std::max(t, max_time);
+  for (const auto & object : objects) {
+    for (const auto & path : object.kinematics.predicted_paths) {
+      calculate_object_path_time_collisions(out_of_lane_data, path, object.shape);
     }
-    if (min_time <= max_time) {
-      out_of_lane_point.min_object_arrival_time = min_time;
-      out_of_lane_point.max_object_arrival_time = max_time;
-      const auto & ego_time =
-        rclcpp::Duration(
-          ego_data.trajectory_points[out_of_lane_point.trajectory_index].time_from_start)
-          .seconds();
-      if (ego_time >= min_time && ego_time <= max_time) {
-        out_of_lane_point.ttc = 0.0;
-      } else {
-        out_of_lane_point.ttc =
-          std::min(std::abs(ego_time - min_time), std::abs(ego_time - max_time));
-      }
-    }
-  }
-  for (auto & p : out_of_lane_data.outside_points) {
-    p.to_avoid = params.mode == "ttc" ? (p.ttc && p.ttc <= params.ttc_threshold)
-                                      : (p.min_object_arrival_time &&
-                                         p.min_object_arrival_time <= params.time_threshold);
   }
 }
 
-OutOfLaneData calculate_out_of_lane_areas(const EgoData & ego_data)
+void calculate_min_max_arrival_times(
+  OutOfLanePoint & out_of_lane_point,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory)
+{
+  auto min_time = std::numeric_limits<double>::infinity();
+  auto max_time = -std::numeric_limits<double>::infinity();
+  for (const auto & t : out_of_lane_point.collision_times) {
+    min_time = std::min(t, min_time);
+    max_time = std::max(t, max_time);
+  }
+  if (min_time <= max_time) {
+    out_of_lane_point.min_object_arrival_time = min_time;
+    out_of_lane_point.max_object_arrival_time = max_time;
+    const auto & ego_time =
+      rclcpp::Duration(trajectory[out_of_lane_point.trajectory_index].time_from_start).seconds();
+    if (ego_time >= min_time && ego_time <= max_time) {
+      out_of_lane_point.ttc = 0.0;
+    } else {
+      out_of_lane_point.ttc =
+        std::min(std::abs(ego_time - min_time), std::abs(ego_time - max_time));
+    }
+  }
+};
+
+void calculate_collisions_to_avoid(
+  OutOfLaneData & out_of_lane_data,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const PlannerParam & params)
+{
+  for (auto & out_of_lane_point : out_of_lane_data.outside_points) {
+    calculate_min_max_arrival_times(out_of_lane_point, trajectory);
+  }
+  for (auto & p : out_of_lane_data.outside_points) {
+    if (params.mode == "ttc") {
+      p.to_avoid = p.ttc && p.ttc <= params.ttc_threshold;
+    } else {
+      p.to_avoid = p.min_object_arrival_time && p.min_object_arrival_time <= params.time_threshold;
+    }
+  }
+}
+
+OutOfLaneData calculate_outside_points(const EgoData & ego_data)
 {
   OutOfLaneData out_of_lane_data;
   out_of_lane::OutOfLanePoint p;
@@ -115,7 +134,12 @@ OutOfLaneData calculate_out_of_lane_areas(const EgoData & ego_data)
       out_of_lane_data.outside_points.push_back(p);
     }
   }
+  return out_of_lane_data;
+}
 
+OutOfLaneData calculate_out_of_lane_areas(const EgoData & ego_data)
+{
+  auto out_of_lane_data = calculate_outside_points(ego_data);
   std::vector<OutAreaNode> rtree_nodes;
   for (auto i = 0UL; i < out_of_lane_data.outside_points.size(); ++i) {
     for (const auto & ring : out_of_lane_data.outside_points[i].outside_rings) {
