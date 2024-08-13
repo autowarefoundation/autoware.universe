@@ -223,7 +223,8 @@ size_t get_index_after_distance(
 
   size_t target_id = curr_id;
   for (size_t traj_id = curr_id + 1; traj_id < traj.points.size(); ++traj_id) {
-    const double current_distance = autoware::universe_utils::calcDistance3d(traj.points.at(traj_id), curr_p);
+    const double current_distance =
+      autoware::universe_utils::calcDistance3d(traj.points.at(traj_id), curr_p);
     if (current_distance >= distance) {
       break;
     }
