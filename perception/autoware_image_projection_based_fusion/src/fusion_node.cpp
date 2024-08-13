@@ -212,6 +212,10 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   int64_t timestamp_nsec =
     (*output_msg).header.stamp.sec * (int64_t)1e9 + (*output_msg).header.stamp.nanosec;
 
+  std::cout << "----------" << std::endl;
+  std::cout << "pointcloud timestamp: " << timestamp_nsec << std::endl;
+  bool fused_once = false;
+
   // if matching rois exist, fuseOnSingle
   // please ask maintainers before parallelize this loop because debugger is not thread safe
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
@@ -229,6 +233,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
       for (const auto & [k, v] : cached_roi_msgs_.at(roi_i)) {
         int64_t new_stamp = timestamp_nsec + input_offset_ms_.at(roi_i) * (int64_t)1e6;
         int64_t interval = abs(int64_t(k) - new_stamp);
+
+        std::cout << "roi " << roi_i << " timestamp: " << k << std::endl;
 
         if (interval <= min_interval && interval <= match_threshold_ms_ * (int64_t)1e6) {
           min_interval = interval;
@@ -249,9 +255,20 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
           debugger_->clear();
         }
 
-        fuseOnSingleImage(
-          *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
-          camera_info_map_.at(roi_i), *output_msg);
+          std::cout << "roi " << roi_i << " matched timestamp: " << matched_stamp << std::endl;
+
+        if (fused_once) {
+            fuseOnSingleImage(
+                    *output_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
+                    camera_info_map_.at(roi_i), *output_msg);
+        } else {
+            fuseOnSingleImage(
+                    *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
+                    camera_info_map_.at(roi_i), *output_msg);
+            fused_once = true;
+        }
+
+
         (cached_roi_msgs_.at(roi_i)).erase(matched_stamp);
         is_fused_.at(roi_i) = true;
 

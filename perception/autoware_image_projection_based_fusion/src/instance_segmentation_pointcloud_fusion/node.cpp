@@ -102,16 +102,14 @@ void InstanceSegmentationPointCloudFusionNode::fuseOnSingleImage(
   cv::cvtColor(combined_mask, combined_mask, cv::COLOR_GRAY2BGR);
 
   PointCloud2 transformed_cloud;
-  tf2::doTransform(
-    input_pointcloud_msg, transformed_cloud,
-    transform_stamped_map_[static_cast<int>(image_id)].value());
+  tf2::doTransform(input_pointcloud_msg, transformed_cloud, transform_stamped_map_[image_id].value());
 
   int point_step = input_pointcloud_msg.point_step;
   int x_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "x")].offset;
   int y_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "y")].offset;
   int z_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "z")].offset;
   size_t output_pointcloud_size = 0;
-  output_pointcloud_msg.data.clear();
+//  output_pointcloud_msg.data.clear();
   output_pointcloud_msg.data.resize(input_pointcloud_msg.data.size());
   output_pointcloud_msg.fields = input_pointcloud_msg.fields;
   output_pointcloud_msg.header = input_pointcloud_msg.header;
@@ -130,8 +128,7 @@ void InstanceSegmentationPointCloudFusionNode::fuseOnSingleImage(
     // skip filtering pointcloud behind the camera or too far from camera
     if (transformed_z <= 0.0 || transformed_z > filter_distance_threshold_) {
       copyPointCloud(
-        input_pointcloud_msg, point_step, global_offset, output_pointcloud_msg,
-        output_pointcloud_size);
+        input_pointcloud_msg, point_step, global_offset, output_pointcloud_msg, output_pointcloud_size);
       continue;
     }
 
@@ -142,8 +139,7 @@ void InstanceSegmentationPointCloudFusionNode::fuseOnSingleImage(
                            projected_point.y() > 0 && projected_point.y() < camera_info.height;
     if (!is_inside_image) {
       copyPointCloud(
-        input_pointcloud_msg, point_step, global_offset, output_pointcloud_msg,
-        output_pointcloud_size);
+        input_pointcloud_msg, point_step, global_offset, output_pointcloud_msg, output_pointcloud_size);
       continue;
     }
 
@@ -158,13 +154,17 @@ void InstanceSegmentationPointCloudFusionNode::fuseOnSingleImage(
         cv::circle(
           combined_mask,
           cv::Point(static_cast<int>(projected_point.x()), static_cast<int>(projected_point.y())),
-          1, cv::Scalar(255, 0, 0), -1);
+          2, cv::Scalar(255, 0, 0), 2);
         copyPointCloud(
           input_pointcloud_msg, point_step, global_offset, output_pointcloud_msg,
           output_pointcloud_size);
       }
     }
   }
+
+  output_pointcloud_msg.data.resize(output_pointcloud_size);
+  output_pointcloud_msg.row_step = output_pointcloud_size / output_pointcloud_msg.height;
+  output_pointcloud_msg.width = output_pointcloud_size / output_pointcloud_msg.point_step / output_pointcloud_msg.height;
 
   Image debug_image;
   debug_image.header = camera_info.header;

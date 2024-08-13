@@ -11,4 +11,4 @@
       PEDESTRIAN: true
 
     # the maximum distance of pointcloud to be applied filter
-    filter_distance_threshold: 60.0
+    filter_distance_threshold: 120.0
