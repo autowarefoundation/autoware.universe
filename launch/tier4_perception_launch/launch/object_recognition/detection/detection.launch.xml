@@ -66,7 +66,6 @@
   <arg name="switch/detector/lidar_rule" default="false"/>
   <arg name="switch/detector/radar" default="false"/>
   <arg name="switch/detector/radar_only" default="false"/>
-  <arg name="switch/detector/camera_bev" default="false"/>
   <arg name="switch/detector/tracker_based" default="false"/>
   <let name="switch/detector/tracker_based" value="true" if="$(var use_detection_by_tracker)"/>
 
@@ -123,9 +122,6 @@
     <let name="switch/detector/radar" value="true" if="$(var use_multi_channel_tracker_merger)"/>
     <let name="switch/detector/radar_only" value="true" unless="$(var use_multi_channel_tracker_merger)"/>
     <let name="switch/detector/tracker_based" value="false"/>
-  </group>
-  <group scoped="false" if="$(eval '&quot;$(var mode)&quot;==&quot;camera&quot;')">
-    <let name="switch/detector/camera_bev" value="true"/>
   </group>
 
   <!-- Detector -->
@@ -215,7 +211,7 @@
       <arg name="radar_object_clustering_param_path" value="$(var radar_object_clustering_param_path)"/>
     </include>
   </group>
-  <group if="$(var switch/detector/camera_bev)">
+  <group if="$(eval '&quot;$(var mode)&quot;==&quot;camera&quot;')">
     <!-- Camera-based bev detectors-->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/camera_bev_detector.launch.xml">
       <arg name="input/camera0/image" value="$(var input/camera0/image)"/>
