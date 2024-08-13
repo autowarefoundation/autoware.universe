@@ -188,13 +188,13 @@ int32_t AlignBEVPlugin::enqueue(
   switch (int(outputDesc[0].type)) {
     case int(DataType::kFLOAT):
       if (inputDesc[0].type == DataType::kFLOAT) {
-        // printf("align : fp32, fp32\n");
+        // align : fp32, fp32;
         align_bev_kernel<float, float><<<GET_BLOCKS(count), NUM_THREADS, 0, stream>>>(
           count, reinterpret_cast<const float *>(inputs[0]),
           reinterpret_cast<const float *>(inputs[1]), reinterpret_cast<float *>(outputs[0]),
           output_desc);
       } else {
-        // printf("align : fp16, fp32\n");
+        // align : fp16, fp32
         align_bev_kernel<__half, float><<<GET_BLOCKS(count), NUM_THREADS, 0, stream>>>(
           count, reinterpret_cast<const __half *>(inputs[0]),
           reinterpret_cast<const float *>(inputs[1]), reinterpret_cast<float *>(outputs[0]),
@@ -203,13 +203,13 @@ int32_t AlignBEVPlugin::enqueue(
       break;
     case int(DataType::kHALF):
       if (inputDesc[0].type == DataType::kFLOAT) {
-        // printf("align : fp32, fp16\n");
+        // align : fp32, fp16
         align_bev_kernel<float, __half><<<GET_BLOCKS(count), NUM_THREADS, 0, stream>>>(
           count, reinterpret_cast<const float *>(inputs[0]),
           reinterpret_cast<const float *>(inputs[1]), reinterpret_cast<__half *>(outputs[0]),
           output_desc);
       } else {
-        // printf("align : fp16, fp16\n");
+        // align : fp16, fp16
         align_bev_kernel<__half, __half><<<GET_BLOCKS(count), NUM_THREADS, 0, stream>>>(
           count, reinterpret_cast<const __half *>(inputs[0]),
           reinterpret_cast<const float *>(inputs[1]), reinterpret_cast<__half *>(outputs[0]),

@@ -130,7 +130,7 @@ TRTBEVDetNode::TRTBEVDetNode(
   using std::placeholders::_5;
   using std::placeholders::_6;
 
-  score_thre_ = this->declare_parameter<float>("post_process_params.score_thre", 0.2);
+  score_thre_ = this->declare_parameter<float>("post_process_params.score_threshold", 0.2);
 
   img_N_ = this->declare_parameter<int>("data_params.N", 6);     // camera num 6
   img_w_ = this->declare_parameter<int>("data_params.W", 1600);  // W: 1600
