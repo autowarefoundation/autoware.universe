@@ -54,6 +54,8 @@ private:
   bool use_3d_distortion_correction_;
   bool update_azimuth_and_distance_;
 
+  bool can_update_azimuth_and_distance_{false};
+
   std::unique_ptr<DistortionCorrectorBase> distortion_corrector_;
 
   void onPointCloud(PointCloud2::UniquePtr points_msg);

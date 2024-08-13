@@ -236,9 +236,6 @@ protected:
           *iter_azimuth = std::atan2(points[i].y(), points[i].x());
         }
 
-        std::cout << "point " << i << ": "
-                  << "x : " << *iter_x << " y: " << *iter_y << " azimuth: " << *iter_azimuth
-                  << std::endl;
         *iter_distance = points[i].norm();
         *iter_t = timestamps[i];
         ++iter_x;
@@ -931,7 +928,6 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdateAzimuthAndDistan
 {
   // Test the case when the cloud will not update the azimuth and distance values
   // 1. when pointcloud is in the base_link
-  // 2. when user didn't specify the sensor azimuth coordinate
 
   // Generate the point cloud message in base_link
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -952,8 +948,11 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdateAzimuthAndDistan
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  // set the azimuth coordinate system
-  distortion_corrector_2d_->undistortPointCloud(true, true, pointcloud_base_link);
+  auto can_update_azimuth_and_distance =
+    distortion_corrector_2d_->AzimuthConversionExists(pointcloud_base_link);
+
+  distortion_corrector_2d_->undistortPointCloud(
+    true, can_update_azimuth_and_distance, pointcloud_base_link);
 
   sensor_msgs::msg::PointCloud2 original_pointcloud_base_link =
     generatePointCloudMsg(true, false, "", timestamp);
@@ -988,6 +987,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdateAzimuthAndDistan
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 
+  // Test the case when the cloud will not update the azimuth and distance values
+  // 2. when "can_update_azimuth_and_distance" is false
+
   // Generate the point cloud message in sensor frame
   sensor_msgs::msg::PointCloud2 pointcloud_lidar_top =
     generatePointCloudMsg(true, true, "", timestamp);
@@ -1007,7 +1009,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdateAzimuthAndDistan
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
   // set the empty coordinate system
-  distortion_corrector_2d_->undistortPointCloud(true, false, pointcloud_lidar_top);
+  can_update_azimuth_and_distance = false;
+  distortion_corrector_2d_->undistortPointCloud(
+    true, can_update_azimuth_and_distance, pointcloud_lidar_top);
 
   sensor_msgs::msg::PointCloud2 original_pointcloud_lidar_top =
     generatePointCloudMsg(true, true, "", timestamp);
@@ -1066,7 +1070,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
   // set the azimuth coordinate system
-  distortion_corrector_2d_->undistortPointCloud(true, true, pointcloud);
+  auto can_update_azimuth_and_distance =
+    distortion_corrector_2d_->AzimuthConversionExists(pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(true, can_update_azimuth_and_distance, pointcloud);
 
   sensor_msgs::msg::PointCloud2 original_pointcloud =
     generatePointCloudMsg(true, true, "velodyne", timestamp);
@@ -1076,16 +1082,16 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
 
   // Expected undistorted azimuth and distance values
   std::array<std::array<float, 2>, 10> expected_distance_azimuth = {{
-    {0.0f, 10.0499f},      // points: (10.0f, -1.77636e-15f, -4.44089e-16f)
-    {0.77413f, 7.36792f},  // points: (0.049989f, 10.0608f, 0.0924992f)
-    {1.55944f, 10.3743f},  // points: (0.106107f, 0.130237f, 10.1986f)
-    {2.35942f, 8.05408f},  // points: (20.1709f, 0.210011f, 0.32034f)
-    {3.16889f, 11.1711f},  // points: (0.220674f, 20.2734f, 0.417974f)
-    {3.99196f, 8.40875f},  // points: (0.274146f, 0.347043f, 20.5341f)
-    {4.74742f, 10.9642f},  // points: (30.3673f, 0.457564f, 0.700818f)
-    {5.48985f, 8.06673f},  // points: (0.418014f, 30.5259f, 0.807963f)
-    {5.8809f, 9.32108f},   // points: (0.464088f, 0.600081f, 30.9292f)
-    {6.10611f, 9.75209f}   // points: (10.5657f, 10.7121f, 11.094f)
+    {0.0f, 10.0499f},      // points: (10.0f, -2.63462e-08f, 1.0f)
+    {0.77413f, 7.36792f},  // points: (5.05137f, -4.93869f, 2.09267f)
+    {1.55944f, 10.3743f},  // points: (0.112092f, -9.86876f, 3.19715f)
+    {2.35942f, 8.05408f},  // points: (-4.83021f, -4.80022f, 4.30059f)
+    {3.16889f, 11.1711f},  // points: (-9.7743f, 0.266927f, 5.40228f)
+    {3.99196f, 8.40875f},  // points: (-4.69786f, 5.35289f, -4.47032f)
+    {4.74742f, 10.9642f},  // points: (0.365836f, 10.4368f, -3.33969f)
+    {5.48985f, 8.06673f},  // points: (5.44511f, 5.53184f, -2.19585f)
+    {5.8809f, 9.32108f},   // points: (8.52226f, 3.62536f, -1.0538f)
+    {6.10611f, 9.75209f}   // points: (9.59921f, 1.71784f, 0.0862978f)
   }};
 
   size_t i = 0;
@@ -1128,7 +1134,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
   // set the azimuth coordinate system
-  distortion_corrector_2d_->undistortPointCloud(true, true, pointcloud);
+  auto can_update_azimuth_and_distance =
+    distortion_corrector_2d_->AzimuthConversionExists(pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(true, can_update_azimuth_and_distance, pointcloud);
 
   sensor_msgs::msg::PointCloud2 original_pointcloud =
     generatePointCloudMsg(true, true, "hesai", timestamp);
@@ -1166,6 +1174,17 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
+}
+
+TEST_F(DistortionCorrectorTest, TestAzimuthConversionExists)
+{
+  // test empty pointcloud
+  rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
+  sensor_msgs::msg::PointCloud2 empty_pointcloud =
+    generatePointCloudMsg(false, false, "", timestamp);
+  EXPECT_FALSE(distortion_corrector_2d_->AzimuthConversionExists(empty_pointcloud));
+
+  // test velodyne pointcloud (x-axis: 0 degree, y-axis: 270 degree)
 }
 
 int main(int argc, char ** argv)

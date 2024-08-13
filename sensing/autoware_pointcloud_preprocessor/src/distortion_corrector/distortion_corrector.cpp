@@ -188,54 +188,79 @@ bool DistortionCorrector<T>::isInputValid(sensor_msgs::msg::PointCloud2 & pointc
 }
 
 template <class T>
-std::pair<float, float> DistortionCorrector<T>::getAzimuthConversion(
-  float point1_azimuth_rad, float point1_cartesian_deg, float point2_azimuth_rad,
-  float point2_cartesian_deg)
+bool DistortionCorrector<T>::AzimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud)
 {
-  float point1_azimuth_deg = point1_azimuth_rad * 180 / M_PI;
-  float point2_azimuth_deg = point2_azimuth_rad * 180 / M_PI;
+  if (!isInputValid(pointcloud)) return false;
 
-  float b =
-    (point2_azimuth_deg - point1_azimuth_deg) / (point2_cartesian_deg - point1_cartesian_deg);
-  float a = point1_azimuth_deg - b * point1_cartesian_deg;
+  sensor_msgs::PointCloud2Iterator<float> it_x(pointcloud, "x");
+  sensor_msgs::PointCloud2Iterator<float> it_y(pointcloud, "y");
+  sensor_msgs::PointCloud2Iterator<float> it_azimuth(pointcloud, "azimuth");
 
-  bool error_flag = false;
-  // Check if b can be adjusted to 1 or -1
-  if (std::abs(b - 1) <= 0.1) {
-    b = 1;
-  } else if (std::abs(b + 1) <= 0.1) {
-    b = -1;
+  auto next_it_x = it_x;
+  auto next_it_y = it_y;
+  auto next_it_azimuth = it_azimuth;
+
+  if (it_x != it_x.end() && it_x + 1 != it_x.end()) {
+    next_it_x = it_x + 1;
+    next_it_y = it_y + 1;
+    next_it_azimuth = it_azimuth + 1;
   } else {
-    error_flag = true;
+    return false;
   }
 
-  // Check if a can be adjusted to a multiple of 90
-  int nearest_multiple_of_90 = static_cast<int>(round(a / 90.0)) * 90;
-  if (std::abs(a - nearest_multiple_of_90) <= 5) {
-    a = nearest_multiple_of_90;
-    if (a > 360) {
-      a -= 360;
-    } else if (a < -360) {
-      a += 360;
+  for (; next_it_x != it_x.end();
+       ++it_x, ++it_y, ++it_azimuth, ++next_it_x, ++next_it_y, ++next_it_azimuth) {
+    auto current_cartesian_rad = cv::fastAtan2(*it_y, *it_x) * M_PI / 180;
+    auto next_cartesian_rad = cv::fastAtan2(*next_it_y, *next_it_x) * M_PI / 180;
+
+    // If the angle exceeds 180 degrees, it may cross the 0-degree axis,
+    // which could disrupt the calculation of the formula.
+    if (
+      *next_it_azimuth - *it_azimuth >= M_PI ||
+      next_cartesian_rad - current_cartesian_rad >= M_PI) {
+      continue;
     }
-  } else {
-    error_flag = true;
-  }
 
-  if (error_flag) {
-    a = 0;
-    b = 1;
-    std::cerr << "ERROR!!!" << std::endl;
-    // print error message!!!!
-  }
+    float b = (*next_it_azimuth - *it_azimuth) / (next_cartesian_rad - current_cartesian_rad);
+    float a = *it_azimuth - b * current_cartesian_rad;
 
-  std::cout << "Adjusted a: " << a << " Adjusted b: " << b << std::endl;
-  return {a, b};
+    adjusted_b_ = b;
+    adjusted_a_ = a;
+
+    // Check if 'b' can be adjusted to 1 or -1
+    if (std::abs(b - 1.0f) <= threshold_b_) {
+      adjusted_b_ = 1.0f;
+    } else if (std::abs(b + 1.0f) <= threshold_b_) {
+      adjusted_b_ = -1.0f;
+    } else {
+      continue;
+    }
+
+    // Check if 'a' can be adjusted to a multiple of π/2
+    int multiple_of_90_degrees = std::round(a / (M_PI / 2));
+    if (std::abs(a - multiple_of_90_degrees * (M_PI / 2)) > threshold_a_) {
+      continue;
+    }
+
+    if (multiple_of_90_degrees < 0) {
+      multiple_of_90_degrees += 4;
+    } else if (multiple_of_90_degrees > 4) {
+      multiple_of_90_degrees -= 4;
+    }
+
+    adjusted_a_ = multiple_of_90_degrees * (M_PI / 2);
+
+    std::cout << "adjusted_a_: " << adjusted_a_ << std::endl;
+    std::cout << "adjusted_b_: " << adjusted_b_ << std::endl;
+
+    return true;
+  }
+  return false;
 }
 
 template <class T>
 void DistortionCorrector<T>::undistortPointCloud(
-  bool use_imu, bool update_azimuth_and_distance, sensor_msgs::msg::PointCloud2 & pointcloud)
+  bool use_imu, bool can_update_azimuth_and_distance, sensor_msgs::msg::PointCloud2 & pointcloud)
 {
   if (!isInputValid(pointcloud)) return;
 
@@ -303,38 +328,18 @@ void DistortionCorrector<T>::undistortPointCloud(
 
     float time_offset = static_cast<float>(global_point_stamp - prev_time_stamp_sec);
 
-    std::cout << "before" << std::endl;
-    std::cout << " *it_x: " << *it_x << " *it_y: " << *it_y << " *it_azimuth: " << *it_azimuth
-              << std::endl;
-
     // Undistort a single point based on the strategy
     undistortPoint(it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
 
-    if (update_azimuth_and_distance && pointcloudTransformNeeded()) {
-      // Input frame should be in the sensor frame.
+    if (can_update_azimuth_and_distance && pointcloudTransformNeeded()) {
+      float cartesian_coordinate_azimuth = cv::fastAtan2(*it_y, *it_x) * M_PI / 180;
+      float updated_azimuth = adjusted_a_ + adjusted_b_ * cartesian_coordinate_azimuth;
+      // if(updated_azimuth < 0) {
+      //   //TODO(vivid):
+      // }
+      *it_azimuth = updated_azimuth;
       *it_distance = sqrt(*it_x * *it_x + *it_y * *it_y + *it_z * *it_z);
 
-      if (first_time_) {
-        // std::cout << "*it_x: " << *it_x << " *it_y: " << *it_y << " *it_azimuth: " << *it_azimuth
-        // << std::endl;
-        auto next_azimuth = it_azimuth + 1;
-        auto next_x = it_x + 1;
-        auto next_y = it_y + 1;
-        // std::cout << "after" << std::endl;
-        // std::cout << "*it_x: " << *it_x << " *it_y: " << *it_y << " *it_azimuth: " << *it_azimuth
-        // << std::endl; std::cout << "*next_x: " << *next_x << " *next_y: " << *next_y << "
-        // *next_azimuth: " << *next_azimuth << std::endl;
-        std::tie(a_, b_) = getAzimuthConversion(
-          *it_azimuth, cv::fastAtan2(*it_y, *it_x), *next_azimuth, cv::fastAtan2(*next_y, *next_x));
-        first_time_ = false;
-      }
-
-      float cartesian_coordinate_azimuth = cv::fastAtan2(*it_y, *it_x);
-      float updated_azimuth = (a_ + b_ * cartesian_coordinate_azimuth) * M_PI / 180;
-      *it_azimuth = updated_azimuth;
-      // std::cout << "after" << std::endl;
-      // std::cout << " *it_x: " << *it_x << " *it_y: " << *it_y << " *it_azimuth: " << *it_azimuth
-      // << std::endl;
       ++it_azimuth;
       ++it_distance;
     }
