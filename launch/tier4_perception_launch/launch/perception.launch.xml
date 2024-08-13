@@ -48,7 +48,6 @@
   <arg name="mode" default="camera_lidar_fusion" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
   <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
   <arg name="lidar_detection_model" default="centerpoint" description="options: `transfusion`, `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
-  <arg name="bev_detection_model" default="bevdet" description="options: `bevdet`"/>
   <arg name="image_raw0" default="/sensing/camera/camera0/image_rect_color" description="image raw topic name"/>
   <arg name="camera_info0" default="/sensing/camera/camera0/camera_info" description="camera info topic name"/>
   <arg name="detection_rois0" default="/perception/object_recognition/detection/rois0" description="detection rois output topic name"/>
@@ -199,7 +198,6 @@
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detection.launch.xml">
           <arg name="mode" value="$(var mode)"/>
           <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
-          <arg name="bev_detection_model" value="$(var bev_detection_model)"/>
           <arg name="use_multi_channel_tracker_merger" value="$(var use_multi_channel_tracker_merger)"/>
           <arg name="number_of_cameras" value="$(var image_number)"/>
           <arg name="input/camera0/image" value="$(var image_raw0)"/>
