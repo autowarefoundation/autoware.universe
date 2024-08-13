@@ -36,9 +36,19 @@ std::optional<geometry_msgs::msg::Pose> calculate_last_in_lane_pose(
   const EgoData & ego_data, const autoware::universe_utils::Polygon2d & footprint,
   const double min_arc_length, const double max_arc_length, const double precision);
 
+/// @brief calculate the slowdown pose just ahead of a point to avoid
+/// @param ego_data ego data (trajectory, velocity, etc)
+/// @param point_to_avoid the point to avoid
+/// @param footprint the ego footprint
+/// @param params parameters
+/// @return optional slowdown point to insert in the trajectory
+std::optional<geometry_msgs::msg::Pose> calculate_pose_ahead_of_collision(
+  const EgoData & ego_data, const OutOfLanePoint & point_to_avoid,
+  const universe_utils::Polygon2d & footprint, const double precision);
+
 /// @brief calculate the slowdown point to insert in the trajectory
 /// @param ego_data ego data (trajectory, velocity, etc)
-/// @param decisions decision (before which point to stop, what lane to avoid entering, etc)
+/// @param out_of_lane_data data about out of lane areas
 /// @param params parameters
 /// @return optional slowdown point to insert in the trajectory
 std::optional<geometry_msgs::msg::Pose> calculate_slowdown_point(
