@@ -222,7 +222,7 @@ void DistortionCorrector<T>::undistortPointCloud(
     bool is_twist_valid = true;
     bool is_imu_valid = true;
 
-    double global_point_stamp =
+    const double global_point_stamp =
       pointcloud.header.stamp.sec + 1e-9 * (pointcloud.header.stamp.nanosec + *it_time_stamp);
 
     // Get closest twist information
