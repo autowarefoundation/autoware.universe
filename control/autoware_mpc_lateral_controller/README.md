@@ -202,6 +202,13 @@ Defined in the `steering_offset` namespace. This logic is designed as simple as 
 | cf            | double | front cornering power [N/rad]               | 155494.663    |
 | cr            | double | rear cornering power [N/rad]                | 155494.663    |
 
+#### Debug
+
+| Name                                         | Type    | Description                                                                                                | Default value |
+| :------------------------------------------- | :------ | :--------------------------------------------------------------------------------------------------------- | :------------ |
+| debug_publish_predicted_trajectory           | boolean | publish predicted trajectory for debugging, considering Frenet coordinate system and delayed vehicle state | true          |
+| debug_publish_resampled_reference_trajectory | boolean | publish resampled reference trajectory in world coordinate system                                          | false         |
+
 ### How to tune MPC parameters
 
 #### Set kinematics information

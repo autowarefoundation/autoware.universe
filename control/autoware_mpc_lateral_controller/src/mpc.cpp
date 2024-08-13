@@ -115,7 +115,7 @@ bool MPC::calculateMPC(
   if (m_debug_publish_predicted_trajectory) {
     // Calculate and publish predicted trajectory in Frenet coordinate
     auto predicted_trajectory_frenet = calculatePredictedTrajectory(
-      mpc_matrix, x0, Uex, reference_trajectory, prediction_dt, "frenet");
+      mpc_matrix, x0, Uex, mpc_resampled_ref_trajectory, prediction_dt, "frenet");
     predicted_trajectory_frenet.header.stamp = m_clock->now();
     predicted_trajectory_frenet.header.frame_id = "map";
     m_debug_frenet_predicted_trajectory_pub->publish(predicted_trajectory_frenet);

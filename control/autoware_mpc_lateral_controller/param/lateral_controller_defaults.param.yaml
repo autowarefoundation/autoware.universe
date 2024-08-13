@@ -84,5 +84,5 @@
     cf: 155494.663
     cr: 155494.663
 
-    debug_publish_predicted_trajectory: false  # publish debug predicted trajectory in Frenet coordinate
-    debug_publish_resampled_reference_trajectory: true  # publish resampled reference trajectory in world coordinate
+    debug_publish_predicted_trajectory: true  # publish predicted trajectory for debugging, considering Frenet coordinate system and delayed vehicle state
+    debug_publish_resampled_reference_trajectory: false # publish resampled reference trajectory in world coordinate system
