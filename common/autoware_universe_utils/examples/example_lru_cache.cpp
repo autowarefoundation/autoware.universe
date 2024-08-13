@@ -15,25 +15,26 @@
 #include "autoware/universe_utils/system/lru_cache.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 
 using autoware::universe_utils::LRUCache;
 
 // Fibonacci calculation with LRU cache
-long long fibonacci_with_cache(int n, LRUCache<int, long long> * cache)
+int64_t fibonacci_with_cache(int n, LRUCache<int, int64_t> * cache)
 {
   if (n <= 1) return n;
 
   if (cache->contains(n)) {
     return cache->get(n);
   }
-  long long result = fibonacci_with_cache(n - 1, cache) + fibonacci_with_cache(n - 2, cache);
+  int64_t result = fibonacci_with_cache(n - 1, cache) + fibonacci_with_cache(n - 2, cache);
   cache->put(n, result);
   return result;
 }
 
 // Fibonacci calculation without cache
-long long fibonacci_no_cache(int n)
+int64_t fibonacci_no_cache(int n)
 {
   if (n <= 1) return n;
   return fibonacci_no_cache(n - 1) + fibonacci_no_cache(n - 2);
@@ -41,7 +42,7 @@ long long fibonacci_no_cache(int n)
 
 // Helper function to measure execution time
 template <typename Func, typename... Args>
-long long measure_time(Func func, Args &&... args)
+int64_t measure_time(Func func, Args &&... args)
 {
   auto start = std::chrono::high_resolution_clock::now();
   func(std::forward<Args>(args)...);
@@ -51,16 +52,16 @@ long long measure_time(Func func, Args &&... args)
 
 int main()
 {
-  const int max_n = 40;                   // Increased for more noticeable time difference
-  LRUCache<int, long long> cache(max_n);  // Cache size set to MAX_N
+  const int max_n = 40;                 // Increased for more noticeable time difference
+  LRUCache<int, int64_t> cache(max_n);  // Cache size set to MAX_N
 
   std::cout << "Comparing Fibonacci calculation time with and without LRU cache:\n\n";
   std::cout << "n\tWith Cache (μs)\tWithout Cache (μs)\n";
   std::cout << std::string(43, '-') << "\n";
 
   for (int i = 30; i <= max_n; ++i) {  // Starting from 30 for more significant differences
-    long long time_with_cache = measure_time([i, &cache]() { fibonacci_with_cache(i, &cache); });
-    long long time_without_cache = measure_time([i]() { fibonacci_no_cache(i); });
+    int64_t time_with_cache = measure_time([i, &cache]() { fibonacci_with_cache(i, &cache); });
+    int64_t time_without_cache = measure_time([i]() { fibonacci_no_cache(i); });
 
     std::cout << i << "\t" << time_with_cache << "\t\t" << time_without_cache << "\n";
 
