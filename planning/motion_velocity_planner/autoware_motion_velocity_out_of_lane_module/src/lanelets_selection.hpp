@@ -76,11 +76,8 @@ lanelet::ConstLanelets calculate_out_of_lane_lanelets(
 /// @brief calculate the polygons representing the ego lane and add it to the ego data
 /// @param [inout] ego_data ego data
 /// @param [in] route_handler route handler with map information
-/// @param [in] params parameters
-/// @param [inout] debug_data debug data
 void calculate_drivable_lane_polygons(
-  EgoData & ego_data, const route_handler::RouteHandler & route_handler,
-  const PlannerParam & params);
+  EgoData & ego_data, const route_handler::RouteHandler & route_handler);
 }  // namespace autoware::motion_velocity_planner::out_of_lane
 
 #endif  // LANELETS_SELECTION_HPP_

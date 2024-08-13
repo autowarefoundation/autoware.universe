@@ -171,19 +171,7 @@ bool MotionVelocityPlannerNode::update_planner_data()
   is_ready &= check_with_log(
     planner_data_.velocity_smoother_, "Waiting for the initialization of the velocity smoother");
 
-  if (has_received_map_) {
-    planner_data_.route_handler = std::make_shared<route_handler::RouteHandler>(*map_ptr_);
-    has_received_map_ = false;
-  }
-
   // optional data
-  if (planner_data_.route_handler) {
-    const auto route_ptr = route_subscriber_.takeData();
-    if (route_ptr) {
-      planner_data_.route_handler->setRoute(*route_ptr);
-    }
-  }
-
   const auto traffic_signals_ptr = sub_traffic_signals_.takeData();
   if (traffic_signals_ptr) process_traffic_signals(traffic_signals_ptr);
   const auto virtual_traffic_light_states_ptr = sub_virtual_traffic_light_states_.takeData();
@@ -284,6 +272,12 @@ void MotionVelocityPlannerNode::on_trajectory(
     return;
   }
 
+  if (has_received_map_) {
+    planner_data_.route_handler = std::make_shared<route_handler::RouteHandler>(*map_ptr_);
+    has_received_map_ = false;
+    processing_times["make_RouteHandler"] = stop_watch.toc(true);
+  }
+
   autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points{
     input_trajectory_msg->points.begin(), input_trajectory_msg->points.end()};
   auto output_trajectory_msg = generate_trajectory(input_trajectory_points);
@@ -360,10 +354,10 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
   auto traj_resampled = smoother->resampleTrajectory(
     traj_steering_rate_limited, v0, current_pose, planner_data.ego_nearest_dist_threshold,
     planner_data.ego_nearest_yaw_threshold);
-  const auto traj_resampled_closest =
-    static_cast<int64_t>(autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t traj_resampled_closest =
+    autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       traj_resampled, current_pose, planner_data.ego_nearest_dist_threshold,
-      planner_data.ego_nearest_yaw_threshold));
+      planner_data.ego_nearest_yaw_threshold);
   std::vector<autoware::motion_velocity_planner::TrajectoryPoints> debug_trajectories;
   // Clip trajectory from closest point
   autoware::motion_velocity_planner::TrajectoryPoints clipped;

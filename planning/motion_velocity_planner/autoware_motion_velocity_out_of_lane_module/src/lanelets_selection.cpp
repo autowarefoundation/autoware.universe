@@ -118,15 +118,9 @@ lanelet::ConstLanelets calculate_out_of_lane_lanelets(
 }
 
 void calculate_drivable_lane_polygons(
-  EgoData & ego_data, const route_handler::RouteHandler & route_handler,
-  const PlannerParam & params)
+  EgoData & ego_data, const route_handler::RouteHandler & route_handler)
 {
-  lanelet::ConstLanelet ego_lanelet;
-  route_handler.getClosestLaneletWithinRoute(ego_data.pose, &ego_lanelet);
-  const auto route_lanelets =
-    params.use_route_to_get_route_lanelets
-      ? route_handler.getLaneletSequence(ego_lanelet, 10.0, params.max_arc_length, true)
-      : calculate_trajectory_lanelets(ego_data, route_handler);
+  const auto route_lanelets = calculate_trajectory_lanelets(ego_data, route_handler);
   const auto ignored_lanelets =
     out_of_lane::calculate_ignored_lanelets(route_lanelets, route_handler);
   for (const auto & ll : route_lanelets) {

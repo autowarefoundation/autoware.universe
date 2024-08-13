@@ -257,10 +257,8 @@ VelocityPlanningResult OutOfLaneModule::plan(
   // same lane, keep the stop point with lowest arc length out_of_lane_data.out_of_lane_lanelets =
   // out_of_lane::calculate_out_of_lane_lanelets(
   //   ego_data, route_lanelets, ignored_lanelets, planner_data->route_handler, params_);
-  // TODO(Maxime): support parameter 'ignore_overlaps_over_lane_changeable_lanelets' even when using
-  // the route
   stopwatch.tic("calculate_lanelets");
-  calculate_drivable_lane_polygons(ego_data, *planner_data->route_handler, params_);
+  calculate_drivable_lane_polygons(ego_data, *planner_data->route_handler);
   const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");
 
   // Calculate overlapping ranges
