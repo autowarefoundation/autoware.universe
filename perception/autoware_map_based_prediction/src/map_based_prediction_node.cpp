@@ -858,6 +858,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
       "~/debug/processing_time_detail_ms", 1);
   time_keeper_ = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
   time_keeper_ptr_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper_);
+  path_generator_->setTimeKeeper(time_keeper_ptr_);
 
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&MapBasedPredictionNode::onParam, this, std::placeholders::_1));
