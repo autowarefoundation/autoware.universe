@@ -60,6 +60,7 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
   std::string model_path = declare_parameter("fine_detector_model_path", "");
   std::string label_path = declare_parameter("fine_detector_label_path", "");
   std::string precision = declare_parameter("fine_detector_precision", "fp32");
+  uint8_t gpu_id = declare_parameter("gpu_id", 0);
   // Objects with a score lower than this value will be ignored.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
   score_thresh_ = declare_parameter("fine_detector_score_thresh", 0.3);
@@ -86,7 +87,7 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
 
   trt_yolox_ = std::make_unique<autoware::tensorrt_yolox::TrtYoloX>(
     model_path, precision, num_class, score_thresh_, nms_threshold, build_config, cuda_preprocess,
-    calib_image_list, scale, cache_dir, batch_config);
+    gpu_id, calib_image_list, scale, cache_dir, batch_config);
 
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(

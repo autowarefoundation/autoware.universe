@@ -80,7 +80,6 @@ private:
   void overlapSegmentByRoi(
     const tensorrt_yolox::Object & object, cv::Mat & mask, const int width, const int height);
   int mapRoiLabel2SegLabel(const int32_t roi_label_index);
-  bool setCudaDeviceId(const uint8_t gpu_id);
   image_transport::Publisher image_pub_;
   image_transport::Publisher mask_pub_;
 
@@ -97,7 +96,6 @@ private:
   bool is_roi_overlap_segment_;
   bool is_publish_color_mask_;
   float overlap_roi_score_threshold_;
-  uint8_t gpu_id_;
   // TODO(badai-nguyen): change to function
   std::map<std::string, int> remap_roi_to_semantic_ = {
     {"UNKNOWN", 3},     // other

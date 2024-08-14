@@ -57,6 +57,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   const bool preprocess_on_gpu = this->declare_parameter<bool>("preprocess_on_gpu");
   const std::string calibration_image_list_path =
     this->declare_parameter<std::string>("calibration_image_list_path");
+  const uint8_t gpu_id = this->declare_parameter<uint8_t>("gpu_id");
 
   std::string color_map_path = this->declare_parameter<std::string>("color_map_path");
 
@@ -68,7 +69,6 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   is_roi_overlap_segment_ = declare_parameter<bool>("is_roi_overlap_segment");
   is_publish_color_mask_ = declare_parameter<bool>("is_publish_color_mask");
   overlap_roi_score_threshold_ = declare_parameter<float>("overlap_roi_score_threshold");
-  gpu_id_ = declare_parameter<int>("gpu_id");
   roi_overlay_segment_labels_.UNKNOWN =
     declare_parameter<bool>("roi_overlay_segment_label.UNKNOWN");
   roi_overlay_segment_labels_.CAR = declare_parameter<bool>("roi_overlay_segment_label.CAR");
@@ -92,13 +92,9 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   const tensorrt_common::BatchConfig batch_config{1, 1, 1};
   const size_t max_workspace_size = (1 << 30);
 
-  if (!setCudaDeviceId(gpu_id_)) {
-    RCLCPP_ERROR(this->get_logger(), "GPU %d does not exist or is not suitable.", gpu_id_);
-  }
-
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
     model_path, precision, label_map_.size(), score_threshold, nms_threshold, build_config,
-    preprocess_on_gpu, calibration_image_list_path, norm_factor, cache_dir, batch_config,
+    preprocess_on_gpu, gpu_id, calibration_image_list_path, norm_factor, cache_dir, batch_config,
     max_workspace_size, color_map_path);
 
   timer_ =
@@ -134,12 +130,6 @@ void TrtYoloXNode::onConnect()
 
 void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
-  if (!setCudaDeviceId(gpu_id_)) {
-    RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 2000, "GPU %d does not exist or is not suitable.", gpu_id_);
-    return;
-  }
-
   stop_watch_ptr_->toc("processing_time", true);
   tier4_perception_msgs::msg::DetectedObjectsWithFeature out_objects;
 
@@ -232,18 +222,6 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
         .toImageMsg();
     output_color_mask_msg->header = msg->header;
     color_mask_pub_.publish(output_color_mask_msg);
-  }
-}
-
-bool TrtYoloXNode::setCudaDeviceId(const uint8_t gpu_id)
-{
-  cudaError_t cuda_err = cudaSetDevice(gpu_id);
-  if (cuda_err != cudaSuccess) {
-    RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 2000, "Failed to set gpu device with id: %d ", gpu_id);
-    return false;
-  } else {
-    return true;
   }
 }
 
