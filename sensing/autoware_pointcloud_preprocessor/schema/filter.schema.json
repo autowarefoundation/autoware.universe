@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameter for filter",
+  "title": "Parameters for Filter Class",
   "type": "object",
   "definitions": {
     "filter": {
