@@ -48,8 +48,11 @@ ros2 launch autoware_pointcloud_preprocessor distortion_corrector.launch.xml
 
 - The node requires time synchronization between the topics from lidars, twist, and IMU.
 - If you want to use a 3D distortion corrector without IMU, please check that the linear and angular velocity fields of your twist message are not empty.
-- The node updates the per-point azimuth and distance values based on the undistorted XYZ coordinates when the input point cloud is in the sensor frame and the `sensor_azimuth_coordinate` parameter is set to either `velodyne` or `hesai`. The azimuth values are calculated using the `cv::fastAtan2` function. Please note that updating the azimuth and distance fields increases the execution time by approximately 13%. Additionally, due to the `cv::fastAtan2` algorithm's accuracy of about 0.3 degrees, there is a **possibility of changing beam order for high azimuth resolution LiDAR**.
-- Currently, `sensor_azimuth_coordinate` only supports `velodyne` and `hesai`. The `velodyne` and `hesai` coordinates are illustrated below. If a LiDAR uses the same coordinates as `velodyne` or `hesai`, users can use them as well.
+- The node updates the per-point azimuth and distance values based on the undistorted XYZ coordinates when the input point cloud is in the sensor frame (not in the `base_link`) and the `update_azimuth_and_distance` parameter is set to `true`. The azimuth values are calculated using the `cv::fastAtan2` function. Please note that updating the azimuth and distance fields increases the execution time by approximately 13%. Additionally, due to the `cv::fastAtan2` algorithm's accuracy of about 0.3 degrees, there is a **possibility of changing beam order for high azimuth resolution LiDAR**.
+- LiDARs from different vendors have different azimuth coordinates, as shown in the images below. Currently, the coordinate systems listed below have been tested, and the node will update the azimuth based on the input coordinate system.
+  - `velodyne`: (x: 0 degrees, y: 270 degrees)
+  - `hesai`: (x: 90 degrees, y: 0 degrees)
+  - `others`: (x: 0 degrees, y: 90 degrees) and (x: 270 degrees, y: 0 degrees)
 
 <table>
   <tr>
@@ -57,7 +60,7 @@ ros2 launch autoware_pointcloud_preprocessor distortion_corrector.launch.xml
     <td><img src="./image/hesai.drawio.png" alt="hesai azimuth coordinate"></td>
    </tr>
    <tr>
-    <td><p style="text-align: center;">Velodyne azimuth coordinate.</p></td>
+    <td><p style="text-align: center;">Velodyne azimuth coordinate</p></td>
     <td><p style="text-align: center;">Hesai azimuth coordinate</p></td>
   </tr>
 </table>
