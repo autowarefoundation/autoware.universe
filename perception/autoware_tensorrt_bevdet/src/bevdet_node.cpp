@@ -13,7 +13,6 @@
 // limitations under the License.
 #include "autoware/tensorrt_bevdet/bevdet_node.hpp"
 #include "autoware/tensorrt_bevdet/preprocess.hpp"
-#include <chrono>
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 std::map<int, std::vector<int>> colormap{
