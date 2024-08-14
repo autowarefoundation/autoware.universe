@@ -971,23 +971,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     return;
   }
 
-  auto world2map_transform = transform_listener_.getTransform(
-    "map",                        // target
-    in_objects->header.frame_id,  // src
-    in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
-  auto map2world_transform = transform_listener_.getTransform(
-    in_objects->header.frame_id,  // target
-    "map",                        // src
-    in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
-  auto debug_map2lidar_transform = transform_listener_.getTransform(
-    "base_link",  // target
-    "map",        // src
-    rclcpp::Time(), rclcpp::Duration::from_seconds(0.1));
-
-  if (!world2map_transform || !map2world_transform || !debug_map2lidar_transform) {
-    return;
-  }
-
   // Remove old objects information in object history
   const double objects_detected_time = rclcpp::Time(in_objects->header.stamp).seconds();
   removeOldObjectsHistory(objects_detected_time, object_buffer_time_length_, road_users_history);
@@ -1026,11 +1009,23 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   }
   std::unordered_set<std::string> predicted_crosswalk_users_ids;
 
+  // get world to map transform
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr world2map_transform;
+
+  bool is_object_not_in_map_frame = in_objects->header.frame_id != "map";
+  if (is_object_not_in_map_frame) {
+    world2map_transform = transform_listener_.getTransform(
+      "map",                        // target
+      in_objects->header.frame_id,  // src
+      in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
+    if (!world2map_transform) return;
+  }
+
   for (const auto & object : in_objects->objects) {
     TrackedObject transformed_object = object;
 
     // transform object frame if it's based on map frame
-    if (in_objects->header.frame_id != "map") {
+    if (is_object_not_in_map_frame) {
       geometry_msgs::msg::PoseStamped pose_in_map;
       geometry_msgs::msg::PoseStamped pose_orig;
       pose_orig.pose = object.kinematics.pose_with_covariance.pose;
@@ -2404,7 +2399,13 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
 
           const double lane_yaw = std::atan2(
             current_p.position.y - prev_p.position.y, current_p.position.x - prev_p.position.x);
-          current_p.orientation = autoware::universe_utils::createQuaternionFromYaw(lane_yaw);
+          const double sin_yaw_half = std::sin(lane_yaw / 2.0);
+          const double cos_yaw_half = std::cos(lane_yaw / 2.0);
+          current_p.orientation.x = 0.0;
+          current_p.orientation.y = 0.0;
+          current_p.orientation.z = sin_yaw_half;
+          current_p.orientation.w = cos_yaw_half;
+
           converted_path.push_back(current_p);
           prev_p = current_p;
         }
@@ -2435,15 +2436,27 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
 
         const double lane_yaw = std::atan2(
           current_p.position.y - prev_p.position.y, current_p.position.x - prev_p.position.x);
-        current_p.orientation = autoware::universe_utils::createQuaternionFromYaw(lane_yaw);
+        const double sin_yaw_half = std::sin(lane_yaw / 2.0);
+        const double cos_yaw_half = std::cos(lane_yaw / 2.0);
+        current_p.orientation.x = 0.0;
+        current_p.orientation.y = 0.0;
+        current_p.orientation.z = sin_yaw_half;
+        current_p.orientation.w = cos_yaw_half;
+
         converted_path.push_back(current_p);
         prev_p = current_p;
       }
     }
 
     // Resample Path
-    const auto resampled_converted_path =
-      autoware::motion_utils::resamplePoseVector(converted_path, reference_path_resolution_);
+    const bool use_akima_spline_for_xy = true;
+    const bool use_lerp_for_z = true;
+    // the options use_akima_spline_for_xy and use_lerp_for_z are set to true
+    // but the implementation of use_akima_spline_for_xy in resamplePoseVector and
+    // resamplePointVector is opposite to the options so the options are set to true to use linear
+    // interpolation for xy
+    const auto resampled_converted_path = autoware::motion_utils::resamplePoseVector(
+      converted_path, reference_path_resolution_, use_akima_spline_for_xy, use_lerp_for_z);
     converted_paths.push_back(resampled_converted_path);
   }
 
