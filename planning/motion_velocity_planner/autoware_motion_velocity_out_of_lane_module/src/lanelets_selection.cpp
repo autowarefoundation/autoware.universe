@@ -20,11 +20,9 @@
 #include <boost/geometry/algorithms/union.hpp>
 
 #include <lanelet2_core/geometry/BoundingBox.h>
-#include <lanelet2_core/geometry/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
 #include <algorithm>
-#include <string>
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
@@ -101,26 +99,6 @@ lanelet::ConstLanelets calculate_ignored_lanelets(
     }
   }
   return ignored_lanelets;
-}
-
-lanelet::ConstLanelets calculate_out_of_lane_lanelets(
-  const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
-  const lanelet::ConstLanelets & ignored_lanelets,
-  const route_handler::RouteHandler & route_handler, const PlannerParam & params)
-{
-  lanelet::ConstLanelets other_lanelets;
-  const lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
-  const auto lanelets_within_range = lanelet::geometry::findWithin2d(
-    route_handler.getLaneletMapPtr()->laneletLayer, ego_point,
-    2 * params.stop_dist_threshold + params.front_offset + params.extra_front_offset);
-  for (const auto & ll : lanelets_within_range) {
-    if (std::string(ll.second.attributeOr(lanelet::AttributeName::Subtype, "none")) != "road")
-      continue;
-    const auto is_trajectory_lanelet = contains_lanelet(trajectory_lanelets, ll.second.id());
-    const auto is_ignored_lanelet = contains_lanelet(ignored_lanelets, ll.second.id());
-    if (!is_trajectory_lanelet && !is_ignored_lanelet) other_lanelets.push_back(ll.second);
-  }
-  return other_lanelets;
 }
 
 void calculate_drivable_lane_polygons(

@@ -44,6 +44,7 @@ inline bool contains_lanelet(const lanelet::ConstLanelets & lanelets, const lane
 /// @return lanelets crossed by the ego vehicle
 lanelet::ConstLanelets calculate_trajectory_lanelets(
   const EgoData & ego_data, const std::shared_ptr<const route_handler::RouteHandler> route_handler);
+
 /// @brief calculate lanelets that may not be crossed by the trajectory but may be overlapped during
 /// a lane change
 /// @param [in] trajectory_lanelets lanelets driven by the ego vehicle
@@ -53,6 +54,7 @@ lanelet::ConstLanelets calculate_trajectory_lanelets(
 lanelet::ConstLanelets get_missing_lane_change_lanelets(
   const lanelet::ConstLanelets & trajectory_lanelets,
   const std::shared_ptr<const route_handler::RouteHandler> & route_handler);
+
 /// @brief calculate lanelets that should be ignored
 /// @param [in] trajectory_lanelets lanelets followed by the ego vehicle
 /// @param [in] route_handler route handler
@@ -60,18 +62,6 @@ lanelet::ConstLanelets get_missing_lane_change_lanelets(
 lanelet::ConstLanelets calculate_ignored_lanelets(
   const lanelet::ConstLanelets & trajectory_lanelets,
   const std::shared_ptr<const route_handler::RouteHandler> & route_handler);
-/// @brief calculate lanelets that should be checked by the module
-/// @param [in] ego_data data about the ego vehicle
-/// @param [in] trajectory_lanelets lanelets driven by the ego vehicle
-/// @param [in] ignored_lanelets lanelets to ignore
-/// @param [in] route_handler route handler
-/// @param [in] params parameters
-/// @return lanelets to check for overlaps
-lanelet::ConstLanelets calculate_out_of_lane_lanelets(
-  const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
-  const lanelet::ConstLanelets & ignored_lanelets,
-  const std::shared_ptr<const route_handler::RouteHandler> & route_handler,
-  const PlannerParam & params);
 
 /// @brief calculate the polygons representing the ego lane and add it to the ego data
 /// @param [inout] ego_data ego data
