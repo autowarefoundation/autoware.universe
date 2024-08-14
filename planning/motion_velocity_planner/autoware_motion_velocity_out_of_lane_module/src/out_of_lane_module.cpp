@@ -250,7 +250,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
 
   // Calculate lanelets to ignore and consider
   // TODO(Maxime): use the out_of_lane lanelets to find which lane is avoided. When avoiding the
-  // same lane, keep the stop point with lowest arc length out_of_lane_data.out_of_lane_lanelets =
+  // same lane, keep the stop point with lowest arc length
   stopwatch.tic("calculate_lanelets");
   calculate_drivable_lane_polygons(ego_data, *planner_data->route_handler);
   const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");

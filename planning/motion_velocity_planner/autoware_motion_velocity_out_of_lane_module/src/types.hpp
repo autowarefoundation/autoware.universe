@@ -107,9 +107,7 @@ struct EgoData
   std::vector<lanelet::BasicPolygon2d> trajectory_footprints;
 
   lanelet::ConstLanelet ego_lanelet;
-  lanelet::ConstLanelets route_lanelets;
   lanelet::ConstLanelets ignored_lanelets;
-  lanelet::ConstLanelets out_of_lane_lanelets;
   StopLinesRtree stop_lines_rtree;
 };
 
@@ -126,7 +124,6 @@ struct OutOfLanePoint
 struct OutOfLaneData
 {
   std::vector<OutOfLanePoint> outside_points;
-  lanelet::ConstLanelets out_of_lane_lanelets;
   OutAreaRtree outside_areas_rtree;
 };
 
@@ -134,9 +131,7 @@ struct OutOfLaneData
 struct DebugData
 {
   size_t prev_footprints = 0;
-  size_t prev_route_lanelets = 0;
   size_t prev_ignored_lanelets = 0;
-  size_t prev_out_of_lane_lanelets = 0;
   size_t prev_drivable_lane_polygons = 0;
   size_t prev_out_of_lane_areas = 0;
   size_t prev_ttcs = 0;

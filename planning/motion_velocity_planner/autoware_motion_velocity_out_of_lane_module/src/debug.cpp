@@ -75,15 +75,9 @@ void add_out_of_lane_markers(
 {
   auto debug_marker = get_base_marker();
   debug_marker.ns = "out_of_lane_areas";
-  for (const auto & pt : data.outside_points) {
-    if (pt.to_avoid) {
-      debug_marker.color.r = 1.0;
-      debug_marker.color.g = 0.0;
-    } else {
-      debug_marker.color.r = 0.0;
-      debug_marker.color.g = 1.0;
-    }
-    for (const auto & f : pt.outside_rings) {
+
+  const auto & add_rings_marker = [&](const auto & rings) {
+    for (const auto & f : rings) {
       debug_marker.points.clear();
       for (const auto & p : f)
         debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
@@ -93,6 +87,16 @@ void add_out_of_lane_markers(
       debug_marker_array.markers.push_back(debug_marker);
       debug_marker.id++;
     }
+  };
+  for (const auto & pt : data.outside_points) {
+    if (pt.to_avoid) {
+      debug_marker.color.r = 1.0;
+      debug_marker.color.g = 0.0;
+    } else {
+      debug_marker.color.r = 0.0;
+      debug_marker.color.g = 1.0;
+    }
+    add_rings_marker(pt.outside_rings);
   }
   size_t nb_markers = debug_marker.id;
   debug_marker.action = visualization_msgs::msg::Marker::DELETE;
@@ -177,17 +181,20 @@ size_t add_objects_markers(
 {
   auto debug_marker = get_base_marker();
   debug_marker.ns = "objects";
+  const auto add_pose_footprint_marker = [&](const auto & footprint) {
+    debug_marker.points.clear();
+    for (const auto & p : footprint.outer()) {
+      debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
+    }
+    debug_marker.points.push_back(debug_marker.points.front());
+    debug_marker_array.markers.push_back(debug_marker);
+    ++debug_marker.id;
+  };
   for (const auto & o : objects.objects) {
     for (const auto & path : o.kinematics.predicted_paths) {
       for (const auto & pose : path.path) {
         const auto object_footprint = universe_utils::toPolygon2d(pose, o.shape);
-        debug_marker.points.clear();
-        for (const auto & p : object_footprint.outer())
-          debug_marker.points.push_back(
-            universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
-        debug_marker.points.push_back(debug_marker.points.front());
-        debug_marker_array.markers.push_back(debug_marker);
-        ++debug_marker.id;
+        add_pose_footprint_marker(object_footprint);
       }
     }
   }
@@ -205,6 +212,17 @@ size_t add_stop_line_markers(
   auto debug_marker = get_base_marker();
   debug_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   debug_marker.ns = "stop_lines";
+  const auto & add_lanelets_markers = [&](const auto & lanelets) {
+    for (const auto & ll : lanelets) {
+      debug_marker.points.clear();
+      for (const auto & p : ll.polygon2d().basicPolygon()) {
+        debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
+      }
+      debug_marker.points.push_back(debug_marker.points.front());
+      debug_marker_array.markers.push_back(debug_marker);
+      ++debug_marker.id;
+    }
+  };
   for (const auto & [_, stop_line] : rtree) {
     debug_marker.points.clear();
     debug_marker.color.r = 1.0;
@@ -214,15 +232,7 @@ size_t add_stop_line_markers(
     debug_marker_array.markers.push_back(debug_marker);
     ++debug_marker.id;
     debug_marker.color.r = 0.0;
-    for (const auto & ll : stop_line.lanelets) {
-      debug_marker.points.clear();
-      for (const auto & p : ll.polygon2d().basicPolygon()) {
-        debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
-      }
-      debug_marker.points.push_back(debug_marker.points.front());
-      debug_marker_array.markers.push_back(debug_marker);
-      ++debug_marker.id;
-    }
+    add_lanelets_markers(stop_line.lanelets);
   }
   const auto max_id = debug_marker.id;
   debug_marker.action = visualization_msgs::msg::Marker::DELETE;
@@ -246,19 +256,9 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   debug_data.prev_footprints = ego_data.trajectory_footprints.size();
 
   add_lanelet_markers(
-    debug_marker_array, ego_data.route_lanelets, "route_lanelets",
-    universe_utils::createMarkerColor(0.1, 0.1, 1.0, 0.5), debug_data.prev_route_lanelets);
-  debug_data.prev_route_lanelets = ego_data.route_lanelets.size();
-
-  add_lanelet_markers(
     debug_marker_array, ego_data.ignored_lanelets, "ignored_lanelets",
     universe_utils::createMarkerColor(0.7, 0.7, 0.2, 0.5), debug_data.prev_ignored_lanelets);
   debug_data.prev_ignored_lanelets = ego_data.ignored_lanelets.size();
-
-  add_lanelet_markers(
-    debug_marker_array, out_of_lane_data.out_of_lane_lanelets, "out_of_lane_lanelets",
-    universe_utils::createMarkerColor(0.4, 0.4, 0.7, 0.5), debug_data.prev_out_of_lane_lanelets);
-  debug_data.prev_out_of_lane_lanelets = out_of_lane_data.out_of_lane_lanelets.size();
 
   lanelet::BasicPolygons2d drivable_lane_polygons;
   for (const auto & poly : ego_data.drivable_lane_polygons) {
