@@ -1,21 +1,14 @@
 *:*/test/*
 
 checkersReport
-constParameterReference
-funcArgNamesDifferent
-functionConst
 functionStatic
 missingInclude
 missingIncludeSystem
 noConstructor
-passedByValue
-// cspell: ignore uninit
-uninitMemberVar
 unknownMacro
 unmatchedSuppression
 unreadVariable
 unusedFunction
-unusedStructMember
 useInitializationList
 useStlAlgorithm
 variableScope
