@@ -65,7 +65,7 @@ double calcStopDistance(
     traj.points, current_pose, max_dist, max_yaw);
   const double signed_length_on_traj = autoware::motion_utils::calcSignedArcLength(
     traj.points, current_pose.position, seg_idx, traj.points.at(end_idx).pose.position,
-    std::min(end_idx, std::max(traj.points.size() - 2, 0)));
+    std::min(end_idx, std::max(traj.points.size() - 2, static_cast<size_t>(0))));
 
   return signed_length_on_traj;
 }
