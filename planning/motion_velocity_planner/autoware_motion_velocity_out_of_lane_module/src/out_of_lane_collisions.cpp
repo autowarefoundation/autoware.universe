@@ -42,11 +42,14 @@ void update_collision_times(
   for (const auto index : potential_collision_indexes) {
     auto & out_of_lane_point = out_of_lane_data.outside_points[index];
     if (out_of_lane_point.collision_times.count(time) == 0UL) {
-      for (const auto & ring : out_of_lane_point.outside_rings) {
-        if (!boost::geometry::disjoint(ring, object_footprint.outer())) {
-          out_of_lane_point.collision_times.insert(time);
-          break;
-        }
+      const auto has_collision = std::any_of(
+        out_of_lane_point.outside_rings.begin(), out_of_lane_point.outside_rings.end(),
+        [&](const auto & ring) {
+          return !boost::geometry::disjoint(ring, object_footprint.outer());
+        });
+      if (has_collision) {
+        out_of_lane_point.collision_times.insert(time);
+        break;
       }
     }
   }
