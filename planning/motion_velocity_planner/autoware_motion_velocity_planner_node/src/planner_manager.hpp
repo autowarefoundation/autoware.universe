@@ -35,6 +35,9 @@
 #include <string>
 #include <vector>
 
+using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
+using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
+
 namespace autoware::motion_velocity_planner
 {
 class MotionVelocityPlannerManager
@@ -48,7 +51,19 @@ public:
     const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
     const std::shared_ptr<const PlannerData> planner_data);
 
+  // Diagnostic
+  std::shared_ptr<DiagnosticStatus> makeEmptyDiagnostic(const std::string & reason);
+  std::shared_ptr<DiagnosticStatus> makeDiagnostic(
+    const std::string & reason, 
+    const DiagnosticStatus::Level level=DiagnosticStatus::OK,
+    const bool is_decided = true, 
+    [[maybe_unused]] const std::shared_ptr<const PlannerData> planner_data);
+  DiagnosticArray getDiagnostics(const rclcpp::Time & current_time) const;
+  void clearDiagnostics();
+
+
 private:
+  std::vector<std::shared_ptr<DiagnosticStatus>> diagnostics_;
   pluginlib::ClassLoader<PluginModuleInterface> plugin_loader_;
   std::vector<std::shared_ptr<PluginModuleInterface>> loaded_plugins_;
 };

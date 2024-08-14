@@ -71,6 +71,57 @@ void MotionVelocityPlannerManager::update_module_parameters(
   for (auto & plugin : loaded_plugins_) plugin->update_parameters(parameters);
 }
 
+
+
+std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::makeEmptyDiagnostic(
+  const std::string & reason)
+{
+  return makeDiagnostic(reason, is_decided = false);
+}
+
+std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::makeDiagnostic(
+  const std::string & reason,
+  const DiagnosticStatus::Level level,
+  const bool is_decided,
+  [[maybe_unused]] const std::shared_ptr<const PlannerData> planner_data)
+{
+  // Create status
+  auto status = std::make_shared<DiagnosticStatus>();
+  status->level = level;
+  status->name = "motion_velocity_planner_" + reason;
+  diagnostic_msgs::msg::KeyValue key_value;
+  {
+    // Decision
+    key_value.key = "decision";
+    if is_decided
+      key_value.value = reason;
+    else
+      key_value.value = "none";
+    status.values.push_back(key_value);
+  }
+  // Add other information to the status if necessary in the future.
+}
+
+void MotionVelocityPlannerManager::clearDiagnostics()
+{
+  diagnostics_.clear();
+}
+
+DiagnosticArray MotionVelocityPlannerManager::getDiagnostics(
+  const rclcpp::Time & current_time) const
+{
+  DiagnosticArray diagnostics;
+  diagnostics.header.stamp = current_time;
+  diagnostics.header.frame_id = "map";
+  for (const auto & ds_ptr : diagnostics_) {
+    if (ds_ptr) {
+      diagnostics.status.push_back(*ds_ptr);
+    }
+  }
+  return diagnostics;
+}
+
+
 std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocities(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
@@ -78,6 +129,11 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
   std::vector<VelocityPlanningResult> results;
   for (auto & plugin : loaded_plugins_)
     results.push_back(plugin->plan(ego_trajectory_points, planner_data));
+    // TODO 现在做这个：这里更新并生成DiagnosticArray，makeDiagnostic/makeEmptyDiagnostic(plugin.get_name()+"stop"/"slow_down"),
+    //  放reason_diag_里；
+    
+    // TODO 在node上getDiagnostics，然后发布，清空，etc。
+    
   return results;
 }
 }  // namespace autoware::motion_velocity_planner
