@@ -16,6 +16,7 @@
 
 #include "types.hpp"
 
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <rclcpp/duration.hpp>
 
@@ -34,37 +35,45 @@
 namespace autoware::motion_velocity_planner::out_of_lane
 {
 
+void update_collision_times(
+  OutOfLaneData & out_of_lane_data, const std::unordered_set<size_t> & potential_collision_indexes,
+  const universe_utils::Polygon2d & object_footprint, const double time)
+{
+  for (const auto index : potential_collision_indexes) {
+    auto & out_of_lane_point = out_of_lane_data.outside_points[index];
+    if (out_of_lane_point.collision_times.count(time) == 0UL) {
+      for (const auto & ring : out_of_lane_point.outside_rings) {
+        if (!boost::geometry::disjoint(ring, object_footprint.outer())) {
+          out_of_lane_point.collision_times.insert(time);
+          break;
+        }
+      }
+    }
+  }
+}
+
 void calculate_object_path_time_collisions(
   OutOfLaneData & out_of_lane_data,
   const autoware_perception_msgs::msg::PredictedPath & object_path,
   const autoware_perception_msgs::msg::Shape & object_shape)
 {
   const auto time_step = rclcpp::Duration(object_path.time_step).seconds();
-  auto t = time_step;
+  auto time = time_step;
   for (const auto & object_pose : object_path.path) {
-    t += time_step;
+    time += time_step;
     const auto object_footprint = universe_utils::toPolygon2d(object_pose, object_shape);
     std::vector<OutAreaNode> query_results;
     out_of_lane_data.outside_areas_rtree.query(
       boost::geometry::index::intersects(object_footprint.outer()),
       std::back_inserter(query_results));
-    std::unordered_set<size_t> out_of_lane_indexes;
-    for (const auto & query_result : query_results) {
-      out_of_lane_indexes.insert(query_result.second);
+    std::unordered_set<size_t> potential_collision_indexes;
+    for (const auto & [_, index] : query_results) {
+      potential_collision_indexes.insert(index);
     }
-    for (const auto index : out_of_lane_indexes) {
-      auto & out_of_lane_point = out_of_lane_data.outside_points[index];
-      if (out_of_lane_point.collision_times.count(t) == 0UL) {
-        for (const auto & ring : out_of_lane_point.outside_rings) {
-          if (!boost::geometry::disjoint(ring, object_footprint.outer())) {
-            out_of_lane_point.collision_times.insert(t);
-            break;
-          }
-        }
-      }
-    }
+    update_collision_times(out_of_lane_data, potential_collision_indexes, object_footprint, time);
   }
 }
+
 void calculate_objects_time_collisions(
   OutOfLaneData & out_of_lane_data,
   const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects)
