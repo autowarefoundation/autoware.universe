@@ -154,7 +154,8 @@
   </group>
 
   <group if="$(eval '&quot;$(var localization_sim_mode)&quot;==&quot;pose_twist_estimator&quot;')">
-    <group> <!-- start name space localization -->
+    <group>
+      <!-- start name space localization -->
       <push-ros-namespace namespace="localization"/>
       <group>
         <push-ros-namespace namespace="util"/>
@@ -180,7 +181,8 @@
         <push-ros-namespace namespace="pose_twist_fusion_filter"/>
         <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml"/>
       </group>
-    </group> <!-- end name space localization -->
+    </group>
+    <!-- end name space localization -->
     <group>
       <push-ros-namespace namespace="sensing"/>
       <arg name="input_vehicle_velocity_topic" default="/vehicle/status/velocity_status"/>
@@ -210,12 +212,14 @@
   <!-- Simulator model -->
   <group if="$(var launch_dummy_vehicle)">
     <arg name="simulator_model" default="$(var vehicle_model_pkg)/config/simulator_model.param.yaml" description="path to the file of simulator model"/>
+    <let name="motion_publish_mode" value="pose_only" if="$(eval '&quot;$(var localization_sim_mode)&quot;==&quot;pose_twist_estimator&quot;')"/>
+    <let name="motion_publish_mode" value="full_motion" unless="$(eval '&quot;$(var localization_sim_mode)&quot;==&quot;pose_twist_estimator&quot;')"/>
     <include file="$(find-pkg-share simple_planning_simulator)/launch/simple_planning_simulator.launch.py">
       <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
       <arg name="simulator_model_param_file" value="$(var simulator_model)"/>
       <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
       <arg name="raw_vehicle_cmd_converter_param_path" value="$(var raw_vehicle_cmd_converter_param_path)"/>
-      <arg name="launch_localization_for_sim_vehicle" value="$(var launch_localization_for_sim_vehicle)"/>
+      <arg name="motion_publish_mode" value="$(var motion_publish_mode)"/>
     </include>
   </group>
 </launch>

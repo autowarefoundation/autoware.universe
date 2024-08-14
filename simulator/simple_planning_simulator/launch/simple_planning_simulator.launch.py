@@ -65,7 +65,7 @@ def launch_setup(context, *args, **kwargs):
     ]
 
     # Additional remappings
-    if LaunchConfiguration("launch_localization_for_sim_vehicle").perform(context) == "true":
+    if LaunchConfiguration("motion_publish_mode").perform(context) == "pose_only":
         remappings.extend(
             [
                 ("output/odometry", "/simulation/debug/localization/kinematic_state"),
@@ -73,7 +73,7 @@ def launch_setup(context, *args, **kwargs):
                 ("output/pose", "/localization/pose_estimator/pose_with_covariance"),
             ]
         )
-    else:
+    elif LaunchConfiguration("motion_publish_mode").perform(context) == "full_motion":
         remappings.extend(
             [
                 ("output/odometry", "/localization/kinematic_state"),
@@ -83,6 +83,10 @@ def launch_setup(context, *args, **kwargs):
                     "/simulation/debug/localization/pose_estimator/pose_with_covariance",
                 ),
             ]
+        )
+    else:
+        raise ValueError(
+            "Invalid motion_publish_mode specified. Please choose 'pose_only' or 'full_motion'."
         )
 
     simple_planning_simulator_node = Node(
