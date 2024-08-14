@@ -934,9 +934,6 @@ PredictedObject MapBasedPredictionNode::convertToPredictedObject(
 
 void MapBasedPredictionNode::mapCallback(const LaneletMapBin::ConstSharedPtr msg)
 {
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
-
   RCLCPP_DEBUG(get_logger(), "[Map Based Prediction]: Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
@@ -1396,6 +1393,9 @@ bool MapBasedPredictionNode::isIntersecting(
   const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2,
   const lanelet::ConstPoint3d & point3, const lanelet::ConstPoint3d & point4)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
+
   const auto p1 = autoware::universe_utils::createPoint(point1.x, point1.y, 0.0);
   const auto p2 = autoware::universe_utils::createPoint(point2.x, point2.y, 0.0);
   const auto p3 = autoware::universe_utils::createPoint(point3.x(), point3.y(), 0.0);
@@ -1615,9 +1615,6 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
 void MapBasedPredictionNode::removeStaleTrafficLightInfo(
   const TrackedObjects::ConstSharedPtr in_objects)
 {
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
-
   for (auto it = stopped_times_against_green_.begin(); it != stopped_times_against_green_.end();) {
     const bool isDisappeared = std::none_of(
       in_objects->objects.begin(), in_objects->objects.end(),
@@ -2296,9 +2293,6 @@ geometry_msgs::msg::Pose MapBasedPredictionNode::compensateTimeDelay(
 double MapBasedPredictionNode::calcRightLateralOffset(
   const lanelet::ConstLineString2d & boundary_line, const geometry_msgs::msg::Pose & search_pose)
 {
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
-
   std::vector<geometry_msgs::msg::Point> boundary_path(boundary_line.size());
   for (size_t i = 0; i < boundary_path.size(); ++i) {
     const double x = boundary_line[i].x();
@@ -2530,9 +2524,6 @@ bool MapBasedPredictionNode::isDuplicated(
   const std::pair<double, lanelet::ConstLanelet> & target_lanelet,
   const LaneletsData & lanelets_data)
 {
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
-
   const double CLOSE_LANELET_THRESHOLD = 0.1;
   for (const auto & lanelet_data : lanelets_data) {
     const auto target_lanelet_end_p = target_lanelet.second.centerline2d().back();
@@ -2550,9 +2541,6 @@ bool MapBasedPredictionNode::isDuplicated(
 bool MapBasedPredictionNode::isDuplicated(
   const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths)
 {
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
-
   const double CLOSE_PATH_THRESHOLD = 0.1;
   for (const auto & prev_predicted_path : predicted_paths) {
     const auto prev_path_end = prev_predicted_path.path.back().position;
@@ -2569,9 +2557,6 @@ bool MapBasedPredictionNode::isDuplicated(
 std::optional<lanelet::Id> MapBasedPredictionNode::getTrafficSignalId(
   const lanelet::ConstLanelet & way_lanelet)
 {
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
-
   const auto traffic_light_reg_elems =
     way_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>();
   if (traffic_light_reg_elems.empty()) {

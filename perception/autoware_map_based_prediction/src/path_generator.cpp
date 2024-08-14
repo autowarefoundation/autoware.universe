@@ -191,9 +191,6 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
 PredictedPath PathGenerator::generateStraightPath(
   const TrackedObject & object, const double longitudinal_duration) const
 {
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
-
   const auto & object_pose = object.kinematics.pose_with_covariance.pose;
   const auto & object_twist = object.kinematics.twist_with_covariance.twist;
   constexpr double ep = 0.001;
@@ -294,9 +291,6 @@ FrenetPath PathGenerator::generateFrenetPath(
 Eigen::Vector3d PathGenerator::calcLatCoefficients(
   const FrenetPoint & current_point, const FrenetPoint & target_point, const double T) const
 {
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
-
   // Lateral Path Calculation
   // Quintic polynomial for d
   // A = np.array([[T**3, T**4, T**5],
@@ -323,9 +317,6 @@ Eigen::Vector3d PathGenerator::calcLatCoefficients(
 Eigen::Vector2d PathGenerator::calcLonCoefficients(
   const FrenetPoint & current_point, const FrenetPoint & target_point, const double T) const
 {
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
-
   // Longitudinal Path Calculation
   // Quadric polynomial
   // A_inv = np.matrix([[1/(T**2), -1/(3*T)],
