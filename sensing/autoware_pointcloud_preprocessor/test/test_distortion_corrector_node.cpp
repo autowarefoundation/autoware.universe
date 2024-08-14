@@ -322,7 +322,7 @@ protected:
   static constexpr double epsilon = 1e-5;
 
   // for debugging or regenerating the ground truth point cloud
-  bool debug_{true};
+  bool debug_{false};
 };
 
 TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
