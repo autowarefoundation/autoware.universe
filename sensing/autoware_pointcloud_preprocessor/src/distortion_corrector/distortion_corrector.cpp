@@ -458,14 +458,15 @@ inline void DistortionCorrector2D::undistortPointImplementation(
     point_tf_ = tf2_lidar_to_base_link_ * point_tf_;
   }
   theta_ += w * time_offset;
+  auto [sin_half_theta, cos_half_theta] = autoware::universe_utils::sin_and_cos(theta_ * 0.5f);
+  auto [sin_theta, cos_theta] = autoware::universe_utils::sin_and_cos(theta_);
+
   baselink_quat_.setValue(
-    0, 0, autoware::universe_utils::sin(theta_ * 0.5f),
-    autoware::universe_utils::cos(
-      theta_ *
-      0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta); (Note that the value is slightly different)
+    0, 0, sin_half_theta, cos_half_theta);  // baselink_quat.setRPY(0.0, 0.0, theta); (Note that the
+                                            // value is slightly different)
   const float dis = v * time_offset;
-  x_ += dis * autoware::universe_utils::cos(theta_);
-  y_ += dis * autoware::universe_utils::sin(theta_);
+  x_ += dis * cos_theta;
+  y_ += dis * sin_theta;
 
   baselink_tf_odom_.setOrigin(tf2::Vector3(x_, y_, 0.0));
   baselink_tf_odom_.setRotation(baselink_quat_);
