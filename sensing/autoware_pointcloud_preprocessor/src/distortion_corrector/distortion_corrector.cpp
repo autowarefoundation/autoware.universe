@@ -15,6 +15,7 @@
 #include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
 #include "autoware/pointcloud_preprocessor/utility/memory.hpp"
+#include "autoware/universe_utils/math/constants.hpp"
 
 #include <autoware/universe_utils/math/trigonometry.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
@@ -155,7 +156,7 @@ bool DistortionCorrector<T>::isInputValid(sensor_msgs::msg::PointCloud2 & pointc
   if (pointcloud.data.empty() || twist_queue_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
-      "input pointcloud or twist_queue_ is empty.");
+      "Input pointcloud or twist_queue_ is empty.");
     return false;
   }
 
@@ -205,57 +206,68 @@ bool DistortionCorrector<T>::AzimuthConversionExists(sensor_msgs::msg::PointClou
     next_it_y = it_y + 1;
     next_it_azimuth = it_azimuth + 1;
   } else {
+    RCLCPP_WARN(
+      node_->get_logger(),
+      "Current point cloud only has a single point cloud. Could not calculate the formula.");
     return false;
   }
 
   for (; next_it_x != it_x.end();
        ++it_x, ++it_y, ++it_azimuth, ++next_it_x, ++next_it_y, ++next_it_azimuth) {
-    auto current_cartesian_rad = cv::fastAtan2(*it_y, *it_x) * M_PI / 180;
-    auto next_cartesian_rad = cv::fastAtan2(*next_it_y, *next_it_x) * M_PI / 180;
+    auto current_cartesian_rad = autoware::universe_utils::opencv_fastAtan2(*it_y, *it_x);
+    auto next_cartesian_rad = autoware::universe_utils::opencv_fastAtan2(*next_it_y, *next_it_x);
 
     // If the angle exceeds 180 degrees, it may cross the 0-degree axis,
     // which could disrupt the calculation of the formula.
     if (
-      *next_it_azimuth - *it_azimuth >= M_PI ||
-      next_cartesian_rad - current_cartesian_rad >= M_PI) {
+      abs(*next_it_azimuth - *it_azimuth) >= autoware::universe_utils::pi ||
+      abs(next_cartesian_rad - current_cartesian_rad) >= autoware::universe_utils::pi) {
+      RCLCPP_WARN(
+        node_->get_logger(),
+        "Angle between two points exceeds 180 degrees. Iterate to next point ...");
       continue;
     }
 
     float b = (*next_it_azimuth - *it_azimuth) / (next_cartesian_rad - current_cartesian_rad);
     float a = *it_azimuth - b * current_cartesian_rad;
 
-    adjusted_b_ = b;
-    adjusted_a_ = a;
-
     // Check if 'b' can be adjusted to 1 or -1
     if (std::abs(b - 1.0f) <= threshold_b_) {
-      adjusted_b_ = 1.0f;
+      b_ = 1.0f;
     } else if (std::abs(b + 1.0f) <= threshold_b_) {
-      adjusted_b_ = -1.0f;
+      b_ = -1.0f;
     } else {
+      RCLCPP_WARN(
+        node_->get_logger(),
+        "Angle between two points exceeds 180 degrees. Iterate to next point ...");
+      std::cout << "b: " << b << "should be close to 1 or -1" << std::endl;
       continue;
     }
 
     // Check if 'a' can be adjusted to a multiple of π/2
-    int multiple_of_90_degrees = std::round(a / (M_PI / 2));
-    if (std::abs(a - multiple_of_90_degrees * (M_PI / 2)) > threshold_a_) {
+    int multiple_of_90_degrees = std::round(a / (autoware::universe_utils::pi / 2));
+    if (std::abs(a - multiple_of_90_degrees * (autoware::universe_utils::pi / 2)) > threshold_a_) {
       continue;
     }
 
+    // Limit the range of a in [0, 360]
     if (multiple_of_90_degrees < 0) {
       multiple_of_90_degrees += 4;
     } else if (multiple_of_90_degrees > 4) {
       multiple_of_90_degrees -= 4;
     }
 
-    adjusted_a_ = multiple_of_90_degrees * (M_PI / 2);
-
-    std::cout << "adjusted_a_: " << adjusted_a_ << std::endl;
-    std::cout << "adjusted_b_: " << adjusted_b_ << std::endl;
+    a_ = multiple_of_90_degrees * (autoware::universe_utils::pi / 2);
 
     return true;
   }
   return false;
+}
+
+template <class T>
+std::tuple<float, float> DistortionCorrector<T>::getConversion()
+{
+  return std::make_tuple(a_, b_);
 }
 
 template <class T>
@@ -332,11 +344,14 @@ void DistortionCorrector<T>::undistortPointCloud(
     undistortPoint(it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
 
     if (can_update_azimuth_and_distance && pointcloudTransformNeeded()) {
-      float cartesian_coordinate_azimuth = cv::fastAtan2(*it_y, *it_x) * M_PI / 180;
-      float updated_azimuth = adjusted_a_ + adjusted_b_ * cartesian_coordinate_azimuth;
-      // if(updated_azimuth < 0) {
-      //   //TODO(vivid):
-      // }
+      float cartesian_coordinate_azimuth = autoware::universe_utils::opencv_fastAtan2(*it_y, *it_x);
+      float updated_azimuth = a_ + b_ * cartesian_coordinate_azimuth;
+      if (updated_azimuth < 0) {
+        updated_azimuth += autoware::universe_utils::pi * 2;
+      } else if (updated_azimuth > 2 * autoware::universe_utils::pi) {
+        updated_azimuth -= autoware::universe_utils::pi * 2;
+      }
+
       *it_azimuth = updated_azimuth;
       *it_distance = sqrt(*it_x * *it_x + *it_y * *it_y + *it_z * *it_z);
 

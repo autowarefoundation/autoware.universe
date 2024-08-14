@@ -36,8 +36,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include <opencv2/opencv.hpp>
-
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/buffer_interface.h>
 #include <tf2_ros/transform_listener.h>
@@ -66,6 +64,7 @@ public:
     const std::string & base_frame, const std::string & lidar_frame) = 0;
   virtual void initialize() = 0;
   virtual bool AzimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
+  virtual std::tuple<float, float> getConversion() = 0;
   virtual void undistortPointCloud(
     bool use_imu, bool can_update_azimuth_and_distance,
     sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
@@ -92,8 +91,8 @@ protected:
   bool success_{true};
   float threshold_a_{0.087f};  // 5 / 180 * M_PI
   float threshold_b_{0.1f};
-  float adjusted_a_{0};
-  float adjusted_b_{1};
+  float a_{0};
+  float b_{1};
 
   void getIMUTransformation(const std::string & base_frame, const std::string & imu_frame);
   void enqueueIMU(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
@@ -132,6 +131,7 @@ public:
     bool use_imu, bool update_azimuth_and_distance,
     sensor_msgs::msg::PointCloud2 & pointcloud) override;
   bool AzimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud) override;
+  std::tuple<float, float> getConversion() override;
 
   bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
 };
