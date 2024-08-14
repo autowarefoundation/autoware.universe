@@ -832,12 +832,18 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   timeout_set_for_no_intention_to_walk_ = declare_parameter<std::vector<double>>(
     "crosswalk_with_signal.timeout_set_for_no_intention_to_walk");
 
+  // debug parameter
+  bool use_time_publisher = declare_parameter<bool>("publish_processing_time");
+  bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
+  bool use_debug_marker = declare_parameter<bool>("publish_debug_markers");
+
   path_generator_ = std::make_shared<PathGenerator>(
     prediction_sampling_time_interval_, min_crosswalk_user_velocity_);
 
   path_generator_->setUseVehicleAcceleration(use_vehicle_acceleration_);
   path_generator_->setAccelerationHalfLife(acceleration_exponential_half_life_);
 
+  // subscribers
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "~/input/objects", 1,
     std::bind(&MapBasedPredictionNode::objectsCallback, this, std::placeholders::_1));
@@ -845,29 +851,37 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionNode::mapCallback, this, std::placeholders::_1));
 
+  // publishers
   pub_objects_ = this->create_publisher<PredictedObjects>("~/output/objects", rclcpp::QoS{1});
-  pub_debug_markers_ =
-    this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
-  processing_time_publisher_ =
-    std::make_unique<autoware::universe_utils::DebugPublisher>(this, "map_based_prediction");
 
-  // debug publisher
-  published_time_publisher_ =
-    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
-  detailed_processing_time_publisher_ =
-    this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
-      "~/debug/processing_time_detail_ms", 1);
-  time_keeper_ = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
-  time_keeper_ptr_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper_);
-  path_generator_->setTimeKeeper(time_keeper_ptr_);
+  // debug publishers
+  if (use_time_publisher) {
+    processing_time_publisher_ =
+      std::make_unique<autoware::universe_utils::DebugPublisher>(this, "map_based_prediction");
+    published_time_publisher_ =
+      std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
+    stop_watch_ptr_ =
+      std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
 
+  if (use_time_keeper) {
+    detailed_processing_time_publisher_ =
+      this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+        "~/debug/processing_time_detail_ms", 1);
+    time_keeper_ = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
+    time_keeper_ptr_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper_);
+    path_generator_->setTimeKeeper(time_keeper_ptr_);
+  }
+
+  if (use_debug_marker) {
+    pub_debug_markers_ =
+      this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
+  }
+  // dynamic reconfigure
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&MapBasedPredictionNode::onParam, this, std::placeholders::_1));
-
-  stop_watch_ptr_ =
-    std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
-  stop_watch_ptr_->tic("cyclic_time");
-  stop_watch_ptr_->tic("processing_time");
 }
 
 rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
@@ -964,7 +978,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
-  stop_watch_ptr_->toc("processing_time", true);
+  if (stop_watch_ptr_) stop_watch_ptr_->toc("processing_time", true);
 
   // take traffic_signal
   {
@@ -1122,14 +1136,16 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         }
 
         // Get Debug Marker for On Lane Vehicles
-        const auto max_prob_path = std::max_element(
-          ref_paths.begin(), ref_paths.end(),
-          [](const PredictedRefPath & a, const PredictedRefPath & b) {
-            return a.probability < b.probability;
-          });
-        const auto debug_marker =
-          getDebugMarker(object, max_prob_path->maneuver, debug_markers.markers.size());
-        debug_markers.markers.push_back(debug_marker);
+        if (pub_debug_markers_) {
+          const auto max_prob_path = std::max_element(
+            ref_paths.begin(), ref_paths.end(),
+            [](const PredictedRefPath & a, const PredictedRefPath & b) {
+              return a.probability < b.probability;
+            });
+          const auto debug_marker =
+            getDebugMarker(object, max_prob_path->maneuver, debug_markers.markers.size());
+          debug_markers.markers.push_back(debug_marker);
+        }
 
         // Fix object angle if its orientation unreliable (e.g. far object by radar sensor)
         // This prevent bending predicted path
@@ -1238,12 +1254,14 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   publish(output, debug_markers);
 
   // Publish Processing Time
-  const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-  const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-    "debug/cyclic_time_ms", cyclic_time_ms);
-  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-    "debug/processing_time_ms", processing_time_ms);
+  if (stop_watch_ptr_) {
+    const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 
 void MapBasedPredictionNode::publish(
@@ -1253,8 +1271,9 @@ void MapBasedPredictionNode::publish(
   if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   pub_objects_->publish(output);
-  published_time_publisher_->publish_if_subscribed(pub_objects_, output.header.stamp);
-  pub_debug_markers_->publish(debug_markers);
+  if (published_time_publisher_)
+    published_time_publisher_->publish_if_subscribed(pub_objects_, output.header.stamp);
+  if (pub_debug_markers_) pub_debug_markers_->publish(debug_markers);
 }
 
 void MapBasedPredictionNode::updateCrosswalkUserHistory(
