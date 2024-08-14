@@ -45,7 +45,7 @@ Detail description of each filter's algorithm is in the following links.
 
 ### Node Parameters
 
-{{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/filter.schema.json") }}
+{{ json_to_markdown("schema/filter.schema.json") }}
 
 ## Assumptions / Known limits
 
