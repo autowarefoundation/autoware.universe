@@ -16,7 +16,7 @@
   <arg name="launch_dummy_vehicle"/>
   <arg
     name="localization_sim_mode"
-    description="Select localization mode. Options are 'none' or 'api'. 'api' starts an external API for initial position estimation. 'none' does not start any localization-related process."
+    description="Select localization mode. Options are 'none', 'api' or 'pose_twist_estimator'. 'pose_twist_estimator' starts most of the localization modules except for the ndt_scan_matcher. 'api' starts an external API for initial position estimation. 'none' does not start any localization-related process."
   />
   <arg name="launch_dummy_doors"/>
   <arg name="launch_diagnostic_converter"/>
