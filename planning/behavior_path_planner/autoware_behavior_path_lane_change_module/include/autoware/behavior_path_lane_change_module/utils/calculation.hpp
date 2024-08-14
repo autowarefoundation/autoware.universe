@@ -43,9 +43,9 @@ double calc_dist_from_pose_to_terminal_end(
   const Pose & src_pose);
 
 /**
- * @brief Calculates the backward buffer distance required for safe lane changing.
+ * @brief Calculates the minimum stopping distance to terminal start.
  *
- * This function computes the minimum required backward buffer distance based on the
+ * This function computes the minimum stopping distance to terminal start based on the
  * minimum lane changing velocity and the minimum longitudinal acceleration. It then
  * compares this calculated distance with a pre-defined backward length buffer parameter
  * and returns the larger of the two values to ensure safe lane changing.
@@ -57,7 +57,7 @@ double calc_dist_from_pose_to_terminal_end(
  *
  * @return The required backward buffer distance in meters.
  */
-double calc_backward_buffer(const LCParamPtr & lc_param_ptr);
+double calc_stopping_distance(const LCParamPtr & lc_param_ptr);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__CALCULATION_HPP_

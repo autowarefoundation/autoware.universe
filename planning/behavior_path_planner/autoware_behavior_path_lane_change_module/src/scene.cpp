@@ -783,7 +783,7 @@ bool NormalLaneChange::is_near_terminal() const
   const auto min_lane_changing_distance = calcMinimumLaneChangeLength(
     route_handler_ptr, current_lanes_terminal, *lc_param_ptr, direction);
 
-  const auto backward_buffer = calculation::calc_backward_buffer(lc_param_ptr);
+  const auto backward_buffer = calculation::calc_stopping_distance(lc_param_ptr);
 
   const auto min_lc_dist_with_buffer =
     backward_buffer + min_lane_changing_distance + lc_param_ptr->lane_change_finish_judge_buffer;

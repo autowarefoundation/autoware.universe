@@ -44,7 +44,7 @@ double calc_dist_from_pose_to_terminal_end(
   return utils::getDistanceToEndOfLane(src_pose, lanes);
 }
 
-double calc_backward_buffer(const LCParamPtr & lc_param_ptr)
+double calc_stopping_distance(const LCParamPtr & lc_param_ptr)
 {
   // v^2 = u^2 + 2ad
   const auto min_lc_vel = lc_param_ptr->minimum_lane_changing_velocity;
