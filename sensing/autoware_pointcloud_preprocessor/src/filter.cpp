@@ -70,14 +70,14 @@ autoware::pointcloud_preprocessor::Filter::Filter(
 {
   // Set parameters (moved from NodeletLazy onInit)
   {
-    tf_input_frame_ = static_cast<std::string>(declare_parameter("input_frame", ""));
-    tf_output_frame_ = static_cast<std::string>(declare_parameter("output_frame", ""));
-    max_queue_size_ = static_cast<std::size_t>(declare_parameter("max_queue_size", 5));
+    tf_input_frame_ = declare_parameter<std::string>("input_frame");
+    tf_output_frame_ = declare_parameter<std::string>("output_frame");
+    max_queue_size_ = declare_parameter<int64_t>("max_queue_size");
 
     // ---[ Optional parameters
-    use_indices_ = static_cast<bool>(declare_parameter("use_indices", false));
-    latched_indices_ = static_cast<bool>(declare_parameter("latched_indices", false));
-    approximate_sync_ = static_cast<bool>(declare_parameter("approximate_sync", false));
+    use_indices_ = declare_parameter<bool>("use_indices");
+    latched_indices_ = declare_parameter<bool>("latched_indices");
+    approximate_sync_ = declare_parameter<bool>("approximate_sync");
 
     RCLCPP_DEBUG_STREAM(
       this->get_logger(),
