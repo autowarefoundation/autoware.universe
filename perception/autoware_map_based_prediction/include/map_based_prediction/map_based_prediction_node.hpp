@@ -344,6 +344,10 @@ private:
     const TrackedObject & object, const LaneletData & current_lanelet_data,
     const double object_detected_time);
 
+  void publish(
+    const PredictedObjects & output,
+    const visualization_msgs::msg::MarkerArray & debug_markers) const;
+
   // NOTE: This function is copied from the motion_velocity_smoother package.
   // TODO(someone): Consolidate functions and move them to a common
   inline std::vector<double> calcTrajectoryCurvatureFrom3Points(

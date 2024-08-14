@@ -1235,15 +1235,26 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   }
 
   // Publish Results
-  pub_objects_->publish(output);
-  published_time_publisher_->publish_if_subscribed(pub_objects_, output.header.stamp);
-  pub_debug_markers_->publish(debug_markers);
+  publish(output, debug_markers);
+
+  // Publish Processing Time
   const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
   const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
   processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
     "debug/cyclic_time_ms", cyclic_time_ms);
   processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
     "debug/processing_time_ms", processing_time_ms);
+}
+
+void MapBasedPredictionNode::publish(
+  const PredictedObjects & output, const visualization_msgs::msg::MarkerArray & debug_markers) const
+{
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
+
+  pub_objects_->publish(output);
+  published_time_publisher_->publish_if_subscribed(pub_objects_, output.header.stamp);
+  pub_debug_markers_->publish(debug_markers);
 }
 
 void MapBasedPredictionNode::updateCrosswalkUserHistory(
