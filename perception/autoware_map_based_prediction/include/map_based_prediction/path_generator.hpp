@@ -122,7 +122,7 @@ private:
   bool use_vehicle_acceleration_;
   double acceleration_exponential_half_life_;
 
-  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_ptr_;
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
 
   // Member functions
   PredictedPath generateStraightPath(const TrackedObject & object, const double duration) const;
