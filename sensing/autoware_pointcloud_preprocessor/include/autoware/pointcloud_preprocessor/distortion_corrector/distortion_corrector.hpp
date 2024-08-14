@@ -63,7 +63,7 @@ public:
   virtual void setPointCloudTransform(
     const std::string & base_frame, const std::string & lidar_frame) = 0;
   virtual void initialize() = 0;
-  virtual bool AzimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
+  virtual bool azimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
   virtual std::tuple<float, float> getConversion() = 0;
   virtual void undistortPointCloud(
     bool use_imu, bool can_update_azimuth_and_distance,
@@ -87,12 +87,10 @@ protected:
   // Equation of converion between sensor azimuth coordinates and cartesian coordinates:
   // sensor azimuth coordinates = a + b * cartesian coordinates;
   // a is restricted to be a multiple of 90, and b is restricted to be 1 or -1.
-  bool first_time_{true};
-  bool success_{true};
-  float threshold_a_{0.087f};  // 5 / 180 * M_PI
-  float threshold_b_{0.1f};
   float a_{0};
   float b_{1};
+  float threshold_a_{0.087f};  // 5 / 180 * M_PI
+  float threshold_b_{0.1f};
 
   void getIMUTransformation(const std::string & base_frame, const std::string & imu_frame);
   void enqueueIMU(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
@@ -130,7 +128,7 @@ public:
   void undistortPointCloud(
     bool use_imu, bool update_azimuth_and_distance,
     sensor_msgs::msg::PointCloud2 & pointcloud) override;
-  bool AzimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud) override;
+  bool azimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud) override;
   std::tuple<float, float> getConversion() override;
 
   bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);

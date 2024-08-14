@@ -96,7 +96,7 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointclou
 
   if (update_azimuth_and_distance_ && !can_update_azimuth_and_distance_) {
     can_update_azimuth_and_distance_ =
-      distortion_corrector_->AzimuthConversionExists(*pointcloud_msg);
+      distortion_corrector_->azimuthConversionExists(*pointcloud_msg);
     if (can_update_azimuth_and_distance_) {
       RCLCPP_INFO(
         this->get_logger(),

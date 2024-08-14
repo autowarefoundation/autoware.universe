@@ -978,7 +978,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdateAzimuthAndDistan
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
   auto can_update_azimuth_and_distance =
-    distortion_corrector_2d_->AzimuthConversionExists(pointcloud_base_link);
+    distortion_corrector_2d_->azimuthConversionExists(pointcloud_base_link);
 
   distortion_corrector_2d_->undistortPointCloud(
     true, can_update_azimuth_and_distance, pointcloud_base_link);
@@ -1100,7 +1100,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
   // set the azimuth coordinate system
   auto can_update_azimuth_and_distance =
-    distortion_corrector_2d_->AzimuthConversionExists(pointcloud);
+    distortion_corrector_2d_->azimuthConversionExists(pointcloud);
   distortion_corrector_2d_->undistortPointCloud(true, can_update_azimuth_and_distance, pointcloud);
 
   sensor_msgs::msg::PointCloud2 original_pointcloud =
@@ -1165,7 +1165,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
   // set the azimuth coordinate system
   auto can_update_azimuth_and_distance =
-    distortion_corrector_2d_->AzimuthConversionExists(pointcloud);
+    distortion_corrector_2d_->azimuthConversionExists(pointcloud);
   distortion_corrector_2d_->undistortPointCloud(true, can_update_azimuth_and_distance, pointcloud);
 
   sensor_msgs::msg::PointCloud2 original_pointcloud =
@@ -1206,7 +1206,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   }
 }
 
-TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsEmptyPointlcoud)
+TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsEmptyPointcloud)
 {
   // test empty pointcloud
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1217,10 +1217,10 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsEmptyPointlcoud)
   }
   sensor_msgs::msg::PointCloud2 empty_pointcloud =
     generatePointCloudMsg(false, false, "", timestamp, true, {}, {});
-  EXPECT_FALSE(distortion_corrector_2d_->AzimuthConversionExists(empty_pointcloud));
+  EXPECT_FALSE(distortion_corrector_2d_->azimuthConversionExists(empty_pointcloud));
 }
 
-TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsVelodynePointlcoud)
+TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsVelodynePointcloud)
 {
   // test velodyne pointcloud (x-axis: 0 degree, y-axis: 270 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1238,14 +1238,14 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsVelodynePointlcoud)
     0.0f, autoware::universe_utils::pi / 4, autoware::universe_utils::pi / 2};
   sensor_msgs::msg::PointCloud2 velodyne_pointcloud =
     generatePointCloudMsg(true, true, "", timestamp, false, velodyne_points, velodyne_azimuths);
-  EXPECT_TRUE(distortion_corrector_2d_->AzimuthConversionExists(velodyne_pointcloud));
+  EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(velodyne_pointcloud));
 
   auto [a, b] = distortion_corrector_2d_->getConversion();
   EXPECT_EQ(b, -1);
   EXPECT_NEAR(a, autoware::universe_utils::pi * 2, standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsHesaiPointlcoud)
+TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsHesaiPointcloud)
 {
   // test hesai pointcloud (x-axis: 90 degree, y-axis: 0 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1264,14 +1264,14 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsHesaiPointlcoud)
     autoware::universe_utils::pi};
   sensor_msgs::msg::PointCloud2 hesai_pointcloud =
     generatePointCloudMsg(true, true, "", timestamp, false, hesai_points, hesai_azimuths);
-  EXPECT_TRUE(distortion_corrector_2d_->AzimuthConversionExists(hesai_pointcloud));
+  EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(hesai_pointcloud));
 
   auto [a, b] = distortion_corrector_2d_->getConversion();
   EXPECT_EQ(b, -1);
   EXPECT_NEAR(a, autoware::universe_utils::pi / 2, standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsCartesianPointlcoud)
+TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsCartesianPointcloud)
 {
   // test pointcloud that use cartesian coordinate for azimuth (x-axis: 0 degree, y-axis: 90 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1289,14 +1289,14 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsCartesianPointlcoud)
     0, autoware::universe_utils::pi / 4, autoware::universe_utils::pi / 2};
   sensor_msgs::msg::PointCloud2 cartesian_pointcloud =
     generatePointCloudMsg(true, true, "", timestamp, false, cartesian_points, cartesian_azimuths);
-  EXPECT_TRUE(distortion_corrector_2d_->AzimuthConversionExists(cartesian_pointcloud));
+  EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(cartesian_pointcloud));
 
   auto [a, b] = distortion_corrector_2d_->getConversion();
   EXPECT_EQ(b, 1);
   EXPECT_NEAR(a, 0, standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsRandomPointlcoud1)
+TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsRandomPointcloud1)
 {
   // test pointcloud that use coordinate (x-axis: 270 degree, y-axis: 0 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1314,7 +1314,7 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsRandomPointlcoud1)
     0, autoware::universe_utils::pi * 3 / 2, autoware::universe_utils::pi * 7 / 4};
   sensor_msgs::msg::PointCloud2 pointcloud =
     generatePointCloudMsg(true, true, "", timestamp, false, points, azimuths);
-  EXPECT_TRUE(distortion_corrector_2d_->AzimuthConversionExists(pointcloud));
+  EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(pointcloud));
 
   auto [a, b] = distortion_corrector_2d_->getConversion();
   EXPECT_EQ(b, 1);

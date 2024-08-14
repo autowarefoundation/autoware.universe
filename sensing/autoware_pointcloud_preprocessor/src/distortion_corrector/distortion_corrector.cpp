@@ -189,7 +189,7 @@ bool DistortionCorrector<T>::isInputValid(sensor_msgs::msg::PointCloud2 & pointc
 }
 
 template <class T>
-bool DistortionCorrector<T>::AzimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud)
+bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud)
 {
   if (!isInputValid(pointcloud)) return false;
 
@@ -208,7 +208,7 @@ bool DistortionCorrector<T>::AzimuthConversionExists(sensor_msgs::msg::PointClou
   } else {
     RCLCPP_WARN(
       node_->get_logger(),
-      "Current point cloud only has a single point cloud. Could not calculate the formula.");
+      "Current point cloud only has a single point. Could not calculate the formula.");
     return false;
   }
 
