@@ -123,19 +123,19 @@ TrajectoryPoint calcInterpolatedPoint(
       curr_pt.longitudinal_velocity_mps, next_pt.longitudinal_velocity_mps, clamped_ratio);
     interpolated_point.lateral_velocity_mps = autoware::interpolation::lerp(
       curr_pt.lateral_velocity_mps, next_pt.lateral_velocity_mps, clamped_ratio);
-    interpolated_point.acceleration_mps2 =
-      autoware::interpolation::lerp(curr_pt.acceleration_mps2, next_pt.acceleration_mps2, clamped_ratio);
+    interpolated_point.acceleration_mps2 = autoware::interpolation::lerp(
+      curr_pt.acceleration_mps2, next_pt.acceleration_mps2, clamped_ratio);
   }
 
   // heading rate interpolation
-  interpolated_point.heading_rate_rps =
-    autoware::interpolation::lerp(curr_pt.heading_rate_rps, next_pt.heading_rate_rps, clamped_ratio);
+  interpolated_point.heading_rate_rps = autoware::interpolation::lerp(
+    curr_pt.heading_rate_rps, next_pt.heading_rate_rps, clamped_ratio);
 
   // wheel interpolation
   interpolated_point.front_wheel_angle_rad = autoware::interpolation::lerp(
     curr_pt.front_wheel_angle_rad, next_pt.front_wheel_angle_rad, clamped_ratio);
-  interpolated_point.rear_wheel_angle_rad =
-    autoware::interpolation::lerp(curr_pt.rear_wheel_angle_rad, next_pt.rear_wheel_angle_rad, clamped_ratio);
+  interpolated_point.rear_wheel_angle_rad = autoware::interpolation::lerp(
+    curr_pt.rear_wheel_angle_rad, next_pt.rear_wheel_angle_rad, clamped_ratio);
 
   // time interpolation
   const double interpolated_time = autoware::interpolation::lerp(

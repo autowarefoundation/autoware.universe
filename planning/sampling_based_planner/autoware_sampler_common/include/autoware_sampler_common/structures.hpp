@@ -284,8 +284,10 @@ struct Trajectory : Path
     t.curvatures = autoware::interpolation::lerp(times, curvatures, t.times);
     t.jerks = autoware::interpolation::lerp(times, jerks, t.times);
     t.yaws = autoware::interpolation::lerp(times, yaws, t.times);
-    t.longitudinal_velocities = autoware::interpolation::lerp(times, longitudinal_velocities, t.times);
-    t.longitudinal_accelerations = autoware::interpolation::lerp(times, longitudinal_accelerations, t.times);
+    t.longitudinal_velocities =
+      autoware::interpolation::lerp(times, longitudinal_velocities, t.times);
+    t.longitudinal_accelerations =
+      autoware::interpolation::lerp(times, longitudinal_accelerations, t.times);
     t.lateral_velocities = autoware::interpolation::lerp(times, lateral_velocities, t.times);
     t.lateral_accelerations = autoware::interpolation::lerp(times, lateral_accelerations, t.times);
     t.constraint_results = constraint_results;
@@ -320,8 +322,10 @@ struct Trajectory : Path
     t.curvatures = autoware::interpolation::lerp(times, curvatures, t.times);
     t.jerks = autoware::interpolation::lerp(times, jerks, t.times);
     t.yaws = autoware::interpolation::lerp(times, yaws, t.times);
-    t.longitudinal_velocities = autoware::interpolation::lerp(times, longitudinal_velocities, t.times);
-    t.longitudinal_accelerations = autoware::interpolation::lerp(times, longitudinal_accelerations, t.times);
+    t.longitudinal_velocities =
+      autoware::interpolation::lerp(times, longitudinal_velocities, t.times);
+    t.longitudinal_accelerations =
+      autoware::interpolation::lerp(times, longitudinal_accelerations, t.times);
     t.lateral_velocities = autoware::interpolation::lerp(times, lateral_velocities, t.times);
     t.lateral_accelerations = autoware::interpolation::lerp(times, lateral_accelerations, t.times);
     t.constraint_results = constraint_results;

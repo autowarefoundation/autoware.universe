@@ -46,7 +46,8 @@ void SteerMap::getSteer(const double steer_rate, const double steer, double & ou
   const double clamped_steer = CSVLoader::clampValue(steer, steer_index_, "steer: steer");
   std::vector<double> steer_rate_interp = {};
   for (const auto & steer_rate_vec : steer_map_) {
-    steer_rate_interp.push_back(autoware::interpolation::lerp(steer_index_, steer_rate_vec, clamped_steer));
+    steer_rate_interp.push_back(
+      autoware::interpolation::lerp(steer_index_, steer_rate_vec, clamped_steer));
   }
 
   const double clamped_steer_rate =

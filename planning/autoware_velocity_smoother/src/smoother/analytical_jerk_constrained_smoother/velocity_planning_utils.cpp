@@ -234,8 +234,10 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   }
 
   if (
-    !autoware::interpolation::isIncreasing(xs) || !autoware::interpolation::isIncreasing(distances) ||
-    !autoware::interpolation::isNotDecreasing(xs) || !autoware::interpolation::isNotDecreasing(distances)) {
+    !autoware::interpolation::isIncreasing(xs) ||
+    !autoware::interpolation::isIncreasing(distances) ||
+    !autoware::interpolation::isNotDecreasing(xs) ||
+    !autoware::interpolation::isNotDecreasing(distances)) {
     return false;
   }
 

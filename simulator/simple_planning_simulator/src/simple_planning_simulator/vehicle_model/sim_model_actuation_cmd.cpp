@@ -47,7 +47,8 @@ double ActuationMap::getControlCommand(const double actuation, const double stat
   }
 
   const double clamped_actuation = CSVLoader::clampValue(actuation, actuation_index_);
-  return autoware::interpolation::lerp(actuation_index_, interpolated_control_vec, clamped_actuation);
+  return autoware::interpolation::lerp(
+    actuation_index_, interpolated_control_vec, clamped_actuation);
 }
 
 std::optional<double> AccelMap::getThrottle(const double acc, double vel) const

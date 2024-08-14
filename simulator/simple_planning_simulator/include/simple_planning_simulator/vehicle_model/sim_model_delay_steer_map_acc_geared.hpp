@@ -57,7 +57,8 @@ public:
 
     // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
     for (const auto & acc_vec : acceleration_map_) {
-      interpolated_acc_vec.push_back(autoware::interpolation::lerp(vel_index_, acc_vec, clamped_vel));
+      interpolated_acc_vec.push_back(
+        autoware::interpolation::lerp(vel_index_, acc_vec, clamped_vel));
     }
     // calculate throttle
     // When the desired acceleration is smaller than the throttle area, return min acc

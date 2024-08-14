@@ -51,7 +51,8 @@ bool BrakeMap::getBrake(const double acc, const double vel, double & brake)
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
   for (std::vector<double> accelerations : brake_map_) {
-    interpolated_acc_vec.push_back(autoware::interpolation::lerp(vel_index_, accelerations, clamped_vel));
+    interpolated_acc_vec.push_back(
+      autoware::interpolation::lerp(vel_index_, accelerations, clamped_vel));
   }
 
   // calculate brake

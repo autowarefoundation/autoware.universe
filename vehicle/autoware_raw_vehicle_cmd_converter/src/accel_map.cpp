@@ -50,7 +50,8 @@ bool AccelMap::getThrottle(const double acc, double vel, double & throttle) cons
   const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "throttle: vel");
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
   for (std::vector<double> accelerations : accel_map_) {
-    interpolated_acc_vec.push_back(autoware::interpolation::lerp(vel_index_, accelerations, clamped_vel));
+    interpolated_acc_vec.push_back(
+      autoware::interpolation::lerp(vel_index_, accelerations, clamped_vel));
   }
   // calculate throttle
   // When the desired acceleration is smaller than the throttle area, return false => brake sequence

@@ -287,7 +287,8 @@ tier4_planning_msgs::msg::PathWithLaneId resamplePath(
     autoware::interpolation::calc_closest_segment_indices(input_arclength, resampling_arclength);
 
   const auto zoh = [&](const auto & input) {
-    return autoware::interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =
@@ -471,7 +472,8 @@ autoware_planning_msgs::msg::Path resamplePath(
       autoware::interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
   }
   const auto zoh = [&](const auto & input) {
-    return autoware::interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =
@@ -645,7 +647,8 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
       autoware::interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
   }
   const auto zoh = [&](const auto & input) {
-    return autoware::interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =
