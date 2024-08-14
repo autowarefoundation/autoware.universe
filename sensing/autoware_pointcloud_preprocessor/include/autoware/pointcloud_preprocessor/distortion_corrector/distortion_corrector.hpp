@@ -84,7 +84,7 @@ protected:
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
-  // Equation of converion between sensor azimuth coordinates and cartesian coordinates:
+  // Equation for the conversion between sensor azimuth coordinates and Cartesian coordinates:
   // sensor azimuth coordinates = a + b * cartesian coordinates;
   // a is restricted to be a multiple of 90, and b is restricted to be 1 or -1.
   float a_{0};

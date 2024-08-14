@@ -72,6 +72,6 @@ TEST(trigonometry, opencv_fastAtan2)
     // 0.3 degree accuracy
     ASSERT_NEAR(fast_atan, std_atan, 6e-3)
       << "Test failed for input (" << y << ", " << x << "): "
-      << "fastatan2 = " << fast_atan << ", std::atan2 = " << std_atan;
+      << "fast atan2 = " << fast_atan << ", std::atan2 = " << std_atan;
   }
 }
