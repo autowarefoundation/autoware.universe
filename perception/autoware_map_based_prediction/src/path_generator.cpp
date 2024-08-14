@@ -22,6 +22,8 @@
 
 namespace autoware::map_based_prediction
 {
+using autoware::universe_utils::ScopedTimeTrack;
+
 PathGenerator::PathGenerator(
   const double sampling_time_interval, const double min_crosswalk_user_velocity)
 : sampling_time_interval_(sampling_time_interval),
@@ -38,7 +40,8 @@ void PathGenerator::setTimeKeeper(
 PredictedPath PathGenerator::generatePathForNonVehicleObject(
   const TrackedObject & object, const double duration) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   return generateStraightPath(object, duration);
 }
@@ -46,7 +49,8 @@ PredictedPath PathGenerator::generatePathForNonVehicleObject(
 PredictedPath PathGenerator::generatePathToTargetPoint(
   const TrackedObject & object, const Eigen::Vector2d & point) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   PredictedPath predicted_path{};
   const double ep = 0.001;
@@ -87,7 +91,8 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
   const TrackedObject & object, const CrosswalkEdgePoints & reachable_crosswalk,
   const double duration) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   PredictedPath predicted_path{};
   const double ep = 0.001;
@@ -147,7 +152,8 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
 PredictedPath PathGenerator::generatePathForLowSpeedVehicle(
   const TrackedObject & object, const double duration) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   PredictedPath path;
   path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
@@ -162,7 +168,8 @@ PredictedPath PathGenerator::generatePathForLowSpeedVehicle(
 PredictedPath PathGenerator::generatePathForOffLaneVehicle(
   const TrackedObject & object, const double duration) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   return generateStraightPath(object, duration);
 }
@@ -171,7 +178,8 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
   const TrackedObject & object, const PosePath & ref_paths, const double duration,
   const double lateral_duration, const double speed_limit) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   if (ref_paths.size() < 2) {
     return generateStraightPath(object, duration);
@@ -183,7 +191,8 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
 PredictedPath PathGenerator::generateStraightPath(
   const TrackedObject & object, const double longitudinal_duration) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   const auto & object_pose = object.kinematics.pose_with_covariance.pose;
   const auto & object_twist = object.kinematics.twist_with_covariance.twist;
@@ -206,7 +215,8 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const TrackedObject & object, const PosePath & ref_path, const double duration,
   const double lateral_duration, const double speed_limit) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   // Get current Frenet Point
   const double ref_path_len = autoware::motion_utils::calcArcLength(ref_path);
@@ -241,7 +251,8 @@ FrenetPath PathGenerator::generateFrenetPath(
   const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length,
   const double duration, const double lateral_duration) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   FrenetPath path;
 
@@ -283,7 +294,8 @@ FrenetPath PathGenerator::generateFrenetPath(
 Eigen::Vector3d PathGenerator::calcLatCoefficients(
   const FrenetPoint & current_point, const FrenetPoint & target_point, const double T) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   // Lateral Path Calculation
   // Quintic polynomial for d
@@ -311,7 +323,8 @@ Eigen::Vector3d PathGenerator::calcLatCoefficients(
 Eigen::Vector2d PathGenerator::calcLonCoefficients(
   const FrenetPoint & current_point, const FrenetPoint & target_point, const double T) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   // Longitudinal Path Calculation
   // Quadric polynomial
@@ -331,7 +344,8 @@ Eigen::Vector2d PathGenerator::calcLonCoefficients(
 PosePath PathGenerator::interpolateReferencePath(
   const PosePath & base_path, const FrenetPath & frenet_predicted_path) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   PosePath interpolated_path;
   const size_t interpolate_num = frenet_predicted_path.size();
@@ -391,7 +405,8 @@ PredictedPath PathGenerator::convertToPredictedPath(
   const TrackedObject & object, const FrenetPath & frenet_predicted_path,
   const PosePath & ref_path) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   PredictedPath predicted_path;
   predicted_path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
@@ -424,7 +439,8 @@ FrenetPoint PathGenerator::getFrenetPoint(
   const TrackedObject & object, const PosePath & ref_path, const double duration,
   const double speed_limit) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_ptr_);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_ptr_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_ptr_);
 
   FrenetPoint frenet_point;
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
