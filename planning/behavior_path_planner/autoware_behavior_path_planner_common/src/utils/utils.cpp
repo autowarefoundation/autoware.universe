@@ -559,8 +559,8 @@ bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
   const BehaviorPathPlannerParameters & common_param, const double outer_margin)
 {
-  const auto lane_length = lanelet::utils::getLaneletLength2d(current_lanes);
-  const auto lane_poly = lanelet::utils::getPolygonFromArcLength(current_lanes, 0, lane_length);
+  const auto combined_lane = lanelet::utils::combineLaneletsShape(current_lanes);
+  const auto lane_poly = combined_lane.polygon2d().basicPolygon();
   const auto base_link2front = common_param.base_link2front;
   const auto base_link2rear = common_param.base_link2rear;
   const auto vehicle_width = common_param.vehicle_width;
@@ -571,7 +571,7 @@ bool isEgoWithinOriginalLane(
   for (const auto & p : vehicle_poly.outer()) {
     // When the point is in the polygon, the distance is 0. When it is out of the polygon, return a
     // positive value.
-    const auto dist = boost::geometry::distance(p, lanelet::utils::to2D(lane_poly).basicPolygon());
+    const auto dist = boost::geometry::distance(p, lane_poly);
     if (dist > std::max(outer_margin, 0.0)) {
       return false;  // out of polygon
     }
@@ -646,54 +646,6 @@ double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLan
   const auto & arc_coordinates = lanelet::utils::getArcCoordinates(lanelets, current_pose);
   const double lanelet_length = lanelet::utils::getLaneletLength3d(lanelets);
   return lanelet_length - arc_coordinates.length;
-}
-
-double getDistanceToLastFitWidth(
-  const Pose & current_pose, const lanelet::ConstLanelets & lanelets, const double width_threshold)
-{
-  if (lanelets.empty()) return 0.0;
-  const double distance_to_end_of_lane = getDistanceToEndOfLane(current_pose, lanelets);
-  const double distance_from_last_fit_width_to_end =
-    getDistanceFromLastFitWidthToEnd(lanelets.back(), width_threshold);
-  return distance_to_end_of_lane - distance_from_last_fit_width_to_end;
-}
-
-double getDistanceFromLastFitWidthToEnd(
-  const lanelet::ConstLanelet & lane, const double width_threshold)
-{
-  const auto center_line = lane.centerline3d().basicLineString();
-  double distance = 0.0;
-
-  if (center_line.size() <= 1) return distance;
-
-  auto checkWidth = [&lane, &width_threshold](const Point & point) {
-    const double left_width = std::abs(getSignedDistanceFromLaneBoundary(lane, point, true));
-    const double right_width = std::abs(getSignedDistanceFromLaneBoundary(lane, point, false));
-    return (left_width > 0.5 * width_threshold && right_width > 0.5 * width_threshold);
-  };
-
-  auto it = center_line.rbegin() + 1;
-  Point point, next_point;
-  for (; it < center_line.rend(); ++it) {
-    point = lanelet::utils::conversion::toGeomMsgPt(*it);
-    next_point = lanelet::utils::conversion::toGeomMsgPt(*std::prev(it));
-    distance += autoware::universe_utils::calcDistance2d(point, next_point);
-    if (checkWidth(point)) break;
-  }
-
-  constexpr double step_length{1.0};
-  const double seg_length = autoware::universe_utils::calcDistance2d(point, next_point);
-  if (seg_length <= step_length) return distance;
-
-  double length = step_length;
-  for (; length < seg_length; length += step_length) {
-    const auto mid_point =
-      universe_utils::calcInterpolatedPoint(point, next_point, length / seg_length);
-    if (!checkWidth(mid_point)) break;
-    distance -= step_length;
-  }
-
-  return distance;
 }
 
 double getDistanceToNextIntersection(

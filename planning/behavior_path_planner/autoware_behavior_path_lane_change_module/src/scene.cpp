@@ -397,12 +397,10 @@ void NormalLaneChange::insertStopPoint(
   const auto target_objects = filterObjects();
   double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
 
-  if (utils::isEgoWithinOriginalLane(
-        lanelets, path.points.front().point.pose, planner_data_->parameters)) {
+  if (utils::isEgoWithinOriginalLane(lanelets, getEgoPose(), planner_data_->parameters)) {
     const double distance_to_last_fit_width =
-      utils::getDistanceToLastFitWidth(
-        path.points.front().point.pose, lanelets, planner_data_->parameters.vehicle_width) -
-      planner_data_->parameters.vehicle_length;
+      utils::lane_change::calculation::calc_dist_to_last_fit_width(
+        lanelets, path.points.front().point.pose, planner_data_->parameters);
     stopping_distance = std::min(stopping_distance, distance_to_last_fit_width);
   }
 
