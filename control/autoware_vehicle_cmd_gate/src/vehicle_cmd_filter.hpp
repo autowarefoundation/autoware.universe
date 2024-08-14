@@ -75,7 +75,7 @@ public:
   static IsFilterActivated checkIsActivated(
     const Control & c1, const Control & c2, const double tol = 1.0e-3);
 
-  Control getPrevCmd() { return prev_cmd_; }
+  Control getPrevCmd() const { return prev_cmd_; }
 
 private:
   VehicleCmdFilterParam param_;
@@ -87,7 +87,7 @@ private:
   double calcLatAcc(const Control & cmd) const;
   double calcLatAcc(const Control & cmd, const double v) const;
   double calcSteerFromLatacc(const double v, const double latacc) const;
-  double limitDiff(const double curr, const double prev, const double diff_lim) const;
+  static double limitDiff(const double curr, const double prev, const double diff_lim);
 
   double interpolateFromSpeed(const LimitArray & limits) const;
   double getLonAccLim() const;
