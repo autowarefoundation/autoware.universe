@@ -37,6 +37,14 @@ namespace autoware::motion_velocity_planner
 class OutOfLaneModule : public PluginModuleInterface
 {
 public:
+  OutOfLaneModule()
+  : module_name_(""),
+    prev_inserted_point_(std::nullopt),
+    clock_(nullptr),
+    prev_inserted_point_time_(0, 0, RCL_ROS_TIME)
+  {
+  }
+
   void init(rclcpp::Node & node, const std::string & module_name) override;
   void update_parameters(const std::vector<rclcpp::Parameter> & parameters) override;
   VelocityPlanningResult plan(
