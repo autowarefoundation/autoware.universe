@@ -23,6 +23,7 @@
   <depend>nlohmann-json-dev</depend>
   <depend>pybind11_vendor</depend>
   <depend>rosbag2_cpp</depend>
+  <depend>rosbag2_storage_mcap</depend>
   <depend>std_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
