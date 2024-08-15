@@ -361,7 +361,7 @@ template <typename T>
 T VehicleCmdGate::getContinuousTopic(
   const std::shared_ptr<T> & prev_topic, const T & current_topic, const std::string & topic_name)
 {
-  if ((rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() > 0.0) {
+  if ((rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() >= 0.0) {
     return current_topic;
   } else {
     RCLCPP_INFO(
