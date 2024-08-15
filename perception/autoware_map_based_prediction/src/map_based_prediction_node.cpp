@@ -411,8 +411,8 @@ bool withinRoadLanelet(
 
 boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
   const TrackedObject & object, const lanelet::ConstLanelets & surrounding_lanelets,
-  const lanelet::ConstLanelets & external_surrounding_crosswalks,
-  const CrosswalkEdgePoints & edge_points, const double time_horizon, const double min_object_vel)
+  const lanelet::ConstLanelets & surrounding_crosswalks, const CrosswalkEdgePoints & edge_points,
+  const double time_horizon, const double min_object_vel)
 {
   using Point = boost::geometry::model::d2::point_xy<double>;
 
@@ -439,10 +439,10 @@ boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
   const auto is_stop_object = estimated_velocity < stop_velocity_th;
   const auto velocity = std::max(min_object_vel, estimated_velocity);
 
-  const auto isAcrossAnyRoad = [&surrounding_lanelets, &external_surrounding_crosswalks](
+  const auto isAcrossAnyRoad = [&surrounding_lanelets, &surrounding_crosswalks](
                                  const Point & p_src, const Point & p_dst) {
-    const auto withinAnyCrosswalk = [&external_surrounding_crosswalks](const Point & p) {
-      for (const auto & crosswalk : external_surrounding_crosswalks) {
+    const auto withinAnyCrosswalk = [&surrounding_crosswalks](const Point & p) {
+      for (const auto & crosswalk : surrounding_crosswalks) {
         if (boost::geometry::within(p, crosswalk.polygon2d().basicPolygon())) {
           return true;
         }
@@ -662,7 +662,6 @@ ObjectClassification::_label_type changeLabelForPrediction(
     }
 
     case ObjectClassification::PEDESTRIAN: {
-      const bool within_road_lanelet = withinRoadLanelet(object, lanelet_map_ptr_, true);
       const float max_velocity_for_human_mps =
         autoware::universe_utils::kmph2mps(25.0);  // Max human being motion speed is 25km/h
       const double abs_speed = std::hypot(
@@ -670,7 +669,6 @@ ObjectClassification::_label_type changeLabelForPrediction(
         object.kinematics.twist_with_covariance.twist.linear.y);
       const bool high_speed_object = abs_speed > max_velocity_for_human_mps;
       // fast, human-like object: like segway
-      if (within_road_lanelet && high_speed_object) return label;  // currently do nothing
       // return ObjectClassification::MOTORCYCLE;
       if (high_speed_object) return label;  // currently do nothing
       // fast human outside road lanelet will move like unknown object
@@ -924,6 +922,7 @@ void MapBasedPredictionNode::mapCallback(const LaneletMapBin::ConstSharedPtr msg
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
+  lru_cache_of_convert_path_type_.clear();  // clear cache
   RCLCPP_DEBUG(get_logger(), "[Map Based Prediction]: Map is loaded");
 
   const auto all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
@@ -931,6 +930,16 @@ void MapBasedPredictionNode::mapCallback(const LaneletMapBin::ConstSharedPtr msg
   const auto walkways = lanelet::utils::query::walkwayLanelets(all_lanelets);
   crosswalks_.insert(crosswalks_.end(), crosswalks.begin(), crosswalks.end());
   crosswalks_.insert(crosswalks_.end(), walkways.begin(), walkways.end());
+
+  lanelet::LineStrings3d fences;
+  for (const auto & linestring : lanelet_map_ptr_->lineStringLayer) {
+    if (const std::string type = linestring.attributeOr(lanelet::AttributeName::Type, "none");
+        type == "fence") {
+      fences.push_back(lanelet::LineString3d(
+        std::const_pointer_cast<lanelet::LineStringData>(linestring.constData())));
+    }
+  }
+  fence_layer_ = lanelet::utils::createMap(fences);
 }
 
 void MapBasedPredictionNode::trafficSignalsCallback(
@@ -960,23 +969,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // Guard for map pointer and frame transformation
   if (!lanelet_map_ptr_) {
-    return;
-  }
-
-  auto world2map_transform = transform_listener_.getTransform(
-    "map",                        // target
-    in_objects->header.frame_id,  // src
-    in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
-  auto map2world_transform = transform_listener_.getTransform(
-    in_objects->header.frame_id,  // target
-    "map",                        // src
-    in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
-  auto debug_map2lidar_transform = transform_listener_.getTransform(
-    "base_link",  // target
-    "map",        // src
-    rclcpp::Time(), rclcpp::Duration::from_seconds(0.1));
-
-  if (!world2map_transform || !map2world_transform || !debug_map2lidar_transform) {
     return;
   }
 
@@ -1018,12 +1010,24 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   }
   std::unordered_set<std::string> predicted_crosswalk_users_ids;
 
+  // get world to map transform
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr world2map_transform;
+
+  bool is_object_not_in_map_frame = in_objects->header.frame_id != "map";
+  if (is_object_not_in_map_frame) {
+    world2map_transform = transform_listener_.getTransform(
+      "map",                        // target
+      in_objects->header.frame_id,  // src
+      in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
+    if (!world2map_transform) return;
+  }
+
   for (const auto & object : in_objects->objects) {
     std::string object_id = autoware::universe_utils::toHexString(object.object_id);
     TrackedObject transformed_object = object;
 
     // transform object frame if it's based on map frame
-    if (in_objects->header.frame_id != "map") {
+    if (is_object_not_in_map_frame) {
       geometry_msgs::msg::PoseStamped pose_in_map;
       geometry_msgs::msg::PoseStamped pose_orig;
       pose_orig.pose = object.kinematics.pose_with_covariance.pose;
@@ -1316,10 +1320,14 @@ std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
 bool MapBasedPredictionNode::doesPathCrossAnyFence(const PredictedPath & predicted_path)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, time_keeper_);
-  const lanelet::ConstLineStrings3d & all_fences =
-    lanelet::utils::query::getAllFences(lanelet_map_ptr_);
-  for (const auto & fence_line : all_fences) {
-    if (doesPathCrossFence(predicted_path, fence_line)) {
+
+  lanelet::BasicLineString2d predicted_path_ls;
+  for (const auto & p : predicted_path.path)
+    predicted_path_ls.emplace_back(p.position.x, p.position.y);
+  const auto candidates =
+    fence_layer_->lineStringLayer.search(lanelet::geometry::boundingBox2d(predicted_path_ls));
+  for (const auto & candidate : candidates) {
+    if (doesPathCrossFence(predicted_path, candidate)) {
       return true;
     }
   }
@@ -1381,7 +1389,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
     lanelet_map_ptr_->laneletLayer, lanelet::BasicPoint2d{obj_pos.x, obj_pos.y},
     prediction_time_horizon_.pedestrian * velocity);
   lanelet::ConstLanelets surrounding_lanelets;
-  lanelet::ConstLanelets external_surrounding_crosswalks;
+  lanelet::ConstLanelets surrounding_crosswalks;
   for (const auto & [dist, lanelet] : surrounding_lanelets_with_dist) {
     surrounding_lanelets.push_back(lanelet);
     const auto attr = lanelet.attribute(lanelet::AttributeName::Subtype);
@@ -1389,10 +1397,9 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
       attr.value() == lanelet::AttributeValueString::Crosswalk ||
       attr.value() == lanelet::AttributeValueString::Walkway) {
       const auto & crosswalk = lanelet;
+      surrounding_crosswalks.push_back(crosswalk);
       if (withinLanelet(object, crosswalk)) {
         crossing_crosswalk = crosswalk;
-      } else {
-        external_surrounding_crosswalks.push_back(crosswalk);
       }
     }
   }
@@ -1456,7 +1463,10 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
   // try to find the edge points for other surrounding crosswalks and generate path to the crosswalk
   // edge
-  for (const auto & crosswalk : external_surrounding_crosswalks) {
+  for (const auto & crosswalk : surrounding_crosswalks) {
+    if (crossing_crosswalk && crossing_crosswalk.get() == crosswalk) {
+      continue;
+    }
     const auto crosswalk_signal_id_opt = getTrafficSignalId(crosswalk);
     if (crosswalk_signal_id_opt.has_value() && use_crosswalk_signal_) {
       if (!calcIntentionToCrossWithTrafficSignal(
@@ -1481,7 +1491,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
     }
 
     const auto reachable_crosswalk = isReachableCrosswalkEdgePoints(
-      object, surrounding_lanelets, external_surrounding_crosswalks, edge_points,
+      object, surrounding_lanelets, surrounding_crosswalks, edge_points,
       prediction_time_horizon_.pedestrian, min_crosswalk_user_velocity_);
 
     if (!reachable_crosswalk) {
@@ -2366,9 +2376,13 @@ ManeuverProbability MapBasedPredictionNode::calculateManeuverProbability(
 }
 
 std::vector<PosePath> MapBasedPredictionNode::convertPathType(
-  const lanelet::routing::LaneletPaths & paths)
+  const lanelet::routing::LaneletPaths & paths) const
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, time_keeper_);
+
+  if (lru_cache_of_convert_path_type_.contains(paths)) {
+    return *lru_cache_of_convert_path_type_.get(paths);
+  }
 
   std::vector<PosePath> converted_paths;
   for (const auto & path : paths) {
@@ -2392,7 +2406,13 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
 
           const double lane_yaw = std::atan2(
             current_p.position.y - prev_p.position.y, current_p.position.x - prev_p.position.x);
-          current_p.orientation = autoware::universe_utils::createQuaternionFromYaw(lane_yaw);
+          const double sin_yaw_half = std::sin(lane_yaw / 2.0);
+          const double cos_yaw_half = std::cos(lane_yaw / 2.0);
+          current_p.orientation.x = 0.0;
+          current_p.orientation.y = 0.0;
+          current_p.orientation.z = sin_yaw_half;
+          current_p.orientation.w = cos_yaw_half;
+
           converted_path.push_back(current_p);
           prev_p = current_p;
         }
@@ -2423,18 +2443,31 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
 
         const double lane_yaw = std::atan2(
           current_p.position.y - prev_p.position.y, current_p.position.x - prev_p.position.x);
-        current_p.orientation = autoware::universe_utils::createQuaternionFromYaw(lane_yaw);
+        const double sin_yaw_half = std::sin(lane_yaw / 2.0);
+        const double cos_yaw_half = std::cos(lane_yaw / 2.0);
+        current_p.orientation.x = 0.0;
+        current_p.orientation.y = 0.0;
+        current_p.orientation.z = sin_yaw_half;
+        current_p.orientation.w = cos_yaw_half;
+
         converted_path.push_back(current_p);
         prev_p = current_p;
       }
     }
 
     // Resample Path
-    const auto resampled_converted_path =
-      autoware::motion_utils::resamplePoseVector(converted_path, reference_path_resolution_);
+    const bool use_akima_spline_for_xy = true;
+    const bool use_lerp_for_z = true;
+    // the options use_akima_spline_for_xy and use_lerp_for_z are set to true
+    // but the implementation of use_akima_spline_for_xy in resamplePoseVector and
+    // resamplePointVector is opposite to the options so the options are set to true to use linear
+    // interpolation for xy
+    const auto resampled_converted_path = autoware::motion_utils::resamplePoseVector(
+      converted_path, reference_path_resolution_, use_akima_spline_for_xy, use_lerp_for_z);
     converted_paths.push_back(resampled_converted_path);
   }
 
+  lru_cache_of_convert_path_type_.put(paths, converted_paths);
   return converted_paths;
 }
 
