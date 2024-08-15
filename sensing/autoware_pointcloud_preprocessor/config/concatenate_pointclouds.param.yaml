@@ -1,0 +1,7 @@
+/**:
+  ros__parameters:
+    output_frame: ""
+    input_topics: [""]
+    max_queue_size: 5
+    timeout_sec: 0.033
+    input_offset: {}
