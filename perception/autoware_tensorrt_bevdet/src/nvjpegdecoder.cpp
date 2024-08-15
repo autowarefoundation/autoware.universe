@@ -237,7 +237,8 @@ int nvjpegDecoder::decode(const std::vector<std::vector<char>> & files_data, uch
   auto decode_end = high_resolution_clock::now();
   duration<double> decode_time = decode_end - decode_start;
 
-  std::cout << "Decode total time : " << std::fixed << std::setprecision(4) << (decode_time.count() * 1000) << " ms" << std::endl;
+  std::cout << "Decode total time : " << std::fixed << std::setprecision(4)
+            << (decode_time.count() * 1000) << " ms" << std::endl;
 
   for (size_t i = 0; i < files_data.size(); i++) {
     get_img(

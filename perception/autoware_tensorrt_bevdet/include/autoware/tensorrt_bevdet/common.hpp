@@ -38,7 +38,8 @@ typedef unsigned char uchar;
 inline void GPUAssert(cudaError_t code, const char * file, int line, bool abort = true)
 {
   if (code != cudaSuccess) {
-    std::cerr << "GPUassert: " << cudaGetErrorString(code) << " " << file << " " << line << std::endl;
+    std::cerr << "GPUassert: " << cudaGetErrorString(code) << " " << file << " " << line
+              << std::endl;
     if (abort) exit(code);
   }
 };

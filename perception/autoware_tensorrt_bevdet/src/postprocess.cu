@@ -118,11 +118,11 @@ PostprocessGPU::PostprocessGPU(
 
   for (auto i = 0; i < nms_rescale_factor.size(); i++) {
     std::cout << std::fixed << std::setprecision(2) << nms_rescale_factor[i];
-        if (i == nms_rescale_factor.size() - 1) {
-            std::cout << std::endl;
-        } else {
-            std::cout << ' ';
-        }
+    if (i == nms_rescale_factor.size() - 1) {
+      std::cout << std::endl;
+    } else {
+      std::cout << ' ';
+    }
   }
 }
 PostprocessGPU::~PostprocessGPU()

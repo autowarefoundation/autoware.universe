@@ -41,7 +41,8 @@ int decode_jpeg(const std::vector<char> & buffer, uchar * output)
   };
 
   if (setjmp(jerr.setjmp_buffer)) {
-    std::cerr << "\033[31mFailed to decompress jpeg: " << jerr.pub.jpeg_message_table[jerr.pub.msg_code] << "\033[0m" << std::endl;
+    std::cerr << "\033[31mFailed to decompress jpeg: "
+              << jerr.pub.jpeg_message_table[jerr.pub.msg_code] << "\033[0m" << std::endl;
     jpeg_destroy_decompress(&cinfo);
     return EXIT_FAILURE;
   }
