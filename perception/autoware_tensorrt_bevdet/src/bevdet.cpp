@@ -38,7 +38,7 @@ BEVDet::BEVDet(
 {
   InitParams(config_file);
   if (n_img != N_img) {
-    printf("BEVDet need %d images, but given %d images!", N_img, n_img);
+    std::cerr << "BEVDet needs " << N_img << " images, but " << n_img << " images were given!" << std::endl;
   }
   auto start = high_resolution_clock::now();
 
@@ -52,13 +52,13 @@ BEVDet::BEVDet(
     ranks_bev_ptr, ranks_depth_ptr, ranks_feat_ptr, interval_starts_ptr, interval_lengths_ptr);
   auto end = high_resolution_clock::now();
   duration<float> t = end - start;
-  printf("InitVewTransformer cost time : %.4lf ms\n", t.count() * 1000);
+  std::cout << "InitVewTransformer cost time: " << t.count() * 1000 << " ms" << std::endl;
 
   if (access(engine_file.c_str(), F_OK) == 0) {
-    printf("Inference engine prepared.");
+    std::cout << "Inference engine prepared." << std::endl;
   } else {
     // onnx to engine
-    printf("Could not find %s, try making TensorRT engine from onnx", engine_file.c_str());
+    std::cerr << "Could not find " << engine_file << ", trying to make TensorRT engine from ONNX." << std::endl;
     ExportEngine(onnx_file, engine_file);
   }
   InitEngine(engine_file);  // FIXME
@@ -129,7 +129,6 @@ void BEVDet::InitCamParams(
   CHECK_CUDA(cudaMemcpy(
     trt_buffer_dev[buffer_map["cam_params"]], cam_params_host,
     trt_buffer_sizes[buffer_map["cam_params"]], cudaMemcpyHostToDevice));
-  // printf("trans : %d cam : %d\n", transform_size, cam_params_size);
 }
 
 void BEVDet::InitParams(const std::string & config_file)
@@ -376,14 +375,19 @@ void BEVDet::InitViewTransformer(
   interval_starts_ptr.reset(interval_starts_host_ptr);
   interval_lengths_ptr.reset(interval_lengths_host_ptr);
 
-  printf("valid_feat_num: %d \n", valid_feat_num);
-  printf("unique_bev_num: %d \n", unique_bev_num);
+  std::cout << "valid_feat_num: " << valid_feat_num << std::endl;
+  std::cout << "unique_bev_num: " << unique_bev_num << std::endl;
 }
 
 void print_dim(nvinfer1::Dims dim)
 {
   for (auto i = 0; i < dim.nbDims; i++) {
-    printf("%d%c", dim.d[i], i == dim.nbDims - 1 ? '\n' : ' ');
+    std::cout << dim.d[i];
+    if (i == dim.nbDims - 1) {
+      std::cout << std::endl;
+    } else {
+      std::cout << " ";
+    }
   }
 }
 
@@ -469,9 +473,9 @@ int BEVDet::DeserializeTRTEngine(
   *engine_ptr = engine;
   for (int bi = 0; bi < engine->getNbBindings(); bi++) {
     if (engine->bindingIsInput(bi) == true) {
-      printf("Binding %d (%s): Input. \n", bi, engine->getBindingName(bi));
+      std::cout << "Binding " << bi << " (" << engine->getBindingName(bi) << "): Input." << std::endl;
     } else {
-      printf("Binding %d (%s): Output. \n", bi, engine->getBindingName(bi));
+      std::cout << "Binding " << bi << " (" << engine->getBindingName(bi) << "): Output." << std::endl;
     }
   }
   return EXIT_SUCCESS;
@@ -570,7 +574,7 @@ void BEVDet::GetCurr2AdjTransform(
 int BEVDet::DoInfer(
   const camsData & cam_data, std::vector<Box> & out_detections, float & cost_time, int idx)
 {
-  printf("-------------------%d-------------------\n", idx + 1);
+  std::cout << "-------------------" << (idx + 1) << "-------------------" << std::endl;
 
   auto start = high_resolution_clock::now();
   CHECK_CUDA(cudaMemcpy(
@@ -584,7 +588,7 @@ int BEVDet::DoInfer(
     cam_data.param.scene_token, cam_data.param.ego2global_rot, cam_data.param.ego2global_trans);
 
   if (!trt_context->executeV2(trt_buffer_dev)) {
-    printf("BEVDet forward failing!\n");
+    std::cerr << "BEVDet forward failing!" << std::endl;
   }
 
   adj_frame_ptr->saveFrameBuffer(
@@ -603,11 +607,11 @@ int BEVDet::DoInfer(
   duration<double> post_t = post_end - end;
 
   cost_time = infer_t.count() * 1000;
-  printf("TRT-Engine  : %.5lf ms\n", engine_t.count() * 1000);
-  printf("Postprocess : %.5lf ms\n", post_t.count() * 1000);
-  printf("Inference   : %.5lf ms\n", infer_t.count() * 1000);
+  std::cout << "TRT-Engine  : " << engine_t.count() * 1000 << " ms" << std::endl;
+  std::cout << "Postprocess : " << post_t.count() * 1000 << " ms" << std::endl;
+  std::cout << "Inference   : " << infer_t.count() * 1000 << " ms" << std::endl;
 
-  printf("Detect %ld objects\n", out_detections.size());
+  std::cout << "Detect " << out_detections.size() << " objects" << std::endl;
 
   return EXIT_SUCCESS;
 }

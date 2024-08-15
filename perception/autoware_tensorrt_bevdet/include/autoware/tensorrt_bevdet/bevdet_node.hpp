@@ -52,37 +52,10 @@
 #include <vector>
 
 uint8_t getSemanticType(const std::string & class_name);
-void Getinfo(void);
 
 void box3DToDetectedObjects(
   const std::vector<Box> & boxes, autoware_perception_msgs::msg::DetectedObjects & objects,
   const std::vector<std::string> & class_names, float score_thre, const bool has_twist);
-
-// opencv Mat-> std::vector<char>
-int cvToArr(cv::Mat img, std::vector<char> & raw_data)
-{
-  if (img.empty()) {
-    std::cerr << "image is empty. " << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  std::vector<u_char> raw_data_;
-  cv::imencode(".jpg", img, raw_data_);
-  raw_data = std::vector<char>(raw_data_.begin(), raw_data_.end());
-  return EXIT_SUCCESS;
-}
-
-int cvImgToArr(std::vector<cv::Mat> & imgs, std::vector<std::vector<char>> & imgs_data)
-{
-  imgs_data.resize(imgs.size());
-
-  for (size_t i = 0; i < imgs_data.size(); i++) {
-    if (cvToArr(imgs[i], imgs_data[i])) {
-      return EXIT_FAILURE;
-    }
-  }
-  return EXIT_SUCCESS;
-}
 
 class TRTBEVDetNode : public rclcpp::Node
 {
