@@ -71,7 +71,7 @@ void MotionVelocityPlannerManager::update_module_parameters(
   for (auto & plugin : loaded_plugins_) plugin->update_parameters(parameters);
 }
 
-std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::makeDiagnostic(
+std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::make_diagnostic(
   const std::string & reason, const bool is_decided)
 {
   auto status = std::make_shared<DiagnosticStatus>();
