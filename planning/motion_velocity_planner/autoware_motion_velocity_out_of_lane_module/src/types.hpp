@@ -129,8 +129,6 @@ struct OutOfLaneData
 /// @brief debug data
 struct DebugData
 {
-  size_t prev_footprints = 0;
-  size_t prev_drivable_lane_polygons = 0;
   size_t prev_out_of_lane_areas = 0;
   size_t prev_ttcs = 0;
   size_t prev_objects = 0;

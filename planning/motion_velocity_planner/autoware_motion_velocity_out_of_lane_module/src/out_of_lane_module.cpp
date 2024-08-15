@@ -344,9 +344,13 @@ VelocityPlanningResult OutOfLaneModule::plan(
     RCLCPP_WARN(
       logger_, "[out_of_lane] Could not insert slowdown point because of deceleration limits");
   }
+
+  stopwatch.tic("gen_debug");
+  const auto markers =
+    out_of_lane::debug::create_debug_marker_array(ego_data, out_of_lane_data, objects, debug_data_);
+  const auto markers_us = stopwatch.toc("gen_debug");
   stopwatch.tic("pub");
-  debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(
-    ego_data, out_of_lane_data, objects, debug_data_));
+  debug_publisher_->publish(markers);
   const auto pub_markers_us = stopwatch.toc("pub");
   const auto total_time_us = stopwatch.toc();
   std::map<std::string, double> processing_times;
@@ -358,6 +362,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   processing_times["calculate_time_collisions"] = calculate_time_collisions_us / 1000;
   processing_times["calculate_times"] = calculate_times_us / 1000;
   processing_times["calculate_slowdown_point"] = calculate_slowdown_point_us / 1000;
+  processing_times["generate_markers"] = markers_us / 1000;
   processing_times["publish_markers"] = pub_markers_us / 1000;
   processing_times["Total"] = total_time_us / 1000;
   processing_diag_publisher_->publish(processing_times);

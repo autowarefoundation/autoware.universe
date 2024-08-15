@@ -24,7 +24,11 @@
 #include <visualization_msgs/msg/detail/marker__struct.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include <boost/geometry/algorithms/for_each.hpp>
+
 #include <lanelet2_core/Forward.h>
+#include <lanelet2_core/primitives/LineString.h>
+#include <lanelet2_core/primitives/Polygon.h>
 
 #include <string>
 
@@ -49,24 +53,19 @@ visualization_msgs::msg::Marker get_base_marker()
 }
 void add_polygons_markers(
   visualization_msgs::msg::MarkerArray & debug_marker_array,
-  const lanelet::BasicPolygons2d & polygons, const double z, const size_t prev_nb,
-  const std::string & ns)
+  const lanelet::BasicPolygons2d & polygons, const double z, const std::string & ns)
 {
   auto debug_marker = get_base_marker();
   debug_marker.ns = ns;
+  debug_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
   for (const auto & f : polygons) {
-    debug_marker.points.clear();
-    for (const auto & p : f)
-      debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
-    debug_marker.points.push_back(debug_marker.points.front());
-    debug_marker_array.markers.push_back(debug_marker);
-    debug_marker.id++;
-    debug_marker.points.clear();
+    boost::geometry::for_each_segment(f, [&](const auto & s) {
+      const auto & [p1, p2] = s;
+      debug_marker.points.push_back(universe_utils::createMarkerPosition(p1.x(), p1.y(), z + 0.5));
+      debug_marker.points.push_back(universe_utils::createMarkerPosition(p2.x(), p2.y(), z + 0.5));
+    });
   }
-  debug_marker.action = visualization_msgs::msg::Marker::DELETE;
-  for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id) {
-    debug_marker_array.markers.push_back(debug_marker);
-  }
+  debug_marker_array.markers.push_back(debug_marker);
 }
 
 void add_out_of_lane_markers(
@@ -149,38 +148,6 @@ void add_ttc_markers(
     debug_marker_array.markers.push_back(debug_marker);
   }
 }
-
-size_t add_objects_markers(
-  visualization_msgs::msg::MarkerArray & debug_marker_array,
-  const autoware_perception_msgs::msg::PredictedObjects & objects, const double z,
-  const size_t prev_nb)
-{
-  auto debug_marker = get_base_marker();
-  debug_marker.ns = "objects";
-  const auto add_pose_footprint_marker = [&](const auto & footprint) {
-    debug_marker.points.clear();
-    for (const auto & p : footprint.outer()) {
-      debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
-    }
-    debug_marker.points.push_back(debug_marker.points.front());
-    debug_marker_array.markers.push_back(debug_marker);
-    ++debug_marker.id;
-  };
-  for (const auto & o : objects.objects) {
-    for (const auto & path : o.kinematics.predicted_paths) {
-      for (const auto & pose : path.path) {
-        const auto object_footprint = universe_utils::toPolygon2d(pose, o.shape);
-        add_pose_footprint_marker(object_footprint);
-      }
-    }
-  }
-  const auto max_id = debug_marker.id;
-  debug_marker.action = visualization_msgs::msg::Marker::DELETE;
-  for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id) {
-    debug_marker_array.markers.push_back(debug_marker);
-  }
-  return max_id;
-}
 size_t add_stop_line_markers(
   visualization_msgs::msg::MarkerArray & debug_marker_array, const StopLinesRtree & rtree,
   const double z, const size_t prev_nb)
@@ -223,22 +190,16 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   const EgoData & ego_data, const OutOfLaneData & out_of_lane_data,
   const autoware_perception_msgs::msg::PredictedObjects & objects, DebugData & debug_data)
 {
-  constexpr auto z = 0.0;
+  const auto z = ego_data.pose.position.z;
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
-  add_polygons_markers(
-    debug_marker_array, ego_data.trajectory_footprints, z, debug_data.prev_footprints,
-    "footprints");
-  debug_data.prev_footprints = ego_data.trajectory_footprints.size();
+  add_polygons_markers(debug_marker_array, ego_data.trajectory_footprints, z, "footprints");
 
   lanelet::BasicPolygons2d drivable_lane_polygons;
   for (const auto & poly : ego_data.drivable_lane_polygons) {
     drivable_lane_polygons.push_back(poly.outer);
   }
-  add_polygons_markers(
-    debug_marker_array, drivable_lane_polygons, z, debug_data.prev_drivable_lane_polygons,
-    "ego_lane");
-  debug_data.prev_drivable_lane_polygons = drivable_lane_polygons.size();
+  add_polygons_markers(debug_marker_array, drivable_lane_polygons, z, "ego_lane");
 
   lanelet::BasicPolygons2d out_of_lane_areas;
   for (const auto & p : out_of_lane_data.outside_points) {
@@ -246,8 +207,17 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
       out_of_lane_areas.end(), p.outside_rings.begin(), p.outside_rings.end());
   }
 
-  debug_data.prev_objects =
-    add_objects_markers(debug_marker_array, objects, z, debug_data.prev_objects);
+  lanelet::BasicPolygons2d object_polygons;
+  for (const auto & o : objects.objects) {
+    for (const auto & path : o.kinematics.predicted_paths) {
+      for (const auto & pose : path.path) {
+        const auto poly = universe_utils::toPolygon2d(pose, o.shape).outer();
+        lanelet::BasicPolygon2d ll_poly(poly.begin(), poly.end());
+        object_polygons.push_back(ll_poly);
+      }
+    }
+  }
+  add_polygons_markers(debug_marker_array, object_polygons, z, "objects");
 
   add_out_of_lane_markers(debug_marker_array, out_of_lane_data, z, debug_data);
 
