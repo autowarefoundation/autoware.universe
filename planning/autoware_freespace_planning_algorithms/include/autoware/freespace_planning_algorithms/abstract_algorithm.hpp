@@ -186,6 +186,7 @@ protected:
   bool detectCollision(const IndexXYT & base_index) const;
   bool detectCollision(const geometry_msgs::msg::Pose & base_pose) const;
 
+  // cspell: ignore Toriwaki
   /// @brief Computes the euclidean distance to the nearest obstacle for each grid cell.
   /// @cite T., Saito, and J., Toriwaki "New algorithms for euclidean distance transformation of an
   /// n-dimensional digitized picture with applications," Pattern Recognition 27, 1994
