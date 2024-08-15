@@ -106,8 +106,6 @@ struct EgoData
   lanelet::BasicPolygon2d current_footprint;
   std::vector<lanelet::BasicPolygon2d> trajectory_footprints;
 
-  lanelet::ConstLanelet ego_lanelet;
-  lanelet::ConstLanelets ignored_lanelets;
   StopLinesRtree stop_lines_rtree;
 };
 
@@ -119,6 +117,7 @@ struct OutOfLanePoint
   std::optional<double> min_object_arrival_time;
   std::optional<double> max_object_arrival_time;
   std::optional<double> ttc;
+  lanelet::ConstLanelets overlapped_lanelets;
   bool to_avoid = false;
 };
 struct OutOfLaneData
@@ -131,7 +130,6 @@ struct OutOfLaneData
 struct DebugData
 {
   size_t prev_footprints = 0;
-  size_t prev_ignored_lanelets = 0;
   size_t prev_drivable_lane_polygons = 0;
   size_t prev_out_of_lane_areas = 0;
   size_t prev_ttcs = 0;

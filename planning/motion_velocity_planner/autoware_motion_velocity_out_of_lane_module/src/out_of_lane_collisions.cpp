@@ -23,8 +23,12 @@
 #include <autoware_planning_msgs/msg/detail/trajectory_point__struct.hpp>
 
 #include <boost/geometry/algorithms/detail/envelope/interface.hpp>
+#include <boost/geometry/algorithms/detail/overlaps/interface.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
 #include <boost/geometry/index/predicates.hpp>
+
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/primitives/BoundingBox.h>
 
 #include <algorithm>
 #include <iterator>
@@ -164,4 +168,5 @@ OutOfLaneData calculate_out_of_lane_areas(const EgoData & ego_data)
   out_of_lane_data.outside_areas_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
   return out_of_lane_data;
 }
+
 }  // namespace autoware::motion_velocity_planner::out_of_lane

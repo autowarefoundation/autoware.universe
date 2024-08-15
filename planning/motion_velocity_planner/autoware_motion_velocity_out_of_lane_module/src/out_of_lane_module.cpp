@@ -248,16 +248,13 @@ VelocityPlanningResult OutOfLaneModule::plan(
   ego_data.trajectory_footprints = out_of_lane::calculate_trajectory_footprints(ego_data, params_);
   const auto calculate_trajectory_footprints_us = stopwatch.toc("calculate_trajectory_footprints");
 
-  // Calculate lanelets to ignore and consider
-  // TODO(Maxime): use the out_of_lane lanelets to find which lane is avoided. When avoiding the
-  // same lane, keep the stop point with lowest arc length
   stopwatch.tic("calculate_lanelets");
-  calculate_drivable_lane_polygons(ego_data, *planner_data->route_handler);
+  out_of_lane::calculate_drivable_lane_polygons(ego_data, *planner_data->route_handler);
   const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");
 
-  // Calculate overlapping ranges
   stopwatch.tic("calculate_out_of_lane_areas");
   auto out_of_lane_data = calculate_out_of_lane_areas(ego_data);
+  out_of_lane::calculate_overlapped_lanelets(out_of_lane_data, *planner_data->route_handler);
   const auto calculate_out_of_lane_areas_us = stopwatch.toc("calculate_out_of_lane_areas");
 
   stopwatch.tic("filter_predicted_objects");
@@ -265,12 +262,12 @@ VelocityPlanningResult OutOfLaneModule::plan(
   const auto filter_predicted_objects_us = stopwatch.toc("filter_predicted_objects");
 
   stopwatch.tic("calculate_time_collisions");
-  calculate_objects_time_collisions(out_of_lane_data, objects.objects);
+  out_of_lane::calculate_objects_time_collisions(out_of_lane_data, objects.objects);
   const auto calculate_time_collisions_us = stopwatch.toc("calculate_time_collisions");
 
   stopwatch.tic("calculate_times");
   // calculate times
-  calculate_collisions_to_avoid(out_of_lane_data, ego_data.trajectory_points, params_);
+  out_of_lane::calculate_collisions_to_avoid(out_of_lane_data, ego_data.trajectory_points, params_);
   const auto calculate_times_us = stopwatch.toc("calculate_times");
 
   if (

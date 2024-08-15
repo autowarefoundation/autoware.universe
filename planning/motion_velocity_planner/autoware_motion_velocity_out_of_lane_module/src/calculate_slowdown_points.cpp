@@ -19,41 +19,49 @@
 
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
+#include <autoware_planning_msgs/msg/detail/trajectory_point__struct.hpp>
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <boost/geometry/algorithms/disjoint.hpp>
 
+#include <lanelet2_core/Forward.h>
 #include <lanelet2_core/geometry/Polygon.h>
 
+#include <algorithm>
 #include <optional>
+#include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
 
-std::optional<geometry_msgs::msg::Pose> calculate_last_in_lane_pose(
-  const EgoData & ego_data, const autoware::universe_utils::Polygon2d & footprint,
+std::optional<geometry_msgs::msg::Pose> calculate_last_avoiding_pose(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const universe_utils::Polygon2d & footprint, const lanelet::BasicPolygons2d & polygons_to_avoid,
   const double min_arc_length, const double max_arc_length, const double precision)
 {
   geometry_msgs::msg::Pose interpolated_pose{};
-  bool is_inside_ego_lane{};
+  bool is_avoiding_pose = false;
 
   auto from = min_arc_length;
   auto to = max_arc_length;
   while (to - from > precision) {
     auto l = from + 0.5 * (to - from);
-    interpolated_pose = autoware::motion_utils::calcInterpolatedPose(ego_data.trajectory_points, l);
+    interpolated_pose = motion_utils::calcInterpolatedPose(trajectory, l);
     const auto interpolated_footprint = project_to_pose(footprint, interpolated_pose);
-    is_inside_ego_lane =
-      boost::geometry::within(interpolated_footprint, ego_data.drivable_lane_polygons);
-    if (is_inside_ego_lane) {
+    is_avoiding_pose =
+      std::all_of(polygons_to_avoid.begin(), polygons_to_avoid.end(), [&](const auto & polygon) {
+        return boost::geometry::disjoint(interpolated_footprint, polygon);
+      });
+    if (is_avoiding_pose) {
       from = l;
     } else {
       to = l;
     }
   }
-  if (is_inside_ego_lane) {
+  if (is_avoiding_pose) {
     return interpolated_pose;
   }
   return std::nullopt;
@@ -68,7 +76,7 @@ std::optional<geometry_msgs::msg::Pose> calculate_pose_ahead_of_collision(
   for (auto l = first_avoid_arc_length - precision; l >= ego_data.min_stop_arc_length;
        l -= precision) {
     const auto interpolated_pose =
-      autoware::motion_utils::calcInterpolatedPose(ego_data.trajectory_points, l);
+      motion_utils::calcInterpolatedPose(ego_data.trajectory_points, l);
     const auto interpolated_footprint = project_to_pose(footprint, interpolated_pose);
     auto overlaps = false;
     for (const auto & ring : point_to_avoid.outside_rings) {
@@ -99,6 +107,10 @@ std::optional<geometry_msgs::msg::Pose> calculate_slowdown_point(
   params.extra_right_offset += params.lat_dist_buffer;
   params.extra_left_offset += params.lat_dist_buffer;
   const auto expanded_footprint = make_base_footprint(params);  // with added distance buffers
+  lanelet::BasicPolygons2d polygons_to_avoid;
+  for (const auto & ll : point_to_avoid_it->overlapped_lanelets) {
+    polygons_to_avoid.push_back(ll.polygon2d().basicPolygon());
+  }
   // points are ordered by trajectory index so the first one has the smallest index and arc length
   const auto first_outside_idx = out_of_lane_data.outside_points.front().trajectory_index;
   const auto first_outside_arc_length =
@@ -108,9 +120,9 @@ std::optional<geometry_msgs::msg::Pose> calculate_slowdown_point(
   // search for the first slowdown decision for which a stop point can be inserted
   // we first try to use the expanded footprint (distance buffers + extra footprint offsets)
   for (const auto & footprint : {expanded_footprint, base_footprint, raw_footprint}) {
-    slowdown_point = calculate_last_in_lane_pose(
-      ego_data, footprint, ego_data.min_stop_arc_length, first_outside_arc_length,
-      params.precision);
+    slowdown_point = calculate_last_avoiding_pose(
+      ego_data.trajectory_points, footprint, polygons_to_avoid, ego_data.min_stop_arc_length,
+      first_outside_arc_length, params.precision);
     if (slowdown_point) {
       break;
     }

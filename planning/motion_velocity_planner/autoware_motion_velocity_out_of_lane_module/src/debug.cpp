@@ -150,30 +150,6 @@ void add_ttc_markers(
   }
 }
 
-void add_lanelet_markers(
-  visualization_msgs::msg::MarkerArray & debug_marker_array,
-  const lanelet::ConstLanelets & lanelets, const std::string & ns,
-  const std_msgs::msg::ColorRGBA & color, const size_t prev_nb)
-{
-  auto debug_marker = get_base_marker();
-  debug_marker.ns = ns;
-  debug_marker.color = color;
-  for (const auto & ll : lanelets) {
-    debug_marker.points.clear();
-
-    // add a small z offset to draw above the lanelet map
-    for (const auto & p : ll.polygon3d())
-      debug_marker.points.push_back(
-        universe_utils::createMarkerPosition(p.x(), p.y(), p.z() + 0.1));
-    debug_marker.points.push_back(debug_marker.points.front());
-    debug_marker_array.markers.push_back(debug_marker);
-    debug_marker.id++;
-  }
-  debug_marker.action = visualization_msgs::msg::Marker::DELETE;
-  for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id)
-    debug_marker_array.markers.push_back(debug_marker);
-}
-
 size_t add_objects_markers(
   visualization_msgs::msg::MarkerArray & debug_marker_array,
   const autoware_perception_msgs::msg::PredictedObjects & objects, const double z,
@@ -254,11 +230,6 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
     debug_marker_array, ego_data.trajectory_footprints, z, debug_data.prev_footprints,
     "footprints");
   debug_data.prev_footprints = ego_data.trajectory_footprints.size();
-
-  add_lanelet_markers(
-    debug_marker_array, ego_data.ignored_lanelets, "ignored_lanelets",
-    universe_utils::createMarkerColor(0.7, 0.7, 0.2, 0.5), debug_data.prev_ignored_lanelets);
-  debug_data.prev_ignored_lanelets = ego_data.ignored_lanelets.size();
 
   lanelet::BasicPolygons2d drivable_lane_polygons;
   for (const auto & poly : ego_data.drivable_lane_polygons) {

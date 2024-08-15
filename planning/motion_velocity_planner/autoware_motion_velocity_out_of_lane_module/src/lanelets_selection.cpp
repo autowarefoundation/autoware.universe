@@ -14,6 +14,8 @@
 
 #include "lanelets_selection.hpp"
 
+#include "types.hpp"
+
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <boost/geometry/algorithms/disjoint.hpp>
@@ -116,6 +118,31 @@ void calculate_drivable_lane_polygons(
     out_of_lane::Polygons tmp;
     boost::geometry::union_(ego_data.drivable_lane_polygons, ll.polygon2d().basicPolygon(), tmp);
     ego_data.drivable_lane_polygons = tmp;
+  }
+}
+
+void calculate_overlapped_lanelets(
+  OutOfLanePoint & out_of_lane_point, const route_handler::RouteHandler & route_handler)
+{
+  out_of_lane_point.overlapped_lanelets = lanelet::ConstLanelets();
+  for (const auto & ring : out_of_lane_point.outside_rings) {
+    const auto candidates =
+      route_handler.getLaneletMapPtr()->laneletLayer.search(lanelet::geometry::boundingBox2d(ring));
+    for (const auto & ll : candidates) {
+      if (
+        !contains_lanelet(out_of_lane_point.overlapped_lanelets, ll.id()) &&
+        !boost::geometry::disjoint(ring, ll.polygon2d().basicPolygon())) {
+        out_of_lane_point.overlapped_lanelets.push_back(ll);
+      }
+    }
+  }
+}
+
+void calculate_overlapped_lanelets(
+  OutOfLaneData & out_of_lane_data, const route_handler::RouteHandler & route_handler)
+{
+  for (auto & point : out_of_lane_data.outside_points) {
+    calculate_overlapped_lanelets(point, route_handler);
   }
 }
 }  // namespace autoware::motion_velocity_planner::out_of_lane

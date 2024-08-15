@@ -68,6 +68,12 @@ lanelet::ConstLanelets calculate_ignored_lanelets(
 /// @param [in] route_handler route handler with map information
 void calculate_drivable_lane_polygons(
   EgoData & ego_data, const route_handler::RouteHandler & route_handler);
+
+/// @brief calculate the lanelets overlapped at each out of lane point
+/// @param [out] out_of_lane_data data with the out of lane points
+/// @param [in] route_handler route handler with the lanelet map
+void calculate_overlapped_lanelets(
+  OutOfLaneData & out_of_lane_data, const route_handler::RouteHandler & route_handler);
 }  // namespace autoware::motion_velocity_planner::out_of_lane
 
 #endif  // LANELETS_SELECTION_HPP_
