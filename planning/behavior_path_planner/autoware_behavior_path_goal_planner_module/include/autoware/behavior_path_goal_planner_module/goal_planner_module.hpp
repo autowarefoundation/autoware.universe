@@ -146,29 +146,10 @@ public:
     set_pull_over_path_no_lock(path);
   }
 
-  void set_pull_over_path_no_lock(const PullOverPath & path)
-  {
-    pull_over_path_ = std::make_shared<PullOverPath>(path);
-    if (path.type != PullOverPlannerType::NONE && path.type != PullOverPlannerType::FREESPACE) {
-      lane_parking_pull_over_path_ = std::make_shared<PullOverPath>(path);
-    }
-
-    last_path_update_time_ = clock_->now();
-  }
-
   void set_pull_over_path(const std::shared_ptr<PullOverPath> & path)
   {
     const std::lock_guard<std::recursive_mutex> lock(mutex_);
     set_pull_over_path_no_lock(path);
-  }
-
-  void set_pull_over_path_no_lock(const std::shared_ptr<PullOverPath> & path)
-  {
-    pull_over_path_ = path;
-    if (path->type != PullOverPlannerType::NONE && path->type != PullOverPlannerType::FREESPACE) {
-      lane_parking_pull_over_path_ = path;
-    }
-    last_path_update_time_ = clock_->now();
   }
 
   template <typename... Args>
@@ -177,15 +158,6 @@ public:
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     (..., set_no_lock(args));
   }
-
-  void set_no_lock(const GoalCandidates & arg) { goal_candidates_ = arg; }
-  void set_no_lock(const std::vector<PullOverPath> & arg) { pull_over_path_candidates_ = arg; }
-  void set_no_lock(const std::shared_ptr<PullOverPath> & arg) { set_pull_over_path_no_lock(arg); }
-  void set_no_lock(const PullOverPath & arg) { set_pull_over_path_no_lock(arg); }
-  void set_no_lock(const GoalCandidate & arg) { modified_goal_pose_ = arg; }
-  void set_no_lock(const BehaviorModuleOutput & arg) { last_previous_module_output_ = arg; }
-  void set_no_lock(const PreviousPullOverData & arg) { prev_data_ = arg; }
-  void set_no_lock(const CollisionCheckDebugMap & arg) { collision_check_ = arg; }
 
   void clearPullOverPath()
   {
@@ -243,6 +215,34 @@ public:
   DEFINE_SETTER_GETTER_WITH_MUTEX(PredictedObjects, dynamic_target_objects)
 
 private:
+  void set_pull_over_path_no_lock(const PullOverPath & path)
+  {
+    pull_over_path_ = std::make_shared<PullOverPath>(path);
+    if (path.type != PullOverPlannerType::NONE && path.type != PullOverPlannerType::FREESPACE) {
+      lane_parking_pull_over_path_ = std::make_shared<PullOverPath>(path);
+    }
+
+    last_path_update_time_ = clock_->now();
+  }
+
+  void set_pull_over_path_no_lock(const std::shared_ptr<PullOverPath> & path)
+  {
+    pull_over_path_ = path;
+    if (path->type != PullOverPlannerType::NONE && path->type != PullOverPlannerType::FREESPACE) {
+      lane_parking_pull_over_path_ = path;
+    }
+    last_path_update_time_ = clock_->now();
+  }
+
+  void set_no_lock(const GoalCandidates & arg) { goal_candidates_ = arg; }
+  void set_no_lock(const std::vector<PullOverPath> & arg) { pull_over_path_candidates_ = arg; }
+  void set_no_lock(const std::shared_ptr<PullOverPath> & arg) { set_pull_over_path_no_lock(arg); }
+  void set_no_lock(const PullOverPath & arg) { set_pull_over_path_no_lock(arg); }
+  void set_no_lock(const GoalCandidate & arg) { modified_goal_pose_ = arg; }
+  void set_no_lock(const BehaviorModuleOutput & arg) { last_previous_module_output_ = arg; }
+  void set_no_lock(const PreviousPullOverData & arg) { prev_data_ = arg; }
+  void set_no_lock(const CollisionCheckDebugMap & arg) { collision_check_ = arg; }
+
   std::shared_ptr<PullOverPath> pull_over_path_{nullptr};
   std::shared_ptr<PullOverPath> lane_parking_pull_over_path_{nullptr};
   std::vector<PullOverPath> pull_over_path_candidates_;
