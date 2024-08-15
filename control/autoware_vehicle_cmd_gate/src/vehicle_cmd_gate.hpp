@@ -50,6 +50,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace autoware::vehicle_cmd_gate
@@ -183,6 +184,11 @@ private:
     this, "input/emergency/gear_cmd"};
   void onEmergencyCtrlCmd(Control::ConstSharedPtr msg);
 
+  // Previous Turn Indicators, Hazard Lights and Gear
+  TurnIndicatorsCommand::SharedPtr prev_turn_indicator_;
+  HazardLightsCommand::SharedPtr prev_hazard_light_;
+  GearCommand::SharedPtr prev_gear_;
+
   // Parameter
   bool use_emergency_handling_;
   bool check_external_emergency_heartbeat_;
@@ -223,7 +229,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_pub_status_;
 
   void onTimer();
-  void publishControlCommands(const Commands & input_msg);
+  void publishControlCommands(const Commands & commands);
   void publishEmergencyStopControlCommands();
   void publishStatus();
 
@@ -231,6 +237,10 @@ private:
   diagnostic_updater::Updater updater_;
 
   void checkExternalEmergencyStop(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  template <typename T>
+  T getContinuousTopic(
+    const std::shared_ptr<T> & prev_topic, const T & current_topic, const std::string & topic_name);
 
   // Algorithm
   Control prev_control_cmd_;
@@ -243,7 +253,7 @@ private:
   Control getActualStatusAsCommand();
 
   VehicleCmdFilter filter_;
-  Control filterControlCommand(const Control & msg);
+  Control filterControlCommand(const Control & in);
 
   // filtering on transition
   OperationModeState current_operation_mode_;

@@ -53,6 +53,10 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   using std::placeholders::_2;
   using std::placeholders::_3;
 
+  prev_turn_indicator_ = nullptr;
+  prev_hazard_light_ = nullptr;
+  prev_gear_ = nullptr;
+
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
 
@@ -352,6 +356,21 @@ void VehicleCmdGate::onEmergencyCtrlCmd(Control::ConstSharedPtr msg)
   }
 }
 
+// check the continuity of topics
+template <typename T>
+T VehicleCmdGate::getContinuousTopic(
+  const std::shared_ptr<T> & prev_topic, const T & current_topic, const std::string & topic_name)
+{
+  if ((rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() > 0.0) {
+    return current_topic;
+  } else {
+    RCLCPP_INFO(
+      get_logger(),
+      "The operation mode is changed, but the %s is not received yet:", topic_name.c_str());
+    return *prev_topic;
+  }
+}
+
 void VehicleCmdGate::onTimer()
 {
   // Subscriber for auto
@@ -447,6 +466,8 @@ void VehicleCmdGate::onTimer()
       if (!is_engaged_) {
         turn_indicator.command = TurnIndicatorsCommand::NO_COMMAND;
         hazard_light.command = HazardLightsCommand::NO_COMMAND;
+        turn_indicator.stamp = this->now();
+        hazard_light.stamp = this->now();
       }
     } else if (current_gate_mode_.data == GateMode::EXTERNAL) {
       turn_indicator = remote_commands_.turn_indicator;
@@ -457,10 +478,40 @@ void VehicleCmdGate::onTimer()
     }
   }
 
-  // Publish topics
-  turn_indicator_cmd_pub_->publish(turn_indicator);
-  hazard_light_cmd_pub_->publish(hazard_light);
-  gear_cmd_pub_->publish(gear);
+  // Publish Turn Indicators, Hazard Lights and Gear Command
+  if (prev_turn_indicator_ != nullptr) {
+    *prev_turn_indicator_ =
+      getContinuousTopic(prev_turn_indicator_, turn_indicator, "TurnIndicatorsCommand");
+    turn_indicator_cmd_pub_->publish(*prev_turn_indicator_);
+  } else {
+    if (msg_auto_command_turn_indicator || msg_remote_command_turn_indicator) {
+      prev_turn_indicator_ = std::make_shared<TurnIndicatorsCommand>(turn_indicator);
+    }
+    turn_indicator_cmd_pub_->publish(turn_indicator);
+  }
+
+  if (prev_hazard_light_ != nullptr) {
+    *prev_hazard_light_ =
+      getContinuousTopic(prev_hazard_light_, hazard_light, "HazardLightsCommand");
+    hazard_light_cmd_pub_->publish(*prev_hazard_light_);
+  } else {
+    if (
+      msg_auto_command_hazard_light || msg_remote_command_hazard_light ||
+      msg_emergency_command_hazard_light) {
+      prev_hazard_light_ = std::make_shared<HazardLightsCommand>(hazard_light);
+    }
+    hazard_light_cmd_pub_->publish(hazard_light);
+  }
+
+  if (prev_gear_ != nullptr) {
+    *prev_gear_ = getContinuousTopic(prev_gear_, gear, "GearCommand");
+    gear_cmd_pub_->publish(*prev_gear_);
+  } else {
+    if (msg_auto_command_gear || msg_remote_command_gear || msg_emergency_command_gear) {
+      prev_gear_ = std::make_shared<GearCommand>(gear);
+    }
+    gear_cmd_pub_->publish(gear);
+  }
 }
 
 void VehicleCmdGate::publishControlCommands(const Commands & commands)
@@ -607,7 +658,6 @@ Control VehicleCmdGate::filterControlCommand(const Control & in)
   const auto mode = current_operation_mode_;
   const auto current_status_cmd = getActualStatusAsCommand();
   const auto ego_is_stopped = vehicle_stop_checker_->isVehicleStopped(stop_check_duration_);
-  const auto input_cmd_is_stopping = in.longitudinal.acceleration < 0.0;
 
   filter_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
   filter_on_transition_.setCurrentSpeed(current_kinematics_.twist.twist.linear.x);
@@ -618,23 +668,6 @@ Control VehicleCmdGate::filterControlCommand(const Control & in)
   if (mode.is_in_transition) {
     filter_on_transition_.filterAll(dt, current_steer_, out, is_filter_activated);
   } else {
-    // When ego is stopped and the input command is not stopping,
-    // use the higher of actual vehicle longitudinal state
-    // and previous longitudinal command for the filtering
-    // this is to prevent the jerk limits being applied and causing
-    // a delay when restarting the vehicle.
-
-    if (ego_is_stopped && !input_cmd_is_stopping) {
-      auto prev_cmd = filter_.getPrevCmd();
-      prev_cmd.longitudinal.acceleration =
-        std::max(prev_cmd.longitudinal.acceleration, current_status_cmd.longitudinal.acceleration);
-      // consider reverse driving
-      prev_cmd.longitudinal.velocity = std::fabs(prev_cmd.longitudinal.velocity) >
-                                           std::fabs(current_status_cmd.longitudinal.velocity)
-                                         ? prev_cmd.longitudinal.velocity
-                                         : current_status_cmd.longitudinal.velocity;
-      filter_.setPrevCmd(prev_cmd);
-    }
     filter_.filterAll(dt, current_steer_, out, is_filter_activated);
   }
 

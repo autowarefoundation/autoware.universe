@@ -194,7 +194,7 @@ void PathShifter::applyLinearShifter(ShiftedPath * shifted_path) const
       double ith_shift_length = 0.0;
       if (i < shift_line.start_idx) {
         ith_shift_length = 0.0;
-      } else if (shift_line.start_idx <= i && i <= shift_line.end_idx) {
+      } else if (i <= shift_line.end_idx) {
         auto dist_from_start = arclength_arr.at(i) - arclength_arr.at(shift_line.start_idx);
         ith_shift_length = (dist_from_start / shifting_arclength) * delta_shift;
       } else {
@@ -501,7 +501,7 @@ void PathShifter::removeBehindShiftLineAndSetBaseOffset(const size_t nearest_idx
   if (!removed_shift_lines.empty()) {
     const auto last_removed_sl = std::max_element(
       removed_shift_lines.begin(), removed_shift_lines.end(),
-      [](auto & a, auto & b) { return a.end_idx > b.end_idx; });
+      [](const auto & a, const auto & b) { return a.end_idx > b.end_idx; });
     new_base_offset = last_removed_sl->end_shift_length;
   }
 
@@ -630,7 +630,7 @@ double PathShifter::getLastShiftLength() const
 
   const auto furthest = std::max_element(
     shift_lines_.begin(), shift_lines_.end(),
-    [](auto & a, auto & b) { return a.end_idx < b.end_idx; });
+    [](const auto & a, const auto & b) { return a.end_idx < b.end_idx; });
 
   return furthest->end_shift_length;
 }
@@ -643,7 +643,7 @@ std::optional<ShiftLine> PathShifter::getLastShiftLine() const
 
   const auto furthest = std::max_element(
     shift_lines_.begin(), shift_lines_.end(),
-    [](auto & a, auto & b) { return a.end_idx > b.end_idx; });
+    [](const auto & a, const auto & b) { return a.end_idx > b.end_idx; });
 
   return *furthest;
 }

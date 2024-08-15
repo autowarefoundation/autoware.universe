@@ -83,8 +83,8 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   velocity_factor_publisher_ =
     this->create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
       "~/output/velocity_factors", 1);
-  processing_time_publisher_ = this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>(
-    "~/debug/total_time/processing_time_ms", 1);
+  processing_time_publisher_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 
   // Parameters
   smooth_velocity_before_planning_ = declare_parameter<bool>("smooth_velocity_before_planning");
@@ -325,7 +325,7 @@ void MotionVelocityPlannerNode::insert_slowdown(
     autoware::motion_utils::insertTargetPoint(to_seg_idx, slowdown_interval.to, trajectory.points);
   if (from_insert_idx && to_insert_idx) {
     for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx)
-      trajectory.points[idx].longitudinal_velocity_mps = 0.0;
+      trajectory.points[idx].longitudinal_velocity_mps = slowdown_interval.velocity;
   } else {
     RCLCPP_WARN(get_logger(), "Failed to insert slowdown point");
   }
@@ -361,7 +361,7 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
   autoware::motion_velocity_planner::TrajectoryPoints traj_smoothed;
   clipped.insert(
     clipped.end(), traj_resampled.begin() + traj_resampled_closest, traj_resampled.end());
-  if (!smoother->apply(v0, a0, clipped, traj_smoothed, debug_trajectories)) {
+  if (!smoother->apply(v0, a0, clipped, traj_smoothed, debug_trajectories, false)) {
     RCLCPP_ERROR(get_logger(), "failed to smooth");
   }
   traj_smoothed.insert(
@@ -418,7 +418,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocityPlannerNode::on_set_param
   updateParam(parameters, "ego_nearest_dist_threshold", planner_data_.ego_nearest_dist_threshold);
   updateParam(parameters, "ego_nearest_yaw_threshold", planner_data_.ego_nearest_yaw_threshold);
 
-  set_velocity_smoother_params();
+  // set_velocity_smoother_params(); TODO(Maxime): fix update parameters of the velocity smoother
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;

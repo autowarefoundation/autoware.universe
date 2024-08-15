@@ -31,6 +31,7 @@ NoDrivableLaneModule::NoDrivableLaneModule(
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   planner_param_(planner_param),
+  debug_data_(),
   state_(State::INIT)
 {
   velocity_factor_.init(PlanningBehavior::NO_DRIVABLE_LANE);
@@ -149,7 +150,7 @@ void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path, StopR
 
   const auto & op_target_point_idx =
     autoware::motion_utils::insertTargetPoint(target_segment_idx, target_point, path->points, 5e-2);
-  size_t target_point_idx;
+  size_t target_point_idx = 0;
   if (op_target_point_idx) {
     target_point_idx = op_target_point_idx.value();
   }

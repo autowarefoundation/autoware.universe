@@ -113,9 +113,8 @@ void SplineInterpolate::generateSpline(const std::vector<double> & x)
   std::vector<double> w_;
   w_.push_back(0.0);
 
-  double tmp;
   for (int i = 1; i < N - 1; i++) {
-    tmp = 1.0 / (4.0 - w_[i - 1]);
+    const double tmp = 1.0 / (4.0 - w_[i - 1]);
     c_[i] = (c_[i] - c_[i - 1]) * tmp;
     w_.push_back(tmp);
   }
@@ -229,8 +228,8 @@ bool SplineInterpolate::interpolate(
   generateSpline(base_value);
 
   // interpolate by spline  with normalized index
-  for (int i = 0; i < static_cast<int>(normalized_idx.size()); ++i) {
-    return_value.push_back(getValue(normalized_idx[i]));
+  for (const auto & index : normalized_idx) {
+    return_value.push_back(getValue(index));
   }
   return true;
 }

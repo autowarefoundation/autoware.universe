@@ -1,35 +1,15 @@
 *:*/test/*
 
 checkersReport
-constParameterReference
-constVariableReference
-// cspell: ignore cstyle
-cstyleCast
-funcArgNamesDifferent
-functionConst
 functionStatic
-invalidPointerCast
-knownConditionTrueFalse
 missingInclude
 missingIncludeSystem
 noConstructor
-noExplicitConstructor
-noValidConfiguration
-passedByValue
-preprocessorErrorDirective
-redundantInitialization
-shadowFunction
-shadowVariable
-syntaxError
-// cspell: ignore uninit
-uninitMemberVar
 unknownMacro
 unmatchedSuppression
 unreadVariable
 unusedFunction
-unusedStructMember
 useInitializationList
 useStlAlgorithm
-uselessOverride
 variableScope
 virtualCallInConstructor

@@ -52,6 +52,7 @@
 
 namespace autoware::map_based_prediction
 {
+using autoware::universe_utils::ScopedTimeTrack;
 
 namespace
 {
@@ -410,8 +411,8 @@ bool withinRoadLanelet(
 }
 
 boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
-  const TrackedObject & object, const lanelet::ConstLanelet & target_crosswalk,
-  const CrosswalkEdgePoints & edge_points, const lanelet::LaneletMapPtr & lanelet_map_ptr,
+  const TrackedObject & object, const lanelet::ConstLanelets & surrounding_lanelets,
+  const lanelet::ConstLanelets & surrounding_crosswalks, const CrosswalkEdgePoints & edge_points,
   const double time_horizon, const double min_object_vel)
 {
   using Point = boost::geometry::model::d2::point_xy<double>;
@@ -421,9 +422,6 @@ boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
   const auto yaw = autoware::universe_utils::getRPY(object.kinematics.pose_with_covariance.pose).z;
 
   lanelet::BasicPoint2d obj_pos_as_lanelet(obj_pos.x, obj_pos.y);
-  if (boost::geometry::within(obj_pos_as_lanelet, target_crosswalk.polygon2d().basicPolygon())) {
-    return {};
-  }
 
   const auto & p1 = edge_points.front_center_point;
   const auto & p2 = edge_points.back_center_point;
@@ -441,17 +439,12 @@ boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
   const auto estimated_velocity = std::hypot(obj_vel.x, obj_vel.y);
   const auto is_stop_object = estimated_velocity < stop_velocity_th;
   const auto velocity = std::max(min_object_vel, estimated_velocity);
-  const auto surrounding_lanelets = lanelet::geometry::findNearest(
-    lanelet_map_ptr->laneletLayer, obj_pos_as_lanelet, time_horizon * velocity);
 
-  const auto isAcrossAnyRoad = [&surrounding_lanelets](const Point & p_src, const Point & p_dst) {
-    const auto withinAnyCrosswalk = [&surrounding_lanelets](const Point & p) {
-      for (const auto & lanelet : surrounding_lanelets) {
-        const lanelet::Attribute attr = lanelet.second.attribute(lanelet::AttributeName::Subtype);
-        if (
-          (attr.value() == lanelet::AttributeValueString::Crosswalk ||
-           attr.value() == lanelet::AttributeValueString::Walkway) &&
-          boost::geometry::within(p, lanelet.second.polygon2d().basicPolygon())) {
+  const auto isAcrossAnyRoad = [&surrounding_lanelets, &surrounding_crosswalks](
+                                 const Point & p_src, const Point & p_dst) {
+    const auto withinAnyCrosswalk = [&surrounding_crosswalks](const Point & p) {
+      for (const auto & crosswalk : surrounding_crosswalks) {
+        if (boost::geometry::within(p, crosswalk.polygon2d().basicPolygon())) {
           return true;
         }
       }
@@ -470,14 +463,13 @@ boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
     std::vector<Point> points_of_intersect;
     const boost::geometry::model::linestring<Point> line{p_src, p_dst};
     for (const auto & lanelet : surrounding_lanelets) {
-      const lanelet::Attribute attr = lanelet.second.attribute(lanelet::AttributeName::Subtype);
+      const lanelet::Attribute attr = lanelet.attribute(lanelet::AttributeName::Subtype);
       if (attr.value() != lanelet::AttributeValueString::Road) {
         continue;
       }
 
       std::vector<Point> tmp_intersects;
-      boost::geometry::intersection(
-        line, lanelet.second.polygon2d().basicPolygon(), tmp_intersects);
+      boost::geometry::intersection(line, lanelet.polygon2d().basicPolygon(), tmp_intersects);
       for (const auto & p : tmp_intersects) {
         if (isExist(p, points_of_intersect) || withinAnyCrosswalk(p)) {
           continue;
@@ -671,7 +663,6 @@ ObjectClassification::_label_type changeLabelForPrediction(
     }
 
     case ObjectClassification::PEDESTRIAN: {
-      const bool within_road_lanelet = withinRoadLanelet(object, lanelet_map_ptr_, true);
       const float max_velocity_for_human_mps =
         autoware::universe_utils::kmph2mps(25.0);  // Max human being motion speed is 25km/h
       const double abs_speed = std::hypot(
@@ -679,7 +670,6 @@ ObjectClassification::_label_type changeLabelForPrediction(
         object.kinematics.twist_with_covariance.twist.linear.y);
       const bool high_speed_object = abs_speed > max_velocity_for_human_mps;
       // fast, human-like object: like segway
-      if (within_road_lanelet && high_speed_object) return label;  // currently do nothing
       // return ObjectClassification::MOTORCYCLE;
       if (high_speed_object) return label;  // currently do nothing
       // fast human outside road lanelet will move like unknown object
@@ -842,12 +832,18 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   timeout_set_for_no_intention_to_walk_ = declare_parameter<std::vector<double>>(
     "crosswalk_with_signal.timeout_set_for_no_intention_to_walk");
 
+  // debug parameter
+  bool use_time_publisher = declare_parameter<bool>("publish_processing_time");
+  bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
+  bool use_debug_marker = declare_parameter<bool>("publish_debug_markers");
+
   path_generator_ = std::make_shared<PathGenerator>(
     prediction_sampling_time_interval_, min_crosswalk_user_velocity_);
 
   path_generator_->setUseVehicleAcceleration(use_vehicle_acceleration_);
   path_generator_->setAccelerationHalfLife(acceleration_exponential_half_life_);
 
+  // subscribers
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "~/input/objects", 1,
     std::bind(&MapBasedPredictionNode::objectsCallback, this, std::placeholders::_1));
@@ -855,21 +851,37 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionNode::mapCallback, this, std::placeholders::_1));
 
+  // publishers
   pub_objects_ = this->create_publisher<PredictedObjects>("~/output/objects", rclcpp::QoS{1});
-  pub_debug_markers_ =
-    this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
-  processing_time_publisher_ =
-    std::make_unique<autoware::universe_utils::DebugPublisher>(this, "map_based_prediction");
 
-  published_time_publisher_ =
-    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
+  // debug publishers
+  if (use_time_publisher) {
+    processing_time_publisher_ =
+      std::make_unique<autoware::universe_utils::DebugPublisher>(this, "map_based_prediction");
+    published_time_publisher_ =
+      std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
+    stop_watch_ptr_ =
+      std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
+
+  if (use_time_keeper) {
+    detailed_processing_time_publisher_ =
+      this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+        "~/debug/processing_time_detail_ms", 1);
+    auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
+    time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
+    path_generator_->setTimeKeeper(time_keeper_);
+  }
+
+  if (use_debug_marker) {
+    pub_debug_markers_ =
+      this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
+  }
+  // dynamic reconfigure
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&MapBasedPredictionNode::onParam, this, std::placeholders::_1));
-
-  stop_watch_ptr_ =
-    std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
-  stop_watch_ptr_->tic("cyclic_time");
-  stop_watch_ptr_->tic("processing_time");
 }
 
 rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
@@ -926,6 +938,7 @@ void MapBasedPredictionNode::mapCallback(const LaneletMapBin::ConstSharedPtr msg
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
+  lru_cache_of_convert_path_type_.clear();  // clear cache
   RCLCPP_DEBUG(get_logger(), "[Map Based Prediction]: Map is loaded");
 
   const auto all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
@@ -933,11 +946,24 @@ void MapBasedPredictionNode::mapCallback(const LaneletMapBin::ConstSharedPtr msg
   const auto walkways = lanelet::utils::query::walkwayLanelets(all_lanelets);
   crosswalks_.insert(crosswalks_.end(), crosswalks.begin(), crosswalks.end());
   crosswalks_.insert(crosswalks_.end(), walkways.begin(), walkways.end());
+
+  lanelet::LineStrings3d fences;
+  for (const auto & linestring : lanelet_map_ptr_->lineStringLayer) {
+    if (const std::string type = linestring.attributeOr(lanelet::AttributeName::Type, "none");
+        type == "fence") {
+      fences.push_back(lanelet::LineString3d(
+        std::const_pointer_cast<lanelet::LineStringData>(linestring.constData())));
+    }
+  }
+  fence_layer_ = lanelet::utils::createMap(fences);
 }
 
 void MapBasedPredictionNode::trafficSignalsCallback(
   const TrafficLightGroupArray::ConstSharedPtr msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   traffic_signal_id_map_.clear();
   for (const auto & signal : msg->traffic_light_groups) {
     traffic_signal_id_map_[signal.traffic_light_group_id] = signal;
@@ -946,7 +972,10 @@ void MapBasedPredictionNode::trafficSignalsCallback(
 
 void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPtr in_objects)
 {
-  stop_watch_ptr_->toc("processing_time", true);
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  if (stop_watch_ptr_) stop_watch_ptr_->toc("processing_time", true);
 
   // take traffic_signal
   {
@@ -958,23 +987,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // Guard for map pointer and frame transformation
   if (!lanelet_map_ptr_) {
-    return;
-  }
-
-  auto world2map_transform = transform_listener_.getTransform(
-    "map",                        // target
-    in_objects->header.frame_id,  // src
-    in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
-  auto map2world_transform = transform_listener_.getTransform(
-    in_objects->header.frame_id,  // target
-    "map",                        // src
-    in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
-  auto debug_map2lidar_transform = transform_listener_.getTransform(
-    "base_link",  // target
-    "map",        // src
-    rclcpp::Time(), rclcpp::Duration::from_seconds(0.1));
-
-  if (!world2map_transform || !map2world_transform || !debug_map2lidar_transform) {
     return;
   }
 
@@ -1016,12 +1028,23 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   }
   std::unordered_set<std::string> predicted_crosswalk_users_ids;
 
+  // get world to map transform
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr world2map_transform;
+
+  bool is_object_not_in_map_frame = in_objects->header.frame_id != "map";
+  if (is_object_not_in_map_frame) {
+    world2map_transform = transform_listener_.getTransform(
+      "map",                        // target
+      in_objects->header.frame_id,  // src
+      in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
+    if (!world2map_transform) return;
+  }
+
   for (const auto & object : in_objects->objects) {
-    std::string object_id = autoware::universe_utils::toHexString(object.object_id);
     TrackedObject transformed_object = object;
 
     // transform object frame if it's based on map frame
-    if (in_objects->header.frame_id != "map") {
+    if (is_object_not_in_map_frame) {
       geometry_msgs::msg::PoseStamped pose_in_map;
       geometry_msgs::msg::PoseStamped pose_orig;
       pose_orig.pose = object.kinematics.pose_with_covariance.pose;
@@ -1110,14 +1133,16 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         }
 
         // Get Debug Marker for On Lane Vehicles
-        const auto max_prob_path = std::max_element(
-          ref_paths.begin(), ref_paths.end(),
-          [](const PredictedRefPath & a, const PredictedRefPath & b) {
-            return a.probability < b.probability;
-          });
-        const auto debug_marker =
-          getDebugMarker(object, max_prob_path->maneuver, debug_markers.markers.size());
-        debug_markers.markers.push_back(debug_marker);
+        if (pub_debug_markers_) {
+          const auto max_prob_path = std::max_element(
+            ref_paths.begin(), ref_paths.end(),
+            [](const PredictedRefPath & a, const PredictedRefPath & b) {
+              return a.probability < b.probability;
+            });
+          const auto debug_marker =
+            getDebugMarker(object, max_prob_path->maneuver, debug_markers.markers.size());
+          debug_markers.markers.push_back(debug_marker);
+        }
 
         // Fix object angle if its orientation unreliable (e.g. far object by radar sensor)
         // This prevent bending predicted path
@@ -1223,20 +1248,37 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   }
 
   // Publish Results
+  publish(output, debug_markers);
+
+  // Publish Processing Time
+  if (stop_watch_ptr_) {
+    const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
+}
+
+void MapBasedPredictionNode::publish(
+  const PredictedObjects & output, const visualization_msgs::msg::MarkerArray & debug_markers) const
+{
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   pub_objects_->publish(output);
-  published_time_publisher_->publish_if_subscribed(pub_objects_, output.header.stamp);
-  pub_debug_markers_->publish(debug_markers);
-  const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-  const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-    "debug/cyclic_time_ms", cyclic_time_ms);
-  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-    "debug/processing_time_ms", processing_time_ms);
+  if (published_time_publisher_)
+    published_time_publisher_->publish_if_subscribed(pub_objects_, output.header.stamp);
+  if (pub_debug_markers_) pub_debug_markers_->publish(debug_markers);
 }
 
 void MapBasedPredictionNode::updateCrosswalkUserHistory(
   const std_msgs::msg::Header & header, const TrackedObject & object, const std::string & object_id)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   CrosswalkUserData crosswalk_user_data;
   crosswalk_user_data.header = header;
   crosswalk_user_data.tracked_object = object;
@@ -1252,6 +1294,9 @@ void MapBasedPredictionNode::updateCrosswalkUserHistory(
 std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
   const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   const auto known_match_opt = [&]() -> std::optional<std::string> {
     if (!known_matches_.count(object_id)) {
       return std::nullopt;
@@ -1309,10 +1354,16 @@ std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
 
 bool MapBasedPredictionNode::doesPathCrossAnyFence(const PredictedPath & predicted_path)
 {
-  const lanelet::ConstLineStrings3d & all_fences =
-    lanelet::utils::query::getAllFences(lanelet_map_ptr_);
-  for (const auto & fence_line : all_fences) {
-    if (doesPathCrossFence(predicted_path, fence_line)) {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  lanelet::BasicLineString2d predicted_path_ls;
+  for (const auto & p : predicted_path.path)
+    predicted_path_ls.emplace_back(p.position.x, p.position.y);
+  const auto candidates =
+    fence_layer_->lineStringLayer.search(lanelet::geometry::boundingBox2d(predicted_path_ls));
+  for (const auto & candidate : candidates) {
+    if (doesPathCrossFence(predicted_path, candidate)) {
       return true;
     }
   }
@@ -1322,6 +1373,9 @@ bool MapBasedPredictionNode::doesPathCrossAnyFence(const PredictedPath & predict
 bool MapBasedPredictionNode::doesPathCrossFence(
   const PredictedPath & predicted_path, const lanelet::ConstLineString3d & fence_line)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // check whether the predicted path cross with fence
   for (size_t i = 0; i < predicted_path.path.size() - 1; ++i) {
     for (size_t j = 0; j < fence_line.size() - 1; ++j) {
@@ -1339,6 +1393,9 @@ bool MapBasedPredictionNode::isIntersecting(
   const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2,
   const lanelet::ConstPoint3d & point3, const lanelet::ConstPoint3d & point4)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   const auto p1 = autoware::universe_utils::createPoint(point1.x, point1.y, 0.0);
   const auto p2 = autoware::universe_utils::createPoint(point2.x, point2.y, 0.0);
   const auto p3 = autoware::universe_utils::createPoint(point3.x(), point3.y(), 0.0);
@@ -1350,6 +1407,9 @@ bool MapBasedPredictionNode::isIntersecting(
 PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
   const TrackedObject & object)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   auto predicted_object = convertToPredictedObject(object);
   {
     PredictedPath predicted_path =
@@ -1360,10 +1420,28 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
   }
 
   boost::optional<lanelet::ConstLanelet> crossing_crosswalk{boost::none};
-  for (const auto & crosswalk : crosswalks_) {
-    if (withinLanelet(object, crosswalk)) {
-      crossing_crosswalk = crosswalk;
-      break;
+  const auto & obj_pos = object.kinematics.pose_with_covariance.pose.position;
+  const auto & obj_vel = object.kinematics.twist_with_covariance.twist.linear;
+  const auto estimated_velocity = std::hypot(obj_vel.x, obj_vel.y);
+  const auto velocity = std::max(min_crosswalk_user_velocity_, estimated_velocity);
+  // TODO(Mamoru Sobue): 3rd argument of findNearest is the number of lanelets, not radius, so past
+  // implementation has been wrong.
+  const auto surrounding_lanelets_with_dist = lanelet::geometry::findNearest(
+    lanelet_map_ptr_->laneletLayer, lanelet::BasicPoint2d{obj_pos.x, obj_pos.y},
+    prediction_time_horizon_.pedestrian * velocity);
+  lanelet::ConstLanelets surrounding_lanelets;
+  lanelet::ConstLanelets surrounding_crosswalks;
+  for (const auto & [dist, lanelet] : surrounding_lanelets_with_dist) {
+    surrounding_lanelets.push_back(lanelet);
+    const auto attr = lanelet.attribute(lanelet::AttributeName::Subtype);
+    if (
+      attr.value() == lanelet::AttributeValueString::Crosswalk ||
+      attr.value() == lanelet::AttributeValueString::Walkway) {
+      const auto & crosswalk = lanelet;
+      surrounding_crosswalks.push_back(crosswalk);
+      if (withinLanelet(object, crosswalk)) {
+        crossing_crosswalk = crosswalk;
+      }
     }
   }
 
@@ -1424,8 +1502,12 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
     }
   }
 
-  // try to find the edge points for all crosswalks and generate path to the crosswalk edge
-  for (const auto & crosswalk : crosswalks_) {
+  // try to find the edge points for other surrounding crosswalks and generate path to the crosswalk
+  // edge
+  for (const auto & crosswalk : surrounding_crosswalks) {
+    if (crossing_crosswalk && crossing_crosswalk.get() == crosswalk) {
+      continue;
+    }
     const auto crosswalk_signal_id_opt = getTrafficSignalId(crosswalk);
     if (crosswalk_signal_id_opt.has_value() && use_crosswalk_signal_) {
       if (!calcIntentionToCrossWithTrafficSignal(
@@ -1450,8 +1532,8 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
     }
 
     const auto reachable_crosswalk = isReachableCrosswalkEdgePoints(
-      object, crosswalk, edge_points, lanelet_map_ptr_, prediction_time_horizon_.pedestrian,
-      min_crosswalk_user_velocity_);
+      object, surrounding_lanelets, surrounding_crosswalks, edge_points,
+      prediction_time_horizon_.pedestrian, min_crosswalk_user_velocity_);
 
     if (!reachable_crosswalk) {
       continue;
@@ -1482,6 +1564,9 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
 void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (
     object.kinematics.orientation_availability ==
     autoware_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
@@ -1548,6 +1633,9 @@ void MapBasedPredictionNode::removeStaleTrafficLightInfo(
 
 LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & object)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // obstacle point
   lanelet::BasicPoint2d search_point(
     object.kinematics.pose_with_covariance.pose.position.x,
@@ -1638,6 +1726,9 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
 bool MapBasedPredictionNode::checkCloseLaneletCondition(
   const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // Step1. If we only have one point in the centerline, we will ignore the lanelet
   if (lanelet.second.centerline().size() <= 1) {
     return false;
@@ -1684,6 +1775,9 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
 float MapBasedPredictionNode::calculateLocalLikelihood(
   const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   const auto & obj_point = object.kinematics.pose_with_covariance.pose.position;
 
   // compute yaw difference between the object and lane
@@ -1719,6 +1813,9 @@ void MapBasedPredictionNode::updateRoadUsersHistory(
   const std_msgs::msg::Header & header, const TrackedObject & object,
   const LaneletsData & current_lanelets_data)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   std::string object_id = autoware::universe_utils::toHexString(object.object_id);
   const auto current_lanelets = getLanelets(current_lanelets_data);
 
@@ -1760,6 +1857,9 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   const TrackedObject & object, const LaneletsData & current_lanelets_data,
   const double object_detected_time, const double time_horizon)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   const double obj_vel = std::hypot(
     object.kinematics.twist_with_covariance.twist.linear.x,
     object.kinematics.twist_with_covariance.twist.linear.y);
@@ -1922,6 +2022,9 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
   const TrackedObject & object, const LaneletData & current_lanelet_data,
   const double object_detected_time)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // calculate maneuver
   const auto current_maneuver = [&]() {
     if (lane_change_detection_method_ == "time_to_change_lane") {
@@ -1972,6 +2075,9 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByTimeToLaneChange(
   const TrackedObject & object, const LaneletData & current_lanelet_data,
   const double /*object_detected_time*/)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // Step1. Check if we have the object in the buffer
   const std::string object_id = autoware::universe_utils::toHexString(object.object_id);
   if (road_users_history.count(object_id) == 0) {
@@ -2043,6 +2149,9 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
   const TrackedObject & object, const LaneletData & current_lanelet_data,
   const double /*object_detected_time*/)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // Step1. Check if we have the object in the buffer
   const std::string object_id = autoware::universe_utils::toHexString(object.object_id);
   if (road_users_history.count(object_id) == 0) {
@@ -2205,6 +2314,9 @@ double MapBasedPredictionNode::calcLeftLateralOffset(
 void MapBasedPredictionNode::updateFuturePossibleLanelets(
   const TrackedObject & object, const lanelet::routing::LaneletPaths & paths)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   std::string object_id = autoware::universe_utils::toHexString(object.object_id);
   if (road_users_history.count(object_id) == 0) {
     return;
@@ -2229,6 +2341,9 @@ void MapBasedPredictionNode::addReferencePaths(
   const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths,
   const double speed_limit)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (!candidate_paths.empty()) {
     updateFuturePossibleLanelets(object, candidate_paths);
     const auto converted_paths = convertPathType(candidate_paths);
@@ -2248,6 +2363,9 @@ ManeuverProbability MapBasedPredictionNode::calculateManeuverProbability(
   const lanelet::routing::LaneletPaths & right_paths,
   const lanelet::routing::LaneletPaths & center_paths)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   float left_lane_change_probability = 0.0;
   float right_lane_change_probability = 0.0;
   float lane_follow_probability = 0.0;
@@ -2308,8 +2426,15 @@ ManeuverProbability MapBasedPredictionNode::calculateManeuverProbability(
 }
 
 std::vector<PosePath> MapBasedPredictionNode::convertPathType(
-  const lanelet::routing::LaneletPaths & paths)
+  const lanelet::routing::LaneletPaths & paths) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  if (lru_cache_of_convert_path_type_.contains(paths)) {
+    return *lru_cache_of_convert_path_type_.get(paths);
+  }
+
   std::vector<PosePath> converted_paths;
   for (const auto & path : paths) {
     PosePath converted_path;
@@ -2332,7 +2457,13 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
 
           const double lane_yaw = std::atan2(
             current_p.position.y - prev_p.position.y, current_p.position.x - prev_p.position.x);
-          current_p.orientation = autoware::universe_utils::createQuaternionFromYaw(lane_yaw);
+          const double sin_yaw_half = std::sin(lane_yaw / 2.0);
+          const double cos_yaw_half = std::cos(lane_yaw / 2.0);
+          current_p.orientation.x = 0.0;
+          current_p.orientation.y = 0.0;
+          current_p.orientation.z = sin_yaw_half;
+          current_p.orientation.w = cos_yaw_half;
+
           converted_path.push_back(current_p);
           prev_p = current_p;
         }
@@ -2363,18 +2494,31 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
 
         const double lane_yaw = std::atan2(
           current_p.position.y - prev_p.position.y, current_p.position.x - prev_p.position.x);
-        current_p.orientation = autoware::universe_utils::createQuaternionFromYaw(lane_yaw);
+        const double sin_yaw_half = std::sin(lane_yaw / 2.0);
+        const double cos_yaw_half = std::cos(lane_yaw / 2.0);
+        current_p.orientation.x = 0.0;
+        current_p.orientation.y = 0.0;
+        current_p.orientation.z = sin_yaw_half;
+        current_p.orientation.w = cos_yaw_half;
+
         converted_path.push_back(current_p);
         prev_p = current_p;
       }
     }
 
     // Resample Path
-    const auto resampled_converted_path =
-      autoware::motion_utils::resamplePoseVector(converted_path, reference_path_resolution_);
+    const bool use_akima_spline_for_xy = true;
+    const bool use_lerp_for_z = true;
+    // the options use_akima_spline_for_xy and use_lerp_for_z are set to true
+    // but the implementation of use_akima_spline_for_xy in resamplePoseVector and
+    // resamplePointVector is opposite to the options so the options are set to true to use linear
+    // interpolation for xy
+    const auto resampled_converted_path = autoware::motion_utils::resamplePoseVector(
+      converted_path, reference_path_resolution_, use_akima_spline_for_xy, use_lerp_for_z);
     converted_paths.push_back(resampled_converted_path);
   }
 
+  lru_cache_of_convert_path_type_.put(paths, converted_paths);
   return converted_paths;
 }
 
@@ -2431,6 +2575,9 @@ std::optional<lanelet::Id> MapBasedPredictionNode::getTrafficSignalId(
 std::optional<TrafficLightElement> MapBasedPredictionNode::getTrafficSignalElement(
   const lanelet::Id & id)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (traffic_signal_id_map_.count(id) != 0) {
     const auto & signal_elements = traffic_signal_id_map_.at(id).elements;
     if (signal_elements.size() > 1) {
@@ -2447,6 +2594,9 @@ bool MapBasedPredictionNode::calcIntentionToCrossWithTrafficSignal(
   const TrackedObject & object, const lanelet::ConstLanelet & crosswalk,
   const lanelet::Id & signal_id)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   const auto signal_color = [&] {
     const auto elem_opt = getTrafficSignalElement(signal_id);
     return elem_opt ? elem_opt.value().color : TrafficLightElement::UNKNOWN;
