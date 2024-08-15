@@ -38,7 +38,8 @@ BEVDet::BEVDet(
 {
   InitParams(config_file);
   if (n_img != N_img) {
-    std::cerr << "BEVDet needs " << N_img << " images, but " << n_img << " images were given!" << std::endl;
+    std::cerr << "BEVDet needs " << N_img << " images, but " << n_img << " images were given!"
+              << std::endl;
   }
   auto start = high_resolution_clock::now();
 
@@ -58,7 +59,8 @@ BEVDet::BEVDet(
     std::cout << "Inference engine prepared." << std::endl;
   } else {
     // onnx to engine
-    std::cerr << "Could not find " << engine_file << ", trying to make TensorRT engine from ONNX." << std::endl;
+    std::cerr << "Could not find " << engine_file << ", trying to make TensorRT engine from ONNX."
+              << std::endl;
     ExportEngine(onnx_file, engine_file);
   }
   InitEngine(engine_file);  // FIXME
@@ -473,9 +475,11 @@ int BEVDet::DeserializeTRTEngine(
   *engine_ptr = engine;
   for (int bi = 0; bi < engine->getNbBindings(); bi++) {
     if (engine->bindingIsInput(bi) == true) {
-      std::cout << "Binding " << bi << " (" << engine->getBindingName(bi) << "): Input." << std::endl;
+      std::cout << "Binding " << bi << " (" << engine->getBindingName(bi) << "): Input."
+                << std::endl;
     } else {
-      std::cout << "Binding " << bi << " (" << engine->getBindingName(bi) << "): Output." << std::endl;
+      std::cout << "Binding " << bi << " (" << engine->getBindingName(bi) << "): Output."
+                << std::endl;
     }
   }
   return EXIT_SUCCESS;
