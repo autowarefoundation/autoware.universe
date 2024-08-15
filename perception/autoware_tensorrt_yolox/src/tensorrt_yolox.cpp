@@ -159,7 +159,8 @@ TrtYoloX::TrtYoloX(
   const bool use_gpu_preprocess, const uint8_t gpu_id, std::string calibration_image_list_path,
   const double norm_factor, [[maybe_unused]] const std::string & cache_dir,
   const tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size,
-  const std::string & color_map_path) : gpu_id_(gpu_id)
+  const std::string & color_map_path)
+: gpu_id_(gpu_id)
 {
   std::cout << "GPU " << gpu_id_ << " is selected for the inference!" << std::endl;
   if (!setCudaDeviceId(gpu_id_)) {
