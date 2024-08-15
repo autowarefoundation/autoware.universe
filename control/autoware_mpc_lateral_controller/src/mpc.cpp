@@ -33,8 +33,6 @@ MPC::MPC(rclcpp::Node & node)
 {
   m_debug_frenet_predicted_trajectory_pub = node.create_publisher<Trajectory>(
     "~/debug/predicted_trajectory_in_frenet_coordinate", rclcpp::QoS(1));
-  m_debug_predicted_trajectory_with_delay_pub =
-    node.create_publisher<Trajectory>("~/debug/predicted_trajectory_with_delay", rclcpp::QoS(1));
   m_debug_resampled_reference_trajectory_pub =
     node.create_publisher<Trajectory>("~/debug/resampled_reference_trajectory", rclcpp::QoS(1));
 }
@@ -108,24 +106,18 @@ bool MPC::calculateMPC(
   m_raw_steer_cmd_prev = Uex(0);
 
   /* calculate predicted trajectory */
+  Eigen::VectorXd initial_state = m_use_delayed_initial_state ? x0_delayed : x0;
   predicted_trajectory = calculatePredictedTrajectory(
-    mpc_matrix, x0, Uex, mpc_resampled_ref_trajectory, prediction_dt, "world");
+    mpc_matrix, initial_state, Uex, mpc_resampled_ref_trajectory, prediction_dt, "world");
 
   // Publish predicted trajectories in different coordinates for debugging purposes
   if (m_debug_publish_predicted_trajectory) {
     // Calculate and publish predicted trajectory in Frenet coordinate
     auto predicted_trajectory_frenet = calculatePredictedTrajectory(
-      mpc_matrix, x0, Uex, mpc_resampled_ref_trajectory, prediction_dt, "frenet");
+      mpc_matrix, initial_state, Uex, mpc_resampled_ref_trajectory, prediction_dt, "frenet");
     predicted_trajectory_frenet.header.stamp = m_clock->now();
     predicted_trajectory_frenet.header.frame_id = "map";
     m_debug_frenet_predicted_trajectory_pub->publish(predicted_trajectory_frenet);
-
-    // Calculate and publish predicted trajectory in world coordinate with delay
-    auto predicted_trajectory_world_with_delay = calculatePredictedTrajectory(
-      mpc_matrix, x0_delayed, Uex, mpc_resampled_ref_trajectory, prediction_dt, "world");
-    predicted_trajectory_world_with_delay.header.stamp = m_clock->now();
-    predicted_trajectory_world_with_delay.header.frame_id = "map";
-    m_debug_predicted_trajectory_with_delay_pub->publish(predicted_trajectory_world_with_delay);
   }
 
   // prepare diagnostic message

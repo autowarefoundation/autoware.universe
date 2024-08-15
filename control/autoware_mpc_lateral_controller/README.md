@@ -95,6 +95,7 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 | use_steer_prediction      | boolean | flag for using steer prediction (do not use steer measurement)              | false         |
 | admissible_position_error | double  | stop vehicle when following position error is larger than this value [m]    | 5.0           |
 | admissible_yaw_error_rad  | double  | stop vehicle when following yaw angle error is larger than this value [rad] | 1.57          |
+| use_delayed_initial_state | boolean | flag to use x0_delayed as initial state for predicted trajectory            | true          |
 
 #### Path Smoothing
 
@@ -204,10 +205,10 @@ Defined in the `steering_offset` namespace. This logic is designed as simple as 
 
 #### Debug
 
-| Name                                         | Type    | Description                                                                                                | Default value |
-| :------------------------------------------- | :------ | :--------------------------------------------------------------------------------------------------------- | :------------ |
-| debug_publish_predicted_trajectory           | boolean | publish predicted trajectory for debugging, considering Frenet coordinate system and delayed vehicle state | true          |
-| debug_publish_resampled_reference_trajectory | boolean | publish resampled reference trajectory in world coordinate system                                          | false         |
+| Name                                         | Type    | Description                                                                      | Default value |
+| :------------------------------------------- | :------ | :------------------------------------------------------------------------------- | :------------ |
+| debug_publish_predicted_trajectory           | boolean | publish predicted trajectory for debugging, considering Frenet coordinate system | true          |
+| debug_publish_resampled_reference_trajectory | boolean | publish resampled reference trajectory in world coordinate system                | false         |
 
 ### How to tune MPC parameters
 

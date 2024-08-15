@@ -221,7 +221,6 @@ private:
 
   double m_min_prediction_length = 5.0;  // Minimum prediction distance.
 
-  rclcpp::Publisher<Trajectory>::SharedPtr m_debug_predicted_trajectory_with_delay_pub;
   rclcpp::Publisher<Trajectory>::SharedPtr m_debug_frenet_predicted_trajectory_pub;
   rclcpp::Publisher<Trajectory>::SharedPtr m_debug_resampled_reference_trajectory_pub;
   /**
@@ -430,6 +429,9 @@ public:
   bool m_use_steer_prediction;  // Flag to use predicted steer instead of measured steer.
   double ego_nearest_dist_threshold = 3.0;  // Threshold for nearest index search based on distance.
   double ego_nearest_yaw_threshold = M_PI_2;  // Threshold for nearest index search based on yaw.
+
+  bool m_use_delayed_initial_state =
+    true;  // Flag to use x0_delayed as initial state for predicted trajectory
 
   bool m_debug_publish_predicted_trajectory = false;  // Flag to publish debug predicted trajectory
   bool m_debug_publish_resampled_reference_trajectory = false;  // Flag to publish debug resampled
