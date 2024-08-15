@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "autoware/tensorrt_bevdet/bevdet_node.hpp"
+
 #include "autoware/tensorrt_bevdet/preprocess.hpp"
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
@@ -194,7 +195,6 @@ void image_transport(std::vector<cv::Mat> imgs, uchar * out_imgs, size_t width, 
     cv::cvtColor(imgs[i], imgs[i], cv::COLOR_BGR2RGB);
     CHECK_CUDA(cudaMemcpy(temp_gpu, imgs[i].data, width * height * 3, cudaMemcpyHostToDevice));
     convert_RGBHWC_to_BGRCHW(temp_gpu, out_imgs + i * width * height * 3, 3, height, width);
-
   }
   delete[] temp;
   CHECK_CUDA(cudaFree(temp_gpu));
