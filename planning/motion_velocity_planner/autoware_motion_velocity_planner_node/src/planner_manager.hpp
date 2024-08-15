@@ -23,6 +23,7 @@
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -52,13 +53,13 @@ public:
     const std::shared_ptr<const PlannerData> planner_data);
 
   // Diagnostic
-  std::shared_ptr<DiagnosticStatus> makeEmptyDiagnostic(const std::string & reason);
   std::shared_ptr<DiagnosticStatus> makeDiagnostic(
     const std::string & reason, 
-    const DiagnosticStatus::Level level=DiagnosticStatus::OK,
-    const bool is_decided = true, 
-    [[maybe_unused]] const std::shared_ptr<const PlannerData> planner_data);
-  DiagnosticArray getDiagnostics(const rclcpp::Time & current_time) const;
+    const bool is_decided = true);
+  void publishDiagnostics(
+    const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr,
+    const rclcpp::Time & current_time,
+    const bool publish_decided_diagnostics_only = true) const;
   void clearDiagnostics();
 
 

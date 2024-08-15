@@ -85,6 +85,7 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
       "~/output/velocity_factors", 1);
   processing_time_publisher_ =
     this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  diagnostics_pub_ = this->create_publisher<DiagnosticArray>("/diagnostics", 10);
 
   // Parameters
   smooth_velocity_before_planning_ = declare_parameter<bool>("smooth_velocity_before_planning");
@@ -293,6 +294,9 @@ void MotionVelocityPlannerNode::on_trajectory(
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = processing_times["Total"];
   processing_time_publisher_->publish(processing_time_msg);
+
+  planner_manager_.publishDiagnostics(diagnostics_pub_, get_clock()->now(), true);
+  planner_manager_.clearDiagnostics();
 }
 
 void MotionVelocityPlannerNode::insert_stop(

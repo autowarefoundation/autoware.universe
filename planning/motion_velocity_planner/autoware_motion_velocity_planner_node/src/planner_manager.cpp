@@ -71,35 +71,25 @@ void MotionVelocityPlannerManager::update_module_parameters(
   for (auto & plugin : loaded_plugins_) plugin->update_parameters(parameters);
 }
 
-
-
-std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::makeEmptyDiagnostic(
-  const std::string & reason)
-{
-  return makeDiagnostic(reason, is_decided = false);
-}
-
 std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::makeDiagnostic(
   const std::string & reason,
-  const DiagnosticStatus::Level level,
-  const bool is_decided,
-  [[maybe_unused]] const std::shared_ptr<const PlannerData> planner_data)
+  const bool is_decided)
 {
-  // Create status
   auto status = std::make_shared<DiagnosticStatus>();
-  status->level = level;
-  status->name = "motion_velocity_planner_" + reason;
+  status->level = status->OK;
+  status->name = reason;
   diagnostic_msgs::msg::KeyValue key_value;
   {
     // Decision
     key_value.key = "decision";
-    if is_decided
+    if (is_decided)
       key_value.value = reason;
     else
       key_value.value = "none";
-    status.values.push_back(key_value);
+    status->values.push_back(key_value);
   }
   // Add other information to the status if necessary in the future.
+  return status;
 }
 
 void MotionVelocityPlannerManager::clearDiagnostics()
@@ -107,9 +97,24 @@ void MotionVelocityPlannerManager::clearDiagnostics()
   diagnostics_.clear();
 }
 
-DiagnosticArray MotionVelocityPlannerManager::getDiagnostics(
-  const rclcpp::Time & current_time) const
+void MotionVelocityPlannerManager::publishDiagnostics(
+  const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr,
+  const rclcpp::Time & current_time,
+  const bool publish_decided_diagnostics_only
+  ) const
 {
+  
+  if (publish_decided_diagnostics_only &&
+      !std::any_of(
+        diagnostics_.begin(), 
+        diagnostics_.end(), 
+        [](const auto& ds_ptr) {
+          return ds_ptr && !ds_ptr->values.empty() && ds_ptr->values[0].key == "decision" && ds_ptr->values[0].value != "none";
+        }
+    )) {
+    return;
+  }
+  
   DiagnosticArray diagnostics;
   diagnostics.header.stamp = current_time;
   diagnostics.header.frame_id = "map";
@@ -118,7 +123,7 @@ DiagnosticArray MotionVelocityPlannerManager::getDiagnostics(
       diagnostics.status.push_back(*ds_ptr);
     }
   }
-  return diagnostics;
+  pub_ptr->publish(diagnostics);
 }
 
 
@@ -127,13 +132,16 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
   const std::shared_ptr<const PlannerData> planner_data)
 {
   std::vector<VelocityPlanningResult> results;
-  for (auto & plugin : loaded_plugins_)
-    results.push_back(plugin->plan(ego_trajectory_points, planner_data));
-    // TODO 现在做这个：这里更新并生成DiagnosticArray，makeDiagnostic/makeEmptyDiagnostic(plugin.get_name()+"stop"/"slow_down"),
-    //  放reason_diag_里；
-    
-    // TODO 在node上getDiagnostics，然后发布，清空，etc。
-    
+  for (auto & plugin : loaded_plugins_){
+    VelocityPlanningResult res = plugin->plan(ego_trajectory_points, planner_data);
+    results.push_back(res);
+
+    auto stop_reason_diag = makeDiagnostic(plugin->get_module_name()+".stop", res.stop_points.size() > 0);
+    diagnostics_.push_back(stop_reason_diag);
+
+    auto slow_down_reason_diag = makeDiagnostic(plugin->get_module_name()+".slow_down", res.slowdown_intervals.size() > 0);
+    diagnostics_.push_back(slow_down_reason_diag);
+  }
   return results;
 }
 }  // namespace autoware::motion_velocity_planner
