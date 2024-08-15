@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "autoware/tensorrt_bevdet/bevdet_node.hpp"
+#include "autoware/tensorrt_bevdet/preprocess.hpp"
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 std::map<int, std::vector<int>> colormap{
@@ -183,6 +184,22 @@ TRTBEVDetNode::TRTBEVDetNode(
     std::bind(&TRTBEVDetNode::callback, this, _1, _2, _3, _4, _5, _6));  // 绑定回调函数
 }
 
+void image_transport(std::vector<cv::Mat> imgs, uchar * out_imgs, size_t width, size_t height)
+{
+  uchar * temp = new uchar[width * height * 3];
+  uchar * temp_gpu = nullptr;
+  CHECK_CUDA(cudaMalloc(&temp_gpu, width * height * 3));
+
+  for (size_t i = 0; i < imgs.size(); i++) {
+    cv::cvtColor(imgs[i], imgs[i], cv::COLOR_BGR2RGB);
+    CHECK_CUDA(cudaMemcpy(temp_gpu, imgs[i].data, width * height * 3, cudaMemcpyHostToDevice));
+    convert_RGBHWC_to_BGRCHW(temp_gpu, out_imgs + i * width * height * 3, 3, height, width);
+
+  }
+  delete[] temp;
+  CHECK_CUDA(cudaFree(temp_gpu));
+}
+
 void TRTBEVDetNode::callback(
   const sensor_msgs::msg::Image::ConstSharedPtr & msg_fl_img,
   const sensor_msgs::msg::Image::ConstSharedPtr & msg_f_img,
@@ -208,11 +225,7 @@ void TRTBEVDetNode::callback(
   imgs.emplace_back(img_br);
 
   std::vector<std::vector<char>> imgs_data;
-  // Mat -> Vetor<char>
-  cvImgToArr(imgs, imgs_data);
-
-  // cpu imgs_data -> gpu imgs_dev
-  decode_cpu(imgs_data, imgs_dev_, img_w_, img_h_);
+  image_transport(imgs, imgs_dev_, img_w_, img_h_);
 
   // uchar *imgs_dev
   sampleData_.imgs_dev = imgs_dev_;
