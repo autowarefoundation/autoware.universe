@@ -92,10 +92,6 @@ std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::makeDiagnostic(
   return status;
 }
 
-void MotionVelocityPlannerManager::clearDiagnostics()
-{
-  diagnostics_.clear();
-}
 
 void MotionVelocityPlannerManager::publishDiagnostics(
   const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr,

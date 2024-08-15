@@ -60,7 +60,7 @@ public:
     const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr,
     const rclcpp::Time & current_time,
     const bool publish_decided_diagnostics_only = true) const;
-  void clearDiagnostics();
+  void clearDiagnostics(){diagnostics_.clear();}
 
 
 private:
