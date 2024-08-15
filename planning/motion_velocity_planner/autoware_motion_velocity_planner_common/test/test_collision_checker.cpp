@@ -21,13 +21,6 @@
 #include <chrono>
 #include <random>
 
-// for writing the svg file
-#include <fstream>
-#include <iostream>
-// for the svg mapper
-#include <boost/geometry/io/svg/svg_mapper.hpp>
-#include <boost/geometry/io/svg/write.hpp>
-
 using autoware::motion_velocity_planner::CollisionChecker;
 using autoware::universe_utils::Line2d;
 using autoware::universe_utils::MultiLineString2d;
@@ -96,7 +89,7 @@ TEST(TestCollisionChecker, Benchmark)
   const auto cc_constr_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(cc_constr_end - cc_constr_start).count();
   std::printf(
-    "Collision checker constuction (with %d footprints): %ld ns\n", nb_ego_footprints,
+    "Collision checker construction (with %d footprints): %ld ns\n", nb_ego_footprints,
     cc_constr_ns);
   MultiPolygon2d poly_obstacles;
   MultiPoint2d point_obstacles;
@@ -129,13 +122,6 @@ TEST(TestCollisionChecker, Benchmark)
                          all_within(naive_collision_points, cc_collision_points);
       EXPECT_TRUE(equal);
       if (!equal) {
-        // Declare a stream and an SVG mapper
-        std::ofstream svg("/home/mclement/Pictures/image.svg");  // /!\ CHANGE PATH
-        boost::geometry::svg_mapper<Point2d> mapper(svg, 400, 400);
-        mapper.add(cc_collision_points);
-        mapper.add(naive_collision_points);
-        mapper.map(cc_collision_points, "opacity:0.3;fill:red;stroke:red;stroke-width:2", 1);
-        mapper.map(naive_collision_points, "opacity:0.3;fill:blue;stroke:blue;stroke-width:2", 1);
         std::cout << "cc: " << boost::geometry::wkt(cc_collision_points) << std::endl;
         std::cout << "naive: " << boost::geometry::wkt(naive_collision_points) << std::endl;
       }
@@ -143,8 +129,8 @@ TEST(TestCollisionChecker, Benchmark)
         std::chrono::duration_cast<std::chrono::nanoseconds>(cc_end - cc_start);
       naive_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(naive_end - naive_start);
     }
-    std::printf("%20s%10ldns\n", "collision checker : ", collision_checker_ns.count());
-    std::printf("%20s%10ldns\n", "naive : ", naive_ns.count());
+    std::printf("%20s%10ld ns\n", "collision checker : ", collision_checker_ns.count());
+    std::printf("%20s%10ld ns\n", "naive : ", naive_ns.count());
   };
   const auto check_obstacles = [&](const auto & obstacles) {
     std::chrono::nanoseconds collision_checker_ns{};
@@ -164,30 +150,13 @@ TEST(TestCollisionChecker, Benchmark)
                        all_within(naive_collision_points, cc_collision_points);
     EXPECT_TRUE(equal);
     if (!equal) {
-      // Declare a stream and an SVG mapper
-      std::ofstream svg("/home/mclement/Pictures/image.svg");    // /!\ CHANGE PATH
-      std::ofstream svg1("/home/mclement/Pictures/image1.svg");  // /!\ CHANGE PATH
-      std::ofstream svg2("/home/mclement/Pictures/image2.svg");  // /!\ CHANGE PATH
-      boost::geometry::svg_mapper<Point2d> mapper(svg, 400, 400);
-      boost::geometry::svg_mapper<Point2d> mapper1(svg1, 400, 400);
-      boost::geometry::svg_mapper<Point2d> mapper2(svg2, 400, 400);
-      mapper.add(cc_collision_points);
-      mapper.add(naive_collision_points);
-      mapper1.add(cc_collision_points);
-      mapper1.add(naive_collision_points);
-      mapper2.add(cc_collision_points);
-      mapper2.add(naive_collision_points);
-      mapper.map(cc_collision_points, "opacity:0.3;fill:red;stroke:red;stroke-width:2", 1);
-      mapper.map(naive_collision_points, "opacity:0.3;fill:blue;stroke:blue;stroke-width:2", 1);
-      mapper1.map(cc_collision_points, "opacity:0.3;fill:red;stroke:red;stroke-width:2", 1);
-      mapper2.map(naive_collision_points, "opacity:0.3;fill:blue;stroke:blue;stroke-width:2", 1);
       std::cout << "cc: " << boost::geometry::wkt(cc_collision_points) << std::endl;
       std::cout << "naive: " << boost::geometry::wkt(naive_collision_points) << std::endl;
     }
     collision_checker_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(cc_end - cc_start);
     naive_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(naive_end - naive_start);
-    std::printf("%20s%10ldns\n", "collision checker : ", collision_checker_ns.count());
-    std::printf("%20s%10ldns\n", "naive : ", naive_ns.count());
+    std::printf("%20s%10ld ns\n", "collision checker : ", collision_checker_ns.count());
+    std::printf("%20s%10ld ns\n", "naive : ", naive_ns.count());
   };
 
   std::cout << "* check one by one\n";
