@@ -15,7 +15,6 @@
 #include "obstacle_velocity_limiter_module.hpp"
 
 #include "debug.hpp"
-#include "forward_projection.hpp"
 #include "map_utils.hpp"
 #include "obstacle_velocity_limiter.hpp"
 #include "parameters.hpp"
@@ -31,7 +30,6 @@
 
 #include <boost/geometry.hpp>
 
-#include <algorithm>
 #include <chrono>
 #include <map>
 

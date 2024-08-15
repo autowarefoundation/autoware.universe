@@ -24,19 +24,10 @@
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
-#include <string>
 #include <vector>
 
 namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
-
-/// @brief calculate the apparent safe velocity
-/// @param[in] trajectory_point trajectory point for which to calculate the apparent safe velocity
-/// @param[in] dist_to_collision distance from the trajectory point to the apparent collision
-/// @return apparent safe velocity
-double calculateSafeVelocity(
-  const TrajectoryPoint & trajectory_point, const double dist_to_collision);
-
 /// @brief calculate trajectory index that is ahead of the given index by the given distance
 /// @param[in] trajectory trajectory
 /// @param[in] ego_idx index closest to the current ego position in the trajectory
