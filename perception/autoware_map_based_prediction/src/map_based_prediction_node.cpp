@@ -365,10 +365,7 @@ bool withinRoadLanelet(
   const std::vector<std::pair<double, lanelet::Lanelet>> & surrounding_lanelets_with_dist,
   const bool use_yaw_information = false)
 {
-  for (const auto & lanelet_with_dist : surrounding_lanelets_with_dist) {
-    const auto & dist = lanelet_with_dist.first;
-    const auto & lanelet = lanelet_with_dist.second;
-
+  for (const auto & [dist, lanelet] : surrounding_lanelets_with_dist) {
     if (lanelet.hasAttribute(lanelet::AttributeName::Subtype)) {
       lanelet::Attribute attr = lanelet.attribute(lanelet::AttributeName::Subtype);
       if (
@@ -401,7 +398,7 @@ bool withinRoadLanelet(
   // nearest lanelet
   constexpr double search_radius = 10.0;  // [m]
   const auto surrounding_lanelets_with_dist =
-    lanelet::geometry::findWithin2D(lanelet_map_ptr->laneletLayer, search_point, search_radius);
+    lanelet::geometry::findWithin2d(lanelet_map_ptr->laneletLayer, search_point, search_radius);
 
   return withinRoadLanelet(object, surrounding_lanelets_with_dist, use_yaw_information);
 }
