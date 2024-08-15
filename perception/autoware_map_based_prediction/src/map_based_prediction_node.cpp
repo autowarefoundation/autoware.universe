@@ -1426,7 +1426,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
       attr.value() == lanelet::AttributeValueString::Walkway) {
       const auto & crosswalk = lanelet;
       surrounding_crosswalks.push_back(crosswalk);
-      if (withinLanelet(object, crosswalk)) {
+      if (std::abs(dist) < 1e-5) {
         crossing_crosswalk = crosswalk;
       }
     }
