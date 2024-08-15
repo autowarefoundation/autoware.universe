@@ -20,7 +20,7 @@ namespace autoware::image_projection_based_fusion
 {
 bool checkCameraInfo(const sensor_msgs::msg::CameraInfo & camera_info)
 {
-  bool is_supported_model =
+  const bool is_supported_model =
     (camera_info.distortion_model == sensor_msgs::distortion_models::PLUMB_BOB ||
      camera_info.distortion_model == sensor_msgs::distortion_models::RATIONAL_POLYNOMIAL);
   if (!is_supported_model) {
@@ -29,7 +29,7 @@ bool checkCameraInfo(const sensor_msgs::msg::CameraInfo & camera_info)
       "checkCameraInfo: Unsupported distortion model: " << camera_info.distortion_model);
     return false;
   }
-  bool is_supported_distortion_param = (camera_info.d.size() == 5 || camera_info.d.size() == 8);
+  const bool is_supported_distortion_param = (camera_info.d.size() == 5 || camera_info.d.size() == 8);
   if (!is_supported_distortion_param) {
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("image_projection_based_fusion"),
