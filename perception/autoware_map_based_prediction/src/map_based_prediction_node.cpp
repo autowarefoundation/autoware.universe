@@ -401,7 +401,7 @@ bool withinRoadLanelet(
   // nearest lanelet
   constexpr double search_radius = 10.0;  // [m]
   const auto surrounding_lanelets_with_dist =
-    lanelet::geometry::findNearest(lanelet_map_ptr->laneletLayer, search_point, search_radius);
+    lanelet::geometry::findWithin2D(lanelet_map_ptr->laneletLayer, search_point, search_radius);
 
   return withinRoadLanelet(object, surrounding_lanelets_with_dist, use_yaw_information);
 }
