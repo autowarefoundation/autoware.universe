@@ -84,10 +84,6 @@ def launch_setup(context, *args, **kwargs):
                 ),
             ]
         )
-    else:
-        raise ValueError(
-            "Invalid motion_publish_mode specified. Please choose 'pose_only' or 'full_motion'."
-        )
 
     simple_planning_simulator_node = Node(
         package="simple_planning_simulator",
