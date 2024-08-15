@@ -182,7 +182,7 @@ TRTBEVDetNode::TRTBEVDetNode(
     MySyncPolicy(10), sub_fl_img_, sub_f_img_, sub_fr_img_, sub_bl_img_, sub_b_img_, sub_br_img_);
 
   sync_->registerCallback(
-    std::bind(&TRTBEVDetNode::callback, this, _1, _2, _3, _4, _5, _6));  // 绑定回调函数
+    std::bind(&TRTBEVDetNode::callback, this, _1, _2, _3, _4, _5, _6));
 }
 
 void image_transport(std::vector<cv::Mat> imgs, uchar * out_imgs, size_t width, size_t height)
@@ -224,7 +224,6 @@ void TRTBEVDetNode::callback(
   imgs.emplace_back(img_b);
   imgs.emplace_back(img_br);
 
-  std::vector<std::vector<char>> imgs_data;
   image_transport(imgs, imgs_dev_, img_w_, img_h_);
 
   // uchar *imgs_dev
