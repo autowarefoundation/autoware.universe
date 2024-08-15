@@ -125,15 +125,9 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
 
   LaneChangePaths valid_paths{};
   const bool is_stuck = isVehicleStuck(current_lanes);
-  bool found_safe_path = getLaneChangePaths(
-    current_lanes, target_lanes, direction_, &valid_paths, lane_change_parameters_->rss_params,
-    is_stuck);
+  bool found_safe_path =
+    getLaneChangePaths(current_lanes, target_lanes, direction_, is_stuck, &valid_paths);
   // if no safe path is found and ego is stuck, try to find a path with a small margin
-  if (!found_safe_path && is_stuck) {
-    found_safe_path = getLaneChangePaths(
-      current_lanes, target_lanes, direction_, &valid_paths,
-      lane_change_parameters_->rss_params_for_stuck, is_stuck);
-  }
 
   lane_change_debug_.valid_paths = valid_paths;
 
@@ -301,6 +295,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   if (!status_.is_valid_path) {
     RCLCPP_DEBUG(logger_, "No valid path found. Returning previous module's path as output.");
+    insertStopPoint(get_current_lanes(), prev_module_output_.path);
     return prev_module_output_;
   }
 
@@ -603,10 +598,12 @@ TurnSignalInfo NormalLaneChange::updateOutputTurnSignal() const
   // The getBehaviorTurnSignalInfo method expects the shifted line to be generated off of the ego's
   // current lane, lane change is different, so we set this flag to false.
   constexpr bool egos_lane_is_shifted = false;
+  constexpr bool is_pull_out = false;
+  constexpr bool is_lane_change = true;
 
   const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
     shift_path, shift_line, current_lanes, current_shift_length, is_driving_forward,
-    egos_lane_is_shifted);
+    egos_lane_is_shifted, is_pull_out, is_lane_change);
   return new_signal;
 }
 
@@ -766,6 +763,31 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
 
   lane_change_debug_.is_able_to_return_to_current_lane = true;
   return true;
+}
+
+bool NormalLaneChange::is_near_terminal() const
+{
+  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+
+  if (current_lanes.empty()) {
+    return true;
+  }
+
+  const auto & current_lanes_terminal = current_lanes.back();
+  const auto & lc_param_ptr = common_data_ptr_->lc_param_ptr;
+  const auto direction = common_data_ptr_->direction;
+  const auto & route_handler_ptr = common_data_ptr_->route_handler_ptr;
+  const auto min_lane_changing_distance = calcMinimumLaneChangeLength(
+    route_handler_ptr, current_lanes_terminal, *lc_param_ptr, direction);
+
+  const auto backward_buffer = calculation::calc_stopping_distance(lc_param_ptr);
+
+  const auto min_lc_dist_with_buffer =
+    backward_buffer + min_lane_changing_distance + lc_param_ptr->lane_change_finish_judge_buffer;
+  const auto dist_from_ego_to_terminal_end =
+    calculation::calc_ego_dist_to_terminal_end(common_data_ptr_);
+
+  return dist_from_ego_to_terminal_end < min_lc_dist_with_buffer;
 }
 
 bool NormalLaneChange::isEgoOnPreparePhase() const
@@ -1162,7 +1184,7 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
     };
 
     if (
-      check_optional_polygon(object, lanes_polygon.expanded_target) && is_lateral_far &&
+      check_optional_polygon(object, lanes_polygon.target) && is_lateral_far &&
       is_before_terminal()) {
       const auto ahead_of_ego =
         utils::lane_change::is_ahead_of_ego(common_data_ptr_, current_lanes_ref_path, object);
@@ -1172,6 +1194,20 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
         target_lane_trailing_objects.push_back(object);
       }
       continue;
+    }
+
+    if (
+      check_optional_polygon(object, lanes_polygon.expanded_target) && is_lateral_far &&
+      is_before_terminal()) {
+      const auto ahead_of_ego =
+        utils::lane_change::is_ahead_of_ego(common_data_ptr_, current_lanes_ref_path, object);
+      constexpr double stopped_obj_vel_th = 1.0;
+      if (object.kinematics.initial_twist_with_covariance.twist.linear.x < stopped_obj_vel_th) {
+        if (ahead_of_ego) {
+          target_lane_leading_objects.push_back(object);
+          continue;
+        }
+      }
     }
 
     const auto is_overlap_target_backward = std::invoke([&]() -> bool {
@@ -1329,9 +1365,7 @@ bool NormalLaneChange::hasEnoughLengthToTrafficLight(
 
 bool NormalLaneChange::getLaneChangePaths(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-  Direction direction, LaneChangePaths * candidate_paths,
-  const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
-  const bool check_safety) const
+  Direction direction, const bool is_stuck, LaneChangePaths * candidate_paths) const
 {
   lane_change_debug_.collision_check_objects.clear();
   if (current_lanes.empty() || target_lanes.empty()) {
@@ -1635,13 +1669,20 @@ bool NormalLaneChange::getLaneChangePaths(
           return false;
         }
 
-        if (!check_safety) {
-          debug_print_lat("ACCEPT!!!: it is valid (and safety check is skipped).");
-          return false;
-        }
+        const auto is_safe = std::invoke([&]() {
+          const auto safety_check_with_normal_rss = isLaneChangePathSafe(
+            *candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params,
+            lane_change_debug_.collision_check_objects);
 
-        const auto [is_safe, is_trailing_object] = isLaneChangePathSafe(
-          *candidate_path, target_objects, rss_params, lane_change_debug_.collision_check_objects);
+          if (!safety_check_with_normal_rss.is_safe && is_stuck) {
+            const auto safety_check_with_stuck_rss = isLaneChangePathSafe(
+              *candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params_for_stuck,
+              lane_change_debug_.collision_check_objects);
+            return safety_check_with_stuck_rss.is_safe;
+          }
+
+          return safety_check_with_normal_rss.is_safe;
+        });
 
         if (is_safe) {
           debug_print_lat("ACCEPT!!!: it is valid and safe!");

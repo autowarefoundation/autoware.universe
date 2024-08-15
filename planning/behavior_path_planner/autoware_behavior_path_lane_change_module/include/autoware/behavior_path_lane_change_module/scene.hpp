@@ -92,6 +92,8 @@ public:
 
   bool isAbleToReturnCurrentLane() const override;
 
+  bool is_near_terminal() const final;
+
   bool isEgoOnPreparePhase() const override;
 
   bool isAbleToStopSafely() const override;
@@ -155,9 +157,7 @@ protected:
 
   bool getLaneChangePaths(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    Direction direction, LaneChangePaths * candidate_paths,
-    const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
-    const bool check_safety = true) const override;
+    Direction direction, const bool is_stuck, LaneChangePaths * candidate_paths) const;
 
   std::optional<LaneChangePath> calcTerminalLaneChangePath(
     const lanelet::ConstLanelets & current_lanes,
