@@ -91,7 +91,7 @@ std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::make_diagnostic(
   return status;
 }
 
-void MotionVelocityPlannerManager::publishDiagnostics(
+void MotionVelocityPlannerManager::publish_diagnostics(
   const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr, const rclcpp::Time & current_time,
   const bool publish_decided_diagnostics_only) const
 {
