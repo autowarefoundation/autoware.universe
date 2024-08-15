@@ -364,9 +364,11 @@ T VehicleCmdGate::getContinuousTopic(
   if ((rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() >= 0.0) {
     return current_topic;
   } else {
-    RCLCPP_INFO(
-      get_logger(),
-      "The operation mode is changed, but the %s is not received yet:", topic_name.c_str());
+    if (topic_name != "") {
+      RCLCPP_INFO(
+        get_logger(),
+        "The operation mode is changed, but the %s is not received yet:", topic_name.c_str());
+    }
     return *prev_topic;
   }
 }
