@@ -24,7 +24,7 @@ bool checkCameraInfo(const sensor_msgs::msg::CameraInfo & camera_info)
     (camera_info.distortion_model == sensor_msgs::distortion_models::PLUMB_BOB ||
      camera_info.distortion_model == sensor_msgs::distortion_models::RATIONAL_POLYNOMIAL);
   if (!is_supported_model) {
-    RCLCPP_WARN_STREAM(
+    RCLCPP_ERROR_STREAM(
       rclcpp::get_logger("image_projection_based_fusion"),
       "checkCameraInfo: Unsupported distortion model: " << camera_info.distortion_model);
     return false;
@@ -32,7 +32,7 @@ bool checkCameraInfo(const sensor_msgs::msg::CameraInfo & camera_info)
   const bool is_supported_distortion_param =
     (camera_info.d.size() == 5 || camera_info.d.size() == 8);
   if (!is_supported_distortion_param) {
-    RCLCPP_WARN_STREAM(
+    RCLCPP_ERROR_STREAM(
       rclcpp::get_logger("image_projection_based_fusion"),
       "checkCameraInfo: Unsupported distortion coefficients size: " << camera_info.d.size());
     return false;
