@@ -28,12 +28,12 @@
         },
         "enable_dust_diag": {
           "type": "boolean",
-          "description": "enable dust diag",
+          "description": "enable dust diagnostic",
           "default": "false"
         },
         "publish_debug_image": {
           "type": "boolean",
-          "description": "eanble debug",
+          "description": "publish debug image",
           "default": "false"
         },
         "dust_ratio_threshold": {
