@@ -226,7 +226,7 @@ void AstarSearch::setCollisionFreeDistanceMap()
         const IndexXY n_index{x, y};
         const double offset = std::abs(offset_x) + std::abs(offset_y);
         if (isOutOfRange(n_index) || isObs(n_index) || offset < 1) continue;
-        if (getObstacleEDT(n_index) < 0.5 * collision_vehicle_shape_.width) continue;
+        if (getObstacleEDT(n_index).distance < 0.5 * collision_vehicle_shape_.width) continue;
         const int n_id = indexToId(n_index);
         const double dist = current.second + (sqrt(offset) * costmap_.info.resolution);
         if (closed[n_id] || col_free_distance_map_[n_id] < dist) continue;
@@ -246,7 +246,7 @@ void AstarSearch::setStartNode(const double cost_offset)
   start_node->set(start_pose_, 0.0, initial_cost, 0, false);
   start_node->dir_distance = 0.0;
   start_node->dist_to_goal = calcDistance2d(start_pose_, goal_pose_);
-  start_node->dist_to_obs = getObstacleEDT(index);
+  start_node->dist_to_obs = getObstacleEDT(index).distance;
   start_node->status = NodeStatus::Open;
   start_node->parent = nullptr;
 
@@ -323,7 +323,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
     AstarNode * next_node = &graph_[getKey(next_index)];
     if (next_node->status == NodeStatus::Closed || detectCollision(next_index)) continue;
 
-    const double distance_to_obs = getObstacleEDT(next_index);
+    const auto obs_edt = getObstacleEDT(next_index);
     const bool is_direction_switch =
       (current_node.parent != nullptr) && (is_back != current_node.is_back);
 
@@ -333,7 +333,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
 
     double move_cost = current_node.gc + (total_weight * std::abs(distance));
     move_cost += getSteeringChangeCost(steering_index, current_node.steering_index);
-    move_cost += getObsDistanceCost(distance_to_obs);
+    move_cost += getObsDistanceCost(next_index, obs_edt);
     move_cost += getLatDistanceCost(next_pose);
     if (is_direction_switch) move_cost += getDirectionChangeCost(current_node.dir_distance);
 
@@ -345,7 +345,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
       next_node->dir_distance =
         std::abs(distance) + (is_direction_switch ? 0.0 : current_node.dir_distance);
       next_node->dist_to_goal = calcDistance2d(next_pose, goal_pose_);
-      next_node->dist_to_obs = distance_to_obs;
+      next_node->dist_to_obs = obs_edt.distance;
       next_node->parent = &current_node;
       openlist_.push(next_node);
       continue;
@@ -383,10 +383,16 @@ double AstarSearch::getDirectionChangeCost(const double dir_distance) const
   return planner_common_param_.direction_change_weight * (1.0 + (1.0 / (1.0 + dir_distance)));
 }
 
-double AstarSearch::getObsDistanceCost(const double obs_distance) const
+double AstarSearch::getObsDistanceCost(const IndexXYT & index, const EDTData & obs_edt) const
 {
+  if (obs_edt.distance > collision_vehicle_shape_.max_dimension + cost_free_obs_dist) {
+    return 0.0;
+  }
+  const double yaw = index.theta * (2.0 * M_PI / planner_common_param_.theta_size);
+  const double base_to_frame_dist = getVehicleBaseToFrameDistance(yaw - obs_edt.angle);
+  const double vehicle_to_obs_dist = std::max(obs_edt.distance - base_to_frame_dist, 0.0);
   return astar_param_.obstacle_distance_weight *
-         std::max(1.0 - (obs_distance / cost_free_obs_dist), 0.0);
+         std::max(1.0 - (vehicle_to_obs_dist / cost_free_obs_dist), 0.0);
 }
 
 double AstarSearch::getLatDistanceCost(const Pose & pose) const

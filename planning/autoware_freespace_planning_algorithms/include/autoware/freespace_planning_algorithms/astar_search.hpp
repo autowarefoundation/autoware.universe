@@ -145,7 +145,7 @@ private:
   double getSteeringCost(const int steering_index) const;
   double getSteeringChangeCost(const int steering_index, const int prev_steering_index) const;
   double getDirectionChangeCost(const double dir_distance) const;
-  double getObsDistanceCost(const double obs_distance) const;
+  double getObsDistanceCost(const IndexXYT & index, const EDTData & obs_edt) const;
   double getLatDistanceCost(const Pose & pose) const;
 
   // Algorithm specific param
@@ -190,7 +190,7 @@ private:
   static constexpr double multi_goal_backward_cost_offset = 5.0;
 
   // cost free obstacle distance
-  static constexpr double cost_free_obs_dist = 5.0;
+  static constexpr double cost_free_obs_dist = 1.0;
 };
 }  // namespace autoware::freespace_planning_algorithms
 
