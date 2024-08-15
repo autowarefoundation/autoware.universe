@@ -772,6 +772,46 @@ bool isObviousAvoidanceTarget(
     }
   }
 
+  if (object.behavior == ObjectData::Behavior::MERGING) {
+    object.info = ObjectInfo::MERGING_TO_EGO_LANE;
+    if (
+      isOnRight(object) && !object.is_on_ego_lane &&
+      object.overhang_points.front().first < parameters->th_overhang_distance) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace),
+        "merging vehicle. but overhang distance is less than threshold.");
+      return true;
+    }
+    if (
+      !isOnRight(object) && !object.is_on_ego_lane &&
+      object.overhang_points.front().first > -1.0 * parameters->th_overhang_distance) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace),
+        "merging vehicle. but overhang distance is less than threshold.");
+      return true;
+    }
+  }
+
+  if (object.behavior == ObjectData::Behavior::DEVIATING) {
+    object.info = ObjectInfo::DEVIATING_FROM_EGO_LANE;
+    if (
+      isOnRight(object) && !object.is_on_ego_lane &&
+      object.overhang_points.front().first < parameters->th_overhang_distance) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace),
+        "deviating vehicle. but overhang distance is less than threshold.");
+      return true;
+    }
+    if (
+      !isOnRight(object) && !object.is_on_ego_lane &&
+      object.overhang_points.front().first > -1.0 * parameters->th_overhang_distance) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace),
+        "deviating vehicle. but overhang distance is less than threshold.");
+      return true;
+    }
+  }
+
   if (!object.is_parked) {
     object.info = ObjectInfo::IS_NOT_PARKING_OBJECT;
   }
@@ -2282,10 +2322,9 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   Pose p_reference_ego_front = reference_path.points.front().point.pose;
   Pose p_spline_ego_front = spline_path.points.front().point.pose;
   double next_longitudinal_distance = parameters->resample_interval_for_output;
+  const auto offset = arc_length_array.at(ego_idx);
   for (size_t i = 0; i < points_size; ++i) {
-    const auto distance_from_ego =
-      autoware::motion_utils::calcSignedArcLength(reference_path.points, ego_idx, i);
-    if (distance_from_ego > object_check_forward_distance) {
+    if (arc_length_array.at(i) > object_check_forward_distance + offset) {
       break;
     }
 
