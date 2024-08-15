@@ -1,6 +1,6 @@
 <launch>
   <arg name="lanelet2_map_filter_param_file" default="$(find-pkg-share autoware_pointcloud_preprocessor)/config/lanelet2_map_filter_node.param.yaml"/>
-  <node pkg="autoware_pointcloud_preprocessor" exec="vector_map_filter_node" name="lanelet2_map_filter">
+  <node pkg="autoware_pointcloud_preprocessor" exec="vector_map_filter_node" name="vector_map_filter_node">
     <param from="$(var lanelet2_map_filter_param_file)"/>
   </node>
 </launch>
