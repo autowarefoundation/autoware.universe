@@ -193,10 +193,10 @@
             "rough_velocity_rate"
           ],
           "additionalProperties": false
-        },
-        "required": ["adaptive_cruise_control"],
-        "additionalProperties": false
-      }
+        }
+      },
+      "required": ["adaptive_cruise_control"],
+      "additionalProperties": false
     }
   },
   "properties": {
