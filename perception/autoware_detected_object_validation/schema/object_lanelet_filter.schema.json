@@ -11,7 +11,7 @@
           "properties": {
             "UNKNOWN": {
               "type": "boolean",
-              "default": true,
+              "default": false,
               "description": "If true, unknown objects are filtered."
             },
             "CAR": {
