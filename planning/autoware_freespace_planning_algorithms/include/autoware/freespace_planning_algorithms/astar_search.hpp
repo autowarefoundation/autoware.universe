@@ -48,11 +48,13 @@ struct AstarParam
   bool use_back;               // backward search
   bool adapt_expansion_distance;
   double expansion_distance;
+  double near_goal_distance;
 
   // search configs
   double distance_heuristic_weight;  // obstacle threshold on grid [0,255]
   double smoothness_weight;
   double obstacle_distance_weight;
+  double goal_lat_distance_weight;
 };
 
 struct AstarNode
@@ -107,9 +109,11 @@ public:
         node.declare_parameter<bool>("astar.use_back"),
         node.declare_parameter<bool>("astar.adapt_expansion_distance"),
         node.declare_parameter<double>("astar.expansion_distance"),
+        node.declare_parameter<double>("astar.near_goal_distance"),
         node.declare_parameter<double>("astar.distance_heuristic_weight"),
         node.declare_parameter<double>("astar.smoothness_weight"),
-        node.declare_parameter<double>("astar.obstacle_distance_weight")})
+        node.declare_parameter<double>("astar.obstacle_distance_weight"),
+        node.declare_parameter<double>("astar.goal_lat_distance_weight")})
   {
   }
 
@@ -142,6 +146,7 @@ private:
   double getSteeringChangeCost(const int steering_index, const int prev_steering_index) const;
   double getDirectionChangeCost(const double dir_distance) const;
   double getObsDistanceCost(const double obs_distance) const;
+  double getLatDistanceCost(const Pose & pose) const;
 
   // Algorithm specific param
   AstarParam astar_param_;
@@ -168,7 +173,9 @@ private:
   double avg_turning_radius_;
   double min_expansion_dist_;
   double max_expansion_dist_;
+  double near_goal_dist_;
   bool is_backward_search_;
+  bool is_multiple_goals_;
 
   // the following constexpr values were found to be best by trial and error, through multiple
   // tests, and are not expected to be changed regularly, therefore they were not made into ros

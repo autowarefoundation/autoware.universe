@@ -93,6 +93,9 @@ AstarSearch::AstarSearch(
 
   min_expansion_dist_ = astar_param_.expansion_distance;
   max_expansion_dist_ = collision_vehicle_shape_.base_length * base_length_max_expansion_factor_;
+
+  near_goal_dist_ =
+    std::max(astar_param.near_goal_distance, planner_common_param.longitudinal_goal_range);
 }
 
 void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
@@ -132,6 +135,8 @@ bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
 
   setCollisionFreeDistanceMap();
 
+  is_multiple_goals_ = false;
+
   setStartNode();
 
   if (!search()) {
@@ -169,6 +174,8 @@ bool AstarSearch::makePlan(
   goal_pose_ = is_backward_search_ ? start_pose_ : goals_local.front();
 
   setCollisionFreeDistanceMap();
+
+  is_multiple_goals_ = true;
 
   if (is_backward_search_) {
     double cost_offset = 0.0;
@@ -327,6 +334,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
     double move_cost = current_node.gc + (total_weight * std::abs(distance));
     move_cost += getSteeringChangeCost(steering_index, current_node.steering_index);
     move_cost += getObsDistanceCost(distance_to_obs);
+    move_cost += getLatDistanceCost(next_pose);
     if (is_direction_switch) move_cost += getDirectionChangeCost(current_node.dir_distance);
 
     double total_cost = move_cost + estimateCost(next_pose, next_index);
@@ -379,6 +387,16 @@ double AstarSearch::getObsDistanceCost(const double obs_distance) const
 {
   return astar_param_.obstacle_distance_weight *
          std::max(1.0 - (obs_distance / cost_free_obs_dist), 0.0);
+}
+
+double AstarSearch::getLatDistanceCost(const Pose & pose) const
+{
+  if (is_multiple_goals_) return 0.0;
+  const auto ref_pose = is_backward_search_ ? start_pose_ : goal_pose_;
+  const double distance_to_goal = calcDistance2d(pose, ref_pose);
+  if (distance_to_goal > near_goal_dist_) return 0.0;
+  const double lat_distance = std::abs(calcRelativePose(ref_pose, pose).position.y);
+  return astar_param_.goal_lat_distance_weight * lat_distance;
 }
 
 void AstarSearch::setPath(const AstarNode & goal_node)

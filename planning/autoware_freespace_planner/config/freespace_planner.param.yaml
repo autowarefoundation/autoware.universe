@@ -35,9 +35,11 @@
       use_back: true
       adapt_expansion_distance: true
       expansion_distance: 0.5
+      near_goal_distance: 4.0
       distance_heuristic_weight: 1.5
       smoothness_weight: 0.5
       obstacle_distance_weight: 1.5
+      goal_lat_distance_weight: 5.0
 
     # -- RRT* search Configurations --
     rrtstar:
