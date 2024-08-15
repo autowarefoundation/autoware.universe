@@ -295,7 +295,7 @@ void MotionVelocityPlannerNode::on_trajectory(
   processing_time_msg.data = processing_times["Total"];
   processing_time_publisher_->publish(processing_time_msg);
 
-  planner_manager_.publishDiagnostics(diagnostics_pub_, get_clock()->now(), true);
+  planner_manager_.publish_diagnostics(diagnostics_pub_, get_clock()->now(), true);
   planner_manager_.clearDiagnostics();
 }
 
