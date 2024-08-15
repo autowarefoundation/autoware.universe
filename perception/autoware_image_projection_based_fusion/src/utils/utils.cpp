@@ -29,7 +29,8 @@ bool checkCameraInfo(const sensor_msgs::msg::CameraInfo & camera_info)
       "checkCameraInfo: Unsupported distortion model: " << camera_info.distortion_model);
     return false;
   }
-  const bool is_supported_distortion_param = (camera_info.d.size() == 5 || camera_info.d.size() == 8);
+  const bool is_supported_distortion_param =
+    (camera_info.d.size() == 5 || camera_info.d.size() == 8);
   if (!is_supported_distortion_param) {
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("image_projection_based_fusion"),
