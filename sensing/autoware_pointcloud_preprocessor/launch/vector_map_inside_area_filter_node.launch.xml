@@ -1,12 +1,14 @@
 <launch>
-  <arg name="input_frame" default=""/>
-  <arg name="output_frame" default=""/>
+  <arg name="input_vector_map" default="input_vector_map"/>
+  <arg name="input_pointcloud" default="compare_map_filtered/pointcloud"/>
+  <arg name="ouput_pointcloud" default="vector_map_inside_area_filtered/pointcloud"/>
   <arg name="vector_map_inside_area_filter_param_file" default="$(find-pkg-share autoware_pointcloud_preprocessor)/config/vector_map_inside_area_filter_node.param.yaml"/>
   <arg name="filter_param_file" default="$(find-pkg-share autoware_pointcloud_preprocessor)/config/filter.param.yaml"/>
   <node pkg="autoware_pointcloud_preprocessor" exec="vector_map_inside_area_filter_node" name="vector_map_inside_area_filter_node">
     <param from="$(var vector_map_inside_area_filter_param_file)"/>
     <param from="$(var filter_param_file)"/>
-    <param name="input_frame" value="$(var input_frame)"/>
-    <param name="output_frame" value="$(var output_frame)"/>
+    <param name="input/vector_map" value="$(var input_vector_map)"/>
+    <param name="input" value="$(var input_pointcloud)"/>
+    <param name="output" value="$(var ouput_pointcloud)"/>
   </node>
 </launch>
