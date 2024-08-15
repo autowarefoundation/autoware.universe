@@ -47,20 +47,22 @@ double calc_dist_from_pose_to_terminal_end(
 
 double calc_dist_to_last_fit_width(
   const lanelet::ConstLanelets lanelets, const Pose & src_pose,
-  const BehaviorPathPlannerParameters & common_param, const double margin)
+  const BehaviorPathPlannerParameters & bpp_param, const double margin)
 {
   if (lanelets.empty()) return 0.0;
 
   const auto lane_polygon = lanelets.back().polygon2d().basicPolygon();
   const auto center_line = lanelet::utils::generateFineCenterline(lanelets.back(), 1.0);
+
+  if (center_line.size() <= 1) return 0.0;
+
   universe_utils::LineString2d line_string;
   line_string.reserve(center_line.size() - 1);
-  auto it = center_line.begin() + 1;
-  for (; it < center_line.end(); ++it) {
-    boost::geometry::append(line_string, universe_utils::Point2d(it->x(), it->y()));
-  }
+  std::for_each(center_line.begin() + 1, center_line.end(), [&line_string](const auto & point) {
+    boost::geometry::append(line_string, universe_utils::Point2d(point.x(), point.y()));
+  });
 
-  const double buffer_distance = 0.5 * common_param.vehicle_width + margin;
+  const double buffer_distance = 0.5 * bpp_param.vehicle_width + margin;
   universe_utils::MultiPolygon2d center_line_polygon;
   namespace strategy = boost::geometry::strategy::buffer;
   boost::geometry::buffer(
@@ -85,6 +87,6 @@ double calc_dist_to_last_fit_width(
     distance = std::min(distance, utils::getSignedDistance(src_pose, pose, lanelets));
   }
 
-  return std::max(distance - (common_param.base_link2front + margin), 0.0);
+  return std::max(distance - (bpp_param.base_link2front + margin), 0.0);
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation

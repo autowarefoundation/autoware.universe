@@ -50,13 +50,13 @@ double calc_dist_from_pose_to_terminal_end(
  *
  * @param lanelets current ego lanelets
  * @param src_pose source pose to calculate distance from
- * @param common_param common parameters used in behavior path planner.
+ * @param bpp_param common parameters used in behavior path planner.
  * @param margin additional margin for checking lane width
  * @return distance to last fit width position along the lane
  */
 double calc_dist_to_last_fit_width(
   const lanelet::ConstLanelets lanelets, const Pose & src_pose,
-  const BehaviorPathPlannerParameters & common_param, const double margin = 0.1);
+  const BehaviorPathPlannerParameters & bpp_param, const double margin = 0.1);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__CALCULATION_HPP_
