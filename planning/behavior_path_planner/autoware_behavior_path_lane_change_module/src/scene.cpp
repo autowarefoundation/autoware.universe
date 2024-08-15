@@ -125,15 +125,9 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
 
   LaneChangePaths valid_paths{};
   const bool is_stuck = isVehicleStuck(current_lanes);
-  bool found_safe_path = getLaneChangePaths(
-    current_lanes, target_lanes, direction_, &valid_paths, lane_change_parameters_->rss_params,
-    is_stuck);
+  bool found_safe_path =
+    getLaneChangePaths(current_lanes, target_lanes, direction_, is_stuck, &valid_paths);
   // if no safe path is found and ego is stuck, try to find a path with a small margin
-  if (!found_safe_path && is_stuck) {
-    found_safe_path = getLaneChangePaths(
-      current_lanes, target_lanes, direction_, &valid_paths,
-      lane_change_parameters_->rss_params_for_stuck, is_stuck);
-  }
 
   lane_change_debug_.valid_paths = valid_paths;
 
@@ -301,6 +295,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   if (!status_.is_valid_path) {
     RCLCPP_DEBUG(logger_, "No valid path found. Returning previous module's path as output.");
+    insertStopPoint(get_current_lanes(), prev_module_output_.path);
     return prev_module_output_;
   }
 
@@ -465,7 +460,8 @@ void NormalLaneChange::insertStopPoint(
     //    [ego]>          | <--- lane change margin --->  [obj]>
     //  ----------------------------------------------------------
     const bool has_blocking_target_lane_obj = std::any_of(
-      target_objects.target_lane.begin(), target_objects.target_lane.end(), [&](const auto & o) {
+      target_objects.target_lane_leading.begin(), target_objects.target_lane_leading.end(),
+      [&](const auto & o) {
         const auto v = std::abs(o.initial_twist.twist.linear.x);
         if (v > lane_change_parameters_->stop_velocity_threshold) {
           return false;
@@ -602,10 +598,12 @@ TurnSignalInfo NormalLaneChange::updateOutputTurnSignal() const
   // The getBehaviorTurnSignalInfo method expects the shifted line to be generated off of the ego's
   // current lane, lane change is different, so we set this flag to false.
   constexpr bool egos_lane_is_shifted = false;
+  constexpr bool is_pull_out = false;
+  constexpr bool is_lane_change = true;
 
   const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
     shift_path, shift_line, current_lanes, current_shift_length, is_driving_forward,
-    egos_lane_is_shifted);
+    egos_lane_is_shifted, is_pull_out, is_lane_change);
   return new_signal;
 }
 
@@ -973,32 +971,32 @@ PathWithLaneId NormalLaneChange::getPrepareSegment(
   return prepare_segment;
 }
 
-ExtendedPredictedObjects NormalLaneChange::getTargetObjects(
-  const LaneChangeLanesFilteredObjects & filtered_objects,
+lane_change::TargetObjects NormalLaneChange::getTargetObjects(
+  const FilteredByLanesExtendedObjects & filtered_objects,
   const lanelet::ConstLanelets & current_lanes) const
 {
-  ExtendedPredictedObjects target_objects = filtered_objects.target_lane;
+  ExtendedPredictedObjects leading_objects = filtered_objects.target_lane_leading;
   const auto is_stuck = isVehicleStuck(current_lanes);
   const auto chk_obj_in_curr_lanes = lane_change_parameters_->check_objects_on_current_lanes;
   if (chk_obj_in_curr_lanes || is_stuck) {
-    target_objects.insert(
-      target_objects.end(), filtered_objects.current_lane.begin(),
+    leading_objects.insert(
+      leading_objects.end(), filtered_objects.current_lane.begin(),
       filtered_objects.current_lane.end());
   }
 
   const auto chk_obj_in_other_lanes = lane_change_parameters_->check_objects_on_other_lanes;
   if (chk_obj_in_other_lanes) {
-    target_objects.insert(
-      target_objects.end(), filtered_objects.other_lane.begin(), filtered_objects.other_lane.end());
+    leading_objects.insert(
+      leading_objects.end(), filtered_objects.other_lane.begin(),
+      filtered_objects.other_lane.end());
   }
 
-  return target_objects;
+  return {leading_objects, filtered_objects.target_lane_trailing};
 }
 
-LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
+FilteredByLanesExtendedObjects NormalLaneChange::filterObjects() const
 {
   const auto & route_handler = getRouteHandler();
-  const auto & common_parameters = planner_data_->parameters;
   auto objects = *planner_data_->dynamic_object;
   utils::path_safety_checker::filterObjectsByClass(
     objects, lane_change_parameters_->object_types_to_check);
@@ -1019,10 +1017,6 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
     return {};
   }
 
-  std::vector<PredictedObject> target_lane_objects;
-  std::vector<PredictedObject> current_lane_objects;
-  std::vector<PredictedObject> other_lane_objects;
-
   const auto & target_lanes = get_target_lanes();
 
   if (target_lanes.empty()) {
@@ -1032,8 +1026,7 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
   const auto path =
     route_handler->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
 
-  filterObjectsByLanelets(
-    objects, path, current_lane_objects, target_lane_objects, other_lane_objects);
+  auto filtered_by_lanes_objects = filterObjectsByLanelets(objects, path);
 
   const auto is_within_vel_th = [](const auto & object) -> bool {
     constexpr double min_vel_th = 1.0;
@@ -1042,14 +1035,12 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
   };
 
   utils::path_safety_checker::filterObjects(
-    target_lane_objects, [&](const PredictedObject & object) {
-      const auto ahead_of_ego = utils::lane_change::is_ahead_of_ego(common_data_ptr_, path, object);
-      return is_within_vel_th(object) || ahead_of_ego;
-    });
+    filtered_by_lanes_objects.target_lane_trailing,
+    [&](const PredictedObject & object) { return is_within_vel_th(object); });
 
   if (lane_change_parameters_->check_objects_on_other_lanes) {
     utils::path_safety_checker::filterObjects(
-      other_lane_objects, [&](const PredictedObject & object) {
+      filtered_by_lanes_objects.other_lane, [&](const PredictedObject & object) {
         const auto ahead_of_ego =
           utils::lane_change::is_ahead_of_ego(common_data_ptr_, path, object);
         return is_within_vel_th(object) && ahead_of_ego;
@@ -1057,34 +1048,27 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
   }
 
   utils::path_safety_checker::filterObjects(
-    current_lane_objects, [&](const PredictedObject & object) {
+    filtered_by_lanes_objects.current_lane, [&](const PredictedObject & object) {
       const auto ahead_of_ego = utils::lane_change::is_ahead_of_ego(common_data_ptr_, path, object);
       return is_within_vel_th(object) && ahead_of_ego;
     });
 
-  LaneChangeLanesFilteredObjects lane_change_target_objects;
-
   const auto is_check_prepare_phase = check_prepare_phase();
-  std::for_each(target_lane_objects.begin(), target_lane_objects.end(), [&](const auto & object) {
-    auto extended_predicted_object = utils::lane_change::transform(
-      object, common_parameters, *lane_change_parameters_, is_check_prepare_phase);
-    lane_change_target_objects.target_lane.push_back(extended_predicted_object);
-  });
+  const auto target_lane_leading_extended_objects =
+    utils::lane_change::transform_to_extended_objects(
+      common_data_ptr_, filtered_by_lanes_objects.target_lane_leading, is_check_prepare_phase);
+  const auto target_lane_trailing_extended_objects =
+    utils::lane_change::transform_to_extended_objects(
+      common_data_ptr_, filtered_by_lanes_objects.target_lane_trailing, is_check_prepare_phase);
+  const auto current_lane_extended_objects = utils::lane_change::transform_to_extended_objects(
+    common_data_ptr_, filtered_by_lanes_objects.current_lane, is_check_prepare_phase);
+  const auto other_lane_extended_objects = utils::lane_change::transform_to_extended_objects(
+    common_data_ptr_, filtered_by_lanes_objects.other_lane, is_check_prepare_phase);
 
-  std::for_each(current_lane_objects.begin(), current_lane_objects.end(), [&](const auto & object) {
-    auto extended_predicted_object = utils::lane_change::transform(
-      object, common_parameters, *lane_change_parameters_, is_check_prepare_phase);
-    lane_change_target_objects.current_lane.push_back(extended_predicted_object);
-  });
-
-  std::for_each(other_lane_objects.begin(), other_lane_objects.end(), [&](const auto & object) {
-    auto extended_predicted_object = utils::lane_change::transform(
-      object, common_parameters, *lane_change_parameters_, is_check_prepare_phase);
-    lane_change_target_objects.other_lane.push_back(extended_predicted_object);
-  });
-
+  FilteredByLanesExtendedObjects lane_change_target_objects(
+    current_lane_extended_objects, target_lane_leading_extended_objects,
+    target_lane_trailing_extended_objects, other_lane_extended_objects);
   lane_change_debug_.filtered_objects = lane_change_target_objects;
-
   return lane_change_target_objects;
 }
 
@@ -1115,12 +1099,14 @@ void NormalLaneChange::filterOncomingObjects(PredictedObjects & objects) const
   });
 }
 
-void NormalLaneChange::filterObjectsByLanelets(
-  const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path,
-  std::vector<PredictedObject> & current_lane_objects,
-  std::vector<PredictedObject> & target_lane_objects,
-  std::vector<PredictedObject> & other_lane_objects) const
+FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
+  const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path) const
 {
+  std::vector<PredictedObject> target_lane_leading_objects;
+  std::vector<PredictedObject> target_lane_trailing_objects;
+  std::vector<PredictedObject> current_lane_objects;
+  std::vector<PredictedObject> other_lane_objects;
+
   const auto & current_pose = getEgoPose();
   const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
   const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
@@ -1152,12 +1138,11 @@ void NormalLaneChange::filterObjectsByLanelets(
   const auto dist_ego_to_current_lanes_center =
     lanelet::utils::getLateralDistanceToClosestLanelet(current_lanes, current_pose);
 
-  {
-    const auto reserve_size = objects.objects.size();
-    current_lane_objects.reserve(reserve_size);
-    target_lane_objects.reserve(reserve_size);
-    other_lane_objects.reserve(reserve_size);
-  }
+  const auto reserve_size = objects.objects.size();
+  current_lane_objects.reserve(reserve_size);
+  target_lane_leading_objects.reserve(reserve_size);
+  target_lane_trailing_objects.reserve(reserve_size);
+  other_lane_objects.reserve(reserve_size);
 
   for (const auto & object : objects.objects) {
     const auto is_lateral_far = std::invoke([&]() -> bool {
@@ -1176,7 +1161,13 @@ void NormalLaneChange::filterObjectsByLanelets(
     if (
       check_optional_polygon(object, lanes_polygon.expanded_target) && is_lateral_far &&
       is_before_terminal()) {
-      target_lane_objects.push_back(object);
+      const auto ahead_of_ego =
+        utils::lane_change::is_ahead_of_ego(common_data_ptr_, current_lanes_ref_path, object);
+      if (ahead_of_ego) {
+        target_lane_leading_objects.push_back(object);
+      } else {
+        target_lane_trailing_objects.push_back(object);
+      }
       continue;
     }
 
@@ -1191,7 +1182,7 @@ void NormalLaneChange::filterObjectsByLanelets(
 
     // check if the object intersects with target backward lanes
     if (is_overlap_target_backward) {
-      target_lane_objects.push_back(object);
+      target_lane_trailing_objects.push_back(object);
       continue;
     }
 
@@ -1203,6 +1194,10 @@ void NormalLaneChange::filterObjectsByLanelets(
 
     other_lane_objects.push_back(object);
   }
+
+  return {
+    current_lane_objects, target_lane_leading_objects, target_lane_trailing_objects,
+    other_lane_objects};
 }
 
 PathWithLaneId NormalLaneChange::getTargetSegment(
@@ -1331,9 +1326,7 @@ bool NormalLaneChange::hasEnoughLengthToTrafficLight(
 
 bool NormalLaneChange::getLaneChangePaths(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-  Direction direction, LaneChangePaths * candidate_paths,
-  const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
-  const bool check_safety) const
+  Direction direction, const bool is_stuck, LaneChangePaths * candidate_paths) const
 {
   lane_change_debug_.collision_check_objects.clear();
   if (current_lanes.empty() || target_lanes.empty()) {
@@ -1417,6 +1410,13 @@ bool NormalLaneChange::getLaneChangePaths(
         continue;
       }
 
+      if (!candidate_paths->empty()) {
+        const auto prev_prep_diff = candidate_paths->back().info.length.prepare - prepare_length;
+        if (std::abs(prev_prep_diff) < lane_change_parameters_->skip_process_lon_diff_th_prepare) {
+          RCLCPP_DEBUG(logger_, "Skip: Change in prepare length is less than threshold.");
+          continue;
+        }
+      }
       auto prepare_segment = getPrepareSegment(current_lanes, backward_path_length, prepare_length);
 
       const auto debug_print = [&](const auto & s) {
@@ -1488,6 +1488,21 @@ bool NormalLaneChange::getLaneChangePaths(
             lane_changing_time, sampled_longitudinal_acc, longitudinal_acc_on_lane_changing,
             lane_changing_length);
         };
+        if (!candidate_paths->empty()) {
+          const auto prev_prep_diff = candidate_paths->back().info.length.prepare - prepare_length;
+          const auto lc_length_diff =
+            candidate_paths->back().info.length.lane_changing - lane_changing_length;
+
+          // We only check lc_length_diff if and only if the current prepare_length is equal to the
+          // previous prepare_length.
+          if (
+            std::abs(prev_prep_diff) < eps &&
+            std::abs(lc_length_diff) <
+              lane_change_parameters_->skip_process_lon_diff_th_lane_changing) {
+            RCLCPP_DEBUG(logger_, "Skip: Change in lane changing length is less than threshold.");
+            continue;
+          }
+        }
 
         if (lane_changing_length + prepare_length > dist_to_end_of_current_lanes) {
           debug_print_lat("Reject: length of lane changing path is longer than length to goal!!");
@@ -1607,7 +1622,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
         if (
           !is_stuck && !utils::lane_change::passed_parked_objects(
-                         common_data_ptr_, *candidate_path, filtered_objects.target_lane,
+                         common_data_ptr_, *candidate_path, filtered_objects.target_lane_leading,
                          lane_change_buffer, lane_change_debug_.collision_check_objects)) {
           debug_print_lat(
             "Reject: parking vehicle exists in the target lane, and the ego is not in stuck. Skip "
@@ -1615,13 +1630,20 @@ bool NormalLaneChange::getLaneChangePaths(
           return false;
         }
 
-        if (!check_safety) {
-          debug_print_lat("ACCEPT!!!: it is valid (and safety check is skipped).");
-          return false;
-        }
+        const auto is_safe = std::invoke([&]() {
+          const auto safety_check_with_normal_rss = isLaneChangePathSafe(
+            *candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params,
+            lane_change_debug_.collision_check_objects);
 
-        const auto [is_safe, is_object_coming_from_rear] = isLaneChangePathSafe(
-          *candidate_path, target_objects, rss_params, lane_change_debug_.collision_check_objects);
+          if (!safety_check_with_normal_rss.is_safe && is_stuck) {
+            const auto safety_check_with_stuck_rss = isLaneChangePathSafe(
+              *candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params_for_stuck,
+              lane_change_debug_.collision_check_objects);
+            return safety_check_with_stuck_rss.is_safe;
+          }
+
+          return safety_check_with_normal_rss.is_safe;
+        });
 
         if (is_safe) {
           debug_print_lat("ACCEPT!!!: it is valid and safe!");
@@ -1798,7 +1820,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     common_data_ptr_->route_handler_ptr->getLateralIntervalsToPreferredLane(current_lanes.back()));
 
   const auto has_passed_parked_objects = utils::lane_change::passed_parked_objects(
-    common_data_ptr_, path, filtered_objects.target_lane, min_lc_length, debug_data);
+    common_data_ptr_, path, filtered_objects.target_lane_leading, min_lc_length, debug_data);
 
   if (!has_passed_parked_objects) {
     RCLCPP_DEBUG(logger_, "Lane change has been delayed.");
@@ -1886,13 +1908,13 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
   return true;
 }
 
-bool NormalLaneChange::isRequiredStop(const bool is_object_coming_from_rear)
+bool NormalLaneChange::isRequiredStop(const bool is_trailing_object)
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   const auto threshold = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
   if (
     isNearEndOfCurrentLanes(get_current_lanes(), get_target_lanes(), threshold) &&
-    isAbleToStopSafely() && is_object_coming_from_rear) {
+    isAbleToStopSafely() && is_trailing_object) {
     current_lane_change_state_ = LaneChangeStates::Stop;
     return true;
   }
@@ -2042,16 +2064,18 @@ bool NormalLaneChange::calcAbortPath()
 }
 
 PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
-  const LaneChangePath & lane_change_path, const ExtendedPredictedObjects & collision_check_objects,
+  const LaneChangePath & lane_change_path,
+  const lane_change::TargetObjects & collision_check_objects,
   const utils::path_safety_checker::RSSparams & rss_params,
   CollisionCheckDebugMap & debug_data) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  PathSafetyStatus path_safety_status;
+  constexpr auto is_safe = true;
+  constexpr auto is_object_behind_ego = true;
 
-  if (collision_check_objects.empty()) {
+  if (collision_check_objects.leading.empty() && collision_check_objects.trailing.empty()) {
     RCLCPP_DEBUG(logger_, "There is nothing to check.");
-    return path_safety_status;
+    return {is_safe, !is_object_behind_ego};
   }
 
   const auto & path = lane_change_path.path;
@@ -2060,11 +2084,10 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
   const auto current_twist = getEgoTwist();
 
   if (path.points.empty()) {
-    path_safety_status.is_safe = false;
-    return path_safety_status;
+    return {!is_safe, !is_object_behind_ego};
   }
 
-  const double & time_resolution = lane_change_parameters_->prediction_time_resolution;
+  const auto time_resolution = lane_change_parameters_->prediction_time_resolution;
 
   const auto ego_predicted_path = utils::lane_change::convertToPredictedPath(
     lane_change_path, current_twist, current_pose, common_parameters, *lane_change_parameters_,
@@ -2077,7 +2100,7 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
 
   constexpr double collision_check_yaw_diff_threshold{M_PI};
 
-  for (const auto & obj : collision_check_objects) {
+  const auto check_collision = [&](const ExtendedPredictedObject & obj) {
     auto current_debug_data = utils::path_safety_checker::createObjectDebug(obj);
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
       obj, lane_change_parameters_->use_all_predicted_path);
@@ -2110,21 +2133,28 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
         continue;
       }
 
-      is_safe = false;
-      path_safety_status.is_safe = false;
       utils::path_safety_checker::updateCollisionCheckDebugMap(
-        debug_data, current_debug_data, is_safe);
-      const auto & obj_pose = obj.initial_pose.pose;
-      const auto obj_polygon = autoware::universe_utils::toPolygon2d(obj_pose, obj.shape);
-      path_safety_status.is_object_coming_from_rear |=
-        !utils::path_safety_checker::isTargetObjectFront(
-          path, current_pose, common_parameters.vehicle_info, obj_polygon);
+        debug_data, current_debug_data, !is_safe);
+      return !is_safe;
     }
     utils::path_safety_checker::updateCollisionCheckDebugMap(
       debug_data, current_debug_data, is_safe);
+    return is_safe;
+  };
+
+  for (const auto & obj : collision_check_objects.trailing) {
+    if (!check_collision(obj)) {
+      return {!is_safe, is_object_behind_ego};
+    }
   }
 
-  return path_safety_status;
+  for (const auto & obj : collision_check_objects.leading) {
+    if (!check_collision(obj)) {
+      return {!is_safe, !is_object_behind_ego};
+    }
+  }
+
+  return {is_safe, !is_object_behind_ego};
 }
 
 // Check if the ego vehicle is in stuck by a stationary obstacle or by the terminal of current lanes

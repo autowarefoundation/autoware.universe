@@ -99,7 +99,7 @@ public:
 
   virtual bool isEgoOnPreparePhase() const = 0;
 
-  virtual bool isRequiredStop(const bool is_object_coming_from_rear) = 0;
+  virtual bool isRequiredStop(const bool is_trailing_object) = 0;
 
   virtual PathSafetyStatus isApprovedPathSafe() const = 0;
 
@@ -233,12 +233,6 @@ protected:
   virtual PathWithLaneId getPrepareSegment(
     const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
     const double prepare_length) const = 0;
-
-  virtual bool getLaneChangePaths(
-    const lanelet::ConstLanelets & original_lanelets,
-    const lanelet::ConstLanelets & target_lanelets, Direction direction,
-    LaneChangePaths * candidate_paths, const utils::path_safety_checker::RSSparams rss_params,
-    const bool is_stuck, const bool check_safety) const = 0;
 
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
