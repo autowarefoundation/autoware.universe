@@ -32,6 +32,7 @@ All Rights Reserved 2019-2022.
 #include <thrust/transform.h>
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 
 const int THREADS_PER_BLOCK = 16;

@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -45,7 +46,7 @@
 inline void NvJpegAssert(nvjpegStatus_t code, const char * file, int line)
 {
   if (code != NVJPEG_STATUS_SUCCESS) {
-    std::cout << "NVJPEG failure: '#" << code << "' at " << std::string(file) << ":" << line
+    std::cerr << "NVJPEG failure: '#" << code << "' at " << std::string(file) << ":" << line
               << std::endl;
     exit(1);
   }

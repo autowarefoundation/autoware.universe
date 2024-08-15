@@ -179,14 +179,10 @@ int32_t BEVPoolPlugin::enqueue(
   dim3 grid(GET_BLOCKS(n_intervals * channel));
   dim3 block(NUM_THREADS);
 
-  // printf("BEVPool input depth %s\n", dataTypeToString(inputDesc[0].type).c_str());
-  // printf("BEVPool input  feat %s\n", dataTypeToString(inputDesc[1].type).c_str());
-  // printf("BEVPool output feat %s\n", dataTypeToString(outputDesc[0].type).c_str());
-
   switch (int(outputDesc[0].type)) {
     case int(DataType::kFLOAT):
       if (inputDesc[0].type == DataType::kFLOAT) {
-        // printf("bevpool : fp32 fp32\n");
+        // fp32 fp32
         bev_pool_v2_kernel<float, float><<<grid, block, 0, stream>>>(
           channel, n_intervals, map_size, img_size, reinterpret_cast<const float *>(inputs[0]),
           reinterpret_cast<const float *>(inputs[1]), reinterpret_cast<const int *>(inputs[2]),
@@ -194,7 +190,7 @@ int32_t BEVPoolPlugin::enqueue(
           reinterpret_cast<const int *>(inputs[5]), reinterpret_cast<const int *>(inputs[6]),
           reinterpret_cast<float *>(outputs[0]));
       } else {
-        // printf("bevpool : fp16 fp32\n");
+        // fp16 fp32
         bev_pool_v2_kernel<__half, float><<<grid, block, 0, stream>>>(
           channel, n_intervals, map_size, img_size, reinterpret_cast<const __half *>(inputs[0]),
           reinterpret_cast<const __half *>(inputs[1]), reinterpret_cast<const int *>(inputs[2]),
@@ -205,7 +201,7 @@ int32_t BEVPoolPlugin::enqueue(
       break;
     case int(DataType::kHALF):
       if (inputDesc[0].type == DataType::kFLOAT) {
-        // printf("bevpool : fp32 fp16\n");
+        // fp32 fp16
         bev_pool_v2_kernel<float, __half><<<grid, block, 0, stream>>>(
           channel, n_intervals, map_size, img_size, reinterpret_cast<const float *>(inputs[0]),
           reinterpret_cast<const float *>(inputs[1]), reinterpret_cast<const int *>(inputs[2]),
@@ -213,7 +209,7 @@ int32_t BEVPoolPlugin::enqueue(
           reinterpret_cast<const int *>(inputs[5]), reinterpret_cast<const int *>(inputs[6]),
           reinterpret_cast<__half *>(outputs[0]));
       } else {
-        // printf("bevpool : fp16 fp16\n");
+        // fp16 fp16
         bev_pool_v2_kernel<__half, __half><<<grid, block, 0, stream>>>(
           channel, n_intervals, map_size, img_size, reinterpret_cast<const __half *>(inputs[0]),
           reinterpret_cast<const __half *>(inputs[1]), reinterpret_cast<const int *>(inputs[2]),
@@ -223,7 +219,7 @@ int32_t BEVPoolPlugin::enqueue(
       }
       break;
     default:  // should NOT be here
-      printf("\tUnsupport datatype!\n");
+      std::cerr << "\tUnsupported datatype!" << std::endl;
   }
   return 0;
 }

@@ -217,7 +217,7 @@ int32_t AlignBEVPlugin::enqueue(
       }
       break;
     default:  // should NOT be here
-      printf("\tUnsupport datatype!\n");
+      std::cerr << "\tUnsupported datatype!" << std::endl;
   }
 
   return 0;

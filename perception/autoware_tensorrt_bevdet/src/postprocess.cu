@@ -117,7 +117,12 @@ PostprocessGPU::PostprocessGPU(
   iou3d_nms.reset(new Iou3dNmsCuda(output_h, output_w, nms_thresh));
 
   for (auto i = 0; i < nms_rescale_factor.size(); i++) {
-    printf("%.2f%c", nms_rescale_factor[i], i == nms_rescale_factor.size() - 1 ? '\n' : ' ');
+    std::cout << std::fixed << std::setprecision(2) << nms_rescale_factor[i];
+        if (i == nms_rescale_factor.size() - 1) {
+            std::cout << std::endl;
+        } else {
+            std::cout << ' ';
+        }
   }
 }
 PostprocessGPU::~PostprocessGPU()

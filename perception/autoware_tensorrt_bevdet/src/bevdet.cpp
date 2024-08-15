@@ -53,7 +53,7 @@ BEVDet::BEVDet(
     ranks_bev_ptr, ranks_depth_ptr, ranks_feat_ptr, interval_starts_ptr, interval_lengths_ptr);
   auto end = high_resolution_clock::now();
   duration<float> t = end - start;
-  std::cout << "InitVewTransformer cost time: " << t.count() * 1000 << " ms" << std::endl;
+  std::cout << std::fixed << std::setprecision(4) << "InitVewTransformer cost time: " << t.count() * 1000 << " ms" << std::endl;
 
   if (access(engine_file.c_str(), F_OK) == 0) {
     std::cout << "Inference engine prepared." << std::endl;
@@ -611,6 +611,7 @@ int BEVDet::DoInfer(
   duration<double> post_t = post_end - end;
 
   cost_time = infer_t.count() * 1000;
+  std::cout << std::fixed << std::setprecision(5); // Set precision for all floating-point outputs
   std::cout << "TRT-Engine  : " << engine_t.count() * 1000 << " ms" << std::endl;
   std::cout << "Postprocess : " << post_t.count() * 1000 << " ms" << std::endl;
   std::cout << "Inference   : " << infer_t.count() * 1000 << " ms" << std::endl;

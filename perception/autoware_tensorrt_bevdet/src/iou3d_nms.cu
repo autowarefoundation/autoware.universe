@@ -131,11 +131,12 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
   Point center_b(box_b[0], box_b[1]);
 
 #ifdef DEBUG
-  printf(
-    "a: (%.3f, %.3f, %.3f, %.3f, %.3f), b: (%.3f, %.3f, %.3f, %.3f, %.3f)\n", a_x1, a_y1, a_x2,
-    a_y2, a_angle, b_x1, b_y1, b_x2, b_y2, b_angle);
-  printf(
-    "center a: (%.3f, %.3f), b: (%.3f, %.3f)\n", center_a.x, center_a.y, center_b.x, center_b.y);
+  std::cout << "a: (" << std::fixed << std::setprecision(3) << a_x1 << ", "
+          << a_y1 << ", " << a_x2 << ", " << a_y2 << ", " << a_angle
+          << "), b: (" << b_x1 << ", " << b_y1 << ", " << b_x2 << ", "
+          << b_y2 << ", " << b_angle << ")" << std::endl;
+  std::cout << "center a: (" << center_a.x << ", " << center_a.y
+          << "), b: (" << center_b.x << ", " << center_b.y << ")" << std::endl;
 #endif
 
   Point box_a_corners[5];
@@ -156,16 +157,18 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
 
   for (int k = 0; k < 4; k++) {
 #ifdef DEBUG
-    printf(
-      "before corner %d: a(%.3f, %.3f), b(%.3f, %.3f) \n", k, box_a_corners[k].x,
-      box_a_corners[k].y, box_b_corners[k].x, box_b_corners[k].y);
+    std::cout << "before corner " << k << ": a("
+          << std::fixed << std::setprecision(3) << box_a_corners[k].x << ", "
+          << box_a_corners[k].y << "), b("
+          << box_b_corners[k].x << ", " << box_b_corners[k].y << ")" << std::endl;
 #endif
     rotate_around_center(center_a, a_angle_cos, a_angle_sin, box_a_corners[k]);
     rotate_around_center(center_b, b_angle_cos, b_angle_sin, box_b_corners[k]);
 #ifdef DEBUG
-    printf(
-      "corner %d: a(%.3f, %.3f), b(%.3f, %.3f) \n", k, box_a_corners[k].x, box_a_corners[k].y,
-      box_b_corners[k].x, box_b_corners[k].y);
+    std::cout << "corner " << k << ": a("
+          << std::fixed << std::setprecision(3) << box_a_corners[k].x << ", "
+          << box_a_corners[k].y << "), b("
+          << box_b_corners[k].x << ", " << box_b_corners[k].y << ")" << std::endl;
 #endif
   }
 
@@ -187,12 +190,14 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
         poly_center = poly_center + cross_points[cnt];
         cnt++;
 #ifdef DEBUG
-        printf(
-          "Cross points (%.3f, %.3f): a(%.3f, %.3f)->(%.3f, %.3f), b(%.3f, "
-          "%.3f)->(%.3f, %.3f) \n",
-          cross_points[cnt - 1].x, cross_points[cnt - 1].y, box_a_corners[i].x, box_a_corners[i].y,
-          box_a_corners[i + 1].x, box_a_corners[i + 1].y, box_b_corners[i].x, box_b_corners[i].y,
-          box_b_corners[i + 1].x, box_b_corners[i + 1].y);
+        std::cout << "Cross points (" 
+          << std::fixed << std::setprecision(3) << cross_points[cnt - 1].x << ", " 
+          << cross_points[cnt - 1].y << "): a("
+          << box_a_corners[i].x << ", " << box_a_corners[i].y << ")->("
+          << box_a_corners[i + 1].x << ", " << box_a_corners[i + 1].y << "), b("
+          << box_b_corners[i].x << ", " << box_b_corners[i].y << ")->("
+          << box_b_corners[i + 1].x << ", " << box_b_corners[i + 1].y << ")" 
+          << std::endl;
 #endif
       }
     }
@@ -205,8 +210,9 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
       cross_points[cnt] = box_b_corners[k];
       cnt++;
 #ifdef DEBUG
-      printf(
-        "b corners in a: corner_b(%.3f, %.3f)", cross_points[cnt - 1].x, cross_points[cnt - 1].y);
+      std::cout << "b corners in a: corner_b("
+          << std::fixed << std::setprecision(3) << cross_points[cnt - 1].x << ", "
+          << cross_points[cnt - 1].y << ")" << std::endl;
 #endif
     }
     if (check_in_box2d(box_b, box_a_corners[k])) {
@@ -214,8 +220,9 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
       cross_points[cnt] = box_a_corners[k];
       cnt++;
 #ifdef DEBUG
-      printf(
-        "a corners in b: corner_a(%.3f, %.3f)", cross_points[cnt - 1].x, cross_points[cnt - 1].y);
+      std::cout << "a corners in b: corner_a("
+          << std::fixed << std::setprecision(3) << cross_points[cnt - 1].x << ", "
+          << cross_points[cnt - 1].y << ")" << std::endl;
 #endif
     }
   }
@@ -236,9 +243,11 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
   }
 
 #ifdef DEBUG
-  printf("cnt=%d\n", cnt);
+  std::cout << "cnt=" << cnt << std::endl;
   for (int i = 0; i < cnt; i++) {
-    printf("All cross point %d: (%.3f, %.3f)\n", i, cross_points[i].x, cross_points[i].y);
+    std::cout << "All cross point " << i << ": ("
+          << std::fixed << std::setprecision(3) << cross_points[i].x << ", "
+          << cross_points[i].y << ")" << std::endl;
   }
 #endif
 
@@ -589,7 +598,6 @@ int Iou3dNmsCuda::DoIou3dNms(
   std::int64_t * host_keep_data)
 {
   const int col_blocks = DIVUP(box_num_pre, THREADS_PER_BLOCK_NMS);  // How many blocks are divided
-  // printf("box_num_pre=%d, col_blocks=%d\n", box_num_pre, col_blocks);
   std::int64_t * dev_mask = NULL;
   cudaMalloc((void **)&dev_mask, box_num_pre * col_blocks * sizeof(std::int64_t));  //
   // THREADS_PER_BLOCK_NMS 掩码的长度
@@ -620,6 +628,8 @@ int Iou3dNmsCuda::DoIou3dNms(
     }
   }
 
-  if (cudaSuccess != cudaGetLastError()) printf("Error!\n");
+  if (cudaSuccess != cudaGetLastError()) {
+    std::cerr << "Error!" << std::endl;
+  }
   return num_to_keep;
 }

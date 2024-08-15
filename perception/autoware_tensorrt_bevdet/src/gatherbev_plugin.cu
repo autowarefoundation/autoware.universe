@@ -164,13 +164,10 @@ int32_t GatherBEVPlugin::enqueue(
 
   dim3 grid(GET_BLOCKS(nthreads));
   dim3 block(NUM_THREADS);
-  // printf("GatherBEV input adj_feats %s\n", dataTypeToString(inputDesc[0].type).c_str());
-  // printf("GatherBEV input curr_feat %s\n", dataTypeToString(inputDesc[1].type).c_str());
-  // printf("GatherBEV output bevfeats %s\n", dataTypeToString(outputDesc[0].type).c_str());
 
   switch (int(outputDesc[0].type)) {
     case int(DataType::kFLOAT):
-      // printf("gather : fp32\n");
+      // fp32
       copy_feat_kernel<<<grid, block, 0, stream>>>(
         nthreads, adj_num, channel, map_size, reinterpret_cast<const float *>(inputs[0]),
         reinterpret_cast<const float *>(inputs[1]), reinterpret_cast<const int *>(inputs[2]),
@@ -178,14 +175,14 @@ int32_t GatherBEVPlugin::enqueue(
 
       break;
     case int(DataType::kHALF):
-      // printf("gather : fp16\n");
+      // fp16
       copy_feat_kernel<<<grid, block, 0, stream>>>(
         nthreads, adj_num, channel, map_size, reinterpret_cast<const __half *>(inputs[0]),
         reinterpret_cast<const __half *>(inputs[1]), reinterpret_cast<const int *>(inputs[2]),
         reinterpret_cast<__half *>(outputs[0]));
       break;
     default:  // should NOT be here
-      printf("\tUnsupport datatype!\n");
+      std::cerr << "\tUnsupported datatype!" << std::endl;
   }
   return 0;
 }

@@ -183,7 +183,7 @@ int32_t PreprocessPlugin::enqueue(
 
   switch (int(outputDesc[0].type)) {
     case int(DataType::kFLOAT):
-      // printf("pre : float\n");
+      // float
       preprocess_kernel<<<grid, block, 0, stream>>>(
         reinterpret_cast<const uint8_t *>(inputs[0]), reinterpret_cast<float *>(outputs[0]),
         src_row_step, dst_row_step, src_img_step, dst_img_step, src_img_h, src_img_w,
@@ -192,7 +192,7 @@ int32_t PreprocessPlugin::enqueue(
         dst_img_h, dst_img_w, n_img);
       break;
     case int(DataType::kHALF):
-      // printf("pre : half\n");
+      // half
       preprocess_kernel<<<grid, block, 0, stream>>>(
         reinterpret_cast<const uint8_t *>(inputs[0]), reinterpret_cast<__half *>(outputs[0]),
         src_row_step, dst_row_step, src_img_step, dst_img_step, src_img_h, src_img_w,
@@ -202,7 +202,7 @@ int32_t PreprocessPlugin::enqueue(
 
       break;
     default:  // should NOT be here
-      printf("\tUnsupport datatype!\n");
+      std::cerr << "\tUnsupported datatype!" << std::endl;
   }
   return 0;
 }
