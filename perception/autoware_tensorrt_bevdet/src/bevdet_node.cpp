@@ -181,8 +181,7 @@ TRTBEVDetNode::TRTBEVDetNode(
   sync_ = std::make_shared<Sync>(
     MySyncPolicy(10), sub_fl_img_, sub_f_img_, sub_fr_img_, sub_bl_img_, sub_b_img_, sub_br_img_);
 
-  sync_->registerCallback(
-    std::bind(&TRTBEVDetNode::callback, this, _1, _2, _3, _4, _5, _6));
+  sync_->registerCallback(std::bind(&TRTBEVDetNode::callback, this, _1, _2, _3, _4, _5, _6));
 }
 
 void image_transport(std::vector<cv::Mat> imgs, uchar * out_imgs, size_t width, size_t height)
