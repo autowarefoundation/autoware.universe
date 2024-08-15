@@ -44,65 +44,42 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id: voxel_grid.cpp 35876 2011-02-09 01:04:36Z rusu $
+ *
  */
 
-#include "autoware/pointcloud_preprocessor/downsample_filter/random_downsample_filter_nodelet.hpp"
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__RANDOM_DOWNSAMPLE_FILTER_NODE_HPP_
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__RANDOM_DOWNSAMPLE_FILTER_NODE_HPP_
+
+#include "autoware/pointcloud_preprocessor/filter.hpp"
+
+#include <pcl/filters/random_sample.h>
 
 #include <vector>
 
 namespace autoware::pointcloud_preprocessor
 {
-RandomDownsampleFilterComponent::RandomDownsampleFilterComponent(
-  const rclcpp::NodeOptions & options)
-: Filter("RandomDownsampleFilter", options)
+class RandomDownsampleFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
-  // set initial parameters
-  {
-    sample_num_ = static_cast<size_t>(declare_parameter("sample_num", 1500));
-  }
+protected:
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
-  using std::placeholders::_1;
-  set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&RandomDownsampleFilterComponent::paramCallback, this, _1));
-}
+private:
+  size_t sample_num_;
 
-void RandomDownsampleFilterComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
-{
-  std::scoped_lock lock(mutex_);
-  if (indices) {
-    RCLCPP_WARN(get_logger(), "Indices are not supported and will be ignored");
-  }
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(*input, *pcl_input);
-  pcl_output->points.reserve(pcl_input->points.size());
-  pcl::RandomSample<pcl::PointXYZ> filter;
-  filter.setInputCloud(pcl_input);
-  // filter.setSaveLeafLayout(true);
-  filter.setSample(sample_num_);
-  filter.filter(*pcl_output);
+  /** \brief Parameter service callback result : needed to be hold */
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
-  pcl::toROSMsg(*pcl_output, output);
-  output.header = input->header;
-}
+  /** \brief Parameter service callback */
+  rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
-rcl_interfaces::msg::SetParametersResult RandomDownsampleFilterComponent::paramCallback(
-  const std::vector<rclcpp::Parameter> & p)
-{
-  std::scoped_lock lock(mutex_);
-
-  if (get_param(p, "sample_num", sample_num_)) {
-    RCLCPP_DEBUG(get_logger(), "Setting new sample num to: %zu.", sample_num_);
-  }
-
-  rcl_interfaces::msg::SetParametersResult result;
-  result.successful = true;
-  result.reason = "success";
-
-  return result;
-}
-
+public:
+  PCL_MAKE_ALIGNED_OPERATOR_NEW
+  explicit RandomDownsampleFilterComponent(const rclcpp::NodeOptions & options);
+};
 }  // namespace autoware::pointcloud_preprocessor
-#include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::RandomDownsampleFilterComponent)
+
+// clang-format off
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__RANDOM_DOWNSAMPLE_FILTER_NODE_HPP_  // NOLINT
+// clang-format on
