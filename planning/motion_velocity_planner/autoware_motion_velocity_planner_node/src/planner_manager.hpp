@@ -54,14 +54,11 @@ public:
 
   // Diagnostic
   std::shared_ptr<DiagnosticStatus> makeDiagnostic(
-    const std::string & reason, 
-    const bool is_decided = true);
+    const std::string & reason, const bool is_decided = true);
   void publishDiagnostics(
-    const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr,
-    const rclcpp::Time & current_time,
+    const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr, const rclcpp::Time & current_time,
     const bool publish_decided_diagnostics_only = true) const;
-  void clearDiagnostics(){diagnostics_.clear();}
-
+  void clearDiagnostics() { diagnostics_.clear(); }
 
 private:
   std::vector<std::shared_ptr<DiagnosticStatus>> diagnostics_;
