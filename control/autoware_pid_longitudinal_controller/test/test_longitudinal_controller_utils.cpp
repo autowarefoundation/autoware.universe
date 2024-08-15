@@ -71,7 +71,8 @@ TEST(TestLongitudinalControllerUtils, calcStopDistance)
   point.pose.position.y = 0.0;
   point.longitudinal_velocity_mps = 0.0;
   traj.points.push_back(point);
-  EXPECT_TRUE(std::isnan(longitudinal_utils::calcStopDistance(current_pose, traj, max_dist, max_yaw)));
+  EXPECT_TRUE(
+    std::isnan(longitudinal_utils::calcStopDistance(current_pose, traj, max_dist, max_yaw)));
   traj.points.clear();
   // non stopping trajectory: stop distance = trajectory length
   point.pose.position.x = 0.0;
