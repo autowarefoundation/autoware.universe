@@ -29,10 +29,8 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   /* parameters for accel/brake map */
   const auto csv_path_accel_map = declare_parameter<std::string>("csv_path_accel_map");
   const auto csv_path_brake_map = declare_parameter<std::string>("csv_path_brake_map");
-  const auto csv_path_steer_map = declare_parameter<std::string>("csv_path_steer_map");
   convert_accel_cmd_ = declare_parameter<bool>("convert_accel_cmd");
   convert_brake_cmd_ = declare_parameter<bool>("convert_brake_cmd");
-  convert_steer_cmd_ = declare_parameter<bool>("convert_steer_cmd");
   max_accel_cmd_ = declare_parameter<double>("max_throttle");
   max_brake_cmd_ = declare_parameter<double>("max_brake");
   max_steer_cmd_ = declare_parameter<double>("max_steer");
@@ -51,33 +49,57 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
       throw std::invalid_argument("Brake map is invalid.");
     }
   }
-  if (convert_steer_cmd_) {
-    if (!steer_map_.readSteerMapFromCSV(csv_path_steer_map, true)) {
-      throw std::invalid_argument("Steer map is invalid.");
+  if (declare_parameter<bool>("convert_steer_cmd")) {
+    convert_steer_cmd_method_ = declare_parameter<std::string>("convert_steer_cmd_method", "vgr");
+    if (convert_steer_cmd_method_.value() == "vgr") {
+      vgr_coef_a_ = declare_parameter<double>("vgr_coef_a");
+      vgr_coef_b_ = declare_parameter<double>("vgr_coef_b");
+      vgr_coef_c_ = declare_parameter<double>("vgr_coef_c");
+    } else if (convert_steer_cmd_method_.value() == "steer_map") {
+      const auto csv_path_steer_map = declare_parameter<std::string>("csv_path_steer_map");
+      if (!steer_map_.readSteerMapFromCSV(csv_path_steer_map, true)) {
+        throw std::invalid_argument("Steer map is invalid.");
+      }
+      const auto kp_steer{declare_parameter<double>("steer_pid.kp")};
+      const auto ki_steer{declare_parameter<double>("steer_pid.ki")};
+      const auto kd_steer{declare_parameter<double>("steer_pid.kd")};
+      const auto max_ret_steer{declare_parameter<double>("steer_pid.max")};
+      const auto min_ret_steer{declare_parameter<double>("steer_pid.min")};
+      const auto max_ret_p_steer{declare_parameter<double>("steer_pid.max_p")};
+      const auto min_ret_p_steer{declare_parameter<double>("steer_pid.min_p")};
+      const auto max_ret_i_steer{declare_parameter<double>("steer_pid.max_i")};
+      const auto min_ret_i_steer{declare_parameter<double>("steer_pid.min_i")};
+      const auto max_ret_d_steer{declare_parameter<double>("steer_pid.max_d")};
+      const auto min_ret_d_steer{declare_parameter<double>("steer_pid.min_d")};
+      const auto invalid_integration_decay{
+        declare_parameter<double>("steer_pid.invalid_integration_decay")};
+      steer_pid_.setDecay(invalid_integration_decay);
+      steer_pid_.setGains(kp_steer, ki_steer, kd_steer);
+      steer_pid_.setLimits(
+        max_ret_steer, min_ret_steer, max_ret_p_steer, min_ret_p_steer, max_ret_i_steer,
+        min_ret_i_steer, max_ret_d_steer, min_ret_d_steer);
+      steer_pid_.setInitialized();
+    } else {
+      throw std::invalid_argument("Invalid steer conversion method.");
     }
-    const auto kp_steer{declare_parameter<double>("steer_pid.kp")};
-    const auto ki_steer{declare_parameter<double>("steer_pid.ki")};
-    const auto kd_steer{declare_parameter<double>("steer_pid.kd")};
-    const auto max_ret_steer{declare_parameter<double>("steer_pid.max")};
-    const auto min_ret_steer{declare_parameter<double>("steer_pid.min")};
-    const auto max_ret_p_steer{declare_parameter<double>("steer_pid.max_p")};
-    const auto min_ret_p_steer{declare_parameter<double>("steer_pid.min_p")};
-    const auto max_ret_i_steer{declare_parameter<double>("steer_pid.max_i")};
-    const auto min_ret_i_steer{declare_parameter<double>("steer_pid.min_i")};
-    const auto max_ret_d_steer{declare_parameter<double>("steer_pid.max_d")};
-    const auto min_ret_d_steer{declare_parameter<double>("steer_pid.min_d")};
-    const auto invalid_integration_decay{
-      declare_parameter<double>("steer_pid.invalid_integration_decay")};
-    steer_pid_.setDecay(invalid_integration_decay);
-    steer_pid_.setGains(kp_steer, ki_steer, kd_steer);
-    steer_pid_.setLimits(
-      max_ret_steer, min_ret_steer, max_ret_p_steer, min_ret_p_steer, max_ret_i_steer,
-      min_ret_i_steer, max_ret_d_steer, min_ret_d_steer);
-    steer_pid_.setInitialized();
   }
-  pub_actuation_cmd_ = create_publisher<ActuationCommandStamped>("~/output/actuation_cmd", 1);
+
+  convert_actuation_to_steering_status_ =
+    declare_parameter<bool>("convert_actuation_to_steering_status");
+  if (convert_actuation_to_steering_status_) {
+    pub_steering_status_ = create_publisher<Steering>("~/output/steering_status", 1);
+  } else {
+    sub_steering_ = create_subscription<Steering>(
+      "~/input/steering", 1, std::bind(&RawVehicleCommandConverterNode::onSteering, this, _1));
+  }
+
   sub_control_cmd_ = create_subscription<Control>(
     "~/input/control_cmd", 1, std::bind(&RawVehicleCommandConverterNode::onControlCmd, this, _1));
+  sub_actuation_status_ = create_subscription<ActuationStatusStamped>(
+    "~/input/actuation_status", 1,
+    std::bind(&RawVehicleCommandConverterNode::onActuationStatus, this, _1));
+
+  pub_actuation_cmd_ = create_publisher<ActuationCommandStamped>("~/output/actuation_cmd", 1);
   debug_pub_steer_pid_ = create_publisher<Float32MultiArrayStamped>(
     "/vehicle/raw_vehicle_cmd_converter/debug/steer_pid", 1);
 
@@ -86,11 +108,11 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
 
 void RawVehicleCommandConverterNode::publishActuationCmd()
 {
-  if (!current_twist_ptr_ || !control_cmd_ptr_ || !current_steer_ptr_) {
+  if (!current_twist_ptr_ || !control_cmd_ptr_ || !current_steer_ptr_ || !actuation_status_ptr_) {
     RCLCPP_WARN_EXPRESSION(
-      get_logger(), is_debugging_, "some pointers are null: %s, %s, %s",
+      get_logger(), is_debugging_, "some pointers are null: %s, %s, %s, %s",
       !current_twist_ptr_ ? "twist" : "", !control_cmd_ptr_ ? "cmd" : "",
-      !current_steer_ptr_ ? "steer" : "");
+      !current_steer_ptr_ ? "steer" : "", !actuation_status_ptr_ ? "actuation" : "");
     return;
   }
   double desired_accel_cmd = 0.0;
@@ -116,11 +138,18 @@ void RawVehicleCommandConverterNode::publishActuationCmd()
     // if conversion is disabled use negative acceleration as brake cmd
     desired_brake_cmd = -acc;
   }
-  if (convert_steer_cmd_) {
-    desired_steer_cmd = calculateSteer(vel, steer, steer_rate);
-  } else {
+  if (!convert_steer_cmd_method_.has_value()) {
     // if conversion is disabled use steering angle as steer cmd
     desired_steer_cmd = steer;
+  } else if (convert_steer_cmd_method_.value() == "vgr") {
+    // NOTE: When using variable gear ratio,
+    // the actuation cmd is the steering wheel angle,
+    // and the actuation_status is also the steering wheel angle.
+    const double current_steer_wheel = actuation_status_ptr_->status.steer_status;
+    const double adaptive_gear_ratio = calculateVariableGearRatio(vel, current_steer_wheel);
+    desired_steer_cmd = steer * adaptive_gear_ratio;
+  } else if (convert_steer_cmd_method_.value() == "steer_map") {
+    desired_steer_cmd = calculateSteerFromMap(vel, steer, steer_rate);
   }
   actuation_cmd.header.frame_id = "base_link";
   actuation_cmd.header.stamp = control_cmd_ptr_->stamp;
@@ -130,7 +159,7 @@ void RawVehicleCommandConverterNode::publishActuationCmd()
   pub_actuation_cmd_->publish(actuation_cmd);
 }
 
-double RawVehicleCommandConverterNode::calculateSteer(
+double RawVehicleCommandConverterNode::calculateSteerFromMap(
   const double vel, const double steering, const double steer_rate)
 {
   double steering_output = 0;
@@ -203,10 +232,6 @@ double RawVehicleCommandConverterNode::calculateBrakeMap(
 void RawVehicleCommandConverterNode::onControlCmd(const Control::ConstSharedPtr msg)
 {
   const auto odometry_msg = sub_odometry_.takeData();
-  const auto steering_msg = sub_steering_.takeData();
-  if (steering_msg) {
-    current_steer_ptr_ = std::make_unique<double>(steering_msg->steering_tire_angle);
-  }
   if (odometry_msg) {
     current_twist_ptr_ = std::make_unique<TwistStamped>();
     current_twist_ptr_->header = odometry_msg->header;
@@ -214,6 +239,55 @@ void RawVehicleCommandConverterNode::onControlCmd(const Control::ConstSharedPtr 
   }
   control_cmd_ptr_ = msg;
   publishActuationCmd();
+}
+
+void RawVehicleCommandConverterNode::onSteering(const Steering::ConstSharedPtr msg)
+{
+  current_steer_ptr_ = std::make_unique<double>(msg->steering_tire_angle);
+}
+
+void RawVehicleCommandConverterNode::onActuationStatus(
+  const ActuationStatusStamped::ConstSharedPtr msg)
+{
+  actuation_status_ptr_ = msg;
+
+  if (!convert_actuation_to_steering_status_) {
+    return;
+  }
+
+  // calculate steering status from actuation status
+  const auto odometry_msg = sub_odometry_.takeData();
+  if (odometry_msg) {
+    if (convert_steer_cmd_method_.value() == "vgr") {
+      current_twist_ptr_ = std::make_unique<TwistStamped>();
+      current_twist_ptr_->header = odometry_msg->header;
+      current_twist_ptr_->twist = odometry_msg->twist.twist;
+      current_steer_ptr_ = std::make_unique<double>(calculateSteeringTireState(
+        current_twist_ptr_->twist.linear.x, actuation_status_ptr_->status.steer_status));
+      Steering steering_msg{};
+      steering_msg.steering_tire_angle = *current_steer_ptr_;
+      pub_steering_status_->publish(steering_msg);
+    } else if (convert_steer_cmd_method_.value() == "steer_map") {
+      throw std::domain_error(
+        "Steer map conversion is not supported for actuation status. Please "
+        "use vgr conversion method or set convert_actuation_to_steering to "
+        "false.");
+    }
+  }
+}
+
+double RawVehicleCommandConverterNode::calculateVariableGearRatio(
+  const double vel, const double steer_wheel) const
+{
+  return std::max(
+    1e-5, vgr_coef_a_ + vgr_coef_b_ * vel * vel - vgr_coef_c_ * std::fabs(steer_wheel));
+}
+
+double RawVehicleCommandConverterNode::calculateSteeringTireState(
+  const double vel, const double steer_wheel) const
+{
+  const double adaptive_gear_ratio = calculateVariableGearRatio(vel, steer_wheel);
+  return steer_wheel / adaptive_gear_ratio;
 }
 }  // namespace autoware::raw_vehicle_cmd_converter
 
