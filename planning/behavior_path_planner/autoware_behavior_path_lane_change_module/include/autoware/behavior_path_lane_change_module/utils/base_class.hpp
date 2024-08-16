@@ -67,6 +67,8 @@ public:
 
   virtual void update_lanes(const bool is_approved) = 0;
 
+  virtual void update_filtered_objects() = 0;
+
   virtual void updateLaneChangeStatus() = 0;
 
   virtual std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const = 0;
@@ -92,6 +94,8 @@ public:
   virtual bool isAbortState() const = 0;
 
   virtual bool isAbleToReturnCurrentLane() const = 0;
+
+  virtual bool is_near_terminal() const = 0;
 
   virtual LaneChangePath getLaneChangePath() const = 0;
 
@@ -234,12 +238,6 @@ protected:
     const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
     const double prepare_length) const = 0;
 
-  virtual bool getLaneChangePaths(
-    const lanelet::ConstLanelets & original_lanelets,
-    const lanelet::ConstLanelets & target_lanelets, Direction direction,
-    LaneChangePaths * candidate_paths, const utils::path_safety_checker::RSSparams rss_params,
-    const bool is_stuck, const bool check_safety) const = 0;
-
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
   virtual bool isAbleToStopSafely() const = 0;
@@ -256,6 +254,7 @@ protected:
   std::shared_ptr<LaneChangePath> abort_path_{};
   std::shared_ptr<const PlannerData> planner_data_{};
   lane_change::CommonDataPtr common_data_ptr_{};
+  FilteredByLanesExtendedObjects filtered_objects_{};
   BehaviorModuleOutput prev_module_output_{};
   std::optional<Pose> lane_change_stop_pose_{std::nullopt};
 

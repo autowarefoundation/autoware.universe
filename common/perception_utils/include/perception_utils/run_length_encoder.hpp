@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "geography_utils/height.hpp"
-#include "geography_utils/lanelet2_projector.hpp"
-#include "geography_utils/projection.hpp"
+#ifndef PERCEPTION_UTILS__RUN_LENGTH_ENCODER_HPP_
 
-#include <gtest/gtest.h>
+#define PERCEPTION_UTILS__RUN_LENGTH_ENCODER_HPP_
+#include <opencv2/opencv.hpp>
 
-int main(int argc, char * argv[])
+#include <utility>
+#include <vector>
+
+namespace perception_utils
 {
-  testing::InitGoogleTest(&argc, argv);
-  bool result = RUN_ALL_TESTS();
-  return result;
-}
+std::vector<std::pair<uint8_t, int>> runLengthEncoder(const cv::Mat & mask);
+cv::Mat runLengthDecoder(const std::vector<uint8_t> & rle_data, const int rows, const int cols);
+}  // namespace perception_utils
+
+#endif  // PERCEPTION_UTILS__RUN_LENGTH_ENCODER_HPP_
