@@ -765,6 +765,31 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
   return true;
 }
 
+bool NormalLaneChange::is_near_terminal() const
+{
+  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+
+  if (current_lanes.empty()) {
+    return true;
+  }
+
+  const auto & current_lanes_terminal = current_lanes.back();
+  const auto & lc_param_ptr = common_data_ptr_->lc_param_ptr;
+  const auto direction = common_data_ptr_->direction;
+  const auto & route_handler_ptr = common_data_ptr_->route_handler_ptr;
+  const auto min_lane_changing_distance = calcMinimumLaneChangeLength(
+    route_handler_ptr, current_lanes_terminal, *lc_param_ptr, direction);
+
+  const auto backward_buffer = calculation::calc_stopping_distance(lc_param_ptr);
+
+  const auto min_lc_dist_with_buffer =
+    backward_buffer + min_lane_changing_distance + lc_param_ptr->lane_change_finish_judge_buffer;
+  const auto dist_from_ego_to_terminal_end =
+    calculation::calc_ego_dist_to_terminal_end(common_data_ptr_);
+
+  return dist_from_ego_to_terminal_end < min_lc_dist_with_buffer;
+}
+
 bool NormalLaneChange::isEgoOnPreparePhase() const
 {
   const auto & start_position = status_.lane_change_path.info.shift_line.start.position;
@@ -1159,7 +1184,7 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
     };
 
     if (
-      check_optional_polygon(object, lanes_polygon.expanded_target) && is_lateral_far &&
+      check_optional_polygon(object, lanes_polygon.target) && is_lateral_far &&
       is_before_terminal()) {
       const auto ahead_of_ego =
         utils::lane_change::is_ahead_of_ego(common_data_ptr_, current_lanes_ref_path, object);
@@ -1169,6 +1194,20 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
         target_lane_trailing_objects.push_back(object);
       }
       continue;
+    }
+
+    if (
+      check_optional_polygon(object, lanes_polygon.expanded_target) && is_lateral_far &&
+      is_before_terminal()) {
+      const auto ahead_of_ego =
+        utils::lane_change::is_ahead_of_ego(common_data_ptr_, current_lanes_ref_path, object);
+      constexpr double stopped_obj_vel_th = 1.0;
+      if (object.kinematics.initial_twist_with_covariance.twist.linear.x < stopped_obj_vel_th) {
+        if (ahead_of_ego) {
+          target_lane_leading_objects.push_back(object);
+          continue;
+        }
+      }
     }
 
     const auto is_overlap_target_backward = std::invoke([&]() -> bool {
