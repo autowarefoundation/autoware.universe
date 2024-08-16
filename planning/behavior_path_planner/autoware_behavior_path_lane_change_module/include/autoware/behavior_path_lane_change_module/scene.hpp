@@ -53,6 +53,8 @@ public:
 
   void update_lanes(const bool is_approved) final;
 
+  void update_filtered_objects() final;
+
   void updateLaneChangeStatus() override;
 
   std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const override;
@@ -82,7 +84,7 @@ public:
   PathSafetyStatus evaluateApprovedPathWithUnsafeHysteresis(
     PathSafetyStatus approved_path_safety_status) override;
 
-  bool isRequiredStop(const bool is_object_coming_from_rear) override;
+  bool isRequiredStop(const bool is_trailing_object) override;
 
   bool isNearEndOfCurrentLanes(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
@@ -91,6 +93,8 @@ public:
   bool hasFinishedLaneChange() const override;
 
   bool isAbleToReturnCurrentLane() const override;
+
+  bool is_near_terminal() const final;
 
   bool isEgoOnPreparePhase() const override;
 
@@ -120,19 +124,16 @@ protected:
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
-  ExtendedPredictedObjects getTargetObjects(
-    const LaneChangeLanesFilteredObjects & predicted_objects,
+  lane_change::TargetObjects getTargetObjects(
+    const FilteredByLanesExtendedObjects & predicted_objects,
     const lanelet::ConstLanelets & current_lanes) const;
 
-  LaneChangeLanesFilteredObjects filterObjects() const;
+  FilteredByLanesExtendedObjects filterObjects() const;
 
   void filterOncomingObjects(PredictedObjects & objects) const;
 
-  void filterObjectsByLanelets(
-    const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path,
-    std::vector<PredictedObject> & current_lane_objects,
-    std::vector<PredictedObject> & target_lane_objects,
-    std::vector<PredictedObject> & other_lane_objects) const;
+  FilteredByLanesObjects filterObjectsByLanelets(
+    const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path) const;
 
   PathWithLaneId getPrepareSegment(
     const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
@@ -158,9 +159,7 @@ protected:
 
   bool getLaneChangePaths(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    Direction direction, LaneChangePaths * candidate_paths,
-    const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
-    const bool check_safety = true) const override;
+    Direction direction, const bool is_stuck, LaneChangePaths * candidate_paths) const;
 
   std::optional<LaneChangePath> calcTerminalLaneChangePath(
     const lanelet::ConstLanelets & current_lanes,
@@ -170,7 +169,7 @@ protected:
 
   PathSafetyStatus isLaneChangePathSafe(
     const LaneChangePath & lane_change_path,
-    const ExtendedPredictedObjects & collision_check_objects,
+    const lane_change::TargetObjects & collision_check_objects,
     const utils::path_safety_checker::RSSparams & rss_params,
     CollisionCheckDebugMap & debug_data) const;
 
