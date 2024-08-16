@@ -95,8 +95,9 @@ public:
     const TrackedObject & object, const double duration) const;
 
   PredictedPath generatePathForOnLaneVehicle(
-    const TrackedObject & object, const PosePath & ref_paths, const double duration,
-    const double lateral_duration, const double speed_limit = 0.0) const;
+    const TrackedObject & object, const PosePath & ref_path, const double duration,
+    const double lateral_duration, const double path_width = 0.0,
+    const double speed_limit = 0.0) const;
 
   PredictedPath generatePathForCrosswalkUser(
     const TrackedObject & object, const CrosswalkEdgePoints & reachable_crosswalk,
@@ -129,7 +130,8 @@ private:
 
   PredictedPath generatePolynomialPath(
     const TrackedObject & object, const PosePath & ref_path, const double duration,
-    const double lateral_duration, const double speed_limit = 0.0) const;
+    const double lateral_duration, const double backlash_width,
+    const double speed_limit = 0.0) const;
 
   FrenetPath generateFrenetPath(
     const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length,

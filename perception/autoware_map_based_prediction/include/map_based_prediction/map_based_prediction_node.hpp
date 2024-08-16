@@ -127,6 +127,7 @@ struct PredictedRefPath
 {
   float probability;
   double speed_limit;
+  double width;
   PosePath path;
   Maneuver maneuver;
 };
@@ -315,9 +316,11 @@ private:
     const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths,
     const double speed_limit = 0.0);
 
-  mutable universe_utils::LRUCache<lanelet::routing::LaneletPaths, std::vector<PosePath>>
+  mutable universe_utils::LRUCache<
+    lanelet::routing::LaneletPaths, std::vector<std::pair<PosePath, double>>>
     lru_cache_of_convert_path_type_{1000};
-  std::vector<PosePath> convertPathType(const lanelet::routing::LaneletPaths & paths) const;
+  std::vector<std::pair<PosePath, double>> convertPathType(
+    const lanelet::routing::LaneletPaths & paths) const;
 
   void updateFuturePossibleLanelets(
     const TrackedObject & object, const lanelet::routing::LaneletPaths & paths);
