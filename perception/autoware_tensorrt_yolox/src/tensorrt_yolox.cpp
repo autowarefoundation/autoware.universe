@@ -162,7 +162,7 @@ TrtYoloX::TrtYoloX(
   const std::string & color_map_path)
 : gpu_id_(gpu_id)
 {
-  std::cout << "GPU " << gpu_id_ << " is selected for the inference!" << std::endl;
+  std::cout << "GPU " << std::to_string(gpu_id_) << " is selected for the inference!" << std::endl;
   if (!setCudaDeviceId(gpu_id_)) {
     throw std::runtime_error(
       "GPU" + std::to_string(gpu_id_) + " does not exist or is not suitable.");
