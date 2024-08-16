@@ -18,6 +18,7 @@
 
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
@@ -156,7 +157,7 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   const auto z = ego_data.pose.position.z;
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
-  add_polygons_markers(debug_marker_array, ego_data.trajectory_footprints, z, "footprints");
+  // add_polygons_markers(debug_marker_array, ego_data.trajectory_footprints, z, "footprints");
 
   lanelet::BasicPolygons2d drivable_lane_polygons;
   for (const auto & poly : ego_data.drivable_lane_polygons) {
@@ -174,9 +175,12 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   for (const auto & o : objects.objects) {
     for (const auto & path : o.kinematics.predicted_paths) {
       for (const auto & pose : path.path) {
-        const auto poly = universe_utils::toPolygon2d(pose, o.shape).outer();
-        lanelet::BasicPolygon2d ll_poly(poly.begin(), poly.end());
-        object_polygons.push_back(ll_poly);
+        // limit the draw distance to improve performance
+        if (universe_utils::calcDistance2d(pose, ego_data.pose) < 50.0) {
+          const auto poly = universe_utils::toPolygon2d(pose, o.shape).outer();
+          lanelet::BasicPolygon2d ll_poly(poly.begin(), poly.end());
+          object_polygons.push_back(ll_poly);
+        }
       }
     }
   }
