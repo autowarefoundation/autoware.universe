@@ -16,7 +16,7 @@
 
 #include "autoware/image_projection_based_fusion/utils/geometry.hpp"
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
-#include "autoware/tensorrt_yolox/utils.hpp"
+#include "perception_utils/run_length_encoder.hpp"
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -63,8 +63,9 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   if (input_mask.height == 0 || input_mask.width == 0) {
     return;
   }
-  cv::Mat mask = autoware::tensorrt_yolox::runLengthDecoder(
-    input_mask.data, input_mask.height, input_mask.width);
+  std::vector<uint8_t> mask_data(input_mask.data.begin(), input_mask.data.end());
+  cv::Mat mask = perception_utils::runLengthDecoder(mask_data, input_mask.height, input_mask.width);
+
   // publish debug mask
   if (is_publish_debug_mask_) {
     sensor_msgs::msg::Image::SharedPtr debug_mask_msg =
