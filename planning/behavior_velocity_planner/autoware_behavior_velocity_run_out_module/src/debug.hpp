@@ -54,7 +54,7 @@ public:
    * @param [in] type the TYPE enum for which to get the index
    * @return index of the type
    */
-  int getValuesIdx(const TYPE type) const { return static_cast<int>(type); }
+  static int getValuesIdx(const TYPE type) { return static_cast<int>(type); }
   /**
    * @brief get all the debug values as an std::array
    * @return array of all debug values
@@ -127,7 +127,7 @@ public:
 
 private:
   visualization_msgs::msg::MarkerArray createVisualizationMarkerArrayFromDebugData(
-    const builtin_interfaces::msg::Time & current_time);
+    const builtin_interfaces::msg::Time & current_time) const;
   void clearDebugMarker();
 
   rclcpp::Node & node_;

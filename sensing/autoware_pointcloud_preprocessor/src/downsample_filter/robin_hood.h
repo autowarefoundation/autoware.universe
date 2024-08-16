@@ -567,7 +567,7 @@ template <typename T, size_t MinSize, size_t MaxSize>
 struct NodeAllocator<T, MinSize, MaxSize, true>
 {
   // we are not using the data, so just free it.
-  void addOrFree(void * ptr, size_t ROBIN_HOOD_UNUSED(numBytes) /*unused*/) noexcept
+  static void addOrFree(void * ptr, size_t ROBIN_HOOD_UNUSED(numBytes) /*unused*/) noexcept
   {
     ROBIN_HOOD_LOG("std::free")
     std::free(ptr);
@@ -1051,8 +1051,8 @@ private:
     }
 
     // doesn't do anything
-    void destroy(M & ROBIN_HOOD_UNUSED(map) /*unused*/) noexcept {}
-    void destroyDoNotDeallocate() noexcept {}
+    static void destroy(M & ROBIN_HOOD_UNUSED(map) /*unused*/) noexcept {}
+    static void destroyDoNotDeallocate() noexcept {}
 
     value_type const * operator->() const noexcept { return &mData; }
     value_type * operator->() noexcept { return &mData; }
@@ -1134,7 +1134,7 @@ private:
       map.deallocate(mData);
     }
 
-    void destroyDoNotDeallocate() noexcept { mData->~value_type(); }
+    void destroyDoNotDeallocate() const noexcept { mData->~value_type(); }
 
     value_type const * operator->() const noexcept { return mData; }
 
@@ -1262,15 +1262,15 @@ private:
   template <typename M>
   struct Destroyer<M, true>
   {
-    void nodes(M & m) const noexcept { m.mNumElements = 0; }
+    static void nodes(M & m) noexcept { m.mNumElements = 0; }
 
-    void nodesDoNotDeallocate(M & m) const noexcept { m.mNumElements = 0; }
+    static void nodesDoNotDeallocate(M & m) noexcept { m.mNumElements = 0; }
   };
 
   template <typename M>
   struct Destroyer<M, false>
   {
-    void nodes(M & m) const noexcept
+    static void nodes(M & m) noexcept
     {
       m.mNumElements = 0;
       // clear also resets mInfo to 0, that's sometimes not necessary.
@@ -1285,7 +1285,7 @@ private:
       }
     }
 
-    void nodesDoNotDeallocate(M & m) const noexcept
+    static void nodesDoNotDeallocate(M & m) noexcept
     {
       m.mNumElements = 0;
       // clear also resets mInfo to 0, that's sometimes not necessary.
@@ -1932,7 +1932,7 @@ public:
   }
 
   template <typename... Args>
-  iterator emplace_hint(const_iterator position, Args &&... args)
+  iterator emplace_hint(const const_iterator & position, Args &&... args)
   {
     (void)position;
     return emplace(std::forward<Args>(args)...).first;
@@ -1951,14 +1951,14 @@ public:
   }
 
   template <typename... Args>
-  iterator try_emplace(const_iterator hint, const key_type & key, Args &&... args)
+  iterator try_emplace(const const_iterator & hint, const key_type & key, Args &&... args)
   {
     (void)hint;
     return try_emplace_impl(key, std::forward<Args>(args)...).first;
   }
 
   template <typename... Args>
-  iterator try_emplace(const_iterator hint, key_type && key, Args &&... args)
+  iterator try_emplace(const const_iterator & hint, key_type && key, Args &&... args)
   {
     (void)hint;
     return try_emplace_impl(std::move(key), std::forward<Args>(args)...).first;
@@ -1977,14 +1977,14 @@ public:
   }
 
   template <typename Mapped>
-  iterator insert_or_assign(const_iterator hint, const key_type & key, Mapped && obj)
+  iterator insert_or_assign(const const_iterator & hint, const key_type & key, Mapped && obj)
   {
     (void)hint;
     return insertOrAssignImpl(key, std::forward<Mapped>(obj)).first;
   }
 
   template <typename Mapped>
-  iterator insert_or_assign(const_iterator hint, key_type && key, Mapped && obj)
+  iterator insert_or_assign(const const_iterator & hint, key_type && key, Mapped && obj)
   {
     (void)hint;
     return insertOrAssignImpl(std::move(key), std::forward<Mapped>(obj)).first;
@@ -1996,7 +1996,7 @@ public:
     return emplace(keyval);
   }
 
-  iterator insert(const_iterator hint, const value_type & keyval)
+  iterator insert(const const_iterator & hint, const value_type & keyval)
   {
     (void)hint;
     return emplace(keyval).first;
@@ -2004,7 +2004,7 @@ public:
 
   std::pair<iterator, bool> insert(value_type && keyval) { return emplace(std::move(keyval)); }
 
-  iterator insert(const_iterator hint, value_type && keyval)
+  iterator insert(const const_iterator & hint, value_type && keyval)
   {
     (void)hint;
     return emplace(std::move(keyval)).first;
@@ -2495,9 +2495,7 @@ private:
 
       // unlikely that this evaluates to true
       if (ROBIN_HOOD_UNLIKELY(mNumElements >= mMaxNumElementsAllowed)) {
-        if (!increase_size()) {
-          return std::make_pair(size_t(0), InsertionState::overflow_error);
-        }
+        increase_size();
         continue;
       }
 

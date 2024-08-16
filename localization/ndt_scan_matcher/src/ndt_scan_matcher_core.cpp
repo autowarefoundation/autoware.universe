@@ -51,18 +51,6 @@ tier4_debug_msgs::msg::Int32Stamped make_int32_stamped(
   return tier4_debug_msgs::build<T>().stamp(stamp).data(data);
 }
 
-Eigen::Matrix2d find_rotation_matrix_aligning_covariance_to_principal_axes(
-  const Eigen::Matrix2d & matrix)
-{
-  const Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> eigensolver(matrix);
-  if (eigensolver.info() == Eigen::Success) {
-    const Eigen::Vector2d eigen_vec = eigensolver.eigenvectors().col(0);
-    const double th = std::atan2(eigen_vec.y(), eigen_vec.x());
-    return Eigen::Rotation2Dd(th).toRotationMatrix();
-  }
-  throw std::runtime_error("Eigen solver failed. Return output_pose_covariance value.");
-}
-
 std::array<double, 36> rotate_covariance(
   const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation)
 {
@@ -586,8 +574,10 @@ bool NDTScanMatcher::callback_sensor_points_main(
       estimate_covariance(ndt_result, initial_pose_matrix, sensor_ros_time);
     const Eigen::Matrix2d estimated_covariance_2d_scaled =
       estimated_covariance_2d * param_.covariance.covariance_estimation.scale_factor;
+    const double default_cov_xx = param_.covariance.output_pose_covariance[0];
+    const double default_cov_yy = param_.covariance.output_pose_covariance[7];
     const Eigen::Matrix2d estimated_covariance_2d_adj = pclomp::adjust_diagonal_covariance(
-      estimated_covariance_2d_scaled, ndt_result.pose, 0.0225, 0.0225);
+      estimated_covariance_2d_scaled, ndt_result.pose, default_cov_xx, default_cov_yy);
     ndt_covariance[0 + 6 * 0] = estimated_covariance_2d_adj(0, 0);
     ndt_covariance[1 + 6 * 1] = estimated_covariance_2d_adj(1, 1);
     ndt_covariance[1 + 6 * 0] = estimated_covariance_2d_adj(1, 0);
@@ -832,17 +822,6 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
   const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
   const rclcpp::Time & sensor_ros_time)
 {
-  Eigen::Matrix2d rot = Eigen::Matrix2d::Identity();
-  try {
-    rot = find_rotation_matrix_aligning_covariance_to_principal_axes(
-      ndt_result.hessian.inverse().block(0, 0, 2, 2));
-  } catch (const std::exception & e) {
-    std::stringstream message;
-    message << "Error in Eigen solver: " << e.what();
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    return Eigen::Matrix2d::Identity() * param_.covariance.output_pose_covariance[0 + 6 * 0];
-  }
-
   geometry_msgs::msg::PoseArray multi_ndt_result_msg;
   geometry_msgs::msg::PoseArray multi_initial_pose_msg;
   multi_ndt_result_msg.header.stamp = sensor_ros_time;
@@ -855,7 +834,7 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
   if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::LAPLACE_APPROXIMATION) {
-    return pclomp::estimate_xy_covariance_by_Laplace_approximation(ndt_result.hessian);
+    return pclomp::estimate_xy_covariance_by_laplace_approximation(ndt_result.hessian);
   } else if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::MULTI_NDT) {
@@ -1015,12 +994,22 @@ void NDTScanMatcher::service_ndt_align_main(
     return;
   }
 
-  res->pose_with_covariance = align_pose(initial_pose_msg_in_map_frame);
+  // estimate initial pose
+  const auto [pose_with_covariance, score] = align_pose(initial_pose_msg_in_map_frame);
+
+  // check reliability of initial pose result
+  res->reliable =
+    (param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood < score);
+  if (!res->reliable) {
+    RCLCPP_WARN_STREAM(
+      this->get_logger(), "Initial Pose Estimation is Unstable. Score is " << score);
+  }
   res->success = true;
+  res->pose_with_covariance = pose_with_covariance;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
+std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> NDTScanMatcher::align_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
   output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
@@ -1110,13 +1099,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
     std::begin(particle_array), std::end(particle_array),
     [](const Particle & lhs, const Particle & rhs) { return lhs.score < rhs.score; });
 
-  if (
-    best_particle_ptr->score <
-    param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood)
-    RCLCPP_WARN_STREAM(
-      this->get_logger(),
-      "Initial Pose Estimation is Unstable. Score is " << best_particle_ptr->score);
-
   geometry_msgs::msg::PoseWithCovarianceStamped result_pose_with_cov_msg;
   result_pose_with_cov_msg.header.stamp = initial_pose_with_cov.header.stamp;
   result_pose_with_cov_msg.header.frame_id = param_.frame.map_frame;
@@ -1125,7 +1107,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
   diagnostics_ndt_align_->add_key_value("best_particle_score", best_particle_ptr->score);
 
-  return result_pose_with_cov_msg;
+  return std::make_tuple(result_pose_with_cov_msg, best_particle_ptr->score);
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

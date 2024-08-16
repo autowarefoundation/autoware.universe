@@ -9,7 +9,10 @@
   <arg name="launch_simulator_perception_modules" default="true"/>
   <arg name="launch_dummy_perception"/>
   <arg name="launch_dummy_vehicle"/>
-  <arg name="launch_dummy_localization"/>
+  <arg
+    name="localization_sim_mode"
+    description="Select localization mode. Options are 'none' or 'api'. 'api' starts an external API for initial position estimation. 'none' does not start any localization-related process."
+  />
   <arg name="launch_dummy_doors"/>
   <arg name="launch_diagnostic_converter"/>
   <arg name="vehicle_info_param_file"/>
@@ -106,7 +109,7 @@
 
       <group if="$(var perception/enable_elevation_map)">
         <push-ros-namespace namespace="obstacle_segmentation/elevation_map"/>
-        <node pkg="elevation_map_loader" exec="elevation_map_loader" name="elevation_map_loader" output="screen">
+        <node pkg="autoware_elevation_map_loader" exec="elevation_map_loader" name="elevation_map_loader" output="screen">
           <remap from="output/elevation_map" to="map"/>
           <remap from="input/pointcloud_map" to="/map/pointcloud_map"/>
           <remap from="input/vector_map" to="/map/vector_map"/>
@@ -114,7 +117,7 @@
           <param name="use_inpaint" value="true"/>
           <param name="inpaint_radius" value="1.0"/>
           <param name="param_file_path" value="$(var obstacle_segmentation_ground_segmentation_elevation_map_param_path)"/>
-          <param name="elevation_map_directory" value="$(find-pkg-share elevation_map_loader)/data/elevation_maps"/>
+          <param name="elevation_map_directory" value="$(find-pkg-share autoware_elevation_map_loader)/data/elevation_maps"/>
           <param name="use_elevation_map_cloud_publisher" value="false"/>
         </node>
       </group>
@@ -128,7 +131,11 @@
   </group>
 
   <!-- Dummy localization -->
-  <group if="$(var launch_dummy_localization)">
+  <group if="$(eval '&quot;$(var localization_sim_mode)&quot;==&quot;none&quot;')">
+    <!-- Do nothing -->
+  </group>
+
+  <group if="$(eval '&quot;$(var localization_sim_mode)&quot;==&quot;api&quot;')">
     <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
       <arg name="user_defined_initial_pose/enable" value="false"/>
       <arg name="user_defined_initial_pose/pose" value="[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]"/>
@@ -149,7 +156,7 @@
   <!-- Diagnostic Converter -->
   <group if="$(var launch_diagnostic_converter)">
     <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="screen">
-      <param name="diagnostic_topics" value="[/diagnostic/planning_evaluator/metrics, /diagnostic/control_evaluator/metrics, /diagnostics_err, /system/processing_time_checker/metrics]"/>
+      <param name="diagnostic_topics" value="[/planning/planning_evaluator/metrics, /control/control_evaluator/metrics, /diagnostics_err, /system/processing_time_checker/metrics]"/>
     </node>
   </group>
 
