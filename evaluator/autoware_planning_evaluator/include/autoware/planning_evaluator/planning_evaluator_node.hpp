@@ -184,7 +184,8 @@ private:
   // queue for diagnostics and time stamp
   std::deque<std::pair<DiagnosticStatus, rclcpp::Time>> diag_queue_;
   const std::vector<std::string> target_functions_ = {
-    "obstacle_cruise_planner_stop", "obstacle_cruise_planner_slow_down",
+    "obstacle_cruise_planner_stop",
+    "obstacle_cruise_planner_slow_down",
     "obstacle_cruise_planner_cruise",
     "autoware::motion_velocity_planner::OutOfLaneModule.stop",
     "autoware::motion_velocity_planner::OutOfLaneModule.slow_down",
@@ -192,7 +193,7 @@ private:
     "autoware::motion_velocity_planner::ObstacleVelocityLimiterModule.slow_down",
     "autoware::motion_velocity_planner::DynamicObstacleStopModule.stop",
     "autoware::motion_velocity_planner::DynamicObstacleStopModule.slow_down",
-    };
+  };
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
 };
 }  // namespace planning_diagnostics

@@ -72,8 +72,7 @@ void MotionVelocityPlannerManager::update_module_parameters(
 }
 
 std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::make_diagnostic(
-  const std::string & reason,
-  const bool is_decided)
+  const std::string & reason, const bool is_decided)
 {
   auto status = std::make_shared<DiagnosticStatus>();
   status->level = status->OK;
@@ -92,25 +91,19 @@ std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::make_diagnostic(
   return status;
 }
 
-
 void MotionVelocityPlannerManager::publish_diagnostics(
-  const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr,
-  const rclcpp::Time & current_time,
-  const bool publish_decided_diagnostics_only
-  ) const
+  const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr, const rclcpp::Time & current_time,
+  const bool publish_decided_diagnostics_only) const
 {
-  
-  if (publish_decided_diagnostics_only &&
-      !std::any_of(
-        diagnostics_.begin(), 
-        diagnostics_.end(), 
-        [](const auto& ds_ptr) {
-          return ds_ptr && !ds_ptr->values.empty() && ds_ptr->values[0].key == "decision" && ds_ptr->values[0].value != "none";
-        }
-    )) {
+  if (
+    publish_decided_diagnostics_only &&
+    !std::any_of(diagnostics_.begin(), diagnostics_.end(), [](const auto & ds_ptr) {
+      return ds_ptr && !ds_ptr->values.empty() && ds_ptr->values[0].key == "decision" &&
+             ds_ptr->values[0].value != "none";
+    })) {
     return;
   }
-  
+
   DiagnosticArray diagnostics;
   diagnostics.header.stamp = current_time;
   diagnostics.header.frame_id = "map";
@@ -122,20 +115,21 @@ void MotionVelocityPlannerManager::publish_diagnostics(
   pub_ptr->publish(diagnostics);
 }
 
-
 std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocities(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
   std::vector<VelocityPlanningResult> results;
-  for (auto & plugin : loaded_plugins_){
+  for (auto & plugin : loaded_plugins_) {
     VelocityPlanningResult res = plugin->plan(ego_trajectory_points, planner_data);
     results.push_back(res);
 
-    auto stop_reason_diag = make_diagnostic(plugin->get_module_name()+".stop", res.stop_points.size() > 0);
+    auto stop_reason_diag =
+      make_diagnostic(plugin->get_module_name() + ".stop", res.stop_points.size() > 0);
     diagnostics_.push_back(stop_reason_diag);
 
-    auto slow_down_reason_diag = make_diagnostic(plugin->get_module_name()+".slow_down", res.slowdown_intervals.size() > 0);
+    auto slow_down_reason_diag =
+      make_diagnostic(plugin->get_module_name() + ".slow_down", res.slowdown_intervals.size() > 0);
     diagnostics_.push_back(slow_down_reason_diag);
   }
   return results;
