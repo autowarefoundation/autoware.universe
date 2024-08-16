@@ -1153,7 +1153,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
             yaw_fixed_transformed_object, ref_path.path, prediction_time_horizon_.vehicle,
-            lateral_control_time_horizon_, ref_path.speed_limit);
+            lateral_control_time_horizon_, ref_path.width, ref_path.speed_limit);
           if (predicted_path.path.empty()) continue;
 
           if (!check_lateral_acceleration_constraints_) {
@@ -2341,7 +2341,8 @@ void MapBasedPredictionNode::addReferencePaths(
     for (const auto & converted_path : converted_paths) {
       PredictedRefPath predicted_path;
       predicted_path.probability = maneuver_probability.at(maneuver) * path_probability;
-      predicted_path.path = converted_path;
+      predicted_path.path = converted_path.first;
+      predicted_path.width = converted_path.second;
       predicted_path.maneuver = maneuver;
       predicted_path.speed_limit = speed_limit;
       reference_paths.push_back(predicted_path);
@@ -2416,7 +2417,7 @@ ManeuverProbability MapBasedPredictionNode::calculateManeuverProbability(
   return maneuver_prob;
 }
 
-std::vector<PosePath> MapBasedPredictionNode::convertPathType(
+std::vector<std::pair<PosePath, double>> MapBasedPredictionNode::convertPathType(
   const lanelet::routing::LaneletPaths & paths) const
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -2426,9 +2427,11 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
     return *lru_cache_of_convert_path_type_.get(paths);
   }
 
-  std::vector<PosePath> converted_paths;
+  std::vector<std::pair<PosePath, double>> converted_paths;
+  // std::vector<PosePath> converted_paths;
   for (const auto & path : paths) {
     PosePath converted_path;
+    double width = 10.0;  // Initialize with a large value
 
     // Insert Positions. Note that we start inserting points from previous lanelet
     if (!path.empty()) {
@@ -2495,6 +2498,14 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
         converted_path.push_back(current_p);
         prev_p = current_p;
       }
+
+      // Update minimum width
+      const auto left_bound = lanelet.leftBound2d();
+      const auto right_bound = lanelet.rightBound2d();
+      const double lanelet_width_front = std::hypot(
+        left_bound.front().x() - right_bound.front().x(),
+        left_bound.front().y() - right_bound.front().y());
+      width = std::min(width, lanelet_width_front);
     }
 
     // Resample Path
@@ -2506,7 +2517,7 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
     // interpolation for xy
     const auto resampled_converted_path = autoware::motion_utils::resamplePoseVector(
       converted_path, reference_path_resolution_, use_akima_spline_for_xy, use_lerp_for_z);
-    converted_paths.push_back(resampled_converted_path);
+    converted_paths.push_back(std::make_pair(resampled_converted_path, width));
   }
 
   lru_cache_of_convert_path_type_.put(paths, converted_paths);
