@@ -229,6 +229,25 @@ PredictedPath PathGenerator::generatePolynomialPath(
   terminal_point.d_vel = 0.0;
   terminal_point.d_acc = 0.0;
 
+  // calculate terminal d position, based on playable width
+  const double playable_width = 1.0; // [m]
+  const double return_coeff = 0.5; // returning zone, ratio of the playable width
+
+  const double current_momentum_d = current_point.d + current_point.d_vel * lateral_duration;
+  const double offset_ratio = std::abs(current_momentum_d / playable_width);
+  if (offset_ratio < 1) {
+    // If the object momentum is within the playable width, we set the target d position to the current
+    // momentum
+    terminal_point.d = current_momentum_d;
+  } else if (offset_ratio >= 1 && offset_ratio < 1+return_coeff) {
+    // If the object momentum is within the return zone, we set the target d position close to the
+    // zero gradually
+    terminal_point.d = current_momentum_d * (-offset_ratio+(1+return_coeff))/return_coeff;
+  } else {
+    // If the object momentum is outside the playable width + return zone, we set the target d position to 0
+    terminal_point.d = 0.0;
+  }
+
   // Step2. Generate Predicted Path on a Frenet coordinate
   const auto frenet_predicted_path =
     generateFrenetPath(current_point, terminal_point, ref_path_len, duration, lateral_duration);
@@ -269,9 +288,10 @@ FrenetPath PathGenerator::generateFrenetPath(
     const double d_next_ = current_point.d + current_point.d_vel * t + current_acc * 2.0 * t2 +
                            lat_coeff(0) * t3 + lat_coeff(1) * t4 + lat_coeff(2) * t5;
     // t > lateral_duration: 0.0, else d_next_
-    const double d_next = t > lateral_duration ? 0.0 : d_next_;
+    const double d_next = t > lateral_duration ? target_point.d : d_next_;
     const double s_next = current_point.s + current_point.s_vel * t + 2.0 * current_acc * t2 +
                           lon_coeff(0) * t3 + lon_coeff(1) * t4;
+
     if (s_next > max_length) {
       break;
     }
