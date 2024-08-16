@@ -104,10 +104,6 @@ std::shared_ptr<DiagnosticArray> MotionVelocityPlannerManager::get_diagnostics(
       diagnostics->status.push_back(*ds_ptr);
     }
   }
-  if (decided_diagnostics_only && diagnostics->status.empty()) {
-    return nullptr;
-  }
-
   diagnostics->header.stamp = current_time;
   diagnostics->header.frame_id = "map";
   return diagnostics;

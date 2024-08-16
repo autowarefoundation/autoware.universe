@@ -297,7 +297,7 @@ void MotionVelocityPlannerNode::on_trajectory(
 
   std::shared_ptr<DiagnosticArray> diagnostics =
     planner_manager_.get_diagnostics(get_clock()->now(), true);
-  if (diagnostics) {
+  if (!diagnostics->status.empty()) {
     diagnostics_pub_->publish(*diagnostics);
   }
   planner_manager_.clear_diagnostics();
