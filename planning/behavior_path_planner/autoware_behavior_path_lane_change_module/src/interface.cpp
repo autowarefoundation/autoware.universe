@@ -75,6 +75,7 @@ void LaneChangeInterface::updateData()
 {
   universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
+  module_type_->update_lanes(getCurrentStatus() == ModuleStatus::RUNNING);
   module_type_->updateSpecialData();
 
   if (isWaitingApproval() || module_type_->isAbortState()) {
@@ -136,7 +137,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   *prev_approved_path_ = getPreviousModuleOutput().path;
 
   BehaviorModuleOutput out = getPreviousModuleOutput();
-  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().current_lanes, out.path);
+  module_type_->insertStopPoint(module_type_->get_current_lanes(), out.path);
   out.turn_signal_info = module_type_->get_current_turn_signal_info();
 
   const auto & lane_change_debug = module_type_->getDebugData();
@@ -246,6 +247,15 @@ bool LaneChangeInterface::canTransitFailureState()
     return true;
   }
 
+  if (module_type_->is_near_terminal()) {
+    log_debug_throttled("Unsafe, but ego is approaching terminal. Continue lane change");
+
+    if (module_type_->isRequiredStop(post_process_safety_status_.is_trailing_object)) {
+      log_debug_throttled("Module require stopping");
+    }
+    return false;
+  }
+
   if (module_type_->isCancelEnabled() && module_type_->isEgoOnPreparePhase()) {
     if (module_type_->isStoppedAtRedTrafficLight()) {
       log_debug_throttled("Stopping at traffic light while in prepare phase. Cancel lane change");
@@ -275,7 +285,7 @@ bool LaneChangeInterface::canTransitFailureState()
     return false;
   }
 
-  if (module_type_->isRequiredStop(post_process_safety_status_.is_object_coming_from_rear)) {
+  if (module_type_->isRequiredStop(post_process_safety_status_.is_trailing_object)) {
     log_debug_throttled("Module require stopping");
   }
 

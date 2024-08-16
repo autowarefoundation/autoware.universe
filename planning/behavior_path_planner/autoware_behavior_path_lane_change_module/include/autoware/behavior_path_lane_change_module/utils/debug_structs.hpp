@@ -26,7 +26,7 @@
 #include <limits>
 #include <string>
 
-namespace autoware::behavior_path_planner::data::lane_change
+namespace autoware::behavior_path_planner::lane_change
 {
 using utils::path_safety_checker::CollisionCheckDebugMap;
 struct Debug
@@ -35,7 +35,7 @@ struct Debug
   LaneChangePaths valid_paths;
   CollisionCheckDebugMap collision_check_objects;
   CollisionCheckDebugMap collision_check_objects_after_approval;
-  LaneChangeLanesFilteredObjects filtered_objects;
+  FilteredByLanesExtendedObjects filtered_objects;
   geometry_msgs::msg::Polygon execution_area;
   geometry_msgs::msg::Pose ego_pose;
   lanelet::ConstLanelets current_lanes;
@@ -55,7 +55,8 @@ struct Debug
     collision_check_objects.clear();
     collision_check_objects_after_approval.clear();
     filtered_objects.current_lane.clear();
-    filtered_objects.target_lane.clear();
+    filtered_objects.target_lane_leading.clear();
+    filtered_objects.target_lane_trailing.clear();
     filtered_objects.other_lane.clear();
     execution_area.points.clear();
     current_lanes.clear();
@@ -71,6 +72,6 @@ struct Debug
     is_abort = false;
   }
 };
-}  // namespace autoware::behavior_path_planner::data::lane_change
+}  // namespace autoware::behavior_path_planner::lane_change
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DEBUG_STRUCTS_HPP_
