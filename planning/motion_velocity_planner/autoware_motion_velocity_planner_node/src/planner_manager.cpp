@@ -71,7 +71,7 @@ void MotionVelocityPlannerManager::update_module_parameters(
   for (auto & plugin : loaded_plugins_) plugin->update_parameters(parameters);
 }
 
-std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::makeDiagnostic(
+std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::make_diagnostic(
   const std::string & reason,
   const bool is_decided)
 {
@@ -93,7 +93,7 @@ std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::makeDiagnostic(
 }
 
 
-void MotionVelocityPlannerManager::publishDiagnostics(
+void MotionVelocityPlannerManager::publish_diagnostics(
   const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr,
   const rclcpp::Time & current_time,
   const bool publish_decided_diagnostics_only
@@ -132,10 +132,10 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
     VelocityPlanningResult res = plugin->plan(ego_trajectory_points, planner_data);
     results.push_back(res);
 
-    auto stop_reason_diag = makeDiagnostic(plugin->get_module_name()+".stop", res.stop_points.size() > 0);
+    auto stop_reason_diag = make_diagnostic(plugin->get_module_name()+".stop", res.stop_points.size() > 0);
     diagnostics_.push_back(stop_reason_diag);
 
-    auto slow_down_reason_diag = makeDiagnostic(plugin->get_module_name()+".slow_down", res.slowdown_intervals.size() > 0);
+    auto slow_down_reason_diag = make_diagnostic(plugin->get_module_name()+".slow_down", res.slowdown_intervals.size() > 0);
     diagnostics_.push_back(slow_down_reason_diag);
   }
   return results;
