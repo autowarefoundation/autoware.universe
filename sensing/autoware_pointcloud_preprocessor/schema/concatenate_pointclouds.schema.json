@@ -16,23 +16,26 @@
           "items": {
             "type": "number"
           },
+          "default": [],
           "description": "This parameter can control waiting time for each input sensor pointcloud [s]. You must to set the same length of offsets with input pointclouds numbers."
         },
         "output_frame": {
           "type": "string",
           "default": "base_link",
-          "description": "Output frame."
+          "description": "Output frame id."
         },
         "input_topics": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "default": [],
+          "description": "List of input topics."
         },
         "max_queue_size": {
           "type": "integer",
           "default": 5,
-          "description": "max queue size of input/output topics."
+          "description": "Max queue size of input/output topics."
         }
       },
       "required": ["timeout_sec", "input_offset", "output_frame", "input_topics", "max_queue_size"]
