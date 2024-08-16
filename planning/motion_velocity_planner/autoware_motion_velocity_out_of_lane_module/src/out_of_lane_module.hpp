@@ -38,7 +38,7 @@ class OutOfLaneModule : public PluginModuleInterface
 {
 public:
   OutOfLaneModule()
-  : module_name_(""), prev_inserted_point_(), clock_(nullptr), prev_inserted_point_time_()
+  : params_(), module_name_(""), prev_inserted_point_(), clock_(nullptr), prev_inserted_point_time_(), debug_data_()
   {
   }
 
