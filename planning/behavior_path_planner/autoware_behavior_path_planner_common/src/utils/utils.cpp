@@ -560,18 +560,23 @@ bool isEgoWithinOriginalLane(
   const BehaviorPathPlannerParameters & common_param, const double outer_margin)
 {
   const auto combined_lane = lanelet::utils::combineLaneletsShape(current_lanes);
-  const auto lane_poly = combined_lane.polygon2d().basicPolygon();
-  const auto base_link2front = common_param.base_link2front;
-  const auto base_link2rear = common_param.base_link2rear;
-  const auto vehicle_width = common_param.vehicle_width;
+  const auto lane_polygon = combined_lane.polygon2d().basicPolygon();
+  return isEgoWithinOriginalLane(lane_polygon, current_pose, common_param, outer_margin);
+}
+
+bool isEgoWithinOriginalLane(
+  const lanelet::BasicPolygon2d & lane_polygon, const Pose & current_pose,
+  const BehaviorPathPlannerParameters & common_param, const double outer_margin)
+{
   const auto vehicle_poly = autoware::universe_utils::toFootprint(
-    current_pose, base_link2front, base_link2rear, vehicle_width);
+    current_pose, common_param.base_link2front, common_param.base_link2rear,
+    common_param.vehicle_width);
 
   // Check if the ego vehicle is entirely within the lane with a given outer margin.
   for (const auto & p : vehicle_poly.outer()) {
     // When the point is in the polygon, the distance is 0. When it is out of the polygon, return a
     // positive value.
-    const auto dist = boost::geometry::distance(p, lane_poly);
+    const auto dist = boost::geometry::distance(p, lane_polygon);
     if (dist > std::max(outer_margin, 0.0)) {
       return false;  // out of polygon
     }

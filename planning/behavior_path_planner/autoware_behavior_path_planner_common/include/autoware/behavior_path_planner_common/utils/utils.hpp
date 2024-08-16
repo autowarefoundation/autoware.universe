@@ -243,6 +243,10 @@ bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
   const BehaviorPathPlannerParameters & common_param, const double outer_margin = 0.0);
 
+bool isEgoWithinOriginalLane(
+  const lanelet::BasicPolygon2d & lane_polygon, const Pose & current_pose,
+  const BehaviorPathPlannerParameters & common_param, const double outer_margin = 0.0);
+
 // path management
 
 // TODO(Horibe) There is a similar function in route_handler. Check.
