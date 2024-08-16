@@ -51,7 +51,7 @@
         "max_queue_size": {
           "type": "integer",
           "default": 5,
-          "description": "max queue size of input/output topics."
+          "description": "Max queue size of input/output topics."
         }
       },
       "required": [
