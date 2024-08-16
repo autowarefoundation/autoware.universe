@@ -189,7 +189,7 @@ def generate_launch_description():
         os.path.join(
             autoware_pointcloud_preprocessor_share_dir,
             "config",
-            "concatenate_and_time_sync.param.yaml",
+            "concatenate_and_time_sync_node.param.yaml",
         ),
         description="path to parameter file of concatenate and time sync node",
     )
@@ -207,7 +207,7 @@ def generate_launch_description():
         os.path.join(
             autoware_pointcloud_preprocessor_share_dir,
             "config",
-            "time_synchronizer.param.yaml",
+            "time_synchronizer_node.param.yaml",
         ),
         description="path to parameter file of time synchronizer node",
     )
