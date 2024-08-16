@@ -21,6 +21,7 @@
 #include <boost/geometry/algorithms/disjoint.hpp>
 #include <boost/geometry/algorithms/union.hpp>
 
+#include <lanelet2_core/Forward.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
@@ -28,6 +29,15 @@
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
+
+namespace
+{
+bool is_road_lanelet(const lanelet::ConstLanelet & lanelet)
+{
+  return lanelet.hasAttribute(lanelet::AttributeName::Subtype) &&
+         lanelet.attribute(lanelet::AttributeName::Subtype) == lanelet::AttributeValueString::Road;
+}
+}  // namespace
 
 lanelet::ConstLanelets consecutive_lanelets(
   const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelet & lanelet)
@@ -77,7 +87,9 @@ lanelet::ConstLanelets calculate_trajectory_lanelets(
   const auto candidates =
     lanelet_map_ptr->laneletLayer.search(lanelet::geometry::boundingBox2d(trajectory_ls));
   for (const auto & ll : candidates) {
-    if (!boost::geometry::disjoint(trajectory_ls, ll.polygon2d().basicPolygon())) {
+    if (
+      is_road_lanelet(ll) &&
+      !boost::geometry::disjoint(trajectory_ls, ll.polygon2d().basicPolygon())) {
       trajectory_lanelets.push_back(ll);
     }
   }
@@ -125,15 +137,13 @@ void calculate_overlapped_lanelets(
   OutOfLanePoint & out_of_lane_point, const route_handler::RouteHandler & route_handler)
 {
   out_of_lane_point.overlapped_lanelets = lanelet::ConstLanelets();
-  for (const auto & ring : out_of_lane_point.outside_rings) {
-    const auto candidates =
-      route_handler.getLaneletMapPtr()->laneletLayer.search(lanelet::geometry::boundingBox2d(ring));
-    for (const auto & ll : candidates) {
-      if (
-        !contains_lanelet(out_of_lane_point.overlapped_lanelets, ll.id()) &&
-        !boost::geometry::disjoint(ring, ll.polygon2d().basicPolygon())) {
-        out_of_lane_point.overlapped_lanelets.push_back(ll);
-      }
+  const auto candidates = route_handler.getLaneletMapPtr()->laneletLayer.search(
+    lanelet::geometry::boundingBox2d(out_of_lane_point.outside_ring));
+  for (const auto & ll : candidates) {
+    if (
+      is_road_lanelet(ll) && !contains_lanelet(out_of_lane_point.overlapped_lanelets, ll.id()) &&
+      boost::geometry::within(out_of_lane_point.outside_ring, ll.polygon2d().basicPolygon())) {
+      out_of_lane_point.overlapped_lanelets.push_back(ll);
     }
   }
 }
@@ -141,8 +151,15 @@ void calculate_overlapped_lanelets(
 void calculate_overlapped_lanelets(
   OutOfLaneData & out_of_lane_data, const route_handler::RouteHandler & route_handler)
 {
-  for (auto & point : out_of_lane_data.outside_points) {
-    calculate_overlapped_lanelets(point, route_handler);
+  for (auto it = out_of_lane_data.outside_points.begin();
+       it != out_of_lane_data.outside_points.end();) {
+    calculate_overlapped_lanelets(*it, route_handler);
+    if (it->overlapped_lanelets.empty()) {
+      // do not keep out of lane points that do not overlap any lanelet
+      out_of_lane_data.outside_points.erase(it);
+    } else {
+      ++it;
+    }
   }
 }
 }  // namespace autoware::motion_velocity_planner::out_of_lane

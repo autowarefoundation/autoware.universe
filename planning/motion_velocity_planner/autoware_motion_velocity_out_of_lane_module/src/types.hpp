@@ -112,7 +112,7 @@ struct EgoData
 struct OutOfLanePoint
 {
   size_t trajectory_index;
-  lanelet::BasicPolygons2d outside_rings;
+  lanelet::BasicPolygon2d outside_ring;
   std::set<double> collision_times;
   std::optional<double> min_object_arrival_time;
   std::optional<double> max_object_arrival_time;

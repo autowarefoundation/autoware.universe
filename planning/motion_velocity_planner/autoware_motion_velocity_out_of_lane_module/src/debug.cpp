@@ -68,43 +68,6 @@ void add_polygons_markers(
   debug_marker_array.markers.push_back(debug_marker);
 }
 
-void add_out_of_lane_markers(
-  visualization_msgs::msg::MarkerArray & debug_marker_array, const OutOfLaneData & data,
-  const double z, DebugData & debug_data)
-{
-  auto debug_marker = get_base_marker();
-  debug_marker.ns = "out_of_lane_areas";
-
-  const auto & add_rings_marker = [&](const auto & rings) {
-    for (const auto & f : rings) {
-      debug_marker.points.clear();
-      for (const auto & p : f)
-        debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
-      if (!debug_marker.points.empty()) {
-        debug_marker.points.push_back(debug_marker.points.front());
-      }
-      debug_marker_array.markers.push_back(debug_marker);
-      debug_marker.id++;
-    }
-  };
-  for (const auto & pt : data.outside_points) {
-    if (pt.to_avoid) {
-      debug_marker.color.r = 1.0;
-      debug_marker.color.g = 0.0;
-    } else {
-      debug_marker.color.r = 0.0;
-      debug_marker.color.g = 1.0;
-    }
-    add_rings_marker(pt.outside_rings);
-  }
-  size_t nb_markers = debug_marker.id;
-  debug_marker.action = visualization_msgs::msg::Marker::DELETE;
-  for (; debug_marker.id < static_cast<int>(debug_data.prev_out_of_lane_areas); ++debug_marker.id) {
-    debug_marker_array.markers.push_back(debug_marker);
-  }
-  debug_data.prev_out_of_lane_areas = nb_markers;
-}
-
 void add_current_overlap_marker(
   visualization_msgs::msg::MarkerArray & debug_marker_array,
   const lanelet::BasicPolygon2d & current_footprint, const double z)
@@ -203,9 +166,9 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
 
   lanelet::BasicPolygons2d out_of_lane_areas;
   for (const auto & p : out_of_lane_data.outside_points) {
-    out_of_lane_areas.insert(
-      out_of_lane_areas.end(), p.outside_rings.begin(), p.outside_rings.end());
+    out_of_lane_areas.push_back(p.outside_ring);
   }
+  add_polygons_markers(debug_marker_array, out_of_lane_areas, z, "out_of_laneareas");
 
   lanelet::BasicPolygons2d object_polygons;
   for (const auto & o : objects.objects) {
@@ -218,8 +181,6 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
     }
   }
   add_polygons_markers(debug_marker_array, object_polygons, z, "objects");
-
-  add_out_of_lane_markers(debug_marker_array, out_of_lane_data, z, debug_data);
 
   add_current_overlap_marker(debug_marker_array, ego_data.current_footprint, z);
 

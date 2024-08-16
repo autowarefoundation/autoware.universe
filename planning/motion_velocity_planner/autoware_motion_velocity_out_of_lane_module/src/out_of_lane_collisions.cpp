@@ -46,14 +46,10 @@ void update_collision_times(
   for (const auto index : potential_collision_indexes) {
     auto & out_of_lane_point = out_of_lane_data.outside_points[index];
     if (out_of_lane_point.collision_times.count(time) == 0UL) {
-      const auto has_collision = std::any_of(
-        out_of_lane_point.outside_rings.begin(), out_of_lane_point.outside_rings.end(),
-        [&](const auto & ring) {
-          return !boost::geometry::disjoint(ring, object_footprint.outer());
-        });
+      const auto has_collision =
+        !boost::geometry::disjoint(out_of_lane_point.outside_ring, object_footprint.outer());
       if (has_collision) {
         out_of_lane_point.collision_times.insert(time);
-        break;
       }
     }
   }
@@ -138,16 +134,15 @@ OutOfLaneData calculate_outside_points(const EgoData & ego_data)
   OutOfLaneData out_of_lane_data;
   out_of_lane::OutOfLanePoint p;
   for (auto i = 0UL; i < ego_data.trajectory_footprints.size(); ++i) {
+    p.trajectory_index = i + ego_data.first_trajectory_idx;
     const auto & footprint = ego_data.trajectory_footprints[i];
-    p.outside_rings.clear();
     out_of_lane::Polygons out_of_lane_polygons;
     boost::geometry::difference(footprint, ego_data.drivable_lane_polygons, out_of_lane_polygons);
     for (const auto & area : out_of_lane_polygons) {
-      p.outside_rings.push_back(area.outer);
-    }
-    if (!p.outside_rings.empty()) {
-      p.trajectory_index = i + ego_data.first_trajectory_idx;
-      out_of_lane_data.outside_points.push_back(p);
+      if (!area.outer.empty()) {
+        p.outside_ring = area.outer;
+        out_of_lane_data.outside_points.push_back(p);
+      }
     }
   }
   return out_of_lane_data;
@@ -158,12 +153,11 @@ OutOfLaneData calculate_out_of_lane_areas(const EgoData & ego_data)
   auto out_of_lane_data = calculate_outside_points(ego_data);
   std::vector<OutAreaNode> rtree_nodes;
   for (auto i = 0UL; i < out_of_lane_data.outside_points.size(); ++i) {
-    for (const auto & ring : out_of_lane_data.outside_points[i].outside_rings) {
-      OutAreaNode n;
-      n.first = boost::geometry::return_envelope<universe_utils::Box2d>(ring);
-      n.second = i;
-      rtree_nodes.push_back(n);
-    }
+    OutAreaNode n;
+    n.first = boost::geometry::return_envelope<universe_utils::Box2d>(
+      out_of_lane_data.outside_points[i].outside_ring);
+    n.second = i;
+    rtree_nodes.push_back(n);
   }
   out_of_lane_data.outside_areas_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
   return out_of_lane_data;

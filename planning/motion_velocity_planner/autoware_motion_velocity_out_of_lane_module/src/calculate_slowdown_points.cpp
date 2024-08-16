@@ -78,14 +78,7 @@ std::optional<geometry_msgs::msg::Pose> calculate_pose_ahead_of_collision(
     const auto interpolated_pose =
       motion_utils::calcInterpolatedPose(ego_data.trajectory_points, l);
     const auto interpolated_footprint = project_to_pose(footprint, interpolated_pose);
-    auto overlaps = false;
-    for (const auto & ring : point_to_avoid.outside_rings) {
-      if (boost::geometry::intersects(interpolated_footprint, ring)) {
-        overlaps = true;
-        break;
-      }
-    }
-    if (!overlaps) {
+    if (boost::geometry::intersects(interpolated_footprint, point_to_avoid.outside_ring)) {
       return interpolated_pose;
     }
   }
