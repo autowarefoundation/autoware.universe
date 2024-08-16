@@ -55,6 +55,7 @@ None
 | `vehicle_shape_margin_m`     | double | vehicle margin                                                                  |
 | `replan_when_obstacle_found` | bool   | whether replanning when obstacle has found on the trajectory                    |
 | `replan_when_course_out`     | bool   | whether replanning when vehicle is out of course                                |
+| `enable_obs_confidence_check`| bool   | if true, when obstacle is found, confidence level is checked before replanning  |
 
 #### Planner common parameters
 

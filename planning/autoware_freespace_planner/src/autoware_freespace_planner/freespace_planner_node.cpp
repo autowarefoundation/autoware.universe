@@ -237,6 +237,7 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
     p.vehicle_shape_margin_m = declare_parameter<double>("vehicle_shape_margin_m");
     p.replan_when_obstacle_found = declare_parameter<bool>("replan_when_obstacle_found");
     p.replan_when_course_out = declare_parameter<bool>("replan_when_course_out");
+    p.enable_obs_confidence_check = declare_parameter<bool>("enable_obs_confidence_check");
   }
 
   // set vehicle_info
@@ -313,22 +314,9 @@ bool FreespacePlannerNode::isPlanRequired()
     return true;
   }
 
-  if (node_param_.replan_when_obstacle_found) {
-    algo_->setMap(*occupancy_grid_);
-
-    const size_t nearest_index_partial = autoware::motion_utils::findNearestIndex(
-      partial_trajectory_.points, current_pose_.pose.position);
-    const size_t end_index_partial = partial_trajectory_.points.size() - 1;
-
-    const auto forward_trajectory =
-      getPartialTrajectory(partial_trajectory_, nearest_index_partial, end_index_partial);
-
-    const bool is_obstacle_found =
-      algo_->hasObstacleOnTrajectory(trajectory2PoseArray(forward_trajectory));
-    if (is_obstacle_found) {
-      RCLCPP_DEBUG(get_logger(), "Found obstacle");
-      return true;
-    }
+  if (node_param_.replan_when_obstacle_found && checkCurrentTrajectoryCollision()) {
+    RCLCPP_DEBUG(get_logger(), "Found obstacle");
+    return true;
   }
 
   if (node_param_.replan_when_course_out) {
@@ -341,6 +329,31 @@ bool FreespacePlannerNode::isPlanRequired()
   }
 
   return false;
+}
+
+bool FreespacePlannerNode::checkCurrentTrajectoryCollision()
+{
+  algo_->setMap(*occupancy_grid_);
+
+  const size_t nearest_index_partial = autoware::motion_utils::findNearestIndex(
+    partial_trajectory_.points, current_pose_.pose.position);
+  const size_t end_index_partial = partial_trajectory_.points.size() - 1;
+  const auto forward_trajectory =
+    getPartialTrajectory(partial_trajectory_, nearest_index_partial, end_index_partial);
+
+  const bool is_obs_found =
+    algo_->hasObstacleOnTrajectory(trajectory2PoseArray(forward_trajectory));
+
+  if (!node_param_.enable_obs_confidence_check) return is_obs_found;
+
+  if (!is_obs_found) {
+    collision_confidence = 0.0;
+    return false;
+  }
+
+  collision_confidence += coll_confidence_increase_rate * (1.0 - collision_confidence);
+
+  return collision_confidence > coll_confidence_threshold;
 }
 
 void FreespacePlannerNode::updateTargetIndex()
@@ -573,6 +586,7 @@ void FreespacePlannerNode::reset()
   std_msgs::msg::Bool is_completed_msg;
   is_completed_msg.data = is_completed_;
   parking_state_pub_->publish(is_completed_msg);
+  collision_confidence = 0.0;
 }
 
 TransformStamped FreespacePlannerNode::getTransform(

@@ -11,6 +11,7 @@
     vehicle_shape_margin_m: 1.0
     replan_when_obstacle_found: true
     replan_when_course_out: true
+    enable_obs_confidence_check: true
 
     # -- Configurations common to the all planners --
     # base configs
