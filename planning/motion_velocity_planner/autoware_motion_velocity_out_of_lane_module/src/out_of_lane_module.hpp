@@ -41,7 +41,7 @@ public:
   : module_name_(""),
     prev_inserted_point_(std::nullopt),
     clock_(nullptr),
-    prev_inserted_point_time_(0, 0, RCL_ROS_TIME)
+    prev_inserted_point_time_(clock_->now())
   {
   }
 
