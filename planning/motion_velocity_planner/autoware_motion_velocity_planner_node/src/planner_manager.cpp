@@ -72,11 +72,11 @@ void MotionVelocityPlannerManager::update_module_parameters(
 }
 
 std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::make_diagnostic(
-  const std::string & reason, const bool is_decided)
+  const std::string & module_name, const std::string & reason, const bool is_decided)
 {
   auto status = std::make_shared<DiagnosticStatus>();
   status->level = status->OK;
-  status->name = reason;
+  status->name = module_name + '.' + reason;
   diagnostic_msgs::msg::KeyValue key_value;
   {
     // Decision
@@ -92,15 +92,14 @@ std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::make_diagnostic(
 }
 
 std::shared_ptr<DiagnosticArray> MotionVelocityPlannerManager::get_diagnostics(
-  const rclcpp::Time & current_time, const bool decided_diagnostics_only) const
+  const rclcpp::Time & current_time) const
 {
   auto diagnostics = std::make_shared<DiagnosticArray>();
 
   for (const auto & ds_ptr : diagnostics_) {
     if (
-      (!decided_diagnostics_only) ||
-      (ds_ptr && !ds_ptr->values.empty() && ds_ptr->values[0].key == "decision" &&
-       ds_ptr->values[0].value != "none")) {
+      ds_ptr && !ds_ptr->values.empty() && ds_ptr->values[0].key == "decision" &&
+      ds_ptr->values[0].value != "none") {
       diagnostics->status.push_back(*ds_ptr);
     }
   }
@@ -119,11 +118,11 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
     results.push_back(res);
 
     auto stop_reason_diag =
-      make_diagnostic(plugin->get_module_name() + ".stop", res.stop_points.size() > 0);
+      make_diagnostic(plugin->get_module_name(), "stop", res.stop_points.size() > 0);
     diagnostics_.push_back(stop_reason_diag);
 
     auto slow_down_reason_diag =
-      make_diagnostic(plugin->get_module_name() + ".slow_down", res.slowdown_intervals.size() > 0);
+      make_diagnostic(plugin->get_module_name(), "slow_down", res.slowdown_intervals.size() > 0);
     diagnostics_.push_back(slow_down_reason_diag);
   }
   return results;

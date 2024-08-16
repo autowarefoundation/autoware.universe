@@ -296,7 +296,7 @@ void MotionVelocityPlannerNode::on_trajectory(
   processing_time_publisher_->publish(processing_time_msg);
 
   std::shared_ptr<DiagnosticArray> diagnostics =
-    planner_manager_.get_diagnostics(get_clock()->now(), true);
+    planner_manager_.get_diagnostics(get_clock()->now());
   if (!diagnostics->status.empty()) {
     diagnostics_pub_->publish(*diagnostics);
   }

@@ -54,9 +54,8 @@ public:
 
   // Diagnostic
   std::shared_ptr<DiagnosticStatus> make_diagnostic(
-    const std::string & reason, const bool is_decided = true);
-  std::shared_ptr<DiagnosticArray> get_diagnostics(
-    const rclcpp::Time & current_time, const bool decided_diagnostics_only = true) const;
+    const std::string & module_name, const std::string & reason, const bool is_decided = true);
+  std::shared_ptr<DiagnosticArray> get_diagnostics(const rclcpp::Time & current_time) const;
   void clear_diagnostics() { diagnostics_.clear(); }
 
 private:
