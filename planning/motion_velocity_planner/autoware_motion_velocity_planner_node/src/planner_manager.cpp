@@ -98,7 +98,7 @@ std::shared_ptr<DiagnosticArray> MotionVelocityPlannerManager::get_diagnostics(
 
   for (const auto & ds_ptr : diagnostics_) {
     if (
-      ds_ptr && !ds_ptr->values.empty() && ds_ptr->values[0].key == "decision" &&
+      !ds_ptr->values.empty() && ds_ptr->values[0].key == "decision" &&
       ds_ptr->values[0].value != "none") {
       diagnostics->status.push_back(*ds_ptr);
     }
