@@ -94,12 +94,19 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     }
     declare_parameter("input_topics", std::vector<std::string>());
     input_topics_ = get_parameter("input_topics").as_string_array();
+
+    // Check if input topics are empty
     if (input_topics_.empty()) {
-      RCLCPP_ERROR(get_logger(), "Need a 'input_topics' parameter to be set before continuing!");
+      RCLCPP_ERROR(get_logger(), "Need 'input_topics' parameter to be set before continuing!");
       return;
     }
-    if (input_topics_.size() == 1) {
-      RCLCPP_ERROR(get_logger(), "Only one topic given. Need at least two topics to continue.");
+
+    // Check if there are duplicated input topic
+    std::sort(input_topics_.begin(), input_topics_.end());
+    auto duplicate_it = std::adjacent_find(input_topics_.begin(), input_topics_.end());
+    if (duplicate_it != input_topics_.end()) {
+      RCLCPP_ERROR(
+        get_logger(), "Each input topic must have a defferent name!");
       return;
     }
 
@@ -162,17 +169,25 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     // First input_topics_.size () filters are valid
     for (size_t d = 0; d < input_topics_.size(); ++d) {
       cloud_stdmap_.insert(std::make_pair(input_topics_[d], nullptr));
-      cloud_stdmap_tmp_ = cloud_stdmap_;
 
       // CAN'T use auto type here.
-      std::function<void(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)> cb = std::bind(
-        &PointCloudConcatenateDataSynchronizerComponent::cloud_callback, this,
-        std::placeholders::_1, input_topics_[d]);
+      std::function<void(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)> cb;
+      if (input_topics_.size() == 1) {
+        cb = std::bind(
+          &PointCloudConcatenateDataSynchronizerComponent::single_cloud_callback, this,
+          std::placeholders::_1, input_topics_[0]);
+      } else {
+        cb = std::bind(
+          &PointCloudConcatenateDataSynchronizerComponent::cloud_callback, this,
+          std::placeholders::_1, input_topics_[d]);
+      }
 
       filters_[d].reset();
       filters_[d] = this->create_subscription<sensor_msgs::msg::PointCloud2>(
         input_topics_[d], rclcpp::SensorDataQoS().keep_last(maximum_queue_size_), cb);
     }
+
+    cloud_stdmap_tmp_ = cloud_stdmap_;
 
     if (input_twist_topic_type_ == "twist") {
       auto twist_cb = std::bind(
@@ -473,6 +488,63 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
   }
 }
 
+void PointCloudConcatenateDataSynchronizerComponent::publishSingleLidar()
+{
+  stop_watch_ptr_->toc("processing_time", true);
+  sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
+    new sensor_msgs::msg::PointCloud2());
+  if (cloud_stdmap_.cbegin()->second) {
+    static_tf_buffer_->transformPointcloud(this, output_frame_, *cloud_stdmap_.cbegin()->second, *transformed_cloud_ptr);
+  }
+
+  // publish concatenated pointcloud
+  if (transformed_cloud_ptr) {
+    auto output = std::make_unique<sensor_msgs::msg::PointCloud2>(*transformed_cloud_ptr);
+    pub_output_->publish(std::move(output));
+  } else {
+    RCLCPP_WARN(
+      this->get_logger(), "transformed_cloud_ptr is nullptr, skipping pointcloud publish.");
+  }
+
+  // publish transformed raw pointclouds
+  if (publish_synchronized_pointcloud_) {
+    if (cloud_stdmap_.cbegin()->second) {
+      auto output =
+        std::make_unique<sensor_msgs::msg::PointCloud2>(*cloud_stdmap_.cbegin()->second);
+      transformed_raw_pc_publisher_map_[cloud_stdmap_.cbegin()->first]->publish(std::move(output));
+    } else {
+      RCLCPP_WARN(
+        this->get_logger(), "transformed_raw_points[%s] is nullptr, skipping pointcloud publish.",
+        cloud_stdmap_.cbegin()->first.c_str());
+    }
+  }
+
+  updater_.force_update();
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
+    for (const auto & e : cloud_stdmap_) {
+    if (e.second != nullptr) {
+      if (debug_publisher_) {
+        const auto pipeline_latency_ms =
+          std::chrono::duration<double, std::milli>(
+            std::chrono::nanoseconds(
+              (this->get_clock()->now() - e.second->header.stamp).nanoseconds()))
+            .count();
+        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+          "debug" + e.first + "/pipeline_latency_ms", pipeline_latency_ms);
+      }
+    }
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void PointCloudConcatenateDataSynchronizerComponent::convertToXYZIRCCloud(
   const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
@@ -623,12 +695,36 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   }
 }
 
+void PointCloudConcatenateDataSynchronizerComponent::single_cloud_callback(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  sensor_msgs::msg::PointCloud2::SharedPtr xyzirc_input_ptr(new sensor_msgs::msg::PointCloud2());
+  auto input = std::make_shared<sensor_msgs::msg::PointCloud2>(*input_ptr);
+  if (input->data.empty()) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
+  } else {
+    // convert to XYZI pointcloud if pointcloud is not empty
+    convertToXYZIRCCloud(input, xyzirc_input_ptr);
+  }
+
+  cloud_stdmap_[topic_name] = xyzirc_input_ptr;
+
+  timer_->cancel();
+  publishSingleLidar();
+}
+
 void PointCloudConcatenateDataSynchronizerComponent::timer_callback()
 {
   using std::chrono_literals::operator""ms;
   timer_->cancel();
   if (mutex_.try_lock()) {
-    publish();
+    if (input_topics_.size() == 1) {
+      publishSingleLidar();
+    } else {
+      publish();
+    }
     mutex_.unlock();
   } else {
     try {

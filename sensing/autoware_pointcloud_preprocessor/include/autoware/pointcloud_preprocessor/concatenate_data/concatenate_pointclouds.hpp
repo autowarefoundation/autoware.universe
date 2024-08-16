@@ -153,6 +153,7 @@ private:
   void checkSyncStatus();
   void combineClouds(sensor_msgs::msg::PointCloud2::SharedPtr & concat_cloud_ptr);
   void publish();
+  void publishSingleLidar();
 
   void convertToXYZIRCCloud(
     const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
@@ -160,6 +161,9 @@ private:
   void setPeriod(const int64_t new_period);
   void cloud_callback(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
+    const std::string & topic_name);
+    void single_cloud_callback(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
     const std::string & topic_name);
   void timer_callback();
 

@@ -166,12 +166,16 @@ private:
   std::map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> combineClouds(
     sensor_msgs::msg::PointCloud2::SharedPtr & concat_cloud_ptr);
   void publish();
+  void publishSingleLidar();
 
   void convertToXYZIRCCloud(
     const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
     sensor_msgs::msg::PointCloud2::SharedPtr & output_ptr);
   void setPeriod(const int64_t new_period);
   void cloud_callback(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
+    const std::string & topic_name);
+  void single_cloud_callback(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
     const std::string & topic_name);
   void twist_callback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input);
