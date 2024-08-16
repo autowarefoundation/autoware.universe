@@ -19,6 +19,7 @@
 
 #include <autoware/behavior_path_planner_common/parameters.hpp>
 #include <autoware/route_handler/route_handler.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <interpolation/linear_interpolation.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
@@ -109,7 +110,6 @@ struct Parameters
   double lane_changing_lateral_jerk{0.5};
   double minimum_lane_changing_velocity{5.6};
   double lane_change_prepare_duration{4.0};
-  double lane_change_finish_judge_buffer{3.0};
   LateralAccelerationMap lane_change_lat_acc_map;
 
   // parked vehicle
@@ -123,6 +123,9 @@ struct Parameters
   // acceleration data
   double min_longitudinal_acc{-1.0};
   double max_longitudinal_acc{1.0};
+
+  double skip_process_lon_diff_th_prepare{0.5};
+  double skip_process_lon_diff_th_lane_changing{1.0};
 
   // collision check
   bool enable_collision_check_for_prepare_phase_in_general_lanes{false};
@@ -151,13 +154,17 @@ struct Parameters
   bool allow_loose_check_for_cancel{true};
   double collision_check_yaw_diff_threshold{3.1416};
   utils::path_safety_checker::RSSparams rss_params{};
+  utils::path_safety_checker::RSSparams rss_params_for_parked{};
   utils::path_safety_checker::RSSparams rss_params_for_abort{};
   utils::path_safety_checker::RSSparams rss_params_for_stuck{};
 
   // abort
   CancelParameters cancel{};
 
+  // finish judge parameter
+  double lane_change_finish_judge_buffer{3.0};
   double finish_judge_lateral_threshold{0.2};
+  double finish_judge_lateral_angle_deviation{autoware::universe_utils::deg2rad(3.0)};
 
   // debug marker
   bool publish_debug_marker{false};
@@ -185,7 +192,9 @@ struct PhaseInfo
 
 struct Lanes
 {
+  bool current_lane_in_goal_section{false};
   lanelet::ConstLanelets current;
+  lanelet::ConstLanelets target_neighbor;
   lanelet::ConstLanelets target;
   std::vector<lanelet::ConstLanelets> preceding_target;
 };
@@ -206,11 +215,33 @@ struct Info
   double terminal_lane_changing_velocity{0.0};
 };
 
+template <typename Object>
 struct LanesObjects
 {
-  ExtendedPredictedObjects current_lane{};
-  ExtendedPredictedObjects target_lane{};
-  ExtendedPredictedObjects other_lane{};
+  Object current_lane{};
+  Object target_lane_leading{};
+  Object target_lane_trailing{};
+  Object other_lane{};
+
+  LanesObjects() = default;
+  LanesObjects(
+    Object current_lane, Object target_lane_leading, Object target_lane_trailing, Object other_lane)
+  : current_lane(std::move(current_lane)),
+    target_lane_leading(std::move(target_lane_leading)),
+    target_lane_trailing(std::move(target_lane_trailing)),
+    other_lane(std::move(other_lane))
+  {
+  }
+};
+
+struct TargetObjects
+{
+  ExtendedPredictedObjects leading;
+  ExtendedPredictedObjects trailing;
+  TargetObjects(ExtendedPredictedObjects leading, ExtendedPredictedObjects trailing)
+  : leading(std::move(leading)), trailing(std::move(trailing))
+  {
+  }
 };
 
 enum class ModuleType {
@@ -222,7 +253,13 @@ enum class ModuleType {
 struct PathSafetyStatus
 {
   bool is_safe{true};
-  bool is_object_coming_from_rear{false};
+  bool is_trailing_object{false};
+
+  PathSafetyStatus() = default;
+  PathSafetyStatus(const bool is_safe, const bool is_trailing_object)
+  : is_safe(is_safe), is_trailing_object(is_trailing_object)
+  {
+  }
 };
 
 struct LanesPolygon
@@ -271,12 +308,15 @@ using CommonDataPtr = std::shared_ptr<CommonData>;
 
 namespace autoware::behavior_path_planner
 {
+using autoware_perception_msgs::msg::PredictedObject;
+using utils::path_safety_checker::ExtendedPredictedObjects;
 using LaneChangeModuleType = lane_change::ModuleType;
 using LaneChangeParameters = lane_change::Parameters;
 using LaneChangeStates = lane_change::States;
 using LaneChangePhaseInfo = lane_change::PhaseInfo;
 using LaneChangeInfo = lane_change::Info;
-using LaneChangeLanesFilteredObjects = lane_change::LanesObjects;
+using FilteredByLanesObjects = lane_change::LanesObjects<std::vector<PredictedObject>>;
+using FilteredByLanesExtendedObjects = lane_change::LanesObjects<ExtendedPredictedObjects>;
 using LateralAccelerationMap = lane_change::LateralAccelerationMap;
 }  // namespace autoware::behavior_path_planner
 

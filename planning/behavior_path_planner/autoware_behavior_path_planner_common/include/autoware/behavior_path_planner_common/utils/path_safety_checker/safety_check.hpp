@@ -27,6 +27,7 @@
 #include <geometry_msgs/msg/twist.hpp>
 
 #include <cmath>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_path_planner::utils::path_safety_checker
@@ -58,9 +59,10 @@ Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const double lon_length, const double lat_margin, const bool is_stopped_obj,
   CollisionCheckDebug & debug);
+
 Polygon2d createExtendedPolygon(
-  const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin,
-  const bool is_stopped_obj, CollisionCheckDebug & debug);
+  const PoseWithVelocityAndPolygonStamped & obj_pose_with_poly, const double lon_length,
+  const double lat_margin, const bool is_stopped_obj, CollisionCheckDebug & debug);
 
 PredictedPath convertToPredictedPath(
   const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);
@@ -155,6 +157,12 @@ bool checkSafetyWithIntegralPredictedPolygon(
   const std::vector<PoseWithVelocityStamped> & ego_predicted_path, const VehicleInfo & vehicle_info,
   const ExtendedPredictedObjects & objects, const bool check_all_predicted_path,
   const IntegralPredictedPolygonParams & params, CollisionCheckDebugMap & debug_map);
+
+double calcObstacleMinLength(const Shape & shape);
+double calcObstacleMaxLength(const Shape & shape);
+std::pair<bool, bool> checkObjectsCollisionRough(
+  const PathWithLaneId & path, const PredictedObjects & objects, const double margin,
+  const BehaviorPathPlannerParameters & parameters, const bool use_offset_ego_point);
 
 // debug
 CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj);
