@@ -21,6 +21,7 @@
 #include "autoware_raw_vehicle_cmd_converter/brake_map.hpp"
 #include "autoware_raw_vehicle_cmd_converter/pid.hpp"
 #include "autoware_raw_vehicle_cmd_converter/steer_map.hpp"
+#include "autoware_raw_vehicle_cmd_converter/vgr.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -95,6 +96,7 @@ public:
   AccelMap accel_map_;
   BrakeMap brake_map_;
   SteerMap steer_map_;
+  VGR vgr_;
   // TODO(tanaka): consider accel/brake pid too
   PIDController steer_pid_;
   bool ff_map_initialized_;
@@ -127,8 +129,6 @@ public:
   void onSteering(const Steering::ConstSharedPtr msg);
   void onActuationStatus(const ActuationStatusStamped::ConstSharedPtr msg);
   void publishActuationCmd();
-  double calculateVariableGearRatio(const double vel, const double steer_wheel) const;
-  double calculateSteeringTireState(const double vel, const double steer_wheel) const;
   // for debugging
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_pub_steer_pid_;
   DebugValues debug_steer_;

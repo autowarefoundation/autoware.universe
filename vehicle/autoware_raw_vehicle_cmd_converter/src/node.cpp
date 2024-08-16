@@ -52,9 +52,10 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   if (declare_parameter<bool>("convert_steer_cmd")) {
     convert_steer_cmd_method_ = declare_parameter<std::string>("convert_steer_cmd_method", "vgr");
     if (convert_steer_cmd_method_.value() == "vgr") {
-      vgr_coef_a_ = declare_parameter<double>("vgr_coef_a");
-      vgr_coef_b_ = declare_parameter<double>("vgr_coef_b");
-      vgr_coef_c_ = declare_parameter<double>("vgr_coef_c");
+      const double a = declare_parameter<double>("vgr_coef_a");
+      const double b = declare_parameter<double>("vgr_coef_b");
+      const double c = declare_parameter<double>("vgr_coef_c");
+      vgr_.setCoefficients(a, b, c);
     } else if (convert_steer_cmd_method_.value() == "steer_map") {
       const auto csv_path_steer_map = declare_parameter<std::string>("csv_path_steer_map");
       if (!steer_map_.readSteerMapFromCSV(csv_path_steer_map, true)) {
@@ -146,7 +147,7 @@ void RawVehicleCommandConverterNode::publishActuationCmd()
     // the actuation cmd is the steering wheel angle,
     // and the actuation_status is also the steering wheel angle.
     const double current_steer_wheel = actuation_status_ptr_->status.steer_status;
-    const double adaptive_gear_ratio = calculateVariableGearRatio(vel, current_steer_wheel);
+    const double adaptive_gear_ratio = vgr_.calculateVariableGearRatio(vel, current_steer_wheel);
     desired_steer_cmd = steer * adaptive_gear_ratio;
   } else if (convert_steer_cmd_method_.value() == "steer_map") {
     desired_steer_cmd = calculateSteerFromMap(vel, steer, steer_rate);
@@ -262,7 +263,7 @@ void RawVehicleCommandConverterNode::onActuationStatus(
       current_twist_ptr_ = std::make_unique<TwistStamped>();
       current_twist_ptr_->header = odometry_msg->header;
       current_twist_ptr_->twist = odometry_msg->twist.twist;
-      current_steer_ptr_ = std::make_unique<double>(calculateSteeringTireState(
+      current_steer_ptr_ = std::make_unique<double>(vgr_.calculateSteeringTireState(
         current_twist_ptr_->twist.linear.x, actuation_status_ptr_->status.steer_status));
       Steering steering_msg{};
       steering_msg.steering_tire_angle = *current_steer_ptr_;
@@ -274,20 +275,6 @@ void RawVehicleCommandConverterNode::onActuationStatus(
         "false.");
     }
   }
-}
-
-double RawVehicleCommandConverterNode::calculateVariableGearRatio(
-  const double vel, const double steer_wheel) const
-{
-  return std::max(
-    1e-5, vgr_coef_a_ + vgr_coef_b_ * vel * vel - vgr_coef_c_ * std::fabs(steer_wheel));
-}
-
-double RawVehicleCommandConverterNode::calculateSteeringTireState(
-  const double vel, const double steer_wheel) const
-{
-  const double adaptive_gear_ratio = calculateVariableGearRatio(vel, steer_wheel);
-  return steer_wheel / adaptive_gear_ratio;
 }
 }  // namespace autoware::raw_vehicle_cmd_converter
 
