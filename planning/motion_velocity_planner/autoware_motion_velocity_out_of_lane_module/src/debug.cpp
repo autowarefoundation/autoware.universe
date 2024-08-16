@@ -169,7 +169,7 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   for (const auto & p : out_of_lane_data.outside_points) {
     out_of_lane_areas.push_back(p.outside_ring);
   }
-  add_polygons_markers(debug_marker_array, out_of_lane_areas, z, "out_of_laneareas");
+  add_polygons_markers(debug_marker_array, out_of_lane_areas, z, "out_of_lane_areas");
 
   lanelet::BasicPolygons2d object_polygons;
   for (const auto & o : objects.objects) {
