@@ -91,28 +91,26 @@ std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::make_diagnostic(
   return status;
 }
 
-void MotionVelocityPlannerManager::publish_diagnostics(
-  const rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_ptr, const rclcpp::Time & current_time,
-  const bool publish_decided_diagnostics_only) const
+std::shared_ptr<DiagnosticArray> MotionVelocityPlannerManager::get_diagnostics(
+  const rclcpp::Time & current_time, const bool decided_diagnostics_only) const
 {
-  if (
-    publish_decided_diagnostics_only &&
-    !std::any_of(diagnostics_.begin(), diagnostics_.end(), [](const auto & ds_ptr) {
-      return ds_ptr && !ds_ptr->values.empty() && ds_ptr->values[0].key == "decision" &&
-             ds_ptr->values[0].value != "none";
-    })) {
-    return;
-  }
+  auto diagnostics = std::make_shared<DiagnosticArray>();
 
-  DiagnosticArray diagnostics;
-  diagnostics.header.stamp = current_time;
-  diagnostics.header.frame_id = "map";
   for (const auto & ds_ptr : diagnostics_) {
-    if (ds_ptr) {
-      diagnostics.status.push_back(*ds_ptr);
+    if (
+      (!decided_diagnostics_only) ||
+      (ds_ptr && !ds_ptr->values.empty() && ds_ptr->values[0].key == "decision" &&
+       ds_ptr->values[0].value != "none")) {
+      diagnostics->status.push_back(*ds_ptr);
     }
   }
-  pub_ptr->publish(diagnostics);
+  if (decided_diagnostics_only && diagnostics->status.empty()) {
+    return nullptr;
+  }
+
+  diagnostics->header.stamp = current_time;
+  diagnostics->header.frame_id = "map";
+  return diagnostics;
 }
 
 std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocities(

@@ -295,7 +295,11 @@ void MotionVelocityPlannerNode::on_trajectory(
   processing_time_msg.data = processing_times["Total"];
   processing_time_publisher_->publish(processing_time_msg);
 
-  planner_manager_.publish_diagnostics(diagnostics_pub_, get_clock()->now(), true);
+  std::shared_ptr<DiagnosticArray> diagnostics =
+    planner_manager_.get_diagnostics(get_clock()->now(), true);
+  if (diagnostics) {
+    diagnostics_pub_->publish(*diagnostics);
+  }
   planner_manager_.clear_diagnostics();
 }
 
