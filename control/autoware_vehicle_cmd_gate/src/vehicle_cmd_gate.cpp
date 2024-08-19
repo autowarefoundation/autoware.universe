@@ -361,12 +361,14 @@ template <typename T>
 T VehicleCmdGate::getContinuousTopic(
   const std::shared_ptr<T> & prev_topic, const T & current_topic, const std::string & topic_name)
 {
-  if ((rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() > 0.0) {
+  if ((rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() >= 0.0) {
     return current_topic;
   } else {
-    RCLCPP_INFO(
-      get_logger(),
-      "The operation mode is changed, but the %s is not received yet:", topic_name.c_str());
+    if (topic_name != "") {
+      RCLCPP_INFO(
+        get_logger(),
+        "The operation mode is changed, but the %s is not received yet:", topic_name.c_str());
+    }
     return *prev_topic;
   }
 }
@@ -536,7 +538,6 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   // Set default commands
   {
     filtered_commands.control = commands.control;
-    filtered_commands.gear = commands.gear;  // tmp
   }
 
   if (moderate_stop_interface_->is_stop_requested()) {  // if stop requested, stop the vehicle
@@ -549,7 +550,6 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(), "Emergency!");
     filtered_commands.control = emergency_commands_.control;
-    filtered_commands.gear = emergency_commands_.gear;  // tmp
   }
 
   // Check engage
@@ -901,7 +901,6 @@ MarkerArray VehicleCmdGate::createMarkerArray(const IsFilterActivated & filter_a
   }
   if (filter_activated.is_activated_on_steering_rate) {
     reason += first_msg ? " steer_rate" : ", steer_rate";
-    first_msg = false;
   }
 
   msg.markers.emplace_back(createStringMarker(
