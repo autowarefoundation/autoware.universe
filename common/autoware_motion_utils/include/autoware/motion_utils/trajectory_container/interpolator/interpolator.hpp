@@ -163,7 +163,7 @@ public:
    */
   [[nodiscard]] virtual size_t minimum_required_points() const = 0;
 
-  [[nodiscard]] int get_index(const double & s, bool include_end = true) const
+  [[nodiscard]] int32_t get_index(const double & s, bool include_end = true) const
   {
     if (include_end && s == end()) {
       return static_cast<int>(axis_.size()) - 2;
