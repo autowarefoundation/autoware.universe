@@ -39,15 +39,14 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_planning");
     p.resample_interval_for_output =
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_output");
-    p.enable_bound_clipping = getOrDeclareParameter<bool>(*node, ns + "enable_bound_clipping");
-    p.disable_path_update = getOrDeclareParameter<bool>(*node, ns + "disable_path_update");
+    p.path_generation_method =
+      getOrDeclareParameter<std::string>(*node, ns + "path_generation_method");
   }
 
   // drivable area
   {
     const std::string ns = "avoidance.";
-    p.use_adjacent_lane = getOrDeclareParameter<bool>(*node, ns + "use_adjacent_lane");
-    p.use_opposite_lane = getOrDeclareParameter<bool>(*node, ns + "use_opposite_lane");
+    p.use_lane_type = getOrDeclareParameter<std::string>(*node, ns + "use_lane_type");
     p.use_intersection_areas = getOrDeclareParameter<bool>(*node, ns + "use_intersection_areas");
     p.use_hatched_road_markings =
       getOrDeclareParameter<bool>(*node, ns + "use_hatched_road_markings");
@@ -138,9 +137,11 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
 
   {
     const std::string ns = "avoidance.target_filtering.avoidance_for_ambiguous_vehicle.";
-    p.enable_avoidance_for_ambiguous_vehicle = getOrDeclareParameter<bool>(*node, ns + "enable");
-    p.closest_distance_to_wait_and_see_for_ambiguous_vehicle =
-      getOrDeclareParameter<double>(*node, ns + "closest_distance_to_wait_and_see");
+    p.policy_ambiguous_vehicle = getOrDeclareParameter<std::string>(*node, ns + "policy");
+    p.wait_and_see_target_behaviors =
+      getOrDeclareParameter<std::vector<std::string>>(*node, ns + "wait_and_see.target_behaviors");
+    p.wait_and_see_th_closest_distance =
+      getOrDeclareParameter<double>(*node, ns + "wait_and_see.th_closest_distance");
     p.time_threshold_for_ambiguous_vehicle =
       getOrDeclareParameter<double>(*node, ns + "condition.th_stopped_time");
     p.distance_threshold_for_ambiguous_vehicle =
@@ -151,6 +152,12 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "ignore_area.crosswalk.front_distance");
     p.object_ignore_section_crosswalk_behind_distance =
       getOrDeclareParameter<double>(*node, ns + "ignore_area.crosswalk.behind_distance");
+  }
+
+  {
+    const std::string ns = "avoidance.target_filtering.freespace.";
+    p.freespace_condition_th_stopped_time =
+      getOrDeclareParameter<double>(*node, ns + "condition.th_stopped_time");
   }
 
   {
@@ -199,6 +206,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "hysteresis_factor_expand_rate");
     p.hysteresis_factor_safe_count =
       getOrDeclareParameter<int>(*node, ns + "hysteresis_factor_safe_count");
+    p.collision_check_yaw_diff_threshold =
+      getOrDeclareParameter<double>(*node, ns + "collision_check_yaw_diff_threshold");
   }
 
   // safety check predicted path params
@@ -292,6 +301,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   {
     const std::string ns = "avoidance.cancel.";
     p.enable_cancel_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable");
+    p.force_deactivate_duration_time =
+      getOrDeclareParameter<double>(*node, ns + "force.duration_time");
   }
 
   // yield

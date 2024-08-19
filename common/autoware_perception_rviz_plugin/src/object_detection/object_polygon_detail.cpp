@@ -459,7 +459,7 @@ visualization_msgs::msg::Marker::SharedPtr get_uuid_marker_ptr(
 
 visualization_msgs::msg::Marker::SharedPtr get_label_marker_ptr(
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-  const std::string label, const std_msgs::msg::ColorRGBA & color_rgba)
+  const std::string & label, const std_msgs::msg::ColorRGBA & color_rgba)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -526,10 +526,7 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
       marker_ptr->scale = shape_msg.dimensions;
       marker_ptr->color.a = 0.75f;
     }
-  } else if (shape_msg.type == Shape::POLYGON) {
-    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
-    calc_polygon_line_list(shape_msg, marker_ptr->points);
-  } else {
+  } else {  // including shape_msg.type == Shape::POLYGON
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_polygon_line_list(shape_msg, marker_ptr->points);
   }
@@ -562,10 +559,7 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   } else if (shape_msg.type == Shape::CYLINDER) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_2d_cylinder_bottom_line_list(shape_msg, marker_ptr->points);
-  } else if (shape_msg.type == Shape::POLYGON) {
-    marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
-    calc_2d_polygon_bottom_line_list(shape_msg, marker_ptr->points);
-  } else {
+  } else {  // including shape_msg.type == Shape::POLYGON
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_2d_polygon_bottom_line_list(shape_msg, marker_ptr->points);
   }

@@ -216,7 +216,8 @@ private:
   /**
    * @brief publish diagnostics message
    */
-  void publish_diagnostics(const rclcpp::Time & current_time);
+  void publish_diagnostics(
+    const geometry_msgs::msg::PoseStamped & current_ekf_pose, const rclcpp::Time & current_time);
 
   /**
    * @brief update simple 1d filter
@@ -237,6 +238,11 @@ private:
     std_srvs::srv::SetBool::Response::SharedPtr res);
 
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
+
+  /**
+   * @brief last angular velocity for compensating rph with delay
+   */
+  tf2::Vector3 last_angular_velocity_;
 
   friend class EKFLocalizerTestSuite;  // for test code
 };

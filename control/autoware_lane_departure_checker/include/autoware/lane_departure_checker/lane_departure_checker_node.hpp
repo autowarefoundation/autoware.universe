@@ -23,9 +23,11 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode_report.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -69,14 +71,21 @@ private:
   // Subscriber
   autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odom_{
     this, "~/input/odometry"};
-  autoware::universe_utils::InterProcessPollingSubscriber<LaneletMapBin> sub_lanelet_map_bin_{
-    this, "~/input/lanelet_map_bin", rclcpp::QoS{1}.transient_local()};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    LaneletMapBin, autoware::universe_utils::polling_policy::Newest>
+    sub_lanelet_map_bin_{this, "~/input/lanelet_map_bin", rclcpp::QoS{1}.transient_local()};
   autoware::universe_utils::InterProcessPollingSubscriber<LaneletRoute> sub_route_{
     this, "~/input/route"};
   autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> sub_reference_trajectory_{
     this, "~/input/reference_trajectory"};
   autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> sub_predicted_trajectory_{
     this, "~/input/predicted_trajectory"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    autoware_adapi_v1_msgs::msg::OperationModeState>
+    sub_operation_mode_{this, "/api/operation_mode/state"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    autoware_vehicle_msgs::msg::ControlModeReport>
+    sub_control_mode_{this, "/vehicle/status/control_mode"};
 
   // Data Buffer
   nav_msgs::msg::Odometry::ConstSharedPtr current_odom_;
@@ -90,6 +99,8 @@ private:
   lanelet::ConstLanelets route_lanelets_;
   Trajectory::ConstSharedPtr reference_trajectory_;
   Trajectory::ConstSharedPtr predicted_trajectory_;
+  autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr operation_mode_;
+  autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
 
   // Callback
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
@@ -97,10 +108,14 @@ private:
   void onRoute(const LaneletRoute::ConstSharedPtr msg);
   void onReferenceTrajectory(const Trajectory::ConstSharedPtr msg);
   void onPredictedTrajectory(const Trajectory::ConstSharedPtr msg);
+  void onOperationMode(const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg);
+  void onControlMode(const autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
 
   // Publisher
   autoware::universe_utils::DebugPublisher debug_publisher_{this, "~/debug"};
-  autoware::universe_utils::ProcessingTimePublisher processing_time_publisher_{this};
+  autoware::universe_utils::ProcessingTimePublisher processing_diag_publisher_{
+    this, "~/debug/processing_time_ms_diag"};
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_publisher_;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;

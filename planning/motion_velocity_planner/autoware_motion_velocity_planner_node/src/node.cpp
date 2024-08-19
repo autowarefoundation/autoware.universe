@@ -14,13 +14,15 @@
 
 #include "node.hpp"
 
+#include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/ros/wait_for_param.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
 #include <autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 #include <autoware/velocity_smoother/trajectory_utils.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
@@ -31,6 +33,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -80,6 +83,8 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   velocity_factor_publisher_ =
     this->create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
       "~/output/velocity_factors", 1);
+  processing_time_publisher_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 
   // Parameters
   smooth_velocity_before_planning_ = declare_parameter<bool>("smooth_velocity_before_planning");
@@ -103,8 +108,6 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
     std::bind(&MotionVelocityPlannerNode::on_set_param, this, std::placeholders::_1));
 
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void MotionVelocityPlannerNode::on_load_plugin(
@@ -252,9 +255,14 @@ void MotionVelocityPlannerNode::on_trajectory(
 {
   std::unique_lock<std::mutex> lk(mutex_);
 
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  std::map<std::string, double> processing_times;
+  stop_watch.tic("Total");
+
   if (!update_planner_data()) {
     return;
   }
+  processing_times["update_planner_data"] = stop_watch.toc(true);
 
   if (input_trajectory_msg->points.empty()) {
     RCLCPP_WARN(get_logger(), "Input trajectory message is empty");
@@ -264,6 +272,7 @@ void MotionVelocityPlannerNode::on_trajectory(
   if (has_received_map_) {
     planner_data_.route_handler = std::make_shared<route_handler::RouteHandler>(*map_ptr_);
     has_received_map_ = false;
+    processing_times["make_RouteHandler"] = stop_watch.toc(true);
   }
 
   autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points{
@@ -271,12 +280,19 @@ void MotionVelocityPlannerNode::on_trajectory(
 
   auto output_trajectory_msg = generate_trajectory(input_trajectory_points);
   output_trajectory_msg.header = input_trajectory_msg->header;
+  processing_times["generate_trajectory"] = stop_watch.toc(true);
 
   lk.unlock();
 
   trajectory_pub_->publish(output_trajectory_msg);
-  published_time_publisher_->publish_if_subscribed(
+  published_time_publisher_.publish_if_subscribed(
     trajectory_pub_, output_trajectory_msg.header.stamp);
+  processing_times["Total"] = stop_watch.toc("Total");
+  processing_diag_publisher_.publish(processing_times);
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = processing_times["Total"];
+  processing_time_publisher_->publish(processing_time_msg);
 }
 
 void MotionVelocityPlannerNode::insert_stop(
@@ -309,7 +325,7 @@ void MotionVelocityPlannerNode::insert_slowdown(
     autoware::motion_utils::insertTargetPoint(to_seg_idx, slowdown_interval.to, trajectory.points);
   if (from_insert_idx && to_insert_idx) {
     for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx)
-      trajectory.points[idx].longitudinal_velocity_mps = 0.0;
+      trajectory.points[idx].longitudinal_velocity_mps = slowdown_interval.velocity;
   } else {
     RCLCPP_WARN(get_logger(), "Failed to insert slowdown point");
   }
@@ -345,7 +361,7 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
   autoware::motion_velocity_planner::TrajectoryPoints traj_smoothed;
   clipped.insert(
     clipped.end(), traj_resampled.begin() + traj_resampled_closest, traj_resampled.end());
-  if (!smoother->apply(v0, a0, clipped, traj_smoothed, debug_trajectories)) {
+  if (!smoother->apply(v0, a0, clipped, traj_smoothed, debug_trajectories, false)) {
     RCLCPP_ERROR(get_logger(), "failed to smooth");
   }
   traj_smoothed.insert(
@@ -365,9 +381,11 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   output_trajectory_msg.points = {input_trajectory_points.begin(), input_trajectory_points.end()};
   if (smooth_velocity_before_planning_)
     input_trajectory_points = smooth_trajectory(input_trajectory_points, planner_data_);
+  const auto resampled_trajectory =
+    autoware::motion_utils::resampleTrajectory(output_trajectory_msg, 0.5);
 
   const auto planning_results = planner_manager_.plan_velocities(
-    input_trajectory_points, std::make_shared<const PlannerData>(planner_data_));
+    resampled_trajectory.points, std::make_shared<const PlannerData>(planner_data_));
 
   autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factors;
   velocity_factors.header.frame_id = "map";
@@ -400,7 +418,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocityPlannerNode::on_set_param
   updateParam(parameters, "ego_nearest_dist_threshold", planner_data_.ego_nearest_dist_threshold);
   updateParam(parameters, "ego_nearest_yaw_threshold", planner_data_.ego_nearest_yaw_threshold);
 
-  set_velocity_smoother_params();
+  // set_velocity_smoother_params(); TODO(Maxime): fix update parameters of the velocity smoother
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;

@@ -18,8 +18,8 @@
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <memory>
 #include <vector>
@@ -246,10 +246,11 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   // set pull over path
   PullOverPath pull_over_path{};
   pull_over_path.type = getPlannerType();
-  pull_over_path.partial_paths.push_back(shifted_path.path);
+  std::vector<PathWithLaneId> partial_paths{shifted_path.path};
+  pull_over_path.setPaths(
+    partial_paths, path_shifter.getShiftLines().front().start,
+    path_shifter.getShiftLines().front().end);
   pull_over_path.pairs_terminal_velocity_and_accel.push_back(std::make_pair(pull_over_velocity, 0));
-  pull_over_path.start_pose = path_shifter.getShiftLines().front().start;
-  pull_over_path.end_pose = path_shifter.getShiftLines().front().end;
   pull_over_path.debug_poses.push_back(shift_end_pose_prev_module_path);
   pull_over_path.debug_poses.push_back(actual_shift_end_pose);
   pull_over_path.debug_poses.push_back(goal_pose);
@@ -308,8 +309,19 @@ double ShiftPullOver::calcBeforeShiftedArcLength(
 
   double before_arc_length{0.0};
   double after_arc_length{0.0};
-  for (const auto & [k, segment_length] :
-       autoware::motion_utils::calcCurvatureAndArcLength(reversed_path.points)) {
+
+  const auto curvature_and_segment_length =
+    autoware::motion_utils::calcCurvatureAndSegmentLength(reversed_path.points);
+
+  for (size_t i = 0; i < curvature_and_segment_length.size(); ++i) {
+    const auto & [k, segment_length_pair] = curvature_and_segment_length[i];
+
+    // If it is the last point, add the lengths of the previous and next segments.
+    // For other points, only add the length of the previous segment.
+    const double segment_length = i == curvature_and_segment_length.size() - 1
+                                    ? segment_length_pair.first
+                                    : segment_length_pair.first + segment_length_pair.second;
+
     // after shifted segment length
     const double after_segment_length =
       k > 0 ? segment_length * (1 + k * dr) : segment_length / (1 - k * dr);

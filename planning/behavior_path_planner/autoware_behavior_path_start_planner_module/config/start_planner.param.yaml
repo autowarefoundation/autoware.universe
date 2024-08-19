@@ -32,6 +32,7 @@
       minimum_lateral_acc: 0.15
       maximum_lateral_acc: 0.5
       maximum_curvature: 0.07
+      end_pose_curvature_threshold: 0.01
       # geometric pull out
       enable_geometric_pull_out: true
       geometric_collision_check_distance_from_end: 0.0
@@ -61,9 +62,8 @@
         velocity: 1.0
         vehicle_shape_margin: 1.0
         time_limit: 3000.0
-        minimum_turning_radius: 5.0
-        maximum_turning_radius: 5.0
-        turning_radius_size: 1
+        max_turning_ratio: 0.7
+        turning_steps: 1
         # search configs
         search_configs:
           theta_size: 144
@@ -143,8 +143,10 @@
             lateral_distance_max_threshold: 2.0
             longitudinal_distance_min_threshold: 3.0
             longitudinal_velocity_delta_time: 0.8
+            extended_polygon_policy: "along_path" # [-] select "rectangle" or "along_path"
           # hysteresis factor to expand/shrink polygon
           hysteresis_factor_expand_rate: 1.0
+          collision_check_yaw_diff_threshold: 1.578
           # temporary
           backward_path_length: 30.0
           forward_path_length: 100.0

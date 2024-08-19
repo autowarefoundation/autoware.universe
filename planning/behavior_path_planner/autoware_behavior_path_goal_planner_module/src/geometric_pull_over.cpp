@@ -17,8 +17,8 @@
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <memory>
 #include <vector>
@@ -72,10 +72,8 @@ std::optional<PullOverPath> GeometricPullOver::plan(const Pose & goal_pose)
 
   PullOverPath pull_over_path{};
   pull_over_path.type = getPlannerType();
-  pull_over_path.partial_paths = planner_.getPaths();
   pull_over_path.pairs_terminal_velocity_and_accel = planner_.getPairsTerminalVelocityAndAccel();
-  pull_over_path.start_pose = planner_.getStartPose();
-  pull_over_path.end_pose = planner_.getArcEndPose();
+  pull_over_path.setPaths(planner_.getPaths(), planner_.getStartPose(), planner_.getArcEndPose());
 
   return pull_over_path;
 }

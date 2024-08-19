@@ -44,6 +44,8 @@ struct DefaultPlannerParameters
 class DefaultPlanner : public mission_planner::PlannerPlugin
 {
 public:
+  DefaultPlanner() : is_graph_ready_(false), route_handler_(), param_(), node_(nullptr) {}
+
   void initialize(rclcpp::Node * node) override;
   void initialize(rclcpp::Node * node, const LaneletMapBin::ConstSharedPtr msg) override;
   bool ready() const override;
@@ -52,7 +54,7 @@ public:
   void clearRoute() override;
   MarkerArray visualize(const LaneletRoute & route) const override;
   MarkerArray visualize_debug_footprint(
-    autoware::universe_utils::LinearRing2d goal_footprint_) const;
+    autoware::universe_utils::LinearRing2d goal_footprint) const;
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
 private:

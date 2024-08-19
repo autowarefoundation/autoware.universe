@@ -10,6 +10,7 @@
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
   <maintainer email="shumpei.wakabayashi@tier4.jp">Shumpei Wakabayashi</maintainer>
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
+  <maintainer email="yukinari.hisaki.2@tier4.jp">Yukinari Hisaki</maintainer>
 
   <license>Apache License 2.0</license>
 
@@ -19,6 +20,7 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_behavior_velocity_planner_common</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_msgs</depend>
@@ -29,7 +31,6 @@
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
   <depend>interpolation</depend>
-  <depend>lanelet2_extension</depend>
   <depend>libopencv-dev</depend>
   <depend>magic_enum</depend>
   <depend>nav_msgs</depend>

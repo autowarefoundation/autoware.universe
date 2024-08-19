@@ -17,15 +17,17 @@
 
 #include "autoware/control_evaluator/metrics/deviation_metrics.hpp"
 
+#include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
-#include <array>
 #include <deque>
-#include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -39,21 +41,17 @@ using diagnostic_msgs::msg::DiagnosticStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
+using LaneletMapBin = autoware_map_msgs::msg::LaneletMapBin;
+using autoware_planning_msgs::msg::LaneletRoute;
+using geometry_msgs::msg::AccelWithCovarianceStamped;
 
 /**
  * @brief Node for control evaluation
  */
-class controlEvaluatorNode : public rclcpp::Node
+class ControlEvaluatorNode : public rclcpp::Node
 {
 public:
-  explicit controlEvaluatorNode(const rclcpp::NodeOptions & node_options);
-  void removeOldDiagnostics(const rclcpp::Time & stamp);
-  void removeDiagnosticsByName(const std::string & name);
-  void addDiagnostic(const DiagnosticStatus & diag, const rclcpp::Time & stamp);
-  void updateDiagnosticQueue(
-    const DiagnosticArray & input_diagnostics, const std::string & function,
-    const rclcpp::Time & stamp);
-
+  explicit ControlEvaluatorNode(const rclcpp::NodeOptions & node_options);
   DiagnosticStatus generateLateralDeviationDiagnosticStatus(
     const Trajectory & traj, const Point & ego_point);
   DiagnosticStatus generateYawDeviationDiagnosticStatus(
@@ -62,6 +60,9 @@ public:
     const DiagnosticArray & diag, const std::string & function_name);
 
   DiagnosticStatus generateAEBDiagnosticStatus(const DiagnosticStatus & diag);
+  DiagnosticStatus generateLaneletDiagnosticStatus(const Pose & ego_pose) const;
+  DiagnosticStatus generateKinematicStateDiagnosticStatus(
+    const Odometry & odom, const AccelWithCovarianceStamped & accel_stamped);
 
   void onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg);
   void onTimer();
@@ -74,10 +75,21 @@ private:
 
   autoware::universe_utils::InterProcessPollingSubscriber<Odometry> odometry_sub_{
     this, "~/input/odometry"};
+  autoware::universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> accel_sub_{
+    this, "~/input/acceleration"};
   autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{
     this, "~/input/trajectory"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    LaneletRoute, autoware::universe_utils::polling_policy::Newest>
+    route_subscriber_{this, "~/input/route", rclcpp::QoS{1}.transient_local()};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    LaneletMapBin, autoware::universe_utils::polling_policy::Newest>
+    vector_map_subscriber_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
 
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
+
+  // update Route Handler
+  void getRouteData();
 
   // Calculator
   // Metrics
@@ -87,7 +99,9 @@ private:
   std::deque<std::pair<DiagnosticStatus, rclcpp::Time>> diag_queue_;
   const std::vector<std::string> target_functions_ = {"autonomous_emergency_braking"};
 
+  autoware::route_handler::RouteHandler route_handler_;
   rclcpp::TimerBase::SharedPtr timer_;
+  std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
 };
 }  // namespace control_diagnostics
 

@@ -15,7 +15,7 @@
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 
 #include <autoware_planning_msgs/msg/path_point.hpp>
 
@@ -418,7 +418,7 @@ double findReachTime(
     return j * t * t * t / 6.0 + a * t * t / 2.0 + v * t - d;
   };
   if (f(min, j, a, v, d) > 0 || f(max, j, a, v, d) < 0) {
-    std::logic_error("[behavior_velocity](findReachTime): search range is invalid");
+    throw std::logic_error("[behavior_velocity](findReachTime): search range is invalid");
   }
   const double eps = 1e-5;
   const int warn_iter = 100;
@@ -450,7 +450,7 @@ double calcDecelerationVelocityFromDistanceToTarget(
   const double current_velocity, const double distance_to_target)
 {
   if (max_slowdown_jerk > 0 || max_slowdown_accel > 0) {
-    std::logic_error("max_slowdown_jerk and max_slowdown_accel should be negative");
+    throw std::logic_error("max_slowdown_jerk and max_slowdown_accel should be negative");
   }
   // case0: distance to target is behind ego
   if (distance_to_target <= 0) return current_velocity;
@@ -699,6 +699,17 @@ std::set<lanelet::Id> getAssociativeIntersectionLanelets(
     }
   }
   return associative_intersection_lanelets;
+}
+
+lanelet::ConstLanelets getConstLaneletsFromIds(
+  lanelet::LaneletMapConstPtr map, const std::set<lanelet::Id> & ids)
+{
+  lanelet::ConstLanelets ret{};
+  for (const auto & id : ids) {
+    const auto ll = map->laneletLayer.get(id);
+    ret.push_back(ll);
+  }
+  return ret;
 }
 
 }  // namespace planning_utils

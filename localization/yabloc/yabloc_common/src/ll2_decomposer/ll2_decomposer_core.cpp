@@ -15,7 +15,7 @@
 #include "yabloc_common/ll2_decomposer/ll2_decomposer.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <yabloc_common/pub_sub.hpp>
 
 #include <geometry_msgs/msg/polygon.hpp>
@@ -27,8 +27,8 @@ namespace yabloc::ll2_decomposer
 Ll2Decomposer::Ll2Decomposer(const rclcpp::NodeOptions & options) : Node("ll2_to_image", options)
 {
   using std::placeholders::_1;
-  const rclcpp::QoS latch_qos = rclcpp::QoS(10).transient_local();
-  const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
+  const rclcpp::QoS latch_qos = rclcpp::QoS(1).transient_local();
+  const rclcpp::QoS map_qos = rclcpp::QoS(1).transient_local().reliable();
 
   // Publisher
   pub_road_marking_ = create_publisher<Cloud2>("~/output/ll2_road_marking", latch_qos);

@@ -32,7 +32,7 @@ class UnitLink
 public:
   void initialize_object(BaseUnit * parent, BaseUnit * child);
   void initialize_struct();
-  void initialize_status();
+  void initialize_status();  // cppcheck-suppress functionStatic
   DiagLinkStruct create_struct() const { return struct_; }
   DiagLinkStatus create_status() const { return status_; }
   BaseUnit * parent() const { return parent_; }
@@ -139,7 +139,7 @@ public:
   std::string type() const override { return unit_name::short_circuit_max; }
 
 private:
-  void update_status() override;
+  void update_status() override;  // cppcheck-suppress uselessOverride
 };
 
 class MinUnit : public NodeUnit

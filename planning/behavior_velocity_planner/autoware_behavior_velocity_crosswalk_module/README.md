@@ -8,6 +8,41 @@ This module judges whether the ego should stop in front of the crosswalk in orde
   ![crosswalk_module](docs/crosswalk_module.svg){width=1100}
 </figure>
 
+## Flowchart
+
+```plantuml
+@startuml
+skinparam monochrome true
+
+title modifyPathVelocity
+start
+:getPathEndPointsOnCrosswalk;
+group apply slow down
+  :applySlowDownByLanleet2Map;
+  :applySlowDownByOcclusion;
+end group
+group calculate stop pose
+  :getDefaultStopPose;
+  :resamplePath;
+  :checkStopForCrosswalkUsers;
+  :checkStopForStuckVehicles;
+end group
+group apply stop
+  :getNearestStopFactor;
+  :setSafe;
+  :setDistanceToStop;
+
+  if (isActivated() is True?) then (yes)
+    :planGo;
+  else (no)
+    :planStop;
+  endif
+end group
+
+stop
+@enduml
+```
+
 ## Features
 
 ### Yield the Way to the Pedestrians
@@ -183,7 +218,7 @@ In the `stuck_vehicle` namespace, the following parameters are defined.
 
 In the current autoware implementation, if no target object is detected around a crosswalk, the ego vehicle will not slow down for the crosswalk.
 However, it may be desirable to slow down in situations, for example, where there are blind spots.
-Such a situation can be handled by setting some tags to the related crosswalk as instructed in the [lanelet2_format_extension.md](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md)
+Such a situation can be handled by setting some tags to the related crosswalk as instructed in the [lanelet2_format_extension.md](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md)
 document.
 
 | Parameter             |         | Type   | Description                                                                                                           |

@@ -17,11 +17,11 @@
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/route_checker.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/route_checker.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
 
@@ -170,6 +170,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   lane_departure_checker_->setParam(param_, vehicle_info);
 
   // Publisher
+  processing_time_publisher_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
   // Nothing
 
   // Diagnostic Updater
@@ -211,6 +213,16 @@ bool LaneDepartureCheckerNode::isDataReady()
   if (!predicted_trajectory_) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting for predicted_trajectory msg...");
+    return false;
+  }
+
+  if (!operation_mode_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for operation_mode msg...");
+    return false;
+  }
+
+  if (!control_mode_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for control_mode msg...");
     return false;
   }
 
@@ -258,8 +270,10 @@ void LaneDepartureCheckerNode::onTimer()
   route_ = sub_route_.takeData();
   reference_trajectory_ = sub_reference_trajectory_.takeData();
   predicted_trajectory_ = sub_predicted_trajectory_.takeData();
+  operation_mode_ = sub_operation_mode_.takeData();
+  control_mode_ = sub_control_mode_.takeData();
 
-  const auto lanelet_map_bin_msg = sub_lanelet_map_bin_.takeNewData();
+  const auto lanelet_map_bin_msg = sub_lanelet_map_bin_.takeData();
   if (lanelet_map_bin_msg) {
     lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
     lanelet::utils::conversion::fromBinMsg(
@@ -347,7 +361,11 @@ void LaneDepartureCheckerNode::onTimer()
   }
 
   processing_time_map["Total"] = stop_watch.toc("Total");
-  processing_time_publisher_.publish(processing_time_map);
+  processing_diag_publisher_.publish(processing_time_map);
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = processing_time_map["Total"];
+  processing_time_publisher_->publish(processing_time_msg);
 }
 
 rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(
@@ -420,6 +438,9 @@ void LaneDepartureCheckerNode::checkTrajectoryDeviation(
   diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
+  using ControlModeStatus = autoware_vehicle_msgs::msg::ControlModeReport;
+  using OperationModeStatus = autoware_adapi_v1_msgs::msg::OperationModeState;
+
   int8_t level = DiagStatus::OK;
 
   if (std::abs(output_.trajectory_deviation.lateral) >= param_.max_lateral_deviation) {
@@ -435,8 +456,12 @@ void LaneDepartureCheckerNode::checkTrajectoryDeviation(
   }
 
   std::string msg = "OK";
-  if (level == DiagStatus::ERROR) {
+  if (
+    level == DiagStatus::ERROR && operation_mode_->mode == OperationModeStatus::AUTONOMOUS &&
+    control_mode_->mode == ControlModeStatus::AUTONOMOUS) {
     msg = "trajectory deviation is too large";
+  } else {
+    level = DiagStatus::OK;
   }
 
   stat.addf("max lateral deviation", "%.3f", param_.max_lateral_deviation);

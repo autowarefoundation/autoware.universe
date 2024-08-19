@@ -26,6 +26,8 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 
+#include <cmath>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_path_planner::utils::path_safety_checker
@@ -57,9 +59,10 @@ Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const double lon_length, const double lat_margin, const bool is_stopped_obj,
   CollisionCheckDebug & debug);
+
 Polygon2d createExtendedPolygon(
-  const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin,
-  const bool is_stopped_obj, CollisionCheckDebug & debug);
+  const PoseWithVelocityAndPolygonStamped & obj_pose_with_poly, const double lon_length,
+  const double lat_margin, const bool is_stopped_obj, CollisionCheckDebug & debug);
 
 PredictedPath convertToPredictedPath(
   const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);
@@ -98,7 +101,8 @@ bool checkSafetyWithRSS(
   const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
   const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & debug_map,
   const BehaviorPathPlannerParameters & parameters, const RSSparams & rss_params,
-  const bool check_all_predicted_path, const double hysteresis_factor);
+  const bool check_all_predicted_path, const double hysteresis_factor,
+  const double yaw_difference_th);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and
@@ -111,6 +115,8 @@ bool checkSafetyWithRSS(
  * @param common_parameters The common parameters used in behavior path planner.
  * @param front_object_deceleration The deceleration of the object in the front.(used in RSS)
  * @param rear_object_deceleration The deceleration of the object in the rear.(used in RSS)
+ * @param yaw_difference_th maximum yaw difference between any given ego path pose and object
+ * predicted path pose.
  * @param debug The debug information for collision checking.
  * @return true if distance is safe.
  */
@@ -120,7 +126,7 @@ bool checkCollision(
   const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
-  const double hysteresis_factor, CollisionCheckDebug & debug);
+  const double hysteresis_factor, const double yaw_difference_th, CollisionCheckDebug & debug);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and
@@ -142,7 +148,8 @@ std::vector<Polygon2d> getCollidedPolygons(
   const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
-  const double hysteresis_factor, const double max_velocity_limit, CollisionCheckDebug & debug);
+  const double hysteresis_factor, const double max_velocity_limit, const double yaw_difference_th,
+  CollisionCheckDebug & debug);
 
 bool checkPolygonsIntersects(
   const std::vector<Polygon2d> & polys_1, const std::vector<Polygon2d> & polys_2);
@@ -150,6 +157,12 @@ bool checkSafetyWithIntegralPredictedPolygon(
   const std::vector<PoseWithVelocityStamped> & ego_predicted_path, const VehicleInfo & vehicle_info,
   const ExtendedPredictedObjects & objects, const bool check_all_predicted_path,
   const IntegralPredictedPolygonParams & params, CollisionCheckDebugMap & debug_map);
+
+double calcObstacleMinLength(const Shape & shape);
+double calcObstacleMaxLength(const Shape & shape);
+std::pair<bool, bool> checkObjectsCollisionRough(
+  const PathWithLaneId & path, const PredictedObjects & objects, const double margin,
+  const BehaviorPathPlannerParameters & parameters, const bool use_offset_ego_point);
 
 // debug
 CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj);

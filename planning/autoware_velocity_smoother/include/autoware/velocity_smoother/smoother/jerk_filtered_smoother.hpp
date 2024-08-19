@@ -17,13 +17,15 @@
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
-#include "osqp_interface/osqp_interface.hpp"
+#include "qp_interface/qp_interface.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 
 #include "boost/optional.hpp"
 
+#include <memory>
 #include <vector>
 
 namespace autoware::velocity_smoother
@@ -40,11 +42,13 @@ public:
     double jerk_filter_ds;
   };
 
-  explicit JerkFilteredSmoother(rclcpp::Node & node);
+  explicit JerkFilteredSmoother(
+    rclcpp::Node & node, const std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) override;
+    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories,
+    const bool publish_debug_trajs) override;
 
   TrajectoryPoints resampleTrajectory(
     const TrajectoryPoints & input, [[maybe_unused]] const double v0,
@@ -56,7 +60,7 @@ public:
 
 private:
   Param smoother_param_;
-  autoware::common::osqp::OSQPInterface qp_solver_;
+  std::shared_ptr<autoware::common::QPInterface> qp_interface_;
   rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother")};
 
   TrajectoryPoints forwardJerkFilter(

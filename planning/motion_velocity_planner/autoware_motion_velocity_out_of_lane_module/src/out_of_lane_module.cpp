@@ -25,17 +25,23 @@
 
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/motion_velocity_planner_common/planner_data.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
+#include <traffic_light_utils/traffic_light_utils.hpp>
 
+#include <boost/geometry/algorithms/envelope.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 
-#include <lanelet2_core/geometry/LaneletMap.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
+#include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace autoware::motion_velocity_planner
@@ -56,6 +62,10 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
   virtual_wall_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/virtual_walls", 1);
+  processing_diag_publisher_ = std::make_shared<autoware::universe_utils::ProcessingTimePublisher>(
+    &node, "~/debug/" + ns_ + "/processing_time_ms_diag");
+  processing_time_publisher_ = node.create_publisher<tier4_debug_msgs::msg::Float64Stamped>(
+    "~/debug/" + ns_ + "/processing_time_ms", 1);
 }
 void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 {
@@ -80,6 +90,8 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
   pp.objects_dist_buffer = getOrDeclareParameter<double>(node, ns_ + ".objects.distance_buffer");
   pp.objects_cut_predicted_paths_beyond_red_lights =
     getOrDeclareParameter<bool>(node, ns_ + ".objects.cut_predicted_paths_beyond_red_lights");
+  pp.objects_ignore_behind_ego =
+    getOrDeclareParameter<bool>(node, ns_ + ".objects.ignore_behind_ego");
 
   pp.overlap_min_dist = getOrDeclareParameter<double>(node, ns_ + ".overlap.minimum_distance");
   pp.overlap_extra_length = getOrDeclareParameter<double>(node, ns_ + ".overlap.extra_length");
@@ -88,7 +100,9 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns_ + ".action.skip_if_over_max_decel");
   pp.precision = getOrDeclareParameter<double>(node, ns_ + ".action.precision");
   pp.min_decision_duration = getOrDeclareParameter<double>(node, ns_ + ".action.min_duration");
-  pp.dist_buffer = getOrDeclareParameter<double>(node, ns_ + ".action.distance_buffer");
+  pp.lon_dist_buffer =
+    getOrDeclareParameter<double>(node, ns_ + ".action.longitudinal_distance_buffer");
+  pp.lat_dist_buffer = getOrDeclareParameter<double>(node, ns_ + ".action.lateral_distance_buffer");
   pp.slow_velocity = getOrDeclareParameter<double>(node, ns_ + ".action.slowdown.velocity");
   pp.slow_dist_threshold =
     getOrDeclareParameter<double>(node, ns_ + ".action.slowdown.distance_threshold");
@@ -127,14 +141,15 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(
     parameters, ns_ + ".objects.cut_predicted_paths_beyond_red_lights",
     pp.objects_cut_predicted_paths_beyond_red_lights);
-
+  updateParam(parameters, ns_ + ".objects.ignore_behind_ego", pp.objects_ignore_behind_ego);
   updateParam(parameters, ns_ + ".overlap.minimum_distance", pp.overlap_min_dist);
   updateParam(parameters, ns_ + ".overlap.extra_length", pp.overlap_extra_length);
 
   updateParam(parameters, ns_ + ".action.skip_if_over_max_decel", pp.skip_if_over_max_decel);
   updateParam(parameters, ns_ + ".action.precision", pp.precision);
   updateParam(parameters, ns_ + ".action.min_duration", pp.min_decision_duration);
-  updateParam(parameters, ns_ + ".action.distance_buffer", pp.dist_buffer);
+  updateParam(parameters, ns_ + ".action.longitudinal_distance_buffer", pp.lon_dist_buffer);
+  updateParam(parameters, ns_ + ".action.lateral_distance_buffer", pp.lat_dist_buffer);
   updateParam(parameters, ns_ + ".action.slowdown.velocity", pp.slow_velocity);
   updateParam(parameters, ns_ + ".action.slowdown.distance_threshold", pp.slow_dist_threshold);
   updateParam(parameters, ns_ + ".action.stop.distance_threshold", pp.stop_dist_threshold);
@@ -144,6 +159,42 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(parameters, ns_ + ".ego.extra_rear_offset", pp.extra_rear_offset);
   updateParam(parameters, ns_ + ".ego.extra_left_offset", pp.extra_left_offset);
   updateParam(parameters, ns_ + ".ego.extra_right_offset", pp.extra_right_offset);
+}
+
+void prepare_stop_lines_rtree(
+  out_of_lane::EgoData & ego_data, const PlannerData & planner_data, const double search_distance)
+{
+  std::vector<out_of_lane::StopLineNode> rtree_nodes;
+  const auto bbox = lanelet::BoundingBox2d(
+    lanelet::BasicPoint2d{
+      ego_data.pose.position.x - search_distance, ego_data.pose.position.y - search_distance},
+    lanelet::BasicPoint2d{
+      ego_data.pose.position.x + search_distance, ego_data.pose.position.y + search_distance});
+  out_of_lane::StopLineNode stop_line_node;
+  for (const auto & ll :
+       planner_data.route_handler->getLaneletMapPtr()->laneletLayer.search(bbox)) {
+    for (const auto & element : ll.regulatoryElementsAs<lanelet::TrafficLight>()) {
+      const auto traffic_signal_stamped = planner_data.get_traffic_signal(element->id());
+      if (
+        traffic_signal_stamped.has_value() && element->stopLine().has_value() &&
+        traffic_light_utils::isTrafficSignalStop(ll, traffic_signal_stamped.value().signal)) {
+        stop_line_node.second.stop_line.clear();
+        for (const auto & p : element->stopLine()->basicLineString()) {
+          stop_line_node.second.stop_line.emplace_back(p.x(), p.y());
+        }
+        // use a longer stop line to also cut predicted paths that slightly go around the stop line
+        const auto diff =
+          stop_line_node.second.stop_line.back() - stop_line_node.second.stop_line.front();
+        stop_line_node.second.stop_line.front() -= diff * 0.5;
+        stop_line_node.second.stop_line.back() += diff * 0.5;
+        stop_line_node.second.lanelets = planner_data.route_handler->getPreviousLanelets(ll);
+        stop_line_node.first =
+          boost::geometry::return_envelope<universe_utils::Box2d>(stop_line_node.second.stop_line);
+        rtree_nodes.push_back(stop_line_node);
+      }
+    }
+  }
+  ego_data.stop_lines_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
 }
 
 VelocityPlanningResult OutOfLaneModule::plan(
@@ -160,6 +211,10 @@ VelocityPlanningResult OutOfLaneModule::plan(
     autoware::motion_utils::findNearestSegmentIndex(ego_trajectory_points, ego_data.pose.position);
   ego_data.velocity = planner_data->current_odometry.twist.twist.linear.x;
   ego_data.max_decel = planner_data->velocity_smoother_->getMinDecel();
+  stopwatch.tic("preprocessing");
+  prepare_stop_lines_rtree(ego_data, *planner_data, 100.0);
+  const auto preprocessing_us = stopwatch.toc("preprocessing");
+
   stopwatch.tic("calculate_trajectory_footprints");
   const auto current_ego_footprint =
     out_of_lane::calculate_current_ego_footprint(ego_data, params_, true);
@@ -207,7 +262,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   inputs.ego_data = ego_data;
   stopwatch.tic("filter_predicted_objects");
   inputs.objects = out_of_lane::filter_predicted_objects(planner_data, ego_data, params_);
-  const auto filter_predicted_objects_ms = stopwatch.toc("filter_predicted_objects");
+  const auto filter_predicted_objects_us = stopwatch.toc("filter_predicted_objects");
   inputs.route_handler = planner_data->route_handler;
   inputs.lanelets = other_lanelets;
   stopwatch.tic("calculate_decisions");
@@ -280,6 +335,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   RCLCPP_DEBUG(
     logger_,
     "Total time = %2.2fus\n"
+    "\tpreprocessing = %2.0fus\n"
     "\tcalculate_lanelets = %2.0fus\n"
     "\tcalculate_trajectory_footprints = %2.0fus\n"
     "\tcalculate_overlapping_ranges = %2.0fus\n"
@@ -287,13 +343,28 @@ VelocityPlanningResult OutOfLaneModule::plan(
     "\tcalculate_decisions = %2.0fus\n"
     "\tcalc_slowdown_points = %2.0fus\n"
     "\tinsert_slowdown_points = %2.0fus\n",
-    total_time_us, calculate_lanelets_us, calculate_trajectory_footprints_us,
-    calculate_overlapping_ranges_us, filter_predicted_objects_ms, calculate_decisions_us,
+    preprocessing_us, total_time_us, calculate_lanelets_us, calculate_trajectory_footprints_us,
+    calculate_overlapping_ranges_us, filter_predicted_objects_us, calculate_decisions_us,
     calc_slowdown_points_us, insert_slowdown_points_us);
   debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(debug_data_));
   virtual_wall_marker_creator.add_virtual_walls(
     out_of_lane::debug::create_virtual_walls(debug_data_, params_));
   virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
+  std::map<std::string, double> processing_times;
+  processing_times["preprocessing"] = preprocessing_us / 1000;
+  processing_times["calculate_lanelets"] = calculate_lanelets_us / 1000;
+  processing_times["calculate_trajectory_footprints"] = calculate_trajectory_footprints_us / 1000;
+  processing_times["calculate_overlapping_ranges"] = calculate_overlapping_ranges_us / 1000;
+  processing_times["filter_pred_objects"] = filter_predicted_objects_us / 1000;
+  processing_times["calculate_decision"] = calculate_decisions_us / 1000;
+  processing_times["calc_slowdown_points"] = calc_slowdown_points_us / 1000;
+  processing_times["insert_slowdown_points"] = insert_slowdown_points_us / 1000;
+  processing_times["Total"] = total_time_us / 1000;
+  processing_diag_publisher_->publish(processing_times);
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = clock_->now();
+  processing_time_msg.data = processing_times["Total"];
+  processing_time_publisher_->publish(processing_time_msg);
   return result;
 }
 

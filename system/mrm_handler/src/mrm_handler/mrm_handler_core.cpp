@@ -82,28 +82,29 @@ void MrmHandler::onOperationModeAvailability(
   const tier4_system_msgs::msg::OperationModeAvailability::ConstSharedPtr msg)
 {
   stamp_operation_mode_availability_ = this->now();
+  operation_mode_availability_ = msg;
+  const bool skip_emergency_holding_check =
+    !param_.use_emergency_holding || is_emergency_holding_ || !isOperationModeAutonomous();
 
-  if (!param_.use_emergency_holding) {
-    operation_mode_availability_ = msg;
+  if (skip_emergency_holding_check) {
     return;
   }
 
-  if (!is_emergency_holding_) {
-    if (msg->autonomous) {
-      stamp_autonomous_become_unavailable_.reset();
-    } else {
-      if (!stamp_autonomous_become_unavailable_.has_value()) {
-        stamp_autonomous_become_unavailable_.emplace(this->now());
-      } else {
-        const auto emergency_duration =
-          (this->now() - stamp_autonomous_become_unavailable_.value()).seconds();
-        if (emergency_duration > param_.timeout_emergency_recovery) {
-          is_emergency_holding_ = true;
-        }
-      }
-    }
+  if (msg->autonomous) {
+    stamp_autonomous_become_unavailable_.reset();
+    return;
   }
-  operation_mode_availability_ = msg;
+
+  // If no timestamp is available, the ego autonomous mode just became unavailable and the current
+  // time is recorded.
+  stamp_autonomous_become_unavailable_ = (!stamp_autonomous_become_unavailable_.has_value())
+                                           ? this->now()
+                                           : stamp_autonomous_become_unavailable_;
+
+  // Check if autonomous mode unavailable time is larger than timeout threshold.
+  const auto emergency_duration =
+    (this->now() - stamp_autonomous_become_unavailable_.value()).seconds();
+  is_emergency_holding_ = (emergency_duration > param_.timeout_emergency_recovery);
 }
 
 void MrmHandler::publishHazardCmd()
@@ -130,19 +131,20 @@ void MrmHandler::publishGearCmd()
 {
   using autoware_vehicle_msgs::msg::GearCommand;
   GearCommand msg;
-
   msg.stamp = this->now();
-  const auto command = [&]() {
-    // If stopped and use_parking is not true, send the last gear command
-    if (isStopped())
-      return (param_.use_parking_after_stopped) ? GearCommand::PARK : last_gear_command_;
-    return (isDrivingBackwards()) ? GearCommand::REVERSE : GearCommand::DRIVE;
-  }();
 
-  msg.command = command;
-  last_gear_command_ = msg.command;
+  if (isEmergency()) {
+    // gear command is created within mrm_handler
+    msg.command =
+      (param_.use_parking_after_stopped && isStopped()) ? GearCommand::PARK : last_gear_command_;
+  } else {
+    // use the same gear as the input gear
+    auto gear = sub_gear_cmd_.takeData();
+    msg.command = (gear == nullptr) ? last_gear_command_ : gear->command;
+    last_gear_command_ = msg.command;
+  }
+
   pub_gear_cmd_->publish(msg);
-  return;
 }
 
 void MrmHandler::publishMrmState()
@@ -396,12 +398,13 @@ void MrmHandler::updateMrmState()
   }
 
   // Get mode
-  const bool is_auto_mode = isAutonomous();
+  const bool is_control_mode_autonomous = isControlModeAutonomous();
+  const bool is_operation_mode_autonomous = isOperationModeAutonomous();
 
   // State Machine
   switch (mrm_state_.state) {
     case MrmState::NORMAL:
-      if (is_auto_mode) {
+      if (is_control_mode_autonomous && is_operation_mode_autonomous) {
         transitionTo(MrmState::MRM_OPERATING);
       }
       return;
@@ -523,26 +526,26 @@ bool MrmHandler::isStopped()
   return (std::abs(odom->twist.twist.linear.x) < th_stopped_velocity);
 }
 
-bool MrmHandler::isDrivingBackwards()
-{
-  auto odom = sub_odom_.takeData();
-  if (odom == nullptr) return false;
-  constexpr auto th_moving_backwards = -0.001;
-  return odom->twist.twist.linear.x < th_moving_backwards;
-}
-
 bool MrmHandler::isEmergency() const
 {
   return !operation_mode_availability_->autonomous || is_emergency_holding_ ||
          is_operation_mode_availability_timeout;
 }
 
-bool MrmHandler::isAutonomous()
+bool MrmHandler::isControlModeAutonomous()
 {
   using autoware_vehicle_msgs::msg::ControlModeReport;
   auto mode = sub_control_mode_.takeData();
   if (mode == nullptr) return false;
   return mode->mode == ControlModeReport::AUTONOMOUS;
+}
+
+bool MrmHandler::isOperationModeAutonomous()
+{
+  using autoware_adapi_v1_msgs::msg::OperationModeState;
+  auto state = sub_operation_mode_state_.takeData();
+  if (state == nullptr) return false;
+  return state->mode == OperationModeState::AUTONOMOUS;
 }
 
 bool MrmHandler::isPullOverStatusAvailable()

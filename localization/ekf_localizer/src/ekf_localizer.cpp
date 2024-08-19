@@ -17,6 +17,7 @@
 #include "ekf_localizer/diagnostics.hpp"
 #include "ekf_localizer/string.hpp"
 #include "ekf_localizer/warning_message.hpp"
+#include "localization_util/covariance_ellipse.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
@@ -46,7 +47,8 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
   params_(this),
   ekf_dt_(params_.ekf_dt),
   pose_queue_(params_.pose_smoothing_steps),
-  twist_queue_(params_.twist_smoothing_steps)
+  twist_queue_(params_.twist_smoothing_steps),
+  last_angular_velocity_(0.0, 0.0, 0.0)
 {
   /* convert to continuous to discrete */
   proc_cov_vx_d_ = std::pow(params_.proc_stddev_vx_c * ekf_dt_, 2.0);
@@ -148,7 +150,7 @@ void EKFLocalizer::timer_callback()
   if (!is_activated_) {
     warning_->warn_throttle(
       "The node is not activated. Provide initial pose to pose_initializer", 2000);
-    publish_diagnostics(current_time);
+    publish_diagnostics(geometry_msgs::msg::PoseStamped{}, current_time);
     return;
   }
 
@@ -186,11 +188,13 @@ void EKFLocalizer::timer_callback()
       if (is_updated) {
         pose_is_updated = true;
 
-        // Update Simple 1D filter with considering change of z value due to measurement pose delay
+        // Update Simple 1D filter with considering change of roll, pitch and height (position z)
+        // values due to measurement pose delay
         const double delay_time =
           (current_time - pose->header.stamp).seconds() + params_.pose_additional_delay;
-        const auto pose_with_z_delay = ekf_module_->compensate_pose_with_z_delay(*pose, delay_time);
-        update_simple_1d_filters(pose_with_z_delay, params_.pose_smoothing_steps);
+        auto pose_with_rph_delay_compensation =
+          ekf_module_->compensate_rph_with_delay(*pose, last_angular_velocity_, delay_time);
+        update_simple_1d_filters(pose_with_rph_delay_compensation, params_.pose_smoothing_steps);
       }
     }
     DEBUG_INFO(
@@ -221,6 +225,10 @@ void EKFLocalizer::timer_callback()
         ekf_module_->measurement_update_twist(*twist, current_time, twist_diag_info_);
       if (is_updated) {
         twist_is_updated = true;
+        last_angular_velocity_ = tf2::Vector3(
+          twist->twist.twist.angular.x, twist->twist.twist.angular.y, twist->twist.twist.angular.z);
+      } else {
+        last_angular_velocity_ = tf2::Vector3(0.0, 0.0, 0.0);
       }
     }
     DEBUG_INFO(
@@ -241,7 +249,7 @@ void EKFLocalizer::timer_callback()
 
   /* publish ekf result */
   publish_estimate_result(current_ekf_pose, current_biased_ekf_pose, current_ekf_twist);
-  publish_diagnostics(current_time);
+  publish_diagnostics(current_ekf_pose, current_time);
 }
 
 /*
@@ -390,7 +398,8 @@ void EKFLocalizer::publish_estimate_result(
   pub_odom_->publish(odometry);
 }
 
-void EKFLocalizer::publish_diagnostics(const rclcpp::Time & current_time)
+void EKFLocalizer::publish_diagnostics(
+  const geometry_msgs::msg::PoseStamped & current_ekf_pose, const rclcpp::Time & current_time)
 {
   std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_status_array;
 
@@ -418,6 +427,18 @@ void EKFLocalizer::publish_diagnostics(const rclcpp::Time & current_time)
     diag_status_array.push_back(check_measurement_mahalanobis_gate(
       "twist", twist_diag_info_.is_passed_mahalanobis_gate, twist_diag_info_.mahalanobis_distance,
       params_.twist_gate_dist));
+
+    geometry_msgs::msg::PoseWithCovariance pose_cov;
+    pose_cov.pose = current_ekf_pose.pose;
+    pose_cov.covariance = ekf_module_->get_current_pose_covariance();
+    const autoware::localization_util::Ellipse ellipse =
+      autoware::localization_util::calculate_xy_ellipse(pose_cov, params_.ellipse_scale);
+    diag_status_array.push_back(check_covariance_ellipse(
+      "cov_ellipse_long_axis", ellipse.long_radius, params_.warn_ellipse_size,
+      params_.error_ellipse_size));
+    diag_status_array.push_back(check_covariance_ellipse(
+      "cov_ellipse_lateral_direction", ellipse.size_lateral_direction,
+      params_.warn_ellipse_size_lateral_direction, params_.error_ellipse_size_lateral_direction));
   }
 
   diagnostic_msgs::msg::DiagnosticStatus diag_merged_status;

@@ -19,9 +19,9 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
@@ -163,7 +163,14 @@ struct PossibleCollisionInfo
   Pose collision_pose;                                 // only use this for debugging
   Pose intersection_pose;                              // For egp path and hidden obstacle
   lanelet::ArcCoordinates arc_lane_dist_at_collision;  // For ego distance to obstacle in s-d
-  PossibleCollisionInfo() = default;
+  PossibleCollisionInfo()
+  : obstacle_info(),
+    collision_with_margin(),
+    collision_pose(),
+    intersection_pose(),
+    arc_lane_dist_at_collision()
+  {
+  }
   PossibleCollisionInfo(
     const ObstacleInfo & obstacle_info, const PathPoint & collision_with_margin,
     const Pose & intersection_pose, const lanelet::ArcCoordinates & arc_lane_dist_to_occlusion)

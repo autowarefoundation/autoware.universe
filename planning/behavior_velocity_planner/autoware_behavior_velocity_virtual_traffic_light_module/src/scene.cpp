@@ -38,7 +38,6 @@ struct SegmentIndexWithPoint
 struct SegmentIndexWithOffset
 {
   size_t index;
-  double offset;
 };
 
 tier4_v2x_msgs::msg::KeyValue createKeyValue(const std::string & key, const std::string & value)
@@ -379,7 +378,7 @@ std::optional<size_t> VirtualTrafficLightModule::getPathIndexOfFirstEndLine()
     end_line_p2.y = end_line.back().y();
 
     const auto collision =
-      arc_lane_utils::findCollisionSegment(module_data_.path, end_line_p1, end_line_p2, lane_id_);
+      arc_lane_utils::findCollisionSegment(module_data_.path, end_line_p1, end_line_p2);
     if (!collision) {
       continue;
     }

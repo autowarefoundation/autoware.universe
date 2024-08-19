@@ -77,7 +77,7 @@ struct PullOutStatus
   // record if the ego has departed from the start point
   bool has_departed{false};
 
-  PullOutStatus() {}
+  PullOutStatus() = default;
 };
 
 class StartPlannerModule : public SceneModuleInterface
@@ -90,7 +90,7 @@ public:
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
       objects_of_interest_marker_interface_ptr_map);
 
-  ~StartPlannerModule()
+  ~StartPlannerModule() override
   {
     if (freespace_planner_timer_) {
       freespace_planner_timer_->cancel();
@@ -229,7 +229,30 @@ private:
 
   bool isModuleRunning() const;
   bool isCurrentPoseOnMiddleOfTheRoad() const;
+
+  /**
+   * @brief Check if the ego vehicle is preventing the rear vehicle from passing through.
+   *
+   * This function just call isPreventingRearVehicleFromPassingThrough(const Pose & ego_pose) with
+   * two poses. If rear vehicle is obstructed by ego vehicle at either of the two poses, it returns
+   * true.
+   *
+   * @return true if the ego vehicle is preventing the rear vehicle from passing through with the
+   * current pose or the pose if it stops.
+   */
   bool isPreventingRearVehicleFromPassingThrough() const;
+
+  /**
+    * @brief Check if the ego vehicle is preventing the rear vehicle from passing through.
+    *
+    * This function measures the distance to the lane boundary from the current pose and the pose if
+it stops, and determines whether there is enough space for the rear vehicle to pass through. If
+    * it is obstructing at either of the two poses, it returns true.
+    *
+    * @return true if the ego vehicle is preventing the rear vehicle from passing through with given
+ego pose.
+    */
+  bool isPreventingRearVehicleFromPassingThrough(const Pose & ego_pose) const;
 
   bool isCloseToOriginalStartPose() const;
   bool hasArrivedAtGoal() const;
@@ -296,16 +319,16 @@ private:
   PathWithLaneId getCurrentPath() const;
   void planWithPriority(
     const std::vector<Pose> & start_pose_candidates, const Pose & refined_start_pose,
-    const Pose & goal_pose, const std::string search_priority);
+    const Pose & goal_pose, const std::string & search_priority);
   PathWithLaneId generateStopPath() const;
   lanelet::ConstLanelets getPathRoadLanes(const PathWithLaneId & path) const;
   std::vector<DrivableLanes> generateDrivableLanes(const PathWithLaneId & path) const;
   void updatePullOutStatus();
   void updateStatusAfterBackwardDriving();
   PredictedObjects filterStopObjectsInPullOutLanes(
-    const lanelet::ConstLanelets & pull_out_lanes, const geometry_msgs::msg::Point & current_pose,
-    const double velocity_threshold, const double object_check_backward_distance,
-    const double object_check_forward_distance) const;
+    const lanelet::ConstLanelets & pull_out_lanes, const geometry_msgs::msg::Point & current_point,
+    const double velocity_threshold, const double object_check_forward_distance,
+    const double object_check_backward_distance) const;
   bool needToPrepareBlinkerBeforeStartDrivingForward() const;
   bool hasReachedFreespaceEnd() const;
   bool hasReachedPullOutEnd() const;

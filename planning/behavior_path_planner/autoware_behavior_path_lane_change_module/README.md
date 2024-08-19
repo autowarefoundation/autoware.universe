@@ -331,8 +331,7 @@ title NormalLaneChange::filterObjects Method Execution Flow
 start
 
 group "Filter Objects by Class" {
-:Iterate through each object in objects list;
-while (has not finished iterating through object list) is (TRUE)
+while (has not finished iterating through predicted object list) is (TRUE)
   if (current object type != param.object_types_to_check?) then (TRUE)
   #LightPink:Remove current object;
 else (FALSE)
@@ -341,17 +340,15 @@ endif
 end while
 end group
 
-if (object list is empty?) then (TRUE)
+if (predicted object list is empty?) then (TRUE)
   :Return empty result;
   stop
 else (FALSE)
 endif
 
 group "Filter Oncoming Objects" #PowderBlue {
-:Iterate through each object in target lane objects list;
-while (has not finished iterating through object list?) is (TRUE)
-:check object's yaw with reference to ego's yaw.;
-if (yaw difference < 90 degree?) then (TRUE)
+while (has not finished iterating through predicted object list?) is (TRUE)
+if (object's yaw with reference to ego's yaw difference < 90 degree?) then (TRUE)
   :Keep current object;
 else (FALSE)
 if (object is stopping?) then (TRUE)
@@ -363,31 +360,7 @@ endif
 endwhile
 end group
 
-if (object list is empty?) then (TRUE)
-  :Return empty result;
-  stop
-else (FALSE)
-endif
-
-group "Filter Objects Ahead Terminal" #Beige {
-:Calculate lateral distance from ego to current lanes center;
-
-:Iterate through each object in objects list;
-while (has not finished iterating through object list) is (TRUE)
-  :Get current object's polygon;
-  :Initialize distance to terminal from object to max;
-  while (has not finished iterating through object polygon's vertices) is (TRUE)
-    :Calculate object's lateral distance to end of lane;
-    :Update minimum distance to terminal from object;
-  end while
-  if (Is object's distance to terminal exceeds minimum lane change length?) then (TRUE)
-      #LightPink:Remove current object;
-  else (FALSE)
-  endif
-end while
-end group
-
-if (object list is empty?) then (TRUE)
+if (predicted object list is empty?) then (TRUE)
   :Return empty result;
   stop
 else (FALSE)
@@ -395,21 +368,27 @@ endif
 
 group "Filter Objects By Lanelets" #LightGreen {
 
-:Iterate through each object in objects list;
-while (has not finished iterating through object list) is (TRUE)
-  :lateral distance diff = difference between object's lateral distance and ego's lateral distance to the current lanes' centerline.;
-  if (Object in target lane polygon, and lateral distance diff is more than half of ego's width?) then (TRUE)
-    :Add to target_lane_objects;
-    else (FALSE)
-      if (Object overlaps with backward target lanes?) then (TRUE)
+while (has not finished iterating through predicted object list) is (TRUE)
+  :Calculate lateral distance diff;
+  if (Object in target lane polygon?) then (TRUE)
+    if (lateral distance diff > half of ego's width?) then (TRUE)
+      if (Object's physical position is before terminal point?) then (TRUE)
         :Add to target_lane_objects;
       else (FALSE)
-        if (Object in current lane polygon?) then (TRUE)
-          :Add to current_lane_objects;
-        else (FALSE)
-          :Add to other_lane_objects;
-        endif
       endif
+    else (FALSE)
+    endif
+  else (FALSE)
+  endif
+
+  if (Object overlaps with backward target lanes?) then (TRUE)
+    :Add to target_lane_objects;
+  else (FALSE)
+    if (Object in current lane polygon?) then (TRUE)
+      :Add to current_lane_objects;
+    else (FALSE)
+      :Add to other_lane_objects;
+    endif
   endif
 end while
 
@@ -426,13 +405,10 @@ endif
 
 group "Filter Target Lanes' objects" #LightCyan {
 
-:Iterate through each object in target lane objects list;
-while (has not finished iterating through object list) is (TRUE)
-  :check object's velocity;
+while (has not finished iterating through target lanes' object list) is (TRUE)
   if(velocity is within threshold?) then (TRUE)
   :Keep current object;
   else (FALSE)
-    :check whether object is ahead of ego;
     if(object is ahead of ego?) then (TRUE)
       :keep current object;
     else (FALSE)
@@ -444,11 +420,8 @@ end group
 
 group "Filter Current Lanes' objects"  #LightYellow {
 
-:Iterate through each object in current lane objects list;
-while (has not finished iterating through object list) is (TRUE)
-  :check object's velocity;
+while (has not finished iterating through current lanes' object list) is (TRUE)
   if(velocity is within threshold?) then (TRUE)
-  :check whether object is ahead of ego;
     if(object is ahead of ego?) then (TRUE)
       :keep current object;
     else (FALSE)
@@ -462,11 +435,8 @@ end group
 
 group "Filter Other Lanes' objects"  #Lavender {
 
-:Iterate through each object in other lane objects list;
-while (has not finished iterating through object list) is (TRUE)
-  :check object's velocity;
+while (has not finished iterating through other lanes' object list) is (TRUE)
   if(velocity is within threshold?) then (TRUE)
-  :check whether object is ahead of ego;
     if(object is ahead of ego?) then (TRUE)
       :keep current object;
     else (FALSE)
@@ -478,7 +448,7 @@ while (has not finished iterating through object list) is (TRUE)
 endwhile
 end group
 
-:Trasform the objects into extended predicted object and return them as lane_change_target_objects;
+:Transform the objects into extended predicted object and return them as lane_change_target_objects;
 stop
 
 @enduml
@@ -648,6 +618,61 @@ The last behavior will also occur if the ego vehicle has departed from the curre
 
 ![stop](./images/lane_change-cant_cancel_no_abort.png)
 
+## Lane change completion checks
+
+To determine if the ego vehicle has successfully changed lanes, one of two criteria must be met: either the longitudinal or the lateral criteria.
+
+For the longitudinal criteria, the ego vehicle must pass the lane-changing end pose and be within the `finish_judge_buffer` distance from it. The module then checks if the ego vehicle is in the target lane. If true, the module returns success. This check ensures that the planner manager updates the root lanelet correctly based on the ego vehicle's current pose. Without this check, if the ego vehicle is changing lanes while avoiding an obstacle and its current pose is in the original lane, the planner manager might set the root lanelet as the original lane. This would force the ego vehicle to perform the lane change again. With the target lane check, the ego vehicle is confirmed to be in the target lane, and the planner manager can correctly update the root lanelets.
+
+If the longitudinal criteria are not met, the module evaluates the lateral criteria. For the lateral criteria, the ego vehicle must be within `finish_judge_lateral_threshold` distance from the target lane's centerline, and the angle deviation must be within `finish_judge_lateral_angle_deviation` degrees. The angle deviation check ensures there is no sudden steering. If the angle deviation is set too high, the ego vehicle's orientation could deviate significantly from the centerline, causing the trajectory follower to aggressively correct the steering to return to the centerline. Keeping the angle deviation value as small as possible avoids this issue.
+
+The process of determining lane change completion is shown in the following diagram.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+title Lane change completion judge
+
+start
+
+:Calculate distance from current ego pose to lane change end pose;
+
+if (Is ego velocity < 1.0?) then (<color:green><b>YES</b></color>)
+  :Set <b>finish_judge_buffer</b> to 0.0;
+else (<color:red><b>NO</b></color>)
+  :Set <b>finish_judge_buffer</b> to lane_change_finish_judge_buffer;
+endif
+
+if (ego has passed the end_pose and ego is <b>finish_judge_buffer</b> meters away from end_pose?) then (<color:green><b>YES</b></color>)
+  if (Current ego pose is in target lanes' polygon?) then (<color:green><b>YES</b></color>)
+    :Lane change is <color:green><b>completed</b></color>;
+    stop
+  else (<color:red><b>NO</b></color>)
+:Lane change is <color:red><b>NOT</b></color> completed;
+stop
+  endif
+else (<color:red><b>NO</b></color>)
+endif
+
+if (ego's yaw deviation to centerline exceeds finish_judge_lateral_angle_deviation?) then (<color:red><b>YES</b></color>)
+  :Lane change is <color:red><b>NOT</b></color> completed;
+  stop
+else (<color:green><b>NO</b></color>)
+  :Calculate distance to the target lanes' centerline;
+  if (abs(distance to the target lanes' centerline) is less than finish_judge_lateral_threshold?) then (<color:green><b>YES</b></color>)
+    :Lane change is <color:green><b>completed</b></color>;
+    stop
+  else (<color:red><b>NO</b></color>)
+    :Lane change is <color:red><b>NOT</b></color> completed;
+    stop
+  endif
+endif
+
+@enduml
+```
+
 ## Parameters
 
 ### Essential lane change parameters
@@ -661,7 +686,6 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `backward_length_buffer_for_end_of_lane`     | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change                                  | 3.0                |
 | `backward_length_buffer_for_blocking_object` | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change when there is an object in front | 3.0                |
 | `lane_change_finish_judge_buffer`            | [m]    | double | The additional buffer used to confirm lane change process completion                                                   | 2.0                |
-| `finish_judge_lateral_threshold`             | [m]    | double | Lateral distance threshold to confirm lane change process completion                                                   | 0.2                |
 | `lane_changing_lateral_jerk`                 | [m/s3] | double | Lateral jerk value for lane change path generation                                                                     | 0.5                |
 | `minimum_lane_changing_velocity`             | [m/s]  | double | Minimum speed during lane changing process.                                                                            | 2.78               |
 | `prediction_time_resolution`                 | [s]    | double | Time resolution for object's path interpolation and collision check.                                                   | 0.5                |
@@ -676,6 +700,16 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `lateral_acceleration.velocity`              | [m/s]  | double | Reference velocity for lateral acceleration calculation (look up table)                                                | [0.0, 4.0, 10.0]   |
 | `lateral_acceleration.min_values`            | [m/ss] | double | Min lateral acceleration values corresponding to velocity (look up table)                                              | [0.4, 0.4, 0.4]    |
 | `lateral_acceleration.max_values`            | [m/ss] | double | Max lateral acceleration values corresponding to velocity (look up table)                                              | [0.65, 0.65, 0.65] |
+
+### Parameter to judge if lane change is completed
+
+The following parameters are used to judge lane change completion.
+
+| Name                                   | Unit  | Type   | Description                                                                                                            | Default value |
+| :------------------------------------- | ----- | ------ | ---------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `lane_change_finish_judge_buffer`      | [m]   | double | The longitudinal distance starting from the lane change end pose.                                                      | 2.0           |
+| `finish_judge_lateral_threshold`       | [m]   | double | The lateral distance from targets lanes' centerline. Used in addition with `finish_judge_lateral_angle_deviation`      | 0.1           |
+| `finish_judge_lateral_angle_deviation` | [deg] | double | Ego angle deviation with reference to target lanes' centerline. Used in addition with `finish_judge_lateral_threshold` | 2.0           |
 
 ### Lane change regulations
 
@@ -725,6 +759,7 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `check_objects_on_current_lanes`                         | [-]   | boolean | If true, the lane change module check objects on current lanes when performing collision assessment.                                                                                                       | false         |
 | `check_objects_on_other_lanes`                           | [-]   | boolean | If true, the lane change module include objects on other lanes. when performing collision assessment                                                                                                       | false         |
 | `use_all_predicted_path`                                 | [-]   | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                                                                     | true          |
+| `safety_check.collision_check_yaw_diff_threshold`        | [rad] | double  | Maximum yaw difference between ego and object when executing rss-based collision checking                                                                                                                  | 3.1416        |
 
 #### safety constraints during lane change path is computed
 
@@ -737,6 +772,18 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `safety_check.execution.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 2.0           |
 | `safety_check.execution.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
 | `safety_check.cancel.longitudinal_velocity_delta_time`       | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
+
+#### safety constraints specifically for stopped or parked vehicles
+
+| Name                                                      | Unit    | Type   | Description                                                                                                                                                    | Default value |
+| :-------------------------------------------------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `safety_check.parked.expected_front_deceleration`         | [m/s^2] | double | The front object's maximum deceleration when the front vehicle perform sudden braking. (\*1)                                                                   | -1.0          |
+| `safety_check.parked.expected_rear_deceleration`          | [m/s^2] | double | The rear object's maximum deceleration when the rear vehicle perform sudden braking. (\*1)                                                                     | -2.0          |
+| `safety_check.parked.rear_vehicle_reaction_time`          | [s]     | double | The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle until the driver step on the brake. | 1.0           |
+| `safety_check.parked.rear_vehicle_safety_time_margin`     | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 0.8           |
+| `safety_check.parked.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 1.0           |
+| `safety_check.parked.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
+| `safety_check.parked.longitudinal_velocity_delta_time`    | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
 
 ##### safety constraints to cancel lane change path
 

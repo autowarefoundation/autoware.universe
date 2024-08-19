@@ -118,8 +118,16 @@ private:
       const double start_distance = autoware::motion_utils::calcSignedArcLength(
         path.points, ego_idx, left_shift.start_pose.position);
       const double finish_distance = start_distance + left_shift.relative_longitudinal;
-      rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
-        left_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
+
+      // If force activated keep safety to false
+      if (rtc_interface_ptr_map_.at("left")->isForceActivated(left_shift.uuid)) {
+        rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+          left_shift.uuid, false, State::RUNNING, start_distance, finish_distance, clock_->now());
+      } else {
+        rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+          left_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
+      }
+
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
           {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
@@ -131,8 +139,15 @@ private:
       const double start_distance = autoware::motion_utils::calcSignedArcLength(
         path.points, ego_idx, right_shift.start_pose.position);
       const double finish_distance = start_distance + right_shift.relative_longitudinal;
-      rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
-        right_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
+
+      if (rtc_interface_ptr_map_.at("right")->isForceActivated(right_shift.uuid)) {
+        rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+          right_shift.uuid, false, State::RUNNING, start_distance, finish_distance, clock_->now());
+      } else {
+        rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+          right_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
+      }
+
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
           {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
@@ -265,6 +280,12 @@ private:
    * @param debug data.
    */
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
+
+  /**
+   * @brief fill additional data which are necessary to plan avoidance path/velocity.
+   * @param avoidance target objects.
+   */
+  void fillAvoidanceTargetData(ObjectDataArray & objects) const;
 
   /**
    * @brief fill candidate shift lines.
@@ -436,6 +457,8 @@ private:
 
   UUID candidate_uuid_;
 
+  ObjectDataArray clip_objects_;
+
   // TODO(Satoshi OTA) create detected object manager.
   ObjectDataArray registered_objects_;
 
@@ -454,6 +477,9 @@ private:
   mutable std::vector<AvoidanceDebugMsg> debug_avoidance_initializer_for_shift_line_;
 
   mutable rclcpp::Time debug_avoidance_initializer_for_shift_line_time_;
+
+  bool force_deactivated_{false};
+  rclcpp::Time last_deactivation_triggered_time_;
 };
 
 }  // namespace autoware::behavior_path_planner

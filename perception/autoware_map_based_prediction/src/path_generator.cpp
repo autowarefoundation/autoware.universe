@@ -16,12 +16,14 @@
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
-#include <interpolation/spline_interpolation.hpp>
+#include <interpolation/linear_interpolation.hpp>
 
 #include <algorithm>
 
 namespace autoware::map_based_prediction
 {
+using autoware::universe_utils::ScopedTimeTrack;
+
 PathGenerator::PathGenerator(
   const double sampling_time_interval, const double min_crosswalk_user_velocity)
 : sampling_time_interval_(sampling_time_interval),
@@ -29,15 +31,27 @@ PathGenerator::PathGenerator(
 {
 }
 
+void PathGenerator::setTimeKeeper(
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_ptr)
+{
+  time_keeper_ = std::move(time_keeper_ptr);
+}
+
 PredictedPath PathGenerator::generatePathForNonVehicleObject(
   const TrackedObject & object, const double duration) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   return generateStraightPath(object, duration);
 }
 
 PredictedPath PathGenerator::generatePathToTargetPoint(
   const TrackedObject & object, const Eigen::Vector2d & point) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   PredictedPath predicted_path{};
   const double ep = 0.001;
 
@@ -77,6 +91,9 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
   const TrackedObject & object, const CrosswalkEdgePoints & reachable_crosswalk,
   const double duration) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   PredictedPath predicted_path{};
   const double ep = 0.001;
 
@@ -135,6 +152,9 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
 PredictedPath PathGenerator::generatePathForLowSpeedVehicle(
   const TrackedObject & object, const double duration) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   PredictedPath path;
   path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
   const double ep = 0.001;
@@ -148,6 +168,9 @@ PredictedPath PathGenerator::generatePathForLowSpeedVehicle(
 PredictedPath PathGenerator::generatePathForOffLaneVehicle(
   const TrackedObject & object, const double duration) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   return generateStraightPath(object, duration);
 }
 
@@ -155,6 +178,9 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
   const TrackedObject & object, const PosePath & ref_paths, const double duration,
   const double lateral_duration, const double speed_limit) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (ref_paths.size() < 2) {
     return generateStraightPath(object, duration);
   }
@@ -186,9 +212,12 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const TrackedObject & object, const PosePath & ref_path, const double duration,
   const double lateral_duration, const double speed_limit) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // Get current Frenet Point
   const double ref_path_len = autoware::motion_utils::calcArcLength(ref_path);
-  const auto current_point = getFrenetPoint(object, ref_path, speed_limit, duration);
+  const auto current_point = getFrenetPoint(object, ref_path, duration, speed_limit);
 
   // Step1. Set Target Frenet Point
   // Note that we do not set position s,
@@ -219,6 +248,9 @@ FrenetPath PathGenerator::generateFrenetPath(
   const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length,
   const double duration, const double lateral_duration) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   FrenetPath path;
 
   // Compute Lateral and Longitudinal Coefficients to generate the trajectory
@@ -303,6 +335,9 @@ Eigen::Vector2d PathGenerator::calcLonCoefficients(
 PosePath PathGenerator::interpolateReferencePath(
   const PosePath & base_path, const FrenetPath & frenet_predicted_path) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   PosePath interpolated_path;
   const size_t interpolate_num = frenet_predicted_path.size();
   if (interpolate_num < 2) {
@@ -332,29 +367,26 @@ PosePath PathGenerator::interpolateReferencePath(
     std::reverse(resampled_s.begin(), resampled_s.end());
   }
 
-  // Spline Interpolation
-  std::vector<double> spline_ref_path_x =
-    interpolation::spline(base_path_s, base_path_x, resampled_s);
-  std::vector<double> spline_ref_path_y =
-    interpolation::spline(base_path_s, base_path_y, resampled_s);
-  std::vector<double> spline_ref_path_z =
-    interpolation::spline(base_path_s, base_path_z, resampled_s);
+  // Lerp Interpolation
+  std::vector<double> lerp_ref_path_x = interpolation::lerp(base_path_s, base_path_x, resampled_s);
+  std::vector<double> lerp_ref_path_y = interpolation::lerp(base_path_s, base_path_y, resampled_s);
+  std::vector<double> lerp_ref_path_z = interpolation::lerp(base_path_s, base_path_z, resampled_s);
 
   interpolated_path.resize(interpolate_num);
   for (size_t i = 0; i < interpolate_num - 1; ++i) {
     geometry_msgs::msg::Pose interpolated_pose;
     const auto current_point =
-      autoware::universe_utils::createPoint(spline_ref_path_x.at(i), spline_ref_path_y.at(i), 0.0);
+      autoware::universe_utils::createPoint(lerp_ref_path_x.at(i), lerp_ref_path_y.at(i), 0.0);
     const auto next_point = autoware::universe_utils::createPoint(
-      spline_ref_path_x.at(i + 1), spline_ref_path_y.at(i + 1), 0.0);
+      lerp_ref_path_x.at(i + 1), lerp_ref_path_y.at(i + 1), 0.0);
     const double yaw = autoware::universe_utils::calcAzimuthAngle(current_point, next_point);
     interpolated_pose.position = autoware::universe_utils::createPoint(
-      spline_ref_path_x.at(i), spline_ref_path_y.at(i), spline_ref_path_z.at(i));
+      lerp_ref_path_x.at(i), lerp_ref_path_y.at(i), lerp_ref_path_z.at(i));
     interpolated_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
     interpolated_path.at(i) = interpolated_pose;
   }
   interpolated_path.back().position = autoware::universe_utils::createPoint(
-    spline_ref_path_x.back(), spline_ref_path_y.back(), spline_ref_path_z.back());
+    lerp_ref_path_x.back(), lerp_ref_path_y.back(), lerp_ref_path_z.back());
   interpolated_path.back().orientation = interpolated_path.at(interpolate_num - 2).orientation;
 
   return interpolated_path;
@@ -364,6 +396,9 @@ PredictedPath PathGenerator::convertToPredictedPath(
   const TrackedObject & object, const FrenetPath & frenet_predicted_path,
   const PosePath & ref_path) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   PredictedPath predicted_path;
   predicted_path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
   predicted_path.path.resize(ref_path.size());
@@ -395,6 +430,9 @@ FrenetPoint PathGenerator::getFrenetPoint(
   const TrackedObject & object, const PosePath & ref_path, const double duration,
   const double speed_limit) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   FrenetPoint frenet_point;
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
 
@@ -421,7 +459,7 @@ FrenetPoint PathGenerator::getFrenetPoint(
 
   // Using a decaying acceleration model. Consult the README for more information about the model.
   const double t_h = duration;
-  const float λ = std::log(2) / acceleration_exponential_half_life_;
+  const float lambda = std::log(2) / acceleration_exponential_half_life_;
 
   auto have_same_sign = [](double a, double b) -> bool {
     return (a >= 0.0 && b >= 0.0) || (a < 0.0 && b < 0.0);
@@ -434,7 +472,7 @@ FrenetPoint PathGenerator::getFrenetPoint(
       return v;
     }
     // Get velocity after time horizon
-    const auto terminal_velocity = v + a * (1.0 / λ) * (1 - std::exp(-λ * t_h));
+    const auto terminal_velocity = v + a * (1.0 / lambda) * (1 - std::exp(-lambda * t_h));
 
     // If vehicle is decelerating, make sure its speed does not change signs (we assume it will, at
     // most stop, not reverse its direction)
@@ -443,15 +481,16 @@ FrenetPoint PathGenerator::getFrenetPoint(
       // if the velocities don't have the same sign, calculate when the vehicle reaches 0 speed ->
       // time t_stop
 
-      // 0 = Vo + acc(1/λ)(1-e^(-λt_stop))
-      // e^(-λt_stop) = 1 - (-Vo* λ)/acc
-      // t_stop = (-1/λ)*ln(1 - (-Vo* λ)/acc)
-      // t_stop = (-1/λ)*ln(1 + (Vo* λ)/acc)
-      auto t_stop = (-1.0 / λ) * std::log(1 + (v * λ / a));
+      // 0 = Vo + acc(1/lambda)(1-e^(-lambda t_stop))
+      // e^(-lambda t_stop) = 1 - (-Vo* lambda)/acc
+      // t_stop = (-1/lambda)*ln(1 - (-Vo* lambda)/acc)
+      // t_stop = (-1/lambda)*ln(1 + (Vo* lambda)/acc)
+      auto t_stop = (-1.0 / lambda) * std::log1p(v * lambda / a);
 
       // Calculate the distance traveled until stopping
       auto distance_to_reach_zero_speed =
-        v * t_stop + a * t_stop * (1.0 / λ) + a * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_h) - 1);
+        v * t_stop + a * t_stop * (1.0 / lambda) +
+        a * (1.0 / std::pow(lambda, 2)) * std::expm1(-lambda * t_h);
       // Output an equivalent constant speed
       return distance_to_reach_zero_speed / t_h;
     }
@@ -461,17 +500,18 @@ FrenetPoint PathGenerator::getFrenetPoint(
     // assume it will continue accelerating (reckless driving)
     const bool object_has_surpassed_limit_already = v > speed_limit;
     if (terminal_velocity < speed_limit || object_has_surpassed_limit_already)
-      return v + a * (1.0 / λ) + (a / (t_h * std::pow(λ, 2))) * (std::exp(-λ * t_h) - 1);
+      return v + a * (1.0 / lambda) + (a / (t_h * std::pow(lambda, 2))) * std::expm1(-lambda * t_h);
 
     // It is assumed the vehicle accelerates until final_speed is reached and
     // then continues at constant speed for the rest of the time horizon
     // So, we calculate the time it takes to reach the speed limit and compute how far the vehicle
     // would go if it accelerated until reaching the speed limit, and then continued at a constant
     // speed.
-    const double t_f = (-1.0 / λ) * std::log(1 - ((speed_limit - v) * λ) / a);
+    const double t_f = (-1.0 / lambda) * std::log(1 - ((speed_limit - v) * lambda) / a);
     const double distance_covered =
       // Distance covered while accelerating
-      a * (1.0 / λ) * t_f + a * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_f) - 1) + v * t_f +
+      a * (1.0 / lambda) * t_f + a * (1.0 / std::pow(lambda, 2)) * std::expm1(-lambda * t_f) +
+      v * t_f +
       // Distance covered at constant speed for the rest of the horizon time
       speed_limit * (t_h - t_f);
     return distance_covered / t_h;

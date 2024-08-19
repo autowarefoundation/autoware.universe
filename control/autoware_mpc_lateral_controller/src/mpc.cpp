@@ -765,10 +765,11 @@ VectorXd MPC::calcSteerRateLimitOnTrajectory(
     return reference.back();
   };
 
-  // when the vehicle is stopped, no steering rate limit.
+  // When the vehicle is stopped, a large steer rate limit is used for the dry steering.
+  constexpr double steer_rate_lim = 100.0;
   const bool is_vehicle_stopped = std::fabs(current_velocity) < 0.01;
   if (is_vehicle_stopped) {
-    return VectorXd::Zero(m_param.prediction_horizon);
+    return steer_rate_lim * VectorXd::Ones(m_param.prediction_horizon);
   }
 
   // calculate steering rate limit
@@ -803,8 +804,10 @@ Trajectory MPC::calculatePredictedTrajectory(
     const auto frenet = m_vehicle_model_ptr->calculatePredictedTrajectoryInFrenetCoordinate(
       mpc_matrix.Aex, mpc_matrix.Bex, mpc_matrix.Cex, mpc_matrix.Wex, x0, Uex, reference_trajectory,
       dt);
-    const auto frenet_clipped = MPCUtils::convertToAutowareTrajectory(
+    auto frenet_clipped = MPCUtils::convertToAutowareTrajectory(
       MPCUtils::clipTrajectoryByLength(frenet, predicted_length));
+    frenet_clipped.header.stamp = m_clock->now();
+    frenet_clipped.header.frame_id = "map";
     m_debug_frenet_predicted_trajectory_pub->publish(frenet_clipped);
   }
 

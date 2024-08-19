@@ -16,12 +16,11 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <depend>ament_index_cpp</depend>
+  <test_depend>ament_index_cpp</test_depend>
   <depend>aruco</depend>
   <depend>autoware_landmark_manager</depend>
   <depend>cv_bridge</depend>
   <depend>diagnostic_msgs</depend>
-  <depend>lanelet2_extension</depend>
   <depend>localization_util</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

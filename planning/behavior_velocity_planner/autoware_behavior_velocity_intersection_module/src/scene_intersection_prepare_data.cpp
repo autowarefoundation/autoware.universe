@@ -18,10 +18,10 @@
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>  // for to_bg2d
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>  // for planning_utils::
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/road_marking.hpp>  // for lanelet::autoware::RoadMarking
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <interpolation/spline_interpolation_points_2d.hpp>
-#include <lanelet2_extension/regulatory_elements/road_marking.hpp>  // for lanelet::autoware::RoadMarking
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/intersection.hpp>
 #include <boost/geometry/algorithms/within.hpp>
@@ -689,8 +689,8 @@ IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
         routing_graph_ptr, ll, length, ego_lanelets);
       for (const auto & ls : lanelet_sequences) {
         for (const auto & l : ls) {
-          const auto & inserted = detection_ids.insert(l.id());
-          if (inserted.second) detection_and_preceding_lanelets.push_back(l);
+          const auto & inner_inserted = detection_ids.insert(l.id());
+          if (inner_inserted.second) detection_and_preceding_lanelets.push_back(l);
         }
       }
     }
@@ -710,8 +710,8 @@ IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
         routing_graph_ptr, ll, length, ego_lanelets);
       for (const auto & ls : lanelet_sequences) {
         for (const auto & l : ls) {
-          const auto & inserted = detection_ids.insert(l.id());
-          if (inserted.second) occlusion_detection_and_preceding_lanelets.push_back(l);
+          const auto & inner_inserted = detection_ids.insert(l.id());
+          if (inner_inserted.second) occlusion_detection_and_preceding_lanelets.push_back(l);
         }
       }
     }

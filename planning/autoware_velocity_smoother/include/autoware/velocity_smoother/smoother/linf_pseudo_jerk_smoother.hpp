@@ -17,6 +17,7 @@
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 
@@ -24,6 +25,7 @@
 
 #include "boost/optional.hpp"
 
+#include <memory>
 #include <vector>
 
 namespace autoware::velocity_smoother
@@ -38,11 +40,13 @@ public:
     double over_a_weight;
   };
 
-  explicit LinfPseudoJerkSmoother(rclcpp::Node & node);
+  explicit LinfPseudoJerkSmoother(
+    rclcpp::Node & node, const std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) override;
+    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories,
+    const bool publish_debug_trajs) override;
 
   TrajectoryPoints resampleTrajectory(
     const TrajectoryPoints & input, const double v0, const geometry_msgs::msg::Pose & current_pose,

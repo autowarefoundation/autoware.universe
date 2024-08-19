@@ -17,8 +17,8 @@
 
 #define FMT_HEADER_ONLY
 
+#include "localization_util/diagnostics_module.hpp"
 #include "localization_util/smart_pose_buffer.hpp"
-#include "ndt_scan_matcher/diagnostics_module.hpp"
 #include "ndt_scan_matcher/hyper_parameters.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
 
@@ -66,6 +66,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <vector>
 
 class NDTScanMatcher : public rclcpp::Node
@@ -105,7 +106,7 @@ private:
     const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
     tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
 
-  geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
+  std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> align_pose(
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
   void transform_sensor_measurement(
@@ -131,7 +132,7 @@ private:
 
   static int count_oscillation(const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array);
 
-  std::array<double, 36> estimate_covariance(
+  Eigen::Matrix2d estimate_covariance(
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
     const rclcpp::Time & sensor_ros_time);
 

@@ -5,13 +5,13 @@
       resample_interval_for_planning: 0.3               # [m] FOR DEVELOPER
       resample_interval_for_output: 4.0                 # [m] FOR DEVELOPER
 
-      # avoidance module common setting
-      enable_bound_clipping: false
-      disable_path_update: false
-
+      # drivable lane setting. this module is able to use not only current lane but also right/left lane
+      # if the current lane(=lanelet::Lanelet) and the right/left lane share the boundary(=lanelet::Linestring) in HDMap.
+      # "current_lane"           : use only current lane. this module doesn't use adjacent lane to avoid object.
+      # "same_direction_lane"    : this module uses same direction lane to avoid object if need.
+      # "opposite_direction_lane": this module uses both same direction and opposite direction lane.
+      use_lane_type: "opposite_direction_lane"
       # drivable area setting
-      use_adjacent_lane: true
-      use_opposite_lane: true
       use_intersection_areas: true
       use_hatched_road_markings: true
       use_freespace_areas: true
@@ -138,8 +138,11 @@
 
         # params for avoidance of vehicle type objects that are ambiguous as to whether they are parked.
         avoidance_for_ambiguous_vehicle:
-          enable: true                                  # [-]
-          closest_distance_to_wait_and_see: 10.0        # [m]
+          # policy for ego behavior for ambiguous vehicle.
+          # "auto"   : generate candidate path. if RTC is running as AUTO mode, the ego avoids it automatically.
+          # "manual" : generate candidate path and wait operator approval even if RTC is running as AUTO mode.
+          # "ignore" : never avoid it.
+          policy: "auto"                                # [-]
           condition:
             th_stopped_time: 3.0                        # [s]
             th_moving_distance: 1.0                     # [m]
@@ -149,10 +152,17 @@
             crosswalk:
               front_distance: 30.0                      # [m]
               behind_distance: 30.0                     # [m]
+          wait_and_see:
+            target_behaviors: ["MERGING", "DEVIATING"]  # [-]
+            th_closest_distance: 10.0                   # [m]
 
         # params for filtering objects that are in intersection
         intersection:
           yaw_deviation: 0.349                          # [rad] (default 20.0deg)
+
+        freespace:
+          condition:
+            th_stopped_time: 5.0                        # [-]
 
       # For safety check
       safety_check:
@@ -178,6 +188,7 @@
         safety_check_backward_distance: 100.0           # [m]
         hysteresis_factor_expand_rate: 1.5              # [-]
         hysteresis_factor_safe_count: 3                 # [-]
+        collision_check_yaw_diff_threshold: 3.1416      # [rad]
         # predicted path parameters
         min_velocity: 1.38                              # [m/s]
         max_velocity: 50.0                              # [m/s]
@@ -232,6 +243,8 @@
       # For cancel maneuver
       cancel:
         enable: true                                    # [-]
+        force:
+          duration_time: 2.0                            # [s]
 
       # For yield maneuver
       yield:
@@ -283,6 +296,19 @@
           max_jerk: 1.0                                 # [m/sss]
           max_acceleration: 0.5                         # [m/ss]
           min_velocity_to_limit_max_acceleration: 2.78  # [m/ss]
+
+      # path generation method. select "shift_line_base" or "optimization_base" or "both".
+      # "shift_line_base"  : Create avoidance path based on shift line.
+      #                      User can control avoidance maneuver execution via RTC.
+      #                      However, this method doesn't support complex avoidance scenario (e.g. S-shape maneuver).
+      # "optimization_base": This module selects avoidance target object
+      #                      and bpp module clips drivable area based on avoidance target object polygon shape.
+      #                      But this module doesn't modify the path shape.
+      #                      On the other hand, autoware_path_optimizer module optimizes path shape instead of this module
+      #                      so that the path can be within drivable area. This method is able to deal with complex avoidance scenario.
+      #                      However, user can't control avoidance manuever execution.
+      # "both"             : Use both method.
+      path_generation_method: "shift_line_base"
 
       shift_line_pipeline:
         trim:
