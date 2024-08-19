@@ -32,13 +32,10 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
-#include <map>
-#include <memory>
-#include <queue>
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace autoware::behavior_velocity_planner::util
@@ -215,35 +212,42 @@ std::optional<size_t> getFirstPointInsidePolygon(
   }
   return std::nullopt;
 }
-
-void retrievePathsBackward(
-  const std::vector<std::vector<bool>> & adjacency, const size_t src_ind,
-  const std::vector<size_t> & visited_inds, std::vector<std::vector<size_t>> & paths)
+std::vector<std::vector<size_t>> retrievePathsBackward(
+  const std::vector<std::vector<bool>> & adjacency, size_t start_node)
 {
-  const auto & nexts = adjacency.at(src_ind);
-  const bool is_terminal = (std::find(nexts.begin(), nexts.end(), true) == nexts.end());
-  if (is_terminal) {
-    std::vector<size_t> path(visited_inds.begin(), visited_inds.end());
-    path.push_back(src_ind);
-    paths.emplace_back(std::move(path));
-    return;
-  }
-  for (size_t next = 0; next < nexts.size(); next++) {
-    if (!nexts.at(next)) {
-      continue;
+  std::vector<std::vector<size_t>> paths;
+  std::vector<size_t> current_path;
+  std::unordered_set<size_t> visited;
+
+  std::function<void(size_t)> retrieve_paths_backward_impl = [&](size_t src_ind) {
+    current_path.push_back(src_ind);
+    visited.insert(src_ind);
+
+    bool is_terminal = true;
+    const auto & nexts = adjacency[src_ind];
+
+    for (size_t next = 0; next < nexts.size(); ++next) {
+      if (nexts[next]) {
+        is_terminal = false;
+        if (visited.find(next) == visited.end()) {
+          retrieve_paths_backward_impl(next);
+        } else {
+          // Loop detected
+          paths.push_back(current_path);
+        }
+      }
     }
-    if (std::find(visited_inds.begin(), visited_inds.end(), next) != visited_inds.end()) {
-      // loop detected
-      std::vector<size_t> path(visited_inds.begin(), visited_inds.end());
-      path.push_back(src_ind);
-      paths.emplace_back(std::move(path));
-      continue;
+
+    if (is_terminal) {
+      paths.push_back(current_path);
     }
-    auto new_visited_inds = visited_inds;
-    new_visited_inds.push_back(src_ind);
-    retrievePathsBackward(adjacency, next, new_visited_inds, paths);
-  }
-  return;
+
+    current_path.pop_back();
+    visited.erase(src_ind);
+  };
+
+  retrieve_paths_backward_impl(start_node);
+  return paths;
 }
 
 std::pair<lanelet::ConstLanelets, std::vector<lanelet::ConstLanelets>>
@@ -270,13 +274,8 @@ mergeLaneletsByTopologicalSort(
 
   // create adjacency matrix
   const auto n_node = lanelets.size();
-  std::vector<std::vector<bool>> adjacency(n_node);
-  for (size_t dst = 0; dst < n_node; ++dst) {
-    adjacency[dst].resize(n_node);
-    for (size_t src = 0; src < n_node; ++src) {
-      adjacency[dst][src] = false;
-    }
-  }
+  std::vector<std::vector<bool>> adjacency(n_node, std::vector<bool>(n_node, false));
+
   // NOTE: this function aims to traverse the detection lanelet in the lane direction, so if lane B
   // follows lane A on the routing_graph, adj[A][B] = true
   for (const auto & lanelet : lanelets) {
@@ -291,14 +290,10 @@ mergeLaneletsByTopologicalSort(
 
   std::unordered_map<size_t, std::vector<std::vector<size_t>>> branches;
   for (const auto & terminal_ind : terminal_inds) {
-    std::vector<std::vector<size_t>> paths;
-    std::vector<size_t> visited;
-    retrievePathsBackward(adjacency, terminal_ind, visited, paths);
-    branches[terminal_ind] = std::move(paths);
+    branches[terminal_ind] = retrievePathsBackward(adjacency, terminal_ind);
   }
 
-  for (auto it = branches.begin(); it != branches.end(); it++) {
-    auto & paths = it->second;
+  for (auto & [terminal_ind, paths] : branches) {
     for (auto & path : paths) {
       std::reverse(path.begin(), path.end());
     }
@@ -306,18 +301,16 @@ mergeLaneletsByTopologicalSort(
   lanelet::ConstLanelets merged;
   std::vector<lanelet::ConstLanelets> originals;
   for (const auto & [ind, sub_branches] : branches) {
-    if (sub_branches.size() == 0) {
+    if (sub_branches.empty()) {
       continue;
     }
     for (const auto & sub_inds : sub_branches) {
-      lanelet::ConstLanelets to_be_merged;
-      originals.push_back(lanelet::ConstLanelets({}));
-      auto & original = originals.back();
+      lanelet::ConstLanelets lanelets;
       for (const auto & sub_ind : sub_inds) {
-        to_be_merged.push_back(Id2lanelet[ind2Id[sub_ind]]);
-        original.push_back(Id2lanelet[ind2Id[sub_ind]]);
+        lanelets.push_back(Id2lanelet[ind2Id[sub_ind]]);
       }
-      merged.push_back(lanelet::utils::combineLaneletsShape(to_be_merged));
+      originals.push_back(lanelets);
+      merged.push_back(lanelet::utils::combineLaneletsShape(lanelets));
     }
   }
   return {merged, originals};
