@@ -60,6 +60,7 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   if (input_pointcloud_msg.data.empty()) {
     return;
   }
+  if (!checkCameraInfo(camera_info)) return;
   if (input_mask.height == 0 || input_mask.width == 0) {
     return;
   }
