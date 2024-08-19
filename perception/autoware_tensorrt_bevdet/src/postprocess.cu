@@ -162,8 +162,8 @@ void PostprocessGPU::DoPostprocess(void ** const bev_buffer, std::vector<Box> & 
       score_dev, cls_dev, valid_box_num, nms_rescale_factor_dev);
 
     /*
-    此时 boxes_dev, score_dev, cls_dev 有 valid_box_num 个元素，可能大于nms_pre_maxnum,
-    而且是无序排列的
+    at this point, boxes_dev, score_dev, cls_dev have valid_box_num elements，which may be greater than nms_pre_maxnum,
+    and it's arranged in disorder
     */
     int box_num_pre = 0;
     CHECK_CUDA(cudaMemcpy(&box_num_pre, valid_box_num, sizeof(int), cudaMemcpyDeviceToHost));

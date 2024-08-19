@@ -131,7 +131,7 @@ bool PreprocessPlugin::supportsFormatCombination(
     case 2:  // std
       res = (inOut[2].type == DataType::kFLOAT) && inOut[2].format == TensorFormat::kLINEAR;
       break;
-    case 3:  // 输出 img tensor
+    case 3:  // output img tensor
       res = (inOut[3].type == DataType::kFLOAT || inOut[3].type == DataType::kHALF) &&
             inOut[3].format == inOut[0].format;
 

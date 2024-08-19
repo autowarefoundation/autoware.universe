@@ -496,7 +496,7 @@ void BEVDet::GetAdjBEVFeature(
     flag = 0;
   }
 
-  // idx越小, adj_bevfeat越新
+  // the smaller the idx, the newer th adj_bevfeat
   for (int i = 0; i < adj_num; i++) {
     const void * adj_buffer = adj_frame_ptr->getFrameBuffer(i);
 
