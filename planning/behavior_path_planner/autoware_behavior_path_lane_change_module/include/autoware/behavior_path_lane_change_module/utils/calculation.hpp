@@ -19,6 +19,7 @@
 namespace autoware::behavior_path_planner::utils::lane_change::calculation
 {
 using behavior_path_planner::lane_change::CommonDataPtr;
+using behavior_path_planner::lane_change::LCParamPtr;
 
 /**
  * @brief Calculates the distance from the ego vehicle to the terminal point.

@@ -1,3 +1,4 @@
+
 // Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +15,8 @@
 
 #include <autoware/behavior_path_lane_change_module/utils/calculation.hpp>
 #include <autoware/behavior_path_planner_common/utils/utils.hpp>
+
+#include <boost/geometry/algorithms/buffer.hpp>
 
 namespace autoware::behavior_path_planner::utils::lane_change::calculation
 {
