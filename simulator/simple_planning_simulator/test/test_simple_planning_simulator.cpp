@@ -300,8 +300,8 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   const auto params = GetParam();
   // common parameters
   const auto common_params = get_common_params(params);
-  auto command_type = common_params.first;
-  auto vehicle_model_type = common_params.second;
+  const auto command_type = common_params.first;
+  const auto vehicle_model_type = common_params.second;
   std::cout << "\n\n vehicle model = " << vehicle_model_type << std::endl << std::endl;
   // optional parameters
   std::optional<std::string> conversion_type{};  // for ActuationCmdParamType
