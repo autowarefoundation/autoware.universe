@@ -10,7 +10,7 @@
 
 using namespace autoware::motion::control::pid_longitudinal_controller;
 
-class PidLongitudinalControllerTest : public ::testing::Test
+class TestPidLongitudinalController : public ::testing::Test
 {
 protected:
     std::shared_ptr<rclcpp::Node> node_;
@@ -48,7 +48,7 @@ TEST_F(TestPidLongitudinalController, setupDiagnosticUpdater)
     EXPECT_TRUE(control_state_added);
 }
 
-TEST_F(PidLongitudinalControllerTest, SetKinematicState)
+TEST_F(TestPidLongitudinalController, setKinematicState)
 {
     nav_msgs::msg::Odometry odom;
     odom.twist.twist.linear.x = 10.0;
@@ -56,7 +56,7 @@ TEST_F(PidLongitudinalControllerTest, SetKinematicState)
     EXPECT_EQ(controller_->m_current_kinematic_state.twist.twist.linear.x, 10.0);
 }
 
-TEST_F(PidLongitudinalControllerTest, SetCurrentAcceleration)
+TEST_F(TestPidLongitudinalController, setCurrentAcceleration)
 {
     geometry_msgs::msg::AccelWithCovarianceStamped accel;
     accel.accel.accel.linear.x = 2.0;
@@ -64,7 +64,7 @@ TEST_F(PidLongitudinalControllerTest, SetCurrentAcceleration)
     EXPECT_EQ(controller_->m_current_accel.accel.accel.linear.x, 2.0);
 }
 
-TEST_F(PidLongitudinalControllerTest, SetCurrentOperationMode)
+TEST_F(TestPidLongitudinalController, setCurrentOperationMode)
 {
     autoware_adapi_v1_msgs::msg::OperationModeState mode;
     mode.mode = autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS;
@@ -72,7 +72,7 @@ TEST_F(PidLongitudinalControllerTest, SetCurrentOperationMode)
     EXPECT_EQ(controller_->m_current_operation_mode.mode, autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS);
 }
 
-TEST_F(PidLongitudinalControllerTest, SetTrajectory)
+TEST_F(TestPidLongitudinalController, setTrajectory)
 {
     autoware_planning_msgs::msg::Trajectory traj;
     traj.points.resize(3);
@@ -80,13 +80,13 @@ TEST_F(PidLongitudinalControllerTest, SetTrajectory)
     EXPECT_EQ(controller_->m_trajectory.points.size(), 3);
 }
 
-TEST_F(PidLongitudinalControllerTest, IsReady)
+TEST_F(TestPidLongitudinalController, isReady)
 {
     trajectory_follower::InputData input_data;
     EXPECT_TRUE(controller_->isReady(input_data));
 }
 
-TEST_F(PidLongitudinalControllerTest, Run)
+TEST_F(TestPidLongitudinalController, run)
 {
     trajectory_follower::InputData input_data;
     autoware_planning_msgs::msg::Trajectory traj;
@@ -104,9 +104,9 @@ TEST_F(PidLongitudinalControllerTest, Run)
     autoware_adapi_v1_msgs::msg::OperationModeState mode;
     mode.mode = autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS;
     input_data.current_operation_mode = mode;
-
+    controller_->m_control_state = PidLongitudinalController::ControlState::DRIVE;
     auto output = controller_->run(input_data);
-    EXPECT_GE(output.control_cmd.velocity, 0.0);
+    EXPECT_EQ(output.control_cmd.velocity, 0.0);
 }
 
 TEST_F(PidLongitudinalControllerTest, GetControlData)
