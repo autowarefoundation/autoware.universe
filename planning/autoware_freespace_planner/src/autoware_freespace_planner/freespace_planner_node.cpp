@@ -34,6 +34,7 @@
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 
 #include <algorithm>
 #include <deque>
@@ -358,9 +359,9 @@ bool FreespacePlannerNode::checkCurrentTrajectoryCollision()
 
 void FreespacePlannerNode::updateTargetIndex()
 {
-  const auto is_near_target =
-    autoware::universe_utils::calcDistance2d(trajectory_.points.at(target_index_), current_pose_) <
-    node_param_.th_arrived_distance_m;
+  const double long_disp_to_target = autoware::universe_utils::calcLongitudinalDeviation(
+    trajectory_.points.at(target_index_).pose, current_pose_.pose.position);
+  const auto is_near_target = std::abs(long_disp_to_target) < node_param_.th_arrived_distance_m;
 
   const auto is_stopped = isStopped(odom_buffer_, node_param_.th_stopped_velocity_mps);
 
