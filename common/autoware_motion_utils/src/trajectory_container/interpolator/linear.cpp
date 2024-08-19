@@ -29,7 +29,7 @@ void Linear::build_impl(const std::vector<double> & values)
 
 double Linear::compute_impl(const double & s) const
 {
-  int idx = this->get_index(s);
+  int32_t idx = this->get_index(s);
   double x0 = this->axis_(idx);
   double x1 = this->axis_(idx + 1);
   double y0 = this->values_(idx);
@@ -39,7 +39,7 @@ double Linear::compute_impl(const double & s) const
 
 double Linear::compute_first_derivative_impl(const double & s) const
 {
-  int idx = this->get_index(s);
+  int32_t idx = this->get_index(s);
   double x0 = this->axis_(idx);
   double x1 = this->axis_(idx + 1);
   double y0 = this->values_(idx);

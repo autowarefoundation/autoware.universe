@@ -25,19 +25,19 @@ namespace autoware::motion_utils::trajectory_container::interpolator
 void AkimaSpline::compute_parameters(
   const Eigen::Ref<const Eigen::VectorXd> & axis, const Eigen::Ref<const Eigen::VectorXd> & values)
 {
-  int n = static_cast<int>(axis.size());
+  int32_t n = static_cast<int>(axis.size());
 
   Eigen::VectorXd h = axis.tail(n - 1) - axis.head(n - 1);
 
   Eigen::VectorXd m(n - 1);
-  for (int i = 0; i < n - 1; ++i) {
+  for (int32_t i = 0; i < n - 1; ++i) {
     m[i] = (values[i + 1] - values[i]) / h[i];
   }
 
   Eigen::VectorXd s(n);
   s[0] = m[0];
   s[1] = (m[0] + m[1]) / 2;
-  for (int i = 2; i < n - 2; ++i) {
+  for (int32_t i = 2; i < n - 2; ++i) {
     if ((std::abs(m[i + 1] - m[i]) + std::abs(m[i - 1] - m[i - 2])) == 0) {
       s[i] = (m[i] + m[i - 1]) / 2;
     } else {
@@ -52,7 +52,7 @@ void AkimaSpline::compute_parameters(
   b_.resize(n - 1);
   c_.resize(n - 1);
   d_.resize(n - 1);
-  for (int i = 0; i < n - 1; ++i) {
+  for (int32_t i = 0; i < n - 1; ++i) {
     a_[i] = values[i];
     b_[i] = s[i];
     c_[i] = (3 * m[i] - 2 * s[i] - s[i + 1]) / h[i];
@@ -69,21 +69,21 @@ void AkimaSpline::build_impl(const std::vector<double> & values)
 
 double AkimaSpline::compute_impl(const double & s) const
 {
-  int i = this->get_index(s);
+  int32_t i = this->get_index(s);
   double dx = s - this->axis_[i];
   return a_[i] + b_[i] * dx + c_[i] * dx * dx + d_[i] * dx * dx * dx;
 }
 
 double AkimaSpline::compute_first_derivative_impl(const double & s) const
 {
-  int i = this->get_index(s);
+  int32_t i = this->get_index(s);
   double dx = s - this->axis_[i];
   return b_[i] + 2 * c_[i] * dx + 3 * d_[i] * dx * dx;
 }
 
 double AkimaSpline::compute_second_derivative_impl(const double & s) const
 {
-  int i = this->get_index(s);
+  int32_t i = this->get_index(s);
   double dx = s - this->axis_[i];
   return 2 * c_[i] + 6 * d_[i] * dx;
 }

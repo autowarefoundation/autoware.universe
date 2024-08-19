@@ -56,7 +56,7 @@ protected:
    */
   [[nodiscard]] T compute_impl(const double & s) const override
   {
-    int idx = this->get_index(s);
+    int32_t idx = this->get_index(s);
     return (std::abs(s - this->axis_[idx]) <= std::abs(s - this->axis_[idx + 1]))
              ? this->values_[idx]
              : this->values_[idx + 1];

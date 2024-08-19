@@ -56,7 +56,7 @@ protected:
    */
   [[nodiscard]] T compute_impl(const double & s) const override
   {
-    int idx = this->get_index(s, false);
+    int32_t idx = this->get_index(s, false);
     return this->values[idx];
   }
 
