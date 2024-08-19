@@ -25,7 +25,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator
 void AkimaSpline::compute_parameters(
   const Eigen::Ref<const Eigen::VectorXd> & axis, const Eigen::Ref<const Eigen::VectorXd> & values)
 {
-  int32_t n = static_cast<int>(axis.size());
+  int32_t n = static_cast<int32_t>(axis.size());
 
   Eigen::VectorXd h = axis.tail(n - 1) - axis.head(n - 1);
 

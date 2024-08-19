@@ -22,7 +22,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator
 void CubicSpline::compute_parameters(
   const Eigen::Ref<const Eigen::VectorXd> & axis, const Eigen::Ref<const Eigen::VectorXd> & values)
 {
-  int32_t n = static_cast<int>(axis.size()) - 1;
+  int32_t n = static_cast<int32_t>(axis.size()) - 1;
 
   h_ = axis.tail(n) - axis.head(n);
   a_ = values.transpose();

@@ -166,7 +166,7 @@ public:
   [[nodiscard]] int32_t get_index(const double & s, bool include_end = true) const
   {
     if (include_end && s == end()) {
-      return static_cast<int>(axis_.size()) - 2;
+      return static_cast<int32_t>(axis_.size()) - 2;
     }
     auto comp = [](const double & a, const double & b) { return a <= b; };
     return std::distance(axis_.begin(), std::lower_bound(axis_.begin(), axis_.end(), s, comp)) - 1;
