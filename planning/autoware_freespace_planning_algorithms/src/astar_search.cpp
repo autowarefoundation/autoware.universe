@@ -449,6 +449,8 @@ void AstarSearch::setPath(const AstarNode & goal_node)
     node = node->parent;
   }
 
+  if (waypoints.empty()) return;
+
   if (waypoints.size() > 1) waypoints.back().is_back = waypoints.rbegin()[1].is_back;
 
   if (!is_backward_search_) {
@@ -458,17 +460,20 @@ void AstarSearch::setPath(const AstarNode & goal_node)
 
   waypoints_.header = header;
   waypoints_.waypoints.clear();
-  auto it = waypoints.begin();
-  for (; it < waypoints.end() - 1; ++it) {
-    auto next_it = it + 1;
-    waypoints_.waypoints.push_back(*it);
-    if (it->is_back == next_it->is_back) continue;
-    if (is_backward_search_) {
-      waypoints_.waypoints.push_back({next_it->pose, it->is_back});
-    } else {
-      waypoints_.waypoints.push_back({it->pose, next_it->is_back});
+
+  for (size_t i = 0; i < waypoints.size() - 1; ++i) {
+    const auto & current = waypoints[i];
+    const auto & next = waypoints[i + 1];
+
+    waypoints.push_back(current);
+
+    if (current.is_back != next.is_back) {
+      waypoints_.waypoints.push_back(
+        {is_backward_search_ ? next.pose : current.pose,
+         is_backward_search_ ? current.is_back : next.is_back});
     }
   }
+
   waypoints_.waypoints.push_back(waypoints.back());
 }
 
