@@ -20,6 +20,10 @@ This module allows developers to design vehicle behavior in avoidance planning u
 
 This module executes avoidance over lanes, and the decision requires the lane structure information to take care of traffic rules (e.g. it needs to send an indicator signal when the vehicle crosses a lane). The difference between motion and behavior module in the planning stack is whether the planner takes traffic rules into account, which is why this avoidance module exists in the behavior module.
 
+<br>
+
+If you would like to know the overview rather than the detail, please skip the [Inner-workings / Algorithms](#inner-workings-algorithms) and refer to [FAQ](#frequently-asked-questions).
+
 ## Inner-workings / Algorithms
 
 This module mainly has two parts, target filtering part and path generation part. At first, all objects are filtered by several conditions. In this step, this module checks avoidance feasibility and necessity as well. After that, this module generates avoidance path outline, whom we call **shift line**, based on filtered objects. The shift lines are set into [path shifter](../autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design.md), which is a library for path generation, to create smooth shift path. Additionally, this module has feature to check non-target objects so that the ego can avoid target object safely. This feature receives generated avoidance path and surround objects and judges current situation. Lastly, this module update current ego behavior.
