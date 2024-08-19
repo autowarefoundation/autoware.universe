@@ -92,8 +92,9 @@ double calcMinimumLaneChangeLength(
   }
 
   const auto min_vel = lane_change_parameters.minimum_lane_changing_velocity;
-  const auto [min_lat_acc, max_lat_acc] =
-    lane_change_parameters.lane_change_lat_acc_map.find(min_vel);
+  const auto min_max_lat_acc = lane_change_parameters.lane_change_lat_acc_map.find(min_vel);
+  // const auto min_lat_acc = std::get<0>(min_max_lat_acc);
+  const auto max_lat_acc = std::get<1>(min_max_lat_acc);
   const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
   const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
 
@@ -1337,6 +1338,23 @@ double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, co
   }
   const auto closest_pose = lanelet::utils::getClosestCenterPose(closest_lanelet, pose.position);
   return std::abs(autoware::universe_utils::calcYawDeviation(closest_pose, pose));
+}
+
+ExtendedPredictedObjects transform_to_extended_objects(
+  const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects,
+  const bool check_prepare_phase)
+{
+  ExtendedPredictedObjects extended_objects;
+  extended_objects.reserve(objects.size());
+
+  const auto & bpp_param = *common_data_ptr->bpp_param_ptr;
+  const auto & lc_param = *common_data_ptr->lc_param_ptr;
+  std::transform(
+    objects.begin(), objects.end(), std::back_inserter(extended_objects), [&](const auto & object) {
+      return utils::lane_change::transform(object, bpp_param, lc_param, check_prepare_phase);
+    });
+
+  return extended_objects;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
