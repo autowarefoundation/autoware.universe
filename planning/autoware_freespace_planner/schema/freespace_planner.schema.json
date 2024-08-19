@@ -57,6 +57,11 @@
           "default": true,
           "description": "Replan path when the vehicle deviates from its course."
         },
+        "enable_obs_confidence_check": {
+          "type": "boolean",
+          "default": true,
+          "description": "Wait for some time to confirm when obstacle is found before replanning path."
+        },
         "time_limit": {
           "type": "number",
           "default": 30000.0,
@@ -198,6 +203,7 @@
         "vehicle_shape_margin_m",
         "replan_when_obstacle_found",
         "replan_when_course_out",
+        "enable_obs_confidence_check",
         "time_limit",
         "max_turning_ratio",
         "turning_steps",
