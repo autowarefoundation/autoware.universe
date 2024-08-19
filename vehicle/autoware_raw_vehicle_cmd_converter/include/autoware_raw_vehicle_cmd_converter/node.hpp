@@ -111,9 +111,6 @@ public:
   bool convert_accel_cmd_;                                             //!< @brief use accel or not
   bool convert_brake_cmd_;                                             //!< @brief use brake or not
   std::optional<std::string> convert_steer_cmd_method_{std::nullopt};  //!< @brief method to convert
-  double vgr_coef_a_{0.0};
-  double vgr_coef_b_{0.0};
-  double vgr_coef_c_{0.0};
   rclcpp::Time prev_time_steer_calculation_{0, 0, RCL_ROS_TIME};
 
   // Whether to subscribe to actuation_status and calculate and publish steering_status
