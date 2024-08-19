@@ -162,8 +162,8 @@ void PostprocessGPU::DoPostprocess(void ** const bev_buffer, std::vector<Box> & 
       score_dev, cls_dev, valid_box_num, nms_rescale_factor_dev);
 
     /*
-    at this point, boxes_dev, score_dev, cls_dev have valid_box_num elements，which may be greater than nms_pre_maxnum,
-    and it's arranged in disorder
+    at this point, boxes_dev, score_dev, cls_dev have valid_box_num elements，which may be greater
+    than nms_pre_maxnum, and it's arranged in disorder
     */
     int box_num_pre = 0;
     CHECK_CUDA(cudaMemcpy(&box_num_pre, valid_box_num, sizeof(int), cudaMemcpyDeviceToHost));
