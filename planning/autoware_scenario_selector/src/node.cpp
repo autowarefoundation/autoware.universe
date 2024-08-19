@@ -52,19 +52,17 @@ bool isInLane(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
   const geometry_msgs::msg::Point & current_pos)
 {
-  const auto & p = current_pos;
-  const lanelet::Point3d search_point(lanelet::InvalId, p.x, p.y, p.z);
+  const lanelet::BasicPoint2d search_point(current_pos.x, current_pos.y);
 
   std::vector<std::pair<double, lanelet::Lanelet>> nearest_lanelets =
-    lanelet::geometry::findNearest(lanelet_map_ptr->laneletLayer, search_point.basicPoint2d(), 1);
+    lanelet::geometry::findNearest(lanelet_map_ptr->laneletLayer, search_point, 1);
 
-  if (nearest_lanelets.empty()) {
-    return false;
-  }
+  if (nearest_lanelets.empty()) return false;
 
-  const auto nearest_lanelet = nearest_lanelets.front().second;
+  const auto dist_to_nearest_lanelet = nearest_lanelets.front().first;
+  static constexpr double margin = 0.01;
 
-  return lanelet::geometry::within(search_point, nearest_lanelet.polygon3d());
+  return dist_to_nearest_lanelet < margin;
 }
 
 bool isInParkingLot(
