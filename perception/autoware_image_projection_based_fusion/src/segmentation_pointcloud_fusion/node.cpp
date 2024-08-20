@@ -16,6 +16,7 @@
 
 #include "autoware/image_projection_based_fusion/utils/geometry.hpp"
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
+
 #include <perception_utils/run_length_encoder.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
