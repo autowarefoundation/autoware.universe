@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "signal_processing/lowpass_filter.hpp"
+#include "autoware/signal_processing/lowpass_filter.hpp"
 
+namespace autoware::signal_processing
+{
 geometry_msgs::msg::Twist LowpassFilterTwist::filter(const geometry_msgs::msg::Twist & u)
 {
   if (x_) {
@@ -31,3 +33,4 @@ geometry_msgs::msg::Twist LowpassFilterTwist::filter(const geometry_msgs::msg::T
   x_ = u;
   return x_.get();
 }
+}  // namespace autoware::signal_processing

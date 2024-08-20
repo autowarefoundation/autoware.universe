@@ -14,6 +14,8 @@
 
 #include "butterworth_filter_test.hpp"
 
+using autoware::signal_processing::ButterworthFilter;
+
 TEST_F(ButterWorthTestFixture, butterworthOrderTest)
 {
   double tol = 1e-4;

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "signal_processing/butterworth.hpp"
+#include "autoware/signal_processing/butterworth.hpp"
 
 #include <rclcpp/logging.hpp>
 
@@ -20,6 +20,8 @@
 #include <numeric>
 #include <sstream>
 
+namespace autoware::signal_processing
+{
 /**
  *  @brief Computes the minimum of an analog Butterworth filter order and cut-off frequency give
  *  the pass and stop-band frequencies and ripple magnitude (tolerances).
@@ -341,3 +343,4 @@ void ButterworthFilter::printFilterSpecs() const
     rclcpp::get_logger("rclcpp"), "Cut-off Frequency : %2.2f rad/sec",
     this->filter_specs_.Wc_rad_sec);
 }
+}  // namespace autoware::signal_processing
