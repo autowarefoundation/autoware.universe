@@ -1692,39 +1692,38 @@ LaneletsData MapBasedPredictionNode::getBidirectionalLanelets(
   const TrackedObject & object)
 {
   LaneletsData bidirectional_lanelets;
-  constexpr double epsilon = 1e-3;
+  std::unordered_map<lanelet::Id, lanelet::Lanelet> left_bound_map;
+  std::unordered_map<lanelet::Id, lanelet::Lanelet> right_bound_map;
 
-  for (size_t t = 0; t < surrounding_lanelets.size(); t++) {
-    for (size_t j = t + 1; j < surrounding_lanelets.size(); j++) {
-      if (
-        surrounding_lanelets[t].second.leftBound().id() ==
-          surrounding_lanelets[j].second.rightBound().id() &&
-        surrounding_lanelets[t].second.rightBound().id() ==
-          surrounding_lanelets[j].second.leftBound().id()) {
-        const auto prev_bidirectional_lane = LaneletData{
-          surrounding_lanelets[t].second,
-          calculateLocalLikelihood(surrounding_lanelets[t].second, object), true};
-        const auto next_bidirectional_lane = LaneletData{
-          surrounding_lanelets[j].second,
-          calculateLocalLikelihood(surrounding_lanelets[j].second, object), true};
+  // Create maps of left and right bounds
+  for (const auto & lanelet_pair : surrounding_lanelets) {
+    const auto & lanelet = lanelet_pair.second;
+    left_bound_map[lanelet.leftBound().id()] = lanelet;
+    right_bound_map[lanelet.rightBound().id()] = lanelet;
+  }
 
-        double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-        double lane_yaw = lanelet::utils::getLaneletAngle(
-          surrounding_lanelets[t].second, object.kinematics.pose_with_covariance.pose.position);
-        double delta_yaw = object_yaw - lane_yaw;
-        const double normalized_delta_yaw = autoware::universe_utils::normalizeRadian(delta_yaw);
-        const double abs_norm_delta = std::fabs(normalized_delta_yaw);
+  // Find matching pairs of lanelets
+  for (const auto & lanelet_pair : surrounding_lanelets) {
+    const auto & lanelet = lanelet_pair.second;
+    auto right_match = right_bound_map.find(lanelet.leftBound().id());
+    auto left_match = left_bound_map.find(lanelet.rightBound().id());
 
-        if (abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_) {
-          bidirectional_lanelets.push_back(prev_bidirectional_lane);
-        } else {
-          bidirectional_lanelets.push_back(next_bidirectional_lane);
-        }
-      } else if (surrounding_lanelets[t].first < epsilon) {
-        const auto object_lanelet = LaneletData{
-          surrounding_lanelets[t].second,
-          calculateLocalLikelihood(surrounding_lanelets[t].second, object), false};
-        bidirectional_lanelets.push_back(object_lanelet);
+    if (right_match != right_bound_map.end() && left_match != left_bound_map.end()) {
+      const auto & matching_lanelet = right_match->second;
+
+      const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+      const double lane_yaw = lanelet::utils::getLaneletAngle(lanelet, object.kinematics.pose_with_covariance.pose.position);
+      const double delta_yaw = object_yaw - lane_yaw;
+      const double normalized_delta_yaw = autoware::universe_utils::normalizeRadian(delta_yaw);
+      const double abs_norm_delta = std::fabs(normalized_delta_yaw);
+
+      const auto prev_bidirectional_lane = LaneletData{lanelet, calculateLocalLikelihood(lanelet, object), true};
+      const auto next_bidirectional_lane = LaneletData{matching_lanelet, calculateLocalLikelihood(matching_lanelet, object), true};
+
+      if (abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_) {
+        bidirectional_lanelets.push_back(prev_bidirectional_lane);
+      } else {
+        bidirectional_lanelets.push_back(next_bidirectional_lane);
       }
     }
   }
