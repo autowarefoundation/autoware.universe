@@ -121,7 +121,7 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
       make_diagnostic(plugin->get_module_name(), "stop", res.stop_points.size() > 0);
     diagnostics_.push_back(stop_reason_diag);
 
-    auto slow_down_reason_diag =
+    const auto slow_down_reason_diag =
       make_diagnostic(plugin->get_module_name(), "slow_down", res.slowdown_intervals.size() > 0);
     diagnostics_.push_back(slow_down_reason_diag);
   }
