@@ -131,11 +131,18 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
   Point center_b(box_b[0], box_b[1]);
 
 #ifdef DEBUG
-  std::cout << "a: (" << std::fixed << std::setprecision(3) << a_x1 << ", " << a_y1 << ", " << a_x2
-            << ", " << a_y2 << ", " << a_angle << "), b: (" << b_x1 << ", " << b_y1 << ", " << b_x2
-            << ", " << b_y2 << ", " << b_angle << ")" << std::endl;
-  std::cout << "center a: (" << center_a.x << ", " << center_a.y << "), b: (" << center_b.x << ", "
-            << center_b.y << ")" << std::endl;
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("iou3d_nms"),
+    "a: (%.3f, %.3f, %.3f, %.3f, %.3f), b: (%.3f, %.3f, %.3f, %.3f, %.3f)",
+    a_x1, a_y1, a_x2, a_y2, a_angle, 
+    b_x1, b_y1, b_x2, b_y2, b_angle 
+  );
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("iou3d_nms"),
+    "center a: (%.3f, %.3f), b: (%.3f, %.3f)",
+    center_a.x, center_a.y, 
+    center_b.x, center_b.y 
+  );
 #endif
 
   Point box_a_corners[5];
@@ -156,16 +163,24 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
 
   for (int k = 0; k < 4; k++) {
 #ifdef DEBUG
-    std::cout << "before corner " << k << ": a(" << std::fixed << std::setprecision(3)
-              << box_a_corners[k].x << ", " << box_a_corners[k].y << "), b(" << box_b_corners[k].x
-              << ", " << box_b_corners[k].y << ")" << std::endl;
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("iou3d_nms"), 
+      "before corner %d: a(%.3f, %.3f), b(%.3f, %.3f)",
+      k,                           
+      box_a_corners[k].x, box_a_corners[k].y,  
+      box_b_corners[k].x, box_b_corners[k].y  
+    );
 #endif
     rotate_around_center(center_a, a_angle_cos, a_angle_sin, box_a_corners[k]);
     rotate_around_center(center_b, b_angle_cos, b_angle_sin, box_b_corners[k]);
 #ifdef DEBUG
-    std::cout << "corner " << k << ": a(" << std::fixed << std::setprecision(3)
-              << box_a_corners[k].x << ", " << box_a_corners[k].y << "), b(" << box_b_corners[k].x
-              << ", " << box_b_corners[k].y << ")" << std::endl;
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("iou3d_nms"),
+      "corner %d: a(%.3f, %.3f), b(%.3f, %.3f)",
+      k,                           
+      box_a_corners[k].x, box_a_corners[k].y,  
+      box_b_corners[k].x, box_b_corners[k].y  
+    );
 #endif
   }
 
@@ -187,12 +202,15 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
         poly_center = poly_center + cross_points[cnt];
         cnt++;
 #ifdef DEBUG
-        std::cout << "Cross points (" << std::fixed << std::setprecision(3)
-                  << cross_points[cnt - 1].x << ", " << cross_points[cnt - 1].y << "): a("
-                  << box_a_corners[i].x << ", " << box_a_corners[i].y << ")->("
-                  << box_a_corners[i + 1].x << ", " << box_a_corners[i + 1].y << "), b("
-                  << box_b_corners[i].x << ", " << box_b_corners[i].y << ")->("
-                  << box_b_corners[i + 1].x << ", " << box_b_corners[i + 1].y << ")" << std::endl;
+        RCLCPP_DEBUG(
+          rclcpp::get_logger("iou3d_nms"), 
+          "Cross points (%.3f, %.3f): a(%.3f, %.3f)->(%.3f, %.3f), b(%.3f, %.3f)->(%.3f, %.3f)", 
+          cross_points[cnt - 1].x, cross_points[cnt - 1].y,  
+          box_a_corners[i].x, box_a_corners[i].y,           
+          box_a_corners[i + 1].x, box_a_corners[i + 1].y,   
+          box_b_corners[i].x, box_b_corners[i].y,          
+          box_b_corners[i + 1].x, box_b_corners[i + 1].y 
+        );
 #endif
       }
     }
@@ -205,8 +223,11 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
       cross_points[cnt] = box_b_corners[k];
       cnt++;
 #ifdef DEBUG
-      std::cout << "b corners in a: corner_b(" << std::fixed << std::setprecision(3)
-                << cross_points[cnt - 1].x << ", " << cross_points[cnt - 1].y << ")" << std::endl;
+      RCLCPP_DEBUG(
+        rclcpp::get_logger("iou3d_nms"), 
+        "b corners in a: corner_b(%.3f, %.3f)", 
+        cross_points[cnt - 1].x, cross_points[cnt - 1].y 
+      );
 #endif
     }
     if (check_in_box2d(box_b, box_a_corners[k])) {
@@ -214,8 +235,11 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
       cross_points[cnt] = box_a_corners[k];
       cnt++;
 #ifdef DEBUG
-      std::cout << "a corners in b: corner_a(" << std::fixed << std::setprecision(3)
-                << cross_points[cnt - 1].x << ", " << cross_points[cnt - 1].y << ")" << std::endl;
+      RCLCPP_DEBUG(
+        rclcpp::get_logger("iou3d_nms"), 
+        "a corners in b: corner_a(%.3f, %.3f)", 
+        cross_points[cnt - 1].x, cross_points[cnt - 1].y 
+      );
 #endif
     }
   }
@@ -236,10 +260,18 @@ __device__ inline float box_overlap(const float * box_a, const float * box_b)
   }
 
 #ifdef DEBUG
-  std::cout << "cnt=" << cnt << std::endl;
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("iou3d_nms"), 
+    "cnt=%d", 
+    cnt 
+  );
   for (int i = 0; i < cnt; i++) {
-    std::cout << "All cross point " << i << ": (" << std::fixed << std::setprecision(3)
-              << cross_points[i].x << ", " << cross_points[i].y << ")" << std::endl;
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("iou3d_nms"), 
+      "All cross point %d: (%.3f, %.3f)", 
+      i,                             
+      cross_points[i].x, cross_points[i].y 
+    );
   }
 #endif
 
@@ -621,7 +653,11 @@ int Iou3dNmsCuda::DoIou3dNms(
   }
 
   if (cudaSuccess != cudaGetLastError()) {
-    std::cerr << "Error!" << std::endl;
+    RCLCPP_ERROR(
+        rclcpp::get_logger("iou3d_nms"), 
+        "Error: %s", 
+        cudaGetErrorString(cudaGetLastError()) 
+    );
   }
   return num_to_keep;
 }

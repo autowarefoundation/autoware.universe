@@ -38,8 +38,12 @@ BEVDet::BEVDet(
 {
   InitParams(config_file);
   if (n_img != N_img) {
-    std::cerr << "BEVDet needs " << N_img << " images, but " << n_img << " images were given!"
-              << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BEVDet"), 
+      "BEVDet need %d images, but given %d images!", 
+      N_img, 
+      n_img 
+    );
   }
   auto start = high_resolution_clock::now();
 
@@ -53,15 +57,24 @@ BEVDet::BEVDet(
     ranks_bev_ptr, ranks_depth_ptr, ranks_feat_ptr, interval_starts_ptr, interval_lengths_ptr);
   auto end = high_resolution_clock::now();
   duration<float> t = end - start;
-  std::cout << std::fixed << std::setprecision(4)
-            << "InitVewTransformer cost time: " << t.count() * 1000 << " ms" << std::endl;
+  RCLCPP_INFO(
+    rclcpp::get_logger("BEVDet"), 
+    "InitVewTransformer cost time : %.4lf ms",
+    t.count() * 1000 
+  );
 
   if (access(engine_file.c_str(), F_OK) == 0) {
-    std::cout << "Inference engine prepared." << std::endl;
+    RCLCPP_INFO(
+      rclcpp::get_logger("BEVDet"), 
+      "Inference engine prepared."
+    );
   } else {
     // onnx to engine
-    std::cerr << "Could not find " << engine_file << ", trying to make TensorRT engine from ONNX."
-              << std::endl;
+    RCLCPP_WARN(
+      rclcpp::get_logger("BEVDet"), 
+      "Could not find %s, try making TensorRT engine from onnx", 
+      engine_file.c_str() 
+    );
     ExportEngine(onnx_file, engine_file);
   }
   InitEngine(engine_file);  // FIXME
@@ -240,7 +253,11 @@ void BEVDet::MallocDeviceMemory()
     CHECK_CUDA(cudaMalloc(&trt_buffer_dev[i], size));
   }
 
-  std::cout << "img num binding : " << trt_engine->getNbBindings() << std::endl;
+  RCLCPP_INFO(
+    rclcpp::get_logger("BEVDet"), 
+    "img num binding : %d", 
+    trt_engine->getNbBindings() 
+  );
 
   post_buffer = reinterpret_cast<void **>(new void *[class_num_pre_task.size() * 6]);
   for (size_t i = 0; i < class_num_pre_task.size(); i++) {
@@ -378,20 +395,30 @@ void BEVDet::InitViewTransformer(
   interval_starts_ptr.reset(interval_starts_host_ptr);
   interval_lengths_ptr.reset(interval_lengths_host_ptr);
 
-  std::cout << "valid_feat_num: " << valid_feat_num << std::endl;
-  std::cout << "unique_bev_num: " << unique_bev_num << std::endl;
+  RCLCPP_INFO(
+    rclcpp::get_logger("BEVDet"), 
+    "valid_feat_num: %d", 
+     valid_feat_num
+  );
+  RCLCPP_INFO(
+    rclcpp::get_logger("BEVDet"), 
+    "unique_bev_num: %d", 
+    unique_bev_num
+  );
 }
 
-void print_dim(nvinfer1::Dims dim)
+void print_dim(nvinfer1::Dims dim, std::string name)
 {
+  std::ostringstream oss;
+  oss << name << " : ";
   for (auto i = 0; i < dim.nbDims; i++) {
-    std::cout << dim.d[i];
-    if (i == dim.nbDims - 1) {
-      std::cout << std::endl;
-    } else {
-      std::cout << " ";
-    }
+    oss << dim.d[i] << ' ';
   }
+  RCLCPP_INFO(
+    rclcpp::get_logger("BEVDet"), 
+    "%s", 
+    oss.str().c_str() 
+  );
 }
 
 int BEVDet::InitEngine(const std::string & engine_file)
@@ -401,13 +428,19 @@ int BEVDet::InitEngine(const std::string & engine_file)
   }
 
   if (trt_engine == nullptr) {
-    std::cerr << "Failed to deserialize engine file!" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BEVDet"), 
+      "Failed to deserialize engine file!"
+    );
     return EXIT_FAILURE;
   }
   trt_context = trt_engine->createExecutionContext();
 
   if (trt_context == nullptr) {
-    std::cerr << "Failed to create TensorRT Execution Context!" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BEVDet"), 
+      "Failed to create TensorRT Execution Context!"
+    );
     return EXIT_FAILURE;
   }
 
@@ -435,10 +468,8 @@ int BEVDet::InitEngine(const std::string & engine_file)
     auto dim = trt_context->getBindingDimensions(i);
     auto name = trt_engine->getBindingName(i);
     buffer_map[name] = i;
-    std::cout << name << " : ";
-    print_dim(dim);
+    print_dim(dim, name);
   }
-  std::cout << std::endl;
 
   return EXIT_SUCCESS;
 }
@@ -476,11 +507,19 @@ int BEVDet::DeserializeTRTEngine(
   *engine_ptr = engine;
   for (int bi = 0; bi < engine->getNbBindings(); bi++) {
     if (engine->bindingIsInput(bi) == true) {
-      std::cout << "Binding " << bi << " (" << engine->getBindingName(bi) << "): Input."
-                << std::endl;
+      RCLCPP_INFO(
+        rclcpp::get_logger("BEVDet"), 
+        "Binding %d (%s): Input.", 
+        bi, 
+        engine->getBindingName(bi) 
+      );
     } else {
-      std::cout << "Binding " << bi << " (" << engine->getBindingName(bi) << "): Output."
-                << std::endl;
+      RCLCPP_INFO(
+        rclcpp::get_logger("BEVDet"), 
+        "Binding %d (%s): Output.", 
+        bi, 
+        engine->getBindingName(bi) 
+      );
     }
   }
   return EXIT_SUCCESS;
@@ -579,7 +618,7 @@ void BEVDet::GetCurr2AdjTransform(
 int BEVDet::DoInfer(
   const camsData & cam_data, std::vector<Box> & out_detections, float & cost_time, int idx)
 {
-  std::cout << "-------------------" << (idx + 1) << "-------------------" << std::endl;
+  printf("-------------------%d-------------------\n", idx + 1);
 
   auto start = high_resolution_clock::now();
   CHECK_CUDA(cudaMemcpy(
@@ -593,7 +632,10 @@ int BEVDet::DoInfer(
     cam_data.param.scene_token, cam_data.param.ego2global_rot, cam_data.param.ego2global_trans);
 
   if (!trt_context->executeV2(trt_buffer_dev)) {
-    std::cerr << "BEVDet forward failing!" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BEVDet"), 
+      "BEVDet forward failing!" 
+    );
   }
 
   adj_frame_ptr->saveFrameBuffer(
@@ -612,12 +654,11 @@ int BEVDet::DoInfer(
   duration<double> post_t = post_end - end;
 
   cost_time = infer_t.count() * 1000;
-  std::cout << std::fixed << std::setprecision(5);  // Set precision for all floating-point outputs
-  std::cout << "TRT-Engine  : " << engine_t.count() * 1000 << " ms" << std::endl;
-  std::cout << "Postprocess : " << post_t.count() * 1000 << " ms" << std::endl;
-  std::cout << "Inference   : " << infer_t.count() * 1000 << " ms" << std::endl;
+  printf("TRT-Engine  : %.5lf ms\n", engine_t.count() * 1000);
+  printf("Postprocess : %.5lf ms\n", post_t.count() * 1000);
+  printf("Inference   : %.5lf ms\n", infer_t.count() * 1000);
 
-  std::cout << "Detect " << out_detections.size() << " objects" << std::endl;
+  printf("Detect %ld objects\n", out_detections.size());
 
   return EXIT_SUCCESS;
 }
@@ -652,16 +693,26 @@ void BEVDet::ExportEngine(const std::string & onnxFile, const std::string & trtF
   nvonnxparser::IParser * parser = nvonnxparser::createParser(*network, g_logger);
 
   if (!parser->parseFromFile(onnxFile.c_str(), static_cast<int>(g_logger.reportable_severity))) {
-    std::cout << std::string("Failed parsing .onnx file!") << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BEVDet"), 
+      "Failed parsing .onnx file!" 
+    );
     for (int i = 0; i < parser->getNbErrors(); ++i) {
       auto * error = parser->getError(i);
-      std::cout << std::to_string(static_cast<int>(error->code())) << std::string(":")
-                << std::string(error->desc()) << std::endl;
+      RCLCPP_ERROR(
+        rclcpp::get_logger("BEVDet"),
+        "Error code: %d, Description: %s",
+        static_cast<int>(error->code()),
+        error->desc()
+      );
     }
 
     return;
   }
-  std::cout << std::string("Succeeded parsing .onnx file!") << std::endl;
+  RCLCPP_INFO(
+    rclcpp::get_logger("BEVDet"), 
+    "Succeeded parsing .onnx file!" 
+  );
 
   for (size_t i = 0; i < min_shapes.size(); i++) {
     nvinfer1::ITensor * it = network->getInput(i);
@@ -673,30 +724,51 @@ void BEVDet::ExportEngine(const std::string & onnxFile, const std::string & trtF
 
   nvinfer1::IHostMemory * engineString = builder->buildSerializedNetwork(*network, *config);
   if (engineString == nullptr || engineString->size() == 0) {
-    std::cout << "Failed building serialized engine!" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BEVDet"), 
+      "Failed building serialized engine!" 
+    );
     return;
   }
-  std::cout << "Succeeded building serialized engine!" << std::endl;
+  RCLCPP_INFO(
+    rclcpp::get_logger("BEVDet"), 
+    "Succeeded building serialized engine!" 
+  );
 
   nvinfer1::IRuntime * runtime{nvinfer1::createInferRuntime(g_logger)};
   engine = runtime->deserializeCudaEngine(engineString->data(), engineString->size());
   if (engine == nullptr) {
-    std::cout << "Failed building engine!" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BEVDet"), 
+      "Failed building engine!" 
+    );
     return;
   }
-  std::cout << "Succeeded building engine!" << std::endl;
+  RCLCPP_INFO(
+    rclcpp::get_logger("BEVDet"), 
+    "Succeeded building engine!" 
+  );
 
   std::ofstream engineFile(trtFile, std::ios::binary);
   if (!engineFile) {
-    std::cout << "Failed opening file to write" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BEVDet"), 
+      "Failed opening file to write" 
+    );
     return;
   }
   engineFile.write(static_cast<char *>(engineString->data()), engineString->size());
   if (engineFile.fail()) {
-    std::cout << "Failed saving .engine file!" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BEVDet"), 
+      "Failed saving .engine file!" 
+    );
     return;
   }
-  std::cout << "Succeeded saving .engine file!" << std::endl;
+  RCLCPP_INFO(
+    rclcpp::get_logger("BEVDet"), 
+    "Succeeded saving .engine file!" 
+  );
 }
 
 BEVDet::~BEVDet()

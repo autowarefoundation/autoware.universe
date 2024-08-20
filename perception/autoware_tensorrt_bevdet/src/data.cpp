@@ -29,8 +29,12 @@ camParams::camParams(const YAML::Node & config, int n, std::vector<std::string> 
 : N_img(n)
 {
   if (static_cast<size_t>(n) != cams_name.size()) {
-    std::cerr << "Error! Need " << n << " camera param, bug given " << cams_name.size()
-              << " camera names!" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("camParams"), 
+      "Error! Need %d camera param, but given %zu camera names!", 
+      n,
+      cams_name.size()
+    );
   }
   ego2global_rot = fromYamlQuater(config["ego2global_rotation"]);
   ego2global_trans = fromYamlTrans(config["ego2global_translation"]);
@@ -56,40 +60,6 @@ camParams::camParams(const YAML::Node & config, int n, std::vector<std::string> 
     cams2ego_trans.push_back(fromYamlTrans(config["cams"][name]["sensor2ego_translation"]));
     //
   }
-}
-
-int read_image(const std::string & image_names, std::vector<char> & raw_data)
-{
-  std::ifstream input(image_names.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
-
-  if (!(input.is_open())) {
-    std::cerr << "Cannot open image: " << image_names << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  std::streamsize file_size = input.tellg();
-  input.seekg(0, std::ios::beg);
-  if (raw_data.size() < static_cast<size_t>(file_size)) {
-    raw_data.resize(file_size);
-  }
-  if (!input.read(raw_data.data(), file_size)) {
-    std::cerr << "Cannot read from file: " << image_names << std::endl;
-    return EXIT_FAILURE;
-  }
-  return EXIT_SUCCESS;
-}
-
-int read_sample(
-  const std::vector<std::string> & imgs_file, std::vector<std::vector<char>> & imgs_data)
-{
-  imgs_data.resize(imgs_file.size());
-
-  for (size_t i = 0; i < imgs_data.size(); i++) {
-    if (read_image(imgs_file[i], imgs_data[i])) {
-      return EXIT_FAILURE;
-    }
-  }
-  return EXIT_SUCCESS;
 }
 
 Eigen::Translation3f fromYamlTrans(YAML::Node x)

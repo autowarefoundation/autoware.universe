@@ -41,24 +41,36 @@ int decode_jpeg(const std::vector<char> & buffer, uchar * output)
   };
 
   if (setjmp(jerr.setjmp_buffer)) {
-    std::cerr << "\033[31mFailed to decompress jpeg: "
-              << jerr.pub.jpeg_message_table[jerr.pub.msg_code] << "\033[0m" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("decode_jpeg"), 
+      "Failed to decompress jpeg: %s", 
+      jerr.pub.jpeg_message_table[jerr.pub.msg_code] 
+    );
     jpeg_destroy_decompress(&cinfo);
     return EXIT_FAILURE;
   }
   jpeg_create_decompress(&cinfo);
 
   if (buffer.size() == 0) {
-    std::cerr << "buffer size is 0" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("decode_jpeg"),
+      "buffer size is 0"
+    );
     return EXIT_FAILURE;
   }
   jpeg_mem_src(&cinfo, reinterpret_cast<const uchar *>(buffer.data()), buffer.size());
   if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK) {
-    std::cerr << "\033[31mFailed to read jpeg header\033[0m" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("decode_jpeg"), 
+      "Failed to read jpeg header" 
+    );
     return EXIT_FAILURE;
   }
   if (jpeg_start_decompress(&cinfo) != TRUE) {
-    std::cerr << "\033[31mFailed to start decompress\033[0m" << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("decode_jpeg"), 
+      "Failed to start decompress" 
+    );
     return EXIT_FAILURE;
   }
 

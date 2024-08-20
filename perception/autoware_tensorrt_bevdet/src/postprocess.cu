@@ -116,14 +116,15 @@ PostprocessGPU::PostprocessGPU(
 
   iou3d_nms.reset(new Iou3dNmsCuda(output_h, output_w, nms_thresh));
 
+  std::ostringstream oss;
   for (auto i = 0; i < nms_rescale_factor.size(); i++) {
-    std::cout << std::fixed << std::setprecision(2) << nms_rescale_factor[i];
-    if (i == nms_rescale_factor.size() - 1) {
-      std::cout << std::endl;
-    } else {
-      std::cout << ' ';
-    }
+    oss << std::fixed << std::setprecision(2) << nms_rescale_factor[i] << ' ';
   }
+  RCLCPP_INFO(
+        rclcpp::get_logger("PostprocessGPU"), 
+        "%s", 
+        oss.str().c_str() 
+  );
 }
 PostprocessGPU::~PostprocessGPU()
 {

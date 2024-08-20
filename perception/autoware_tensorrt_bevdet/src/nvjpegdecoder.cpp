@@ -237,8 +237,11 @@ int nvjpegDecoder::decode(const std::vector<std::vector<char>> & files_data, uch
   auto decode_end = high_resolution_clock::now();
   duration<double> decode_time = decode_end - decode_start;
 
-  std::cout << "Decode total time : " << std::fixed << std::setprecision(4)
-            << (decode_time.count() * 1000) << " ms" << std::endl;
+  RCLCPP_INFO(
+    rclcpp::get_logger("nvjpegDecoder"), 
+    "Decode total time : %.4lf ms",
+    decode_time.count() * 1000
+  );
 
   for (size_t i = 0; i < files_data.size(); i++) {
     get_img(
@@ -263,7 +266,10 @@ int nvjpegDecoder::init()
     &share_param.nvjpeg_handle);
   share_param.hw_decode_available = true;
   if (status == NVJPEG_STATUS_ARCH_MISMATCH) {
-    std::cout << "Hardware Decoder not supported. Falling back to default backend" << std::endl;
+    RCLCPP_WARN(
+      rclcpp::get_logger("nvjpegDecoder"), 
+      "Hardware Decoder not supported. Falling back to default backend"
+    );
     CHECK_NVJPEG(nvjpegCreateEx(
       NVJPEG_BACKEND_DEFAULT, &dev_allocator, &pinned_allocator, NVJPEG_FLAGS_DEFAULT,
       &share_param.nvjpeg_handle));

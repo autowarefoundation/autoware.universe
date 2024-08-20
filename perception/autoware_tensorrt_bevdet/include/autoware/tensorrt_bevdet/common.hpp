@@ -23,6 +23,8 @@
 
 #include <iostream>
 #include <string>
+#include "rclcpp/logger.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 typedef unsigned char uchar;
 
@@ -38,8 +40,13 @@ typedef unsigned char uchar;
 inline void GPUAssert(cudaError_t code, const char * file, int line, bool abort = true)
 {
   if (code != cudaSuccess) {
-    std::cerr << "GPUassert: " << cudaGetErrorString(code) << " " << file << " " << line
-              << std::endl;
+    RCLCPP_ERROR(
+      rclcpp::get_logger("GPUAssert"), 
+      "GPUassert: %s %s %d",                     
+      cudaGetErrorString(code),                  
+      file,                                      
+      line                                       
+    );
     if (abort) exit(code);
   }
 };
@@ -122,22 +129,21 @@ public:
     if (severity > reportable_severity) return;
     switch (severity) {
       case Severity::kINTERNAL_ERROR:
-        std::cerr << "INTERNAL_ERROR: ";
+        RCLCPP_ERROR(rclcpp::get_logger("autoware_tensorrt_bevdet"), "INTERNAL_ERROR: %s", msg);
         break;
       case Severity::kERROR:
-        std::cerr << "ERROR: ";
+        RCLCPP_ERROR(rclcpp::get_logger("autoware_tensorrt_bevdet"), "ERROR: %s", msg);
         break;
       case Severity::kWARNING:
-        std::cerr << "WARNING: ";
+        RCLCPP_WARN(rclcpp::get_logger("autoware_tensorrt_bevdet"), "WARNING: %s", msg);
         break;
       case Severity::kINFO:
-        std::cerr << "INFO: ";
+        RCLCPP_INFO(rclcpp::get_logger("autoware_tensorrt_bevdet"), "INFO: %s", msg);
         break;
       default:
-        std::cerr << "UNKNOWN: ";
+        RCLCPP_INFO(rclcpp::get_logger("autoware_tensorrt_bevdet"), "UNKNOWN: %s", msg);
         break;
     }
-    std::cerr << msg << std::endl;
   }
 
   Severity reportable_severity;

@@ -31,7 +31,6 @@ All Rights Reserved 2019-2022.
 #include <thrust/sort.h>
 #include <thrust/transform.h>
 
-#include <iomanip>
 #include <iostream>
 #include <vector>
 
