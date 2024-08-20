@@ -941,17 +941,18 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
       });
 
     // Create a map of PullOverPath pointer to largest collision check margin
-    std::map<size_t, double> path_id_to_margin_map;
+    std::map<size_t, double> path_id_to_rough_margin_map;
     const auto target_objects = thread_safe_data_.get_static_target_objects();
     for (const size_t i : sorted_path_indices) {
       const auto & path = pull_over_path_candidates[i];
       const double distance = utils::path_safety_checker::calculateRoughDistanceToObjects(
         path.getParkingPath(), target_objects, planner_data_->parameters, false, "max");
-      auto it = std::lower_bound(margins_with_zero.begin(), margins_with_zero.end(), distance, std::greater<double>());
+      auto it = std::lower_bound(
+        margins_with_zero.begin(), margins_with_zero.end(), distance, std::greater<double>());
       if (it == margins_with_zero.end()) {
-        path_id_to_margin_map[path.id] = margins_with_zero.back();
+        path_id_to_rough_margin_map[path.id] = margins_with_zero.back();
       } else {
-        path_id_to_margin_map[path.id] = *it;
+        path_id_to_rough_margin_map[path.id] = *it;
       }
     }
 
@@ -961,10 +962,11 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
       [&](const size_t a_i, const size_t b_i) {
         const auto & a = pull_over_path_candidates[a_i];
         const auto & b = pull_over_path_candidates[b_i];
-        if (std::abs(path_id_to_margin_map[a.id] - path_id_to_margin_map[b.id]) < 0.01) {
+        if (
+          std::abs(path_id_to_rough_margin_map[a.id] - path_id_to_rough_margin_map[b.id]) < 0.01) {
           return false;
         }
-        return path_id_to_margin_map[a.id] > path_id_to_margin_map[b.id];
+        return path_id_to_rough_margin_map[a.id] > path_id_to_rough_margin_map[b.id];
       });
 
     // STEP2-3: Sort by curvature
@@ -974,14 +976,14 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
     };
 
     const auto isSoftMargin = [&](const PullOverPath & path) -> bool {
-      const double margin = path_id_to_margin_map[path.id];
+      const double margin = path_id_to_rough_margin_map[path.id];
       return std::any_of(
         soft_margins.begin(), soft_margins.end(),
         [margin](const double soft_margin) { return std::abs(margin - soft_margin) < 0.01; });
     };
     const auto isSameHardMargin = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
       return !isSoftMargin(a) && !isSoftMargin(b) &&
-             std::abs(path_id_to_margin_map[a.id] - path_id_to_margin_map[b.id]) < 0.01;
+             std::abs(path_id_to_rough_margin_map[a.id] - path_id_to_rough_margin_map[b.id]) < 0.01;
     };
 
     // NOTE: this is just partition sort based on curvature threshold within each sub partitions
@@ -1024,7 +1026,7 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
     // - curvature
     const std::string path_priority_info_str = goal_planner_utils::makePathPriorityDebugMessage(
       sorted_path_indices, pull_over_path_candidates, goal_id_to_index, goal_candidates,
-      path_id_to_margin_map, isSoftMargin, isHighCurvature);
+      path_id_to_rough_margin_map, isSoftMargin, isHighCurvature);
     RCLCPP_DEBUG_STREAM(getLogger(), path_priority_info_str);
   } else {
     /**

@@ -30,6 +30,7 @@
 
 #include <lanelet2_core/Forward.h>
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -114,7 +115,7 @@ std::string makePathPriorityDebugMessage(
   const std::vector<size_t> & sorted_path_indices,
   const std::vector<PullOverPath> & pull_over_path_candidates,
   const std::map<size_t, size_t> & goal_id_to_index, const GoalCandidates & goal_candidates,
-  const std::map<size_t, double> & path_id_to_margin_map,
+  const std::map<size_t, double> & path_id_to_rough_margin_map,
   const std::function<bool(const PullOverPath &)> & isSoftMargin,
   const std::function<bool(const PullOverPath &)> & isHighCurvature);
 }  // namespace autoware::behavior_path_planner::goal_planner_utils
