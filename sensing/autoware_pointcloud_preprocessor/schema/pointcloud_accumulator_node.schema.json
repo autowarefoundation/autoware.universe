@@ -9,12 +9,14 @@
         "accumulation_time_sec": {
           "type": "number",
           "description": "accumulation period [s]",
-          "default": "2.0"
+          "default": "2.0",
+          "minimum": 0
         },
         "pointcloud_buffer_size": {
           "type": "integer",
           "description": "buffer size",
-          "default": "50"
+          "default": "50",
+          "minimum": 0
         }
       },
       "required": ["accumulation_time_sec", "pointcloud_buffer_size"],
