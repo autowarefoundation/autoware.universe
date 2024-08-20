@@ -64,9 +64,9 @@ ApproximateDownsampleFilterComponent::ApproximateDownsampleFilterComponent(
 : Filter("ApproximateDownsampleFilter", options)
 {
   {
-    voxel_size_x_ = declare_parameter<double>("voxel_size_x");
-    voxel_size_y_ = declare_parameter<double>("voxel_size_y");
-    voxel_size_z_ = declare_parameter<double>("voxel_size_z");
+    voxel_size_x_ = declare_parameter<float>("voxel_size_x");
+    voxel_size_y_ = declare_parameter<float>("voxel_size_y");
+    voxel_size_z_ = declare_parameter<float>("voxel_size_z");
   }
 
   using std::placeholders::_1;
