@@ -16,7 +16,7 @@
 
 #include "autoware/image_projection_based_fusion/utils/geometry.hpp"
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
-#include "perception_utils/run_length_encoder.hpp"
+#include <perception_utils/run_length_encoder.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
