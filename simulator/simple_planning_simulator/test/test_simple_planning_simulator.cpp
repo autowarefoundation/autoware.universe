@@ -307,7 +307,7 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   std::optional<std::string> conversion_type{};  // for ActuationCmdParamType
 
   // Determine the ParamType corresponding to vehicle_model_type and get the specific parameters.
-  auto iter = vehicle_model_type_map.find(vehicle_model_type);
+  const auto iter = vehicle_model_type_map.find(vehicle_model_type);
   if (iter == vehicle_model_type_map.end()) {
     throw std::invalid_argument("Unexpected vehicle_model_type.");
   }
