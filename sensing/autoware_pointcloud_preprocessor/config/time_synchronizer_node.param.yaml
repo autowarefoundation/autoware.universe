@@ -10,5 +10,5 @@
                 ]
     synchronized_pointcloud_postfix: pointcloud
     max_queue_size: 5
-    timeout_sec: 0.1
+    timeout_sec: 0.033
     input_offset: [0.0, 0.0, 0.0]
