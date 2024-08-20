@@ -30,11 +30,8 @@ camParams::camParams(const YAML::Node & config, int n, std::vector<std::string> 
 {
   if (static_cast<size_t>(n) != cams_name.size()) {
     RCLCPP_ERROR(
-      rclcpp::get_logger("camParams"), 
-      "Error! Need %d camera param, but given %zu camera names!", 
-      n,
-      cams_name.size()
-    );
+      rclcpp::get_logger("camParams"), "Error! Need %d camera param, but given %zu camera names!",
+      n, cams_name.size());
   }
   ego2global_rot = fromYamlQuater(config["ego2global_rotation"]);
   ego2global_trans = fromYamlTrans(config["ego2global_translation"]);

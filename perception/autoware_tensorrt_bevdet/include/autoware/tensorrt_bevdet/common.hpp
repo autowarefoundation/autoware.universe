@@ -14,6 +14,9 @@
 #ifndef AUTOWARE__TENSORRT_BEVDET__COMMON_HPP_
 #define AUTOWARE__TENSORRT_BEVDET__COMMON_HPP_
 
+#include "rclcpp/logger.hpp"
+#include "rclcpp/rclcpp.hpp"
+
 #include <NvInfer.h>
 #include <assert.h>
 #include <cuda_runtime.h>
@@ -23,8 +26,6 @@
 
 #include <iostream>
 #include <string>
-#include "rclcpp/logger.hpp"
-#include "rclcpp/rclcpp.hpp"
 
 typedef unsigned char uchar;
 
@@ -41,12 +42,7 @@ inline void GPUAssert(cudaError_t code, const char * file, int line, bool abort 
 {
   if (code != cudaSuccess) {
     RCLCPP_ERROR(
-      rclcpp::get_logger("GPUAssert"), 
-      "GPUassert: %s %s %d",                     
-      cudaGetErrorString(code),                  
-      file,                                      
-      line                                       
-    );
+      rclcpp::get_logger("GPUAssert"), "GPUassert: %s %s %d", cudaGetErrorString(code), file, line);
     if (abort) exit(code);
   }
 };

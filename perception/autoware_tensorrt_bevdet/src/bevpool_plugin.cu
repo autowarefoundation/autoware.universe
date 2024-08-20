@@ -219,10 +219,7 @@ int32_t BEVPoolPlugin::enqueue(
       }
       break;
     default:  // should NOT be here
-      RCLCPP_ERROR(
-        rclcpp::get_logger("BEVPoolPlugin"), 
-        "\tUnsupport datatype!"
-      );
+      RCLCPP_ERROR(rclcpp::get_logger("BEVPoolPlugin"), "\tUnsupport datatype!");
   }
   return 0;
 }

@@ -120,11 +120,7 @@ PostprocessGPU::PostprocessGPU(
   for (auto i = 0; i < nms_rescale_factor.size(); i++) {
     oss << std::fixed << std::setprecision(2) << nms_rescale_factor[i] << ' ';
   }
-  RCLCPP_INFO(
-        rclcpp::get_logger("PostprocessGPU"), 
-        "%s", 
-        oss.str().c_str() 
-  );
+  RCLCPP_INFO(rclcpp::get_logger("PostprocessGPU"), "%s", oss.str().c_str());
 }
 PostprocessGPU::~PostprocessGPU()
 {

@@ -202,10 +202,7 @@ int32_t PreprocessPlugin::enqueue(
 
       break;
     default:  // should NOT be here
-      RCLCPP_ERROR(
-        rclcpp::get_logger("PreprocessPlugin"),
-        "\tUnsupport datatype!"
-      );
+      RCLCPP_ERROR(rclcpp::get_logger("PreprocessPlugin"), "\tUnsupport datatype!");
   }
   return 0;
 }

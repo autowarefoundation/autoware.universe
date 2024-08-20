@@ -182,10 +182,7 @@ int32_t GatherBEVPlugin::enqueue(
         reinterpret_cast<__half *>(outputs[0]));
       break;
     default:  // should NOT be here
-      RCLCPP_ERROR(
-        rclcpp::get_logger("GatherBEVPlugin"), 
-        "\tUnsupport datatype!" 
-      );
+      RCLCPP_ERROR(rclcpp::get_logger("GatherBEVPlugin"), "\tUnsupport datatype!");
   }
   return 0;
 }

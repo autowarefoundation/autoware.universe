@@ -217,10 +217,7 @@ int32_t AlignBEVPlugin::enqueue(
       }
       break;
     default:  // should NOT be here
-      RCLCPP_ERROR(
-        rclcpp::get_logger("AlignBEVPlugin"), 
-        "\tUnsupported datatype!"
-      );
+      RCLCPP_ERROR(rclcpp::get_logger("AlignBEVPlugin"), "\tUnsupported datatype!");
   }
 
   return 0;

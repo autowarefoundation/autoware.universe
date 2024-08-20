@@ -46,12 +46,8 @@ inline void NvJpegAssert(nvjpegStatus_t code, const char * file, int line)
 {
   if (code != NVJPEG_STATUS_SUCCESS) {
     RCLCPP_ERROR(
-      rclcpp::get_logger("autoware_tensorrt_bevdet"), 
-      "NVJPEG failure: '#%d' at %s:%d", 
-      code,
-      file, 
-      line 
-    ); 
+      rclcpp::get_logger("autoware_tensorrt_bevdet"), "NVJPEG failure: '#%d' at %s:%d", code, file,
+      line);
     exit(1);
   }
 }
@@ -83,9 +79,7 @@ struct share_params
       fmt = (nvjpegOutputFormat_t)_fmt;
     } else {
       RCLCPP_WARN(
-        rclcpp::get_logger("autoware_tensorrt_bevdet"), 
-        "Unknown format! Auto switch BGR!" 
-      );
+        rclcpp::get_logger("autoware_tensorrt_bevdet"), "Unknown format! Auto switch BGR!");
       fmt = NVJPEG_OUTPUT_BGR;
     }
   }
