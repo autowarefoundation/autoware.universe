@@ -9,12 +9,14 @@
         "filter_limit_min": {
           "type": "integer",
           "description": "minimum allowed field value",
-          "default": "0"
+          "default": "0",
+          "minimum": 0
         },
         "filter_limit_max": {
           "type": "integer",
           "description": "maximum allowed field value",
-          "default": "127"
+          "default": "127",
+          "minimum": 0
         },
         "filter_field_name": {
           "type": "string",
