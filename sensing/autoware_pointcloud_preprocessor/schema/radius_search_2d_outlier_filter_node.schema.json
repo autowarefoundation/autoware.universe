@@ -3,7 +3,7 @@
   "title": "Parameters for Radius Search 2D Outlier Filter Node",
   "type": "object",
   "definitions": {
-    "crop_box_filter": {
+    "radius_search_2d_outlier_filter": {
       "type": "object",
       "properties": {
         "min_neighbors": {
