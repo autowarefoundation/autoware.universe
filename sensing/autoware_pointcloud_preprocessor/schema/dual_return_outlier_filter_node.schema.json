@@ -58,7 +58,7 @@
           "type": "integer",
           "description": "The number of vertical bin for visibility histogram",
           "default": "128",
-          "minimum": 0
+          "minimum": 1
         },
         "max_azimuth_diff": {
           "type": "number",
