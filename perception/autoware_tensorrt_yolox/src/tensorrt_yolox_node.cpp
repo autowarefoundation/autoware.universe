@@ -97,6 +97,13 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
     preprocess_on_gpu, gpu_id, calibration_image_list_path, norm_factor, cache_dir, batch_config,
     max_workspace_size, color_map_path);
 
+  if (!trt_yolox_->isGPUInitialized()) {
+    RCLCPP_ERROR(this->get_logger(), "GPU %d does not exist or is not suitable.", gpu_id);
+    rclcpp::shutdown();
+    return;
+  }
+  RCLCPP_INFO(this->get_logger(), "GPU %d is selected for the inference!", gpu_id);
+
   timer_ =
     rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&TrtYoloXNode::onConnect, this));
 

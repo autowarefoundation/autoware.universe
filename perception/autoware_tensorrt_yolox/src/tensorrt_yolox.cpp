@@ -160,13 +160,13 @@ TrtYoloX::TrtYoloX(
   const double norm_factor, [[maybe_unused]] const std::string & cache_dir,
   const tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size,
   const std::string & color_map_path)
-: gpu_id_(gpu_id)
+: gpu_id_(gpu_id), is_gpu_initialized_(false)
 {
-  std::cout << "GPU " << std::to_string(gpu_id_) << " is selected for the inference!" << std::endl;
   if (!setCudaDeviceId(gpu_id_)) {
-    throw std::runtime_error(
-      "GPU" + std::to_string(gpu_id_) + " does not exist or is not suitable.");
+    return;
   }
+  is_gpu_initialized_ = true;
+
   src_width_ = -1;
   src_height_ = -1;
   norm_factor_ = norm_factor;

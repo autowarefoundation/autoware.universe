@@ -89,6 +89,13 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
     model_path, precision, num_class, score_thresh_, nms_threshold, build_config, cuda_preprocess,
     gpu_id, calib_image_list, scale, cache_dir, batch_config);
 
+  if (!trt_yolox_->isGPUInitialized()) {
+    RCLCPP_ERROR(this->get_logger(), "GPU %d does not exist or is not suitable.", gpu_id);
+    rclcpp::shutdown();
+    return;
+  }
+  RCLCPP_INFO(this->get_logger(), "GPU %d is selected for the inference!", gpu_id);
+
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(
     this, get_clock(), 100ms, std::bind(&TrafficLightFineDetectorNode::connectCb, this));

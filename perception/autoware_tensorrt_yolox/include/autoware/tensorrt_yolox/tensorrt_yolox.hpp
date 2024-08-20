@@ -106,6 +106,11 @@ public:
   bool setCudaDeviceId(const uint8_t gpu_id);
 
   /**
+   * @brief return a flag for gpu initialization
+   */
+  bool isGPUInitialized() const { return is_gpu_initialized_; }
+
+  /**
    * @brief run inference including pre-process and post-process
    * @param[out] objects results for object detection
    * @param[in] images batched images
@@ -289,6 +294,8 @@ private:
   bool use_gpu_preprocess_;
   // GPU id for inference
   const uint8_t gpu_id_;
+  // flag for gpu initialization
+  bool is_gpu_initialized_;
   // host buffer for preprocessing on GPU
   CudaUniquePtrHost<unsigned char[]> image_buf_h_;
   // device buffer for preprocessing on GPU
