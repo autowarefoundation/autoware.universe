@@ -34,6 +34,12 @@ jobs:
       - name: Show disk space before the tasks
         run: df -h
 
+      - name: Show CUDA version
+        if: matrix.container-suffix == '-cuda'
+        run: |
+          /usr/local/cuda/bin/nvcc --version
+        shell: bash
+
       - name: Remove exec_depend
         uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
 
