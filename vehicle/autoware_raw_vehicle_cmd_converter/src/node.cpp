@@ -94,11 +94,18 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
       "~/input/steering", 1, std::bind(&RawVehicleCommandConverterNode::onSteering, this, _1));
   }
 
+  // NOTE: some vehicles do not publish actuation status. To handle this, subscribe only when the
+  // option is specified.
+  need_to_subscribe_actuation_status_ =
+    convert_actuation_to_steering_status_ || convert_steer_cmd_method_.value() == "vgr";
+  if (need_to_subscribe_actuation_status_) {
+    sub_actuation_status_ = create_subscription<ActuationStatusStamped>(
+      "~/input/actuation_status", 1,
+      std::bind(&RawVehicleCommandConverterNode::onActuationStatus, this, _1));
+  }
+
   sub_control_cmd_ = create_subscription<Control>(
     "~/input/control_cmd", 1, std::bind(&RawVehicleCommandConverterNode::onControlCmd, this, _1));
-  sub_actuation_status_ = create_subscription<ActuationStatusStamped>(
-    "~/input/actuation_status", 1,
-    std::bind(&RawVehicleCommandConverterNode::onActuationStatus, this, _1));
 
   pub_actuation_cmd_ = create_publisher<ActuationCommandStamped>("~/output/actuation_cmd", 1);
   debug_pub_steer_pid_ = create_publisher<Float32MultiArrayStamped>(
@@ -111,11 +118,19 @@ void RawVehicleCommandConverterNode::publishActuationCmd()
 {
   if (!current_twist_ptr_ || !control_cmd_ptr_ || !current_steer_ptr_ || !actuation_status_ptr_) {
     RCLCPP_WARN_EXPRESSION(
-      get_logger(), is_debugging_, "some pointers are null: %s, %s, %s, %s",
+      get_logger(), is_debugging_, "some pointers are null: %s, %s, %s",
       !current_twist_ptr_ ? "twist" : "", !control_cmd_ptr_ ? "cmd" : "",
-      !current_steer_ptr_ ? "steer" : "", !actuation_status_ptr_ ? "actuation" : "");
+      !current_steer_ptr_ ? "steer" : "");
     return;
   }
+
+  if (need_to_subscribe_actuation_status_) {
+    if (!actuation_status_ptr_) {
+      RCLCPP_WARN_EXPRESSION(get_logger(), is_debugging_, "actuation status is null");
+      return;
+    }
+  }
+
   double desired_accel_cmd = 0.0;
   double desired_brake_cmd = 0.0;
   double desired_steer_cmd = 0.0;
