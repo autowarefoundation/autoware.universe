@@ -22,7 +22,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator
 void CubicSpline::compute_parameters(
   const Eigen::Ref<const Eigen::VectorXd> & axis, const Eigen::Ref<const Eigen::VectorXd> & values)
 {
-  int32_t n = static_cast<int32_t>(axis.size()) - 1;
+  const int32_t n = static_cast<int32_t>(axis.size()) - 1;
 
   h_ = axis.tail(n) - axis.head(n);
   a_ = values.transpose();
@@ -70,22 +70,22 @@ void CubicSpline::build_impl(const std::vector<double> & values)
 
 double CubicSpline::compute_impl(const double & s) const
 {
-  int32_t i = this->get_index(s);
-  double dx = s - this->axis_(i);
+  const int32_t i = this->get_index(s);
+  const double dx = s - this->axis_(i);
   return a_(i) + b_(i) * dx + c_(i) * dx * dx + d_(i) * dx * dx * dx;
 }
 
 double CubicSpline::compute_first_derivative_impl(const double & s) const
 {
-  int32_t i = this->get_index(s);
-  double dx = s - this->axis_(i);
+  const int32_t i = this->get_index(s);
+  const double dx = s - this->axis_(i);
   return b_(i) + 2 * c_(i) * dx + 3 * d_(i) * dx * dx;
 }
 
 double CubicSpline::compute_second_derivative_impl(const double & s) const
 {
-  int32_t i = this->get_index(s);
-  double dx = s - this->axis_(i);
+  const int32_t i = this->get_index(s);
+  const double dx = s - this->axis_(i);
   return 2 * c_(i) + 6 * d_(i) * dx;
 }
 

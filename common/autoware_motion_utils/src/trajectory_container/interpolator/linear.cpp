@@ -29,21 +29,21 @@ void Linear::build_impl(const std::vector<double> & values)
 
 double Linear::compute_impl(const double & s) const
 {
-  int32_t idx = this->get_index(s);
-  double x0 = this->axis_(idx);
-  double x1 = this->axis_(idx + 1);
-  double y0 = this->values_(idx);
-  double y1 = this->values_(idx + 1);
+  const int32_t idx = this->get_index(s);
+  const double x0 = this->axis_(idx);
+  const double x1 = this->axis_(idx + 1);
+  const double y0 = this->values_(idx);
+  const double y1 = this->values_(idx + 1);
   return y0 + (y1 - y0) * (s - x0) / (x1 - x0);
 }
 
 double Linear::compute_first_derivative_impl(const double & s) const
 {
-  int32_t idx = this->get_index(s);
-  double x0 = this->axis_(idx);
-  double x1 = this->axis_(idx + 1);
-  double y0 = this->values_(idx);
-  double y1 = this->values_(idx + 1);
+  const int32_t idx = this->get_index(s);
+  const double x0 = this->axis_(idx);
+  const double x1 = this->axis_(idx + 1);
+  const double y0 = this->values_(idx);
+  const double y1 = this->values_(idx + 1);
   return (y1 - y0) / (x1 - x0);
 }
 
