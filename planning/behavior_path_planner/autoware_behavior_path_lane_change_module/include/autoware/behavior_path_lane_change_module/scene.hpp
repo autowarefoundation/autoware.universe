@@ -53,6 +53,8 @@ public:
 
   void update_lanes(const bool is_approved) final;
 
+  void update_filtered_objects() final;
+
   void updateLaneChangeStatus() override;
 
   std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const override;
@@ -91,6 +93,8 @@ public:
   bool hasFinishedLaneChange() const override;
 
   bool isAbleToReturnCurrentLane() const override;
+
+  bool is_near_terminal() const final;
 
   bool isEgoOnPreparePhase() const override;
 
@@ -155,9 +159,7 @@ protected:
 
   bool getLaneChangePaths(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    Direction direction, LaneChangePaths * candidate_paths,
-    const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
-    const bool check_safety = true) const override;
+    Direction direction, const bool is_stuck, LaneChangePaths * candidate_paths) const;
 
   std::optional<LaneChangePath> calcTerminalLaneChangePath(
     const lanelet::ConstLanelets & current_lanes,
