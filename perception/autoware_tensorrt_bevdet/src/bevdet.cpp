@@ -383,7 +383,7 @@ void BEVDet::InitViewTransformer(
   RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "unique_bev_num: %d", unique_bev_num);
 }
 
-void print_dim(nvinfer1::Dims dim, std::string name)
+void print_dim(nvinfer1::Dims dim, const std::string & name)
 {
   std::ostringstream oss;
   oss << name << " : ";
