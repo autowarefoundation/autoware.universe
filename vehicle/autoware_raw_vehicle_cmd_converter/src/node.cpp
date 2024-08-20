@@ -85,11 +85,14 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
     }
   }
 
+  // NOTE: The steering status can be published from the vehicle side or converted in this node.
   convert_actuation_to_steering_status_ =
     declare_parameter<bool>("convert_actuation_to_steering_status");
   if (convert_actuation_to_steering_status_) {
     pub_steering_status_ = create_publisher<Steering>("~/output/steering_status", 1);
   } else {
+    // NOTE: Polling subscriber requires specifying the topic name at declaration,
+    // so use a normal callback subscriber.
     sub_steering_ = create_subscription<Steering>(
       "~/input/steering", 1, std::bind(&RawVehicleCommandConverterNode::onSteering, this, _1));
   }
