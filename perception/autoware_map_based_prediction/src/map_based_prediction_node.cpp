@@ -1171,12 +1171,12 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
             if (isLeft(transformed_object)) {
               predicted_path = path_generator_->generateShiftedPathForOnLaneVehicle(
                 yaw_fixed_transformed_object, predicted_path, prediction_time_horizon_.vehicle,
-                lateral_control_time_horizon_, bound_to_centerline/2, ref_path.speed_limit);
+                lateral_control_time_horizon_, bound_to_centerline / 2, ref_path.speed_limit);
 
             } else if (!isLeft(transformed_object)) {
               predicted_path = path_generator_->generateShiftedPathForOnLaneVehicle(
                 yaw_fixed_transformed_object, predicted_path, prediction_time_horizon_.vehicle,
-                lateral_control_time_horizon_, -bound_to_centerline/2, ref_path.speed_limit);
+                lateral_control_time_horizon_, -bound_to_centerline / 2, ref_path.speed_limit);
             }
           } else {
             predicted_path = path_generator_->generatePathForOnLaneVehicle(
@@ -1427,14 +1427,13 @@ bool MapBasedPredictionNode::isIntersecting(
   return intersection.has_value();
 }
 
-bool MapBasedPredictionNode::isLeft(
-  const TrackedObject & object)
+bool MapBasedPredictionNode::isLeft(const TrackedObject & object)
 {
   lanelet::BasicPoint2d search_point(
     object.kinematics.pose_with_covariance.pose.position.x,
     object.kinematics.pose_with_covariance.pose.position.y);
 
-  //find current lane
+  // find current lane
   const auto surrounding_lanelets = getCurrentLanelets(object);
   if (surrounding_lanelets.empty()) {
     return false;
@@ -1445,7 +1444,8 @@ bool MapBasedPredictionNode::isLeft(
 
   for (size_t t = 0; t < surrounding_lanelets.size(); t++) {
     const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-    const double lane_yaw = lanelet::utils::getLaneletAngle(surrounding_lanelets[t].lanelet, object.kinematics.pose_with_covariance.pose.position);
+    const double lane_yaw = lanelet::utils::getLaneletAngle(
+      surrounding_lanelets[t].lanelet, object.kinematics.pose_with_covariance.pose.position);
     const double delta_yaw = object_yaw - lane_yaw;
     const double normalized_delta_yaw = autoware::universe_utils::normalizeRadian(delta_yaw);
     const double abs_norm_delta = std::fabs(normalized_delta_yaw);
