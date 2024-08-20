@@ -25,7 +25,7 @@ from launch_ros.substitutions import FindPackageShare
 
 def create_api_node(node_name, class_name, **kwargs):
     return ComposableNode(
-        namespace="default_adapi/node",
+        namespace="adapi/node",
         name=node_name,
         package="autoware_default_adapi",
         plugin="autoware::default_adapi::" + class_name,
@@ -34,7 +34,7 @@ def create_api_node(node_name, class_name, **kwargs):
 
 
 def get_default_config():
-    path = FindPackageShare("default_adapi")
+    path = FindPackageShare("autoware_default_adapi")
     path = PathJoinSubstitution([path, "config/default_adapi.param.yaml"])
     return path
 
@@ -57,15 +57,15 @@ def generate_launch_description():
         create_api_node("vehicle_door", "VehicleDoorNode"),
     ]
     container = ComposableNodeContainer(
-        namespace="default_adapi",
+        namespace="adapi",
         name="container",
         package="rclcpp_components",
         executable="component_container_mt",
-        ros_arguments=["--log-level", "default_adapi.container:=WARN"],
+        ros_arguments=["--log-level", "adapi.container:=WARN"],
         composable_node_descriptions=components,
     )
     web_server = Node(
-        namespace="default_adapi",
+        namespace="adapi",
         package="autoware_default_adapi",
         name="web_server",
         executable="web_server.py",
