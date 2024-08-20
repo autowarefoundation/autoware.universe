@@ -914,9 +914,8 @@ void calc_path_line_list(
   const autoware_perception_msgs::msg::PredictedPath & paths,
   std::vector<geometry_msgs::msg::Point> & points, const bool is_simple)
 {
-  // const int circle_line_num = is_simple ? 5 : 10;
-
   for (int i = 0; i < static_cast<int>(paths.path.size()) - 1; ++i) {
+    // draw line
     geometry_msgs::msg::Point point;
     point.x = paths.path.at(i).position.x;
     point.y = paths.path.at(i).position.y;
@@ -929,12 +928,11 @@ void calc_path_line_list(
 
     if (!is_simple || i % 2 == 0) {
       // get yaw from the line
-      const double yaw = std::atan2(
-        paths.path.at(i + 1).position.y - paths.path.at(i).position.y,
-        paths.path.at(i + 1).position.x - paths.path.at(i).position.x);
+      const double yaw =
+        std::atan2(point.y - paths.path.at(i).position.y, point.x - paths.path.at(i).position.x);
+      // draw triangle
       constexpr double length = 0.5;
       const double arrow_angle = M_PI * 5.0 / 6.0;
-      // draw triangle
       const double point_list[3][3] = {
         {point.x, point.y, point.z},
         {point.x + length * std::cos(yaw + arrow_angle),
