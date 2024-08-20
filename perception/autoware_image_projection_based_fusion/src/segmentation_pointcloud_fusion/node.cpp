@@ -40,6 +40,8 @@ SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptio
     RCLCPP_INFO(
       this->get_logger(), "filter_semantic_label_target: %s %d", item.first.c_str(), item.second);
   }
+  is_publish_debug_mask_ = declare_parameter<bool>("is_publish_debug_mask");
+  pub_debug_mask_ptr_ = image_transport::create_publisher(this, "~/debug/mask");
 }
 
 void SegmentPointCloudFusionNode::preprocess(__attribute__((unused)) PointCloud2 & pointcloud_msg)
@@ -66,6 +68,13 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   std::vector<uint8_t> mask_data(input_mask.data.begin(), input_mask.data.end());
   cv::Mat mask = perception_utils::runLengthDecoder(mask_data, input_mask.height, input_mask.width);
 
+  // publish debug mask
+  if (is_publish_debug_mask_) {
+    sensor_msgs::msg::Image::SharedPtr debug_mask_msg =
+      cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", mask).toImageMsg();
+    debug_mask_msg->header = input_mask.header;
+    pub_debug_mask_ptr_.publish(debug_mask_msg);
+  }
   const int orig_width = camera_info.width;
   const int orig_height = camera_info.height;
   // resize mask to the same size as the camera image
