@@ -150,7 +150,7 @@ private:
 
   FrenetPoint getFrenetPoint(
     const TrackedObject & object, const PosePath & ref_path, const double duration,
-    const double speed_limit = 0.0) const;
+    PosePath & target_path, const double speed_limit = 0.0) const;
 };
 }  // namespace autoware::map_based_prediction
 
