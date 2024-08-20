@@ -484,7 +484,7 @@ void SimplePlanningSimulator::on_timer()
     publish_steering(current_steer_);
   }
 
-  if (vehicle_model_type_ == VehicleModelType::ACTUATION_CMD) {
+  if (vehicle_model_ptr_->shouldPublishActuationStatus()) {
     publish_actuation_status();
   }
 }
@@ -906,14 +906,7 @@ void SimplePlanningSimulator::publish_tf(const Odometry & odometry)
 
 void SimplePlanningSimulator::publish_actuation_status()
 {
-  if (vehicle_model_type_ != VehicleModelType::ACTUATION_CMD) {
-    return;
-  }
-  const auto model = std::dynamic_pointer_cast<SimModelActuationCmd>(vehicle_model_ptr_);
-  if (!model) {
-    return;
-  }
-  auto actuation_status = model->getActuationStatus();
+  auto actuation_status = vehicle_model_ptr_->getActuationStatus();
   if (!actuation_status.has_value()) {
     return;
   }

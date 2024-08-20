@@ -21,8 +21,6 @@
 #include "simple_planning_simulator/utils/csv_loader.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
-#include "tier4_vehicle_msgs/msg/actuation_status_stamped.hpp"
-
 #include <deque>
 #include <iostream>
 #include <optional>
@@ -103,8 +101,6 @@ public:
 class SimModelActuationCmd : public SimModelInterface
 {
 public:
-  using ActuationStatusStamped = tier4_vehicle_msgs::msg::ActuationStatusStamped;
-
   enum class ActuationSimType { VGR, STEER_MAP };
 
   /**
@@ -174,10 +170,14 @@ public:
   ~SimModelActuationCmd() = default;
 
   /*
-   * @brief update state considering current gear
-   * @return current actuation status
+   * @brief get actuation status
    */
-  std::optional<ActuationStatusStamped> getActuationStatus() const;
+  std::optional<ActuationStatusStamped> getActuationStatus() const override;
+
+  /**
+   * @brief is publish actuation status enabled
+   */
+  bool shouldPublishActuationStatus() const override { return true; }
 
 private:
   const double MIN_TIME_CONSTANT;  //!< @brief minimum time constant
