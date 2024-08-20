@@ -223,7 +223,7 @@ protected:
    * ~indices topics must be synchronised in time, either exact or within a
    * specified jitter. See also @ref latched_indices_ and approximate_sync.
    **/
-  bool use_indices_ = false;
+  bool use_indices_;
   /** \brief Set to true if the indices topic is latched.
    *
    * If use_indices_ is true, the ~input and ~indices topics generally must
@@ -231,14 +231,14 @@ protected:
    * value from ~indices can be used instead of requiring a synchronised
    * message.
    **/
-  bool latched_indices_ = false;
+  bool latched_indices_;
 
   /** \brief The maximum queue size (default: 3). */
-  size_t max_queue_size_ = 3;
+  size_t max_queue_size_;
 
   /** \brief True if we use an approximate time synchronizer
    * versus an exact one (false by default). */
-  bool approximate_sync_ = false;
+  bool approximate_sync_;
 
   std::unique_ptr<autoware::universe_utils::StaticTransformBuffer> static_tf_buffer_{nullptr};
 
