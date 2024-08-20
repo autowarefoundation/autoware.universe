@@ -305,12 +305,12 @@ mergeLaneletsByTopologicalSort(
       continue;
     }
     for (const auto & sub_inds : sub_branches) {
-      lanelet::ConstLanelets lanelets;
+      lanelet::ConstLanelets to_merge;
       for (const auto & sub_ind : sub_inds) {
-        lanelets.push_back(Id2lanelet[ind2Id[sub_ind]]);
+        to_merge.push_back(Id2lanelet[ind2Id[sub_ind]]);
       }
-      originals.push_back(lanelets);
-      merged.push_back(lanelet::utils::combineLaneletsShape(lanelets));
+      originals.push_back(to_merge);
+      merged.push_back(lanelet::utils::combineLaneletsShape(to_merge));
     }
   }
   return {merged, originals};
