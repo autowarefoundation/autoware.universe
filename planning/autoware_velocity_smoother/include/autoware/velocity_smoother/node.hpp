@@ -45,6 +45,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
+#include "tier4_debug_msgs/msg/float64_stamped.hpp"         // temporary
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"  // temporary
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -68,6 +69,7 @@ using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
 using std_srvs::srv::SetBool;
 using tier4_debug_msgs::msg::Float32Stamped;        // temporary
+using tier4_debug_msgs::msg::Float64Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
 using visualization_msgs::msg::MarkerArray;
@@ -291,7 +293,7 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_velocity_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_acc_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_jerk_;
-  rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr debug_calculation_time_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_max_velocity_;
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
     debug_processing_time_detail_;

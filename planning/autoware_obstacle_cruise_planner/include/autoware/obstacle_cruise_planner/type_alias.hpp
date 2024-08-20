@@ -28,6 +28,7 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"
+#include "tier4_debug_msgs/msg/float64_stamped.hpp"
 #include "tier4_planning_msgs/msg/stop_factor.hpp"
 #include "tier4_planning_msgs/msg/stop_reason_array.hpp"
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"
@@ -51,6 +52,7 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 using tier4_debug_msgs::msg::Float32Stamped;
+using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
 using tier4_planning_msgs::msg::StopReasonArray;
