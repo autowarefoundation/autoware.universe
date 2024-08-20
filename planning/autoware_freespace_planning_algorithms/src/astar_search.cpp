@@ -465,7 +465,7 @@ void AstarSearch::setPath(const AstarNode & goal_node)
     const auto & current = waypoints[i];
     const auto & next = waypoints[i + 1];
 
-    waypoints.push_back(current);
+    waypoints_.waypoints.push_back(current);
 
     if (current.is_back != next.is_back) {
       waypoints_.waypoints.push_back(
