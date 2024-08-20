@@ -72,7 +72,7 @@ autoware::pointcloud_preprocessor::Filter::Filter(
   {
     tf_input_frame_ = declare_parameter<std::string>("input_frame");
     tf_output_frame_ = declare_parameter<std::string>("output_frame");
-    max_queue_size_ = declare_parameter<int64_t>("max_queue_size");
+    max_queue_size_ = static_cast<size_t>(declare_parameter<int64_t>("max_queue_size"));
 
     // ---[ Optional parameters
     use_indices_ = declare_parameter<bool>("use_indices");
