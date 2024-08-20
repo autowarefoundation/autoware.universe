@@ -280,6 +280,11 @@ private:
   void removeStaleTrafficLightInfo(const TrackedObjects::ConstSharedPtr in_objects);
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
+
+  LaneletsData getBidirectionalLanelets(
+    const std::vector<std::pair<double, lanelet::Lanelet>> & surrounding_lanelets,
+    const TrackedObject & object);
+
   bool checkCloseLaneletCondition(
     const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object);
   float calculateLocalLikelihood(
