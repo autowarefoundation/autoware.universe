@@ -54,8 +54,8 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
 
     weak_first_local_noise_threshold_ = declare_parameter<int>("weak_first_local_noise_threshold");
     roi_mode_ = declare_parameter<std::string>("roi_mode");
-    visibility_error_threshold_ = declare_parameter<float>("visibility_error_threshold");
-    visibility_warn_threshold_ = declare_parameter<float>("visibility_warn_threshold");
+    visibility_error_threshold_ = declare_parameter<double>("visibility_error_threshold");
+    visibility_warn_threshold_ = declare_parameter<double>("visibility_warn_threshold");
   }
   updater_.setHardwareID("dual_return_outlier_filter");
   updater_.add(
