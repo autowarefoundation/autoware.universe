@@ -1168,15 +1168,15 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
           predicted_path.confidence = ref_path.probability;
 
           if (current_lanelets.front().is_bidirectional) {
-            if (isRelativelyLeft(transformed_object)) {
+            if (isLeft(transformed_object)) {
               predicted_path = path_generator_->generateShiftedPathForOnLaneVehicle(
                 yaw_fixed_transformed_object, predicted_path, prediction_time_horizon_.vehicle,
-                lateral_control_time_horizon_, -bound_to_centerline / 2, ref_path.speed_limit);
+                lateral_control_time_horizon_, bound_to_centerline/2, ref_path.speed_limit);
 
-            } else if (!isRelativelyLeft(transformed_object)) {
+            } else if (!isLeft(transformed_object)) {
               predicted_path = path_generator_->generateShiftedPathForOnLaneVehicle(
                 yaw_fixed_transformed_object, predicted_path, prediction_time_horizon_.vehicle,
-                lateral_control_time_horizon_, bound_to_centerline / 2, ref_path.speed_limit);
+                lateral_control_time_horizon_, -bound_to_centerline/2, ref_path.speed_limit);
             }
           } else {
             predicted_path = path_generator_->generatePathForOnLaneVehicle(
@@ -1427,43 +1427,39 @@ bool MapBasedPredictionNode::isIntersecting(
   return intersection.has_value();
 }
 
-bool MapBasedPredictionNode::isRelativelyLeft(const TrackedObject & object)
+bool MapBasedPredictionNode::isLeft(
+  const TrackedObject & object)
 {
   lanelet::BasicPoint2d search_point(
     object.kinematics.pose_with_covariance.pose.position.x,
     object.kinematics.pose_with_covariance.pose.position.y);
 
-  // nearest lanelet
-  std::vector<std::pair<double, lanelet::Lanelet>> surrounding_lanelets =
-    lanelet::geometry::findNearest(lanelet_map_ptr_->laneletLayer, search_point, 10);
+  //find current lane
+  const auto surrounding_lanelets = getCurrentLanelets(object);
+  if (surrounding_lanelets.empty()) {
+    return false;
+  }
 
-  double prev_left_bound_dist = 0;
-  double next_left_bound_dist = 0;
-  double prev_right_bound_dist = 0;
-  double next_right_bound_dist = 0;
+  double left_bound_dist = 0;
+  double right_bound_dist = 0;
 
   for (size_t t = 0; t < surrounding_lanelets.size(); t++) {
-    for (size_t j = t + 1; j < surrounding_lanelets.size(); j++) {
-      prev_left_bound_dist = lanelet::geometry::distance2d(
-        lanelet::utils::to2D(surrounding_lanelets[t].second.leftBound().basicLineString()),
-        search_point);
-      prev_right_bound_dist = lanelet::geometry::distance2d(
-        lanelet::utils::to2D(surrounding_lanelets[t].second.rightBound().basicLineString()),
-        search_point);
-      next_left_bound_dist = lanelet::geometry::distance2d(
-        lanelet::utils::to2D(surrounding_lanelets[j].second.leftBound().basicLineString()),
-        search_point);
-      next_right_bound_dist = lanelet::geometry::distance2d(
-        lanelet::utils::to2D(surrounding_lanelets[j].second.rightBound().basicLineString()),
-        search_point);
+    const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    const double lane_yaw = lanelet::utils::getLaneletAngle(surrounding_lanelets[t].lanelet, object.kinematics.pose_with_covariance.pose.position);
+    const double delta_yaw = object_yaw - lane_yaw;
+    const double normalized_delta_yaw = autoware::universe_utils::normalizeRadian(delta_yaw);
+    const double abs_norm_delta = std::fabs(normalized_delta_yaw);
+    if (abs_norm_delta < M_PI_2) {
+      const auto & lanelet = surrounding_lanelets[t].lanelet;
+      const auto & centerline = lanelet.centerline();
+      const auto & left_bound = lanelet.leftBound();
+      const auto & right_bound = lanelet.rightBound();
+
+      left_bound_dist = lanelet::geometry::distance2d(left_bound, search_point);
+      right_bound_dist = lanelet::geometry::distance2d(right_bound, search_point);
     }
   }
-  if (
-    (prev_right_bound_dist < prev_left_bound_dist) &&
-    (next_left_bound_dist < next_right_bound_dist)) {
-    return true;
-  }
-  return false;
+  return left_bound_dist < right_bound_dist;
 }
 
 PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(

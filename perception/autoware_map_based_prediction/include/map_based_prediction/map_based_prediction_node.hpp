@@ -268,7 +268,7 @@ private:
     const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2,
     const lanelet::ConstPoint3d & point3, const lanelet::ConstPoint3d & point4);
 
-  bool isRelativelyLeft(const TrackedObject & object);
+  bool isLeft(const TrackedObject & object);
 
   PredictedObjectKinematics convertToPredictedKinematics(
     const TrackedObjectKinematics & tracked_object);
