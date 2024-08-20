@@ -240,9 +240,8 @@ bool AstarSearch::search()
 void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
 {
   const auto current_pose = node2pose(current_node);
-  double direction = is_back ? -1.0 : 1.0;
-  if (is_backward_search_) direction *= -1.0;
-  double distance = getExpansionDistance(current_node) * direction;
+  const double direction = (is_back == is_backward_search_) ? 1.0 : -1.0;
+  const double distance = getExpansionDistance(current_node) * direction;
   int steering_index = -1 * planner_common_param_.turning_steps;
   for (; steering_index <= planner_common_param_.turning_steps; ++steering_index) {
     // skip expansion back to parent
@@ -347,8 +346,8 @@ void AstarSearch::setPath(const AstarNode & goal_node)
     const double distance_2d = calcDistance2d(node2pose(node), parent_pose);
     const int n = static_cast<int>(distance_2d / min_expansion_dist_);
     for (int i = 1; i < n; ++i) {
-      double dist = ((distance_2d * i) / n) * (node.is_back ? -1.0 : 1.0);
-      if (is_backward_search_) dist *= -1.0;
+      const double dist =
+        ((distance_2d * i) / n) * (node.is_back == is_backward_search_ ? 1.0 : -1.0);
       const double steering = node.steering_index * steering_resolution_;
       const auto local_pose = kinematic_bicycle_model::getPose(
         parent_pose, collision_vehicle_shape_.base_length, steering, dist);
