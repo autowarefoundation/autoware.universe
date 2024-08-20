@@ -117,7 +117,7 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
     VelocityPlanningResult res = plugin->plan(ego_trajectory_points, planner_data);
     results.push_back(res);
 
-    auto stop_reason_diag =
+    const auto stop_reason_diag =
       make_diagnostic(plugin->get_module_name(), "stop", res.stop_points.size() > 0);
     diagnostics_.push_back(stop_reason_diag);
 
