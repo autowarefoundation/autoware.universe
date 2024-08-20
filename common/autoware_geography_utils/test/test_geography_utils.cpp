@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__TENSORRT_YOLOX__UTILS_HPP_
-#define AUTOWARE__TENSORRT_YOLOX__UTILS_HPP_
-#include <opencv2/opencv.hpp>
+#include "autoware/geography_utils/height.hpp"
+#include "autoware/geography_utils/lanelet2_projector.hpp"
+#include "autoware/geography_utils/projection.hpp"
 
-#include <utility>
-#include <vector>
+#include <gtest/gtest.h>
 
-namespace autoware::tensorrt_yolox
+int main(int argc, char * argv[])
 {
-std::vector<std::pair<uint8_t, int>> runLengthEncoder(const cv::Mat & mask);
-cv::Mat runLengthDecoder(const std::vector<uint8_t> & rle_data, const int rows, const int cols);
-}  // namespace autoware::tensorrt_yolox
-
-#endif  // AUTOWARE__TENSORRT_YOLOX__UTILS_HPP_
+  testing::InitGoogleTest(&argc, argv);
+  bool result = RUN_ALL_TESTS();
+  return result;
+}
