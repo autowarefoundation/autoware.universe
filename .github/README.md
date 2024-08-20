@@ -12,7 +12,7 @@ They are free to use for public repositories, with a concurrency limit of 20 job
 **Listed specs:**
 
 | vCPU | RAM   | Storage (SSD) |
-|------|-------|---------------|
+| ---- | ----- | ------------- |
 | 4    | 16 GB | 14 GB         |
 
 **Note:** While the official documentation lists 14 GB of storage, the actual available storage is approximately 73 GB.
@@ -26,7 +26,7 @@ These runners are employed for workflows that require more resources and are fun
 **Relevant machine types:**
 
 | Instance Type   | Memory | vCPUs | Price per Minute |
-|-----------------|--------|-------|------------------|
+| --------------- | ------ | ----- | ---------------- |
 | arm1.large      | 16 GiB | 8     | $0.015           |
 | general1.medium | 7 GB   | 4     | $0.01            |
 | general1.large  | 15 GB  | 8     | $0.02            |
@@ -41,7 +41,7 @@ These runners are employed for workflows that require more resources and are fun
 ## Key workflows and their runners
 
 | Workflow                           | Trigger               | Runner         |
-|------------------------------------|-----------------------|----------------|
+| ---------------------------------- | --------------------- | -------------- |
 | build-and-test (cuda)              | merge to main         | general1.large |
 | build-and-test-daily               | daily on main         | github-std     |
 | build-and-test-daily-arm64         | daily on main         | arm1.large     |
