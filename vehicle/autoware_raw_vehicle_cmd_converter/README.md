@@ -68,4 +68,3 @@ Also, when `convert_actuation_to_steering_status: true`, this node receives the 
 ## Limitation
 
 The current feed back implementation is only applied to steering control.
-`
