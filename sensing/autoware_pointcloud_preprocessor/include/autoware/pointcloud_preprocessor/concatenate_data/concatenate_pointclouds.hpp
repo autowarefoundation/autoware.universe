@@ -162,8 +162,8 @@ private:
   void cloud_callback(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
     const std::string & topic_name);
-    void single_cloud_callback(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
+  void single_cloud_callback(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
     const std::string & topic_name);
   void timer_callback();
 

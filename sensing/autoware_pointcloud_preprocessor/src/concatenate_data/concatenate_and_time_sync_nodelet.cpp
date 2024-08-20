@@ -105,8 +105,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     std::sort(input_topics_.begin(), input_topics_.end());
     auto duplicate_it = std::adjacent_find(input_topics_.begin(), input_topics_.end());
     if (duplicate_it != input_topics_.end()) {
-      RCLCPP_ERROR(
-        get_logger(), "Each input topic must have a defferent name!");
+      RCLCPP_ERROR(get_logger(), "Each input topic must have a defferent name!");
       return;
     }
 
@@ -494,7 +493,8 @@ void PointCloudConcatenateDataSynchronizerComponent::publishSingleLidar()
   sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
     new sensor_msgs::msg::PointCloud2());
   if (cloud_stdmap_.cbegin()->second) {
-    static_tf_buffer_->transformPointcloud(this, output_frame_, *cloud_stdmap_.cbegin()->second, *transformed_cloud_ptr);
+    static_tf_buffer_->transformPointcloud(
+      this, output_frame_, *cloud_stdmap_.cbegin()->second, *transformed_cloud_ptr);
   }
 
   // publish concatenated pointcloud
@@ -530,7 +530,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publishSingleLidar()
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
   }
-    for (const auto & e : cloud_stdmap_) {
+  for (const auto & e : cloud_stdmap_) {
     if (e.second != nullptr) {
       if (debug_publisher_) {
         const auto pipeline_latency_ms =

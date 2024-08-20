@@ -127,12 +127,12 @@ PointCloudConcatenationComponent::PointCloudConcatenationComponent(
       std::function<void(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)> cb;
       if (input_topics_.size() == 1) {
         cb = std::bind(
-          &PointCloudConcatenationComponent::single_cloud_callback, this,
-          std::placeholders::_1, input_topics_[0]);
+          &PointCloudConcatenationComponent::single_cloud_callback, this, std::placeholders::_1,
+          input_topics_[0]);
       } else {
         cb = std::bind(
-          &PointCloudConcatenationComponent::cloud_callback, this,
-          std::placeholders::_1, input_topics_[d]);
+          &PointCloudConcatenationComponent::cloud_callback, this, std::placeholders::_1,
+          input_topics_[d]);
       }
 
       filters_[d].reset();
@@ -332,7 +332,7 @@ void PointCloudConcatenationComponent::publishSingleLidar()
     RCLCPP_WARN(
       this->get_logger(), "transformed_cloud_ptr is nullptr, skipping pointcloud publish.");
   }
-  
+
   updater_.force_update();
 
   // add processing time for debug
@@ -510,8 +510,7 @@ void PointCloudConcatenationComponent::single_cloud_callback(
   sensor_msgs::msg::PointCloud2::SharedPtr xyzirc_input_ptr(new sensor_msgs::msg::PointCloud2());
   auto input = std::make_shared<sensor_msgs::msg::PointCloud2>(*input_ptr);
   if (input->data.empty()) {
-    RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
   } else {
     // convert to XYZI pointcloud if pointcloud is not empty
     convertToXYZIRCCloud(input, xyzirc_input_ptr);
