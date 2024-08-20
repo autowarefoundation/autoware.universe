@@ -1689,18 +1689,18 @@ void MapBasedPredictionNode::removeStaleTrafficLightInfo(
 
 LaneletsData MapBasedPredictionNode::getBidirectionalLanelets(
   const std::vector<std::pair<double, lanelet::Lanelet>> & surrounding_lanelets,
-  const TrackedObject & object) {
-
+  const TrackedObject & object)
+{
   LaneletsData bidirectional_lanelets;
   constexpr double epsilon = 1e-3;
 
   for (size_t t = 0; t < surrounding_lanelets.size(); t++) {
     for (size_t j = t + 1; j < surrounding_lanelets.size(); j++) {
-      if (surrounding_lanelets[t].second.leftBound().id() ==
-            surrounding_lanelets[j].second.rightBound().id() &&
-          surrounding_lanelets[t].second.rightBound().id() ==
-            surrounding_lanelets[j].second.leftBound().id()) {
-
+      if (
+        surrounding_lanelets[t].second.leftBound().id() ==
+          surrounding_lanelets[j].second.rightBound().id() &&
+        surrounding_lanelets[t].second.rightBound().id() ==
+          surrounding_lanelets[j].second.leftBound().id()) {
         const auto prev_bidirectional_lane = LaneletData{
           surrounding_lanelets[t].second,
           calculateLocalLikelihood(surrounding_lanelets[t].second, object), true};
@@ -1712,8 +1712,7 @@ LaneletsData MapBasedPredictionNode::getBidirectionalLanelets(
         double lane_yaw = lanelet::utils::getLaneletAngle(
           surrounding_lanelets[t].second, object.kinematics.pose_with_covariance.pose.position);
         double delta_yaw = object_yaw - lane_yaw;
-        const double normalized_delta_yaw =
-          autoware::universe_utils::normalizeRadian(delta_yaw);
+        const double normalized_delta_yaw = autoware::universe_utils::normalizeRadian(delta_yaw);
         const double abs_norm_delta = std::fabs(normalized_delta_yaw);
 
         if (abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_) {
@@ -1733,7 +1732,8 @@ LaneletsData MapBasedPredictionNode::getBidirectionalLanelets(
   return bidirectional_lanelets;
 }
 
-LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & object) {
+LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & object)
+{
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
