@@ -28,7 +28,7 @@ RadiusSearch2DOutlierFilterComponent::RadiusSearch2DOutlierFilterComponent(
 {
   // set initial parameters
   {
-    min_neighbors_ = declare_parameter<int64_t>("min_neighbors");
+    min_neighbors_ = static_cast<size_t>(declare_parameter<int64_t>("min_neighbors"));
     search_radius_ = declare_parameter<double>("search_radius");
   }
 
