@@ -109,21 +109,23 @@ TEST_F(TestPidLongitudinalController, run)
     EXPECT_EQ(output.control_cmd.velocity, 0.0);
 }
 
-TEST_F(PidLongitudinalControllerTest, GetControlData)
+TEST_F(TestPidLongitudinalController, getControlData) // more tests can be added
 {
     geometry_msgs::msg::Pose pose;
     pose.position.x = 1.0;
     pose.position.y = 1.0;
+    controller_->m_current_kinematic_state.twist.twist.linear.x = 1.0;
 
     auto control_data = controller_->getControlData(pose);
-    EXPECT_GE(control_data.current_motion.vel, 0.0);
+    EXPECT_EQ(control_data.current_motion.vel, 1.0);
 }
 
-TEST_F(PidLongitudinalControllerTest, CalcEmergencyCtrlCmd)
+TEST_F(TestPidLongitudinalController, calcEmergencyCtrlCmd)
 {
     double dt = 0.1;
+    controller_->m_prev_raw_ctrl_cmd.vel = 0.0;
     auto cmd = controller_->calcEmergencyCtrlCmd(dt);
-    EXPECT_LE(cmd.acc, 0.0);
+    EXPECT_EQ(cmd.vel, 0.0);
 }
 
 TEST_F(PidLongitudinalControllerTest, UpdateControlState)
