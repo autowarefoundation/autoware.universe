@@ -85,8 +85,6 @@
 #include <autoware/universe_utils/ros/static_transform_buffer.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 
-// TODO(xmfcx): remove this line before merging...
-
 namespace autoware::pointcloud_preprocessor
 {
 namespace sync_policies = message_filters::sync_policies;
