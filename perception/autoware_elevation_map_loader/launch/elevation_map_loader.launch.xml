@@ -1,5 +1,4 @@
 <launch>
-  <arg name="elevation_map_directory" default="$(find-pkg-share autoware_elevation_map_loader)/data/elevation_maps"/>
   <arg name="param_file_path" default="$(find-pkg-share autoware_elevation_map_loader)/config/elevation_map_parameters.yaml"/>
 
   <node pkg="autoware_elevation_map_loader" exec="elevation_map_loader_node" name="elevation_map_loader" output="screen">
