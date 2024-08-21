@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "localization_error_monitor/diagnostics.hpp"
+#include "localization_error_monitor/diagnostics_helper.hpp"
 
 #include <gtest/gtest.h>
 
