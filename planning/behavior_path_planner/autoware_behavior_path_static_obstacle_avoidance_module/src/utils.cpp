@@ -1579,7 +1579,7 @@ void fillObjectEnvelopePolygon(
     return;
   }
 
-  object_data.error_eclipse_max = object_parameter.th_error_eclipse_long_radius;
+  object_data.error_eclipse_max = error_eclipse_long_radius;
 
   // If the one_shot_envelope_poly is within the registered envelope, use the registered one
   if (boost::geometry::within(one_shot_envelope_poly, same_id_obj->envelope_poly)) {
