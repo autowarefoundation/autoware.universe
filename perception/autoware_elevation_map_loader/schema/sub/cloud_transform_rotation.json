@@ -9,19 +9,24 @@
           "type": "number",
           "description": "Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation.",
           "default": 0.0,
-          "$comment": "This is the rotation around the X-axis"
+          "$comment": "This is the rotation around the X-axis",
+          "minimum": -360.0,
+          "maximum": 360.0
         },
         "p": {
           "type": "number",
           "description": "Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation.",
           "default": 0.0,
-          "$comment": "This is the rotation around the Y-axis"
+          "$comment": "This is the rotation around the Y-axis",
+          "minimum": -360.0,
+          "maximum": 360.0
         },
         "y": {
           "type": "number",
           "description": "Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation.",
           "default": 0.0,
-          "$comment": "This is the rotation around the Z-axis"
+          "minimum": -360.0,
+          "maximum": 360.0
         }
       },
       "required": ["r", "p", "y"],

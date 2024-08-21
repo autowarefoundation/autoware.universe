@@ -77,3 +77,4 @@ See <https://pointclouds.org/documentation/tutorials/statistical_outlier.html> f
 See <https://pointclouds.org/documentation/tutorials/voxel_grid.html> for more explanation on point cloud downsampling.
 
 {{ json_to_markdown("perception/autoware_elevation_map_loader/schema/sub/downsampling.json") }}
+{{ json_to_markdown("perception/autoware_elevation_map_loader/schema/sub/downsampling_voxel_size.json") }}
