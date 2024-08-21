@@ -190,6 +190,12 @@ void BlockageDiagComponent::filter(
     sky_blockage_range_deg_[1] = angle_range_deg_[1];
   } else {
     for (const auto p : pcl_input->points) {
+      if (p.channel > vertical_bins) {
+        std::ostringstream oss;
+        oss << "p.channel: " << p.channel << " is larger than vertical_bins: " << vertical_bins
+            << " .Please check the parameter 'vertical_bins'.";
+        throw std::runtime_error(oss.str());
+      }
       double azimuth_deg = p.azimuth * (180.0 / M_PI);
       if (
         ((azimuth_deg > angle_range_deg_[0]) &&
