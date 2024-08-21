@@ -80,8 +80,7 @@ private:
   uchar * imgs_dev_ = nullptr;
   float score_thre_;
 
-  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
-    pub_boxes_; 
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr pub_boxes_;
 
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_f_img_;
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_fl_img_;
