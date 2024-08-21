@@ -1161,7 +1161,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path{};
           // convert PredictedRefPath to PredictedPath
-          for (const auto &current_lanelet : current_lanelets) {
+          for (const auto & current_lanelet : current_lanelets) {
             if (current_lanelet.is_bidirectional) {
               if (isLeft(transformed_object)) {
                 predicted_path = path_generator_->generateShiftedPathForOnLaneVehicle(
@@ -1704,14 +1704,18 @@ LaneletsData MapBasedPredictionNode::getBidirectionalLanelets(
     if (right_match != right_bound_map.end() && left_match != left_bound_map.end()) {
       const auto & matching_lanelet = right_match->second;
 
-      const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-      const double lane_yaw = lanelet::utils::getLaneletAngle(lanelet, object.kinematics.pose_with_covariance.pose.position);
+      const double object_yaw =
+        tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+      const double lane_yaw = lanelet::utils::getLaneletAngle(
+        lanelet, object.kinematics.pose_with_covariance.pose.position);
       const double delta_yaw = object_yaw - lane_yaw;
       const double normalized_delta_yaw = autoware::universe_utils::normalizeRadian(delta_yaw);
       const double abs_norm_delta = std::fabs(normalized_delta_yaw);
 
-      const auto prev_bidirectional_lane = LaneletData{lanelet, calculateLocalLikelihood(lanelet, object), true};
-      const auto next_bidirectional_lane = LaneletData{matching_lanelet, calculateLocalLikelihood(matching_lanelet, object), true};
+      const auto prev_bidirectional_lane =
+        LaneletData{lanelet, calculateLocalLikelihood(lanelet, object), true};
+      const auto next_bidirectional_lane =
+        LaneletData{matching_lanelet, calculateLocalLikelihood(matching_lanelet, object), true};
 
       if (abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_) {
         bidirectional_lanelets.push_back(prev_bidirectional_lane);
