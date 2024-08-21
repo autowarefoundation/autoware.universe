@@ -1783,10 +1783,6 @@ void compensateLostTargetObjects(
 
   // STEP1-2: UPDATE STORED OBJECTS IF THERE ARE NEW OBJECTS.
   for (const auto & current_object : data.target_objects) {
-    if (stored_objects.empty()) {
-      stored_objects.push_back(current_object);
-    }
-
     if (!include(stored_objects, current_object.object.object_id)) {
       stored_objects.push_back(current_object);
     }
