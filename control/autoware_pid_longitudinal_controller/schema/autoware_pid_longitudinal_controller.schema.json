@@ -271,6 +271,11 @@
           "description": "min value of jerk of output acceleration [m/s^3]",
           "default": "-5.0"
         },
+        "max_acc_cmd_diff": {
+          "type": "number",
+          "description": "max difference between the current and previous acceleration command [m/s^2 * s^-1]",
+          "default": "50"
+        },
         "lpf_pitch_gain": {
           "type": "number",
           "description": "gain of low-pass filter for pitch estimation",
@@ -351,6 +356,7 @@
         "min_acc",
         "max_jerk",
         "min_jerk",
+        "max_acc_cmd_diff",
         "lpf_pitch_gain",
         "slope_source",
         "adaptive_trajectory_velocity_th",
