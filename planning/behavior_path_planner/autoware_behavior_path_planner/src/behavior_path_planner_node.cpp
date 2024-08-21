@@ -40,8 +40,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   // data_manager
   {
     planner_data_ = std::make_shared<PlannerData>();
-    planner_data_->parameters = getCommonParam();
-    planner_data_->drivable_area_expansion_parameters.init(*this);
+    planner_data_->init_parameters(*this);
   }
 
   // publisher
