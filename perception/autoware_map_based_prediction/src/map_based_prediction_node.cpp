@@ -2449,6 +2449,7 @@ std::vector<std::pair<PosePath, double>> MapBasedPredictionNode::convertPathType
             continue;
           }
 
+          // only considers yaw of the lanelet
           const double lane_yaw = std::atan2(
             current_p.position.y - prev_p.position.y, current_p.position.x - prev_p.position.x);
           const double sin_yaw_half = std::sin(lane_yaw / 2.0);
