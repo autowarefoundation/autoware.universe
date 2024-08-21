@@ -81,7 +81,7 @@ private:
   float score_thre_;
 
   rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
-    pub_boxes_;  // ros2无该消息类型
+    pub_boxes_; 
 
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_f_img_;
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_fl_img_;
