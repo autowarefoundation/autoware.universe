@@ -121,8 +121,9 @@ double calc_ego_dist_to_lanes_start(
   }
 
   const auto & target_bound =
-    common_data_ptr->direction == autoware::route_handler::Direction::RIGHT ?
-    target_lanes.front().leftBound() : target_lanes.front().rightBound();
+    common_data_ptr->direction == autoware::route_handler::Direction::RIGHT
+      ? target_lanes.front().leftBound()
+      : target_lanes.front().rightBound();
 
   if (target_bound.empty()) {
     return std::numeric_limits<double>::max();
