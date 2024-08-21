@@ -2196,7 +2196,7 @@ bool NormalLaneChange::has_collision_with_decel_patterns(
       return std::any_of(objects.begin(), objects.end(), [&](const auto & obj) {
         const auto selected_rss_param =
           (obj.initial_twist.twist.linear.x <=
-           lane_change_parameters_->prepare_segment_ignore_object_velocity_thresh)
+           lane_change_parameters_->stopped_object_velocity_threshold)
             ? lane_change_parameters_->rss_params_for_parked
             : rss_param;
         return is_collided(
