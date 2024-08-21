@@ -235,10 +235,10 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
     p.th_stopped_time_sec = declare_parameter<double>("th_stopped_time_sec");
     p.th_stopped_velocity_mps = declare_parameter<double>("th_stopped_velocity_mps");
     p.th_course_out_distance_m = declare_parameter<double>("th_course_out_distance_m");
+    p.th_obstacle_time_sec = declare_parameter<double>("th_obstacle_time_sec");
     p.vehicle_shape_margin_m = declare_parameter<double>("vehicle_shape_margin_m");
     p.replan_when_obstacle_found = declare_parameter<bool>("replan_when_obstacle_found");
     p.replan_when_course_out = declare_parameter<bool>("replan_when_course_out");
-    p.enable_obs_confidence_check = declare_parameter<bool>("enable_obs_confidence_check");
   }
 
   // set vehicle_info
@@ -345,16 +345,14 @@ bool FreespacePlannerNode::checkCurrentTrajectoryCollision()
   const bool is_obs_found =
     algo_->hasObstacleOnTrajectory(trajectory2PoseArray(forward_trajectory));
 
-  if (!node_param_.enable_obs_confidence_check) return is_obs_found;
-
   if (!is_obs_found) {
-    collision_confidence = 0.0;
+    obs_found_time_ = {};
     return false;
   }
 
-  collision_confidence += coll_confidence_increase_rate * (1.0 - collision_confidence);
+  if (!obs_found_time_) obs_found_time_ = get_clock()->now();
 
-  return collision_confidence > coll_confidence_threshold;
+  return (get_clock()->now() - obs_found_time_.get()).seconds() > node_param_.th_obstacle_time_sec;
 }
 
 void FreespacePlannerNode::updateTargetIndex()
@@ -587,7 +585,7 @@ void FreespacePlannerNode::reset()
   std_msgs::msg::Bool is_completed_msg;
   is_completed_msg.data = is_completed_;
   parking_state_pub_->publish(is_completed_msg);
-  collision_confidence = 0.0;
+  obs_found_time_ = {};
 }
 
 TransformStamped FreespacePlannerNode::getTransform(

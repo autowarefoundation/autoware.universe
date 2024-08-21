@@ -42,6 +42,11 @@
           "default": 1.0,
           "description": "Threshold distance for considering the vehicle has deviated from its course."
         },
+        "th_obstacle_time_sec": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Time threshold for checking obstacles along the trajectory."
+        },
         "vehicle_shape_margin_m": {
           "type": "number",
           "default": 1.0,
@@ -56,11 +61,6 @@
           "type": "boolean",
           "default": true,
           "description": "Replan path when the vehicle deviates from its course."
-        },
-        "enable_obs_confidence_check": {
-          "type": "boolean",
-          "default": true,
-          "description": "Wait for some time to confirm when obstacle is found before replanning path."
         },
         "time_limit": {
           "type": "number",
@@ -200,10 +200,10 @@
         "th_stopped_time_sec",
         "th_stopped_velocity_mps",
         "th_course_out_distance_m",
+        "th_obstacle_time_sec",
         "vehicle_shape_margin_m",
         "replan_when_obstacle_found",
         "replan_when_course_out",
-        "enable_obs_confidence_check",
         "time_limit",
         "max_turning_ratio",
         "turning_steps",

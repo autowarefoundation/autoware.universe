@@ -92,10 +92,10 @@ struct NodeParam
   double th_stopped_time_sec;
   double th_stopped_velocity_mps;
   double th_course_out_distance_m;  // collision margin [m]
+  double th_obstacle_time_sec;
   double vehicle_shape_margin_m;
   bool replan_when_obstacle_found;
   bool replan_when_course_out;
-  bool enable_obs_confidence_check;
 };
 
 class FreespacePlannerNode : public rclcpp::Node
@@ -142,7 +142,7 @@ private:
   bool is_completed_ = false;
   bool reset_in_progress_ = false;
   bool is_new_parking_cycle_ = true;
-  double collision_confidence;
+  boost::optional<rclcpp::Time> obs_found_time_;
 
   LaneletRoute::ConstSharedPtr route_;
   OccupancyGrid::ConstSharedPtr occupancy_grid_;
@@ -175,9 +175,6 @@ private:
   TransformStamped getTransform(const std::string & from, const std::string & to);
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
-
-  static constexpr double coll_confidence_increase_rate = 0.3;
-  static constexpr double coll_confidence_threshold = 0.95;
 };
 }  // namespace autoware::freespace_planner
 
