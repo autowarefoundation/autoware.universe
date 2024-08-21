@@ -53,6 +53,8 @@ public:
 
   void update_lanes(const bool is_approved) final;
 
+  void update_filtered_objects() final;
+
   void updateLaneChangeStatus() override;
 
   std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const override;
@@ -91,6 +93,8 @@ public:
   bool hasFinishedLaneChange() const override;
 
   bool isAbleToReturnCurrentLane() const override;
+
+  bool is_near_terminal() const final;
 
   bool isEgoOnPreparePhase() const override;
 
