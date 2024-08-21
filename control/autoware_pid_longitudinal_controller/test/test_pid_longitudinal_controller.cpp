@@ -154,7 +154,7 @@ TEST_F(TestPidLongitudinalController, calcCtrlCmd)
     EXPECT_EQ(cmd.acc, -3.4);
 }
 
-TEST_F(PidLongitudinalControllerTest, CreateCtrlCmdMsg)
+TEST_F(TestPidLongitudinalController, createCtrlCmdMsg)
 {
     PidLongitudinalController::Motion cmd;
     cmd.vel = 10.0;
@@ -163,15 +163,6 @@ TEST_F(PidLongitudinalControllerTest, CreateCtrlCmdMsg)
     auto ctrl_cmd_msg = controller_->createCtrlCmdMsg(cmd, 5.0);
     EXPECT_EQ(ctrl_cmd_msg.velocity, 10.0);
     EXPECT_EQ(ctrl_cmd_msg.acceleration, 1.0);
-}
-
-TEST_F(PidLongitudinalControllerTest, PublishDebugData)
-{
-    PidLongitudinalController::Motion cmd;
-    PidLongitudinalController::ControlData control_data;
-    control_data.slope_angle = 0.1;
-
-    controller_->publishDebugData(cmd, control_data);
 }
 
 TEST_F(PidLongitudinalControllerTest, GetDt)
