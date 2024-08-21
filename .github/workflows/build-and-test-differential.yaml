@@ -65,6 +65,7 @@ jobs:
           runner: ${{ matrix.runner }}
           build-depends-repos: ${{ matrix.build-depends-repos }}
           build-pre-command: ${{ matrix.build-pre-command }}
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
   clang-tidy-differential:
     needs: build-and-test-differential
