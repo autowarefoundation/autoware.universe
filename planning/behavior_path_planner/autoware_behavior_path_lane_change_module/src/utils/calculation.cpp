@@ -114,42 +114,30 @@ double calc_ego_dist_to_lanes_start(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes)
 {
-  if (target_lanes.empty()) {
-    return 0.0;
-  }
-
-  const auto & target_left_bound = target_lanes.front().leftBound();
-  const auto & target_right_bound = target_lanes.front().rightBound();
-  if (target_left_bound.empty() || target_right_bound.empty()) {
-    return 0.0;
-  }
-
   const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
 
-  if (!route_handler_ptr) {
-    return 0.0;
+  if (!route_handler_ptr || target_lanes.empty() || current_lanes.empty()) {
+    return std::numeric_limits<double>::max();
   }
 
-  if (current_lanes.empty()) {
-    return 0.0;
+  const auto & target_bound =
+    common_data_ptr->direction == autoware::route_handler::Direction::RIGHT ?
+    target_lanes.front().leftBound() : target_lanes.front().rightBound();
+
+  if (target_bound.empty()) {
+    return std::numeric_limits<double>::max();
   }
 
   const auto path =
     route_handler_ptr->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
 
   if (path.points.empty()) {
-    return 0.0;
+    return std::numeric_limits<double>::max();
   }
 
-  const auto left_front_pt = lanelet::utils::conversion::toGeomMsgPt(target_left_bound.front());
-  const auto right_front_pt = lanelet::utils::conversion::toGeomMsgPt(target_right_bound.front());
-
+  const auto target_front_pt = lanelet::utils::conversion::toGeomMsgPt(target_bound.front());
   const auto ego_position = common_data_ptr->get_ego_pose().position;
-  const auto left_dist =
-    motion_utils::calcSignedArcLength(path.points, ego_position, left_front_pt);
-  const auto right_dist =
-    motion_utils::calcSignedArcLength(path.points, ego_position, right_front_pt);
 
-  return std::min(left_dist, right_dist);
+  return motion_utils::calcSignedArcLength(path.points, ego_position, target_front_pt);
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
