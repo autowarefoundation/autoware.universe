@@ -1,7 +1,6 @@
 *:*/test/*
 
 checkersReport
-functionStatic
 missingInclude
 missingIncludeSystem
 noConstructor
@@ -12,4 +11,3 @@ unusedFunction
 useInitializationList
 useStlAlgorithm
 variableScope
-virtualCallInConstructor
