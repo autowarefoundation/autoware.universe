@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef LOCALIZATION_ERROR_MONITOR__DIAGNOSTICS_HELPER_HPP_
+#define LOCALIZATION_ERROR_MONITOR__DIAGNOSTICS_HELPER_HPP_
+
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
 #include <string>
 #include <vector>
 
-diagnostic_msgs::msg::DiagnosticStatus check_localization_accuracy(
+inline diagnostic_msgs::msg::DiagnosticStatus check_localization_accuracy(
   const double ellipse_size, const double warn_ellipse_size, const double error_ellipse_size)
 {
   diagnostic_msgs::msg::DiagnosticStatus stat;
-
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "localization_error_ellipse";
-  key_value.value = std::to_string(ellipse_size);
-  stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   stat.message = "OK";
@@ -41,15 +39,10 @@ diagnostic_msgs::msg::DiagnosticStatus check_localization_accuracy(
   return stat;
 }
 
-diagnostic_msgs::msg::DiagnosticStatus check_localization_accuracy_lateral_direction(
+inline diagnostic_msgs::msg::DiagnosticStatus check_localization_accuracy_lateral_direction(
   const double ellipse_size, const double warn_ellipse_size, const double error_ellipse_size)
 {
   diagnostic_msgs::msg::DiagnosticStatus stat;
-
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "localization_error_ellipse_lateral_direction";
-  key_value.value = std::to_string(ellipse_size);
-  stat.values.push_back(key_value);
 
   stat.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   stat.message = "OK";
@@ -65,30 +58,4 @@ diagnostic_msgs::msg::DiagnosticStatus check_localization_accuracy_lateral_direc
   return stat;
 }
 
-// The highest level within the stat_array will be reflected in the merged_stat.
-diagnostic_msgs::msg::DiagnosticStatus merge_diagnostic_status(
-  const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & stat_array)
-{
-  diagnostic_msgs::msg::DiagnosticStatus merged_stat;
-
-  for (const auto & stat : stat_array) {
-    if ((stat.level > diagnostic_msgs::msg::DiagnosticStatus::OK)) {
-      if (!merged_stat.message.empty()) {
-        merged_stat.message += "; ";
-      }
-      merged_stat.message += stat.message;
-    }
-    if (stat.level > merged_stat.level) {
-      merged_stat.level = stat.level;
-    }
-    for (const auto & value : stat.values) {
-      merged_stat.values.push_back(value);
-    }
-  }
-
-  if (merged_stat.level == diagnostic_msgs::msg::DiagnosticStatus::OK) {
-    merged_stat.message = "OK";
-  }
-
-  return merged_stat;
-}
+#endif  // LOCALIZATION_ERROR_MONITOR__DIAGNOSTICS_HELPER_HPP_
