@@ -265,7 +265,9 @@ mergeLaneletsByTopologicalSort(
   }
   std::set<size_t> terminal_inds;
   for (const auto & terminal_lanelet : terminal_lanelets) {
-    terminal_inds.insert(Id2ind[terminal_lanelet.id()]);
+    if (Id2ind.count(terminal_lanelet.id()) > 0) {
+      terminal_inds.insert(Id2ind[terminal_lanelet.id()]);
+    }
   }
 
   // create adjacency matrix
