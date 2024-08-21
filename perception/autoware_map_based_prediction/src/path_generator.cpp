@@ -380,6 +380,47 @@ Eigen::Vector2d PathGenerator::calcLonCoefficients(
   return A_lon_inv * b_lon;
 }
 
+std::vector<double> PathGenerator::interpolationLerp(
+  const std::vector<double> & base_keys, const std::vector<double> & base_values,
+  const std::vector<double> & query_keys) const
+{
+  // calculate linear interpolation
+  std::vector<double> query_values;
+  size_t key_index = 0;
+  double last_query_key = query_keys.at(0);
+  for (const auto query_key : query_keys) {
+    // search for the closest key index
+    // if current query key is larger than the last query key, search base_keys increasing order
+    if (query_key >= last_query_key) {
+      while (base_keys.at(key_index + 1) < query_key) {
+        if (key_index == base_keys.size() - 2) {
+          break;
+        }
+        ++key_index;
+      }
+    } else {
+      // if current query key is smaller than the last query key, search base_keys decreasing order
+      while (base_keys.at(key_index) > query_key) {
+        if (key_index == 0) {
+          break;
+        }
+        --key_index;
+      }
+    }
+    last_query_key = query_key;
+
+    const double src_val = base_values.at(key_index);
+    const double dst_val = base_values.at(key_index + 1);
+    const double ratio = (query_key - base_keys.at(key_index)) /
+                         (base_keys.at(key_index + 1) - base_keys.at(key_index));
+
+    const double interpolated_val = src_val + (dst_val - src_val) * ratio;
+    query_values.push_back(interpolated_val);
+  }
+
+  return query_values;
+}
+
 PosePath PathGenerator::interpolateReferencePath(
   const PosePath & base_path, const FrenetPath & frenet_predicted_path) const
 {
@@ -434,9 +475,9 @@ PosePath PathGenerator::interpolateReferencePath(
 
   // Lerp Interpolation
   // only works for simple increase of bash_path_s and resampled_s
-  std::vector<double> lerp_ref_path_x = interpolation::lerp(base_path_s, base_path_x, resampled_s);
-  std::vector<double> lerp_ref_path_y = interpolation::lerp(base_path_s, base_path_y, resampled_s);
-  std::vector<double> lerp_ref_path_z = interpolation::lerp(base_path_s, base_path_z, resampled_s);
+  std::vector<double> lerp_ref_path_x = interpolationLerp(base_path_s, base_path_x, resampled_s);
+  std::vector<double> lerp_ref_path_y = interpolationLerp(base_path_s, base_path_y, resampled_s);
+  std::vector<double> lerp_ref_path_z = interpolationLerp(base_path_s, base_path_z, resampled_s);
 
   interpolated_path.resize(interpolate_num);
   for (size_t i = 0; i < interpolate_num - 1; ++i) {
@@ -532,8 +573,10 @@ FrenetPoint PathGenerator::getFrenetPoint(
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
 
   // Find starting segment index
-  const size_t starting_segment_idx =
+  size_t starting_segment_idx =
     autoware::motion_utils::findNearestSegmentIndex(ref_path, obj_point);
+  starting_segment_idx = std::min(starting_segment_idx, ref_path.size() - 2);
+  starting_segment_idx = std::max(starting_segment_idx, (long unsigned int)0);
 
   // Trim the reference path
   target_path = PosePath(ref_path.begin() + starting_segment_idx, ref_path.end());
@@ -621,9 +664,8 @@ FrenetPoint PathGenerator::getFrenetPoint(
 
   frenet_point.s = l;
   frenet_point.d = autoware::motion_utils::calcLateralOffset(target_path, obj_point);
-  const double s_vel = acceleration_adjusted_velocity_x * std::cos(delta_yaw) -
+  frenet_point.s_vel = acceleration_adjusted_velocity_x * std::cos(delta_yaw) -
                        acceleration_adjusted_velocity_y * std::sin(delta_yaw);
-  frenet_point.s_vel = std::max(s_vel, 0.0);
   frenet_point.d_vel = acceleration_adjusted_velocity_x * std::sin(delta_yaw) +
                        acceleration_adjusted_velocity_y * std::cos(delta_yaw);
   frenet_point.s_acc = 0.0;

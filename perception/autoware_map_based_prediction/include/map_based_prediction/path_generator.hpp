@@ -141,6 +141,10 @@ private:
   Eigen::Vector2d calcLonCoefficients(
     const FrenetPoint & current_point, const FrenetPoint & target_point, const double T) const;
 
+  std::vector<double> interpolationLerp(
+    const std::vector<double> & base_keys, const std::vector<double> & base_values,
+    const std::vector<double> & query_keys) const;
+
   PosePath interpolateReferencePath(
     const PosePath & base_path, const FrenetPath & frenet_predicted_path) const;
 
