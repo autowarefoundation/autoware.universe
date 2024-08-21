@@ -165,32 +165,33 @@ TEST_F(TestPidLongitudinalController, createCtrlCmdMsg)
     EXPECT_EQ(ctrl_cmd_msg.acceleration, 1.0);
 }
 
-TEST_F(PidLongitudinalControllerTest, GetDt)
+TEST_F(TestPidLongitudinalController, getDt)
 {
     auto dt = controller_->getDt();
-    EXPECT_GT(dt, 0.0);
+    EXPECT_GT(dt, 0.03);
 }
 
-TEST_F(PidLongitudinalControllerTest, GetCurrentShift)
+TEST_F(TestPidLongitudinalController, getCurrentShift)
 {
     PidLongitudinalController::ControlData control_data;
-    control_data.interpolated_traj.points.resize(2);
-    control_data.interpolated_traj.points[1].longitudinal_velocity_mps = 1.0;
+    control_data.target_idx = 0;
+    control_data.interpolated_traj.points[control_data.target_idx].longitudinal_velocity_mps = 1.0;
 
     auto shift = controller_->getCurrentShift(control_data);
     EXPECT_EQ(shift, PidLongitudinalController::Shift::Forward);
 }
 
-TEST_F(PidLongitudinalControllerTest, StoreAccelCmd)
+TEST_F(TestPidLongitudinalController, storeAccelCmd)
 {
+    m_ctrl_cmd_vec.clear();
     controller_->storeAccelCmd(1.0);
     EXPECT_FALSE(controller_->m_ctrl_cmd_vec.empty());
 }
 
-TEST_F(PidLongitudinalControllerTest, ApplySlopeCompensation)
+TEST_F(TestPidLongitudinalController, applySlopeCompensation)
 {
-    auto acc = controller_->applySlopeCompensation(1.0, 0.1, PidLongitudinalController::Shift::Forward);
-    EXPECT_GT(acc, 1.0);
+    auto acc = controller_->applySlopeCompensation(1.0, 0.05, PidLongitudinalController::Shift::Forward);
+    EXPECT_EQ(acc, 1.0 + 9.81 * std::sin(0.05));
 }
 
 TEST_F(PidLongitudinalControllerTest, KeepBrakeBeforeStop)
