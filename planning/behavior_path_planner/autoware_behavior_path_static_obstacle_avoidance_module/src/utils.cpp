@@ -1732,8 +1732,8 @@ void compensateLostTargetObjects(
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   const auto include = [](const auto & objects, const auto & search_id) {
-    return std::all_of(objects.begin(), objects.end(), [&search_id](const auto & o) {
-      return o.object.object_id != search_id;
+    return std::any_of(objects.begin(), objects.end(), [&search_id](const auto & o) {
+      return o.object.object_id == search_id;
     });
   };
 
@@ -1783,6 +1783,10 @@ void compensateLostTargetObjects(
 
   // STEP1-2: UPDATE STORED OBJECTS IF THERE ARE NEW OBJECTS.
   for (const auto & current_object : data.target_objects) {
+    if (stored_objects.empty()) {
+      stored_objects.push_back(current_object);
+    }
+
     if (!include(stored_objects, current_object.object.object_id)) {
       stored_objects.push_back(current_object);
     }
