@@ -24,7 +24,7 @@ namespace autoware::image_projection_based_fusion
 {
 InstanceSegmentationPointCloudFusionNode::InstanceSegmentationPointCloudFusionNode(
   const rclcpp::NodeOptions & options)
-: FusionNode<PointCloud2, PointCloud2, DetectedObjectsWithMask>(
+: FusionNode<PointCloud2, PointCloud2, Image>(
     "instance_segmentation_pointcloud_fusion", options),
   transform_provider_ptr_(std::make_shared<TransformProvider>(this->get_clock()))
 {
@@ -55,16 +55,29 @@ void InstanceSegmentationPointCloudFusionNode::postprocess(__attribute__((unused
 void InstanceSegmentationPointCloudFusionNode::fuseOnSingleImage(
   [[maybe_unused]] const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
   [[maybe_unused]] const std::size_t image_id,
-  [[maybe_unused]] const DetectedObjectsWithMask & input_objects,
+  [[maybe_unused]] const Image & input_mask,
   [[maybe_unused]] const sensor_msgs::msg::CameraInfo & camera_info,
   [[maybe_unused]] sensor_msgs::msg::PointCloud2 & output_pointcloud_msg)
 {
   if (input_pointcloud_msg.data.empty()) {
     return;
   }
-  if (input_objects.feature_objects.empty()) {
-    return;
+  cv_bridge::CvImagePtr in_image_ptr;
+  try {
+      in_image_ptr = cv_bridge::toCvCopy(
+              std::make_shared<sensor_msgs::msg::Image>(input_mask), sensor_msgs::image_encodings::TYPE_8SC3);
+  } catch (const std::exception & e) {
+      RCLCPP_ERROR(this->get_logger(), "cv_bridge exception:%s", e.what());
+      return;
   }
+
+  cv::Mat mask = in_image_ptr->image;
+  if (mask.cols == 0 || mask.rows == 0) {
+      return;
+  }
+  const int orig_width = camera_info.width;
+  const int orig_height = camera_info.height;
+  cv::resize(mask, mask, cv::Size(orig_width, orig_height), 0, 0, cv::INTER_NEAREST);
 
   image_geometry::PinholeCameraModel pinhole_camera_model;
   pinhole_camera_model.fromCameraInfo(camera_info);
@@ -77,29 +90,6 @@ void InstanceSegmentationPointCloudFusionNode::fuseOnSingleImage(
     }
     transform_stamped_map_[static_cast<int>(image_id)] = transform;
   }
-
-  cv::Mat combined_mask = cv::Mat::zeros(camera_info.height, camera_info.width, CV_8UC1);
-  std::map<int, cv::Mat> mask_map;
-  for (size_t index = 0; index < input_objects.feature_objects.size(); index++) {
-    const auto & object = input_objects.feature_objects[index];
-    cv_bridge::CvImagePtr in_image_ptr;
-    try {
-      in_image_ptr = cv_bridge::toCvCopy(
-        std::make_shared<sensor_msgs::msg::Image>(object.mask), object.mask.encoding);
-    } catch (const std::exception & e) {
-      RCLCPP_ERROR(this->get_logger(), "cv_bridge exception:%s", e.what());
-      return;
-    }
-
-    cv::Mat resized_mask;
-    cv::resize(
-      in_image_ptr->image, resized_mask, cv::Size(camera_info.width, camera_info.height), 0, 0,
-      cv::INTER_NEAREST);
-    cv::bitwise_or(combined_mask, resized_mask, combined_mask);
-    mask_map[static_cast<int>(index)] = resized_mask;
-  }
-
-  cv::cvtColor(combined_mask, combined_mask, cv::COLOR_GRAY2BGR);
 
   PointCloud2 transformed_cloud;
   tf2::doTransform(input_pointcloud_msg, transformed_cloud, transform_stamped_map_[image_id].value());
@@ -143,38 +133,19 @@ void InstanceSegmentationPointCloudFusionNode::fuseOnSingleImage(
       continue;
     }
 
-    for (const auto & item : mask_map) {
-      const tier4_perception_msgs::msg::DetectedObjectWithMask & object =
-        input_objects.feature_objects[item.first];
-      uint8_t pixel_value = item.second.at<uint8_t>(
-        static_cast<uint16_t>(projected_point.y()), static_cast<uint16_t>(projected_point.x()));
-      if (
-        keep_instance_label_list_[object.object.classification[0].label].second &&
-        pixel_value > 199) {
-        cv::circle(
-          combined_mask,
-          cv::Point(static_cast<int>(projected_point.x()), static_cast<int>(projected_point.y())),
-          2, cv::Scalar(255, 0, 0), 2);
-        copyPointCloud(
-          input_pointcloud_msg, point_step, global_offset, output_pointcloud_msg,
-          output_pointcloud_size);
+      cv::Vec3b pixel = mask.at<cv::Vec3b>(static_cast<uint16_t>(projected_point.y()),
+                                           static_cast<uint16_t>(projected_point.x()));
+
+      if (keep_instance_label_list_.at(pixel[0]).second) {
+          copyPointCloud(
+                  input_pointcloud_msg, point_step, global_offset, output_pointcloud_msg,
+                  output_pointcloud_size);
       }
-    }
   }
 
   output_pointcloud_msg.data.resize(output_pointcloud_size);
   output_pointcloud_msg.row_step = output_pointcloud_size / output_pointcloud_msg.height;
   output_pointcloud_msg.width = output_pointcloud_size / output_pointcloud_msg.point_step / output_pointcloud_msg.height;
-
-  Image debug_image;
-  debug_image.header = camera_info.header;
-  debug_image.encoding = "bgr8";
-  debug_image.height = combined_mask.rows;
-  debug_image.width = combined_mask.cols;
-  debug_image.step = combined_mask.cols * combined_mask.elemSize();
-  debug_image.data = std::vector<uint8_t>(
-    combined_mask.data, combined_mask.data + combined_mask.total() * combined_mask.elemSize());
-  pub_debug_image_ptr_->publish(debug_image);
 }
 
 bool InstanceSegmentationPointCloudFusionNode::out_of_scope(__attribute__((unused))

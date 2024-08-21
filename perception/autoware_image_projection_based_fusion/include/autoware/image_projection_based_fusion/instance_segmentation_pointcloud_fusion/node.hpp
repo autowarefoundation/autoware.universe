@@ -19,9 +19,6 @@
 
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 
-#include "tier4_perception_msgs/msg/detected_object_with_mask.hpp"
-#include "tier4_perception_msgs/msg/detected_objects_with_mask.hpp"
-
 #include <string>
 #include <utility>
 #include <vector>
@@ -69,11 +66,8 @@ using TransformProviderConstPtr = std::shared_ptr<const TransformProvider>;
 
 namespace autoware::image_projection_based_fusion
 {
-using tier4_perception_msgs::msg::DetectedObjectsWithMask;
-using tier4_perception_msgs::msg::DetectedObjectWithMask;
-
 class InstanceSegmentationPointCloudFusionNode
-: public FusionNode<PointCloud2, PointCloud2, DetectedObjectsWithMask>
+: public FusionNode<PointCloud2, PointCloud2, Image>
 {
 public:
   explicit InstanceSegmentationPointCloudFusionNode(const rclcpp::NodeOptions & options);
@@ -95,7 +89,7 @@ protected:
 
   void fuseOnSingleImage(
     const PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
-    const DetectedObjectsWithMask & input_objects, const CameraInfo & camera_info,
+    const Image & input_mask, const CameraInfo & camera_info,
     PointCloud2 & output_pointcloud_msg) override;
 
   bool out_of_scope(const PointCloud2 & filtered_cloud);
