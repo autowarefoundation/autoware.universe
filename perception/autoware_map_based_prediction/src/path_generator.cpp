@@ -31,18 +31,17 @@ PathGenerator::PathGenerator(
 {
 }
 
-PredictedPath PathGenerator::shiftPath(const PredictedPath & path, const double shift_distance)
+PredictedPath PathGenerator::shiftPath(const PosePath & ref_paths, const double shift_distance)
 {
   PredictedPath shifted_path;
-  shifted_path.time_step = path.time_step;
-  shifted_path.confidence = path.confidence;
-  shifted_path.path.reserve(path.path.size());
-  for (const auto & pose : path.path) {
-    geometry_msgs::msg::Pose shifted_pose = pose;
+  shifted_path.path.reserve(ref_paths.size());
+  for (const auto & ref_path : ref_paths) {
+
+    geometry_msgs::msg::Pose shifted_pose = ref_path;
 
     // Get yaw from quaternion
     tf2::Quaternion quat(
-      pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+      ref_path.orientation.x, ref_path.orientation.y, ref_path.orientation.z, ref_path.orientation.w);
     tf2::Matrix3x3 mat(quat);
     double roll, pitch, yaw;
     mat.getRPY(roll, pitch, yaw);
@@ -57,9 +56,9 @@ PredictedPath PathGenerator::shiftPath(const PredictedPath & path, const double 
 
     shifted_path.path.push_back(shifted_pose);
   }
-
   return shifted_path;
 }
+
 void PathGenerator::setTimeKeeper(
   std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_ptr)
 {
@@ -218,13 +217,13 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
 }
 
 PredictedPath PathGenerator::generateShiftedPathForOnLaneVehicle(
-  const TrackedObject & object, const PredictedPath & predicted_path, const double duration,
+  const TrackedObject & object, const PosePath & ref_paths, const double duration,
   const double lateral_duration, const double shift_length, const double speed_limit)
 {
-  if (predicted_path.path.size() < 2) {
+  if (ref_paths.size() < 2) {
     return generateStraightPath(object, duration);
   }
-  const PosePath & ref_path = shiftPath(predicted_path, shift_length).path;
+  const PosePath & ref_path = shiftPath(ref_paths, shift_length).path;
   return generatePolynomialPath(object, ref_path, duration, lateral_duration, speed_limit);
 }
 

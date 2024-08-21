@@ -83,7 +83,7 @@ class PathGenerator
 public:
   PathGenerator(const double sampling_time_interval, const double min_crosswalk_user_velocity);
 
-  PredictedPath shiftPath(const PredictedPath & path, const double shift_distance);
+  PredictedPath shiftPath(const PosePath & ref_paths, const double shift_distance);
 
   void setTimeKeeper(std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_ptr);
 
@@ -101,7 +101,7 @@ public:
     const double lateral_duration, const double speed_limit = 0.0) const;
 
   PredictedPath generateShiftedPathForOnLaneVehicle(
-    const TrackedObject & object, const PredictedPath & predicted_path, const double duration,
+    const TrackedObject & object, const PosePath & ref_paths, const double duration,
     const double lateral_duration, const double shift_length, const double speed_limit = 0.0);
 
   PredictedPath generatePathForCrosswalkUser(
