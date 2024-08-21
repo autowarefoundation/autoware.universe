@@ -25,6 +25,8 @@ jobs:
   build-and-test-differential:
     needs: make-sure-label-is-present
     if: ${{ needs.make-sure-label-is-present.outputs.result == 'true' }}
+    env:
+      SKIP: ${{ matrix.container-suffix == '-cuda' && !contains(github.event.pull_request.labels.*.name, 'tag:require-cuda-build-and-test') }}
     runs-on: ${{ matrix.runner }}
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
@@ -47,34 +49,41 @@ jobs:
             build-pre-command: ""
     steps:
       - name: Set PR fetch depth
+        if: ${{ env.SKIP != 'true' }}
         run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
 
       - name: Checkout PR branch and all PR commits
+        if: ${{ env.SKIP != 'true' }}
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: ${{ env.PR_FETCH_DEPTH }}
 
       - name: Show disk space before the tasks
+        if: ${{ env.SKIP != 'true' }}
         run: df -h
 
       - name: Show machine specs
         run: lscpu && free -h
 
       - name: Remove exec_depend
+        if: ${{ env.SKIP != 'true' }}
         uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
 
       - name: Get modified packages
+        if: ${{ env.SKIP != 'true' }}
         id: get-modified-packages
         uses: autowarefoundation/autoware-github-actions/get-modified-packages@v1
 
       - name: Create ccache directory
+        if: ${{ env.SKIP != 'true' }}
         run: |
           mkdir -p ${CCACHE_DIR}
           du -sh ${CCACHE_DIR} && ccache -s
         shell: bash
 
       - name: Attempt to restore ccache
+        if: ${{ env.SKIP != 'true' }}
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -84,10 +93,12 @@ jobs:
             ccache-main-${{ runner.arch }}-${{ matrix.rosdistro }}-
 
       - name: Show ccache stats before build
+        if: ${{ env.SKIP != 'true' }}
         run: du -sh ${CCACHE_DIR} && ccache -s
         shell: bash
 
       - name: Export CUDA state as a variable for adding to cache key
+        if: ${{ env.SKIP != 'true' }}
         run: |
           build_type_cuda_state=nocuda
           if [[ "${{ matrix.container-suffix }}" == "-cuda" ]]; then
@@ -98,7 +109,7 @@ jobs:
         shell: bash
 
       - name: Build
-        if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
+        if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }} && ${{ env.SKIP != 'true' }}
         uses: autowarefoundation/autoware-github-actions/colcon-build@v1
         with:
           rosdistro: ${{ matrix.rosdistro }}
@@ -108,12 +119,13 @@ jobs:
           build-pre-command: ${{ matrix.build-pre-command }}
 
       - name: Show ccache stats after build
+        if: ${{ env.SKIP != 'true' }}
         run: du -sh ${CCACHE_DIR} && ccache -s
         shell: bash
 
       - name: Test
         id: test
-        if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
+        if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }} && ${{ env.SKIP != 'true' }}
         uses: autowarefoundation/autoware-github-actions/colcon-test@v1
         with:
           rosdistro: ${{ matrix.rosdistro }}
@@ -121,7 +133,7 @@ jobs:
           build-depends-repos: ${{ matrix.build-depends-repos }}
 
       - name: Upload coverage to CodeCov
-        if: ${{ steps.test.outputs.coverage-report-files != '' }}
+        if: ${{ steps.test.outputs.coverage-report-files != '' }} && ${{ env.SKIP != 'true' }}
         uses: codecov/codecov-action@v4
         with:
           files: ${{ steps.test.outputs.coverage-report-files }}
@@ -131,6 +143,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Show disk space after the tasks
+        if: ${{ env.SKIP != 'true' }}
         run: df -h
 
   clang-tidy-differential:
