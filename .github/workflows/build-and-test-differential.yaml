@@ -46,6 +46,16 @@ jobs:
             runner: ubuntu-latest
             build-pre-command: ""
     steps:
+      - name: Set PR fetch depth
+        run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
+        shell: bash
+
+      - name: Checkout PR branch and all PR commits
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
+
       - name: Run build-and-test-differential action
         uses: ./.github/actions/build-and-test-differential
         with:

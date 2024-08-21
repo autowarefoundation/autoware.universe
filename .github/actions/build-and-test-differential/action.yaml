@@ -24,16 +24,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Set PR fetch depth
-      run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
-      shell: bash
-
-    - name: Checkout PR branch and all PR commits
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        fetch-depth: ${{ env.PR_FETCH_DEPTH }}
-
     - name: Show disk space before the tasks
       run: df -h
       shell: bash
