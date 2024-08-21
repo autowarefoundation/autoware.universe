@@ -128,23 +128,30 @@ TEST_F(TestPidLongitudinalController, calcEmergencyCtrlCmd)
     EXPECT_EQ(cmd.vel, 0.0);
 }
 
-TEST_F(PidLongitudinalControllerTest, UpdateControlState)
+TEST_F(TestPidLongitudinalController, updateControlState)
 {
     PidLongitudinalController::ControlData control_data;
+    controller_->m_control_state = ControlState::DRIVE;
     control_data.current_motion.vel = 5.0;
-    control_data.stop_dist = 0.1;
+    control_data.stop_dist = -5.0;
+    control_data.nearest_idx = 0;
+    control_data.interpolated_traj.points.at(control_data.nearest_idx).longitudinal_velocity_mps = 0.0;
 
     controller_->updateControlState(control_data);
-    EXPECT_EQ(controller_->m_control_state, PidLongitudinalController::ControlState::STOPPING);
+    EXPECT_EQ(controller_->m_control_state, PidLongitudinalController::ControlState::EMERGENCY);
 }
 
-TEST_F(PidLongitudinalControllerTest, CalcCtrlCmd)
+TEST_F(TestPidLongitudinalController, calcCtrlCmd)
 {
     PidLongitudinalController::ControlData control_data;
-    control_data.current_motion.vel = 5.0;
+    controller_->m_control_state == ControlState::STOPPED;
+    controller_->m_prev_ctrl_cmd.acc = 0.0;
+    control_data.target_idx = 0;
+    control_data.interpolated_traj.points.at(control_data.target_idx).longitudinal_velocity_mps = 0.0;
+    control_data.interpolated_traj.points.at(control_data.target_idx).acceleration_mps2 = 0.0;
 
     auto cmd = controller_->calcCtrlCmd(control_data);
-    EXPECT_GE(cmd.acc, 0.0);
+    EXPECT_EQ(cmd.acc, -3.4);
 }
 
 TEST_F(PidLongitudinalControllerTest, CreateCtrlCmdMsg)
