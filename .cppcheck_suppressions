@@ -10,5 +10,4 @@ unreadVariable
 unusedFunction
 useInitializationList
 useStlAlgorithm
-variableScope
 virtualCallInConstructor
