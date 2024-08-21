@@ -110,9 +110,9 @@ RadiusSearch2dFilter::RadiusSearch2dFilter(rclcpp::Node & node)
   min_points_and_distance_ratio_ =
     node.declare_parameter<float>("radius_search_2d_filter.min_points_and_distance_ratio");
   min_points_ = node.declare_parameter<int>("radius_search_2d_filter.min_points");
-  max_points_ = node.declare_parameter<int>("radius_search_2d_filter.max_points", 70);
+  max_points_ = node.declare_parameter<int>("radius_search_2d_filter.max_points");
   max_filter_points_nb_ =
-    node.declare_parameter<int>("radius_search_2d_filter.max_filter_points_nb", 15000);
+    node.declare_parameter<int>("radius_search_2d_filter.max_filter_points_nb");
   kd_tree_ = pcl::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);
 }
 
