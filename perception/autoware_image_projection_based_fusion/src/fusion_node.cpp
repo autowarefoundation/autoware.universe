@@ -255,19 +255,18 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
           debugger_->clear();
         }
 
-          std::cout << "roi " << roi_i << " matched timestamp: " << matched_stamp << std::endl;
+        std::cout << "roi " << roi_i << " matched timestamp: " << matched_stamp << std::endl;
 
         if (fused_once) {
-            fuseOnSingleImage(
-                    *output_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
-                    camera_info_map_.at(roi_i), *output_msg);
+          fuseOnSingleImage(
+            *output_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
+            camera_info_map_.at(roi_i), *output_msg);
         } else {
-            fuseOnSingleImage(
-                    *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
-                    camera_info_map_.at(roi_i), *output_msg);
-            fused_once = true;
+          fuseOnSingleImage(
+            *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
+            camera_info_map_.at(roi_i), *output_msg);
+          fused_once = true;
         }
-
 
         (cached_roi_msgs_.at(roi_i)).erase(matched_stamp);
         is_fused_.at(roi_i) = true;

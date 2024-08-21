@@ -66,8 +66,7 @@ using TransformProviderConstPtr = std::shared_ptr<const TransformProvider>;
 
 namespace autoware::image_projection_based_fusion
 {
-class InstanceSegmentationPointCloudFusionNode
-: public FusionNode<PointCloud2, PointCloud2, Image>
+class InstanceSegmentationPointCloudFusionNode : public FusionNode<PointCloud2, PointCloud2, Image>
 {
 public:
   explicit InstanceSegmentationPointCloudFusionNode(const rclcpp::NodeOptions & options);
@@ -88,9 +87,8 @@ protected:
   void postprocess(PointCloud2 & pointcloud_msg) override;
 
   void fuseOnSingleImage(
-    const PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
-    const Image & input_mask, const CameraInfo & camera_info,
-    PointCloud2 & output_pointcloud_msg) override;
+    const PointCloud2 & input_pointcloud_msg, const std::size_t image_id, const Image & input_mask,
+    const CameraInfo & camera_info, PointCloud2 & output_pointcloud_msg) override;
 
   bool out_of_scope(const PointCloud2 & filtered_cloud);
 
