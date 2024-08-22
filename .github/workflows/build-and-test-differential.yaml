@@ -61,10 +61,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: ${{ env.PR_FETCH_DEPTH }}
 
-      - name: Show whether build-and-test-differential is skipped
-        run: echo "${{ !(matrix.container-suffix == '-cuda') || needs.make-sure-require-cuda-label-is-present.outputs.result == 'true' }}"
-        shell: bash
-
       - name: Run build-and-test-differential action
         if: ${{ !(matrix.container-suffix == '-cuda') || needs.make-sure-require-cuda-label-is-present.outputs.result == 'true' }}
         uses: ./.github/actions/build-and-test-differential
