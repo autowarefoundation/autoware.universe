@@ -349,20 +349,23 @@ bool AEB::fetchLatestData()
   }
 
   const auto imu_ptr = sub_imu_.takeData();
-  if (use_imu_path_) {
+  const bool has_imu_path = std::invoke([&]() {
+    if (!use_imu_path_) return false;
     if (!imu_ptr) {
       return missing("imu message");
     }
     // imu_ptr is valid
     onImu(imu_ptr);
-  }
-  if (use_imu_path_ && !angular_velocity_ptr_) {
-    return missing("imu");
-  }
+    return (!angular_velocity_ptr_) ? missing("imu") : true;
+  });
 
   predicted_traj_ptr_ = sub_predicted_traj_.takeData();
-  if (use_predicted_trajectory_ && !predicted_traj_ptr_) {
-    return missing("control predicted trajectory");
+  const bool has_predicted_path = (use_predicted_trajectory_ && !predicted_traj_ptr_)
+                                    ? missing("control predicted trajectory")
+                                    : true;
+
+  if (!has_imu_path && !has_predicted_path) {
+    return missing("any type of path");
   }
 
   autoware_state_ = sub_autoware_state_.takeData();
