@@ -76,7 +76,7 @@ RayGroundFilterComponent::RayGroundFilterComponent(const rclcpp::NodeOptions & o
   if (use_time_keeper) {
     detailed_processing_time_publisher_ =
       this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
-        "~/debug/ground_segm_processing_time_detail_ms", 1);
+        "~/debug/processing_time_detail_ms", 1);
     auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
     time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
   }
