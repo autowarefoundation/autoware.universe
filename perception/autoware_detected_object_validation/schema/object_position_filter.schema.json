@@ -3,71 +3,51 @@
   "title": "Parameters for Object Position Filter",
   "type": "object",
   "definitions": {
-    "object_position_filter": {
+    "object_position_filter_params": {
       "type": "object",
       "properties": {
-        "upper_bound_x": {
-          "type": "number",
-          "default": 100.0,
-          "description": "Bound for filtering. Only used if filter_by_xy_position is true"
-        },
-        "upper_bound_y": {
-          "type": "number",
-          "default": 50.0,
-          "description": "Bound for filtering. Only used if filter_by_xy_position is true"
-        },
-        "lower_bound_x": {
-          "type": "number",
-          "default": 0.0,
-          "description": "Bound for filtering. Only used if filter_by_xy_position is true"
-        },
-        "lower_bound_y": {
-          "type": "number",
-          "default": -50.0,
-          "description": "Bound for filtering. Only used if filter_by_xy_position is true"
-        },
         "filter_target_label": {
           "type": "object",
           "properties": {
             "UNKNOWN": {
               "type": "boolean",
-              "default": false,
-              "description": "If true, unknown objects are filtered."
+              "default": true,
+              "description": "Filter for UNKNOWN label"
             },
             "CAR": {
               "type": "boolean",
               "default": false,
-              "description": "If true, car objects are filtered."
+              "description": "Filter for CAR label"
             },
             "TRUCK": {
               "type": "boolean",
               "default": false,
-              "description": "If true, truck objects are filtered."
+              "description": "Filter for TRUCK label"
             },
             "BUS": {
               "type": "boolean",
               "default": false,
-              "description": "If true, bus objects are filtered."
+              "description": "Filter for BUS label"
             },
             "TRAILER": {
               "type": "boolean",
               "default": false,
-              "description": "If true, trailer objects are filtered."
+              "description": "Filter for TRAILER label"
             },
             "MOTORCYCLE": {
               "type": "boolean",
               "default": false,
-              "description": "If true, motorcycle objects are filtered."
+              "description": "Filter for MOTORCYCLE label"
             },
             "BICYCLE": {
               "type": "boolean",
               "default": false,
-              "description": "If true, bicycle objects are filtered."
+              "description": "Filter for BICYCLE label"
             },
             "PEDESTRIAN": {
               "type": "boolean",
               "default": false,
-              "description": "If true, pedestrian objects are filtered."
+              "description": "Filter for PEDESTRIAN label"
             }
           },
           "required": [
@@ -80,16 +60,35 @@
             "BICYCLE",
             "PEDESTRIAN"
           ]
+        },
+        "upper_bound_x": {
+          "type": "number",
+          "default": 100.0,
+          "description": "Upper bound for X coordinate"
+        },
+        "lower_bound_x": {
+          "type": "number",
+          "default": 0.0,
+          "description": "Lower bound for X coordinate"
+        },
+        "upper_bound_y": {
+          "type": "number",
+          "default": 10.0,
+          "description": "Upper bound for Y coordinate"
+        },
+        "lower_bound_y": {
+          "type": "number",
+          "default": -10.0,
+          "description": "Lower bound for Y coordinate"
         }
       },
       "required": [
+        "filter_target_label",
         "upper_bound_x",
-        "upper_bound_y",
         "lower_bound_x",
-        "lower_bound_y",
-        "filter_target_label"
-      ],
-      "additionalProperties": false
+        "upper_bound_y",
+        "lower_bound_y"
+      ]
     }
   },
   "properties": {
@@ -97,13 +96,11 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/object_position_filter"
+          "$ref": "#/definitions/object_position_filter_params"
         }
       },
-      "required": ["ros__parameters"],
-      "additionalProperties": false
+      "required": ["ros__parameters"]
     }
   },
-  "required": ["/**"],
-  "additionalProperties": false
+  "required": ["/**"]
 }
