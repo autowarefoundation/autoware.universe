@@ -30,6 +30,7 @@ using autoware::universe_utils::calcDistance3d;
 using autoware::universe_utils::deg2rad;
 using autoware::universe_utils::normalizeDegree;
 using autoware::universe_utils::normalizeRadian;
+using autoware::universe_utils::ScopedTimeTrack;
 using autoware::vehicle_info_utils::VehicleInfoUtils;
 
 ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions & options)
@@ -85,6 +86,15 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     debug_publisher_ptr_ = std::make_unique<DebugPublisher>(this, "scan_ground_filter");
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
+
+    bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
+    if (use_time_keeper) {
+      detailed_processing_time_publisher_ =
+        this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+          "~/debug/ground_segm_processing_time_detail_ms", 1);
+      auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
+      time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
+    }
   }
 }
 
@@ -114,6 +124,9 @@ inline void ScanGroundFilterComponent::get_point_from_global_offset(
 void ScanGroundFilterComponent::convertPointcloudGridScan(
   const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & out_radial_ordered_points)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   out_radial_ordered_points.resize(radial_dividers_num_);
   PointData current_point;
 
@@ -168,6 +181,9 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
 void ScanGroundFilterComponent::convertPointcloud(
   const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & out_radial_ordered_points)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   out_radial_ordered_points.resize(radial_dividers_num_);
   PointData current_point;
 
@@ -336,6 +352,9 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
   const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & in_radial_ordered_clouds,
   pcl::PointIndices & out_no_ground_indices)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   out_no_ground_indices.indices.clear();
   for (size_t i = 0; i < in_radial_ordered_clouds.size(); ++i) {
     PointsCentroid ground_cluster;
@@ -456,6 +475,9 @@ void ScanGroundFilterComponent::classifyPointCloud(
   const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & in_radial_ordered_clouds,
   pcl::PointIndices & out_no_ground_indices)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   out_no_ground_indices.indices.clear();
 
   const pcl::PointXYZ init_ground_point(0, 0, 0);
@@ -569,6 +591,9 @@ void ScanGroundFilterComponent::extractObjectPoints(
   const PointCloud2ConstPtr & in_cloud_ptr, const pcl::PointIndices & in_indices,
   PointCloud2 & out_object_cloud)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   size_t output_data_size = 0;
 
   for (const auto & i : in_indices.indices) {
@@ -584,6 +609,9 @@ void ScanGroundFilterComponent::faster_filter(
   PointCloud2 & output,
   [[maybe_unused]] const autoware::pointcloud_preprocessor::TransformInfo & transform_info)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   std::scoped_lock lock(mutex_);
   stop_watch_ptr_->toc("processing_time", true);
 
