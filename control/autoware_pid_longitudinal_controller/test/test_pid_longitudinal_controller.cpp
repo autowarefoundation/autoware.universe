@@ -212,9 +212,3 @@ TEST_F(TestPidLongitudinalController, predictedStateAfterDelay)
     auto state = controller_->predictedStateAfterDelay(current_motion, 0.5);
     EXPECT_GT(state.vel, 10.0 + 1.0 * 0.5);
 }
-
-int main(int argc, char **argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
