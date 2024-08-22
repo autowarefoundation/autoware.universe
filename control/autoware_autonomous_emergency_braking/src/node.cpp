@@ -348,9 +348,9 @@ bool AEB::fetchLatestData()
     return missing("object detection method (pointcloud or predicted objects)");
   }
 
-  const auto imu_ptr = sub_imu_.takeData();
   const bool has_imu_path = std::invoke([&]() {
     if (!use_imu_path_) return false;
+    const auto imu_ptr = sub_imu_.takeData();
     if (!imu_ptr) {
       return missing("imu message");
     }
@@ -359,10 +359,13 @@ bool AEB::fetchLatestData()
     return (!angular_velocity_ptr_) ? missing("imu") : true;
   });
 
-  predicted_traj_ptr_ = sub_predicted_traj_.takeData();
-  const bool has_predicted_path = (use_predicted_trajectory_ && !predicted_traj_ptr_)
-                                    ? missing("control predicted trajectory")
-                                    : true;
+  const bool has_predicted_path = std::invoke([&]() {
+    if (!use_predicted_trajectory_) {
+      return false;
+    }
+    predicted_traj_ptr_ = sub_predicted_traj_.takeData();
+    return (!predicted_traj_ptr_) ? missing("control predicted trajectory") : true;
+  });
 
   if (!has_imu_path && !has_predicted_path) {
     return missing("any type of path");
