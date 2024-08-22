@@ -186,7 +186,6 @@ TrtYoloX::TrtYoloX(
     }
     tensorrt_yolox::ImageStream stream(max_batch_size, input_dims, calibration_images);
     fs::path calibration_table{model_path};
-    std::string calibName = "";
     std::string ext = "";
     if (build_config.calib_type_str == "Entropy") {
       ext = "EntropyV2-";
@@ -773,8 +772,6 @@ void TrtYoloX::multiScalePreprocess(const cv::Mat & image, const std::vector<cv:
 bool TrtYoloX::doInferenceWithRoi(
   const std::vector<cv::Mat> & images, ObjectArrays & objects, const std::vector<cv::Rect> & rois)
 {
-  std::vector<cv::Mat> masks;
-  std::vector<cv::Mat> color_masks;
   if (!trt_common_->isInitialized()) {
     return false;
   }
@@ -785,6 +782,8 @@ bool TrtYoloX::doInferenceWithRoi(
   }
 
   if (needs_output_decode_) {
+    std::vector<cv::Mat> masks;
+    std::vector<cv::Mat> color_masks;
     return feedforwardAndDecode(images, objects, masks, color_masks);
   } else {
     return feedforward(images, objects);
