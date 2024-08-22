@@ -20,9 +20,6 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 
-#include <geometry_msgs/msg/detail/point__struct.hpp>
-#include <geometry_msgs/msg/detail/quaternion__struct.hpp>
-
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/utils.h>
 
