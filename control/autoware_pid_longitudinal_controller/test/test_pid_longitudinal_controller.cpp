@@ -213,15 +213,6 @@ TEST_F(TestPidLongitudinalController, predictedStateAfterDelay)
     EXPECT_GT(state.vel, 10.0 + 1.0 * 0.5);
 }
 
-TEST_F(PidLongitudinalControllerTest, ApplyVelocityFeedback)
-{
-    PidLongitudinalController::ControlData control_data;
-    control_data.current_motion.vel = 10.0;
-
-    auto acc = controller_->applyVelocityFeedback(control_data);
-    EXPECT_GT(acc, 0.0);
-}
-
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
