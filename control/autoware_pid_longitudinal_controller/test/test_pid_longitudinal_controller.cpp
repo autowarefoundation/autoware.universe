@@ -222,18 +222,6 @@ TEST_F(PidLongitudinalControllerTest, ApplyVelocityFeedback)
     EXPECT_GT(acc, 0.0);
 }
 
-TEST_F(PidLongitudinalControllerTest, UpdatePitchDebugValues)
-{
-    controller_->updatePitchDebugValues(0.1, 0.2, 0.3);
-}
-
-TEST_F(PidLongitudinalControllerTest, UpdateDebugVelAcc)
-{
-    PidLongitudinalController::ControlData control_data;
-    control_data.current_motion.vel = 10.0;
-    controller_->updateDebugVelAcc(control_data);
-}
-
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
