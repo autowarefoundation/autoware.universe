@@ -65,9 +65,10 @@ protected:
    *
    * This method should be overridden by subclasses to provide the specific build logic.
    *
+   * @param axis The axis values.
    * @param values The values to interpolate.
    */
-  virtual bool build(
+  virtual void build_impl(
     const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<T> & values) = 0;
 
   /**
@@ -82,7 +83,7 @@ protected:
   {
     if (s < start() || s > end()) {
       RCLCPP_WARN(
-        rclcpp::get_logger("InterpolatorBase"),
+        rclcpp::get_logger("Interpolator"),
         "Input value %f is outside the range of the interpolator [%f, %f].", s, start(), end());
     }
   }
@@ -98,13 +99,32 @@ protected:
 
 public:
   /**
+   * @brief Build the interpolator with the given axis and values.
+   *
+   * @param axis The axis values.
+   * @param values The values to interpolate.
+   * @return True if the interpolator was built successfully, false otherwise.
+   */
+  bool build(const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<T> & values)
+  {
+    if (axis.size() != static_cast<Eigen::Index>(values.size())) {
+      return false;
+    }
+    if (axis.size() < static_cast<Eigen::Index>(minimum_required_points())) {
+      return false;
+    }
+    build_impl(axis, values);
+    return true;
+  }
+
+  /**
    * @brief Get the minimum number of required points for the interpolator.
    *
    * This method should be overridden by subclasses to return the specific requirement.
    *
    * @return The minimum number of required points.
    */
-  [[nodiscard]] static size_t minimum_required_points();
+  [[nodiscard]] virtual size_t minimum_required_points() const = 0;
 
   /**
    * @brief Compute the interpolated value at the given point.

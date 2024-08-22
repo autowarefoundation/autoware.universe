@@ -12,11 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/motion_utils/trajectory_container/interpolator/linear.hpp"
+
 #include <autoware/motion_utils/trajectory_container/interpolator.hpp>
 
 #include <matplotlibcpp17/pyplot.h>
 
+#include <ostream>
 #include <random>
+#include <utility>
 #include <vector>
 
 int main()

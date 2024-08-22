@@ -61,14 +61,13 @@ void CubicSpline::compute_parameters(
   }
 }
 
-bool CubicSpline::build(
+void CubicSpline::build_impl(
   const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<double> & values)
 {
   this->axis_ = axis;
   compute_parameters(
     this->axis_,
     Eigen::Map<const Eigen::VectorXd>(values.data(), static_cast<Eigen::Index>(values.size())));
-  return true;
 }
 
 double CubicSpline::compute_impl(const double & s) const

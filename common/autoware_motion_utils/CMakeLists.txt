@@ -33,12 +33,12 @@ if(BUILD_EXAMPLES)
   message(STATUS "Building examples")
 
   include(FetchContent)
-  FetchContent_Declare(
+  fetchcontent_declare(
     matplotlibcpp17
     GIT_REPOSITORY https://github.com/soblin/matplotlibcpp17.git
     GIT_TAG master
   )
-  FetchContent_MakeAvailable(matplotlibcpp17)
+  fetchcontent_makeavailable(matplotlibcpp17)
 
   file(GLOB_RECURSE example_files examples/*.cpp)
 

@@ -49,7 +49,7 @@ private:
    * @param values The values to interpolate.
    * @return True if the interpolator was built successfully, false otherwise.
    */
-  bool build(
+  void build_impl(
     const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<double> & values) override;
 
   /**
@@ -82,7 +82,7 @@ public:
    *
    * @return The minimum number of required points.
    */
-  [[nodiscard]] static size_t minimum_required_points();
+  [[nodiscard]] size_t minimum_required_points() const override;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

@@ -21,13 +21,12 @@
 namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
-bool Linear::build(
+void Linear::build_impl(
   const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<double> & values)
 {
   this->axis_ = axis;
   this->values_ =
     Eigen::Map<const Eigen::VectorXd>(values.data(), static_cast<Eigen::Index>(values.size()));
-  return true;
 }
 
 double Linear::compute_impl(const double & s) const
@@ -55,7 +54,7 @@ double Linear::compute_second_derivative_impl(const double &) const
   return 0.0;
 }
 
-size_t Linear::minimum_required_points()
+size_t Linear::minimum_required_points() const
 {
   return 2;
 }

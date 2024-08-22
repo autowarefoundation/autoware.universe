@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__CREATOR_HPP_
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__CREATOR_HPP_
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__INTERPOLATOR_CREATOR_HPP_
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__INTERPOLATOR_CREATOR_HPP_
 
 #include <Eigen/Dense>
 
@@ -23,6 +23,10 @@
 
 namespace autoware::motion_utils::trajectory_container::interpolator
 {
+
+// Forward declaration
+template <typename T>
+class Interpolator;
 
 template <typename InterpolatorType>
 class InterpolatorCreator
@@ -65,19 +69,14 @@ public:
 
   [[nodiscard]] std::optional<InterpolatorType> create()
   {
-    if (axis_.size() != static_cast<Eigen::Index>(values_.size())) {
+    bool success = interpolator_->build(axis_, values_);
+    if (!success) {
       return std::nullopt;
     }
-
-    if (axis_.size() < static_cast<Eigen::Index>(InterpolatorType::minimum_required_points())) {
-      return std::nullopt;
-    }
-
-    interpolator_->build(axis_, values_);
     return interpolator_;
   }
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator
 
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__CREATOR_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__INTERPOLATOR_CREATOR_HPP_
