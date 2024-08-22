@@ -21,9 +21,7 @@
 
 #include <vector>
 
-namespace autoware::motion_velocity_planner
-{
-namespace out_of_lane
+namespace autoware::motion_velocity_planner::out_of_lane
 {
 /// @brief create the base footprint of ego
 /// @param [in] p parameters used to create the footprint
@@ -53,7 +51,6 @@ std::vector<lanelet::BasicPolygon2d> calculate_trajectory_footprints(
 /// footprint
 lanelet::BasicPolygon2d calculate_current_ego_footprint(
   const EgoData & ego_data, const PlannerParam & params, const bool ignore_offset = false);
-}  // namespace out_of_lane
-}  // namespace autoware::motion_velocity_planner
+}  // namespace autoware::motion_velocity_planner::out_of_lane
 
 #endif  // FOOTPRINT_HPP_

@@ -43,7 +43,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <vector>
 
 namespace autoware::motion_velocity_planner
 {

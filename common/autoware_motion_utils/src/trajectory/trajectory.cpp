@@ -614,9 +614,9 @@ void calculate_time_from_start(
   // Temporary solution: use a minimum velocity
   for (auto idx = nearest_segment_idx + 1; idx < trajectory.size(); ++idx) {
     const auto & from = trajectory[idx - 1];
-    auto & to = trajectory[idx];
     const auto velocity = std::max(min_velocity, from.longitudinal_velocity_mps);
     if (velocity != 0.0) {
+      auto & to = trajectory[idx];
       const auto t = universe_utils::calcDistance2d(from, to) / velocity;
       to.time_from_start = rclcpp::Duration::from_seconds(t) + from.time_from_start;
     }
