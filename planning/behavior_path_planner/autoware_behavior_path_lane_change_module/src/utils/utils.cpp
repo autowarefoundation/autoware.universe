@@ -1001,7 +1001,7 @@ bool passed_parked_objects(
   const auto min_dist_to_end_of_current_lane = std::invoke([&]() {
     auto min_dist_to_end_of_current_lane = std::numeric_limits<double>::max();
     for (const auto & point : leading_obj_poly.outer()) {
-      const auto obj_p = autoware::universe_utils::createPoint(point.x(), point.y(), 0.0);
+      const auto obj_p = universe_utils::createPoint(point.x(), point.y(), 0.0);
       const auto dist = dist_to_path_end(obj_p);
       min_dist_to_end_of_current_lane = std::min(dist, min_dist_to_end_of_current_lane);
     }
