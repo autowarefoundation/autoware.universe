@@ -111,9 +111,9 @@ PoseEstimatorArbiter::PoseEstimatorArbiter(const rclcpp::NodeOptions & options)
   load_switch_rule();
 
   // Timer callback
-  auto on_timer = std::bind(&PoseEstimatorArbiter::on_timer, this);
-  timer_ =
-    rclcpp::create_timer(this, this->get_clock(), rclcpp::Rate(1).period(), std::move(on_timer));
+  auto on_timer_callback = std::bind(&PoseEstimatorArbiter::on_timer, this);
+  timer_ = rclcpp::create_timer(
+    this, this->get_clock(), rclcpp::Rate(1).period(), std::move(on_timer_callback));
 
   // Enable all pose estimators at the first
   toggle_all(true);
