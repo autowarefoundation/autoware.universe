@@ -512,7 +512,7 @@ bool AstarSearch::isGoal(const AstarNode & node) const
       return false;
     }
 
-    bool is_set_shifted_goal_pose =
+    const bool is_set_shifted_goal_pose =
       is_backward_search_ ? is_behind_goal == is_back : is_behind_goal != is_back;
     if (is_set_shifted_goal_pose) {
       setShiftedGoalPose(pose, relative_pose.position.y);
