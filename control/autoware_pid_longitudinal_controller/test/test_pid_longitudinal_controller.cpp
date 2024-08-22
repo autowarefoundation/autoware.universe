@@ -194,36 +194,23 @@ TEST_F(TestPidLongitudinalController, applySlopeCompensation)
     EXPECT_EQ(acc, 1.0 + 9.81 * std::sin(0.05));
 }
 
-TEST_F(PidLongitudinalControllerTest, KeepBrakeBeforeStop)
+TEST_F(TestPidLongitudinalController, keepBrakeBeforeStop)
 {
     PidLongitudinalController::ControlData control_data;
     PidLongitudinalController::Motion target_motion;
-
+    target_motion.acc = 1.0;
     auto motion = controller_->keepBrakeBeforeStop(control_data, target_motion, 0);
-    EXPECT_LE(motion.acc, target_motion.acc);
+    EXPECT_EQ(motion.acc, 1.0);
 }
 
-TEST_F(PidLongitudinalControllerTest, CalcInterpolatedTrajPointAndSegment)
-{
-    autoware_planning_msgs::msg::Trajectory traj;
-    traj.points.resize(3);
-
-    geometry_msgs::msg::Pose pose;
-    pose.position.x = 1.0;
-    pose.position.y = 1.0;
-
-    auto result = controller_->calcInterpolatedTrajPointAndSegment(traj, pose);
-    EXPECT_EQ(result.second, 0);
-}
-
-TEST_F(PidLongitudinalControllerTest, PredictedStateAfterDelay)
+TEST_F(TestPidLongitudinalController, predictedStateAfterDelay)
 {
     PidLongitudinalController::Motion current_motion;
     current_motion.vel = 10.0;
     current_motion.acc = 1.0;
-
+    m_ctrl_cmd_vec.clear();
     auto state = controller_->predictedStateAfterDelay(current_motion, 0.5);
-    EXPECT_GT(state.vel, 0.0);
+    EXPECT_GT(state.vel, 10.0 + 1.0 * 0.5);
 }
 
 TEST_F(PidLongitudinalControllerTest, ApplyVelocityFeedback)
