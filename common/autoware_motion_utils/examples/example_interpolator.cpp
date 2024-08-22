@@ -18,9 +18,7 @@
 
 #include <matplotlibcpp17/pyplot.h>
 
-#include <ostream>
 #include <random>
-#include <utility>
 #include <vector>
 
 int main()
