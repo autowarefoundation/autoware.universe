@@ -147,7 +147,6 @@ private:
   //!< @brief tf listener
   tf2_ros::TransformListener tf2_listener_;
 
-
   //!< @brief logger configure module
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
