@@ -51,6 +51,7 @@ using autoware_perception_msgs::msg::PredictedPath;
 using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LanesPolygon;
 using behavior_path_planner::lane_change::PathSafetyStatus;
+using behavior_path_planner::lane_change::RouteHandlerPtr;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
@@ -72,8 +73,7 @@ double calcMaximumLaneChangeLength(
   const std::vector<double> & shift_intervals, const double max_acc);
 
 double calcMinimumAcceleration(
-  const double current_velocity, const double min_longitudinal_acc,
-  const LaneChangeParameters & lane_change_parameters);
+  const CommonDataPtr & common_data_ptr, const double min_longitudinal_acc);
 
 double calcMaximumAcceleration(
   const double current_velocity, const double current_max_velocity,
@@ -130,6 +130,11 @@ PathWithLaneId getReferencePathFromTargetLane(
   const double lane_changing_length, const double forward_path_length,
   const double resample_interval, const bool is_goal_in_route,
   const double next_lane_change_buffer);
+
+PathWithLaneId get_path_from_lanelet(
+  const CommonDataPtr & common_data_ptr, const Pose & lc_start_pose,
+  const double lane_changing_length, const double forward_path_length,
+  const double next_lane_buffer, const double resample_interval);
 
 std::vector<DrivableLanes> generateDrivableLanes(
   const std::vector<DrivableLanes> & original_drivable_lanes, const RouteHandler & route_handler,

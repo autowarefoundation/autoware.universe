@@ -904,8 +904,8 @@ std::pair<double, double> NormalLaneChange::calcCurrentMinMaxAcceleration() cons
     prev_module_output_.path.points.at(ego_seg_idx).point.longitudinal_velocity_mps;
 
   // calculate minimum and maximum acceleration
-  const auto min_acc = utils::lane_change::calcMinimumAcceleration(
-    getEgoVelocity(), vehicle_min_acc, *lane_change_parameters_);
+  const auto min_acc =
+    utils::lane_change::calcMinimumAcceleration(common_data_ptr_, vehicle_min_acc);
   const auto max_acc = utils::lane_change::calcMaximumAcceleration(
     getEgoVelocity(), max_path_velocity, vehicle_max_acc, *lane_change_parameters_);
 
@@ -923,14 +923,12 @@ double NormalLaneChange::calcMaximumLaneChangeLength(
 }
 
 std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
+  const lanelet::ConstLanelets & current_lanes) const
 {
   if (prev_module_output_.path.points.empty()) {
     return {};
   }
 
-  const auto & route_handler = *getRouteHandler();
-  const auto current_pose = getEgoPose();
   const auto longitudinal_acc_sampling_num = lane_change_parameters_->longitudinal_acc_sampling_num;
 
   const auto [min_acc, max_acc] = calcCurrentMinMaxAcceleration();
@@ -939,17 +937,6 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   if (max_acc <= 0.0) {
     RCLCPP_DEBUG(
       logger_, "Available max acc <= 0. Normal sampling for acc: [%f ~ %f]", min_acc, max_acc);
-    return utils::lane_change::getAccelerationValues(
-      min_acc, max_acc, longitudinal_acc_sampling_num);
-  }
-
-  // calculate maximum lane change length
-  const double max_lane_change_length = calcMaximumLaneChangeLength(current_lanes.back(), max_acc);
-
-  if (max_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
-    RCLCPP_DEBUG(
-      logger_, "No enough distance to the end of lane. Normal sampling for acc: [%f ~ %f]", min_acc,
-      max_acc);
     return utils::lane_change::getAccelerationValues(
       min_acc, max_acc, longitudinal_acc_sampling_num);
   }
@@ -964,42 +951,49 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
       min_acc, max_acc, longitudinal_acc_sampling_num);
   }
 
-  // if maximum lane change length is less than length to goal or the end of target lanes, only
-  // sample max acc
-  if (route_handler.isInGoalRouteSection(target_lanes.back())) {
-    const auto goal_pose = route_handler.getGoalPose();
-    if (max_lane_change_length < utils::getSignedDistance(current_pose, goal_pose, target_lanes)) {
-      RCLCPP_DEBUG(
-        logger_, "Distance to goal has enough distance. Sample only max_acc: %f", max_acc);
-      return {max_acc};
-    }
-  } else if (max_lane_change_length < utils::getDistanceToEndOfLane(current_pose, target_lanes)) {
+  // calculate maximum lane change length
+  const auto max_lane_change_length = calcMaximumLaneChangeLength(current_lanes.back(), max_acc);
+  const auto dist_to_terminal_end = calculation::calc_ego_dist_to_terminal_end(common_data_ptr_);
+
+  if (max_lane_change_length > dist_to_terminal_end) {
     RCLCPP_DEBUG(
-      logger_, "Distance to end of lane has enough distance. Sample only max_acc: %f", max_acc);
-    return {max_acc};
+      logger_, "No enough distance to the end of lane. Normal sampling for acc: [%f ~ %f]", min_acc,
+      max_acc);
+    return utils::lane_change::getAccelerationValues(
+      min_acc, max_acc, longitudinal_acc_sampling_num);
   }
 
-  RCLCPP_DEBUG(logger_, "Normal sampling for acc: [%f ~ %f]", min_acc, max_acc);
-  return utils::lane_change::getAccelerationValues(min_acc, max_acc, longitudinal_acc_sampling_num);
+  RCLCPP_DEBUG(logger_, "Distance to goal has enough distance. Sample only max_acc: %f", max_acc);
+  return {max_acc};
 }
 
 std::vector<double> NormalLaneChange::calcPrepareDuration(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
+  const lanelet::ConstLanelets & current_lanes,
+  [[maybe_unused]] const lanelet::ConstLanelets & target_lanes) const
 {
   const auto base_link2front = planner_data_->parameters.base_link2front;
   const auto threshold =
     lane_change_parameters_->min_length_for_turn_signal_activation + base_link2front;
 
+  const auto dist_to_end = calculation::calc_ego_dist_to_terminal_end(common_data_ptr_);
+  const auto & route_handler_ptr = common_data_ptr_->route_handler_ptr;
+  const auto & lc_param = *common_data_ptr_->lc_param_ptr;
+  const auto lane_change_buffer =
+    calcMinimumLaneChangeLength(route_handler_ptr, current_lanes.back(), lc_param, Direction::NONE);
+
   std::vector<double> prepare_durations;
   constexpr double step = 0.5;
 
-  for (double duration = lane_change_parameters_->lane_change_prepare_duration; duration >= 0.0;
-       duration -= step) {
-    prepare_durations.push_back(duration);
-    if (!isNearEndOfCurrentLanes(current_lanes, target_lanes, threshold)) {
-      break;
-    }
+  const auto prepare_duration_limit =
+    calculation::calc_prepare_duration_limit(common_data_ptr_, current_lanes);
+  if (dist_to_end - lane_change_buffer > threshold) {
+    return {prepare_duration_limit};
   }
+
+  for (double duration = prepare_duration_limit; duration >= 0.0; duration -= step) {
+    prepare_durations.push_back(duration);
+  }
+  prepare_durations.push_back(0.0);
 
   return prepare_durations;
 }
@@ -1411,10 +1405,7 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto current_velocity = getEgoVelocity();
 
   // get sampling acceleration values
-  const auto longitudinal_acc_sampling_values =
-    sampleLongitudinalAccValues(current_lanes, target_lanes);
-
-  const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanes.back());
+  const auto longitudinal_acc_sampling_values = sampleLongitudinalAccValues(current_lanes);
 
   const double lane_change_buffer = utils::lane_change::calcMinimumLaneChangeLength(
     *lane_change_parameters_,
@@ -1620,10 +1611,15 @@ bool NormalLaneChange::getLaneChangePaths(
 
         const auto resample_interval = utils::lane_change::calcLaneChangeResampleInterval(
           lane_changing_length, initial_lane_changing_velocity);
-        const auto target_lane_reference_path = utils::lane_change::getReferencePathFromTargetLane(
-          route_handler, target_lanes, lane_changing_start_pose, target_lane_length,
-          lane_changing_length, forward_path_length, resample_interval, is_goal_in_route,
-          next_lane_change_buffer);
+        // const auto target_lane_reference_path =
+        // utils::lane_change::getReferencePathFromTargetLane(
+        //   route_handler, target_lanes, lane_changing_start_pose, target_lane_length,
+        //   lane_changing_length, forward_path_length, resample_interval, is_goal_in_route,
+        //   next_lane_change_buffer);
+
+        const auto target_lane_reference_path = utils::lane_change::get_path_from_lanelet(
+          common_data_ptr_, lane_changing_start_pose, lane_changing_length, forward_path_length,
+          next_lane_change_buffer, resample_interval);
 
         if (target_lane_reference_path.points.empty()) {
           debug_print_lat("Reject: target_lane_reference_path is empty!!");
@@ -1718,6 +1714,10 @@ bool NormalLaneChange::getLaneChangePaths(
         debug_print_lat("Reject: sampled path is not safe.");
       }
     }
+  }
+
+  if (candidate_paths->empty()) {
+    RCLCPP_DEBUG(logger_, "No candidate path at all.");
   }
 
   RCLCPP_DEBUG(logger_, "No safety path found.");

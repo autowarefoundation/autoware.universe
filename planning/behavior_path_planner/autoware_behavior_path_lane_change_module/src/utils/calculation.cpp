@@ -141,4 +141,57 @@ double calc_ego_dist_to_lanes_start(
 
   return motion_utils::calcSignedArcLength(path.points, ego_position, target_front_pt);
 }
+
+double calc_min_lane_changing_length(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes)
+{
+  const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+  if (!route_handler_ptr || lanes.empty()) {
+    return std::numeric_limits<double>::max();
+  }
+
+  const auto direction = common_data_ptr->direction;
+  const auto shift_intervals =
+    route_handler_ptr->getLateralIntervalsToPreferredLane(lanes.back(), direction);
+
+  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
+  if (shift_intervals.empty() || !lc_param_ptr) {
+    return std::numeric_limits<double>::max();
+  }
+
+  const auto min_vel = lc_param_ptr->minimum_lane_changing_velocity;
+  const auto min_max_lat_acc = lc_param_ptr->lane_change_lat_acc_map.find(min_vel);
+  // const auto min_lat_acc = std::get<0>(min_max_lat_acc);
+  const auto max_lat_acc = std::get<1>(min_max_lat_acc);
+  const auto lat_jerk = lc_param_ptr->lane_changing_lateral_jerk;
+  const auto finish_judge_buffer = lc_param_ptr->lane_change_finish_judge_buffer;
+
+  const auto calc_sum = [&](double sum, double shift_interval) {
+    const auto t = PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
+    return sum + (min_vel * t + finish_judge_buffer);
+  };
+
+  const auto total_length =
+    std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
+
+  const auto backward_buffer = calc_stopping_distance(lc_param_ptr);
+  return total_length + backward_buffer * (static_cast<double>(shift_intervals.size() - 1));
+}
+
+double calc_prepare_duration_limit(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes)
+{
+  const auto dist_to_end = calculation::calc_ego_dist_to_terminal_end(common_data_ptr);
+  const auto min_lc_length = calc_min_lane_changing_length(common_data_ptr, lanes);
+
+  const auto dist_to_terminal_start = dist_to_end - min_lc_length;
+  constexpr auto epsilon = 1e-3;
+  const auto current_speed = common_data_ptr->get_ego_speed();
+  const auto speed = current_speed > epsilon ? current_speed : epsilon;
+
+  const auto duration = dist_to_terminal_start / speed;
+
+  const auto max_prepare_duration = common_data_ptr->lc_param_ptr->lane_change_prepare_duration;
+  return std::clamp(duration, epsilon, max_prepare_duration);
+}
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation

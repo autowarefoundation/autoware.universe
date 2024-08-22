@@ -162,12 +162,15 @@ double calcMaximumLaneChangeLength(
 }
 
 double calcMinimumAcceleration(
-  const double current_velocity, const double min_longitudinal_acc,
-  const LaneChangeParameters & lane_change_parameters)
+  const CommonDataPtr & common_data_ptr, const double min_longitudinal_acc)
 {
-  const double min_lane_changing_velocity = lane_change_parameters.minimum_lane_changing_velocity;
-  const double prepare_duration = lane_change_parameters.lane_change_prepare_duration;
-  const double acc = (min_lane_changing_velocity - current_velocity) / prepare_duration;
+  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
+  const auto current_speed = common_data_ptr->get_ego_speed();
+  const auto min_lane_changing_velocity = lc_param_ptr->minimum_lane_changing_velocity;
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  const auto prepare_duration =
+    calculation::calc_prepare_duration_limit(common_data_ptr, current_lanes);
+  const auto acc = (min_lane_changing_velocity - current_speed) / prepare_duration;
   return std::clamp(acc, -std::abs(min_longitudinal_acc), -std::numeric_limits<double>::epsilon());
 }
 
@@ -437,6 +440,53 @@ PathWithLaneId getReferencePathFromTargetLane(
 
   const auto lane_changing_reference_path =
     route_handler.getCenterLinePath(target_lanes, s_start, s_end);
+
+  return utils::resamplePathWithSpline(
+    lane_changing_reference_path, resample_interval, true, {0.0, lane_changing_length});
+}
+
+PathWithLaneId get_path_from_lanelet(
+  const CommonDataPtr & common_data_ptr, const Pose & lc_start_pose,
+  const double lane_changing_length, const double forward_path_length,
+  const double next_lane_buffer, const double resample_interval)
+{
+  if (!common_data_ptr) {
+    return PathWithLaneId();
+  }
+
+  const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+  const auto & target_neighbor_lanes = common_data_ptr->lanes_ptr->target_neighbor;
+
+  if (!route_handler_ptr || target_neighbor_lanes.empty()) {
+    return PathWithLaneId();
+  }
+
+  auto reference_path = route_handler_ptr->getCenterLinePath(
+    target_neighbor_lanes, 0.0, std::numeric_limits<double>::max());
+
+  if (reference_path.points.empty()) {
+    return PathWithLaneId();
+  }
+
+  const auto & front_pose = reference_path.points.front().point.pose;
+  const auto s_start = motion_utils::calcSignedArcLength(
+    reference_path.points, front_pose.position, lc_start_pose.position);
+  const auto s_end = std::invoke([&]() -> double {
+                       const auto is_goal_section =
+                         route_handler_ptr->isInGoalRouteSection(target_neighbor_lanes.back());
+                       if (is_goal_section) {
+                         const auto & goal_pose = route_handler_ptr->getGoalPose();
+                         const auto dist_to_goal = motion_utils::calcSignedArcLength(
+                           reference_path.points, front_pose.position, goal_pose.position);
+                         return std::min(forward_path_length, dist_to_goal);
+                       }
+                       return forward_path_length;
+                     }) -
+                     next_lane_buffer;
+
+  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  const auto lane_changing_reference_path =
+    route_handler_ptr->getCenterLinePath(target_lanes, s_start, s_end);
 
   return utils::resamplePathWithSpline(
     lane_changing_reference_path, resample_interval, true, {0.0, lane_changing_length});

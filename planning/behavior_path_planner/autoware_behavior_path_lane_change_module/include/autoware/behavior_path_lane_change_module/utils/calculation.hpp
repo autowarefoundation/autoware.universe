@@ -113,6 +113,11 @@ double calc_maximum_prepare_length(const CommonDataPtr & common_data_ptr);
 double calc_ego_dist_to_lanes_start(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
+double calc_min_lane_changing_length(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
+
+double calc_prepare_duration_limit(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__CALCULATION_HPP_
