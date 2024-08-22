@@ -98,7 +98,8 @@ double calc_maximum_prepare_length(const CommonDataPtr & common_data_ptr);
  * This function computes the shortest distance from the current position of the ego vehicle
  * to the start of the target lanes by measuring the arc length to the front points of
  * the left and right boundaries of the target lane. If the target lanes are empty or other
- * required data is unavailable, the function returns 0.0.
+ * required data is unavailable, the function returns numeric_limits<double>::max() preventing lane
+ * change being executed.
  *
  * @param common_data_ptr Shared pointer to a CommonData structure, which should include:
  *  - `route_handler_ptr`: Pointer to the route handler that manages the route.
@@ -107,7 +108,7 @@ double calc_maximum_prepare_length(const CommonDataPtr & common_data_ptr);
  * @param target_lanes The set of lanelets representing the target lanes for lane changing.
  *
  * @return The distance from the ego vehicle to the start of the target lanes in meters,
- * or 0.0 if the target lanes are empty or data is unavailable.
+ * or numeric_limits<double>::max() if the target lanes are empty or data is unavailable.
  */
 double calc_ego_dist_to_lanes_start(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
