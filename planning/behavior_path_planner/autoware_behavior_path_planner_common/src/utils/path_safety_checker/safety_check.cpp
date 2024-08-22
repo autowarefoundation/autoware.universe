@@ -129,6 +129,7 @@ Polygon2d createExtendedPolygon(
     autoware::universe_utils::calcOffsetPose(base_link_pose, backward_lon_offset, lat_offset, 0.0);
 
   Polygon2d polygon;
+  polygon.outer().reserve(5);
   appendPointToPolygon(polygon, p1.position);
   appendPointToPolygon(polygon, p2.position);
   appendPointToPolygon(polygon, p3.position);
@@ -140,13 +141,14 @@ Polygon2d createExtendedPolygon(
 }
 
 Polygon2d createExtendedPolygon(
-  const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin,
-  const bool is_stopped_obj, CollisionCheckDebug & debug)
+  const PoseWithVelocityAndPolygonStamped & obj_pose_with_poly, const double lon_length,
+  const double lat_margin, const bool is_stopped_obj, CollisionCheckDebug & debug)
 {
-  const auto obj_polygon = autoware::universe_utils::toPolygon2d(obj_pose, shape);
+  const auto & obj_polygon = obj_pose_with_poly.poly;
   if (obj_polygon.outer().empty()) {
     return obj_polygon;
   }
+  const auto & obj_pose = obj_pose_with_poly.pose;
 
   double max_x = std::numeric_limits<double>::lowest();
   double min_x = std::numeric_limits<double>::max();
@@ -186,6 +188,7 @@ Polygon2d createExtendedPolygon(
     autoware::universe_utils::calcOffsetPose(obj_pose, backward_lon_offset, left_lat_offset, 0.0);
 
   Polygon2d polygon;
+  polygon.outer().reserve(5);
   appendPointToPolygon(polygon, p1.position);
   appendPointToPolygon(polygon, p2.position);
   appendPointToPolygon(polygon, p3.position);
@@ -670,10 +673,9 @@ std::vector<Polygon2d> getCollidedPolygons(
       throw std::domain_error("invalid rss parameter. please select 'rectangle' or 'along_path'.");
     }();
     const auto & extended_obj_polygon =
-      is_object_front
-        ? obj_polygon
-        : createExtendedPolygon(
-            obj_pose, target_object.shape, lon_offset, lat_margin, is_stopped_object, debug);
+      is_object_front ? obj_polygon
+                      : createExtendedPolygon(
+                          obj_pose_with_poly, lon_offset, lat_margin, is_stopped_object, debug);
 
     // check overlap with extended polygon
     if (boost::geometry::overlaps(extended_ego_polygon, extended_obj_polygon)) {
@@ -818,6 +820,56 @@ std::pair<bool, bool> checkObjectsCollisionRough(
     }
   }
   return has_collision;
+}
+
+double calculateRoughDistanceToObjects(
+  const PathWithLaneId & path, const PredictedObjects & objects,
+  const BehaviorPathPlannerParameters & parameters, const bool use_offset_ego_point,
+  const std::string & distance_type)
+{
+  const auto & points = path.points;
+
+  const double ego_length = std::invoke([&]() -> double {
+    const auto & p = parameters;
+    if (distance_type == "min") {
+      return std::max(
+        std::hypot(p.vehicle_width / 2, p.front_overhang),
+        std::hypot(p.vehicle_width / 2, p.rear_overhang));
+    } else if (distance_type == "max") {
+      return std::min({p.vehicle_width / 2, p.front_overhang / 2, p.rear_overhang / 2});
+    }
+    throw std::invalid_argument("Invalid distance type");
+  });
+
+  double min_distance = std::numeric_limits<double>::max();
+  for (const auto & object : objects.objects) {
+    const double object_length = std::invoke([&]() -> double {
+      if (distance_type == "min") {
+        return calcObstacleMaxLength(object.shape);
+      } else if (distance_type == "max") {
+        return calcObstacleMinLength(object.shape);
+      }
+      throw std::invalid_argument("Invalid distance type");
+    });
+    const Point & object_point = object.kinematics.initial_pose_with_covariance.pose.position;
+    const double distance = std::invoke([&]() -> double {
+      if (use_offset_ego_point) {
+        const size_t nearest_segment_idx = findNearestSegmentIndex(points, object_point);
+        const double offset_length =
+          calcLongitudinalOffsetToSegment(points, nearest_segment_idx, object_point);
+        const auto offset_point =
+          calcLongitudinalOffsetPoint(points, nearest_segment_idx, offset_length);
+        const Point ego_point =
+          offset_point ? offset_point.value()
+                       : points.at(findNearestIndex(points, object_point)).point.pose.position;
+        return std::max(calcDistance2d(ego_point, object_point) - object_length - ego_length, 0.0);
+      }
+      const Point ego_point = points.at(findNearestIndex(points, object_point)).point.pose.position;
+      return std::max(calcDistance2d(ego_point, object_point) - object_length - ego_length, 0.0);
+    });
+    min_distance = std::min(min_distance, distance);
+  }
+  return min_distance;
 }
 
 }  // namespace autoware::behavior_path_planner::utils::path_safety_checker

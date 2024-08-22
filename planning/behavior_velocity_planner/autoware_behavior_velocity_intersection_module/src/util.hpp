@@ -116,8 +116,16 @@ geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
  */
 std::pair<lanelet::ConstLanelets, std::vector<lanelet::ConstLanelets>>
 mergeLaneletsByTopologicalSort(
-  const lanelet::ConstLanelets & lanelets,
+  const lanelet::ConstLanelets & lanelets, const lanelet::ConstLanelets & terminal_lanelets,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr);
+
+/**
+ * @brief this functions retrieves all the paths from the given source to terminal nodes on the tree
+ @param[in] visited_inds visited node indices excluding src_ind so far
+ */
+void retrievePathsBackward(
+  const std::vector<std::vector<bool>> & adjacency, const size_t src_ind,
+  const std::vector<size_t> & visited_inds, std::vector<std::vector<size_t>> & paths);
 
 /**
  * @brief find the index of the first point where vehicle footprint intersects with the given
