@@ -92,8 +92,9 @@ double calcMinimumLaneChangeLength(
   }
 
   const auto min_vel = lane_change_parameters.minimum_lane_changing_velocity;
-  const auto [min_lat_acc, max_lat_acc] =
-    lane_change_parameters.lane_change_lat_acc_map.find(min_vel);
+  const auto min_max_lat_acc = lane_change_parameters.lane_change_lat_acc_map.find(min_vel);
+  // const auto min_lat_acc = std::get<0>(min_max_lat_acc);
+  const auto max_lat_acc = std::get<1>(min_max_lat_acc);
   const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
   const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
 
@@ -777,7 +778,7 @@ std::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const BehaviorPathPlannerParameters & common_parameters,
+  const double lane_changing_acceleration, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters, const double resolution)
 {
   if (lane_change_path.path.points.empty()) {
@@ -786,7 +787,6 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
 
   const auto & path = lane_change_path.path;
   const auto prepare_acc = lane_change_path.info.longitudinal_acceleration.prepare;
-  const auto lane_changing_acc = lane_change_path.info.longitudinal_acceleration.lane_changing;
   const auto duration = lane_change_path.info.duration.sum();
   const auto prepare_time = lane_change_path.info.duration.prepare;
   const auto & minimum_lane_changing_velocity =
@@ -819,9 +819,9 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
     initial_velocity * prepare_time + 0.5 * prepare_acc * prepare_time * prepare_time;
   for (double t = prepare_time; t < duration; t += resolution) {
     const double delta_t = t - prepare_time;
-    const double velocity = lane_changing_velocity + lane_changing_acc * delta_t;
-    const double length =
-      lane_changing_velocity * delta_t + 0.5 * lane_changing_acc * delta_t * delta_t + offset;
+    const double velocity = lane_changing_velocity + lane_changing_acceleration * delta_t;
+    const double length = lane_changing_velocity * delta_t +
+                          0.5 * lane_changing_acceleration * delta_t * delta_t + offset;
     const auto pose = autoware::motion_utils::calcInterpolatedPose(
       path.points, vehicle_pose_frenet.length + length);
     predicted_path.emplace_back(t, pose, velocity);
@@ -1091,8 +1091,7 @@ ExtendedPredictedObject transform(
 
   const auto & time_resolution = lane_change_parameters.prediction_time_resolution;
   const auto & prepare_duration = lane_change_parameters.lane_change_prepare_duration;
-  const auto & velocity_threshold =
-    lane_change_parameters.prepare_segment_ignore_object_velocity_thresh;
+  const auto & velocity_threshold = lane_change_parameters.stopped_object_velocity_threshold;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
   const double obj_vel_norm = std::hypot(
     extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
