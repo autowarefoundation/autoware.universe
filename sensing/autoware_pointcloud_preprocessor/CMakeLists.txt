@@ -66,7 +66,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/concatenate_data/concatenate_pointclouds.cpp
   src/time_synchronizer/time_synchronizer_nodelet.cpp
   src/crop_box_filter/crop_box_filter_nodelet.cpp
-  src/downsample_filter/voxel_grid_downsample_filter_nodelet.cpp
+  src/downsample_filter/voxel_grid_downsample_filter_node.cpp
   src/downsample_filter/random_downsample_filter_nodelet.cpp
   src/downsample_filter/approximate_downsample_filter_nodelet.cpp
   src/downsample_filter/pickup_based_voxel_grid_downsample_filter.cpp
@@ -81,7 +81,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/vector_map_filter/lanelet2_map_filter_nodelet.cpp
   src/distortion_corrector/distortion_corrector.cpp
   src/distortion_corrector/distortion_corrector_node.cpp
-  src/blockage_diag/blockage_diag_nodelet.cpp
+  src/blockage_diag/blockage_diag_node.cpp
   src/polygon_remover/polygon_remover.cpp
   src/vector_map_filter/vector_map_inside_area_filter_node.cpp
   src/utility/geometry.cpp
