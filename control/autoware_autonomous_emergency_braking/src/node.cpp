@@ -368,7 +368,10 @@ bool AEB::fetchLatestData()
   });
 
   if (!has_imu_path && !has_predicted_path) {
-    return missing("any type of path");
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), 5000,
+      "[AEB] At least one path (IMU or predicted trajectory) is required for operation");
+    return false;
   }
 
   autoware_state_ = sub_autoware_state_.takeData();
