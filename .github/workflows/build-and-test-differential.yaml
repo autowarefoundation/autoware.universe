@@ -28,7 +28,7 @@ jobs:
       label: tag:require-cuda-build-and-test
 
   build-and-test-differential:
-    needs: make-sure-label-is-present
+    needs: [make-sure-label-is-present, make-sure-require-cuda-label-is-present]
     if: ${{ needs.make-sure-label-is-present.outputs.result == 'true' }}
     runs-on: ${{ matrix.runner }}
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
