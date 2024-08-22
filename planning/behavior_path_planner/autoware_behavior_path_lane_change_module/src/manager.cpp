@@ -74,8 +74,8 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
     *node, parameter("enable_collision_check_for_prepare_phase.intersection"));
   p.enable_collision_check_for_prepare_phase_in_turns =
     getOrDeclareParameter<bool>(*node, parameter("enable_collision_check_for_prepare_phase.turns"));
-  p.prepare_segment_ignore_object_velocity_thresh = getOrDeclareParameter<double>(
-    *node, parameter("prepare_segment_ignore_object_velocity_thresh"));
+  p.stopped_object_velocity_threshold =
+    getOrDeclareParameter<double>(*node, parameter("stopped_object_velocity_threshold"));
   p.check_objects_on_current_lanes =
     getOrDeclareParameter<bool>(*node, parameter("check_objects_on_current_lanes"));
   p.check_objects_on_other_lanes =
@@ -238,6 +238,8 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
     getOrDeclareParameter<double>(*node, parameter("cancel.overhang_tolerance"));
   p.cancel.unsafe_hysteresis_threshold =
     getOrDeclareParameter<int>(*node, parameter("cancel.unsafe_hysteresis_threshold"));
+  p.cancel.deceleration_sampling_num =
+    getOrDeclareParameter<int>(*node, parameter("cancel.deceleration_sampling_num"));
 
   // finish judge parameters
   p.lane_change_finish_judge_buffer =
@@ -352,6 +354,13 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
     // longitudinal acceleration
     updateParam<double>(parameters, ns + "min_longitudinal_acc", p->min_longitudinal_acc);
     updateParam<double>(parameters, ns + "max_longitudinal_acc", p->max_longitudinal_acc);
+  }
+
+  {
+    const std::string ns = "lane_change.skip_process.longitudinal_distance_diff_threshold.";
+    updateParam<double>(parameters, ns + "prepare", p->skip_process_lon_diff_th_prepare);
+    updateParam<double>(
+      parameters, ns + "lane_changing", p->skip_process_lon_diff_th_lane_changing);
   }
 
   {
