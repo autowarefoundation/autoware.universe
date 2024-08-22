@@ -15,9 +15,7 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__STAIRSTEP_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__STAIRSTEP_HPP_
 
-#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
-
-#include <vector>
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/stairstep_common_impl.hpp"
 
 namespace autoware::motion_utils::trajectory_container::interpolator
 {
@@ -32,55 +30,6 @@ namespace autoware::motion_utils::trajectory_container::interpolator
 template <typename T>
 class Stairstep;
 
-namespace detail
-{
-
-/**
- * @brief Base class for stairstep interpolation.
- *
- * This class implements the core functionality for stairstep interpolation.
- *
- * @tparam T The type of the values being interpolated.
- */
-template <typename T>
-class StairstepCommonImpl : public Interpolator<T>
-{
-protected:
-  std::vector<T> values;  ///< Interpolation values.
-
-  /**
-   * @brief Compute the interpolated value at the given point.
-   *
-   * @param s The point at which to compute the interpolated value.
-   * @return The interpolated value.
-   */
-  [[nodiscard]] T compute_impl(const double & s) const override
-  {
-    const int32_t idx = this->get_index(s, false);
-    return this->values.at(idx);
-  }
-
-  /**
-   * @brief Build the interpolator with the given values.
-   *
-   * @param values The values to interpolate.
-   */
-  void build_impl(const std::vector<T> & values) override { this->values = values; }
-
-public:
-  /**
-   * @brief Default constructor.
-   */
-  StairstepCommonImpl() = default;
-
-  /**
-   * @brief Get the minimum number of required points for the interpolator.
-   */
-  [[nodiscard]] size_t minimum_required_points() const override { return 2; }
-};
-
-}  // namespace detail
-
 /**
  * @brief Template class for stairstep interpolation.
  *
@@ -91,6 +40,11 @@ public:
 template <typename T>
 class Stairstep : public detail::StairstepCommonImpl<T>
 {
+  template <typename InterpolatorType>
+  friend class InterpolatorCreator;
+
+private:
+  Stairstep() = default;
 };
 
 /**
@@ -101,7 +55,11 @@ class Stairstep : public detail::StairstepCommonImpl<T>
 template <>
 class Stairstep<double> : public detail::StairstepCommonImpl<double>
 {
+  template <typename InterpolatorType>
+  friend class InterpolatorCreator;
+
 private:
+  Stairstep() = default;
   /**
    * @brief Compute the first derivative at the given point.
    *

@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include <gtest/internal/gtest-type-util.h>
 
+#include <optional>
 #include <random>
 #include <vector>
 
@@ -24,7 +25,7 @@ template <class Interpolator>
 class TestInterpolator : public ::testing::Test
 {
 public:
-  Interpolator interpolator;
+  std::optional<Interpolator> interpolator;
   std::vector<double> axis;
   std::vector<double> values;
 
@@ -54,9 +55,11 @@ TYPED_TEST_SUITE(TestInterpolator, Interpolators, );
 
 TYPED_TEST(TestInterpolator, compute)
 {
-  this->interpolator.build(this->axis, this->values);
+  using autoware::motion_utils::trajectory_container::interpolator::InterpolatorCreator;
+  this->interpolator =
+    InterpolatorCreator<TypeParam>().set_axis(this->axis).set_values(this->values).create();
   for (size_t i = 0; i < this->axis.size(); ++i) {
-    EXPECT_NEAR(this->values[i], this->interpolator.compute(this->axis[i]), 1e-6);
+    EXPECT_NEAR(this->values[i], this->interpolator->compute(this->axis[i]), 1e-6);
   }
 }
 

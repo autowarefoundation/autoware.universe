@@ -31,8 +31,13 @@ namespace autoware::motion_utils::trajectory_container::interpolator
  */
 class AkimaSpline : public Interpolator<double>
 {
+  template <typename InterpolatorType>
+  friend class InterpolatorCreator;
+
 private:
   Eigen::VectorXd a_, b_, c_, d_;  ///< Coefficients for the Akima spline.
+
+  AkimaSpline() = default;
 
   /**
    * @brief Compute the spline parameters.
@@ -49,9 +54,12 @@ private:
   /**
    * @brief Build the interpolator with the given values.
    *
+   * @param axis The axis values.
    * @param values The values to interpolate.
+   * @return True if the interpolator was built successfully, false otherwise.
    */
-  void build_impl(const std::vector<double> & values) override;
+  bool build(
+    const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<double> & values) override;
 
   /**
    * @brief Compute the interpolated value at the given point.
@@ -83,7 +91,7 @@ public:
    *
    * @return The minimum number of required points.
    */
-  [[nodiscard]] size_t minimum_required_points() const override { return 5; }
+  [[nodiscard]] static size_t minimum_required_points() { return 5; }
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

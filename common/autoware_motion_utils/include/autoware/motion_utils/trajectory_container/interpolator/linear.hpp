@@ -31,15 +31,26 @@ namespace autoware::motion_utils::trajectory_container::interpolator
  */
 class Linear : public Interpolator<double>
 {
+  template <typename InterpolatorType>
+  friend class InterpolatorCreator;
+
 private:
   Eigen::VectorXd values_;  ///< Interpolation values.
 
   /**
+   * @brief Default constructor.
+   */
+  Linear() = default;
+
+  /**
    * @brief Build the interpolator with the given values.
    *
+   * @param axis The axis values.
    * @param values The values to interpolate.
+   * @return True if the interpolator was built successfully, false otherwise.
    */
-  void build_impl(const std::vector<double> & values) override;
+  bool build(
+    const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<double> & values) override;
 
   /**
    * @brief Compute the interpolated value at the given point.
@@ -67,16 +78,11 @@ private:
 
 public:
   /**
-   * @brief Default constructor.
-   */
-  Linear() = default;
-
-  /**
    * @brief Get the minimum number of required points for the interpolator.
    *
    * @return The minimum number of required points.
    */
-  [[nodiscard]] size_t minimum_required_points() const override;
+  [[nodiscard]] static size_t minimum_required_points();
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

@@ -60,11 +60,14 @@ void AkimaSpline::compute_parameters(
   }
 }
 
-void AkimaSpline::build_impl(const std::vector<double> & values)
+bool AkimaSpline::build(
+  const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<double> & values)
 {
+  this->axis_ = axis;
   compute_parameters(
     this->axis_,
     Eigen::Map<const Eigen::VectorXd>(values.data(), static_cast<Eigen::Index>(values.size())));
+  return true;
 }
 
 double AkimaSpline::compute_impl(const double & s) const

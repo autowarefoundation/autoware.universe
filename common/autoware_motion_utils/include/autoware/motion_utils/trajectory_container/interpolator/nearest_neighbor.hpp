@@ -15,9 +15,7 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__NEAREST_NEIGHBOR_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__NEAREST_NEIGHBOR_HPP_
 
-#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
-
-#include <vector>
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/nearest_neighbor_common_impl.hpp"
 
 namespace autoware::motion_utils::trajectory_container::interpolator
 {
@@ -32,59 +30,6 @@ namespace autoware::motion_utils::trajectory_container::interpolator
 template <typename T>
 class NearestNeighbor;
 
-namespace detail
-{
-
-/**
- * @brief Common Implementation of nearest neighbor.
- *
- * This class implements the core functionality for nearest neighbor interpolation.
- *
- * @tparam T The type of the values being interpolated.
- */
-template <typename T>
-class NearestNeighborCommonImpl : public Interpolator<T>
-{
-protected:
-  std::vector<T> values_;  ///< Interpolation values.
-
-  /**
-   * @brief Compute the interpolated value at the given point.
-   *
-   * @param s The point at which to compute the interpolated value.
-   * @return The interpolated value.
-   */
-  [[nodiscard]] T compute_impl(const double & s) const override
-  {
-    const int32_t idx = this->get_index(s);
-    return (std::abs(s - this->axis_[idx]) <= std::abs(s - this->axis_[idx + 1]))
-             ? this->values_.at(idx)
-             : this->values_.at(idx + 1);
-  }
-
-  /**
-   * @brief Build the interpolator with the given values.
-   *
-   * @param values The values to interpolate.
-   */
-  void build_impl(const std::vector<T> & values) override { this->values_ = values; }
-
-public:
-  /**
-   * @brief Default constructor.
-   */
-  NearestNeighborCommonImpl() = default;
-
-  /**
-   * @brief Get the minimum number of required points for the interpolator.
-   *
-   * @return The minimum number of required points.
-   */
-  [[nodiscard]] size_t minimum_required_points() const override { return 1; }
-};
-
-}  // namespace detail
-
 /**
  * @brief Template class for nearest neighbor interpolation.
  *
@@ -95,6 +40,11 @@ public:
 template <typename T>
 class NearestNeighbor : public detail::NearestNeighborCommonImpl<T>
 {
+  template <typename InterpolatorType>
+  friend class InterpolatorCreator;
+
+private:
+  NearestNeighbor() = default;
 };
 
 /**
@@ -105,7 +55,12 @@ class NearestNeighbor : public detail::NearestNeighborCommonImpl<T>
 template <>
 class NearestNeighbor<double> : public detail::NearestNeighborCommonImpl<double>
 {
+  template <typename InterpolatorType>
+  friend class InterpolatorCreator;
+
 private:
+  NearestNeighbor() = default;
+
   /**
    * @brief Compute the first derivative at the given point.
    *
