@@ -183,7 +183,7 @@ TEST_F(TestPidLongitudinalController, getCurrentShift)
 
 TEST_F(TestPidLongitudinalController, storeAccelCmd)
 {
-    m_ctrl_cmd_vec.clear();
+    controller_->m_ctrl_cmd_vec.clear();
     controller_->storeAccelCmd(1.0);
     EXPECT_FALSE(controller_->m_ctrl_cmd_vec.empty());
 }
@@ -208,7 +208,7 @@ TEST_F(TestPidLongitudinalController, predictedStateAfterDelay)
     PidLongitudinalController::Motion current_motion;
     current_motion.vel = 10.0;
     current_motion.acc = 1.0;
-    m_ctrl_cmd_vec.clear();
+    controller_->m_ctrl_cmd_vec.clear();
     auto state = controller_->predictedStateAfterDelay(current_motion, 0.5);
     EXPECT_GT(state.vel, 10.0 + 1.0 * 0.5);
 }
