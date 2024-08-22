@@ -488,7 +488,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 
   // step3. make function to check collision with ego path created with sensor data
   const auto has_collision_ego = [&](pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) -> bool {
-    if (!use_imu_path_) return false;
+    if (!use_imu_path_ || !angular_velocity_ptr_) return false;
     const double current_w = angular_velocity_ptr_->z;
     constexpr colorTuple debug_color = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
     const std::string ns = "ego";
