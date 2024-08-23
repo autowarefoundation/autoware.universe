@@ -455,22 +455,19 @@ void AstarSearch::setPath(const AstarNode & goal_node)
   }
 
   waypoints_.header = header;
-  waypoints_.waypoints.clear();
+  waypoints_.waypoints = waypoints;
 
-  for (size_t i = 0; i < waypoints.size() - 1; ++i) {
-    const auto & current = waypoints[i];
-    const auto & next = waypoints[i + 1];
+  if (!is_backward_search_) return;
 
-    waypoints_.waypoints.push_back(current);
+  for (size_t i = 0; i < waypoints_.waypoints.size() - 1; ++i) {
+    const auto & current = waypoints_.waypoints[i];
+    auto & next = waypoints_.waypoints[i + 1];
 
     if (current.is_back != next.is_back) {
-      waypoints_.waypoints.push_back(
-        {is_backward_search_ ? next.pose : current.pose,
-         is_backward_search_ ? current.is_back : next.is_back});
+      next.is_back = current.is_back;
+      ++i;  // skip next waypoint
     }
   }
-
-  waypoints_.waypoints.push_back(waypoints.back());
 }
 
 bool AstarSearch::isGoal(const AstarNode & node) const
