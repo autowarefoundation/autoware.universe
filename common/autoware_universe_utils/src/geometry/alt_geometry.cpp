@@ -239,6 +239,23 @@ double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
   return min_distance;
 }
 
+alt::ConvexPolygon2d envelope(const alt::ConvexPolygon2d & poly)
+{
+  const auto [x_min_vertex, x_max_vertex] = std::minmax_element(
+    poly.vertices().begin(), poly.vertices().end(),
+    [](const auto & a, const auto & b) { return a.x() < b.x(); });
+
+  const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
+    poly.vertices().begin(), poly.vertices().end(),
+    [](const auto & a, const auto & b) { return a.y() < b.y(); });
+
+  return alt::ConvexPolygon2d{
+    {{x_min_vertex->x(), y_min_vertex->y()},
+     {x_min_vertex->x(), y_max_vertex->y()},
+     {x_max_vertex->x(), y_max_vertex->y()},
+     {x_max_vertex->x(), y_min_vertex->y()}}};
+}
+
 bool equals(const alt::Point2d & point1, const alt::Point2d & point2)
 {
   constexpr double epsilon = 1e-3;

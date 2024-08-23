@@ -315,6 +315,38 @@ TEST(alt_geometry, distance)
   }
 }
 
+TEST(geometry, envelope)
+{
+  using autoware::universe_utils::envelope;
+  using autoware::universe_utils::alt::ConvexPolygon2d;
+
+  {
+    const ConvexPolygon2d poly{
+      {{2.0, 1.3},
+       {2.4, 1.7},
+       {2.8, 1.8},
+       {3.4, 1.2},
+       {3.7, 1.6},
+       {3.4, 2.0},
+       {4.1, 3.0},
+       {5.3, 2.6},
+       {5.4, 1.2},
+       {4.9, 0.8},
+       {2.9, 0.7}}};
+    const auto result = envelope(poly);
+
+    ASSERT_EQ(result.vertices().size(), 4);
+    EXPECT_NEAR(result.vertices().at(0).x(), 2.0, epsilon);
+    EXPECT_NEAR(result.vertices().at(0).y(), 0.7, epsilon);
+    EXPECT_NEAR(result.vertices().at(1).x(), 2.0, epsilon);
+    EXPECT_NEAR(result.vertices().at(1).y(), 3.0, epsilon);
+    EXPECT_NEAR(result.vertices().at(2).x(), 5.4, epsilon);
+    EXPECT_NEAR(result.vertices().at(2).y(), 3.0, epsilon);
+    EXPECT_NEAR(result.vertices().at(3).x(), 5.4, epsilon);
+    EXPECT_NEAR(result.vertices().at(3).y(), 0.7, epsilon);
+  }
+}
+
 TEST(alt_geometry, intersects)
 {
   using autoware::universe_utils::intersects;
@@ -527,7 +559,7 @@ TEST(geometry, simplify)
     const double max_distance = 0.5;
     const auto result = simplify(points, max_distance);
 
-    EXPECT_EQ(result.size(), 4);
+    ASSERT_EQ(result.size(), 4);
     EXPECT_NEAR(result.at(0).x(), 1.1, epsilon);
     EXPECT_NEAR(result.at(0).y(), 1.1, epsilon);
     EXPECT_NEAR(result.at(1).x(), 3.1, epsilon);
