@@ -21,6 +21,7 @@
 
 namespace autoware::occupancy_grid_map
 {
+using autoware::universe_utils::ScopedTimeTrack;
 using costmap_2d::OccupancyGridMapFixedBlindSpot;
 using costmap_2d::OccupancyGridMapLOBFUpdater;
 using geometry_msgs::msg::Pose;
@@ -142,6 +143,16 @@ GridMapFusionNode::GridMapFusionNode(const rclcpp::NodeOptions & node_options)
     debug_publisher_ptr_ = std::make_unique<DebugPublisher>(this, "synchronized_grid_map_fusion");
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
+
+    // time keeper setup
+    bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
+    if (use_time_keeper) {
+      detailed_processing_time_publisher_ =
+        this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+          "~/debug/processing_time_detail_ms", 1);
+      auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
+      time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
+    }
   }
 }
 
@@ -176,6 +187,9 @@ void GridMapFusionNode::onGridMap(
   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & occupancy_grid_msg,
   const std::string & topic_name)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   std::lock_guard<std::mutex> lock(mutex_);
   const bool is_already_subscribed_this = (gridmap_dict_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(
@@ -260,6 +274,9 @@ void GridMapFusionNode::timer_callback()
  */
 void GridMapFusionNode::publish()
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   stop_watch_ptr_->toc("processing_time", true);
   builtin_interfaces::msg::Time latest_stamp = get_clock()->now();
   double height = 0.0;
@@ -322,6 +339,9 @@ OccupancyGridMapFixedBlindSpot GridMapFusionNode::SingleFrameOccupancyFusion(
   std::vector<OccupancyGridMapFixedBlindSpot> & occupancy_grid_maps,
   const builtin_interfaces::msg::Time latest_stamp, const std::vector<double> & weights)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // if only single map
   if (occupancy_grid_maps.size() == 1) {
     return occupancy_grid_maps[0];
@@ -377,6 +397,9 @@ OccupancyGridMapFixedBlindSpot GridMapFusionNode::SingleFrameOccupancyFusion(
 void GridMapFusionNode::updateGridMap(
   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & occupancy_grid_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // get updater map origin
 
   // origin is set to current updater map
@@ -389,6 +412,9 @@ void GridMapFusionNode::updateGridMap(
 nav2_costmap_2d::Costmap2D GridMapFusionNode::OccupancyGridMsgToCostmap2D(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid_map)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   nav2_costmap_2d::Costmap2D costmap2d(
     occupancy_grid_map.info.width, occupancy_grid_map.info.height,
     occupancy_grid_map.info.resolution, occupancy_grid_map.info.origin.position.x,
@@ -408,6 +434,9 @@ nav2_costmap_2d::Costmap2D GridMapFusionNode::OccupancyGridMsgToCostmap2D(
 OccupancyGridMapFixedBlindSpot GridMapFusionNode::OccupancyGridMsgToGridMap(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid_map)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   OccupancyGridMapFixedBlindSpot gridmap(
     occupancy_grid_map.info.width, occupancy_grid_map.info.height,
     occupancy_grid_map.info.resolution);
@@ -428,6 +457,9 @@ nav_msgs::msg::OccupancyGrid::UniquePtr GridMapFusionNode::OccupancyGridMapToMsg
   const std::string & frame_id, const builtin_interfaces::msg::Time & stamp,
   const float & robot_pose_z, const nav2_costmap_2d::Costmap2D & occupancy_grid_map)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   auto msg_ptr = std::make_unique<OccupancyGrid>();
 
   msg_ptr->header.frame_id = frame_id;

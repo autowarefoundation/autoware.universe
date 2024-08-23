@@ -43,6 +43,7 @@
 
 namespace autoware::occupancy_grid_map
 {
+using autoware::universe_utils::ScopedTimeTrack;
 using costmap_2d::OccupancyGridMapBBFUpdater;
 using costmap_2d::OccupancyGridMapFixedBlindSpot;
 using costmap_2d::OccupancyGridMapProjectiveBlindSpot;
@@ -127,6 +128,16 @@ PointcloudBasedOccupancyGridMapNode::PointcloudBasedOccupancyGridMapNode(
       std::make_unique<DebugPublisher>(this, "pointcloud_based_occupancy_grid_map");
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
+
+    // time keeper setup
+    bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
+    if (use_time_keeper) {
+      detailed_processing_time_publisher_ =
+        this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+          "~/debug/processing_time_detail_ms", 1);
+      auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
+      time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
+    }
   }
 }
 
@@ -134,6 +145,9 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   const PointCloud2::ConstSharedPtr & input_obstacle_msg,
   const PointCloud2::ConstSharedPtr & input_raw_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (stop_watch_ptr_) {
     stop_watch_ptr_->toc("processing_time", true);
   }
@@ -244,6 +258,9 @@ OccupancyGrid::UniquePtr PointcloudBasedOccupancyGridMapNode::OccupancyGridMapTo
   const std::string & frame_id, const Time & stamp, const float & robot_pose_z,
   const Costmap2D & occupancy_grid_map)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   auto msg_ptr = std::make_unique<OccupancyGrid>();
 
   msg_ptr->header.frame_id = frame_id;
