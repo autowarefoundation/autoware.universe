@@ -352,6 +352,44 @@ bool is_clockwise(const alt::ConvexPolygon2d & poly)
   return area(poly) > 0;
 }
 
+alt::Points2d simplify(const alt::Points2d & points, const double max_distance)
+{
+  if (points.size() < 3) {
+    return points;
+  }
+
+  alt::Points2d pending(std::next(points.begin()), std::prev(points.end()));
+  alt::Points2d simplified;
+
+  // Douglas-Peucker algorithm
+
+  auto douglas_peucker = [&max_distance, &pending, &simplified](
+                           auto self, const alt::Point2d & seg_start,
+                           const alt::Point2d & seg_end) {
+    if (pending.empty()) {
+      return;
+    }
+
+    const auto farthest_itr = find_farthest(pending, seg_start, seg_end);
+    const auto farthest = *farthest_itr;
+    pending.erase(farthest_itr);
+
+    if (distance(farthest, seg_start, seg_end) <= max_distance) {
+      return;
+    }
+
+    self(self, seg_start, farthest);
+    simplified.push_back(farthest);
+    self(self, farthest, seg_end);
+  };
+
+  simplified.push_back(points.front());
+  douglas_peucker(douglas_peucker, points.front(), points.back());
+  simplified.push_back(points.back());
+
+  return simplified;
+}
+
 bool touches(
   const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end)
 {

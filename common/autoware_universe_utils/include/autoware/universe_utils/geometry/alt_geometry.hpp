@@ -154,6 +154,8 @@ bool is_above(
 
 bool is_clockwise(const alt::ConvexPolygon2d & poly);
 
+alt::Points2d simplify(const alt::Points2d & points, const double max_distance);
+
 bool touches(
   const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 

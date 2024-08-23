@@ -517,6 +517,28 @@ TEST(alt_geometry, isClockwise)
   }
 }
 
+TEST(geometry, simplify)
+{
+  using autoware::universe_utils::simplify;
+  using autoware::universe_utils::alt::Points2d;
+
+  {
+    const Points2d points = {{1.1, 1.1}, {2.5, 2.1}, {3.1, 3.1}, {4.9, 1.1}, {3.1, 1.9}};
+    const double max_distance = 0.5;
+    const auto result = simplify(points, max_distance);
+
+    EXPECT_EQ(result.size(), 4);
+    EXPECT_NEAR(result.at(0).x(), 1.1, epsilon);
+    EXPECT_NEAR(result.at(0).y(), 1.1, epsilon);
+    EXPECT_NEAR(result.at(1).x(), 3.1, epsilon);
+    EXPECT_NEAR(result.at(1).y(), 3.1, epsilon);
+    EXPECT_NEAR(result.at(2).x(), 4.9, epsilon);
+    EXPECT_NEAR(result.at(2).y(), 1.1, epsilon);
+    EXPECT_NEAR(result.at(3).x(), 3.1, epsilon);
+    EXPECT_NEAR(result.at(3).y(), 1.9, epsilon);
+  }
+}
+
 TEST(alt_geometry, touches)
 {
   using autoware::universe_utils::touches;
