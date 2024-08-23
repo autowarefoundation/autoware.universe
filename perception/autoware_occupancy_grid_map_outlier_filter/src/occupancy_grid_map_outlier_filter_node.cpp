@@ -39,6 +39,8 @@
 
 namespace
 {
+using autoware::universe_utils::ScopedTimeTrack;
+
 bool transformPointcloud(
   const sensor_msgs::msg::PointCloud2 & input, const tf2_ros::Buffer & tf2,
   const std::string & target_frame, sensor_msgs::msg::PointCloud2 & output)
@@ -263,11 +265,24 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   if (enable_debugger) {
     debugger_ptr_ = std::make_shared<Debugger>(*this);
   }
+
+  // time keeper
+  bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
+  if (use_time_keeper) {
+    detailed_processing_time_publisher_ =
+      this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+        "~/debug/processing_time_detail_ms", 1);
+    auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
+    time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
+  }
 }
 
 void OccupancyGridMapOutlierFilterComponent::splitPointCloudFrontBack(
   const PointCloud2::ConstSharedPtr & input_pc, PointCloud2 & front_pc, PointCloud2 & behind_pc)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   int x_offset = input_pc->fields[pcl::getFieldIndex(*input_pc, "x")].offset;
   int point_step = input_pc->point_step;
   size_t front_count = 0;
@@ -295,6 +310,9 @@ void OccupancyGridMapOutlierFilterComponent::splitPointCloudFrontBack(
 void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   const OccupancyGrid::ConstSharedPtr & input_ogm, const PointCloud2::ConstSharedPtr & input_pc)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   stop_watch_ptr_->toc("processing_time", true);
   // Transform to occupancy grid map frame
 
@@ -401,6 +419,9 @@ void OccupancyGridMapOutlierFilterComponent::finalizePointCloud2(
 void OccupancyGridMapOutlierFilterComponent::concatPointCloud2(
   PointCloud2 & output, const PointCloud2 & input)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   size_t output_size = output.data.size();
   output.data.resize(output.data.size() + input.data.size());
   std::memcpy(&output.data[output_size], &input.data[0], input.data.size());
@@ -409,6 +430,9 @@ void OccupancyGridMapOutlierFilterComponent::filterByOccupancyGridMap(
   const OccupancyGrid & occupancy_grid_map, const PointCloud2 & pointcloud,
   PointCloud2 & high_confidence, PointCloud2 & low_confidence, PointCloud2 & out_ogm)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   int x_offset = pointcloud.fields[pcl::getFieldIndex(pointcloud, "x")].offset;
   int y_offset = pointcloud.fields[pcl::getFieldIndex(pointcloud, "y")].offset;
   size_t high_confidence_size = 0;
