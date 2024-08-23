@@ -32,7 +32,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from joy_teleop_testing_common import generate_joy_test_description, TestJoyTeleop
+from joy_teleop_testing_common import TestJoyTeleop
+from joy_teleop_testing_common import generate_joy_test_description
 import pytest
 import rclpy
 import std_msgs.msg
@@ -41,17 +42,16 @@ import std_msgs.msg
 @pytest.mark.rostest
 def generate_test_description():
     parameters = {}
-    parameters['simple_message.type'] = 'topic'
-    parameters['simple_message.interface_type'] = 'std_msgs/msg/String'
-    parameters['simple_message.topic_name'] = '/simple_message_type'
-    parameters['simple_message.deadman_buttons'] = [2]
-    parameters['simple_message.message_value.data.value'] = 'button2'
+    parameters["simple_message.type"] = "topic"
+    parameters["simple_message.interface_type"] = "std_msgs/msg/String"
+    parameters["simple_message.topic_name"] = "/simple_message_type"
+    parameters["simple_message.deadman_buttons"] = [2]
+    parameters["simple_message.message_value.data.value"] = "button2"
 
     return generate_joy_test_description(parameters)
 
 
 class TestJoyTeleopDebounce(TestJoyTeleop):
-
     def publish_message(self):
         self.joy_publisher.publish(self.joy_msg)
 
@@ -71,7 +71,7 @@ class TestJoyTeleopDebounce(TestJoyTeleop):
 
         simple_message_subscriber = self.node.create_subscription(
             std_msgs.msg.String,
-            '/simple_message_type',
+            "/simple_message_type",
             receive_simple_message,
             1,
         )

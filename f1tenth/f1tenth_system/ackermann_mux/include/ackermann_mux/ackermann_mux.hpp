@@ -37,8 +37,9 @@
 #define ACKERMANN_MUX__ACKERMANN_MUX_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/bool.hpp>
+
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <list>
 #include <memory>
@@ -61,7 +62,7 @@ class LockTopicHandle;
 class AckermannMux : public rclcpp::Node
 {
 public:
-  template<typename T>
+  template <typename T>
   using handle_container = std::list<T>;
 
   using velocity_topic_container = handle_container<VelocityTopicHandle>;
@@ -99,7 +100,7 @@ protected:
 
   ackermann_msgs::msg::AckermannDriveStamped last_cmd_;
 
-  template<typename T>
+  template <typename T>
   void getTopicHandles(const std::string & param_name, handle_container<T> & topic_hs);
 
   int getLockPriority();

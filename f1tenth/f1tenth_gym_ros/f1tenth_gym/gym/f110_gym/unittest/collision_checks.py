@@ -21,15 +21,15 @@
 # SOFTWARE.
 
 
-
 """
 Prototype of Utility functions and GJK algorithm for Collision checks between vehicles
 Originally from https://github.com/kroitor/gjk.c
 Author: Hongrui Zheng
 """
 
-import numpy as np
 from numba import njit
+import numpy as np
+
 
 @njit(cache=True)
 def perpendicular(pt):
@@ -44,7 +44,7 @@ def perpendicular(pt):
     """
     temp = pt[0]
     pt[0] = pt[1]
-    pt[1] = -1*temp
+    pt[1] = -1 * temp
     return pt
 
 
@@ -61,7 +61,7 @@ def tripleProduct(a, b, c):
     """
     ac = a.dot(c)
     bc = b.dot(c)
-    return b*ac - a*bc
+    return b * ac - a * bc
 
 
 @njit(cache=True)
@@ -75,7 +75,7 @@ def avgPoint(vertices):
     Returns:
         avg (np.ndarray, (2,)): average point of the vertices
     """
-    return np.sum(vertices, axis=0)/vertices.shape[0]
+    return np.sum(vertices, axis=0) / vertices.shape[0]
 
 
 @njit(cache=True)
@@ -153,7 +153,7 @@ def collision(vertices1, vertices2):
 
         if index < 2:
             b = simplex[0, :]
-            ab = b-a
+            ab = b - a
             d = tripleProduct(ab, ao, ab)
             if np.linalg.norm(d) < 1e-10:
                 d = perpendicular(ab)
@@ -161,8 +161,8 @@ def collision(vertices1, vertices2):
 
         b = simplex[1, :]
         c = simplex[0, :]
-        ab = b-a
-        ac = c-a
+        ab = b - a
+        ac = c - a
 
         acperp = tripleProduct(ab, ac, ac)
 
@@ -181,9 +181,11 @@ def collision(vertices1, vertices2):
         iter_count += 1
     return False
 
+
 """
 Utility functions for getting vertices by pose and shape
 """
+
 
 @njit(cache=True)
 def get_trmtx(pose):
@@ -201,8 +203,11 @@ def get_trmtx(pose):
     th = pose[2]
     cos = np.cos(th)
     sin = np.sin(th)
-    H = np.array([[cos, -sin, 0., x], [sin, cos, 0., y], [0., 0., 1., 0.], [0., 0., 0., 1.]])
+    H = np.array(
+        [[cos, -sin, 0.0, x], [sin, cos, 0.0, y], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
+    )
     return H
+
 
 @njit(cache=True)
 def get_vertices(pose, length, width):
@@ -218,14 +223,14 @@ def get_vertices(pose, length, width):
         vertices (np.ndarray, (4, 2)): corner vertices of the vehicle body
     """
     H = get_trmtx(pose)
-    rl = H.dot(np.asarray([[-length/2],[width/2],[0.], [1.]])).flatten()
-    rr = H.dot(np.asarray([[-length/2],[-width/2],[0.], [1.]])).flatten()
-    fl = H.dot(np.asarray([[length/2],[width/2],[0.], [1.]])).flatten()
-    fr = H.dot(np.asarray([[length/2],[-width/2],[0.], [1.]])).flatten()
-    rl = rl/rl[3]
-    rr = rr/rr[3]
-    fl = fl/fl[3]
-    fr = fr/fr[3]
+    rl = H.dot(np.asarray([[-length / 2], [width / 2], [0.0], [1.0]])).flatten()
+    rr = H.dot(np.asarray([[-length / 2], [-width / 2], [0.0], [1.0]])).flatten()
+    fl = H.dot(np.asarray([[length / 2], [width / 2], [0.0], [1.0]])).flatten()
+    fr = H.dot(np.asarray([[length / 2], [-width / 2], [0.0], [1.0]])).flatten()
+    rl = rl / rl[3]
+    rr = rr / rr[3]
+    fl = fl / fl[3]
+    fr = fr / fr[3]
     vertices = np.asarray([[rl[0], rl[1]], [rr[0], rr[1]], [fr[0], fr[1]], [fl[0], fl[1]]])
     return vertices
 
@@ -238,28 +243,30 @@ Author: Hongrui Zheng
 import time
 import unittest
 
+
 class CollisionTests(unittest.TestCase):
     def setUp(self):
         # test params
         np.random.seed(1234)
 
         # Collision check body
-        self.vertices1 = np.asarray([[4,11.],[5,5],[9,9],[10,10]])
+        self.vertices1 = np.asarray([[4, 11.0], [5, 5], [9, 9], [10, 10]])
 
         # car size
         self.length = 0.32
         self.width = 0.22
-    
+
     def test_get_vert(self):
         test_pose = np.array([2.3, 6.7, 0.8])
         vertices = get_vertices(test_pose, self.length, self.width)
-        rect = np.vstack((vertices, vertices[0,:]))
+        rect = np.vstack((vertices, vertices[0, :]))
         import matplotlib.pyplot as plt
-        plt.scatter(test_pose[0], test_pose[1], c='red')
+
+        plt.scatter(test_pose[0], test_pose[1], c="red")
         plt.plot(rect[:, 0], rect[:, 1])
         plt.xlim([1, 4])
         plt.ylim([5, 8])
-        plt.axes().set_aspect('equal')
+        plt.axes().set_aspect("equal")
         plt.show()
         self.assertTrue(vertices.shape == (4, 2))
 
@@ -269,28 +276,29 @@ class CollisionTests(unittest.TestCase):
         for _ in range(1000):
             vertices = get_vertices(test_pose, self.length, self.width)
         elapsed = time.time() - start
-        fps = 1000/elapsed
-        print('get vertices fps:', fps)
-        self.assertTrue(fps>500)
+        fps = 1000 / elapsed
+        print("get vertices fps:", fps)
+        self.assertTrue(fps > 500)
 
     def test_random_collision(self):
         # perturb the body by a small amount and make sure it all collides with the original body
         for _ in range(1000):
-            a = self.vertices1 + np.random.normal(size=(self.vertices1.shape))/100.
-            b = self.vertices1 + np.random.normal(size=(self.vertices1.shape))/100.
-            self.assertTrue(collision(a,b))
+            a = self.vertices1 + np.random.normal(size=(self.vertices1.shape)) / 100.0
+            b = self.vertices1 + np.random.normal(size=(self.vertices1.shape)) / 100.0
+            self.assertTrue(collision(a, b))
 
     def test_fps(self):
         # also perturb the body but mainly want to test GJK speed
         start = time.time()
         for _ in range(1000):
-            a = self.vertices1 + np.random.normal(size=(self.vertices1.shape))/100.
-            b = self.vertices1 + np.random.normal(size=(self.vertices1.shape))/100.
+            a = self.vertices1 + np.random.normal(size=(self.vertices1.shape)) / 100.0
+            b = self.vertices1 + np.random.normal(size=(self.vertices1.shape)) / 100.0
             collision(a, b)
         elapsed = time.time() - start
-        fps = 1000/elapsed
-        print('gjk fps:', fps)
-        self.assertTrue(fps>500)
+        fps = 1000 / elapsed
+        print("gjk fps:", fps)
+        self.assertTrue(fps > 500)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

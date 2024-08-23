@@ -21,21 +21,21 @@
 # SOFTWARE.
 
 
-
 """
 Prototype of Utility functions and classes for simulating 2D LIDAR scans
 Author: Hongrui Zheng
 """
 
-import numpy as np
-from numba import njit
-from scipy.ndimage import distance_transform_edt as edt
-from PIL import Image
 import os
+import timeit
+import unittest
+
+from PIL import Image
+from numba import njit
+import numpy as np
+from scipy.ndimage import distance_transform_edt as edt
 import yaml
 
-import unittest
-import timeit
 
 def get_dt(bitmap, resolution):
     """
@@ -52,6 +52,7 @@ def get_dt(bitmap, resolution):
     dt = resolution * edt(bitmap)
     return dt
 
+
 @njit(cache=True)
 def xy_2_rc(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution):
     """
@@ -62,7 +63,7 @@ def xy_2_rc(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution):
             y (float): coordinate in y (m)
             orig_x (float): x coordinate of the map origin (m)
             orig_y (float): y coordinate of the map origin (m)
-        
+
         Returns:
             r (int): row number in the transform matrix of the given point
             c (int): column number in the transform matrix of the given point
@@ -80,10 +81,11 @@ def xy_2_rc(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution):
         c = -1
         r = -1
     else:
-        c = int(x_rot/resolution)
-        r = int(y_rot/resolution)
+        c = int(x_rot / resolution)
+        r = int(y_rot / resolution)
 
     return r, c
+
 
 @njit(cache=True)
 def distance_transform(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt):
@@ -103,8 +105,25 @@ def distance_transform(x, y, orig_x, orig_y, orig_c, orig_s, height, width, reso
     distance = dt[r, c]
     return distance
 
+
 @njit(cache=True)
-def trace_ray(x, y, theta_index, sines, cosines, eps, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt, max_range):
+def trace_ray(
+    x,
+    y,
+    theta_index,
+    sines,
+    cosines,
+    eps,
+    orig_x,
+    orig_y,
+    orig_c,
+    orig_s,
+    height,
+    width,
+    resolution,
+    dt,
+    max_range,
+):
     """
     Find the length of a specific ray at a specific scan angle theta
     Purely math calculation and loops, should be JITted.
@@ -119,14 +138,16 @@ def trace_ray(x, y, theta_index, sines, cosines, eps, orig_x, orig_y, orig_c, or
         Returns:
             total_distance (float): the distance to first obstacle on the current scan beam
     """
-    
+
     # int casting, and index precal trigs
     theta_index_ = int(theta_index)
     s = sines[theta_index_]
     c = cosines[theta_index_]
 
     # distance to nearest initialization
-    dist_to_nearest = distance_transform(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt)
+    dist_to_nearest = distance_transform(
+        x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt
+    )
     total_dist = dist_to_nearest
 
     # ray tracing iterations
@@ -137,13 +158,34 @@ def trace_ray(x, y, theta_index, sines, cosines, eps, orig_x, orig_y, orig_c, or
 
         # update dist_to_nearest for current point on ray
         # also keeps track of total ray length
-        dist_to_nearest = distance_transform(x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt)
+        dist_to_nearest = distance_transform(
+            x, y, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt
+        )
         total_dist += dist_to_nearest
-    
+
     return total_dist
 
+
 @njit(cache=True)
-def get_scan(pose, theta_dis, fov, num_beams, theta_index_increment, sines, cosines, eps, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt, max_range):
+def get_scan(
+    pose,
+    theta_dis,
+    fov,
+    num_beams,
+    theta_index_increment,
+    sines,
+    cosines,
+    eps,
+    orig_x,
+    orig_y,
+    orig_c,
+    orig_s,
+    height,
+    width,
+    resolution,
+    dt,
+    max_range,
+):
     """
     Perform the scan for each discretized angle of each beam of the laser, loop heavy, should be JITted
 
@@ -161,17 +203,33 @@ def get_scan(pose, theta_dis, fov, num_beams, theta_index_increment, sines, cosi
     scan = np.empty((num_beams,))
 
     # make theta discrete by mapping the range [-pi, pi] onto [0, theta_dis]
-    theta_index = theta_dis * (pose[2] - fov/2.)/(2. * np.pi)
+    theta_index = theta_dis * (pose[2] - fov / 2.0) / (2.0 * np.pi)
 
     # make sure it's wrapped properly
     theta_index = np.fmod(theta_index, theta_dis)
-    while (theta_index < 0):
+    while theta_index < 0:
         theta_index += theta_dis
 
     # sweep through each beam
     for i in range(0, num_beams):
         # trace the current beam
-        scan[i] = trace_ray(pose[0], pose[1], theta_index, sines, cosines, eps, orig_x, orig_y, orig_c, orig_s, height, width, resolution, dt, max_range)
+        scan[i] = trace_ray(
+            pose[0],
+            pose[1],
+            theta_index,
+            sines,
+            cosines,
+            eps,
+            orig_x,
+            orig_y,
+            orig_c,
+            orig_s,
+            height,
+            width,
+            resolution,
+            dt,
+            max_range,
+        )
 
         # increment the beam index
         theta_index += theta_index_increment
@@ -181,6 +239,7 @@ def get_scan(pose, theta_dis, fov, num_beams, theta_index_increment, sines, cosi
             theta_index -= theta_dis
 
     return scan
+
 
 class ScanSimulator2D(object):
     """
@@ -196,8 +255,10 @@ class ScanSimulator2D(object):
         seed (int, default=123): seed for random number generator for the whitenoise in scan
     """
 
-    def __init__(self, num_beams, fov, std_dev=0.01, eps=0.0001, theta_dis=2000, max_range=30.0, seed=123):
-        # initialization 
+    def __init__(
+        self, num_beams, fov, std_dev=0.01, eps=0.0001, theta_dis=2000, max_range=30.0, seed=123
+    ):
+        # initialization
         self.num_beams = num_beams
         self.fov = fov
         self.std_dev = std_dev
@@ -205,7 +266,7 @@ class ScanSimulator2D(object):
         self.theta_dis = theta_dis
         self.max_range = max_range
         self.angle_increment = self.fov / (self.num_beams - 1)
-        self.theta_index_increment = theta_dis * self.angle_increment / (2. * np.pi)
+        self.theta_index_increment = theta_dis * self.angle_increment / (2.0 * np.pi)
         self.orig_c = None
         self.orig_s = None
         self.orig_x = None
@@ -214,15 +275,15 @@ class ScanSimulator2D(object):
         self.map_width = None
         self.map_resolution = None
         self.dt = None
-        
+
         # white noise generator
         self.rng = np.random.default_rng(seed=seed)
 
         # precomputing corresponding cosines and sines of the angle array
-        theta_arr = np.linspace(0.0, 2*np.pi, num=theta_dis)
+        theta_arr = np.linspace(0.0, 2 * np.pi, num=theta_dis)
         self.sines = np.sin(theta_arr)
         self.cosines = np.cos(theta_arr)
-    
+
     def set_map(self, map_path, map_ext):
         """
         Set the bitmap of the scan simulator by path
@@ -243,18 +304,18 @@ class ScanSimulator2D(object):
         self.map_img = self.map_img.astype(np.float64)
 
         # grayscale -> binary
-        self.map_img[self.map_img <= 128.] = 0.
-        self.map_img[self.map_img > 128.] = 255.
+        self.map_img[self.map_img <= 128.0] = 0.0
+        self.map_img[self.map_img > 128.0] = 255.0
 
         self.map_height = self.map_img.shape[0]
         self.map_width = self.map_img.shape[1]
 
         # load map yaml
-        with open(map_path, 'r') as yaml_stream:
+        with open(map_path, "r") as yaml_stream:
             try:
                 map_metadata = yaml.safe_load(yaml_stream)
-                self.map_resolution = map_metadata['resolution']
-                self.origin = map_metadata['origin']
+                self.map_resolution = map_metadata["resolution"]
+                self.origin = map_metadata["origin"]
             except yaml.YAMLError as ex:
                 print(ex)
 
@@ -283,9 +344,27 @@ class ScanSimulator2D(object):
                 ValueError: when scan is called before a map is set
         """
         if self.map_height is None:
-            raise ValueError('Map is not set for scan simulator.')
-        scan = get_scan(pose, self.theta_dis, self.fov, self.num_beams, self.theta_index_increment, self.sines, self.cosines, self.eps, self.orig_x, self.orig_y, self.orig_c, self.orig_s, self.map_height, self.map_width, self.map_resolution, self.dt, self.max_range)
-        noise = self.rng.normal(0., self.std_dev, size=self.num_beams)
+            raise ValueError("Map is not set for scan simulator.")
+        scan = get_scan(
+            pose,
+            self.theta_dis,
+            self.fov,
+            self.num_beams,
+            self.theta_index_increment,
+            self.sines,
+            self.cosines,
+            self.eps,
+            self.orig_x,
+            self.orig_y,
+            self.orig_c,
+            self.orig_s,
+            self.map_height,
+            self.map_width,
+            self.map_resolution,
+            self.dt,
+            self.max_range,
+        )
+        noise = self.rng.normal(0.0, self.std_dev, size=self.num_beams)
         final_scan = scan + noise
         return final_scan
 
@@ -308,123 +387,131 @@ class ScanTests(unittest.TestCase):
         # test params
         self.num_beams = 1080
         self.fov = 4.7
-        
+
         self.num_test = 10
         self.test_poses = np.zeros((self.num_test, 3))
-        self.test_poses[:, 2] = np.linspace(-1., 1., num=self.num_test)
+        self.test_poses[:, 2] = np.linspace(-1.0, 1.0, num=self.num_test)
 
         # legacy gym data
-        sample_scan = np.load('legacy_scan.npz')
-        self.berlin_scan = sample_scan['berlin']
-        self.skirk_scan = sample_scan['skirk']
+        sample_scan = np.load("legacy_scan.npz")
+        self.berlin_scan = sample_scan["berlin"]
+        self.skirk_scan = sample_scan["skirk"]
 
     def test_map_berlin(self):
         scan_sim = ScanSimulator2D(self.num_beams, self.fov)
         new_berlin = np.empty((self.num_test, self.num_beams))
-        map_path = '../../../maps/berlin.yaml'
-        map_ext = '.png'
+        map_path = "../../../maps/berlin.yaml"
+        map_ext = ".png"
         scan_sim.set_map(map_path, map_ext)
         # scan gen loop
         for i in range(self.num_test):
             test_pose = self.test_poses[i]
-            new_berlin[i,:] = scan_sim.scan(test_pose)
+            new_berlin[i, :] = scan_sim.scan(test_pose)
         diff = self.berlin_scan - new_berlin
         mse = np.mean(diff**2)
         # print('Levine distance test, norm: ' + str(norm))
 
         # plotting
         import matplotlib.pyplot as plt
-        theta = np.linspace(-self.fov/2., self.fov/2., num=self.num_beams)
-        plt.polar(theta, new_berlin[1,:], '.', lw=0)
-        plt.polar(theta, self.berlin_scan[1,:], '.', lw=0)
+
+        theta = np.linspace(-self.fov / 2.0, self.fov / 2.0, num=self.num_beams)
+        plt.polar(theta, new_berlin[1, :], ".", lw=0)
+        plt.polar(theta, self.berlin_scan[1, :], ".", lw=0)
         plt.show()
 
-        self.assertLess(mse, 2.)
+        self.assertLess(mse, 2.0)
 
     def test_map_skirk(self):
         scan_sim = ScanSimulator2D(self.num_beams, self.fov)
         new_skirk = np.empty((self.num_test, self.num_beams))
-        map_path = '../../../maps/skirk.yaml'
-        map_ext = '.png'
+        map_path = "../../../maps/skirk.yaml"
+        map_ext = ".png"
         scan_sim.set_map(map_path, map_ext)
-        print('map set')
+        print("map set")
         # scan gen loop
         for i in range(self.num_test):
             test_pose = self.test_poses[i]
-            new_skirk[i,:] = scan_sim.scan(test_pose)
+            new_skirk[i, :] = scan_sim.scan(test_pose)
         diff = self.skirk_scan - new_skirk
         mse = np.mean(diff**2)
-        print('skirk distance test, mse: ' + str(mse))
+        print("skirk distance test, mse: " + str(mse))
 
         # plotting
         import matplotlib.pyplot as plt
-        theta = np.linspace(-self.fov/2., self.fov/2., num=self.num_beams)
-        plt.polar(theta, new_skirk[1,:], '.', lw=0)
-        plt.polar(theta, self.skirk_scan[1,:], '.', lw=0)
+
+        theta = np.linspace(-self.fov / 2.0, self.fov / 2.0, num=self.num_beams)
+        plt.polar(theta, new_skirk[1, :], ".", lw=0)
+        plt.polar(theta, self.skirk_scan[1, :], ".", lw=0)
         plt.show()
 
-        self.assertLess(mse, 2.)
+        self.assertLess(mse, 2.0)
 
     def test_fps(self):
         # scan fps should be greater than 500
         scan_sim = ScanSimulator2D(self.num_beams, self.fov)
-        map_path = '../../../maps/skirk.yaml'
-        map_ext = '.png'
+        map_path = "../../../maps/skirk.yaml"
+        map_ext = ".png"
         scan_sim.set_map(map_path, map_ext)
-        
+
         import time
+
         start = time.time()
         for i in range(10000):
-            x_test = i/10000
-            scan = scan_sim.scan(np.array([x_test, 0., 0.]))
+            x_test = i / 10000
+            scan = scan_sim.scan(np.array([x_test, 0.0, 0.0]))
         end = time.time()
-        fps = 10000/(end-start)
+        fps = 10000 / (end - start)
         # print('FPS test')
         # print('Elapsed time: ' + str(end-start) + ' , FPS: ' + str(1/fps))
-        self.assertGreater(fps, 500.)
+        self.assertGreater(fps, 500.0)
 
 
 def main():
     num_beams = 1080
     fov = 4.7
     # map_path = '../envs/maps/berlin.yaml'
-    map_path = '/home/f1tenth-eval/tunercar/es/maps/map0.yaml'
-    map_ext = '.png'
+    map_path = "/home/f1tenth-eval/tunercar/es/maps/map0.yaml"
+    map_ext = ".png"
     scan_sim = ScanSimulator2D(num_beams, fov)
     scan_sim.set_map(map_path, map_ext)
-    scan = scan_sim.scan(np.array([0., 0., 0.]))
+    scan = scan_sim.scan(np.array([0.0, 0.0, 0.0]))
 
     # fps test
     import time
+
     start = time.time()
     for i in range(10000):
-        x_test = i/10000
-        scan = scan_sim.scan(np.array([x_test, 0., 0.]))
+        x_test = i / 10000
+        scan = scan_sim.scan(np.array([x_test, 0.0, 0.0]))
     end = time.time()
-    fps = (end-start)/10000
-    print('FPS test')
-    print('Elapsed time: ' + str(end-start) + ' , FPS: ' + str(1/fps))
+    fps = (end - start) / 10000
+    print("FPS test")
+    print("Elapsed time: " + str(end - start) + " , FPS: " + str(1 / fps))
 
     # visualization
-    import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation
+    import matplotlib.pyplot as plt
+
     num_iter = 100
-    theta = np.linspace(-fov/2., fov/2., num=num_beams)
+    theta = np.linspace(-fov / 2.0, fov / 2.0, num=num_beams)
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='polar')
+    ax = fig.add_subplot(111, projection="polar")
     ax.set_ylim(0, 70)
-    line, = ax.plot([], [], '.', lw=0)
+    (line,) = ax.plot([], [], ".", lw=0)
+
     def update(i):
         # x_ani = i * 3. / num_iter
         theta_ani = -i * 2 * np.pi / num_iter
-        x_ani = 0.
-        current_scan = scan_sim.scan(np.array([x_ani, 0., theta_ani]))
+        x_ani = 0.0
+        current_scan = scan_sim.scan(np.array([x_ani, 0.0, theta_ani]))
         print(np.max(current_scan))
         line.set_data(theta, current_scan)
-        return line, 
+        return (line,)
+
     ani = FuncAnimation(fig, update, frames=num_iter, blit=True)
     plt.show()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # unittest.main()
     main()

@@ -7,20 +7,20 @@
   <maintainer email="billyzheng.bz@gmail.com">Billy Zheng</maintainer>
   <license>MIT</license>
 
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>nav_msgs</exec_depend>
-  <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>ackermann_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>joint_state_publisher</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
-  <exec_depend>tf2_ros</exec_depend>
-  <exec_depend>rclpy</exec_depend>
-  <exec_depend>joint_state_publisher</exec_depend>
-  <exec_depend>xacro</exec_depend>
-  <exec_depend>nav2_map_server</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>teleop_twist_keyboard</exec_depend>
-  
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
   <depend>python-transforms3d-pip</depend>
 
   <test_depend>ament_copyright</test_depend>

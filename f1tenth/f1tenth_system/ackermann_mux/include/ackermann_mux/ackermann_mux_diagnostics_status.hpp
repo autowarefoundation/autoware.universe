@@ -38,7 +38,6 @@
 
 #include <ackermann_mux/ackermann_mux.hpp>
 #include <ackermann_mux/topic_handle.hpp>
-
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -60,10 +59,7 @@ struct AckermannMuxDiagnosticsStatus
   std::shared_ptr<AckermannMux::lock_topic_container> lock_hs;
 
   AckermannMuxDiagnosticsStatus()
-  : reading_age(0),
-    last_loop_update(rclcpp::Clock().now()),
-    main_loop_time(0),
-    priority(0)
+  : reading_age(0), last_loop_update(rclcpp::Clock().now()), main_loop_time(0), priority(0)
   {
     velocity_hs = std::make_shared<AckermannMux::velocity_topic_container>();
     lock_hs = std::make_shared<AckermannMux::lock_topic_container>();

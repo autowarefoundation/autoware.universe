@@ -20,38 +20,41 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-'''
+"""
 Author: Hongrui Zheng
-'''
+"""
+
+import csv
+import math
+import os
+import signal
+import subprocess
+import sys
+
+from PIL import Image
 
 # gym imports
 import gym
-from gym import error, spaces, utils
+from gym import error
+from gym import spaces
+from gym import utils
 from gym.utils import seeding
+from numba import njit
+
+# others
+import numpy as np
+from scipy.ndimage import distance_transform_edt as edt
+
+# protobuf import
+import sim_requests_pb2
+import yaml
 
 # zmq imports
 import zmq
 
-# protobuf import
-import sim_requests_pb2
-
-# others
-import numpy as np
-
-from numba import njit
-from scipy.ndimage import distance_transform_edt as edt
-
-from PIL import Image
-import sys
-import os
-import signal
-import subprocess
-import math
-import yaml
-import csv
-
 # from matplotlib.pyplot import imshow
 # import matplotlib.pyplot as plt
+
 
 class F110Env(gym.Env, utils.EzPickle):
     """
@@ -62,7 +65,8 @@ class F110Env(gym.Env, utils.EzPickle):
 
     should be initialized with a map, a timestep, and number of agents
     """
-    metadata = {'render.modes': []}
+
+    metadata = {"render.modes": []}
 
     def __init__(self):
         # simualtor params
@@ -152,7 +156,7 @@ class F110Env(gym.Env, utils.EzPickle):
         self.socket = self.context.socket(zmq.PAIR)
         while tries < max_tries:
             try:
-                self.socket.bind('tcp://*:%s' % str(min_port + tries))
+                self.socket.bind("tcp://*:%s" % str(min_port + tries))
                 # self.socket.connect('tcp://localhost:6666')
                 self.port = min_port + tries
                 break
@@ -160,7 +164,7 @@ class F110Env(gym.Env, utils.EzPickle):
                 tries = tries + 1
                 # print('Gym env - retrying for ' + str(tries) + ' times')
 
-        print('Gym env - Connected env to port: ' + str(self.port))
+        print("Gym env - Connected env to port: " + str(self.port))
 
         # create cpp instance if create then need to pass port number
         # subprocess call assumes directory structure
@@ -190,7 +194,19 @@ class F110Env(gym.Env, utils.EzPickle):
         cs_r = self.params[4]
         I_z = self.params[5]
         mass = self.params[6]
-        args = [path+'sim_server', str(self.timestep), str(self.num_agents), str(self.port), str(mu), str(h_cg), str(l_r), str(cs_f), str(cs_r), str(I_z), str(mass)]
+        args = [
+            path + "sim_server",
+            str(self.timestep),
+            str(self.num_agents),
+            str(self.port),
+            str(mu),
+            str(h_cg),
+            str(l_r),
+            str(cs_f),
+            str(cs_r),
+            str(I_z),
+            str(mass),
+        ]
         self.sim_p = subprocess.Popen(args)
 
     def _set_map(self):
@@ -198,11 +214,11 @@ class F110Env(gym.Env, utils.EzPickle):
         Sets the map for the simulator instance
         """
         if not self.map_inited:
-            print('Gym env - Sim map not initialized, call env.init_map() to init map.')
+            print("Gym env - Sim map not initialized, call env.init_map() to init map.")
         # create and fill in protobuf
         map_request_proto = sim_requests_pb2.SimRequest()
         map_request_proto.type = 1
-        map_request_proto.map_request.map.extend((1. - self.map_img/255.).flatten().tolist())
+        map_request_proto.map_request.map.extend((1.0 - self.map_img / 255.0).flatten().tolist())
         map_request_proto.map_request.origin_x = self.origin[0]
         map_request_proto.map_request.origin_y = self.origin[1]
         map_request_proto.map_request.map_resolution = self.map_resolution
@@ -224,7 +240,7 @@ class F110Env(gym.Env, utils.EzPickle):
         # get results
         set_map_result = sim_response_proto.map_result.result
         if set_map_result == 1:
-            print('Gym env - Set map failed, exiting...')
+            print("Gym env - Set map failed, exiting...")
             sys.exit()
 
     def _check_done(self):
@@ -243,17 +259,17 @@ class F110Env(gym.Env, utils.EzPickle):
         right_t = 2
         timeout = self.current_time >= self.timeout
         if self.double_finish:
-            poses_x = np.array(self.all_x)-self.start_xs
-            poses_y = np.array(self.all_y)-self.start_ys
+            poses_x = np.array(self.all_x) - self.start_xs
+            poses_y = np.array(self.all_y) - self.start_ys
             delta_pt = np.dot(self.start_rot, np.stack((poses_x, poses_y), axis=0))
-            temp_y = delta_pt[1,:]
+            temp_y = delta_pt[1, :]
             idx1 = temp_y > left_t
             idx2 = temp_y < -right_t
             temp_y[idx1] -= left_t
             temp_y[idx2] = -right_t - temp_y[idx2]
             temp_y[np.invert(np.logical_or(idx1, idx2))] = 0
 
-            dist2 = delta_pt[0,:]**2 + temp_y**2
+            dist2 = delta_pt[0, :] ** 2 + temp_y**2
             closes = dist2 <= 0.1
             for i in range(self.num_agents):
                 if closes[i] and not self.near_starts[i]:
@@ -262,7 +278,7 @@ class F110Env(gym.Env, utils.EzPickle):
                 elif not closes[i] and self.near_starts[i]:
                     self.near_starts[i] = False
                     self.toggle_list[i] += 1
-            done = (self.in_collision | (timeout) | np.all(self.toggle_list >= 4))
+            done = self.in_collision | (timeout) | np.all(self.toggle_list >= 4)
             # only for two cars atm
             self.lap_counts[0] = np.floor(self.toggle_list[0] / 2)
             self.lap_counts[1] = np.floor(self.toggle_list[1] / 2)
@@ -272,14 +288,14 @@ class F110Env(gym.Env, utils.EzPickle):
                 self.lap_times[1] = self.current_time
             return done, self.toggle_list >= 4
 
-        delta_pt = np.dot(self.start_rot, np.array([self.x-self.start_x, self.y-self.start_y]))
-        if delta_pt[1] > left_t: # left
-            temp_y = delta_pt[1]-left_t
-        elif delta_pt[1] < -right_t: # right
+        delta_pt = np.dot(self.start_rot, np.array([self.x - self.start_x, self.y - self.start_y]))
+        if delta_pt[1] > left_t:  # left
+            temp_y = delta_pt[1] - left_t
+        elif delta_pt[1] < -right_t:  # right
             temp_y = -right_t - delta_pt[1]
         else:
             temp_y = 0
-        dist2 = delta_pt[0]**2 + temp_y**2
+        dist2 = delta_pt[0] ** 2 + temp_y**2
         close = dist2 <= 0.1
         # close = dist_to_start <= self.start_thresh
         if close and not self.near_start:
@@ -288,7 +304,7 @@ class F110Env(gym.Env, utils.EzPickle):
         elif not close and self.near_start:
             self.near_start = False
             self.num_toggles += 1
-        done = (self.in_collision | (timeout) | (self.num_toggles >= 4))
+        done = self.in_collision | (timeout) | (self.num_toggles >= 4)
         return done
 
     def _check_passed(self):
@@ -302,15 +318,15 @@ class F110Env(gym.Env, utils.EzPickle):
         Update the env's states according to observations
         obs is observation dictionary
         """
-        self.x = obs_dict['poses_x'][obs_dict['ego_idx']]
-        self.y = obs_dict['poses_y'][obs_dict['ego_idx']]
+        self.x = obs_dict["poses_x"][obs_dict["ego_idx"]]
+        self.y = obs_dict["poses_y"][obs_dict["ego_idx"]]
         if self.double_finish:
-            self.all_x = obs_dict['poses_x']
-            self.all_y = obs_dict['poses_y']
+            self.all_x = obs_dict["poses_x"]
+            self.all_y = obs_dict["poses_y"]
 
-        self.theta = obs_dict['poses_theta'][obs_dict['ego_idx']]
-        self.in_collision = obs_dict['collisions'][obs_dict['ego_idx']]
-        self.collision_angle = obs_dict['collision_angles'][obs_dict['ego_idx']]
+        self.theta = obs_dict["poses_theta"][obs_dict["ego_idx"]]
+        self.in_collision = obs_dict["collisions"][obs_dict["ego_idx"]]
+        self.collision_angle = obs_dict["collision_angles"][obs_dict["ego_idx"]]
 
     # TODO: do we do the ray casting here or in C++?
     # if speed is a concern do it in C++?
@@ -327,16 +343,16 @@ class F110Env(gym.Env, utils.EzPickle):
     def step(self, action):
         # can't step if params not set
         if not self.params_set:
-            print('ERROR - Gym Env - Params not set, call update params before stepping.')
+            print("ERROR - Gym Env - Params not set, call update params before stepping.")
             sys.exit()
         # action is a list of steering angles + command velocities
         # also a ego car index
         # action should a DICT with {'ego_idx': int, 'speed':[], 'steer':[]}
         step_request_proto = sim_requests_pb2.SimRequest()
         step_request_proto.type = 0
-        step_request_proto.step_request.ego_idx = action['ego_idx']
-        step_request_proto.step_request.requested_vel.extend(action['speed'])
-        step_request_proto.step_request.requested_ang.extend(action['steer'])
+        step_request_proto.step_request.ego_idx = action["ego_idx"]
+        step_request_proto.step_request.requested_vel.extend(action["speed"])
+        step_request_proto.step_request.requested_ang.extend(action["steer"])
         # serialization
         step_request_string = step_request_proto.SerializeToString()
         # send step request
@@ -352,34 +368,47 @@ class F110Env(gym.Env, utils.EzPickle):
         response_type = sim_response_proto.type
         # TODO: also check for stepping fail
         if not response_type == 0:
-            print('Gym env - Wrong response type for stepping, exiting...')
+            print("Gym env - Wrong response type for stepping, exiting...")
             sys.exit()
         observations_proto = sim_response_proto.sim_obs
         # make sure the ego idx matches
-        if not observations_proto.ego_idx == action['ego_idx']:
-            print('Gym env - Ego index mismatch, exiting...')
+        if not observations_proto.ego_idx == action["ego_idx"]:
+            print("Gym env - Ego index mismatch, exiting...")
             sys.exit()
         # get observations
         carobs_list = observations_proto.observations
         # construct observation dict
         # Observation DICT, assume indices consistent: {'ego_idx':int, 'scans':[[]], 'poses_x':[], 'poses_y':[], 'poses_theta':[], 'linear_vels_x':[], 'linear_vels_y':[], 'ang_vels_z':[], 'collisions':[], 'collision_angles':[]}
-        obs = {'ego_idx': observations_proto.ego_idx, 'scans': [], 'poses_x': [], 'poses_y': [], 'poses_theta': [], 'linear_vels_x': [], 'linear_vels_y': [], 'ang_vels_z': [], 'collisions': [], 'collision_angles': [], 'lap_times': [], 'lap_counts': []}
+        obs = {
+            "ego_idx": observations_proto.ego_idx,
+            "scans": [],
+            "poses_x": [],
+            "poses_y": [],
+            "poses_theta": [],
+            "linear_vels_x": [],
+            "linear_vels_y": [],
+            "ang_vels_z": [],
+            "collisions": [],
+            "collision_angles": [],
+            "lap_times": [],
+            "lap_counts": [],
+        }
         for car_obs in carobs_list:
-            obs['scans'].append(car_obs.scan)
-            obs['poses_x'].append(car_obs.pose_x)
-            obs['poses_y'].append(car_obs.pose_y)
+            obs["scans"].append(car_obs.scan)
+            obs["poses_x"].append(car_obs.pose_x)
+            obs["poses_y"].append(car_obs.pose_y)
             if abs(car_obs.theta) < np.pi:
-                obs['poses_theta'].append(car_obs.theta)
+                obs["poses_theta"].append(car_obs.theta)
             else:
-                obs['poses_theta'].append(-((2 * np.pi) - car_obs.theta))
-            obs['linear_vels_x'].append(car_obs.linear_vel_x)
-            obs['linear_vels_y'].append(car_obs.linear_vel_y)
-            obs['ang_vels_z'].append(car_obs.ang_vel_z)
-            obs['collisions'].append(car_obs.collision)
-            obs['collision_angles'].append(car_obs.collision_angle)
+                obs["poses_theta"].append(-((2 * np.pi) - car_obs.theta))
+            obs["linear_vels_x"].append(car_obs.linear_vel_x)
+            obs["linear_vels_y"].append(car_obs.linear_vel_y)
+            obs["ang_vels_z"].append(car_obs.ang_vel_z)
+            obs["collisions"].append(car_obs.collision)
+            obs["collision_angles"].append(car_obs.collision_angle)
 
-        obs['lap_times'] = self.lap_times
-        obs['lap_counts'] = self.lap_counts
+        obs["lap_times"] = self.lap_times
+        obs["lap_counts"] = self.lap_counts
 
         # TODO: do we need step reward?
         reward = self.timestep
@@ -389,7 +418,7 @@ class F110Env(gym.Env, utils.EzPickle):
         self._update_state(obs)
         if self.double_finish:
             done, temp = self._check_done()
-            info = {'checkpoint_done': temp}
+            info = {"checkpoint_done": temp}
         else:
             done = self._check_done()
             info = {}
@@ -398,26 +427,29 @@ class F110Env(gym.Env, utils.EzPickle):
         return obs, reward, done, info
 
     def reset(self, poses=None):
-
         self.current_time = 0.0
         self.in_collision = False
         self.collision_angles = None
         self.num_toggles = 0
         self.near_start = True
-        self.near_starts = np.array([True]*self.num_agents)
+        self.near_starts = np.array([True] * self.num_agents)
         self.toggle_list = np.zeros((self.num_agents,))
         if poses:
-            pose_x = poses['x']
-            pose_y = poses['y']
-            pose_theta = poses['theta']
+            pose_x = poses["x"]
+            pose_y = poses["y"]
+            pose_theta = poses["theta"]
             self.start_x = pose_x[0]
             self.start_y = pose_y[0]
             self.start_theta = pose_theta[0]
             self.start_xs = np.array(pose_x)
             self.start_ys = np.array(pose_y)
             self.start_thetas = np.array(pose_theta)
-            self.start_rot = np.array([[np.cos(-self.start_theta), -np.sin(-self.start_theta)],
-                                        [np.sin(-self.start_theta), np.cos(-self.start_theta)]])
+            self.start_rot = np.array(
+                [
+                    [np.cos(-self.start_theta), -np.sin(-self.start_theta)],
+                    [np.sin(-self.start_theta), np.cos(-self.start_theta)],
+                ]
+            )
             # create reset by pose proto
             reset_request_proto = sim_requests_pb2.SimRequest()
             reset_request_proto.type = 4
@@ -433,8 +465,12 @@ class F110Env(gym.Env, utils.EzPickle):
             self.start_x = 0.0
             self.start_y = 0.0
             self.start_theta = 0.0
-            self.start_rot = np.array([[np.cos(-self.start_theta), -np.sin(-self.start_theta)],
-                                        [np.sin(-self.start_theta), np.cos(-self.start_theta)]])
+            self.start_rot = np.array(
+                [
+                    [np.cos(-self.start_theta), -np.sin(-self.start_theta)],
+                    [np.sin(-self.start_theta), np.cos(-self.start_theta)],
+                ]
+            )
             reset_request_proto = sim_requests_pb2.SimRequest()
             reset_request_proto.type = 2
             reset_request_proto.reset_request.num_cars = self.num_agents
@@ -448,13 +484,13 @@ class F110Env(gym.Env, utils.EzPickle):
         reset_response_proto = sim_requests_pb2.SimResponse()
         reset_response_proto.ParseFromString(reset_response_string)
         if reset_response_proto.reset_resp.result:
-            print('Gym env - Reset failed')
+            print("Gym env - Reset failed")
             # TODO: failure handling
             return None
         # TODO: return with gym convention, one step?
         vels = [0.0] * self.num_agents
         angs = [0.0] * self.num_agents
-        action = {'ego_idx': self.ego_idx, 'speed': vels, 'steer': angs}
+        action = {"ego_idx": self.ego_idx, "speed": vels, "steer": angs}
         # print('Gym env - Reset done')
         obs, reward, done, info = self.step(action)
         # print('Gym env - step done for reset')
@@ -462,16 +498,16 @@ class F110Env(gym.Env, utils.EzPickle):
 
     def init_map(self, map_path, img_ext, rgb, flip):
         """
-            init a map for the gym env
-            map_path: full path for the yaml, same as ROS, img and yaml in same dir
-            rgb: map grayscale or rgb
-            flip: if map needs flipping
+        init a map for the gym env
+        map_path: full path for the yaml, same as ROS, img and yaml in same dir
+        rgb: map grayscale or rgb
+        flip: if map needs flipping
         """
 
         self.map_path = map_path
-        if not map_path.endswith('.yaml'):
-            print('Gym env - Please use a yaml file for map initialization.')
-            print('Exiting...')
+        if not map_path.endswith(".yaml"):
+            print("Gym env - Please use a yaml file for map initialization.")
+            print("Exiting...")
             sys.exit()
 
         # split yaml ext name
@@ -488,11 +524,11 @@ class F110Env(gym.Env, utils.EzPickle):
         self.map_height = self.map_img.shape[0]
         self.map_width = self.map_img.shape[1]
         self.free_thresh = 0.6  # TODO: double check
-        with open(self.map_path, 'r') as yaml_stream:
+        with open(self.map_path, "r") as yaml_stream:
             try:
                 map_metadata = yaml.safe_load(yaml_stream)
-                self.map_resolution = map_metadata['resolution']
-                self.origin = map_metadata['origin']
+                self.map_resolution = map_metadata["resolution"]
+                self.origin = map_metadata["origin"]
             except yaml.YAMLError as ex:
                 print(ex)
         self.map_inited = True
@@ -504,8 +540,7 @@ class F110Env(gym.Env, utils.EzPickle):
         #     # waypoints are [x, y, speed, theta]
         #     self.waypoints = np.array([(float(pt[0]), float(pt[1]), float(pt[2]), float(pt[3])) for pt in self.waypoints])
 
-
-    def render(self, mode='human', close=False):
+    def render(self, mode="human", close=False):
         return
 
     # def get_min_dist(self, position):
@@ -577,7 +612,7 @@ class F110Env(gym.Env, utils.EzPickle):
         update_response_proto = sim_requests_pb2.SimResponse()
         update_response_proto.ParseFromString(update_response_string)
         if update_response_proto.update_resp.result:
-            print('Gym env - Update param failed')
+            print("Gym env - Update param failed")
             return None
 
         # print('Gym env - params updated.')

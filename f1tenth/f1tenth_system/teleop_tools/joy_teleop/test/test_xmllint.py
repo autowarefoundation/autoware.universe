@@ -20,4 +20,4 @@ import pytest
 @pytest.mark.linter
 def test_xmllint():
     rc = main(argv=[])
-    assert rc == 0, 'Found errors'
+    assert rc == 0, "Found errors"

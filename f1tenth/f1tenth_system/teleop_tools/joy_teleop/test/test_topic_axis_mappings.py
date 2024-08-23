@@ -33,7 +33,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import geometry_msgs.msg
-from joy_teleop_testing_common import generate_joy_test_description, TestJoyTeleop
+from joy_teleop_testing_common import TestJoyTeleop
+from joy_teleop_testing_common import generate_joy_test_description
 import pytest
 import rclpy
 
@@ -41,22 +42,21 @@ import rclpy
 @pytest.mark.rostest
 def generate_test_description():
     parameters = {}
-    parameters['twist.type'] = 'topic'
-    parameters['twist.interface_type'] = 'geometry_msgs/msg/Twist'
-    parameters['twist.topic_name'] = '/cmd_vel'
-    parameters['twist.deadman_buttons'] = [2]
-    parameters['twist.axis_mappings.linear-x.axis'] = 1
-    parameters['twist.axis_mappings.linear-x.scale'] = 0.8
-    parameters['twist.axis_mappings.linear-x.offset'] = 0.0
-    parameters['twist.axis_mappings.angular-z.axis'] = 3
-    parameters['twist.axis_mappings.angular-z.scale'] = 0.5
-    parameters['twist.axis_mappings.angular-z.offset'] = 0.0
+    parameters["twist.type"] = "topic"
+    parameters["twist.interface_type"] = "geometry_msgs/msg/Twist"
+    parameters["twist.topic_name"] = "/cmd_vel"
+    parameters["twist.deadman_buttons"] = [2]
+    parameters["twist.axis_mappings.linear-x.axis"] = 1
+    parameters["twist.axis_mappings.linear-x.scale"] = 0.8
+    parameters["twist.axis_mappings.linear-x.offset"] = 0.0
+    parameters["twist.axis_mappings.angular-z.axis"] = 3
+    parameters["twist.axis_mappings.angular-z.scale"] = 0.5
+    parameters["twist.axis_mappings.angular-z.offset"] = 0.0
 
     return generate_joy_test_description(parameters)
 
 
 class TestJoyTeleopTopicAxisMappings(TestJoyTeleop):
-
     def setUp(self):
         self.publish_from_timer = True
         super().setUp()
@@ -80,14 +80,16 @@ class TestJoyTeleopTopicAxisMappings(TestJoyTeleop):
             num_received_twists += 1
             future.set_result(True)
 
-        qos = rclpy.qos.QoSProfile(history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
-                                   depth=1,
-                                   reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
-                                   durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
+        qos = rclpy.qos.QoSProfile(
+            history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
+            durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE,
+        )
 
         twist_subscriber = self.node.create_subscription(
             geometry_msgs.msg.Twist,
-            '/cmd_vel',
+            "/cmd_vel",
             receive_twist,
             qos,
         )
@@ -100,8 +102,9 @@ class TestJoyTeleopTopicAxisMappings(TestJoyTeleop):
             self.executor.spin_until_future_complete(future, timeout_sec=10)
 
             # Check
-            self.assertTrue(future.done() and future.result(),
-                            'Timed out waiting for twist topic to complete')
+            self.assertTrue(
+                future.done() and future.result(), "Timed out waiting for twist topic to complete"
+            )
             self.assertEqual(twist.linear.x, 0.8)
             self.assertEqual(twist.angular.z, 0.5)
 

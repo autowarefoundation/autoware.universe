@@ -20,14 +20,12 @@ import launch_ros.actions
 
 
 def generate_launch_description():
-
     parameters_file = os.path.join(
-        get_package_share_directory('mouse_teleop'),
-        'config', 'mouse_teleop.yaml'
+        get_package_share_directory("mouse_teleop"), "config", "mouse_teleop.yaml"
     )
 
     mouse_teleop = launch_ros.actions.Node(
-            package='mouse_teleop', executable='mouse_teleop',
-            parameters=[parameters_file])
+        package="mouse_teleop", executable="mouse_teleop", parameters=[parameters_file]
+    )
 
     return LaunchDescription([mouse_teleop])

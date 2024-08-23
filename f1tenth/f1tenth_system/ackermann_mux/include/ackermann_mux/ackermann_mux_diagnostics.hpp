@@ -37,7 +37,6 @@
 #define ACKERMANN_MUX__ACKERMANN_MUX_DIAGNOSTICS_HPP_
 
 #include <ackermann_mux/ackermann_mux_diagnostics_status.hpp>
-
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <memory>
@@ -49,7 +48,7 @@ class AckermannMuxDiagnostics
 public:
   typedef AckermannMuxDiagnosticsStatus status_type;
 
-  static constexpr double MAIN_LOOP_TIME_MIN = 0.2;   // [s]
+  static constexpr double MAIN_LOOP_TIME_MIN = 0.2;  // [s]
   static constexpr double READING_AGE_MIN = 3.0;     // [s]
 
   explicit AckermannMuxDiagnostics(AckermannMux * mux);
@@ -65,8 +64,7 @@ private:
   /**
    * @brief Levels
    */
-  enum
-  {
+  enum {
     OK = diagnostic_msgs::msg::DiagnosticStatus::OK,
     WARN = diagnostic_msgs::msg::DiagnosticStatus::WARN,
     ERROR = diagnostic_msgs::msg::DiagnosticStatus::ERROR

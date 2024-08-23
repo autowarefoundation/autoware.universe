@@ -31,15 +31,16 @@
 #ifndef VESC_ACKERMANN__VESC_TO_ODOM_HPP_
 #define VESC_ACKERMANN__VESC_TO_ODOM_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <nav_msgs/msg/odometry.hpp>
+#include <std_msgs/msg/float64.hpp>
+#include <vesc_msgs/msg/vesc_state_stamped.hpp>
+
 #include <tf2_ros/transform_broadcaster.h>
 
 #include <memory>
 #include <string>
-
-#include <nav_msgs/msg/odometry.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/float64.hpp>
-#include <vesc_msgs/msg/vesc_state_stamped.hpp>
 
 namespace vesc_ackermann
 {
@@ -67,7 +68,7 @@ private:
 
   // odometry state
   double x_, y_, yaw_;
-  Float64::SharedPtr last_servo_cmd_;  ///< Last servo position commanded value
+  Float64::SharedPtr last_servo_cmd_;       ///< Last servo position commanded value
   VescStateStamped::SharedPtr last_state_;  ///< Last received state message
 
   // ROS services

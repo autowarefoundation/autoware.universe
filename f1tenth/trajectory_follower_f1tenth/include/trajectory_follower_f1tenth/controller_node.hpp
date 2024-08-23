@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
-#define AUTOWARE__TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
+#ifndef TRAJECTORY_FOLLOWER_F1TENTH__CONTROLLER_NODE_HPP_
+#define TRAJECTORY_FOLLOWER_F1TENTH__CONTROLLER_NODE_HPP_
 
 #include "autoware/trajectory_follower_base/lateral_controller_base.hpp"
 #include "autoware/trajectory_follower_base/longitudinal_controller_base.hpp"
@@ -148,4 +148,4 @@ private:
 }  // namespace trajectory_follower_node
 }  // namespace autoware::motion::control
 
-#endif  // AUTOWARE__TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
+#endif  // TRAJECTORY_FOLLOWER_F1TENTH__CONTROLLER_NODE_HPP_

@@ -13,16 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 */
-#include <cassert>
-#include <cmath>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <memory>
-
 #include "vesc_driver/vesc_device_uuid_lookup.hpp"
 
+#include <cassert>
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
 
 namespace vesc_driver
 {
@@ -30,10 +29,8 @@ using std::placeholders::_1;
 
 VescDeviceLookup::VescDeviceLookup(std::string name)
 : vesc_(
-    std::string(),
-    std::bind(&VescDeviceLookup::vescPacketCallback, this, _1),
-    std::bind(&VescDeviceLookup::vescErrorCallback, this, _1)
-),
+    std::string(), std::bind(&VescDeviceLookup::vescPacketCallback, this, _1),
+    std::bind(&VescDeviceLookup::vescErrorCallback, this, _1)),
   ready_(false),
   device_(name)
 {
@@ -81,7 +78,6 @@ const char * VescDeviceLookup::deviceUUID() const
 {
   return uuid_.c_str();
 }
-
 
 const char * VescDeviceLookup::version() const
 {

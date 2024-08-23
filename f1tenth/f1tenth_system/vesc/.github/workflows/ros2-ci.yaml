@@ -9,18 +9,13 @@ on:
       - ros2
 
 jobs:
-
   build-ros2:
     strategy:
       fail-fast: false
       matrix:
         config:
-        - {
-          ros_distro: "humble"
-        }
-        - {
-          ros_distro: "foxy"
-        }
+          - { ros_distro: "humble" }
+          - { ros_distro: "foxy" }
     runs-on: ubuntu-latest
     container:
       image: ros:${{ matrix.config.ros_distro }}

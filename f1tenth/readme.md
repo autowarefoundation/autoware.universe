@@ -5,11 +5,13 @@ This tutorial provides step-by-step instructions for installing and setting up t
 This repo also includes a F1tenth Record-Replay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in the `F1tenth gym simulator` or in `real-world` running Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investments listed are based on running Jetson Orin Nano on the default`15W` power mode.
 
 ## Flash JetPack6 to Jetson Orin Nano
+
 (Approximate time investment: 1-1.5 hours)
 
 There are multiple ways to install JetPack on a Jetson as described in [Jetpack 6 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-60). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 6. Other JetPack versions may also work but have not yet been tested.
 
-### NVIDIA SDK Manager Method:
+### NVIDIA SDK Manager Method
+
 This method requires a Linux host computer running Ubuntu Linux x64 version `22.04` with `~40GB` of disk space
 
 This method you will first install `NVIDIA SDK Manager` on your host machine, connect the host machine to the Jetson Orin Nano via a `USB-C` cable, download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson Orin Nano. This method allows you to directly flash the JetPack to the `SD Card` or to the `NVME SSD drive` on the F1tenth car's Jetson. You may need to create an NVIDIA account to download the NVIDIA SDK manager.
@@ -20,22 +22,22 @@ This method you will first install `NVIDIA SDK Manager` on your host machine, co
 
 3. If you have trouble flashing the JetPack, you can put the Jetson into `Force Recovery Mode` by using a jumper to connect `PINs #9 and #10` of the connector J50 before powering up the Jetson.
 
+### SD Card Image Method
 
-### SD Card Image Method:
 This method requires a computer with Internet connection and the ability to read and write SD cards
 
 1. Download [JetPack 6](https://developer.nvidia.com/downloads/embedded/l4t/r36_release_v3.0/jp60-orin-nano-sd-card-image.zip)
 
 2. If you have not previously run a JetPack 6 release on your Jetson Orin Nano Developer kit, you must first update its QSPI before using this JetPack 6 SD Card image. See the [SD Card Image Method](https://developer.nvidia.com/embedded/jetpack-sdk-511) section for more information.
 
-2. Follow the steps at [Jetson Orin Nano Developer Kit - Get Started](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare) to write the Jetpack to the microSD card.
+3. Follow the steps at [Jetson Orin Nano Developer Kit - Get Started](https://developer.nvidia.com/embedded/learn/get-started-jetson-xavier-nx-devkit#prepare) to write the Jetpack to the microSD card.
 
-3. Insert your microSD card to the Jetson.
+4. Insert your microSD card to the Jetson.
 
 Once the JetPack is successfully flashed to the Jetson NX, boot the system and the Ubuntu desktop environment should launch
 
+## Set up Autoware development environment
 
-## Set up Autoware development environment 
 (Approximate time investment: 0.5 hour)
 
 1. Clone the `f1tenth_humble` branch of `autowarefoundation/autoware` and move to the directory.
@@ -45,7 +47,7 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
    cd autoware
    ```
 
-2. If you are installing Autoware for the first time, you can automatically install the dependencies by using the provided Ansible script. 
+2. If you are installing Autoware for the first time, you can automatically install the dependencies by using the provided Ansible script.
 
    ```bash
    ./setup-dev-env.sh --no-nvidia --no-cuda-drivers
@@ -53,8 +55,8 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
 
    The NVIDIA library and cuda driver installation are disabled as they are already installed with the JetPack. If you force the cuda driver installation here, it can mess up the kernel and cause errors at bootup. You will need to reflash the JetPack if this happens.
 
+## Set up Autoware workspace
 
-## Set up Autoware workspace 
 (Approximate time investment: 3-4 hours)
 
 1. Create the `src` directory and clone repositories into it.
@@ -82,17 +84,20 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
    Building Autoware requires a lot of memory. Jetson NX can crash during a build because of insufficient memory. To avoid this problem, 16-32GB of swap should be configured.
 
    Optional: Check the current swapfile
+
    ```bash
    free -h
    ```
 
    Remove the current swapfile
+
    ```bash
    sudo swapoff /swapfile
    sudo rm /swapfile`
    ```
-   
+
    Create a new swapfile
+
    ```bash
    sudo fallocate -l 32G /swapfile
    sudo chmod 600 /swapfile
@@ -101,6 +106,7 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
    ```
 
    Optional: Check if the change is reflected
+
    ```bash
    free -h
    ```
@@ -115,11 +121,11 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
    ```
 
    Ignore the `stderr` warnings during the build.
-   
 
 ## Install f1tenth_gym simulator dependencies
+
 (Approximate time investment: 10 minutes)
-  
+
 1. The f1tenth_gym_ros simulator is used in this case, click [here](https://github.com/f1tenth/f1tenth_gym_ros) for details.
 
    ```bash
@@ -128,6 +134,7 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
    ```
 
 # F1tenth Record-Replay Demo
+
 This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in the `F1tenth gym simulator` or in `real-world` running Autoware framework.
 
 ## Create a map without an F1tenth car
@@ -142,9 +149,9 @@ This part assumes that you have a fully built and properly tuned F1tenth car. Fo
 
 Install `slam_toolbox`
 
-   ```bash
-   sudo apt install ros-humble-slam-toolbox
-   ```
+```bash
+sudo apt install ros-humble-slam-toolbox
+```
 
 1. Start the f1tenth system
 
@@ -180,7 +187,7 @@ Navigate to autoware/src/universe/autoware.universe/f1tenth/particle_filter/conf
 
 ## How to record a trajectory (simulation)
 
-1. Use the `demo_launch` launch file to launch `gym_bridge`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes. 
+1. Use the `demo_launch` launch file to launch `gym_bridge`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
 ```(bash)
 # Terminal 1
@@ -193,7 +200,7 @@ rviz2 should launch automatically with the target map loaded (black markers). Af
 
 ![rviz image](./images/simulator_rviz.jpg)
 
-2. Launch the `teleop_twist_keyboard` node for keyboard tele-operation. Focus on this window and use `U`, `I`, `O` keys to manually control the F1tenth car in the simulation.  Use `Q` and `Z` keys to increase/decrease the speed.
+2. Launch the `teleop_twist_keyboard` node for keyboard tele-operation. Focus on this window and use `U`, `I`, `O` keys to manually control the F1tenth car in the simulation. Use `Q` and `Z` keys to increase/decrease the speed.
 
 ```(bash)
 # Terminal 2
@@ -202,8 +209,8 @@ cd autoware && . install/setup.bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-3. Record a trajectory and save at your preferred path. To stop recording, `Ctrl + C` and your path will be automatically saved. 
-The default path for the recording is set to `"/tmp/path"`. This recording will be automatically erased after system reboot. 
+3. Record a trajectory and save at your preferred path. To stop recording, `Ctrl + C` and your path will be automatically saved.
+   The default path for the recording is set to `"/tmp/path"`. This recording will be automatically erased after system reboot.
 
 ```(bash)
 # Terminal 3
@@ -262,8 +269,8 @@ cd autoware && . install/setup.bash
 ros2 launch particle_filter localize_launch.py
 ```
 
-4. Record a trajectory and save at your preferred path. To stop recording, `Ctrl + C` and your path will be automatically saved. 
-The default path for the recording is is set to `"/tmp/path"`. This recording will be automatically erased after system reboot.
+4. Record a trajectory and save at your preferred path. To stop recording, `Ctrl + C` and your path will be automatically saved.
+   The default path for the recording is is set to `"/tmp/path"`. This recording will be automatically erased after system reboot.
 
 ```(bash)
 # Terminal 3
@@ -311,9 +318,8 @@ ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/act
 
 # Troubleshooting/Tips
 
-1. If editing files doesn't seem to change anything, delete the respective package files in the `install` and `build` folders under `autoware` and rebuild the respective package using  `--packages-select` again.
+1. If editing files doesn't seem to change anything, delete the respective package files in the `install` and `build` folders under `autoware` and rebuild the respective package using `--packages-select` again.
 
 2. Use `absolute path` (ex. /home/<username>/autoware/src/universe/autoware.universe/f1tenth/) in config file or parameter when there's an issue loading the file.
 
 3. You may need to insert a `hdmi emulator` to the Jetson for `NoMachine` to initiate remote desktop when running on a real F1tenth car. Sometimes you will need to put the emulator in and out a few times for `NoMachine` to start remote desktop.
-

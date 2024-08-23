@@ -12,26 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rate_publishers import RatePublishers, TimeoutManager
 import os
-import unittest
 import sys
+import threading
+import time
+import unittest
 
+from geometry_msgs.msg import Twist
 import launch
 from launch.actions.execute_process import ExecuteProcess
-
 import launch_ros.actions
-
 import launch_testing
-
-import time
-import threading
-from rclpy.executors import MultiThreadedExecutor
-
+from rate_publishers import RatePublishers
+from rate_publishers import TimeoutManager
 import rclpy
-
+from rclpy.executors import MultiThreadedExecutor
 from std_msgs.msg import Bool
-from geometry_msgs.msg import Twist
 
 sys.path.append(os.path.abspath(os.path.dirname(os.path.realpath(__file__))))
 
@@ -39,33 +35,32 @@ sys.path.append(os.path.abspath(os.path.dirname(os.path.realpath(__file__))))
 def generate_test_description():
     # Necessary to get real-time stdout from python processes:
     proc_env = os.environ.copy()
-    proc_env['PYTHONUNBUFFERED'] = '1'
+    proc_env["PYTHONUNBUFFERED"] = "1"
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
-    parameters_file = os.path.join(
-        dir_path, 'system_config.yaml'
-    )
+    parameters_file = os.path.join(dir_path, "system_config.yaml")
 
     twist_mux = launch_ros.actions.Node(
-        package='twist_mux', executable='twist_mux',
-        parameters=[parameters_file], env=proc_env)
+        package="twist_mux", executable="twist_mux", parameters=[parameters_file], env=proc_env
+    )
 
     publisher = ExecuteProcess(
-        cmd=['ros2 topic pub /lock_1 std_msgs/Bool "data: False" -r 20'],
-        shell=True, env=proc_env
+        cmd=['ros2 topic pub /lock_1 std_msgs/Bool "data: False" -r 20'], shell=True, env=proc_env
     )
 
     # system_blackbox = launch_ros.actions.Node(
     # package='twist_mux', node_executable='system_blackbox.py', env=proc_env)
 
-    return launch.LaunchDescription([
-        twist_mux,
-        publisher,
-        # system_blackbox,
-        # Start tests right away - no need to wait for anything
-        launch_testing.actions.ReadyToTest(),
-    ])
+    return launch.LaunchDescription(
+        [
+            twist_mux,
+            publisher,
+            # system_blackbox,
+            # Start tests right away - no need to wait for anything
+            launch_testing.actions.ReadyToTest(),
+        ]
+    )
 
 
 def twist(x=0.0, r=0.0):
@@ -77,7 +72,6 @@ def twist(x=0.0, r=0.0):
 
 
 class TestTwistMux(unittest.TestCase):
-
     # Maximum time (in seconds) that it may take for a message
     # to be received by the target node.
     MESSAGE_TIMEOUT = 0.3
@@ -87,29 +81,25 @@ class TestTwistMux(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-
         cls.context = rclpy.Context()
         rclpy.init(context=cls.context)
 
-        cls.node = rclpy.create_node(
-            'node', namespace='ns', context=cls.context)
+        cls.node = rclpy.create_node("node", namespace="ns", context=cls.context)
 
         # Aim at emulating a 'wait_for_msg'
-        cls._subscription = cls.node.create_subscription(
-            Twist, 'cmd_vel_out', cls._cb, 1)
+        cls._subscription = cls.node.create_subscription(Twist, "cmd_vel_out", cls._cb, 1)
         cls._msg = None
 
-        cls.executor = MultiThreadedExecutor(
-            context=cls.context, num_threads=2)
+        cls.executor = MultiThreadedExecutor(context=cls.context, num_threads=2)
         cls.executor.add_node(cls.node)
 
         cls._publishers = RatePublishers(cls.context)
-        cls._vel1 = cls._publishers.add_topic('vel_1', Twist)
-        cls._vel2 = cls._publishers.add_topic('vel_2', Twist)
-        cls._vel3 = cls._publishers.add_topic('vel_3', Twist)
+        cls._vel1 = cls._publishers.add_topic("vel_1", Twist)
+        cls._vel2 = cls._publishers.add_topic("vel_2", Twist)
+        cls._vel3 = cls._publishers.add_topic("vel_3", Twist)
 
-        cls._lock1 = cls._publishers.add_topic('lock_1', Bool)
-        cls._lock2 = cls._publishers.add_topic('lock_2', Bool)
+        cls._lock1 = cls._publishers.add_topic("lock_1", Bool)
+        cls._lock2 = cls._publishers.add_topic("lock_2", Bool)
 
         cls.executor.add_node(cls._vel1)
         cls.executor.add_node(cls._vel2)
@@ -130,7 +120,7 @@ class TestTwistMux(unittest.TestCase):
     def _wait(self, timeout):
         start = self.node.get_clock().now()
         self._msg = None
-        while (timeout > ((self.node.get_clock().now() - start).nanoseconds / 1e9)):
+        while timeout > ((self.node.get_clock().now() - start).nanoseconds / 1e9):
             if self._msg is not None:
                 return self._msg
             time.sleep(0.01)
@@ -172,7 +162,7 @@ class TestTwistMux(unittest.TestCase):
     def test_empty(self):
         try:
             self._vel_cmd()
-            self.fail('twist_mux should not be publishing without any input')
+            self.fail("twist_mux should not be publishing without any input")
         except Exception:
             e = sys.exc_info()[0]
             print(e)
@@ -182,6 +172,7 @@ class TestTwistMux(unittest.TestCase):
         t = twist(2.0)
         self._vel1.pub(t, rate=5)
         self.assertEqual(t, self._vel_cmd())
+
 
 #    def test_basic_with_priorities(self):
 #        t1 = twist(2.0)
@@ -205,7 +196,6 @@ class TestTwistMux(unittest.TestCase):
 
 @launch_testing.post_shutdown_test()
 class TestProcessOutput(unittest.TestCase):
-
     def test_exit_code(self):
         # Check that all processes in the launch exit with code 0
         launch_testing.asserts.assertExitCodes(self.proc_info)

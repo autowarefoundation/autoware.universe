@@ -32,7 +32,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from joy_teleop_testing_common import generate_joy_test_description, TestJoyTeleop
+from joy_teleop_testing_common import TestJoyTeleop
+from joy_teleop_testing_common import generate_joy_test_description
 import pytest
 import rclpy
 import std_msgs.msg
@@ -42,21 +43,20 @@ import std_srvs.srv
 @pytest.mark.rostest
 def generate_test_description():
     parameters = {}
-    parameters['trigger.type'] = 'service'
-    parameters['trigger.interface_type'] = 'std_srvs/srv/Trigger'
-    parameters['trigger.service_name'] = '/trigger'
-    parameters['trigger.buttons'] = [4]
-    parameters['simple_message.type'] = 'topic'
-    parameters['simple_message.interface_type'] = 'std_msgs/msg/String'
-    parameters['simple_message.topic_name'] = '/simple_message_type'
-    parameters['simple_message.deadman_buttons'] = [2]
-    parameters['simple_message.message_value.data.value'] = 'button2'
+    parameters["trigger.type"] = "service"
+    parameters["trigger.interface_type"] = "std_srvs/srv/Trigger"
+    parameters["trigger.service_name"] = "/trigger"
+    parameters["trigger.buttons"] = [4]
+    parameters["simple_message.type"] = "topic"
+    parameters["simple_message.interface_type"] = "std_msgs/msg/String"
+    parameters["simple_message.topic_name"] = "/simple_message_type"
+    parameters["simple_message.deadman_buttons"] = [2]
+    parameters["simple_message.message_value.data.value"] = "button2"
 
     return generate_joy_test_description(parameters)
 
 
 class TestJoyTeleopServiceNotReady(TestJoyTeleop):
-
     def setUp(self):
         self.toggle = True
         super().setUp()
@@ -83,14 +83,16 @@ class TestJoyTeleopServiceNotReady(TestJoyTeleop):
             simple_message = msg.data
             future.set_result(True)
 
-        qos = rclpy.qos.QoSProfile(history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
-                                   depth=1,
-                                   reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
-                                   durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
+        qos = rclpy.qos.QoSProfile(
+            history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
+            durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE,
+        )
 
         simple_message_subscriber = self.node.create_subscription(
             std_msgs.msg.String,
-            '/simple_message_type',
+            "/simple_message_type",
             receive_simple_message,
             qos,
         )
@@ -104,9 +106,10 @@ class TestJoyTeleopServiceNotReady(TestJoyTeleop):
             self.executor.spin_until_future_complete(future, timeout_sec=10)
 
             # Check
-            assert future.done() and future.result(), \
-                'Timed out waiting for simple_message topic to complete'
-            self.assertTrue(simple_message == 'button2')
+            assert (
+                future.done() and future.result()
+            ), "Timed out waiting for simple_message topic to complete"
+            self.assertTrue(simple_message == "button2")
 
             # If we've made it to this point with no assertions, then we are ready
             # to setup the service and trigger.
@@ -118,7 +121,7 @@ class TestJoyTeleopServiceNotReady(TestJoyTeleop):
                 nonlocal saw_trigger
                 nonlocal future
                 response.success = True
-                response.message = 'service_response'
+                response.message = "service_response"
                 saw_trigger = True
                 future.set_result(True)
 
@@ -126,14 +129,16 @@ class TestJoyTeleopServiceNotReady(TestJoyTeleop):
 
             self.toggle = False
 
-            srv = self.node.create_service(std_srvs.srv.Trigger, '/trigger', trigger)
+            srv = self.node.create_service(std_srvs.srv.Trigger, "/trigger", trigger)
 
             try:
                 self.executor.spin_until_future_complete(future, timeout_sec=10)
 
                 # Check
-                self.assertTrue(future.done() and future.result(),
-                                'Timed out waiting for trigger service to complete')
+                self.assertTrue(
+                    future.done() and future.result(),
+                    "Timed out waiting for trigger service to complete",
+                )
                 self.assertTrue(saw_trigger)
             finally:
                 # Cleanup

@@ -1,8 +1,8 @@
 particle_filter:
   ros__parameters:
     # topic names
-    scan_topic: '/scan'
-    odometry_topic: 'ego_racecar/odom'
+    scan_topic: "/scan"
+    odometry_topic: "ego_racecar/odom"
     # range data downsampling
     angle_step: 18
     max_particles: 1500
@@ -11,7 +11,7 @@ particle_filter:
     viz: 1
     max_viz_particles: 60
     # ray marching method
-    range_method: 'rmgpu'
+    range_method: "rmgpu"
     theta_discretization: 112
     # range data filtering
     max_range: 10
@@ -33,4 +33,4 @@ particle_filter:
 map_server:
   ros__parameters:
     # assuming map file is in particle_filter/maps
-    map: 'pennovation'
+    map: "pennovation"

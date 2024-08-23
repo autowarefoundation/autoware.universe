@@ -10,5 +10,5 @@ Description: @PACKAGE_DESCRIPTION@
 URL: @PACKAGE_URL@
 Requires:
 Libs: -L${libdir} -lgflags
-Libs.private: -lpthread 
+Libs.private: -lpthread
 Cflags: -I${includedir}

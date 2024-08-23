@@ -48,36 +48,34 @@
 // called after all flag-values have been assigned, that is, after
 // parsing the command-line.
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <assert.h>
-#include <string>
-#include <vector>
-
 #include "config.h"
 #include "gflags/gflags.h"
 #include "gflags/gflags_completions.h"
 #include "util.h"
 
+#include <assert.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <string>
+#include <vector>
 
 // The 'reporting' flags.  They all call gflags_exitfunc().
-DEFINE_bool  (help,        false, "show help on all flags [tip: all flags can have two dashes]");
-DEFINE_bool  (helpfull,    false, "show help on all flags -- same as -help");
-DEFINE_bool  (helpshort,   false, "show help on only the main module for this program");
-DEFINE_string(helpon,      "",    "show help on the modules named by this flag value");
-DEFINE_string(helpmatch,   "",    "show help on modules whose name contains the specified substr");
-DEFINE_bool  (helppackage, false, "show help on all modules in the main package");
-DEFINE_bool  (helpxml,     false, "produce an xml version of help");
-DEFINE_bool  (version,     false, "show version and build info and exit");
+DEFINE_bool(help, false, "show help on all flags [tip: all flags can have two dashes]");
+DEFINE_bool(helpfull, false, "show help on all flags -- same as -help");
+DEFINE_bool(helpshort, false, "show help on only the main module for this program");
+DEFINE_string(helpon, "", "show help on the modules named by this flag value");
+DEFINE_string(helpmatch, "", "show help on modules whose name contains the specified substr");
+DEFINE_bool(helppackage, false, "show help on all modules in the main package");
+DEFINE_bool(helpxml, false, "produce an xml version of help");
+DEFINE_bool(version, false, "show version and build info and exit");
 
-
-namespace GFLAGS_NAMESPACE {
-
+namespace GFLAGS_NAMESPACE
+{
 
 using std::string;
 using std::vector;
-
 
 // --------------------------------------------------------------------
 // DescribeOneFlag()
@@ -89,8 +87,8 @@ using std::vector;
 
 static const int kLineLength = 80;
 
-static void AddString(const string& s,
-                      string* final_string, int* chars_in_line) {
+static void AddString(const string & s, string * final_string, int * chars_in_line)
+{
   const int slen = static_cast<int>(s.length());
   if (*chars_in_line + 1 + slen >= kLineLength) {  // < 80 chars/line
     *final_string += "\n      ";
@@ -103,10 +101,10 @@ static void AddString(const string& s,
   *chars_in_line += slen;
 }
 
-static string PrintStringFlagsWithQuotes(const CommandLineFlagInfo& flag,
-                                         const string& text, bool current) {
-  const char* c_string = (current ? flag.current_value.c_str() :
-                          flag.default_value.c_str());
+static string PrintStringFlagsWithQuotes(
+  const CommandLineFlagInfo & flag, const string & text, bool current)
+{
+  const char * c_string = (current ? flag.current_value.c_str() : flag.default_value.c_str());
   if (strcmp(flag.type.c_str(), "string") == 0) {  // add quotes for strings
     return StringPrintf("%s: \"%s\"", text.c_str(), c_string);
   } else {
@@ -116,20 +114,18 @@ static string PrintStringFlagsWithQuotes(const CommandLineFlagInfo& flag,
 
 // Create a descriptive string for a flag.
 // Goes to some trouble to make pretty line breaks.
-string DescribeOneFlag(const CommandLineFlagInfo& flag) {
+string DescribeOneFlag(const CommandLineFlagInfo & flag)
+{
   string main_part;
-  SStringPrintf(&main_part, "    -%s (%s)",
-                flag.name.c_str(),
-                flag.description.c_str());
-  const char* c_string = main_part.c_str();
+  SStringPrintf(&main_part, "    -%s (%s)", flag.name.c_str(), flag.description.c_str());
+  const char * c_string = main_part.c_str();
   int chars_left = static_cast<int>(main_part.length());
   string final_string = "";
   int chars_in_line = 0;  // how many chars in current line so far?
   while (1) {
-    assert(static_cast<size_t>(chars_left)
-            == strlen(c_string));  // Unless there's a \0 in there?
-    const char* newline = strchr(c_string, '\n');
-    if (newline == NULL && chars_in_line+chars_left < kLineLength) {
+    assert(static_cast<size_t>(chars_left) == strlen(c_string));  // Unless there's a \0 in there?
+    const char * newline = strchr(c_string, '\n');
+    if (newline == NULL && chars_in_line + chars_left < kLineLength) {
       // The whole remainder of the string fits on this line
       final_string += c_string;
       chars_in_line += chars_left;
@@ -142,8 +138,8 @@ string DescribeOneFlag(const CommandLineFlagInfo& flag) {
       c_string += n + 1;
     } else {
       // Find the last whitespace on this 80-char line
-      int whitespace = kLineLength-chars_in_line-1;  // < 80 chars/line
-      while ( whitespace > 0 && !isspace(c_string[whitespace]) ) {
+      int whitespace = kLineLength - chars_in_line - 1;  // < 80 chars/line
+      while (whitespace > 0 && !isspace(c_string[whitespace])) {
         --whitespace;
       }
       if (whitespace <= 0) {
@@ -155,12 +151,11 @@ string DescribeOneFlag(const CommandLineFlagInfo& flag) {
       }
       final_string += string(c_string, whitespace);
       chars_in_line += whitespace;
-      while (isspace(c_string[whitespace]))  ++whitespace;
+      while (isspace(c_string[whitespace])) ++whitespace;
       c_string += whitespace;
       chars_left -= whitespace;
     }
-    if (*c_string == '\0')
-      break;
+    if (*c_string == '\0') break;
     StringAppendF(&final_string, "\n      ");
     chars_in_line = 6;
   }
@@ -171,11 +166,9 @@ string DescribeOneFlag(const CommandLineFlagInfo& flag) {
   // definition in the originating source file, unless the value has
   // subsequently been modified using SetCommandLineOptionWithMode() with mode
   // SET_FLAGS_DEFAULT, or by setting FLAGS_foo = bar before ParseCommandLineFlags().
-  AddString(PrintStringFlagsWithQuotes(flag, "default", false), &final_string,
-            &chars_in_line);
+  AddString(PrintStringFlagsWithQuotes(flag, "default", false), &final_string, &chars_in_line);
   if (!flag.is_default) {
-    AddString(PrintStringFlagsWithQuotes(flag, "currently", true),
-              &final_string, &chars_in_line);
+    AddString(PrintStringFlagsWithQuotes(flag, "currently", true), &final_string, &chars_in_line);
   }
 
   StringAppendF(&final_string, "\n");
@@ -183,21 +176,23 @@ string DescribeOneFlag(const CommandLineFlagInfo& flag) {
 }
 
 // Simple routine to xml-escape a string: escape & and < only.
-static string XMLText(const string& txt) {
+static string XMLText(const string & txt)
+{
   string ans = txt;
-  for (string::size_type pos = 0; (pos = ans.find("&", pos)) != string::npos; )
+  for (string::size_type pos = 0; (pos = ans.find("&", pos)) != string::npos;)
     ans.replace(pos++, 1, "&amp;");
-  for (string::size_type pos = 0; (pos = ans.find("<", pos)) != string::npos; )
+  for (string::size_type pos = 0; (pos = ans.find("<", pos)) != string::npos;)
     ans.replace(pos++, 1, "&lt;");
   return ans;
 }
 
-static void AddXMLTag(string* r, const char* tag, const string& txt) {
+static void AddXMLTag(string * r, const char * tag, const string & txt)
+{
   StringAppendF(r, "<%s>%s</%s>", tag, XMLText(txt).c_str(), tag);
 }
 
-
-static string DescribeOneFlagInXML(const CommandLineFlagInfo& flag) {
+static string DescribeOneFlagInXML(const CommandLineFlagInfo & flag)
+{
   // The file and flagname could have been attributes, but default
   // and meaning need to avoid attribute normalization.  This way it
   // can be parsed by simple programs, in addition to xml parsers.
@@ -225,31 +220,31 @@ static string DescribeOneFlagInXML(const CommandLineFlagInfo& flag) {
 //    sorted: first by filename they are defined in, then by flagname.
 // --------------------------------------------------------------------
 
-static const char* Basename(const char* filename) {
-  const char* sep = strrchr(filename, PATH_SEPARATOR);
+static const char * Basename(const char * filename)
+{
+  const char * sep = strrchr(filename, PATH_SEPARATOR);
   return sep ? sep + 1 : filename;
 }
 
-static string Dirname(const string& filename) {
+static string Dirname(const string & filename)
+{
   string::size_type sep = filename.rfind(PATH_SEPARATOR);
   return filename.substr(0, (sep == string::npos) ? 0 : sep);
 }
 
 // Test whether a filename contains at least one of the substrings.
-static bool FileMatchesSubstring(const string& filename,
-                                 const vector<string>& substrings) {
-  for (vector<string>::const_iterator target = substrings.begin();
-       target != substrings.end();
+static bool FileMatchesSubstring(const string & filename, const vector<string> & substrings)
+{
+  for (vector<string>::const_iterator target = substrings.begin(); target != substrings.end();
        ++target) {
-    if (strstr(filename.c_str(), target->c_str()) != NULL)
-      return true;
+    if (strstr(filename.c_str(), target->c_str()) != NULL) return true;
     // If the substring starts with a '/', that means that we want
     // the string to be at the beginning of a directory component.
     // That should match the first directory component as well, so
     // we allow '/foo' to match a filename of 'foo'.
-    if (!target->empty() && (*target)[0] == PATH_SEPARATOR &&
-        strncmp(filename.c_str(), target->c_str() + 1,
-                strlen(target->c_str() + 1)) == 0)
+    if (
+      !target->empty() && (*target)[0] == PATH_SEPARATOR &&
+      strncmp(filename.c_str(), target->c_str() + 1, strlen(target->c_str() + 1)) == 0)
       return true;
   }
   return false;
@@ -260,28 +255,25 @@ static bool FileMatchesSubstring(const string& filename,
 // has been stripped (e.g. by adding '#define STRIP_FLAG_HELP 1'
 // before including gflags/gflags.h), then this flag will not be displayed
 // by '--help' and its variants.
-static void ShowUsageWithFlagsMatching(const char *argv0,
-                                       const vector<string> &substrings) {
+static void ShowUsageWithFlagsMatching(const char * argv0, const vector<string> & substrings)
+{
   fprintf(stdout, "%s: %s\n", Basename(argv0), ProgramUsage());
 
   vector<CommandLineFlagInfo> flags;
-  GetAllFlags(&flags);           // flags are sorted by filename, then flagname
+  GetAllFlags(&flags);  // flags are sorted by filename, then flagname
 
-  string last_filename;          // so we know when we're at a new file
-  bool first_directory = true;   // controls blank lines between dirs
-  bool found_match = false;      // stays false iff no dir matches restrict
-  for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin();
-       flag != flags.end();
+  string last_filename;         // so we know when we're at a new file
+  bool first_directory = true;  // controls blank lines between dirs
+  bool found_match = false;     // stays false iff no dir matches restrict
+  for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin(); flag != flags.end();
        ++flag) {
-    if (substrings.empty() ||
-        FileMatchesSubstring(flag->filename, substrings)) {
+    if (substrings.empty() || FileMatchesSubstring(flag->filename, substrings)) {
       // If the flag has been stripped, pretend that it doesn't exist.
       if (flag->description == kStrippedFlagHelp) continue;
-      found_match = true;     // this flag passed the match!
+      found_match = true;                                         // this flag passed the match!
       if (flag->filename != last_filename) {                      // new file
         if (Dirname(flag->filename) != Dirname(last_filename)) {  // new dir!
-          if (!first_directory)
-            fprintf(stdout, "\n\n");   // put blank lines between directories
+          if (!first_directory) fprintf(stdout, "\n\n");  // put blank lines between directories
           first_directory = false;
         }
         fprintf(stdout, "\n  Flags from %s:\n", flag->filename.c_str());
@@ -296,35 +288,35 @@ static void ShowUsageWithFlagsMatching(const char *argv0,
   }
 }
 
-void ShowUsageWithFlagsRestrict(const char *argv0, const char *restrict) {
+void ShowUsageWithFlagsRestrict(const char * argv0, const char * restrict)
+{
   vector<string> substrings;
-  if (restrict != NULL && *restrict != '\0') {
+  if (restrict != NULL && * restrict != '\0') {
     substrings.push_back(restrict);
   }
   ShowUsageWithFlagsMatching(argv0, substrings);
 }
 
-void ShowUsageWithFlags(const char *argv0) {
+void ShowUsageWithFlags(const char * argv0)
+{
   ShowUsageWithFlagsRestrict(argv0, "");
 }
 
 // Convert the help, program, and usage to xml.
-static void ShowXMLOfFlags(const char *prog_name) {
+static void ShowXMLOfFlags(const char * prog_name)
+{
   vector<CommandLineFlagInfo> flags;
-  GetAllFlags(&flags);   // flags are sorted: by filename, then flagname
+  GetAllFlags(&flags);  // flags are sorted: by filename, then flagname
 
   // XML.  There is no corresponding schema yet
   fprintf(stdout, "<?xml version=\"1.0\"?>\n");
   // The document
   fprintf(stdout, "<AllFlags>\n");
   // the program name and usage
-  fprintf(stdout, "<program>%s</program>\n",
-          XMLText(Basename(prog_name)).c_str());
-  fprintf(stdout, "<usage>%s</usage>\n",
-          XMLText(ProgramUsage()).c_str());
+  fprintf(stdout, "<program>%s</program>\n", XMLText(Basename(prog_name)).c_str());
+  fprintf(stdout, "<usage>%s</usage>\n", XMLText(ProgramUsage()).c_str());
   // All the flags
-  for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin();
-       flag != flags.end();
+  for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin(); flag != flags.end();
        ++flag) {
     if (flag->description != kStrippedFlagHelp)
       fprintf(stdout, "%s\n", DescribeOneFlagInXML(*flag).c_str());
@@ -338,21 +330,21 @@ static void ShowXMLOfFlags(const char *prog_name) {
 //    Called upon --version.  Prints build-related info.
 // --------------------------------------------------------------------
 
-static void ShowVersion() {
-  const char* version_string = VersionString();
+static void ShowVersion()
+{
+  const char * version_string = VersionString();
   if (version_string && *version_string) {
-    fprintf(stdout, "%s version %s\n",
-            ProgramInvocationShortName(), version_string);
+    fprintf(stdout, "%s version %s\n", ProgramInvocationShortName(), version_string);
   } else {
     fprintf(stdout, "%s\n", ProgramInvocationShortName());
   }
-# if !defined(NDEBUG)
+#if !defined(NDEBUG)
   fprintf(stdout, "Debug build (NDEBUG not #defined)\n");
-# endif
+#endif
 }
 
-static void AppendPrognameStrings(vector<string>* substrings,
-                                  const char* progname) {
+static void AppendPrognameStrings(vector<string> * substrings, const char * progname)
+{
   string r("");
   r += PATH_SEPARATOR;
   r += progname;
@@ -369,8 +361,9 @@ static void AppendPrognameStrings(vector<string>* substrings,
 //    if they trigger.
 // --------------------------------------------------------------------
 
-void HandleCommandLineHelpFlags() {
-  const char* progname = ProgramInvocationShortName();
+void HandleCommandLineHelpFlags()
+{
+  const char * progname = ProgramInvocationShortName();
 
   HandleCommandLineCompletions();
 
@@ -385,7 +378,7 @@ void HandleCommandLineHelpFlags() {
 
   } else if (FLAGS_help || FLAGS_helpfull) {
     // show all options
-    ShowUsageWithFlagsRestrict(progname, "");   // empty restrict
+    ShowUsageWithFlagsRestrict(progname, "");  // empty restrict
     gflags_exitfunc(1);
 
   } else if (!FLAGS_helpon.empty()) {
@@ -406,22 +399,20 @@ void HandleCommandLineHelpFlags() {
     vector<CommandLineFlagInfo> flags;
     GetAllFlags(&flags);
     string last_package;
-    for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin();
-         flag != flags.end();
+    for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin(); flag != flags.end();
          ++flag) {
-      if (!FileMatchesSubstring(flag->filename, substrings))
-        continue;
+      if (!FileMatchesSubstring(flag->filename, substrings)) continue;
       const string package = Dirname(flag->filename) + PATH_SEPARATOR;
       if (package != last_package) {
         ShowUsageWithFlagsRestrict(progname, package.c_str());
         VLOG(7) << "Found package: " << package;
-        if (!last_package.empty()) {      // means this isn't our first pkg
+        if (!last_package.empty()) {  // means this isn't our first pkg
           LOG(WARNING) << "Multiple packages contain a file=" << progname;
         }
         last_package = package;
       }
     }
-    if (last_package.empty()) {   // never found a package to print
+    if (last_package.empty()) {  // never found a package to print
       LOG(WARNING) << "Unable to find a package for file=" << progname;
     }
     gflags_exitfunc(1);
@@ -434,9 +425,7 @@ void HandleCommandLineHelpFlags() {
     ShowVersion();
     // Unlike help, we may be asking for version in a script, so return 0
     gflags_exitfunc(0);
-
   }
 }
 
-
-} // namespace GFLAGS_NAMESPACE
+}  // namespace GFLAGS_NAMESPACE

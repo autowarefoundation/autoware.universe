@@ -17,36 +17,35 @@
 # Authors:
 #   * Siegfried-A. Gevatter
 
-import sys
 import _thread
+import sys
 from time import sleep
 
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSDurabilityPolicy
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSProfile
 
 
 class _RatePublisher(Node):
-
     # How many seconds before the expected time a message may
     # be published.
     _tolerance = 0.01
 
     def __init__(self, topic, msg_type, context, latch=False):
-        super().__init__('rate_publisher_'+topic, context=context)
+        super().__init__("rate_publisher_" + topic, context=context)
         self._topic = topic
         latching_qos = QoSProfile(
-            depth=1,
-            durability=QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
-        self._publisher = self.create_publisher(
-            msg_type, topic, qos_profile=latching_qos)
+            depth=1, durability=QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL
+        )
+        self._publisher = self.create_publisher(msg_type, topic, qos_profile=latching_qos)
         self._message = None
         self._period = None  # 1 / freq
         self._last_pub = 0
 
     def pub(self, message, rate=None):
         self._message = message
-        self._period = (1. / rate) if rate else None
+        self._period = (1.0 / rate) if rate else None
         self.publish_once()
 
     def stop(self):
@@ -95,8 +94,7 @@ class RatePublishers(object):
         connect.
         """
         assert topic not in self._publishers
-        rate_publisher = _RatePublisher(
-            topic, msg_type, self._context, latch=True)
+        rate_publisher = _RatePublisher(topic, msg_type, self._context, latch=True)
         self._publishers[topic] = rate_publisher
         return rate_publisher
 
@@ -134,7 +132,6 @@ class RatePublishers(object):
 
 # TODO: Make this class more generic (keeping track of timeouts itself)?
 class TimeoutManager(object):
-
     def __init__(self):
         self._shutdown = False
         self._members = []

@@ -49,8 +49,8 @@ namespace vesc_driver
 class VescInterface
 {
 public:
-  typedef std::function<void (const VescPacketConstPtr &)> PacketHandlerFunction;
-  typedef std::function<void (const std::string &)> ErrorHandlerFunction;
+  typedef std::function<void(const VescPacketConstPtr &)> PacketHandlerFunction;
+  typedef std::function<void(const std::string &)> ErrorHandlerFunction;
 
   /**
    * Creates a VescInterface object. Opens the serial port interface to the VESC if @p port is not
@@ -145,13 +145,9 @@ public:
     ss << "SerialException " << description << " failed.";
     e_what_ = ss.str();
   }
-  SerialException(const SerialException & other)
-  : e_what_(other.e_what_) {}
+  SerialException(const SerialException & other) : e_what_(other.e_what_) {}
   virtual ~SerialException() throw() {}
-  virtual const char * what() const throw()
-  {
-    return e_what_.c_str();
-  }
+  virtual const char * what() const throw() { return e_what_.c_str(); }
 };
 
 }  // namespace vesc_driver

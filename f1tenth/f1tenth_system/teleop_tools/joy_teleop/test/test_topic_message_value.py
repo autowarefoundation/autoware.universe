@@ -32,7 +32,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from joy_teleop_testing_common import generate_joy_test_description, TestJoyTeleop
+from joy_teleop_testing_common import TestJoyTeleop
+from joy_teleop_testing_common import generate_joy_test_description
 import pytest
 import rclpy
 import std_msgs.msg
@@ -41,17 +42,16 @@ import std_msgs.msg
 @pytest.mark.rostest
 def generate_test_description():
     parameters = {}
-    parameters['simple_message.type'] = 'topic'
-    parameters['simple_message.interface_type'] = 'std_msgs/msg/String'
-    parameters['simple_message.topic_name'] = '/simple_message_type'
-    parameters['simple_message.deadman_buttons'] = [2]
-    parameters['simple_message.message_value.data.value'] = 'button2'
+    parameters["simple_message.type"] = "topic"
+    parameters["simple_message.interface_type"] = "std_msgs/msg/String"
+    parameters["simple_message.topic_name"] = "/simple_message_type"
+    parameters["simple_message.deadman_buttons"] = [2]
+    parameters["simple_message.message_value.data.value"] = "button2"
 
     return generate_joy_test_description(parameters)
 
 
 class TestJoyTeleopTopicMessageValue(TestJoyTeleop):
-
     def publish_message(self):
         self.joy_publisher.publish(self.joy_msg)
         self.joy_msg.buttons[2] = int(not self.joy_msg.buttons[2])
@@ -66,14 +66,16 @@ class TestJoyTeleopTopicMessageValue(TestJoyTeleop):
             simple_message = msg.data
             future.set_result(True)
 
-        qos = rclpy.qos.QoSProfile(history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
-                                   depth=1,
-                                   reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
-                                   durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE)
+        qos = rclpy.qos.QoSProfile(
+            history=rclpy.qos.QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=rclpy.qos.QoSReliabilityPolicy.RELIABLE,
+            durability=rclpy.qos.QoSDurabilityPolicy.VOLATILE,
+        )
 
         simple_message_subscriber = self.node.create_subscription(
             std_msgs.msg.String,
-            '/simple_message_type',
+            "/simple_message_type",
             receive_simple_message,
             qos,
         )
@@ -85,9 +87,11 @@ class TestJoyTeleopTopicMessageValue(TestJoyTeleop):
             self.executor.spin_until_future_complete(future, timeout_sec=10)
 
             # Check
-            self.assertTrue(future.done() and future.result(),
-                            'Timed out waiting for simple_message topic to complete')
-            self.assertEqual(simple_message, 'button2')
+            self.assertTrue(
+                future.done() and future.result(),
+                "Timed out waiting for simple_message topic to complete",
+            )
+            self.assertEqual(simple_message, "button2")
         finally:
             # Cleanup
             self.node.destroy_subscription(simple_message_subscriber)
