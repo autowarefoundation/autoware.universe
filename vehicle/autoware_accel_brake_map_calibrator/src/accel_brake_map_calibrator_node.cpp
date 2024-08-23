@@ -269,13 +269,13 @@ bool AccelBrakeMapCalibrator::take_data()
   // take actuation data
   // take data from subscribers
   if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
-      ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
-      take_actuation_status(actuation_status_ptr);
+    ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
+    take_actuation_status(actuation_status_ptr);
   }
   // take actuation data
   if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::COMMAND) {
-      ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
-      take_actuation_command(actuation_cmd_ptr);
+    ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
+    take_actuation_command(actuation_cmd_ptr);
   }
 
   // take velocity data
