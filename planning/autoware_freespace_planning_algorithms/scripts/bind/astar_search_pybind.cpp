@@ -120,12 +120,12 @@ namespace py = pybind11;
 PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
 {
   auto pyPlannerWaypointsVector =
-    py::class_<PlannerWaypointsVector>(p, "PlannerWaypointsVector", py::dynamic_attr())
+    py::class_<PlannerWaypointsVector>(p, "PlannerWaypointsVector")
       .def(py::init<>())
       .def_readwrite("waypoints", &PlannerWaypointsVector::waypoints)
       .def_readwrite("length", &PlannerWaypointsVector::length);
   auto pyAstarParam =
-    py::class_<freespace_planning_algorithms::AstarParam>(p, "AstarParam", py::dynamic_attr())
+    py::class_<freespace_planning_algorithms::AstarParam>(p, "AstarParam")
       .def(py::init<>())
       .def_readwrite("search_method", &freespace_planning_algorithms::AstarParam::search_method)
       .def_readwrite(
@@ -151,7 +151,7 @@ PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
         &freespace_planning_algorithms::AstarParam::goal_lat_distance_weight);
   auto pyPlannerCommonParam =
     py::class_<freespace_planning_algorithms::PlannerCommonParam>(
-      p, "PlannerCommonParam", py::dynamic_attr())
+      p, "PlannerCommonParam")
       .def(py::init<>())
       .def_readwrite("time_limit", &freespace_planning_algorithms::PlannerCommonParam::time_limit)
       .def_readwrite("theta_size", &freespace_planning_algorithms::PlannerCommonParam::theta_size)
@@ -178,14 +178,16 @@ PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
         "obstacle_threshold",
         &freespace_planning_algorithms::PlannerCommonParam::obstacle_threshold);
   auto pyVehicleShape =
-    py::class_<freespace_planning_algorithms::VehicleShape>(p, "VehicleShape", py::dynamic_attr())
+    py::class_<freespace_planning_algorithms::VehicleShape>(p, "VehicleShape")
       .def(py::init<>())
       .def(py::init<double, double, double, double, double>())
+      .def("setMinMaxDimension", &freespace_planning_algorithms::VehicleShape::setMinMaxDimension)
       .def_readwrite("length", &freespace_planning_algorithms::VehicleShape::length)
       .def_readwrite("width", &freespace_planning_algorithms::VehicleShape::width)
       .def_readwrite("base_length", &freespace_planning_algorithms::VehicleShape::base_length)
       .def_readwrite("max_steering", &freespace_planning_algorithms::VehicleShape::max_steering)
-      .def_readwrite("base2back", &freespace_planning_algorithms::VehicleShape::base2back);
+      .def_readwrite("base2back", &freespace_planning_algorithms::VehicleShape::base2back)
+      .def_readwrite("min_dimension", &freespace_planning_algorithms::VehicleShape::min_dimension);
 
   py::class_<freespace_planning_algorithms::AbstractPlanningAlgorithm>(
     p, "AbstractPlanningAlgorithm");
