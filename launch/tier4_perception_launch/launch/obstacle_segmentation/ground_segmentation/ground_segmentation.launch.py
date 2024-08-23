@@ -339,6 +339,7 @@ class GroundSegmentationPipeline:
                     ("~/input/pointcloud", input_topic),
                     ("~/output/pointcloud", output_topic),
                 ],
+                parameters=[{"publish_processing_time_detail": False}],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
                 ],
