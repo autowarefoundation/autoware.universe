@@ -117,7 +117,7 @@ protected:
 
   int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
 
-  TurnSignalInfo get_terminal_turn_signal_info() const override;
+  TurnSignalInfo get_terminal_turn_signal_info() const final;
 
   std::vector<double> sampleLongitudinalAccValues(
     const lanelet::ConstLanelets & current_lanes,
