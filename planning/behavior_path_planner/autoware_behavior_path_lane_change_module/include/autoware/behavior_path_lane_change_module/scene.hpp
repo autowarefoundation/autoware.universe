@@ -109,7 +109,7 @@ public:
 
   bool isStoppedAtRedTrafficLight() const override;
 
-  TurnSignalInfo get_current_turn_signal_info() const override;
+  TurnSignalInfo get_current_turn_signal_info() const final;
 
 protected:
   lanelet::ConstLanelets getLaneChangeLanes(
