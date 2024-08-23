@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__GEOMETRY_HPP_
-#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__GEOMETRY_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__ALT_GEOMETRY_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__ALT_GEOMETRY_HPP_
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
@@ -159,4 +159,4 @@ bool within(
   const alt::ConvexPolygon2d & poly_contained, const alt::ConvexPolygon2d & poly_containing);
 }  // namespace autoware::universe_utils
 
-#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__GEOMETRY_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__ALT_GEOMETRY_HPP_
