@@ -16,7 +16,6 @@
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware_utils/autoware_utils.hpp>
 #include <interpolation/linear_interpolation.hpp>
 
 #include <algorithm>
@@ -234,61 +233,15 @@ PredictedPath PathGenerator::generatePolynomialPath(
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  // search optimum target path
-  PosePath target_path;
-  {
-    // input: object, ref_path
-    // output: target_path
-
-    size_t starting_segment_idx;
-    {
-      // starting segment index is the nearest segment index from the object
-      const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
-      starting_segment_idx = autoware::motion_utils::findNearestSegmentIndex(ref_path, obj_point);
-
-      // // method 1: search starting segment index that have less delta yaw
-      // const float obj_yaw =
-      //   static_cast<float>(tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
-      // const uint search_segment_num =
-      //   std::min(20, static_cast<int>(ref_path.size() - starting_segment_idx));
-      // float delta_yaw_min = M_PI;
-      // size_t idx = 0;
-      // for (uint i = 0; i < search_segment_num; ++i) {
-      //   const auto & ref_pose = ref_path.at(starting_segment_idx + i);
-      //   const float ref_yaw = static_cast<float>(tf2::getYaw(ref_pose.orientation));
-      //   const float delta_yaw = std::abs(autoware_utils::normalize_radian(obj_yaw - ref_yaw));
-      //   if (delta_yaw < delta_yaw_min) {
-      //     delta_yaw_min = delta_yaw;
-      //     idx = i;
-      //     if (delta_yaw < 1e-5) {
-      //       break;
-      //     }
-      //   }
-      // }
-
-      // // method 2: consider the object is moving forward
-
-      // // method 3: calculate score that object can reach the target path smoothly, and search the
-      // // starting segment index that have the highest score
-
-      // // update starting segment index
-      // starting_segment_idx += idx;
-      // starting_segment_idx = std::min(starting_segment_idx, ref_path.size() - 2);
-      // starting_segment_idx = std::max(starting_segment_idx, (uint64_t)0);
-    }
-    // Trim the reference path
-    target_path = PosePath(ref_path.begin() + starting_segment_idx, ref_path.end());
-  }
-
   // Get current Frenet Point
-  const double target_path_len = autoware::motion_utils::calcArcLength(target_path);
-  const auto current_point = getFrenetPoint(object, target_path.at(0), duration, speed_limit);
+  const double ref_path_len = autoware::motion_utils::calcArcLength(ref_path);
+  const auto current_point = getFrenetPoint(object, ref_path.at(0), duration, speed_limit);
 
   // Step1. Set Target Frenet Point
   // Note that we do not set position s,
   // since we don't know the target longitudinal position
   FrenetPoint terminal_point;
-  terminal_point.s_vel = current_point.s_vel;
+  terminal_point.s_vel = std::hypot(current_point.s_vel, current_point.d_vel);
   terminal_point.s_acc = 0.0;
   terminal_point.d = 0.0;
   terminal_point.d_vel = 0.0;
@@ -316,10 +269,10 @@ PredictedPath PathGenerator::generatePolynomialPath(
 
   // Step2. Generate Predicted Path on a Frenet coordinate
   const auto frenet_predicted_path =
-    generateFrenetPath(current_point, terminal_point, target_path_len, duration, lateral_duration);
+    generateFrenetPath(current_point, terminal_point, ref_path_len, duration, lateral_duration);
 
   // Step3. Interpolate Reference Path for converting predicted path coordinate
-  const auto interpolated_ref_path = interpolateReferencePath(target_path, frenet_predicted_path);
+  const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);
 
   if (frenet_predicted_path.size() < 2 || interpolated_ref_path.size() < 2) {
     return generateStraightPath(object, duration);
@@ -431,6 +384,10 @@ std::vector<double> PathGenerator::interpolationLerp(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const std::vector<double> & query_keys) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_)
+    st_ptr = std::make_unique<ScopedTimeTrack>("interpolationLerp_double", *time_keeper_);
+
   // calculate linear interpolation
   // extrapolate the value if the query key is out of the base key range
   std::vector<double> query_values;
@@ -473,6 +430,10 @@ std::vector<tf2::Quaternion> PathGenerator::interpolationLerp(
   const std::vector<double> & base_keys, const std::vector<tf2::Quaternion> & base_values,
   const std::vector<double> & query_keys) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_)
+    st_ptr = std::make_unique<ScopedTimeTrack>("interpolationLerp_quaternion", *time_keeper_);
+
   // calculate linear interpolation
   // extrapolate the value if the query key is out of the base key range
   std::vector<tf2::Quaternion> query_values;
@@ -503,6 +464,16 @@ std::vector<tf2::Quaternion> PathGenerator::interpolationLerp(
     const tf2::Quaternion dst_val = base_values.at(key_index + 1);
     const double ratio = (query_key - base_keys.at(key_index)) /
                          (base_keys.at(key_index + 1) - base_keys.at(key_index));
+
+    // in case of extrapolation, export the nearest quaternion
+    if (ratio < 0.0) {
+      query_values.push_back(src_val);
+      continue;
+    }
+    if (ratio > 1.0) {
+      query_values.push_back(dst_val);
+      continue;
+    }
     const auto interpolated_quat = tf2::slerp(src_val, dst_val, ratio);
     query_values.push_back(interpolated_quat);
   }
@@ -593,30 +564,6 @@ PredictedPath PathGenerator::convertToPredictedPath(
     // Frenet Point from frenet predicted path
     const auto & frenet_point = frenet_predicted_path.at(i);
     double d_offset = frenet_point.d;
-
-    // check if the frenet coordinate is folded (the frenet d value is larger than radius of the
-    // reference path)
-    if (i < predicted_path.path.size() - 1) {
-      // radius of curvature
-      using autoware::universe_utils::calcDistance2d;
-      const auto p1 = autoware::universe_utils::getPoint(ref_path.at(i - 1));
-      const auto p2 = autoware::universe_utils::getPoint(ref_path.at(i));
-      const auto p3 = autoware::universe_utils::getPoint(ref_path.at(i + 1));
-      const double denominator =
-        calcDistance2d(p1, p2) * calcDistance2d(p2, p3) * calcDistance2d(p3, p1);
-      const double curve_angle = (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
-      double radius = 0.5 * denominator / (std::abs(curve_angle) + 1e-6);
-      radius = std::min(radius, 10.0);  // limit the radius to 10m
-      radius *= curve_angle > 0 ? 1 : -1;
-      constexpr double curve_limit_ratio = 0.8;
-      const double curve_limit = radius * curve_limit_ratio;
-
-      // if the radius and the frenet d value have the same sign, and the frenet d value is larger
-      // than the curve limit, we set the d_offset to the curve limit
-      if (std::abs(frenet_point.d) > std::abs(curve_limit) && radius * frenet_point.d > 0) {
-        d_offset = curve_limit;
-      }
-    }
 
     // Converted Pose
     auto predicted_pose = autoware::universe_utils::calcOffsetPose(ref_pose, 0.0, d_offset, 0.0);
