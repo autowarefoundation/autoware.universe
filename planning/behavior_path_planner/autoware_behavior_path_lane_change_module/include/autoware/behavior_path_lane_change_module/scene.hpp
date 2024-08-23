@@ -37,6 +37,7 @@ using geometry_msgs::msg::Twist;
 using lane_change::LanesPolygon;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using utils::path_safety_checker::ExtendedPredictedObjects;
+using utils::path_safety_checker::RSSparams;
 
 class NormalLaneChange : public LaneChangeBase
 {
@@ -52,6 +53,8 @@ public:
   ~NormalLaneChange() override = default;
 
   void update_lanes(const bool is_approved) final;
+
+  void update_filtered_objects() final;
 
   void updateLaneChangeStatus() override;
 
@@ -82,7 +85,7 @@ public:
   PathSafetyStatus evaluateApprovedPathWithUnsafeHysteresis(
     PathSafetyStatus approved_path_safety_status) override;
 
-  bool isRequiredStop(const bool is_object_coming_from_rear) override;
+  bool isRequiredStop(const bool is_trailing_object) override;
 
   bool isNearEndOfCurrentLanes(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
@@ -91,6 +94,8 @@ public:
   bool hasFinishedLaneChange() const override;
 
   bool isAbleToReturnCurrentLane() const override;
+
+  bool is_near_terminal() const final;
 
   bool isEgoOnPreparePhase() const override;
 
@@ -120,19 +125,16 @@ protected:
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
-  ExtendedPredictedObjects getTargetObjects(
-    const LaneChangeLanesFilteredObjects & predicted_objects,
+  lane_change::TargetObjects getTargetObjects(
+    const FilteredByLanesExtendedObjects & predicted_objects,
     const lanelet::ConstLanelets & current_lanes) const;
 
-  LaneChangeLanesFilteredObjects filterObjects() const;
+  FilteredByLanesExtendedObjects filterObjects() const;
 
   void filterOncomingObjects(PredictedObjects & objects) const;
 
-  void filterObjectsByLanelets(
-    const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path,
-    std::vector<PredictedObject> & current_lane_objects,
-    std::vector<PredictedObject> & target_lane_objects,
-    std::vector<PredictedObject> & other_lane_objects) const;
+  FilteredByLanesObjects filterObjectsByLanelets(
+    const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path) const;
 
   PathWithLaneId getPrepareSegment(
     const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
@@ -158,9 +160,7 @@ protected:
 
   bool getLaneChangePaths(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    Direction direction, LaneChangePaths * candidate_paths,
-    const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
-    const bool check_safety = true) const override;
+    Direction direction, const bool is_stuck, LaneChangePaths * candidate_paths) const;
 
   std::optional<LaneChangePath> calcTerminalLaneChangePath(
     const lanelet::ConstLanelets & current_lanes,
@@ -170,9 +170,19 @@ protected:
 
   PathSafetyStatus isLaneChangePathSafe(
     const LaneChangePath & lane_change_path,
-    const ExtendedPredictedObjects & collision_check_objects,
+    const lane_change::TargetObjects & collision_check_objects,
     const utils::path_safety_checker::RSSparams & rss_params,
+    const size_t deceleration_sampling_num, CollisionCheckDebugMap & debug_data) const;
+
+  bool has_collision_with_decel_patterns(
+    const LaneChangePath & lane_change_path, const ExtendedPredictedObjects & objects,
+    const size_t deceleration_sampling_num, const RSSparams & rss_param,
     CollisionCheckDebugMap & debug_data) const;
+
+  bool is_collided(
+    const PathWithLaneId & lane_change_path, const ExtendedPredictedObject & obj,
+    const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
+    const RSSparams & selected_rss_param, CollisionCheckDebugMap & debug_data) const;
 
   //! @brief Check if the ego vehicle is in stuck by a stationary obstacle.
   //! @param obstacle_check_distance Distance to check ahead for any objects that might be
@@ -183,6 +193,24 @@ protected:
   double get_max_velocity_for_safety_check() const;
 
   bool isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const;
+
+  /**
+   * @brief Checks if the given pose is a valid starting point for a lane change.
+   *
+   * This function determines whether the given pose (position) of the vehicle is within
+   * the area of either the target neighbor lane or the target lane itself. It uses geometric
+   * checks to see if the start point of the lane change is covered by the polygons representing
+   * these lanes.
+   *
+   * @param common_data_ptr Shared pointer to a CommonData structure, which should include:
+   *  - Non-null `lanes_polygon_ptr` that contains the polygon data for lanes.
+   * @param pose The current pose of the vehicle
+   *
+   * @return `true` if the pose is within either the target neighbor lane or the target lane;
+   * `false` otherwise.
+   */
+  bool is_valid_start_point(
+    const lane_change::CommonDataPtr & common_data_ptr, const Pose & pose) const;
 
   bool check_prepare_phase() const;
 
@@ -203,6 +231,7 @@ protected:
   }
 
   double stop_time_{0.0};
+  static constexpr double floating_err_th{1e-3};
 };
 }  // namespace autoware::behavior_path_planner
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_

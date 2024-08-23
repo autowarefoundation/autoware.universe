@@ -20,7 +20,7 @@
 namespace autoware::vehicle_cmd_gate
 {
 
-VehicleCmdFilter::VehicleCmdFilter()
+VehicleCmdFilter::VehicleCmdFilter() : param_()
 {
 }
 
@@ -39,48 +39,6 @@ bool VehicleCmdFilter::setParameterWithValidation(const VehicleCmdFilterParam & 
 
   param_ = p;
   return true;
-}
-void VehicleCmdFilter::setSteerLim(LimitArray v)
-{
-  auto tmp = param_;
-  tmp.steer_lim = v;
-  setParameterWithValidation(tmp);
-}
-void VehicleCmdFilter::setSteerRateLim(LimitArray v)
-{
-  auto tmp = param_;
-  tmp.steer_rate_lim = v;
-  setParameterWithValidation(tmp);
-}
-void VehicleCmdFilter::setLonAccLim(LimitArray v)
-{
-  auto tmp = param_;
-  tmp.lon_acc_lim = v;
-  setParameterWithValidation(tmp);
-}
-void VehicleCmdFilter::setLonJerkLim(LimitArray v)
-{
-  auto tmp = param_;
-  tmp.lon_jerk_lim = v;
-  setParameterWithValidation(tmp);
-}
-void VehicleCmdFilter::setLatAccLim(LimitArray v)
-{
-  auto tmp = param_;
-  tmp.lat_acc_lim = v;
-  setParameterWithValidation(tmp);
-}
-void VehicleCmdFilter::setLatJerkLim(LimitArray v)
-{
-  auto tmp = param_;
-  tmp.lat_jerk_lim = v;
-  setParameterWithValidation(tmp);
-}
-void VehicleCmdFilter::setActualSteerDiffLim(LimitArray v)
-{
-  auto tmp = param_;
-  tmp.actual_steer_diff_lim = v;
-  setParameterWithValidation(tmp);
 }
 
 void VehicleCmdFilter::setParam(const VehicleCmdFilterParam & p)
@@ -252,8 +210,7 @@ double VehicleCmdFilter::calcLatAcc(const Control & cmd, const double v) const
   return v * v * std::tan(cmd.lateral.steering_tire_angle) / param_.wheel_base;
 }
 
-double VehicleCmdFilter::limitDiff(
-  const double curr, const double prev, const double diff_lim) const
+double VehicleCmdFilter::limitDiff(const double curr, const double prev, const double diff_lim)
 {
   double diff = std::max(std::min(curr - prev, diff_lim), -diff_lim);
   return prev + diff;

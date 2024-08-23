@@ -87,6 +87,7 @@ public:
   };
   void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
   [[nodiscard]] double get_x() const { return x_; }
+  [[nodiscard]] double get_dev() const { return dev_; }
 
 private:
   bool initialized_;
@@ -238,6 +239,11 @@ private:
     std_srvs::srv::SetBool::Response::SharedPtr res);
 
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
+
+  /**
+   * @brief last angular velocity for compensating rph with delay
+   */
+  tf2::Vector3 last_angular_velocity_;
 
   friend class EKFLocalizerTestSuite;  // for test code
 };
