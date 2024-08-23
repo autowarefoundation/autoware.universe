@@ -89,11 +89,7 @@ alt::ConvexPolygon2d convex_hull(const alt::Points2d & points)
         return;
       }
 
-      const auto farthest =
-        *std::max_element(points.begin(), points.end(), [&](const auto & a, const auto & b) {
-          const auto seg_vec = p2 - p1;
-          return seg_vec.cross(a - p1) < seg_vec.cross(b - p1);
-        });
+      const auto & farthest = *find_farthest(points, p1, p2);
 
       alt::Points2d subset1, subset2;
       for (const auto & point : points) {
@@ -255,6 +251,15 @@ bool equals(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & pol
     return std::any_of(poly2.vertices().begin(), poly2.vertices().end(), [&](const auto & b) {
       return equals(a, b);
     });
+  });
+}
+
+alt::Points2d::const_iterator find_farthest(
+  const alt::Points2d & points, const alt::Point2d & seg_start, const alt::Point2d & seg_end)
+{
+  const auto seg_vec = seg_end - seg_start;
+  return std::max_element(points.begin(), points.end(), [&](const auto & a, const auto & b) {
+    return std::abs(seg_vec.cross(a - seg_start)) < std::abs(seg_vec.cross(b - seg_start));
   });
 }
 

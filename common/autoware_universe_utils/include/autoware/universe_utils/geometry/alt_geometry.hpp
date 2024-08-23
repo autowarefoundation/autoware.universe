@@ -140,6 +140,9 @@ bool equals(const alt::Point2d & point1, const alt::Point2d & point2);
 
 bool equals(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2);
 
+alt::Points2d::const_iterator find_farthest(
+  const alt::Points2d & points, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
+
 bool intersects(
   const alt::Point2d & seg1_start, const alt::Point2d & seg1_end, const alt::Point2d & seg2_start,
   const alt::Point2d & seg2_end);
