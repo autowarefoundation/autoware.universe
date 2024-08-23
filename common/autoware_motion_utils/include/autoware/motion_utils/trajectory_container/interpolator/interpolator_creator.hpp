@@ -32,17 +32,10 @@ template <typename InterpolatorType>
 class InterpolatorCreator
 {
 private:
-  std::optional<InterpolatorType> interpolator_;
   Eigen::VectorXd axis_;
   std::vector<double> values_;
 
 public:
-  template <typename... Args>
-  explicit InterpolatorCreator(Args &&... args)
-  {
-    interpolator_ = InterpolatorType(std::forward<Args>(args)...);
-  }
-
   [[nodiscard]] InterpolatorCreator & set_axis(const Eigen::Ref<const Eigen::VectorXd> & axis)
   {
     axis_ = axis;
@@ -67,13 +60,15 @@ public:
     return *this;
   }
 
-  [[nodiscard]] std::optional<InterpolatorType> create()
+  template <typename... Args>
+  [[nodiscard]] std::optional<InterpolatorType> create(Args &&... args)
   {
-    bool success = interpolator_->build(axis_, values_);
+    auto interpolator = InterpolatorType(std::forward<Args>(args)...);
+    bool success = interpolator.build(axis_, values_);
     if (!success) {
       return std::nullopt;
     }
-    return interpolator_;
+    return interpolator;
   }
 };
 
