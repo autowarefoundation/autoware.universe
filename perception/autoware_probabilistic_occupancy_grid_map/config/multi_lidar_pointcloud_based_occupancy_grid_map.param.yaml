@@ -13,7 +13,7 @@
         map_length_y: 150.0 # [m]
 
         # debug parameters
-        publish_processing_time_detail: true
+        publish_processing_time_detail: false
 
       # downsample input pointcloud
       downsample_input_pointcloud: true

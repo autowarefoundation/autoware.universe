@@ -18,4 +18,4 @@
     map_resolution: 0.5
 
     # debug parameters
-    publish_processing_time_detail: true
+    publish_processing_time_detail: false
