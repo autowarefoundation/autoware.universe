@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2023 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/lidar_centerpoint/utils.hpp"
+#ifndef POSE_ESTIMATOR_TYPE_HPP_
+#define POSE_ESTIMATOR_TYPE_HPP_
 
-#include <stdexcept>
-
-namespace autoware::lidar_centerpoint
+namespace autoware::pose_estimator_arbiter
 {
-// cspell: ignore divup
-std::size_t divup(const std::size_t a, const std::size_t b)  // cppcheck-suppress unusedFunction
-{
-  if (a == 0) {
-    throw std::runtime_error("A dividend of divup isn't positive.");
-  }
-  if (b == 0) {
-    throw std::runtime_error("A divisor of divup isn't positive.");
-  }
+enum class PoseEstimatorType : int { ndt = 1, yabloc = 2, eagleye = 4, artag = 8 };
+}  // namespace autoware::pose_estimator_arbiter
 
-  return (a + b - 1) / b;
-}
-
-}  // namespace autoware::lidar_centerpoint
+#endif  // POSE_ESTIMATOR_TYPE_HPP_
