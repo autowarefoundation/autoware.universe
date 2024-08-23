@@ -352,7 +352,6 @@ bool TrtYoloX::setCudaDeviceId(const uint8_t gpu_id)
 {
   cudaError_t cuda_err = cudaSetDevice(gpu_id);
   if (cuda_err != cudaSuccess) {
-    std::cerr << "Failed to set CUDA device: " << cudaGetErrorString(cuda_err) << std::endl;
     return false;
   } else {
     return true;
