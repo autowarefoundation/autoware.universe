@@ -52,7 +52,7 @@ Based on the camera image and the global ROI array detected by `map_based_detect
 ### Node Parameters
 
 | Name                       | Type    | Default Value               | Description                                                        |
-|----------------------------|---------|-----------------------------|--------------------------------------------------------------------|
+| -------------------------- | ------- | --------------------------- | ------------------------------------------------------------------ |
 | `data_path`                | string  | "$(env HOME)/autoware_data" | packages data and artifacts directory path                         |
 | `fine_detector_model_path` | string  | ""                          | The onnx file name for yolo model                                  |
 | `fine_detector_label_path` | string  | ""                          | The label file with label names for detected objects written on it |
