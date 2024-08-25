@@ -30,8 +30,6 @@
 namespace traffic_light_utils
 {
 
-bool isSignalUnknown(const tier4_perception_msgs::msg::TrafficLight & signal);
-
 void setSignalUnknown(tier4_perception_msgs::msg::TrafficLight & signal, float confidence = -1);
 
 /**
