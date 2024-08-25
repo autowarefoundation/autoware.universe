@@ -16,7 +16,11 @@
 
 #include "bevdet.hpp"
 #include "cpu_jpegdecoder.hpp"
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
 
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <opencv2/opencv.hpp>
 
 #include <autoware_perception_msgs/msg/detected_object_kinematics.hpp>
@@ -26,6 +30,7 @@
 #include <geometry_msgs/msg/point32.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -57,6 +62,13 @@ void box3DToDetectedObjects(
   const std::vector<Box> & boxes, autoware_perception_msgs::msg::DetectedObjects & objects,
   const std::vector<std::string> & class_names, float score_thre, const bool has_twist);
 
+void getTransform(
+  const geometry_msgs::msg::TransformStamped & transform, Eigen::Quaternion<float> & rot,
+  Eigen::Translation3f & translation);
+
+void getCameraIntrinsics(
+  const sensor_msgs::msg::CameraInfo::SharedPtr msg, Eigen::Matrix3f & intrinsics);
+
 class TRTBEVDetNode : public rclcpp::Node
 {
 private:
@@ -81,7 +93,26 @@ private:
   float score_thre_;
 
   rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr pub_boxes_;
+  // Subscribers of camera info for each camera, no need to synchonrize
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_f_caminfo_;
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_fl_caminfo_;
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_fr_caminfo_;
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_b_caminfo_;
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_bl_caminfo_;
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_br_caminfo_;
+  std::vector<bool> caminfo_received_;
+  bool camera_info_received_flag_ = false;
 
+  // tf listener
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+
+  // Camera parameters;
+  std::vector<Eigen::Matrix3f> cams_intrin;
+  std::vector<Eigen::Quaternion<float>> cams2ego_rot;
+  std::vector<Eigen::Translation3f> cams2ego_trans;
+
+  // Subscribers of images for each camera, synchonrized
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_f_img_;
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_fl_img_;
   message_filters::Subscriber<sensor_msgs::msg::Image> sub_fr_img_;
@@ -97,6 +128,14 @@ private:
   typedef message_filters::Synchronizer<MySyncPolicy> Sync;
   std::shared_ptr<Sync> sync_;
 
+  // Timer for checking initialization
+  rclcpp::TimerBase::SharedPtr timer_;
+  void initParameters();
+  void startCameraInfoSubscription();
+  void checkInitialization();
+  void initModel();
+  void startImageSubscription();
+
 public:
   TRTBEVDetNode(const std::string & node_name, const rclcpp::NodeOptions & options);
   ~TRTBEVDetNode();
@@ -108,6 +147,8 @@ public:
     const sensor_msgs::msg::Image::ConstSharedPtr & msg_bl_img,
     const sensor_msgs::msg::Image::ConstSharedPtr & msg_b_img,
     const sensor_msgs::msg::Image::ConstSharedPtr & msg_br_img);
+
+  void camera_info_callback(int idx, const sensor_msgs::msg::CameraInfo::SharedPtr msg);
 };
 
 #endif  // AUTOWARE__TENSORRT_BEVDET__BEVDET_NODE_HPP_
