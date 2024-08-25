@@ -138,7 +138,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
   updateCurrentRouteLanelet(data);
 
     const bool is_out_of_route = utils::isEgoOutOfRoute(
-      data->self_odometry->pose.pose, current_route_lanelet_.value(), data->prev_modified_goal,
+      data->self_odometry->pose.pose, current_route_lanelet_->value(), data->prev_modified_goal,
       data->route_handler, data->parameters);
 
   if (!is_any_module_running && is_out_of_route) {

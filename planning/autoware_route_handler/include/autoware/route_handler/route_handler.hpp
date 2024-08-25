@@ -368,7 +368,6 @@ private:
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const;
   bool getLeftLaneletWithinRoute(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * left_lanelet) const;
-  lanelet::ConstLanelets getRouteLanelets() const;
   lanelet::ConstLanelets getLaneletSequenceUpTo(
     const lanelet::ConstLanelet & lanelet,
     const double min_length = std::numeric_limits<double>::max(),
