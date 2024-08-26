@@ -106,8 +106,8 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
     Eigen::VectorXd dstate = Eigen::VectorXd::Zero(4);
     dstate(0) = velocity * std::cos(yaw);
     dstate(1) = velocity * std::sin(yaw);
-    // dstate(2) = velocity * std::tan(steer) / m_wheelbase;
-    dstate(2) = velocity / m_wheelbase * cos_delta_r_squared_inv * steer -velocity * m_curvature + velocity / m_wheelbase * (tan(delta_r) - delta_r * cos_delta_r_squared_inv);
+    dstate(2) = velocity / m_wheelbase * cos_delta_r_squared_inv * steer - velocity * m_curvature +
+                velocity / m_wheelbase * (tan(delta_r) - delta_r * cos_delta_r_squared_inv);
     dstate(3) = -(steer - desired_steer) / m_steer_tau;
 
     // Note: don't do "return state_w + dstate * dt", which does not work due to the lazy evaluation
@@ -118,17 +118,17 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
 
   MPCTrajectory mpc_predicted_trajectory;
   const auto DIM_U = getDimU();
-  Eigen::VectorXd pre_dstate_w, pre_state_w;
+  Eigen::VectorXd pre_dstate_w;
   for (size_t i = 0; i < reference_trajectory.size(); ++i) {
+    const auto current_state_w =
+      updateState(state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), dt, t.vx.at(i)).eval();
     if (i != 0) {
-      const auto dstate_w = updateState(state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), dt, t.vx.at(i));
-      state_w = 0.5 * (dstate_w + pre_dstate_w - pre_state_w + state_w);
+      const auto dstate_w = (current_state_w - state_w).eval();
+      state_w = state_w + 0.5 * (dstate_w + pre_dstate_w);
       pre_dstate_w = dstate_w;
-      // state_w = updateState(state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), dt, t.vx.at(i));
     } else {
-      pre_dstate_w = updateState(state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), dt, t.vx.at(i));
-      pre_state_w = state_w;
-    state_w = updateState(state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), dt, t.vx.at(i));
+      pre_dstate_w = (current_state_w - state_w).eval();
+      state_w = current_state_w;
     }
     // state_w = updateState(state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), dt, t.vx.at(i));
     mpc_predicted_trajectory.push_back(
