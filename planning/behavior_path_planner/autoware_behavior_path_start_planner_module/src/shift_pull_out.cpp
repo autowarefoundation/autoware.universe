@@ -311,7 +311,7 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
 
     // before means distance on road lane
     // Note: the pull_out_distance is the required distance on the shifted path. Now we need to
-    // calculate the distance on the center line used for the shift pathpath_shifter generation.
+    // calculate the distance on the center line used for the shift path_shifter generation.
     // However, since the calcBeforeShiftedArcLength is an approximate conversion from center line
     // to center line (not shift path to centerline), the conversion result may too long or short.
     // To prevent too short length, take maximum with the original distance.
