@@ -237,7 +237,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const double ref_path_len = autoware::motion_utils::calcArcLength(ref_path);
   const auto current_point = getFrenetPoint(object, ref_path.at(0), duration, speed_limit);
 
-  // Step1. Set Target Frenet Point
+  // Step 1. Set Target Frenet Point
   // Note that we do not set position s,
   // since we don't know the target longitudinal position
   FrenetPoint terminal_point;
@@ -267,11 +267,11 @@ PredictedPath PathGenerator::generatePolynomialPath(
     terminal_point.d = 0.0;
   }
 
-  // Step2. Generate Predicted Path on a Frenet coordinate
+  // Step 2. Generate Predicted Path on a Frenet coordinate
   const auto frenet_predicted_path =
     generateFrenetPath(current_point, terminal_point, ref_path_len, duration, lateral_duration);
 
-  // Step3. Interpolate Reference Path for converting predicted path coordinate
+  // Step 3. Interpolate Reference Path for converting predicted path coordinate
   const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);
 
   if (frenet_predicted_path.size() < 2 || interpolated_ref_path.size() < 2) {
@@ -582,15 +582,18 @@ FrenetPoint PathGenerator::getFrenetPoint(
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   FrenetPoint frenet_point;
+
+  // 1. Position
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
   const float obj_yaw =
     static_cast<float>(tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
   const float lane_yaw = static_cast<float>(tf2::getYaw(ref_pose.orientation));
-  const float delta_yaw = obj_yaw - lane_yaw;
-  const double l = (obj_point.x - ref_pose.position.x) * cos(lane_yaw) +
+  frenet_point.s = (obj_point.x - ref_pose.position.x) * cos(lane_yaw) +
                    (obj_point.y - ref_pose.position.y) * sin(lane_yaw);
-  const double d = -(obj_point.x - ref_pose.position.x) * sin(lane_yaw) +
+  frenet_point.d = -(obj_point.x - ref_pose.position.x) * sin(lane_yaw) +
                    (obj_point.y - ref_pose.position.y) * cos(lane_yaw);
+
+  // 2. Velocity (adjusted by acceleration)
   const float vx = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.x);
   const float vy = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.y);
   const float ax =
@@ -601,8 +604,9 @@ FrenetPoint PathGenerator::getFrenetPoint(
     (use_vehicle_acceleration_)
       ? static_cast<float>(object.kinematics.acceleration_with_covariance.accel.linear.y)
       : 0.0;
+  const float delta_yaw = obj_yaw - lane_yaw;
 
-  // Using a decaying acceleration model. Consult the README for more information about the model.
+  // using a decaying acceleration model. Consult the README for more information about the model.
   const double t_h = duration;
   const float lambda = std::log(2) / acceleration_exponential_half_life_;
 
@@ -664,13 +668,12 @@ FrenetPoint PathGenerator::getFrenetPoint(
 
   const float acceleration_adjusted_velocity_x = get_acceleration_adjusted_velocity(vx, ax);
   const float acceleration_adjusted_velocity_y = get_acceleration_adjusted_velocity(vy, ay);
-
-  frenet_point.s = l;
-  frenet_point.d = d;
   frenet_point.s_vel = acceleration_adjusted_velocity_x * std::cos(delta_yaw) -
                        acceleration_adjusted_velocity_y * std::sin(delta_yaw);
   frenet_point.d_vel = acceleration_adjusted_velocity_x * std::sin(delta_yaw) +
                        acceleration_adjusted_velocity_y * std::cos(delta_yaw);
+
+  // 3. Acceleration, assuming constant acceleration
   frenet_point.s_acc = 0.0;
   frenet_point.d_acc = 0.0;
 
