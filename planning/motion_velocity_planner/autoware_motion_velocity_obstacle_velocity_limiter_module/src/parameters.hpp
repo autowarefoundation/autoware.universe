@@ -46,9 +46,9 @@ struct ObstacleParameters
   double dynamic_obstacles_buffer{};
   double dynamic_obstacles_min_vel{};
   std::vector<std::string> static_map_tags{};
-  bool filter_envelope;
-  bool ignore_on_path;
-  double ignore_extra_distance;
+  bool filter_envelope{};
+  bool ignore_on_path{};
+  double ignore_extra_distance{};
   size_t rtree_min_points{};
   size_t rtree_min_segments{};
 
@@ -70,6 +70,7 @@ struct ObstacleParameters
       node.get_logger(), static_cast<int>(node.declare_parameter<int>(RTREE_SEGMENTS_PARAM)));
   }
 
+  // cppcheck-suppress functionStatic
   bool updateType(const rclcpp::Logger & logger, const std::string & type)
   {
     if (type == "pointcloud") {
@@ -140,6 +141,7 @@ struct ProjectionParameters
     duration = node.declare_parameter<double>(DURATION_PARAM);
   }
 
+  // cppcheck-suppress functionStatic
   bool updateModel(const rclcpp::Logger & logger, const std::string & model_str)
   {
     if (model_str == "particle") {
@@ -154,6 +156,7 @@ struct ProjectionParameters
     return true;
   }
 
+  // cppcheck-suppress functionStatic
   bool updateDistanceMethod(const rclcpp::Logger & logger, const std::string & method_str)
   {
     if (method_str == "exact") {

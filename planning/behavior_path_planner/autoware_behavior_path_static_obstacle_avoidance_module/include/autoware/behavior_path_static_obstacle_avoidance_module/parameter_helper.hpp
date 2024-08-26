@@ -69,6 +69,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       param.lateral_hard_margin_for_parked_vehicle =
         getOrDeclareParameter<double>(*node, ns + "lateral_margin.hard_margin_for_parked_vehicle");
       param.longitudinal_margin = getOrDeclareParameter<double>(*node, ns + "longitudinal_margin");
+      param.th_error_eclipse_long_radius =
+        getOrDeclareParameter<double>(*node, ns + "th_error_eclipse_long_radius");
       return param;
     };
 
@@ -301,6 +303,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   {
     const std::string ns = "avoidance.cancel.";
     p.enable_cancel_maneuver = getOrDeclareParameter<bool>(*node, ns + "enable");
+    p.force_deactivate_duration_time =
+      getOrDeclareParameter<double>(*node, ns + "force.duration_time");
   }
 
   // yield
