@@ -243,7 +243,6 @@ PredictedPath PathGenerator::generatePolynomialPath(
   FrenetPoint terminal_point;
   terminal_point.s_vel = std::hypot(current_point.s_vel, current_point.d_vel);
   terminal_point.s_acc = 0.0;
-  terminal_point.d = 0.0;
   terminal_point.d_vel = 0.0;
   terminal_point.d_acc = 0.0;
 
@@ -278,7 +277,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
     return generateStraightPath(object, duration);
   }
 
-  // Step4. Convert predicted trajectory from Frenet to Cartesian coordinate
+  // Step 4. Convert predicted trajectory from Frenet to Cartesian coordinate
   return convertToPredictedPath(object, frenet_predicted_path, interpolated_ref_path);
 }
 
@@ -316,14 +315,10 @@ FrenetPath PathGenerator::generateFrenetPath(
       break;
     }
 
-    // We assume the object is traveling at a constant speed along s direction
+    // Fill the FrenetPoint, velocity and acceleration are not used in the path generator
     FrenetPoint point;
     point.s = s_next;
-    point.s_vel = current_point.s_vel;
-    point.s_acc = current_point.s_acc;
     point.d = d_next;
-    point.d_vel = current_point.d_vel;
-    point.d_acc = current_point.d_acc;
     path.push_back(point);
   }
 
@@ -414,8 +409,8 @@ std::vector<double> PathGenerator::interpolationLerp(
     }
     last_query_key = query_key;
 
-    const double src_val = base_values.at(key_index);
-    const double dst_val = base_values.at(key_index + 1);
+    const double & src_val = base_values.at(key_index);
+    const double & dst_val = base_values.at(key_index + 1);
     const double ratio = (query_key - base_keys.at(key_index)) /
                          (base_keys.at(key_index + 1) - base_keys.at(key_index));
 
@@ -460,8 +455,8 @@ std::vector<tf2::Quaternion> PathGenerator::interpolationLerp(
     }
     last_query_key = query_key;
 
-    const tf2::Quaternion src_val = base_values.at(key_index);
-    const tf2::Quaternion dst_val = base_values.at(key_index + 1);
+    const tf2::Quaternion & src_val = base_values.at(key_index);
+    const tf2::Quaternion & dst_val = base_values.at(key_index + 1);
     const double ratio = (query_key - base_keys.at(key_index)) /
                          (base_keys.at(key_index + 1) - base_keys.at(key_index));
 
@@ -494,6 +489,7 @@ PosePath PathGenerator::interpolateReferencePath(
     return interpolated_path;
   }
 
+  // Prepare base path vectors
   std::vector<double> base_path_x(base_path.size());
   std::vector<double> base_path_y(base_path.size());
   std::vector<double> base_path_z(base_path.size());
@@ -512,6 +508,7 @@ PosePath PathGenerator::interpolateReferencePath(
     }
   }
 
+  // Prepare resampled s vector
   std::vector<double> resampled_s(frenet_predicted_path.size());
   for (size_t i = 0; i < frenet_predicted_path.size(); ++i) {
     resampled_s.at(i) = frenet_predicted_path.at(i).s;
@@ -524,9 +521,9 @@ PosePath PathGenerator::interpolateReferencePath(
   std::vector<tf2::Quaternion> lerp_ref_path_orientation =
     interpolationLerp(base_path_s, base_path_orientation, resampled_s);
 
+  // Set the interpolated PosePath
   interpolated_path.resize(interpolate_num);
   for (size_t i = 0; i < interpolate_num; ++i) {
-    // Set the interpolated pose
     geometry_msgs::msg::Pose interpolated_pose;
     interpolated_pose.position = autoware::universe_utils::createPoint(
       lerp_ref_path_x.at(i), lerp_ref_path_y.at(i), lerp_ref_path_z.at(i));

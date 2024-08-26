@@ -2042,7 +2042,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       }
 
       // calculate score that object can reach the target path smoothly, and search the
-      // starting segment index that have the highest score
+      // starting segment index that have the best score
       size_t idx = 0;
       {  // find target segmentation index
         std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -2050,13 +2050,16 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
           st_ptr = std::make_unique<ScopedTimeTrack>("find_target_seg_index", *time_keeper_);
 
         const double obj_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-        constexpr double search_distance = 32.0;  // [m]
+        constexpr double search_distance = 22.0;  // [m]
         const int search_segment_count = std::floor(search_distance / reference_path_resolution_);
         const uint search_segment_num =
           std::min(search_segment_count, static_cast<int>(pose_path.size() - starting_segment_idx));
-        double best_score = 1e9;
+
+        // search for the best score, which is the smallest
+        double best_score = 1e9;  // initial value is large enough
         for (uint i = 0; i < search_segment_num; ++i) {
           const auto & ref_pose = pose_path.at(starting_segment_idx + i);
+
           // yaw difference
           const double ref_yaw = tf2::getYaw(ref_pose.orientation);
           const double relative_ref_yaw = autoware_utils::normalize_radian(ref_yaw - obj_yaw);
@@ -2074,11 +2077,10 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
           if (std::abs(delta_yaw) > M_PI_4) {
             continue;
           }
-
           // distance
           const double distance_sq = dx * dx + dy * dy;
 
-          // score
+          // objective function score
           constexpr double dist_to_yaw_ratio = 0.0001;  // [rad2/m2]
           double score = delta_yaw * delta_yaw + dist_to_yaw_ratio * distance_sq;
 
