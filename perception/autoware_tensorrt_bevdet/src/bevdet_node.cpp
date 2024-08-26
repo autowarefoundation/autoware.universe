@@ -117,7 +117,7 @@ void getCameraIntrinsics(
 TRTBEVDetNode::TRTBEVDetNode(
   const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
-{
+{  // Only start camera info subscription and tf listener at the beginning
   img_N_ = this->declare_parameter<int>("data_params.N", 6);     // camera num 6
   img_w_ = this->declare_parameter<int>("data_params.W", 1600);  // W: 1600
   img_h_ = this->declare_parameter<int>("data_params.H", 900);   // H: 900
@@ -127,12 +127,12 @@ TRTBEVDetNode::TRTBEVDetNode(
   cams2ego_rot = std::vector<Eigen::Quaternion<float>>(img_N_);
   cams2ego_trans = std::vector<Eigen::Translation3f>(img_N_);
 
-  tf_buffer_ =
-      std::make_unique<tf2_ros::Buffer>(this->get_clock());
-  tf_listener_ =
-      std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+  tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
   startCameraInfoSubscription();
+
+  // Wait for camera info and tf transform initialization
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(100), std::bind(&TRTBEVDetNode::checkInitialization, this));
 }
@@ -146,15 +146,12 @@ void TRTBEVDetNode::initModel()
   onnx_file_ = this->declare_parameter("onnx_file", "bevdet_one_lt_d.onnx");
   engine_file_ = this->declare_parameter("engine_file", "bevdet_one_lt_d.engine");
 
-  // camconfig_ = YAML::LoadFile(this->declare_parameter("cam_config", "cams_param.yaml"));
-
   imgs_name_ = this->declare_parameter<std::vector<std::string>>("data_params.cams");
   class_names_ =
     this->declare_parameter<std::vector<std::string>>("post_process_params.class_names");
 
   RCLCPP_INFO_STREAM(this->get_logger(), "Successful load config!");
 
-  // sampleData_.param = camParams(camconfig_, img_N_, imgs_name_);
   sampleData_.param = camParams(cams_intrin, cams2ego_rot, cams2ego_trans);
 
   RCLCPP_INFO_STREAM(this->get_logger(), "Successful load image params!");
@@ -181,8 +178,7 @@ void TRTBEVDetNode::checkInitialization()
     startImageSubscription();
     timer_->cancel();
     timer_.reset();
-  }
-  else {
+  } else {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000,
       "Waiting for Camera Info and TF Transform Initialization...");
@@ -305,7 +301,8 @@ void TRTBEVDetNode::callback(
 
 void TRTBEVDetNode::camera_info_callback(int idx, const sensor_msgs::msg::CameraInfo::SharedPtr msg)
 {
-  if (caminfo_received_[idx]) return; // already received;  not expected to modify because of we init the model only once
+  if (caminfo_received_[idx])
+    return;  // already received;  not expected to modify because of we init the model only once
 
   Eigen::Matrix3f intrinsics;
   getCameraIntrinsics(msg, intrinsics);
