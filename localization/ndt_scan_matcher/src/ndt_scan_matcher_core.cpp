@@ -171,6 +171,9 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
     this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "monte_carlo_initial_pose_marker", 10);
 
+  voxel_score_points_pub_ =
+    this->create_publisher<sensor_msgs::msg::PointCloud2>("voxel_score_points", 10);
+
   service_ = this->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv",
     std::bind(
@@ -464,6 +467,18 @@ bool NDTScanMatcher::callback_sensor_points_main(
     geometry_msgs::msg::Pose pose_ros = matrix4f_to_pose(pose_matrix);
     transformation_msg_array.push_back(pose_ros);
   }
+
+  // check each of voxel score by SaltUhey
+  pcl::PointCloud<pcl::PointXYZI>::Ptr voxel_score_points_in_baselink_frame {new pcl::PointCloud<pcl::PointXYZI>};
+  pcl::PointCloud<pcl::PointXYZI>::Ptr voxel_score_points_in_map {new pcl::PointCloud<pcl::PointXYZI>};
+  *voxel_score_points_in_map = *ndt_ptr_->getScorePoints();
+  // autoware::universe_utils::transformPointCloud(
+  //   *voxel_score_points_in_baselink_frame, *voxel_score_points_in_map, ndt_result.pose);
+  sensor_msgs::msg::PointCloud2 voxel_score_points_msg_in_map;
+  pcl::toROSMsg(*voxel_score_points_in_map, voxel_score_points_msg_in_map);
+  voxel_score_points_msg_in_map.header.stamp = sensor_ros_time;
+  voxel_score_points_msg_in_map.header.frame_id = param_.frame.map_frame;
+  voxel_score_points_pub_->publish(voxel_score_points_msg_in_map);
 
   // check iteration_num
   diagnostics_scan_points_->add_key_value("iteration_num", ndt_result.iteration_num);
@@ -834,7 +849,7 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
   if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::LAPLACE_APPROXIMATION) {
-    return pclomp::estimate_xy_covariance_by_Laplace_approximation(ndt_result.hessian);
+    return pclomp::estimate_xy_covariance_by_laplace_approximation(ndt_result.hessian);
   } else if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::MULTI_NDT) {
