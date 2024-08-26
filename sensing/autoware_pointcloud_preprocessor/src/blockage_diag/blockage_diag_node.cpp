@@ -191,7 +191,6 @@ void BlockageDiagComponent::filter(
   } else {
     for (const auto p : pcl_input->points) {
       if (p.channel >= vertical_bins) {
-        std::ostringstream oss;
         RCLCPP_ERROR(
           this->get_logger(),
           "p.channel: %d is larger than vertical_bins: %d  .Please check the parameter "
