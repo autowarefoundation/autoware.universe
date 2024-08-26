@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// cspell:ignore BEVDET, thre, TRTBEV, bevdet, caminfo, intrin
 #ifndef AUTOWARE__TENSORRT_BEVDET__BEVDET_NODE_HPP_
 #define AUTOWARE__TENSORRT_BEVDET__BEVDET_NODE_HPP_
 
