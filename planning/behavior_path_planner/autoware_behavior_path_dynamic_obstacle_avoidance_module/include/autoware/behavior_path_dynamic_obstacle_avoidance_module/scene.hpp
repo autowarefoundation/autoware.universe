@@ -95,6 +95,9 @@ struct DynamicAvoidanceParameters
   bool enable_debug_info{true};
   bool use_hatched_road_markings{true};
 
+  // drivable lane config
+  std::string use_lane_type{"opposite_direction_lane"};
+
   // obstacle types to avoid
   bool avoid_car{true};
   bool avoid_truck{true};
@@ -169,6 +172,11 @@ struct LatFeasiblePaths
 class DynamicObstacleAvoidanceModule : public SceneModuleInterface
 {
 public:
+  static constexpr const char * logger_namespace =
+    "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.dynamic_"
+    "obstacle_"
+    "avoidance";
+
   struct DynamicAvoidanceObject
   {
     DynamicAvoidanceObject(
@@ -351,6 +359,7 @@ public:
     parameters_ = std::any_cast<std::shared_ptr<DynamicAvoidanceParameters>>(parameters);
   }
 
+  bool arrived_path_end_{false};
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   // TODO(someone): remove this, and use base class function
@@ -439,6 +448,11 @@ private:
   std::optional<autoware::universe_utils::Polygon2d> calcPredictedPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object, const EgoPathReservePoly & ego_path_poly) const;
   EgoPathReservePoly calcEgoPathReservePoly(const PathWithLaneId & ego_path) const;
+  lanelet::ConstLanelets getCurrentLanesFromPath(
+    const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data);
+  DrivableLanes generateExpandedDrivableLanes(
+    const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
+    const std::shared_ptr<DynamicAvoidanceParameters> & parameters);
 
   void printIgnoreReason(const std::string & obj_uuid, const std::string & reason)
   {

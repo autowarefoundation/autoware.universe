@@ -3,6 +3,7 @@
     dynamic_avoidance:
       common:
         enable_debug_info: false
+        use_lane_type: "opposite_direction_lane"
         use_hatched_road_markings: true
 
       # avoidance is performed for the object type with true
