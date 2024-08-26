@@ -10,7 +10,7 @@
   <arg name="output_velocity_limit_from_selector" default="/planning/scenario_planning/max_velocity"/>
   <arg name="output_debug_string" default="/planning/scenario_planning/external_velocity_limit_selector/debug"/>
 
-  <node pkg="autoware_external_velocity_limit_selector" exec="external_velocity_limit_selector" name="external_velocity_limit_selector" output="screen">
+  <node pkg="autoware_external_velocity_limit_selector" exec="external_velocity_limit_selector" name="external_velocity_limit_selector" output="both">
     <param from="$(var common_param_path)"/>
     <param from="$(var param_path)"/>
     <remap from="input/velocity_limit_from_api" to="$(var input_velocity_limit_from_api)"/>

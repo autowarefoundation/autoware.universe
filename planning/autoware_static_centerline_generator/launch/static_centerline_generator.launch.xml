@@ -87,5 +87,5 @@
   </group>
 
   <!-- rviz -->
-  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_static_centerline_generator)/rviz/static_centerline_generator.rviz" if="$(var rviz)"/>
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="both" args="-d $(find-pkg-share autoware_static_centerline_generator)/rviz/static_centerline_generator.rviz" if="$(var rviz)"/>
 </launch>

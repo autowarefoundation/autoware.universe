@@ -17,7 +17,7 @@
   <arg name="output_velocity_limit" default="/planning/scenario_planning/max_velocity_candidates"/>
   <arg name="output_clear_velocity_limit" default="/planning/scenario_planning/clear_velocity_limit"/>
 
-  <node pkg="autoware_obstacle_cruise_planner" exec="autoware_obstacle_cruise_planner" name="obstacle_cruise_planner" output="screen">
+  <node pkg="autoware_obstacle_cruise_planner" exec="autoware_obstacle_cruise_planner" name="obstacle_cruise_planner" output="both">
     <!-- param -->
     <param from="$(var obstacle_cruise_planner_param_path)"/>
     <param from="$(var vehicle_info_param_path)"/>

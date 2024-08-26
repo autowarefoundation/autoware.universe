@@ -14,7 +14,7 @@
   <arg name="output_velocity_limit" default="/planning/scenario_planning/max_velocity_candidates"/>
   <arg name="output_velocity_limit_clear_command" default="/planning/scenario_planning/clear_velocity_limit"/>
 
-  <node pkg="obstacle_stop_planner" exec="obstacle_stop_planner_node" name="obstacle_stop_planner" output="screen">
+  <node pkg="obstacle_stop_planner" exec="obstacle_stop_planner_node" name="obstacle_stop_planner" output="both">
     <!-- load config files -->
     <param from="$(var common_param_path)"/>
     <param from="$(var adaptive_cruise_control_param_path)"/>

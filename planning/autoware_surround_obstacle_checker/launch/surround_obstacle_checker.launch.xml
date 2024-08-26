@@ -7,7 +7,7 @@
   <arg name="output_velocity_limit" default="/planning/scenario_planning/max_velocity_candidates"/>
   <arg name="output_velocity_limit_clear_command" default="/planning/scenario_planning/clear_velocity_limit"/>
 
-  <node pkg="autoware_surround_obstacle_checker" exec="surround_obstacle_checker_node" name="surround_obstacle_checker" output="screen">
+  <node pkg="autoware_surround_obstacle_checker" exec="surround_obstacle_checker_node" name="surround_obstacle_checker" output="both">
     <param from="$(var param_path)"/>
     <remap from="~/output/no_start_reason" to="/planning/scenario_planning/status/no_start_reason"/>
     <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons"/>

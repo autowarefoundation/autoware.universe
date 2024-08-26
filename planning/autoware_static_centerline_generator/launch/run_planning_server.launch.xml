@@ -8,5 +8,5 @@
   </include>
 
   <!-- local server to connect path optimizer and cloud software -->
-  <node pkg="autoware_static_centerline_generator" exec="app.py" name="static_centerline_generator_http_server" output="screen"/>
+  <node pkg="autoware_static_centerline_generator" exec="app.py" name="static_centerline_generator_http_server" output="both"/>
 </launch>

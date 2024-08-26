@@ -15,7 +15,7 @@
   <arg name="param_path" default="$(find-pkg-share autoware_velocity_smoother)/config/default_velocity_smoother.param.yaml"/>
   <arg name="velocity_smoother_param_path" default="$(find-pkg-share autoware_velocity_smoother)/config/$(var velocity_smoother_type).param.yaml"/>
 
-  <node pkg="autoware_velocity_smoother" exec="velocity_smoother_node" name="velocity_smoother_node" output="screen">
+  <node pkg="autoware_velocity_smoother" exec="velocity_smoother_node" name="velocity_smoother_node" output="both">
     <param from="$(var common_param_path)"/>
     <param from="$(var nearest_search_param_path)"/>
     <param from="$(var param_path)"/>

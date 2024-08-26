@@ -35,7 +35,7 @@ def generate_test_description():
     static_centerline_generator_node = Node(
         package="autoware_static_centerline_generator",
         executable="main",
-        output="screen",
+        output="both",
         parameters=[
             {"lanelet2_map_path": lanelet2_map_path},
             {"mode": "AUTO"},
