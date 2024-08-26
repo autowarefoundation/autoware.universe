@@ -27,7 +27,6 @@ class CustomSlider : public QSlider
 
 public:
   explicit CustomSlider(Qt::Orientation orientation, QWidget * parent = nullptr);
-
 };
 
 #endif  // CUSTOM_SLIDER_HPP_
