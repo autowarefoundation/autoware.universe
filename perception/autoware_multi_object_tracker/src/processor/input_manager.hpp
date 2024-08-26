@@ -46,7 +46,6 @@ public:
 
   void init(const InputChannel & input_channel);
 
-  void setQueueSize(size_t que_size) { que_size_ = que_size; }
   void setTriggerFunction(std::function<void(const uint &)> func_trigger)
   {
     func_trigger_ = func_trigger;
@@ -60,15 +59,8 @@ public:
   void getObjectsOlderThan(
     const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
     ObjectsList & objects_list);
-  void getNames(std::string & long_name, std::string & short_name)
-  {
-    long_name = long_name_;
-    short_name = short_name_;
-  }
   bool isSpawnEnabled() const { return is_spawn_enabled_; }
 
-  std::string getLongName() const { return long_name_; }
-  size_t getObjectsCount() const { return objects_que_.size(); }
   void getTimeStatistics(
     double & latency_mean, double & latency_var, double & interval_mean,
     double & interval_var) const
@@ -78,13 +70,6 @@ public:
     interval_mean = interval_mean_;
     interval_var = interval_var_;
   }
-  void getLatencyStatistics(double & latency_mean, double & latency_var) const
-  {
-    latency_mean = latency_mean_;
-    latency_var = latency_var_;
-  }
-  bool getTimestamps(
-    rclcpp::Time & latest_measurement_time, rclcpp::Time & latest_message_time) const;
   rclcpp::Time getLatestMeasurementTime() const { return latest_measurement_time_; }
 
 private:
@@ -94,7 +79,7 @@ private:
   std::string input_topic_;
   std::string long_name_;
   std::string short_name_;
-  bool is_spawn_enabled_;
+  bool is_spawn_enabled_{};
 
   size_t que_size_{30};
   std::deque<DetectedObjects> objects_que_;
@@ -103,11 +88,11 @@ private:
 
   // bool is_time_initialized_{false};
   int initial_count_{0};
-  double expected_interval_;
-  double latency_mean_;
-  double latency_var_;
-  double interval_mean_;
-  double interval_var_;
+  double expected_interval_{};
+  double latency_mean_{};
+  double latency_var_{};
+  double interval_mean_{};
+  double interval_var_{};
 
   rclcpp::Time latest_measurement_time_;
   rclcpp::Time latest_message_time_;
@@ -136,7 +121,7 @@ private:
   bool is_initialized_{false};
   rclcpp::Time latest_exported_object_time_;
 
-  size_t input_size_;
+  size_t input_size_{};
   std::vector<std::shared_ptr<InputStream>> input_streams_;
 
   std::function<void()> func_trigger_;

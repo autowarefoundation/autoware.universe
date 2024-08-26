@@ -60,6 +60,8 @@ void StaticObstacleAvoidanceModuleManager::updateModuleParams(
       parameters, ns + "lateral_margin.hard_margin_for_parked_vehicle",
       config.lateral_hard_margin_for_parked_vehicle);
     updateParam<double>(parameters, ns + "longitudinal_margin", config.longitudinal_margin);
+    updateParam<double>(
+      parameters, ns + "th_error_eclipse_long_radius", config.th_error_eclipse_long_radius);
   };
 
   {
@@ -180,6 +182,11 @@ void StaticObstacleAvoidanceModuleManager::updateModuleParams(
     updateParam<double>(parameters, ns + "buf_slow_down_speed", p->buf_slow_down_speed);
     updateParam<bool>(parameters, ns + "consider_front_overhang", p->consider_front_overhang);
     updateParam<bool>(parameters, ns + "consider_rear_overhang", p->consider_rear_overhang);
+  }
+
+  {
+    const std::string ns = "avoidance.cancel.";
+    updateParam<double>(parameters, ns + "force.duration_time", p->force_deactivate_duration_time);
   }
 
   {
