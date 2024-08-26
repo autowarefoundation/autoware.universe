@@ -30,8 +30,9 @@ DetectedObjectsDisplay::DetectedObjectsDisplay() : ObjectPolygonDisplayBase("det
 
 void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
 {
-  clear_markers();
+  // clear_markers();
   int id = 0;
+  std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
   for (const auto & object : msg->objects) {
     // TODO(Satoshi Tanaka): fixing from string label to one string
     // Get marker for shape
@@ -45,7 +46,8 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto shape_marker_ptr = shape_marker.value();
       shape_marker_ptr->header = msg->header;
       shape_marker_ptr->id = id++;
-      add_marker(shape_marker_ptr);
+      // add_marker(shape_marker_ptr);
+      markers.push_back(shape_marker_ptr);
     }
 
     // Get marker for label
@@ -66,7 +68,8 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto marker_ptr = pose_with_covariance_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = id++;
-      add_marker(marker_ptr);
+      // add_marker(marker_ptr);
+      markers.push_back(marker_ptr);
     }
 
     // Get marker for yaw covariance
@@ -77,7 +80,8 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto marker_ptr = yaw_covariance_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = id++;
-      add_marker(marker_ptr);
+      // add_marker(marker_ptr);
+      markers.push_back(marker_ptr);
     }
 
     // Get marker for existence probability
@@ -93,7 +97,8 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto existence_prob_marker_ptr = existence_prob_marker.value();
       existence_prob_marker_ptr->header = msg->header;
       existence_prob_marker_ptr->id = id++;
-      add_marker(existence_prob_marker_ptr);
+      // add_marker(existence_prob_marker_ptr);
+      markers.push_back(existence_prob_marker_ptr);
     }
 
     // Get marker for velocity text
@@ -107,7 +112,8 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto velocity_text_marker_ptr = velocity_text_marker.value();
       velocity_text_marker_ptr->header = msg->header;
       velocity_text_marker_ptr->id = id++;
-      add_marker(velocity_text_marker_ptr);
+      // add_marker(velocity_text_marker_ptr);
+      markers.push_back(velocity_text_marker_ptr);
     }
 
     // Get marker for twist
@@ -118,7 +124,8 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto twist_marker_ptr = twist_marker.value();
       twist_marker_ptr->header = msg->header;
       twist_marker_ptr->id = id++;
-      add_marker(twist_marker_ptr);
+      // add_marker(twist_marker_ptr);
+      markers.push_back(twist_marker_ptr);
     }
 
     // Get marker for twist covariance
@@ -128,7 +135,8 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto marker_ptr = twist_covariance_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = id++;
-      add_marker(marker_ptr);
+      // add_marker(marker_ptr);
+      markers.push_back(marker_ptr);
     }
 
     // Get marker for yaw rate
@@ -139,7 +147,8 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto marker_ptr = yaw_rate_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = id++;
-      add_marker(marker_ptr);
+      // add_marker(marker_ptr);
+      markers.push_back(marker_ptr);
     }
 
     // Get marker for yaw rate covariance
@@ -150,8 +159,27 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto marker_ptr = yaw_rate_covariance_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = id++;
-      add_marker(marker_ptr);
+      // add_marker(marker_ptr);
+      markers.push_back(marker_ptr);
     }
+  }
+
+  if (!markers.empty()) {
+    std::set new_marker_ids = std::set<rviz_default_plugins::displays::MarkerID>();
+    for (const auto & marker : markers) {
+      rviz_default_plugins::displays::MarkerID marker_id =
+        rviz_default_plugins::displays::MarkerID(marker->ns, marker->id);
+      add_marker(marker);
+      new_marker_ids.insert(marker_id);
+    }
+    for (auto itr = existing_marker_ids.begin(); itr != existing_marker_ids.end(); itr++) {
+      if (new_marker_ids.find(*itr) == new_marker_ids.end()) {
+        deleteMarker(*itr);
+      }
+    }
+    existing_marker_ids = new_marker_ids;
+
+    markers.clear();
   }
 }
 
