@@ -106,7 +106,7 @@
         general_lanes: false
         intersection: true
         turns: true
-      prepare_segment_ignore_object_velocity_thresh: 0.1 # [m/s]
+      stopped_object_velocity_threshold: 1.0 # [m/s]
       check_objects_on_current_lanes: true
       check_objects_on_other_lanes: true
       use_all_predicted_path: true
@@ -120,6 +120,7 @@
         max_lateral_jerk: 1000.0            # [m/s3]
         overhang_tolerance: 0.0             # [m]
         unsafe_hysteresis_threshold: 10     # [/]
+        deceleration_sampling_num: 5 # [/]
 
       lane_change_finish_judge_buffer: 2.0      # [m]
       finish_judge_lateral_threshold: 0.1        # [m]

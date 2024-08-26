@@ -74,8 +74,8 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
     *node, parameter("enable_collision_check_for_prepare_phase.intersection"));
   p.enable_collision_check_for_prepare_phase_in_turns =
     getOrDeclareParameter<bool>(*node, parameter("enable_collision_check_for_prepare_phase.turns"));
-  p.prepare_segment_ignore_object_velocity_thresh = getOrDeclareParameter<double>(
-    *node, parameter("prepare_segment_ignore_object_velocity_thresh"));
+  p.stopped_object_velocity_threshold =
+    getOrDeclareParameter<double>(*node, parameter("stopped_object_velocity_threshold"));
   p.check_objects_on_current_lanes =
     getOrDeclareParameter<bool>(*node, parameter("check_objects_on_current_lanes"));
   p.check_objects_on_other_lanes =
@@ -238,6 +238,8 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
     getOrDeclareParameter<double>(*node, parameter("cancel.overhang_tolerance"));
   p.cancel.unsafe_hysteresis_threshold =
     getOrDeclareParameter<int>(*node, parameter("cancel.unsafe_hysteresis_threshold"));
+  p.cancel.deceleration_sampling_num =
+    getOrDeclareParameter<int>(*node, parameter("cancel.deceleration_sampling_num"));
 
   // finish judge parameters
   p.lane_change_finish_judge_buffer =

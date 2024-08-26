@@ -14,6 +14,7 @@
 
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
 
+#include "autoware/behavior_path_lane_change_module/utils/calculation.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/path.hpp"
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
@@ -778,7 +779,7 @@ std::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const BehaviorPathPlannerParameters & common_parameters,
+  const double lane_changing_acceleration, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters, const double resolution)
 {
   if (lane_change_path.path.points.empty()) {
@@ -787,7 +788,6 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
 
   const auto & path = lane_change_path.path;
   const auto prepare_acc = lane_change_path.info.longitudinal_acceleration.prepare;
-  const auto lane_changing_acc = lane_change_path.info.longitudinal_acceleration.lane_changing;
   const auto duration = lane_change_path.info.duration.sum();
   const auto prepare_time = lane_change_path.info.duration.prepare;
   const auto & minimum_lane_changing_velocity =
@@ -820,9 +820,9 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
     initial_velocity * prepare_time + 0.5 * prepare_acc * prepare_time * prepare_time;
   for (double t = prepare_time; t < duration; t += resolution) {
     const double delta_t = t - prepare_time;
-    const double velocity = lane_changing_velocity + lane_changing_acc * delta_t;
-    const double length =
-      lane_changing_velocity * delta_t + 0.5 * lane_changing_acc * delta_t * delta_t + offset;
+    const double velocity = lane_changing_velocity + lane_changing_acceleration * delta_t;
+    const double length = lane_changing_velocity * delta_t +
+                          0.5 * lane_changing_acceleration * delta_t * delta_t + offset;
     const auto pose = autoware::motion_utils::calcInterpolatedPose(
       path.points, vehicle_pose_frenet.length + length);
     predicted_path.emplace_back(t, pose, velocity);
@@ -989,30 +989,41 @@ bool passed_parked_objects(
   }
 
   const auto & current_path_end = current_lane_path.points.back().point.pose.position;
-  double min_dist_to_end_of_current_lane = std::numeric_limits<double>::max();
-  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
-  const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanes.back());
-  for (const auto & point : leading_obj_poly.outer()) {
-    const auto obj_p = autoware::universe_utils::createPoint(point.x(), point.y(), 0.0);
-    const double dist = autoware::motion_utils::calcSignedArcLength(
-      current_lane_path.points, obj_p, current_path_end);
-    min_dist_to_end_of_current_lane = std::min(dist, min_dist_to_end_of_current_lane);
-    if (is_goal_in_route) {
+  const auto dist_to_path_end = [&](const auto & src_point) {
+    if (common_data_ptr->lanes_ptr->current_lane_in_goal_section) {
       const auto goal_pose = route_handler.getGoalPose();
-      const double dist_to_goal = autoware::motion_utils::calcSignedArcLength(
-        current_lane_path.points, obj_p, goal_pose.position);
-      min_dist_to_end_of_current_lane = std::min(min_dist_to_end_of_current_lane, dist_to_goal);
+      return motion_utils::calcSignedArcLength(
+        current_lane_path.points, src_point, goal_pose.position);
     }
-  }
+    return motion_utils::calcSignedArcLength(current_lane_path.points, src_point, current_path_end);
+  };
+
+  const auto min_dist_to_end_of_current_lane = std::invoke([&]() {
+    auto min_dist_to_end_of_current_lane = std::numeric_limits<double>::max();
+    for (const auto & point : leading_obj_poly.outer()) {
+      const auto obj_p = universe_utils::createPoint(point.x(), point.y(), 0.0);
+      const auto dist = dist_to_path_end(obj_p);
+      min_dist_to_end_of_current_lane = std::min(dist, min_dist_to_end_of_current_lane);
+    }
+    return min_dist_to_end_of_current_lane;
+  });
 
   // If there are still enough length after the target object, we delay the lane change
-  if (min_dist_to_end_of_current_lane > minimum_lane_change_length) {
-    debug.second.unsafe_reason = "delay lane change";
-    utils::path_safety_checker::updateCollisionCheckDebugMap(object_debug, debug, false);
-    return false;
+  if (min_dist_to_end_of_current_lane <= minimum_lane_change_length) {
+    return true;
   }
 
-  return true;
+  const auto current_pose = common_data_ptr->get_ego_pose();
+  const auto dist_ego_to_obj = motion_utils::calcSignedArcLength(
+    current_lane_path.points, current_pose.position, leading_obj.initial_pose.pose.position);
+
+  if (dist_ego_to_obj < lane_change_path.info.length.lane_changing) {
+    return true;
+  }
+
+  debug.second.unsafe_reason = "delay lane change";
+  utils::path_safety_checker::updateCollisionCheckDebugMap(object_debug, debug, false);
+  return false;
 }
 
 std::optional<size_t> getLeadingStaticObjectIdx(
@@ -1092,8 +1103,7 @@ ExtendedPredictedObject transform(
 
   const auto & time_resolution = lane_change_parameters.prediction_time_resolution;
   const auto & prepare_duration = lane_change_parameters.lane_change_prepare_duration;
-  const auto & velocity_threshold =
-    lane_change_parameters.prepare_segment_ignore_object_velocity_thresh;
+  const auto & velocity_threshold = lane_change_parameters.stopped_object_velocity_threshold;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
   const double obj_vel_norm = std::hypot(
     extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
