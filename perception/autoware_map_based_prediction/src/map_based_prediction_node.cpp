@@ -2011,29 +2011,46 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       st_ptr = std::make_unique<ScopedTimeTrack>("searching_refpath_starting_point", *time_keeper_);
 
     auto & pose_path = ref_path.path;
+    if (pose_path.empty()) {
+      continue;
+    }
 
     size_t starting_segment_idx;
     {
-      // starting segment index is the nearest segment index from the object
+      // starting segment index is a segment close enough to the object
       const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
       {
         std::unique_ptr<ScopedTimeTrack> st_ptr;
         if (time_keeper_)
-          st_ptr = std::make_unique<ScopedTimeTrack>("findNearestSegmentIndex", *time_keeper_);
-        starting_segment_idx =
-          autoware::motion_utils::findNearestSegmentIndex(pose_path, obj_point);
+          st_ptr = std::make_unique<ScopedTimeTrack>("find_close_segment_index", *time_keeper_);
+
+        starting_segment_idx = 0;
+        double min_dist_sq = std::numeric_limits<double>::max();
+        constexpr double acceptable_dist_sq = 1.0;  // [m2]
+        for (size_t i = 0; i < pose_path.size(); i++) {
+          const double dx = pose_path.at(i).position.x - obj_point.x;
+          const double dy = pose_path.at(i).position.y - obj_point.y;
+          const double dist_sq = dx * dx + dy * dy;
+          if (dist_sq < min_dist_sq) {
+            min_dist_sq = dist_sq;
+            starting_segment_idx = i;
+          }
+          if (dist_sq < acceptable_dist_sq) {
+            break;
+          }
+        }
       }
-      size_t idx = 0;
 
       // calculate score that object can reach the target path smoothly, and search the
       // starting segment index that have the highest score
+      size_t idx = 0;
       {  // find target segmentation index
         std::unique_ptr<ScopedTimeTrack> st_ptr;
         if (time_keeper_)
           st_ptr = std::make_unique<ScopedTimeTrack>("find_target_seg_index", *time_keeper_);
 
         const double obj_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-        constexpr double search_distance = 30.0;  // [m]
+        constexpr double search_distance = 32.0;  // [m]
         const int search_segment_count = std::floor(search_distance / reference_path_resolution_);
         const uint search_segment_num =
           std::min(search_segment_count, static_cast<int>(pose_path.size() - starting_segment_idx));
@@ -2065,8 +2082,9 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
           constexpr double dist_to_yaw_ratio = 0.0001;  // [rad2/m2]
           double score = delta_yaw * delta_yaw + dist_to_yaw_ratio * distance_sq;
 
+          constexpr double acceptable_score = 1e-3;
           if (score < best_score) {
-            if (score < 1e-3) {
+            if (score < acceptable_score) {
               // if the score is small enough, we can break the loop
               idx = i;
               break;
@@ -2082,7 +2100,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       starting_segment_idx = std::clamp(starting_segment_idx, 0ul, pose_path.size() - 1);
     }
     // Trim the reference path
-    pose_path = PosePath(pose_path.begin() + starting_segment_idx, pose_path.end());
+    pose_path.erase(pose_path.begin(), pose_path.begin() + starting_segment_idx);
   }
 
   return all_ref_paths;
