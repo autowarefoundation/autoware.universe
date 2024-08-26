@@ -9,12 +9,12 @@
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
   <maintainer email="shumpei.wakabayashi@tier4.jp">Shumpei Wakabayashi</maintainer>
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
+  <maintainer email="mamoru.sobue@tier4.jp">Mamoru Sobue</maintainer>
 
   <license>Apache License 2.0</license>
 
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_motion_velocity_planner_common</depend>
   <depend>autoware_perception_msgs</depend>

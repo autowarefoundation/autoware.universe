@@ -7,7 +7,7 @@ It receives roughly estimated initial pose from GNSS/user.
 Passing the pose to `ndt_scan_matcher`, and it gets a calculated ego pose from `ndt_scan_matcher` via service.
 Finally, it publishes the initial pose to `ekf_localizer`.
 This node depends on the map height fitter library.
-[See here for more details.](../../map/map_height_fitter/README.md)
+[See here for more details.](../../map/autoware_map_height_fitter/README.md)
 
 ## Interfaces
 
@@ -40,6 +40,14 @@ This node depends on the map height fitter library.
 | ------------------------------------ | ------------------------------------------------------------ | --------------------------- |
 | `/localization/initialization_state` | autoware_adapi_v1_msgs::msg::LocalizationInitializationState | pose initialization state   |
 | `/initialpose3d`                     | geometry_msgs::msg::PoseWithCovarianceStamped                | calculated initial ego pose |
+
+## Diagnostics
+
+### pose_initializer_status
+
+If the score of initial pose estimation result is lower than score threshold, ERROR message is output to the `/diagnostics` topic.
+
+<img src="./media/diagnostic_pose_reliability.png" alt="drawing" width="400"/>
 
 ## Connection with Default AD API
 
