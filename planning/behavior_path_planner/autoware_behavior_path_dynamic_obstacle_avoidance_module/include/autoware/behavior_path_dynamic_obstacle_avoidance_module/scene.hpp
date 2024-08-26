@@ -133,6 +133,7 @@ struct DynamicAvoidanceParameters
 
   // drivable area generation
   PolygonGenerationMethod polygon_generation_method{};
+  bool expand_drivable_area;
   double min_obj_path_based_lon_polygon_margin{0.0};
   double lat_offset_from_obstacle{0.0};
   double margin_distance_around_pedestrian{0.0};
@@ -453,6 +454,7 @@ private:
   DrivableLanes generateExpandedDrivableLanes(
     const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
     const std::shared_ptr<DynamicAvoidanceParameters> & parameters);
+  DrivableLanes generateNotExpandedDrivableLanes(const lanelet::ConstLanelet & lanelet);
 
   void printIgnoreReason(const std::string & obj_uuid, const std::string & reason)
   {

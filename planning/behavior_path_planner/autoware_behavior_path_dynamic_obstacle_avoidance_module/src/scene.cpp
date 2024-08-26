@@ -427,9 +427,6 @@ BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
 
   const auto ego_path_reserve_poly = calcEgoPathReservePoly(input_path);
 
-  // create obstacles to avoid (= extract from the drivable area)
-  std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
-
   // generate drivable lanes
   auto current_lanelets =
     getCurrentLanesFromPath(getPreviousModuleOutput().reference_path, planner_data_);
@@ -441,48 +438,53 @@ BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
   output.reference_path = getPreviousModuleOutput().reference_path;
   output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   output.modified_goal = getPreviousModuleOutput().modified_goal;
+  std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
 
-  {
-    // generate drivable lanes
+  if(parameters_->expand_drivable_area) {
     std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
-      current_drivable_area_info.drivable_lanes.push_back(
-        generateExpandedDrivableLanes(lanelet, planner_data_, parameters_));
+  current_drivable_area_info.drivable_lanes.push_back(
+    generateExpandedDrivableLanes(lanelet, planner_data_, parameters_));
     });
-    // expand hatched road markings
-    current_drivable_area_info.enable_expanding_hatched_road_markings =
-      parameters_->use_hatched_road_markings;
-    current_drivable_area_info.obstacles.clear();
-
-    // generate obstacle polygons
-    for (const auto & object : target_objects_) {
-      const auto obstacle_poly = [&]() {
-        if (getObjectType(object.label) == ObjectType::UNREGULATED) {
-          return calcPredictedPathBasedDynamicObstaclePolygon(object, ego_path_reserve_poly);
-        }
-
-        if (parameters_->polygon_generation_method == PolygonGenerationMethod::EGO_PATH_BASE) {
-          return calcEgoPathBasedDynamicObstaclePolygon(object);
-        }
-        if (parameters_->polygon_generation_method == PolygonGenerationMethod::OBJECT_PATH_BASE) {
-          return calcObjectPathBasedDynamicObstaclePolygon(object);
-        }
-        throw std::logic_error("The polygon_generation_method's string is invalid.");
-      }();
-      if (obstacle_poly) {
-        obstacles_for_drivable_area.push_back(
-          {object.pose, obstacle_poly.value(), object.is_collision_left});
-
-        appendObjectMarker(info_marker_, object.pose);
-        appendExtractedPolygonMarker(debug_marker_, obstacle_poly.value(), object.pose.position.z);
-      }
-    }
-    current_drivable_area_info.obstacles = obstacles_for_drivable_area;
-
-    output.drivable_area_info = utils::combineDrivableAreaInfo(
-      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
-
-    setDrivableLanes(output.drivable_area_info.drivable_lanes);
+  } else {
+    std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
+  current_drivable_area_info.drivable_lanes.push_back(
+    generateNotExpandedDrivableLanes(lanelet));
+    });
   }
+
+  // expand hatched road markings
+  current_drivable_area_info.enable_expanding_hatched_road_markings =
+    parameters_->use_hatched_road_markings;
+  current_drivable_area_info.obstacles.clear();
+
+  // generate obstacle polygons
+  for (const auto & object : target_objects_) {
+    const auto obstacle_poly = [&]() {
+      if (getObjectType(object.label) == ObjectType::UNREGULATED) {
+        return calcPredictedPathBasedDynamicObstaclePolygon(object, ego_path_reserve_poly);
+      }
+
+      if (parameters_->polygon_generation_method == PolygonGenerationMethod::EGO_PATH_BASE) {
+        return calcEgoPathBasedDynamicObstaclePolygon(object);
+      }
+      if (parameters_->polygon_generation_method == PolygonGenerationMethod::OBJECT_PATH_BASE) {
+        return calcObjectPathBasedDynamicObstaclePolygon(object);
+      }
+      throw std::logic_error("The polygon_generation_method's string is invalid.");
+    }();
+    if (obstacle_poly) {
+      obstacles_for_drivable_area.push_back(
+        {object.pose, obstacle_poly.value(), object.is_collision_left});
+
+      appendObjectMarker(info_marker_, object.pose);
+      appendExtractedPolygonMarker(debug_marker_, obstacle_poly.value(), object.pose.position.z);
+    }
+  }
+  current_drivable_area_info.obstacles = obstacles_for_drivable_area;
+
+  output.drivable_area_info = utils::combineDrivableAreaInfo(
+    current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+
   return output;
 }
 
@@ -2136,6 +2138,15 @@ DrivableLanes DynamicObstacleAvoidanceModule::generateExpandedDrivableLanes(
     current_drivable_lanes.right_lane.id() != lanelet.id()) {
     current_drivable_lanes.middle_lanes.push_back(lanelet);
   }
+
+  return current_drivable_lanes;
+}
+
+DrivableLanes DynamicObstacleAvoidanceModule::generateNotExpandedDrivableLanes(const lanelet::ConstLanelet & lanelet)
+{
+  DrivableLanes current_drivable_lanes;
+  current_drivable_lanes.left_lane = lanelet;
+  current_drivable_lanes.right_lane = lanelet;
 
   return current_drivable_lanes;
 }
