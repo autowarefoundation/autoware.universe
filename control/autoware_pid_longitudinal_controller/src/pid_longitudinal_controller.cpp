@@ -104,7 +104,7 @@ PidLongitudinalController::PidLongitudinalController(
 
     // set lowpass filter for vel error and pitch
     const double lpf_vel_error_gain{node.declare_parameter<double>("lpf_vel_error_gain")};
-    m_lpf_vel_error = std::make_unique<LowpassFilter1d>(0.0, lpf_vel_error_gain);
+    m_lpf_vel_error = std::make_shared<LowpassFilter1d>(0.0, lpf_vel_error_gain);
 
     m_enable_integration_at_low_speed =
       node.declare_parameter<bool>("enable_integration_at_low_speed");
@@ -167,7 +167,7 @@ PidLongitudinalController::PidLongitudinalController(
   // parameters for acc feedback
   {
     const double lpf_acc_error_gain{node.declare_parameter<double>("lpf_acc_error_gain")};
-    m_lpf_acc_error = std::make_unique<LowpassFilter1d>(0.0, lpf_acc_error_gain);
+    m_lpf_acc_error = std::make_shared<LowpassFilter1d>(0.0, lpf_acc_error_gain);
     m_acc_feedback_gain = node.declare_parameter<double>("acc_feedback_gain");
   }
 
@@ -184,7 +184,7 @@ PidLongitudinalController::PidLongitudinalController(
   m_adaptive_trajectory_velocity_th =
     node.declare_parameter<double>("adaptive_trajectory_velocity_th");  // [m/s^2]
   const double lpf_pitch_gain{node.declare_parameter<double>("lpf_pitch_gain")};
-  m_lpf_pitch = std::make_unique<LowpassFilter1d>(0.0, lpf_pitch_gain);
+  m_lpf_pitch = std::make_shared<LowpassFilter1d>(0.0, lpf_pitch_gain);
   m_max_pitch_rad = node.declare_parameter<double>("max_pitch_rad");  // [rad]
   m_min_pitch_rad = node.declare_parameter<double>("min_pitch_rad");  // [rad]
 
@@ -872,9 +872,9 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_FB_APPLIED, acc_cmd);
     RCLCPP_DEBUG(
       logger_,
-      "[acc feedback]: raw_ctrl_cmd.acc: %1.3f, control_data.current_motion.acc: %1.3f, "
-      "m_lpf_acc_error.getValue(): %1.3f, acc_cmd: %1.3f",
-      raw_ctrl_cmd.acc, control_data.current_motion.acc, 0.0, acc_cmd);
+      "[acc feedback]: raw_ctrl_cmd.acc: %1.3f, control_data.current_motion.acc: %1.3f, acc_cmd: "
+      "%1.3f",
+      raw_ctrl_cmd.acc, control_data.current_motion.acc, acc_cmd);
 
     ctrl_cmd_as_pedal_pos.acc =
       applySlopeCompensation(acc_cmd, control_data.slope_angle, control_data.shift);
