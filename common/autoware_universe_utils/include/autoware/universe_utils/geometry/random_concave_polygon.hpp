@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__RANDOM_POLYGON_HPP_
-#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__RANDOM_POLYGON_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__RANDOM_CONCAVE_POLYGON_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__RANDOM_CONCAVE_POLYGON_HPP_
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
@@ -22,9 +22,10 @@ namespace autoware::universe_utils
 /// @brief generate a random non-convex polygon
 /// @param vertices number of vertices for the desired polygon
 /// @param max points will be generated in the range [-max, max]
-/// @details algorithm from https://digitalscholarship.unlv.edu/cgi/viewcontent.cgi?article=3183&context=thesesdissertations
+/// @details algorithm from
+/// https://digitalscholarship.unlv.edu/cgi/viewcontent.cgi?article=3183&context=thesesdissertations
 Polygon2d random_concave_polygon(const size_t vertices, const double max);
 
 }  // namespace autoware::universe_utils
 
-#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__RANDOM_POLYGON_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__RANDOM_CONCAVE_POLYGON_HPP_

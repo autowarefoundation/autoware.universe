@@ -1990,7 +1990,7 @@ TEST(geometry, intersectPolygonRand)
 TEST(geometry, intersectPolygonwithHoles)
 {
   using autoware::universe_utils::Polygon2d;
-  using autoware::universe_utils::earclipping::triangulate;
+  using autoware::universe_utils::triangulate;
 
   {  // quadrilateral inside the hole of another quadrilateral (not intersecting)
     Polygon2d outerConcave, innerConcave;
@@ -2099,10 +2099,13 @@ TEST(geometry, intersectPolygonwithHoles)
   }
 }
 
-TEST(geometry, DISABLED_intersectConcavePolygon) // GJK give different result for edge test (point sharing and edge sharing) compared to SAT and boost::geometry::intersect
+TEST(
+  geometry,
+  DISABLED_intersectConcavePolygon)  // GJK give different result for edge test (point sharing and
+                                     // edge sharing) compared to SAT and boost::geometry::intersect
 {
-  using autoware::universe_utils::earclipping::triangulate;
   using autoware::universe_utils::Polygon2d;
+  using autoware::universe_utils::triangulate;
 
   {  // 2 Concave quadrilateral with intersection
     Polygon2d poly1, poly2;
@@ -2124,20 +2127,20 @@ TEST(geometry, DISABLED_intersectConcavePolygon) // GJK give different result fo
     bool collisionDetectedSAT = false;
     bool collisionDetectedGJK = false;
 
-    for (const auto& tri1 : triangles1) {
-      for (const auto& tri2 : triangles2) {
+    for (const auto & tri1 : triangles1) {
+      for (const auto & tri2 : triangles2) {
         if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
           collisionDetectedSAT = true;
           break;
         }
       }
       if (collisionDetectedSAT) {
-        break; 
+        break;
       }
     }
 
-    for (const auto& tri1 : triangles1) {
-      for (const auto& tri2 : triangles2) {
+    for (const auto & tri1 : triangles1) {
+      for (const auto & tri2 : triangles2) {
         if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
           collisionDetectedGJK = true;
           break;
@@ -2173,20 +2176,20 @@ TEST(geometry, DISABLED_intersectConcavePolygon) // GJK give different result fo
     bool collisionDetectedSAT = false;
     bool collisionDetectedGJK = false;
 
-    for (const auto& tri1 : triangles1) {
-      for (const auto& tri2 : triangles2) {
+    for (const auto & tri1 : triangles1) {
+      for (const auto & tri2 : triangles2) {
         if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
           collisionDetectedSAT = true;
           break;
         }
       }
       if (collisionDetectedSAT) {
-        break; 
+        break;
       }
     }
 
-    for (const auto& tri1 : triangles1) {
-      for (const auto& tri2 : triangles2) {
+    for (const auto & tri1 : triangles1) {
+      for (const auto & tri2 : triangles2) {
         if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
           collisionDetectedGJK = true;
           break;
@@ -2221,20 +2224,20 @@ TEST(geometry, DISABLED_intersectConcavePolygon) // GJK give different result fo
     bool collisionDetectedSAT = false;
     bool collisionDetectedGJK = false;
 
-    for (const auto& tri1 : triangles1) {
-      for (const auto& tri2 : triangles2) {
+    for (const auto & tri1 : triangles1) {
+      for (const auto & tri2 : triangles2) {
         if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
           collisionDetectedSAT = true;
           break;
         }
       }
       if (collisionDetectedSAT) {
-        break; 
+        break;
       }
     }
 
-    for (const auto& tri1 : triangles1) {
-      for (const auto& tri2 : triangles2) {
+    for (const auto & tri1 : triangles1) {
+      for (const auto & tri2 : triangles2) {
         if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
           collisionDetectedGJK = true;
           break;
@@ -2270,20 +2273,20 @@ TEST(geometry, DISABLED_intersectConcavePolygon) // GJK give different result fo
     bool collisionDetectedSAT = false;
     bool collisionDetectedGJK = false;
 
-    for (const auto& tri1 : triangles1) {
-      for (const auto& tri2 : triangles2) {
+    for (const auto & tri1 : triangles1) {
+      for (const auto & tri2 : triangles2) {
         if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
           collisionDetectedSAT = true;
           break;
         }
       }
       if (collisionDetectedSAT) {
-        break; 
+        break;
       }
     }
 
-    for (const auto& tri1 : triangles1) {
-      for (const auto& tri2 : triangles2) {
+    for (const auto & tri1 : triangles1) {
+      for (const auto & tri2 : triangles2) {
         if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
           collisionDetectedGJK = true;
           break;
@@ -2295,7 +2298,7 @@ TEST(geometry, DISABLED_intersectConcavePolygon) // GJK give different result fo
     }
 
     EXPECT_FALSE(collisionDetectedSAT);
-    EXPECT_FALSE(collisionDetectedGJK); // 
+    EXPECT_FALSE(collisionDetectedGJK);  //
 
     // small intersection test
     poly1.outer()[1].y() += 1e-12;
@@ -2303,20 +2306,20 @@ TEST(geometry, DISABLED_intersectConcavePolygon) // GJK give different result fo
 
     collisionDetectedSAT = false;
     collisionDetectedGJK = false;
-    for (const auto& tri1 : triangles1) {
-      for (const auto& tri2 : triangles2) {
+    for (const auto & tri1 : triangles1) {
+      for (const auto & tri2 : triangles2) {
         if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
           collisionDetectedSAT = true;
           break;
         }
       }
       if (collisionDetectedSAT) {
-        break; 
+        break;
       }
     }
 
-    for (const auto& tri1 : triangles1) {
-      for (const auto& tri2 : triangles2) {
+    for (const auto & tri1 : triangles1) {
+      for (const auto & tri2 : triangles2) {
         if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
           collisionDetectedGJK = true;
           break;
@@ -2361,7 +2364,7 @@ TEST(geometry, intersectConcavePolygonRand)
     for (const auto & polygon : polygons) {
       sw.tic();
       std::vector<autoware::universe_utils::Polygon2d> triangles =
-        autoware::universe_utils::earclipping::triangulate(polygon);
+        autoware::universe_utils::triangulate(polygon);
       triangulation_ns += sw.toc();
       triangulations.push_back(triangles);
     }
