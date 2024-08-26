@@ -21,6 +21,7 @@
 #include <OgreRay.h>
 #include <OgreViewport.h>
 
+// cppcheck-suppress unusedFunction
 std::optional<Ogre::Vector3> get_point_from_mouse(rviz_common::ViewportMouseEvent & event)
 {
   using rviz_rendering::RenderWindowOgreAdapter;
