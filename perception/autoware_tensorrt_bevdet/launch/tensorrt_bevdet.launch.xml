@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- cspell:ignore nuscenes, bevdet dlongterm-->
+  <!-- cspell:ignore nuscenes, bevdet, dlongterm -->
 
   <!-- input topic name -->
   <arg name="input/img_fl" default="/CAM_FRONT_LEFT/image"/>
