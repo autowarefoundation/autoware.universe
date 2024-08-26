@@ -23,6 +23,13 @@
 namespace default_ad_api::utils
 {
 
+template <class MsgT>
+MsgT ignore_stamp(MsgT msg)
+{
+  msg.stamp = rclcpp::Time(0, 0);
+  return msg;
+};
+
 template <class PubT, class MsgT, class FuncT>
 void notify(PubT & pub, std::optional<MsgT> & prev, const MsgT & curr, FuncT && ignore)
 {
