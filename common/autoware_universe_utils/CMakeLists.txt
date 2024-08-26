@@ -15,7 +15,9 @@ ament_auto_add_library(autoware_universe_utils SHARED
   src/geometry/pose_deviation.cpp
   src/geometry/boost_polygon_utils.cpp
   src/geometry/random_convex_polygon.cpp
+  src/geometry/random_concave_polygon.cpp
   src/geometry/gjk_2d.cpp
+  src/geometry/earclipping.cpp
   src/math/sin_table.cpp
   src/math/trigonometry.cpp
   src/ros/msg_operation.cpp
