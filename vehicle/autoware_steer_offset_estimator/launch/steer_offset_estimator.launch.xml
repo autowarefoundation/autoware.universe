@@ -12,7 +12,7 @@
   </include>
 
   <!-- steer offset estimator -->
-  <node pkg="autoware_steer_offset_estimator" exec="steer_offset_estimator" name="steer_offset_estimator" output="screen">
+  <node pkg="autoware_steer_offset_estimator" exec="steer_offset_estimator" name="steer_offset_estimator" output="both">
     <param from="$(var config_file)"/>
     <remap from="~/input/twist" to="$(var output_twist_topic)"/>
     <remap from="~/input/steer" to="/vehicle/status/steering_status"/>

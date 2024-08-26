@@ -11,7 +11,7 @@
   <arg name="calibration_method" default="each_cell"/>
 
   <!-- calibration interface -->
-  <node pkg="autoware_accel_brake_map_calibrator" exec="accel_brake_map_calibrator" name="accel_brake_map_calibrator" output="screen">
+  <node pkg="autoware_accel_brake_map_calibrator" exec="accel_brake_map_calibrator" name="accel_brake_map_calibrator" output="both">
     <param from="$(var accel_brake_map_calib_param)"/>
     <remap from="~/input/velocity" to="/vehicle/status/velocity_status"/>
     <remap from="~/input/steer" to="/vehicle/status/steering_status"/>
@@ -27,9 +27,9 @@
   </node>
 
   <!-- calibration plot and map server node -->
-  <node pkg="autoware_accel_brake_map_calibrator" exec="new_accel_brake_map_server.py" name="new_accel_brake_map_server" output="screen">
+  <node pkg="autoware_accel_brake_map_calibrator" exec="new_accel_brake_map_server.py" name="new_accel_brake_map_server" output="both">
     <param name="calibration_method" value="$(var calibration_method)"/>
   </node>
   <!-- Rviz -->
-  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_accel_brake_map_calibrator)/rviz/occupancy.rviz" if="$(var rviz)"/>
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="both" args="-d $(find-pkg-share autoware_accel_brake_map_calibrator)/rviz/occupancy.rviz" if="$(var rviz)"/>
 </launch>
