@@ -6,7 +6,7 @@
   <arg name="input_predicted_trajectory" default="/control/trajectory_follower/lateral/predicted_trajectory"/>
   <arg name="input_objects" default="/perception/object_recognition/objects"/>
 
-  <node pkg="autoware_autonomous_emergency_braking" exec="autoware_autonomous_emergency_braking" name="autonomous_emergency_braking" output="screen">
+  <node pkg="autoware_autonomous_emergency_braking" exec="autoware_autonomous_emergency_braking" name="autonomous_emergency_braking" output="both">
     <!-- load config files -->
     <param from="$(var param_path)"/>
     <!-- remap topic name -->

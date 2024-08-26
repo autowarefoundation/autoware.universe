@@ -10,7 +10,7 @@
   <!-- vehicle info -->
   <arg name="vehicle_info_param_file" default="$(find-pkg-share autoware_vehicle_info_utils)/config/vehicle_info.param.yaml"/>
 
-  <node pkg="control_performance_analysis" exec="control_performance_analysis_exe" name="control_performance_analysis_exe" output="screen">
+  <node pkg="control_performance_analysis" exec="control_performance_analysis_exe" name="control_performance_analysis_exe" output="both">
     <param from="$(var control_performance_analysis_param_path)"/>
     <param from="$(var vehicle_info_param_file)"/>
 

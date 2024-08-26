@@ -3,7 +3,7 @@
   <arg name="input_reference_trajectory" default="/planning/scenario_planning/trajectory"/>
   <arg name="input_predicted_trajectory" default="/control/trajectory_follower/lateral/predicted_trajectory"/>
 
-  <node name="control_validator" exec="autoware_control_validator_node" pkg="autoware_control_validator" output="screen">
+  <node name="control_validator" exec="autoware_control_validator_node" pkg="autoware_control_validator" output="both">
     <!-- load config a file -->
     <param from="$(var control_validator_param_path)"/>
 

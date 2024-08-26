@@ -9,7 +9,7 @@
   <!-- vehicle info -->
   <arg name="vehicle_info_param_file" default="$(find-pkg-share autoware_vehicle_info_utils)/config/vehicle_info.param.yaml"/>
 
-  <node pkg="predicted_path_checker" exec="predicted_path_checker_node" name="predicted_path_checker_node" output="screen">
+  <node pkg="predicted_path_checker" exec="predicted_path_checker_node" name="predicted_path_checker_node" output="both">
     <param from="$(var config_file)"/>
     <param from="$(var vehicle_info_param_file)"/>
     <remap from="~/input/objects" to="$(var input/objects)"/>
