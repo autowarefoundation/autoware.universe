@@ -37,13 +37,9 @@ public:
   QButtonGroup * getButtonGroup() const;
 
   QSize sizeHint() const override;
-  QSize minimumSizeHint() const override;
 
 Q_SIGNALS:
   void buttonClicked(int id);
-
-protected:
-  void paintEvent(QPaintEvent * event) override;
 
 private:
   QButtonGroup * buttonGroup;

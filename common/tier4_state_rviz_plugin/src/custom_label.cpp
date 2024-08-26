@@ -46,32 +46,6 @@ QSize CustomLabel::sizeHint() const
   return QSize(width, height);
 }
 
-QSize CustomLabel::minimumSizeHint() const
-{
-  return sizeHint();
-}
-
-void CustomLabel::paintEvent(QPaintEvent *)
-{
-  QPainter painter(this);
-  painter.setRenderHint(QPainter::Antialiasing);
-
-  int cornerRadius = height() / 2;  // Making the corner radius proportional to the height
-
-  // Draw background
-  QPainterPath path;
-  path.addRoundedRect(rect().adjusted(1, 1, -1, -1), cornerRadius, cornerRadius);
-
-  painter.setPen(Qt::NoPen);
-  painter.setBrush(backgroundColor);
-
-  painter.drawPath(path);
-
-  // Set text color and draw text
-  painter.setPen(textColor);
-  painter.drawText(rect(), Qt::AlignCenter, text());
-}
-
 void CustomLabel::updateStyle(
   const QString & text, const QColor & bg_color, const QColor & text_color)
 {

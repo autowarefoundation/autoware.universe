@@ -30,16 +30,12 @@ class CustomSegmentedButtonItem : public QPushButton
 public:
   explicit CustomSegmentedButtonItem(const QString & text, QWidget * parent = nullptr);
 
-  void setColors(
-    const QColor & bg, const QColor & checkedBg, const QColor & activeText,
-    const QColor & inactiveText);
   void setActivated(bool activated);
   void setCheckableButton(bool checkable);
   void setDisabledButton(bool disabled);
   void setHovered(bool hovered);
 
 protected:
-  void paintEvent(QPaintEvent * event) override;
   void enterEvent(QEvent * event) override;
   void leaveEvent(QEvent * event) override;
 

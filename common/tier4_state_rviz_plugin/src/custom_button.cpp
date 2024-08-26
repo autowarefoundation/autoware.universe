@@ -53,11 +53,7 @@ QSize CustomElevatedButton::sizeHint() const
   return QSize(width, height);
 }
 
-QSize CustomElevatedButton::minimumSizeHint() const
-{
-  return sizeHint();
-}
-
+// cppcheck-suppress unusedFunction
 void CustomElevatedButton::updateStyle(
   const QString & text, const QColor & bgColor, const QColor & textColor, const QColor & hoverColor,
   const QColor & disabledBgColor, const QColor & disabledTextColor)
@@ -69,49 +65,6 @@ void CustomElevatedButton::updateStyle(
   this->disabledBgColor = disabledBgColor;
   this->disabledTextColor = disabledTextColor;
   update();  // Force repaint
-}
-
-void CustomElevatedButton::paintEvent(QPaintEvent *)
-{
-  QPainter painter(this);
-  painter.setRenderHint(QPainter::Antialiasing);
-
-  QStyleOption opt;
-  opt.initFrom(this);
-  QRect r = rect();
-
-  QColor buttonColor;
-  QColor currentTextColor = textColor;
-  if (!isEnabled()) {
-    buttonColor = disabledBgColor;
-    currentTextColor = disabledTextColor;
-  } else if (isHovered) {
-    buttonColor = hoverColor;
-  } else {
-    buttonColor = backgroundColor;
-  }
-
-  int cornerRadius = height() / 2;  // Making the corner radius proportional to the height
-
-  // Draw button background
-  QPainterPath backgroundPath;
-  backgroundPath.addRoundedRect(r, cornerRadius, cornerRadius);
-  if (!isEnabled()) {
-    painter.setBrush(
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
-    painter.setOpacity(0.12);
-  } else {
-    painter.setBrush(buttonColor);
-  }
-  painter.setPen(Qt::NoPen);
-  painter.drawPath(backgroundPath);
-
-  // Draw button text
-  if (!isEnabled()) {
-    painter.setOpacity(0.38);
-  }
-  painter.setPen(currentTextColor);
-  painter.drawText(r, Qt::AlignCenter, text());
 }
 
 void CustomElevatedButton::enterEvent(QEvent * event)

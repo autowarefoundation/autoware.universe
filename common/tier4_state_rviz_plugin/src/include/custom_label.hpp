@@ -33,9 +33,7 @@ public:
       QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
 
 protected:
-  void paintEvent(QPaintEvent * event) override;
   QSize sizeHint() const override;
-  QSize minimumSizeHint() const override;
 
 private:
   QColor backgroundColor =
