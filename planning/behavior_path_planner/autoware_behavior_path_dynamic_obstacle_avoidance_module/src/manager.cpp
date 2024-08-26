@@ -239,8 +239,7 @@ void DynamicObstacleAvoidanceModuleManager::updateModuleParams(
       p->polygon_generation_method =
         convertToPolygonGenerationMethod(polygon_generation_method_str);
     }
-    updateParam<bool>(
-      parameters, ns + "expand_drivable_area", p->expand_drivable_area);
+    updateParam<bool>(parameters, ns + "expand_drivable_area", p->expand_drivable_area);
     updateParam<double>(
       parameters, ns + "object_path_base.min_longitudinal_polygon_margin",
       p->min_obj_path_based_lon_polygon_margin);

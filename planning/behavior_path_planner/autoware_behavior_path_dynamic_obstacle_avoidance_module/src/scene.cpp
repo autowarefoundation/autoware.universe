@@ -440,15 +440,15 @@ BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
   output.modified_goal = getPreviousModuleOutput().modified_goal;
   std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
 
-  if(parameters_->expand_drivable_area) {
+  if (parameters_->expand_drivable_area) {
     std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
-  current_drivable_area_info.drivable_lanes.push_back(
-    generateExpandedDrivableLanes(lanelet, planner_data_, parameters_));
+      current_drivable_area_info.drivable_lanes.push_back(
+        generateExpandedDrivableLanes(lanelet, planner_data_, parameters_));
     });
   } else {
     std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
-  current_drivable_area_info.drivable_lanes.push_back(
-    generateNotExpandedDrivableLanes(lanelet));
+      current_drivable_area_info.drivable_lanes.push_back(
+        generateNotExpandedDrivableLanes(lanelet));
     });
   }
 
@@ -2142,7 +2142,8 @@ DrivableLanes DynamicObstacleAvoidanceModule::generateExpandedDrivableLanes(
   return current_drivable_lanes;
 }
 
-DrivableLanes DynamicObstacleAvoidanceModule::generateNotExpandedDrivableLanes(const lanelet::ConstLanelet & lanelet)
+DrivableLanes DynamicObstacleAvoidanceModule::generateNotExpandedDrivableLanes(
+  const lanelet::ConstLanelet & lanelet)
 {
   DrivableLanes current_drivable_lanes;
   current_drivable_lanes.left_lane = lanelet;
