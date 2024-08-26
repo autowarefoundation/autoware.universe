@@ -127,6 +127,11 @@ TRTBEVDetNode::TRTBEVDetNode(
   cams2ego_rot = std::vector<Eigen::Quaternion<float>>(img_N_);
   cams2ego_trans = std::vector<Eigen::Translation3f>(img_N_);
 
+  tf_buffer_ =
+      std::make_unique<tf2_ros::Buffer>(this->get_clock());
+  tf_listener_ =
+      std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
   startCameraInfoSubscription();
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(100), std::bind(&TRTBEVDetNode::checkInitialization, this));
@@ -176,7 +181,11 @@ void TRTBEVDetNode::checkInitialization()
     startImageSubscription();
     timer_->cancel();
     timer_.reset();
-    timer_ = nullptr;
+  }
+  else {
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), 5000,
+      "Waiting for Camera Info and TF Transform Initialization...");
   }
 }
 
@@ -296,6 +305,8 @@ void TRTBEVDetNode::callback(
 
 void TRTBEVDetNode::camera_info_callback(int idx, const sensor_msgs::msg::CameraInfo::SharedPtr msg)
 {
+  if (caminfo_received_[idx]) return; // already received;  not expected to modify because of we init the model only once
+
   Eigen::Matrix3f intrinsics;
   getCameraIntrinsics(msg, intrinsics);
   cams_intrin[idx] = intrinsics;
