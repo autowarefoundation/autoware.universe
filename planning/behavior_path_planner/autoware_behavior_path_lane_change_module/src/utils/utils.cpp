@@ -85,82 +85,6 @@ double calcLaneChangeResampleInterval(
     lane_changing_length / min_resampling_points, lane_changing_velocity * resampling_dt);
 }
 
-double calcMinimumLaneChangeLength(
-  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals)
-{
-  if (shift_intervals.empty()) {
-    return 0.0;
-  }
-
-  const auto min_vel = lane_change_parameters.minimum_lane_changing_velocity;
-  const auto min_max_lat_acc = lane_change_parameters.lane_change_lat_acc_map.find(min_vel);
-  // const auto min_lat_acc = std::get<0>(min_max_lat_acc);
-  const auto max_lat_acc = std::get<1>(min_max_lat_acc);
-  const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
-  const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
-
-  const auto calc_sum = [&](double sum, double shift_interval) {
-    const auto t = PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
-    return sum + (min_vel * t + finish_judge_buffer);
-  };
-
-  const auto total_length =
-    std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
-
-  const auto backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
-  return total_length + backward_buffer * (static_cast<double>(shift_intervals.size()) - 1.0);
-}
-
-double calcMinimumLaneChangeLength(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
-  const LaneChangeParameters & lane_change_parameters, Direction direction)
-{
-  if (!route_handler) {
-    return std::numeric_limits<double>::max();
-  }
-
-  const auto shift_intervals = route_handler->getLateralIntervalsToPreferredLane(lane, direction);
-  return utils::lane_change::calcMinimumLaneChangeLength(lane_change_parameters, shift_intervals);
-}
-
-double calcMaximumLaneChangeLength(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc)
-{
-  if (shift_intervals.empty()) {
-    return 0.0;
-  }
-
-  const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
-  const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
-  const auto t_prepare = lane_change_parameters.lane_change_prepare_duration;
-
-  auto vel = current_velocity;
-
-  const auto calc_sum = [&](double sum, double shift_interval) {
-    // prepare section
-    const auto prepare_length = vel * t_prepare + 0.5 * max_acc * t_prepare * t_prepare;
-    vel = vel + max_acc * t_prepare;
-
-    // lane changing section
-    const auto [min_lat_acc, max_lat_acc] =
-      lane_change_parameters.lane_change_lat_acc_map.find(vel);
-    const auto t_lane_changing =
-      PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
-    const auto lane_changing_length =
-      vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
-
-    vel = vel + max_acc * t_lane_changing;
-    return sum + (prepare_length + lane_changing_length + finish_judge_buffer);
-  };
-
-  const auto total_length =
-    std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
-
-  const auto backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
-  return total_length + backward_buffer * (static_cast<double>(shift_intervals.size()) - 1.0);
-}
-
 double calcMinimumAcceleration(
   const double current_velocity, const double min_longitudinal_acc,
   const LaneChangeParameters & lane_change_parameters)
@@ -655,7 +579,7 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
     return false;
   }
 
-  const auto minimum_lane_change_length = calcMinimumLaneChangeLength(
+  const auto minimum_lane_change_length = calculation::calc_minimum_lane_change_length(
     route_handler, current_lanes.back(), lane_change_parameters, direction);
   const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
   if (abort_plus_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {

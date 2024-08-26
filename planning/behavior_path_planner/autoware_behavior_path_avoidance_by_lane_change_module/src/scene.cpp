@@ -20,6 +20,7 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <autoware/behavior_path_lane_change_module/utils/calculation.hpp>
 #include <autoware/behavior_path_lane_change_module/utils/utils.hpp>
 #include <autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
@@ -280,7 +281,7 @@ double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
     return std::numeric_limits<double>::infinity();
   }
 
-  return utils::lane_change::calcMinimumLaneChangeLength(
+  return utils::lane_change::calculation::calc_minimum_lane_change_length(
     getRouteHandler(), current_lanes.back(), *lane_change_parameters_, direction_);
 }
 

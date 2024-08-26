@@ -60,17 +60,6 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);
 
-double calcMinimumLaneChangeLength(
-  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals);
-
-double calcMinimumLaneChangeLength(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
-  const LaneChangeParameters & lane_change_parameters, Direction direction);
-
-double calcMaximumLaneChangeLength(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc);
-
 double calcMinimumAcceleration(
   const double current_velocity, const double min_longitudinal_acc,
   const LaneChangeParameters & lane_change_parameters);
