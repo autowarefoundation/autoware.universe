@@ -209,6 +209,7 @@ private:
   // Parameters
   bool enable_delay_compensation_;
   PredictionTimeHorizon prediction_time_horizon_;
+  bool check_bidirectional_lanelets_;
   double lateral_control_time_horizon_;
   double prediction_time_horizon_rate_for_validate_lane_length_;
   double prediction_sampling_time_interval_;

@@ -750,6 +750,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     google::InstallFailureSignalHandler();
   }
   enable_delay_compensation_ = declare_parameter<bool>("enable_delay_compensation");
+  check_bidirectional_lanelets_ = declare_parameter<bool>("check_bidirectional_lanelets");
   prediction_time_horizon_.vehicle = declare_parameter<double>("prediction_time_horizon.vehicle");
   prediction_time_horizon_.pedestrian =
     declare_parameter<double>("prediction_time_horizon.pedestrian");
@@ -1075,12 +1076,14 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         // Get Closest Lanelet
         const auto current_lanelets = getCurrentLanelets(transformed_object);
         double bound_to_centerline = 0.0;
-        for (const auto & current_lanelet : current_lanelets) {
-          // Check if the lanelet is bidirectional
-          if (current_lanelet.is_bidirectional) {
-            bound_to_centerline = lanelet::geometry::distance2d(
-              lanelet::utils::to2D(current_lanelet.lanelet.leftBound().basicLineString()),
-              lanelet::utils::to2D(current_lanelet.lanelet.centerline().basicLineString()));
+        if (check_bidirectional_lanelets_) {
+          for (const auto & current_lanelet : current_lanelets) {
+            // Check if the lanelet is bidirectional
+            if (current_lanelet.is_bidirectional) {
+              bound_to_centerline = lanelet::geometry::distance2d(
+                lanelet::utils::to2D(current_lanelet.lanelet.leftBound().basicLineString()),
+                lanelet::utils::to2D(current_lanelet.lanelet.centerline().basicLineString()));
+            }
           }
         }
         // Update Objects History
