@@ -130,7 +130,6 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
       pre_dstate_w = (current_state_w - state_w).eval();
       state_w = current_state_w;
     }
-    // state_w = updateState(state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), dt, t.vx.at(i));
     mpc_predicted_trajectory.push_back(
       state_w(0), state_w(1), t.z.at(i), state_w(2), t.vx.at(i), t.k.at(i), t.smooth_k.at(i),
       t.relative_time.at(i));
