@@ -91,7 +91,7 @@ def launch_setup(context, *args, **kwargs):
         executable="simple_planning_simulator_exe",
         name="simple_planning_simulator",
         namespace="simulation",
-        output="screen",
+        output="both",
         parameters=[
             vehicle_info_param,
             vehicle_characteristics_param,
