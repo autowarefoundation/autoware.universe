@@ -88,7 +88,6 @@ public:
   void update(float dt, float ros_dt) override;
 
 protected:
-
   /** Set the camera orientation based on angle_. */
   void orientCamera();
 
