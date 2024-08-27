@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// cspell:ignore BEVDET, thre, TRTBEV, bevdet, caminfo, intrin, Ncams, bevfeat, dlongterm, RGBHWC, BGRCHW
+// cspell:ignore BEVDET, thre, TRTBEV, bevdet, caminfo, intrin, Ncams, bevfeat, dlongterm, RGBHWC,
+// BGRCHW
 #include "autoware/tensorrt_bevdet/bevdet_node.hpp"
 
 #include "autoware/tensorrt_bevdet/preprocess.hpp"

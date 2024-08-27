@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// cspell:ignore BEVDET, thre, TRTBEV, bevdet, caminfo, intrin, Ncams, bevfeat, bevpool, maxnum, zgrid
-// cspell:ignore gridbev, egobev, adjgrid, currgrid
+// cspell:ignore BEVDET, thre, TRTBEV, bevdet, caminfo, intrin, Ncams, bevfeat, bevpool, maxnum,
+// zgrid cspell:ignore gridbev, egobev, adjgrid, currgrid
 #include "autoware/tensorrt_bevdet/bevdet.hpp"
 
 #include "autoware/tensorrt_bevdet/alignbev_plugin.hpp"
