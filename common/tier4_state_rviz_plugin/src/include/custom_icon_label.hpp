@@ -39,7 +39,9 @@ public:
   void updateStyle(IconState state, const QColor & bgColor);
 
 protected:
+  void paintEvent(QPaintEvent * event) override;
   QSize sizeHint() const override;
+  QSize minimumSizeHint() const override;
 
 private:
   void loadIcons();
