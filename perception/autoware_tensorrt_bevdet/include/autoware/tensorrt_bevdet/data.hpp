@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// cspell:ignore BEVDET, intrin, Quater, BEVDET
 #ifndef AUTOWARE__TENSORRT_BEVDET__DATA_HPP_
 #define AUTOWARE__TENSORRT_BEVDET__DATA_HPP_
 
@@ -29,6 +31,13 @@ struct camParams
 {
   camParams() = default;
   camParams(const YAML::Node & config, int n, std::vector<std::string> & cams_name);
+  camParams(
+    const std::vector<Eigen::Matrix3f> & _cams_intrin,
+    const std::vector<Eigen::Quaternion<float>> & _cams2ego_rot,
+    const std::vector<Eigen::Translation3f> & _cams2ego_trans)
+  : cams_intrin(_cams_intrin), cams2ego_rot(_cams2ego_rot), cams2ego_trans(_cams2ego_trans)
+  {
+  }
 
   int N_img;
 

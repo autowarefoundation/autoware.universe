@@ -1,4 +1,4 @@
-# tensorrt_bevdet
+# tensorrt_bevdet <!-- cspell: ignore bevdet -->
 
 ## Purpose
 
@@ -12,24 +12,28 @@ BEVDet is a BEV perception algorithm based on panoramic cameras. It unifies mult
 
 ### Inputs
 
-| Name                   | Type                            | Description                                                 |
-| ---------------------- | ------------------------------- | ----------------------------------------------------------- |
-| `~/input/pointcloud`   | `sensor_msgs::msg::PointCloud2` | input pointcloud (only used for time alignment and display) |
-| `~/input/topic_img_fl` | `sensor_msgs::msg::Image`       | input front_left camera image                               |
-| `~/input/topic_img_f`  | `sensor_msgs::msg::Image`       | input front camera image                                    |
-| `~/input/topic_img_fr` | `sensor_msgs::msg::Image`       | input front_right camera image                              |
-| `~/input/topic_img_bl` | `sensor_msgs::msg::Image`       | input back_left camera image                                |
-| `~/input/topic_img_b`  | `sensor_msgs::msg::Image`       | input back camera image                                     |
-| `~/input/topic_img_br` | `sensor_msgs::msg::Image`       | input back_right camera image                               |
+| Name                               | Type                           | Description                         |
+| ---------------------------------- | ------------------------------ | ----------------------------------- |
+| `~/input/topic_img_fl`             | `sensor_msgs::msg::Image`      | input front_left camera image       |
+| `~/input/topic_img_f`              | `sensor_msgs::msg::Image`      | input front camera image            |
+| `~/input/topic_img_fr`             | `sensor_msgs::msg::Image`      | input front_right camera image      |
+| `~/input/topic_img_bl`             | `sensor_msgs::msg::Image`      | input back_left camera image        |
+| `~/input/topic_img_b`              | `sensor_msgs::msg::Image`      | input back camera image             |
+| `~/input/topic_img_br`             | `sensor_msgs::msg::Image`      | input back_right camera image       |
+| `~/input/topic_img_fl/camera_info` | `sensor_msgs::msg::CameraInfo` | input front_left camera parameters  |
+| `~/input/topic_img_f/camera_info`  | `sensor_msgs::msg::CameraInfo` | input front camera parameters       |
+| `~/input/topic_img_fr/camera_info` | `sensor_msgs::msg::CameraInfo` | input front_right camera parameters |
+| `~/input/topic_img_bl/camera_info` | `sensor_msgs::msg::CameraInfo` | input back_left camera parameters   |
+| `~/input/topic_img_b/camera_info`  | `sensor_msgs::msg::CameraInfo` | input back camera parameters        |
+| `~/input/topic_img_br/camera_info` | `sensor_msgs::msg::CameraInfo` | input back_right camera parameters  |
 
 ### Outputs
 
-| Name                  | Type                                             | Description                               |
-| --------------------- | ------------------------------------------------ | ----------------------------------------- |
-| `~/output/boxes`      | `autoware_perception_msgs::msg::DetectedObjects` | detected objects                          |
-| `~/output/pointcloud` | `sensor_msgs::msg::PointCloud2`                  | output pointcloud (only used for display) |
+| Name             | Type                                             | Description      |
+| ---------------- | ------------------------------------------------ | ---------------- |
+| `~/output/boxes` | `autoware_perception_msgs::msg::DetectedObjects` | detected objects |
 
-## Limittation
+## Limitation
 
 The model is trained on open-source dataset `NuScenes` and has poor generalization on its own dataset, If you want to use this model to infer your data, you need to retrain it.
 

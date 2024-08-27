@@ -1,18 +1,26 @@
 <?xml version="1.0"?>
 <launch>
+  <!-- cspell:ignore nuscenes, bevdet, dlongterm -->
+
   <!-- input topic name -->
-  <arg name="input/img_fl" default="/cam_front_left/raw"/>
-  <arg name="input/img_f" default="/cam_front/raw"/>
-  <arg name="input/img_fr" default="/cam_front_right/raw"/>
-  <arg name="input/img_bl" default="/cam_back_left/raw"/>
-  <arg name="input/img_b" default="/cam_back/raw"/>
-  <arg name="input/img_br" default="/cam_back_right/raw"/>
+  <arg name="input/img_fl" default="/CAM_FRONT_LEFT/image"/>
+  <arg name="input/img_f" default="/CAM_FRONT/image"/>
+  <arg name="input/img_fr" default="/CAM_FRONT_RIGHT/image"/>
+  <arg name="input/img_bl" default="/CAM_BACK_LEFT/image"/>
+  <arg name="input/img_b" default="/CAM_BACK/image"/>
+  <arg name="input/img_br" default="/CAM_BACK_RIGHT/image"/>
   <arg name="output/boxes" default="boxes"/>
+
+  <arg name="input/img_fl/camera_info" default="/CAM_FRONT_LEFT/camera_info"/>
+  <arg name="input/img_f/camera_info" default="/CAM_FRONT/camera_info"/>
+  <arg name="input/img_fr/camera_info" default="/CAM_FRONT_RIGHT/camera_info"/>
+  <arg name="input/img_bl/camera_info" default="/CAM_BACK_LEFT/camera_info"/>
+  <arg name="input/img_b/camera_info" default="/CAM_BACK/camera_info"/>
+  <arg name="input/img_br/camera_info" default="/CAM_BACK_RIGHT/camera_info"/>
 
   <arg name="data_path" default="$(env HOME)/autoware_data/autoware_tensorrt_bevdet"/>
   <arg name="onnx_file" default="$(var data_path)/bevdet_one_lt_d.onnx"/>
   <arg name="engine_file" default="$(var data_path)/bevdet_one_lt_d.engine"/>
-  <arg name="cam_config" default="$(find-pkg-share autoware_tensorrt_bevdet)/config/cams_param.yaml"/>
   <arg name="model_config" default="$(find-pkg-share autoware_tensorrt_bevdet)/config/bevdet_r50_4dlongterm_depth.yaml"/>
   <arg name="param_file" default="$(find-pkg-share autoware_tensorrt_bevdet)/config/bevdet.param.yaml"/>
 
@@ -26,11 +34,17 @@
     <remap from="~/input/topic_img_b" to="$(var input/img_b)"/>
     <remap from="~/input/topic_img_br" to="$(var input/img_br)"/>
 
+    <remap from="~/input/topic_img_fl/camera_info" to="$(var input/img_fl/camera_info)"/>
+    <remap from="~/input/topic_img_f/camera_info" to="$(var input/img_f/camera_info)"/>
+    <remap from="~/input/topic_img_fr/camera_info" to="$(var input/img_fr/camera_info)"/>
+    <remap from="~/input/topic_img_bl/camera_info" to="$(var input/img_bl/camera_info)"/>
+    <remap from="~/input/topic_img_b/camera_info" to="$(var input/img_b/camera_info)"/>
+    <remap from="~/input/topic_img_br/camera_info" to="$(var input/img_br/camera_info)"/>
+
     <remap from="~/output/boxes" to="$(var output/boxes)"/>
 
     <param name="onnx_file" value="$(var onnx_file)"/>
     <param name="engine_file" value="$(var engine_file)"/>
-    <param name="cam_config" value="$(var cam_config)"/>
     <param name="model_config" value="$(var model_config)"/>
     <param from="$(var param_file)"/>
   </node>

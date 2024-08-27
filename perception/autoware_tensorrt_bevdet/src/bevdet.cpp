@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// cspell:ignore BEVDET, thre, TRTBEV, bevdet, caminfo, intrin, Ncams, bevfeat, bevpool, maxnum, zgrid
+// cspell:ignore gridbev, egobev, adjgrid, currgrid
 #include "autoware/tensorrt_bevdet/bevdet.hpp"
 
 #include "autoware/tensorrt_bevdet/alignbev_plugin.hpp"
@@ -576,7 +579,7 @@ void BEVDet::GetCurr2AdjTransform(
 int BEVDet::DoInfer(
   const camsData & cam_data, std::vector<Box> & out_detections, float & cost_time, int idx)
 {
-  printf("-------------------%d-------------------\n", idx + 1);
+  RCLCPP_DEBUG(rclcpp::get_logger("BEVDet"), "---------%d---------", idx + 1);
 
   auto start = high_resolution_clock::now();
   CHECK_CUDA(cudaMemcpy(
@@ -609,11 +612,10 @@ int BEVDet::DoInfer(
   duration<double> post_t = post_end - end;
 
   cost_time = infer_t.count() * 1000;
-  printf("TRT-Engine  : %.5lf ms\n", engine_t.count() * 1000);
-  printf("Postprocess : %.5lf ms\n", post_t.count() * 1000);
-  printf("Inference   : %.5lf ms\n", infer_t.count() * 1000);
-
-  printf("Detect %ld objects\n", out_detections.size());
+  RCLCPP_DEBUG(rclcpp::get_logger("BEVDet"), "Inference time: %.5lf ms", engine_t.count() * 1000);
+  RCLCPP_DEBUG(rclcpp::get_logger("BEVDet"), "Postprocess time: %.5lf ms", post_t.count() * 1000);
+  RCLCPP_DEBUG(rclcpp::get_logger("BEVDet"), "Total time: %.5lf ms", infer_t.count() * 1000);
+  RCLCPP_DEBUG(rclcpp::get_logger("BEVDet"), "Detect %ld objects", out_detections.size());
 
   return EXIT_SUCCESS;
 }
