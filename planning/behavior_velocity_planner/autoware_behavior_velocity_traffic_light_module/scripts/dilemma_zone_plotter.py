@@ -35,7 +35,7 @@ def get_params_from_yaml():
         params = yaml.safe_load(yaml_file)
         yellow_lamp_period = params["/**"]["ros__parameters"]["traffic_light"]["yellow_lamp_period"]
 
-    # get parameters from behvaior velocity planner
+    # get parameters from behavior velocity planner
     behavior_vel_yaml_file_path = os.path.join(
         autoware_launch_package_path,
         "config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/behavior_velocity_planner.param.yaml",
