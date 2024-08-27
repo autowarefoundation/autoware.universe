@@ -39,3 +39,23 @@ QSize CustomContainer::sizeHint() const
   int height = size.height() + 20;  // Adding padding
   return QSize(width, height);
 }
+
+// cppcheck-suppress unusedFunction
+QSize CustomContainer::minimumSizeHint() const
+{
+  return sizeHint();
+}
+
+void CustomContainer::paintEvent(QPaintEvent *)
+{
+  QPainter painter(this);
+  painter.setRenderHint(QPainter::Antialiasing);
+
+  // Draw background
+  QPainterPath path;
+  path.addRoundedRect(rect(), height() / 2, height() / 2);  // Use height for rounded corners
+  painter.setPen(Qt::NoPen);
+  painter.setBrush(QColor(
+    autoware::state_rviz_plugin::colors::default_colors.surface.c_str()));  // Background color
+  painter.drawPath(path);
+}
