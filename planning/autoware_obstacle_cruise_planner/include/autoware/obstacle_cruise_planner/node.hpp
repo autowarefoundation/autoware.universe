@@ -88,6 +88,8 @@ private:
   std::optional<StopObstacle> createStopObstacleForPointCloud(
     const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle,
     const double precise_lateral_dist) const;
+  bool isInsideStopObstacle(const uint8_t label) const;
+  bool isOutsideStopObstacle(const uint8_t label) const;
   bool isStopObstacle(const uint8_t label) const;
   bool isInsideCruiseObstacle(const uint8_t label) const;
   bool isOutsideCruiseObstacle(const uint8_t label) const;
@@ -98,8 +100,9 @@ private:
   std::optional<std::vector<CruiseObstacle>> findYieldCruiseObstacles(
     const std::vector<Obstacle> & obstacles, const std::vector<TrajectoryPoint> & traj_points);
   std::optional<CruiseObstacle> createCruiseObstacle(
-    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle, const double precise_lat_dist);
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
+    const double precise_lat_dist);
   std::optional<std::vector<PointWithStamp>> createCollisionPointsForInsideCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle) const;
@@ -145,7 +148,8 @@ private:
   double min_safe_distance_margin_on_curve_;
   bool suppress_sudden_obstacle_stop_;
 
-  std::vector<int> stop_obstacle_types_;
+  std::vector<int> inside_stop_obstacle_types_;
+  std::vector<int> outside_stop_obstacle_types_;
   std::vector<int> inside_cruise_obstacle_types_;
   std::vector<int> outside_cruise_obstacle_types_;
   std::vector<int> slow_down_obstacle_types_;
@@ -231,12 +235,16 @@ private:
     double ego_obstacle_overlap_time_threshold;
     double max_prediction_time_for_collision_check;
     double crossing_obstacle_traj_angle_threshold;
-    double max_lateral_time_margin;
+    int num_of_predicted_paths_for_outside_cruise_obstacle;
+    int num_of_predicted_paths_for_outside_stop_obstacle;
     // obstacle hold
     double stop_obstacle_hold_time_threshold;
     // prediction resampling
     double prediction_resampling_time_interval;
     double prediction_resampling_time_horizon;
+    // max lateral time margin
+    double max_lat_time_margin_for_stop;
+    double max_lat_time_margin_for_cruise;
     // max lateral margin
     double max_lat_margin_for_stop;
     double max_lat_margin_for_stop_against_unknown;
