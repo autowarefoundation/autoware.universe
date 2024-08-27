@@ -305,6 +305,8 @@ double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, co
 ExtendedPredictedObjects transform_to_extended_objects(
   const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects,
   const bool check_prepare_phase);
+
+double get_distance_to_next_regulatory_element(const CommonDataPtr & common_data_ptr);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 namespace autoware::behavior_path_planner::utils::lane_change::debug

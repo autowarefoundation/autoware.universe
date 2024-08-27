@@ -22,6 +22,7 @@
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
@@ -1289,6 +1290,31 @@ ExtendedPredictedObjects transform_to_extended_objects(
     });
 
   return extended_objects;
+}
+
+double get_distance_to_next_regulatory_element(const CommonDataPtr & common_data_ptr)
+{
+  double distance = std::numeric_limits<double>::max();
+
+  const auto current_pose = common_data_ptr->get_ego_pose();
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  const auto & route_handler = *common_data_ptr->route_handler_ptr;
+  const auto overall_graphs_ptr = route_handler.getOverallGraphPtr();
+
+  if (common_data_ptr->lc_param_ptr->regulate_on_intersection) {
+    distance =
+      std::min(distance, utils::getDistanceToNextIntersection(current_pose, current_lanes));
+  }
+  if (common_data_ptr->lc_param_ptr->regulate_on_crosswalk) {
+    distance = std::min(
+      distance, utils::getDistanceToCrosswalk(current_pose, current_lanes, *overall_graphs_ptr));
+  }
+  if (common_data_ptr->lc_param_ptr->regulate_on_traffic_light) {
+    distance = std::min(
+      distance, utils::traffic_light::getDistanceToNextTrafficLight(current_pose, current_lanes));
+  }
+
+  return distance;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
