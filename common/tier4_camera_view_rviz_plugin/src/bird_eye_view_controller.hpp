@@ -88,9 +88,6 @@ public:
   void update(float dt, float ros_dt) override;
 
 protected:
-  void onTargetFrameChanged(
-    const Ogre::Vector3 & old_reference_position,
-    const Ogre::Quaternion & old_reference_orientation) override;
 
   /** Set the camera orientation based on angle_. */
   void orientCamera();

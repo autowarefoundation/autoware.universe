@@ -99,6 +99,7 @@ void BirdEyeViewController::reset()
   y_property_->setFloat(0);
 }
 
+// cppcheck-suppress unusedFunction
 void BirdEyeViewController::handleMouseEvent(rviz_common::ViewportMouseEvent & event)
 {
   if (event.shift()) {
@@ -178,18 +179,10 @@ void BirdEyeViewController::update(float dt, float ros_dt)
   updateCamera();
 }
 
+// cppcheck-suppress unusedFunction
 void BirdEyeViewController::lookAt(const Ogre::Vector3 & point)
 {
   setPosition(point - target_scene_node_->getPosition());
-}
-
-void BirdEyeViewController::onTargetFrameChanged(
-  const Ogre::Vector3 & old_reference_position,
-  const Ogre::Quaternion & /*old_reference_orientation*/)
-{
-  move_camera(
-    old_reference_position.x - reference_position_.x,
-    old_reference_position.y - reference_position_.y);
 }
 
 void BirdEyeViewController::updateCamera()
