@@ -82,4 +82,3 @@ void CustomLabel::updateStyle(
   textColor = text_color;
   update();  // Force repaint
 }
-
