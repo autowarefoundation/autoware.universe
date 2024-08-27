@@ -54,3 +54,25 @@ QSize CustomSegmentedButton::sizeHint() const
   //   layout->count() * (layout->itemAt(0)->widget()->width()),
   //   layout->itemAt(0)->widget()->height() + 10);
 }
+
+// cppcheck-suppress unusedFunction
+QSize CustomSegmentedButton::minimumSizeHint() const
+{
+  return sizeHint();
+}
+
+// cppcheck-suppress unusedFunction
+void CustomSegmentedButton::paintEvent(QPaintEvent *)
+{
+  QPainter painter(this);
+  painter.setRenderHint(QPainter::Antialiasing);
+
+  // Draw background
+  QPainterPath path;
+  path.addRoundedRect(rect(), height() / 2, height() / 2);
+
+  painter.setPen(Qt::NoPen);
+  painter.setBrush(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()));
+  painter.drawPath(path);
+}
