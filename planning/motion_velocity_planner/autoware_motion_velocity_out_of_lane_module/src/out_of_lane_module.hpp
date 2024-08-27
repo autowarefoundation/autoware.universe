@@ -30,6 +30,7 @@
 #include <lanelet2_core/LaneletMap.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -38,6 +39,13 @@ namespace autoware::motion_velocity_planner
 class OutOfLaneModule : public PluginModuleInterface
 {
 public:
+  OutOfLaneModule()
+  : params_(),
+    module_name_("unitialized"),
+    previous_slowdown_pose_(std::nullopt),
+    previous_slowdown_time_(0)
+  {
+  }
   void init(rclcpp::Node & node, const std::string & module_name) override;
   void update_parameters(const std::vector<rclcpp::Parameter> & parameters) override;
   VelocityPlanningResult plan(
