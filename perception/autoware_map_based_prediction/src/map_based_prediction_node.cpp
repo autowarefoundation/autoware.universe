@@ -2006,9 +2006,10 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
   // Step 3. Search starting point for each reference path
   for (auto it = all_ref_paths.begin(); it != all_ref_paths.end();) {
-    std::unique_ptr<ScopedTimeTrack> st_ptr;
+    std::unique_ptr<ScopedTimeTrack> st1_ptr;
     if (time_keeper_)
-      st_ptr = std::make_unique<ScopedTimeTrack>("searching_refpath_starting_point", *time_keeper_);
+      st1_ptr =
+        std::make_unique<ScopedTimeTrack>("searching_refpath_starting_point", *time_keeper_);
 
     auto & pose_path = it->path;
     if (pose_path.empty()) {
@@ -2021,9 +2022,9 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       // starting segment index is a segment close enough to the object
       const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
       {
-        std::unique_ptr<ScopedTimeTrack> st_ptr;
+        std::unique_ptr<ScopedTimeTrack> st2_ptr;
         if (time_keeper_)
-          st_ptr = std::make_unique<ScopedTimeTrack>("find_close_segment_index", *time_keeper_);
+          st2_ptr = std::make_unique<ScopedTimeTrack>("find_close_segment_index", *time_keeper_);
 
         starting_segment_idx = 0;
         double min_dist_sq = std::numeric_limits<double>::max();
@@ -2046,9 +2047,9 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       // starting segment index that have the best score
       size_t idx = 0;
       {  // find target segmentation index
-        std::unique_ptr<ScopedTimeTrack> st_ptr;
+        std::unique_ptr<ScopedTimeTrack> st3_ptr;
         if (time_keeper_)
-          st_ptr = std::make_unique<ScopedTimeTrack>("find_target_seg_index", *time_keeper_);
+          st3_ptr = std::make_unique<ScopedTimeTrack>("find_target_seg_index", *time_keeper_);
 
         const double obj_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
         constexpr double search_distance = 22.0;  // [m]
