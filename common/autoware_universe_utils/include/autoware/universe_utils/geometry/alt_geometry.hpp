@@ -121,7 +121,23 @@ autoware::universe_utils::Point2d to_boost(const Point2d & point);
 autoware::universe_utils::Polygon2d to_boost(const ConvexPolygon2d & polygon);
 }  // namespace alt
 
+enum BufferStrategy {
+  JOIN_ROUND = 0b0,
+  JOIN_MITER = 0b1,
+  END_ROUND = 0b00,
+  END_FLAT = 0b10,
+  POINT_CIRCLE = 0b000,
+  POINT_SQUARE = 0b100,
+};
+
 double area(const alt::ConvexPolygon2d & poly);
+
+// Usage example:
+// buffer(points, 1.0, 0.5,
+//        BufferStrategy::JOIN_ROUND | BufferStrategy::END_FLAT | BufferStrategy::POINT_CIRCLE);
+/* alt::Polygon2d buffer(
+  const alt::Points2d & points, const double left_dist, const double right_dist,
+  const int strategy); */
 
 alt::ConvexPolygon2d convex_hull(const alt::Points2d & points);
 
