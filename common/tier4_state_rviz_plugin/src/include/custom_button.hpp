@@ -47,9 +47,11 @@ public:
     const QColor & hoverColor, const QColor & disabledBgColor, const QColor & disabledTextColor);
 
 protected:
+  void paintEvent(QPaintEvent * event) override;
   void enterEvent(QEvent * event) override;
   void leaveEvent(QEvent * event) override;
   QSize sizeHint() const override;
+  QSize minimumSizeHint() const override;
 
 private:
   QColor backgroundColor =
