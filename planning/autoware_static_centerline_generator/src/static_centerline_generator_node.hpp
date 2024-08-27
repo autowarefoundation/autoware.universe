@@ -131,9 +131,6 @@ private:
   void on_plan_path(
     const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response);
 
-  void visualize_selected_centerline();
-  RoadBounds update_road_boundary(const std::vector<TrajectoryPoint> & centerline);
-
   // parameter
   template <typename T>
   T getRosParameter(const std::string & param_name)
