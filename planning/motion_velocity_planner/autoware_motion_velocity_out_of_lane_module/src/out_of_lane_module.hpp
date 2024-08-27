@@ -39,13 +39,6 @@ namespace autoware::motion_velocity_planner
 class OutOfLaneModule : public PluginModuleInterface
 {
 public:
-  OutOfLaneModule()
-  : params_(),
-    module_name_("unitialized"),
-    previous_slowdown_pose_(std::nullopt),
-    previous_slowdown_time_(0)
-  {
-  }
   void init(rclcpp::Node & node, const std::string & module_name) override;
   void update_parameters(const std::vector<rclcpp::Parameter> & parameters) override;
   VelocityPlanningResult plan(
@@ -66,17 +59,17 @@ private:
     out_of_lane::EgoData & ego_data, const PlannerData & planner_data,
     std::optional<geometry_msgs::msg::Pose> & previous_slowdown_pose_, const double slow_velocity);
 
-  out_of_lane::PlannerParam params_;
+  out_of_lane::PlannerParam params_{};
 
   inline static const std::string ns_ = "out_of_lane";
-  std::string module_name_;
-  rclcpp::Clock::SharedPtr clock_;
-  std::optional<geometry_msgs::msg::Pose> previous_slowdown_pose_;
-  rclcpp::Time previous_slowdown_time_;
+  std::string module_name_{"unitialized"};
+  rclcpp::Clock::SharedPtr clock_{nullptr};
+  std::optional<geometry_msgs::msg::Pose> previous_slowdown_pose_{std::nullopt};
+  rclcpp::Time previous_slowdown_time_{0};
 
 protected:
   // Debug
-  mutable out_of_lane::DebugData debug_data_;
+  mutable out_of_lane::DebugData debug_data_{};
 };
 }  // namespace autoware::motion_velocity_planner
 
