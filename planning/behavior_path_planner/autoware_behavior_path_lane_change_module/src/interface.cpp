@@ -147,6 +147,16 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   *prev_approved_path_ = getPreviousModuleOutput().path;
 
   BehaviorModuleOutput out = getPreviousModuleOutput();
+
+  if (module_type_->is_too_close_to_regulatory_element()) {
+    module_type_->toCancelState();
+    updateRTCStatus(
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+      State::FAILED);
+    path_candidate_ = std::make_shared<PathWithLaneId>();
+    return out;
+  }
+
   module_type_->insertStopPoint(module_type_->get_current_lanes(), out.path);
   out.turn_signal_info = module_type_->get_current_turn_signal_info();
 

@@ -109,6 +109,8 @@ public:
 
   bool isStoppedAtRedTrafficLight() const override;
 
+  bool is_too_close_to_regulatory_element() const override;
+
   TurnSignalInfo get_current_turn_signal_info() const final;
 
 protected:

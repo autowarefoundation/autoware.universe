@@ -170,7 +170,26 @@ bool NormalLaneChange::isLaneChangeRequired()
     calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
   const auto maximum_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
 
-  return ego_dist_to_target_start <= maximum_prepare_length;
+  if (ego_dist_to_target_start > maximum_prepare_length) {
+    return false;
+  }
+
+  return !is_too_close_to_regulatory_element();
+}
+
+bool NormalLaneChange::is_too_close_to_regulatory_element() const
+{
+  const auto & current_lanes = get_current_lanes();
+
+  if (current_lanes.empty()) return false;
+
+  const auto shift_intervals =
+    getRouteHandler()->getLateralIntervalsToPreferredLane(current_lanes.back());
+  const double min_lc_length =
+    calculation::calc_minimum_lane_change_length(*lane_change_parameters_, shift_intervals);
+
+  return min_lc_length >
+         utils::lane_change::get_distance_to_next_regulatory_element(common_data_ptr_);
 }
 
 bool NormalLaneChange::isStoppedAtRedTrafficLight() const
