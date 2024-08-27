@@ -42,6 +42,11 @@
           "default": 1.0,
           "description": "Threshold distance for considering the vehicle has deviated from its course."
         },
+        "th_obstacle_time_sec": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Time threshold for checking obstacles along the trajectory."
+        },
         "vehicle_shape_margin_m": {
           "type": "number",
           "default": 1.0,
@@ -115,6 +120,12 @@
         "astar": {
           "type": "object",
           "properties": {
+            "search_method": {
+              "type": "string",
+              "enum": ["forward", "backward"],
+              "default": "forward",
+              "description": "Search method to use, options: forward, backward."
+            },
             "only_behind_solutions": {
               "type": "boolean",
               "default": false,
@@ -125,10 +136,20 @@
               "default": true,
               "description": "Allow reverse motion in A* search."
             },
+            "adapt_expansion_distance": {
+              "type": "boolean",
+              "default": true,
+              "description": "Allow varying A* expansion distance based on space configuration."
+            },
             "expansion_distance": {
               "type": "number",
               "default": 0.5,
               "description": "Distance for expanding nodes in A* search."
+            },
+            "near_goal_distance": {
+              "type": "number",
+              "default": 4.0,
+              "description": "Distance threshold to consider near goal."
             },
             "distance_heuristic_weight": {
               "type": "number",
@@ -138,7 +159,17 @@
             "smoothness_weight": {
               "type": "number",
               "default": 0.5,
-              "description": "Weight for the smoothness heuristic in A* search."
+              "description": "Weight for the smoothness (change in curvature) in A* search."
+            },
+            "obstacle_distance_weight": {
+              "type": "number",
+              "default": 0.5,
+              "description": "Weight for distance to obstacle in A* search."
+            },
+            "goal_lat_distance_weight": {
+              "type": "number",
+              "default": 0.5,
+              "description": "Weight for lateral distance from original goal."
             }
           },
           "required": [
@@ -195,6 +226,7 @@
         "th_stopped_time_sec",
         "th_stopped_velocity_mps",
         "th_course_out_distance_m",
+        "th_obstacle_time_sec",
         "vehicle_shape_margin_m",
         "replan_when_obstacle_found",
         "replan_when_course_out",
