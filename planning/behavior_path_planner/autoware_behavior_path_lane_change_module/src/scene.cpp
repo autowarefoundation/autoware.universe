@@ -185,10 +185,11 @@ bool NormalLaneChange::is_too_close_to_regulatory_element() const
 
   const auto shift_intervals =
     getRouteHandler()->getLateralIntervalsToPreferredLane(current_lanes.back());
-  const double min_lc_length =
+  double threshold_distance =
     calculation::calc_minimum_lane_change_length(*lane_change_parameters_, shift_intervals);
+  threshold_distance += calculation::calc_maximum_prepare_length(common_data_ptr_);
 
-  return min_lc_length >
+  return threshold_distance >
          utils::lane_change::get_distance_to_next_regulatory_element(common_data_ptr_);
 }
 
