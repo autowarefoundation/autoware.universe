@@ -96,11 +96,12 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
   // update state in the world coordinate
   const auto updateState = [&](
                              const Eigen::VectorXd & state_w, const Eigen::MatrixXd & input,
-                             const double dt, const double velocity) {
+                             const double dt, const double velocity, const double curvature) {
     const auto yaw = state_w(2);
     const auto steer = state_w(3);
     const auto desired_steer = input(0);
-    const auto delta_r = atan(m_wheelbase * m_curvature);
+
+    const auto delta_r = atan(m_wheelbase * curvature);
     const auto cos_delta_r_squared_inv = 1 / (cos(delta_r) * cos(delta_r));
 
     Eigen::VectorXd dstate = Eigen::VectorXd::Zero(4);
@@ -121,7 +122,7 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
   Eigen::VectorXd pre_dstate_w;
   for (size_t i = 0; i < reference_trajectory.size(); ++i) {
     const auto current_state_w =
-      updateState(state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), dt, t.vx.at(i)).eval();
+      updateState(state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), dt, t.vx.at(i), t.k.at(i)).eval();
     if (i != 0) {
       const auto dstate_w = (current_state_w - state_w).eval();
       state_w = state_w + 0.5 * (dstate_w + pre_dstate_w);
