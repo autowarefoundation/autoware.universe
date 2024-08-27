@@ -1115,7 +1115,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
         // If predicted reference path is empty, assume this object is out of the lane
         if (ref_paths.empty()) {
-          PredictedPath predicted_path = path_generator_->generatePathForLowSpeedVehicle(
+          PredictedPath predicted_path = path_generator_->generatePathForOffLaneVehicle(
             transformed_object, prediction_time_horizon_.vehicle);
           predicted_path.confidence = 1.0;
           if (predicted_path.path.empty()) break;
@@ -2005,17 +2005,18 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   }
 
   // Step 3. Search starting point for each reference path
-  for (auto & ref_path : all_ref_paths) {
+  for (auto it = all_ref_paths.begin(); it != all_ref_paths.end();) {
     std::unique_ptr<ScopedTimeTrack> st_ptr;
     if (time_keeper_)
       st_ptr = std::make_unique<ScopedTimeTrack>("searching_refpath_starting_point", *time_keeper_);
 
-    auto & pose_path = ref_path.path;
+    auto & pose_path = it->path;
     if (pose_path.empty()) {
       continue;
     }
 
     size_t starting_segment_idx;
+    bool is_position_found = false;
     {
       // starting segment index is a segment close enough to the object
       const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
@@ -2058,41 +2059,39 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
         // search for the best score, which is the smallest
         double best_score = 1e9;  // initial value is large enough
         for (uint i = 0; i < search_segment_num; ++i) {
-          const auto & ref_pose = pose_path.at(starting_segment_idx + i);
+          const auto & path_pose = pose_path.at(starting_segment_idx + i);
 
           // yaw difference
-          const double ref_yaw = tf2::getYaw(ref_pose.orientation);
-          const double relative_ref_yaw = autoware_utils::normalize_radian(ref_yaw - obj_yaw);
-          if (std::abs(relative_ref_yaw) > M_PI_4) {
+          const double path_yaw = tf2::getYaw(path_pose.orientation);
+          const double relative_path_yaw = autoware_utils::normalize_radian(path_yaw - obj_yaw);
+          if (std::abs(relative_path_yaw) > M_PI_4) {
             continue;
           }
 
-          const double dx = ref_pose.position.x - obj_point.x;
-          const double dy = ref_pose.position.y - obj_point.y;
+          const double dx = path_pose.position.x - obj_point.x;
+          const double dy = path_pose.position.y - obj_point.y;
           const double dx_cp = std::cos(obj_yaw) * dx + std::sin(obj_yaw) * dy;
           const double dy_cp = -std::sin(obj_yaw) * dx + std::cos(obj_yaw) * dy;
-          const double relative_neutral_yaw = std::atan2(dy_cp, dx_cp) * 2.0;
+          const double neutral_yaw = std::atan2(dy_cp, dx_cp) * 2.0;
           const double delta_yaw =
-            autoware_utils::normalize_radian(ref_yaw - obj_yaw - relative_neutral_yaw);
+            autoware_utils::normalize_radian(path_yaw - obj_yaw - neutral_yaw);
           if (std::abs(delta_yaw) > M_PI_4) {
             continue;
           }
-          // distance
-          const double distance_sq = dx * dx + dy * dy;
 
           // objective function score
-          constexpr double dist_to_yaw_ratio = 0.0001;  // [rad2/m2]
-          double score = delta_yaw * delta_yaw + dist_to_yaw_ratio * distance_sq;
+          constexpr double weight_ratio = 0.01;
+          double score = delta_yaw * delta_yaw + weight_ratio * neutral_yaw * neutral_yaw;
 
           constexpr double acceptable_score = 1e-3;
           if (score < best_score) {
-            if (score < acceptable_score) {
-              // if the score is small enough, we can break the loop
-              idx = i;
-              break;
-            }
             best_score = score;
             idx = i;
+            is_position_found = true;
+            if (score < acceptable_score) {
+              // if the score is small enough, we can break the loop
+              break;
+            }
           }
         }
       }
@@ -2101,8 +2100,14 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       starting_segment_idx += idx;
       starting_segment_idx = std::clamp(starting_segment_idx, 0ul, pose_path.size() - 1);
     }
-    // Trim the reference path
-    pose_path.erase(pose_path.begin(), pose_path.begin() + starting_segment_idx);
+
+    if (is_position_found) {
+      // Trim the reference path
+      pose_path.erase(pose_path.begin(), pose_path.begin() + starting_segment_idx);
+      ++it;
+    } else {
+      it = all_ref_paths.erase(it);
+    }
   }
 
   return all_ref_paths;
