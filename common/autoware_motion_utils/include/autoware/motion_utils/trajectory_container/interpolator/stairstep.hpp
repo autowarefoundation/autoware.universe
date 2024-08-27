@@ -17,6 +17,8 @@
 
 #include "autoware/motion_utils/trajectory_container/interpolator/detail/stairstep_common_impl.hpp"
 
+#include <memory>
+
 namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
@@ -45,6 +47,14 @@ class Stairstep : public detail::StairstepCommonImpl<T>
 
 private:
   Stairstep() = default;
+
+public:
+  /**
+   * @brief Clone the interpolator.
+   *
+   * @return A shared pointer to a new instance of the interpolator.
+   */
+  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override;
 };
 
 /**
@@ -75,6 +85,14 @@ private:
    * @return The second derivative.
    */
   [[nodiscard]] double compute_second_derivative_impl(const double &) const override { return 0.0; }
+
+public:
+  /**
+   * @brief Clone the interpolator.
+   *
+   * @return A shared pointer to a new instance of the interpolator.
+   */
+  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

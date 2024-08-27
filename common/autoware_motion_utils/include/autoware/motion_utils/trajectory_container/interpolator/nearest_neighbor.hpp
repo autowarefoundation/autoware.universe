@@ -17,6 +17,8 @@
 
 #include "autoware/motion_utils/trajectory_container/interpolator/detail/nearest_neighbor_common_impl.hpp"
 
+#include <memory>
+
 namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
@@ -45,6 +47,17 @@ class NearestNeighbor : public detail::NearestNeighborCommonImpl<T>
 
 private:
   NearestNeighbor() = default;
+
+public:
+  /**
+   * @brief Clone the interpolator.
+   *
+   * @return A shared pointer to a new instance of the interpolator.
+   */
+  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override
+  {
+    return std::make_shared<NearestNeighbor<T>>(*this);
+  }
 };
 
 /**
@@ -76,6 +89,17 @@ private:
    * @return The second derivative.
    */
   [[nodiscard]] double compute_second_derivative_impl(const double &) const override { return 0.0; }
+
+public:
+  /**
+   * @brief Clone the interpolator.
+   *
+   * @return A shared pointer to a new instance of the interpolator.
+   */
+  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override
+  {
+    return std::make_shared<NearestNeighbor<double>>(*this);
+  }
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

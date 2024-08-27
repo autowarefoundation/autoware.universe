@@ -93,6 +93,13 @@ public:
    * @return The minimum number of required points.
    */
   [[nodiscard]] size_t minimum_required_points() const override { return 4; }
+
+  /**
+   * @brief Clone the interpolator.
+   *
+   * @return A shared pointer to a new instance of the interpolator.
+   */
+  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

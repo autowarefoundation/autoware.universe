@@ -19,6 +19,7 @@
 
 #include <Eigen/Dense>
 
+#include <memory>
 #include <vector>
 
 namespace autoware::motion_utils::trajectory_container::interpolator
@@ -83,6 +84,13 @@ public:
    * @return The minimum number of required points.
    */
   [[nodiscard]] size_t minimum_required_points() const override;
+
+  /**
+   * @brief Clone the interpolator.
+   *
+   * @return A shared pointer to the cloned interpolator.
+   */
+  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator
