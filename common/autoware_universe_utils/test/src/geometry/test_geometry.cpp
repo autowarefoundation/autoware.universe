@@ -2017,29 +2017,10 @@ TEST(geometry, intersectPolygonwithHoles)
     bool collisionDetectedSAT = false;
     bool collisionDetectedGJK = false;
 
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
-          collisionDetectedSAT = true;
-          break;
-        }
-      }
-      if (collisionDetectedSAT) {
-        break;
-      }
-    }
-
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
-          collisionDetectedGJK = true;
-          break;
-        }
-      }
-      if (collisionDetectedGJK) {
-        break;
-      }
-    }
+    bool gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    bool sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
 
     EXPECT_FALSE(collisionDetectedSAT);
     EXPECT_FALSE(collisionDetectedGJK);
@@ -2070,29 +2051,10 @@ TEST(geometry, intersectPolygonwithHoles)
     bool collisionDetectedSAT = false;
     bool collisionDetectedGJK = false;
 
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
-          collisionDetectedSAT = true;
-          break;
-        }
-      }
-      if (collisionDetectedSAT) {
-        break;
-      }
-    }
-
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
-          collisionDetectedGJK = true;
-          break;
-        }
-      }
-      if (collisionDetectedGJK) {
-        break;
-      }
-    }
+    bool gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    bool sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
 
     EXPECT_TRUE(collisionDetectedSAT);
     EXPECT_TRUE(collisionDetectedGJK);
@@ -2127,29 +2089,10 @@ TEST(
     bool collisionDetectedSAT = false;
     bool collisionDetectedGJK = false;
 
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
-          collisionDetectedSAT = true;
-          break;
-        }
-      }
-      if (collisionDetectedSAT) {
-        break;
-      }
-    }
-
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
-          collisionDetectedGJK = true;
-          break;
-        }
-      }
-      if (collisionDetectedGJK) {
-        break;
-      }
-    }
+    bool gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    bool sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
 
     EXPECT_TRUE(collisionDetectedSAT);
     EXPECT_TRUE(collisionDetectedGJK);
@@ -2176,29 +2119,10 @@ TEST(
     bool collisionDetectedSAT = false;
     bool collisionDetectedGJK = false;
 
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
-          collisionDetectedSAT = true;
-          break;
-        }
-      }
-      if (collisionDetectedSAT) {
-        break;
-      }
-    }
-
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
-          collisionDetectedGJK = true;
-          break;
-        }
-      }
-      if (collisionDetectedGJK) {
-        break;
-      }
-    }
+    bool gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    bool sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
 
     EXPECT_FALSE(collisionDetectedSAT);
     EXPECT_FALSE(collisionDetectedGJK);
@@ -2224,29 +2148,10 @@ TEST(
     bool collisionDetectedSAT = false;
     bool collisionDetectedGJK = false;
 
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
-          collisionDetectedSAT = true;
-          break;
-        }
-      }
-      if (collisionDetectedSAT) {
-        break;
-      }
-    }
-
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
-          collisionDetectedGJK = true;
-          break;
-        }
-      }
-      if (collisionDetectedGJK) {
-        break;
-      }
-    }
+    bool gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    bool sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
 
     EXPECT_FALSE(collisionDetectedSAT);
     EXPECT_FALSE(collisionDetectedGJK);
@@ -2273,29 +2178,10 @@ TEST(
     bool collisionDetectedSAT = false;
     bool collisionDetectedGJK = false;
 
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
-          collisionDetectedSAT = true;
-          break;
-        }
-      }
-      if (collisionDetectedSAT) {
-        break;
-      }
-    }
-
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
-          collisionDetectedGJK = true;
-          break;
-        }
-      }
-      if (collisionDetectedGJK) {
-        break;
-      }
-    }
+    bool gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    bool sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
 
     EXPECT_FALSE(collisionDetectedSAT);
     EXPECT_FALSE(collisionDetectedGJK);  //
@@ -2318,20 +2204,12 @@ TEST(
       }
     }
 
-    for (const auto & tri1 : triangles1) {
-      for (const auto & tri2 : triangles2) {
-        if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
-          collisionDetectedGJK = true;
-          break;
-        }
-      }
-      if (collisionDetectedGJK) {
-        break;
-      }
-    }
-
+    bool gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    bool sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
     EXPECT_TRUE(collisionDetectedSAT);
-    EXPECT_TRUE(collisionDetectedGJK);
+    EXPECT_TRUE(gjk_intersect);
   }
 }
 
@@ -2381,41 +2259,21 @@ TEST(geometry, intersectConcavePolygonRand)
         }
 
         sw.tic();
-        bool gjk_intersect = false;
-        for (const auto & tri1 : triangulations[i]) {
-          for (const auto & tri2 : triangulations[j]) {
-            if (autoware::universe_utils::intersects_convex(tri1, tri2)) {
-              gjk_intersect = true;
-              break;
-            }
-          }
-          if (gjk_intersect) {
-            gjk_intersect_ns += sw.toc();
-            break;
-          }
-        }
-
+        bool gjk_intersect = autoware::universe_utils::test_intersection(
+          triangulations[i], triangulations[j], autoware::universe_utils::intersects_convex);
         if (!gjk_intersect) {
           gjk_no_intersect_ns += sw.toc();
+        } else {
+          gjk_intersect_ns += sw.toc();
         }
 
         sw.tic();
-        bool sat_intersect = false;
-        for (const auto & tri1 : triangulations[i]) {
-          for (const auto & tri2 : triangulations[j]) {
-            if (autoware::universe_utils::sat::intersects(tri1, tri2)) {
-              sat_intersect = true;
-              break;
-            }
-          }
-          if (sat_intersect) {
-            sat_intersect_ns += sw.toc();
-            break;
-          }
-        }
-
+        bool sat_intersect = autoware::universe_utils::test_intersection(
+          triangulations[i], triangulations[j], autoware::universe_utils::sat::intersects);
         if (!sat_intersect) {
           sat_no_intersect_ns += sw.toc();
+        } else {
+          sat_intersect_ns += sw.toc();
         }
 
         EXPECT_EQ(ground_truth, gjk_intersect);

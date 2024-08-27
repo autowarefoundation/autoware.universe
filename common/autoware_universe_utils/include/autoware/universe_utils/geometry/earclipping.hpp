@@ -1,4 +1,4 @@
-// Copyright 2024 Tier IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,21 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EARCLIPPING_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EARCLIPPING_HPP_
+
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <cstddef>
-#include <limits>
-#include <memory>
-#include <utility>
 #include <vector>
 
 namespace autoware::universe_utils
 {
 
-class Earclipping
+class earclipping
 {
 public:
   std::vector<std::size_t> indices;
@@ -34,6 +30,7 @@ public:
   using Polygon2d = autoware::universe_utils::Polygon2d;
   using Point2d = autoware::universe_utils::Point2d;
   using LinearRing2d = autoware::universe_utils::LinearRing2d;
+
   void operator()(const Polygon2d & points);
 
 private:
@@ -58,81 +55,42 @@ private:
     double y() const { return pt.y(); }
   };
 
-  Point * linkedList(const LinearRing2d & points, bool clockwise);
-  Point * filterPoints(Point * start, Point * end = nullptr);
-  Point * cureLocalIntersections(Point * start);
-  Point * getLeftmost(Point * start);
-  Point * splitPolygon(Point * a, Point * b);
-  Point * insertPoint(std::size_t i, const Point2d & p, Point * last);
-  Point * eliminateHoles(const std::vector<LinearRing2d> & points, Point * outerPoint);
-  Point * eliminateHole(Point * hole, Point * outerPoint);
-  Point * findHoleBridge(Point * hole, Point * outerPoint);
-  void earclippingLinked(Point * ear, int pass = 0);
-  void splitearclipping(Point * start);
-  void indexCurve(Point * start);
-  void removePoint(Point * p);
-  bool isEar(Point * ear);
-  bool sectorContainsSector(const Point * m, const Point * p);
-  bool pointInTriangle(
+  // Use std::vector instead of ObjectPool
+  std::vector<Point *> Points;
+
+  Point * linked_list(const LinearRing2d & points, bool clockwise);
+  Point * filter_points(Point * start, Point * end = nullptr);
+  Point * cure_local_intersections(Point * start);
+  Point * get_leftmost(Point * start);
+  Point * split_polygon(Point * a, Point * b);
+  Point * insert_point(std::size_t i, const Point2d & p, Point * last);
+  Point * eliminate_holes(const std::vector<LinearRing2d> & points, Point * outer_point);
+  Point * eliminate_hole(Point * hole, Point * outer_point);
+  Point * find_hole_bridge(Point * hole, Point * outer_point);
+  void earclipping_linked(Point * ear, int pass = 0);
+  void split_earclipping(Point * start);
+  void remove_point(Point * p);
+  bool is_ear(Point * ear);
+  bool sector_contains_sector(const Point * m, const Point * p);
+  bool point_in_triangle(
     double ax, double ay, double bx, double by, double cx, double cy, double px, double py) const;
-  bool isValidDiagonal(Point * a, Point * b);
+  bool is_valid_diagonal(Point * a, Point * b);
   bool equals(const Point * p1, const Point * p2);
   bool intersects(const Point * p1, const Point * q1, const Point * p2, const Point * q2);
-  bool onSegment(const Point * p, const Point * q, const Point * r);
-  bool intersectsPolygon(const Point * a, const Point * b);
-  bool locallyInside(const Point * a, const Point * b);
-  bool middleInside(const Point * a, const Point * b);
+  bool on_segment(const Point * p, const Point * q, const Point * r);
+  bool intersects_polygon(const Point * a, const Point * b);
+  bool locally_inside(const Point * a, const Point * b);
+  bool middle_inside(const Point * a, const Point * b);
   int sign(double val);
   double area(const Point * p, const Point * q, const Point * r) const;
-  double minX, maxX;
-  double minY, maxY;
-  double inv_size = 0;
 
-  class ObjectPool
+  // Function to construct a new Point object
+  earclipping::Point * construct_point(std::size_t index, const Point2d & point)
   {
-  public:
-    ObjectPool() = default;
-    ObjectPool(std::size_t blockSize_) { reset(blockSize_); }
-    ~ObjectPool() { clear(); }
-
-    // Construct a new Point object in the pool
-    template <typename... Args>
-    Point * construct(Args &&... args)
-    {
-      if (currentIndex >= blockSize) {
-        currentBlock = alloc_traits::allocate(alloc, blockSize);
-        allocations.emplace_back(currentBlock);
-        currentIndex = 0;
-      }
-      Point * object = &currentBlock[currentIndex++];
-      alloc_traits::construct(alloc, object, std::forward<Args>(args)...);
-      return object;
-    }
-
-    // Reset the pool with a new block size
-    void reset(std::size_t newBlockSize)
-    {
-      for (auto allocation : allocations) {
-        alloc_traits::deallocate(alloc, allocation, blockSize);
-      }
-      allocations.clear();
-      blockSize = std::max<std::size_t>(1, newBlockSize);
-      currentBlock = nullptr;
-      currentIndex = blockSize;
-    }
-
-    // Clear the pool and reset
-    void clear() { reset(blockSize); }
-
-  private:
-    Point * currentBlock = nullptr;    // Pointer to the current block of memory
-    std::size_t currentIndex = 1;      // Current index in the block
-    std::size_t blockSize = 1;         // Size of each block
-    std::vector<Point *> allocations;  // Track allocated blocks
-    std::allocator<Point> alloc;       // Allocator for Point
-    typedef std::allocator_traits<std::allocator<Point>> alloc_traits;  // Traits for allocator
-  };
-  ObjectPool Points;
+    Point * new_point = new Point(index, point);
+    Points.push_back(new_point);
+    return new_point;
+  }
 };
 
 /// @brief Triangulate based on earclipping algorithm
@@ -142,3 +100,5 @@ std::vector<autoware::universe_utils::Polygon2d> triangulate(
   const autoware::universe_utils::Polygon2d & poly);
 
 }  // namespace autoware::universe_utils
+
+#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EARCLIPPING_HPP_
