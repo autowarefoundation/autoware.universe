@@ -14,7 +14,7 @@ include_directories(
 )
 
 generate_parameter_library(surround_obstacle_checker_node_parameters
-  src/surround_obstacle_checker_node_parameters.yaml
+  param/surround_obstacle_checker_node_parameters.yaml
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED

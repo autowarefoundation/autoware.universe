@@ -1,24 +1,304 @@
-autoware::surround_obstacle_checker:
+surround_obstacle_checker_node:
   pointcloud:
     enable_check:
       type: bool
       default_value: false
-      description: "Enable to check surrounding pointcloud"
+      description: Enable to check surrounding pointcloud
     surround_check_front_distance:
       type: double
       default_value: 0.5
-      description: "If objects exist in this distance, transit to "exist-surrounding-obstacle" status. [m]"
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
       validation:
-        gt_eq<>: [0.0]
+        gt_eq<>:
+        - 0.0
     surround_check_side_distance:
       type: double
       default_value: 0.5
-      description: "If objects exist in this distance, transit to "exist-surrounding-obstacle" status. [m]"
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
       validation:
-        gt_eq<>: [0.0]
+        gt_eq<>:
+        - 0.0
     surround_check_back_distance:
       type: double
       default_value: 0.5
-      description: "If objects exist in this distance, transit to "exist-surrounding-obstacle" status. [m]"
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
       validation:
-        gt_eq<>: [0.0]
+        gt_eq<>:
+        - 0.0
+  unknown:
+    enable_check:
+      type: bool
+      default_value: true
+      description: Enable to check surrounding unknown
+    surround_check_front_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_side_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_back_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+  car:
+    enable_check:
+      type: bool
+      default_value: true
+      description: Enable to check surrounding car
+    surround_check_front_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_side_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_back_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+  truck:
+    enable_check:
+      type: bool
+      default_value: true
+      description: Enable to check surrounding truck
+    surround_check_front_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_side_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_back_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+  bus:
+    enable_check:
+      type: bool
+      default_value: true
+      description: Enable to check surrounding bus
+    surround_check_front_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_side_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_back_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+  trailer:
+    enable_check:
+      type: bool
+      default_value: true
+      description: Enable to check surrounding trailer
+    surround_check_front_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_side_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_back_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+  motorcycle:
+    enable_check:
+      type: bool
+      default_value: true
+      description: Enable to check surrounding motorcycle
+    surround_check_front_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_side_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_back_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+  bicycle:
+    enable_check:
+      type: bool
+      default_value: true
+      description: Enable to check surrounding bicycle
+    surround_check_front_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_side_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_back_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+  pedestrian:
+    enable_check:
+      type: bool
+      default_value: true
+      description: Enable to check surrounding pedestrian
+    surround_check_front_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_side_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+    surround_check_back_distance:
+      type: double
+      default_value: 0.5
+      description: If objects exist in this distance, transit to 'exist-surrounding-obstacle'
+        status. [m]
+      validation:
+        gt_eq<>:
+        - 0.0
+  surround_check_hysteresis_distance:
+    type: double
+    default_value: 0.3
+    description: If no object exists in this hysteresis distance added to the above
+      distance, transit to 'non-surrounding-obstacle' status [m]
+    validation:
+      gt_eq<>:
+      - 0.0
+  state_clear_time:
+    type: double
+    default_value: 2.0
+    description: Threshold to clear stop state [s]
+    validation:
+      gt_eq<>:
+      - 0.0
+  stop_state_ego_speed:
+    type: double
+    default_value: 0.1
+    description: Threshold to check ego vehicle stopped [m/s]
+    validation:
+      gt_eq<>:
+      - 0.0
+  publish_debug_footprints:
+    type: bool
+    default_value: true
+    description: Publish vehicle footprint & footprints with surround_check_distance
+      and surround_check_recover_distance offsets.
+  debug_footprint_label:
+    type: string
+    default_value: car
+    description: Select the label for debug footprint
+    validation:
+      one_of<>:
+      - - pointcloud
+        - unknown
+        - car
+        - truck
+        - bus
+        - trailer
+        - motorcycle
+        - bicycle
+        - pedestrian
