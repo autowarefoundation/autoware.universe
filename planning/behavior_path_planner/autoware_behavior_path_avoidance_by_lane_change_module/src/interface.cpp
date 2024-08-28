@@ -47,10 +47,6 @@ bool AvoidanceByLaneChangeInterface::isExecutionRequested() const
   return module_type_->isLaneChangeRequired() && module_type_->specialRequiredCheck() &&
          module_type_->isValidPath();
 }
-void AvoidanceByLaneChangeInterface::processOnEntry()
-{
-  waitApproval();
-}
 
 void AvoidanceByLaneChangeInterface::updateRTCStatus(
   const double start_distance, const double finish_distance)
