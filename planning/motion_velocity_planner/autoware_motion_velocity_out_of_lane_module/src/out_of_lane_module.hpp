@@ -62,7 +62,7 @@ private:
   out_of_lane::PlannerParam params_{};
 
   inline static const std::string ns_ = "out_of_lane";
-  std::string module_name_{"unitialized"};
+  std::string module_name_{"uninitialized"};
   rclcpp::Clock::SharedPtr clock_{nullptr};
   std::optional<geometry_msgs::msg::Pose> previous_slowdown_pose_{std::nullopt};
   rclcpp::Time previous_slowdown_time_{0};
