@@ -88,7 +88,6 @@ public:
   inline Eigen::Vector4i get_max_b() const { return max_b_; }
   inline Eigen::Vector4i get_div_b() const { return div_b_; }
   inline Eigen::Array4f get_inverse_leaf_size() const { return inverse_leaf_size_; }
-  inline std::vector<int> getLeafLayout() { return (leaf_layout_); }
 };
 
 class VoxelGridMapLoader
@@ -97,7 +96,7 @@ protected:
   rclcpp::Logger logger_;
   std::mutex * mutex_ptr_;
   double voxel_leaf_size_;
-  double voxel_leaf_size_z_;
+  double voxel_leaf_size_z_{};
   double downsize_ratio_z_axis_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_map_pub_;
   bool debug_ = false;
@@ -111,9 +110,9 @@ public:
     std::string * tf_map_input_frame, std::mutex * mutex);
 
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
-  bool is_close_to_neighbor_voxels(
+  static bool is_close_to_neighbor_voxels(
     const pcl::PointXYZ & point, const double distance_threshold, VoxelGridPointXYZ & voxel,
-    pcl::search::Search<pcl::PointXYZ>::Ptr tree) const;
+    pcl::search::Search<pcl::PointXYZ>::Ptr tree);
   bool is_close_to_neighbor_voxels(
     const pcl::PointXYZ & point, const double distance_threshold, const PointCloudPtr & map,
     VoxelGridPointXYZ & voxel) const;
@@ -122,9 +121,6 @@ public:
     const double distance_threshold, const PointCloudPtr & map, VoxelGridPointXYZ & voxel) const;
 
   void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
-  bool is_close_points(
-    const pcl::PointXYZ point, const pcl::PointXYZ target_point,
-    const double distance_threshold) const;
   std::string * tf_map_input_frame_;
 };
 

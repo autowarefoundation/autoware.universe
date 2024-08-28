@@ -125,7 +125,8 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   {
     pub_obstacle_pointcloud_ =
       this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
-    debug_ego_path_publisher_ = this->create_publisher<MarkerArray>("~/debug/markers", 1);
+    debug_marker_publisher_ = this->create_publisher<MarkerArray>("~/debug/markers", 1);
+    info_marker_publisher_ = this->create_publisher<MarkerArray>("~/info/markers", 1);
   }
   // Diagnostics
   {
@@ -140,6 +141,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   use_pointcloud_data_ = declare_parameter<bool>("use_pointcloud_data");
   use_predicted_object_data_ = declare_parameter<bool>("use_predicted_object_data");
   use_object_velocity_calculation_ = declare_parameter<bool>("use_object_velocity_calculation");
+  check_autoware_state_ = declare_parameter<bool>("check_autoware_state");
   path_footprint_extra_margin_ = declare_parameter<double>("path_footprint_extra_margin");
   detection_range_min_height_ = declare_parameter<double>("detection_range_min_height");
   detection_range_max_height_margin_ =
@@ -193,6 +195,7 @@ rcl_interfaces::msg::SetParametersResult AEB::onParameter(
   updateParam<bool>(parameters, "use_predicted_object_data", use_predicted_object_data_);
   updateParam<bool>(
     parameters, "use_object_velocity_calculation", use_object_velocity_calculation_);
+  updateParam<bool>(parameters, "check_autoware_state", check_autoware_state_);
   updateParam<double>(parameters, "path_footprint_extra_margin", path_footprint_extra_margin_);
   updateParam<double>(parameters, "detection_range_min_height", detection_range_min_height_);
   updateParam<double>(
@@ -345,25 +348,34 @@ bool AEB::fetchLatestData()
     return missing("object detection method (pointcloud or predicted objects)");
   }
 
-  const auto imu_ptr = sub_imu_.takeData();
-  if (use_imu_path_) {
+  const bool has_imu_path = std::invoke([&]() {
+    if (!use_imu_path_) return false;
+    const auto imu_ptr = sub_imu_.takeData();
     if (!imu_ptr) {
       return missing("imu message");
     }
     // imu_ptr is valid
     onImu(imu_ptr);
-  }
-  if (use_imu_path_ && !angular_velocity_ptr_) {
-    return missing("imu");
-  }
+    return (!angular_velocity_ptr_) ? missing("imu") : true;
+  });
 
-  predicted_traj_ptr_ = sub_predicted_traj_.takeData();
-  if (use_predicted_trajectory_ && !predicted_traj_ptr_) {
-    return missing("control predicted trajectory");
+  const bool has_predicted_path = std::invoke([&]() {
+    if (!use_predicted_trajectory_) {
+      return false;
+    }
+    predicted_traj_ptr_ = sub_predicted_traj_.takeData();
+    return (!predicted_traj_ptr_) ? missing("control predicted trajectory") : true;
+  });
+
+  if (!has_imu_path && !has_predicted_path) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), 5000,
+      "[AEB] At least one path (IMU or predicted trajectory) is required for operation");
+    return false;
   }
 
   autoware_state_ = sub_autoware_state_.takeData();
-  if (!autoware_state_) {
+  if (check_autoware_state_ && !autoware_state_) {
     return missing("autoware_state");
   }
 
@@ -373,6 +385,7 @@ bool AEB::fetchLatestData()
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   MarkerArray debug_markers;
+  MarkerArray info_markers;
   checkCollision(debug_markers);
 
   if (!collision_data_keeper_.checkCollisionExpired()) {
@@ -380,12 +393,16 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
     const auto diag_level = DiagnosticStatus::ERROR;
     stat.summary(diag_level, error_msg);
     const auto & data = collision_data_keeper_.get();
-    stat.addf("RSS", "%.2f", data.rss);
-    stat.addf("Distance", "%.2f", data.distance_to_object);
-    stat.addf("Object Speed", "%.2f", data.velocity);
-    if (publish_debug_markers_) {
-      addCollisionMarker(data, debug_markers);
+    if (data.has_value()) {
+      stat.addf("RSS", "%.2f", data.value().rss);
+      stat.addf("Distance", "%.2f", data.value().distance_to_object);
+      stat.addf("Object Speed", "%.2f", data.value().velocity);
+      if (publish_debug_markers_) {
+        addCollisionMarker(data.value(), debug_markers);
+      }
     }
+
+    addVirtualStopWallMarker(info_markers);
   } else {
     const std::string error_msg = "[AEB]: No Collision";
     const auto diag_level = DiagnosticStatus::OK;
@@ -393,7 +410,8 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
   }
 
   // publish debug markers
-  debug_ego_path_publisher_->publish(debug_markers);
+  debug_marker_publisher_->publish(debug_markers);
+  info_marker_publisher_->publish(info_markers);
 }
 
 bool AEB::checkCollision(MarkerArray & debug_markers)
@@ -406,7 +424,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   }
 
   // if not driving, disable aeb
-  if (autoware_state_->state != AutowareState::DRIVING) {
+  if (check_autoware_state_ && autoware_state_->state != AutowareState::DRIVING) {
     return false;
   }
 
@@ -461,22 +479,24 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       return std::make_optional<ObjectData>(*closest_object_point_itr);
     });
 
+    const bool has_collision = (closest_object_point.has_value())
+                                 ? hasCollision(current_v, closest_object_point.value())
+                                 : false;
+
     // Add debug markers
     if (publish_debug_markers_) {
       const auto [color_r, color_g, color_b, color_a] = debug_colors;
       addMarker(
-        this->get_clock()->now(), path, ego_polys, objects, closest_object_point, color_r, color_g,
-        color_b, color_a, debug_ns, debug_markers);
+        this->get_clock()->now(), path, ego_polys, objects, collision_data_keeper_.get(), color_r,
+        color_g, color_b, color_a, debug_ns, debug_markers);
     }
     // check collision using rss distance
-    return (closest_object_point.has_value())
-             ? hasCollision(current_v, closest_object_point.value())
-             : false;
+    return has_collision;
   };
 
   // step3. make function to check collision with ego path created with sensor data
   const auto has_collision_ego = [&](pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) -> bool {
-    if (!use_imu_path_) return false;
+    if (!use_imu_path_ || !angular_velocity_ptr_) return false;
     const double current_w = angular_velocity_ptr_->z;
     constexpr colorTuple debug_color = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
     const std::string ns = "ego";
@@ -501,7 +521,8 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   };
 
   // Data of filtered point cloud
-  pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects(new PointCloud);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects =
+    pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   // evaluate if there is a collision for both paths
   const bool has_collision =
     has_collision_ego(filtered_objects) || has_collision_predicted(filtered_objects);
@@ -890,20 +911,17 @@ void AEB::addMarker(
       "Object velocity: " + std::to_string(obj.velocity) + " [m/s]\n";
     closest_object_velocity_marker_array.text +=
       "Object relative velocity to ego: " + std::to_string(obj.velocity - std::abs(ego_velocity)) +
-      " [m/s]";
+      " [m/s]\n";
+    closest_object_velocity_marker_array.text +=
+      "Object distance to ego: " + std::to_string(obj.distance_to_object) + " [m]\n";
+    closest_object_velocity_marker_array.text +=
+      "RSS distance: " + std::to_string(obj.rss) + " [m]";
     debug_markers.markers.push_back(closest_object_velocity_marker_array);
   }
 }
 
-void AEB::addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers)
+void AEB::addVirtualStopWallMarker(MarkerArray & markers)
 {
-  auto point_marker = autoware::universe_utils::createDefaultMarker(
-    "base_link", data.stamp, "collision_point", 0, Marker::SPHERE,
-    autoware::universe_utils::createMarkerScale(0.3, 0.3, 0.3),
-    autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.3));
-  point_marker.pose.position = data.position;
-  debug_markers.markers.push_back(point_marker);
-
   const auto ego_map_pose = std::invoke([this]() -> std::optional<geometry_msgs::msg::Pose> {
     geometry_msgs::msg::TransformStamped tf_current_pose;
     geometry_msgs::msg::Pose p;
@@ -928,8 +946,18 @@ void AEB::addCollisionMarker(const ObjectData & data, MarkerArray & debug_marker
       ego_map_pose.value(), base_to_front_offset, 0.0, 0.0, 0.0);
     const auto virtual_stop_wall = autoware::motion_utils::createStopVirtualWallMarker(
       ego_front_pose, "autonomous_emergency_braking", this->now(), 0);
-    autoware::universe_utils::appendMarkerArray(virtual_stop_wall, &debug_markers);
+    autoware::universe_utils::appendMarkerArray(virtual_stop_wall, &markers);
   }
+}
+
+void AEB::addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers)
+{
+  auto point_marker = autoware::universe_utils::createDefaultMarker(
+    "base_link", data.stamp, "collision_point", 0, Marker::SPHERE,
+    autoware::universe_utils::createMarkerScale(0.3, 0.3, 0.3),
+    autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.3));
+  point_marker.pose.position = data.position;
+  debug_markers.markers.push_back(point_marker);
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking
