@@ -103,13 +103,15 @@ void PlanningValidator::setStatus(
 {
   using ControlModeStatus = autoware_vehicle_msgs::msg::ControlModeReport;
   using OperationModeStatus = autoware_adapi_v1_msgs::msg::OperationModeState;
-  
+
   operation_mode_ = sub_operation_mode_.takeData();
   control_mode_ = sub_control_mode_.takeData();
-  
+
   if (is_ok) {
     stat.summary(DiagnosticStatus::OK, "validated.");
-  } else if (operation_mode_->mode != OperationModeStatus::AUTONOMOUS || control_mode_->mode != ControlModeStatus::AUTONOMOUS) {
+  } else if (
+    operation_mode_->mode != OperationModeStatus::AUTONOMOUS ||
+    control_mode_->mode != ControlModeStatus::AUTONOMOUS) {
     stat.summary(DiagnosticStatus::OK, "validated.");
   } else if (validation_status_.invalid_count < diag_error_count_threshold_) {
     const auto warn_msg = msg + " (invalid count is less than error threshold: " +
@@ -122,7 +124,7 @@ void PlanningValidator::setStatus(
 }
 
 void PlanningValidator::setupDiag()
-{ 
+{
   diag_updater_ = std::make_shared<Updater>(this);
   auto & d = diag_updater_;
   d->setHardwareID("planning_validator");

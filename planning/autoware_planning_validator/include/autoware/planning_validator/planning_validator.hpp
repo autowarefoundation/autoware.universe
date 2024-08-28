@@ -107,10 +107,12 @@ private:
 
   autoware::universe_utils::InterProcessPollingSubscriber<Odometry> sub_kinematics_{
     this, "~/input/kinematics"};
-  autoware::universe_utils::InterProcessPollingSubscriber<autoware_adapi_v1_msgs::msg::OperationModeState> sub_operation_mode_{
-    this, "/api/operation_mode/state"};
-  autoware::universe_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::ControlModeReport> sub_control_mode_{
-    this, "/vehicle/status/control_mode"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    autoware_adapi_v1_msgs::msg::OperationModeState>
+    sub_operation_mode_{this, "/api/operation_mode/state"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    autoware_vehicle_msgs::msg::ControlModeReport>
+    sub_control_mode_{this, "/vehicle/status/control_mode"};
   rclcpp::Subscription<Trajectory>::SharedPtr sub_traj_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_traj_;
   rclcpp::Publisher<PlanningValidatorStatus>::SharedPtr pub_status_;
