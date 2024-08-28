@@ -78,6 +78,8 @@ private:
   // publish timer
   rclcpp::TimerBase::SharedPtr publish_timer_;
   rclcpp::Time last_published_time_;
+  rclcpp::Time last_updated_time_;
+  double publisher_period_;
 
   // internal states
   std::string world_frame_id_;  // tracking frame
