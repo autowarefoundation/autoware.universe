@@ -2,59 +2,58 @@
 
 ### Role
 
-`out_of_lane` is the module that decelerates and stops to prevent the ego vehicle from entering another lane with incoming dynamic objects.
+There are cases where the ego vehicle footprint goes out of the driving lane,
+for example when taking a narrow turn with a large vehicle.
+The `out_of_lane` module adds deceleration and stop points to the ego trajectory in order to prevent collisions from occuring in these "out of lane" cases.
 
 ### Activation Timing
 
-This module is activated if `launch_out_of_lane` is set to true.
+This module is activated if `launch_out_of_lane_module` is set to true at launch.
 
 ### Inner-workings / Algorithms
 
-The algorithm is made of the following steps.
+The overall idea of this module is to calculate at which time does "out of lane" collisions with predicted objects occur.
+The algorithm assumes the input ego trajectory contains accurate `time_from_start` values in order to calculate accurate time to collisions with the predicted object.
 
-1. Calculate the ego path footprints (red).
-2. Calculate the other lanes (magenta).
-3. Calculate the overlapping ranges between the ego path footprints and the other lanes (green).
-4. For each overlapping range, decide if a stop or slow down action must be taken.
-5. For each action, insert the corresponding stop or slow down point in the path.
+We will explain the inner-workings of the module by detailling the following steps:
+
+1. Calculate the ego trajectory footprints.
+2. Calculate the ego lanelets.
+3. Calculate the "out of lane" areas.
+4. Calculate the time to collisions (TTCs) at each "out of lane" area.
+5. Calculate the stop or slowdown point ahead of the collision to avoid.
 
 ![overview](./docs/out_of_lane-footprints_other_lanes_overlaps_ranges.png)
 
-#### 1. Ego Path Footprints
+#### 1. Ego trajectory footprints
 
-In this first step, the ego footprint is projected at each path point and are eventually inflated based on the `extra_..._offset` parameters.
+In this first step, the ego footprint is projected at each trajectory point and its size is modified based on the `ego.extra_..._offset` parameters.
 
-#### 2. Other lanes
+#### 2. Ego lanelets
 
-In the second step, the set of lanes to consider for overlaps is generated.
-This set is built by selecting all lanelets within some distance from the ego vehicle, and then removing non-relevant lanelets.
-The selection distance is chosen as the maximum between the `slowdown.distance_threshold` and the `stop.distance_threshold`.
+In the second step, we calculate the lanelets followed by the ego trajectory.
+We select all lanelets crossed by the trajectory linestring (sequence of trajectory points), as well as their preceding lanelets.
 
-A lanelet is deemed non-relevant if it meets one of the following conditions.
+#### 3. Out of lane areas
 
-- It is part of the lanelets followed by the ego path.
-- It contains the rear point of the ego footprint.
-- It follows one of the ego path lanelets.
+Next, for each trajectory point, we create the corresponding "out of lane" areas by substracting the ego lanelets from the trajectory point footprint (from step 1).
+Each area is associated with the lanelets overlapped by the area and with the corresponding ego trajectory point.
 
-#### 3. Overlapping ranges
+#### 4. Time to collisions
 
-In the third step, overlaps between the ego path footprints and the other lanes are calculated.
-For each pair of other lane $l$ and ego path footprint $f$, we calculate the overlapping polygons using `boost::geometry::intersection`.
-For each overlapping polygon found, if the distance inside the other lane $l$ is above the `overlap.minimum_distance` threshold, then the overlap is ignored.
-Otherwise, the arc length range (relative to the ego path) and corresponding points of the overlapping polygons are stored.
-Ultimately, for each other lane $l$, overlapping ranges of successive overlaps are built with the following information:
+For each "out of lane" area, we calculate the times when a dynamic object will overlap the area based on its predicted paths.
 
-- overlapped other lane $l$.
-- start and end ego path indexes.
-- start and end ego path arc lengths.
-- start and end overlap points.
+In the case where parameter `mode` is set to `threshold` and the calculated time is less than `thrshold.time_threshold` parameter, then we decide to avoid the "out of lane" area.
 
-#### 4. Decisions
+In the case where parameter `mode` is set to `ttc`,
+we calculate the time to collision by comparing the predicted time of the object with the `time_from_start` field contained in the trajectory point.
+If the time to collision is bellow the `ttc.threshold` parameter value, we decide to avoid the "out of lane" area.
 
-In the fourth step, a decision to either slow down or stop before each overlapping range is taken based on the dynamic objects.
-The conditions for the decision depend on the value of the `mode` parameter.
+#### 5. Calculate the stop or slowdown point
 
-Whether it is decided to slow down or stop is determined by the distance between the ego vehicle and the start of the overlapping range (in arc length along the ego path).
+There can be multiple points to avoid
+
+Whether it is decided to slow down or stop is determined by the distance between the ego vehicle and the trajectory point to avoid.
 If this distance is bellow the `actions.slowdown.threshold`, a velocity of `actions.slowdown.velocity` will be used.
 If the distance is bellow the `actions.stop.threshold`, a velocity of `0`m/s will be used.
 
