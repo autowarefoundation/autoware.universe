@@ -51,7 +51,7 @@ bool projections_overlap(
 
 /// @brief check is all edges of a polygon can be separated from the other polygon with a separating
 /// axis
-bool has_separating_axis(const Polygon2d & polygon, const Polygon2d & other)
+bool has_no_separating_axis(const Polygon2d & polygon, const Polygon2d & other)
 {
   for (size_t i = 0; i < polygon.outer().size(); ++i) {
     const size_t next_i = (i + 1) % polygon.outer().size();
@@ -73,8 +73,8 @@ bool has_separating_axis(const Polygon2d & polygon, const Polygon2d & other)
 /// will be considered as not intersecting.
 bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
 {
-  return has_separating_axis(convex_polygon1, convex_polygon2) &&
-         has_separating_axis(convex_polygon2, convex_polygon1);
+  return has_no_separating_axis(convex_polygon1, convex_polygon2) &&
+         has_no_separating_axis(convex_polygon2, convex_polygon1);
 }
 
 }  // namespace autoware::universe_utils::sat
