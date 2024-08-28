@@ -177,20 +177,6 @@ std::vector<TrajectoryPoint> resample_trajectory_points(
   return autoware::motion_utils::convertToTrajectoryPointArray(resampled_input_traj);
 }
 
-bool arePointsClose(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2, const double epsilon)
-{
-  return std::abs(p1.x - p2.x) < epsilon && std::abs(p1.y - p2.y) < epsilon;
-}
-
-bool areSameDirection(
-  const double yaw, const geometry_msgs::msg::Point & start_point,
-  const geometry_msgs::msg::Point & end_point)
-{
-  return autoware::universe_utils::normalizeRadian(
-           yaw - std::atan2(end_point.y - start_point.y, end_point.x - start_point.x)) < M_PI_2;
-}
-
 std::vector<geometry_msgs::msg::Point> convertToGeometryPoints(const LineString2d & lanelet_points)
 {
   std::vector<geometry_msgs::msg::Point> points;

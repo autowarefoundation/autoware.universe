@@ -131,6 +131,8 @@ private:
   void on_plan_path(
     const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response);
 
+  void visualize_selected_centerline();
+
   // parameter
   template <typename T>
   T getRosParameter(const std::string & param_name)
