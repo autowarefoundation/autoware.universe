@@ -26,7 +26,9 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode_report.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
@@ -105,6 +107,10 @@ private:
 
   autoware::universe_utils::InterProcessPollingSubscriber<Odometry> sub_kinematics_{
     this, "~/input/kinematics"};
+  autoware::universe_utils::InterProcessPollingSubscriber<autoware_adapi_v1_msgs::msg::OperationModeState> sub_operation_mode_{
+    this, "/api/operation_mode/state"};
+  autoware::universe_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::ControlModeReport> sub_control_mode_{
+    this, "/vehicle/status/control_mode"};
   rclcpp::Subscription<Trajectory>::SharedPtr sub_traj_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_traj_;
   rclcpp::Publisher<PlanningValidatorStatus>::SharedPtr pub_status_;
@@ -134,6 +140,9 @@ private:
   Trajectory::ConstSharedPtr previous_published_trajectory_;
 
   Odometry::ConstSharedPtr current_kinematics_;
+
+  autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr operation_mode_;
+  autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
 
   std::shared_ptr<PlanningValidatorDebugMarkerPublisher> debug_pose_publisher_;
 
