@@ -231,13 +231,13 @@ void MultiObjectTracker::onTimer()
     return;
   }
 
-  // if there was update, publish
+  // if there was update after publishing, publish new messages
   bool should_publish = last_published_time_ < last_updated_time_;
 
   // if there was no update, publish if the elapsed time is longer than the maximum publish latency
-  // it will perform extrapolate/remove old objects
-  const double maximum_publish_latency = publisher_period_ * 1.05;
-  should_publish = should_publish || elapsed_time > maximum_publish_latency;
+  // in this case, it will perform extrapolate/remove old objects
+  const double maximum_publish_interval = publisher_period_ * 1.05;  // 105% of the period
+  should_publish = should_publish || elapsed_time > maximum_publish_interval;
 
   // Publish with delay compensation to the current time
   if (should_publish) checkAndPublish(current_time);
