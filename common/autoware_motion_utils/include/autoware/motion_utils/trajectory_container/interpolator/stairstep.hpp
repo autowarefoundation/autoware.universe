@@ -54,7 +54,10 @@ public:
    *
    * @return A shared pointer to a new instance of the interpolator.
    */
-  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override;
+  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override
+  {
+    return std::make_shared<Stairstep<T>>(*this);
+  }
 };
 
 /**
@@ -92,7 +95,10 @@ public:
    *
    * @return A shared pointer to a new instance of the interpolator.
    */
-  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override;
+  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override
+  {
+    return std::make_shared<Stairstep<double>>(*this);
+  }
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator
