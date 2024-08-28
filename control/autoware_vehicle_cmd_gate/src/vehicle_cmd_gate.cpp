@@ -53,6 +53,10 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   using std::placeholders::_2;
   using std::placeholders::_3;
 
+  prev_turn_indicator_ = nullptr;
+  prev_hazard_light_ = nullptr;
+  prev_gear_ = nullptr;
+
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
 
@@ -352,6 +356,23 @@ void VehicleCmdGate::onEmergencyCtrlCmd(Control::ConstSharedPtr msg)
   }
 }
 
+// check the continuity of topics
+template <typename T>
+T VehicleCmdGate::getContinuousTopic(
+  const std::shared_ptr<T> & prev_topic, const T & current_topic, const std::string & topic_name)
+{
+  if ((rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic->stamp)).seconds() >= 0.0) {
+    return current_topic;
+  } else {
+    if (topic_name != "") {
+      RCLCPP_INFO(
+        get_logger(),
+        "The operation mode is changed, but the %s is not received yet:", topic_name.c_str());
+    }
+    return *prev_topic;
+  }
+}
+
 void VehicleCmdGate::onTimer()
 {
   // Subscriber for auto
@@ -447,6 +468,8 @@ void VehicleCmdGate::onTimer()
       if (!is_engaged_) {
         turn_indicator.command = TurnIndicatorsCommand::NO_COMMAND;
         hazard_light.command = HazardLightsCommand::NO_COMMAND;
+        turn_indicator.stamp = this->now();
+        hazard_light.stamp = this->now();
       }
     } else if (current_gate_mode_.data == GateMode::EXTERNAL) {
       turn_indicator = remote_commands_.turn_indicator;
@@ -457,10 +480,40 @@ void VehicleCmdGate::onTimer()
     }
   }
 
-  // Publish topics
-  turn_indicator_cmd_pub_->publish(turn_indicator);
-  hazard_light_cmd_pub_->publish(hazard_light);
-  gear_cmd_pub_->publish(gear);
+  // Publish Turn Indicators, Hazard Lights and Gear Command
+  if (prev_turn_indicator_ != nullptr) {
+    *prev_turn_indicator_ =
+      getContinuousTopic(prev_turn_indicator_, turn_indicator, "TurnIndicatorsCommand");
+    turn_indicator_cmd_pub_->publish(*prev_turn_indicator_);
+  } else {
+    if (msg_auto_command_turn_indicator || msg_remote_command_turn_indicator) {
+      prev_turn_indicator_ = std::make_shared<TurnIndicatorsCommand>(turn_indicator);
+    }
+    turn_indicator_cmd_pub_->publish(turn_indicator);
+  }
+
+  if (prev_hazard_light_ != nullptr) {
+    *prev_hazard_light_ =
+      getContinuousTopic(prev_hazard_light_, hazard_light, "HazardLightsCommand");
+    hazard_light_cmd_pub_->publish(*prev_hazard_light_);
+  } else {
+    if (
+      msg_auto_command_hazard_light || msg_remote_command_hazard_light ||
+      msg_emergency_command_hazard_light) {
+      prev_hazard_light_ = std::make_shared<HazardLightsCommand>(hazard_light);
+    }
+    hazard_light_cmd_pub_->publish(hazard_light);
+  }
+
+  if (prev_gear_ != nullptr) {
+    *prev_gear_ = getContinuousTopic(prev_gear_, gear, "GearCommand");
+    gear_cmd_pub_->publish(*prev_gear_);
+  } else {
+    if (msg_auto_command_gear || msg_remote_command_gear || msg_emergency_command_gear) {
+      prev_gear_ = std::make_shared<GearCommand>(gear);
+    }
+    gear_cmd_pub_->publish(gear);
+  }
 }
 
 void VehicleCmdGate::publishControlCommands(const Commands & commands)
@@ -480,62 +533,55 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
     return;
   }
 
-  Commands filtered_commands;
-
   // Set default commands
-  {
-    filtered_commands.control = commands.control;
-    filtered_commands.gear = commands.gear;  // tmp
-  }
+  Control filtered_control = commands.control;
 
   if (moderate_stop_interface_->is_stop_requested()) {  // if stop requested, stop the vehicle
-    filtered_commands.control.longitudinal.velocity = 0.0;
-    filtered_commands.control.longitudinal.acceleration = moderate_stop_service_acceleration_;
+    filtered_control.longitudinal.velocity = 0.0;
+    filtered_control.longitudinal.acceleration = moderate_stop_service_acceleration_;
   }
 
   // Check emergency
   if (use_emergency_handling_ && is_system_emergency_) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(), "Emergency!");
-    filtered_commands.control = emergency_commands_.control;
-    filtered_commands.gear = emergency_commands_.gear;  // tmp
+    filtered_control = emergency_commands_.control;
   }
 
   // Check engage
   if (!is_engaged_) {
-    filtered_commands.control.longitudinal = createLongitudinalStopControlCmd();
+    filtered_control.longitudinal = createLongitudinalStopControlCmd();
   }
 
   // Check pause. Place this check after all other checks as it needs the final output.
-  adapi_pause_->update(filtered_commands.control);
+  adapi_pause_->update(filtered_control);
   if (adapi_pause_->is_paused()) {
     if (is_engaged_) {
-      filtered_commands.control.longitudinal = createLongitudinalStopControlCmd();
+      filtered_control.longitudinal = createLongitudinalStopControlCmd();
     } else {
-      filtered_commands.control = createStopControlCmd();
+      filtered_control = createStopControlCmd();
     }
   }
 
   // Check if command filtering option is enable
   if (enable_cmd_limit_filter_) {
     // Apply limit filtering
-    filtered_commands.control = filterControlCommand(filtered_commands.control);
+    filtered_control = filterControlCommand(filtered_control);
   }
   // tmp: Publish vehicle emergency status
   VehicleEmergencyStamped vehicle_cmd_emergency;
   vehicle_cmd_emergency.emergency = (use_emergency_handling_ && is_system_emergency_);
-  vehicle_cmd_emergency.stamp = filtered_commands.control.stamp;
+  vehicle_cmd_emergency.stamp = filtered_control.stamp;
 
   // Publish commands
   vehicle_cmd_emergency_pub_->publish(vehicle_cmd_emergency);
-  control_cmd_pub_->publish(filtered_commands.control);
-  published_time_publisher_->publish_if_subscribed(
-    control_cmd_pub_, filtered_commands.control.stamp);
+  control_cmd_pub_->publish(filtered_control);
+  published_time_publisher_->publish_if_subscribed(control_cmd_pub_, filtered_control.stamp);
   adapi_pause_->publish();
   moderate_stop_interface_->publish();
 
   // Save ControlCmd to steering angle when disengaged
-  prev_control_cmd_ = filtered_commands.control;
+  prev_control_cmd_ = filtered_control;
 }
 
 void VehicleCmdGate::publishEmergencyStopControlCommands()
@@ -850,7 +896,6 @@ MarkerArray VehicleCmdGate::createMarkerArray(const IsFilterActivated & filter_a
   }
   if (filter_activated.is_activated_on_steering_rate) {
     reason += first_msg ? " steer_rate" : ", steer_rate";
-    first_msg = false;
   }
 
   msg.markers.emplace_back(createStringMarker(
