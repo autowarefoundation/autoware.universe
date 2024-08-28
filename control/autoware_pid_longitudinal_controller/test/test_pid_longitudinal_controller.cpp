@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 #include <memory>
-#include "pid_longitudinal_controller.hpp"
+#include "autoware/pid_longitudinal_controller/pid_longitudinal_controller.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "nav_msgs/msg/odometry.hpp"
