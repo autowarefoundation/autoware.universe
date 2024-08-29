@@ -35,7 +35,7 @@ If the uncertainty of the estimated pose is given, it can also be displayed.
 | `property_line_alpha_`  | float  | 1.0           | Alpha of Line property     |
 | `property_line_color_`  | QColor | Qt::white     | Color of Line property     |
 
-### Pose Eith Covariance History
+### Pose With Covariance History
 
 | Name                            | Type   | Default Value  | Description                      |
 | ------------------------------- | ------ | -------------- | -------------------------------- |
