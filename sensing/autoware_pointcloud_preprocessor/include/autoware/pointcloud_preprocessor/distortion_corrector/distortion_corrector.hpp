@@ -74,7 +74,7 @@ protected:
   bool pointcloud_transform_exists_{false};
   bool imu_transform_exists_{false};
   rclcpp::Node * node_;
-  std::unique_ptr<autoware::universe_utils::StaticTransformBuffer> static_tf_buffer_{nullptr};
+  std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
@@ -101,8 +101,8 @@ protected:
 public:
   explicit DistortionCorrector(rclcpp::Node * node) : node_(node)
   {
-    static_tf_buffer_ =
-      std::make_unique<autoware::universe_utils::StaticTransformBuffer>(node, true);
+    managed_tf_buffer_ =
+      std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(node, true);
   }
   bool pointcloud_transform_exists();
   bool pointcloud_transform_needed();

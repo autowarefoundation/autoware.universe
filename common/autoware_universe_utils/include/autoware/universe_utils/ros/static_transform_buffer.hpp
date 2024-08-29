@@ -60,10 +60,11 @@ struct PairEqual
 using TFMap = std::unordered_map<Key, Eigen::Matrix4f, std::hash<Key>, PairEqual>;
 constexpr std::array<const char *, 3> warn_frames = {"map", "odom", "world"};
 
-class StaticTransformBuffer
+class ManagedTransformBuffer
 {
 public:
-  explicit StaticTransformBuffer(rclcpp::Node * node, const bool & has_static_tf_only) : node_(node)
+  explicit ManagedTransformBuffer(rclcpp::Node * node, const bool & has_static_tf_only)
+  : node_(node)
   {
     if (has_static_tf_only) {
       get_transform_ = [this](

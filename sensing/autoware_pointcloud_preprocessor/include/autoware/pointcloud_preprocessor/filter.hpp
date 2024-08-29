@@ -236,7 +236,7 @@ protected:
    * versus an exact one (false by default). */
   bool approximate_sync_ = false;
 
-  std::unique_ptr<autoware::universe_utils::StaticTransformBuffer> static_tf_buffer_{nullptr};
+  std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
   inline bool isValid(
     const PointCloud2ConstPtr & cloud, const std::string & /*topic_name*/ = "input")

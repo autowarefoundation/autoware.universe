@@ -137,8 +137,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // tf2 listener
   {
-    static_tf_buffer_ =
-      std::make_unique<autoware::universe_utils::StaticTransformBuffer>(this, true);
+    managed_tf_buffer_ =
+      std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(this, true);
   }
 
   // Output Publishers
@@ -362,7 +362,7 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
       }
       sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
         new sensor_msgs::msg::PointCloud2());
-      static_tf_buffer_->transformPointcloud(output_frame_, *e.second, *transformed_cloud_ptr);
+      managed_tf_buffer_->transformPointcloud(output_frame_, *e.second, *transformed_cloud_ptr);
 
       // calculate transforms to oldest stamp
       Eigen::Matrix4f adjust_to_old_data_transform = Eigen::Matrix4f::Identity();
@@ -392,7 +392,7 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
       if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
         sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr_in_sensor_frame(
           new sensor_msgs::msg::PointCloud2());
-        static_tf_buffer_->transformPointcloud(
+        managed_tf_buffer_->transformPointcloud(
           e.second->header.frame_id, *transformed_delay_compensated_cloud_ptr,
           *transformed_cloud_ptr_in_sensor_frame);
         transformed_cloud_ptr_in_sensor_frame->header.stamp = oldest_stamp;

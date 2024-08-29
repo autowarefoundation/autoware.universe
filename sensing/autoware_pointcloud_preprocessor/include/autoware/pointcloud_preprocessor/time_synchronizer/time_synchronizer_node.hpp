@@ -144,7 +144,7 @@ private:
   // XmlRpc::XmlRpcValue input_topics_;
   std::vector<std::string> input_topics_;
 
-  std::unique_ptr<autoware::universe_utils::StaticTransformBuffer> static_tf_buffer_{nullptr};
+  std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
   std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_ptr_queue_;
 
