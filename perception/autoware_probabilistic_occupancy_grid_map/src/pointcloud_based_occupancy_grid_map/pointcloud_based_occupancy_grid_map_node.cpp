@@ -213,21 +213,37 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     return;
   }
 
-  // Create single frame occupancy grid map
-  occupancy_grid_map_ptr_->resetMaps();
-  occupancy_grid_map_ptr_->updateOrigin(
-    gridmap_origin.position.x - occupancy_grid_map_ptr_->getSizeInMetersX() / 2,
-    gridmap_origin.position.y - occupancy_grid_map_ptr_->getSizeInMetersY() / 2);
-  occupancy_grid_map_ptr_->updateWithPointCloud(
-    *input_raw_use, (use_input_obstacle_pc_common ? input_obstacle_pc_common : *input_obstacle_use),
-    robot_pose, scan_origin);
+  {  // add scope for time keeper
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("create_occupancy_grid_map", *time_keeper_);
+
+    // Create single frame occupancy grid map
+    occupancy_grid_map_ptr_->resetMaps();
+    occupancy_grid_map_ptr_->updateOrigin(
+      gridmap_origin.position.x - occupancy_grid_map_ptr_->getSizeInMetersX() / 2,
+      gridmap_origin.position.y - occupancy_grid_map_ptr_->getSizeInMetersY() / 2);
+    occupancy_grid_map_ptr_->updateWithPointCloud(
+      *input_raw_use,
+      (use_input_obstacle_pc_common ? input_obstacle_pc_common : *input_obstacle_use), robot_pose,
+      scan_origin);
+  }
 
   if (enable_single_frame_mode_) {
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish_occupancy_grid_map", *time_keeper_);
+
     // publish
     occupancy_grid_map_pub_->publish(OccupancyGridMapToMsgPtr(
       map_frame_, input_raw_msg->header.stamp, robot_pose.position.z,
       *occupancy_grid_map_ptr_));  // (todo) robot_pose may be altered with gridmap_origin
   } else {
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr =
+        std::make_unique<ScopedTimeTrack>("update_and_publish_occupancy_grid_map", *time_keeper_);
+
     // Update with bayes filter
     occupancy_grid_map_updater_ptr_->update(*occupancy_grid_map_ptr_);
 

@@ -284,12 +284,18 @@ void GridMapFusionNode::publish()
   // merge available gridmap
   std::vector<OccupancyGridMapFixedBlindSpot> subscribed_maps;
   std::vector<double> weights;
-  for (const auto & e : gridmap_dict_) {
-    if (e.second != nullptr) {
-      subscribed_maps.push_back(GridMapFusionNode::OccupancyGridMsgToGridMap(*e.second));
-      weights.push_back(input_topic_weights_map_[e.first]);
-      latest_stamp = e.second->header.stamp;
-      height = e.second->info.origin.position.z;
+  {  // add scope for time keeper
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("merge_grid_map", *time_keeper_);
+
+    for (const auto & e : gridmap_dict_) {
+      if (e.second != nullptr) {
+        subscribed_maps.push_back(GridMapFusionNode::OccupancyGridMsgToGridMap(*e.second));
+        weights.push_back(input_topic_weights_map_[e.first]);
+        latest_stamp = e.second->header.stamp;
+        height = e.second->info.origin.position.z;
+      }
     }
   }
 
@@ -356,37 +362,50 @@ OccupancyGridMapFixedBlindSpot GridMapFusionNode::SingleFrameOccupancyFusion(
     return occupancy_grid_maps[0];
   }
 
-  // init fused map with calculated origin
-  OccupancyGridMapFixedBlindSpot fused_map(
-    occupancy_grid_maps[0].getSizeInCellsX(), occupancy_grid_maps[0].getSizeInCellsY(),
-    occupancy_grid_maps[0].getResolution());
-  fused_map.updateOrigin(
-    gridmap_origin.position.x - fused_map.getSizeInMetersX() / 2,
-    gridmap_origin.position.y - fused_map.getSizeInMetersY() / 2);
+  {  // add scope for time keeper
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("create_fused_map", *time_keeper_);
 
-  // fix origin of each map
-  for (auto & map : occupancy_grid_maps) {
-    map.updateOrigin(fused_map.getOriginX(), fused_map.getOriginY());
-  }
+    // init fused map with calculated origin
+    OccupancyGridMapFixedBlindSpot fused_map(
+      occupancy_grid_maps[0].getSizeInCellsX(), occupancy_grid_maps[0].getSizeInCellsY(),
+      occupancy_grid_maps[0].getResolution());
+    fused_map.updateOrigin(
+      gridmap_origin.position.x - fused_map.getSizeInMetersX() / 2,
+      gridmap_origin.position.y - fused_map.getSizeInMetersY() / 2);
 
-  // assume map is same size and resolutions
-  for (unsigned int x = 0; x < fused_map.getSizeInCellsX(); x++) {
-    for (unsigned int y = 0; y < fused_map.getSizeInCellsY(); y++) {
-      // get cost of each map
-      std::vector<unsigned char> costs;
-      for (auto & map : occupancy_grid_maps) {
-        costs.push_back(map.getCost(x, y));
-      }
-
-      // set fusion policy
-      auto fused_cost = fusion_policy::singleFrameOccupancyFusion(costs, fusion_method_, weights);
-
-      // set max cost to fused map
-      fused_map.setCost(x, y, fused_cost);
+    // fix origin of each map
+    for (auto & map : occupancy_grid_maps) {
+      map.updateOrigin(fused_map.getOriginX(), fused_map.getOriginY());
     }
-  }
 
-  return fused_map;
+    {  // add scope for time keeper (cost_fusion_loop)
+      std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+      if (time_keeper_)
+        inner_st_ptr = std::make_unique<ScopedTimeTrack>("cost_fusion_loop", *time_keeper_);
+
+      // assume map is same size and resolutions
+      for (unsigned int x = 0; x < fused_map.getSizeInCellsX(); x++) {
+        for (unsigned int y = 0; y < fused_map.getSizeInCellsY(); y++) {
+          // get cost of each map
+          std::vector<unsigned char> costs;
+          for (auto & map : occupancy_grid_maps) {
+            costs.push_back(map.getCost(x, y));
+          }
+
+          // set fusion policy
+          auto fused_cost =
+            fusion_policy::singleFrameOccupancyFusion(costs, fusion_method_, weights);
+
+          // set max cost to fused map
+          fused_map.setCost(x, y, fused_cost);
+        }
+      }
+    }  // scope for time keeper (cost_fusion_loop) ends
+
+    return fused_map;
+  }  // scope for time keeper ends
 }
 
 /**
