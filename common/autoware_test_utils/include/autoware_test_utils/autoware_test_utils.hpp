@@ -412,7 +412,7 @@ void createPublisherWithQoS(
     qos.transient_local();
     publisher = rclcpp::create_publisher<T>(test_node, topic_name, qos);
   } else {
-    // publisher is already created. Do nothing
+    publisher = rclcpp::create_publisher<T>(test_node, topic_name, 1);
   }
 }
 
