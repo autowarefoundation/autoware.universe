@@ -446,7 +446,6 @@ int BEVDet::InitEngine(const std::string & engine_file)
 int BEVDet::DeserializeTRTEngine(
   const std::string & engine_file, nvinfer1::ICudaEngine ** engine_ptr)
 {
-  int verbosity = static_cast<int>(nvinfer1::ILogger::Severity::kWARNING);
   std::stringstream engine_stream;
   engine_stream.seekg(0, engine_stream.beg);
 

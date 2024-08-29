@@ -220,7 +220,6 @@ int nvjpegDecoder::decode(const std::vector<std::vector<char>> & files_data, uch
   }
   if (prepare_buffers(files_data, widths, heights, iout, isz, share_param)) return EXIT_FAILURE;
 
-  double total_time = 0;
   double times[6];
 
   auto decode_start = high_resolution_clock::now();
@@ -232,7 +231,6 @@ int nvjpegDecoder::decode(const std::vector<std::vector<char>> & files_data, uch
   }
   for (size_t i = 0; i < files_data.size(); i++) {
     threads[i].join();
-    total_time += times[i];
   }
   auto decode_end = high_resolution_clock::now();
   duration<double> decode_time = decode_end - decode_start;
