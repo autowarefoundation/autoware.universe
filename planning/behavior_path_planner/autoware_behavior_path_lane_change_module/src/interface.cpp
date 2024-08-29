@@ -76,6 +76,7 @@ void LaneChangeInterface::updateData()
   universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
   module_type_->update_lanes(getCurrentStatus() == ModuleStatus::RUNNING);
+  module_type_->update_filtered_objects();
   module_type_->updateSpecialData();
 
   if (isWaitingApproval() || module_type_->isAbortState()) {
@@ -257,17 +258,45 @@ bool LaneChangeInterface::canTransitFailureState()
 
   if (!module_type_->isValidPath()) {
     log_debug_throttled("Transit to failure state due not to find valid path");
+    updateRTCStatus(
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+      State::FAILED);
     return true;
   }
 
   if (module_type_->isAbortState() && module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has completed.");
+    updateRTCStatus(
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+      State::FAILED);
     return true;
+  }
+
+  if (module_type_->is_near_terminal()) {
+    log_debug_throttled("Unsafe, but ego is approaching terminal. Continue lane change");
+
+    if (module_type_->isRequiredStop(post_process_safety_status_.is_trailing_object)) {
+      log_debug_throttled("Module require stopping");
+    }
+    return false;
   }
 
   if (module_type_->isCancelEnabled() && module_type_->isEgoOnPreparePhase()) {
     if (module_type_->isStoppedAtRedTrafficLight()) {
       log_debug_throttled("Stopping at traffic light while in prepare phase. Cancel lane change");
+      module_type_->toCancelState();
+      updateRTCStatus(
+        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+        State::FAILED);
+      return true;
+    }
+
+    const auto force_deactivated = std::any_of(
+      rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+      [&](const auto & rtc) { return rtc.second->isForceDeactivated(uuid_map_.at(rtc.first)); });
+
+    if (force_deactivated && module_type_->isAbleToReturnCurrentLane()) {
+      log_debug_throttled("Cancel lane change due to force deactivation");
       module_type_->toCancelState();
       updateRTCStatus(
         std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
@@ -294,7 +323,7 @@ bool LaneChangeInterface::canTransitFailureState()
     return false;
   }
 
-  if (module_type_->isRequiredStop(post_process_safety_status_.is_object_coming_from_rear)) {
+  if (module_type_->isRequiredStop(post_process_safety_status_.is_trailing_object)) {
     log_debug_throttled("Module require stopping");
   }
 

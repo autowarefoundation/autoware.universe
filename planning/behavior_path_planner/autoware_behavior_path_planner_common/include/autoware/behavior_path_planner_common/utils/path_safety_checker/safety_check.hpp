@@ -27,6 +27,8 @@
 #include <geometry_msgs/msg/twist.hpp>
 
 #include <cmath>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_path_planner::utils::path_safety_checker
@@ -58,9 +60,10 @@ Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const double lon_length, const double lat_margin, const bool is_stopped_obj,
   CollisionCheckDebug & debug);
+
 Polygon2d createExtendedPolygon(
-  const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin,
-  const bool is_stopped_obj, CollisionCheckDebug & debug);
+  const PoseWithVelocityAndPolygonStamped & obj_pose_with_poly, const double lon_length,
+  const double lat_margin, const bool is_stopped_obj, CollisionCheckDebug & debug);
 
 PredictedPath convertToPredictedPath(
   const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);
@@ -156,6 +159,28 @@ bool checkSafetyWithIntegralPredictedPolygon(
   const ExtendedPredictedObjects & objects, const bool check_all_predicted_path,
   const IntegralPredictedPolygonParams & params, CollisionCheckDebugMap & debug_map);
 
+double calcObstacleMinLength(const Shape & shape);
+double calcObstacleMaxLength(const Shape & shape);
+std::pair<bool, bool> checkObjectsCollisionRough(
+  const PathWithLaneId & path, const PredictedObjects & objects, const double margin,
+  const BehaviorPathPlannerParameters & parameters, const bool use_offset_ego_point);
+
+/**
+ * @brief Calculate the rough distance between the ego vehicle and the objects.
+ * @param path The path of the ego vehicle.
+ * @param objects The predicted objects.
+ * @param parameters The common parameters used in behavior path planner.
+ * @param use_offset_ego_point If true, the closest point to the object is calculated by
+ * interpolating the path points.
+ * @param distance_type The type of distance to calculate. "min" or "max". Calculate the distance
+ * when the distance is minimized or maximized when the direction of the ego and the object is
+ * changed.
+ * @return The rough distance between the ego vehicle and the objects.
+ */
+double calculateRoughDistanceToObjects(
+  const PathWithLaneId & path, const PredictedObjects & objects,
+  const BehaviorPathPlannerParameters & parameters, const bool use_offset_ego_point,
+  const std::string & distance_type);
 // debug
 CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj);
 void updateCollisionCheckDebugMap(

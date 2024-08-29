@@ -137,6 +137,8 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
     p.path_priority = node->declare_parameter<std::string>(ns + "path_priority");
     p.efficient_path_order =
       node->declare_parameter<std::vector<std::string>>(ns + "efficient_path_order");
+    p.lane_departure_check_expansion_margin =
+      node->declare_parameter<double>(ns + "lane_departure_check_expansion_margin");
   }
 
   // shift parking
@@ -153,7 +155,6 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
 
   // parallel parking common
   {
-    const std::string ns = base_ns + "pull_over.parallel_parking.";
     p.parallel_parking_parameters.center_line_path_interval =
       p.center_line_path_interval;  // for geometric parallel parking
   }
@@ -201,17 +202,10 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
     p.vehicle_shape_margin = node->declare_parameter<double>(ns + "vehicle_shape_margin");
     p.freespace_parking_common_parameters.time_limit =
       node->declare_parameter<double>(ns + "time_limit");
-    p.freespace_parking_common_parameters.minimum_turning_radius =
-      node->declare_parameter<double>(ns + "minimum_turning_radius");
-    p.freespace_parking_common_parameters.maximum_turning_radius =
-      node->declare_parameter<double>(ns + "maximum_turning_radius");
-    p.freespace_parking_common_parameters.turning_radius_size =
-      node->declare_parameter<int>(ns + "turning_radius_size");
-    p.freespace_parking_common_parameters.maximum_turning_radius = std::max(
-      p.freespace_parking_common_parameters.maximum_turning_radius,
-      p.freespace_parking_common_parameters.minimum_turning_radius);
-    p.freespace_parking_common_parameters.turning_radius_size =
-      std::max(p.freespace_parking_common_parameters.turning_radius_size, 1);
+    p.freespace_parking_common_parameters.max_turning_ratio =
+      node->declare_parameter<double>(ns + "max_turning_ratio");
+    p.freespace_parking_common_parameters.turning_steps =
+      node->declare_parameter<int>(ns + "turning_steps");
   }
 
   //  freespace parking search config
@@ -241,6 +235,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   //  freespace parking astar
   {
     const std::string ns = base_ns + "pull_over.freespace_parking.astar.";
+    p.astar_parameters.search_method = node->declare_parameter<std::string>(ns + "search_method");
     p.astar_parameters.only_behind_solutions =
       node->declare_parameter<bool>(ns + "only_behind_solutions");
     p.astar_parameters.use_back = node->declare_parameter<bool>(ns + "use_back");
@@ -526,6 +521,9 @@ void GoalPlannerModuleManager::updateModuleParams(
     updateParam<double>(parameters, ns + "deceleration_interval", p->deceleration_interval);
     updateParam<double>(
       parameters, ns + "after_shift_straight_distance", p->after_shift_straight_distance);
+    updateParam<double>(
+      parameters, ns + "lane_departure_check_expansion_margin",
+      p->lane_departure_check_expansion_margin);
   }
 
   // parallel parking common
@@ -590,19 +588,10 @@ void GoalPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "time_limit", p->freespace_parking_common_parameters.time_limit);
     updateParam<double>(
-      parameters, ns + "minimum_turning_radius",
-      p->freespace_parking_common_parameters.minimum_turning_radius);
-    updateParam<double>(
-      parameters, ns + "maximum_turning_radius",
-      p->freespace_parking_common_parameters.maximum_turning_radius);
+      parameters, ns + "max_turning_ratio",
+      p->freespace_parking_common_parameters.max_turning_ratio);
     updateParam<int>(
-      parameters, ns + "turning_radius_size",
-      p->freespace_parking_common_parameters.turning_radius_size);
-    p->freespace_parking_common_parameters.maximum_turning_radius = std::max(
-      p->freespace_parking_common_parameters.maximum_turning_radius,
-      p->freespace_parking_common_parameters.minimum_turning_radius);
-    p->freespace_parking_common_parameters.turning_radius_size =
-      std::max(p->freespace_parking_common_parameters.turning_radius_size, 1);
+      parameters, ns + "turning_steps", p->freespace_parking_common_parameters.turning_steps);
   }
 
   //  freespace parking search config
@@ -635,6 +624,7 @@ void GoalPlannerModuleManager::updateModuleParams(
   //  freespace parking astar
   {
     const std::string ns = base_ns + "pull_over.freespace_parking.astar.";
+    updateParam<std::string>(parameters, ns + "search_method", p->astar_parameters.search_method);
     updateParam<bool>(
       parameters, ns + "only_behind_solutions", p->astar_parameters.only_behind_solutions);
     updateParam<bool>(parameters, ns + "use_back", p->astar_parameters.use_back);
@@ -843,23 +833,8 @@ void GoalPlannerModuleManager::updateModuleParams(
   });
 }
 
-bool GoalPlannerModuleManager::isAlwaysExecutableModule() const
-{
-  // enable AlwaysExecutable whenever goal modification is not allowed
-  // because only minor path refinements are made for fixed goals
-  if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
-    return true;
-  }
-
-  return false;
-}
-
 bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 {
-  if (isAlwaysExecutableModule()) {
-    return true;
-  }
-
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
   if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
@@ -871,10 +846,6 @@ bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 
 bool GoalPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
 {
-  if (isAlwaysExecutableModule()) {
-    return true;
-  }
-
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
   if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {

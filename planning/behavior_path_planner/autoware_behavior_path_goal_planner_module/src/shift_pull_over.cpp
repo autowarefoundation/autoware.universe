@@ -148,8 +148,12 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
       lanelet::utils::getArcCoordinates(road_lanes, shift_end_pose).length >
       lanelet::utils::getArcCoordinates(road_lanes, prev_module_path_terminal_pose).length;
     if (extend_previous_module_path) {  // case1
+      // NOTE: The previous module may insert a zero velocity at the end of the path, so remove it
+      // by setting remove_connected_zero_velocity=true. Inserting a velocity of 0 into the goal is
+      // the role of the goal planner, and the intermediate zero velocity after extension is
+      // unnecessary.
       return goal_planner_utils::extendPath(
-        prev_module_path, road_lane_reference_path_to_shift_end, shift_end_pose);
+        prev_module_path, road_lane_reference_path_to_shift_end, shift_end_pose, true);
     } else {  // case2
       return goal_planner_utils::cropPath(prev_module_path, shift_end_pose);
     }
@@ -246,10 +250,11 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   // set pull over path
   PullOverPath pull_over_path{};
   pull_over_path.type = getPlannerType();
-  pull_over_path.partial_paths.push_back(shifted_path.path);
+  std::vector<PathWithLaneId> partial_paths{shifted_path.path};
+  pull_over_path.setPaths(
+    partial_paths, path_shifter.getShiftLines().front().start,
+    path_shifter.getShiftLines().front().end);
   pull_over_path.pairs_terminal_velocity_and_accel.push_back(std::make_pair(pull_over_velocity, 0));
-  pull_over_path.start_pose = path_shifter.getShiftLines().front().start;
-  pull_over_path.end_pose = path_shifter.getShiftLines().front().end;
   pull_over_path.debug_poses.push_back(shift_end_pose_prev_module_path);
   pull_over_path.debug_poses.push_back(actual_shift_end_pose);
   pull_over_path.debug_poses.push_back(goal_pose);

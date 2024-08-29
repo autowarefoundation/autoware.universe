@@ -66,6 +66,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <vector>
 
 namespace autoware::ndt_scan_matcher
@@ -113,7 +114,7 @@ private:
     const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
     tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
 
-  geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
+  std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> align_pose(
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
   void transform_sensor_measurement(
