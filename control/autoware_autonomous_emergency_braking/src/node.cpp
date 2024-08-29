@@ -348,21 +348,30 @@ bool AEB::fetchLatestData()
     return missing("object detection method (pointcloud or predicted objects)");
   }
 
-  const auto imu_ptr = sub_imu_.takeData();
-  if (use_imu_path_) {
+  const bool has_imu_path = std::invoke([&]() {
+    if (!use_imu_path_) return false;
+    const auto imu_ptr = sub_imu_.takeData();
     if (!imu_ptr) {
       return missing("imu message");
     }
     // imu_ptr is valid
     onImu(imu_ptr);
-  }
-  if (use_imu_path_ && !angular_velocity_ptr_) {
-    return missing("imu");
-  }
+    return (!angular_velocity_ptr_) ? missing("imu") : true;
+  });
 
-  predicted_traj_ptr_ = sub_predicted_traj_.takeData();
-  if (use_predicted_trajectory_ && !predicted_traj_ptr_) {
-    return missing("control predicted trajectory");
+  const bool has_predicted_path = std::invoke([&]() {
+    if (!use_predicted_trajectory_) {
+      return false;
+    }
+    predicted_traj_ptr_ = sub_predicted_traj_.takeData();
+    return (!predicted_traj_ptr_) ? missing("control predicted trajectory") : true;
+  });
+
+  if (!has_imu_path && !has_predicted_path) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), 5000,
+      "[AEB] At least one path (IMU or predicted trajectory) is required for operation");
+    return false;
   }
 
   autoware_state_ = sub_autoware_state_.takeData();
@@ -384,12 +393,15 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
     const auto diag_level = DiagnosticStatus::ERROR;
     stat.summary(diag_level, error_msg);
     const auto & data = collision_data_keeper_.get();
-    stat.addf("RSS", "%.2f", data.rss);
-    stat.addf("Distance", "%.2f", data.distance_to_object);
-    stat.addf("Object Speed", "%.2f", data.velocity);
-    if (publish_debug_markers_) {
-      addCollisionMarker(data, debug_markers);
+    if (data.has_value()) {
+      stat.addf("RSS", "%.2f", data.value().rss);
+      stat.addf("Distance", "%.2f", data.value().distance_to_object);
+      stat.addf("Object Speed", "%.2f", data.value().velocity);
+      if (publish_debug_markers_) {
+        addCollisionMarker(data.value(), debug_markers);
+      }
     }
+
     addVirtualStopWallMarker(info_markers);
   } else {
     const std::string error_msg = "[AEB]: No Collision";
@@ -467,22 +479,24 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       return std::make_optional<ObjectData>(*closest_object_point_itr);
     });
 
+    const bool has_collision = (closest_object_point.has_value())
+                                 ? hasCollision(current_v, closest_object_point.value())
+                                 : false;
+
     // Add debug markers
     if (publish_debug_markers_) {
       const auto [color_r, color_g, color_b, color_a] = debug_colors;
       addMarker(
-        this->get_clock()->now(), path, ego_polys, objects, closest_object_point, color_r, color_g,
-        color_b, color_a, debug_ns, debug_markers);
+        this->get_clock()->now(), path, ego_polys, objects, collision_data_keeper_.get(), color_r,
+        color_g, color_b, color_a, debug_ns, debug_markers);
     }
     // check collision using rss distance
-    return (closest_object_point.has_value())
-             ? hasCollision(current_v, closest_object_point.value())
-             : false;
+    return has_collision;
   };
 
   // step3. make function to check collision with ego path created with sensor data
   const auto has_collision_ego = [&](pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) -> bool {
-    if (!use_imu_path_) return false;
+    if (!use_imu_path_ || !angular_velocity_ptr_) return false;
     const double current_w = angular_velocity_ptr_->z;
     constexpr colorTuple debug_color = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
     const std::string ns = "ego";

@@ -377,8 +377,7 @@ void FreespacePlannerNode::updateTargetIndex()
     } else {
       // Switch to next partial trajectory
       prev_target_index_ = target_index_;
-      target_index_ =
-        getNextTargetIndex(trajectory_.points.size(), reversing_indices_, target_index_);
+      target_index_ = new_target_index;
     }
   }
 }
@@ -417,7 +416,6 @@ void FreespacePlannerNode::onOdometry(const Odometry::ConstSharedPtr msg)
 void FreespacePlannerNode::updateData()
 {
   occupancy_grid_ = occupancy_grid_sub_.takeData();
-  scenario_ = scenario_sub_.takeData();
 
   {
     auto msgs = odom_sub_.takeData();
@@ -441,11 +439,6 @@ bool FreespacePlannerNode::isDataReady()
     is_ready = false;
   }
 
-  if (!scenario_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Waiting for scenario.");
-    is_ready = false;
-  }
-
   if (!odom_) {
     RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "Waiting for odometry.");
     is_ready = false;
@@ -456,14 +449,15 @@ bool FreespacePlannerNode::isDataReady()
 
 void FreespacePlannerNode::onTimer()
 {
-  updateData();
-
-  if (!isDataReady()) {
+  scenario_ = scenario_sub_.takeData();
+  if (!isActive(scenario_)) {
+    reset();
     return;
   }
 
-  if (!isActive(scenario_)) {
-    reset();
+  updateData();
+
+  if (!isDataReady()) {
     return;
   }
 
