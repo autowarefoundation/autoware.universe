@@ -469,13 +469,40 @@ bool NDTScanMatcher::callback_sensor_points_main(
   }
 
   // check each of voxel score by SaltUhey
-  pcl::PointCloud<pcl::PointXYZI>::Ptr voxel_score_points_in_baselink_frame {new pcl::PointCloud<pcl::PointXYZI>};
-  pcl::PointCloud<pcl::PointXYZI>::Ptr voxel_score_points_in_map {new pcl::PointCloud<pcl::PointXYZI>};
-  *voxel_score_points_in_map = *ndt_ptr_->getScorePoints();
-  // autoware::universe_utils::transformPointCloud(
-  //   *voxel_score_points_in_baselink_frame, *voxel_score_points_in_map, ndt_result.pose);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr voxel_score_points_in_map_i {new pcl::PointCloud<pcl::PointXYZI>};
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr voxel_score_points_in_map_rgb {new pcl::PointCloud<pcl::PointXYZRGB>};
+  *voxel_score_points_in_map_i = *ndt_ptr_->getScorePoints();
+
+  const float lower_nvs = 1.0f;
+  const float upper_nvs = 3.5f;
+  // const float max_nvs = 4.2f;
+  const float range = upper_nvs - lower_nvs;
+  for (std::size_t i = 0; i < voxel_score_points_in_map_i->size(); i++) {
+    pcl::PointXYZRGB point;
+    point.x = voxel_score_points_in_map_i->points[i].x;
+    point.y = voxel_score_points_in_map_i->points[i].y;
+    point.z = voxel_score_points_in_map_i->points[i].z;  
+    if(voxel_score_points_in_map_i->points[i].intensity > upper_nvs){
+      point.r = 1.0f * 255;
+      point.g = 0.0f * 255;
+      point.b = 0.0f * 255;
+    }
+    else if(lower_nvs > voxel_score_points_in_map_i->points[i].intensity){
+      point.r = 0.0f * 255;
+      point.g = 0.0f * 255;
+      point.b = 1.0f * 255;
+    }
+    else{
+      std_msgs::msg::ColorRGBA color = exchange_color_crc(voxel_score_points_in_map_i->points[i].intensity/range);
+      point.r = color.r * 255;
+      point.g = color.g * 255;
+      point.b = color.b * 255;
+    }
+    voxel_score_points_in_map_rgb->points.push_back(point);
+  }
+
   sensor_msgs::msg::PointCloud2 voxel_score_points_msg_in_map;
-  pcl::toROSMsg(*voxel_score_points_in_map, voxel_score_points_msg_in_map);
+  pcl::toROSMsg(*voxel_score_points_in_map_rgb, voxel_score_points_msg_in_map);
   voxel_score_points_msg_in_map.header.stamp = sensor_ros_time;
   voxel_score_points_msg_in_map.header.frame_id = param_.frame.map_frame;
   voxel_score_points_pub_->publish(voxel_score_points_msg_in_map);
