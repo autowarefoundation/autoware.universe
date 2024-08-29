@@ -135,6 +135,11 @@ public:
   bool checkPathWillLeaveLane(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
 
+  bool checkPathWillLeaveLane(
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
+    std::vector<lanelet::Id> & fused_lanelets_id,
+    std::optional<autoware::universe_utils::Polygon2d> & fused_lanelets_polygon) const;
+
   PathWithLaneId cropPointsOutsideOfLanes(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
     const size_t end_index);

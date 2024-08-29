@@ -386,6 +386,91 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
     });
 }
 
+bool LaneDepartureChecker::checkPathWillLeaveLane(
+  const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
+  std::vector<lanelet::Id> & fused_lanelets_id,
+  std::optional<autoware::universe_utils::Polygon2d> & fused_lanelets_polygon) const
+{
+  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+
+  // check if the footprint is not fully contained within the fused lanelets polygon
+  const std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
+
+  if (fused_lanelets_polygon) {
+    bool is_indside_fused_lanelets = std::all_of(
+      vehicle_footprints.begin(), vehicle_footprints.end(), [&](const auto & footprint) {
+        return boost::geometry::within(footprint, fused_lanelets_polygon.value());
+      });
+
+    if (is_indside_fused_lanelets) {
+      return false;
+    }
+  }
+
+  LinearRing2d footprint_hull = createHullFromFootprints(vehicle_footprints);
+
+  auto to_basic_polygon = [](const LinearRing2d & footprint_hull) -> lanelet::BasicPolygon2d {
+    lanelet::BasicPolygon2d basic_polygon;
+    for (const auto & point : footprint_hull) {
+      Eigen::Vector2d p(point.x(), point.y());
+      basic_polygon.push_back(p);
+    }
+    return basic_polygon;
+  };
+
+  lanelet::BasicPolygon2d footprint_hull_basic_polygon = to_basic_polygon(footprint_hull);
+  const auto lanelets_distance_pair = lanelet::geometry::findWithin2d(
+    lanelet_map_ptr->laneletLayer, footprint_hull_basic_polygon, 0.0);
+
+  if (lanelets_distance_pair.empty()) return true;
+
+  auto to_polygon2d =
+    [](const lanelet::BasicPolygon2d & poly) -> autoware::universe_utils::Polygon2d {
+    autoware::universe_utils::Polygon2d polygon;
+    auto & outer = polygon.outer();
+
+    for (const auto & p : poly) {
+      autoware::universe_utils::Point2d p2d(p.x(), p.y());
+      outer.push_back(p2d);
+    }
+    boost::geometry::correct(polygon);
+    return polygon;
+  };
+
+  autoware::universe_utils::MultiPolygon2d lanelet_unions;
+  autoware::universe_utils::MultiPolygon2d result;
+
+  if (fused_lanelets_polygon) lanelet_unions.push_back(fused_lanelets_polygon.value());
+
+  for (size_t i = 0; i < lanelets_distance_pair.size(); ++i) {
+    const auto & route_lanelet = lanelets_distance_pair.at(i).second;
+    bool id_exist = std::any_of(
+      fused_lanelets_id.begin(), fused_lanelets_id.end(),
+      [&](const auto & id) { return id == route_lanelet.id(); });
+
+    if (id_exist) continue;
+
+    const auto & p = route_lanelet.polygon2d().basicPolygon();
+    autoware::universe_utils::Polygon2d poly = to_polygon2d(p);
+    boost::geometry::union_(lanelet_unions, poly, result);
+    lanelet_unions = result;
+    result.clear();
+    fused_lanelets_id.push_back(route_lanelet.id());
+  }
+
+  if (lanelet_unions.empty()) {
+    fused_lanelets_polygon = std::nullopt;
+    return true;
+  }
+
+  fused_lanelets_polygon = lanelet_unions.front();
+
+  return !std::all_of(
+    vehicle_footprints.begin(), vehicle_footprints.end(), [&](const auto & footprint) {
+      return boost::geometry::within(footprint, fused_lanelets_polygon.value());
+    });
+}
+
 PathWithLaneId LaneDepartureChecker::cropPointsOutsideOfLanes(
   const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path, const size_t end_index)
 {
