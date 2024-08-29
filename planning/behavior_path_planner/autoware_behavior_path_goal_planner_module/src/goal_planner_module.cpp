@@ -283,6 +283,10 @@ void GoalPlannerModule::onTimer()
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
     }
+    // TODO(someone): The generated path inherits the velocity of the path of the previous module.
+    // Therefore, if the velocity of the path of the previous module changes (e.g. stop points are
+    // inserted, deleted), the path should be regenerated.
+
     return false;
   });
   if (!need_update) {
@@ -1206,8 +1210,6 @@ bool GoalPlannerModule::hasDecidedPath(
   const std::shared_ptr<SafetyCheckParams> & safety_check_params,
   const std::shared_ptr<GoalSearcherBase> goal_searcher) const
 {
-  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-
   return checkDecidingPathStatus(
            planner_data, occupancy_grid_map, parameters, ego_predicted_path_params,
            objects_filtering_params, safety_check_params, goal_searcher)
@@ -1240,8 +1242,6 @@ DecidingPathStatusWithStamp GoalPlannerModule::checkDecidingPathStatus(
   const std::shared_ptr<SafetyCheckParams> & safety_check_params,
   const std::shared_ptr<GoalSearcherBase> goal_searcher) const
 {
-  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-
   const auto & prev_status = thread_safe_data_.get_prev_data().deciding_path_status;
   const bool enable_safety_check = parameters.safety_check_params.enable_safety_check;
 
@@ -1632,8 +1632,12 @@ PathWithLaneId GoalPlannerModule::generateStopPath() const
     const double s_end = s_current + common_parameters.forward_path_length;
     return route_handler->getCenterLinePath(current_lanes, s_start, s_end, true);
   });
+
+  // NOTE: The previous module may insert a zero velocity at the end of the path, so remove it by
+  // setting remove_connected_zero_velocity=true. Inserting a velocity of 0 into the goal is the
+  // role of the goal planner, and the intermediate zero velocity after extension is unnecessary.
   const auto extended_prev_path = goal_planner_utils::extendPath(
-    getPreviousModuleOutput().path, reference_path, common_parameters.forward_path_length);
+    getPreviousModuleOutput().path, reference_path, common_parameters.forward_path_length, true);
 
   // calculate search start offset pose from the closest goal candidate pose with
   // approximate_pull_over_distance_ ego vehicle decelerates to this position. or if no feasible
