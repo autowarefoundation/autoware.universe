@@ -89,7 +89,7 @@ def plot(max_ego_vel, params):
     ax.fill_betweenx(ego_vel, min_distance, facecolor="yellow", interpolate=True, alpha=0.1)
     ax.fill_between(max_distance, ego_vel, facecolor="red", interpolate=True, alpha=0.05)
 
-    # init dot lines for the curor
+    # init dot lines for the cursor
     hline = ax.axhline(y=0, color="gray", linestyle="--")
     vline = ax.axvline(x=0, color="gray", linestyle="--")
 
