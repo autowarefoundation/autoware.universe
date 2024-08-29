@@ -327,13 +327,20 @@ public:
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   autoware::motion_utils::VirtualWalls createVirtualWalls() override;
 
+  // cppcheck-suppress unusedFunction
   const std::set<lanelet::Id> & getAssociativeIds() const { return associative_ids_; }
 
+  // cppcheck-suppress unusedFunction
   UUID getOcclusionUUID() const { return occlusion_uuid_; }
+  // cppcheck-suppress unusedFunction
   bool getOcclusionSafety() const { return occlusion_safety_; }
+  // cppcheck-suppress unusedFunction
   double getOcclusionDistance() const { return occlusion_stop_distance_; }
+  // cppcheck-suppress unusedFunction
   void setOcclusionActivation(const bool activation) { occlusion_activated_ = activation; }
+  // cppcheck-suppress unusedFunction
   bool isOcclusionFirstStopRequired() const { return occlusion_first_stop_required_; }
+  // cppcheck-suppress unusedFunction
   InternalDebugData & getInternalDebugData() const { return internal_debug_data_; }
 
 private:
