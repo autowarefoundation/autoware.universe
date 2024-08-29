@@ -7,7 +7,7 @@ It receives roughly estimated initial pose from GNSS/user.
 Passing the pose to `ndt_scan_matcher`, and it gets a calculated ego pose from `ndt_scan_matcher` via service.
 Finally, it publishes the initial pose to `ekf_localizer`.
 This node depends on the map height fitter library.
-[See here for more details.](../../map/map_height_fitter/README.md)
+[See here for more details.](../../map/autoware_map_height_fitter/README.md)
 
 ## Interfaces
 
@@ -41,11 +41,19 @@ This node depends on the map height fitter library.
 | `/localization/initialization_state` | autoware_adapi_v1_msgs::msg::LocalizationInitializationState | pose initialization state   |
 | `/initialpose3d`                     | geometry_msgs::msg::PoseWithCovarianceStamped                | calculated initial ego pose |
 
+## Diagnostics
+
+### pose_initializer_status
+
+If the score of initial pose estimation result is lower than score threshold, ERROR message is output to the `/diagnostics` topic.
+
+<img src="./media/diagnostic_pose_reliability.png" alt="drawing" width="400"/>
+
 ## Connection with Default AD API
 
-This `pose_initializer` is used via default AD API. For detailed description of the API description, please refer to [the description of `default_ad_api`](https://github.com/autowarefoundation/autoware.universe/blob/main/system/default_ad_api/document/localization.md).
+This `pose_initializer` is used via default AD API. For detailed description of the API description, please refer to [the description of `autoware_default_adapi`](https://github.com/autowarefoundation/autoware.universe/blob/main/system/autoware_default_adapi/document/localization.md).
 
-<img src="../../system/default_ad_api/document/images/localization.drawio.svg" alt="drawing" width="800"/>
+<img src="../../system/autoware_default_adapi/document/images/localization.drawio.svg" alt="drawing" width="800"/>
 
 ## Initialize pose via CLI
 
@@ -128,4 +136,4 @@ pose:
 ```
 
 It behaves the same as "initialpose (from rviz)".
-The position.z and the covariance will be overwritten by [ad_api_adaptors](https://github.com/autowarefoundation/autoware.universe/tree/main/system/default_ad_api_helpers/ad_api_adaptors), so there is no need to input them.
+The position.z and the covariance will be overwritten by [ad_api_adaptors](https://github.com/autowarefoundation/autoware.universe/tree/main/system/autoware_default_adapi_helpers/ad_api_adaptors), so there is no need to input them.

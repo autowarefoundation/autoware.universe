@@ -160,7 +160,7 @@ std::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & pose,
-  const BehaviorPathPlannerParameters & common_parameters,
+  const double lane_changing_acceleration, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters, const double resolution);
 
 bool isParkedObject(
@@ -312,6 +312,10 @@ bool is_before_terminal(
   const PredictedObject & object);
 
 double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, const Pose & pose);
+
+ExtendedPredictedObjects transform_to_extended_objects(
+  const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects,
+  const bool check_prepare_phase);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 namespace autoware::behavior_path_planner::utils::lane_change::debug
