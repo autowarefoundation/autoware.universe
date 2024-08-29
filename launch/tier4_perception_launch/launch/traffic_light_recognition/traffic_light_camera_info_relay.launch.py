@@ -14,11 +14,11 @@
 
 
 import launch
-from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
 from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 from launch_ros.actions import PushRosNamespace
 import yaml
 
@@ -28,7 +28,7 @@ def create_traffic_light_camera_info_relay(namespace):
         package="topic_tools",
         executable="relay",
         name=f"traffic_light_camera_info_relay",
-        arguments=[f"/sensing/camera/{namespace}/camera_info", "camera_info"]
+        arguments=[f"/sensing/camera/{namespace}/camera_info", "camera_info"],
     )
 
     group = GroupAction(
