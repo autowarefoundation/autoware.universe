@@ -146,8 +146,8 @@ void TRTBEVDetNode::initModel()
 
   model_config_ = this->declare_parameter("model_config", "bevdet_r50_4dlongterm_depth.yaml");
 
-  onnx_file_ = this->declare_parameter("onnx_file", "bevdet_one_lt_d.onnx");
-  engine_file_ = this->declare_parameter("engine_file", "bevdet_one_lt_d.engine");
+  onnx_file_ = this->declare_parameter<std::string>("onnx_path", "bevdet_one_lt_d.onnx");
+  engine_file_ = this->declare_parameter<std::string>("engine_path", "bevdet_one_lt_d.engine");
 
   imgs_name_ = this->declare_parameter<std::vector<std::string>>("data_params.cams");
   class_names_ =

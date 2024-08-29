@@ -1,5 +1,8 @@
 /**:
     ros__parameters:
+      # weight files
+      onnx_path: "$(var model_path)/$(var model_name).onnx"
+      engine_path: "$(var model_path)/$(var model_name).engine"
       data_params:
         N: 6  # camera num
         H: 900 # image height

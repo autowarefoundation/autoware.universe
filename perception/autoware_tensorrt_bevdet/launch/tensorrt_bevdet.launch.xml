@@ -18,9 +18,9 @@
   <arg name="input/img_b/camera_info" default="/CAM_BACK/camera_info"/>
   <arg name="input/img_br/camera_info" default="/CAM_BACK_RIGHT/camera_info"/>
 
-  <arg name="data_path" default="$(env HOME)/autoware_data/autoware_tensorrt_bevdet"/>
-  <arg name="onnx_file" default="$(var data_path)/bevdet_one_lt_d.onnx"/>
-  <arg name="engine_file" default="$(var data_path)/bevdet_one_lt_d.engine"/>
+  <arg name="data_path" default="$(env HOME)/autoware_data"/>
+  <arg name="model_name" default="bevdet_one_lt_d"/>
+  <arg name="model_path" default="$(var data_path)/tensorrt_bevdet"/>
   <arg name="model_config" default="$(find-pkg-share autoware_tensorrt_bevdet)/config/bevdet_r50_4dlongterm_depth.yaml"/>
   <arg name="param_file" default="$(find-pkg-share autoware_tensorrt_bevdet)/config/bevdet.param.yaml"/>
 
@@ -43,9 +43,7 @@
 
     <remap from="~/output/boxes" to="$(var output/boxes)"/>
 
-    <param name="onnx_file" value="$(var onnx_file)"/>
-    <param name="engine_file" value="$(var engine_file)"/>
     <param name="model_config" value="$(var model_config)"/>
-    <param from="$(var param_file)"/>
+    <param from="$(var param_file)" allow_substs="true"/>
   </node>
 </launch>
