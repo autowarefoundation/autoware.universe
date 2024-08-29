@@ -21,14 +21,18 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 
+#include <geometry_msgs/msg/detail/point__struct.hpp>
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
+#include <std_msgs/msg/detail/color_rgba__struct.hpp>
 #include <visualization_msgs/msg/detail/marker__struct.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include <boost/geometry/algorithms/centroid.hpp>
 #include <boost/geometry/algorithms/for_each.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/primitives/LineString.h>
+#include <lanelet2_core/primitives/Point.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
 #include <string>
@@ -54,9 +58,11 @@ visualization_msgs::msg::Marker get_base_marker()
 }
 void add_polygons_markers(
   visualization_msgs::msg::MarkerArray & debug_marker_array,
-  const lanelet::BasicPolygons2d & polygons, const double z, const std::string & ns)
+  const lanelet::BasicPolygons2d & polygons, const double z, const std::string & ns,
+  const std_msgs::msg::ColorRGBA & color = universe_utils::createMarkerColor(1.0, 0.0, 0.0, 1.0))
 {
   auto debug_marker = get_base_marker();
+  debug_marker.color = color;
   debug_marker.ns = ns;
   debug_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
   for (const auto & f : polygons) {
@@ -157,19 +163,33 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   const auto z = ego_data.pose.position.z;
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
-  // add_polygons_markers(debug_marker_array, ego_data.trajectory_footprints, z, "footprints");
+  add_polygons_markers(
+    debug_marker_array, ego_data.trajectory_footprints, z, "footprints",
+    universe_utils::createMarkerColor(1.0, 1.0, 1.0, 1.0));
 
   lanelet::BasicPolygons2d drivable_lane_polygons;
   for (const auto & poly : ego_data.drivable_lane_polygons) {
     drivable_lane_polygons.push_back(poly.outer);
   }
-  add_polygons_markers(debug_marker_array, drivable_lane_polygons, z, "ego_lane");
+  add_polygons_markers(
+    debug_marker_array, drivable_lane_polygons, z, "ego_lane",
+    universe_utils::createMarkerColor(0.0, 0.0, 1.0, 1.0));
 
   lanelet::BasicPolygons2d out_of_lane_areas;
   for (const auto & p : out_of_lane_data.outside_points) {
     out_of_lane_areas.push_back(p.outside_ring);
   }
-  add_polygons_markers(debug_marker_array, out_of_lane_areas, z, "out_of_lane_areas");
+  add_polygons_markers(
+    debug_marker_array, out_of_lane_areas, z, "out_of_lane_areas",
+    universe_utils::createMarkerColor(1.0, 0.0, 0.0, 1.0));
+  for (const auto & [bbox, i] : out_of_lane_data.outside_areas_rtree) {
+    const auto & a = out_of_lane_data.outside_points[i];
+    debug_marker_array.markers.back().points.push_back(
+      ego_data.trajectory_points[a.trajectory_index].pose.position);
+    const auto centroid = boost::geometry::return_centroid<lanelet::BasicPoint2d>(a.outside_ring);
+    debug_marker_array.markers.back().points.push_back(
+      geometry_msgs::msg::Point().set__x(centroid.x()).set__y(centroid.y()));
+  }
 
   lanelet::BasicPolygons2d object_polygons;
   for (const auto & o : objects.objects) {
@@ -184,7 +204,9 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
       }
     }
   }
-  add_polygons_markers(debug_marker_array, object_polygons, z, "objects");
+  add_polygons_markers(
+    debug_marker_array, object_polygons, z, "objects",
+    universe_utils::createMarkerColor(0.0, 1.0, 0.0, 1.0));
 
   add_current_overlap_marker(debug_marker_array, ego_data.current_footprint, z);
 
