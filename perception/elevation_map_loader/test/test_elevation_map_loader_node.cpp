@@ -20,6 +20,8 @@
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <gtest/gtest.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <vector>
 
@@ -66,11 +68,8 @@ std::shared_ptr<sensor_msgs::msg::PointCloud2> createEmptyPointCloud2(const std:
 
   return pointcloud_msg;
 }
-// load pcd map from autoware_test_utils
-// #include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
 
+// load pcd map from autoware_test_utils
 std::shared_ptr<sensor_msgs::msg::PointCloud2> loadMapPointcloud()
 {
   const std::string autoware_test_util_dir =
@@ -83,11 +82,11 @@ std::shared_ptr<sensor_msgs::msg::PointCloud2> loadMapPointcloud()
     return nullptr;
   }
 
-  // sensor_msgs::msg::PointCloud2に変換
+  // sensor_msgs::msg::PointCloud2 conversion
   auto pointcloud_msg = std::make_shared<sensor_msgs::msg::PointCloud2>();
   pcl::toROSMsg(*pcl_map, *pointcloud_msg);
 
-  // フレームIDとタイムスタンプを設定（必要に応じて変更）
+  // set header
   pointcloud_msg->header.frame_id = "map";
   pointcloud_msg->header.stamp = rclcpp::Clock().now();
 
@@ -105,7 +104,7 @@ TEST(ElevationMapLoaderNode, testSamplePCInput)
   const std::string api_topic = "/api/autoware/get/map/info/hash";
 
   // add callback to count output
-  int counter = 0;
+  uint32_t counter = 0;
   auto callback = [&counter](const grid_map_msgs::msg::GridMap::ConstSharedPtr msg) {
     (void)msg;
     ++counter;
