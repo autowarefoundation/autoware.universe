@@ -58,12 +58,68 @@ struct PairEqual
   }
 };
 using TFMap = std::unordered_map<Key, Eigen::Matrix4f, std::hash<Key>, PairEqual>;
+constexpr std::array<const char *, 3> warn_frames = {"map", "odom", "world"};
 
 class StaticTransformBuffer
 {
 public:
-  StaticTransformBuffer() = default;
+  explicit StaticTransformBuffer(rclcpp::Node * node, const bool & has_static_tf_only) : node_(node)
+  {
+    if (has_static_tf_only) {
+      get_transform_ = [this](
+                         const std::string & target_frame, const std::string & source_frame,
+                         Eigen::Matrix4f & eigen_transform) {
+        return getStaticTransform(target_frame, source_frame, eigen_transform);
+      };
+    } else {
+      tf_listener_ = std::make_unique<autoware::universe_utils::TransformListener>(node);
+      get_transform_ = [this](
+                         const std::string & target_frame, const std::string & source_frame,
+                         Eigen::Matrix4f & eigen_transform) {
+        return getDynamicTransform(target_frame, source_frame, eigen_transform);
+      };
+    }
+  }
 
+  bool getTransform(
+    const std::string & target_frame, const std::string & source_frame,
+    Eigen::Matrix4f & eigen_transform)
+  {
+    return get_transform_(target_frame, source_frame, eigen_transform);
+  }
+
+  /**
+   * Transforms a point cloud from one frame to another.
+   *
+   * @param target_frame The target frame to transform the point cloud to.
+   * @param cloud_in The input point cloud to be transformed.
+   * @param cloud_out The transformed point cloud.
+   * @return True if the transformation is successful, false otherwise.
+   */
+  bool transformPointcloud(
+    const std::string & target_frame, const sensor_msgs::msg::PointCloud2 & cloud_in,
+    sensor_msgs::msg::PointCloud2 & cloud_out)
+  {
+    if (
+      pcl::getFieldIndex(cloud_in, "x") == -1 || pcl::getFieldIndex(cloud_in, "y") == -1 ||
+      pcl::getFieldIndex(cloud_in, "z") == -1) {
+      RCLCPP_ERROR(node_->get_logger(), "Input pointcloud does not have xyz fields");
+      return false;
+    }
+    if (target_frame == cloud_in.header.frame_id) {
+      cloud_out = cloud_in;
+      return true;
+    }
+    Eigen::Matrix4f eigen_transform;
+    if (!getTransform(target_frame, cloud_in.header.frame_id, eigen_transform)) {
+      return false;
+    }
+    pcl_ros::transformPointCloud(eigen_transform, cloud_in, cloud_out);
+    cloud_out.header.frame_id = target_frame;
+    return true;
+  }
+
+private:
   /**
    * @brief Retrieves a transform between two static frames.
    *
@@ -72,17 +128,24 @@ public:
    * Otherwise, transform matrix is set to identity and the function returns false. Transform
    * Listener is destroyed after function call.
    *
-   * @param node A pointer to the ROS node.
    * @param target_frame The target frame.
    * @param source_frame The source frame.
    * @param eigen_transform The output Eigen transform matrix. Is set to identity if the transform
    * is not found.
    * @return True if the transform was successfully retrieved, false otherwise.
    */
-  bool getTransform(
-    rclcpp::Node * node, const std::string & target_frame, const std::string & source_frame,
+  bool getStaticTransform(
+    const std::string & target_frame, const std::string & source_frame,
     Eigen::Matrix4f & eigen_transform)
   {
+    if (
+      std::find(warn_frames.begin(), warn_frames.end(), target_frame) != warn_frames.end() ||
+      std::find(warn_frames.begin(), warn_frames.end(), source_frame) != warn_frames.end()) {
+      RCLCPP_WARN(
+        node_->get_logger(), "Using %s -> %s transform. This may not be a static transform.",
+        target_frame.c_str(), source_frame.c_str());
+    }
+
     auto key = std::make_pair(target_frame, source_frame);
     auto key_inv = std::make_pair(source_frame, target_frame);
 
@@ -109,11 +172,12 @@ public:
     }
 
     // Get the transform from the TF tree
-    auto tf_listener = std::make_unique<autoware::universe_utils::TransformListener>(node);
-    auto tf = tf_listener->getTransform(
+    tf_listener_ = std::make_unique<autoware::universe_utils::TransformListener>(node_);
+    auto tf = tf_listener_->getTransform(
       target_frame, source_frame, rclcpp::Time(0), rclcpp::Duration(1000ms));
+    tf_listener_.reset();
     RCLCPP_DEBUG(
-      node->get_logger(), "Trying to enqueue %s -> %s transform to static TFs buffer...",
+      node_->get_logger(), "Trying to enqueue %s -> %s transform to static TFs buffer...",
       target_frame.c_str(), source_frame.c_str());
     if (tf == nullptr) {
       eigen_transform = Eigen::Matrix4f::Identity();
@@ -124,40 +188,36 @@ public:
     return true;
   }
 
-  /**
-   * Transforms a point cloud from one frame to another.
+  /** @brief Retrieves a transform between two dynamic frames.
    *
-   * @param node A pointer to the ROS node.
-   * @param target_frame The target frame to transform the point cloud to.
-   * @param cloud_in The input point cloud to be transformed.
-   * @param cloud_out The transformed point cloud.
-   * @return True if the transformation is successful, false otherwise.
+   * This function attempts to retrieve a transform between the target frame and the source frame.
+   * If success, the transform matrix is set to the output parameter and the function returns true.
+   * Otherwise, transform matrix is set to identity and the function returns false.
+   *
+   * @param target_frame The target frame.
+   * @param source_frame The source frame.
+   * @param eigen_transform The output Eigen transform matrix. Is set to identity if the transform
+   * is not found.
+   * @return True if the transform was successfully retrieved, false otherwise.
    */
-  bool transformPointcloud(
-    rclcpp::Node * node, const std::string & target_frame,
-    const sensor_msgs::msg::PointCloud2 & cloud_in, sensor_msgs::msg::PointCloud2 & cloud_out)
+  bool getDynamicTransform(
+    const std::string & target_frame, const std::string & source_frame,
+    Eigen::Matrix4f & eigen_transform)
   {
-    if (
-      pcl::getFieldIndex(cloud_in, "x") == -1 || pcl::getFieldIndex(cloud_in, "y") == -1 ||
-      pcl::getFieldIndex(cloud_in, "z") == -1) {
-      RCLCPP_ERROR(node->get_logger(), "Input pointcloud does not have xyz fields");
+    auto tf = tf_listener_->getTransform(
+      target_frame, source_frame, rclcpp::Time(0), rclcpp::Duration(1000ms));
+    if (tf == nullptr) {
+      eigen_transform = Eigen::Matrix4f::Identity();
       return false;
     }
-    if (target_frame == cloud_in.header.frame_id) {
-      cloud_out = cloud_in;
-      return true;
-    }
-    Eigen::Matrix4f eigen_transform;
-    if (!getTransform(node, target_frame, cloud_in.header.frame_id, eigen_transform)) {
-      return false;
-    }
-    pcl_ros::transformPointCloud(eigen_transform, cloud_in, cloud_out);
-    cloud_out.header.frame_id = target_frame;
+    pcl_ros::transformAsMatrix(*tf, eigen_transform);
     return true;
   }
 
-private:
   TFMap buffer_;
+  rclcpp::Node * node_;
+  std::unique_ptr<autoware::universe_utils::TransformListener> tf_listener_;
+  std::function<bool(const std::string &, const std::string &, Eigen::Matrix4f &)> get_transform_;
 };
 
 }  // namespace autoware::universe_utils

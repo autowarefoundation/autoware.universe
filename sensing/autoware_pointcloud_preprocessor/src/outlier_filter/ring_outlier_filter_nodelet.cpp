@@ -25,7 +25,7 @@ namespace autoware::pointcloud_preprocessor
 using autoware_point_types::PointXYZIRADRT;
 
 RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions & options)
-: Filter("RingOutlierFilter", options)
+: Filter("RingOutlierFilter", options, true)
 {
   // initialize debug tool
   {

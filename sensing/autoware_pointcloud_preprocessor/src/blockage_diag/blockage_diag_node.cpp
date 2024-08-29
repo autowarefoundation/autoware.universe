@@ -25,7 +25,7 @@ using autoware_point_types::PointXYZIRCAEDT;
 using diagnostic_msgs::msg::DiagnosticStatus;
 
 BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options)
-: Filter("BlockageDiag", options)
+: Filter("BlockageDiag", options, true)
 {
   {
     // initialize params:

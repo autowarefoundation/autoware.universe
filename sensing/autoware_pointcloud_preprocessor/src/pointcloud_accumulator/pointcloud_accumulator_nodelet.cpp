@@ -19,7 +19,7 @@
 namespace autoware::pointcloud_preprocessor
 {
 PointcloudAccumulatorComponent::PointcloudAccumulatorComponent(const rclcpp::NodeOptions & options)
-: Filter("PointcloudAccumulator", options)
+: Filter("PointcloudAccumulator", options, true)
 {
   // set initial parameters
   {

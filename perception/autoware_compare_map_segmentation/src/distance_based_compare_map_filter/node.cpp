@@ -108,7 +108,7 @@ bool DistanceBasedDynamicMapLoader::is_close_to_map(
 
 DistanceBasedCompareMapFilterComponent::DistanceBasedCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("DistanceBasedCompareMapFilter", options)
+: Filter("DistanceBasedCompareMapFilter", options, false)
 {
   // initialize debug tool
   {

@@ -74,11 +74,6 @@
 #include <pcl_msgs/msg/model_coefficients.h>
 #include <pcl_msgs/msg/point_indices.h>
 
-// Include TF
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/create_timer_ros.h>
-#include <tf2_ros/transform_listener.h>
-
 // Include tier4 autoware utils
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
@@ -135,7 +130,8 @@ public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
   explicit Filter(
     const std::string & filter_name = "pointcloud_preprocessor_filter",
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+    const rclcpp::NodeOptions & options = rclcpp::NodeOptions(),
+    const bool & has_static_tf_only = false);
 
 protected:
   /** \brief The input PointCloud2 subscriber. */
@@ -296,7 +292,7 @@ private:
   void faster_input_indices_callback(
     const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices);
 
-  void setupTF();
+  void setupTF(const bool & has_static_tf_only);
 };
 }  // namespace autoware::pointcloud_preprocessor
 

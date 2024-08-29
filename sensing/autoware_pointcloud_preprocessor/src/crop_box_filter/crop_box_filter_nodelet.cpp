@@ -58,7 +58,7 @@
 namespace autoware::pointcloud_preprocessor
 {
 CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & options)
-: Filter("CropBoxFilter", options)
+: Filter("CropBoxFilter", options, true)
 {
   // initialize debug tool
   {

@@ -65,7 +65,7 @@ namespace autoware::pointcloud_preprocessor
 {
 VectorMapInsideAreaFilterComponent::VectorMapInsideAreaFilterComponent(
   const rclcpp::NodeOptions & node_options)
-: Filter("VectorMapInsideAreaFilter", node_options)
+: Filter("VectorMapInsideAreaFilter", node_options, true)
 {
   polygon_type_ = declare_parameter<std::string>("polygon_type");
 

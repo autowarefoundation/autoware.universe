@@ -101,7 +101,8 @@ protected:
 public:
   explicit DistortionCorrector(rclcpp::Node * node) : node_(node)
   {
-    static_tf_buffer_ = std::make_unique<autoware::universe_utils::StaticTransformBuffer>();
+    static_tf_buffer_ =
+      std::make_unique<autoware::universe_utils::StaticTransformBuffer>(node, true);
   }
   bool pointcloud_transform_exists();
   bool pointcloud_transform_needed();

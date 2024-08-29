@@ -53,7 +53,7 @@ namespace autoware::pointcloud_preprocessor
 {
 PickupBasedVoxelGridDownsampleFilterComponent::PickupBasedVoxelGridDownsampleFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("PickupBasedVoxelGridDownsampleFilterComponent", options)
+: Filter("PickupBasedVoxelGridDownsampleFilterComponent", options, true)
 {
   // initialize debug tool
   {

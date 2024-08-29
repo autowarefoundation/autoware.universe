@@ -33,7 +33,7 @@ using autoware::universe_utils::normalizeRadian;
 using autoware::vehicle_info_utils::VehicleInfoUtils;
 
 ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions & options)
-: autoware::pointcloud_preprocessor::Filter("ScanGroundFilter", options)
+: autoware::pointcloud_preprocessor::Filter("ScanGroundFilter", options, true)
 {
   // set initial parameters
   {

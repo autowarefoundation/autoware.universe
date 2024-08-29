@@ -34,7 +34,7 @@ using diagnostic_msgs::msg::DiagnosticStatus;
 
 DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("DualReturnOutlierFilter", options)
+: Filter("DualReturnOutlierFilter", options, true)
 {
   // set initial parameters
   {

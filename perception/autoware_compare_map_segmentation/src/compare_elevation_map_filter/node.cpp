@@ -37,7 +37,7 @@ namespace autoware::compare_map_segmentation
 {
 CompareElevationMapFilterComponent::CompareElevationMapFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("CompareElevationMapFilter", options)
+: Filter("CompareElevationMapFilter", options, false)
 {
   unsubscribe();
   layer_name_ = declare_parameter<std::string>("map_layer_name");

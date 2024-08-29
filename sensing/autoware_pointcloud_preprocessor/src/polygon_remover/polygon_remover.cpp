@@ -17,7 +17,7 @@
 namespace autoware::pointcloud_preprocessor
 {
 PolygonRemoverComponent::PolygonRemoverComponent(const rclcpp::NodeOptions & options)
-: Filter("PolygonRemover", options)
+: Filter("PolygonRemover", options, true)
 {
   pub_marker_ptr_ = this->create_publisher<visualization_msgs::msg::Marker>("Removed_polygon", 10);
 

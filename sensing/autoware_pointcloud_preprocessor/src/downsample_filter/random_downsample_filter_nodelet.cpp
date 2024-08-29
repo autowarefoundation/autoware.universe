@@ -54,7 +54,7 @@ namespace autoware::pointcloud_preprocessor
 {
 RandomDownsampleFilterComponent::RandomDownsampleFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("RandomDownsampleFilter", options)
+: Filter("RandomDownsampleFilter", options, true)
 {
   // set initial parameters
   {

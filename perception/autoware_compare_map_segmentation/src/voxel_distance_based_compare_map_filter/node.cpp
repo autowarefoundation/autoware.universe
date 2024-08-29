@@ -100,7 +100,7 @@ bool VoxelDistanceBasedDynamicMapLoader::is_close_to_map(
 
 VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("VoxelDistanceBasedCompareMapFilter", options)
+: Filter("VoxelDistanceBasedCompareMapFilter", options, false)
 {
   // initialize debug tool
   {

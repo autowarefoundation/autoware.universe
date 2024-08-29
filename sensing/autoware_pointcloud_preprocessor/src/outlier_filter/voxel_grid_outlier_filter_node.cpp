@@ -24,7 +24,7 @@ namespace autoware::pointcloud_preprocessor
 {
 VoxelGridOutlierFilterComponent::VoxelGridOutlierFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("VoxelGridOutlierFilter", options)
+: Filter("VoxelGridOutlierFilter", options, true)
 {
   // set initial parameters
   {
