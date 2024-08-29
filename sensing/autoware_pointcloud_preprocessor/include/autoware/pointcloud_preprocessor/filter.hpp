@@ -76,8 +76,8 @@
 
 // Include tier4 autoware utils
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
-#include <autoware/universe_utils/ros/static_transform_buffer.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 
 namespace autoware::pointcloud_preprocessor

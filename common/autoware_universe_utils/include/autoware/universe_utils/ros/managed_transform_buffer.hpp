@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__UNIVERSE_UTILS__ROS__STATIC_TRANSFORM_BUFFER_HPP_
-#define AUTOWARE__UNIVERSE_UTILS__ROS__STATIC_TRANSFORM_BUFFER_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__ROS__MANAGED_TRANSFORM_BUFFER_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__ROS__MANAGED_TRANSFORM_BUFFER_HPP_
 
 #include "autoware/universe_utils/ros/transform_listener.hpp"
 
@@ -223,4 +223,4 @@ private:
 
 }  // namespace autoware::universe_utils
 
-#endif  // AUTOWARE__UNIVERSE_UTILS__ROS__STATIC_TRANSFORM_BUFFER_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__ROS__MANAGED_TRANSFORM_BUFFER_HPP_

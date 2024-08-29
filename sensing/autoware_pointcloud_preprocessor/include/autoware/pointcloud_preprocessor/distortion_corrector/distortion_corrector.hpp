@@ -16,7 +16,7 @@
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 
 #include <Eigen/Core>
-#include <autoware/universe_utils/ros/static_transform_buffer.hpp>
+#include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sophus/se3.hpp>
 

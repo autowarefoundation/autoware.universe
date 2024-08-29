@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/universe_utils/ros/static_transform_buffer.hpp"
+#include "autoware/universe_utils/ros/managed_transform_buffer.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
