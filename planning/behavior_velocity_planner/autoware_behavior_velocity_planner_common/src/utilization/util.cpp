@@ -672,6 +672,7 @@ std::optional<geometry_msgs::msg::Pose> insertStopPoint(
   return autoware::universe_utils::getPose(output.points.at(insert_idx.value()));
 }
 
+// cppcheck-suppress unusedFunction
 std::set<lanelet::Id> getAssociativeIntersectionLanelets(
   lanelet::ConstLanelet lane, const lanelet::LaneletMapPtr lanelet_map,
   const lanelet::routing::RoutingGraphPtr routing_graph)
