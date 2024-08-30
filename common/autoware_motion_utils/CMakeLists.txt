@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(autoware_motion_utils)
 
-option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_EXAMPLES "Build examples" ON)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

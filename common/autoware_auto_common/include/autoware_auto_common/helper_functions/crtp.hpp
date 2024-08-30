@@ -19,13 +19,9 @@
 #ifndef AUTOWARE_AUTO_COMMON__HELPER_FUNCTIONS__CRTP_HPP_
 #define AUTOWARE_AUTO_COMMON__HELPER_FUNCTIONS__CRTP_HPP_
 
-namespace autoware
+namespace autoware::common::helper_functions
 {
-namespace common
-{
-namespace helper_functions
-{
-template <typename Derived>
+template <typename Derived, typename CRTP>
 class crtp
 {
 protected:
@@ -45,8 +41,6 @@ protected:
     return *static_cast<Derived *>(this);
   }
 };
-}  // namespace helper_functions
-}  // namespace common
-}  // namespace autoware
+}  // namespace autoware::common::helper_functions
 
 #endif  // AUTOWARE_AUTO_COMMON__HELPER_FUNCTIONS__CRTP_HPP_
