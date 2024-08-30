@@ -185,7 +185,7 @@ void LaserscanBasedOccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRa
   Pose gridmap_origin{};
   Pose scan_origin{};
 
-  {  // add scope for time keeper
+  {  // scope for the timekeeper to track the time spent for transformPointcloud
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("transformPointcloud", *time_keeper_);
@@ -204,7 +204,7 @@ void LaserscanBasedOccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRa
     }
   }
 
-  {  // add scope for time keeper
+  {  // scope for the timekeeper to track the time spent for creating occupancy grid map
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("create_occupancy_grid_map", *time_keeper_);

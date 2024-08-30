@@ -284,7 +284,7 @@ void GridMapFusionNode::publish()
   // merge available gridmap
   std::vector<OccupancyGridMapFixedBlindSpot> subscribed_maps;
   std::vector<double> weights;
-  {  // add scope for time keeper
+  {  // scope for the timekeeper to track the time spent for merging grid map
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("merge_grid_map", *time_keeper_);
@@ -362,7 +362,7 @@ OccupancyGridMapFixedBlindSpot GridMapFusionNode::SingleFrameOccupancyFusion(
     return occupancy_grid_maps[0];
   }
 
-  {  // add scope for time keeper
+  {  // scope for the timekeeper to track the time spent for creating occupancy grid map
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("create_fused_map", *time_keeper_);
@@ -380,29 +380,22 @@ OccupancyGridMapFixedBlindSpot GridMapFusionNode::SingleFrameOccupancyFusion(
       map.updateOrigin(fused_map.getOriginX(), fused_map.getOriginY());
     }
 
-    {  // add scope for time keeper (cost_fusion_loop)
-      std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-      if (time_keeper_)
-        inner_st_ptr = std::make_unique<ScopedTimeTrack>("cost_fusion_loop", *time_keeper_);
-
-      // assume map is same size and resolutions
-      for (unsigned int x = 0; x < fused_map.getSizeInCellsX(); x++) {
-        for (unsigned int y = 0; y < fused_map.getSizeInCellsY(); y++) {
-          // get cost of each map
-          std::vector<unsigned char> costs;
-          for (auto & map : occupancy_grid_maps) {
-            costs.push_back(map.getCost(x, y));
-          }
-
-          // set fusion policy
-          auto fused_cost =
-            fusion_policy::singleFrameOccupancyFusion(costs, fusion_method_, weights);
-
-          // set max cost to fused map
-          fused_map.setCost(x, y, fused_cost);
+    // assume map is same size and resolutions
+    for (unsigned int x = 0; x < fused_map.getSizeInCellsX(); x++) {
+      for (unsigned int y = 0; y < fused_map.getSizeInCellsY(); y++) {
+        // get cost of each map
+        std::vector<unsigned char> costs;
+        for (auto & map : occupancy_grid_maps) {
+          costs.push_back(map.getCost(x, y));
         }
+
+        // set fusion policy
+        auto fused_cost = fusion_policy::singleFrameOccupancyFusion(costs, fusion_method_, weights);
+
+        // set max cost to fused map
+        fused_map.setCost(x, y, fused_cost);
       }
-    }  // scope for time keeper (cost_fusion_loop) ends
+    }
 
     return fused_map;
   }  // scope for time keeper ends
