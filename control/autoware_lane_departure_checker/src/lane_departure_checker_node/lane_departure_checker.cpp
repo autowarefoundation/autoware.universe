@@ -339,8 +339,7 @@ LaneDepartureChecker::getFusedLaneletPolygonForPath(
     const auto & p = route_lanelet.polygon2d().basicPolygon();
     autoware::universe_utils::Polygon2d poly = toPolygon2D(p);
     boost::geometry::union_(lanelet_unions, poly, result);
-    lanelet_unions = result;
-    result.clear();
+    lanelet_unions = std::move(result);
   }
 
   if (lanelet_unions.empty()) return std::nullopt;
@@ -373,8 +372,7 @@ bool LaneDepartureChecker::updateFusedLaneletPolygonForPath(
     const auto & p = route_lanelet.polygon2d().basicPolygon();
     autoware::universe_utils::Polygon2d poly = toPolygon2D(p);
     boost::geometry::union_(lanelet_unions, poly, result);
-    lanelet_unions = result;
-    result.clear();
+    lanelet_unions = std::move(result);
     fused_lanelets_id.push_back(route_lanelet.id());
   }
 
@@ -410,28 +408,26 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  // check if the footprint is not fully contained within the fused lanelets polygon
   const std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
 
-  if (fused_lanelets_polygon) {
-    bool is_inside_fused_lanelets = std::all_of(
-      vehicle_footprints.begin(), vehicle_footprints.end(), [&](const auto & footprint) {
-        return boost::geometry::within(footprint, fused_lanelets_polygon.value());
-      });
+  auto is_all_footprints_within = [&](const auto & polygon) {
+    return std::all_of(
+      vehicle_footprints.begin(), vehicle_footprints.end(),
+      [&polygon](const auto & footprint) { return boost::geometry::within(footprint, polygon); });
+  };
 
-    if (is_inside_fused_lanelets) {
-      return false;
-    }
+  // If lanelets polygon exists and all footprints are within it, the path doesn't leave the lane
+  if (fused_lanelets_polygon && is_all_footprints_within(fused_lanelets_polygon.value())) {
+    return false;
   }
 
-  const auto updated = updateFusedLaneletPolygonForPath(
-    lanelet_map_ptr, path, fused_lanelets_id, fused_lanelets_polygon);
-  if (!updated) return true;
+  // Updated the lanelet polygon for the current path
+  if (!updateFusedLaneletPolygonForPath(
+        lanelet_map_ptr, path, fused_lanelets_id, fused_lanelets_polygon)) {
+    return true;
+  }
 
-  return !std::all_of(
-    vehicle_footprints.begin(), vehicle_footprints.end(), [&](const auto & footprint) {
-      return boost::geometry::within(footprint, fused_lanelets_polygon.value());
-    });
+  return !is_all_footprints_within(fused_lanelets_polygon.value());
 }
 
 PathWithLaneId LaneDepartureChecker::cropPointsOutsideOfLanes(
