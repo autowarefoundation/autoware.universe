@@ -65,7 +65,8 @@ protected:
 private Q_SLOTS:
   void update_shape_type();
 
-private:  // NOLINT : suppress redundancy warnings; cannot be declared with the Q_SLOTS macro
+private:  // NOLINT : suppress redundancy warnings
+          //          followings cannot be declared with the Q_SLOTS macro
   void subscribe() override;
   void unsubscribe() override;
   void processMessage(
