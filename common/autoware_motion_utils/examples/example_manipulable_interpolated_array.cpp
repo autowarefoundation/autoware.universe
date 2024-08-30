@@ -28,7 +28,7 @@ using autoware::motion_utils::trajectory_container::trajectory::detail::
 
 void plot_array(
   const ManipulableInterpolatedArray<double> & arr, matplotlibcpp17::pyplot::PyPlot & plt,
-  std::string label = "", std::string color = "blue")
+  const std::string & label = "", const std::string & color = "blue")
 {
   auto [axis, values] = arr.get_data();
   std::vector<double> axis_vec(axis.begin(), axis.end());
