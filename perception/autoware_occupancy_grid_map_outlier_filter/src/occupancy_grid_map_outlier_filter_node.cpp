@@ -355,7 +355,6 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   PointCloud2 outlier_pc{};
   initializerPointCloud2(low_confidence_pc, outlier_pc);
   initializerPointCloud2(low_confidence_pc, filtered_low_confidence_pc);
-  initializerPointCloud2(low_confidence_pc, outlier_pc);
 
   if (radius_search_2d_filter_ptr_) {
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
