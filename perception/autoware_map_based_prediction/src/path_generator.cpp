@@ -198,7 +198,7 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
     object_width = object.shape.dimensions.y;
   }
   // calculate backlash_width, which may the object can be biased from the reference path
-  constexpr double margin = 0.3;  // 0.3 m margin
+  constexpr double margin = 0.5;  // margin of 0.5m
   double backlash_width = (path_width - object_width) / 2.0 - margin;
   backlash_width = std::max(backlash_width, 0.0);  // minimum is 0.0
 
@@ -247,23 +247,32 @@ PredictedPath PathGenerator::generatePolynomialPath(
   terminal_point.d_acc = 0.0;
 
   // calculate terminal d position, based on backlash width
-  const double return_width = backlash_width + 1.5;  // [m]
-  const double current_momentum_d = current_point.d + 0.5 * current_point.d_vel * lateral_duration;
-  const double offset_ratio = std::abs(current_momentum_d / backlash_width);
-  const double return_coeff =
-    return_width / backlash_width;  // if the object is biased too much, back to the center path
-  if (offset_ratio < 1) {
-    // If the object momentum is within the backlash width, we set the target d position to the
-    // current momentum
-    terminal_point.d = current_momentum_d;
-  } else if (offset_ratio >= 1 && offset_ratio < 1 + return_coeff) {
-    // If the object momentum is within the return zone, we set the target d position close to the
-    // zero gradually
-    terminal_point.d = current_momentum_d * (-offset_ratio + (1 + return_coeff)) / return_coeff;
-  } else {
-    // If the object momentum is outside the backlash width + return zone, we set the target d
-    // position to 0
-    terminal_point.d = 0.0;
+  {
+    if (backlash_width < 0.01 /*m*/) {
+      terminal_point.d = 0.0;
+    } else {
+      constexpr double return_width = 1.5;  // [m]
+      const double return_coeff =
+        return_width / backlash_width;  // if the object is biased too much, back to the center path
+      const double current_momentum_d =
+        current_point.d + 0.5 * current_point.d_vel * lateral_duration;
+      const double offset_ratio = std::abs(current_momentum_d / backlash_width);
+
+      if (offset_ratio < 1) {
+        // If the object momentum is within the backlash width, we set the target d position to the
+        // current momentum
+        terminal_point.d = current_momentum_d;
+      } else if (offset_ratio >= 1 && offset_ratio < return_coeff + 1) {
+        // If the object momentum is within the return zone, we set the target d position close to
+        // the zero gradually
+        terminal_point.d = ((1 - offset_ratio) * backlash_width + return_width) / return_coeff;
+        terminal_point.d *= (current_momentum_d > 0) ? 1 : -1;
+      } else {
+        // If the object momentum is outside the backlash width + return zone, we set the target d
+        // position to 0
+        terminal_point.d = 0.0;
+      }
+    }
   }
 
   // Step 2. Generate Predicted Path on a Frenet coordinate
