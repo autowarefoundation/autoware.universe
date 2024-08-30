@@ -61,7 +61,7 @@ steering_status_color = {
 class PlanningFactorVisualizer(rclpy.node.Node):
     def __init__(self):
         super().__init__("planning_factor_visualizer")
-        self.front_offset = self.declare_parameter("front_offset", 0.0).value
+        self.front_offset = self.declare_parameter("front_offset").value
         self.pub_velocity = self.create_publisher(MarkerArray, "/visualizer/velocity_factors", 1)
         self.pub_steering = self.create_publisher(MarkerArray, "/visualizer/steering_factors", 1)
         self.sub_velocity = self.create_subscription(VelocityFactorArray, "/api/planning/velocity_factors", self.on_velocity_factor, 1)  # fmt: skip
