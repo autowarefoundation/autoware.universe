@@ -64,7 +64,7 @@ private Q_SLOTS:
   void update_visualization();
   void update_vehicle_info();
 
-private:  // NOLINT
+private:  // NOLINT : suppress redundancy warnings; cannot be declared with the Q_SLOTS macro
   void subscribe() override;
   void unsubscribe() override;
   void processMessage(const geometry_msgs::msg::PoseStamped::ConstSharedPtr message) override;
