@@ -41,7 +41,6 @@ namespace autoware::shape_estimation
 
 namespace corrector_utils
 {
-// cppcheck-suppress unusedFunction
 bool correctWithDefaultValue(
   const CorrectionBBParameters & param, autoware_perception_msgs::msg::Shape & shape,
   geometry_msgs::msg::Pose & pose)
@@ -262,7 +261,6 @@ bool correctWithDefaultValue(
   return true;
 }
 
-// cppcheck-suppress unusedFunction
 bool correctWithReferenceYaw(
   const CorrectionBBParameters & param, autoware_perception_msgs::msg::Shape & shape,
   geometry_msgs::msg::Pose & pose)
@@ -334,7 +332,6 @@ bool correctWithReferenceYaw(
   return true;
 }
 
-// cppcheck-suppress unusedFunction
 bool correctWithReferenceYawAndShapeSize(
   const ReferenceShapeSizeInfo & ref_shape_size_info, autoware_perception_msgs::msg::Shape & shape,
   geometry_msgs::msg::Pose & pose)
