@@ -80,7 +80,7 @@ private:
   rclcpp::Time last_published_time_;
   rclcpp::Time last_updated_time_;
   double publisher_period_;
-  static constexpr double minimum_publish_interval_ratio = 0.85;  
+  static constexpr double minimum_publish_interval_ratio = 0.85;
   static constexpr double maximum_publish_interval_ratio = 1.05;
 
   // internal states
