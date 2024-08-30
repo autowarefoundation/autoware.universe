@@ -421,12 +421,14 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
     return false;
   }
 
-  // Updated the lanelet polygon for the current path
+  // Update the lanelet polygon for the current path
   if (!updateFusedLaneletPolygonForPath(
         lanelet_map_ptr, path, fused_lanelets_id, fused_lanelets_polygon)) {
+    // If update fails, assume the path leaves the lane
     return true;
   }
 
+  // Check if any footprint is outside the updated lanelets polygon
   return !is_all_footprints_within(fused_lanelets_polygon.value());
 }
 
