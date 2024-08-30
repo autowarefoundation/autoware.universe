@@ -327,7 +327,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
 
   PointCloud2 ogm_frame_pc{};
   PointCloud2 ogm_frame_input_behind_pc{};
-  {  // add scope for time keeper
+  {  // scope for the timekeeper to track the time spent on transformPointcloud
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("transformPointcloud", *time_keeper_);
@@ -375,32 +375,36 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
     std::memcpy(&outlier_pc.data[0], &low_confidence_pc.data[0], low_confidence_pc.data.size());
     outlier_pc.data.resize(low_confidence_pc.data.size());
   }
+
   // Concatenate high confidence pointcloud from occupancy grid map and non-outlier pointcloud
   PointCloud2 ogm_frame_filtered_pc{};
-  {  // add scope for time keeper
-    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-    if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("point_concat", *time_keeper_);
+  concatPointCloud2(ogm_frame_filtered_pc, high_confidence_pc);
+  concatPointCloud2(ogm_frame_filtered_pc, filtered_low_confidence_pc);
+  concatPointCloud2(ogm_frame_filtered_pc, out_ogm_pc);
+  concatPointCloud2(ogm_frame_filtered_pc, ogm_frame_input_behind_pc);
+  finalizePointCloud2(ogm_frame_pc, ogm_frame_filtered_pc);
 
-    concatPointCloud2(ogm_frame_filtered_pc, high_confidence_pc);
-    concatPointCloud2(ogm_frame_filtered_pc, filtered_low_confidence_pc);
-    concatPointCloud2(ogm_frame_filtered_pc, out_ogm_pc);
-    concatPointCloud2(ogm_frame_filtered_pc, ogm_frame_input_behind_pc);
-    finalizePointCloud2(ogm_frame_pc, ogm_frame_filtered_pc);
-  }
-  {
+  auto base_link_frame_filtered_pc_ptr = std::make_unique<PointCloud2>();
+  {  // scope for the timekeeper to track the time spent on transformPointcloud
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("transformPointcloud", *time_keeper_);
 
-    auto base_link_frame_filtered_pc_ptr = std::make_unique<PointCloud2>();
     ogm_frame_filtered_pc.header = ogm_frame_pc.header;
     if (!transformPointcloud(
           ogm_frame_filtered_pc, *tf2_, base_link_frame_, *base_link_frame_filtered_pc_ptr)) {
       return;
     }
+  }
+
+  {  // scope for the timekeeper to track the time spent on publishing pointcloud
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish_pointcloud", *time_keeper_);
+
     pointcloud_pub_->publish(std::move(base_link_frame_filtered_pc_ptr));
   }
+
   if (debugger_ptr_) {
     finalizePointCloud2(ogm_frame_pc, high_confidence_pc);
     finalizePointCloud2(ogm_frame_pc, filtered_low_confidence_pc);
