@@ -446,7 +446,7 @@ PathWithLaneId LaneDepartureChecker::cropPointsOutsideOfLanes(
 
   {
     universe_utils::ScopedTimeTrack st2(
-      "check if footprint is within fused_lanlets_polygon", *time_keeper_);
+      "check if footprint is within fused_lanelets_polygon", *time_keeper_);
 
     size_t idx = 0;
     std::for_each(
