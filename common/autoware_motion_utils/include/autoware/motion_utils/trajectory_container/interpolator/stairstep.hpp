@@ -42,19 +42,15 @@ class Stairstep;
 template <typename T>
 class Stairstep : public detail::StairstepCommonImpl<T>
 {
-  template <typename InterpolatorType>
-  friend class InterpolatorCreator;
-
-private:
+public:
   Stairstep() = default;
 
-public:
   /**
    * @brief Clone the interpolator.
    *
    * @return A shared pointer to a new instance of the interpolator.
    */
-  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override
+  [[nodiscard]] std::shared_ptr<Interpolator<T>> clone() const override
   {
     return std::make_shared<Stairstep<T>>(*this);
   }
@@ -68,11 +64,7 @@ public:
 template <>
 class Stairstep<double> : public detail::StairstepCommonImpl<double>
 {
-  template <typename InterpolatorType>
-  friend class InterpolatorCreator;
-
 private:
-  Stairstep() = default;
   /**
    * @brief Compute the first derivative at the given point.
    *
@@ -90,6 +82,8 @@ private:
   [[nodiscard]] double compute_second_derivative_impl(const double &) const override { return 0.0; }
 
 public:
+  Stairstep() = default;
+
   /**
    * @brief Clone the interpolator.
    *

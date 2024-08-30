@@ -42,13 +42,9 @@ class NearestNeighbor;
 template <typename T>
 class NearestNeighbor : public detail::NearestNeighborCommonImpl<T>
 {
-  template <typename InterpolatorType>
-  friend class InterpolatorCreator;
-
-private:
+public:
   NearestNeighbor() = default;
 
-public:
   /**
    * @brief Clone the interpolator.
    *
@@ -68,12 +64,7 @@ public:
 template <>
 class NearestNeighbor<double> : public detail::NearestNeighborCommonImpl<double>
 {
-  template <typename InterpolatorType>
-  friend class InterpolatorCreator;
-
 private:
-  NearestNeighbor() = default;
-
   /**
    * @brief Compute the first derivative at the given point.
    *
@@ -91,6 +82,8 @@ private:
   [[nodiscard]] double compute_second_derivative_impl(const double &) const override { return 0.0; }
 
 public:
+  NearestNeighbor() = default;
+
   /**
    * @brief Clone the interpolator.
    *

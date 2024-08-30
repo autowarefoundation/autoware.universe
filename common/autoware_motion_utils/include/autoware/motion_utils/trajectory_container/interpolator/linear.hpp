@@ -32,16 +32,8 @@ namespace autoware::motion_utils::trajectory_container::interpolator
  */
 class Linear : public Interpolator<double>
 {
-  template <typename InterpolatorType>
-  friend class InterpolatorCreator;
-
 private:
   Eigen::VectorXd values_;  ///< Interpolation values.
-
-  /**
-   * @brief Default constructor.
-   */
-  Linear() = default;
 
   /**
    * @brief Build the interpolator with the given values.
@@ -78,6 +70,11 @@ private:
   [[nodiscard]] double compute_second_derivative_impl(const double &) const override;
 
 public:
+  /**
+   * @brief Default constructor.
+   */
+  Linear() = default;
+
   /**
    * @brief Get the minimum number of required points for the interpolator.
    *

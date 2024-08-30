@@ -32,13 +32,8 @@ namespace autoware::motion_utils::trajectory_container::interpolator
  */
 class AkimaSpline : public Interpolator<double>
 {
-  template <typename InterpolatorType>
-  friend class InterpolatorCreator;
-
 private:
   Eigen::VectorXd a_, b_, c_, d_;  ///< Coefficients for the Akima spline.
-
-  AkimaSpline() = default;
 
   /**
    * @brief Compute the spline parameters.
@@ -86,6 +81,8 @@ private:
   [[nodiscard]] double compute_second_derivative_impl(const double & s) const override;
 
 public:
+  AkimaSpline() = default;
+
   /**
    * @brief Get the minimum number of required points for the interpolator.
    *
