@@ -4,7 +4,7 @@
 
 There are cases where the ego vehicle footprint goes out of the driving lane,
 for example when taking a narrow turn with a large vehicle.
-The `out_of_lane` module adds deceleration and stop points to the ego trajectory in order to prevent collisions from occuring in these out of lane cases.
+The `out_of_lane` module adds deceleration and stop points to the ego trajectory in order to prevent collisions from occurring in these out of lane cases.
 
 ## Activation
 
@@ -38,7 +38,7 @@ In the debug visualization the combination of all ego lanelets is shown as a blu
 
 ### 3. Out of lane areas
 
-Next, for each trajectory point, we create the corresponding out of lane areas by substracting the ego lanelets (from step 2) from the trajectory point footprint (from step 1).
+Next, for each trajectory point, we create the corresponding out of lane areas by subtracting the ego lanelets (from step 2) from the trajectory point footprint (from step 1).
 Each area is associated with the lanelets overlapped by the area and with the corresponding ego trajectory point.
 
 ![out_of_lane_areas](./docs/out_of_lane_areas.png)
@@ -83,7 +83,7 @@ We then search for the furthest pose along the trajectory where the ego footprin
 The search is done by moving backward along the trajectory with a distance step set by the `action.precision` parameter.
 
 We first do this search for a footprint expanded with the `ego.extra_..._offset`, `action.longitudinal_distance_buffer` and `action.lateral_distance_buffer` parameters.
-If no valid pose is found, we search again while only considering the extra offets but without considering the distance buffers.
+If no valid pose is found, we search again while only considering the extra offsets but without considering the distance buffers.
 If still no valid pose is found, we use the base ego footprint without any offset.
 In case no pose is found, we fallback to using the pose before the detected collision without caring if it is out of lane or not.
 
