@@ -414,12 +414,12 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
   const std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
 
   if (fused_lanelets_polygon) {
-    bool is_indside_fused_lanelets = std::all_of(
+    bool is_inside_fused_lanelets = std::all_of(
       vehicle_footprints.begin(), vehicle_footprints.end(), [&](const auto & footprint) {
         return boost::geometry::within(footprint, fused_lanelets_polygon.value());
       });
 
-    if (is_indside_fused_lanelets) {
+    if (is_inside_fused_lanelets) {
       return false;
     }
   }
