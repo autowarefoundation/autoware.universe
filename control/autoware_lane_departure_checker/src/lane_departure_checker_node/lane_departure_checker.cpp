@@ -339,7 +339,8 @@ LaneDepartureChecker::getFusedLaneletPolygonForPath(
     const auto & p = route_lanelet.polygon2d().basicPolygon();
     autoware::universe_utils::Polygon2d poly = toPolygon2D(p);
     boost::geometry::union_(lanelet_unions, poly, result);
-    lanelet_unions = std::move(result);
+    lanelet_unions = result;
+    result.clear();
   }
 
   if (lanelet_unions.empty()) return std::nullopt;
@@ -372,7 +373,8 @@ bool LaneDepartureChecker::updateFusedLaneletPolygonForPath(
     const auto & p = route_lanelet.polygon2d().basicPolygon();
     autoware::universe_utils::Polygon2d poly = toPolygon2D(p);
     boost::geometry::union_(lanelet_unions, poly, result);
-    lanelet_unions = std::move(result);
+    lanelet_unions = result;
+    result.clear();
     fused_lanelets_id.push_back(route_lanelet.id());
   }
 
