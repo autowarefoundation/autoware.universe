@@ -159,6 +159,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     const auto timer_period = rclcpp::Rate(publish_rate * timer_multiplier).period();
     publish_timer_ = rclcpp::create_timer(
       this, get_clock(), timer_period, std::bind(&MultiObjectTracker::onTimer, this));
+    
   }
 
   // Initialize processor
@@ -225,7 +226,7 @@ void MultiObjectTracker::onTimer()
   const rclcpp::Time current_time = this->now();
 
   // ensure minimum interval: room for the next process(prediction)
-  const double minimum_publish_interval = publisher_period_ * 0.85;  // 85% of the period
+  const double minimum_publish_interval = publisher_period_ * minimumPublishIntervalRatio;
   const auto elapsed_time = (current_time - last_published_time_).seconds();
   if (elapsed_time < minimum_publish_interval) {
     return;
@@ -236,7 +237,7 @@ void MultiObjectTracker::onTimer()
 
   // if there was no update, publish if the elapsed time is longer than the maximum publish latency
   // in this case, it will perform extrapolate/remove old objects
-  const double maximum_publish_interval = publisher_period_ * 1.05;  // 105% of the period
+  const double maximum_publish_interval = publisher_period_ * maximumPublishIntervalRatio;
   should_publish = should_publish || elapsed_time > maximum_publish_interval;
 
   // Publish with delay compensation to the current time
