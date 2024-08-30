@@ -384,7 +384,7 @@ void PlannerManager::print() const
 
   state_publisher_ptr_->publish<DebugStringMsg>("internal_state", string_stream.str());
 
-  RCLCPP_INFO_STREAM(logger_, string_stream.str());
+  RCLCPP_DEBUG_STREAM(logger_, string_stream.str());
 }
 
 void PlannerManager::publishProcessingTime() const
