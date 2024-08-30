@@ -28,17 +28,17 @@ import yaml
 
 def create_traffic_light_map_based_detector(namespace, context):
     package = FindPackageShare("autoware_traffic_light_map_based_detector")
-    include = PathJoinSubstitution([package, f"launch/traffic_light_map_based_detector.launch.xml"])
+    include = PathJoinSubstitution([package, "launch/traffic_light_map_based_detector.launch.xml"])
 
     output_rois = (
-        f"rough/rois"
+        "rough/rois"
         if IfCondition(LaunchConfiguration("enable_fine_detection")).evaluate(context)
         else f"/perception/traffic_light_recognition/{namespace}/detection/rois"
     )
 
     arguments = {
         "input/camera_info": f"/sensing/camera/{namespace}/camera_info",
-        "expect/rois": f"expect/rois",
+        "expect/rois": "expect/rois",
         "output/rois": output_rois,
         # This parameter should be configured differently for each camera considering their delay.
         "min_timestamp_offset": "-0.3",
@@ -63,9 +63,13 @@ def launch_setup(context, *args, **kwargs):
     # Convert string to list
     all_camera_namespaces = yaml.load(all_camera_namespaces, Loader=yaml.FullLoader)
     if not isinstance(all_camera_namespaces, list):
-        print("all_camera_namespaces is not a list")
+        raise ValueError(
+            "all_camera_namespaces is not a list. You should declare it like `['camera6', 'camera7']`."
+        )
     if not all((isinstance(v, str) for v in all_camera_namespaces)):
-        print("all_camera_namespaces is not a list of strings")
+        raise ValueError(
+            "all_camera_namespaces is not a list of strings. You should declare it like `['camera6', 'camera7']`."
+        )
 
     # Create containers for all cameras
     traffic_light_recognition_containers = [

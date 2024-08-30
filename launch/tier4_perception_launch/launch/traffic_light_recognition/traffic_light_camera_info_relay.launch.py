@@ -27,7 +27,7 @@ def create_traffic_light_camera_info_relay(namespace):
     relay_node = Node(
         package="topic_tools",
         executable="relay",
-        name=f"traffic_light_camera_info_relay",
+        name="traffic_light_camera_info_relay",
         arguments=[f"/sensing/camera/{namespace}/camera_info", "camera_info"],
     )
 
@@ -48,9 +48,13 @@ def launch_setup(context, *args, **kwargs):
     # Convert string to list
     all_camera_namespaces = yaml.load(all_camera_namespaces, Loader=yaml.FullLoader)
     if not isinstance(all_camera_namespaces, list):
-        print("all_camera_namespaces is not a list")
+        raise ValueError(
+            "all_camera_namespaces is not a list. You should declare it like `['camera6', 'camera7']`."
+        )
     if not all((isinstance(v, str) for v in all_camera_namespaces)):
-        print("all_camera_namespaces is not a list of strings")
+        raise ValueError(
+            "all_camera_namespaces is not a list of strings. You should declare it like `['camera6', 'camera7']`."
+        )
 
     # Create containers for all cameras
     traffic_light_recognition_containers = [
