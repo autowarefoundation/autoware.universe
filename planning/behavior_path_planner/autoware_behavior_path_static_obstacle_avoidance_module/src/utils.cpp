@@ -21,6 +21,7 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <Eigen/Dense>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 
 #include <boost/geometry/algorithms/buffer.hpp>
@@ -111,31 +112,6 @@ size_t findFirstNearestSegmentIndex(const T & points, const geometry_msgs::msg::
   }
 
   return nearest_idx;
-}
-
-template <class T>
-double calcSignedArcLengthToFirstNearestPoint(
-  const T & points, const geometry_msgs::msg::Point & src_point,
-  const geometry_msgs::msg::Point & dst_point)
-{
-  try {
-    autoware::motion_utils::validateNonEmpty(points);
-  } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
-    return 0.0;
-  }
-
-  const size_t src_seg_idx = findFirstNearestSegmentIndex(points, src_point);
-  const size_t dst_seg_idx = findFirstNearestSegmentIndex(points, dst_point);
-
-  const double signed_length_on_traj =
-    autoware::motion_utils::calcSignedArcLength(points, src_seg_idx, dst_seg_idx);
-  const double signed_length_src_offset =
-    autoware::motion_utils::calcLongitudinalOffsetToSegment(points, src_seg_idx, src_point);
-  const double signed_length_dst_offset =
-    autoware::motion_utils::calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_point);
-
-  return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
 }
 
 geometry_msgs::msg::Polygon createVehiclePolygon(
@@ -1558,11 +1534,27 @@ void fillObjectEnvelopePolygon(
   if (same_id_obj == registered_objects.end()) {
     object_data.envelope_poly =
       createEnvelopePolygon(object_data, closest_pose, envelope_buffer_margin);
+    object_data.error_eclipse_max =
+      calcErrorEclipseLongRadius(object_data.object.kinematics.initial_pose_with_covariance);
     return;
   }
 
   const auto one_shot_envelope_poly =
     createEnvelopePolygon(object_data, closest_pose, envelope_buffer_margin);
+  const double error_eclipse_long_radius =
+    calcErrorEclipseLongRadius(object_data.object.kinematics.initial_pose_with_covariance);
+
+  if (error_eclipse_long_radius > object_parameter.th_error_eclipse_long_radius) {
+    if (error_eclipse_long_radius < object_data.error_eclipse_max) {
+      object_data.error_eclipse_max = error_eclipse_long_radius;
+      object_data.envelope_poly = one_shot_envelope_poly;
+      return;
+    }
+    object_data.envelope_poly = same_id_obj->envelope_poly;
+    return;
+  }
+
+  object_data.error_eclipse_max = error_eclipse_long_radius;
 
   // If the one_shot_envelope_poly is within the registered envelope, use the registered one
   if (boost::geometry::within(one_shot_envelope_poly, same_id_obj->envelope_poly)) {
@@ -1732,8 +1724,8 @@ void compensateLostTargetObjects(
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   const auto include = [](const auto & objects, const auto & search_id) {
-    return std::all_of(objects.begin(), objects.end(), [&search_id](const auto & o) {
-      return o.object.object_id != search_id;
+    return std::any_of(objects.begin(), objects.end(), [&search_id](const auto & o) {
+      return o.object.object_id == search_id;
     });
   };
 
@@ -2580,5 +2572,19 @@ double calcDistanceToReturnDeadLine(
   }
 
   return distance_to_return_dead_line;
+}
+
+double calcErrorEclipseLongRadius(const PoseWithCovariance & pose)
+{
+  Eigen::Matrix2d xy_covariance;
+  const auto cov = pose.covariance;
+  xy_covariance(0, 0) = cov[0 * 6 + 0];
+  xy_covariance(0, 1) = cov[0 * 6 + 1];
+  xy_covariance(1, 0) = cov[1 * 6 + 0];
+  xy_covariance(1, 1) = cov[1 * 6 + 1];
+
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> eigensolver(xy_covariance);
+
+  return std::sqrt(eigensolver.eigenvalues()(1));
 }
 }  // namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
