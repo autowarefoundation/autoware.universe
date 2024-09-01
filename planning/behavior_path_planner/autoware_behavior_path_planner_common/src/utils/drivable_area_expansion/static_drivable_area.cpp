@@ -1659,9 +1659,7 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   }();
 
   const auto post_process = [&](const auto & bound, const auto skip) {
-    return skip
-             ? bound
-             : postProcess(bound, path, planner_data, drivable_lanes, is_left);
+    return skip ? bound : postProcess(bound, path, planner_data, drivable_lanes, is_left);
   };
 
   // Step2. if there is no drivable area defined by polygon, return original drivable bound.
