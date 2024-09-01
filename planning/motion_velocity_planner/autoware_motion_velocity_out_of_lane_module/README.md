@@ -54,9 +54,9 @@ We filter objects and their predicted paths with the following conditions:
 - ignore predicted paths whose confidence value is bellow the `predicted_path_min_confidence` parameter;
 - cut the points of predicted paths going beyond the stop line of a red traffic light if parameter `cut_predicted_paths_beyond_red_lights` is set to `true`.
 
-| `cut_predicted_paths_beyond_red_lights = false` | `cut_predicted_paths_beyond_red_lights = false` |
-| :---------------------------------------------: | :---------------------------------------------: |
-|        ![](./docs/path_green_light.png)         |         ![](./docs/path_red_light.png)          |
+| `cut_predicted_paths_beyond_red_lights = false` | `cut_predicted_paths_beyond_red_lights = true` |
+| :---------------------------------------------: | :--------------------------------------------: |
+|        ![](./docs/path_green_light.png)         |         ![](./docs/path_red_light.png)         |
 
 In the debug visualization, the filtered predicted paths are shown in green and the stop lines of red traffic lights are shown in red.
 
@@ -97,7 +97,7 @@ If the distance is bellow the `actions.stop.threshold`, a velocity of `0`m/s wil
 
 As the input trajectory can change significantly between iterations,
 it is expected that the decisions of this module will also change.
-To add to the stability, a stop or slowdown pose is used for a minimum duration set by the `action.min_duration` parameter.
+To make the decision more stable, a stop or slowdown pose is used for a minimum duration set by the `action.min_duration` parameter.
 If during that time a new pose closer to the ego vehicle is generated, then it replaces the previous one.
 Otherwise, the stop or slowdown pose will only be discarded after no out of lane collision is detection for the set duration.
 
