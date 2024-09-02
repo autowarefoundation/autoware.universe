@@ -32,6 +32,8 @@
 using std::chrono::duration;
 using std::chrono::high_resolution_clock;
 
+namespace autoware::tensorrt_bevdet
+{
 BEVDet::BEVDet(
   const std::string & config_file, int n_img, std::vector<Eigen::Matrix3f> _cams_intrin,
   std::vector<Eigen::Quaternion<float>> _cams2ego_rot,
@@ -710,3 +712,4 @@ BEVDet::~BEVDet()
   trt_context->destroy();
   trt_engine->destroy();
 }
+}//namespace autoware::tensorrt_bevdet

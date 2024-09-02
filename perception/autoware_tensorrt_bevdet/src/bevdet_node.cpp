@@ -159,7 +159,7 @@ void TRTBEVDetNode::initModel()
 
   RCLCPP_INFO_STREAM(this->get_logger(), "Successful load image params!");
 
-  bevdet_ = std::make_shared<BEVDet>(
+  bevdet_ = std::make_shared<autoware::tensorrt_bevdet::BEVDet>(
     model_config_, img_N_, sampleData_.param.cams_intrin, sampleData_.param.cams2ego_rot,
     sampleData_.param.cams2ego_trans, onnx_file_, engine_file_);
 
