@@ -189,8 +189,17 @@ bool NormalLaneChange::is_too_close_to_regulatory_element() const
     calculation::calc_minimum_lane_change_length(*lane_change_parameters_, shift_intervals);
   threshold_distance += calculation::calc_maximum_prepare_length(common_data_ptr_);
 
-  return threshold_distance >
-         utils::lane_change::get_distance_to_next_regulatory_element(common_data_ptr_);
+  const auto dist_from_ego_to_terminal_end =
+    calculation::calc_ego_dist_to_terminal_end(common_data_ptr_);
+
+  if (dist_from_ego_to_terminal_end <= threshold_distance) {
+    return false;
+  }
+
+  const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
+
+  return threshold_distance > utils::lane_change::get_distance_to_next_regulatory_element(
+                                common_data_ptr_, only_tl, only_tl);
 }
 
 bool NormalLaneChange::isStoppedAtRedTrafficLight() const

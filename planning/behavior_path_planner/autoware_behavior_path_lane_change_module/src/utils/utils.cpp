@@ -1292,7 +1292,9 @@ ExtendedPredictedObjects transform_to_extended_objects(
   return extended_objects;
 }
 
-double get_distance_to_next_regulatory_element(const CommonDataPtr & common_data_ptr)
+double get_distance_to_next_regulatory_element(
+  const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk,
+  const bool ignore_intersection)
 {
   double distance = std::numeric_limits<double>::max();
 
@@ -1301,11 +1303,11 @@ double get_distance_to_next_regulatory_element(const CommonDataPtr & common_data
   const auto & route_handler = *common_data_ptr->route_handler_ptr;
   const auto overall_graphs_ptr = route_handler.getOverallGraphPtr();
 
-  if (common_data_ptr->lc_param_ptr->regulate_on_intersection) {
+  if (!ignore_intersection && common_data_ptr->lc_param_ptr->regulate_on_intersection) {
     distance =
       std::min(distance, utils::getDistanceToNextIntersection(current_pose, current_lanes));
   }
-  if (common_data_ptr->lc_param_ptr->regulate_on_crosswalk) {
+  if (!ignore_crosswalk && common_data_ptr->lc_param_ptr->regulate_on_crosswalk) {
     distance = std::min(
       distance, utils::getDistanceToCrosswalk(current_pose, current_lanes, *overall_graphs_ptr));
   }

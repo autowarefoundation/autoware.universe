@@ -306,7 +306,9 @@ ExtendedPredictedObjects transform_to_extended_objects(
   const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects,
   const bool check_prepare_phase);
 
-double get_distance_to_next_regulatory_element(const CommonDataPtr & common_data_ptr);
+double get_distance_to_next_regulatory_element(
+  const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
+  const bool ignore_intersection = false);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 namespace autoware::behavior_path_planner::utils::lane_change::debug
