@@ -6,12 +6,15 @@
   <description>ROS 2 node for evaluating planners</description>
   <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
+  <maintainer email="temkei.kem@tier4.jp">Temkei Kem</maintainer>
   <license>Apache License 2.0</license>
 
   <author email="maxime.clement@tier4.jp">Maxime CLEMENT</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
 
   <depend>autoware_evaluator_utils</depend>
   <depend>autoware_motion_utils</depend>
@@ -28,6 +31,8 @@
   <depend>rclcpp_components</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
+  
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
