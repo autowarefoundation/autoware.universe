@@ -132,7 +132,7 @@ private:
    *
    * @param target_frame The target frame.
    * @param source_frame The source frame.
-   * @param eigen_transform The output Eigen transform matrix. Is set to identity if the transform
+   * @param eigen_transform The output Eigen transform matrix. It is set to the identity if the transform
    * is not found.
    * @return True if the transform was successfully retrieved, false otherwise.
    */
