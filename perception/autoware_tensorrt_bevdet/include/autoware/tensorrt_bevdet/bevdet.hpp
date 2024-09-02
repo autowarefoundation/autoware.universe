@@ -121,34 +121,34 @@ public:
     std::vector<Eigen::Translation3f> _cams2ego_trans, const std::string & onnx_file,
     const std::string & engine_file);
 
-  int DoInfer(
+  int doInfer(
     const camsData & cam_data, std::vector<Box> & out_detections, float & cost_time, int idx = -1);
   ~BEVDet();
 
 protected:
-  void InitParams(const std::string & config_file);
+  void initParams(const std::string & config_file);
 
-  void InitViewTransformer(
+  void initViewTransformer(
     std::shared_ptr<int> & ranks_bev_ptr, std::shared_ptr<int> & ranks_depth_ptr,
     std::shared_ptr<int> & ranks_feat_ptr, std::shared_ptr<int> & interval_starts_ptr,
     std::shared_ptr<int> & interval_lengths_ptr);
-  void ExportEngine(const std::string & onnxFile, const std::string & trtFile);
-  int InitEngine(const std::string & engine_file);
+  void exportEngine(const std::string & onnxFile, const std::string & trtFile);
+  int initEngine(const std::string & engine_file);
 
-  int DeserializeTRTEngine(const std::string & engine_file, nvinfer1::ICudaEngine ** engine_ptr);
+  int deserializeTRTEngine(const std::string & engine_file, nvinfer1::ICudaEngine ** engine_ptr);
 
-  void MallocDeviceMemory();
+  void mallocDeviceMemory();
 
-  void InitCamParams(
+  void initCamParams(
     const std::vector<Eigen::Quaternion<float>> & curr_cams2ego_rot,
     const std::vector<Eigen::Translation3f> & curr_cams2ego_trans,
     const std::vector<Eigen::Matrix3f> & cams_intrin);
 
-  void GetAdjBEVFeature(
+  void getAdjBEVFeature(
     const std::string & curr_scene_token, const Eigen::Quaternion<float> & ego2global_rot,
     const Eigen::Translation3f & ego2global_trans);
 
-  void GetCurr2AdjTransform(
+  void getCurr2AdjTransform(
     const Eigen::Quaternion<float> & curr_ego2global_rot,
     const Eigen::Quaternion<float> & adj_ego2global_rot,
     const Eigen::Translation3f & curr_ego2global_trans,

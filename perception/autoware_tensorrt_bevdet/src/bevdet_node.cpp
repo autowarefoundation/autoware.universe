@@ -291,7 +291,7 @@ void TRTBEVDetNode::callback(
   ego_boxes.clear();
   float time = 0.f;
 
-  bevdet_->DoInfer(sampleData_, ego_boxes, time);
+  bevdet_->doInfer(sampleData_, ego_boxes, time);
 
   autoware_perception_msgs::msg::DetectedObjects bevdet_objects;
   bevdet_objects.header.frame_id = "base_link";
