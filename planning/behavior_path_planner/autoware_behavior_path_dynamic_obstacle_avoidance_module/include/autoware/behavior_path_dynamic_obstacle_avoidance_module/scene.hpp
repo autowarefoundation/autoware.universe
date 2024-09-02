@@ -173,7 +173,8 @@ class DynamicObstacleAvoidanceModule : public SceneModuleInterface
 {
 public:
   static constexpr const char * logger_namespace =
-    "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.dynamic_obstacle_avoidance";
+    "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.dynamic_"
+    "obstacle_avoidance";
 
   struct DynamicAvoidanceObject
   {
