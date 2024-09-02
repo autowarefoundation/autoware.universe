@@ -401,20 +401,6 @@ void DynamicObstacleAvoidanceModule::updateData()
 
 bool DynamicObstacleAvoidanceModule::canTransitSuccessState()
 {
-  const auto & data = getPreviousModuleOutput();
-  const auto idx = planner_data_->findEgoIndex(data.reference_path.points);
-  if (idx == data.reference_path.points.size() - 1) {
-    arrived_path_end_ = true;
-  }
-  constexpr double THRESHOLD = 2.0;
-  const auto is_further_than_threshold =
-    autoware::universe_utils::calcDistance2d(
-      getEgoPose(), autoware::universe_utils::getPose(data.reference_path.points.back())) >
-    THRESHOLD;
-  if (is_further_than_threshold && arrived_path_end_) {
-    RCLCPP_WARN(getLogger(), "Reach path end point. Exit.");
-    return true;
-  }
   return planner_data_->dynamic_object->objects.empty();
 }
 
@@ -427,37 +413,8 @@ BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
 
   const auto ego_path_reserve_poly = calcEgoPathReservePoly(input_path);
 
-  // generate drivable lanes
-  auto current_lanelets =
-    getCurrentLanesFromPath(getPreviousModuleOutput().reference_path, planner_data_);
-  DrivableAreaInfo current_drivable_area_info;
-  BehaviorModuleOutput output;
-  output.path = input_path;
-  output.drivable_area_info = utils::combineDrivableAreaInfo(
-    current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
-  output.reference_path = getPreviousModuleOutput().reference_path;
-  output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
-  output.modified_goal = getPreviousModuleOutput().modified_goal;
+  // create obstacles to avoid (= extract from the drivable area)
   std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
-
-  if (parameters_->expand_drivable_area) {
-    std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
-      current_drivable_area_info.drivable_lanes.push_back(
-        generateExpandedDrivableLanes(lanelet, planner_data_, parameters_));
-    });
-  } else {
-    std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
-      current_drivable_area_info.drivable_lanes.push_back(
-        generateNotExpandedDrivableLanes(lanelet));
-    });
-  }
-
-  // expand hatched road markings
-  current_drivable_area_info.enable_expanding_hatched_road_markings =
-    parameters_->use_hatched_road_markings;
-  current_drivable_area_info.obstacles.clear();
-
-  // generate obstacle polygons
   for (const auto & object : target_objects_) {
     const auto obstacle_poly = [&]() {
       if (getObjectType(object.label) == ObjectType::UNREGULATED) {
@@ -480,10 +437,30 @@ BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
       appendExtractedPolygonMarker(debug_marker_, obstacle_poly.value(), object.pose.position.z);
     }
   }
+  // generate drivable lanes
+  DrivableAreaInfo current_drivable_area_info;
+  if (parameters_->expand_drivable_area) {
+    auto current_lanelets =
+      getCurrentLanesFromPath(getPreviousModuleOutput().reference_path, planner_data_);
+    std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
+      current_drivable_area_info.drivable_lanes.push_back(
+        generateExpandedDrivableLanes(lanelet, planner_data_, parameters_));
+    });
+  } else {
+    current_drivable_area_info.drivable_lanes =
+      getPreviousModuleOutput().drivable_area_info.drivable_lanes;
+  }
   current_drivable_area_info.obstacles = obstacles_for_drivable_area;
+  current_drivable_area_info.enable_expanding_hatched_road_markings =
+    parameters_->use_hatched_road_markings;
 
+  BehaviorModuleOutput output;
+  output.path = input_path;
   output.drivable_area_info = utils::combineDrivableAreaInfo(
     current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+  output.reference_path = getPreviousModuleOutput().reference_path;
+  output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+  output.modified_goal = getPreviousModuleOutput().modified_goal;
 
   return output;
 }
@@ -2141,15 +2118,4 @@ DrivableLanes DynamicObstacleAvoidanceModule::generateExpandedDrivableLanes(
 
   return current_drivable_lanes;
 }
-
-DrivableLanes DynamicObstacleAvoidanceModule::generateNotExpandedDrivableLanes(
-  const lanelet::ConstLanelet & lanelet)
-{
-  DrivableLanes current_drivable_lanes;
-  current_drivable_lanes.left_lane = lanelet;
-  current_drivable_lanes.right_lane = lanelet;
-
-  return current_drivable_lanes;
-}
-
 }  // namespace autoware::behavior_path_planner
