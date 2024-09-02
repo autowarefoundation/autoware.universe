@@ -57,8 +57,8 @@ bool isUnknownObjectOverlapped(
 }
 
 bool isKnownObjectOverlapped(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object1,
-  const autoware_auto_perception_msgs::msg::DetectedObject & object2,
+  const autoware_perception_msgs::msg::DetectedObject & object1,
+  const autoware_perception_msgs::msg::DetectedObject & object2,
   const double precision_threshold, const double recall_threshold,
   const std::map<int, double>& distance_threshold_map,
   const std::map<int, double>& generalized_iou_threshold_map)
@@ -74,7 +74,7 @@ bool isKnownObjectOverlapped(
     distance_threshold_map.at(object2_label));
 
   const double sq_distance_threshold = std::pow(distance_threshold, 2.0);
-  const double sq_distance = tier4_autoware_utils::calcSquaredDistance2d(
+  const double sq_distance = autoware::universe_utils::calcSquaredDistance2d(
     object1.kinematics.pose_with_covariance.pose,
     object2.kinematics.pose_with_covariance.pose);
   if (sq_distance_threshold < sq_distance) return false;
@@ -257,7 +257,7 @@ void ObjectAssociationMergerNode::objectsCallback(
 
   // Remove overlapped known object
   if (remove_overlapped_known_objects_) {
-    std::vector<autoware_auto_perception_msgs::msg::DetectedObject> unknown_objects, known_objects;
+    std::vector<autoware_perception_msgs::msg::DetectedObject> unknown_objects, known_objects;
     unknown_objects.reserve(output_msg.objects.size());
     known_objects.reserve(output_msg.objects.size());
     for (const auto & object : output_msg.objects) {
@@ -275,7 +275,7 @@ void ObjectAssociationMergerNode::objectsCallback(
         if (i == j) {
           continue;
         }
-        if (areObjectsOverlapped(known_objects[i], known_objects[j],
+        if (isKnownObjectOverlapped(known_objects[i], known_objects[j],
                                 overlapped_judge_param_.precision_threshold,
                                 overlapped_judge_param_.recall_threshold,
                                 overlapped_judge_param_.distance_threshold_map,
