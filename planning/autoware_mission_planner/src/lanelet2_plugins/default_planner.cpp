@@ -225,7 +225,7 @@ PlannerPlugin::MarkerArray DefaultPlanner::visualize(const LaneletRoute & route)
 }
 
 visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
-  autoware::universe_utils::LinearRing2d goal_footprint) const
+  autoware::universe_utils::LinearRing2d goal_footprint)
 {
   visualization_msgs::msg::MarkerArray msg;
   auto marker = autoware::universe_utils::createDefaultMarker(
@@ -304,7 +304,7 @@ bool DefaultPlanner::check_goal_footprint_inside_lanes(
 }
 
 bool DefaultPlanner::is_goal_valid(
-  const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets)
+  const geometry_msgs::msg::Pose & goal, const lanelet::ConstLanelets & path_lanelets)
 {
   const auto logger = node_->get_logger();
 
@@ -384,11 +384,7 @@ bool DefaultPlanner::is_goal_valid(
   // check if goal is in parking lot
   const auto parking_lots =
     lanelet::utils::query::getAllParkingLots(route_handler_.getLaneletMapPtr());
-  if (is_in_parking_lot(parking_lots, goal_lanelet_pt)) {
-    return true;
-  }
-
-  return false;
+  return is_in_parking_lot(parking_lots, goal_lanelet_pt);
 }
 
 PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
@@ -438,7 +434,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     return route_msg;
   }
 
-  if (route_handler_.isRouteLooped(route_sections)) {
+  if (route_handler::RouteHandler::isRouteLooped(route_sections)) {
     RCLCPP_WARN(logger, "Loop detected within route!");
     return route_msg;
   }
