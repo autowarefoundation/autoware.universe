@@ -58,10 +58,9 @@ bool isUnknownObjectOverlapped(
 
 bool isKnownObjectOverlapped(
   const autoware_perception_msgs::msg::DetectedObject & object1,
-  const autoware_perception_msgs::msg::DetectedObject & object2,
-  const double precision_threshold, const double recall_threshold,
-  const std::map<int, double>& distance_threshold_map,
-  const std::map<int, double>& generalized_iou_threshold_map)
+  const autoware_perception_msgs::msg::DetectedObject & object2, const double precision_threshold,
+  const double recall_threshold, const std::map<int, double> & distance_threshold_map,
+  const std::map<int, double> & generalized_iou_threshold_map)
 {
   int object1_label = object_recognition_utils::getHighestProbLabel(object1.classification);
   int object2_label = object_recognition_utils::getHighestProbLabel(object2.classification);
@@ -69,14 +68,12 @@ bool isKnownObjectOverlapped(
   const double generalized_iou_threshold = std::min(
     generalized_iou_threshold_map.at(object1_label),
     generalized_iou_threshold_map.at(object2_label));
-  const double distance_threshold = std::min(
-    distance_threshold_map.at(object1_label),
-    distance_threshold_map.at(object2_label));
+  const double distance_threshold =
+    std::min(distance_threshold_map.at(object1_label), distance_threshold_map.at(object2_label));
 
   const double sq_distance_threshold = std::pow(distance_threshold, 2.0);
   const double sq_distance = autoware::universe_utils::calcSquaredDistance2d(
-    object1.kinematics.pose_with_covariance.pose,
-    object2.kinematics.pose_with_covariance.pose);
+    object1.kinematics.pose_with_covariance.pose, object2.kinematics.pose_with_covariance.pose);
   if (sq_distance_threshold < sq_distance) return false;
 
   const auto precision = object_recognition_utils::get2dPrecision(object1, object2);
@@ -275,14 +272,18 @@ void ObjectAssociationMergerNode::objectsCallback(
         if (i == j) {
           continue;
         }
-        if (isKnownObjectOverlapped(known_objects[i], known_objects[j],
-                                overlapped_judge_param_.precision_threshold,
-                                overlapped_judge_param_.recall_threshold,
-                                overlapped_judge_param_.distance_threshold_map,
-                                overlapped_judge_param_.generalized_iou_threshold)) {
-          auto label_i = object_recognition_utils::getHighestProbClassification(known_objects[i].classification);
-          auto label_j = object_recognition_utils::getHighestProbClassification(known_objects[j].classification);
-          if (label_i.probability * known_objects[i].existence_probability <= label_j.probability * known_objects[j].existence_probability) {
+        if (isKnownObjectOverlapped(
+              known_objects[i], known_objects[j], overlapped_judge_param_.precision_threshold,
+              overlapped_judge_param_.recall_threshold,
+              overlapped_judge_param_.distance_threshold_map,
+              overlapped_judge_param_.generalized_iou_threshold)) {
+          auto label_i =
+            object_recognition_utils::getHighestProbClassification(known_objects[i].classification);
+          auto label_j =
+            object_recognition_utils::getHighestProbClassification(known_objects[j].classification);
+          if (
+            label_i.probability * known_objects[i].existence_probability <=
+            label_j.probability * known_objects[j].existence_probability) {
             should_keep = false;
             break;
           }
