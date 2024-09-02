@@ -29,6 +29,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
@@ -58,7 +59,7 @@ struct PairEqual
   }
 };
 using TFMap = std::unordered_map<Key, Eigen::Matrix4f, std::hash<Key>, PairEqual>;
-constexpr std::array<const char *, 3> warn_frames = {"map", "odom", "world"};
+constexpr std::array<std::string_view, 3> warn_frames = {"map", "odom", "world"};
 
 class ManagedTransformBuffer
 {
