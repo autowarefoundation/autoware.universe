@@ -85,11 +85,9 @@ private:
    * @param next_lane_length the accumulated total length from the start lanelet of the search to
    * the lanelet of current goal query
    */
-  bool check_goal_footprint_inside_lanes(
-    const lanelet::ConstLanelet & current_lanelet,
-    const lanelet::ConstLanelet & combined_prev_lanelet,
-    const autoware::universe_utils::Polygon2d & goal_footprint, double & next_lane_length,
-    const double search_margin = 2.0);
+  [[nodiscard]] bool check_goal_footprint_inside_lanes(
+    const lanelet::ConstLanelet & current_lanelet, const lanelet::ConstLanelets & path_lanelets,
+    const universe_utils::Polygon2d & goal_footprint) const;
 
   /**
    * @brief return true if (1)the goal is in parking area or (2)the goal is on the lanes and the
