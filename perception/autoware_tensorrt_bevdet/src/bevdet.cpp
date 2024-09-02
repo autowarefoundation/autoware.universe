@@ -712,4 +712,4 @@ BEVDet::~BEVDet()
   trt_context->destroy();
   trt_engine->destroy();
 }
-}//namespace autoware::tensorrt_bevdet
+}  // namespace autoware::tensorrt_bevdet

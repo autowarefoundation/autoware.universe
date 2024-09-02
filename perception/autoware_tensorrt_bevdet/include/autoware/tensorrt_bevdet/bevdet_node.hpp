@@ -93,8 +93,9 @@ private:
   std::vector<std::string> imgs_name_;    ///< Names of the images
   std::vector<std::string> class_names_;  ///< Names of the object classes
 
-  camsData sampleData_;             ///< Sample data for camera parameters
-  std::shared_ptr<autoware::tensorrt_bevdet::BEVDet> bevdet_;  ///< Object for performing object detection
+  camsData sampleData_;  ///< Sample data for camera parameters
+  std::shared_ptr<autoware::tensorrt_bevdet::BEVDet>
+    bevdet_;  ///< Object for performing object detection
 
   uchar * imgs_dev_ = nullptr;  ///< Device pointer for storing the images
   float score_thre_;            ///< Score threshold for object detection

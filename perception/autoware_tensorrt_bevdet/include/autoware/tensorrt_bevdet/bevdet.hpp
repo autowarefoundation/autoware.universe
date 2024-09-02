@@ -237,5 +237,5 @@ private:
   std::unique_ptr<PostprocessGPU> postprocess_ptr;
   std::unique_ptr<adjFrame> adj_frame_ptr;
 };
-}//namespce autoware::tensorrt_bevdet
+}  // namespace autoware::tensorrt_bevdet
 #endif  // AUTOWARE__TENSORRT_BEVDET__BEVDET_HPP_
