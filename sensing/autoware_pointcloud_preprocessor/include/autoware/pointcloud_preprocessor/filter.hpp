@@ -130,8 +130,7 @@ public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
   explicit Filter(
     const std::string & filter_name = "pointcloud_preprocessor_filter",
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions(),
-    const bool & has_static_tf_only = false);
+    const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 protected:
   /** \brief The input PointCloud2 subscriber. */
@@ -169,6 +168,9 @@ protected:
   /** \brief The output TF frame the data should be transformed into,
    * if input.header.frame_id is different. */
   std::string tf_output_frame_;
+
+  /** \brief The flag to indicate if only static TF are used. */
+  bool has_static_tf_only_;
 
   /** \brief Internal mutex. */
   std::mutex mutex_;
@@ -292,7 +294,7 @@ private:
   void faster_input_indices_callback(
     const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices);
 
-  void setupTF(const bool & has_static_tf_only);
+  void setupTF();
 };
 }  // namespace autoware::pointcloud_preprocessor
 

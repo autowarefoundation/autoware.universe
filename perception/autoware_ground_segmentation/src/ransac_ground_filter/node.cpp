@@ -83,7 +83,7 @@ PlaneBasis getPlaneBasis(const Eigen::Vector3d & plane_normal)
 using autoware::pointcloud_preprocessor::get_param;
 
 RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptions & options)
-: Filter("RANSACGroundFilter", options, true)
+: Filter("RANSACGroundFilter", options)
 {
   base_frame_ = declare_parameter<std::string>("base_frame", "base_link");
   unit_axis_ = declare_parameter<std::string>("unit_axis");
@@ -117,7 +117,7 @@ RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptio
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
   managed_tf_buffer_ =
-    std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(this, true);
+    std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(this, has_static_tf_only_);
 }
 
 void RANSACGroundFilterComponent::setDebugPublisher()

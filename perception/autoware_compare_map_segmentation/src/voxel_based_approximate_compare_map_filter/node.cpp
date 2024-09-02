@@ -71,7 +71,7 @@ bool VoxelBasedApproximateDynamicMapLoader::is_close_to_map(
 
 VoxelBasedApproximateCompareMapFilterComponent::VoxelBasedApproximateCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("VoxelBasedApproximateCompareMapFilter", options, false)
+: Filter("VoxelBasedApproximateCompareMapFilter", options)
 {
   // initialize debug tool
   {

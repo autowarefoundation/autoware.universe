@@ -61,7 +61,7 @@ namespace autoware::pointcloud_preprocessor
 {
 ApproximateDownsampleFilterComponent::ApproximateDownsampleFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("ApproximateDownsampleFilter", options, true)
+: Filter("ApproximateDownsampleFilter", options)
 {
   {
     voxel_size_x_ = static_cast<double>(declare_parameter("voxel_size_x", 0.3));

@@ -59,7 +59,7 @@
 namespace autoware::pointcloud_preprocessor
 {
 PassThroughFilterComponent::PassThroughFilterComponent(const rclcpp::NodeOptions & options)
-: Filter("PassThroughFilter", options, true)
+: Filter("PassThroughFilter", options)
 {
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(

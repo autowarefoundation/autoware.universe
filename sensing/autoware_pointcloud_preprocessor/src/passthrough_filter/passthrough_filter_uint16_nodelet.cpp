@@ -25,7 +25,7 @@ namespace autoware::pointcloud_preprocessor
 {
 PassThroughFilterUInt16Component::PassThroughFilterUInt16Component(
   const rclcpp::NodeOptions & options)
-: Filter("PassThroughFilterUInt16", options, true)
+: Filter("PassThroughFilterUInt16", options)
 {
   // set initial parameters
   {

@@ -24,7 +24,7 @@ namespace autoware::pointcloud_preprocessor
 {
 RadiusSearch2DOutlierFilterComponent::RadiusSearch2DOutlierFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("RadiusSearch2DOutlierFilter", options, true)
+: Filter("RadiusSearch2DOutlierFilter", options)
 {
   // set initial parameters
   {

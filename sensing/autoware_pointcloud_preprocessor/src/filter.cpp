@@ -65,14 +65,14 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 autoware::pointcloud_preprocessor::Filter::Filter(
-  const std::string & filter_name, const rclcpp::NodeOptions & options,
-  const bool & has_static_tf_only)
+  const std::string & filter_name, const rclcpp::NodeOptions & options)
 : Node(filter_name, options), filter_field_name_(filter_name)
 {
   // Set parameters (moved from NodeletLazy onInit)
   {
     tf_input_frame_ = static_cast<std::string>(declare_parameter("input_frame", ""));
     tf_output_frame_ = static_cast<std::string>(declare_parameter("output_frame", ""));
+    has_static_tf_only_ = static_cast<bool>(declare_parameter("has_static_tf_only", false));
     max_queue_size_ = static_cast<std::size_t>(declare_parameter("max_queue_size", 5));
 
     // ---[ Optional parameters
@@ -101,7 +101,7 @@ autoware::pointcloud_preprocessor::Filter::Filter(
   subscribe(filter_name);
 
   // Set tf_listener, tf_buffer.
-  setupTF(has_static_tf_only);
+  setupTF();
 
   // Set parameter service callback
   set_param_res_filter_ = this->add_on_set_parameters_callback(
@@ -113,10 +113,19 @@ autoware::pointcloud_preprocessor::Filter::Filter(
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void autoware::pointcloud_preprocessor::Filter::setupTF(const bool & has_static_tf_only)
+void autoware::pointcloud_preprocessor::Filter::setupTF()
 {
+  // Always consider static TF if in & out frames are same
+  if (tf_input_frame_ == tf_output_frame_) {
+    if (!has_static_tf_only_) {
+      RCLCPP_INFO(
+        this->get_logger(),
+        "Input and output frames are the same. Overriding has_static_tf_only to true.");
+    }
+    has_static_tf_only_ = true;
+  }
   managed_tf_buffer_ =
-    std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(this, has_static_tf_only);
+    std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(this, has_static_tf_only_);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

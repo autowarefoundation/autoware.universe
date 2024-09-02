@@ -99,10 +99,10 @@ protected:
   void convertMatrixToTransform(const Eigen::Matrix4f & matrix, tf2::Transform & transform);
 
 public:
-  explicit DistortionCorrector(rclcpp::Node * node) : node_(node)
+  explicit DistortionCorrector(rclcpp::Node * node, const bool & has_static_tf_only) : node_(node)
   {
     managed_tf_buffer_ =
-      std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(node, true);
+      std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(node, has_static_tf_only);
   }
   bool pointcloud_transform_exists();
   bool pointcloud_transform_needed();
@@ -134,7 +134,10 @@ private:
   tf2::Transform tf2_base_link_to_lidar_;
 
 public:
-  explicit DistortionCorrector2D(rclcpp::Node * node) : DistortionCorrector(node) {}
+  explicit DistortionCorrector2D(rclcpp::Node * node, const bool & has_static_tf_only)
+  : DistortionCorrector(node, has_static_tf_only)
+  {
+  }
   void initialize() override;
   void undistortPointImplementation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
@@ -161,7 +164,10 @@ private:
   Eigen::Matrix4f eigen_base_link_to_lidar_;
 
 public:
-  explicit DistortionCorrector3D(rclcpp::Node * node) : DistortionCorrector(node) {}
+  explicit DistortionCorrector3D(rclcpp::Node * node, const bool & has_static_tf_only)
+  : DistortionCorrector(node, has_static_tf_only)
+  {
+  }
   void initialize() override;
   void undistortPointImplementation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,

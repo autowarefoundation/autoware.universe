@@ -30,7 +30,7 @@ using autoware::pointcloud_preprocessor::get_param;
 
 VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("VoxelBasedCompareMapFilter", options, false)
+: Filter("VoxelBasedCompareMapFilter", options)
 {
   // initialize debug tool
   {
