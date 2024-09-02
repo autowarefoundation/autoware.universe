@@ -192,7 +192,8 @@ void decode_single_image(
     params.jpeg_streams[buffer_index], params.stream));
 
   buffer_index = 1 - buffer_index;  // switch pinned buffer in pipeline mode to avoid an extra sync
-
+  RCLCPP_DEBUG(rclcpp::get_logger("nvjpegDecoder"), buffer_index);
+  
   CHECK_NVJPEG(nvjpegDecodeJpegDevice(
     share_param.nvjpeg_handle, params.nvjpeg_decoder, params.nvjpeg_decoupled_state, &out,
     params.stream));

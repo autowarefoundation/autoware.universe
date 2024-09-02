@@ -6,7 +6,7 @@
 
   <author email="cynthia.liu@autocore.ai">Cynthia</author>
   <maintainer email="cynthia.liu@autocore.ai">Cynthia</maintainer>
-
+  <maintainer email="yliuhb@connect.ust.hk">Yuxuan Liu</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
