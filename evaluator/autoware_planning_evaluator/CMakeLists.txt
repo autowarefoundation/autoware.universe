@@ -1,19 +1,17 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.22)
 project(autoware_planning_evaluator)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(pluginlib REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
 ament_auto_add_library(planning_evaluator_node SHARED
   DIRECTORY src
 )
 
-
-# ------------------------------------------------------------------------------
-find_package(builtin_interfaces REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(
         ${PROJECT_NAME}
         "msg/Metric.msg"
@@ -30,7 +28,6 @@ else()
     cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
   target_link_libraries(planning_evaluator_node "${cpp_typesupport_target}")
 endif()
-# ------------------------------------------------------------------------------
 
 rclcpp_components_register_node(planning_evaluator_node
   PLUGIN "planning_diagnostics::PlanningEvaluatorNode"

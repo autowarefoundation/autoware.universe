@@ -1,5 +1,5 @@
 # time stamp
-builtin_interface/Time stamp
+builtin_interfaces/Time stamp
 
 # metrics list
-Mtric[] metric_list
+Metric[] metric_list
