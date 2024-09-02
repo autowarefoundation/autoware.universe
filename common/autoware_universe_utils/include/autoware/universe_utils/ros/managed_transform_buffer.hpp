@@ -217,7 +217,7 @@ private:
   }
 
   TFMap buffer_;
-  rclcpp::Node * node_;
+  rclcpp::Node * const node_;
   std::unique_ptr<autoware::universe_utils::TransformListener> tf_listener_;
   std::function<bool(const std::string &, const std::string &, Eigen::Matrix4f &)> get_transform_;
 };
