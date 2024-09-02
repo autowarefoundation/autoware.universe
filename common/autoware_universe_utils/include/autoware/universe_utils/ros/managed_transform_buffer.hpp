@@ -194,7 +194,7 @@ private:
    *
    * This function attempts to retrieve a transform between the target frame and the source frame.
    * If successful, the transformation matrix is assigned to the output parameter, and the function returns true.
-   * Otherwise, transform matrix is set to identity and the function returns false.
+   * Otherwise, the transformation matrix is set to the identity and the function returns false.
    *
    * @param target_frame The target frame.
    * @param source_frame The source frame.
