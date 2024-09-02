@@ -22,8 +22,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
   # node test
   ament_auto_add_gtest(simple_object_merger_node_test
-  test/test_simple_object_merger_node.cpp
-)
+    test/test_simple_object_merger_node.cpp
+  )
 endif()
 
 # Package
