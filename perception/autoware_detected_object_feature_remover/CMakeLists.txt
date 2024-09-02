@@ -13,6 +13,16 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE detected_object_feature_remover_node
 )
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_auto_add_gtest(test_detected_object_feature_remover_node
+    test/test_detected_object_feature_remover_node.cpp
+  )
+  target_include_directories(test_detected_object_feature_remover_node
+    PRIVATE src
+  )
+endif()
+
 ament_auto_package(
   INSTALL_TO_SHARE
     launch
