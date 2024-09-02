@@ -1,4 +1,6 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <autoware/behavior_path_goal_planner_module/manager.hpp>
+#include <autoware/behavior_path_goal_planner_module/pull_over_planner/shift_pull_over.hpp>
 #include <autoware/behavior_path_planner/behavior_path_planner_node.hpp>
 #include <autoware/behavior_path_planner_common/data_manager.hpp>
 #include <autoware/behavior_path_planner_common/utils/path_utils.hpp>
@@ -106,6 +108,16 @@ int main(int argc, char ** argv)
                                          .y(0.0)
                                          .z(-0.3361155457734493)
                                          .w(0.9418207578352774));
+  /*
+  route_msg.goal_pose =
+    geometry_msgs::build<geometry_msgs::msg::Pose>()
+      .position(
+        geometry_msgs::build<geometry_msgs::msg::Point>().x(568.836731).y(437.871904).z(100.0))
+      .orientation(
+        geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(-0.292125).w(
+          0.956380));
+  */
+
   route_msg.segments = std::vector<autoware_planning_msgs::msg::LaneletSegment>{
     autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletSegment>()
       .preferred_primitive(
@@ -189,8 +201,7 @@ int main(int argc, char ** argv)
   node_options.parameter_overrides(
     std::vector<rclcpp::Parameter>{{"launch_modules", std::vector<std::string>{}}});
   node_options.arguments(std::vector<std::string>{
-    "--ros-args",
-    "--params-file",
+    "--ros-args", "--params-file",
     ament_index_cpp::get_package_share_directory("autoware_behavior_path_planner") +
       "/config/behavior_path_planner.param.yaml",
     "--params-file",
@@ -208,7 +219,9 @@ int main(int argc, char ** argv)
     "--params-file",
     ament_index_cpp::get_package_share_directory("autoware_test_utils") +
       "/config/test_vehicle_info.param.yaml",
-  });
+    "--params-file",
+    ament_index_cpp::get_package_share_directory("autoware_behavior_path_goal_planner_module") +
+      "/config/goal_planner.param.yaml"});
   auto node = rclcpp::Node::make_shared("plot_map", node_options);
 
   auto planner_data = std::make_shared<autoware::behavior_path_planner::PlannerData>();
@@ -225,6 +238,20 @@ int main(int argc, char ** argv)
   std::cout << "current_route_lanelet is " << current_route_lanelet.id() << std::endl;
   const auto reference_path =
     autoware::behavior_path_planner::utils::getReferencePath(current_route_lanelet, planner_data);
+  auto goal_planner_parameter =
+    autoware::behavior_path_planner::GoalPlannerModuleManager::initGoalPlannerParameters(
+      node.get(), "goal_planner.");
+  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(*node).getVehicleInfo();
+  autoware::lane_departure_checker::LaneDepartureChecker lane_departure_checker{};
+  lane_departure_checker.setVehicleInfo(vehicle_info);
+  autoware::lane_departure_checker::Param lane_depature_checker_params;
+  lane_depature_checker_params.footprint_extra_margin =
+    goal_planner_parameter.lane_departure_check_expansion_margin;
+  lane_departure_checker.setParam(lane_depature_checker_params);
+  auto shift_pull_over_planner = autoware::behavior_path_planner::ShiftPullOver(
+    *node, goal_planner_parameter, lane_departure_checker);
+  const auto pull_over_path_opt =
+    shift_pull_over_planner.plan(planner_data, reference_path, route_msg.goal_pose);
 
   pybind11::scoped_interpreter guard{};
   auto plt = matplotlibcpp17::pyplot::import();
@@ -238,6 +265,12 @@ int main(int argc, char ** argv)
   }
 
   plot_path_with_lane_id(ax, reference_path.path);
+  std::cout << pull_over_path_opt.has_value() << std::endl;
+  if (pull_over_path_opt) {
+    const auto & pull_over_path = pull_over_path_opt.value();
+    const auto full_path = pull_over_path.getFullPath();
+    plot_path_with_lane_id(ax, full_path);
+  }
   ax.set_aspect(Args("equal"));
   plt.show();
 

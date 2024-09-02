@@ -30,6 +30,10 @@ namespace autoware::behavior_path_planner
 class GoalPlannerModuleManager : public SceneModuleManagerInterface
 {
 public:
+  static GoalPlannerParameters initGoalPlannerParameters(
+    rclcpp::Node * node, const std::string & base_ns);
+
+public:
   GoalPlannerModuleManager() : SceneModuleManagerInterface{"goal_planner"} {}
 
   void init(rclcpp::Node * node) override;

@@ -270,6 +270,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   pull_over_path.debug_poses.push_back(prev_module_path_terminal_pose);
 
   // check if the parking path will leave drivable area and lanes
+  /*
   const bool is_in_parking_lots = std::invoke([&]() -> bool {
     const auto & p = planner_data->parameters;
     const auto parking_lot_polygons =
@@ -304,6 +305,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   if (!is_in_parking_lots && !is_in_lanes) {
     return {};
   }
+  */
 
   return pull_over_path;
 }
