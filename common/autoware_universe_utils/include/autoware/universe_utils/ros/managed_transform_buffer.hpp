@@ -132,8 +132,8 @@ private:
    *
    * @param target_frame The target frame.
    * @param source_frame The source frame.
-   * @param eigen_transform The output Eigen transform matrix. It is set to the identity if the transform
-   * is not found.
+   * @param eigen_transform The output Eigen transform matrix. It is set to the identity if the
+   * transform is not found.
    * @return True if the transform was successfully retrieved, false otherwise.
    */
   bool getStaticTransform(
@@ -193,13 +193,14 @@ private:
   /** @brief Retrieves a transform between two dynamic frames.
    *
    * This function attempts to retrieve a transform between the target frame and the source frame.
-   * If successful, the transformation matrix is assigned to the output parameter, and the function returns true.
-   * Otherwise, the transformation matrix is set to the identity and the function returns false.
+   * If successful, the transformation matrix is assigned to the output parameter, and the function
+   * returns true. Otherwise, the transformation matrix is set to the identity and the function
+   * returns false.
    *
    * @param target_frame The target frame.
    * @param source_frame The source frame.
-   * @param eigen_transform The output Eigen transformation matrix. It is set to the identity if the transform
-   * is not found.
+   * @param eigen_transform The output Eigen transformation matrix. It is set to the identity if the
+   * transform is not found.
    * @return True if the transform was successfully retrieved, false otherwise.
    */
   bool getDynamicTransform(
