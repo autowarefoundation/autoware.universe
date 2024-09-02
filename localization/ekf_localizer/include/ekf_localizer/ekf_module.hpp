@@ -34,6 +34,8 @@
 #include <memory>
 #include <vector>
 
+namespace autoware::ekf_localizer
+{
 using autoware::kalman_filter::TimeDelayKalmanFilter;
 
 struct EKFDiagnosticInfo
@@ -148,5 +150,7 @@ private:
 
   double ekf_dt_;
 };
+
+}  // namespace autoware::ekf_localizer
 
 #endif  // EKF_LOCALIZER__EKF_MODULE_HPP_

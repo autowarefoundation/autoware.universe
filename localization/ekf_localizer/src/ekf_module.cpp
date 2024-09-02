@@ -29,6 +29,9 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
+namespace autoware::ekf_localizer
+{
+
 // clang-format off
 #define DEBUG_PRINT_MAT(X) {if (params_.show_debug_info) {std::cout << #X << ": " << X << std::endl;}} // NOLINT
 // clang-format on
@@ -449,3 +452,5 @@ void EKFModule::update_simple_1d_filters(
   roll_filter_.update(rpy.x, roll_var, ekf_dt_);
   pitch_filter_.update(rpy.y, pitch_var, ekf_dt_);
 }
+
+}  // namespace autoware::ekf_localizer

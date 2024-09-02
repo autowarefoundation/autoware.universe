@@ -50,6 +50,9 @@
 #include <string>
 #include <vector>
 
+namespace autoware::ekf_localizer
+{
+
 class EKFLocalizer : public rclcpp::Node
 {
 public:
@@ -180,4 +183,7 @@ private:
 
   friend class EKFLocalizerTestSuite;  // for test code
 };
+
+}  // namespace autoware::ekf_localizer
+
 #endif  // EKF_LOCALIZER__EKF_LOCALIZER_HPP_
