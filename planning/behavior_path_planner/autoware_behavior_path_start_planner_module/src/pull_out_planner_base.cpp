@@ -18,7 +18,7 @@ namespace autoware::behavior_path_planner
 {
 bool PullOutPlannerBase::isPullOutPathCollided(
   autoware::behavior_path_planner::PullOutPath & pull_out_path,
-  double collision_check_distance_from_end)
+  double collision_check_distance_from_end) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
