@@ -55,6 +55,37 @@ bool isUnknownObjectOverlapped(
   return precision > precision_threshold || recall > recall_threshold ||
          generalized_iou > generalized_iou_threshold;
 }
+
+bool isKnownObjectOverlapped(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object1,
+  const autoware_auto_perception_msgs::msg::DetectedObject & object2,
+  const double precision_threshold, const double recall_threshold,
+  const std::map<int, double>& distance_threshold_map,
+  const std::map<int, double>& generalized_iou_threshold_map)
+{
+  int object1_label = object_recognition_utils::getHighestProbLabel(object1.classification);
+  int object2_label = object_recognition_utils::getHighestProbLabel(object2.classification);
+
+  const double generalized_iou_threshold = std::min(
+    generalized_iou_threshold_map.at(object1_label),
+    generalized_iou_threshold_map.at(object2_label));
+  const double distance_threshold = std::min(
+    distance_threshold_map.at(object1_label),
+    distance_threshold_map.at(object2_label));
+
+  const double sq_distance_threshold = std::pow(distance_threshold, 2.0);
+  const double sq_distance = tier4_autoware_utils::calcSquaredDistance2d(
+    object1.kinematics.pose_with_covariance.pose,
+    object2.kinematics.pose_with_covariance.pose);
+  if (sq_distance_threshold < sq_distance) return false;
+
+  const auto precision = object_recognition_utils::get2dPrecision(object1, object2);
+  const auto recall = object_recognition_utils::get2dRecall(object1, object2);
+  const auto generalized_iou = object_recognition_utils::get2dGeneralizedIoU(object1, object2);
+
+  return precision > precision_threshold || recall > recall_threshold ||
+         generalized_iou > generalized_iou_threshold;
+}
 }  // namespace
 
 namespace
@@ -220,6 +251,45 @@ void ObjectAssociationMergerNode::objectsCallback(
       }
       if (!is_overlapped) {
         output_msg.objects.push_back(unknown_object);
+      }
+    }
+  }
+
+  // Remove overlapped known object
+  if (remove_overlapped_known_objects_) {
+    std::vector<autoware_auto_perception_msgs::msg::DetectedObject> unknown_objects, known_objects;
+    unknown_objects.reserve(output_msg.objects.size());
+    known_objects.reserve(output_msg.objects.size());
+    for (const auto & object : output_msg.objects) {
+      if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+        unknown_objects.push_back(object);
+      } else {
+        known_objects.push_back(object);
+      }
+    }
+    output_msg.objects.clear();
+    output_msg.objects = unknown_objects;
+    for (size_t i = 0; i < known_objects.size(); ++i) {
+      bool should_keep = true;
+      for (size_t j = 0; j < known_objects.size(); ++j) {
+        if (i == j) {
+          continue;
+        }
+        if (areObjectsOverlapped(known_objects[i], known_objects[j],
+                                overlapped_judge_param_.precision_threshold,
+                                overlapped_judge_param_.recall_threshold,
+                                overlapped_judge_param_.distance_threshold_map,
+                                overlapped_judge_param_.generalized_iou_threshold)) {
+          auto label_i = object_recognition_utils::getHighestProbClassification(known_objects[i].classification);
+          auto label_j = object_recognition_utils::getHighestProbClassification(known_objects[j].classification);
+          if (label_i.probability * known_objects[i].existence_probability <= label_j.probability * known_objects[j].existence_probability) {
+            should_keep = false;
+            break;
+          }
+        }
+      }
+      if (should_keep) {
+        output_msg.objects.push_back(known_objects[i]);
       }
     }
   }

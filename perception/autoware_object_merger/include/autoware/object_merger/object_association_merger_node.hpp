@@ -75,6 +75,7 @@ private:
 
   PriorityMode priority_mode_;
   bool remove_overlapped_unknown_objects_;
+  bool remove_overlapped_known_objects_;
   struct
   {
     double precision_threshold;
