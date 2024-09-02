@@ -284,7 +284,7 @@ void GridMapFusionNode::publish()
   // merge available gridmap
   std::vector<OccupancyGridMapFixedBlindSpot> subscribed_maps;
   std::vector<double> weights;
-  {  // scope for the timekeeper to track the time spent for merging grid map
+  {  // merging grid map
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("merge_grid_map", *time_keeper_);
@@ -362,7 +362,7 @@ OccupancyGridMapFixedBlindSpot GridMapFusionNode::SingleFrameOccupancyFusion(
     return occupancy_grid_maps[0];
   }
 
-  {  // scope for the timekeeper to track the time spent for creating occupancy grid map
+  {  // create fused occupancy grid map
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("create_fused_map", *time_keeper_);

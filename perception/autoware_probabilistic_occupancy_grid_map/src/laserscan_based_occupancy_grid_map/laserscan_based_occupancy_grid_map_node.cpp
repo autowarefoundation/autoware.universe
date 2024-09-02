@@ -204,7 +204,7 @@ void LaserscanBasedOccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRa
     }
   }
 
-  {  // scope for the timekeeper to track the time spent for creating occupancy grid map
+  {  // create occupancy grid map and publish it
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("create_occupancy_grid_map", *time_keeper_);
