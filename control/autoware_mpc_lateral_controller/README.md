@@ -205,10 +205,9 @@ Defined in the `steering_offset` namespace. This logic is designed as simple as 
 
 #### Debug
 
-| Name                                         | Type    | Description                                                                      | Default value |
-| :------------------------------------------- | :------ | :------------------------------------------------------------------------------- | :------------ |
-| debug_publish_predicted_trajectory           | boolean | publish predicted trajectory for debugging, considering Frenet coordinate system | true          |
-| debug_publish_resampled_reference_trajectory | boolean | publish resampled reference trajectory in world coordinate system                | false         |
+| Name                       | Type    | Description                                                                       | Default value |
+| :------------------------- | :------ | :-------------------------------------------------------------------------------- | :------------ |
+| publish_debug_trajectories | boolean | publish predicted trajectory and resampled reference trajectory for debug purpose | true          |
 
 ### How to tune MPC parameters
 

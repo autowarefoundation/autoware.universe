@@ -111,7 +111,7 @@ bool MPC::calculateMPC(
     mpc_matrix, initial_state, Uex, mpc_resampled_ref_trajectory, prediction_dt, "world");
 
   // Publish predicted trajectories in different coordinates for debugging purposes
-  if (m_debug_publish_predicted_trajectory) {
+  if (m_publish_debug_trajectories) {
     // Calculate and publish predicted trajectory in Frenet coordinate
     auto predicted_trajectory_frenet = calculatePredictedTrajectory(
       mpc_matrix, initial_state, Uex, mpc_resampled_ref_trajectory, prediction_dt, "frenet");
@@ -324,7 +324,7 @@ std::pair<bool, MPCTrajectory> MPC::resampleMPCTrajectoryByTime(
     return {false, {}};
   }
   // Publish resampled reference trajectory for debug purpose.
-  if (m_debug_publish_resampled_reference_trajectory) {
+  if (m_publish_debug_trajectories) {
     auto converted_output = MPCUtils::convertToAutowareTrajectory(output);
     converted_output.header.stamp = m_clock->now();
     converted_output.header.frame_id = "map";

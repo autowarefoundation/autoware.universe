@@ -433,9 +433,8 @@ public:
   bool m_use_delayed_initial_state =
     true;  // Flag to use x0_delayed as initial state for predicted trajectory
 
-  bool m_debug_publish_predicted_trajectory = false;  // Flag to publish debug predicted trajectory
-  bool m_debug_publish_resampled_reference_trajectory = false;  // Flag to publish debug resampled
-                                                                // reference trajectory
+  bool m_publish_debug_trajectories = false;  // Flag to publish predicted trajectory and
+                                              // resampled reference trajectory for debug purpose
 
   //!< Constructor.
   explicit MPC(rclcpp::Node & node);
