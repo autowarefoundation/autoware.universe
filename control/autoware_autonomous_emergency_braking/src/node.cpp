@@ -574,7 +574,7 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
 
 Path AEB::generateEgoPath(const double curr_v, const double curr_w)
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware::universe_utils::ScopedTimeTrack st(std::string(__func__) + "(IMU)", *time_keeper_);
   Path path;
   double curr_x = 0.0;
   double curr_y = 0.0;
@@ -623,22 +623,26 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
 
 std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware::universe_utils::ScopedTimeTrack st(std::string(__func__) + "(MPC)", *time_keeper_);
   if (predicted_traj.points.empty()) {
     return std::nullopt;
   }
-
+  time_keeper_->start_track("lookUpTransform");
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
       "base_link", predicted_traj.header.frame_id, predicted_traj.header.stamp,
       rclcpp::Duration::from_seconds(0.5));
   } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
+    RCLCPP_ERROR_STREAM(
+      get_logger(),
+      "[AEB] Failed to look up transform from base_link to " + predicted_traj.header.frame_id);
     return std::nullopt;
   }
+  time_keeper_->end_track("lookUpTransform");
 
   // create path
+  time_keeper_->start_track("createPath");
   Path path;
   path.reserve(predicted_traj.points.size());
   for (size_t i = 0; i < predicted_traj.points.size(); ++i) {
@@ -650,6 +654,7 @@ std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
       break;
     }
   }
+  time_keeper_->end_track("createPath");
   return path;
 }
 
