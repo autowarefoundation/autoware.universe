@@ -2,7 +2,7 @@
   <arg name="input/image" default="/camera/image_raw"/>
   <arg name="input/rois" default="~/input/rois"/>
   <arg name="input/rough/rois" default="~/rough/rois"/>
-  <arg name="input/traffic_signals" default="~/input/traffic_signals"/>
+  <arg name="input/traffic_lights" default="~/input/traffic_lights"/>
   <arg name="output/image" default="~/debug/rois"/>
   <arg name="enable_fine_detection" default="false"/>
   <arg name="use_image_transport" default="true"/>
@@ -11,7 +11,7 @@
     <remap from="~/input/image" to="$(var input/image)"/>
     <remap from="~/input/rois" to="$(var input/rois)"/>
     <remap from="~/input/rough/rois" to="$(var input/rough/rois)"/>
-    <remap from="~/input/traffic_signals" to="$(var input/traffic_signals)"/>
+    <remap from="~/input/traffic_lights" to="$(var input/traffic_lights)"/>
     <remap from="~/output/image" to="$(var output/image)"/>
     <param name="enable_fine_detection" value="$(var enable_fine_detection)"/>
     <param name="use_image_transport" value="$(var use_image_transport)"/>

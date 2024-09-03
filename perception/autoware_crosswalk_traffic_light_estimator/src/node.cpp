@@ -92,11 +92,11 @@ CrosswalkTrafficLightEstimatorNode::CrosswalkTrafficLightEstimatorNode(
     "~/input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&CrosswalkTrafficLightEstimatorNode::onRoute, this, _1));
   sub_traffic_light_array_ = create_subscription<TrafficSignalArray>(
-    "~/input/classified/traffic_signals", rclcpp::QoS{1},
+    "~/input/classified/traffic_lights", rclcpp::QoS{1},
     std::bind(&CrosswalkTrafficLightEstimatorNode::onTrafficLightArray, this, _1));
 
   pub_traffic_light_array_ =
-    this->create_publisher<TrafficSignalArray>("~/output/traffic_signals", rclcpp::QoS{1});
+    this->create_publisher<TrafficSignalArray>("~/output/traffic_lights", rclcpp::QoS{1});
   pub_processing_time_ = std::make_shared<DebugPublisher>(this, "~/debug");
 }
 

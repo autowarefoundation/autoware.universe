@@ -28,14 +28,14 @@ The table below outlines how the matching process determines the output based on
 | Name                             | Type                                                  | Description                                              |
 | -------------------------------- | ----------------------------------------------------- | -------------------------------------------------------- |
 | ~/sub/vector_map                 | autoware_map_msgs::msg::LaneletMapBin                 | The vector map to get valid traffic signal ids.          |
-| ~/sub/perception_traffic_signals | autoware_perception_msgs::msg::TrafficLightGroupArray | The traffic signals from the image recognition pipeline. |
-| ~/sub/external_traffic_signals   | autoware_perception_msgs::msg::TrafficLightGroupArray | The traffic signals from an external system.             |
+| ~/sub/perception_traffic_lights | autoware_perception_msgs::msg::TrafficLightGroupArray | The traffic signals from the image recognition pipeline. |
+| ~/sub/external_traffic_lights   | autoware_perception_msgs::msg::TrafficLightGroupArray | The traffic signals from an external system.             |
 
 #### Output
 
 | Name                  | Type                                                  | Description                      |
 | --------------------- | ----------------------------------------------------- | -------------------------------- |
-| ~/pub/traffic_signals | autoware_perception_msgs::msg::TrafficLightGroupArray | The merged traffic signal state. |
+| ~/pub/traffic_lights | autoware_perception_msgs::msg::TrafficLightGroupArray | The merged traffic signal state. |
 
 ## Parameters
 

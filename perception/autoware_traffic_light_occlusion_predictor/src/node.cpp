@@ -58,7 +58,7 @@ TrafficLightOcclusionPredictorNode::TrafficLightOcclusionPredictorNode(
 
   // publishers
   signal_pub_ =
-    create_publisher<tier4_perception_msgs::msg::TrafficLightArray>("~/output/traffic_signals", 1);
+    create_publisher<tier4_perception_msgs::msg::TrafficLightArray>("~/output/traffic_lights", 1);
 
   // configuration parameters
   config_.azimuth_occlusion_resolution_deg =
@@ -75,7 +75,7 @@ TrafficLightOcclusionPredictorNode::TrafficLightOcclusionPredictorNode(
     config_.elevation_occlusion_resolution_deg);
 
   const std::vector<std::string> topics{
-    "~/input/car/traffic_signals", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
+    "~/input/car/traffic_lights", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
   const std::vector<rclcpp::QoS> qos(topics.size(), rclcpp::SensorDataQoS());
   synchronizer_ = std::make_shared<SynchronizerType>(
     this, topics, qos,
@@ -85,7 +85,7 @@ TrafficLightOcclusionPredictorNode::TrafficLightOcclusionPredictorNode(
     config_.max_image_cloud_delay, config_.max_wait_t);
 
   const std::vector<std::string> topics_ped{
-    "~/input/pedestrian/traffic_signals", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
+    "~/input/pedestrian/traffic_lights", "~/input/rois", "~/input/camera_info", "~/input/cloud"};
   const std::vector<rclcpp::QoS> qos_ped(topics_ped.size(), rclcpp::SensorDataQoS());
   synchronizer_ped_ = std::make_shared<SynchronizerType>(
     this, topics_ped, qos_ped,

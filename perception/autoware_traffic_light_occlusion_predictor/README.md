@@ -15,8 +15,8 @@ If no point cloud is received or all point clouds have very large stamp differen
 | Name                                 | Type                                                | Description                      |
 | ------------------------------------ | --------------------------------------------------- | -------------------------------- |
 | `~input/vector_map`                  | autoware_auto_mapping_msgs::HADMapBin               | vector map                       |
-| `~/input/car/traffic_signals`        | tier4_perception_msgs::msg::TrafficLightArray       | vehicular traffic light signals  |
-| `~/input/pedestrian/traffic_signals` | tier4_perception_msgs::msg::TrafficLightArray       | pedestrian traffic light signals |
+| `~/input/car/traffic_lights`        | tier4_perception_msgs::msg::TrafficLightArray       | vehicular traffic light signals  |
+| `~/input/pedestrian/traffic_lights` | tier4_perception_msgs::msg::TrafficLightArray       | pedestrian traffic light signals |
 | `~/input/rois`                       | autoware_auto_perception_msgs::TrafficLightRoiArray | traffic light detections         |
 | `~input/camera_info`                 | sensor_msgs::CameraInfo                             | target camera parameter          |
 | `~/input/cloud`                      | sensor_msgs::PointCloud2                            | LiDAR point cloud                |
@@ -25,7 +25,7 @@ If no point cloud is received or all point clouds have very large stamp differen
 
 | Name                       | Type                                          | Description                                                  |
 | -------------------------- | --------------------------------------------- | ------------------------------------------------------------ |
-| `~/output/traffic_signals` | tier4_perception_msgs::msg::TrafficLightArray | traffic light signals reset according to the occlusion ratio |
+| `~/output/traffic_lights` | tier4_perception_msgs::msg::TrafficLightArray | traffic light signals reset according to the occlusion ratio |
 
 ## Node parameters
 
