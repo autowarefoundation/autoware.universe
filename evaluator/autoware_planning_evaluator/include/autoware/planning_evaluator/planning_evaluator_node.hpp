@@ -17,6 +17,8 @@
 
 #include "autoware/planning_evaluator/metrics_calculator.hpp"
 #include "autoware/planning_evaluator/stat.hpp"
+#include "tier4_metric_msgs/msg/Metric.hpp"
+#include "tier4_metric_msgs/msg/MetricList.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -28,11 +30,9 @@
 #include "autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
-#include <diagnostic_msgs/msg/detail/diagnostic_status__struct.hpp>
 
 #include <array>
 #include <deque>
@@ -46,8 +46,8 @@ using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
-using diagnostic_msgs::msg::DiagnosticArray;
-using diagnostic_msgs::msg::DiagnosticStatus;
+using autoware::planning_evaluator::msg::Metric;
+using autoware::planning_evaluator::msg::MetricList;
 using nav_msgs::msg::Odometry;
 using LaneletMapBin = autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletRoute;
@@ -97,28 +97,28 @@ public:
   /**
    * @brief obtain diagnostics information
    */
-  void onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg);
+  void onDiagnostics(const MetricList::ConstSharedPtr diag_msg);
 
   /**
    * @brief publish the given metric statistic
    */
-  DiagnosticStatus generateDiagnosticStatus(
+  Metric generateDiagnosticStatus(
     const Metric & metric, const Stat<double> & metric_stat) const;
 
   /**
    * @brief publish current ego lane info
    */
-  DiagnosticStatus generateDiagnosticEvaluationStatus(const DiagnosticStatus & diag);
+  Metric generateDiagnosticEvaluationStatus(const Metric & diag);
 
   /**
    * @brief publish current ego lane info
    */
-  DiagnosticStatus generateLaneletDiagnosticStatus(const Odometry::ConstSharedPtr ego_state_ptr);
+  Metric generateLaneletDiagnosticStatus(const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
    * @brief publish current ego kinematic state
    */
-  DiagnosticStatus generateKinematicStateDiagnosticStatus(
+  Metric generateKinematicStateDiagnosticStatus(
     const AccelWithCovarianceStamped & accel_stamped, const Odometry::ConstSharedPtr ego_state_ptr);
 
 private:
@@ -163,12 +163,12 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> accel_sub_{
     this, "~/input/acceleration"};
 
-  rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
+  rclcpp::Publisher<MetricList>::SharedPtr metrics_pub_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   autoware::route_handler::RouteHandler route_handler_;
 
-  DiagnosticArray metrics_msg_;
+  MetricList metrics_msg_;
   // Parameters
   std::string output_file_str_;
   std::string ego_frame_str_;
@@ -182,7 +182,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
   // queue for diagnostics and time stamp
-  std::deque<std::pair<DiagnosticStatus, rclcpp::Time>> diag_queue_;
+  std::deque<std::pair<MetricList, rclcpp::Time>> diag_queue_;
   const std::vector<std::string> target_functions_ = {
     "obstacle_cruise_planner_stop",
     "obstacle_cruise_planner_slow_down",

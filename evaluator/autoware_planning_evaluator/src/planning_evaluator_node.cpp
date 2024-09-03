@@ -62,7 +62,7 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
     "~/input/diagnostics", 1, std::bind(&PlanningEvaluatorNode::onDiagnostics, this, _1));
 
   // List of metrics to calculate and publish
-  metrics_pub_ = create_publisher<DiagnosticArray>("~/metrics", 1);
+  metrics_pub_ = create_publisher<MetricList>("~/metrics", 1);
   for (const std::string & selected_metric :
        declare_parameter<std::vector<std::string>>("selected_metrics")) {
     Metric metric = str_to_metric.at(selected_metric);
@@ -111,8 +111,8 @@ void PlanningEvaluatorNode::onDiagnostics(const DiagnosticArray::ConstSharedPtr 
   }
 }
 
-DiagnosticStatus PlanningEvaluatorNode::generateDiagnosticEvaluationStatus(
-  const DiagnosticStatus & diag)
+Metric PlanningEvaluatorNode::generateDiagnosticEvaluationStatus(
+  const Metric & diag)
 {
   DiagnosticStatus status;
   status.name = diag.name;
@@ -232,7 +232,7 @@ DiagnosticStatus PlanningEvaluatorNode::generateKinematicStateDiagnosticStatus(
   return status;
 }
 
-DiagnosticStatus PlanningEvaluatorNode::generateDiagnosticStatus(
+Metric PlanningEvaluatorNode::generateDiagnosticStatus(
   const Metric & metric, const Stat<double> & metric_stat) const
 {
   DiagnosticStatus status;
