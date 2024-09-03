@@ -406,7 +406,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     velocity_factors_pub_->publish(makeVelocityFactorArray(planner_data.current_time, stop_pose));
     // Store stop reason debug data
     debug_data_ptr_->stop_metrics =
-      makeDicisionMetrics("stop", planner_data, stop_pose, *determined_stop_obstacle);
+      makeMetrics("PlannerInterface", "stop", planner_data, stop_pose, *determined_stop_obstacle);
     // Publish if ego vehicle will over run against the stop point with a limit acceleration
 
     const bool will_over_run = determined_zero_vel_dist.value() >
@@ -678,7 +678,8 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     // Add debug data
     debug_data_ptr_->obstacles_to_slow_down.push_back(obstacle);
     if (!debug_data_ptr_->stop_metrics.has_value()) {
-      debug_data_ptr_->slow_down_metrics = makeDicisionMetrics("slow_down", planner_data);
+      debug_data_ptr_->slow_down_metrics =
+        makeMetrics("PlannerInterface", "slow_down", planner_data);
     }
 
     // update prev_slow_down_output_
@@ -837,20 +838,19 @@ PlannerInterface::calculateDistanceToSlowDownWithConstraints(
     filtered_dist_to_slow_down_start, filtered_dist_to_slow_down_end, feasible_slow_down_vel);
 }
 
-std::vector<Metric> PlannerInterface::makeDicisionMetrics(
-  const std::string & reason, const std::optional<PlannerData> & planner_data,
+std::vector<Metric> PlannerInterface::makeMetrics(
+  const std::string & module_name, const std::string & reason,
+  const std::optional<PlannerData> & planner_data,
   const std::optional<geometry_msgs::msg::Pose> & stop_pose,
   const std::optional<StopObstacle> & stop_obstacle)
 {
-
   auto metrics = std::vector<Metric>();
 
   // Create status
-  std::string metrics_name = "obstacle_cruise_planner/" + reason;
   {
     // Decision
     Metric decision_metric;
-    decision_metric.name = metrics_name + "/decision";
+    decision_metric.name = module_name + "/decision";
     decision_metric.unit = "string";
     decision_metric.value = reason;
     metrics.push_back(decision_metric);
@@ -858,7 +858,7 @@ std::vector<Metric> PlannerInterface::makeDicisionMetrics(
 
   if (stop_pose.has_value() && planner_data.has_value()) {  // Stop info
     Metric stop_posision_metric;
-    stop_posision_metric.name = metrics_name + "/stop_position";
+    stop_posision_metric.name = module_name + "/stop_position";
     stop_posision_metric.unit = "string";
     const auto & p = stop_pose.value().position;
     stop_posision_metric.value =
@@ -866,7 +866,7 @@ std::vector<Metric> PlannerInterface::makeDicisionMetrics(
     metrics.push_back(stop_posision_metric);
 
     Metric stop_orientation_metric;
-    stop_orientation_metric.name = metrics_name + "/stop_orientation";
+    stop_orientation_metric.name = module_name + "/stop_orientation";
     stop_orientation_metric.unit = "string";
     const auto & o = stop_pose.value().orientation;
     stop_orientation_metric.value = "{" + std::to_string(o.w) + ", " + std::to_string(o.x) + ", " +
@@ -878,7 +878,7 @@ std::vector<Metric> PlannerInterface::makeDicisionMetrics(
       stop_pose.value().position);
 
     Metric dist_to_stop_pose_metric;
-    dist_to_stop_pose_metric.name = metrics_name + "/distance_to_stop_pose";
+    dist_to_stop_pose_metric.name = module_name + "/distance_to_stop_pose";
     dist_to_stop_pose_metric.unit = "double";
     dist_to_stop_pose_metric.value = std::to_string(dist_to_stop_pose);
     metrics.push_back(dist_to_stop_pose_metric);
@@ -888,7 +888,7 @@ std::vector<Metric> PlannerInterface::makeDicisionMetrics(
     // Obstacle info
     Metric collision_point_metric;
     const auto & p = stop_obstacle.value().collision_point;
-    collision_point_metric.name = metrics_name + "/collision_point";
+    collision_point_metric.name = module_name + "/collision_point";
     collision_point_metric.unit = "string";
     collision_point_metric.value =
       "{" + std::to_string(p.x) + ", " + std::to_string(p.y) + ", " + std::to_string(p.z) + "}";
@@ -902,20 +902,19 @@ void PlannerInterface::publishMetrics(const rclcpp::Time & current_time)
   // create array
   MetricArray metrics_msg;
   metrics_msg.stamp = current_time;
-  
-  auto addMetrics = [&metrics_msg](std::optional<std::vector<Metric>>& opt_metrics) {
-      if (opt_metrics) {
-          metrics_msg.metric_array.insert(
-              metrics_msg.metric_array.end(), 
-              opt_metrics->begin(), 
-              opt_metrics->end()
-          );
-      }
+
+  auto addMetrics = [&metrics_msg](std::optional<std::vector<Metric>> & opt_metrics) {
+    if (opt_metrics) {
+      metrics_msg.metric_array.insert(
+        metrics_msg.metric_array.end(), opt_metrics->begin(), opt_metrics->end());
+    }
   };
   addMetrics(debug_data_ptr_->stop_metrics);
   addMetrics(debug_data_ptr_->slow_down_metrics);
   addMetrics(debug_data_ptr_->cruise_metrics);
-  metrics_pub_->publish(metrics_msg);
+  if (!metrics_msg.metric_array.empty()) {
+    metrics_pub_->publish(metrics_msg);
+  }
   clearMetrics();
 }
 

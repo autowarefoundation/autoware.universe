@@ -97,8 +97,9 @@ public:
     const std::vector<SlowDownObstacle> & slow_down_obstacles,
     std::optional<VelocityLimit> & vel_limit);
 
-  std::vector<Metric> makeDicisionMetrics(
-    const std::string & reason, const std::optional<PlannerData> & planner_data = std::nullopt,
+  std::vector<Metric> makeMetrics(
+    const std::string & module_name, const std::string & reason,
+    const std::optional<PlannerData> & planner_data = std::nullopt,
     const std::optional<geometry_msgs::msg::Pose> & stop_pose = std::nullopt,
     const std::optional<StopObstacle> & stop_obstacle = std::nullopt);
   void publishMetrics(const rclcpp::Time & current_time);
