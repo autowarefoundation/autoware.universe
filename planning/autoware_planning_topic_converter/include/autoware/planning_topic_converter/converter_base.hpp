@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__PLANNING_TOPIC_CONVERTER__CONVERTER_BASE_HPP_
 #define AUTOWARE__PLANNING_TOPIC_CONVERTER__CONVERTER_BASE_HPP_
 
+#include "converter_base_parameters.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include <memory>
@@ -30,18 +31,21 @@ public:
   ConverterBase(const std::string & node_name, const rclcpp::NodeOptions & options)
   : rclcpp::Node(node_name, options)
   {
-    const auto input_topic = this->declare_parameter<std::string>("input_topic");
-    const auto output_topic = this->declare_parameter<std::string>("output_topic");
+    param_listener_ =
+      std::make_shared<converter_base::ParamListener>(this->get_node_parameters_interface());
+    const auto p = param_listener_->get_params();
 
-    pub_ = this->create_publisher<OutputType>(output_topic, 1);
+    pub_ = this->create_publisher<OutputType>(p.output_topic, 1);
     sub_ = this->create_subscription<InputType>(
-      input_topic, 1, std::bind(&ConverterBase::process, this, std::placeholders::_1));
+      p.input_topic, 1, std::bind(&ConverterBase::process, this, std::placeholders::_1));
   }
 
 protected:
   virtual void process(const typename InputType::ConstSharedPtr msg) = 0;
   typename rclcpp::Publisher<OutputType>::SharedPtr pub_;
   typename rclcpp::Subscription<InputType>::SharedPtr sub_;
+
+  std::shared_ptr<converter_base::ParamListener> param_listener_;
 
 private:
 };
