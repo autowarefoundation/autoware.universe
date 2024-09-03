@@ -197,8 +197,10 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
   } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
     object_width = object.shape.dimensions.x;
   }
-  // calculate backlash_width, which may the object can be biased from the reference path
-  constexpr double margin = 0.5;  // margin of 0.5m
+  // Calculate the backlash width, which represents the maximum distance the object can be biased
+  // from the reference path
+  constexpr double margin =
+    0.5;  // Set a safety margin of 0.5m for the object to stay away from the edge of the lane
   double backlash_width = (path_width - object_width) / 2.0 - margin;
   backlash_width = std::max(backlash_width, 0.0);  // minimum is 0.0
 
