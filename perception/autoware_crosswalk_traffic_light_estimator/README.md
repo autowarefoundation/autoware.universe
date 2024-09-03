@@ -8,16 +8,16 @@
 
 ### Input
 
-| Name                                 | Type                                             | Description        |
-| ------------------------------------ | ------------------------------------------------ | ------------------ |
-| `~/input/vector_map`                 | `autoware_map_msgs::msg::LaneletMapBin`          | vector map         |
-| `~/input/route`                      | `autoware_planning_msgs::msg::LaneletRoute`      | route              |
+| Name                                | Type                                                    | Description        |
+| ----------------------------------- | ------------------------------------------------------- | ------------------ |
+| `~/input/vector_map`                | `autoware_map_msgs::msg::LaneletMapBin`                 | vector map         |
+| `~/input/route`                     | `autoware_planning_msgs::msg::LaneletRoute`             | route              |
 | `~/input/classified/traffic_lights` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | classified signals |
 
 ### Output
 
-| Name                       | Type                                                    | Description                                               |
-| -------------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
+| Name                      | Type                                                    | Description                                               |
+| ------------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
 | `~/output/traffic_lights` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | output that contains estimated pedestrian traffic signals |
 
 ## Parameters

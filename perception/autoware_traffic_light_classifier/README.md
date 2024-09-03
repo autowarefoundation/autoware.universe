@@ -50,10 +50,10 @@ These colors and shapes are assigned to the message as follows:
 
 ### Output
 
-| Name                       | Type                                            | Description         |
-| -------------------------- | ----------------------------------------------- | ------------------- |
+| Name                      | Type                                            | Description         |
+| ------------------------- | ----------------------------------------------- | ------------------- |
 | `~/output/traffic_lights` | `tier4_perception_msgs::msg::TrafficLightArray` | classified signals  |
-| `~/output/debug/image`     | `sensor_msgs::msg::Image`                       | image for debugging |
+| `~/output/debug/image`    | `sensor_msgs::msg::Image`                       | image for debugging |
 
 ## Parameters
 
