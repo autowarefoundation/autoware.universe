@@ -23,7 +23,8 @@
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <tier4_metric_msgs/msg/metric.hpp>
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -35,8 +36,9 @@
 #include <utility>
 #include <vector>
 
-using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
-using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
+using Metric = tier4_metric_msgs::msg::Metric;
+using MetricArray = tier4_metric_msgs::msg::MetricArray;
+
 class PlannerInterface
 {
 public:
@@ -56,7 +58,7 @@ public:
       node.create_publisher<VelocityFactorArray>("/planning/velocity_factors/obstacle_cruise", 1);
     stop_speed_exceeded_pub_ =
       node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
-    diagnostics_pub_ = node.create_publisher<DiagnosticArray>("/diagnostics", 10);
+    metrics_pub_ = node.create_publisher<MetricArray>("/metrics", 10);
 
     moving_object_speed_threshold =
       node.declare_parameter<double>("slow_down.moving_object_speed_threshold");
@@ -95,13 +97,12 @@ public:
     const std::vector<SlowDownObstacle> & slow_down_obstacles,
     std::optional<VelocityLimit> & vel_limit);
 
-  DiagnosticStatus makeEmptyDiagnostic(const std::string & reason);
-  DiagnosticStatus makeDiagnostic(
+  std::vector<Metric> makeDicisionMetrics(
     const std::string & reason, const std::optional<PlannerData> & planner_data = std::nullopt,
     const std::optional<geometry_msgs::msg::Pose> & stop_pose = std::nullopt,
     const std::optional<StopObstacle> & stop_obstacle = std::nullopt);
-  void publishDiagnostics(const rclcpp::Time & current_time);
-  void clearDiagnostics();
+  void publishMetrics(const rclcpp::Time & current_time);
+  void clearMetrics();
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
   {
@@ -148,7 +149,7 @@ protected:
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reasons_pub_;
   rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factors_pub_;
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
-  rclcpp::Publisher<DiagnosticArray>::SharedPtr diagnostics_pub_;
+  rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
 
   // Vehicle Parameters
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
