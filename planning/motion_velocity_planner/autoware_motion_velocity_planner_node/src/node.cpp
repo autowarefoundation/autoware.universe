@@ -31,6 +31,7 @@
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
@@ -129,7 +130,8 @@ void MotionVelocityPlannerNode::on_unload_plugin(
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
-bool MotionVelocityPlannerNode::update_planner_data()
+bool MotionVelocityPlannerNode::update_planner_data(
+  std::map<std::string, double> & processing_times)
 {
   auto clock = *get_clock();
   auto is_ready = true;
@@ -143,32 +145,40 @@ bool MotionVelocityPlannerNode::update_planner_data()
     return true;
   };
 
+  universe_utils::StopWatch<std::chrono::milliseconds> sw;
   const auto ego_state_ptr = sub_vehicle_odometry_.takeData();
   if (check_with_log(ego_state_ptr, "Waiting for current odometry"))
     planner_data_.current_odometry = *ego_state_ptr;
+  processing_times["update_planner_data.odom"] = sw.toc(true);
 
   const auto ego_accel_ptr = sub_acceleration_.takeData();
   if (check_with_log(ego_accel_ptr, "Waiting for current acceleration"))
     planner_data_.current_acceleration = *ego_accel_ptr;
+  processing_times["update_planner_data.accel"] = sw.toc(true);
 
   const auto predicted_objects_ptr = sub_predicted_objects_.takeData();
   if (check_with_log(predicted_objects_ptr, "Waiting for predicted objects"))
     planner_data_.predicted_objects = *predicted_objects_ptr;
+  processing_times["update_planner_data.pred_obj"] = sw.toc(true);
 
   const auto no_ground_pointcloud_ptr = sub_no_ground_pointcloud_.takeData();
   if (check_with_log(no_ground_pointcloud_ptr, "Waiting for pointcloud")) {
     const auto no_ground_pointcloud = process_no_ground_pointcloud(no_ground_pointcloud_ptr);
     if (no_ground_pointcloud) planner_data_.no_ground_pointcloud = *no_ground_pointcloud;
   }
+  processing_times["update_planner_data.pcd"] = sw.toc(true);
 
   const auto occupancy_grid_ptr = sub_occupancy_grid_.takeData();
   if (check_with_log(occupancy_grid_ptr, "Waiting for the occupancy grid"))
     planner_data_.occupancy_grid = *occupancy_grid_ptr;
+  processing_times["update_planner_data.occ_grid"] = sw.toc(true);
 
   // here we use bitwise operator to not short-circuit the logging messages
   is_ready &= check_with_log(map_ptr_, "Waiting for the map");
+  processing_times["update_planner_data.map"] = sw.toc(true);
   is_ready &= check_with_log(
     planner_data_.velocity_smoother_, "Waiting for the initialization of the velocity smoother");
+  processing_times["update_planner_data.smoother"] = sw.toc(true);
 
   // optional data
   const auto traffic_signals_ptr = sub_traffic_signals_.takeData();
@@ -176,6 +186,7 @@ bool MotionVelocityPlannerNode::update_planner_data()
   const auto virtual_traffic_light_states_ptr = sub_virtual_traffic_light_states_.takeData();
   if (virtual_traffic_light_states_ptr)
     planner_data_.virtual_traffic_light_states = *virtual_traffic_light_states_ptr;
+  processing_times["update_planner_data.traffic_lights"] = sw.toc(true);
 
   return is_ready;
 }
@@ -261,7 +272,7 @@ void MotionVelocityPlannerNode::on_trajectory(
   std::map<std::string, double> processing_times;
   stop_watch.tic("Total");
 
-  if (!update_planner_data()) {
+  if (!update_planner_data(processing_times)) {
     return;
   }
   processing_times["update_planner_data"] = stop_watch.toc(true);
@@ -279,7 +290,7 @@ void MotionVelocityPlannerNode::on_trajectory(
 
   autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points{
     input_trajectory_msg->points.begin(), input_trajectory_msg->points.end()};
-  auto output_trajectory_msg = generate_trajectory(input_trajectory_points);
+  auto output_trajectory_msg = generate_trajectory(input_trajectory_points, processing_times);
   output_trajectory_msg.header = input_trajectory_msg->header;
   processing_times["generate_trajectory"] = stop_watch.toc(true);
 
@@ -385,25 +396,32 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
 }
 
 autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_trajectory(
-  autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points)
+  autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points,
+  std::map<std::string, double> & processing_times)
 {
-  universe_utils::StopWatch<std::chrono::microseconds> stop_watch;
+  universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   autoware_planning_msgs::msg::Trajectory output_trajectory_msg;
   output_trajectory_msg.points = {input_trajectory_points.begin(), input_trajectory_points.end()};
   if (smooth_velocity_before_planning_) {
     stop_watch.tic("smooth");
     input_trajectory_points = smooth_trajectory(input_trajectory_points, planner_data_);
-    RCLCPP_DEBUG(get_logger(), "smooth: %2.2f us", stop_watch.toc("smooth"));
+    processing_times["velocity_smoothing"] = stop_watch.toc("smooth");
   }
   autoware_planning_msgs::msg::Trajectory smooth_velocity_trajectory;
   smooth_velocity_trajectory.points = {
     input_trajectory_points.begin(), input_trajectory_points.end()};
+  stop_watch.tic("resample");
   auto resampled_trajectory =
     autoware::motion_utils::resampleTrajectory(smooth_velocity_trajectory, 0.5);
+  processing_times["resample"] = stop_watch.toc("resample");
+  stop_watch.tic("calculate_time_from_start");
   motion_utils::calculate_time_from_start(
     resampled_trajectory.points, planner_data_.current_odometry.pose.pose.position);
+  processing_times["calculate_time_from_start"] = stop_watch.toc("calculate_time_from_start");
+  stop_watch.tic("plan_velocities");
   const auto planning_results = planner_manager_.plan_velocities(
     resampled_trajectory.points, std::make_shared<const PlannerData>(planner_data_));
+  processing_times["plan_velocities"] = stop_watch.toc("plan_velocities");
 
   autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factors;
   velocity_factors.header.frame_id = "map";
