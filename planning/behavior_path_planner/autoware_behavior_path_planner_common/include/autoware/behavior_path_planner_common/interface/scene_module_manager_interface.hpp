@@ -315,6 +315,12 @@ protected:
         "~/processing_time/" + name_, 20);
     }
 
+    // init steering factor
+    {
+      steering_factor_interface_ptr_ =
+        std::make_shared<SteeringFactorInterface>(node, utils::convertToSnakeCase(name_));
+    }
+
     // misc
     {
       node_ = node;
@@ -338,6 +344,8 @@ protected:
   std::string name_;
 
   std::shared_ptr<PlannerData> planner_data_;
+
+  std::shared_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
 
   std::vector<SceneModuleObserver> observers_;
 
