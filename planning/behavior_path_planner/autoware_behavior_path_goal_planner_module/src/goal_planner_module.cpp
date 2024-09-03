@@ -470,12 +470,15 @@ void GoalPlannerModule::updateData()
     const auto objects_extraction_polygon = goal_planner_utils::generateObjectExtractionPolygon(
       pull_over_lanes, left_side_parking_, p->detection_bound_offset,
       p->margin_from_boundary + p->max_lateral_offset + vehicle_width);
-    debug_data_.objects_extraction_polygon = objects_extraction_polygon;
-
+    if (objects_extraction_polygon.has_value()) {
+      debug_data_.objects_extraction_polygon = objects_extraction_polygon.value();
+    }
     PredictedObjects dynamic_target_objects{};
     for (const auto & object : objects.objects) {
       const auto object_polygon = universe_utils::toPolygon2d(object);
-      if (boost::geometry::intersects(object_polygon, objects_extraction_polygon)) {
+      if (
+        objects_extraction_polygon.has_value() &&
+        boost::geometry::intersects(object_polygon, objects_extraction_polygon.value())) {
         dynamic_target_objects.objects.push_back(object);
       }
     }

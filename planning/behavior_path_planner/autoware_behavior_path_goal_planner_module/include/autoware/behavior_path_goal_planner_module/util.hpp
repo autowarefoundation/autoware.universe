@@ -73,7 +73,7 @@ lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
  * @param inner_offset inner offset from pull over lane boundary
  * @return polygon to extract objects
  */
-Polygon2d generateObjectExtractionPolygon(
+std::optional<Polygon2d> generateObjectExtractionPolygon(
   const lanelet::ConstLanelets & pull_over_lanes, const bool left_side, const double outer_offset,
   const double inner_offset);
 
