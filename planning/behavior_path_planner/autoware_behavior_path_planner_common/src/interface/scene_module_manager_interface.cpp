@@ -59,6 +59,12 @@ void SceneModuleManagerInterface::initInterface(
       "~/processing_time/" + name_, 20);
   }
 
+  // init steering factor
+  {
+    steering_factor_interface_ptr_ =
+      std::make_shared<SteeringFactorInterface>(node, utils::convertToSnakeCase(name_));
+  }
+
   // misc
   {
     node_ = node;

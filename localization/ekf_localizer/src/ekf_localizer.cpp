@@ -34,6 +34,9 @@
 #include <string>
 #include <utility>
 
+namespace autoware::ekf_localizer
+{
+
 // clang-format off
 #define PRINT_MAT(X) std::cout << #X << ":\n" << X << std::endl << std::endl // NOLINT
 #define DEBUG_INFO(...) {if (params_.show_debug_info) {RCLCPP_INFO(__VA_ARGS__);}} // NOLINT
@@ -456,9 +459,9 @@ void EKFLocalizer::update_simple_1d_filters(
   double pitch_var =
     pose.pose.covariance[COV_IDX::PITCH_PITCH] * static_cast<double>(smoothing_step);
 
-  z_filter_.update(z, z_var, pose.header.stamp);
-  roll_filter_.update(rpy.x, roll_var, pose.header.stamp);
-  pitch_filter_.update(rpy.y, pitch_var, pose.header.stamp);
+  z_filter_.update(z, z_var, ekf_dt_);
+  roll_filter_.update(rpy.x, roll_var, ekf_dt_);
+  pitch_filter_.update(rpy.y, pitch_var, ekf_dt_);
 }
 
 void EKFLocalizer::init_simple_1d_filters(
@@ -473,9 +476,9 @@ void EKFLocalizer::init_simple_1d_filters(
   double roll_var = pose.pose.covariance[COV_IDX::ROLL_ROLL];
   double pitch_var = pose.pose.covariance[COV_IDX::PITCH_PITCH];
 
-  z_filter_.init(z, z_var, pose.header.stamp);
-  roll_filter_.init(rpy.x, roll_var, pose.header.stamp);
-  pitch_filter_.init(rpy.y, pitch_var, pose.header.stamp);
+  z_filter_.init(z, z_var);
+  roll_filter_.init(rpy.x, roll_var);
+  pitch_filter_.init(rpy.y, pitch_var);
 }
 
 /**
@@ -495,5 +498,7 @@ void EKFLocalizer::service_trigger_node(
   res->success = true;
 }
 
+}  // namespace autoware::ekf_localizer
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(EKFLocalizer)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ekf_localizer::EKFLocalizer)

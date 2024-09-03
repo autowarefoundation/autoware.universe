@@ -276,6 +276,8 @@ protected:
 
   std::shared_ptr<PlannerData> planner_data_;
 
+  std::shared_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
+
   std::vector<SceneModuleObserver> observers_;
 
   std::unique_ptr<SceneModuleInterface> idle_module_ptr_;
