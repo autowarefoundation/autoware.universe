@@ -163,11 +163,11 @@ Polygon2d generateObjectExtractionPolygon(
   }
 
   // set orientation to next point
-  for (size_t i = 0; i < base_boundary_poses.size() - 1; ++i) {
-    const auto & p = base_boundary_poses[i].position;
-    const auto & next_p = base_boundary_poses[i + 1].position;
+  for (auto it = base_boundary_poses.begin(); it != std::prev(base_boundary_poses.end()); ++it) {
+    const auto & p = it->position;
+    const auto & next_p = std::next(it)->position;
     const double yaw = autoware::universe_utils::calcAzimuthAngle(p, next_p);
-    base_boundary_poses[i].orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
+    it->orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
   }
   base_boundary_poses.back().orientation =
     base_boundary_poses[base_boundary_poses.size() - 2].orientation;
