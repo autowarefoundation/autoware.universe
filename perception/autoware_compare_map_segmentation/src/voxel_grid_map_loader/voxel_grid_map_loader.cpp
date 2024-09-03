@@ -270,6 +270,14 @@ void VoxelGridStaticMapLoader::onMapCallback(
   voxel_grid_.filter(*voxel_map_ptr_);
   (*mutex_ptr_).unlock();
 
+  // sanity check: check pointcloud size before and after filters
+  const auto voxel_map_size = voxel_map_ptr_->size();
+  const auto original_map_size = map_pcl_ptr->size();
+  const bool map_is_not_filtered = (voxel_map_size == original_map_size);
+  if (map_is_not_filtered) {
+    RCLCPP_WARN(logger_, "Map size has not changed. Check the voxel grid filter parameters.");
+  }
+
   if (debug_) {
     publish_downsampled_map(*voxel_map_ptr_);
   }
