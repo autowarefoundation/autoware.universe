@@ -1,12 +1,12 @@
-name: cppcheck-daily
+name: cppcheck-weekly
 
 on:
   schedule:
-    - cron: 0 0 * * *
+    - cron: 0 0 * * 1
   workflow_dispatch:
 
 jobs:
-  cppcheck-daily:
+  cppcheck-weekly:
     runs-on: ubuntu-latest
 
     steps:
