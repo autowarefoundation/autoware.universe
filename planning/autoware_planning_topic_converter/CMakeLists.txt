@@ -12,8 +12,16 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
+generate_parameter_library(converter_base_parameters
+  param/converter_base_parameters.yaml
+)
+
 ament_auto_add_library(planning_topic_converter SHARED
   src/path_to_trajectory.cpp
+)
+
+target_link_libraries(planning_topic_converter
+  converter_base_parameters
 )
 
 rclcpp_components_register_node(planning_topic_converter

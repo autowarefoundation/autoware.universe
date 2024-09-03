@@ -1,0 +1,7 @@
+converter_base:
+  input_topic:
+    type: string
+    description: Input topic name.
+  output_topic:
+    type: string
+    description: Output topic name.
