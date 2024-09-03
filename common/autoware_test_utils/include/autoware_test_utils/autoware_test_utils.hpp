@@ -601,10 +601,7 @@ public:
     pub_clock_->publish(clock);
   }
 
-  void spin()
-  {
-    rclcpp::spin_some(test_node_);
-  }
+  void spin() { rclcpp::spin_some(test_node_); }
 
 protected:
   // Publisher
