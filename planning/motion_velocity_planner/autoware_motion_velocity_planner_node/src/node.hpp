@@ -33,7 +33,6 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
-#include <tier4_metric_msgs/msg/MetricArray.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -44,8 +43,6 @@
 #include <mutex>
 #include <string>
 #include <vector>
-
-using MetricArray = tier4_metric_msgs::msg::MetricArray;
 
 namespace autoware::motion_velocity_planner
 {

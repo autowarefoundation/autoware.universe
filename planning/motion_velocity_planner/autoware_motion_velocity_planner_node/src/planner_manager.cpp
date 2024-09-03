@@ -76,7 +76,7 @@ std::shared_ptr<Metric> MotionVelocityPlannerManager::make_decision_metric(
   const std::string & module_name, const std::string & reason, const bool is_decided)
 {
   auto metric = std::make_shared<Metric>();
-  metric->name = module_name + '/' + 'decision';
+  metric->name = module_name + "/decision";
   metric->unit = "string";
   if (is_decided)
     metric->value = reason;
@@ -89,13 +89,13 @@ std::shared_ptr<MetricArray> MotionVelocityPlannerManager::get_metrics(
   const rclcpp::Time & current_time) const
 {
   auto metrics = std::make_shared<MetricArray>();
+  metrics->stamp = current_time;
 
   for (const auto & mtr_ptr : metrics_) {
-    if (mtr_ptr.value != "none") {
+    if (mtr_ptr->value != "none") {
       metrics->metric_array.push_back(*mtr_ptr);
     }
   }
-  metrics->stamp = current_time;
   return metrics;
 }
 
