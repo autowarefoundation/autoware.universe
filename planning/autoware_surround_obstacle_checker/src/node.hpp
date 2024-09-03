@@ -66,6 +66,8 @@ public:
 private:
   std::array<double, 3> getCheckDistances(const std::string & str_label) const;
 
+  bool getUseDynamicObject() const;
+
   void onTimer();
 
   void onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
@@ -125,8 +127,6 @@ private:
   std::shared_ptr<const rclcpp::Time> last_obstacle_found_time_;
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
-
-  bool use_dynamic_object_;
 
   std::unordered_map<int, std::string> label_map_;
 };

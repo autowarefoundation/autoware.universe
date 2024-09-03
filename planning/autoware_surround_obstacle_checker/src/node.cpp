@@ -202,6 +202,16 @@ std::array<double, 3> SurroundObstacleCheckerNode::getCheckDistances(
     obstacle_param.surround_check_back_distance};
 }
 
+bool SurroundObstacleCheckerNode::getUseDynamicObject() const
+{
+  const auto p = param_listener_->get_params();
+  bool use_dynamic_object = false;
+  for (const auto & label_pair : label_map_) {
+    use_dynamic_object |= p.object_types_map.at(label_pair.second).enable_check;
+  }
+  return use_dynamic_object;
+}
+
 void SurroundObstacleCheckerNode::onTimer()
 {
   odometry_ptr_ = sub_odometry_.takeData();
@@ -215,6 +225,7 @@ void SurroundObstacleCheckerNode::onTimer()
   }
 
   const auto p = param_listener_->get_params();
+  const auto use_dynamic_object = getUseDynamicObject();
 
   if (p.publish_debug_footprints) {
     debug_ptr_->publishFootprints();
@@ -225,12 +236,12 @@ void SurroundObstacleCheckerNode::onTimer()
       this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for pointcloud info...");
   }
 
-  if (use_dynamic_object_ && !object_ptr_) {
+  if (use_dynamic_object && !object_ptr_) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for dynamic object info...");
   }
 
-  if (!p.pointcloud.enable_check && !use_dynamic_object_) {
+  if (!p.pointcloud.enable_check && !use_dynamic_object) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000 /* ms */,
       "Surround obstacle check is disabled for all dynamic object types and for pointcloud check.");
@@ -379,7 +390,7 @@ std::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByPointCl
 
 std::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject() const
 {
-  if (!object_ptr_ || !use_dynamic_object_) return std::nullopt;
+  if (!object_ptr_ || !getUseDynamicObject()) return std::nullopt;
 
   const auto transform_stamped =
     getTransform(object_ptr_->header.frame_id, "base_link", object_ptr_->header.stamp, 0.5);
