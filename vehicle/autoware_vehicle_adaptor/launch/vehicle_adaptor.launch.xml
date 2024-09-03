@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="input_control_cmd" default="/control/command/control_cmd"/>
+  <arg name="output_control_cmd" default="/vehicle/command/control_cmd"/>
+
+  <node pkg="autoware_vehicle_adaptor" exec="autoware_vehicle_adaptor_node" name="vehicle_adaptor" output="screen">
+    <remap from="~/input/control_cmd" to="$(var input_control_cmd)"/>
+    <remap from="~/output/control_cmd" to="$(var output_control_cmd)"/>
+  </node>
+</launch>
