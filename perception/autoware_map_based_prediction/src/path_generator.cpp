@@ -251,6 +251,8 @@ PredictedPath PathGenerator::generatePolynomialPath(
   // calculate terminal d position, based on backlash width
   {
     if (backlash_width < 0.01 /*m*/) {
+      // If the backlash width is less than 0.01m, do not consider the backlash width and reduce
+      // calculation cost
       terminal_point.d = 0.0;
     } else {
       constexpr double return_width = 1.5;  // [m]
