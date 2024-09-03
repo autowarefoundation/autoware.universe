@@ -44,6 +44,8 @@ public:
 
   void init(rclcpp::Node * node) override;
 
+  std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
+
 private:
   std::shared_ptr<AvoidanceByLCParameters> avoidance_parameters_;
 };

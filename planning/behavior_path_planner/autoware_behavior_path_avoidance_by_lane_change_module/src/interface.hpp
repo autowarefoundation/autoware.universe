@@ -45,6 +45,8 @@ public:
 
   bool isExecutionRequested() const override;
 
+  void processOnEntry() override;
+
 protected:
   void updateRTCStatus(const double start_distance, const double finish_distance) override;
 };
