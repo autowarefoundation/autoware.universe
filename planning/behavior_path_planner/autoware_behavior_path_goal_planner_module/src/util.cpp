@@ -183,11 +183,11 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
     inner_boundary_points.push_back(inner_pose.position);
   }
 
-  // fix intersected bound
+  // remove self intersection
   // if bound is intersected, remove them and insert intersection point
   using BoostPoint = boost::geometry::model::d2::point_xy<double>;
   using LineString = boost::geometry::model::linestring<BoostPoint>;
-  const auto modify_bound_intersection = [](const std::vector<Point> & bound) {
+  const auto remove_self_intersection = [](const std::vector<Point> & bound) {
     constexpr double INTERSECTION_CHECK_DISTANCE = 10.0;
     std::vector<Point> modified_bound{};
     size_t i = 0;
@@ -231,8 +231,8 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
     modified_bound.push_back(bound.back());
     return modified_bound;
   };
-  outer_boundary_points = modify_bound_intersection(outer_boundary_points);
-  inner_boundary_points = modify_bound_intersection(inner_boundary_points);
+  outer_boundary_points = remove_self_intersection(outer_boundary_points);
+  inner_boundary_points = remove_self_intersection(inner_boundary_points);
 
   // create clockwise polygon
   Polygon2d polygon{};
