@@ -58,8 +58,9 @@ GoalPlannerModule::GoalPlannerModule(
   const std::shared_ptr<GoalPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
+    objects_of_interest_marker_interface_ptr_map,
+  std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, steering_factor_interface_ptr},  // NOLINT
   parameters_{parameters},
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
   thread_safe_data_{mutex_, clock_},
@@ -283,6 +284,10 @@ void GoalPlannerModule::onTimer()
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
     }
+    // TODO(someone): The generated path inherits the velocity of the path of the previous module.
+    // Therefore, if the velocity of the path of the previous module changes (e.g. stop points are
+    // inserted, deleted), the path should be regenerated.
+
     return false;
   });
   if (!need_update) {
@@ -302,9 +307,8 @@ void GoalPlannerModule::onTimer()
   const auto planCandidatePaths = [&](
                                     const std::shared_ptr<PullOverPlannerBase> & planner,
                                     const GoalCandidate & goal_candidate) {
-    planner->setPlannerData(local_planner_data);
-    planner->setPreviousModuleOutput(previous_module_output);
-    auto pull_over_path = planner->plan(goal_candidate.goal_pose);
+    auto pull_over_path =
+      planner->plan(local_planner_data, previous_module_output, goal_candidate.goal_pose);
     if (pull_over_path && pull_over_path->getParkingPath().points.size() >= 3) {
       pull_over_path->goal_id = goal_candidate.id;
       pull_over_path->id = path_candidates.size();
@@ -750,8 +754,9 @@ bool GoalPlannerModule::planFreespacePath(
     if (!goal_candidate.is_safe) {
       continue;
     }
-    freespace_planner_->setPlannerData(planner_data);
-    auto freespace_path = freespace_planner_->plan(goal_candidate.goal_pose);
+    auto freespace_path = freespace_planner_->plan(
+      planner_data, BehaviorModuleOutput{},  // NOTE: not used so passing {} is OK
+      goal_candidate.goal_pose);
     freespace_path->goal_id = goal_candidate.id;
     if (!freespace_path) {
       continue;
@@ -1525,7 +1530,6 @@ void GoalPlannerModule::updatePreviousData()
   // this is used to determine whether to generate a new stop path or keep the current stop path.
   // TODO(Mamoru Sobue): put prev_data_ out of  ThreadSafeData
   auto prev_data = thread_safe_data_.get_prev_data();
-  prev_data.found_path = thread_safe_data_.foundPullOverPath();
 
   prev_data.deciding_path_status = checkDecidingPathStatus(
     planner_data_, occupancy_grid_map_, *parameters_, ego_predicted_path_params_,
@@ -1628,8 +1632,12 @@ PathWithLaneId GoalPlannerModule::generateStopPath() const
     const double s_end = s_current + common_parameters.forward_path_length;
     return route_handler->getCenterLinePath(current_lanes, s_start, s_end, true);
   });
+
+  // NOTE: The previous module may insert a zero velocity at the end of the path, so remove it by
+  // setting remove_connected_zero_velocity=true. Inserting a velocity of 0 into the goal is the
+  // role of the goal planner, and the intermediate zero velocity after extension is unnecessary.
   const auto extended_prev_path = goal_planner_utils::extendPath(
-    getPreviousModuleOutput().path, reference_path, common_parameters.forward_path_length);
+    getPreviousModuleOutput().path, reference_path, common_parameters.forward_path_length, true);
 
   // calculate search start offset pose from the closest goal candidate pose with
   // approximate_pull_over_distance_ ego vehicle decelerates to this position. or if no feasible

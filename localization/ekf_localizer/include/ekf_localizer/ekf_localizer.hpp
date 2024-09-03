@@ -39,6 +39,7 @@
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
+#include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -48,6 +49,9 @@
 #include <queue>
 #include <string>
 #include <vector>
+
+namespace autoware::ekf_localizer
+{
 
 class Simple1DFilter
 {
@@ -59,22 +63,20 @@ public:
     var_ = 1e9;
     proc_var_x_c_ = 0.0;
   };
-  void init(const double init_obs, const double obs_var, const rclcpp::Time & time)
+  void init(const double init_obs, const double obs_var)
   {
     x_ = init_obs;
     var_ = obs_var;
-    latest_time_ = time;
     initialized_ = true;
   };
-  void update(const double obs, const double obs_var, const rclcpp::Time & time)
+  void update(const double obs, const double obs_var, const double dt)
   {
     if (!initialized_) {
-      init(obs, obs_var, time);
+      init(obs, obs_var);
       return;
     }
 
     // Prediction step (current variance)
-    double dt = (time - latest_time_).seconds();
     double proc_var_x_d = proc_var_x_c_ * dt * dt;
     var_ = var_ + proc_var_x_d;
 
@@ -82,8 +84,6 @@ public:
     double kalman_gain = var_ / (var_ + obs_var);
     x_ = x_ + kalman_gain * (obs - x_);
     var_ = (1 - kalman_gain) * var_;
-
-    latest_time_ = time;
   };
   void set_proc_var(const double proc_var) { proc_var_x_c_ = proc_var; }
   [[nodiscard]] double get_x() const { return x_; }
@@ -94,7 +94,6 @@ private:
   double x_;
   double var_;
   double proc_var_x_c_;
-  rclcpp::Time latest_time_;
 };
 
 class EKFLocalizer : public rclcpp::Node
@@ -141,6 +140,10 @@ private:
   rclcpp::TimerBase::SharedPtr timer_tf_;
   //!< @brief tf broadcaster
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;
+  //!< @brief tf buffer
+  tf2_ros::Buffer tf2_buffer_;
+  //!< @brief tf listener
+  tf2_ros::TransformListener tf2_listener_;
 
   //!< @brief logger configure module
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
@@ -154,11 +157,6 @@ private:
   const HyperParameters params_;
 
   double ekf_dt_;
-
-  /* process noise variance for discrete model */
-  double proc_cov_yaw_d_;  //!< @brief  discrete yaw process noise
-  double proc_cov_vx_d_;   //!< @brief  discrete process noise in d_vx=0
-  double proc_cov_wz_d_;   //!< @brief  discrete process noise in d_wz=0
 
   bool is_activated_;
 
@@ -247,4 +245,7 @@ private:
 
   friend class EKFLocalizerTestSuite;  // for test code
 };
+
+}  // namespace autoware::ekf_localizer
+
 #endif  // EKF_LOCALIZER__EKF_LOCALIZER_HPP_
