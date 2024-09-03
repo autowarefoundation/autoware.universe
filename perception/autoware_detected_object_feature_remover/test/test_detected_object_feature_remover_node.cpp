@@ -138,8 +138,8 @@ TEST(FeatureRemoverTest, TestArbitraryObject)
 
   // Check output
   auto expect = generate_detected_object();
-  EXPECT_EQ(output.objects.size(), 1);
-  EXPECT_EQ(output.objects.front(), expect);
+  EXPECT_EQ(1, output.objects.size());
+  EXPECT_EQ(expect, output.objects.front());
 }
 
 /**
@@ -169,7 +169,7 @@ TEST(FeatureRemoverTest, TestEmptyObject)
   test_manager->test_pub_msg<DetectedObjectsWithFeature>(node, input_topic, input);
 
   // Check output
-  EXPECT_EQ(output.objects.size(), 0);
+  EXPECT_EQ(0, output.objects.size());
 }
 
 int main(int argc, char ** argv)
