@@ -70,14 +70,4 @@ void SceneModuleManagerInterface::initInterface(
     node_ = node;
   }
 }
-
-void SceneModuleManagerInterface::updateIdleModuleInstance()
-{
-  if (idle_module_ptr_) {
-    idle_module_ptr_->onEntry();
-    return;
-  }
-
-  idle_module_ptr_ = createNewSceneModuleInstance();
-}
 }  // namespace autoware::behavior_path_planner

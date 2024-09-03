@@ -57,7 +57,15 @@ public:
 
   virtual void init(rclcpp::Node * node) = 0;
 
-  void updateIdleModuleInstance();
+  void updateIdleModuleInstance()
+  {
+    if (idle_module_ptr_) {
+      idle_module_ptr_->onEntry();
+      return;
+    }
+
+    idle_module_ptr_ = createNewSceneModuleInstance();
+  }
 
   bool isExecutionRequested(const BehaviorModuleOutput & previous_module_output) const
   {

@@ -173,7 +173,14 @@ public:
   /**
    * @brief Called on the first time when the module goes into RUNNING.
    */
-  void onEntry();
+  void onEntry()
+  {
+    RCLCPP_DEBUG(getLogger(), "%s %s", name_.c_str(), __func__);
+
+    stop_reason_ = StopReason();
+
+    processOnEntry();
+  }
 
   /**
    * @brief Called when the module exit from RUNNING.
