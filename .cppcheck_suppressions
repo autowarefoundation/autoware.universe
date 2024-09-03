@@ -1,15 +1,10 @@
 *:*/test/*
 
 checkersReport
-functionStatic
 missingInclude
 missingIncludeSystem
-noConstructor
 unknownMacro
 unmatchedSuppression
-unreadVariable
 unusedFunction
 useInitializationList
 useStlAlgorithm
-variableScope
-virtualCallInConstructor
