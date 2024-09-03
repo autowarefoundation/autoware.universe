@@ -86,13 +86,10 @@ TEST(SimpleObjectMergerTest, testSimpleObjectMergerTwoTopics)
   // set the subscriber
   test_manager->set_subscriber<DetectedObjects>("/output/objects", callback);
 
-  // Set the clock and initialize the node
+  // Time-wise simulation
   rclcpp::Time current_time(0);
-
-  // time-wise simulation
   auto time_interval = rclcpp::Duration(0, 0);
   time_interval = time_interval.from_seconds(0.010);
-
   for (int i = 0; i < 20; i++) {
     current_time = current_time + time_interval;
     test_manager->jump_clock(current_time);
