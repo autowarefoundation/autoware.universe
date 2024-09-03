@@ -79,9 +79,54 @@ TEST(SimpleObjectMergerTest, testSimpleObjectMergerTwoTopics)
 
   // Set the output tester
   int counter = 0;
-  auto callback = [&counter](const DetectedObjects::ConstSharedPtr msg) {
+  auto callback = [&counter, &target_node](const DetectedObjects::ConstSharedPtr msg) {
     (void)msg;
     ++counter;
+    // debug message
+    RCLCPP_INFO(target_node->get_logger(), "TESTER Received %d messages", counter);
+  };
+  // set the subscriber
+  test_manager->set_subscriber<DetectedObjects>("/output/objects", callback);
+
+  // Initialization
+  rclcpp::Time current_time(0);
+  test_manager->jump_clock(current_time);
+  rclcpp::spin_some(target_node);  // initialize the node timer
+
+  // Publish two input topics
+  DetectedObjects msg = *generateDetectedObjects(current_time);
+  test_manager->test_pub_msg<DetectedObjects>(target_node, "/input/object0", msg);
+  test_manager->test_pub_msg<DetectedObjects>(target_node, "/input/object1", msg);
+
+  // Spin the test target node
+  auto time_interval = rclcpp::Duration(0, 1e8);
+  // time_interval = time_interval.from_seconds(
+  //   0.1);  // longer than the update rate, so the timer callback should be called
+  test_manager->jump_clock(current_time + time_interval);
+  rclcpp::spin_some(target_node);
+
+  // spin the test manager to subscribe the output topic
+  test_manager->spin();
+
+  // Check if the message is published to the output topic
+  EXPECT_GE(counter, 1);
+
+  rclcpp::shutdown();
+}
+
+TEST(SimpleObjectMergerTest, testSimpleObjectMergerSequentialTwoTopics)
+{
+  rclcpp::init(0, nullptr);
+  auto test_manager = generateTestManager();
+  auto target_node = generateNode();
+
+  // Set the output tester
+  int counter = 0;
+  auto callback = [&counter, &target_node](const DetectedObjects::ConstSharedPtr msg) {
+    (void)msg;
+    ++counter;
+    // debug message
+    RCLCPP_INFO(target_node->get_logger(), "TESTER Received %d messages", counter);
   };
   // set the subscriber
   test_manager->set_subscriber<DetectedObjects>("/output/objects", callback);
@@ -90,13 +135,16 @@ TEST(SimpleObjectMergerTest, testSimpleObjectMergerTwoTopics)
   rclcpp::Time current_time(0);
   auto time_interval = rclcpp::Duration(0, 0);
   time_interval = time_interval.from_seconds(0.010);
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 40; i++) {
     current_time = current_time + time_interval;
     test_manager->jump_clock(current_time);
 
     if (i == 0) {
       DetectedObjects msg = *generateDetectedObjects(current_time);
       test_manager->test_pub_msg<DetectedObjects>(target_node, "/input/object0", msg);
+    }
+    if (i == 10) {
+      DetectedObjects msg = *generateDetectedObjects(current_time);
       test_manager->test_pub_msg<DetectedObjects>(target_node, "/input/object1", msg);
     }
 
