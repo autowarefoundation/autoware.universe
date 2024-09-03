@@ -252,7 +252,7 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
     left_boundary_points.front().x, left_boundary_points.front().y};
   polygon.outer().push_back(first_point);
 
-  if(polygon.outer().size() < 3) {
+  if (polygon.outer().size() < 3) {
     return std::nullopt;
   }
 
