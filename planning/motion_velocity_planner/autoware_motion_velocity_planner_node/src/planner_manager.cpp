@@ -108,13 +108,13 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
     VelocityPlanningResult res = plugin->plan(ego_trajectory_points, planner_data);
     results.push_back(res);
 
-    const auto stop_decition_metric =
+    const auto stop_decision_metric =
       make_decision_metric(plugin->get_module_name(), "stop", res.stop_points.size() > 0);
-    metrics_.push_back(stop_decition_metric);
+    metrics_.push_back(stop_decision_metric);
 
-    const auto slow_down_decition_metric =
+    const auto slow_down_decision_metric =
       make_decision_metric(plugin->get_module_name(), "slow_down", res.slowdown_intervals.size() > 0);
-    metrics_.push_back(slow_down_decition_metric);
+    metrics_.push_back(slow_down_decision_metric);
   }
   return results;
 }
