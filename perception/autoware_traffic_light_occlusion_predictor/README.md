@@ -8,7 +8,7 @@ For each traffic light roi, hundreds of pixels would be selected and projected i
 
 ![image](images/occlusion.png)
 
-If no point cloud is received or all point clouds have very large stamp difference with the camera image, the occlusion ratio of each roi would be set as 0. The signal whose occlusion ratio is larger than `max_occlusion_ratio `will be set as unknown type.
+If no point cloud is received or all point clouds have very large stamp difference with the camera image, the occlusion ratio of each roi would be set as 0. The signal whose occlusion ratio is larger than `max_occlusion_ratio`will be set as unknown type.
 
 ## Input topics
 
