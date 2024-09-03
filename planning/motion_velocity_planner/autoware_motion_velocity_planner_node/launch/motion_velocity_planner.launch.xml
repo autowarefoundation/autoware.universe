@@ -27,7 +27,7 @@
     <remap from="~/input/virtual_traffic_light_states" to="/perception/virtual_traffic_light_states"/>
     <remap from="~/input/occupancy_grid" to="/perception/occupancy_grid_map/map"/>
     <remap from="~/output/trajectory" to="trajectory"/>
-    <remap from="~/metrics" to="/planning/motion_velocity_planner/metrics"/>
+    <remap from="~/metrics" to="/planning/autoware_motion_velocity_planner/metrics"/>
     <!-- params -->
     <param name="launch_modules" value="$(var motion_velocity_planner_launch_modules)"/>
     <!-- load config -->

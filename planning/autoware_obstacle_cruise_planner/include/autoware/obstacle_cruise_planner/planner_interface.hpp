@@ -58,7 +58,7 @@ public:
       node.create_publisher<VelocityFactorArray>("/planning/velocity_factors/obstacle_cruise", 1);
     stop_speed_exceeded_pub_ =
       node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
-    metrics_pub_ = node.create_publisher<MetricArray>("/metrics", 10);
+    metrics_pub_ = node.create_publisher<MetricArray>("~/metrics", 10);
 
     moving_object_speed_threshold =
       node.declare_parameter<double>("slow_down.moving_object_speed_threshold");
