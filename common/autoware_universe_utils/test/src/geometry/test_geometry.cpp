@@ -3076,138 +3076,149 @@ TEST(geometry, withinPolygonRand)
   }
 }
 
-double calculateArea(const autoware_universe::utils::pc::PolygonClip &polygon) {
-    double total_area = 0.0;
+double calculateArea(const autoware_universe::utils::pc::PolygonClip & polygon)
+{
+  double total_area = 0.0;
 
-    // Iterate over each sub-polygon
-    for (const auto &head : polygon.get_vertices()) {
-        if (head == nullptr) continue;
+  // Iterate over each sub-polygon
+  for (const auto & head : polygon.get_vertices()) {
+    if (head == nullptr) continue;
 
-        double area = 0.0;
-        auto current = head;
+    double area = 0.0;
+    auto current = head;
 
-        // Collect vertices of the current sub-polygon
-        std::vector<autoware_universe::utils::pc::Point> points;
-        do {
-            points.push_back(current->point);
-            current = current->next;
-        } while (current != head);
+    // Collect vertices of the current sub-polygon
+    std::vector<autoware_universe::utils::pc::Point> points;
+    do {
+      points.push_back(current->point);
+      current = current->next;
+    } while (current != head);
 
-        int n = points.size();
+    int n = points.size();
 
-        // Ensure the sub-polygon has at least 3 vertices
-        if (n < 3) {
-            continue; // Skip invalid sub-polygons
-        }
-
-        // Iterate over each edge of the sub-polygon
-        for (int i = 0; i < n; ++i) {
-            const auto &p1 = points[i];
-            const auto &p2 = points[(i + 1) % n]; // Wrap around to the first vertex
-            area += p1.x() * p2.y();
-            area -= p1.y() * p2.x();
-        }
-
-        area = std::abs(area) / 2.0;
-        total_area += area;
+    // Ensure the sub-polygon has at least 3 vertices
+    if (n < 3) {
+      continue;  // Skip invalid sub-polygons
     }
 
-    return total_area;
+    // Iterate over each edge of the sub-polygon
+    for (int i = 0; i < n; ++i) {
+      const auto & p1 = points[i];
+      const auto & p2 = points[(i + 1) % n];  // Wrap around to the first vertex
+      area += p1.x() * p2.y();
+      area -= p1.y() * p2.x();
+    }
+
+    area = std::abs(area) / 2.0;
+    total_area += area;
+  }
+
+  return total_area;
 }
 
-TEST(geometry, compareUnionAndDifferenceWithBoost) {
-    std::vector<autoware::universe_utils::Polygon2d> polygons;
-    constexpr auto polygons_nb = 500;
-    constexpr auto max_vertices = 10;
-    constexpr auto max_values = 1000;
+TEST(geometry, compareUnionAndDifferenceWithBoost)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
 
-    autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
 
-    double custom_union_ns = 0.0;
-    double custom_difference_ns = 0.0;
-    double boost_union_ns = 0.0;
-    double boost_difference_ns = 0.0;
+  double custom_union_ns = 0.0;
+  double custom_difference_ns = 0.0;
+  double boost_union_ns = 0.0;
+  double boost_difference_ns = 0.0;
 
-    int count_matching_areas_union = 0;
-    int count_different_areas_union = 0;
-    int count_matching_areas_difference = 0;
-    int count_different_areas_difference = 0;
+  int count_matching_areas_union = 0;
+  int count_different_areas_union = 0;
+  int count_matching_areas_difference = 0;
+  int count_different_areas_difference = 0;
 
-    for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
-        polygons.clear();
+  for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
+    polygons.clear();
 
-        for (auto i = 0; i < polygons_nb; ++i) {
-            polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
-        }
-
-        for (auto i = 0UL; i < polygons.size(); ++i) {
-            for (auto j = 0UL; j < polygons.size(); ++j) {
-                autoware_universe::utils::pc::PolygonClip polygonA(polygons[i]);
-                autoware_universe::utils::pc::PolygonClip polygonB(polygons[j]);
-                // Custom Union
-                sw.tic();
-                auto custom_union_result = autoware_universe::utils::pc::PolygonClip::Union(polygonA, polygonB);
-                custom_union_ns += sw.toc();
-
-                // Boost Union
-                sw.tic();
-                std::vector<autoware::universe_utils::Polygon2d> boost_union_result;
-                boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d> boost_union_resultMP;
-                boost::geometry::union_(polygons[i], polygons[j], boost_union_resultMP);
-                boost_union_result.assign(boost_union_resultMP.begin(), boost_union_resultMP.end());
-                boost_union_ns += sw.toc();
-
-                // Custom Difference
-                sw.tic();
-                auto custom_difference_result = autoware_universe::utils::pc::PolygonClip::Diff(polygonA, polygonB);
-                custom_difference_ns += sw.toc();
-
-                // Boost Difference
-                sw.tic();
-                std::vector<autoware::universe_utils::Polygon2d> boost_difference_result;
-                boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d> boost_difference_resultMP;
-                boost::geometry::difference(polygons[i], polygons[j], boost_difference_resultMP);
-                boost_difference_result.assign(boost_difference_resultMP.begin(), boost_difference_resultMP.end());
-                boost_difference_ns += sw.toc();
-
-                // Calculate and compare areas
-                double custom_union_area = calculateArea(custom_union_result);
-                double boost_union_area = 0.0;
-                for (const auto& polygon : boost_union_result) {
-                    autoware_universe::utils::pc::PolygonClip poly(polygon);
-                    boost_union_area += calculateArea(poly);
-                }
-                EXPECT_NEAR(custom_union_area, boost_union_area, epsilon);
-                if (std::fabs(custom_union_area - boost_union_area) < epsilon) {
-                    ++count_matching_areas_union;
-                } else {
-                    ++count_different_areas_union;
-                }
-
-                double custom_difference_area = calculateArea(custom_difference_result);
-                double boost_difference_area = 0.0;
-                for (const auto& polygon : boost_difference_result) {
-                    autoware_universe::utils::pc::PolygonClip poly(polygon);
-                    boost_difference_area += calculateArea(poly);
-                }
-                EXPECT_NEAR(custom_difference_area, boost_difference_area, epsilon);
-                if (std::fabs(custom_difference_area - boost_difference_area) < epsilon) {
-                    ++count_matching_areas_difference;
-                } else {
-                    ++count_different_areas_difference;
-                }
-            }
-        }
-
-        std::printf("vertices = %ld\n", vertices);
-        std::printf("\tUnion:\n\t\tCustom = %2.2f ms\n\t\tBoost::geometry = %2.2f ms\n",
-                    custom_union_ns / 1e6, boost_union_ns / 1e6);
-        std::printf("\t\tMatching Areas = %d\n\t\tDifferent Areas = %d\n",
-                    count_matching_areas_union, count_different_areas_union);
-
-        std::printf("\tDifference:\n\t\tCustom = %2.2f ms\n\t\tBoost::geometry = %2.2f ms\n",
-                    custom_difference_ns / 1e6, boost_difference_ns / 1e6);
-        std::printf("\t\tMatching Areas = %d\n\t\tDifferent Areas = %d\n",
-                    count_matching_areas_difference, count_different_areas_difference);
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
     }
+
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (auto j = 0UL; j < polygons.size(); ++j) {
+        autoware_universe::utils::pc::PolygonClip polygonA(polygons[i]);
+        autoware_universe::utils::pc::PolygonClip polygonB(polygons[j]);
+        // Custom Union
+        sw.tic();
+        auto custom_union_result =
+          autoware_universe::utils::pc::PolygonClip::Union(polygonA, polygonB);
+        custom_union_ns += sw.toc();
+
+        // Boost Union
+        sw.tic();
+        std::vector<autoware::universe_utils::Polygon2d> boost_union_result;
+        boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d>
+          boost_union_resultMP;
+        boost::geometry::union_(polygons[i], polygons[j], boost_union_resultMP);
+        boost_union_result.assign(boost_union_resultMP.begin(), boost_union_resultMP.end());
+        boost_union_ns += sw.toc();
+
+        // Custom Difference
+        sw.tic();
+        auto custom_difference_result =
+          autoware_universe::utils::pc::PolygonClip::Diff(polygonA, polygonB);
+        custom_difference_ns += sw.toc();
+
+        // Boost Difference
+        sw.tic();
+        std::vector<autoware::universe_utils::Polygon2d> boost_difference_result;
+        boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d>
+          boost_difference_resultMP;
+        boost::geometry::difference(polygons[i], polygons[j], boost_difference_resultMP);
+        boost_difference_result.assign(
+          boost_difference_resultMP.begin(), boost_difference_resultMP.end());
+        boost_difference_ns += sw.toc();
+
+        // Calculate and compare areas
+        double custom_union_area = calculateArea(custom_union_result);
+        double boost_union_area = 0.0;
+        for (const auto & polygon : boost_union_result) {
+          autoware_universe::utils::pc::PolygonClip poly(polygon);
+          boost_union_area += calculateArea(poly);
+        }
+        EXPECT_NEAR(custom_union_area, boost_union_area, epsilon);
+        if (std::fabs(custom_union_area - boost_union_area) < epsilon) {
+          ++count_matching_areas_union;
+        } else {
+          ++count_different_areas_union;
+        }
+
+        double custom_difference_area = calculateArea(custom_difference_result);
+        double boost_difference_area = 0.0;
+        for (const auto & polygon : boost_difference_result) {
+          autoware_universe::utils::pc::PolygonClip poly(polygon);
+          boost_difference_area += calculateArea(poly);
+        }
+        EXPECT_NEAR(custom_difference_area, boost_difference_area, epsilon);
+        if (std::fabs(custom_difference_area - boost_difference_area) < epsilon) {
+          ++count_matching_areas_difference;
+        } else {
+          ++count_different_areas_difference;
+        }
+      }
+    }
+
+    std::printf("vertices = %ld\n", vertices);
+    std::printf(
+      "\tUnion:\n\t\tCustom = %2.2f ms\n\t\tBoost::geometry = %2.2f ms\n", custom_union_ns / 1e6,
+      boost_union_ns / 1e6);
+    std::printf(
+      "\t\tMatching Areas = %d\n\t\tDifferent Areas = %d\n", count_matching_areas_union,
+      count_different_areas_union);
+
+    std::printf(
+      "\tDifference:\n\t\tCustom = %2.2f ms\n\t\tBoost::geometry = %2.2f ms\n",
+      custom_difference_ns / 1e6, boost_difference_ns / 1e6);
+    std::printf(
+      "\t\tMatching Areas = %d\n\t\tDifferent Areas = %d\n", count_matching_areas_difference,
+      count_different_areas_difference);
+  }
 }

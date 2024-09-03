@@ -12,86 +12,89 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <iostream>
-#include <cstdlib>
-#include <cmath>
-#include <string>
-#include <vector>
-#include <set>
+#include "autoware/universe_utils/geometry/polygon_clip.hpp"
+
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdint>
-#include "autoware/universe_utils/geometry/polygon_clip.hpp"
+#include <cstdlib>
+#include <iostream>
+#include <set>
+#include <string>
+#include <vector>
 
 using namespace std;
 
-namespace autoware_universe::utils::pc {
+namespace autoware_universe::utils::pc
+{
 
-struct VertexDist {
-  Vertex *vert;
+struct VertexDist
+{
+  Vertex * vert;
   double t;
 
-  VertexDist(Vertex *vert, double t) : vert(vert), t(t) {}
+  VertexDist(Vertex * vert, double t) : vert(vert), t(t) {}
 };
 
-struct VertDistCompiler {
-  bool operator()(const VertexDist &v1, const VertexDist &v2) {
-    return v1.t < v2.t;
-  }
+struct VertDistCompiler
+{
+  bool operator()(const VertexDist & v1, const VertexDist & v2) { return v1.t < v2.t; }
 };
 
 // Dot product of two Points
-double dot_product(const Point &a, const Point &b) {
-    return a.x() * b.x() + a.y() * b.y();
+double dot_product(const Point & a, const Point & b)
+{
+  return a.x() * b.x() + a.y() * b.y();
 }
 
 constexpr double kdoubleNearZero = 1e-7;
 
-bool Math::segment_intersect(Vertex *p1, Vertex *p2, Vertex *q1, Vertex *q2,
-                             double &t1, double &t2) {
-    Point2d p1_q1(p1->point.pt.x() - q1->point.pt.x(), p1->point.pt.y() - q1->point.pt.y());
-    Point2d p2_q1(p2->point.pt.x() - q1->point.pt.x(), p2->point.pt.y() - q1->point.pt.y());
-    Point2d q2_q1(q2->point.pt.x() - q1->point.pt.x(), q2->point.pt.y() - q1->point.pt.y());
+bool Math::segment_intersect(
+  Vertex * p1, Vertex * p2, Vertex * q1, Vertex * q2, double & t1, double & t2)
+{
+  Point2d p1_q1(p1->point.pt.x() - q1->point.pt.x(), p1->point.pt.y() - q1->point.pt.y());
+  Point2d p2_q1(p2->point.pt.x() - q1->point.pt.x(), p2->point.pt.y() - q1->point.pt.y());
+  Point2d q2_q1(q2->point.pt.x() - q1->point.pt.x(), q2->point.pt.y() - q1->point.pt.y());
 
-    Point2d q2_q1_normal(-q2_q1.y(), q2_q1.x());
+  Point2d q2_q1_normal(-q2_q1.y(), q2_q1.x());
 
-    double WEC_P1 = dot_product(p1_q1, q2_q1_normal);
-    double WEC_P2 = dot_product(p2_q1, q2_q1_normal);
+  double WEC_P1 = dot_product(p1_q1, q2_q1_normal);
+  double WEC_P2 = dot_product(p2_q1, q2_q1_normal);
 
-    if (WEC_P1 == 0.0 || WEC_P2 == 0.0) {
-        return false;
-    }
+  if (WEC_P1 == 0.0 || WEC_P2 == 0.0) {
+    return false;
+  }
 
-    if (WEC_P1 * WEC_P2 >= 0.0) {
-        return false;
-    }
+  if (WEC_P1 * WEC_P2 >= 0.0) {
+    return false;
+  }
 
-    Point2d p2_p1(p2->point.pt.x() - p1->point.pt.x(), p2->point.pt.y() - p1->point.pt.y());
-    Point2d q1_p1(q1->point.pt.x() - p1->point.pt.x(), q1->point.pt.y() - p1->point.pt.y());
-    Point2d q2_p1(q2->point.pt.x() - p1->point.pt.x(), q2->point.pt.y() - p1->point.pt.y());
+  Point2d p2_p1(p2->point.pt.x() - p1->point.pt.x(), p2->point.pt.y() - p1->point.pt.y());
+  Point2d q1_p1(q1->point.pt.x() - p1->point.pt.x(), q1->point.pt.y() - p1->point.pt.y());
+  Point2d q2_p1(q2->point.pt.x() - p1->point.pt.x(), q2->point.pt.y() - p1->point.pt.y());
 
-    Point2d p2_p1_normal(-p2_p1.y(), p2_p1.x());
+  Point2d p2_p1_normal(-p2_p1.y(), p2_p1.x());
 
-    double WEC_Q1 = dot_product(q1_p1, p2_p1_normal);
-    double WEC_Q2 = dot_product(q2_p1, p2_p1_normal);
+  double WEC_Q1 = dot_product(q1_p1, p2_p1_normal);
+  double WEC_Q2 = dot_product(q2_p1, p2_p1_normal);
 
-    if (WEC_Q1 == 0.0 || WEC_Q2 == 0.0) {
-        return false;
-    }
+  if (WEC_Q1 == 0.0 || WEC_Q2 == 0.0) {
+    return false;
+  }
 
-    if (WEC_Q1 * WEC_Q2 >= 0.0) {
-        return false;
-    }
+  if (WEC_Q1 * WEC_Q2 >= 0.0) {
+    return false;
+  }
 
-    t1 = WEC_P1 / (WEC_P1 - WEC_P2);
-    t2 = WEC_Q1 / (WEC_Q1 - WEC_Q2);
+  t1 = WEC_P1 / (WEC_P1 - WEC_P2);
+  t2 = WEC_Q1 / (WEC_Q1 - WEC_Q2);
 
-    return true;
+  return true;
 }
 
-
-PolygonIter::PolygonIter(const std::vector<Vertex *> &polygons)
-    : m_polygon(polygons) {
+PolygonIter::PolygonIter(const std::vector<Vertex *> & polygons) : m_polygon(polygons)
+{
   m_index = 0;
   if (m_polygon.empty()) {
     m_curr_head = nullptr;
@@ -102,7 +105,8 @@ PolygonIter::PolygonIter(const std::vector<Vertex *> &polygons)
   }
 }
 
-bool PolygonIter::has_next() {
+bool PolygonIter::has_next()
+{
   if (m_loop_end && m_index == m_polygon.size() - 1) {
     return false;
   }
@@ -110,7 +114,8 @@ bool PolygonIter::has_next() {
   return true;
 }
 
-void PolygonIter::move_next() {
+void PolygonIter::move_next()
+{
   if (!m_loop_end) {
     m_current = m_current->next;
     if (m_current == m_curr_head) {
@@ -129,10 +134,13 @@ void PolygonIter::move_next() {
   m_loop_end = false;
 }
 
-Vertex *PolygonIter::current() { return m_current; }
+Vertex * PolygonIter::current()
+{
+  return m_current;
+}
 
-
-PolygonClip ClipAlgorithm::do_clip(PolygonClip subject, PolygonClip clipping) {
+PolygonClip ClipAlgorithm::do_clip(PolygonClip subject, PolygonClip clipping)
+{
   PolygonClip result;
 
   ClipAlgorithm algorithm(std::move(subject), std::move(clipping));
@@ -157,7 +165,7 @@ PolygonClip ClipAlgorithm::do_clip(PolygonClip subject, PolygonClip clipping) {
   }
 
   std::vector<Vertex *> intersection_points;
-  for (auto &vert : algorithm.m_subject.m_vertex) {
+  for (auto & vert : algorithm.m_subject.m_vertex) {
     if (vert->intersect) {
       intersection_points.emplace_back(vert.get());
     }
@@ -202,7 +210,8 @@ PolygonClip ClipAlgorithm::do_clip(PolygonClip subject, PolygonClip clipping) {
   return result;
 }
 
-PolygonClip ClipAlgorithm::do_union(PolygonClip subject, PolygonClip clipping) {
+PolygonClip ClipAlgorithm::do_union(PolygonClip subject, PolygonClip clipping)
+{
   PolygonClip result;
 
   ClipAlgorithm algorithm(std::move(subject), std::move(clipping));
@@ -216,7 +225,7 @@ PolygonClip ClipAlgorithm::do_union(PolygonClip subject, PolygonClip clipping) {
 
   if (!no_intersection) {
     std::vector<Vertex *> intersection_points;
-    for (auto &vert : algorithm.m_subject.m_vertex) {
+    for (auto & vert : algorithm.m_subject.m_vertex) {
       if (vert->intersect) {
         intersection_points.emplace_back(vert.get());
       }
@@ -268,7 +277,8 @@ PolygonClip ClipAlgorithm::do_union(PolygonClip subject, PolygonClip clipping) {
   }
 }
 
-PolygonClip ClipAlgorithm::do_diff(PolygonClip subject, PolygonClip clipping) {
+PolygonClip ClipAlgorithm::do_diff(PolygonClip subject, PolygonClip clipping)
+{
   PolygonClip result;
 
   ClipAlgorithm algorithm(std::move(subject), std::move(clipping));
@@ -282,7 +292,7 @@ PolygonClip ClipAlgorithm::do_diff(PolygonClip subject, PolygonClip clipping) {
 
   if (!no_intersection) {
     std::vector<Vertex *> intersection_points;
-    for (auto &vert : algorithm.m_subject.m_vertex) {
+    for (auto & vert : algorithm.m_subject.m_vertex) {
       if (vert->intersect) {
         intersection_points.emplace_back(vert.get());
       }
@@ -348,7 +358,8 @@ PolygonClip ClipAlgorithm::do_diff(PolygonClip subject, PolygonClip clipping) {
   return PolygonClip(algorithm.m_subject, algorithm.m_clipping, true);
 }
 
-void ClipAlgorithm::process_intersection() {
+void ClipAlgorithm::process_intersection()
+{
   uint32_t intersection_count = 0;
 
   PolygonIter subj_iter(m_subject.get_vertices());
@@ -366,8 +377,7 @@ void ClipAlgorithm::process_intersection() {
 
       auto clip_curr = clip_iter.current();
 
-      if (Math::segment_intersect(current, current->next, clip_curr,
-                                  clip_curr->next, t1, t2)) {
+      if (Math::segment_intersect(current, current->next, clip_curr, clip_curr->next, t1, t2)) {
         intersection_count++;
 
         auto i1 = m_subject.allocate_vertex(current, current->next, t1);
@@ -396,9 +406,7 @@ void ClipAlgorithm::process_intersection() {
     }
 
     if (!intersect_list.empty()) {
-
-      std::sort(intersect_list.begin(), intersect_list.end(),
-                VertDistCompiler{});
+      std::sort(intersect_list.begin(), intersect_list.end(), VertDistCompiler{});
 
       for (size_t i = 1; i < intersect_list.size(); i++) {
         auto prev = intersect_list[i - 1];
@@ -428,7 +436,8 @@ void ClipAlgorithm::process_intersection() {
   assert((intersection_count % 2) == 0);
 }
 
-std::tuple<bool, uint32_t> ClipAlgorithm::mark_vertices() {
+std::tuple<bool, uint32_t> ClipAlgorithm::mark_vertices()
+{
   bool no_intersection = true;
   uint32_t inner_indicator = 0;
   // false  : exit
@@ -488,8 +497,8 @@ std::tuple<bool, uint32_t> ClipAlgorithm::mark_vertices() {
   return std::make_tuple(no_intersection, inner_indicator);
 }
 
-PolygonClip::PolygonClip(const PolygonClip &other) {
-
+PolygonClip::PolygonClip(const PolygonClip & other)
+{
   for (auto v : other.m_sub_polygons) {
     auto p = v;
     std::vector<Point> points{};
@@ -510,8 +519,8 @@ PolygonClip::PolygonClip(const PolygonClip &other) {
   }
 }
 
-PolygonClip::PolygonClip(const PolygonClip &p1, const PolygonClip &p2, bool p2_reserve) {
-
+PolygonClip::PolygonClip(const PolygonClip & p1, const PolygonClip & p2, bool p2_reserve)
+{
   for (auto v : p1.m_sub_polygons) {
     auto p = v;
     std::vector<Point> points{};
@@ -559,7 +568,8 @@ PolygonClip::PolygonClip(const PolygonClip &p1, const PolygonClip &p2, bool p2_r
   }
 }
 
-void PolygonClip::append_vertices(const std::vector<Point> &points) {
+void PolygonClip::append_vertices(const std::vector<Point> & points)
+{
   if (points.size() < 3) {
     // not a closed path
     return;
@@ -582,93 +592,98 @@ void PolygonClip::append_vertices(const std::vector<Point> &points) {
   m_sub_polygons.emplace_back(head);
 }
 
-bool PolygonClip::contains(const Point &p) const {
-    bool contains = false;
-    int32_t winding_num = 0;
+bool PolygonClip::contains(const Point & p) const
+{
+  bool contains = false;
+  int32_t winding_num = 0;
 
-    PolygonIter iter(m_sub_polygons);
-    double tolerance = 1e-6; // Tolerance for floating-point comparison
+  PolygonIter iter(m_sub_polygons);
+  double tolerance = 1e-6;  // Tolerance for floating-point comparison
 
-    while (iter.has_next()) {
-        auto curr = iter.current();
-        auto next = curr->next;
+  while (iter.has_next()) {
+    auto curr = iter.current();
+    auto next = curr->next;
 
-        // Check if the point is between the y coordinates of curr and next
-        bool y_intersects = ((next->point.y() > p.y()) != (curr->point.y() > p.y())) &&
-                            (p.x() < (curr->point.x() - next->point.x()) * (p.y() - next->point.y()) /
-                               (curr->point.y() - next->point.y()) +
-                               next->point.x());
+    // Check if the point is between the y coordinates of curr and next
+    bool y_intersects = ((next->point.y() > p.y()) != (curr->point.y() > p.y())) &&
+                        (p.x() < (curr->point.x() - next->point.x()) * (p.y() - next->point.y()) /
+                                     (curr->point.y() - next->point.y()) +
+                                   next->point.x());
 
-        if (y_intersects) {
-            contains = !contains;
+    if (y_intersects) {
+      contains = !contains;
 
-            // Check if points are close to each other within tolerance
-            if (std::abs(curr->point.x() - next->point.x()) < tolerance && 
-                std::abs(curr->point.y() - next->point.y()) < tolerance) {
-                iter.move_next();
-                continue;
-            }
-
-            // Use tolerance to compare points
-            if (curr->point.x() < next->point.x() - tolerance) {
-                winding_num += 1;
-            } else if (curr->point.x() > next->point.x() + tolerance) {
-                winding_num -= 1;
-            }
-        }
-
+      // Check if points are close to each other within tolerance
+      if (
+        std::abs(curr->point.x() - next->point.x()) < tolerance &&
+        std::abs(curr->point.y() - next->point.y()) < tolerance) {
         iter.move_next();
+        continue;
+      }
+
+      // Use tolerance to compare points
+      if (curr->point.x() < next->point.x() - tolerance) {
+        winding_num += 1;
+      } else if (curr->point.x() > next->point.x() + tolerance) {
+        winding_num -= 1;
+      }
     }
 
-    return contains;
+    iter.move_next();
+  }
+
+  return contains;
 }
 
-Vertex* PolygonClip::allocate_vertex(const Point& p) {
-    if (!m_left_top) {
-        m_left_top.emplace(p.pt);
-    } else {
-        if (m_left_top->x() >= p.x()) {
-            m_left_top->pt = Point2d(p.pt.x(), m_left_top->pt.y());
-        }
-        if (m_left_top->y() >= p.y()) {
-            m_left_top->pt = Point2d(m_left_top->pt.x(), p.pt.y());
-        }
+Vertex * PolygonClip::allocate_vertex(const Point & p)
+{
+  if (!m_left_top) {
+    m_left_top.emplace(p.pt);
+  } else {
+    if (m_left_top->x() >= p.x()) {
+      m_left_top->pt = Point2d(p.pt.x(), m_left_top->pt.y());
     }
-
-    if (!m_right_bottom) {
-        m_right_bottom.emplace(p.pt);
-    } else {
-        if (m_right_bottom->x() < p.x()) {
-            m_right_bottom->pt = Point2d(p.pt.x(), m_right_bottom->pt.y());
-        }
-        if (m_right_bottom->y() < p.y()) {
-            m_right_bottom->pt = Point2d(m_right_bottom->pt.x(), p.pt.y());
-        }
+    if (m_left_top->y() >= p.y()) {
+      m_left_top->pt = Point2d(m_left_top->pt.x(), p.pt.y());
     }
+  }
 
-    // Allocate new Vertex with the point
-    m_vertex.emplace_back(std::make_unique<Vertex>(p));
+  if (!m_right_bottom) {
+    m_right_bottom.emplace(p.pt);
+  } else {
+    if (m_right_bottom->x() < p.x()) {
+      m_right_bottom->pt = Point2d(p.pt.x(), m_right_bottom->pt.y());
+    }
+    if (m_right_bottom->y() < p.y()) {
+      m_right_bottom->pt = Point2d(m_right_bottom->pt.x(), p.pt.y());
+    }
+  }
 
-    return m_vertex.back().get();
+  // Allocate new Vertex with the point
+  m_vertex.emplace_back(std::make_unique<Vertex>(p));
+
+  return m_vertex.back().get();
 }
 
-
-Vertex* PolygonClip::allocate_vertex(Vertex* p1, Vertex* p2, double t) {
-    Point p = (p1->point * (1.0 - t)) + (p2->point * t);
-    return allocate_vertex(p);
+Vertex * PolygonClip::allocate_vertex(Vertex * p1, Vertex * p2, double t)
+{
+  Point p = (p1->point * (1.0 - t)) + (p2->point * t);
+  return allocate_vertex(p);
 }
 
-
-PolygonClip PolygonClip::Clip(const PolygonClip &subject, const PolygonClip &clipping) {
+PolygonClip PolygonClip::Clip(const PolygonClip & subject, const PolygonClip & clipping)
+{
   return ClipAlgorithm::do_clip(PolygonClip(subject), PolygonClip(clipping));
 }
 
-PolygonClip PolygonClip::Union(const PolygonClip &subject, const PolygonClip &clipping) {
+PolygonClip PolygonClip::Union(const PolygonClip & subject, const PolygonClip & clipping)
+{
   return ClipAlgorithm::do_union(PolygonClip(subject), PolygonClip(clipping));
 }
 
-PolygonClip PolygonClip::Diff(const PolygonClip &subject, const PolygonClip &clipping) {
+PolygonClip PolygonClip::Diff(const PolygonClip & subject, const PolygonClip & clipping)
+{
   return ClipAlgorithm::do_diff(PolygonClip(subject), PolygonClip(clipping));
 }
 
-} // namespace pc
+}  // namespace autoware_universe::utils::pc
