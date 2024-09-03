@@ -121,7 +121,7 @@ TRTBEVDetNode::TRTBEVDetNode(
   const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {  // Only start camera info subscription and tf listener at the beginning
-  img_N_ = this->declare_parameter<int>("data_params.N", 6);     // camera num 6
+  img_N_ = this->declare_parameter<int>("data_params.N", 6);  // camera num 6
 
   caminfo_received_ = std::vector<bool>(img_N_, false);
   cams_intrin = std::vector<Eigen::Matrix3f>(img_N_);
@@ -305,11 +305,11 @@ void TRTBEVDetNode::camera_info_callback(int idx, const sensor_msgs::msg::Camera
   if (caminfo_received_[idx])
     return;  // already received;  not expected to modify because of we init the model only once
 
-    if(!initialized_){ //get image width and height
-      img_w_ = msg->width;
-      img_h_ = msg->height;
-      initialized_ = true;
-    }
+  if (!initialized_) {  // get image width and height
+    img_w_ = msg->width;
+    img_h_ = msg->height;
+    initialized_ = true;
+  }
   Eigen::Matrix3f intrinsics;
   getCameraIntrinsics(msg, intrinsics);
   cams_intrin[idx] = intrinsics;
