@@ -169,7 +169,7 @@ private:
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
   rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;
   autoware::universe_utils::InterProcessPollingSubscriber<TrafficLightGroupArray>
-    sub_traffic_signals_{this, "/traffic_signals"};
+    sub_traffic_signals_{this, "/traffic_lights"};
 
   // debug publisher
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
