@@ -275,7 +275,10 @@ void VoxelGridStaticMapLoader::onMapCallback(
   const auto original_map_size = map_pcl_ptr->size();
   const bool map_is_not_filtered = (voxel_map_size == original_map_size);
   if (map_is_not_filtered) {
-    RCLCPP_WARN(logger_, "Map size has not changed. Check the voxel grid filter parameters.");
+    RCLCPP_WARN(
+      logger_,
+      "Map size has not downsized. If this is not intended, something wrong with PCL voxel grid. "
+      "Check the voxel grid filter parameters.");
   }
 
   if (debug_) {
