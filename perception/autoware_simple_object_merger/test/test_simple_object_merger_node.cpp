@@ -16,6 +16,8 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
+#include <rclcpp/duration.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <gtest/gtest.h>
 
@@ -37,7 +39,8 @@ std::shared_ptr<SimpleObjectMergerNode> generateNode()
   const auto package_dir =
     ament_index_cpp::get_package_share_directory("autoware_simple_object_merger");
   node_options.arguments(
-    {"--ros-args", "--params-file", package_dir + "/config/simple_object_merger.param.yaml"});
+    {"--ros-args", "--params-file", package_dir + "/config/simple_object_merger.param.yaml", "-p",
+     "use_sim_time:=true", "-r", "~/output/objects:=/output/objects"});
 
   std::vector<std::string> input_topics;
   input_topics.push_back("/input/object0");
@@ -72,28 +75,38 @@ TEST(SimpleObjectMergerTest, testSimpleObjectMergerTwoTopics)
 {
   rclcpp::init(0, nullptr);
   auto test_manager = generateTestManager();
-  auto test_target_node = generateNode();
+  auto target_node = generateNode();
 
-  // Check output topic
+  // Set the output tester
   int counter = 0;
   auto callback = [&counter](const DetectedObjects::ConstSharedPtr msg) {
     (void)msg;
     ++counter;
   };
+  // set the subscriber
+  test_manager->set_subscriber<DetectedObjects>("/output/objects", callback);
 
-  // Create a DetectedObjects message
-  rclcpp::Time stamp(0);
-  DetectedObjects msg = *generateDetectedObjects(stamp);
+  // Set the clock and initialize the node
+  rclcpp::Time current_time(0);
 
-  // Publish the message to the input topics
-  test_manager->test_pub_msg<DetectedObjects>(test_target_node, "/input/object0", msg);
-  test_manager->test_pub_msg<DetectedObjects>(test_target_node, "/input/object1", msg);
+  // time-wise simulation
+  auto time_interval = rclcpp::Duration(0, 0);
+  time_interval = time_interval.from_seconds(0.010);
 
-  // Check if the message is published to the output topic
-  test_manager->set_subscriber<DetectedObjects>("/output/object", callback);
+  for (int i = 0; i < 20; i++) {
+    current_time = current_time + time_interval;
+    test_manager->jump_clock(current_time);
 
-  // Wait for the message to be published
-  // test_manager->spin(test_target_node, 1s);
+    if (i == 0) {
+      DetectedObjects msg = *generateDetectedObjects(current_time);
+      test_manager->test_pub_msg<DetectedObjects>(target_node, "/input/object0", msg);
+      test_manager->test_pub_msg<DetectedObjects>(target_node, "/input/object1", msg);
+    }
+
+    // spin the nodes
+    rclcpp::spin_some(target_node);
+    test_manager->spin();
+  }
 
   // Check if the message is published to the output topic
   EXPECT_GE(counter, 1);
