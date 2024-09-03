@@ -192,10 +192,10 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
 
   // get object width
   double object_width = 5.0;  // a large number
-  if (
-    object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX ||
-    object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     object_width = object.shape.dimensions.y;
+  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
+    object_width = object.shape.dimensions.x;
   }
   // calculate backlash_width, which may the object can be biased from the reference path
   constexpr double margin = 0.5;  // margin of 0.5m
