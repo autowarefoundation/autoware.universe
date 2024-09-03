@@ -82,8 +82,8 @@ class TRTBEVDetNode : public rclcpp::Node
    */
 private:
   size_t img_N_;  ///< Number of images
-  int img_w_;     ///< Width of the images
-  int img_h_;     ///< Height of the images
+  uint32_t img_w_;     ///< Width of the images
+  uint32_t img_h_;     ///< Height of the images
 
   std::string model_config_;  ///< Path to the model configuration file
 
@@ -120,6 +120,7 @@ private:
     caminfo_received_;  ///< Flag indicating if camera info has been received for each camera
   bool camera_info_received_flag_ =
     false;  ///< Flag indicating if camera info has been received for all cameras
+  bool initialized_ = false; ///Flag indicating if img_w_ and img_h_ has been initialized
 
   // tf listener
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_{
