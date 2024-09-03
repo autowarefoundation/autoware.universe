@@ -159,7 +159,7 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
     }
   }
   if (base_boundary_poses.size() < 2) {
-    return Polygon2d{};
+    return std::nullopt;
   }
 
   // set orientation to next point
@@ -251,6 +251,10 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
   autoware::universe_utils::Point2d first_point{
     left_boundary_points.front().x, left_boundary_points.front().y};
   polygon.outer().push_back(first_point);
+
+  if(polygon.outer().size() < 3) {
+    return std::nullopt;
+  }
 
   return polygon;
 }
