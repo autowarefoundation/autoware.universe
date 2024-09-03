@@ -26,7 +26,6 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <pcl/common/transforms.h>
@@ -89,7 +88,7 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
     this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
   debug_viz_pub_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 1);
-  diagnostics_pub_ = this->create_publisher<DiagnosticArray>("/diagnostics", 10);
+  metrics_pub_ = this->create_publisher<MetricArray>("/metrics", 10);
 
   // Parameters
   smooth_velocity_before_planning_ = declare_parameter<bool>("smooth_velocity_before_planning");
@@ -307,12 +306,12 @@ void MotionVelocityPlannerNode::on_trajectory(
   processing_time_msg.data = processing_times["Total"];
   processing_time_publisher_->publish(processing_time_msg);
 
-  std::shared_ptr<DiagnosticArray> diagnostics =
-    planner_manager_.get_diagnostics(get_clock()->now());
-  if (!diagnostics->status.empty()) {
-    diagnostics_pub_->publish(*diagnostics);
+  std::shared_ptr<MetricArray> metrics =
+    planner_manager_.get_metrics(get_clock()->now());
+  if (!metrics->metric_array.empty()) {
+    metrics_pub_->publish(*metrics);
   }
-  planner_manager_.clear_diagnostics();
+  planner_manager_.clear_metrics();
 }
 
 void MotionVelocityPlannerNode::insert_stop(

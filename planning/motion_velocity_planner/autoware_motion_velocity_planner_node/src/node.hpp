@@ -33,6 +33,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <tier4_metric_msgs/msg/MetricArray.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -44,7 +45,7 @@
 #include <string>
 #include <vector>
 
-using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
+using MetricArray = tier4_metric_msgs::msg::MetricArray;
 
 namespace autoware::motion_velocity_planner
 {
@@ -104,7 +105,7 @@ private:
     this, "~/debug/processing_time_ms_diag"};
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_publisher_;
   autoware::universe_utils::PublishedTimePublisher published_time_publisher_{this};
-  rclcpp::Publisher<DiagnosticArray>::SharedPtr diagnostics_pub_;
+  rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
 
   //  parameters
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_callback_;

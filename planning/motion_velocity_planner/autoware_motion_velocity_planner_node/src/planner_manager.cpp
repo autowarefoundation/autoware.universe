@@ -71,41 +71,32 @@ void MotionVelocityPlannerManager::update_module_parameters(
   for (auto & plugin : loaded_plugins_) plugin->update_parameters(parameters);
 }
 
-std::shared_ptr<DiagnosticStatus> MotionVelocityPlannerManager::make_diagnostic(
+
+std::shared_ptr<Metric> MotionVelocityPlannerManager::make_decision_metric(
   const std::string & module_name, const std::string & reason, const bool is_decided)
 {
-  auto status = std::make_shared<DiagnosticStatus>();
-  status->level = status->OK;
-  status->name = module_name + '.' + reason;
-  diagnostic_msgs::msg::KeyValue key_value;
-  {
-    // Decision
-    key_value.key = "decision";
-    if (is_decided)
-      key_value.value = reason;
-    else
-      key_value.value = "none";
-    status->values.push_back(key_value);
-  }
-  // Add other information to the status if necessary in the future.
-  return status;
+  auto metric = std::make_shared<Metric>();
+  metric->name = module_name + '/' + 'decision';
+  metric->unit = "string";
+  if (is_decided)
+    metric->value = reason;
+  else
+    metric->value = "none";
+  return metric;
 }
 
-std::shared_ptr<DiagnosticArray> MotionVelocityPlannerManager::get_diagnostics(
+std::shared_ptr<MetricArray> MotionVelocityPlannerManager::get_metrics(
   const rclcpp::Time & current_time) const
 {
-  auto diagnostics = std::make_shared<DiagnosticArray>();
+  auto metrics = std::make_shared<MetricArray>();
 
-  for (const auto & ds_ptr : diagnostics_) {
-    if (
-      !ds_ptr->values.empty() && ds_ptr->values[0].key == "decision" &&
-      ds_ptr->values[0].value != "none") {
-      diagnostics->status.push_back(*ds_ptr);
+  for (const auto & mtr_ptr : metrics_) {
+    if (mtr_ptr.value != "none") {
+      metrics->metric_array.push_back(*mtr_ptr);
     }
   }
-  diagnostics->header.stamp = current_time;
-  diagnostics->header.frame_id = "map";
-  return diagnostics;
+  metrics->stamp = current_time;
+  return metrics;
 }
 
 std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocities(
@@ -117,13 +108,13 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
     VelocityPlanningResult res = plugin->plan(ego_trajectory_points, planner_data);
     results.push_back(res);
 
-    const auto stop_reason_diag =
-      make_diagnostic(plugin->get_module_name(), "stop", res.stop_points.size() > 0);
-    diagnostics_.push_back(stop_reason_diag);
+    const auto stop_decition_metric =
+      make_decision_metric(plugin->get_module_name(), "stop", res.stop_points.size() > 0);
+    metrics_.push_back(stop_decition_metric);
 
-    const auto slow_down_reason_diag =
-      make_diagnostic(plugin->get_module_name(), "slow_down", res.slowdown_intervals.size() > 0);
-    diagnostics_.push_back(slow_down_reason_diag);
+    const auto slow_down_decition_metric =
+      make_decision_metric(plugin->get_module_name(), "slow_down", res.slowdown_intervals.size() > 0);
+    metrics_.push_back(slow_down_decition_metric);
   }
   return results;
 }
