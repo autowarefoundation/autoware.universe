@@ -17,6 +17,9 @@
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
+#include <utility>
+#include <vector>
+
 namespace autoware::universe_utils
 {
 // Alternatives for Boost.Geometry ----------------------------------------------------------------
