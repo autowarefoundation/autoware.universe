@@ -414,6 +414,16 @@ public:
    * @brief Generate the footprint of the path with extra width margin
    * @param path Ego vehicle path
    * @param extra_width_margin Extra width margin for the footprint
+   * @param polygons vector to be filled with the polygons
+   * @return Vector of polygons representing the path footprint
+   */
+  void generatePathFootprint(
+    const Path & path, const double extra_width_margin, std::vector<Polygon2d> & polygons);
+
+  /**
+   * @brief Generate the footprint of the path with extra width margin
+   * @param path Ego vehicle path
+   * @param extra_width_margin Extra width margin for the footprint
    * @return Vector of polygons representing the path footprint
    */
   std::vector<Polygon2d> generatePathFootprint(const Path & path, const double extra_width_margin);
