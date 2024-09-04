@@ -130,6 +130,8 @@ void Lanelet2MapVisualizationNode::on_map_bin(
   std::vector<lanelet::NoParkingAreaConstPtr> no_parking_reg_elems =
     lanelet::utils::query::noParkingAreas(all_lanelets);
   lanelet::ConstLineStrings3d curbstones = lanelet::utils::query::curbstones(viz_lanelet_map);
+  std::vector<lanelet::BusStopAreaConstPtr> bus_stop_reg_elems =
+    lanelet::utils::query::busStopAreas(all_lanelets);
 
   std_msgs::msg::ColorRGBA cl_road;
   std_msgs::msg::ColorRGBA cl_shoulder;
@@ -155,6 +157,7 @@ void Lanelet2MapVisualizationNode::on_map_bin(
   std_msgs::msg::ColorRGBA cl_no_parking_areas;
   std_msgs::msg::ColorRGBA cl_curbstones;
   std_msgs::msg::ColorRGBA cl_intersection_area;
+  std_msgs::msg::ColorRGBA cl_bus_stop_area;
   set_color(&cl_road, 0.27, 0.27, 0.27, 0.999);
   set_color(&cl_shoulder, 0.15, 0.15, 0.15, 0.999);
   set_color(&cl_cross, 0.27, 0.3, 0.27, 0.5);
@@ -179,6 +182,7 @@ void Lanelet2MapVisualizationNode::on_map_bin(
   set_color(&cl_no_parking_areas, 0.42, 0.42, 0.42, 0.5);
   set_color(&cl_curbstones, 0.1, 0.1, 0.2, 0.999);
   set_color(&cl_intersection_area, 0.16, 1.0, 0.69, 0.5);
+  set_color(&cl_bus_stop_area, 0.863, 0.863, 0.863, 0.5);
 
   visualization_msgs::msg::MarkerArray map_marker_array;
 
@@ -285,6 +289,10 @@ void Lanelet2MapVisualizationNode::on_map_bin(
   insert_marker_array(
     &map_marker_array, lanelet::visualization::intersectionAreaAsMarkerArray(
                          intersection_areas, cl_intersection_area));
+
+  insert_marker_array(
+    &map_marker_array,
+    lanelet::visualization::busStopAreasAsMarkerArray(bus_stop_reg_elems, cl_bus_stop_area));
 
   pub_marker_->publish(map_marker_array);
 }
