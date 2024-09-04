@@ -2,6 +2,6 @@
   ros__parameters:
     filter_limit_min: 0
     filter_limit_max: 127
-    filter_field_name: "ring"
+    filter_field_name: "channel"
     keep_organized: false
     filter_limit_negative: false
