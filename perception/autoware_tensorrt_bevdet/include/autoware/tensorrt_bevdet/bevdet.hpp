@@ -64,8 +64,7 @@ public:
 
   void saveFrameBuffer(
     const void * curr_buffer, const std::string & curr_token,
-    const Eigen::Quaternion<float> & ego2global_rot,
-    const Eigen::Translation3f & ego2global_trans)
+    const Eigen::Quaternion<float> & ego2global_rot, const Eigen::Translation3f & ego2global_trans)
   {
     int iters = init_ ? 1 : n_;
     while (iters--) {
