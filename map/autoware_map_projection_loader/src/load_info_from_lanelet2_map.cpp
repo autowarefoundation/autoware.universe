@@ -30,7 +30,6 @@ tier4_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::str
   lanelet::ErrorMessages errors{};
   lanelet::projection::MGRSProjector projector{};
   const lanelet::LaneletMapPtr map = lanelet::load(filename, projector, &errors);
-
   if (!errors.empty()) {
     for (const auto & error : errors) {
       std::cout << error << std::endl;
