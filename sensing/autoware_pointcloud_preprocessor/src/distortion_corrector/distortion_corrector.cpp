@@ -240,7 +240,6 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
       RCLCPP_WARN(
         node_->get_logger(),
         "Angle between two points exceeds 180 degrees. Iterate to next point ...");
-      std::cout << "b: " << b << "should be close to 1 or -1" << std::endl;
       continue;
     }
 
