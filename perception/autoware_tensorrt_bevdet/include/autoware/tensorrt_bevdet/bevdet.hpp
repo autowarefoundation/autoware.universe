@@ -37,78 +37,78 @@ class AdjFrame
 {
 public:
   AdjFrame() {}
-  AdjFrame(int _n, size_t _buf_size)
-  : n(_n), buf_size(_buf_size), scenes_token(_n), ego2global_rot(_n), ego2global_trans(_n)
+  AdjFrame(int n, size_t buf_size)
+  : n_(n), buf_size_(buf_size), scenes_token_(n), ego2global_rot_(n), ego2global_trans_(n)
   {
-    CHECK_CUDA(cudaMalloc(reinterpret_cast<void **>(&adj_buffer), _n * _buf_size));
-    CHECK_CUDA(cudaMemset(adj_buffer, 0, _n * _buf_size));
-    last = 0;
-    buffer_num = 0;
-    init = false;
+    CHECK_CUDA(cudaMalloc(reinterpret_cast<void **>(&adj_buffer), n * buf_size));
+    CHECK_CUDA(cudaMemset(adj_buffer, 0, n * buf_size));
+    last_ = 0;
+    buffer_num_ = 0;
+    init_ = false;
 
-    for (auto & rot : ego2global_rot) {
+    for (auto & rot : ego2global_rot_) {
       rot = Eigen::Quaternion<float>(0.f, 0.f, 0.f, 0.f);
     }
-    for (auto & trans : ego2global_trans) {
+    for (auto & trans : ego2global_trans_) {
       trans = Eigen::Translation3f(0.f, 0.f, 0.f);
     }
   }
-  const std::string & lastScenesToken() const { return scenes_token[last]; }
+  const std::string & lastScenesToken() const { return scenes_token_[last_]; }
 
   void reset()
   {
-    last = 0;  // origin -1
-    buffer_num = 0;
-    init = false;
+    last_ = 0;  // origin -1
+    buffer_num_ = 0;
+    init_ = false;
   }
 
   void saveFrameBuffer(
     const void * curr_buffer, const std::string & curr_token,
-    const Eigen::Quaternion<float> & _ego2global_rot,
-    const Eigen::Translation3f & _ego2global_trans)
+    const Eigen::Quaternion<float> & ego2global_rot,
+    const Eigen::Translation3f & ego2global_trans)
   {
-    int iters = init ? 1 : n;
+    int iters = init_ ? 1 : n_;
     while (iters--) {
-      last = (last + 1) % n;
+      last_ = (last_ + 1) % n_;
       CHECK_CUDA(cudaMemcpy(
-        reinterpret_cast<char *>(adj_buffer) + last * buf_size, curr_buffer, buf_size,
+        reinterpret_cast<char *>(adj_buffer) + last_ * buf_size_, curr_buffer, buf_size_,
         cudaMemcpyDeviceToDevice));
-      scenes_token[last] = curr_token;
-      ego2global_rot[last] = _ego2global_rot;
-      ego2global_trans[last] = _ego2global_trans;
-      buffer_num = std::min(buffer_num + 1, n);
+      scenes_token_[last_] = curr_token;
+      ego2global_rot_[last_] = ego2global_rot;
+      ego2global_trans_[last_] = ego2global_trans;
+      buffer_num_ = std::min(buffer_num_ + 1, n_);
     }
-    init = true;
+    init_ = true;
   }
-  int havingBuffer(int idx) { return static_cast<int>(idx < buffer_num); }
+  int havingBuffer(int idx) { return static_cast<int>(idx < buffer_num_); }
 
   const void * getFrameBuffer(int idx)
   {
-    idx = (-idx + last + n) % n;
-    return reinterpret_cast<char *>(adj_buffer) + idx * buf_size;
+    idx = (-idx + last_ + n_) % n_;
+    return reinterpret_cast<char *>(adj_buffer) + idx * buf_size_;
   }
   void getEgo2Global(
     int idx, Eigen::Quaternion<float> & adj_ego2global_rot,
     Eigen::Translation3f & adj_ego2global_trans)
   {
-    idx = (-idx + last + n) % n;
-    adj_ego2global_rot = ego2global_rot[idx];
-    adj_ego2global_trans = ego2global_trans[idx];
+    idx = (-idx + last_ + n_) % n_;
+    adj_ego2global_rot = ego2global_rot_[idx];
+    adj_ego2global_trans = ego2global_trans_[idx];
   }
 
   ~AdjFrame() { CHECK_CUDA(cudaFree(adj_buffer)); }
 
 private:
-  int n;
-  size_t buf_size;
+  int n_;
+  size_t buf_size_;
 
-  int last;
-  int buffer_num;
-  bool init;
+  int last_;
+  int buffer_num_;
+  bool init_;
 
-  std::vector<std::string> scenes_token;
-  std::vector<Eigen::Quaternion<float>> ego2global_rot;
-  std::vector<Eigen::Translation3f> ego2global_trans;
+  std::vector<std::string> scenes_token_;
+  std::vector<Eigen::Quaternion<float>> ego2global_rot_;
+  std::vector<Eigen::Translation3f> ego2global_trans_;
 
   void * adj_buffer;
 };
