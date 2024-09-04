@@ -134,7 +134,7 @@ private:
 
   PredictedPath generatePolynomialPath(
     const TrackedObject & object, const PosePath & ref_path, const double duration,
-    const double lateral_duration, const double backlash_width,
+    const double lateral_duration, const double path_width, const double backlash_width,
     const double speed_limit = 0.0) const;
 
   FrenetPath generateFrenetPath(

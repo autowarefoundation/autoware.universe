@@ -205,7 +205,7 @@ PredictedPath PathGenerator::generatePathForOnLaneVehicle(
   backlash_width = std::max(backlash_width, 0.0);  // minimum is 0.0
 
   return generatePolynomialPath(
-    object, ref_path, duration, lateral_duration, backlash_width, speed_limit);
+    object, ref_path, duration, lateral_duration, path_width, backlash_width, speed_limit);
 }
 
 PredictedPath PathGenerator::generateStraightPath(
@@ -230,7 +230,8 @@ PredictedPath PathGenerator::generateStraightPath(
 
 PredictedPath PathGenerator::generatePolynomialPath(
   const TrackedObject & object, const PosePath & ref_path, const double duration,
-  const double lateral_duration, const double backlash_width, const double speed_limit) const
+  const double lateral_duration, const double path_width, const double backlash_width,
+  const double speed_limit) const
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -255,7 +256,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
       // calculation cost
       terminal_point.d = 0.0;
     } else {
-      constexpr double return_width = 1.5;  // [m]
+      const double return_width = path_width / 2.0;  // [m]
       const double current_momentum_d =
         current_point.d + 0.5 * current_point.d_vel * lateral_duration;
       const double momentum_d_abs = std::abs(current_momentum_d);
