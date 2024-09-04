@@ -1,9 +1,12 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware/behavior_path_goal_planner_module/manager.hpp>
 #include <autoware/behavior_path_goal_planner_module/pull_over_planner/shift_pull_over.hpp>
+#include <autoware/behavior_path_goal_planner_module/util.hpp>
 #include <autoware/behavior_path_planner/behavior_path_planner_node.hpp>
 #include <autoware/behavior_path_planner_common/data_manager.hpp>
+#include <autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp>
 #include <autoware/behavior_path_planner_common/utils/path_utils.hpp>
+#include <autoware/behavior_path_planner_common/utils/utils.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
@@ -27,45 +30,54 @@
 using namespace std::chrono_literals;
 
 void plot_path_with_lane_id(
-  matplotlibcpp17::axes::Axes & axes, const tier4_planning_msgs::msg::PathWithLaneId path)
+  matplotlibcpp17::axes::Axes & axes, const tier4_planning_msgs::msg::PathWithLaneId & path,
+  const std::optional<std::string> label)
 {
   std::vector<double> xs, ys;
   for (const auto & point : path.points) {
     xs.push_back(point.point.pose.position.x);
     ys.push_back(point.point.pose.position.y);
   }
-  axes.plot(Args(xs, ys), Kwargs("color"_a = "red", "linewidth"_a = 1.0));
+  if (label) {
+    axes.plot(
+      Args(xs, ys), Kwargs("color"_a = "red", "linewidth"_a = 1.0, "label"_a = label.value()));
+  } else {
+    axes.plot(Args(xs, ys), Kwargs("color"_a = "red", "linewidth"_a = 1.0));
+  }
+}
+
+void plot_lanelet_linestring(
+  matplotlibcpp17::axes::Axes & axes, lanelet::ConstLineString3d linestring,
+  const std::optional<std::string> label, const std::string color = "blue",
+  const double linewidth = 0.5, const std::string linestyle = "solid")
+{
+  std::vector<double> xs, ys;
+  for (const auto & point : linestring) {
+    xs.push_back(point.x());
+    ys.push_back(point.y());
+  }
+
+  if (label) {
+    axes.plot(
+      Args(xs, ys), Kwargs(
+                      "color"_a = color, "linewidth"_a = linewidth, "linestyle"_a = linestyle,
+                      "label"_a = label.value()));
+  } else {
+    axes.plot(
+      Args(xs, ys),
+      Kwargs("color"_a = color, "linewidth"_a = linewidth, "linestyle"_a = linestyle));
+  }
 }
 
 void plot_lanelet(
   matplotlibcpp17::axes::Axes & axes, lanelet::ConstLanelet lanelet,
-  const std::string color = "blue", const double linewidth = 0.5)
+  const std::string color = "black", const double linewidth = 0.5)
 {
-  const auto lefts = lanelet.leftBound();
-  const auto rights = lanelet.rightBound();
-  std::vector<double> xs_left, ys_left;
-  for (const auto & point : lefts) {
-    xs_left.push_back(point.x());
-    ys_left.push_back(point.y());
-  }
+  plot_lanelet_linestring(axes, lanelet.leftBound(), std::nullopt, color, linewidth);
 
-  std::vector<double> xs_right, ys_right;
-  for (const auto & point : rights) {
-    xs_right.push_back(point.x());
-    ys_right.push_back(point.y());
-  }
+  plot_lanelet_linestring(axes, lanelet.rightBound(), std::nullopt, color, linewidth);
 
-  std::vector<double> xs_center, ys_center;
-  for (const auto & point : lanelet.centerline()) {
-    xs_center.push_back(point.x());
-    ys_center.push_back(point.y());
-  }
-
-  axes.plot(Args(xs_left, ys_left), Kwargs("color"_a = color, "linewidth"_a = linewidth));
-  axes.plot(Args(xs_right, ys_right), Kwargs("color"_a = color, "linewidth"_a = linewidth));
-  axes.plot(
-    Args(xs_center, ys_center),
-    Kwargs("color"_a = "black", "linewidth"_a = linewidth, "linestyle"_a = "dashed"));
+  plot_lanelet_linestring(axes, lanelet.centerline(), std::nullopt, color, linewidth, "dashed");
 }
 
 int main(int argc, char ** argv)
@@ -108,15 +120,6 @@ int main(int argc, char ** argv)
                                          .y(0.0)
                                          .z(-0.3361155457734493)
                                          .w(0.9418207578352774));
-  /*
-  route_msg.goal_pose =
-    geometry_msgs::build<geometry_msgs::msg::Pose>()
-      .position(
-        geometry_msgs::build<geometry_msgs::msg::Point>().x(568.836731).y(437.871904).z(100.0))
-      .orientation(
-        geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(-0.292125).w(
-          0.956380));
-  */
 
   route_msg.segments = std::vector<autoware_planning_msgs::msg::LaneletSegment>{
     autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletSegment>()
@@ -164,39 +167,6 @@ int main(int argc, char ** argv)
   lanelet::utils::conversion::toBinMsg(
     lanelet_map_ptr, &map_bin);  // TODO(soblin): pass lanelet_map_ptr to RouteHandler
 
-  /*
-    reference:
-    https://github.com/ros2/rclcpp/blob/ee94bc63e4ce47a502891480a2796b53d54fcdfc/rclcpp/test/rclcpp/test_parameter_client.cpp#L927
-   */
-  /*
-  auto node = rclcpp::Node::make_shared(
-    "node", "namespace", rclcpp::NodeOptions().allow_undeclared_parameters(true));
-  auto param_node = std::make_shared<rclcpp::AsyncParametersClient>(node, "");
-  {
-    auto future = param_node->load_parameters(
-      ament_index_cpp::get_package_share_directory("autoware_behavior_path_planner") +
-      "/config/behavior_path_planner.param.yaml");
-    if (rclcpp::spin_until_future_complete(node, future) != rclcpp::FutureReturnCode::SUCCESS) {
-      RCLCPP_INFO(node->get_logger(), "failed to load behavior_path_planner.param.yaml");
-    }
-  }
-  {
-    auto future = param_node->load_parameters(
-      ament_index_cpp::get_package_share_directory("autoware_behavior_path_planner") +
-      "/config/drivable_area_expansion.param.yaml");
-    if (rclcpp::spin_until_future_complete(node, future) != rclcpp::FutureReturnCode::SUCCESS) {
-      RCLCPP_INFO(node->get_logger(), "failed to load drivable_area_expansion.param.yaml");
-    }
-  }
-  {
-    auto future = param_node->load_parameters(
-      ament_index_cpp::get_package_share_directory("autoware_behavior_path_planner") +
-      "/config/scene_module_manager.param.yaml");
-    if (rclcpp::spin_until_future_complete(node, future) != rclcpp::FutureReturnCode::SUCCESS) {
-      RCLCPP_INFO(node->get_logger(), "failed to load scene_module_manager.param.yaml");
-    }
-  }
-  */
   auto node_options = rclcpp::NodeOptions{};
   node_options.parameter_overrides(
     std::vector<rclcpp::Parameter>{{"launch_modules", std::vector<std::string>{}}});
@@ -236,7 +206,7 @@ int main(int argc, char ** argv)
   planner_data->route_handler->getClosestLaneletWithinRoute(
     route_msg.start_pose, &current_route_lanelet);
   std::cout << "current_route_lanelet is " << current_route_lanelet.id() << std::endl;
-  const auto reference_path =
+  auto reference_output =
     autoware::behavior_path_planner::utils::getReferencePath(current_route_lanelet, planner_data);
   auto goal_planner_parameter =
     autoware::behavior_path_planner::GoalPlannerModuleManager::initGoalPlannerParameters(
@@ -251,7 +221,27 @@ int main(int argc, char ** argv)
   auto shift_pull_over_planner = autoware::behavior_path_planner::ShiftPullOver(
     *node, goal_planner_parameter, lane_departure_checker);
   const auto pull_over_path_opt =
-    shift_pull_over_planner.plan(planner_data, reference_path, route_msg.goal_pose);
+    shift_pull_over_planner.plan(planner_data, reference_output, route_msg.goal_pose);
+
+  const auto current_lanes = autoware::behavior_path_planner::utils::getExtendedCurrentLanes(
+    planner_data, goal_planner_parameter.backward_goal_search_length,
+    goal_planner_parameter.forward_goal_search_length, false);
+  const auto pull_over_lanes =
+    autoware::behavior_path_planner::goal_planner_utils::getPullOverLanes(
+      *(planner_data->route_handler), true /*left_side_parking */,
+      goal_planner_parameter.backward_goal_search_length,
+      goal_planner_parameter.forward_goal_search_length);
+  const auto drivable_lanes =
+    autoware::behavior_path_planner::utils::generateDrivableLanesWithShoulderLanes(
+      current_lanes, pull_over_lanes);
+  const auto target_drivable_lanes =
+    autoware::behavior_path_planner::utils::getNonOverlappingExpandedLanes(
+      reference_output.path, drivable_lanes, planner_data->drivable_area_expansion_parameters);
+
+  autoware::behavior_path_planner::DrivableAreaInfo current_drivable_area_info;
+  current_drivable_area_info.drivable_lanes = target_drivable_lanes;
+  current_drivable_area_info = autoware::behavior_path_planner::utils::combineDrivableAreaInfo(
+    current_drivable_area_info, reference_output.drivable_area_info);
 
   pybind11::scoped_interpreter guard{};
   auto plt = matplotlibcpp17::pyplot::import();
@@ -264,14 +254,22 @@ int main(int argc, char ** argv)
     plot_lanelet(ax, lanelet);
   }
 
-  plot_path_with_lane_id(ax, reference_path.path);
+  plot_path_with_lane_id(
+    ax, reference_output.path, std::make_optional<std::string>("reference path"));
   std::cout << pull_over_path_opt.has_value() << std::endl;
   if (pull_over_path_opt) {
     const auto & pull_over_path = pull_over_path_opt.value();
     const auto full_path = pull_over_path.getFullPath();
-    plot_path_with_lane_id(ax, full_path);
+    plot_path_with_lane_id(ax, full_path, std::make_optional<std::string>("shift path"));
   }
+
+  for (const auto & drivable_lane : current_drivable_area_info.drivable_lanes) {
+    plot_lanelet_linestring(ax, drivable_lane.left_lane.leftBound(), std::nullopt, "blue", 2.0);
+    plot_lanelet_linestring(ax, drivable_lane.right_lane.rightBound(), std::nullopt, "blue", 2.0);
+  }
+
   ax.set_aspect(Args("equal"));
+  plt.legend();
   plt.show();
 
   rclcpp::shutdown();
