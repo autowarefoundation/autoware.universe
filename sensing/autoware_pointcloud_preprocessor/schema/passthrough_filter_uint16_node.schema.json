@@ -21,7 +21,7 @@
         "filter_field_name": {
           "type": "string",
           "description": "filtering field name",
-          "default": "ring"
+          "default": "channel"
         },
         "keep_organized": {
           "type": "boolean",
