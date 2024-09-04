@@ -277,7 +277,7 @@ void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
     geometry_msgs::msg::TransformStamped transform_stamped{};
     try {
       transform_stamped = tf_buffer_.lookupTransform(
-        "base_link", input_msg->header.frame_id, input_msg->header.stamp,
+        "base_link", input_msg->header.frame_id, rclcpp::Time(0),
         rclcpp::Duration::from_seconds(0.5));
     } catch (tf2::TransformException & ex) {
       RCLCPP_ERROR_STREAM(
