@@ -477,7 +477,6 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   control_data.interpolated_traj.points.insert(
     control_data.interpolated_traj.points.begin() + current_interpolated_pose.second + 1,
     current_interpolated_pose.first);
-
   control_data.nearest_idx = current_interpolated_pose.second + 1;
   control_data.target_idx = control_data.nearest_idx;
   const auto nearest_point = current_interpolated_pose.first;
