@@ -56,7 +56,7 @@ public:
     autoware::universe_utils::LinearRing2d goal_footprint);
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
-private:
+protected:
   using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
   using Pose = geometry_msgs::msg::Pose;
   bool is_graph_ready_;
