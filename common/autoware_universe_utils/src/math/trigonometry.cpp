@@ -72,6 +72,14 @@ std::pair<float, float> sin_and_cos(float radian)
   }
 }
 
+// This code is modified from part of OpenCV project
+// (https://github.com/opencv/opencv/blob/4.x/modules/core/src/mathfuncs_core.simd.hpp). It is
+// subject to the license terms in the LICENSE file found in the top-level directory of this
+// distribution and at http://opencv.org/license.html.
+
+// Modification:
+// 1. use autoware defined PI
+// 2. output of the function change from degrees to radians.
 static const float atan2_p1 =
   0.9997878412794807f * static_cast<float>(180) / autoware::universe_utils::pi;
 static const float atan2_p3 =
