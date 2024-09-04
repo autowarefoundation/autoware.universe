@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 
+// test change
 namespace autoware::gnss_poser
 {
 GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
