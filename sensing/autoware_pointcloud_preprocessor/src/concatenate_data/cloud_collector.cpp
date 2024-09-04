@@ -109,6 +109,7 @@ void CloudCollector::processCloud(
 
 void CloudCollector::concatenateCallback()
 {
+  timer_->cancel();
   // lock for protecting collector list and concatenated pointcloud
   std::lock_guard<std::mutex> lock(mutex_);
   auto [concatenate_cloud_ptr, topic_to_transformed_cloud_map, topic_to_original_stamp_map] =
