@@ -79,7 +79,7 @@ std::pair<float, float> sin_and_cos(float radian)
 
 // Modification:
 // 1. use autoware defined PI
-// 2. output of the function change from degrees to radians.
+// 2. output of the function is changed from degrees to radians.
 static const float atan2_p1 =
   0.9997878412794807f * static_cast<float>(180) / autoware::universe_utils::pi;
 static const float atan2_p3 =
