@@ -26,8 +26,6 @@
 #include <pcl_ros/transforms.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
-#include <boost/format.hpp>
-
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -129,34 +127,39 @@ double calcDiffAngleAgainstTrajectory(
  * obstacle is getting far away from the trajectory.
  *
  * @param traj_points The trajectory points.
- * @param current_obstacle_pose The current pose of the obstacle.
+ * @param obstacle_pose The current pose of the obstacle.
  * @param obstacle_twist The twist (velocity) of the obstacle.
  * @return A pair containing the longitudinal and perpendicular velocity components.
  */
 std::pair<double, double> projectObstacleVelocityToTrajectory(
-  const std::vector<TrajectoryPoint> & traj_points,
-  const geometry_msgs::msg::Pose & current_obstacle_pose,
+  const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & obstacle_pose,
   const geometry_msgs::msg::Twist & obstacle_twist)
 {
-  const size_t nearest_index =
-    autoware::motion_utils::findNearestIndex(traj_points, current_obstacle_pose.position);
-  const auto & nearest_point = traj_points.at(nearest_index);
+  const size_t object_idx =
+    autoware::motion_utils::findNearestIndex(traj_points, obstacle_pose.position);
+
+  const auto & nearest_point = traj_points.at(object_idx);
 
   const double traj_yaw = tf2::getYaw(nearest_point.pose.orientation);
-  const double obstacle_yaw = tf2::getYaw(current_obstacle_pose.orientation);
+  const double obstacle_yaw = tf2::getYaw(obstacle_pose.orientation);
+  const Eigen::Rotation2Dd R_ego_to_obstacle(
+    autoware::universe_utils::normalizeRadian(obstacle_yaw - traj_yaw));
 
-  const Eigen::Vector2d to_obstacle(
-    current_obstacle_pose.position.x - nearest_point.pose.position.x,
-    current_obstacle_pose.position.y - nearest_point.pose.position.y);
+  // Calculate the trajectory direction and the vector from the trajectory to the obstacle
+  const Eigen::Vector2d traj_direction(std::cos(traj_yaw), std::sin(traj_yaw));
+  const Eigen::Vector2d traj_to_obstacle(
+    obstacle_pose.position.x - nearest_point.pose.position.x,
+    obstacle_pose.position.y - nearest_point.pose.position.y);
 
-  const Eigen::Rotation2Dd R_ego_to_obstacle(obstacle_yaw - traj_yaw);
+  // Determine if the obstacle is to the left or right of the trajectory using the cross product
+  const double cross_product =
+    traj_direction.x() * traj_to_obstacle.y() - traj_direction.y() * traj_to_obstacle.x();
+  const int sign = (cross_product > 0) ? -1 : 1;
+
   const Eigen::Vector2d obstacle_velocity(obstacle_twist.linear.x, obstacle_twist.linear.y);
   const Eigen::Vector2d projected_velocity = R_ego_to_obstacle * obstacle_velocity;
 
-  const double perpendicular_velocity = projected_velocity[1];
-  const double side_factor =
-    projected_velocity[0] * to_obstacle.dot(projected_velocity) > 0 ? 1 : -1;
-  return std::make_pair(projected_velocity[0], perpendicular_velocity * side_factor);
+  return std::make_pair(projected_velocity[0], sign * projected_velocity[1]);
 }
 
 double calcObstacleMaxLength(const Shape & shape)
@@ -355,6 +358,8 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
     "behavior_determination.consider_current_pose.enable_to_consider_current_pose");
   time_to_convergence = node.declare_parameter<double>(
     "behavior_determination.consider_current_pose.time_to_convergence");
+  min_velocity_to_reach_collision_point = node.declare_parameter<double>(
+    "behavior_determination.stop.min_velocity_to_reach_collision_point");
   max_lat_time_margin_for_stop = node.declare_parameter<double>(
     "behavior_determination.stop.outside_obstacle.max_lateral_time_margin");
   max_lat_time_margin_for_cruise = node.declare_parameter<double>(
@@ -455,6 +460,9 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
   autoware::universe_utils::updateParam<double>(
     parameters, "behavior_determination.consider_current_pose.time_to_convergence",
     time_to_convergence);
+  autoware::universe_utils::updateParam<double>(
+    parameters, "behavior_determination.stop.min_velocity_to_reach_collision_point",
+    min_velocity_to_reach_collision_point);
   autoware::universe_utils::updateParam<double>(
     parameters, "behavior_determination.stop.outside_obstacle.max_lateral_time_margin",
     max_lat_time_margin_for_stop);
@@ -1709,25 +1717,26 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPred
   }
 
   // check transient obstacle or not
-  const double abs_ego_offset = is_driving_forward_
-                                  ? std::abs(vehicle_info_.max_longitudinal_offset_m)
-                                  : std::abs(vehicle_info_.min_longitudinal_offset_m);
+  const double abs_ego_offset =
+    min_behavior_stop_margin_ + (is_driving_forward_
+                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
+                                   : std::abs(vehicle_info_.min_longitudinal_offset_m));
 
-  const double time_to_reach_collision_point =
+  const double time_to_reach_stop_point =
     calcTimeToReachCollisionPoint(odometry, collision_point->first, traj_points, abs_ego_offset);
-
   const bool is_transient_obstacle = [&]() {
+    if (time_to_reach_stop_point <= p.collision_time_margin) {
+      return false;
+    }
     // get the predicted position of the obstacle when ego reaches the collision point
     const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
       obstacle.predicted_paths, p.prediction_resampling_time_interval,
       p.prediction_resampling_time_horizon, 1);
-    if (
-      resampled_predicted_paths.empty() || resampled_predicted_paths.front().path.empty() ||
-      min_behavior_stop_margin_ > collision_point->second) {
+    if (resampled_predicted_paths.empty() || resampled_predicted_paths.front().path.empty()) {
       return false;
     }
     const auto future_obj_pose = object_recognition_utils::calcInterpolatedPose(
-      resampled_predicted_paths.front(), time_to_reach_collision_point);
+      resampled_predicted_paths.front(), time_to_reach_stop_point - p.collision_time_margin);
 
     Obstacle tmp_future_obs = obstacle;
     tmp_future_obs.pose =
@@ -2007,36 +2016,28 @@ double ObstacleCruisePlannerNode::calcCollisionTimeMargin(
   const Odometry & odometry, const std::vector<PointWithStamp> & collision_points,
   const std::vector<TrajectoryPoint> & traj_points, const bool is_driving_forward) const
 {
-  const auto & ego_pose = odometry.pose.pose;
-  const double ego_vel = odometry.twist.twist.linear.x;
-
-  const double abs_ego_offset = is_driving_forward
-                                  ? std::abs(vehicle_info_.max_longitudinal_offset_m)
-                                  : std::abs(vehicle_info_.min_longitudinal_offset_m);
-  const bool is_stopping = ego_vel < 0.1;
-  if (is_stopping) {
-    // If the ego vehicle is stopping, time to reach collision point always will be high. If the
-    // distance to collision point is low, keep the ego stopped.
-    const double dist_from_ego_to_obstacle =
-      std::abs(autoware::motion_utils::calcSignedArcLength(
-        traj_points, ego_pose.position, collision_points.front().point)) -
-      abs_ego_offset;
-    if (dist_from_ego_to_obstacle <= min_behavior_stop_margin_) {
-      return 0.0;
-    }
-  }
-  const double time_to_reach_collision_point = calcTimeToReachCollisionPoint(
+  const auto & p = behavior_determination_param_;
+  const double abs_ego_offset =
+    min_behavior_stop_margin_ + (is_driving_forward
+                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
+                                   : std::abs(vehicle_info_.min_longitudinal_offset_m));
+  const double time_to_reach_stop_point = calcTimeToReachCollisionPoint(
     odometry, collision_points.front().point, traj_points, abs_ego_offset);
+
+  const double time_to_leave_collision_point =
+    time_to_reach_stop_point +
+    abs_ego_offset /
+      std::max(p.min_velocity_to_reach_collision_point, odometry.twist.twist.linear.x);
 
   const double time_to_start_cross =
     (rclcpp::Time(collision_points.front().stamp) - now()).seconds();
   const double time_to_end_cross = (rclcpp::Time(collision_points.back().stamp) - now()).seconds();
 
-  if (time_to_reach_collision_point < time_to_start_cross) {  // Ego goes first.
-    return time_to_start_cross - time_to_reach_collision_point;
+  if (time_to_leave_collision_point < time_to_start_cross) {  // Ego goes first.
+    return time_to_start_cross - time_to_reach_stop_point;
   }
-  if (time_to_end_cross < time_to_reach_collision_point) {  // Obstacle goes first.
-    return time_to_reach_collision_point - time_to_end_cross;
+  if (time_to_end_cross < time_to_reach_stop_point) {  // Obstacle goes first.
+    return time_to_reach_stop_point - time_to_end_cross;
   }
   return 0.0;  // Ego and obstacle will collide.
 }
@@ -2221,11 +2222,13 @@ double ObstacleCruisePlannerNode::calcTimeToReachCollisionPoint(
   const Odometry & odometry, const geometry_msgs::msg::Point & collision_point,
   const std::vector<TrajectoryPoint> & traj_points, const double abs_ego_offset) const
 {
+  const auto & p = behavior_determination_param_;
   const double dist_from_ego_to_obstacle =
     std::abs(autoware::motion_utils::calcSignedArcLength(
       traj_points, odometry.pose.pose.position, collision_point)) -
     abs_ego_offset;
-  return dist_from_ego_to_obstacle / std::max(1e-6, std::abs(odometry.twist.twist.linear.x));
+  return dist_from_ego_to_obstacle /
+         std::max(p.min_velocity_to_reach_collision_point, std::abs(odometry.twist.twist.linear.x));
 }
 }  // namespace autoware::motion_planning
 

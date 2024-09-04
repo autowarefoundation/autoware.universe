@@ -239,6 +239,8 @@ private:
     int num_of_predicted_paths_for_outside_stop_obstacle;
     // obstacle hold
     double stop_obstacle_hold_time_threshold;
+    // reach collision point
+    double min_velocity_to_reach_collision_point;
     // prediction resampling
     double prediction_resampling_time_interval;
     double prediction_resampling_time_horizon;

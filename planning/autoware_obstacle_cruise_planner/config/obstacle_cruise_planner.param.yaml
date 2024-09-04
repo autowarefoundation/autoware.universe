@@ -110,6 +110,7 @@
       stop:
         max_lat_margin: 0.3 # lateral margin between the obstacles except for unknown and ego's footprint
         max_lat_margin_against_unknown: 0.3 # lateral margin between the unknown obstacles and ego's footprint
+        min_velocity_to_reach_collision_point: 2.0 # minimum velocity margin to calculate time to reach collision [m/s]
         outside_obstacle:
           max_lateral_time_margin: 4.0 # time threshold of lateral margin between the obstacles and ego's footprint [s]
           num_of_predicted_paths: 3 # number of the highest confidence predicted path to check collision between obstacle and ego
