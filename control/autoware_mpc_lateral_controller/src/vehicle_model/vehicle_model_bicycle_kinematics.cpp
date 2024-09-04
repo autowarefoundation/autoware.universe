@@ -100,15 +100,25 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
     const auto yaw = state_w(2);
     const auto steer = state_w(3);
     const auto desired_steer = input(0);
+    
+    auto sign = [](double x) { return (x > 0.0) - (x < 0.0); };
+    auto delta_r = atan(m_wheelbase * curvature);
+    if (std::abs(delta_r) >= m_steer_lim) {
+    delta_r = m_steer_lim * static_cast<double>(sign(delta_r));
+    }
+    
+    auto cos_delta_r_squared_inv = 1 / (cos(delta_r) * cos(delta_r));
+    auto velocity_r = velocity;
+    if (std::abs(velocity) < 1e-04) {
+    velocity_r = 1e-04 * (velocity_r >= 0 ? 1 : -1);
+     }
 
-    const auto delta_r = atan(m_wheelbase * curvature);
-    const auto cos_delta_r_squared_inv = 1 / (cos(delta_r) * cos(delta_r));
 
     Eigen::VectorXd dstate = Eigen::VectorXd::Zero(4);
-    dstate(0) = velocity * std::cos(yaw);
-    dstate(1) = velocity * std::sin(yaw);
-    dstate(2) = velocity / m_wheelbase * cos_delta_r_squared_inv * steer - velocity * m_curvature +
-                velocity / m_wheelbase * (tan(delta_r) - delta_r * cos_delta_r_squared_inv);
+    dstate(0) = velocity_r * std::cos(yaw);
+    dstate(1) = velocity_r * std::sin(yaw);
+    dstate(2) = velocity_r / m_wheelbase * cos_delta_r_squared_inv * steer - velocity_r * m_curvature +
+                velocity_r / m_wheelbase * (tan(delta_r) - delta_r * cos_delta_r_squared_inv);
     dstate(3) = -(steer - desired_steer) / m_steer_tau;
 
     // Note: don't do "return state_w + dstate * dt", which does not work due to the lazy evaluation
