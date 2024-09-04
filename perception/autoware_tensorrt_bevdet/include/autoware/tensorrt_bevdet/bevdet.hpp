@@ -33,11 +33,11 @@
 
 namespace autoware::tensorrt_bevdet
 {
-class adjFrame
+class AdjFrame
 {
 public:
-  adjFrame() {}
-  adjFrame(int _n, size_t _buf_size)
+  AdjFrame() {}
+  AdjFrame(int _n, size_t _buf_size)
   : n(_n), buf_size(_buf_size), scenes_token(_n), ego2global_rot(_n), ego2global_trans(_n)
   {
     CHECK_CUDA(cudaMalloc(reinterpret_cast<void **>(&adj_buffer), _n * _buf_size));
@@ -96,7 +96,7 @@ public:
     adj_ego2global_trans = ego2global_trans[idx];
   }
 
-  ~adjFrame() { CHECK_CUDA(cudaFree(adj_buffer)); }
+  ~AdjFrame() { CHECK_CUDA(cudaFree(adj_buffer)); }
 
 private:
   int n;
@@ -235,7 +235,7 @@ private:
   nvinfer1::IExecutionContext * trt_context;
 
   std::unique_ptr<PostprocessGPU> postprocess_ptr;
-  std::unique_ptr<adjFrame> adj_frame_ptr;
+  std::unique_ptr<AdjFrame> adj_frame_ptr;
 };
 }  // namespace autoware::tensorrt_bevdet
 #endif  // AUTOWARE__TENSORRT_BEVDET__BEVDET_HPP_

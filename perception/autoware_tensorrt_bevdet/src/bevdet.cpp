@@ -74,7 +74,7 @@ BEVDet::BEVDet(
   mallocDeviceMemory();
 
   if (use_adj) {
-    adj_frame_ptr.reset(new adjFrame(adj_num, trt_buffer_sizes[buffer_map["curr_bevfeat"]]));
+    adj_frame_ptr.reset(new AdjFrame(adj_num, trt_buffer_sizes[buffer_map["curr_bevfeat"]]));
   }
 
   cam_params_host = new float[N_img * cam_params_size];
