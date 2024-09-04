@@ -256,20 +256,20 @@ PredictedPath PathGenerator::generatePolynomialPath(
       terminal_point.d = 0.0;
     } else {
       constexpr double return_width = 1.5;  // [m]
-      const double return_coeff =
-        return_width / backlash_width;  // if the object is biased too much, back to the center path
       const double current_momentum_d =
         current_point.d + 0.5 * current_point.d_vel * lateral_duration;
-      const double offset_ratio = std::abs(current_momentum_d / backlash_width);
+      const double momentum_d_abs = std::abs(current_momentum_d);
 
-      if (offset_ratio < 1) {
+      if (momentum_d_abs < backlash_width) {
         // If the object momentum is within the backlash width, we set the target d position to the
         // current momentum
         terminal_point.d = current_momentum_d;
-      } else if (offset_ratio >= 1 && offset_ratio < return_coeff + 1) {
+      } else if (
+        momentum_d_abs >= backlash_width && momentum_d_abs < backlash_width + return_width) {
         // If the object momentum is within the return zone, we set the target d position close to
         // the zero gradually
-        terminal_point.d = ((1 - offset_ratio) * backlash_width + return_width) / return_coeff;
+        terminal_point.d =
+          (backlash_width + return_width - momentum_d_abs) * backlash_width / return_width;
         terminal_point.d *= (current_momentum_d > 0) ? 1 : -1;
       } else {
         // If the object momentum is outside the backlash width + return zone, we set the target d
