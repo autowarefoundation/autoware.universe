@@ -446,7 +446,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const auto ego_polys = generatePathFootprint(path, expand_width_);
     std::vector<ObjectData> objects;
     // Crop out Pointcloud using an extra wide ego path
-    if (use_pointcloud_data_) {
+    if (use_pointcloud_data_ && !points_belonging_to_cluster_hulls->empty()) {
       const auto current_time = obstacle_ros_pointcloud_ptr_->header.stamp;
       getClosestObjectsOnPath(
         path, ego_polys, current_time, points_belonging_to_cluster_hulls, objects);
@@ -775,6 +775,7 @@ void AEB::getPointsBelongingToClusterHulls(
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   // eliminate noisy points by only considering points belonging to clusters of at least a certain
   // size
+  if (obstacle_points_ptr->empty()) return;
   const std::vector<pcl::PointIndices> cluster_indices = std::invoke([&]() {
     std::vector<pcl::PointIndices> cluster_idx;
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
@@ -788,7 +789,6 @@ void AEB::getPointsBelongingToClusterHulls(
     ec.extract(cluster_idx);
     return cluster_idx;
   });
-
   for (const auto & indices : cluster_indices) {
     PointCloud::Ptr cluster(new PointCloud);
     bool cluster_surpasses_threshold_height{false};
