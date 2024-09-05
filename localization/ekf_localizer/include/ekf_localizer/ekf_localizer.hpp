@@ -101,6 +101,7 @@ class EKFLocalizer : public rclcpp::Node
 public:
   explicit EKFLocalizer(const rclcpp::NodeOptions & options);
 
+  // This function is only used in static tools to know when timer callbacks are triggered.
   std::chrono::nanoseconds time_until_trigger() const
   {
     return timer_control_->time_until_trigger();
