@@ -10,14 +10,14 @@ traffic_light_classifier is a package for classifying traffic light labels using
 
 Traffic light labels are classified by EfficientNet-b1 or MobileNet-v2.  
 We trained classifiers for vehicular signals and pedestrian signals separately.
-For vehicular signals, totally 83400 (58600 for training, 14800 for evaluation and 10000 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
+For vehicular signals, a total of 83400 (58600 for training, 14800 for evaluation and 10000 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
 The information of the models is listed here:
 | Name | Input Size | Test Accuracy |
 | --------------- | ---------- | ------------- |
 | EfficientNet-b1 | 128 x 128 | 99.76% |
 | MobileNet-v2 | 224 x 224 | 99.81% |
 
-For pedestrian signals, totally 21199 (17860 for training, 2114 for evaluation and 1225 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
+For pedestrian signals, a total of 21199 (17860 for training, 2114 for evaluation and 1225 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
 The information of the models is listed here:
 | Name | Input Size | Test Accuracy |
 | --------------- | ---------- | ------------- |
@@ -50,10 +50,10 @@ These colors and shapes are assigned to the message as follows:
 
 ### Output
 
-| Name                       | Type                                            | Description         |
-| -------------------------- | ----------------------------------------------- | ------------------- |
+| Name                      | Type                                            | Description         |
+| ------------------------- | ----------------------------------------------- | ------------------- |
 | `~/output/traffic_lights` | `tier4_perception_msgs::msg::TrafficLightArray` | classified signals  |
-| `~/output/debug/image`     | `sensor_msgs::msg::Image`                       | image for debugging |
+| `~/output/debug/image`    | `sensor_msgs::msg::Image`                       | image for debugging |
 
 ## Parameters
 
