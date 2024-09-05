@@ -81,8 +81,8 @@ public:
   explicit CostmapGenerator(const rclcpp::NodeOptions & node_options);
 
 private:
-  std::shared_ptr<costmap_generator_node::ParamListener> param_listener_;
-  std::shared_ptr<costmap_generator_node::Params> param_;
+  std::shared_ptr<::costmap_generator_node::ParamListener> param_listener_;
+  std::shared_ptr<::costmap_generator_node::Params> param_;
 
   lanelet::LaneletMapPtr lanelet_map_;
   autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_;

@@ -160,9 +160,9 @@ namespace autoware::costmap_generator
 CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
 : Node("costmap_generator", node_options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-  param_listener_ =
-    std::make_shared<costmap_generator_node::ParamListener>(this->get_node_parameters_interface());
-  param_ = std::make_shared<costmap_generator_node::Params>(param_listener_->get_params());
+  param_listener_ = std::make_shared<::costmap_generator_node::ParamListener>(
+    this->get_node_parameters_interface());
+  param_ = std::make_shared<::costmap_generator_node::Params>(param_listener_->get_params());
 
   // Wait for first tf
   // We want to do this before creating subscriptions
