@@ -1077,7 +1077,7 @@ ros2 service call /planning/scenario_planning/lane_driving/behavior_planning/beh
 
 ### Visualize debug markers
 
-Use can enable publishing of debug markers with the following parameters.
+User can enable publishing of debug markers with the following parameters.
 
 ```yaml
 debug:
