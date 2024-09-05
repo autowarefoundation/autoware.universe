@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(autoware_behavior_path_goal_planner_module)
 
+set(ament_cmake_lint_cmake_FOUND TRUE)
+
 option(BUILD_EXAMPLES "Build examples" OFF)
 
 find_package(autoware_cmake REQUIRED)
@@ -19,7 +21,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 if(BUILD_EXAMPLES)
-  set(ament_cmake_lint_cmake_FOUND TRUE)
   message(STATUS "Building examples")
   include(FetchContent)
   FetchContent_Declare(
