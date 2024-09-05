@@ -10,7 +10,7 @@ traffic_light_classifier is a package for classifying traffic light labels using
 
 Traffic light labels are classified by EfficientNet-b1 or MobileNet-v2.  
 We trained classifiers for vehicular signals and pedestrian signals separately.
-For vehicular signals, totally 83400 (58600 for training, 14800 for evaluation and 10000 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
+For vehicular signals, a total of 83400 (58600 for training, 14800 for evaluation and 10000 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
 The information of the models is listed here:
 | Name | Input Size | Test Accuracy |
 | --------------- | ---------- | ------------- |
