@@ -17,7 +17,7 @@ The information of the models is listed here:
 | EfficientNet-b1 | 128 x 128 | 99.76% |
 | MobileNet-v2 | 224 x 224 | 99.81% |
 
-For pedestrian signals, totally 21199 (17860 for training, 2114 for evaluation and 1225 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
+For pedestrian signals, a total of 21199 (17860 for training, 2114 for evaluation and 1225 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
 The information of the models is listed here:
 | Name | Input Size | Test Accuracy |
 | --------------- | ---------- | ------------- |
