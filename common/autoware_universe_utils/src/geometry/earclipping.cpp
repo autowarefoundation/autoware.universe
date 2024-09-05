@@ -20,36 +20,35 @@
 namespace autoware::universe_utils
 {
 
-void earclipping::operator()(const Polygon2d & polygon)
+void Earclipping::operator()(const Polygon2d & polygon)
 {
   indices.clear();
   vertices = 0;
 
   if (polygon.outer().size() == 0) return;
 
-  std::size_t len;
+  std::size_t len = 0;
 
-  auto outer_ring = polygon.outer();
+  const auto & outer_ring = polygon.outer();
   len = outer_ring.size();
-  Points.reserve(len * 3 / 2);
+  points_.reserve(len * 3 / 2);
   indices.reserve(len + outer_ring.size());
 
-  earclipping::Point * outer_point = linked_list(outer_ring, true);
+  Earclipping::Point * outer_point = linked_list(outer_ring, true);
   if (!outer_point || outer_point->prev == outer_point->next) return;
   if (polygon.inners().size() > 0) outer_point = eliminate_holes(polygon.inners(), outer_point);
   earclipping_linked(outer_point);
-  Points.clear();
+  points_.clear();
 }
 
 /// @brief create a circular doubly linked list from polygon points in the specified winding order
-earclipping::Point * earclipping::linked_list(const LinearRing2d & points, bool clockwise)
+Earclipping::Point * Earclipping::linked_list(const LinearRing2d & points, bool clockwise)
 {
   double sum = 0;
   const std::size_t len = points.size();
-  std::size_t i, j;
-  earclipping::Point * last = nullptr;
+  Earclipping::Point * last = nullptr;
 
-  for (i = 0, j = len > 0 ? len - 1 : 0; i < len; j = i++) {
+  for (size_t i = 0, j = len > 0 ? len - 1 : 0; i < len; j = i++) {
     const auto & p1 = points[i];
     const auto & p2 = points[j];
     const double p10 = p1.x();
@@ -60,11 +59,11 @@ earclipping::Point * earclipping::linked_list(const LinearRing2d & points, bool 
   }
 
   if (clockwise == (sum > 0)) {
-    for (i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
       last = insert_point(vertices + i, points[i], last);
     }
   } else {
-    for (i = len; i-- > 0;) {
+    for (size_t i = len; i-- > 0;) {
       last = insert_point(vertices + i, points[i], last);
     }
   }
@@ -80,12 +79,12 @@ earclipping::Point * earclipping::linked_list(const LinearRing2d & points, bool 
 }
 
 /// @brief eliminate colinear or duplicate points
-earclipping::Point * earclipping::filter_points(
-  earclipping::Point * start, earclipping::Point * end)
+Earclipping::Point * Earclipping::filter_points(
+  Earclipping::Point * start, Earclipping::Point * end)
 {
   if (!end) end = start;
 
-  earclipping::Point * p = start;
+  Earclipping::Point * p = start;
   bool again;
   do {
     again = false;
@@ -106,14 +105,14 @@ earclipping::Point * earclipping::filter_points(
 }
 
 /// @brief find a bridge between vertices that connects hole with an outer ring and and link it
-earclipping::Point * earclipping::eliminate_hole(
-  earclipping::Point * hole, earclipping::Point * outer_point)
+Earclipping::Point * Earclipping::eliminate_hole(
+  Earclipping::Point * hole, Earclipping::Point * outer_point)
 {
-  earclipping::Point * bridge = find_hole_bridge(hole, outer_point);
+  Earclipping::Point * bridge = find_hole_bridge(hole, outer_point);
   if (!bridge) {
     return outer_point;
   }
-  earclipping::Point * bridgeReverse = split_polygon(bridge, hole);
+  Earclipping::Point * bridgeReverse = split_polygon(bridge, hole);
 
   // filter collinear points around the cuts
   filter_points(bridgeReverse, bridgeReverse->next);
@@ -122,8 +121,8 @@ earclipping::Point * earclipping::eliminate_hole(
   return filter_points(bridge, bridge->next);
 }
 
-earclipping::Point * earclipping::eliminate_holes(
-  const std::vector<LinearRing2d> & inners, earclipping::Point * outer_point)
+Earclipping::Point * Earclipping::eliminate_holes(
+  const std::vector<LinearRing2d> & inners, Earclipping::Point * outer_point)
 {
   const size_t len = inners.size();
 
@@ -145,7 +144,7 @@ earclipping::Point * earclipping::eliminate_holes(
 }
 
 /// @brief David Eberly's algorithm for finding a bridge between hole and outer polygon
-earclipping::Point * earclipping::find_hole_bridge(Point * hole, Point * outer_point)
+Earclipping::Point * Earclipping::find_hole_bridge(Point * hole, Point * outer_point)
 {
   Point * p = outer_point;
   double hx = hole->x();
@@ -164,7 +163,7 @@ earclipping::Point * earclipping::find_hole_bridge(Point * hole, Point * outer_p
     p = p->next;
   } while (p != outer_point);
 
-  if (!m) return 0;
+  if (!m) return nullptr;
 
   const Point * stop = m;
   double tanMin = std::numeric_limits<double>::infinity();
@@ -196,12 +195,12 @@ earclipping::Point * earclipping::find_hole_bridge(Point * hole, Point * outer_p
 }
 
 /// @brief main ear slicing loop which triangulates a polygon using linked list
-void earclipping::earclipping_linked(earclipping::Point * ear, int pass)
+void Earclipping::earclipping_linked(Earclipping::Point * ear, int pass)
 {
   if (!ear) return;
 
-  earclipping::Point * stop = ear;
-  earclipping::Point * next;
+  Earclipping::Point * stop = ear;
+  Earclipping::Point * next;
 
   // Iterate through ears, slicing them one by one
   while (ear->prev != ear->next) {
@@ -236,15 +235,15 @@ void earclipping::earclipping_linked(earclipping::Point * ear, int pass)
 }
 
 /// @brief check whether ear is valid
-bool earclipping::is_ear(earclipping::Point * ear)
+bool Earclipping::is_ear(Earclipping::Point * ear)
 {
-  const earclipping::Point * a = ear->prev;
-  const earclipping::Point * b = ear;
-  const earclipping::Point * c = ear->next;
+  const Earclipping::Point * a = ear->prev;
+  const Earclipping::Point * b = ear;
+  const Earclipping::Point * c = ear->next;
 
   if (area(a, b, c) >= 0) return false;  // Reflex, can't be an ear
 
-  earclipping::Point * p = ear->next->next;
+  Earclipping::Point * p = ear->next->next;
 
   while (p != ear->prev) {
     if (
@@ -258,12 +257,12 @@ bool earclipping::is_ear(earclipping::Point * ear)
 }
 
 /// @brief go through all polygon Points and cure small local self-intersections
-earclipping::Point * earclipping::cure_local_intersections(earclipping::Point * start)
+Earclipping::Point * Earclipping::cure_local_intersections(Earclipping::Point * start)
 {
-  earclipping::Point * p = start;
+  Earclipping::Point * p = start;
   do {
-    earclipping::Point * a = p->prev;
-    earclipping::Point * b = p->next->next;
+    Earclipping::Point * a = p->prev;
+    Earclipping::Point * b = p->next->next;
 
     if (
       !equals(a, b) && intersects(a, p, p->next, b) && locally_inside(a, b) &&
@@ -283,14 +282,14 @@ earclipping::Point * earclipping::cure_local_intersections(earclipping::Point * 
 }
 
 /// @brief splitting polygon into two and triangulate them independently
-void earclipping::split_earclipping(earclipping::Point * start)
+void Earclipping::split_earclipping(Earclipping::Point * start)
 {
-  earclipping::Point * a = start;
+  Earclipping::Point * a = start;
   do {
-    earclipping::Point * b = a->next->next;
+    Earclipping::Point * b = a->next->next;
     while (b != a->prev) {
       if (a->i != b->i && is_valid_diagonal(a, b)) {
-        earclipping::Point * c = split_polygon(a, b);
+        Earclipping::Point * c = split_polygon(a, b);
 
         a = filter_points(a, a->next);
         c = filter_points(c, c->next);
@@ -306,16 +305,16 @@ void earclipping::split_earclipping(earclipping::Point * start)
 }
 
 /// @brief check whether sector in vertex m contains sector in vertex p in the same coordinates
-bool earclipping::sector_contains_sector(const earclipping::Point * m, const earclipping::Point * p)
+bool Earclipping::sector_contains_sector(const Earclipping::Point * m, const Earclipping::Point * p)
 {
   return area(m->prev, m, p->prev) < 0 && area(p->next, m, m->next) < 0;
 }
 
 /// @brief find the leftmost Point of a polygon ring
-earclipping::Point * earclipping::get_leftmost(earclipping::Point * start)
+Earclipping::Point * Earclipping::get_leftmost(Earclipping::Point * start)
 {
-  earclipping::Point * p = start;
-  earclipping::Point * leftmost = start;
+  Earclipping::Point * p = start;
+  Earclipping::Point * leftmost = start;
   do {
     if (p->x() < leftmost->x() || (p->x() == leftmost->x() && p->y() < leftmost->y())) leftmost = p;
     p = p->next;
@@ -325,7 +324,7 @@ earclipping::Point * earclipping::get_leftmost(earclipping::Point * start)
 }
 
 /// @brief check if a point lies within a convex triangle
-bool earclipping::point_in_triangle(
+bool Earclipping::point_in_triangle(
   double ax, double ay, double bx, double by, double cx, double cy, double px, double py) const
 {
   return (cx - px) * (ay - py) >= (ax - px) * (cy - py) &&
@@ -334,7 +333,7 @@ bool earclipping::point_in_triangle(
 }
 
 /// @brief check if a diagonal between two polygon Points is valid
-bool earclipping::is_valid_diagonal(earclipping::Point * a, earclipping::Point * b)
+bool Earclipping::is_valid_diagonal(Earclipping::Point * a, Earclipping::Point * b)
 {
   return a->next->i != b->i && a->prev->i != b->i && !intersects_polygon(a, b) &&
          ((locally_inside(a, b) && locally_inside(b, a) && middle_inside(a, b) &&
@@ -343,22 +342,22 @@ bool earclipping::is_valid_diagonal(earclipping::Point * a, earclipping::Point *
 }
 
 /// @brief signed area of a triangle
-double earclipping::area(
-  const earclipping::Point * p, const earclipping::Point * q, const earclipping::Point * r) const
+double Earclipping::area(
+  const Earclipping::Point * p, const Earclipping::Point * q, const Earclipping::Point * r) const
 {
   return (q->y() - p->y()) * (r->x() - q->x()) - (q->x() - p->x()) * (r->y() - q->y());
 }
 
 /// @brief check if two points are equal
-bool earclipping::equals(const earclipping::Point * p1, const earclipping::Point * p2)
+bool Earclipping::equals(const Earclipping::Point * p1, const Earclipping::Point * p2)
 {
   return p1->x() == p2->x() && p1->y() == p2->y();
 }
 
 /// @brief check if two segments intersect
-bool earclipping::intersects(
-  const earclipping::Point * p1, const earclipping::Point * q1, const earclipping::Point * p2,
-  const earclipping::Point * q2)
+bool Earclipping::intersects(
+  const Earclipping::Point * p1, const Earclipping::Point * q1, const Earclipping::Point * p2,
+  const Earclipping::Point * q2)
 {
   int o1 = sign(area(p1, q1, p2));
   int o2 = sign(area(p1, q1, q2));
@@ -376,23 +375,23 @@ bool earclipping::intersects(
 }
 
 /// @brief for collinear points p, q, r, check if point q lies on segment pr
-bool earclipping::on_segment(
-  const earclipping::Point * p, const earclipping::Point * q, const earclipping::Point * r)
+bool Earclipping::on_segment(
+  const Earclipping::Point * p, const Earclipping::Point * q, const Earclipping::Point * r)
 {
   return q->x() <= std::max<double>(p->x(), r->x()) && q->x() >= std::min<double>(p->x(), r->x()) &&
          q->y() <= std::max<double>(p->y(), r->y()) && q->y() >= std::min<double>(p->y(), r->y());
 }
 
 /// @brief Sign function for area calculation
-int earclipping::sign(double val)
+int Earclipping::sign(double val)
 {
   return (0.0 < val) - (val < 0.0);
 }
 
 /// @brief Check if a polygon diagonal intersects any polygon segments
-bool earclipping::intersects_polygon(const earclipping::Point * a, const earclipping::Point * b)
+bool Earclipping::intersects_polygon(const Earclipping::Point * a, const Earclipping::Point * b)
 {
-  const earclipping::Point * p = a;
+  const Earclipping::Point * p = a;
   do {
     if (
       p->i != a->i && p->next->i != a->i && p->i != b->i && p->next->i != b->i &&
@@ -405,16 +404,16 @@ bool earclipping::intersects_polygon(const earclipping::Point * a, const earclip
 }
 
 /// @brief Check if a polygon diagonal is locally inside the polygon
-bool earclipping::locally_inside(const earclipping::Point * a, const earclipping::Point * b)
+bool Earclipping::locally_inside(const Earclipping::Point * a, const Earclipping::Point * b)
 {
   return area(a->prev, a, a->next) < 0 ? area(a, b, a->next) >= 0 && area(a, a->prev, b) >= 0
                                        : area(a, b, a->prev) < 0 || area(a, a->next, b) < 0;
 }
 
 /// @brief Check if the middle vertex of a polygon diagonal is inside the polygon
-bool earclipping::middle_inside(const earclipping::Point * a, const earclipping::Point * b)
+bool Earclipping::middle_inside(const Earclipping::Point * a, const Earclipping::Point * b)
 {
-  const earclipping::Point * p = a;
+  const Earclipping::Point * p = a;
   bool inside = false;
   double px = (a->x() + b->x()) / 2;
   double py = (a->y() + b->y()) / 2;
@@ -430,17 +429,17 @@ bool earclipping::middle_inside(const earclipping::Point * a, const earclipping:
 }
 
 /// @brief Link two polygon vertices with a bridge
-earclipping::Point * earclipping::split_polygon(earclipping::Point * a, earclipping::Point * b)
+Earclipping::Point * Earclipping::split_polygon(Earclipping::Point * a, Earclipping::Point * b)
 {
   Point2d aPoint(a->x(), a->y());
   Point2d bPoint(b->x(), b->y());
 
   // Use construct_point to create new Point objects
-  earclipping::Point * a2 = construct_point(a->i, aPoint);
-  earclipping::Point * b2 = construct_point(b->i, bPoint);
+  Earclipping::Point * a2 = construct_point(a->i, aPoint);
+  Earclipping::Point * b2 = construct_point(b->i, bPoint);
 
-  earclipping::Point * an = a->next;
-  earclipping::Point * bp = b->prev;
+  Earclipping::Point * an = a->next;
+  Earclipping::Point * bp = b->prev;
 
   // Update the linked list connections
   a->next = b;
@@ -464,10 +463,10 @@ earclipping::Point * earclipping::split_polygon(earclipping::Point * a, earclipp
 
 /// @brief create a Point and optionally link it with the previous one (in a circular doubly linked
 /// list)
-earclipping::Point * earclipping::insert_point(
-  std::size_t i, const Point2d & pt, earclipping::Point * last)
+Earclipping::Point * Earclipping::insert_point(
+  std::size_t i, const Point2d & pt, Earclipping::Point * last)
 {
-  earclipping::Point * p = construct_point(static_cast<std::size_t>(i), pt);
+  Earclipping::Point * p = construct_point(static_cast<std::size_t>(i), pt);
 
   if (!last) {
     p->prev = p;
@@ -483,7 +482,7 @@ earclipping::Point * earclipping::insert_point(
 }
 
 /// @brief remove a Point from the linked list
-void earclipping::remove_point(earclipping::Point * p)
+void Earclipping::remove_point(Earclipping::Point * p)
 {
   p->next->prev = p->prev;
   p->prev->next = p->next;
@@ -492,7 +491,7 @@ void earclipping::remove_point(earclipping::Point * p)
 /// @brief main triangulate function
 std::vector<Polygon2d> triangulate(const Polygon2d & poly)
 {
-  autoware::universe_utils::earclipping triangulate;
+  autoware::universe_utils::Earclipping triangulate;
   triangulate(poly);
 
   std::vector<Polygon2d> triangles;

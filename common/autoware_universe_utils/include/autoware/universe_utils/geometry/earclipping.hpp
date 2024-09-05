@@ -17,12 +17,13 @@
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
+#include <utility>
 #include <vector>
 
 namespace autoware::universe_utils
 {
 
-class earclipping
+class Earclipping
 {
 public:
   std::vector<std::size_t> indices;
@@ -31,17 +32,19 @@ public:
   using Point2d = autoware::universe_utils::Point2d;
   using LinearRing2d = autoware::universe_utils::LinearRing2d;
 
-  void operator()(const Polygon2d & points);
+  void operator()(const Polygon2d & polygon);
+
+  ~Earclipping()
+  {
+    for (auto * p : points_) {
+      delete p;
+    }
+  }
 
 private:
   struct Point
   {
-    Point(std::size_t index, const Point2d & point) : i(index), pt(point) {}
-
-    Point(const Point &) = delete;
-    Point & operator=(const Point &) = delete;
-    Point(Point &&) = delete;
-    Point & operator=(Point &&) = delete;
+    Point(const std::size_t index, Point2d point) : i(index), pt(std::move(point)) {}
 
     const std::size_t i;  // Index of the point in the original polygon
     const Point2d pt;     // The Point2d object representing the coordinates
@@ -51,12 +54,11 @@ private:
     Point * next = nullptr;
     bool steiner = false;
 
-    double x() const { return pt.x(); }
-    double y() const { return pt.y(); }
+    [[nodiscard]] double x() const { return pt.x(); }
+    [[nodiscard]] double y() const { return pt.y(); }
   };
 
-  // Use std::vector instead of ObjectPool
-  std::vector<Point *> Points;
+  std::vector<Point *> points_;
 
   Point * linked_list(const LinearRing2d & points, bool clockwise);
   Point * filter_points(Point * start, Point * end = nullptr);
@@ -72,7 +74,7 @@ private:
   void remove_point(Point * p);
   bool is_ear(Point * ear);
   bool sector_contains_sector(const Point * m, const Point * p);
-  bool point_in_triangle(
+  [[nodiscard]] bool point_in_triangle(
     double ax, double ay, double bx, double by, double cx, double cy, double px, double py) const;
   bool is_valid_diagonal(Point * a, Point * b);
   bool equals(const Point * p1, const Point * p2);
@@ -81,14 +83,14 @@ private:
   bool intersects_polygon(const Point * a, const Point * b);
   bool locally_inside(const Point * a, const Point * b);
   bool middle_inside(const Point * a, const Point * b);
-  int sign(double val);
+  static int sign(double val);
   double area(const Point * p, const Point * q, const Point * r) const;
 
   // Function to construct a new Point object
-  earclipping::Point * construct_point(std::size_t index, const Point2d & point)
+  Earclipping::Point * construct_point(std::size_t index, const Point2d & point)
   {
-    Point * new_point = new Point(index, point);
-    Points.push_back(new_point);
+    auto * new_point = new Point(index, point);
+    points_.push_back(new_point);
     return new_point;
   }
 };
