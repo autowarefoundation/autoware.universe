@@ -44,6 +44,9 @@ target_link_libraries(costmap_generator_node
   costmap_generator_lib
   costmap_generator_node_parameters
 )
+target_compile_options(costmap_generator_node PUBLIC
+  -Wno-error=deprecated-declarations
+)
 
 rclcpp_components_register_node(costmap_generator_node
   PLUGIN "autoware::costmap_generator::CostmapGenerator"
