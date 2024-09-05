@@ -21,6 +21,7 @@
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <pcl_ros/transforms.hpp>
+#include <rclcpp/node.hpp>
 
 #include <geometry_msgs/msg/polygon.hpp>
 
@@ -248,20 +249,13 @@ void AEB::onTimer()
 void AEB::onImu(const Imu::ConstSharedPtr input_msg)
 {
   // transform imu
-  geometry_msgs::msg::TransformStamped transform_stamped{};
-  try {
-    transform_stamped = tf_buffer_.lookupTransform(
-      "base_link", input_msg->header.frame_id, rclcpp::Time(0),
-      rclcpp::Duration::from_seconds(0.5));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR_STREAM(
-      get_logger(),
-      "[AEB] Failed to look up transform from base_link to" << input_msg->header.frame_id);
-    return;
-  }
+  const auto logger = get_logger();
+  const auto transform_stamped =
+    utils::getTransform("base_link", input_msg->header.frame_id, tf_buffer_, logger);
+  if (!transform_stamped.has_value()) return;
 
   angular_velocity_ptr_ = std::make_shared<Vector3>();
-  tf2::doTransform(input_msg->angular_velocity, *angular_velocity_ptr_, transform_stamped);
+  tf2::doTransform(input_msg->angular_velocity, *angular_velocity_ptr_, transform_stamped.value());
 }
 
 void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
@@ -275,22 +269,15 @@ void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
       get_logger(),
       "[AEB]: Input point cloud frame is not base_link and it is " << input_msg->header.frame_id);
     // transform pointcloud
-    geometry_msgs::msg::TransformStamped transform_stamped{};
-    try {
-      transform_stamped = tf_buffer_.lookupTransform(
-        "base_link", input_msg->header.frame_id, rclcpp::Time(0),
-        rclcpp::Duration::from_seconds(0.5));
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_ERROR_STREAM(
-        get_logger(),
-        "[AEB] Failed to look up transform from base_link to" << input_msg->header.frame_id);
-      return;
-    }
+    const auto logger = get_logger();
+    const auto transform_stamped =
+      utils::getTransform("base_link", input_msg->header.frame_id, tf_buffer_, logger);
+    if (!transform_stamped.has_value()) return;
 
     // transform by using eigen matrix
     PointCloud2 transformed_points{};
     const Eigen::Matrix4f affine_matrix =
-      tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
+      tf2::transformToEigen(transform_stamped.value().transform).matrix().cast<float>();
     pcl_ros::transformPointCloud(affine_matrix, *input_msg, transformed_points);
     pcl::fromROSMsg(transformed_points, *pointcloud_ptr);
   }
@@ -651,27 +638,17 @@ std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
   if (predicted_traj.points.empty()) {
     return std::nullopt;
   }
-  time_keeper_->start_track("lookUpTransform");
-  geometry_msgs::msg::TransformStamped transform_stamped{};
-  try {
-    transform_stamped = tf_buffer_.lookupTransform(
-      "base_link", predicted_traj.header.frame_id, rclcpp::Time(0),
-      rclcpp::Duration::from_seconds(0.5));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR_STREAM(
-      get_logger(),
-      "[AEB] Failed to look up transform from base_link to " + predicted_traj.header.frame_id);
-    return std::nullopt;
-  }
-  time_keeper_->end_track("lookUpTransform");
-
+  const auto logger = get_logger();
+  const auto transform_stamped =
+    utils::getTransform("base_link", predicted_traj.header.frame_id, tf_buffer_, logger);
+  if (!transform_stamped.has_value()) return std::nullopt;
   // create path
   time_keeper_->start_track("createPath");
   Path path;
   path.reserve(predicted_traj.points.size());
   for (size_t i = 0; i < predicted_traj.points.size(); ++i) {
     geometry_msgs::msg::Pose map_pose;
-    tf2::doTransform(predicted_traj.points.at(i).pose, map_pose, transform_stamped);
+    tf2::doTransform(predicted_traj.points.at(i).pose, map_pose, transform_stamped.value());
     path.push_back(map_pose);
 
     if (i * mpc_prediction_time_interval_ > mpc_prediction_time_horizon_) {
@@ -736,19 +713,14 @@ void AEB::createObjectDataUsingPredictedObjects(
       return obj_vel_norm * std::cos(obj_yaw - path_yaw);
     };
 
-  geometry_msgs::msg::TransformStamped transform_stamped{};
-  try {
-    transform_stamped = tf_buffer_.lookupTransform(
-      "base_link", predicted_objects_ptr_->header.frame_id, rclcpp::Time(0),
-      rclcpp::Duration::from_seconds(0.5));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
-    return;
-  }
-
+  const auto logger = get_logger();
+  const auto transform_stamped_opt =
+    utils::getTransform("base_link", predicted_objects_ptr_->header.frame_id, tf_buffer_, logger);
+  if (!transform_stamped_opt.has_value()) return;
   // Check which objects collide with the ego footprints
   std::for_each(objects.begin(), objects.end(), [&](const auto & predicted_object) {
     // get objects in base_link frame
+    const auto & transform_stamped = transform_stamped_opt.value();
     const auto t_predicted_object =
       utils::transformObjectFrame(predicted_object, transform_stamped);
     const auto & obj_pose = t_predicted_object.kinematics.initial_pose_with_covariance.pose;
@@ -980,20 +952,15 @@ void AEB::addVirtualStopWallMarker(MarkerArray & markers)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   const auto ego_map_pose = std::invoke([this]() -> std::optional<geometry_msgs::msg::Pose> {
-    geometry_msgs::msg::TransformStamped tf_current_pose;
+    const auto logger = get_logger();
+    const auto tf_current_pose = utils::getTransform("map", "base_link", tf_buffer_, logger);
+    if (!tf_current_pose.has_value()) return std::nullopt;
+    const auto transform = tf_current_pose.value().transform;
     geometry_msgs::msg::Pose p;
-    try {
-      tf_current_pose = tf_buffer_.lookupTransform(
-        "map", "base_link", rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_ERROR(get_logger(), "%s", ex.what());
-      return std::nullopt;
-    }
-
-    p.orientation = tf_current_pose.transform.rotation;
-    p.position.x = tf_current_pose.transform.translation.x;
-    p.position.y = tf_current_pose.transform.translation.y;
-    p.position.z = tf_current_pose.transform.translation.z;
+    p.orientation = transform.rotation;
+    p.position.x = transform.translation.x;
+    p.position.y = transform.translation.y;
+    p.position.z = transform.translation.z;
     return std::make_optional(p);
   });
 
