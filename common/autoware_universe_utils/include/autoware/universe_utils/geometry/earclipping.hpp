@@ -23,7 +23,7 @@
 namespace autoware::universe_utils
 {
 
-class Earclipping
+class EarClipping
 {
 public:
   std::vector<std::size_t> indices;
@@ -34,7 +34,7 @@ public:
 
   void operator()(const Polygon2d & polygon);
 
-  ~Earclipping()
+  ~EarClipping()
   {
     for (auto * p : points_) {
       delete p;
@@ -67,7 +67,7 @@ private:
   Point * split_polygon(Point * a, Point * b);
   Point * insert_point(std::size_t i, const Point2d & p, Point * last);
   Point * eliminate_holes(
-    const std::vector<LinearRing2d> & inners, Earclipping::Point * outer_point);
+    const std::vector<LinearRing2d> & inners, EarClipping::Point * outer_point);
   Point * eliminate_hole(Point * hole, Point * outer_point);
   static Point * find_hole_bridge(Point * hole, Point * outer_point);
   void earclipping_linked(Point * ear, int pass = 0);
@@ -88,7 +88,7 @@ private:
   static double area(const Point * p, const Point * q, const Point * r);
 
   // Function to construct a new Point object
-  Earclipping::Point * construct_point(std::size_t index, const Point2d & point)
+  EarClipping::Point * construct_point(std::size_t index, const Point2d & point)
   {
     auto * new_point = new Point(index, point);
     points_.push_back(new_point);
@@ -96,7 +96,7 @@ private:
   }
 };
 
-/// @brief Triangulate based on earclipping algorithm
+/// @brief Triangulate based on ear clipping algorithm
 /// @param polygon concave/convex polygon with/without holes
 /// @details algorithm based on https://github.com/mapbox/earclipping with modification
 std::vector<autoware::universe_utils::Polygon2d> triangulate(
