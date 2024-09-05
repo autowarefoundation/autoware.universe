@@ -85,7 +85,7 @@ Earclipping::Point * Earclipping::filter_points(
   if (!end) end = start;
 
   Earclipping::Point * p = start;
-  bool again;
+  bool again = false;
   do {
     again = false;
 
@@ -112,10 +112,10 @@ Earclipping::Point * Earclipping::eliminate_hole(
   if (!bridge) {
     return outer_point;
   }
-  Earclipping::Point * bridgeReverse = split_polygon(bridge, hole);
+  Earclipping::Point * bridge_reverse = split_polygon(bridge, hole);
 
   // filter collinear points around the cuts
-  filter_points(bridgeReverse, bridgeReverse->next);
+  filter_points(bridge_reverse, bridge_reverse->next);
 
   // Check if input node was removed by the filtering
   return filter_points(bridge, bridge->next);
@@ -166,8 +166,8 @@ Earclipping::Point * Earclipping::find_hole_bridge(Point * hole, Point * outer_p
   if (!m) return nullptr;
 
   const Point * stop = m;
-  double tanMin = std::numeric_limits<double>::infinity();
-  double tanCur = 0;
+  double tan_min = std::numeric_limits<double>::infinity();
+  double tan_cur = 0;
 
   p = m;
   double mx = m->x();
@@ -177,14 +177,14 @@ Earclipping::Point * Earclipping::find_hole_bridge(Point * hole, Point * outer_p
     if (
       hx >= p->x() && p->x() >= mx && hx != p->x() &&
       point_in_triangle(hy < my ? hx : qx, hy, mx, my, hy < my ? qx : hx, hy, p->x(), p->y())) {
-      tanCur = std::abs(hy - p->y()) / (hx - p->x());
+      tan_cur = std::abs(hy - p->y()) / (hx - p->x());
 
       if (
         locally_inside(p, hole) &&
-        (tanCur < tanMin ||
-         (tanCur == tanMin && (p->x() > m->x() || sector_contains_sector(m, p))))) {
+        (tan_cur < tan_min ||
+         (tan_cur == tan_min && (p->x() > m->x() || sector_contains_sector(m, p))))) {
         m = p;
-        tanMin = tanCur;
+        tan_min = tan_cur;
       }
     }
 
@@ -200,7 +200,7 @@ void Earclipping::earclipping_linked(Earclipping::Point * ear, int pass)
   if (!ear) return;
 
   Earclipping::Point * stop = ear;
-  Earclipping::Point * next;
+  Earclipping::Point * next = nullptr;
 
   // Iterate through ears, slicing them one by one
   while (ear->prev != ear->next) {
@@ -325,7 +325,7 @@ Earclipping::Point * Earclipping::get_leftmost(Earclipping::Point * start)
 
 /// @brief check if a point lies within a convex triangle
 bool Earclipping::point_in_triangle(
-  double ax, double ay, double bx, double by, double cx, double cy, double px, double py) const
+  double ax, double ay, double bx, double by, double cx, double cy, double px, double py)
 {
   return (cx - px) * (ay - py) >= (ax - px) * (cy - py) &&
          (ax - px) * (by - py) >= (bx - px) * (ay - py) &&
@@ -343,7 +343,7 @@ bool Earclipping::is_valid_diagonal(Earclipping::Point * a, Earclipping::Point *
 
 /// @brief signed area of a triangle
 double Earclipping::area(
-  const Earclipping::Point * p, const Earclipping::Point * q, const Earclipping::Point * r) const
+  const Earclipping::Point * p, const Earclipping::Point * q, const Earclipping::Point * r)
 {
   return (q->y() - p->y()) * (r->x() - q->x()) - (q->x() - p->x()) * (r->y() - q->y());
 }
@@ -431,12 +431,12 @@ bool Earclipping::middle_inside(const Earclipping::Point * a, const Earclipping:
 /// @brief Link two polygon vertices with a bridge
 Earclipping::Point * Earclipping::split_polygon(Earclipping::Point * a, Earclipping::Point * b)
 {
-  Point2d aPoint(a->x(), a->y());
-  Point2d bPoint(b->x(), b->y());
+  Point2d a_point(a->x(), a->y());
+  Point2d b_point(b->x(), b->y());
 
   // Use construct_point to create new Point objects
-  Earclipping::Point * a2 = construct_point(a->i, aPoint);
-  Earclipping::Point * b2 = construct_point(b->i, bPoint);
+  Earclipping::Point * a2 = construct_point(a->i, a_point);
+  Earclipping::Point * b2 = construct_point(b->i, b_point);
 
   Earclipping::Point * an = a->next;
   Earclipping::Point * bp = b->prev;

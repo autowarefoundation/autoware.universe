@@ -61,30 +61,31 @@ private:
   std::vector<Point *> points_;
 
   Point * linked_list(const LinearRing2d & points, bool clockwise);
-  Point * filter_points(Point * start, Point * end = nullptr);
+  static Point * filter_points(Point * start, Point * end = nullptr);
   Point * cure_local_intersections(Point * start);
-  Point * get_leftmost(Point * start);
+  static Point * get_leftmost(Point * start);
   Point * split_polygon(Point * a, Point * b);
   Point * insert_point(std::size_t i, const Point2d & p, Point * last);
-  Point * eliminate_holes(const std::vector<LinearRing2d> & points, Point * outer_point);
+  Point * eliminate_holes(
+    const std::vector<LinearRing2d> & inners, Earclipping::Point * outer_point);
   Point * eliminate_hole(Point * hole, Point * outer_point);
-  Point * find_hole_bridge(Point * hole, Point * outer_point);
+  static Point * find_hole_bridge(Point * hole, Point * outer_point);
   void earclipping_linked(Point * ear, int pass = 0);
   void split_earclipping(Point * start);
-  void remove_point(Point * p);
-  bool is_ear(Point * ear);
-  bool sector_contains_sector(const Point * m, const Point * p);
-  [[nodiscard]] bool point_in_triangle(
-    double ax, double ay, double bx, double by, double cx, double cy, double px, double py) const;
-  bool is_valid_diagonal(Point * a, Point * b);
-  bool equals(const Point * p1, const Point * p2);
-  bool intersects(const Point * p1, const Point * q1, const Point * p2, const Point * q2);
-  bool on_segment(const Point * p, const Point * q, const Point * r);
-  bool intersects_polygon(const Point * a, const Point * b);
-  bool locally_inside(const Point * a, const Point * b);
-  bool middle_inside(const Point * a, const Point * b);
+  static void remove_point(Point * p);
+  static bool is_ear(Point * ear);
+  static bool sector_contains_sector(const Point * m, const Point * p);
+  [[nodiscard]] static bool point_in_triangle(
+    double ax, double ay, double bx, double by, double cx, double cy, double px, double py);
+  static bool is_valid_diagonal(Point * a, Point * b);
+  static bool equals(const Point * p1, const Point * p2);
+  static bool intersects(const Point * p1, const Point * q1, const Point * p2, const Point * q2);
+  static bool on_segment(const Point * p, const Point * q, const Point * r);
+  static bool intersects_polygon(const Point * a, const Point * b);
+  static bool locally_inside(const Point * a, const Point * b);
+  static bool middle_inside(const Point * a, const Point * b);
   static int sign(double val);
-  double area(const Point * p, const Point * q, const Point * r) const;
+  static double area(const Point * p, const Point * q, const Point * r);
 
   // Function to construct a new Point object
   Earclipping::Point * construct_point(std::size_t index, const Point2d & point)
