@@ -182,7 +182,8 @@ RouteHandler::RouteHandler(const LaneletMapBin & map_msg)
   route_ptr_ = nullptr;
 }
 
-void RouteHandler::setMap(const LaneletMapBin & map_msg)
+void RouteHandler::setMap(
+  const LaneletMapBin & map_msg, const bool & is_enable_differential_lanelet)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
@@ -214,7 +215,7 @@ void RouteHandler::setMap(const LaneletMapBin & map_msg)
   is_map_msg_ready_ = true;
   is_handler_ready_ = false;
 
-  setLaneletsFromRouteMsg();
+  setLaneletsFromRouteMsg(is_enable_differential_lanelet);
 }
 
 bool RouteHandler::isRouteLooped(const RouteSections & route_sections)
@@ -231,7 +232,8 @@ bool RouteHandler::isRouteLooped(const RouteSections & route_sections)
   return false;
 }
 
-void RouteHandler::setRoute(const LaneletRoute & route_msg)
+void RouteHandler::setRoute(
+  const LaneletRoute & route_msg, const bool & is_enable_differential_lanelet)
 {
   if (!isRouteLooped(route_msg.segments)) {
     // if get not modified route but new route, reset original start pose
@@ -241,7 +243,7 @@ void RouteHandler::setRoute(const LaneletRoute & route_msg)
     }
     route_ptr_ = std::make_shared<LaneletRoute>(route_msg);
     is_handler_ready_ = false;
-    setLaneletsFromRouteMsg();
+    setLaneletsFromRouteMsg(is_enable_differential_lanelet);
   } else {
     RCLCPP_ERROR(
       logger_,
@@ -364,16 +366,18 @@ void RouteHandler::clearRoute()
   is_handler_ready_ = false;
 }
 
-void RouteHandler::setLaneletsFromRouteMsg()
+void RouteHandler::setLaneletsFromRouteMsg(const bool & is_enable_differential_lanelet)
 {
   if (!route_ptr_ || !is_map_msg_ready_) {
     return;
   }
   route_lanelets_.clear();
   preferred_lanelets_.clear();
-  const bool is_route_valid = lanelet::utils::route::isRouteValid(*route_ptr_, lanelet_map_ptr_);
-  if (!is_route_valid) {
-    return;
+  if (!is_enable_differential_lanelet) {
+    const bool is_route_valid = lanelet::utils::route::isRouteValid(*route_ptr_, lanelet_map_ptr_);
+    if (!is_route_valid) {
+      return;
+    }
   }
 
   size_t primitive_size{0};
@@ -384,11 +388,26 @@ void RouteHandler::setLaneletsFromRouteMsg()
 
   for (const auto & route_section : route_ptr_->segments) {
     for (const auto & primitive : route_section.primitives) {
-      const auto id = primitive.id;
-      const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
-      route_lanelets_.push_back(llt);
-      if (id == route_section.preferred_primitive.id) {
-        preferred_lanelets_.push_back(llt);
+      try {
+        const auto id = primitive.id;
+        const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
+        route_lanelets_.push_back(llt);
+        if (id == route_section.preferred_primitive.id) {
+          preferred_lanelets_.push_back(llt);
+        }
+      } catch (const std::exception & e) {
+        if (!is_enable_differential_lanelet) {
+          std::cerr
+            << e.what()
+            << ". Maybe the loaded route was created on a different Map from the current one. "
+               "Try to load the other Route again."
+            << std::endl;
+          return;
+        } else {
+          RCLCPP_DEBUG(
+            logger_, "Failed to get lanelet differential map with id: %ld. %s", primitive.id,
+            e.what());
+        }
       }
     }
   }
@@ -397,15 +416,45 @@ void RouteHandler::setLaneletsFromRouteMsg()
   if (!route_ptr_->segments.empty()) {
     goal_lanelets_.reserve(route_ptr_->segments.back().primitives.size());
     for (const auto & primitive : route_ptr_->segments.back().primitives) {
-      const auto id = primitive.id;
-      const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
-      goal_lanelets_.push_back(llt);
+      try {
+        const auto id = primitive.id;
+        const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
+        goal_lanelets_.push_back(llt);
+      } catch (const std::exception & e) {
+        if (!is_enable_differential_lanelet) {
+          std::cerr
+            << e.what()
+            << ". Maybe the loaded route was created on a different Map from the current one. "
+               "Try to load the other Route again."
+            << std::endl;
+          return;
+        } else {
+          RCLCPP_DEBUG(
+            logger_, "Failed to get lanelet differential map with id: %ld. %s", primitive.id,
+            e.what());
+        }
+      }
     }
     start_lanelets_.reserve(route_ptr_->segments.front().primitives.size());
     for (const auto & primitive : route_ptr_->segments.front().primitives) {
-      const auto id = primitive.id;
-      const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
-      start_lanelets_.push_back(llt);
+      try {
+        const auto id = primitive.id;
+        const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
+        start_lanelets_.push_back(llt);
+      } catch (const std::exception & e) {
+        if (!is_enable_differential_lanelet) {
+          std::cerr
+            << e.what()
+            << ". Maybe the loaded route was created on a different Map from the current one. "
+               "Try to load the other Route again."
+            << std::endl;
+          return;
+        } else {
+          RCLCPP_DEBUG(
+            logger_, "Failed to get lanelet differential map with id: %ld. %s", primitive.id,
+            e.what());
+        }
+      }
     }
   }
   is_handler_ready_ = true;
