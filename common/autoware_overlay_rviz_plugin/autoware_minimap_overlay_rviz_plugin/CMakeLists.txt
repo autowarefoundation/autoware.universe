@@ -6,6 +6,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};/usr/share/cmake/geographiclib")
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(GeographicLib REQUIRED)
 find_package(Qt5 COMPONENTS Network REQUIRED)
 find_package(OGRE REQUIRED)
 
