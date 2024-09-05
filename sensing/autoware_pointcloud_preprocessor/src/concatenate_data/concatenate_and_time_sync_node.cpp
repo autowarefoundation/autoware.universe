@@ -314,32 +314,37 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
   double reference_timestamp_min, double reference_timestamp_max)
 {
   // should never come to this state.
-  if (concatenate_cloud_ptr == nullptr) return;
-
-  current_concat_cloud_timestamp_ = rclcpp::Time(concatenate_cloud_ptr->header.stamp).seconds();
+  if (concatenate_cloud_ptr == nullptr) {
+    RCLCPP_ERROR(this->get_logger(), "Concatenate cloud is a nullptr.");
+    return;
+  }
+  current_concatenate_cloud_timestamp_ =
+    rclcpp::Time(concatenate_cloud_ptr->header.stamp).seconds();
 
   if (
-    current_concat_cloud_timestamp_ < lastest_concat_cloud_timestamp_ &&
+    current_concatenate_cloud_timestamp_ < lastest_concatenate_cloud_timestamp_ &&
     !params_.publish_previous_but_late_pointcloud) {
     drop_previous_but_late_pointcloud_ = true;
   } else {
     publish_pointcloud_ = true;
-    lastest_concat_cloud_timestamp_ = current_concat_cloud_timestamp_;
-    auto concat_output = std::make_unique<sensor_msgs::msg::PointCloud2>(*concatenate_cloud_ptr);
-    concatenate_cloud_publisher_->publish(std::move(concat_output));
+    lastest_concatenate_cloud_timestamp_ = current_concatenate_cloud_timestamp_;
+    auto concatenate_pointcloud_output =
+      std::make_unique<sensor_msgs::msg::PointCloud2>(*concatenate_cloud_ptr);
+    concatenate_cloud_publisher_->publish(std::move(concatenate_pointcloud_output));
+
     // publish transformed raw pointclouds
-    for (const auto & pair : topic_to_transformed_cloud_map) {
-      if (pair.second) {
-        if (params_.publish_synchronized_pointcloud) {
+    if (params_.publish_synchronized_pointcloud) {
+      for (auto topic : params_.input_topics) {
+        if (topic_to_transformed_cloud_map.find(topic) != topic_to_transformed_cloud_map.end()) {
           auto transformed_cloud_output =
-            std::make_unique<sensor_msgs::msg::PointCloud2>(*pair.second);
-          topic_to_transformed_cloud_publisher_map_[pair.first]->publish(
+            std::make_unique<sensor_msgs::msg::PointCloud2>(*topic_to_transformed_cloud_map[topic]);
+          topic_to_transformed_cloud_publisher_map_[topic]->publish(
             std::move(transformed_cloud_output));
+        } else {
+          RCLCPP_WARN(
+            this->get_logger(),
+            "transformed_raw_points[%s] is nullptr, skipping pointcloud publish.", topic.c_str());
         }
-      } else {
-        RCLCPP_WARN(
-          this->get_logger(), "transformed_raw_points[%s] is nullptr, skipping pointcloud publish.",
-          pair.first.c_str());
       }
     }
   }
@@ -438,7 +443,7 @@ void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
   diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   if (publish_pointcloud_ || drop_previous_but_late_pointcloud_) {
-    stat.add("concatenated cloud timestamp", formatTimestamp(current_concat_cloud_timestamp_));
+    stat.add("concatenated cloud timestamp", formatTimestamp(current_concatenate_cloud_timestamp_));
     stat.add("reference timestamp min", formatTimestamp(diagnostic_reference_timestamp_min_));
     stat.add("reference timestamp max", formatTimestamp(diagnostic_reference_timestamp_max_));
 

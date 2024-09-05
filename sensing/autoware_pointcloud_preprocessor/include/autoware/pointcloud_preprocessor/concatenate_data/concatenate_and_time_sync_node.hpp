@@ -122,8 +122,8 @@ private:
     std::vector<double> lidar_timestamp_noise_window;
   } params_;
 
-  double current_concat_cloud_timestamp_{0.0};
-  double lastest_concat_cloud_timestamp_{0.0};
+  double current_concatenate_cloud_timestamp_{0.0};
+  double lastest_concatenate_cloud_timestamp_{0.0};
   bool drop_previous_but_late_pointcloud_{false};
   bool publish_pointcloud_{false};
   double diagnostic_reference_timestamp_min_{0.0};
