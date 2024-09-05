@@ -136,8 +136,8 @@ Earclipping::Point * Earclipping::eliminate_holes(
   }
   std::sort(
     queue.begin(), queue.end(), [](const Point * a, const Point * b) { return a->x() < b->x(); });
-  for (size_t i = 0; i < queue.size(); i++) {
-    outer_point = eliminate_hole(queue[i], outer_point);
+  for (const auto & q : queue) {
+    outer_point = eliminate_hole(q, outer_point);
   }
 
   return outer_point;
