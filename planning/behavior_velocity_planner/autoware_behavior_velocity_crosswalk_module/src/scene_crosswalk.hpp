@@ -352,13 +352,13 @@ private:
     const PathWithLaneId & ego_path, const PathWithLaneId & sparse_resample_path,
     const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
     const geometry_msgs::msg::Point & last_path_point_on_crosswalk,
-    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose);
+    const geometry_msgs::msg::Pose & default_stop_pose);
 
   std::optional<StopFactor> checkStopForStuckVehicles(
     const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
     const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
     const geometry_msgs::msg::Point & last_path_point_on_crosswalk,
-    const std::optional<geometry_msgs::msg::Pose> & stop_pose);
+    const geometry_msgs::msg::Pose & stop_pose);
 
   std::optional<double> findEgoPassageDirectionAlongPath(
     const PathWithLaneId & sparse_resample_path) const;
@@ -376,14 +376,14 @@ private:
 
   void setDistanceToStop(
     const PathWithLaneId & ego_path,
-    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose,
+    const geometry_msgs::msg::Pose & default_stop_pose,
     const std::optional<StopFactor> & stop_factor);
 
   void planGo(PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const;
 
   void planStop(
     PathWithLaneId & ego_path, const std::optional<StopFactor> & nearest_stop_factor,
-    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose, StopReason * stop_reason);
+    const geometry_msgs::msg::Pose & default_stop_pose, StopReason * stop_reason);
 
   // minor functions
   std::pair<double, double> getAttentionRange(
