@@ -21,6 +21,8 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <thread>
 #include <vector>
 
 using autoware::simple_object_merger::SimpleObjectMergerNode;
@@ -99,14 +101,13 @@ TEST(SimpleObjectMergerTest, testSimpleObjectMergerTwoTopics)
   test_manager->test_pub_msg<DetectedObjects>(target_node, "/input/object1", msg);
 
   // Spin the test target node
-  auto time_interval = rclcpp::Duration(0, 1e8);
-  // time_interval = time_interval.from_seconds(
-  //   0.1);  // longer than the update rate, so the timer callback should be called
+  auto time_interval = rclcpp::Duration(
+    0, 1e8);  // longer than the update rate, so the timer callback should be called
   test_manager->jump_clock(current_time + time_interval);
-  rclcpp::spin_some(target_node);
-
-  // spin the test manager to subscribe the output topic
-  test_manager->spin();
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));  // thread switch
+  rclcpp::spin_some(target_node);                              // spin the test target node
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));  // thread switch
+  test_manager->spin();  // spin the test manager node for the subscriber callback
 
   // Check if the message is published to the output topic
   EXPECT_GE(counter, 1);
