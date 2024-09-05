@@ -327,7 +327,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
 
   PointCloud2 ogm_frame_pc{};
   PointCloud2 ogm_frame_input_behind_pc{};
-  {  // scope for the timekeeper to track the time spent on transformPointcloud
+  {  // transform pointclouds
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("transformPointcloud", *time_keeper_);
