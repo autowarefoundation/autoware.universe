@@ -280,6 +280,7 @@ void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
     for (const auto & marker : markers) {
       rviz_default_plugins::displays::MarkerID marker_id =
         rviz_default_plugins::displays::MarkerID(marker->ns, marker->id);
+      deleteMarker(marker_id);
       add_marker(marker);
       new_marker_ids.insert(marker_id);
     }
