@@ -19,6 +19,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 if(BUILD_EXAMPLES)
+  set(ament_cmake_lint_cmake_FOUND TRUE)
   message(STATUS "Building examples")
   include(FetchContent)
   FetchContent_Declare(
