@@ -1845,6 +1845,99 @@ void MapBasedPredictionNode::updateRoadUsersHistory(
   }
 }
 
+bool MapBasedPredictionNode::searchProperStartingRefPathIndex(
+  const TrackedObject & object, const PosePath & pose_path, size_t & index) const
+{
+  std::unique_ptr<ScopedTimeTrack> st1_ptr;
+  if (time_keeper_) st1_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  bool is_position_found = false;
+  index = 0;
+
+  // starting segment index is a segment close enough to the object
+  const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
+  {
+    std::unique_ptr<ScopedTimeTrack> st2_ptr;
+    if (time_keeper_)
+      st2_ptr = std::make_unique<ScopedTimeTrack>("find_close_segment_index", *time_keeper_);
+    double min_dist_sq = std::numeric_limits<double>::max();
+    constexpr double acceptable_dist_sq = 1.0;  // [m2]
+    for (size_t i = 0; i < pose_path.size(); i++) {
+      const double dx = pose_path.at(i).position.x - obj_point.x;
+      const double dy = pose_path.at(i).position.y - obj_point.y;
+      const double dist_sq = dx * dx + dy * dy;
+      if (dist_sq < min_dist_sq) {
+        min_dist_sq = dist_sq;
+        index = i;
+      }
+      if (dist_sq < acceptable_dist_sq) {
+        break;
+      }
+    }
+  }
+
+  // calculate score that object can reach the target path smoothly, and search the
+  // starting segment index that have the best score
+  size_t idx = 0;
+  {  // find target segmentation index
+    std::unique_ptr<ScopedTimeTrack> st3_ptr;
+    if (time_keeper_)
+      st3_ptr = std::make_unique<ScopedTimeTrack>("find_target_seg_index", *time_keeper_);
+
+    constexpr double search_distance = 22.0;       // [m]
+    constexpr double yaw_diff_limit = M_PI / 3.0;  // 60 degrees
+
+    const double obj_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    const size_t search_segment_count =
+      static_cast<size_t>(std::floor(search_distance / reference_path_resolution_));
+    const size_t search_segment_num =
+      std::min(search_segment_count, static_cast<size_t>(pose_path.size() - index));
+
+    // search for the best score, which is the smallest
+    double best_score = 1e9;  // initial value is large enough
+    for (size_t i = 0; i < search_segment_num; ++i) {
+      const auto & path_pose = pose_path.at(index + i);
+      // yaw difference
+      const double path_yaw = tf2::getYaw(path_pose.orientation);
+      const double relative_path_yaw = autoware_utils::normalize_radian(path_yaw - obj_yaw);
+      if (std::abs(relative_path_yaw) > yaw_diff_limit) {
+        continue;
+      }
+
+      const double dx = path_pose.position.x - obj_point.x;
+      const double dy = path_pose.position.y - obj_point.y;
+      const double dx_cp = std::cos(obj_yaw) * dx + std::sin(obj_yaw) * dy;
+      const double dy_cp = -std::sin(obj_yaw) * dx + std::cos(obj_yaw) * dy;
+      const double neutral_yaw = std::atan2(dy_cp, dx_cp) * 2.0;
+      const double delta_yaw = autoware_utils::normalize_radian(path_yaw - obj_yaw - neutral_yaw);
+      if (std::abs(delta_yaw) > yaw_diff_limit) {
+        continue;
+      }
+
+      // objective function score
+      constexpr double weight_ratio = 0.01;
+      double score = delta_yaw * delta_yaw + weight_ratio * neutral_yaw * neutral_yaw;
+      constexpr double acceptable_score = 1e-3;
+
+      if (score < best_score) {
+        best_score = score;
+        idx = i;
+        is_position_found = true;
+        if (score < acceptable_score) {
+          // if the score is small enough, we can break the loop
+          break;
+        }
+      }
+    }
+  }
+
+  // update starting segment index
+  index += idx;
+  index = std::clamp(index, 0ul, pose_path.size() - 1);
+
+  return is_position_found;
+}
+
 std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   const TrackedObject & object, const LaneletsData & current_lanelets_data,
   const double object_detected_time, const double time_horizon)
@@ -2017,96 +2110,15 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     }
 
     size_t starting_segment_idx;
-    bool is_position_found = false;
-    {
-      // starting segment index is a segment close enough to the object
-      const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
-      {
-        std::unique_ptr<ScopedTimeTrack> st2_ptr;
-        if (time_keeper_)
-          st2_ptr = std::make_unique<ScopedTimeTrack>("find_close_segment_index", *time_keeper_);
-
-        starting_segment_idx = 0;
-        double min_dist_sq = std::numeric_limits<double>::max();
-        constexpr double acceptable_dist_sq = 1.0;  // [m2]
-        for (size_t i = 0; i < pose_path.size(); i++) {
-          const double dx = pose_path.at(i).position.x - obj_point.x;
-          const double dy = pose_path.at(i).position.y - obj_point.y;
-          const double dist_sq = dx * dx + dy * dy;
-          if (dist_sq < min_dist_sq) {
-            min_dist_sq = dist_sq;
-            starting_segment_idx = i;
-          }
-          if (dist_sq < acceptable_dist_sq) {
-            break;
-          }
-        }
-      }
-
-      // calculate score that object can reach the target path smoothly, and search the
-      // starting segment index that have the best score
-      size_t idx = 0;
-      {  // find target segmentation index
-        std::unique_ptr<ScopedTimeTrack> st3_ptr;
-        if (time_keeper_)
-          st3_ptr = std::make_unique<ScopedTimeTrack>("find_target_seg_index", *time_keeper_);
-
-        const double obj_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-        constexpr double search_distance = 22.0;  // [m]
-        const int search_segment_count = std::floor(search_distance / reference_path_resolution_);
-        const uint search_segment_num =
-          std::min(search_segment_count, static_cast<int>(pose_path.size() - starting_segment_idx));
-
-        // search for the best score, which is the smallest
-        double best_score = 1e9;  // initial value is large enough
-        for (uint i = 0; i < search_segment_num; ++i) {
-          const auto & path_pose = pose_path.at(starting_segment_idx + i);
-
-          // yaw difference
-          const double path_yaw = tf2::getYaw(path_pose.orientation);
-          const double relative_path_yaw = autoware_utils::normalize_radian(path_yaw - obj_yaw);
-          if (std::abs(relative_path_yaw) > M_PI_4) {
-            continue;
-          }
-
-          const double dx = path_pose.position.x - obj_point.x;
-          const double dy = path_pose.position.y - obj_point.y;
-          const double dx_cp = std::cos(obj_yaw) * dx + std::sin(obj_yaw) * dy;
-          const double dy_cp = -std::sin(obj_yaw) * dx + std::cos(obj_yaw) * dy;
-          const double neutral_yaw = std::atan2(dy_cp, dx_cp) * 2.0;
-          const double delta_yaw =
-            autoware_utils::normalize_radian(path_yaw - obj_yaw - neutral_yaw);
-          if (std::abs(delta_yaw) > M_PI_4) {
-            continue;
-          }
-
-          // objective function score
-          constexpr double weight_ratio = 0.01;
-          double score = delta_yaw * delta_yaw + weight_ratio * neutral_yaw * neutral_yaw;
-
-          constexpr double acceptable_score = 1e-3;
-          if (score < best_score) {
-            best_score = score;
-            idx = i;
-            is_position_found = true;
-            if (score < acceptable_score) {
-              // if the score is small enough, we can break the loop
-              break;
-            }
-          }
-        }
-      }
-
-      // update starting segment index
-      starting_segment_idx += idx;
-      starting_segment_idx = std::clamp(starting_segment_idx, 0ul, pose_path.size() - 1);
-    }
+    bool is_position_found =
+      searchProperStartingRefPathIndex(object, pose_path, starting_segment_idx);
 
     if (is_position_found) {
       // Trim the reference path
       pose_path.erase(pose_path.begin(), pose_path.begin() + starting_segment_idx);
       ++it;
     } else {
+      // Proper starting point is not found, remove the reference path
       it = all_ref_paths.erase(it);
     }
   }

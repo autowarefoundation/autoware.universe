@@ -292,6 +292,8 @@ private:
     const std::string & object_id);
   std::string tryMatchNewObjectToDisappeared(
     const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users);
+  bool searchProperStartingRefPathIndex(
+    const TrackedObject & object, const PosePath & pose_path, size_t & index) const;
   std::vector<PredictedRefPath> getPredictedReferencePath(
     const TrackedObject & object, const LaneletsData & current_lanelets_data,
     const double object_detected_time, const double time_horizon);
