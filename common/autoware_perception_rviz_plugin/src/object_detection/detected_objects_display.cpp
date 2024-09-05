@@ -30,7 +30,6 @@ DetectedObjectsDisplay::DetectedObjectsDisplay() : ObjectPolygonDisplayBase("det
 
 void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
 {
-  // clear_markers();
   int id = 0;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
   for (const auto & object : msg->objects) {
@@ -46,7 +45,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto shape_marker_ptr = shape_marker.value();
       shape_marker_ptr->header = msg->header;
       shape_marker_ptr->id = id++;
-      // add_marker(shape_marker_ptr);
       markers.push_back(shape_marker_ptr);
     }
 
@@ -68,7 +66,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto marker_ptr = pose_with_covariance_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = id++;
-      // add_marker(marker_ptr);
       markers.push_back(marker_ptr);
     }
 
@@ -80,7 +77,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto marker_ptr = yaw_covariance_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = id++;
-      // add_marker(marker_ptr);
       markers.push_back(marker_ptr);
     }
 
@@ -97,7 +93,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto existence_prob_marker_ptr = existence_prob_marker.value();
       existence_prob_marker_ptr->header = msg->header;
       existence_prob_marker_ptr->id = id++;
-      // add_marker(existence_prob_marker_ptr);
       markers.push_back(existence_prob_marker_ptr);
     }
 
@@ -112,7 +107,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto velocity_text_marker_ptr = velocity_text_marker.value();
       velocity_text_marker_ptr->header = msg->header;
       velocity_text_marker_ptr->id = id++;
-      // add_marker(velocity_text_marker_ptr);
       markers.push_back(velocity_text_marker_ptr);
     }
 
@@ -124,7 +118,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto twist_marker_ptr = twist_marker.value();
       twist_marker_ptr->header = msg->header;
       twist_marker_ptr->id = id++;
-      // add_marker(twist_marker_ptr);
       markers.push_back(twist_marker_ptr);
     }
 
@@ -135,7 +128,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto marker_ptr = twist_covariance_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = id++;
-      // add_marker(marker_ptr);
       markers.push_back(marker_ptr);
     }
 
@@ -147,7 +139,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto marker_ptr = yaw_rate_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = id++;
-      // add_marker(marker_ptr);
       markers.push_back(marker_ptr);
     }
 
@@ -159,7 +150,6 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
       auto marker_ptr = yaw_rate_covariance_marker.value();
       marker_ptr->header = msg->header;
       marker_ptr->id = id++;
-      // add_marker(marker_ptr);
       markers.push_back(marker_ptr);
     }
   }
