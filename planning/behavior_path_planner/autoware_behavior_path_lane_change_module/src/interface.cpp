@@ -38,14 +38,14 @@ LaneChangeInterface::LaneChangeInterface(
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
     objects_of_interest_marker_interface_ptr_map,
+  std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr,
   std::unique_ptr<LaneChangeBase> && module_type)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, steering_factor_interface_ptr},  // NOLINT
   parameters_{std::move(parameters)},
   module_type_{std::move(module_type)},
   prev_approved_path_{std::make_unique<PathWithLaneId>()}
 {
   module_type_->setTimeKeeper(getTimeKeeper());
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, name);
   logger_ = utils::lane_change::getLogger(module_type_->getModuleTypeStr());
 }
 
@@ -258,11 +258,17 @@ bool LaneChangeInterface::canTransitFailureState()
 
   if (!module_type_->isValidPath()) {
     log_debug_throttled("Transit to failure state due not to find valid path");
+    updateRTCStatus(
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+      State::FAILED);
     return true;
   }
 
   if (module_type_->isAbortState() && module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has completed.");
+    updateRTCStatus(
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+      State::FAILED);
     return true;
   }
 
