@@ -2021,7 +2021,7 @@ TEST(geometry, intersectPolygonRand)
   }
 }
 
-TEST(geometry, intersectPolygonwithHoles)
+TEST(geometry, intersectPolygonWithHoles)
 {
   using autoware::universe_utils::Polygon2d;
   using autoware::universe_utils::triangulate;

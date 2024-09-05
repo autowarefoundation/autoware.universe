@@ -143,6 +143,7 @@ Earclipping::Point * Earclipping::eliminate_holes(
   return outer_point;
 }
 
+// cspell: ignore Eberly
 /// @brief David Eberly's algorithm for finding a bridge between hole and outer polygon
 Earclipping::Point * Earclipping::find_hole_bridge(Point * hole, Point * outer_point)
 {

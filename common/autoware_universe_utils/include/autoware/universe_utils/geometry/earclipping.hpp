@@ -97,7 +97,7 @@ private:
 };
 
 /// @brief Triangulate based on earclipping algorithm
-/// @param polyogn concave/convex polygon with/without holes
+/// @param polygon concave/convex polygon with/without holes
 /// @details algorithm based on https://github.com/mapbox/earclipping with modification
 std::vector<autoware::universe_utils::Polygon2d> triangulate(
   const autoware::universe_utils::Polygon2d & poly);
