@@ -37,8 +37,8 @@ Polygon2d random_concave_polygon(const size_t vertices, const double max);
 bool test_intersection(
   const std::vector<autoware::universe_utils::Polygon2d> & polygons1,
   const std::vector<autoware::universe_utils::Polygon2d> & polygons2,
-  std::function<bool(
-    const autoware::universe_utils::Polygon2d &, const autoware::universe_utils::Polygon2d &)>);
+  const std::function<bool(
+    const autoware::universe_utils::Polygon2d &, const autoware::universe_utils::Polygon2d &)> &);
 
 }  // namespace autoware::universe_utils
 

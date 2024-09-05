@@ -49,10 +49,14 @@ struct PolygonWithEdges
 
 /// @brief prepares coordinate vectors for a given number of vertices
 std::vector<double> prepare_coordinate_vectors(
-  const size_t nb_vertices, std::uniform_real_distribution<double> & random_double,
-  std::uniform_int_distribution<int> & random_bool, std::default_random_engine & random_engine)
+  const size_t nb_vertices,
+  std::uniform_real_distribution<double> &
+    random_double,                                   // cppcheck-suppress constParameterReference
+  std::uniform_int_distribution<int> & random_bool,  // cppcheck-suppress constParameterReference
+  std::default_random_engine & random_engine)
 {
   std::vector<double> v;
+  v.reserve(nb_vertices);
   for (auto i = 0UL; i < nb_vertices; ++i) {
     v.push_back(random_double(random_engine));
   }
@@ -174,11 +178,11 @@ Point2d get_nearest_node(const std::vector<Point2d> & Q, const Edge & e)
 }
 
 /// @brief finds the edge that is closest to the given set of points
-Edge get_breaking_edge(PolygonWithEdges & polygon_with_edges, const std::vector<Point2d> & Q)
+Edge get_breaking_edge(const PolygonWithEdges & polygon_with_edges, const std::vector<Point2d> & Q)
 {
   double min_distance = std::numeric_limits<double>::max();
-  Edge eBreaking;
-  eBreaking.valid = false;
+  Edge e_breaking;
+  e_breaking.valid = false;
 
   for (const auto & edge : polygon_with_edges.edges) {
     if (is_valid(edge, polygon_with_edges.polygon, Q)) {
@@ -186,11 +190,11 @@ Edge get_breaking_edge(PolygonWithEdges & polygon_with_edges, const std::vector<
       double distance = dist(edge, nearest_node);
       if (distance < min_distance) {
         min_distance = distance;
-        eBreaking = edge;
+        e_breaking = edge;
       }
     }
   }
-  return eBreaking;
+  return e_breaking;
 }
 
 /// @brief updates the polygon's outer ring based on its edges
@@ -252,8 +256,8 @@ void mark_valid_edges(PolygonWithEdges & polygon_with_edges, const std::vector<P
 Polygon2d inward_denting(LinearRing2d & ring)
 {
   LinearRing2d convex_ring;
-  std::vector<Point2d> Q;
-  Q.reserve(ring.size());
+  std::vector<Point2d> q;
+  q.reserve(ring.size());
   boost::geometry::strategy::convex_hull::graham_andrew<LinearRing2d, Point2d> strategy;
   boost::geometry::convex_hull(ring, convex_ring, strategy);
   PolygonWithEdges polygon_with_edges;
@@ -262,7 +266,7 @@ Polygon2d inward_denting(LinearRing2d & ring)
 
   for (const auto & point : ring) {
     if (boost::geometry::within(point, polygon_with_edges.polygon)) {
-      Q.push_back(point);
+      q.push_back(point);
     }
   }
   for (size_t i = 0; i < polygon_with_edges.edges.size(); ++i) {
@@ -270,12 +274,12 @@ Polygon2d inward_denting(LinearRing2d & ring)
       polygon_with_edges.polygon.outer()[i],
       polygon_with_edges.polygon.outer()[(i + 1) % polygon_with_edges.polygon.outer().size()]};
   }
-  while (!Q.empty()) {
-    Edge e = get_breaking_edge(polygon_with_edges, Q);
-    Point2d w = get_nearest_node(Q, e);
+  while (!q.empty()) {
+    Edge e = get_breaking_edge(polygon_with_edges, q);
+    Point2d w = get_nearest_node(q, e);
     insert_node(polygon_with_edges, w, e);
-    remove_node(Q, w);
-    mark_valid_edges(polygon_with_edges, Q);
+    remove_node(q, w);
+    mark_valid_edges(polygon_with_edges, q);
     update_polygon_from_edges(polygon_with_edges);
   }
 
@@ -324,8 +328,8 @@ bool is_convex(const autoware::universe_utils::Polygon2d & polygon)
 bool test_intersection(
   const std::vector<autoware::universe_utils::Polygon2d> & polygons1,
   const std::vector<autoware::universe_utils::Polygon2d> & polygons2,
-  std::function<
-    bool(const autoware::universe_utils::Polygon2d &, const autoware::universe_utils::Polygon2d &)>
+  const std::function<bool(
+    const autoware::universe_utils::Polygon2d &, const autoware::universe_utils::Polygon2d &)> &
     intersection_func)
 {
   for (const auto & poly1 : polygons1) {

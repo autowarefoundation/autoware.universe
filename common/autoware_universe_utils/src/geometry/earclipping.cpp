@@ -167,7 +167,6 @@ Earclipping::Point * Earclipping::find_hole_bridge(Point * hole, Point * outer_p
 
   const Point * stop = m;
   double tan_min = std::numeric_limits<double>::infinity();
-  double tan_cur = 0;
 
   p = m;
   double mx = m->x();
@@ -177,7 +176,7 @@ Earclipping::Point * Earclipping::find_hole_bridge(Point * hole, Point * outer_p
     if (
       hx >= p->x() && p->x() >= mx && hx != p->x() &&
       point_in_triangle(hy < my ? hx : qx, hy, mx, my, hy < my ? qx : hx, hy, p->x(), p->y())) {
-      tan_cur = std::abs(hy - p->y()) / (hx - p->x());
+      const auto tan_cur = std::abs(hy - p->y()) / (hx - p->x());
 
       if (
         locally_inside(p, hole) &&
