@@ -21,12 +21,12 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 if(BUILD_EXAMPLES)
   message(STATUS "Building examples")
   include(FetchContent)
-  FetchContent_Declare(
+  FetchContentDeclare(
     matplotlibcpp17
     GIT_REPOSITORY https://github.com/soblin/matplotlibcpp17.git
     GIT_TAG master
   )
-  FetchContent_MakeAvailable(matplotlibcpp17)
+  FetchContentMakeAvailable(matplotlibcpp17)
 
   file(GLOB_RECURSE example_files examples/*.cpp)
 
