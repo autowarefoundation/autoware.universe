@@ -41,6 +41,7 @@
 
 #include "autoware_perception_msgs/msg/shape.hpp"
 #include "tier4_perception_msgs/msg/detected_object_with_feature.hpp"
+#include <sensor_msgs/msg/camera_info.hpp>
 
 #include <image_geometry/pinhole_camera_model.h>
 #include <pcl/point_cloud.h>
@@ -62,6 +63,8 @@ struct PointData
   size_t orig_index;
 };
 
+bool checkCameraInfo(const sensor_msgs::msg::CameraInfo & camera_info);
+
 Eigen::Vector2d calcRawImageProjectedPoint(
   const image_geometry::PinholeCameraModel & pinhole_camera_model, const cv::Point3d & point3d);
 
@@ -71,9 +74,6 @@ std::optional<geometry_msgs::msg::TransformStamped> getTransformStamped(
 
 Eigen::Affine3d transformToEigen(const geometry_msgs::msg::Transform & t);
 
-void convertCluster2FeatureObject(
-  const std_msgs::msg::Header & header, const PointCloud & cluster,
-  DetectedObjectWithFeature & feature_obj);
 void closest_cluster(
   const PointCloud2 & cluster, const double cluster_2d_tolerance, const int min_cluster_size,
   const pcl::PointXYZ & center, PointCloud2 & out_cluster);
@@ -86,11 +86,6 @@ void updateOutputFusedObjects(
   std::vector<DetectedObjectWithFeature> & output_fused_objects);
 
 geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & pointcloud);
-
-pcl::PointXYZ getClosestPoint(const pcl::PointCloud<pcl::PointXYZ> & cluster);
-void addShapeAndKinematic(
-  const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  tier4_perception_msgs::msg::DetectedObjectWithFeature & feature_obj);
 
 }  // namespace autoware::image_projection_based_fusion
 
