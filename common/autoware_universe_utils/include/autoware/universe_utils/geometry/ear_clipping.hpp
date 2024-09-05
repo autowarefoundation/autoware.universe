@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EARCLIPPING_HPP_
-#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EARCLIPPING_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EAR_CLIPPING_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EAR_CLIPPING_HPP_
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
@@ -70,8 +70,8 @@ private:
     const std::vector<LinearRing2d> & inners, EarClipping::Point * outer_point);
   Point * eliminate_hole(Point * hole, Point * outer_point);
   static Point * find_hole_bridge(Point * hole, Point * outer_point);
-  void earclipping_linked(Point * ear, int pass = 0);
-  void split_earclipping(Point * start);
+  void ear_clipping_linked(Point * ear, int pass = 0);
+  void split_ear_clipping(Point * start);
   static void remove_point(Point * p);
   static bool is_ear(Point * ear);
   static bool sector_contains_sector(const Point * m, const Point * p);
@@ -104,4 +104,4 @@ std::vector<autoware::universe_utils::Polygon2d> triangulate(
 
 }  // namespace autoware::universe_utils
 
-#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EARCLIPPING_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EAR_CLIPPING_HPP_

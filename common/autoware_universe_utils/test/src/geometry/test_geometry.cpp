@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
-#include "autoware/universe_utils/geometry/earclipping.hpp"
+#include "autoware/universe_utils/geometry/ear_clipping.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/geometry/random_concave_polygon.hpp"
 #include "autoware/universe_utils/geometry/random_convex_polygon.hpp"

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/universe_utils/geometry/earclipping.hpp"
+#include "autoware/universe_utils/geometry/ear_clipping.hpp"
 
 #ifndef EAR_CUT_IMPL_HPP
 #define EAR_CUT_IMPL_HPP
@@ -37,7 +37,7 @@ void EarClipping::operator()(const Polygon2d & polygon)
   EarClipping::Point * outer_point = linked_list(outer_ring, true);
   if (!outer_point || outer_point->prev == outer_point->next) return;
   if (polygon.inners().size() > 0) outer_point = eliminate_holes(polygon.inners(), outer_point);
-  earclipping_linked(outer_point);
+  ear_clipping_linked(outer_point);
   points_.clear();
 }
 
@@ -195,7 +195,7 @@ EarClipping::Point * EarClipping::find_hole_bridge(Point * hole, Point * outer_p
 }
 
 /// @brief main ear slicing loop which triangulates a polygon using linked list
-void EarClipping::earclipping_linked(EarClipping::Point * ear, int pass)
+void EarClipping::ear_clipping_linked(EarClipping::Point * ear, int pass)
 {
   if (!ear) return;
 
@@ -222,12 +222,12 @@ void EarClipping::earclipping_linked(EarClipping::Point * ear, int pass)
     ear = next;
     if (ear == stop) {
       if (!pass) {
-        earclipping_linked(filter_points(ear), 1);
+        ear_clipping_linked(filter_points(ear), 1);
       } else if (pass == 1) {
         ear = cure_local_intersections(filter_points(ear));
-        earclipping_linked(ear, 2);
+        ear_clipping_linked(ear, 2);
       } else if (pass == 2) {
-        split_earclipping(ear);
+        split_ear_clipping(ear);
       }
       break;
     }
@@ -282,7 +282,7 @@ EarClipping::Point * EarClipping::cure_local_intersections(EarClipping::Point * 
 }
 
 /// @brief splitting polygon into two and triangulate them independently
-void EarClipping::split_earclipping(EarClipping::Point * start)
+void EarClipping::split_ear_clipping(EarClipping::Point * start)
 {
   EarClipping::Point * a = start;
   do {
@@ -294,8 +294,8 @@ void EarClipping::split_earclipping(EarClipping::Point * start)
         a = filter_points(a, a->next);
         c = filter_points(c, c->next);
 
-        earclipping_linked(a);
-        earclipping_linked(c);
+        ear_clipping_linked(a);
+        ear_clipping_linked(c);
         return;
       }
       b = b->next;
