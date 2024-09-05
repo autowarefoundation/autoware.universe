@@ -264,7 +264,7 @@ The module generates detection area for target filtering based on the following 
 
 If the parameter `detection_area.static` is set to `true`, the module creates detection area whose longitudinal distance is `max_forward_distance`.
 
-If the parameter `detection_area.static` is set to `false`, the module creates detection area so that the ego can avoid objects with minimum lateral jerk value. Thus, the longitudinal distance is depends on lateral maximum shift length, lateral jerk constraints and current ego speed. Additionally, it has to consider the distance used for the preparation phase.
+If the parameter `detection_area.static` is set to `false`, the module creates a detection area so that the ego can avoid objects with minimum lateral jerk value. Thus, the longitudinal distance depends on maximum lateral shift length, lateral jerk constraints and current ego speed. Additionally, it has to consider the distance used for the preparation phase.
 
 ```c++
 ...
