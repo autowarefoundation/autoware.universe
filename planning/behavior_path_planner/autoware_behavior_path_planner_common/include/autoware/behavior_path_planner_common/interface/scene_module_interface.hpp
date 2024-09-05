@@ -90,15 +90,15 @@ public:
     const std::string & name, rclcpp::Node & node,
     std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>
-      objects_of_interest_marker_interface_ptr_map)
+      objects_of_interest_marker_interface_ptr_map,
+    std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
     rtc_interface_ptr_map_(std::move(rtc_interface_ptr_map)),
     objects_of_interest_marker_interface_ptr_map_(
       std::move(objects_of_interest_marker_interface_ptr_map)),
-    steering_factor_interface_ptr_(
-      std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name))),
+    steering_factor_interface_ptr_{steering_factor_interface_ptr},
     time_keeper_(std::make_shared<universe_utils::TimeKeeper>())
   {
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
@@ -173,14 +173,7 @@ public:
   /**
    * @brief Called on the first time when the module goes into RUNNING.
    */
-  void onEntry()
-  {
-    RCLCPP_DEBUG(getLogger(), "%s %s", name_.c_str(), __func__);
-
-    stop_reason_ = StopReason();
-
-    processOnEntry();
-  }
+  void onEntry();
 
   /**
    * @brief Called when the module exit from RUNNING.
@@ -583,11 +576,7 @@ protected:
     stop_reason_.stop_factors.push_back(stop_factor);
   }
 
-  void setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes)
-  {
-    drivable_lanes_marker_ =
-      marker_utils::createDrivableLanesMarkerArray(drivable_lanes, "drivable_lanes");
-  }
+  void setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes);
 
   BehaviorModuleOutput getPreviousModuleOutput() const { return previous_module_output_; }
 
@@ -640,7 +629,7 @@ protected:
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>
     objects_of_interest_marker_interface_ptr_map_;
 
-  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
+  std::shared_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
 
   mutable std::optional<Pose> stop_pose_{std::nullopt};
 
