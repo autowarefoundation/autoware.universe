@@ -53,7 +53,7 @@ void plot_path_with_lane_id(
 
 void plot_lanelet(
   matplotlibcpp17::axes::Axes & axes, lanelet::ConstLanelet lanelet,
-  const std::string color = "blue", const double linewidth = 0.5)
+  const std::string & color = "blue", const double linewidth = 0.5)
 {
   const auto lefts = lanelet.leftBound();
   const auto rights = lanelet.rightBound();
