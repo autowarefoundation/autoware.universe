@@ -440,8 +440,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   };
 
   auto get_objects_on_path = [&](
-                               const auto & path,
-                               pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects,
+                               const auto & path, PointCloud::Ptr points_belonging_to_cluster_hulls,
                                const colorTuple & debug_colors, const std::string & debug_ns) {
     // Check which points of the cropped point cloud are on the ego path, and get the closest one
     const auto ego_polys = generatePathFootprint(path, expand_width_);
@@ -449,8 +448,8 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     // Crop out Pointcloud using an extra wide ego path
     if (use_pointcloud_data_) {
       const auto current_time = obstacle_ros_pointcloud_ptr_->header.stamp;
-      createObjectDataUsingPointCloudClusters(
-        path, ego_polys, current_time, objects, filtered_objects);
+      getClosestObjectsOnPath(
+        path, ego_polys, current_time, points_belonging_to_cluster_hulls, objects);
     }
     if (use_predicted_object_data_) {
       createObjectDataUsingPredictedObjects(path, ego_polys, objects);
@@ -469,9 +468,10 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   auto check_collision = [&](
                            const Path & path, const colorTuple & debug_colors,
                            const std::string & debug_ns,
-                           pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) {
+                           PointCloud::Ptr points_belonging_to_cluster_hulls) {
     time_keeper_->start_track("has_collision_with_" + debug_ns);
-    auto objects = get_objects_on_path(path, filtered_objects, debug_colors, debug_ns);
+    auto objects =
+      get_objects_on_path(path, points_belonging_to_cluster_hulls, debug_colors, debug_ns);
     // Get only the closest object and calculate its speed
     const auto closest_object_point = std::invoke([&]() -> std::optional<ObjectData> {
       const auto closest_object_point_itr =
@@ -511,8 +511,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
                               ? std::nullopt
                               : generateEgoPath(*predicted_traj_ptr_);
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects =
-    pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  PointCloud::Ptr filtered_objects = pcl::make_shared<PointCloud>();
   if (use_pointcloud_data_) {
     const std::vector<Path> paths = [&]() {
       std::vector<Path> paths;
@@ -528,26 +527,31 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     // Data of filtered point cloud
     cropPointCloudWithEgoFootprintPath(merged_path_polygons, filtered_objects);
   }
+
+  PointCloud::Ptr points_belonging_to_cluster_hulls = pcl::make_shared<PointCloud>();
+  getPointsBelongingToClusterHulls(filtered_objects, points_belonging_to_cluster_hulls);
+
   const auto has_collision_imu_path =
-    [&](pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) -> bool {
+    [&](const PointCloud::Ptr points_belonging_to_cluster_hulls) -> bool {
     if (!use_imu_path_ || !angular_velocity_ptr_) return false;
     constexpr colorTuple debug_color = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
     const std::string ns = "imu";
-    return check_collision(ego_imu_path, debug_color, ns, filtered_objects);
+    return check_collision(ego_imu_path, debug_color, ns, points_belonging_to_cluster_hulls);
   };
 
   // step4. make function to check collision with predicted trajectory from control module
   const auto has_collision_mpc_path =
-    [&](pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) -> bool {
+    [&](const PointCloud::Ptr points_belonging_to_cluster_hulls) -> bool {
     if (!use_predicted_trajectory_ || !ego_mpc_path.has_value()) return false;
     constexpr colorTuple debug_color = {0.0 / 256.0, 100.0 / 256.0, 0.0 / 256.0, 0.999};
     const std::string ns = "mpc";
-    return check_collision(ego_mpc_path.value(), debug_color, ns, filtered_objects);
+    return check_collision(
+      ego_mpc_path.value(), debug_color, ns, points_belonging_to_cluster_hulls);
   };
 
   // evaluate if there is a collision for both paths
-  const bool has_collision =
-    has_collision_imu_path(filtered_objects) || has_collision_mpc_path(filtered_objects);
+  const bool has_collision = has_collision_imu_path(points_belonging_to_cluster_hulls) ||
+                             has_collision_mpc_path(points_belonging_to_cluster_hulls);
 
   // Debug print
   if (!filtered_objects->empty() && publish_debug_pointcloud_) {
@@ -764,16 +768,11 @@ void AEB::createObjectDataUsingPredictedObjects(
   });
 }
 
-void AEB::createObjectDataUsingPointCloudClusters(
-  const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
-  std::vector<ObjectData> & objects, const pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr)
+void AEB::getPointsBelongingToClusterHulls(
+  const PointCloud::Ptr obstacle_points_ptr,
+  const PointCloud::Ptr points_belonging_to_cluster_hulls)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  // check if the predicted path has valid number of points
-  if (ego_path.size() < 2 || ego_polys.empty() || obstacle_points_ptr->empty()) {
-    return;
-  }
-
   // eliminate noisy points by only considering points belonging to clusters of at least a certain
   // size
   const std::vector<pcl::PointIndices> cluster_indices = std::invoke([&]() {
@@ -790,7 +789,6 @@ void AEB::createObjectDataUsingPointCloudClusters(
     return cluster_idx;
   });
 
-  PointCloud::Ptr points_belonging_to_cluster_hulls(new PointCloud);
   for (const auto & indices : cluster_indices) {
     PointCloud::Ptr cluster(new PointCloud);
     bool cluster_surpasses_threshold_height{false};
@@ -807,11 +805,22 @@ void AEB::createObjectDataUsingPointCloudClusters(
     hull.setDimension(2);
     hull.setInputCloud(cluster);
     std::vector<pcl::Vertices> polygons;
-    PointCloud::Ptr surface_hull(new pcl::PointCloud<pcl::PointXYZ>);
+    PointCloud::Ptr surface_hull(new PointCloud);
     hull.reconstruct(*surface_hull, polygons);
     for (const auto & p : *surface_hull) {
       points_belonging_to_cluster_hulls->push_back(p);
     }
+  }
+}
+
+void AEB::getClosestObjectsOnPath(
+  const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
+  const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects)
+{
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  // check if the predicted path has valid number of points
+  if (ego_path.size() < 2 || ego_polys.empty() || points_belonging_to_cluster_hulls->empty()) {
+    return;
   }
 
   // select points inside the ego footprint path
@@ -851,7 +860,7 @@ void AEB::createObjectDataUsingPointCloudClusters(
 }
 
 void AEB::cropPointCloudWithEgoFootprintPath(
-  const std::vector<Polygon2d> & ego_polys, pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects)
+  const std::vector<Polygon2d> & ego_polys, PointCloud::Ptr filtered_objects)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   PointCloud::Ptr full_points_ptr(new PointCloud);
@@ -869,7 +878,7 @@ void AEB::cropPointCloudWithEgoFootprintPath(
   hull.setDimension(2);
   hull.setInputCloud(path_polygon_points);
   std::vector<pcl::Vertices> polygons;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr surface_hull(new pcl::PointCloud<pcl::PointXYZ>);
+  PointCloud::Ptr surface_hull(new PointCloud);
   hull.reconstruct(*surface_hull, polygons);
   // Filter out points outside of the path's convex hull
   pcl::CropHull<pcl::PointXYZ> path_polygon_hull_filter;
