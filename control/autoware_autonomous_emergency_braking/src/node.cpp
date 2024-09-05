@@ -181,6 +181,12 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   const double aeb_hz = declare_parameter<double>("aeb_hz");
   const auto period_ns = rclcpp::Rate(aeb_hz).period();
   timer_ = rclcpp::create_timer(this, this->get_clock(), period_ns, std::bind(&AEB::onTimer, this));
+
+  debug_processing_time_detail_pub_ =
+    create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+      "~/debug/processing_time_detail_ms", 1);
+  time_keeper_ =
+    std::make_shared<autoware::universe_utils::TimeKeeper>(debug_processing_time_detail_pub_);
 }
 
 rcl_interfaces::msg::SetParametersResult AEB::onParameter(
@@ -244,7 +250,7 @@ void AEB::onImu(const Imu::ConstSharedPtr input_msg)
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
-      "base_link", input_msg->header.frame_id, input_msg->header.stamp,
+      "base_link", input_msg->header.frame_id, rclcpp::Time(0),
       rclcpp::Duration::from_seconds(0.5));
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR_STREAM(
@@ -259,6 +265,7 @@ void AEB::onImu(const Imu::ConstSharedPtr input_msg)
 
 void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   PointCloud::Ptr pointcloud_ptr(new PointCloud);
   pcl::fromROSMsg(*input_msg, *pointcloud_ptr);
 
@@ -393,11 +400,13 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
     const auto diag_level = DiagnosticStatus::ERROR;
     stat.summary(diag_level, error_msg);
     const auto & data = collision_data_keeper_.get();
-    stat.addf("RSS", "%.2f", data.rss);
-    stat.addf("Distance", "%.2f", data.distance_to_object);
-    stat.addf("Object Speed", "%.2f", data.velocity);
-    if (publish_debug_markers_) {
-      addCollisionMarker(data, debug_markers);
+    if (data.has_value()) {
+      stat.addf("RSS", "%.2f", data.value().rss);
+      stat.addf("Distance", "%.2f", data.value().distance_to_object);
+      stat.addf("Object Speed", "%.2f", data.value().velocity);
+      if (publish_debug_markers_) {
+        addCollisionMarker(data.value(), debug_markers);
+      }
     }
     addVirtualStopWallMarker(info_markers);
   } else {
@@ -413,6 +422,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 
 bool AEB::checkCollision(MarkerArray & debug_markers)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   using colorTuple = std::tuple<double, double, double, double>;
 
   // step1. check data
@@ -476,20 +486,23 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       return std::make_optional<ObjectData>(*closest_object_point_itr);
     });
 
+    const bool has_collision = (closest_object_point.has_value())
+                                 ? hasCollision(current_v, closest_object_point.value())
+                                 : false;
+
     // Add debug markers
     if (publish_debug_markers_) {
       const auto [color_r, color_g, color_b, color_a] = debug_colors;
       addMarker(
-        this->get_clock()->now(), path, ego_polys, objects, closest_object_point, color_r, color_g,
-        color_b, color_a, debug_ns, debug_markers);
+        this->get_clock()->now(), path, ego_polys, objects, collision_data_keeper_.get(), color_r,
+        color_g, color_b, color_a, debug_ns, debug_markers);
     }
     // check collision using rss distance
-    return (closest_object_point.has_value())
-             ? hasCollision(current_v, closest_object_point.value())
-             : false;
+    return has_collision;
   };
 
   // step3. make function to check collision with ego path created with sensor data
+  time_keeper_->start_track("has_collision_imu_path");
   const auto has_collision_ego = [&](pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) -> bool {
     if (!use_imu_path_ || !angular_velocity_ptr_) return false;
     const double current_w = angular_velocity_ptr_->z;
@@ -499,8 +512,10 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 
     return check_collision(ego_path, debug_color, ns, filtered_objects);
   };
+  time_keeper_->end_track("has_collision_imu_path");
 
   // step4. make function to check collision with predicted trajectory from control module
+  time_keeper_->start_track("has_collision_mpc_path");
   const auto has_collision_predicted =
     [&](pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) -> bool {
     if (!use_predicted_trajectory_ || !predicted_traj_ptr_) return false;
@@ -514,6 +529,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 
     return check_collision(predicted_path, debug_color, ns, filtered_objects);
   };
+  time_keeper_->end_track("has_collision_mpc_path");
 
   // Data of filtered point cloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects =
@@ -533,10 +549,10 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 
 bool AEB::hasCollision(const double current_v, const ObjectData & closest_object)
 {
-  const double & obj_v = closest_object.velocity;
-  const double & t = t_response_;
-
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   const double rss_dist = std::invoke([&]() {
+    const double & obj_v = closest_object.velocity;
+    const double & t = t_response_;
     const double pre_braking_covered_distance = std::abs(current_v) * t;
     const double braking_distance = (current_v * current_v) / (2 * std::fabs(a_ego_min_));
     const double ego_stopping_distance = pre_braking_covered_distance + braking_distance;
@@ -546,19 +562,19 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
     return ego_stopping_distance + obj_braking_distance + longitudinal_offset_;
   });
 
-  if (closest_object.distance_to_object < rss_dist) {
-    // collision happens
-    ObjectData collision_data = closest_object;
-    collision_data.rss = rss_dist;
-    collision_data.distance_to_object = closest_object.distance_to_object;
-    collision_data_keeper_.setCollisionData(collision_data);
-    return true;
-  }
-  return false;
+  if (closest_object.distance_to_object > rss_dist) return false;
+
+  // collision happens
+  ObjectData collision_data = closest_object;
+  collision_data.rss = rss_dist;
+  collision_data.distance_to_object = closest_object.distance_to_object;
+  collision_data_keeper_.setCollisionData(collision_data);
+  return true;
 }
 
 Path AEB::generateEgoPath(const double curr_v, const double curr_w)
 {
+  autoware::universe_utils::ScopedTimeTrack st(std::string(__func__) + "(IMU)", *time_keeper_);
   Path path;
   double curr_x = 0.0;
   double curr_y = 0.0;
@@ -607,21 +623,26 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
 
 std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
 {
+  autoware::universe_utils::ScopedTimeTrack st(std::string(__func__) + "(MPC)", *time_keeper_);
   if (predicted_traj.points.empty()) {
     return std::nullopt;
   }
-
+  time_keeper_->start_track("lookUpTransform");
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
-      "base_link", predicted_traj.header.frame_id, predicted_traj.header.stamp,
+      "base_link", predicted_traj.header.frame_id, rclcpp::Time(0),
       rclcpp::Duration::from_seconds(0.5));
   } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
+    RCLCPP_ERROR_STREAM(
+      get_logger(),
+      "[AEB] Failed to look up transform from base_link to " + predicted_traj.header.frame_id);
     return std::nullopt;
   }
+  time_keeper_->end_track("lookUpTransform");
 
   // create path
+  time_keeper_->start_track("createPath");
   Path path;
   path.reserve(predicted_traj.points.size());
   for (size_t i = 0; i < predicted_traj.points.size(); ++i) {
@@ -633,12 +654,14 @@ std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
       break;
     }
   }
+  time_keeper_->end_track("createPath");
   return path;
 }
 
 std::vector<Polygon2d> AEB::generatePathFootprint(
   const Path & path, const double extra_width_margin)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   std::vector<Polygon2d> polygons;
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.push_back(
@@ -651,6 +674,7 @@ void AEB::createObjectDataUsingPredictedObjects(
   const Path & ego_path, const std::vector<Polygon2d> & ego_polys,
   std::vector<ObjectData> & object_data_vector)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   if (predicted_objects_ptr_->objects.empty()) return;
 
   const double current_ego_speed = current_velocity_ptr_->longitudinal_velocity;
@@ -681,7 +705,7 @@ void AEB::createObjectDataUsingPredictedObjects(
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
-      "base_link", predicted_objects_ptr_->header.frame_id, stamp,
+      "base_link", predicted_objects_ptr_->header.frame_id, rclcpp::Time(0),
       rclcpp::Duration::from_seconds(0.5));
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR_STREAM(get_logger(), "[AEB] Failed to look up transform from base_link to map");
@@ -738,6 +762,7 @@ void AEB::createObjectDataUsingPointCloudClusters(
   const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
   std::vector<ObjectData> & objects, const pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   // check if the predicted path has valid number of points
   if (ego_path.size() < 2 || ego_polys.empty() || obstacle_points_ptr->empty()) {
     return;
@@ -822,6 +847,7 @@ void AEB::createObjectDataUsingPointCloudClusters(
 void AEB::cropPointCloudWithEgoFootprintPath(
   const std::vector<Polygon2d> & ego_polys, pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   PointCloud::Ptr full_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *full_points_ptr);
   // Create a Point cloud with the points of the ego footprint
@@ -855,6 +881,7 @@ void AEB::addMarker(
   const double color_r, const double color_g, const double color_b, const double color_a,
   const std::string & ns, MarkerArray & debug_markers)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   auto path_marker = autoware::universe_utils::createDefaultMarker(
     "base_link", current_time, ns + "_path", 0L, Marker::LINE_STRIP,
     autoware::universe_utils::createMarkerScale(0.2, 0.2, 0.2),
@@ -917,6 +944,7 @@ void AEB::addMarker(
 
 void AEB::addVirtualStopWallMarker(MarkerArray & markers)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   const auto ego_map_pose = std::invoke([this]() -> std::optional<geometry_msgs::msg::Pose> {
     geometry_msgs::msg::TransformStamped tf_current_pose;
     geometry_msgs::msg::Pose p;
@@ -947,6 +975,7 @@ void AEB::addVirtualStopWallMarker(MarkerArray & markers)
 
 void AEB::addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   auto point_marker = autoware::universe_utils::createDefaultMarker(
     "base_link", data.stamp, "collision_point", 0, Marker::SPHERE,
     autoware::universe_utils::createMarkerScale(0.3, 0.3, 0.3),
