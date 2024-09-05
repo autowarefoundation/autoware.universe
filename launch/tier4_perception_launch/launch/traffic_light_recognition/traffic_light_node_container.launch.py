@@ -63,7 +63,7 @@ def launch_setup(context, *args, **kwargs):
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", LaunchConfiguration("output/rois")),
-                    ("~/output/traffic_signals", "classified/car/traffic_signals"),
+                    ("~/output/traffic_lights", "classified/car/traffic_lights"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -78,7 +78,7 @@ def launch_setup(context, *args, **kwargs):
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", LaunchConfiguration("output/rois")),
-                    ("~/output/traffic_signals", "classified/pedestrian/traffic_signals"),
+                    ("~/output/traffic_lights", "classified/pedestrian/traffic_lights"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -94,8 +94,8 @@ def launch_setup(context, *args, **kwargs):
                     ("~/input/rois", LaunchConfiguration("output/rois")),
                     ("~/input/rough/rois", "detection/rough/rois"),
                     (
-                        "~/input/traffic_signals",
-                        LaunchConfiguration("output/traffic_signals"),
+                        "~/input/traffic_lights",
+                        LaunchConfiguration("output/traffic_lights"),
                     ),
                     ("~/output/image", "debug/rois"),
                     ("~/output/image/compressed", "debug/rois/compressed"),
@@ -176,15 +176,15 @@ def generate_launch_description():
     add_launch_arg("input/image", "/sensing/camera/traffic_light/image_raw")
     add_launch_arg("output/rois", "/perception/traffic_light_recognition/rois")
     add_launch_arg(
-        "output/traffic_signals",
+        "output/traffic_lights",
         "/perception/traffic_light_recognition/traffic_signals",
     )
     add_launch_arg(
-        "output/car/traffic_signals", "/perception/traffic_light_recognition/car/traffic_signals"
+        "output/car/traffic_lights", "/perception/traffic_light_recognition/car/traffic_lights"
     )
     add_launch_arg(
-        "output/pedestrian/traffic_signals",
-        "/perception/traffic_light_recognition/pedestrian/traffic_signals",
+        "output/pedestrian/traffic_lights",
+        "/perception/traffic_light_recognition/pedestrian/traffic_lights",
     )
 
     # traffic_light_fine_detector
