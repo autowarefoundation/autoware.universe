@@ -320,15 +320,7 @@ void EKFLocalizer::callback_pose_with_covariance(
 
   pose_queue_.push(msg);
 
-  diagnostic_msgs::msg::DiagnosticStatus diag_status;
-  diag_status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  diag_status.name = "localization: " + std::string(this->get_name());
-  diag_status.hardware_id = this->get_name();
-  diag_status.message = "Pose measurement is received";
-  diagnostic_msgs::msg::DiagnosticArray diag_msg;
-  diag_msg.header = msg->header;
-  diag_msg.status.push_back(diag_status);
-  pub_diag_->publish(diag_msg);
+  publish_callback_return_diagnostics("pose", msg->header.stamp);
 }
 
 /*
@@ -344,15 +336,7 @@ void EKFLocalizer::callback_twist_with_covariance(
   }
   twist_queue_.push(msg);
 
-  diagnostic_msgs::msg::DiagnosticStatus diag_status;
-  diag_status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  diag_status.name = "localization: " + std::string(this->get_name());
-  diag_status.hardware_id = this->get_name();
-  diag_status.message = "Twist measurement is received";
-  diagnostic_msgs::msg::DiagnosticArray diag_msg;
-  diag_msg.header = msg->header;
-  diag_msg.status.push_back(diag_status);
-  pub_diag_->publish(diag_msg);
+  publish_callback_return_diagnostics("twist", msg->header.stamp);
 }
 
 /*
@@ -463,6 +447,25 @@ void EKFLocalizer::publish_diagnostics(
   diagnostic_msgs::msg::DiagnosticArray diag_msg;
   diag_msg.header.stamp = current_time;
   diag_msg.status.push_back(diag_merged_status);
+  pub_diag_->publish(diag_msg);
+}
+
+void EKFLocalizer::publish_callback_return_diagnostics(
+  const std::string & callback_name, const rclcpp::Time & current_time)
+{
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "topic_time_stamp";
+  key_value.value = std::to_string(current_time.nanoseconds());
+  diagnostic_msgs::msg::DiagnosticStatus diag_status;
+  diag_status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  diag_status.name =
+    "localization: " + std::string(this->get_name()) + ": callback_" + callback_name;
+  diag_status.hardware_id = this->get_name();
+  diag_status.message = "OK";
+  diag_status.values.push_back(key_value);
+  diagnostic_msgs::msg::DiagnosticArray diag_msg;
+  diag_msg.header.stamp = current_time;
+  diag_msg.status.push_back(diag_status);
   pub_diag_->publish(diag_msg);
 }
 

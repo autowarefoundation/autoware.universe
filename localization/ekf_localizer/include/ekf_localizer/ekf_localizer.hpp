@@ -224,6 +224,12 @@ private:
     const geometry_msgs::msg::PoseStamped & current_ekf_pose, const rclcpp::Time & current_time);
 
   /**
+   * @brief publish diagnostics message for return
+   */
+  void publish_callback_return_diagnostics(
+    const std::string & callback_name, const rclcpp::Time & current_time);
+
+  /**
    * @brief update simple 1d filter
    */
   void update_simple_1d_filters(
