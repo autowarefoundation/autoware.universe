@@ -81,7 +81,6 @@ TEST_F(TestRouteHandler, getLaneletSequenceWhenOverlappingRoute)
 TEST_F(TestRouteHandler, getClosestRouteLaneletFromLaneletWhenOverlappingRoute)
 {
   set_route_handler("overlap_map.osm");
-  set_test_route("overlap_test_route.yaml");
   ASSERT_TRUE(route_handler_->isHandlerReady());
 
   geometry_msgs::msg::Pose reference_pose;
