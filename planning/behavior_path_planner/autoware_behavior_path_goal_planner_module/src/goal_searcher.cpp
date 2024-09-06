@@ -107,7 +107,10 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
   const double forward_length = parameters_.forward_goal_search_length;
   const double backward_length = parameters_.backward_goal_search_length;
   const double margin_from_boundary = parameters_.margin_from_boundary;
-  const double lateral_offset_interval = parameters_.lateral_offset_interval;
+  const bool use_bus_stop_area = parameters_.bus_stop_area.use_bus_stop_area;
+  const double lateral_offset_interval = use_bus_stop_area
+                                           ? parameters_.bus_stop_area.lateral_offset_interval
+                                           : parameters_.lateral_offset_interval;
   const double max_lateral_offset = parameters_.max_lateral_offset;
   const double ignore_distance_from_lane_start = parameters_.ignore_distance_from_lane_start;
   const double vehicle_width = planner_data->parameters.vehicle_width;
@@ -126,9 +129,11 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
     lanelet::utils::getArcCoordinates(pull_over_lanes, reference_goal_pose_);
   const double s_start = std::max(0.0, goal_arc_coords.length - backward_length);
   const double s_end = goal_arc_coords.length + forward_length;
+  const double longitudinal_interval = use_bus_stop_area
+                                         ? parameters_.bus_stop_area.goal_search_interval
+                                         : parameters_.goal_search_interval;
   auto center_line_path = utils::resamplePathWithSpline(
-    route_handler->getCenterLinePath(pull_over_lanes, s_start, s_end),
-    parameters_.goal_search_interval);
+    route_handler->getCenterLinePath(pull_over_lanes, s_start, s_end), longitudinal_interval);
 
   const auto no_parking_area_polygons = getNoParkingAreaPolygons(pull_over_lanes);
   const auto no_stopping_area_polygons = getNoStoppingAreaPolygons(pull_over_lanes);
@@ -156,7 +161,8 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
 
     const double sign = left_side_parking_ ? -1.0 : 1.0;
     const double offset_from_center_line =
-      -distance_from_bound.value() + sign * margin_from_boundary;
+      use_bus_stop_area ? -distance_from_bound.value()
+                        : -distance_from_bound.value() + sign * margin_from_boundary;
     // original means non lateral offset poses
     const Pose original_search_pose = calcOffsetPose(center_pose, 0, offset_from_center_line, 0);
     const double longitudinal_distance_from_original_goal =
