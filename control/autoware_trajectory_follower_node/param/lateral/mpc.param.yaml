@@ -13,7 +13,7 @@
     curvature_smoothing_num_ref_steer: 15   # point-to-point index distance used in curvature calculation (for steer command reference): curvature is calculated from three points p(i-num), p(i), p(i+num)
 
     # -- trajectory extending --
-    extend_trajectory_for_end_yaw_control: true  # flag of trajectory extending for terminal yaw control
+    extend_trajectory_for_end_yaw_control: false  # flag of trajectory extending for terminal yaw control
 
     # -- mpc optimization --
     qp_solver_type: "osqp"                       # optimization solver option (unconstraint_fast or osqp)
@@ -46,7 +46,7 @@
     # -- vehicle model --
     vehicle_model_type: "kinematics" # vehicle model type for mpc prediction. option is kinematics, kinematics_no_delay, and dynamics
     input_delay: 0.24                # steering input delay time for delay compensation
-    vehicle_model_steer_tau: 0.3     # steering dynamics time constant (1d approximation) [s]
+    vehicle_model_steer_tau: 0.27     # steering dynamics time constant (1d approximation) [s]
     steer_rate_lim_dps_list_by_curvature: [40.0, 50.0, 60.0]            # steering angle rate limit list depending on curvature [deg/s]
     curvature_list_for_steer_rate_lim: [0.001, 0.002, 0.01]              # curvature list for steering angle rate limit interpolation in ascending order [/m]
     steer_rate_lim_dps_list_by_velocity: [60.0, 50.0, 40.0]             # steering angle rate limit list depending on velocity [deg/s]
@@ -75,4 +75,4 @@
       average_num: 1000
       steering_offset_limit: 0.02
 
-    debug_publish_predicted_trajectory: false  # publish debug predicted trajectory in Frenet coordinate
+    debug_publish_predicted_trajectory: true  # publish debug predicted trajectory in Frenet coordinate
