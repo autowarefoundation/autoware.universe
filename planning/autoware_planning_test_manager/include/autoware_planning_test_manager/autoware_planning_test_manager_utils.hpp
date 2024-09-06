@@ -63,54 +63,6 @@ Pose createPoseFromLaneID(const lanelet::Id & lane_id)
   return middle_pose;
 }
 
-// Function to create a route from given start and goal lanelet ids
-// start pose and goal pose are set to the middle of the lanelet
-LaneletRoute makeBehaviorRouteFromLaneId(const int & start_lane_id, const int & goal_lane_id)
-{
-  LaneletRoute route;
-  route.header.frame_id = "map";
-  auto start_pose = createPoseFromLaneID(start_lane_id);
-  auto goal_pose = createPoseFromLaneID(goal_lane_id);
-  route.start_pose = start_pose;
-  route.goal_pose = goal_pose;
-
-  auto map_bin_msg = autoware::test_utils::makeMapBinMsg();
-  // create route_handler
-  auto route_handler = std::make_shared<RouteHandler>();
-  route_handler->setMap(map_bin_msg);
-
-  LaneletRoute route_msg;
-  RouteSections route_sections;
-  lanelet::ConstLanelets all_route_lanelets;
-
-  // Plan the path between checkpoints (start and goal poses)
-  lanelet::ConstLanelets path_lanelets;
-  if (!route_handler->planPathLaneletsBetweenCheckpoints(start_pose, goal_pose, &path_lanelets)) {
-    return route_msg;
-  }
-
-  // Add all path_lanelets to all_route_lanelets
-  for (const auto & lane : path_lanelets) {
-    all_route_lanelets.push_back(lane);
-  }
-  // create local route sections
-  route_handler->setRouteLanelets(path_lanelets);
-  const auto local_route_sections = route_handler->createMapSegments(path_lanelets);
-  route_sections =
-    autoware::test_utils::combineConsecutiveRouteSections(route_sections, local_route_sections);
-  for (const auto & route_section : route_sections) {
-    for (const auto & primitive : route_section.primitives) {
-      std::cerr << "primitive: " << primitive.id << std::endl;
-    }
-    std::cerr << "preferred_primitive id : " << route_section.preferred_primitive.id << std::endl;
-  }
-  route_handler->setRouteLanelets(all_route_lanelets);
-  route.segments = route_sections;
-
-  route.allow_modification = false;
-  return route;
-}
-
 Odometry makeInitialPoseFromLaneId(const lanelet::Id & lane_id)
 {
   Odometry current_odometry;
