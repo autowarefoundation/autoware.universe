@@ -1184,7 +1184,7 @@ Currently, avoiding left-shifted obstacles from the left side is not supported (
 #### Why is an envelope polygon used for the target object?
 
 It is employed to reduce the influence of the perception/tracking noise for each target object.
-The envelope polygon is a rectange, whose size depends on the object's polygon and buffer parameter and it is always parallel to the reference path.
+The envelope polygon is a rectangle, whose size depends on the object's polygon and buffer parameter and it is always parallel to the reference path.
 The envelope polygon is created by using the latest one-shot envelope polygon and the previous envelope polygon.
 Details are explained in [How to prevent shift line chattering that is caused by perception noise section](#how-to-prevent-shift-line-chattering-that-is-caused-by-perception-noise).
 
