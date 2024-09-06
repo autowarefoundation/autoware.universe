@@ -33,14 +33,9 @@ using autoware::behavior_path_planner::ObjectInfo;
 using autoware::behavior_path_planner::PathShifter;
 using autoware::behavior_path_planner::ShiftLineArray;
 
-MarkerArray createEgoStatusMarkerArray(
-  const AvoidancePlanningData & data, const Pose & p_ego, std::string && ns);
-
 MarkerArray createAvoidLineMarkerArray(
   const AvoidLineArray & shift_lines, std::string && ns, const float & r, const float & g,
   const float & b, const double & w);
-
-MarkerArray createPredictedVehiclePositions(const PathWithLaneId & path, std::string && ns);
 
 MarkerArray createTargetObjectsMarkerArray(const ObjectDataArray & objects, const std::string & ns);
 
@@ -53,7 +48,8 @@ MarkerArray createAmbiguousObjectsMarkerArray(
 MarkerArray createStopTargetObjectMarkerArray(const AvoidancePlanningData & data);
 
 MarkerArray createDebugMarkerArray(
-  const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug,
+  const BehaviorModuleOutput & output, const AvoidancePlanningData & data,
+  const PathShifter & shifter, const DebugData & debug,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 }  // namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 
