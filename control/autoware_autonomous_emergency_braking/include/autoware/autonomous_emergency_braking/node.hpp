@@ -15,6 +15,8 @@
 #ifndef AUTOWARE__AUTONOMOUS_EMERGENCY_BRAKING__NODE_HPP_
 #define AUTOWARE__AUTONOMOUS_EMERGENCY_BRAKING__NODE_HPP_
 
+#include "autoware/universe_utils/system/time_keeper.hpp"
+
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
@@ -156,10 +158,7 @@ public:
    * @brief Get the closest object data
    * @return Object data of the closest object
    */
-  [[nodiscard]] ObjectData get() const
-  {
-    return (closest_object_.has_value()) ? closest_object_.value() : ObjectData();
-  }
+  [[nodiscard]] std::optional<ObjectData> get() const { return closest_object_; }
 
   /**
    * @brief Get the previous closest object data
@@ -337,9 +336,11 @@ public:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr info_marker_publisher_;
-
+  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
+    debug_processing_time_detail_pub_;
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
+  mutable std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
 
   // callback
   /**
@@ -511,6 +512,7 @@ public:
   // Member variables
   bool publish_debug_pointcloud_;
   bool publish_debug_markers_;
+  bool publish_debug_time_;
   bool use_predicted_trajectory_;
   bool use_imu_path_;
   bool use_pointcloud_data_;
