@@ -87,7 +87,7 @@ public:
     down_grid_size_y_ = grid_size_y_ / downsample_factor_;
   };
 
-  // input and pre-processing
+  // input params
   std::size_t cloud_capacity_{};
   std::size_t class_size_{3};
   const std::size_t point_dim_size_{3};  // x, y and z
