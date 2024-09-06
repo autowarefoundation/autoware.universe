@@ -593,9 +593,17 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
   rear_wheel_angle.reserve(input_trajectory.points.size());
   time_from_start.reserve(input_trajectory.points.size());
 
+  bool stop_point_found_in_v_lon = false;
+  constexpr double epsilon = 1e-4;
+
   input_arclength.push_back(0.0);
   input_pose.push_back(input_trajectory.points.front().pose);
-  v_lon.push_back(input_trajectory.points.front().longitudinal_velocity_mps);
+  if (std::abs(input_trajectory.points.front().longitudinal_velocity_mps) < epsilon) {
+    stop_point_found_in_v_lon = true;
+    v_lon.push_back(0.0);
+  } else {
+    v_lon.push_back(input_trajectory.points.front().longitudinal_velocity_mps);
+  }
   v_lat.push_back(input_trajectory.points.front().lateral_velocity_mps);
   heading_rate.push_back(input_trajectory.points.front().heading_rate_rps);
   acceleration.push_back(input_trajectory.points.front().acceleration_mps2);
@@ -603,9 +611,6 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
   rear_wheel_angle.push_back(input_trajectory.points.front().rear_wheel_angle_rad);
   time_from_start.push_back(
     rclcpp::Duration(input_trajectory.points.front().time_from_start).seconds());
-
-  bool stop_point_found_in_v_lon = false;
-  constexpr double epsilon = 1e-4;
 
   for (size_t i = 1; i < input_trajectory.points.size(); ++i) {
     const auto & prev_pt = input_trajectory.points.at(i - 1);
