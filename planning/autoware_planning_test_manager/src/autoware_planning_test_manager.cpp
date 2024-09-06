@@ -461,10 +461,13 @@ int PlanningInterfaceTestManager::getReceivedTopicNum()
 
 LaneletRoute makeBehaviorRouteFromLaneId(const int & start_lane_id, const int & goal_lane_id)
 {
+  using autoware::route_handler::RouteHandler;
+  using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
+
   LaneletRoute route;
   route.header.frame_id = "map";
-  auto start_pose = createPoseFromLaneID(start_lane_id);
-  auto goal_pose = createPoseFromLaneID(goal_lane_id);
+  auto start_pose = autoware_planning_test_manager::utils::createPoseFromLaneID(start_lane_id);
+  auto goal_pose = autoware_planning_test_manager::utils::createPoseFromLaneID(goal_lane_id);
   route.start_pose = start_pose;
   route.goal_pose = goal_pose;
 
