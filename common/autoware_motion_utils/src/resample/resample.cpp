@@ -593,17 +593,9 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
   rear_wheel_angle.reserve(input_trajectory.points.size());
   time_from_start.reserve(input_trajectory.points.size());
 
-  bool stop_point_found_in_v_lon = false;
-  constexpr double epsilon = 1e-4;
-
   input_arclength.push_back(0.0);
   input_pose.push_back(input_trajectory.points.front().pose);
-  if (std::abs(input_trajectory.points.front().longitudinal_velocity_mps) < epsilon) {
-    stop_point_found_in_v_lon = true;
-    v_lon.push_back(0.0);
-  } else {
-    v_lon.push_back(input_trajectory.points.front().longitudinal_velocity_mps);
-  }
+  v_lon.push_back(input_trajectory.points.front().longitudinal_velocity_mps);
   v_lat.push_back(input_trajectory.points.front().lateral_velocity_mps);
   heading_rate.push_back(input_trajectory.points.front().heading_rate_rps);
   acceleration.push_back(input_trajectory.points.front().acceleration_mps2);
@@ -617,23 +609,28 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
     const auto & curr_pt = input_trajectory.points.at(i);
     const double ds =
       autoware::universe_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
-    if (std::abs(curr_pt.longitudinal_velocity_mps) < epsilon) {
-      stop_point_found_in_v_lon = true;
-    }
 
     input_arclength.push_back(ds + input_arclength.back());
     input_pose.push_back(curr_pt.pose);
-    if (stop_point_found_in_v_lon) {
-      v_lon.push_back(0.0);
-    } else {
-      v_lon.push_back(curr_pt.longitudinal_velocity_mps);
-    }
+    v_lon.push_back(curr_pt.longitudinal_velocity_mps);
     v_lat.push_back(curr_pt.lateral_velocity_mps);
     heading_rate.push_back(curr_pt.heading_rate_rps);
     acceleration.push_back(curr_pt.acceleration_mps2);
     front_wheel_angle.push_back(curr_pt.front_wheel_angle_rad);
     rear_wheel_angle.push_back(curr_pt.rear_wheel_angle_rad);
     time_from_start.push_back(rclcpp::Duration(curr_pt.time_from_start).seconds());
+  }
+
+  // Set Zero Velocity After Stop Point
+  bool stop_point_found_in_v_lon = false;
+  constexpr double epsilon = 1e-4;
+  for (size_t i = 0; i < v_lon.size(); ++i) {
+    if (std::abs(v_lon.at(i)) < epsilon) {
+      stop_point_found_in_v_lon = true;
+    }
+    if (stop_point_found_in_v_lon) {
+      v_lon.at(i) = 0.0;
+    }
   }
 
   // Interpolate
