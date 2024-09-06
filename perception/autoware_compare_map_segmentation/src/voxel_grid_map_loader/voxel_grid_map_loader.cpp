@@ -13,9 +13,35 @@
 // limitations under the License.
 
 #include "voxel_grid_map_loader.hpp"
-
 namespace autoware::compare_map_segmentation
 {
+
+// check if the pointcloud is filterable with PCL voxel grid
+bool isFeasibleWithPCLVoxelGrid(
+  const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
+  const pcl::VoxelGrid<pcl::PointXYZ> & voxel_grid)
+{
+  pcl::PointXYZ min_pt, max_pt;
+  pcl::getMinMax3D(*pointcloud, min_pt, max_pt);
+  const double x_range = max_pt.x - min_pt.x;
+  const double y_range = max_pt.y - min_pt.y;
+  const double z_range = max_pt.z - min_pt.z;
+
+  const auto voxel_leaf_size = voxel_grid.getLeafSize();
+  const double inv_voxel_x = 1.0 / voxel_leaf_size[0];
+  const double inv_voxel_y = 1.0 / voxel_leaf_size[1];
+  const double inv_voxel_z = 1.0 / voxel_leaf_size[2];
+
+  const std::int64_t x_voxel_num = std::ceil(x_range * inv_voxel_x) + 1;
+  const std::int64_t y_voxel_num = std::ceil(y_range * inv_voxel_y) + 1;
+  const std::int64_t z_voxel_num = std::ceil(z_range * inv_voxel_z) + 1;
+  const std::int64_t voxel_num = x_voxel_num * y_voxel_num * z_voxel_num;
+  if (voxel_num > std::numeric_limits<std::int32_t>::max()) {
+    return false;
+  }
+  return true;
+}
+
 VoxelGridMapLoader::VoxelGridMapLoader(
   rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
   std::string * tf_map_input_frame, std::mutex * mutex)
@@ -263,23 +289,21 @@ void VoxelGridStaticMapLoader::onMapCallback(
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
   *tf_map_input_frame_ = map_pcl_ptr->header.frame_id;
   (*mutex_ptr_).lock();
+  bool map_is_not_filtered = true;
   voxel_map_ptr_.reset(new pcl::PointCloud<pcl::PointXYZ>);
   voxel_grid_.setLeafSize(voxel_leaf_size_, voxel_leaf_size_, voxel_leaf_size_z_);
+  map_is_not_filtered = isFeasibleWithPCLVoxelGrid(map_pcl_ptr, voxel_grid_);
+  if (map_is_not_filtered) {
+    RCLCPP_ERROR(
+      logger_,
+      "Voxel grid filter is not feasible. Check the voxel grid filter parameters and input "
+      "pointcloud.");
+    throw std::runtime_error("Voxel grid filter is not feasible with input pointcloud.");
+  }
   voxel_grid_.setInputCloud(map_pcl_ptr);
   voxel_grid_.setSaveLeafLayout(true);
   voxel_grid_.filter(*voxel_map_ptr_);
   (*mutex_ptr_).unlock();
-
-  // sanity check: check pointcloud size before and after filters
-  const auto voxel_map_size = voxel_map_ptr_->size();
-  const auto original_map_size = map_pcl_ptr->size();
-  const bool map_is_not_filtered = (voxel_map_size == original_map_size);
-  if (map_is_not_filtered) {
-    RCLCPP_WARN(
-      logger_,
-      "Map size has not downsized. If this is not intended, something wrong with PCL voxel grid. "
-      "Check the voxel grid filter parameters.");
-  }
 
   if (debug_) {
     publish_downsampled_map(*voxel_map_ptr_);

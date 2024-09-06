@@ -39,19 +39,17 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   // voxel
   voxel_map_ptr_.reset(new pcl::PointCloud<pcl::PointXYZ>);
   voxel_grid_.setLeafSize(voxel_leaf_size_, voxel_leaf_size_, voxel_leaf_size_);
+  const bool is_feasible = isFeasibleWithPCLVoxelGrid(map_pcl_ptr, voxel_grid_);
+  if (!is_feasible) {
+    RCLCPP_ERROR(
+      logger_,
+      "Voxel grid filter is not feasible. Check the voxel grid filter parameters and input "
+      "pointcloud.");
+    throw std::runtime_error("Voxel grid filter is not feasible with input pointcloud.");
+  }
   voxel_grid_.setInputCloud(map_pcl_ptr);
   voxel_grid_.setSaveLeafLayout(true);
   voxel_grid_.filter(*voxel_map_ptr_);
-  // sanity check: check pointcloud size before and after filters
-  const auto voxel_pc_size = voxel_map_ptr_->size();
-  const auto original_pc_size = map_pcl_ptr->size();
-  const bool is_not_filtered = (voxel_pc_size == original_pc_size);
-  if (is_not_filtered) {
-    RCLCPP_WARN(
-      logger_,
-      "Pointcloud has not downsized. If this is not intended, something wrong with PCL voxel grid. "
-      "Check the voxel grid filter parameters.");
-  }
 
   // kdtree
   map_ptr_ = map_pcl_ptr;
