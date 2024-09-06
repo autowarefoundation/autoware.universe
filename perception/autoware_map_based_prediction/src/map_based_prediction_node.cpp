@@ -1845,14 +1845,15 @@ void MapBasedPredictionNode::updateRoadUsersHistory(
   }
 }
 
-bool MapBasedPredictionNode::searchProperStartingRefPathIndex(
-  const TrackedObject & object, const PosePath & pose_path, size_t & index) const
+std::optional<size_t> MapBasedPredictionNode::searchProperStartingRefPathIndex(
+  const TrackedObject & object, const PosePath & pose_path) const
 {
   std::unique_ptr<ScopedTimeTrack> st1_ptr;
   if (time_keeper_) st1_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   bool is_position_found = false;
-  index = 0;
+  std::optional<size_t> opt_index{std::nullopt};
+  auto & index = opt_index.emplace();
 
   // starting segment index is a segment close enough to the object
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
@@ -1935,7 +1936,7 @@ bool MapBasedPredictionNode::searchProperStartingRefPathIndex(
   index += idx;
   index = std::clamp(index, 0ul, pose_path.size() - 1);
 
-  return is_position_found;
+  return is_position_found ? opt_index : std::nullopt;
 }
 
 std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
@@ -2109,13 +2110,12 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       continue;
     }
 
-    size_t starting_segment_idx;
-    bool is_position_found =
-      searchProperStartingRefPathIndex(object, pose_path, starting_segment_idx);
+    const std::optional<size_t> opt_starting_idx =
+      searchProperStartingRefPathIndex(object, pose_path);
 
-    if (is_position_found) {
+    if (opt_starting_idx.has_value()) {
       // Trim the reference path
-      pose_path.erase(pose_path.begin(), pose_path.begin() + starting_segment_idx);
+      pose_path.erase(pose_path.begin(), pose_path.begin() + opt_starting_idx.value());
       ++it;
     } else {
       // Proper starting point is not found, remove the reference path
