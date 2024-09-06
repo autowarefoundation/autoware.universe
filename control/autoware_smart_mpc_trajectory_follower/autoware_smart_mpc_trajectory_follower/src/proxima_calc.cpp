@@ -26,10 +26,6 @@ Eigen::VectorXd tanh(const Eigen::VectorXd & v)
 {
   return v.array().tanh();
 }
-Eigen::VectorXd d_tanh(const Eigen::VectorXd & v)
-{
-  return 1 / (v.array().cosh() * v.array().cosh());
-}
 Eigen::VectorXd sigmoid(const Eigen::VectorXd & v)
 {
   return 0.5 * (0.5 * v).array().tanh() + 0.5;
@@ -43,16 +39,6 @@ Eigen::VectorXd relu(const Eigen::VectorXd & x)
     }
   }
   return x_;
-}
-Eigen::VectorXd d_relu(const Eigen::VectorXd & x)
-{
-  Eigen::VectorXd result = Eigen::VectorXd::Ones(x.size());
-  for (int i = 0; i < x.size(); i++) {
-    if (x[i] < 0) {
-      result[i] = 0;
-    }
-  }
-  return result;
 }
 Eigen::MatrixXd d_relu_product(const Eigen::MatrixXd & m, const Eigen::VectorXd & x)
 {
@@ -178,15 +164,15 @@ private:
   Eigen::VectorXd bias_linear_finalize_;
   Eigen::MatrixXd A_linear_reg_;
   Eigen::VectorXd b_linear_reg_;
-  int deg_;
-  int acc_delay_step_;
-  int steer_delay_step_;
-  int acc_ctrl_queue_size_;
-  int steer_ctrl_queue_size_;
-  int steer_ctrl_queue_size_core_;
-  double vel_normalize_;
-  double acc_normalize_;
-  double steer_normalize_;
+  int deg_{};
+  int acc_delay_step_{};
+  int steer_delay_step_{};
+  int acc_ctrl_queue_size_{};
+  int steer_ctrl_queue_size_{};
+  int steer_ctrl_queue_size_core_{};
+  double vel_normalize_{};
+  double acc_normalize_{};
+  double steer_normalize_{};
   static constexpr double max_acc_error_ = 20.0;
   static constexpr double max_steer_error_ = 20.0;
 
@@ -611,15 +597,15 @@ private:
   Eigen::VectorXd bias_linear_finalize_;
   Eigen::MatrixXd A_linear_reg_;
   Eigen::VectorXd b_linear_reg_;
-  int deg_;
-  int acc_delay_step_;
-  int steer_delay_step_;
-  int acc_ctrl_queue_size_;
-  int steer_ctrl_queue_size_;
-  int steer_ctrl_queue_size_core_;
-  double vel_normalize_;
-  double acc_normalize_;
-  double steer_normalize_;
+  int deg_{};
+  int acc_delay_step_{};
+  int steer_delay_step_{};
+  int acc_ctrl_queue_size_{};
+  int steer_ctrl_queue_size_{};
+  int steer_ctrl_queue_size_core_{};
+  double vel_normalize_{};
+  double acc_normalize_{};
+  double steer_normalize_{};
 
   static constexpr double max_acc_error_ = 20.0;
   static constexpr double max_steer_error_ = 20.0;

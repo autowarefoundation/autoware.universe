@@ -91,7 +91,14 @@ private:
     std::vector<float> height_list;
 
     PointsCentroid()
-    : radius_sum(0.0f), height_sum(0.0f), radius_avg(0.0f), height_avg(0.0f), point_num(0)
+    : radius_sum(0.0f),
+      height_sum(0.0f),
+      radius_avg(0.0f),
+      height_avg(0.0f),
+      height_max(0.0f),
+      height_min(10.0f),
+      point_num(0),
+      grid_id(0)
     {
     }
 
@@ -135,11 +142,6 @@ private:
     float getMaxHeight() const { return height_max; }
 
     float getMinHeight() const { return height_min; }
-
-    uint16_t getGridId() const { return grid_id; }
-
-    pcl::PointIndices getIndices() const { return pcl_indices; }
-    std::vector<float> getHeightList() const { return height_list; }
 
     pcl::PointIndices & getIndicesRef() { return pcl_indices; }
     std::vector<float> & getHeightListRef() { return height_list; }

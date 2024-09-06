@@ -31,16 +31,6 @@ VoxelGridMapLoader::VoxelGridMapLoader(
   debug_ = node->declare_parameter<bool>("publish_debug_pcd");
 }
 
-bool VoxelGridMapLoader::is_close_points(
-  const pcl::PointXYZ point, const pcl::PointXYZ target_point,
-  const double distance_threshold) const
-{
-  if (distance3D(point, target_point) < distance_threshold * distance_threshold) {
-    return true;
-  }
-  return false;
-}
-
 void VoxelGridMapLoader::publish_downsampled_map(
   const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc)
 {
@@ -52,7 +42,7 @@ void VoxelGridMapLoader::publish_downsampled_map(
 
 bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
   const pcl::PointXYZ & point, const double distance_threshold, VoxelGridPointXYZ & voxel,
-  pcl::search::Search<pcl::PointXYZ>::Ptr tree) const
+  pcl::search::Search<pcl::PointXYZ>::Ptr tree)
 {
   const int index = voxel.getCentroidIndexAt(voxel.getGridCoordinates(point.x, point.y, point.z));
   if (index != -1) {

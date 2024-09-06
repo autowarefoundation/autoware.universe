@@ -34,12 +34,13 @@ CustomElevatedButton::CustomElevatedButton(
   font.setFamily("Roboto");
   setFont(font);
 
+  QColor shadowColor = QColor(autoware::state_rviz_plugin::colors::default_colors.shadow.c_str());
+  shadowColor.setAlpha(255 * 0.6);
   // Set up drop shadow effect
   QGraphicsDropShadowEffect * shadowEffect = new QGraphicsDropShadowEffect(this);
-  shadowEffect->setBlurRadius(15);
-  shadowEffect->setOffset(3, 3);
-  shadowEffect->setColor(
-    QColor(autoware::state_rviz_plugin::colors::default_colors.shadow.c_str()));
+  shadowEffect->setBlurRadius(5);
+  shadowEffect->setOffset(0, 1);
+  shadowEffect->setColor(shadowColor);
   setGraphicsEffect(shadowEffect);
 }
 
@@ -53,11 +54,13 @@ QSize CustomElevatedButton::sizeHint() const
   return QSize(width, height);
 }
 
+// cppcheck-suppress unusedFunction
 QSize CustomElevatedButton::minimumSizeHint() const
 {
   return sizeHint();
 }
 
+// cppcheck-suppress unusedFunction
 void CustomElevatedButton::updateStyle(
   const QString & text, const QColor & bgColor, const QColor & textColor, const QColor & hoverColor,
   const QColor & disabledBgColor, const QColor & disabledTextColor)
@@ -71,6 +74,7 @@ void CustomElevatedButton::updateStyle(
   update();  // Force repaint
 }
 
+// cppcheck-suppress unusedFunction
 void CustomElevatedButton::paintEvent(QPaintEvent *)
 {
   QPainter painter(this);

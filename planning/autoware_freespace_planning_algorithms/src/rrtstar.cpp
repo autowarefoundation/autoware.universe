@@ -42,6 +42,13 @@ RRTStar::RRTStar(
 }
 
 bool RRTStar::makePlan(
+  const geometry_msgs::msg::Pose & start_pose,
+  const std::vector<geometry_msgs::msg::Pose> & goal_candidates)
+{
+  return makePlan(start_pose, goal_candidates.front());
+}
+
+bool RRTStar::makePlan(
   const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose)
 {
   const rclcpp::Time begin = rclcpp::Clock(RCL_ROS_TIME).now();
@@ -113,9 +120,7 @@ bool RRTStar::hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & traj
 {
   for (const auto & pose : trajectory.poses) {
     const auto pose_local = global2local(costmap_, pose);
-    const auto base_index = pose2index(costmap_, pose_local, planner_common_param_.theta_size);
-
-    if (detectCollision(base_index)) {
+    if (detectCollision(pose_local)) {
       return true;
     }
   }

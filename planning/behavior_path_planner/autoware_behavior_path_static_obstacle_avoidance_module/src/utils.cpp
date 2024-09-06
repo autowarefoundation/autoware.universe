@@ -21,6 +21,7 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <Eigen/Dense>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 
 #include <boost/geometry/algorithms/buffer.hpp>
@@ -63,79 +64,6 @@ geometry_msgs::msg::Polygon toMsg(
     ret.points.push_back(createPoint32(p.x(), p.y(), z));
   }
   return ret;
-}
-
-template <class T>
-size_t findFirstNearestIndex(const T & points, const geometry_msgs::msg::Point & point)
-{
-  autoware::motion_utils::validateNonEmpty(points);
-
-  double min_dist = std::numeric_limits<double>::max();
-  size_t min_idx = 0;
-  bool decreasing = false;
-
-  for (size_t i = 0; i < points.size(); ++i) {
-    const auto dist = autoware::universe_utils::calcSquaredDistance2d(points.at(i), point);
-    if (dist < min_dist) {
-      decreasing = true;
-      min_dist = dist;
-      min_idx = i;
-      continue;
-    }
-
-    if (decreasing) {
-      return min_idx;
-    }
-  }
-
-  return min_idx;
-}
-
-template <class T>
-size_t findFirstNearestSegmentIndex(const T & points, const geometry_msgs::msg::Point & point)
-{
-  const size_t nearest_idx = findFirstNearestIndex(points, point);
-
-  if (nearest_idx == 0) {
-    return 0;
-  }
-  if (nearest_idx == points.size() - 1) {
-    return points.size() - 2;
-  }
-
-  const double signed_length =
-    autoware::motion_utils::calcLongitudinalOffsetToSegment(points, nearest_idx, point);
-
-  if (signed_length <= 0) {
-    return nearest_idx - 1;
-  }
-
-  return nearest_idx;
-}
-
-template <class T>
-double calcSignedArcLengthToFirstNearestPoint(
-  const T & points, const geometry_msgs::msg::Point & src_point,
-  const geometry_msgs::msg::Point & dst_point)
-{
-  try {
-    autoware::motion_utils::validateNonEmpty(points);
-  } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
-    return 0.0;
-  }
-
-  const size_t src_seg_idx = findFirstNearestSegmentIndex(points, src_point);
-  const size_t dst_seg_idx = findFirstNearestSegmentIndex(points, dst_point);
-
-  const double signed_length_on_traj =
-    autoware::motion_utils::calcSignedArcLength(points, src_seg_idx, dst_seg_idx);
-  const double signed_length_src_offset =
-    autoware::motion_utils::calcLongitudinalOffsetToSegment(points, src_seg_idx, src_point);
-  const double signed_length_dst_offset =
-    autoware::motion_utils::calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_point);
-
-  return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
 }
 
 geometry_msgs::msg::Polygon createVehiclePolygon(
@@ -693,6 +621,15 @@ bool isNeverAvoidanceTarget(
       }
     }
 
+    const auto right_opposite_lanes =
+      planner_data->route_handler->getRightOppositeLanelets(object.overhang_lanelet);
+    if (!right_opposite_lanes.empty() && isOnRight(object)) {
+      object.info = ObjectInfo::IS_NOT_PARKING_OBJECT;
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
+      return true;
+    }
+
     const auto left_lane =
       planner_data->route_handler->getLeftLanelet(object.overhang_lanelet, true, true);
     if (left_lane.has_value() && !isOnRight(object)) {
@@ -714,6 +651,15 @@ bool isNeverAvoidanceTarget(
           rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
         return true;
       }
+    }
+
+    const auto left_opposite_lanes =
+      planner_data->route_handler->getLeftOppositeLanelets(object.overhang_lanelet);
+    if (!left_opposite_lanes.empty() && !isOnRight(object)) {
+      object.info = ObjectInfo::IS_NOT_PARKING_OBJECT;
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
+      return true;
     }
   }
 
@@ -750,6 +696,46 @@ bool isObviousAvoidanceTarget(
 
     if (!object.is_on_ego_lane && object.behavior == ObjectData::Behavior::NONE) {
       RCLCPP_DEBUG(rclcpp::get_logger(logger_namespace), "object is adjacent vehicle.");
+      return true;
+    }
+  }
+
+  if (object.behavior == ObjectData::Behavior::MERGING) {
+    object.info = ObjectInfo::MERGING_TO_EGO_LANE;
+    if (
+      isOnRight(object) && !object.is_on_ego_lane &&
+      object.overhang_points.front().first < parameters->th_overhang_distance) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace),
+        "merging vehicle. but overhang distance is less than threshold.");
+      return true;
+    }
+    if (
+      !isOnRight(object) && !object.is_on_ego_lane &&
+      object.overhang_points.front().first > -1.0 * parameters->th_overhang_distance) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace),
+        "merging vehicle. but overhang distance is less than threshold.");
+      return true;
+    }
+  }
+
+  if (object.behavior == ObjectData::Behavior::DEVIATING) {
+    object.info = ObjectInfo::DEVIATING_FROM_EGO_LANE;
+    if (
+      isOnRight(object) && !object.is_on_ego_lane &&
+      object.overhang_points.front().first < parameters->th_overhang_distance) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace),
+        "deviating vehicle. but overhang distance is less than threshold.");
+      return true;
+    }
+    if (
+      !isOnRight(object) && !object.is_on_ego_lane &&
+      object.overhang_points.front().first > -1.0 * parameters->th_overhang_distance) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace),
+        "deviating vehicle. but overhang distance is less than threshold.");
       return true;
     }
   }
@@ -1500,11 +1486,27 @@ void fillObjectEnvelopePolygon(
   if (same_id_obj == registered_objects.end()) {
     object_data.envelope_poly =
       createEnvelopePolygon(object_data, closest_pose, envelope_buffer_margin);
+    object_data.error_eclipse_max =
+      calcErrorEclipseLongRadius(object_data.object.kinematics.initial_pose_with_covariance);
     return;
   }
 
   const auto one_shot_envelope_poly =
     createEnvelopePolygon(object_data, closest_pose, envelope_buffer_margin);
+  const double error_eclipse_long_radius =
+    calcErrorEclipseLongRadius(object_data.object.kinematics.initial_pose_with_covariance);
+
+  if (error_eclipse_long_radius > object_parameter.th_error_eclipse_long_radius) {
+    if (error_eclipse_long_radius < object_data.error_eclipse_max) {
+      object_data.error_eclipse_max = error_eclipse_long_radius;
+      object_data.envelope_poly = one_shot_envelope_poly;
+      return;
+    }
+    object_data.envelope_poly = same_id_obj->envelope_poly;
+    return;
+  }
+
+  object_data.error_eclipse_max = error_eclipse_long_radius;
 
   // If the one_shot_envelope_poly is within the registered envelope, use the registered one
   if (boost::geometry::within(one_shot_envelope_poly, same_id_obj->envelope_poly)) {
@@ -1674,8 +1676,8 @@ void compensateLostTargetObjects(
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   const auto include = [](const auto & objects, const auto & search_id) {
-    return std::all_of(objects.begin(), objects.end(), [&search_id](const auto & o) {
-      return o.object.object_id != search_id;
+    return std::any_of(objects.begin(), objects.end(), [&search_id](const auto & o) {
+      return o.object.object_id == search_id;
     });
   };
 
@@ -2264,10 +2266,9 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   Pose p_reference_ego_front = reference_path.points.front().point.pose;
   Pose p_spline_ego_front = spline_path.points.front().point.pose;
   double next_longitudinal_distance = parameters->resample_interval_for_output;
+  const auto offset = arc_length_array.at(ego_idx);
   for (size_t i = 0; i < points_size; ++i) {
-    const auto distance_from_ego =
-      autoware::motion_utils::calcSignedArcLength(reference_path.points, ego_idx, i);
-    if (distance_from_ego > object_check_forward_distance) {
+    if (arc_length_array.at(i) > object_check_forward_distance + offset) {
       break;
     }
 
@@ -2523,5 +2524,19 @@ double calcDistanceToReturnDeadLine(
   }
 
   return distance_to_return_dead_line;
+}
+
+double calcErrorEclipseLongRadius(const PoseWithCovariance & pose)
+{
+  Eigen::Matrix2d xy_covariance;
+  const auto cov = pose.covariance;
+  xy_covariance(0, 0) = cov[0 * 6 + 0];
+  xy_covariance(0, 1) = cov[0 * 6 + 1];
+  xy_covariance(1, 0) = cov[1 * 6 + 0];
+  xy_covariance(1, 1) = cov[1 * 6 + 1];
+
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> eigensolver(xy_covariance);
+
+  return std::sqrt(eigensolver.eigenvalues()(1));
 }
 }  // namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
