@@ -321,8 +321,10 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   const double ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
 
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-  const auto dist_ego_to_stop =
-    calcSignedArcLength(ego_path.points, ego_pos, default_stop_pose->position);
+  const auto dist_ego_to_default_stop_opt =
+    default_stop_pose.has_value() ? std::optional<double>(calcSignedArcLength(
+                                      ego_path.points, ego_pos, default_stop_pose->position))
+                                  : std::nullopt;
 
   // Calculate attention range for crosswalk
   const auto crosswalk_attention_range = getAttentionRange(
@@ -333,7 +335,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
 
   // Update object state
   updateObjectState(
-    dist_ego_to_stop, sparse_resample_path, crosswalk_attention_range, attention_area);
+    dist_ego_to_default_stop_opt, sparse_resample_path, crosswalk_attention_range, attention_area);
 
   // Check if ego moves forward enough to ignore yield.
   const auto & p = planner_param_;
@@ -394,9 +396,10 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   }
 
   // Check if the ego should stop at the stop line or the other points.
-  const bool stop_at_stop_line =
-    dist_ego_to_stop < nearest_stop_info->second &&
-    nearest_stop_info->second < dist_ego_to_stop + planner_param_.far_object_threshold;
+  const bool stop_at_stop_line = dist_ego_to_default_stop_opt.has_value() &&
+                                 dist_ego_to_default_stop_opt.value() < nearest_stop_info->second &&
+                                 nearest_stop_info->second < dist_ego_to_default_stop_opt.value() +
+                                                               planner_param_.far_object_threshold;
 
   if (stop_at_stop_line) {
     // Stop at the stop line
@@ -1053,7 +1056,8 @@ std::optional<StopFactor> CrosswalkModule::getNearestStopFactor(
 }
 
 void CrosswalkModule::updateObjectState(
-  const double dist_ego_to_stop, const PathWithLaneId & sparse_resample_path,
+  const std::optional<double> dist_ego_to_default_stop_opt,
+  const PathWithLaneId & sparse_resample_path,
   const std::pair<double, double> & crosswalk_attention_range, const Polygon2d & attention_area)
 {
   const auto & objects_ptr = planner_data_->predicted_objects;
@@ -1064,7 +1068,9 @@ void CrosswalkModule::updateObjectState(
 
   // Check if ego is yielding
   const bool is_ego_yielding = [&]() {
-    const auto has_reached_stop_point = dist_ego_to_stop < planner_param_.stop_position_threshold;
+    const auto has_reached_stop_point =
+      dist_ego_to_default_stop_opt.has_value() &&
+      dist_ego_to_default_stop_opt.has_value() < planner_param_.stop_position_threshold;
 
     return planner_data_->isVehicleStopped(planner_param_.timeout_ego_stop_for_yield) &&
            has_reached_stop_point;
