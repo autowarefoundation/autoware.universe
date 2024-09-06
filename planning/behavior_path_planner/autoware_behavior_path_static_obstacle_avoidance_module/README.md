@@ -372,7 +372,7 @@ $$
 
 | Situation                                                                                                                        | Details                                                     | Ego behavior                                                                                               |
 | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Vehicle is within intersection area defined in HDMap. The module ignores vehicle which is following lane or merging into ego lane. | ![fig](./images/target_filter/never_avoid_intersection.png) | Never avoid it.                                                                                            |
+| Vehicle is within intersection area defined in HDMap. The module ignores vehicles following a lane or merging into ego lane. | ![fig](./images/target_filter/never_avoid_intersection.png) | Never avoid it.                                                                                            |
 | Vehicle is on ego lane. There are adjacent lanes for both sides.                                                                  | ![fig](./images/target_filter/never_avoid_not_edge.png)     | Never avoid it.                                                                                            |
 | Vehicle is merging into other lane from ego lane. Most of its footprint is on ego lane.                                       | ![fig](./images/target_filter/never_avoid_deviating.png)    | Never avoid it.                                                                                            |
 | Vehicle is merging into ego lane from other lane. Most of its footprint is on ego lane.                                       | ![fig](./images/target_filter/never_avoid_merging.png)      | Never avoid it.                                                                                            |
@@ -748,7 +748,7 @@ The envelope polygon is a rectangle box, whose size depends on the object's poly
 
 ![fig](./images/path_generation/envelope_polygon.png)
 
-The module creates a one-shot envelope polygon by using the latest object pose and raw polygon in every planning cycle. On the other hand, the module envelope polygon information which is created in last planning cycle as well in order to update envelope polygon according to following logic. If the one-shot envelope polygon is not within the previous envelope polygon, the module creates a new envelope polygon. Otherwise, it keeps the previous envelope polygon. By doing this process, the envelope polygon size and pose will converge even if perception output includes noise in object pose or shape.
+The module creates a one-shot envelope polygon by using the latest object pose and raw polygon in every planning cycle. On the other hand, the module uses the envelope polygon information created in the last planning cycle in order to update the envelope polygon according to the following logic. If the one-shot envelope polygon is not within the previous envelope polygon, the module creates a new envelope polygon. Otherwise, it keeps the previous envelope polygon. By doing this process, the envelope polygon size and pose will converge even if perception output includes noise in object pose or shape.
 
 ![fig](./images/path_generation/polygon_update.png)
 
@@ -818,7 +818,7 @@ This module has only one parameter `soft_margin` for soft lateral margin constra
 
 ![fig](./images/path_generation/hard_margin.png)
 
-As the hard margin parameters the distance which the user definitely want to keep, they are used in the logic to check whether the ego can pass the side of the target object without executing an avoidance maneuver as well.
+As the hard margin parameters define the distance the user definitely wants to maintain, they are used in the logic to check whether the ego can pass the side of the target object without executing an avoidance maneuver as well.
 
 If the lateral distance is less than `hard_margin`/`hard_margin_for_parked_vehicle` when assuming that the ego follows the current lane without an avoidance maneuver, this module thinks the ego can not pass the side of the object safely and the ego must avoid it. In this case, this module inserts a stop point until the avoidance maneuver is allowed to execute so that the ego can avoid the object after approval. (For example, the ego keeps stopping in front of such an object until the operator approves the avoidance maneuver if the module is in MANUAL mode.)
 
@@ -842,7 +842,7 @@ This module inserts a stop point only when the ego can potentially avoid the obj
 
 ### Shift length calculation
 
-The lateral shift length is the sum of `overhang_distance`, lateral margin, whose value is set in the config file, and half of ego vehicle width defined in `vehicle_info.param.yaml`. On the other hand, the module limits the shift length depending on the space the module can use for an avoidance maneuver and the parameters `soft_drivable_bound_margin` `hard_drivable_bound_margin`. Basically, the shift length is limited so that the ego doesn't get closer than `soft_drivable_bound_margin` to the drivable boundary. But it allows to relax the threshold `soft_drivable_bound_margin` to `hard_drivable_bound_margin` when the road is narrow.
+The lateral shift length is the sum of `overhang_distance`, lateral margin, whose value is set in the config file, and half of ego vehicle width defined in `vehicle_info.param.yaml`. On the other hand, the module limits the shift length depending on the space the module can use for an avoidance maneuver and the parameters `soft_drivable_bound_margin` `hard_drivable_bound_margin`. Basically, the shift length is limited so that the ego doesn't get closer than `soft_drivable_bound_margin` to the drivable boundary. But the module allows the threshold to be relaxed from `soft_drivable_bound_margin` to `hard_drivable_bound_margin` when the road is narrow.
 
 ![fig](./images/path_generation/lateral.png)
 
@@ -851,7 +851,7 @@ Usable lanes for the avoidance module can be selected using the config file.
 ```yaml
       ...
       # drivable lane setting. This module is able to use not only current lane but also right/left lane
-      # if the current lane(=lanelt::Lanelet) and the right/left lane share the boundary(=lanelet::Linestring) in HDMap.
+      # if the current lane(=lanelet::Lanelet) and the right/left lane share the boundary(=lanelet::Linestring) in HDMap.
       # "current_lane"           : use only current lane. This module doesn't use adjacent lane to avoid object.
       # "same_direction_lane"    : this module uses same direction lane to avoid object if needed.
       # "opposite_direction_lane": this module uses both same direction and opposite direction lanes.
@@ -1023,7 +1023,7 @@ Please set the flags to `true` when user wants to make it possible to use those 
 
 ```yaml
 # drivable lane setting. This module is able to use not only current lane but also right/left lane
-# if the current lane(=lanelt::Lanelet) and the right/left lane share the boundary(=lanelet::Linestring) in HDMap.
+# if the current lane(=lanelet::Lanelet) and the right/left lane share the boundary(=lanelet::Linestring) in HDMap.
 # "current_lane"           : use only current lane. This module doesn't use adjacent lane to avoid object.
 # "same_direction_lane"    : this module uses the same direction lane to avoid object if needed.
 # "opposite_direction_lane": this module uses both same direction and opposite direction lanes.
