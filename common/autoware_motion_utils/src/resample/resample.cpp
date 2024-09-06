@@ -622,6 +622,7 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
   }
 
   // Set Zero Velocity After Stop Point
+  // If the longitudinal velocity is zero, set the velocity to zero after that point.
   bool stop_point_found_in_v_lon = false;
   constexpr double epsilon = 1e-4;
   for (size_t i = 0; i < v_lon.size(); ++i) {

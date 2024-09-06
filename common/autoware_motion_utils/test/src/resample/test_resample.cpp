@@ -3586,3 +3586,36 @@ TEST(resample_trajectory, resample_trajectory_by_same_interval)
     }
   }
 }
+
+TEST(resample_trajectory, resample_with_middle_stop_point)
+{
+  // This test is to check the behavior when the stop point is unstably resampled by zero-order hold
+  // interpolation.
+
+  using autoware::motion_utils::resampleTrajectory;
+
+  autoware_planning_msgs::msg::Trajectory traj;
+  traj.points.reserve(10);
+
+  traj.points.push_back(generateTestTrajectoryPoint(0.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0));
+  traj.points.push_back(generateTestTrajectoryPoint(1.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0));
+  traj.points.push_back(generateTestTrajectoryPoint(2.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0));
+  traj.points.push_back(generateTestTrajectoryPoint(3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+  traj.points.push_back(generateTestTrajectoryPoint(3.1, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0));
+  traj.points.push_back(generateTestTrajectoryPoint(4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+  traj.points.push_back(generateTestTrajectoryPoint(5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+  traj.points.push_back(generateTestTrajectoryPoint(6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+  traj.points.push_back(generateTestTrajectoryPoint(7.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+
+  std::vector<double> interpolated_axis = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0};
+
+  const auto resampled_traj = resampleTrajectory(traj, interpolated_axis);
+
+  EXPECT_NEAR(resampled_traj.points.at(0).longitudinal_velocity_mps, 10.0, epsilon);
+  EXPECT_NEAR(resampled_traj.points.at(1).longitudinal_velocity_mps, 10.0, epsilon);
+  EXPECT_NEAR(resampled_traj.points.at(2).longitudinal_velocity_mps, 10.0, epsilon);
+  EXPECT_NEAR(resampled_traj.points.at(3).longitudinal_velocity_mps, 0.0, epsilon);
+  EXPECT_NEAR(resampled_traj.points.at(4).longitudinal_velocity_mps, 0.0, epsilon);
+  EXPECT_NEAR(resampled_traj.points.at(5).longitudinal_velocity_mps, 0.0, epsilon);
+  EXPECT_NEAR(resampled_traj.points.at(6).longitudinal_velocity_mps, 0.0, epsilon);
+}
