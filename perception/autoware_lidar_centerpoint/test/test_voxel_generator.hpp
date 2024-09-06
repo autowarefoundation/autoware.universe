@@ -47,7 +47,6 @@ public:
   std::string lidar_frame_{};
   std::size_t points_per_pointcloud_{};
   std::size_t capacity_{};
-  bool shuffle_points_{};
   double delta_pointcloud_x_{};
 
   std::size_t class_size_{};

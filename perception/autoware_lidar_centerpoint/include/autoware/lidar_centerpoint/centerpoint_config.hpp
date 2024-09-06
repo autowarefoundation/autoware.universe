@@ -29,12 +29,11 @@ public:
     const std::vector<double> & voxel_size, const std::size_t downsample_factor,
     const std::size_t encoder_in_feature_size, const float score_threshold,
     const float circle_nms_dist_threshold, const std::vector<double> yaw_norm_thresholds,
-    const bool has_variance, const bool shuffle_points)
+    const bool has_variance)
   {
     class_size_ = class_size;
     point_feature_size_ = point_feature_size;
     cloud_capacity_ = cloud_capacity;
-    shuffle_points_ = shuffle_points;
 
     max_voxel_size_ = max_voxel_size;
     if (point_cloud_range.size() == 6) {
@@ -90,7 +89,6 @@ public:
 
   // input and pre-processing
   std::size_t cloud_capacity_{};
-  bool shuffle_points_{true};
   std::size_t class_size_{3};
   const std::size_t point_dim_size_{3};  // x, y and z
   std::size_t point_feature_size_{4};    // x, y, z and time-lag
