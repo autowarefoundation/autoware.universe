@@ -63,6 +63,10 @@ Pose createPoseFromLaneID(const lanelet::Id & lane_id)
   return middle_pose;
 }
 
+// Function to create a route from given start and goal lanelet ids
+// start pose and goal pose are set to the middle of the lanelet
+LaneletRoute makeBehaviorRouteFromLaneId(const int & start_lane_id, const int & goal_lane_id);
+
 Odometry makeInitialPoseFromLaneId(const lanelet::Id & lane_id)
 {
   Odometry current_odometry;

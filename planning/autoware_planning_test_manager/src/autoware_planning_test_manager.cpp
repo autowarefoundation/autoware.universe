@@ -459,8 +459,6 @@ int PlanningInterfaceTestManager::getReceivedTopicNum()
   return count_;
 }
 
-// Function to create a route from given start and goal lanelet ids
-// start pose and goal pose are set to the middle of the lanelet
 LaneletRoute makeBehaviorRouteFromLaneId(const int & start_lane_id, const int & goal_lane_id)
 {
   LaneletRoute route;
