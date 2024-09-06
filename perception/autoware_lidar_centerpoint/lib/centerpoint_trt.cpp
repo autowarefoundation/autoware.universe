@@ -20,8 +20,12 @@
 
 #include <autoware/universe_utils/math/constants.hpp>
 
+#include <algorithm>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -104,6 +108,24 @@ void CenterPointTRT::initPtr()
   voxels_buffer_d_ = cuda::make_unique<float[]>(voxels_buffer_size_);
   mask_d_ = cuda::make_unique<unsigned int[]>(mask_size_);
   num_voxels_d_ = cuda::make_unique<unsigned int[]>(1);
+
+  if (config_.shuffle_points_) {
+    points_aux_d_ =
+      cuda::make_unique<float[]>(config_.cloud_capacity_ * config_.point_feature_size_);
+    shuffle_indices_d_ = cuda::make_unique<unsigned int[]>(config_.cloud_capacity_);
+
+    std::vector<unsigned int> indexes(config_.cloud_capacity_);
+    std::iota(indexes.begin(), indexes.end(), 0);
+
+    std::default_random_engine e(0);
+    std::shuffle(indexes.begin(), indexes.end(), e);
+
+    std::srand(std::time(nullptr));
+
+    CHECK_CUDA_ERROR(cudaMemcpyAsync(
+      shuffle_indices_d_.get(), indexes.data(), config_.cloud_capacity_ * sizeof(unsigned int),
+      cudaMemcpyHostToDevice, stream_));
+  }
 }
 
 bool CenterPointTRT::detect(
@@ -135,7 +157,21 @@ bool CenterPointTRT::preprocess(
   if (!is_success) {
     return false;
   }
-  const auto count = vg_ptr_->generateSweepPoints(points_d_.get(), stream_);
+
+  std::size_t count;
+
+  if (config_.shuffle_points_) {
+    count = vg_ptr_->generateSweepPoints(points_aux_d_.get(), stream_);
+    const std::size_t random_offset = std::rand();
+    shufflePoints_launch(
+      points_aux_d_.get(), shuffle_indices_d_.get(), points_d_.get(), count,
+      config_.cloud_capacity_, random_offset, stream_);
+
+    count = config_.cloud_capacity_;
+  } else {
+    count = vg_ptr_->generateSweepPoints(points_d_.get(), stream_);
+  }
+
   CHECK_CUDA_ERROR(cudaMemsetAsync(num_voxels_d_.get(), 0, sizeof(unsigned int), stream_));
   CHECK_CUDA_ERROR(
     cudaMemsetAsync(voxels_buffer_d_.get(), 0, voxels_buffer_size_ * sizeof(float), stream_));

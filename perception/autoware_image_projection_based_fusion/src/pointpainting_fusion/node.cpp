@@ -104,6 +104,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   // network param
   const std::string trt_precision = this->declare_parameter<std::string>("trt_precision");
   const std::size_t cloud_capacity = this->declare_parameter<std::int64_t>("cloud_capacity");
+  const bool shuffle_points = this->declare_parameter<bool>("shuffle_points");
   const std::string encoder_onnx_path = this->declare_parameter<std::string>("encoder_onnx_path");
   const std::string encoder_engine_path =
     this->declare_parameter<std::string>("encoder_engine_path");
@@ -186,7 +187,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   autoware::lidar_centerpoint::CenterPointConfig config(
     class_names_.size(), point_feature_size, cloud_capacity, max_voxel_size, pointcloud_range,
     voxel_size, downsample_factor, encoder_in_feature_size, score_threshold,
-    circle_nms_dist_threshold, yaw_norm_thresholds, has_variance_);
+    circle_nms_dist_threshold, yaw_norm_thresholds, has_variance_, shuffle_points);
 
   // create detector
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
