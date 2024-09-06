@@ -16,7 +16,11 @@
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
 
+#include <boost/geometry/io/wkt/write.hpp>
+
 #include <gtest/gtest.h>
+#include <lanelet2_core/Forward.h>
+#include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/LineString.h>
 #include <lanelet2_core/primitives/Point.h>
@@ -44,14 +48,15 @@ TEST(TestLanelet2PluginsDefaultPlanner, checkGoalInsideLane)
   planner.set_front_offset(0.0);
   lanelet::LineString3d left_bound;
   lanelet::LineString3d right_bound;
-  left_bound.push_back(lanelet::Point3d{-1, -1});
-  left_bound.push_back(lanelet::Point3d{0, -1});
-  left_bound.push_back(lanelet::Point3d{1, -1});
-  right_bound.push_back(lanelet::Point3d{-1, 1});
-  right_bound.push_back(lanelet::Point3d{0, 1});
-  right_bound.push_back(lanelet::Point3d{1, 1});
+  left_bound.push_back(lanelet::Point3d{lanelet::InvalId, -1, -1});
+  left_bound.push_back(lanelet::Point3d{lanelet::InvalId, 0, -1});
+  left_bound.push_back(lanelet::Point3d{lanelet::InvalId, 1, -1});
+  right_bound.push_back(lanelet::Point3d{lanelet::InvalId, -1, 1});
+  right_bound.push_back(lanelet::Point3d{lanelet::InvalId, 0, 1});
+  right_bound.push_back(lanelet::Point3d{lanelet::InvalId, 1, 1});
   lanelet::ConstLanelet goal_lanelet{lanelet::InvalId, left_bound, right_bound};
 
+  // simple case where the footprint is completely inside the lane
   autoware::universe_utils::Polygon2d goal_footprint;
   goal_footprint.outer().emplace_back(0, 0);
   goal_footprint.outer().emplace_back(0, 0.5);
@@ -59,22 +64,84 @@ TEST(TestLanelet2PluginsDefaultPlanner, checkGoalInsideLane)
   goal_footprint.outer().emplace_back(0.5, 0);
   goal_footprint.outer().emplace_back(0, 0);
   EXPECT_TRUE(planner.check_goal_inside_lanes(goal_lanelet, {goal_lanelet}, goal_footprint));
-  // sometime fails when the footprint touches the border of the lanelet
+
+  // the footprint touches the border of the lanelet
   goal_footprint.clear();
   goal_footprint.outer().emplace_back(0, 0);
   goal_footprint.outer().emplace_back(0, 1);
   goal_footprint.outer().emplace_back(1, 1);
   goal_footprint.outer().emplace_back(1, 0);
   goal_footprint.outer().emplace_back(0, 0);
-  EXPECT_FALSE(planner.check_goal_inside_lanes(goal_lanelet, {goal_lanelet}, goal_footprint));
-  // add lanelets such that the footprint no longer touches the border of the combined lanelets
-  left_bound.clear();
-  right_bound.clear();
-  left_bound.push_back(lanelet::Point3d{1, -1});
-  left_bound.push_back(lanelet::Point3d{2, -1});
-  right_bound.push_back(lanelet::Point3d{1, 1});
-  right_bound.push_back(lanelet::Point3d{2, 1});
-  lanelet::ConstLanelet next_lanelet{lanelet::InvalId, left_bound, right_bound};
+  EXPECT_TRUE(planner.check_goal_inside_lanes(goal_lanelet, {goal_lanelet}, goal_footprint));
+
+  // add lanelets such that the footprint touches the linestring shared by the combined lanelets
+  lanelet::LineString3d next_left_bound;
+  lanelet::LineString3d next_right_bound;
+  next_left_bound.push_back(lanelet::Point3d{lanelet::InvalId, 1, -1});
+  next_left_bound.push_back(lanelet::Point3d{lanelet::InvalId, 2, -1});
+  next_right_bound.push_back(lanelet::Point3d{lanelet::InvalId, 1, 1});
+  next_right_bound.push_back(lanelet::Point3d{lanelet::InvalId, 2, 1});
+  lanelet::ConstLanelet next_lanelet{lanelet::InvalId, next_left_bound, next_right_bound};
   EXPECT_TRUE(
+    planner.check_goal_inside_lanes(goal_lanelet, {goal_lanelet, next_lanelet}, goal_footprint));
+
+  // the footprint is inside the other lanelet
+  goal_footprint.clear();
+  goal_footprint.outer().emplace_back(1.1, -0.5);
+  goal_footprint.outer().emplace_back(1.1, 0.5);
+  goal_footprint.outer().emplace_back(1.6, 0.5);
+  goal_footprint.outer().emplace_back(1.6, -0.5);
+  goal_footprint.outer().emplace_back(1.1, -0.5);
+  EXPECT_TRUE(
+    planner.check_goal_inside_lanes(goal_lanelet, {goal_lanelet, next_lanelet}, goal_footprint));
+
+  // the footprint is completely outside of the lanelets
+  goal_footprint.clear();
+  goal_footprint.outer().emplace_back(1.1, 1.5);
+  goal_footprint.outer().emplace_back(1.1, 2.0);
+  goal_footprint.outer().emplace_back(1.6, 2.0);
+  goal_footprint.outer().emplace_back(1.6, 1.5);
+  goal_footprint.outer().emplace_back(1.1, 1.5);
+  EXPECT_FALSE(
+    planner.check_goal_inside_lanes(goal_lanelet, {goal_lanelet, next_lanelet}, goal_footprint));
+
+  // the footprint is outside of the lanelets but touches an edge
+  goal_footprint.clear();
+  goal_footprint.outer().emplace_back(1.1, 1.0);
+  goal_footprint.outer().emplace_back(1.1, 2.0);
+  goal_footprint.outer().emplace_back(1.6, 2.0);
+  goal_footprint.outer().emplace_back(1.6, 1.0);
+  goal_footprint.outer().emplace_back(1.1, 1.0);
+  EXPECT_FALSE(
+    planner.check_goal_inside_lanes(goal_lanelet, {goal_lanelet, next_lanelet}, goal_footprint));
+
+  // the footprint is outside of the lanelets but share a point
+  goal_footprint.clear();
+  goal_footprint.outer().emplace_back(2.0, 1.0);
+  goal_footprint.outer().emplace_back(2.0, 2.0);
+  goal_footprint.outer().emplace_back(3.0, 2.0);
+  goal_footprint.outer().emplace_back(3.0, 1.0);
+  goal_footprint.outer().emplace_back(2.0, 1.0);
+  EXPECT_FALSE(
+    planner.check_goal_inside_lanes(goal_lanelet, {goal_lanelet, next_lanelet}, goal_footprint));
+
+  // ego footprint that overlaps both lanelets
+  goal_footprint.clear();
+  goal_footprint.outer().emplace_back(-0.5, -0.5);
+  goal_footprint.outer().emplace_back(-0.5, 0.5);
+  goal_footprint.outer().emplace_back(1.5, 0.5);
+  goal_footprint.outer().emplace_back(1.5, -0.5);
+  goal_footprint.outer().emplace_back(-0.5, -0.5);
+  EXPECT_TRUE(
+    planner.check_goal_inside_lanes(goal_lanelet, {goal_lanelet, next_lanelet}, goal_footprint));
+
+  // ego footprint that goes further than the next lanelet
+  goal_footprint.clear();
+  goal_footprint.outer().emplace_back(-0.5, -0.5);
+  goal_footprint.outer().emplace_back(-0.5, 0.5);
+  goal_footprint.outer().emplace_back(2.5, 0.5);
+  goal_footprint.outer().emplace_back(2.5, -0.5);
+  goal_footprint.outer().emplace_back(-0.5, -0.5);
+  EXPECT_FALSE(
     planner.check_goal_inside_lanes(goal_lanelet, {goal_lanelet, next_lanelet}, goal_footprint));
 }

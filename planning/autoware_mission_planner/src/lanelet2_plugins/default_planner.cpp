@@ -28,6 +28,7 @@
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
+#include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/difference.hpp>
 #include <boost/geometry/algorithms/is_empty.hpp>
 
@@ -276,20 +277,24 @@ bool DefaultPlanner::check_goal_footprint_inside_lanes(
     const auto left_shoulder = route_handler_.getLeftShoulderLanelet(ll);
     if (left_shoulder) {
       boost::geometry::convert(left_shoulder->polygon2d().basicPolygon(), poly);
+      boost::geometry::correct(poly);
       ego_lanes.push_back(poly);
     }
     const auto right_shoulder = route_handler_.getRightShoulderLanelet(ll);
     if (right_shoulder) {
       boost::geometry::convert(right_shoulder->polygon2d().basicPolygon(), poly);
+      boost::geometry::correct(poly);
       ego_lanes.push_back(poly);
     }
     boost::geometry::convert(ll.polygon2d().basicPolygon(), poly);
+    boost::geometry::correct(poly);
     ego_lanes.push_back(poly);
   }
   const auto next_lanelets = next_lanelets_up_to(
     closest_lanelet_to_goal, vehicle_info_.max_longitudinal_offset_m, route_handler_);
   for (const auto & ll : next_lanelets) {
     boost::geometry::convert(ll.polygon2d().basicPolygon(), poly);
+    boost::geometry::correct(poly);
     ego_lanes.push_back(poly);
   }
 
