@@ -32,6 +32,7 @@
 
 namespace autoware::motion::control::autonomous_emergency_braking::test
 {
+using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -40,6 +41,7 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::Vector3;
 using std_msgs::msg::Header;
+namespace bg = boost::geometry;
 
 Header get_header(const char * const frame_id, rclcpp::Time t)
 {
@@ -116,6 +118,8 @@ TEST_F(TestAEB, checkCollision)
   ObjectData object_collision;
   object_collision.distance_to_object = 0.5;
   object_collision.velocity = 0.1;
+  object_collision.position.x = 1.0;
+  object_collision.position.y = 1.0;
   ASSERT_TRUE(aeb_node_->hasCollision(longitudinal_velocity, object_collision));
 
   ObjectData object_no_collision;
@@ -136,6 +140,7 @@ TEST_F(TestAEB, checkImuPathGeneration)
   ASSERT_TRUE(imu_path.size() >= static_cast<size_t>(horizon / dt));
 
   const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
+  const auto footprint_expanded = aeb_node_->generatePathFootprint(imu_path, 4.0);
   ASSERT_FALSE(footprint.empty());
   ASSERT_TRUE(footprint.size() == imu_path.size() - 1);
 
@@ -162,7 +167,7 @@ TEST_F(TestAEB, checkImuPathGeneration)
     obstacle_points_ptr, points_belonging_to_cluster_hulls, debug_markers);
   std::vector<ObjectData> objects;
   aeb_node_->getClosestObjectsOnPath(
-    imu_path, footprint, stamp, points_belonging_to_cluster_hulls, objects);
+    imu_path, footprint, footprint_expanded, stamp, points_belonging_to_cluster_hulls, objects);
   ASSERT_FALSE(objects.empty());
 }
 
