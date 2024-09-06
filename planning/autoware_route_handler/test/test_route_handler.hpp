@@ -41,10 +41,7 @@ using autoware_map_msgs::msg::LaneletMapBin;
 class TestRouteHandler : public ::testing::Test
 {
 public:
-  TestRouteHandler()
-  {
-    set_route_handler("2km_test.osm");
-  }
+  TestRouteHandler() { set_route_handler("2km_test.osm"); }
 
   TestRouteHandler(const TestRouteHandler &) = delete;
   TestRouteHandler(TestRouteHandler &&) = delete;
