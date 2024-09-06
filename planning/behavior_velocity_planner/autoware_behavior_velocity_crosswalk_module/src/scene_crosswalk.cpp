@@ -1070,7 +1070,7 @@ void CrosswalkModule::updateObjectState(
   const bool is_ego_yielding = [&]() {
     const auto has_reached_stop_point =
       dist_ego_to_default_stop_opt.has_value() &&
-      dist_ego_to_default_stop_opt.has_value() < planner_param_.stop_position_threshold;
+      dist_ego_to_default_stop_opt.value() < planner_param_.stop_position_threshold;
 
     return planner_data_->isVehicleStopped(planner_param_.timeout_ego_stop_for_yield) &&
            has_reached_stop_point;
