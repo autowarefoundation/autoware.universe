@@ -9,7 +9,7 @@
         "front_offset": {
           "type": "number",
           "description": "front_offset",
-          "default": "0.0"
+          "default": 0.0
         }
       },
       "required": ["front_offset"],
