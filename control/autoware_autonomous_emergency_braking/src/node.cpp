@@ -445,23 +445,14 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     return false;
   }
 
-  auto merge_expanded_polys = [&](const std::vector<Path> & paths, double margin) {
-    std::vector<Polygon2d> merged_polys;
-    for (const auto & path : paths) {
-      generatePathFootprint(path, expand_width_ + margin, merged_polys);
-    }
-    return merged_polys;
-  };
-
-  // for collision checking expansion
   auto merge_expanded_path_polys = [&](const std::vector<Path> & paths) {
-    return merge_expanded_polys(paths, path_footprint_extra_margin_);
+    std::vector<Polygon2d> merged_expanded_path_polygons;
+    for (const auto & path : paths) {
+      generatePathFootprint(
+        path, expand_width_ + path_footprint_extra_margin_, merged_expanded_path_polygons);
+    }
+    return merged_expanded_path_polygons;
   };
-
-  // for speed calculation expansion
-  //  auto merge_speed_calc_expanded_ego_polys = [&](const std::vector<Path> & paths) {
-  //    return merge_expanded_polys(paths, speed_calculation_expansion_margin_);
-  //  };
 
   auto get_objects_on_path = [&](
                                const auto & path, PointCloud::Ptr points_belonging_to_cluster_hulls,
@@ -492,13 +483,8 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   };
 
   auto check_collision = [&](
-                           const Path & path, const colorTuple & debug_colors,
-                           const std::string & debug_ns,
-                           PointCloud::Ptr points_belonging_to_cluster_hulls) {
+                           const Path & path, std::vector<ObjectData> & objects, const std::string & debug_ns) {
     time_keeper_->start_track("has_collision_with_" + debug_ns);
-    auto objects =
-      get_objects_on_path(path, points_belonging_to_cluster_hulls, debug_colors, debug_ns);
-
     const auto closest_object_point = std::invoke([&]() -> std::optional<ObjectData> {
       // Attempt to find the closest target object
       const auto closest_target_object_itr =
@@ -579,27 +565,40 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   getPointsBelongingToClusterHulls(
     filtered_objects, points_belonging_to_cluster_hulls, debug_markers);
 
-  const auto has_collision_imu_path =
-    [&](const PointCloud::Ptr points_belonging_to_cluster_hulls) -> bool {
-    if (!use_imu_path_ || !angular_velocity_ptr_) return false;
-    constexpr colorTuple debug_color = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
-    const std::string ns = "imu";
-    return check_collision(ego_imu_path, debug_color, ns, points_belonging_to_cluster_hulls);
+  const auto imu_path_objects = (!use_imu_path_ || !angular_velocity_ptr_)
+                                  ? std::vector<ObjectData>{}
+                                  : get_objects_on_path(
+                                      ego_imu_path, points_belonging_to_cluster_hulls,
+                                      {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999}, "imu");
+
+  const auto mpc_path_objects = (!use_predicted_trajectory_ || !predicted_traj_ptr_)
+                                  ? std::vector<ObjectData>{}
+                                  : get_objects_on_path(
+                                      ego_mpc_path.value(), points_belonging_to_cluster_hulls,
+                                      {0.0 / 256.0, 100.0 / 256.0, 0.0 / 256.0, 0.999}, "mpc");
+
+  auto merge_objects =
+    [&](const std::vector<ObjectData> & imu_objects, const std::vector<ObjectData> & mpc_objects) {
+      std::vector<ObjectData> merged_objects = imu_objects;  // Start with imu_objects
+      merged_objects.insert(
+        merged_objects.end(), mpc_objects.begin(), mpc_objects.end());  // Append mpc_objects
+      return merged_objects;
+    };
+
+  auto merge_imu_mpc_objects = merge_objects(imu_path_objects, mpc_path_objects);
+  if (merge_imu_mpc_objects.empty()) return false;
+
+  auto merge_paths = [&](const Path & imu_path, const Path & mpc_path) {
+    Path merged_path = imu_path;  // Start with imu_path
+    merged_path.insert(merged_path.end(), mpc_path.begin(), mpc_path.end());  // Append mpc_path
+    return merged_path;
   };
 
-  // step4. make function to check collision with predicted trajectory from control module
-  const auto has_collision_mpc_path =
-    [&](const PointCloud::Ptr points_belonging_to_cluster_hulls) -> bool {
-    if (!use_predicted_trajectory_ || !ego_mpc_path.has_value()) return false;
-    constexpr colorTuple debug_color = {0.0 / 256.0, 100.0 / 256.0, 0.0 / 256.0, 0.999};
-    const std::string ns = "mpc";
-    return check_collision(
-      ego_mpc_path.value(), debug_color, ns, points_belonging_to_cluster_hulls);
-  };
+  auto merge_imu_mpc_path = merge_paths(ego_mpc_path.value(), ego_imu_path);
+  if (merge_imu_mpc_path.empty()) return false;
 
   // evaluate if there is a collision for both paths
-  const bool has_collision = has_collision_imu_path(points_belonging_to_cluster_hulls) ||
-                             has_collision_mpc_path(points_belonging_to_cluster_hulls);
+  const bool has_collision = check_collision(merge_imu_mpc_path, merge_imu_mpc_objects, "imu");
 
   // Debug print
   if (!filtered_objects->empty() && publish_debug_pointcloud_) {
