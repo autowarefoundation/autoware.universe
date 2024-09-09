@@ -191,7 +191,7 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
     constexpr double INTERSECTION_CHECK_DISTANCE = 10.0;
     std::vector<Point> modified_bound{};
     size_t i = 0;
-    while (i < bound.size() - 2) {
+    while (i < bound.size() - 1) {
       BoostPoint p1(bound.at(i).x, bound.at(i).y);
       BoostPoint p2(bound.at(i + 1).x, bound.at(i + 1).y);
       LineString p_line{};
@@ -272,17 +272,6 @@ PredictedObjects extractObjectsInExpandedPullOverLanes(
     });
 
   return objects_in_lanes;
-}
-
-PredictedObjects extractStaticObjectsInExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, double bound_offset, const PredictedObjects & objects,
-  const double velocity_thresh)
-{
-  const auto objects_in_lanes = extractObjectsInExpandedPullOverLanes(
-    route_handler, left_side, backward_distance, forward_distance, bound_offset, objects);
-
-  return utils::path_safety_checker::filterObjectsByVelocity(objects_in_lanes, velocity_thresh);
 }
 
 PredictedObjects filterObjectsByLateralDistance(

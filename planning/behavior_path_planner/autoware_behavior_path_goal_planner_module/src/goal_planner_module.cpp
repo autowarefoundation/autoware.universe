@@ -459,7 +459,7 @@ void GoalPlannerModule::updateData()
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  // extract static and dynamic objects in extraction polygon for path coliision check
+  // extract static and dynamic objects in extraction polygon for path collision check
   {
     const auto & p = parameters_;
     const auto & rh = *(planner_data_->route_handler);
@@ -1243,8 +1243,6 @@ bool GoalPlannerModule::hasNotDecidedPath(
   const std::shared_ptr<SafetyCheckParams> & safety_check_params,
   const std::shared_ptr<GoalSearcherBase> goal_searcher) const
 {
-  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-
   return checkDecidingPathStatus(
            planner_data, occupancy_grid_map, parameters, ego_predicted_path_params,
            objects_filtering_params, safety_check_params, goal_searcher)
@@ -2360,8 +2358,6 @@ std::pair<bool, bool> GoalPlannerModule::isSafePath(
   const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
   const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
 {
-  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-
   if (!thread_safe_data_.get_pull_over_path()) {
     return {false, false};
   }
