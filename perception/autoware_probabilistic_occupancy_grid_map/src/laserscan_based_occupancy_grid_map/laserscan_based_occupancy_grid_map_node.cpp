@@ -222,9 +222,9 @@ void LaserscanBasedOccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRa
     single_frame_occupancy_grid_map.updateOccupiedCells(trans_obstacle_pc);
 
     if (enable_single_frame_mode_) {
-      std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+      std::unique_ptr<ScopedTimeTrack> publish_st_ptr;
       if (time_keeper_)
-        inner_st_ptr =
+        publish_st_ptr =
           std::make_unique<ScopedTimeTrack>("publish_occupancy_grid_map", *time_keeper_);
 
       // publish
@@ -232,9 +232,9 @@ void LaserscanBasedOccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRa
         map_frame_, laserscan_pc_ptr->header.stamp, gridmap_origin.position.z,
         single_frame_occupancy_grid_map));
     } else {
-      std::unique_ptr<ScopedTimeTrack> update_st_ptr;
+      std::unique_ptr<ScopedTimeTrack> publish_and_update_st_ptr;
       if (time_keeper_)
-        update_st_ptr =
+        publish_and_update_st_ptr =
           std::make_unique<ScopedTimeTrack>("update_and_publish_occupancy_grid_map", *time_keeper_);
 
       // Update with bayes filter
