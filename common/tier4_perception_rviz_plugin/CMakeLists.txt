@@ -16,6 +16,7 @@ ament_auto_add_library(tier4_perception_rviz_plugin SHARED
   src/tools/interactive_object.cpp
   src/tools/pedestrian_pose.cpp
   src/tools/car_pose.cpp
+  src/tools/cycle.cpp
   src/tools/unknown_pose.cpp
   src/tools/delete_all_objects.cpp
 )
