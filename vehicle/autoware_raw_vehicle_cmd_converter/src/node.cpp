@@ -117,6 +117,11 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   debug_pub_steer_pid_ = create_publisher<Float32MultiArrayStamped>(
     "/vehicle/raw_vehicle_cmd_converter/debug/steer_pid", 1);
 
+  if (use_vehicle_adaptor_) {
+    pub_compensated_control_cmd_ = create_publisher<Control>(
+      "/vehicle/raw_vehicle_cmd_converter/debug/compensated_control_cmd", 1);
+  }
+
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
 }
 
@@ -155,6 +160,9 @@ void RawVehicleCommandConverterNode::publishActuationCmd()
                                     *control_cmd_ptr_, *current_odometry_, *current_accel,
                                     *current_steer_ptr_, *current_operation_mode)
                                 : *control_cmd_ptr_;
+  if (use_vehicle_adaptor_) {
+    pub_compensated_control_cmd_->publish(control_cmd);
+  }
 
   /* calculate actuation command */
   double desired_accel_cmd = 0.0;
