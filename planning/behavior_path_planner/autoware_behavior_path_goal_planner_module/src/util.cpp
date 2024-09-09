@@ -39,6 +39,7 @@
 namespace autoware::behavior_path_planner::goal_planner_utils
 {
 
+using autoware::universe_utils::calcDistance2d;
 using autoware::universe_utils::calcOffsetPose;
 using autoware::universe_utils::createDefaultMarker;
 using autoware::universe_utils::createMarkerColor;
@@ -138,6 +139,126 @@ lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
                        -outer_road_offset);
 }
 
+std::optional<Polygon2d> generateObjectExtractionPolygon(
+  const lanelet::ConstLanelets & pull_over_lanes, const bool left_side, const double outer_offset,
+  const double inner_offset)
+{
+  // generate base boundary poses without orientation
+  std::vector<Pose> base_boundary_poses{};
+  for (const auto & lane : pull_over_lanes) {
+    const auto & bound = left_side ? lane.leftBound() : lane.rightBound();
+    for (const auto & p : bound) {
+      Pose pose{};
+      pose.position = createPoint(p.x(), p.y(), p.z());
+      if (std::any_of(base_boundary_poses.begin(), base_boundary_poses.end(), [&](const auto & p) {
+            return calcDistance2d(p.position, pose.position) < 0.1;
+          })) {
+        continue;
+      }
+      base_boundary_poses.push_back(pose);
+    }
+  }
+  if (base_boundary_poses.size() < 2) {
+    return std::nullopt;
+  }
+
+  // set orientation to next point
+  for (auto it = base_boundary_poses.begin(); it != std::prev(base_boundary_poses.end()); ++it) {
+    const auto & p = it->position;
+    const auto & next_p = std::next(it)->position;
+    const double yaw = autoware::universe_utils::calcAzimuthAngle(p, next_p);
+    it->orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
+  }
+  base_boundary_poses.back().orientation =
+    base_boundary_poses[base_boundary_poses.size() - 2].orientation;
+
+  // generate outer and inner boundary poses
+  std::vector<Point> outer_boundary_points{};
+  std::vector<Point> inner_boundary_points{};
+  const double outer_direction_sign = left_side ? 1.0 : -1.0;
+  for (const auto & base_pose : base_boundary_poses) {
+    const Pose outer_pose = calcOffsetPose(base_pose, 0, outer_direction_sign * outer_offset, 0);
+    const Pose inner_pose = calcOffsetPose(base_pose, 0, -outer_direction_sign * inner_offset, 0);
+    outer_boundary_points.push_back(outer_pose.position);
+    inner_boundary_points.push_back(inner_pose.position);
+  }
+
+  // remove self intersection
+  // if bound is intersected, remove them and insert intersection point
+  using BoostPoint = boost::geometry::model::d2::point_xy<double>;
+  using LineString = boost::geometry::model::linestring<BoostPoint>;
+  const auto remove_self_intersection = [](const std::vector<Point> & bound) {
+    constexpr double INTERSECTION_CHECK_DISTANCE = 10.0;
+    std::vector<Point> modified_bound{};
+    size_t i = 0;
+    while (i < bound.size() - 1) {
+      BoostPoint p1(bound.at(i).x, bound.at(i).y);
+      BoostPoint p2(bound.at(i + 1).x, bound.at(i + 1).y);
+      LineString p_line{};
+      p_line.push_back(p1);
+      p_line.push_back(p2);
+      bool intersection_found = false;
+      for (size_t j = i + 2; j < bound.size() - 1; j++) {
+        const double distance = autoware::universe_utils::calcDistance2d(bound.at(i), bound.at(j));
+        if (distance > INTERSECTION_CHECK_DISTANCE) {
+          break;
+        }
+        LineString q_line{};
+        BoostPoint q1(bound.at(j).x, bound.at(j).y);
+        BoostPoint q2(bound.at(j + 1).x, bound.at(j + 1).y);
+        q_line.push_back(q1);
+        q_line.push_back(q2);
+        std::vector<BoostPoint> intersection_points;
+        boost::geometry::intersection(p_line, q_line, intersection_points);
+        if (intersection_points.empty()) {
+          continue;
+        }
+        modified_bound.push_back(bound.at(i));
+        Point intersection_point{};
+        intersection_point.x = intersection_points.at(0).x();
+        intersection_point.y = intersection_points.at(0).y();
+        intersection_point.z = bound.at(i).z;
+        modified_bound.push_back(intersection_point);
+        i = j + 1;
+        intersection_found = true;
+        break;
+      }
+      if (!intersection_found) {
+        modified_bound.push_back(bound.at(i));
+        i++;
+      }
+    }
+    modified_bound.push_back(bound.back());
+    return modified_bound;
+  };
+  outer_boundary_points = remove_self_intersection(outer_boundary_points);
+  inner_boundary_points = remove_self_intersection(inner_boundary_points);
+
+  // create clockwise polygon
+  Polygon2d polygon{};
+  const auto & left_boundary_points = left_side ? outer_boundary_points : inner_boundary_points;
+  const auto & right_boundary_points = left_side ? inner_boundary_points : outer_boundary_points;
+  std::vector<Point> reversed_right_boundary_points = right_boundary_points;
+  std::reverse(reversed_right_boundary_points.begin(), reversed_right_boundary_points.end());
+  for (const auto & left_point : left_boundary_points) {
+    autoware::universe_utils::Point2d point{left_point.x, left_point.y};
+    polygon.outer().push_back(point);
+  }
+  for (const auto & right_point : reversed_right_boundary_points) {
+    autoware::universe_utils::Point2d point{right_point.x, right_point.y};
+    polygon.outer().push_back(point);
+  }
+  autoware::universe_utils::Point2d first_point{
+    left_boundary_points.front().x, left_boundary_points.front().y};
+  polygon.outer().push_back(first_point);
+
+  if (polygon.outer().size() < 3) {
+    return std::nullopt;
+  }
+
+  return polygon;
+}
+
 PredictedObjects extractObjectsInExpandedPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
   const double forward_distance, double bound_offset, const PredictedObjects & objects)
@@ -151,17 +272,6 @@ PredictedObjects extractObjectsInExpandedPullOverLanes(
     });
 
   return objects_in_lanes;
-}
-
-PredictedObjects extractStaticObjectsInExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, double bound_offset, const PredictedObjects & objects,
-  const double velocity_thresh)
-{
-  const auto objects_in_lanes = extractObjectsInExpandedPullOverLanes(
-    route_handler, left_side, backward_distance, forward_distance, bound_offset, objects);
-
-  return utils::path_safety_checker::filterObjectsByVelocity(objects_in_lanes, velocity_thresh);
 }
 
 PredictedObjects filterObjectsByLateralDistance(
@@ -389,7 +499,7 @@ PathWithLaneId cropForwardPoints(
 
 PathWithLaneId extendPath(
   const PathWithLaneId & target_path, const PathWithLaneId & reference_path,
-  const double extend_length)
+  const double extend_length, const bool remove_connected_zero_velocity)
 {
   const auto & target_terminal_pose = target_path.points.back().point.pose;
 
@@ -409,6 +519,11 @@ PathWithLaneId extendPath(
   }
 
   auto extended_path = target_path;
+  auto & target_terminal_vel = extended_path.points.back().point.longitudinal_velocity_mps;
+  if (remove_connected_zero_velocity && target_terminal_vel < 0.01) {
+    target_terminal_vel = clipped_path.points.front().point.longitudinal_velocity_mps;
+  }
+
   const auto start_point =
     std::find_if(clipped_path.points.begin(), clipped_path.points.end(), [&](const auto & p) {
       const bool is_forward =
@@ -427,7 +542,7 @@ PathWithLaneId extendPath(
 
 PathWithLaneId extendPath(
   const PathWithLaneId & target_path, const PathWithLaneId & reference_path,
-  const Pose & extend_pose)
+  const Pose & extend_pose, const bool remove_connected_zero_velocity)
 {
   const auto & target_terminal_pose = target_path.points.back().point.pose;
   const size_t target_path_terminal_idx = autoware::motion_utils::findNearestSegmentIndex(
@@ -435,7 +550,7 @@ PathWithLaneId extendPath(
   const double extend_distance = autoware::motion_utils::calcSignedArcLength(
     reference_path.points, target_path_terminal_idx, extend_pose.position);
 
-  return extendPath(target_path, reference_path, extend_distance);
+  return extendPath(target_path, reference_path, extend_distance, remove_connected_zero_velocity);
 }
 
 std::vector<Polygon2d> createPathFootPrints(
