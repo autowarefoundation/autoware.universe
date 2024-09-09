@@ -33,6 +33,7 @@
 #include "autoware/lidar_centerpoint/utils.hpp"
 
 #include <cassert>
+#include <cmath>
 
 namespace
 {
@@ -99,10 +100,10 @@ __global__ void shufflePoints_kernel(
   int dst_idx = point_idx;
 
   if (dst_idx >= points_size) {
-    shuffled_points[4 * dst_idx + 0] = NAN;
-    shuffled_points[4 * dst_idx + 1] = NAN;
-    shuffled_points[4 * dst_idx + 2] = NAN;
-    shuffled_points[4 * dst_idx + 3] = NAN;
+    shuffled_points[4 * dst_idx + 0] = INFINITY;
+    shuffled_points[4 * dst_idx + 1] = INFINITY;
+    shuffled_points[4 * dst_idx + 2] = INFINITY;
+    shuffled_points[4 * dst_idx + 3] = INFINITY;
   } else {
     shuffled_points[4 * dst_idx + 0] = points[4 * src_idx + 0];
     shuffled_points[4 * dst_idx + 1] = points[4 * src_idx + 1];

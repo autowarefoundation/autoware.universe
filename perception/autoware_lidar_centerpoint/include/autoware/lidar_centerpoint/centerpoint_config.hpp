@@ -34,7 +34,6 @@ public:
     class_size_ = class_size;
     point_feature_size_ = point_feature_size;
     cloud_capacity_ = cloud_capacity;
-
     max_voxel_size_ = max_voxel_size;
     if (point_cloud_range.size() == 6) {
       range_min_x_ = static_cast<float>(point_cloud_range[0]);
