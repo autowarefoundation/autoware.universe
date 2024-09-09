@@ -231,18 +231,4 @@ double calc_maximum_lane_change_length(
   return calc_maximum_lane_change_length(
     vel, *common_data_ptr->lc_param_ptr, shift_intervals, max_acc);
 }
-
-double calc_lane_change_length(
-  const LaneChangeParameters & lane_change_parameters, const double velocity,
-  const double acceleration, const double shift_distance)
-{
-  const auto lateral_jerk = lane_change_parameters.lane_changing_lateral_jerk;
-  const auto [min_lat_acc, max_lat_acc] =
-    lane_change_parameters.lane_change_lat_acc_map.find(velocity);
-  const auto t_lane_changing =
-    PathShifter::calcShiftTimeFromJerk(shift_distance, lateral_jerk, max_lat_acc);
-  const auto lane_changing_length =
-    (velocity * t_lane_changing) + (0.5 * acceleration * t_lane_changing * t_lane_changing);
-  return lane_changing_length;
-}
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation

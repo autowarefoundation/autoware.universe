@@ -193,18 +193,14 @@ bool NormalLaneChange::is_near_regulatory_element() const
 
   if (shift_intervals.empty()) return false;
 
-  const double max_vel = getCommonParam().max_vel;
   const auto & lc_params = *common_data_ptr_->lc_param_ptr;
-  auto threshold_distance =
-    calculation::calc_lane_change_length(lc_params, max_vel, 0.0, shift_intervals.front());
-  threshold_distance += calculation::calc_maximum_prepare_length(common_data_ptr_);
+  const auto max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
+  const auto min_lc_length =
+    calculation::calc_minimum_lane_change_length(lc_params, shift_intervals);
+  const auto dist_to_terminal_start =
+    calculation::calc_ego_dist_to_terminal_end(common_data_ptr_) - min_lc_length;
 
-  const auto dist_from_ego_to_terminal_end =
-    calculation::calc_ego_dist_to_terminal_end(common_data_ptr_);
-
-  if (dist_from_ego_to_terminal_end <= threshold_distance) {
-    return false;
-  }
+  if (dist_to_terminal_start <= max_prepare_length) return false;
 
   const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
 
@@ -212,7 +208,7 @@ bool NormalLaneChange::is_near_regulatory_element() const
     RCLCPP_DEBUG(logger_, "Stop time is over threshold. Ignore crosswalk and intersection checks.");
   }
 
-  return threshold_distance > utils::lane_change::get_distance_to_next_regulatory_element(
+  return max_prepare_length > utils::lane_change::get_distance_to_next_regulatory_element(
                                 common_data_ptr_, only_tl, only_tl);
 }
 
@@ -1467,6 +1463,10 @@ bool NormalLaneChange::getLaneChangePaths(
     logger_, "lane change sampling start. Sampling num for prep_time: %lu, acc: %lu",
     prepare_durations.size(), longitudinal_acc_sampling_values.size());
 
+  const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
+  const auto dist_to_next_regulatory_element =
+    utils::lane_change::get_distance_to_next_regulatory_element(common_data_ptr_, only_tl, only_tl);
+
   for (const auto & prepare_duration : prepare_durations) {
     for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
       // get path on original lanes
@@ -1588,6 +1588,12 @@ bool NormalLaneChange::getLaneChangePaths(
 
         if (lane_changing_length + prepare_length > dist_to_end_of_current_lanes) {
           debug_print_lat("Reject: length of lane changing path is longer than length to goal!!");
+          continue;
+        }
+
+        if (lane_changing_length + prepare_length > dist_to_next_regulatory_element) {
+          debug_print_lat(
+            "Reject: length of lane changing path is longer than length to regulatory element!!");
           continue;
         }
 
