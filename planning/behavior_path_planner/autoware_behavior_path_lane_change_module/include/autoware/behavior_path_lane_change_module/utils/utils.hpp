@@ -96,7 +96,8 @@ bool isPathInLanelets(
   const lanelet::ConstLanelets & target_lanes);
 
 bool pathFootprintExceedsTargetLaneBound(
-  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info);
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
+  const double margin = 0.1);
 
 std::optional<LaneChangePath> constructCandidatePath(
   const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,

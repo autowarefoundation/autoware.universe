@@ -213,7 +213,8 @@ bool isPathInLanelets(
 }
 
 bool pathFootprintExceedsTargetLaneBound(
-  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info)
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
+  const double margin)
 {
   if (common_data_ptr->direction == Direction::NONE || path.points.empty()) {
     return false;
@@ -233,7 +234,7 @@ bool pathFootprintExceedsTargetLaneBound(
     const auto dist_to_boundary =
       sign * utils::getSignedDistanceFromLaneBoundary(combined_target_lane, front_vertex, is_left);
 
-    if (dist_to_boundary < 0.0) {
+    if (dist_to_boundary < margin) {
       return true;
     }
   }
