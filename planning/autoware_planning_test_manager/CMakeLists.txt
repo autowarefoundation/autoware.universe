@@ -5,6 +5,7 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 ament_auto_add_library(autoware_planning_test_manager SHARED
+  src/autoware_planning_test_manager_utils.cpp
   src/autoware_planning_test_manager.cpp
 )
 

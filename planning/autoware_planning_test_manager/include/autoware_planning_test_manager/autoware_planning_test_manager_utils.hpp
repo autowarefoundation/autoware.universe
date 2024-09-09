@@ -26,55 +26,17 @@
 
 namespace autoware_planning_test_manager::utils
 {
-using autoware::route_handler::RouteHandler;
 using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
-using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 
-Pose createPoseFromLaneID(const lanelet::Id & lane_id)
-{
-  auto map_bin_msg = autoware::test_utils::makeMapBinMsg();
-  // create route_handler
-  auto route_handler = std::make_shared<RouteHandler>();
-  route_handler->setMap(map_bin_msg);
-
-  // get middle idx of the lanelet
-  const auto lanelet = route_handler->getLaneletsFromId(lane_id);
-  const auto center_line = lanelet.centerline();
-  const size_t middle_point_idx = std::floor(center_line.size() / 2.0);
-
-  // get middle position of the lanelet
-  geometry_msgs::msg::Point middle_pos;
-  middle_pos.x = center_line[middle_point_idx].x();
-  middle_pos.y = center_line[middle_point_idx].y();
-
-  // get next middle position of the lanelet
-  geometry_msgs::msg::Point next_middle_pos;
-  next_middle_pos.x = center_line[middle_point_idx + 1].x();
-  next_middle_pos.y = center_line[middle_point_idx + 1].y();
-
-  // calculate middle pose
-  geometry_msgs::msg::Pose middle_pose;
-  middle_pose.position = middle_pos;
-  const double yaw = autoware::universe_utils::calcAzimuthAngle(middle_pos, next_middle_pos);
-  middle_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
-
-  return middle_pose;
-}
+Pose createPoseFromLaneID(const lanelet::Id & lane_id);
 
 // Function to create a route from given start and goal lanelet ids
 // start pose and goal pose are set to the middle of the lanelet
 LaneletRoute makeBehaviorRouteFromLaneId(const int & start_lane_id, const int & goal_lane_id);
 
-Odometry makeInitialPoseFromLaneId(const lanelet::Id & lane_id)
-{
-  Odometry current_odometry;
-  current_odometry.pose.pose = createPoseFromLaneID(lane_id);
-  current_odometry.header.frame_id = "map";
-
-  return current_odometry;
-}
+Odometry makeInitialPoseFromLaneId(const lanelet::Id & lane_id);
 
 }  // namespace autoware_planning_test_manager::utils
 #endif  // AUTOWARE_PLANNING_TEST_MANAGER__AUTOWARE_PLANNING_TEST_MANAGER_UTILS_HPP_
