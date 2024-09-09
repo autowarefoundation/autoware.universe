@@ -135,6 +135,11 @@ bool isIntersectingAreas(
 bool isWithinAreas(
   const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas);
 
+/**
+ * @brief query BusStopArea polygons associated with given lanes
+ */
+std::vector<lanelet::BasicPolygon2d> getBusStopAreaPolygons(const lanelet::ConstLanelets & lanes);
+
 // debug
 MarkerArray createPullOverAreaMarkerArray(
   const autoware::universe_utils::MultiPolygon2d area_polygons,
