@@ -266,9 +266,9 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
 }
 
 template <class T>
-std::tuple<float, float> DistortionCorrector<T>::getConversion()
+AngleConversion DistortionCorrector<T>::getAngleConversion()
 {
-  return std::make_tuple(angle_conversion_.offset_rad_, angle_conversion_.sign_);
+  return angle_conversion_;
 }
 
 template <class T>

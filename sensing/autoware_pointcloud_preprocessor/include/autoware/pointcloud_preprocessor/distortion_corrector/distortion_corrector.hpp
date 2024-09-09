@@ -75,7 +75,7 @@ public:
     const std::string & base_frame, const std::string & lidar_frame) = 0;
   virtual void initialize() = 0;
   virtual bool azimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
-  virtual std::tuple<float, float> getConversion() = 0;
+  virtual AngleConversion getAngleConversion() = 0;
   virtual void undistortPointCloud(
     bool use_imu, bool can_update_azimuth_and_distance,
     sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
@@ -135,7 +135,7 @@ public:
     bool use_imu, bool update_azimuth_and_distance,
     sensor_msgs::msg::PointCloud2 & pointcloud) override;
   bool azimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud) override;
-  std::tuple<float, float> getConversion() override;
+  AngleConversion getAngleConversion() override;
 
   bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
 };
