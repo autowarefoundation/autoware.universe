@@ -53,8 +53,8 @@ class DistortionCorrectorBase
 public:
   virtual bool pointcloudTransformExists() = 0;
   virtual bool pointcloudTransformNeeded() = 0;
-  virtual std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue() = 0;
-  virtual std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue() = 0;
+  virtual std::deque<geometry_msgs::msg::TwistStamped> getTwistQueue() = 0;
+  virtual std::deque<geometry_msgs::msg::Vector3Stamped> getAngularVelocityQueue() = 0;
 
   virtual void processTwistMessage(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) = 0;
@@ -119,8 +119,8 @@ public:
   }
   bool pointcloudTransformExists();
   bool pointcloudTransformNeeded();
-  std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue();
-  std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue();
+  std::deque<geometry_msgs::msg::TwistStamped> getTwistQueue();
+  std::deque<geometry_msgs::msg::Vector3Stamped> getAngularVelocityQueue();
   void processTwistMessage(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) override;
 

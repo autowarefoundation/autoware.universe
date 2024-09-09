@@ -331,9 +331,9 @@ TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
   auto twist_msg = generateTwistMsg(twist_linear_x_, twist_angular_z_, timestamp);
   distortion_corrector_2d_->processTwistMessage(twist_msg);
 
-  ASSERT_FALSE(distortion_corrector_2d_->get_twist_queue().empty());
-  EXPECT_EQ(distortion_corrector_2d_->get_twist_queue().front().twist.linear.x, twist_linear_x_);
-  EXPECT_EQ(distortion_corrector_2d_->get_twist_queue().front().twist.angular.z, twist_angular_z_);
+  ASSERT_FALSE(distortion_corrector_2d_->getTwistQueue().empty());
+  EXPECT_EQ(distortion_corrector_2d_->getTwistQueue().front().twist.linear.x, twist_linear_x_);
+  EXPECT_EQ(distortion_corrector_2d_->getTwistQueue().front().twist.angular.z, twist_angular_z_);
 }
 
 TEST_F(DistortionCorrectorTest, TestProcessIMUMessage)
@@ -342,9 +342,9 @@ TEST_F(DistortionCorrectorTest, TestProcessIMUMessage)
   auto imu_msg = generateImuMsg(imu_angular_x_, imu_angular_y_, imu_angular_z_, timestamp);
   distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
 
-  ASSERT_FALSE(distortion_corrector_2d_->get_angular_velocity_queue().empty());
+  ASSERT_FALSE(distortion_corrector_2d_->getAngularVelocityQueue().empty());
   EXPECT_NEAR(
-    distortion_corrector_2d_->get_angular_velocity_queue().front().vector.z, -0.03159,
+    distortion_corrector_2d_->getAngularVelocityQueue().front().vector.z, -0.03159,
     standard_tolerance_);
 }
 
