@@ -135,6 +135,10 @@ private:
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
     const rclcpp::Time & sensor_ros_time);
 
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr visualizePointScore(
+  const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr,
+  const float lower_nvs, const float upper_nvs);
+
   void add_regularization_pose(const rclcpp::Time & sensor_ros_time);
 
   rclcpp::TimerBase::SharedPtr map_update_timer_;
