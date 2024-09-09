@@ -290,6 +290,28 @@ PredictedObjects filterObjectsByLateralDistance(
   return filtered_objects;
 }
 
+bool isIntersectingAreas(
+  const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas)
+{
+  for (const auto & area : areas) {
+    if (boost::geometry::intersects(area, footprint)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool isWithinAreas(
+  const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas)
+{
+  for (const auto & area : areas) {
+    if (boost::geometry::within(footprint, area)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 MarkerArray createPullOverAreaMarkerArray(
   const autoware::universe_utils::MultiPolygon2d area_polygons,
   const std_msgs::msg::Header & header, const std_msgs::msg::ColorRGBA & color, const double z)

@@ -179,16 +179,18 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
 
       if (
         parameters_.bus_stop_area.use_bus_stop_area &&
-        !isInAreas(transformed_vehicle_footprint, bus_stop_area_polygons)) {
-        break;
+        !goal_planner_utils::isWithinAreas(transformed_vehicle_footprint, bus_stop_area_polygons)) {
+        continue;
       }
 
-      if (isInAreas(transformed_vehicle_footprint, no_parking_area_polygons)) {
+      if (goal_planner_utils::isIntersectingAreas(
+            transformed_vehicle_footprint, no_parking_area_polygons)) {
         // break here to exclude goals located laterally in no_parking_areas
         break;
       }
 
-      if (isInAreas(transformed_vehicle_footprint, no_stopping_area_polygons)) {
+      if (goal_planner_utils::isIntersectingAreas(
+            transformed_vehicle_footprint, no_stopping_area_polygons)) {
         // break here to exclude goals located laterally in no_stopping_areas
         break;
       }
@@ -518,16 +520,6 @@ BasicPolygons2d GoalSearcher::getBusStopAreaPolygons(const lanelet::ConstLanelet
     }
   }
   return area_polygons;
-}
-
-bool GoalSearcher::isInAreas(const LinearRing2d & footprint, const BasicPolygons2d & areas) const
-{
-  for (const auto & area : areas) {
-    if (boost::geometry::intersects(area, footprint)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 GoalCandidate GoalSearcher::getClosetGoalCandidateAlongLanes(

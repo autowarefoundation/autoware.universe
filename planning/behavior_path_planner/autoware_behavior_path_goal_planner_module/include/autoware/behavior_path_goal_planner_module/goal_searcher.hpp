@@ -66,7 +66,6 @@ private:
   BasicPolygons2d getNoParkingAreaPolygons(const lanelet::ConstLanelets & lanes) const;
   BasicPolygons2d getNoStoppingAreaPolygons(const lanelet::ConstLanelets & lanes) const;
   BasicPolygons2d getBusStopAreaPolygons(const lanelet::ConstLanelets & lanes) const;
-  bool isInAreas(const LinearRing2d & footprint, const BasicPolygons2d & areas) const;
 
   LinearRing2d vehicle_footprint_{};
   bool left_side_parking_{true};

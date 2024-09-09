@@ -123,6 +123,18 @@ std::vector<Polygon2d> createPathFootPrints(
   const PathWithLaneId & path, const double base_to_front, const double base_to_rear,
   const double width);
 
+/**
+ * @brief check if footprint intersects with given areas
+ */
+bool isIntersectingAreas(
+  const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas);
+
+/**
+ * @brief check if footprint is within one of the areas
+ */
+bool isWithinAreas(
+  const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas);
+
 // debug
 MarkerArray createPullOverAreaMarkerArray(
   const autoware::universe_utils::MultiPolygon2d area_polygons,
