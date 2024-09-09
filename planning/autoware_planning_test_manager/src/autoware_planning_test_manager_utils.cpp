@@ -55,7 +55,6 @@ Pose createPoseFromLaneID(const lanelet::Id & lane_id)
 
 LaneletRoute makeBehaviorRouteFromLaneId(const int & start_lane_id, const int & goal_lane_id)
 {
-
   LaneletRoute route;
   route.header.frame_id = "map";
   auto start_pose = autoware_planning_test_manager::utils::createPoseFromLaneID(start_lane_id);
