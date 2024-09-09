@@ -1691,7 +1691,7 @@ bool NormalLaneChange::getLaneChangePaths(
           utils::lane_change::pathFootprintExceedsTargetLaneBound(
             common_data_ptr_, candidate_path.value().shifted_path.path,
             common_parameters.vehicle_info)) {
-          debug_print_lat("Reject: Path footprint excceds target lane boundary. Skip lane change.");
+          debug_print_lat("Reject: Path footprint exceeds target lane boundary. Skip lane change.");
           return false;
         }
 
