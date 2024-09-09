@@ -63,6 +63,7 @@ TEST(trigonometry, opencv_fastAtan2)
 {
   for (int i = 0; i < 100; ++i) {
     // Generate random x and y between -10 and 10
+    std::srand(0);
     float x = static_cast<float>(std::rand()) / RAND_MAX * 20.0 - 10.0;
     float y = static_cast<float>(std::rand()) / RAND_MAX * 20.0 - 10.0;
 
