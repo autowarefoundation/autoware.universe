@@ -184,8 +184,9 @@ A candidate path is considered valid if it meets the following criteria:
 1. The distance from the ego vehicle's current position to the end of the current lanes is sufficient to perform a single lane change.
 2. The distance from the ego vehicle's current position to the goal along the current lanes is adequate to complete multiple lane changes.
 3. The distance from the ego vehicle's current position to the end of the target lanes is adequate for completing multiple lane changes.
-4. The lane change can be completed after passing a parked vehicle.
-5. The lane change is deemed safe to execute.
+4. The distance from the ego vehicle's current position to the next regulatory element is adequate to perform a single lane change.
+5. The lane change can be completed after passing a parked vehicle.
+6. The lane change is deemed safe to execute.
 
 The following flow chart illustrates the validity check.
 
