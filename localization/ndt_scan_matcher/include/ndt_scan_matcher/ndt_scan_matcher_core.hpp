@@ -66,7 +66,11 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <vector>
+
+namespace autoware::ndt_scan_matcher
+{
 
 class NDTScanMatcher : public rclcpp::Node
 {
@@ -77,6 +81,12 @@ class NDTScanMatcher : public rclcpp::Node
 
 public:
   explicit NDTScanMatcher(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+
+  // This function is only used in static tools to know when timer callbacks are triggered.
+  std::chrono::nanoseconds time_until_trigger() const
+  {
+    return map_update_timer_->time_until_trigger();
+  }
 
 private:
   void callback_timer();
@@ -105,7 +115,7 @@ private:
     const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
     tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
 
-  geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
+  std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> align_pose(
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
   void transform_sensor_measurement(
@@ -207,5 +217,7 @@ private:
 
   HyperParameters param_;
 };
+
+}  // namespace autoware::ndt_scan_matcher
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

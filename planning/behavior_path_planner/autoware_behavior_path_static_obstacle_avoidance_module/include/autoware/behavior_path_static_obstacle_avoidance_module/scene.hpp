@@ -46,7 +46,8 @@ public:
     const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map);
+      objects_of_interest_marker_interface_ptr_map,
+    std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr);
 
   CandidateOutput planCandidate() const override;
   BehaviorModuleOutput plan() override;
@@ -345,7 +346,8 @@ private:
    * @brief fill debug markers.
    */
   void updateDebugMarker(
-    const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug) const;
+    const BehaviorModuleOutput & output, const AvoidancePlanningData & data,
+    const PathShifter & shifter, const DebugData & debug) const;
 
   /**
    * @brief fill information markers that are shown in Rviz by default.
@@ -366,6 +368,9 @@ private:
    * @return result.
    */
   bool isSafePath(ShiftedPath & shifted_path, DebugData & debug) const;
+
+  auto getTurnSignal(const ShiftedPath & spline_shift_path, const ShiftedPath & linear_shift_path)
+    -> TurnSignalInfo;
 
   // post process
 
@@ -477,6 +482,9 @@ private:
   mutable std::vector<AvoidanceDebugMsg> debug_avoidance_initializer_for_shift_line_;
 
   mutable rclcpp::Time debug_avoidance_initializer_for_shift_line_time_;
+
+  bool force_deactivated_{false};
+  rclcpp::Time last_deactivation_triggered_time_;
 };
 
 }  // namespace autoware::behavior_path_planner

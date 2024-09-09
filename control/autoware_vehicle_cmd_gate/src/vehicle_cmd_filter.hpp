@@ -48,14 +48,6 @@ public:
   ~VehicleCmdFilter() = default;
 
   void setWheelBase(double v) { param_.wheel_base = v; }
-  void setVelLim(double v) { param_.vel_lim = v; }
-  void setSteerLim(LimitArray v);
-  void setSteerRateLim(LimitArray v);
-  void setLonAccLim(LimitArray v);
-  void setLonJerkLim(LimitArray v);
-  void setLatAccLim(LimitArray v);
-  void setLatJerkLim(LimitArray v);
-  void setActualSteerDiffLim(LimitArray v);
   void setCurrentSpeed(double v) { current_speed_ = v; }
   void setParam(const VehicleCmdFilterParam & p);
   VehicleCmdFilterParam getParam() const;
@@ -75,8 +67,6 @@ public:
   static IsFilterActivated checkIsActivated(
     const Control & c1, const Control & c2, const double tol = 1.0e-3);
 
-  Control getPrevCmd() { return prev_cmd_; }
-
 private:
   VehicleCmdFilterParam param_;
   Control prev_cmd_;
@@ -87,7 +77,7 @@ private:
   double calcLatAcc(const Control & cmd) const;
   double calcLatAcc(const Control & cmd, const double v) const;
   double calcSteerFromLatacc(const double v, const double latacc) const;
-  double limitDiff(const double curr, const double prev, const double diff_lim) const;
+  static double limitDiff(const double curr, const double prev, const double diff_lim);
 
   double interpolateFromSpeed(const LimitArray & limits) const;
   double getLonAccLim() const;

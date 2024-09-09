@@ -266,15 +266,16 @@ bool AccelBrakeMapCalibrator::get_current_pitch_from_tf(double * pitch)
 bool AccelBrakeMapCalibrator::take_data()
 {
   // take data from subscribers
-  // take actuation data
-  ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
-  ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
-  if (actuation_status_ptr) {
+  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
+    ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
+    if (!actuation_status_ptr) return false;
     take_actuation_status(actuation_status_ptr);
-  } else if (actuation_cmd_ptr) {
+  }
+  // take actuation data
+  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::COMMAND) {
+    ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
+    if (!actuation_cmd_ptr) return false;
     take_actuation_command(actuation_cmd_ptr);
-  } else {
-    return false;
   }
 
   // take velocity data
@@ -1326,15 +1327,12 @@ void AccelBrakeMapCalibrator::check_update_suggest(
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
   using CalibrationStatus = CalibrationStatus;
   CalibrationStatus accel_brake_map_status;
-  int8_t level = DiagStatus::OK;
-  std::string msg;
-
   accel_brake_map_status.target = CalibrationStatus::ACCEL_BRAKE_MAP;
-  if (is_default_map_) {
-    accel_brake_map_status.status = CalibrationStatus::NORMAL;
-    level = DiagStatus::OK;
-    msg = "OK";
-  } else {
+  accel_brake_map_status.status = CalibrationStatus::NORMAL;
+  int8_t level = DiagStatus::OK;
+  std::string msg = "OK";
+
+  if (!is_default_map_) {
     accel_brake_map_status.status = CalibrationStatus::UNAVAILABLE;
     level = DiagStatus::ERROR;
     msg = "Default map is not found in " + csv_default_map_dir_;

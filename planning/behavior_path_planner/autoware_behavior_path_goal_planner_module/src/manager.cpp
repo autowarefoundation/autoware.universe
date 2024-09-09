@@ -25,14 +25,11 @@
 
 namespace autoware::behavior_path_planner
 {
-void GoalPlannerModuleManager::init(rclcpp::Node * node)
+
+GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
+  rclcpp::Node * node, const std::string & base_ns)
 {
-  // init manager interface
-  initInterface(node, {""});
-
   GoalPlannerParameters p;
-
-  const std::string base_ns = "goal_planner.";
   // general params
   {
     p.th_stopped_velocity = node->declare_parameter<double>(base_ns + "th_stopped_velocity");
@@ -71,7 +68,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
       p.parking_policy = ParkingPolicy::RIGHT_SIDE;
     } else {
       RCLCPP_ERROR_STREAM(
-        node->get_logger().get_child(name()),
+        node->get_logger(),
         "[goal_planner] invalid parking_policy: " << parking_policy_name << std::endl);
       exit(EXIT_FAILURE);
     }
@@ -115,7 +112,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
       p.object_recognition_collision_check_soft_margins.empty() ||
       p.object_recognition_collision_check_hard_margins.empty()) {
       RCLCPP_FATAL_STREAM(
-        node->get_logger().get_child(name()),
+        node->get_logger(),
         "object_recognition.collision_check_soft_margins and "
           << "object_recognition.collision_check_hard_margins must not be empty. "
           << "Terminating the program...");
@@ -137,6 +134,8 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
     p.path_priority = node->declare_parameter<std::string>(ns + "path_priority");
     p.efficient_path_order =
       node->declare_parameter<std::vector<std::string>>(ns + "efficient_path_order");
+    p.lane_departure_check_expansion_margin =
+      node->declare_parameter<double>(ns + "lane_departure_check_expansion_margin");
   }
 
   // shift parking
@@ -153,7 +152,6 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
 
   // parallel parking common
   {
-    const std::string ns = base_ns + "pull_over.parallel_parking.";
     p.parallel_parking_parameters.center_line_path_interval =
       p.center_line_path_interval;  // for geometric parallel parking
   }
@@ -234,6 +232,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   //  freespace parking astar
   {
     const std::string ns = base_ns + "pull_over.freespace_parking.astar.";
+    p.astar_parameters.search_method = node->declare_parameter<std::string>(ns + "search_method");
     p.astar_parameters.only_behind_solutions =
       node->declare_parameter<bool>(ns + "only_behind_solutions");
     p.astar_parameters.use_back = node->declare_parameter<bool>(ns + "use_back");
@@ -398,22 +397,28 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   // validation of parameters
   if (p.shift_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
-      node->get_logger().get_child(name()),
-      "shift_sampling_num must be positive integer. Given parameter: "
-        << p.shift_sampling_num << std::endl
-        << "Terminating the program...");
+      node->get_logger(), "shift_sampling_num must be positive integer. Given parameter: "
+                            << p.shift_sampling_num << std::endl
+                            << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
   if (p.maximum_deceleration < 0.0) {
     RCLCPP_FATAL_STREAM(
-      node->get_logger().get_child(name()),
-      "maximum_deceleration cannot be negative value. Given parameter: "
-        << p.maximum_deceleration << std::endl
-        << "Terminating the program...");
+      node->get_logger(), "maximum_deceleration cannot be negative value. Given parameter: "
+                            << p.maximum_deceleration << std::endl
+                            << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
+  return p;
+}
 
-  parameters_ = std::make_shared<GoalPlannerParameters>(p);
+void GoalPlannerModuleManager::init(rclcpp::Node * node)
+{
+  // init manager interface
+  initInterface(node, {""});
+
+  const std::string base_ns = "goal_planner.";
+  parameters_ = std::make_shared<GoalPlannerParameters>(initGoalPlannerParameters(node, base_ns));
 }
 
 void GoalPlannerModuleManager::updateModuleParams(
@@ -519,6 +524,9 @@ void GoalPlannerModuleManager::updateModuleParams(
     updateParam<double>(parameters, ns + "deceleration_interval", p->deceleration_interval);
     updateParam<double>(
       parameters, ns + "after_shift_straight_distance", p->after_shift_straight_distance);
+    updateParam<double>(
+      parameters, ns + "lane_departure_check_expansion_margin",
+      p->lane_departure_check_expansion_margin);
   }
 
   // parallel parking common
@@ -619,6 +627,7 @@ void GoalPlannerModuleManager::updateModuleParams(
   //  freespace parking astar
   {
     const std::string ns = base_ns + "pull_over.freespace_parking.astar.";
+    updateParam<std::string>(parameters, ns + "search_method", p->astar_parameters.search_method);
     updateParam<bool>(
       parameters, ns + "only_behind_solutions", p->astar_parameters.only_behind_solutions);
     updateParam<bool>(parameters, ns + "use_back", p->astar_parameters.use_back);
@@ -827,23 +836,8 @@ void GoalPlannerModuleManager::updateModuleParams(
   });
 }
 
-bool GoalPlannerModuleManager::isAlwaysExecutableModule() const
-{
-  // enable AlwaysExecutable whenever goal modification is not allowed
-  // because only minor path refinements are made for fixed goals
-  if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
-    return true;
-  }
-
-  return false;
-}
-
 bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 {
-  if (isAlwaysExecutableModule()) {
-    return true;
-  }
-
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
   if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
@@ -855,10 +849,6 @@ bool GoalPlannerModuleManager::isSimultaneousExecutableAsApprovedModule() const
 
 bool GoalPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() const
 {
-  if (isAlwaysExecutableModule()) {
-    return true;
-  }
-
   // enable SimultaneousExecutable whenever goal modification is not allowed
   // because only minor path refinements are made for fixed goals
   if (!utils::isAllowedGoalModification(planner_data_->route_handler)) {
