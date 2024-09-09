@@ -19,6 +19,7 @@
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
+#include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
 #include <random>
 
@@ -257,7 +258,8 @@ Polygon2d inward_denting(LinearRing2d & ring)
   LinearRing2d convex_ring;
   std::vector<Point2d> q;
   q.reserve(ring.size());
-  boost::geometry::convex_hull(ring, convex_ring);
+  boost::geometry::strategy::convex_hull::graham_andrew<LinearRing2d, Point2d> strategy;
+  boost::geometry::convex_hull(ring, convex_ring, strategy);
   PolygonWithEdges polygon_with_edges;
   polygon_with_edges.polygon.outer() = convex_ring;
   polygon_with_edges.edges.resize(polygon_with_edges.polygon.outer().size());

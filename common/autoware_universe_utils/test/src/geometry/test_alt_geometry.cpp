@@ -20,6 +20,7 @@
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/touches.hpp>
 #include <boost/geometry/io/wkt/write.hpp>
+#include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
 #include <gtest/gtest.h>
 
