@@ -110,6 +110,9 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointclou
         "Failed to get the conversion formula between cartesian coordinates and LiDAR azimuth "
         "coordinates. Please check the LiDAR azimuth coordinate. This pointcloud will not update "
         "azimuth and distance");
+      throw std::runtime_error(
+        "Couldn't get the conversion formula between cartesian coordinates and LiDAR azimuth "
+        "coordinates");
     }
   }
 
