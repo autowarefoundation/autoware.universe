@@ -1240,9 +1240,9 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsVelodynePointcloud)
     generatePointCloudMsg(true, true, "", timestamp, false, velodyne_points, velodyne_azimuths);
   EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(velodyne_pointcloud));
 
-  auto [a, b] = distortion_corrector_2d_->getConversion();
-  EXPECT_EQ(b, -1);
-  EXPECT_NEAR(a, autoware::universe_utils::pi * 2, standard_tolerance_);
+  auto [rad_offset, sign] = distortion_corrector_2d_->getConversion();
+  EXPECT_EQ(sign, -1);
+  EXPECT_NEAR(rad_offset, autoware::universe_utils::pi * 2, standard_tolerance_);
 }
 
 TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsHesaiPointcloud)
@@ -1266,9 +1266,9 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsHesaiPointcloud)
     generatePointCloudMsg(true, true, "", timestamp, false, hesai_points, hesai_azimuths);
   EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(hesai_pointcloud));
 
-  auto [a, b] = distortion_corrector_2d_->getConversion();
-  EXPECT_EQ(b, -1);
-  EXPECT_NEAR(a, autoware::universe_utils::pi / 2, standard_tolerance_);
+  auto [rad_offset, sign] = distortion_corrector_2d_->getConversion();
+  EXPECT_EQ(sign, -1);
+  EXPECT_NEAR(rad_offset, autoware::universe_utils::pi / 2, standard_tolerance_);
 }
 
 TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsCartesianPointcloud)
@@ -1291,9 +1291,9 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsCartesianPointcloud)
     generatePointCloudMsg(true, true, "", timestamp, false, cartesian_points, cartesian_azimuths);
   EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(cartesian_pointcloud));
 
-  auto [a, b] = distortion_corrector_2d_->getConversion();
-  EXPECT_EQ(b, 1);
-  EXPECT_NEAR(a, 0, standard_tolerance_);
+  auto [rad_offset, sign] = distortion_corrector_2d_->getConversion();
+  EXPECT_EQ(sign, 1);
+  EXPECT_NEAR(rad_offset, 0, standard_tolerance_);
 }
 
 TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsRandomPointcloud1)
@@ -1316,9 +1316,9 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsRandomPointcloud1)
     generatePointCloudMsg(true, true, "", timestamp, false, points, azimuths);
   EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(pointcloud));
 
-  auto [a, b] = distortion_corrector_2d_->getConversion();
-  EXPECT_EQ(b, 1);
-  EXPECT_NEAR(a, autoware::universe_utils::pi * 3 / 2, standard_tolerance_);
+  auto [rad_offset, sign] = distortion_corrector_2d_->getConversion();
+  EXPECT_EQ(sign, 1);
+  EXPECT_NEAR(rad_offset, autoware::universe_utils::pi * 3 / 2, standard_tolerance_);
 }
 
 int main(int argc, char ** argv)

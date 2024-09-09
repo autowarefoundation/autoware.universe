@@ -228,14 +228,14 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
       continue;
     }
 
-    float b = (*next_it_azimuth - *it_azimuth) / (next_cartesian_rad - current_cartesian_rad);
-    float a = *it_azimuth - b * current_cartesian_rad;
+    float sign = (*next_it_azimuth - *it_azimuth) / (next_cartesian_rad - current_cartesian_rad);
+    float offset_rad = *it_azimuth - sign * current_cartesian_rad;
 
-    // Check if 'b' can be adjusted to 1 or -1
-    if (std::abs(b - 1.0f) <= threshold_b_) {
-      b_ = 1.0f;
-    } else if (std::abs(b + 1.0f) <= threshold_b_) {
-      b_ = -1.0f;
+    // Check if 'sign' can be adjusted to 1 or -1
+    if (std::abs(sign - 1.0f) <= angle_conversion_.sign_threshold_) {
+      angle_conversion_.sign_ = 1.0f;
+    } else if (std::abs(sign + 1.0f) <= angle_conversion_.sign_threshold_) {
+      angle_conversion_.sign_ = -1.0f;
     } else {
       RCLCPP_WARN(
         node_->get_logger(),
@@ -243,20 +243,22 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
       continue;
     }
 
-    // Check if 'a' can be adjusted to a multiple of π/2
-    int multiple_of_90_degrees = std::round(a / (autoware::universe_utils::pi / 2));
-    if (std::abs(a - multiple_of_90_degrees * (autoware::universe_utils::pi / 2)) > threshold_a_) {
+    // Check if 'offset_rad' can be adjusted to offset_rad multiple of π/2
+    int multiple_of_90_degrees = std::round(offset_rad / (autoware::universe_utils::pi / 2));
+    if (
+      std::abs(offset_rad - multiple_of_90_degrees * (autoware::universe_utils::pi / 2)) >
+      angle_conversion_.offset_rad_threshold_) {
       continue;
     }
 
-    // Limit the range of a in [0, 360]
+    // Limit the range of offset_rad in [0, 360]
     if (multiple_of_90_degrees < 0) {
       multiple_of_90_degrees += 4;
     } else if (multiple_of_90_degrees > 4) {
       multiple_of_90_degrees -= 4;
     }
 
-    a_ = multiple_of_90_degrees * (autoware::universe_utils::pi / 2);
+    angle_conversion_.offset_rad_ = multiple_of_90_degrees * (autoware::universe_utils::pi / 2);
 
     return true;
   }
@@ -266,7 +268,7 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
 template <class T>
 std::tuple<float, float> DistortionCorrector<T>::getConversion()
 {
-  return std::make_tuple(a_, b_);
+  return std::make_tuple(angle_conversion_.offset_rad_, angle_conversion_.sign_);
 }
 
 template <class T>
@@ -341,7 +343,8 @@ void DistortionCorrector<T>::undistortPointCloud(
 
     if (can_update_azimuth_and_distance && pointcloudTransformNeeded()) {
       float cartesian_coordinate_azimuth = autoware::universe_utils::opencv_fastAtan2(*it_y, *it_x);
-      float updated_azimuth = a_ + b_ * cartesian_coordinate_azimuth;
+      float updated_azimuth =
+        angle_conversion_.offset_rad_ + angle_conversion_.sign_ * cartesian_coordinate_azimuth;
       if (updated_azimuth < 0) {
         updated_azimuth += autoware::universe_utils::pi * 2;
       } else if (updated_azimuth > 2 * autoware::universe_utils::pi) {

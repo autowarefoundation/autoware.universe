@@ -48,6 +48,17 @@
 namespace autoware::pointcloud_preprocessor
 {
 
+struct AngleConversion
+{
+  // Equation for the conversion between sensor azimuth coordinates and Cartesian coordinates:
+  // sensor azimuth coordinates = offset_rad_ + sign_ * cartesian coordinates;
+  // offset_rad_ is restricted to be a multiple of 90, and sign_ is restricted to be 1 or -1.
+  float offset_rad_{0};
+  float sign_{1};
+  float offset_rad_threshold_{0.087f};  // (5 / 180) * M_PI
+  float sign_threshold_{0.1f};
+};
+
 class DistortionCorrectorBase
 {
 public:
@@ -84,13 +95,7 @@ protected:
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
-  // Equation for the conversion between sensor azimuth coordinates and Cartesian coordinates:
-  // sensor azimuth coordinates = a + b * cartesian coordinates;
-  // a is restricted to be a multiple of 90, and b is restricted to be 1 or -1.
-  float a_{0};
-  float b_{1};
-  float threshold_a_{0.087f};  // 5 / 180 * M_PI
-  float threshold_b_{0.1f};
+  AngleConversion angle_conversion_;
 
   void getIMUTransformation(const std::string & base_frame, const std::string & imu_frame);
   void enqueueIMU(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
@@ -117,8 +122,8 @@ public:
     managed_tf_buffer_ =
       std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(node, has_static_tf_only);
   }
-  bool pointcloudTransformExists();
-  bool pointcloudTransformNeeded();
+  bool pointcloudTransformExists() override;
+  bool pointcloudTransformNeeded() override;
   std::deque<geometry_msgs::msg::TwistStamped> getTwistQueue();
   std::deque<geometry_msgs::msg::Vector3Stamped> getAngularVelocityQueue();
   void processTwistMessage(
