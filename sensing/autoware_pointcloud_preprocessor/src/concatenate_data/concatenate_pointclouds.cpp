@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,12 +49,14 @@ PointCloudConcatenationComponent::PointCloudConcatenationComponent(
 
   // Set parameters
   {
-    output_frame_ = static_cast<std::string>(declare_parameter("output_frame", ""));
+    output_frame_ = declare_parameter<std::string>("output_frame");
     if (output_frame_.empty()) {
       RCLCPP_ERROR(get_logger(), "Need an 'output_frame' parameter to be set before continuing!");
       return;
     }
-    declare_parameter("input_topics", std::vector<std::string>());
+    has_static_tf_only_ = declare_parameter<bool>(
+      "has_static_tf_only", false);  // TODO(amadeuszsz): remove default value
+    declare_parameter<std::vector<std::string>>("input_topics");
     input_topics_ = get_parameter("input_topics").as_string_array();
     if (input_topics_.empty()) {
       RCLCPP_ERROR(get_logger(), "Need a 'input_topics' parameter to be set before continuing!");
@@ -66,11 +68,11 @@ PointCloudConcatenationComponent::PointCloudConcatenationComponent(
     }
 
     // Optional parameters
-    maximum_queue_size_ = static_cast<int>(declare_parameter("max_queue_size", 5));
+    maximum_queue_size_ = declare_parameter<int64_t>("max_queue_size");
     /** input pointclouds should be */
-    timeout_sec_ = static_cast<double>(declare_parameter("timeout_sec", 0.033));
+    timeout_sec_ = declare_parameter<double>("timeout_sec");
 
-    input_offset_ = declare_parameter("input_offset", std::vector<double>{});
+    input_offset_ = declare_parameter<std::vector<double>>("input_offset");
     if (!input_offset_.empty() && input_topics_.size() != input_offset_.size()) {
       RCLCPP_ERROR(get_logger(), "The number of topics does not match the number of offsets.");
       return;
@@ -93,7 +95,8 @@ PointCloudConcatenationComponent::PointCloudConcatenationComponent(
 
   // tf2 listener
   {
-    static_tf_buffer_ = std::make_unique<autoware::universe_utils::StaticTransformBuffer>();
+    managed_tf_buffer_ =
+      std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(this, has_static_tf_only_);
   }
 
   // Output Publishers
@@ -237,8 +240,7 @@ void PointCloudConcatenationComponent::combineClouds(
       // transform to output frame
       sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
         new sensor_msgs::msg::PointCloud2());
-      static_tf_buffer_->transformPointcloud(
-        this, output_frame_, *e.second, *transformed_cloud_ptr);
+      managed_tf_buffer_->transformPointcloud(output_frame_, *e.second, *transformed_cloud_ptr);
 
       // concatenate
       if (concat_cloud_ptr == nullptr) {
