@@ -132,6 +132,10 @@ double calc_maximum_lane_change_length(
 double calc_maximum_lane_change_length(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
   const double max_acc);
+
+double calc_lane_change_length(
+  const LaneChangeParameters & lane_change_parameters, const double velocity,
+  const double acceleration, const double shift_distance);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__CALCULATION_HPP_

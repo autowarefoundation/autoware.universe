@@ -174,10 +174,15 @@ bool NormalLaneChange::isLaneChangeRequired()
     return false;
   }
 
-  return !is_too_close_to_regulatory_element();
+  if (is_near_regulatory_element()) {
+    RCLCPP_DEBUG(logger_, "Ego is close to regulatory element, don't run LC module");
+    return false;
+  }
+
+  return true;
 }
 
-bool NormalLaneChange::is_too_close_to_regulatory_element() const
+bool NormalLaneChange::is_near_regulatory_element() const
 {
   const auto & current_lanes = get_current_lanes();
 
@@ -185,8 +190,13 @@ bool NormalLaneChange::is_too_close_to_regulatory_element() const
 
   const auto shift_intervals =
     getRouteHandler()->getLateralIntervalsToPreferredLane(current_lanes.back());
-  double threshold_distance =
-    calculation::calc_minimum_lane_change_length(*lane_change_parameters_, shift_intervals);
+
+  if (shift_intervals.empty()) return false;
+
+  const double max_vel = getCommonParam().max_vel;
+  const auto & lc_params = *common_data_ptr_->lc_param_ptr;
+  auto threshold_distance =
+    calculation::calc_lane_change_length(lc_params, max_vel, 0.0, shift_intervals.front());
   threshold_distance += calculation::calc_maximum_prepare_length(common_data_ptr_);
 
   const auto dist_from_ego_to_terminal_end =
@@ -197,6 +207,10 @@ bool NormalLaneChange::is_too_close_to_regulatory_element() const
   }
 
   const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
+
+  if (only_tl) {
+    RCLCPP_DEBUG(logger_, "Stop time is over threshold. Ignore crosswalk and intersection checks.");
+  }
 
   return threshold_distance > utils::lane_change::get_distance_to_next_regulatory_element(
                                 common_data_ptr_, only_tl, only_tl);
@@ -1651,41 +1665,6 @@ bool NormalLaneChange::getLaneChangePaths(
           continue;
         }
 
-        if (
-          lane_change_parameters_->regulate_on_crosswalk &&
-          !hasEnoughLengthToCrosswalk(*candidate_path, current_lanes)) {
-          if (getStopTime() < lane_change_parameters_->stop_time_threshold) {
-            debug_print_lat("Reject: including crosswalk!!");
-            continue;
-          }
-          RCLCPP_INFO_THROTTLE(
-            logger_, clock_, 1000, "Stop time is over threshold. Allow lane change in crosswalk.");
-        }
-
-        if (
-          lane_change_parameters_->regulate_on_intersection &&
-          !hasEnoughLengthToIntersection(*candidate_path, current_lanes)) {
-          if (getStopTime() < lane_change_parameters_->stop_time_threshold) {
-            debug_print_lat("Reject: including intersection!!");
-            continue;
-          }
-          RCLCPP_WARN_STREAM(
-            logger_, "Stop time is over threshold. Allow lane change in intersection.");
-        }
-
-        if (
-          lane_change_parameters_->regulate_on_traffic_light &&
-          !hasEnoughLengthToTrafficLight(*candidate_path, current_lanes)) {
-          debug_print_lat("Reject: regulate on traffic light!!");
-          continue;
-        }
-
-        if (utils::traffic_light::isStoppedAtRedTrafficLightWithinDistance(
-              get_current_lanes(), candidate_path.value().path, planner_data_,
-              lane_change_info.length.sum())) {
-          debug_print_lat("Ego is stopping near traffic light. Do not allow lane change");
-          continue;
-        }
         candidate_paths->push_back(*candidate_path);
 
         if (

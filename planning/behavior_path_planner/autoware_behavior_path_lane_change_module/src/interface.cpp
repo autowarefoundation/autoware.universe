@@ -253,7 +253,8 @@ bool LaneChangeInterface::canTransitFailureState()
   }
 
   if (isWaitingApproval()) {
-    if (module_type_->is_too_close_to_regulatory_element()) {
+    if (module_type_->is_near_regulatory_element()) {
+      log_debug_throttled("Ego is close to regulatory element. Cancel lane change");
       updateRTCStatus(
         std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
         State::FAILED);
