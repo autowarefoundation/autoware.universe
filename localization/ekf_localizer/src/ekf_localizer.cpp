@@ -34,6 +34,9 @@
 #include <string>
 #include <utility>
 
+namespace autoware::ekf_localizer
+{
+
 // clang-format off
 #define PRINT_MAT(X) std::cout << #X << ":\n" << X << std::endl << std::endl // NOLINT
 #define DEBUG_INFO(...) {if (params_.show_debug_info) {RCLCPP_INFO(__VA_ARGS__);}} // NOLINT
@@ -316,6 +319,8 @@ void EKFLocalizer::callback_pose_with_covariance(
   }
 
   pose_queue_.push(msg);
+
+  publish_callback_return_diagnostics("pose", msg->header.stamp);
 }
 
 /*
@@ -330,6 +335,8 @@ void EKFLocalizer::callback_twist_with_covariance(
     msg->twist.covariance[0 * 6 + 0] = 10000.0;
   }
   twist_queue_.push(msg);
+
+  publish_callback_return_diagnostics("twist", msg->header.stamp);
 }
 
 /*
@@ -443,6 +450,25 @@ void EKFLocalizer::publish_diagnostics(
   pub_diag_->publish(diag_msg);
 }
 
+void EKFLocalizer::publish_callback_return_diagnostics(
+  const std::string & callback_name, const rclcpp::Time & current_time)
+{
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "topic_time_stamp";
+  key_value.value = std::to_string(current_time.nanoseconds());
+  diagnostic_msgs::msg::DiagnosticStatus diag_status;
+  diag_status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  diag_status.name =
+    "localization: " + std::string(this->get_name()) + ": callback_" + callback_name;
+  diag_status.hardware_id = this->get_name();
+  diag_status.message = "OK";
+  diag_status.values.push_back(key_value);
+  diagnostic_msgs::msg::DiagnosticArray diag_msg;
+  diag_msg.header.stamp = current_time;
+  diag_msg.status.push_back(diag_status);
+  pub_diag_->publish(diag_msg);
+}
+
 void EKFLocalizer::update_simple_1d_filters(
   const geometry_msgs::msg::PoseWithCovarianceStamped & pose, const size_t smoothing_step)
 {
@@ -456,9 +482,9 @@ void EKFLocalizer::update_simple_1d_filters(
   double pitch_var =
     pose.pose.covariance[COV_IDX::PITCH_PITCH] * static_cast<double>(smoothing_step);
 
-  z_filter_.update(z, z_var, pose.header.stamp);
-  roll_filter_.update(rpy.x, roll_var, pose.header.stamp);
-  pitch_filter_.update(rpy.y, pitch_var, pose.header.stamp);
+  z_filter_.update(z, z_var, ekf_dt_);
+  roll_filter_.update(rpy.x, roll_var, ekf_dt_);
+  pitch_filter_.update(rpy.y, pitch_var, ekf_dt_);
 }
 
 void EKFLocalizer::init_simple_1d_filters(
@@ -473,9 +499,9 @@ void EKFLocalizer::init_simple_1d_filters(
   double roll_var = pose.pose.covariance[COV_IDX::ROLL_ROLL];
   double pitch_var = pose.pose.covariance[COV_IDX::PITCH_PITCH];
 
-  z_filter_.init(z, z_var, pose.header.stamp);
-  roll_filter_.init(rpy.x, roll_var, pose.header.stamp);
-  pitch_filter_.init(rpy.y, pitch_var, pose.header.stamp);
+  z_filter_.init(z, z_var);
+  roll_filter_.init(rpy.x, roll_var);
+  pitch_filter_.init(rpy.y, pitch_var);
 }
 
 /**
@@ -495,5 +521,7 @@ void EKFLocalizer::service_trigger_node(
   res->success = true;
 }
 
+}  // namespace autoware::ekf_localizer
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(EKFLocalizer)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ekf_localizer::EKFLocalizer)
