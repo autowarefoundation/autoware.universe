@@ -8,37 +8,37 @@
       "properties": {
         "min_x": {
           "type": "number",
-          "description": "x-coordinate minimum value for crop range",
+          "description": "minimum x-coordinate value for crop range in meters",
           "default": "-1.0"
         },
         "min_y": {
           "type": "number",
-          "description": "y-coordinate minimum value for crop range",
+          "description": "minimum y-coordinate value for crop range in meters",
           "default": "-1.0"
         },
         "min_z": {
           "type": "number",
-          "description": "z-coordinate minimum value for crop range",
+          "description": "minimum z-coordinate value for crop range in meters",
           "default": "-1.0"
         },
         "max_x": {
           "type": "number",
-          "description": "x-coordinate maximum value for crop range",
+          "description": "maximum x-coordinate value for crop range in meters",
           "default": "1.0"
         },
         "max_y": {
           "type": "number",
-          "description": "y-coordinate maximum value for crop range",
+          "description": "maximum y-coordinate value for crop range in meters",
           "default": "1.0"
         },
         "max_z": {
           "type": "number",
-          "description": "z-coordinate maximum value for crop range",
+          "description": "maximum z-coordinate value for crop range in meters",
           "default": "1.0"
         },
         "negative": {
           "type": "boolean",
-          "description": "if negative then choose the point outside the box",
+          "description": "if the value is true, filter points inside the box; otherwise, filter points outside the box",
           "default": "false"
         }
       },
