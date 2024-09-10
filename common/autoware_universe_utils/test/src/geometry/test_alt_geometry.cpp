@@ -108,8 +108,8 @@ TEST(alt_geometry, correct)
     PointList2d vertices;
     vertices.push_back({1.0, 1.0});
     vertices.push_back({-1.0, 1.0});
-    vertices.push_back({1.0, -1.0});
     vertices.push_back({-1.0, -1.0});
+    vertices.push_back({1.0, -1.0});
     auto poly = ConvexPolygon2d::create(vertices).value();  // correct()-ed in create()
 
     PointList2d ground_truth = {{1.0, 1.0}, {1.0, -1.0}, {-1.0, -1.0}, {-1.0, 1.0}, {1.0, 1.0}};
