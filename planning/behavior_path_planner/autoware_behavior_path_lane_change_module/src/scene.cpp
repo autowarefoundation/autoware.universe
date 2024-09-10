@@ -1378,10 +1378,21 @@ bool NormalLaneChange::getLaneChangePaths(
   Direction direction, const bool is_stuck, LaneChangePaths * candidate_paths) const
 {
   lane_change_debug_.collision_check_objects.clear();
-  if (current_lanes.empty() || target_lanes.empty()) {
-    RCLCPP_WARN(logger_, "target_neighbor_preferred_lane_poly_2d is empty. Not expected.");
+
+  const auto is_empty = [&](const auto & data, const auto & s) {
+    if (!data.empty()) return false;
+    RCLCPP_WARN(logger_, "%s is empty. Not expected.", s);
+    return true;
+  };
+
+  const auto target_lane_neighbors_polygon_2d =
+    common_data_ptr_->lanes_polygon_ptr->target_neighbor;
+  if (
+    is_empty(current_lanes, "current_lanes") || is_empty(target_lanes, "target_lanes") ||
+    is_empty(target_lane_neighbors_polygon_2d, "target_lane_neighbors_polygon_2d")) {
     return false;
   }
+
   const auto & route_handler = *getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
 
@@ -1414,13 +1425,6 @@ bool NormalLaneChange::getLaneChangePaths(
 
   const auto sorted_lane_ids =
     utils::lane_change::getSortedLaneIds(route_handler, getEgoPose(), current_lanes, target_lanes);
-
-  const auto & target_neighbor_preferred_lane_poly_2d =
-    common_data_ptr_->lanes_polygon_ptr->target_neighbor;
-  if (target_neighbor_preferred_lane_poly_2d.empty()) {
-    RCLCPP_WARN(logger_, "target_neighbor_preferred_lane_poly_2d is empty. Not expected.");
-    return false;
-  }
 
   const auto target_objects = getTargetObjects(filtered_objects_, current_lanes);
 
@@ -1711,10 +1715,20 @@ bool NormalLaneChange::getLaneChangePaths(
 std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
 {
-  if (current_lanes.empty() || target_lanes.empty()) {
-    RCLCPP_WARN(logger_, "target_neighbor_preferred_lane_poly_2d is empty. Not expected.");
+  const auto is_empty = [&](const auto & data, const auto & s) {
+    if (!data.empty()) return false;
+    RCLCPP_WARN(logger_, "%s is empty. Not expected.", s);
+    return true;
+  };
+
+  const auto target_lane_neighbors_polygon_2d =
+    common_data_ptr_->lanes_polygon_ptr->target_neighbor;
+  if (
+    is_empty(current_lanes, "current_lanes") || is_empty(target_lanes, "target_lanes") ||
+    is_empty(target_lane_neighbors_polygon_2d, "target_lane_neighbors_polygon_2d")) {
     return {};
   }
+
   const auto & route_handler = *getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
 
@@ -1735,13 +1749,6 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
 
   const auto sorted_lane_ids =
     utils::lane_change::getSortedLaneIds(route_handler, getEgoPose(), current_lanes, target_lanes);
-
-  const auto target_neighbor_preferred_lane_poly_2d =
-    common_data_ptr_->lanes_polygon_ptr->target_neighbor;
-  if (target_neighbor_preferred_lane_poly_2d.empty()) {
-    RCLCPP_WARN(logger_, "target_neighbor_preferred_lane_poly_2d is empty. Not expected.");
-    return {};
-  }
 
   // lane changing start getEgoPose() is at the end of prepare segment
   const auto current_lane_terminal_point =
@@ -1789,15 +1796,6 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
     return {};
   }
 
-  const lanelet::BasicPoint2d lc_start_point(
-    lane_changing_start_pose->position.x, lane_changing_start_pose->position.y);
-
-  const auto & target_lane_poly_2d = common_data_ptr_->lanes_polygon_ptr->target.value();
-
-  const auto is_valid_start_point =
-    boost::geometry::covered_by(lc_start_point, target_neighbor_preferred_lane_poly_2d) ||
-    boost::geometry::covered_by(lc_start_point, target_lane_poly_2d);
-
   LaneChangeInfo lane_change_info;
   lane_change_info.longitudinal_acceleration = LaneChangePhaseInfo{0.0, 0.0};
   lane_change_info.duration = LaneChangePhaseInfo{0.0, lane_changing_time};
@@ -1809,7 +1807,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   lane_change_info.lateral_acceleration = max_lateral_acc;
   lane_change_info.terminal_lane_changing_velocity = minimum_lane_changing_velocity;
 
-  if (!is_valid_start_point) {
+  if (!is_valid_start_point(common_data_ptr_, lane_changing_start_pose.value())) {
     RCLCPP_DEBUG(
       logger_,
       "Reject: lane changing points are not inside of the target preferred lanes or its "
