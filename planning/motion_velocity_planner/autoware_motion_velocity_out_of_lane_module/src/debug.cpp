@@ -169,27 +169,32 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   // add_polygons_markers(debug_marker_array, base_marker, ego_data.trajectory_footprints);
 
   lanelet::BasicPolygons2d drivable_lane_polygons;
-  for (const auto & poly : ego_data.drivable_lane_polygons) {
-    drivable_lane_polygons.push_back(poly.outer);
+  for (const auto & ll : ego_data.out_lanelets) {
+    drivable_lane_polygons.push_back(ll.polygon2d().basicPolygon());
   }
   base_marker.ns = "ego_lane";
   base_marker.color = universe_utils::createMarkerColor(0.0, 0.0, 1.0, 1.0);
   add_polygons_markers(debug_marker_array, base_marker, drivable_lane_polygons);
 
-  lanelet::BasicPolygons2d out_of_lane_areas;
+  lanelet::BasicPolygons2d out_of_lane_overlaps;
+  lanelet::BasicPolygon2d out_of_lane_overlap;
   for (const auto & p : out_of_lane_data.outside_points) {
-    out_of_lane_areas.push_back(p.outside_ring);
+    for (const auto & overlap : p.out_overlaps) {
+      boost::geometry::convert(overlap, out_of_lane_overlap);
+      out_of_lane_overlaps.push_back(out_of_lane_overlap);
+    }
   }
   base_marker.ns = "out_of_lane_areas";
   base_marker.color = universe_utils::createMarkerColor(1.0, 0.0, 0.0, 1.0);
-  add_polygons_markers(debug_marker_array, base_marker, out_of_lane_areas);
-  for (const auto & [bbox, i] : out_of_lane_data.outside_areas_rtree) {
-    const auto & a = out_of_lane_data.outside_points[i];
-    debug_marker_array.markers.back().points.push_back(
-      ego_data.trajectory_points[a.trajectory_index].pose.position);
-    const auto centroid = boost::geometry::return_centroid<lanelet::BasicPoint2d>(a.outside_ring);
-    debug_marker_array.markers.back().points.push_back(
-      geometry_msgs::msg::Point().set__x(centroid.x()).set__y(centroid.y()));
+  add_polygons_markers(debug_marker_array, base_marker, out_of_lane_overlaps);
+  for (const auto & p : out_of_lane_data.outside_points) {
+    for (const auto & a : p.out_overlaps) {
+      debug_marker_array.markers.back().points.push_back(
+        ego_data.trajectory_points[p.trajectory_index].pose.position);
+      const auto centroid = boost::geometry::return_centroid<lanelet::BasicPoint2d>(a);
+      debug_marker_array.markers.back().points.push_back(
+        geometry_msgs::msg::Point().set__x(centroid.x()).set__y(centroid.y()));
+    }
   }
 
   lanelet::BasicPolygons2d object_polygons;

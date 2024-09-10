@@ -25,6 +25,7 @@
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
+#include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -78,7 +79,7 @@ std::optional<geometry_msgs::msg::Pose> calculate_pose_ahead_of_collision(
     const auto interpolated_pose =
       motion_utils::calcInterpolatedPose(ego_data.trajectory_points, l);
     const auto interpolated_footprint = project_to_pose(footprint, interpolated_pose);
-    if (boost::geometry::intersects(interpolated_footprint, point_to_avoid.outside_ring)) {
+    if (!boost::geometry::disjoint(interpolated_footprint, point_to_avoid.out_overlaps)) {
       return interpolated_pose;
     }
   }
