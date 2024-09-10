@@ -1,73 +1,83 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "system_error_monitor parameter",
-    "type": "object",
-    "definitions": {
-      "system_error_monitor": {
-        "type": "object",
-        "properties": {
-          "update_rate": {
-            "type": "integer",
-            "description": "update_rate",
-            "default": "10"
-          },
-          "ignore_missing_diagnostics": {
-            "type": "boolean",
-            "description": "ignore_missing_diagnostics",
-            "default": "false"
-          },
-          "add_leaf_diagnostics": {
-            "type": "boolean",
-            "description": "add_leaf_diagnostics",
-            "default": "true"
-          },
-          "data_ready_timeout": {
-            "type": "number",
-            "description": "data_ready_timeout",
-            "default": "30.0"
-          },
-          "data_heartbeat_timeout": {
-            "type": "number",
-            "description": "data_heartbeat_timeout",
-            "default": "1.0"
-          },
-          "diag_timeout_sec": {
-            "type": "number",
-            "description": "diag_timeout_sec",
-            "default": "10"
-          },
-          "hazard_recovery_timeout": {
-            "type": "number",
-            "description": "hazard_recovery_timeout",
-            "default": "5.0"
-          },
-          "use_emergency_hold": {
-            "type": "boolean",
-            "description": "use_emergency_hold",
-            "default": "false"
-          },
-          "use_emergency_hold_in_manual_driving": {
-            "type": "boolean",
-            "description": "use_emergency_hold_in_manual_driving",
-            "default": "false"
-          }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "system_error_monitor parameter",
+  "type": "object",
+  "definitions": {
+    "system_error_monitor": {
+      "type": "object",
+      "properties": {
+        "update_rate": {
+          "type": "integer",
+          "description": "update_rate",
+          "default": "10"
         },
-        "required": ["update_rate", "ignore_missing_diagnostics", "add_leaf_diagnostics", "data_ready_timeout", "data_heartbeat_timeout", "diag_timeout_sec", "hazard_recovery_timeout", "use_emergency_hold", "use_emergency_hold_in_manual_driving"],
-        "additionalProperties": false
-      }
-    },
-    "properties": {
-      "/**": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "$ref": "#/definitions/system_error_monitor"
-          }
+        "ignore_missing_diagnostics": {
+          "type": "boolean",
+          "description": "ignore_missing_diagnostics",
+          "default": "false"
         },
-        "required": ["ros__parameters"],
-        "additionalProperties": false
-      }
-    },
-    "required": ["/**"],
-    "additionalProperties": false
-  }
+        "add_leaf_diagnostics": {
+          "type": "boolean",
+          "description": "add_leaf_diagnostics",
+          "default": "true"
+        },
+        "data_ready_timeout": {
+          "type": "number",
+          "description": "data_ready_timeout",
+          "default": "30.0"
+        },
+        "data_heartbeat_timeout": {
+          "type": "number",
+          "description": "data_heartbeat_timeout",
+          "default": "1.0"
+        },
+        "diag_timeout_sec": {
+          "type": "number",
+          "description": "diag_timeout_sec",
+          "default": "10"
+        },
+        "hazard_recovery_timeout": {
+          "type": "number",
+          "description": "hazard_recovery_timeout",
+          "default": "5.0"
+        },
+        "use_emergency_hold": {
+          "type": "boolean",
+          "description": "use_emergency_hold",
+          "default": "false"
+        },
+        "use_emergency_hold_in_manual_driving": {
+          "type": "boolean",
+          "description": "use_emergency_hold_in_manual_driving",
+          "default": "false"
+        }
+      },
+      "required": [
+        "update_rate",
+        "ignore_missing_diagnostics",
+        "add_leaf_diagnostics",
+        "data_ready_timeout",
+        "data_heartbeat_timeout",
+        "diag_timeout_sec",
+        "hazard_recovery_timeout",
+        "use_emergency_hold",
+        "use_emergency_hold_in_manual_driving"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/system_error_monitor"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
