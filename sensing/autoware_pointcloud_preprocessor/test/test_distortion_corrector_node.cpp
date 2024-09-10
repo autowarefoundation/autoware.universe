@@ -170,6 +170,51 @@ protected:
     return imu_msgs;
   }
 
+  std::tuple<std::vector<Eigen::Vector3f>, std::vector<float>> generate_default_pointcloud(
+    std::string vendor)
+  {
+    // Generate all combinations of signs { -, 0, + } x { -, 0, + } for x and y.
+    std::vector<Eigen::Vector3f> default_points = {{
+      Eigen::Vector3f(10.0f, 0.0f, 1.0f),   // point 1
+      Eigen::Vector3f(5.0f, -5.0f, 2.0f),   // point 2
+      Eigen::Vector3f(0.0f, -10.0f, 3.0f),  // point 3
+      Eigen::Vector3f(-5.0f, -5.0f, 4.0f),  // point 4
+      Eigen::Vector3f(-10.0f, 0.0f, 5.0f),  // point 5
+      Eigen::Vector3f(-5.0f, 5.0f, -5.0f),  // point 6
+      Eigen::Vector3f(0.0f, 10.0f, -4.0f),  // point 7
+      Eigen::Vector3f(5.0f, 5.0f, -3.0f),   // point 8
+      Eigen::Vector3f(8.0f, 3.0f, -2.0f),   // point 9
+      Eigen::Vector3f(9.0f, 1.0f, -1.0f)    // point 10
+    }};
+
+    std::vector<float> default_azimuths;
+    for (const auto & point : default_points) {
+      if (vendor == "velodyne") {
+        // velodyne coordinates: x-axis is 0 degrees, y-axis is 270 degrees, angle increase in
+        // clockwise direction
+        float cartesian_deg = std::atan2(point.y(), point.x()) * 180 / autoware::universe_utils::pi;
+        if (cartesian_deg < 0) cartesian_deg += 360;
+        float velodyne_deg = 360 - cartesian_deg;
+        if (velodyne_deg == 360) velodyne_deg = 0;
+        default_azimuths.push_back(velodyne_deg * autoware::universe_utils::pi / 180);
+      } else if (vendor == "hesai") {
+        // hesai coordinates: y-axis is 0 degrees, x-axis is 90 degrees, angle increase in clockwise
+        // direction
+        float cartesian_deg = std::atan2(point.y(), point.x()) * 180 / autoware::universe_utils::pi;
+        if (cartesian_deg < 0) cartesian_deg += 360;
+        float hesai_deg = 90 - cartesian_deg < 0 ? 90 - cartesian_deg + 360 : 90 - cartesian_deg;
+        if (hesai_deg == 360) hesai_deg = 0;
+        default_azimuths.push_back(hesai_deg * autoware::universe_utils::pi / 180);
+      } else {
+        // Cartesian coordingates: x-axis is 0 degrees, y-axis is 90 degrees, angle increase in
+        // counterclockwise direction
+        default_azimuths.push_back(std::atan2(point.y(), point.x()));
+      }
+    }
+
+    return std::make_tuple(default_points, default_azimuths);
+  }
+
   sensor_msgs::msg::PointCloud2 generatePointCloudMsg(
     bool generate_points, bool is_lidar_frame, std::string vendor, rclcpp::Time stamp,
     bool use_default_pointcloud, std::vector<Eigen::Vector3f> defined_points,
@@ -187,41 +232,7 @@ protected:
       std::vector<float> azimuths;
 
       if (use_default_pointcloud) {
-        std::vector<Eigen::Vector3f> default_points = {{
-          Eigen::Vector3f(10.0f, 0.0f, 1.0f),   // point 1
-          Eigen::Vector3f(5.0f, -5.0f, 2.0f),   // point 2
-          Eigen::Vector3f(0.0f, -10.0f, 3.0f),  // point 3
-          Eigen::Vector3f(-5.0f, -5.0f, 4.0f),  // point 4
-          Eigen::Vector3f(-10.0f, 0.0f, 5.0f),  // point 5
-          Eigen::Vector3f(-5.0f, 5.0f, -5.0f),  // point 6
-          Eigen::Vector3f(0.0f, 10.0f, -4.0f),  // point 7
-          Eigen::Vector3f(5.0f, 5.0f, -3.0f),   // point 8
-          Eigen::Vector3f(8.0f, 3.0f, -2.0f),   // point 9
-          Eigen::Vector3f(9.0f, 1.0f, -1.0f)    // point 10
-        }};
-
-        std::vector<float> default_azimuths;
-        for (const auto & point : default_points) {
-          if (vendor == "velodyne") {
-            float cartesian_deg =
-              std::atan2(point.y(), point.x()) * 180 / autoware::universe_utils::pi;
-            if (cartesian_deg < 0) cartesian_deg += 360;
-            float velodyne_deg = 360 - cartesian_deg;
-            if (velodyne_deg == 360) velodyne_deg = 0;
-            default_azimuths.push_back(velodyne_deg * autoware::universe_utils::pi / 180);
-          } else if (vendor == "hesai") {
-            float cartesian_deg =
-              std::atan2(point.y(), point.x()) * 180 / autoware::universe_utils::pi;
-            if (cartesian_deg < 0) cartesian_deg += 360;
-            float hesai_deg =
-              90 - cartesian_deg < 0 ? 90 - cartesian_deg + 360 : 90 - cartesian_deg;
-            if (hesai_deg == 360) hesai_deg = 0;
-            default_azimuths.push_back(hesai_deg * autoware::universe_utils::pi / 180);
-          } else {  // empty string
-            default_azimuths.push_back(std::atan2(point.y(), point.x()));
-          }
-        }
-
+        auto [default_points, default_azimuths] = generate_default_pointcloud(vendor);
         points = default_points;
         azimuths = default_azimuths;
       } else {
