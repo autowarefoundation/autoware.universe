@@ -142,19 +142,19 @@ double calc_ego_dist_to_lanes_start(
   return motion_utils::calcSignedArcLength(path.points, ego_position, target_front_pt);
 }
 
-double calc_minimum_lane_change_length(
-  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals)
+double calc_minimum_lane_change_buffer(
+  const LCParamPtr & lc_param_ptr, const std::vector<double> & shift_intervals)
 {
   if (shift_intervals.empty()) {
     return 0.0;
   }
 
-  const auto min_vel = lane_change_parameters.minimum_lane_changing_velocity;
-  const auto min_max_lat_acc = lane_change_parameters.lane_change_lat_acc_map.find(min_vel);
+  const auto min_vel = lc_param_ptr->minimum_lane_changing_velocity;
+  const auto min_max_lat_acc = lc_param_ptr->lane_change_lat_acc_map.find(min_vel);
   // const auto min_lat_acc = std::get<0>(min_max_lat_acc);
   const auto max_lat_acc = std::get<1>(min_max_lat_acc);
-  const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
-  const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
+  const auto lat_jerk = lc_param_ptr->lane_changing_lateral_jerk;
+  const auto finish_judge_buffer = lc_param_ptr->lane_change_finish_judge_buffer;
 
   const auto calc_sum = [&](double sum, double shift_interval) {
     const auto t = PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
@@ -164,16 +164,14 @@ double calc_minimum_lane_change_length(
   const auto total_length =
     std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
 
-  const auto backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
+  const auto backward_buffer = calc_stopping_distance(lc_param_ptr);
   return total_length + backward_buffer * (static_cast<double>(shift_intervals.size()) - 1.0);
 }
 
-double calc_minimum_lane_change_length(
+double calc_minimum_lane_change_buffer(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes)
 {
-  if (
-    !common_data_ptr || !common_data_ptr->route_handler_ptr ||
-    !common_data_ptr->self_odometry_ptr || lanes.empty()) {
+  if (!common_data_ptr || !common_data_ptr->is_data_available() || lanes.empty()) {
     return std::numeric_limits<double>::max();
   }
 
@@ -182,8 +180,8 @@ double calc_minimum_lane_change_length(
 
   const auto shift_intervals =
     route_handler_ptr->getLateralIntervalsToPreferredLane(lanes.back(), direction);
-  const auto lc_param = *common_data_ptr->lc_param_ptr;
-  return calc_minimum_lane_change_length(lc_param, shift_intervals);
+  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
+  return calc_minimum_lane_change_buffer(lc_param_ptr, shift_intervals);
 }
 
 double calc_maximum_lane_change_length(

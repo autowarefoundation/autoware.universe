@@ -581,7 +581,7 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
   }
 
   const auto minimum_lane_change_length =
-    calculation::calc_minimum_lane_change_length(common_data_ptr, current_lanes);
+    calculation::calc_minimum_lane_change_buffer(common_data_ptr, current_lanes);
   const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
   const auto current_pose = common_data_ptr->get_ego_pose();
   if (

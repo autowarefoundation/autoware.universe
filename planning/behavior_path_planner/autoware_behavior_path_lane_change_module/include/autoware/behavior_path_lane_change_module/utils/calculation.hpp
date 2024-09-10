@@ -118,10 +118,10 @@ double calc_ego_dist_to_lanes_start(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
 
-double calc_minimum_lane_change_length(
-  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals);
+double calc_minimum_lane_change_buffer(
+  const LCParamPtr & lc_param_ptr, const std::vector<double> & shift_intervals);
 
-double calc_minimum_lane_change_length(
+double calc_minimum_lane_change_buffer(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
 
 double calc_maximum_lane_change_length(

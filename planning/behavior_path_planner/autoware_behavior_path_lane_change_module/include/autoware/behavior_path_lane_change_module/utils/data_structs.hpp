@@ -305,6 +305,18 @@ struct CommonData
     const auto y = get_ego_twist().linear.y;
     return std::hypot(x, y);
   }
+
+  [[nodiscard]] bool is_data_available() const
+  {
+    return route_handler_ptr || self_odometry_ptr || bpp_param_ptr || lc_param_ptr || lanes_ptr ||
+           lanes_polygon_ptr;
+  }
+
+  [[nodiscard]] bool is_lanes_available() const
+  {
+    return lanes_ptr || !lanes_ptr->current.empty() || !lanes_ptr->target.empty() ||
+           !lanes_ptr->target_neighbor.empty();
+  }
 };
 using CommonDataPtr = std::shared_ptr<CommonData>;
 }  // namespace autoware::behavior_path_planner::lane_change

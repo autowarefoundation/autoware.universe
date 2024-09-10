@@ -281,7 +281,7 @@ double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
     return std::numeric_limits<double>::infinity();
   }
 
-  return utils::lane_change::calculation::calc_minimum_lane_change_length(
+  return utils::lane_change::calculation::calc_minimum_lane_change_buffer(
     common_data_ptr_, current_lanes);
 }
 
