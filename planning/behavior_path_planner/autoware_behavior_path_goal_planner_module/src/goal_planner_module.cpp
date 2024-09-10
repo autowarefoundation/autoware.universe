@@ -282,7 +282,7 @@ void GoalPlannerModule::onTimer()
       safety_check_params));
     if (
       hasDeviatedFromLastPreviousModulePath(local_planner_data) &&
-      // TODO(soblin):
+      // TODO(soblin): use DecidingPathStatus in ThreadInputData
       !hasDecidedPath(
         local_planner_data, occupancy_grid_map, local_context_data, parameters, goal_searcher)) {
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
@@ -886,9 +886,9 @@ BehaviorModuleOutput GoalPlannerModule::plan()
   if (!context_data_) {
     RCLCPP_ERROR(getLogger(), " [pull_over] plan() is called without valid context_data");
   }
-  const auto & context_data = context_data_.has_value()
-                                ? context_data_.value()
-                                : PullOverContextData(std::make_pair(true, true));
+  const auto context_data = context_data_.has_value()
+                              ? context_data_.value()
+                              : PullOverContextData(std::make_pair(true, true));
 
   if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return planPullOver(context_data);
@@ -1523,9 +1523,9 @@ void GoalPlannerModule::postProcess()
   if (!context_data_) {
     RCLCPP_ERROR(getLogger(), " [pull_over] postProcess() is called without valid context_data");
   }
-  const auto & context_data = context_data_.has_value()
-                                ? context_data_.value()
-                                : PullOverContextData(std::make_pair(true, true));
+  const auto context_data = context_data_.has_value()
+                              ? context_data_.value()
+                              : PullOverContextData(std::make_pair(true, true));
 
   // TODO(Mamoru Sobue): repetitive call to checkDecidingPathStatus() in the main thread is a
   // waste of time because it gives same result throughout the main thread.
@@ -1595,9 +1595,9 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
     RCLCPP_ERROR(
       getLogger(), " [pull_over] planWaitingApproval() is called without valid context_data");
   }
-  const auto & context_data = context_data_.has_value()
-                                ? context_data_.value()
-                                : PullOverContextData(std::make_pair(true, true));
+  const auto context_data = context_data_.has_value()
+                              ? context_data_.value()
+                              : PullOverContextData(std::make_pair(true, true));
 
   if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
     return planPullOverAsCandidate(context_data);
