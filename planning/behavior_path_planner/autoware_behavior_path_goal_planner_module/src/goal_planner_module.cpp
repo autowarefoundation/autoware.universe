@@ -277,9 +277,9 @@ void GoalPlannerModule::onTimer()
       return true;
     }
     // TODO(soblin): never call isSafePath on thread pool sode
-    const auto local_context_data = isSafePath(
+    const auto local_context_data = PullOverContextData(isSafePath(
       local_planner_data, parameters, ego_predicted_path_params, objects_filtering_params,
-      safety_check_params);
+      safety_check_params));
     if (
       hasDeviatedFromLastPreviousModulePath(local_planner_data) &&
       // TODO(soblin):
