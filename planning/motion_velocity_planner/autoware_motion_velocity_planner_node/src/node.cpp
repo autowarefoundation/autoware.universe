@@ -371,9 +371,10 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
     smoother->applySteeringRateLimit(traj_lateral_acc_filtered, false);
 
   // Resample trajectory with ego-velocity based interval distances
-  auto traj_resampled = smoother->resampleTrajectory(
-    traj_steering_rate_limited, v0, current_pose, planner_data.ego_nearest_dist_threshold,
-    planner_data.ego_nearest_yaw_threshold);
+  auto traj_resampled = traj_steering_rate_limited;
+  // smoother->resampleTrajectory(
+  // traj_steering_rate_limited, v0, current_pose, planner_data.ego_nearest_dist_threshold,
+  // planner_data.ego_nearest_yaw_threshold);
   const size_t traj_resampled_closest =
     autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       traj_resampled, current_pose, planner_data.ego_nearest_dist_threshold,
@@ -411,8 +412,8 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   smooth_velocity_trajectory.points = {
     input_trajectory_points.begin(), input_trajectory_points.end()};
   stop_watch.tic("resample");
-  auto resampled_trajectory =
-    autoware::motion_utils::resampleTrajectory(smooth_velocity_trajectory, 0.5);
+  auto resampled_trajectory = smooth_velocity_trajectory;
+  // autoware::motion_utils::resampleTrajectory(smooth_velocity_trajectory, 0.5);
   processing_times["resample"] = stop_watch.toc("resample");
   stop_watch.tic("calculate_time_from_start");
   motion_utils::calculate_time_from_start(
