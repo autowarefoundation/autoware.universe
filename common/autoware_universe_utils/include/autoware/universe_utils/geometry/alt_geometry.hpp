@@ -169,7 +169,7 @@ double area(const alt::ConvexPolygon2d & poly);
 
 std::optional<alt::ConvexPolygon2d> convex_hull(const alt::Points2d & points);
 
-void correct(alt::ConvexPolygon2d & poly);
+void correct(alt::Polygon2d & poly);
 
 bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
 

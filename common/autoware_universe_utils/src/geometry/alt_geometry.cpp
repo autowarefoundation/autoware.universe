@@ -23,7 +23,7 @@ std::optional<Polygon2d> Polygon2d::create(
   const PointList2d & outer, const std::vector<PointList2d> & inners) noexcept
 {
   Polygon2d poly(outer, inners);
-  // correct(poly);
+  correct(poly);
 
   if (poly.outer().size() < 4) {
     return std::nullopt;
@@ -42,7 +42,7 @@ std::optional<Polygon2d> Polygon2d::create(
   PointList2d && outer, std::vector<PointList2d> && inners) noexcept
 {
   Polygon2d poly(std::move(outer), std::move(inners));
-  // correct(poly);
+  correct(poly);
 
   if (poly.outer().size() < 4) {
     return std::nullopt;
@@ -86,9 +86,9 @@ std::optional<ConvexPolygon2d> ConvexPolygon2d::create(const PointList2d & verti
     return std::nullopt;
   }
 
-  // if (!is_convex(poly)) {
-  //   return std::nullopt;
-  // }
+  if (!is_convex(poly)) {
+    return std::nullopt;
+  }
 
   return poly;
 }
@@ -102,9 +102,9 @@ std::optional<ConvexPolygon2d> ConvexPolygon2d::create(PointList2d && vertices) 
     return std::nullopt;
   }
 
-  // if (!is_convex(poly)) {
-  //   return std::nullopt;
-  // }
+  if (!is_convex(poly)) {
+    return std::nullopt;
+  }
 
   return poly;
 }
@@ -257,7 +257,7 @@ std::optional<alt::ConvexPolygon2d> convex_hull(const alt::Points2d & points)
   return hull;
 }
 
-void correct(alt::ConvexPolygon2d & poly)
+void correct(alt::Polygon2d & poly)
 {
   auto correct_vertices = [](alt::PointList2d & vertices) {
     // remove adjacent duplicate points
@@ -266,27 +266,19 @@ void correct(alt::ConvexPolygon2d & poly)
       [](const auto & a, const auto & b) { return equals(a, b); });
     vertices.erase(it, vertices.end());
 
-    const auto first_point = vertices.front();
-    vertices.pop_front();
-
-    if (equals(vertices.back(), first_point)) {
-      vertices.pop_back();
+    if (!equals(vertices.front(), vertices.back())) {
+      vertices.push_back(vertices.front());
     }
 
-    // TODO(mitukou1109): support non-convex polygons
-    // sort points in clockwise order with respect to the first point
-    vertices.sort(
-      [&](const auto & a, const auto & b) { return (a - first_point).cross(b - first_point) < 0; });
-
-    vertices.push_front(first_point);
-    vertices.push_back(first_point);
+    if (!is_clockwise(vertices)) {
+      std::reverse(std::next(vertices.begin()), std::prev(vertices.end()));
+    }
   };
 
-  correct_vertices(poly.vertices());
-  // correct_vertices(poly.outer());
-  // for (auto & inner : poly.inners()) {
-  //   correct_vertices(inner);
-  // }
+  correct_vertices(poly.outer());
+  for (auto & inner : poly.inners()) {
+    correct_vertices(inner);
+  }
 }
 
 bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
@@ -542,7 +534,7 @@ bool is_convex(const alt::Polygon2d & poly)
 
   const auto & outer = poly.outer();
 
-  for (auto it = ++outer.cbegin(); it != --outer.cend(); ++it) {
+  for (auto it = std::next(outer.cbegin()); it != std::prev(outer.cend()); ++it) {
     const auto & p1 = *--it;
     const auto & p2 = *it;
     const auto & p3 = *++it;
