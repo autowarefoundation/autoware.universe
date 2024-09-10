@@ -108,100 +108,110 @@ bool correctWithDefaultValue(
   // rule based correction
   Eigen::Vector2d correction_vector = Eigen::Vector2d::Zero();
 
-  // 1,3 pair or 0,2 pair is most far index
+  // check diagonal pair: 1,3 pair or 0,2 pair is most far index
   if (
     static_cast<int>(std::abs(
       static_cast<int>(first_most_distant_index) - static_cast<int>(second_most_distant_index))) %
       2 ==
     0) {
-    if (
+    if ( // check if width is within threshold
       param.min_width < (v_point.at(first_most_distant_index) * 2.0).norm() &&
       (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) {
+      // check if length is within threshold
       if ((v_point.at(third_most_distant_index) * 2.0).norm() < param.max_length) {
         correction_vector = v_point.at(third_most_distant_index);
-        if (correction_vector.x() == 0.0) {
+        // adjust length if it is too short
+        if (correction_vector.x() == 0.0) { // parallel to y-axis
           correction_vector.y() =
             std::max(std::abs(correction_vector.y()), param.default_length / 2.0) *
               (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
             correction_vector.y();
-        } else if (correction_vector.y() == 0.0) {
+        } else if (correction_vector.y() == 0.0) { // parallel to x-axis
           correction_vector.x() =
             std::max(std::abs(correction_vector.x()), param.default_length / 2.0) *
               (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
             correction_vector.x();
         }
-      } else {
+      } else { // length is too long
         return false;
       }
     } else if (  // NOLINT
+      // check if length is within threshold
       param.min_length < (v_point.at(first_most_distant_index) * 2.0).norm() &&
       (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_length) {
+      // check if width is within threshold
       if ((v_point.at(third_most_distant_index) * 2.0).norm() < param.max_width) {
         correction_vector = v_point.at(third_most_distant_index);
-        if (correction_vector.x() == 0.0) {
+        // adjust width if it is too short
+        if (correction_vector.x() == 0.0) { // parallel to y-axis
           correction_vector.y() =
             std::max(std::abs(correction_vector.y()), param.default_width / 2.0) *
               (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
             correction_vector.y();
-        } else if (correction_vector.y() == 0.0) {
+        } else if (correction_vector.y() == 0.0) { // parallel to x-axis
           correction_vector.x() =
             std::max(std::abs(correction_vector.x()), param.default_width / 2.0) *
               (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
             correction_vector.x();
         }
-      } else {
+      } else { // width is too long
         return false;
       }
-    } else {
+    } else { // both of width and length are out of threshold
       return false;
     }
-  }
+  }  // end of diagonal check
   // fit width
   else if (  // NOLINT
+    // not diagonal and both of edges are within width threshold
     (param.min_width < (v_point.at(first_most_distant_index) * 2.0).norm() &&
      (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) &&
     (param.min_width < (v_point.at(second_most_distant_index) * 2.0).norm() &&
      (v_point.at(second_most_distant_index) * 2.0).norm() <
-       param.max_width))  // both of edge is within width threshold
+       param.max_width))
   {
     correction_vector = v_point.at(first_most_distant_index);
-    if (correction_vector.x() == 0.0) {
+    // adjust length if it is too short
+    if (correction_vector.x() == 0.0) { // parallel to y-axis
       correction_vector.y() =
         std::max(std::abs(correction_vector.y()), param.default_length / 2.0) *
           (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
         correction_vector.y();
-    } else if (correction_vector.y() == 0.0) {
+    } else if (correction_vector.y() == 0.0) { // parallel to x-axis
       correction_vector.x() =
         std::max(std::abs(correction_vector.x()), param.default_length / 2.0) *
           (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
         correction_vector.x();
     }
   } else if (  // NOLINT
+    // not diagonal and check if width is within threshold
     param.min_width < (v_point.at(first_most_distant_index) * 2.0).norm() &&
     (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) {
-    correction_vector = v_point.at(second_most_distant_index);
-    if (correction_vector.x() == 0.0) {
+    correction_vector = v_point.at(first_most_distant_index);
+    // adjust length if it is too short
+    if (correction_vector.x() == 0.0) { // parallel to y-axis
       correction_vector.y() =
         std::max(std::abs(correction_vector.y()), param.default_length / 2.0) *
           (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
         correction_vector.y();
-    } else if (correction_vector.y() == 0.0) {
+    } else if (correction_vector.y() == 0.0) { // parallel to x-axis
       correction_vector.x() =
         std::max(std::abs(correction_vector.x()), param.default_length / 2.0) *
           (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
         correction_vector.x();
     }
   } else if (  // NOLINT
+    // not diagonal and check if width is within threshold
     param.min_width < (v_point.at(second_most_distant_index) * 2.0).norm() &&
     (v_point.at(second_most_distant_index) * 2.0).norm() < param.max_width) {
     correction_vector = v_point.at(first_most_distant_index);
-
-    if (correction_vector.x() == 0.0) {
+    // adjust length if it is too short
+    if (correction_vector.x() == 0.0) { // parallel to y-axis
       correction_vector.y() =
         std::max(std::abs(correction_vector.y()), param.default_length / 2.0) *
           (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
         correction_vector.y();
-    } else if (correction_vector.y() == 0.0) {
+    } else if (correction_vector.y() == 0.0) { // parallel to x-axis
       correction_vector.x() =
         std::max(std::abs(correction_vector.x()), param.default_length / 2.0) *
           (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
@@ -210,31 +220,33 @@ bool correctWithDefaultValue(
   }
   // fit length
   else if (  // NOLINT
+    // not diagonal and both of edges are within length and width threshold
     (param.min_length < (v_point.at(first_most_distant_index) * 2.0).norm() &&
      (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_length) &&
     (v_point.at(second_most_distant_index) * 2.0).norm() < param.max_width) {
     correction_vector = v_point.at(second_most_distant_index);
-
-    if (correction_vector.x() == 0.0) {
+    // adjust width if it is too short
+    if (correction_vector.x() == 0.0) { // parallel to y-axis
       correction_vector.y() = std::max(std::abs(correction_vector.y()), param.default_width / 2.0) *
                                 (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
                               correction_vector.y();
-    } else if (correction_vector.y() == 0.0) {
+    } else if (correction_vector.y() == 0.0) { // parallel to x-axis
       correction_vector.x() = std::max(std::abs(correction_vector.x()), param.default_width / 2.0) *
                                 (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
                               correction_vector.x();
     }
   } else if (  // NOLINT
+    // not diagonal and both of edges are within length and width threshold
     (param.min_length < (v_point.at(second_most_distant_index) * 2.0).norm() &&
      (v_point.at(second_most_distant_index) * 2.0).norm() < param.max_length) &&
     (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) {
     correction_vector = v_point.at(first_most_distant_index);
-
-    if (correction_vector.x() == 0.0) {
+    // adjust width if it is too short
+    if (correction_vector.x() == 0.0) { // parallel to y-axis
       correction_vector.y() = std::max(std::abs(correction_vector.y()), param.default_width / 2.0) *
                                 (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
                               correction_vector.y();
-    } else if (correction_vector.y() == 0.0) {
+    } else if (correction_vector.y() == 0.0) { // parallel to x-axis
       correction_vector.x() = std::max(std::abs(correction_vector.x()), param.default_width / 2.0) *
                                 (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
                               correction_vector.x();
