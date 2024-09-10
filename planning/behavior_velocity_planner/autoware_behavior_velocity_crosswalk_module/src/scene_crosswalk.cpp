@@ -1325,6 +1325,8 @@ bool CrosswalkModule::checkRestartSuppression(
   const double dist_to_stop =
     calcSignedArcLength(ego_path.points, ego_pos, stop_factor->stop_pose.position);
 
+  // NOTE: min_dist_to_stop_for_restart_suppression is supposed to be the same as
+  //      the pid_longitudinal_controller's drive_state_stop_dist.
   return planner_param_.min_dist_to_stop_for_restart_suppression < dist_to_stop &&
          dist_to_stop < planner_param_.max_dist_to_stop_for_restart_suppression;
 }
