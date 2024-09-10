@@ -33,6 +33,19 @@ BEVDet is a BEV perception algorithm based on panoramic cameras. It unifies mult
 | ---------------- | ------------------------------------------------ | ---------------- |
 | `~/output/boxes` | `autoware_perception_msgs::msg::DetectedObjects` | detected objects |
 
+## How to Use Tensorrt BEVDet Node
+
+1. launch `tensorrt_bevdet_node`
+
+```bash
+
+ros2 launch autoware_tensorrt_bevdet tensorrt_bevdet_node.launch.xml
+```
+
+2. play nuScenes data
+
+please refer to open source repository [ros2_dataset_bridge](https://github.com/Owen-Liuyuxuan/ros2_dataset_bridge) to publish the ROS 2 topics.
+
 ## Limitation
 
 The model is trained on open-source dataset `NuScenes` and has poor generalization on its own dataset, If you want to use this model to infer your data, you need to retrain it.
