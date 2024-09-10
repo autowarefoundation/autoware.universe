@@ -106,6 +106,8 @@ endif
 
 ## Parameters
 
+{{ json_to_markdown("/system/system_error_monitor/schema/system_error_monitor.schema.json") }}
+
 ### Node Parameters
 
 | Name                         | Type   | Default Value | Explanation                                                                                                                                                            |
