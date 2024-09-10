@@ -1299,7 +1299,7 @@ void CrosswalkModule::planStop(
   }
 
   // Check if the restart should be suppressed.
-  const bool suppress_restart = checkRestartSuppression(stop_factor);
+  const bool suppress_restart = checkRestartSuppression(ego_path, stop_factor);
   if (suppress_restart) {
     const auto & ego_pose = planner_data_->current_odometry->pose;
     stop_factor->stop_pose = ego_pose;
@@ -1313,7 +1313,8 @@ void CrosswalkModule::planStop(
     VelocityFactor::UNKNOWN);
 }
 
-bool CrosswalkModule::checkRestartSuppression(const std::optional<StopFactor> & stop_factor)
+bool CrosswalkModule::checkRestartSuppression(
+  const PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const
 {
   const auto is_vehicle_stopped = vehicle_stop_checker_->isVehicleStopped();
   if (!is_vehicle_stopped) {
@@ -1322,7 +1323,9 @@ bool CrosswalkModule::checkRestartSuppression(const std::optional<StopFactor> & 
 
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
   const double dist_to_stop =
-    autoware::universe_utils::calcDistance2d(ego_pos, stop_factor->stop_pose);
-  return dist_to_stop < planner_param_.dist_to_stop_for_restart_suppression;
+    calcSignedArcLength(ego_path.points, ego_pos, stop_factor->stop_pose.position);
+
+  return planner_param_.min_dist_to_stop_for_restart_suppression < dist_to_stop &&
+         dist_to_stop < planner_param_.max_dist_to_stop_for_restart_suppression;
 }
 }  // namespace autoware::behavior_velocity_planner

@@ -62,7 +62,8 @@
 
       # params for suppressing the ego to restart when the ego is close to the next stop position.
       restart_suppression:
-        distance_to_stop: 1.0
+        min_distance_to_stop: 0.5
+        max_distance_to_stop: 1.0
 
       # param for target object filtering
       object_filtering:
