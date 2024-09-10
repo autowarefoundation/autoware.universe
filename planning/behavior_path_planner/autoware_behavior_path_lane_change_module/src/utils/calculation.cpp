@@ -169,15 +169,21 @@ double calc_minimum_lane_change_length(
 }
 
 double calc_minimum_lane_change_length(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
-  const LaneChangeParameters & lane_change_parameters, Direction direction)
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes)
 {
-  if (!route_handler) {
+  if (
+    !common_data_ptr || !common_data_ptr->route_handler_ptr ||
+    !common_data_ptr->self_odometry_ptr || lanes.empty()) {
     return std::numeric_limits<double>::max();
   }
 
-  const auto shift_intervals = route_handler->getLateralIntervalsToPreferredLane(lane, direction);
-  return calc_minimum_lane_change_length(lane_change_parameters, shift_intervals);
+  const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+  const auto direction = common_data_ptr->direction;
+
+  const auto shift_intervals =
+    route_handler_ptr->getLateralIntervalsToPreferredLane(lanes.back(), direction);
+  const auto lc_param = *common_data_ptr->lc_param_ptr;
+  return calc_minimum_lane_change_length(lc_param, shift_intervals);
 }
 
 double calc_maximum_lane_change_length(

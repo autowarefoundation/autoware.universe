@@ -131,9 +131,8 @@ std::vector<DrivableLanes> generateDrivableLanes(
 double getLateralShift(const LaneChangePath & path);
 
 bool hasEnoughLengthToLaneChangeAfterAbort(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const Pose & curent_pose, const double abort_return_dist,
-  const LaneChangeParameters & lane_change_parameters, const Direction direction);
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
+  const double abort_return_dist);
 
 CandidateOutput assignToCandidate(
   const LaneChangePath & lane_change_path, const Point & ego_position);

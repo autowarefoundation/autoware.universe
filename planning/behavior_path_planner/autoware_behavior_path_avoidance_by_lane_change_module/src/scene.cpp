@@ -282,7 +282,7 @@ double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
   }
 
   return utils::lane_change::calculation::calc_minimum_lane_change_length(
-    getRouteHandler(), current_lanes.back(), *lane_change_parameters_, direction_);
+    common_data_ptr_, current_lanes);
 }
 
 double AvoidanceByLaneChange::calcLateralOffset() const

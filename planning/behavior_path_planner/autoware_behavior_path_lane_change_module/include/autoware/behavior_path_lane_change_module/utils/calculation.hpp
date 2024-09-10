@@ -122,8 +122,7 @@ double calc_minimum_lane_change_length(
   const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals);
 
 double calc_minimum_lane_change_length(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
-  const LaneChangeParameters & lane_change_parameters, Direction direction);
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
 
 double calc_maximum_lane_change_length(
   const double current_velocity, const LaneChangeParameters & lane_change_parameters,
