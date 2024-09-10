@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(tier4_perception_rviz_plugin)
+project(tier4_dummy_perception_rviz_plugin)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
