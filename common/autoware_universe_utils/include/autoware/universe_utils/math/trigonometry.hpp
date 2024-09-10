@@ -26,7 +26,7 @@ float cos(float radian);
 
 std::pair<float, float> sin_and_cos(float radian);
 
-float opencv_fastAtan2(float dy, float dx);
+float opencv_fast_atan2(float dy, float dx);
 
 }  // namespace autoware::universe_utils
 

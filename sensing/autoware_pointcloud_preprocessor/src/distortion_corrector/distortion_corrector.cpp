@@ -214,8 +214,8 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
 
   for (; next_it_x != it_x.end();
        ++it_x, ++it_y, ++it_azimuth, ++next_it_x, ++next_it_y, ++next_it_azimuth) {
-    auto current_cartesian_rad = autoware::universe_utils::opencv_fastAtan2(*it_y, *it_x);
-    auto next_cartesian_rad = autoware::universe_utils::opencv_fastAtan2(*next_it_y, *next_it_x);
+    auto current_cartesian_rad = autoware::universe_utils::opencv_fast_atan2(*it_y, *it_x);
+    auto next_cartesian_rad = autoware::universe_utils::opencv_fast_atan2(*next_it_y, *next_it_x);
 
     // If the angle exceeds 180 degrees, it may cross the 0-degree axis,
     // which could disrupt the calculation of the formula.
@@ -342,7 +342,8 @@ void DistortionCorrector<T>::undistortPointCloud(
     undistortPoint(it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
 
     if (can_update_azimuth_and_distance && pointcloudTransformNeeded()) {
-      float cartesian_coordinate_azimuth = autoware::universe_utils::opencv_fastAtan2(*it_y, *it_x);
+      float cartesian_coordinate_azimuth =
+        autoware::universe_utils::opencv_fast_atan2(*it_y, *it_x);
       float updated_azimuth =
         angle_conversion_.offset_rad_ + angle_conversion_.sign_ * cartesian_coordinate_azimuth;
       if (updated_azimuth < 0) {

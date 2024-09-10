@@ -59,7 +59,7 @@ float normalize_angle(double angle)
   return angle;
 }
 
-TEST(trigonometry, opencv_fastAtan2)
+TEST(trigonometry, opencv_fast_atan2)
 {
   for (int i = 0; i < 100; ++i) {
     // Generate random x and y between -10 and 10
@@ -67,7 +67,7 @@ TEST(trigonometry, opencv_fastAtan2)
     float x = static_cast<float>(std::rand()) / RAND_MAX * 20.0 - 10.0;
     float y = static_cast<float>(std::rand()) / RAND_MAX * 20.0 - 10.0;
 
-    float fast_atan = autoware::universe_utils::opencv_fastAtan2(y, x);
+    float fast_atan = autoware::universe_utils::opencv_fast_atan2(y, x);
     float std_atan = normalize_angle(std::atan2(y, x));
 
     // 0.3 degree accuracy

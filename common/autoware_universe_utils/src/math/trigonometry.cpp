@@ -80,6 +80,8 @@ std::pair<float, float> sin_and_cos(float radian)
 // Modification:
 // 1. use autoware defined PI
 // 2. output of the function is changed from degrees to radians.
+namespace detail_fast_atan2
+{
 static const float atan2_p1 =
   0.9997878412794807f * static_cast<float>(180) / autoware::universe_utils::pi;
 static const float atan2_p3 =
@@ -89,19 +91,29 @@ static const float atan2_p5 =
 static const float atan2_p7 =
   -0.04432655554792128f * static_cast<float>(180) / autoware::universe_utils::pi;
 static const float atan2_DBL_EPSILON = 2.2204460492503131e-016f;
+}  // namespace detail_fast_atan2
 
-float opencv_fastAtan2(float dy, float dx)
+float opencv_fast_atan2(float dy, float dx)
 {
-  float ax = std::abs(dx), ay = std::abs(dy);
+  float ax = std::abs(dx);
+  float ay = std::abs(dy);
   float a, c, c2;
   if (ax >= ay) {
-    c = ay / (ax + atan2_DBL_EPSILON);
+    c = ay / (ax + detail_fast_atan2::atan2_DBL_EPSILON);
     c2 = c * c;
-    a = (((atan2_p7 * c2 + atan2_p5) * c2 + atan2_p3) * c2 + atan2_p1) * c;
+    a = (((detail_fast_atan2::atan2_p7 * c2 + detail_fast_atan2::atan2_p5) * c2 +
+          detail_fast_atan2::atan2_p3) *
+           c2 +
+         detail_fast_atan2::atan2_p1) *
+        c;
   } else {
-    c = ax / (ay + atan2_DBL_EPSILON);
+    c = ax / (ay + detail_fast_atan2::atan2_DBL_EPSILON);
     c2 = c * c;
-    a = 90.f - (((atan2_p7 * c2 + atan2_p5) * c2 + atan2_p3) * c2 + atan2_p1) * c;
+    a = 90.f - (((detail_fast_atan2::atan2_p7 * c2 + detail_fast_atan2::atan2_p5) * c2 +
+                 detail_fast_atan2::atan2_p3) *
+                  c2 +
+                detail_fast_atan2::atan2_p1) *
+                 c;
   }
   if (dx < 0) a = 180.f - a;
   if (dy < 0) a = 360.f - a;
