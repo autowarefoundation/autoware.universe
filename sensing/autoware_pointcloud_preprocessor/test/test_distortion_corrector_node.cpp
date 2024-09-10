@@ -956,7 +956,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdatingAzimuthAndDistance)
 {
   // Test the case when the cloud will not update the azimuth and distance values
-  // 1. when pointcloud is in the base_link
+  // 1. when pointcloud is in base_link
 
   // Generate the point cloud message in base_link
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
