@@ -712,19 +712,22 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
 
       case MRMState::PULL_OVER:
         behavior_state = Crash;
-        behavior_bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.success.c_str());
+        behavior_bgColor =
+          QColor(autoware::state_rviz_plugin::colors::default_colors.success.c_str());
         mrm_behavior = "MRM Behavior | Pull Over";
         break;
 
       case MRMState::COMFORTABLE_STOP:
         behavior_state = Crash;
-        behavior_bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
+        behavior_bgColor =
+          QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
         mrm_behavior = "MRM Behavior | Comfortable Stop";
         break;
 
       case MRMState::EMERGENCY_STOP:
         behavior_state = Crash;
-        behavior_bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.danger.c_str());
+        behavior_bgColor =
+          QColor(autoware::state_rviz_plugin::colors::default_colors.danger.c_str());
         mrm_behavior = "MRM Behavior | Emergency Stop";
         break;
 
