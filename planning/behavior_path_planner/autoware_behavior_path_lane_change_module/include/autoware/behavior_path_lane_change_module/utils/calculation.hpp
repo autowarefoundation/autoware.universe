@@ -129,7 +129,7 @@ double calc_minimum_lane_change_buffer(
 //   const std::vector<double> & shift_intervals, const double max_acc);
 
 double calc_maximum_lane_change_length(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes,
   const double max_acc);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
 
