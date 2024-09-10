@@ -579,6 +579,10 @@ PredictedPath PathGenerator::convertToPredictedPath(
     // Converted Pose
     auto predicted_pose = autoware::universe_utils::calcOffsetPose(ref_pose, 0.0, d_offset, 0.0);
     predicted_pose.position.z += object_height;
+    const double yaw = autoware::universe_utils::calcAzimuthAngle(
+      predicted_path.path.at(i - 1).position, predicted_pose.position);
+    predicted_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
+
     predicted_path.path.at(i) = predicted_pose;
   }
 

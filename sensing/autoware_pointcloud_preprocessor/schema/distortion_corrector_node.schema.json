@@ -32,7 +32,13 @@
           "default": false
         }
       },
-      "required": ["base_frame", "use_imu", "use_3d_distortion_correction", "update_azimuth_and_distance", "has_static_tf_only"]
+      "required": [
+        "base_frame",
+        "use_imu",
+        "use_3d_distortion_correction",
+        "update_azimuth_and_distance",
+        "has_static_tf_only"
+      ]
     }
   },
   "properties": {
