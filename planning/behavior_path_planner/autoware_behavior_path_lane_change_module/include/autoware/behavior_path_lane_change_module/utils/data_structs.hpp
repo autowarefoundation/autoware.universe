@@ -30,6 +30,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <limits>
 
 namespace autoware::behavior_path_planner::lane_change
 {
@@ -319,6 +320,19 @@ struct CommonData
   }
 };
 using CommonDataPtr = std::shared_ptr<CommonData>;
+
+struct TransientData
+{
+  struct Boundary
+  {
+    double min{std::numeric_limits<double>::max()};
+    double max{std::numeric_limits<double>::max()};
+  };
+
+  Boundary acc;
+  Boundary current_lc_buffer;
+  Boundary next_lc_buffer;
+};
 }  // namespace autoware::behavior_path_planner::lane_change
 
 namespace autoware::behavior_path_planner
