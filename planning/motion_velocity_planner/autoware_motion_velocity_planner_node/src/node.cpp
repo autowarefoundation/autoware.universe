@@ -16,6 +16,7 @@
 
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/ros/wait_for_param.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -408,20 +409,29 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
     input_trajectory_points = smooth_trajectory(input_trajectory_points, planner_data_);
     processing_times["velocity_smoothing"] = stop_watch.toc("smooth");
   }
-  autoware_planning_msgs::msg::Trajectory smooth_velocity_trajectory;
-  smooth_velocity_trajectory.points = {
-    input_trajectory_points.begin(), input_trajectory_points.end()};
   stop_watch.tic("resample");
-  auto resampled_trajectory = smooth_velocity_trajectory;
-  // autoware::motion_utils::resampleTrajectory(smooth_velocity_trajectory, 0.5);
+  TrajectoryPoints resampled_trajectory;
+  // skip points that are too close together to make computation easier
+  if (!input_trajectory_points.empty()) {
+    resampled_trajectory.push_back(input_trajectory_points.front());
+    constexpr auto min_interval_squared = 0.5 * 0.5;  // TODO(Maxime): change to a parameter
+    for (auto i = 1UL; i < input_trajectory_points.size(); ++i) {
+      const auto & p = input_trajectory_points[i];
+      const auto dist_to_prev_point =
+        universe_utils::calcSquaredDistance2d(resampled_trajectory.back(), p);
+      if (dist_to_prev_point > min_interval_squared) {
+        resampled_trajectory.push_back(p);
+      }
+    }
+  }
   processing_times["resample"] = stop_watch.toc("resample");
   stop_watch.tic("calculate_time_from_start");
   motion_utils::calculate_time_from_start(
-    resampled_trajectory.points, planner_data_.current_odometry.pose.pose.position);
+    resampled_trajectory, planner_data_.current_odometry.pose.pose.position);
   processing_times["calculate_time_from_start"] = stop_watch.toc("calculate_time_from_start");
   stop_watch.tic("plan_velocities");
   const auto planning_results = planner_manager_.plan_velocities(
-    resampled_trajectory.points, std::make_shared<const PlannerData>(planner_data_));
+    resampled_trajectory, std::make_shared<const PlannerData>(planner_data_));
   processing_times["plan_velocities"] = stop_watch.toc("plan_velocities");
 
   autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factors;
