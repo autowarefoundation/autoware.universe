@@ -208,7 +208,7 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
   } else {
     RCLCPP_WARN(
       node_->get_logger(),
-      "Current point cloud only has a single point. Could not calculate the formula.");
+      "Current point cloud only has a single point. Could not calculate the angle conversion.");
     return false;
   }
 
