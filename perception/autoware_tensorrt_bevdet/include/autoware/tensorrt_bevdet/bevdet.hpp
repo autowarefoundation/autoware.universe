@@ -117,9 +117,9 @@ class BEVDet
 public:
   BEVDet() {}
   BEVDet(
-    const std::string & config_file, int n_img, std::vector<Eigen::Matrix3f> _cams_intrin,
-    std::vector<Eigen::Quaternion<float>> _cams2ego_rot,
-    std::vector<Eigen::Translation3f> _cams2ego_trans, const std::string & onnx_file,
+    const std::string & config_file, int n_img, std::vector<Eigen::Matrix3f> cams_intrin,
+    std::vector<Eigen::Quaternion<float>> cams2ego_rot,
+    std::vector<Eigen::Translation3f> cams2ego_trans, const std::string & onnx_file,
     const std::string & engine_file);
 
   int doInfer(
@@ -156,85 +156,85 @@ protected:
     const Eigen::Translation3f & adj_ego2global_trans, float * transform_dev);
 
 private:
-  int N_img;
+  int n_img_;
 
-  int src_img_h;
-  int src_img_w;
-  int input_img_h;
-  int input_img_w;
-  int crop_h;
-  int crop_w;
-  float resize_radio;
-  int down_sample;
-  int feat_h;
-  int feat_w;
-  int bev_h;
-  int bev_w;
-  int bevpool_channel;
+  int src_img_h_;
+  int src_img_w_;
+  int input_img_h_;
+  int input_img_w_;
+  int crop_h_;
+  int crop_w_;
+  float resize_radio_;
+  int down_sample_;
+  int feat_h_;
+  int feat_w_;
+  int bev_h_;
+  int bev_w_;
+  int bevpool_channel_;
 
-  float depth_start;
-  float depth_end;
-  float depth_step;
-  int depth_num;
+  float depth_start_;
+  float depth_end_;
+  float depth_step_;
+  int depth_num_;
 
-  float x_start;
-  float x_end;
-  float x_step;
-  int xgrid_num;
+  float x_start_;
+  float x_end_;
+  float x_step_;
+  int xgrid_num_;
 
-  float y_start;
-  float y_end;
-  float y_step;
-  int ygrid_num;
+  float y_start_;
+  float y_end_;
+  float y_step_;
+  int ygrid_num_;
 
-  float z_start;
-  float z_end;
-  float z_step;
-  int zgrid_num;
+  float z_start_;
+  float z_end_;
+  float z_step_;
+  int zgrid_num_;
 
-  std::vector<float> mean;
-  std::vector<float> std;
+  std::vector<float> mean_;
+  std::vector<float> std_;
 
-  bool use_depth;
-  bool use_adj;
-  int adj_num;
+  bool use_depth_;
+  bool use_adj_;
+  int adj_num_;
 
-  int class_num;
-  float score_thresh;
-  float nms_overlap_thresh;
-  int nms_pre_maxnum;
-  int nms_post_maxnum;
-  std::vector<float> nms_rescale_factor;
-  std::vector<int> class_num_pre_task;
-  std::map<std::string, int> out_num_task_head;
+  int class_num_;
+  float score_thresh_;
+  float nms_overlap_thresh_;
+  int nms_pre_maxnum_;
+  int nms_post_maxnum_;
+  std::vector<float> nms_rescale_factor_;
+  std::vector<int> class_num_pre_task_;
+  std::map<std::string, int> out_num_task_head_;
 
-  std::vector<Eigen::Matrix3f> cams_intrin;
-  std::vector<Eigen::Quaternion<float>> cams2ego_rot;
-  std::vector<Eigen::Translation3f> cams2ego_trans;
+  std::vector<Eigen::Matrix3f> cams_intrin_;
+  std::vector<Eigen::Quaternion<float>> cams2ego_rot_;
+  std::vector<Eigen::Translation3f> cams2ego_trans_;
 
-  Eigen::Matrix3f post_rot;
-  Eigen::Translation3f post_trans;
+  Eigen::Matrix3f post_rot_;
+  Eigen::Translation3f post_trans_;
 
-  std::vector<size_t> trt_buffer_sizes;
-  void ** trt_buffer_dev;
-  float * cam_params_host;
-  void ** post_buffer;
+  std::vector<size_t> trt_buffer_sizes_;
+  void ** trt_buffer_dev_;
+  float * cam_params_host_;
+  void ** post_buffer_;
 
-  std::map<std::string, int> buffer_map;
+  std::map<std::string, int> buffer_map_;
 
-  int valid_feat_num;
-  int unique_bev_num;
+  int valid_feat_num_;
+  int unique_bev_num_;
 
-  int transform_size;
-  int cam_params_size;
+  int transform_size_;
+  int cam_params_size_;
 
-  Logger g_logger;
+  Logger g_logger_;
 
-  nvinfer1::ICudaEngine * trt_engine;
-  nvinfer1::IExecutionContext * trt_context;
+  nvinfer1::ICudaEngine * trt_engine_;
+  nvinfer1::IExecutionContext * trt_context_;
 
-  std::unique_ptr<PostprocessGPU> postprocess_ptr;
-  std::unique_ptr<AdjFrame> adj_frame_ptr;
+  std::unique_ptr<PostprocessGPU> postprocess_ptr_;
+  std::unique_ptr<AdjFrame> adj_frame_ptr_;
 };
 }  // namespace autoware::tensorrt_bevdet
 #endif  // AUTOWARE__TENSORRT_BEVDET__BEVDET_HPP_

@@ -35,16 +35,16 @@ using std::chrono::high_resolution_clock;
 namespace autoware::tensorrt_bevdet
 {
 BEVDet::BEVDet(
-  const std::string & config_file, int n_img, std::vector<Eigen::Matrix3f> _cams_intrin,
-  std::vector<Eigen::Quaternion<float>> _cams2ego_rot,
-  std::vector<Eigen::Translation3f> _cams2ego_trans, const std::string & onnx_file,
+  const std::string & config_file, int n_img, std::vector<Eigen::Matrix3f> cams_intrin,
+  std::vector<Eigen::Quaternion<float>> cams2ego_rot,
+  std::vector<Eigen::Translation3f> cams2ego_trans, const std::string & onnx_file,
   const std::string & engine_file)
-: cams_intrin(_cams_intrin), cams2ego_rot(_cams2ego_rot), cams2ego_trans(_cams2ego_trans)
+: cams_intrin_(cams_intrin), cams2ego_rot_(cams2ego_rot), cams2ego_trans_(cams2ego_trans)
 {
   initParams(config_file);
-  if (n_img != N_img) {
+  if (n_img != n_img_) {
     RCLCPP_ERROR(
-      rclcpp::get_logger("BEVDet"), "BEVDet need %d images, but given %d images!", N_img, n_img);
+      rclcpp::get_logger("BEVDet"), "BEVDet need %d images, but given %d images!", n_img_, n_img);
   }
   auto start = high_resolution_clock::now();
 
@@ -73,32 +73,32 @@ BEVDet::BEVDet(
   initEngine(engine_file);  // FIXME
   mallocDeviceMemory();
 
-  if (use_adj) {
-    adj_frame_ptr.reset(new AdjFrame(adj_num, trt_buffer_sizes[buffer_map["curr_bevfeat"]]));
+  if (use_adj_) {
+    adj_frame_ptr_.reset(new AdjFrame(adj_num_, trt_buffer_sizes_[buffer_map_["curr_bevfeat"]]));
   }
 
-  cam_params_host = new float[N_img * cam_params_size];
+  cam_params_host_ = new float[n_img_ * cam_params_size_];
 
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev[buffer_map["ranks_bev"]], ranks_bev_ptr.get(), valid_feat_num * sizeof(int),
+    trt_buffer_dev_[buffer_map_["ranks_bev"]], ranks_bev_ptr.get(), valid_feat_num_ * sizeof(int),
     cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev[buffer_map["ranks_depth"]], ranks_depth_ptr.get(), valid_feat_num * sizeof(int),
+    trt_buffer_dev_[buffer_map_["ranks_depth"]], ranks_depth_ptr.get(), valid_feat_num_ * sizeof(int),
     cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev[buffer_map["ranks_feat"]], ranks_feat_ptr.get(), valid_feat_num * sizeof(int),
+    trt_buffer_dev_[buffer_map_["ranks_feat"]], ranks_feat_ptr.get(), valid_feat_num_ * sizeof(int),
     cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev[buffer_map["interval_starts"]], interval_starts_ptr.get(),
-    unique_bev_num * sizeof(int), cudaMemcpyHostToDevice));
+    trt_buffer_dev_[buffer_map_["interval_starts"]], interval_starts_ptr.get(),
+    unique_bev_num_ * sizeof(int), cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev[buffer_map["interval_lengths"]], interval_lengths_ptr.get(),
-    unique_bev_num * sizeof(int), cudaMemcpyHostToDevice));
+    trt_buffer_dev_[buffer_map_["interval_lengths"]], interval_lengths_ptr.get(),
+    unique_bev_num_ * sizeof(int), cudaMemcpyHostToDevice));
 
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev[buffer_map["mean"]], mean.data(), 3 * sizeof(float), cudaMemcpyHostToDevice));
+    trt_buffer_dev_[buffer_map_["mean"]], mean_.data(), 3 * sizeof(float), cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev[buffer_map["std"]], std.data(), 3 * sizeof(float), cudaMemcpyHostToDevice));
+    trt_buffer_dev_[buffer_map_["std"]], std_.data(), 3 * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 void BEVDet::initCamParams(
@@ -106,156 +106,156 @@ void BEVDet::initCamParams(
   const std::vector<Eigen::Translation3f> & curr_cams2ego_trans,
   const std::vector<Eigen::Matrix3f> & curr_cams_intrin)
 {
-  for (int i = 0; i < N_img; i++) {
-    cam_params_host[i * cam_params_size + 0] = curr_cams_intrin[i](0, 0);
-    cam_params_host[i * cam_params_size + 1] = curr_cams_intrin[i](1, 1);
-    cam_params_host[i * cam_params_size + 2] = curr_cams_intrin[i](0, 2);
-    cam_params_host[i * cam_params_size + 3] = curr_cams_intrin[i](1, 2);
-    cam_params_host[i * cam_params_size + 4] = post_rot(0, 0);
-    cam_params_host[i * cam_params_size + 5] = post_rot(0, 1);
-    cam_params_host[i * cam_params_size + 6] = post_trans.translation()(0);
-    cam_params_host[i * cam_params_size + 7] = post_rot(1, 0);
-    cam_params_host[i * cam_params_size + 8] = post_rot(1, 1);
-    cam_params_host[i * cam_params_size + 9] = post_trans.translation()(1);
-    cam_params_host[i * cam_params_size + 10] = 1.f;  // bda 0 0
-    cam_params_host[i * cam_params_size + 11] = 0.f;  // bda 0 1
-    cam_params_host[i * cam_params_size + 12] = 0.f;  // bda 1 0
-    cam_params_host[i * cam_params_size + 13] = 1.f;  // bda 1 1
-    cam_params_host[i * cam_params_size + 14] = 1.f;  // bda 2 2
-    cam_params_host[i * cam_params_size + 15] = curr_cams2ego_rot[i].matrix()(0, 0);
-    cam_params_host[i * cam_params_size + 16] = curr_cams2ego_rot[i].matrix()(0, 1);
-    cam_params_host[i * cam_params_size + 17] = curr_cams2ego_rot[i].matrix()(0, 2);
-    cam_params_host[i * cam_params_size + 18] = curr_cams2ego_trans[i].translation()(0);
-    cam_params_host[i * cam_params_size + 19] = curr_cams2ego_rot[i].matrix()(1, 0);
-    cam_params_host[i * cam_params_size + 20] = curr_cams2ego_rot[i].matrix()(1, 1);
-    cam_params_host[i * cam_params_size + 21] = curr_cams2ego_rot[i].matrix()(1, 2);
-    cam_params_host[i * cam_params_size + 22] = curr_cams2ego_trans[i].translation()(1);
-    cam_params_host[i * cam_params_size + 23] = curr_cams2ego_rot[i].matrix()(2, 0);
-    cam_params_host[i * cam_params_size + 24] = curr_cams2ego_rot[i].matrix()(2, 1);
-    cam_params_host[i * cam_params_size + 25] = curr_cams2ego_rot[i].matrix()(2, 2);
-    cam_params_host[i * cam_params_size + 26] = curr_cams2ego_trans[i].translation()(2);
+  for (int i = 0; i < n_img_; i++) {
+    cam_params_host_[i * cam_params_size_ + 0] = curr_cams_intrin[i](0, 0);
+    cam_params_host_[i * cam_params_size_ + 1] = curr_cams_intrin[i](1, 1);
+    cam_params_host_[i * cam_params_size_ + 2] = curr_cams_intrin[i](0, 2);
+    cam_params_host_[i * cam_params_size_ + 3] = curr_cams_intrin[i](1, 2);
+    cam_params_host_[i * cam_params_size_ + 4] = post_rot_(0, 0);
+    cam_params_host_[i * cam_params_size_ + 5] = post_rot_(0, 1);
+    cam_params_host_[i * cam_params_size_ + 6] = post_trans_.translation()(0);
+    cam_params_host_[i * cam_params_size_ + 7] = post_rot_(1, 0);
+    cam_params_host_[i * cam_params_size_ + 8] = post_rot_(1, 1);
+    cam_params_host_[i * cam_params_size_ + 9] = post_trans_.translation()(1);
+    cam_params_host_[i * cam_params_size_ + 10] = 1.f;  // bda 0 0
+    cam_params_host_[i * cam_params_size_ + 11] = 0.f;  // bda 0 1
+    cam_params_host_[i * cam_params_size_ + 12] = 0.f;  // bda 1 0
+    cam_params_host_[i * cam_params_size_ + 13] = 1.f;  // bda 1 1
+    cam_params_host_[i * cam_params_size_ + 14] = 1.f;  // bda 2 2
+    cam_params_host_[i * cam_params_size_ + 15] = curr_cams2ego_rot[i].matrix()(0, 0);
+    cam_params_host_[i * cam_params_size_ + 16] = curr_cams2ego_rot[i].matrix()(0, 1);
+    cam_params_host_[i * cam_params_size_ + 17] = curr_cams2ego_rot[i].matrix()(0, 2);
+    cam_params_host_[i * cam_params_size_ + 18] = curr_cams2ego_trans[i].translation()(0);
+    cam_params_host_[i * cam_params_size_ + 19] = curr_cams2ego_rot[i].matrix()(1, 0);
+    cam_params_host_[i * cam_params_size_ + 20] = curr_cams2ego_rot[i].matrix()(1, 1);
+    cam_params_host_[i * cam_params_size_ + 21] = curr_cams2ego_rot[i].matrix()(1, 2);
+    cam_params_host_[i * cam_params_size_ + 22] = curr_cams2ego_trans[i].translation()(1);
+    cam_params_host_[i * cam_params_size_ + 23] = curr_cams2ego_rot[i].matrix()(2, 0);
+    cam_params_host_[i * cam_params_size_ + 24] = curr_cams2ego_rot[i].matrix()(2, 1);
+    cam_params_host_[i * cam_params_size_ + 25] = curr_cams2ego_rot[i].matrix()(2, 2);
+    cam_params_host_[i * cam_params_size_ + 26] = curr_cams2ego_trans[i].translation()(2);
   }
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev[buffer_map["cam_params"]], cam_params_host,
-    trt_buffer_sizes[buffer_map["cam_params"]], cudaMemcpyHostToDevice));
+    trt_buffer_dev_[buffer_map_["cam_params"]], cam_params_host_,
+    trt_buffer_sizes_[buffer_map_["cam_params"]], cudaMemcpyHostToDevice));
 }
 
 void BEVDet::initParams(const std::string & config_file)
 {
-  mean = std::vector<float>(3);
-  std = std::vector<float>(3);
+  mean_ = std::vector<float>(3);
+  std_ = std::vector<float>(3);
 
   YAML::Node model_config = YAML::LoadFile(config_file);
-  N_img = model_config["data_config"]["Ncams"].as<int>();
-  src_img_h = model_config["data_config"]["src_size"][0].as<int>();
-  src_img_w = model_config["data_config"]["src_size"][1].as<int>();
-  input_img_h = model_config["data_config"]["input_size"][0].as<int>();
-  input_img_w = model_config["data_config"]["input_size"][1].as<int>();
-  resize_radio = model_config["data_config"]["resize_radio"].as<float>();
-  crop_h = model_config["data_config"]["crop"][0].as<int>();
-  crop_w = model_config["data_config"]["crop"][1].as<int>();
-  mean[0] = model_config["mean"][0].as<float>();
-  mean[1] = model_config["mean"][1].as<float>();
-  mean[2] = model_config["mean"][2].as<float>();
-  std[0] = model_config["std"][0].as<float>();
-  std[1] = model_config["std"][1].as<float>();
-  std[2] = model_config["std"][2].as<float>();
-  down_sample = model_config["model"]["down_sample"].as<int>();
-  depth_start = model_config["grid_config"]["depth"][0].as<float>();
-  depth_end = model_config["grid_config"]["depth"][1].as<float>();
-  depth_step = model_config["grid_config"]["depth"][2].as<float>();
-  x_start = model_config["grid_config"]["x"][0].as<float>();
-  x_end = model_config["grid_config"]["x"][1].as<float>();
-  x_step = model_config["grid_config"]["x"][2].as<float>();
-  y_start = model_config["grid_config"]["y"][0].as<float>();
-  y_end = model_config["grid_config"]["y"][1].as<float>();
-  y_step = model_config["grid_config"]["y"][2].as<float>();
-  z_start = model_config["grid_config"]["z"][0].as<float>();
-  z_end = model_config["grid_config"]["z"][1].as<float>();
-  z_step = model_config["grid_config"]["z"][2].as<float>();
-  bevpool_channel = model_config["model"]["bevpool_channels"].as<int>();
-  nms_pre_maxnum = model_config["test_cfg"]["max_per_img"].as<int>();
-  nms_post_maxnum = model_config["test_cfg"]["post_max_size"].as<int>();
-  score_thresh = model_config["test_cfg"]["score_threshold"].as<float>();
-  nms_overlap_thresh = model_config["test_cfg"]["nms_thr"][0].as<float>();
-  use_depth = model_config["use_depth"].as<bool>();
-  use_adj = model_config["use_adj"].as<bool>();
-  transform_size = model_config["transform_size"].as<int>();
-  cam_params_size = model_config["cam_params_size"].as<int>();
+  n_img_ = model_config["data_config"]["Ncams"].as<int>();
+  src_img_h_ = model_config["data_config"]["src_size"][0].as<int>();
+  src_img_w_ = model_config["data_config"]["src_size"][1].as<int>();
+  input_img_h_ = model_config["data_config"]["input_size"][0].as<int>();
+  input_img_w_ = model_config["data_config"]["input_size"][1].as<int>();
+  resize_radio_ = model_config["data_config"]["resize_radio"].as<float>();
+  crop_h_ = model_config["data_config"]["crop"][0].as<int>();
+  crop_w_ = model_config["data_config"]["crop"][1].as<int>();
+  mean_[0] = model_config["mean"][0].as<float>();
+  mean_[1] = model_config["mean"][1].as<float>();
+  mean_[2] = model_config["mean"][2].as<float>();
+  std_[0] = model_config["std"][0].as<float>();
+  std_[1] = model_config["std"][1].as<float>();
+  std_[2] = model_config["std"][2].as<float>();
+  down_sample_ = model_config["model"]["down_sample"].as<int>();
+  depth_start_ = model_config["grid_config"]["depth"][0].as<float>();
+  depth_end_ = model_config["grid_config"]["depth"][1].as<float>();
+  depth_step_ = model_config["grid_config"]["depth"][2].as<float>();
+  x_start_ = model_config["grid_config"]["x"][0].as<float>();
+  x_end_ = model_config["grid_config"]["x"][1].as<float>();
+  x_step_ = model_config["grid_config"]["x"][2].as<float>();
+  y_start_ = model_config["grid_config"]["y"][0].as<float>();
+  y_end_ = model_config["grid_config"]["y"][1].as<float>();
+  y_step_ = model_config["grid_config"]["y"][2].as<float>();
+  z_start_ = model_config["grid_config"]["z"][0].as<float>();
+  z_end_ = model_config["grid_config"]["z"][1].as<float>();
+  z_step_ = model_config["grid_config"]["z"][2].as<float>();
+  bevpool_channel_ = model_config["model"]["bevpool_channels"].as<int>();
+  nms_pre_maxnum_ = model_config["test_cfg"]["max_per_img"].as<int>();
+  nms_post_maxnum_ = model_config["test_cfg"]["post_max_size"].as<int>();
+  score_thresh_ = model_config["test_cfg"]["score_threshold"].as<float>();
+  nms_overlap_thresh_ = model_config["test_cfg"]["nms_thr"][0].as<float>();
+  use_depth_ = model_config["use_depth"].as<bool>();
+  use_adj_ = model_config["use_adj"].as<bool>();
+  transform_size_ = model_config["transform_size"].as<int>();
+  cam_params_size_ = model_config["cam_params_size"].as<int>();
 
   std::vector<std::vector<float>> nms_factor_temp =
     model_config["test_cfg"]["nms_rescale_factor"].as<std::vector<std::vector<float>>>();
-  nms_rescale_factor.clear();
+  nms_rescale_factor_.clear();
   for (const auto & task_factors : nms_factor_temp) {
     for (float factor : task_factors) {
-      nms_rescale_factor.push_back(factor);
+      nms_rescale_factor_.push_back(factor);
     }
   }
 
   std::vector<std::vector<std::string>> class_name_pre_task;
-  class_num = 0;
+  class_num_ = 0;
   YAML::Node tasks = model_config["model"]["tasks"];
-  class_num_pre_task = std::vector<int>();
+  class_num_pre_task_ = std::vector<int>();
   for (auto it : tasks) {
     int num = it["num_class"].as<int>();
-    class_num_pre_task.push_back(num);
-    class_num += num;
+    class_num_pre_task_.push_back(num);
+    class_num_ += num;
     class_name_pre_task.push_back(it["class_names"].as<std::vector<std::string>>());
   }
 
   YAML::Node common_head_channel = model_config["model"]["common_head"]["channels"];
   YAML::Node common_head_name = model_config["model"]["common_head"]["names"];
   for (size_t i = 0; i < common_head_channel.size(); i++) {
-    out_num_task_head[common_head_name[i].as<std::string>()] = common_head_channel[i].as<int>();
+    out_num_task_head_[common_head_name[i].as<std::string>()] = common_head_channel[i].as<int>();
   }
 
-  feat_h = input_img_h / down_sample;
-  feat_w = input_img_w / down_sample;
-  depth_num = (depth_end - depth_start) / depth_step;
-  xgrid_num = (x_end - x_start) / x_step;
-  ygrid_num = (y_end - y_start) / y_step;
-  zgrid_num = (z_end - z_start) / z_step;
-  bev_h = ygrid_num;
-  bev_w = xgrid_num;
+  feat_h_ = input_img_h_ / down_sample_;
+  feat_w_ = input_img_w_ / down_sample_;
+  depth_num_ = (depth_end_ - depth_start_) / depth_step_;
+  xgrid_num_ = (x_end_ - x_start_) / x_step_;
+  ygrid_num_ = (y_end_ - y_start_) / y_step_;
+  zgrid_num_ = (z_end_ - z_start_) / z_step_;
+  bev_h_ = ygrid_num_;
+  bev_w_ = xgrid_num_;
 
-  post_rot << resize_radio, 0, 0, 0, resize_radio, 0, 0, 0, 1;
-  post_trans.translation() << -crop_w, -crop_h, 0;
+  post_rot_ << resize_radio_, 0, 0, 0, resize_radio_, 0, 0, 0, 1;
+  post_trans_.translation() << -crop_w_, -crop_h_, 0;
 
-  adj_num = 0;
-  if (use_adj) {
-    adj_num = model_config["adj_num"].as<int>();
+  adj_num_ = 0;
+  if (use_adj_) {
+    adj_num_ = model_config["adj_num"].as<int>();
   }
 
-  postprocess_ptr.reset(new PostprocessGPU(
-    class_num, score_thresh, nms_overlap_thresh, nms_pre_maxnum, nms_post_maxnum, down_sample,
-    bev_h, bev_w, x_step, y_step, x_start, y_start, class_num_pre_task, nms_rescale_factor));
+  postprocess_ptr_.reset(new PostprocessGPU(
+    class_num_, score_thresh_, nms_overlap_thresh_, nms_pre_maxnum_, nms_post_maxnum_, down_sample_,
+    bev_h_, bev_w_, x_step_, y_step_, x_start_, y_start_, class_num_pre_task_, nms_rescale_factor_));
 }
 
 void BEVDet::mallocDeviceMemory()
 {
-  trt_buffer_sizes.resize(trt_engine->getNbBindings());
-  trt_buffer_dev = reinterpret_cast<void **>(new void *[trt_engine->getNbBindings()]);
-  for (int i = 0; i < trt_engine->getNbBindings(); i++) {
-    nvinfer1::Dims32 dim = trt_context->getBindingDimensions(i);
+  trt_buffer_sizes_.resize(trt_engine_->getNbBindings());
+  trt_buffer_dev_ = reinterpret_cast<void **>(new void *[trt_engine_->getNbBindings()]);
+  for (int i = 0; i < trt_engine_->getNbBindings(); i++) {
+    nvinfer1::Dims32 dim = trt_context_->getBindingDimensions(i);
     size_t size = 1;
     for (int j = 0; j < dim.nbDims; j++) {
       size *= dim.d[j];
     }
-    size *= dataTypeToSize(trt_engine->getBindingDataType(i));
-    trt_buffer_sizes[i] = size;
-    CHECK_CUDA(cudaMalloc(&trt_buffer_dev[i], size));
+    size *= dataTypeToSize(trt_engine_->getBindingDataType(i));
+    trt_buffer_sizes_[i] = size;
+    CHECK_CUDA(cudaMalloc(&trt_buffer_dev_[i], size));
   }
 
-  RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "img num binding : %d", trt_engine->getNbBindings());
+  RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "img num binding : %d", trt_engine_->getNbBindings());
 
-  post_buffer = reinterpret_cast<void **>(new void *[class_num_pre_task.size() * 6]);
-  for (size_t i = 0; i < class_num_pre_task.size(); i++) {
-    post_buffer[i * 6 + 0] = trt_buffer_dev[buffer_map["reg_" + std::to_string(i)]];
-    post_buffer[i * 6 + 1] = trt_buffer_dev[buffer_map["height_" + std::to_string(i)]];
-    post_buffer[i * 6 + 2] = trt_buffer_dev[buffer_map["dim_" + std::to_string(i)]];
-    post_buffer[i * 6 + 3] = trt_buffer_dev[buffer_map["rot_" + std::to_string(i)]];
-    post_buffer[i * 6 + 4] = trt_buffer_dev[buffer_map["vel_" + std::to_string(i)]];
-    post_buffer[i * 6 + 5] = trt_buffer_dev[buffer_map["heatmap_" + std::to_string(i)]];
+  post_buffer_ = reinterpret_cast<void **>(new void *[class_num_pre_task_.size() * 6]);
+  for (size_t i = 0; i < class_num_pre_task_.size(); i++) {
+    post_buffer_[i * 6 + 0] = trt_buffer_dev_[buffer_map_["reg_" + std::to_string(i)]];
+    post_buffer_[i * 6 + 1] = trt_buffer_dev_[buffer_map_["height_" + std::to_string(i)]];
+    post_buffer_[i * 6 + 2] = trt_buffer_dev_[buffer_map_["dim_" + std::to_string(i)]];
+    post_buffer_[i * 6 + 3] = trt_buffer_dev_[buffer_map_["rot_" + std::to_string(i)]];
+    post_buffer_[i * 6 + 4] = trt_buffer_dev_[buffer_map_["vel_" + std::to_string(i)]];
+    post_buffer_[i * 6 + 5] = trt_buffer_dev_[buffer_map_["heatmap_" + std::to_string(i)]];
   }
 
   return;
@@ -266,33 +266,33 @@ void BEVDet::initViewTransformer(
   std::shared_ptr<int> & ranks_feat_ptr, std::shared_ptr<int> & interval_starts_ptr,
   std::shared_ptr<int> & interval_lengths_ptr)
 {
-  int num_points = N_img * depth_num * feat_h * feat_w;
+  int num_points = n_img_ * depth_num_ * feat_h_ * feat_w_;
   Eigen::Vector3f * frustum = new Eigen::Vector3f[num_points];
 
-  for (int i = 0; i < N_img; i++) {
-    for (int d_ = 0; d_ < depth_num; d_++) {
-      for (int h_ = 0; h_ < feat_h; h_++) {
-        for (int w_ = 0; w_ < feat_w; w_++) {
-          int offset = i * depth_num * feat_h * feat_w + d_ * feat_h * feat_w + h_ * feat_w + w_;
-          (frustum + offset)->x() = static_cast<float>(w_) * (input_img_w - 1) / (feat_w - 1);
-          (frustum + offset)->y() = static_cast<float>(h_) * (input_img_h - 1) / (feat_h - 1);
-          (frustum + offset)->z() = static_cast<float>(d_) * depth_step + depth_start;
+  for (int i = 0; i < n_img_; i++) {
+    for (int d_ = 0; d_ < depth_num_; d_++) {
+      for (int h_ = 0; h_ < feat_h_; h_++) {
+        for (int w_ = 0; w_ < feat_w_; w_++) {
+          int offset = i * depth_num_ * feat_h_ * feat_w_ + d_ * feat_h_ * feat_w_ + h_ * feat_w_ + w_;
+          (frustum + offset)->x() = static_cast<float>(w_) * (input_img_w_ - 1) / (feat_w_ - 1);
+          (frustum + offset)->y() = static_cast<float>(h_) * (input_img_h_ - 1) / (feat_h_ - 1);
+          (frustum + offset)->z() = static_cast<float>(d_) * depth_step_ + depth_start_;
 
           // eliminate post transformation
-          *(frustum + offset) -= post_trans.translation();
-          *(frustum + offset) = post_rot.inverse() * *(frustum + offset);
+          *(frustum + offset) -= post_trans_.translation();
+          *(frustum + offset) = post_rot_.inverse() * *(frustum + offset);
           //
           (frustum + offset)->x() *= (frustum + offset)->z();
           (frustum + offset)->y() *= (frustum + offset)->z();
           // img to ego -> rot -> trans
-          *(frustum + offset) = cams2ego_rot[i] * cams_intrin[i].inverse() * *(frustum + offset) +
-                                cams2ego_trans[i].translation();
+          *(frustum + offset) = cams2ego_rot_[i] * cams_intrin_[i].inverse() * *(frustum + offset) +
+                                cams2ego_trans_[i].translation();
 
           // voxelization
-          *(frustum + offset) -= Eigen::Vector3f(x_start, y_start, z_start);
-          (frustum + offset)->x() = static_cast<int>((frustum + offset)->x() / x_step);
-          (frustum + offset)->y() = static_cast<int>((frustum + offset)->y() / y_step);
-          (frustum + offset)->z() = static_cast<int>((frustum + offset)->z() / z_step);
+          *(frustum + offset) -= Eigen::Vector3f(x_start_, y_start_, z_start_);
+          (frustum + offset)->x() = static_cast<int>((frustum + offset)->x() / x_step_);
+          (frustum + offset)->y() = static_cast<int>((frustum + offset)->y() / y_step_);
+          (frustum + offset)->z() = static_cast<int>((frustum + offset)->z() / z_step_);
         }
       }
     }
@@ -304,11 +304,11 @@ void BEVDet::initViewTransformer(
   for (int i = 0; i < num_points; i++) {
     _ranks_depth[i] = i;
   }
-  for (int i = 0; i < N_img; i++) {
-    for (int d_ = 0; d_ < depth_num; d_++) {
-      for (int u = 0; u < feat_h * feat_w; u++) {
-        int offset = i * (depth_num * feat_h * feat_w) + d_ * (feat_h * feat_w) + u;
-        _ranks_feat[offset] = i * feat_h * feat_w + u;
+  for (int i = 0; i < n_img_; i++) {
+    for (int d_ = 0; d_ < depth_num_; d_++) {
+      for (int u = 0; u < feat_h_ * feat_w_; u++) {
+        int offset = i * (depth_num_ * feat_h_ * feat_w_) + d_ * (feat_h_ * feat_w_) + u;
+        _ranks_feat[offset] = i * feat_h_ * feat_w_ + u;
       }
     }
   }
@@ -317,30 +317,30 @@ void BEVDet::initViewTransformer(
   for (int i = 0; i < num_points; i++) {
     if (
       static_cast<int>((frustum + i)->x()) >= 0 &&
-      static_cast<int>((frustum + i)->x()) < xgrid_num &&
+      static_cast<int>((frustum + i)->x()) < xgrid_num_ &&
       static_cast<int>((frustum + i)->y()) >= 0 &&
-      static_cast<int>((frustum + i)->y()) < ygrid_num &&
+      static_cast<int>((frustum + i)->y()) < ygrid_num_ &&
       static_cast<int>((frustum + i)->z()) >= 0 &&
-      static_cast<int>((frustum + i)->z()) < zgrid_num) {
+      static_cast<int>((frustum + i)->z()) < zgrid_num_) {
       kept.push_back(i);
     }
   }
 
-  valid_feat_num = kept.size();
-  int * ranks_depth_host = new int[valid_feat_num];
-  int * ranks_feat_host = new int[valid_feat_num];
-  int * ranks_bev_host = new int[valid_feat_num];
-  int * order = new int[valid_feat_num];
+  valid_feat_num_ = kept.size();
+  int * ranks_depth_host = new int[valid_feat_num_];
+  int * ranks_feat_host = new int[valid_feat_num_];
+  int * ranks_bev_host = new int[valid_feat_num_];
+  int * order = new int[valid_feat_num_];
 
-  for (int i = 0; i < valid_feat_num; i++) {
+  for (int i = 0; i < valid_feat_num_; i++) {
     Eigen::Vector3f & p = frustum[kept[i]];
-    ranks_bev_host[i] = static_cast<int>(p.z()) * xgrid_num * ygrid_num +
-                        static_cast<int>(p.y()) * xgrid_num + static_cast<int>(p.x());
+    ranks_bev_host[i] = static_cast<int>(p.z()) * xgrid_num_ * ygrid_num_ +
+                        static_cast<int>(p.y()) * xgrid_num_ + static_cast<int>(p.x());
     order[i] = i;
   }
 
-  thrust::sort_by_key(ranks_bev_host, ranks_bev_host + valid_feat_num, order);
-  for (int i = 0; i < valid_feat_num; i++) {
+  thrust::sort_by_key(ranks_bev_host, ranks_bev_host + valid_feat_num_, order);
+  for (int i = 0; i < valid_feat_num_; i++) {
     ranks_depth_host[i] = _ranks_depth[kept[order[i]]];
     ranks_feat_host[i] = _ranks_feat[kept[order[i]]];
   }
@@ -355,7 +355,7 @@ void BEVDet::initViewTransformer(
 
   interval_starts_host.push_back(0);
   int len = 1;
-  for (int i = 1; i < valid_feat_num; i++) {
+  for (int i = 1; i < valid_feat_num_; i++) {
     if (ranks_bev_host[i] != ranks_bev_host[i - 1]) {
       interval_starts_host.push_back(i);
       interval_lengths_host.push_back(len);
@@ -366,7 +366,7 @@ void BEVDet::initViewTransformer(
   }
 
   interval_lengths_host.push_back(len);
-  unique_bev_num = interval_lengths_host.size();
+  unique_bev_num_ = interval_lengths_host.size();
 
   int * interval_starts_host_ptr = new int[interval_starts_host.size()];
   int * interval_lengths_host_ptr = new int[interval_lengths_host.size()];
@@ -384,8 +384,8 @@ void BEVDet::initViewTransformer(
   interval_starts_ptr.reset(interval_starts_host_ptr);
   interval_lengths_ptr.reset(interval_lengths_host_ptr);
 
-  RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "valid_feat_num: %d", valid_feat_num);
-  RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "unique_bev_num: %d", unique_bev_num);
+  RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "valid_feat_num: %d", valid_feat_num_);
+  RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "unique_bev_num: %d", unique_bev_num_);
 }
 
 void print_dim(nvinfer1::Dims dim, const std::string & name)
@@ -400,45 +400,45 @@ void print_dim(nvinfer1::Dims dim, const std::string & name)
 
 int BEVDet::initEngine(const std::string & engine_file)
 {
-  if (deserializeTRTEngine(engine_file, &trt_engine)) {
+  if (deserializeTRTEngine(engine_file, &trt_engine_)) {
     return EXIT_FAILURE;
   }
 
-  if (trt_engine == nullptr) {
+  if (trt_engine_ == nullptr) {
     RCLCPP_ERROR(rclcpp::get_logger("BEVDet"), "Failed to deserialize engine file!");
     return EXIT_FAILURE;
   }
-  trt_context = trt_engine->createExecutionContext();
+  trt_context_ = trt_engine_->createExecutionContext();
 
-  if (trt_context == nullptr) {
+  if (trt_context_ == nullptr) {
     RCLCPP_ERROR(rclcpp::get_logger("BEVDet"), "Failed to create TensorRT Execution Context!");
     return EXIT_FAILURE;
   }
 
   // set bindings
   std::vector<nvinfer1::Dims32> shapes{
-    {4, {N_img, 3, src_img_h, src_img_w / 4}},
+    {4, {n_img_, 3, src_img_h_, src_img_w_ / 4}},
     {1, {3}},
     {1, {3}},
-    {3, {1, N_img, cam_params_size}},
-    {1, {valid_feat_num}},
-    {1, {valid_feat_num}},
-    {1, {valid_feat_num}},
-    {1, {unique_bev_num}},
-    {1, {unique_bev_num}},
-    {5, {1, adj_num, bevpool_channel, bev_h, bev_w}},
-    {3, {1, adj_num, transform_size}},
+    {3, {1, n_img_, cam_params_size_}},
+    {1, {valid_feat_num_}},
+    {1, {valid_feat_num_}},
+    {1, {valid_feat_num_}},
+    {1, {unique_bev_num_}},
+    {1, {unique_bev_num_}},
+    {5, {1, adj_num_, bevpool_channel_, bev_h_, bev_w_}},
+    {3, {1, adj_num_, transform_size_}},
     {2, {1, 1}}};
 
   for (size_t i = 0; i < shapes.size(); i++) {
-    trt_context->setBindingDimensions(i, shapes[i]);
+    trt_context_->setBindingDimensions(i, shapes[i]);
   }
 
-  buffer_map.clear();
-  for (auto i = 0; i < trt_engine->getNbBindings(); i++) {
-    auto dim = trt_context->getBindingDimensions(i);
-    auto name = trt_engine->getBindingName(i);
-    buffer_map[name] = i;
+  buffer_map_.clear();
+  for (auto i = 0; i < trt_engine_->getNbBindings(); i++) {
+    auto dim = trt_context_->getBindingDimensions(i);
+    auto name = trt_engine_->getBindingName(i);
+    buffer_map_[name] = i;
     print_dim(dim, name);
   }
 
@@ -455,10 +455,10 @@ int BEVDet::deserializeTRTEngine(
   engine_stream << file.rdbuf();
   file.close();
 
-  nvinfer1::IRuntime * runtime = nvinfer1::createInferRuntime(g_logger);
+  nvinfer1::IRuntime * runtime = nvinfer1::createInferRuntime(g_logger_);
   if (runtime == nullptr) {
     std::string msg("Failed to build runtime parser!");
-    g_logger.log(nvinfer1::ILogger::Severity::kERROR, msg.c_str());
+    g_logger_.log(nvinfer1::ILogger::Severity::kERROR, msg.c_str());
     return EXIT_FAILURE;
   }
   engine_stream.seekg(0, std::ios::end);
@@ -471,7 +471,7 @@ int BEVDet::deserializeTRTEngine(
   nvinfer1::ICudaEngine * engine = runtime->deserializeCudaEngine(engine_str, engine_size, NULL);
   if (engine == nullptr) {
     std::string msg("Failed to build engine parser!");
-    g_logger.log(nvinfer1::ILogger::Severity::kERROR, msg.c_str());
+    g_logger_.log(nvinfer1::ILogger::Severity::kERROR, msg.c_str());
     return EXIT_FAILURE;
   }
   *engine_ptr = engine;
@@ -492,31 +492,31 @@ void BEVDet::getAdjBEVFeature(
   const Eigen::Translation3f & ego2global_trans)
 {
   int flag = 1;
-  if (adj_frame_ptr->lastScenesToken() != curr_scene_token) {
-    adj_frame_ptr->reset();
+  if (adj_frame_ptr_->lastScenesToken() != curr_scene_token) {
+    adj_frame_ptr_->reset();
     flag = 0;
   }
 
   // the smaller the idx, the newer th adj_bevfeat
-  for (int i = 0; i < adj_num; i++) {
-    const void * adj_buffer = adj_frame_ptr->getFrameBuffer(i);
+  for (int i = 0; i < adj_num_; i++) {
+    const void * adj_buffer = adj_frame_ptr_->getFrameBuffer(i);
 
-    size_t buf_size = trt_buffer_sizes[buffer_map["adj_feats"]] / adj_num;
+    size_t buf_size = trt_buffer_sizes_[buffer_map_["adj_feats"]] / adj_num_;
 
     CHECK_CUDA(cudaMemcpy(
-      reinterpret_cast<char *>(trt_buffer_dev[buffer_map["adj_feats"]]) + i * buf_size, adj_buffer,
+      reinterpret_cast<char *>(trt_buffer_dev_[buffer_map_["adj_feats"]]) + i * buf_size, adj_buffer,
       buf_size, cudaMemcpyDeviceToDevice));
 
     Eigen::Quaternion<float> adj_ego2global_rot;
     Eigen::Translation3f adj_ego2global_trans;
-    adj_frame_ptr->getEgo2Global(i, adj_ego2global_rot, adj_ego2global_trans);
+    adj_frame_ptr_->getEgo2Global(i, adj_ego2global_rot, adj_ego2global_trans);
 
     getCurr2AdjTransform(
       ego2global_rot, adj_ego2global_rot, ego2global_trans, adj_ego2global_trans,
-      reinterpret_cast<float *>(trt_buffer_dev[buffer_map["transforms"]]) + i * transform_size);
+      reinterpret_cast<float *>(trt_buffer_dev_[buffer_map_["transforms"]]) + i * transform_size_);
   }
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev[buffer_map["flag"]], &flag, trt_buffer_sizes[buffer_map["flag"]],
+    trt_buffer_dev_[buffer_map_["flag"]], &flag, trt_buffer_sizes_[buffer_map_["flag"]],
     cudaMemcpyHostToDevice));
 }
 
@@ -559,10 +559,10 @@ void BEVDet::getCurr2AdjTransform(
   currEgo2adjEgo_2d(1, 2) = currEgo2adjEgo(1, 3);
 
   Eigen::Matrix3f gridbev2egobev;
-  gridbev2egobev(0, 0) = x_step;
-  gridbev2egobev(1, 1) = y_step;
-  gridbev2egobev(0, 2) = x_start;
-  gridbev2egobev(1, 2) = y_start;
+  gridbev2egobev(0, 0) = x_step_;
+  gridbev2egobev(1, 1) = y_step_;
+  gridbev2egobev(0, 2) = x_start_;
+  gridbev2egobev(1, 2) = y_start_;
   gridbev2egobev(2, 2) = 1.f;
 
   gridbev2egobev(0, 1) = 0.f;
@@ -574,7 +574,7 @@ void BEVDet::getCurr2AdjTransform(
 
   CHECK_CUDA(cudaMemcpy(
     transform_dev, Eigen::Matrix3f(currgrid2adjgrid.transpose()).data(),
-    transform_size * sizeof(float), cudaMemcpyHostToDevice));
+    transform_size_ * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 int BEVDet::doInfer(
@@ -584,7 +584,7 @@ int BEVDet::doInfer(
 
   auto start = high_resolution_clock::now();
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev[buffer_map["images"]], cam_data.imgs_dev, trt_buffer_sizes[buffer_map["images"]],
+    trt_buffer_dev_[buffer_map_["images"]], cam_data.imgs_dev, trt_buffer_sizes_[buffer_map_["images"]],
     cudaMemcpyDeviceToDevice));
 
   initCamParams(
@@ -593,17 +593,17 @@ int BEVDet::doInfer(
   getAdjBEVFeature(
     cam_data.param.scene_token, cam_data.param.ego2global_rot, cam_data.param.ego2global_trans);
 
-  if (!trt_context->executeV2(trt_buffer_dev)) {
+  if (!trt_context_->executeV2(trt_buffer_dev_)) {
     RCLCPP_ERROR(rclcpp::get_logger("BEVDet"), "BEVDet forward failing!");
   }
 
-  adj_frame_ptr->saveFrameBuffer(
-    trt_buffer_dev[buffer_map["curr_bevfeat"]], cam_data.param.scene_token,
+  adj_frame_ptr_->saveFrameBuffer(
+    trt_buffer_dev_[buffer_map_["curr_bevfeat"]], cam_data.param.scene_token,
     cam_data.param.ego2global_rot, cam_data.param.ego2global_trans);
 
   auto end = high_resolution_clock::now();
 
-  postprocess_ptr->DoPostprocess(post_buffer, out_detections);
+  postprocess_ptr_->DoPostprocess(post_buffer_, out_detections);
   CHECK_CUDA(cudaDeviceSynchronize());
 
   auto post_end = high_resolution_clock::now();
@@ -639,7 +639,7 @@ void BEVDet::exportEngine(const std::string & onnxFile, const std::string & trtF
     {4, {6, 3, 900, 400}}, {1, {3}},      {1, {3}},     {3, {1, 6, 27}}, {1, {370000}},
     {1, {370000}},         {1, {370000}}, {1, {14000}}, {1, {14000}},    {5, {1, 8, 80, 128, 128}},
     {3, {1, 8, 6}},        {2, {1, 1}}};
-  nvinfer1::IBuilder * builder = nvinfer1::createInferBuilder(g_logger);
+  nvinfer1::IBuilder * builder = nvinfer1::createInferBuilder(g_logger_);
   nvinfer1::INetworkDefinition * network =
     builder->createNetworkV2(1U << int(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH));
   nvinfer1::IOptimizationProfile * profile = builder->createOptimizationProfile();
@@ -648,9 +648,9 @@ void BEVDet::exportEngine(const std::string & onnxFile, const std::string & trtF
 
   config->setFlag(nvinfer1::BuilderFlag::kFP16);
 
-  nvonnxparser::IParser * parser = nvonnxparser::createParser(*network, g_logger);
+  nvonnxparser::IParser * parser = nvonnxparser::createParser(*network, g_logger_);
 
-  if (!parser->parseFromFile(onnxFile.c_str(), static_cast<int>(g_logger.reportable_severity))) {
+  if (!parser->parseFromFile(onnxFile.c_str(), static_cast<int>(g_logger_.reportable_severity))) {
     RCLCPP_ERROR(rclcpp::get_logger("BEVDet"), "Failed parsing .onnx file!");
     for (int i = 0; i < parser->getNbErrors(); ++i) {
       auto * error = parser->getError(i);
@@ -678,7 +678,7 @@ void BEVDet::exportEngine(const std::string & onnxFile, const std::string & trtF
   }
   RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "Succeeded building serialized engine!");
 
-  nvinfer1::IRuntime * runtime{nvinfer1::createInferRuntime(g_logger)};
+  nvinfer1::IRuntime * runtime{nvinfer1::createInferRuntime(g_logger_)};
   engine = runtime->deserializeCudaEngine(engineString->data(), engineString->size());
   if (engine == nullptr) {
     RCLCPP_ERROR(rclcpp::get_logger("BEVDet"), "Failed building engine!");
@@ -701,15 +701,15 @@ void BEVDet::exportEngine(const std::string & onnxFile, const std::string & trtF
 
 BEVDet::~BEVDet()
 {
-  for (int i = 0; i < trt_engine->getNbBindings(); i++) {
-    CHECK_CUDA(cudaFree(trt_buffer_dev[i]));
+  for (int i = 0; i < trt_engine_->getNbBindings(); i++) {
+    CHECK_CUDA(cudaFree(trt_buffer_dev_[i]));
   }
-  delete[] trt_buffer_dev;
-  delete[] post_buffer;
+  delete[] trt_buffer_dev_;
+  delete[] post_buffer_;
 
-  delete[] cam_params_host;
+  delete[] cam_params_host_;
 
-  trt_context->destroy();
-  trt_engine->destroy();
+  trt_context_->destroy();
+  trt_engine_->destroy();
 }
 }  // namespace autoware::tensorrt_bevdet
