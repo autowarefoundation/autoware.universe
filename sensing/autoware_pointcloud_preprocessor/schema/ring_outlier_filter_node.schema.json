@@ -51,7 +51,8 @@
           "type": "number",
           "description": "The right limit of azimuth for visibility score calculation",
           "default": "360.0",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 360
         },
         "max_distance": {
           "type": "number",
