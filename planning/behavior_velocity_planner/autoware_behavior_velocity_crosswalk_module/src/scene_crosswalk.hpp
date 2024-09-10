@@ -18,6 +18,7 @@
 #include "autoware/behavior_velocity_crosswalk_module/util.hpp"
 
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
@@ -115,6 +116,8 @@ public:
     double stop_distance_from_crosswalk;
     double far_object_threshold;
     double stop_position_threshold;
+    // param for restart suppression
+    double dist_to_stop_for_restart_suppression;
     // param for ego velocity
     float min_slow_down_velocity;
     double max_slow_down_jerk;
@@ -428,6 +431,8 @@ private:
   static geometry_msgs::msg::Polygon createVehiclePolygon(
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 
+  bool checkRestartSuppression(const std::optional<StopFactor> & stop_factor);
+
   void recordTime(const int step_num)
   {
     RCLCPP_INFO_EXPRESSION(
@@ -452,6 +457,8 @@ private:
 
   // Debug
   mutable DebugData debug_data_;
+
+  std::unique_ptr<autoware::motion_utils::VehicleStopChecker> vehicle_stop_checker_{nullptr};
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;

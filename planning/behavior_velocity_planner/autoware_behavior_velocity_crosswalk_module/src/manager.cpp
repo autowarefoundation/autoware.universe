@@ -54,6 +54,10 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   cp.stop_position_threshold =
     getOrDeclareParameter<double>(node, ns + ".stop_position.stop_position_threshold");
 
+  // param for restart suppression
+  cp.dist_to_stop_for_restart_suppression =
+    getOrDeclareParameter<double>(node, ns + ".restart_suppression.distance_to_stop");
+
   // param for ego velocity
   cp.min_slow_down_velocity =
     getOrDeclareParameter<double>(node, ns + ".slow_down.min_slow_down_velocity");
