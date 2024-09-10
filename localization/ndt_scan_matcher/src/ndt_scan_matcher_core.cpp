@@ -37,6 +37,9 @@
 #include <iomanip>
 #include <thread>
 
+namespace autoware::ndt_scan_matcher
+{
+
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)
 {
@@ -413,7 +416,10 @@ bool NDTScanMatcher::callback_sensor_points_main(
     "is_succeed_interpolate_initial_pose", is_succeed_interpolate_initial_pose);
   if (!is_succeed_interpolate_initial_pose) {
     std::stringstream message;
-    message << "Couldn't interpolate pose. Please check the initial pose topic";
+    message << "Couldn't interpolate pose. Please verify that "
+               "(1) the initial pose topic (primarily come from the EKF) is being published, and "
+               "(2) the timestamps of the sensor PCD messages and pose messages are synchronized "
+               "correctly.";
     diagnostics_scan_points_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return false;
@@ -1111,5 +1117,7 @@ std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> NDTScanMatcher
   return std::make_tuple(result_pose_with_cov_msg, best_particle_ptr->score);
 }
 
+}  // namespace autoware::ndt_scan_matcher
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(NDTScanMatcher)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ndt_scan_matcher::NDTScanMatcher)
