@@ -86,9 +86,9 @@ std::optional<ConvexPolygon2d> ConvexPolygon2d::create(const PointList2d & verti
     return std::nullopt;
   }
 
-  if (!is_convex(poly)) {
-    return std::nullopt;
-  }
+  // if (!is_convex(poly)) {
+  //   return std::nullopt;
+  // }
 
   return poly;
 }
@@ -102,9 +102,9 @@ std::optional<ConvexPolygon2d> ConvexPolygon2d::create(PointList2d && vertices) 
     return std::nullopt;
   }
 
-  if (!is_convex(poly)) {
-    return std::nullopt;
-  }
+  // if (!is_convex(poly)) {
+  //   return std::nullopt;
+  // }
 
   return poly;
 }
