@@ -276,7 +276,7 @@ void GoalPlannerModule::onTimer()
       RCLCPP_DEBUG(getLogger(), "has previous module path shape changed");
       return true;
     }
-    // TODO(soblin): never call isSafePath on thread pool sode
+    // TODO(soblin): never call isSafePath on thread pool side
     const auto local_context_data = PullOverContextData(isSafePath(
       local_planner_data, parameters, ego_predicted_path_params, objects_filtering_params,
       safety_check_params));
