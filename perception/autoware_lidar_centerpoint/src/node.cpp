@@ -104,10 +104,12 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
       rclcpp::get_logger("lidar_centerpoint"),
       "The size of voxel_size != 3: use the default parameters.");
   }
+
   CenterPointConfig config(
     class_names_.size(), point_feature_size, cloud_capacity, max_voxel_size, point_cloud_range,
     voxel_size, downsample_factor, encoder_in_feature_size, score_threshold,
     circle_nms_dist_threshold, yaw_norm_thresholds, has_variance_);
+
   detector_ptr_ =
     std::make_unique<CenterPointTRT>(encoder_param, head_param, densification_param, config);
 

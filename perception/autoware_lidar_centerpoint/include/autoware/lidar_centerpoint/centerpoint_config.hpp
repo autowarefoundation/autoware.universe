@@ -116,7 +116,7 @@ public:
   std::size_t head_out_rot_size_{2};
   std::size_t head_out_vel_size_{2};
 
-  // post-process params
+  // post-processing params
   float score_threshold_{0.35f};
   float circle_nms_dist_threshold_{1.5f};
   std::vector<float> yaw_norm_thresholds_{};
