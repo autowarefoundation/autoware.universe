@@ -953,7 +953,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
   }
 }
 
-TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdateAzimuthAndDistance)
+TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdatingAzimuthAndDistance)
 {
   // Test the case when the cloud will not update the azimuth and distance values
   // 1. when pointcloud is in the base_link
