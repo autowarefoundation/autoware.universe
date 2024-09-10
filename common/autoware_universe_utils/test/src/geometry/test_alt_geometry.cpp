@@ -515,6 +515,34 @@ TEST(alt_geometry, isAbove)
   }
 }
 
+TEST(alt_geometry, isClockwise)
+{
+  using autoware::universe_utils::is_clockwise;
+  using autoware::universe_utils::alt::PointList2d;
+
+  {  // Clockwise
+    PointList2d vertices;
+    vertices.push_back({0.0, 0.0});
+    vertices.push_back({0.0, 7.0});
+    vertices.push_back({4.0, 2.0});
+    vertices.push_back({2.0, 0.0});
+    const auto result = is_clockwise(vertices);
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // Counter-clockwise
+    PointList2d vertices;
+    vertices.push_back({0.0, 0.0});
+    vertices.push_back({2.0, 0.0});
+    vertices.push_back({4.0, 2.0});
+    vertices.push_back({0.0, 7.0});
+    const auto result = is_clockwise(vertices);
+
+    EXPECT_FALSE(result);
+  }
+}
+
 TEST(geometry, simplify)
 {
   using autoware::universe_utils::simplify;

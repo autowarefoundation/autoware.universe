@@ -522,6 +522,16 @@ bool is_above(
   return (seg_end - seg_start).cross(point - seg_start) > 0;
 }
 
+bool is_clockwise(const alt::PointList2d & vertices)
+{
+  double sum = 0.;
+  for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
+    sum += (std::next(it)->x() - it->x()) * (std::next(it)->y() + it->y());
+  }
+
+  return sum > 0;
+}
+
 bool is_convex(const alt::Polygon2d & poly)
 {
   constexpr double epsilon = 1e-6;

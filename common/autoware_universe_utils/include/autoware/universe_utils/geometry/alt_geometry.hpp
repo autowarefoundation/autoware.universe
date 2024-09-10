@@ -198,6 +198,8 @@ bool intersects(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d &
 bool is_above(
   const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 
+bool is_clockwise(const alt::PointList2d & vertices);
+
 bool is_convex(const alt::Polygon2d & poly);
 
 alt::PointList2d simplify(const alt::PointList2d & line, const double max_distance);
