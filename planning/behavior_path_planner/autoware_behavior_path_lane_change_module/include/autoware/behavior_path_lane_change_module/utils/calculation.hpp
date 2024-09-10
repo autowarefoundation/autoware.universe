@@ -124,9 +124,9 @@ double calc_minimum_lane_change_buffer(
 double calc_minimum_lane_change_buffer(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
 
-double calc_maximum_lane_change_length(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc);
+// double calc_maximum_lane_change_length(
+//   const double current_velocity, const LaneChangeParameters & lane_change_parameters,
+//   const std::vector<double> & shift_intervals, const double max_acc);
 
 double calc_maximum_lane_change_length(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,

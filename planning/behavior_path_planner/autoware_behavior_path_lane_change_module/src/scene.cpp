@@ -943,7 +943,7 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
 
   // calculate maximum lane change length
   const double max_lane_change_length =
-    calculation::calc_maximum_lane_change_length(common_data_ptr_, current_lanes.back(), max_acc);
+    calculation::calc_maximum_lane_change_length(common_data_ptr_, current_lanes, max_acc);
 
   if (max_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     RCLCPP_DEBUG(
@@ -2339,7 +2339,7 @@ bool NormalLaneChange::isVehicleStuck(const lanelet::ConstLanelets & current_lan
 
   const auto [min_acc, max_acc] = calcCurrentMinMaxAcceleration();
   const auto max_lane_change_length =
-    calculation::calc_maximum_lane_change_length(common_data_ptr_, current_lanes.back(), max_acc);
+    calculation::calc_maximum_lane_change_length(common_data_ptr_, current_lanes, max_acc);
   const auto rss_dist = calcRssDistance(
     0.0, lane_change_parameters_->minimum_lane_changing_velocity,
     lane_change_parameters_->rss_params);

@@ -223,12 +223,16 @@ double calc_maximum_lane_change_length(
 }
 
 double calc_maximum_lane_change_length(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes,
   const double max_acc)
 {
+  if(!common_data_ptr || !common_data_ptr->is_data_available() || lanes.empty()){
+    return std::numeric_limits<double>::max();
+  }
+
   const auto shift_intervals =
     common_data_ptr->route_handler_ptr->getLateralIntervalsToPreferredLane(
-      current_terminal_lanelet);
+      lanes.back());
   const auto vel = std::max(
     common_data_ptr->get_ego_speed(),
     common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity);
