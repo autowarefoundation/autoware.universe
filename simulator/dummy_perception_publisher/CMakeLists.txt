@@ -23,19 +23,19 @@ ament_auto_add_library(signed_distance_function SHARED
   src/signed_distance_function.cpp
 )
 
-ament_auto_add_executable(${PROJECT_NAME}
+ament_auto_add_executable(dummy_perception_publisher_node
   src/main.cpp
   src/node.cpp
   src/pointcloud_creator.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(dummy_perception_publisher_node
   signed_distance_function
 )
 
-ament_target_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_DEPENDENCIES})
+ament_target_dependencies(dummy_perception_publisher_node ${${PROJECT_NAME}_DEPENDENCIES})
 
-target_include_directories(${PROJECT_NAME}
+target_include_directories(dummy_perception_publisher_node
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
@@ -43,14 +43,14 @@ target_include_directories(${PROJECT_NAME}
 # PCL dependencies - `ament_target_dependencies` doesn't respect the
 # components/modules selected above and only links in `common` ,so we need
 # to do this manually.
-target_compile_definitions(${PROJECT_NAME} PRIVATE ${PCL_DEFINITIONS})
-target_include_directories(${PROJECT_NAME} PRIVATE ${PCL_INCLUDE_DIRS})
+target_compile_definitions(dummy_perception_publisher_node PRIVATE ${PCL_DEFINITIONS})
+target_include_directories(dummy_perception_publisher_node PRIVATE ${PCL_INCLUDE_DIRS})
 # Unfortunately, this one can't be PRIVATE because only the plain or only the
 # keyword (PRIVATE) signature of target_link_libraries can be used for one
 # target, not both. The plain signature is already used inside
 # `ament_target_dependencies` and possibly rosidl_target_interfaces.
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES})
-target_link_directories(${PROJECT_NAME} PRIVATE ${PCL_LIBRARY_DIRS})
+target_link_libraries(dummy_perception_publisher_node ${PCL_LIBRARIES})
+target_link_directories(dummy_perception_publisher_node PRIVATE ${PCL_LIBRARY_DIRS})
 
 
 ament_auto_add_executable(empty_objects_publisher
