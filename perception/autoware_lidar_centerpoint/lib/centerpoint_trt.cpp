@@ -157,9 +157,9 @@ bool CenterPointTRT::preprocess(
 
   const std::size_t count = vg_ptr_->generateSweepPoints(points_aux_d_.get(), stream_);
   const std::size_t random_offset = std::rand() % config_.cloud_capacity_;
-  shufflePoints_launch(
+  CHECK_CUDA_ERROR(shufflePoints_launch(
     points_aux_d_.get(), shuffle_indices_d_.get(), points_d_.get(), count, config_.cloud_capacity_,
-    random_offset, stream_);
+    random_offset, stream_));
 
   CHECK_CUDA_ERROR(cudaMemsetAsync(num_voxels_d_.get(), 0, sizeof(unsigned int), stream_));
   CHECK_CUDA_ERROR(
