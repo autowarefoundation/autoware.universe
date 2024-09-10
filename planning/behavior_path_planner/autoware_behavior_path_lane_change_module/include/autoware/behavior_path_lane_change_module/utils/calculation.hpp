@@ -16,8 +16,12 @@
 
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 
+#include <autoware/route_handler/route_handler.hpp>
+
 namespace autoware::behavior_path_planner::utils::lane_change::calculation
 {
+using autoware::route_handler::Direction;
+using autoware::route_handler::RouteHandler;
 using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LCParamPtr;
 
@@ -113,6 +117,21 @@ double calc_maximum_prepare_length(const CommonDataPtr & common_data_ptr);
 double calc_ego_dist_to_lanes_start(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
+
+double calc_minimum_lane_change_length(
+  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals);
+
+double calc_minimum_lane_change_length(
+  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
+  const LaneChangeParameters & lane_change_parameters, Direction direction);
+
+double calc_maximum_lane_change_length(
+  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
+  const std::vector<double> & shift_intervals, const double max_acc);
+
+double calc_maximum_lane_change_length(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
+  const double max_acc);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__CALCULATION_HPP_
