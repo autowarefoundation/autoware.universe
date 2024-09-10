@@ -83,8 +83,8 @@ BEVDet::BEVDet(
     trt_buffer_dev_[buffer_map_["ranks_bev"]], ranks_bev_ptr.get(), valid_feat_num_ * sizeof(int),
     cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev_[buffer_map_["ranks_depth"]], ranks_depth_ptr.get(), valid_feat_num_ * sizeof(int),
-    cudaMemcpyHostToDevice));
+    trt_buffer_dev_[buffer_map_["ranks_depth"]], ranks_depth_ptr.get(),
+    valid_feat_num_ * sizeof(int), cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
     trt_buffer_dev_[buffer_map_["ranks_feat"]], ranks_feat_ptr.get(), valid_feat_num_ * sizeof(int),
     cudaMemcpyHostToDevice));
@@ -228,7 +228,8 @@ void BEVDet::initParams(const std::string & config_file)
 
   postprocess_ptr_.reset(new PostprocessGPU(
     class_num_, score_thresh_, nms_overlap_thresh_, nms_pre_maxnum_, nms_post_maxnum_, down_sample_,
-    bev_h_, bev_w_, x_step_, y_step_, x_start_, y_start_, class_num_pre_task_, nms_rescale_factor_));
+    bev_h_, bev_w_, x_step_, y_step_, x_start_, y_start_, class_num_pre_task_,
+    nms_rescale_factor_));
 }
 
 void BEVDet::mallocDeviceMemory()
@@ -273,7 +274,8 @@ void BEVDet::initViewTransformer(
     for (int d_ = 0; d_ < depth_num_; d_++) {
       for (int h_ = 0; h_ < feat_h_; h_++) {
         for (int w_ = 0; w_ < feat_w_; w_++) {
-          int offset = i * depth_num_ * feat_h_ * feat_w_ + d_ * feat_h_ * feat_w_ + h_ * feat_w_ + w_;
+          int offset =
+            i * depth_num_ * feat_h_ * feat_w_ + d_ * feat_h_ * feat_w_ + h_ * feat_w_ + w_;
           (frustum + offset)->x() = static_cast<float>(w_) * (input_img_w_ - 1) / (feat_w_ - 1);
           (frustum + offset)->y() = static_cast<float>(h_) * (input_img_h_ - 1) / (feat_h_ - 1);
           (frustum + offset)->z() = static_cast<float>(d_) * depth_step_ + depth_start_;
@@ -504,8 +506,8 @@ void BEVDet::getAdjBEVFeature(
     size_t buf_size = trt_buffer_sizes_[buffer_map_["adj_feats"]] / adj_num_;
 
     CHECK_CUDA(cudaMemcpy(
-      reinterpret_cast<char *>(trt_buffer_dev_[buffer_map_["adj_feats"]]) + i * buf_size, adj_buffer,
-      buf_size, cudaMemcpyDeviceToDevice));
+      reinterpret_cast<char *>(trt_buffer_dev_[buffer_map_["adj_feats"]]) + i * buf_size,
+      adj_buffer, buf_size, cudaMemcpyDeviceToDevice));
 
     Eigen::Quaternion<float> adj_ego2global_rot;
     Eigen::Translation3f adj_ego2global_trans;
@@ -584,8 +586,8 @@ int BEVDet::doInfer(
 
   auto start = high_resolution_clock::now();
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev_[buffer_map_["images"]], cam_data.imgs_dev, trt_buffer_sizes_[buffer_map_["images"]],
-    cudaMemcpyDeviceToDevice));
+    trt_buffer_dev_[buffer_map_["images"]], cam_data.imgs_dev,
+    trt_buffer_sizes_[buffer_map_["images"]], cudaMemcpyDeviceToDevice));
 
   initCamParams(
     cam_data.param.cams2ego_rot, cam_data.param.cams2ego_trans, cam_data.param.cams_intrin);
