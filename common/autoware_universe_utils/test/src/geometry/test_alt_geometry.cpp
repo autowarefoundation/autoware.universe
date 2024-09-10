@@ -302,22 +302,25 @@ TEST(alt_geometry, distance)
 TEST(geometry, envelope)
 {
   using autoware::universe_utils::envelope;
-  using autoware::universe_utils::alt::ConvexPolygon2d;
   using autoware::universe_utils::alt::PointList2d;
+  using autoware::universe_utils::alt::Polygon2d;
 
   {
-    const auto poly = ConvexPolygon2d::create(PointList2d{
-                                                {2.0, 1.3},
-                                                {2.4, 1.7},
-                                                {2.8, 1.8},
-                                                {3.4, 1.2},
-                                                {3.7, 1.6},
-                                                {3.4, 2.0},
-                                                {4.1, 3.0},
-                                                {5.3, 2.6},
-                                                {5.4, 1.2},
-                                                {4.9, 0.8},
-                                                {2.9, 0.7}})
+    const auto poly = Polygon2d::create(
+                        PointList2d{
+                          {2.0, 1.3},
+                          {2.4, 1.7},
+                          {2.8, 1.8},
+                          {3.4, 1.2},
+                          {3.7, 1.6},
+                          {3.4, 2.0},
+                          {4.1, 3.0},
+                          {5.3, 2.6},
+                          {5.4, 1.2},
+                          {4.9, 0.8},
+                          {2.9, 0.7},
+                          {2.0, 1.3}},
+                        {PointList2d{{4.0, 2.0}, {4.2, 1.4}, {4.8, 1.9}, {4.4, 2.2}, {4.0, 2.0}}})
                         .value();
     const auto result = envelope(poly);
 

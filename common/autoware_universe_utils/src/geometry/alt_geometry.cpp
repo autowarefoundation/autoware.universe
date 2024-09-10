@@ -387,14 +387,14 @@ double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
   return min_distance;
 }
 
-std::optional<alt::ConvexPolygon2d> envelope(const alt::ConvexPolygon2d & poly)
+std::optional<alt::ConvexPolygon2d> envelope(const alt::Polygon2d & poly)
 {
   const auto [x_min_vertex, x_max_vertex] = std::minmax_element(
-    poly.vertices().begin(), std::prev(poly.vertices().end()),
+    poly.outer().begin(), std::prev(poly.outer().end()),
     [](const auto & a, const auto & b) { return a.x() < b.x(); });
 
   const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
-    poly.vertices().begin(), std::prev(poly.vertices().end()),
+    poly.outer().begin(), std::prev(poly.outer().end()),
     [](const auto & a, const auto & b) { return a.y() < b.y(); });
 
   return alt::ConvexPolygon2d::create(alt::PointList2d{

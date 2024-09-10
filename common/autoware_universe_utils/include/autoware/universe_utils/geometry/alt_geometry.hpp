@@ -180,7 +180,7 @@ double distance(
 
 double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
 
-std::optional<alt::ConvexPolygon2d> envelope(const alt::ConvexPolygon2d & poly);
+std::optional<alt::ConvexPolygon2d> envelope(const alt::Polygon2d & poly);
 
 bool equals(const alt::Point2d & point1, const alt::Point2d & point2);
 
