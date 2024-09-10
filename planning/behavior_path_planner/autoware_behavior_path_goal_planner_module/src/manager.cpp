@@ -25,14 +25,11 @@
 
 namespace autoware::behavior_path_planner
 {
-void GoalPlannerModuleManager::init(rclcpp::Node * node)
+
+GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
+  rclcpp::Node * node, const std::string & base_ns)
 {
-  // init manager interface
-  initInterface(node, {""});
-
   GoalPlannerParameters p;
-
-  const std::string base_ns = "goal_planner.";
   // general params
   {
     p.th_stopped_velocity = node->declare_parameter<double>(base_ns + "th_stopped_velocity");
@@ -62,6 +59,12 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
       node->declare_parameter<double>(ns + "ignore_distance_from_lane_start");
     p.margin_from_boundary = node->declare_parameter<double>(ns + "margin_from_boundary");
     p.high_curvature_threshold = node->declare_parameter<double>(ns + "high_curvature_threshold");
+    p.bus_stop_area.use_bus_stop_area =
+      node->declare_parameter<bool>(ns + "bus_stop_area.use_bus_stop_area");
+    p.bus_stop_area.goal_search_interval =
+      node->declare_parameter<double>(ns + "bus_stop_area.goal_search_interval");
+    p.bus_stop_area.lateral_offset_interval =
+      node->declare_parameter<double>(ns + "bus_stop_area.lateral_offset_interval");
 
     const std::string parking_policy_name =
       node->declare_parameter<std::string>(ns + "parking_policy");
@@ -71,7 +74,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
       p.parking_policy = ParkingPolicy::RIGHT_SIDE;
     } else {
       RCLCPP_ERROR_STREAM(
-        node->get_logger().get_child(name()),
+        node->get_logger(),
         "[goal_planner] invalid parking_policy: " << parking_policy_name << std::endl);
       exit(EXIT_FAILURE);
     }
@@ -115,7 +118,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
       p.object_recognition_collision_check_soft_margins.empty() ||
       p.object_recognition_collision_check_hard_margins.empty()) {
       RCLCPP_FATAL_STREAM(
-        node->get_logger().get_child(name()),
+        node->get_logger(),
         "object_recognition.collision_check_soft_margins and "
           << "object_recognition.collision_check_hard_margins must not be empty. "
           << "Terminating the program...");
@@ -235,6 +238,7 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   //  freespace parking astar
   {
     const std::string ns = base_ns + "pull_over.freespace_parking.astar.";
+    p.astar_parameters.search_method = node->declare_parameter<std::string>(ns + "search_method");
     p.astar_parameters.only_behind_solutions =
       node->declare_parameter<bool>(ns + "only_behind_solutions");
     p.astar_parameters.use_back = node->declare_parameter<bool>(ns + "use_back");
@@ -399,22 +403,28 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
   // validation of parameters
   if (p.shift_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
-      node->get_logger().get_child(name()),
-      "shift_sampling_num must be positive integer. Given parameter: "
-        << p.shift_sampling_num << std::endl
-        << "Terminating the program...");
+      node->get_logger(), "shift_sampling_num must be positive integer. Given parameter: "
+                            << p.shift_sampling_num << std::endl
+                            << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
   if (p.maximum_deceleration < 0.0) {
     RCLCPP_FATAL_STREAM(
-      node->get_logger().get_child(name()),
-      "maximum_deceleration cannot be negative value. Given parameter: "
-        << p.maximum_deceleration << std::endl
-        << "Terminating the program...");
+      node->get_logger(), "maximum_deceleration cannot be negative value. Given parameter: "
+                            << p.maximum_deceleration << std::endl
+                            << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
+  return p;
+}
 
-  parameters_ = std::make_shared<GoalPlannerParameters>(p);
+void GoalPlannerModuleManager::init(rclcpp::Node * node)
+{
+  // init manager interface
+  initInterface(node, {""});
+
+  const std::string base_ns = "goal_planner.";
+  parameters_ = std::make_shared<GoalPlannerParameters>(initGoalPlannerParameters(node, base_ns));
 }
 
 void GoalPlannerModuleManager::updateModuleParams(
@@ -623,6 +633,7 @@ void GoalPlannerModuleManager::updateModuleParams(
   //  freespace parking astar
   {
     const std::string ns = base_ns + "pull_over.freespace_parking.astar.";
+    updateParam<std::string>(parameters, ns + "search_method", p->astar_parameters.search_method);
     updateParam<bool>(
       parameters, ns + "only_behind_solutions", p->astar_parameters.only_behind_solutions);
     updateParam<bool>(parameters, ns + "use_back", p->astar_parameters.use_back);

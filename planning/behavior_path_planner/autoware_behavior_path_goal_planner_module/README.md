@@ -107,7 +107,7 @@ If the target path contains a goal, modify the points of the path so that the pa
 - Route is set with `allow_goal_modification=true` .
   - We can set this option with [SetRoute](https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2) api service.
   - We support `2D Rough Goal Pose` with the key bind `r` in RViz, but in the future there will be a panel of tools to manipulate various Route API from RViz.
-- ego-vehicle is in the same lane as the goal.
+- The terminal point of the current path is in the same lane sequence as the goal. If goal is on the road shoulder, then it is in the adjacent road lane sequence.
 
 <img src="https://user-images.githubusercontent.com/39142679/237929950-989ca6c3-d48c-4bb5-81e5-e8d6a38911aa.png" width="600">
 
@@ -339,13 +339,13 @@ Then there is the concept of soft and hard margins. Although not currently param
 
 #### Parameters for object recognition based collision check
 
-| Name                                                         | Unit | Type           | Description                                                                                              | Default value   |
-| :----------------------------------------------------------- | :--- | :------------- | :------------------------------------------------------------------------------------------------------- | :-------------- |
-| use_object_recognition                                       | [-]  | bool           | flag whether to use object recognition for collision check                                               | true            |
-| object_recognition_collision_check_soft_margins              | [m]  | vector[double] | soft margins for collision check when path generation                                                    | [2.0, 1.5, 1.0] |
-| object_recognition_collision_check_hard_margins              | [m]  | vector[double] | hard margins for collision check when path generation                                                    | [0.6]           |
-| object_recognition_collision_check_max_extra_stopping_margin | [m]  | double         | maximum value when adding longitudinal distance margin for collision check considering stopping distance | 1.0             |
-| detection_bound_offset                                       | [m]  | double         | expand pull over lane with this offset to make detection area for collision check of path generation     | 15.0            |
+| Name                                                         | Unit | Type           | Description                                                                                                                                                            | Default value                                 |
+| :----------------------------------------------------------- | :--- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- |
+| use_object_recognition                                       | [-]  | bool           | flag whether to use object recognition for collision check                                                                                                             | true                                          |
+| object_recognition_collision_check_soft_margins              | [m]  | vector[double] | soft margins for collision check when path generation. It is not strictly the distance between footprints, but the maximum distance when ego and objects are oriented. | [5.0, 4.5, 4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0] |
+| object_recognition_collision_check_hard_margins              | [m]  | vector[double] | hard margins for collision check when path generation                                                                                                                  | [0.6]                                         |
+| object_recognition_collision_check_max_extra_stopping_margin | [m]  | double         | maximum value when adding longitudinal distance margin for collision check considering stopping distance                                                               | 1.0                                           |
+| detection_bound_offset                                       | [m]  | double         | expand pull over lane with this offset to make detection area for collision check of path generation                                                                   | 15.0                                          |
 
 ## **safety check**
 
