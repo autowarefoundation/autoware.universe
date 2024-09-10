@@ -2103,7 +2103,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     std::unique_ptr<ScopedTimeTrack> st1_ptr;
     if (time_keeper_)
       st1_ptr =
-        std::make_unique<ScopedTimeTrack>("searching_refpath_starting_point", *time_keeper_);
+        std::make_unique<ScopedTimeTrack>("searching_ref_path_starting_point", *time_keeper_);
 
     auto & pose_path = it->path;
     if (pose_path.empty()) {
