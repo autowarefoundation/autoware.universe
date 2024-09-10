@@ -57,5 +57,5 @@ costmap_generator_node:
     type: double
     description: Expand object's rectangle with this value
   size_of_expansion_kernel:
-    type: double
+    type: int
     description: Kernel size for blurring effect on object's costmap
