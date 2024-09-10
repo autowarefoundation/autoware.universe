@@ -299,6 +299,26 @@ protected:
     return timestamps;
   }
 
+  template <typename T>
+  void generateAndProcessTwistMsgs(
+    const std::shared_ptr<T> & distortion_corrector, rclcpp::Time timestamp)
+  {
+    auto twist_msgs = generateTwistMsgs(timestamp);
+    for (const auto & twist_msg : twist_msgs) {
+      distortion_corrector->processTwistMessage(twist_msg);
+    }
+  }
+
+  template <typename T>
+  void generateAndProcessIMUMsgs(
+    const std::shared_ptr<T> & distortion_corrector, rclcpp::Time timestamp)
+  {
+    auto imu_msgs = generateImuMsgs(timestamp);
+    for (const auto & imu_msg : imu_msgs) {
+      distortion_corrector->processIMUMessage("base_link", imu_msg);
+    }
+  }
+
   std::shared_ptr<rclcpp::Node> node_;
   std::shared_ptr<autoware::pointcloud_preprocessor::DistortionCorrector2D>
     distortion_corrector_2d_;
@@ -446,10 +466,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyPointCloud)
 {
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
   // Generate an empty point cloud message
   sensor_msgs::msg::PointCloud2 empty_pointcloud =
     generatePointCloudMsg(false, false, "", timestamp, true, {}, {});
@@ -471,10 +488,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
     generatePointCloudMsg(true, false, "", timestamp, true, {}, {});
 
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
 
   // Test using only twist
   distortion_corrector_2d_->initialize();
@@ -518,16 +532,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
     generatePointCloudMsg(true, false, "", timestamp, true, {}, {});
 
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  auto imu_msgs = generateImuMsgs(timestamp);
-  for (const auto & imu_msg : imu_msgs) {
-    distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
-  }
+  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
@@ -570,16 +578,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
     generatePointCloudMsg(true, true, "", timestamp, true, {}, {});
 
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  auto imu_msgs = generateImuMsgs(timestamp);
-  for (const auto & imu_msg : imu_msgs) {
-    distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
-  }
+  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
@@ -625,10 +627,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
     generatePointCloudMsg(true, false, "", timestamp, true, {}, {});
 
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_3d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_3d_, timestamp);
 
   // Test using only twist
   distortion_corrector_3d_->initialize();
@@ -672,16 +671,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
     generatePointCloudMsg(true, false, "", timestamp, true, {}, {});
 
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_3d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_3d_, timestamp);
 
   // Generate and process multiple IMU messages
-  auto imu_msgs = generateImuMsgs(timestamp);
-  for (const auto & imu_msg : imu_msgs) {
-    distortion_corrector_3d_->processIMUMessage("base_link", imu_msg);
-  }
+  generateAndProcessIMUMsgs(distortion_corrector_3d_, timestamp);
 
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
@@ -727,16 +720,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
     generatePointCloudMsg(true, true, "", timestamp, true, {}, {});
 
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_3d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_3d_, timestamp);
 
   // Generate and process multiple IMU messages
-  auto imu_msgs = generateImuMsgs(timestamp);
-  for (const auto & imu_msg : imu_msgs) {
-    distortion_corrector_3d_->processIMUMessage("base_link", imu_msg);
-  }
+  generateAndProcessIMUMsgs(distortion_corrector_3d_, timestamp);
 
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "lidar_top");
@@ -975,16 +962,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdatingAzimuthAndDist
     generatePointCloudMsg(true, false, "", timestamp, true, {}, {});
 
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  auto imu_msgs = generateImuMsgs(timestamp);
-  for (const auto & imu_msg : imu_msgs) {
-    distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
-  }
+  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
@@ -1035,16 +1016,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdatingAzimuthAndDist
     generatePointCloudMsg(true, true, "", timestamp, true, {}, {});
 
   // Generate and process multiple twist messages
-  twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  imu_msgs = generateImuMsgs(timestamp);
-  for (const auto & imu_msg : imu_msgs) {
-    distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
-  }
+  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
@@ -1096,16 +1071,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
     generatePointCloudMsg(true, true, "velodyne", timestamp, true, {}, {});
 
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  auto imu_msgs = generateImuMsgs(timestamp);
-  for (const auto & imu_msg : imu_msgs) {
-    distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
-  }
+  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
@@ -1161,16 +1130,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
     generatePointCloudMsg(true, true, "hesai", timestamp, true, {}, {});
 
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  auto imu_msgs = generateImuMsgs(timestamp);
-  for (const auto & imu_msg : imu_msgs) {
-    distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
-  }
+  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
@@ -1222,10 +1185,8 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsEmptyPointcloud)
   // test empty pointcloud
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+
   sensor_msgs::msg::PointCloud2 empty_pointcloud =
     generatePointCloudMsg(false, false, "", timestamp, true, {}, {});
   EXPECT_FALSE(distortion_corrector_2d_->azimuthConversionExists(empty_pointcloud));
@@ -1236,10 +1197,8 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsVelodynePointcloud)
   // test velodyne pointcloud (x-axis: 0 degree, y-axis: 270 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+
   std::vector<Eigen::Vector3f> velodyne_points = {
     Eigen::Vector3f(0.0f, 0.0f, 0.0f),
     Eigen::Vector3f(1.0f, -1.0f, 1.0f),
@@ -1261,10 +1220,8 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsHesaiPointcloud)
   // test hesai pointcloud (x-axis: 90 degree, y-axis: 0 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+
   std::vector<Eigen::Vector3f> hesai_points = {
     Eigen::Vector3f(0.0f, 0.0f, 0.0f),
     Eigen::Vector3f(1.0f, -1.0f, 1.0f),
@@ -1287,10 +1244,8 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsCartesianPointcloud)
   // test pointcloud that use cartesian coordinate for azimuth (x-axis: 0 degree, y-axis: 90 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+
   std::vector<Eigen::Vector3f> cartesian_points = {
     Eigen::Vector3f(0.0f, 0.0f, 0.0f),
     Eigen::Vector3f(1.0f, 1.0f, 1.0f),
@@ -1312,10 +1267,8 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsRandomPointcloud1)
   // test pointcloud that use coordinate (x-axis: 270 degree, y-axis: 0 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   // Generate and process multiple twist messages
-  auto twist_msgs = generateTwistMsgs(timestamp);
-  for (const auto & twist_msg : twist_msgs) {
-    distortion_corrector_2d_->processTwistMessage(twist_msg);
-  }
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+
   std::vector<Eigen::Vector3f> points = {
     Eigen::Vector3f(0.0f, 1.0f, 0.0f),
     Eigen::Vector3f(2.0f, 0.0f, 1.0f),
