@@ -19,6 +19,7 @@
 #include "autoware_test_utils/mock_data_parser.hpp"
 #include "gtest/gtest.h"
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
