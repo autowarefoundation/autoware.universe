@@ -50,6 +50,9 @@
 #include <string>
 #include <vector>
 
+namespace autoware::ekf_localizer
+{
+
 class Simple1DFilter
 {
 public:
@@ -97,6 +100,12 @@ class EKFLocalizer : public rclcpp::Node
 {
 public:
   explicit EKFLocalizer(const rclcpp::NodeOptions & options);
+
+  // This function is only used in static tools to know when timer callbacks are triggered.
+  std::chrono::nanoseconds time_until_trigger() const
+  {
+    return timer_control_->time_until_trigger();
+  }
 
 private:
   const std::shared_ptr<Warning> warning_;
@@ -216,6 +225,12 @@ private:
     const geometry_msgs::msg::PoseStamped & current_ekf_pose, const rclcpp::Time & current_time);
 
   /**
+   * @brief publish diagnostics message for return
+   */
+  void publish_callback_return_diagnostics(
+    const std::string & callback_name, const rclcpp::Time & current_time);
+
+  /**
    * @brief update simple 1d filter
    */
   void update_simple_1d_filters(
@@ -242,4 +257,7 @@ private:
 
   friend class EKFLocalizerTestSuite;  // for test code
 };
+
+}  // namespace autoware::ekf_localizer
+
 #endif  // EKF_LOCALIZER__EKF_LOCALIZER_HPP_

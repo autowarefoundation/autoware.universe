@@ -327,7 +327,6 @@ void IntersectionModuleManager::launchNewModules(
       continue;
     }
 
-    const std::string location = ll.attributeOr("location", "else");
     const auto associative_ids =
       planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
     bool has_traffic_light = false;
@@ -471,7 +470,7 @@ void IntersectionModuleManager::deleteExpiredModules(
 MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
-  const std::string ns(getModuleName());
+  const std::string ns(MergeFromPrivateModuleManager::getModuleName());
   auto & mp = merge_from_private_area_param_;
   mp.stop_duration_sec = getOrDeclareParameter<double>(node, ns + ".stop_duration_sec");
   mp.attention_area_length =
