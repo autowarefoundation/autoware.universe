@@ -52,7 +52,7 @@ struct AngleConversion
 {
   // Equation for the conversion between sensor azimuth coordinates and Cartesian coordinates:
   // sensor azimuth coordinates = offset_rad + sign * cartesian coordinates;
-  // offset_rad is restricted to be a multiple of 90, and sign is restricted to be 1 or -1.
+  // offset_rad i 0, and sign is restricted to be 1 or -1.
   float offset_rad{0};
   float sign{1};
   float offset_rad_threshold{0.087f};  // (5 / 180) * M_PI
