@@ -599,6 +599,7 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
 
   // steering angle rate limit
   VectorXd steer_rate_limits = calcSteerRateLimitOnTrajectory(traj, current_velocity);
+  m_vehicle_model_ptr->setSteerRateLimits(steer_rate_limits);
   VectorXd ubA = steer_rate_limits * prediction_dt;
   VectorXd lbA = -steer_rate_limits * prediction_dt;
   ubA(0) = m_raw_steer_cmd_prev + steer_rate_limits(0) * m_ctrl_period;

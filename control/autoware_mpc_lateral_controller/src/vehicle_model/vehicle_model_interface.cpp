@@ -44,4 +44,8 @@ void VehicleModelInterface::setCurvature(const double curvature)
 {
   m_curvature = curvature;
 }
+void VehicleModelInterface::setSteerRateLimits(const Eigen::VectorXd steer_rate_limits)
+{
+  m_steer_rate_limits = steer_rate_limits;
+}
 }  // namespace autoware::motion::control::mpc_lateral_controller

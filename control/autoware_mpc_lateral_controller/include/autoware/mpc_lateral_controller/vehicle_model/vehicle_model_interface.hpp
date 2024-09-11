@@ -37,6 +37,8 @@ protected:
   double m_velocity;   //!< @brief vehicle velocity [m/s]
   double m_curvature;  //!< @brief curvature on the linearized point on path
   double m_wheelbase;  //!< @brief wheelbase of the vehicle [m]
+  Eigen::VectorXd
+    m_steer_rate_limits;  //!< @brief steering rate limit along with the trajectory [rad/s]
 
 public:
   /**
@@ -88,6 +90,12 @@ public:
    * @param [in] curvature curvature on the linearized point on path
    */
   void setCurvature(const double curvature);
+
+  /**
+   * @brief set steering rate limits
+   * @param [in] steer_rate_limits steering rate limit along with the trajectory [rad/s]
+   */
+  void setSteerRateLimits(const Eigen::VectorXd steer_rate_limits);
 
   /**
    * @brief calculate discrete model matrix of x_k+1 = a_d * xk + b_d * uk + w_d, yk = c_d * xk
