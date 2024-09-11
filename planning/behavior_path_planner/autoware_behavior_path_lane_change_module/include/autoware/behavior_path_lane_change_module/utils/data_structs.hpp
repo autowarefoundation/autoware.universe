@@ -27,10 +27,10 @@
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
-#include <limits>
 
 namespace autoware::behavior_path_planner::lane_change
 {
@@ -289,6 +289,7 @@ struct CommonData
   LCParamPtr lc_param_ptr;
   LanesPtr lanes_ptr;
   LanesPolygonPtr lanes_polygon_ptr;
+  PathWithLaneId current_lanes_path;
   ModuleType lc_type;
   Direction direction;
 
@@ -332,6 +333,7 @@ struct TransientData
   Boundary acc;
   Boundary current_lc_buffer;
   Boundary next_lc_buffer;
+  double dist_from_ego_to_current_terminal_end{std::numeric_limits<double>::min()};
 };
 }  // namespace autoware::behavior_path_planner::lane_change
 

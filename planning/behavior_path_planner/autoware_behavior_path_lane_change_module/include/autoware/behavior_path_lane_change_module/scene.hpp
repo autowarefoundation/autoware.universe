@@ -151,10 +151,6 @@ protected:
     const double target_lane_length, const double lane_changing_length,
     const double lane_changing_velocity, const double buffer_for_next_lane_change) const;
 
-  bool hasEnoughLength(
-    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes, const Direction direction = Direction::NONE) const;
-
   bool hasEnoughLengthToCrosswalk(
     const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
 

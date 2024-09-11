@@ -52,6 +52,7 @@ using autoware_perception_msgs::msg::PredictedPath;
 using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LanesPolygon;
 using behavior_path_planner::lane_change::PathSafetyStatus;
+using behavior_path_planner::lane_change::TransientData;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
@@ -131,7 +132,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
 double getLateralShift(const LaneChangePath & path);
 
 bool hasEnoughLengthToLaneChangeAfterAbort(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
+  const CommonDataPtr & common_data_ptr, const TransientData & transient_data,
   const double abort_return_dist);
 
 CandidateOutput assignToCandidate(

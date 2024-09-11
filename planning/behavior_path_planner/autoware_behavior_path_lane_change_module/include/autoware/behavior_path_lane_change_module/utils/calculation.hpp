@@ -25,23 +25,6 @@ using autoware::route_handler::RouteHandler;
 using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LCParamPtr;
 
-/**
- * @brief Calculates the distance from the ego vehicle to the terminal point.
- *
- * This function computes the distance from the current position of the ego vehicle
- * to either the goal pose or the end of the current lane, depending on whether
- * the vehicle's current lane is within the goal section.
- *
- * @param common_data_ptr Shared pointer to a CommonData structure, which should include:
- *  - Non null `lanes_ptr` that points to the current lanes data.
- *  - Non null `self_odometry_ptr` that contains the current pose of the ego vehicle.
- *  - Non null `route_handler_ptr` that contains the goal pose of the route.
- *
- * @return The distance to the terminal point (either the goal pose or the end of the current lane)
- * in meters.
- */
-double calc_ego_dist_to_terminal_end(const CommonDataPtr & common_data_ptr);
-
 double calc_dist_from_pose_to_terminal_end(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes,
   const Pose & src_pose);

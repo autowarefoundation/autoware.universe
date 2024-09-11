@@ -14,10 +14,8 @@
 
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
 
-#include "autoware/behavior_path_lane_change_module/utils/calculation.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/path.hpp"
-#include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 #include "autoware/behavior_path_planner_common/parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
@@ -61,7 +59,6 @@ namespace autoware::behavior_path_planner::utils::lane_change
 {
 using autoware::route_handler::RouteHandler;
 using autoware::universe_utils::LineString2d;
-using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -573,32 +570,11 @@ double getLateralShift(const LaneChangePath & path)
 }
 
 bool hasEnoughLengthToLaneChangeAfterAbort(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
-  const double abort_return_dist)
+  const TransientData & transient_data, const double abort_return_dist)
 {
-  if (current_lanes.empty()) {
-    return false;
-  }
-
-  const auto minimum_lane_change_length =
-    calculation::calc_minimum_lane_change_buffer(common_data_ptr, current_lanes);
-  const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
-  const auto current_pose = common_data_ptr->get_ego_pose();
-  if (
-    abort_plus_lane_change_length >
-    utils::getDistanceToEndOfLane(common_data_ptr->get_ego_pose(), current_lanes)) {
-    return false;
-  }
-
-  const auto goal_pose = common_data_ptr->route_handler_ptr->getGoalPose();
-
-  if (
-    abort_plus_lane_change_length >
-    utils::getSignedDistance(current_pose, goal_pose, current_lanes)) {
-    return false;
-  }
-
-  return true;
+  const auto abort_plus_lane_change_length =
+    abort_return_dist + transient_data.current_lc_buffer.min;
+  return abort_plus_lane_change_length <= transient_data.dist_from_ego_to_current_terminal_end;
 }
 
 std::vector<std::vector<int64_t>> getSortedLaneIds(
@@ -879,9 +855,7 @@ bool passed_parked_objects(
     lane_change_parameters.object_check_min_road_shoulder_width;
   const auto & object_shiftable_ratio_threshold =
     lane_change_parameters.object_shiftable_ratio_threshold;
-  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
-  const auto current_lane_path =
-    route_handler.getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto & current_lane_path = common_data_ptr->current_lanes_path;
 
   if (objects.empty() || lane_change_path.path.points.empty() || current_lane_path.points.empty()) {
     return true;
