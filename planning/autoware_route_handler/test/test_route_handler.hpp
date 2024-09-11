@@ -41,7 +41,11 @@ using autoware_map_msgs::msg::LaneletMapBin;
 class TestRouteHandler : public ::testing::Test
 {
 public:
-  TestRouteHandler() { set_route_handler("2km_test.osm"); }
+  TestRouteHandler()
+  {
+    set_route_handler("2km_test.osm");
+    set_test_route(lane_change_right_test_route_filename);
+  }
 
   TestRouteHandler(const TestRouteHandler &) = delete;
   TestRouteHandler(TestRouteHandler &&) = delete;
@@ -57,6 +61,20 @@ public:
     const auto map_bin_msg =
       autoware::test_utils::make_map_bin_msg(lanelet2_path, center_line_resolution);
     route_handler_ = std::make_shared<RouteHandler>(map_bin_msg);
+  }
+
+  std::string get_absolute_path_to_route(
+    const std::string & package_name, const std::string & route_filename)
+  {
+    const auto dir = ament_index_cpp::get_package_share_directory(package_name);
+    return dir + "/test_route/" + route_filename;
+  }
+
+  void set_test_route(const std::string & route_filename)
+  {
+    const auto rh_test_route =
+      get_absolute_path_to_route(autoware_route_handler_dir, route_filename);
+    route_handler_->setRoute(autoware::test_utils::parse_lanelet_route_file(rh_test_route));
   }
 
   lanelet::ConstLanelets get_current_lanes()
