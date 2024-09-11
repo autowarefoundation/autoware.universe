@@ -1428,8 +1428,6 @@ bool NormalLaneChange::getLaneChangePaths(
 
   const auto backward_path_length = common_parameters.backward_path_length;
   const auto forward_path_length = common_parameters.forward_path_length;
-  const auto minimum_lane_changing_velocity =
-    lane_change_parameters_->minimum_lane_changing_velocity;
   const auto lateral_acc_sampling_num = lane_change_parameters_->lateral_acc_sampling_num;
 
   // get velocity
@@ -1448,8 +1446,10 @@ bool NormalLaneChange::getLaneChangePaths(
     *lane_change_parameters_,
     route_handler.getLateralIntervalsToPreferredLane(target_lanes.back()));
 
-  const auto dist_to_end_of_current_lanes =
-    calculation::calc_ego_dist_to_terminal_end(common_data_ptr_);
+  const auto dist_to_terminal_end = calculation::calc_ego_dist_to_terminal_end(common_data_ptr_);
+  const auto dist_to_target_start =
+    calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
+  const auto dist_to_terminal_start = dist_to_terminal_end - lane_change_buffer;
 
   const auto target_lane_length = lanelet::utils::getLaneletLength2d(target_lanes);
 
@@ -1471,245 +1471,172 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto dist_to_next_regulatory_element =
     utils::lane_change::get_distance_to_next_regulatory_element(common_data_ptr_, only_tl, only_tl);
 
-  for (const auto & prepare_duration : prepare_durations) {
-    for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
-      // get path on original lanes
-      const auto prepare_velocity = std::clamp(
-        current_velocity + sampled_longitudinal_acc * prepare_duration,
-        minimum_lane_changing_velocity, getCommonParam().max_vel);
+  const auto prepare_phase_metrics = calculation::calc_prepare_phase_metrics(
+    common_data_ptr_, prepare_durations, longitudinal_acc_sampling_values, current_velocity,
+    dist_to_target_start, dist_to_terminal_start);
 
-      // compute actual longitudinal acceleration
-      const double longitudinal_acc_on_prepare =
-        (prepare_duration < 1e-3) ? 0.0
-                                  : ((prepare_velocity - current_velocity) / prepare_duration);
+  for (const auto & prep_metric : prepare_phase_metrics) {
+    const auto debug_print = [&](const auto & s) {
+      RCLCPP_DEBUG(
+        logger_, "%s | prep_time: %.5f | lon_acc: %.5f | prep_len: %.5f", s, prep_metric.duration,
+        prep_metric.lon_accel, prep_metric.length);
+    };
 
-      const auto prepare_length = utils::lane_change::calcPhaseLength(
-        current_velocity, getCommonParam().max_vel, longitudinal_acc_on_prepare, prepare_duration);
+    auto prepare_segment =
+      getPrepareSegment(current_lanes, backward_path_length, prep_metric.length);
 
-      const auto ego_dist_to_terminal_start = dist_to_end_of_current_lanes - lane_change_buffer;
-      if (prepare_length > ego_dist_to_terminal_start) {
+    if (prepare_segment.points.empty()) {
+      debug_print("prepare segment is empty...? Unexpected.");
+      continue;
+    }
+
+    if (!is_valid_start_point(common_data_ptr_, prepare_segment.points.back().point.pose)) {
+      debug_print(
+        "Reject: lane changing start point is not within the preferred lanes or its neighbors");
+      continue;
+    }
+
+    // lane changing start is at the end of prepare segment
+    const auto & lane_changing_start_pose = prepare_segment.points.back().point.pose;
+    const auto target_length_from_lane_change_start_pose = utils::getArcLengthToTargetLanelet(
+      current_lanes, target_lanes.front(), lane_changing_start_pose);
+
+    // Check if the lane changing start point is not on the lanes next to target lanes,
+    if (target_length_from_lane_change_start_pose > 0.0) {
+      debug_print("lane change start is behind target lanelet!");
+      break;
+    }
+
+    debug_print("Prepare path satisfy constraints");
+
+    const auto initial_lane_changing_velocity = prep_metric.velocity;
+    const auto max_path_velocity = prepare_segment.points.back().point.longitudinal_velocity_mps;
+    const auto shift_length =
+      lanelet::utils::getLateralDistanceToClosestLanelet(target_lanes, lane_changing_start_pose);
+    const auto max_lane_changing_length =
+      std::min(dist_to_terminal_end, dist_to_next_regulatory_element) - prep_metric.length;
+
+    const auto lane_changing_metrics = calculation::calc_shift_phase_metrics(
+      common_data_ptr_, shift_length, initial_lane_changing_velocity, max_path_velocity,
+      prep_metric.lon_accel, max_lane_changing_length);
+
+    const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
+      common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor, lane_changing_start_pose);
+
+    for (const auto & lc_metric : lane_changing_metrics) {
+      const auto debug_print_lat = [&](const auto & s) {
         RCLCPP_DEBUG(
-          logger_,
-          "Reject: Prepare length exceed distance to terminal start. prep_len: %.5f,  ego dist to "
-          "terminal start: %.5f",
-          prepare_length, ego_dist_to_terminal_start);
-        continue;
-      }
-
-      if (!candidate_paths->empty()) {
-        const auto prev_prep_diff = candidate_paths->back().info.length.prepare - prepare_length;
-        if (std::abs(prev_prep_diff) < lane_change_parameters_->skip_process_lon_diff_th_prepare) {
-          RCLCPP_DEBUG(logger_, "Skip: Change in prepare length is less than threshold.");
-          continue;
-        }
-      }
-      auto prepare_segment = getPrepareSegment(current_lanes, backward_path_length, prepare_length);
-
-      const auto debug_print = [&](const auto & s) {
-        RCLCPP_DEBUG(
-          logger_, "%s | prep_time: %.5f | lon_acc sampled: %.5f, actual: %.5f | prep_len: %.5f", s,
-          prepare_duration, sampled_longitudinal_acc, longitudinal_acc_on_prepare, prepare_length);
+          logger_, "    -  %s | lc_time: %.5f | lon_acc: %.5f | lat_acc: %.5f | lc_len: %.5f", s,
+          lc_metric.duration, lc_metric.lon_accel, lc_metric.lat_accel, lc_metric.length);
       };
 
-      if (prepare_segment.points.empty()) {
-        debug_print("prepare segment is empty...? Unexpected.");
+      // if multiple lane change is necessary, does the remaining distance is sufficient
+      const auto remaining_dist_in_target = std::invoke([&]() {
+        const auto finish_judge_buffer = lane_change_parameters_->lane_change_finish_judge_buffer;
+        const auto num_to_preferred_lane_from_target_lane =
+          std::abs(route_handler.getNumLaneToPreferredLane(target_lanes.back(), direction));
+        const auto backward_len_buffer =
+          lane_change_parameters_->backward_length_buffer_for_end_of_lane;
+        const auto backward_buffer_to_target_lane =
+          num_to_preferred_lane_from_target_lane == 0 ? 0.0 : backward_len_buffer;
+        return lc_metric.length + finish_judge_buffer + backward_buffer_to_target_lane +
+               next_lane_change_buffer;
+      });
+
+      if (remaining_dist_in_target > dist_lc_start_to_end_of_lanes) {
+        debug_print_lat("Reject: length of lane changing path is longer than length to goal!!");
         continue;
       }
 
-      if (!is_valid_start_point(common_data_ptr_, prepare_segment.points.back().point.pose)) {
-        debug_print(
-          "Reject: lane changing start point is not within the preferred lanes or its neighbors");
+      const auto terminal_lane_changing_velocity = std::min(
+        initial_lane_changing_velocity + lc_metric.lon_accel * lc_metric.duration,
+        getCommonParam().max_vel);
+      utils::lane_change::setPrepareVelocity(
+        prepare_segment, current_velocity, terminal_lane_changing_velocity);
+
+      const auto target_segment = getTargetSegment(
+        target_lanes, lane_changing_start_pose, target_lane_length, lc_metric.length,
+        initial_lane_changing_velocity, next_lane_change_buffer);
+
+      if (target_segment.points.empty()) {
+        debug_print_lat("Reject: target segment is empty!! something wrong...");
         continue;
       }
 
-      // lane changing start getEgoPose() is at the end of prepare segment
-      const auto & lane_changing_start_pose = prepare_segment.points.back().point.pose;
-      const auto target_length_from_lane_change_start_pose = utils::getArcLengthToTargetLanelet(
-        current_lanes, target_lanes.front(), lane_changing_start_pose);
+      LaneChangeInfo lane_change_info;
+      lane_change_info.longitudinal_acceleration =
+        LaneChangePhaseInfo{prep_metric.lon_accel, lc_metric.lon_accel};
+      lane_change_info.duration = LaneChangePhaseInfo{prep_metric.duration, lc_metric.duration};
+      lane_change_info.velocity =
+        LaneChangePhaseInfo{prep_metric.velocity, initial_lane_changing_velocity};
+      lane_change_info.length = LaneChangePhaseInfo{prep_metric.length, lc_metric.length};
+      lane_change_info.lane_changing_start = prepare_segment.points.back().point.pose;
+      lane_change_info.lane_changing_end = target_segment.points.front().point.pose;
+      lane_change_info.lateral_acceleration = lc_metric.lat_accel;
+      lane_change_info.terminal_lane_changing_velocity = terminal_lane_changing_velocity;
 
-      // Check if the lane changing start point is not on the lanes next to target lanes,
-      if (target_length_from_lane_change_start_pose > 0.0) {
-        debug_print("lane change start getEgoPose() is behind target lanelet!");
-        break;
+      const auto resample_interval = utils::lane_change::calcLaneChangeResampleInterval(
+        lc_metric.length, initial_lane_changing_velocity);
+      const auto target_lane_reference_path = utils::lane_change::getReferencePathFromTargetLane(
+        route_handler, target_lanes, lane_changing_start_pose, target_lane_length, lc_metric.length,
+        forward_path_length, resample_interval, is_goal_in_route, next_lane_change_buffer);
+
+      if (target_lane_reference_path.points.empty()) {
+        debug_print_lat("Reject: target_lane_reference_path is empty!!");
+        continue;
       }
 
-      const auto shift_length =
-        lanelet::utils::getLateralDistanceToClosestLanelet(target_lanes, lane_changing_start_pose);
+      lane_change_info.shift_line = utils::lane_change::getLaneChangingShiftLine(
+        prepare_segment, target_segment, target_lane_reference_path, shift_length);
 
-      const auto initial_lane_changing_velocity = prepare_velocity;
-      const auto max_path_velocity = prepare_segment.points.back().point.longitudinal_velocity_mps;
+      const auto candidate_path = utils::lane_change::constructCandidatePath(
+        common_data_ptr_, lane_change_info, prepare_segment, target_segment,
+        target_lane_reference_path, sorted_lane_ids);
 
-      // get lateral acceleration range
-      const auto [min_lateral_acc, max_lateral_acc] =
-        lane_change_parameters_->lane_change_lat_acc_map.find(initial_lane_changing_velocity);
-      const auto lateral_acc_resolution =
-        std::abs(max_lateral_acc - min_lateral_acc) / lateral_acc_sampling_num;
-
-      std::vector<double> sample_lat_acc;
-      constexpr double eps = 0.01;
-      for (double a = min_lateral_acc; a < max_lateral_acc + eps; a += lateral_acc_resolution) {
-        sample_lat_acc.push_back(a);
+      if (!candidate_path) {
+        debug_print_lat("Reject: failed to generate candidate path!!");
+        continue;
       }
-      RCLCPP_DEBUG(logger_, "  -  sampling num for lat_acc: %lu", sample_lat_acc.size());
 
-      debug_print("Prepare path satisfy constraints");
-      const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
-        common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor, lane_changing_start_pose);
+      if (!hasEnoughLength(*candidate_path, current_lanes, target_lanes, direction)) {
+        debug_print_lat("Reject: invalid candidate path!!");
+        continue;
+      }
 
-      for (const auto & lateral_acc : sample_lat_acc) {
-        const auto lane_changing_time = PathShifter::calcShiftTimeFromJerk(
-          shift_length, lane_change_parameters_->lane_changing_lateral_jerk, lateral_acc);
-        const double longitudinal_acc_on_lane_changing =
-          utils::lane_change::calcLaneChangingAcceleration(
-            initial_lane_changing_velocity, max_path_velocity, lane_changing_time,
-            sampled_longitudinal_acc);
-        const auto lane_changing_length = utils::lane_change::calcPhaseLength(
-          initial_lane_changing_velocity, getCommonParam().max_vel,
-          longitudinal_acc_on_lane_changing, lane_changing_time);
+      candidate_paths->push_back(*candidate_path);
 
-        const auto debug_print_lat = [&](const auto & s) {
-          RCLCPP_DEBUG(
-            logger_,
-            "    -  %s | lc_time: %.5f | lon_acc sampled: %.5f, actual: %.5f | lc_len: %.5f", s,
-            lane_changing_time, sampled_longitudinal_acc, longitudinal_acc_on_lane_changing,
-            lane_changing_length);
-        };
-        if (!candidate_paths->empty()) {
-          const auto prev_prep_diff = candidate_paths->back().info.length.prepare - prepare_length;
-          const auto lc_length_diff =
-            candidate_paths->back().info.length.lane_changing - lane_changing_length;
+      if (
+        !is_stuck && !utils::lane_change::passed_parked_objects(
+                       common_data_ptr_, *candidate_path, filtered_objects_.target_lane_leading,
+                       lane_change_buffer, lane_change_debug_.collision_check_objects)) {
+        debug_print_lat(
+          "Reject: parking vehicle exists in the target lane, and the ego is not in stuck. Skip "
+          "lane change.");
+        return false;
+      }
 
-          // We only check lc_length_diff if and only if the current prepare_length is equal to the
-          // previous prepare_length.
-          if (
-            std::abs(prev_prep_diff) < eps &&
-            std::abs(lc_length_diff) <
-              lane_change_parameters_->skip_process_lon_diff_th_lane_changing) {
-            RCLCPP_DEBUG(logger_, "Skip: Change in lane changing length is less than threshold.");
-            continue;
-          }
-        }
+      const auto is_safe = std::invoke([&]() {
+        constexpr size_t decel_sampling_num = 1;
+        const auto safety_check_with_normal_rss = isLaneChangePathSafe(
+          *candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params,
+          decel_sampling_num, lane_change_debug_.collision_check_objects);
 
-        if (lane_changing_length + prepare_length > dist_to_end_of_current_lanes) {
-          debug_print_lat("Reject: length of lane changing path is longer than length to goal!!");
-          continue;
-        }
-
-        if (lane_changing_length + prepare_length > dist_to_next_regulatory_element) {
-          debug_print_lat(
-            "Reject: length of lane changing path is longer than length to regulatory element!!");
-          continue;
-        }
-
-        // if multiple lane change is necessary, does the remaining distance is sufficient
-        const auto remaining_dist_in_target = std::invoke([&]() {
-          const auto finish_judge_buffer = lane_change_parameters_->lane_change_finish_judge_buffer;
-          const auto num_to_preferred_lane_from_target_lane =
-            std::abs(route_handler.getNumLaneToPreferredLane(target_lanes.back(), direction));
-          const auto backward_len_buffer =
-            lane_change_parameters_->backward_length_buffer_for_end_of_lane;
-          const auto backward_buffer_to_target_lane =
-            num_to_preferred_lane_from_target_lane == 0 ? 0.0 : backward_len_buffer;
-          return lane_changing_length + finish_judge_buffer + backward_buffer_to_target_lane +
-                 next_lane_change_buffer;
-        });
-
-        if (remaining_dist_in_target > dist_lc_start_to_end_of_lanes) {
-          debug_print_lat("Reject: length of lane changing path is longer than length to goal!!");
-          continue;
-        }
-
-        const auto terminal_lane_changing_velocity = std::min(
-          initial_lane_changing_velocity + longitudinal_acc_on_lane_changing * lane_changing_time,
-          getCommonParam().max_vel);
-        utils::lane_change::setPrepareVelocity(
-          prepare_segment, current_velocity, terminal_lane_changing_velocity);
-
-        const auto target_segment = getTargetSegment(
-          target_lanes, lane_changing_start_pose, target_lane_length, lane_changing_length,
-          initial_lane_changing_velocity, next_lane_change_buffer);
-
-        if (target_segment.points.empty()) {
-          debug_print_lat("Reject: target segment is empty!! something wrong...");
-          continue;
-        }
-
-        LaneChangeInfo lane_change_info;
-        lane_change_info.longitudinal_acceleration =
-          LaneChangePhaseInfo{longitudinal_acc_on_prepare, longitudinal_acc_on_lane_changing};
-        lane_change_info.duration = LaneChangePhaseInfo{prepare_duration, lane_changing_time};
-        lane_change_info.velocity =
-          LaneChangePhaseInfo{prepare_velocity, initial_lane_changing_velocity};
-        lane_change_info.length = LaneChangePhaseInfo{prepare_length, lane_changing_length};
-        lane_change_info.lane_changing_start = prepare_segment.points.back().point.pose;
-        lane_change_info.lane_changing_end = target_segment.points.front().point.pose;
-        lane_change_info.lateral_acceleration = lateral_acc;
-        lane_change_info.terminal_lane_changing_velocity = terminal_lane_changing_velocity;
-
-        const auto resample_interval = utils::lane_change::calcLaneChangeResampleInterval(
-          lane_changing_length, initial_lane_changing_velocity);
-        const auto target_lane_reference_path = utils::lane_change::getReferencePathFromTargetLane(
-          route_handler, target_lanes, lane_changing_start_pose, target_lane_length,
-          lane_changing_length, forward_path_length, resample_interval, is_goal_in_route,
-          next_lane_change_buffer);
-
-        if (target_lane_reference_path.points.empty()) {
-          debug_print_lat("Reject: target_lane_reference_path is empty!!");
-          continue;
-        }
-
-        lane_change_info.shift_line = utils::lane_change::getLaneChangingShiftLine(
-          prepare_segment, target_segment, target_lane_reference_path, shift_length);
-
-        const auto candidate_path = utils::lane_change::constructCandidatePath(
-          common_data_ptr_, lane_change_info, prepare_segment, target_segment,
-          target_lane_reference_path, sorted_lane_ids);
-
-        if (!candidate_path) {
-          debug_print_lat("Reject: failed to generate candidate path!!");
-          continue;
-        }
-
-        if (!hasEnoughLength(*candidate_path, current_lanes, target_lanes, direction)) {
-          debug_print_lat("Reject: invalid candidate path!!");
-          continue;
-        }
-
-        candidate_paths->push_back(*candidate_path);
-
-        if (
-          !is_stuck && !utils::lane_change::passed_parked_objects(
-                         common_data_ptr_, *candidate_path, filtered_objects_.target_lane_leading,
-                         lane_change_buffer, lane_change_debug_.collision_check_objects)) {
-          debug_print_lat(
-            "Reject: parking vehicle exists in the target lane, and the ego is not in stuck. Skip "
-            "lane change.");
-          return false;
-        }
-
-        const auto is_safe = std::invoke([&]() {
-          constexpr size_t decel_sampling_num = 1;
-          const auto safety_check_with_normal_rss = isLaneChangePathSafe(
-            *candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params,
+        if (!safety_check_with_normal_rss.is_safe && is_stuck) {
+          const auto safety_check_with_stuck_rss = isLaneChangePathSafe(
+            *candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params_for_stuck,
             decel_sampling_num, lane_change_debug_.collision_check_objects);
-
-          if (!safety_check_with_normal_rss.is_safe && is_stuck) {
-            const auto safety_check_with_stuck_rss = isLaneChangePathSafe(
-              *candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params_for_stuck,
-              decel_sampling_num, lane_change_debug_.collision_check_objects);
-            return safety_check_with_stuck_rss.is_safe;
-          }
-
-          return safety_check_with_normal_rss.is_safe;
-        });
-
-        if (is_safe) {
-          debug_print_lat("ACCEPT!!!: it is valid and safe!");
-          return true;
+          return safety_check_with_stuck_rss.is_safe;
         }
 
-        debug_print_lat("Reject: sampled path is not safe.");
+        return safety_check_with_normal_rss.is_safe;
+      });
+
+      if (is_safe) {
+        debug_print_lat("ACCEPT!!!: it is valid and safe!");
+        return true;
       }
+
+      debug_print_lat("Reject: sampled path is not safe.");
     }
   }
 

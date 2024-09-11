@@ -192,6 +192,15 @@ struct PhaseInfo
   }
 };
 
+struct PhaseMetrics
+{
+  double duration;
+  double length;
+  double velocity;
+  double lon_accel;
+  double lat_accel;
+};
+
 struct Lanes
 {
   bool current_lane_in_goal_section{false};

@@ -20,6 +20,13 @@
 
 namespace autoware::behavior_path_planner::utils::lane_change::calculation
 {
+
+rclcpp::Logger get_logger()
+{
+  constexpr const char * name{"lane_change.calculation"};
+  return rclcpp::get_logger(name);
+}
+
 double calc_ego_dist_to_terminal_end(const CommonDataPtr & common_data_ptr)
 {
   const auto & lanes_ptr = common_data_ptr->lanes_ptr;
@@ -230,5 +237,141 @@ double calc_maximum_lane_change_length(
     common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity);
   return calc_maximum_lane_change_length(
     vel, *common_data_ptr->lc_param_ptr, shift_intervals, max_acc);
+}
+
+double calc_phase_length(
+  const double velocity, const double maximum_velocity, const double acceleration,
+  const double duration)
+{
+  const auto length_with_acceleration =
+    velocity * duration + 0.5 * acceleration * std::pow(duration, 2);
+  const auto length_with_max_velocity = maximum_velocity * duration;
+  return std::min(length_with_acceleration, length_with_max_velocity);
+}
+
+double calc_lane_changing_acceleration(
+  const double initial_lane_changing_velocity, const double max_path_velocity,
+  const double lane_changing_time, const double prepare_longitudinal_acc)
+{
+  if (prepare_longitudinal_acc <= 0.0) {
+    return 0.0;
+  }
+
+  return std::clamp(
+    (max_path_velocity - initial_lane_changing_velocity) / lane_changing_time, 0.0,
+    prepare_longitudinal_acc);
+}
+
+std::vector<PhaseMetrics> calc_prepare_phase_metrics(
+  const CommonDataPtr & common_data_ptr, const std::vector<double> & prepare_durations,
+  const std::vector<double> & lon_accel_values, const double current_velocity,
+  const double min_length_threshold, const double max_length_threshold)
+{
+  const auto & min_lc_vel = common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity;
+  const auto & max_vel = common_data_ptr->bpp_param_ptr->max_vel;
+
+  std::vector<PhaseMetrics> metrics;
+
+  auto is_skip = [&](const double prepare_length) {
+    if (prepare_length > max_length_threshold || prepare_length < min_length_threshold) {
+      RCLCPP_DEBUG(
+        get_logger(),
+        "Skip: prepare length out of expected range. length: %.5f, threshold min: %.5f, max: %.5f",
+        prepare_length, min_length_threshold, max_length_threshold);
+      return true;
+    }
+
+    if (metrics.empty()) return false;
+
+    const auto length_diff = std::abs(metrics.back().length - prepare_length);
+    if (length_diff < common_data_ptr->lc_param_ptr->skip_process_lon_diff_th_prepare) {
+      RCLCPP_DEBUG(get_logger(), "Skip: Change in prepare length is less than threshold.");
+      return true;
+    }
+
+    return false;
+  };
+
+  metrics.reserve(prepare_durations.size() * lon_accel_values.size());
+  for (const auto & prepare_duration : prepare_durations) {
+    for (const auto & lon_accel : lon_accel_values) {
+      const auto prepare_velocity =
+        std::clamp(current_velocity + lon_accel * prepare_duration, min_lc_vel, max_vel);
+
+      // compute actual longitudinal acceleration
+      const double prepare_accel = (prepare_duration < 1e-3)
+                                     ? 0.0
+                                     : ((prepare_velocity - current_velocity) / prepare_duration);
+
+      const auto prepare_length =
+        calc_phase_length(current_velocity, max_vel, prepare_accel, prepare_duration);
+
+      if (is_skip(prepare_length)) continue;
+
+      metrics.push_back({prepare_duration, prepare_length, prepare_velocity, prepare_accel, 0.0});
+    }
+  }
+
+  return metrics;
+}
+
+std::vector<PhaseMetrics> calc_shift_phase_metrics(
+  const CommonDataPtr & common_data_ptr, const double shift_length, const double initial_velocity,
+  const double max_velocity, const double lon_accel, const double max_length_threshold)
+{
+  const auto & min_lc_vel = common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity;
+  const auto & max_vel = common_data_ptr->bpp_param_ptr->max_vel;
+
+  // get lateral acceleration range
+  const auto [min_lateral_acc, max_lateral_acc] =
+    common_data_ptr->lc_param_ptr->lane_change_lat_acc_map.find(initial_velocity);
+  const auto lateral_acc_resolution = std::abs(max_lateral_acc - min_lateral_acc) /
+                                      common_data_ptr->lc_param_ptr->lateral_acc_sampling_num;
+
+  std::vector<PhaseMetrics> metrics;
+
+  auto is_skip = [&](const double lane_changing_length) {
+    if (lane_changing_length > max_length_threshold) {
+      RCLCPP_DEBUG(
+        get_logger(),
+        "Skip: lane changing length exceeds maximum threshold. length: %.5f, threshold: %.5f",
+        lane_changing_length, max_length_threshold);
+      return true;
+    }
+
+    if (metrics.empty()) return false;
+
+    const auto length_diff = std::abs(metrics.back().length - lane_changing_length);
+    if (length_diff < common_data_ptr->lc_param_ptr->skip_process_lon_diff_th_prepare) {
+      RCLCPP_DEBUG(get_logger(), "Skip: Change in lane changing length is less than threshold.");
+      return true;
+    }
+
+    return false;
+  };
+
+  for (double lat_acc = min_lateral_acc; lat_acc < max_lateral_acc + eps;
+       lat_acc += lateral_acc_resolution) {
+    const auto lane_changing_duration = PathShifter::calcShiftTimeFromJerk(
+      shift_length, common_data_ptr->lc_param_ptr->lane_changing_lateral_jerk, lat_acc);
+
+    const double lane_changing_accel = calc_lane_changing_acceleration(
+      initial_velocity, max_velocity, lane_changing_duration, lon_accel);
+
+    const auto lane_changing_length = calculation::calc_phase_length(
+      initial_velocity, common_data_ptr->bpp_param_ptr->max_vel, lane_changing_accel,
+      lane_changing_duration);
+
+    if (is_skip(lane_changing_length)) continue;
+
+    const auto lane_changing_velocity = std::clamp(
+      initial_velocity + lane_changing_accel * lane_changing_duration, min_lc_vel, max_vel);
+
+    metrics.push_back(
+      {lane_changing_duration, lane_changing_length, lane_changing_velocity, lane_changing_accel,
+       lat_acc});
+  }
+
+  return metrics;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
