@@ -56,6 +56,10 @@ private:
 
   bool can_update_azimuth_and_distance_{false};
 
+  std::optional<AngleConversion> angle_conversion_opt_;
+  int angle_conversion_failure_num_{0};
+  int failure_tolerance_{10};
+
   std::unique_ptr<DistortionCorrectorBase> distortion_corrector_;
 
   void onPointCloud(PointCloud2::UniquePtr points_msg);

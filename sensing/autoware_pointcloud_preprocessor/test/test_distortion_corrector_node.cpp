@@ -382,29 +382,19 @@ TEST_F(DistortionCorrectorTest, TestProcessIMUMessage)
     standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, TestIsInputValid)
+TEST_F(DistortionCorrectorTest, TestIsPointCloudValid)
 {
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
 
-  // input normal pointcloud without twist
-  sensor_msgs::msg::PointCloud2 pointcloud =
+  auto pointcloud =
     generatePointCloudMsg(true, false, AngleCoordinateSystem::CARTESIAN, timestamp, true, {}, {});
-  bool result = distortion_corrector_2d_->isInputValid(pointcloud);
-  EXPECT_FALSE(result);
-
-  // input normal pointcloud with valid twist
-  auto twist_msg = generateTwistMsg(twist_linear_x_, twist_angular_z_, timestamp);
-  distortion_corrector_2d_->processTwistMessage(twist_msg);
-
-  pointcloud =
-    generatePointCloudMsg(true, false, AngleCoordinateSystem::CARTESIAN, timestamp, true, {}, {});
-  result = distortion_corrector_2d_->isInputValid(pointcloud);
+  auto result = distortion_corrector_2d_->isPointCloudValid(pointcloud);
   EXPECT_TRUE(result);
 
   // input empty pointcloud
   pointcloud =
     generatePointCloudMsg(false, false, AngleCoordinateSystem::CARTESIAN, timestamp, true, {}, {});
-  result = distortion_corrector_2d_->isInputValid(pointcloud);
+  result = distortion_corrector_2d_->isPointCloudValid(pointcloud);
   EXPECT_FALSE(result);
 }
 
@@ -438,7 +428,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
 
   // Process empty twist queue
   distortion_corrector_2d_->initialize();
-  distortion_corrector_2d_->undistortPointCloud(false, false, pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(false, std::nullopt, pointcloud);
 
   // Verify the point cloud is not changed
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
@@ -478,7 +468,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyPointCloud)
 
   // Process empty point cloud
   distortion_corrector_2d_->initialize();
-  distortion_corrector_2d_->undistortPointCloud(true, false, empty_pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(true, std::nullopt, empty_pointcloud);
 
   // Verify the point cloud is still empty
   EXPECT_EQ(empty_pointcloud.width, 0);
@@ -498,7 +488,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
   // Test using only twist
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_2d_->undistortPointCloud(false, false, pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(false, std::nullopt, pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -544,7 +534,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_2d_->undistortPointCloud(true, false, pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(true, std::nullopt, pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -590,7 +580,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
-  distortion_corrector_2d_->undistortPointCloud(true, false, pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(true, std::nullopt, pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -637,7 +627,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
   // Test using only twist
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_3d_->undistortPointCloud(false, false, pointcloud);
+  distortion_corrector_3d_->undistortPointCloud(false, std::nullopt, pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -683,7 +673,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
 
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_3d_->undistortPointCloud(true, false, pointcloud);
+  distortion_corrector_3d_->undistortPointCloud(true, std::nullopt, pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -732,7 +722,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
 
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "lidar_top");
-  distortion_corrector_3d_->undistortPointCloud(true, false, pointcloud);
+  distortion_corrector_3d_->undistortPointCloud(true, std::nullopt, pointcloud);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
@@ -779,12 +769,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
   distortion_corrector_2d_->processTwistMessage(twist_msg);
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_2d_->undistortPointCloud(false, false, test2d_pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(false, std::nullopt, test2d_pointcloud);
 
   distortion_corrector_3d_->processTwistMessage(twist_msg);
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_3d_->undistortPointCloud(false, false, test3d_pointcloud);
+  distortion_corrector_3d_->undistortPointCloud(false, std::nullopt, test3d_pointcloud);
 
   // Generate expected point cloud for testing
   sensor_msgs::msg::PointCloud2 expected_pointcloud_msg =
@@ -868,12 +858,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
   distortion_corrector_2d_->processTwistMessage(twist_msg);
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_2d_->undistortPointCloud(false, false, test2d_pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(false, std::nullopt, test2d_pointcloud);
 
   distortion_corrector_3d_->processTwistMessage(twist_msg);
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_3d_->undistortPointCloud(false, false, test3d_pointcloud);
+  distortion_corrector_3d_->undistortPointCloud(false, std::nullopt, test3d_pointcloud);
 
   // Generate expected point cloud for testing
   sensor_msgs::msg::PointCloud2 expected_pointcloud_msg =
@@ -959,7 +949,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdatingAzimuthAndDistance)
 {
   // Test the case when the cloud will not update the azimuth and distance values
-  // 1. when pointcloud is in base_link
+  // 1. when pointcloud is in base_link (pointcloudTransformNeeded() is false)
 
   // Generate the point cloud message in base_link
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -974,11 +964,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdatingAzimuthAndDist
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  auto can_update_azimuth_and_distance =
-    distortion_corrector_2d_->azimuthConversionExists(pointcloud_base_link);
+  auto angle_conversion_opt =
+    distortion_corrector_2d_->tryComputeAngleConversion(pointcloud_base_link);
 
-  distortion_corrector_2d_->undistortPointCloud(
-    true, can_update_azimuth_and_distance, pointcloud_base_link);
+  distortion_corrector_2d_->undistortPointCloud(true, angle_conversion_opt, pointcloud_base_link);
 
   sensor_msgs::msg::PointCloud2 original_pointcloud_base_link =
     generatePointCloudMsg(true, false, AngleCoordinateSystem::CARTESIAN, timestamp, true, {}, {});
@@ -1029,9 +1018,8 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudNotUpdatingAzimuthAndDist
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
   // set the empty coordinate system
-  can_update_azimuth_and_distance = false;
-  distortion_corrector_2d_->undistortPointCloud(
-    true, can_update_azimuth_and_distance, pointcloud_lidar_top);
+  angle_conversion_opt = distortion_corrector_2d_->tryComputeAngleConversion(pointcloud_base_link);
+  distortion_corrector_2d_->undistortPointCloud(true, angle_conversion_opt, pointcloud_lidar_top);
 
   sensor_msgs::msg::PointCloud2 original_pointcloud_lidar_top =
     generatePointCloudMsg(true, true, AngleCoordinateSystem::CARTESIAN, timestamp, true, {}, {});
@@ -1083,10 +1071,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
-  // set the azimuth coordinate system
-  auto can_update_azimuth_and_distance =
-    distortion_corrector_2d_->azimuthConversionExists(pointcloud);
-  distortion_corrector_2d_->undistortPointCloud(true, can_update_azimuth_and_distance, pointcloud);
+
+  auto angle_conversion_opt = distortion_corrector_2d_->tryComputeAngleConversion(pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(true, angle_conversion_opt, pointcloud);
 
   sensor_msgs::msg::PointCloud2 original_pointcloud =
     generatePointCloudMsg(true, true, AngleCoordinateSystem::VELODYNE, timestamp, true, {}, {});
@@ -1142,10 +1129,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
-  // set the azimuth coordinate system
-  auto can_update_azimuth_and_distance =
-    distortion_corrector_2d_->azimuthConversionExists(pointcloud);
-  distortion_corrector_2d_->undistortPointCloud(true, can_update_azimuth_and_distance, pointcloud);
+
+  auto angle_conversion_opt = distortion_corrector_2d_->tryComputeAngleConversion(pointcloud);
+  distortion_corrector_2d_->undistortPointCloud(true, angle_conversion_opt, pointcloud);
 
   sensor_msgs::msg::PointCloud2 original_pointcloud =
     generatePointCloudMsg(true, true, AngleCoordinateSystem::HESAI, timestamp, true, {}, {});
@@ -1194,7 +1180,8 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsEmptyPointcloud)
 
   sensor_msgs::msg::PointCloud2 empty_pointcloud =
     generatePointCloudMsg(false, false, AngleCoordinateSystem::CARTESIAN, timestamp, true, {}, {});
-  EXPECT_FALSE(distortion_corrector_2d_->azimuthConversionExists(empty_pointcloud));
+  auto angle_conversion_opt = distortion_corrector_2d_->tryComputeAngleConversion(empty_pointcloud);
+  EXPECT_FALSE(angle_conversion_opt.has_value());
 }
 
 TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsVelodynePointcloud)
@@ -1214,11 +1201,14 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsVelodynePointcloud)
   sensor_msgs::msg::PointCloud2 velodyne_pointcloud = generatePointCloudMsg(
     true, true, AngleCoordinateSystem::CARTESIAN, timestamp, false, velodyne_points,
     velodyne_azimuths);
-  EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(velodyne_pointcloud));
 
-  auto angle_conversion = distortion_corrector_2d_->getAngleConversion();
-  EXPECT_EQ(angle_conversion.sign_, -1);
-  EXPECT_NEAR(angle_conversion.offset_rad_, autoware::universe_utils::pi * 2, standard_tolerance_);
+  auto angle_conversion_opt =
+    distortion_corrector_2d_->tryComputeAngleConversion(velodyne_pointcloud);
+  EXPECT_TRUE(angle_conversion_opt.has_value());
+
+  EXPECT_EQ(angle_conversion_opt->sign, -1);
+  EXPECT_NEAR(
+    angle_conversion_opt->offset_rad, autoware::universe_utils::pi * 2, standard_tolerance_);
 }
 
 TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsHesaiPointcloud)
@@ -1238,11 +1228,13 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsHesaiPointcloud)
     autoware::universe_utils::pi};
   sensor_msgs::msg::PointCloud2 hesai_pointcloud = generatePointCloudMsg(
     true, true, AngleCoordinateSystem::CARTESIAN, timestamp, false, hesai_points, hesai_azimuths);
-  EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(hesai_pointcloud));
 
-  auto angle_conversion = distortion_corrector_2d_->getAngleConversion();
-  EXPECT_EQ(angle_conversion.sign_, -1);
-  EXPECT_NEAR(angle_conversion.offset_rad_, autoware::universe_utils::pi / 2, standard_tolerance_);
+  auto angle_conversion_opt = distortion_corrector_2d_->tryComputeAngleConversion(hesai_pointcloud);
+
+  EXPECT_TRUE(angle_conversion_opt.has_value());
+  EXPECT_EQ(angle_conversion_opt->sign, -1);
+  EXPECT_NEAR(
+    angle_conversion_opt->offset_rad, autoware::universe_utils::pi / 2, standard_tolerance_);
 }
 
 TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsCartesianPointcloud)
@@ -1262,11 +1254,13 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsCartesianPointcloud)
   sensor_msgs::msg::PointCloud2 cartesian_pointcloud = generatePointCloudMsg(
     true, true, AngleCoordinateSystem::CARTESIAN, timestamp, false, cartesian_points,
     cartesian_azimuths);
-  EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(cartesian_pointcloud));
 
-  auto angle_conversion = distortion_corrector_2d_->getAngleConversion();
-  EXPECT_EQ(angle_conversion.sign_, 1);
-  EXPECT_NEAR(angle_conversion.offset_rad_, 0, standard_tolerance_);
+  auto angle_conversion_opt =
+    distortion_corrector_2d_->tryComputeAngleConversion(cartesian_pointcloud);
+
+  EXPECT_TRUE(angle_conversion_opt.has_value());
+  EXPECT_EQ(angle_conversion_opt->sign, 1);
+  EXPECT_NEAR(angle_conversion_opt->offset_rad, 0, standard_tolerance_);
 }
 
 TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsRandomPointcloud1)
@@ -1285,12 +1279,13 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsRandomPointcloud1)
     0, autoware::universe_utils::pi * 3 / 2, autoware::universe_utils::pi * 7 / 4};
   sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(
     true, true, AngleCoordinateSystem::CARTESIAN, timestamp, false, points, azimuths);
-  EXPECT_TRUE(distortion_corrector_2d_->azimuthConversionExists(pointcloud));
 
-  auto angle_conversion = distortion_corrector_2d_->getAngleConversion();
-  EXPECT_EQ(angle_conversion.sign_, 1);
+  auto angle_conversion_opt = distortion_corrector_2d_->tryComputeAngleConversion(pointcloud);
+
+  EXPECT_TRUE(angle_conversion_opt.has_value());
+  EXPECT_EQ(angle_conversion_opt->sign, 1);
   EXPECT_NEAR(
-    angle_conversion.offset_rad_, autoware::universe_utils::pi * 3 / 2, standard_tolerance_);
+    angle_conversion_opt->offset_rad, autoware::universe_utils::pi * 3 / 2, standard_tolerance_);
 }
 
 int main(int argc, char ** argv)

@@ -96,25 +96,45 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointclou
   distortion_corrector_->setPointCloudTransform(base_frame_, pointcloud_msg->header.frame_id);
   distortion_corrector_->initialize();
 
-  if (update_azimuth_and_distance_ && !can_update_azimuth_and_distance_) {
-    can_update_azimuth_and_distance_ =
-      distortion_corrector_->azimuthConversionExists(*pointcloud_msg);
-    if (can_update_azimuth_and_distance_) {
+  if (update_azimuth_and_distance_) {
+    angle_conversion_opt_ = distortion_corrector_->tryComputeAngleConversion(*pointcloud_msg);
+    if (angle_conversion_opt_.has_value()) {
       RCLCPP_INFO(
         this->get_logger(),
         "Success to get the conversion formula between cartesian coordinates and LiDAR azimuth "
         "coordinates");
     } else {
-      RCLCPP_ERROR(
+      RCLCPP_INFO(
         this->get_logger(),
-        "Failed to get the conversion formula between cartesian coordinates and LiDAR azimuth "
-        "coordinates. Please check the LiDAR azimuth coordinate. This pointcloud will not update "
-        "azimuth and distance");
+        "Failed to get the angle conversion between Cartesian coordinates and LiDAR azimuth "
+        "coordinates. This pointcloud will not update azimuth and distance");
+      angle_conversion_failure_num_++;
+
+      if (angle_conversion_failure_num_ > failure_tolerance_) {
+        throw std::runtime_error(
+          "Angle conversion failed more than " + std::to_string(failure_tolerance_) +
+          " times. The node has been interrupted. Please check the LiDAR azimuth coordinates.");
+      }
     }
   }
+  // if (update_azimuth_and_distance_ && !can_update_azimuth_and_distance_) {
+  //   can_update_azimuth_and_distance_ =
+  //     distortion_corrector_->azimuthConversionExists(*pointcloud_msg);
+  //   if (can_update_azimuth_and_distance_) {
+  //     RCLCPP_INFO(
+  //       this->get_logger(),
+  //       "Success to get the conversion formula between cartesian coordinates and LiDAR azimuth "
+  //       "coordinates");
+  //   } else {
+  //     RCLCPP_ERROR(
+  //       this->get_logger(),
+  //       "Failed to get the conversion formula between cartesian coordinates and LiDAR azimuth "
+  //       "coordinates. Please check the LiDAR azimuth coordinate. This pointcloud will not update
+  //       " "azimuth and distance");
+  //   }
+  // }
 
-  distortion_corrector_->undistortPointCloud(
-    use_imu_, can_update_azimuth_and_distance_, *pointcloud_msg);
+  distortion_corrector_->undistortPointCloud(use_imu_, angle_conversion_opt_, *pointcloud_msg);
 
   if (debug_publisher_) {
     auto pipeline_latency_ms =

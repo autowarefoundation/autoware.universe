@@ -51,12 +51,12 @@ namespace autoware::pointcloud_preprocessor
 struct AngleConversion
 {
   // Equation for the conversion between sensor azimuth coordinates and Cartesian coordinates:
-  // sensor azimuth coordinates = offset_rad_ + sign_ * cartesian coordinates;
-  // offset_rad_ is restricted to be a multiple of 90, and sign_ is restricted to be 1 or -1.
-  float offset_rad_{0};
-  float sign_{1};
-  float offset_rad_threshold_{0.087f};  // (5 / 180) * M_PI
-  float sign_threshold_{0.1f};
+  // sensor azimuth coordinates = offset_rad + sign * cartesian coordinates;
+  // offset_rad is restricted to be a multiple of 90, and sign is restricted to be 1 or -1.
+  float offset_rad{0};
+  float sign{1};
+  float offset_rad_threshold{0.087f};  // (5 / 180) * M_PI
+  float sign_threshold{0.1f};
 };
 
 class DistortionCorrectorBase
@@ -74,10 +74,10 @@ public:
   virtual void setPointCloudTransform(
     const std::string & base_frame, const std::string & lidar_frame) = 0;
   virtual void initialize() = 0;
-  virtual bool azimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
-  virtual AngleConversion getAngleConversion() = 0;
+  virtual std::optional<AngleConversion> tryComputeAngleConversion(
+    sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
   virtual void undistortPointCloud(
-    bool use_imu, bool can_update_azimuth_and_distance,
+    bool use_imu, std::optional<AngleConversion> angle_conversion_opt,
     sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
 };
 
@@ -94,8 +94,6 @@ protected:
 
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
-
-  AngleConversion angle_conversion_;
 
   void getIMUTransformation(const std::string & base_frame, const std::string & imu_frame);
   void enqueueIMU(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
@@ -132,12 +130,12 @@ public:
   void processIMUMessage(
     const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
   void undistortPointCloud(
-    bool use_imu, bool update_azimuth_and_distance,
+    bool use_imu, std::optional<AngleConversion> angle_conversion_opt,
     sensor_msgs::msg::PointCloud2 & pointcloud) override;
-  bool azimuthConversionExists(sensor_msgs::msg::PointCloud2 & pointcloud) override;
-  AngleConversion getAngleConversion() override;
+  std::optional<AngleConversion> tryComputeAngleConversion(
+    sensor_msgs::msg::PointCloud2 & pointcloud) override;
 
-  bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
+  bool isPointCloudValid(sensor_msgs::msg::PointCloud2 & pointcloud);
 };
 
 class DistortionCorrector2D : public DistortionCorrector<DistortionCorrector2D>
