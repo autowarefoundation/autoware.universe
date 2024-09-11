@@ -224,7 +224,7 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
       abs(next_cartesian_rad - current_cartesian_rad) >= autoware::universe_utils::pi ||
       abs(*next_it_azimuth - *it_azimuth) == 0 ||
       abs(next_cartesian_rad - current_cartesian_rad) == 0) {
-      RCLCPP_WARN(
+      RCLCPP_DEBUG(
         node_->get_logger(),
         "Angle between two points exceeds 180 degrees. Iterate to next point ...");
       continue;
@@ -239,9 +239,8 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
     } else if (std::abs(sign + 1.0f) <= angle_conversion_.sign_threshold_) {
       angle_conversion_.sign_ = -1.0f;
     } else {
-      RCLCPP_WARN(
-        node_->get_logger(),
-        "Angle between two points exceeds 180 degrees. Iterate to next point ...");
+      RCLCPP_DEBUG(
+        node_->get_logger(), "Value of sign is not close to 1 or -1. Iterate to next point ...");
       continue;
     }
 
@@ -250,6 +249,9 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
     if (
       std::abs(offset_rad - multiple_of_90_degrees * (autoware::universe_utils::pi / 2)) >
       angle_conversion_.offset_rad_threshold_) {
+      RCLCPP_DEBUG(
+        node_->get_logger(),
+        "Value of offset_rad is not close to 1 or -1. Iterate to next point ...");
       continue;
     }
 
