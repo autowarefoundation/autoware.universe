@@ -1544,7 +1544,7 @@ bool NormalLaneChange::getLaneChangePaths(
         }
 
         if (
-          lane_changing_length + prepare_length + transient_data_.next_lc_buffer.min>
+          lane_changing_length + prepare_length + transient_data_.next_lc_buffer.min >
           transient_data_.dist_from_ego_to_current_terminal_end) {
           debug_print_lat("Reject: length of lane changing path is longer than length to goal!!");
           continue;
