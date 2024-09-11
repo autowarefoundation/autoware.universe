@@ -37,6 +37,9 @@
 #include <iomanip>
 #include <thread>
 
+namespace autoware::ndt_scan_matcher
+{
+
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)
 {
@@ -961,7 +964,8 @@ void NDTScanMatcher::service_ndt_align_main(
   diagnostics_ndt_align_->add_key_value("is_succeed_transform_initial_pose", true);
 
   // transform pose_frame to map_frame
-  const auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
+  auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
+  initial_pose_msg_in_map_frame.header.stamp = req->pose_with_covariance.header.stamp;
   map_update_module_->update_map(
     initial_pose_msg_in_map_frame.pose.pose.position, diagnostics_ndt_align_);
 
@@ -1110,5 +1114,7 @@ std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> NDTScanMatcher
   return std::make_tuple(result_pose_with_cov_msg, best_particle_ptr->score);
 }
 
+}  // namespace autoware::ndt_scan_matcher
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(NDTScanMatcher)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ndt_scan_matcher::NDTScanMatcher)

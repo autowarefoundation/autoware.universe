@@ -16,11 +16,11 @@
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
 
 #include "autoware/behavior_path_goal_planner_module/default_fixed_goal_planner.hpp"
-#include "autoware/behavior_path_goal_planner_module/freespace_pull_over.hpp"
-#include "autoware/behavior_path_goal_planner_module/geometric_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
-#include "autoware/behavior_path_goal_planner_module/shift_pull_over.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/freespace_pull_over.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/geometric_pull_over.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/shift_pull_over.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 #include "autoware/behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
@@ -108,12 +108,10 @@ struct PreviousPullOverData
 
   void reset()
   {
-    found_path = false;
     safety_status = SafetyStatus{};
     deciding_path_status = DecidingPathStatusWithStamp{};
   }
 
-  bool found_path{false};
   SafetyStatus safety_status{};
   DecidingPathStatusWithStamp deciding_path_status{};
 };
@@ -277,6 +275,7 @@ struct GoalPlannerDebugData
   FreespacePlannerDebugData freespace_planner{};
   std::vector<Polygon2d> ego_polygons_expanded{};
   lanelet::ConstLanelet expanded_pull_over_lane_between_ego{};
+  Polygon2d objects_extraction_polygon{};
 };
 
 struct LastApprovalData
@@ -318,7 +317,8 @@ public:
     const std::shared_ptr<GoalPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map);
+      objects_of_interest_marker_interface_ptr_map,
+    std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr);
 
   ~GoalPlannerModule()
   {
