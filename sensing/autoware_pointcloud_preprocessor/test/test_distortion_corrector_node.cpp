@@ -1171,7 +1171,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   }
 }
 
-TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsEmptyPointcloud)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnEmptyPointcloud)
 {
   // test empty pointcloud
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1184,7 +1184,7 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsEmptyPointcloud)
   EXPECT_FALSE(angle_conversion_opt.has_value());
 }
 
-TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsVelodynePointcloud)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnVelodynePointcloud)
 {
   // test velodyne pointcloud (x-axis: 0 degree, y-axis: 270 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1207,11 +1207,10 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsVelodynePointcloud)
   EXPECT_TRUE(angle_conversion_opt.has_value());
 
   EXPECT_EQ(angle_conversion_opt->sign, -1);
-  EXPECT_NEAR(
-    angle_conversion_opt->offset_rad, autoware::universe_utils::pi * 2, standard_tolerance_);
+  EXPECT_NEAR(angle_conversion_opt->offset_rad, 0, standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsHesaiPointcloud)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnHesaiPointcloud)
 {
   // test hesai pointcloud (x-axis: 90 degree, y-axis: 0 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1237,7 +1236,7 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsHesaiPointcloud)
     angle_conversion_opt->offset_rad, autoware::universe_utils::pi / 2, standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsCartesianPointcloud)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionCartesianPointcloud)
 {
   // test pointcloud that use cartesian coordinate for azimuth (x-axis: 0 degree, y-axis: 90 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1263,7 +1262,7 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsCartesianPointcloud)
   EXPECT_NEAR(angle_conversion_opt->offset_rad, 0, standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsRandomPointcloud1)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnRandomPointcloud)
 {
   // test pointcloud that use coordinate (x-axis: 270 degree, y-axis: 0 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1286,6 +1285,31 @@ TEST_F(DistortionCorrectorTest, TestAzimuthConversionExistsRandomPointcloud1)
   EXPECT_EQ(angle_conversion_opt->sign, 1);
   EXPECT_NEAR(
     angle_conversion_opt->offset_rad, autoware::universe_utils::pi * 3 / 2, standard_tolerance_);
+}
+
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnBadAzimuthPointcloud)
+{
+  // test pointcloud that has bad zimuth
+  // 1. angle difference is 0
+  // 2. azimuth value is wrong
+  rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
+  // Generate and process multiple twist messages
+  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+
+  std::vector<Eigen::Vector3f> points = {
+    Eigen::Vector3f(0.0f, 1.0f, 0.0f),
+    Eigen::Vector3f(2.0f, 0.0f, 1.0f),
+    Eigen::Vector3f(1.0f, 1.0f, 1.0f),
+  };
+
+  // generate random bad azimuths
+  std::vector<float> azimuths = {0, 0, autoware::universe_utils::pi};
+  sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(
+    true, true, AngleCoordinateSystem::CARTESIAN, timestamp, false, points, azimuths);
+
+  auto angle_conversion_opt = distortion_corrector_2d_->tryComputeAngleConversion(pointcloud);
+
+  EXPECT_FALSE(angle_conversion_opt.has_value());
 }
 
 int main(int argc, char ** argv)

@@ -225,18 +225,23 @@ std::optional<AngleConversion> DistortionCorrector<T>::tryComputeAngleConversion
     // If the angle exceeds 180 degrees, it may cross the 0-degree axis,
     // which could disrupt the calculation of the formula.
     if (
-      abs(*next_it_azimuth - *it_azimuth) >= autoware::universe_utils::pi ||
-      abs(next_cartesian_rad - current_cartesian_rad) >= autoware::universe_utils::pi ||
       abs(*next_it_azimuth - *it_azimuth) == 0 ||
       abs(next_cartesian_rad - current_cartesian_rad) == 0) {
       RCLCPP_DEBUG(
-        node_->get_logger(),
-        "Angle between two points exceeds 180 degrees. Iterate to next point ...");
+        node_->get_logger(), "Angle between two points is 0 degrees. Iterate to next point ...");
       continue;
     }
 
-    float sign = (*next_it_azimuth - *it_azimuth) / (next_cartesian_rad - current_cartesian_rad);
-    float offset_rad = *it_azimuth - sign * current_cartesian_rad;
+    // restrict the angle difference between [-180, 180] (degrees)
+    float azimuth_diff = abs(*next_it_azimuth - *it_azimuth) > autoware::universe_utils::pi
+                           ? abs(*next_it_azimuth - *it_azimuth) - 2 * autoware::universe_utils::pi
+                           : *next_it_azimuth - *it_azimuth;
+    float cartesian_rad_diff =
+      abs(next_cartesian_rad - current_cartesian_rad) > autoware::universe_utils::pi
+        ? abs(next_cartesian_rad - current_cartesian_rad) - 2 * autoware::universe_utils::pi
+        : next_cartesian_rad - current_cartesian_rad;
+
+    float sign = azimuth_diff / cartesian_rad_diff;
 
     // Check if 'sign' can be adjusted to 1 or -1
     if (std::abs(sign - 1.0f) <= angle_conversion.sign_threshold) {
@@ -249,6 +254,7 @@ std::optional<AngleConversion> DistortionCorrector<T>::tryComputeAngleConversion
       continue;
     }
 
+    float offset_rad = *it_azimuth - sign * current_cartesian_rad;
     // Check if 'offset_rad' can be adjusted to offset_rad multiple of π/2
     int multiple_of_90_degrees = std::round(offset_rad / (autoware::universe_utils::pi / 2));
     if (
@@ -256,14 +262,15 @@ std::optional<AngleConversion> DistortionCorrector<T>::tryComputeAngleConversion
       angle_conversion.offset_rad_threshold) {
       RCLCPP_DEBUG(
         node_->get_logger(),
-        "Value of offset_rad is not close to 1 or -1. Iterate to next point ...");
+        "Value of offset_rad is not close to mutiplication of 90 degrees. Iterate to next point "
+        "...");
       continue;
     }
 
-    // Limit the range of offset_rad in [0, 360]
+    // Limit the range of offset_rad in [0, 360)
     if (multiple_of_90_degrees < 0) {
       multiple_of_90_degrees += 4;
-    } else if (multiple_of_90_degrees > 4) {
+    } else if (multiple_of_90_degrees >= 4) {
       multiple_of_90_degrees -= 4;
     }
 
