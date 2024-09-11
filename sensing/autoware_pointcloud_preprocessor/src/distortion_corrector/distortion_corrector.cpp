@@ -221,7 +221,9 @@ bool DistortionCorrector<T>::azimuthConversionExists(sensor_msgs::msg::PointClou
     // which could disrupt the calculation of the formula.
     if (
       abs(*next_it_azimuth - *it_azimuth) >= autoware::universe_utils::pi ||
-      abs(next_cartesian_rad - current_cartesian_rad) >= autoware::universe_utils::pi) {
+      abs(next_cartesian_rad - current_cartesian_rad) >= autoware::universe_utils::pi ||
+      abs(*next_it_azimuth - *it_azimuth) == 0 ||
+      abs(next_cartesian_rad - current_cartesian_rad) == 0) {
       RCLCPP_WARN(
         node_->get_logger(),
         "Angle between two points exceeds 180 degrees. Iterate to next point ...");
