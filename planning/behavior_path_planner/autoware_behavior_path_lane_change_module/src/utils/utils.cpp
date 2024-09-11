@@ -225,16 +225,16 @@ bool pathFootprintExceedsTargetLaneBound(
 
   const auto combined_target_lane = lanelet::utils::combineLaneletsShape(target_lanes);
 
-  auto it = path.points.rbegin();
-  for (; it < path.points.rend(); ++it) {
-    const auto & pose = it->point.pose;
-    const auto & front_vertex = getEgoFrontVertex(pose, ego_info, is_left);
+  for (const auto & path_point : path.points) {
+    const auto & pose = path_point.point.pose;
+    const auto front_vertex = getEgoFrontVertex(pose, ego_info, is_left);
 
-    const double sign = is_left ? -1.0 : 1.0;
+    const auto sign = is_left ? -1.0 : 1.0;
     const auto dist_to_boundary =
       sign * utils::getSignedDistanceFromLaneBoundary(combined_target_lane, front_vertex, is_left);
 
     if (dist_to_boundary < margin) {
+      RCLCPP_DEBUG(get_logger(), "Path footprint exceeds target lane boundary");
       return true;
     }
   }
@@ -1083,9 +1083,7 @@ Point getEgoFrontVertex(
 {
   const double lon_offset = ego_info.wheel_base_m + ego_info.front_overhang_m;
   const double lat_offset = 0.5 * (left ? ego_info.vehicle_width_m : -ego_info.vehicle_width_m);
-  const auto vertex =
-    autoware::universe_utils::calcOffsetPose(ego_pose, lon_offset, lat_offset, 0.0).position;
-  return vertex;
+  return autoware::universe_utils::calcOffsetPose(ego_pose, lon_offset, lat_offset, 0.0).position;
 }
 
 bool isWithinIntersection(
