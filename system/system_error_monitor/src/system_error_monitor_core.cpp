@@ -219,7 +219,8 @@ AutowareErrorMonitor::AutowareErrorMonitor(const rclcpp::NodeOptions & options)
   get_parameter_or<double>("hazard_recovery_timeout", params_.hazard_recovery_timeout);
   get_parameter_or<int>("emergency_hazard_level", params_.emergency_hazard_level);
   get_parameter_or<bool>("use_emergency_hold", params_.use_emergency_hold);
-  get_parameter_or<bool>("use_emergency_hold_in_manual_driving", params_.use_emergency_hold_in_manual_driving);
+  get_parameter_or<bool>(
+    "use_emergency_hold_in_manual_driving", params_.use_emergency_hold_in_manual_driving);
 
   loadRequiredModules(KeyName::autonomous_driving);
   loadRequiredModules(KeyName::external_control);
