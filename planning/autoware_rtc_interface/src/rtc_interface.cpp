@@ -258,11 +258,17 @@ void RTCInterface::updateCooperateStatus(
     status.module = module_;
     status.safe = safe;
     status.command_status.type = Command::DEACTIVATE;
-    status.state.type = state;
+    status.state.type = State::WAITING_FOR_EXECUTION;
     status.start_distance = start_distance;
     status.finish_distance = finish_distance;
     status.auto_mode = is_auto_mode_enabled_;
     registered_status_.statuses.push_back(status);
+
+    if (state != State::WAITING_FOR_EXECUTION)
+      RCLCPP_WARN_STREAM(
+        getLogger(), "[updateCooperateStatus]  Cannot register "
+                       << state_to_string(state) << " as initial state" << std::endl);
+
     return;
   }
 
