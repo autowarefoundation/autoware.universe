@@ -24,7 +24,7 @@
     data_heartbeat_timeout: 1.0
     diag_timeout_sec: 1.0
     hazard_recovery_timeout: 5.0
-    # emergency_hazard_level: autoware_system_msgs::msg::HazardStatus::LATENT_FAULT
+    emergency_hazard_level: 2
     use_emergency_hold: false
     use_emergency_hold_in_manual_driving: false
 
