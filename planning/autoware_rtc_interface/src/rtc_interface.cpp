@@ -266,12 +266,42 @@ void RTCInterface::updateCooperateStatus(
     return;
   }
 
-  // If the registered status is found, update status
-  itr->stamp = stamp;
-  itr->safe = safe;
-  itr->state.type = state;
-  itr->start_distance = start_distance;
-  itr->finish_distance = finish_distance;
+  auto update_status = [&](auto & status) {
+    status.stamp = stamp;
+    status.safe = safe;
+    status.state.type = state;
+    status.start_distance = start_distance;
+    status.finish_distance = finish_distance;
+  };
+
+  // If the registered status is found, update status by considering the state transition
+  if (
+    itr->state.type == State::WAITING_FOR_EXECUTION &&
+    (state == State::WAITING_FOR_EXECUTION || state == State::RUNNING || state == State::FAILED)) {
+    update_status(*itr);
+    return;
+  }
+
+  if (itr->state.type == State::RUNNING && state != State::WAITING_FOR_EXECUTION) {
+    update_status(*itr);
+    return;
+  }
+
+  if (itr->state.type == State::ABORTING && (state == State::ABORTING || state == State::FAILED)) {
+    update_status(*itr);
+    return;
+  }
+
+  // State: update FAILED or SUCCEEDED
+  if (itr->state.type == state) {
+    update_status(*itr);
+    return;
+  }
+
+  RCLCPP_WARN_STREAM(
+    getLogger(), "[updateCooperateStatus] uuid : " << uuid_to_string(uuid) << " cannot transit from"
+                                                   << state_to_string(itr->state.type) << " to"
+                                                   << state_to_string(state) << std::endl);
 }
 
 void RTCInterface::removeCooperateStatus(const UUID & uuid)
