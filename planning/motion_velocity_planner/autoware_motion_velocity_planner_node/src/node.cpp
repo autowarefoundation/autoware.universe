@@ -31,6 +31,7 @@
 
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <tf2/time.h>
 
 #include <chrono>
 #include <functional>
@@ -198,8 +199,7 @@ MotionVelocityPlannerNode::process_no_ground_pointcloud(
 {
   geometry_msgs::msg::TransformStamped transform;
   try {
-    transform = tf_buffer_.lookupTransform(
-      "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
+    transform = tf_buffer_.lookupTransform("map", msg->header.frame_id, tf2::TimePointZero);
   } catch (tf2::TransformException & e) {
     RCLCPP_WARN(get_logger(), "no transform found for no_ground_pointcloud: %s", e.what());
     return {};
