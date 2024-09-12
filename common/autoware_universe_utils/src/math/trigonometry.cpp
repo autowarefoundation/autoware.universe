@@ -76,6 +76,9 @@ std::pair<float, float> sin_and_cos(float radian)
 // (https://github.com/opencv/opencv/blob/4.x/modules/core/src/mathfuncs_core.simd.hpp). It is
 // subject to the license terms in the LICENSE file found in the top-level directory of this
 // distribution and at http://opencv.org/license.html.
+// The license can be found in
+// /autoware/src/universe/autoware.universe/common/autoware_universe_utils/third_party_licenses/opencv-license.md
+// and https://github.com/opencv/opencv/blob/master/LICENSE
 
 // Modification:
 // 1. use autoware defined PI
