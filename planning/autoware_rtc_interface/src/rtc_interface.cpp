@@ -292,15 +292,9 @@ void RTCInterface::updateCooperateStatus(
     return;
   }
 
-  // State: update FAILED or SUCCEEDED
-  if (itr->state.type == state) {
-    update_status(*itr);
-    return;
-  }
-
   RCLCPP_WARN_STREAM(
-    getLogger(), "[updateCooperateStatus] uuid : " << uuid_to_string(uuid) << " cannot transit from"
-                                                   << state_to_string(itr->state.type) << " to"
+    getLogger(), "[updateCooperateStatus] uuid : " << uuid_to_string(uuid) << " cannot transit from "
+                                                   << state_to_string(itr->state.type) << " to "
                                                    << state_to_string(state) << std::endl);
 }
 
