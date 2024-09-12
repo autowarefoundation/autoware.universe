@@ -67,7 +67,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/time_synchronizer/time_synchronizer_node.cpp
   src/crop_box_filter/crop_box_filter_nodelet.cpp
   src/downsample_filter/voxel_grid_downsample_filter_node.cpp
-  src/downsample_filter/random_downsample_filter_nodelet.cpp
+  src/downsample_filter/random_downsample_filter_node.cpp
   src/downsample_filter/approximate_downsample_filter_nodelet.cpp
   src/downsample_filter/pickup_based_voxel_grid_downsample_filter.cpp
   src/outlier_filter/ring_outlier_filter_nodelet.cpp
@@ -77,7 +77,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/passthrough_filter/passthrough_filter_node.cpp
   src/passthrough_filter/passthrough_filter_uint16_node.cpp
   src/passthrough_filter/passthrough_uint16.cpp
-  src/pointcloud_accumulator/pointcloud_accumulator_nodelet.cpp
+  src/pointcloud_accumulator/pointcloud_accumulator_node.cpp
   src/vector_map_filter/lanelet2_map_filter_node.cpp
   src/distortion_corrector/distortion_corrector.cpp
   src/distortion_corrector/distortion_corrector_node.cpp
