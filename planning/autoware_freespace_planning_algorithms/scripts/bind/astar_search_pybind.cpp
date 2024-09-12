@@ -111,6 +111,7 @@ PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
   auto pyAstarParam =
     py::class_<freespace_planning_algorithms::AstarParam>(p, "AstarParam", py::dynamic_attr())
       .def(py::init<>())
+      .def_readwrite("search_method", &freespace_planning_algorithms::AstarParam::search_method)
       .def_readwrite(
         "only_behind_solutions", &freespace_planning_algorithms::AstarParam::only_behind_solutions)
       .def_readwrite("use_back", &freespace_planning_algorithms::AstarParam::use_back)
@@ -120,13 +121,18 @@ PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
       .def_readwrite(
         "expansion_distance", &freespace_planning_algorithms::AstarParam::expansion_distance)
       .def_readwrite(
+        "near_goal_distance", &freespace_planning_algorithms::AstarParam::near_goal_distance)
+      .def_readwrite(
         "distance_heuristic_weight",
         &freespace_planning_algorithms::AstarParam::distance_heuristic_weight)
       .def_readwrite(
         "smoothness_weight", &freespace_planning_algorithms::AstarParam::smoothness_weight)
       .def_readwrite(
         "obstacle_distance_weight",
-        &freespace_planning_algorithms::AstarParam::obstacle_distance_weight);
+        &freespace_planning_algorithms::AstarParam::obstacle_distance_weight)
+      .def_readwrite(
+        "goal_lat_distance_weight",
+        &freespace_planning_algorithms::AstarParam::goal_lat_distance_weight);
   auto pyPlannerCommonParam =
     py::class_<freespace_planning_algorithms::PlannerCommonParam>(
       p, "PlannerCommonParam", py::dynamic_attr())

@@ -44,17 +44,20 @@ PoseHistory::PoseHistory() : last_stamp_(0, 0, RCL_ROS_TIME)
 
 PoseHistory::~PoseHistory() = default;  // Properties are deleted by Qt
 
+// cppcheck-suppress unusedFunction
 void PoseHistory::onInitialize()
 {
   MFDClass::onInitialize();
   lines_ = std::make_unique<rviz_rendering::BillboardLine>(scene_manager_, scene_node_);
 }
 
+// cppcheck-suppress unusedFunction
 void PoseHistory::onEnable()
 {
   subscribe();
 }
 
+// cppcheck-suppress unusedFunction
 void PoseHistory::onDisable()
 {
   unsubscribe();
@@ -68,7 +71,7 @@ void PoseHistory::update(float wall_dt, float ros_dt)
   if (!history_.empty()) {
     lines_->clear();
     if (property_line_view_->getBool()) {
-      updateLines();
+      update_lines();
     }
   }
 }
@@ -101,10 +104,10 @@ void PoseHistory::processMessage(const geometry_msgs::msg::PoseStamped::ConstSha
   history_.emplace_back(message);
   last_stamp_ = message->header.stamp;
 
-  updateHistory();
+  update_history();
 }
 
-void PoseHistory::updateHistory()
+void PoseHistory::update_history()
 {
   const auto buffer_size = static_cast<size_t>(property_buffer_size_->getInt());
   while (buffer_size < history_.size()) {
@@ -112,7 +115,7 @@ void PoseHistory::updateHistory()
   }
 }
 
-void PoseHistory::updateLines()
+void PoseHistory::update_lines()
 {
   Ogre::ColourValue color = rviz_common::properties::qtToOgre(property_line_color_->getColor());
   color.a = property_line_alpha_->getFloat();
@@ -134,9 +137,9 @@ void PoseHistory::updateLines()
 
   for (const auto & message : history_) {
     Ogre::Vector3 point;
-    point.x = message->pose.position.x;
-    point.y = message->pose.position.y;
-    point.z = message->pose.position.z;
+    point.x = static_cast<float>(message->pose.position.x);
+    point.y = static_cast<float>(message->pose.position.y);
+    point.z = static_cast<float>(message->pose.position.z);
     lines_->addPoint(point);
   }
 }

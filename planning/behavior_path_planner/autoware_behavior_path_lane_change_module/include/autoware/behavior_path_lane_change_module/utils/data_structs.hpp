@@ -94,6 +94,8 @@ struct CancelParameters
   // number of unsafe exceeds unsafe_hysteresis_threshold, the lane change will be cancelled or
   // aborted.
   int unsafe_hysteresis_threshold{2};
+
+  int deceleration_sampling_num{5};
 };
 
 struct Parameters
@@ -131,7 +133,7 @@ struct Parameters
   bool enable_collision_check_for_prepare_phase_in_general_lanes{false};
   bool enable_collision_check_for_prepare_phase_in_intersection{true};
   bool enable_collision_check_for_prepare_phase_in_turns{true};
-  double prepare_segment_ignore_object_velocity_thresh{0.1};
+  double stopped_object_velocity_threshold{0.1};
   bool check_objects_on_current_lanes{true};
   bool check_objects_on_other_lanes{true};
   bool use_all_predicted_path{false};

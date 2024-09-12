@@ -34,6 +34,9 @@
 #include <string>
 #include <utility>
 
+namespace autoware::ekf_localizer
+{
+
 // clang-format off
 #define PRINT_MAT(X) std::cout << #X << ":\n" << X << std::endl << std::endl // NOLINT
 #define DEBUG_INFO(...) {if (params_.show_debug_info) {RCLCPP_INFO(__VA_ARGS__);}} // NOLINT
@@ -44,17 +47,13 @@ using std::placeholders::_1;
 EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("ekf_localizer", node_options),
   warning_(std::make_shared<Warning>(this)),
+  tf2_buffer_(this->get_clock()),
+  tf2_listener_(tf2_buffer_),
   params_(this),
   ekf_dt_(params_.ekf_dt),
   pose_queue_(params_.pose_smoothing_steps),
-  twist_queue_(params_.twist_smoothing_steps),
-  last_angular_velocity_(0.0, 0.0, 0.0)
+  twist_queue_(params_.twist_smoothing_steps)
 {
-  /* convert to continuous to discrete */
-  proc_cov_vx_d_ = std::pow(params_.proc_stddev_vx_c * ekf_dt_, 2.0);
-  proc_cov_wz_d_ = std::pow(params_.proc_stddev_wz_c * ekf_dt_, 2.0);
-  proc_cov_yaw_d_ = std::pow(params_.proc_stddev_yaw_c * ekf_dt_, 2.0);
-
   is_activated_ = false;
 
   /* initialize ros system */
@@ -99,10 +98,6 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
 
   ekf_module_ = std::make_unique<EKFModule>(warning_, params_);
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
-
-  z_filter_.set_proc_dev(params_.z_filter_proc_dev);
-  roll_filter_.set_proc_dev(params_.roll_filter_proc_dev);
-  pitch_filter_.set_proc_dev(params_.pitch_filter_proc_dev);
 }
 
 /*
@@ -130,11 +125,6 @@ void EKFLocalizer::update_predict_frequency(const rclcpp::Time & current_time)
 
       /* Register dt and accumulate time delay */
       ekf_module_->accumulate_delay_time(ekf_dt_);
-
-      /* Update discrete proc_cov*/
-      proc_cov_vx_d_ = std::pow(params_.proc_stddev_vx_c * ekf_dt_, 2.0);
-      proc_cov_wz_d_ = std::pow(params_.proc_stddev_wz_c * ekf_dt_, 2.0);
-      proc_cov_yaw_d_ = std::pow(params_.proc_stddev_yaw_c * ekf_dt_, 2.0);
     }
   }
   last_predict_time_ = std::make_shared<const rclcpp::Time>(current_time);
@@ -187,14 +177,6 @@ void EKFLocalizer::timer_callback()
       bool is_updated = ekf_module_->measurement_update_pose(*pose, current_time, pose_diag_info_);
       if (is_updated) {
         pose_is_updated = true;
-
-        // Update Simple 1D filter with considering change of roll, pitch and height (position z)
-        // values due to measurement pose delay
-        const double delay_time =
-          (current_time - pose->header.stamp).seconds() + params_.pose_additional_delay;
-        auto pose_with_rph_delay_compensation =
-          ekf_module_->compensate_rph_with_delay(*pose, last_angular_velocity_, delay_time);
-        update_simple_1d_filters(pose_with_rph_delay_compensation, params_.pose_smoothing_steps);
       }
     }
     DEBUG_INFO(
@@ -225,10 +207,6 @@ void EKFLocalizer::timer_callback()
         ekf_module_->measurement_update_twist(*twist, current_time, twist_diag_info_);
       if (is_updated) {
         twist_is_updated = true;
-        last_angular_velocity_ = tf2::Vector3(
-          twist->twist.twist.angular.x, twist->twist.twist.angular.y, twist->twist.twist.angular.z);
-      } else {
-        last_angular_velocity_ = tf2::Vector3(0.0, 0.0, 0.0);
       }
     }
     DEBUG_INFO(
@@ -237,13 +215,10 @@ void EKFLocalizer::timer_callback()
   }
   twist_diag_info_.no_update_count = twist_is_updated ? 0 : (twist_diag_info_.no_update_count + 1);
 
-  const double z = z_filter_.get_x();
-  const double roll = roll_filter_.get_x();
-  const double pitch = pitch_filter_.get_x();
   const geometry_msgs::msg::PoseStamped current_ekf_pose =
-    ekf_module_->get_current_pose(current_time, z, roll, pitch, false);
+    ekf_module_->get_current_pose(current_time, false);
   const geometry_msgs::msg::PoseStamped current_biased_ekf_pose =
-    ekf_module_->get_current_pose(current_time, z, roll, pitch, true);
+    ekf_module_->get_current_pose(current_time, true);
   const geometry_msgs::msg::TwistStamped current_ekf_twist =
     ekf_module_->get_current_twist(current_time);
 
@@ -265,15 +240,11 @@ void EKFLocalizer::timer_tf_callback()
     return;
   }
 
-  const double z = z_filter_.get_x();
-  const double roll = roll_filter_.get_x();
-  const double pitch = pitch_filter_.get_x();
-
   const rclcpp::Time current_time = this->now();
 
   geometry_msgs::msg::TransformStamped transform_stamped;
   transform_stamped = autoware::universe_utils::pose2transform(
-    ekf_module_->get_current_pose(current_time, z, roll, pitch, false), "base_link");
+    ekf_module_->get_current_pose(current_time, false), "base_link");
   transform_stamped.header.stamp = current_time;
   tf_br_->sendTransform(transform_stamped);
 }
@@ -285,21 +256,14 @@ bool EKFLocalizer::get_transform_from_tf(
   std::string parent_frame, std::string child_frame,
   geometry_msgs::msg::TransformStamped & transform)
 {
-  tf2::BufferCore tf_buffer;
-  tf2_ros::TransformListener tf_listener(tf_buffer);
-  rclcpp::sleep_for(std::chrono::milliseconds(100));
-
   parent_frame = erase_leading_slash(parent_frame);
   child_frame = erase_leading_slash(child_frame);
 
-  for (int i = 0; i < 50; ++i) {
-    try {
-      transform = tf_buffer.lookupTransform(parent_frame, child_frame, tf2::TimePointZero);
-      return true;
-    } catch (tf2::TransformException & ex) {
-      warning_->warn(ex.what());
-      rclcpp::sleep_for(std::chrono::milliseconds(100));
-    }
+  try {
+    transform = tf2_buffer_.lookupTransform(parent_frame, child_frame, tf2::TimePointZero);
+    return true;
+  } catch (tf2::TransformException & ex) {
+    warning_->warn(ex.what());
   }
   return false;
 }
@@ -317,7 +281,6 @@ void EKFLocalizer::callback_initial_pose(
       params_.pose_frame_id.c_str(), msg->header.frame_id.c_str());
   }
   ekf_module_->initialize(*msg, transform);
-  init_simple_1d_filters(*msg);
 }
 
 /*
@@ -331,6 +294,8 @@ void EKFLocalizer::callback_pose_with_covariance(
   }
 
   pose_queue_.push(msg);
+
+  publish_callback_return_diagnostics("pose", msg->header.stamp);
 }
 
 /*
@@ -345,6 +310,8 @@ void EKFLocalizer::callback_twist_with_covariance(
     msg->twist.covariance[0 * 6 + 0] = 10000.0;
   }
   twist_queue_.push(msg);
+
+  publish_callback_return_diagnostics("twist", msg->header.stamp);
 }
 
 /*
@@ -452,39 +419,23 @@ void EKFLocalizer::publish_diagnostics(
   pub_diag_->publish(diag_msg);
 }
 
-void EKFLocalizer::update_simple_1d_filters(
-  const geometry_msgs::msg::PoseWithCovarianceStamped & pose, const size_t smoothing_step)
+void EKFLocalizer::publish_callback_return_diagnostics(
+  const std::string & callback_name, const rclcpp::Time & current_time)
 {
-  double z = pose.pose.pose.position.z;
-
-  const auto rpy = autoware::universe_utils::getRPY(pose.pose.pose.orientation);
-
-  using COV_IDX = autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-  double z_dev = pose.pose.covariance[COV_IDX::Z_Z] * static_cast<double>(smoothing_step);
-  double roll_dev = pose.pose.covariance[COV_IDX::ROLL_ROLL] * static_cast<double>(smoothing_step);
-  double pitch_dev =
-    pose.pose.covariance[COV_IDX::PITCH_PITCH] * static_cast<double>(smoothing_step);
-
-  z_filter_.update(z, z_dev, pose.header.stamp);
-  roll_filter_.update(rpy.x, roll_dev, pose.header.stamp);
-  pitch_filter_.update(rpy.y, pitch_dev, pose.header.stamp);
-}
-
-void EKFLocalizer::init_simple_1d_filters(
-  const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
-{
-  double z = pose.pose.pose.position.z;
-
-  const auto rpy = autoware::universe_utils::getRPY(pose.pose.pose.orientation);
-
-  using COV_IDX = autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-  double z_dev = pose.pose.covariance[COV_IDX::Z_Z];
-  double roll_dev = pose.pose.covariance[COV_IDX::ROLL_ROLL];
-  double pitch_dev = pose.pose.covariance[COV_IDX::PITCH_PITCH];
-
-  z_filter_.init(z, z_dev, pose.header.stamp);
-  roll_filter_.init(rpy.x, roll_dev, pose.header.stamp);
-  pitch_filter_.init(rpy.y, pitch_dev, pose.header.stamp);
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "topic_time_stamp";
+  key_value.value = std::to_string(current_time.nanoseconds());
+  diagnostic_msgs::msg::DiagnosticStatus diag_status;
+  diag_status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  diag_status.name =
+    "localization: " + std::string(this->get_name()) + ": callback_" + callback_name;
+  diag_status.hardware_id = this->get_name();
+  diag_status.message = "OK";
+  diag_status.values.push_back(key_value);
+  diagnostic_msgs::msg::DiagnosticArray diag_msg;
+  diag_msg.header.stamp = current_time;
+  diag_msg.status.push_back(diag_status);
+  pub_diag_->publish(diag_msg);
 }
 
 /**
@@ -504,5 +455,7 @@ void EKFLocalizer::service_trigger_node(
   res->success = true;
 }
 
+}  // namespace autoware::ekf_localizer
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(EKFLocalizer)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ekf_localizer::EKFLocalizer)

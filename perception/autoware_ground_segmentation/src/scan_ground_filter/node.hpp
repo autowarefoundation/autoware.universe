@@ -17,6 +17,7 @@
 
 #include "autoware/pointcloud_preprocessor/filter.hpp"
 #include "autoware/pointcloud_preprocessor/transform_info.hpp"
+#include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -143,11 +144,6 @@ private:
 
     float getMinHeight() const { return height_min; }
 
-    uint16_t getGridId() const { return grid_id; }
-
-    pcl::PointIndices getIndices() const { return pcl_indices; }
-    std::vector<float> getHeightList() const { return height_list; }
-
     pcl::PointIndices & getIndicesRef() { return pcl_indices; }
     std::vector<float> & getHeightListRef() { return height_list; }
   };
@@ -205,6 +201,11 @@ private:
                            // otherwise select middle point
   size_t radial_dividers_num_;
   VehicleInfo vehicle_info_;
+
+  // time keeper related
+  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
+    detailed_processing_time_publisher_;
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
 
   /*!
    * Output transformed PointCloud from in_cloud_ptr->header.frame_id to in_target_frame
