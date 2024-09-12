@@ -74,7 +74,7 @@ geometry_msgs::msg::Quaternion getQuaternionFromRPY(const double r, const double
 
 double sigmoid(double x)
 {
-    return 1.0 / (1.0 + std::exp(-x));
+  return 1.0 / (1.0 + std::exp(-x));
 }
 
 Cluster2D::Cluster2D(const int rows, const int cols, const float range)
