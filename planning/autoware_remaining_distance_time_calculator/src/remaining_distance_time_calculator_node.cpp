@@ -145,7 +145,7 @@ void RemainingDistanceTimeCalculatorNode::calculate_remaining_distance()
     if (remaining_shortest_path.size() == 1) {
       auto arc_coord_cur = lanelet::utils::getArcCoordinates({llt}, current_vehicle_pose_);
       auto arc_coord_goal = lanelet::utils::getArcCoordinates({llt}, goal_pose_);
-      remaining_distance_ + = arc_coord_goal.length - arc_coord_cur.length;
+      remaining_distance_ += arc_coord_goal.length - arc_coord_cur.length;
       break;
     }
 
