@@ -573,7 +573,7 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
   const TransientData & transient_data, const double abort_return_dist)
 {
   const auto abort_plus_lane_change_length =
-    abort_return_dist + transient_data.current_lc_buffer.min;
+    abort_return_dist + transient_data.current_dist_buffer.min;
   return abort_plus_lane_change_length <= transient_data.dist_from_ego_to_current_terminal_end;
 }
 

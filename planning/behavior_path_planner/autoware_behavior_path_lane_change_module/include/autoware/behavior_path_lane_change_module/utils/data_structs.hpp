@@ -275,6 +275,21 @@ struct LanesPolygon
   std::vector<lanelet::BasicPolygon2d> preceding_target;
 };
 
+struct Boundary
+{
+  double min{std::numeric_limits<double>::max()};
+  double max{std::numeric_limits<double>::max()};
+};
+
+struct TransientData
+{
+  Boundary acc;
+  Boundary lane_changing_length;
+  Boundary current_dist_buffer;
+  Boundary next_lc_buffer;
+  double dist_from_ego_to_current_terminal_end{std::numeric_limits<double>::min()};
+};
+
 using RouteHandlerPtr = std::shared_ptr<RouteHandler>;
 using BppParamPtr = std::shared_ptr<BehaviorPathPlannerParameters>;
 using LCParamPtr = std::shared_ptr<Parameters>;
@@ -289,6 +304,7 @@ struct CommonData
   LCParamPtr lc_param_ptr;
   LanesPtr lanes_ptr;
   LanesPolygonPtr lanes_polygon_ptr;
+  TransientData transient_data;
   PathWithLaneId current_lanes_path;
   ModuleType lc_type;
   Direction direction;
@@ -310,31 +326,17 @@ struct CommonData
 
   [[nodiscard]] bool is_data_available() const
   {
-    return route_handler_ptr || self_odometry_ptr || bpp_param_ptr || lc_param_ptr || lanes_ptr ||
+    return route_handler_ptr && self_odometry_ptr && bpp_param_ptr && lc_param_ptr && lanes_ptr &&
            lanes_polygon_ptr;
   }
 
   [[nodiscard]] bool is_lanes_available() const
   {
-    return lanes_ptr || !lanes_ptr->current.empty() || !lanes_ptr->target.empty() ||
+    return lanes_ptr && !lanes_ptr->current.empty() && !lanes_ptr->target.empty() &&
            !lanes_ptr->target_neighbor.empty();
   }
 };
 using CommonDataPtr = std::shared_ptr<CommonData>;
-
-struct TransientData
-{
-  struct Boundary
-  {
-    double min{std::numeric_limits<double>::max()};
-    double max{std::numeric_limits<double>::max()};
-  };
-
-  Boundary acc;
-  Boundary current_lc_buffer;
-  Boundary next_lc_buffer;
-  double dist_from_ego_to_current_terminal_end{std::numeric_limits<double>::min()};
-};
 }  // namespace autoware::behavior_path_planner::lane_change
 
 namespace autoware::behavior_path_planner

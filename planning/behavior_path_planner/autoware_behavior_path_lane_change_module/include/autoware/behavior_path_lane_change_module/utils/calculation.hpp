@@ -101,19 +101,11 @@ double calc_ego_dist_to_lanes_start(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
 
-double calc_minimum_lane_change_buffer(
-  const LCParamPtr & lc_param_ptr, const std::vector<double> & shift_intervals);
-
-double calc_minimum_lane_change_buffer(
+std::pair<double, double> calc_min_lc_length_and_dist_buffer(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
 
-// double calc_maximum_lane_change_length(
-//   const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-//   const std::vector<double> & shift_intervals, const double max_acc);
-
-double calc_maximum_lane_change_length(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes,
-  const double max_acc);
+std::pair<double, double> calc_max_lc_length_and_dist_buffer(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__CALCULATION_HPP_

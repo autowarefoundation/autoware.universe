@@ -275,14 +275,10 @@ double AvoidanceByLaneChange::calcMinAvoidanceLength(const ObjectData & nearest_
 
 double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
 {
-  const auto current_lanes = get_current_lanes();
-  if (current_lanes.empty()) {
-    RCLCPP_DEBUG(logger_, "no empty lanes");
-    return std::numeric_limits<double>::infinity();
-  }
-
-  return utils::lane_change::calculation::calc_minimum_lane_change_buffer(
-    common_data_ptr_, current_lanes);
+  const auto min_lc_length_and_dist_buffer =
+    utils::lane_change::calculation::calc_min_lc_length_and_dist_buffer(
+      common_data_ptr_, get_current_lanes());
+  return std::get<1>(min_lc_length_and_dist_buffer);
 }
 
 double AvoidanceByLaneChange::calcLateralOffset() const
