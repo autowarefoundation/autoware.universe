@@ -58,7 +58,7 @@ private:
 
   std::optional<AngleConversion> angle_conversion_opt_;
   int angle_conversion_failure_num_{0};
-  int failure_tolerance_{10};
+  int failure_tolerance_{20};
 
   std::unique_ptr<DistortionCorrectorBase> distortion_corrector_;
 

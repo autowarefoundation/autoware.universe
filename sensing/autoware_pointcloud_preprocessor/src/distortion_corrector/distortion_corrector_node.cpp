@@ -104,8 +104,8 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointclou
         "Success to get the conversion formula between cartesian coordinates and LiDAR azimuth "
         "coordinates");
     } else {
-      RCLCPP_INFO(
-        this->get_logger(),
+      RCLCPP_WARN_STREAM_THROTTLE(
+        this->get_logger(), *this->get_clock(), 10000 /* ms */,
         "Failed to get the angle conversion between Cartesian coordinates and LiDAR azimuth "
         "coordinates. This pointcloud will not update azimuth and distance");
       angle_conversion_failure_num_++;
