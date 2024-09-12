@@ -89,6 +89,14 @@ install(
   RUNTIME DESTINATION bin
 )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+  ament_auto_add_gtest(test_voxel_based_compare_map_filter
+    test/test_voxel_based_compare_map_filter.cpp
+  )
+  target_link_libraries(test_voxel_based_compare_map_filter ${PROJECT_NAME})
+endif()
 ament_auto_package(
   INSTALL_TO_SHARE
   launch
