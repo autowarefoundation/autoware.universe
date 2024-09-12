@@ -488,7 +488,7 @@ public:
     const colorTuple & debug_colors, const std::string & ns, MarkerArray & debug_markers);
 
   /**
-   * @brief Add a marker of a convex hull for debugging
+   * @brief Add a marker of convex hulls for debugging
    * @param current_time Current time
    * @param hulls vector of polygons of the convex hulls
    * @param debug_colors Tuple of RGBA colors
