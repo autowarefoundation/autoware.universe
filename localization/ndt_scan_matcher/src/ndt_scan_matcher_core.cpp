@@ -898,20 +898,20 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr NDTScanMatcher::visualizePointScore(
   const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr,
   const float & lower_nvs, const float & upper_nvs)
 {
-  pcl::PointCloud<pcl::PointXYZI>::Ptr nvs_points_in_map_ptr_i{new pcl::PointCloud<pcl::PointXYZI>};
+  pcl::PointCloud<pcl::PointXYZI> nvs_points_in_map_ptr_i;
   nvs_points_in_map_ptr_i =
     ndt_ptr_->calculateNearestVoxelScoreEachPoint(*sensor_points_in_map_ptr);
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr nvs_points_in_map_ptr_rgb{
     new pcl::PointCloud<pcl::PointXYZRGB>};
 
   const float range = upper_nvs - lower_nvs;
-  for (std::size_t i = 0; i < nvs_points_in_map_ptr_i->size(); i++) {
+  for (std::size_t i = 0; i < nvs_points_in_map_ptr_i.size(); i++) {
     pcl::PointXYZRGB point;
-    point.x = nvs_points_in_map_ptr_i->points[i].x;
-    point.y = nvs_points_in_map_ptr_i->points[i].y;
-    point.z = nvs_points_in_map_ptr_i->points[i].z;
+    point.x = nvs_points_in_map_ptr_i.points[i].x;
+    point.y = nvs_points_in_map_ptr_i.points[i].y;
+    point.z = nvs_points_in_map_ptr_i.points[i].z;
     std_msgs::msg::ColorRGBA color =
-      exchange_color_crc((nvs_points_in_map_ptr_i->points[i].intensity - lower_nvs) / range);
+      exchange_color_crc((nvs_points_in_map_ptr_i.points[i].intensity - lower_nvs) / range);
     point.r = color.r * 255;
     point.g = color.g * 255;
     point.b = color.b * 255;
