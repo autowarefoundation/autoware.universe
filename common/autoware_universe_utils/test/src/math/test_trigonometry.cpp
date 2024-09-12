@@ -53,10 +53,9 @@ TEST(trigonometry, sin_and_cos)
 
 float normalize_angle(double angle)
 {
-  if (angle < 0) {
-    return angle + 2 * autoware::universe_utils::pi;
-  }
-  return angle;
+  const double tau = 2 * autoware::universe_utils::pi;
+  double factor = std::floor(angle / tau);
+  return static_cast<float>(angle - (factor * tau));
 }
 
 TEST(trigonometry, opencv_fast_atan2)
