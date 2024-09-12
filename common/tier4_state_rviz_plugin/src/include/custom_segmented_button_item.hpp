@@ -18,6 +18,7 @@
 
 #include <QColor>
 #include <QHBoxLayout>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPushButton>
@@ -39,6 +40,8 @@ protected:
   void paintEvent(QPaintEvent * event) override;
   void enterEvent(QEvent * event) override;
   void leaveEvent(QEvent * event) override;
+  void mousePressEvent(QMouseEvent * event) override;
+  void mouseReleaseEvent(QMouseEvent * event) override;
 
 private:
   void updateCheckableState();
@@ -47,6 +50,8 @@ private:
   QColor checkedBgColor;
   QColor hoverColor =
     QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str());
+  QColor pressedColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str());
   QColor inactiveTextColor;
   QColor activeTextColor;
   QColor disabledBgColor =
@@ -56,6 +61,7 @@ private:
   bool isHovered = false;
   bool isActivated = false;
   bool isDisabled = false;
+  bool isPressed = false;
 };
 
 #endif  // CUSTOM_SEGMENTED_BUTTON_ITEM_HPP_

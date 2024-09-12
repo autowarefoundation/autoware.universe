@@ -78,6 +78,12 @@ struct MaterialColors
   std::string warning = "#EEF08B";
   std::string info = "#8BD0F0";
   std::string danger = "#F08B8B";
+
+  std::string enabled_button_bg = "#8BD0F0";
+  std::string hover_button_bg = "#84c2e6";
+  std::string pressed_button_bg = "#699BB8";
+  std::string checked_button_bg = "#699BB8";
+  std::string disabled_button_bg = "#292d30";
 };
 
 inline MaterialColors default_colors;

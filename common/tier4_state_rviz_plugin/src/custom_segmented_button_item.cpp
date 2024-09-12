@@ -92,6 +92,8 @@ void CustomSegmentedButtonItem::paintEvent(QPaintEvent *)
   QColor buttonColor;
   if (isDisabled) {
     buttonColor = disabledBgColor;
+  } else if (isPressed) {
+    buttonColor = pressedColor;
   } else if (isHovered && !isChecked() && isCheckable()) {
     buttonColor = hoverColor;
   } else if (isActivated) {
@@ -176,4 +178,22 @@ void CustomSegmentedButtonItem::leaveEvent(QEvent * event)
     update();
   }
   QPushButton::leaveEvent(event);
+}
+
+void CustomSegmentedButtonItem::mousePressEvent(QMouseEvent * event)
+{
+  if (event->button() == Qt::LeftButton && !isDisabled) {
+    isPressed = true;
+    update();
+  }
+  QPushButton::mousePressEvent(event);
+}
+
+void CustomSegmentedButtonItem::mouseReleaseEvent(QMouseEvent * event)
+{
+  if (event->button() == Qt::LeftButton && !isDisabled) {
+    isPressed = false;
+    update();
+  }
+  QPushButton::mouseReleaseEvent(event);
 }

@@ -427,7 +427,7 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
   CustomSlider * pub_velocity_limit_slider_ = new CustomSlider(Qt::Horizontal);
   pub_velocity_limit_slider_->setRange(0, 100);
   pub_velocity_limit_slider_->setValue(0);
-  pub_velocity_limit_slider_->setMaximumWidth(300);
+  // pub_velocity_limit_slider_->setMaximumWidth(300);
 
   connect(pub_velocity_limit_slider_, &QSlider::sliderPressed, this, [this]() {
     sliderIsDragging = true;  // User starts dragging the handle
@@ -560,18 +560,26 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
 
   if (msg->state == RouteState::SET) {
     activateButton(clear_route_button_ptr_);
+    clear_route_button_ptr_->updateStyle(
+      "Clear Route",
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
   } else {
-    clear_route_button_ptr_->setStyleSheet(
-      QString("QPushButton {"
-              "background-color: %1;color: %2;"
-              "border: 2px solid %3;"
-              "font-weight: bold;"
-              "}")
-        .arg(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str())
-        .arg(autoware::state_rviz_plugin::colors::default_colors.outline.c_str())
-        .arg(
-          autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()));
     deactivateButton(clear_route_button_ptr_);
+    clear_route_button_ptr_->updateStyle(
+      "Clear Route",
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
   }
 }
 
@@ -608,6 +616,15 @@ void AutowareStatePanel::onLocalization(const LocalizationInitializationState::C
 
   localization_icon->updateStyle(state, bgColor);
   localization_label_ptr_->setText(localization_state);
+  init_by_gnss_button_ptr_->updateStyle(
+    "Initialize with GNSS",
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
 }
 
 void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
@@ -646,8 +663,26 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
 
   if (msg->state == MotionState::STARTING) {
     activateButton(accept_start_button_ptr_);
+    accept_start_button_ptr_->updateStyle(
+      "Accept Start",
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
   } else {
     deactivateButton(accept_start_button_ptr_);
+    accept_start_button_ptr_->updateStyle(
+      "Accept Start",
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
   }
 }
 
@@ -748,14 +783,18 @@ void AutowareStatePanel::onEmergencyStatus(
       QColor(autoware::state_rviz_plugin::colors::default_colors.error_container.c_str()),
       QColor(autoware::state_rviz_plugin::colors::default_colors.on_error_container.c_str()),
       QColor(autoware::state_rviz_plugin::colors::default_colors.on_error.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_error_container.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_error.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_error.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.error_container.c_str()),
       QColor(autoware::state_rviz_plugin::colors::default_colors.error_container.c_str()));
   } else {
     emergency_button_ptr_->updateStyle(
       "Set Emergency", QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
       QColor(autoware::state_rviz_plugin::colors::default_colors.on_primary.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_primary_container.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_primary.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.hover_button_bg.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.pressed_button_bg.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.checked_button_bg.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.error_container.c_str()),
       QColor(autoware::state_rviz_plugin::colors::default_colors.surface_tint.c_str()));
   }
 }
