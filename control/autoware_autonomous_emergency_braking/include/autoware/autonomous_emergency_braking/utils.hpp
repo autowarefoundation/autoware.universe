@@ -88,7 +88,7 @@ Polygon2d convertBoundingBoxObjectToGeometryPolygon(
 Polygon2d convertObjToPolygon(const PredictedObject & obj);
 
 /**
- * @brief Get the predicted object's shape as a geometry polygon
+ * @brief Get the transform from source to target frame
  * @param target_frame target frame
  * @param source_frame source frame
  * @param tf_buffer buffer of tf transforms

@@ -478,7 +478,7 @@ public:
    * @param polygons Polygons representing the ego vehicle footprint
    * @param objects Vector of object data
    * @param closest_object Optional data of the closest object
-   * @param colors Tuple of RGBA colors
+   * @param debug_colors Tuple of RGBA colors
    * @param ns Namespace for the marker
    * @param debug_markers Marker array for debugging
    */
@@ -488,10 +488,10 @@ public:
     const colorTuple & debug_colors, const std::string & ns, MarkerArray & debug_markers);
 
   /**
-   * @brief Add a marker for debugging
+   * @brief Add a marker of a convex hull for debugging
    * @param current_time Current time
-   * @param
-   * @param colors Tuple of RGBA colors
+   * @param hulls vector of polygons of the convex hulls
+   * @param debug_colors Tuple of RGBA colors
    * @param ns Namespace for the marker
    * @param debug_markers Marker array for debugging
    */
