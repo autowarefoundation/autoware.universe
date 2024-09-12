@@ -137,7 +137,7 @@ private:
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr visualizePointScore(
   const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr,
-  const float lower_nvs, const float upper_nvs);
+  const float & lower_nvs, const float & upper_nvs);
 
   void add_regularization_pose(const rclcpp::Time & sensor_ros_time);
 
@@ -160,6 +160,8 @@ private:
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     nearest_voxel_transformation_likelihood_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
+    voxel_score_points_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     no_ground_transform_probability_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
@@ -176,8 +178,6 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr ndt_marker_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     ndt_monte_carlo_initial_pose_marker_pub_;
-
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr voxel_score_points_pub_;
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
