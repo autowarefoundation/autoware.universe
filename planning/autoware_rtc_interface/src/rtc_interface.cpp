@@ -293,7 +293,8 @@ void RTCInterface::updateCooperateStatus(
   }
 
   RCLCPP_WARN_STREAM(
-    getLogger(), "[updateCooperateStatus] uuid : " << uuid_to_string(uuid) << " cannot transit from "
+    getLogger(), "[updateCooperateStatus] uuid : " << uuid_to_string(uuid)
+                                                   << " cannot transit from "
                                                    << state_to_string(itr->state.type) << " to "
                                                    << state_to_string(state) << std::endl);
 }
