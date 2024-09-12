@@ -197,6 +197,7 @@ struct PhaseInfo
 struct Lanes
 {
   bool current_lane_in_goal_section{false};
+  bool target_lane_in_goal_section{false};
   lanelet::ConstLanelets current;
   lanelet::ConstLanelets target_neighbor;
   lanelet::ConstLanelets target;
@@ -288,6 +289,9 @@ struct TransientData
   Boundary current_dist_buffer;
   Boundary next_lc_buffer;
   double dist_from_ego_to_current_terminal_end{std::numeric_limits<double>::min()};
+  double dist_from_ego_to_current_terminal_start{std::numeric_limits<double>::min()};
+
+  bool is_ego_near_current_terminal_start{false};
 };
 
 using RouteHandlerPtr = std::shared_ptr<RouteHandler>;

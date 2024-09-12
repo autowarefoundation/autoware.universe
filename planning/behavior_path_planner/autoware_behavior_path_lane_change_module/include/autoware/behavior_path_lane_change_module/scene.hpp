@@ -89,10 +89,6 @@ public:
 
   bool isRequiredStop(const bool is_trailing_object) override;
 
-  bool isNearEndOfCurrentLanes(
-    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    const double threshold) const override;
-
   bool hasFinishedLaneChange() const override;
 
   bool isAbleToReturnCurrentLane() const override;
@@ -127,9 +123,7 @@ protected:
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
-  std::vector<double> calcPrepareDuration(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
+  std::vector<double> calcPrepareDuration() const;
 
   lane_change::TargetObjects getTargetObjects(
     const FilteredByLanesExtendedObjects & predicted_objects,

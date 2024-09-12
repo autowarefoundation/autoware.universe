@@ -112,10 +112,6 @@ public:
   virtual PathSafetyStatus evaluateApprovedPathWithUnsafeHysteresis(
     PathSafetyStatus approve_path_safety_status) = 0;
 
-  virtual bool isNearEndOfCurrentLanes(
-    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    const double threshold) const = 0;
-
   virtual bool isStoppedAtRedTrafficLight() const = 0;
 
   virtual bool calcAbortPath() = 0;

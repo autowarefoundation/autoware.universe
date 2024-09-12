@@ -94,6 +94,9 @@ void NormalLaneChange::update_lanes(const bool is_approved)
 
   common_data_ptr_->lanes_ptr->current_lane_in_goal_section =
     route_handler_ptr->isInGoalRouteSection(current_lanes.back());
+  common_data_ptr_->lanes_ptr->target_lane_in_goal_section =
+    route_handler_ptr->isInGoalRouteSection(target_lanes.back());
+
   common_data_ptr_->lanes_ptr->preceding_target = utils::getPrecedingLanelets(
     *route_handler_ptr, get_target_lanes(), common_data_ptr_->get_ego_pose(),
     common_data_ptr_->lc_param_ptr->backward_lane_length);
@@ -136,6 +139,14 @@ void NormalLaneChange::update_transient_data()
   common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_end =
     calculation::calc_dist_from_pose_to_terminal_end(
       common_data_ptr_, common_data_ptr_->lanes_ptr->current, common_data_ptr_->get_ego_pose());
+  common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start =
+    common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start -
+    common_data_ptr_->transient_data.current_dist_buffer.min;
+
+  common_data_ptr_->transient_data.is_ego_near_current_terminal_start = std::invoke([&]() -> bool {
+    const auto threshold = calculation::calc_maximum_prepare_length(common_data_ptr_);
+    return common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start < threshold;
+  });
 }
 
 void NormalLaneChange::update_filtered_objects()
@@ -719,34 +730,6 @@ lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
     lane_change_lane.value(), getEgoPose(), backward_length, forward_length);
 }
 
-bool NormalLaneChange::isNearEndOfCurrentLanes(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-  const double threshold) const
-{
-  if (current_lanes.empty()) {
-    return false;
-  }
-
-  const auto & route_handler = getRouteHandler();
-  const auto & current_pose = getEgoPose();
-
-  const auto distance_to_lane_change_end = std::invoke([&]() {
-    auto distance_to_end = utils::getDistanceToEndOfLane(current_pose, current_lanes);
-
-    if (!target_lanes.empty() && route_handler->isInGoalRouteSection(target_lanes.back())) {
-      distance_to_end = std::min(
-        distance_to_end,
-        utils::getSignedDistance(current_pose, route_handler->getGoalPose(), current_lanes));
-    }
-
-    return std::max(0.0, distance_to_end) -
-           common_data_ptr_->transient_data.current_dist_buffer.min;
-  });
-
-  lane_change_debug_.distance_to_end_of_current_lane = distance_to_lane_change_end;
-  return distance_to_lane_change_end < threshold;
-}
-
 bool NormalLaneChange::hasFinishedLaneChange() const
 {
   const auto & current_pose = getEgoPose();
@@ -1016,20 +999,15 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   return utils::lane_change::getAccelerationValues(min_acc, max_acc, longitudinal_acc_sampling_num);
 }
 
-std::vector<double> NormalLaneChange::calcPrepareDuration(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
+std::vector<double> NormalLaneChange::calcPrepareDuration() const
 {
-  const auto base_link2front = planner_data_->parameters.base_link2front;
-  const auto threshold =
-    lane_change_parameters_->min_length_for_turn_signal_activation + base_link2front;
-
   std::vector<double> prepare_durations;
   constexpr double step = 0.5;
 
   for (double duration = lane_change_parameters_->lane_change_prepare_duration; duration >= 0.0;
        duration -= step) {
     prepare_durations.push_back(duration);
-    if (!isNearEndOfCurrentLanes(current_lanes, target_lanes, threshold)) {
+    if (!common_data_ptr_->transient_data.is_ego_near_current_terminal_start) {
       break;
     }
   }
@@ -1426,7 +1404,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
   const auto target_objects = getTargetObjects(filtered_objects_, current_lanes);
 
-  const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
+  const auto prepare_durations = calcPrepareDuration();
 
   candidate_paths->reserve(
     longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num * prepare_durations.size());
@@ -1943,10 +1921,9 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
 bool NormalLaneChange::isRequiredStop(const bool is_trailing_object)
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  const auto threshold = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
   if (
-    isNearEndOfCurrentLanes(get_current_lanes(), get_target_lanes(), threshold) &&
-    isAbleToStopSafely() && is_trailing_object) {
+    common_data_ptr_->transient_data.is_ego_near_current_terminal_start && isAbleToStopSafely() &&
+    is_trailing_object) {
     current_lane_change_state_ = LaneChangeStates::Stop;
     return true;
   }
