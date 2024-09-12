@@ -145,7 +145,7 @@ std::vector<Polygon2d> calcOverlappingPoints(const Polygon2d & polygon1, const P
 
 StopFactor createStopFactor(
   const geometry_msgs::msg::Pose & stop_pose,
-  const std::vector<geometry_msgs::msg::Point> stop_factor_points = {})
+  const std::vector<geometry_msgs::msg::Point> & stop_factor_points = {})
 {
   StopFactor stop_factor;
   stop_factor.stop_factor_points = stop_factor_points;
@@ -201,6 +201,8 @@ CrosswalkModule::CrosswalkModule(
 
   collision_info_pub_ =
     node.create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/collision_info", 1);
+
+  vehicle_stop_checker_ = std::make_unique<autoware::motion_utils::VehicleStopChecker>(&node);
 }
 
 bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -320,8 +322,6 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   const double ego_vel = planner_data_->current_velocity->twist.linear.x;
   const double ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
 
-  const std::optional<double> ego_crosswalk_passage_direction =
-    findEgoPassageDirectionAlongPath(sparse_resample_path);
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   const auto dist_ego_to_stop =
     calcSignedArcLength(ego_path.points, ego_pos, default_stop_pose->position);
@@ -357,6 +357,8 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   };
   std::optional<std::pair<geometry_msgs::msg::Point, double>> nearest_stop_info;
   std::vector<geometry_msgs::msg::Point> stop_factor_points;
+  const std::optional<double> ego_crosswalk_passage_direction =
+    findEgoPassageDirectionAlongPath(sparse_resample_path);
   for (const auto & object : object_info_manager_.getObject()) {
     const auto & collision_point_opt = object.collision_point;
     if (collision_point_opt) {
@@ -618,9 +620,17 @@ std::optional<double> CrosswalkModule::findEgoPassageDirectionAlongPath(
   if (!intersect_pt1 || !intersect_pt2) {
     return std::nullopt;
   }
-  const auto idx1 = intersect_pt1.value().first, idx2 = intersect_pt2.value().first;
-  const auto & front = idx1 > idx2 ? intersect_pt2.value().second : intersect_pt1.value().second;
-  const auto & back = idx1 > idx2 ? intersect_pt1.value().second : intersect_pt2.value().second;
+
+  const auto idx1 = intersect_pt1.value().first;
+  const auto idx2 = intersect_pt2.value().first;
+
+  const auto min_idx = std::min(idx1, idx2);
+  const auto dist1 = calcSignedArcLength(path.points, min_idx, intersect_pt1.value().second);
+  const auto dist2 = calcSignedArcLength(path.points, min_idx, intersect_pt2.value().second);
+
+  const auto & front = dist1 > dist2 ? intersect_pt2.value().second : intersect_pt1.value().second;
+  const auto & back = dist1 > dist2 ? intersect_pt1.value().second : intersect_pt2.value().second;
+
   return std::atan2(back.y - front.y, back.x - front.x);
 }
 
@@ -1276,7 +1286,8 @@ void CrosswalkModule::planStop(
   PathWithLaneId & ego_path, const std::optional<StopFactor> & nearest_stop_factor,
   const std::optional<geometry_msgs::msg::Pose> & default_stop_pose, StopReason * stop_reason)
 {
-  const auto stop_factor = [&]() -> std::optional<StopFactor> {
+  // Calculate stop factor
+  auto stop_factor = [&]() -> std::optional<StopFactor> {
     if (nearest_stop_factor) return *nearest_stop_factor;
     if (default_stop_pose) return createStopFactor(*default_stop_pose);
     return std::nullopt;
@@ -1287,11 +1298,36 @@ void CrosswalkModule::planStop(
     return;
   }
 
+  // Check if the restart should be suppressed.
+  const bool suppress_restart = checkRestartSuppression(ego_path, stop_factor);
+  if (suppress_restart) {
+    const auto & ego_pose = planner_data_->current_odometry->pose;
+    stop_factor->stop_pose = ego_pose;
+  }
+
   // Plan stop
   insertDecelPointWithDebugInfo(stop_factor->stop_pose.position, 0.0, ego_path);
   planning_utils::appendStopReason(*stop_factor, stop_reason);
   velocity_factor_.set(
     ego_path.points, planner_data_->current_odometry->pose, stop_factor->stop_pose,
     VelocityFactor::UNKNOWN);
+}
+
+bool CrosswalkModule::checkRestartSuppression(
+  const PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const
+{
+  const auto is_vehicle_stopped = vehicle_stop_checker_->isVehicleStopped();
+  if (!is_vehicle_stopped) {
+    return false;
+  }
+
+  const auto & ego_pos = planner_data_->current_odometry->pose.position;
+  const double dist_to_stop =
+    calcSignedArcLength(ego_path.points, ego_pos, stop_factor->stop_pose.position);
+
+  // NOTE: min_dist_to_stop_for_restart_suppression is supposed to be the same as
+  //      the pid_longitudinal_controller's drive_state_stop_dist.
+  return planner_param_.min_dist_to_stop_for_restart_suppression < dist_to_stop &&
+         dist_to_stop < planner_param_.max_dist_to_stop_for_restart_suppression;
 }
 }  // namespace autoware::behavior_velocity_planner

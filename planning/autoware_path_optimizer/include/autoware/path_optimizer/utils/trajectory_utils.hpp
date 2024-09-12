@@ -132,10 +132,6 @@ std::vector<ReferencePoint> convertToReferencePoints(
 
 std::vector<ReferencePoint> sanitizePoints(const std::vector<ReferencePoint> & points);
 
-void compensateLastPose(
-  const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
-  const double delta_dist_threshold, const double delta_yaw_threshold);
-
 geometry_msgs::msg::Point getNearestPosition(
   const std::vector<ReferencePoint> & points, const int target_idx, const double offset);
 
@@ -158,13 +154,13 @@ size_t findEgoSegmentIndex(
 }
 
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
-  const std::vector<TrajectoryPoint> traj_points, const double interval);
+  const std::vector<TrajectoryPoint> & traj_points, const double interval);
 
 std::vector<TrajectoryPoint> resampleTrajectoryPointsWithoutStopPoint(
-  const std::vector<TrajectoryPoint> traj_points, const double interval);
+  const std::vector<TrajectoryPoint> & traj_points, const double interval);
 
 std::vector<ReferencePoint> resampleReferencePoints(
-  const std::vector<ReferencePoint> ref_points, const double interval);
+  const std::vector<ReferencePoint> & ref_points, const double interval);
 
 template <typename T>
 std::optional<size_t> updateFrontPointForFix(

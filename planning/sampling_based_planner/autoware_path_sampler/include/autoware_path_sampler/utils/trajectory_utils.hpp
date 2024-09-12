@@ -117,10 +117,6 @@ inline std::vector<TrajectoryPoint> convertToTrajectoryPoints(
   return traj_points;
 }
 
-void compensateLastPose(
-  const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
-  const double delta_dist_threshold, const double delta_yaw_threshold);
-
 template <class T>
 size_t findEgoIndex(
   const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose,
@@ -140,10 +136,10 @@ size_t findEgoSegmentIndex(
 }
 
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
-  const std::vector<TrajectoryPoint> traj_points, const double interval);
+  const std::vector<TrajectoryPoint> & traj_points, const double interval);
 
 std::vector<TrajectoryPoint> resampleTrajectoryPointsWithoutStopPoint(
-  const std::vector<TrajectoryPoint> traj_points, const double interval);
+  const std::vector<TrajectoryPoint> & traj_points, const double interval);
 
 template <typename T>
 std::optional<size_t> updateFrontPointForFix(

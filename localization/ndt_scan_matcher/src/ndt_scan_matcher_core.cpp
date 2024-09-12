@@ -37,6 +37,9 @@
 #include <iomanip>
 #include <thread>
 
+namespace autoware::ndt_scan_matcher
+{
+
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)
 {
@@ -415,7 +418,10 @@ bool NDTScanMatcher::callback_sensor_points_main(
     "is_succeed_interpolate_initial_pose", is_succeed_interpolate_initial_pose);
   if (!is_succeed_interpolate_initial_pose) {
     std::stringstream message;
-    message << "Couldn't interpolate pose. Please check the initial pose topic";
+    message << "Couldn't interpolate pose. Please verify that "
+               "(1) the initial pose topic (primarily come from the EKF) is being published, and "
+               "(2) the timestamps of the sensor PCD messages and pose messages are synchronized "
+               "correctly.";
     diagnostics_scan_points_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return false;
@@ -1003,7 +1009,8 @@ void NDTScanMatcher::service_ndt_align_main(
   diagnostics_ndt_align_->add_key_value("is_succeed_transform_initial_pose", true);
 
   // transform pose_frame to map_frame
-  const auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
+  auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
+  initial_pose_msg_in_map_frame.header.stamp = req->pose_with_covariance.header.stamp;
   map_update_module_->update_map(
     initial_pose_msg_in_map_frame.pose.pose.position, diagnostics_ndt_align_);
 
@@ -1036,12 +1043,22 @@ void NDTScanMatcher::service_ndt_align_main(
     return;
   }
 
-  res->pose_with_covariance = align_pose(initial_pose_msg_in_map_frame);
+  // estimate initial pose
+  const auto [pose_with_covariance, score] = align_pose(initial_pose_msg_in_map_frame);
+
+  // check reliability of initial pose result
+  res->reliable =
+    (param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood < score);
+  if (!res->reliable) {
+    RCLCPP_WARN_STREAM(
+      this->get_logger(), "Initial Pose Estimation is Unstable. Score is " << score);
+  }
   res->success = true;
+  res->pose_with_covariance = pose_with_covariance;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
+std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> NDTScanMatcher::align_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
   output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
@@ -1131,13 +1148,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
     std::begin(particle_array), std::end(particle_array),
     [](const Particle & lhs, const Particle & rhs) { return lhs.score < rhs.score; });
 
-  if (
-    best_particle_ptr->score <
-    param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood)
-    RCLCPP_WARN_STREAM(
-      this->get_logger(),
-      "Initial Pose Estimation is Unstable. Score is " << best_particle_ptr->score);
-
   geometry_msgs::msg::PoseWithCovarianceStamped result_pose_with_cov_msg;
   result_pose_with_cov_msg.header.stamp = initial_pose_with_cov.header.stamp;
   result_pose_with_cov_msg.header.frame_id = param_.frame.map_frame;
@@ -1146,8 +1156,10 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
   diagnostics_ndt_align_->add_key_value("best_particle_score", best_particle_ptr->score);
 
-  return result_pose_with_cov_msg;
+  return std::make_tuple(result_pose_with_cov_msg, best_particle_ptr->score);
 }
 
+}  // namespace autoware::ndt_scan_matcher
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(NDTScanMatcher)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ndt_scan_matcher::NDTScanMatcher)

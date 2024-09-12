@@ -60,9 +60,10 @@ public:
     tier4_perception_msgs::msg::TrafficLightArray & traffic_signals) override;
 
 private:
-  void postProcess(int cls, float prob, tier4_perception_msgs::msg::TrafficLight & traffic_signal);
+  void postProcess(
+    int class_index, float prob, tier4_perception_msgs::msg::TrafficLight & traffic_signal);
   bool readLabelfile(std::string filepath, std::vector<std::string> & labels);
-  bool isColorLabel(const std::string label);
+  bool isColorLabel(const std::string & label);
   void outputDebugImage(
     cv::Mat & debug_image, const tier4_perception_msgs::msg::TrafficLight & traffic_signal);
 

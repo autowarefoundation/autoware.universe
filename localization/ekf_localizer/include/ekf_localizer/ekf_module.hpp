@@ -19,8 +19,8 @@
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/warning.hpp"
 
-#include <kalman_filter/kalman_filter.hpp>
-#include <kalman_filter/time_delay_kalman_filter.hpp>
+#include <autoware/kalman_filter/kalman_filter.hpp>
+#include <autoware/kalman_filter/time_delay_kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -29,8 +29,14 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 
+#include <tf2/utils.h>
+
 #include <memory>
 #include <vector>
+
+namespace autoware::ekf_localizer
+{
+using autoware::kalman_filter::TimeDelayKalmanFilter;
 
 struct EKFDiagnosticInfo
 {
@@ -77,8 +83,8 @@ public:
   bool measurement_update_twist(
     const TwistWithCovariance & twist, const rclcpp::Time & t_curr,
     EKFDiagnosticInfo & twist_diag_info);
-  geometry_msgs::msg::PoseWithCovarianceStamped compensate_pose_with_z_delay(
-    const PoseWithCovariance & pose, const double delay_time);
+  geometry_msgs::msg::PoseWithCovarianceStamped compensate_rph_with_delay(
+    const PoseWithCovariance & pose, tf2::Vector3 last_angular_velocity, const double delay_time);
 
 private:
   TimeDelayKalmanFilter kalman_filter_;
@@ -88,5 +94,7 @@ private:
   std::vector<double> accumulated_delay_times_;
   const HyperParameters params_;
 };
+
+}  // namespace autoware::ekf_localizer
 
 #endif  // EKF_LOCALIZER__EKF_MODULE_HPP_

@@ -34,7 +34,7 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
     node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".common.enable_rtc"))
 {
-  const std::string ns(getModuleName());
+  const std::string ns(CrosswalkModuleManager::getModuleName());
 
   // for crosswalk parameters
   auto & cp = crosswalk_planner_param_;
@@ -53,6 +53,12 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".stop_position.far_object_threshold");
   cp.stop_position_threshold =
     getOrDeclareParameter<double>(node, ns + ".stop_position.stop_position_threshold");
+
+  // param for restart suppression
+  cp.min_dist_to_stop_for_restart_suppression =
+    getOrDeclareParameter<double>(node, ns + ".restart_suppression.min_distance_to_stop");
+  cp.max_dist_to_stop_for_restart_suppression =
+    getOrDeclareParameter<double>(node, ns + ".restart_suppression.max_distance_to_stop");
 
   // param for ego velocity
   cp.min_slow_down_velocity =

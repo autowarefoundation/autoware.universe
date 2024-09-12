@@ -39,6 +39,7 @@
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
+#include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -49,6 +50,9 @@
 #include <string>
 #include <vector>
 
+namespace autoware::ekf_localizer
+{
+
 class Simple1DFilter
 {
 public:
@@ -56,50 +60,52 @@ public:
   {
     initialized_ = false;
     x_ = 0;
-    dev_ = 1e9;
-    proc_dev_x_c_ = 0.0;
+    var_ = 1e9;
+    proc_var_x_c_ = 0.0;
   };
-  void init(const double init_obs, const double obs_dev, const rclcpp::Time & time)
+  void init(const double init_obs, const double obs_var)
   {
     x_ = init_obs;
-    dev_ = obs_dev;
-    latest_time_ = time;
+    var_ = obs_var;
     initialized_ = true;
   };
-  void update(const double obs, const double obs_dev, const rclcpp::Time & time)
+  void update(const double obs, const double obs_var, const double dt)
   {
     if (!initialized_) {
-      init(obs, obs_dev, time);
+      init(obs, obs_var);
       return;
     }
 
-    // Prediction step (current stddev_)
-    double dt = (time - latest_time_).seconds();
-    double proc_dev_x_d = proc_dev_x_c_ * dt * dt;
-    dev_ = dev_ + proc_dev_x_d;
+    // Prediction step (current variance)
+    double proc_var_x_d = proc_var_x_c_ * dt * dt;
+    var_ = var_ + proc_var_x_d;
 
     // Update step
-    double kalman_gain = dev_ / (dev_ + obs_dev);
+    double kalman_gain = var_ / (var_ + obs_var);
     x_ = x_ + kalman_gain * (obs - x_);
-    dev_ = (1 - kalman_gain) * dev_;
-
-    latest_time_ = time;
+    var_ = (1 - kalman_gain) * var_;
   };
-  void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
+  void set_proc_var(const double proc_var) { proc_var_x_c_ = proc_var; }
   [[nodiscard]] double get_x() const { return x_; }
+  [[nodiscard]] double get_var() const { return var_; }
 
 private:
   bool initialized_;
   double x_;
-  double dev_;
-  double proc_dev_x_c_;
-  rclcpp::Time latest_time_;
+  double var_;
+  double proc_var_x_c_;
 };
 
 class EKFLocalizer : public rclcpp::Node
 {
 public:
   explicit EKFLocalizer(const rclcpp::NodeOptions & options);
+
+  // This function is only used in static tools to know when timer callbacks are triggered.
+  std::chrono::nanoseconds time_until_trigger() const
+  {
+    return timer_control_->time_until_trigger();
+  }
 
 private:
   const std::shared_ptr<Warning> warning_;
@@ -140,6 +146,10 @@ private:
   rclcpp::TimerBase::SharedPtr timer_tf_;
   //!< @brief tf broadcaster
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;
+  //!< @brief tf buffer
+  tf2_ros::Buffer tf2_buffer_;
+  //!< @brief tf listener
+  tf2_ros::TransformListener tf2_listener_;
 
   //!< @brief logger configure module
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
@@ -153,11 +163,6 @@ private:
   const HyperParameters params_;
 
   double ekf_dt_;
-
-  /* process noise variance for discrete model */
-  double proc_cov_yaw_d_;  //!< @brief  discrete yaw process noise
-  double proc_cov_vx_d_;   //!< @brief  discrete process noise in d_vx=0
-  double proc_cov_wz_d_;   //!< @brief  discrete process noise in d_wz=0
 
   bool is_activated_;
 
@@ -220,6 +225,12 @@ private:
     const geometry_msgs::msg::PoseStamped & current_ekf_pose, const rclcpp::Time & current_time);
 
   /**
+   * @brief publish diagnostics message for return
+   */
+  void publish_callback_return_diagnostics(
+    const std::string & callback_name, const rclcpp::Time & current_time);
+
+  /**
    * @brief update simple 1d filter
    */
   void update_simple_1d_filters(
@@ -239,6 +250,14 @@ private:
 
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
+  /**
+   * @brief last angular velocity for compensating rph with delay
+   */
+  tf2::Vector3 last_angular_velocity_;
+
   friend class EKFLocalizerTestSuite;  // for test code
 };
+
+}  // namespace autoware::ekf_localizer
+
 #endif  // EKF_LOCALIZER__EKF_LOCALIZER_HPP_
