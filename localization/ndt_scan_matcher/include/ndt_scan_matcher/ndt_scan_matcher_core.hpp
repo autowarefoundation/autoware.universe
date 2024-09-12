@@ -69,6 +69,9 @@
 #include <tuple>
 #include <vector>
 
+namespace autoware::ndt_scan_matcher
+{
+
 class NDTScanMatcher : public rclcpp::Node
 {
   using PointSource = pcl::PointXYZ;
@@ -78,6 +81,12 @@ class NDTScanMatcher : public rclcpp::Node
 
 public:
   explicit NDTScanMatcher(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+
+  // This function is only used in static tools to know when timer callbacks are triggered.
+  std::chrono::nanoseconds time_until_trigger() const
+  {
+    return map_update_timer_->time_until_trigger();
+  }
 
 private:
   void callback_timer();
@@ -208,5 +217,7 @@ private:
 
   HyperParameters param_;
 };
+
+}  // namespace autoware::ndt_scan_matcher
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

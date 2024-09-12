@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    delay_compensation_time: 0.17
+    delay_compensation_time: 0.1
 
     enable_smooth_stop: true
     enable_overshoot_emergency: true
@@ -59,6 +59,10 @@
     emergency_vel: 0.0
     emergency_acc: -5.0 # denotes acceleration
     emergency_jerk: -3.0
+
+    # acceleration feedback
+    lpf_acc_error_gain: 0.98
+    acc_feedback_gain: 0.0
 
     # acceleration limit
     max_acc: 3.0
