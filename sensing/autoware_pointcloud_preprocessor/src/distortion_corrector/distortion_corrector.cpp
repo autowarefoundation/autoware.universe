@@ -262,7 +262,7 @@ std::optional<AngleConversion> DistortionCorrector<T>::tryComputeAngleConversion
       angle_conversion.offset_rad_threshold) {
       RCLCPP_DEBUG(
         node_->get_logger(),
-        "Value of offset_rad is not close to mutiplication of 90 degrees. Iterate to next point "
+        "Value of offset_rad is not close to multiplication of 90 degrees. Iterate to next point "
         "...");
       continue;
     }

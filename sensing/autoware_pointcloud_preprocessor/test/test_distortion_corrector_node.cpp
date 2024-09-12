@@ -208,7 +208,7 @@ protected:
         if (hesai_deg == 360) hesai_deg = 0;
         default_azimuths.push_back(hesai_deg * autoware::universe_utils::pi / 180);
       } else if (vendor == AngleCoordinateSystem::CARTESIAN) {
-        // Cartesian coordingates: x-axis is 0 degrees, y-axis is 90 degrees, angle increase in
+        // Cartesian coordinates: x-axis is 0 degrees, y-axis is 90 degrees, angle increase in
         // counterclockwise direction
         default_azimuths.push_back(std::atan2(point.y(), point.x()));
       } else {
@@ -1292,7 +1292,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnRandomPointcloud)
 
 TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnBadAzimuthPointcloud)
 {
-  // test pointcloud that has bad zimuth
+  // test pointcloud that can cause the angle conversion to fail.
   // 1. angle difference is 0
   // 2. azimuth value is wrong
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
