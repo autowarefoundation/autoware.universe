@@ -72,7 +72,7 @@ geometry_msgs::msg::Quaternion getQuaternionFromRPY(const double r, const double
   return tf2::toMsg(q);
 }
 
-double sigmoid(double x)
+double sigmoid(const double x)
 {
   return 1.0 / (1.0 + std::exp(-x));
 }
