@@ -175,17 +175,18 @@ protected:
     AngleCoordinateSystem vendor)
   {
     // Generate all combinations of signs { -, 0, + } x { -, 0, + } for x and y.
+    // Also include the case of (0, 0 ,0)
     std::vector<Eigen::Vector3f> default_points = {{
-      Eigen::Vector3f(10.0f, 0.0f, 1.0f),   // point 1
-      Eigen::Vector3f(5.0f, -5.0f, 2.0f),   // point 2
-      Eigen::Vector3f(0.0f, -10.0f, 3.0f),  // point 3
-      Eigen::Vector3f(-5.0f, -5.0f, 4.0f),  // point 4
-      Eigen::Vector3f(-10.0f, 0.0f, 5.0f),  // point 5
-      Eigen::Vector3f(-5.0f, 5.0f, -5.0f),  // point 6
-      Eigen::Vector3f(0.0f, 10.0f, -4.0f),  // point 7
-      Eigen::Vector3f(5.0f, 5.0f, -3.0f),   // point 8
-      Eigen::Vector3f(8.0f, 3.0f, -2.0f),   // point 9
-      Eigen::Vector3f(9.0f, 1.0f, -1.0f)    // point 10
+      Eigen::Vector3f(0.0f, 0.0f, 0.0f),    // point 1
+      Eigen::Vector3f(0.0f, 0.0f, 0.0f),    // point 2
+      Eigen::Vector3f(10.0f, 0.0f, 1.0f),   // point 3
+      Eigen::Vector3f(5.0f, -5.0f, 2.0f),   // point 4
+      Eigen::Vector3f(0.0f, -10.0f, 3.0f),  // point 5
+      Eigen::Vector3f(-5.0f, -5.0f, 4.0f),  // point 6
+      Eigen::Vector3f(-10.0f, 0.0f, 5.0f),  // point 7
+      Eigen::Vector3f(-5.0f, 5.0f, -5.0f),  // point 8
+      Eigen::Vector3f(0.0f, 10.0f, -4.0f),  // point 9
+      Eigen::Vector3f(5.0f, 5.0f, -3.0f),   // point 10
     }};
 
     std::vector<float> default_azimuths;
@@ -242,7 +243,6 @@ protected:
     pointcloud_msg.height = 1;
     pointcloud_msg.is_dense = true;
     pointcloud_msg.is_bigendian = false;
-    // auto [default_points, default_azimuths] = generateDefaultPointcloud(vendor);
 
     // Generate timestamps for the points
     std::vector<std::uint32_t> timestamps = generatePointTimestamps(stamp, points.size());
@@ -433,12 +433,13 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
-  std::array<Eigen::Vector3f, number_of_points_> expected_pointcloud = {
-    {Eigen::Vector3f(10.0f, 0.0f, 1.0f), Eigen::Vector3f(5.0f, -5.0f, 2.0f),
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(0.0f, 0.0f, 0.0f), Eigen::Vector3f(0.0f, 0.0f, 0.0f),
+     Eigen::Vector3f(10.0f, 0.0f, 1.0f), Eigen::Vector3f(5.0f, -5.0f, 2.0f),
      Eigen::Vector3f(0.0f, -10.0f, 3.0f), Eigen::Vector3f(-5.0f, -5.0f, 4.0f),
      Eigen::Vector3f(-10.0f, 0.0f, 5.0f), Eigen::Vector3f(-5.0f, 5.0f, -5.0f),
-     Eigen::Vector3f(0.0f, 10.0f, -4.0f), Eigen::Vector3f(5.0f, 5.0f, -3.0f),
-     Eigen::Vector3f(8.0f, 3.0f, -2.0f), Eigen::Vector3f(9.0f, 1.0f, -1.0f)}};
+     Eigen::Vector3f(0.0f, 10.0f, -4.0f), Eigen::Vector3f(5.0f, 5.0f, -3.0f)}};
+
   size_t i = 0;
   std::ostringstream oss;
   oss << "Expected pointcloud:\n";
@@ -493,12 +494,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::array<Eigen::Vector3f, number_of_points_> expected_pointcloud = {
-    {Eigen::Vector3f(10.0f, 0.0f, 1.0f), Eigen::Vector3f(5.12144f, -4.99853f, 2.0f),
-     Eigen::Vector3f(0.266711f, -9.99986f, 3.0f), Eigen::Vector3f(-4.59472f, -5.00498f, 4.0f),
-     Eigen::Vector3f(-9.45999f, -0.0148422f, 5.0f), Eigen::Vector3f(-4.31006f, 4.99074f, -5.0f),
-     Eigen::Vector3f(0.835072f, 10.0012f, -4.0f), Eigen::Vector3f(6.02463f, 5.0171f, -3.0f),
-     Eigen::Vector3f(9.20872f, 3.03234f, -2.0f), Eigen::Vector3f(10.3956f, 1.04204f, -1.0f)}};
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(0.0f, 0.0f, 0.0f), Eigen::Vector3f(0.12f, 3.45146e-05f, 0.0f),
+     Eigen::Vector3f(10.26f, 0.00684635f, 1.0f), Eigen::Vector3f(5.40527f, -4.99443f, 2.0f),
+     Eigen::Vector3f(0.55534f, -9.99949f, 3.0f), Eigen::Vector3f(-4.28992f, -5.00924f, 4.0f),
+     Eigen::Vector3f(-9.13997f, -0.0237086f, 5.0f), Eigen::Vector3f(-3.97532f, 4.98642f, -5.0f),
+     Eigen::Vector3f(1.18261f, 10.0024f, -4.0f), Eigen::Vector3f(6.37838f, 5.02475f, -3.0f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -540,12 +541,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::array<Eigen::Vector3f, number_of_points_> expected_pointcloud = {
-    {Eigen::Vector3f(10.0f, 0.0f, 1.0f), Eigen::Vector3f(5.11856f, -5.00147f, 2.0f),
-     Eigen::Vector3f(0.254248f, -10.0001f, 3.0f), Eigen::Vector3f(-4.60431f, -4.99592f, 4.0f),
-     Eigen::Vector3f(-9.45999f, 0.0111079f, 5.0f), Eigen::Vector3f(-4.2928f, 5.00656f, -5.0f),
-     Eigen::Vector3f(0.877257f, 9.99908f, -4.0f), Eigen::Vector3f(6.05006f, 4.98867f, -3.0f),
-     Eigen::Vector3f(9.22659f, 2.98069f, -2.0f), Eigen::Vector3f(10.4025f, 0.975451f, -1.0f)}};
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(0.0f, 0.0f, 0.0f), Eigen::Vector3f(0.12f, -3.45146e-05f, 0.0f),
+     Eigen::Vector3f(10.26f, -0.00586748f, 1.0f), Eigen::Vector3f(5.39568f, -5.00455f, 2.0f),
+     Eigen::Vector3f(0.528495f, -10.0004f, 3.0f), Eigen::Vector3f(-4.30719f, -4.99343f, 4.0f),
+     Eigen::Vector3f(-9.13999f, 0.0163541f, 5.0f), Eigen::Vector3f(-3.94992f, 5.0088f, -5.0f),
+     Eigen::Vector3f(1.24205f, 9.99831f, -4.0f), Eigen::Vector3f(6.41245f, 4.98541f, -3.0f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -587,15 +588,15 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::array<Eigen::Vector3f, number_of_points_> expected_pointcloud = {
-    {Eigen::Vector3f(10.0f, -2.63462e-08f, 1.0f), Eigen::Vector3f(5.05137f, -4.93869f, 2.09267f),
-     Eigen::Vector3f(0.112092f, -9.86876f, 3.19715f),
-     Eigen::Vector3f(-4.83021f, -4.80022f, 4.30059f),
-     Eigen::Vector3f(-9.7743f, 0.266927f, 5.40228f),
-     Eigen::Vector3f(-4.69786f, 5.35289f, -4.47032f),
-     Eigen::Vector3f(0.365836f, 10.4368f, -3.33969f),
-     Eigen::Vector3f(5.44511f, 5.53184f, -2.19585f), Eigen::Vector3f(8.52226f, 3.62536f, -1.0538f),
-     Eigen::Vector3f(9.59921f, 1.71784f, 0.0862978f)}};
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(0.0f, 0.0f, 0.0f), Eigen::Vector3f(0.0512387f, 0.0608269f, 0.0917824f),
+     Eigen::Vector3f(10.1106f, 0.134026f, 1.20356f), Eigen::Vector3f(5.17128f, -4.79604f, 2.30806f),
+     Eigen::Vector3f(0.232686f, -9.7275f, 3.40938f),
+     Eigen::Vector3f(-4.70281f, -4.65034f, 4.52609f),
+     Eigen::Vector3f(-9.64009f, 0.425434f, 5.64106f),
+     Eigen::Vector3f(-4.55139f, 5.5241f, -4.21327f),
+     Eigen::Vector3f(0.519385f, 10.6188f, -3.06522f),
+     Eigen::Vector3f(5.5992f, 5.71475f, -1.91985f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -635,12 +636,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::array<Eigen::Vector3f, number_of_points_> expected_pointcloud = {
-    {Eigen::Vector3f(10.0f, 0.0f, 1.0f), Eigen::Vector3f(5.1215f, -4.99848f, 2.0f),
-     Eigen::Vector3f(0.267f, -9.99991f, 3.0f), Eigen::Vector3f(-4.5945f, -5.00528f, 4.0f),
-     Eigen::Vector3f(-9.45999f, -0.0146016f, 5.0f), Eigen::Vector3f(-4.30999f, 4.9907f, -5.0f),
-     Eigen::Vector3f(0.834999f, 10.0011f, -4.0f), Eigen::Vector3f(6.02447f, 5.01714f, -3.0f),
-     Eigen::Vector3f(9.20884f, 3.03192f, -2.0f), Eigen::Vector3f(10.3956f, 1.04182f, -1.0f)}};
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(0.0f, 0.0f, 0.0f), Eigen::Vector3f(0.12f, 2.38419e-05f, 0.0f),
+     Eigen::Vector3f(10.26f, 0.0070927f, 1.0f), Eigen::Vector3f(5.4055f, -4.99428f, 2.0f),
+     Eigen::Vector3f(0.555f, -9.99959f, 3.0f), Eigen::Vector3f(-4.28999f, -5.00928f, 4.0f),
+     Eigen::Vector3f(-9.13997f, -0.0239053f, 5.0f), Eigen::Vector3f(-3.97548f, 4.98614f, -5.0f),
+     Eigen::Vector3f(1.183f, 10.0023f, -4.0f), Eigen::Vector3f(6.37845f, 5.02458f, -3.0f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -682,15 +683,15 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::array<Eigen::Vector3f, number_of_points_> expected_pointcloud = {
-    {Eigen::Vector3f(10.0f, 0.0f, 1.0f), Eigen::Vector3f(5.11902f, -5.00239f, 1.9965f),
-     Eigen::Vector3f(0.255945f, -10.0027f, 2.99104f),
-     Eigen::Vector3f(-4.60055f, -5.00116f, 3.99787f),
-     Eigen::Vector3f(-9.45347f, 0.00231253f, 5.01268f),
-     Eigen::Vector3f(-4.30145f, 5.01808f, -4.98054f),
-     Eigen::Vector3f(0.868468f, 10.0103f, -3.97336f),
-     Eigen::Vector3f(6.04213f, 4.99888f, -2.99811f), Eigen::Vector3f(9.22048f, 2.98838f, -2.01552f),
-     Eigen::Vector3f(10.3988f, 0.980287f, -1.03088f)}};
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(0.0f, 0.0f, 0.0f), Eigen::Vector3f(0.12f, -1.86084e-05f, -1.63216e-05f),
+     Eigen::Vector3f(10.2606f, -0.00683919f, 0.993812f),
+     Eigen::Vector3f(5.39753f, -5.00722f, 1.9883f), Eigen::Vector3f(0.532273f, -10.0057f, 2.98165f),
+     Eigen::Vector3f(-4.30025f, -5.0024f, 3.99665f),
+     Eigen::Vector3f(-9.12918f, 0.00256404f, 5.02064f),
+     Eigen::Vector3f(-3.96298f, 5.02511f, -4.97218f),
+     Eigen::Vector3f(1.23005f, 10.0137f, -3.96452f),
+     Eigen::Vector3f(6.40165f, 4.99868f, -2.99944f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -733,13 +734,13 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
 
   // Expected undistorted point cloud values
   std::array<Eigen::Vector3f, 10> expected_pointcloud = {
-    {Eigen::Vector3f(10.0f, 4.76837e-07f, 1.0f), Eigen::Vector3f(5.05124f, -4.93713f, 2.09134f),
-     Eigen::Vector3f(0.114215f, -9.86881f, 3.19198f),
-     Eigen::Vector3f(-4.82904f, -4.80461f, 4.30305f),
-     Eigen::Vector3f(-9.77529f, 0.255465f, 5.41964f), Eigen::Vector3f(-4.71431f, 5.36722f, -4.441f),
-     Eigen::Vector3f(0.342873f, 10.4561f, -3.29519f), Eigen::Vector3f(5.426f, 5.55628f, -2.16926f),
-     Eigen::Vector3f(8.50523f, 3.65298f, -1.03512f),
-     Eigen::Vector3f(9.58544f, 1.74465f, 0.0959219f)}};
+    {Eigen::Vector3f(0.0f, 4.76837e-07f, 0.0f), Eigen::Vector3f(0.049716f, 0.0622373f, 0.0935726f),
+     Eigen::Vector3f(10.1082f, 0.139472f, 1.20323f), Eigen::Vector3f(5.17113f, -4.79225f, 2.30392f),
+     Eigen::Vector3f(0.23695f, -9.72807f, 3.39875f),
+     Eigen::Vector3f(-4.70053f, -4.65832f, 4.53053f),
+     Eigen::Vector3f(-9.64065f, 0.407413f, 5.66885f), Eigen::Vector3f(-4.5738f, 5.5446f, -4.17022f),
+     Eigen::Vector3f(0.489763f, 10.6448f, -3.00165f),
+     Eigen::Vector3f(5.57566f, 5.74589f, -1.88189f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -1093,17 +1094,17 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   sensor_msgs::PointCloud2ConstIterator<float> iter_distance(pointcloud, "distance");
 
   // Expected undistorted azimuth and distance values
-  std::array<std::array<float, 2>, 10> expected_distance_azimuth = {{
-    {0.0f, 10.0499f},      // points: (10.0f, -2.63462e-08f, 1.0f)
-    {0.77413f, 7.36792f},  // points: (5.05137f, -4.93869f, 2.09267f)
-    {1.55944f, 10.3743f},  // points: (0.112092f, -9.86876f, 3.19715f)
-    {2.35942f, 8.05408f},  // points: (-4.83021f, -4.80022f, 4.30059f)
-    {3.16889f, 11.1711f},  // points: (-9.7743f, 0.266927f, 5.40228f)
-    {3.99196f, 8.40875f},  // points: (-4.69786f, 5.35289f, -4.47032f)
-    {4.74742f, 10.9642f},  // points: (0.365836f, 10.4368f, -3.33969f)
-    {5.48985f, 8.06673f},  // points: (5.44511f, 5.53184f, -2.19585f)
-    {5.8809f, 9.32108f},   // points: (8.52226f, 3.62536f, -1.0538f)
-    {6.10611f, 9.75209f}   // points: (9.59921f, 1.71784f, 0.0862978f)
+  std::array<std::array<float, 2>, 10> expected_azimuth_distance = {{
+    {0.0f, 0.0f},           // points: (0.0f, 0.0f, 0.0f)
+    {5.41248f, 0.121447f},  // points: (0.0512387f, 0.0608269f, 0.0917824f)
+    {6.26993f, 10.1829f},   // points: (10.1106f, 0.134026f, 1.20356f)
+    {0.747926f, 7.421f},    // points: (5.17128f, -4.79604f, 2.30806f)
+    {1.54689f, 10.3103f},   // points: (0.232686f, -9.7275f, 3.40938f)
+    {2.36187f, 8.01421f},   // points: (-4.70281f, -4.65034f, 4.52609f)
+    {3.18569f, 11.1774f},   // points: (-9.64009f, 0.425434f, 5.64106f)
+    {4.02323f, 8.30557f},   // points: (-4.55139f, 5.5241f, -4.21327f)
+    {4.76125f, 11.0645f},   // points: (0.519385f, 10.6188f, -3.06522f)
+    {5.48757f, 8.22771f}    // points: (5.5992f, 5.71475f, -1.91985f)
   }};
 
   size_t i = 0;
@@ -1113,11 +1114,11 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   for (; iter_azimuth != iter_azimuth.end(); ++iter_azimuth, ++iter_distance, ++i) {
     oss << "Point " << i << " - Output azimuth and distance: (" << *iter_azimuth << ", "
         << *iter_distance << ")"
-        << " vs Expected azimuth and distance: (" << expected_distance_azimuth[i][0] << ", "
-        << expected_distance_azimuth[i][1] << ")\n";
+        << " vs Expected azimuth and distance: (" << expected_azimuth_distance[i][0] << ", "
+        << expected_azimuth_distance[i][1] << ")\n";
 
-    EXPECT_NEAR(*iter_azimuth, expected_distance_azimuth[i][0], standard_tolerance_);
-    EXPECT_NEAR(*iter_distance, expected_distance_azimuth[i][1], standard_tolerance_);
+    EXPECT_NEAR(*iter_azimuth, expected_azimuth_distance[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_distance, expected_azimuth_distance[i][1], standard_tolerance_);
   }
 
   if (debug_) {
@@ -1152,17 +1153,18 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   sensor_msgs::PointCloud2ConstIterator<float> iter_distance(pointcloud, "distance");
 
   // Expected undistorted azimuth and distance values
-  std::array<std::array<float, 2>, 10> expected_distance_azimuth = {
-    {{1.5708f, 10.0499f},
-     {2.34493f, 7.36792f},
-     {3.13024f, 10.3743f},
-     {3.93021f, 8.05408f},
-     {4.73969f, 11.1711f},
-     {5.56275f, 8.40875f},
-     {0.0350311f, 10.9642f},
-     {0.777465f, 8.06673f},
-     {1.16851f, 9.32108f},
-     {1.39372f, 9.75209f}}};
+  std::array<std::array<float, 2>, 10> expected_azimuth_distance = {{
+    {1.5708f, 0.0f},         // points: (0.0f, 0.0f, 0.0f)
+    {0.70009f, 0.121447f},   // points: (0.0512387f, 0.0608269f, 0.0917824f)
+    {1.55754f, 10.1829f},    // points: (10.1106f, 0.134026f, 1.20356f)
+    {2.31872f, 7.421f},      // points: (5.17128f, -4.79604f, 2.30806f)
+    {3.11768f, 10.3103f},    // points: (0.232686f, -9.7275f, 3.40938f)
+    {3.93267f, 8.01421f},    // points: (-4.70281f, -4.65034f, 4.52609f)
+    {4.75648f, 11.1774f},    // points: (-9.64009f, 0.425434f, 5.64106f)
+    {5.59403f, 8.30557f},    // points: (-4.55139f, 5.5241f, -4.21327f)
+    {0.0488634f, 11.0645f},  // points: (0.519385f, 10.6188f, -3.06522f)
+    {0.775183f, 8.22771f}    // points: (5.5992f, 5.71475f, -1.91985f)
+  }};
 
   size_t i = 0;
   std::ostringstream oss;
@@ -1171,11 +1173,11 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudUpdateAzimuthAndDistanceI
   for (; iter_azimuth != iter_azimuth.end(); ++iter_azimuth, ++iter_distance, ++i) {
     oss << "Point " << i << " - Output azimuth and distance: (" << *iter_azimuth << ", "
         << *iter_distance << ")"
-        << " vs Expected azimuth and distance: (" << expected_distance_azimuth[i][0] << ", "
-        << expected_distance_azimuth[i][1] << ")\n";
+        << " vs Expected azimuth and distance: (" << expected_azimuth_distance[i][0] << ", "
+        << expected_azimuth_distance[i][1] << ")\n";
 
-    EXPECT_NEAR(*iter_azimuth, expected_distance_azimuth[i][0], standard_tolerance_);
-    EXPECT_NEAR(*iter_distance, expected_distance_azimuth[i][1], standard_tolerance_);
+    EXPECT_NEAR(*iter_azimuth, expected_azimuth_distance[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_distance, expected_azimuth_distance[i][1], standard_tolerance_);
   }
 
   if (debug_) {
