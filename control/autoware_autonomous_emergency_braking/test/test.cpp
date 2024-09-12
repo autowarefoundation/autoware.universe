@@ -140,7 +140,6 @@ TEST_F(TestAEB, checkImuPathGeneration)
   ASSERT_TRUE(imu_path.size() >= static_cast<size_t>(horizon / dt));
 
   const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
-  const auto footprint_expanded = aeb_node_->generatePathFootprint(imu_path, 4.0);
   ASSERT_FALSE(footprint.empty());
   ASSERT_TRUE(footprint.size() == imu_path.size() - 1);
 
@@ -167,7 +166,7 @@ TEST_F(TestAEB, checkImuPathGeneration)
     obstacle_points_ptr, points_belonging_to_cluster_hulls, debug_markers);
   std::vector<ObjectData> objects;
   aeb_node_->getClosestObjectsOnPath(
-    imu_path, footprint, footprint_expanded, stamp, points_belonging_to_cluster_hulls, objects);
+    imu_path, footprint, stamp, points_belonging_to_cluster_hulls, objects);
   ASSERT_FALSE(objects.empty());
 }
 
