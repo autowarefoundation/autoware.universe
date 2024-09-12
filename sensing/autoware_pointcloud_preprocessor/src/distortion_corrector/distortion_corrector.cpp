@@ -268,11 +268,7 @@ std::optional<AngleConversion> DistortionCorrector<T>::tryComputeAngleConversion
     }
 
     // Limit the range of offset_rad in [0, 360)
-    if (multiple_of_90_degrees < 0) {
-      multiple_of_90_degrees += 4;
-    } else if (multiple_of_90_degrees >= 4) {
-      multiple_of_90_degrees -= 4;
-    }
+    multiple_of_90_degrees = (multiple_of_90_degrees % 4 + 4) % 4;
 
     angle_conversion.offset_rad = multiple_of_90_degrees * (autoware::universe_utils::pi / 2);
 
