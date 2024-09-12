@@ -41,6 +41,11 @@
           "description": "hazard_recovery_timeout",
           "default": "5.0"
         },
+        "emergency_hazard_level": {
+          "type": "number",
+          "description": "emergency_hazard_level",
+          "default": "2"
+        },
         "use_emergency_hold": {
           "type": "boolean",
           "description": "use_emergency_hold",
@@ -60,6 +65,7 @@
         "data_heartbeat_timeout",
         "diag_timeout_sec",
         "hazard_recovery_timeout",
+        "emergency_hazard_level",
         "use_emergency_hold",
         "use_emergency_hold_in_manual_driving"
       ],
