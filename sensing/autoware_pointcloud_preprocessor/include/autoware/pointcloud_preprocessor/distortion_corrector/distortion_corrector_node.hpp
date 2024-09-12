@@ -54,8 +54,6 @@ private:
   bool use_3d_distortion_correction_;
   bool update_azimuth_and_distance_;
 
-  bool can_update_azimuth_and_distance_{false};
-
   std::optional<AngleConversion> angle_conversion_opt_;
   int angle_conversion_failure_num_{0};
   int failure_tolerance_{20};
