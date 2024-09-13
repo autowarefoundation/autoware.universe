@@ -46,7 +46,7 @@ void CustomToggleSwitch::paintEvent(QPaintEvent *)
     QColor(autoware::state_rviz_plugin::colors::default_colors.on_primary.c_str());
 
   QColor uncheckedHoverIndicatorColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface.c_str());
+    QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface_variant.c_str());
   QColor checkedHoverIndicatorColor =
     QColor(autoware::state_rviz_plugin::colors::default_colors.primary_container.c_str());
 
@@ -59,11 +59,7 @@ void CustomToggleSwitch::paintEvent(QPaintEvent *)
   QColor checkedBgColor =
     QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
 
-  QColor uncheckedHoverBgColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.disabled_elevated_button_bg.c_str());
-
-  QColor bgColor =
-    isChecked ? checkedBgColor : (isHovered ? uncheckedHoverBgColor : uncheckedBgColor);
+  QColor bgColor = isChecked ? checkedBgColor : uncheckedBgColor;
 
   // Surface color with 12% opacity for the hover circle
   QColor hoverCircleColor =
