@@ -40,6 +40,7 @@ struct MaterialColors
   std::string error = "#FFB4AB";
   std::string on_error = "#690005";
   std::string error_container = "#93000A";
+  std::string error_press = "#7A0008";
   std::string on_error_container = "#FFDAD6";
   std::string background = "#0F1417";
   std::string on_background = "#DFE3E7";

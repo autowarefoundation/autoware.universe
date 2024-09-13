@@ -783,8 +783,8 @@ void AutowareStatePanel::onEmergencyStatus(
       QColor(autoware::state_rviz_plugin::colors::default_colors.error_container.c_str()),
       QColor(autoware::state_rviz_plugin::colors::default_colors.on_error_container.c_str()),
       QColor(autoware::state_rviz_plugin::colors::default_colors.on_error.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_error.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_error.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.error_press.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.error_press.c_str()),
       QColor(autoware::state_rviz_plugin::colors::default_colors.error_container.c_str()),
       QColor(autoware::state_rviz_plugin::colors::default_colors.error_container.c_str()));
   } else {
