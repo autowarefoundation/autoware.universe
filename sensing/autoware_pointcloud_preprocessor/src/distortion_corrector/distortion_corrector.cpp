@@ -211,8 +211,8 @@ std::optional<AngleConversion> DistortionCorrector<T>::tryComputeAngleConversion
     next_it_y = it_y + 1;
     next_it_azimuth = it_azimuth + 1;
   } else {
-    RCLCPP_WARN(
-      node_->get_logger(),
+    RCLCPP_WARN_STREAM_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
       "Current point cloud only has a single point. Could not calculate the angle conversion.");
     return std::nullopt;
   }
@@ -227,8 +227,9 @@ std::optional<AngleConversion> DistortionCorrector<T>::tryComputeAngleConversion
     if (
       abs(*next_it_azimuth - *it_azimuth) == 0 ||
       abs(next_cartesian_rad - current_cartesian_rad) == 0) {
-      RCLCPP_DEBUG(
-        node_->get_logger(), "Angle between two points is 0 degrees. Iterate to next point ...");
+      RCLCPP_DEBUG_STREAM_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+        "Angle between two points is 0 degrees. Iterate to next point ...");
       continue;
     }
 
@@ -249,8 +250,9 @@ std::optional<AngleConversion> DistortionCorrector<T>::tryComputeAngleConversion
     } else if (std::abs(sign + 1.0f) <= angle_conversion.sign_threshold) {
       angle_conversion.sign = -1.0f;
     } else {
-      RCLCPP_DEBUG(
-        node_->get_logger(), "Value of sign is not close to 1 or -1. Iterate to next point ...");
+      RCLCPP_DEBUG_STREAM_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+        "Value of sign is not close to 1 or -1. Iterate to next point ...");
       continue;
     }
 
@@ -260,8 +262,8 @@ std::optional<AngleConversion> DistortionCorrector<T>::tryComputeAngleConversion
     if (
       std::abs(offset_rad - multiple_of_90_degrees * (autoware::universe_utils::pi / 2)) >
       angle_conversion.offset_rad_threshold) {
-      RCLCPP_DEBUG(
-        node_->get_logger(),
+      RCLCPP_DEBUG_STREAM_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
         "Value of offset_rad is not close to multiplication of 90 degrees. Iterate to next point "
         "...");
       continue;
