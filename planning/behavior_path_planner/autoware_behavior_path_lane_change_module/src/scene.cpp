@@ -1364,7 +1364,8 @@ bool NormalLaneChange::hasEnoughLengthToTrafficLight(
 
 bool NormalLaneChange::getLaneChangePaths(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-  Direction direction, const bool is_stuck, LaneChangePaths * candidate_paths) const
+  [[maybe_unused]] Direction direction, const bool is_stuck,
+  LaneChangePaths * candidate_paths) const
 {
   lane_change_debug_.collision_check_objects.clear();
   if (current_lanes.empty() || target_lanes.empty()) {
@@ -1557,14 +1558,7 @@ bool NormalLaneChange::getLaneChangePaths(
 
         // if multiple lane change is necessary, does the remaining distance is sufficient
         const auto remaining_dist_in_target = std::invoke([&]() {
-          const auto finish_judge_buffer = lane_change_parameters_->lane_change_finish_judge_buffer;
-          const auto num_to_preferred_lane_from_target_lane =
-            std::abs(route_handler.getNumLaneToPreferredLane(target_lanes.back(), direction));
-          const auto backward_len_buffer =
-            lane_change_parameters_->backward_length_buffer_for_end_of_lane;
-          const auto backward_buffer_to_target_lane =
-            num_to_preferred_lane_from_target_lane == 0 ? 0.0 : backward_len_buffer;
-          return lane_changing_length + finish_judge_buffer + backward_buffer_to_target_lane +
+          return prepare_length + lane_changing_length +
                  common_data_ptr_->transient_data.next_lc_buffer.min;
         });
 
@@ -1577,7 +1571,7 @@ bool NormalLaneChange::getLaneChangePaths(
           initial_lane_changing_velocity + longitudinal_acc_on_lane_changing * lane_changing_time,
           getCommonParam().max_vel);
         utils::lane_change::setPrepareVelocity(
-          prepare_segment, current_velocity, terminal_lane_changing_velocity);
+          prepare_segment, current_velocity, initial_lane_changing_velocity);
 
         const auto target_segment = getTargetSegment(
           target_lanes, lane_changing_start_pose, target_lane_length, lane_changing_length,

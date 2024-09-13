@@ -278,7 +278,7 @@ struct LanesPolygon
 
 struct Boundary
 {
-  double min{std::numeric_limits<double>::max()};
+  double min{0.0};
   double max{std::numeric_limits<double>::max()};
 };
 
