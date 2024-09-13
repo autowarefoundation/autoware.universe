@@ -170,6 +170,10 @@ protected:
     const Pose & lc_start_pose, const double target_lane_length, const double shift_length,
     const double next_lc_buffer, const bool is_goal_in_route) const;
 
+  bool checkCandidatePathSafety(
+    const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects,
+    const double lane_change_buffer, const bool is_stuck) const;
+
   std::optional<LaneChangePath> calcTerminalLaneChangePath(
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;

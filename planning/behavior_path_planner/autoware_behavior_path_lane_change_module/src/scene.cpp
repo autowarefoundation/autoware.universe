@@ -1487,6 +1487,8 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
       continue;
     }
 
+    // TODO(Quda, Azu): Is it possible to remove these checks if we ensure prepare segment length is
+    // larger than distance to target lane start
     if (!is_valid_start_point(common_data_ptr_, prepare_segment.points.back().point.pose)) {
       debug_print(
         "Reject: lane changing start point is not within the preferred lanes or its neighbors");
@@ -1506,8 +1508,6 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
 
     debug_print("Prepare path satisfy constraints");
 
-    const auto initial_lane_changing_velocity = prep_metric.velocity;
-    const auto max_path_velocity = prepare_segment.points.back().point.longitudinal_velocity_mps;
     const auto shift_length =
       lanelet::utils::getLateralDistanceToClosestLanelet(target_lanes, lane_changing_start_pose);
 
@@ -1528,8 +1528,9 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
       return max_length;
     });
 
+    const auto max_path_velocity = prepare_segment.points.back().point.longitudinal_velocity_mps;
     const auto lane_changing_metrics = calculation::calc_shift_phase_metrics(
-      common_data_ptr_, shift_length, initial_lane_changing_velocity, max_path_velocity,
+      common_data_ptr_, shift_length, prep_metric.velocity, max_path_velocity,
       prep_metric.lon_accel, max_lane_changing_length);
 
     for (const auto & lc_metric : lane_changing_metrics) {
@@ -1551,31 +1552,14 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
 
       candidate_paths->push_back(candidate_path);
 
-      if (
-        !is_stuck && !utils::lane_change::passed_parked_objects(
-                       common_data_ptr_, candidate_path, filtered_objects_.target_lane_leading,
-                       lane_change_buffer, lane_change_debug_.collision_check_objects)) {
-        debug_print_lat(
-          "Reject: parking vehicle exists in the target lane, and the ego is not in stuck. Skip "
-          "lane change.");
+      bool is_safe = false;
+      try {
+        is_safe =
+          checkCandidatePathSafety(candidate_path, target_objects, lane_change_buffer, is_stuck);
+      } catch (const std::exception & e) {
+        debug_print_lat(std::string("Reject: ") + e.what());
         return false;
       }
-
-      const auto is_safe = std::invoke([&]() {
-        constexpr size_t decel_sampling_num = 1;
-        const auto safety_check_with_normal_rss = isLaneChangePathSafe(
-          candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params,
-          decel_sampling_num, lane_change_debug_.collision_check_objects);
-
-        if (!safety_check_with_normal_rss.is_safe && is_stuck) {
-          const auto safety_check_with_stuck_rss = isLaneChangePathSafe(
-            candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params_for_stuck,
-            decel_sampling_num, lane_change_debug_.collision_check_objects);
-          return safety_check_with_stuck_rss.is_safe;
-        }
-
-        return safety_check_with_normal_rss.is_safe;
-      });
 
       if (is_safe) {
         debug_print_lat("ACCEPT!!!: it is valid and safe!");
@@ -1635,6 +1619,33 @@ LaneChangePath NormalLaneChange::getCandidatePath(
   }
 
   return *candidate_path;
+}
+
+bool NormalLaneChange::checkCandidatePathSafety(
+  const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects,
+  const double lane_change_buffer, const bool is_stuck) const
+{
+  if (
+    !is_stuck && !utils::lane_change::passed_parked_objects(
+                   common_data_ptr_, candidate_path, filtered_objects_.target_lane_leading,
+                   lane_change_buffer, lane_change_debug_.collision_check_objects)) {
+    throw std::logic_error(
+      "Ego is not stuck and parked vehicle exists in the target lane. Skip lane change.");
+  }
+
+  constexpr size_t decel_sampling_num = 1;
+  const auto safety_check_with_normal_rss = isLaneChangePathSafe(
+    candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params, decel_sampling_num,
+    lane_change_debug_.collision_check_objects);
+
+  if (!safety_check_with_normal_rss.is_safe && is_stuck) {
+    const auto safety_check_with_stuck_rss = isLaneChangePathSafe(
+      candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params_for_stuck,
+      decel_sampling_num, lane_change_debug_.collision_check_objects);
+    return safety_check_with_stuck_rss.is_safe;
+  }
+
+  return safety_check_with_normal_rss.is_safe;
 }
 
 std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
