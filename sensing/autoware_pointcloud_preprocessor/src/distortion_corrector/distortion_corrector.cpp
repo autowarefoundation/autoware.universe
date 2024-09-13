@@ -191,7 +191,7 @@ template <class T>
 std::optional<AngleConversion> DistortionCorrector<T>::tryComputeAngleConversion(
   sensor_msgs::msg::PointCloud2 & pointcloud)
 {
-  // This function try to compute the angle conversion from Cartesian coordinates to LiDAR azimuth
+  // This function tries to compute the angle conversion from Cartesian coordinates to LiDAR azimuth
   // coordinates system
 
   if (!isPointCloudValid(pointcloud)) return std::nullopt;
