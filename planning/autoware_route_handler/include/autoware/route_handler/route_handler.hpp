@@ -326,6 +326,9 @@ public:
    */
   lanelet::ConstLanelets getShoulderLaneletsAtPose(const Pose & pose) const;
 
+  Pose getPoseFrom2DArcLength(
+    const lanelet::ConstLanelets & lanelet_sequence, const double s) const;
+
 private:
   // MUST
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
