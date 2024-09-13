@@ -113,7 +113,7 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointclou
       if (angle_conversion_failure_num_ > failure_tolerance_) {
         throw std::runtime_error(
           "Angle conversion failed more than " + std::to_string(failure_tolerance_) +
-          " times. The node has been interrupted. Please check the LiDAR azimuth coordinates.");
+          " times. Please check the LiDAR azimuth coordinates.");
       }
     }
   }
