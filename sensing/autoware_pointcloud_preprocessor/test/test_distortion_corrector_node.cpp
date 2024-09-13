@@ -221,15 +221,7 @@ protected:
 
   sensor_msgs::msg::PointCloud2 generateEmptyPointCloudMsg(rclcpp::Time stamp)
   {
-    sensor_msgs::msg::PointCloud2 empty_pointcloud_msg;
-    empty_pointcloud_msg.header.stamp = stamp;
-    empty_pointcloud_msg.header.frame_id = "lidar_top";
-    empty_pointcloud_msg.height = 1;
-    empty_pointcloud_msg.is_dense = true;
-    empty_pointcloud_msg.is_bigendian = false;
-    empty_pointcloud_msg.width = 0;
-    empty_pointcloud_msg.row_step = 0;
-
+    auto empty_pointcloud_msg = generatePointCloudMsg(true, stamp, {}, {});
     return empty_pointcloud_msg;
   }
 
