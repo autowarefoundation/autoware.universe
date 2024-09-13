@@ -10,6 +10,7 @@
   <!-- Auto mode setting-->
   <arg name="enable_all_modules_auto_mode"/>
   <arg name="is_simulation"/>
+  <arg name="result_archive_path"/>
 
   <group>
     <push-ros-namespace namespace="planning"/>
@@ -41,7 +42,9 @@
 
     <!-- planning evaluator -->
     <group>
-      <include file="$(find-pkg-share autoware_planning_evaluator)/launch/planning_evaluator.launch.xml"/>
+      <include file="$(find-pkg-share autoware_planning_evaluator)/launch/planning_evaluator.launch.xml">
+        <arg name="result_archive_path" value="$(var result_archive_path)"/>
+      </include>
     </group>
 
     <!-- mission remaining distance and time calculator -->
