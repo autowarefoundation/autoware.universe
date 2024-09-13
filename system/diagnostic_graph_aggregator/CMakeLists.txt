@@ -22,6 +22,11 @@ ament_auto_add_executable(converter
 )
 target_include_directories(converter PRIVATE src/common)
 
+ament_auto_add_executable(recovery
+  src/node/recovery.cpp
+)
+target_include_directories(recovery PRIVATE src/common)
+
 ament_auto_add_executable(tree
   src/tool/tree.cpp
   src/tool/utils/loader.cpp
