@@ -78,7 +78,7 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
   // Calculate predicted state in world coordinate since there is modeling errors in Frenet
   // Relative coordinate x = [lat_err, yaw_err, steer]
   // World coordinate x = [x, y, yaw, steer]
-  
+
   Eigen::VectorXd Xex = a_d * x0 + b_d * Uex + w_d;
   const auto DIM_X = getDimX();
   const auto & t = reference_trajectory;
@@ -97,8 +97,9 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
 
   // update state in the world coordinate
   const auto updateState = [&](
-                             const Eigen::VectorXd & state_w, const Eigen::MatrixXd & input, const Eigen::VectorXd & state_mpc,
-                             const double dt, const double velocity) {
+                             const Eigen::VectorXd & state_w, const Eigen::MatrixXd & input,
+                             const Eigen::VectorXd & state_mpc, const double dt,
+                             const double velocity) {
     const auto yaw = state_w(2);
     const auto steer = state_mpc(2);
     const auto desired_steer = input(0);
@@ -119,7 +120,9 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
   const auto DIM_U = getDimU();
 
   for (size_t i = 0; i < reference_trajectory.size(); ++i) {
-    state_w = updateState(state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), Xex.block(i * DIM_X, 0, DIM_X, 1), dt, t.vx.at(i));
+    state_w = updateState(
+      state_w, Uex.block(i * DIM_U, 0, DIM_U, 1), Xex.block(i * DIM_X, 0, DIM_X, 1), dt,
+      t.vx.at(i));
     mpc_predicted_trajectory.push_back(
       state_w(0), state_w(1), t.z.at(i), state_w(2), t.vx.at(i), t.k.at(i), t.smooth_k.at(i),
       t.relative_time.at(i));
