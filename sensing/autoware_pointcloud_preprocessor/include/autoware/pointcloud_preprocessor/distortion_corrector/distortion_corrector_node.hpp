@@ -55,8 +55,13 @@ private:
   bool update_azimuth_and_distance_;
 
   std::optional<AngleConversion> angle_conversion_opt_;
+
+  /// @brief 'angle_conversion_failure_num_' counts the number of failures during angle conversion.
   int angle_conversion_failure_num_{0};
-  int failure_tolerance_{20};
+
+  /// @brief 'failure_tolerance_' allows for failures when the input point clouds do not contain
+  /// enough points to calculate angle conversion.
+  static constexpr int failure_tolerance_{20};
 
   std::unique_ptr<DistortionCorrectorBase> distortion_corrector_;
 
