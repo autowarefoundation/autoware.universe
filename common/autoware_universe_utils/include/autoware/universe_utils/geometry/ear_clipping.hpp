@@ -23,84 +23,53 @@
 namespace autoware::universe_utils
 {
 
-class EarClipping
-{
-public:
-  std::vector<std::size_t> indices;
-  std::size_t vertices = 0;
-  using Polygon2d = autoware::universe_utils::Polygon2d;
-  using Point2d = autoware::universe_utils::Point2d;
-  using LinearRing2d = autoware::universe_utils::LinearRing2d;
+using Polygon2d = autoware::universe_utils::Polygon2d;
+using Point2d = autoware::universe_utils::Point2d;
+using LinearRing2d = autoware::universe_utils::LinearRing2d;
 
-  void operator()(const Polygon2d & polygon);
+struct Point {
+    Point(std::size_t index, Point2d point) 
+        : i(index), pt(std::move(point)), steiner(false), prev_index(0), next_index(0) {}
 
-  ~EarClipping()
-  {
-    for (auto * p : points_) {
-      delete p;
-    }
-  }
-
-private:
-  struct Point
-  {
-    Point(const std::size_t index, Point2d point) : i(index), pt(std::move(point)) {}
-
-    const std::size_t i;  // Index of the point in the original polygon
-    const Point2d pt;     // The Point2d object representing the coordinates
-
-    // Previous and next vertices (Points) in the polygon ring
-    Point * prev = nullptr;
-    Point * next = nullptr;
-    bool steiner = false;
+    std::size_t i;
+    Point2d pt;
+    bool steiner;
+    std::size_t prev_index; // Use index for prev
+    std::size_t next_index; // Use index for next
 
     [[nodiscard]] double x() const { return pt.x(); }
     [[nodiscard]] double y() const { return pt.y(); }
-  };
-
-  std::vector<Point *> points_;
-
-  Point * linked_list(const LinearRing2d & points, bool clockwise);
-  static Point * filter_points(Point * start, Point * end = nullptr);
-  Point * cure_local_intersections(Point * start);
-  static Point * get_leftmost(Point * start);
-  Point * split_polygon(Point * a, Point * b);
-  Point * insert_point(std::size_t i, const Point2d & p, Point * last);
-  Point * eliminate_holes(
-    const std::vector<LinearRing2d> & inners, EarClipping::Point * outer_point);
-  Point * eliminate_hole(Point * hole, Point * outer_point);
-  static Point * find_hole_bridge(Point * hole, Point * outer_point);
-  void ear_clipping_linked(Point * ear, int pass = 0);
-  void split_ear_clipping(Point * start);
-  static void remove_point(Point * p);
-  static bool is_ear(Point * ear);
-  static bool sector_contains_sector(const Point * m, const Point * p);
-  [[nodiscard]] static bool point_in_triangle(
-    double ax, double ay, double bx, double by, double cx, double cy, double px, double py);
-  static bool is_valid_diagonal(Point * a, Point * b);
-  static bool equals(const Point * p1, const Point * p2);
-  static bool intersects(const Point * p1, const Point * q1, const Point * p2, const Point * q2);
-  static bool on_segment(const Point * p, const Point * q, const Point * r);
-  static bool intersects_polygon(const Point * a, const Point * b);
-  static bool locally_inside(const Point * a, const Point * b);
-  static bool middle_inside(const Point * a, const Point * b);
-  static int sign(double val);
-  static double area(const Point * p, const Point * q, const Point * r);
-
-  // Function to construct a new Point object
-  EarClipping::Point * construct_point(std::size_t index, const Point2d & point)
-  {
-    auto * new_point = new Point(index, point);
-    points_.push_back(new_point);
-    return new_point;
-  }
 };
 
-/// @brief Triangulate based on ear clipping algorithm
-/// @param polygon concave/convex polygon with/without holes
-/// @details algorithm based on https://github.com/mapbox/earclipping with modification
-std::vector<autoware::universe_utils::Polygon2d> triangulate(
-  const autoware::universe_utils::Polygon2d & poly);
+std::vector<Polygon2d> triangulate(const Polygon2d & polygon);
+
+void perform_triangulation(const Polygon2d & polygon, std::vector<std::size_t> & indices);
+std::size_t construct_point(std::size_t index, const Point2d & point, std::vector<Point> & points);
+void remove_point(std::size_t index, std::vector<Point> & points);
+bool is_ear(std::size_t ear_index, const std::vector<Point> & points);
+bool sector_contains_sector(std::size_t m_index, std::size_t p_index, const std::vector<Point> & points);
+bool point_in_triangle(double ax, double ay, double bx, double by, double cx, double cy, double px, double py);
+bool is_valid_diagonal(std::size_t a_index, std::size_t b_index, const std::vector<Point> & points);
+bool equals(std::size_t p1_index, std::size_t p2_index, const std::vector<Point> & points);
+bool intersects(std::size_t p1_index, std::size_t q1_index, std::size_t p2_index, std::size_t q2_index, const std::vector<Point> & points);
+bool on_segment(const std::vector<Point>& points, std::size_t pIdx, std::size_t qIdx, std::size_t rIdx);
+bool intersects_polygon(const std::vector<Point>& points, std::size_t aIdx, std::size_t bIdx);
+bool locally_inside(std::size_t a_index, std::size_t b_index, const std::vector<Point> & points);
+bool middle_inside(std::size_t a_index, std::size_t b_index, const std::vector<Point> & points);
+int sign(double val);
+double area(const std::vector<Point>& points, std::size_t pIdx, std::size_t qIdx, std::size_t rIdx);
+
+std::size_t linked_list(const LinearRing2d& points, bool clockwise, std::size_t& vertices, std::vector<Point> & points_vec);
+std::size_t filter_points(std::size_t start_index, std::size_t end_index, std::vector<Point> & points_vec);
+std::size_t cure_local_intersections(std::size_t start_index, std::vector<std::size_t> & indices, std::vector<Point> & points_vec);
+std::size_t get_leftmost(std::size_t start_index, const std::vector<Point> & points);
+std::size_t split_polygon(std::size_t a_index, std::size_t b_index, std::vector<Point> & points);
+std::size_t insert_point(std::size_t i, const Point2d & p, std::vector<Point> & points, bool clockwise);
+std::size_t eliminate_holes(const std::vector<LinearRing2d> & inners, std::size_t outer_index, std::size_t& vertices, std::vector<Point> & points);
+std::size_t eliminate_hole(std::size_t hole_index, std::size_t outer_index, std::vector<Point> & points);
+std::size_t find_hole_bridge(std::size_t hole_index, std::size_t outer_index, const std::vector<Point> & points);
+void ear_clipping_linked(std::size_t ear_index, std::vector<std::size_t> & indices, std::vector<Point> & points, int pass = 0);
+void split_ear_clipping(std::vector<Point>& points, std::size_t startIdx, std::vector<std::size_t>& indices);
 
 }  // namespace autoware::universe_utils
 
