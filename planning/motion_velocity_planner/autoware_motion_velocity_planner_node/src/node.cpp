@@ -373,9 +373,6 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
 
   // Resample trajectory with ego-velocity based interval distances
   auto traj_resampled = traj_steering_rate_limited;
-  // smoother->resampleTrajectory(
-  // traj_steering_rate_limited, v0, current_pose, planner_data.ego_nearest_dist_threshold,
-  // planner_data.ego_nearest_yaw_threshold);
   const size_t traj_resampled_closest =
     autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       traj_resampled, current_pose, planner_data.ego_nearest_dist_threshold,
