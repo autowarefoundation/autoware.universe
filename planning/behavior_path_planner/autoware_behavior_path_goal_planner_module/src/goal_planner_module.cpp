@@ -547,7 +547,9 @@ void GoalPlannerModule::updateData()
   path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
   const bool found_pull_over_path = thread_safe_data_.foundPullOverPath();
-  const auto pull_over_path = *thread_safe_data_.get_pull_over_path();
+  const std::optional<PullOverPath> pull_over_path =
+    found_pull_over_path ? std::make_optional<PullOverPath>(*thread_safe_data_.get_pull_over_path())
+                         : std::nullopt;
 
   const bool is_current_safe = isSafePath(
     planner_data_, found_pull_over_path, pull_over_path, *parameters_, ego_predicted_path_params_,
@@ -2150,14 +2152,15 @@ static std::vector<utils::path_safety_checker::ExtendedPredictedObject> filterOb
 
 bool GoalPlannerModule::isSafePath(
   const std::shared_ptr<const PlannerData> planner_data, const bool found_pull_over_path,
-  const PullOverPath & pull_over_path, const GoalPlannerParameters & parameters,
+  const std::optional<PullOverPath> & pull_over_path_opt, const GoalPlannerParameters & parameters,
   const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
   const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
 {
-  if (!found_pull_over_path) {
+  if (!found_pull_over_path || !pull_over_path_opt) {
     return false;
   }
+  const auto & pull_over_path = pull_over_path_opt.value();
   const auto current_pull_over_path = pull_over_path.getCurrentPath();
   const auto & current_pose = planner_data->self_odometry->pose.pose;
   const double current_velocity = std::hypot(
@@ -2603,7 +2606,8 @@ void PathDecisionStateController::transit_state(
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const bool is_current_safe, const GoalPlannerParameters & parameters,
   const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
-  const PullOverPath & pull_over_path, std::vector<Polygon2d> & ego_polygons_expanded)
+  const std::optional<PullOverPath> & pull_over_path,
+  std::vector<Polygon2d> & ego_polygons_expanded)
 {
   const auto next_state = get_next_state(
     found_pull_over_path, now, static_target_objects, dynamic_target_objects, modified_goal_opt,
@@ -2621,7 +2625,8 @@ PathDecisionState PathDecisionStateController::get_next_state(
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const bool is_current_safe, const GoalPlannerParameters & parameters,
   const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
-  const PullOverPath & pull_over_path, std::vector<Polygon2d> & ego_polygons_expanded) const
+  const std::optional<PullOverPath> & pull_over_path_opt,
+  std::vector<Polygon2d> & ego_polygons_expanded) const
 {
   auto next_state = prev_state_;
 
@@ -2654,11 +2659,12 @@ PathDecisionState PathDecisionStateController::get_next_state(
   }
 
   // if path is not safe, not decided
-  if (!found_pull_over_path) {
+  if (!found_pull_over_path || !pull_over_path_opt) {
     next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
     return next_state;
   }
 
+  const auto & pull_over_path = pull_over_path_opt.value();
   const bool enable_safety_check = parameters.safety_check_params.enable_safety_check;
   // If it is dangerous against dynamic objects before approval, do not determine the path.
   // This eliminates a unsafe path to be approved

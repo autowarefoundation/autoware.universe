@@ -330,7 +330,8 @@ public:
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
     const bool is_current_safe, const GoalPlannerParameters & parameters,
     const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
-    const PullOverPath & pull_over_path, std::vector<Polygon2d> & ego_polygons_expanded);
+    const std::optional<PullOverPath> & pull_over_path,
+    std::vector<Polygon2d> & ego_polygons_expanded);
 
   PathDecisionState get_current_state() const { return current_state_; }
 
@@ -351,7 +352,8 @@ private:
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
     const bool is_current_safe, const GoalPlannerParameters & parameters,
     const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
-    const PullOverPath & pull_over_path, std::vector<Polygon2d> & ego_polygons_expanded) const;
+    const std::optional<PullOverPath> & pull_over_path_opt,
+    std::vector<Polygon2d> & ego_polygons_expanded) const;
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -690,7 +692,8 @@ private:
    */
   bool isSafePath(
     const std::shared_ptr<const PlannerData> planner_data, const bool found_pull_over_path,
-    const PullOverPath & pull_over_path, const GoalPlannerParameters & parameters,
+    const std::optional<PullOverPath> & pull_over_path_opt,
+    const GoalPlannerParameters & parameters,
     const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
     const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
     const std::shared_ptr<SafetyCheckParams> & safety_check_params) const;
