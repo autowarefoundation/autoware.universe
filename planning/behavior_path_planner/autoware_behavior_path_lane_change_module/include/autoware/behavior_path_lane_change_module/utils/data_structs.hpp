@@ -194,11 +194,11 @@ struct PhaseInfo
 
 struct PhaseMetrics
 {
-  double duration;
-  double length;
-  double velocity;
-  double lon_accel;
-  double lat_accel;
+  double duration{0.0};
+  double length{0.0};
+  double velocity{0.0};
+  double lon_accel{0.0};
+  double lat_accel{0.0};
 };
 
 struct Lanes
@@ -224,6 +224,22 @@ struct Info
 
   double lateral_acceleration{0.0};
   double terminal_lane_changing_velocity{0.0};
+
+  Info() = default;
+  Info(
+    const PhaseMetrics & _prep_metrics, const PhaseMetrics & _lc_metrics,
+    const Pose & _lc_start_pose, const Pose & _lc_end_pose, const ShiftLine & _shift_line)
+  {
+    longitudinal_acceleration = PhaseInfo{_prep_metrics.lon_accel, _lc_metrics.lon_accel};
+    duration = PhaseInfo{_prep_metrics.duration, _lc_metrics.duration};
+    velocity = PhaseInfo{_prep_metrics.velocity, _prep_metrics.velocity};
+    length = PhaseInfo{_prep_metrics.length, _lc_metrics.length};
+    lane_changing_start = _lc_start_pose;
+    lane_changing_end = _lc_end_pose;
+    lateral_acceleration = _lc_metrics.lat_accel;
+    terminal_lane_changing_velocity = _lc_metrics.velocity;
+    shift_line = _shift_line;
+  }
 };
 
 template <typename Object>
@@ -325,6 +341,7 @@ using LaneChangeModuleType = lane_change::ModuleType;
 using LaneChangeParameters = lane_change::Parameters;
 using LaneChangeStates = lane_change::States;
 using LaneChangePhaseInfo = lane_change::PhaseInfo;
+using LaneChangePhaseMetrics = lane_change::PhaseMetrics;
 using LaneChangeInfo = lane_change::Info;
 using FilteredByLanesObjects = lane_change::LanesObjects<std::vector<PredictedObject>>;
 using FilteredByLanesExtendedObjects = lane_change::LanesObjects<ExtendedPredictedObjects>;

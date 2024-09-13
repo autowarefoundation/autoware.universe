@@ -162,9 +162,13 @@ protected:
   bool hasEnoughLengthToTrafficLight(
     const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
 
-  bool getLaneChangePaths(
-    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    Direction direction, const bool is_stuck, LaneChangePaths * candidate_paths) const;
+  bool getLaneChangePaths(LaneChangePaths * candidate_paths) const;
+
+  LaneChangePath getCandidatePath(
+    const LaneChangePhaseMetrics & prep_metrics, const LaneChangePhaseMetrics & lc_metrics,
+    const PathWithLaneId & prep_segment, const std::vector<std::vector<int64_t>> & sorted_lane_ids,
+    const Pose & lc_start_pose, const double target_lane_length, const double shift_length,
+    const double next_lc_buffer, const bool is_goal_in_route) const;
 
   std::optional<LaneChangePath> calcTerminalLaneChangePath(
     const lanelet::ConstLanelets & current_lanes,

@@ -201,8 +201,7 @@ bool isPathInLanelets(
 
 std::optional<LaneChangePath> constructCandidatePath(
   const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
-  const PathWithLaneId & target_lane_reference_path,
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids)
 {
   const auto & shift_line = lane_change_info.shift_line;
@@ -254,8 +253,8 @@ std::optional<LaneChangePath> constructCandidatePath(
       continue;
     }
     const auto nearest_idx =
-      autoware::motion_utils::findNearestIndex(target_segment.points, point.point.pose);
-    point.lane_ids = target_segment.points.at(*nearest_idx).lane_ids;
+      autoware::motion_utils::findNearestIndex(target_lane_reference_path.points, point.point.pose);
+    point.lane_ids = target_lane_reference_path.points.at(*nearest_idx).lane_ids;
   }
 
   // TODO(Yutaka Shimizu): remove this flag after make the isPathInLanelets faster
@@ -323,17 +322,6 @@ PathWithLaneId getReferencePathFromTargetLane(
 
   return utils::resamplePathWithSpline(
     lane_changing_reference_path, resample_interval, true, {0.0, lane_changing_length});
-}
-
-ShiftLine getLaneChangingShiftLine(
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
-  const PathWithLaneId & reference_path, const double shift_length)
-{
-  const Pose & lane_changing_start_pose = prepare_segment.points.back().point.pose;
-  const Pose & lane_changing_end_pose = target_segment.points.front().point.pose;
-
-  return getLaneChangingShiftLine(
-    lane_changing_start_pose, lane_changing_end_pose, reference_path, shift_length);
 }
 
 ShiftLine getLaneChangingShiftLine(

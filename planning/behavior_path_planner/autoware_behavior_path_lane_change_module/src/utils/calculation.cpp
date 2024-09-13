@@ -317,7 +317,7 @@ std::vector<PhaseMetrics> calc_prepare_phase_metrics(
 
 std::vector<PhaseMetrics> calc_shift_phase_metrics(
   const CommonDataPtr & common_data_ptr, const double shift_length, const double initial_velocity,
-  const double max_velocity, const double lon_accel, const double max_length_threshold)
+  const double max_path_velocity, const double lon_accel, const double max_length_threshold)
 {
   const auto & min_lc_vel = common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity;
   const auto & max_vel = common_data_ptr->bpp_param_ptr->max_vel;
@@ -356,11 +356,10 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
       shift_length, common_data_ptr->lc_param_ptr->lane_changing_lateral_jerk, lat_acc);
 
     const double lane_changing_accel = calc_lane_changing_acceleration(
-      initial_velocity, max_velocity, lane_changing_duration, lon_accel);
+      initial_velocity, max_path_velocity, lane_changing_duration, lon_accel);
 
     const auto lane_changing_length = calculation::calc_phase_length(
-      initial_velocity, common_data_ptr->bpp_param_ptr->max_vel, lane_changing_accel,
-      lane_changing_duration);
+      initial_velocity, max_vel, lane_changing_accel, lane_changing_duration);
 
     if (is_skip(lane_changing_length)) continue;
 
