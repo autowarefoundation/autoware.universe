@@ -26,6 +26,7 @@
 #include <boost/geometry/strategies/cartesian/buffer_point_square.hpp>
 
 #include <lanelet2_core/Forward.h>
+#include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/primitives/BoundingBox.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -119,6 +120,42 @@ lanelet::ConstLanelets calculate_ignored_lanelets(
   return ignored_lanelets;
 }
 
+lanelet::ConstLanelets calculate_out_lanelets(
+  const lanelet::LaneletLayer & lanelet_layer,
+  const universe_utils::MultiPolygon2d & trajectory_footprints,
+  const lanelet::ConstLanelets & trajectory_lanelets,
+  const lanelet::ConstLanelets & ignored_lanelets)
+{
+  lanelet::ConstLanelets out_lanelets;
+  const auto candidates = lanelet_layer.search(
+    boost::geometry::return_envelope<lanelet::BoundingBox2d>(trajectory_footprints));
+  for (const auto & lanelet : candidates) {
+    const auto id = lanelet.id();
+    if (
+      contains_lanelet(trajectory_lanelets, id) || contains_lanelet(ignored_lanelets, id) ||
+      !is_road_lanelet(lanelet)) {
+      continue;
+    }
+    if (!boost::geometry::disjoint(trajectory_footprints, lanelet.polygon2d().basicPolygon())) {
+      out_lanelets.push_back(lanelet);
+    }
+  }
+  return out_lanelets;
+}
+
+OutLaneletRtree calculate_out_lanelet_rtree(const lanelet::ConstLanelets & lanelets)
+{
+  std::vector<LaneletNode> nodes;
+  nodes.reserve(lanelets.size());
+  for (auto i = 0UL; i < lanelets.size(); ++i) {
+    nodes.emplace_back(
+      boost::geometry::return_envelope<universe_utils::Box2d>(
+        lanelets[i].polygon2d().basicPolygon()),
+      i);
+  }
+  return {nodes.begin(), nodes.end()};
+}
+
 void calculate_out_lanelet_rtree(
   EgoData & ego_data, const route_handler::RouteHandler & route_handler,
   const PlannerParam & params)
@@ -148,45 +185,9 @@ void calculate_out_lanelet_rtree(
     trajectory_ls, trajectory_footprints, distance_strategy, side_strategy, join_strategy,
     end_strategy, circle_strategy);
 
-  ego_data.out_lanelets.clear();
-  const auto candidates = route_handler.getLaneletMapPtr()->laneletLayer.search(
-    boost::geometry::return_envelope<lanelet::BoundingBox2d>(trajectory_footprints));
-  for (const auto & lanelet : candidates) {
-    const auto id = lanelet.id();
-    if (
-      contains_lanelet(trajectory_lanelets, id) || contains_lanelet(ignored_lanelets, id) ||
-      !is_road_lanelet(lanelet)) {
-      continue;
-    }
-    if (!boost::geometry::disjoint(trajectory_footprints, lanelet.polygon2d().basicPolygon())) {
-      ego_data.out_lanelets.push_back(lanelet);
-    }
-  }
-  std::vector<LaneletNode> nodes;
-  for (auto i = 0UL; i < ego_data.out_lanelets.size(); ++i) {
-    nodes.emplace_back(
-      boost::geometry::return_envelope<universe_utils::Box2d>(
-        ego_data.out_lanelets[i].polygon2d().basicPolygon()),
-      i);
-  }
-  ego_data.out_lanelets_rtree = {nodes.begin(), nodes.end()};
+  ego_data.out_lanelets = calculate_out_lanelets(
+    route_handler.getLaneletMapPtr()->laneletLayer, trajectory_footprints, trajectory_lanelets,
+    ignored_lanelets);
+  ego_data.out_lanelets_rtree = calculate_out_lanelet_rtree(ego_data.out_lanelets);
 }
-
-// void calculate_drivable_lane_polygons(
-//   EgoData & ego_data, const route_handler::RouteHandler & route_handler)
-// {
-//   const auto route_lanelets = calculate_trajectory_lanelets(ego_data, route_handler);
-//   const auto ignored_lanelets =
-//     out_of_lane::calculate_ignored_lanelets(route_lanelets, route_handler);
-//   for (const auto & ll : route_lanelets) {
-//     out_of_lane::Polygons tmp;
-//     boost::geometry::union_(ego_data.drivable_lane_polygons, ll.polygon2d().basicPolygon(), tmp);
-//     ego_data.drivable_lane_polygons = tmp;
-//   }
-//   for (const auto & ll : ignored_lanelets) {
-//     out_of_lane::Polygons tmp;
-//     boost::geometry::union_(ego_data.drivable_lane_polygons, ll.polygon2d().basicPolygon(), tmp);
-//     ego_data.drivable_lane_polygons = tmp;
-//   }
-// }
 }  // namespace autoware::motion_velocity_planner::out_of_lane

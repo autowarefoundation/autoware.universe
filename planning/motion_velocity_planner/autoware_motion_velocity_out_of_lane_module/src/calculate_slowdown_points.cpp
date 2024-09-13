@@ -21,11 +21,9 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
-#include <autoware_planning_msgs/msg/detail/trajectory_point__struct.hpp>
-#include <geometry_msgs/msg/detail/pose__struct.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
-#include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
 
 #include <lanelet2_core/Forward.h>

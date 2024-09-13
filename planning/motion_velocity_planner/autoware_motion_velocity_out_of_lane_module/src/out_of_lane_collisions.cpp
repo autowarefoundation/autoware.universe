@@ -20,16 +20,15 @@
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <rclcpp/duration.hpp>
 
-#include <autoware_planning_msgs/msg/detail/trajectory_point__struct.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 
-#include <boost/geometry/algorithms/detail/envelope/interface.hpp>
-#include <boost/geometry/algorithms/detail/overlaps/interface.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
 #include <boost/geometry/index/predicates.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/primitives/BoundingBox.h>
+#include <lanelet2_core/primitives/Polygon.h>
 
 #include <algorithm>
 #include <iterator>
@@ -130,29 +129,37 @@ void calculate_collisions_to_avoid(
   }
 }
 
+OutOfLanePoint calculate_out_of_lane_point(
+  const lanelet::BasicPolygon2d & footprint, const lanelet::ConstLanelets & out_lanelets,
+  const OutLaneletRtree & out_lanelets_rtree)
+{
+  OutOfLanePoint p;
+  std::vector<LaneletNode> candidates;
+  out_lanelets_rtree.query(
+    boost::geometry::index::intersects(footprint), std::back_inserter(candidates));
+  for (const auto & [_, idx] : candidates) {
+    const auto & lanelet = out_lanelets[idx];
+    lanelet::BasicPolygons2d intersections;
+    boost::geometry::intersection(footprint, lanelet.polygon2d().basicPolygon(), intersections);
+    for (const auto & intersection : intersections) {
+      universe_utils::Polygon2d poly;
+      boost::geometry::convert(intersection, poly);
+      p.out_overlaps.push_back(poly);
+    }
+    if (!intersections.empty()) {
+      p.overlapped_lanelets.push_back(lanelet);
+    }
+  }
+  return p;
+}
 std::vector<OutOfLanePoint> calculate_out_of_lane_points(const EgoData & ego_data)
 {
   std::vector<OutOfLanePoint> out_of_lane_points;
   for (auto i = 0UL; i < ego_data.trajectory_footprints.size(); ++i) {
-    OutOfLanePoint p;
     const auto & footprint = ego_data.trajectory_footprints[i];
-    std::vector<LaneletNode> candidates;
-    ego_data.out_lanelets_rtree.query(
-      boost::geometry::index::intersects(footprint), std::back_inserter(candidates));
-    p.trajectory_index = i + ego_data.first_trajectory_idx;
-    for (const auto & [_, idx] : candidates) {
-      const auto & lanelet = ego_data.out_lanelets[idx];
-      lanelet::BasicPolygons2d intersections;
-      boost::geometry::intersection(footprint, lanelet.polygon2d().basicPolygon(), intersections);
-      for (const auto & intersection : intersections) {
-        universe_utils::Polygon2d poly;
-        boost::geometry::convert(intersection, poly);
-        p.out_overlaps.push_back(poly);
-      }
-      if (!intersections.empty()) {
-        p.overlapped_lanelets.push_back(lanelet);
-      }
-    }
+    OutOfLanePoint p =
+      calculate_out_of_lane_point(footprint, ego_data.out_lanelets, ego_data.out_lanelets_rtree);
+    p.trajectory_index = ego_data.first_trajectory_idx + i;
     if (!p.overlapped_lanelets.empty()) {
       out_of_lane_points.push_back(p);
     }
