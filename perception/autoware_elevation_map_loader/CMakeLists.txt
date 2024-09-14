@@ -6,6 +6,11 @@ autoware_package()
 
 find_package(PCL REQUIRED COMPONENTS io)
 
+include_directories(
+  src
+  ${PCL_INCLUDE_DIRS}
+)
+
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/elevation_map_loader_node.cpp
 )
