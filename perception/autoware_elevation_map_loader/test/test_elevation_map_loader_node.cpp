@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "elevation_map_loader/elevation_map_loader_node.hpp"
+#include "elevation_map_loader_node.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
@@ -25,6 +25,8 @@
 
 #include <vector>
 
+using autoware::elevation_map_loader::ElevationMapLoaderNode;
+
 std::shared_ptr<autoware::test_utils::AutowareTestManager> generateTestManager()
 {
   auto test_manager = std::make_shared<autoware::test_utils::AutowareTestManager>();
@@ -35,7 +37,7 @@ std::shared_ptr<ElevationMapLoaderNode> generateNode()
 {
   auto node_options = rclcpp::NodeOptions{};
   const auto detected_object_validation_dir =
-    ament_index_cpp::get_package_share_directory("elevation_map_loader");
+    ament_index_cpp::get_package_share_directory("autoware_elevation_map_loader");
   const auto parameter_file_path =
     detected_object_validation_dir + "/config/elevation_map_parameters.yaml";
 
