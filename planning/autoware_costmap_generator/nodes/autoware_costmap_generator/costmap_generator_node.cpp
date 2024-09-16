@@ -53,6 +53,7 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
+#include <tf2/time.h>
 #include <tf2/utils.h>
 
 #include <memory>
@@ -286,8 +287,7 @@ void CostmapGenerator::onTimer()
   geometry_msgs::msg::TransformStamped tf;
   try {
     tf = tf_buffer_.lookupTransform(
-      param_->costmap_frame, param_->vehicle_frame, rclcpp::Time(0),
-      rclcpp::Duration::from_seconds(1.0));
+      param_->costmap_frame, param_->vehicle_frame, tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
     return;
