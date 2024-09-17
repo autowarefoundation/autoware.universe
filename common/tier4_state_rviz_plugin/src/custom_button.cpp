@@ -114,7 +114,6 @@ void CustomElevatedButton::paintEvent(QPaintEvent *)
   backgroundPath.addRoundedRect(r, cornerRadius, cornerRadius);
   if (!isEnabled()) {
     painter.setBrush(disabledBgColor);
-    painter.setOpacity(0.12);
   } else {
     painter.setBrush(buttonColor);
   }
@@ -122,9 +121,6 @@ void CustomElevatedButton::paintEvent(QPaintEvent *)
   painter.drawPath(backgroundPath);
 
   // Draw button text
-  if (!isEnabled()) {
-    painter.setOpacity(0.38);
-  }
   painter.setPen(currentTextColor);
   painter.drawText(r, Qt::AlignCenter, text());
 }
