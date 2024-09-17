@@ -145,6 +145,10 @@ private:
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
     const rclcpp::Time & sensor_ros_time);
 
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr visualize_point_score(
+    const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr,
+    const float & lower_nvs, const float & upper_nvs);
+
   void add_regularization_pose(const rclcpp::Time & sensor_ros_time);
 
   rclcpp::TimerBase::SharedPtr map_update_timer_;
@@ -166,6 +170,7 @@ private:
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     nearest_voxel_transformation_likelihood_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr voxel_score_points_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     no_ground_transform_probability_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
