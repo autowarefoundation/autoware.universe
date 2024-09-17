@@ -21,6 +21,14 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE lane_departure_checker_node
 )
 
+if(BUILD_TESTING)
+  file(GLOB_RECURSE TEST_SOURCES test/*.cpp)
+  ament_add_gtest(test_autoware_lane_departure_checker
+    ${TEST_SOURCES}
+  )
+  target_link_libraries(test_autoware_lane_departure_checker autoware_lane_departure_checker)
+endif()
+
 ament_auto_package(
   INSTALL_TO_SHARE
     launch
