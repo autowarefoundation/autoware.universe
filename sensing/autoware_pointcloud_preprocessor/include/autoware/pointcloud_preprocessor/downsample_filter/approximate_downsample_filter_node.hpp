@@ -72,9 +72,9 @@ protected:
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
 private:
-  double voxel_size_x_;
-  double voxel_size_y_;
-  double voxel_size_z_;
+  float voxel_size_x_;
+  float voxel_size_y_;
+  float voxel_size_z_;
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
