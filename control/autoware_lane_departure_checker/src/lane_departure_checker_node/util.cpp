@@ -20,12 +20,6 @@
 
 namespace autoware::lane_departure_checker
 {
-/**
- * @brief cut trajectory by length
- * @param trajectory input trajectory
- * @param length cut length
- * @return cut trajectory
- */
 TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double length)
 {
   if (trajectory.empty()) {

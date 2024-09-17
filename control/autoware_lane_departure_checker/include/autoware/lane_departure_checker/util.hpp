@@ -22,6 +22,12 @@ namespace autoware::lane_departure_checker
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
+/**
+ * @brief cut trajectory by length
+ * @param trajectory input trajectory
+ * @param length cut length
+ * @return cut trajectory
+ */
 TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double length);
 }  // namespace autoware::lane_departure_checker
 
