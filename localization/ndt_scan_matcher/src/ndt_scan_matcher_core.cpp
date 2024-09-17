@@ -644,7 +644,7 @@ bool NDTScanMatcher::callback_sensor_points_main(
   if (voxel_score_points_pub_->get_subscription_count() > 0) {
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr nvs_points_in_map_ptr_rgb{
       new pcl::PointCloud<pcl::PointXYZRGB>};
-    nvs_points_in_map_ptr_rgb = visualizePointScore(sensor_points_in_map_ptr, lower_nvs, upper_nvs);
+    nvs_points_in_map_ptr_rgb = visualize_point_score(sensor_points_in_map_ptr, lower_nvs, upper_nvs);
     sensor_msgs::msg::PointCloud2 nvs_points_msg_in_map;
     pcl::toROSMsg(*nvs_points_in_map_ptr_rgb, nvs_points_msg_in_map);
     nvs_points_msg_in_map.header.stamp = sensor_ros_time;
@@ -894,7 +894,7 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
   }
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr NDTScanMatcher::visualizePointScore(
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr NDTScanMatcher::visualize_point_score(
   const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr,
   const float & lower_nvs, const float & upper_nvs)
 {
