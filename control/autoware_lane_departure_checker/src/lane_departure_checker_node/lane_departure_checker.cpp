@@ -119,7 +119,8 @@ Output LaneDepartureChecker::update(const Input & input)
       calcBrakingDistance(abs_velocity, param_.max_deceleration, param_.delay_time));
 
     output.resampled_trajectory = utils::cutTrajectory(
-      resampleTrajectory(*input.predicted_trajectory, param_.resample_interval), braking_distance);
+      utils::resampleTrajectory(*input.predicted_trajectory, param_.resample_interval),
+      braking_distance);
     output.processing_time_map["resampleTrajectory"] = stop_watch.toc(true);
   }
   output.vehicle_footprints =
@@ -174,27 +175,6 @@ PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
   const auto nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     trajectory.points, pose, dist_threshold, yaw_threshold);
   return autoware::universe_utils::calcPoseDeviation(trajectory.points.at(nearest_idx).pose, pose);
-}
-
-TrajectoryPoints LaneDepartureChecker::resampleTrajectory(
-  const Trajectory & trajectory, const double interval)
-{
-  TrajectoryPoints resampled;
-
-  resampled.push_back(trajectory.points.front());
-  for (size_t i = 1; i < trajectory.points.size() - 1; ++i) {
-    const auto & point = trajectory.points.at(i);
-
-    const auto p1 = autoware::universe_utils::fromMsg(resampled.back().pose.position);
-    const auto p2 = autoware::universe_utils::fromMsg(point.pose.position);
-
-    if (boost::geometry::distance(p1.to_2d(), p2.to_2d()) > interval) {
-      resampled.push_back(point);
-    }
-  }
-  resampled.push_back(trajectory.points.back());
-
-  return resampled;
 }
 
 std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(

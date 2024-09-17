@@ -65,4 +65,30 @@ TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double
 
   return cut;
 }
+
+TrajectoryPoints resampleTrajectory(const Trajectory & trajectory, const double interval)
+{
+  if (trajectory.points.size() < 2) {
+    return trajectory.points;
+  }
+
+  TrajectoryPoints resampled;
+
+  resampled.push_back(trajectory.points.front());
+  auto prev_point = autoware::universe_utils::fromMsg(trajectory.points.front().pose.position);
+  for (size_t i = 1; i < trajectory.points.size() - 1; ++i) {
+    const auto & traj_point = trajectory.points.at(i);
+
+    const auto next_point = autoware::universe_utils::fromMsg(traj_point.pose.position);
+
+    if (boost::geometry::distance(prev_point.to_2d(), next_point.to_2d()) >= interval) {
+      resampled.push_back(traj_point);
+    }
+
+    prev_point = next_point;
+  }
+  resampled.push_back(trajectory.points.back());
+
+  return resampled;
+}
 }  // namespace autoware::lane_departure_checker::utils

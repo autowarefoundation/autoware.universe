@@ -21,18 +21,21 @@
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
-TrajectoryPoints create_trajectory(const std::vector<Eigen::Vector3d> & points)
+namespace
 {
-  TrajectoryPoints trajectory;
+TrajectoryPoints create_trajectory_points(const std::vector<Eigen::Vector3d> & points)
+{
+  TrajectoryPoints trajectory_points;
   for (const auto & point : points) {
     TrajectoryPoint p;
     p.pose.position.x = point.x();
     p.pose.position.y = point.y();
     p.pose.position.z = point.z();
-    trajectory.push_back(p);
+    trajectory_points.push_back(p);
   }
-  return trajectory;
+  return trajectory_points;
 }
+}  // namespace
 
 struct CutTrajectoryTestParam
 {
@@ -54,7 +57,7 @@ class CutTrajectoryTest : public ::testing::TestWithParam<CutTrajectoryTestParam
 TEST_P(CutTrajectoryTest, test_cut_trajectory)
 {
   const auto p = GetParam();
-  const auto trajectory = create_trajectory(p.trajectory_points);
+  const auto trajectory = create_trajectory_points(p.trajectory_points);
   const auto cut = autoware::lane_departure_checker::utils::cutTrajectory(trajectory, p.length);
 
   ASSERT_EQ(cut.size(), p.expected_points.size());
