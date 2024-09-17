@@ -48,20 +48,17 @@ private:
 
   QColor bgColor;
   QColor checkedBgColor;
-  QColor hoverColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str());
-  QColor pressedColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str());
+  QColor hoverColor;
+  QColor pressedColor;
   QColor inactiveTextColor;
   QColor activeTextColor;
-  QColor disabledBgColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_dim.c_str());
-  QColor disabledTextColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface_variant.c_str());
-  bool isHovered = false;
-  bool isActivated = false;
-  bool isDisabled = false;
-  bool isPressed = false;
+  QColor disabledBgColor;
+  QColor disabledTextColor;
+
+  bool isHovered;
+  bool isActivated;
+  bool isDisabled;
+  bool isPressed;
 };
 
 #endif  // CUSTOM_SEGMENTED_BUTTON_ITEM_HPP_

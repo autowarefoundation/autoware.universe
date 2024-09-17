@@ -15,17 +15,21 @@
 
 CustomSegmentedButtonItem::CustomSegmentedButtonItem(const QString & text, QWidget * parent)
 : QPushButton(text, parent),
-  bgColor(
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str())),
+  bgColor(QColor(autoware::state_rviz_plugin::colors::default_colors.surface.c_str())),
   checkedBgColor(
-    QColor(autoware::state_rviz_plugin::colors::default_colors.secondary_container.c_str())),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.on_secondary_fixed_variant.c_str())),
+  hoverColor(autoware::state_rviz_plugin::colors::default_colors.on_surface_hover_bg.c_str()),
+  pressedColor(autoware::state_rviz_plugin::colors::default_colors.on_surface_pressed_bg.c_str()),
   inactiveTextColor(QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str())),
   activeTextColor(
     QColor(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str())),
+  disabledBgColor(autoware::state_rviz_plugin::colors::default_colors.surface.c_str()),
+  disabledTextColor(
+    autoware::state_rviz_plugin::colors::default_colors.on_surface_disabled.c_str()),
   isHovered(false),
   isActivated(false),
-  isDisabled(false)
-
+  isDisabled(false),
+  isPressed(false)
 {
   setCheckable(true);
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
