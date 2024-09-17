@@ -191,8 +191,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
     this->create_publisher<nav_msgs::msg::OccupancyGrid>("~/output/occupancy_grid", 1);
   pub_processing_time_ =
     create_publisher<autoware::universe_utils::ProcessingTimeDetail>("processing_time", 1);
-  time_keeper_ =
-    std::make_shared<autoware::universe_utils::TimeKeeper>(pub_processing_time_, &std::cerr);
+  time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(pub_processing_time_);
 
   // Timer
   const auto period_ns = rclcpp::Rate(param_->update_rate).period();
@@ -286,8 +285,8 @@ void CostmapGenerator::onTimer()
   time_keeper_->start_track("lookupTransform");
   geometry_msgs::msg::TransformStamped tf;
   try {
-    tf = tf_buffer_.lookupTransform(
-      param_->costmap_frame, param_->vehicle_frame, tf2::TimePointZero);
+    tf =
+      tf_buffer_.lookupTransform(param_->costmap_frame, param_->vehicle_frame, tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
     return;
