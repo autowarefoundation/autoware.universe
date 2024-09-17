@@ -4,8 +4,6 @@ project(autoware_lanelet2_map_visualizer)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(PCL REQUIRED COMPONENTS common io filters)
-
 ament_auto_add_library(lanelet2_map_visualization_node SHARED
   src/lanelet2_map_visualization_node.cpp
 )
