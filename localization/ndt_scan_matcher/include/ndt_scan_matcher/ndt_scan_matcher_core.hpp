@@ -37,8 +37,8 @@
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <fmt/format.h>
 #include <autoware/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h>
+#include <fmt/format.h>
 #include <pcl/point_types.h>
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/buffer.h>
@@ -142,8 +142,8 @@ private:
   static int count_oscillation(const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array);
 
   Eigen::Matrix2d estimate_covariance(
-    const autoware::ndt_omp::pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
-    const rclcpp::Time & sensor_ros_time);
+    const autoware::ndt_omp::pclomp::NdtResult & ndt_result,
+    const Eigen::Matrix4f & initial_pose_matrix, const rclcpp::Time & sensor_ros_time);
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr visualize_point_score(
     const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr,

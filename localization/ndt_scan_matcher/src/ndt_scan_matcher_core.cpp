@@ -19,9 +19,9 @@
 #include "localization_util/util_func.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 
+#include <autoware/ndt_omp/estimate_covariance/estimate_covariance.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
-#include <autoware/ndt_omp/estimate_covariance/estimate_covariance.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -584,8 +584,9 @@ bool NDTScanMatcher::callback_sensor_points_main(
       estimated_covariance_2d * param_.covariance.covariance_estimation.scale_factor;
     const double default_cov_xx = param_.covariance.output_pose_covariance[0];
     const double default_cov_yy = param_.covariance.output_pose_covariance[7];
-    const Eigen::Matrix2d estimated_covariance_2d_adj = autoware::ndt_omp::pclomp::adjust_diagonal_covariance(
-      estimated_covariance_2d_scaled, ndt_result.pose, default_cov_xx, default_cov_yy);
+    const Eigen::Matrix2d estimated_covariance_2d_adj =
+      autoware::ndt_omp::pclomp::adjust_diagonal_covariance(
+        estimated_covariance_2d_scaled, ndt_result.pose, default_cov_xx, default_cov_yy);
     ndt_covariance[0 + 6 * 0] = estimated_covariance_2d_adj(0, 0);
     ndt_covariance[1 + 6 * 1] = estimated_covariance_2d_adj(1, 1);
     ndt_covariance[1 + 6 * 0] = estimated_covariance_2d_adj(1, 0);
@@ -842,8 +843,8 @@ int NDTScanMatcher::count_oscillation(
 }
 
 Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
-  const autoware::ndt_omp::pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
-  const rclcpp::Time & sensor_ros_time)
+  const autoware::ndt_omp::pclomp::NdtResult & ndt_result,
+  const Eigen::Matrix4f & initial_pose_matrix, const rclcpp::Time & sensor_ros_time)
 {
   geometry_msgs::msg::PoseArray multi_ndt_result_msg;
   geometry_msgs::msg::PoseArray multi_initial_pose_msg;
@@ -857,15 +858,18 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
   if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::LAPLACE_APPROXIMATION) {
-    return autoware::ndt_omp::pclomp::estimate_xy_covariance_by_laplace_approximation(ndt_result.hessian);
+    return autoware::ndt_omp::pclomp::estimate_xy_covariance_by_laplace_approximation(
+      ndt_result.hessian);
   } else if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::MULTI_NDT) {
-    const std::vector<Eigen::Matrix4f> poses_to_search = autoware::ndt_omp::pclomp::propose_poses_to_search(
-      ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x,
-      param_.covariance.covariance_estimation.initial_pose_offset_model_y);
-    const autoware::ndt_omp::pclomp::ResultOfMultiNdtCovarianceEstimation result_of_multi_ndt_covariance_estimation =
-      estimate_xy_covariance_by_multi_ndt(ndt_result, ndt_ptr_, poses_to_search);
+    const std::vector<Eigen::Matrix4f> poses_to_search =
+      autoware::ndt_omp::pclomp::propose_poses_to_search(
+        ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x,
+        param_.covariance.covariance_estimation.initial_pose_offset_model_y);
+    const autoware::ndt_omp::pclomp::ResultOfMultiNdtCovarianceEstimation
+      result_of_multi_ndt_covariance_estimation =
+        estimate_xy_covariance_by_multi_ndt(ndt_result, ndt_ptr_, poses_to_search);
     for (size_t i = 0; i < result_of_multi_ndt_covariance_estimation.ndt_initial_poses.size();
          i++) {
       multi_ndt_result_msg.poses.push_back(
@@ -879,9 +883,10 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
   } else if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::MULTI_NDT_SCORE) {
-    const std::vector<Eigen::Matrix4f> poses_to_search = autoware::ndt_omp::pclomp::propose_poses_to_search(
-      ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x,
-      param_.covariance.covariance_estimation.initial_pose_offset_model_y);
+    const std::vector<Eigen::Matrix4f> poses_to_search =
+      autoware::ndt_omp::pclomp::propose_poses_to_search(
+        ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x,
+        param_.covariance.covariance_estimation.initial_pose_offset_model_y);
     const autoware::ndt_omp::pclomp::ResultOfMultiNdtCovarianceEstimation
       result_of_multi_ndt_score_covariance_estimation = estimate_xy_covariance_by_multi_ndt_score(
         ndt_result, ndt_ptr_, poses_to_search, param_.covariance.covariance_estimation.temperature);
