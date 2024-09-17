@@ -22,6 +22,10 @@ namespace autoware::lane_departure_checker
 {
 TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double length)
 {
+  if (trajectory.empty()) {
+    return {};
+  }
+
   TrajectoryPoints cut;
 
   double total_length = 0.0;
