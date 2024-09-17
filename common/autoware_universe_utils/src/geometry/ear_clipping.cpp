@@ -27,42 +27,28 @@ std::size_t construct_point(std::size_t index, const Point2d& point, std::vector
     return index;
 }
 
-void perform_triangulation(const Polygon2d & polygon, std::vector<std::size_t> & indices) {
+std::vector<Point> perform_triangulation(const Polygon2d & polygon, std::vector<std::size_t> & indices) {
     indices.clear();
-    if (polygon.outer().empty()) return;
-
+    std::vector<Point> points_;
     std::size_t vertices = 0;
     const auto & outer_ring = polygon.outer();
     std::size_t len = outer_ring.size();
-
-    std::vector<Point> points_;
     points_.reserve(len * 3 / 2);
+
+    if (polygon.outer().empty()) return points_;
+
     indices.reserve(len + outer_ring.size());
-
-    std::cout << "Outer ring size: " << len << std::endl;
     auto outer_point = linked_list(outer_ring, true, vertices, points_);
-    std::cout << "Linked list created. Last point index: " << outer_point  << "last_point prev index" << points_[outer_point].prev_index.value() << std::endl;
-
-    if (outer_point == points_[outer_point].prev_index.value()) {
-        std::cerr << "Invalid linked list. Exiting triangulation." << std::endl;
-        return;
+    if (outer_point == points_[outer_point.value()].prev_index.value()) {
+        return points_;
     }
 
     if (!polygon.inners().empty()) {
-        outer_point = eliminate_holes(polygon.inners(), outer_point, vertices, points_);
-        std::cout << "Holes eliminated. New outer point index: " << outer_point << std::endl;
+        outer_point = eliminate_holes(polygon.inners(), outer_point.value(), vertices, points_);
     }
 
-    ear_clipping_linked(outer_point, indices, points_);
-    std::cout << "Number of triangles: " << indices.size() / 3 << std::endl;
-
-    std::cout << "Indices: ";
-    for (std::size_t idx : indices) {
-        std::cout << idx << " ";
-    }
-    std::cout << std::endl;
-
-    points_.clear();
+    ear_clipping_linked(outer_point.value(), indices, points_);
+    return points_;
 }
 
 /// @brief create a Point and optionally link it with the previous one (in a circular doubly linked list)
@@ -87,7 +73,7 @@ std::size_t insert_point(
     return p_idx;
 }
 
-std::size_t linked_list(const LinearRing2d& points, bool clockwise, std::size_t& vertices, std::vector<Point>& points_vec) {
+std::optional<std::size_t> linked_list(const LinearRing2d& points, bool clockwise, std::size_t& vertices, std::vector<Point>& points_vec) {
     double sum = 0;
     const std::size_t len = points.size();
     std::optional<std::size_t> last_index = std::nullopt;
@@ -105,25 +91,26 @@ std::size_t linked_list(const LinearRing2d& points, bool clockwise, std::size_t&
             last_index = insert_point(vertices + i, points[i], points_vec, last_index);
         }
     } else {
-        for (std::size_t i = 0; i < len; i++) {
-            last_index = insert_point(vertices + i, points[len - 1 - i], points_vec, last_index);
+        for (size_t i = len; i-- > 0;) {
+            last_index = insert_point(vertices + i, points[i], points_vec, last_index);
         }
     }
 
-    for (std::size_t i = 0; i < points_vec.size(); ++i) {
-        std::cout << "Index: " << i
-                  << ", Prev index: " << points_vec[i].prev_index.value()
-                  << ", Next index: " << points_vec[i].next_index.value()
-                  << std::endl;
+    
+    if (last_index.has_value() && equals(last_index.value(), points_vec[last_index.value()].next_index.value(), points_vec)) {
+        std::size_t next_index = points_vec[last_index.value()].next_index.value();
+        remove_point(last_index.value(), points_vec);
+        last_index = next_index;
     }
+
     // Update the number of vertices
     vertices += len;
-    return last_index.value();
+    return last_index;
 }
 
 /// @brief eliminate colinear or duplicate points
-std::size_t filter_points(std::size_t start_index, std::size_t end_index, std::vector<Point>& points_vec) {
-    if (end_index == std::numeric_limits<std::size_t>::max()) {
+std::size_t filter_points(std::size_t start_index, std::optional<std::size_t> end_index, std::vector<Point>& points_vec) {
+    if (!end_index.has_value()) {
         end_index = start_index;
     }
 
@@ -146,20 +133,20 @@ std::size_t filter_points(std::size_t start_index, std::size_t end_index, std::v
         } else {
             p = points_vec[p].next_index.value();
         }
-    } while (again || p != end_index);
+    } while (again || p != end_index.value());
 
-    return end_index;
+    return end_index.value();
 }
 /// @brief find a bridge between vertices that connects hole with an outer ring and link it
 std::size_t eliminate_hole(std::size_t hole_index, std::size_t outer_index, std::vector<Point> & points_vec) {
     auto bridge = find_hole_bridge(hole_index, outer_index, points_vec);
-    if (bridge == std::numeric_limits<std::size_t>::max()) {
+    if (!bridge.has_value()) {
         return outer_index;
     }
-    auto bridge_reverse = split_polygon(bridge, hole_index, points_vec);
+    auto bridge_reverse = split_polygon(bridge.value(), hole_index, points_vec);
 
     filter_points(bridge_reverse, points_vec[bridge_reverse].next_index.value(), points_vec);
-    return filter_points(bridge, points_vec[bridge].next_index.value(), points_vec);
+    return filter_points(bridge.value(), points_vec[bridge.value()].next_index.value(), points_vec);
 }
 
 std::size_t eliminate_holes(
@@ -170,16 +157,16 @@ std::size_t eliminate_holes(
     std::vector<std::size_t> queue;
     for (std::size_t i = 0; i < len; i++) {
         // Get the linked list starting point (first point in the inner ring)
-        std::size_t list = linked_list(inners[i], false, vertices, points_vec);
+        auto list = linked_list(inners[i], false, vertices, points_vec);
 
-        if (list != std::numeric_limits<std::size_t>::max()) {
+        if (list.has_value()) {
             // If the list is a single-point loop, mark it as Steiner
-            if (points_vec[list].next_index == list) {
-                points_vec[list].steiner = true;
+            if (points_vec[list.value()].next_index == list.value()) {
+                points_vec[list.value()].steiner = true;
             }
 
             // Add the leftmost point of the list to the queue
-            queue.push_back(get_leftmost(list, points_vec));
+            queue.push_back(get_leftmost(list.value(), points_vec));
         }
     }
 
@@ -196,82 +183,76 @@ std::size_t eliminate_holes(
     return outer_index;
 }
 /// @brief main ear slicing loop which triangulates a polygon using linked list
-void ear_clipping_linked(std::size_t ear_index, std::vector<std::size_t> & indices, std::vector<Point> & points_vec, int pass) {
-    if (ear_index == std::numeric_limits<std::size_t>::max()) return;
+void ear_clipping_linked(std::optional<std::size_t> ear_index, std::vector<std::size_t> & indices, std::vector<Point> & points_vec, int pass) {
+    if (!ear_index.has_value()) {
+        return;
+    }
 
     auto stop = ear_index;  // Stopping point for the loop
-    std::size_t next = std::numeric_limits<std::size_t>::max();
+    std::optional<std::size_t> next = std::nullopt;
 
     // Iterate through ears, slicing them one by one
-    while (points_vec[ear_index].prev_index.value() != points_vec[ear_index].next_index.value()) {
-        next = points_vec[ear_index].next_index.value();
+    while (points_vec[ear_index.value()].prev_index.value() != points_vec[ear_index.value()].next_index.value()) {
+        next = points_vec[ear_index.value()].next_index;
 
-        if (is_ear(ear_index, points_vec)) {
+
+        if (is_ear(ear_index.value(), points_vec)) {
+
             // Cut off the triangle and store the indices
-            indices.emplace_back(points_vec[ear_index].prev_index.value());
-            indices.emplace_back(ear_index);
-            indices.emplace_back(next);
+            indices.emplace_back(points_vec[ear_index.value()].prev_index.value());
+            indices.emplace_back(ear_index.value());
+            indices.emplace_back(next.value());
+
 
             // Remove the ear and update the ear_index to continue
-            remove_point(ear_index, points_vec);
+            remove_point(ear_index.value(), points_vec);
 
             // Move to the next ear after removal
-            ear_index = points_vec[next].next_index.value();
-            stop = points_vec[next].next_index.value();
-
+            ear_index = points_vec[next.value()].next_index.value();
+            stop = points_vec[next.value()].next_index.value();
             continue;
         }
 
-        ear_index = next;
+        ear_index = next.value();
 
         // If we have completed a full loop and haven't found any ears
         if (ear_index == stop) {
             if (pass == 0) {
-                // Filter the points and try another pass
-                ear_clipping_linked(filter_points(ear_index, std::numeric_limits<std::size_t>::max(), points_vec), indices, points_vec, 1);
+                ear_clipping_linked(filter_points(ear_index.value(), std::nullopt, points_vec), indices, points_vec, 1);
             } else if (pass == 1) {
-                // Cure local intersections and move to the next pass
-                ear_index = cure_local_intersections(filter_points(ear_index, std::numeric_limits<std::size_t>::max(), points_vec), indices, points_vec);
-                ear_clipping_linked(ear_index, indices, points_vec, 2);
+                ear_index = cure_local_intersections(filter_points(ear_index.value(), std::nullopt, points_vec), indices, points_vec);
+                ear_clipping_linked(ear_index.value(), indices, points_vec, 2);
             } else if (pass == 2) {
-                // Split the remaining polygon
-                split_ear_clipping(points_vec, ear_index, indices);
+                split_ear_clipping(points_vec, ear_index.value(), indices);
             }
             break;  // End the loop after handling all passes
         }
     }
-
-    // Check if we have reduced the polygon to the final triangle
-    if (points_vec[ear_index].prev_index == points_vec[ear_index].next_index.value()) {
-        // The remaining triangle
-        std::size_t prev = points_vec[ear_index].prev_index.value();
-        indices.emplace_back(prev);
-        indices.emplace_back(ear_index);
-        indices.emplace_back(points_vec[ear_index].next_index.value());
-    }
 }
+
 /// @brief check whether ear is valid
-bool is_ear(std::size_t ear_index, const std::vector<Point>& points_vec) {
-    const auto a = points_vec[ear_index].prev_index.value();
-    const auto b = ear_index;
-    const auto c = points_vec[ear_index].next_index.value();
+bool is_ear(std::size_t ear_index, const std::vector<Point>& points_vec)
+{
+    const auto a_index = points_vec[ear_index].prev_index.value();
+    const auto b_index = ear_index;
+    const auto c_index = points_vec[ear_index].next_index.value();
 
-    // Check if the area is non-negative
-    if (area(points_vec, a, b, c) >= 0) {
-        return false;
-    }
+    const auto a = points_vec[a_index];
+    const auto b = points_vec[b_index];
+    const auto c = points_vec[c_index];
 
-    auto p = points_vec[ear_index].next_index.value();
-    while (p != points_vec[ear_index].prev_index.value()) {
-        // Check if point p is inside the triangle (a, b, c)
-        if (point_in_triangle(points_vec[a].x(), points_vec[a].y(), points_vec[b].x(), points_vec[b].y(),
-                              points_vec[c].x(), points_vec[c].y(), points_vec[p].x(), points_vec[p].y())) {
-            // Check if p is not collinear with the ear
-            if (area(points_vec, points_vec[p].prev_index.value(), p, points_vec[p].next_index.value()) >= 0) {
-                return false;
-            }
+    if (area(points_vec, a_index, b_index, c_index) >= 0) return false;  // Reflex, can't be an ear
+
+    auto p_index = points_vec[c_index].next_index.value();
+    while (p_index != a_index) {
+        const auto p = points_vec[p_index];
+        if (
+          point_in_triangle(a.x(), a.y(), b.x(), b.y(), c.x(), c.y(), p.x(), p.y()) &&
+          area(points_vec, p.prev_index.value(), p_index, p.next_index.value()) >= 0
+        ) {
+            return false;
         }
-        p = points_vec[p].next_index.value();
+        p_index = points_vec[p_index].next_index.value();
     }
 
     return true;
@@ -280,33 +261,44 @@ bool is_ear(std::size_t ear_index, const std::vector<Point>& points_vec) {
 /// @brief go through all polygon Points and cure small local self-intersections
 std::size_t cure_local_intersections(std::size_t start_index, std::vector<std::size_t> & indices, std::vector<Point> & points_vec) {
     auto p = start_index;
+    bool updated = false;
+
     do {
         auto a = points_vec[p].prev_index.value();
-        auto b = points_vec[p].next_index.value();
+        auto b = points_vec[points_vec[p].next_index.value()].next_index.value(); // b is next->next
 
-        if (!equals(a, b, points_vec) && intersects(a, p, points_vec[p].next_index.value(), b, points_vec) && locally_inside(a, b, points_vec) && locally_inside(b, a, points_vec)) {
+        if (!equals(a, b, points_vec) &&
+            intersects(a, p, points_vec[p].next_index.value(), b, points_vec) &&
+            locally_inside(a, b, points_vec) &&
+            locally_inside(b, a, points_vec)) {
+
             indices.emplace_back(a);
             indices.emplace_back(p);
             indices.emplace_back(b);
+
             remove_point(p, points_vec);
-            remove_point(points_vec[p].next_index.value(), points_vec);
+            remove_point(points_vec[p].next_index.value(), points_vec); // Removing next point
 
-            p = b;
+            p = start_index = b;
+            updated = true;
+        } else {
+            p = points_vec[p].next_index.value();
         }
-        p = points_vec[p].next_index.value();
-    } while (p != start_index);
 
-    return filter_points(p, std::numeric_limits<std::size_t>::max(), points_vec);
+    } while (p != start_index && updated); // Continue if `p` has not looped back to `start_index` and there was an update
+
+    return filter_points(p, std::nullopt, points_vec);
 }
 
+
 /// @brief David Eberly's algorithm for finding a bridge between hole and outer polygon using vector indices
-std::size_t find_hole_bridge(std::size_t hole_index, std::size_t outer_point_index, const std::vector<Point>& points)
+std::optional<std::size_t> find_hole_bridge(std::size_t hole_index, std::size_t outer_point_index, const std::vector<Point>& points)
 {
     std::size_t p = outer_point_index;
     double hx = points[hole_index].x();
     double hy = points[hole_index].y();
     double qx = -std::numeric_limits<double>::infinity();
-    std::size_t bridge_point = std::numeric_limits<std::size_t>::max();  // Null equivalent for index
+    std::optional<std::size_t> bridge_point = std::nullopt;  // Null equivalent for index
 
     // Find the best candidate point on the outer polygon
     do {
@@ -316,20 +308,20 @@ std::size_t find_hole_bridge(std::size_t hole_index, std::size_t outer_point_ind
             if (x <= hx && x > qx) {
                 qx = x;
                 bridge_point = points[p].x() < points[next_index].x() ? p : next_index;
-                if (x == hx) return bridge_point;
+                if (x == hx) return bridge_point.value();
             }
         }
         p = next_index;
     } while (p != outer_point_index);
 
-    if (bridge_point == std::numeric_limits<std::size_t>::max()) return bridge_point;
+    if (!bridge_point.has_value()) return bridge_point.value();
 
-    const std::size_t stop = bridge_point;
+    const std::size_t stop = bridge_point.value();
     double min_tan = std::numeric_limits<double>::infinity();
 
-    p = bridge_point;
-    double mx = points[bridge_point].x();
-    double my = points[bridge_point].y();
+    p = bridge_point.value();
+    double mx = points[bridge_point.value()].x();
+    double my = points[bridge_point.value()].y();
 
     // Refine the best candidate
     do {
@@ -342,7 +334,7 @@ std::size_t find_hole_bridge(std::size_t hole_index, std::size_t outer_point_ind
             if (
                 locally_inside(p, hole_index, points) &&
                 (current_tan < min_tan ||
-                 (current_tan == min_tan && (points[p].x() > points[bridge_point].x() || sector_contains_sector(bridge_point, p, points))))) {
+                 (current_tan == min_tan && (points[p].x() > points[bridge_point.value()].x() || sector_contains_sector(bridge_point.value(), p, points))))) {
                 bridge_point = p;
                 min_tan = current_tan;
             }
@@ -359,7 +351,7 @@ void split_ear_clipping(std::vector<Point>& points, std::size_t start_idx, std::
 {
     std::size_t a_idx = start_idx;
     do {
-        std::size_t b_idx = points[a_idx].next_index.value();
+        std::size_t b_idx = points[points[a_idx].next_index.value()].next_index.value();
         while (b_idx != points[a_idx].prev_index.value()) {
             if (a_idx != b_idx && is_valid_diagonal(a_idx, b_idx, points)) {
                 std::size_t c_idx = split_polygon(a_idx, b_idx, points);
@@ -414,16 +406,19 @@ bool point_in_triangle(
 /// @brief Check if a diagonal between two polygon Points is valid
 bool is_valid_diagonal(std::size_t a_idx, std::size_t b_idx, const std::vector<Point>& points)
 {
+    // Extract indices for the next and previous points
     std::size_t a_next_idx = points[a_idx].next_index.value();
     std::size_t a_prev_idx = points[a_idx].prev_index.value();
     std::size_t b_next_idx = points[b_idx].next_index.value();
     std::size_t b_prev_idx = points[b_idx].prev_index.value();
 
+    // Check if diagonal does not connect adjacent or same points
     if (a_next_idx == b_idx || a_prev_idx == b_idx || intersects_polygon(points, a_idx, b_idx))
     {
         return false;
     }
 
+    // Check if diagonals are locally inside and not intersecting
     bool is_locally_inside_ab = locally_inside(a_idx, b_idx, points);
     bool is_locally_inside_ba = locally_inside(b_idx, a_idx, points);
     bool is_middle_inside = middle_inside(a_idx, b_idx, points);
@@ -492,14 +487,16 @@ bool intersects_polygon(const std::vector<Point>& points, std::size_t a_idx, std
     std::size_t p_idx = a_idx;
     do {
         std::size_t p_next_idx = points[p_idx].next_index.value();  // Get the next point in the polygon
+
+        // Ensure we are not comparing the same segment as `a-b`
         if (p_idx != a_idx && p_next_idx != a_idx && p_idx != b_idx && p_next_idx != b_idx) {
             if (intersects(p_idx, p_next_idx, a_idx, b_idx, points)) {
                 return true;
             }
         }
 
-        p_idx = p_next_idx; 
-    } while (p_idx != a_idx);  
+        p_idx = p_next_idx;  // Move to the next point in the polygon
+    } while (p_idx != a_idx);  // Loop until we come back to the starting point
 
     return false;
 }
@@ -582,46 +579,27 @@ void remove_point(std::size_t p_index, std::vector<Point>& points) {
 /// @brief main triangulate function
 std::vector<Polygon2d> triangulate(const Polygon2d& poly) {
     std::vector<std::size_t> indices;
-    perform_triangulation(poly, indices);
+    auto list_ = perform_triangulation(poly, indices);
 
     std::vector<Polygon2d> triangles;
     const std::size_t num_indices = indices.size();
 
-    std::cout << "Number of indices: " << num_indices << std::endl;
 
     if (num_indices % 3 != 0) {
         throw std::runtime_error("Indices size should be a multiple of 3");
     }
 
-    std::vector<Point2d> all_vertices;
-    const auto& outer_ring = poly.outer();
-    all_vertices.insert(all_vertices.end(), outer_ring.begin(), outer_ring.end());
-
-    for (const auto& inner_ring : poly.inners()) {
-        all_vertices.insert(all_vertices.end(), inner_ring.begin(), inner_ring.end());
-    }
-
-    const std::size_t total_vertices = all_vertices.size();
-
-    std::cout << "Total vertices: " << total_vertices << std::endl;
-
     for (std::size_t i = 0; i < num_indices; i += 3) {
-        if (indices[i] >= total_vertices || indices[i + 1] >= total_vertices || indices[i + 2] >= total_vertices) {
-            std::cerr << "Index out of range: " << indices[i] << ", " << indices[i + 1] << ", " << indices[i + 2] << std::endl;
-            throw std::runtime_error("Index out of range");
-        }
-
-        std::cout << "Creating triangle with indices: " << indices[i] << ", " << indices[i + 1] << ", " << indices[i + 2] << std::endl;
 
         Polygon2d triangle;
-        triangle.outer().push_back(all_vertices[indices[i]]);
-        triangle.outer().push_back(all_vertices[indices[i + 1]]);
-        triangle.outer().push_back(all_vertices[indices[i + 2]]);
-        triangle.outer().push_back(all_vertices[indices[i]]); // Closing the triangle
+        triangle.outer().push_back(list_[indices[i]].pt);
+        triangle.outer().push_back(list_[indices[i + 1]].pt);
+        triangle.outer().push_back(list_[indices[i + 2]].pt);
+        triangle.outer().push_back(list_[indices[i]].pt); // Closing the triangle
 
         triangles.push_back(triangle);
     }
-
+    list_.clear();
     return triangles;
 }
 
