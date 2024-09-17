@@ -16,6 +16,7 @@
 #define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EAR_CLIPPING_HPP_
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
+#include <optional>
 
 #include <utility>
 #include <vector>
@@ -28,15 +29,15 @@ using Point2d = autoware::universe_utils::Point2d;
 using LinearRing2d = autoware::universe_utils::LinearRing2d;
 
 struct Point {
-    Point(std::size_t index, Point2d point) 
-        : i(index), pt(std::move(point)), steiner(false), prev_index(0), next_index(0) {}
+    Point(std::size_t index, const Point2d& point) 
+        : i(index), pt(point), steiner(false), prev_index(std::nullopt), next_index(std::nullopt) {}
 
-    std::size_t i;
-    Point2d pt;
-    bool steiner;
-    std::size_t prev_index; // Use index for prev
-    std::size_t next_index; // Use index for next
-
+    std::size_t i;                    
+    Point2d pt;                       
+    bool steiner;                     
+    std::optional<std::size_t> prev_index;  
+    std::optional<std::size_t> next_index;
+    // Convenience functions to access coordinates
     [[nodiscard]] double x() const { return pt.x(); }
     [[nodiscard]] double y() const { return pt.y(); }
 };
@@ -64,7 +65,7 @@ std::size_t filter_points(std::size_t start_index, std::size_t end_index, std::v
 std::size_t cure_local_intersections(std::size_t start_index, std::vector<std::size_t> & indices, std::vector<Point> & points_vec);
 std::size_t get_leftmost(std::size_t start_index, const std::vector<Point> & points);
 std::size_t split_polygon(std::size_t a_index, std::size_t b_index, std::vector<Point> & points);
-std::size_t insert_point(std::size_t i, const Point2d & p, std::vector<Point> & points, bool clockwise);
+std::size_t insert_point(std::size_t i, const Point2d & p, std::vector<Point> & points, std::size_t last_index);
 std::size_t eliminate_holes(const std::vector<LinearRing2d> & inners, std::size_t outer_index, std::size_t& vertices, std::vector<Point> & points);
 std::size_t eliminate_hole(std::size_t hole_index, std::size_t outer_index, std::vector<Point> & points);
 std::size_t find_hole_bridge(std::size_t hole_index, std::size_t outer_index, const std::vector<Point> & points);
