@@ -5,13 +5,13 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 # Compile flags for SIMD instructions
-# Be careful to change these options, especially when `ndt_omp` implementation is used.
-# All packages linked to `ndt_omp` should use the same SIMD instruction set.
+# Be careful to change these options, especially when `autoware_ndt_omp` implementation is used.
+# All packages linked to `autoware_ndt_omp` should use the same SIMD instruction set.
 # In case mismatched instruction set are used, program causes a crash at its initialization
 # because of a misaligned access to the `Eigen` libraries' data structure.
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
   # For x86_64 architecture, SIMD instruction set is fixed below versions,
-  # because the `ndt_omp` is optimized to these versions.
+  # because the `autoware_ndt_omp` is optimized to these versions.
   add_compile_options(-msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2)
 else()
   # For other architecture, like arm64, compile flags are generally prepared by compiler

@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <multigrid_pclomp/multigrid_ndt_omp.h>
+#include <autoware/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h>
 
 #include <algorithm>
 #include <sstream>
@@ -54,7 +54,7 @@ struct HyperParameters
     double required_distance{};
   } sensor_points{};
 
-  pclomp::NdtParams ndt{};
+  autoware::ndt_omp::pclomp::NdtParams ndt{};
   bool ndt_regularization_enable{};
 
   struct InitialPoseEstimation
