@@ -34,40 +34,30 @@ TrajectoryPoints create_trajectory(const std::vector<Eigen::Vector3d> & points)
   return trajectory;
 }
 
-class CutTrajectoryTest : public ::testing::Test
+TEST(CutTrajectoryTest, test_cut_empty_trajectory)
 {
-protected:
-  void SetUp() override
-  {
-    trajectory_ = create_trajectory({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}});
-    length_ = 1.5;
-  }
-
-  TrajectoryPoints trajectory_;
-  double length_;
-};
-
-TEST_F(CutTrajectoryTest, test_cut_empty_trajectory)
-{
-  trajectory_ = create_trajectory({});
-  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory_, length_);
+  const auto trajectory = create_trajectory({});
+  const auto length = 1.0;
+  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory, length);
   EXPECT_TRUE(cut.empty());
 }
 
-TEST_F(CutTrajectoryTest, test_cut_single_point_trajectory)
+TEST(CutTrajectoryTest, test_cut_single_point_trajectory)
 {
-  trajectory_ = create_trajectory({{0.0, 0.0, 0.0}});
-  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory_, length_);
+  const auto trajectory = create_trajectory({{0.0, 0.0, 0.0}});
+  const auto length = 1.0;
+  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory, length);
   ASSERT_EQ(cut.size(), 1);
   EXPECT_DOUBLE_EQ(cut[0].pose.position.x, 0.0);
   EXPECT_DOUBLE_EQ(cut[0].pose.position.y, 0.0);
   EXPECT_DOUBLE_EQ(cut[0].pose.position.z, 0.0);
 }
 
-TEST_F(CutTrajectoryTest, test_interpolation_at_viapoint)
+TEST(CutTrajectoryTest, test_interpolation_at_viapoint)
 {
-  length_ = 1.0;
-  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory_, length_);
+  const auto trajectory = create_trajectory({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}});
+  const auto length = 1.0;
+  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory, length);
   ASSERT_EQ(cut.size(), 2);
   EXPECT_DOUBLE_EQ(cut[0].pose.position.x, 0.0);
   EXPECT_DOUBLE_EQ(cut[0].pose.position.y, 0.0);
@@ -77,9 +67,11 @@ TEST_F(CutTrajectoryTest, test_interpolation_at_viapoint)
   EXPECT_DOUBLE_EQ(cut[1].pose.position.z, 0.0);
 }
 
-TEST_F(CutTrajectoryTest, test_interpolation_in_middle)
+TEST(CutTrajectoryTest, test_interpolation_in_middle)
 {
-  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory_, length_);
+  const auto trajectory = create_trajectory({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}});
+  const auto length = 1.5;
+  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory, length);
   ASSERT_EQ(cut.size(), 3);
   EXPECT_DOUBLE_EQ(cut[0].pose.position.x, 0.0);
   EXPECT_DOUBLE_EQ(cut[0].pose.position.y, 0.0);
@@ -92,10 +84,11 @@ TEST_F(CutTrajectoryTest, test_interpolation_in_middle)
   EXPECT_DOUBLE_EQ(cut[2].pose.position.z, 0.0);
 }
 
-TEST_F(CutTrajectoryTest, test_no_interpolation)
+TEST(CutTrajectoryTest, test_no_interpolation)
 {
-  length_ = 3.0;
-  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory_, length_);
+  const auto trajectory = create_trajectory({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}});
+  const auto length = 3.0;
+  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory, length);
   ASSERT_EQ(cut.size(), 3);
   EXPECT_DOUBLE_EQ(cut[0].pose.position.x, 0.0);
   EXPECT_DOUBLE_EQ(cut[0].pose.position.y, 0.0);
