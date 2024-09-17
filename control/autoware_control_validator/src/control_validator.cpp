@@ -69,6 +69,10 @@ void ControlValidator::setup_parameters()
     p.max_reverse_velocity_threshold = declare_parameter<double>(t + "max_reverse_velocity");
     p.max_over_velocity_ratio_threshold = declare_parameter<double>(t + "max_over_velocity_ratio");
   }
+  vehicle_vel_.setGain(declare_parameter<double>("vel_lpf_gain"));
+  target_vel_.setGain(declare_parameter<double>("vel_lpf_gain"));
+
+  hold_velocity_error_until_stop_ = declare_parameter<double>("hold_velocity_error_until_stop");
 
   try {
     vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
@@ -218,22 +222,25 @@ std::pair<double, bool> ControlValidator::calc_lateral_deviation_status(
 }
 
 std::tuple<double, double, bool> ControlValidator::calc_velocity_deviation_status(
-  const Trajectory & reference_trajectory, const Odometry & kinematics) const
+  const Trajectory & reference_trajectory, const Odometry & kinematics)
 {
-  const double current_vel = kinematics.twist.twist.linear.x;
-  const double desired_vel =
+  const double v_vel = vehicle_vel_.filter(kinematics.twist.twist.linear.x);
+  const double t_vel = target_vel_.filter(
     autoware::motion_utils::calcInterpolatedPoint(reference_trajectory, kinematics.pose.pose)
-      .longitudinal_velocity_mps;
+      .longitudinal_velocity_mps);
 
   const bool is_over_velocity =
-    std::abs(current_vel) >
-    std::abs(desired_vel) * (1.0 + validation_params_.max_over_velocity_ratio_threshold) +
+    std::abs(v_vel) >
+    std::abs(t_vel) * (1.0 + validation_params_.max_over_velocity_ratio_threshold) +
       validation_params_.max_reverse_velocity_threshold;
   const bool is_reverse_velocity =
-    std::signbit(current_vel * desired_vel) &&
-    std::abs(current_vel) > validation_params_.max_reverse_velocity_threshold;
+    std::signbit(v_vel * t_vel) &&
+    std::abs(v_vel) > validation_params_.max_reverse_velocity_threshold;
 
-  return {current_vel, desired_vel, !(is_over_velocity || is_reverse_velocity)};
+  if (!hold_velocity_error_until_stop_ || is_velocity_valid_ || std::abs(v_vel) < 0.05) {
+    is_velocity_valid_ = !(is_over_velocity || is_reverse_velocity);
+  }
+  return {v_vel, t_vel, is_velocity_valid_};
 }
 
 bool ControlValidator::is_all_valid(const ControlValidatorStatus & s)
