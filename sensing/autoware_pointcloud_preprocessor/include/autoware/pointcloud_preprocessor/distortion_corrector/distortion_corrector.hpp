@@ -62,21 +62,21 @@ struct AngleConversion
 class DistortionCorrectorBase
 {
 public:
-  virtual bool pointcloudTransformExists() = 0;
-  virtual bool pointcloudTransformNeeded() = 0;
-  virtual std::deque<geometry_msgs::msg::TwistStamped> getTwistQueue() = 0;
-  virtual std::deque<geometry_msgs::msg::Vector3Stamped> getAngularVelocityQueue() = 0;
+  virtual bool pointcloud_transform_exists() = 0;
+  virtual bool pointcloud_transform_needed() = 0;
+  virtual std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue() = 0;
+  virtual std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue() = 0;
 
-  virtual void processTwistMessage(
+  virtual void process_twist_message(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) = 0;
-  virtual void processIMUMessage(
+  virtual void process_imu_message(
     const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) = 0;
-  virtual void setPointCloudTransform(
+  virtual void set_pointcloud_transform(
     const std::string & base_frame, const std::string & lidar_frame) = 0;
   virtual void initialize() = 0;
-  virtual std::optional<AngleConversion> tryComputeAngleConversion(
+  virtual std::optional<AngleConversion> try_compute_angle_conversion(
     sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
-  virtual void undistortPointCloud(
+  virtual void undistort_pointcloud(
     bool use_imu, std::optional<AngleConversion> angle_conversion_opt,
     sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
 };
@@ -95,24 +95,25 @@ protected:
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
-  void getIMUTransformation(const std::string & base_frame, const std::string & imu_frame);
-  void enqueueIMU(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
-  void getTwistAndIMUIterator(
+  void get_imu_transformation(const std::string & base_frame, const std::string & imu_frame);
+  void enqueue_imu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
+  void get_twist_and_imu_iterator(
     bool use_imu, double first_point_time_stamp_sec,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu);
-  void warnIfTimestampIsTooLate(bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late);
-  void undistortPoint(
+  void warn_if_timestamp_is_too_late(
+    bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late);
+  void undistort_point(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float const & time_offset,
     const bool & is_twist_valid, const bool & is_imu_valid)
   {
-    static_cast<T *>(this)->undistortPointImplementation(
+    static_cast<T *>(this)->undistort_point_implementation(
       it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
   };
-  void convertMatrixToTransform(const Eigen::Matrix4f & matrix, tf2::Transform & transform);
+  void convert_matrix_to_transform(const Eigen::Matrix4f & matrix, tf2::Transform & transform);
 
 public:
   explicit DistortionCorrector(rclcpp::Node * node, const bool & has_static_tf_only) : node_(node)
@@ -120,22 +121,22 @@ public:
     managed_tf_buffer_ =
       std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(node, has_static_tf_only);
   }
-  bool pointcloudTransformExists() override;
-  bool pointcloudTransformNeeded() override;
-  std::deque<geometry_msgs::msg::TwistStamped> getTwistQueue();
-  std::deque<geometry_msgs::msg::Vector3Stamped> getAngularVelocityQueue();
-  void processTwistMessage(
+  bool pointcloud_transform_exists() override;
+  bool pointcloud_transform_needed() override;
+  std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue();
+  std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue();
+  void process_twist_message(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) override;
 
-  void processIMUMessage(
+  void process_imu_message(
     const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
-  void undistortPointCloud(
+  void undistort_pointcloud(
     bool use_imu, std::optional<AngleConversion> angle_conversion_opt,
     sensor_msgs::msg::PointCloud2 & pointcloud) override;
-  std::optional<AngleConversion> tryComputeAngleConversion(
+  std::optional<AngleConversion> try_compute_angle_conversion(
     sensor_msgs::msg::PointCloud2 & pointcloud) override;
 
-  bool isPointCloudValid(sensor_msgs::msg::PointCloud2 & pointcloud);
+  bool is_pointcloud_valid(sensor_msgs::msg::PointCloud2 & pointcloud);
 };
 
 class DistortionCorrector2D : public DistortionCorrector<DistortionCorrector2D>
@@ -160,14 +161,14 @@ public:
   {
   }
   void initialize() override;
-  void undistortPointImplementation(
+  void undistort_point_implementation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, const float & time_offset,
     const bool & is_twist_valid, const bool & is_imu_valid);
 
-  void setPointCloudTransform(
+  void set_pointcloud_transform(
     const std::string & base_frame, const std::string & lidar_frame) override;
 };
 
@@ -190,13 +191,13 @@ public:
   {
   }
   void initialize() override;
-  void undistortPointImplementation(
+  void undistort_point_implementation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, const float & time_offset,
     const bool & is_twist_valid, const bool & is_imu_valid);
-  void setPointCloudTransform(
+  void set_pointcloud_transform(
     const std::string & base_frame, const std::string & lidar_frame) override;
 };
 
