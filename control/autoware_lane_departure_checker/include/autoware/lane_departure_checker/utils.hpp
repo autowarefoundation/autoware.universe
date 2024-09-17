@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__LANE_DEPARTURE_CHECKER__UTIL_HPP_
-#define AUTOWARE__LANE_DEPARTURE_CHECKER__UTIL_HPP_
+#ifndef AUTOWARE__LANE_DEPARTURE_CHECKER__UTILS_HPP_
+#define AUTOWARE__LANE_DEPARTURE_CHECKER__UTILS_HPP_
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 
-namespace autoware::lane_departure_checker
+namespace autoware::lane_departure_checker::utils
 {
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
@@ -29,6 +29,6 @@ using TrajectoryPoints = std::vector<TrajectoryPoint>;
  * @return cut trajectory
  */
 TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double length);
-}  // namespace autoware::lane_departure_checker
+}  // namespace autoware::lane_departure_checker::utils
 
-#endif  // AUTOWARE__LANE_DEPARTURE_CHECKER__UTIL_HPP_
+#endif  // AUTOWARE__LANE_DEPARTURE_CHECKER__UTILS_HPP_

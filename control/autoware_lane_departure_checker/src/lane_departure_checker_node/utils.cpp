@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/lane_departure_checker/util.hpp"
+#include "autoware/lane_departure_checker/utils.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <boost/geometry.hpp>
 
-namespace autoware::lane_departure_checker
+namespace autoware::lane_departure_checker::utils
 {
 TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double length)
 {
@@ -65,4 +65,4 @@ TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double
 
   return cut;
 }
-}  // namespace autoware::lane_departure_checker
+}  // namespace autoware::lane_departure_checker::utils

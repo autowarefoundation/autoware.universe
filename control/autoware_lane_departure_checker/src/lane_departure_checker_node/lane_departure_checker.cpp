@@ -14,8 +14,8 @@
 
 #include "autoware/lane_departure_checker/lane_departure_checker.hpp"
 
-#include "autoware/lane_departure_checker/util.hpp"
 #include "autoware/lane_departure_checker/util/create_vehicle_footprint.hpp"
+#include "autoware/lane_departure_checker/utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
@@ -118,7 +118,7 @@ Output LaneDepartureChecker::update(const Input & input)
       param_.min_braking_distance,
       calcBrakingDistance(abs_velocity, param_.max_deceleration, param_.delay_time));
 
-    output.resampled_trajectory = cutTrajectory(
+    output.resampled_trajectory = utils::cutTrajectory(
       resampleTrajectory(*input.predicted_trajectory, param_.resample_interval), braking_distance);
     output.processing_time_map["resampleTrajectory"] = stop_watch.toc(true);
   }
