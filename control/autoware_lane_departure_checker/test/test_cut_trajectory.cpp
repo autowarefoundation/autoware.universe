@@ -34,49 +34,55 @@ TrajectoryPoints create_trajectory(const std::vector<Eigen::Vector3d> & points)
   return trajectory;
 }
 
-class CutTrajectoryTest
-: public ::testing::TestWithParam<
-    std::tuple<std::vector<Eigen::Vector3d>, double, std::vector<Eigen::Vector3d>>>
+struct CutTrajectoryTestParam
+{
+  std::string description;
+  std::vector<Eigen::Vector3d> trajectory_points;
+  double length;
+  std::vector<Eigen::Vector3d> expected_points;
+};
+
+std::ostream & operator<<(std::ostream & os, const CutTrajectoryTestParam & p)
+{
+  return os << p.description;
+}
+
+class CutTrajectoryTest : public ::testing::TestWithParam<CutTrajectoryTestParam>
 {
 };
 
 TEST_P(CutTrajectoryTest, test_cut_trajectory)
 {
-  const auto [trajectory_points, length, expected_points] = GetParam();
-  const auto trajectory = create_trajectory(trajectory_points);
-  const auto cut = autoware::lane_departure_checker::utils::cutTrajectory(trajectory, length);
+  const auto p = GetParam();
+  const auto trajectory = create_trajectory(p.trajectory_points);
+  const auto cut = autoware::lane_departure_checker::utils::cutTrajectory(trajectory, p.length);
 
-  ASSERT_EQ(cut.size(), expected_points.size());
+  ASSERT_EQ(cut.size(), p.expected_points.size());
 
-  for (size_t i = 0; i < expected_points.size(); ++i) {
-    EXPECT_DOUBLE_EQ(cut[i].pose.position.x, expected_points[i].x());
-    EXPECT_DOUBLE_EQ(cut[i].pose.position.y, expected_points[i].y());
-    EXPECT_DOUBLE_EQ(cut[i].pose.position.z, expected_points[i].z());
+  for (size_t i = 0; i < p.expected_points.size(); ++i) {
+    EXPECT_DOUBLE_EQ(cut[i].pose.position.x, p.expected_points[i].x());
+    EXPECT_DOUBLE_EQ(cut[i].pose.position.y, p.expected_points[i].y());
+    EXPECT_DOUBLE_EQ(cut[i].pose.position.z, p.expected_points[i].z());
   }
 }
 
 INSTANTIATE_TEST_SUITE_P(
   CutTrajectoryTests, CutTrajectoryTest,
   ::testing::Values(
-    // Empty trajectory
-    std::make_tuple(std::vector<Eigen::Vector3d>{}, 1.0, std::vector<Eigen::Vector3d>{}),
-
-    // Single point trajectory
-    std::make_tuple(
-      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}}, 1.0,
-      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}}),
-
-    // Interpolation at the viapoint of the trajectory
-    std::make_tuple(
+    CutTrajectoryTestParam{
+      "EmptyTrajectory", std::vector<Eigen::Vector3d>{}, 1.0, std::vector<Eigen::Vector3d>{}},
+    CutTrajectoryTestParam{
+      "SinglePointTrajectory", std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}}, 1.0,
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}}},
+    CutTrajectoryTestParam{
+      "InterpolationAtViapoint",
       std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}}, 1.0,
-      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}),
-
-    // Interpolation in the middle of the trajectory
-    std::make_tuple(
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}},
+    CutTrajectoryTestParam{
+      "InterpolationInMiddle",
       std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}}, 1.5,
-      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.5, 0.0, 0.0}}),
-
-    // No interpolation
-    std::make_tuple(
-      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}}, 3.0,
-      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}})));
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.5, 0.0, 0.0}}},
+    CutTrajectoryTestParam{
+      "NoCut", std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}}, 3.0,
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}}}),
+  ::testing::PrintToStringParamName());
