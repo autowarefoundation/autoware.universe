@@ -17,6 +17,8 @@
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 
+#include <vector>
+
 namespace autoware::lane_departure_checker::utils
 {
 using autoware_planning_msgs::msg::TrajectoryPoint;
