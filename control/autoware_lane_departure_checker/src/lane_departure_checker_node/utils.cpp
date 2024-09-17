@@ -81,7 +81,7 @@ TrajectoryPoints resampleTrajectory(const Trajectory & trajectory, const double 
 
     const auto next_point = autoware::universe_utils::fromMsg(traj_point.pose.position);
 
-    if (boost::geometry::distance(prev_point.to_2d(), next_point.to_2d()) > interval) {
+    if (boost::geometry::distance(prev_point.to_2d(), next_point.to_2d()) >= interval) {
       resampled.push_back(traj_point);
     }
 
