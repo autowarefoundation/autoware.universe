@@ -10,7 +10,7 @@ lanelet2_map_visualization visualizes autoware_map_msgs/LaneletMapBin messages i
 
 ### How to Run
 
-`ros2 run map_loader lanelet2_map_visualization`
+`ros2 run autoware_lanelet2_map_visualizer lanelet2_map_visualization`
 
 ### Subscribed Topics
 
