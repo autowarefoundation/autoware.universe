@@ -85,10 +85,14 @@ struct MaterialColors
   std::string pressed_button_bg = "#699BB8";
   std::string checked_button_bg = "#699BB8";
   std::string disabled_button_bg = "#292d30";
+  std::string disabled_button_text = "#6e7276";
 
   std::string on_surface_hover_bg = "#212429";
   std::string on_surface_pressed_bg = "#292d32";
   std::string on_surface_disabled = "#5e6266";
+
+  std::string surface_container_low_hover = "#262931";
+  std::string surface_container_low_pressed = "#2d303a";
 };
 
 inline MaterialColors default_colors;

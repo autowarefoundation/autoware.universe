@@ -564,28 +564,21 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
   routing_icon->updateStyle(state, bgColor);
   routing_label_ptr_->setText(route_state);
 
+  clear_route_button_ptr_->updateStyle(
+    "Clear Route",
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low_hover.c_str()),
+    QColor(
+      autoware::state_rviz_plugin::colors::default_colors.surface_container_low_pressed.c_str()),
+    QColor(
+      autoware::state_rviz_plugin::colors::default_colors.surface_container_low_pressed.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.disabled_button_bg.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.disabled_button_text.c_str()));
   if (msg->state == RouteState::SET) {
     activateButton(clear_route_button_ptr_);
-    clear_route_button_ptr_->updateStyle(
-      "Clear Route",
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
   } else {
     deactivateButton(clear_route_button_ptr_);
-    clear_route_button_ptr_->updateStyle(
-      "Clear Route",
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
   }
 }
 
@@ -626,11 +619,13 @@ void AutowareStatePanel::onLocalization(const LocalizationInitializationState::C
     "Initialize with GNSS",
     QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
     QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-    QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low_hover.c_str()),
+    QColor(
+      autoware::state_rviz_plugin::colors::default_colors.surface_container_low_pressed.c_str()),
+    QColor(
+      autoware::state_rviz_plugin::colors::default_colors.surface_container_low_pressed.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.disabled_button_bg.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.disabled_button_text.c_str()));
 }
 
 void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
@@ -667,28 +662,21 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
   motion_icon->updateStyle(state, bgColor);
   motion_label_ptr_->setText(motion_state);
 
+  accept_start_button_ptr_->updateStyle(
+    "Accept Start",
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low_hover.c_str()),
+    QColor(
+      autoware::state_rviz_plugin::colors::default_colors.surface_container_low_pressed.c_str()),
+    QColor(
+      autoware::state_rviz_plugin::colors::default_colors.surface_container_low_pressed.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.disabled_button_bg.c_str()),
+    QColor(autoware::state_rviz_plugin::colors::default_colors.disabled_button_text.c_str()));
   if (msg->state == MotionState::STARTING) {
     activateButton(accept_start_button_ptr_);
-    accept_start_button_ptr_->updateStyle(
-      "Accept Start",
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
   } else {
     deactivateButton(accept_start_button_ptr_);
-    accept_start_button_ptr_->updateStyle(
-      "Accept Start",
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
   }
 }
 
