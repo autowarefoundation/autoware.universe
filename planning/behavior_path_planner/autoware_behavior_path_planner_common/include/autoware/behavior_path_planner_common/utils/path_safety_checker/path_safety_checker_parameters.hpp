@@ -82,7 +82,7 @@ struct ExtendedPredictedObject
   Twist initial_twist;
   Shape shape;
   ObjectClassification classification;
-  Polygon2d self_polygon;
+  Polygon2d initial_polygon;
   std::vector<PredictedPathWithPolygon> predicted_paths;
   double dist_from_ego{0.0};
 
@@ -101,7 +101,7 @@ struct ExtendedPredictedObject
       return (max_elem != object.classification.end()) ? max_elem->label
                                                        : ObjectClassification::UNKNOWN;
     });
-    self_polygon = autoware::universe_utils::toPolygon2d(initial_pose, shape);
+    initial_polygon = autoware::universe_utils::toPolygon2d(initial_pose, shape);
   }
 };
 using ExtendedPredictedObjects = std::vector<ExtendedPredictedObject>;
