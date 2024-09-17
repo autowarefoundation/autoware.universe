@@ -53,53 +53,16 @@
 namespace autoware::ekf_localizer
 {
 
-class Simple1DFilter
-{
-public:
-  Simple1DFilter()
-  {
-    initialized_ = false;
-    x_ = 0;
-    var_ = 1e9;
-    proc_var_x_c_ = 0.0;
-  };
-  void init(const double init_obs, const double obs_var)
-  {
-    x_ = init_obs;
-    var_ = obs_var;
-    initialized_ = true;
-  };
-  void update(const double obs, const double obs_var, const double dt)
-  {
-    if (!initialized_) {
-      init(obs, obs_var);
-      return;
-    }
-
-    // Prediction step (current variance)
-    double proc_var_x_d = proc_var_x_c_ * dt * dt;
-    var_ = var_ + proc_var_x_d;
-
-    // Update step
-    double kalman_gain = var_ / (var_ + obs_var);
-    x_ = x_ + kalman_gain * (obs - x_);
-    var_ = (1 - kalman_gain) * var_;
-  };
-  void set_proc_var(const double proc_var) { proc_var_x_c_ = proc_var; }
-  [[nodiscard]] double get_x() const { return x_; }
-  [[nodiscard]] double get_var() const { return var_; }
-
-private:
-  bool initialized_;
-  double x_;
-  double var_;
-  double proc_var_x_c_;
-};
-
 class EKFLocalizer : public rclcpp::Node
 {
 public:
   explicit EKFLocalizer(const rclcpp::NodeOptions & options);
+
+  // This function is only used in static tools to know when timer callbacks are triggered.
+  std::chrono::nanoseconds time_until_trigger() const
+  {
+    return timer_control_->time_until_trigger();
+  }
 
 private:
   const std::shared_ptr<Warning> warning_;
@@ -150,9 +113,6 @@ private:
 
   //!< @brief  extended kalman filter instance.
   std::unique_ptr<EKFModule> ekf_module_;
-  Simple1DFilter z_filter_;
-  Simple1DFilter roll_filter_;
-  Simple1DFilter pitch_filter_;
 
   const HyperParameters params_;
 
@@ -219,15 +179,10 @@ private:
     const geometry_msgs::msg::PoseStamped & current_ekf_pose, const rclcpp::Time & current_time);
 
   /**
-   * @brief update simple 1d filter
+   * @brief publish diagnostics message for return
    */
-  void update_simple_1d_filters(
-    const geometry_msgs::msg::PoseWithCovarianceStamped & pose, const size_t smoothing_step);
-
-  /**
-   * @brief initialize simple 1d filter
-   */
-  void init_simple_1d_filters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
+  void publish_callback_return_diagnostics(
+    const std::string & callback_name, const rclcpp::Time & current_time);
 
   /**
    * @brief trigger node
@@ -237,11 +192,6 @@ private:
     std_srvs::srv::SetBool::Response::SharedPtr res);
 
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
-
-  /**
-   * @brief last angular velocity for compensating rph with delay
-   */
-  tf2::Vector3 last_angular_velocity_;
 
   friend class EKFLocalizerTestSuite;  // for test code
 };
