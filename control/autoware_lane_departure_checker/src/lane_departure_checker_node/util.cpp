@@ -29,14 +29,9 @@ TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double
   TrajectoryPoints cut;
 
   double total_length = 0.0;
-  cut.push_back(trajectory.front());
-  for (size_t i = 1; i < trajectory.size(); ++i) {
-    const auto & point = trajectory.at(i);
-
-    const auto p1 = autoware::universe_utils::fromMsg(cut.back().pose.position);
-    const auto p2 = autoware::universe_utils::fromMsg(point.pose.position);
-    const auto points_distance = boost::geometry::distance(p1.to_2d(), p2.to_2d());
-
+  auto last_point = autoware::universe_utils::fromMsg(trajectory.front().pose.position);
+  auto end_it = std::next(trajectory.cbegin());
+  for (; end_it != trajectory.cend(); ++end_it) {
     const auto remain_distance = length - total_length;
 
     // Over length
@@ -44,23 +39,29 @@ TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double
       break;
     }
 
+    const auto & new_pose = end_it->pose;
+    const auto new_point = autoware::universe_utils::fromMsg(new_pose.position);
+    const auto points_distance = boost::geometry::distance(last_point.to_2d(), new_point.to_2d());
+
     // Require interpolation
     if (remain_distance <= points_distance) {
-      const Eigen::Vector3d p_interpolated = p1 + remain_distance * (p2 - p1).normalized();
+      const Eigen::Vector3d p_interpolated =
+        last_point + remain_distance * (new_point - last_point).normalized();
 
       TrajectoryPoint p;
       p.pose.position.x = p_interpolated.x();
       p.pose.position.y = p_interpolated.y();
       p.pose.position.z = p_interpolated.z();
-      p.pose.orientation = point.pose.orientation;
+      p.pose.orientation = new_pose.orientation;
 
       cut.push_back(p);
       break;
     }
 
-    cut.push_back(point);
     total_length += points_distance;
+    last_point = new_point;
   }
+  cut.insert(cut.begin(), trajectory.begin(), end_it);
 
   return cut;
 }
