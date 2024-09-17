@@ -14,10 +14,10 @@
 
 #include "autoware/lane_departure_checker/lane_departure_checker.hpp"
 
+#include "autoware/lane_departure_checker/util.hpp"
 #include "autoware/lane_departure_checker/util/create_vehicle_footprint.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -195,48 +195,6 @@ TrajectoryPoints LaneDepartureChecker::resampleTrajectory(
   resampled.push_back(trajectory.points.back());
 
   return resampled;
-}
-
-TrajectoryPoints LaneDepartureChecker::cutTrajectory(
-  const TrajectoryPoints & trajectory, const double length)
-{
-  TrajectoryPoints cut;
-
-  double total_length = 0.0;
-  cut.push_back(trajectory.front());
-  for (size_t i = 1; i < trajectory.size(); ++i) {
-    const auto & point = trajectory.at(i);
-
-    const auto p1 = autoware::universe_utils::fromMsg(cut.back().pose.position);
-    const auto p2 = autoware::universe_utils::fromMsg(point.pose.position);
-    const auto points_distance = boost::geometry::distance(p1.to_2d(), p2.to_2d());
-
-    const auto remain_distance = length - total_length;
-
-    // Over length
-    if (remain_distance <= 0) {
-      break;
-    }
-
-    // Require interpolation
-    if (remain_distance <= points_distance) {
-      const Eigen::Vector3d p_interpolated = p1 + remain_distance * (p2 - p1).normalized();
-
-      TrajectoryPoint p;
-      p.pose.position.x = p_interpolated.x();
-      p.pose.position.y = p_interpolated.y();
-      p.pose.position.z = p_interpolated.z();
-      p.pose.orientation = point.pose.orientation;
-
-      cut.push_back(p);
-      break;
-    }
-
-    cut.push_back(point);
-    total_length += points_distance;
-  }
-
-  return cut;
 }
 
 std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(
