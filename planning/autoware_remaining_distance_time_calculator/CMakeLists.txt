@@ -16,7 +16,7 @@ target_link_libraries(${PROJECT_NAME}
   remaining_distance_time_calculator_parameters
 )
 
-target_compile_options(${PROJECT_NAME} PUBLIC
+target_compile_options(${PROJECT_NAME} PRIVATE
   -Wno-error=deprecated-declarations
 )
 
