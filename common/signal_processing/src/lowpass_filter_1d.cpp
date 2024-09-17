@@ -36,7 +36,7 @@ void LowpassFilter1d::reset(const double x)
   x_ = x;
 }
 
-void LowpassFilter1d::resetGain(const double gain)
+void LowpassFilter1d::setGain(const double gain)
 {
   gain_ = gain;
 }
