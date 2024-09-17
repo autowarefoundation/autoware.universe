@@ -446,7 +446,7 @@ public:
    * @param obstacle_points_ptr Pointer to the point cloud of obstacles
    */
   void getClosestObjectsOnPath(
-    const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
+    const Path & ego_path, const rclcpp::Time & stamp,
     const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects);
 
   /**

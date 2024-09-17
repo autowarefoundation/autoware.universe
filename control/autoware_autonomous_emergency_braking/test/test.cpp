@@ -32,7 +32,6 @@
 
 namespace autoware::motion::control::autonomous_emergency_braking::test
 {
-using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -41,7 +40,6 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::Vector3;
 using std_msgs::msg::Header;
-namespace bg = boost::geometry;
 
 Header get_header(const char * const frame_id, rclcpp::Time t)
 {
@@ -165,8 +163,7 @@ TEST_F(TestAEB, checkImuPathGeneration)
   aeb_node_->getPointsBelongingToClusterHulls(
     obstacle_points_ptr, points_belonging_to_cluster_hulls, debug_markers);
   std::vector<ObjectData> objects;
-  aeb_node_->getClosestObjectsOnPath(
-    imu_path, footprint, stamp, points_belonging_to_cluster_hulls, objects);
+  aeb_node_->getClosestObjectsOnPath(imu_path, stamp, points_belonging_to_cluster_hulls, objects);
   ASSERT_FALSE(objects.empty());
 }
 
