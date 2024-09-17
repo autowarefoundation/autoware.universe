@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "aged_object_queue.hpp"
+#include "autoware/ekf_localizer/aged_object_queue.hpp"
 
 #include <gtest/gtest.h>
 

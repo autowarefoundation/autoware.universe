@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EKF_LOCALIZER_HPP_
-#define EKF_LOCALIZER_HPP_
+#ifndef AUTOWARE__EKF_LOCALIZER__EKF_LOCALIZER_HPP_
+#define AUTOWARE__EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
-#include "aged_object_queue.hpp"
-#include "ekf_module.hpp"
-#include "hyper_parameters.hpp"
-#include "warning.hpp"
+#include "autoware/ekf_localizer/aged_object_queue.hpp"
+#include "autoware/ekf_localizer/ekf_module.hpp"
+#include "autoware/ekf_localizer/hyper_parameters.hpp"
+#include "autoware/ekf_localizer/warning.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
@@ -198,4 +198,4 @@ private:
 
 }  // namespace autoware::ekf_localizer
 
-#endif  // EKF_LOCALIZER_HPP_
+#endif  // AUTOWARE__EKF_LOCALIZER__EKF_LOCALIZER_HPP_

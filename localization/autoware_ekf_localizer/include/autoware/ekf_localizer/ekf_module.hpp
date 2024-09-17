@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EKF_MODULE_HPP_
-#define EKF_MODULE_HPP_
+#ifndef AUTOWARE__EKF_LOCALIZER__EKF_MODULE_HPP_
+#define AUTOWARE__EKF_LOCALIZER__EKF_MODULE_HPP_
 
-#include "hyper_parameters.hpp"
-#include "state_index.hpp"
-#include "warning.hpp"
+#include "autoware/ekf_localizer/hyper_parameters.hpp"
+#include "autoware/ekf_localizer/state_index.hpp"
+#include "autoware/ekf_localizer/warning.hpp"
 
 #include <autoware/kalman_filter/kalman_filter.hpp>
 #include <autoware/kalman_filter/time_delay_kalman_filter.hpp>
@@ -153,4 +153,4 @@ private:
 
 }  // namespace autoware::ekf_localizer
 
-#endif  // EKF_MODULE_HPP_
+#endif  // AUTOWARE__EKF_LOCALIZER__EKF_MODULE_HPP_

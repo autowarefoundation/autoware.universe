@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGED_OBJECT_QUEUE_HPP_
-#define AGED_OBJECT_QUEUE_HPP_
+#ifndef AUTOWARE__EKF_LOCALIZER__AGED_OBJECT_QUEUE_HPP_
+#define AUTOWARE__EKF_LOCALIZER__AGED_OBJECT_QUEUE_HPP_
 
 #include <cstddef>
 #include <queue>
@@ -68,4 +68,4 @@ private:
 
 }  // namespace autoware::ekf_localizer
 
-#endif  // AGED_OBJECT_QUEUE_HPP_
+#endif  // AUTOWARE__EKF_LOCALIZER__AGED_OBJECT_QUEUE_HPP_

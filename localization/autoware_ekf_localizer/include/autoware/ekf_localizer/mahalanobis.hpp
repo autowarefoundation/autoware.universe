@@ -12,26 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NUMERIC_HPP_
-#define NUMERIC_HPP_
+#ifndef AUTOWARE__EKF_LOCALIZER__MAHALANOBIS_HPP_
+#define AUTOWARE__EKF_LOCALIZER__MAHALANOBIS_HPP_
 
 #include <Eigen/Core>
-
-#include <cmath>
+#include <Eigen/Dense>
 
 namespace autoware::ekf_localizer
 {
 
-inline bool has_inf(const Eigen::MatrixXd & v)
-{
-  return v.array().isInf().any();
-}
+double squared_mahalanobis(
+  const Eigen::VectorXd & x, const Eigen::VectorXd & y, const Eigen::MatrixXd & C);
 
-inline bool has_nan(const Eigen::MatrixXd & v)
-{
-  return v.array().isNaN().any();
-}
+double mahalanobis(const Eigen::VectorXd & x, const Eigen::VectorXd & y, const Eigen::MatrixXd & C);
 
 }  // namespace autoware::ekf_localizer
 
-#endif  // NUMERIC_HPP_
+#endif  // AUTOWARE__EKF_LOCALIZER__MAHALANOBIS_HPP_

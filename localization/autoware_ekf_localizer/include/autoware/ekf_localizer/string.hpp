@@ -1,4 +1,4 @@
-// Copyright 2022 Autoware Foundation
+// Copyright 2023 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,37 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WARNING_HPP_
-#define WARNING_HPP_
-
-#include <rclcpp/rclcpp.hpp>
+#ifndef AUTOWARE__EKF_LOCALIZER__STRING_HPP_
+#define AUTOWARE__EKF_LOCALIZER__STRING_HPP_
 
 #include <string>
 
 namespace autoware::ekf_localizer
 {
 
-class Warning
+inline std::string erase_leading_slash(const std::string & s)
 {
-public:
-  explicit Warning(rclcpp::Node * node) : node_(node) {}
-
-  void warn(const std::string & message) const
-  {
-    RCLCPP_WARN(node_->get_logger(), "%s", message.c_str());
+  std::string a = s;
+  if (a.front() == '/') {
+    a.erase(0, 1);
   }
-
-  void warn_throttle(const std::string & message, const int duration_milliseconds) const
-  {
-    RCLCPP_WARN_THROTTLE(
-      node_->get_logger(), *(node_->get_clock()),
-      std::chrono::milliseconds(duration_milliseconds).count(), "%s", message.c_str());
-  }
-
-private:
-  rclcpp::Node * node_;
-};
+  return a;
+}
 
 }  // namespace autoware::ekf_localizer
 
-#endif  // WARNING_HPP_
+#endif  // AUTOWARE__EKF_LOCALIZER__STRING_HPP_

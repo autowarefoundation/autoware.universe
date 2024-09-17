@@ -12,23 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef STRING_HPP_
-#define STRING_HPP_
+#ifndef AUTOWARE__EKF_LOCALIZER__WARNING_MESSAGE_HPP_
+#define AUTOWARE__EKF_LOCALIZER__WARNING_MESSAGE_HPP_
 
 #include <string>
 
 namespace autoware::ekf_localizer
 {
 
-inline std::string erase_leading_slash(const std::string & s)
-{
-  std::string a = s;
-  if (a.front() == '/') {
-    a.erase(0, 1);
-  }
-  return a;
-}
+std::string pose_delay_step_warning_message(
+  const double delay_time, const double delay_time_threshold);
+std::string twist_delay_step_warning_message(
+  const double delay_time, const double delay_time_threshold);
+std::string pose_delay_time_warning_message(const double delay_time);
+std::string twist_delay_time_warning_message(const double delay_time);
+std::string mahalanobis_warning_message(const double distance, const double max_distance);
 
 }  // namespace autoware::ekf_localizer
 
-#endif  // STRING_HPP_
+#endif  // AUTOWARE__EKF_LOCALIZER__WARNING_MESSAGE_HPP_

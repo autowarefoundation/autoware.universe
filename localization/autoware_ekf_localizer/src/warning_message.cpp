@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "warning_message.hpp"
+#include "autoware/ekf_localizer/warning_message.hpp"
 
 #include <fmt/core.h>
 

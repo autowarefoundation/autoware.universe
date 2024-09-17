@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "state_transition.hpp"
+#include "autoware/ekf_localizer/state_transition.hpp"
 
-#include "matrix_types.hpp"
-#include "state_index.hpp"
+#include "autoware/ekf_localizer/matrix_types.hpp"
+#include "autoware/ekf_localizer/state_index.hpp"
 
 #include <cmath>
 

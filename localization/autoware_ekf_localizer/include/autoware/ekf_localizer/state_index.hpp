@@ -1,4 +1,4 @@
-// Copyright 2023 Autoware Foundation
+// Copyright 2022 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WARNING_MESSAGE_HPP_
-#define WARNING_MESSAGE_HPP_
-
-#include <string>
+#ifndef AUTOWARE__EKF_LOCALIZER__STATE_INDEX_HPP_
+#define AUTOWARE__EKF_LOCALIZER__STATE_INDEX_HPP_
 
 namespace autoware::ekf_localizer
 {
 
-std::string pose_delay_step_warning_message(
-  const double delay_time, const double delay_time_threshold);
-std::string twist_delay_step_warning_message(
-  const double delay_time, const double delay_time_threshold);
-std::string pose_delay_time_warning_message(const double delay_time);
-std::string twist_delay_time_warning_message(const double delay_time);
-std::string mahalanobis_warning_message(const double distance, const double max_distance);
+enum IDX {
+  X = 0,
+  Y = 1,
+  YAW = 2,
+  YAWB = 3,
+  VX = 4,
+  WZ = 5,
+};
 
 }  // namespace autoware::ekf_localizer
 
-#endif  // WARNING_MESSAGE_HPP_
+#endif  // AUTOWARE__EKF_LOCALIZER__STATE_INDEX_HPP_

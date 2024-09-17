@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "diagnostics.hpp"
+#include "autoware/ekf_localizer/diagnostics.hpp"
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 

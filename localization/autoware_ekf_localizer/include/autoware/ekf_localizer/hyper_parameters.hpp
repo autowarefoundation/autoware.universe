@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef HYPER_PARAMETERS_HPP_
-#define HYPER_PARAMETERS_HPP_
+#ifndef AUTOWARE__EKF_LOCALIZER__HYPER_PARAMETERS_HPP_
+#define AUTOWARE__EKF_LOCALIZER__HYPER_PARAMETERS_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -107,4 +107,4 @@ public:
 
 }  // namespace autoware::ekf_localizer
 
-#endif  // HYPER_PARAMETERS_HPP_
+#endif  // AUTOWARE__EKF_LOCALIZER__HYPER_PARAMETERS_HPP_

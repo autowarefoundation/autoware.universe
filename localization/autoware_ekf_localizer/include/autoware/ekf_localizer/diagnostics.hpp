@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DIAGNOSTICS_HPP_
-#define DIAGNOSTICS_HPP_
+#ifndef AUTOWARE__EKF_LOCALIZER__DIAGNOSTICS_HPP_
+#define AUTOWARE__EKF_LOCALIZER__DIAGNOSTICS_HPP_
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
@@ -45,4 +45,4 @@ diagnostic_msgs::msg::DiagnosticStatus merge_diagnostic_status(
 
 }  // namespace autoware::ekf_localizer
 
-#endif  // DIAGNOSTICS_HPP_
+#endif  // AUTOWARE__EKF_LOCALIZER__DIAGNOSTICS_HPP_

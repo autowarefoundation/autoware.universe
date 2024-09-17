@@ -12,17 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COVARIANCE_HPP_
-#define COVARIANCE_HPP_
+#ifndef AUTOWARE__EKF_LOCALIZER__MEASUREMENT_HPP_
+#define AUTOWARE__EKF_LOCALIZER__MEASUREMENT_HPP_
 
-#include "matrix_types.hpp"
+#include <Eigen/Core>
 
 namespace autoware::ekf_localizer
 {
 
-std::array<double, 36> ekf_covariance_to_pose_message_covariance(const Matrix6d & P);
-std::array<double, 36> ekf_covariance_to_twist_message_covariance(const Matrix6d & P);
+Eigen::Matrix<double, 3, 6> pose_measurement_matrix();
+Eigen::Matrix<double, 2, 6> twist_measurement_matrix();
+Eigen::Matrix3d pose_measurement_covariance(
+  const std::array<double, 36ul> & covariance, const size_t smoothing_step);
+Eigen::Matrix2d twist_measurement_covariance(
+  const std::array<double, 36ul> & covariance, const size_t smoothing_step);
 
 }  // namespace autoware::ekf_localizer
 
-#endif  // COVARIANCE_HPP_
+#endif  // AUTOWARE__EKF_LOCALIZER__MEASUREMENT_HPP_

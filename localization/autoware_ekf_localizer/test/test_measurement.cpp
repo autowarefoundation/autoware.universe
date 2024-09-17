@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "measurement.hpp"
+#include "autoware/ekf_localizer/measurement.hpp"
 
 #include <gtest/gtest.h>
 
