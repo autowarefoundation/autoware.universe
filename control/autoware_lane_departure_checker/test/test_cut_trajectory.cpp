@@ -34,69 +34,49 @@ TrajectoryPoints create_trajectory(const std::vector<Eigen::Vector3d> & points)
   return trajectory;
 }
 
-TEST(CutTrajectoryTest, test_cut_empty_trajectory)
+class CutTrajectoryTest
+: public ::testing::TestWithParam<
+    std::tuple<std::vector<Eigen::Vector3d>, double, std::vector<Eigen::Vector3d>>>
 {
-  const auto trajectory = create_trajectory({});
-  const auto length = 1.0;
-  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory, length);
-  EXPECT_TRUE(cut.empty());
+};
+
+TEST_P(CutTrajectoryTest, test_cut_trajectory)
+{
+  const auto [trajectory_points, length, expected_points] = GetParam();
+  const auto trajectory = create_trajectory(trajectory_points);
+  const auto cut = autoware::lane_departure_checker::utils::cutTrajectory(trajectory, length);
+
+  ASSERT_EQ(cut.size(), expected_points.size());
+
+  for (size_t i = 0; i < expected_points.size(); ++i) {
+    EXPECT_DOUBLE_EQ(cut[i].pose.position.x, expected_points[i].x());
+    EXPECT_DOUBLE_EQ(cut[i].pose.position.y, expected_points[i].y());
+    EXPECT_DOUBLE_EQ(cut[i].pose.position.z, expected_points[i].z());
+  }
 }
 
-TEST(CutTrajectoryTest, test_cut_single_point_trajectory)
-{
-  const auto trajectory = create_trajectory({{0.0, 0.0, 0.0}});
-  const auto length = 1.0;
-  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory, length);
-  ASSERT_EQ(cut.size(), 1);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.x, 0.0);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.y, 0.0);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.z, 0.0);
-}
+INSTANTIATE_TEST_SUITE_P(
+  CutTrajectoryTests, CutTrajectoryTest,
+  ::testing::Values(
+    // Empty trajectory
+    std::make_tuple(std::vector<Eigen::Vector3d>{}, 1.0, std::vector<Eigen::Vector3d>{}),
 
-TEST(CutTrajectoryTest, test_interpolation_at_viapoint)
-{
-  const auto trajectory = create_trajectory({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}});
-  const auto length = 1.0;
-  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory, length);
-  ASSERT_EQ(cut.size(), 2);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.x, 0.0);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.y, 0.0);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.z, 0.0);
-  EXPECT_DOUBLE_EQ(cut[1].pose.position.x, 1.0);
-  EXPECT_DOUBLE_EQ(cut[1].pose.position.y, 0.0);
-  EXPECT_DOUBLE_EQ(cut[1].pose.position.z, 0.0);
-}
+    // Single point trajectory
+    std::make_tuple(
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}}, 1.0,
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}}),
 
-TEST(CutTrajectoryTest, test_interpolation_in_middle)
-{
-  const auto trajectory = create_trajectory({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}});
-  const auto length = 1.5;
-  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory, length);
-  ASSERT_EQ(cut.size(), 3);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.x, 0.0);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.y, 0.0);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.z, 0.0);
-  EXPECT_DOUBLE_EQ(cut[1].pose.position.x, 1.0);
-  EXPECT_DOUBLE_EQ(cut[1].pose.position.y, 0.0);
-  EXPECT_DOUBLE_EQ(cut[1].pose.position.z, 0.0);
-  EXPECT_DOUBLE_EQ(cut[2].pose.position.x, 1.5);
-  EXPECT_DOUBLE_EQ(cut[2].pose.position.y, 0.0);
-  EXPECT_DOUBLE_EQ(cut[2].pose.position.z, 0.0);
-}
+    // Interpolation at the viapoint of the trajectory
+    std::make_tuple(
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}}, 1.0,
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}),
 
-TEST(CutTrajectoryTest, test_no_interpolation)
-{
-  const auto trajectory = create_trajectory({{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}});
-  const auto length = 3.0;
-  const auto cut = autoware::lane_departure_checker::cutTrajectory(trajectory, length);
-  ASSERT_EQ(cut.size(), 3);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.x, 0.0);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.y, 0.0);
-  EXPECT_DOUBLE_EQ(cut[0].pose.position.z, 0.0);
-  EXPECT_DOUBLE_EQ(cut[1].pose.position.x, 1.0);
-  EXPECT_DOUBLE_EQ(cut[1].pose.position.y, 0.0);
-  EXPECT_DOUBLE_EQ(cut[1].pose.position.z, 0.0);
-  EXPECT_DOUBLE_EQ(cut[2].pose.position.x, 2.0);
-  EXPECT_DOUBLE_EQ(cut[2].pose.position.y, 0.0);
-  EXPECT_DOUBLE_EQ(cut[2].pose.position.z, 0.0);
-}
+    // Interpolation in the middle of the trajectory
+    std::make_tuple(
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}}, 1.5,
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.5, 0.0, 0.0}}),
+
+    // No interpolation
+    std::make_tuple(
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}}, 3.0,
+      std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}})));
