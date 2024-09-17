@@ -276,7 +276,7 @@ void CostmapGenerator::onScenario(const tier4_planning_msgs::msg::Scenario::Cons
 
 void CostmapGenerator::onTimer()
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware::universe_utils::ScopedTimeTrack scoped_time_track(__func__, *time_keeper_);
   if (!isActive()) {
     return;
   }
