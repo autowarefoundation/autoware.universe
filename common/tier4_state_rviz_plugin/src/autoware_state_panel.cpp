@@ -455,7 +455,13 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
   connect(emergency_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickEmergencyButton()));
   auto * utility_layout = new QVBoxLayout;
   auto * velocity_limit_layout = new QHBoxLayout;
-  QLabel * velocity_limit_label = new QLabel("km/h");
+  auto * velocity_limit_label = new QLabel("km/h");
+
+  QFontMetrics fm(velocity_limit_value_label_->font());
+  int width = fm.horizontalAdvance("999");
+
+  // Set the fixed width for the label
+  velocity_limit_value_label_->setFixedWidth(width);
 
   velocity_limit_layout->addWidget(pub_velocity_limit_slider_);
   velocity_limit_layout->addSpacing(5);
