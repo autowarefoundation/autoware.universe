@@ -427,7 +427,6 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
   CustomSlider * pub_velocity_limit_slider_ = new CustomSlider(Qt::Horizontal);
   pub_velocity_limit_slider_->setRange(0, 100);
   pub_velocity_limit_slider_->setValue(0);
-  // pub_velocity_limit_slider_->setMaximumWidth(300);
 
   connect(pub_velocity_limit_slider_, &QSlider::sliderPressed, this, [this]() {
     sliderIsDragging = true;  // User starts dragging the handle
