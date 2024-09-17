@@ -75,7 +75,7 @@ INSTANTIATE_TEST_SUITE_P(
       "SinglePointTrajectory", std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}}, 1.0,
       std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}}},
     CutTrajectoryTestParam{
-      "InterpolationAtViapoint",
+      "InterpolationAtViaPoint",
       std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {2.0, 0.0, 0.0}}, 1.0,
       std::vector<Eigen::Vector3d>{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}}},
     CutTrajectoryTestParam{
