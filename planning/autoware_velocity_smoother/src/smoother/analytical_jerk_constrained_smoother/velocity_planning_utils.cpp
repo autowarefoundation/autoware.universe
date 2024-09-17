@@ -14,14 +14,13 @@
 
 #include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.hpp"
 
+#include "interpolation/interpolation_utils.hpp"
 #include "interpolation/linear_interpolation.hpp"
 
 #include <algorithm>
 #include <vector>
 
-namespace autoware::velocity_smoother
-{
-namespace analytical_velocity_planning_utils
+namespace autoware::velocity_smoother::analytical_velocity_planning_utils
 {
 bool calcStopDistWithJerkAndAccConstraints(
   const double v0, const double a0, const double jerk_acc, const double jerk_dec,
@@ -234,8 +233,9 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   }
 
   if (
-    !interpolation_utils::isIncreasing(xs) || !interpolation_utils::isIncreasing(distances) ||
-    !interpolation_utils::isNotDecreasing(xs) || !interpolation_utils::isNotDecreasing(distances)) {
+    !interpolation_utils::is_increasing(xs) || !interpolation_utils::is_increasing(distances) ||
+    !interpolation_utils::is_not_decreasing(xs) ||
+    !interpolation_utils::is_not_decreasing(distances)) {
     return false;
   }
 
@@ -343,5 +343,4 @@ double integ_a(double a0, double j0, double t)
   return a0 + j0 * t;
 }
 
-}  // namespace analytical_velocity_planning_utils
-}  // namespace autoware::velocity_smoother
+}  // namespace autoware::velocity_smoother::analytical_velocity_planning_utils

@@ -15,15 +15,20 @@
 #ifndef INTERPOLATION__SPLINE_INTERPOLATION_POINTS_2D_HPP_
 #define INTERPOLATION__SPLINE_INTERPOLATION_POINTS_2D_HPP_
 
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "interpolation/spline_interpolation.hpp"
 
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+
+#include <optional>
 #include <vector>
 
 namespace interpolation
 {
 
 template <typename T>
-std::vector<double> splineYawFromPoints(const std::vector<T> & points);
+std::vector<double> spline_yaw_from_points(const std::vector<T> & points);
 }  // namespace interpolation
 
 // non-static points spline interpolation
@@ -52,7 +57,7 @@ public:
     for (const auto & p : points) {
       points_inner.push_back(autoware::universe_utils::getPoint(p));
     }
-    calcSplineCoefficientsInner(points_inner);
+    calc_coefficients_inner(points_inner);
   }
 
   // TODO(murooka) implement these functions
@@ -60,28 +65,29 @@ public:
   // std::vector<geometry_msgs::msg::Pose> getSplineInterpolatedPoses(const double width);
 
   // pose (= getSplineInterpolatedPoint + getSplineInterpolatedYaw)
-  geometry_msgs::msg::Pose getSplineInterpolatedPose(const size_t idx, const double s) const;
+  [[nodiscard]] geometry_msgs::msg::Pose compute_pose(const size_t idx, const double s) const;
 
   // point
-  geometry_msgs::msg::Point getSplineInterpolatedPoint(const size_t idx, const double s) const;
+  [[nodiscard]] geometry_msgs::msg::Point compute_point(const size_t idx, const double s) const;
 
   // yaw
-  double getSplineInterpolatedYaw(const size_t idx, const double s) const;
-  std::vector<double> getSplineInterpolatedYaws() const;
+  [[nodiscard]] double compute_yaw(const size_t idx, const double s) const;
+  [[nodiscard]] std::vector<double> compute_yaws() const;
 
   // curvature
-  double getSplineInterpolatedCurvature(const size_t idx, const double s) const;
-  std::vector<double> getSplineInterpolatedCurvatures() const;
+  [[nodiscard]] double compute_curvature(const size_t idx, const double s) const;
+  [[nodiscard]] std::vector<double> compute_curvaures() const;
 
-  size_t getSize() const { return base_s_vec_.size(); }
-  size_t getOffsetIndex(const size_t idx, const double offset) const;
-  double getAccumulatedLength(const size_t idx) const;
+  [[nodiscard]] size_t get_size() const { return base_s_vec_.size(); }
+  [[nodiscard]] size_t get_offset_index(const size_t idx, const double offset) const;
+  [[nodiscard]] double get_accumulated_length(const size_t idx) const;
 
 private:
-  void calcSplineCoefficientsInner(const std::vector<geometry_msgs::msg::Point> & points);
-  SplineInterpolation spline_x_;
-  SplineInterpolation spline_y_;
-  SplineInterpolation spline_z_;
+  void calc_coefficients_inner(const std::vector<geometry_msgs::msg::Point> & points);
+
+  std::optional<SplineInterpolation> spline_x_;
+  std::optional<SplineInterpolation> spline_y_;
+  std::optional<SplineInterpolation> spline_z_;
 
   std::vector<double> base_s_vec_;
 };

@@ -626,7 +626,7 @@ void StaticCenterlineGeneratorNode::validate()
 
   // calculate curvature
   SplineInterpolationPoints2d centerline_spline(centerline);
-  const auto curvature_vec = centerline_spline.getSplineInterpolatedCurvatures();
+  const auto curvature_vec = centerline_spline.compute_curvaures();
   const double curvature_threshold = vehicle_info_.calcCurvatureFromSteerAngle(
     vehicle_info_.max_steer_angle_rad - max_steer_angle_margin);
 

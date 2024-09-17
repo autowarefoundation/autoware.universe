@@ -12,124 +12,133 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "interpolation/spline_interpolation.hpp"
 
 #include <gtest/gtest.h>
 
-#include <limits>
 #include <vector>
 
 constexpr double epsilon = 1e-6;
 
-TEST(spline_interpolation, spline)
+void test_spline_interpolation(
+  const std::vector<double> & base_keys, const std::vector<double> & base_values,
+  const std::vector<double> & query_keys, const std::vector<double> & ans)
 {
-  {  // straight: query_keys is same as base_keys
-    const std::vector<double> base_keys{0.0, 1.0, 2.0, 3.0, 4.0};
-    const std::vector<double> base_values{0.0, 1.5, 3.0, 4.5, 6.0};
-    const std::vector<double> query_keys = base_keys;
-    const std::vector<double> ans = base_values;
+  const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
 
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
-      EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
-    }
-  }
-
-  {  // straight: query_keys is random
-    const std::vector<double> base_keys{0.0, 1.0, 2.0, 3.0, 4.0};
-    const std::vector<double> base_values{0.0, 1.5, 3.0, 4.5, 6.0};
-    const std::vector<double> query_keys{0.0, 0.7, 1.9, 4.0};
-    const std::vector<double> ans{0.0, 1.05, 2.85, 6.0};
-
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
-      EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
-    }
-  }
-
-  {  // curve: query_keys is same as base_keys
-    const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
-    const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
-    const std::vector<double> query_keys = base_keys;
-    const std::vector<double> ans = base_values;
-
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
-      EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
-    }
-  }
-
-  {  // curve: query_keys is random
-    const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
-    const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
-    const std::vector<double> query_keys{0.0, 8.0, 18.0};
-    const std::vector<double> ans{-0.075611, 0.997242, 1.573258};
-
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
-      EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
-    }
-  }
-
-  {  // straight: size of base_keys is 2 (edge case in the implementation)
-    const std::vector<double> base_keys{0.0, 1.0};
-    const std::vector<double> base_values{0.0, 1.5};
-    const std::vector<double> query_keys = base_keys;
-    const std::vector<double> ans = base_values;
-
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
-      EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
-    }
-  }
-
-  {  // straight: size of base_keys is 3 (edge case in the implementation)
-    const std::vector<double> base_keys{0.0, 1.0, 2.0};
-    const std::vector<double> base_values{0.0, 1.5, 3.0};
-    const std::vector<double> query_keys = base_keys;
-    const std::vector<double> ans = base_values;
-
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
-      EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
-    }
-  }
-
-  {  // curve: query_keys is random. size of base_keys is 3 (edge case in the implementation)
-    const std::vector<double> base_keys{-1.5, 1.0, 5.0};
-    const std::vector<double> base_values{-1.2, 0.5, 1.0};
-    const std::vector<double> query_keys{-1.0, 0.0, 4.0};
-    const std::vector<double> ans{-0.808769, -0.077539, 1.035096};
-
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
-      EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
-    }
-  }
-
-  {  // When the query keys changes suddenly (edge case of spline interpolation).
-    const std::vector<double> base_keys = {0.0, 1.0, 1.0001, 2.0, 3.0, 4.0};
-    const std::vector<double> base_values = {0.0, 0.0, 0.1, 0.1, 0.1, 0.1};
-    const std::vector<double> query_keys = {0.0, 1.0, 1.5, 2.0, 3.0, 4.0};
-    const std::vector<double> ans = {0.0, 0.0, 137.591789, 0.1, 0.1, 0.1};
-
-    const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
-      EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
-    }
+  for (size_t i = 0; i < query_values.size(); ++i) {
+    EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
   }
 }
 
-TEST(spline_interpolation, splineByAkima)
+TEST(spline_interpolation, spline)
+{
+  // These data are generated by scipy's CubicSpline.
+  {
+    std::vector<double> base_keys = {3.8344151882577773, 4.236547993389047,  4.375872112626925,
+                                     5.448831829968968,  5.4881350392732475, 6.027633760716439,
+                                     6.458941130666561,  7.151893663724195,  8.917730007820797,
+                                     9.636627605010293};
+    std::vector<double> base_values = {7.917250380826646,  5.288949197529044,  5.680445610939323,
+                                       9.25596638292661,   0.7103605819788694, 0.8712929970154071,
+                                       0.2021839744032572, 8.32619845547938,   7.781567509498505,
+                                       8.700121482468191};
+    std::vector<double> query_keys = {
+      3.83441519, 3.89302339, 3.9516316,  4.01023981, 4.06884801, 4.12745622, 4.18606443,
+      4.24467263, 4.30328084, 4.36188904, 4.42049725, 4.47910546, 4.53771366, 4.59632187,
+      4.65493008, 4.71353828, 4.77214649, 4.83075469, 4.8893629,  4.94797111, 5.00657931,
+      5.06518752, 5.12379573, 5.18240393, 5.24101214, 5.29962034, 5.35822855, 5.41683676,
+      5.47544496, 5.53405317, 5.59266138, 5.65126958, 5.70987779, 5.76848599, 5.8270942,
+      5.88570241, 5.94431061, 6.00291882, 6.06152702, 6.12013523, 6.17874344, 6.23735164,
+      6.29595985, 6.35456806, 6.41317626, 6.47178447, 6.53039267, 6.58900088, 6.64760909,
+      6.70621729, 6.7648255,  6.82343371, 6.88204191, 6.94065012, 6.99925832, 7.05786653,
+      7.11647474, 7.17508294, 7.23369115, 7.29229936, 7.35090756, 7.40951577, 7.46812397,
+      7.52673218, 7.58534039, 7.64394859, 7.7025568,  7.76116501, 7.81977321, 7.87838142,
+      7.93698962, 7.99559783, 8.05420604, 8.11281424, 8.17142245, 8.23003066, 8.28863886,
+      8.34724707, 8.40585527, 8.46446348, 8.52307169, 8.58167989, 8.6402881,  8.69889631,
+      8.75750451, 8.81611272, 8.87472092, 8.93332913, 8.99193734, 9.05054554, 9.10915375,
+      9.16776196, 9.22637016, 9.28497837, 9.34358657, 9.40219478, 9.46080299, 9.51941119,
+      9.5780194,  9.63662761};
+
+    std::vector<double> ans = {
+      7.917250380826646,    7.507999598775768,   7.102159505148688,   6.703140788369201,
+      6.314354136861098,    5.939210239048185,   5.581119783354247,   5.243711813339051,
+      5.050737722981253,    5.4450117428878375,  6.869600284687381,   9.330701415239268,
+      12.616530139402899,   16.513697572881604,  20.80881483137883,   25.28849303059803,
+      29.739343286242487,   33.94797671401571,   37.701004429620966,  40.785037548761785,
+      42.98668718714146,    44.092564460463436,  43.88928048443108,   42.16344637474779,
+      38.701673247117,      33.29057221724213,   25.71675440082643,   15.766830913573472,
+      3.4012202618140117,   -7.3357228842154605, -13.984403041117478, -17.17911134225112,
+      -17.57372816844825,   -15.822133900540555, -12.578208919359799, -8.49583360573778,
+      -4.228888340506209,   -0.4312535044967518, 2.2722789217960617,  3.731887423648444,
+      4.184827683186797,    3.8796340665466102,  3.06484093986341,    1.988982669272704,
+      0.900593620909989,    0.04768917537698386, -0.4090020646851679, -0.49336675737229924,
+      -0.25277264648050385, 0.26541252419411165, 1.0138210108554468,  1.9450850697074196,
+      3.011836956953919,    4.166708928798824,   5.362333241446051,   6.551342151099517,
+      7.686367913963101,    8.720594411423704,   9.629209436000002,   10.416312586885413,
+      11.087969033194849,   11.650243944043261,  12.109202488545584,  12.470909835816748,
+      12.741431154971687,   12.926831615125337,  13.03317638539264,   13.066530634888522,
+      13.032959532727922,   12.938528248025781,  12.789301949897023,  12.591345807456591,
+      12.350724989819417,   12.07350466610044,   11.765750005414596,  11.433526176876825,
+      11.082898349602043,   10.719931692705199,  10.350691375301215,  9.981242566505045,
+      9.617650435431628,    9.265980151195885,   8.932296882912755,   8.62266579969716,
+      8.343152070664054,    8.099820864928368,   7.898737351605035,   7.745934122434306,
+      7.644066915444975,    7.589516965931862,   7.577982705033485,   7.605162563888376,
+      7.666754973635058,    7.75845836541206,    7.8759711703579045,  8.014991819611115,
+      8.171218744310227,    8.340350375593754,   8.518085144600235,   8.70012148246819};
+
+    test_spline_interpolation(base_keys, base_values, query_keys, ans);
+  }
+  // Test two points interpolation
+  {
+    std::vector<double> base_keys = {0.0, 1.0};
+    std::vector<double> base_values = {0.0, 1.0};
+    std::vector<double> query_keys = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    std::vector<double> ans = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    test_spline_interpolation(base_keys, base_values, query_keys, ans);
+  }
+  // Test three points interpolation
+  {
+    std::vector<double> base_keys = {0.0, 1.0, 2.0};
+    std::vector<double> base_values = {0.0, -1.0, 1.0};
+    std::vector<double> query_keys = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
+                                      1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0};
+    std::vector<double> ans = {
+      0.0,
+      -0.17425000000000002,
+      -0.34400000000000003,
+      -0.50475,
+      -0.652,
+      -0.78125,
+      -0.888,
+      -0.9677499999999999,
+      -1.016,
+      -1.0282499999999999,
+      -1.0,
+      -0.9282499999999999,
+      -0.8160000000000001,
+      -0.66775,
+      -0.4880000000000002,
+      -0.28125,
+      -0.05199999999999974,
+      0.19524999999999987,
+      0.4560000000000003,
+      0.7257499999999997,
+      1.0};
+
+    test_spline_interpolation(base_keys, base_values, query_keys, ans);
+  }
+}
+
+TEST(spline_interpolation, spline_by_akima)
 {
   {  // straight: query_keys is same as base_keys
     const std::vector<double> base_keys{0.0, 1.0, 2.0, 3.0, 4.0};
     const std::vector<double> base_values{0.0, 1.5, 3.0, 4.5, 6.0};
-    const std::vector<double> query_keys = base_keys;
-    const std::vector<double> ans = base_values;
+    const std::vector<double> & query_keys = base_keys;
+    const std::vector<double> & ans = base_values;
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values = interpolation::spline_by_akima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -141,7 +150,7 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys{0.0, 0.7, 1.9, 4.0};
     const std::vector<double> ans{0.0, 1.05, 2.85, 6.0};
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values = interpolation::spline_by_akima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -150,10 +159,10 @@ TEST(spline_interpolation, splineByAkima)
   {  // curve: query_keys is same as base_keys
     const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
     const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
-    const std::vector<double> query_keys = base_keys;
-    const std::vector<double> ans = base_values;
+    const std::vector<double> & query_keys = base_keys;
+    const std::vector<double> & ans = base_values;
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values = interpolation::spline_by_akima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -165,7 +174,7 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys{0.0, 8.0, 18.0};
     const std::vector<double> ans{-0.0801, 1.110749, 1.4864};
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values = interpolation::spline_by_akima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -174,10 +183,10 @@ TEST(spline_interpolation, splineByAkima)
   {  // straight: size of base_keys is 2 (edge case in the implementation)
     const std::vector<double> base_keys{0.0, 1.0};
     const std::vector<double> base_values{0.0, 1.5};
-    const std::vector<double> query_keys = base_keys;
-    const std::vector<double> ans = base_values;
+    const std::vector<double> & query_keys = base_keys;
+    const std::vector<double> & ans = base_values;
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values = interpolation::spline_by_akima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -186,10 +195,10 @@ TEST(spline_interpolation, splineByAkima)
   {  // straight: size of base_keys is 3 (edge case in the implementation)
     const std::vector<double> base_keys{0.0, 1.0, 2.0};
     const std::vector<double> base_values{0.0, 1.5, 3.0};
-    const std::vector<double> query_keys = base_keys;
-    const std::vector<double> ans = base_values;
+    const std::vector<double> & query_keys = base_keys;
+    const std::vector<double> & ans = base_values;
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values = interpolation::spline_by_akima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -201,7 +210,7 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys{-1.0, 0.0, 4.0};
     const std::vector<double> ans{-0.8378, -0.0801, 0.927031};
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values = interpolation::spline_by_akima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -213,7 +222,7 @@ TEST(spline_interpolation, splineByAkima)
     const std::vector<double> query_keys = {0.0, 1.0, 1.5, 2.0, 3.0, 4.0};
     const std::vector<double> ans = {0.0, 0.0, 0.1, 0.1, 0.1, 0.1};
 
-    const auto query_values = interpolation::splineByAkima(base_keys, base_values, query_keys);
+    const auto query_values = interpolation::spline_by_akima(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
@@ -226,11 +235,12 @@ TEST(spline_interpolation, SplineInterpolation)
     // curve: query_keys is random
     const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
     const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
-    const std::vector<double> query_keys{0.0, 8.0, 18.0};
-    const std::vector<double> ans{-0.075611, 0.997242, 1.573258};
+    const std::vector<double> query_keys{0.0, 8.0, 12.0, 18.0};
+    const std::vector<double> ans{
+      -0.07611428571428575, 1.0012171428571428, 1.5910571428571427, 1.57364};
 
     SplineInterpolation s(base_keys, base_values);
-    const std::vector<double> query_values = s.getSplineInterpolatedValues(query_keys);
+    const std::vector<double> query_values = s.compute(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
@@ -242,10 +252,11 @@ TEST(spline_interpolation, SplineInterpolation)
     const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
     const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
     const std::vector<double> query_keys{0.0, 8.0, 12.0, 18.0};
-    const std::vector<double> ans{0.671301, 0.0509853, 0.209426, -0.253628};
+    const std::vector<double> ans{
+      0.6713428571428571, 0.04928857142857142, 0.2094714285714286, -0.25374571428571424};
 
     SplineInterpolation s(base_keys, base_values);
-    const std::vector<double> query_values = s.getSplineInterpolatedDiffValues(query_keys);
+    const std::vector<double> query_values = s.compute_diff(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
@@ -257,10 +268,11 @@ TEST(spline_interpolation, SplineInterpolation)
     const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
     const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
     const std::vector<double> query_keys{0.0, 8.0, 12.0, 18.0};
-    const std::vector<double> ans{-0.156582, 0.0440771, -0.0116873, -0.0495025};
+    const std::vector<double> ans{
+      -0.15582857142857134, 0.043097142857142855, -0.011142857142857135, -0.049611428571428544};
 
     SplineInterpolation s(base_keys, base_values);
-    const std::vector<double> query_values = s.getSplineInterpolatedQuadDiffValues(query_keys);
+    const std::vector<double> query_values = s.compute_quad_diff(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);

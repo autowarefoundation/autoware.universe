@@ -80,7 +80,7 @@ void insertStopPoint(
     traj_points, stop_seg_idx, input_stop_pose.position);
 
   const auto traj_spline = SplineInterpolationPoints2d(traj_points);
-  const auto stop_pose = traj_spline.getSplineInterpolatedPose(stop_seg_idx, offset_to_segment);
+  const auto stop_pose = traj_spline.compute_pose(stop_seg_idx, offset_to_segment);
 
   if (geometry_utils::isSamePoint(traj_points.at(stop_seg_idx), stop_pose)) {
     traj_points.at(stop_seg_idx).longitudinal_velocity_mps = 0.0;

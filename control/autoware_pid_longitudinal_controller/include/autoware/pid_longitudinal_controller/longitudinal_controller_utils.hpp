@@ -105,7 +105,7 @@ std::pair<TrajectoryPoint, size_t> lerpTrajectoryPoint(
       points.at(i).pose.position.y, points.at(i + 1).pose.position.y, interpolate_ratio);
     interpolated_point.pose.position.z = interpolation::lerp(
       points.at(i).pose.position.z, points.at(i + 1).pose.position.z, interpolate_ratio);
-    interpolated_point.pose.orientation = interpolation::lerpOrientation(
+    interpolated_point.pose.orientation = interpolation::lerp_orientation(
       points.at(i).pose.orientation, points.at(i + 1).pose.orientation, interpolate_ratio);
     interpolated_point.longitudinal_velocity_mps = interpolation::lerp(
       points.at(i).longitudinal_velocity_mps, points.at(i + 1).longitudinal_velocity_mps,

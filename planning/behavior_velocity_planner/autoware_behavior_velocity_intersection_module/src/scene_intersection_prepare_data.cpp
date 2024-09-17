@@ -147,7 +147,7 @@ double getHighestCurvature(const lanelet::ConstLineString3d & centerline)
   }
 
   SplineInterpolationPoints2d interpolation(points);
-  const std::vector<double> curvatures = interpolation.getSplineInterpolatedCurvatures();
+  const std::vector<double> curvatures = interpolation.compute_curvaures();
   std::vector<double> curvatures_positive;
   for (const auto & curvature : curvatures) {
     curvatures_positive.push_back(std::fabs(curvature));

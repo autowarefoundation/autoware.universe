@@ -16,14 +16,13 @@
 
 #include <gtest/gtest.h>
 
-#include <limits>
 #include <vector>
 
 constexpr double epsilon = 1e-6;
 
 namespace
 {
-inline geometry_msgs::msg::Quaternion createQuaternionFromRPY(
+inline geometry_msgs::msg::Quaternion create_quaternion_from_rpy(
   const double roll, const double pitch, const double yaw)
 {
   tf2::Quaternion q;
@@ -40,10 +39,10 @@ TEST(slerp, spline_scalar)
   {
     const double src_yaw = 0.0;
     const double dst_yaw = 0.0;
-    const auto src_quat = createQuaternionFromRPY(0.0, 0.0, src_yaw);
-    const auto dst_quat = createQuaternionFromRPY(0.0, 0.0, dst_yaw);
+    const auto src_quat = create_quaternion_from_rpy(0.0, 0.0, src_yaw);
+    const auto dst_quat = create_quaternion_from_rpy(0.0, 0.0, dst_yaw);
 
-    const auto ans_quat = createQuaternionFromRPY(0.0, 0.0, 0.0);
+    const auto ans_quat = create_quaternion_from_rpy(0.0, 0.0, 0.0);
 
     for (double ratio = -2.0; ratio < 2.0 + epsilon; ratio += 0.1) {
       const auto interpolated_quat = slerp(src_quat, dst_quat, ratio);
@@ -58,8 +57,8 @@ TEST(slerp, spline_scalar)
   {
     const double src_yaw = 0.0;
     const double dst_yaw = M_PI;
-    const auto src_quat = createQuaternionFromRPY(0.0, 0.0, src_yaw);
-    const auto dst_quat = createQuaternionFromRPY(0.0, 0.0, dst_yaw);
+    const auto src_quat = create_quaternion_from_rpy(0.0, 0.0, src_yaw);
+    const auto dst_quat = create_quaternion_from_rpy(0.0, 0.0, dst_yaw);
 
     for (double ratio = -2.0; ratio < 2.0 + epsilon; ratio += 0.1) {
       const auto interpolated_quat = slerp(src_quat, dst_quat, ratio);
@@ -86,10 +85,10 @@ TEST(slerp, spline_vector)
     const std::vector<double> base_keys{0.0, 1.0, 2.0, 3.0, 4.0};
     std::vector<geometry_msgs::msg::Quaternion> base_values;
     for (size_t i = 0; i < 5; ++i) {
-      const auto quat = createQuaternionFromRPY(0.0, 0.0, i * M_PI / 5.0);
+      const auto quat = create_quaternion_from_rpy(0.0, 0.0, static_cast<double>(i) * M_PI / 5.0);
       base_values.push_back(quat);
     }
-    const std::vector<double> query_keys = base_keys;
+    const std::vector<double> & query_keys = base_keys;
     const auto ans = base_values;
 
     const auto results = slerp(base_keys, base_values, query_keys);
@@ -110,17 +109,17 @@ TEST(slerp, spline_vector)
     const std::vector<double> base_keys{0.0, 1.0, 2.0, 3.0, 4.0};
     std::vector<geometry_msgs::msg::Quaternion> base_values;
     for (size_t i = 0; i < 5; ++i) {
-      const auto quat = createQuaternionFromRPY(0.0, 0.0, i * M_PI / 5.0);
+      const auto quat = create_quaternion_from_rpy(0.0, 0.0, static_cast<double>(i) * M_PI / 5.0);
       base_values.push_back(quat);
     }
     const std::vector<double> query_keys = {0.0, 0.1, 1.5, 2.6, 3.1, 3.8};
     std::vector<geometry_msgs::msg::Quaternion> ans(query_keys.size());
-    ans.at(0) = createQuaternionFromRPY(0.0, 0.0, 0.0);
-    ans.at(1) = createQuaternionFromRPY(0.0, 0.0, 0.1 * M_PI / 5.0);
-    ans.at(2) = createQuaternionFromRPY(0.0, 0.0, 0.5 * M_PI / 5.0 + M_PI / 5.0);
-    ans.at(3) = createQuaternionFromRPY(0.0, 0.0, 0.6 * M_PI / 5.0 + 2.0 * M_PI / 5.0);
-    ans.at(4) = createQuaternionFromRPY(0.0, 0.0, 0.1 * M_PI / 5.0 + 3.0 * M_PI / 5.0);
-    ans.at(5) = createQuaternionFromRPY(0.0, 0.0, 0.8 * M_PI / 5.0 + 3.0 * M_PI / 5.0);
+    ans.at(0) = create_quaternion_from_rpy(0.0, 0.0, 0.0);
+    ans.at(1) = create_quaternion_from_rpy(0.0, 0.0, 0.1 * M_PI / 5.0);
+    ans.at(2) = create_quaternion_from_rpy(0.0, 0.0, 0.5 * M_PI / 5.0 + M_PI / 5.0);
+    ans.at(3) = create_quaternion_from_rpy(0.0, 0.0, 0.6 * M_PI / 5.0 + 2.0 * M_PI / 5.0);
+    ans.at(4) = create_quaternion_from_rpy(0.0, 0.0, 0.1 * M_PI / 5.0 + 3.0 * M_PI / 5.0);
+    ans.at(5) = create_quaternion_from_rpy(0.0, 0.0, 0.8 * M_PI / 5.0 + 3.0 * M_PI / 5.0);
 
     const auto results = slerp(base_keys, base_values, query_keys);
 

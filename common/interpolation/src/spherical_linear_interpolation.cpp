@@ -14,6 +14,8 @@
 
 #include "interpolation/spherical_linear_interpolation.hpp"
 
+#include "interpolation/interpolation_utils.hpp"
+
 namespace interpolation
 {
 geometry_msgs::msg::Quaternion slerp(
@@ -34,8 +36,8 @@ std::vector<geometry_msgs::msg::Quaternion> slerp(
   const std::vector<double> & query_keys)
 {
   // throw exception for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys, query_keys);
-  interpolation_utils::validateKeysAndValues(base_keys, base_values);
+  const auto validated_query_keys = interpolation_utils::validate_keys(base_keys, query_keys);
+  interpolation_utils::validate_keys_and_values(base_keys, base_values);
 
   // calculate linear interpolation
   std::vector<geometry_msgs::msg::Quaternion> query_values;
@@ -57,11 +59,12 @@ std::vector<geometry_msgs::msg::Quaternion> slerp(
   return query_values;
 }
 
-geometry_msgs::msg::Quaternion lerpOrientation(
+geometry_msgs::msg::Quaternion lerp_orientation(
   const geometry_msgs::msg::Quaternion & o_from, const geometry_msgs::msg::Quaternion & o_to,
   const double ratio)
 {
-  tf2::Quaternion q_from, q_to;
+  tf2::Quaternion q_from;
+  tf2::Quaternion q_to;
   tf2::fromMsg(o_from, q_from);
   tf2::fromMsg(o_to, q_to);
 

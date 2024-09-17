@@ -18,7 +18,7 @@
 
 namespace
 {
-std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vector<double> & y)
+std::vector<double> calc_euclid_dist(const std::vector<double> & x, const std::vector<double> & y)
 {
   if (x.size() != y.size()) {
     return std::vector<double>{};
@@ -35,7 +35,7 @@ std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vec
   return dist_v;
 }
 
-std::array<std::vector<double>, 4> getBaseValues(
+std::array<std::vector<double>, 4> get_base_values(
   const std::vector<geometry_msgs::msg::Point> & points)
 {
   // calculate x, y
@@ -62,7 +62,7 @@ std::array<std::vector<double>, 4> getBaseValues(
     throw std::logic_error("The number of unique points is not enough.");
   }
 
-  const std::vector<double> base_s = calcEuclidDist(base_x, base_y);
+  const std::vector<double> base_s = calc_euclid_dist(base_x, base_y);
 
   return {base_s, base_x, base_y, base_z};
 }
@@ -72,7 +72,7 @@ namespace interpolation
 {
 
 template <typename T>
-std::vector<double> splineYawFromPoints(const std::vector<T> & points)
+std::vector<double> spline_yaw_from_points(const std::vector<T> & points)
 {
   // calculate spline coefficients
   SplineInterpolationPoints2d interpolator(points);
@@ -80,27 +80,26 @@ std::vector<double> splineYawFromPoints(const std::vector<T> & points)
   // interpolate base_keys at query_keys
   std::vector<double> yaw_vec;
   for (size_t i = 0; i < points.size(); ++i) {
-    const double yaw = interpolator.getSplineInterpolatedYaw(i, 0.0);
+    const double yaw = interpolator.compute_yaw(i, 0.0);
     yaw_vec.push_back(yaw);
   }
   return yaw_vec;
 }
-template std::vector<double> splineYawFromPoints(
+template std::vector<double> spline_yaw_from_points(
   const std::vector<geometry_msgs::msg::Point> & points);
 
 }  // namespace interpolation
 
-geometry_msgs::msg::Pose SplineInterpolationPoints2d::getSplineInterpolatedPose(
+geometry_msgs::msg::Pose SplineInterpolationPoints2d::compute_pose(
   const size_t idx, const double s) const
 {
   geometry_msgs::msg::Pose pose;
-  pose.position = getSplineInterpolatedPoint(idx, s);
-  pose.orientation =
-    autoware::universe_utils::createQuaternionFromYaw(getSplineInterpolatedYaw(idx, s));
+  pose.position = compute_point(idx, s);
+  pose.orientation = autoware::universe_utils::createQuaternionFromYaw(compute_yaw(idx, s));
   return pose;
 }
 
-geometry_msgs::msg::Point SplineInterpolationPoints2d::getSplineInterpolatedPoint(
+geometry_msgs::msg::Point SplineInterpolationPoints2d::compute_point(
   const size_t idx, const double s) const
 {
   if (base_s_vec_.size() <= idx) {
@@ -115,9 +114,9 @@ geometry_msgs::msg::Point SplineInterpolationPoints2d::getSplineInterpolatedPoin
     whole_s = base_s_vec_.back();
   }
 
-  const double x = spline_x_.getSplineInterpolatedValues({whole_s}).at(0);
-  const double y = spline_y_.getSplineInterpolatedValues({whole_s}).at(0);
-  const double z = spline_z_.getSplineInterpolatedValues({whole_s}).at(0);
+  const double x = spline_x_->compute({whole_s}).at(0);
+  const double y = spline_y_->compute({whole_s}).at(0);
+  const double z = spline_z_->compute({whole_s}).at(0);
 
   geometry_msgs::msg::Point geom_point;
   geom_point.x = x;
@@ -126,7 +125,7 @@ geometry_msgs::msg::Point SplineInterpolationPoints2d::getSplineInterpolatedPoin
   return geom_point;
 }
 
-double SplineInterpolationPoints2d::getSplineInterpolatedYaw(const size_t idx, const double s) const
+double SplineInterpolationPoints2d::compute_yaw(const size_t idx, const double s) const
 {
   if (base_s_vec_.size() <= idx) {
     throw std::out_of_range("idx is out of range.");
@@ -135,24 +134,23 @@ double SplineInterpolationPoints2d::getSplineInterpolatedYaw(const size_t idx, c
   const double whole_s =
     std::clamp(base_s_vec_.at(idx) + s, base_s_vec_.front(), base_s_vec_.back());
 
-  const double diff_x = spline_x_.getSplineInterpolatedDiffValues({whole_s}).at(0);
-  const double diff_y = spline_y_.getSplineInterpolatedDiffValues({whole_s}).at(0);
+  const double diff_x = spline_x_->compute_diff({whole_s}).at(0);
+  const double diff_y = spline_y_->compute_diff({whole_s}).at(0);
 
   return std::atan2(diff_y, diff_x);
 }
 
-std::vector<double> SplineInterpolationPoints2d::getSplineInterpolatedYaws() const
+std::vector<double> SplineInterpolationPoints2d::compute_yaws() const
 {
   std::vector<double> yaw_vec;
-  for (size_t i = 0; i < spline_x_.getSize(); ++i) {
-    const double yaw = getSplineInterpolatedYaw(i, 0.0);
+  for (size_t i = 0; i < spline_x_->get_size(); ++i) {
+    const double yaw = compute_yaw(i, 0.0);
     yaw_vec.push_back(yaw);
   }
   return yaw_vec;
 }
 
-double SplineInterpolationPoints2d::getSplineInterpolatedCurvature(
-  const size_t idx, const double s) const
+double SplineInterpolationPoints2d::compute_curvature(const size_t idx, const double s) const
 {
   if (base_s_vec_.size() <= idx) {
     throw std::out_of_range("idx is out of range.");
@@ -161,27 +159,27 @@ double SplineInterpolationPoints2d::getSplineInterpolatedCurvature(
   const double whole_s =
     std::clamp(base_s_vec_.at(idx) + s, base_s_vec_.front(), base_s_vec_.back());
 
-  const double diff_x = spline_x_.getSplineInterpolatedDiffValues({whole_s}).at(0);
-  const double diff_y = spline_y_.getSplineInterpolatedDiffValues({whole_s}).at(0);
+  const double diff_x = spline_x_->compute_diff({whole_s}).at(0);
+  const double diff_y = spline_y_->compute_diff({whole_s}).at(0);
 
-  const double quad_diff_x = spline_x_.getSplineInterpolatedQuadDiffValues({whole_s}).at(0);
-  const double quad_diff_y = spline_y_.getSplineInterpolatedQuadDiffValues({whole_s}).at(0);
+  const double quad_diff_x = spline_x_->compute_quad_diff({whole_s}).at(0);
+  const double quad_diff_y = spline_y_->compute_quad_diff({whole_s}).at(0);
 
   return (diff_x * quad_diff_y - quad_diff_x * diff_y) /
          std::pow(std::pow(diff_x, 2) + std::pow(diff_y, 2), 1.5);
 }
 
-std::vector<double> SplineInterpolationPoints2d::getSplineInterpolatedCurvatures() const
+std::vector<double> SplineInterpolationPoints2d::compute_curvaures() const
 {
   std::vector<double> curvature_vec;
-  for (size_t i = 0; i < spline_x_.getSize(); ++i) {
-    const double curvature = getSplineInterpolatedCurvature(i, 0.0);
+  for (size_t i = 0; i < spline_x_->get_size(); ++i) {
+    const double curvature = compute_curvature(i, 0.0);
     curvature_vec.push_back(curvature);
   }
   return curvature_vec;
 }
 
-size_t SplineInterpolationPoints2d::getOffsetIndex(const size_t idx, const double offset) const
+size_t SplineInterpolationPoints2d::get_offset_index(const size_t idx, const double offset) const
 {
   const double whole_s = base_s_vec_.at(idx) + offset;
   for (size_t s_idx = 0; s_idx < base_s_vec_.size(); ++s_idx) {
@@ -192,7 +190,7 @@ size_t SplineInterpolationPoints2d::getOffsetIndex(const size_t idx, const doubl
   return base_s_vec_.size() - 1;
 }
 
-double SplineInterpolationPoints2d::getAccumulatedLength(const size_t idx) const
+double SplineInterpolationPoints2d::get_accumulated_length(const size_t idx) const
 {
   if (base_s_vec_.size() <= idx) {
     throw std::out_of_range("idx is out of range.");
@@ -200,10 +198,10 @@ double SplineInterpolationPoints2d::getAccumulatedLength(const size_t idx) const
   return base_s_vec_.at(idx);
 }
 
-void SplineInterpolationPoints2d::calcSplineCoefficientsInner(
+void SplineInterpolationPoints2d::calc_coefficients_inner(
   const std::vector<geometry_msgs::msg::Point> & points)
 {
-  const auto base = getBaseValues(points);
+  const auto base = get_base_values(points);
 
   base_s_vec_ = base.at(0);
   const auto & base_x_vec = base.at(1);

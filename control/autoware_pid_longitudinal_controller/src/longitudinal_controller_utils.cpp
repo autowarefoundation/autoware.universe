@@ -179,7 +179,7 @@ geometry_msgs::msg::Pose findTrajectoryPoseAfterDistance(
       p.position.x = interpolation::lerp(p0.position.x, p1.position.x, ratio);
       p.position.y = interpolation::lerp(p0.position.y, p1.position.y, ratio);
       p.position.z = interpolation::lerp(p0.position.z, p1.position.z, ratio);
-      p.orientation = interpolation::lerpOrientation(p0.orientation, p1.orientation, ratio);
+      p.orientation = interpolation::lerp_orientation(p0.orientation, p1.orientation, ratio);
       break;
     }
     remain_dist -= dist;

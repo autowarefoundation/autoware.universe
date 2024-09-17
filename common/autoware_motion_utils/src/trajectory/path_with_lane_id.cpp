@@ -107,8 +107,8 @@ tier4_planning_msgs::msg::PathWithLaneId convertToRearWheelCenter(
 
   // calculate curvature and yaw from spline interpolation
   const auto spline = SplineInterpolationPoints2d(path.points);
-  const auto curvature_vec = spline.getSplineInterpolatedCurvatures();
-  const auto yaw_vec = spline.getSplineInterpolatedYaws();
+  const auto curvature_vec = spline.compute_curvaures();
+  const auto yaw_vec = spline.compute_yaws();
 
   for (size_t i = 0; i < path.points.size(); ++i) {
     // calculate beta, which is CoG's velocity direction

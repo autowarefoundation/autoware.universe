@@ -16,7 +16,6 @@
 
 #include <gtest/gtest.h>
 
-#include <limits>
 #include <vector>
 
 constexpr double epsilon = 1e-6;
@@ -32,8 +31,8 @@ TEST(linear_interpolation, lerp_vector)
   {  // straight: query_keys is same as base_keys
     const std::vector<double> base_keys{0.0, 1.0, 2.0, 3.0, 4.0};
     const std::vector<double> base_values{0.0, 1.5, 3.0, 4.5, 6.0};
-    const std::vector<double> query_keys = base_keys;
-    const std::vector<double> ans = base_values;
+    const std::vector<double> & query_keys = base_keys;
+    const std::vector<double> & ans = base_values;
 
     const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
@@ -56,8 +55,8 @@ TEST(linear_interpolation, lerp_vector)
   {  // curve: query_keys is same as base_keys
     const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
     const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
-    const std::vector<double> query_keys = base_keys;
-    const std::vector<double> ans = base_values;
+    const std::vector<double> & query_keys = base_keys;
+    const std::vector<double> & ans = base_values;
 
     const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {

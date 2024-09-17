@@ -15,94 +15,72 @@
 #ifndef INTERPOLATION__SPLINE_INTERPOLATION_HPP_
 #define INTERPOLATION__SPLINE_INTERPOLATION_HPP_
 
-#include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/interpolation_utils.hpp"
+// #include "autoware/universe_utils/geometry/geometry.hpp"
+// #include "interpolation/interpolation_utils.hpp"
 
-#include <algorithm>
+#include <Eigen/Core>
+
 #include <cmath>
-#include <iostream>
-#include <numeric>
 #include <vector>
 
 namespace interpolation
 {
-// NOTE: X(s) = a_i (s - s_i)^3 + b_i (s - s_i)^2 + c_i (s - s_i) + d_i : (i = 0, 1, ... N-1)
-struct MultiSplineCoef
+
+namespace detail
 {
-  MultiSplineCoef() = default;
-
-  explicit MultiSplineCoef(const size_t num_spline)
-  {
-    a.resize(num_spline);
-    b.resize(num_spline);
-    c.resize(num_spline);
-    d.resize(num_spline);
-  }
-
-  std::vector<double> a;
-  std::vector<double> b;
-  std::vector<double> c;
-  std::vector<double> d;
-};
+Eigen::VectorXd solve_tridiagonal_matrix_algorithm(
+  const Eigen::Ref<const Eigen::VectorXd> & a, const Eigen::Ref<const Eigen::VectorXd> & b,
+  const Eigen::Ref<const Eigen::VectorXd> & c, const Eigen::Ref<const Eigen::VectorXd> & d);
+}  // namespace detail
 
 // static spline interpolation functions
 std::vector<double> spline(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const std::vector<double> & query_keys);
-std::vector<double> splineByAkima(
+
+std::vector<double> spline_by_akima(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const std::vector<double> & query_keys);
 }  // namespace interpolation
 
-// non-static 1-dimensional spline interpolation
-//
-// Usage:
-// ```
-// SplineInterpolation spline;
-// // memorize pre-interpolation result internally
-// spline.calcSplineCoefficients(base_keys, base_values);
-// const auto interpolation_result1 = spline.getSplineInterpolatedValues(
-//   base_keys, query_keys1);
-// const auto interpolation_result2 = spline.getSplineInterpolatedValues(
-//   base_keys, query_keys2);
-// ```
 class SplineInterpolation
 {
 public:
-  SplineInterpolation() = default;
   SplineInterpolation(
-    const std::vector<double> & base_keys, const std::vector<double> & base_values)
-  {
-    calcSplineCoefficients(base_keys, base_values);
-  }
+    const std::vector<double> & base_keys, const std::vector<double> & base_values);
 
   //!< @brief get values of spline interpolation on designated sampling points.
   //!< @details Assuming that query_keys are t vector for sampling, and interpolation is for x,
   //            meaning that spline interpolation was applied to x(t),
   //            return value will be x(t) vector
-  std::vector<double> getSplineInterpolatedValues(const std::vector<double> & query_keys) const;
+  [[nodiscard]] std::vector<double> compute(const std::vector<double> & query_keys) const;
 
   //!< @brief get 1st differential values of spline interpolation on designated sampling points.
   //!< @details Assuming that query_keys are t vector for sampling, and interpolation is for x,
   //            meaning that spline interpolation was applied to x(t),
   //            return value will be dx/dt(t) vector
-  std::vector<double> getSplineInterpolatedDiffValues(const std::vector<double> & query_keys) const;
+  [[nodiscard]] std::vector<double> compute_diff(const std::vector<double> & query_keys) const;
 
   //!< @brief get 2nd differential values of spline interpolation on designated sampling points.
   //!< @details Assuming that query_keys are t vector for sampling, and interpolation is for x,
   //            meaning that spline interpolation was applied to x(t),
   //            return value will be d^2/dt^2(t) vector
-  std::vector<double> getSplineInterpolatedQuadDiffValues(
-    const std::vector<double> & query_keys) const;
+  [[nodiscard]] std::vector<double> compute_quad_diff(const std::vector<double> & query_keys) const;
 
-  size_t getSize() const { return base_keys_.size(); }
+  [[nodiscard]] size_t get_size() const { return base_keys_.size(); }
 
 private:
-  std::vector<double> base_keys_;
-  interpolation::MultiSplineCoef multi_spline_coef_;
+  Eigen::VectorXd a_;
+  Eigen::VectorXd b_;
+  Eigen::VectorXd c_;
+  Eigen::VectorXd d_;
 
-  void calcSplineCoefficients(
+  std::vector<double> base_keys_;
+
+  void calc_spline_coefficients(
     const std::vector<double> & base_keys, const std::vector<double> & base_values);
+
+  [[nodiscard]] Eigen::Index get_index(double key) const;
 };
 
 #endif  // INTERPOLATION__SPLINE_INTERPOLATION_HPP_

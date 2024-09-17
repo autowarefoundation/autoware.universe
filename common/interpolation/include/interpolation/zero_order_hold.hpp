@@ -26,7 +26,7 @@ inline std::vector<size_t> calc_closest_segment_indices(
   const double overlap_threshold = 1e-3)
 {
   // throw exception for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys, query_keys);
+  const auto validated_query_keys = interpolation_utils::validate_keys(base_keys, query_keys);
 
   std::vector<size_t> closest_segment_indices(validated_query_keys.size());
   size_t closest_segment_idx = 0;
@@ -58,7 +58,7 @@ std::vector<T> zero_order_hold(
   const std::vector<size_t> & closest_segment_indices)
 {
   // throw exception for invalid arguments
-  interpolation_utils::validateKeysAndValues(base_keys, base_values);
+  interpolation_utils::validate_keys_and_values(base_keys, base_values);
 
   std::vector<T> query_values(closest_segment_indices.size());
   for (size_t i = 0; i < closest_segment_indices.size(); ++i) {

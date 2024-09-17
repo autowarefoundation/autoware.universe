@@ -616,7 +616,7 @@ void MPTOptimizer::updateOrientation(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
-  const auto yaw_vec = ref_points_spline.getSplineInterpolatedYaws();
+  const auto yaw_vec = ref_points_spline.compute_yaws();
   for (size_t i = 0; i < ref_points.size(); ++i) {
     ref_points.at(i).pose.orientation =
       autoware::universe_utils::createQuaternionFromYaw(yaw_vec.at(i));
@@ -627,7 +627,7 @@ void MPTOptimizer::updateCurvature(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
-  const auto curvature_vec = ref_points_spline.getSplineInterpolatedCurvatures();
+  const auto curvature_vec = ref_points_spline.compute_curvaures();
   for (size_t i = 0; i < ref_points.size(); ++i) {
     ref_points.at(i).curvature = curvature_vec.at(i);
   }
@@ -1104,8 +1104,7 @@ void MPTOptimizer::updateVehicleBounds(
     ref_points.at(p_idx).beta.clear();
 
     for (const double lon_offset : vehicle_circle_longitudinal_offsets_) {
-      const auto collision_check_pose =
-        ref_points_spline.getSplineInterpolatedPose(p_idx, lon_offset);
+      const auto collision_check_pose = ref_points_spline.compute_pose(p_idx, lon_offset);
       const double collision_check_yaw = tf2::getYaw(collision_check_pose.orientation);
 
       // calculate beta
@@ -1125,19 +1124,20 @@ void MPTOptimizer::updateVehicleBounds(
 
       // interpolate bounds
       const auto bounds = [&]() {
-        const double collision_check_s = ref_points_spline.getAccumulatedLength(p_idx) + lon_offset;
-        const size_t collision_check_idx = ref_points_spline.getOffsetIndex(p_idx, lon_offset);
+        const double collision_check_s =
+          ref_points_spline.get_accumulated_length(p_idx) + lon_offset;
+        const size_t collision_check_idx = ref_points_spline.get_offset_index(p_idx, lon_offset);
 
         const size_t prev_idx = std::clamp(
           collision_check_idx - 1, static_cast<size_t>(0),
-          static_cast<size_t>(ref_points_spline.getSize() - 2));
+          static_cast<size_t>(ref_points_spline.get_size() - 2));
         const size_t next_idx = prev_idx + 1;
 
         const auto & prev_bounds = ref_points.at(prev_idx).bounds;
         const auto & next_bounds = ref_points.at(next_idx).bounds;
 
-        const double prev_s = ref_points_spline.getAccumulatedLength(prev_idx);
-        const double next_s = ref_points_spline.getAccumulatedLength(next_idx);
+        const double prev_s = ref_points_spline.get_accumulated_length(prev_idx);
+        const double next_s = ref_points_spline.get_accumulated_length(next_idx);
 
         const double ratio = std::clamp((collision_check_s - prev_s) / (next_s - prev_s), 0.0, 1.0);
 

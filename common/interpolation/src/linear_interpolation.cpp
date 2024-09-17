@@ -14,6 +14,8 @@
 
 #include "interpolation/linear_interpolation.hpp"
 
+#include "interpolation/interpolation_utils.hpp"
+
 #include <vector>
 
 namespace interpolation
@@ -28,8 +30,8 @@ std::vector<double> lerp(
   const std::vector<double> & query_keys)
 {
   // throw exception for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys, query_keys);
-  interpolation_utils::validateKeysAndValues(base_keys, base_values);
+  const auto validated_query_keys = interpolation_utils::validate_keys(base_keys, query_keys);
+  interpolation_utils::validate_keys_and_values(base_keys, base_values);
 
   // calculate linear interpolation
   std::vector<double> query_values;

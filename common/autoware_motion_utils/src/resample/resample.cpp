@@ -67,7 +67,7 @@ std::vector<geometry_msgs::msg::Point> resamplePointVector(
     return interpolation::spline(input_arclength, input, resampled_arclength);
   };
   const auto spline_by_akima = [&](const auto & input) {
-    return interpolation::splineByAkima(input_arclength, input, resampled_arclength);
+    return interpolation::spline_by_akima(input_arclength, input, resampled_arclength);
   };
 
   const auto interpolated_x = use_akima_spline_for_xy ? lerp(x) : spline_by_akima(x);

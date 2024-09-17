@@ -16,13 +16,12 @@
 #define INTERPOLATION__INTERPOLATION_UTILS_HPP_
 
 #include <algorithm>
-#include <array>
 #include <stdexcept>
 #include <vector>
 
 namespace interpolation_utils
 {
-inline bool isIncreasing(const std::vector<double> & x)
+inline bool is_increasing(const std::vector<double> & x)
 {
   if (x.empty()) {
     throw std::invalid_argument("Points is empty.");
@@ -37,7 +36,7 @@ inline bool isIncreasing(const std::vector<double> & x)
   return true;
 }
 
-inline bool isNotDecreasing(const std::vector<double> & x)
+inline bool is_not_decreasing(const std::vector<double> & x)
 {
   if (x.empty()) {
     throw std::invalid_argument("Points is empty.");
@@ -52,7 +51,7 @@ inline bool isNotDecreasing(const std::vector<double> & x)
   return true;
 }
 
-inline std::vector<double> validateKeys(
+inline std::vector<double> validate_keys(
   const std::vector<double> & base_keys, const std::vector<double> & query_keys)
 {
   // when vectors are empty
@@ -67,7 +66,7 @@ inline std::vector<double> validateKeys(
   }
 
   // when indices are not sorted
-  if (!isIncreasing(base_keys) || !isNotDecreasing(query_keys)) {
+  if (!is_increasing(base_keys) || !is_not_decreasing(query_keys)) {
     throw std::invalid_argument("Either base_keys or query_keys is not sorted.");
   }
 
@@ -89,7 +88,7 @@ inline std::vector<double> validateKeys(
 }
 
 template <class T>
-void validateKeysAndValues(
+void validate_keys_and_values(
   const std::vector<double> & base_keys, const std::vector<T> & base_values)
 {
   // when vectors are empty
