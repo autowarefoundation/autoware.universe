@@ -30,7 +30,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
-#include <multigrid_pclomp/multigrid_ndt_omp.h>
+#include <autoware/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <map>
@@ -47,7 +47,7 @@ class MapUpdateModule
 {
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
-  using NdtType = pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
+  using NdtType = autoware::ndt_omp::pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
   using NdtPtrType = std::shared_ptr<NdtType>;
 
 public:

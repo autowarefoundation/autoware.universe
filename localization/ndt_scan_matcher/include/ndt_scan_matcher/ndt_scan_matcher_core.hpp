@@ -38,7 +38,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
-#include <multigrid_pclomp/multigrid_ndt_omp.h>
+#include <autoware/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl/point_types.h>
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/buffer.h>
@@ -77,7 +77,7 @@ class NDTScanMatcher : public rclcpp::Node
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
-    pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
+    autoware::ndt_omp::pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
 
 public:
   explicit NDTScanMatcher(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
@@ -142,7 +142,7 @@ private:
   static int count_oscillation(const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array);
 
   Eigen::Matrix2d estimate_covariance(
-    const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
+    const autoware::ndt_omp::pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
     const rclcpp::Time & sensor_ros_time);
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr visualize_point_score(
