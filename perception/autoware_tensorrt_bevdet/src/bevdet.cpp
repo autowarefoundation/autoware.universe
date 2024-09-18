@@ -288,7 +288,7 @@ void BEVDet::initViewTransformer(
           frustum[offset].y() *= frustum[offset].z();
           // img to ego -> rot -> trans
           frustum[offset] = cams2ego_rot_[i] * cams_intrin_[i].inverse() * frustum[offset] +
-                                cams2ego_trans_[i].translation();
+                            cams2ego_trans_[i].translation();
 
           // voxelization
           frustum[offset] -= Eigen::Vector3f(x_start_, y_start_, z_start_);
@@ -318,12 +318,9 @@ void BEVDet::initViewTransformer(
   std::vector<int> kept;
   for (int i = 0; i < num_points; i++) {
     if (
-      static_cast<int>(frustum[i].x()) >= 0 &&
-      static_cast<int>(frustum[i].x()) < xgrid_num_ &&
-      static_cast<int>(frustum[i].y()) >= 0 &&
-      static_cast<int>(frustum[i].y()) < ygrid_num_ &&
-      static_cast<int>(frustum[i].z()) >= 0 &&
-      static_cast<int>(frustum[i].z()) < zgrid_num_) {
+      static_cast<int>(frustum[i].x()) >= 0 && static_cast<int>(frustum[i].x()) < xgrid_num_ &&
+      static_cast<int>(frustum[i].y()) >= 0 && static_cast<int>(frustum[i].y()) < ygrid_num_ &&
+      static_cast<int>(frustum[i].z()) >= 0 && static_cast<int>(frustum[i].z()) < zgrid_num_) {
       kept.push_back(i);
     }
   }
