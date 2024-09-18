@@ -93,7 +93,8 @@ bool middle_inside(
   return inside;
 }
 
-bool equals(const std::size_t p1_idx, const std::size_t p2_idx, const std::vector<LinkedPoint> & points)
+bool equals(
+  const std::size_t p1_idx, const std::size_t p2_idx, const std::vector<LinkedPoint> & points)
 {
   return points[p1_idx].x() == points[p2_idx].x() && points[p1_idx].y() == points[p2_idx].y();
 }
@@ -253,7 +254,8 @@ bool sector_contains_sector(
 }
 
 std::size_t find_hole_bridge(
-  const std::size_t hole_index, const std::size_t outer_point_index, const std::vector<LinkedPoint> & points)
+  const std::size_t hole_index, const std::size_t outer_point_index,
+  const std::vector<LinkedPoint> & points)
 {
   std::size_t p = outer_point_index;
   double hx = points[hole_index].x();
@@ -455,7 +457,7 @@ void ear_clipping_linked(
   std::size_t ear_index, std::vector<std::size_t> & indices, std::vector<LinkedPoint> & pointsvec,
   const int pass = 0)
 {
-  auto stop = ear_index; 
+  auto stop = ear_index;
   std::optional<std::size_t> next = std::nullopt;
 
   while (pointsvec[ear_index].prev_index.value() != pointsvec[ear_index].next_index.value()) {
@@ -491,7 +493,8 @@ void ear_clipping_linked(
 }
 
 void split_ear_clipping(
-  std::vector<LinkedPoint> & points, const std::size_t start_idx, std::vector<std::size_t> & indices)
+  std::vector<LinkedPoint> & points, const std::size_t start_idx,
+  std::vector<std::size_t> & indices)
 {
   std::size_t a_idx = start_idx;
   do {
