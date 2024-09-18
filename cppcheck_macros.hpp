@@ -15,7 +15,7 @@
 #ifndef CPPCHECK_MACROS_HPP_
 #define CPPCHECK_MACROS_HPP_
 
-// Empty macro definition (so that cppcheck ignores the macro)
+// Empty macro definition
 #define PLUGINLIB_EXPORT_CLASS(class_type, base_class)
 
 // Empty macro definition for Qt
