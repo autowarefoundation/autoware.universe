@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
-#define NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
+#ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
+#define AUTOWARE__NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
 
 #define FMT_HEADER_ONLY
 
+#include "autoware/ndt_scan_matcher/hyper_parameters.hpp"
+#include "autoware/ndt_scan_matcher/map_update_module.hpp"
 #include "localization_util/diagnostics_module.hpp"
 #include "localization_util/smart_pose_buffer.hpp"
-#include "ndt_scan_matcher/hyper_parameters.hpp"
-#include "ndt_scan_matcher/map_update_module.hpp"
 
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -225,4 +225,4 @@ private:
 
 }  // namespace autoware::ndt_scan_matcher
 
-#endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
+#endif  // AUTOWARE__NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

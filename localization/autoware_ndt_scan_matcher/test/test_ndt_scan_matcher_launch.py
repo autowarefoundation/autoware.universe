@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 @pytest.mark.launch_test
 def generate_test_description():
     test_ndt_scan_matcher_launch_file = os.path.join(
-        get_package_share_directory("ndt_scan_matcher"),
+        get_package_share_directory("autoware_ndt_scan_matcher"),
         "launch",
         "ndt_scan_matcher.launch.xml",
     )

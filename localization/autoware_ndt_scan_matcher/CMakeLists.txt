@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(ndt_scan_matcher)
+project(autoware_ndt_scan_matcher)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -32,7 +32,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
-target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES})
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::ndt_scan_matcher::NDTScanMatcher"

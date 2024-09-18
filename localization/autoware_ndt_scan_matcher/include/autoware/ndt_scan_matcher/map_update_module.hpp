@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
-#define NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
+#ifndef AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
+#define AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
+#include "autoware/ndt_scan_matcher/hyper_parameters.hpp"
+#include "autoware/ndt_scan_matcher/particle.hpp"
 #include "localization_util/diagnostics_module.hpp"
 #include "localization_util/util_func.hpp"
-#include "ndt_scan_matcher/hyper_parameters.hpp"
-#include "ndt_scan_matcher/particle.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
@@ -100,4 +100,4 @@ private:
 
 }  // namespace autoware::ndt_scan_matcher
 
-#endif  // NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
+#endif  // AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
