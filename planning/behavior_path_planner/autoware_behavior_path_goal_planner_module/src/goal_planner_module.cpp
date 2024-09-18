@@ -2654,7 +2654,7 @@ PathDecisionState PathDecisionStateController::get_next_state(
 
   // Once this function returns true, it will continue to return true thereafter
   if (next_state.state == PathDecisionState::DecisionKind::DECIDED) {
-    next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
+    next_state.state = PathDecisionState::DecisionKind::DECIDED;
     return next_state;
   }
 
