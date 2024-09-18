@@ -14,9 +14,9 @@
 
 #include "static_centerline_generator_node.hpp"
 
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/map_projection_loader/load_info_from_lanelet2_map.hpp"
 #include "autoware/map_projection_loader/map_projection_loader.hpp"
-#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
