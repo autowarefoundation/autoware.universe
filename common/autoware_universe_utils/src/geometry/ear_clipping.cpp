@@ -250,12 +250,12 @@ std::size_t linked_list(
   }
 
   if (clockwise == (sum > 0)) {
-    for (std::size_t i = 0; i < len; i++) {
-      last_index = insert_point(ring[i], points, last_index);
+    for (const auto & point : ring) {
+      last_index = insert_point(point, points, last_index);
     }
   } else {
-    for (std::size_t i = len; i-- > 0;) {
-      last_index = insert_point(ring[i], points, last_index);
+    for (auto it = ring.rbegin(); it != ring.rend(); ++it) {
+      last_index = insert_point(*it, points, last_index);
     }
   }
 
@@ -420,11 +420,10 @@ std::size_t eliminate_holes(
   const std::vector<LinearRing2d> & inners, std::size_t outer_index, std::size_t & vertices,
   std::vector<LinkedPoint> & points)
 {
-  const std::size_t len = inners.size();
   std::vector<std::size_t> queue;
 
-  for (std::size_t i = 0; i < len; ++i) {
-    auto inner_index = linked_list(inners[i], false, vertices, points);
+  for (const auto & ring : inners) {
+    auto inner_index = linked_list(ring, false, vertices, points);
 
     if (points[inner_index].next_index.value() == inner_index) {
       points[inner_index].steiner = true;

@@ -89,12 +89,17 @@ std::size_t eliminate_holes(
   std::vector<LinkedPoint> & points);
 
 /**
- * @brief triangulates a polygon into multiple convex triangles
- * @details simplifies a concave polygon (with or without holes) into a set of triangles
- * @return a vector of convex triangles forming the triangulated polygon
+ * @brief triangulates a polygon into convex triangles
+ * @details simplifies a concave polygon, with or without holes, into a set of triangles
+ * the size of the `points` vector at the end of the perform_triangulation algorithm is described as
+ * follow:
+ * - `outer_points`: Number of points in the initial outer linked list.
+ * - `hole_points`: Number of points in all inner polygons.
+ * - `2 * n_holes`: Additional points for bridging holes, where `n_holes` is the number of holes.
+ * the final size of `points` vector is: `outer_points + hole_points + 2 * n_holes`.
+ * @return A vector of convex triangles representing the triangulated polygon.
  */
 std::vector<Polygon2d> triangulate(const Polygon2d & polygon);
-
 }  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EAR_CLIPPING_HPP_
