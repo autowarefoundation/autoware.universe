@@ -40,13 +40,15 @@
           "type": "number",
           "description": "The left limit of azimuth for `Fixed_azimuth_ROI` mode",
           "default": "135.0",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 360
         },
         "max_azimuth_deg": {
           "type": "number",
           "description": "The right limit of azimuth for `Fixed_azimuth_ROI` mode",
           "default": "225.0",
-          "maximum": 0
+          "minimum": 0,
+          "maximum": 360
         },
         "max_distance": {
           "type": "number",
