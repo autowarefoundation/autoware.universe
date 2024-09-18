@@ -221,7 +221,9 @@ void SceneModuleManagerInterfaceWithRTC::sendRTC(const Time & stamp)
 {
   for (const auto & scene_module : scene_modules_) {
     const UUID uuid = getUUID(scene_module->getModuleId());
-    const auto state = scene_module->isActivated() ? State::RUNNING : State::WAITING_FOR_EXECUTION;
+    const auto state = !scene_module->isActivated() && scene_module->isSafe()
+                         ? State::WAITING_FOR_EXECUTION
+                         : State::RUNNING;
     updateRTCStatus(uuid, scene_module->isSafe(), state, scene_module->getDistance(), stamp);
   }
   publishRTCStatus(stamp);

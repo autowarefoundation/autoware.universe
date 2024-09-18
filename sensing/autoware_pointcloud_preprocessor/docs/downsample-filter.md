@@ -52,11 +52,7 @@ These implementations inherit `autoware::pointcloud_preprocessor::Filter` class,
 
 ### Pickup Based Voxel Grid Downsample Filter
 
-| Name           | Type   | Default Value | Description      |
-| -------------- | ------ | ------------- | ---------------- |
-| `voxel_size_x` | double | 1.0           | voxel size x [m] |
-| `voxel_size_y` | double | 1.0           | voxel size y [m] |
-| `voxel_size_z` | double | 1.0           | voxel size z [m] |
+{{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/pickup_based_voxel_grid_downsample_filter.schema.json") }}
 
 ## Assumptions / Known limits
 

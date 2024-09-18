@@ -151,6 +151,8 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
   nearest_voxel_transformation_likelihood_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
       "nearest_voxel_transformation_likelihood", 10);
+  voxel_score_points_pub_ =
+    this->create_publisher<sensor_msgs::msg::PointCloud2>("voxel_score_points", 10);
   no_ground_transform_probability_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
       "no_ground_transform_probability", 10);
@@ -636,6 +638,21 @@ bool NDTScanMatcher::callback_sensor_points_main(
     *sensor_points_in_baselink_frame, *sensor_points_in_map_ptr, ndt_result.pose);
   publish_point_cloud(sensor_ros_time, param_.frame.map_frame, sensor_points_in_map_ptr);
 
+  // check each of point score
+  const float lower_nvs = 1.0f;
+  const float upper_nvs = 3.5f;
+  if (voxel_score_points_pub_->get_subscription_count() > 0) {
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr nvs_points_in_map_ptr_rgb{
+      new pcl::PointCloud<pcl::PointXYZRGB>};
+    nvs_points_in_map_ptr_rgb =
+      visualize_point_score(sensor_points_in_map_ptr, lower_nvs, upper_nvs);
+    sensor_msgs::msg::PointCloud2 nvs_points_msg_in_map;
+    pcl::toROSMsg(*nvs_points_in_map_ptr_rgb, nvs_points_msg_in_map);
+    nvs_points_msg_in_map.header.stamp = sensor_ros_time;
+    nvs_points_msg_in_map.header.frame_id = param_.frame.map_frame;
+    voxel_score_points_pub_->publish(nvs_points_msg_in_map);
+  }
+
   // whether use no ground points to calculate score
   if (param_.score_estimation.no_ground_points.enable) {
     // remove ground
@@ -876,6 +893,32 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
   } else {
     return Eigen::Matrix2d::Identity() * param_.covariance.output_pose_covariance[0 + 6 * 0];
   }
+}
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr NDTScanMatcher::visualize_point_score(
+  const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr,
+  const float & lower_nvs, const float & upper_nvs)
+{
+  pcl::PointCloud<pcl::PointXYZI> nvs_points_in_map_ptr_i;
+  nvs_points_in_map_ptr_i =
+    ndt_ptr_->calculateNearestVoxelScoreEachPoint(*sensor_points_in_map_ptr);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr nvs_points_in_map_ptr_rgb{
+    new pcl::PointCloud<pcl::PointXYZRGB>};
+
+  const float range = upper_nvs - lower_nvs;
+  for (std::size_t i = 0; i < nvs_points_in_map_ptr_i.size(); i++) {
+    pcl::PointXYZRGB point;
+    point.x = nvs_points_in_map_ptr_i.points[i].x;
+    point.y = nvs_points_in_map_ptr_i.points[i].y;
+    point.z = nvs_points_in_map_ptr_i.points[i].z;
+    std_msgs::msg::ColorRGBA color =
+      exchange_color_crc((nvs_points_in_map_ptr_i.points[i].intensity - lower_nvs) / range);
+    point.r = color.r * 255;
+    point.g = color.g * 255;
+    point.b = color.b * 255;
+    nvs_points_in_map_ptr_rgb->points.push_back(point);
+  }
+  return nvs_points_in_map_ptr_rgb;
 }
 
 void NDTScanMatcher::add_regularization_pose(const rclcpp::Time & sensor_ros_time)
