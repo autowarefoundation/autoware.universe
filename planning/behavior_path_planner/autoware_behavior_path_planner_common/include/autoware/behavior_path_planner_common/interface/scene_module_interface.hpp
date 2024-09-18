@@ -501,7 +501,9 @@ protected:
   {
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
       if (ptr) {
-        const auto state = isWaitingApproval() ? State::WAITING_FOR_EXECUTION : State::RUNNING;
+        const auto state = !ptr->isRegistered(uuid_map_.at(module_name)) || isWaitingApproval()
+                             ? State::WAITING_FOR_EXECUTION
+                             : State::RUNNING;
         ptr->updateCooperateStatus(
           uuid_map_.at(module_name), isExecutionReady(), state, start_distance, finish_distance,
           clock_->now());
