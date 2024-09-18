@@ -85,6 +85,9 @@ int compareRecord(
   int visible_score_1 = calVisibleScore(r1);
   int visible_score_2 = calVisibleScore(r2);
   if (visible_score_1 == visible_score_2) {
+    /*
+    if the visible scores are the same, the one with higher confidence is of higher priority
+    */
     double confidence_1 = r1.signal.elements[0].confidence;
     double confidence_2 = r2.signal.elements[0].confidence;
     return confidence_1 < confidence_2 ? -1 : 1;
@@ -151,7 +154,7 @@ MultiCameraFusion::MultiCameraFusion(const rclcpp::NodeOptions & node_options)
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
   message_lifespan_ = this->declare_parameter<double>("message_lifespan", 0.09);
   for (const std::string & camera_ns : camera_namespaces) {
-    std::string signal_topic = camera_ns + "/classification/traffic_signals";
+    std::string signal_topic = camera_ns + "/classification/traffic_lights";
     std::string roi_topic = camera_ns + "/detection/rois";
     std::string cam_info_topic = camera_ns + "/camera_info";
     roi_subs_.emplace_back(
@@ -178,7 +181,7 @@ MultiCameraFusion::MultiCameraFusion(const rclcpp::NodeOptions & node_options)
   map_sub_ = create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MultiCameraFusion::mapCallback, this, _1));
-  signal_pub_ = create_publisher<NewSignalArrayType>("~/output/traffic_signals", rclcpp::QoS{1});
+  signal_pub_ = create_publisher<NewSignalArrayType>("~/output/traffic_lights", rclcpp::QoS{1});
 }
 
 void MultiCameraFusion::trafficSignalRoiCallback(
