@@ -14,7 +14,7 @@ When a point cloud arrives, its timestamp is checked, and an offset is subtracte
 
 ### Step 2: Trigger the Timer
 
-Once a collector is created, a timer for that collector starts counting down (this value is defined by `timeout_sec`). The collector begins to concatenate the point clouds either when the required number of point clouds has been collected or when the timer counts down to zero.
+Once a collector is created, a timer for that collector starts counting down (this value is defined by `timeout_sec`). The collector begins to concatenate the point clouds either when all point clouds defined in `input_topics` have been collected or when the timer counts down to zero.
 
 ### Step 3: Concatenate the Point Clouds
 
