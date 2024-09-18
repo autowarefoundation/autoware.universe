@@ -268,7 +268,7 @@ void BEVDet::initViewTransformer(
   std::shared_ptr<int> & interval_lengths_ptr)
 {
   int num_points = n_img_ * depth_num_ * feat_h_ * feat_w_;
-  Eigen::Vector3f * frustum = new Eigen::Vector3f[num_points];
+  std::vector<Eigen::Vector3f> frustum(num_points);
 
   for (int i = 0; i < n_img_; i++) {
     for (int d_ = 0; d_ < depth_num_; d_++) {
@@ -276,41 +276,41 @@ void BEVDet::initViewTransformer(
         for (int w_ = 0; w_ < feat_w_; w_++) {
           int offset =
             i * depth_num_ * feat_h_ * feat_w_ + d_ * feat_h_ * feat_w_ + h_ * feat_w_ + w_;
-          (frustum + offset)->x() = static_cast<float>(w_) * (input_img_w_ - 1) / (feat_w_ - 1);
-          (frustum + offset)->y() = static_cast<float>(h_) * (input_img_h_ - 1) / (feat_h_ - 1);
-          (frustum + offset)->z() = static_cast<float>(d_) * depth_step_ + depth_start_;
+          frustum[offset].x() = static_cast<float>(w_) * (input_img_w_ - 1) / (feat_w_ - 1);
+          frustum[offset].y() = static_cast<float>(h_) * (input_img_h_ - 1) / (feat_h_ - 1);
+          frustum[offset].z() = static_cast<float>(d_) * depth_step_ + depth_start_;
 
           // eliminate post transformation
-          *(frustum + offset) -= post_trans_.translation();
-          *(frustum + offset) = post_rot_.inverse() * *(frustum + offset);
+          frustum[offset] -= post_trans_.translation();
+          frustum[offset] = post_rot_.inverse() * frustum[offset];
           //
-          (frustum + offset)->x() *= (frustum + offset)->z();
-          (frustum + offset)->y() *= (frustum + offset)->z();
+          frustum[offset].x() *= frustum[offset].z();
+          frustum[offset].y() *= frustum[offset].z();
           // img to ego -> rot -> trans
-          *(frustum + offset) = cams2ego_rot_[i] * cams_intrin_[i].inverse() * *(frustum + offset) +
+          frustum[offset] = cams2ego_rot_[i] * cams_intrin_[i].inverse() * frustum[offset] +
                                 cams2ego_trans_[i].translation();
 
           // voxelization
-          *(frustum + offset) -= Eigen::Vector3f(x_start_, y_start_, z_start_);
-          (frustum + offset)->x() = static_cast<int>((frustum + offset)->x() / x_step_);
-          (frustum + offset)->y() = static_cast<int>((frustum + offset)->y() / y_step_);
-          (frustum + offset)->z() = static_cast<int>((frustum + offset)->z() / z_step_);
+          frustum[offset] -= Eigen::Vector3f(x_start_, y_start_, z_start_);
+          frustum[offset].x() = static_cast<int>(frustum[offset].x() / x_step_);
+          frustum[offset].y() = static_cast<int>(frustum[offset].y() / y_step_);
+          frustum[offset].z() = static_cast<int>(frustum[offset].z() / z_step_);
         }
       }
     }
   }
 
-  int * _ranks_depth = new int[num_points];
-  int * _ranks_feat = new int[num_points];
+  std::vector<int> ranks_depth(num_points);
+  std::vector<int> ranks_feat(num_points);
 
   for (int i = 0; i < num_points; i++) {
-    _ranks_depth[i] = i;
+    ranks_depth[i] = i;
   }
   for (int i = 0; i < n_img_; i++) {
     for (int d_ = 0; d_ < depth_num_; d_++) {
       for (int u = 0; u < feat_h_ * feat_w_; u++) {
         int offset = i * (depth_num_ * feat_h_ * feat_w_) + d_ * (feat_h_ * feat_w_) + u;
-        _ranks_feat[offset] = i * feat_h_ * feat_w_ + u;
+        ranks_feat[offset] = i * feat_h_ * feat_w_ + u;
       }
     }
   }
@@ -318,21 +318,21 @@ void BEVDet::initViewTransformer(
   std::vector<int> kept;
   for (int i = 0; i < num_points; i++) {
     if (
-      static_cast<int>((frustum + i)->x()) >= 0 &&
-      static_cast<int>((frustum + i)->x()) < xgrid_num_ &&
-      static_cast<int>((frustum + i)->y()) >= 0 &&
-      static_cast<int>((frustum + i)->y()) < ygrid_num_ &&
-      static_cast<int>((frustum + i)->z()) >= 0 &&
-      static_cast<int>((frustum + i)->z()) < zgrid_num_) {
+      static_cast<int>(frustum[i].x()) >= 0 &&
+      static_cast<int>(frustum[i].x()) < xgrid_num_ &&
+      static_cast<int>(frustum[i].y()) >= 0 &&
+      static_cast<int>(frustum[i].y()) < ygrid_num_ &&
+      static_cast<int>(frustum[i].z()) >= 0 &&
+      static_cast<int>(frustum[i].z()) < zgrid_num_) {
       kept.push_back(i);
     }
   }
 
   valid_feat_num_ = kept.size();
-  int * ranks_depth_host = new int[valid_feat_num_];
-  int * ranks_feat_host = new int[valid_feat_num_];
-  int * ranks_bev_host = new int[valid_feat_num_];
-  int * order = new int[valid_feat_num_];
+  std::vector<int> ranks_depth_host(valid_feat_num_);
+  std::vector<int> ranks_feat_host(valid_feat_num_);
+  std::vector<int> ranks_bev_host(valid_feat_num_);
+  std::vector<int> order(valid_feat_num_);
 
   for (int i = 0; i < valid_feat_num_; i++) {
     Eigen::Vector3f & p = frustum[kept[i]];
@@ -341,16 +341,11 @@ void BEVDet::initViewTransformer(
     order[i] = i;
   }
 
-  thrust::sort_by_key(ranks_bev_host, ranks_bev_host + valid_feat_num_, order);
+  thrust::sort_by_key(ranks_bev_host.begin(), ranks_bev_host.end(), order.begin());
   for (int i = 0; i < valid_feat_num_; i++) {
-    ranks_depth_host[i] = _ranks_depth[kept[order[i]]];
-    ranks_feat_host[i] = _ranks_feat[kept[order[i]]];
+    ranks_depth_host[i] = ranks_depth[kept[order[i]]];
+    ranks_feat_host[i] = ranks_feat[kept[order[i]]];
   }
-
-  delete[] _ranks_depth;
-  delete[] _ranks_feat;
-  delete[] frustum;
-  delete[] order;
 
   std::vector<int> interval_starts_host;
   std::vector<int> interval_lengths_host;
@@ -370,21 +365,17 @@ void BEVDet::initViewTransformer(
   interval_lengths_host.push_back(len);
   unique_bev_num_ = interval_lengths_host.size();
 
-  int * interval_starts_host_ptr = new int[interval_starts_host.size()];
-  int * interval_lengths_host_ptr = new int[interval_lengths_host.size()];
+  ranks_bev_ptr.reset(new int[valid_feat_num_], std::default_delete<int[]>());
+  ranks_depth_ptr.reset(new int[valid_feat_num_], std::default_delete<int[]>());
+  ranks_feat_ptr.reset(new int[valid_feat_num_], std::default_delete<int[]>());
+  interval_starts_ptr.reset(new int[interval_starts_host.size()], std::default_delete<int[]>());
+  interval_lengths_ptr.reset(new int[interval_lengths_host.size()], std::default_delete<int[]>());
 
-  memcpy(
-    interval_starts_host_ptr, interval_starts_host.data(),
-    interval_starts_host.size() * sizeof(int));
-  memcpy(
-    interval_lengths_host_ptr, interval_lengths_host.data(),
-    interval_lengths_host.size() * sizeof(int));
-
-  ranks_bev_ptr.reset(ranks_bev_host);
-  ranks_depth_ptr.reset(ranks_depth_host);
-  ranks_feat_ptr.reset(ranks_feat_host);
-  interval_starts_ptr.reset(interval_starts_host_ptr);
-  interval_lengths_ptr.reset(interval_lengths_host_ptr);
+  std::copy(ranks_bev_host.begin(), ranks_bev_host.end(), ranks_bev_ptr.get());
+  std::copy(ranks_depth_host.begin(), ranks_depth_host.end(), ranks_depth_ptr.get());
+  std::copy(ranks_feat_host.begin(), ranks_feat_host.end(), ranks_feat_ptr.get());
+  std::copy(interval_starts_host.begin(), interval_starts_host.end(), interval_starts_ptr.get());
+  std::copy(interval_lengths_host.begin(), interval_lengths_host.end(), interval_lengths_ptr.get());
 
   RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "valid_feat_num: %d", valid_feat_num_);
   RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "unique_bev_num: %d", unique_bev_num_);
