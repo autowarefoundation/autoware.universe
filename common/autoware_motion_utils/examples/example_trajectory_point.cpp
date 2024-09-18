@@ -66,7 +66,7 @@ int main()
 
   std::cout << "Trajectory length: " << trajectory->length() << std::endl;
 
-  trajectory = trajectory->crop(2.0, trajectory->length() - 2.0);
+  trajectory = trajectory->crop(2.0, trajectory->length() - 4.0);
 
   std::cout << "Trajectory length after cropping: " << trajectory->length() << std::endl;
 

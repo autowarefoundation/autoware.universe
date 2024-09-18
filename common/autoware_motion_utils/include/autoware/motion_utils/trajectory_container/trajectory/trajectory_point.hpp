@@ -16,7 +16,6 @@
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_POINT_HPP_
 
 #include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
-#include "autoware/motion_utils/trajectory_container/trajectory/detail/crop_impl.hpp"
 #include "autoware/motion_utils/trajectory_container/trajectory/detail/utils.hpp"
 
 #include <Eigen/Dense>
@@ -40,9 +39,7 @@ class TrajectoryContainer;
  */
 template <>
 class TrajectoryContainer<geometry_msgs::msg::Point>
-: public detail::CropTrajectoryImpl<TrajectoryContainer<geometry_msgs::msg::Point>>
 {
-  friend class detail::CropTrajectoryImpl<TrajectoryContainer<geometry_msgs::msg::Point>>;
   using PointType = geometry_msgs::msg::Point;
 
 protected:
@@ -238,6 +235,10 @@ public:
    * @return Vector of points
    */
   [[nodiscard]] std::vector<PointType> restore(const size_t & min_points = 100) const;
+
+  void crop_in_place(const double & start, const double & length);
+
+  [[nodiscard]] TrajectoryContainer crop(const double & start, const double & length) const;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory

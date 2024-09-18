@@ -30,17 +30,11 @@ namespace autoware::motion_utils::trajectory_container::trajectory
 {
 template <>
 class TrajectoryContainer<tier4_planning_msgs::msg::PathPointWithLaneId>
-: public TrajectoryContainer<autoware_planning_msgs::msg::PathPoint>,
-  public detail::CropTrajectoryImpl<
-    TrajectoryContainer<tier4_planning_msgs::msg::PathPointWithLaneId>>
+: public TrajectoryContainer<autoware_planning_msgs::msg::PathPoint>
 {
-  friend class detail::CropTrajectoryImpl<
-    TrajectoryContainer<tier4_planning_msgs::msg::PathPointWithLaneId>>;
-
   using BaseClass = TrajectoryContainer<autoware_planning_msgs::msg::PathPoint>;
   using PointType = tier4_planning_msgs::msg::PathPointWithLaneId;
-  using CropTrajectoryImpl =
-    detail::CropTrajectoryImpl<TrajectoryContainer<tier4_planning_msgs::msg::PathPointWithLaneId>>;
+
   using LaneIdType = std::vector<int64_t>;
   template <typename ValueType>
   using ArrayType = detail::ManipulableInterpolatedArray<ValueType>;
@@ -82,8 +76,7 @@ public:
    */
   [[nodiscard]] std::vector<PointType> restore(const size_t & min_points = 100) const;
 
-  using CropTrajectoryImpl::crop;
-  using CropTrajectoryImpl::crop_in_place;
+  [[nodiscard]] TrajectoryContainer crop(const double & start, const double & length) const;
 };
 }  // namespace autoware::motion_utils::trajectory_container::trajectory
 

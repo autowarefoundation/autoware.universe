@@ -45,6 +45,7 @@ if(BUILD_EXAMPLES)
   foreach(example_file ${example_files})
     get_filename_component(example_name ${example_file} NAME_WE)
     ament_auto_add_executable(${example_name} ${example_file})
+    set_source_files_properties(${example_file} PROPERTIES COMPILE_FLAGS -Wno-error -Wno-attributes -Wno-unused-parameter)
     target_link_libraries(${example_name}
       autoware_motion_utils
       matplotlibcpp17::matplotlibcpp17

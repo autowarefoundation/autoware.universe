@@ -28,14 +28,10 @@ namespace autoware::motion_utils::trajectory_container::trajectory
  */
 template <>
 class TrajectoryContainer<geometry_msgs::msg::Pose>
-: public TrajectoryContainer<geometry_msgs::msg::Point>,
-  public detail::CropTrajectoryImpl<TrajectoryContainer<geometry_msgs::msg::Pose>>
+: public TrajectoryContainer<geometry_msgs::msg::Point>
 {
-  friend class detail::CropTrajectoryImpl<TrajectoryContainer<geometry_msgs::msg::Pose>>;
-
   using BaseClass = TrajectoryContainer<geometry_msgs::msg::Point>;
   using PointType = geometry_msgs::msg::Pose;
-  using CropTrajectoryImpl = detail::CropTrajectoryImpl<TrajectoryContainer<PointType>>;
 
 private:
   std::shared_ptr<interpolator::Interpolator<double>> orientation_x_interpolator_;
@@ -71,8 +67,7 @@ public:
    */
   [[nodiscard]] std::vector<PointType> restore(const size_t & min_points = 100) const;
 
-  using CropTrajectoryImpl::crop;
-  using CropTrajectoryImpl::crop_in_place;
+  [[nodiscard]] TrajectoryContainer crop(const double & start, const double & length) const;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory

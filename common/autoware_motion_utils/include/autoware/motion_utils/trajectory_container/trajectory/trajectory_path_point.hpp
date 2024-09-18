@@ -29,17 +29,12 @@ namespace autoware::motion_utils::trajectory_container::trajectory
 
 template <>
 class TrajectoryContainer<autoware_planning_msgs::msg::PathPoint>
-: public TrajectoryContainer<geometry_msgs::msg::Pose>,
-  public detail::CropTrajectoryImpl<TrajectoryContainer<autoware_planning_msgs::msg::PathPoint>>
+: public TrajectoryContainer<geometry_msgs::msg::Pose>
 {
-  friend class detail::CropTrajectoryImpl<
-    TrajectoryContainer<autoware_planning_msgs::msg::PathPoint>>;
-
   using BaseClass = TrajectoryContainer<geometry_msgs::msg::Pose>;
   using PointType = autoware_planning_msgs::msg::PathPoint;
   template <typename ValueType>
   using ArrayType = detail::ManipulableInterpolatedArray<ValueType>;
-  using CropTrajectoryImpl = detail::CropTrajectoryImpl<TrajectoryContainer<PointType>>;
 
 public:
   ArrayType<double> longitudinal_velocity_mps;  //!< Longitudinal velocity in m/s
@@ -79,8 +74,7 @@ public:
    */
   [[nodiscard]] std::vector<PointType> restore(const size_t & min_points = 100) const;
 
-  using CropTrajectoryImpl::crop;
-  using CropTrajectoryImpl::crop_in_place;
+  [[nodiscard]] TrajectoryContainer crop(const double & start, const double & length) const;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory

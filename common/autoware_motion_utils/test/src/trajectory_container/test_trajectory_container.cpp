@@ -14,8 +14,6 @@
 #include <autoware/motion_utils/trajectory_container/trajectory.hpp>
 
 #include <gtest/gtest.h>
-#include <gtest/internal/gtest-internal.h>
-#include <gtest/internal/gtest-type-util.h>
 
 #include <vector>
 
@@ -177,4 +175,27 @@ TEST_F(TrajectoryContainerTest, closest)
     closest_pose.point.pose.position.y - pose.position.y);
 
   EXPECT_LT(distance, 3.0);
+}
+
+TEST_F(TrajectoryContainerTest, crop)
+{
+  double length = trajectory->length();
+
+  auto start_point_expect = trajectory->compute(length / 3.0);
+  auto end_point_expect = trajectory->compute(length / 3.0 + 1.0);
+
+  auto cropped = trajectory->crop(length / 3.0, 1.0);
+
+  EXPECT_EQ(cropped.length(), 1.0);
+
+  auto start_point_actual = cropped.compute(0.0);
+  auto end_point_actual = cropped.compute(cropped.length());
+
+  EXPECT_EQ(start_point_expect.point.pose.position.x, start_point_actual.point.pose.position.x);
+  EXPECT_EQ(start_point_expect.point.pose.position.y, start_point_actual.point.pose.position.y);
+  EXPECT_EQ(start_point_expect.lane_ids[0], start_point_actual.lane_ids[0]);
+
+  EXPECT_EQ(end_point_expect.point.pose.position.x, end_point_actual.point.pose.position.x);
+  EXPECT_EQ(end_point_expect.point.pose.position.y, end_point_actual.point.pose.position.y);
+  EXPECT_EQ(end_point_expect.lane_ids[0], end_point_actual.lane_ids[0]);
 }

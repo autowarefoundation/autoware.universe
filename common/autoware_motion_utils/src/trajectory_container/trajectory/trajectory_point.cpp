@@ -16,11 +16,10 @@
 
 #include "autoware/motion_utils/trajectory_container/trajectory/detail/utils.hpp"
 
+#include <Eigen/Core>
 #include <rclcpp/logging.hpp>
 
-#include <Eigen/src/Core/util/Meta.h>
-#include <fmt/format.h>
-
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 
@@ -127,6 +126,20 @@ std::vector<PointType> TrajectoryContainer<PointType>::restore(const size_t & mi
     points.emplace_back(p);
   }
   return points;
+}
+
+void TrajectoryContainer<PointType>::crop_in_place(const double & start, const double & length)
+{
+  start_ = std::clamp(start_ + start, start_, end_);
+  end_ = std::clamp(start_ + length, start_, end_);
+}
+
+TrajectoryContainer<PointType> TrajectoryContainer<PointType>::crop(
+  const double & start, const double & length) const
+{
+  auto cropped = *this;
+  cropped.crop_in_place(start, length);
+  return cropped;
 }
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory

@@ -93,4 +93,12 @@ std::vector<PointType> TrajectoryContainer<PointType>::restore(const size_t & mi
   return points;
 }
 
+TrajectoryContainer<PointType> TrajectoryContainer<PointType>::crop(
+  const double & start, const double & length) const
+{
+  auto cropped = *this;
+  cropped.crop_in_place(start, length);
+  return cropped;
+}
+
 }  // namespace autoware::motion_utils::trajectory_container::trajectory
