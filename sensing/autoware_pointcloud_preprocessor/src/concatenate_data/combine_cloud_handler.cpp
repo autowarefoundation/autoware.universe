@@ -81,7 +81,7 @@ CombineCloudHandler::CombineCloudHandler(
 void CombineCloudHandler::processTwist(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & input)
 {
-  // if rosbag restart, clear buffer
+  // If time jumps backwards (e.g. when a rosbag restarts), clear buffer
   if (!twist_ptr_queue_.empty()) {
     if (rclcpp::Time(twist_ptr_queue_.front()->header.stamp) > rclcpp::Time(input->header.stamp)) {
       twist_ptr_queue_.clear();
