@@ -29,6 +29,7 @@
   <depend>builtin_interfaces</depend>
   <depend>geometry_msgs</depend>
   <depend>interpolation</depend>
+  <depend>lanelet2_core</depend>
   <depend>libboost-dev</depend>
   <depend>rclcpp</depend>
   <depend>tf2</depend>
