@@ -58,7 +58,7 @@
         },
         "vertical_bins": {
           "type": "integer",
-          "description": "The number of vertical bin for visibility histogram",
+          "description": "The number of vertical bins for the visibility histogram",
           "default": "128",
           "minimum": 1
         },
