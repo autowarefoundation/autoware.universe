@@ -18,7 +18,6 @@ namespace autoware::universe_utils
 {
 
 /// Utils Function
-/// @brief insert a point inside the linked linst on an index
 std::size_t construct_point(
   const std::size_t index, const Point2d & point, std::vector<LinkedPoint> & points)
 {
@@ -26,7 +25,6 @@ std::size_t construct_point(
   return index;
 }
 
-/// @brief remove a Point from the linked list
 void remove_point(const std::size_t p_index, std::vector<LinkedPoint> & points)
 {
   std::size_t prev_index = points[p_index].prev_index.value();
@@ -36,7 +34,6 @@ void remove_point(const std::size_t p_index, std::vector<LinkedPoint> & points)
   points[next_index].prev_index = prev_index;
 }
 
-/// @brief find the leftmost Point of a polygon ring
 std::size_t get_leftmost(const std::size_t start_idx, const std::vector<LinkedPoint> & points)
 {
   std::size_t p_idx = start_idx;
@@ -54,7 +51,6 @@ std::size_t get_leftmost(const std::size_t start_idx, const std::vector<LinkedPo
   return left_most_idx;
 }
 
-/// @brief check if a point lies within a convex triangle
 bool point_in_triangle(
   const double ax, const double ay, const double bx, const double by, const double cx,
   const double cy, const double px, const double py)
@@ -64,7 +60,6 @@ bool point_in_triangle(
          (bx - px) * (cy - py) >= (cx - px) * (by - py);
 }
 
-/// @brief signed area of a triangle
 double area(
   const std::vector<LinkedPoint> & points, const std::size_t p_idx, const std::size_t q_idx,
   const std::size_t r_idx)
@@ -75,7 +70,6 @@ double area(
   return (q.y() - p.y()) * (r.x() - q.x()) - (q.x() - p.x()) * (r.y() - q.y());
 }
 
-/// @brief check if the middle vertex of a polygon diagonal is inside the polygon
 bool middle_inside(
   const std::size_t a_idx, const std::size_t b_idx, const std::vector<LinkedPoint> & points)
 {
@@ -99,20 +93,16 @@ bool middle_inside(
   return inside;
 }
 
-/// @brief check if two points are equal
-bool equals(
-  const std::size_t p1_idx, const std::size_t p2_idx, const std::vector<LinkedPoint> & points)
+bool equals(const std::size_t p1_idx, const std::size_t p2_idx, const std::vector<LinkedPoint> & points)
 {
   return points[p1_idx].x() == points[p2_idx].x() && points[p1_idx].y() == points[p2_idx].y();
 }
 
-/// @brief sign function for area calculation
 int sign(const double val)
 {
   return (0.0 < val) - (val < 0.0);
 }
 
-/// @brief for collinear points p, q, r, check if point q lies on segment pr
 bool on_segment(
   const std::vector<LinkedPoint> & points, const std::size_t p_idx, const std::size_t q_idx,
   const std::size_t r_idx)
@@ -124,7 +114,6 @@ bool on_segment(
          q.y() <= std::max<double>(p.y(), r.y()) && q.y() >= std::min<double>(p.y(), r.y());
 }
 
-/// @brief check if a polygon diagonal is locally inside the polygon
 bool locally_inside(
   const std::size_t a_idx, const std::size_t b_idx, const std::vector<LinkedPoint> & points)
 {
@@ -135,7 +124,6 @@ bool locally_inside(
                area(points, a_idx, points[a_idx].next_index.value(), b_idx) < 0;
 }
 
-/// @brief check if two segments intersect
 bool intersects(
   const std::size_t p1_idx, const std::size_t q1_idx, const std::size_t p2_idx,
   const std::size_t q2_idx, const std::vector<LinkedPoint> & points)
@@ -155,7 +143,6 @@ bool intersects(
   return false;
 }
 
-/// @brief check if a polygon diagonal intersects any polygon segments
 bool intersects_polygon(
   const std::vector<LinkedPoint> & points, const std::size_t a_idx, const std::size_t b_idx)
 {
@@ -175,22 +162,18 @@ bool intersects_polygon(
   return false;
 }
 
-/// @brief check if a diagonal between two polygon Points is valid
 bool is_valid_diagonal(
   const std::size_t a_idx, const std::size_t b_idx, const std::vector<LinkedPoint> & points)
 {
-  // Extract indices for the next and previous points
   std::size_t a_next_idx = points[a_idx].next_index.value();
   std::size_t a_prev_idx = points[a_idx].prev_index.value();
   std::size_t b_next_idx = points[b_idx].next_index.value();
   std::size_t b_prev_idx = points[b_idx].prev_index.value();
 
-  // Check if diagonal does not connect adjacent or same points
   if (a_next_idx == b_idx || a_prev_idx == b_idx || intersects_polygon(points, a_idx, b_idx)) {
     return false;
   }
 
-  // Check if diagonals are locally inside and not intersecting
   bool is_locally_inside_ab = locally_inside(a_idx, b_idx, points);
   bool is_locally_inside_ba = locally_inside(b_idx, a_idx, points);
   bool is_middle_inside = middle_inside(a_idx, b_idx, points);
@@ -205,9 +188,6 @@ bool is_valid_diagonal(
   return is_valid_diagonal;
 }
 
-// Main Earclipping Function
-/// @brief create a Point and optionally link it with the previous one (in a circular doubly linked
-/// list)
 std::size_t insert_point(
   const std::size_t i, const Point2d & pt, std::vector<LinkedPoint> & pointsvec,
   const std::optional<std::size_t> last_index)
@@ -230,7 +210,6 @@ std::size_t insert_point(
   return p_idx;
 }
 
-/// @brief create a circular doubly linked list from polygon points in the specified winding order
 std::size_t linked_list(
   const LinearRing2d & points, const bool clockwise, std::size_t & vertices,
   std::vector<LinkedPoint> & pointsvec)
@@ -266,8 +245,6 @@ std::size_t linked_list(
   return last_index.value();
 }
 
-/// @brief check whether the sector in vertex m contains the sector in vertex p in the same
-/// coordinates
 bool sector_contains_sector(
   const std::size_t m_idx, const std::size_t p_idx, const std::vector<LinkedPoint> & points)
 {
@@ -275,12 +252,8 @@ bool sector_contains_sector(
          area(points, p_idx, points[m_idx].next_index.value(), m_idx) < 0;
 }
 
-// cspell: ignore Eberly
-/// @brief David Eberly's algorithm for finding a bridge between hole and outer polygon using vector
-/// indices
 std::size_t find_hole_bridge(
-  const std::size_t hole_index, const std::size_t outer_point_index,
-  const std::vector<LinkedPoint> & points)
+  const std::size_t hole_index, const std::size_t outer_point_index, const std::vector<LinkedPoint> & points)
 {
   std::size_t p = outer_point_index;
   double hx = points[hole_index].x();
@@ -335,39 +308,33 @@ std::size_t find_hole_bridge(
   return bridge_point.value();
 }
 
-/// @brief link two polygon vertices with a bridge
 std::size_t split_polygon(
-  const std::size_t a_index, const std::size_t b_index, std::vector<LinkedPoint> & points)
+  std::size_t a_index, std::size_t b_index, std::vector<LinkedPoint> & points)
 {
-  Point2d a_point(points[a_index].x(), points[a_index].y());
-  Point2d b_point(points[b_index].x(), points[b_index].y());
-
-  std::size_t a2_idx = construct_point(a_index, a_point, points);
-  std::size_t b2_idx = construct_point(b_index, b_point, points);
-
   std::size_t an_idx = points[a_index].next_index.value();
   std::size_t bp_idx = points[b_index].prev_index.value();
 
+  std::size_t a2_idx = points.size();
+  std::size_t b2_idx = points.size() + 1;
+  points.emplace_back(a_index, points[a_index].pt);
+  points.emplace_back(b_index, points[b_index].pt);
+
   points[a_index].next_index = b_index;
-  points[b_index].prev_index = a_index;
-
-  points[a2_idx].next_index = an_idx;
-  if (an_idx != a_index) {
-    points[an_idx].prev_index = a2_idx;
-  }
-
-  points[b2_idx].next_index = a2_idx;
   points[a2_idx].prev_index = b2_idx;
+  points[a2_idx].next_index = an_idx;
+
+  points[b_index].prev_index = a_index;
+  points[an_idx].prev_index = b2_idx;
+  points[b2_idx].next_index = a2_idx;
+  points[b2_idx].prev_index = bp_idx;
 
   if (bp_idx != b_index) {
     points[bp_idx].next_index = b2_idx;
   }
-  points[b2_idx].prev_index = bp_idx;
 
   return b2_idx;
 }
 
-/// @brief eliminate colinear or duplicate points
 std::size_t filter_points(
   const std::size_t start_index, const std::size_t end_index, std::vector<LinkedPoint> & pointsvec)
 {
@@ -393,7 +360,6 @@ std::size_t filter_points(
   return end_index;
 }
 
-/// @brief find a bridge between vertices that connects hole with an outer ring and link it
 std::size_t eliminate_hole(
   const std::size_t hole_index, const std::size_t outer_index, std::vector<LinkedPoint> & pointsvec)
 {
@@ -409,18 +375,16 @@ std::size_t eliminate_holes(
   std::vector<LinkedPoint> & pointsvec)
 {
   const std::size_t len = inners.size();
-
   std::vector<std::size_t> queue;
   for (std::size_t i = 0; i < len; i++) {
-    auto list = linked_list(inners[i], false, vertices, pointsvec);
+    auto pointsvec_inner = linked_list(inners[i], false, vertices, pointsvec);
 
-    if (pointsvec[list].next_index == list) {
-      pointsvec[list].steiner = true;
+    if (pointsvec[pointsvec_inner].next_index == pointsvec_inner) {
+      pointsvec[pointsvec_inner].steiner = true;
     }
 
-    queue.push_back(get_leftmost(list, pointsvec));
+    queue.push_back(get_leftmost(pointsvec_inner, pointsvec));
   }
-
   std::sort(queue.begin(), queue.end(), [&](std::size_t a, std::size_t b) {
     return pointsvec[a].x() < pointsvec[b].x();
   });
@@ -428,11 +392,9 @@ std::size_t eliminate_holes(
   for (const auto & q : queue) {
     outer_index = eliminate_hole(q, outer_index, pointsvec);
   }
-
   return outer_index;
 }
 
-/// @brief check whether ear is valid
 bool is_ear(const std::size_t ear_index, const std::vector<LinkedPoint> & pointsvec)
 {
   const auto a_index = pointsvec[ear_index].prev_index.value();
@@ -443,8 +405,7 @@ bool is_ear(const std::size_t ear_index, const std::vector<LinkedPoint> & points
   const auto b = pointsvec[b_index];
   const auto c = pointsvec[c_index];
 
-  if (area(pointsvec, a_index, b_index, c_index) >= 0) return false;  // Reflex, can't be an ear
-
+  if (area(pointsvec, a_index, b_index, c_index) >= 0) return false;
   auto p_index = pointsvec[c_index].next_index.value();
   while (p_index != a_index) {
     const auto p = pointsvec[p_index];
@@ -459,7 +420,6 @@ bool is_ear(const std::size_t ear_index, const std::vector<LinkedPoint> & points
   return true;
 }
 
-/// @brief go through all polygon Points and cure small local self-intersections
 std::size_t cure_local_intersections(
   std::size_t start_index, std::vector<std::size_t> & indices, std::vector<LinkedPoint> & pointsvec)
 {
@@ -485,33 +445,29 @@ std::size_t cure_local_intersections(
     } else {
       p = pointsvec[p].next_index.value();
     }
+
   } while (p != start_index && updated);
 
   return filter_points(p, p, pointsvec);
 }
 
-/// @brief main ear slicing loop which triangulates a polygon using linked list
 void ear_clipping_linked(
   std::size_t ear_index, std::vector<std::size_t> & indices, std::vector<LinkedPoint> & pointsvec,
   const int pass = 0)
 {
-  auto stop = ear_index;  // Stopping point for the loop
+  auto stop = ear_index; 
   std::optional<std::size_t> next = std::nullopt;
 
-  // Iterate through ears, slicing them one by one
   while (pointsvec[ear_index].prev_index.value() != pointsvec[ear_index].next_index.value()) {
     next = pointsvec[ear_index].next_index;
 
     if (is_ear(ear_index, pointsvec)) {
-      // Cut off the triangle and store the indices
       indices.emplace_back(pointsvec[ear_index].prev_index.value());
       indices.emplace_back(ear_index);
       indices.emplace_back(next.value());
 
-      // Remove the ear and update the ear_index to continue
       remove_point(ear_index, pointsvec);
 
-      // Move to the next ear after removal
       ear_index = pointsvec[next.value()].next_index.value();
       stop = pointsvec[next.value()].next_index.value();
       continue;
@@ -534,10 +490,8 @@ void ear_clipping_linked(
   }
 }
 
-/// @brief split the polygon using ear clipping
 void split_ear_clipping(
-  std::vector<LinkedPoint> & points, const std::size_t start_idx,
-  std::vector<std::size_t> & indices)
+  std::vector<LinkedPoint> & points, const std::size_t start_idx, std::vector<std::size_t> & indices)
 {
   std::size_t a_idx = start_idx;
   do {
@@ -587,8 +541,6 @@ std::vector<LinkedPoint> perform_triangulation(
   return points;
 }
 
-// Main Function
-/// @brief main triangulate function
 std::vector<Polygon2d> triangulate(const Polygon2d & poly)
 {
   std::vector<std::size_t> indices;

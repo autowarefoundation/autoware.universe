@@ -18,7 +18,6 @@
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
 #include <optional>
-#include <vector>
 
 namespace autoware::universe_utils
 {
@@ -42,13 +41,22 @@ struct LinkedPoint
   [[nodiscard]] double x() const { return pt.x(); }
   [[nodiscard]] double y() const { return pt.y(); }
 };
+
+/**
+ * @brief main ear slicing loop which triangulates a polygon using linked list
+ */
 void ear_clipping_linked(
   std::optional<std::size_t> ear_index, std::vector<std::size_t> & indices,
   std::vector<LinkedPoint> & points, int pass = 0);
 void split_ear_clipping(
   std::vector<LinkedPoint> & points, std::size_t start_index, std::vector<std::size_t> & indices);
 
+/**
+ * @brief Triangulate polygon into multiple convex triangle
+ * @details to simplify concave polygons with/without holes into convex polygon
+ */
 std::vector<Polygon2d> triangulate(const Polygon2d & polygon);
+
 }  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EAR_CLIPPING_HPP_
