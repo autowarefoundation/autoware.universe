@@ -37,14 +37,14 @@ BEVDet is a BEV perception algorithm based on panoramic cameras. It unifies mult
 
 1. launch `tensorrt_bevdet_node`
 
-    ```bash
+   ```bash
 
-    ros2 launch autoware_tensorrt_bevdet tensorrt_bevdet_node.launch.xml
-    ```
+   ros2 launch autoware_tensorrt_bevdet tensorrt_bevdet_node.launch.xml
+   ```
 
 2. play ros2 bag of nuScenes data
 
-    Please refer to open source repository [ros2_dataset_bridge](https://github.com/Owen-Liuyuxuan/ros2_dataset_bridge) to publish the ROS 2 topics.
+   Please refer to open source repository [ros2_dataset_bridge](https://github.com/Owen-Liuyuxuan/ros2_dataset_bridge) to publish the ROS 2 topics.
 
 ## Limitation
 
