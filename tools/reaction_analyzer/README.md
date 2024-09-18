@@ -90,7 +90,7 @@ start to test. After the test is completed, the results will be stored in the `o
 ros2 launch reaction_analyzer reaction_analyzer.launch.xml running_mode:=perception_planning vehicle_model:=sample_vehicle sensor_model:=awsim_labs_sensor_kit map_path:=[MAP_PATH]
 ```
 
- - On the first run of the tool in perception_planning mode, initialization might take longer than expected. Please allow some time for the process to complete.
+- On the first run of the tool in perception_planning mode, initialization might take longer than expected. Please allow some time for the process to complete.
 
 After the command, the `e2e_simulator` and the `reaction_analyzer` will be launched. It will automatically start
 to test. After the test is completed, the results will be stored in the `output_file_path` you defined.
