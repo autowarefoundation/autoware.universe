@@ -56,7 +56,7 @@ void split_ear_clipping(
 /**
  * @brief creates a linked list from a ring of points
  * @details converts a polygon ring into a doubly linked list with optional clockwise ordering
- * @return outer index of the linked list
+ * @return the last index of the created linked list
  */
 std::size_t linked_list(
   const LinearRing2d & ring, const bool clockwise, std::size_t & vertices,

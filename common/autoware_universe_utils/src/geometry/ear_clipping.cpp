@@ -424,13 +424,13 @@ std::size_t eliminate_holes(
   std::vector<std::size_t> queue;
 
   for (std::size_t i = 0; i < len; ++i) {
-    auto points_inner = linked_list(inners[i], false, vertices, points);
+    auto inner_index = linked_list(inners[i], false, vertices, points);
 
-    if (points[points_inner].next_index.value() == points_inner) {
-      points[points_inner].steiner = true;
+    if (points[inner_index].next_index.value() == inner_index) {
+      points[inner_index].steiner = true;
     }
 
-    queue.push_back(get_leftmost(points_inner, points));
+    queue.push_back(get_leftmost(inner_index, points));
   }
 
   std::sort(queue.begin(), queue.end(), [&](std::size_t a, std::size_t b) {
