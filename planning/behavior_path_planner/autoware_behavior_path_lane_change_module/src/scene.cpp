@@ -1466,6 +1466,7 @@ bool NormalLaneChange::getLaneChangePaths(
   const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
   const auto dist_to_next_regulatory_element =
     utils::lane_change::get_distance_to_next_regulatory_element(common_data_ptr_, only_tl, only_tl);
+  const auto max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
 
   for (const auto & prepare_duration : prepare_durations) {
     for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
@@ -1591,7 +1592,9 @@ bool NormalLaneChange::getLaneChangePaths(
           continue;
         }
 
-        if (lane_changing_length + prepare_length > dist_to_next_regulatory_element) {
+        if (
+          ego_dist_to_terminal_start > max_prepare_length &&
+          lane_changing_length + prepare_length > dist_to_next_regulatory_element) {
           debug_print_lat(
             "Reject: length of lane changing path is longer than length to regulatory element!!");
           continue;
