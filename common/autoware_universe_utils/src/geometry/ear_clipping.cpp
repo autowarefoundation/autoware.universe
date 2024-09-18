@@ -17,14 +17,6 @@
 namespace autoware::universe_utils
 {
 
-/// Utils Function
-std::size_t construct_point(
-  const std::size_t index, const Point2d & point, std::vector<LinkedPoint> & points)
-{
-  points.emplace_back(index, point);
-  return index;
-}
-
 void remove_point(const std::size_t p_index, std::vector<LinkedPoint> & points)
 {
   std::size_t prev_index = points[p_index].prev_index.value();
@@ -447,7 +439,6 @@ std::size_t cure_local_intersections(
     } else {
       p = pointsvec[p].next_index.value();
     }
-
   } while (p != start_index && updated);
 
   return filter_points(p, p, pointsvec);

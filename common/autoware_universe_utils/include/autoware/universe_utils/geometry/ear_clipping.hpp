@@ -18,6 +18,7 @@
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
 #include <optional>
+#include <vector>
 
 namespace autoware::universe_utils
 {
