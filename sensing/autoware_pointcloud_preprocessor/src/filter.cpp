@@ -70,7 +70,6 @@ autoware::pointcloud_preprocessor::Filter::Filter(
 {
   // Set parameters (moved from NodeletLazy onInit)
   {
-
     tf_input_frame_ = declare_parameter<std::string>("input_frame");
     tf_output_frame_ = declare_parameter<std::string>("output_frame");
     max_queue_size_ = static_cast<size_t>(declare_parameter<int64_t>("max_queue_size"));
