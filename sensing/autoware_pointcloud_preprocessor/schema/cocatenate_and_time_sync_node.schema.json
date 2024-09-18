@@ -73,7 +73,7 @@
             "type": "number"
           },
           "default": [],
-          "description": "List of LiDAR timestamp noise window."
+          "description": "List of LiDAR timestamp noise windows."
         }
       },
       "required": [
