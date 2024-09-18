@@ -70,9 +70,11 @@ autoware::pointcloud_preprocessor::Filter::Filter(
 {
   // Set parameters (moved from NodeletLazy onInit)
   {
+
     tf_input_frame_ = declare_parameter<std::string>("input_frame");
     tf_output_frame_ = declare_parameter<std::string>("output_frame");
     max_queue_size_ = static_cast<size_t>(declare_parameter<int64_t>("max_queue_size"));
+    has_static_tf_only_ = static_cast<bool>(declare_parameter("has_static_tf_only", false));
 
     // ---[ Optional parameters
     use_indices_ = declare_parameter<bool>("use_indices");
@@ -114,7 +116,17 @@ autoware::pointcloud_preprocessor::Filter::Filter(
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void autoware::pointcloud_preprocessor::Filter::setupTF()
 {
-  static_tf_buffer_ = std::make_unique<autoware::universe_utils::StaticTransformBuffer>();
+  // Always consider static TF if in & out frames are same
+  if (tf_input_frame_ == tf_output_frame_) {
+    if (!has_static_tf_only_) {
+      RCLCPP_INFO(
+        this->get_logger(),
+        "Input and output frames are the same. Overriding has_static_tf_only to true.");
+    }
+    has_static_tf_only_ = true;
+  }
+  managed_tf_buffer_ =
+    std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(this, has_static_tf_only_);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -269,7 +281,7 @@ void autoware::pointcloud_preprocessor::Filter::input_indices_callback(
     // Convert the cloud into the different frame
     PointCloud2 cloud_transformed;
 
-    if (!static_tf_buffer_->transformPointcloud(this, tf_input_frame_, *cloud, cloud_transformed)) {
+    if (!managed_tf_buffer_->transformPointcloud(tf_input_frame_, *cloud, cloud_transformed)) {
       return;
     }
     cloud_tf = std::make_shared<PointCloud2>(cloud_transformed);
@@ -298,8 +310,8 @@ bool autoware::pointcloud_preprocessor::Filter::calculate_transform_matrix(
     this->get_logger(), "[get_transform_matrix] Transforming input dataset from %s to %s.",
     from.header.frame_id.c_str(), target_frame.c_str());
 
-  if (!static_tf_buffer_->getTransform(
-        this, target_frame, from.header.frame_id, transform_info.eigen_transform)) {
+  if (!managed_tf_buffer_->getTransform(
+        target_frame, from.header.frame_id, transform_info.eigen_transform)) {
     return false;
   }
 
@@ -321,8 +333,7 @@ bool autoware::pointcloud_preprocessor::Filter::convert_output_costly(
     // Convert the cloud into the different frame
     auto cloud_transformed = std::make_unique<PointCloud2>();
 
-    if (!static_tf_buffer_->transformPointcloud(
-          this, tf_output_frame_, *output, *cloud_transformed)) {
+    if (!managed_tf_buffer_->transformPointcloud(tf_output_frame_, *output, *cloud_transformed)) {
       RCLCPP_ERROR(
         this->get_logger(),
         "[convert_output_costly] Error converting output dataset from %s to %s.",
@@ -342,8 +353,8 @@ bool autoware::pointcloud_preprocessor::Filter::convert_output_costly(
 
     auto cloud_transformed = std::make_unique<PointCloud2>();
 
-    if (!static_tf_buffer_->transformPointcloud(
-          this, tf_input_orig_frame_, *output, *cloud_transformed)) {
+    if (!managed_tf_buffer_->transformPointcloud(
+          tf_input_orig_frame_, *output, *cloud_transformed)) {
       return false;
     }
 

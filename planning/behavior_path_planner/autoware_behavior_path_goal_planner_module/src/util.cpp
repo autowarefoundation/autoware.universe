@@ -16,6 +16,7 @@
 
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
+#include "autoware_lanelet2_extension/regulatory_elements/bus_stop_area.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
@@ -76,17 +77,6 @@ lanelet::ConstLanelets getPullOverLanes(
   constexpr bool only_route_lanes = false;
   return route_handler.getLaneletSequence(
     outermost_lane, backward_distance_with_buffer, forward_distance, only_route_lanes);
-}
-
-lanelet::ConstLanelets generateExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, const double bound_offset)
-{
-  const auto pull_over_lanes =
-    getPullOverLanes(route_handler, left_side, backward_distance, forward_distance);
-
-  return left_side ? lanelet::utils::getExpandedLanelets(pull_over_lanes, bound_offset, 0.0)
-                   : lanelet::utils::getExpandedLanelets(pull_over_lanes, 0.0, -bound_offset);
 }
 
 static double getOffsetToLanesBoundary(
@@ -259,32 +249,6 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
   return polygon;
 }
 
-PredictedObjects extractObjectsInExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, double bound_offset, const PredictedObjects & objects)
-{
-  const auto lanes = generateExpandedPullOverLanes(
-    route_handler, left_side, backward_distance, forward_distance, bound_offset);
-
-  const auto [objects_in_lanes, others] = utils::path_safety_checker::separateObjectsByLanelets(
-    objects, lanes, [](const auto & obj, const auto & lanelet, const auto yaw_threshold) {
-      return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lanelet, yaw_threshold);
-    });
-
-  return objects_in_lanes;
-}
-
-PredictedObjects extractStaticObjectsInExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, double bound_offset, const PredictedObjects & objects,
-  const double velocity_thresh)
-{
-  const auto objects_in_lanes = extractObjectsInExpandedPullOverLanes(
-    route_handler, left_side, backward_distance, forward_distance, bound_offset, objects);
-
-  return utils::path_safety_checker::filterObjectsByVelocity(objects_in_lanes, velocity_thresh);
-}
-
 PredictedObjects filterObjectsByLateralDistance(
   const Pose & ego_pose, const double vehicle_width, const PredictedObjects & objects,
   const double distance_thresh, const bool filter_inside)
@@ -299,6 +263,40 @@ PredictedObjects filterObjectsByLateralDistance(
   }
 
   return filtered_objects;
+}
+
+bool isIntersectingAreas(
+  const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas)
+{
+  for (const auto & area : areas) {
+    if (boost::geometry::intersects(area, footprint)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool isWithinAreas(
+  const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas)
+{
+  for (const auto & area : areas) {
+    if (boost::geometry::within(footprint, area)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::vector<lanelet::BasicPolygon2d> getBusStopAreaPolygons(const lanelet::ConstLanelets & lanes)
+{
+  std::vector<lanelet::BasicPolygon2d> area_polygons{};
+  for (const auto & bus_stop_area_reg_elem : lanelet::utils::query::busStopAreas(lanes)) {
+    for (const auto & area : bus_stop_area_reg_elem->busStopAreas()) {
+      const auto & area_poly = lanelet::utils::to2D(area).basicPolygon();
+      area_polygons.push_back(area_poly);
+    }
+  }
+  return area_polygons;
 }
 
 MarkerArray createPullOverAreaMarkerArray(
