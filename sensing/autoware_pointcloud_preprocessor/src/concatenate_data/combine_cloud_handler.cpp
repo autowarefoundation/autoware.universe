@@ -237,7 +237,7 @@ Eigen::Matrix4f CombineCloudHandler::computeTransformToAdjustForOldTimestamp(
   if (twist_ptr_queue_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       node_->get_logger(), *node_->get_clock(), std::chrono::milliseconds(10000).count(),
-      "No twist is available. Please confirm twist topic and timestamp");
+      "No twist is available. Please confirm twist topic and timestamp. Leaving point cloud untransformed.");
     return Eigen::Matrix4f::Identity();
   }
 
