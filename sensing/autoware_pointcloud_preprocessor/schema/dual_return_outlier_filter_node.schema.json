@@ -82,7 +82,7 @@
         },
         "weak_first_local_noise_threshold": {
           "type": "integer",
-          "description": "The parameter for determining whether it is noise",
+          "description": "If the number of outliers among weak points is less than the weak_first_local_noise_threshold in the (max_azimuth - min_azimuth) / horizontal_bins interval, all points within the interval will not be filtered out.",
           "default": "2",
           "minimum": 0
         },
