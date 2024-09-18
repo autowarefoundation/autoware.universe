@@ -160,7 +160,7 @@ CombineCloudHandler::combinePointClouds(
             output_frame_, *cloud, *transformed_cloud_ptr, tf_buffer_)) {
         RCLCPP_ERROR(
           node_->get_logger(),
-          "Transform pointcloud from %s to %s failed, Please check the defined output frame.",
+          "Transforming pointcloud from %s to %s failed, please check the defined output frame.",
           cloud->header.frame_id.c_str(), output_frame_.c_str());
         transformed_cloud_ptr = cloud;
       }
