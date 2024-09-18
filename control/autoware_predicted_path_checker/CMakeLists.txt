@@ -20,8 +20,12 @@ ament_auto_add_library(predicted_path_checker SHARED
 
 )
 
+target_include_directories(predicted_path_checker
+  PRIVATE src
+)
+
 rclcpp_components_register_node(predicted_path_checker
-  PLUGIN "autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode"
+  PLUGIN "autoware::predicted_path_checker::PredictedPathCheckerNode"
   EXECUTABLE predicted_path_checker_node
 )
 

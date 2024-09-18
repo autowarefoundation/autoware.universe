@@ -28,6 +28,8 @@
 #include <memory>
 #include <vector>
 
+namespace autoware::predicted_path_checker
+{
 using autoware::motion_utils::createDeletedStopVirtualWallMarker;
 using autoware::motion_utils::createStopVirtualWallMarker;
 using autoware::universe_utils::appendMarkerArray;
@@ -38,8 +40,6 @@ using autoware::universe_utils::createMarkerOrientation;
 using autoware::universe_utils::createMarkerScale;
 using autoware::universe_utils::createPoint;
 
-namespace autoware::motion::control::predicted_path_checker
-{
 PredictedPathCheckerDebugNode::PredictedPathCheckerDebugNode(
   rclcpp::Node * node, const double base_link2front)
 : node_(node), base_link2front_(base_link2front)
@@ -326,4 +326,4 @@ visualization_msgs::msg::MarkerArray PredictedPathCheckerDebugNode::makeVisualiz
   return msg;
 }
 
-}  // namespace autoware::motion::control::predicted_path_checker
+}  // namespace autoware::predicted_path_checker

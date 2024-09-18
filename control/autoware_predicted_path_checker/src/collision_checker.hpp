@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
-#define PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
+#ifndef COLLISION_CHECKER_HPP_
+#define COLLISION_CHECKER_HPP_
 
 #include <autoware/motion_utils/trajectory/conversion.hpp>
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
@@ -40,7 +40,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::predicted_path_checker
+namespace autoware::predicted_path_checker
 {
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
@@ -123,6 +123,6 @@ private:
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
   std::vector<PredictedObjectWithDetectionTime> predicted_object_history_{};
 };
-}  // namespace autoware::motion::control::predicted_path_checker
+}  // namespace autoware::predicted_path_checker
 
-#endif  // PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
+#endif  // COLLISION_CHECKER_HPP_
