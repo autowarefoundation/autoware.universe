@@ -52,7 +52,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "List of input topics."
+          "description": "List of input point cloud topics."
         },
         "output_frame": {
           "type": "string",
