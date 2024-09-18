@@ -28,17 +28,18 @@ void remove_point(const std::size_t p_index, std::vector<LinkedPoint> & points)
 
 std::size_t get_leftmost(const std::size_t start_idx, const std::vector<LinkedPoint> & points)
 {
-  std::size_t p_idx = start_idx;
+  std::optional<std::size_t> p_idx = points[start_idx].next_index;
   std::size_t left_most_idx = start_idx;
-  do {
+
+  while (p_idx.has_value() && p_idx.value() != start_idx) {
     if (
-      points[p_idx].x() < points[left_most_idx].x() ||
-      (points[p_idx].x() == points[left_most_idx].x() &&
-       points[p_idx].y() < points[left_most_idx].y())) {
-      left_most_idx = p_idx;
+      points[p_idx.value()].x() < points[left_most_idx].x() ||
+      (points[p_idx.value()].x() == points[left_most_idx].x() &&
+       points[p_idx.value()].y() < points[left_most_idx].y())) {
+      left_most_idx = p_idx.value();
     }
-    p_idx = points[p_idx].next_index.value();
-  } while (p_idx != start_idx);
+    p_idx = points[p_idx.value()].next_index;
+  }
 
   return left_most_idx;
 }
@@ -65,22 +66,31 @@ double area(
 bool middle_inside(
   const std::size_t a_idx, const std::size_t b_idx, const std::vector<LinkedPoint> & points)
 {
-  std::size_t p_idx = a_idx;
+  std::optional<std::size_t> p_idx = a_idx;
   bool inside = false;
   double px = (points[a_idx].x() + points[b_idx].x()) / 2;
   double py = (points[a_idx].y() + points[b_idx].y()) / 2;
-  do {
+  std::size_t start_idx = a_idx;
+
+  while (p_idx.has_value()) {
+    std::size_t current_idx = p_idx.value();
+    std::size_t next_idx = points[current_idx].next_index.value();
+
     if (
-      ((points[p_idx].y() > py) != (points[points[p_idx].next_index.value()].y() > py)) &&
-      points[points[p_idx].next_index.value()].y() != points[p_idx].y() &&
-      (px < (points[points[p_idx].next_index.value()].x() - points[p_idx].x()) *
-                (py - points[p_idx].y()) /
-                (points[points[p_idx].next_index.value()].y() - points[p_idx].y()) +
-              points[p_idx].x())) {
+      ((points[current_idx].y() > py) != (points[next_idx].y() > py)) &&
+      points[next_idx].y() != points[current_idx].y() &&
+      (px < (points[next_idx].x() - points[current_idx].x()) * (py - points[current_idx].y()) /
+                (points[next_idx].y() - points[current_idx].y()) +
+              points[current_idx].x())) {
       inside = !inside;
     }
-    p_idx = points[p_idx].next_index.value();
-  } while (p_idx != a_idx);
+
+    if (next_idx == start_idx) {
+      break;  // Break the loop if we have cycled back to the start index
+    }
+
+    p_idx = next_idx;
+  }
 
   return inside;
 }
@@ -110,11 +120,21 @@ bool on_segment(
 bool locally_inside(
   const std::size_t a_idx, const std::size_t b_idx, const std::vector<LinkedPoint> & points)
 {
-  return area(points, points[a_idx].prev_index.value(), a_idx, points[a_idx].next_index.value()) < 0
-           ? area(points, a_idx, b_idx, points[a_idx].next_index.value()) >= 0 &&
-               area(points, a_idx, points[a_idx].prev_index.value(), b_idx) >= 0
-           : area(points, a_idx, b_idx, points[a_idx].prev_index.value()) < 0 ||
-               area(points, a_idx, points[a_idx].next_index.value(), b_idx) < 0;
+  const auto & prev_idx = points[a_idx].prev_index;
+  const auto & next_idx = points[a_idx].next_index;
+
+  if (!prev_idx.has_value() || !next_idx.has_value()) {
+    return false;
+  }
+
+  double area_prev = area(points, prev_idx.value(), a_idx, next_idx.value());
+  double area_a_b_next = area(points, a_idx, b_idx, next_idx.value());
+  double area_a_prev_b = area(points, a_idx, prev_idx.value(), b_idx);
+  double area_a_b_prev = area(points, a_idx, b_idx, prev_idx.value());
+  double area_a_next_b = area(points, a_idx, next_idx.value(), b_idx);
+
+  return area_prev < 0 ? area_a_b_next >= 0 && area_a_prev_b >= 0
+                       : area_a_b_prev < 0 || area_a_next_b < 0;
 }
 
 bool intersects(
@@ -140,8 +160,10 @@ bool intersects_polygon(
   const std::vector<LinkedPoint> & points, const std::size_t a_idx, const std::size_t b_idx)
 {
   std::size_t p_idx = a_idx;
-  do {
-    std::size_t p_next_idx = points[p_idx].next_index.value();  // Get the next point in the polygon
+  std::optional<std::size_t> p_next_opt = points[p_idx].next_index;
+
+  while (p_next_opt.has_value() && p_next_opt.value() != a_idx) {
+    std::size_t p_next_idx = p_next_opt.value();
 
     if (p_idx != a_idx && p_next_idx != a_idx && p_idx != b_idx && p_next_idx != b_idx) {
       if (intersects(p_idx, p_next_idx, a_idx, b_idx, points)) {
@@ -150,7 +172,8 @@ bool intersects_polygon(
     }
 
     p_idx = p_next_idx;
-  } while (p_idx != a_idx);
+    p_next_opt = points[p_idx].next_index;
+  }
 
   return false;
 }
@@ -158,6 +181,12 @@ bool intersects_polygon(
 bool is_valid_diagonal(
   const std::size_t a_idx, const std::size_t b_idx, const std::vector<LinkedPoint> & points)
 {
+  if (
+    !points[a_idx].next_index.has_value() || !points[a_idx].prev_index.has_value() ||
+    !points[b_idx].next_index.has_value() || !points[b_idx].prev_index.has_value()) {
+    return false;
+  }
+
   std::size_t a_next_idx = points[a_idx].next_index.value();
   std::size_t a_prev_idx = points[a_idx].prev_index.value();
   std::size_t b_next_idx = points[b_idx].next_index.value();
@@ -182,58 +211,65 @@ bool is_valid_diagonal(
 }
 
 std::size_t insert_point(
-  const std::size_t i, const Point2d & pt, std::vector<LinkedPoint> & pointsvec,
+  const Point2d & pt, std::vector<LinkedPoint> & points,
   const std::optional<std::size_t> last_index)
 {
-  std::size_t p_idx = pointsvec.size();
-  pointsvec.emplace_back(i, pt);
+  std::size_t p_idx = points.size();
+  points.push_back(LinkedPoint(pt));
+
+  // Making sure all next_index and prev_index will always have values
   if (!last_index.has_value()) {
-    pointsvec[p_idx].prev_index = p_idx;
-    pointsvec[p_idx].next_index = p_idx;
+    points[p_idx].prev_index = p_idx;
+    points[p_idx].next_index = p_idx;
   } else {
     std::size_t last = last_index.value();
-    std::size_t next = pointsvec[last].next_index.value();
-    pointsvec[p_idx].prev_index = last;
-    pointsvec[p_idx].next_index = next;
-
-    pointsvec[last].next_index = p_idx;
-    pointsvec[next].prev_index = p_idx;
+    std::size_t next = points[last].next_index.value();
+    points[p_idx].prev_index = last;
+    points[p_idx].next_index = next;
+    points[last].next_index = p_idx;
+    if (next != p_idx) {
+      points[next].prev_index = p_idx;
+    }
   }
 
   return p_idx;
 }
 
 std::size_t linked_list(
-  const LinearRing2d & points, const bool clockwise, std::size_t & vertices,
-  std::vector<LinkedPoint> & pointsvec)
+  const LinearRing2d & ring, const bool clockwise, std::size_t & vertices,
+  std::vector<LinkedPoint> & points)
 {
   double sum = 0;
-  const std::size_t len = points.size();
+  const std::size_t len = ring.size();
   std::optional<std::size_t> last_index = std::nullopt;
 
   for (std::size_t i = 0, j = len > 0 ? len - 1 : 0; i < len; j = i++) {
-    const auto & p1 = points[i];
-    const auto & p2 = points[j];
+    const auto & p1 = ring[i];
+    const auto & p2 = ring[j];
     sum += (p2.x() - p1.x()) * (p1.y() + p2.y());
   }
 
   if (clockwise == (sum > 0)) {
     for (std::size_t i = 0; i < len; i++) {
-      last_index = insert_point(vertices + i, points[i], pointsvec, last_index);
+      last_index = insert_point(ring[i], points, last_index);
     }
   } else {
-    for (size_t i = len; i-- > 0;) {
-      last_index = insert_point(vertices + i, points[i], pointsvec, last_index);
+    for (std::size_t i = len; i-- > 0;) {
+      last_index = insert_point(ring[i], points, last_index);
     }
   }
 
-  if (
-    last_index.has_value() &&
-    equals(last_index.value(), pointsvec[last_index.value()].next_index.value(), pointsvec)) {
-    std::size_t next_index = pointsvec[last_index.value()].next_index.value();
-    remove_point(last_index.value(), pointsvec);
-    last_index = next_index;
+  if (last_index.has_value()) {
+    std::size_t last_idx_value = last_index.value();
+    std::optional<std::size_t> next_index = points[last_idx_value].next_index;
+
+    if (next_index.has_value() && equals(last_idx_value, next_index.value(), points)) {
+      std::size_t next_idx_value = next_index.value();
+      remove_point(last_idx_value, points);
+      last_index = next_idx_value;
+    }
   }
+
   vertices += len;
   return last_index.value();
 }
@@ -241,8 +277,14 @@ std::size_t linked_list(
 bool sector_contains_sector(
   const std::size_t m_idx, const std::size_t p_idx, const std::vector<LinkedPoint> & points)
 {
-  return area(points, points[m_idx].prev_index.value(), m_idx, p_idx) < 0 &&
-         area(points, p_idx, points[m_idx].next_index.value(), m_idx) < 0;
+  if (!points[m_idx].prev_index.has_value() || !points[m_idx].next_index.has_value()) {
+    return false;
+  }
+
+  std::size_t m_prev_idx = points[m_idx].prev_index.value();
+  std::size_t m_next_idx = points[m_idx].next_index.value();
+
+  return area(points, m_prev_idx, m_idx, p_idx) < 0 && area(points, p_idx, m_next_idx, m_idx) < 0;
 }
 
 std::size_t find_hole_bridge(
@@ -253,9 +295,10 @@ std::size_t find_hole_bridge(
   double hx = points[hole_index].x();
   double hy = points[hole_index].y();
   double qx = -std::numeric_limits<double>::infinity();
-  std::optional<std::size_t> bridge_point = std::nullopt;
-  do {
-    std::size_t next_index = points[p].next_index.value();
+  std::optional<std::size_t> bridge_index = std::nullopt;
+  std::size_t next_index = points[p].next_index.value();
+
+  while (p != outer_point_index) {
     if (
       hy <= points[p].y() && hy >= points[next_index].y() &&
       points[next_index].y() != points[p].y()) {
@@ -263,23 +306,25 @@ std::size_t find_hole_bridge(
                                    (points[next_index].y() - points[p].y());
       if (x <= hx && x > qx) {
         qx = x;
-        bridge_point = points[p].x() < points[next_index].x() ? p : next_index;
-        if (x == hx) return bridge_point.value();
+        bridge_index = (points[p].x() < points[next_index].x()) ? p : next_index;
+        if (x == hx) return bridge_index.value();
       }
     }
     p = next_index;
-  } while (p != outer_point_index);
+    next_index = points[p].next_index.value();
+  }
 
-  if (!bridge_point.has_value()) return bridge_point.value();
+  if (!bridge_index.has_value()) return outer_point_index;
 
-  const std::size_t stop = bridge_point.value();
+  const std::size_t stop = bridge_index.value();
   double min_tan = std::numeric_limits<double>::infinity();
 
-  p = bridge_point.value();
-  double mx = points[bridge_point.value()].x();
-  double my = points[bridge_point.value()].y();
+  p = bridge_index.value();
+  double mx = points[p].x();
+  double my = points[p].y();
+  next_index = points[p].next_index.value();
 
-  do {
+  while (p != stop) {
     if (
       hx >= points[p].x() && points[p].x() >= mx && hx != points[p].x() &&
       point_in_triangle(
@@ -289,17 +334,18 @@ std::size_t find_hole_bridge(
       if (
         locally_inside(p, hole_index, points) &&
         (current_tan < min_tan ||
-         (current_tan == min_tan && (points[p].x() > points[bridge_point.value()].x() ||
-                                     sector_contains_sector(bridge_point.value(), p, points))))) {
-        bridge_point = p;
+         (current_tan == min_tan && (points[p].x() > points[bridge_index.value()].x() ||
+                                     sector_contains_sector(bridge_index.value(), p, points))))) {
+        bridge_index = p;
         min_tan = current_tan;
       }
     }
 
-    p = points[p].next_index.value();
-  } while (p != stop);
+    p = next_index;
+    next_index = points[p].next_index.value();
+  }
 
-  return bridge_point.value();
+  return bridge_index.value();
 }
 
 std::size_t split_polygon(
@@ -310,8 +356,8 @@ std::size_t split_polygon(
 
   std::size_t a2_idx = points.size();
   std::size_t b2_idx = points.size() + 1;
-  points.emplace_back(a_index, points[a_index].pt);
-  points.emplace_back(b_index, points[b_index].pt);
+  points.push_back(points[a_index]);
+  points.push_back(points[b_index]);
 
   points[a_index].next_index = b_index;
   points[a2_idx].prev_index = b2_idx;
@@ -330,157 +376,130 @@ std::size_t split_polygon(
 }
 
 std::size_t filter_points(
-  const std::size_t start_index, const std::size_t end_index, std::vector<LinkedPoint> & pointsvec)
+  const std::size_t start_index, const std::size_t end_index, std::vector<LinkedPoint> & points)
 {
   auto p = start_index;
-  bool again = false;
-  do {
+  bool again = true;
+
+  while (again && p != end_index) {
     again = false;
+
     if (
-      !pointsvec[p].steiner &&
-      (equals(p, pointsvec[p].next_index.value(), pointsvec) ||
-       area(pointsvec, pointsvec[p].prev_index.value(), p, pointsvec[p].next_index.value()) == 0)) {
-      remove_point(p, pointsvec);
-      p = pointsvec[p].prev_index.value();
+      !points[p].steiner &&
+      (equals(p, points[p].next_index.value(), points) ||
+       area(points, points[p].prev_index.value(), p, points[p].next_index.value()) == 0)) {
+      remove_point(p, points);
+      p = points[p].prev_index.value();
 
-      if (p == pointsvec[p].next_index.value()) break;
+      if (p == points[p].next_index.value()) {
+        break;
+      }
       again = true;
-
     } else {
-      p = pointsvec[p].next_index.value();
+      p = points[p].next_index.value();
     }
-  } while (again || p != end_index);
+  }
 
   return end_index;
 }
 
 std::size_t eliminate_hole(
-  const std::size_t hole_index, const std::size_t outer_index, std::vector<LinkedPoint> & pointsvec)
+  const std::size_t hole_index, const std::size_t outer_index, std::vector<LinkedPoint> & points)
 {
-  auto bridge = find_hole_bridge(hole_index, outer_index, pointsvec);
-  auto bridge_reverse = split_polygon(bridge, hole_index, pointsvec);
+  auto bridge = find_hole_bridge(hole_index, outer_index, points);
+  auto bridge_reverse = split_polygon(bridge, hole_index, points);
 
-  filter_points(bridge_reverse, pointsvec[bridge_reverse].next_index.value(), pointsvec);
-  return filter_points(bridge, pointsvec[bridge].next_index.value(), pointsvec);
+  auto next_index_bridge_reverse = points[bridge_reverse].next_index.value();
+  filter_points(bridge_reverse, next_index_bridge_reverse, points);
+
+  auto next_index_bridge = points[bridge].next_index.value();
+  return filter_points(bridge, next_index_bridge, points);
 }
 
 std::size_t eliminate_holes(
   const std::vector<LinearRing2d> & inners, std::size_t outer_index, std::size_t & vertices,
-  std::vector<LinkedPoint> & pointsvec)
+  std::vector<LinkedPoint> & points)
 {
   const std::size_t len = inners.size();
   std::vector<std::size_t> queue;
-  for (std::size_t i = 0; i < len; i++) {
-    auto pointsvec_inner = linked_list(inners[i], false, vertices, pointsvec);
 
-    if (pointsvec[pointsvec_inner].next_index == pointsvec_inner) {
-      pointsvec[pointsvec_inner].steiner = true;
+  for (std::size_t i = 0; i < len; ++i) {
+    auto points_inner = linked_list(inners[i], false, vertices, points);
+
+    if (points[points_inner].next_index.value() == points_inner) {
+      points[points_inner].steiner = true;
     }
 
-    queue.push_back(get_leftmost(pointsvec_inner, pointsvec));
+    queue.push_back(get_leftmost(points_inner, points));
   }
+
   std::sort(queue.begin(), queue.end(), [&](std::size_t a, std::size_t b) {
-    return pointsvec[a].x() < pointsvec[b].x();
+    return points[a].x() < points[b].x();
   });
 
   for (const auto & q : queue) {
-    outer_index = eliminate_hole(q, outer_index, pointsvec);
+    outer_index = eliminate_hole(q, outer_index, points);
   }
+
   return outer_index;
 }
 
-bool is_ear(const std::size_t ear_index, const std::vector<LinkedPoint> & pointsvec)
+bool is_ear(const std::size_t ear_index, const std::vector<LinkedPoint> & points)
 {
-  const auto a_index = pointsvec[ear_index].prev_index.value();
+  const auto a_index = points[ear_index].prev_index.value();
   const auto b_index = ear_index;
-  const auto c_index = pointsvec[ear_index].next_index.value();
+  const auto c_index = points[ear_index].next_index.value();
 
-  const auto a = pointsvec[a_index];
-  const auto b = pointsvec[b_index];
-  const auto c = pointsvec[c_index];
+  const auto a = points[a_index];
+  const auto b = points[b_index];
+  const auto c = points[c_index];
 
-  if (area(pointsvec, a_index, b_index, c_index) >= 0) return false;
-  auto p_index = pointsvec[c_index].next_index.value();
+  if (area(points, a_index, b_index, c_index) >= 0) return false;
+  auto p_index = points[c_index].next_index.value();
   while (p_index != a_index) {
-    const auto p = pointsvec[p_index];
+    const auto p = points[p_index];
     if (
       point_in_triangle(a.x(), a.y(), b.x(), b.y(), c.x(), c.y(), p.x(), p.y()) &&
-      area(pointsvec, p.prev_index.value(), p_index, p.next_index.value()) >= 0) {
+      area(points, p.prev_index.value(), p_index, p.next_index.value()) >= 0) {
       return false;
     }
-    p_index = pointsvec[p_index].next_index.value();
+    p_index = points[p_index].next_index.value();
   }
 
   return true;
 }
 
 std::size_t cure_local_intersections(
-  std::size_t start_index, std::vector<std::size_t> & indices, std::vector<LinkedPoint> & pointsvec)
+  std::size_t start_index, std::vector<std::size_t> & indices, std::vector<LinkedPoint> & points)
 {
   auto p = start_index;
   bool updated = false;
 
-  do {
-    auto a = pointsvec[p].prev_index.value();
-    auto b = pointsvec[pointsvec[p].next_index.value()].next_index.value();
+  while (p != start_index || updated) {
+    updated = false;
+    auto a_idx = points[p].prev_index.value();
+    auto b_idx = points[points[p].next_index.value()].next_index.value();
 
     if (
-      !equals(a, b, pointsvec) && intersects(a, p, pointsvec[p].next_index.value(), b, pointsvec) &&
-      locally_inside(a, b, pointsvec) && locally_inside(b, a, pointsvec)) {
-      indices.emplace_back(a);
-      indices.emplace_back(p);
-      indices.emplace_back(b);
+      !equals(a_idx, b_idx, points) &&
+      intersects(
+        a_idx, p, points[points[p].next_index.value()].next_index.value(), b_idx, points) &&
+      locally_inside(a_idx, b_idx, points) && locally_inside(b_idx, a_idx, points)) {
+      indices.push_back(a_idx);
+      indices.push_back(p);
+      indices.push_back(b_idx);
 
-      remove_point(p, pointsvec);
-      remove_point(pointsvec[p].next_index.value(), pointsvec);
+      remove_point(p, points);
+      remove_point(points[p].next_index.value(), points);
 
-      p = start_index = b;
+      p = start_index = b_idx;
       updated = true;
     } else {
-      p = pointsvec[p].next_index.value();
-    }
-  } while (p != start_index && updated);
-
-  return filter_points(p, p, pointsvec);
-}
-
-void ear_clipping_linked(
-  std::size_t ear_index, std::vector<std::size_t> & indices, std::vector<LinkedPoint> & pointsvec,
-  const int pass = 0)
-{
-  auto stop = ear_index;
-  std::optional<std::size_t> next = std::nullopt;
-
-  while (pointsvec[ear_index].prev_index.value() != pointsvec[ear_index].next_index.value()) {
-    next = pointsvec[ear_index].next_index;
-
-    if (is_ear(ear_index, pointsvec)) {
-      indices.emplace_back(pointsvec[ear_index].prev_index.value());
-      indices.emplace_back(ear_index);
-      indices.emplace_back(next.value());
-
-      remove_point(ear_index, pointsvec);
-
-      ear_index = pointsvec[next.value()].next_index.value();
-      stop = pointsvec[next.value()].next_index.value();
-      continue;
-    }
-
-    ear_index = next.value();
-
-    if (ear_index == stop) {
-      if (pass == 0) {
-        ear_clipping_linked(filter_points(ear_index, ear_index, pointsvec), indices, pointsvec, 1);
-      } else if (pass == 1) {
-        ear_index = cure_local_intersections(
-          filter_points(ear_index, ear_index, pointsvec), indices, pointsvec);
-        ear_clipping_linked(ear_index, indices, pointsvec, 2);
-      } else if (pass == 2) {
-        split_ear_clipping(pointsvec, ear_index, indices);
-      }
-      break;
+      p = points[p].next_index.value();
     }
   }
+
+  return filter_points(p, p, points);
 }
 
 void split_ear_clipping(
@@ -505,6 +524,45 @@ void split_ear_clipping(
     }
     a_idx = points[a_idx].next_index.value();
   } while (a_idx != start_idx);
+}
+
+void ear_clipping_linked(
+  std::size_t ear_index, std::vector<std::size_t> & indices, std::vector<LinkedPoint> & points,
+  const int pass)
+{
+  auto stop = ear_index;
+  std::optional<std::size_t> next = std::nullopt;
+
+  while (points[ear_index].prev_index.value() != points[ear_index].next_index.value()) {
+    next = points[ear_index].next_index;
+
+    if (is_ear(ear_index, points)) {
+      indices.push_back(points[ear_index].prev_index.value());
+      indices.push_back(ear_index);
+      indices.push_back(next.value());
+
+      remove_point(ear_index, points);
+
+      ear_index = points[next.value()].next_index.value();
+      stop = points[next.value()].next_index.value();
+      continue;
+    }
+
+    ear_index = next.value();
+
+    if (ear_index == stop) {
+      if (pass == 0) {
+        ear_clipping_linked(filter_points(ear_index, ear_index, points), indices, points, 1);
+      } else if (pass == 1) {
+        ear_index =
+          cure_local_intersections(filter_points(ear_index, ear_index, points), indices, points);
+        ear_clipping_linked(ear_index, indices, points, 2);
+      } else if (pass == 2) {
+        split_ear_clipping(points, ear_index, indices);
+      }
+      break;
+    }
+  }
 }
 
 std::vector<LinkedPoint> perform_triangulation(
