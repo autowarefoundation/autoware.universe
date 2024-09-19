@@ -67,14 +67,15 @@ namespace autoware::pointcloud_preprocessor
 
 CombineCloudHandler::CombineCloudHandler(
   rclcpp::Node * node, std::vector<std::string> input_topics, std::string output_frame,
-  bool is_motion_compensated, bool keep_input_frame_in_synchronized_pointcloud)
+  bool is_motion_compensated, bool keep_input_frame_in_synchronized_pointcloud,
+  bool has_static_tf_only)
 : node_(node),
-  tf_buffer_(node_->get_clock()),
-  tf_listener_(tf_buffer_),
   input_topics_(input_topics),
   output_frame_(output_frame),
   is_motion_compensated_(is_motion_compensated),
-  keep_input_frame_in_synchronized_pointcloud_(keep_input_frame_in_synchronized_pointcloud)
+  keep_input_frame_in_synchronized_pointcloud_(keep_input_frame_in_synchronized_pointcloud),
+  managed_tf_buffer_(
+    std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(node_, has_static_tf_only))
 {
 }
 
@@ -155,18 +156,7 @@ CombineCloudHandler::combinePointClouds(
     sensor_msgs::msg::PointCloud2::SharedPtr cloud = pair.second;
 
     auto transformed_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
-    if (output_frame_ != cloud->header.frame_id) {
-      if (!pcl_ros::transformPointCloud(
-            output_frame_, *cloud, *transformed_cloud_ptr, tf_buffer_)) {
-        RCLCPP_ERROR(
-          node_->get_logger(),
-          "Transforming pointcloud from %s to %s failed, please check the defined output frame.",
-          cloud->header.frame_id.c_str(), output_frame_.c_str());
-        transformed_cloud_ptr = cloud;
-      }
-    } else {
-      transformed_cloud_ptr = cloud;
-    }
+    managed_tf_buffer_->transformPointcloud(output_frame_, *cloud, *transformed_cloud_ptr);
 
     topic_to_original_stamp_map[topic] = rclcpp::Time(cloud->header.stamp).seconds();
 
@@ -212,9 +202,9 @@ CombineCloudHandler::combinePointClouds(
     if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
       sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr_in_sensor_frame(
         new sensor_msgs::msg::PointCloud2());
-      pcl_ros::transformPointCloud(
-        (std::string)cloud->header.frame_id, *transformed_delay_compensated_cloud_ptr,
-        *transformed_cloud_ptr_in_sensor_frame, tf_buffer_);
+      managed_tf_buffer_->transformPointcloud(
+        cloud->header.frame_id, *transformed_delay_compensated_cloud_ptr,
+        *transformed_cloud_ptr_in_sensor_frame);
       transformed_cloud_ptr_in_sensor_frame->header.stamp = oldest_stamp;
       transformed_cloud_ptr_in_sensor_frame->header.frame_id = cloud->header.frame_id;
       topic_to_transformed_cloud_map[topic] = transformed_cloud_ptr_in_sensor_frame;
@@ -237,7 +227,8 @@ Eigen::Matrix4f CombineCloudHandler::computeTransformToAdjustForOldTimestamp(
   if (twist_ptr_queue_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       node_->get_logger(), *node_->get_clock(), std::chrono::milliseconds(10000).count(),
-      "No twist is available. Please confirm twist topic and timestamp. Leaving point cloud untransformed.");
+      "No twist is available. Please confirm twist topic and timestamp. Leaving point cloud "
+      "untransformed.");
     return Eigen::Matrix4f::Identity();
   }
 

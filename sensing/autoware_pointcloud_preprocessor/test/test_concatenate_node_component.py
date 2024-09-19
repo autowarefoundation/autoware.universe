@@ -84,6 +84,7 @@ def generate_test_description():
             ],
             parameters=[
                 {
+                    "has_static_tf_only": False,
                     "maximum_queue_size": 5,
                     "timeout_sec": TIMEOUT_SEC,
                     "is_motion_compensated": True,

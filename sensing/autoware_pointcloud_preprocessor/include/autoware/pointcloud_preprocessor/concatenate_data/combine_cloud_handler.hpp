@@ -64,6 +64,7 @@
 // ROS includes
 #include "autoware_point_types/types.hpp"
 
+#include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
@@ -81,8 +82,6 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/synchronizer.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
 
 namespace autoware::pointcloud_preprocessor
 {
@@ -91,13 +90,12 @@ class CombineCloudHandler
 {
 private:
   rclcpp::Node * node_;
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
 
   std::vector<std::string> input_topics_;
   std::string output_frame_;
   bool is_motion_compensated_;
   bool keep_input_frame_in_synchronized_pointcloud_;
+  std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
   struct RclcppTimeHash_
   {
@@ -112,7 +110,8 @@ public:
 
   CombineCloudHandler(
     rclcpp::Node * node, std::vector<std::string> input_topics, std::string output_frame,
-    bool is_motion_compensated, bool keep_input_frame_in_synchronized_pointcloud);
+    bool is_motion_compensated, bool keep_input_frame_in_synchronized_pointcloud,
+    bool has_static_tf_only);
   void processTwist(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & input);
   void processOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr & input);
 

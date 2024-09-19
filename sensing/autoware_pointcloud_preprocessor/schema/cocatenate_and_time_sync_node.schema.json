@@ -74,6 +74,11 @@
           },
           "default": [],
           "description": "List of LiDAR timestamp noise windows."
+        },
+        "has_static_tf_only": {
+          "type": "boolean",
+          "default": false,
+          "description": "Flag to indicate if only static TF is used."
         }
       },
       "required": [
@@ -88,7 +93,8 @@
         "input_topics",
         "output_frame",
         "lidar_timestamp_offsets",
-        "lidar_timestamp_noise_window"
+        "lidar_timestamp_noise_window",
+        "has_static_tf_only"
       ]
     }
   },

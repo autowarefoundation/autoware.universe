@@ -67,7 +67,6 @@
 #include "combine_cloud_handler.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
-#include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
@@ -108,6 +107,7 @@ public:
 private:
   struct Parameters
   {
+    bool has_static_tf_only;
     int maximum_queue_size;
     double timeout_sec;
     bool is_motion_compensated;
