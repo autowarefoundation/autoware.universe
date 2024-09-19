@@ -56,7 +56,7 @@ private:
 
   std::optional<AngleConversion> angle_conversion_opt_;
 
-  /// @brief 'angle_conversion_failure_num_' counts the number of failures during angle conversion.
+  /// @brief Counts the number of pointclouds for which angle conversion failed.
   int angle_conversion_failure_num_{0};
 
   /// @brief 'failure_tolerance_' allows for failures when the input point clouds do not contain
