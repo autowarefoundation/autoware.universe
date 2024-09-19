@@ -1519,7 +1519,7 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
 
     const auto max_lane_changing_length = std::invoke([&]() {
       double max_length =
-        ego_dist_to_terminal_start > max_prepare_length
+        dist_to_terminal_start > max_prepare_length
           ? std::min(dist_to_terminal_end, dist_to_next_regulatory_element) - prep_metric.length
           : dist_to_terminal_end - prep_metric.length;
       auto target_lane_buffer =
