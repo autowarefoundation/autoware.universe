@@ -1973,7 +1973,7 @@ bool NormalLaneChange::calcAbortPath()
   }
 
   if (!utils::lane_change::hasEnoughLengthToLaneChangeAfterAbort(
-        common_data_ptr_, common_data_ptr_->transient_data, abort_return_dist)) {
+        common_data_ptr_->transient_data, abort_return_dist)) {
     RCLCPP_ERROR(logger_, "insufficient distance to abort.");
     return false;
   }
