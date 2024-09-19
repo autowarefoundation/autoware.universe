@@ -230,9 +230,7 @@ bool NormalLaneChange::is_near_regulatory_element() const
 
   const auto max_prepare_length = common_data_ptr_->transient_data.maximum_prepare_length;
   const auto dist_to_terminal_start =
-    calculation::calc_dist_from_pose_to_terminal_end(
-      common_data_ptr_, current_lanes, common_data_ptr_->get_ego_pose()) -
-    common_data_ptr_->transient_data.current_dist_buffer.min;
+    common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start;
 
   if (dist_to_terminal_start <= max_prepare_length) return false;
 
@@ -1424,8 +1422,8 @@ bool NormalLaneChange::getLaneChangePaths(
         current_velocity, getCommonParam().max_vel, longitudinal_acc_on_prepare, prepare_duration);
 
       const auto ego_dist_to_terminal_start =
-        common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_end -
-        common_data_ptr_->transient_data.current_dist_buffer.min;
+        common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start;
+
       if (prepare_length > ego_dist_to_terminal_start) {
         RCLCPP_DEBUG(
           logger_,
