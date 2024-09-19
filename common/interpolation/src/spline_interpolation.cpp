@@ -14,6 +14,7 @@
 
 #include "interpolation/spline_interpolation.hpp"
 
+#include <cstdint>
 #include <vector>
 
 namespace
@@ -45,7 +46,7 @@ Eigen::VectorXd solve_tridiagonal_matrix_algorithm(
   // Back substitution
   x(n - 1) = d_prime(n - 1);
 
-  for (auto i = n - 2; i >= 0; i--) {
+  for (int64_t i = n - 2; i >= 0; i--) {
     x(i) = d_prime(i) - c_prime(i) * x(i + 1);
   }
 
