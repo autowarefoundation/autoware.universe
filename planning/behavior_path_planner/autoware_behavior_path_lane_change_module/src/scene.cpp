@@ -138,9 +138,9 @@ void NormalLaneChange::update_transient_data()
     calculation::calc_maximum_prepare_length(common_data_ptr_);
 
   common_data_ptr_->transient_data.is_ego_near_current_terminal_start = std::invoke([&]() -> bool {
-    return common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start < common_data_ptr_->transient_data.maximum_prepare_length;
+    return common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start <
+           common_data_ptr_->transient_data.maximum_prepare_length;
   });
-
 }
 
 void NormalLaneChange::update_filtered_objects()
@@ -198,7 +198,9 @@ bool NormalLaneChange::isLaneChangeRequired()
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  if(!common_data_ptr_ || !common_data_ptr_->is_data_available() || !common_data_ptr_->is_lanes_available()){
+  if (
+    !common_data_ptr_ || !common_data_ptr_->is_data_available() ||
+    !common_data_ptr_->is_lanes_available()) {
     return false;
   }
 
