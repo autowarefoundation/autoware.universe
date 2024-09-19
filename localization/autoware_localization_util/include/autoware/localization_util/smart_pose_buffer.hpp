@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LOCALIZATION_UTIL__SMART_POSE_BUFFER_HPP_
-#define LOCALIZATION_UTIL__SMART_POSE_BUFFER_HPP_
+#ifndef AUTOWARE__LOCALIZATION_UTIL__SMART_POSE_BUFFER_HPP_
+#define AUTOWARE__LOCALIZATION_UTIL__SMART_POSE_BUFFER_HPP_
 
-#include "localization_util/util_func.hpp"
+#include "autoware/localization_util/util_func.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,6 +23,8 @@
 
 #include <deque>
 
+namespace autoware::localization_util
+{
 class SmartPoseBuffer
 {
 private:
@@ -64,5 +66,6 @@ private:
     const geometry_msgs::msg::Point & target_point,
     const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_) const;
 };
+}  // namespace autoware::localization_util
 
-#endif  // LOCALIZATION_UTIL__SMART_POSE_BUFFER_HPP_
+#endif  // AUTOWARE__LOCALIZATION_UTIL__SMART_POSE_BUFFER_HPP_

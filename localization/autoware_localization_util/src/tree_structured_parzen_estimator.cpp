@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "localization_util/tree_structured_parzen_estimator.hpp"
+#include "autoware/localization_util/tree_structured_parzen_estimator.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <numeric>
 
+namespace autoware::localization_util
+{
 // random number generator
 std::mt19937_64 TreeStructuredParzenEstimator::engine(0);
 
@@ -177,3 +179,4 @@ double TreeStructuredParzenEstimator::log_gaussian_pdf(
   }
   return result;
 }
+}  // namespace autoware::localization_util

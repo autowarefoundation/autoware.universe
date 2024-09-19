@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
-project(localization_util)
+project(autoware_localization_util)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_library(localization_util SHARED
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/util_func.cpp
   src/diagnostics_module.cpp
   src/smart_pose_buffer.cpp

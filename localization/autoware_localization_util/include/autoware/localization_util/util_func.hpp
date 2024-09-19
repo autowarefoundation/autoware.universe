@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LOCALIZATION_UTIL__UTIL_FUNC_HPP_
-#define LOCALIZATION_UTIL__UTIL_FUNC_HPP_
+#ifndef AUTOWARE__LOCALIZATION_UTIL__UTIL_FUNC_HPP_
+#define AUTOWARE__LOCALIZATION_UTIL__UTIL_FUNC_HPP_
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -36,6 +36,8 @@
 #include <string>
 #include <vector>
 
+namespace autoware::localization_util
+{
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
 std_msgs::msg::ColorRGBA exchange_color_crc(double x);
 
@@ -81,4 +83,6 @@ void output_pose_with_cov_to_log(
   const rclcpp::Logger & logger, const std::string & prefix,
   const geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov);
 
-#endif  // LOCALIZATION_UTIL__UTIL_FUNC_HPP_
+}  // namespace autoware::localization_util
+
+#endif  // AUTOWARE__LOCALIZATION_UTIL__UTIL_FUNC_HPP_
