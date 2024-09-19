@@ -162,16 +162,26 @@ private:
    */
   void removeCandidateRTCStatus()
   {
+    bool candidate_registered = false;
+
     if (rtc_interface_ptr_map_.at("left")->isRegistered(candidate_uuid_)) {
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         candidate_uuid_, true, State::FAILED, std::numeric_limits<double>::lowest(),
         std::numeric_limits<double>::lowest(), clock_->now());
+      candidate_registered = true;
     }
 
     if (rtc_interface_ptr_map_.at("right")->isRegistered(candidate_uuid_)) {
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         candidate_uuid_, true, State::FAILED, std::numeric_limits<double>::lowest(),
         std::numeric_limits<double>::lowest(), clock_->now());
+      candidate_registered = true;
+    }
+
+    if (candidate_registered) {
+      uuid_map_.at("left") = generateUUID();
+      uuid_map_.at("right") = generateUUID();
+      candidate_uuid_ = generateUUID();
     }
   }
 
