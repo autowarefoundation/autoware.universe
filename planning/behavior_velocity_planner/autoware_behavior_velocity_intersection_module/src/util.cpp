@@ -221,7 +221,8 @@ void retrievePathsBackward(
   const std::vector<size_t> & visited_indices, std::vector<std::vector<size_t>> & paths)
 {
   const auto & next_indices = adjacency.at(src_index);
-  const bool is_terminal = (std::find(next_indices.begin(), next_indices.end(), true) == next_indices.end());
+  const bool is_terminal =
+    (std::find(next_indices.begin(), next_indices.end(), true) == next_indices.end());
   if (is_terminal) {
     std::vector<size_t> path(visited_indices.begin(), visited_indices.end());
     path.push_back(src_index);
