@@ -446,9 +446,6 @@ private:
       initializeOccupancyGridMap(planner_data, parameters);
     };
     GoalPlannerParameters parameters;
-    std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params;
-    std::shared_ptr<ObjectsFilteringParams> objects_filtering_params;
-    std::shared_ptr<SafetyCheckParams> safety_check_params;
     autoware::universe_utils::LinearRing2d vehicle_footprint;
 
     PlannerData planner_data;
@@ -464,12 +461,8 @@ private:
     void updateOccupancyGrid();
     GoalPlannerData clone() const;
     void update(
-      const GoalPlannerParameters & parameters,
-      const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params_,
-      const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params_,
-      const std::shared_ptr<SafetyCheckParams> & safety_check_params_,
-      const PlannerData & planner_data, const ModuleStatus & current_status,
-      const BehaviorModuleOutput & previous_module_output,
+      const GoalPlannerParameters & parameters, const PlannerData & planner_data,
+      const ModuleStatus & current_status, const BehaviorModuleOutput & previous_module_output,
       const std::shared_ptr<GoalSearcherBase> goal_searcher_,
       const autoware::universe_utils::LinearRing2d & vehicle_footprint);
 

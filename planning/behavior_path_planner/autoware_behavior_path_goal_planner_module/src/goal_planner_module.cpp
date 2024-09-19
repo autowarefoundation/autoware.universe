@@ -209,9 +209,6 @@ void GoalPlannerModule::onTimer()
   std::optional<BehaviorModuleOutput> previous_module_output_opt{std::nullopt};
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map{nullptr};
   std::optional<GoalPlannerParameters> parameters_opt{std::nullopt};
-  std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params{nullptr};
-  std::shared_ptr<ObjectsFilteringParams> objects_filtering_params{nullptr};
-  std::shared_ptr<SafetyCheckParams> safety_check_params{nullptr};
   std::shared_ptr<GoalSearcherBase> goal_searcher{nullptr};
 
   // begin of critical section
@@ -224,23 +221,18 @@ void GoalPlannerModule::onTimer()
       previous_module_output_opt = gp_planner_data.previous_module_output;
       occupancy_grid_map = gp_planner_data.occupancy_grid_map;
       parameters_opt = gp_planner_data.parameters;
-      ego_predicted_path_params = gp_planner_data.ego_predicted_path_params;
-      objects_filtering_params = gp_planner_data.objects_filtering_params;
-      safety_check_params = gp_planner_data.safety_check_params;
       goal_searcher = gp_planner_data.goal_searcher;
     }
   }
   // end of critical section
   if (
     !local_planner_data || !current_status_opt || !previous_module_output_opt ||
-    !occupancy_grid_map || !parameters_opt || !ego_predicted_path_params ||
-    !objects_filtering_params || !safety_check_params || !goal_searcher) {
+    !occupancy_grid_map || !parameters_opt || !goal_searcher) {
     RCLCPP_ERROR(
       getLogger(),
       "failed to get valid "
       "local_planner_data/current_status/previous_module_output/occupancy_grid_map/parameters_opt/"
-      "ego_predicted_path_params/objects_filtering_params/safety_check_params/goal_searcher in "
-      "onTimer");
+      "goal_searcher in onTimer");
     return;
   }
   const auto & current_status = current_status_opt.value();
@@ -514,8 +506,7 @@ void GoalPlannerModule::updateData()
     // **re-pointing** by `planner_data_->foo = msg` in behavior_path_planner::onCallbackFor(msg)
     // and if these two coincided, only the reference count is affected
     gp_planner_data.update(
-      *parameters_, ego_predicted_path_params_, objects_filtering_params_, safety_check_params_,
-      *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
+      *parameters_, *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
       vehicle_footprint_);
     // NOTE: RouteHandler holds several shared pointers in it, so just copying PlannerData as
     // value does not adds the reference counts of RouteHandler.lanelet_map_ptr_ and others. Since
@@ -583,6 +574,7 @@ void GoalPlannerModule::updateData()
   if (!last_approval_data_) {
     last_approval_data_ =
       std::make_unique<LastApprovalData>(clock_->now(), planner_data_->self_odometry->pose.pose);
+    // TODO(soblin): do not "plan" in updateData
     decideVelocity();
   }
 }
@@ -2565,25 +2557,18 @@ GoalPlannerModule::GoalPlannerData GoalPlannerModule::GoalPlannerData::clone() c
 {
   GoalPlannerModule::GoalPlannerData gp_planner_data(planner_data, parameters);
   gp_planner_data.update(
-    parameters, ego_predicted_path_params, objects_filtering_params, safety_check_params,
-    planner_data, current_status, previous_module_output, goal_searcher, vehicle_footprint);
+    parameters, planner_data, current_status, previous_module_output, goal_searcher,
+    vehicle_footprint);
   return gp_planner_data;
 }
 
 void GoalPlannerModule::GoalPlannerData::update(
-  const GoalPlannerParameters & parameters_,
-  const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params_,
-  const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params_,
-  const std::shared_ptr<SafetyCheckParams> & safety_check_params_,
-  const PlannerData & planner_data_, const ModuleStatus & current_status_,
-  const BehaviorModuleOutput & previous_module_output_,
+  const GoalPlannerParameters & parameters_, const PlannerData & planner_data_,
+  const ModuleStatus & current_status_, const BehaviorModuleOutput & previous_module_output_,
   const std::shared_ptr<GoalSearcherBase> goal_searcher_,
   const autoware::universe_utils::LinearRing2d & vehicle_footprint_)
 {
   parameters = parameters_;
-  ego_predicted_path_params = ego_predicted_path_params_;
-  objects_filtering_params = objects_filtering_params_;
-  safety_check_params = safety_check_params_;
   vehicle_footprint = vehicle_footprint_;
 
   planner_data = planner_data_;
