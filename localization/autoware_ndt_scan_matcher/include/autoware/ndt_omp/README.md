@@ -4,4 +4,4 @@ The codes in this directory are derived from <https://github.com/tier4/ndt_omp>,
 
 We use this code in accordance with the LICENSE, and we have directly confirmed this with Mr. Kenji Koide.
 
-We sincerely appreciate Mr. Koide’s support and contributions.
+We sincerely appreciate Dr. Koide’s support and contributions.
