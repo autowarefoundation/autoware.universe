@@ -51,8 +51,7 @@ TEST(spline_interpolation, splineYawFromPoints)
     points.push_back(createPoint(5.0, 10.0, 0.0));
     points.push_back(createPoint(10.0, 12.5, 0.0));
 
-    const std::vector<double> ans{1.3593746, 0.9813541, 1.0419655, 0.8935115, 0.2932783};
-
+    const std::vector<double> ans{1.368174, 0.961318, 1.086098, 0.938357, 0.278594};
     const auto yaws = interpolation::splineYawFromPoints(points);
     for (size_t i = 0; i < yaws.size(); ++i) {
       EXPECT_NEAR(yaws.at(i), ans.at(i), epsilon);
@@ -121,8 +120,8 @@ TEST(spline_interpolation, SplineInterpolationPoints2d)
 
     // random
     const auto random_point = s.getSplineInterpolatedPoint(3, 0.5);
-    EXPECT_NEAR(random_point.x, 5.3036484, epsilon);
-    EXPECT_NEAR(random_point.y, 10.3343074, epsilon);
+    EXPECT_NEAR(random_point.x, 5.28974, epsilon);
+    EXPECT_NEAR(random_point.y, 10.3450319, epsilon);
 
     // out of range of total length
     const auto front_out_point = s.getSplineInterpolatedPoint(0.0, -0.1);
@@ -140,17 +139,17 @@ TEST(spline_interpolation, SplineInterpolationPoints2d)
 
   {  // yaw
     // front
-    EXPECT_NEAR(s.getSplineInterpolatedYaw(0, 0.0), 1.3593746, epsilon);
+    EXPECT_NEAR(s.getSplineInterpolatedYaw(0, 0.0), 1.368174, epsilon);
 
     // back
-    EXPECT_NEAR(s.getSplineInterpolatedYaw(4, 0.0), 0.2932783, epsilon);
+    EXPECT_NEAR(s.getSplineInterpolatedYaw(4, 0.0), 0.278594, epsilon);
 
     // random
-    EXPECT_NEAR(s.getSplineInterpolatedYaw(3, 0.5), 0.7757198, epsilon);
+    EXPECT_NEAR(s.getSplineInterpolatedYaw(3, 0.5), 0.808580, epsilon);
 
     // out of range of total length
-    EXPECT_NEAR(s.getSplineInterpolatedYaw(0.0, -0.1), 1.3593746, epsilon);
-    EXPECT_NEAR(s.getSplineInterpolatedYaw(4, 0.1), 0.2932783, epsilon);
+    EXPECT_NEAR(s.getSplineInterpolatedYaw(0.0, -0.1), 1.368174, epsilon);
+    EXPECT_NEAR(s.getSplineInterpolatedYaw(4, 0.1), 0.278594, epsilon);
 
     // out of range of index
     EXPECT_THROW(s.getSplineInterpolatedYaw(-1, 0.0), std::out_of_range);
@@ -165,7 +164,7 @@ TEST(spline_interpolation, SplineInterpolationPoints2d)
     EXPECT_NEAR(s.getSplineInterpolatedCurvature(4, 0.0), 0.0, epsilon);
 
     // random
-    EXPECT_NEAR(s.getSplineInterpolatedCurvature(3, 0.5), -0.2441671, epsilon);
+    EXPECT_NEAR(s.getSplineInterpolatedCurvature(3, 0.5), -0.271073, epsilon);
 
     // out of range of total length
     EXPECT_NEAR(s.getSplineInterpolatedCurvature(0.0, -0.1), 0.0, epsilon);

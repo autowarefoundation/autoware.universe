@@ -18,10 +18,10 @@
 #define FMT_HEADER_ONLY
 
 #include "autoware/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h"
+#include "autoware/localization_util/diagnostics_module.hpp"
+#include "autoware/localization_util/smart_pose_buffer.hpp"
 #include "autoware/ndt_scan_matcher/hyper_parameters.hpp"
 #include "autoware/ndt_scan_matcher/map_update_module.hpp"
-#include "localization_util/diagnostics_module.hpp"
-#include "localization_util/smart_pose_buffer.hpp"
 
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -202,13 +202,13 @@ private:
   Eigen::Matrix4f base_to_sensor_matrix_;
 
   std::mutex ndt_ptr_mtx_;
-  std::unique_ptr<SmartPoseBuffer> initial_pose_buffer_;
+  std::unique_ptr<autoware::localization_util::SmartPoseBuffer> initial_pose_buffer_;
 
   // Keep latest position for dynamic map loading
   std::mutex latest_ekf_position_mtx_;
   std::optional<geometry_msgs::msg::Point> latest_ekf_position_ = std::nullopt;
 
-  std::unique_ptr<SmartPoseBuffer> regularization_pose_buffer_;
+  std::unique_ptr<autoware::localization_util::SmartPoseBuffer> regularization_pose_buffer_;
 
   std::atomic<bool> is_activated_;
   std::unique_ptr<DiagnosticsModule> diagnostics_scan_points_;

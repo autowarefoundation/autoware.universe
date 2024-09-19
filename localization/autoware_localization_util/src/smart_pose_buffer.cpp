@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "localization_util/smart_pose_buffer.hpp"
+#include "autoware/localization_util/smart_pose_buffer.hpp"
 
+namespace autoware::localization_util
+{
 SmartPoseBuffer::SmartPoseBuffer(
   const rclcpp::Logger & logger, const double & pose_timeout_sec,
   const double & pose_distance_tolerance_meters)
@@ -153,3 +155,4 @@ bool SmartPoseBuffer::validate_position_difference(
   }
   return success;
 }
+}  // namespace autoware::localization_util

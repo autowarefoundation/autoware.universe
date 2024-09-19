@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "localization_util/util_func.hpp"
+#include "autoware/localization_util/util_func.hpp"
 
-#include "localization_util/matrix_type.hpp"
+#include "autoware/localization_util/matrix_type.hpp"
 
+namespace autoware::localization_util
+{
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
 std_msgs::msg::ColorRGBA exchange_color_crc(double x)
 {
@@ -249,3 +251,4 @@ void output_pose_with_cov_to_log(
                        << covariance(1, 1) << "," << covariance(2, 2) << "," << covariance(3, 3)
                        << "," << covariance(4, 4) << "," << covariance(5, 5));
 }
+}  // namespace autoware::localization_util

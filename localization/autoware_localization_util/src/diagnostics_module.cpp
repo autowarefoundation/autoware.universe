@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "localization_util/diagnostics_module.hpp"
+#include "autoware/localization_util/diagnostics_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <string>
 
+namespace autoware::localization_util
+{
 DiagnosticsModule::DiagnosticsModule(rclcpp::Node * node, const std::string & diagnostic_name)
 : clock_(node->get_clock())
 {
@@ -103,3 +105,4 @@ diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::create_diagnostics_arra
 
   return diagnostics_msg;
 }
+}  // namespace autoware::localization_util

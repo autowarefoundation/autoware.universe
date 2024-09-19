@@ -15,10 +15,10 @@
 #include "autoware/ndt_scan_matcher/ndt_scan_matcher_core.hpp"
 
 #include "autoware/ndt_omp/estimate_covariance/estimate_covariance.hpp"
+#include "autoware/localization_util/matrix_type.hpp"
+#include "autoware/localization_util/tree_structured_parzen_estimator.hpp"
+#include "autoware/localization_util/util_func.hpp"
 #include "autoware/ndt_scan_matcher/particle.hpp"
-#include "localization_util/matrix_type.hpp"
-#include "localization_util/tree_structured_parzen_estimator.hpp"
-#include "localization_util/util_func.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
@@ -39,6 +39,14 @@
 
 namespace autoware::ndt_scan_matcher
 {
+using autoware::localization_util::exchange_color_crc;
+using autoware::localization_util::matrix4f_to_pose;
+using autoware::localization_util::point_to_vector3d;
+using autoware::localization_util::pose_to_matrix4f;
+
+using autoware::localization_util::DiagnosticsModule;
+using autoware::localization_util::SmartPoseBuffer;
+using autoware::localization_util::TreeStructuredParzenEstimator;
 
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)
@@ -593,8 +601,8 @@ bool NDTScanMatcher::callback_sensor_points_main(
   }
 
   // check distance_initial_to_result
-  const auto distance_initial_to_result = static_cast<double>(
-    norm(interpolation_result.interpolated_pose.pose.pose.position, result_pose_msg.position));
+  const auto distance_initial_to_result = static_cast<double>(autoware::localization_util::norm(
+    interpolation_result.interpolated_pose.pose.pose.position, result_pose_msg.position));
   diagnostics_scan_points_->add_key_value("distance_initial_to_result", distance_initial_to_result);
   if (distance_initial_to_result > param_.validation.initial_to_result_distance_tolerance_m) {
     std::stringstream message;
@@ -798,18 +806,18 @@ void NDTScanMatcher::publish_initial_to_result(
   initial_to_result_relative_pose_stamped.header.frame_id = param_.frame.map_frame;
   initial_to_result_relative_pose_pub_->publish(initial_to_result_relative_pose_stamped);
 
-  const auto initial_to_result_distance =
-    static_cast<float>(norm(initial_pose_cov_msg.pose.pose.position, result_pose_msg.position));
+  const auto initial_to_result_distance = static_cast<float>(autoware::localization_util::norm(
+    initial_pose_cov_msg.pose.pose.position, result_pose_msg.position));
   initial_to_result_distance_pub_->publish(
     make_float32_stamped(sensor_ros_time, initial_to_result_distance));
 
-  const auto initial_to_result_distance_old =
-    static_cast<float>(norm(initial_pose_old_msg.pose.pose.position, result_pose_msg.position));
+  const auto initial_to_result_distance_old = static_cast<float>(autoware::localization_util::norm(
+    initial_pose_old_msg.pose.pose.position, result_pose_msg.position));
   initial_to_result_distance_old_pub_->publish(
     make_float32_stamped(sensor_ros_time, initial_to_result_distance_old));
 
-  const auto initial_to_result_distance_new =
-    static_cast<float>(norm(initial_pose_new_msg.pose.pose.position, result_pose_msg.position));
+  const auto initial_to_result_distance_new = static_cast<float>(autoware::localization_util::norm(
+    initial_pose_new_msg.pose.pose.position, result_pose_msg.position));
   initial_to_result_distance_new_pub_->publish(
     make_float32_stamped(sensor_ros_time, initial_to_result_distance_new));
 }
@@ -1010,7 +1018,8 @@ void NDTScanMatcher::service_ndt_align_main(
   diagnostics_ndt_align_->add_key_value("is_succeed_transform_initial_pose", true);
 
   // transform pose_frame to map_frame
-  auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
+  auto initial_pose_msg_in_map_frame =
+    autoware::localization_util::transform(req->pose_with_covariance, transform_s2t);
   initial_pose_msg_in_map_frame.header.stamp = req->pose_with_covariance.header.stamp;
   map_update_module_->update_map(
     initial_pose_msg_in_map_frame.pose.pose.position, diagnostics_ndt_align_);
@@ -1062,10 +1071,11 @@ void NDTScanMatcher::service_ndt_align_main(
 std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> NDTScanMatcher::align_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
-  output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
+  autoware::localization_util::output_pose_with_cov_to_log(
+    get_logger(), "align_pose_input", initial_pose_with_cov);
 
-  const auto base_rpy = get_rpy(initial_pose_with_cov);
-  const Eigen::Map<const RowMatrixXd> covariance = {
+  const auto base_rpy = autoware::localization_util::get_rpy(initial_pose_with_cov);
+  const Eigen::Map<const autoware::localization_util::RowMatrixXd> covariance = {
     initial_pose_with_cov.pose.covariance.data(), 6, 6};
   const double stddev_x = std::sqrt(covariance(0, 0));
   const double stddev_y = std::sqrt(covariance(1, 1));
@@ -1127,7 +1137,7 @@ std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> NDTScanMatcher
     }
 
     const geometry_msgs::msg::Pose pose = matrix4f_to_pose(ndt_result.pose);
-    const geometry_msgs::msg::Vector3 rpy = get_rpy(pose);
+    const geometry_msgs::msg::Vector3 rpy = autoware::localization_util::get_rpy(pose);
 
     TreeStructuredParzenEstimator::Input result(6);
     result[0] = pose.position.x;
@@ -1154,7 +1164,8 @@ std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> NDTScanMatcher
   result_pose_with_cov_msg.header.frame_id = param_.frame.map_frame;
   result_pose_with_cov_msg.pose.pose = best_particle_ptr->result_pose;
 
-  output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
+  autoware::localization_util::output_pose_with_cov_to_log(
+    get_logger(), "align_pose_output", result_pose_with_cov_msg);
   diagnostics_ndt_align_->add_key_value("best_particle_score", best_particle_ptr->score);
 
   return std::make_tuple(result_pose_with_cov_msg, best_particle_ptr->score);
