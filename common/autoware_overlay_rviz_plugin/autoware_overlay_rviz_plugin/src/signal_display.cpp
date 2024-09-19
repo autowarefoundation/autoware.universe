@@ -494,6 +494,5 @@ void SignalDisplay::topic_updated_traffic()
 
 }  // namespace autoware_overlay_rviz_plugin
 
-// Check cppcheck ci :todo remove this comment
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(autoware_overlay_rviz_plugin::SignalDisplay, rviz_common::Display)
