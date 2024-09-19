@@ -24,5 +24,3 @@
     enable_cog_on_centerline: false
     input_path_interval: 2.0
     output_path_interval: 2.0
-
-    visualize_maximum_drivable_area: true
