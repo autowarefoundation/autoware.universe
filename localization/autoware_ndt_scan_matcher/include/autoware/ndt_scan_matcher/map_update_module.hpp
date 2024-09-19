@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 #define AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
+#include "autoware/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h"
 #include "autoware/ndt_scan_matcher/hyper_parameters.hpp"
 #include "autoware/ndt_scan_matcher/particle.hpp"
 #include "localization_util/diagnostics_module.hpp"
@@ -30,7 +31,6 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
-#include <multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <map>

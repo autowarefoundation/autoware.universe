@@ -17,6 +17,7 @@
 
 #define FMT_HEADER_ONLY
 
+#include "autoware/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h"
 #include "autoware/ndt_scan_matcher/hyper_parameters.hpp"
 #include "autoware/ndt_scan_matcher/map_update_module.hpp"
 #include "localization_util/diagnostics_module.hpp"
@@ -38,7 +39,6 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
-#include <multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl/point_types.h>
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/buffer.h>

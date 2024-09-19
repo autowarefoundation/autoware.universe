@@ -22,8 +22,23 @@ else()
   endif()
 endif()
 
+find_package(OpenMP)
+
 find_package(PCL REQUIRED COMPONENTS common io registration)
 include_directories(${PCL_INCLUDE_DIRS})
+
+ament_auto_add_library(multigrid_ndt_omp SHARED
+  src/ndt_omp/multigrid_pclomp/multi_voxel_grid_covariance_omp.cpp
+  src/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.cpp
+  src/ndt_omp/estimate_covariance/estimate_covariance.cpp
+)
+target_link_libraries(multigrid_ndt_omp ${PCL_LIBRARIES})
+
+if(OpenMP_CXX_FOUND)
+  target_link_libraries(multigrid_ndt_omp OpenMP::OpenMP_CXX)
+else()
+  message(WARNING "OpenMP not found")
+endif()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/map_update_module.cpp
@@ -32,7 +47,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} multigrid_ndt_omp)
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::ndt_scan_matcher::NDTScanMatcher"
