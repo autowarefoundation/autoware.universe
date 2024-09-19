@@ -65,6 +65,9 @@
 
 #include <pcl/registration/registration.h>
 
+#include <string>
+#include <vector>
+
 namespace pclomp
 {
 
