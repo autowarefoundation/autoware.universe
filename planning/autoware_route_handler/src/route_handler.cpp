@@ -2044,7 +2044,7 @@ Pose RouteHandler::getPoseFrom2DArcLength(
   double accumulated_distance2d = 0;
   for (const auto & llt : lanelet_sequence) {
     const auto & centerline = llt.centerline();
-    for (auto it = centerline.begin(); it < centerline.end() - 1; ++it) {
+    for (auto it = centerline.begin(); std::next(it) != centerline.end(); ++it) {
       const auto pt = *it;
       const auto next_pt = *std::next(it);
       const double distance2d = lanelet::geometry::distance2d(to2D(pt), to2D(next_pt));
