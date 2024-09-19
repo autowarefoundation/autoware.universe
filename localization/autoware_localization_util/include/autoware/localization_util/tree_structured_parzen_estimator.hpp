@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LOCALIZATION_UTIL__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
-#define LOCALIZATION_UTIL__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
+#ifndef AUTOWARE__LOCALIZATION_UTIL__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
+#define AUTOWARE__LOCALIZATION_UTIL__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
 
 /*
 A implementation of tree-structured parzen estimator (TPE)
@@ -28,6 +28,8 @@ https://github.com/optuna/optuna
 #include <random>
 #include <vector>
 
+namespace autoware::localization_util
+{
 class TreeStructuredParzenEstimator
 {
 public:
@@ -80,5 +82,6 @@ private:
   const std::vector<double> sample_stddev_;
   Input base_stddev_;
 };
+}  // namespace autoware::localization_util
 
-#endif  // LOCALIZATION_UTIL__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
+#endif  // AUTOWARE__LOCALIZATION_UTIL__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_

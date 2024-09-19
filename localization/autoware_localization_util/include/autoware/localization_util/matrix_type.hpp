@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LOCALIZATION_UTIL__MATRIX_TYPE_HPP_
-#define LOCALIZATION_UTIL__MATRIX_TYPE_HPP_
+#ifndef AUTOWARE__LOCALIZATION_UTIL__MATRIX_TYPE_HPP_
+#define AUTOWARE__LOCALIZATION_UTIL__MATRIX_TYPE_HPP_
 
 #include <Eigen/Core>
 
+namespace autoware::localization_util
+{
 using Matrix6d = Eigen::Matrix<double, 6, 6>;
 using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+}  // namespace autoware::localization_util
 
-#endif  // LOCALIZATION_UTIL__MATRIX_TYPE_HPP_
+#endif  // AUTOWARE__LOCALIZATION_UTIL__MATRIX_TYPE_HPP_

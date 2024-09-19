@@ -14,9 +14,11 @@
 
 #include "autoware/ndt_scan_matcher/particle.hpp"
 
-#include "localization_util/util_func.hpp"
+#include "autoware/localization_util/util_func.hpp"
 namespace autoware::ndt_scan_matcher
 {
+
+using autoware::localization_util::exchange_color_crc;
 
 void push_debug_markers(
   visualization_msgs::msg::MarkerArray & marker_array, const builtin_interfaces::msg::Time & stamp,

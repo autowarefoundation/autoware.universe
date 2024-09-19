@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "localization_util/covariance_ellipse.hpp"
+#include "autoware/localization_util/covariance_ellipse.hpp"
 
 #include <tf2/utils.h>
 #ifdef ROS_DISTRO_GALACTIC

@@ -44,7 +44,7 @@
 
 #include "ar_tag_based_localizer.hpp"
 
-#include "localization_util/util_func.hpp"
+#include "autoware/localization_util/util_func.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -94,7 +94,7 @@ ArTagBasedLocalizer::ArTagBasedLocalizer(const rclcpp::NodeOptions & options)
     RCLCPP_ERROR_STREAM(this->get_logger(), "Invalid detection_mode: " << detection_mode);
     return;
   }
-  ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
+  ekf_pose_buffer_ = std::make_unique<autoware::localization_util::SmartPoseBuffer>(
     this->get_logger(), ekf_time_tolerance_, ekf_position_tolerance_);
 
   /*
@@ -168,8 +168,8 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
   const builtin_interfaces::msg::Time sensor_stamp = msg->header.stamp;
 
   // get self pose
-  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
-    ekf_pose_buffer_->interpolate(sensor_stamp);
+  const std::optional<autoware::localization_util::SmartPoseBuffer::InterpolateResult>
+    interpolate_result = ekf_pose_buffer_->interpolate(sensor_stamp);
   if (!interpolate_result) {
     return;
   }
