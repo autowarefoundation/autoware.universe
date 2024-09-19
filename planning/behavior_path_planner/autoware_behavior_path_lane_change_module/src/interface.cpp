@@ -147,6 +147,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   *prev_approved_path_ = getPreviousModuleOutput().path;
 
   BehaviorModuleOutput out = getPreviousModuleOutput();
+
   module_type_->insertStopPoint(module_type_->get_current_lanes(), out.path);
   out.turn_signal_info = module_type_->get_current_turn_signal_info();
 
@@ -160,9 +161,6 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   stop_pose_ = module_type_->getStopPose();
 
   if (!module_type_->isValidPath()) {
-    updateRTCStatus(
-      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), false,
-      State::FAILED);
     path_candidate_ = std::make_shared<PathWithLaneId>();
     return out;
   }
@@ -252,6 +250,13 @@ bool LaneChangeInterface::canTransitFailureState()
   }
 
   if (isWaitingApproval()) {
+    if (module_type_->is_near_regulatory_element()) {
+      log_debug_throttled("Ego is close to regulatory element. Cancel lane change");
+      updateRTCStatus(
+        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+        State::FAILED);
+      return true;
+    }
     log_debug_throttled("Can't transit to failure state. Module is WAITING_FOR_APPROVAL");
     return false;
   }
