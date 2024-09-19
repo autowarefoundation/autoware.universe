@@ -62,12 +62,15 @@
 #include <pcl/filters/boost.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/pcl_macros.h>
 #include <pcl/point_types.h>
 
 #include <future>
 #include <map>
+#include <memory>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace pclomp
 {
