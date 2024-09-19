@@ -84,7 +84,7 @@ struct ExtendedPredictedObject
   ObjectClassification classification;
   Polygon2d initial_polygon;
   std::vector<PredictedPathWithPolygon> predicted_paths;
-  double dist_from_ego{0.0};
+  double dist_from_ego{0.0};  ///< Distance from ego, can either be arc length or euclidean.
 
   ExtendedPredictedObject() = default;
   explicit ExtendedPredictedObject(const PredictedObject & object)
