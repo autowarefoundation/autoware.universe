@@ -14,7 +14,9 @@
           "detection_successful_rate": {
             "type": "number",
             "default": 0.8,
-            "description": "sensor detection rate. (min) 0.0 - 1.0(max)"
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "sensor detection rate."
           },
           "enable_ray_tracing": {
             "type": "boolean",
@@ -42,7 +44,7 @@
             "description": "if True, publish ground truth objects"
           },
           "random_seed": {
-            "type": "number",
+            "type": "integer",
             "default": 0,
             "description": "random seed"
           },

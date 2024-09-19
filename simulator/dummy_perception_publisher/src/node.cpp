@@ -127,17 +127,17 @@ TrackedObject ObjectInfo::toTrackedObject(
 DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
 : Node("dummy_perception_publisher"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-  visible_range_ = this->declare_parameter("visible_range", 100.0);
-  detection_successful_rate_ = this->declare_parameter("detection_successful_rate", 0.8);
-  enable_ray_tracing_ = this->declare_parameter("enable_ray_tracing", true);
-  use_object_recognition_ = this->declare_parameter("use_object_recognition", true);
-  use_base_link_z_ = this->declare_parameter("use_base_link_z", true);
+  visible_range_ = this->declare_parameter("visible_range");
+  detection_successful_rate_ = this->declare_parameter("detection_successful_rate");
+  enable_ray_tracing_ = this->declare_parameter("enable_ray_tracing");
+  use_object_recognition_ = this->declare_parameter("use_object_recognition");
+  use_base_link_z_ = this->declare_parameter("use_base_link_z");
   const bool object_centric_pointcloud =
-    this->declare_parameter("object_centric_pointcloud", false);
-  publish_ground_truth_objects_ = this->declare_parameter("publish_ground_truth", false);
+    this->declare_parameter("object_centric_pointcloud");
+  publish_ground_truth_objects_ = this->declare_parameter("publish_ground_truth");
   const unsigned int random_seed =
-    static_cast<unsigned int>(this->declare_parameter("random_seed", 0));
-  const bool use_fixed_random_seed = this->declare_parameter("use_fixed_random_seed", false);
+    static_cast<unsigned int>(this->declare_parameter("random_seed"));
+  const bool use_fixed_random_seed = this->declare_parameter("use_fixed_random_seed");
 
   if (object_centric_pointcloud) {
     pointcloud_creator_ =

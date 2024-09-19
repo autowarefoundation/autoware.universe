@@ -25,7 +25,7 @@ This node publishes the result of the dummy detection with the type of perceptio
 
 ## Parameters
 
-{{json_to_markdown("simulator/dummy_perception_publisher/schema/dummy_perception_publisher.schema.json)}}
+{{json_to_markdown("simulator/dummy_perception_publisher/schema/dummy_perception_publisher.schema.json")}}
 
 ### Node Parameters
 
