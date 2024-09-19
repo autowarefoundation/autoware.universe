@@ -49,8 +49,8 @@
  *
  */
 
-#ifndef PCL_MULTI_VOXEL_GRID_COVARIANCE_IMPL_OMP_H_
-#define PCL_MULTI_VOXEL_GRID_COVARIANCE_IMPL_OMP_H_
+#ifndef AUTOWARE__NDT_OMP__MULTIGRID_PCLOMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
+#define AUTOWARE__NDT_OMP__MULTIGRID_PCLOMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
 
 #include "multi_voxel_grid_covariance_omp.h"
 
@@ -472,4 +472,4 @@ void pclomp::MultiVoxelGridCovariance<PointT>::computeLeafParams(
 #define PCL_INSTANTIATE_VoxelGridCovariance(T) \
   template class PCL_EXPORTS pcl::VoxelGridCovariance<T>;
 
-#endif  // PCL_MULTI_VOXEL_GRID_COVARIANCE_IMPL_H_
+#endif  // AUTOWARE__NDT_OMP__MULTIGRID_PCLOMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_

@@ -51,8 +51,8 @@
  *
  */
 
-#ifndef PCLOMP_NDT_STRUCT_HPP_
-#define PCLOMP_NDT_STRUCT_HPP_
+#ifndef AUTOWARE__NDT_OMP__MULTIGRID_PCLOMP__NDT_STRUCT_HPP_
+#define AUTOWARE__NDT_OMP__MULTIGRID_PCLOMP__NDT_STRUCT_HPP_
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -104,4 +104,4 @@ struct NdtParams
 
 }  // namespace pclomp
 
-#endif  // PCLOMP_NDT_STRUCT_HPP_
+#endif  // AUTOWARE__NDT_OMP__MULTIGRID_PCLOMP__NDT_STRUCT_HPP_
