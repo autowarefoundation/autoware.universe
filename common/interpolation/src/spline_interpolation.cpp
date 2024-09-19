@@ -37,7 +37,7 @@ Eigen::VectorXd solve_tridiagonal_matrix_algorithm(
   d_prime(0) = d(0) / b(0);
 
   for (auto i = 1; i < n; i++) {
-    double m = 1.0 / (b(i) - a(i - 1) * c_prime(i - 1));
+    const double m = 1.0 / (b(i) - a(i - 1) * c_prime(i - 1));
     c_prime(i) = i < n - 1 ? c(i) * m : 0;
     d_prime(i) = (d(i) - a(i - 1) * d_prime(i - 1)) * m;
   }
@@ -173,13 +173,13 @@ void SplineInterpolation::calcSplineCoefficients(
 
   // Create Tridiagonal matrix
   Eigen::VectorXd v(n);
-  Eigen::VectorXd h = x.segment(1, n - 1) - x.segment(0, n - 1);
-  Eigen::VectorXd a = h.segment(1, n - 3);
-  Eigen::VectorXd b = 2 * (h.segment(0, n - 2) + h.segment(1, n - 2));
-  Eigen::VectorXd c = h.segment(1, n - 3);
-  Eigen::VectorXd y_diff = y.segment(1, n - 1) - y.segment(0, n - 1);
-  Eigen::VectorXd d = 6 * (y_diff.segment(1, n - 2).array() / h.tail(n - 2).array() -
-                           y_diff.segment(0, n - 2).array() / h.head(n - 2).array());
+  const Eigen::VectorXd h = x.segment(1, n - 1) - x.segment(0, n - 1);
+  const Eigen::VectorXd a = h.segment(1, n - 3);
+  const Eigen::VectorXd b = 2 * (h.segment(0, n - 2) + h.segment(1, n - 2));
+  const Eigen::VectorXd c = h.segment(1, n - 3);
+  const Eigen::VectorXd y_diff = y.segment(1, n - 1) - y.segment(0, n - 1);
+  const Eigen::VectorXd d = 6 * (y_diff.segment(1, n - 2).array() / h.tail(n - 2).array() -
+                                 y_diff.segment(0, n - 2).array() / h.head(n - 2).array());
 
   // Solve tridiagonal matrix
   v.segment(1, n - 2) = solve_tridiagonal_matrix_algorithm(a, b, c, d);
