@@ -17,9 +17,9 @@
 
 #define FMT_HEADER_ONLY
 
-#include "autoware/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h"
 #include "autoware/localization_util/diagnostics_module.hpp"
 #include "autoware/localization_util/smart_pose_buffer.hpp"
+#include "autoware/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h"
 #include "autoware/ndt_scan_matcher/hyper_parameters.hpp"
 #include "autoware/ndt_scan_matcher/map_update_module.hpp"
 
