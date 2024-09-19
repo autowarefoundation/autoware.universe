@@ -141,7 +141,7 @@ std::vector<double> splineByAkima(
 }
 }  // namespace interpolation
 
-Eigen::Index SplineInterpolation::get_index(double key) const
+Eigen::Index SplineInterpolation::get_index(const double & key) const
 {
   const auto it = std::lower_bound(base_keys_.begin(), base_keys_.end(), key);
   return std::clamp(

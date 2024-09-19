@@ -91,7 +91,7 @@ private:
   void calcSplineCoefficients(
     const std::vector<double> & base_keys, const std::vector<double> & base_values);
 
-  Eigen::Index get_index(double key) const;
+  Eigen::Index get_index(const double & key) const;
 };
 
 #endif  // INTERPOLATION__SPLINE_INTERPOLATION_HPP_
