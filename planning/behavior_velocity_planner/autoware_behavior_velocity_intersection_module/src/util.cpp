@@ -217,31 +217,31 @@ std::optional<size_t> getFirstPointInsidePolygon(
 }
 
 void retrievePathsBackward(
-  const std::vector<std::vector<bool>> & adjacency, const size_t src_ind,
-  const std::vector<size_t> & visited_inds, std::vector<std::vector<size_t>> & paths)
+  const std::vector<std::vector<bool>> & adjacency, const size_t src_index,
+  const std::vector<size_t> & visited_indices, std::vector<std::vector<size_t>> & paths)
 {
-  const auto & nexts = adjacency.at(src_ind);
-  const bool is_terminal = (std::find(nexts.begin(), nexts.end(), true) == nexts.end());
+  const auto & next_indices = adjacency.at(src_index);
+  const bool is_terminal = (std::find(next_indices.begin(), next_indices.end(), true) == next_indices.end());
   if (is_terminal) {
-    std::vector<size_t> path(visited_inds.begin(), visited_inds.end());
-    path.push_back(src_ind);
+    std::vector<size_t> path(visited_indices.begin(), visited_indices.end());
+    path.push_back(src_index);
     paths.emplace_back(std::move(path));
     return;
   }
-  for (size_t next = 0; next < nexts.size(); next++) {
-    if (!nexts.at(next)) {
+  for (size_t next = 0; next < next_indices.size(); next++) {
+    if (!next_indices.at(next)) {
       continue;
     }
-    if (std::find(visited_inds.begin(), visited_inds.end(), next) != visited_inds.end()) {
+    if (std::find(visited_indices.begin(), visited_indices.end(), next) != visited_indices.end()) {
       // loop detected
-      std::vector<size_t> path(visited_inds.begin(), visited_inds.end());
-      path.push_back(src_ind);
+      std::vector<size_t> path(visited_indices.begin(), visited_indices.end());
+      path.push_back(src_index);
       paths.emplace_back(std::move(path));
       continue;
     }
-    auto new_visited_inds = visited_inds;
-    new_visited_inds.push_back(src_ind);
-    retrievePathsBackward(adjacency, next, new_visited_inds, paths);
+    auto new_visited_indices = visited_indices;
+    new_visited_indices.push_back(src_index);
+    retrievePathsBackward(adjacency, next, new_visited_indices, paths);
   }
   return;
 }
