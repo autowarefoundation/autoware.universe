@@ -1467,6 +1467,7 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
   const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
   const auto dist_to_next_regulatory_element =
     utils::lane_change::get_distance_to_next_regulatory_element(common_data_ptr_, only_tl, only_tl);
+  const auto max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
 
   const auto prepare_phase_metrics = calculation::calc_prepare_phase_metrics(
     common_data_ptr_, prepare_durations, longitudinal_acc_sampling_values, current_velocity,
@@ -1518,7 +1519,9 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
 
     const auto max_lane_changing_length = std::invoke([&]() {
       double max_length =
-        std::min(dist_to_terminal_end, dist_to_next_regulatory_element) - prep_metric.length;
+        ego_dist_to_terminal_start > max_prepare_length
+          ? std::min(dist_to_terminal_end, dist_to_next_regulatory_element) - prep_metric.length
+          : dist_to_terminal_end - prep_metric.length;
       auto target_lane_buffer =
         lane_change_parameters_->lane_change_finish_judge_buffer + next_lane_change_buffer;
       if (std::abs(route_handler.getNumLaneToPreferredLane(target_lanes.back(), direction_)) > 0) {
