@@ -66,11 +66,12 @@ protected:
   bool pointcloud_transform_needed_{false};
   bool pointcloud_transform_exists_{false};
   bool imu_transform_exists_{false};
-  rclcpp::Node * node_;
   std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
+
+  rclcpp::Node * node_;
 
   void get_imu_transformation(const std::string & base_frame, const std::string & imu_frame);
   void enqueue_imu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);

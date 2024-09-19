@@ -348,7 +348,7 @@ protected:
   bool debug_{false};
 };
 
-TEST_F(DistortionCorrectorTest, Testprocess_twist_message)
+TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
 {
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   auto twist_msg = generateTwistMsg(twist_linear_x_, twist_angular_z_, timestamp);
@@ -359,7 +359,7 @@ TEST_F(DistortionCorrectorTest, Testprocess_twist_message)
   EXPECT_EQ(distortion_corrector_2d_->get_twist_queue().front().twist.angular.z, twist_angular_z_);
 }
 
-TEST_F(DistortionCorrectorTest, Testprocess_imu_message)
+TEST_F(DistortionCorrectorTest, TestProcessImuMessage)
 {
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   auto imu_msg = generateImuMsg(imu_angular_x_, imu_angular_y_, imu_angular_z_, timestamp);
@@ -371,7 +371,7 @@ TEST_F(DistortionCorrectorTest, Testprocess_imu_message)
     standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, Testis_pointcloud_valid)
+TEST_F(DistortionCorrectorTest, TestIsPointcloudValid)
 {
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
 
@@ -387,28 +387,28 @@ TEST_F(DistortionCorrectorTest, Testis_pointcloud_valid)
   EXPECT_FALSE(result);
 }
 
-TEST_F(DistortionCorrectorTest, Testset_pointcloud_transformWithBaseLink)
+TEST_F(DistortionCorrectorTest, TestSetPointcloudTransformWithBaseLink)
 {
   distortion_corrector_2d_->set_pointcloud_transform("base_link", "base_link");
   EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_exists());
   EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_needed());
 }
 
-TEST_F(DistortionCorrectorTest, Testset_pointcloud_transformWithLidarFrame)
+TEST_F(DistortionCorrectorTest, TestSetPointcloudTransformWithLidarFrame)
 {
   distortion_corrector_2d_->set_pointcloud_transform("base_link", "lidar_top");
   EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_exists());
   EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_needed());
 }
 
-TEST_F(DistortionCorrectorTest, Testset_pointcloud_transformWithMissingFrame)
+TEST_F(DistortionCorrectorTest, TestSetPointcloudTransformWithMissingFrame)
 {
   distortion_corrector_2d_->set_pointcloud_transform("base_link", "missing_lidar_frame");
   EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_exists());
   EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_needed());
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloudWithEmptyTwist)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithEmptyTwist)
 {
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   // Generate the point cloud message
@@ -448,7 +448,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloudWithEmptyTwist)
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloudWithEmptyPointCloud)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithEmptyPointCloud)
 {
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   // Generate and process multiple twist messages
@@ -465,7 +465,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloudWithEmptyPointCloud)
   EXPECT_EQ(empty_pointcloud.row_step, 0);
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloud2dWithoutImuInBaseLink)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloud2dWithoutImuInBaseLink)
 {
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -510,7 +510,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloud2dWithoutImuInBaseLink)
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloud2dWithImuInBaseLink)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloud2dWithImuInBaseLink)
 {
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -557,7 +557,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloud2dWithImuInBaseLink)
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloud2dWithImuInLidarFrame)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloud2dWithImuInLidarFrame)
 {
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -607,7 +607,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloud2dWithImuInLidarFrame)
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloud3dWithoutImuInBaseLink)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloud3dWithoutImuInBaseLink)
 {
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -652,7 +652,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloud3dWithoutImuInBaseLink)
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloud3dWithImuInBaseLink)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloud3dWithImuInBaseLink)
 {
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -702,7 +702,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloud3dWithImuInBaseLink)
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloud3dWithImuInLidarFrame)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloud3dWithImuInLidarFrame)
 {
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -751,7 +751,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloud3dWithImuInLidarFrame)
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloudWithPureLinearMotion)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithPureLinearMotion)
 {
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
@@ -842,7 +842,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloudWithPureLinearMotion)
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloudWithPureRotationalMotion)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithPureRotationalMotion)
 {
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
@@ -946,7 +946,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloudWithPureRotationalMotion
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloudNotUpdatingAzimuthAndDistance)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloudNotUpdatingAzimuthAndDistance)
 {
   // Test the case when the cloud will not update the azimuth and distance values
   // 1. when pointcloud is in base_link (pointcloud_transform_needed() is false)
@@ -1059,7 +1059,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloudNotUpdatingAzimuthAndDis
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloudUpdateAzimuthAndDistanceInVelodyne)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloudUpdateAzimuthAndDistanceInVelodyne)
 {
   // Generate the point cloud message in sensor frame
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1118,7 +1118,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloudUpdateAzimuthAndDistance
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testundistort_pointcloudUpdateAzimuthAndDistanceInHesai)
+TEST_F(DistortionCorrectorTest, TestUndistortPointcloudUpdateAzimuthAndDistanceInHesai)
 {
   // Generate the point cloud message in sensor frame
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1177,7 +1177,7 @@ TEST_F(DistortionCorrectorTest, Testundistort_pointcloudUpdateAzimuthAndDistance
   }
 }
 
-TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionOnEmptyPointcloud)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnEmptyPointcloud)
 {
   // test empty pointcloud
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1189,7 +1189,7 @@ TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionOnEmptyPointclou
   EXPECT_FALSE(angle_conversion_opt.has_value());
 }
 
-TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionOnVelodynePointcloud)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnVelodynePointcloud)
 {
   // test velodyne pointcloud (x-axis: 0 degree, y-axis: 270 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1212,7 +1212,7 @@ TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionOnVelodynePointc
   EXPECT_NEAR(angle_conversion_opt->offset_rad, 0, standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionOnHesaiPointcloud)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnHesaiPointcloud)
 {
   // test hesai pointcloud (x-axis: 90 degree, y-axis: 0 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1235,7 +1235,7 @@ TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionOnHesaiPointclou
     angle_conversion_opt->offset_rad, autoware::universe_utils::pi / 2, standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionCartesianPointcloud)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionCartesianPointcloud)
 {
   // test pointcloud that use cartesian coordinate for azimuth (x-axis: 0 degree, y-axis: 90 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1260,7 +1260,7 @@ TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionCartesianPointcl
   EXPECT_NEAR(angle_conversion_opt->offset_rad, 0, standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionOnRandomPointcloud)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnRandomPointcloud)
 {
   // test pointcloud that use coordinate (x-axis: 270 degree, y-axis: 0 degree)
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
@@ -1284,7 +1284,7 @@ TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionOnRandomPointclo
     angle_conversion_opt->offset_rad, autoware::universe_utils::pi * 3 / 2, standard_tolerance_);
 }
 
-TEST_F(DistortionCorrectorTest, Testtry_compute_angle_conversionOnBadAzimuthPointcloud)
+TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnBadAzimuthPointcloud)
 {
   // test pointcloud that can cause the angle conversion to fail.
   // 1. angle difference is 0
