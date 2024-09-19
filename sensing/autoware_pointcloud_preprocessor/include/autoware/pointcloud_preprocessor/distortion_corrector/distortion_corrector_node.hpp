@@ -61,7 +61,7 @@ private:
 
   /// @brief The maximum number of failed angle conversions due to pointclouds not containing enough
   /// points before throwing an error.
-  static constexpr int failure_tolerance_{20};
+  static constexpr int failure_tolerance{20};
 
   std::unique_ptr<DistortionCorrectorBase> distortion_corrector_;
 
