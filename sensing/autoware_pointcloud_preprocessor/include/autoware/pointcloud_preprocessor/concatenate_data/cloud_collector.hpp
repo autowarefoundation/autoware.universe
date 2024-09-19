@@ -94,8 +94,7 @@ public:
 
   void deleteCollector();
 
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
-  get_topic_to_cloud_map();
+  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> getTopicToCloudMap();
 
 private:
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> concatenate_node_;

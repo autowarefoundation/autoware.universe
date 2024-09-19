@@ -11,10 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// cloud_collector_test.cpp
-// cloud_collector_test.cpp
 
-// cloud_collector_test.cpp
+// Note: To regenerate the ground truth (GT) for the expected undistorted point cloud values,
+// set the "debug_" value to true to display the point cloud values. Then,
+// replace the expected values with the newly displayed undistorted point cloud values.
 
 #include "autoware/pointcloud_preprocessor/concatenate_data/cloud_collector.hpp"
 #include "autoware/pointcloud_preprocessor/concatenate_data/combine_cloud_handler.hpp"
@@ -175,12 +175,12 @@ protected:
   static constexpr size_t number_of_points_{3};
   static constexpr float standard_tolerance_{1e-4};
   static constexpr int number_of_pointcloud_{3};
-  static constexpr float timeout_sec_{1};
-  bool debug_{true};
+  static constexpr float timeout_sec_{0.2};
+  bool debug_{false};
 };
 
 //////////////////////////////// Test combine_cloud_handler ////////////////////////////////
-TEST_F(ConcatenateCloudTest, ProcessTwist)
+TEST_F(ConcatenateCloudTest, TestProcessTwist)
 {
   auto twist_msg = std::make_shared<geometry_msgs::msg::TwistWithCovarianceStamped>();
   twist_msg->header.stamp = rclcpp::Time(10, 0);
@@ -194,7 +194,7 @@ TEST_F(ConcatenateCloudTest, ProcessTwist)
   EXPECT_EQ(combine_cloud_handler_->twist_ptr_queue_.front()->twist.angular.z, 0.1);
 }
 
-TEST_F(ConcatenateCloudTest, ProcessOdometry)
+TEST_F(ConcatenateCloudTest, TestProcessOdometry)
 {
   auto odom_msg = std::make_shared<nav_msgs::msg::Odometry>();
   odom_msg->header.stamp = rclcpp::Time(10, 0);
@@ -208,7 +208,7 @@ TEST_F(ConcatenateCloudTest, ProcessOdometry)
   EXPECT_EQ(combine_cloud_handler_->twist_ptr_queue_.front()->twist.angular.z, 0.1);
 }
 
-TEST_F(ConcatenateCloudTest, ComputeTransformToAdjustForOldTimestamp)
+TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
 {
   rclcpp::Time old_stamp(10, 100000000, RCL_ROS_TIME);
   rclcpp::Time new_stamp(10, 150000000, RCL_ROS_TIME);
@@ -249,7 +249,7 @@ TEST_F(ConcatenateCloudTest, ComputeTransformToAdjustForOldTimestamp)
 
 //////////////////////////////// Test cloud_collector ////////////////////////////////
 
-TEST_F(ConcatenateCloudTest, SetAndGetReferenceTimeStampBoundary)
+TEST_F(ConcatenateCloudTest, TestSetAndGetReferenceTimeStampBoundary)
 {
   double reference_timestamp = 10.0;
   double noise_window = 0.1;
@@ -259,7 +259,7 @@ TEST_F(ConcatenateCloudTest, SetAndGetReferenceTimeStampBoundary)
   EXPECT_DOUBLE_EQ(max, 10.1);
 }
 
-TEST_F(ConcatenateCloudTest, concatenateAndPublishClouds)
+TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
 {
   rclcpp::Time top_timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   rclcpp::Time left_timestamp(timestamp_seconds_, timestamp_nanoseconds_ + 40000000, RCL_ROS_TIME);
@@ -311,13 +311,13 @@ TEST_F(ConcatenateCloudTest, concatenateAndPublishClouds)
     EXPECT_FLOAT_EQ(*iter_z, expected_pointcloud[i].z());
   }
 
-  // concatenate cloud should have the oldest pointcloud's timestamp
-  EXPECT_FLOAT_EQ(
-    top_timestamp.seconds(), rclcpp::Time(concatenate_cloud_ptr->header.stamp).seconds());
-
   if (debug_) {
     RCLCPP_INFO(concatenate_node_->get_logger(), "%s", oss.str().c_str());
   }
+
+  // test concatenate cloud has the oldest pointcloud's timestamp
+  EXPECT_FLOAT_EQ(
+    top_timestamp.seconds(), rclcpp::Time(concatenate_cloud_ptr->header.stamp).seconds());
 
   // test seperated transformed cloud
   std::array<Eigen::Vector3f, 10> expected_top_pointcloud = {
@@ -405,13 +405,13 @@ TEST_F(ConcatenateCloudTest, concatenateAndPublishClouds)
   EXPECT_FLOAT_EQ(right_timestamp.seconds(), topic_to_original_stamp_map["lidar_right"]);
 }
 
-TEST_F(ConcatenateCloudTest, DeleteCollector)
+TEST_F(ConcatenateCloudTest, TestDeleteCollector)
 {
   collector_->deleteCollector();
   EXPECT_TRUE(collectors_.empty());
 }
 
-TEST_F(ConcatenateCloudTest, ProcessSingleCloud)
+TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 {
   rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 top_pointcloud =
@@ -420,19 +420,19 @@ TEST_F(ConcatenateCloudTest, ProcessSingleCloud)
     std::make_shared<sensor_msgs::msg::PointCloud2>(top_pointcloud);
   collector_->processCloud("lidar_top", top_pointcloud_ptr);
 
-  auto topic_to_cloud_map = collector_->get_topic_to_cloud_map();
+  auto topic_to_cloud_map = collector_->getTopicToCloudMap();
   EXPECT_EQ(topic_to_cloud_map["lidar_top"], top_pointcloud_ptr);
   EXPECT_FALSE(collectors_.empty());
 
-  // Sleep for 1.5 seconds
-  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+  // Sleep for timeout seconds (200 ms)
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
   rclcpp::spin_some(concatenate_node_);
 
   // Collector should concatenate and publish the pointcloud, also delete itself.
   EXPECT_TRUE(collectors_.empty());
 }
 
-TEST_F(ConcatenateCloudTest, ProcessMultipleCloud)
+TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
 {
   rclcpp::Time top_timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
   rclcpp::Time left_timestamp(timestamp_seconds_, timestamp_nanoseconds_ + 40000000, RCL_ROS_TIME);

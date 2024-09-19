@@ -25,25 +25,25 @@ namespace autoware::pointcloud_preprocessor
 {
 
 template <class T>
-bool DistortionCorrector<T>::pointcloud_transform_exists()
+bool DistortionCorrector<T>::pointcloudTransformExists()
 {
   return pointcloud_transform_exists_;
 }
 
 template <class T>
-bool DistortionCorrector<T>::pointcloud_transform_needed()
+bool DistortionCorrector<T>::pointcloudTransformNeeded()
 {
   return pointcloud_transform_needed_;
 }
 
 template <class T>
-std::deque<geometry_msgs::msg::TwistStamped> DistortionCorrector<T>::get_twist_queue()
+std::deque<geometry_msgs::msg::TwistStamped> DistortionCorrector<T>::getTwistQueue()
 {
   return twist_queue_;
 }
 
 template <class T>
-std::deque<geometry_msgs::msg::Vector3Stamped> DistortionCorrector<T>::get_angular_velocity_queue()
+std::deque<geometry_msgs::msg::Vector3Stamped> DistortionCorrector<T>::getAngularVelocityQueue()
 {
   return angular_velocity_queue_;
 }

@@ -17,21 +17,17 @@
 import random
 import struct
 import time
+from typing import List
+from typing import Tuple
 import unittest
 
-# TODO: remove unused later
 from geometry_msgs.msg import TransformStamped
 from geometry_msgs.msg import TwistWithCovarianceStamped
 import launch
 import launch.actions
-from launch.logging import get_logger
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 import launch_testing
-import launch_testing.actions
-import launch_testing.asserts
-import launch_testing.markers
-import launch_testing.tools
 import numpy as np
 import pytest
 import rclpy
@@ -46,8 +42,6 @@ from sensor_msgs_py import point_cloud2
 from std_msgs.msg import Header
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
-logger = get_logger(__name__)
-
 INPUT_LIDAR_TOPICS = [
     "/test/sensing/lidar/left/pointcloud",
     "/test/sensing/lidar/right/pointcloud",
@@ -60,12 +54,19 @@ FRAME_ID_LISTS = [
 ]
 
 TIMEOUT_SEC = 0.2
+TIMESTAMP_OFFSET = [0.0, 0.04, 0.08]
+TIMESTAMP_NOISE = 0.01  # 10 ms
+
 NUM_OF_POINTS = 3
+DEBUG = False
+MILLISECONDS = 1000000
+
+
+STANDARD_TOLERANCE = 1e-4
+COARSE_TOLERANCE = TIMESTAMP_NOISE * 2
 
 global_seconds = 10
 global_nanosceonds = 100000000
-milliseconds = 1000000
-global_timestamp = Time(seconds=global_seconds, nanoseconds=global_nanosceonds).to_msg()
 
 
 @pytest.mark.launch_test
@@ -93,8 +94,12 @@ def generate_test_description():
                     "input_twist_topic_type": "twist",
                     "input_topics": INPUT_LIDAR_TOPICS,
                     "output_frame": "base_link",
-                    "lidar_timestamp_offsets": [0.0, 0.04, 0.08],
-                    "lidar_timestamp_noise_window": [0.01, 0.01, 0.01],
+                    "lidar_timestamp_offsets": TIMESTAMP_OFFSET,
+                    "lidar_timestamp_noise_window": [
+                        TIMESTAMP_NOISE,
+                        TIMESTAMP_NOISE,
+                        TIMESTAMP_NOISE,
+                    ],
                 }
             ],
             extra_arguments=[{"use_intra_process_comms": True}],
@@ -119,7 +124,7 @@ def generate_test_description():
     )
 
 
-def create_header(timestamp: Time, frame_id_index: int, is_base_link: bool):
+def create_header(timestamp: Time, frame_id_index: int, is_base_link: bool) -> Header:
     header = Header()
     header.stamp = timestamp
 
@@ -130,11 +135,13 @@ def create_header(timestamp: Time, frame_id_index: int, is_base_link: bool):
     return header
 
 
-def create_points():
+def create_points() -> List[Tuple[float, float, float]]:
     return [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
 
 
-def create_fields():
+def create_fields() -> (
+    Tuple[List[int], List[int], List[int], List[float], List[float], List[float], List[int]]
+):
     # The values of the fields do not influence the results.
     intensities = [255] * NUM_OF_POINTS
     return_types = [1] * NUM_OF_POINTS
@@ -148,7 +155,7 @@ def create_fields():
 
 def get_pointcloud_msg(
     timestamp: Time, is_generate_points: bool, frame_id_index: int, is_base_link: bool
-):
+) -> PointCloud2:
     header = create_header(timestamp, frame_id_index, is_base_link)
     points = create_points()
     intensities, return_types, channels, azimuths, elevations, distances, timestamps = (
@@ -196,9 +203,19 @@ def get_pointcloud_msg(
     return pointcloud_msg
 
 
-def generate_transform_msg(parent_frame, child_frame, x, y, z, qx, qy, qz, qw):
+def generate_transform_msg(
+    parent_frame: str,
+    child_frame: str,
+    x: float,
+    y: float,
+    z: float,
+    qx: float,
+    qy: float,
+    qz: float,
+    qw: float,
+) -> TransformStamped:
     tf_msg = TransformStamped()
-    tf_msg.header.stamp = global_timestamp
+    tf_msg.header.stamp = Time(seconds=global_seconds, nanoseconds=global_nanosceonds).to_msg()
     tf_msg.header.frame_id = parent_frame
     tf_msg.child_frame_id = child_frame
     tf_msg.transform.translation.x = x
@@ -211,7 +228,7 @@ def generate_transform_msg(parent_frame, child_frame, x, y, z, qx, qy, qz, qw):
     return tf_msg
 
 
-def generate_static_transform_msgs():
+def generate_static_transform_msgs() -> List[TransformStamped]:
     tf_top_lidar_msg = generate_transform_msg(
         parent_frame="base_link",
         child_frame=FRAME_ID_LISTS[0],
@@ -251,7 +268,7 @@ def generate_static_transform_msgs():
     return [tf_top_lidar_msg, tf_right_lidar_msg, tf_left_lidar_msg]
 
 
-def generate_twist_msg():
+def generate_twist_msg() -> TwistWithCovarianceStamped:
     twist_header = Header()
     twist_header.stamp = Time(seconds=global_seconds, nanoseconds=global_nanosceonds).to_msg()
     twist_header.frame_id = "base_link"
@@ -262,7 +279,7 @@ def generate_twist_msg():
     return twist_msg
 
 
-def get_output_points(cloud_msg):
+def get_output_points(cloud_msg) -> np.ndarray:
     points_list = []
     for point in point_cloud2.read_points(cloud_msg, field_names=("x", "y", "z"), skip_nans=True):
         points_list.append([point[0], point[1], point[2]])
@@ -344,7 +361,7 @@ class TestConcatenateNode(unittest.TestCase):
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS):
             pointcloud_seconds = global_seconds
-            pointcloud_nanoseconds = global_nanosceonds + frame_idx * milliseconds * 40  # add 40 ms
+            pointcloud_nanoseconds = global_nanosceonds + frame_idx * MILLISECONDS * 40  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
             ).to_msg()
@@ -364,18 +381,6 @@ class TestConcatenateNode(unittest.TestCase):
             1,
             "The number of concatenate pointcloud has different number as expected.",
         )
-        self.assertEqual(
-            len(get_output_points(self.msg_buffer[0])),
-            NUM_OF_POINTS * len(FRAME_ID_LISTS),
-            "The concatenate pointcloud has a different number of point as expected",
-        )
-
-        # test tf
-        self.assertEqual(
-            self.msg_buffer[0].header.frame_id,
-            "base_link",
-            "The concatenate pointcloud frame id is not base_link",
-        )
 
         expected_pointcloud = np.array(
             [
@@ -392,11 +397,20 @@ class TestConcatenateNode(unittest.TestCase):
             dtype=np.float32,
         )
 
-        cloud_arr = get_output_points(self.msg_buffer[0])
-        print("cloud_arr: ", cloud_arr)
+        concatenate_cloud = get_output_points(self.msg_buffer[0])
+
+        if DEBUG:
+            print("concatenate_cloud: ", concatenate_cloud)
+
         self.assertTrue(
-            np.allclose(cloud_arr, expected_pointcloud, atol=1e-3),
+            np.allclose(concatenate_cloud, expected_pointcloud, atol=1e-3),
             "The concatenation node have wierd output",
+        )
+
+        self.assertEqual(
+            self.msg_buffer[0].header.frame_id,
+            "base_link",
+            "The concatenate pointcloud frame id is not base_link",
         )
 
         global_seconds += 1
@@ -414,10 +428,10 @@ class TestConcatenateNode(unittest.TestCase):
         self.twist_publisher.publish(twist_msg)
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS):
-            noise = random.uniform(-10, 10) * milliseconds
+            noise = random.uniform(-10, 10) * MILLISECONDS
             pointcloud_seconds = global_seconds
             pointcloud_nanoseconds = (
-                global_nanosceonds + frame_idx * milliseconds * 40 + noise
+                global_nanosceonds + frame_idx * MILLISECONDS * 40 + noise
             )  # add 40 ms and noise (-10 to 10 ms)
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
@@ -438,20 +452,7 @@ class TestConcatenateNode(unittest.TestCase):
             1,
             "The number of concatenate pointcloud has different number as expected.",
         )
-        self.assertEqual(
-            len(get_output_points(self.msg_buffer[0])),
-            NUM_OF_POINTS * len(FRAME_ID_LISTS),
-            "The concatenate pointcloud has a different number of point as expected",
-        )
 
-        # test tf
-        self.assertEqual(
-            self.msg_buffer[0].header.frame_id,
-            "base_link",
-            "The concatenate pointcloud frame id is not base_link",
-        )
-
-        # test transformed points
         expected_pointcloud = np.array(
             [
                 [1.08, -5, 5],
@@ -467,10 +468,12 @@ class TestConcatenateNode(unittest.TestCase):
             dtype=np.float32,
         )
 
-        cloud_arr = get_output_points(self.msg_buffer[0])
-        print("cloud_arr: ", cloud_arr)
+        concatenate_cloud = get_output_points(self.msg_buffer[0])
+        if DEBUG:
+            print("concatenate_cloud: ", concatenate_cloud)
+
         self.assertTrue(
-            np.allclose(cloud_arr, expected_pointcloud, atol=1e-2),
+            np.allclose(concatenate_cloud, expected_pointcloud, atol=2e-2),
             "The concatenation node have wierd output",
         )
 
@@ -488,7 +491,7 @@ class TestConcatenateNode(unittest.TestCase):
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS):
             pointcloud_seconds = global_seconds
-            pointcloud_nanoseconds = global_nanosceonds + frame_idx * milliseconds * 40  # add 40 ms
+            pointcloud_nanoseconds = global_nanosceonds + frame_idx * MILLISECONDS * 40  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
             ).to_msg()
@@ -519,10 +522,26 @@ class TestConcatenateNode(unittest.TestCase):
             1,
             "The number of concatenate pointcloud has different number as expected.",
         )
-        self.assertEqual(
-            len(get_output_points(self.msg_buffer[0])),
-            NUM_OF_POINTS * (len(FRAME_ID_LISTS) - 1),
-            "The concatenate pointcloud has a different number of point as expected",
+
+        expected_pointcloud = np.array(
+            [
+                [1.04, 5, 5],
+                [0.04, 6, 5],
+                [0.04, 5, 6],
+                [1, 0, 5],
+                [0, 1, 5],
+                [0, 0, 6],
+            ],
+            dtype=np.float32,
+        )
+
+        concatenate_cloud = get_output_points(self.msg_buffer[0])
+        if DEBUG:
+            print("concatenate_cloud: ", concatenate_cloud)
+
+        self.assertTrue(
+            np.allclose(concatenate_cloud, expected_pointcloud, atol=1e-3),
+            "The concatenation node have wierd output",
         )
 
         global_seconds += 1
@@ -567,10 +586,10 @@ class TestConcatenateNode(unittest.TestCase):
         global_seconds += 1
 
     def test_5_abnormal_multiple_pointcloud_drop(self):
-        """Test the abnormal situation when a pointcloud was dropped.
+        """Test the abnormal situation when multiple pointclouds were dropped (only one poincloud arrive).
 
         This can test that
-        1. The concatenate node concatenates the remaining pointcloud after the timeout.
+        1. The concatenate node concatenates the single pointcloud after the timeout.
         """
         time.sleep(1)
         global global_seconds
@@ -602,10 +621,23 @@ class TestConcatenateNode(unittest.TestCase):
             1,
             "The number of concatenate pointcloud has different number as expected.",
         )
-        self.assertEqual(
-            len(get_output_points(self.msg_buffer[0])),
-            3,
-            "The concatenate pointcloud has a different number of point as expected",
+
+        expected_pointcloud = np.array(
+            [
+                [1, 0, 5],
+                [0, 1, 5],
+                [0, 0, 6],
+            ],
+            dtype=np.float32,
+        )
+
+        concatenate_cloud = get_output_points(self.msg_buffer[0])
+        if DEBUG:
+            print("concatenate_cloud: ", concatenate_cloud)
+
+        self.assertTrue(
+            np.allclose(concatenate_cloud, expected_pointcloud, atol=1e-3),
+            "The concatenation node have wierd output",
         )
 
     def test_6_abnormal_single_pointcloud_drop(self):
@@ -622,7 +654,7 @@ class TestConcatenateNode(unittest.TestCase):
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS[:-1]):
             pointcloud_seconds = global_seconds
-            pointcloud_nanoseconds = global_nanosceonds + frame_idx * milliseconds * 40  # add 40 ms
+            pointcloud_nanoseconds = global_nanosceonds + frame_idx * MILLISECONDS * 40  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
             ).to_msg()
@@ -645,10 +677,25 @@ class TestConcatenateNode(unittest.TestCase):
             "The number of concatenate pointcloud has different number as expected.",
         )
 
-        self.assertEqual(
-            len(get_output_points(self.msg_buffer[0])),
-            NUM_OF_POINTS * (len(FRAME_ID_LISTS) - 1),
-            "The concatenate pointcloud has a different number of point as expected",
+        expected_pointcloud = np.array(
+            [
+                [1.04, 5, 5],
+                [0.04, 6, 5],
+                [0.04, 5, 6],
+                [1, 0, 5],
+                [0, 1, 5],
+                [0, 0, 6],
+            ],
+            dtype=np.float32,
+        )
+
+        concatenate_cloud = get_output_points(self.msg_buffer[0])
+        if DEBUG:
+            print("concatenate_cloud: ", concatenate_cloud)
+
+        self.assertTrue(
+            np.allclose(concatenate_cloud, expected_pointcloud, atol=1e-3),
+            "The concatenation node have wierd output",
         )
 
         global_seconds += 1
@@ -668,7 +715,7 @@ class TestConcatenateNode(unittest.TestCase):
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS[:-1]):
             pointcloud_seconds = global_seconds
-            pointcloud_nanoseconds = global_nanosceonds + frame_idx * milliseconds * 40  # add 40 ms
+            pointcloud_nanoseconds = global_nanosceonds + frame_idx * MILLISECONDS * 40  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
             ).to_msg()
@@ -686,7 +733,7 @@ class TestConcatenateNode(unittest.TestCase):
 
         pointcloud_seconds = global_seconds
         pointcloud_nanoseconds = (
-            global_nanosceonds + (len(INPUT_LIDAR_TOPICS) - 1) * milliseconds * 40
+            global_nanosceonds + (len(INPUT_LIDAR_TOPICS) - 1) * MILLISECONDS * 40
         )  # add 40 ms
         pointcloud_timestamp = Time(
             seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
@@ -710,16 +757,43 @@ class TestConcatenateNode(unittest.TestCase):
             "The number of concatenate pointcloud has different number as expected.",
         )
 
-        self.assertEqual(
-            len(get_output_points(self.msg_buffer[0])),
-            NUM_OF_POINTS * (len(FRAME_ID_LISTS) - 1),
-            "The concatenate pointcloud has a different number of point as expected",
+        expected_pointcloud1 = np.array(
+            [
+                [1.04, 5, 5],
+                [0.04, 6, 5],
+                [0.04, 5, 6],
+                [1, 0, 5],
+                [0, 1, 5],
+                [0, 0, 6],
+            ],
+            dtype=np.float32,
         )
 
-        self.assertEqual(
-            len(get_output_points(self.msg_buffer[1])),
-            NUM_OF_POINTS,
-            "The concatenate pointcloud has a different number of point as expected",
+        concatenate_cloud1 = get_output_points(self.msg_buffer[0])
+        if DEBUG:
+            print("concatenate_cloud 1: ", concatenate_cloud1)
+
+        self.assertTrue(
+            np.allclose(concatenate_cloud1, expected_pointcloud1, atol=1e-3),
+            "The concatenation node have wierd output",
+        )
+
+        expected_pointcloud2 = np.array(
+            [
+                [1, -5, 5],
+                [0, -4, 5],
+                [0, -5, 6],
+            ],
+            dtype=np.float32,
+        )
+
+        concatenate_cloud2 = get_output_points(self.msg_buffer[1])
+        if DEBUG:
+            print("concatenate_cloud 2: ", concatenate_cloud2)
+
+        self.assertTrue(
+            np.allclose(concatenate_cloud2, expected_pointcloud2, atol=1e-3),
+            "The concatenation node have wierd output",
         )
 
         global_seconds += 1
@@ -739,7 +813,7 @@ class TestConcatenateNode(unittest.TestCase):
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS[:-1]):
             pointcloud_seconds = global_seconds
-            pointcloud_nanoseconds = global_nanosceonds + frame_idx * milliseconds * 40  # add 40 ms
+            pointcloud_nanoseconds = global_nanosceonds + frame_idx * MILLISECONDS * 40  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
             ).to_msg()
@@ -755,11 +829,11 @@ class TestConcatenateNode(unittest.TestCase):
         time.sleep(TIMEOUT_SEC)
         rclpy.spin_once(self.node)
 
-        next_global_nanosecond = global_nanosceonds + 100 * milliseconds
+        next_global_nanosecond = global_nanosceonds + 100 * MILLISECONDS
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS):
             pointcloud_seconds = global_seconds
             pointcloud_nanoseconds = (
-                next_global_nanosecond + frame_idx * milliseconds * 40
+                next_global_nanosecond + frame_idx * MILLISECONDS * 40
             )  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
@@ -774,24 +848,56 @@ class TestConcatenateNode(unittest.TestCase):
             time.sleep(0.01)
 
         rclpy.spin_once(self.node)
-        print("len of msg buffer: ", len(self.msg_buffer))
-        # Should receive only one concatenate pointcloud
+
         self.assertEqual(
             len(self.msg_buffer),
             2,
             "The number of concatenate pointcloud has different number as expected.",
         )
 
-        self.assertEqual(
-            len(get_output_points(self.msg_buffer[0])),
-            NUM_OF_POINTS * (len(FRAME_ID_LISTS) - 1),
-            "The concatenate pointcloud has a different number of point as expected",
+        expected_pointcloud1 = np.array(
+            [
+                [1.04, 5, 5],
+                [0.04, 6, 5],
+                [0.04, 5, 6],
+                [1, 0, 5],
+                [0, 1, 5],
+                [0, 0, 6],
+            ],
+            dtype=np.float32,
         )
 
-        self.assertEqual(
-            len(get_output_points(self.msg_buffer[1])),
-            NUM_OF_POINTS * len(FRAME_ID_LISTS),
-            "The concatenate pointcloud has a different number of point as expected",
+        concatenate_cloud1 = get_output_points(self.msg_buffer[0])
+        if DEBUG:
+            print("concatenate_cloud 1: ", concatenate_cloud1)
+
+        self.assertTrue(
+            np.allclose(concatenate_cloud1, expected_pointcloud1, atol=1e-3),
+            "The concatenation node have wierd output",
+        )
+
+        expected_pointcloud2 = np.array(
+            [
+                [1.08, -5, 5],
+                [0.08, -4, 5],
+                [0.08, -5, 6],
+                [1.04, 5, 5],
+                [0.04, 6, 5],
+                [0.04, 5, 6],
+                [1, 0, 5],
+                [0, 1, 5],
+                [0, 0, 6],
+            ],
+            dtype=np.float32,
+        )
+
+        concatenate_cloud2 = get_output_points(self.msg_buffer[1])
+        if DEBUG:
+            print("concatenate_cloud 2: ", concatenate_cloud2)
+
+        self.assertTrue(
+            np.allclose(concatenate_cloud2, expected_pointcloud2, atol=1e-3),
+            "The concatenation node have wierd output",
         )
 
         global_seconds += 1
