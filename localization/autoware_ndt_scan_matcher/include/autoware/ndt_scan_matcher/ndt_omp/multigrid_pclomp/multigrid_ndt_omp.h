@@ -55,7 +55,7 @@
 #ifndef AUTOWARE__NDT_OMP__MULTIGRID_PCLOMP__MULTIGRID_NDT_OMP_H_
 #define AUTOWARE__NDT_OMP__MULTIGRID_PCLOMP__MULTIGRID_NDT_OMP_H_
 
-#include "autoware/ndt_omp/multigrid_pclomp/multi_voxel_grid_covariance_omp.h"
+#include "multi_voxel_grid_covariance_omp.h"
 #include "ndt_struct.hpp"
 
 #include <pcl/search/impl/search.hpp>

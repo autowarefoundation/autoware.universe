@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/ndt_omp/estimate_covariance/estimate_covariance.hpp"
+#include "autoware/ndt_scan_matcher/ndt_omp/estimate_covariance/estimate_covariance.hpp"
 
 #include <fstream>
 #include <iomanip>
