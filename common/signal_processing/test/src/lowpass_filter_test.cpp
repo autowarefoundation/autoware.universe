@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/optional/optional_io.hpp>
+
 constexpr double epsilon = 1e-6;
 
 geometry_msgs::msg::Twist createTwist(
