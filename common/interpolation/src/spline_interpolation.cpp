@@ -23,7 +23,7 @@ Eigen::VectorXd solve_tridiagonal_matrix_algorithm(
   const Eigen::Ref<const Eigen::VectorXd> & a, const Eigen::Ref<const Eigen::VectorXd> & b,
   const Eigen::Ref<const Eigen::VectorXd> & c, const Eigen::Ref<const Eigen::VectorXd> & d)
 {
-  auto n = d.size();
+  const auto n = d.size();
 
   if (n == 1) {
     return d.array() / b.array();
@@ -143,7 +143,7 @@ std::vector<double> splineByAkima(
 
 Eigen::Index SplineInterpolation::get_index(double key) const
 {
-  auto it = std::lower_bound(base_keys_.begin(), base_keys_.end(), key);
+  const auto it = std::lower_bound(base_keys_.begin(), base_keys_.end(), key);
   return std::clamp(
     static_cast<int>(std::distance(base_keys_.begin(), it)) - 1, 0,
     static_cast<int>(base_keys_.size()) - 2);
