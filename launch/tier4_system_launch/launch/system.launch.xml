@@ -102,6 +102,11 @@
       </include>
     </group>
 
+    <!-- Hazard Status Converter -->
+    <group>
+      <include file="$(find-pkg-share hazard_status_converter)/launch/hazard_status_converter.launch.xml"/>
+    </group>
+
     <!-- MRM Handler -->
     <group>
       <include file="$(find-pkg-share mrm_handler)/launch/mrm_handler.launch.xml">
