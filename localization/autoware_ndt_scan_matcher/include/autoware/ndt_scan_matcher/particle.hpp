@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NDT_SCAN_MATCHER__PARTICLE_HPP_
-#define NDT_SCAN_MATCHER__PARTICLE_HPP_
+#ifndef AUTOWARE__NDT_SCAN_MATCHER__PARTICLE_HPP_
+#define AUTOWARE__NDT_SCAN_MATCHER__PARTICLE_HPP_
 
 #include <geometry_msgs/msg/pose.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -43,4 +43,4 @@ void push_debug_markers(
 
 }  // namespace autoware::ndt_scan_matcher
 
-#endif  // NDT_SCAN_MATCHER__PARTICLE_HPP_
+#endif  // AUTOWARE__NDT_SCAN_MATCHER__PARTICLE_HPP_

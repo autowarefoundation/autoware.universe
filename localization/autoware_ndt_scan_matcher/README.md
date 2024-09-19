@@ -1,8 +1,8 @@
-# ndt_scan_matcher
+# autoware_ndt_scan_matcher
 
 ## Purpose
 
-ndt_scan_matcher is a package for position estimation using the NDT scan matching method.
+autoware_ndt_scan_matcher is a package for position estimation using the NDT scan matching method.
 
 There are two main functions in this package:
 
@@ -58,31 +58,31 @@ One optional function is regularization. Please see the regularization chapter i
 
 #### Frame
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/frame.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/frame.json") }}
 
 #### Sensor Points
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/sensor_points.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/sensor_points.json") }}
 
 #### Ndt
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/ndt.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/ndt.json") }}
 
 #### Initial Pose Estimation
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/initial_pose_estimation.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/initial_pose_estimation.json") }}
 
 #### Validation
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/validation.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/validation.json") }}
 
 #### Score Estimation
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/score_estimation.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/score_estimation.json") }}
 
 #### Covariance
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/covariance.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/covariance.json") }}
 
 ## Regularization
 
@@ -158,7 +158,7 @@ This is because if the base position is far off from the true value, NDT scan ma
 
 ### Parameters
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/ndt_regularization.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/ndt_regularization.json") }}
 
 Regularization is disabled by default because GNSS is not always accurate enough to serve the appropriate base position in any scenes.
 
@@ -208,7 +208,7 @@ Using the feature, `ndt_scan_matcher` can theoretically handle any large size ma
 
 ### Parameters
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/dynamic_map_loading.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/dynamic_map_loading.json") }}
 
 ### Notes for dynamic map loading
 
@@ -235,7 +235,7 @@ This is a function that uses no ground LiDAR scan to estimate the scan matching 
 
 ### Parameters
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/score_estimation_no_ground_points.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/score_estimation_no_ground_points.json") }}
 
 ## 2D real-time covariance estimation
 
@@ -262,7 +262,7 @@ initial_pose_offset_model is rotated around (x,y) = (0,0) in the direction of th
 initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.
 In MULTI_NDT_SCORE mode, the scale of the output 2D covariance can be adjusted according to the temperature.
 
-{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/covariance_covariance_estimation.json") }}
+{{ json_to_markdown("localization/autoware_ndt_scan_matcher/schema/sub/covariance_covariance_estimation.json") }}
 
 ## Diagnostics
 

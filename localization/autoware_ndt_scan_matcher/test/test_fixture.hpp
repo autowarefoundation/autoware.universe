@@ -15,7 +15,7 @@
 #ifndef TEST_FIXTURE_HPP_
 #define TEST_FIXTURE_HPP_
 
-#include "../include/ndt_scan_matcher/ndt_scan_matcher_core.hpp"
+#include "../include/autoware/ndt_scan_matcher/ndt_scan_matcher_core.hpp"
 #include "stub_initialpose_client.hpp"
 #include "stub_pcd_loader.hpp"
 #include "stub_sensor_pcd_publisher.hpp"
@@ -37,8 +37,9 @@ class TestNDTScanMatcher : public ::testing::Test
 protected:
   void SetUp() override
   {
-    const std::string yaml_path = ament_index_cpp::get_package_share_directory("ndt_scan_matcher") +
-                                  "/config/ndt_scan_matcher.param.yaml";
+    const std::string yaml_path =
+      ament_index_cpp::get_package_share_directory("autoware_ndt_scan_matcher") +
+      "/config/ndt_scan_matcher.param.yaml";
 
     rcl_params_t * params_st = rcl_yaml_node_struct_init(rcl_get_default_allocator());
     if (!rcl_parse_yaml_file(yaml_path.c_str(), params_st)) {
