@@ -25,32 +25,27 @@
 namespace autoware::pointcloud_preprocessor
 {
 
-template <class T>
-bool DistortionCorrector<T>::pointcloud_transform_exists()
+bool DistortionCorrectorBase::pointcloud_transform_exists()
 {
   return pointcloud_transform_exists_;
 }
 
-template <class T>
-bool DistortionCorrector<T>::pointcloud_transform_needed()
+bool DistortionCorrectorBase::pointcloud_transform_needed()
 {
   return pointcloud_transform_needed_;
 }
 
-template <class T>
-std::deque<geometry_msgs::msg::TwistStamped> DistortionCorrector<T>::get_twist_queue()
+std::deque<geometry_msgs::msg::TwistStamped> DistortionCorrectorBase::get_twist_queue()
 {
   return twist_queue_;
 }
 
-template <class T>
-std::deque<geometry_msgs::msg::Vector3Stamped> DistortionCorrector<T>::get_angular_velocity_queue()
+std::deque<geometry_msgs::msg::Vector3Stamped> DistortionCorrectorBase::get_angular_velocity_queue()
 {
   return angular_velocity_queue_;
 }
 
-template <class T>
-void DistortionCorrector<T>::process_twist_message(
+void DistortionCorrectorBase::process_twist_message(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg)
 {
   geometry_msgs::msg::TwistStamped msg;
@@ -72,16 +67,14 @@ void DistortionCorrector<T>::process_twist_message(
   }
 }
 
-template <class T>
-void DistortionCorrector<T>::process_imu_message(
+void DistortionCorrectorBase::process_imu_message(
   const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
   get_imu_transformation(base_frame, imu_msg->header.frame_id);
   enqueue_imu(imu_msg);
 }
 
-template <class T>
-void DistortionCorrector<T>::get_imu_transformation(
+void DistortionCorrectorBase::get_imu_transformation(
   const std::string & base_frame, const std::string & imu_frame)
 {
   if (imu_transform_exists_) {
@@ -99,8 +92,7 @@ void DistortionCorrector<T>::get_imu_transformation(
     tf2::toMsg(tf2_imu_to_base_link.getRotation());
 }
 
-template <class T>
-void DistortionCorrector<T>::enqueue_imu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
+void DistortionCorrectorBase::enqueue_imu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
   geometry_msgs::msg::Vector3Stamped angular_velocity;
   angular_velocity.vector = imu_msg->angular_velocity;
@@ -126,8 +118,7 @@ void DistortionCorrector<T>::enqueue_imu(const sensor_msgs::msg::Imu::ConstShare
   }
 }
 
-template <class T>
-void DistortionCorrector<T>::get_twist_and_imu_iterator(
+void DistortionCorrectorBase::get_twist_and_imu_iterator(
   bool use_imu, double first_point_time_stamp_sec,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
   std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu)
@@ -150,8 +141,7 @@ void DistortionCorrector<T>::get_twist_and_imu_iterator(
   }
 }
 
-template <class T>
-bool DistortionCorrector<T>::is_pointcloud_valid(sensor_msgs::msg::PointCloud2 & pointcloud)
+bool DistortionCorrectorBase::is_pointcloud_valid(sensor_msgs::msg::PointCloud2 & pointcloud)
 {
   if (pointcloud.data.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
@@ -187,8 +177,7 @@ bool DistortionCorrector<T>::is_pointcloud_valid(sensor_msgs::msg::PointCloud2 &
   return true;
 }
 
-template <class T>
-std::optional<AngleConversion> DistortionCorrector<T>::try_compute_angle_conversion(
+std::optional<AngleConversion> DistortionCorrectorBase::try_compute_angle_conversion(
   sensor_msgs::msg::PointCloud2 & pointcloud)
 {
   // This function tries to compute the angle conversion from Cartesian coordinates to LiDAR azimuth
@@ -277,6 +266,31 @@ std::optional<AngleConversion> DistortionCorrector<T>::try_compute_angle_convers
     return angle_conversion;
   }
   return std::nullopt;
+}
+
+void DistortionCorrectorBase::warn_if_timestamp_is_too_late(
+  bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late)
+{
+  if (is_twist_time_stamp_too_late) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+      "Twist time_stamp is too late. Could not interpolate.");
+  }
+
+  if (is_imu_time_stamp_too_late) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+      "IMU time_stamp is too late. Could not interpolate.");
+  }
+}
+
+void DistortionCorrectorBase::convert_matrix_to_transform(
+  const Eigen::Matrix4f & matrix, tf2::Transform & transform)
+{
+  transform.setOrigin(tf2::Vector3(matrix(0, 3), matrix(1, 3), matrix(2, 3)));
+  transform.setBasis(tf2::Matrix3x3(
+    matrix(0, 0), matrix(0, 1), matrix(0, 2), matrix(1, 0), matrix(1, 1), matrix(1, 2),
+    matrix(2, 0), matrix(2, 1), matrix(2, 2)));
 }
 
 template <class T>
@@ -377,33 +391,6 @@ void DistortionCorrector<T>::undistort_pointcloud(
   }
 
   warn_if_timestamp_is_too_late(is_twist_time_stamp_too_late, is_imu_time_stamp_too_late);
-}
-
-template <class T>
-void DistortionCorrector<T>::warn_if_timestamp_is_too_late(
-  bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late)
-{
-  if (is_twist_time_stamp_too_late) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
-      "Twist time_stamp is too late. Could not interpolate.");
-  }
-
-  if (is_imu_time_stamp_too_late) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
-      "IMU time_stamp is too late. Could not interpolate.");
-  }
-}
-
-template <class T>
-void DistortionCorrector<T>::convert_matrix_to_transform(
-  const Eigen::Matrix4f & matrix, tf2::Transform & transform)
-{
-  transform.setOrigin(tf2::Vector3(matrix(0, 3), matrix(1, 3), matrix(2, 3)));
-  transform.setBasis(tf2::Matrix3x3(
-    matrix(0, 0), matrix(0, 1), matrix(0, 2), matrix(1, 0), matrix(1, 1), matrix(1, 2),
-    matrix(2, 0), matrix(2, 1), matrix(2, 2)));
 }
 
 ///////////////////////// Functions for different undistortion strategies /////////////////////////
