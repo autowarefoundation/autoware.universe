@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/ndt_scan_matcher/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h"
+#include "autoware/ndt_scan_matcher/ndt_omp/multigrid_ndt_omp.h"
 
-#include "autoware/ndt_scan_matcher/ndt_omp/multigrid_pclomp/multigrid_ndt_omp_impl.hpp"
+#include "autoware/ndt_scan_matcher/ndt_omp/multigrid_ndt_omp_impl.hpp"
 
 template class pclomp::MultiGridNormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>;
 template class pclomp::MultiGridNormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>;

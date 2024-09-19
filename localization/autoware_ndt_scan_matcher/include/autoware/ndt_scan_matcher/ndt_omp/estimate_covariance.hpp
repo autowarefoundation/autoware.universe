@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__ESTIMATE_COVARIANCE__ESTIMATE_COVARIANCE_HPP_
 #define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__ESTIMATE_COVARIANCE__ESTIMATE_COVARIANCE_HPP_
 
-#include "autoware/ndt_scan_matcher/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.h"
+#include "autoware/ndt_scan_matcher/ndt_omp/multigrid_ndt_omp.h"
 
 #include <Eigen/Core>
 
