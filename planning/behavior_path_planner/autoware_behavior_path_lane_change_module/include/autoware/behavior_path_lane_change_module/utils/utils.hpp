@@ -60,17 +60,6 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);
 
-double calcMinimumLaneChangeLength(
-  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals);
-
-double calcMinimumLaneChangeLength(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
-  const LaneChangeParameters & lane_change_parameters, Direction direction);
-
-double calcMaximumLaneChangeLength(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc);
-
 double calcMinimumAcceleration(
   const double current_velocity, const double min_longitudinal_acc,
   const LaneChangeParameters & lane_change_parameters);
@@ -96,11 +85,6 @@ std::vector<int64_t> replaceWithSortedIds(
 std::vector<std::vector<int64_t>> getSortedLaneIds(
   const RouteHandler & route_handler, const Pose & current_pose,
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes);
-
-lanelet::ConstLanelets getTargetPreferredLanes(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Direction & direction,
-  const LaneChangeModuleType & type);
 
 lanelet::ConstLanelets getTargetNeighborLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
@@ -145,12 +129,6 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelets & current_lanes,
   const Pose & curent_pose, const double abort_return_dist,
   const LaneChangeParameters & lane_change_parameters, const Direction direction);
-
-double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer = 0.0);
-
-double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer);
-
-std::string getStrDirection(const std::string & name, const Direction direction);
 
 CandidateOutput assignToCandidate(
   const LaneChangePath & lane_change_path, const Point & ego_position);
@@ -316,6 +294,10 @@ double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, co
 ExtendedPredictedObjects transform_to_extended_objects(
   const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects,
   const bool check_prepare_phase);
+
+double get_distance_to_next_regulatory_element(
+  const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
+  const bool ignore_intersection = false);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 namespace autoware::behavior_path_planner::utils::lane_change::debug
