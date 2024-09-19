@@ -172,7 +172,7 @@ protected:
   }
 
   std::tuple<std::vector<Eigen::Vector3f>, std::vector<float>> generateDefaultPointcloud(
-    AngleCoordinateSystem vendor)
+    AngleCoordinateSystem coordinate_system)
   {
     // Generate all combinations of signs { -, 0, + } x { -, 0, + } for x and y.
     // Also include the case of (0, 0 ,0)
@@ -191,7 +191,7 @@ protected:
 
     std::vector<float> default_azimuths;
     for (const auto & point : default_points) {
-      if (vendor == AngleCoordinateSystem::VELODYNE) {
+      if (coordinate_system == AngleCoordinateSystem::VELODYNE) {
         // velodyne coordinates: x-axis is 0 degrees, y-axis is 270 degrees, angle increase in
         // clockwise direction
         float cartesian_deg = std::atan2(point.y(), point.x()) * 180 / autoware::universe_utils::pi;
@@ -199,7 +199,7 @@ protected:
         float velodyne_deg = 360 - cartesian_deg;
         if (velodyne_deg == 360) velodyne_deg = 0;
         default_azimuths.push_back(velodyne_deg * autoware::universe_utils::pi / 180);
-      } else if (vendor == AngleCoordinateSystem::HESAI) {
+      } else if (coordinate_system == AngleCoordinateSystem::HESAI) {
         // hesai coordinates: y-axis is 0 degrees, x-axis is 90 degrees, angle increase in clockwise
         // direction
         float cartesian_deg = std::atan2(point.y(), point.x()) * 180 / autoware::universe_utils::pi;
@@ -207,7 +207,7 @@ protected:
         float hesai_deg = 90 - cartesian_deg < 0 ? 90 - cartesian_deg + 360 : 90 - cartesian_deg;
         if (hesai_deg == 360) hesai_deg = 0;
         default_azimuths.push_back(hesai_deg * autoware::universe_utils::pi / 180);
-      } else if (vendor == AngleCoordinateSystem::CARTESIAN) {
+      } else if (coordinate_system == AngleCoordinateSystem::CARTESIAN) {
         // Cartesian coordinates: x-axis is 0 degrees, y-axis is 90 degrees, angle increase in
         // counterclockwise direction
         default_azimuths.push_back(std::atan2(point.y(), point.x()));
