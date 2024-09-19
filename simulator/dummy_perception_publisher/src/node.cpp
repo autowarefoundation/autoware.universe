@@ -132,8 +132,7 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
   enable_ray_tracing_ = this->declare_parameter("enable_ray_tracing");
   use_object_recognition_ = this->declare_parameter("use_object_recognition");
   use_base_link_z_ = this->declare_parameter("use_base_link_z");
-  const bool object_centric_pointcloud =
-    this->declare_parameter("object_centric_pointcloud");
+  const bool object_centric_pointcloud = this->declare_parameter("object_centric_pointcloud");
   publish_ground_truth_objects_ = this->declare_parameter("publish_ground_truth");
   const unsigned int random_seed =
     static_cast<unsigned int>(this->declare_parameter("random_seed"));

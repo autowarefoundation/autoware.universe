@@ -1,83 +1,82 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Parameters for Dummy Perception Publisher",
-    "type": "object",
-    "definitions": {
-      "dummy_perception_publisher_params": {
-        "type": "object",
-        "properties": {
-          "visible_range": {
-            "type": "number",
-            "default": 100.0,
-            "description": "sensor visible range [m]"
-          },
-          "detection_successful_rate": {
-            "type": "number",
-            "default": 0.8,
-            "minimum": 0.0,
-            "maximum": 1.0,
-            "description": "sensor detection rate."
-          },
-          "enable_ray_tracing": {
-            "type": "boolean",
-            "default": true,
-            "description": "if True, use ray tracing"
-          },
-          "use_object_recognition": {
-            "type": "boolean",
-            "default": true,
-            "description": "if True, publish objects topic"
-          },
-          "use_base_link_z": {
-            "type": "boolean",
-            "default": true,
-            "description": "if True, node uses z coordinate of ego base_link"
-          },
-          "object_centric_pointcloud": {
-            "type": "boolean",
-            "default": false,
-            "description": "if True, use object-centric point cloud for detection."
-          },
-          "publish_ground_truth": {
-            "type": "boolean",
-            "default": false,
-            "description": "if True, publish ground truth objects"
-          },
-          "random_seed": {
-            "type": "integer",
-            "default": 0,
-            "description": "random seed"
-          },
-          "use_fixed_random_seed": {
-            "type": "boolean",
-            "default": false,
-            "description": "if True, use fixed random seed"
-          }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Dummy Perception Publisher",
+  "type": "object",
+  "definitions": {
+    "dummy_perception_publisher_params": {
+      "type": "object",
+      "properties": {
+        "visible_range": {
+          "type": "number",
+          "default": 100.0,
+          "description": "sensor visible range [m]"
         },
-        "required": [
-          "visible_range",
-          "detection_successful_rate",
-          "enable_ray_tracing",
-          "use_object_recognition",
-          "use_base_link_z",
-          "object_centric_pointcloud",
-          "publish_ground_truth",
-          "random_seed",
-          "use_fixed_random_seed"
-        ]
-      }
-    },
-    "properties": {
-      "/**": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "$ref": "#/definitions/dummy_perception_publisher_params"
-          }
+        "detection_successful_rate": {
+          "type": "number",
+          "default": 0.8,
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "sensor detection rate."
         },
-        "required": ["ros__parameters"]
-      }
-    },
-    "required": ["/**"]
-  }
-  
+        "enable_ray_tracing": {
+          "type": "boolean",
+          "default": true,
+          "description": "if True, use ray tracing"
+        },
+        "use_object_recognition": {
+          "type": "boolean",
+          "default": true,
+          "description": "if True, publish objects topic"
+        },
+        "use_base_link_z": {
+          "type": "boolean",
+          "default": true,
+          "description": "if True, node uses z coordinate of ego base_link"
+        },
+        "object_centric_pointcloud": {
+          "type": "boolean",
+          "default": false,
+          "description": "if True, use object-centric point cloud for detection."
+        },
+        "publish_ground_truth": {
+          "type": "boolean",
+          "default": false,
+          "description": "if True, publish ground truth objects"
+        },
+        "random_seed": {
+          "type": "integer",
+          "default": 0,
+          "description": "random seed"
+        },
+        "use_fixed_random_seed": {
+          "type": "boolean",
+          "default": false,
+          "description": "if True, use fixed random seed"
+        }
+      },
+      "required": [
+        "visible_range",
+        "detection_successful_rate",
+        "enable_ray_tracing",
+        "use_object_recognition",
+        "use_base_link_z",
+        "object_centric_pointcloud",
+        "publish_ground_truth",
+        "random_seed",
+        "use_fixed_random_seed"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/dummy_perception_publisher_params"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
