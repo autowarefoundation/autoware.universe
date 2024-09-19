@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NDT_SCAN_MATCHER__HYPER_PARAMETERS_HPP_
-#define NDT_SCAN_MATCHER__HYPER_PARAMETERS_HPP_
+#ifndef AUTOWARE__NDT_SCAN_MATCHER__HYPER_PARAMETERS_HPP_
+#define AUTOWARE__NDT_SCAN_MATCHER__HYPER_PARAMETERS_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -196,4 +196,4 @@ public:
 
 }  // namespace autoware::ndt_scan_matcher
 
-#endif  // NDT_SCAN_MATCHER__HYPER_PARAMETERS_HPP_
+#endif  // AUTOWARE__NDT_SCAN_MATCHER__HYPER_PARAMETERS_HPP_

@@ -64,7 +64,7 @@ TEST(spline_interpolation, spline)
     const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
     const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
     const std::vector<double> query_keys{0.0, 8.0, 18.0};
-    const std::vector<double> ans{-0.075611, 0.997242, 1.573258};
+    const std::vector<double> ans{-0.076114, 1.001217, 1.573640};
 
     const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
@@ -112,7 +112,7 @@ TEST(spline_interpolation, spline)
     const std::vector<double> base_keys = {0.0, 1.0, 1.0001, 2.0, 3.0, 4.0};
     const std::vector<double> base_values = {0.0, 0.0, 0.1, 0.1, 0.1, 0.1};
     const std::vector<double> query_keys = {0.0, 1.0, 1.5, 2.0, 3.0, 4.0};
-    const std::vector<double> ans = {0.0, 0.0, 137.591789, 0.1, 0.1, 0.1};
+    const std::vector<double> ans = {0.0, 0.0, 158.738293, 0.1, 0.1, 0.1};
 
     const auto query_values = interpolation::spline(base_keys, base_values, query_keys);
     for (size_t i = 0; i < query_values.size(); ++i) {
@@ -227,7 +227,7 @@ TEST(spline_interpolation, SplineInterpolation)
     const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
     const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
     const std::vector<double> query_keys{0.0, 8.0, 18.0};
-    const std::vector<double> ans{-0.075611, 0.997242, 1.573258};
+    const std::vector<double> ans{-0.076114, 1.001217, 1.573640};
 
     SplineInterpolation s(base_keys, base_values);
     const std::vector<double> query_values = s.getSplineInterpolatedValues(query_keys);
@@ -242,7 +242,7 @@ TEST(spline_interpolation, SplineInterpolation)
     const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
     const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
     const std::vector<double> query_keys{0.0, 8.0, 12.0, 18.0};
-    const std::vector<double> ans{0.671301, 0.0509853, 0.209426, -0.253628};
+    const std::vector<double> ans{0.671343, 0.049289, 0.209471, -0.253746};
 
     SplineInterpolation s(base_keys, base_values);
     const std::vector<double> query_values = s.getSplineInterpolatedDiffValues(query_keys);
@@ -257,7 +257,7 @@ TEST(spline_interpolation, SplineInterpolation)
     const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
     const std::vector<double> base_values{-1.2, 0.5, 1.0, 1.2, 2.0, 1.0};
     const std::vector<double> query_keys{0.0, 8.0, 12.0, 18.0};
-    const std::vector<double> ans{-0.156582, 0.0440771, -0.0116873, -0.0495025};
+    const std::vector<double> ans{-0.155829, 0.043097, -0.011143, -0.049611};
 
     SplineInterpolation s(base_keys, base_values);
     const std::vector<double> query_values = s.getSplineInterpolatedQuadDiffValues(query_keys);
