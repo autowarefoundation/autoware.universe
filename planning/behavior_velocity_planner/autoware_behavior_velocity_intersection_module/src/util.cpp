@@ -263,10 +263,10 @@ mergeLaneletsByTopologicalSort(
     ind2Id[ind] = Id;
     Id2lanelet[Id] = lanelet;
   }
-  std::set<size_t> terminal_inds;
+  std::set<size_t> terminal_indices;
   for (const auto & terminal_lanelet : terminal_lanelets) {
     if (Id2ind.count(terminal_lanelet.id()) > 0) {
-      terminal_inds.insert(Id2ind[terminal_lanelet.id()]);
+      terminal_indices.insert(Id2ind[terminal_lanelet.id()]);
     }
   }
 
@@ -292,7 +292,7 @@ mergeLaneletsByTopologicalSort(
   }
 
   std::unordered_map<size_t, std::vector<std::vector<size_t>>> branches;
-  for (const auto & terminal_ind : terminal_inds) {
+  for (const auto & terminal_ind : terminal_indices) {
     std::vector<std::vector<size_t>> paths;
     std::vector<size_t> visited;
     retrievePathsBackward(adjacency, terminal_ind, visited, paths);
@@ -311,11 +311,11 @@ mergeLaneletsByTopologicalSort(
     if (sub_branches.size() == 0) {
       continue;
     }
-    for (const auto & sub_inds : sub_branches) {
+    for (const auto & sub_indices : sub_branches) {
       lanelet::ConstLanelets to_be_merged;
       originals.push_back(lanelet::ConstLanelets({}));
       auto & original = originals.back();
-      for (const auto & sub_ind : sub_inds) {
+      for (const auto & sub_ind : sub_indices) {
         to_be_merged.push_back(Id2lanelet[ind2Id[sub_ind]]);
         original.push_back(Id2lanelet[ind2Id[sub_ind]]);
       }
