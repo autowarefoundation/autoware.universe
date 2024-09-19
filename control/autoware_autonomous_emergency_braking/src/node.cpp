@@ -481,8 +481,8 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   auto check_collision = [&](const Path & path, std::vector<ObjectData> & objects) {
     time_keeper_->start_track("has_collision");
     const auto closest_object_point = std::invoke([&]() -> std::optional<ObjectData> {
-      // Attempt to find the closest target object
-      const auto closest_target_object_itr =
+      // Attempt to find the closest object
+      const auto closest_object_itr =
         std::min_element(objects.begin(), objects.end(), [](const auto & o1, const auto & o2) {
           // target objects have priority
           if (o1.is_target != o2.is_target) {
@@ -491,37 +491,20 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
           return o1.distance_to_object < o2.distance_to_object;
         });
 
-      if (closest_target_object_itr != objects.end()) {
-        // Calculate speed for the closest target object
+      if (closest_object_itr != objects.end()) {
+        // Calculate speed for the closest object
         const auto closest_object_speed = (use_object_velocity_calculation_)
                                             ? collision_data_keeper_.calcObjectSpeedFromHistory(
-                                                *closest_target_object_itr, path, current_v)
+                                                *closest_object_itr, path, current_v)
                                             : std::make_optional<double>(0.0);
 
         if (closest_object_speed.has_value()) {
-          closest_target_object_itr->velocity = closest_object_speed.value();
-          return std::make_optional<ObjectData>(*closest_target_object_itr);
+          closest_object_itr->velocity = closest_object_speed.value();
+          return std::make_optional<ObjectData>(*closest_object_itr);
         }
       }
 
-      // If no target object is found, find the closest object overall
-      const auto closest_object_point_itr =
-        std::min_element(objects.begin(), objects.end(), [](const auto & o1, const auto & o2) {
-          return o1.distance_to_object < o2.distance_to_object;
-        });
-
-      if (closest_object_point_itr == objects.end()) {
-        return std::nullopt;
-      }
-      const auto closest_object_speed = (use_object_velocity_calculation_)
-                                          ? collision_data_keeper_.calcObjectSpeedFromHistory(
-                                              *closest_object_point_itr, path, current_v)
-                                          : std::make_optional<double>(0.0);
-      if (!closest_object_speed.has_value()) {
-        return std::nullopt;
-      }
-      closest_object_point_itr->velocity = closest_object_speed.value();
-      return std::make_optional<ObjectData>(*closest_object_point_itr);
+      return std::nullopt;
     });
 
     const bool has_collision =
