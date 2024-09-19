@@ -22,6 +22,7 @@ namespace autoware::behavior_path_planner::utils::lane_change::calculation
 {
 using autoware::route_handler::Direction;
 using autoware::route_handler::RouteHandler;
+using behavior_path_planner::lane_change::Boundary;
 using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LCParamPtr;
 
@@ -101,10 +102,7 @@ double calc_ego_dist_to_lanes_start(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
 
-std::pair<double, double> calc_min_lc_length_and_dist_buffer(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
-
-std::pair<double, double> calc_max_lc_length_and_dist_buffer(
+std::pair<Boundary, Boundary> calc_lc_length_and_dist_buffer(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
 

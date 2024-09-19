@@ -290,6 +290,7 @@ struct TransientData
   Boundary next_lc_buffer;
   double dist_from_ego_to_current_terminal_end{std::numeric_limits<double>::min()};
   double dist_from_ego_to_current_terminal_start{std::numeric_limits<double>::min()};
+  double maximum_prepare_length{std::numeric_limits<double>::max()};
 
   bool is_ego_near_current_terminal_start{false};
 };

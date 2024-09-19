@@ -82,7 +82,7 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
 
   const auto & nearest_object = data.target_objects.front();
   const auto minimum_avoid_length = calcMinAvoidanceLength(nearest_object);
-  const auto minimum_lane_change_length = calcMinimumLaneChangeLength();
+  const auto minimum_lane_change_length = calc_minimum_dist_buffer();
 
   lane_change_debug_.execution_area = createExecutionArea(
     getCommonParam().vehicle_info, getEgoPose(),
@@ -273,12 +273,12 @@ double AvoidanceByLaneChange::calcMinAvoidanceLength(const ObjectData & nearest_
   return avoidance_helper_->getMinAvoidanceDistance(shift_length);
 }
 
-double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
+double AvoidanceByLaneChange::calc_minimum_dist_buffer() const
 {
-  const auto min_lc_length_and_dist_buffer =
-    utils::lane_change::calculation::calc_min_lc_length_and_dist_buffer(
+  const auto lc_length_and_dist_buffer =
+    utils::lane_change::calculation::calc_lc_length_and_dist_buffer(
       common_data_ptr_, get_current_lanes());
-  return std::get<1>(min_lc_length_and_dist_buffer);
+  return std::get<1>(lc_length_and_dist_buffer).min;
 }
 
 double AvoidanceByLaneChange::calcLateralOffset() const

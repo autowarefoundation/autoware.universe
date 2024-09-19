@@ -116,20 +116,11 @@ void NormalLaneChange::update_transient_data()
   common_data_ptr_->transient_data.acc.min = std::get<0>(acc_boundary);
   common_data_ptr_->transient_data.acc.max = std::get<1>(acc_boundary);
 
-  const auto min_lc_length_and_dist_buffer =
-    calculation::calc_min_lc_length_and_dist_buffer(common_data_ptr_, get_current_lanes());
-  const auto max_lc_length_and_dist_buffer =
-    calculation::calc_max_lc_length_and_dist_buffer(common_data_ptr_, get_current_lanes());
+  const auto lc_length_and_dist_buffer =
+    calculation::calc_lc_length_and_dist_buffer(common_data_ptr_, get_current_lanes());
 
-  common_data_ptr_->transient_data.lane_changing_length.min =
-    std::get<0>(min_lc_length_and_dist_buffer);
-  common_data_ptr_->transient_data.lane_changing_length.max =
-    std::get<0>(max_lc_length_and_dist_buffer);
-
-  common_data_ptr_->transient_data.current_dist_buffer.min =
-    std::get<1>(min_lc_length_and_dist_buffer);
-  common_data_ptr_->transient_data.current_dist_buffer.max =
-    std::get<1>(max_lc_length_and_dist_buffer);
+  common_data_ptr_->transient_data.lane_changing_length = std::get<0>(lc_length_and_dist_buffer);
+  common_data_ptr_->transient_data.current_dist_buffer = std::get<1>(lc_length_and_dist_buffer);
 
   common_data_ptr_->transient_data.next_lc_buffer.min =
     common_data_ptr_->transient_data.current_dist_buffer.min -
@@ -143,10 +134,13 @@ void NormalLaneChange::update_transient_data()
     common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start -
     common_data_ptr_->transient_data.current_dist_buffer.min;
 
+  common_data_ptr_->transient_data.maximum_prepare_length =
+    calculation::calc_maximum_prepare_length(common_data_ptr_);
+
   common_data_ptr_->transient_data.is_ego_near_current_terminal_start = std::invoke([&]() -> bool {
-    const auto threshold = calculation::calc_maximum_prepare_length(common_data_ptr_);
-    return common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start < threshold;
+    return common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start < common_data_ptr_->transient_data.maximum_prepare_length;
   });
+
 }
 
 void NormalLaneChange::update_filtered_objects()
@@ -204,24 +198,17 @@ bool NormalLaneChange::isLaneChangeRequired()
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  const auto current_lanes =
-    utils::getCurrentLanesFromPath(prev_module_output_.path, planner_data_);
-
-  if (current_lanes.empty()) {
+  if(!common_data_ptr_ || !common_data_ptr_->is_data_available() || !common_data_ptr_->is_lanes_available()){
     return false;
   }
 
-  const auto target_lanes = getLaneChangeLanes(current_lanes, direction_);
-
-  if (target_lanes.empty()) {
-    return false;
-  }
+  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
 
   const auto ego_dist_to_target_start =
     calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
-  const auto maximum_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
 
-  if (ego_dist_to_target_start > maximum_prepare_length) {
+  if (ego_dist_to_target_start > common_data_ptr_->transient_data.maximum_prepare_length) {
     return false;
   }
 
@@ -239,7 +226,7 @@ bool NormalLaneChange::is_near_regulatory_element() const
 
   if (current_lanes.empty()) return false;
 
-  const auto max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
+  const auto max_prepare_length = common_data_ptr_->transient_data.maximum_prepare_length;
   const auto dist_to_terminal_start =
     calculation::calc_dist_from_pose_to_terminal_end(
       common_data_ptr_, current_lanes, common_data_ptr_->get_ego_pose()) -
@@ -447,9 +434,9 @@ void NormalLaneChange::insertStopPoint(
     return;
   }
 
-  const auto min_lc_length_and_dist_buffer =
-    calculation::calc_min_lc_length_and_dist_buffer(common_data_ptr_, lanelets);
-  const auto lane_change_buffer = std::get<1>(min_lc_length_and_dist_buffer);
+  const auto lc_length_and_dist_buffer =
+    calculation::calc_lc_length_and_dist_buffer(common_data_ptr_, lanelets);
+  const auto lane_change_buffer = std::get<1>(lc_length_and_dist_buffer).min;
 
   const auto getDistanceAlongLanelet = [&](const geometry_msgs::msg::Pose & target) {
     return utils::getSignedDistance(path.points.front().point.pose, target, lanelets);
@@ -1417,7 +1404,7 @@ bool NormalLaneChange::getLaneChangePaths(
   const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
   const auto dist_to_next_regulatory_element =
     utils::lane_change::get_distance_to_next_regulatory_element(common_data_ptr_, only_tl, only_tl);
-  const auto max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
+  const auto max_prepare_length = common_data_ptr_->transient_data.maximum_prepare_length;
 
   for (const auto & prepare_duration : prepare_durations) {
     for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {

@@ -230,7 +230,7 @@ std::vector<double> calc_shift_intervals(
   return route_handler_ptr->getLateralIntervalsToPreferredLane(lanes.back(), direction);
 }
 
-std::pair<double, double> calc_min_lc_length_and_dist_buffer(
+std::pair<Boundary, Boundary> calc_lc_length_and_dist_buffer(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes)
 {
   if (!common_data_ptr || !common_data_ptr->is_data_available() || lanes.empty()) {
@@ -243,22 +243,22 @@ std::pair<double, double> calc_min_lc_length_and_dist_buffer(
     !all_min_lc_lengths.empty() ? all_min_lc_lengths.front() : std::numeric_limits<double>::max();
   const auto min_dist_buffer =
     calculation::calc_distance_buffer(common_data_ptr->lc_param_ptr, all_min_lc_lengths);
-  return {min_lc_length, min_dist_buffer};
-}
 
-std::pair<double, double> calc_max_lc_length_and_dist_buffer(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes)
-{
-  if (!common_data_ptr || !common_data_ptr->is_data_available() || lanes.empty()) {
-    return {};
-  }
-  const auto shift_intervals = calculation::calc_shift_intervals(common_data_ptr, lanes);
   const auto all_max_lc_lengths =
     calculation::calc_all_max_lc_lengths(common_data_ptr, shift_intervals);
   const auto max_lc_length =
     !all_max_lc_lengths.empty() ? all_max_lc_lengths.front() : std::numeric_limits<double>::max();
   const auto max_dist_buffer =
     calculation::calc_distance_buffer(common_data_ptr->lc_param_ptr, all_max_lc_lengths);
-  return {max_lc_length, max_dist_buffer};
+
+  Boundary lc_length;
+  lc_length.min = min_lc_length;
+  lc_length.max = max_lc_length;
+
+  Boundary dist_buffer;
+  dist_buffer.min = min_dist_buffer;
+  dist_buffer.max = max_dist_buffer;
+
+  return {lc_length, dist_buffer};
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
