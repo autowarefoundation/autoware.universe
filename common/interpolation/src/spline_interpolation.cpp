@@ -154,9 +154,9 @@ void SplineInterpolation::calcSplineCoefficients(
 {
   // throw exceptions for invalid arguments
   interpolation_utils::validateKeysAndValues(base_keys, base_values);
-  Eigen::VectorXd x = Eigen::Map<const Eigen::VectorXd>(
+  const Eigen::VectorXd x = Eigen::Map<const Eigen::VectorXd>(
     base_keys.data(), static_cast<Eigen::Index>(base_keys.size()));
-  Eigen::VectorXd y = Eigen::Map<const Eigen::VectorXd>(
+  const Eigen::VectorXd y = Eigen::Map<const Eigen::VectorXd>(
     base_values.data(), static_cast<Eigen::Index>(base_values.size()));
 
   const auto n = x.size();
