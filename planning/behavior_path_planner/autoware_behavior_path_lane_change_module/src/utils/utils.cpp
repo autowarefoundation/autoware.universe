@@ -569,14 +569,6 @@ double getLateralShift(const LaneChangePath & path)
   return path.shifted_path.shift_length.at(end_idx) - path.shifted_path.shift_length.at(start_idx);
 }
 
-bool hasEnoughLengthToLaneChangeAfterAbort(
-  const TransientData & transient_data, const double abort_return_dist)
-{
-  const auto abort_plus_lane_change_length =
-    abort_return_dist + transient_data.current_dist_buffer.min;
-  return abort_plus_lane_change_length <= transient_data.dist_from_ego_to_current_terminal_end;
-}
-
 std::vector<std::vector<int64_t>> getSortedLaneIds(
   const RouteHandler & route_handler, const Pose & current_pose,
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes)

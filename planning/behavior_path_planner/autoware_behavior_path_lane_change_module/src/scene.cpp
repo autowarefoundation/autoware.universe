@@ -131,7 +131,7 @@ void NormalLaneChange::update_transient_data()
     calculation::calc_dist_from_pose_to_terminal_end(
       common_data_ptr_, common_data_ptr_->lanes_ptr->current, common_data_ptr_->get_ego_pose());
   common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start =
-    common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start -
+    common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_end -
     common_data_ptr_->transient_data.current_dist_buffer.min;
 
   common_data_ptr_->transient_data.maximum_prepare_length =
@@ -1972,8 +1972,9 @@ bool NormalLaneChange::calcAbortPath()
     return false;
   }
 
-  if (!utils::lane_change::hasEnoughLengthToLaneChangeAfterAbort(
-        common_data_ptr_->transient_data, abort_return_dist)) {
+  if (
+    abort_return_dist + common_data_ptr_->transient_data.current_dist_buffer.min >
+    common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_end) {
     RCLCPP_ERROR(logger_, "insufficient distance to abort.");
     return false;
   }
