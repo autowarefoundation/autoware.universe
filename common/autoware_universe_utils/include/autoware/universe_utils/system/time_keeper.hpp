@@ -25,6 +25,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace autoware::universe_utils
@@ -67,9 +68,9 @@ public:
   /**
    * @brief Get the parent node
    *
-   * @return std::shared_ptr<ProcessingTimeNode> Shared pointer to the parent node
+   * @return std::weak_ptr<ProcessingTimeNode> Weak pointer to the parent node
    */
-  std::shared_ptr<ProcessingTimeNode> get_parent_node() const;
+  std::weak_ptr<ProcessingTimeNode> get_parent_node() const;
 
   /**
    * @brief Get the child nodes
@@ -101,10 +102,10 @@ public:
   std::string get_name() const;
 
 private:
-  const std::string name_;                                    //!< Name of the node
-  double processing_time_{0.0};                               //!< Processing time of the node
-  std::string comment_;                                       //!< Comment for the node
-  std::shared_ptr<ProcessingTimeNode> parent_node_{nullptr};  //!< Shared pointer to the parent node
+  const std::string name_;                         //!< Name of the node
+  double processing_time_{0.0};                    //!< Processing time of the node
+  std::string comment_;                            //!< Comment for the node
+  std::weak_ptr<ProcessingTimeNode> parent_node_;  //!< Weak pointer to the parent node
   std::vector<std::shared_ptr<ProcessingTimeNode>>
     child_nodes_;  //!< Vector of shared pointers to the child nodes
 };
@@ -169,6 +170,7 @@ private:
   std::shared_ptr<ProcessingTimeNode>
     current_time_node_;                            //!< Shared pointer to the current time node
   std::shared_ptr<ProcessingTimeNode> root_node_;  //!< Shared pointer to the root time node
+  std::thread::id root_node_thread_id_;            //!< ID of the thread that started the tracking
   autoware::universe_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
     stop_watch_;  //!< StopWatch object for tracking the processing time

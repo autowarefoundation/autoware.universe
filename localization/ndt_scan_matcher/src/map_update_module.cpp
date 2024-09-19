@@ -14,6 +14,9 @@
 
 #include "ndt_scan_matcher/map_update_module.hpp"
 
+namespace autoware::ndt_scan_matcher
+{
+
 MapUpdateModule::MapUpdateModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex, NdtPtrType & ndt_ptr,
   HyperParameters::DynamicMapLoading param)
@@ -265,7 +268,7 @@ bool MapUpdateModule::update_ndt(
   }
   diagnostics_ptr->add_key_value("is_succeed_call_pcd_loader", true);
 
-  auto & maps_to_add = result.get()->new_pointcloud_cells;
+  auto & maps_to_add = result.get()->new_pointcloud_with_ids;
   auto & map_ids_to_remove = result.get()->ids_to_remove;
 
   diagnostics_ptr->add_key_value("maps_to_add_size", maps_to_add.size());
@@ -283,7 +286,7 @@ bool MapUpdateModule::update_ndt(
     auto cloud = pcl::make_shared<pcl::PointCloud<PointTarget>>();
 
     pcl::fromROSMsg(map.pointcloud, *cloud);
-    ndt.addTarget(cloud, map.metadata.cell_id);
+    ndt.addTarget(cloud, map.cell_id);
   }
 
   // Remove pcd
@@ -312,3 +315,5 @@ void MapUpdateModule::publish_partial_pcd_map()
 
   loaded_pcd_pub_->publish(map_msg);
 }
+
+}  // namespace autoware::ndt_scan_matcher

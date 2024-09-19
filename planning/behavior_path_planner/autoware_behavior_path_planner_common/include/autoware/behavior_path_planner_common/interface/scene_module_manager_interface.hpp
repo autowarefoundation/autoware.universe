@@ -57,15 +57,7 @@ public:
 
   virtual void init(rclcpp::Node * node) = 0;
 
-  void updateIdleModuleInstance()
-  {
-    if (idle_module_ptr_) {
-      idle_module_ptr_->onEntry();
-      return;
-    }
-
-    idle_module_ptr_ = createNewSceneModuleInstance();
-  }
+  void updateIdleModuleInstance();
 
   bool isExecutionRequested(const BehaviorModuleOutput & previous_module_output) const
   {
@@ -217,36 +209,15 @@ public:
    */
   bool canLaunchNewModule() const { return observers_.empty(); }
 
-  /**
-   * Determine if the module is always executable, regardless of the state of other modules.
-   *
-   * When this returns true:
-   * - The module can be executed even if other modules are not marked as 'simultaneously
-   * executable'.
-   * - Conversely, the presence of this module will not prevent other modules
-   *   from executing, even if they are not marked as 'simultaneously executable'.
-   */
-  virtual bool isAlwaysExecutableModule() const { return false; }
-
   virtual bool isSimultaneousExecutableAsApprovedModule() const
   {
-    if (isAlwaysExecutableModule()) {
-      return true;
-    }
-
     return config_.enable_simultaneous_execution_as_approved_module;
   }
 
   virtual bool isSimultaneousExecutableAsCandidateModule() const
   {
-    if (isAlwaysExecutableModule()) {
-      return true;
-    }
-
     return config_.enable_simultaneous_execution_as_candidate_module;
   }
-
-  bool isKeepLast() const { return config_.keep_last; }
 
   void setData(const std::shared_ptr<PlannerData> & planner_data) { planner_data_ = planner_data; }
 
@@ -268,8 +239,6 @@ public:
     pub_debug_marker_->publish(MarkerArray{});
   }
 
-  size_t getPriority() const { return config_.priority; }
-
   std::string name() const { return name_; }
 
   std::vector<SceneModuleObserver> getSceneModuleObservers() { return observers_; }
@@ -279,55 +248,7 @@ public:
   virtual void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) = 0;
 
 protected:
-  void initInterface(rclcpp::Node * node, const std::vector<std::string> & rtc_types)
-  {
-    using autoware::universe_utils::getOrDeclareParameter;
-
-    // init manager configuration
-    {
-      std::string ns = name_ + ".";
-      try {
-        config_.enable_rtc = getOrDeclareParameter<bool>(*node, "enable_all_modules_auto_mode")
-                               ? false
-                               : getOrDeclareParameter<bool>(*node, ns + "enable_rtc");
-      } catch (const std::exception & e) {
-        config_.enable_rtc = getOrDeclareParameter<bool>(*node, ns + "enable_rtc");
-      }
-
-      config_.enable_simultaneous_execution_as_approved_module =
-        getOrDeclareParameter<bool>(*node, ns + "enable_simultaneous_execution_as_approved_module");
-      config_.enable_simultaneous_execution_as_candidate_module = getOrDeclareParameter<bool>(
-        *node, ns + "enable_simultaneous_execution_as_candidate_module");
-      config_.keep_last = getOrDeclareParameter<bool>(*node, ns + "keep_last");
-      config_.priority = getOrDeclareParameter<int>(*node, ns + "priority");
-    }
-
-    // init rtc configuration
-    for (const auto & rtc_type : rtc_types) {
-      const auto snake_case_name = utils::convertToSnakeCase(name_);
-      const auto rtc_interface_name =
-        rtc_type.empty() ? snake_case_name : snake_case_name + "_" + rtc_type;
-      rtc_interface_ptr_map_.emplace(
-        rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name, config_.enable_rtc));
-      objects_of_interest_marker_interface_ptr_map_.emplace(
-        rtc_type, std::make_shared<ObjectsOfInterestMarkerInterface>(node, rtc_interface_name));
-    }
-
-    // init publisher
-    {
-      pub_info_marker_ = node->create_publisher<MarkerArray>("~/info/" + name_, 20);
-      pub_debug_marker_ = node->create_publisher<MarkerArray>("~/debug/" + name_, 20);
-      pub_virtual_wall_ = node->create_publisher<MarkerArray>("~/virtual_wall/" + name_, 20);
-      pub_drivable_lanes_ = node->create_publisher<MarkerArray>("~/drivable_lanes/" + name_, 20);
-      pub_processing_time_ = node->create_publisher<universe_utils::ProcessingTimeDetail>(
-        "~/processing_time/" + name_, 20);
-    }
-
-    // misc
-    {
-      node_ = node;
-    }
-  }
+  void initInterface(rclcpp::Node * node, const std::vector<std::string> & rtc_types);
 
   virtual std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() = 0;
 
@@ -346,6 +267,8 @@ protected:
   std::string name_;
 
   std::shared_ptr<PlannerData> planner_data_;
+
+  std::shared_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
 
   std::vector<SceneModuleObserver> observers_;
 

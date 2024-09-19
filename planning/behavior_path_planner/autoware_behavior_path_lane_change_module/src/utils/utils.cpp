@@ -14,6 +14,7 @@
 
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
 
+#include "autoware/behavior_path_lane_change_module/utils/calculation.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/path.hpp"
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
@@ -21,6 +22,7 @@
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
@@ -82,81 +84,6 @@ double calcLaneChangeResampleInterval(
   constexpr auto resampling_dt{0.2};
   return std::max(
     lane_changing_length / min_resampling_points, lane_changing_velocity * resampling_dt);
-}
-
-double calcMinimumLaneChangeLength(
-  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals)
-{
-  if (shift_intervals.empty()) {
-    return 0.0;
-  }
-
-  const auto min_vel = lane_change_parameters.minimum_lane_changing_velocity;
-  const auto [min_lat_acc, max_lat_acc] =
-    lane_change_parameters.lane_change_lat_acc_map.find(min_vel);
-  const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
-  const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
-
-  const auto calc_sum = [&](double sum, double shift_interval) {
-    const auto t = PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
-    return sum + (min_vel * t + finish_judge_buffer);
-  };
-
-  const auto total_length =
-    std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
-
-  const auto backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
-  return total_length + backward_buffer * (static_cast<double>(shift_intervals.size()) - 1.0);
-}
-
-double calcMinimumLaneChangeLength(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
-  const LaneChangeParameters & lane_change_parameters, Direction direction)
-{
-  if (!route_handler) {
-    return std::numeric_limits<double>::max();
-  }
-
-  const auto shift_intervals = route_handler->getLateralIntervalsToPreferredLane(lane, direction);
-  return utils::lane_change::calcMinimumLaneChangeLength(lane_change_parameters, shift_intervals);
-}
-
-double calcMaximumLaneChangeLength(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc)
-{
-  if (shift_intervals.empty()) {
-    return 0.0;
-  }
-
-  const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
-  const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
-  const auto t_prepare = lane_change_parameters.lane_change_prepare_duration;
-
-  auto vel = current_velocity;
-
-  const auto calc_sum = [&](double sum, double shift_interval) {
-    // prepare section
-    const auto prepare_length = vel * t_prepare + 0.5 * max_acc * t_prepare * t_prepare;
-    vel = vel + max_acc * t_prepare;
-
-    // lane changing section
-    const auto [min_lat_acc, max_lat_acc] =
-      lane_change_parameters.lane_change_lat_acc_map.find(vel);
-    const auto t_lane_changing =
-      PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
-    const auto lane_changing_length =
-      vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
-
-    vel = vel + max_acc * t_lane_changing;
-    return sum + (prepare_length + lane_changing_length + finish_judge_buffer);
-  };
-
-  const auto total_length =
-    std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
-
-  const auto backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
-  return total_length + backward_buffer * (static_cast<double>(shift_intervals.size()) - 1.0);
 }
 
 double calcMinimumAcceleration(
@@ -238,35 +165,6 @@ std::vector<double> getAccelerationValues(
   return sampled_values;
 }
 
-lanelet::ConstLanelets getTargetPreferredLanes(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Direction & direction,
-  const LaneChangeModuleType & type)
-{
-  if (type != LaneChangeModuleType::NORMAL) {
-    return target_lanes;
-  }
-
-  const auto target_lane =
-    utils::lane_change::getLaneChangeTargetLane(route_handler, current_lanes, type, direction);
-  if (!target_lane) {
-    return target_lanes;
-  }
-
-  const auto itr = std::find_if(
-    target_lanes.begin(), target_lanes.end(),
-    [&](const lanelet::ConstLanelet & lane) { return lane.id() == target_lane->id(); });
-
-  if (itr == target_lanes.end()) {
-    return target_lanes;
-  }
-
-  const int target_id = std::distance(target_lanes.begin(), itr);
-  const lanelet::ConstLanelets target_preferred_lanes(
-    target_lanes.begin() + target_id, target_lanes.end());
-  return target_preferred_lanes;
-}
-
 lanelet::ConstLanelets getTargetNeighborLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType & type)
@@ -288,21 +186,6 @@ lanelet::ConstLanelets getTargetNeighborLanes(
   }
 
   return neighbor_lanes;
-}
-
-lanelet::BasicPolygon2d getTargetNeighborLanesPolygon(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const LaneChangeModuleType & type)
-{
-  const auto target_neighbor_lanelets =
-    utils::lane_change::getTargetNeighborLanes(route_handler, current_lanes, type);
-  if (target_neighbor_lanelets.empty()) {
-    return {};
-  }
-  const auto target_neighbor_preferred_lane_poly = lanelet::utils::getPolygonFromArcLength(
-    target_neighbor_lanelets, 0, std::numeric_limits<double>::max());
-
-  return lanelet::utils::to2D(target_neighbor_preferred_lane_poly).basicPolygon();
 }
 
 bool isPathInLanelets(
@@ -527,7 +410,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
 }
 
 std::vector<DrivableLanes> generateDrivableLanes(
-  const std::vector<DrivableLanes> original_drivable_lanes, const RouteHandler & route_handler,
+  const std::vector<DrivableLanes> & original_drivable_lanes, const RouteHandler & route_handler,
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & lane_change_lanes)
 {
   const auto has_same_lane =
@@ -668,7 +551,7 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
     return false;
   }
 
-  const auto minimum_lane_change_length = calcMinimumLaneChangeLength(
+  const auto minimum_lane_change_length = calculation::calc_minimum_lane_change_length(
     route_handler, current_lanes.back(), lane_change_parameters, direction);
   const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
   if (abort_plus_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
@@ -682,22 +565,6 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
   }
 
   return true;
-}
-
-double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer)
-{
-  return lateral_buffer + 0.5 * vehicle_width;
-}
-
-std::string getStrDirection(const std::string & name, const Direction direction)
-{
-  if (direction == Direction::LEFT) {
-    return name + "_left";
-  }
-  if (direction == Direction::RIGHT) {
-    return name + "_right";
-  }
-  return "";
 }
 
 std::vector<std::vector<int64_t>> getSortedLaneIds(
@@ -792,7 +659,7 @@ std::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const BehaviorPathPlannerParameters & common_parameters,
+  const double lane_changing_acceleration, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters, const double resolution)
 {
   if (lane_change_path.path.points.empty()) {
@@ -801,7 +668,6 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
 
   const auto & path = lane_change_path.path;
   const auto prepare_acc = lane_change_path.info.longitudinal_acceleration.prepare;
-  const auto lane_changing_acc = lane_change_path.info.longitudinal_acceleration.lane_changing;
   const auto duration = lane_change_path.info.duration.sum();
   const auto prepare_time = lane_change_path.info.duration.prepare;
   const auto & minimum_lane_changing_velocity =
@@ -834,9 +700,9 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
     initial_velocity * prepare_time + 0.5 * prepare_acc * prepare_time * prepare_time;
   for (double t = prepare_time; t < duration; t += resolution) {
     const double delta_t = t - prepare_time;
-    const double velocity = lane_changing_velocity + lane_changing_acc * delta_t;
-    const double length =
-      lane_changing_velocity * delta_t + 0.5 * lane_changing_acc * delta_t * delta_t + offset;
+    const double velocity = lane_changing_velocity + lane_changing_acceleration * delta_t;
+    const double length = lane_changing_velocity * delta_t +
+                          0.5 * lane_changing_acceleration * delta_t * delta_t + offset;
     const auto pose = autoware::motion_utils::calcInterpolatedPose(
       path.points, vehicle_pose_frenet.length + length);
     predicted_path.emplace_back(t, pose, velocity);
@@ -1003,30 +869,41 @@ bool passed_parked_objects(
   }
 
   const auto & current_path_end = current_lane_path.points.back().point.pose.position;
-  double min_dist_to_end_of_current_lane = std::numeric_limits<double>::max();
-  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
-  const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanes.back());
-  for (const auto & point : leading_obj_poly.outer()) {
-    const auto obj_p = autoware::universe_utils::createPoint(point.x(), point.y(), 0.0);
-    const double dist = autoware::motion_utils::calcSignedArcLength(
-      current_lane_path.points, obj_p, current_path_end);
-    min_dist_to_end_of_current_lane = std::min(dist, min_dist_to_end_of_current_lane);
-    if (is_goal_in_route) {
+  const auto dist_to_path_end = [&](const auto & src_point) {
+    if (common_data_ptr->lanes_ptr->current_lane_in_goal_section) {
       const auto goal_pose = route_handler.getGoalPose();
-      const double dist_to_goal = autoware::motion_utils::calcSignedArcLength(
-        current_lane_path.points, obj_p, goal_pose.position);
-      min_dist_to_end_of_current_lane = std::min(min_dist_to_end_of_current_lane, dist_to_goal);
+      return motion_utils::calcSignedArcLength(
+        current_lane_path.points, src_point, goal_pose.position);
     }
-  }
+    return motion_utils::calcSignedArcLength(current_lane_path.points, src_point, current_path_end);
+  };
+
+  const auto min_dist_to_end_of_current_lane = std::invoke([&]() {
+    auto min_dist_to_end_of_current_lane = std::numeric_limits<double>::max();
+    for (const auto & point : leading_obj_poly.outer()) {
+      const auto obj_p = universe_utils::createPoint(point.x(), point.y(), 0.0);
+      const auto dist = dist_to_path_end(obj_p);
+      min_dist_to_end_of_current_lane = std::min(dist, min_dist_to_end_of_current_lane);
+    }
+    return min_dist_to_end_of_current_lane;
+  });
 
   // If there are still enough length after the target object, we delay the lane change
-  if (min_dist_to_end_of_current_lane > minimum_lane_change_length) {
-    debug.second.unsafe_reason = "delay lane change";
-    utils::path_safety_checker::updateCollisionCheckDebugMap(object_debug, debug, false);
-    return false;
+  if (min_dist_to_end_of_current_lane <= minimum_lane_change_length) {
+    return true;
   }
 
-  return true;
+  const auto current_pose = common_data_ptr->get_ego_pose();
+  const auto dist_ego_to_obj = motion_utils::calcSignedArcLength(
+    current_lane_path.points, current_pose.position, leading_obj.initial_pose.pose.position);
+
+  if (dist_ego_to_obj < lane_change_path.info.length.lane_changing) {
+    return true;
+  }
+
+  debug.second.unsafe_reason = "delay lane change";
+  utils::path_safety_checker::updateCollisionCheckDebugMap(object_debug, debug, false);
+  return false;
 }
 
 std::optional<size_t> getLeadingStaticObjectIdx(
@@ -1106,8 +983,7 @@ ExtendedPredictedObject transform(
 
   const auto & time_resolution = lane_change_parameters.prediction_time_resolution;
   const auto & prepare_duration = lane_change_parameters.lane_change_prepare_duration;
-  const auto & velocity_threshold =
-    lane_change_parameters.prepare_segment_ignore_object_velocity_thresh;
+  const auto & velocity_threshold = lane_change_parameters.stopped_object_velocity_threshold;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
   const double obj_vel_norm = std::hypot(
     extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
@@ -1216,6 +1092,7 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
 
   lanes_polygon.current =
     utils::lane_change::createPolygon(lanes->current, 0.0, std::numeric_limits<double>::max());
+
   lanes_polygon.target =
     utils::lane_change::createPolygon(lanes->target, 0.0, std::numeric_limits<double>::max());
 
@@ -1226,9 +1103,8 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
   lanes_polygon.expanded_target = utils::lane_change::createPolygon(
     expanded_target_lanes, 0.0, std::numeric_limits<double>::max());
 
-  const auto & route_handler = *common_data_ptr->route_handler_ptr;
-  lanes_polygon.target_neighbor =
-    getTargetNeighborLanesPolygon(route_handler, lanes->current, common_data_ptr->lc_type);
+  lanes_polygon.target_neighbor = *utils::lane_change::createPolygon(
+    lanes->target_neighbor, 0.0, std::numeric_limits<double>::max());
 
   lanes_polygon.preceding_target.reserve(lanes->preceding_target.size());
   for (const auto & preceding_lane : lanes->preceding_target) {
@@ -1262,6 +1138,140 @@ bool is_same_lane_with_prev_iteration(
   }
   return (prev_target_lanes.front().id() == target_lanes.front().id()) &&
          (prev_target_lanes.back().id() == prev_target_lanes.back().id());
+}
+
+Pose to_pose(
+  const autoware::universe_utils::Point2d & point,
+  const geometry_msgs::msg::Quaternion & orientation)
+{
+  Pose pose;
+  pose.position = autoware::universe_utils::createPoint(point.x(), point.y(), 0.0);
+  pose.orientation = orientation;
+  return pose;
+}
+
+bool is_ahead_of_ego(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
+  const PredictedObject & object)
+{
+  const auto & current_ego_pose = common_data_ptr->get_ego_pose();
+
+  const auto & obj_position = object.kinematics.initial_pose_with_covariance.pose.position;
+
+  const auto dist_to_base_link = autoware::motion_utils::calcSignedArcLength(
+    path.points, current_ego_pose.position, obj_position);
+  const auto & ego_info = common_data_ptr->bpp_param_ptr->vehicle_info;
+  const auto lon_dev = std::max(
+    ego_info.max_longitudinal_offset_m + ego_info.rear_overhang_m, object.shape.dimensions.x);
+
+  // we don't always have to check the distance accurately.
+  if (std::abs(dist_to_base_link) > lon_dev) {
+    return dist_to_base_link >= 0.0;
+  }
+
+  const auto ego_polygon = getEgoCurrentFootprint(current_ego_pose, ego_info).outer();
+  auto ego_min_dist_to_end = std::numeric_limits<double>::max();
+  for (const auto & ego_edge_point : ego_polygon) {
+    const auto ego_edge =
+      autoware::universe_utils::createPoint(ego_edge_point.x(), ego_edge_point.y(), 0.0);
+    const auto dist_to_end = autoware::motion_utils::calcSignedArcLength(
+      path.points, ego_edge, path.points.back().point.pose.position);
+    ego_min_dist_to_end = std::min(dist_to_end, ego_min_dist_to_end);
+  }
+
+  const auto obj_polygon = autoware::universe_utils::toPolygon2d(object).outer();
+  auto current_min_dist_to_end = std::numeric_limits<double>::max();
+  for (const auto & polygon_p : obj_polygon) {
+    const auto obj_p = autoware::universe_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
+    const auto dist_ego_to_obj = autoware::motion_utils::calcSignedArcLength(
+      path.points, obj_p, path.points.back().point.pose.position);
+    current_min_dist_to_end = std::min(dist_ego_to_obj, current_min_dist_to_end);
+  }
+  return ego_min_dist_to_end - current_min_dist_to_end >= 0.0;
+}
+
+bool is_before_terminal(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
+  const PredictedObject & object)
+{
+  const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+  const auto & lanes_ptr = common_data_ptr->lanes_ptr;
+  const auto terminal_position = (lanes_ptr->current_lane_in_goal_section)
+                                   ? route_handler_ptr->getGoalPose().position
+                                   : path.points.back().point.pose.position;
+  double current_max_dist = std::numeric_limits<double>::lowest();
+
+  const auto & obj_position = object.kinematics.initial_pose_with_covariance.pose.position;
+  const auto dist_to_base_link =
+    autoware::motion_utils::calcSignedArcLength(path.points, obj_position, terminal_position);
+  // we don't always have to check the distance accurately.
+  if (std::abs(dist_to_base_link) > object.shape.dimensions.x) {
+    return dist_to_base_link >= 0.0;
+  }
+
+  const auto obj_polygon = autoware::universe_utils::toPolygon2d(object).outer();
+  for (const auto & polygon_p : obj_polygon) {
+    const auto obj_p = autoware::universe_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
+    const auto dist_obj_to_terminal =
+      autoware::motion_utils::calcSignedArcLength(path.points, obj_p, terminal_position);
+    current_max_dist = std::max(dist_obj_to_terminal, current_max_dist);
+  }
+  return current_max_dist >= 0.0;
+}
+
+double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, const Pose & pose)
+{
+  lanelet::ConstLanelet closest_lanelet;
+
+  if (!lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
+    return autoware::universe_utils::deg2rad(180);
+  }
+  const auto closest_pose = lanelet::utils::getClosestCenterPose(closest_lanelet, pose.position);
+  return std::abs(autoware::universe_utils::calcYawDeviation(closest_pose, pose));
+}
+
+ExtendedPredictedObjects transform_to_extended_objects(
+  const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects,
+  const bool check_prepare_phase)
+{
+  ExtendedPredictedObjects extended_objects;
+  extended_objects.reserve(objects.size());
+
+  const auto & bpp_param = *common_data_ptr->bpp_param_ptr;
+  const auto & lc_param = *common_data_ptr->lc_param_ptr;
+  std::transform(
+    objects.begin(), objects.end(), std::back_inserter(extended_objects), [&](const auto & object) {
+      return utils::lane_change::transform(object, bpp_param, lc_param, check_prepare_phase);
+    });
+
+  return extended_objects;
+}
+
+double get_distance_to_next_regulatory_element(
+  const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk,
+  const bool ignore_intersection)
+{
+  double distance = std::numeric_limits<double>::max();
+
+  const auto current_pose = common_data_ptr->get_ego_pose();
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  const auto & route_handler = *common_data_ptr->route_handler_ptr;
+  const auto overall_graphs_ptr = route_handler.getOverallGraphPtr();
+
+  if (!ignore_intersection && common_data_ptr->lc_param_ptr->regulate_on_intersection) {
+    distance =
+      std::min(distance, utils::getDistanceToNextIntersection(current_pose, current_lanes));
+  }
+  if (!ignore_crosswalk && common_data_ptr->lc_param_ptr->regulate_on_crosswalk) {
+    distance = std::min(
+      distance, utils::getDistanceToCrosswalk(current_pose, current_lanes, *overall_graphs_ptr));
+  }
+  if (common_data_ptr->lc_param_ptr->regulate_on_traffic_light) {
+    distance = std::min(
+      distance, utils::traffic_light::getDistanceToNextTrafficLight(current_pose, current_lanes));
+  }
+
+  return distance;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 

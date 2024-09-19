@@ -40,7 +40,7 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
     &node, "intersection_occlusion",
     getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
 {
-  const std::string ns(getModuleName());
+  const std::string ns(IntersectionModuleManager::getModuleName());
   auto & ip = intersection_param_;
 
   // common
@@ -327,7 +327,6 @@ void IntersectionModuleManager::launchNewModules(
       continue;
     }
 
-    const std::string location = ll.attributeOr("location", "else");
     const auto associative_ids =
       planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
     bool has_traffic_light = false;
@@ -345,10 +344,10 @@ void IntersectionModuleManager::launchNewModules(
     const UUID uuid = getUUID(new_module->getModuleId());
     const auto occlusion_uuid = new_module->getOcclusionUUID();
     rtc_interface_.updateCooperateStatus(
-      uuid, true, State::RUNNING, std::numeric_limits<double>::lowest(),
+      uuid, true, State::WAITING_FOR_EXECUTION, std::numeric_limits<double>::lowest(),
       std::numeric_limits<double>::lowest(), clock_->now());
     occlusion_rtc_interface_.updateCooperateStatus(
-      occlusion_uuid, true, State::RUNNING, std::numeric_limits<double>::lowest(),
+      occlusion_uuid, true, State::WAITING_FOR_EXECUTION, std::numeric_limits<double>::lowest(),
       std::numeric_limits<double>::lowest(), clock_->now());
     registerModule(std::move(new_module));
   }
@@ -471,7 +470,7 @@ void IntersectionModuleManager::deleteExpiredModules(
 MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
-  const std::string ns(getModuleName());
+  const std::string ns(MergeFromPrivateModuleManager::getModuleName());
   auto & mp = merge_from_private_area_param_;
   mp.stop_duration_sec = getOrDeclareParameter<double>(node, ns + ".stop_duration_sec");
   mp.attention_area_length =

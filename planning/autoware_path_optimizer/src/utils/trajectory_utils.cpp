@@ -97,29 +97,6 @@ std::vector<ReferencePoint> sanitizePoints(const std::vector<ReferencePoint> & p
   return output;
 }
 
-void compensateLastPose(
-  const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
-  const double delta_dist_threshold, const double delta_yaw_threshold)
-{
-  if (traj_points.empty()) {
-    traj_points.push_back(convertToTrajectoryPoint(last_path_point));
-    return;
-  }
-
-  const geometry_msgs::msg::Pose last_traj_pose = traj_points.back().pose;
-
-  const double dist = autoware::universe_utils::calcDistance2d(
-    last_path_point.pose.position, last_traj_pose.position);
-  const double norm_diff_yaw = [&]() {
-    const double diff_yaw =
-      tf2::getYaw(last_path_point.pose.orientation) - tf2::getYaw(last_traj_pose.orientation);
-    return autoware::universe_utils::normalizeRadian(diff_yaw);
-  }();
-  if (dist > delta_dist_threshold || std::fabs(norm_diff_yaw) > delta_yaw_threshold) {
-    traj_points.push_back(convertToTrajectoryPoint(last_path_point));
-  }
-}
-
 geometry_msgs::msg::Point getNearestPosition(
   const std::vector<ReferencePoint> & points, const int target_idx, const double offset)
 {
@@ -136,7 +113,7 @@ geometry_msgs::msg::Point getNearestPosition(
 }
 
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
-  const std::vector<TrajectoryPoint> traj_points, const double interval)
+  const std::vector<TrajectoryPoint> & traj_points, const double interval)
 {
   constexpr bool enable_resampling_stop_point = true;
 
@@ -148,7 +125,7 @@ std::vector<TrajectoryPoint> resampleTrajectoryPoints(
 
 // NOTE: stop point will not be resampled
 std::vector<TrajectoryPoint> resampleTrajectoryPointsWithoutStopPoint(
-  const std::vector<TrajectoryPoint> traj_points, const double interval)
+  const std::vector<TrajectoryPoint> & traj_points, const double interval)
 {
   constexpr bool enable_resampling_stop_point = false;
 
@@ -159,7 +136,7 @@ std::vector<TrajectoryPoint> resampleTrajectoryPointsWithoutStopPoint(
 }
 
 std::vector<ReferencePoint> resampleReferencePoints(
-  const std::vector<ReferencePoint> ref_points, const double interval)
+  const std::vector<ReferencePoint> & ref_points, const double interval)
 {
   // resample pose and velocity
   const auto traj_points = convertToTrajectoryPoints(ref_points);

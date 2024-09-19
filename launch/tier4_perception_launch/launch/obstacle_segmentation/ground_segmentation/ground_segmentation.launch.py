@@ -23,6 +23,7 @@ from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
+from launch_ros.parameter_descriptions import ParameterFile
 from launch_ros.substitutions import FindPackageShare
 import yaml
 
@@ -327,11 +328,13 @@ class GroundSegmentationPipeline:
         return components
 
     @staticmethod
-    def create_time_series_outlier_filter_components(input_topic, output_topic):
+    def create_time_series_outlier_filter_components(
+        input_topic, output_topic, ogm_outlier_filter_param
+    ):
         components = []
         components.append(
             ComposableNode(
-                package="occupancy_grid_map_outlier_filter",
+                package="autoware_occupancy_grid_map_outlier_filter",
                 plugin="autoware::occupancy_grid_map_outlier_filter::OccupancyGridMapOutlierFilterComponent",
                 name="occupancy_grid_based_outlier_filter",
                 remappings=[
@@ -339,6 +342,7 @@ class GroundSegmentationPipeline:
                     ("~/input/pointcloud", input_topic),
                     ("~/output/pointcloud", output_topic),
                 ],
+                parameters=[ogm_outlier_filter_param],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
                 ],
@@ -352,8 +356,8 @@ class GroundSegmentationPipeline:
         components = []
         components.append(
             ComposableNode(
-                package="elevation_map_loader",
-                plugin="ElevationMapLoaderNode",
+                package="autoware_elevation_map_loader",
+                plugin="autoware::elevation_map_loader::ElevationMapLoaderNode",
                 name="elevation_map_loader",
                 namespace="elevation_map",
                 remappings=[
@@ -379,7 +383,11 @@ class GroundSegmentationPipeline:
                             ]
                         ),
                         "elevation_map_directory": PathJoinSubstitution(
-                            [FindPackageShare("elevation_map_loader"), "data", "elevation_maps"]
+                            [
+                                FindPackageShare("autoware_elevation_map_loader"),
+                                "data",
+                                "elevation_maps",
+                            ]
                         ),
                         "use_elevation_map_cloud_publisher": False,
                     }
@@ -541,6 +549,9 @@ def launch_setup(context, *args, **kwargs):
                     else pipeline.single_frame_obstacle_seg_output
                 ),
                 output_topic=pipeline.output_topic,
+                ogm_outlier_filter_param=ParameterFile(
+                    LaunchConfiguration("ogm_outlier_filter_param_path").perform(context)
+                ),
             )
         )
     pointcloud_container_loader = LoadComposableNodes(
@@ -561,6 +572,13 @@ def generate_launch_description():
     add_launch_arg("use_intra_process", "True")
     add_launch_arg("pointcloud_container_name", "pointcloud_container")
     add_launch_arg("input/pointcloud", "/sensing/lidar/concatenated/pointcloud")
+    add_launch_arg(
+        "ogm_outlier_filter_param_path",
+        [
+            FindPackageShare("autoware_launch"),
+            "/config/perception/obstacle_segmentation/occupancy_grid_based_outlier_filter/occupancy_grid_map_outlier_filter.param.yaml",
+        ],
+    )
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",

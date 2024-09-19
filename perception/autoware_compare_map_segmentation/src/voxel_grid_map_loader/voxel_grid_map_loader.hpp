@@ -36,15 +36,6 @@
 namespace autoware::compare_map_segmentation
 {
 template <typename T, typename U>
-double distance3D(const T p1, const U p2)
-{
-  double dx = p1.x - p2.x;
-  double dy = p1.y - p2.y;
-  double dz = p1.z - p2.z;
-  return dx * dx + dy * dy + dz * dz;
-}
-
-template <typename T, typename U>
 double distance2D(const T p1, const U p2)
 {
   double dx = p1.x - p2.x;
@@ -88,7 +79,6 @@ public:
   inline Eigen::Vector4i get_max_b() const { return max_b_; }
   inline Eigen::Vector4i get_div_b() const { return div_b_; }
   inline Eigen::Array4f get_inverse_leaf_size() const { return inverse_leaf_size_; }
-  inline std::vector<int> getLeafLayout() { return (leaf_layout_); }
 };
 
 class VoxelGridMapLoader
@@ -97,7 +87,7 @@ protected:
   rclcpp::Logger logger_;
   std::mutex * mutex_ptr_;
   double voxel_leaf_size_;
-  double voxel_leaf_size_z_;
+  double voxel_leaf_size_z_{};
   double downsize_ratio_z_axis_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr downsampled_map_pub_;
   bool debug_ = false;
@@ -111,9 +101,9 @@ public:
     std::string * tf_map_input_frame, std::mutex * mutex);
 
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
-  bool is_close_to_neighbor_voxels(
+  static bool is_close_to_neighbor_voxels(
     const pcl::PointXYZ & point, const double distance_threshold, VoxelGridPointXYZ & voxel,
-    pcl::search::Search<pcl::PointXYZ>::Ptr tree) const;
+    pcl::search::Search<pcl::PointXYZ>::Ptr tree);
   bool is_close_to_neighbor_voxels(
     const pcl::PointXYZ & point, const double distance_threshold, const PointCloudPtr & map,
     VoxelGridPointXYZ & voxel) const;
@@ -122,9 +112,6 @@ public:
     const double distance_threshold, const PointCloudPtr & map, VoxelGridPointXYZ & voxel) const;
 
   void publish_downsampled_map(const pcl::PointCloud<pcl::PointXYZ> & downsampled_pc);
-  bool is_close_points(
-    const pcl::PointXYZ point, const pcl::PointXYZ target_point,
-    const double distance_threshold) const;
   std::string * tf_map_input_frame_;
 };
 
@@ -223,8 +210,8 @@ public:
     return current_map_ids;
   }
   inline void updateDifferentialMapCells(
-    const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithMetaData> & map_cells_to_add,
-    std::vector<std::string> map_cell_ids_to_remove)
+    const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & map_cells_to_add,
+    const std::vector<std::string> & map_cell_ids_to_remove)
   {
     for (const auto & map_cell_to_add : map_cells_to_add) {
       addMapCellAndFilter(map_cell_to_add);
@@ -271,7 +258,7 @@ public:
     (*mutex_ptr_).unlock();
   }
 
-  inline void removeMapCell(const std::string map_cell_id_to_remove)
+  inline void removeMapCell(const std::string & map_cell_id_to_remove)
   {
     (*mutex_ptr_).lock();
     current_voxel_grid_dict_.erase(map_cell_id_to_remove);
@@ -279,7 +266,7 @@ public:
   }
 
   virtual inline void addMapCellAndFilter(
-    const autoware_map_msgs::msg::PointCloudMapCellWithMetaData & map_cell_to_add)
+    const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add)
   {
     map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;
     map_grid_size_y_ = map_cell_to_add.metadata.max_y - map_cell_to_add.metadata.min_y;
@@ -316,8 +303,7 @@ public:
     current_voxel_grid_list_item.map_cell_pc_ptr = std::move(map_cell_downsampled_pc_ptr_tmp);
     // add
     (*mutex_ptr_).lock();
-    current_voxel_grid_dict_.insert(
-      {map_cell_to_add.metadata.cell_id, current_voxel_grid_list_item});
+    current_voxel_grid_dict_.insert({map_cell_to_add.cell_id, current_voxel_grid_list_item});
     (*mutex_ptr_).unlock();
   }
 };

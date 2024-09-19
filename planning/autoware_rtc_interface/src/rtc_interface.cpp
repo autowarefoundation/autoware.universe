@@ -258,20 +258,56 @@ void RTCInterface::updateCooperateStatus(
     status.module = module_;
     status.safe = safe;
     status.command_status.type = Command::DEACTIVATE;
-    status.state.type = state;
+    status.state.type = State::WAITING_FOR_EXECUTION;
     status.start_distance = start_distance;
     status.finish_distance = finish_distance;
     status.auto_mode = is_auto_mode_enabled_;
     registered_status_.statuses.push_back(status);
+
+    if (state != State::WAITING_FOR_EXECUTION)
+      RCLCPP_WARN_STREAM(
+        getLogger(), "[updateCooperateStatus]  Cannot register "
+                       << state_to_string(state) << " as initial state" << std::endl);
+
     return;
   }
 
-  // If the registered status is found, update status
-  itr->stamp = stamp;
-  itr->safe = safe;
-  itr->state.type = state;
-  itr->start_distance = start_distance;
-  itr->finish_distance = finish_distance;
+  auto update_status = [&](auto & status) {
+    status.stamp = stamp;
+    status.safe = safe;
+    status.state.type = state;
+    status.start_distance = start_distance;
+    status.finish_distance = finish_distance;
+  };
+
+  // If the registered status is found, update status by considering the state transition
+  if (
+    itr->state.type == State::WAITING_FOR_EXECUTION &&
+    (state == State::WAITING_FOR_EXECUTION || state == State::RUNNING || state == State::FAILED)) {
+    update_status(*itr);
+    return;
+  }
+
+  if (itr->state.type == State::RUNNING && state != State::WAITING_FOR_EXECUTION) {
+    update_status(*itr);
+    return;
+  }
+
+  if (itr->state.type == State::ABORTING && (state == State::ABORTING || state == State::FAILED)) {
+    update_status(*itr);
+    return;
+  }
+
+  if (itr->state.type == state) {
+    update_status(*itr);
+    return;
+  }
+
+  RCLCPP_WARN_STREAM(
+    getLogger(), "[updateCooperateStatus] uuid : " << uuid_to_string(uuid)
+                                                   << " cannot transit from "
+                                                   << state_to_string(itr->state.type) << " to "
+                                                   << state_to_string(state) << std::endl);
 }
 
 void RTCInterface::removeCooperateStatus(const UUID & uuid)
@@ -367,6 +403,30 @@ bool RTCInterface::isForceActivated(const UUID & uuid) const
   RCLCPP_WARN_STREAM(
     getLogger(),
     "[isForceActivated] uuid : " << uuid_to_string(uuid) << " is not found" << std::endl);
+  return false;
+}
+
+bool RTCInterface::isForceDeactivated(const UUID & uuid) const
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  const auto itr = std::find_if(
+    registered_status_.statuses.begin(), registered_status_.statuses.end(),
+    [uuid](const auto & s) { return s.uuid == uuid; });
+
+  if (itr != registered_status_.statuses.end()) {
+    if (itr->state.type != State::RUNNING) {
+      return false;
+    }
+    if (itr->command_status.type == Command::DEACTIVATE && itr->safe && !itr->auto_mode) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  RCLCPP_WARN_STREAM(
+    getLogger(),
+    "[isForceDeactivated] uuid : " << uuid_to_string(uuid) << " is not found" << std::endl);
   return false;
 }
 

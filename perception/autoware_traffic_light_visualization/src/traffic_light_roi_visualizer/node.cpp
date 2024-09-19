@@ -20,7 +20,6 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 
 namespace autoware::traffic_light
 {
@@ -32,6 +31,7 @@ TrafficLightRoiVisualizerNode::TrafficLightRoiVisualizerNode(const rclcpp::NodeO
   using std::placeholders::_3;
   using std::placeholders::_4;
   enable_fine_detection_ = this->declare_parameter<bool>("enable_fine_detection");
+  use_image_transport_ = this->declare_parameter<bool>("use_image_transport");
 
   if (enable_fine_detection_) {
     sync_with_rough_roi_.reset(new SyncWithRoughRoi(
@@ -48,13 +48,24 @@ TrafficLightRoiVisualizerNode::TrafficLightRoiVisualizerNode(const rclcpp::NodeO
   timer_ = rclcpp::create_timer(
     this, get_clock(), 100ms, std::bind(&TrafficLightRoiVisualizerNode::connectCb, this));
 
-  image_pub_ =
-    image_transport::create_publisher(this, "~/output/image", rclcpp::QoS{1}.get_rmw_qos_profile());
+  if (use_image_transport_) {
+    image_pub_ = image_transport::create_publisher(
+      this, "~/output/image", rclcpp::QoS{1}.get_rmw_qos_profile());
+  } else {
+    auto qos = rclcpp::QoS(1);
+    simple_image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("~/output/image", qos);
+  }
 }
 
 void TrafficLightRoiVisualizerNode::connectCb()
 {
-  if (image_pub_.getNumSubscribers() == 0) {
+  int num_subscribers = 0;
+  if (use_image_transport_) {
+    num_subscribers = image_pub_.getNumSubscribers();
+  } else {
+    num_subscribers = simple_image_pub_->get_subscription_count();
+  }
+  if (num_subscribers == 0) {
     image_sub_.unsubscribe();
     traffic_signals_sub_.unsubscribe();
     roi_sub_.unsubscribe();
@@ -91,26 +102,18 @@ bool TrafficLightRoiVisualizerNode::createRect(
   cv::Mat & image, const tier4_perception_msgs::msg::TrafficLightRoi & tl_roi,
   const ClassificationResult & result)
 {
-  cv::Scalar color;
-  if (result.label.find("red") != std::string::npos) {
-    color = cv::Scalar{254, 149, 149};
-  } else if (result.label.find("yellow") != std::string::npos) {
-    color = cv::Scalar{254, 250, 149};
-  } else if (result.label.find("green") != std::string::npos) {
-    color = cv::Scalar{149, 254, 161};
-  } else {
-    color = cv::Scalar{250, 250, 250};
-  }
+  const auto info = extractShapeInfo(result.label);
 
   cv::rectangle(
     image, cv::Point(tl_roi.roi.x_offset, tl_roi.roi.y_offset),
     cv::Point(tl_roi.roi.x_offset + tl_roi.roi.width, tl_roi.roi.y_offset + tl_roi.roi.height),
-    color, 2);
+    info.color, 2);
 
-  std::string shape_name = extractShapeName(result.label);
+  constexpr int shape_img_size = 16;
+  const auto position = cv::Point(tl_roi.roi.x_offset, tl_roi.roi.y_offset);
 
   visualization::drawTrafficLightShape(
-    image, shape_name, cv::Point(tl_roi.roi.x_offset, tl_roi.roi.y_offset), color, 16, result.prob);
+    image, info.shapes, shape_img_size, position, info.color, result.prob);
 
   return true;
 }
@@ -143,7 +146,11 @@ void TrafficLightRoiVisualizerNode::imageRoiCallback(
     RCLCPP_ERROR(
       get_logger(), "Could not convert from '%s' to 'rgb8'.", input_image_msg->encoding.c_str());
   }
-  image_pub_.publish(cv_ptr->toImageMsg());
+  if (use_image_transport_) {
+    image_pub_.publish(cv_ptr->toImageMsg());
+  } else {
+    simple_image_pub_->publish(*cv_ptr->toImageMsg());
+  }
 }
 
 bool TrafficLightRoiVisualizerNode::getClassificationResult(
@@ -220,7 +227,11 @@ void TrafficLightRoiVisualizerNode::imageRoughRoiCallback(
     RCLCPP_ERROR(
       get_logger(), "Could not convert from '%s' to 'rgb8'.", input_image_msg->encoding.c_str());
   }
-  image_pub_.publish(cv_ptr->toImageMsg());
+  if (use_image_transport_) {
+    image_pub_.publish(cv_ptr->toImageMsg());
+  } else {
+    simple_image_pub_->publish(*cv_ptr->toImageMsg());
+  }
 }
 
 }  // namespace autoware::traffic_light

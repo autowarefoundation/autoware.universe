@@ -37,6 +37,9 @@
 #include <iomanip>
 #include <thread>
 
+namespace autoware::ndt_scan_matcher
+{
+
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)
 {
@@ -148,6 +151,8 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
   nearest_voxel_transformation_likelihood_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
       "nearest_voxel_transformation_likelihood", 10);
+  voxel_score_points_pub_ =
+    this->create_publisher<sensor_msgs::msg::PointCloud2>("voxel_score_points", 10);
   no_ground_transform_probability_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
       "no_ground_transform_probability", 10);
@@ -413,7 +418,10 @@ bool NDTScanMatcher::callback_sensor_points_main(
     "is_succeed_interpolate_initial_pose", is_succeed_interpolate_initial_pose);
   if (!is_succeed_interpolate_initial_pose) {
     std::stringstream message;
-    message << "Couldn't interpolate pose. Please check the initial pose topic";
+    message << "Couldn't interpolate pose. Please verify that "
+               "(1) the initial pose topic (primarily come from the EKF) is being published, and "
+               "(2) the timestamps of the sensor PCD messages and pose messages are synchronized "
+               "correctly.";
     diagnostics_scan_points_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return false;
@@ -630,6 +638,21 @@ bool NDTScanMatcher::callback_sensor_points_main(
     *sensor_points_in_baselink_frame, *sensor_points_in_map_ptr, ndt_result.pose);
   publish_point_cloud(sensor_ros_time, param_.frame.map_frame, sensor_points_in_map_ptr);
 
+  // check each of point score
+  const float lower_nvs = 1.0f;
+  const float upper_nvs = 3.5f;
+  if (voxel_score_points_pub_->get_subscription_count() > 0) {
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr nvs_points_in_map_ptr_rgb{
+      new pcl::PointCloud<pcl::PointXYZRGB>};
+    nvs_points_in_map_ptr_rgb =
+      visualize_point_score(sensor_points_in_map_ptr, lower_nvs, upper_nvs);
+    sensor_msgs::msg::PointCloud2 nvs_points_msg_in_map;
+    pcl::toROSMsg(*nvs_points_in_map_ptr_rgb, nvs_points_msg_in_map);
+    nvs_points_msg_in_map.header.stamp = sensor_ros_time;
+    nvs_points_msg_in_map.header.frame_id = param_.frame.map_frame;
+    voxel_score_points_pub_->publish(nvs_points_msg_in_map);
+  }
+
   // whether use no ground points to calculate score
   if (param_.score_estimation.no_ground_points.enable) {
     // remove ground
@@ -834,7 +857,7 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
   if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::LAPLACE_APPROXIMATION) {
-    return pclomp::estimate_xy_covariance_by_Laplace_approximation(ndt_result.hessian);
+    return pclomp::estimate_xy_covariance_by_laplace_approximation(ndt_result.hessian);
   } else if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::MULTI_NDT) {
@@ -870,6 +893,32 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
   } else {
     return Eigen::Matrix2d::Identity() * param_.covariance.output_pose_covariance[0 + 6 * 0];
   }
+}
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr NDTScanMatcher::visualize_point_score(
+  const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_in_map_ptr,
+  const float & lower_nvs, const float & upper_nvs)
+{
+  pcl::PointCloud<pcl::PointXYZI> nvs_points_in_map_ptr_i;
+  nvs_points_in_map_ptr_i =
+    ndt_ptr_->calculateNearestVoxelScoreEachPoint(*sensor_points_in_map_ptr);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr nvs_points_in_map_ptr_rgb{
+    new pcl::PointCloud<pcl::PointXYZRGB>};
+
+  const float range = upper_nvs - lower_nvs;
+  for (std::size_t i = 0; i < nvs_points_in_map_ptr_i.size(); i++) {
+    pcl::PointXYZRGB point;
+    point.x = nvs_points_in_map_ptr_i.points[i].x;
+    point.y = nvs_points_in_map_ptr_i.points[i].y;
+    point.z = nvs_points_in_map_ptr_i.points[i].z;
+    std_msgs::msg::ColorRGBA color =
+      exchange_color_crc((nvs_points_in_map_ptr_i.points[i].intensity - lower_nvs) / range);
+    point.r = color.r * 255;
+    point.g = color.g * 255;
+    point.b = color.b * 255;
+    nvs_points_in_map_ptr_rgb->points.push_back(point);
+  }
+  return nvs_points_in_map_ptr_rgb;
 }
 
 void NDTScanMatcher::add_regularization_pose(const rclcpp::Time & sensor_ros_time)
@@ -961,7 +1010,8 @@ void NDTScanMatcher::service_ndt_align_main(
   diagnostics_ndt_align_->add_key_value("is_succeed_transform_initial_pose", true);
 
   // transform pose_frame to map_frame
-  const auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
+  auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
+  initial_pose_msg_in_map_frame.header.stamp = req->pose_with_covariance.header.stamp;
   map_update_module_->update_map(
     initial_pose_msg_in_map_frame.pose.pose.position, diagnostics_ndt_align_);
 
@@ -994,12 +1044,22 @@ void NDTScanMatcher::service_ndt_align_main(
     return;
   }
 
-  res->pose_with_covariance = align_pose(initial_pose_msg_in_map_frame);
+  // estimate initial pose
+  const auto [pose_with_covariance, score] = align_pose(initial_pose_msg_in_map_frame);
+
+  // check reliability of initial pose result
+  res->reliable =
+    (param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood < score);
+  if (!res->reliable) {
+    RCLCPP_WARN_STREAM(
+      this->get_logger(), "Initial Pose Estimation is Unstable. Score is " << score);
+  }
   res->success = true;
+  res->pose_with_covariance = pose_with_covariance;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
+std::tuple<geometry_msgs::msg::PoseWithCovarianceStamped, double> NDTScanMatcher::align_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
   output_pose_with_cov_to_log(get_logger(), "align_pose_input", initial_pose_with_cov);
@@ -1089,13 +1149,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
     std::begin(particle_array), std::end(particle_array),
     [](const Particle & lhs, const Particle & rhs) { return lhs.score < rhs.score; });
 
-  if (
-    best_particle_ptr->score <
-    param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood)
-    RCLCPP_WARN_STREAM(
-      this->get_logger(),
-      "Initial Pose Estimation is Unstable. Score is " << best_particle_ptr->score);
-
   geometry_msgs::msg::PoseWithCovarianceStamped result_pose_with_cov_msg;
   result_pose_with_cov_msg.header.stamp = initial_pose_with_cov.header.stamp;
   result_pose_with_cov_msg.header.frame_id = param_.frame.map_frame;
@@ -1104,8 +1157,10 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
   diagnostics_ndt_align_->add_key_value("best_particle_score", best_particle_ptr->score);
 
-  return result_pose_with_cov_msg;
+  return std::make_tuple(result_pose_with_cov_msg, best_particle_ptr->score);
 }
 
+}  // namespace autoware::ndt_scan_matcher
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(NDTScanMatcher)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ndt_scan_matcher::NDTScanMatcher)

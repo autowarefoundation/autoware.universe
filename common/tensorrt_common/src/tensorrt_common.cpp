@@ -137,6 +137,7 @@ void TrtCommon::setup()
     is_initialized_ = false;
     return;
   }
+  // cppcheck-suppress unreadVariable
   std::string engine_path = model_file_path_;
   if (model_file_path_.extension() == ".engine") {
     std::cout << "Load ... " << model_file_path_ << std::endl;
@@ -193,6 +194,7 @@ void TrtCommon::setup()
       logger_.stop_throttle(log_thread);
       logger_.log(nvinfer1::ILogger::Severity::kINFO, "End build engine");
     }
+    // cppcheck-suppress unreadVariable
     engine_path = cache_engine_path;
   } else {
     is_initialized_ = false;
@@ -278,7 +280,6 @@ void TrtCommon::printNetworkInfo(const std::string & onnx_file_path)
   for (int i = 0; i < num; i++) {
     nvinfer1::ILayer * layer = network->getLayer(i);
     auto layer_type = layer->getType();
-    std::string name = layer->getName();
     if (build_config_->profile_per_layer) {
       model_profiler_.setProfDict(layer);
     }

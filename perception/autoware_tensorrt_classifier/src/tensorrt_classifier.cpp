@@ -54,7 +54,7 @@ bool fileExists(const std::string & file_name, bool verbose)
   return true;
 }
 
-std::vector<std::string> loadListFromTextFile(const std::string filename)
+std::vector<std::string> loadListFromTextFile(const std::string & filename)
 {
   assert(fileExists(filename, true));
   std::vector<std::string> list;
@@ -123,7 +123,6 @@ TrtClassifier::TrtClassifier(
     autoware::tensorrt_classifier::ImageStream stream(
       max_batch_size, input_dims, calibration_images);
     fs::path calibration_table{model_path};
-    std::string calibName = "";
     std::string ext = "";
     if (build_config.calib_type_str == "Entropy") {
       ext = "EntropyV2-";

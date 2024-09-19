@@ -18,6 +18,7 @@
 #include "autoware/behavior_velocity_crosswalk_module/util.hpp"
 
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
@@ -111,10 +112,16 @@ public:
   {
     bool show_processing_time;
     // param for stop position
-    double stop_distance_from_object;
+    double stop_distance_from_object_preferred;
+    double stop_distance_from_object_limit;
     double stop_distance_from_crosswalk;
     double far_object_threshold;
     double stop_position_threshold;
+    double min_acc_preferred;
+    double min_jerk_preferred;
+    // param for restart suppression
+    double min_dist_to_stop_for_restart_suppression;
+    double max_dist_to_stop_for_restart_suppression;
     // param for ego velocity
     float min_slow_down_velocity;
     double max_slow_down_jerk;
@@ -136,10 +143,9 @@ public:
     std::vector<double> ego_pass_later_margin_y;
     double ego_pass_later_additional_margin;
     double ego_min_assumed_speed;
-    double max_offset_to_crosswalk_for_yield;
     double min_acc_for_no_stop_decision;
-    double max_jerk_for_no_stop_decision;
     double min_jerk_for_no_stop_decision;
+    double overrun_threshold_length_for_no_stop_decision;
     double stop_object_velocity;
     double min_object_velocity;
     bool disable_yield_for_new_stopped_object;
@@ -348,6 +354,10 @@ private:
     const PathWithLaneId & ego_path,
     const geometry_msgs::msg::Point & first_path_point_on_crosswalk) const;
 
+  std::optional<geometry_msgs::msg::Pose> calcStopPose(
+    const PathWithLaneId & ego_path, double dist_nearest_cp,
+    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose_opt);
+
   std::optional<StopFactor> checkStopForCrosswalkUsers(
     const PathWithLaneId & ego_path, const PathWithLaneId & sparse_resample_path,
     const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
@@ -428,6 +438,9 @@ private:
   static geometry_msgs::msg::Polygon createVehiclePolygon(
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 
+  bool checkRestartSuppression(
+    const PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const;
+
   void recordTime(const int step_num)
   {
     RCLCPP_INFO_EXPRESSION(
@@ -452,6 +465,8 @@ private:
 
   // Debug
   mutable DebugData debug_data_;
+
+  std::unique_ptr<autoware::motion_utils::VehicleStopChecker> vehicle_stop_checker_{nullptr};
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;

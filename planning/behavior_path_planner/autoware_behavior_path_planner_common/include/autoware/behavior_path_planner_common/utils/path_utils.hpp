@@ -67,11 +67,6 @@ void clipPathLength(
 void clipPathLength(
   PathWithLaneId & path, const size_t target_idx, const BehaviorPathPlannerParameters & params);
 
-std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
-  const lanelet::ConstLanelets & current_lanes, const ShiftedPath & path,
-  const ShiftLine & shift_line, const Pose & pose, const double & velocity,
-  const BehaviorPathPlannerParameters & common_parameter);
-
 PathWithLaneId convertWayPointsToPathWithLaneId(
   const autoware::freespace_planning_algorithms::PlannerWaypoints & waypoints,
   const double velocity, const lanelet::ConstLanelets & lanelets);
@@ -79,16 +74,14 @@ PathWithLaneId convertWayPointsToPathWithLaneId(
 std::vector<size_t> getReversingIndices(const PathWithLaneId & path);
 
 std::vector<PathWithLaneId> dividePath(
-  const PathWithLaneId & path, const std::vector<size_t> indices);
+  const PathWithLaneId & path, const std::vector<size_t> & indices);
 
 void correctDividedPathVelocity(std::vector<PathWithLaneId> & divided_paths);
 
-bool isCloseToPath(const PathWithLaneId & path, const Pose & pose, const double distance_threshold);
-
 // only two points is supported
 std::vector<double> splineTwoPoints(
-  std::vector<double> base_s, std::vector<double> base_x, const double begin_diff,
-  const double end_diff, std::vector<double> new_s);
+  const std::vector<double> & base_s, const std::vector<double> & base_x, const double begin_diff,
+  const double end_diff, const std::vector<double> & new_s);
 
 std::vector<Pose> interpolatePose(
   const Pose & start_pose, const Pose & end_pose, const double resample_interval);
@@ -102,8 +95,6 @@ PathWithLaneId calcCenterLinePath(
   const std::optional<PathWithLaneId> & prev_module_path = std::nullopt);
 
 PathWithLaneId combinePath(const PathWithLaneId & path1, const PathWithLaneId & path2);
-
-std::optional<Pose> getFirstStopPoseFromPath(const PathWithLaneId & path);
 
 BehaviorModuleOutput getReferencePath(
   const lanelet::ConstLanelet & current_lane,
