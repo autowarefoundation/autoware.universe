@@ -1,25 +1,25 @@
 name: comment-on-pr
+
 on:
-  pull_request_target:
+  pull_request:
+    types:
+      - opened
+    branches:
+      - beta/v0.[0-9]+.[1-9]+
 
 jobs:
-  comment-on-pr:
+  comment:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Initial PR comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          message: |
-            Thank you for contributing to the Autoware project!
-
-            🚧 If your pull request is in progress, [switch it to draft mode](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request#converting-a-pull-request-to-a-draft).
-
-            Please ensure:
-            - You've checked our [contribution guidelines](https://autowarefoundation.github.io/autoware-documentation/main/contributing/).
-            - Your PR follows our [pull request guidelines](https://autowarefoundation.github.io/autoware-documentation/main/contributing/pull-request-guidelines/).
-            - All required CI checks pass before [marking the PR ready for review](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review).
+      - name: Create comments
+        run: |
+          cat << EOF > comments
+          ### Merging guidelines for the beta branch
+          Please use `Squash and merge` as the default.
+          However, when incorporating multiple changes with cherry-pick, use a `Create a merge commit` to preserve the changes in the history.
+          EOF
+      - name: Post comments
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr comment -F ./comments "${URL}"
