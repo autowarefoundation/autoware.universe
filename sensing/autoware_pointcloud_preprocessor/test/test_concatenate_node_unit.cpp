@@ -172,7 +172,7 @@ protected:
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
   static constexpr int32_t timestamp_seconds_{10};
-  static constexpr uint32_t timestamp_nanoseconds_{100000000};
+  static constexpr uint32_t timestamp_nanoseconds_{100'000'000};
   static constexpr size_t number_of_points_{3};
   static constexpr float standard_tolerance_{1e-4};
   static constexpr int number_of_pointcloud_{3};
