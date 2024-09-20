@@ -13,7 +13,7 @@
         }
       },
       "required": ["publish_debug_trajectories"],
-      "additionalProperties": false
+      "additionalProperties": true
     }
   },
   "properties": {
