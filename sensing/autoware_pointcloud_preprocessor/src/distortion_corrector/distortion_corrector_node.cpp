@@ -110,9 +110,9 @@ void DistortionCorrectorComponent::pointcloud_callback(PointCloud2::UniquePtr po
         "coordinates. This pointcloud will not update azimuth and distance");
       angle_conversion_failure_num_++;
 
-      if (angle_conversion_failure_num_ > failure_tolerance_) {
+      if (angle_conversion_failure_num_ > failure_tolerance) {
         throw std::runtime_error(
-          "Angle conversion failed more than " + std::to_string(failure_tolerance_) +
+          "Angle conversion failed more than " + std::to_string(failure_tolerance) +
           " times. Please check the LiDAR azimuth coordinates.");
       }
     }
