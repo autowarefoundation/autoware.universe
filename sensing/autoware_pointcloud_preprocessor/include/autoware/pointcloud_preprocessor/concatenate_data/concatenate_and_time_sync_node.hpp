@@ -105,7 +105,7 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
 
   // publishers
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr concatenate_cloud_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr concatenated_cloud_publisher_;
   std::unordered_map<std::string, rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
     topic_to_transformed_cloud_publisher_map_;
   std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;

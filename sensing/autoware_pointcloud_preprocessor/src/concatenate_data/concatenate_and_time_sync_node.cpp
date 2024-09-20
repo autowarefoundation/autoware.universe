@@ -96,7 +96,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   }
 
   // Publishers
-  concatenate_cloud_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+  concatenated_cloud_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "output", rclcpp::SensorDataQoS().keep_last(params_.maximum_queue_size));
 
   // Transformed Raw PointCloud2 Publisher to publish the transformed pointcloud
@@ -294,7 +294,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
     lastest_concatenate_cloud_timestamp_ = current_concatenate_cloud_timestamp_;
     auto concatenate_pointcloud_output =
       std::make_unique<sensor_msgs::msg::PointCloud2>(*concatenate_cloud_ptr);
-    concatenate_cloud_publisher_->publish(std::move(concatenate_pointcloud_output));
+    concatenated_cloud_publisher_->publish(std::move(concatenate_pointcloud_output));
 
     // publish transformed raw pointclouds
     if (params_.publish_synchronized_pointcloud) {
