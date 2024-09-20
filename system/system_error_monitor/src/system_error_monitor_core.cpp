@@ -218,7 +218,7 @@ AutowareErrorMonitor::AutowareErrorMonitor(const rclcpp::NodeOptions & options)
   get_parameter_or<double>("diag_timeout_sec", params_.diag_timeout_sec);
   get_parameter_or<double>("hazard_recovery_timeout", params_.hazard_recovery_timeout);
   get_parameter_or<int>(
-    "emergency_hazard_level", params_.emergency_hazard_level, 
+    "emergency_hazard_level", params_.emergency_hazard_level,
     autoware_system_msgs::msg::HazardStatus::LATENT_FAULT);
   get_parameter_or<bool>("use_emergency_hold", params_.use_emergency_hold);
   get_parameter_or<bool>(
