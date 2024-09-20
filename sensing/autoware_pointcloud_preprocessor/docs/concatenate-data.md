@@ -51,7 +51,7 @@ Three parameters, `timeout_sec`, `lidar_timestamp_offsets`, and `lidar_timestamp
 
 #### timeout_sec
 
-When network issues occur or when point clouds experience delays in the previous processing pipeline, some point clouds may be delayed or dropped. To address this, the `timeout_sec` parameter is used. Once the timer is created, it will start counting down from `timeout_sec`. If the timer reaches zero, the collector will not wait for delayed or dropped point clouds but will concatenate the remaining point clouds in the collector directly. The figure below demonstrates how `timeout_sec` works with `concatenate_and_time_sync_node`.
+When network issues occur or when point clouds experience delays in the previous processing pipeline, some point clouds may be delayed or dropped. To address this, the `timeout_sec` parameter is used. Once the timer is created, it will start counting down from `timeout_sec`. If the timer reaches zero, the collector will not wait for delayed or dropped point clouds but will concatenate the remaining point clouds in the collector directly. The figure below demonstrates how `timeout_sec` works with `concatenate_and_time_sync_node` when `timeout_sec` is set to `0.12` (120 ms).
 
 ![concatenate_edge_case](./image/concatenate_edge_case.drawio.svg)
 
