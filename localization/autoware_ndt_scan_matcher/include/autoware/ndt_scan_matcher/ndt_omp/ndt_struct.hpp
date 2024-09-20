@@ -80,7 +80,7 @@ struct NdtResult
   {
     os << "Pose: " << std::endl << val.pose << std::endl;
     os << "TP: " << val.transform_probability << std::endl;
-    os << "NVTP: " << val.nearest_voxel_transformation_likelihood << std::endl;
+    os << "NVTL: " << val.nearest_voxel_transformation_likelihood << std::endl;
     os << "Iteration num: " << val.iteration_num << std::endl;
     os << "Hessian: " << std::endl << val.hessian << std::endl;
     return os;
