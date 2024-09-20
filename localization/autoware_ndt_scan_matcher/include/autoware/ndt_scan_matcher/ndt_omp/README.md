@@ -1,6 +1,7 @@
 # ndt_omp
 
 <!-->
+
 cspell:ignore Kenji, Koide
 <-->
 
