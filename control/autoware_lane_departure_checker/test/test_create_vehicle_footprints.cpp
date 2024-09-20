@@ -241,3 +241,40 @@ INSTANTIATE_TEST_SUITE_P(
         {front_overhang_m + wheel_base_m + 0.1 + 1.0,
          wheel_tread_m / 2.0 + left_overhang_m + 0.2}}}}),
   ::testing::PrintToStringParamName());
+
+INSTANTIATE_TEST_SUITE_P(
+  LaneDepartureCheckerTest, CreateVehicleFootprintsAlongPathTest,
+  ::testing::Values(
+    CreateVehicleFootprintsAlongPathParam{"EmptyTrajectory", {}, 0.0, {}},
+    CreateVehicleFootprintsAlongPathParam{
+      "SinglePointTrajectory",
+      {{{0.0, 0.0}, 0.0}},
+      0.0,
+      {{{front_overhang_m + wheel_base_m, wheel_tread_m / 2.0 + left_overhang_m},
+        {front_overhang_m + wheel_base_m, -(wheel_tread_m / 2.0 + right_overhang_m)},
+        {wheel_base_m / 2.0, -(wheel_tread_m / 2.0 + right_overhang_m)},
+        {-rear_overhang_m, -(wheel_tread_m / 2.0 + right_overhang_m)},
+        {-rear_overhang_m, wheel_tread_m / 2.0 + left_overhang_m},
+        {wheel_base_m / 2.0, wheel_tread_m / 2.0 + left_overhang_m},
+        {front_overhang_m + wheel_base_m, wheel_tread_m / 2.0 + left_overhang_m}}}},
+    CreateVehicleFootprintsAlongPathParam{
+      "NonZeroMargin",
+      {{{0.0, 0.0}, 0.0}, {{1.0, 0.0}, 0.0}},
+      0.1,
+      {{{front_overhang_m + wheel_base_m + 0.1, wheel_tread_m / 2.0 + left_overhang_m + 0.1},
+        {front_overhang_m + wheel_base_m + 0.1, -(wheel_tread_m / 2.0 + right_overhang_m + 0.1)},
+        {wheel_base_m / 2.0, -(wheel_tread_m / 2.0 + right_overhang_m + 0.1)},
+        {-(rear_overhang_m + 0.1), -(wheel_tread_m / 2.0 + right_overhang_m + 0.1)},
+        {-(rear_overhang_m + 0.1), wheel_tread_m / 2.0 + left_overhang_m + 0.1},
+        {wheel_base_m / 2.0, wheel_tread_m / 2.0 + left_overhang_m + 0.1},
+        {front_overhang_m + wheel_base_m + 0.1, wheel_tread_m / 2.0 + left_overhang_m + 0.1}},
+       {{front_overhang_m + wheel_base_m + 0.1 + 1.0, wheel_tread_m / 2.0 + left_overhang_m + 0.1},
+        {front_overhang_m + wheel_base_m + 0.1 + 1.0,
+         -(wheel_tread_m / 2.0 + right_overhang_m + 0.1)},
+        {wheel_base_m / 2.0 + 1.0, -(wheel_tread_m / 2.0 + right_overhang_m + 0.1)},
+        {-(rear_overhang_m + 0.1) + 1.0, -(wheel_tread_m / 2.0 + right_overhang_m + 0.1)},
+        {-(rear_overhang_m + 0.1) + 1.0, wheel_tread_m / 2.0 + left_overhang_m + 0.1},
+        {wheel_base_m / 2.0 + 1.0, wheel_tread_m / 2.0 + left_overhang_m + 0.1},
+        {front_overhang_m + wheel_base_m + 0.1 + 1.0,
+         wheel_tread_m / 2.0 + left_overhang_m + 0.1}}}}),
+  ::testing::PrintToStringParamName());
