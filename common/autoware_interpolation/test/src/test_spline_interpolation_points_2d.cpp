@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/spline_interpolation.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 
 #include <gtest/gtest.h>
 
@@ -22,6 +22,8 @@
 #include <vector>
 
 constexpr double epsilon = 1e-6;
+
+using autoware::interpolation::SplineInterpolationPoints2d;
 
 TEST(spline_interpolation, splineYawFromPoints)
 {
@@ -37,7 +39,7 @@ TEST(spline_interpolation, splineYawFromPoints)
 
     const std::vector<double> ans{0.9827937, 0.9827937, 0.9827937, 0.9827937, 0.9827937};
 
-    const auto yaws = interpolation::splineYawFromPoints(points);
+    const auto yaws = autoware::interpolation::splineYawFromPoints(points);
     for (size_t i = 0; i < yaws.size(); ++i) {
       EXPECT_NEAR(yaws.at(i), ans.at(i), epsilon);
     }
@@ -52,7 +54,7 @@ TEST(spline_interpolation, splineYawFromPoints)
     points.push_back(createPoint(10.0, 12.5, 0.0));
 
     const std::vector<double> ans{1.368174, 0.961318, 1.086098, 0.938357, 0.278594};
-    const auto yaws = interpolation::splineYawFromPoints(points);
+    const auto yaws = autoware::interpolation::splineYawFromPoints(points);
     for (size_t i = 0; i < yaws.size(); ++i) {
       EXPECT_NEAR(yaws.at(i), ans.at(i), epsilon);
     }
@@ -62,7 +64,7 @@ TEST(spline_interpolation, splineYawFromPoints)
     std::vector<geometry_msgs::msg::Point> points;
     points.push_back(createPoint(1.0, 0.0, 0.0));
 
-    EXPECT_THROW(interpolation::splineYawFromPoints(points), std::logic_error);
+    EXPECT_THROW(autoware::interpolation::splineYawFromPoints(points), std::logic_error);
   }
 
   {  // straight: size of base_keys is 2 (edge case in the implementation)
@@ -72,7 +74,7 @@ TEST(spline_interpolation, splineYawFromPoints)
 
     const std::vector<double> ans{0.9827937, 0.9827937};
 
-    const auto yaws = interpolation::splineYawFromPoints(points);
+    const auto yaws = autoware::interpolation::splineYawFromPoints(points);
     for (size_t i = 0; i < yaws.size(); ++i) {
       EXPECT_NEAR(yaws.at(i), ans.at(i), epsilon);
     }
@@ -86,7 +88,7 @@ TEST(spline_interpolation, splineYawFromPoints)
 
     const std::vector<double> ans{0.9827937, 0.9827937, 0.9827937};
 
-    const auto yaws = interpolation::splineYawFromPoints(points);
+    const auto yaws = autoware::interpolation::splineYawFromPoints(points);
     for (size_t i = 0; i < yaws.size(); ++i) {
       EXPECT_NEAR(yaws.at(i), ans.at(i), epsilon);
     }

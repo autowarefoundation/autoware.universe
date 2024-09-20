@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
 
 #include <cstdint>
 #include <vector>
 
-namespace
+namespace autoware::interpolation
 {
 Eigen::VectorXd solve_tridiagonal_matrix_algorithm(
   const Eigen::Ref<const Eigen::VectorXd> & a, const Eigen::Ref<const Eigen::VectorXd> & b,
@@ -52,10 +52,7 @@ Eigen::VectorXd solve_tridiagonal_matrix_algorithm(
 
   return x;
 }
-}  // namespace
 
-namespace interpolation
-{
 std::vector<double> spline(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const std::vector<double> & query_keys)
@@ -139,7 +136,6 @@ std::vector<double> splineByAkima(
   }
   return res;
 }
-}  // namespace interpolation
 
 Eigen::Index SplineInterpolation::get_index(const double & key) const
 {
@@ -153,7 +149,7 @@ void SplineInterpolation::calcSplineCoefficients(
   const std::vector<double> & base_keys, const std::vector<double> & base_values)
 {
   // throw exceptions for invalid arguments
-  interpolation_utils::validateKeysAndValues(base_keys, base_values);
+  autoware::interpolation::validateKeysAndValues(base_keys, base_values);
   const Eigen::VectorXd x = Eigen::Map<const Eigen::VectorXd>(
     base_keys.data(), static_cast<Eigen::Index>(base_keys.size()));
   const Eigen::VectorXd y = Eigen::Map<const Eigen::VectorXd>(
@@ -201,7 +197,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = autoware::interpolation::validateKeys(base_keys_, query_keys);
   std::vector<double> interpolated_values;
   interpolated_values.reserve(query_keys.size());
 
@@ -219,7 +215,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = autoware::interpolation::validateKeys(base_keys_, query_keys);
   std::vector<double> interpolated_diff_values;
   interpolated_diff_values.reserve(query_keys.size());
 
@@ -236,7 +232,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedQuadDiffValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = autoware::interpolation::validateKeys(base_keys_, query_keys);
   std::vector<double> interpolated_quad_diff_values;
   interpolated_quad_diff_values.reserve(query_keys.size());
 
@@ -248,3 +244,4 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedQuadDiffValues(
 
   return interpolated_quad_diff_values;
 }
+}  // namespace autoware::interpolation

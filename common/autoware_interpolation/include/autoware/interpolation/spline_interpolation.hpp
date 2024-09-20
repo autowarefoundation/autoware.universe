@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERPOLATION__SPLINE_INTERPOLATION_HPP_
-#define INTERPOLATION__SPLINE_INTERPOLATION_HPP_
+#ifndef AUTOWARE__INTERPOLATION__SPLINE_INTERPOLATION_HPP_
+#define AUTOWARE__INTERPOLATION__SPLINE_INTERPOLATION_HPP_
 
+#include "autoware/interpolation/interpolation_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/interpolation_utils.hpp"
 
 #include <Eigen/Core>
 
@@ -26,7 +26,7 @@
 #include <numeric>
 #include <vector>
 
-namespace interpolation
+namespace autoware::interpolation
 {
 // static spline interpolation functions
 std::vector<double> spline(
@@ -35,7 +35,6 @@ std::vector<double> spline(
 std::vector<double> splineByAkima(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const std::vector<double> & query_keys);
-}  // namespace interpolation
 
 // non-static 1-dimensional spline interpolation
 //
@@ -93,5 +92,6 @@ private:
 
   Eigen::Index get_index(const double & key) const;
 };
+}  // namespace autoware::interpolation
 
-#endif  // INTERPOLATION__SPLINE_INTERPOLATION_HPP_
+#endif  // AUTOWARE__INTERPOLATION__SPLINE_INTERPOLATION_HPP_

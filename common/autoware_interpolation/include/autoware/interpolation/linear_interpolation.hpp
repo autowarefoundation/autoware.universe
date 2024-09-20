@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERPOLATION__LINEAR_INTERPOLATION_HPP_
-#define INTERPOLATION__LINEAR_INTERPOLATION_HPP_
+#ifndef AUTOWARE__INTERPOLATION__LINEAR_INTERPOLATION_HPP_
+#define AUTOWARE__INTERPOLATION__LINEAR_INTERPOLATION_HPP_
 
-#include "interpolation/interpolation_utils.hpp"
+#include "autoware/interpolation/interpolation_utils.hpp"
 
 #include <vector>
 
-namespace interpolation
+namespace autoware::interpolation
 {
 double lerp(const double src_val, const double dst_val, const double ratio);
 
@@ -30,7 +30,6 @@ std::vector<double> lerp(
 double lerp(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const double query_key);
+}  // namespace autoware::interpolation
 
-}  // namespace interpolation
-
-#endif  // INTERPOLATION__LINEAR_INTERPOLATION_HPP_
+#endif  // AUTOWARE__INTERPOLATION__LINEAR_INTERPOLATION_HPP_

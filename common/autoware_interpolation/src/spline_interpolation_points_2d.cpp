@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolation/spline_interpolation_points_2d.hpp"
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 
 #include <vector>
 
-namespace
+namespace autoware::interpolation
 {
 std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vector<double> & y)
 {
@@ -66,10 +66,6 @@ std::array<std::vector<double>, 4> getBaseValues(
 
   return {base_s, base_x, base_y, base_z};
 }
-}  // namespace
-
-namespace interpolation
-{
 
 template <typename T>
 std::vector<double> splineYawFromPoints(const std::vector<T> & points)
@@ -87,8 +83,6 @@ std::vector<double> splineYawFromPoints(const std::vector<T> & points)
 }
 template std::vector<double> splineYawFromPoints(
   const std::vector<geometry_msgs::msg::Point> & points);
-
-}  // namespace interpolation
 
 geometry_msgs::msg::Pose SplineInterpolationPoints2d::getSplineInterpolatedPose(
   const size_t idx, const double s) const
@@ -215,3 +209,4 @@ void SplineInterpolationPoints2d::calcSplineCoefficientsInner(
   spline_y_ = SplineInterpolation(base_s_vec_, base_y_vec);
   spline_z_ = SplineInterpolation(base_s_vec_, base_z_vec);
 }
+}  // namespace autoware::interpolation

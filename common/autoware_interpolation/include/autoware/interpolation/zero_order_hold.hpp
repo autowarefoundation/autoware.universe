@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERPOLATION__ZERO_ORDER_HOLD_HPP_
-#define INTERPOLATION__ZERO_ORDER_HOLD_HPP_
+#ifndef AUTOWARE__INTERPOLATION__ZERO_ORDER_HOLD_HPP_
+#define AUTOWARE__INTERPOLATION__ZERO_ORDER_HOLD_HPP_
 
-#include "interpolation/interpolation_utils.hpp"
+#include "autoware/interpolation/interpolation_utils.hpp"
 
 #include <vector>
 
-namespace interpolation
+namespace autoware::interpolation
 {
 inline std::vector<size_t> calc_closest_segment_indices(
   const std::vector<double> & base_keys, const std::vector<double> & query_keys,
   const double overlap_threshold = 1e-3)
 {
   // throw exception for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys, query_keys);
+  const auto validated_query_keys = validateKeys(base_keys, query_keys);
 
   std::vector<size_t> closest_segment_indices(validated_query_keys.size());
   size_t closest_segment_idx = 0;
@@ -58,7 +58,7 @@ std::vector<T> zero_order_hold(
   const std::vector<size_t> & closest_segment_indices)
 {
   // throw exception for invalid arguments
-  interpolation_utils::validateKeysAndValues(base_keys, base_values);
+  validateKeysAndValues(base_keys, base_values);
 
   std::vector<T> query_values(closest_segment_indices.size());
   for (size_t i = 0; i < closest_segment_indices.size(); ++i) {
@@ -76,6 +76,6 @@ std::vector<T> zero_order_hold(
   return zero_order_hold(
     base_keys, base_values, calc_closest_segment_indices(base_keys, query_keys, overlap_threshold));
 }
-}  // namespace interpolation
+}  // namespace autoware::interpolation
 
-#endif  // INTERPOLATION__ZERO_ORDER_HOLD_HPP_
+#endif  // AUTOWARE__INTERPOLATION__ZERO_ORDER_HOLD_HPP_
