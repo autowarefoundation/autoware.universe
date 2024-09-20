@@ -67,7 +67,7 @@ protected:
       std::dynamic_pointer_cast<
         autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>(
         concatenate_node_->shared_from_this()),
-      collectors_, combine_cloud_handler_, number_of_pointcloud_, timeout_sec_);
+      collectors_, combine_cloud_handler_, number_of_pointcloud, timeout_sec);
 
     collectors_.push_back(collector_);
 
@@ -88,7 +88,7 @@ protected:
     const std::string & parent_frame, const std::string & child_frame, double x, double y, double z,
     double qx, double qy, double qz, double qw)
   {
-    rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
+    rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
     geometry_msgs::msg::TransformStamped tf_msg;
     tf_msg.header.stamp = timestamp;
     tf_msg.header.frame_id = parent_frame;
@@ -114,7 +114,7 @@ protected:
     pointcloud_msg.is_bigendian = false;
 
     if (generate_points) {
-      std::array<Eigen::Vector3f, number_of_points_> points = {{
+      std::array<Eigen::Vector3f, number_of_points> points = {{
         Eigen::Vector3f(10.0f, 0.0f, 0.0f),  // point 1
         Eigen::Vector3f(0.0f, 10.0f, 0.0f),  // point 2
         Eigen::Vector3f(0.0f, 0.0f, 10.0f),  // point 3
@@ -130,14 +130,14 @@ protected:
         sensor_msgs::msg::PointField::FLOAT32, "distance", 1, sensor_msgs::msg::PointField::FLOAT32,
         "time_stamp", 1, sensor_msgs::msg::PointField::UINT32);
 
-      modifier.resize(number_of_points_);
+      modifier.resize(number_of_points);
 
       sensor_msgs::PointCloud2Iterator<float> iter_x(pointcloud_msg, "x");
       sensor_msgs::PointCloud2Iterator<float> iter_y(pointcloud_msg, "y");
       sensor_msgs::PointCloud2Iterator<float> iter_z(pointcloud_msg, "z");
       sensor_msgs::PointCloud2Iterator<std::uint32_t> iter_t(pointcloud_msg, "time_stamp");
 
-      for (size_t i = 0; i < number_of_points_; ++i) {
+      for (size_t i = 0; i < number_of_points; ++i) {
         *iter_x = points[i].x();
         *iter_y = points[i].y();
         *iter_z = points[i].z();
@@ -171,12 +171,12 @@ protected:
   std::shared_ptr<autoware::pointcloud_preprocessor::CloudCollector> collector_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
-  static constexpr int32_t timestamp_seconds_{10};
-  static constexpr uint32_t timestamp_nanoseconds_{100'000'000};
-  static constexpr size_t number_of_points_{3};
-  static constexpr float standard_tolerance_{1e-4};
-  static constexpr int number_of_pointcloud_{3};
-  static constexpr float timeout_sec_{0.2};
+  static constexpr int32_t timestamp_seconds{10};
+  static constexpr uint32_t timestamp_nanoseconds{100'000'000};
+  static constexpr size_t number_of_points{3};
+  static constexpr float standard_tolerance{1e-4};
+  static constexpr int number_of_pointcloud{3};
+  static constexpr float timeout_sec{0.2};
   bool debug_{false};
 };
 
@@ -231,14 +231,14 @@ TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
     combine_cloud_handler_->computeTransformToAdjustForOldTimestamp(old_stamp, new_stamp);
 
   // translation
-  EXPECT_NEAR(transform(0, 3), 0.0499996, standard_tolerance_);
-  EXPECT_NEAR(transform(1, 3), 0.000189999, standard_tolerance_);
+  EXPECT_NEAR(transform(0, 3), 0.0499996, standard_tolerance);
+  EXPECT_NEAR(transform(1, 3), 0.000189999, standard_tolerance);
 
   // rotation, yaw = 0.005
-  EXPECT_NEAR(transform(0, 0), 0.999987, standard_tolerance_);
-  EXPECT_NEAR(transform(0, 1), -0.00499998, standard_tolerance_);
-  EXPECT_NEAR(transform(1, 0), 0.00499998, standard_tolerance_);
-  EXPECT_NEAR(transform(1, 1), 0.999987, standard_tolerance_);
+  EXPECT_NEAR(transform(0, 0), 0.999987, standard_tolerance);
+  EXPECT_NEAR(transform(0, 1), -0.00499998, standard_tolerance);
+  EXPECT_NEAR(transform(1, 0), 0.00499998, standard_tolerance);
+  EXPECT_NEAR(transform(1, 1), 0.999987, standard_tolerance);
 
   std::ostringstream oss;
   oss << "Transformation matrix:\n" << transform;
@@ -262,9 +262,9 @@ TEST_F(ConcatenateCloudTest, TestSetAndGetReferenceTimeStampBoundary)
 
 TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
 {
-  rclcpp::Time top_timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
-  rclcpp::Time left_timestamp(timestamp_seconds_, timestamp_nanoseconds_ + 40'000'000, RCL_ROS_TIME);
-  rclcpp::Time right_timestamp(timestamp_seconds_, timestamp_nanoseconds_ + 80'000'000, RCL_ROS_TIME);
+  rclcpp::Time top_timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
+  rclcpp::Time left_timestamp(timestamp_seconds, timestamp_nanoseconds + 40'000'000, RCL_ROS_TIME);
+  rclcpp::Time right_timestamp(timestamp_seconds, timestamp_nanoseconds + 80'000'000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 top_pointcloud =
     generatePointCloudMsg(true, false, "lidar_top", top_timestamp);
   sensor_msgs::msg::PointCloud2 left_pointcloud =
@@ -414,7 +414,7 @@ TEST_F(ConcatenateCloudTest, TestDeleteCollector)
 
 TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 {
-  rclcpp::Time timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
+  rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 top_pointcloud =
     generatePointCloudMsg(true, false, "lidar_top", timestamp);
   sensor_msgs::msg::PointCloud2::SharedPtr top_pointcloud_ptr =
@@ -435,9 +435,9 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 
 TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
 {
-  rclcpp::Time top_timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
-  rclcpp::Time left_timestamp(timestamp_seconds_, timestamp_nanoseconds_ + 40'000'000, RCL_ROS_TIME);
-  rclcpp::Time right_timestamp(timestamp_seconds_, timestamp_nanoseconds_ + 80'000'000, RCL_ROS_TIME);
+  rclcpp::Time top_timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
+  rclcpp::Time left_timestamp(timestamp_seconds, timestamp_nanoseconds + 40'000'000, RCL_ROS_TIME);
+  rclcpp::Time right_timestamp(timestamp_seconds, timestamp_nanoseconds + 80'000'000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 top_pointcloud =
     generatePointCloudMsg(true, false, "lidar_top", top_timestamp);
   sensor_msgs::msg::PointCloud2 left_pointcloud =
