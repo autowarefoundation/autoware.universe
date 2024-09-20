@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__AKIMA_SPLINE_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__AKIMA_SPLINE_HPP_
 
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_builder.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
 
 #include <Eigen/Dense>
@@ -30,7 +31,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator
  *
  * This class provides methods to perform Akima spline interpolation on a set of data points.
  */
-class AkimaSpline : public Interpolator<double>
+class AkimaSpline : public Interpolator<double>, public detail::InterpolatorBuilder<AkimaSpline>
 {
 private:
   Eigen::VectorXd a_, b_, c_, d_;  ///< Coefficients for the Akima spline.
@@ -40,21 +41,20 @@ private:
    *
    * This method computes the coefficients for the Akima spline.
    *
-   * @param axis The axis values.
+   * @param bases The bases values.
    * @param values The values to interpolate.
    */
   void compute_parameters(
-    const Eigen::Ref<const Eigen::VectorXd> & axis,
+    const Eigen::Ref<const Eigen::VectorXd> & bases,
     const Eigen::Ref<const Eigen::VectorXd> & values);
 
   /**
    * @brief Build the interpolator with the given values.
    *
-   * @param axis The axis values.
+   * @param bases The bases values.
    * @param values The values to interpolate.
    */
-  void build_impl(
-    const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<double> & values) override;
+  void build_impl(const std::vector<double> & bases, const std::vector<double> & values) override;
 
   /**
    * @brief Compute the interpolated value at the given point.

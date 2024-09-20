@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__NEAREST_NEIGHBOR_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__NEAREST_NEIGHBOR_HPP_
 
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_builder.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/detail/nearest_neighbor_common_impl.hpp"
 
 #include <memory>
@@ -40,7 +41,8 @@ class NearestNeighbor;
  * @tparam T The type of the values being interpolated.
  */
 template <typename T>
-class NearestNeighbor : public detail::NearestNeighborCommonImpl<T>
+class NearestNeighbor : public detail::NearestNeighborCommonImpl<T>,
+                        public detail::InterpolatorBuilder<NearestNeighbor<T>>
 {
 public:
   NearestNeighbor() = default;
@@ -62,7 +64,8 @@ public:
  * This class provides methods to perform nearest neighbor interpolation on double values.
  */
 template <>
-class NearestNeighbor<double> : public detail::NearestNeighborCommonImpl<double>
+class NearestNeighbor<double> : public detail::NearestNeighborCommonImpl<double>,
+                                public detail::InterpolatorBuilder<NearestNeighbor<double>>
 {
 private:
   /**

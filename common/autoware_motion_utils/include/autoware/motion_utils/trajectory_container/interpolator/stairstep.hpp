@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__STAIRSTEP_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__STAIRSTEP_HPP_
 
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_builder.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/detail/stairstep_common_impl.hpp"
 
 #include <memory>
@@ -40,7 +41,8 @@ class Stairstep;
  * @tparam T The type of the values being interpolated.
  */
 template <typename T>
-class Stairstep : public detail::StairstepCommonImpl<T>
+class Stairstep : public detail::StairstepCommonImpl<T>,
+                  public detail::InterpolatorBuilder<Stairstep<T>>
 {
 public:
   Stairstep() = default;
@@ -62,7 +64,8 @@ public:
  * This class provides methods to perform stairstep interpolation on double values.
  */
 template <>
-class Stairstep<double> : public detail::StairstepCommonImpl<double>
+class Stairstep<double> : public detail::StairstepCommonImpl<double>,
+                          public detail::InterpolatorBuilder<Stairstep<double>>
 {
 private:
   /**

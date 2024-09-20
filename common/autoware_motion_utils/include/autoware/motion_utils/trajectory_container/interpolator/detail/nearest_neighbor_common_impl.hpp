@@ -45,7 +45,7 @@ protected:
   [[nodiscard]] T compute_impl(const double & s) const override
   {
     const int32_t idx = this->get_index(s);
-    return (std::abs(s - this->axis_[idx]) <= std::abs(s - this->axis_[idx + 1]))
+    return (std::abs(s - this->bases_[idx]) <= std::abs(s - this->bases_[idx + 1]))
              ? this->values_.at(idx)
              : this->values_.at(idx + 1);
   }
@@ -53,14 +53,13 @@ protected:
   /**
    * @brief Build the interpolator with the given values.
    *
-   * @param axis The axis values.
+   * @param bases The bases values.
    * @param values The values to interpolate.
    * @return True if the interpolator was built successfully, false otherwise.
    */
-  void build_impl(
-    const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<T> & values) override
+  void build_impl(const std::vector<double> & bases, const std::vector<T> & values) override
   {
-    this->axis_ = axis;
+    this->bases_ = bases;
     this->values_ = values;
   }
 

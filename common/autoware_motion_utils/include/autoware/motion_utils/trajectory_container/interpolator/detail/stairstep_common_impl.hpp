@@ -51,13 +51,12 @@ protected:
   /**
    * @brief Build the interpolator with the given values.
    *
-   * @param axis The axis values.
+   * @param bases The bases values.
    * @param values The values to interpolate.
    */
-  void build_impl(
-    const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<T> & values) override
+  void build_impl(const std::vector<double> & bases, const std::vector<T> & values) override
   {
-    this->axis_ = axis;
+    this->bases_ = bases;
     this->values_ = values;
   }
 
