@@ -56,8 +56,8 @@ std::tuple<double, double> CloudCollector::getReferenceTimeStampBoundary()
 void CloudCollector::processCloud(
   std::string topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
-  // Check if the map already contains an entry for the same topic, shouldn't happened if the
-  // parameter set correctly.
+  // Check if the map already contains an entry for the same topic. This shouldn't happen if the
+  // parameter 'lidar_timestamp_noise_window' is set correctly.
   if (topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end()) {
     RCLCPP_WARN(
       concatenate_node_->get_logger(),
