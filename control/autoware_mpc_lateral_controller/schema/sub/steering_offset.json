@@ -32,9 +32,6 @@
           "default": 0.02
         }
       },
-<<<<<<< HEAD
-      "required": ["enable_auto_steering_offset_removal", "update_vel_threshold", "update_steer_threshold", "average_num", "steering_offset_limit"],
-=======
       "required": [
         "enable_auto_steering_offset_removal",
         "update_vel_threshold",
@@ -42,7 +39,6 @@
         "average_num",
         "steering_offset_limit"
       ],
->>>>>>> 77caa749aa285a948a5080c81d7a7bfe5ee43eb6
       "additionalProperties": false
     }
   },
