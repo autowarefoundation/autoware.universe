@@ -27,16 +27,12 @@
           "default": 15
         }
       },
-<<<<<<< HEAD
-      "required": ["enable_path_smoothing", "path_filter_moving_ave_num", "curvature_smoothing_num_traj", "curvature_smoothing_num_ref_steer"],
-=======
       "required": [
         "enable_path_smoothing",
         "path_filter_moving_ave_num",
         "curvature_smoothing_num_traj",
         "curvature_smoothing_num_ref_steer"
       ],
->>>>>>> 77caa749aa285a948a5080c81d7a7bfe5ee43eb6
       "additionalProperties": false
     }
   },
@@ -54,8 +50,4 @@
   },
   "required": ["/**"],
   "additionalProperties": false
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 77caa749aa285a948a5080c81d7a7bfe5ee43eb6
