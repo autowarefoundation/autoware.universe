@@ -6,13 +6,13 @@
     "debug_publish": {
       "type": "object",
       "properties": {
-        "debug_publish_predicted_trajectory": {
+        "publish_debug_trajectories": {
           "type": "boolean",
           "description": "publish predicted trajectory and resampled reference trajectory for debug purpose",
           "default": false
         }
       },
-      "required": ["debug_publish_predicted_trajectory"],
+      "required": ["publish_debug_trajectories"],
       "additionalProperties": false
     }
   },
