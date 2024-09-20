@@ -13,8 +13,8 @@
         },
         "timeout_sec": {
           "type": "number",
-          "default": 0.0,
-          "description": "Timeout in seconds."
+          "default": 0.1,
+          "description": "Timer's timeout duration in seconds when collectors are created. Collectors will concatenate the point clouds when timeout_sec reaches zero."
         },
         "is_motion_compensated": {
           "type": "boolean",
@@ -39,7 +39,7 @@
         "synchronized_pointcloud_postfix": {
           "type": "string",
           "default": "pointcloud",
-          "description": "Postfix for the synchronized point cloud."
+          "description": "Postfix for the topic name of the synchronized point cloud."
         },
         "input_twist_topic_type": {
           "type": "string",
@@ -65,7 +65,7 @@
             "type": "number"
           },
           "default": [],
-          "description": "List of LiDAR timestamp offsets."
+          "description": "List of LiDAR timestamp offsets in seconds. The offset values should be specified in the same order as the input_topics."
         },
         "lidar_timestamp_noise_window": {
           "type": "array",
@@ -73,7 +73,7 @@
             "type": "number"
           },
           "default": [],
-          "description": "List of LiDAR timestamp noise windows."
+          "description": "List of LiDAR timestamp noise windows in seconds. The noise values should be specified in the same order as the input_topics."
         },
         "has_static_tf_only": {
           "type": "boolean",
