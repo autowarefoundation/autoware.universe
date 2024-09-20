@@ -342,7 +342,7 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
     if (metrics.empty()) return false;
 
     const auto length_diff = std::abs(metrics.back().length - lane_changing_length);
-    if (length_diff < common_data_ptr->lc_param_ptr->skip_process_lon_diff_th_prepare) {
+    if (length_diff < common_data_ptr->lc_param_ptr->skip_process_lon_diff_th_lane_changing) {
       RCLCPP_DEBUG(get_logger(), "Skip: Change in lane changing length is less than threshold.");
       return true;
     }
