@@ -653,7 +653,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
     geometry_msgs::msg::Pose current_pose;
     current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
     current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-    if (autoware::universe_utils::calcDistance2d(path.back(), current_pose) < 1e-3) {
+    if (autoware::universe_utils::calcDistance2d(path.back(), current_pose) < 1e-2) {
       continue;
     }
     path.push_back(current_pose);
@@ -667,7 +667,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
     geometry_msgs::msg::Pose current_pose;
     current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
     current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-    if (autoware::universe_utils::calcDistance2d(path.back(), current_pose) < 1e-3) {
+    if (autoware::universe_utils::calcDistance2d(path.back(), current_pose) < 1e-2) {
       continue;
     }
     path.push_back(current_pose);
@@ -692,6 +692,12 @@ std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
   for (size_t i = 0; i < predicted_traj.points.size(); ++i) {
     geometry_msgs::msg::Pose map_pose;
     tf2::doTransform(predicted_traj.points.at(i).pose, map_pose, transform_stamped.value());
+
+    // skip points that are too close to the last point in the path
+    if (autoware::universe_utils::calcDistance2d(path.back(), map_pose) < 1e-2) {
+      continue;
+    }
+
     path.push_back(map_pose);
 
     if (i * mpc_prediction_time_interval_ > mpc_prediction_time_horizon_) {
@@ -889,6 +895,8 @@ void AEB::getClosestObjectsOnPath(
     // calculate the lateral offset between the ego vehicle and the object
     const double lateral_offset =
       std::abs(autoware::motion_utils::calcLateralOffset(ego_path, obj_position));
+
+    if (std::isnan(lateral_offset)) continue;
 
     // object is outside region of interest
     if (
