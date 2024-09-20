@@ -118,7 +118,6 @@
 
 {{json_to_markdown("planning/autoware_velocity_smoother/schema/Linf.schema.json")}}
 
-
 ### Constraint parameters
 
 | Name           | Type     | Description                                    | Default value |
