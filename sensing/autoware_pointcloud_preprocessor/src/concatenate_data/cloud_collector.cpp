@@ -59,10 +59,11 @@ void CloudCollector::processCloud(
   // Check if the map already contains an entry for the same topic. This shouldn't happen if the
   // parameter 'lidar_timestamp_noise_window' is set correctly.
   if (topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end()) {
-    RCLCPP_WARN(
-      concatenate_node_->get_logger(),
-      "Topic '%s' already exists in the collector. Check the timestamp of the pointcloud.",
-      topic_name.c_str());
+    RCLCPP_WARN_STREAM_THROTTLE(
+      concatenate_node_->get_logger(), *concatenate_node_->get_clock(),
+      std::chrono::milliseconds(10000).count(),
+      "Topic '" << topic_name
+                << "' already exists in the collector. Check the timestamp of the pointcloud.");
   }
   topic_to_cloud_map_[topic_name] = cloud;
   if (topic_to_cloud_map_.size() == num_of_clouds_) {
