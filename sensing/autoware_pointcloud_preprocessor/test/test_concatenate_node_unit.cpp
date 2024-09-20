@@ -211,18 +211,18 @@ TEST_F(ConcatenateCloudTest, TestProcessOdometry)
 
 TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
 {
-  rclcpp::Time old_stamp(10, 100000000, RCL_ROS_TIME);
-  rclcpp::Time new_stamp(10, 150000000, RCL_ROS_TIME);
+  rclcpp::Time old_stamp(10, 100'000'000, RCL_ROS_TIME);
+  rclcpp::Time new_stamp(10, 150'000'000, RCL_ROS_TIME);
 
   // Time difference between twist msg is more than 100 miliseconds, won't calculate the difference
   auto twist_msg1 = std::make_shared<geometry_msgs::msg::TwistStamped>();
-  twist_msg1->header.stamp = rclcpp::Time(10, 130000000, RCL_ROS_TIME);
+  twist_msg1->header.stamp = rclcpp::Time(10, 130'000'000, RCL_ROS_TIME);
   twist_msg1->twist.linear.x = 1.0;
   twist_msg1->twist.angular.z = 0.1;
   combine_cloud_handler_->twist_ptr_queue_.push_back(twist_msg1);
 
   auto twist_msg2 = std::make_shared<geometry_msgs::msg::TwistStamped>();
-  twist_msg2->header.stamp = rclcpp::Time(10, 160000000, RCL_ROS_TIME);
+  twist_msg2->header.stamp = rclcpp::Time(10, 160'000'000, RCL_ROS_TIME);
   twist_msg2->twist.linear.x = 1.0;
   twist_msg2->twist.angular.z = 0.1;
   combine_cloud_handler_->twist_ptr_queue_.push_back(twist_msg2);
