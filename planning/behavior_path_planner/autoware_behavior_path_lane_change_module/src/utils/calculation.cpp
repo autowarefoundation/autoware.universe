@@ -24,7 +24,8 @@ namespace autoware::behavior_path_planner::utils::lane_change::calculation
 rclcpp::Logger get_logger()
 {
   constexpr const char * name{"lane_change.calculation"};
-  return rclcpp::get_logger(name);
+  static rclcpp::Logger logger = rclcpp::get_logger(name);
+  return logger;
 }
 
 double calc_ego_dist_to_terminal_end(const CommonDataPtr & common_data_ptr)
@@ -308,7 +309,7 @@ std::vector<PhaseMetrics> calc_prepare_phase_metrics(
 
       if (is_skip(prepare_length)) continue;
 
-      metrics.push_back({prepare_duration, prepare_length, prepare_velocity, prepare_accel, 0.0});
+      metrics.emplace_back(prepare_duration, prepare_length, prepare_velocity, prepare_accel, 0.0);
     }
   }
 
@@ -366,9 +367,9 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
     const auto lane_changing_velocity = std::clamp(
       initial_velocity + lane_changing_accel * lane_changing_duration, min_lc_vel, max_vel);
 
-    metrics.push_back(
-      {lane_changing_duration, lane_changing_length, lane_changing_velocity, lane_changing_accel,
-       lat_acc});
+    metrics.emplace_back(
+      lane_changing_duration, lane_changing_length, lane_changing_velocity, lane_changing_accel,
+      lat_acc);
   }
 
   return metrics;

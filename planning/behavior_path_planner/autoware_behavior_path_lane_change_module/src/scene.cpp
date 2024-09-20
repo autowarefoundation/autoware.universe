@@ -128,7 +128,7 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
   }
 
   LaneChangePaths valid_paths{};
-  bool found_safe_path = getLaneChangePaths(&valid_paths);
+  bool found_safe_path = getLaneChangePaths(valid_paths);
   // if no safe path is found and ego is stuck, try to find a path with a small margin
 
   lane_change_debug_.valid_paths = valid_paths;
@@ -1401,7 +1401,7 @@ bool NormalLaneChange::hasEnoughLengthToTrafficLight(
          dist_to_next_traffic_light_from_lc_start_pose >= path.info.length.lane_changing;
 }
 
-bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) const
+bool NormalLaneChange::getLaneChangePaths(LaneChangePaths & candidate_paths) const
 {
   lane_change_debug_.collision_check_objects.clear();
 
@@ -1456,7 +1456,7 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
 
   const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
 
-  candidate_paths->reserve(
+  candidate_paths.reserve(
     longitudinal_acc_sampling_values.size() * lane_change_parameters_->lateral_acc_sampling_num *
     prepare_durations.size());
 
@@ -1553,7 +1553,7 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
         continue;
       }
 
-      candidate_paths->push_back(candidate_path);
+      candidate_paths.push_back(candidate_path);
 
       bool is_safe = false;
       try {

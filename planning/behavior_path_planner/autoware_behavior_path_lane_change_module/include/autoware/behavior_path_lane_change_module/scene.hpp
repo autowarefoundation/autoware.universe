@@ -162,7 +162,7 @@ protected:
   bool hasEnoughLengthToTrafficLight(
     const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
 
-  bool getLaneChangePaths(LaneChangePaths * candidate_paths) const;
+  bool getLaneChangePaths(LaneChangePaths & candidate_paths) const;
 
   LaneChangePath getCandidatePath(
     const LaneChangePhaseMetrics & prep_metrics, const LaneChangePhaseMetrics & lc_metrics,

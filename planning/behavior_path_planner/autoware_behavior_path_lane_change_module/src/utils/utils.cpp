@@ -74,7 +74,8 @@ using tier4_planning_msgs::msg::PathPointWithLaneId;
 rclcpp::Logger get_logger()
 {
   constexpr const char * name{"lane_change.utils"};
-  return rclcpp::get_logger(name);
+  static rclcpp::Logger logger = rclcpp::get_logger(name);
+  return logger;
 }
 
 double calcLaneChangeResampleInterval(

@@ -199,6 +199,17 @@ struct PhaseMetrics
   double velocity{0.0};
   double lon_accel{0.0};
   double lat_accel{0.0};
+
+  PhaseMetrics(
+    const double _duration, const double _length, const double _velocity, const double _lon_accel,
+    const double _lat_accel)
+  : duration(_duration),
+    length(_length),
+    velocity(_velocity),
+    lon_accel(_lon_accel),
+    lat_accel(_lat_accel)
+  {
+  }
 };
 
 struct Lanes
