@@ -9,7 +9,7 @@
         "maximum_queue_size": {
           "type": "integer",
           "default": 5,
-          "description": "Maximum size of the queue."
+          "description": "Maximum size of the queue for the Keep Last policy in QoS history."
         },
         "timeout_sec": {
           "type": "number",
