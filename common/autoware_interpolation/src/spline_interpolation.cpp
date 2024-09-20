@@ -149,7 +149,7 @@ void SplineInterpolation::calcSplineCoefficients(
   const std::vector<double> & base_keys, const std::vector<double> & base_values)
 {
   // throw exceptions for invalid arguments
-  interpolation_utils::validateKeysAndValues(base_keys, base_values);
+  autoware::interpolation::validateKeysAndValues(base_keys, base_values);
   const Eigen::VectorXd x = Eigen::Map<const Eigen::VectorXd>(
     base_keys.data(), static_cast<Eigen::Index>(base_keys.size()));
   const Eigen::VectorXd y = Eigen::Map<const Eigen::VectorXd>(
@@ -197,7 +197,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = autoware::interpolation::validateKeys(base_keys_, query_keys);
   std::vector<double> interpolated_values;
   interpolated_values.reserve(query_keys.size());
 
@@ -215,7 +215,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = autoware::interpolation::validateKeys(base_keys_, query_keys);
   std::vector<double> interpolated_diff_values;
   interpolated_diff_values.reserve(query_keys.size());
 
@@ -232,7 +232,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedQuadDiffValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = autoware::interpolation::validateKeys(base_keys_, query_keys);
   std::vector<double> interpolated_quad_diff_values;
   interpolated_quad_diff_values.reserve(query_keys.size());
 
