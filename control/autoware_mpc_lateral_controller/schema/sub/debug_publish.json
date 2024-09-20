@@ -8,7 +8,7 @@
       "properties": {
         "debug_publish_predicted_trajectory": {
           "type": "boolean",
-          "description": "publish debug predicted trajectory in Frenet coordinate",
+          "description": "publish predicted trajectory and resampled reference trajectory for debug purpose",
           "default": false
         }
       },
