@@ -71,7 +71,7 @@ TEST_P(ResampleTrajectoryTest, test_resample_trajectory)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-  ResampleTrajectoryTests, ResampleTrajectoryTest,
+  LaneDepartureCheckerTest, ResampleTrajectoryTest,
   ::testing::Values(
     ResampleTrajectoryTestParam{"EmptyTrajectory", {}, 1.0, {}},
     ResampleTrajectoryTestParam{"SinglePointTrajectory", {{1.0, 0.0, 0.0}}, 1.0, {{1.0, 0.0, 0.0}}},
