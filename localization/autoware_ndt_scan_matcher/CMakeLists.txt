@@ -28,9 +28,9 @@ find_package(PCL REQUIRED COMPONENTS common io registration)
 include_directories(${PCL_INCLUDE_DIRS})
 
 ament_auto_add_library(multigrid_ndt_omp SHARED
-  src/ndt_omp/multigrid_pclomp/multi_voxel_grid_covariance_omp.cpp
-  src/ndt_omp/multigrid_pclomp/multigrid_ndt_omp.cpp
-  src/ndt_omp/estimate_covariance/estimate_covariance.cpp
+  src/ndt_omp/multi_voxel_grid_covariance_omp.cpp
+  src/ndt_omp/multigrid_ndt_omp.cpp
+  src/ndt_omp/estimate_covariance.cpp
 )
 target_link_libraries(multigrid_ndt_omp ${PCL_LIBRARIES})
 
