@@ -132,66 +132,7 @@ double area(const alt::ConvexPolygon2d & poly)
 
   return area;
 }
-/*
-alt::Polygon2d buffer(
-  const alt::Points2d & points, const double left_dist, const double right_dist, const int strategy)
-{
-  constexpr std::size_t points_per_circle = 90;
-  const bool join_round = strategy & BufferStrategy::JOIN_ROUND;
-  const bool end_round = strategy & BufferStrategy::END_ROUND;
-  const bool point_circle = strategy & BufferStrategy::POINT_CIRCLE;
-  alt::Polygon2d buffered_poly;
-  if (points.size() == 1) {
-    const double dist = std::max(left_dist, right_dist);
-    if (point_circle) {
-      for (std::size_t i = 0; i < points_per_circle; ++i) {
-        const double theta = 2 * M_PI * i / points_per_circle;
-        buffered_poly.push_back(
-          points.front() + dist * alt::Point2d{std::cos(theta), std::sin(theta)});
-      }
-    } else {
-      const std::vector<alt::Point2d> vertices = {
-        {-dist, -dist}, {dist, -dist}, {dist, dist}, {-dist, dist}};
-      for (const auto & vertex : vertices) {
-        buffered_poly.push_back(points.front() + vertex);
-      }
-    }
-  } else {
-    for (std::size_t i = 0; i < points.size(); ++i) {
-      const auto & p1 = points[i];
-      const auto & p2 = points[(i + 1) % points.size()];
-      const auto v = (p2 - p1).normalized();
-      const auto n = v.vector_triple(alt::Vector2d{0, 0}, 1);
-      alt::Points2d buffer_points;
-      const std::vector<alt::Point2d> square_vertices = {
-        p1 - left_dist * n, p2 - left_dist * n, p2 + right_dist * n, p1 + right_dist * n};
-      for (const auto & vertex : square_vertices) {
-        buffer_points.push_back(vertex);
-      }
-      auto draw_arc = [](const auto & arc_center, const auto start_angle) {
-        const auto radius = (right_dist + left_dist) / 2;
-        for (std::size_t j = 0; j < points_per_circle; ++j) {
-          const double theta = start_angle + M_PI * j / points_per_circle;
-          buffer_points.push_back(
-            arc_center + radius * alt::Point2d{std::cos(theta), std::sin(theta)});
-        }
-      };
-      if ((i > 0 && join_round) || end_round) {
-        const auto arc_center = p1 + (right_dist - left_dist) * n;
-        const auto start_angle = std::atan2(-n.y(), -n.x());
-        draw_arc(arc_center, start_angle);
-      }
-      if ((i < points.size() - 1 && join_round) || end_round) {
-        const auto arc_center = p2 + (right_dist - left_dist) * n;
-        const auto start_angle = std::atan2(n.y(), n.x());
-        draw_arc(arc_center, start_angle);
-      }
-      buffered_poly = union_(buffered_poly, alt::ConvexPolygon2d{buffer_points});
-    }
-  }
-  return buffered_poly;
-}
-*/
+
 std::optional<alt::ConvexPolygon2d> convex_hull(const alt::Points2d & points)
 {
   if (points.size() < 3) {
