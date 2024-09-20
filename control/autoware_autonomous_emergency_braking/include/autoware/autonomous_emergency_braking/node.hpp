@@ -65,6 +65,7 @@ using sensor_msgs::msg::Imu;
 using sensor_msgs::msg::PointCloud2;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 using autoware::universe_utils::Polygon2d;
+using autoware::universe_utils::Polygon3d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
@@ -496,7 +497,7 @@ public:
    * @param debug_markers Marker array for debugging
    */
   void addClusterHullMarkers(
-    const rclcpp::Time & current_time, const std::vector<Polygon2d> & hulls,
+    const rclcpp::Time & current_time, const std::vector<Polygon3d> & hulls,
     const colorTuple & debug_colors, const std::string & ns, MarkerArray & debug_markers);
 
   /**
