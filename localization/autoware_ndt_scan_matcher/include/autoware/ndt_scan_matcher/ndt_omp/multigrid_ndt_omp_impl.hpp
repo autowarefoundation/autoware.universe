@@ -55,6 +55,8 @@
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTIGRID_NDT_OMP_IMPL_HPP_
 #define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTIGRID_NDT_OMP_IMPL_HPP_
 
+// cspell:ignore multigrid, nnvn, colj
+
 #include "multigrid_ndt_omp.h"
 
 #include <algorithm>
@@ -531,7 +533,7 @@ void MultiGridNormalDistributionsTransform<PointSource, PointTarget>::computeAng
     sz = sin(p(5));
   }
 
-  // Precomputed angular gradiant components. Letters correspond to Equation 6.19 [Magnusson 2009]
+  // Precomputed angular gradient components. Letters correspond to Equation 6.19 [Magnusson 2009]
   j_ang_.setZero();
 
   j_ang_.row(0) << (-sx * sz + cx * sy * cz), (-sx * cz - cx * sy * sz), (-cx * cy), 0.0f;
@@ -957,7 +959,7 @@ double MultiGridNormalDistributionsTransform<PointSource, PointTarget>::computeS
 
   // Updates score, gradient and hessian.  Hessian calculation is unnecessary but testing showed
   // that most step calculations use the initial step suggestion and recalculation the reusable
-  // portions of the hessian would intail more computation time.
+  // portions of the hessian would entail more computation time.
   score = computeDerivatives(score_gradient, hessian, trans_cloud, x_t, true);
 
   // --------------------------------------------------------------------------------------------------------------------------------

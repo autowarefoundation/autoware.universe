@@ -52,6 +52,8 @@
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
 #define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
 
+// cspell:ignore evecs, evals, covar, eigvalue, futs
+
 #include "multi_voxel_grid_covariance_omp.h"
 
 #include <pcl/common/common.h>

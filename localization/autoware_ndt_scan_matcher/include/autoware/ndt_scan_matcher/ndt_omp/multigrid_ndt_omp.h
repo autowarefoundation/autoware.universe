@@ -55,6 +55,8 @@
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTIGRID_NDT_OMP_H_
 #define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTIGRID_NDT_OMP_H_
 
+// cspell:ignore multigrid, Magnusson, Thuente, Todor, Stoyanov, Okorn
+
 #include "multi_voxel_grid_covariance_omp.h"
 #include "ndt_struct.hpp"
 
@@ -498,7 +500,7 @@ protected:
    * \param[in] a the step length, \f$ \alpha \f$ in More-Thuente (1994)
    * \param[in] f_a function value at step length a, \f$ \phi(\alpha) \f$ in More-Thuente (1994)
    * \param[in] f_0 initial function value, \f$ \phi(0) \f$ in Moore-Thuente (1994)
-   * \param[in] g_0 initial function gradiant, \f$ \phi'(0) \f$ in More-Thuente (1994)
+   * \param[in] g_0 initial function gradient, \f$ \phi'(0) \f$ in More-Thuente (1994)
    * \param[in] mu the step length, constant \f$ \mu \f$ in Equation 1.1 [More, Thuente 1994]
    * \return sufficient decrease value
    */
@@ -511,7 +513,7 @@ protected:
   /** \brief Auxiliary function derivative used to determine endpoints of More-Thuente interval.
    * \note \f$ \psi'(\alpha) \f$, derivative of Equation 1.6 (Moore, Thuente 1994)
    * \param[in] g_a function gradient at step length a, \f$ \phi'(\alpha) \f$ in More-Thuente (1994)
-   * \param[in] g_0 initial function gradiant, \f$ \phi'(0) \f$ in More-Thuente (1994)
+   * \param[in] g_0 initial function gradient, \f$ \phi'(0) \f$ in More-Thuente (1994)
    * \param[in] mu the step length, constant \f$ \mu \f$ in Equation 1.1 [More, Thuente 1994]
    * \return sufficient decrease derivative
    */

@@ -52,6 +52,8 @@
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_H_
 #define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_H_
 
+// cspell:ignore Magnusson, Okorn, evecs, evals, covar, eigvalue, futs
+
 #include <Eigen/Cholesky>
 #include <Eigen/Dense>
 
@@ -293,7 +295,7 @@ public:
    */
   void removeCloud(const std::string & grid_id);
 
-  /** \brief Build Kdtrees from the NDT voxel for later radius search
+  /** \brief Build KdTrees from the NDT voxel for later radius search
    */
   void createKdtree();
 
@@ -384,7 +386,7 @@ protected:
     }
   }
 
-  // A wraper of the real applyFilter
+  // A wrapper of the real applyFilter
   inline bool applyFilterThread(int tid, GridNodeType & node)
   {
     applyFilter(processing_inputs_[tid], node);
