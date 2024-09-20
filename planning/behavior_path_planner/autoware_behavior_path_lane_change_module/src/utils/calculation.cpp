@@ -214,7 +214,7 @@ double calc_distance_buffer(
   const auto lengths_sum = std::accumulate(min_lc_lengths.begin(), min_lc_lengths.end(), 0.0);
   const auto num_of_lane_changes = static_cast<double>(min_lc_lengths.size());
   return lengths_sum + (num_of_lane_changes * finish_judge_buffer) +
-         ((num_of_lane_changes - 1) * backward_buffer);
+         ((num_of_lane_changes - 1.0) * backward_buffer);
 }
 
 std::vector<double> calc_shift_intervals(
