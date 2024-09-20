@@ -28,10 +28,10 @@ After concatenation, the concatenated point cloud is published, and the collecto
 
 ### Input
 
-| Name            | Type                                             | Description                                                                       |
-| --------------- | ------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `~/input/twist` | `geometry_msgs::msg::TwistWithCovarianceStamped` | The twist information used to interpolate the timestamp of each LiDAR point cloud |
-| `~/input/odom`  | `nav_msgs::msg::Odometry`                        | The vehicle odometry used to interpolate the timestamp of each LiDAR point cloud  |
+| Name            | Type                                             | Description                                                                                                                                             |
+| --------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `~/input/twist` | `geometry_msgs::msg::TwistWithCovarianceStamped` | Twist information adjusts the point cloud scans based on vehicle motion, allowing LiDARs with different timestamp to be synchronized for concatenation. |
+| `~/input/odom`  | `nav_msgs::msg::Odometry`                        | Vehicle odometry adjusts the point cloud scans based on vehicle motion, allowing LiDARs with different timestamp to be synchronized for concatenation.  |
 
 By setting the `input_twist_topic_type` parameter to `twist` or `odom`, the subscriber will subscribe to either `~/input/twist` or `~/input/odom`. If the user doesn't want to use the twist information or vehicle odometry to compensate for motion, set `is_motion_compensated` to `false`.
 
