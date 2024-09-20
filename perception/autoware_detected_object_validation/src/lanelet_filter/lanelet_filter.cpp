@@ -42,14 +42,14 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
   using std::placeholders::_1;
 
   // Set parameters
-  filter_target_.UNKNOWN = declare_parameter<bool>("filter_target_label.UNKNOWN", false);
-  filter_target_.CAR = declare_parameter<bool>("filter_target_label.CAR", false);
-  filter_target_.TRUCK = declare_parameter<bool>("filter_target_label.TRUCK", false);
-  filter_target_.BUS = declare_parameter<bool>("filter_target_label.BUS", false);
-  filter_target_.TRAILER = declare_parameter<bool>("filter_target_label.TRAILER", false);
-  filter_target_.MOTORCYCLE = declare_parameter<bool>("filter_target_label.MOTORCYCLE", false);
-  filter_target_.BICYCLE = declare_parameter<bool>("filter_target_label.BICYCLE", false);
-  filter_target_.PEDESTRIAN = declare_parameter<bool>("filter_target_label.PEDESTRIAN", false);
+  filter_target_.UNKNOWN = declare_parameter<bool>("filter_target_label.UNKNOWN");
+  filter_target_.CAR = declare_parameter<bool>("filter_target_label.CAR");
+  filter_target_.TRUCK = declare_parameter<bool>("filter_target_label.TRUCK");
+  filter_target_.BUS = declare_parameter<bool>("filter_target_label.BUS");
+  filter_target_.TRAILER = declare_parameter<bool>("filter_target_label.TRAILER");
+  filter_target_.MOTORCYCLE = declare_parameter<bool>("filter_target_label.MOTORCYCLE");
+  filter_target_.BICYCLE = declare_parameter<bool>("filter_target_label.BICYCLE");
+  filter_target_.PEDESTRIAN = declare_parameter<bool>("filter_target_label.PEDESTRIAN");
   // Set filter settings
   filter_settings_.polygon_overlap_filter =
     declare_parameter<bool>("filter_settings.polygon_overlap_filter.enabled");

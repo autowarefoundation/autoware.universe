@@ -30,6 +30,10 @@ namespace autoware::behavior_path_planner
 class GoalPlannerModuleManager : public SceneModuleManagerInterface
 {
 public:
+  static GoalPlannerParameters initGoalPlannerParameters(
+    rclcpp::Node * node, const std::string & base_ns);
+
+public:
   GoalPlannerModuleManager() : SceneModuleManagerInterface{"goal_planner"} {}
 
   void init(rclcpp::Node * node) override;
@@ -38,7 +42,7 @@ public:
   {
     return std::make_unique<GoalPlannerModule>(
       name_, *node_, parameters_, rtc_interface_ptr_map_,
-      objects_of_interest_marker_interface_ptr_map_);
+      objects_of_interest_marker_interface_ptr_map_, steering_factor_interface_ptr_);
   }
 
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;

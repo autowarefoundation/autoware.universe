@@ -47,7 +47,20 @@
           "default": 155494.663
         }
       },
+<<<<<<< HEAD
       "required": ["cg_to_front_m", "cg_to_rear_m", "mass_fl", "mass_fr", "mass_rl", "mass_rr", "cf", "cr"],
+=======
+      "required": [
+        "cg_to_front_m",
+        "cg_to_rear_m",
+        "mass_fl",
+        "mass_fr",
+        "mass_rl",
+        "mass_rr",
+        "cf",
+        "cr"
+      ],
+>>>>>>> 77caa749aa285a948a5080c81d7a7bfe5ee43eb6
       "additionalProperties": false
     }
   },
@@ -66,4 +79,3 @@
   "required": ["/**"],
   "additionalProperties": false
 }
-  

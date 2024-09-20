@@ -27,7 +27,16 @@
           "default": 1.57
         }
       },
+<<<<<<< HEAD
       "required": ["traj_resample_dist", "use_steer_prediction", "admissible_position_error", "admissible_yaw_error_rad"],
+=======
+      "required": [
+        "traj_resample_dist",
+        "use_steer_prediction",
+        "admissible_position_error",
+        "admissible_yaw_error_rad"
+      ],
+>>>>>>> 77caa749aa285a948a5080c81d7a7bfe5ee43eb6
       "additionalProperties": false
     }
   },
@@ -46,4 +55,3 @@
   "required": ["/**"],
   "additionalProperties": false
 }
-  

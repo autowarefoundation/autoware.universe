@@ -64,7 +64,21 @@
           "default": 0.3
         }
       },
+<<<<<<< HEAD
       "required": ["vehicle_model_type", "input_delay", "vehicle_model_steer_tau", "steer_rate_lim_dps_list_by_curvature", "curvature_list_for_steer_rate_lim", "steer_rate_lim_dps_list_by_velocity", "velocity_list_for_steer_rate_lim", "acceleration_limit", "velocity_time_constant"],
+=======
+      "required": [
+        "vehicle_model_type",
+        "input_delay",
+        "vehicle_model_steer_tau",
+        "steer_rate_lim_dps_list_by_curvature",
+        "curvature_list_for_steer_rate_lim",
+        "steer_rate_lim_dps_list_by_velocity",
+        "velocity_list_for_steer_rate_lim",
+        "acceleration_limit",
+        "velocity_time_constant"
+      ],
+>>>>>>> 77caa749aa285a948a5080c81d7a7bfe5ee43eb6
       "additionalProperties": false
     }
   },
@@ -83,4 +97,3 @@
   "required": ["/**"],
   "additionalProperties": false
 }
-  
