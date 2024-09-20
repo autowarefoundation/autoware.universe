@@ -14,7 +14,8 @@
             "lowpass_filter": { "$ref": "sub/lowpass_filter.json#/definitions/lowpass_filter" },
             "stop_state": { "$ref": "sub/stop_state.json#/definitions/stop_state" },
             "steering_offset": { "$ref": "sub/steering_offset.json#/definitions/steering_offset" },
-            "dynamics_model": { "$ref": "sub/dynamics_model.json#/definitions/dynamics_model" }
+            "dynamics_model": { "$ref": "sub/dynamics_model.json#/definitions/dynamics_model" },
+            "debug_publish": { "$ref": "sub/debug_publish.json#/definitions/debug_publish" }
         },
         "required": [
             "system",
@@ -25,7 +26,8 @@
             "lowpass_filter",
             "stop_state",
             "steering_offset",
-            "dynamics_model"
+            "dynamics_model",
+            "debug_publish"
         ],
         "additionalProperties": false
         }

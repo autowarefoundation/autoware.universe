@@ -127,6 +127,10 @@ Defined in the `steering_offset` namespace. This logic is designed as simple as 
 
 {{ json_to_markdown("control/autoware_mpc_lateral_controller/schema/sub/dynamics_model.json") }}
 
+##### publish debug predicted trajectory in Frenet coordinate
+
+{{ json_to_markdown("control/autoware_mpc_lateral_controller/schema/sub/debug_publish.json") }}
+
 ### How to tune MPC parameters
 
 #### Set kinematics information
