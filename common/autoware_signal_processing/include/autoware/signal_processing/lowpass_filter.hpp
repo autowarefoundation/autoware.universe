@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIGNAL_PROCESSING__LOWPASS_FILTER_HPP_
-#define SIGNAL_PROCESSING__LOWPASS_FILTER_HPP_
+#ifndef AUTOWARE__SIGNAL_PROCESSING__LOWPASS_FILTER_HPP_
+#define AUTOWARE__SIGNAL_PROCESSING__LOWPASS_FILTER_HPP_
 
-#include "signal_processing/lowpass_filter_1d.hpp"
+#include "autoware/signal_processing/lowpass_filter_1d.hpp"
 
 #include "geometry_msgs/msg/twist.hpp"
 
+namespace autoware::signal_processing
+{
 /**
  * @class First-order low-pass filter
  * @brief filtering values
@@ -51,5 +53,6 @@ public:
 
   geometry_msgs::msg::Twist filter(const geometry_msgs::msg::Twist & u) override;
 };
+}  // namespace autoware::signal_processing
 
-#endif  // SIGNAL_PROCESSING__LOWPASS_FILTER_HPP_
+#endif  // AUTOWARE__SIGNAL_PROCESSING__LOWPASS_FILTER_HPP_

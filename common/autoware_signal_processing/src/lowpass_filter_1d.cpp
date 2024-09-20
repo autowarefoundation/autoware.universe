@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "signal_processing/lowpass_filter_1d.hpp"
+#include "autoware/signal_processing/lowpass_filter_1d.hpp"
 
-namespace signal_processing
+namespace autoware::signal_processing
 {
 double lowpassFilter(const double current_val, const double prev_val, const double gain)
 {
   return gain * prev_val + (1.0 - gain) * current_val;
 }
-}  // namespace signal_processing
 
 LowpassFilter1d::LowpassFilter1d(const double gain) : gain_(gain)
 {
@@ -57,3 +56,4 @@ double LowpassFilter1d::filter(const double u)
   x_ = u;
   return x_.get();
 }
+}  // namespace autoware::signal_processing

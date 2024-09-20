@@ -12,14 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIGNAL_PROCESSING__BUTTERWORTH_HPP_
-#define SIGNAL_PROCESSING__BUTTERWORTH_HPP_
+#ifndef AUTOWARE__SIGNAL_PROCESSING__BUTTERWORTH_HPP_
+#define AUTOWARE__SIGNAL_PROCESSING__BUTTERWORTH_HPP_
 
 #include <cmath>
 #include <complex>
 #include <iomanip>
 #include <iostream>
 #include <vector>
+
+namespace autoware::signal_processing
+{
 
 template <typename T>
 const T & append_separator(const T & arg)
@@ -133,5 +136,6 @@ private:
   // Computes continuous time roots from the phase angles
   void computeContinuousTimeRoots(bool const & use_sampling_frequency = false);
 };
+}  // namespace autoware::signal_processing
 
-#endif  // SIGNAL_PROCESSING__BUTTERWORTH_HPP_
+#endif  // AUTOWARE__SIGNAL_PROCESSING__BUTTERWORTH_HPP_

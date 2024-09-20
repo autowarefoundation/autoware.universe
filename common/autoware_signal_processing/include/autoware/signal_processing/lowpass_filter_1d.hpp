@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIGNAL_PROCESSING__LOWPASS_FILTER_1D_HPP_
-#define SIGNAL_PROCESSING__LOWPASS_FILTER_1D_HPP_
+#ifndef AUTOWARE__SIGNAL_PROCESSING__LOWPASS_FILTER_1D_HPP_
+#define AUTOWARE__SIGNAL_PROCESSING__LOWPASS_FILTER_1D_HPP_
 
 #include <boost/optional.hpp>
 
-namespace signal_processing
+namespace autoware::signal_processing
 {
 double lowpassFilter(const double current_val, const double prev_val, const double gain);
-}
 
 /**
  * @class First-order low-pass filter
@@ -43,5 +42,6 @@ public:
   boost::optional<double> getValue() const;
   double filter(const double u);
 };
+}  // namespace autoware::signal_processing
 
-#endif  // SIGNAL_PROCESSING__LOWPASS_FILTER_1D_HPP_
+#endif  // AUTOWARE__SIGNAL_PROCESSING__LOWPASS_FILTER_1D_HPP_

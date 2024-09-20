@@ -15,7 +15,7 @@
 #ifndef TWIST2ACCEL_HPP_
 #define TWIST2ACCEL_HPP_
 
-#include "signal_processing/lowpass_filter_1d.hpp"
+#include "autoware/signal_processing/lowpass_filter_1d.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -36,6 +36,8 @@
 #include <queue>
 #include <string>
 #include <vector>
+
+using autoware::signal_processing::LowpassFilter1d;
 
 namespace autoware::twist2accel
 {

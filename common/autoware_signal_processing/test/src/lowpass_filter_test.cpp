@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "signal_processing/lowpass_filter.hpp"
+#include "autoware/signal_processing/lowpass_filter.hpp"
 
 #include <gtest/gtest.h>
 
 constexpr double epsilon = 1e-6;
+
+using autoware::signal_processing::LowpassFilterTwist;
 
 geometry_msgs::msg::Twist createTwist(
   const double lx, const double ly, const double lz, const double ax, const double ay,
