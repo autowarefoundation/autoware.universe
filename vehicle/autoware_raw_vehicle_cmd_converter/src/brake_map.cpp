@@ -14,7 +14,7 @@
 
 #include "autoware_raw_vehicle_cmd_converter/brake_map.hpp"
 
-#include "interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
 
 #include <algorithm>
 #include <string>
@@ -51,7 +51,8 @@ bool BrakeMap::getBrake(const double acc, const double vel, double & brake)
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
   for (std::vector<double> accelerations : brake_map_) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, accelerations, clamped_vel));
+    interpolated_acc_vec.push_back(
+      autoware::interpolation::lerp(vel_index_, accelerations, clamped_vel));
   }
 
   // calculate brake
@@ -71,7 +72,7 @@ bool BrakeMap::getBrake(const double acc, const double vel, double & brake)
   }
 
   std::reverse(std::begin(interpolated_acc_vec), std::end(interpolated_acc_vec));
-  brake = interpolation::lerp(interpolated_acc_vec, brake_index_rev_, acc);
+  brake = autoware::interpolation::lerp(interpolated_acc_vec, brake_index_rev_, acc);
 
   return true;
 }
@@ -83,14 +84,14 @@ bool BrakeMap::getAcceleration(const double brake, const double vel, double & ac
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
   for (const auto & acc_vec : brake_map_) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, acc_vec, clamped_vel));
+    interpolated_acc_vec.push_back(autoware::interpolation::lerp(vel_index_, acc_vec, clamped_vel));
   }
 
   // calculate brake
   // When the desired acceleration is smaller than the brake area, return min acc
   // When the desired acceleration is greater than the brake area, return min acc
   const double clamped_brake = CSVLoader::clampValue(brake, brake_index_, "brake: acc");
-  acc = interpolation::lerp(brake_index_, interpolated_acc_vec, clamped_brake);
+  acc = autoware::interpolation::lerp(brake_index_, interpolated_acc_vec, clamped_brake);
 
   return true;
 }

@@ -24,6 +24,10 @@
 #include <boost/geometry/algorithms/correct.hpp>
 
 #include <tf2/utils.h>
+
+#include <string>
+#include <vector>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -31,11 +35,14 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+
 #endif
 
 namespace autoware::motion::control::autonomous_emergency_braking::utils
 {
 using autoware::universe_utils::Polygon2d;
+using autoware::universe_utils::Polygon3d;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using geometry_msgs::msg::Point;
@@ -48,7 +55,7 @@ using geometry_msgs::msg::TransformStamped;
  * @param transform_stamped the tf2 transform
  */
 PredictedObject transformObjectFrame(
-  const PredictedObject & input, geometry_msgs::msg::TransformStamped & transform_stamped);
+  const PredictedObject & input, const geometry_msgs::msg::TransformStamped & transform_stamped);
 
 /**
  * @brief Get the predicted objects polygon as a geometry polygon
@@ -80,6 +87,33 @@ Polygon2d convertBoundingBoxObjectToGeometryPolygon(
  * @param obj the object
  */
 Polygon2d convertObjToPolygon(const PredictedObject & obj);
+
+/**
+ * @brief Get the transform from source to target frame
+ * @param target_frame target frame
+ * @param source_frame source frame
+ * @param tf_buffer buffer of tf transforms
+ * @param logger node logger
+ */
+std::optional<geometry_msgs::msg::TransformStamped> getTransform(
+  const std::string & target_frame, const std::string & source_frame,
+  const tf2_ros::Buffer & tf_buffer, const rclcpp::Logger & logger);
+
+/**
+ * @brief Get the predicted object's shape as a geometry polygon
+ * @param polygons vector of Polygon2d
+ * @param polygon_marker marker to be filled with polygon points
+ */
+void fillMarkerFromPolygon(
+  const std::vector<Polygon2d> & polygons, visualization_msgs::msg::Marker & polygon_marker);
+
+/**
+ * @brief Get the predicted object's shape as a geometry polygon
+ * @param polygons vector of Polygon3d
+ * @param polygon_marker marker to be filled with polygon points
+ */
+void fillMarkerFromPolygon(
+  const std::vector<Polygon3d> & polygons, visualization_msgs::msg::Marker & polygon_marker);
 }  // namespace autoware::motion::control::autonomous_emergency_braking::utils
 
 #endif  // AUTOWARE__AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_

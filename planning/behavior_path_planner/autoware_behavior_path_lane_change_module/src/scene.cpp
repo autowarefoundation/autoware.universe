@@ -42,7 +42,6 @@
 namespace autoware::behavior_path_planner
 {
 using autoware::motion_utils::calcSignedArcLength;
-using utils::lane_change::calcMinimumLaneChangeLength;
 using utils::lane_change::create_lanes_polygon;
 using utils::path_safety_checker::isPolygonOverlapLanelet;
 using utils::traffic_light::getDistanceToNextTrafficLight;
@@ -171,7 +170,46 @@ bool NormalLaneChange::isLaneChangeRequired()
     calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
   const auto maximum_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
 
-  return ego_dist_to_target_start <= maximum_prepare_length;
+  if (ego_dist_to_target_start > maximum_prepare_length) {
+    return false;
+  }
+
+  if (is_near_regulatory_element()) {
+    RCLCPP_DEBUG(logger_, "Ego is close to regulatory element, don't run LC module");
+    return false;
+  }
+
+  return true;
+}
+
+bool NormalLaneChange::is_near_regulatory_element() const
+{
+  const auto & current_lanes = get_current_lanes();
+
+  if (current_lanes.empty()) return false;
+
+  const auto shift_intervals =
+    getRouteHandler()->getLateralIntervalsToPreferredLane(current_lanes.back());
+
+  if (shift_intervals.empty()) return false;
+
+  const auto & lc_params = *common_data_ptr_->lc_param_ptr;
+  const auto max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
+  const auto min_lc_length =
+    calculation::calc_minimum_lane_change_length(lc_params, shift_intervals);
+  const auto dist_to_terminal_start =
+    calculation::calc_ego_dist_to_terminal_end(common_data_ptr_) - min_lc_length;
+
+  if (dist_to_terminal_start <= max_prepare_length) return false;
+
+  const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
+
+  if (only_tl) {
+    RCLCPP_DEBUG(logger_, "Stop time is over threshold. Ignore crosswalk and intersection checks.");
+  }
+
+  return max_prepare_length > utils::lane_change::get_distance_to_next_regulatory_element(
+                                common_data_ptr_, only_tl, only_tl);
 }
 
 bool NormalLaneChange::isStoppedAtRedTrafficLight() const
@@ -216,7 +254,7 @@ TurnSignalInfo NormalLaneChange::get_terminal_turn_signal_info() const
   const auto shift_intervals =
     getRouteHandler()->getLateralIntervalsToPreferredLane(get_current_lanes().back());
   const double next_lane_change_buffer =
-    utils::lane_change::calcMinimumLaneChangeLength(lane_change_param, shift_intervals);
+    calculation::calc_minimum_lane_change_length(lane_change_param, shift_intervals);
 
   const double buffer = next_lane_change_buffer +
                         lane_change_param.min_length_for_turn_signal_activation +
@@ -371,7 +409,7 @@ void NormalLaneChange::insertStopPoint(
 
   const auto shift_intervals = route_handler->getLateralIntervalsToPreferredLane(lanelets.back());
   const auto lane_change_buffer =
-    calcMinimumLaneChangeLength(*lane_change_parameters_, shift_intervals);
+    calculation::calc_minimum_lane_change_length(*lane_change_parameters_, shift_intervals);
 
   const auto getDistanceAlongLanelet = [&](const geometry_msgs::msg::Pose & target) {
     return utils::getSignedDistance(path.points.front().point.pose, target, lanelets);
@@ -451,7 +489,7 @@ void NormalLaneChange::insertStopPoint(
       0.0, lane_change_parameters_->minimum_lane_changing_velocity,
       lane_change_parameters_->rss_params);
     const double lane_change_buffer_for_blocking_object =
-      utils::lane_change::calcMinimumLaneChangeLength(*lane_change_parameters_, shift_intervals);
+      calculation::calc_minimum_lane_change_length(*lane_change_parameters_, shift_intervals);
 
     const auto stopping_distance_for_obj =
       distance_to_ego_lane_obj - lane_change_buffer_for_blocking_object -
@@ -668,7 +706,7 @@ bool NormalLaneChange::isNearEndOfCurrentLanes(
 
   const auto & route_handler = getRouteHandler();
   const auto & current_pose = getEgoPose();
-  const auto lane_change_buffer = calcMinimumLaneChangeLength(
+  const auto lane_change_buffer = calculation::calc_minimum_lane_change_length(
     route_handler, current_lanes.back(), *lane_change_parameters_, Direction::NONE);
 
   const auto distance_to_lane_change_end = std::invoke([&]() {
@@ -785,7 +823,7 @@ bool NormalLaneChange::is_near_terminal() const
   const auto & lc_param_ptr = common_data_ptr_->lc_param_ptr;
   const auto direction = common_data_ptr_->direction;
   const auto & route_handler_ptr = common_data_ptr_->route_handler_ptr;
-  const auto min_lane_changing_distance = calcMinimumLaneChangeLength(
+  const auto min_lane_changing_distance = calculation::calc_minimum_lane_change_length(
     route_handler_ptr, current_lanes_terminal, *lc_param_ptr, direction);
 
   const auto backward_buffer = calculation::calc_stopping_distance(lc_param_ptr);
@@ -896,16 +934,6 @@ std::pair<double, double> NormalLaneChange::calcCurrentMinMaxAcceleration() cons
   return {min_acc, max_acc};
 }
 
-double NormalLaneChange::calcMaximumLaneChangeLength(
-  const lanelet::ConstLanelet & current_terminal_lanelet, const double max_acc) const
-{
-  const auto shift_intervals =
-    getRouteHandler()->getLateralIntervalsToPreferredLane(current_terminal_lanelet);
-  return utils::lane_change::calcMaximumLaneChangeLength(
-    std::max(lane_change_parameters_->minimum_lane_changing_velocity, getEgoVelocity()),
-    *lane_change_parameters_, shift_intervals, max_acc);
-}
-
 std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
 {
@@ -928,7 +956,8 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   }
 
   // calculate maximum lane change length
-  const double max_lane_change_length = calcMaximumLaneChangeLength(current_lanes.back(), max_acc);
+  const double max_lane_change_length =
+    calculation::calc_maximum_lane_change_length(common_data_ptr_, current_lanes.back(), max_acc);
 
   if (max_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     RCLCPP_DEBUG(
@@ -1295,8 +1324,9 @@ bool NormalLaneChange::hasEnoughLength(
   const auto current_pose = getEgoPose();
   const auto & route_handler = getRouteHandler();
   const auto overall_graphs_ptr = route_handler->getOverallGraphPtr();
-  const auto minimum_lane_change_length_to_preferred_lane = calcMinimumLaneChangeLength(
-    route_handler, target_lanes.back(), *lane_change_parameters_, direction);
+  const auto minimum_lane_change_length_to_preferred_lane =
+    calculation::calc_minimum_lane_change_length(
+      route_handler, target_lanes.back(), *lane_change_parameters_, direction);
 
   const double lane_change_length = path.info.length.sum();
   if (lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
@@ -1400,10 +1430,10 @@ bool NormalLaneChange::getLaneChangePaths(
 
   const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanes.back());
 
-  const double lane_change_buffer = utils::lane_change::calcMinimumLaneChangeLength(
+  const double lane_change_buffer = calculation::calc_minimum_lane_change_length(
     *lane_change_parameters_,
     route_handler.getLateralIntervalsToPreferredLane(current_lanes.back()));
-  const double next_lane_change_buffer = utils::lane_change::calcMinimumLaneChangeLength(
+  const double next_lane_change_buffer = calculation::calc_minimum_lane_change_length(
     *lane_change_parameters_,
     route_handler.getLateralIntervalsToPreferredLane(target_lanes.back()));
 
@@ -1432,6 +1462,11 @@ bool NormalLaneChange::getLaneChangePaths(
   RCLCPP_DEBUG(
     logger_, "lane change sampling start. Sampling num for prep_time: %lu, acc: %lu",
     prepare_durations.size(), longitudinal_acc_sampling_values.size());
+
+  const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
+  const auto dist_to_next_regulatory_element =
+    utils::lane_change::get_distance_to_next_regulatory_element(common_data_ptr_, only_tl, only_tl);
+  const auto max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
 
   for (const auto & prepare_duration : prepare_durations) {
     for (const auto & sampled_longitudinal_acc : longitudinal_acc_sampling_values) {
@@ -1557,6 +1592,14 @@ bool NormalLaneChange::getLaneChangePaths(
           continue;
         }
 
+        if (
+          ego_dist_to_terminal_start > max_prepare_length &&
+          lane_changing_length + prepare_length > dist_to_next_regulatory_element) {
+          debug_print_lat(
+            "Reject: length of lane changing path is longer than length to regulatory element!!");
+          continue;
+        }
+
         // if multiple lane change is necessary, does the remaining distance is sufficient
         const auto remaining_dist_in_target = std::invoke([&]() {
           const auto finish_judge_buffer = lane_change_parameters_->lane_change_finish_judge_buffer;
@@ -1631,41 +1674,6 @@ bool NormalLaneChange::getLaneChangePaths(
           continue;
         }
 
-        if (
-          lane_change_parameters_->regulate_on_crosswalk &&
-          !hasEnoughLengthToCrosswalk(*candidate_path, current_lanes)) {
-          if (getStopTime() < lane_change_parameters_->stop_time_threshold) {
-            debug_print_lat("Reject: including crosswalk!!");
-            continue;
-          }
-          RCLCPP_INFO_THROTTLE(
-            logger_, clock_, 1000, "Stop time is over threshold. Allow lane change in crosswalk.");
-        }
-
-        if (
-          lane_change_parameters_->regulate_on_intersection &&
-          !hasEnoughLengthToIntersection(*candidate_path, current_lanes)) {
-          if (getStopTime() < lane_change_parameters_->stop_time_threshold) {
-            debug_print_lat("Reject: including intersection!!");
-            continue;
-          }
-          RCLCPP_WARN_STREAM(
-            logger_, "Stop time is over threshold. Allow lane change in intersection.");
-        }
-
-        if (
-          lane_change_parameters_->regulate_on_traffic_light &&
-          !hasEnoughLengthToTrafficLight(*candidate_path, current_lanes)) {
-          debug_print_lat("Reject: regulate on traffic light!!");
-          continue;
-        }
-
-        if (utils::traffic_light::isStoppedAtRedTrafficLightWithinDistance(
-              get_current_lanes(), candidate_path.value().path, planner_data_,
-              lane_change_info.length.sum())) {
-          debug_print_lat("Ego is stopping near traffic light. Do not allow lane change");
-          continue;
-        }
         candidate_paths->push_back(*candidate_path);
 
         if (
@@ -1675,6 +1683,15 @@ bool NormalLaneChange::getLaneChangePaths(
           debug_print_lat(
             "Reject: parking vehicle exists in the target lane, and the ego is not in stuck. Skip "
             "lane change.");
+          return false;
+        }
+
+        if (
+          lane_change_parameters_->enable_target_lane_bound_check &&
+          utils::lane_change::pathFootprintExceedsTargetLaneBound(
+            common_data_ptr_, candidate_path.value().shifted_path.path,
+            common_parameters.vehicle_info)) {
+          debug_print_lat("Reject: Path footprint exceeds target lane boundary. Skip lane change.");
           return false;
         }
 
@@ -1724,10 +1741,10 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
 
   const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanes.back());
 
-  const double lane_change_buffer = utils::lane_change::calcMinimumLaneChangeLength(
+  const double lane_change_buffer = calculation::calc_minimum_lane_change_length(
     *lane_change_parameters_,
     route_handler.getLateralIntervalsToPreferredLane(current_lanes.back()));
-  const double next_lane_change_buffer = utils::lane_change::calcMinimumLaneChangeLength(
+  const double next_lane_change_buffer = calculation::calc_minimum_lane_change_length(
     *lane_change_parameters_,
     route_handler.getLateralIntervalsToPreferredLane(target_lanes.back()));
 
@@ -1863,7 +1880,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
 
   CollisionCheckDebugMap debug_data;
 
-  const auto min_lc_length = utils::lane_change::calcMinimumLaneChangeLength(
+  const auto min_lc_length = calculation::calc_minimum_lane_change_length(
     *lane_change_parameters_,
     common_data_ptr_->route_handler_ptr->getLateralIntervalsToPreferredLane(current_lanes.back()));
 
@@ -1985,7 +2002,7 @@ bool NormalLaneChange::calcAbortPath()
   const auto ego_nearest_yaw_threshold = common_param.ego_nearest_yaw_threshold;
 
   const auto direction = getDirection();
-  const auto minimum_lane_change_length = utils::lane_change::calcMinimumLaneChangeLength(
+  const auto minimum_lane_change_length = calculation::calc_minimum_lane_change_length(
     route_handler, get_current_lanes().back(), *lane_change_parameters_, direction);
 
   const auto & lane_changing_path = selected_path.path;
@@ -2305,7 +2322,7 @@ bool NormalLaneChange::isVehicleStuck(
     route_handler->isInGoalRouteSection(current_lanes.back())
       ? utils::getSignedDistance(getEgoPose(), route_handler->getGoalPose(), current_lanes)
       : utils::getDistanceToEndOfLane(getEgoPose(), current_lanes);
-  const auto lane_change_buffer = calcMinimumLaneChangeLength(
+  const auto lane_change_buffer = calculation::calc_minimum_lane_change_length(
     route_handler, current_lanes.back(), *lane_change_parameters_, Direction::NONE);
   const double stop_point_buffer = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
   const double terminal_judge_buffer = lane_change_buffer + stop_point_buffer + 1.0;
@@ -2342,7 +2359,8 @@ bool NormalLaneChange::isVehicleStuck(const lanelet::ConstLanelets & current_lan
   }
 
   const auto [min_acc, max_acc] = calcCurrentMinMaxAcceleration();
-  const auto max_lane_change_length = calcMaximumLaneChangeLength(current_lanes.back(), max_acc);
+  const auto max_lane_change_length =
+    calculation::calc_maximum_lane_change_length(common_data_ptr_, current_lanes.back(), max_acc);
   const auto rss_dist = calcRssDistance(
     0.0, lane_change_parameters_->minimum_lane_changing_velocity,
     lane_change_parameters_->rss_params);

@@ -127,6 +127,12 @@ Defined in the `steering_offset` namespace. This logic is designed as simple as 
 
 {{ json_to_markdown("control/autoware_mpc_lateral_controller/schema/sub/dynamics_model.json") }}
 
+#### Debug
+
+| Name                       | Type    | Description                                                                       | Default value |
+| :------------------------- | :------ | :-------------------------------------------------------------------------------- | :------------ |
+| publish_debug_trajectories | boolean | publish predicted trajectory and resampled reference trajectory for debug purpose | true          |
+
 ### How to tune MPC parameters
 
 #### Set kinematics information
