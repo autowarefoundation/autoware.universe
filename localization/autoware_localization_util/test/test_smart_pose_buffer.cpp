@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "localization_util/smart_pose_buffer.hpp"
-#include "localization_util/util_func.hpp"
+#include "autoware/localization_util/smart_pose_buffer.hpp"
+#include "autoware/localization_util/util_func.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -26,6 +26,7 @@
 #include <vector>
 
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+using SmartPoseBuffer = autoware::localization_util::SmartPoseBuffer;
 
 bool compare_pose(
   const PoseWithCovarianceStamped & pose_a, const PoseWithCovarianceStamped & pose_b)
@@ -56,7 +57,8 @@ TEST(TestSmartPoseBuffer, interpolate_pose)  // NOLINT
   old_pose_ptr->pose.pose.position.x = 10.0;
   old_pose_ptr->pose.pose.position.y = 20.0;
   old_pose_ptr->pose.pose.position.z = 0.0;
-  old_pose_ptr->pose.pose.orientation = rpy_deg_to_quaternion(0.0, 0.0, 0.0);
+  old_pose_ptr->pose.pose.orientation =
+    autoware::localization_util::rpy_deg_to_quaternion(0.0, 0.0, 0.0);
   smart_pose_buffer.push_back(old_pose_ptr);
 
   // second data
@@ -66,7 +68,8 @@ TEST(TestSmartPoseBuffer, interpolate_pose)  // NOLINT
   new_pose_ptr->pose.pose.position.x = 20.0;
   new_pose_ptr->pose.pose.position.y = 40.0;
   new_pose_ptr->pose.pose.position.z = 0.0;
-  new_pose_ptr->pose.pose.orientation = rpy_deg_to_quaternion(0.0, 0.0, 90.0);
+  new_pose_ptr->pose.pose.orientation =
+    autoware::localization_util::rpy_deg_to_quaternion(0.0, 0.0, 90.0);
   smart_pose_buffer.push_back(new_pose_ptr);
 
   // interpolate
@@ -90,7 +93,7 @@ TEST(TestSmartPoseBuffer, interpolate_pose)  // NOLINT
   EXPECT_EQ(result.interpolated_pose.pose.pose.position.x, 15.0);
   EXPECT_EQ(result.interpolated_pose.pose.pose.position.y, 30.0);
   EXPECT_EQ(result.interpolated_pose.pose.pose.position.z, 0.0);
-  const auto rpy = get_rpy(result.interpolated_pose.pose.pose);
+  const auto rpy = autoware::localization_util::get_rpy(result.interpolated_pose.pose.pose);
   EXPECT_NEAR(rpy.x * 180 / M_PI, 0.0, 1e-6);
   EXPECT_NEAR(rpy.y * 180 / M_PI, 0.0, 1e-6);
   EXPECT_NEAR(rpy.z * 180 / M_PI, 45.0, 1e-6);

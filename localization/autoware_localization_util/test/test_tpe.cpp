@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "localization_util/tree_structured_parzen_estimator.hpp"
+#include "autoware/localization_util/tree_structured_parzen_estimator.hpp"
 
 #include <gtest/gtest.h>
+
+using TreeStructuredParzenEstimator = autoware::localization_util::TreeStructuredParzenEstimator;
 
 TEST(TreeStructuredParzenEstimatorTest, TPE_is_better_than_random_search_on_sphere_function)
 {

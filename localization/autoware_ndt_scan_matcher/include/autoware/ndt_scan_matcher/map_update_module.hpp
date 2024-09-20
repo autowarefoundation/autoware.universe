@@ -15,10 +15,10 @@
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 #define AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
+#include "autoware/localization_util/diagnostics_module.hpp"
+#include "autoware/localization_util/util_func.hpp"
 #include "autoware/ndt_scan_matcher/hyper_parameters.hpp"
 #include "autoware/ndt_scan_matcher/particle.hpp"
-#include "localization_util/diagnostics_module.hpp"
-#include "localization_util/util_func.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
@@ -42,6 +42,7 @@
 
 namespace autoware::ndt_scan_matcher
 {
+using DiagnosticsModule = autoware::localization_util::DiagnosticsModule;
 
 class MapUpdateModule
 {
