@@ -1,37 +1,4 @@
 {
-<<<<<<< HEAD
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "MPC Lateral Controller Params",
-    "type": "object",
-    "definitions": {
-        "mpc_lateral_controller": {
-        "type": "object",
-        "properties": {
-            "system": { "$ref": "sub/system.json#/definitions/system" },
-            "path_smoothing": { "$ref": "sub/path_smoothing.json#/definitions/path_smoothing" },
-            "trajectory_extending": { "$ref": "sub/trajectory_extending.json#/definitions/trajectory_extending" },
-            "mpc_optimization": { "$ref": "sub/mpc_optimization.json#/definitions/mpc_optimization" },
-            "vehicle_model": { "$ref": "sub/vehicle_model.json#/definitions/vehicle_model" },
-            "lowpass_filter": { "$ref": "sub/lowpass_filter.json#/definitions/lowpass_filter" },
-            "stop_state": { "$ref": "sub/stop_state.json#/definitions/stop_state" },
-            "steering_offset": { "$ref": "sub/steering_offset.json#/definitions/steering_offset" },
-            "dynamics_model": { "$ref": "sub/dynamics_model.json#/definitions/dynamics_model" },
-            "debug_publish": { "$ref": "sub/debug_publish.json#/definitions/debug_publish" }
-        },
-        "required": [
-            "system",
-            "path_smoothing",
-            "trajectory_extending",
-            "mpc_optimization",
-            "vehicle_model",
-            "lowpass_filter",
-            "stop_state",
-            "steering_offset",
-            "dynamics_model",
-            "debug_publish"
-        ],
-        "additionalProperties": false
-=======
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "MPC Lateral Controller Params",
   "type": "object",
@@ -71,7 +38,6 @@
       "properties": {
         "ros__parameters": {
           "$ref": "#/definitions/mpc_lateral_controller"
->>>>>>> 77caa749aa285a948a5080c81d7a7bfe5ee43eb6
         }
       },
       "required": ["ros__parameters"],
