@@ -111,7 +111,7 @@ private:
   std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
 
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
-  diagnostic_updater::Updater updater_{this};
+  diagnostic_updater::Updater diagnostic_updater_{this};
 
   void cloud_callback(
     const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr, const std::string & topic_name);

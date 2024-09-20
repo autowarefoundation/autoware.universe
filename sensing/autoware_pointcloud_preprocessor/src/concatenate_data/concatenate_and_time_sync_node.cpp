@@ -156,8 +156,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     params_.keep_input_frame_in_synchronized_pointcloud, params_.has_static_tf_only);
 
   // Diagnostic Updater
-  updater_.setHardwareID("concatenate_data_checker");
-  updater_.add(
+  diagnostic_updater_.setHardwareID("concatenate_data_checker");
+  diagnostic_updater_.add(
     "concat_status", this, &PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus);
 }
 
@@ -316,7 +316,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
   diagnostic_reference_timestamp_min_ = reference_timestamp_min;
   diagnostic_reference_timestamp_max_ = reference_timestamp_max;
   diagnostic_topic_to_original_stamp_map_ = topic_to_original_stamp_map;
-  updater_.force_update();
+  diagnostic_updater_.force_update();
 
   // add processing time for debug
   if (debug_publisher_) {
