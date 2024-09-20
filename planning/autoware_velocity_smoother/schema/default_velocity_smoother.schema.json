@@ -26,16 +26,6 @@
             "default": 5.0,
             "description": "Distance of points while curvature is calculating for the steer rate and lateral acceleration limit [m]"
           },
-          "ego_nearest_dist_threshold": {
-            "type": "number",
-            "default": 0.3,
-            "description": "Threshold to find the nearest point on the trajectory [m]"
-          },
-          "ego_nearest_yaw_threshold": {
-            "type": "number",
-            "default": 1.046,
-            "description": "Threshold to find the nearest point on the trajectory [rad]"
-          },
           "algorithm_type": {
             "type": "string",
             "enum": ["JerkFiltered", "L2", "Linf", "Analytical"],
