@@ -186,4 +186,21 @@ void fillMarkerFromPolygon(
   }
 }
 
+void fillMarkerFromPolygon(
+  const std::vector<Polygon3d> & polygons, visualization_msgs::msg::Marker & polygon_marker)
+{
+  for (const auto & poly : polygons) {
+    for (size_t dp_idx = 0; dp_idx < poly.outer().size(); ++dp_idx) {
+      const auto & boost_cp = poly.outer().at(dp_idx);
+      const auto & boost_np = poly.outer().at((dp_idx + 1) % poly.outer().size());
+      const auto curr_point =
+        autoware::universe_utils::createPoint(boost_cp.x(), boost_cp.y(), boost_cp.z());
+      const auto next_point =
+        autoware::universe_utils::createPoint(boost_np.x(), boost_np.y(), boost_np.z());
+      polygon_marker.points.push_back(curr_point);
+      polygon_marker.points.push_back(next_point);
+    }
+  }
+}
+
 }  // namespace autoware::motion::control::autonomous_emergency_braking::utils
