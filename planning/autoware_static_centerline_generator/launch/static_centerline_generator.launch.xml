@@ -40,7 +40,7 @@
   </include>
 
   <!-- generate tf from "viewer" to "map" -->
-  <node pkg="map_tf_generator" exec="vector_map_tf_generator" name="vector_map_tf_generator">
+  <node pkg="autoware_map_tf_generator" exec="autoware_vector_map_tf_generator" name="vector_map_tf_generator">
     <remap from="vector_map" to="$(var lanelet2_map_topic)"/>
 
     <param name="map_frame" value="map"/>
@@ -48,7 +48,7 @@
   </node>
 
   <!-- visualize map -->
-  <node pkg="map_loader" exec="lanelet2_map_visualization" name="lanelet2_map_visualization">
+  <node pkg="autoware_lanelet2_map_visualizer" exec="lanelet2_map_visualization" name="lanelet2_map_visualization">
     <remap from="input/lanelet2_map" to="$(var lanelet2_map_topic)"/>
     <remap from="output/lanelet2_map_marker" to="$(var lanelet2_map_marker_topic)"/>
   </node>
