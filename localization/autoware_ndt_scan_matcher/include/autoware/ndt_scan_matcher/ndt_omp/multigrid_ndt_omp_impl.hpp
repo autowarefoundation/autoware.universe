@@ -349,11 +349,11 @@ double MultiGridNormalDistributionsTransform<PointSource, PointTarget>::computeD
   double score = 0;
   int total_neighborhood_count = 0;
   double nearest_voxel_score = 0;
-  size_t found_neigborhood_voxel_num = 0;
+  size_t found_neighborhood_voxel_num = 0;
 
   std::vector<double> scores(params_.num_threads);
   std::vector<double> nearest_voxel_scores(params_.num_threads);
-  std::vector<size_t> found_neigborhood_voxel_nums(params_.num_threads);
+  std::vector<size_t> found_neighborhood_voxel_nums(params_.num_threads);
   std::vector<Eigen::Matrix<double, 6, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 6, 1>>>
     score_gradients(params_.num_threads);
   std::vector<Eigen::Matrix<double, 6, 6>, Eigen::aligned_allocator<Eigen::Matrix<double, 6, 6>>>
@@ -367,7 +367,7 @@ double MultiGridNormalDistributionsTransform<PointSource, PointTarget>::computeD
   for (int i = 0; i < params_.num_threads; ++i) {
     scores[i] = 0;
     nearest_voxel_scores[i] = 0;
-    found_neigborhood_voxel_nums[i] = 0;
+    found_neighborhood_voxel_nums[i] = 0;
     score_gradients[i].setZero();
     hessians[i].setZero();
     neighborhood_counts[i] = 0;
@@ -429,7 +429,7 @@ double MultiGridNormalDistributionsTransform<PointSource, PointTarget>::computeD
       }
     }
 
-    ++found_neigborhood_voxel_nums[tid];
+    ++found_neighborhood_voxel_nums[tid];
 
     scores[tid] += sum_score_pt;
     nearest_voxel_scores[tid] += nearest_voxel_score_pt;
@@ -440,7 +440,7 @@ double MultiGridNormalDistributionsTransform<PointSource, PointTarget>::computeD
   for (int i = 0; i < params_.num_threads; ++i) {
     score += scores[i];
     nearest_voxel_score += nearest_voxel_scores[i];
-    found_neigborhood_voxel_num += found_neigborhood_voxel_nums[i];
+    found_neighborhood_voxel_num += found_neighborhood_voxel_nums[i];
     score_gradient += score_gradients[i];
     hessian += hessians[i];
     total_neighborhood_count += neighborhood_counts[i];
@@ -481,9 +481,9 @@ double MultiGridNormalDistributionsTransform<PointSource, PointTarget>::computeD
     hessian += regularization_hessian;
   }
 
-  if (found_neigborhood_voxel_num != 0) {
+  if (found_neighborhood_voxel_num != 0) {
     nearest_voxel_transformation_likelihood_ =
-      nearest_voxel_score / static_cast<double>(found_neigborhood_voxel_num);
+      nearest_voxel_score / static_cast<double>(found_neighborhood_voxel_num);
   } else {
     nearest_voxel_transformation_likelihood_ = 0.0;
   }
