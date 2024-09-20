@@ -386,10 +386,10 @@ protected:
     }
   }
 
-  // A wrapper of the real applyFilter
-  inline bool applyFilterThread(int tid, GridNodeType & node)
+  // A wrapper of the real apply_filter
+  inline bool apply_filter_thread(int tid, GridNodeType & node)
   {
-    applyFilter(processing_inputs_[tid], node);
+    apply_filter(processing_inputs_[tid], node);
     processing_inputs_[tid].reset();
 
     return true;
@@ -399,7 +399,7 @@ protected:
    * \param[out] output cloud containing centroids of voxels containing a sufficient number of
    * points
    */
-  void applyFilter(const PointCloudConstPtr & input, GridNodeType & node);
+  void apply_filter(const PointCloudConstPtr & input, GridNodeType & node);
 
   void updateLeaf(const PointT & point, const int & centroid_size, Leaf & leaf) const;
 

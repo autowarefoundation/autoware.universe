@@ -168,13 +168,13 @@ void MultiVoxelGridCovariance<PointT>::setInputCloudAndFilter(
 
   // If single thread, no parallel processing
   if (thread_num_ == 1) {
-    applyFilter(cloud, *new_grid);
+    apply_filter(cloud, *new_grid);
   } else {
     int idle_tid = get_idle_tid();
 
     processing_inputs_[idle_tid] = cloud;
     thread_futs_[idle_tid] = std::async(
-      std::launch::async, &MultiVoxelGridCovariance<PointT>::applyFilterThread, this, idle_tid,
+      std::launch::async, &MultiVoxelGridCovariance<PointT>::apply_filter_thread, this, idle_tid,
       std::ref(*new_grid));
   }
 }
@@ -302,12 +302,12 @@ std::vector<std::string> MultiVoxelGridCovariance<PointT>::getCurrentMapIDs() co
 
 //////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT>
-void MultiVoxelGridCovariance<PointT>::applyFilter(
+void MultiVoxelGridCovariance<PointT>::apply_filter(
   const PointCloudConstPtr & input, GridNodeType & node)
 {
   // Has the input dataset been set already?
   if (!input) {
-    PCL_WARN("[pcl::%s::applyFilter] No input dataset given!\n", getClassName().c_str());
+    PCL_WARN("[pcl::%s::apply_filter] No input dataset given!\n", getClassName().c_str());
     return;
   }
 
@@ -322,7 +322,7 @@ void MultiVoxelGridCovariance<PointT>::applyFilter(
 
   if ((dx * dy * dz) > std::numeric_limits<int32_t>::max()) {
     PCL_WARN(
-      "[pcl::%s::applyFilter] Leaf size is too small for the input dataset. Integer indices would "
+      "[pcl::%s::apply_filter] Leaf size is too small for the input dataset. Integer indices would "
       "overflow.",
       getClassName().c_str());
     return;
