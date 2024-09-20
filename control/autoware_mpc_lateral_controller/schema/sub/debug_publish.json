@@ -9,11 +9,11 @@
         "publish_debug_trajectories": {
           "type": "boolean",
           "description": "publish predicted trajectory and resampled reference trajectory for debug purpose",
-          "default": false
+          "default": true
         }
       },
       "required": ["publish_debug_trajectories"],
-      "additionalProperties": true
+      "additionalProperties": false
     }
   },
   "properties": {
