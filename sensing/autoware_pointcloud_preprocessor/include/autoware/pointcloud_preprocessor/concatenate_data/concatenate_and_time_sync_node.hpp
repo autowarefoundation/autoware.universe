@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_AND_TIME_SYNC_NODE_HPP_
-#define AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_AND_TIME_SYNC_NODE_HPP_
+#pragma once
 
 #include <deque>
 #include <list>
@@ -129,7 +128,3 @@ private:
 };
 
 }  // namespace autoware::pointcloud_preprocessor
-
-// clang-format off
-#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_AND_TIME_SYNC_NODE_HPP_  // NOLINT
-// clang-format on
