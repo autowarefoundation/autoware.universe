@@ -1512,8 +1512,6 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
     const auto shift_length =
       lanelet::utils::getLateralDistanceToClosestLanelet(target_lanes, lane_changing_start_pose);
 
-    utils::lane_change::setPrepareVelocity(prepare_segment, current_velocity, prep_metric.velocity);
-
     const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
       common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor, lane_changing_start_pose);
 
@@ -1535,6 +1533,8 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths * candidate_paths) con
     const auto lane_changing_metrics = calculation::calc_shift_phase_metrics(
       common_data_ptr_, shift_length, prep_metric.velocity, max_path_velocity,
       prep_metric.lon_accel, max_lane_changing_length);
+
+    utils::lane_change::setPrepareVelocity(prepare_segment, current_velocity, prep_metric.velocity);
 
     for (const auto & lc_metric : lane_changing_metrics) {
       const auto debug_print_lat = [&](const std::string & s) {
