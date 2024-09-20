@@ -160,11 +160,6 @@ private:
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
     const double dist_threshold, const double yaw_threshold);
 
-  //! This function assumes the input trajectory is sampled dense enough
-  static TrajectoryPoints resampleTrajectory(const Trajectory & trajectory, const double interval);
-
-  static TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double length);
-
   std::vector<LinearRing2d> createVehicleFootprints(
     const geometry_msgs::msg::PoseWithCovariance & covariance, const TrajectoryPoints & trajectory,
     const Param & param);
