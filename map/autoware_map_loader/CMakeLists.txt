@@ -24,7 +24,7 @@ target_include_directories(pointcloud_map_loader_node
 
 rclcpp_components_register_node(pointcloud_map_loader_node
   PLUGIN "autoware::map_loader::PointCloudMapLoaderNode"
-  EXECUTABLE pointcloud_map_loader
+  EXECUTABLE autoware_pointcloud_map_loader
 )
 
 ament_auto_add_library(lanelet2_map_loader_node SHARED
@@ -33,7 +33,7 @@ ament_auto_add_library(lanelet2_map_loader_node SHARED
 
 rclcpp_components_register_node(lanelet2_map_loader_node
   PLUGIN "autoware::map_loader::Lanelet2MapLoaderNode"
-  EXECUTABLE lanelet2_map_loader
+  EXECUTABLE autoware_lanelet2_map_loader
 )
 
 if(BUILD_TESTING)

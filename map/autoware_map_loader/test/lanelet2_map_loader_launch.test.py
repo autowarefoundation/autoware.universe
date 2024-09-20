@@ -33,7 +33,7 @@ def generate_test_description():
 
     lanelet2_map_loader = Node(
         package="autoware_map_loader",
-        executable="lanelet2_map_loader",
+        executable="autoware_lanelet2_map_loader",
         parameters=[
             {
                 "lanelet2_map_path": lanelet2_map_path,
