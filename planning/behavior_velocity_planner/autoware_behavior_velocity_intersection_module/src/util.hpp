@@ -76,24 +76,8 @@ bool isOverTargetIndex(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
   const geometry_msgs::msg::Pose & current_pose, const size_t target_idx);
 
-/**
- * @brief check if ego is before the target_idx. If the index is same, compare the exact pose
- * @param[in] path path
- * @param[in] closest_idx ego's closest index on the path
- * @param[in] current_pose ego's exact pose
- * @return true if ego is over the target_idx
- */
-bool isBeforeTargetIndex(
-  const tier4_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
-  const geometry_msgs::msg::Pose & current_pose, const size_t target_idx);
-
 std::optional<autoware::universe_utils::Polygon2d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr);
-
-/**
- * @brief check if the given lane has related traffic light
- */
-bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane);
 
 /**
  * @brief interpolate PathWithLaneId
@@ -121,11 +105,11 @@ mergeLaneletsByTopologicalSort(
 
 /**
  * @brief this functions retrieves all the paths from the given source to terminal nodes on the tree
- @param[in] visited_inds visited node indices excluding src_ind so far
+ @param[in] visited_indices visited node indices excluding src_ind so far
  */
 void retrievePathsBackward(
-  const std::vector<std::vector<bool>> & adjacency, const size_t src_ind,
-  const std::vector<size_t> & visited_inds, std::vector<std::vector<size_t>> & paths);
+  const std::vector<std::vector<bool>> & adjacency, const size_t src_index,
+  const std::vector<size_t> & visited_indices, std::vector<std::vector<size_t>> & paths);
 
 /**
  * @brief find the index of the first point where vehicle footprint intersects with the given

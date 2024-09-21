@@ -14,7 +14,7 @@
 
 #include "autoware_raw_vehicle_cmd_converter/steer_map.hpp"
 
-#include "interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
 
 #include <string>
 #include <vector>
@@ -46,11 +46,12 @@ void SteerMap::getSteer(const double steer_rate, const double steer, double & ou
   const double clamped_steer = CSVLoader::clampValue(steer, steer_index_, "steer: steer");
   std::vector<double> steer_rate_interp = {};
   for (const auto & steer_rate_vec : steer_map_) {
-    steer_rate_interp.push_back(interpolation::lerp(steer_index_, steer_rate_vec, clamped_steer));
+    steer_rate_interp.push_back(
+      autoware::interpolation::lerp(steer_index_, steer_rate_vec, clamped_steer));
   }
 
   const double clamped_steer_rate =
     CSVLoader::clampValue(steer_rate, steer_rate_interp, "steer: steer_rate");
-  output = interpolation::lerp(steer_rate_interp, output_index_, clamped_steer_rate);
+  output = autoware::interpolation::lerp(steer_rate_interp, output_index_, clamped_steer_rate);
 }
 }  // namespace autoware::raw_vehicle_cmd_converter

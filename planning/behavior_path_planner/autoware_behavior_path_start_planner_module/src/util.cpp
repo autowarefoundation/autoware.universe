@@ -72,17 +72,6 @@ PathWithLaneId getBackwardPath(
   return backward_path;
 }
 
-Pose getBackedPose(
-  const Pose & current_pose, const double & yaw_shoulder_lane, const double & back_distance)
-{
-  Pose backed_pose;
-  backed_pose = current_pose;
-  backed_pose.position.x -= std::cos(yaw_shoulder_lane) * back_distance;
-  backed_pose.position.y -= std::sin(yaw_shoulder_lane) * back_distance;
-
-  return backed_pose;
-}
-
 lanelet::ConstLanelets getPullOutLanes(
   const std::shared_ptr<const PlannerData> & planner_data, const double backward_length)
 {
