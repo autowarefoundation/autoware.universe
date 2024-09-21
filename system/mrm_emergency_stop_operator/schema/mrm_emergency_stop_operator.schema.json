@@ -22,11 +22,7 @@
           "default": -1.5
         }
       },
-      "required": [
-        "update_rate",
-        "target_acceleration",
-        "target_jerk"
-      ],
+      "required": ["update_rate", "target_acceleration", "target_jerk"],
       "additionalProperties": false
     }
   },
