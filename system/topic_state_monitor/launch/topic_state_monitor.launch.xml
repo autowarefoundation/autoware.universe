@@ -5,7 +5,6 @@
   <arg name="diag_name" description="diag name"/>
   <arg name="param_path" default="$(find-pkg-share topic_state_monitor)/config/topic_state_monitor.param.yaml"/>
 
-
   <node pkg="topic_state_monitor" exec="topic_state_monitor_node" name="topic_state_monitor_$(var node_name_suffix)" output="screen">
     <param name="topic" value="$(var topic)"/>
     <param name="topic_type" value="$(var topic_type)"/>

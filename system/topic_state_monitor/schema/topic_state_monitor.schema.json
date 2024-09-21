@@ -1,96 +1,96 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Topic State Monitor Params",
-    "type": "object",
-    "definitions": {
-      "topic_state_monitor": {
-        "type": "object",
-        "properties": {
-          "topic": {
-            "type": "string",
-            "description": "Name of target topic"
-          },
-          "topic_type": {
-            "type": "string",
-            "description": "Type of target topic (used if the topic is not transform)"
-          },
-          "frame_id": {
-            "type": "string",
-            "description": "Frame ID of transform parent (used if the topic is transform)"
-          },
-          "child_frame_id": {
-            "type": "string",
-            "description": "Frame ID of transform child (used if the topic is transform)"
-          },
-          "transient_local": {
-            "type": "boolean",
-            "description": "QoS policy of topic subscription (Transient Local/Volatile)",
-            "default": false
-          },
-          "best_effort": {
-            "type": "boolean",
-            "description": "QoS policy of topic subscription (Best Effort/Reliable)",
-            "default": false
-          },
-          "diag_name": {
-            "type": "string",
-            "description": "Name used for the diagnostics to publish"
-          },
-          "update_rate": {
-            "type": "number",
-            "description": "Timer callback period [Hz]",
-            "default": 10.0
-          },
-          "warn_rate": {
-            "type": "number",
-            "description": "If the topic rate is lower than this value, the topic status becomes `WarnRate`",
-            "default": 0.5
-          },
-          "error_rate": {
-            "type": "number",
-            "description": "If the topic rate is lower than this value, the topic status becomes `ErrorRate`",
-            "default": 0.1
-          },
-          "timeout": {
-            "type": "number",
-            "description": "If the topic subscription is stopped for more than this time [s], the topic status becomes `Timeout`",
-            "default": 1.0
-          },
-          "window_size": {
-            "type": "integer",
-            "description": "Window size of target topic for calculating",
-            "default": 10
-          }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Topic State Monitor Params",
+  "type": "object",
+  "definitions": {
+    "topic_state_monitor": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "description": "Name of target topic"
         },
-        "required": [
-          "topic",
-          "topic_type",
-          "frame_id",
-          "child_frame_id",
-          "transient_local",
-          "best_effort",
-          "diag_name",
-          "update_rate",
-          "warn_rate",
-          "error_rate",
-          "timeout",
-          "window_size"
-        ],
-        "additionalProperties": false
-      }
-    },
-    "properties": {
-      "/**": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "$ref": "#/definitions/topic_state_monitor"
-          }
+        "topic_type": {
+          "type": "string",
+          "description": "Type of target topic (used if the topic is not transform)"
         },
-        "required": ["ros__parameters"],
-        "additionalProperties": false
-      }
-    },
-    "required": ["/**"],
-    "additionalProperties": false
-}  
+        "frame_id": {
+          "type": "string",
+          "description": "Frame ID of transform parent (used if the topic is transform)"
+        },
+        "child_frame_id": {
+          "type": "string",
+          "description": "Frame ID of transform child (used if the topic is transform)"
+        },
+        "transient_local": {
+          "type": "boolean",
+          "description": "QoS policy of topic subscription (Transient Local/Volatile)",
+          "default": false
+        },
+        "best_effort": {
+          "type": "boolean",
+          "description": "QoS policy of topic subscription (Best Effort/Reliable)",
+          "default": false
+        },
+        "diag_name": {
+          "type": "string",
+          "description": "Name used for the diagnostics to publish"
+        },
+        "update_rate": {
+          "type": "number",
+          "description": "Timer callback period [Hz]",
+          "default": 10.0
+        },
+        "warn_rate": {
+          "type": "number",
+          "description": "If the topic rate is lower than this value, the topic status becomes `WarnRate`",
+          "default": 0.5
+        },
+        "error_rate": {
+          "type": "number",
+          "description": "If the topic rate is lower than this value, the topic status becomes `ErrorRate`",
+          "default": 0.1
+        },
+        "timeout": {
+          "type": "number",
+          "description": "If the topic subscription is stopped for more than this time [s], the topic status becomes `Timeout`",
+          "default": 1.0
+        },
+        "window_size": {
+          "type": "integer",
+          "description": "Window size of target topic for calculating",
+          "default": 10
+        }
+      },
+      "required": [
+        "topic",
+        "topic_type",
+        "frame_id",
+        "child_frame_id",
+        "transient_local",
+        "best_effort",
+        "diag_name",
+        "update_rate",
+        "warn_rate",
+        "error_rate",
+        "timeout",
+        "window_size"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/topic_state_monitor"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
