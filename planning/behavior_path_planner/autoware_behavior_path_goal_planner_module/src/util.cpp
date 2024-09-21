@@ -15,7 +15,9 @@
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
 
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
+#include "autoware_lanelet2_extension/regulatory_elements/bus_stop_area.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
@@ -39,6 +41,7 @@
 namespace autoware::behavior_path_planner::goal_planner_utils
 {
 
+using autoware::universe_utils::calcDistance2d;
 using autoware::universe_utils::calcOffsetPose;
 using autoware::universe_utils::createDefaultMarker;
 using autoware::universe_utils::createMarkerColor;
@@ -75,17 +78,6 @@ lanelet::ConstLanelets getPullOverLanes(
   constexpr bool only_route_lanes = false;
   return route_handler.getLaneletSequence(
     outermost_lane, backward_distance_with_buffer, forward_distance, only_route_lanes);
-}
-
-lanelet::ConstLanelets generateExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, const double bound_offset)
-{
-  const auto pull_over_lanes =
-    getPullOverLanes(route_handler, left_side, backward_distance, forward_distance);
-
-  return left_side ? lanelet::utils::getExpandedLanelets(pull_over_lanes, bound_offset, 0.0)
-                   : lanelet::utils::getExpandedLanelets(pull_over_lanes, 0.0, -bound_offset);
 }
 
 static double getOffsetToLanesBoundary(
@@ -138,30 +130,124 @@ lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
                        -outer_road_offset);
 }
 
-PredictedObjects extractObjectsInExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, double bound_offset, const PredictedObjects & objects)
+std::optional<Polygon2d> generateObjectExtractionPolygon(
+  const lanelet::ConstLanelets & pull_over_lanes, const bool left_side, const double outer_offset,
+  const double inner_offset)
 {
-  const auto lanes = generateExpandedPullOverLanes(
-    route_handler, left_side, backward_distance, forward_distance, bound_offset);
+  // generate base boundary poses without orientation
+  std::vector<Pose> base_boundary_poses{};
+  for (const auto & lane : pull_over_lanes) {
+    const auto & bound = left_side ? lane.leftBound() : lane.rightBound();
+    for (const auto & p : bound) {
+      Pose pose{};
+      pose.position = createPoint(p.x(), p.y(), p.z());
+      if (std::any_of(base_boundary_poses.begin(), base_boundary_poses.end(), [&](const auto & p) {
+            return calcDistance2d(p.position, pose.position) < 0.1;
+          })) {
+        continue;
+      }
+      base_boundary_poses.push_back(pose);
+    }
+  }
+  if (base_boundary_poses.size() < 2) {
+    return std::nullopt;
+  }
 
-  const auto [objects_in_lanes, others] = utils::path_safety_checker::separateObjectsByLanelets(
-    objects, lanes, [](const auto & obj, const auto & lanelet, const auto yaw_threshold) {
-      return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lanelet, yaw_threshold);
-    });
+  // set orientation to next point
+  for (auto it = base_boundary_poses.begin(); it != std::prev(base_boundary_poses.end()); ++it) {
+    const auto & p = it->position;
+    const auto & next_p = std::next(it)->position;
+    const double yaw = autoware::universe_utils::calcAzimuthAngle(p, next_p);
+    it->orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
+  }
+  base_boundary_poses.back().orientation =
+    base_boundary_poses[base_boundary_poses.size() - 2].orientation;
 
-  return objects_in_lanes;
-}
+  // generate outer and inner boundary poses
+  std::vector<Point> outer_boundary_points{};
+  std::vector<Point> inner_boundary_points{};
+  const double outer_direction_sign = left_side ? 1.0 : -1.0;
+  for (const auto & base_pose : base_boundary_poses) {
+    const Pose outer_pose = calcOffsetPose(base_pose, 0, outer_direction_sign * outer_offset, 0);
+    const Pose inner_pose = calcOffsetPose(base_pose, 0, -outer_direction_sign * inner_offset, 0);
+    outer_boundary_points.push_back(outer_pose.position);
+    inner_boundary_points.push_back(inner_pose.position);
+  }
 
-PredictedObjects extractStaticObjectsInExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, double bound_offset, const PredictedObjects & objects,
-  const double velocity_thresh)
-{
-  const auto objects_in_lanes = extractObjectsInExpandedPullOverLanes(
-    route_handler, left_side, backward_distance, forward_distance, bound_offset, objects);
+  // remove self intersection
+  // if bound is intersected, remove them and insert intersection point
+  using BoostPoint = boost::geometry::model::d2::point_xy<double>;
+  using LineString = boost::geometry::model::linestring<BoostPoint>;
+  const auto remove_self_intersection = [](const std::vector<Point> & bound) {
+    constexpr double INTERSECTION_CHECK_DISTANCE = 10.0;
+    std::vector<Point> modified_bound{};
+    size_t i = 0;
+    while (i < bound.size() - 1) {
+      BoostPoint p1(bound.at(i).x, bound.at(i).y);
+      BoostPoint p2(bound.at(i + 1).x, bound.at(i + 1).y);
+      LineString p_line{};
+      p_line.push_back(p1);
+      p_line.push_back(p2);
+      bool intersection_found = false;
+      for (size_t j = i + 2; j < bound.size() - 1; j++) {
+        const double distance = autoware::universe_utils::calcDistance2d(bound.at(i), bound.at(j));
+        if (distance > INTERSECTION_CHECK_DISTANCE) {
+          break;
+        }
+        LineString q_line{};
+        BoostPoint q1(bound.at(j).x, bound.at(j).y);
+        BoostPoint q2(bound.at(j + 1).x, bound.at(j + 1).y);
+        q_line.push_back(q1);
+        q_line.push_back(q2);
+        std::vector<BoostPoint> intersection_points;
+        boost::geometry::intersection(p_line, q_line, intersection_points);
+        if (intersection_points.empty()) {
+          continue;
+        }
+        modified_bound.push_back(bound.at(i));
+        Point intersection_point{};
+        intersection_point.x = intersection_points.at(0).x();
+        intersection_point.y = intersection_points.at(0).y();
+        intersection_point.z = bound.at(i).z;
+        modified_bound.push_back(intersection_point);
+        i = j + 1;
+        intersection_found = true;
+        break;
+      }
+      if (!intersection_found) {
+        modified_bound.push_back(bound.at(i));
+        i++;
+      }
+    }
+    modified_bound.push_back(bound.back());
+    return modified_bound;
+  };
+  outer_boundary_points = remove_self_intersection(outer_boundary_points);
+  inner_boundary_points = remove_self_intersection(inner_boundary_points);
 
-  return utils::path_safety_checker::filterObjectsByVelocity(objects_in_lanes, velocity_thresh);
+  // create clockwise polygon
+  Polygon2d polygon{};
+  const auto & left_boundary_points = left_side ? outer_boundary_points : inner_boundary_points;
+  const auto & right_boundary_points = left_side ? inner_boundary_points : outer_boundary_points;
+  std::vector<Point> reversed_right_boundary_points = right_boundary_points;
+  std::reverse(reversed_right_boundary_points.begin(), reversed_right_boundary_points.end());
+  for (const auto & left_point : left_boundary_points) {
+    autoware::universe_utils::Point2d point{left_point.x, left_point.y};
+    polygon.outer().push_back(point);
+  }
+  for (const auto & right_point : reversed_right_boundary_points) {
+    autoware::universe_utils::Point2d point{right_point.x, right_point.y};
+    polygon.outer().push_back(point);
+  }
+  autoware::universe_utils::Point2d first_point{
+    left_boundary_points.front().x, left_boundary_points.front().y};
+  polygon.outer().push_back(first_point);
+
+  if (polygon.outer().size() < 3) {
+    return std::nullopt;
+  }
+
+  return polygon;
 }
 
 PredictedObjects filterObjectsByLateralDistance(
@@ -178,6 +264,114 @@ PredictedObjects filterObjectsByLateralDistance(
   }
 
   return filtered_objects;
+}
+
+bool isIntersectingAreas(
+  const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas)
+{
+  for (const auto & area : areas) {
+    if (boost::geometry::intersects(area, footprint)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool isWithinAreas(
+  const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas)
+{
+  for (const auto & area : areas) {
+    if (boost::geometry::within(footprint, area)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::vector<lanelet::BasicPolygon2d> getBusStopAreaPolygons(const lanelet::ConstLanelets & lanes)
+{
+  std::vector<lanelet::BasicPolygon2d> area_polygons{};
+  for (const auto & bus_stop_area_reg_elem : lanelet::utils::query::busStopAreas(lanes)) {
+    for (const auto & area : bus_stop_area_reg_elem->busStopAreas()) {
+      const auto & area_poly = lanelet::utils::to2D(area).basicPolygon();
+      area_polygons.push_back(area_poly);
+    }
+  }
+  return area_polygons;
+}
+
+bool checkObjectsCollision(
+  const PathWithLaneId & path, const std::vector<double> & curvatures,
+  const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
+  const BehaviorPathPlannerParameters & behavior_path_parameters,
+  const double collision_check_margin, const bool extract_static_objects,
+  const double maximum_deceleration,
+  const double object_recognition_collision_check_max_extra_stopping_margin,
+  std::vector<Polygon2d> & debug_ego_polygons_expanded, const bool update_debug_data)
+{
+  if (path.points.size() != curvatures.size()) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("goal_planner_util"),
+      "path.points.size() != curvatures.size() in checkObjectsCollision(). judge as non collision");
+    return false;
+  }
+
+  const auto & target_objects =
+    extract_static_objects ? static_target_objects : dynamic_target_objects;
+  if (target_objects.objects.empty()) {
+    return false;
+  }
+
+  // check collision roughly with {min_distance, max_distance} between ego footprint and objects
+  // footprint
+  std::pair<bool, bool> has_collision_rough =
+    utils::path_safety_checker::checkObjectsCollisionRough(
+      path, target_objects, collision_check_margin, behavior_path_parameters, false);
+  if (!has_collision_rough.first) {
+    return false;
+  }
+  if (has_collision_rough.second) {
+    return true;
+  }
+
+  std::vector<Polygon2d> obj_polygons;
+  for (const auto & object : target_objects.objects) {
+    obj_polygons.push_back(autoware::universe_utils::toPolygon2d(object));
+  }
+
+  /* Expand ego collision check polygon
+   *   - `collision_check_margin` is added in all directions.
+   *   - `extra_stopping_margin` adds stopping margin under deceleration constraints forward.
+   *   - `extra_lateral_margin` adds the lateral margin on curves.
+   */
+  std::vector<Polygon2d> ego_polygons_expanded{};
+  for (size_t i = 0; i < path.points.size(); ++i) {
+    const auto p = path.points.at(i);
+    const double extra_stopping_margin = std::min(
+      std::pow(p.point.longitudinal_velocity_mps, 2) * 0.5 / maximum_deceleration,
+      object_recognition_collision_check_max_extra_stopping_margin);
+
+    // The square is meant to imply centrifugal force, but it is not a very well-founded formula.
+    // TODO(kosuke55): It is needed to consider better way because there is an inherently
+    // different conception of the inside and outside margins.
+    const double extra_lateral_margin = std::min(
+      extra_stopping_margin,
+      std::abs(curvatures.at(i) * std::pow(p.point.longitudinal_velocity_mps, 2)));
+
+    const auto ego_polygon = autoware::universe_utils::toFootprint(
+      p.point.pose,
+      behavior_path_parameters.base_link2front + collision_check_margin + extra_stopping_margin,
+      behavior_path_parameters.base_link2rear + collision_check_margin,
+      behavior_path_parameters.vehicle_width + collision_check_margin * 2.0 +
+        extra_lateral_margin * 2.0);
+    ego_polygons_expanded.push_back(ego_polygon);
+  }
+
+  if (update_debug_data) {
+    debug_ego_polygons_expanded = ego_polygons_expanded;
+  }
+
+  return utils::path_safety_checker::checkPolygonsIntersects(ego_polygons_expanded, obj_polygons);
 }
 
 MarkerArray createPullOverAreaMarkerArray(

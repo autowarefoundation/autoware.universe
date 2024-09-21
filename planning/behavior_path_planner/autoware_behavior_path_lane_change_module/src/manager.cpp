@@ -102,6 +102,8 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
   // safety check
   p.allow_loose_check_for_cancel =
     getOrDeclareParameter<bool>(*node, parameter("safety_check.allow_loose_check_for_cancel"));
+  p.enable_target_lane_bound_check =
+    getOrDeclareParameter<bool>(*node, parameter("safety_check.enable_target_lane_bound_check"));
   p.collision_check_yaw_diff_threshold = getOrDeclareParameter<double>(
     *node, parameter("safety_check.collision_check_yaw_diff_threshold"));
 
@@ -301,7 +303,7 @@ std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneMod
 {
   return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
-    objects_of_interest_marker_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_, steering_factor_interface_ptr_,
     std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
 }
 
