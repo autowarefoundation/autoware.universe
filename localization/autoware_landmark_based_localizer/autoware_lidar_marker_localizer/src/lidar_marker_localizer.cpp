@@ -81,7 +81,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
   param_.save_file_name = this->declare_parameter<std::string>("save_file_name");
   param_.save_frame_id = this->declare_parameter<std::string>("save_frame_id");
 
-  ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
+  ekf_pose_buffer_ = std::make_unique<autoware::localization_util::SmartPoseBuffer>(
     this->get_logger(), param_.self_pose_timeout_sec, param_.self_pose_distance_tolerance_m);
 
   rclcpp::CallbackGroup::SharedPtr points_callback_group;
@@ -122,7 +122,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, this, false);
 
-  diagnostics_module_.reset(new DiagnosticsModule(this, "marker_detection_status"));
+  diagnostics_module_.reset(
+    new autoware::localization_util::DiagnosticsModule(this, "marker_detection_status"));
 }
 
 void LidarMarkerLocalizer::initialize_diagnostics()
@@ -195,8 +196,8 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
   }
 
   // (2) get Self Pose
-  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
-    ekf_pose_buffer_->interpolate(sensor_ros_time);
+  const std::optional<autoware::localization_util::SmartPoseBuffer::InterpolateResult>
+    interpolate_result = ekf_pose_buffer_->interpolate(sensor_ros_time);
 
   const bool is_received_self_pose = interpolate_result != std::nullopt;
   diagnostics_module_->add_key_value("is_received_self_pose", is_received_self_pose);
@@ -607,7 +608,7 @@ void LidarMarkerLocalizer::transform_sensor_measurement(
   const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped =
     autoware::universe_utils::transform2pose(transform);
   const Eigen::Matrix4f base_to_sensor_matrix =
-    pose_to_matrix4f(target_to_source_pose_stamped.pose);
+    autoware::localization_util::pose_to_matrix4f(target_to_source_pose_stamped.pose);
   pcl_ros::transformPointCloud(
     base_to_sensor_matrix, *sensor_points_input_ptr, *sensor_points_output_ptr);
 }

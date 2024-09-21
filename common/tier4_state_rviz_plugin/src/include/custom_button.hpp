@@ -37,6 +37,10 @@ public:
       QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
     const QColor & hoverColor =
       QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+    const QColor & pressedColor =
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+    const QColor & checkedColor =
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
     const QColor & disabledBgColor =
       QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
     const QColor & disabledTextColor =
@@ -44,26 +48,37 @@ public:
     QWidget * parent = nullptr);
   void updateStyle(
     const QString & text, const QColor & bgColor, const QColor & textColor,
-    const QColor & hoverColor, const QColor & disabledBgColor, const QColor & disabledTextColor);
+    const QColor & hoverColor, const QColor & pressedColor, const QColor & checkedColor,
+    const QColor & disabledBgColor, const QColor & disabledTextColor);
 
 protected:
   void paintEvent(QPaintEvent * event) override;
   void enterEvent(QEvent * event) override;
   void leaveEvent(QEvent * event) override;
+  void mousePressEvent(QMouseEvent * event) override;
+  void mouseReleaseEvent(QMouseEvent * event) override;
   QSize sizeHint() const override;
   QSize minimumSizeHint() const override;
+  // set checked state
+  void setChecked(bool checked);
 
 private:
   QColor backgroundColor =
     QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str());
   QColor textColor = QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
   QColor hoverColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str());
+    QColor(autoware::state_rviz_plugin::colors::default_colors.hover_button_bg.c_str());
+  QColor pressedColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.pressed_button_bg.c_str());
+  QColor checkedColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.checked_button_bg.c_str());
   QColor disabledBgColor =
     QColor(autoware::state_rviz_plugin::colors::default_colors.disabled_elevated_button_bg.c_str());
   QColor disabledTextColor =
     QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str());
   bool isHovered = false;
+  bool isPressed = false;
+  bool isChecked = false;
 };
 
 #endif  // CUSTOM_BUTTON_HPP_
