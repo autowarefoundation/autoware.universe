@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "MRM Emergency Stop Operator",
+  "title": "MRM Emergency Stop Operator Params",
   "type": "object",
   "definitions": {
     "mrm_emergency_stop_operator": {
