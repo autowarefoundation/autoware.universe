@@ -1,5 +1,5 @@
 /**:
   ros__parameters:
-    update_rate: 30
-    target_acceleration: -2.5
-    target_jerk: -1.5
+    update_rate: 30               # Node Parameter
+    target_acceleration: -2.5     # Core Parameter
+    target_jerk: -1.5             # Core Parameter
