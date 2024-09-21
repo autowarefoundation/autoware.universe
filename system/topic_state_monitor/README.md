@@ -33,27 +33,7 @@ The types of topic status and corresponding diagnostic status are following.
 
 ## Parameters
 
-### Node Parameters
-
-| Name              | Type   | Default Value | Description                                                   |
-| ----------------- | ------ | ------------- | ------------------------------------------------------------- |
-| `topic`           | string | -             | Name of target topic                                          |
-| `topic_type`      | string | -             | Type of target topic (used if the topic is not transform)     |
-| `frame_id`        | string | -             | Frame ID of transform parent (used if the topic is transform) |
-| `child_frame_id`  | string | -             | Frame ID of transform child (used if the topic is transform)  |
-| `transient_local` | bool   | false         | QoS policy of topic subscription (Transient Local/Volatile)   |
-| `best_effort`     | bool   | false         | QoS policy of topic subscription (Best Effort/Reliable)       |
-| `diag_name`       | string | -             | Name used for the diagnostics to publish                      |
-| `update_rate`     | double | 10.0          | Timer callback period [Hz]                                    |
-
-### Core Parameters
-
-| Name          | Type   | Default Value | Description                                                                                          |
-| ------------- | ------ | ------------- | ---------------------------------------------------------------------------------------------------- |
-| `warn_rate`   | double | 0.5           | If the topic rate is lower than this value, the topic status becomes `WarnRate`                      |
-| `error_rate`  | double | 0.1           | If the topic rate is lower than this value, the topic status becomes `ErrorRate`                     |
-| `timeout`     | double | 1.0           | If the topic subscription is stopped for more than this time [s], the topic status becomes `Timeout` |
-| `window_size` | int    | 10            | Window size of target topic for calculating frequency                                                |
+{{ json_to_markdown("system/topic_state_monitor/schema/topic_state_monitor.schema.json") }}
 
 ## Assumptions / Known limits
 

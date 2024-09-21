@@ -1,0 +1,9 @@
+/**:
+  ros__parameters:
+    update_rate: 10.0
+    transient_local: false
+    best_effort: false
+    warn_rate: 0.5
+    error_rate: 0.1
+    timeout: 1.0
+    window_size: 10

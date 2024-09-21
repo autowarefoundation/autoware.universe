@@ -42,10 +42,10 @@ TopicStateMonitorNode::TopicStateMonitorNode(const rclcpp::NodeOptions & node_op
   using std::placeholders::_1;
 
   // Parameter
-  node_param_.update_rate = declare_parameter("update_rate", 10.0);
+  node_param_.update_rate = declare_parameter<double>("update_rate");
   node_param_.topic = declare_parameter<std::string>("topic");
-  node_param_.transient_local = declare_parameter("transient_local", false);
-  node_param_.best_effort = declare_parameter("best_effort", false);
+  node_param_.transient_local = declare_parameter<bool>("transient_local");
+  node_param_.best_effort = declare_parameter<bool>("best_effort");
   node_param_.diag_name = declare_parameter<std::string>("diag_name");
   node_param_.is_transform = (node_param_.topic == "/tf" || node_param_.topic == "/tf_static");
 
@@ -56,10 +56,10 @@ TopicStateMonitorNode::TopicStateMonitorNode(const rclcpp::NodeOptions & node_op
     node_param_.topic_type = declare_parameter<std::string>("topic_type");
   }
 
-  param_.warn_rate = declare_parameter("warn_rate", 0.5);
-  param_.error_rate = declare_parameter("error_rate", 0.1);
-  param_.timeout = declare_parameter("timeout", 1.0);
-  param_.window_size = declare_parameter("window_size", 10);
+  param_.warn_rate = declare_parameter<double>("warn_rate");
+  param_.error_rate = declare_parameter<double>("error_rate");
+  param_.timeout = declare_parameter<double>("timeout");
+  param_.window_size = declare_parameter<double>("window_size");
 
   // Parameter Reconfigure
   set_param_res_ =
