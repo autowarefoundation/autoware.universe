@@ -43,7 +43,8 @@ std::shared_ptr<VoxelBasedApproximateCompareMapFilterComponent> generateNode(
     ament_index_cpp::get_package_share_directory("autoware_compare_map_segmentation");
   node_options.arguments(
     {"--ros-args", "--params-file",
-     compare_map_segmentation_dir + "/config/voxel_based_approximate_compare_map_filter.param.yaml"});
+     compare_map_segmentation_dir +
+       "/config/voxel_based_approximate_compare_map_filter.param.yaml"});
 
   node_options.append_parameter_override("use_dynamic_map_loading", use_dynamic_map_loading);
   node_options.append_parameter_override("input_frame", "map");
