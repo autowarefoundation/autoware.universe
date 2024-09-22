@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../src/voxel_based_compare_map_filter/node.hpp"
+#include "../src/distance_based_compare_map_filter/node.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_point_types/types.hpp>
@@ -23,7 +23,7 @@
 
 #include <gtest/gtest.h>
 
-using autoware::compare_map_segmentation::VoxelBasedCompareMapFilterComponent;
+using autoware::compare_map_segmentation::DistanceBasedCompareMapFilterComponent;
 using autoware_point_types::PointXYZIRC;
 using autoware_point_types::PointXYZIRCGenerator;
 using point_cloud_msg_wrapper::PointCloud2Modifier;
@@ -35,7 +35,7 @@ std::shared_ptr<autoware::test_utils::AutowareTestManager> generateTestManager()
   return test_manager;
 };
 
-std::shared_ptr<VoxelBasedCompareMapFilterComponent> generateNode(
+std::shared_ptr<DistanceBasedCompareMapFilterComponent> generateNode(
   const bool use_dynamic_map_loading)
 {
   auto node_options = rclcpp::NodeOptions{};
@@ -43,13 +43,13 @@ std::shared_ptr<VoxelBasedCompareMapFilterComponent> generateNode(
     ament_index_cpp::get_package_share_directory("autoware_compare_map_segmentation");
   node_options.arguments(
     {"--ros-args", "--params-file",
-     compare_map_segmentation_dir + "/config/voxel_based_compare_map_filter.param.yaml"});
+     compare_map_segmentation_dir + "/config/distance_based_compare_map_filter.param.yaml"});
 
   node_options.append_parameter_override("use_dynamic_map_loading", use_dynamic_map_loading);
   node_options.append_parameter_override("input_frame", "map");
   node_options.append_parameter_override("publish_debug_pcd", true);
 
-  return std::make_unique<VoxelBasedCompareMapFilterComponent>(node_options);
+  return std::make_unique<DistanceBasedCompareMapFilterComponent>(node_options);
 };
 PointCloud2 create_pointcloud(const int number_of_point)
 {
@@ -67,7 +67,7 @@ PointCloud2 create_pointcloud(const int number_of_point)
   return pointcloud;
 }
 
-TEST(VoxelBasedCompareMapFilterComponentTest, testEmptyInputPointcloud)
+TEST(DistanceBasedCompareMapFilterComponentTest, testEmptyInputPointcloud)
 {
   rclcpp::init(0, nullptr);
   const std::string input_map_topic = "/map";
