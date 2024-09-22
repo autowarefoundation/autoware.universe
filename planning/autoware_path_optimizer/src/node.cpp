@@ -14,12 +14,12 @@
 
 #include "autoware/path_optimizer/node.hpp"
 
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/marker/marker_helper.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/path_optimizer/debug_marker.hpp"
 #include "autoware/path_optimizer/utils/geometry_utils.hpp"
 #include "autoware/path_optimizer/utils/trajectory_utils.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "rclcpp/time.hpp"
 
 #include <chrono>

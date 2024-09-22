@@ -25,78 +25,75 @@ void CustomSlider::paintEvent(QPaintEvent *)
   painter.setRenderHint(QPainter::Antialiasing);
   painter.setPen(Qt::NoPen);
 
-  // Initialize style option
   QStyleOptionSlider opt;
   initStyleOption(&opt);
 
-  QRect grooveRect =
+  QRectF rect_groove =
     style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderGroove, this);
-  int centerY = grooveRect.center().y();
-  QRect handleRect =
+  double groove_y = rect_groove.center().y();
+  QRectF rect_handle =
     style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderHandle, this);
 
   int value = this->value();
-  int minValue = this->minimum();
-  int maxValue = this->maximum();
+  int val_min = this->minimum();
+  int val_max = this->maximum();
 
-  int trackThickness = 14;
-  int gap = 8;
+  double track_height = 10.0;
+  double gap_handle_x = 5.0;
 
-  QRect beforeRect(
-    grooveRect.x(), centerY - trackThickness / 2, handleRect.center().x() - grooveRect.x() - gap,
-    trackThickness);
+  // active track
+  if (value > val_min + 1) {
+    QRectF rect_before(
+      rect_groove.x(), groove_y - track_height / 2,
+      rect_handle.center().x() - rect_groove.x() - gap_handle_x, track_height);
 
-  QRect afterRect(
-    handleRect.center().x() + gap, centerY - trackThickness / 2,
-    grooveRect.right() - handleRect.center().x() - gap, trackThickness);
+    QColor color_track_active(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
+    painter.setBrush(color_track_active);
+    // first half of the track with high radius
+    painter.drawRoundedRect(
+      QRectF(
+        rect_before.left(), groove_y - track_height / 2, rect_before.width() / 2 + track_height / 2,
+        track_height),
+      track_height / 2, track_height / 2);
 
-  QColor inactiveTrackColor(
-    autoware::state_rviz_plugin::colors::default_colors.primary_container.c_str());
-  QColor activeTrackColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
-  QColor handleColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
-
-  // only draw the active track if the value is more than the gap from the minimum
-  if (value > minValue + gap / 2) {
-    QPainterPath beforePath;
-    beforePath.moveTo(beforeRect.left(), centerY + trackThickness / 2);  // Start from bottom-left
-    beforePath.quadTo(
-      beforeRect.left(), centerY - trackThickness / 2, beforeRect.left() + trackThickness * 0.5,
-      centerY - trackThickness / 2);
-    beforePath.lineTo(beforeRect.right() - trackThickness * 0.1, centerY - trackThickness / 2);
-    beforePath.quadTo(
-      beforeRect.right(), centerY - trackThickness / 2, beforeRect.right(), centerY);
-    beforePath.quadTo(
-      beforeRect.right(), centerY + trackThickness / 2, beforeRect.right() - trackThickness * 0.1,
-      centerY + trackThickness / 2);
-    beforePath.lineTo(beforeRect.left() + trackThickness * 0.5, centerY + trackThickness / 2);
-    beforePath.quadTo(beforeRect.left(), centerY + trackThickness / 2, beforeRect.left(), centerY);
-    painter.fillPath(beforePath, activeTrackColor);
+    // second half of the track with low radius
+    painter.drawRoundedRect(
+      QRectF(
+        rect_before.center().x(), groove_y - track_height / 2, rect_before.width() / 2,
+        track_height),
+      2.0, 2.0);
   }
 
-  if (value < maxValue - gap / 2) {
-    QPainterPath afterPath;
-    afterPath.moveTo(afterRect.left(), centerY + trackThickness / 2);
-    afterPath.quadTo(
-      afterRect.left(), centerY - trackThickness / 2, afterRect.left() + trackThickness * 0.1,
-      centerY - trackThickness / 2);
-    afterPath.lineTo(afterRect.right() - trackThickness * 0.5, centerY - trackThickness / 2);
-    afterPath.quadTo(afterRect.right(), centerY - trackThickness / 2, afterRect.right(), centerY);
-    afterPath.quadTo(
-      afterRect.right(), centerY + trackThickness / 2, afterRect.right() - trackThickness * 0.5,
-      centerY + trackThickness / 2);
-    afterPath.lineTo(afterRect.left() + trackThickness * 0.1, centerY + trackThickness / 2);
-    afterPath.quadTo(afterRect.left(), centerY + trackThickness / 2, afterRect.left(), centerY);
-    painter.fillPath(afterPath, inactiveTrackColor);
+  // inactive track
+  if (value < val_max - 1) {
+    QRectF rect_after(
+      rect_handle.center().x() + gap_handle_x, groove_y - track_height / 2,
+      rect_groove.right() - rect_handle.center().x() - gap_handle_x, track_height);
+
+    QColor color_track_inactive(
+      autoware::state_rviz_plugin::colors::default_colors.primary_container.c_str());
+    painter.setBrush(color_track_inactive);
+    // second half of the track with high radius
+    painter.drawRoundedRect(
+      QRectF(
+        rect_after.center().x() - track_height / 2, groove_y - track_height / 2,
+        rect_after.width() / 2 + track_height / 2, track_height),
+      track_height / 2, track_height / 2);
+
+    // first half of the track with low radius
+    painter.drawRoundedRect(
+      QRectF(rect_after.left(), groove_y - track_height / 2, rect_after.width() / 2, track_height),
+      2.0, 2.0);
   }
 
-  painter.setBrush(handleColor);
-  int handleLineHeight = 30;
-  int handleLineWidth = 4;
-  int handleLineRadius = 2;
-  QRect handleLineRect(
-    handleRect.center().x() - handleLineWidth / 2, centerY - handleLineHeight / 2, handleLineWidth,
-    handleLineHeight);
-  QPainterPath handlePath;
-  handlePath.addRoundedRect(handleLineRect, handleLineRadius, handleLineRadius);
-  painter.fillPath(handlePath, handleColor);
+  double handle_height = 28.0;
+  double handle_width = 3.0;
+  double handle_corner_radius = 2.0;
+  QColor color_handle(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
+  painter.setBrush(color_handle);
+  painter.drawRoundedRect(
+    QRectF(
+      rect_handle.center().x() - handle_width / 2, groove_y - handle_height / 2, handle_width,
+      handle_height),
+    handle_corner_radius, handle_corner_radius);
 }

@@ -14,10 +14,10 @@
 
 #include "autoware/mpc_lateral_controller/mpc.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/mpc_lateral_controller/mpc_utils.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
-#include "interpolation/linear_interpolation.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include <algorithm>
@@ -383,8 +383,8 @@ std::pair<bool, VectorXd> MPC::updateStateForDelayCompensation(
     double k, v = 0.0;
     try {
       // NOTE: When driving backward, the curvature's sign should be reversed.
-      k = interpolation::lerp(traj.relative_time, traj.k, mpc_curr_time) * sign_vx;
-      v = interpolation::lerp(traj.relative_time, traj.vx, mpc_curr_time);
+      k = autoware::interpolation::lerp(traj.relative_time, traj.k, mpc_curr_time) * sign_vx;
+      v = autoware::interpolation::lerp(traj.relative_time, traj.vx, mpc_curr_time);
     } catch (const std::exception & e) {
       RCLCPP_ERROR(m_logger, "mpc resample failed at delay compensation, stop mpc: %s", e.what());
       return {false, {}};

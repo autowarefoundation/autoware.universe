@@ -45,6 +45,7 @@ using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVeloc
 using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 using autoware::route_handler::Direction;
 using autoware::universe_utils::Polygon2d;
+using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
@@ -59,17 +60,6 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);
-
-double calcMinimumLaneChangeLength(
-  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals);
-
-double calcMinimumLaneChangeLength(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
-  const LaneChangeParameters & lane_change_parameters, Direction direction);
-
-double calcMaximumLaneChangeLength(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc);
 
 double calcMinimumAcceleration(
   const double current_velocity, const double min_longitudinal_acc,
@@ -104,6 +94,10 @@ lanelet::ConstLanelets getTargetNeighborLanes(
 bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
+
+bool pathFootprintExceedsTargetLaneBound(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
+  const double margin = 0.1);
 
 std::optional<LaneChangePath> constructCandidatePath(
   const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
@@ -228,8 +222,9 @@ rclcpp::Logger getLogger(const std::string & type);
  *
  * @return Polygon2d A polygon representing the current 2D footprint of the ego vehicle.
  */
-Polygon2d getEgoCurrentFootprint(
-  const Pose & ego_pose, const autoware::vehicle_info_utils::VehicleInfo & ego_info);
+Polygon2d getEgoCurrentFootprint(const Pose & ego_pose, const VehicleInfo & ego_info);
+
+Point getEgoFrontVertex(const Pose & ego_pose, const VehicleInfo & ego_info, bool left);
 
 /**
  * @brief Checks if the given polygon is within an intersection area.
@@ -305,6 +300,10 @@ double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, co
 ExtendedPredictedObjects transform_to_extended_objects(
   const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects,
   const bool check_prepare_phase);
+
+double get_distance_to_next_regulatory_element(
+  const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
+  const bool ignore_intersection = false);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 namespace autoware::behavior_path_planner::utils::lane_change::debug
@@ -312,8 +311,8 @@ namespace autoware::behavior_path_planner::utils::lane_change::debug
 geometry_msgs::msg::Point32 create_point32(const geometry_msgs::msg::Pose & pose);
 
 geometry_msgs::msg::Polygon createExecutionArea(
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const Pose & pose,
-  double additional_lon_offset, double additional_lat_offset);
+  const VehicleInfo & vehicle_info, const Pose & pose, double additional_lon_offset,
+  double additional_lat_offset);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::debug
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_

@@ -51,14 +51,6 @@ lanelet::ConstLanelets getPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
   const double forward_distance);
 
-/*
- * @brief expand pull_over_lanes to the opposite side of drivable roads by bound_offset.
- * bound_offset must be positive regardless of left_side is true/false
- */
-lanelet::ConstLanelets generateExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, const double bound_offset);
-
 lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
   const lanelet::ConstLanelets & pull_over_lanes, const bool left_side,
   const geometry_msgs::msg::Pose ego_pose,
@@ -77,9 +69,6 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
   const lanelet::ConstLanelets & pull_over_lanes, const bool left_side, const double outer_offset,
   const double inner_offset);
 
-PredictedObjects extractObjectsInExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, double bound_offset, const PredictedObjects & objects);
 PredictedObjects filterObjectsByLateralDistance(
   const Pose & ego_pose, const double vehicle_width, const PredictedObjects & objects,
   const double distance_thresh, const bool filter_inside);
@@ -139,6 +128,15 @@ bool isWithinAreas(
  * @brief query BusStopArea polygons associated with given lanes
  */
 std::vector<lanelet::BasicPolygon2d> getBusStopAreaPolygons(const lanelet::ConstLanelets & lanes);
+
+bool checkObjectsCollision(
+  const PathWithLaneId & path, const std::vector<double> & curvatures,
+  const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
+  const BehaviorPathPlannerParameters & behavior_path_parameters,
+  const double collision_check_margin, const bool extract_static_objects,
+  const double maximum_deceleration,
+  const double object_recognition_collision_check_max_extra_stopping_margin,
+  std::vector<Polygon2d> & ego_polygons_expanded, const bool update_debug_data = false);
 
 // debug
 MarkerArray createPullOverAreaMarkerArray(

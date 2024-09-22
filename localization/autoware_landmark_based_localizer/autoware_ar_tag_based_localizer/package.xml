@@ -19,9 +19,9 @@
   <test_depend>ament_index_cpp</test_depend>
   <depend>aruco</depend>
   <depend>autoware_landmark_manager</depend>
+  <depend>autoware_localization_util</depend>
   <depend>cv_bridge</depend>
   <depend>diagnostic_msgs</depend>
-  <depend>localization_util</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2_eigen</depend>

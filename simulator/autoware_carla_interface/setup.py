@@ -3,8 +3,6 @@ import os
 
 from setuptools import setup
 
-ROS_VERSION = int(os.environ["ROS_VERSION"])
-
 package_name = "autoware_carla_interface"
 
 setup(
