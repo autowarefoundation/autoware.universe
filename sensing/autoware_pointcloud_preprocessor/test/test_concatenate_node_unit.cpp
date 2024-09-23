@@ -262,11 +262,9 @@ TEST_F(ConcatenateCloudTest, TestSetAndGetReferenceTimeStampBoundary)
 
 TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
 {
-  rclcpp::Time top_timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
-  rclcpp::Time left_timestamp(
-    timestamp_seconds_, timestamp_nanoseconds_ + 40'000'000, RCL_ROS_TIME);
-  rclcpp::Time right_timestamp(
-    timestamp_seconds_, timestamp_nanoseconds_ + 80'000'000, RCL_ROS_TIME);
+  rclcpp::Time top_timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
+  rclcpp::Time left_timestamp(timestamp_seconds, timestamp_nanoseconds + 40'000'000, RCL_ROS_TIME);
+  rclcpp::Time right_timestamp(timestamp_seconds, timestamp_nanoseconds + 80'000'000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 top_pointcloud =
     generatePointCloudMsg(true, false, "lidar_top", top_timestamp);
   sensor_msgs::msg::PointCloud2 left_pointcloud =
@@ -437,11 +435,9 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 
 TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
 {
-  rclcpp::Time top_timestamp(timestamp_seconds_, timestamp_nanoseconds_, RCL_ROS_TIME);
-  rclcpp::Time left_timestamp(
-    timestamp_seconds_, timestamp_nanoseconds_ + 40'000'000, RCL_ROS_TIME);
-  rclcpp::Time right_timestamp(
-    timestamp_seconds_, timestamp_nanoseconds_ + 80'000'000, RCL_ROS_TIME);
+  rclcpp::Time top_timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
+  rclcpp::Time left_timestamp(timestamp_seconds, timestamp_nanoseconds + 40'000'000, RCL_ROS_TIME);
+  rclcpp::Time right_timestamp(timestamp_seconds, timestamp_nanoseconds + 80'000'000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 top_pointcloud =
     generatePointCloudMsg(true, false, "lidar_top", top_timestamp);
   sensor_msgs::msg::PointCloud2 left_pointcloud =

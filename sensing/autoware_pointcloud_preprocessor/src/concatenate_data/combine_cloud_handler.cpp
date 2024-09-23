@@ -106,18 +106,15 @@ CombineCloudHandler::combinePointClouds(
   std::unordered_map<std::string, double> topic_to_original_stamp_map;
 
   std::vector<rclcpp::Time> pc_stamps;
-  for (const auto & pair : topic_to_cloud_map) {
-    pc_stamps.push_back(rclcpp::Time(pair.second->header.stamp));
+  for (const auto & [topic, cloud] : topic_to_cloud_map) {
+    pc_stamps.push_back(rclcpp::Time(cloud->header.stamp));
   }
   std::sort(pc_stamps.begin(), pc_stamps.end(), std::greater<rclcpp::Time>());
   const auto oldest_stamp = pc_stamps.back();
 
   std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash_> transform_memo;
 
-  for (const auto & pair : topic_to_cloud_map) {
-    std::string topic = pair.first;
-    sensor_msgs::msg::PointCloud2::SharedPtr cloud = pair.second;
-
+  for (const auto & [topic, cloud] : topic_to_cloud_map) {
     auto transformed_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
     managed_tf_buffer_->transformPointcloud(output_frame_, *cloud, *transformed_cloud_ptr);
 

@@ -327,15 +327,15 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
 
-    for (const auto & pair : topic_to_transformed_cloud_map) {
-      if (pair.second != nullptr) {
+    for (const auto & [topic, transformed_cloud] : topic_to_transformed_cloud_map) {
+      if (transformed_cloud != nullptr) {
         const auto pipeline_latency_ms =
           std::chrono::duration<double, std::milli>(
             std::chrono::nanoseconds(
-              (this->get_clock()->now() - pair.second->header.stamp).nanoseconds()))
+              (this->get_clock()->now() - transformed_cloud->header.stamp).nanoseconds()))
             .count();
         debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-          "debug" + pair.first + "/pipeline_latency_ms", pipeline_latency_ms);
+          "debug" + topic + "/pipeline_latency_ms", pipeline_latency_ms);
       }
     }
   }
