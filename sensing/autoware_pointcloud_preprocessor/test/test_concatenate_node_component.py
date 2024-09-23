@@ -108,7 +108,7 @@ def generate_test_description():
     )
 
     container = ComposableNodeContainer(
-        name="test_concateante_data_container",
+        name="test_concatenate_data_container",
         namespace="pointcloud_preprocessor",
         package="rclcpp_components",
         executable="component_container",
@@ -282,7 +282,7 @@ def generate_twist_msg() -> TwistWithCovarianceStamped:
 
 def get_output_points(cloud_msg) -> np.ndarray:
     points_list = []
-    for point in point_cloud2.read_points(cloud_msg, field_names=("x", "y", "z"), skip_nans=True):
+    for point in point_cloud2.read_points(cloud_msg, field_names=("x", "y", "z")):
         points_list.append([point[0], point[1], point[2]])
     points = np.array(points_list, dtype=np.float32)
     return points
@@ -587,7 +587,7 @@ class TestConcatenateNode(unittest.TestCase):
         global_seconds += 1
 
     def test_5_abnormal_multiple_pointcloud_drop(self):
-        """Test the abnormal situation when multiple pointclouds were dropped (only one poincloud arrive).
+        """Test the abnormal situation when multiple pointclouds were dropped (only one pointcloud arrive).
 
         This can test that
         1. The concatenate node concatenates the single pointcloud after the timeout.

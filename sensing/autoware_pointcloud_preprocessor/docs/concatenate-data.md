@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `concatenate_and_time_synchronize_node` is a ROS2 node that combines and synchronizes multiple point clouds into a single concatenated point cloud. This enhances the sensing range for autonomous driving vehicles by integrating data from multiple LiDARs.
+The `concatenate_and_time_synchronize_node` is a ros2 node that combines and synchronizes multiple point clouds into a single concatenated point cloud. This enhances the sensing range for autonomous driving vehicles by integrating data from multiple LiDARs.
 
 ## Inner Workings / Algorithms
 

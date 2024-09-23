@@ -38,7 +38,7 @@ protected:
   void SetUp() override
   {
     rclcpp::NodeOptions node_options;
-    // Instead of "input_topics", other parameters are not unsed.
+    // Instead of "input_topics", other parameters are not used.
     // They just helps to setup the concatenate node
     node_options.parameter_overrides(
       {{"has_static_tf_only", false},
