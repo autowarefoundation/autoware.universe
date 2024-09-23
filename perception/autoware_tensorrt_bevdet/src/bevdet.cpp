@@ -48,14 +48,14 @@ BEVDet::BEVDet(
   }
   auto start = high_resolution_clock::now();
 
-  std::shared_ptr<int> ranks_bev_ptr = nullptr;
-  std::shared_ptr<int> ranks_depth_ptr = nullptr;
-  std::shared_ptr<int> ranks_feat_ptr = nullptr;
-  std::shared_ptr<int> interval_starts_ptr = nullptr;
-  std::shared_ptr<int> interval_lengths_ptr = nullptr;
+  std::vector<int> ranks_bev;
+  std::vector<int> ranks_depth;
+  std::vector<int> ranks_feat;
+  std::vector<int> interval_starts;
+  std::vector<int> interval_lengths;
 
   initViewTransformer(
-    ranks_bev_ptr, ranks_depth_ptr, ranks_feat_ptr, interval_starts_ptr, interval_lengths_ptr);
+    ranks_bev, ranks_depth, ranks_feat, interval_starts, interval_lengths);
   auto end = high_resolution_clock::now();
   duration<float> t = end - start;
   RCLCPP_INFO(
@@ -77,22 +77,22 @@ BEVDet::BEVDet(
     adj_frame_ptr_.reset(new AdjFrame(adj_num_, trt_buffer_sizes_[buffer_map_["curr_bevfeat"]]));
   }
 
-  cam_params_host_ = new float[n_img_ * cam_params_size_];
+  cam_params_host_.resize(n_img_ * cam_params_size_);
 
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev_[buffer_map_["ranks_bev"]], ranks_bev_ptr.get(), valid_feat_num_ * sizeof(int),
+    trt_buffer_dev_[buffer_map_["ranks_bev"]], ranks_bev.data(), valid_feat_num_ * sizeof(int),
     cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev_[buffer_map_["ranks_depth"]], ranks_depth_ptr.get(),
+    trt_buffer_dev_[buffer_map_["ranks_depth"]], ranks_depth.data(),
     valid_feat_num_ * sizeof(int), cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev_[buffer_map_["ranks_feat"]], ranks_feat_ptr.get(), valid_feat_num_ * sizeof(int),
+    trt_buffer_dev_[buffer_map_["ranks_feat"]], ranks_feat.data(), valid_feat_num_ * sizeof(int),
     cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev_[buffer_map_["interval_starts"]], interval_starts_ptr.get(),
+    trt_buffer_dev_[buffer_map_["interval_starts"]], interval_starts.data(),
     unique_bev_num_ * sizeof(int), cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev_[buffer_map_["interval_lengths"]], interval_lengths_ptr.get(),
+    trt_buffer_dev_[buffer_map_["interval_lengths"]], interval_lengths.data(),
     unique_bev_num_ * sizeof(int), cudaMemcpyHostToDevice));
 
   CHECK_CUDA(cudaMemcpy(
@@ -136,7 +136,7 @@ void BEVDet::initCamParams(
     cam_params_host_[i * cam_params_size_ + 26] = curr_cams2ego_trans[i].translation()(2);
   }
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev_[buffer_map_["cam_params"]], cam_params_host_,
+    trt_buffer_dev_[buffer_map_["cam_params"]], cam_params_host_.data(),
     trt_buffer_sizes_[buffer_map_["cam_params"]], cudaMemcpyHostToDevice));
 }
 
@@ -263,9 +263,9 @@ void BEVDet::mallocDeviceMemory()
 }
 
 void BEVDet::initViewTransformer(
-  std::shared_ptr<int> & ranks_bev_ptr, std::shared_ptr<int> & ranks_depth_ptr,
-  std::shared_ptr<int> & ranks_feat_ptr, std::shared_ptr<int> & interval_starts_ptr,
-  std::shared_ptr<int> & interval_lengths_ptr)
+  std::vector<int> & ranks_bev, std::vector<int> & ranks_depth,
+  std::vector<int> & ranks_feat, std::vector<int> & interval_starts,
+  std::vector<int> & interval_lengths)
 {
   int num_points = n_img_ * depth_num_ * feat_h_ * feat_w_;
   std::vector<Eigen::Vector3f> frustum(num_points);
@@ -300,17 +300,17 @@ void BEVDet::initViewTransformer(
     }
   }
 
-  std::vector<int> ranks_depth(num_points);
-  std::vector<int> ranks_feat(num_points);
+  std::vector<int> _ranks_depth(num_points);
+  std::vector<int> _ranks_feat(num_points);
 
   for (int i = 0; i < num_points; i++) {
-    ranks_depth[i] = i;
+    _ranks_depth[i] = i;
   }
   for (int i = 0; i < n_img_; i++) {
     for (int d_ = 0; d_ < depth_num_; d_++) {
       for (int u = 0; u < feat_h_ * feat_w_; u++) {
         int offset = i * (depth_num_ * feat_h_ * feat_w_) + d_ * (feat_h_ * feat_w_) + u;
-        ranks_feat[offset] = i * feat_h_ * feat_w_ + u;
+        _ranks_feat[offset] = i * feat_h_ * feat_w_ + u;
       }
     }
   }
@@ -325,54 +325,39 @@ void BEVDet::initViewTransformer(
     }
   }
 
-  valid_feat_num_ = kept.size();
-  std::vector<int> ranks_depth_host(valid_feat_num_);
-  std::vector<int> ranks_feat_host(valid_feat_num_);
-  std::vector<int> ranks_bev_host(valid_feat_num_);
+  valid_feat_num_ = kept.size();;
+  ranks_depth.resize(valid_feat_num_);
+  ranks_feat.resize(valid_feat_num_);
+  ranks_bev.resize(valid_feat_num_);
   std::vector<int> order(valid_feat_num_);
 
   for (int i = 0; i < valid_feat_num_; i++) {
     Eigen::Vector3f & p = frustum[kept[i]];
-    ranks_bev_host[i] = static_cast<int>(p.z()) * xgrid_num_ * ygrid_num_ +
+    ranks_bev[i] = static_cast<int>(p.z()) * xgrid_num_ * ygrid_num_ +
                         static_cast<int>(p.y()) * xgrid_num_ + static_cast<int>(p.x());
     order[i] = i;
   }
 
-  thrust::sort_by_key(ranks_bev_host.begin(), ranks_bev_host.end(), order.begin());
+  thrust::sort_by_key(ranks_bev.begin(), ranks_bev.end(), order.begin());
   for (int i = 0; i < valid_feat_num_; i++) {
-    ranks_depth_host[i] = ranks_depth[kept[order[i]]];
-    ranks_feat_host[i] = ranks_feat[kept[order[i]]];
+    ranks_depth[i] = _ranks_depth[kept[order[i]]];
+    ranks_feat[i] = _ranks_feat[kept[order[i]]];
   }
 
-  std::vector<int> interval_starts_host;
-  std::vector<int> interval_lengths_host;
-
-  interval_starts_host.push_back(0);
+  interval_starts.push_back(0);
   int len = 1;
   for (int i = 1; i < valid_feat_num_; i++) {
-    if (ranks_bev_host[i] != ranks_bev_host[i - 1]) {
-      interval_starts_host.push_back(i);
-      interval_lengths_host.push_back(len);
+    if (ranks_bev[i] != ranks_bev[i - 1]) {
+      interval_starts.push_back(i);
+      interval_lengths.push_back(len);
       len = 1;
     } else {
       len++;
     }
   }
 
-  interval_lengths_host.push_back(len);
-  unique_bev_num_ = interval_lengths_host.size();
-
-  ranks_bev_ptr.reset(new int[valid_feat_num_], std::default_delete<int[]>());
-  ranks_depth_ptr.reset(new int[valid_feat_num_], std::default_delete<int[]>());
-  ranks_feat_ptr.reset(new int[valid_feat_num_], std::default_delete<int[]>());
-  interval_starts_ptr.reset(new int[interval_starts_host.size()], std::default_delete<int[]>());
-  interval_lengths_ptr.reset(new int[interval_lengths_host.size()], std::default_delete<int[]>());
-
-  std::copy(ranks_bev_host.begin(), ranks_bev_host.end(), ranks_bev_ptr.get());
-  std::copy(ranks_depth_host.begin(), ranks_depth_host.end(), ranks_depth_ptr.get());
-  std::copy(ranks_feat_host.begin(), ranks_feat_host.end(), ranks_feat_ptr.get());
-  std::copy(interval_starts_host.begin(), interval_starts_host.end(), interval_starts_ptr.get());
-  std::copy(interval_lengths_host.begin(), interval_lengths_host.end(), interval_lengths_ptr.get());
+  interval_lengths.push_back(len);
+  unique_bev_num_ = interval_lengths.size();
 
   RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "valid_feat_num: %d", valid_feat_num_);
   RCLCPP_INFO(rclcpp::get_logger("BEVDet"), "unique_bev_num: %d", unique_bev_num_);
@@ -696,8 +681,6 @@ BEVDet::~BEVDet()
   }
   delete[] trt_buffer_dev_;
   delete[] post_buffer_;
-
-  delete[] cam_params_host_;
 
   trt_context_->destroy();
   trt_engine_->destroy();

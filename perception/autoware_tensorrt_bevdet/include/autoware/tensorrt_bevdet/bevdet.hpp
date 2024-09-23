@@ -130,9 +130,9 @@ protected:
   void initParams(const std::string & config_file);
 
   void initViewTransformer(
-    std::shared_ptr<int> & ranks_bev_ptr, std::shared_ptr<int> & ranks_depth_ptr,
-    std::shared_ptr<int> & ranks_feat_ptr, std::shared_ptr<int> & interval_starts_ptr,
-    std::shared_ptr<int> & interval_lengths_ptr);
+    std::vector<int> & ranks_bev, std::vector<int> & ranks_depth,
+    std::vector<int> & ranks_feat, std::vector<int> & interval_starts,
+    std::vector<int> & interval_lengths);
   void exportEngine(const std::string & onnxFile, const std::string & trtFile);
   int initEngine(const std::string & engine_file);
 
@@ -217,7 +217,7 @@ private:
 
   std::vector<size_t> trt_buffer_sizes_;
   void ** trt_buffer_dev_;
-  float * cam_params_host_;
+  std::vector<float> cam_params_host_;
   void ** post_buffer_;
 
   std::map<std::string, int> buffer_map_;
