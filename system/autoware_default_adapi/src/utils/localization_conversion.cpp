@@ -29,6 +29,8 @@ InternalInitializeRequest convert_request(
     internal->method = tier4_localization_msgs::srv::InitializeLocalization::Request::AUTO;
   else if (initialization_method == 1)
     internal->method = tier4_localization_msgs::srv::InitializeLocalization::Request::DIRECT;
+  else
+    throw std::invalid_argument("Invalid initialization_method. initialization_method must be 0 (AUTO) or 1 (DIRECT)");
 
   return internal;
 }
