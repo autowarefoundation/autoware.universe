@@ -15,6 +15,19 @@
 ---
 /**:
   ros__parameters:
+
+    # parameters
+    update_rate: 10
+    ignore_missing_diagnostics: false
+    add_leaf_diagnostics: true
+    data_ready_timeout: 30.0
+    data_heartbeat_timeout: 1.0
+    diag_timeout_sec: 1.0
+    hazard_recovery_timeout: 5.0
+    emergency_hazard_level: 2
+    use_emergency_hold: false
+    use_emergency_hold_in_manual_driving: false
+
     required_modules:
       autonomous_driving:
         /autoware/control/autonomous_driving/node_alive_monitoring: default

@@ -210,19 +210,17 @@ AutowareErrorMonitor::AutowareErrorMonitor(const rclcpp::NodeOptions & options)
   control_mode_stamp_(0, 0, this->get_clock()->get_clock_type())
 {
   // Parameter
-  get_parameter_or<int>("update_rate", params_.update_rate, 10);
-  get_parameter_or<bool>("ignore_missing_diagnostics", params_.ignore_missing_diagnostics, false);
-  get_parameter_or<bool>("add_leaf_diagnostics", params_.add_leaf_diagnostics, true);
-  get_parameter_or<double>("data_ready_timeout", params_.data_ready_timeout, 30.0);
-  get_parameter_or<double>("data_heartbeat_timeout", params_.data_heartbeat_timeout, 1.0);
-  get_parameter_or<double>("diag_timeout_sec", params_.diag_timeout_sec, 1.0);
-  get_parameter_or<double>("hazard_recovery_timeout", params_.hazard_recovery_timeout, 5.0);
-  get_parameter_or<int>(
-    "emergency_hazard_level", params_.emergency_hazard_level,
-    autoware_system_msgs::msg::HazardStatus::LATENT_FAULT);
-  get_parameter_or<bool>("use_emergency_hold", params_.use_emergency_hold, false);
+  get_parameter_or<int>("update_rate", params_.update_rate);
+  get_parameter_or<bool>("ignore_missing_diagnostics", params_.ignore_missing_diagnostics);
+  get_parameter_or<bool>("add_leaf_diagnostics", params_.add_leaf_diagnostics);
+  get_parameter_or<double>("data_ready_timeout", params_.data_ready_timeout);
+  get_parameter_or<double>("data_heartbeat_timeout", params_.data_heartbeat_timeout);
+  get_parameter_or<double>("diag_timeout_sec", params_.diag_timeout_sec);
+  get_parameter_or<double>("hazard_recovery_timeout", params_.hazard_recovery_timeout);
+  get_parameter_or<int>("emergency_hazard_level", params_.emergency_hazard_level);
+  get_parameter_or<bool>("use_emergency_hold", params_.use_emergency_hold);
   get_parameter_or<bool>(
-    "use_emergency_hold_in_manual_driving", params_.use_emergency_hold_in_manual_driving, false);
+    "use_emergency_hold_in_manual_driving", params_.use_emergency_hold_in_manual_driving);
 
   loadRequiredModules(KeyName::autonomous_driving);
   loadRequiredModules(KeyName::external_control);
