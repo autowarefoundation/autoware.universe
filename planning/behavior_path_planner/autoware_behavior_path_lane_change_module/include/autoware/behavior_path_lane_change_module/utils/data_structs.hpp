@@ -18,9 +18,9 @@
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <autoware/behavior_path_planner_common/parameters.hpp>
+#include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <interpolation/linear_interpolation.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
 
@@ -74,8 +74,8 @@ struct LateralAccelerationMap
       return std::make_pair(base_min_acc.back(), base_max_acc.back());
     }
 
-    const double min_acc = interpolation::lerp(base_vel, base_min_acc, velocity);
-    const double max_acc = interpolation::lerp(base_vel, base_max_acc, velocity);
+    const double min_acc = autoware::interpolation::lerp(base_vel, base_min_acc, velocity);
+    const double max_acc = autoware::interpolation::lerp(base_vel, base_max_acc, velocity);
 
     return std::make_pair(min_acc, max_acc);
   }
@@ -154,6 +154,7 @@ struct Parameters
 
   // safety check
   bool allow_loose_check_for_cancel{true};
+  bool enable_target_lane_bound_check{true};
   double collision_check_yaw_diff_threshold{3.1416};
   utils::path_safety_checker::RSSparams rss_params{};
   utils::path_safety_checker::RSSparams rss_params_for_parked{};

@@ -14,9 +14,9 @@
 
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spherical_linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spherical_linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
 
 #include <algorithm>
 
@@ -69,13 +69,13 @@ autoware_perception_msgs::msg::PredictedPath resamplePredictedPath(
   }
 
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_time, input, resampled_time);
+    return autoware::interpolation::lerp(input_time, input, resampled_time);
   };
   const auto spline = [&](const auto & input) {
-    return interpolation::spline(input_time, input, resampled_time);
+    return autoware::interpolation::spline(input_time, input, resampled_time);
   };
   const auto slerp = [&](const auto & input) {
-    return interpolation::slerp(input_time, input, resampled_time);
+    return autoware::interpolation::slerp(input_time, input, resampled_time);
   };
 
   const auto interpolated_x = use_spline_for_xy ? spline(x) : lerp(x);
