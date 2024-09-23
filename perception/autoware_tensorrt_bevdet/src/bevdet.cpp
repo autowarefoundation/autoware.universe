@@ -54,8 +54,7 @@ BEVDet::BEVDet(
   std::vector<int> interval_starts;
   std::vector<int> interval_lengths;
 
-  initViewTransformer(
-    ranks_bev, ranks_depth, ranks_feat, interval_starts, interval_lengths);
+  initViewTransformer(ranks_bev, ranks_depth, ranks_feat, interval_starts, interval_lengths);
   auto end = high_resolution_clock::now();
   duration<float> t = end - start;
   RCLCPP_INFO(
@@ -83,8 +82,8 @@ BEVDet::BEVDet(
     trt_buffer_dev_[buffer_map_["ranks_bev"]], ranks_bev.data(), valid_feat_num_ * sizeof(int),
     cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
-    trt_buffer_dev_[buffer_map_["ranks_depth"]], ranks_depth.data(),
-    valid_feat_num_ * sizeof(int), cudaMemcpyHostToDevice));
+    trt_buffer_dev_[buffer_map_["ranks_depth"]], ranks_depth.data(), valid_feat_num_ * sizeof(int),
+    cudaMemcpyHostToDevice));
   CHECK_CUDA(cudaMemcpy(
     trt_buffer_dev_[buffer_map_["ranks_feat"]], ranks_feat.data(), valid_feat_num_ * sizeof(int),
     cudaMemcpyHostToDevice));
@@ -263,9 +262,8 @@ void BEVDet::mallocDeviceMemory()
 }
 
 void BEVDet::initViewTransformer(
-  std::vector<int> & ranks_bev, std::vector<int> & ranks_depth,
-  std::vector<int> & ranks_feat, std::vector<int> & interval_starts,
-  std::vector<int> & interval_lengths)
+  std::vector<int> & ranks_bev, std::vector<int> & ranks_depth, std::vector<int> & ranks_feat,
+  std::vector<int> & interval_starts, std::vector<int> & interval_lengths)
 {
   int num_points = n_img_ * depth_num_ * feat_h_ * feat_w_;
   std::vector<Eigen::Vector3f> frustum(num_points);
@@ -325,7 +323,8 @@ void BEVDet::initViewTransformer(
     }
   }
 
-  valid_feat_num_ = kept.size();;
+  valid_feat_num_ = kept.size();
+  ;
   ranks_depth.resize(valid_feat_num_);
   ranks_feat.resize(valid_feat_num_);
   ranks_bev.resize(valid_feat_num_);
@@ -334,7 +333,7 @@ void BEVDet::initViewTransformer(
   for (int i = 0; i < valid_feat_num_; i++) {
     Eigen::Vector3f & p = frustum[kept[i]];
     ranks_bev[i] = static_cast<int>(p.z()) * xgrid_num_ * ygrid_num_ +
-                        static_cast<int>(p.y()) * xgrid_num_ + static_cast<int>(p.x());
+                   static_cast<int>(p.y()) * xgrid_num_ + static_cast<int>(p.x());
     order[i] = i;
   }
 

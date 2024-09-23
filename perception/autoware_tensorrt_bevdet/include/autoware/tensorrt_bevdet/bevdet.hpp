@@ -130,9 +130,8 @@ protected:
   void initParams(const std::string & config_file);
 
   void initViewTransformer(
-    std::vector<int> & ranks_bev, std::vector<int> & ranks_depth,
-    std::vector<int> & ranks_feat, std::vector<int> & interval_starts,
-    std::vector<int> & interval_lengths);
+    std::vector<int> & ranks_bev, std::vector<int> & ranks_depth, std::vector<int> & ranks_feat,
+    std::vector<int> & interval_starts, std::vector<int> & interval_lengths);
   void exportEngine(const std::string & onnxFile, const std::string & trtFile);
   int initEngine(const std::string & engine_file);
 
