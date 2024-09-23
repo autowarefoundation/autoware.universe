@@ -36,6 +36,7 @@ private:
   Pub<autoware_ad_api::localization::InitializationState> pub_state_;
   Cli<localization_interface::Initialize> cli_initialize_;
   Sub<localization_interface::InitializationState> sub_state_;
+  int initialization_method_;
 
   void on_initialize(
     const autoware_ad_api::localization::Initialize::Service::Request::SharedPtr req,

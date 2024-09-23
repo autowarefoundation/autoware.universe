@@ -27,16 +27,17 @@ using ExternalInitializeRequest =
   autoware_adapi_v1_msgs::srv::InitializeLocalization::Request::SharedPtr;
 using InternalInitializeRequest =
   tier4_localization_msgs::srv::InitializeLocalization::Request::SharedPtr;
-InternalInitializeRequest convert_request(const ExternalInitializeRequest & external);
+InternalInitializeRequest convert_request(
+  const ExternalInitializeRequest & external, int initialization_method);
 
 using ExternalResponse = autoware_adapi_v1_msgs::msg::ResponseStatus;
 using InternalResponse = autoware_common_msgs::msg::ResponseStatus;
 ExternalResponse convert_response(const InternalResponse & internal);
 
 template <class ClientT, class RequestT>
-ExternalResponse convert_call(ClientT & client, RequestT & req)
+ExternalResponse convert_call(ClientT & client, RequestT & req, int initialization_method)
 {
-  return convert_response(client->call(convert_request(req))->status);
+  return convert_response(client->call(convert_request(req, initialization_method))->status);
 }
 
 }  // namespace autoware::default_adapi::localization_conversion

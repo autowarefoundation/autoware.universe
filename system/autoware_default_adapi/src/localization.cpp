@@ -27,13 +27,15 @@ LocalizationNode::LocalizationNode(const rclcpp::NodeOptions & options)
   adaptor.relay_message(pub_state_, sub_state_);
   adaptor.init_cli(cli_initialize_);
   adaptor.init_srv(srv_initialize_, this, &LocalizationNode::on_initialize, group_cli_);
+
+  initialization_method_ = declare_parameter<int>("initialization_method");
 }
 
 void LocalizationNode::on_initialize(
   const autoware_ad_api::localization::Initialize::Service::Request::SharedPtr req,
   const autoware_ad_api::localization::Initialize::Service::Response::SharedPtr res)
 {
-  res->status = localization_conversion::convert_call(cli_initialize_, req);
+  res->status = localization_conversion::convert_call(cli_initialize_, req, initialization_method_);
 }
 
 }  // namespace autoware::default_adapi

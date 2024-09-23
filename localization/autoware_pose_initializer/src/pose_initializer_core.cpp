@@ -185,7 +185,7 @@ void PoseInitializer::on_initialize(
       change_state(State::Message::INITIALIZED);
 
     } else if (req->method == Initialize::Service::Request::DIRECT) {
-      if (req->pose_with_covariance.empty()) {
+      if (req->pose_with_covariance.empty() && !gnss_) {
         std::stringstream message;
         message << "No input pose_with_covariance. If you want to use DIRECT method, please input "
                    "pose_with_covariance.";
@@ -193,7 +193,10 @@ void PoseInitializer::on_initialize(
         throw ServiceException(
           autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
       }
-      auto pose = req->pose_with_covariance.front().pose.pose;
+
+      auto pose = req->pose_with_covariance.empty() ? get_gnss_pose().pose.pose
+                                                    : req->pose_with_covariance.front().pose.pose;
+
       set_user_defined_initial_pose(pose, false);
       res->status.success = true;
 

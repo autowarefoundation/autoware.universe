@@ -19,11 +19,17 @@
 namespace autoware::default_adapi::localization_conversion
 {
 
-InternalInitializeRequest convert_request(const ExternalInitializeRequest & external)
+InternalInitializeRequest convert_request(
+  const ExternalInitializeRequest & external, int initialization_method)
 {
   auto internal = std::make_shared<InternalInitializeRequest::element_type>();
   internal->pose_with_covariance = external->pose;
-  internal->method = tier4_localization_msgs::srv::InitializeLocalization::Request::AUTO;
+
+  if (initialization_method == 0)
+    internal->method = tier4_localization_msgs::srv::InitializeLocalization::Request::AUTO;
+  else if (initialization_method == 1)
+    internal->method = tier4_localization_msgs::srv::InitializeLocalization::Request::DIRECT;
+
   return internal;
 }
 

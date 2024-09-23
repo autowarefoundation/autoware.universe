@@ -6,3 +6,7 @@
   ros__parameters:
     require_accept_start: false
     stop_check_duration: 1.0
+
+/adapi/node/localization:
+  ros__parameters:
+    initialization_method: 1  # 0: AUTO, 1: DIRECT
