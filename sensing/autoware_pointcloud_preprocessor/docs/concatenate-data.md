@@ -67,7 +67,7 @@ The figure below demonstrates how `lidar_timestamp_offsets` works with `concaten
 
 Additionally, due to the mechanical design of LiDARs, there may be some jitter in the timestamps of each scan, as shown in the image below. For example, if the scan frequency is set to 10 Hz (scanning every 100 ms), the timestamps between each scan might not be exactly 100 ms apart. To handle this noise, the `lidar_timestamp_noise_window` parameter is provided.
 
-User can use [this tool](https://github.com/tier4/timestamp_analyzer) to visualize the noise betweeen each scan.
+User can use [this tool](https://github.com/tier4/timestamp_analyzer) to visualize the noise between each scan.
 
 ![jitter](./image/jitter.png)
 

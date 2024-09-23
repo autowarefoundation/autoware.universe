@@ -85,7 +85,7 @@ private:
   } params_;
 
   double current_concatenate_cloud_timestamp_{0.0};
-  double lastest_concatenate_cloud_timestamp_{0.0};
+  double latest_concatenate_cloud_timestamp_{0.0};
   bool drop_previous_but_late_pointcloud_{false};
   bool publish_pointcloud_{false};
   double diagnostic_reference_timestamp_min_{0.0};

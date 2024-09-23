@@ -320,7 +320,7 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
   EXPECT_FLOAT_EQ(
     top_timestamp.seconds(), rclcpp::Time(concatenate_cloud_ptr->header.stamp).seconds());
 
-  // test seperated transformed cloud
+  // test separated transformed cloud
   std::array<Eigen::Vector3f, 10> expected_top_pointcloud = {
     {Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.0f, 10.0f, 0.0f),
      Eigen::Vector3f(0.0f, 0.0f, 10.0f)}};

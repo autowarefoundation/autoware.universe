@@ -86,7 +86,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   }
   if (params_.lidar_timestamp_noise_window.size() != params_.input_topics.size()) {
     RCLCPP_ERROR(
-      get_logger(), "The number of topics does not match the number of timestamp noise windwo");
+      get_logger(), "The number of topics does not match the number of timestamp noise window");
     return;
   }
 
@@ -286,12 +286,12 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
     rclcpp::Time(concatenate_cloud_ptr->header.stamp).seconds();
 
   if (
-    current_concatenate_cloud_timestamp_ < lastest_concatenate_cloud_timestamp_ &&
+    current_concatenate_cloud_timestamp_ < latest_concatenate_cloud_timestamp_ &&
     !params_.publish_previous_but_late_pointcloud) {
     drop_previous_but_late_pointcloud_ = true;
   } else {
     publish_pointcloud_ = true;
-    lastest_concatenate_cloud_timestamp_ = current_concatenate_cloud_timestamp_;
+    latest_concatenate_cloud_timestamp_ = current_concatenate_cloud_timestamp_;
     auto concatenate_pointcloud_output =
       std::make_unique<sensor_msgs::msg::PointCloud2>(*concatenate_cloud_ptr);
     concatenated_cloud_publisher_->publish(std::move(concatenate_pointcloud_output));
