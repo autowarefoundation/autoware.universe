@@ -115,6 +115,11 @@ method: 1
 
 The initial position is set directly by the input position without going through localization algorithm.
 
+> [!NOTE]
+> If you want to activate the direct initialization feature with GNSS poses, you must change the parameters. </br>
+> You need to update [config/default_adapi.param.yaml](../../system/autoware_default_adapi/config/default_adapi.param.yaml) </br> 
+> `initialization_method` should be set to 1 for direct initialization. </br>
+
 ### Via ros2 topic pub
 
 ```bash

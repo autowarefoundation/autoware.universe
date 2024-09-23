@@ -9,4 +9,4 @@
 
 /adapi/node/localization:
   ros__parameters:
-    initialization_method: 1  # 0: AUTO, 1: DIRECT
+    initialization_method: 0  # 0: AUTO, 1: DIRECT
