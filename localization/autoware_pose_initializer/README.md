@@ -117,6 +117,7 @@ The initial position is set directly by the input position without going through
 
 > [!NOTE]
 > To enable the direct initialization feature using GNSS poses, the parameters must be adjusted accordingly.
+>
 > 1. Open the [config/default_adapi.param.yaml](../../system/autoware_default_adapi/config/default_adapi.param.yaml) file.
 > 2. Set the `initialization_method` parameter to 1 to activate direct initialization.
 
