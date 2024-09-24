@@ -14,7 +14,7 @@
 //  limitations under the License.
 //
 
-#include "operation_mode_panel.hpp"
+#include "operation_mode_debug_panel.hpp"
 
 #include <QGridLayout>
 #include <QString>
@@ -26,7 +26,7 @@
 namespace tier4_adapi_rviz_plugins
 {
 
-OperationModePanel::OperationModePanel(QWidget * parent) : rviz_common::Panel(parent)
+OperationModeDebugPanel::OperationModeDebugPanel(QWidget * parent) : rviz_common::Panel(parent)
 {
   auto * layout = new QGridLayout;
   setLayout(layout);
@@ -66,13 +66,13 @@ OperationModePanel::OperationModePanel(QWidget * parent) : rviz_common::Panel(pa
   layout->addWidget(disable_button_ptr_, 2, 2);
 }
 
-void OperationModePanel::onInitialize()
+void OperationModeDebugPanel::onInitialize()
 {
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
   sub_operation_mode_ = raw_node_->create_subscription<OperationModeState>(
     "/api/operation_mode/state", rclcpp::QoS{1}.transient_local(),
-    std::bind(&OperationModePanel::onOperationMode, this, std::placeholders::_1));
+    std::bind(&OperationModeDebugPanel::onOperationMode, this, std::placeholders::_1));
 
   client_change_to_autonomous_ =
     raw_node_->create_client<ChangeOperationMode>("/api/operation_mode/change_to_autonomous");
@@ -111,37 +111,37 @@ void callService(const rclcpp::Logger & logger, const typename rclcpp::Client<T>
   });
 }
 
-void OperationModePanel::onClickAutonomous()
+void OperationModeDebugPanel::onClickAutonomous()
 {
   callService<ChangeOperationMode>(raw_node_->get_logger(), client_change_to_autonomous_);
 }
 
-void OperationModePanel::onClickStop()
+void OperationModeDebugPanel::onClickStop()
 {
   callService<ChangeOperationMode>(raw_node_->get_logger(), client_change_to_stop_);
 }
 
-void OperationModePanel::onClickLocal()
+void OperationModeDebugPanel::onClickLocal()
 {
   callService<ChangeOperationMode>(raw_node_->get_logger(), client_change_to_local_);
 }
 
-void OperationModePanel::onClickRemote()
+void OperationModeDebugPanel::onClickRemote()
 {
   callService<ChangeOperationMode>(raw_node_->get_logger(), client_change_to_remote_);
 }
 
-void OperationModePanel::onClickAutowareControl()
+void OperationModeDebugPanel::onClickAutowareControl()
 {
   callService<ChangeOperationMode>(raw_node_->get_logger(), client_enable_autoware_control_);
 }
 
-void OperationModePanel::onClickDirectControl()
+void OperationModeDebugPanel::onClickDirectControl()
 {
   callService<ChangeOperationMode>(raw_node_->get_logger(), client_enable_direct_control_);
 }
 
-void OperationModePanel::onOperationMode(const OperationModeState::ConstSharedPtr msg)
+void OperationModeDebugPanel::onOperationMode(const OperationModeState::ConstSharedPtr msg)
 {
   const auto updateLabel = [](QLabel * label, QString text, QString style) {
     label->setText(text);
@@ -218,4 +218,4 @@ void OperationModePanel::onOperationMode(const OperationModeState::ConstSharedPt
 }  // namespace tier4_adapi_rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(tier4_adapi_rviz_plugins::OperationModePanel, rviz_common::Panel)
+PLUGINLIB_EXPORT_CLASS(tier4_adapi_rviz_plugins::OperationModeDebugPanel, rviz_common::Panel)

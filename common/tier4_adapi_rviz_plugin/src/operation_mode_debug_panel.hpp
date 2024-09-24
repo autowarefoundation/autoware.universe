@@ -14,8 +14,8 @@
 //  limitations under the License.
 //
 
-#ifndef OPERATION_MODE_PANEL_HPP_
-#define OPERATION_MODE_PANEL_HPP_
+#ifndef OPERATION_MODE_DEBUG_PANEL_HPP_
+#define OPERATION_MODE_DEBUG_PANEL_HPP_
 
 #include <QLabel>
 #include <QPushButton>
@@ -28,12 +28,12 @@
 namespace tier4_adapi_rviz_plugins
 {
 
-class OperationModePanel : public rviz_common::Panel
+class OperationModeDebugPanel : public rviz_common::Panel
 {
   Q_OBJECT
 
 public:
-  explicit OperationModePanel(QWidget * parent = nullptr);
+  explicit OperationModeDebugPanel(QWidget * parent = nullptr);
   void onInitialize() override;
 
 public Q_SLOTS:  // NOLINT for Qt
@@ -73,4 +73,4 @@ protected:
 
 }  // namespace tier4_adapi_rviz_plugins
 
-#endif  // OPERATION_MODE_PANEL_HPP_
+#endif  // OPERATION_MODE_DEBUG_PANEL_HPP_
