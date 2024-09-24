@@ -897,8 +897,6 @@ double MultiGridNormalDistributionsTransform<PointSource, PointTarget>::computeS
   double step_max, double step_min, double & score, Eigen::Matrix<double, 6, 1> & score_gradient,
   Eigen::Matrix<double, 6, 6> & hessian, PointCloudSource & trans_cloud)
 {
-  // Set the value of phi(0), Equation 1.3 [More, Thuente 1994]
-  double phi_0 = -score;
   // Set the value of phi'(0), Equation 1.3 [More, Thuente 1994]
   double d_phi_0 = -(score_gradient.dot(step_dir));
 
@@ -912,33 +910,6 @@ double MultiGridNormalDistributionsTransform<PointSource, PointTarget>::computeS
     d_phi_0 *= -1;
     step_dir *= -1;
   }
-
-  // The Search Algorithm for T(mu) [More, Thuente 1994]
-
-  int max_step_iterations = 10;
-  int step_iterations = 0;
-
-  // Sufficient decrease constant, Equation 1.1 [More, Thuete 1994]
-  double mu = 1.e-4;
-  // Curvature condition constant, Equation 1.2 [More, Thuete 1994]
-  double nu = 0.9;
-
-  // Initial endpoints of Interval I,
-  double a_l = 0;
-  double a_u = 0;
-
-  // Auxiliary function psi is used until I is determined ot be a closed interval, Equation 2.1
-  // [More, Thuente 1994]
-  double f_l = auxiliaryFunction_PsiMT(a_l, phi_0, phi_0, d_phi_0, mu);
-  double g_l = auxiliaryFunction_dPsiMT(d_phi_0, d_phi_0, mu);
-
-  double f_u = auxiliaryFunction_PsiMT(a_u, phi_0, phi_0, d_phi_0, mu);
-  double g_u = auxiliaryFunction_dPsiMT(d_phi_0, d_phi_0, mu);
-
-  // Check used to allow More-Thuente step length calculation to be skipped by making step_min ==
-  // step_max
-  bool interval_converged = (step_max - step_min) < 0;
-  bool open_interval = true;
 
   double a_t = step_init;
   a_t = std::min(a_t, step_max);
@@ -971,8 +942,38 @@ double MultiGridNormalDistributionsTransform<PointSource, PointTarget>::computeS
   // using LineSearch, we have decided to disable this feature. If you have any suggestions on how
   // to solve these issues, we would appreciate it if you could contribute.
   // --------------------------------------------------------------------------------------------------------------------------------
+  int step_iterations = 0;
 
   if (params_.use_line_search) {
+    // Set the value of phi(0), Equation 1.3 [More, Thuente 1994]
+    double phi_0 = -score;
+
+    // The Search Algorithm for T(mu) [More, Thuente 1994]
+
+    int max_step_iterations = 10;
+
+    // Sufficient decrease constant, Equation 1.1 [More, Thuete 1994]
+    double mu = 1.e-4;
+    // Curvature condition constant, Equation 1.2 [More, Thuete 1994]
+    double nu = 0.9;
+
+    // Initial endpoints of Interval I,
+    double a_l = 0;
+    double a_u = 0;
+
+    // Auxiliary function psi is used until I is determined ot be a closed interval, Equation 2.1
+    // [More, Thuente 1994]
+    double f_l = auxiliaryFunction_PsiMT(a_l, phi_0, phi_0, d_phi_0, mu);
+    double g_l = auxiliaryFunction_dPsiMT(d_phi_0, d_phi_0, mu);
+
+    double f_u = auxiliaryFunction_PsiMT(a_u, phi_0, phi_0, d_phi_0, mu);
+    double g_u = auxiliaryFunction_dPsiMT(d_phi_0, d_phi_0, mu);
+
+    // Check used to allow More-Thuente step length calculation to be skipped by making step_min ==
+    // step_max
+    bool interval_converged = (step_max - step_min) < 0;
+    bool open_interval = true;
+
     // Calculate phi(alpha_t)
     double phi_t = -score;
     // Calculate phi'(alpha_t)
