@@ -70,7 +70,7 @@ TEST_P(CutTrajectoryTest, test_cut_trajectory)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-  CutTrajectoryTests, CutTrajectoryTest,
+  LaneDepartureCheckerTest, CutTrajectoryTest,
   ::testing::Values(
     CutTrajectoryTestParam{
       "EmptyTrajectory", std::vector<Eigen::Vector3d>{}, 1.0, std::vector<Eigen::Vector3d>{}},

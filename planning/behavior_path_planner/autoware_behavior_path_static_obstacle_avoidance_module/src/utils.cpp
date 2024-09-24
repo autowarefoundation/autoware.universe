@@ -256,8 +256,6 @@ bool isWithinIntersection(
     return false;
   }
 
-  const auto object_polygon = autoware::universe_utils::toPolygon2d(object.object);
-
   const auto polygon =
     route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(area_id.c_str()));
 

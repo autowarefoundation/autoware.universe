@@ -956,7 +956,7 @@ autoware::frenet_planner::SamplingParameters SamplingPlannerModule::prepareSampl
     max_d -= params_.constraints.ego_width / 2.0;
     if (min_d < max_d) {
       for (auto r = 0.0; r <= 1.0; r += 1.0 / (params_.sampling.nb_target_lateral_positions - 1))
-        target_lateral_positions.push_back(interpolation::lerp(min_d, max_d, r));
+        target_lateral_positions.push_back(autoware::interpolation::lerp(min_d, max_d, r));
     }
   } else {
     target_lateral_positions = params_.sampling.target_lateral_positions;

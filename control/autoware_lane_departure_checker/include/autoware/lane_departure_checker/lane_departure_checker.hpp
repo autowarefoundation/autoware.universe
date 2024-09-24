@@ -160,11 +160,6 @@ private:
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
     const double dist_threshold, const double yaw_threshold);
 
-  std::vector<LinearRing2d> createVehicleFootprints(
-    const geometry_msgs::msg::PoseWithCovariance & covariance, const TrajectoryPoints & trajectory,
-    const Param & param);
-  std::vector<LinearRing2d> createVehicleFootprints(const PathWithLaneId & path) const;
-
   static std::vector<LinearRing2d> createVehiclePassingAreas(
     const std::vector<LinearRing2d> & vehicle_footprints);
 

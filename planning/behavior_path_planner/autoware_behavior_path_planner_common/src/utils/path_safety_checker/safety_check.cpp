@@ -15,10 +15,10 @@
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/ros/uuid_helper.hpp"
-#include "interpolation/linear_interpolation.hpp"
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -364,7 +364,7 @@ std::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
       const auto interpolated_pose =
         autoware::universe_utils::calcInterpolatedPose(prev_pt.pose, pt.pose, ratio, false);
       const double interpolated_velocity =
-        interpolation::lerp(prev_pt.velocity, pt.velocity, ratio);
+        autoware::interpolation::lerp(prev_pt.velocity, pt.velocity, ratio);
       return PoseWithVelocityStamped{relative_time, interpolated_pose, interpolated_velocity};
     }
   }
