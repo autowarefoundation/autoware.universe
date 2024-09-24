@@ -169,17 +169,18 @@ void PoseInitializer::on_initialize(
       }
 
       diagnostics_pose_reliable_->clear();
+
       // check pose error between gnss pose and initial pose result
       if (pose_error_check_ && gnss_) {
         const auto latest_gnss_pose = get_gnss_pose();
 
-        double error_2d;
-        const bool is_ok_pose_error =
-          pose_error_check_->check_pose_error(latest_gnss_pose.pose.pose, pose.pose.pose, error_2d);
+        double gnss_error_2d;
+        const bool is_gnss_pose_error_ok = pose_error_check_->check_pose_error(
+          latest_gnss_pose.pose.pose, pose.pose.pose, gnss_error_2d);
 
-        diagnostics_pose_reliable_->add_key_value("pose_error_2d", error_2d);
-        diagnostics_pose_reliable_->add_key_value("is_pose_error_large", is_ok_pose_error);
-        if (!is_ok_pose_error) {
+        diagnostics_pose_reliable_->add_key_value("gnss_pose_error_2d", gnss_error_2d);
+        diagnostics_pose_reliable_->add_key_value("is_gnss_pose_error_ok", is_gnss_pose_error_ok);
+        if (!is_gnss_pose_error_ok) {
           std::stringstream message;
           message << " Large error between Initial Pose and GNSS Pose.";
           diagnostics_pose_reliable_->update_level_and_message(
