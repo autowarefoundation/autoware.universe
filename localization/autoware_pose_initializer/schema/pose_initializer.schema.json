@@ -30,9 +30,9 @@
           "minimum": 0.0
         },
         "pose_error_check_enabled": {
-          "type": "string",
+          "type": "boolean",
           "description": "If true, check error between initial pose result and GNSS pose.",
-          "default": "true"
+          "default": "false"
         },
         "pose_error_threshold": {
           "type": "number",
