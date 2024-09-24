@@ -16,9 +16,9 @@
 
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 
+#include <autoware/interpolation/spline_interpolation.hpp>
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
-#include <interpolation/spline_interpolation.hpp>
 
 #include <string>
 #include <utility>
@@ -252,7 +252,7 @@ void PathShifter::applySplineShifter(ShiftedPath * shifted_path, const bool offs
       query_distance.push_back(dist_from_start);
     }
     if (!query_distance.empty()) {
-      query_length = interpolation::spline(base_distance, base_length, query_distance);
+      query_length = autoware::interpolation::spline(base_distance, base_length, query_distance);
     }
 
     // Apply shifting.

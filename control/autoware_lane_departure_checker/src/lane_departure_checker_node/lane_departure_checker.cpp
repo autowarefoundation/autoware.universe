@@ -14,7 +14,6 @@
 
 #include "autoware/lane_departure_checker/lane_departure_checker.hpp"
 
-#include "autoware/lane_departure_checker/util/create_vehicle_footprint.hpp"
 #include "autoware/lane_departure_checker/utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
@@ -123,8 +122,9 @@ Output LaneDepartureChecker::update(const Input & input)
       braking_distance);
     output.processing_time_map["resampleTrajectory"] = stop_watch.toc(true);
   }
-  output.vehicle_footprints =
-    createVehicleFootprints(input.current_odom->pose, output.resampled_trajectory, param_);
+  output.vehicle_footprints = utils::createVehicleFootprints(
+    input.current_odom->pose, output.resampled_trajectory, *vehicle_info_ptr_,
+    param_.footprint_margin_scale);
   output.processing_time_map["createVehicleFootprints"] = stop_watch.toc(true);
 
   output.vehicle_passing_areas = createVehiclePassingAreas(output.vehicle_footprints);
@@ -163,7 +163,8 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
+  std::vector<LinearRing2d> vehicle_footprints =
+    utils::createVehicleFootprints(path, *vehicle_info_ptr_, param_.footprint_extra_margin);
   lanelet::ConstLanelets candidate_lanelets = getCandidateLanelets(lanelets, vehicle_footprints);
   return willLeaveLane(candidate_lanelets, vehicle_footprints);
 }
@@ -175,43 +176,6 @@ PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
   const auto nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     trajectory.points, pose, dist_threshold, yaw_threshold);
   return autoware::universe_utils::calcPoseDeviation(trajectory.points.at(nearest_idx).pose, pose);
-}
-
-std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(
-  const geometry_msgs::msg::PoseWithCovariance & covariance, const TrajectoryPoints & trajectory,
-  const Param & param)
-{
-  // Calculate longitudinal and lateral margin based on covariance
-  const auto margin = calcFootprintMargin(covariance, param.footprint_margin_scale);
-
-  // Create vehicle footprint in base_link coordinate
-  const auto local_vehicle_footprint = vehicle_info_ptr_->createFootprint(margin.lat, margin.lon);
-
-  // Create vehicle footprint on each TrajectoryPoint
-  std::vector<LinearRing2d> vehicle_footprints;
-  for (const auto & p : trajectory) {
-    vehicle_footprints.push_back(
-      transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(p.pose)));
-  }
-
-  return vehicle_footprints;
-}
-
-std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(
-  const PathWithLaneId & path) const
-{
-  // Create vehicle footprint in base_link coordinate
-  const auto local_vehicle_footprint =
-    vehicle_info_ptr_->createFootprint(param_.footprint_extra_margin);
-
-  // Create vehicle footprint on each Path point
-  std::vector<LinearRing2d> vehicle_footprints;
-  for (const auto & p : path.points) {
-    vehicle_footprints.push_back(transformVector(
-      local_vehicle_footprint, autoware::universe_utils::pose2transform(p.point.pose)));
-  }
-
-  return vehicle_footprints;
 }
 
 std::vector<LinearRing2d> LaneDepartureChecker::createVehiclePassingAreas(
@@ -249,7 +213,8 @@ std::vector<std::pair<double, lanelet::Lanelet>> LaneDepartureChecker::getLanele
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // Get Footprint Hull basic polygon
-  std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
+  std::vector<LinearRing2d> vehicle_footprints =
+    utils::createVehicleFootprints(path, *vehicle_info_ptr_, param_.footprint_extra_margin);
   LinearRing2d footprint_hull = createHullFromFootprints(vehicle_footprints);
 
   lanelet::BasicPolygon2d footprint_hull_basic_polygon = toBasicPolygon2D(footprint_hull);
@@ -331,7 +296,8 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // check if the footprint is not fully contained within the fused lanelets polygon
-  const std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
+  const std::vector<LinearRing2d> vehicle_footprints =
+    utils::createVehicleFootprints(path, *vehicle_info_ptr_, param_.footprint_extra_margin);
   const auto fused_lanelets_polygon = getFusedLaneletPolygonForPath(lanelet_map_ptr, path);
   if (!fused_lanelets_polygon) return true;
   return !std::all_of(
@@ -348,7 +314,8 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  const std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
+  const std::vector<LinearRing2d> vehicle_footprints =
+    utils::createVehicleFootprints(path, *vehicle_info_ptr_, param_.footprint_extra_margin);
 
   auto is_all_footprints_within = [&](const auto & polygon) {
     return std::all_of(
@@ -380,7 +347,8 @@ PathWithLaneId LaneDepartureChecker::cropPointsOutsideOfLanes(
   PathWithLaneId temp_path;
   const auto fused_lanelets_polygon = getFusedLaneletPolygonForPath(lanelet_map_ptr, path);
   if (path.points.empty() || !fused_lanelets_polygon) return temp_path;
-  const auto vehicle_footprints = createVehicleFootprints(path);
+  const auto vehicle_footprints =
+    utils::createVehicleFootprints(path, *vehicle_info_ptr_, param_.footprint_extra_margin);
 
   {
     universe_utils::ScopedTimeTrack st2(

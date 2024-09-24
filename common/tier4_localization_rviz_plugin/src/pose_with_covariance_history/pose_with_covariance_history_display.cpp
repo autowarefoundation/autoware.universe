@@ -92,19 +92,16 @@ void PoseWithCovarianceHistory::onInitialize()
   lines_ = std::make_unique<rviz_rendering::BillboardLine>(scene_manager_, scene_node_);
 }
 
-// cppcheck-suppress unusedFunction
 void PoseWithCovarianceHistory::onEnable()
 {
   subscribe();
 }
 
-// cppcheck-suppress unusedFunction
 void PoseWithCovarianceHistory::onDisable()
 {
   unsubscribe();
 }
 
-// cppcheck-suppress unusedFunction
 void PoseWithCovarianceHistory::update(float wall_dt, float ros_dt)
 {
   (void)wall_dt;
@@ -151,7 +148,6 @@ void PoseWithCovarianceHistory::update_shape_type()
   property_arrow_color_->setHidden(!is_arrow);
 }
 
-// cppcheck-suppress unusedFunction
 void PoseWithCovarianceHistory::processMessage(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr message)
 {

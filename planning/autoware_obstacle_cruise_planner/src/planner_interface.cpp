@@ -19,8 +19,8 @@
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/signal_processing/lowpass_filter_1d.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
-#include "signal_processing/lowpass_filter_1d.hpp"
 
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
@@ -620,7 +620,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     // calculate slow down velocity
     const double stable_slow_down_vel = [&]() {
       if (prev_output) {
-        return signal_processing::lowpassFilter(
+        return autoware::signal_processing::lowpassFilter(
           feasible_slow_down_vel, prev_output->target_vel, slow_down_param_.lpf_gain_slow_down_vel);
       }
       return feasible_slow_down_vel;
@@ -706,7 +706,7 @@ double PlannerInterface::calculateSlowDownVelocity(
     slow_down_param_.getObstacleParamByLabel(obstacle.classification, is_obstacle_moving);
   const double stable_precise_lat_dist = [&]() {
     if (prev_output) {
-      return signal_processing::lowpassFilter(
+      return autoware::signal_processing::lowpassFilter(
         obstacle.precise_lat_dist, prev_output->precise_lat_dist,
         slow_down_param_.lpf_gain_lat_dist);
     }
@@ -785,7 +785,7 @@ PlannerInterface::calculateDistanceToSlowDownWithConstraints(
         autoware::motion_utils::findNearestSegmentIndex(traj_points, prev_point->position);
       const double prev_dist_to_slow_down =
         autoware::motion_utils::calcSignedArcLength(traj_points, 0, prev_point->position, seg_idx);
-      return signal_processing::lowpassFilter(
+      return autoware::signal_processing::lowpassFilter(
         dist_to_slow_down, prev_dist_to_slow_down, slow_down_param_.lpf_gain_dist_to_slow_down);
     }
     return dist_to_slow_down;

@@ -34,6 +34,7 @@
       # safety check
       safety_check:
         allow_loose_check_for_cancel: true
+        enable_target_lane_bound_check: true
         collision_check_yaw_diff_threshold: 3.1416
         execution:
           expected_front_deceleration: -1.0

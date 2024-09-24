@@ -22,6 +22,7 @@
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
@@ -83,82 +84,6 @@ double calcLaneChangeResampleInterval(
   constexpr auto resampling_dt{0.2};
   return std::max(
     lane_changing_length / min_resampling_points, lane_changing_velocity * resampling_dt);
-}
-
-double calcMinimumLaneChangeLength(
-  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals)
-{
-  if (shift_intervals.empty()) {
-    return 0.0;
-  }
-
-  const auto min_vel = lane_change_parameters.minimum_lane_changing_velocity;
-  const auto min_max_lat_acc = lane_change_parameters.lane_change_lat_acc_map.find(min_vel);
-  // const auto min_lat_acc = std::get<0>(min_max_lat_acc);
-  const auto max_lat_acc = std::get<1>(min_max_lat_acc);
-  const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
-  const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
-
-  const auto calc_sum = [&](double sum, double shift_interval) {
-    const auto t = PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
-    return sum + (min_vel * t + finish_judge_buffer);
-  };
-
-  const auto total_length =
-    std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
-
-  const auto backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
-  return total_length + backward_buffer * (static_cast<double>(shift_intervals.size()) - 1.0);
-}
-
-double calcMinimumLaneChangeLength(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
-  const LaneChangeParameters & lane_change_parameters, Direction direction)
-{
-  if (!route_handler) {
-    return std::numeric_limits<double>::max();
-  }
-
-  const auto shift_intervals = route_handler->getLateralIntervalsToPreferredLane(lane, direction);
-  return utils::lane_change::calcMinimumLaneChangeLength(lane_change_parameters, shift_intervals);
-}
-
-double calcMaximumLaneChangeLength(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc)
-{
-  if (shift_intervals.empty()) {
-    return 0.0;
-  }
-
-  const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
-  const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
-  const auto t_prepare = lane_change_parameters.lane_change_prepare_duration;
-
-  auto vel = current_velocity;
-
-  const auto calc_sum = [&](double sum, double shift_interval) {
-    // prepare section
-    const auto prepare_length = vel * t_prepare + 0.5 * max_acc * t_prepare * t_prepare;
-    vel = vel + max_acc * t_prepare;
-
-    // lane changing section
-    const auto [min_lat_acc, max_lat_acc] =
-      lane_change_parameters.lane_change_lat_acc_map.find(vel);
-    const auto t_lane_changing =
-      PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
-    const auto lane_changing_length =
-      vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
-
-    vel = vel + max_acc * t_lane_changing;
-    return sum + (prepare_length + lane_changing_length + finish_judge_buffer);
-  };
-
-  const auto total_length =
-    std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
-
-  const auto backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
-  return total_length + backward_buffer * (static_cast<double>(shift_intervals.size()) - 1.0);
 }
 
 double calcMinimumAcceleration(
@@ -285,6 +210,36 @@ bool isPathInLanelets(
     }
   }
   return true;
+}
+
+bool pathFootprintExceedsTargetLaneBound(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
+  const double margin)
+{
+  if (common_data_ptr->direction == Direction::NONE || path.points.empty()) {
+    return false;
+  }
+
+  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  const bool is_left = common_data_ptr->direction == Direction::LEFT;
+
+  const auto combined_target_lane = lanelet::utils::combineLaneletsShape(target_lanes);
+
+  for (const auto & path_point : path.points) {
+    const auto & pose = path_point.point.pose;
+    const auto front_vertex = getEgoFrontVertex(pose, ego_info, is_left);
+
+    const auto sign = is_left ? -1.0 : 1.0;
+    const auto dist_to_boundary =
+      sign * utils::getSignedDistanceFromLaneBoundary(combined_target_lane, front_vertex, is_left);
+
+    if (dist_to_boundary < margin) {
+      RCLCPP_DEBUG(get_logger(), "Path footprint exceeds target lane boundary");
+      return true;
+    }
+  }
+
+  return false;
 }
 
 std::optional<LaneChangePath> constructCandidatePath(
@@ -626,7 +581,7 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
     return false;
   }
 
-  const auto minimum_lane_change_length = calcMinimumLaneChangeLength(
+  const auto minimum_lane_change_length = calculation::calc_minimum_lane_change_length(
     route_handler, current_lanes.back(), lane_change_parameters, direction);
   const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
   if (abort_plus_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
@@ -1123,6 +1078,14 @@ Polygon2d getEgoCurrentFootprint(
   return autoware::universe_utils::toFootprint(ego_pose, base_to_front, base_to_rear, width);
 }
 
+Point getEgoFrontVertex(
+  const Pose & ego_pose, const autoware::vehicle_info_utils::VehicleInfo & ego_info, bool left)
+{
+  const double lon_offset = ego_info.wheel_base_m + ego_info.front_overhang_m;
+  const double lat_offset = 0.5 * (left ? ego_info.vehicle_width_m : -ego_info.vehicle_width_m);
+  return autoware::universe_utils::calcOffsetPose(ego_pose, lon_offset, lat_offset, 0.0).position;
+}
+
 bool isWithinIntersection(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lanelet,
   const Polygon2d & polygon)
@@ -1320,6 +1283,33 @@ ExtendedPredictedObjects transform_to_extended_objects(
     });
 
   return extended_objects;
+}
+
+double get_distance_to_next_regulatory_element(
+  const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk,
+  const bool ignore_intersection)
+{
+  double distance = std::numeric_limits<double>::max();
+
+  const auto current_pose = common_data_ptr->get_ego_pose();
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  const auto & route_handler = *common_data_ptr->route_handler_ptr;
+  const auto overall_graphs_ptr = route_handler.getOverallGraphPtr();
+
+  if (!ignore_intersection && common_data_ptr->lc_param_ptr->regulate_on_intersection) {
+    distance =
+      std::min(distance, utils::getDistanceToNextIntersection(current_pose, current_lanes));
+  }
+  if (!ignore_crosswalk && common_data_ptr->lc_param_ptr->regulate_on_crosswalk) {
+    distance = std::min(
+      distance, utils::getDistanceToCrosswalk(current_pose, current_lanes, *overall_graphs_ptr));
+  }
+  if (common_data_ptr->lc_param_ptr->regulate_on_traffic_light) {
+    distance = std::min(
+      distance, utils::traffic_light::getDistanceToNextTrafficLight(current_pose, current_lanes));
+  }
+
+  return distance;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
