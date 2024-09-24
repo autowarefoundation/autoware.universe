@@ -231,6 +231,8 @@ public:
 
   virtual TurnSignalInfo get_current_turn_signal_info() const = 0;
 
+  virtual bool is_near_regulatory_element() const = 0;
+
 protected:
   virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
 

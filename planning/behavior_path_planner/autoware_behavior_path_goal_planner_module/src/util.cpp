@@ -15,6 +15,7 @@
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
 
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/bus_stop_area.hpp"
 
@@ -297,6 +298,80 @@ std::vector<lanelet::BasicPolygon2d> getBusStopAreaPolygons(const lanelet::Const
     }
   }
   return area_polygons;
+}
+
+bool checkObjectsCollision(
+  const PathWithLaneId & path, const std::vector<double> & curvatures,
+  const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
+  const BehaviorPathPlannerParameters & behavior_path_parameters,
+  const double collision_check_margin, const bool extract_static_objects,
+  const double maximum_deceleration,
+  const double object_recognition_collision_check_max_extra_stopping_margin,
+  std::vector<Polygon2d> & debug_ego_polygons_expanded, const bool update_debug_data)
+{
+  if (path.points.size() != curvatures.size()) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("goal_planner_util"),
+      "path.points.size() != curvatures.size() in checkObjectsCollision(). judge as non collision");
+    return false;
+  }
+
+  const auto & target_objects =
+    extract_static_objects ? static_target_objects : dynamic_target_objects;
+  if (target_objects.objects.empty()) {
+    return false;
+  }
+
+  // check collision roughly with {min_distance, max_distance} between ego footprint and objects
+  // footprint
+  std::pair<bool, bool> has_collision_rough =
+    utils::path_safety_checker::checkObjectsCollisionRough(
+      path, target_objects, collision_check_margin, behavior_path_parameters, false);
+  if (!has_collision_rough.first) {
+    return false;
+  }
+  if (has_collision_rough.second) {
+    return true;
+  }
+
+  std::vector<Polygon2d> obj_polygons;
+  for (const auto & object : target_objects.objects) {
+    obj_polygons.push_back(autoware::universe_utils::toPolygon2d(object));
+  }
+
+  /* Expand ego collision check polygon
+   *   - `collision_check_margin` is added in all directions.
+   *   - `extra_stopping_margin` adds stopping margin under deceleration constraints forward.
+   *   - `extra_lateral_margin` adds the lateral margin on curves.
+   */
+  std::vector<Polygon2d> ego_polygons_expanded{};
+  for (size_t i = 0; i < path.points.size(); ++i) {
+    const auto p = path.points.at(i);
+    const double extra_stopping_margin = std::min(
+      std::pow(p.point.longitudinal_velocity_mps, 2) * 0.5 / maximum_deceleration,
+      object_recognition_collision_check_max_extra_stopping_margin);
+
+    // The square is meant to imply centrifugal force, but it is not a very well-founded formula.
+    // TODO(kosuke55): It is needed to consider better way because there is an inherently
+    // different conception of the inside and outside margins.
+    const double extra_lateral_margin = std::min(
+      extra_stopping_margin,
+      std::abs(curvatures.at(i) * std::pow(p.point.longitudinal_velocity_mps, 2)));
+
+    const auto ego_polygon = autoware::universe_utils::toFootprint(
+      p.point.pose,
+      behavior_path_parameters.base_link2front + collision_check_margin + extra_stopping_margin,
+      behavior_path_parameters.base_link2rear + collision_check_margin,
+      behavior_path_parameters.vehicle_width + collision_check_margin * 2.0 +
+        extra_lateral_margin * 2.0);
+    ego_polygons_expanded.push_back(ego_polygon);
+  }
+
+  if (update_debug_data) {
+    debug_ego_polygons_expanded = ego_polygons_expanded;
+  }
+
+  return utils::path_safety_checker::checkPolygonsIntersects(ego_polygons_expanded, obj_polygons);
 }
 
 MarkerArray createPullOverAreaMarkerArray(

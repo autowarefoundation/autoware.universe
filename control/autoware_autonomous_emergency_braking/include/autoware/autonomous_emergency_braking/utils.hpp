@@ -42,6 +42,7 @@
 namespace autoware::motion::control::autonomous_emergency_braking::utils
 {
 using autoware::universe_utils::Polygon2d;
+using autoware::universe_utils::Polygon3d;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using geometry_msgs::msg::Point;
@@ -105,6 +106,14 @@ std::optional<geometry_msgs::msg::TransformStamped> getTransform(
  */
 void fillMarkerFromPolygon(
   const std::vector<Polygon2d> & polygons, visualization_msgs::msg::Marker & polygon_marker);
+
+/**
+ * @brief Get the predicted object's shape as a geometry polygon
+ * @param polygons vector of Polygon3d
+ * @param polygon_marker marker to be filled with polygon points
+ */
+void fillMarkerFromPolygon(
+  const std::vector<Polygon3d> & polygons, visualization_msgs::msg::Marker & polygon_marker);
 }  // namespace autoware::motion::control::autonomous_emergency_braking::utils
 
 #endif  // AUTOWARE__AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_
