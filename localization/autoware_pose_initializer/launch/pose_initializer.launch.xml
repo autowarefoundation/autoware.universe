@@ -5,7 +5,6 @@
   <arg name="ekf_enabled"/>
   <arg name="yabloc_enabled"/>
   <arg name="stop_check_enabled"/>
-  <arg name="pose_error_check_enabled"/>
 
   <arg name="sub_gnss_pose_cov" default="sub_gnss_pose_cov"/>
   <arg name="gnss_initial_pose_auto_fix_target" default="pointcloud_map"/>
