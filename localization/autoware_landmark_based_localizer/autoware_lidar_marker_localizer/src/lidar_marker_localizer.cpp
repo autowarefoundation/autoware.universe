@@ -359,6 +359,11 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   // Check that the leaf size is not too small, given the size of the data
   const int bin_num = static_cast<int>((max_x - min_x) / param_.resolution + 1);
 
+  if (bin_num < static_cast<int>(param_.intensity_pattern.size())) {
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "bin_num is too small!");
+    return std::vector<landmark_manager::Landmark>{};
+  }
+
   // initialize variables
   std::vector<int> vote(bin_num, 0);
   std::vector<float> min_y(bin_num, std::numeric_limits<float>::max());
