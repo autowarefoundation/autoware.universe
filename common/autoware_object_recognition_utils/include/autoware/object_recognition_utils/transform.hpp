@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBJECT_RECOGNITION_UTILS__TRANSFORM_HPP_
-#define OBJECT_RECOGNITION_UTILS__TRANSFORM_HPP_
+#ifndef AUTOWARE__OBJECT_RECOGNITION_UTILS__TRANSFORM_HPP_
+#define AUTOWARE__OBJECT_RECOGNITION_UTILS__TRANSFORM_HPP_
 
 #include <pcl_ros/transforms.hpp>
 
@@ -71,7 +71,7 @@ namespace detail
 }
 }  // namespace detail
 
-namespace object_recognition_utils
+namespace autoware::object_recognition_utils
 {
 template <class T>
 bool transformObjects(
@@ -147,6 +147,6 @@ bool transformObjectsWithFeature(
   }
   return true;
 }
-}  // namespace object_recognition_utils
+}  // namespace autoware::object_recognition_utils
 
-#endif  // OBJECT_RECOGNITION_UTILS__TRANSFORM_HPP_
+#endif  // AUTOWARE__OBJECT_RECOGNITION_UTILS__TRANSFORM_HPP_
