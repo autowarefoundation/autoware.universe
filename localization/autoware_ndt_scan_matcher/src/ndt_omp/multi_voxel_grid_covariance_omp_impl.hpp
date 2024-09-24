@@ -49,8 +49,8 @@
  *
  */
 
-#ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
-#define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
+#ifndef NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
+#define NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
 
 // cspell:ignore evecs, evals, covar, eigvalue, futs
 
@@ -474,4 +474,4 @@ void pclomp::MultiVoxelGridCovariance<PointT>::computeLeafParams(
 #define PCL_INSTANTIATE_VoxelGridCovariance(T) \
   template class PCL_EXPORTS pcl::VoxelGridCovariance<T>;
 
-#endif  // AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
+#endif  // NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_

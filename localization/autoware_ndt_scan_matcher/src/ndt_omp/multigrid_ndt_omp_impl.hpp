@@ -52,8 +52,8 @@
  *
  */
 
-#ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTIGRID_NDT_OMP_IMPL_HPP_
-#define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTIGRID_NDT_OMP_IMPL_HPP_
+#ifndef NDT_OMP__MULTIGRID_NDT_OMP_IMPL_HPP_
+#define NDT_OMP__MULTIGRID_NDT_OMP_IMPL_HPP_
 
 // cspell:ignore multigrid, nnvn, colj
 
@@ -1239,4 +1239,4 @@ pcl::PointCloud<pcl::PointXYZI> MultiGridNormalDistributionsTransform<PointSourc
 
 }  // namespace pclomp
 
-#endif  // AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTIGRID_NDT_OMP_IMPL_HPP_
+#endif  // NDT_OMP__MULTIGRID_NDT_OMP_IMPL_HPP_
