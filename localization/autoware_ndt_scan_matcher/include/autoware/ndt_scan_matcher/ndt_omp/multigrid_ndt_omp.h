@@ -170,7 +170,7 @@ public:
     target_cells_.setInputCloudAndFilter(cloud, target_id);
   }
 
-  inline void removeTarget(const std::string target_id) { target_cells_.removeCloud(target_id); }
+  inline void removeTarget(const std::string & target_id) { target_cells_.removeCloud(target_id); }
 
   inline void createVoxelKdtree()
   {
