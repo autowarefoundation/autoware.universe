@@ -1,21 +1,18 @@
 cmake_minimum_required(VERSION 3.14)
 project(autoware_motion_utils)
 
-option(BUILD_EXAMPLES "Build examples" ON)
+option(BUILD_EXAMPLES "Build examples" OFF)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Boost REQUIRED)
-find_package(fmt REQUIRED)
 
 ament_auto_add_library(autoware_motion_utils SHARED
   DIRECTORY src
 )
 
-target_link_libraries(autoware_motion_utils
-  fmt::fmt
-)
+target_link_libraries(autoware_motion_utils)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_ros REQUIRED)
@@ -45,6 +42,7 @@ if(BUILD_EXAMPLES)
   foreach(example_file ${example_files})
     get_filename_component(example_name ${example_file} NAME_WE)
     ament_auto_add_executable(${example_name} ${example_file})
+    set_source_files_properties(${example_file} PROPERTIES COMPILE_FLAGS -Wno-error -Wno-attributes -Wno-unused-parameter)
     target_link_libraries(${example_name}
       autoware_motion_utils
       matplotlibcpp17::matplotlibcpp17
