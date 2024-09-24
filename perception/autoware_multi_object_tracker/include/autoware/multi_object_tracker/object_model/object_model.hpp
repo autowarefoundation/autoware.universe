@@ -53,6 +53,10 @@ namespace object_model
 {
 
 enum class ObjectModelType { NormalVehicle, BigVehicle, Bicycle, Pedestrian, Unknown };
+
+
+
+
 struct ObjectSize
 {
   double length{0.0};  // [m]

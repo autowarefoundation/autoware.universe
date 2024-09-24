@@ -22,7 +22,7 @@
 #include "autoware/kalman_filter/kalman_filter.hpp"
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "autoware/multi_object_tracker/tracker/motion_model/ctrv_motion_model.hpp"
-#include "autoware/multi_object_tracker/tracker/object_model/object_model.hpp"
+#include "autoware/multi_object_tracker/object_model/object_model.hpp"
 
 namespace autoware::multi_object_tracker
 {
