@@ -516,7 +516,9 @@ bool LinearMotionTracker::measure(
 {
   const auto & current_classification = getClassification();
   object_ = object;
-  if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+  if (
+    autoware::object_recognition_utils::getHighestProbLabel(object.classification) ==
+    Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
@@ -536,7 +538,7 @@ bool LinearMotionTracker::measure(
 bool LinearMotionTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
-  object = object_recognition_utils::toTrackedObject(object_);
+  object = autoware::object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 

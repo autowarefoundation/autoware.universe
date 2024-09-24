@@ -14,8 +14,8 @@
 
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 
+#include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
 
 namespace obstacle_cruise_utils
 {
@@ -30,7 +30,8 @@ std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
     return std::nullopt;
   }
 
-  const auto pose = object_recognition_utils::calcInterpolatedPose(predicted_path, rel_time);
+  const auto pose =
+    autoware::object_recognition_utils::calcInterpolatedPose(predicted_path, rel_time);
   if (!pose) {
     return std::nullopt;
   }

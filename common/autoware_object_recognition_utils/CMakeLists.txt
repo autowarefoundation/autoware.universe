@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.14)
-project(object_recognition_utils)
+project(autoware_object_recognition_utils)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Boost REQUIRED)
 
-ament_auto_add_library(object_recognition_utils SHARED
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/predicted_path_utils.cpp
   src/conversion.cpp
 )
@@ -19,7 +19,7 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_object_recognition_utils ${test_files})
 
   target_link_libraries(test_object_recognition_utils
-    object_recognition_utils
+    ${PROJECT_NAME}
   )
 endif()
 

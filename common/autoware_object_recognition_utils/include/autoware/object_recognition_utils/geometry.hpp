@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBJECT_RECOGNITION_UTILS__GEOMETRY_HPP_
-#define OBJECT_RECOGNITION_UTILS__GEOMETRY_HPP_
+#ifndef AUTOWARE__OBJECT_RECOGNITION_UTILS__GEOMETRY_HPP_
+#define AUTOWARE__OBJECT_RECOGNITION_UTILS__GEOMETRY_HPP_
 
 #include <autoware_perception_msgs/msg/detected_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/tracked_object.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
-namespace object_recognition_utils
+namespace autoware::object_recognition_utils
 {
 template <class T>
 geometry_msgs::msg::Pose getPose([[maybe_unused]] const T & p)
@@ -52,6 +52,6 @@ inline geometry_msgs::msg::Pose getPose(const autoware_perception_msgs::msg::Pre
 {
   return obj.kinematics.initial_pose_with_covariance.pose;
 }
-}  // namespace object_recognition_utils
+}  // namespace autoware::object_recognition_utils
 
-#endif  // OBJECT_RECOGNITION_UTILS__GEOMETRY_HPP_
+#endif  // AUTOWARE__OBJECT_RECOGNITION_UTILS__GEOMETRY_HPP_

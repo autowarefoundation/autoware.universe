@@ -16,9 +16,9 @@
 
 #include "occupancy_grid_map_validator.hpp"
 
+#include "autoware/object_recognition_utils/object_classification.hpp"
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
-#include "object_recognition_utils/object_classification.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <boost/optional.hpp>
 
@@ -68,7 +68,7 @@ void OccupancyGridBasedValidator::onObjectsAndOccGrid(
 
   // Transform to occ grid frame
   autoware_perception_msgs::msg::DetectedObjects transformed_objects;
-  if (!object_recognition_utils::transformObjects(
+  if (!autoware::object_recognition_utils::transformObjects(
         *input_objects, input_occ_grid->header.frame_id, tf_buffer_, transformed_objects))
     return;
 
@@ -80,7 +80,7 @@ void OccupancyGridBasedValidator::onObjectsAndOccGrid(
     const auto & transformed_object = transformed_objects.objects.at(i);
     const auto & object = input_objects->objects.at(i);
     const auto & label = object.classification.front().label;
-    if (object_recognition_utils::isCarLikeVehicle(label)) {
+    if (autoware::object_recognition_utils::isCarLikeVehicle(label)) {
       auto mask = getMask(*input_occ_grid, transformed_object);
       const float mean = mask ? cv::mean(occ_grid, mask.value())[0] * 0.01 : 1.0;
       if (mean_threshold_ < mean) output.objects.push_back(object);
@@ -159,7 +159,7 @@ void OccupancyGridBasedValidator::showDebugImage(
   // Get vehicle mask image and calculate mean within mask.
   for (const auto & object : objects.objects) {
     const auto & label = object.classification.front().label;
-    if (object_recognition_utils::isCarLikeVehicle(label)) {
+    if (autoware::object_recognition_utils::isCarLikeVehicle(label)) {
       auto mask = getMask(ros_occ_grid, object);
       const float mean = mask ? cv::mean(occ_grid, mask.value())[0] * 0.01 : 1.0;
       if (mean_threshold_ < mean) {

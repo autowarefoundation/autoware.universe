@@ -16,12 +16,12 @@
 
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
+#include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/obstacle_cruise_planner/polygon_utils.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <pcl_ros/transforms.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
@@ -99,7 +99,7 @@ std::vector<PredictedPath> resampleHighestConfidencePredictedPaths(
       continue;
     }
     resampled_paths.push_back(
-      object_recognition_utils::resamplePredictedPath(path, time_interval, time_horizon));
+      autoware::object_recognition_utils::resamplePredictedPath(path, time_interval, time_horizon));
   }
 
   return resampled_paths;
@@ -1758,7 +1758,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPred
     if (resampled_predicted_paths.empty() || resampled_predicted_paths.front().path.empty()) {
       return false;
     }
-    const auto future_obj_pose = object_recognition_utils::calcInterpolatedPose(
+    const auto future_obj_pose = autoware::object_recognition_utils::calcInterpolatedPose(
       resampled_predicted_paths.front(), time_to_reach_stop_point - p.collision_time_margin);
 
     Obstacle tmp_future_obs = obstacle;
