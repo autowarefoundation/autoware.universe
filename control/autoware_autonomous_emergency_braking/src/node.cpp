@@ -59,6 +59,7 @@ namespace autoware::motion::control::autonomous_emergency_braking
 {
 using autoware::motion::control::autonomous_emergency_braking::utils::convertObjToPolygon;
 using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Point3d;
 using diagnostic_msgs::msg::DiagnosticStatus;
 namespace bg = boost::geometry;
 
@@ -67,6 +68,16 @@ void appendPointToPolygon(Polygon2d & polygon, const geometry_msgs::msg::Point &
   Point2d point;
   point.x() = geom_point.x;
   point.y() = geom_point.y;
+
+  bg::append(polygon.outer(), point);
+}
+
+void appendPointToPolygon(Polygon3d & polygon, const geometry_msgs::msg::Point & geom_point)
+{
+  Point3d point;
+  point.x() = geom_point.x;
+  point.y() = geom_point.y;
+  point.z() = geom_point.z;
 
   bg::append(polygon.outer(), point);
 }
@@ -580,7 +591,6 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
   // collision happens
   ObjectData collision_data = closest_object;
   collision_data.rss = rss_dist;
-  collision_data.distance_to_object = closest_object.distance_to_object;
   collision_data_keeper_.setCollisionData(collision_data);
   return true;
 }
@@ -787,7 +797,7 @@ void AEB::getPointsBelongingToClusterHulls(
     ec.extract(cluster_idx);
     return cluster_idx;
   });
-  std::vector<Polygon2d> hull_polygons;
+  std::vector<Polygon3d> hull_polygons;
   for (const auto & indices : cluster_indices) {
     PointCloud::Ptr cluster(new PointCloud);
     bool cluster_surpasses_threshold_height{false};
@@ -806,7 +816,7 @@ void AEB::getPointsBelongingToClusterHulls(
     std::vector<pcl::Vertices> polygons;
     PointCloud::Ptr surface_hull(new PointCloud);
     hull.reconstruct(*surface_hull, polygons);
-    Polygon2d hull_polygon;
+    Polygon3d hull_polygon;
     for (const auto & p : *surface_hull) {
       points_belonging_to_cluster_hulls->push_back(p);
       if (publish_debug_markers_) {
@@ -900,7 +910,7 @@ void AEB::cropPointCloudWithEgoFootprintPath(
 }
 
 void AEB::addClusterHullMarkers(
-  const rclcpp::Time & current_time, const std::vector<Polygon2d> & hulls,
+  const rclcpp::Time & current_time, const std::vector<Polygon3d> & hulls,
   const colorTuple & debug_colors, const std::string & ns, MarkerArray & debug_markers)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);

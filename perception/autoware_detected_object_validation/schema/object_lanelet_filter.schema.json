@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Object Lanelet Filter",
+  "type": "object",
+  "definitions": {
+    "object_lanelet_filter": {
+      "type": "object",
+      "properties": {
+        "filter_target_label": {
+          "type": "object",
+          "properties": {
+            "UNKNOWN": {
+              "type": "boolean",
+              "default": true,
+              "description": "If true, unknown objects are filtered."
+            },
+            "CAR": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, car objects are filtered."
+            },
+            "TRUCK": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, truck objects are filtered."
+            },
+            "BUS": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, bus objects are filtered."
+            },
+            "TRAILER": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, trailer objects are filtered."
+            },
+            "MOTORCYCLE": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, motorcycle objects are filtered."
+            },
+            "BICYCLE": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, bicycle objects are filtered."
+            },
+            "PEDESTRIAN": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, pedestrian objects are filtered."
+            }
+          },
+          "required": [
+            "UNKNOWN",
+            "CAR",
+            "TRUCK",
+            "BUS",
+            "TRAILER",
+            "MOTORCYCLE",
+            "BICYCLE",
+            "PEDESTRIAN"
+          ]
+        },
+        "filter_settings": {
+          "type": "object",
+          "properties": {
+            "polygon_overlap_filter": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "If true, objects that are not in the lanelet polygon are filtered."
+                }
+              },
+              "required": ["enabled"]
+            },
+            "lanelet_direction_filter": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "If true, objects that are not in the same direction as the lanelet are filtered."
+                },
+                "velocity_yaw_threshold": {
+                  "type": "number",
+                  "default": 0.785398,
+                  "description": "If the yaw difference between the object and the lanelet is greater than this value, the object is filtered."
+                },
+                "object_speed_threshold": {
+                  "type": "number",
+                  "default": 3.0,
+                  "description": "If the object speed is greater than this value, the object is filtered."
+                }
+              },
+              "required": ["enabled", "velocity_yaw_threshold", "object_speed_threshold"]
+            }
+          },
+          "required": ["polygon_overlap_filter", "lanelet_direction_filter"]
+        }
+      },
+      "required": ["filter_target_label", "filter_settings"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/object_lanelet_filter"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}

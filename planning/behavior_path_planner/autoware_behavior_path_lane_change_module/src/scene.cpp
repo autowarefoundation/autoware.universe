@@ -1686,6 +1686,15 @@ bool NormalLaneChange::getLaneChangePaths(
           return false;
         }
 
+        if (
+          lane_change_parameters_->enable_target_lane_bound_check &&
+          utils::lane_change::pathFootprintExceedsTargetLaneBound(
+            common_data_ptr_, candidate_path.value().shifted_path.path,
+            common_parameters.vehicle_info)) {
+          debug_print_lat("Reject: Path footprint exceeds target lane boundary. Skip lane change.");
+          return false;
+        }
+
         const auto is_safe = std::invoke([&]() {
           constexpr size_t decel_sampling_num = 1;
           const auto safety_check_with_normal_rss = isLaneChangePathSafe(

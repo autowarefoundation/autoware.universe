@@ -17,91 +17,89 @@
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
-#include <utility>
+#include <optional>
 #include <vector>
 
 namespace autoware::universe_utils
 {
 
-class EarClipping
+using Polygon2d = autoware::universe_utils::Polygon2d;
+using Point2d = autoware::universe_utils::Point2d;
+using LinearRing2d = autoware::universe_utils::LinearRing2d;
+
+struct LinkedPoint
 {
-public:
-  std::vector<std::size_t> indices;
-  std::size_t vertices = 0;
-  using Polygon2d = autoware::universe_utils::Polygon2d;
-  using Point2d = autoware::universe_utils::Point2d;
-  using LinearRing2d = autoware::universe_utils::LinearRing2d;
-
-  void operator()(const Polygon2d & polygon);
-
-  ~EarClipping()
+  explicit LinkedPoint(const Point2d & point)
+  : pt(point), steiner(false), prev_index(std::nullopt), next_index(std::nullopt)
   {
-    for (auto * p : points_) {
-      delete p;
-    }
   }
 
-private:
-  struct Point
-  {
-    Point(const std::size_t index, Point2d point) : i(index), pt(std::move(point)) {}
-
-    const std::size_t i;  // Index of the point in the original polygon
-    const Point2d pt;     // The Point2d object representing the coordinates
-
-    // Previous and next vertices (Points) in the polygon ring
-    Point * prev = nullptr;
-    Point * next = nullptr;
-    bool steiner = false;
-
-    [[nodiscard]] double x() const { return pt.x(); }
-    [[nodiscard]] double y() const { return pt.y(); }
-  };
-
-  std::vector<Point *> points_;
-
-  Point * linked_list(const LinearRing2d & points, bool clockwise);
-  static Point * filter_points(Point * start, Point * end = nullptr);
-  Point * cure_local_intersections(Point * start);
-  static Point * get_leftmost(Point * start);
-  Point * split_polygon(Point * a, Point * b);
-  Point * insert_point(std::size_t i, const Point2d & p, Point * last);
-  Point * eliminate_holes(
-    const std::vector<LinearRing2d> & inners, EarClipping::Point * outer_point);
-  Point * eliminate_hole(Point * hole, Point * outer_point);
-  static Point * find_hole_bridge(Point * hole, Point * outer_point);
-  void ear_clipping_linked(Point * ear, int pass = 0);
-  void split_ear_clipping(Point * start);
-  static void remove_point(Point * p);
-  static bool is_ear(Point * ear);
-  static bool sector_contains_sector(const Point * m, const Point * p);
-  [[nodiscard]] static bool point_in_triangle(
-    double ax, double ay, double bx, double by, double cx, double cy, double px, double py);
-  static bool is_valid_diagonal(Point * a, Point * b);
-  static bool equals(const Point * p1, const Point * p2);
-  static bool intersects(const Point * p1, const Point * q1, const Point * p2, const Point * q2);
-  static bool on_segment(const Point * p, const Point * q, const Point * r);
-  static bool intersects_polygon(const Point * a, const Point * b);
-  static bool locally_inside(const Point * a, const Point * b);
-  static bool middle_inside(const Point * a, const Point * b);
-  static int sign(double val);
-  static double area(const Point * p, const Point * q, const Point * r);
-
-  // Function to construct a new Point object
-  EarClipping::Point * construct_point(std::size_t index, const Point2d & point)
-  {
-    auto * new_point = new Point(index, point);
-    points_.push_back(new_point);
-    return new_point;
-  }
+  Point2d pt;
+  bool steiner;
+  std::optional<std::size_t> prev_index;
+  std::optional<std::size_t> next_index;
+  [[nodiscard]] double x() const { return pt.x(); }
+  [[nodiscard]] double y() const { return pt.y(); }
 };
 
-/// @brief Triangulate based on ear clipping algorithm
-/// @param polygon concave/convex polygon with/without holes
-/// @details algorithm based on https://github.com/mapbox/earclipping with modification
-std::vector<autoware::universe_utils::Polygon2d> triangulate(
-  const autoware::universe_utils::Polygon2d & poly);
+/**
+ * @brief main ear slicing loop which triangulates a polygon using linked list
+ * @details iterates over the linked list of polygon points, cutting off triangular ears one by one
+ * handles different stages for fixing intersections and splitting if necessary
+ */
+void ear_clipping_linked(
+  std::size_t ear_index, std::vector<std::size_t> & indices, std::vector<LinkedPoint> & points,
+  const int pass = 0);
+void split_ear_clipping(
+  std::vector<LinkedPoint> & points, std::size_t start_index, std::vector<std::size_t> & indices);
 
+/**
+ * @brief creates a linked list from a ring of points
+ * @details converts a polygon ring into a doubly linked list with optional clockwise ordering
+ * @return the last index of the created linked list
+ */
+std::size_t linked_list(
+  const LinearRing2d & ring, const bool clockwise, std::size_t & vertices,
+  std::vector<LinkedPoint> & points);
+
+/**
+ * @brief David Eberly's algorithm for finding a bridge between hole and outer polygon
+ * @details connects a hole to the outer polygon by finding the closest bridge point
+ * @return index of the bridge point
+ */
+std::size_t find_hole_bridge(
+  const std::size_t hole_index, const std::size_t outer_point_index,
+  const std::vector<LinkedPoint> & points);
+
+/**
+ * @brief eliminates a single hole by connecting it to the outer polygon
+ * @details finds a bridge and modifies the linked list to remove the hole
+ * @return the updated outer_index after the hole is eliminated
+ */
+std::size_t eliminate_hole(
+  const std::size_t hole_index, const std::size_t outer_index, std::vector<LinkedPoint> & points);
+
+/**
+ * @brief eliminates all holes from a polygon
+ * @details processes multiple holes by connecting each to the outer polygon in sequence
+ * @return the updated outer_index after all holes are eliminated
+ */
+std::size_t eliminate_holes(
+  const std::vector<LinearRing2d> & inners, std::size_t outer_index, std::size_t & vertices,
+  std::vector<LinkedPoint> & points);
+
+/**
+ * @brief triangulates a polygon into convex triangles
+ * @details simplifies a concave polygon, with or without holes, into a set of triangles
+ * the size of the `points` vector at the end of the perform_triangulation algorithm is described as
+ * follow:
+ * - `outer_points`: Number of points in the initial outer linked list.
+ * - `hole_points`: Number of points in all inner polygons.
+ * - `2 * n_holes`: Additional points for bridging holes, where `n_holes` is the number of holes.
+ * the final size of `points` vector is: `outer_points + hole_points + 2 * n_holes`.
+ * @return A vector of convex triangles representing the triangulated polygon.
+ */
+std::vector<Polygon2d> triangulate(const Polygon2d & polygon);
 }  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EAR_CLIPPING_HPP_
