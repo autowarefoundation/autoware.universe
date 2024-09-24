@@ -57,7 +57,7 @@
 
 // cspell:ignore multigrid, nnvn, colj
 
-#include "multigrid_ndt_omp.h"
+#include "autoware/ndt_scan_matcher/ndt_omp/multigrid_ndt_omp.h"
 
 #include <algorithm>
 #include <utility>
