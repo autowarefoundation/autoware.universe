@@ -360,7 +360,8 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   const int bin_num = static_cast<int>((max_x - min_x) / param_.resolution + 1);
 
   if (bin_num < static_cast<int>(param_.intensity_pattern.size())) {
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "bin_num is too small!");
+    RCLCPP_WARN_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000, "bin_num is too small!");
     return std::vector<landmark_manager::Landmark>{};
   }
 
