@@ -156,6 +156,13 @@ void PoseInitializer::on_initialize(
 
       auto pose =
         req->pose_with_covariance.empty() ? get_gnss_pose() : req->pose_with_covariance.front();
+      if (is_covariance_zero(pose.pose.covariance)) {
+        RCLCPP_INFO(get_logger(), "Covariance is zero, switching to DIRECT initialization");
+        set_user_defined_initial_pose(pose.pose.pose, false);
+        res->status.success = true;
+        return;
+      }
+
       bool reliable = true;
       if (ndt_) {
         std::tie(pose, reliable) = ndt_->align_pose(pose);
@@ -224,7 +231,17 @@ geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializer::get_gnss_pose()
   throw ServiceException(
     Initialize::Service::Response::ERROR_GNSS_SUPPORT, "GNSS is not supported.");
 }
-}  // namespace autoware::pose_initializer
 
+bool PoseInitializer::is_covariance_zero(const std::array<double, 36> & covariance)
+{
+  for (const auto & value : covariance) {
+    if (value != 0.0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+}  // namespace autoware::pose_initializer
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pose_initializer::PoseInitializer)

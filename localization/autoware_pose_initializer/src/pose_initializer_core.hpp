@@ -70,6 +70,7 @@ private:
     const Initialize::Service::Request::SharedPtr req,
     const Initialize::Service::Response::SharedPtr res);
   PoseWithCovarianceStamped get_gnss_pose();
+  bool is_covariance_zero(const std::array<double, 36> & covariance);
 };
 }  // namespace autoware::pose_initializer
 
