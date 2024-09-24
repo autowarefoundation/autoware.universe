@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(polar_grid)
+project(autoware_polar_grid)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -10,12 +10,12 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 add_definitions(-DQT_NO_KEYWORDS)
 
-ament_auto_add_library(polar_grid SHARED
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/polar_grid_display.cpp
   src/polar_grid_display.hpp
 )
 
-target_link_libraries(polar_grid
+target_link_libraries(${PROJECT_NAME}
   ${QT_LIBRARIES}
 )
 
