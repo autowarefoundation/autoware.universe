@@ -6,10 +6,6 @@
   <arg name="processing_time_checker_param_path"/>
   <arg name="mrm_comfortable_stop_operator_param_path"/>
   <arg name="mrm_emergency_stop_operator_param_path"/>
-  <arg name="system_error_monitor_param_path"/>
-  <arg name="system_error_monitor_planning_simulator_param_path"/>
-  <arg name="diagnostic_aggregator_system_param_path"/>
-  <arg name="diagnostic_aggregator_vehicle_param_path"/>
   <arg name="dummy_diag_publisher_param_path"/>
   <arg name="system_monitor_cpu_monitor_param_path"/>
   <arg name="system_monitor_gpu_monitor_param_path"/>
