@@ -28,6 +28,7 @@
 
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using nav_msgs::msg::Odometry;
 
 Trajectory make_linear_trajectory(
   const TrajectoryPoint & start, const TrajectoryPoint & end, size_t num_points, double velocity)
@@ -71,7 +72,24 @@ TrajectoryPoint make_trajectory_point(double x, double y)
   return point;
 }
 
-class ControlValidatorTest
+Odometry make_kinematic_state(double x_pos, double y_pos, double yaw, double velocity)
+{
+  auto create_quaternion = [](double yaw) {
+    tf2::Quaternion q;
+    q.setRPY(0, 0, yaw);
+    return tf2::toMsg(q);
+  };
+
+  Odometry kinematic_state;
+  kinematic_state.pose.pose.position.x = x_pos;
+  kinematic_state.pose.pose.position.y = y_pos;
+  kinematic_state.pose.pose.orientation = create_quaternion(yaw);
+  kinematic_state.twist.twist.linear.x = velocity;
+
+  return kinematic_state;
+}
+
+class LateralDeviationTest
 : public ::testing::TestWithParam<std::tuple<Trajectory, Trajectory, double, bool>>
 {
 protected:
@@ -95,7 +113,7 @@ protected:
   std::shared_ptr<autoware::control_validator::ControlValidator> node;
 };
 
-TEST_P(ControlValidatorTest, test_calc_lateral_deviation_status)
+TEST_P(LateralDeviationTest, test_calc_lateral_deviation_status)
 {
   auto [reference_trajectory, predicted_trajectory, expected_deviation, expected_condition] =
     GetParam();
@@ -107,7 +125,7 @@ TEST_P(ControlValidatorTest, test_calc_lateral_deviation_status)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-  ControlValidatorTests, ControlValidatorTest,
+  LateralDeviationTests, LateralDeviationTest,
   ::testing::Values(
 
     std::make_tuple(
@@ -165,6 +183,47 @@ INSTANTIATE_TEST_SUITE_P(
     std::make_tuple(
       make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
       make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(20, 2.0), 21, 1.0),
-      1.0, true))
+      1.0, true)));
 
-);
+class VelocityDeviationTest
+: public ::testing::TestWithParam<std::tuple<Trajectory, Odometry, bool>>
+{
+protected:
+  void SetUp() override
+  {
+    rclcpp::init(0, nullptr);
+    rclcpp::NodeOptions options;
+    options.arguments(
+      {"--ros-args", "--params-file",
+       ament_index_cpp::get_package_share_directory("autoware_control_validator") +
+         "/config/control_validator.param.yaml",
+       "--params-file",
+       ament_index_cpp::get_package_share_directory("autoware_test_utils") +
+         "/config/test_vehicle_info.param.yaml"});
+
+    node = std::make_shared<autoware::control_validator::ControlValidator>(options);
+  }
+
+  void TearDown() override { rclcpp::shutdown(); }
+
+  std::shared_ptr<autoware::control_validator::ControlValidator> node;
+};
+
+TEST_P(VelocityDeviationTest, test_calc_velocity_deviation_status)
+{
+  auto [reference_trajectory, kinematics, expected_condition] = GetParam();
+  auto [current_vel, desired_vel, is_valid] =
+    node->calc_velocity_deviation_status(reference_trajectory, kinematics);
+
+  EXPECT_EQ(is_valid, expected_condition);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  VelocityDeviationTests, VelocityDeviationTest,
+  ::testing::Values(
+    std::make_tuple(
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
+      make_kinematic_state(0.0, 0.0, 0.0, 1.0), true),
+    std::make_tuple(
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
+      make_kinematic_state(0.0, 0.0, 0.0, -1.0), false)));
