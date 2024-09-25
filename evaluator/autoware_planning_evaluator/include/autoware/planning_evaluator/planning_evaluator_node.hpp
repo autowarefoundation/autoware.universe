@@ -17,8 +17,6 @@
 
 #include "autoware/planning_evaluator/metrics_calculator.hpp"
 #include "autoware/planning_evaluator/stat.hpp"
-#include "tier4_metric_msgs/msg/Metric.hpp"
-#include "tier4_metric_msgs/msg/MetricList.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -33,12 +31,13 @@
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <tier4_metric_msgs/msg/metric.hpp>
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include <array>
 #include <deque>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 namespace planning_diagnostics
 {
@@ -46,8 +45,8 @@ using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
-using autoware::planning_evaluator::msg::Metric;
-using autoware::planning_evaluator::msg::MetricList;
+using MetricMsg = tier4_metric_msgs::msg::Metric;
+using MetricArrayMsg = tier4_metric_msgs::msg::MetricArray;
 using nav_msgs::msg::Odometry;
 using LaneletMapBin = autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletRoute;
@@ -95,30 +94,20 @@ public:
     const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
-   * @brief obtain diagnostics information
-   */
-  void onDiagnostics(const MetricList::ConstSharedPtr diag_msg);
-
-  /**
    * @brief publish the given metric statistic
    */
-  Metric generateDiagnosticStatus(
-    const Metric & metric, const Stat<double> & metric_stat) const;
+  void AddMetricMsg(
+    const Metric & metric, const Stat<double> & metric_stat);
 
   /**
    * @brief publish current ego lane info
    */
-  Metric generateDiagnosticEvaluationStatus(const Metric & diag);
-
-  /**
-   * @brief publish current ego lane info
-   */
-  Metric generateLaneletDiagnosticStatus(const Odometry::ConstSharedPtr ego_state_ptr);
+  void AddLaneletMetricMsg(const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
    * @brief publish current ego kinematic state
    */
-  Metric generateKinematicStateDiagnosticStatus(
+  void AddKinematicStateMetricMsg(
     const AccelWithCovarianceStamped & accel_stamped, const Odometry::ConstSharedPtr ego_state_ptr);
 
 private:
@@ -133,15 +122,6 @@ private:
    * @brief fetch data and publish diagnostics
    */
   void onTimer();
-
-  /**
-   * @brief fetch topic data
-   */
-  void fetchData();
-  // The diagnostics cycle is faster than timer, and each node publishes diagnostic separately.
-  // takeData() in onTimer() with a polling subscriber will miss a topic, so save all topics with
-  // onDiagnostics().
-  rclcpp::Subscription<DiagnosticArray>::SharedPtr planning_diag_sub_;
 
   // ROS
   autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{
@@ -163,12 +143,14 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> accel_sub_{
     this, "~/input/acceleration"};
 
-  rclcpp::Publisher<MetricList>::SharedPtr metrics_pub_;
+  rclcpp::Publisher<MetricArrayMsg>::SharedPtr metrics_pub_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   autoware::route_handler::RouteHandler route_handler_;
 
-  MetricList metrics_msg_;
+  // Message to publish
+  MetricArrayMsg metrics_msg_;
+
   // Parameters
   std::string output_file_str_;
   std::string ego_frame_str_;
@@ -181,19 +163,6 @@ private:
   std::array<std::deque<Stat<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
 
   rclcpp::TimerBase::SharedPtr timer_;
-  // queue for diagnostics and time stamp
-  std::deque<std::pair<MetricList, rclcpp::Time>> diag_queue_;
-  const std::vector<std::string> target_functions_ = {
-    "obstacle_cruise_planner_stop",
-    "obstacle_cruise_planner_slow_down",
-    "obstacle_cruise_planner_cruise",
-    "autoware::motion_velocity_planner::OutOfLaneModule.stop",
-    "autoware::motion_velocity_planner::OutOfLaneModule.slow_down",
-    "autoware::motion_velocity_planner::ObstacleVelocityLimiterModule.stop",
-    "autoware::motion_velocity_planner::ObstacleVelocityLimiterModule.slow_down",
-    "autoware::motion_velocity_planner::DynamicObstacleStopModule.stop",
-    "autoware::motion_velocity_planner::DynamicObstacleStopModule.slow_down",
-  };
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
 };
 }  // namespace planning_diagnostics

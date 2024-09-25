@@ -60,7 +60,7 @@ Each metric is published on a topic named after the metric name.
 
 | Name        | Type                                    | Description                                             |
 | ----------- | --------------------------------------- | ------------------------------------------------------- |
-| `~/metrics` | `diagnostic_msgs::msg::DiagnosticArray` | DiagnosticArray with a DiagnosticStatus for each metric |
+| `~/metrics` | `tier4_metric_msgs::msg::MetricArray` | MetricArray with many metrics of `tier4_metric_msgs::msg::Metric`|
 
 When shut down, the evaluation node writes the values of the metrics measured during its lifetime
 to a file as specified by the `output_file` parameter.

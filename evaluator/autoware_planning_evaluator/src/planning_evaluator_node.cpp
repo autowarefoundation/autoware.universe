@@ -14,8 +14,6 @@
 
 #include "autoware/planning_evaluator/planning_evaluator_node.hpp"
 
-#include "autoware/evaluator_utils/evaluator_utils.hpp"
-
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
@@ -58,11 +56,8 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
   output_file_str_ = declare_parameter<std::string>("output_file");
   ego_frame_str_ = declare_parameter<std::string>("ego_frame");
 
-  planning_diag_sub_ = create_subscription<DiagnosticArray>(
-    "~/input/diagnostics", 1, std::bind(&PlanningEvaluatorNode::onDiagnostics, this, _1));
-
   // List of metrics to calculate and publish
-  metrics_pub_ = create_publisher<MetricList>("~/metrics", 1);
+  metrics_pub_ = create_publisher<MetricArrayMsg>("~/metrics", 1);
   for (const std::string & selected_metric :
        declare_parameter<std::vector<std::string>>("selected_metrics")) {
     Metric metric = str_to_metric.at(selected_metric);
@@ -103,43 +98,6 @@ PlanningEvaluatorNode::~PlanningEvaluatorNode()
   }
 }
 
-void PlanningEvaluatorNode::onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg)
-{
-  // add target diagnostics to the queue and remove old ones
-  for (const auto & function : target_functions_) {
-    autoware::evaluator_utils::updateDiagnosticQueue(*diag_msg, function, now(), diag_queue_);
-  }
-}
-
-Metric PlanningEvaluatorNode::generateDiagnosticEvaluationStatus(
-  const Metric & diag)
-{
-  DiagnosticStatus status;
-  status.name = diag.name;
-
-  const auto it = std::find_if(diag.values.begin(), diag.values.end(), [](const auto & key_value) {
-    return key_value.key.find("decision") != std::string::npos;
-  });
-  const bool found = it != diag.values.end();
-  status.level = (found) ? status.OK : status.ERROR;
-
-  auto get_key_value = [&]() {
-    if (!found) {
-      return diagnostic_msgs::msg::KeyValue{};
-    }
-    if (it->value.find("none") != std::string::npos) {
-      return *it;
-    }
-    diagnostic_msgs::msg::KeyValue key_value;
-    key_value.key = "decision";
-    key_value.value = "deceleration";
-    return key_value;
-  };
-
-  status.values.push_back(get_key_value());
-  return status;
-}
-
 void PlanningEvaluatorNode::getRouteData()
 {
   // route
@@ -163,7 +121,7 @@ void PlanningEvaluatorNode::getRouteData()
   }
 }
 
-DiagnosticStatus PlanningEvaluatorNode::generateLaneletDiagnosticStatus(
+void PlanningEvaluatorNode::AddLaneletMetricMsg(
   const Odometry::ConstSharedPtr ego_state_ptr)
 {
   const auto & ego_pose = ego_state_ptr->pose.pose;
@@ -180,37 +138,45 @@ DiagnosticStatus PlanningEvaluatorNode::generateLaneletDiagnosticStatus(
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(current_lanelets, ego_pose, &current_lane);
 
-  DiagnosticStatus status;
-  status.name = "ego_lane_info";
-  status.level = status.OK;
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "lane_id";
-  key_value.value = std::to_string(current_lane.id());
-  status.values.push_back(key_value);
-  key_value.key = "s";
-  key_value.value = std::to_string(arc_coordinates.length);
-  status.values.push_back(key_value);
-  key_value.key = "t";
-  key_value.value = std::to_string(arc_coordinates.distance);
-  status.values.push_back(key_value);
-  return status;
+  // push_back lanelet info to MetricArrayMsg
+  const std::string base_name = "ego_lane_info/";
+  MetricMsg metric_msg;
+
+  {
+  metric_msg.name = base_name+ "lane_id";
+  metric_msg.value = std::to_string(current_lane.id());
+  metrics_msg_.metric_array.push_back(metric_msg);
+  }
+
+  {
+  metric_msg.name = base_name + "s";
+  metric_msg.value = std::to_string(arc_coordinates.length);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  }
+  
+  {
+  metric_msg.name = base_name + "t";
+  metric_msg.value = std::to_string(arc_coordinates.distance);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  }
+  return;
 }
 
-DiagnosticStatus PlanningEvaluatorNode::generateKinematicStateDiagnosticStatus(
+void PlanningEvaluatorNode::AddKinematicStateMetricMsg(
   const AccelWithCovarianceStamped & accel_stamped, const Odometry::ConstSharedPtr ego_state_ptr)
 {
-  DiagnosticStatus status;
-  status.name = "kinematic_state";
-  status.level = status.OK;
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "vel";
-  key_value.value = std::to_string(ego_state_ptr->twist.twist.linear.x);
-  status.values.push_back(key_value);
-  key_value.key = "acc";
+  const std::string base_name = "ego_lane_info/";
+  MetricMsg metric_msg;
+
+  metric_msg.name = base_name + "vel";
+  metric_msg.value = std::to_string(ego_state_ptr->twist.twist.linear.x);
+  metrics_msg_.metric_array.push_back(metric_msg);
+
+  metric_msg.name = base_name + "acc";
   const auto & acc = accel_stamped.accel.accel.linear.x;
-  key_value.value = std::to_string(acc);
-  status.values.push_back(key_value);
-  key_value.key = "jerk";
+  metric_msg.value = std::to_string(acc);
+  metrics_msg_.metric_array.push_back(metric_msg);
+
   const auto jerk = [&]() {
     if (!prev_acc_stamped_.has_value()) {
       prev_acc_stamped_ = accel_stamped;
@@ -227,33 +193,41 @@ DiagnosticStatus PlanningEvaluatorNode::generateKinematicStateDiagnosticStatus(
     prev_acc_stamped_ = accel_stamped;
     return (acc - prev_acc) / dt;
   }();
-  key_value.value = std::to_string(jerk);
-  status.values.push_back(key_value);
-  return status;
+  metric_msg.name = base_name + "jerk";
+  metric_msg.value = std::to_string(jerk);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  return;
 }
 
-Metric PlanningEvaluatorNode::generateDiagnosticStatus(
-  const Metric & metric, const Stat<double> & metric_stat) const
+void PlanningEvaluatorNode::AddMetricMsg(
+  const Metric & metric, const Stat<double> & metric_stat)
 {
-  DiagnosticStatus status;
-  status.level = status.OK;
-  status.name = metric_to_str.at(metric);
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "min";
-  key_value.value = boost::lexical_cast<decltype(key_value.value)>(metric_stat.min());
-  status.values.push_back(key_value);
-  key_value.key = "max";
-  key_value.value = boost::lexical_cast<decltype(key_value.value)>(metric_stat.max());
-  status.values.push_back(key_value);
-  key_value.key = "mean";
-  key_value.value = boost::lexical_cast<decltype(key_value.value)>(metric_stat.mean());
-  status.values.push_back(key_value);
-  return status;
+  const std::string base_name = metric_to_str.at(metric) + "/";
+  MetricMsg metric_msg;
+  {
+  metric_msg.name = base_name + "min";
+  metric_msg.value = boost::lexical_cast<decltype(metric_msg.value)>(metric_stat.min());
+  metrics_msg_.metric_array.push_back(metric_msg);
+  }
+
+  {
+  metric_msg.name = base_name + "max";
+  metric_msg.value = boost::lexical_cast<decltype(metric_msg.value)>(metric_stat.max());
+  metrics_msg_.metric_array.push_back(metric_msg);
+  }
+
+  {
+  metric_msg.name = base_name + "mean";
+  metric_msg.value = boost::lexical_cast<decltype(metric_msg.value)>(metric_stat.mean());
+  metrics_msg_.metric_array.push_back(metric_msg);
+  }
+
+  return;
 }
 
 void PlanningEvaluatorNode::onTimer()
 {
-  metrics_msg_.header.stamp = now();
+  metrics_msg_.stamp = now();
 
   const auto ego_state_ptr = odometry_sub_.takeData();
   onOdometry(ego_state_ptr);
@@ -276,26 +250,10 @@ void PlanningEvaluatorNode::onTimer()
     onModifiedGoal(modified_goal_msg, ego_state_ptr);
   }
 
-  {
-    // generate decision diagnostics from input diagnostics
-    for (const auto & function : target_functions_) {
-      const auto it = std::find_if(
-        diag_queue_.begin(), diag_queue_.end(),
-        [&function](const std::pair<diagnostic_msgs::msg::DiagnosticStatus, rclcpp::Time> & p) {
-          return p.first.name.find(function) != std::string::npos;
-        });
-      if (it == diag_queue_.end()) {
-        continue;
-      }
-      // generate each decision diagnostics
-      metrics_msg_.status.push_back(generateDiagnosticEvaluationStatus(it->first));
-    }
-  }
-
-  if (!metrics_msg_.status.empty()) {
+  if (!metrics_msg_.metric_array.empty()) {
     metrics_pub_->publish(metrics_msg_);
   }
-  metrics_msg_ = DiagnosticArray{};
+  metrics_msg_ = MetricArrayMsg{};
 }
 
 void PlanningEvaluatorNode::onTrajectory(
@@ -321,7 +279,7 @@ void PlanningEvaluatorNode::onTrajectory(
     }
 
     if (metric_stat->count() > 0) {
-      metrics_msg_.status.push_back(generateDiagnosticStatus(metric, *metric_stat));
+      AddMetricMsg(metric, *metric_stat);
     }
   }
 
@@ -347,7 +305,7 @@ void PlanningEvaluatorNode::onModifiedGoal(
     }
     metric_stats_[static_cast<size_t>(metric)].push_back(*metric_stat);
     if (metric_stat->count() > 0) {
-      metrics_msg_.status.push_back(generateDiagnosticStatus(metric, *metric_stat));
+      AddMetricMsg(metric, *metric_stat);
     }
   }
   auto runtime = (now() - start).seconds();
@@ -363,12 +321,12 @@ void PlanningEvaluatorNode::onOdometry(const Odometry::ConstSharedPtr odometry_m
   {
     getRouteData();
     if (route_handler_.isHandlerReady() && odometry_msg) {
-      metrics_msg_.status.push_back(generateLaneletDiagnosticStatus(odometry_msg));
+      AddLaneletMetricMsg(odometry_msg);
     }
 
     const auto acc_msg = accel_sub_.takeData();
     if (acc_msg && odometry_msg) {
-      metrics_msg_.status.push_back(generateKinematicStateDiagnosticStatus(*acc_msg, odometry_msg));
+      AddKinematicStateMetricMsg(*acc_msg, odometry_msg);
     }
   }
 }
