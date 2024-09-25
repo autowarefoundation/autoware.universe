@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>osqp_interface</name>
+  <name>autoware_osqp_interface</name>
   <version>1.0.0</version>
   <description>Interface for the OSQP solver</description>
   <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
