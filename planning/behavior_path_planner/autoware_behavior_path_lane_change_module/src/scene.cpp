@@ -1575,15 +1575,15 @@ LaneChangePath NormalLaneChange::get_candidate_path(
     const auto dist_to_lc_start =
       lanelet::utils::getArcCoordinates(target_lanes, lc_start_pose).length;
     const auto dist_to_lc_end = dist_to_lc_start + lc_metrics.length;
-    return route_handler.getPoseFrom2DArcLength(target_lanes, dist_to_lc_end);
+    return route_handler.get_pose_from_2d_arc_length(target_lanes, dist_to_lc_end);
   });
 
-  const auto shift_line = utils::lane_change::getLaneChangingShiftLine(
+  const auto shift_line = utils::lane_change::get_lane_changing_shift_line(
     lc_start_pose, lc_end_pose, target_lane_reference_path, shift_length);
 
   LaneChangeInfo lane_change_info{prep_metrics, lc_metrics, lc_start_pose, lc_end_pose, shift_line};
 
-  const auto candidate_path = utils::lane_change::constructCandidatePath(
+  const auto candidate_path = utils::lane_change::construct_candidate_path(
     common_data_ptr_, lane_change_info, prep_segment, target_lane_reference_path, sorted_lane_ids);
 
   if (!candidate_path) {
@@ -1739,7 +1739,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
     return {};
   }
 
-  lane_change_info.shift_line = utils::lane_change::getLaneChangingShiftLine(
+  lane_change_info.shift_line = utils::lane_change::get_lane_changing_shift_line(
     lane_changing_start_pose.value(), target_segment.points.front().point.pose,
     target_lane_reference_path, shift_length);
 
@@ -1752,7 +1752,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   reference_segment.points.pop_back();
   reference_segment.points.back().point.longitudinal_velocity_mps = minimum_lane_changing_velocity;
 
-  const auto terminal_lane_change_path = utils::lane_change::constructCandidatePath(
+  const auto terminal_lane_change_path = utils::lane_change::construct_candidate_path(
     common_data_ptr_, lane_change_info, reference_segment, target_lane_reference_path,
     sorted_lane_ids);
 

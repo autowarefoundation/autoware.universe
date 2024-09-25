@@ -2038,7 +2038,7 @@ std::optional<lanelet::routing::LaneletPath> RouteHandler::findDrivableLanePath(
   return {};
 }
 
-Pose RouteHandler::getPoseFrom2DArcLength(
+Pose RouteHandler::get_pose_from_2d_arc_length(
   const lanelet::ConstLanelets & lanelet_sequence, const double s) const
 {
   double accumulated_distance2d = 0;

@@ -230,7 +230,7 @@ bool pathFootprintExceedsTargetLaneBound(
   return false;
 }
 
-std::optional<LaneChangePath> constructCandidatePath(
+std::optional<LaneChangePath> construct_candidate_path(
   const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
   const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids)
@@ -355,7 +355,7 @@ PathWithLaneId getReferencePathFromTargetLane(
     lane_changing_reference_path, resample_interval, true, {0.0, lane_changing_length});
 }
 
-ShiftLine getLaneChangingShiftLine(
+ShiftLine get_lane_changing_shift_line(
   const Pose & lane_changing_start_pose, const Pose & lane_changing_end_pose,
   const PathWithLaneId & reference_path, const double shift_length)
 {
