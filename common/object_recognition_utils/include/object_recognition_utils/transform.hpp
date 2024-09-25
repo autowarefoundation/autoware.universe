@@ -98,11 +98,11 @@ bool transformObjects(
       auto & pose_with_cov = object.kinematics.pose_with_covariance;
       tf2::fromMsg(pose_with_cov.pose, tf_objects_world2objects);
       tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
-      // transform pose
+      // transform pose, frame difference and object pose
       tf2::toMsg(tf_target2objects, pose_with_cov.pose);
-      // transform covariance
+      // transform covariance, only the frame difference
       pose_with_cov.covariance =
-        tf2::transformCovariance(pose_with_cov.covariance, tf_target2objects);
+        tf2::transformCovariance(pose_with_cov.covariance, tf_target2objects_world);
     }
   }
   return true;
