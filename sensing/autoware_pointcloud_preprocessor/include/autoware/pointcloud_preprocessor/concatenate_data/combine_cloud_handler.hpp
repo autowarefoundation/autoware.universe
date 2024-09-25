@@ -59,6 +59,8 @@ private:
   bool keep_input_frame_in_synchronized_pointcloud_;
   std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
+  /// @brief RclcppTimeHash_ structure defines a custom hash function for the rclcpp::Time type by
+  /// using its nanoseconds representation as the hash value.
   struct RclcppTimeHash_
   {
     std::size_t operator()(const rclcpp::Time & t) const
