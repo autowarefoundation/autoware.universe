@@ -110,15 +110,21 @@ struct PullOverContextData
   PullOverContextData() = delete;
   explicit PullOverContextData(
     const bool is_stable_safe_path, const PredictedObjects & static_objects,
-    const PredictedObjects & dynamic_objects)
+    const PredictedObjects & dynamic_objects, std::optional<PullOverPath> && pull_over_path_opt,
+    const std::vector<PullOverPath> & pull_over_path_candidates)
   : is_stable_safe_path(is_stable_safe_path),
     static_target_objects(static_objects),
-    dynamic_target_objects(dynamic_objects)
+    dynamic_target_objects(dynamic_objects),
+    pull_over_path_opt(pull_over_path_opt),
+    pull_over_path_candidates(pull_over_path_candidates)
   {
   }
   const bool is_stable_safe_path;
   const PredictedObjects static_target_objects;
   const PredictedObjects dynamic_target_objects;
+  const std::optional<PullOverPath> pull_over_path_opt;
+  const std::vector<PullOverPath> pull_over_path_candidates;
+  // TODO(soblin): goal_candidate_from_thread, modifed_goal_pose_from_thread, closest_start_pose
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -354,7 +360,7 @@ private:
   void decelerateForTurnSignal(const Pose & stop_pose, PathWithLaneId & path) const;
   void decelerateBeforeSearchStart(
     const Pose & search_start_offset_pose, PathWithLaneId & path) const;
-  PathWithLaneId generateStopPath() const;
+  PathWithLaneId generateStopPath(const PullOverContextData & context_data) const;
   PathWithLaneId generateFeasibleStopPath(const PathWithLaneId & path) const;
 
   void keepStoppedWithCurrentPath(PathWithLaneId & path) const;
@@ -364,7 +370,7 @@ private:
   bool isStopped();
   bool isStopped(
     std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer, const double time);
-  bool hasFinishedCurrentPath();
+  bool hasFinishedCurrentPath(const PullOverContextData & ctx_data);
   bool isOnModifiedGoal(const Pose & current_pose, const GoalPlannerParameters & parameters) const;
   double calcModuleRequestLength() const;
   bool needPathUpdate(
@@ -411,7 +417,8 @@ private:
   // output setter
   void setOutput(const PullOverContextData & context_data, BehaviorModuleOutput & output);
 
-  void setModifiedGoal(BehaviorModuleOutput & output) const;
+  void setModifiedGoal(
+    const PullOverContextData & context_data, BehaviorModuleOutput & output) const;
   void setTurnSignalInfo(BehaviorModuleOutput & output);
 
   // new turn signal
@@ -434,7 +441,8 @@ private:
     const std::array<Pose, 2> & pose, const std::array<double, 2> distance, const uint16_t type);
 
   // rtc
-  std::pair<double, double> calcDistanceToPathChange() const;
+  std::pair<double, double> calcDistanceToPathChange(
+    const PullOverContextData & context_data) const;
 
   // safety check
   void initializeSafetyCheckParameters();
