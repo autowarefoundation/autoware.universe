@@ -32,7 +32,7 @@ class CloudCollector
 {
 public:
   CloudCollector(
-    std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> concatenate_node,
+    std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node,
     std::list<std::shared_ptr<CloudCollector>> & collectors,
     std::shared_ptr<CombineCloudHandler> combine_cloud_handler, int num_of_clouds, double time);
 
@@ -58,7 +58,7 @@ public:
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> getTopicToCloudMap();
 
 private:
-  std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> concatenate_node_;
+  std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node_;
   std::list<std::shared_ptr<CloudCollector>> & collectors_;
   std::shared_ptr<CombineCloudHandler> combine_cloud_handler_;
   rclcpp::TimerBase::SharedPtr timer_;

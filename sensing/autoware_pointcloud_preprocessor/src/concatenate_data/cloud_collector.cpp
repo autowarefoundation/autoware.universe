@@ -25,10 +25,10 @@ namespace autoware::pointcloud_preprocessor
 {
 
 CloudCollector::CloudCollector(
-  std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> concatenate_node,
+  std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node,
   std::list<std::shared_ptr<CloudCollector>> & collectors,
   std::shared_ptr<CombineCloudHandler> combine_cloud_handler, int num_of_clouds, double timeout_sec)
-: concatenate_node_(concatenate_node),
+: ros2_parent_node_(ros2_parent_node),
   collectors_(collectors),
   combine_cloud_handler_(combine_cloud_handler),
   num_of_clouds_(num_of_clouds),
@@ -38,7 +38,7 @@ CloudCollector::CloudCollector(
     std::chrono::duration<double>(timeout_sec_));
 
   timer_ = rclcpp::create_timer(
-    concatenate_node_, concatenate_node_->get_clock(), period_ns,
+    ros2_parent_node_, ros2_parent_node_->get_clock(), period_ns,
     std::bind(&CloudCollector::concatenateCallback, this));
 }
 
@@ -60,7 +60,7 @@ void CloudCollector::processCloud(
   // parameter 'lidar_timestamp_noise_window' is set correctly.
   if (topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      concatenate_node_->get_logger(), *concatenate_node_->get_clock(),
+      ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(),
       std::chrono::milliseconds(10000).count(),
       "Topic '" << topic_name
                 << "' already exists in the collector. Check the timestamp of the pointcloud.");
@@ -101,7 +101,7 @@ void CloudCollector::publishClouds(
     topic_to_transformed_cloud_map,
   std::unordered_map<std::string, double> topic_to_original_stamp_map)
 {
-  concatenate_node_->publishClouds(
+  ros2_parent_node_->publishClouds(
     concatenate_cloud_ptr, topic_to_transformed_cloud_map, topic_to_original_stamp_map,
     reference_timestamp_min_, reference_timestamp_max_);
 }
