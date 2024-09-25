@@ -21,7 +21,6 @@
 #include "gtest/gtest.h"
 
 #include <cmath>
-#include <stdexcept>
 
 /*
  * Throttle data: (vel, throttle -> acc)
@@ -124,6 +123,10 @@ TEST(ConverterTests, LoadValidPath)
   EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_1col_map.csv", true));
   EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_inconsistent_rows_map.csv", true));
   EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_not_interpolatable.csv", true));
+  EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_empty_map.csv", true));
+
+
+  EXPECT_FALSE(steer_map.readSteerMapFromCSV(map_path + "test_not_interpolatable.csv", true));
 }
 
 TEST(ConverterTests, AccelMapCalculation)
@@ -147,6 +150,9 @@ TEST(ConverterTests, AccelMapCalculation)
 
   // case for interpolation
   EXPECT_DOUBLE_EQ(calcThrottle(2.0, 0.0), 0.75);
+
+  // case for max throttle
+  EXPECT_DOUBLE_EQ(calcThrottle(2.0, 10.0), 1.0);
 
   const auto calcAcceleration = [&](double throttle, double vel) {
     double output;
@@ -188,6 +194,9 @@ TEST(ConverterTests, BrakeMapCalculation)
 
   // case for interpolation
   EXPECT_DOUBLE_EQ(calcBrake(-2.25, 5.0), 0.75);
+
+  // case for min brake
+  EXPECT_DOUBLE_EQ(calcBrake(1.0, 5.0), 0.0);
 
   const auto calcAcceleration = [&](double brake, double vel) {
     double output;
