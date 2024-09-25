@@ -23,7 +23,7 @@ namespace autoware::behavior_path_planner::utils::lane_change::calculation
 
 rclcpp::Logger get_logger()
 {
-  constexpr const char * name{"lane_change.calculation"};
+  constexpr const char * name{"lane_change.utils"};
   static rclcpp::Logger logger = rclcpp::get_logger(name);
   return logger;
 }
