@@ -20,7 +20,6 @@
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
-#include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
@@ -301,7 +300,7 @@ void GoalPlannerModule::onTimer()
     auto pull_over_path = planner->plan(
       goal_candidate.id, path_candidates.size(), local_planner_data, previous_module_output,
       goal_candidate.goal_pose);
-    if (pull_over_path && pull_over_path->getParkingPath().points.size() >= 3) {
+    if (pull_over_path && pull_over_path->parking_path.points.size() >= 3) {
       // calculate absolute maximum curvature of parking path(start pose to end pose) for path
       // priority
       path_candidates.push_back(*pull_over_path);
@@ -830,8 +829,8 @@ bool GoalPlannerModule::canReturnToLaneParking(const PullOverContextData & conte
     return false;
   }
 
-  const PathWithLaneId path = lane_parking_path->getFullPath();
-  const std::vector<double> curvatures = lane_parking_path->getFullPathCurvatures();
+  const PathWithLaneId path = lane_parking_path->full_path;
+  const std::vector<double> curvatures = lane_parking_path->full_path_curvatures;
   if (
     parameters_->use_object_recognition &&
     goal_planner_utils::checkObjectsCollision(
@@ -1003,7 +1002,7 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
     for (const size_t i : sorted_path_indices) {
       const auto & path = pull_over_path_candidates[i];
       const double distance = utils::path_safety_checker::calculateRoughDistanceToObjects(
-        path.getParkingPath(), target_objects, planner_data_->parameters, false, "max");
+        path.parking_path, target_objects, planner_data_->parameters, false, "max");
       auto it = std::lower_bound(
         margins_with_zero.begin(), margins_with_zero.end(), distance, std::greater<double>());
       if (it == margins_with_zero.end()) {
@@ -1029,7 +1028,7 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
     // STEP2-3: Sort by curvature
     // If the curvature is less than the threshold, prioritize the path.
     const auto isHighCurvature = [&](const PullOverPath & path) -> bool {
-      return path.getParkingPathMaxCurvature() >= parameters_->high_curvature_threshold;
+      return path.parking_path_max_curvature >= parameters_->high_curvature_threshold;
     };
 
     const auto isSoftMargin = [&](const PullOverPath & path) -> bool {
@@ -1108,8 +1107,8 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
     parameters_->object_recognition_collision_check_hard_margins.back();
   for (const size_t i : sorted_path_indices) {
     const auto & path = pull_over_path_candidates[i];
-    const PathWithLaneId parking_path = path.getParkingPath();
-    const auto parking_path_curvatures = path.getParkingPathCurvatures();
+    const PathWithLaneId parking_path = path.parking_path;
+    const auto parking_path_curvatures = path.parking_path_curvatures;
     if (
       parameters_->use_object_recognition &&
       goal_planner_utils::checkObjectsCollision(
@@ -1260,6 +1259,10 @@ void GoalPlannerModule::decideVelocity()
 
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
 
+  // todo:
+  // これのせいでPullOverPathのpartial_pathsをconstにできない．ここで速度を変更するのがおかしい
+  // full_pathの速度は変更されないため．なのでfull_pathは毎回求め直さないといけないかもしれない
+  // partial_paths
   auto & first_path = thread_safe_data_.get_pull_over_path()->partial_paths.front();
   const auto vel =
     static_cast<float>(std::max(current_vel, parameters_->pull_over_minimum_velocity));
@@ -1388,7 +1391,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(
   }
 
   path_candidate_ =
-    std::make_shared<PathWithLaneId>(thread_safe_data_.get_pull_over_path()->getFullPath());
+    std::make_shared<PathWithLaneId>(thread_safe_data_.get_pull_over_path()->full_path);
 
   return output;
 }
@@ -1425,7 +1428,7 @@ void GoalPlannerModule::postProcess()
     {distance_to_path_change.first, distance_to_path_change.second},
     has_decided_path ? SteeringFactor::TURNING : SteeringFactor::APPROACHING);
 
-  setStopReason(StopReason::GOAL_PLANNER, thread_safe_data_.get_pull_over_path()->getFullPath());
+  setStopReason(StopReason::GOAL_PLANNER, thread_safe_data_.get_pull_over_path()->full_path);
 }
 
 BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
@@ -1456,7 +1459,7 @@ std::pair<double, double> GoalPlannerModule::calcDistanceToPathChange() const
     return {std::numeric_limits<double>::max(), std::numeric_limits<double>::max()};
   }
 
-  const auto full_path = thread_safe_data_.get_pull_over_path()->getFullPath();
+  const auto full_path = thread_safe_data_.get_pull_over_path()->full_path;
 
   const auto ego_segment_idx = autoware::motion_utils::findNearestSegmentIndex(
     full_path.points, planner_data_->self_odometry->pose.pose, std::numeric_limits<double>::max(),
@@ -1757,7 +1760,7 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo()
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  const auto path = thread_safe_data_.get_pull_over_path()->getFullPath();
+  const auto path = thread_safe_data_.get_pull_over_path()->full_path;
   if (path.points.empty()) return getPreviousModuleOutput().turn_signal_info;
 
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
@@ -1914,7 +1917,7 @@ void GoalPlannerModule::deceleratePath(PullOverPath & pull_over_path) const
   const auto closest_goal_candidate = goal_searcher_->getClosetGoalCandidateAlongLanes(
     thread_safe_data_.get_goal_candidates(), planner_data_);
   const auto decel_pose = calcLongitudinalOffsetPose(
-    pull_over_path.getFullPath().points, closest_goal_candidate.goal_pose.position,
+    pull_over_path.full_path.points, closest_goal_candidate.goal_pose.position,
     -approximate_pull_over_distance_);
   auto & first_path = pull_over_path.partial_paths.front();
   if (decel_pose) {
@@ -1926,7 +1929,9 @@ void GoalPlannerModule::deceleratePath(PullOverPath & pull_over_path) const
   const auto min_decel_distance = calcFeasibleDecelDistance(
     planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk,
     parameters_->pull_over_velocity);
-  for (auto & p : first_path.points) {
+  // todo: partial pathだけ速度を変えてもful_pathには反映されない
+  // auto &で参照しないと速度を変えられない
+  for (auto p : first_path.points) {
     const double distance_from_ego = calcSignedArcLengthFromEgo(first_path, p.point.pose);
     if (min_decel_distance && distance_from_ego < *min_decel_distance) {
       continue;
@@ -2350,7 +2355,7 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
     add(createPoseMarkerArray(
       thread_safe_data_.get_pull_over_path()->end_pose, "pull_over_end_pose", 0, 0.3, 0.3, 0.9));
     add(createPathMarkerArray(
-      thread_safe_data_.get_pull_over_path()->getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
+      thread_safe_data_.get_pull_over_path()->full_path, "full_path", 0, 0.0, 0.5, 0.9));
     add(createPathMarkerArray(
       thread_safe_data_.get_pull_over_path()->getCurrentPath(), "current_path", 0, 0.9, 0.5, 0.0));
 
@@ -2671,8 +2676,8 @@ PathDecisionState PathDecisionStateController::get_next_state(
     }
 
     // check current parking path collision
-    const auto & parking_path = pull_over_path.getParkingPath();
-    const std::vector<double> parking_path_curvatures = pull_over_path.getParkingPathCurvatures();
+    const auto & parking_path = pull_over_path.parking_path;
+    const std::vector<double> parking_path_curvatures = pull_over_path.parking_path_curvatures;
     const double margin =
       parameters.object_recognition_collision_check_hard_margins.back() * hysteresis_factor;
     if (goal_planner_utils::checkObjectsCollision(

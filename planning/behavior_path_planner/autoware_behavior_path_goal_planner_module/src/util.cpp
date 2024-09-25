@@ -680,7 +680,7 @@ std::string makePathPriorityDebugMessage(
        << ", goal_priority: " << (is_safe_goal ? std::to_string(goal_priority) : "unsafe")
        << ", margin: " << path_id_to_rough_margin_map.at(path.id)
        << (isSoftMargin(path) ? " (soft)" : " (hard)")
-       << ", curvature: " << path.getParkingPathMaxCurvature()
+       << ", curvature: " << path.parking_path_max_curvature
        << (isHighCurvature(path) ? " (high)" : " (low)") << "\n";
   }
   ss << "-----------------------------------------------------------\n";

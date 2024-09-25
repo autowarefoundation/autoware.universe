@@ -138,10 +138,13 @@ std::optional<PullOverPath> FreespacePullOver::plan(
     }
   }
 
-  PullOverPath pull_over_path{};
+  auto pull_over_path_opt =
+    PullOverPath::create(getPlannerType(), goal_id, id, partial_paths, current_pose, goal_pose);
+  if (!pull_over_path_opt) {
+    return {};
+  }
+  auto & pull_over_path = pull_over_path_opt.value();
   pull_over_path.pairs_terminal_velocity_and_accel = pairs_terminal_velocity_and_accel;
-  pull_over_path.setPaths(partial_paths, current_pose, goal_pose);
-  pull_over_path.type = getPlannerType();
 
   return pull_over_path;
 }
