@@ -38,7 +38,7 @@ GeometricPullOver::GeometricPullOver(
 }
 
 std::optional<PullOverPath> GeometricPullOver::plan(
-  const std::shared_ptr<const PlannerData> planner_data,
+  const size_t goal_id, const size_t id, const std::shared_ptr<const PlannerData> planner_data,
   [[maybe_unused]] const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose)
 {
   const auto & route_handler = planner_data->route_handler;

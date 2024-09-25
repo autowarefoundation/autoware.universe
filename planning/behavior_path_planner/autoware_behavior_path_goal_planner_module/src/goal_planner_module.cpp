@@ -298,12 +298,10 @@ void GoalPlannerModule::onTimer()
   const auto planCandidatePaths = [&](
                                     const std::shared_ptr<PullOverPlannerBase> & planner,
                                     const GoalCandidate & goal_candidate) {
-    auto pull_over_path =
-      planner->plan(local_planner_data, previous_module_output, goal_candidate.goal_pose);
+    auto pull_over_path = planner->plan(
+      goal_candidate.id, path_candidates.size(), local_planner_data, previous_module_output,
+      goal_candidate.goal_pose);
     if (pull_over_path && pull_over_path->getParkingPath().points.size() >= 3) {
-      pull_over_path->goal_id = goal_candidate.id;
-      pull_over_path->id = path_candidates.size();
-
       // calculate absolute maximum curvature of parking path(start pose to end pose) for path
       // priority
       path_candidates.push_back(*pull_over_path);
@@ -798,9 +796,9 @@ bool GoalPlannerModule::planFreespacePath(
       continue;
     }
     auto freespace_path = freespace_planner_->plan(
-      planner_data, BehaviorModuleOutput{},  // NOTE: not used so passing {} is OK
+      goal_candidate.id, 0, planner_data,
+      BehaviorModuleOutput{},  // NOTE: not used so passing {} is OK
       goal_candidate.goal_pose);
-    freespace_path->goal_id = goal_candidate.id;
     if (!freespace_path) {
       continue;
     }

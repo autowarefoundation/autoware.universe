@@ -36,7 +36,7 @@ public:
     const LaneDepartureChecker & lane_departure_checker);
   PullOverPlannerType getPlannerType() const override { return PullOverPlannerType::SHIFT; };
   std::optional<PullOverPath> plan(
-    const std::shared_ptr<const PlannerData> planner_data,
+    const size_t goal_id, const size_t id, const std::shared_ptr<const PlannerData> planner_data,
     const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose) override;
 
 protected:
