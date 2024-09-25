@@ -27,6 +27,7 @@
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -218,6 +219,7 @@ struct PhaseMetrics
 struct Lanes
 {
   bool current_lane_in_goal_section{false};
+  bool target_lane_in_goal_section{false};
   lanelet::ConstLanelets current;
   lanelet::ConstLanelets target_neighbor;
   lanelet::ConstLanelets target;
@@ -313,6 +315,25 @@ struct LanesPolygon
   std::vector<lanelet::BasicPolygon2d> preceding_target;
 };
 
+struct MinMaxValue
+{
+  double min{std::numeric_limits<double>::infinity()};
+  double max{std::numeric_limits<double>::infinity()};
+};
+
+struct TransientData
+{
+  MinMaxValue acc;
+  MinMaxValue lane_changing_length;
+  MinMaxValue current_dist_buffer;
+  MinMaxValue next_dist_buffer;
+  double dist_from_ego_to_current_terminal_end{std::numeric_limits<double>::min()};
+  double dist_from_ego_to_current_terminal_start{std::numeric_limits<double>::min()};
+  double maximum_prepare_length{std::numeric_limits<double>::max()};
+
+  bool is_ego_near_current_terminal_start{false};
+};
+
 using RouteHandlerPtr = std::shared_ptr<RouteHandler>;
 using BppParamPtr = std::shared_ptr<BehaviorPathPlannerParameters>;
 using LCParamPtr = std::shared_ptr<Parameters>;
@@ -327,12 +348,14 @@ struct CommonData
   LCParamPtr lc_param_ptr;
   LanesPtr lanes_ptr;
   LanesPolygonPtr lanes_polygon_ptr;
+  TransientData transient_data;
+  PathWithLaneId current_lanes_path;
   ModuleType lc_type;
   Direction direction;
 
-  [[nodiscard]] Pose get_ego_pose() const { return self_odometry_ptr->pose.pose; }
+  [[nodiscard]] const Pose & get_ego_pose() const { return self_odometry_ptr->pose.pose; }
 
-  [[nodiscard]] Twist get_ego_twist() const { return self_odometry_ptr->twist.twist; }
+  [[nodiscard]] const Twist & get_ego_twist() const { return self_odometry_ptr->twist.twist; }
 
   [[nodiscard]] double get_ego_speed(bool use_norm = false) const
   {
@@ -343,6 +366,18 @@ struct CommonData
     const auto x = get_ego_twist().linear.x;
     const auto y = get_ego_twist().linear.y;
     return std::hypot(x, y);
+  }
+
+  [[nodiscard]] bool is_data_available() const
+  {
+    return route_handler_ptr && self_odometry_ptr && bpp_param_ptr && lc_param_ptr && lanes_ptr &&
+           lanes_polygon_ptr;
+  }
+
+  [[nodiscard]] bool is_lanes_available() const
+  {
+    return lanes_ptr && !lanes_ptr->current.empty() && !lanes_ptr->target.empty() &&
+           !lanes_ptr->target_neighbor.empty();
   }
 };
 using CommonDataPtr = std::shared_ptr<CommonData>;
