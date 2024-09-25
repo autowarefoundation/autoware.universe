@@ -125,7 +125,6 @@ TEST(ConverterTests, LoadValidPath)
   EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_not_interpolatable.csv", true));
   EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_empty_map.csv", true));
 
-
   EXPECT_FALSE(steer_map.readSteerMapFromCSV(map_path + "test_not_interpolatable.csv", true));
 }
 

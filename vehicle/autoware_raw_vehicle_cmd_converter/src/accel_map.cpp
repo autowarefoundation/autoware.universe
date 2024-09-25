@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-
 namespace autoware::raw_vehicle_cmd_converter
 {
 bool AccelMap::readAccelMapFromCSV(const std::string & csv_path, const bool validation)
