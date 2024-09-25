@@ -25,6 +25,18 @@ rclcpp_components_register_node(${PROJECT_NAME}_lib
   EXECUTABLE ${PROJECT_NAME}_node
 )
 
+ament_auto_add_executable(planner_data_saver
+  src/planner_data_saver.cpp
+)
+
+target_include_directories(planner_data_saver SYSTEM PUBLIC
+  ${EIGEN3_INCLUDE_DIR}
+)
+
+target_link_libraries(planner_data_saver
+  ${OpenCV_LIBRARIES}
+)
+
 if(BUILD_TESTING)
   ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_utilities
     test/input.cpp
