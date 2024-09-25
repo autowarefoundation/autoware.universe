@@ -128,7 +128,7 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
   }
 
   LaneChangePaths valid_paths{};
-  bool found_safe_path = getLaneChangePaths(valid_paths);
+  bool found_safe_path = get_lane_change_paths(valid_paths);
   // if no safe path is found and ego is stuck, try to find a path with a small margin
 
   lane_change_debug_.valid_paths = valid_paths;
@@ -1349,59 +1349,7 @@ bool NormalLaneChange::hasEnoughLength(
   return true;
 }
 
-bool NormalLaneChange::hasEnoughLengthToCrosswalk(
-  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const
-{
-  const auto current_pose = getEgoPose();
-  const auto & route_handler = *getRouteHandler();
-  const auto overall_graphs_ptr = route_handler.getOverallGraphPtr();
-
-  const double dist_to_crosswalk_from_lane_change_start_pose =
-    utils::getDistanceToCrosswalk(current_pose, current_lanes, *overall_graphs_ptr) -
-    path.info.length.prepare;
-  // Check lane changing section includes crosswalk
-  if (
-    dist_to_crosswalk_from_lane_change_start_pose > 0.0 &&
-    dist_to_crosswalk_from_lane_change_start_pose < path.info.length.lane_changing) {
-    return false;
-  }
-
-  return true;
-}
-
-bool NormalLaneChange::hasEnoughLengthToIntersection(
-  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const
-{
-  const auto current_pose = getEgoPose();
-  const auto & route_handler = *getRouteHandler();
-  const auto overall_graphs_ptr = route_handler.getOverallGraphPtr();
-
-  const double dist_to_intersection_from_lane_change_start_pose =
-    utils::getDistanceToNextIntersection(current_pose, current_lanes) - path.info.length.prepare;
-  // Check lane changing section includes intersection
-  if (
-    dist_to_intersection_from_lane_change_start_pose > 0.0 &&
-    dist_to_intersection_from_lane_change_start_pose < path.info.length.lane_changing) {
-    return false;
-  }
-
-  return true;
-}
-
-bool NormalLaneChange::hasEnoughLengthToTrafficLight(
-  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const
-{
-  const auto current_pose = getEgoPose();
-  const auto dist_to_next_traffic_light =
-    getDistanceToNextTrafficLight(current_pose, current_lanes);
-  const auto dist_to_next_traffic_light_from_lc_start_pose =
-    dist_to_next_traffic_light - path.info.length.prepare;
-
-  return dist_to_next_traffic_light_from_lc_start_pose <= 0.0 ||
-         dist_to_next_traffic_light_from_lc_start_pose >= path.info.length.lane_changing;
-}
-
-bool NormalLaneChange::getLaneChangePaths(LaneChangePaths & candidate_paths) const
+bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) const
 {
   lane_change_debug_.collision_check_objects.clear();
 
@@ -1570,7 +1518,7 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths & candidate_paths) con
 
       LaneChangePath candidate_path;
       try {
-        candidate_path = getCandidatePath(
+        candidate_path = get_candidate_path(
           prep_metric, lc_metric, prepare_segment, sorted_lane_ids, lane_changing_start_pose,
           target_lane_length, shift_length, next_lane_change_buffer, is_goal_in_route);
       } catch (const std::exception & e) {
@@ -1583,7 +1531,7 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths & candidate_paths) con
       bool is_safe = false;
       try {
         is_safe =
-          checkCandidatePathSafety(candidate_path, target_objects, lane_change_buffer, is_stuck);
+          check_candidate_path_safety(candidate_path, target_objects, lane_change_buffer, is_stuck);
       } catch (const std::exception & e) {
         debug_print_lat(std::string("Reject: ") + e.what());
         return false;
@@ -1602,7 +1550,7 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths & candidate_paths) con
   return false;
 }
 
-LaneChangePath NormalLaneChange::getCandidatePath(
+LaneChangePath NormalLaneChange::get_candidate_path(
   const LaneChangePhaseMetrics & prep_metrics, const LaneChangePhaseMetrics & lc_metrics,
   const PathWithLaneId & prep_segment, const std::vector<std::vector<int64_t>> & sorted_lane_ids,
   const Pose & lc_start_pose, const double target_lane_length, const double shift_length,
@@ -1649,7 +1597,7 @@ LaneChangePath NormalLaneChange::getCandidatePath(
   return *candidate_path;
 }
 
-bool NormalLaneChange::checkCandidatePathSafety(
+bool NormalLaneChange::check_candidate_path_safety(
   const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects,
   const double lane_change_buffer, const bool is_stuck) const
 {

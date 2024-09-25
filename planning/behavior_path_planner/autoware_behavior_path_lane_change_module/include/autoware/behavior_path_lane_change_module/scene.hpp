@@ -153,24 +153,15 @@ protected:
     const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes, const Direction direction = Direction::NONE) const;
 
-  bool hasEnoughLengthToCrosswalk(
-    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
+  bool get_lane_change_paths(LaneChangePaths & candidate_paths) const;
 
-  bool hasEnoughLengthToIntersection(
-    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
-
-  bool hasEnoughLengthToTrafficLight(
-    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
-
-  bool getLaneChangePaths(LaneChangePaths & candidate_paths) const;
-
-  LaneChangePath getCandidatePath(
+  LaneChangePath get_candidate_path(
     const LaneChangePhaseMetrics & prep_metrics, const LaneChangePhaseMetrics & lc_metrics,
     const PathWithLaneId & prep_segment, const std::vector<std::vector<int64_t>> & sorted_lane_ids,
     const Pose & lc_start_pose, const double target_lane_length, const double shift_length,
     const double next_lc_buffer, const bool is_goal_in_route) const;
 
-  bool checkCandidatePathSafety(
+  bool check_candidate_path_safety(
     const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects,
     const double lane_change_buffer, const bool is_stuck) const;
 
