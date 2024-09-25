@@ -47,10 +47,7 @@ bool CSVLoader::readCSV(Table & result, const char delim)
       result.push_back(tokens);
     }
   }
-  if (!validateData(result, csv_path_)) {
-    return false;
-  }
-  return true;
+  return validateData(result, csv_path_);
 }
 
 bool CSVLoader::validateMap(const Map & map, const bool is_col_decent)
