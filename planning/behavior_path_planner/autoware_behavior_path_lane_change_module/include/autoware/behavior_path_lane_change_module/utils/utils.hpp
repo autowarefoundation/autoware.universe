@@ -69,10 +69,6 @@ double calcMaximumAcceleration(
   const double current_velocity, const double current_max_velocity,
   const double max_longitudinal_acc, const LaneChangeParameters & lane_change_parameters);
 
-double calcLaneChangingAcceleration(
-  const double initial_lane_changing_velocity, const double max_path_velocity,
-  const double lane_changing_time, const double prepare_longitudinal_acc);
-
 void setPrepareVelocity(
   PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity);
 
@@ -99,17 +95,12 @@ bool pathFootprintExceedsTargetLaneBound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
   const double margin = 0.1);
 
-std::optional<LaneChangePath> constructCandidatePath(
+std::optional<LaneChangePath> construct_candidate_path(
   const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
-  const PathWithLaneId & target_lane_reference_path,
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 
-ShiftLine getLaneChangingShiftLine(
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
-  const PathWithLaneId & reference_path, const double shift_length);
-
-ShiftLine getLaneChangingShiftLine(
+ShiftLine get_lane_changing_shift_line(
   const Pose & lane_changing_start_pose, const Pose & lane_changing_end_pose,
   const PathWithLaneId & reference_path, const double shift_length);
 
@@ -259,23 +250,6 @@ bool isWithinIntersection(
  *              straight lane or no turn direction is specified.
  */
 bool isWithinTurnDirectionLanes(const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon);
-
-/**
- * @brief Calculates the distance required during a lane change operation.
- *
- * Used for computing prepare or lane change length based on current and maximum velocity,
- * acceleration, and duration, returning the lesser of accelerated distance or distance at max
- * velocity.
- *
- * @param velocity The current velocity of the vehicle in meters per second (m/s).
- * @param maximum_velocity The maximum velocity the vehicle can reach in meters per second (m/s).
- * @param acceleration The acceleration of the vehicle in meters per second squared (m/s^2).
- * @param duration The duration of the lane change in seconds (s).
- * @return The calculated minimum distance in meters (m).
- */
-double calcPhaseLength(
-  const double velocity, const double maximum_velocity, const double acceleration,
-  const double time);
 
 LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr);
 
