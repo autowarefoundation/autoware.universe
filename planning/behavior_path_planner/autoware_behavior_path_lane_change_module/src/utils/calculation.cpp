@@ -281,15 +281,6 @@ std::vector<PhaseMetrics> calc_prepare_phase_metrics(
         prepare_length, min_length_threshold, max_length_threshold);
       return true;
     }
-
-    if (metrics.empty()) return false;
-
-    const auto length_diff = std::abs(metrics.back().length - prepare_length);
-    if (length_diff < common_data_ptr->lc_param_ptr->skip_process_lon_diff_th_prepare) {
-      RCLCPP_DEBUG(get_logger(), "Skip: Change in prepare length is less than threshold.");
-      return true;
-    }
-
     return false;
   };
 
@@ -309,7 +300,8 @@ std::vector<PhaseMetrics> calc_prepare_phase_metrics(
 
       if (is_skip(prepare_length)) continue;
 
-      metrics.emplace_back(prepare_duration, prepare_length, prepare_velocity, prepare_accel, 0.0);
+      metrics.emplace_back(
+        prepare_duration, prepare_length, prepare_velocity, lon_accel, prepare_accel, 0.0);
     }
   }
 
@@ -339,15 +331,6 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
         lane_changing_length, max_length_threshold);
       return true;
     }
-
-    if (metrics.empty()) return false;
-
-    const auto length_diff = std::abs(metrics.back().length - lane_changing_length);
-    if (length_diff < common_data_ptr->lc_param_ptr->skip_process_lon_diff_th_lane_changing) {
-      RCLCPP_DEBUG(get_logger(), "Skip: Change in lane changing length is less than threshold.");
-      return true;
-    }
-
     return false;
   };
 
@@ -368,8 +351,8 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
       initial_velocity + lane_changing_accel * lane_changing_duration, min_lc_vel, max_vel);
 
     metrics.emplace_back(
-      lane_changing_duration, lane_changing_length, lane_changing_velocity, lane_changing_accel,
-      lat_acc);
+      lane_changing_duration, lane_changing_length, lane_changing_velocity, lon_accel,
+      lane_changing_accel, lat_acc);
   }
 
   return metrics;

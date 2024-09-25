@@ -198,16 +198,18 @@ struct PhaseMetrics
   double duration{0.0};
   double length{0.0};
   double velocity{0.0};
-  double lon_accel{0.0};
+  double sampled_lon_accel{0.0};
+  double actual_lon_accel{0.0};
   double lat_accel{0.0};
 
   PhaseMetrics(
-    const double _duration, const double _length, const double _velocity, const double _lon_accel,
-    const double _lat_accel)
+    const double _duration, const double _length, const double _velocity,
+    const double _sampled_lon_accel, const double _actual_lon_accel, const double _lat_accel)
   : duration(_duration),
     length(_length),
     velocity(_velocity),
-    lon_accel(_lon_accel),
+    sampled_lon_accel(_sampled_lon_accel),
+    actual_lon_accel(_actual_lon_accel),
     lat_accel(_lat_accel)
   {
   }
@@ -242,7 +244,8 @@ struct Info
     const PhaseMetrics & _prep_metrics, const PhaseMetrics & _lc_metrics,
     const Pose & _lc_start_pose, const Pose & _lc_end_pose, const ShiftLine & _shift_line)
   {
-    longitudinal_acceleration = PhaseInfo{_prep_metrics.lon_accel, _lc_metrics.lon_accel};
+    longitudinal_acceleration =
+      PhaseInfo{_prep_metrics.actual_lon_accel, _lc_metrics.actual_lon_accel};
     duration = PhaseInfo{_prep_metrics.duration, _lc_metrics.duration};
     velocity = PhaseInfo{_prep_metrics.velocity, _prep_metrics.velocity};
     length = PhaseInfo{_prep_metrics.length, _lc_metrics.length};

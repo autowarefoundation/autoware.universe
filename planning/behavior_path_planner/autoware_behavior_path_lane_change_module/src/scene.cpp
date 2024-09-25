@@ -1473,12 +1473,32 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths & candidate_paths) con
     common_data_ptr_, prepare_durations, longitudinal_acc_sampling_values, current_velocity,
     dist_to_target_start, dist_to_terminal_start);
 
+  auto check_length_diff =
+    [&](const double prep_length, const double lc_length, const bool check_lc) {
+      if (candidate_paths.empty()) return true;
+
+      const auto prep_diff = std::abs(candidate_paths.back().info.length.prepare - prep_length);
+      if (prep_diff > lane_change_parameters_->skip_process_lon_diff_th_prepare) return true;
+
+      if (!check_lc) return false;
+
+      const auto lc_diff = std::abs(candidate_paths.back().info.length.lane_changing - lc_length);
+      if (lc_diff > lane_change_parameters_->skip_process_lon_diff_th_lane_changing) return true;
+
+      return false;
+    };
+
   for (const auto & prep_metric : prepare_phase_metrics) {
     const auto debug_print = [&](const auto & s) {
       RCLCPP_DEBUG(
         logger_, "%s | prep_time: %.5f | lon_acc: %.5f | prep_len: %.5f", s, prep_metric.duration,
-        prep_metric.lon_accel, prep_metric.length);
+        prep_metric.actual_lon_accel, prep_metric.length);
     };
+
+    if (!check_length_diff(prep_metric.length, 0.0, false)) {
+      RCLCPP_DEBUG(logger_, "Skip: Change in prepare length is less than threshold.");
+      continue;
+    }
 
     auto prepare_segment =
       getPrepareSegment(current_lanes, common_parameters.backward_path_length, prep_metric.length);
@@ -1532,7 +1552,7 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths & candidate_paths) con
     const auto max_path_velocity = prepare_segment.points.back().point.longitudinal_velocity_mps;
     const auto lane_changing_metrics = calculation::calc_shift_phase_metrics(
       common_data_ptr_, shift_length, prep_metric.velocity, max_path_velocity,
-      prep_metric.lon_accel, max_lane_changing_length);
+      prep_metric.sampled_lon_accel, max_lane_changing_length);
 
     utils::lane_change::setPrepareVelocity(prepare_segment, current_velocity, prep_metric.velocity);
 
@@ -1540,8 +1560,13 @@ bool NormalLaneChange::getLaneChangePaths(LaneChangePaths & candidate_paths) con
       const auto debug_print_lat = [&](const std::string & s) {
         RCLCPP_DEBUG(
           logger_, "%s | lc_time: %.5f | lon_acc: %.5f | lat_acc: %.5f | lc_len: %.5f", s.c_str(),
-          lc_metric.duration, lc_metric.lon_accel, lc_metric.lat_accel, lc_metric.length);
+          lc_metric.duration, lc_metric.actual_lon_accel, lc_metric.lat_accel, lc_metric.length);
       };
+
+      if (!check_length_diff(prep_metric.length, lc_metric.length, true)) {
+        RCLCPP_DEBUG(logger_, "Skip: Change in lane changing length is less than threshold.");
+        continue;
+      }
 
       LaneChangePath candidate_path;
       try {

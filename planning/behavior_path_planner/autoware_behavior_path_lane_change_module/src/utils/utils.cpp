@@ -132,7 +132,7 @@ std::vector<double> getAccelerationValues(
   }
 
   if (max_acc - min_acc < std::numeric_limits<double>::epsilon()) {
-    return {0.0};
+    return {min_acc};
   }
 
   constexpr double epsilon = 0.001;
