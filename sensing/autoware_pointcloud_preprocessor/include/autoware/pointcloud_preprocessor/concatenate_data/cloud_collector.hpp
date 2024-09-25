@@ -38,7 +38,7 @@ public:
 
   void setReferenceTimeStamp(double timestamp, double noise_window);
   std::tuple<double, double> getReferenceTimeStampBoundary();
-  void processCloud(std::string topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud);
+  void processCloud(const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud);
   void concatenateCallback();
   std::tuple<
     sensor_msgs::msg::PointCloud2::SharedPtr,
