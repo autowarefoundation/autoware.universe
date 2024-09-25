@@ -15,7 +15,6 @@
 #include "autoware_raw_vehicle_cmd_converter/csv_loader.hpp"
 
 #include <algorithm>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
