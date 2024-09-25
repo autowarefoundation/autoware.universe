@@ -52,11 +52,11 @@ void CombineCloudHandler::processTwist(
     }
   }
 
-  // pop old data
+  //  twist data that older than 1s will be cleared
+  auto cutoff_time = rclcpp::Time(input->header.stamp) - rclcpp::Duration::from_seconds(1.0);
+
   while (!twist_ptr_queue_.empty()) {
-    if (
-      rclcpp::Time(twist_ptr_queue_.front()->header.stamp) + rclcpp::Duration::from_seconds(1.0) >
-      rclcpp::Time(input->header.stamp)) {
+    if (rclcpp::Time(twist_ptr_queue_.front()->header.stamp) > cutoff_time) {
       break;
     }
     twist_ptr_queue_.pop_front();
@@ -77,11 +77,11 @@ void CombineCloudHandler::processOdometry(const nav_msgs::msg::Odometry::ConstSh
     }
   }
 
-  // pop old data
+  //  odometry data that older than 1s will be cleared
+  auto cutoff_time = rclcpp::Time(input->header.stamp) - rclcpp::Duration::from_seconds(1.0);
+
   while (!twist_ptr_queue_.empty()) {
-    if (
-      rclcpp::Time(twist_ptr_queue_.front()->header.stamp) + rclcpp::Duration::from_seconds(1.0) >
-      rclcpp::Time(input->header.stamp)) {
+    if (rclcpp::Time(twist_ptr_queue_.front()->header.stamp) > cutoff_time) {
       break;
     }
     twist_ptr_queue_.pop_front();
