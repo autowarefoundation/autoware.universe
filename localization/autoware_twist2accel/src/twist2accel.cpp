@@ -22,6 +22,8 @@
 #include <string>
 #include <utility>
 
+using autoware::signal_processing::LowpassFilter1d;
+
 namespace autoware::twist2accel
 {
 using std::placeholders::_1;

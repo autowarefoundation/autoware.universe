@@ -32,9 +32,12 @@ public:
 protected:
   void paintEvent(QPaintEvent * event) override;
   void mouseReleaseEvent(QMouseEvent * event) override;
+  void enterEvent(QEvent * event) override;
+  void leaveEvent(QEvent * event) override;
 
 private:
-  bool blockSignalsGuard = false;  // Guard variable to block signals during updates
+  bool blockSignalsGuard = false;
+  bool isHovered = false;
 };
 
 #endif  // CUSTOM_TOGGLE_SWITCH_HPP_

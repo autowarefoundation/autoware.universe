@@ -44,7 +44,15 @@ void CustomToggleSwitch::paintEvent(QPaintEvent *)
     QColor(autoware::state_rviz_plugin::colors::default_colors.outline.c_str());
   QColor checkedIndicatorColor =
     QColor(autoware::state_rviz_plugin::colors::default_colors.on_primary.c_str());
-  QColor indicatorColor = isChecked ? checkedIndicatorColor : uncheckedIndicatorColor;
+
+  QColor uncheckedHoverIndicatorColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface_variant.c_str());
+  QColor checkedHoverIndicatorColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.primary_container.c_str());
+
+  QColor indicatorColor = isChecked
+                            ? (isHovered ? checkedHoverIndicatorColor : checkedIndicatorColor)
+                            : (isHovered ? uncheckedHoverIndicatorColor : uncheckedIndicatorColor);
 
   QColor uncheckedBgColor =
     QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str());
@@ -52,6 +60,11 @@ void CustomToggleSwitch::paintEvent(QPaintEvent *)
     QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
 
   QColor bgColor = isChecked ? checkedBgColor : uncheckedBgColor;
+
+  // Surface color with 12% opacity for the hover circle
+  QColor hoverCircleColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface.c_str());
+  hoverCircleColor.setAlpha(255 * 0.12);  // 12% opacity
 
   QRect borderR = r.adjusted(-margin, -margin, margin, margin);
   p.setBrush(bgColor);
@@ -84,4 +97,18 @@ void CustomToggleSwitch::setCheckedState(bool state)
   setChecked(state);
   blockSignalsGuard = false;
   update();  // Force repaint
+}
+
+void CustomToggleSwitch::enterEvent(QEvent * event)
+{
+  isHovered = true;
+  update();
+  QCheckBox::enterEvent(event);
+}
+
+void CustomToggleSwitch::leaveEvent(QEvent * event)
+{
+  isHovered = false;
+  update();
+  QCheckBox::leaveEvent(event);
 }

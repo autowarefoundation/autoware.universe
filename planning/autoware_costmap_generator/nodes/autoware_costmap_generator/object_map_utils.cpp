@@ -32,6 +32,8 @@
 
 #include "autoware_costmap_generator/object_map_utils.hpp"
 
+#include <tf2/time.h>
+
 #include <string>
 #include <vector>
 
@@ -59,8 +61,8 @@ void FillPolygonAreas(
   cv::Mat merged_filled_image = original_image.clone();
 
   geometry_msgs::msg::TransformStamped transform;
-  transform = in_tf_buffer.lookupTransform(
-    in_tf_target_frame, in_tf_source_frame, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
+  transform =
+    in_tf_buffer.lookupTransform(in_tf_target_frame, in_tf_source_frame, tf2::TimePointZero);
 
   // calculate out_grid_map position
   grid_map::Position map_pos = out_grid_map.getPosition();
