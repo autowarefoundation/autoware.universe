@@ -220,7 +220,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   }
 
   // protect cloud collectors list
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::unique_lock<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
   // For each callback, check whether there is a exist collector that matches this cloud
   bool collector_found = false;
@@ -235,7 +235,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
           reference_timestamp_max + topic_to_noise_window_map_[topic_name] &&
         rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] >
           reference_timestamp_min - topic_to_noise_window_map_[topic_name]) {
-        lock.unlock();
+        cloud_collectors_lock.unlock();
         cloud_collector->processCloud(topic_name, input_ptr);
         collector_found = true;
         break;
@@ -250,7 +250,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
       cloud_collectors_, combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec);
 
     cloud_collectors_.push_back(new_cloud_collector);
-    lock.unlock();
+    cloud_collectors_lock.unlock();
     new_cloud_collector->setReferenceTimeStamp(
       rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name],
       topic_to_noise_window_map_[topic_name]);
