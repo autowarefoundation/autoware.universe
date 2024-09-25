@@ -45,7 +45,7 @@ int main()
   // Linear Interpolator
   {
     using autoware::motion_utils::trajectory_container::interpolator::Linear;
-    auto interpolator = *Linear::Builder().set_bases(bases).set_values(values).build();
+    auto interpolator = *Linear::Builder{}.set_bases(bases).set_values(values).build();
     std::vector<double> x;
     std::vector<double> y;
     for (double i = bases.front(); i < bases.back(); i += 0.01) {
@@ -59,7 +59,7 @@ int main()
   {
     using autoware::motion_utils::trajectory_container::interpolator::AkimaSpline;
 
-    auto interpolator = *AkimaSpline::Builder().set_bases(bases).set_values(values).build();
+    auto interpolator = *AkimaSpline::Builder{}.set_bases(bases).set_values(values).build();
     std::vector<double> x;
     std::vector<double> y;
     for (double i = bases.front(); i < bases.back(); i += 0.01) {
@@ -72,7 +72,7 @@ int main()
   // CubicSpline Interpolator
   {
     using autoware::motion_utils::trajectory_container::interpolator::CubicSpline;
-    auto interpolator = *CubicSpline::Builder().set_bases(bases).set_values(values).build();
+    auto interpolator = *CubicSpline::Builder{}.set_bases(bases).set_values(values).build();
     std::vector<double> x;
     std::vector<double> y;
     for (double i = bases.front(); i < bases.back(); i += 0.01) {
@@ -86,7 +86,7 @@ int main()
   {
     using autoware::motion_utils::trajectory_container::interpolator::NearestNeighbor;
     auto interpolator =
-      *NearestNeighbor<double>::Builder().set_bases(bases).set_values(values).build();
+      *NearestNeighbor<double>::Builder{}.set_bases(bases).set_values(values).build();
     std::vector<double> x;
     std::vector<double> y;
     for (double i = bases.front(); i < bases.back(); i += 0.01) {
@@ -99,7 +99,7 @@ int main()
   // Stairstep Interpolator
   {
     using autoware::motion_utils::trajectory_container::interpolator::Stairstep;
-    auto interpolator = *Stairstep<double>::Builder().set_bases(bases).set_values(values).build();
+    auto interpolator = *Stairstep<double>::Builder{}.set_bases(bases).set_values(values).build();
     std::vector<double> x;
     std::vector<double> y;
     for (double i = bases.front(); i < bases.back(); i += 0.01) {

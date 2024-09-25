@@ -17,11 +17,17 @@
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__STAIRSTEP_COMMON_IMPL_HPP_  // NOLINT
 // clang-format on
 
-#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_impl_base.hpp"
 
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_container::interpolator::detail
+namespace autoware::motion_utils::trajectory_container::interpolator
+{
+
+template <typename T>
+class Stairstep;
+
+namespace detail
 {
 
 /**
@@ -32,7 +38,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator::detail
  * @tparam T The type of the values being interpolated.
  */
 template <typename T>
-class StairstepCommonImpl : public Interpolator<T>
+class StairstepCommonImpl : public detail::InterpolatorImplBase<Stairstep<T>, T>
 {
 protected:
   std::vector<T> values_;  ///< Interpolation values.
@@ -71,8 +77,8 @@ public:
    */
   [[nodiscard]] size_t minimum_required_points() const override { return 2; }
 };
-
-}  // namespace autoware::motion_utils::trajectory_container::interpolator::detail
+}  // namespace detail
+}  // namespace autoware::motion_utils::trajectory_container::interpolator
 
 // clang-format off
 #endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__STAIRSTEP_COMMON_IMPL_HPP_  // NOLINT

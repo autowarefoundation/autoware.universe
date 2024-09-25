@@ -13,12 +13,15 @@
 // limitations under the License.
 
 // clang-format off
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_BUILDER_HPP_  // NOLINT
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_BUILDER_HPP_  // NOLINT
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_IMPL_BASE_HPP_  // NOLINT
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_IMPL_BASE_HPP_  // NOLINT
 // clang-format on
+
+#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
 
 #include <Eigen/Dense>
 
+#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -27,15 +30,21 @@ namespace autoware::motion_utils::trajectory_container::interpolator::detail
 {
 
 /**
- * @brief Builder for interpolators.
+ * @brief Base class for interpolator implementations.
  *
- * This class provides a builder pattern for interpolators.
+ * This class implements the core functionality for interpolator implementations.
  *
- * @tparam InterpolatorType The type of the interpolator to build.
+ * @tparam InterpolatorType The type of the interpolator implementation.
+ * @tparam T The type of the values being interpolated.
  */
-template <class InterpolatorType>
-struct InterpolatorBuilder
+template <class InterpolatorType, class T>
+struct InterpolatorImplBase : public Interpolator<T>
 {
+  std::shared_ptr<Interpolator<T>> clone() const override
+  {
+    return std::make_shared<InterpolatorType>(static_cast<const InterpolatorType &>(*this));
+  }
+
   class Builder
   {
   private:
@@ -83,5 +92,5 @@ struct InterpolatorBuilder
 }  // namespace autoware::motion_utils::trajectory_container::interpolator::detail
 
 // clang-format off
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_BUILDER_HPP_  // NOLINT
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_IMPL_BASE_HPP_  // NOLINT
 // clang-format on

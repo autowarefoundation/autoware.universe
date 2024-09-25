@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__LINEAR_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__LINEAR_HPP_
 
-#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_builder.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_impl_base.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
 
 #include <Eigen/Dense>
@@ -31,7 +31,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator
  *
  * This class provides methods to perform linear interpolation on a set of data points.
  */
-class Linear : public Interpolator<double>, public detail::InterpolatorBuilder<Linear>
+class Linear : public detail::InterpolatorImplBase<Linear, double>
 {
 private:
   Eigen::VectorXd values_;  ///< Interpolation values.
