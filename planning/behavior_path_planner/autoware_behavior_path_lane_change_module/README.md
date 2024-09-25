@@ -34,7 +34,7 @@ skinparam backgroundColor #WHITE
 start
 
 if (Is current lanes, target lanes OR target neighbor lanes polygon empty?) then (yes)
-  :Return prev approved path;
+  #LightPink:Return prev approved path;
   stop
 else (no)
 endif
@@ -50,10 +50,10 @@ repeat
 
   if (Is LC start point outside target lanes range) then (yes)
     if (Is found a valid path) then (yes)
-      :Return first valid path;
+      #Orange:Return first valid path;
       stop
     else (no)
-      :Return prev approved path;
+      #LightPink:Return prev approved path;
       stop
     endif
   else (no)
@@ -68,7 +68,7 @@ repeat
     if (Is valid candidate path?) then (yes)
       :Store candidate path;
       if (Is candidate path safe?) then (yes)
-        :Return candidate path;
+        #LightGreen:Return candidate path;
         stop
       else (no)
       endif
@@ -78,12 +78,12 @@ repeat
   repeat while (Is finished looping prepare phase metrics) is (FALSE)
 
 if (Is found a valid path) then (yes)
-  :Return first valid path;
+  #Orange:Return first valid path;
   stop
 else (no)
 endif
 
-:Return prev approved path;
+#LightPink:Return prev approved path;
 stop
 
 @enduml
@@ -103,7 +103,7 @@ start
 :Get reference path from target lanes;
 
 if (Is reference path empty?) then (yes)
-  :Return;
+  #LightPink:Return;
   stop
 else (no)
 endif
@@ -116,10 +116,10 @@ note left: set information from sampled prepare phase and shift phase metrics\n<
 :Construct candidate path;
 
 if (Candidate path has enough length?) then (yes)
-  :Return valid candidate path;
+  #LightGreen:Return valid candidate path;
   stop
 else (no)
-  :Return;
+  #LightPink:Return;
   stop
 endif
 
