@@ -237,6 +237,8 @@ private:
     double crossing_obstacle_traj_angle_threshold;
     int num_of_predicted_paths_for_outside_cruise_obstacle;
     int num_of_predicted_paths_for_outside_stop_obstacle;
+    double pedestrian_deceleration_rate;
+    double bicycle_deceleration_rate;
     // obstacle hold
     double stop_obstacle_hold_time_threshold;
     // reach collision point

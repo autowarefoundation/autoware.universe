@@ -368,6 +368,10 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
     "behavior_determination.cruise.outside_obstacle.num_of_predicted_paths");
   num_of_predicted_paths_for_outside_stop_obstacle = node.declare_parameter<int>(
     "behavior_determination.stop.outside_obstacle.num_of_predicted_paths");
+  pedestrian_deceleration_rate = node.declare_parameter<double>(
+    "behavior_determination.stop.outside_obstacle.pedestrian_deceleration_rate");
+  bicycle_deceleration_rate = node.declare_parameter<double>(
+    "behavior_determination.stop.outside_obstacle.bicycle_deceleration_rate");
 }
 
 void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
@@ -475,6 +479,12 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
   autoware::universe_utils::updateParam<int>(
     parameters, "behavior_determination.stop.outside_obstacle.num_of_predicted_paths",
     num_of_predicted_paths_for_outside_stop_obstacle);
+  autoware::universe_utils::updateParam<double>(
+    parameters, "behavior_determination.stop.outside_obstacle.pedestrian_deceleration_rate",
+    pedestrian_deceleration_rate);
+  autoware::universe_utils::updateParam<double>(
+    parameters, "behavior_determination.stop.outside_obstacle.bicycle_deceleration_rate",
+    bicycle_deceleration_rate);
 }
 
 ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions & node_options)
@@ -1664,10 +1674,23 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPred
       return std::nullopt;
     }
 
+    // brkay54: For the pedestrians and bicycles, we need to check the collision point by thinking
+    // they will stop with a predefined deceleration rate to avoid unnecessary stops.
+    double resample_time_horizon = p.prediction_resampling_time_horizon;
+    if (obstacle.classification.label == ObjectClassification::PEDESTRIAN) {
+      resample_time_horizon =
+        std::sqrt(std::pow(obstacle.twist.linear.x, 2) + std::pow(obstacle.twist.linear.y, 2)) /
+        p.pedestrian_deceleration_rate;
+    } else if (obstacle.classification.label == ObjectClassification::BICYCLE) {
+      resample_time_horizon =
+        std::sqrt(std::pow(obstacle.twist.linear.x, 2) + std::pow(obstacle.twist.linear.y, 2)) /
+        p.bicycle_deceleration_rate;
+    }
+
     // Get the highest confidence predicted path
     const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
-      obstacle.predicted_paths, p.prediction_resampling_time_interval,
-      p.prediction_resampling_time_horizon, p.num_of_predicted_paths_for_outside_stop_obstacle);
+      obstacle.predicted_paths, p.prediction_resampling_time_interval, resample_time_horizon,
+      p.num_of_predicted_paths_for_outside_stop_obstacle);
     if (resampled_predicted_paths.empty()) {
       return std::nullopt;
     }

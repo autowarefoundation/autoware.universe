@@ -114,6 +114,8 @@
         outside_obstacle:
           max_lateral_time_margin: 4.0 # time threshold of lateral margin between the obstacles and ego's footprint [s]
           num_of_predicted_paths: 3 # number of the highest confidence predicted path to check collision between obstacle and ego
+          pedestrian_deceleration_rate: 0.5 # planner perceives pedestrians will stop with this rate to avoid unnecessary stops [m/ss]
+          bicycle_deceleration_rate: 0.5 # planner perceives bicycles will stop with this rate to avoid unnecessary stops [m/ss]
         crossing_obstacle:
           collision_time_margin : 4.0 # time threshold of collision between obstacle adn ego for cruise or stop [s]
 
