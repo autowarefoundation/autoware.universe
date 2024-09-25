@@ -43,73 +43,129 @@ public:
   static std::optional<PullOverPath> create(
     const PullOverPlannerType & type, const size_t goal_id, const size_t id,
     const std::vector<PathWithLaneId> & partial_paths, const Pose & start_pose,
-    const Pose & end_pose,
-    const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel);
-
-  PullOverPath(const PullOverPath & other);
-
-  PullOverPlannerType type() const { return type_; }
-  size_t goal_id() const { return goal_id_; }
-  size_t id() const { return id_; }
-  Pose start_pose() const { return start_pose_; }
-  Pose end_pose() const { return end_pose_; }
-
-  std::vector<PathWithLaneId> & partial_paths() { return partial_paths_; }
-  const std::vector<PathWithLaneId> & partial_paths() const { return partial_paths_; }
-
-  // TODO(soblin): use reference to avoid copy once thread-safe design is finished
-  PathWithLaneId full_path() const { return full_path_; }
-  PathWithLaneId parking_path() const { return parking_path_; }
-  std::vector<double> full_path_curvatures() { return full_path_curvatures_; }
-  std::vector<double> parking_path_curvatures() const { return parking_path_curvatures_; }
-  double full_path_max_curvature() const { return full_path_max_curvature_; }
-  double parking_path_max_curvature() const { return parking_path_max_curvature_; }
-  size_t path_idx() const { return path_idx_; }
-
-  bool incrementPathIndex();
-
-  // TODO(soblin): this cannot be const due to decelerateBeforeSearchStart
-  PathWithLaneId & getCurrentPath();
-
-  const PathWithLaneId & getCurrentPath() const;
-
-  std::pair<double, double> getPairsTerminalVelocityAndAccel() const
+    const Pose & end_pose)
   {
-    if (pairs_terminal_velocity_and_accel_.size() <= path_idx_) {
-      return std::make_pair(0.0, 0.0);
+    if (partial_paths.empty()) {
+      return std::nullopt;
     }
-    return pairs_terminal_velocity_and_accel_.at(path_idx_);
+    PathWithLaneId path{};
+    for (size_t i = 0; i < partial_paths.size(); ++i) {
+      if (i == 0) {
+        path.points.insert(
+          path.points.end(), partial_paths.at(i).points.begin(), partial_paths.at(i).points.end());
+      } else {
+        // skip overlapping point
+        path.points.insert(
+          path.points.end(), next(partial_paths.at(i).points.begin()),
+          partial_paths.at(i).points.end());
+      }
+    }
+    PathWithLaneId full_path{};
+    full_path.points = autoware::motion_utils::removeOverlapPoints(path.points);
+    if (full_path.points.size() < 3) {
+      return std::nullopt;
+    }
+
+    const size_t start_idx =
+      autoware::motion_utils::findNearestIndex(full_path.points, start_pose.position);
+
+    PathWithLaneId parking_path{};
+    std::copy(
+      full_path.points.begin() + start_idx, full_path.points.end(),
+      std::back_inserter(parking_path.points));
+
+    if (parking_path.points.size() < 3) {
+      return std::nullopt;
+    }
+
+    const auto calculateCurvaturesAndMax =
+      [](const auto & path) -> std::pair<std::vector<double>, double> {
+      std::vector<double> curvatures = autoware::motion_utils::calcCurvature(path.points);
+      double max_curvature = 0.0;
+      if (!curvatures.empty()) {
+        max_curvature = std::abs(*std::max_element(
+          curvatures.begin(), curvatures.end(),
+          [](const double & a, const double & b) { return std::abs(a) < std::abs(b); }));
+      }
+      return std::make_pair(curvatures, max_curvature);
+    };
+
+    std::vector<double> full_path_curvatures{};
+    std::vector<double> parking_path_curvatures{};
+    double full_path_max_curvature{};
+    double parking_path_max_curvature{};
+    std::tie(full_path_curvatures, full_path_max_curvature) = calculateCurvaturesAndMax(full_path);
+    std::tie(parking_path_curvatures, parking_path_max_curvature) =
+      calculateCurvaturesAndMax(full_path);
+
+    return PullOverPath(
+      type, goal_id, id, start_pose, end_pose, partial_paths, std::move(full_path),
+      std::move(parking_path), std::move(full_path_curvatures), std::move(parking_path_curvatures),
+      full_path_max_curvature, full_path_max_curvature, parking_path_max_curvature);
   }
 
-  std::vector<Pose> debug_poses{};
+  PullOverPath(const PullOverPath &) = default;
+
+  const PullOverPlannerType type;
+  const size_t goal_id;
+  const size_t id;
+  const Pose start_pose;
+  const Pose end_pose;
+
+  // todo: multithreadでこれを参照するとアウト
+  const std::vector<PathWithLaneId> partial_paths;
+  const PathWithLaneId full_path;
+  const PathWithLaneId parking_path;
+
+  const std::vector<double> full_path_curvatures;
+  const std::vector<double> parking_path_curvatures;
+  const double full_path_max_curvature;
+  const double parking_path_max_curvature;
 
 private:
   PullOverPath(
     const PullOverPlannerType & type, const size_t goal_id, const size_t id,
-    const Pose & start_pose, const Pose & end_pose,
-    const std::vector<PathWithLaneId> & partial_paths, const PathWithLaneId & full_path,
-    const PathWithLaneId & parking_path, const std::vector<double> & full_path_curvatures,
-    const std::vector<double> & parking_path_curvatures, const double full_path_max_curvature,
-    const double parking_path_max_curvature,
-    const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel);
+    const Pose & start_pose, const Pose & end_pose, std::vector<PathWithLaneId> && partial_paths,
+    PathWithLaneId && full_path, PathWithLaneId && parking_path,
+    std::vector<double> && full_path_curvatures, std::vector<double> && parking_path_curvatures,
+    const double full_path_max_curvature, const double parking_path_max_curvature)
+  : type(type),
+    goal_id(goal_id),
+    id(id),
+    start_pose(start_pose),
+    end_pose(end_pose),
+    partial_paths(partial_paths),
+    full_path(full_path),
+    parking_path(parking_path),
+    full_path_curvatures(full_path_curvatures),
+    parking_path_curvatures(parking_path_curvatures),
+    full_path_max_curvature(full_path_max_curvature),
+    parking_path_max_curvature(parking_path_max_curvature)
+  {
+  }
 
-  PullOverPlannerType type_;
-  size_t goal_id_;
-  size_t id_;
-  Pose start_pose_;
-  Pose end_pose_;
-
-  std::vector<PathWithLaneId> partial_paths_;
-  PathWithLaneId full_path_;
-  PathWithLaneId parking_path_;
-  std::vector<double> full_path_curvatures_;
-  std::vector<double> parking_path_curvatures_;
-  double full_path_max_curvature_;
-  double parking_path_max_curvature_;
-
+  size_t path_idx{0};
   // accelerate with constant acceleration to the target velocity
-  size_t path_idx_;
-  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel_;
+  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel{};
+  std::vector<Pose> debug_poses{};
+
+  const PathWithLaneId & getCurrentPath() const
+  {
+    if (partial_paths.size() <= path_idx) {
+      return partial_paths.back();
+    }
+    return partial_paths.at(path_idx);
+  }
+
+  // この中でcurrent_pathを更新する
+  bool incrementPathIndex()
+  {
+    if (partial_paths.size() - 1 <= path_idx) {
+      return false;
+    }
+    path_idx += 1;
+    return true;
+  }
 };
 
 class PullOverPlannerBase
