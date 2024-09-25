@@ -705,7 +705,7 @@ std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
     }
   }
   time_keeper_->end_track("createPath");
-  return path;
+  return (!path.empty()) ? std::make_optional(path) : std::nullopt;
 }
 
 void AEB::generatePathFootprint(
