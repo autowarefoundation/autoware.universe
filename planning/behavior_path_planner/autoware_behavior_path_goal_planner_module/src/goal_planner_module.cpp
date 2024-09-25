@@ -1931,7 +1931,9 @@ void GoalPlannerModule::deceleratePath(PullOverPath & pull_over_path) const
   const auto min_decel_distance = calcFeasibleDecelDistance(
     planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk,
     parameters_->pull_over_velocity);
-  for (auto & p : first_path.points) {
+  // todo: partial pathだけ速度を変えてもful_pathには反映されない
+  // auto &で参照しないと速度を変えられない
+  for (auto p : first_path.points) {
     const double distance_from_ego = calcSignedArcLengthFromEgo(first_path, p.point.pose);
     if (min_decel_distance && distance_from_ego < *min_decel_distance) {
       continue;

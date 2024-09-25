@@ -78,8 +78,6 @@ std::optional<PullOverPath> GeometricPullOver::plan(
   if (!pull_over_path_opt) {
     return {};
   }
-  auto & pull_over_path = pull_over_path_opt.value();
-
-  return pull_over_path;
+  return pull_over_path_opt.value();
 }
 }  // namespace autoware::behavior_path_planner

@@ -99,36 +99,85 @@ public:
       calculateCurvaturesAndMax(full_path);
 
     return PullOverPath(
-      type, goal_id, id, start_pose, end_pose, partial_paths, std::move(full_path),
-      std::move(parking_path), std::move(full_path_curvatures), std::move(parking_path_curvatures),
-      full_path_max_curvature, full_path_max_curvature, parking_path_max_curvature);
+      type, goal_id, id, start_pose, end_pose, partial_paths, full_path, parking_path,
+      full_path_curvatures, parking_path_curvatures, full_path_max_curvature,
+      parking_path_max_curvature);
   }
 
-  PullOverPath(const PullOverPath &) = default;
+  PullOverPath(const PullOverPath & other)
+  : type(other.type),
+    goal_id(other.goal_id),
+    id(other.id),
+    start_pose(other.start_pose),
+    end_pose(other.end_pose),
+    partial_paths(other.partial_paths),
+    full_path(other.full_path),
+    parking_path(other.parking_path),
+    full_path_curvatures(other.full_path_curvatures),
+    parking_path_curvatures(other.parking_path_curvatures),
+    full_path_max_curvature(other.full_path_max_curvature),
+    parking_path_max_curvature(other.parking_path_max_curvature),
+    path_idx(other.path_idx),
+    pairs_terminal_velocity_and_accel(other.pairs_terminal_velocity_and_accel)
+  {
+  }
 
-  const PullOverPlannerType type;
-  const size_t goal_id;
-  const size_t id;
-  const Pose start_pose;
-  const Pose end_pose;
+  // ThreadSafeDataのsetterで変更するから全てconstにできない
+  PullOverPlannerType type;
+  size_t goal_id;
+  size_t id;
+  Pose start_pose;
+  Pose end_pose;
 
   // todo: multithreadでこれを参照するとアウト
-  const std::vector<PathWithLaneId> partial_paths;
-  const PathWithLaneId full_path;
-  const PathWithLaneId parking_path;
+  std::vector<PathWithLaneId> partial_paths;
+  PathWithLaneId full_path;
+  PathWithLaneId parking_path;
 
-  const std::vector<double> full_path_curvatures;
-  const std::vector<double> parking_path_curvatures;
-  const double full_path_max_curvature;
-  const double parking_path_max_curvature;
+  std::vector<double> full_path_curvatures;
+  std::vector<double> parking_path_curvatures;
+  double full_path_max_curvature;
+  double parking_path_max_curvature;
+
+  bool incrementPathIndex()
+  {
+    if (partial_paths.size() - 1 <= path_idx) {
+      return false;
+    }
+    path_idx += 1;
+    return true;
+  }
+
+  // todo: decelerateBeforeSearchStartのせいでconstにできない
+  PathWithLaneId & getCurrentPath()
+  {
+    if (partial_paths.size() <= path_idx) {
+      return partial_paths.back();
+    }
+    return partial_paths.at(path_idx);
+  }
+
+  const PathWithLaneId & getCurrentPath() const
+  {
+    if (partial_paths.size() <= path_idx) {
+      return partial_paths.back();
+    }
+    return partial_paths.at(path_idx);
+  }
+
+  size_t path_idx{0};
+  // accelerate with constant acceleration to the target velocity
+  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel{};
+  std::vector<Pose> debug_poses{};
 
 private:
   PullOverPath(
     const PullOverPlannerType & type, const size_t goal_id, const size_t id,
-    const Pose & start_pose, const Pose & end_pose, std::vector<PathWithLaneId> && partial_paths,
-    PathWithLaneId && full_path, PathWithLaneId && parking_path,
-    std::vector<double> && full_path_curvatures, std::vector<double> && parking_path_curvatures,
-    const double full_path_max_curvature, const double parking_path_max_curvature)
+    const Pose & start_pose, const Pose & end_pose,
+    const std::vector<PathWithLaneId> & partial_paths, const PathWithLaneId & full_path,
+    const PathWithLaneId & parking_path, const std::vector<double> & full_path_curvatures,
+    const std::vector<double> & parking_path_curvatures, const double full_path_max_curvature,
+    const double parking_path_max_curvature)
   : type(type),
     goal_id(goal_id),
     id(id),
@@ -142,29 +191,6 @@ private:
     full_path_max_curvature(full_path_max_curvature),
     parking_path_max_curvature(parking_path_max_curvature)
   {
-  }
-
-  size_t path_idx{0};
-  // accelerate with constant acceleration to the target velocity
-  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel{};
-  std::vector<Pose> debug_poses{};
-
-  const PathWithLaneId & getCurrentPath() const
-  {
-    if (partial_paths.size() <= path_idx) {
-      return partial_paths.back();
-    }
-    return partial_paths.at(path_idx);
-  }
-
-  // この中でcurrent_pathを更新する
-  bool incrementPathIndex()
-  {
-    if (partial_paths.size() - 1 <= path_idx) {
-      return false;
-    }
-    path_idx += 1;
-    return true;
   }
 };
 
