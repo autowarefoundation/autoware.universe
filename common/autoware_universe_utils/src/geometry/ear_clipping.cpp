@@ -236,15 +236,19 @@ std::size_t insert_point(
 }
 
 std::size_t linked_list(
-  const alt::PointList2d & ring, const bool clockwise, std::size_t & vertices,
+  const alt::PointList2d & ring, const bool forward, std::size_t & vertices,
   std::vector<LinkedPoint> & points)
 {
   const std::size_t len = ring.size();
   std::optional<std::size_t> last_index = std::nullopt;
 
-  if (clockwise == is_clockwise(ring)) {
-    for (const auto & point : ring) {
-      last_index = insert_point(point, points, last_index);
+  // create forward linked list if forward is true and ring is counter-clockwise, or
+  //                               forward is false and ring is clockwise
+  // create reverse linked list if forward is true and ring is clockwise, or
+  //                               forward is false and ring is counter-clockwise
+  if (forward == !is_clockwise(ring)) {
+    for (auto it = ring.begin(); it != ring.end(); ++it) {
+      last_index = insert_point(*it, points, last_index);
     }
   } else {
     for (auto it = ring.rbegin(); it != ring.rend(); ++it) {
@@ -416,7 +420,7 @@ std::size_t eliminate_holes(
   std::vector<std::size_t> queue;
 
   for (const auto & ring : inners) {
-    auto inner_index = linked_list(ring, true, vertices, points);
+    auto inner_index = linked_list(ring, false, vertices, points);
 
     if (points[inner_index].next_index.value() == inner_index) {
       points[inner_index].steiner = true;
@@ -570,7 +574,7 @@ std::vector<LinkedPoint> perform_triangulation(
   if (polygon.outer().empty()) return points;
 
   indices.reserve(len + outer_ring.size());
-  auto outer_point_index = linked_list(outer_ring, false, vertices, points);
+  auto outer_point_index = linked_list(outer_ring, true, vertices, points);
   if (
     !points[outer_point_index].prev_index.has_value() ||
     outer_point_index == points[outer_point_index].prev_index.value()) {
