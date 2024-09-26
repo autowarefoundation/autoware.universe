@@ -109,31 +109,10 @@ TEST(ConverterTests, LoadValidPath)
   BrakeMap brake_map;
   SteerMap steer_map;
 
-  std::vector<double> map_row_idx = {0.0, 5.0, 10.0};
-  std::vector<double> map_column_idx = {0.0, 0.5, 1.0};
-  std::vector<std::vector<double>> map_value = {
-    {0.0, -0.3, -0.5}, {1.0, 0.5, 0.0}, {3.0, 2.0, 1.5}};
-
   // for valid path
   EXPECT_TRUE(loadAccelMapData(accel_map));
   EXPECT_TRUE(loadBrakeMapData(brake_map));
   EXPECT_TRUE(loadSteerMapData(steer_map));
-
-  // for get function in acceleration
-  EXPECT_EQ(accel_map.getVelIdx(), map_row_idx);
-  EXPECT_EQ(accel_map.getThrottleIdx(), map_column_idx);
-  EXPECT_EQ(accel_map.getAccelMap(), map_value);
-  map_row_idx.clear();
-  map_column_idx.clear();
-  map_value.clear();
-
-  // for get function in brake
-  map_row_idx = {0.0, 5.0, 10.0};
-  map_column_idx = {0.0, 0.5, 1.0};
-  map_value = {{0.0, -0.4, -0.5}, {-1.5, -2.0, -2.0}, {-2.0, -2.5, -3.0}};
-  EXPECT_EQ(brake_map.getVelIdx(), map_row_idx);
-  EXPECT_EQ(brake_map.getBrakeIdx(), map_column_idx);
-  EXPECT_EQ(brake_map.getBrakeMap(), map_value);
 
   // for invalid path
   EXPECT_FALSE(accel_map.readAccelMapFromCSV("invalid.csv", true));
@@ -158,6 +137,16 @@ TEST(ConverterTests, AccelMapCalculation)
     accel_map.getThrottle(acc, vel, output);
     return output;
   };
+
+  // for get function in acceleration
+  std::vector<double> map_column_idx = {0.0, 5.0, 10.0};
+  std::vector<double> map_raw_idx = {0.0, 0.5, 1.0};
+  std::vector<std::vector<double>> map_value = {
+    {0.0, -0.3, -0.5}, {1.0, 0.5, 0.0}, {3.0, 2.0, 1.5}};
+
+  EXPECT_EQ(accel_map.getVelIdx(), map_column_idx);
+  EXPECT_EQ(accel_map.getThrottleIdx(), map_raw_idx);
+  EXPECT_EQ(accel_map.getAccelMap(), map_value);
 
   // case for max vel nominal acc
   EXPECT_DOUBLE_EQ(calcThrottle(0.0, 20.0), 0.5);
@@ -202,6 +191,15 @@ TEST(ConverterTests, BrakeMapCalculation)
     brake_map.getBrake(acc, vel, output);
     return output;
   };
+
+  // for get function in brake
+  std::vector<double> map_column_idx = {0.0, 5.0, 10.0};
+  std::vector<double> map_raw_idx = {0.0, 0.5, 1.0};
+  std::vector<std::vector<double>> map_value = {
+    {0.0, -0.4, -0.5}, {-1.5, -2.0, -2.0}, {-2.0, -2.5, -3.0}};
+  EXPECT_EQ(brake_map.getVelIdx(), map_column_idx);
+  EXPECT_EQ(brake_map.getBrakeIdx(), map_raw_idx);
+  EXPECT_EQ(brake_map.getBrakeMap(), map_value);
 
   // case for min vel min acc
   EXPECT_DOUBLE_EQ(calcBrake(-2.5, 0.0), 1.0);
