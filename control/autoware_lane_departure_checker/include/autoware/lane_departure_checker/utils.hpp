@@ -75,8 +75,18 @@ std::vector<LinearRing2d> createVehicleFootprints(
   const PathWithLaneId & path, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const double footprint_extra_margin);
 
+/**
+ * @brief create convex hull that covers all given footprints
+ * @param footprints vehicle footprints
+ * @return convex hull that covers all footprints
+ */
 LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprints);
 
+/**
+ * @brief create vehicle passing areas from every two consecutive footprints
+ * @param vehicle_footprints vehicle footprints
+ * @return vehicle passing areas
+ */
 std::vector<LinearRing2d> createVehiclePassingAreas(
   const std::vector<LinearRing2d> & vehicle_footprints);
 }  // namespace autoware::lane_departure_checker::utils
