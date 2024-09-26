@@ -198,8 +198,8 @@ CombineCloudHandler::combinePointClouds(
     // convert to original sensor frame if necessary
     bool need_transform_to_sensor_frame = (cloud->header.frame_id != output_frame_);
     if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
-      sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr_in_sensor_frame(
-        new sensor_msgs::msg::PointCloud2());
+      auto transformed_cloud_ptr_in_sensor_frame =
+        std::make_shared<sensor_msgs::msg::PointCloud2>();
       managed_tf_buffer_->transformPointcloud(
         cloud->header.frame_id, *transformed_delay_compensated_cloud_ptr,
         *transformed_cloud_ptr_in_sensor_frame);
