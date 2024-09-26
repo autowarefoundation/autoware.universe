@@ -165,14 +165,35 @@ CombineCloudHandler::combinePointClouds(
       transformed_delay_compensated_cloud_ptr = transformed_cloud_ptr;
     }
 
-    // concatenate
+    // Check if concatenate_cloud_ptr is nullptr, if so initialize it
     if (concatenate_cloud_ptr == nullptr) {
-      concatenate_cloud_ptr =
-        std::make_shared<sensor_msgs::msg::PointCloud2>(*transformed_delay_compensated_cloud_ptr);
-    } else {
-      pcl::concatenatePointCloud(
-        *concatenate_cloud_ptr, *transformed_delay_compensated_cloud_ptr, *concatenate_cloud_ptr);
+      // Initialize concatenate_cloud_ptr without copying the data
+      concatenate_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
+      concatenate_cloud_ptr->header = transformed_delay_compensated_cloud_ptr->header;
+      concatenate_cloud_ptr->height = transformed_delay_compensated_cloud_ptr->height;
+      concatenate_cloud_ptr->width = 0;  // Will be updated with total points
+      concatenate_cloud_ptr->is_dense = transformed_delay_compensated_cloud_ptr->is_dense;
+      concatenate_cloud_ptr->is_bigendian = transformed_delay_compensated_cloud_ptr->is_bigendian;
+      concatenate_cloud_ptr->fields = transformed_delay_compensated_cloud_ptr->fields;
+      concatenate_cloud_ptr->point_step = transformed_delay_compensated_cloud_ptr->point_step;
+      concatenate_cloud_ptr->row_step = 0;  // Will be updated after concatenation
+      concatenate_cloud_ptr->data.clear();
+
+      // Reserve space for the data (assume max points you expect to concatenate)
+      auto num_of_points = transformed_delay_compensated_cloud_ptr->width *
+                           transformed_delay_compensated_cloud_ptr->height;
+      concatenate_cloud_ptr->data.reserve(num_of_points * concatenate_cloud_ptr->point_step);
     }
+
+    // Concatenate the current pointcloud to the concatenated cloud
+    pcl::concatenatePointCloud(
+      *concatenate_cloud_ptr, *transformed_delay_compensated_cloud_ptr, *concatenate_cloud_ptr);
+
+    // Update width and row_step to reflect the new size
+    concatenate_cloud_ptr->width =
+      concatenate_cloud_ptr->data.size() / concatenate_cloud_ptr->point_step;
+    concatenate_cloud_ptr->row_step =
+      concatenate_cloud_ptr->width * concatenate_cloud_ptr->point_step;
 
     // convert to original sensor frame if necessary
     bool need_transform_to_sensor_frame = (cloud->header.frame_id != output_frame_);
