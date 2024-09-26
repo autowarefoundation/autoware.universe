@@ -132,16 +132,14 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     }
   }
 
-  pointcloud_subs.resize(params_.input_topics.size());
-  for (size_t topic_id = 0; topic_id < params_.input_topics.size(); ++topic_id) {
+  for (const std::string & topic : params_.input_topics) {
     std::function<void(const sensor_msgs::msg::PointCloud2::SharedPtr msg)> callback = std::bind(
       &PointCloudConcatenateDataSynchronizerComponent::cloud_callback, this, std::placeholders::_1,
-      params_.input_topics[topic_id]);
+      topic);
 
-    pointcloud_subs[topic_id].reset();
-    pointcloud_subs[topic_id] = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-      params_.input_topics[topic_id], rclcpp::SensorDataQoS().keep_last(params_.maximum_queue_size),
-      callback);
+    auto pointcloud_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      topic, rclcpp::SensorDataQoS().keep_last(params_.maximum_queue_size), callback);
+    pointcloud_subs_.push_back(pointcloud_sub);
   }
   RCLCPP_DEBUG_STREAM(
     get_logger(),
