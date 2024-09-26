@@ -48,9 +48,9 @@ void PathOverlay::setProjectionInfo(
 std::pair<double, double> PathOverlay::localToGeographic(
   double local_x, double local_y, double origin_lat, double origin_lon)
 {
-  if (projector_type_ == "MGRS") {
+  if (projector_type_ == tier4_map_msgs::msg::MapProjectorInfo::MGRS) {
     return localToGeographicMGRS(local_x, local_y, origin_lat, origin_lon, mgrs_grid_);
-  } else {
+  } else if (projector_type_ == tier4_map_msgs::msg::MapProjectorInfo::LOCAL_CARTESIAN_UTM) {
     return localToGeographicUTM(local_x, local_y, origin_lat, origin_lon);
   }
 }
