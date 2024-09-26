@@ -103,6 +103,31 @@ std::deque<geometry_msgs::msg::TwistStamped> CombineCloudHandler::getTwistQueue(
   return twist_queue_;
 }
 
+void CombineCloudHandler::correctPointCloudMotion(
+  const std::shared_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
+  const std::vector<rclcpp::Time> & pc_stamps,
+  std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash_> & transform_memo,
+  std::shared_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr)
+{
+  Eigen::Matrix4f adjust_to_old_data_transform = Eigen::Matrix4f::Identity();
+  rclcpp::Time current_cloud_stamp = rclcpp::Time(transformed_cloud_ptr->header.stamp);
+  for (const auto & stamp : pc_stamps) {
+    if (stamp >= current_cloud_stamp) continue;
+
+    Eigen::Matrix4f new_to_old_transform;
+    if (transform_memo.find(stamp) != transform_memo.end()) {
+      new_to_old_transform = transform_memo[stamp];
+    } else {
+      new_to_old_transform = computeTransformToAdjustForOldTimestamp(stamp, current_cloud_stamp);
+      transform_memo[stamp] = new_to_old_transform;
+    }
+    adjust_to_old_data_transform = new_to_old_transform * adjust_to_old_data_transform;
+    current_cloud_stamp = stamp;
+  }
+  pcl_ros::transformPointCloud(
+    adjust_to_old_data_transform, *transformed_cloud_ptr, *transformed_delay_compensated_cloud_ptr);
+}
+
 std::tuple<
   sensor_msgs::msg::PointCloud2::SharedPtr,
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>,
@@ -130,30 +155,12 @@ CombineCloudHandler::combinePointClouds(
 
     topic_to_original_stamp_map[topic] = rclcpp::Time(cloud->header.stamp).seconds();
 
-    auto transformed_delay_compensated_cloud_ptr =
-      std::make_shared<sensor_msgs::msg::PointCloud2>();
-
+    // compensate pointcloud
+    std::shared_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr;
     if (is_motion_compensated_) {
-      Eigen::Matrix4f adjust_to_old_data_transform = Eigen::Matrix4f::Identity();
-      rclcpp::Time current_cloud_stamp = rclcpp::Time(cloud->header.stamp);
-      for (const auto & stamp : pc_stamps) {
-        if (stamp >= current_cloud_stamp) continue;
-
-        Eigen::Matrix4f new_to_old_transform;
-        if (transform_memo.find(stamp) != transform_memo.end()) {
-          new_to_old_transform = transform_memo[stamp];
-        } else {
-          new_to_old_transform =
-            computeTransformToAdjustForOldTimestamp(stamp, current_cloud_stamp);
-          transform_memo[stamp] = new_to_old_transform;
-        }
-        adjust_to_old_data_transform = new_to_old_transform * adjust_to_old_data_transform;
-        current_cloud_stamp = stamp;
-      }
-      pcl_ros::transformPointCloud(
-        adjust_to_old_data_transform, *transformed_cloud_ptr,
-        *transformed_delay_compensated_cloud_ptr);
-
+      transformed_delay_compensated_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
+      correctPointCloudMotion(
+        transformed_cloud_ptr, pc_stamps, transform_memo, transformed_delay_compensated_cloud_ptr);
     } else {
       transformed_delay_compensated_cloud_ptr = transformed_cloud_ptr;
     }

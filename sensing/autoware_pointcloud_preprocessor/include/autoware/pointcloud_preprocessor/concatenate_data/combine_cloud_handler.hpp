@@ -71,6 +71,12 @@ private:
     }
   };
 
+  void correctPointCloudMotion(
+    const std::shared_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
+    const std::vector<rclcpp::Time> & pc_stamps,
+    std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash_> & transform_memo,
+    std::shared_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr);
+
 public:
   CombineCloudHandler(
     rclcpp::Node * node, std::vector<std::string> input_topics, std::string output_frame,
