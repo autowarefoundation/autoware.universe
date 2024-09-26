@@ -160,9 +160,6 @@ private:
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
     const double dist_threshold, const double yaw_threshold);
 
-  static std::vector<LinearRing2d> createVehiclePassingAreas(
-    const std::vector<LinearRing2d> & vehicle_footprints);
-
   bool willLeaveLane(
     const lanelet::ConstLanelets & candidate_lanelets,
     const std::vector<LinearRing2d> & vehicle_footprints) const;

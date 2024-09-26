@@ -113,7 +113,7 @@ Output LaneDepartureChecker::update(const Input & input)
     param_.footprint_margin_scale);
   output.processing_time_map["createVehicleFootprints"] = stop_watch.toc(true);
 
-  output.vehicle_passing_areas = createVehiclePassingAreas(output.vehicle_footprints);
+  output.vehicle_passing_areas = utils::createVehiclePassingAreas(output.vehicle_footprints);
   output.processing_time_map["createVehiclePassingAreas"] = stop_watch.toc(true);
 
   const auto candidate_road_lanelets =
@@ -162,20 +162,6 @@ PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
   const auto nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     trajectory.points, pose, dist_threshold, yaw_threshold);
   return autoware::universe_utils::calcPoseDeviation(trajectory.points.at(nearest_idx).pose, pose);
-}
-
-std::vector<LinearRing2d> LaneDepartureChecker::createVehiclePassingAreas(
-  const std::vector<LinearRing2d> & vehicle_footprints)
-{
-  // Create hull from two adjacent vehicle footprints
-  std::vector<LinearRing2d> areas;
-  for (size_t i = 0; i < vehicle_footprints.size() - 1; ++i) {
-    const auto & footprint1 = vehicle_footprints.at(i);
-    const auto & footprint2 = vehicle_footprints.at(i + 1);
-    areas.push_back(createHullFromFootprints({footprint1, footprint2}));
-  }
-
-  return areas;
 }
 
 bool LaneDepartureChecker::willLeaveLane(

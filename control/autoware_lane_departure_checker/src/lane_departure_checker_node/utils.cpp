@@ -176,4 +176,22 @@ LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprin
 
   return hull;
 }
+
+std::vector<LinearRing2d> createVehiclePassingAreas(
+  const std::vector<LinearRing2d> & vehicle_footprints)
+{
+  if (vehicle_footprints.size() < 2) {
+    return {};
+  }
+
+  // Create hull from two adjacent vehicle footprints
+  std::vector<LinearRing2d> areas;
+  for (size_t i = 0; i < vehicle_footprints.size() - 1; ++i) {
+    const auto & footprint1 = vehicle_footprints.at(i);
+    const auto & footprint2 = vehicle_footprints.at(i + 1);
+    areas.push_back(createHullFromFootprints({footprint1, footprint2}));
+  }
+
+  return areas;
+}
 }  // namespace autoware::lane_departure_checker::utils

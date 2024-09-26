@@ -76,6 +76,9 @@ std::vector<LinearRing2d> createVehicleFootprints(
   const double footprint_extra_margin);
 
 LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprints);
+
+std::vector<LinearRing2d> createVehiclePassingAreas(
+  const std::vector<LinearRing2d> & vehicle_footprints);
 }  // namespace autoware::lane_departure_checker::utils
 
 #endif  // AUTOWARE__LANE_DEPARTURE_CHECKER__UTILS_HPP_
