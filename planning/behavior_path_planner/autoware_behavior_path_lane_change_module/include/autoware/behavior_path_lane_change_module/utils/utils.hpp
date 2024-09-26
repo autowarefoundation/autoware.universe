@@ -211,8 +211,6 @@ rclcpp::Logger getLogger(const std::string & type);
  */
 Polygon2d getEgoCurrentFootprint(const Pose & ego_pose, const VehicleInfo & ego_info);
 
-Point getEgoFrontVertex(const Pose & ego_pose, const VehicleInfo & ego_info, bool left);
-
 /**
  * @brief Checks if the given polygon is within an intersection area.
  *

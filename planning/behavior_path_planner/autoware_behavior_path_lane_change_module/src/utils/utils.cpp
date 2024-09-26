@@ -1024,14 +1024,6 @@ Polygon2d getEgoCurrentFootprint(
   return autoware::universe_utils::toFootprint(ego_pose, base_to_front, base_to_rear, width);
 }
 
-Point getEgoFrontVertex(
-  const Pose & ego_pose, const autoware::vehicle_info_utils::VehicleInfo & ego_info, bool left)
-{
-  const double lon_offset = ego_info.wheel_base_m + ego_info.front_overhang_m;
-  const double lat_offset = 0.5 * (left ? ego_info.vehicle_width_m : -ego_info.vehicle_width_m);
-  return autoware::universe_utils::calcOffsetPose(ego_pose, lon_offset, lat_offset, 0.0).position;
-}
-
 bool isWithinIntersection(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lanelet,
   const Polygon2d & polygon)
