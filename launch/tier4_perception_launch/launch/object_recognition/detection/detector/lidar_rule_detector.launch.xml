@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 <launch>
+  <!-- Lidar rule detector parameters -->
+  <arg name="use_low_intensity_cluster_filter"/>
+
   <!-- External interfaces -->
   <arg name="node/pointcloud_container"/>
   <arg name="input/pointcloud_map/pointcloud"/>
@@ -20,9 +23,19 @@
       </include>
     </group>
 
+    <!-- low_intensity_cluster_filter -->
     <group>
-      <include file="$(find-pkg-share autoware_shape_estimation)/launch/shape_estimation.launch.xml">
+      <include file="$(find-pkg-share autoware_raindrop_cluster_filter)/launch/low_intensity_cluster_filter.launch.xml" if="$(var use_low_intensity_cluster_filter)">
         <arg name="input/objects" value="clusters"/>
+        <arg name="output/objects" value="filtered/clusters"/>
+      </include>
+    </group>
+
+    <group>
+      <let name="shape_estimation/input" value="filtered/clusters" if="$(var use_low_intensity_cluster_filter)"/>
+      <let name="shape_estimation/input" value="clusters" unless="$(var use_low_intensity_cluster_filter)"/>
+      <include file="$(find-pkg-share autoware_shape_estimation)/launch/shape_estimation.launch.xml">
+        <arg name="input/objects" value="$(var shape_estimation/input)"/>
         <arg name="output/objects" value="objects_with_feature"/>
       </include>
     </group>

@@ -184,6 +184,7 @@
       <arg name="input/obstacle_segmentation/pointcloud" value="$(var input/obstacle_segmentation/pointcloud)"/>
       <arg name="output/objects" value="$(var lidar_rule_detector/output/objects)"/>
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
+      <arg name="use_low_intensity_cluster_filter" value="$(var use_low_intensity_cluster_filter)"/>
     </include>
   </group>
   <group if="$(var switch/detector/radar)">
