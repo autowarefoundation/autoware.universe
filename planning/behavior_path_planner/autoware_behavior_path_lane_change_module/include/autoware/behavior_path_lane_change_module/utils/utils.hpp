@@ -91,6 +91,10 @@ bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
 
+bool pathFootprintExceedsTargetLaneBound(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
+  const double margin = 0.1);
+
 std::optional<LaneChangePath> construct_candidate_path(
   const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
   const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
@@ -210,6 +214,8 @@ rclcpp::Logger getLogger(const std::string & type);
  * @return Polygon2d A polygon representing the current 2D footprint of the ego vehicle.
  */
 Polygon2d getEgoCurrentFootprint(const Pose & ego_pose, const VehicleInfo & ego_info);
+
+Point getEgoFrontVertex(const Pose & ego_pose, const VehicleInfo & ego_info, bool left);
 
 /**
  * @brief Checks if the given polygon is within an intersection area.
