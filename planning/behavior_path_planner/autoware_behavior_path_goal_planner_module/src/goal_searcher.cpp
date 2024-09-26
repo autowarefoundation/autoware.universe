@@ -119,11 +119,8 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
   const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
     *route_handler, left_side_parking_, parameters_.backward_goal_search_length,
     parameters_.forward_goal_search_length);
-  auto lanes = utils::getExtendedCurrentLanes(
-    planner_data, backward_length, forward_length,
-    /*forward_only_in_route*/ false);
-  lanes.insert(lanes.end(), pull_over_lanes.begin(), pull_over_lanes.end());
-
+  const auto departure_check_lane = goal_planner_utils::createDepartureCheckLanelet(
+    pull_over_lanes, *route_handler, left_side_parking_);
   const auto goal_arc_coords =
     lanelet::utils::getArcCoordinates(pull_over_lanes, reference_goal_pose_);
   const double s_start = std::max(0.0, goal_arc_coords.length - backward_length);
@@ -194,7 +191,8 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
         break;
       }
 
-      if (LaneDepartureChecker::isOutOfLane(lanes, transformed_vehicle_footprint)) {
+      if (!boost::geometry::within(
+            transformed_vehicle_footprint, departure_check_lane.polygon2d().basicPolygon())) {
         continue;
       }
 
