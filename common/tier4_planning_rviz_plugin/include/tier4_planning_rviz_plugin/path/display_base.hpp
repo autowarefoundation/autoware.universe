@@ -332,9 +332,6 @@ protected:
     // visualize Path
     visualizePath(msg_ptr);
 
-    // Visualize second path (last part of the path)
-    // visualizeEndOfPath(msg_ptr, 0.2);  // Draw the last 20% of the path
-
     // visualize drivable area
     visualizeDrivableArea(msg_ptr);
 
@@ -568,111 +565,6 @@ protected:
 
     path_manual_object_->end();
     velocity_manual_object_->end();
-  }
-
-  void visualizeEndOfPath(const typename T::ConstSharedPtr msg_ptr, double percentage = 0.2)
-  {
-    if (msg_ptr->points.empty()) {
-      return;
-    }
-
-    // Calculate total distance
-    double total_distance = 0.0;
-    std::vector<double> cumulative_distances;
-    cumulative_distances.push_back(0.0);
-
-    for (size_t point_idx = 1; point_idx < msg_ptr->points.size(); point_idx++) {
-      const auto & prev_point =
-        autoware::universe_utils::getPose(msg_ptr->points.at(point_idx - 1));
-      const auto & current_point = autoware::universe_utils::getPose(msg_ptr->points.at(point_idx));
-
-      double distance = std::sqrt(
-        std::pow(current_point.position.x - prev_point.position.x, 2) +
-        std::pow(current_point.position.y - prev_point.position.y, 2) +
-        std::pow(current_point.position.z - prev_point.position.z, 2));
-
-      total_distance += distance;
-      cumulative_distances.push_back(total_distance);
-    }
-
-    // Define threshold for the last part of the path
-    double distance_threshold = total_distance * (1.0 - percentage);
-
-    // Begin drawing the second path (last part)
-    Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(
-      "BaseWhiteNoLighting", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-    material->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
-    // material->setDepthWriteEnabled(false);  // Disable writing to the depth buffer
-    material->setDepthCheckEnabled(false);  // Disable depth checking to render on top
-
-    path_end_manual_object_->estimateVertexCount(msg_ptr->points.size() * 2);
-    path_end_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_STRIP);
-
-    const auto info = vehicle_footprint_info_;
-    const float left = property_path_width_view_.getBool() ? -property_path_width_.getFloat() / 2.0
-                                                           : -info->width / 2.0;
-    const float right = property_path_width_view_.getBool() ? property_path_width_.getFloat() / 2.0
-                                                            : info->width / 2.0;
-
-    for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
-      if (cumulative_distances[point_idx] < distance_threshold) {
-        // Skip points before the threshold
-        continue;
-      }
-
-      const auto & path_point = msg_ptr->points.at(point_idx);
-      const auto & pose = autoware::universe_utils::getPose(path_point);
-      const auto & velocity = autoware::universe_utils::getLongitudinalVelocity(path_point);
-
-      Ogre::ColourValue color;
-      Ogre::ColourValue bg_color = getBackgroundColor();  // Access the RViz background color
-
-      // color change depending on velocity
-      std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-        setColorDependsOnVelocity(property_vel_max_.getFloat(), velocity);
-
-      // Fade to background color
-      std::unique_ptr<Ogre::ColourValue> faded_color_ptr =
-        fadeToBackgroundColor(ogreToQColor(*dynamic_color_ptr), bg_color);
-
-      color = *faded_color_ptr;
-
-      color.a = property_path_alpha_.getFloat();
-
-      Eigen::Vector3f vec_in;
-      Eigen::Vector3f vec_out;
-      Eigen::Quaternionf quat_yaw_reverse(0, 0, 0, 1);
-      {
-        vec_in << 0, right, 0;
-        Eigen::Quaternionf quat(
-          pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
-        if (!isDrivingForward(msg_ptr->points, point_idx)) {
-          quat *= quat_yaw_reverse;
-        }
-        vec_out = quat * vec_in;
-        path_end_manual_object_->position(
-          static_cast<float>(pose.position.x) + vec_out.x(),
-          static_cast<float>(pose.position.y) + vec_out.y(),
-          static_cast<float>(pose.position.z) + vec_out.z() + 0.1);
-        path_end_manual_object_->colour(color);
-      }
-      {
-        vec_in << 0, left, 0;
-        Eigen::Quaternionf quat(
-          pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
-        if (!isDrivingForward(msg_ptr->points, point_idx)) {
-          quat *= quat_yaw_reverse;
-        }
-        vec_out = quat * vec_in;
-        path_end_manual_object_->position(
-          static_cast<float>(pose.position.x) + vec_out.x(),
-          static_cast<float>(pose.position.y) + vec_out.y(),
-          static_cast<float>(pose.position.z) + vec_out.z() + 0.1);
-        path_end_manual_object_->colour(color);
-      }
-    }
-
-    path_end_manual_object_->end();
   }
 
   void visualizePathFootprint(const typename T::ConstSharedPtr msg_ptr)
