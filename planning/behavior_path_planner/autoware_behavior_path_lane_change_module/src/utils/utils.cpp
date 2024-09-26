@@ -200,7 +200,6 @@ bool isPathInLanelets(
   return true;
 }
 
-// TODO:remove this suppression after implementation
 // cppcheck-suppress unusedFunction
 bool pathFootprintExceedsTargetLaneBound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
