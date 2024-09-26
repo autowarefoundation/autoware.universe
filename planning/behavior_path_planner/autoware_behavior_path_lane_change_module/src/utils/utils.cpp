@@ -200,36 +200,6 @@ bool isPathInLanelets(
   return true;
 }
 
-bool pathFootprintExceedsTargetLaneBound(
-  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
-  const double margin)
-{
-  if (common_data_ptr->direction == Direction::NONE || path.points.empty()) {
-    return false;
-  }
-
-  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
-  const bool is_left = common_data_ptr->direction == Direction::LEFT;
-
-  const auto combined_target_lane = lanelet::utils::combineLaneletsShape(target_lanes);
-
-  for (const auto & path_point : path.points) {
-    const auto & pose = path_point.point.pose;
-    const auto front_vertex = getEgoFrontVertex(pose, ego_info, is_left);
-
-    const auto sign = is_left ? -1.0 : 1.0;
-    const auto dist_to_boundary =
-      sign * utils::getSignedDistanceFromLaneBoundary(combined_target_lane, front_vertex, is_left);
-
-    if (dist_to_boundary < margin) {
-      RCLCPP_DEBUG(get_logger(), "Path footprint exceeds target lane boundary");
-      return true;
-    }
-  }
-
-  return false;
-}
-
 std::optional<LaneChangePath> construct_candidate_path(
   const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
   const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
