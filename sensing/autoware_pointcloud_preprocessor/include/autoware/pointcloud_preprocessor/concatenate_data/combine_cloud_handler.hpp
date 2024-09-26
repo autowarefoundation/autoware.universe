@@ -59,7 +59,7 @@ struct ConcatenatedCloudResult
 class CombineCloudHandler
 {
 private:
-  rclcpp::Node * node_;
+  rclcpp::Node & node_;
 
   std::vector<std::string> input_topics_;
   std::string output_frame_;
@@ -87,7 +87,7 @@ private:
 
 public:
   CombineCloudHandler(
-    rclcpp::Node * node, std::vector<std::string> input_topics, std::string output_frame,
+    rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
     bool is_motion_compensated, bool keep_input_frame_in_synchronized_pointcloud,
     bool has_static_tf_only);
   void processTwist(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & input);

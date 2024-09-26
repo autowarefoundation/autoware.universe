@@ -153,7 +153,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // Combine cloud handler
   combine_cloud_handler_ = std::make_shared<CombineCloudHandler>(
-    this, params_.input_topics, params_.output_frame, params_.is_motion_compensated,
+    *this, params_.input_topics, params_.output_frame, params_.is_motion_compensated,
     params_.keep_input_frame_in_synchronized_pointcloud, params_.has_static_tf_only);
 
   // Diagnostic Updater

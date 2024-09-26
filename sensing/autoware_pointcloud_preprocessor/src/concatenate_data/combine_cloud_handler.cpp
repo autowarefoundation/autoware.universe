@@ -29,7 +29,7 @@ namespace autoware::pointcloud_preprocessor
 {
 
 CombineCloudHandler::CombineCloudHandler(
-  rclcpp::Node * node, std::vector<std::string> input_topics, std::string output_frame,
+  rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
   bool is_motion_compensated, bool keep_input_frame_in_synchronized_pointcloud,
   bool has_static_tf_only)
 : node_(node),
@@ -38,7 +38,7 @@ CombineCloudHandler::CombineCloudHandler(
   is_motion_compensated_(is_motion_compensated),
   keep_input_frame_in_synchronized_pointcloud_(keep_input_frame_in_synchronized_pointcloud),
   managed_tf_buffer_(
-    std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(node_, has_static_tf_only))
+    std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(&node_, has_static_tf_only))
 {
 }
 
@@ -232,7 +232,7 @@ Eigen::Matrix4f CombineCloudHandler::computeTransformToAdjustForOldTimestamp(
   // return identity if no twist is available
   if (twist_queue_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), std::chrono::milliseconds(10000).count(),
+      node_.get_logger(), *node_.get_clock(), std::chrono::milliseconds(10000).count(),
       "No twist is available. Please confirm twist topic and timestamp. Leaving point cloud "
       "untransformed.");
     return Eigen::Matrix4f::Identity();
@@ -265,7 +265,7 @@ Eigen::Matrix4f CombineCloudHandler::computeTransformToAdjustForOldTimestamp(
 
     if (std::fabs(dt) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
-        node_->get_logger(), *node_->get_clock(), std::chrono::milliseconds(10000).count(),
+        node_.get_logger(), *node_.get_clock(), std::chrono::milliseconds(10000).count(),
         "Time difference is too large. Cloud not interpolate. Please confirm twist topic and "
         "timestamp");
       break;
