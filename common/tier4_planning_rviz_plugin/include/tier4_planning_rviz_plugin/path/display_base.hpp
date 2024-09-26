@@ -24,7 +24,6 @@
 #include <rviz_common/properties/color_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_common/properties/parse_color.hpp>
-#include <rviz_common/render_panel.hpp>  // For accessing the RenderPanel
 #include <rviz_common/validate_floats.hpp>
 #include <rviz_rendering/objects/movable_text.hpp>
 
@@ -35,7 +34,6 @@
 #include <OgreMaterialManager.h>
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
-#include <OgreViewport.h>  // For accessing the viewport and its background color
 
 #include <deque>
 #include <memory>
@@ -81,7 +79,7 @@ public:
     property_min_color_("Min Velocity Color", QColor("#3F2EE3"), "", &property_path_view_),
     property_mid_color_("Mid Velocity Color", QColor("#208AAE"), "", &property_path_view_),
     property_max_color_("Max Velocity Color", QColor("#00E678"), "", &property_path_view_),
-
+    property_fade_out_distance_{"Fade Out Distance", 0.0, "[m]", &property_path_view_},
     property_vel_max_{"Color Border Vel Max", 3.0, "[m/s]", this},
     // velocity
     property_velocity_view_{"View Velocity", true, "", this},
@@ -139,7 +137,6 @@ public:
   {
     if (this->initialized()) {
       this->scene_manager_->destroyManualObject(path_manual_object_);
-      this->scene_manager_->destroyManualObject(path_end_manual_object_);
       this->scene_manager_->destroyManualObject(velocity_manual_object_);
       for (size_t i = 0; i < velocity_text_nodes_.size(); i++) {
         Ogre::SceneNode * node = velocity_text_nodes_.at(i);
@@ -162,17 +159,14 @@ public:
     rviz_common::MessageFilterDisplay<T>::MFDClass::onInitialize();
 
     path_manual_object_ = this->scene_manager_->createManualObject();
-    path_end_manual_object_ = this->scene_manager_->createManualObject();
     velocity_manual_object_ = this->scene_manager_->createManualObject();
     footprint_manual_object_ = this->scene_manager_->createManualObject();
     point_manual_object_ = this->scene_manager_->createManualObject();
     path_manual_object_->setDynamic(true);
-    path_end_manual_object_->setDynamic(true);
     velocity_manual_object_->setDynamic(true);
     footprint_manual_object_->setDynamic(true);
     point_manual_object_->setDynamic(true);
     this->scene_node_->attachObject(path_manual_object_);
-    this->scene_node_->attachObject(path_end_manual_object_);
     this->scene_node_->attachObject(velocity_manual_object_);
     this->scene_node_->attachObject(footprint_manual_object_);
     this->scene_node_->attachObject(point_manual_object_);
@@ -182,7 +176,6 @@ public:
   {
     rviz_common::MessageFilterDisplay<T>::MFDClass::reset();
     path_manual_object_->clear();
-    path_end_manual_object_->clear();
     velocity_manual_object_->clear();
 
     for (size_t i = 0; i < velocity_texts_.size(); i++) {
@@ -208,31 +201,6 @@ public:
   }
 
 protected:
-  QColor ogreToQColor(const Ogre::ColourValue & ogre_color)
-  {
-    return QColor(
-      static_cast<int>(ogre_color.r * 255), static_cast<int>(ogre_color.g * 255),
-      static_cast<int>(ogre_color.b * 255));
-  }
-  std::unique_ptr<Ogre::ColourValue> fadeToBackgroundColor(
-    const QColor & max_color, const Ogre::ColourValue & bg_color)
-  {
-    std::unique_ptr<Ogre::ColourValue> color_ptr(new Ogre::ColourValue());
-
-    // Interpolate between max color and background color based on ratio (0.0 -> max_color, 1.0
-    // -> bg_color)
-    color_ptr->r = static_cast<float>(max_color.redF() * (1.0 - 0.8) + bg_color.r * 0.8);
-    color_ptr->g = static_cast<float>(max_color.greenF() * (1.0 - 0.8) + bg_color.g * 0.8);
-    color_ptr->b = static_cast<float>(max_color.blueF() * (1.0 - 0.8) + bg_color.b * 0.8);
-
-    // Reduce alpha to fade out the color, starting from max alpha (1.0) to nearly transparent
-    // color_ptr->a =
-    //   static_cast<float>(1.0 * (1.0 - ratio));  // Gradually reduce opacity as ratio
-    //   increases
-
-    return color_ptr;
-  }
-
   std::unique_ptr<Ogre::ColourValue> gradation(
     const QColor & color_min, const QColor & color_max, const double ratio)
   {
@@ -246,23 +214,6 @@ protected:
     return color_ptr;
   }
 
-  Ogre::ColourValue getBackgroundColor()
-  {
-    // Access the scene manager from the display context
-    Ogre::SceneManager * scene_manager = this->context_->getSceneManager();
-    if (scene_manager) {
-      // Access the background color from the scene manager's viewport
-      Ogre::Viewport * viewport = scene_manager->getCurrentViewport();
-      if (viewport) {
-        // Return the background color
-        return viewport->getBackgroundColour();
-      }
-    }
-
-    // Default background color if we can't access it
-    return Ogre::ColourValue(0, 0, 0);  // Black as default
-  }
-
   std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
     const double vel_max, const double cmd_vel)
   {
@@ -270,8 +221,6 @@ protected:
     const double vel_min = 0.0;
 
     std::unique_ptr<Ogre::ColourValue> color_ptr(new Ogre::ColourValue());
-    // Ogre::ColourValue bg_color = getBackgroundColor();  // Access the RViz background color
-
     if (vel_min < cmd_vel_abs && cmd_vel_abs <= (vel_max / 2.0)) {
       double ratio = (cmd_vel_abs) / (vel_max / 2.0);
       color_ptr = gradation(property_min_color_.getColor(), property_mid_color_.getColor(), ratio);
@@ -289,7 +238,6 @@ protected:
 
     return color_ptr;
   }
-
   virtual void visualizeDrivableArea([[maybe_unused]] const typename T::ConstSharedPtr msg_ptr) {}
   virtual void preProcessMessageDetail() {}
   virtual void preVisualizePathFootprintDetail(
@@ -304,7 +252,6 @@ protected:
   void processMessage(const typename T::ConstSharedPtr msg_ptr) override
   {
     path_manual_object_->clear();
-    path_end_manual_object_->clear();
     velocity_manual_object_->clear();
     footprint_manual_object_->clear();
     point_manual_object_->clear();
@@ -433,7 +380,7 @@ protected:
       const auto & path_point = msg_ptr->points.at(point_idx);
       const auto & pose = autoware::universe_utils::getPose(path_point);
       const auto & velocity = autoware::universe_utils::getLongitudinalVelocity(path_point);
-      // find out the disance between current and start point
+      // find out the distance between current and start point
       cumulative_distance += distances[point_idx];  // Use precomputed distances
 
       // path
@@ -687,7 +634,6 @@ protected:
   }
 
   Ogre::ManualObject * path_manual_object_{nullptr};
-  Ogre::ManualObject * path_end_manual_object_{nullptr};
   Ogre::ManualObject * velocity_manual_object_{nullptr};
   Ogre::ManualObject * footprint_manual_object_{nullptr};
   Ogre::ManualObject * point_manual_object_{nullptr};
@@ -704,6 +650,8 @@ protected:
   rviz_common::properties::ColorProperty property_min_color_;
   rviz_common::properties::ColorProperty property_mid_color_;
   rviz_common::properties::ColorProperty property_max_color_;
+  // Property for fading out the path
+  rviz_common::properties::FloatProperty property_fade_out_distance_;
 
   rviz_common::properties::FloatProperty property_vel_max_;
   rviz_common::properties::BoolProperty property_velocity_view_;
