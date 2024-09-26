@@ -416,7 +416,7 @@ std::size_t eliminate_holes(
   std::vector<std::size_t> queue;
 
   for (const auto & ring : inners) {
-    auto inner_index = linked_list(ring, false, vertices, points);
+    auto inner_index = linked_list(ring, true, vertices, points);
 
     if (points[inner_index].next_index.value() == inner_index) {
       points[inner_index].steiner = true;
@@ -570,7 +570,7 @@ std::vector<LinkedPoint> perform_triangulation(
   if (polygon.outer().empty()) return points;
 
   indices.reserve(len + outer_ring.size());
-  auto outer_point_index = linked_list(outer_ring, true, vertices, points);
+  auto outer_point_index = linked_list(outer_ring, false, vertices, points);
   if (
     !points[outer_point_index].prev_index.has_value() ||
     outer_point_index == points[outer_point_index].prev_index.value()) {
