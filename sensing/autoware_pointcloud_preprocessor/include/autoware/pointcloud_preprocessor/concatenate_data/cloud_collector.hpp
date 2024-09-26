@@ -46,13 +46,6 @@ public:
     std::unordered_map<std::string, double>>
   concatenateClouds(
     std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map);
-
-  void publishClouds(
-    sensor_msgs::msg::PointCloud2::SharedPtr concatenate_cloud_ptr,
-    std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
-      topic_to_transformed_cloud_map,
-    std::unordered_map<std::string, double> topic_to_original_stamp_map);
-
   void deleteCollector();
 
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> getTopicToCloudMap();
