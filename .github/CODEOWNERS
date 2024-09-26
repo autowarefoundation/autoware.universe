@@ -210,7 +210,7 @@ sensing/autoware_radar_threshold_filter/** satoshi.tanaka@tier4.jp shunsuke.miur
 sensing/autoware_radar_tracks_noise_filter/** satoshi.tanaka@tier4.jp shunsuke.miura@tier4.jp taekjin.lee@tier4.jp yoshi.ri@tier4.jp
 sensing/cuda_utils/** daisuke.nishimatsu@tier4.jp manato.hirabayashi@tier4.jp
 sensing/livox/autoware_livox_tag_filter/** kenzo.lobos@tier4.jp ryohsuke.mitsudome@tier4.jp
-sensing/vehicle_velocity_converter/** ryu.yamamoto@tier4.jp
+sensing/autoware_vehicle_velocity_converter/** ryu.yamamoto@tier4.jp
 simulator/autoware_carla_interface/** maxime.clement@tier4.jp mradityagio@gmail.com
 simulator/dummy_perception_publisher/** yukihiro.saito@tier4.jp
 simulator/fault_injection/** keisuke.shima@tier4.jp

@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "vehicle_velocity_converter/vehicle_velocity_converter.hpp"
+#include "vehicle_velocity_converter.hpp"
 
+namespace autoware::vehicle_velocity_converter
+{
 VehicleVelocityConverter::VehicleVelocityConverter(const rclcpp::NodeOptions & options)
 : rclcpp::Node("vehicle_velocity_converter", options)
 {
@@ -53,6 +55,7 @@ void VehicleVelocityConverter::callback_velocity_report(
 
   twist_with_covariance_pub_->publish(twist_with_covariance_msg);
 }
+}  // namespace autoware::vehicle_velocity_converter
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(VehicleVelocityConverter)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::vehicle_velocity_converter::VehicleVelocityConverter)
