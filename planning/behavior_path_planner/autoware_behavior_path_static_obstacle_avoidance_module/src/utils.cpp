@@ -1822,6 +1822,9 @@ void updateRoadShoulderDistance(
       clip_objects.push_back(object);
     }
   });
+
+  if (clip_objects.empty()) return;
+
   for (auto & o : clip_objects) {
     const auto & vehicle_width = planner_data->parameters.vehicle_width;
     const auto object_type = utils::getHighestProbLabel(o.object.classification);
@@ -1886,6 +1889,7 @@ void filterTargetObjects(
         data.other_objects.push_back(o);
         continue;
       }
+      o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
     } else if (filtering_utils::isVehicleTypeObject(o)) {
       // TARGET: CAR, TRUCK, BUS, TRAILER, MOTORCYCLE
 
