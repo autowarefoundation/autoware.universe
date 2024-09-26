@@ -28,9 +28,6 @@
 #include <utility>
 #include <vector>
 
-#define DEFAULT_SYNC_TOPIC_POSTFIX \
-  "_synchronized"  // default postfix name for synchronized pointcloud
-
 namespace autoware::pointcloud_preprocessor
 {
 
@@ -190,7 +187,7 @@ std::string PointCloudConcatenateDataSynchronizerComponent::replaceSyncTopicName
                       << " have the same postfix with synchronized pointcloud. We use "
                          "the postfix "
                          "to the end of the topic name.");
-    replaced_topic_name = original_topic_name + DEFAULT_SYNC_TOPIC_POSTFIX;
+    replaced_topic_name = original_topic_name + default_sync_topic_postfix_;
   }
   return replaced_topic_name;
 }

@@ -99,6 +99,9 @@ private:
   std::unordered_map<std::string, double> topic_to_offset_map_;
   std::unordered_map<std::string, double> topic_to_noise_window_map_;
 
+  // default postfix name for synchronized pointcloud
+  static constexpr const char * default_sync_topic_postfix_ = "_synchronized";
+
   // subscribers
   std::vector<rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr> pointcloud_subs_;
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_sub_;
