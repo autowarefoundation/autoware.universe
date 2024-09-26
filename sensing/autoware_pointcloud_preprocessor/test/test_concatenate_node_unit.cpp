@@ -189,11 +189,11 @@ TEST_F(ConcatenateCloudTest, TestProcessTwist)
   twist_msg->twist.twist.linear.x = 1.0;
   twist_msg->twist.twist.angular.z = 0.1;
 
-  combine_cloud_handler_->processTwist(twist_msg);
+  combine_cloud_handler_->process_twist(twist_msg);
 
-  ASSERT_FALSE(combine_cloud_handler_->getTwistQueue().empty());
-  EXPECT_EQ(combine_cloud_handler_->getTwistQueue().front().twist.linear.x, 1.0);
-  EXPECT_EQ(combine_cloud_handler_->getTwistQueue().front().twist.angular.z, 0.1);
+  ASSERT_FALSE(combine_cloud_handler_->get_twist_queue().empty());
+  EXPECT_EQ(combine_cloud_handler_->get_twist_queue().front().twist.linear.x, 1.0);
+  EXPECT_EQ(combine_cloud_handler_->get_twist_queue().front().twist.angular.z, 0.1);
 }
 
 TEST_F(ConcatenateCloudTest, TestProcessOdometry)
@@ -203,11 +203,11 @@ TEST_F(ConcatenateCloudTest, TestProcessOdometry)
   odom_msg->twist.twist.linear.x = 1.0;
   odom_msg->twist.twist.angular.z = 0.1;
 
-  combine_cloud_handler_->processOdometry(odom_msg);
+  combine_cloud_handler_->process_odometry(odom_msg);
 
-  ASSERT_FALSE(combine_cloud_handler_->getTwistQueue().empty());
-  EXPECT_EQ(combine_cloud_handler_->getTwistQueue().front().twist.linear.x, 1.0);
-  EXPECT_EQ(combine_cloud_handler_->getTwistQueue().front().twist.angular.z, 0.1);
+  ASSERT_FALSE(combine_cloud_handler_->get_twist_queue().empty());
+  EXPECT_EQ(combine_cloud_handler_->get_twist_queue().front().twist.linear.x, 1.0);
+  EXPECT_EQ(combine_cloud_handler_->get_twist_queue().front().twist.angular.z, 0.1);
 }
 
 TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
@@ -220,15 +220,15 @@ TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
   twist_msg1->header.stamp = rclcpp::Time(9, 130'000'000, RCL_ROS_TIME);
   twist_msg1->twist.twist.linear.x = 1.0;
   twist_msg1->twist.twist.angular.z = 0.1;
-  combine_cloud_handler_->processTwist(twist_msg1);
+  combine_cloud_handler_->process_twist(twist_msg1);
 
   auto twist_msg2 = std::make_shared<geometry_msgs::msg::TwistWithCovarianceStamped>();
   twist_msg2->header.stamp = rclcpp::Time(9, 160'000'000, RCL_ROS_TIME);
   twist_msg2->twist.twist.linear.x = 1.0;
   twist_msg2->twist.twist.angular.z = 0.1;
-  combine_cloud_handler_->processTwist(twist_msg2);
+  combine_cloud_handler_->process_twist(twist_msg2);
 
-  Eigen::Matrix4f transform = combine_cloud_handler_->computeTransformToAdjustForOldTimestamp(
+  Eigen::Matrix4f transform = combine_cloud_handler_->compute_transform_to_adjust_for_old_timestamp(
     pointcloud_stamp1, pointcloud_stamp2);
 
   // translation
@@ -254,15 +254,15 @@ TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
   twist_msg3->header.stamp = rclcpp::Time(11, 130'000'000, RCL_ROS_TIME);
   twist_msg3->twist.twist.linear.x = 1.0;
   twist_msg3->twist.twist.angular.z = 0.1;
-  combine_cloud_handler_->processTwist(twist_msg3);
+  combine_cloud_handler_->process_twist(twist_msg3);
 
   auto twist_msg4 = std::make_shared<geometry_msgs::msg::TwistWithCovarianceStamped>();
   twist_msg4->header.stamp = rclcpp::Time(11, 160'000'000, RCL_ROS_TIME);
   twist_msg4->twist.twist.linear.x = 1.0;
   twist_msg4->twist.twist.angular.z = 0.1;
-  combine_cloud_handler_->processTwist(twist_msg4);
+  combine_cloud_handler_->process_twist(twist_msg4);
 
-  transform = combine_cloud_handler_->computeTransformToAdjustForOldTimestamp(
+  transform = combine_cloud_handler_->compute_transform_to_adjust_for_old_timestamp(
     pointcloud_stamp3, pointcloud_stamp4);
 
   // translation
@@ -290,8 +290,8 @@ TEST_F(ConcatenateCloudTest, TestSetAndGetReferenceTimeStampBoundary)
 {
   double reference_timestamp = 10.0;
   double noise_window = 0.1;
-  collector_->setReferenceTimeStamp(reference_timestamp, noise_window);
-  auto [min, max] = collector_->getReferenceTimeStampBoundary();
+  collector_->set_reference_timestamp(reference_timestamp, noise_window);
+  auto [min, max] = collector_->get_reference_timestamp_boundary();
   EXPECT_DOUBLE_EQ(min, 9.9);
   EXPECT_DOUBLE_EQ(max, 10.1);
 }
@@ -321,7 +321,7 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
   topic_to_cloud_map["lidar_right"] = right_pointcloud_ptr;
 
   auto [concatenate_cloud_ptr, topic_to_transformed_cloud_map, topic_to_original_stamp_map] =
-    collector_->concatenateClouds(topic_to_cloud_map);
+    collector_->concatenate_pointclouds(topic_to_cloud_map);
 
   // test output concatenate cloud
   // No input twist, so it will not do the motion compensation
@@ -444,7 +444,7 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
 
 TEST_F(ConcatenateCloudTest, TestDeleteCollector)
 {
-  collector_->deleteCollector();
+  collector_->delete_collector();
   EXPECT_TRUE(collectors_.empty());
 }
 
@@ -455,9 +455,9 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
     generatePointCloudMsg(true, false, "lidar_top", timestamp);
   sensor_msgs::msg::PointCloud2::SharedPtr top_pointcloud_ptr =
     std::make_shared<sensor_msgs::msg::PointCloud2>(top_pointcloud);
-  collector_->processCloud("lidar_top", top_pointcloud_ptr);
+  collector_->process_pointcloud("lidar_top", top_pointcloud_ptr);
 
-  auto topic_to_cloud_map = collector_->getTopicToCloudMap();
+  auto topic_to_cloud_map = collector_->get_topic_to_cloud_map();
   EXPECT_EQ(topic_to_cloud_map["lidar_top"], top_pointcloud_ptr);
   EXPECT_FALSE(collectors_.empty());
 
@@ -488,9 +488,9 @@ TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
   sensor_msgs::msg::PointCloud2::SharedPtr right_pointcloud_ptr =
     std::make_shared<sensor_msgs::msg::PointCloud2>(right_pointcloud);
 
-  collector_->processCloud("lidar_top", top_pointcloud_ptr);
-  collector_->processCloud("lidar_left", left_pointcloud_ptr);
-  collector_->processCloud("lidar_right", right_pointcloud_ptr);
+  collector_->process_pointcloud("lidar_top", top_pointcloud_ptr);
+  collector_->process_pointcloud("lidar_left", left_pointcloud_ptr);
+  collector_->process_pointcloud("lidar_right", right_pointcloud_ptr);
 
   EXPECT_TRUE(collectors_.empty());
 }

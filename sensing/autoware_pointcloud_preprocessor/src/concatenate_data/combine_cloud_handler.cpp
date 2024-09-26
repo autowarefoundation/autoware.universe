@@ -42,8 +42,7 @@ CombineCloudHandler::CombineCloudHandler(
 {
 }
 
-// TODO(vivid): change this to process_twist_message
-void CombineCloudHandler::processTwist(
+void CombineCloudHandler::process_twist(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & twist_msg)
 {
   geometry_msgs::msg::TwistStamped msg;
@@ -70,8 +69,7 @@ void CombineCloudHandler::processTwist(
   twist_queue_.push_back(msg);
 }
 
-// TODO(vivid): change this to process_odometry_message
-void CombineCloudHandler::processOdometry(
+void CombineCloudHandler::process_odometry(
   const nav_msgs::msg::Odometry::ConstSharedPtr & odometry_msg)
 {
   geometry_msgs::msg::TwistStamped msg;
@@ -98,12 +96,12 @@ void CombineCloudHandler::processOdometry(
   twist_queue_.push_back(msg);
 }
 
-std::deque<geometry_msgs::msg::TwistStamped> CombineCloudHandler::getTwistQueue()
+std::deque<geometry_msgs::msg::TwistStamped> CombineCloudHandler::get_twist_queue()
 {
   return twist_queue_;
 }
 
-void CombineCloudHandler::correctPointCloudMotion(
+void CombineCloudHandler::correct_pointcloud_motion(
   const std::shared_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
   const std::vector<rclcpp::Time> & pc_stamps,
   std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash> & transform_memo,
@@ -118,7 +116,8 @@ void CombineCloudHandler::correctPointCloudMotion(
     if (transform_memo.find(stamp) != transform_memo.end()) {
       new_to_old_transform = transform_memo[stamp];
     } else {
-      new_to_old_transform = computeTransformToAdjustForOldTimestamp(stamp, current_cloud_stamp);
+      new_to_old_transform =
+        compute_transform_to_adjust_for_old_timestamp(stamp, current_cloud_stamp);
       transform_memo[stamp] = new_to_old_transform;
     }
     adjust_to_old_data_transform = new_to_old_transform * adjust_to_old_data_transform;
@@ -128,7 +127,7 @@ void CombineCloudHandler::correctPointCloudMotion(
     adjust_to_old_data_transform, *transformed_cloud_ptr, *transformed_delay_compensated_cloud_ptr);
 }
 
-ConcatenatedCloudResult CombineCloudHandler::combinePointClouds(
+ConcatenatedCloudResult CombineCloudHandler::combine_pointclouds(
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> & topic_to_cloud_map)
 {
   ConcatenatedCloudResult concatenate_cloud_result;
@@ -153,7 +152,7 @@ ConcatenatedCloudResult CombineCloudHandler::combinePointClouds(
     std::shared_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr;
     if (is_motion_compensated_) {
       transformed_delay_compensated_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
-      correctPointCloudMotion(
+      correct_pointcloud_motion(
         transformed_cloud_ptr, pc_stamps, transform_memo, transformed_delay_compensated_cloud_ptr);
     } else {
       transformed_delay_compensated_cloud_ptr = transformed_cloud_ptr;
@@ -226,7 +225,7 @@ ConcatenatedCloudResult CombineCloudHandler::combinePointClouds(
   return concatenate_cloud_result;
 }
 
-Eigen::Matrix4f CombineCloudHandler::computeTransformToAdjustForOldTimestamp(
+Eigen::Matrix4f CombineCloudHandler::compute_transform_to_adjust_for_old_timestamp(
   const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp)
 {
   // return identity if no twist is available

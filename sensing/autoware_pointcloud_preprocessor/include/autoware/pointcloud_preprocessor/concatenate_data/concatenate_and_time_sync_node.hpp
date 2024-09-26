@@ -118,11 +118,11 @@ private:
   void twist_callback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input);
   void odom_callback(const nav_msgs::msg::Odometry::ConstSharedPtr input);
 
-  std::string formatTimestamp(double timestamp);
-  void checkConcatStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
-  std::string replaceSyncTopicNamePostfix(
+  std::string format_timestamp(double timestamp);
+  void check_concat_status(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  std::string replace_sync_topic_name_postfix(
     const std::string & original_topic_name, const std::string & postfix);
-  void convertToXYZIRCCloud(
+  void convert_to_xyzirc_cloud(
     const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
     sensor_msgs::msg::PointCloud2::SharedPtr & output_ptr);
 };

@@ -101,7 +101,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   if (params_.publish_synchronized_pointcloud) {
     for (auto & topic : params_.input_topics) {
       std::string new_topic =
-        replaceSyncTopicNamePostfix(topic, params_.synchronized_pointcloud_postfix);
+        replace_sync_topic_name_postfix(topic, params_.synchronized_pointcloud_postfix);
       auto publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         new_topic, rclcpp::SensorDataQoS().keep_last(params_.maximum_queue_size));
       topic_to_transformed_cloud_publisher_map_.insert({topic, publisher});
@@ -159,10 +159,10 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   // Diagnostic Updater
   diagnostic_updater_.setHardwareID("concatenate_data_checker");
   diagnostic_updater_.add(
-    "concat_status", this, &PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus);
+    "concat_status", this, &PointCloudConcatenateDataSynchronizerComponent::check_concat_status);
 }
 
-std::string PointCloudConcatenateDataSynchronizerComponent::replaceSyncTopicNamePostfix(
+std::string PointCloudConcatenateDataSynchronizerComponent::replace_sync_topic_name_postfix(
   const std::string & original_topic_name, const std::string & postfix)
 {
   std::string replaced_topic_name;
@@ -217,7 +217,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     return;
   } else {
     // convert to XYZIRC pointcloud if pointcloud is not empty
-    convertToXYZIRCCloud(input, xyzirc_input_ptr);
+    convert_to_xyzirc_cloud(input, xyzirc_input_ptr);
   }
 
   // protect cloud collectors list
@@ -229,7 +229,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   if (!cloud_collectors_.empty()) {
     for (const auto & cloud_collector : cloud_collectors_) {
       auto [reference_timestamp_min, reference_timestamp_max] =
-        cloud_collector->getReferenceTimeStampBoundary();
+        cloud_collector->get_reference_timestamp_boundary();
 
       if (
         rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] <
@@ -237,7 +237,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
         rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] >
           reference_timestamp_min - topic_to_noise_window_map_[topic_name]) {
         cloud_collectors_lock.unlock();
-        cloud_collector->processCloud(topic_name, input_ptr);
+        cloud_collector->process_pointcloud(topic_name, input_ptr);
         collector_found = true;
         break;
       }
@@ -252,23 +252,23 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
     cloud_collectors_.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();
-    new_cloud_collector->setReferenceTimeStamp(
+    new_cloud_collector->set_reference_timestamp(
       rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name],
       topic_to_noise_window_map_[topic_name]);
-    new_cloud_collector->processCloud(topic_name, input_ptr);
+    new_cloud_collector->process_pointcloud(topic_name, input_ptr);
   }
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input)
 {
-  combine_cloud_handler_->processTwist(input);
+  combine_cloud_handler_->process_twist(input);
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::odom_callback(
   const nav_msgs::msg::Odometry::ConstSharedPtr input)
 {
-  combine_cloud_handler_->processOdometry(input);
+  combine_cloud_handler_->process_odometry(input);
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
@@ -342,7 +342,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
   }
 }
 
-void PointCloudConcatenateDataSynchronizerComponent::convertToXYZIRCCloud(
+void PointCloudConcatenateDataSynchronizerComponent::convert_to_xyzirc_cloud(
   const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
   sensor_msgs::msg::PointCloud2::SharedPtr & output_ptr)
 {
@@ -397,20 +397,21 @@ void PointCloudConcatenateDataSynchronizerComponent::convertToXYZIRCCloud(
   }
 }
 
-std::string PointCloudConcatenateDataSynchronizerComponent::formatTimestamp(double timestamp)
+std::string PointCloudConcatenateDataSynchronizerComponent::format_timestamp(double timestamp)
 {
   std::ostringstream oss;
   oss << std::fixed << std::setprecision(9) << timestamp;
   return oss.str();
 }
 
-void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
+void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
   diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   if (publish_pointcloud_ || drop_previous_but_late_pointcloud_) {
-    stat.add("concatenated cloud timestamp", formatTimestamp(current_concatenate_cloud_timestamp_));
-    stat.add("reference timestamp min", formatTimestamp(diagnostic_reference_timestamp_min_));
-    stat.add("reference timestamp max", formatTimestamp(diagnostic_reference_timestamp_max_));
+    stat.add(
+      "concatenated cloud timestamp", format_timestamp(current_concatenate_cloud_timestamp_));
+    stat.add("reference timestamp min", format_timestamp(diagnostic_reference_timestamp_min_));
+    stat.add("reference timestamp max", format_timestamp(diagnostic_reference_timestamp_max_));
 
     bool topic_miss = false;
 
@@ -422,7 +423,7 @@ void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
         diagnostic_topic_to_original_stamp_map_.end()) {
         cloud_status = 1;
         stat.add(
-          topic + " timestamp", formatTimestamp(diagnostic_topic_to_original_stamp_map_[topic]));
+          topic + " timestamp", format_timestamp(diagnostic_topic_to_original_stamp_map_[topic]));
       } else {
         topic_miss = true;
         cloud_status = 0;

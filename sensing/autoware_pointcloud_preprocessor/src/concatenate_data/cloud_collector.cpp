@@ -39,21 +39,21 @@ CloudCollector::CloudCollector(
 
   timer_ = rclcpp::create_timer(
     ros2_parent_node_, ros2_parent_node_->get_clock(), period_ns,
-    std::bind(&CloudCollector::concatenateCallback, this));
+    std::bind(&CloudCollector::concatenate_callback, this));
 }
 
-void CloudCollector::setReferenceTimeStamp(double timestamp, double noise_window)
+void CloudCollector::set_reference_timestamp(double timestamp, double noise_window)
 {
   reference_timestamp_max_ = timestamp + noise_window;
   reference_timestamp_min_ = timestamp - noise_window;
 }
 
-std::tuple<double, double> CloudCollector::getReferenceTimeStampBoundary()
+std::tuple<double, double> CloudCollector::get_reference_timestamp_boundary()
 {
   return std::make_tuple(reference_timestamp_min_, reference_timestamp_max_);
 }
 
-void CloudCollector::processCloud(
+void CloudCollector::process_pointcloud(
   const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
   // Check if the map already contains an entry for the same topic. This shouldn't happen if the
@@ -67,11 +67,11 @@ void CloudCollector::processCloud(
   }
   topic_to_cloud_map_[topic_name] = cloud;
   if (topic_to_cloud_map_.size() == num_of_clouds_) {
-    concatenateCallback();
+    concatenate_callback();
   }
 }
 
-void CloudCollector::concatenateCallback()
+void CloudCollector::concatenate_callback()
 {
   // All pointclouds are received or the timer has timed out, cancel the timer and concatenate the
   // pointclouds in the collector.
@@ -79,19 +79,19 @@ void CloudCollector::concatenateCallback()
 
   // lock for protecting collector list and concatenated pointcloud
   std::lock_guard<std::mutex> lock(mutex_);
-  auto concatenated_cloud_result = concatenateClouds(topic_to_cloud_map_);
+  auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
   ros2_parent_node_->publishClouds(
     concatenated_cloud_result, reference_timestamp_min_, reference_timestamp_max_);
-  deleteCollector();
+  delete_collector();
 }
 
-ConcatenatedCloudResult CloudCollector::concatenateClouds(
+ConcatenatedCloudResult CloudCollector::concatenate_pointclouds(
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map)
 {
-  return combine_cloud_handler_->combinePointClouds(topic_to_cloud_map);
+  return combine_cloud_handler_->combine_pointclouds(topic_to_cloud_map);
 }
 
-void CloudCollector::deleteCollector()
+void CloudCollector::delete_collector()
 {
   auto it = std::find_if(
     collectors_.begin(), collectors_.end(),
@@ -102,7 +102,7 @@ void CloudCollector::deleteCollector()
 }
 
 std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
-CloudCollector::getTopicToCloudMap()
+CloudCollector::get_topic_to_cloud_map()
 {
   return topic_to_cloud_map_;
 }

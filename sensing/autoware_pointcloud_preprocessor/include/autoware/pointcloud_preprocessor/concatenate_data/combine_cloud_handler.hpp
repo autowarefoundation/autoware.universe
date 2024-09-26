@@ -79,7 +79,7 @@ private:
     }
   };
 
-  void correctPointCloudMotion(
+  void correct_pointcloud_motion(
     const std::shared_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
     const std::vector<rclcpp::Time> & pc_stamps,
     std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash> & transform_memo,
@@ -90,16 +90,16 @@ public:
     rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
     bool is_motion_compensated, bool keep_input_frame_in_synchronized_pointcloud,
     bool has_static_tf_only);
-  void processTwist(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & input);
-  void processOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr & input);
+  void process_twist(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & input);
+  void process_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr & input);
 
-  ConcatenatedCloudResult combinePointClouds(
+  ConcatenatedCloudResult combine_pointclouds(
     std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> & topic_to_cloud_map);
 
-  Eigen::Matrix4f computeTransformToAdjustForOldTimestamp(
+  Eigen::Matrix4f compute_transform_to_adjust_for_old_timestamp(
     const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
 
-  std::deque<geometry_msgs::msg::TwistStamped> getTwistQueue();
+  std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue();
 };
 
 }  // namespace autoware::pointcloud_preprocessor

@@ -36,16 +36,18 @@ public:
     std::list<std::shared_ptr<CloudCollector>> & collectors,
     std::shared_ptr<CombineCloudHandler> combine_cloud_handler, int num_of_clouds, double time);
 
-  void setReferenceTimeStamp(double timestamp, double noise_window);
-  std::tuple<double, double> getReferenceTimeStampBoundary();
-  void processCloud(const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud);
-  void concatenateCallback();
+  void set_reference_timestamp(double timestamp, double noise_window);
+  std::tuple<double, double> get_reference_timestamp_boundary();
+  void process_pointcloud(
+    const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud);
+  void concatenate_callback();
 
-  ConcatenatedCloudResult concatenateClouds(
+  ConcatenatedCloudResult concatenate_pointclouds(
     std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map);
-  void deleteCollector();
+  void delete_collector();
 
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> getTopicToCloudMap();
+  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
+  get_topic_to_cloud_map();
 
 private:
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node_;
