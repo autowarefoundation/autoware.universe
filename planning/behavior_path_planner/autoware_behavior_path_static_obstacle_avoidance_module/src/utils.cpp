@@ -751,7 +751,7 @@ bool isObviousAvoidanceTarget(
 
 bool isSatisfiedWithCommonCondition(
   ObjectData & object, const PathWithLaneId & path, const double forward_detection_range,
-  const double to_goal_distance, const Point & ego_pos, const bool & is_allowed_goal_modification,
+  const double to_goal_distance, const Point & ego_pos, const bool is_allowed_goal_modification,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   // Step1. filtered by target object type.
