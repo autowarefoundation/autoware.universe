@@ -190,6 +190,12 @@ void VehicleMapDisplay::mapProjectorInfoCallback(
 {
   map_projector_info_msg_ = msg;
 
+  if (msg->projector_type != tier4_map_msgs::msg::MapProjectorInfo::MGRS && msg->projector_type != tier4_map_msgs::msg::MapProjectorInfo::LOCAL_CARTESIAN_UTM )
+  {
+    RCLCPP_ERROR_STREAM(
+      node_->get_logger(),
+      "Minimap plugin only supports MGRS and UTM for projector type"
+  }
   projector_type_ = msg->projector_type;
   mgrs_grid_ = msg->mgrs_grid;
 
