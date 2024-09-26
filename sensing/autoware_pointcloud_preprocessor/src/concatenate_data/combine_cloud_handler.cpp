@@ -42,55 +42,65 @@ CombineCloudHandler::CombineCloudHandler(
 {
 }
 
+// TODO(vivid): change this to process_twist_message
 void CombineCloudHandler::processTwist(
-  const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & input)
+  const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & twist_msg)
 {
+  geometry_msgs::msg::TwistStamped msg;
+  msg.header = twist_msg->header;
+  msg.twist = twist_msg->twist.twist;
+
   // If time jumps backwards (e.g. when a rosbag restarts), clear buffer
-  if (!twist_ptr_queue_.empty()) {
-    if (rclcpp::Time(twist_ptr_queue_.front()->header.stamp) > rclcpp::Time(input->header.stamp)) {
-      twist_ptr_queue_.clear();
+  if (!twist_queue_.empty()) {
+    if (rclcpp::Time(twist_queue_.front().header.stamp) > rclcpp::Time(msg.header.stamp)) {
+      twist_queue_.clear();
     }
   }
 
-  //  twist data that older than 1s will be cleared
-  auto cutoff_time = rclcpp::Time(input->header.stamp) - rclcpp::Duration::from_seconds(1.0);
+  // Twist data in the queue that is older than the current twist by 1 second will be cleared.
+  auto cutoff_time = rclcpp::Time(msg.header.stamp) - rclcpp::Duration::from_seconds(1.0);
 
-  while (!twist_ptr_queue_.empty()) {
-    if (rclcpp::Time(twist_ptr_queue_.front()->header.stamp) > cutoff_time) {
+  while (!twist_queue_.empty()) {
+    if (rclcpp::Time(twist_queue_.front().header.stamp) > cutoff_time) {
       break;
     }
-    twist_ptr_queue_.pop_front();
+    twist_queue_.pop_front();
   }
 
-  auto twist_ptr = std::make_shared<geometry_msgs::msg::TwistStamped>();
-  twist_ptr->header = input->header;
-  twist_ptr->twist = input->twist.twist;
-  twist_ptr_queue_.push_back(twist_ptr);
+  twist_queue_.push_back(msg);
 }
 
-void CombineCloudHandler::processOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr & input)
+// TODO(vivid): change this to process_odometry_message
+void CombineCloudHandler::processOdometry(
+  const nav_msgs::msg::Odometry::ConstSharedPtr & odometry_msg)
 {
-  // if rosbag restart, clear buffer
-  if (!twist_ptr_queue_.empty()) {
-    if (rclcpp::Time(twist_ptr_queue_.front()->header.stamp) > rclcpp::Time(input->header.stamp)) {
-      twist_ptr_queue_.clear();
+  geometry_msgs::msg::TwistStamped msg;
+  msg.header = odometry_msg->header;
+  msg.twist = odometry_msg->twist.twist;
+
+  // If time jumps backwards (e.g. when a rosbag restarts), clear buffer
+  if (!twist_queue_.empty()) {
+    if (rclcpp::Time(twist_queue_.front().header.stamp) > rclcpp::Time(msg.header.stamp)) {
+      twist_queue_.clear();
     }
   }
 
-  //  odometry data that older than 1s will be cleared
-  auto cutoff_time = rclcpp::Time(input->header.stamp) - rclcpp::Duration::from_seconds(1.0);
+  // Twist data in the queue that is older than the current twist by 1 second will be cleared.
+  auto cutoff_time = rclcpp::Time(msg.header.stamp) - rclcpp::Duration::from_seconds(1.0);
 
-  while (!twist_ptr_queue_.empty()) {
-    if (rclcpp::Time(twist_ptr_queue_.front()->header.stamp) > cutoff_time) {
+  while (!twist_queue_.empty()) {
+    if (rclcpp::Time(twist_queue_.front().header.stamp) > cutoff_time) {
       break;
     }
-    twist_ptr_queue_.pop_front();
+    twist_queue_.pop_front();
   }
 
-  auto twist_ptr = std::make_shared<geometry_msgs::msg::TwistStamped>();
-  twist_ptr->header = input->header;
-  twist_ptr->twist = input->twist.twist;
-  twist_ptr_queue_.push_back(twist_ptr);
+  twist_queue_.push_back(msg);
+}
+
+std::deque<geometry_msgs::msg::TwistStamped> CombineCloudHandler::getTwistQueue()
+{
+  return twist_queue_;
 }
 
 std::tuple<
@@ -184,7 +194,7 @@ Eigen::Matrix4f CombineCloudHandler::computeTransformToAdjustForOldTimestamp(
   const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp)
 {
   // return identity if no twist is available
-  if (twist_ptr_queue_.empty()) {
+  if (twist_queue_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       node_->get_logger(), *node_->get_clock(), std::chrono::milliseconds(10000).count(),
       "No twist is available. Please confirm twist topic and timestamp. Leaving point cloud "
@@ -192,31 +202,29 @@ Eigen::Matrix4f CombineCloudHandler::computeTransformToAdjustForOldTimestamp(
     return Eigen::Matrix4f::Identity();
   }
 
-  auto old_twist_ptr_it = std::lower_bound(
-    std::begin(twist_ptr_queue_), std::end(twist_ptr_queue_), old_stamp,
-    [](const geometry_msgs::msg::TwistStamped::ConstSharedPtr & x_ptr, const rclcpp::Time & t) {
-      return rclcpp::Time(x_ptr->header.stamp) < t;
+  auto old_twist_it = std::lower_bound(
+    std::begin(twist_queue_), std::end(twist_queue_), old_stamp,
+    [](const geometry_msgs::msg::TwistStamped & x, const rclcpp::Time & t) {
+      return rclcpp::Time(x.header.stamp) < t;
     });
-  old_twist_ptr_it =
-    old_twist_ptr_it == twist_ptr_queue_.end() ? (twist_ptr_queue_.end() - 1) : old_twist_ptr_it;
+  old_twist_it = old_twist_it == twist_queue_.end() ? (twist_queue_.end() - 1) : old_twist_it;
 
-  auto new_twist_ptr_it = std::lower_bound(
-    std::begin(twist_ptr_queue_), std::end(twist_ptr_queue_), new_stamp,
-    [](const geometry_msgs::msg::TwistStamped::ConstSharedPtr & x_ptr, const rclcpp::Time & t) {
-      return rclcpp::Time(x_ptr->header.stamp) < t;
+  auto new_twist_it = std::lower_bound(
+    std::begin(twist_queue_), std::end(twist_queue_), new_stamp,
+    [](const geometry_msgs::msg::TwistStamped & x, const rclcpp::Time & t) {
+      return rclcpp::Time(x.header.stamp) < t;
     });
-  new_twist_ptr_it =
-    new_twist_ptr_it == twist_ptr_queue_.end() ? (twist_ptr_queue_.end() - 1) : new_twist_ptr_it;
+  new_twist_it = new_twist_it == twist_queue_.end() ? (twist_queue_.end() - 1) : new_twist_it;
 
   auto prev_time = old_stamp;
   double x = 0.0;
   double y = 0.0;
   double yaw = 0.0;
   tf2::Quaternion baselink_quat{};
-  for (auto twist_ptr_it = old_twist_ptr_it; twist_ptr_it != new_twist_ptr_it + 1; ++twist_ptr_it) {
+  for (auto twist_it = old_twist_it; twist_it != new_twist_it + 1; ++twist_it) {
     const double dt =
-      (twist_ptr_it != new_twist_ptr_it)
-        ? (rclcpp::Time((*twist_ptr_it)->header.stamp) - rclcpp::Time(prev_time)).seconds()
+      (twist_it != new_twist_it)
+        ? (rclcpp::Time((*twist_it).header.stamp) - rclcpp::Time(prev_time)).seconds()
         : (rclcpp::Time(new_stamp) - rclcpp::Time(prev_time)).seconds();
 
     if (std::fabs(dt) > 0.1) {
@@ -227,11 +235,11 @@ Eigen::Matrix4f CombineCloudHandler::computeTransformToAdjustForOldTimestamp(
       break;
     }
 
-    const double dis = (*twist_ptr_it)->twist.linear.x * dt;
-    yaw += (*twist_ptr_it)->twist.angular.z * dt;
+    const double dis = (*twist_it).twist.linear.x * dt;
+    yaw += (*twist_it).twist.angular.z * dt;
     x += dis * std::cos(yaw);
     y += dis * std::sin(yaw);
-    prev_time = (*twist_ptr_it)->header.stamp;
+    prev_time = (*twist_it).header.stamp;
   }
 
   Eigen::Matrix4f transformation_matrix = Eigen::Matrix4f::Identity();

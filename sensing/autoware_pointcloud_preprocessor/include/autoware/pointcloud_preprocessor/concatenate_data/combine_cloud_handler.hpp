@@ -59,6 +59,8 @@ private:
   bool keep_input_frame_in_synchronized_pointcloud_;
   std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
+  std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
+
   /// @brief RclcppTimeHash_ structure defines a custom hash function for the rclcpp::Time type by
   /// using its nanoseconds representation as the hash value.
   struct RclcppTimeHash_
@@ -70,8 +72,6 @@ private:
   };
 
 public:
-  std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_ptr_queue_;
-
   CombineCloudHandler(
     rclcpp::Node * node, std::vector<std::string> input_topics, std::string output_frame,
     bool is_motion_compensated, bool keep_input_frame_in_synchronized_pointcloud,
@@ -88,6 +88,8 @@ public:
 
   Eigen::Matrix4f computeTransformToAdjustForOldTimestamp(
     const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
+
+  std::deque<geometry_msgs::msg::TwistStamped> getTwistQueue();
 };
 
 }  // namespace autoware::pointcloud_preprocessor

@@ -190,9 +190,9 @@ TEST_F(ConcatenateCloudTest, TestProcessTwist)
 
   combine_cloud_handler_->processTwist(twist_msg);
 
-  ASSERT_FALSE(combine_cloud_handler_->twist_ptr_queue_.empty());
-  EXPECT_EQ(combine_cloud_handler_->twist_ptr_queue_.front()->twist.linear.x, 1.0);
-  EXPECT_EQ(combine_cloud_handler_->twist_ptr_queue_.front()->twist.angular.z, 0.1);
+  ASSERT_FALSE(combine_cloud_handler_->getTwistQueue().empty());
+  EXPECT_EQ(combine_cloud_handler_->getTwistQueue().front().twist.linear.x, 1.0);
+  EXPECT_EQ(combine_cloud_handler_->getTwistQueue().front().twist.angular.z, 0.1);
 }
 
 TEST_F(ConcatenateCloudTest, TestProcessOdometry)
@@ -204,31 +204,65 @@ TEST_F(ConcatenateCloudTest, TestProcessOdometry)
 
   combine_cloud_handler_->processOdometry(odom_msg);
 
-  ASSERT_FALSE(combine_cloud_handler_->twist_ptr_queue_.empty());
-  EXPECT_EQ(combine_cloud_handler_->twist_ptr_queue_.front()->twist.linear.x, 1.0);
-  EXPECT_EQ(combine_cloud_handler_->twist_ptr_queue_.front()->twist.angular.z, 0.1);
+  ASSERT_FALSE(combine_cloud_handler_->getTwistQueue().empty());
+  EXPECT_EQ(combine_cloud_handler_->getTwistQueue().front().twist.linear.x, 1.0);
+  EXPECT_EQ(combine_cloud_handler_->getTwistQueue().front().twist.angular.z, 0.1);
 }
 
 TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
 {
-  rclcpp::Time old_stamp(10, 100'000'000, RCL_ROS_TIME);
-  rclcpp::Time new_stamp(10, 150'000'000, RCL_ROS_TIME);
+  // If time difference between twist msg and pointcloud stamp is more than 100 miliseconds, return
+  // Identity transformation. case 1: time differecne larger than 100 miliseconds
+  rclcpp::Time pointcloud_stamp1(10, 100'000'000, RCL_ROS_TIME);
+  rclcpp::Time pointcloud_stamp2(10, 210'000'000, RCL_ROS_TIME);
+  auto twist_msg1 = std::make_shared<geometry_msgs::msg::TwistWithCovarianceStamped>();
+  twist_msg1->header.stamp = rclcpp::Time(9, 130'000'000, RCL_ROS_TIME);
+  twist_msg1->twist.twist.linear.x = 1.0;
+  twist_msg1->twist.twist.angular.z = 0.1;
+  combine_cloud_handler_->processTwist(twist_msg1);
 
-  // Time difference between twist msg is more than 100 miliseconds, won't calculate the difference
-  auto twist_msg1 = std::make_shared<geometry_msgs::msg::TwistStamped>();
-  twist_msg1->header.stamp = rclcpp::Time(10, 130'000'000, RCL_ROS_TIME);
-  twist_msg1->twist.linear.x = 1.0;
-  twist_msg1->twist.angular.z = 0.1;
-  combine_cloud_handler_->twist_ptr_queue_.push_back(twist_msg1);
+  auto twist_msg2 = std::make_shared<geometry_msgs::msg::TwistWithCovarianceStamped>();
+  twist_msg2->header.stamp = rclcpp::Time(9, 160'000'000, RCL_ROS_TIME);
+  twist_msg2->twist.twist.linear.x = 1.0;
+  twist_msg2->twist.twist.angular.z = 0.1;
+  combine_cloud_handler_->processTwist(twist_msg2);
 
-  auto twist_msg2 = std::make_shared<geometry_msgs::msg::TwistStamped>();
-  twist_msg2->header.stamp = rclcpp::Time(10, 160'000'000, RCL_ROS_TIME);
-  twist_msg2->twist.linear.x = 1.0;
-  twist_msg2->twist.angular.z = 0.1;
-  combine_cloud_handler_->twist_ptr_queue_.push_back(twist_msg2);
+  Eigen::Matrix4f transform = combine_cloud_handler_->computeTransformToAdjustForOldTimestamp(
+    pointcloud_stamp1, pointcloud_stamp2);
 
-  Eigen::Matrix4f transform =
-    combine_cloud_handler_->computeTransformToAdjustForOldTimestamp(old_stamp, new_stamp);
+  // translation
+  EXPECT_NEAR(transform(0, 3), 0.0, standard_tolerance);
+  EXPECT_NEAR(transform(1, 3), 0.0, standard_tolerance);
+
+  EXPECT_NEAR(transform(0, 0), 1.0, standard_tolerance);
+  EXPECT_NEAR(transform(0, 1), 0.0, standard_tolerance);
+  EXPECT_NEAR(transform(1, 0), 0.0, standard_tolerance);
+  EXPECT_NEAR(transform(1, 1), 1.0, standard_tolerance);
+
+  std::ostringstream oss;
+  oss << "Transformation matrix from cloud 2 to cloud 1:\n" << transform;
+
+  if (debug_) {
+    RCLCPP_INFO(concatenate_node_->get_logger(), "%s", oss.str().c_str());
+  }
+
+  // case 2: time difference smaller than 100 miliseconds
+  rclcpp::Time pointcloud_stamp3(11, 100'000'000, RCL_ROS_TIME);
+  rclcpp::Time pointcloud_stamp4(11, 150'000'000, RCL_ROS_TIME);
+  auto twist_msg3 = std::make_shared<geometry_msgs::msg::TwistWithCovarianceStamped>();
+  twist_msg3->header.stamp = rclcpp::Time(11, 130'000'000, RCL_ROS_TIME);
+  twist_msg3->twist.twist.linear.x = 1.0;
+  twist_msg3->twist.twist.angular.z = 0.1;
+  combine_cloud_handler_->processTwist(twist_msg3);
+
+  auto twist_msg4 = std::make_shared<geometry_msgs::msg::TwistWithCovarianceStamped>();
+  twist_msg4->header.stamp = rclcpp::Time(11, 160'000'000, RCL_ROS_TIME);
+  twist_msg4->twist.twist.linear.x = 1.0;
+  twist_msg4->twist.twist.angular.z = 0.1;
+  combine_cloud_handler_->processTwist(twist_msg4);
+
+  transform = combine_cloud_handler_->computeTransformToAdjustForOldTimestamp(
+    pointcloud_stamp3, pointcloud_stamp4);
 
   // translation
   EXPECT_NEAR(transform(0, 3), 0.0499996, standard_tolerance);
@@ -240,8 +274,9 @@ TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
   EXPECT_NEAR(transform(1, 0), 0.00499998, standard_tolerance);
   EXPECT_NEAR(transform(1, 1), 0.999987, standard_tolerance);
 
-  std::ostringstream oss;
-  oss << "Transformation matrix:\n" << transform;
+  oss.str("");
+  oss.clear();
+  oss << "Transformation matrix from cloud 4 to cloud 3:\n" << transform;
 
   if (debug_) {
     RCLCPP_INFO(concatenate_node_->get_logger(), "%s", oss.str().c_str());
