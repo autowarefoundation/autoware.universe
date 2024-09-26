@@ -46,6 +46,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   stop_watch_ptr_->tic("cyclic_time");
   stop_watch_ptr_->tic("processing_time");
 
+  bool parameters_valid = true;
   //  initialize parameters
   params_.has_static_tf_only = declare_parameter<bool>("has_static_tf_only");
   params_.maximum_queue_size = declare_parameter<int>("maximum_queue_size");
@@ -69,25 +70,25 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   if (params_.input_topics.empty()) {
     RCLCPP_ERROR(get_logger(), "Need a 'input_topics' parameter to be set before continuing!");
-    return;
+    parameters_valid = false;
   } else if (params_.input_topics.size() == 1) {
     RCLCPP_ERROR(get_logger(), "Only one topic given. Need at least two topics to continue.");
-    return;
+    parameters_valid = false;
   }
 
   if (params_.output_frame.empty()) {
     RCLCPP_ERROR(get_logger(), "Need an 'output_frame' parameter to be set before continuing!");
-    return;
+    parameters_valid = false;
   }
   if (params_.lidar_timestamp_offsets.size() != params_.input_topics.size()) {
     RCLCPP_ERROR(
       get_logger(), "The number of topics does not match the number of timestamp offsets");
-    return;
+    parameters_valid = false;
   }
   if (params_.lidar_timestamp_noise_window.size() != params_.input_topics.size()) {
     RCLCPP_ERROR(
       get_logger(), "The number of topics does not match the number of timestamp noise window");
-    return;
+    parameters_valid = false;
   }
 
   for (size_t i = 0; i < params_.input_topics.size(); i++) {
@@ -127,9 +128,14 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     } else {
       RCLCPP_ERROR_STREAM(
         get_logger(), "input_twist_topic_type is invalid: " << params_.input_twist_topic_type);
-      throw std::runtime_error(
-        "input_twist_topic_type is invalid: " + params_.input_twist_topic_type);
+      parameters_valid = false;
     }
+  }
+
+  if (!parameters_valid) {
+    throw std::runtime_error(
+      "Invalid parameter setting detected. Please review the provided parameter values and refer "
+      "to the error logs for detailed information.");
   }
 
   for (const std::string & topic : params_.input_topics) {
