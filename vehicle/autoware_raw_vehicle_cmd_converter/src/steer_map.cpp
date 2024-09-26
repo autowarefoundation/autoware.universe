@@ -32,8 +32,8 @@ bool SteerMap::readSteerMapFromCSV(const std::string & csv_path, const bool vali
   }
 
   vehicle_name_ = table[0][0];
-  steer_index_ = CSVLoader::getRowIndex(table);
-  output_index_ = CSVLoader::getColumnIndex(table);
+  steer_index_ = CSVLoader::getColumnIndex(table);
+  output_index_ = CSVLoader::getRowIndex(table);
   steer_map_ = CSVLoader::getMap(table);
   return !validation || CSVLoader::validateMap(steer_map_, true);
 }
