@@ -14,12 +14,12 @@
 
 #include "autoware/motion_utils/resample/resample.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/zero_order_hold.hpp"
 #include "autoware/motion_utils/resample/resample_utils.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
-#include "interpolation/zero_order_hold.hpp"
 
 #include <cstdlib>
 
@@ -61,13 +61,13 @@ std::vector<geometry_msgs::msg::Point> resamplePointVector(
 
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampled_arclength);
   };
   const auto spline = [&](const auto & input) {
-    return interpolation::spline(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::spline(input_arclength, input, resampled_arclength);
   };
   const auto spline_by_akima = [&](const auto & input) {
-    return interpolation::splineByAkima(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::splineByAkima(input_arclength, input, resampled_arclength);
   };
 
   const auto interpolated_x = use_akima_spline_for_xy ? lerp(x) : spline_by_akima(x);
@@ -280,14 +280,15 @@ tier4_planning_msgs::msg::PathWithLaneId resamplePath(
 
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampling_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampling_arclength);
   };
 
   auto closest_segment_indices =
-    interpolation::calc_closest_segment_indices(input_arclength, resampling_arclength);
+    autoware::interpolation::calc_closest_segment_indices(input_arclength, resampling_arclength);
 
   const auto zoh = [&](const auto & input) {
-    return interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =
@@ -462,16 +463,17 @@ autoware_planning_msgs::msg::Path resamplePath(
 
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampled_arclength);
   };
 
   std::vector<size_t> closest_segment_indices;
   if (use_zero_order_hold_for_v) {
     closest_segment_indices =
-      interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
+      autoware::interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
   }
   const auto zoh = [&](const auto & input) {
-    return interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =
@@ -636,16 +638,17 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
 
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampled_arclength);
   };
 
   std::vector<size_t> closest_segment_indices;
   if (use_zero_order_hold_for_twist) {
     closest_segment_indices =
-      interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
+      autoware::interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
   }
   const auto zoh = [&](const auto & input) {
-    return interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =

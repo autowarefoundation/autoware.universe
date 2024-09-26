@@ -14,8 +14,8 @@
 
 #include "autoware/motion_utils/trajectory/path_with_lane_id.hpp"
 
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 
 #include <algorithm>
 #include <utility>
@@ -106,7 +106,7 @@ tier4_planning_msgs::msg::PathWithLaneId convertToRearWheelCenter(
   auto cog_path = path;
 
   // calculate curvature and yaw from spline interpolation
-  const auto spline = SplineInterpolationPoints2d(path.points);
+  const auto spline = autoware::interpolation::SplineInterpolationPoints2d(path.points);
   const auto curvature_vec = spline.getSplineInterpolatedCurvatures();
   const auto yaw_vec = spline.getSplineInterpolatedYaws();
 

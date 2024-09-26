@@ -63,7 +63,6 @@ QSize CustomElevatedButton::minimumSizeHint() const
   return sizeHint();
 }
 
-// cppcheck-suppress unusedFunction
 void CustomElevatedButton::updateStyle(
   const QString & text, const QColor & bgColor, const QColor & textColor, const QColor & hoverColor,
   const QColor & pressedColor, const QColor & checkedColor, const QColor & disabledBgColor,

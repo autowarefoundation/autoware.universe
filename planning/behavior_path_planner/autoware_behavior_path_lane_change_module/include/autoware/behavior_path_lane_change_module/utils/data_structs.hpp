@@ -18,9 +18,9 @@
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <autoware/behavior_path_planner_common/parameters.hpp>
+#include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <interpolation/linear_interpolation.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
 
@@ -74,8 +74,8 @@ struct LateralAccelerationMap
       return std::make_pair(base_min_acc.back(), base_max_acc.back());
     }
 
-    const double min_acc = interpolation::lerp(base_vel, base_min_acc, velocity);
-    const double max_acc = interpolation::lerp(base_vel, base_max_acc, velocity);
+    const double min_acc = autoware::interpolation::lerp(base_vel, base_min_acc, velocity);
+    const double max_acc = autoware::interpolation::lerp(base_vel, base_max_acc, velocity);
 
     return std::make_pair(min_acc, max_acc);
   }
@@ -154,6 +154,7 @@ struct Parameters
 
   // safety check
   bool allow_loose_check_for_cancel{true};
+  bool enable_target_lane_bound_check{true};
   double collision_check_yaw_diff_threshold{3.1416};
   utils::path_safety_checker::RSSparams rss_params{};
   utils::path_safety_checker::RSSparams rss_params_for_parked{};
@@ -192,6 +193,28 @@ struct PhaseInfo
   }
 };
 
+struct PhaseMetrics
+{
+  double duration{0.0};
+  double length{0.0};
+  double velocity{0.0};
+  double sampled_lon_accel{0.0};
+  double actual_lon_accel{0.0};
+  double lat_accel{0.0};
+
+  PhaseMetrics(
+    const double _duration, const double _length, const double _velocity,
+    const double _sampled_lon_accel, const double _actual_lon_accel, const double _lat_accel)
+  : duration(_duration),
+    length(_length),
+    velocity(_velocity),
+    sampled_lon_accel(_sampled_lon_accel),
+    actual_lon_accel(_actual_lon_accel),
+    lat_accel(_lat_accel)
+  {
+  }
+};
+
 struct Lanes
 {
   bool current_lane_in_goal_section{false};
@@ -215,6 +238,23 @@ struct Info
 
   double lateral_acceleration{0.0};
   double terminal_lane_changing_velocity{0.0};
+
+  Info() = default;
+  Info(
+    const PhaseMetrics & _prep_metrics, const PhaseMetrics & _lc_metrics,
+    const Pose & _lc_start_pose, const Pose & _lc_end_pose, const ShiftLine & _shift_line)
+  {
+    longitudinal_acceleration =
+      PhaseInfo{_prep_metrics.actual_lon_accel, _lc_metrics.actual_lon_accel};
+    duration = PhaseInfo{_prep_metrics.duration, _lc_metrics.duration};
+    velocity = PhaseInfo{_prep_metrics.velocity, _prep_metrics.velocity};
+    length = PhaseInfo{_prep_metrics.length, _lc_metrics.length};
+    lane_changing_start = _lc_start_pose;
+    lane_changing_end = _lc_end_pose;
+    lateral_acceleration = _lc_metrics.lat_accel;
+    terminal_lane_changing_velocity = _lc_metrics.velocity;
+    shift_line = _shift_line;
+  }
 };
 
 template <typename Object>
@@ -316,6 +356,7 @@ using LaneChangeModuleType = lane_change::ModuleType;
 using LaneChangeParameters = lane_change::Parameters;
 using LaneChangeStates = lane_change::States;
 using LaneChangePhaseInfo = lane_change::PhaseInfo;
+using LaneChangePhaseMetrics = lane_change::PhaseMetrics;
 using LaneChangeInfo = lane_change::Info;
 using FilteredByLanesObjects = lane_change::LanesObjects<std::vector<PredictedObject>>;
 using FilteredByLanesExtendedObjects = lane_change::LanesObjects<ExtendedPredictedObjects>;
