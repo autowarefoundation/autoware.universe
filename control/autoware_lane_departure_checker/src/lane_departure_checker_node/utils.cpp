@@ -161,4 +161,19 @@ std::vector<LinearRing2d> createVehicleFootprints(
 
   return vehicle_footprints;
 }
+
+LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprints)
+{
+  MultiPoint2d combined;
+  for (const auto & footprint : footprints) {
+    for (const auto & p : footprint) {
+      combined.push_back(p);
+    }
+  }
+
+  LinearRing2d hull;
+  boost::geometry::convex_hull(combined, hull);
+
+  return hull;
+}
 }  // namespace autoware::lane_departure_checker::utils

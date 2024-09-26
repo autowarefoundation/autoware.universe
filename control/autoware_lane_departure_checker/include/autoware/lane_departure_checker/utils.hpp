@@ -28,6 +28,7 @@
 namespace autoware::lane_departure_checker::utils
 {
 using autoware::universe_utils::LinearRing2d;
+using autoware::universe_utils::MultiPoint2d;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using tier4_planning_msgs::msg::PathWithLaneId;
@@ -73,6 +74,8 @@ std::vector<LinearRing2d> createVehicleFootprints(
 std::vector<LinearRing2d> createVehicleFootprints(
   const PathWithLaneId & path, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const double footprint_extra_margin);
+
+LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprints);
 }  // namespace autoware::lane_departure_checker::utils
 
 #endif  // AUTOWARE__LANE_DEPARTURE_CHECKER__UTILS_HPP_
