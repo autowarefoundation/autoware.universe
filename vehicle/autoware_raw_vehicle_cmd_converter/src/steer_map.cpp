@@ -35,16 +35,14 @@ bool SteerMap::readSteerMapFromCSV(const std::string & csv_path, const bool vali
   steer_index_ = CSVLoader::getRowIndex(table);
   output_index_ = CSVLoader::getColumnIndex(table);
   steer_map_ = CSVLoader::getMap(table);
-  if (validation && !CSVLoader::validateMap(steer_map_, true)) {
-    return false;
-  }
-  return true;
+  return !validation || CSVLoader::validateMap(steer_map_, true);
 }
 
 void SteerMap::getSteer(const double steer_rate, const double steer, double & output) const
 {
   const double clamped_steer = CSVLoader::clampValue(steer, steer_index_, "steer: steer");
   std::vector<double> steer_rate_interp = {};
+  steer_rate_interp.reserve(steer_map_.size());
   for (const auto & steer_rate_vec : steer_map_) {
     steer_rate_interp.push_back(
       autoware::interpolation::lerp(steer_index_, steer_rate_vec, clamped_steer));
