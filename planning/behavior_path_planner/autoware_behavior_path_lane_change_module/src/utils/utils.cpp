@@ -200,7 +200,7 @@ bool isPathInLanelets(
   return true;
 }
 
-bool pathFootprintExceedsTargetLaneBound(
+bool path_footprint_exceeds_target_lane_bound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
   const double margin)
 {
