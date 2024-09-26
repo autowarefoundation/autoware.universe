@@ -95,13 +95,6 @@ void PoseHistoryFootprint::update_vehicle_info()
   }
 }
 
-void PoseHistoryFootprint::update_visualization()
-{
-  if (last_msg_ptr_) {
-    processMessage(last_msg_ptr_);
-  }
-}
-
 void PoseHistoryFootprint::onInitialize()
 {
   MFDClass::onInitialize();
@@ -211,7 +204,7 @@ void PoseHistoryFootprint::update_footprint()
 
   const float offset_from_baselink = property_offset_->getFloat();
 
-  for (auto & point_idx : history_) {
+  for (const auto & point_idx : history_) {
     const auto & pose = point_idx->pose;
     /*
      * Footprint

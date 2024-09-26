@@ -16,10 +16,15 @@
 
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 
+#include <autoware/route_handler/route_handler.hpp>
+
 namespace autoware::behavior_path_planner::utils::lane_change::calculation
 {
+using autoware::route_handler::Direction;
+using autoware::route_handler::RouteHandler;
 using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LCParamPtr;
+using behavior_path_planner::lane_change::PhaseMetrics;
 
 /**
  * @brief Calculates the distance from the ego vehicle to the terminal point.
@@ -113,6 +118,53 @@ double calc_maximum_prepare_length(const CommonDataPtr & common_data_ptr);
 double calc_ego_dist_to_lanes_start(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
+
+double calc_minimum_lane_change_length(
+  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals);
+
+double calc_minimum_lane_change_length(
+  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
+  const LaneChangeParameters & lane_change_parameters, Direction direction);
+
+double calc_maximum_lane_change_length(
+  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
+  const std::vector<double> & shift_intervals, const double max_acc);
+
+double calc_maximum_lane_change_length(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
+  const double max_acc);
+
+/**
+ * @brief Calculates the distance required during a lane change operation.
+ *
+ * Used for computing prepare or lane change length based on current and maximum velocity,
+ * acceleration, and duration, returning the lesser of accelerated distance or distance at max
+ * velocity.
+ *
+ * @param velocity The current velocity of the vehicle in meters per second (m/s).
+ * @param maximum_velocity The maximum velocity the vehicle can reach in meters per second (m/s).
+ * @param acceleration The acceleration of the vehicle in meters per second squared (m/s^2).
+ * @param duration The duration of the lane change in seconds (s).
+ * @return The calculated minimum distance in meters (m).
+ */
+double calc_phase_length(
+  const double velocity, const double maximum_velocity, const double acceleration,
+  const double duration);
+
+double calc_lane_changing_acceleration(
+  const double initial_lane_changing_velocity, const double max_path_velocity,
+  const double lane_changing_time, const double prepare_longitudinal_acc);
+
+std::vector<PhaseMetrics> calc_prepare_phase_metrics(
+  const CommonDataPtr & common_data_ptr, const std::vector<double> & prepare_durations,
+  const std::vector<double> & lon_accel_values, const double current_velocity,
+  const double min_length_threshold = 0.0,
+  const double max_length_threshold = std::numeric_limits<double>::max());
+
+std::vector<PhaseMetrics> calc_shift_phase_metrics(
+  const CommonDataPtr & common_data_ptr, const double shift_length, const double initial_velocity,
+  const double max_velocity, const double lon_accel,
+  const double max_length_threshold = std::numeric_limits<double>::max());
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__CALCULATION_HPP_

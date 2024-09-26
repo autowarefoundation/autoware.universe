@@ -43,11 +43,12 @@ double ActuationMap::getControlCommand(const double actuation, const double stat
 
   for (std::vector<double> control_command_values : actuation_map_) {
     interpolated_control_vec.push_back(
-      interpolation::lerp(state_index_, control_command_values, clamped_state));
+      autoware::interpolation::lerp(state_index_, control_command_values, clamped_state));
   }
 
   const double clamped_actuation = CSVLoader::clampValue(actuation, actuation_index_);
-  return interpolation::lerp(actuation_index_, interpolated_control_vec, clamped_actuation);
+  return autoware::interpolation::lerp(
+    actuation_index_, interpolated_control_vec, clamped_actuation);
 }
 
 std::optional<double> AccelMap::getThrottle(const double acc, double vel) const
@@ -61,7 +62,8 @@ std::optional<double> AccelMap::getThrottle(const double acc, double vel) const
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
   for (std::vector<double> accelerations : accel_map) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_indices, accelerations, clamped_vel));
+    interpolated_acc_vec.push_back(
+      autoware::interpolation::lerp(vel_indices, accelerations, clamped_vel));
   }
 
   // calculate throttle
@@ -73,7 +75,7 @@ std::optional<double> AccelMap::getThrottle(const double acc, double vel) const
     return throttle_indices.back();
   }
 
-  return interpolation::lerp(interpolated_acc_vec, throttle_indices, acc);
+  return autoware::interpolation::lerp(interpolated_acc_vec, throttle_indices, acc);
 }
 
 double BrakeMap::getBrake(const double acc, double vel) const
@@ -87,7 +89,8 @@ double BrakeMap::getBrake(const double acc, double vel) const
 
   // (brake, vel, acc) map => (brake, acc) map by fixing vel
   for (std::vector<double> accelerations : brake_map) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_indices, accelerations, clamped_vel));
+    interpolated_acc_vec.push_back(
+      autoware::interpolation::lerp(vel_indices, accelerations, clamped_vel));
   }
 
   // calculate brake
@@ -100,7 +103,7 @@ double BrakeMap::getBrake(const double acc, double vel) const
   }
 
   std::reverse(std::begin(interpolated_acc_vec), std::end(interpolated_acc_vec));
-  return interpolation::lerp(interpolated_acc_vec, brake_indices, acc);
+  return autoware::interpolation::lerp(interpolated_acc_vec, brake_indices, acc);
 }
 
 // steer map sim model

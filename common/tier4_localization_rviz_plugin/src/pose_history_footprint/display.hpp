@@ -61,7 +61,6 @@ protected:
   void update_footprint();
 
 private Q_SLOTS:
-  void update_visualization();
   void update_vehicle_info();
 
 private:  // NOLINT : suppress redundancy warnings

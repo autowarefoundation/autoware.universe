@@ -57,8 +57,10 @@ runs:
         restore-keys: |
           ccache-main-${{ runner.arch }}-${{ inputs.rosdistro }}-
 
-    - name: Show ccache stats before build
-      run: du -sh ${CCACHE_DIR} && ccache -s
+    - name: Show ccache stats before build and reset stats
+      run: |
+        du -sh ${CCACHE_DIR} && ccache -s
+        ccache --zero-stats
       shell: bash
 
     - name: Export CUDA state as a variable for adding to cache key
