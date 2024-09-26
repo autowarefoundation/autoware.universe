@@ -115,7 +115,7 @@ Map CSVLoader::getMap(const Table & table)
   return map;
 }
 
-std::vector<double> CSVLoader::getRowIndex(const Table & table)
+std::vector<double> CSVLoader::getColumnIndex(const Table & table)
 {
   std::vector<double> index = {};
   for (size_t i = 1; i < table[0].size(); i++) {
@@ -124,7 +124,7 @@ std::vector<double> CSVLoader::getRowIndex(const Table & table)
   return index;
 }
 
-std::vector<double> CSVLoader::getColumnIndex(const Table & table)
+std::vector<double> CSVLoader::getRowIndex(const Table & table)
 {
   std::vector<double> index = {};
   for (size_t i = 1; i < table.size(); i++) {
