@@ -48,6 +48,14 @@
 namespace autoware::pointcloud_preprocessor
 {
 
+struct ConcatenatedCloudResult
+{
+  sensor_msgs::msg::PointCloud2::SharedPtr concatenate_cloud_ptr{nullptr};
+  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
+    topic_to_transformed_cloud_map;
+  std::unordered_map<std::string, double> topic_to_original_stamp_map;
+};
+
 class CombineCloudHandler
 {
 private:
@@ -61,9 +69,9 @@ private:
 
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
 
-  /// @brief RclcppTimeHash_ structure defines a custom hash function for the rclcpp::Time type by
+  /// @brief RclcppTimeHash structure defines a custom hash function for the rclcpp::Time type by
   /// using its nanoseconds representation as the hash value.
-  struct RclcppTimeHash_
+  struct RclcppTimeHash
   {
     std::size_t operator()(const rclcpp::Time & t) const
     {
@@ -74,7 +82,7 @@ private:
   void correctPointCloudMotion(
     const std::shared_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
     const std::vector<rclcpp::Time> & pc_stamps,
-    std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash_> & transform_memo,
+    std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash> & transform_memo,
     std::shared_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr);
 
 public:
@@ -85,12 +93,8 @@ public:
   void processTwist(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & input);
   void processOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr & input);
 
-  std::tuple<
-    sensor_msgs::msg::PointCloud2::SharedPtr,
-    std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>,
-    std::unordered_map<std::string, double>>
-  combinePointClouds(std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> &
-                       topic_to_cloud_map_);
+  ConcatenatedCloudResult combinePointClouds(
+    std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> & topic_to_cloud_map);
 
   Eigen::Matrix4f computeTransformToAdjustForOldTimestamp(
     const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);

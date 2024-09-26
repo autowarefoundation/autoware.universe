@@ -106,7 +106,7 @@ std::deque<geometry_msgs::msg::TwistStamped> CombineCloudHandler::getTwistQueue(
 void CombineCloudHandler::correctPointCloudMotion(
   const std::shared_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
   const std::vector<rclcpp::Time> & pc_stamps,
-  std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash_> & transform_memo,
+  std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash> & transform_memo,
   std::shared_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr)
 {
   Eigen::Matrix4f adjust_to_old_data_transform = Eigen::Matrix4f::Identity();
@@ -128,17 +128,10 @@ void CombineCloudHandler::correctPointCloudMotion(
     adjust_to_old_data_transform, *transformed_cloud_ptr, *transformed_delay_compensated_cloud_ptr);
 }
 
-std::tuple<
-  sensor_msgs::msg::PointCloud2::SharedPtr,
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>,
-  std::unordered_map<std::string, double>>
-CombineCloudHandler::combinePointClouds(
+ConcatenatedCloudResult CombineCloudHandler::combinePointClouds(
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> & topic_to_cloud_map)
 {
-  sensor_msgs::msg::PointCloud2::SharedPtr concatenate_cloud_ptr = nullptr;
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
-    topic_to_transformed_cloud_map;
-  std::unordered_map<std::string, double> topic_to_original_stamp_map;
+  ConcatenatedCloudResult concatenate_cloud_result;
 
   std::vector<rclcpp::Time> pc_stamps;
   for (const auto & [topic, cloud] : topic_to_cloud_map) {
@@ -147,13 +140,14 @@ CombineCloudHandler::combinePointClouds(
   std::sort(pc_stamps.begin(), pc_stamps.end(), std::greater<rclcpp::Time>());
   const auto oldest_stamp = pc_stamps.back();
 
-  std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash_> transform_memo;
+  std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash> transform_memo;
 
   for (const auto & [topic, cloud] : topic_to_cloud_map) {
     auto transformed_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
     managed_tf_buffer_->transformPointcloud(output_frame_, *cloud, *transformed_cloud_ptr);
 
-    topic_to_original_stamp_map[topic] = rclcpp::Time(cloud->header.stamp).seconds();
+    concatenate_cloud_result.topic_to_original_stamp_map[topic] =
+      rclcpp::Time(cloud->header.stamp).seconds();
 
     // compensate pointcloud
     std::shared_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr;
@@ -166,34 +160,47 @@ CombineCloudHandler::combinePointClouds(
     }
 
     // Check if concatenate_cloud_ptr is nullptr, if so initialize it
-    if (concatenate_cloud_ptr == nullptr) {
+    if (concatenate_cloud_result.concatenate_cloud_ptr == nullptr) {
       // Initialize concatenate_cloud_ptr without copying the data
-      concatenate_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
-      concatenate_cloud_ptr->header = transformed_delay_compensated_cloud_ptr->header;
-      concatenate_cloud_ptr->height = transformed_delay_compensated_cloud_ptr->height;
-      concatenate_cloud_ptr->width = 0;  // Will be updated with total points
-      concatenate_cloud_ptr->is_dense = transformed_delay_compensated_cloud_ptr->is_dense;
-      concatenate_cloud_ptr->is_bigendian = transformed_delay_compensated_cloud_ptr->is_bigendian;
-      concatenate_cloud_ptr->fields = transformed_delay_compensated_cloud_ptr->fields;
-      concatenate_cloud_ptr->point_step = transformed_delay_compensated_cloud_ptr->point_step;
-      concatenate_cloud_ptr->row_step = 0;  // Will be updated after concatenation
-      concatenate_cloud_ptr->data.clear();
+      concatenate_cloud_result.concatenate_cloud_ptr =
+        std::make_shared<sensor_msgs::msg::PointCloud2>();
+      concatenate_cloud_result.concatenate_cloud_ptr->header =
+        transformed_delay_compensated_cloud_ptr->header;
+      concatenate_cloud_result.concatenate_cloud_ptr->height =
+        transformed_delay_compensated_cloud_ptr->height;
+      concatenate_cloud_result.concatenate_cloud_ptr->width =
+        0;  // Will be updated with total points
+      concatenate_cloud_result.concatenate_cloud_ptr->is_dense =
+        transformed_delay_compensated_cloud_ptr->is_dense;
+      concatenate_cloud_result.concatenate_cloud_ptr->is_bigendian =
+        transformed_delay_compensated_cloud_ptr->is_bigendian;
+      concatenate_cloud_result.concatenate_cloud_ptr->fields =
+        transformed_delay_compensated_cloud_ptr->fields;
+      concatenate_cloud_result.concatenate_cloud_ptr->point_step =
+        transformed_delay_compensated_cloud_ptr->point_step;
+      concatenate_cloud_result.concatenate_cloud_ptr->row_step =
+        0;  // Will be updated after concatenation
+      concatenate_cloud_result.concatenate_cloud_ptr->data.clear();
 
       // Reserve space for the data (assume max points you expect to concatenate)
       auto num_of_points = transformed_delay_compensated_cloud_ptr->width *
                            transformed_delay_compensated_cloud_ptr->height;
-      concatenate_cloud_ptr->data.reserve(num_of_points * concatenate_cloud_ptr->point_step);
+      concatenate_cloud_result.concatenate_cloud_ptr->data.reserve(
+        num_of_points * concatenate_cloud_result.concatenate_cloud_ptr->point_step);
     }
 
     // Concatenate the current pointcloud to the concatenated cloud
     pcl::concatenatePointCloud(
-      *concatenate_cloud_ptr, *transformed_delay_compensated_cloud_ptr, *concatenate_cloud_ptr);
+      *concatenate_cloud_result.concatenate_cloud_ptr, *transformed_delay_compensated_cloud_ptr,
+      *concatenate_cloud_result.concatenate_cloud_ptr);
 
     // Update width and row_step to reflect the new size
-    concatenate_cloud_ptr->width =
-      concatenate_cloud_ptr->data.size() / concatenate_cloud_ptr->point_step;
-    concatenate_cloud_ptr->row_step =
-      concatenate_cloud_ptr->width * concatenate_cloud_ptr->point_step;
+    concatenate_cloud_result.concatenate_cloud_ptr->width =
+      concatenate_cloud_result.concatenate_cloud_ptr->data.size() /
+      concatenate_cloud_result.concatenate_cloud_ptr->point_step;
+    concatenate_cloud_result.concatenate_cloud_ptr->row_step =
+      concatenate_cloud_result.concatenate_cloud_ptr->width *
+      concatenate_cloud_result.concatenate_cloud_ptr->point_step;
 
     // convert to original sensor frame if necessary
     bool need_transform_to_sensor_frame = (cloud->header.frame_id != output_frame_);
@@ -205,17 +212,18 @@ CombineCloudHandler::combinePointClouds(
         *transformed_cloud_ptr_in_sensor_frame);
       transformed_cloud_ptr_in_sensor_frame->header.stamp = oldest_stamp;
       transformed_cloud_ptr_in_sensor_frame->header.frame_id = cloud->header.frame_id;
-      topic_to_transformed_cloud_map[topic] = transformed_cloud_ptr_in_sensor_frame;
+      concatenate_cloud_result.topic_to_transformed_cloud_map[topic] =
+        transformed_cloud_ptr_in_sensor_frame;
     } else {
       transformed_delay_compensated_cloud_ptr->header.stamp = oldest_stamp;
       transformed_delay_compensated_cloud_ptr->header.frame_id = output_frame_;
-      topic_to_transformed_cloud_map[topic] = transformed_delay_compensated_cloud_ptr;
+      concatenate_cloud_result.topic_to_transformed_cloud_map[topic] =
+        transformed_delay_compensated_cloud_ptr;
     }
   }
-  concatenate_cloud_ptr->header.stamp = oldest_stamp;
+  concatenate_cloud_result.concatenate_cloud_ptr->header.stamp = oldest_stamp;
 
-  return std::make_tuple(
-    concatenate_cloud_ptr, topic_to_transformed_cloud_map, topic_to_original_stamp_map);
+  return concatenate_cloud_result;
 }
 
 Eigen::Matrix4f CombineCloudHandler::computeTransformToAdjustForOldTimestamp(

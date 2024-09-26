@@ -272,19 +272,16 @@ void PointCloudConcatenateDataSynchronizerComponent::odom_callback(
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
-  sensor_msgs::msg::PointCloud2::SharedPtr concatenate_cloud_ptr,
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> &
-    topic_to_transformed_cloud_map,
-  std::unordered_map<std::string, double> & topic_to_original_stamp_map,
-  double reference_timestamp_min, double reference_timestamp_max)
+  ConcatenatedCloudResult concatenated_cloud_result, double reference_timestamp_min,
+  double reference_timestamp_max)
 {
   // should never come to this state.
-  if (concatenate_cloud_ptr == nullptr) {
+  if (concatenated_cloud_result.concatenate_cloud_ptr == nullptr) {
     RCLCPP_ERROR(this->get_logger(), "Concatenate cloud is a nullptr.");
     return;
   }
   current_concatenate_cloud_timestamp_ =
-    rclcpp::Time(concatenate_cloud_ptr->header.stamp).seconds();
+    rclcpp::Time(concatenated_cloud_result.concatenate_cloud_ptr->header.stamp).seconds();
 
   if (
     current_concatenate_cloud_timestamp_ < latest_concatenate_cloud_timestamp_ &&
@@ -293,16 +290,18 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
   } else {
     publish_pointcloud_ = true;
     latest_concatenate_cloud_timestamp_ = current_concatenate_cloud_timestamp_;
-    auto concatenate_pointcloud_output =
-      std::make_unique<sensor_msgs::msg::PointCloud2>(*concatenate_cloud_ptr);
+    auto concatenate_pointcloud_output = std::make_unique<sensor_msgs::msg::PointCloud2>(
+      *concatenated_cloud_result.concatenate_cloud_ptr);
     concatenated_cloud_publisher_->publish(std::move(concatenate_pointcloud_output));
 
     // publish transformed raw pointclouds
     if (params_.publish_synchronized_pointcloud) {
       for (auto topic : params_.input_topics) {
-        if (topic_to_transformed_cloud_map.find(topic) != topic_to_transformed_cloud_map.end()) {
-          auto transformed_cloud_output =
-            std::make_unique<sensor_msgs::msg::PointCloud2>(*topic_to_transformed_cloud_map[topic]);
+        if (
+          concatenated_cloud_result.topic_to_transformed_cloud_map.find(topic) !=
+          concatenated_cloud_result.topic_to_transformed_cloud_map.end()) {
+          auto transformed_cloud_output = std::make_unique<sensor_msgs::msg::PointCloud2>(
+            *concatenated_cloud_result.topic_to_transformed_cloud_map[topic]);
           topic_to_transformed_cloud_publisher_map_[topic]->publish(
             std::move(transformed_cloud_output));
         } else {
@@ -316,7 +315,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
 
   diagnostic_reference_timestamp_min_ = reference_timestamp_min;
   diagnostic_reference_timestamp_max_ = reference_timestamp_max;
-  diagnostic_topic_to_original_stamp_map_ = topic_to_original_stamp_map;
+  diagnostic_topic_to_original_stamp_map_ = concatenated_cloud_result.topic_to_original_stamp_map;
   diagnostic_updater_.force_update();
 
   // add processing time for debug
@@ -328,7 +327,8 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
 
-    for (const auto & [topic, transformed_cloud] : topic_to_transformed_cloud_map) {
+    for (const auto & [topic, transformed_cloud] :
+         concatenated_cloud_result.topic_to_transformed_cloud_map) {
       if (transformed_cloud != nullptr) {
         const auto pipeline_latency_ms =
           std::chrono::duration<double, std::milli>(

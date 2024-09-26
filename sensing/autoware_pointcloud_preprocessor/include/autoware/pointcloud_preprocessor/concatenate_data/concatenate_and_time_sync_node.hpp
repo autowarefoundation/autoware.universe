@@ -60,11 +60,8 @@ public:
   explicit PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options);
   virtual ~PointCloudConcatenateDataSynchronizerComponent() {}
   void publishClouds(
-    sensor_msgs::msg::PointCloud2::SharedPtr concatenate_cloud_ptr,
-    std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> &
-      topic_to_transformed_cloud_map,
-    std::unordered_map<std::string, double> & topic_to_original_stamp_map,
-    double reference_timestamp_min, double reference_timestamp_max);
+    ConcatenatedCloudResult concatenated_cloud_result, double reference_timestamp_min,
+    double reference_timestamp_max);
 
 private:
   struct Parameters

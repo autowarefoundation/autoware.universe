@@ -40,11 +40,8 @@ public:
   std::tuple<double, double> getReferenceTimeStampBoundary();
   void processCloud(const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud);
   void concatenateCallback();
-  std::tuple<
-    sensor_msgs::msg::PointCloud2::SharedPtr,
-    std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>,
-    std::unordered_map<std::string, double>>
-  concatenateClouds(
+
+  ConcatenatedCloudResult concatenateClouds(
     std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map);
   void deleteCollector();
 

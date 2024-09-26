@@ -79,19 +79,13 @@ void CloudCollector::concatenateCallback()
 
   // lock for protecting collector list and concatenated pointcloud
   std::lock_guard<std::mutex> lock(mutex_);
-  auto [concatenate_cloud_ptr, topic_to_transformed_cloud_map, topic_to_original_stamp_map] =
-    concatenateClouds(topic_to_cloud_map_);
+  auto concatenated_cloud_result = concatenateClouds(topic_to_cloud_map_);
   ros2_parent_node_->publishClouds(
-    concatenate_cloud_ptr, topic_to_transformed_cloud_map, topic_to_original_stamp_map,
-    reference_timestamp_min_, reference_timestamp_max_);
+    concatenated_cloud_result, reference_timestamp_min_, reference_timestamp_max_);
   deleteCollector();
 }
 
-std::tuple<
-  sensor_msgs::msg::PointCloud2::SharedPtr,
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>,
-  std::unordered_map<std::string, double>>
-CloudCollector::concatenateClouds(
+ConcatenatedCloudResult CloudCollector::concatenateClouds(
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map)
 {
   return combine_cloud_handler_->combinePointClouds(topic_to_cloud_map);
