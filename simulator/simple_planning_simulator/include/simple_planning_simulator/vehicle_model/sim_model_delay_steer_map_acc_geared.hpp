@@ -41,8 +41,8 @@ public:
     }
 
     vehicle_name_ = table[0][0];
-    vel_index_ = CSVLoader::getRowIndex(table);
-    acc_index_ = CSVLoader::getColumnIndex(table);
+    vel_index_ = CSVLoader::getColumnIndex(table);
+    acc_index_ = CSVLoader::getRowIndex(table);
     acceleration_map_ = CSVLoader::getMap(table);
 
     std::cout << "[SimModelDelaySteerMapAccGeared]: success to read acceleration map from "

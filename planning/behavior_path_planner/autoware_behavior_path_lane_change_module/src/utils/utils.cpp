@@ -74,7 +74,8 @@ using tier4_planning_msgs::msg::PathPointWithLaneId;
 rclcpp::Logger get_logger()
 {
   constexpr const char * name{"lane_change.utils"};
-  return rclcpp::get_logger(name);
+  static rclcpp::Logger logger = rclcpp::get_logger(name);
+  return logger;
 }
 
 double calcLaneChangeResampleInterval(
@@ -105,19 +106,6 @@ double calcMaximumAcceleration(
   return std::clamp(acc, 0.0, max_longitudinal_acc);
 }
 
-double calcLaneChangingAcceleration(
-  const double initial_lane_changing_velocity, const double max_path_velocity,
-  const double lane_changing_time, const double prepare_longitudinal_acc)
-{
-  if (prepare_longitudinal_acc <= 0.0) {
-    return 0.0;
-  }
-
-  return std::clamp(
-    (max_path_velocity - initial_lane_changing_velocity) / lane_changing_time, 0.0,
-    prepare_longitudinal_acc);
-}
-
 void setPrepareVelocity(
   PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity)
 {
@@ -144,7 +132,7 @@ std::vector<double> getAccelerationValues(
   }
 
   if (max_acc - min_acc < std::numeric_limits<double>::epsilon()) {
-    return {0.0};
+    return {min_acc};
   }
 
   constexpr double epsilon = 0.001;
@@ -212,6 +200,7 @@ bool isPathInLanelets(
   return true;
 }
 
+// cppcheck-suppress unusedFunction
 bool pathFootprintExceedsTargetLaneBound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
   const double margin)
@@ -242,10 +231,9 @@ bool pathFootprintExceedsTargetLaneBound(
   return false;
 }
 
-std::optional<LaneChangePath> constructCandidatePath(
+std::optional<LaneChangePath> construct_candidate_path(
   const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
-  const PathWithLaneId & target_lane_reference_path,
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids)
 {
   const auto & shift_line = lane_change_info.shift_line;
@@ -297,8 +285,8 @@ std::optional<LaneChangePath> constructCandidatePath(
       continue;
     }
     const auto nearest_idx =
-      autoware::motion_utils::findNearestIndex(target_segment.points, point.point.pose);
-    point.lane_ids = target_segment.points.at(*nearest_idx).lane_ids;
+      autoware::motion_utils::findNearestIndex(target_lane_reference_path.points, point.point.pose);
+    point.lane_ids = target_lane_reference_path.points.at(*nearest_idx).lane_ids;
   }
 
   // TODO(Yutaka Shimizu): remove this flag after make the isPathInLanelets faster
@@ -368,18 +356,7 @@ PathWithLaneId getReferencePathFromTargetLane(
     lane_changing_reference_path, resample_interval, true, {0.0, lane_changing_length});
 }
 
-ShiftLine getLaneChangingShiftLine(
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
-  const PathWithLaneId & reference_path, const double shift_length)
-{
-  const Pose & lane_changing_start_pose = prepare_segment.points.back().point.pose;
-  const Pose & lane_changing_end_pose = target_segment.points.front().point.pose;
-
-  return getLaneChangingShiftLine(
-    lane_changing_start_pose, lane_changing_end_pose, reference_path, shift_length);
-}
-
-ShiftLine getLaneChangingShiftLine(
+ShiftLine get_lane_changing_shift_line(
   const Pose & lane_changing_start_pose, const Pose & lane_changing_end_pose,
   const PathWithLaneId & reference_path, const double shift_length)
 {
@@ -1111,16 +1088,6 @@ bool isWithinTurnDirectionLanes(const lanelet::ConstLanelet & lanelet, const Pol
 
   return !boost::geometry::disjoint(
     polygon, utils::toPolygon2d(lanelet::utils::to2D(lanelet.polygon2d().basicPolygon())));
-}
-
-double calcPhaseLength(
-  const double velocity, const double maximum_velocity, const double acceleration,
-  const double duration)
-{
-  const auto length_with_acceleration =
-    velocity * duration + 0.5 * acceleration * std::pow(duration, 2);
-  const auto length_with_max_velocity = maximum_velocity * duration;
-  return std::min(length_with_acceleration, length_with_max_velocity);
 }
 
 LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
