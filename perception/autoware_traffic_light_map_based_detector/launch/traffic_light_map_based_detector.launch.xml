@@ -14,6 +14,6 @@
     <remap from="~/expect/rois" to="$(var expect/rois)"/>
     <remap from="~/input/route" to="$(var input/route)"/>
     <remap from="~/output/rois" to="$(var output/rois)"/>
-    <param from="$(var param_path)"/>
+    <param from="$(var param_path)" allow_substs="true"/>
   </node>
 </launch>
