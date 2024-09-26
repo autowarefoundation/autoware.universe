@@ -120,6 +120,14 @@ double calc_phase_length(
   const double velocity, const double maximum_velocity, const double acceleration,
   const double duration);
 
+double calc_maximum_lane_change_length(
+  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
+  const std::vector<double> & shift_intervals, const double max_acc);
+
+double calc_maximum_lane_change_length(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
+  const double max_acc);
+
 double calc_lane_changing_acceleration(
   const double initial_lane_changing_velocity, const double max_path_velocity,
   const double lane_changing_time, const double prepare_longitudinal_acc);

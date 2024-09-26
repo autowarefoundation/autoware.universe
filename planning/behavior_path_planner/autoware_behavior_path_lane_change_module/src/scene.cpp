@@ -857,8 +857,7 @@ bool NormalLaneChange::is_near_terminal() const
   const auto backward_buffer = calculation::calc_stopping_distance(lc_param_ptr);
 
   const auto current_min_dist_buffer = common_data_ptr_->transient_data.current_dist_buffer.min;
-  const auto min_lc_dist_with_buffer =
-    backward_buffer + current_min_dist_buffer + lc_param_ptr->lane_change_finish_judge_buffer;
+  const auto min_lc_dist_with_buffer = backward_buffer + current_min_dist_buffer;
 
   return common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_end <
          min_lc_dist_with_buffer;
@@ -984,7 +983,9 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   }
 
   // calculate maximum lane change length
-  const auto current_max_dist_buffer = common_data_ptr_->transient_data.current_dist_buffer.max;
+  // TODO(Azu) Double check why it's failing with transient data
+  const auto current_max_dist_buffer =
+    calculation::calc_maximum_lane_change_length(common_data_ptr_, current_lanes.back(), max_acc);
 
   if (current_max_dist_buffer > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
     RCLCPP_DEBUG(
@@ -2279,7 +2280,7 @@ bool NormalLaneChange::isVehicleStuck(const lanelet::ConstLanelets & current_lan
   }
 
   const auto [min_acc, max_acc] = calcCurrentMinMaxAcceleration();
-  const auto current_max_dist_buffer = common_data_ptr_->transient_data.next_dist_buffer.max;
+  const auto current_max_dist_buffer = common_data_ptr_->transient_data.current_dist_buffer.max;
   const auto rss_dist = calcRssDistance(
     0.0, lane_change_parameters_->minimum_lane_changing_velocity,
     lane_change_parameters_->rss_params);
