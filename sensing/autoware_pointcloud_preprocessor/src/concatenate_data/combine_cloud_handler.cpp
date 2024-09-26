@@ -263,10 +263,10 @@ Eigen::Matrix4f CombineCloudHandler::computeTransformToAdjustForOldTimestamp(
       break;
     }
 
-    const double dis = (*twist_it).twist.linear.x * dt;
+    const double distance = (*twist_it).twist.linear.x * dt;
     yaw += (*twist_it).twist.angular.z * dt;
-    x += dis * std::cos(yaw);
-    y += dis * std::sin(yaw);
+    x += distance * std::cos(yaw);
+    y += distance * std::sin(yaw);
     prev_time = (*twist_it).header.stamp;
   }
 
