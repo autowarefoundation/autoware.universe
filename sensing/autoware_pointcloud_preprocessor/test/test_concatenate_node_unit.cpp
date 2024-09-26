@@ -212,7 +212,7 @@ TEST_F(ConcatenateCloudTest, TestProcessOdometry)
 TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
 {
   // If time difference between twist msg and pointcloud stamp is more than 100 miliseconds, return
-  // Identity transformation. case 1: time differecne larger than 100 miliseconds
+  // Identity transformation. case 1: time difference larger than 100 miliseconds
   rclcpp::Time pointcloud_stamp1(10, 100'000'000, RCL_ROS_TIME);
   rclcpp::Time pointcloud_stamp2(10, 210'000'000, RCL_ROS_TIME);
   auto twist_msg1 = std::make_shared<geometry_msgs::msg::TwistWithCovarianceStamped>();
