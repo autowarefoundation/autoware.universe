@@ -50,7 +50,8 @@ bool BrakeMap::getBrake(const double acc, const double vel, double & brake)
   const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "brake: vel");
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
-  for (std::vector<double> accelerations : brake_map_) {
+  interpolated_acc_vec.reserve(brake_map_.size());
+  for (const std::vector<double> & accelerations : brake_map_) {
     interpolated_acc_vec.push_back(
       autoware::interpolation::lerp(vel_index_, accelerations, clamped_vel));
   }
@@ -66,7 +67,8 @@ bool BrakeMap::getBrake(const double acc, const double vel, double & brake)
       acc, interpolated_acc_vec.back());
     brake = brake_index_.back();
     return true;
-  } else if (interpolated_acc_vec.front() < acc) {
+  }
+  if (interpolated_acc_vec.front() < acc) {
     brake = brake_index_.front();
     return true;
   }
@@ -83,6 +85,7 @@ bool BrakeMap::getAcceleration(const double brake, const double vel, double & ac
   const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "brake: vel");
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
+  interpolated_acc_vec.reserve(brake_map_.size());
   for (const auto & acc_vec : brake_map_) {
     interpolated_acc_vec.push_back(autoware::interpolation::lerp(vel_index_, acc_vec, clamped_vel));
   }
