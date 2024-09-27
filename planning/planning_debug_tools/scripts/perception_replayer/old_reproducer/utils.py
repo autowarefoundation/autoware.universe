@@ -26,11 +26,6 @@ from tf_transformations import euler_from_quaternion
 from tf_transformations import quaternion_from_euler
 
 
-def get_starting_time(uri: str):
-    info = rosbag2_py.Info().read_metadata(uri, "sqlite3")
-    return info.starting_time
-
-
 def get_rosbag_options(path, serialization_format="cdr"):
     storage_options = rosbag2_py.StorageOptions(uri=path, storage_id="sqlite3")
 
@@ -151,7 +146,7 @@ class StopWatch:
             time.perf_counter() - self.start_times[name]
         ) * 1000  # Convert to milliseconds
         if self.verbose:
-            print(f"Time for {name}: {elapsed_time:.2f} ms")
+            print(f"Time for {name}: {elapsed_time: .2f} ms")
 
         # Reset the starting time for the name
         del self.start_times[name]
