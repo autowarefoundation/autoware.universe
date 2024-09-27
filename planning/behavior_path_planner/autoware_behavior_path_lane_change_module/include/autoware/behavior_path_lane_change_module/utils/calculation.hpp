@@ -144,28 +144,31 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
   const double max_length_threshold = std::numeric_limits<double>::max());
 
 /**
- * @brief Calculates the minimum and maximum lane change lengths, and corresponding distance buffers.
+ * @brief Calculates the minimum and maximum lane changing lengths, along with the corresponding
+ * distance buffers.
  *
- * This function computes both the minimum and maximum lane change lengths based on shift intervals
- * and vehicle parameters, and calculates the corresponding distance buffers for the lane change process.
- * The calculated values provide an estimation of the space required to perform a lane change, without
- * considering safety aspects.
+ * This function computes the minimum and maximum lane change lengths based on shift intervals and
+ * vehicle parameters. It only accounts for the lane changing phase itself, excluding the prepare
+ * distance, which should be handled separately during path generation.
  *
- * If the lane information or necessary data is unavailable, the function returns default values of
- * `std::numeric_limits<double>::max()` to prevent lane change execution.
+ * Additionally, the function calculates the distance buffer to ensure that the ego vehicle has
+ * enough space to complete the lane change, including cases where multiple lane changes may be
+ * necessary.
  *
  * @param common_data_ptr Shared pointer to a CommonData structure, which includes:
- *  - `lc_param_ptr`: Parameters related to lane changing, such as velocity, lateral acceleration, and jerk.
+ *  - `lc_param_ptr`: Parameters related to lane changing, such as velocity, lateral acceleration,
+ * and jerk.
  *  - `route_handler_ptr`: Pointer to the route handler for managing routes.
  *  - `direction`: Lane change direction (e.g., left or right).
  *  - `transient_data.acc.max`: Maximum acceleration of the vehicle.
- *  - Other relevant data for ego vehicle's dynamics and state.
+ *  - Other relevant data for the ego vehicle's dynamics and state.
  * @param lanes The set of lanelets representing the lanes for the lane change.
  *
  * @return A pair of `MinMaxValue` structures where:
- *  - The first element contains the minimum and maximum lane change lengths in meters.
+ *  - The first element contains the minimum and maximum lane changing lengths in meters.
  *  - The second element contains the minimum and maximum distance buffers in meters.
- * If the lanes or necessary data are unavailable, returns `std::numeric_limits<double>::max()` for both values.
+ * If the lanes or necessary data are unavailable, returns `std::numeric_limits<double>::max()` for
+ * both values.
  */
 std::pair<MinMaxValue, MinMaxValue> calc_lc_length_and_dist_buffer(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
