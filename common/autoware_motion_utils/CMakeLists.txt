@@ -12,8 +12,6 @@ ament_auto_add_library(autoware_motion_utils SHARED
   DIRECTORY src
 )
 
-target_link_libraries(autoware_motion_utils)
-
 if(BUILD_TESTING)
   find_package(ament_cmake_ros REQUIRED)
 
