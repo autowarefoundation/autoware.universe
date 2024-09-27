@@ -323,13 +323,20 @@ struct MinMaxValue
 
 struct TransientData
 {
-  MinMaxValue acc;
-  MinMaxValue lane_changing_length;
-  MinMaxValue current_dist_buffer;
-  MinMaxValue next_dist_buffer;
-  double dist_from_ego_to_current_terminal_end{std::numeric_limits<double>::min()};
-  double dist_from_ego_to_current_terminal_start{std::numeric_limits<double>::min()};
-  double maximum_prepare_length{std::numeric_limits<double>::max()};
+  MinMaxValue acc;                   // acceleration profile for accelerating lane change path
+  MinMaxValue lane_changing_length;  // lane changing length for a single lane change
+  MinMaxValue
+    current_dist_buffer;  // distance buffer computed backward from current lanes' terminal end
+  MinMaxValue
+    next_dist_buffer;  // distance buffer computed backward  from target lanes' terminal end
+  double dist_to_terminal_end{
+    std::numeric_limits<double>::min()};  // distance from ego base link to the current lanes'
+                                          // terminal end
+  double dist_to_terminal_start{
+    std::numeric_limits<double>::min()};  // distance from ego base link to the current lanes'
+                                          // terminal start
+  double max_prepare_length{
+    std::numeric_limits<double>::max()};  // maximum prepare length, starting from ego's base link
 
   bool is_ego_near_current_terminal_start{false};
 };

@@ -122,17 +122,15 @@ void NormalLaneChange::update_transient_data()
     transient_data.current_dist_buffer.min - transient_data.lane_changing_length.min -
     common_data_ptr_->lc_param_ptr->lane_change_finish_judge_buffer;
 
-  transient_data.dist_from_ego_to_current_terminal_end =
-    calculation::calc_dist_from_pose_to_terminal_end(
-      common_data_ptr_, common_data_ptr_->lanes_ptr->current, common_data_ptr_->get_ego_pose());
-  transient_data.dist_from_ego_to_current_terminal_start =
-    transient_data.dist_from_ego_to_current_terminal_end - transient_data.current_dist_buffer.min;
+  transient_data.dist_to_terminal_end = calculation::calc_dist_from_pose_to_terminal_end(
+    common_data_ptr_, common_data_ptr_->lanes_ptr->current, common_data_ptr_->get_ego_pose());
+  transient_data.dist_to_terminal_start =
+    transient_data.dist_to_terminal_end - transient_data.current_dist_buffer.min;
 
-  transient_data.maximum_prepare_length =
-    calculation::calc_maximum_prepare_length(common_data_ptr_);
+  transient_data.max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
 
   transient_data.is_ego_near_current_terminal_start =
-    transient_data.dist_from_ego_to_current_terminal_start < transient_data.maximum_prepare_length;
+    transient_data.dist_to_terminal_start < transient_data.max_prepare_length;
 
   RCLCPP_DEBUG(
     logger_, "acc - min: %.4f, max: %.4f", transient_data.acc.min, transient_data.acc.max);
@@ -145,13 +143,9 @@ void NormalLaneChange::update_transient_data()
   RCLCPP_DEBUG(
     logger_, "next_dist_buffer - min: %.4f, max: %.4f", transient_data.next_dist_buffer.min,
     transient_data.next_dist_buffer.max);
-  RCLCPP_DEBUG(
-    logger_, "dist_from_ego_to_current_terminal_start: %.4f",
-    transient_data.dist_from_ego_to_current_terminal_start);
-  RCLCPP_DEBUG(
-    logger_, "dist_from_ego_to_current_terminal_end: %.4f",
-    transient_data.dist_from_ego_to_current_terminal_end);
-  RCLCPP_DEBUG(logger_, "maximum_prepare_length: %.4f", transient_data.maximum_prepare_length);
+  RCLCPP_DEBUG(logger_, "dist_to_terminal_start: %.4f", transient_data.dist_to_terminal_start);
+  RCLCPP_DEBUG(logger_, "dist_to_terminal_end: %.4f", transient_data.dist_to_terminal_end);
+  RCLCPP_DEBUG(logger_, "max_prepare_length: %.4f", transient_data.max_prepare_length);
   RCLCPP_DEBUG(
     logger_, "is_ego_near_current_terminal_start: %s",
     (transient_data.is_ego_near_current_terminal_start ? "true" : "false"));
@@ -221,9 +215,9 @@ bool NormalLaneChange::isLaneChangeRequired()
 
   const auto ego_dist_to_target_start =
     calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
-  const auto maximum_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
+  const auto max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
 
-  if (ego_dist_to_target_start > maximum_prepare_length) {
+  if (ego_dist_to_target_start > max_prepare_length) {
     return false;
   }
 
@@ -240,8 +234,7 @@ bool NormalLaneChange::is_near_regulatory_element() const
   if (!common_data_ptr_ || !common_data_ptr_->is_data_available()) return false;
 
   const auto max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
-  const auto dist_to_terminal_start =
-    common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start;
+  const auto dist_to_terminal_start = common_data_ptr_->transient_data.dist_to_terminal_start;
 
   if (dist_to_terminal_start <= max_prepare_length) return false;
 
@@ -859,8 +852,7 @@ bool NormalLaneChange::is_near_terminal() const
   const auto current_min_dist_buffer = common_data_ptr_->transient_data.current_dist_buffer.min;
   const auto min_lc_dist_with_buffer = backward_buffer + current_min_dist_buffer;
 
-  return common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_end <
-         min_lc_dist_with_buffer;
+  return common_data_ptr_->transient_data.dist_to_terminal_end < min_lc_dist_with_buffer;
 }
 
 bool NormalLaneChange::isEgoOnPreparePhase() const
@@ -1417,10 +1409,8 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
 
   const auto dist_to_target_start =
     calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
-  const auto dist_to_terminal_end =
-    common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_end;
-  const auto dist_to_terminal_start =
-    common_data_ptr_->transient_data.dist_from_ego_to_current_terminal_start;
+  const auto dist_to_terminal_end = common_data_ptr_->transient_data.dist_to_terminal_end;
+  const auto dist_to_terminal_start = common_data_ptr_->transient_data.dist_to_terminal_start;
 
   const auto target_lane_length = lanelet::utils::getLaneletLength2d(target_lanes);
 
