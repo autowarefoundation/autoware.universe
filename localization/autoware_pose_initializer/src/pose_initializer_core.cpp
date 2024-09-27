@@ -176,12 +176,13 @@ void PoseInitializer::on_initialize(
         const auto latest_gnss_pose = get_gnss_pose();
 
         double gnss_error_2d;
-        const bool is_gnss_pose_error = pose_error_check_->check_pose_error(
+        const bool is_gnss_pose_error_small = pose_error_check_->check_pose_error(
           latest_gnss_pose.pose.pose, pose.pose.pose, gnss_error_2d);
 
         diagnostics_pose_reliable_->add_key_value("gnss_pose_error_2d", gnss_error_2d);
-        diagnostics_pose_reliable_->add_key_value("is_gnss_pose_error", is_gnss_pose_error);
-        if (!is_gnss_pose_error) {
+        diagnostics_pose_reliable_->add_key_value(
+          "is_gnss_pose_error_small", is_gnss_pose_error_small);
+        if (!is_gnss_pose_error_small) {
           std::stringstream message;
           message << " Large error between Initial Pose and GNSS Pose.";
           diagnostics_pose_reliable_->update_level_and_message(
@@ -189,7 +190,7 @@ void PoseInitializer::on_initialize(
         }
       }
       // check initial pose result and publish diagnostics
-      diagnostics_pose_reliable_->add_key_value("initial_pose_reliable", reliable);
+      diagnostics_pose_reliable_->add_key_value("is_initial_pose_reliable", reliable);
       if (!reliable) {
         std::stringstream message;
         message << "Initial Pose Estimation is Unstable.";
