@@ -40,6 +40,7 @@ This node depends on the map height fitter library.
 | ------------------------------------ | ------------------------------------------------------------ | --------------------------- |
 | `/localization/initialization_state` | autoware_adapi_v1_msgs::msg::LocalizationInitializationState | pose initialization state   |
 | `/initialpose3d`                     | geometry_msgs::msg::PoseWithCovarianceStamped                | calculated initial ego pose |
+| `/diagnostics`                       | diagnostic_msgs::msg::DiagnosticArray                        | diagnostics                 |
 
 ## Diagnostics
 
