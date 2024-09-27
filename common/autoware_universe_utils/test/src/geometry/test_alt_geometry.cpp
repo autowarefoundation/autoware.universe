@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/universe_utils/geometry/alt_geometry.hpp"
+#include "autoware/universe_utils/geometry/ear_clipping.hpp"
 #include "autoware/universe_utils/geometry/random_concave_polygon.hpp"
 #include "autoware/universe_utils/geometry/random_convex_polygon.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
@@ -882,6 +883,73 @@ TEST(alt_geometry, coveredByRand)
           const auto alt_point = autoware::universe_utils::alt::Point2d(point);
           const auto alt_poly =
             autoware::universe_utils::alt::ConvexPolygon2d::create(polygons[j]).value();
+          sw.tic();
+          const auto alt = autoware::universe_utils::covered_by(alt_point, alt_poly);
+          if (alt) {
+            alt_covered_ns += sw.toc();
+          } else {
+            alt_not_covered_ns += sw.toc();
+          }
+
+          if (ground_truth != alt) {
+            std::cout << "Alt failed for the point and polygon: ";
+            std::cout << boost::geometry::wkt(point) << boost::geometry::wkt(polygons[j])
+                      << std::endl;
+          }
+          EXPECT_EQ(ground_truth, alt);
+        }
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %ld covered pairs\n", polygons_nb, vertices,
+      covered_count, polygons_nb * vertices * polygons_nb);
+    std::printf(
+      "\tCovered:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_covered_ns / 1e6, alt_covered_ns / 1e6);
+    std::printf(
+      "\tNot covered:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_not_covered_ns / 1e6, alt_not_covered_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      (ground_truth_not_covered_ns + ground_truth_covered_ns) / 1e6,
+      (alt_not_covered_ns + alt_covered_ns) / 1e6);
+  }
+}
+
+TEST(alt_geometry, coveredByConcaveRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 100;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_covered_ns = 0.0;
+    double ground_truth_not_covered_ns = 0.0;
+    double alt_covered_ns = 0.0;
+    double alt_not_covered_ns = 0.0;
+    int covered_count = 0;
+
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (const auto & point : polygons[i].outer()) {
+        for (auto j = 0UL; j < polygons.size(); ++j) {
+          sw.tic();
+          const auto ground_truth = boost::geometry::covered_by(point, polygons[j]);
+          if (ground_truth) {
+            ++covered_count;
+            ground_truth_covered_ns += sw.toc();
+          } else {
+            ground_truth_not_covered_ns += sw.toc();
+          }
+
+          const auto alt_point = autoware::universe_utils::alt::Point2d(point);
+          const auto alt_poly =
+            autoware::universe_utils::alt::Polygon2d::create(polygons[j]).value();
           sw.tic();
           const auto alt = autoware::universe_utils::covered_by(alt_point, alt_poly);
           if (alt) {

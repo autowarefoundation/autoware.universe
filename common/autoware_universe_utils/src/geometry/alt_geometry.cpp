@@ -14,6 +14,8 @@
 
 #include "autoware/universe_utils/geometry/alt_geometry.hpp"
 
+#include "autoware/universe_utils/geometry/ear_clipping.hpp"
+
 namespace autoware::universe_utils
 {
 // Alternatives for Boost.Geometry ----------------------------------------------------------------
@@ -292,6 +294,17 @@ bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
   }
 
   return winding_number != 0;
+}
+
+bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly)
+{
+  for (const auto & triangle : triangulate(poly)) {
+    if (covered_by(point, triangle)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
