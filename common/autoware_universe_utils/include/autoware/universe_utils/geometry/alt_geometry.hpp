@@ -195,7 +195,9 @@ alt::PointList2d simplify(const alt::PointList2d & line, const double max_distan
 bool touches(
   const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 
-bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
+bool touches(const alt::Point2d & point, const alt::PointList2d & vertices);
+
+bool touches(const alt::Point2d & point, const alt::Polygon2d & poly);
 
 bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
 

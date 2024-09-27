@@ -567,10 +567,8 @@ bool touches(
   return std::abs(start_vec.cross(end_vec)) < epsilon && start_vec.dot(end_vec) <= 0;
 }
 
-bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
+bool touches(const alt::Point2d & point, const alt::PointList2d & vertices)
 {
-  const auto & vertices = poly.vertices();
-
   const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
     vertices.begin(), std::prev(vertices.end()),
     [](const auto & a, const auto & b) { return a.y() < b.y(); });
@@ -581,6 +579,21 @@ bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
   for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
     // check if the point is on each edge of the polygon
     if (touches(point, *it, *std::next(it))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool touches(const alt::Point2d & point, const alt::Polygon2d & poly)
+{
+  if (touches(point, poly.outer())) {
+    return true;
+  }
+
+  for (const auto & inner : poly.inners()) {
+    if (touches(point, inner)) {
       return true;
     }
   }
