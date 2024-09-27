@@ -73,8 +73,6 @@ struct ObjectParameter
 
   bool is_safety_check_target{false};
 
-  size_t execute_num{1};
-
   double moving_speed_threshold{0.0};
 
   double moving_time_threshold{1.0};

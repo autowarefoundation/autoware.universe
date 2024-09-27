@@ -99,7 +99,6 @@ void BirdEyeViewController::reset()
   y_property_->setFloat(0);
 }
 
-// cppcheck-suppress unusedFunction
 void BirdEyeViewController::handleMouseEvent(rviz_common::ViewportMouseEvent & event)
 {
   if (event.shift()) {

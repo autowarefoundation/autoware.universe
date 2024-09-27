@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2020-2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,18 +50,14 @@
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <pcl_ros/transforms.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
+#include <tf2/time.h>
 #include <tf2/utils.h>
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#else
-#include <tf2_eigen/tf2_eigen.hpp>
-#endif
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace
@@ -193,6 +189,9 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
   pub_costmap_ = this->create_publisher<grid_map_msgs::msg::GridMap>("~/output/grid_map", 1);
   pub_occupancy_grid_ =
     this->create_publisher<nav_msgs::msg::OccupancyGrid>("~/output/occupancy_grid", 1);
+  pub_processing_time_ =
+    create_publisher<autoware::universe_utils::ProcessingTimeDetail>("processing_time", 1);
+  time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(pub_processing_time_);
 
   // Timer
   const auto period_ns = rclcpp::Rate(param_->update_rate).period();
@@ -277,20 +276,22 @@ void CostmapGenerator::onScenario(const tier4_planning_msgs::msg::Scenario::Cons
 
 void CostmapGenerator::onTimer()
 {
+  autoware::universe_utils::ScopedTimeTrack scoped_time_track(__func__, *time_keeper_);
   if (!isActive()) {
     return;
   }
 
   // Get current pose
+  time_keeper_->start_track("lookupTransform");
   geometry_msgs::msg::TransformStamped tf;
   try {
-    tf = tf_buffer_.lookupTransform(
-      param_->costmap_frame, param_->vehicle_frame, rclcpp::Time(0),
-      rclcpp::Duration::from_seconds(1.0));
+    tf =
+      tf_buffer_.lookupTransform(param_->costmap_frame, param_->vehicle_frame, tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
     return;
   }
+  time_keeper_->end_track("lookupTransform");
 
   // Set grid center
   grid_map::Position p;
@@ -299,18 +300,24 @@ void CostmapGenerator::onTimer()
   costmap_.setPosition(p);
 
   if ((param_->use_wayarea || param_->use_parkinglot) && lanelet_map_) {
+    autoware::universe_utils::ScopedTimeTrack st("generatePrimitivesCostmap()", *time_keeper_);
     costmap_[LayerName::primitives] = generatePrimitivesCostmap();
   }
 
   if (param_->use_objects && objects_) {
+    autoware::universe_utils::ScopedTimeTrack st("generateObjectsCostmap()", *time_keeper_);
     costmap_[LayerName::objects] = generateObjectsCostmap(objects_);
   }
 
   if (param_->use_points && points_) {
+    autoware::universe_utils::ScopedTimeTrack st("generatePointsCostmap()", *time_keeper_);
     costmap_[LayerName::points] = generatePointsCostmap(points_);
   }
 
-  costmap_[LayerName::combined] = generateCombinedCostmap();
+  {
+    autoware::universe_utils::ScopedTimeTrack st("generateCombinedCostmap()", *time_keeper_);
+    costmap_[LayerName::combined] = generateCombinedCostmap();
+  }
 
   publishCostmap(costmap_);
 }
