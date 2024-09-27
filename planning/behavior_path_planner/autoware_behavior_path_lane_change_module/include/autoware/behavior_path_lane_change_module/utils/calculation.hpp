@@ -103,6 +103,18 @@ double calc_ego_dist_to_lanes_start(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
 
+double calc_maximum_lane_change_length(
+  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
+  const std::vector<double> & shift_intervals, const double max_acc);
+
+double calc_maximum_lane_change_length(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
+  const double max_acc);
+
+double calc_lane_changing_acceleration(
+  const double initial_lane_changing_velocity, const double max_path_velocity,
+  const double lane_changing_time, const double prepare_longitudinal_acc);
+
 /**
  * @brief Calculates the distance required during a lane change operation.
  *
@@ -120,18 +132,6 @@ double calc_phase_length(
   const double velocity, const double maximum_velocity, const double acceleration,
   const double duration);
 
-double calc_maximum_lane_change_length(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc);
-
-double calc_maximum_lane_change_length(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
-  const double max_acc);
-
-double calc_lane_changing_acceleration(
-  const double initial_lane_changing_velocity, const double max_path_velocity,
-  const double lane_changing_time, const double prepare_longitudinal_acc);
-
 std::vector<PhaseMetrics> calc_prepare_phase_metrics(
   const CommonDataPtr & common_data_ptr, const std::vector<double> & prepare_durations,
   const std::vector<double> & lon_accel_values, const double current_velocity,
@@ -143,6 +143,30 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
   const double max_velocity, const double lon_accel,
   const double max_length_threshold = std::numeric_limits<double>::max());
 
+/**
+ * @brief Calculates the minimum and maximum lane change lengths, and corresponding distance buffers.
+ *
+ * This function computes both the minimum and maximum lane change lengths based on shift intervals
+ * and vehicle parameters, and calculates the corresponding distance buffers for the lane change process.
+ * The calculated values provide an estimation of the space required to perform a lane change, without
+ * considering safety aspects.
+ *
+ * If the lane information or necessary data is unavailable, the function returns default values of
+ * `std::numeric_limits<double>::max()` to prevent lane change execution.
+ *
+ * @param common_data_ptr Shared pointer to a CommonData structure, which includes:
+ *  - `lc_param_ptr`: Parameters related to lane changing, such as velocity, lateral acceleration, and jerk.
+ *  - `route_handler_ptr`: Pointer to the route handler for managing routes.
+ *  - `direction`: Lane change direction (e.g., left or right).
+ *  - `transient_data.acc.max`: Maximum acceleration of the vehicle.
+ *  - Other relevant data for ego vehicle's dynamics and state.
+ * @param lanes The set of lanelets representing the lanes for the lane change.
+ *
+ * @return A pair of `MinMaxValue` structures where:
+ *  - The first element contains the minimum and maximum lane change lengths in meters.
+ *  - The second element contains the minimum and maximum distance buffers in meters.
+ * If the lanes or necessary data are unavailable, returns `std::numeric_limits<double>::max()` for both values.
+ */
 std::pair<MinMaxValue, MinMaxValue> calc_lc_length_and_dist_buffer(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::calculation
