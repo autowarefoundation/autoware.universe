@@ -95,13 +95,6 @@ void PoseHistoryFootprint::update_vehicle_info()
   }
 }
 
-void PoseHistoryFootprint::update_visualization()
-{
-  if (last_msg_ptr_) {
-    processMessage(last_msg_ptr_);
-  }
-}
-
 void PoseHistoryFootprint::onInitialize()
 {
   MFDClass::onInitialize();

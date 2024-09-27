@@ -14,6 +14,7 @@
 
 #include "map_based_prediction/map_based_prediction_node.hpp"
 
+#include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
@@ -24,7 +25,6 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_utils/autoware_utils.hpp>
-#include <interpolation/linear_interpolation.hpp>
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
 
