@@ -1609,6 +1609,18 @@ bool NormalLaneChange::check_candidate_path_safety(
       "Ego is not stuck and parked vehicle exists in the target lane. Skip lane change.");
   }
 
+  const auto lc_start_velocity = candidate_path.info.velocity.prepare;
+  const auto min_lc_velocity = lane_change_parameters_->minimum_lane_changing_velocity;
+  constexpr double margin = 0.1;
+  // path is unsafe if it exceeds target lane boundary with a high velocity
+  if (
+    lane_change_parameters_->enable_target_lane_bound_check &&
+    lc_start_velocity > min_lc_velocity + margin &&
+    utils::lane_change::path_footprint_exceeds_target_lane_bound(
+      common_data_ptr_, candidate_path.shifted_path.path, planner_data_->parameters.vehicle_info)) {
+    throw std::logic_error("Path footprint exceeds target lane boundary. Skip lane change.");
+  }
+
   constexpr size_t decel_sampling_num = 1;
   const auto safety_check_with_normal_rss = isLaneChangePathSafe(
     candidate_path, target_objects, common_data_ptr_->lc_param_ptr->rss_params, decel_sampling_num,

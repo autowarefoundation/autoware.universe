@@ -200,8 +200,7 @@ bool isPathInLanelets(
   return true;
 }
 
-// cppcheck-suppress unusedFunction
-bool pathFootprintExceedsTargetLaneBound(
+bool path_footprint_exceeds_target_lane_bound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
   const double margin)
 {
@@ -1145,16 +1144,6 @@ bool is_same_lane_with_prev_iteration(
          (prev_target_lanes.back().id() == prev_target_lanes.back().id());
 }
 
-Pose to_pose(
-  const autoware::universe_utils::Point2d & point,
-  const geometry_msgs::msg::Quaternion & orientation)
-{
-  Pose pose;
-  pose.position = autoware::universe_utils::createPoint(point.x(), point.y(), 0.0);
-  pose.orientation = orientation;
-  return pose;
-}
-
 bool is_ahead_of_ego(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
   const PredictedObject & object)
@@ -1279,47 +1268,3 @@ double get_distance_to_next_regulatory_element(
   return distance;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
-
-namespace autoware::behavior_path_planner::utils::lane_change::debug
-{
-geometry_msgs::msg::Point32 create_point32(const geometry_msgs::msg::Pose & pose)
-{
-  geometry_msgs::msg::Point32 p;
-  p.x = static_cast<float>(pose.position.x);
-  p.y = static_cast<float>(pose.position.y);
-  p.z = static_cast<float>(pose.position.z);
-  return p;
-};
-
-geometry_msgs::msg::Polygon createExecutionArea(
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const Pose & pose,
-  double additional_lon_offset, double additional_lat_offset)
-{
-  const double & base_to_front = vehicle_info.max_longitudinal_offset_m;
-  const double & width = vehicle_info.vehicle_width_m;
-  const double & base_to_rear = vehicle_info.rear_overhang_m;
-
-  // if stationary object, extend forward and backward by the half of lon length
-  const double forward_lon_offset = base_to_front + additional_lon_offset;
-  const double backward_lon_offset = -base_to_rear;
-  const double lat_offset = width / 2.0 + additional_lat_offset;
-
-  const auto p1 =
-    autoware::universe_utils::calcOffsetPose(pose, forward_lon_offset, lat_offset, 0.0);
-  const auto p2 =
-    autoware::universe_utils::calcOffsetPose(pose, forward_lon_offset, -lat_offset, 0.0);
-  const auto p3 =
-    autoware::universe_utils::calcOffsetPose(pose, backward_lon_offset, -lat_offset, 0.0);
-  const auto p4 =
-    autoware::universe_utils::calcOffsetPose(pose, backward_lon_offset, lat_offset, 0.0);
-  geometry_msgs::msg::Polygon polygon;
-
-  polygon.points.push_back(create_point32(p1));
-  polygon.points.push_back(create_point32(p2));
-  polygon.points.push_back(create_point32(p3));
-  polygon.points.push_back(create_point32(p4));
-
-  return polygon;
-}
-
-}  // namespace autoware::behavior_path_planner::utils::lane_change::debug
