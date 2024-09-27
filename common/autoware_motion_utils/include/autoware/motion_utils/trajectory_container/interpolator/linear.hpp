@@ -15,12 +15,10 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__LINEAR_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__LINEAR_HPP_
 
-#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_impl_base.hpp"
-#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_mixin.hpp"
 
 #include <Eigen/Dense>
 
-#include <memory>
 #include <vector>
 
 namespace autoware::motion_utils::trajectory_container::interpolator
@@ -31,7 +29,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator
  *
  * This class provides methods to perform linear interpolation on a set of data points.
  */
-class Linear : public detail::InterpolatorImplBase<Linear, double>
+class Linear : public detail::InterpolatorMixin<Linear, double>
 {
 private:
   Eigen::VectorXd values_;  ///< Interpolation values.
@@ -81,13 +79,6 @@ public:
    * @return The minimum number of required points.
    */
   [[nodiscard]] size_t minimum_required_points() const override;
-
-  /**
-   * @brief Clone the interpolator.
-   *
-   * @return A shared pointer to the cloned interpolator.
-   */
-  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

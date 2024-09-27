@@ -15,8 +15,7 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__CUBIC_SPLINE_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__CUBIC_SPLINE_HPP_
 
-#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_impl_base.hpp"
-#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_mixin.hpp"
 
 #include <Eigen/Dense>
 
@@ -30,7 +29,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator
  *
  * This class provides methods to perform cubic spline interpolation on a set of data points.
  */
-class CubicSpline : public detail::InterpolatorImplBase<CubicSpline, double>
+class CubicSpline : public detail::InterpolatorMixin<CubicSpline, double>
 {
 private:
   Eigen::VectorXd a_, b_, c_, d_;  ///< Coefficients for the cubic spline.
@@ -90,13 +89,6 @@ public:
    * @return The minimum number of required points.
    */
   [[nodiscard]] size_t minimum_required_points() const override { return 4; }
-
-  /**
-   * @brief Clone the interpolator.
-   *
-   * @return A shared pointer to a new instance of the interpolator.
-   */
-  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

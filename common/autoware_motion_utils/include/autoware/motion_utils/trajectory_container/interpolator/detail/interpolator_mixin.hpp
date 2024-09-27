@@ -13,8 +13,8 @@
 // limitations under the License.
 
 // clang-format off
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_IMPL_BASE_HPP_  // NOLINT
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_IMPL_BASE_HPP_  // NOLINT
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_MIXIN_HPP_  // NOLINT
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_MIXIN_HPP_  // NOLINT
 // clang-format on
 
 #include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
@@ -38,9 +38,9 @@ namespace autoware::motion_utils::trajectory_container::interpolator::detail
  * @tparam T The type of the values being interpolated.
  */
 template <class InterpolatorType, class T>
-struct InterpolatorImplBase : public Interpolator<T>
+struct InterpolatorMixin : public InterpolatorInterface<T>
 {
-  std::shared_ptr<Interpolator<T>> clone() const override
+  std::shared_ptr<InterpolatorInterface<T>> clone() const override
   {
     return std::make_shared<InterpolatorType>(static_cast<const InterpolatorType &>(*this));
   }
@@ -92,5 +92,5 @@ struct InterpolatorImplBase : public Interpolator<T>
 }  // namespace autoware::motion_utils::trajectory_container::interpolator::detail
 
 // clang-format off
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_IMPL_BASE_HPP_  // NOLINT
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_MIXIN_HPP_  // NOLINT
 // clang-format on

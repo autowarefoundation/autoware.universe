@@ -13,8 +13,8 @@
 // limitations under the License.
 
 // clang-format off
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_IMPL_HPP_  // NOLINT
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_IMPL_HPP_  // NOLINT
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_  // NOLINT
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_  // NOLINT
 // clang-format on
 
 #include <Eigen/Dense>
@@ -33,7 +33,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator::detail
  * @tparam T The type of the values being interpolated.
  */
 template <typename T>
-class InterpolatorCommonImpl
+class InterpolatorCommonInterface
 {
 protected:
   std::vector<double> bases_;  ///< bases values for the interpolation.
@@ -139,5 +139,5 @@ public:
 }  // namespace autoware::motion_utils::trajectory_container::interpolator::detail
 
 // clang-format off
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_IMPL_HPP_  // NOLINT
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_  // NOLINT
 // clang-format on

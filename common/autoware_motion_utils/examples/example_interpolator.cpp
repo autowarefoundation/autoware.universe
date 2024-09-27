@@ -14,6 +14,7 @@
 
 #include "autoware/motion_utils/trajectory_container/interpolator/akima_spline.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/linear.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/nearest_neighbor.hpp"
 
@@ -41,7 +42,7 @@ int main()
   // Scatter Data
   plt.scatter(Args(bases, values));
 
-  using autoware::motion_utils::trajectory_container::interpolator::Interpolator;
+  using autoware::motion_utils::trajectory_container::interpolator::InterpolatorInterface;
   // Linear Interpolator
   {
     using autoware::motion_utils::trajectory_container::interpolator::Linear;

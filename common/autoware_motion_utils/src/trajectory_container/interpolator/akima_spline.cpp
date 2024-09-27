@@ -17,7 +17,6 @@
 #include <Eigen/Dense>
 
 #include <cmath>
-#include <memory>
 #include <vector>
 
 namespace autoware::motion_utils::trajectory_container::interpolator
@@ -88,11 +87,6 @@ double AkimaSpline::compute_second_derivative_impl(const double & s) const
   const int32_t i = this->get_index(s);
   const double dx = s - this->bases_[i];
   return 2 * c_[i] + 6 * d_[i] * dx;
-}
-
-std::shared_ptr<Interpolator<double>> AkimaSpline::clone() const
-{
-  return std::make_shared<AkimaSpline>(*this);
 }
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

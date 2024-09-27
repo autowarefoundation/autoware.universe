@@ -17,7 +17,7 @@
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__NEAREST_NEIGHBOR_COMMON_IMPL_HPP_  // NOLINT
 // clang-format on
 
-#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_impl_base.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_mixin.hpp"
 
 #include <vector>
 
@@ -37,7 +37,7 @@ namespace detail
  * @tparam T The type of the values being interpolated.
  */
 template <typename T>
-class NearestNeighborCommonImpl : public detail::InterpolatorImplBase<NearestNeighbor<T>, T>
+class NearestNeighborCommonImpl : public detail::InterpolatorMixin<NearestNeighbor<T>, T>
 {
 protected:
   std::vector<T> values_;  ///< Interpolation values.

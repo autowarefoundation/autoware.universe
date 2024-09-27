@@ -17,7 +17,7 @@
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__STAIRSTEP_COMMON_IMPL_HPP_  // NOLINT
 // clang-format on
 
-#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_impl_base.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_mixin.hpp"
 
 #include <vector>
 
@@ -38,7 +38,7 @@ namespace detail
  * @tparam T The type of the values being interpolated.
  */
 template <typename T>
-class StairstepCommonImpl : public detail::InterpolatorImplBase<Stairstep<T>, T>
+class StairstepCommonImpl : public detail::InterpolatorMixin<Stairstep<T>, T>
 {
 protected:
   std::vector<T> values_;  ///< Interpolation values.

@@ -16,7 +16,6 @@
 
 #include <Eigen/Dense>
 
-#include <memory>
 #include <vector>
 
 namespace autoware::motion_utils::trajectory_container::interpolator
@@ -58,10 +57,4 @@ size_t Linear::minimum_required_points() const
 {
   return 2;
 }
-
-std::shared_ptr<Interpolator<double>> Linear::clone() const
-{
-  return std::make_shared<Linear>(*this);
-}
-
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

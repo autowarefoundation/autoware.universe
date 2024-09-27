@@ -15,12 +15,10 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__AKIMA_SPLINE_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__AKIMA_SPLINE_HPP_
 
-#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_impl_base.hpp"
-#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_mixin.hpp"
 
 #include <Eigen/Dense>
 
-#include <memory>
 #include <vector>
 
 namespace autoware::motion_utils::trajectory_container::interpolator
@@ -31,7 +29,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator
  *
  * This class provides methods to perform Akima spline interpolation on a set of data points.
  */
-class AkimaSpline : public detail::InterpolatorImplBase<AkimaSpline, double>
+class AkimaSpline : public detail::InterpolatorMixin<AkimaSpline, double>
 {
 private:
   Eigen::VectorXd a_, b_, c_, d_;  ///< Coefficients for the Akima spline.
@@ -89,13 +87,6 @@ public:
    * @return The minimum number of required points.
    */
   [[nodiscard]] size_t minimum_required_points() const override { return 5; }
-
-  /**
-   * @brief Clone the interpolator.
-   *
-   * @return A shared pointer to a new instance of the interpolator.
-   */
-  [[nodiscard]] std::shared_ptr<Interpolator<double>> clone() const override;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator
