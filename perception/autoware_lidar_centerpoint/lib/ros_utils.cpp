@@ -68,8 +68,12 @@ void box3DToDetectedObject(
     float vel_x = box3d.vel_x;
     float vel_y = box3d.vel_y;
     geometry_msgs::msg::Twist twist;
-    twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
-    twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
+    const float vel_norm = std::sqrt(vel_x * vel_x + vel_y * vel_y);
+    const float angle_diff = std::atan2(vel_y, vel_x) - yaw;
+    twist.linear.x = vel_norm * std::cos(angle_diff);
+    twist.linear.y = vel_norm * std::sin(angle_diff);
+    twist.angular.z = 0;  // angular velocity is not supported
+
     obj.kinematics.twist_with_covariance.twist = twist;
     obj.kinematics.has_twist = has_twist;
     if (has_variance) {
