@@ -278,7 +278,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
     const auto parking_lot_polygons =
       lanelet::utils::query::getAllParkingLots(planner_data->route_handler->getLaneletMapPtr());
     const auto path_footprints = goal_planner_utils::createPathFootPrints(
-      pull_over_path.parking_path, p.base_link2front, p.base_link2rear, p.vehicle_width);
+      pull_over_path.parking_path(), p.base_link2front, p.base_link2rear, p.vehicle_width);
     const auto is_footprint_in_any_polygon = [&parking_lot_polygons](const auto & footprint) {
       return std::any_of(
         parking_lot_polygons.begin(), parking_lot_polygons.end(),
@@ -302,7 +302,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
     const auto combined_drivable = utils::combineDrivableLanes(
       expanded_lanes, previous_module_output.drivable_area_info.drivable_lanes);
     return !lane_departure_checker_.checkPathWillLeaveLane(
-      utils::transformToLanelets(combined_drivable), pull_over_path.parking_path);
+      utils::transformToLanelets(combined_drivable), pull_over_path.parking_path());
   });
   if (!is_in_parking_lots && !is_in_lanes) {
     return {};
