@@ -151,7 +151,9 @@ private:
 };
 }  // namespace alt
 
-double area(const alt::ConvexPolygon2d & poly);
+double area(const alt::PointList2d & vertices);
+
+double area(const alt::Polygon2d & poly);
 
 std::optional<alt::ConvexPolygon2d> convex_hull(const alt::Points2d & points);
 

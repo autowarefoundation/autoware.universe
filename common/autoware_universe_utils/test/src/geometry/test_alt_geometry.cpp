@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/universe_utils/geometry/alt_geometry.hpp"
+#include "autoware/universe_utils/geometry/random_concave_polygon.hpp"
 #include "autoware/universe_utils/geometry/random_convex_polygon.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
@@ -743,6 +744,45 @@ TEST(alt_geometry, areaRand)
 
       const auto alt_poly =
         autoware::universe_utils::alt::ConvexPolygon2d::create(polygons[i]).value();
+      sw.tic();
+      const auto alt = autoware::universe_utils::area(alt_poly);
+      alt_area_ns += sw.toc();
+
+      if (std::abs(alt - ground_truth) > epsilon) {
+        std::cout << "Alt failed for the polygon: ";
+        std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
+      }
+      EXPECT_NEAR(ground_truth, alt, epsilon);
+    }
+    std::printf("polygons_nb = %d, vertices = %ld\n", polygons_nb, vertices);
+    std::printf(
+      "\tArea:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n", ground_truth_area_ns / 1e6,
+      alt_area_ns / 1e6);
+  }
+}
+
+TEST(alt_geometry, areaConcaveRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 100;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_area_ns = 0.0;
+    double alt_area_ns = 0.0;
+
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      sw.tic();
+      const auto ground_truth = boost::geometry::area(polygons[i]);
+      ground_truth_area_ns += sw.toc();
+
+      const auto alt_poly = autoware::universe_utils::alt::Polygon2d::create(polygons[i]).value();
       sw.tic();
       const auto alt = autoware::universe_utils::area(alt_poly);
       alt_area_ns += sw.toc();
