@@ -77,6 +77,25 @@ std::optional<Polygon2d> Polygon2d::create(
   return Polygon2d::create(outer, inners);
 }
 
+autoware::universe_utils::Polygon2d Polygon2d::to_boost() const
+{
+  autoware::universe_utils::Polygon2d polygon;
+
+  for (const auto & point : outer_) {
+    polygon.outer().emplace_back(point.x(), point.y());
+  }
+
+  for (const auto & inner : inners_) {
+    autoware::universe_utils::LinearRing2d _inner;
+    for (const auto & point : inner) {
+      _inner.emplace_back(point.x(), point.y());
+    }
+    polygon.inners().push_back(_inner);
+  }
+
+  return polygon;
+}
+
 std::optional<ConvexPolygon2d> ConvexPolygon2d::create(const PointList2d & vertices) noexcept
 {
   ConvexPolygon2d poly(vertices);
