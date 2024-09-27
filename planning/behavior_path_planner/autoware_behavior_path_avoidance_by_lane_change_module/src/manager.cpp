@@ -186,6 +186,7 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   avoidance_parameters_ = std::make_shared<AvoidanceByLCParameters>(p);
 }
 
+// cppcheck-suppress unusedFunction
 std::unique_ptr<SceneModuleInterface>
 AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
