@@ -154,7 +154,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   // Combine cloud handler
   combine_cloud_handler_ = std::make_shared<CombineCloudHandler>(
     *this, params_.input_topics, params_.output_frame, params_.is_motion_compensated,
-    params_.keep_input_frame_in_synchronized_pointcloud, params_.has_static_tf_only);
+    params_.publish_synchronized_pointcloud, params_.keep_input_frame_in_synchronized_pointcloud,
+    params_.has_static_tf_only);
 
   // Diagnostic Updater
   diagnostic_updater_.setHardwareID("concatenate_data_checker");
@@ -295,13 +296,16 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
     concatenated_cloud_publisher_->publish(std::move(concatenate_pointcloud_output));
 
     // publish transformed raw pointclouds
-    if (params_.publish_synchronized_pointcloud) {
+    if (
+      params_.publish_synchronized_pointcloud &&
+      concatenated_cloud_result.topic_to_transformed_cloud_map) {
       for (auto topic : params_.input_topics) {
+        // Get a reference to the internal map
         if (
-          concatenated_cloud_result.topic_to_transformed_cloud_map.find(topic) !=
-          concatenated_cloud_result.topic_to_transformed_cloud_map.end()) {
+          (*concatenated_cloud_result.topic_to_transformed_cloud_map).find(topic) !=
+          (*concatenated_cloud_result.topic_to_transformed_cloud_map).end()) {
           auto transformed_cloud_output = std::make_unique<sensor_msgs::msg::PointCloud2>(
-            *concatenated_cloud_result.topic_to_transformed_cloud_map[topic]);
+            *(*concatenated_cloud_result.topic_to_transformed_cloud_map).at(topic));
           topic_to_transformed_cloud_publisher_map_[topic]->publish(
             std::move(transformed_cloud_output));
         } else {
@@ -327,17 +331,14 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
 
-    for (const auto & [topic, transformed_cloud] :
-         concatenated_cloud_result.topic_to_transformed_cloud_map) {
-      if (transformed_cloud != nullptr) {
-        const auto pipeline_latency_ms =
-          std::chrono::duration<double, std::milli>(
-            std::chrono::nanoseconds(
-              (this->get_clock()->now() - transformed_cloud->header.stamp).nanoseconds()))
-            .count();
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-          "debug" + topic + "/pipeline_latency_ms", pipeline_latency_ms);
-      }
+    for (const auto & [topic, stamp] : concatenated_cloud_result.topic_to_original_stamp_map) {
+      const auto pipeline_latency_ms =
+        std::chrono::duration<double, std::milli>(
+          std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::duration<double>(this->get_clock()->now().nanoseconds() - stamp * 1e9)))
+          .count();
+      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        "debug" + topic + "/pipeline_latency_ms", pipeline_latency_ms);
     }
   }
 }

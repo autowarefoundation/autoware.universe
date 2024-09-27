@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <deque>
 #include <list>
 #include <memory>
 #include <mutex>

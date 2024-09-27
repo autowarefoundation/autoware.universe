@@ -62,7 +62,7 @@ protected:
       std::make_shared<autoware::pointcloud_preprocessor::CombineCloudHandler>(
         *concatenate_node_.get(),
         std::vector<std::string>{"lidar_top", "lidar_left", "lidar_right"}, "base_link", true, true,
-        false);
+        true, false);
 
     collector_ = std::make_shared<autoware::pointcloud_preprocessor::CloudCollector>(
       std::dynamic_pointer_cast<
@@ -370,12 +370,13 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
   oss.clear();
   oss.str("");
   i = 0;
+
   sensor_msgs::PointCloud2Iterator<float> top_pc_iter_x(
-    *topic_to_transformed_cloud_map["lidar_top"], "x");
+    *(topic_to_transformed_cloud_map.value().at("lidar_top")), "x");
   sensor_msgs::PointCloud2Iterator<float> top_pc_iter_y(
-    *topic_to_transformed_cloud_map["lidar_top"], "y");
+    *(topic_to_transformed_cloud_map.value().at("lidar_top")), "y");
   sensor_msgs::PointCloud2Iterator<float> top_pc_iter_z(
-    *topic_to_transformed_cloud_map["lidar_top"], "z");
+    *(topic_to_transformed_cloud_map.value().at("lidar_top")), "z");
 
   for (; top_pc_iter_x != top_pc_iter_x.end();
        ++top_pc_iter_x, ++top_pc_iter_y, ++top_pc_iter_z, ++i) {
@@ -394,11 +395,11 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
   oss.str("");
   i = 0;
   sensor_msgs::PointCloud2Iterator<float> left_pc_iter_x(
-    *topic_to_transformed_cloud_map["lidar_left"], "x");
+    *(topic_to_transformed_cloud_map.value().at("lidar_left")), "x");
   sensor_msgs::PointCloud2Iterator<float> left_pc_iter_y(
-    *topic_to_transformed_cloud_map["lidar_left"], "y");
+    *(topic_to_transformed_cloud_map.value().at("lidar_left")), "y");
   sensor_msgs::PointCloud2Iterator<float> left_pc_iter_z(
-    *topic_to_transformed_cloud_map["lidar_left"], "z");
+    *(topic_to_transformed_cloud_map.value().at("lidar_left")), "z");
 
   for (; left_pc_iter_x != left_pc_iter_x.end();
        ++left_pc_iter_x, ++left_pc_iter_y, ++left_pc_iter_z, ++i) {
@@ -417,11 +418,11 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
   oss.str("");
   i = 0;
   sensor_msgs::PointCloud2Iterator<float> right_pc_iter_x(
-    *topic_to_transformed_cloud_map["lidar_right"], "x");
+    *(topic_to_transformed_cloud_map.value().at("lidar_right")), "x");
   sensor_msgs::PointCloud2Iterator<float> right_pc_iter_y(
-    *topic_to_transformed_cloud_map["lidar_right"], "y");
+    *(topic_to_transformed_cloud_map.value().at("lidar_right")), "y");
   sensor_msgs::PointCloud2Iterator<float> right_pc_iter_z(
-    *topic_to_transformed_cloud_map["lidar_right"], "z");
+    *(topic_to_transformed_cloud_map.value().at("lidar_right")), "z");
 
   for (; right_pc_iter_x != right_pc_iter_x.end();
        ++right_pc_iter_x, ++right_pc_iter_y, ++right_pc_iter_z, ++i) {

@@ -17,9 +17,9 @@
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -51,7 +51,7 @@ namespace autoware::pointcloud_preprocessor
 struct ConcatenatedCloudResult
 {
   sensor_msgs::msg::PointCloud2::SharedPtr concatenate_cloud_ptr{nullptr};
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
+  std::optional<std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>>
     topic_to_transformed_cloud_map;
   std::unordered_map<std::string, double> topic_to_original_stamp_map;
 };
@@ -64,6 +64,7 @@ private:
   std::vector<std::string> input_topics_;
   std::string output_frame_;
   bool is_motion_compensated_;
+  bool publish_synchronized_pointcloud_;
   bool keep_input_frame_in_synchronized_pointcloud_;
   std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
@@ -88,8 +89,8 @@ private:
 public:
   CombineCloudHandler(
     rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
-    bool is_motion_compensated, bool keep_input_frame_in_synchronized_pointcloud,
-    bool has_static_tf_only);
+    bool is_motion_compensated, bool publish_synchronized_pointcloud,
+    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
   void process_twist(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & input);
   void process_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr & input);
 

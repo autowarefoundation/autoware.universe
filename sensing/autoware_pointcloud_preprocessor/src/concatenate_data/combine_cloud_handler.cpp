@@ -30,12 +30,13 @@ namespace autoware::pointcloud_preprocessor
 
 CombineCloudHandler::CombineCloudHandler(
   rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
-  bool is_motion_compensated, bool keep_input_frame_in_synchronized_pointcloud,
-  bool has_static_tf_only)
+  bool is_motion_compensated, bool publish_synchronized_pointcloud,
+  bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
 : node_(node),
   input_topics_(input_topics),
   output_frame_(output_frame),
   is_motion_compensated_(is_motion_compensated),
+  publish_synchronized_pointcloud_(publish_synchronized_pointcloud),
   keep_input_frame_in_synchronized_pointcloud_(keep_input_frame_in_synchronized_pointcloud),
   managed_tf_buffer_(
     std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(&node_, has_static_tf_only))
@@ -201,23 +202,31 @@ ConcatenatedCloudResult CombineCloudHandler::combine_pointclouds(
       concatenate_cloud_result.concatenate_cloud_ptr->width *
       concatenate_cloud_result.concatenate_cloud_ptr->point_step;
 
-    // convert to original sensor frame if necessary
-    bool need_transform_to_sensor_frame = (cloud->header.frame_id != output_frame_);
-    if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
-      auto transformed_cloud_ptr_in_sensor_frame =
-        std::make_shared<sensor_msgs::msg::PointCloud2>();
-      managed_tf_buffer_->transformPointcloud(
-        cloud->header.frame_id, *transformed_delay_compensated_cloud_ptr,
-        *transformed_cloud_ptr_in_sensor_frame);
-      transformed_cloud_ptr_in_sensor_frame->header.stamp = oldest_stamp;
-      transformed_cloud_ptr_in_sensor_frame->header.frame_id = cloud->header.frame_id;
-      concatenate_cloud_result.topic_to_transformed_cloud_map[topic] =
-        transformed_cloud_ptr_in_sensor_frame;
-    } else {
-      transformed_delay_compensated_cloud_ptr->header.stamp = oldest_stamp;
-      transformed_delay_compensated_cloud_ptr->header.frame_id = output_frame_;
-      concatenate_cloud_result.topic_to_transformed_cloud_map[topic] =
-        transformed_delay_compensated_cloud_ptr;
+    if (publish_synchronized_pointcloud_) {
+      if (!concatenate_cloud_result.topic_to_transformed_cloud_map) {
+        // Initialize the map if it is not present
+        concatenate_cloud_result.topic_to_transformed_cloud_map =
+          std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>();
+      }
+      // convert to original sensor frame if necessary
+      bool need_transform_to_sensor_frame = (cloud->header.frame_id != output_frame_);
+      if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
+        auto transformed_cloud_ptr_in_sensor_frame =
+          std::make_shared<sensor_msgs::msg::PointCloud2>();
+        managed_tf_buffer_->transformPointcloud(
+          cloud->header.frame_id, *transformed_delay_compensated_cloud_ptr,
+          *transformed_cloud_ptr_in_sensor_frame);
+        transformed_cloud_ptr_in_sensor_frame->header.stamp = oldest_stamp;
+        transformed_cloud_ptr_in_sensor_frame->header.frame_id = cloud->header.frame_id;
+
+        (*concatenate_cloud_result.topic_to_transformed_cloud_map)[topic] =
+          transformed_cloud_ptr_in_sensor_frame;
+      } else {
+        transformed_delay_compensated_cloud_ptr->header.stamp = oldest_stamp;
+        transformed_delay_compensated_cloud_ptr->header.frame_id = output_frame_;
+        (*concatenate_cloud_result.topic_to_transformed_cloud_map)[topic] =
+          transformed_delay_compensated_cloud_ptr;
+      }
     }
   }
   concatenate_cloud_result.concatenate_cloud_ptr->header.stamp = oldest_stamp;
