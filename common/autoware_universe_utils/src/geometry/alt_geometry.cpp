@@ -140,16 +140,26 @@ std::optional<ConvexPolygon2d> ConvexPolygon2d::create(
 }
 }  // namespace alt
 
-double area(const alt::ConvexPolygon2d & poly)
+double area(const alt::PointList2d & vertices)
 {
-  const auto & vertices = poly.vertices();
-
-  double area = 0.;
-  for (auto it = std::next(vertices.cbegin()); it != std::prev(vertices.cend(), 2); ++it) {
-    area += (*std::next(it) - vertices.front()).cross(*it - vertices.front()) / 2;
+  double area_2 = 0.;
+  for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
+    area_2 += (*std::next(it)).cross(*it);
   }
 
-  return area;
+  return area_2 / 2;
+}
+
+double area(const alt::Polygon2d & poly)
+{
+  const auto outer_area = area(poly.outer());
+
+  double inner_area = 0.;
+  for (const auto & inner : poly.inners()) {
+    inner_area += area(inner);
+  }
+
+  return outer_area - inner_area;
 }
 
 std::optional<alt::ConvexPolygon2d> convex_hull(const alt::Points2d & points)
