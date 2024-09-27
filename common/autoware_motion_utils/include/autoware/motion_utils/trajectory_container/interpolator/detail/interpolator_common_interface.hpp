@@ -13,14 +13,12 @@
 // limitations under the License.
 
 // clang-format off
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_IMPL_HPP_  // NOLINT
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_IMPL_HPP_  // NOLINT
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_  // NOLINT
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_  // NOLINT
 // clang-format on
 
 #include <Eigen/Dense>
 #include <rclcpp/logging.hpp>
-
-#include <fmt/format.h>
 
 #include <vector>
 
@@ -35,20 +33,20 @@ namespace autoware::motion_utils::trajectory_container::interpolator::detail
  * @tparam T The type of the values being interpolated.
  */
 template <typename T>
-class InterpolatorCommonImpl
+class InterpolatorCommonInterface
 {
 protected:
-  Eigen::VectorXd axis_;  ///< Axis values for the interpolation.
+  std::vector<double> bases_;  ///< bases values for the interpolation.
 
   /**
    * @brief Get the start of the interpolation range.
    */
-  [[nodiscard]] double start() const { return axis_(0); }
+  [[nodiscard]] double start() const { return bases_.front(); }
 
   /**
    * @brief Get the end of the interpolation range.
    */
-  [[nodiscard]] double end() const { return axis_(axis_.size() - 1); }
+  [[nodiscard]] double end() const { return bases_.back(); }
 
   /**
    * @brief Compute the interpolated value at the given point.
@@ -65,11 +63,10 @@ protected:
    *
    * This method should be overridden by subclasses to provide the specific build logic.
    *
-   * @param axis The axis values.
+   * @param bases The bases values.
    * @param values The values to interpolate.
    */
-  virtual void build_impl(
-    const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<T> & values) = 0;
+  virtual void build_impl(const std::vector<double> & bases, const std::vector<T> & values) = 0;
 
   /**
    * @brief Validate the input to the compute method.
@@ -91,29 +88,30 @@ protected:
   [[nodiscard]] int32_t get_index(const double & s, bool end_inclusive = true) const
   {
     if (end_inclusive && s == end()) {
-      return static_cast<int32_t>(axis_.size()) - 2;
+      return static_cast<int32_t>(bases_.size()) - 2;
     }
     auto comp = [](const double & a, const double & b) { return a <= b; };
-    return std::distance(axis_.begin(), std::lower_bound(axis_.begin(), axis_.end(), s, comp)) - 1;
+    return std::distance(bases_.begin(), std::lower_bound(bases_.begin(), bases_.end(), s, comp)) -
+           1;
   }
 
 public:
   /**
-   * @brief Build the interpolator with the given axis and values.
+   * @brief Build the interpolator with the given bases and values.
    *
-   * @param axis The axis values.
+   * @param bases The bases values.
    * @param values The values to interpolate.
    * @return True if the interpolator was built successfully, false otherwise.
    */
-  bool build(const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<T> & values)
+  bool build(const std::vector<double> & bases, const std::vector<T> & values)
   {
-    if (axis.size() != static_cast<Eigen::Index>(values.size())) {
+    if (bases.size() != values.size()) {
       return false;
     }
-    if (axis.size() < static_cast<Eigen::Index>(minimum_required_points())) {
+    if (bases.size() < minimum_required_points()) {
       return false;
     }
-    build_impl(axis, values);
+    build_impl(bases, values);
     return true;
   }
 
@@ -141,5 +139,5 @@ public:
 }  // namespace autoware::motion_utils::trajectory_container::interpolator::detail
 
 // clang-format off
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_IMPL_HPP_  // NOLINT
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_  // NOLINT
 // clang-format on
