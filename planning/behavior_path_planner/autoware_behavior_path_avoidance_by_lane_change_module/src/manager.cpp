@@ -187,8 +187,7 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
 }
 
 // cppcheck-suppress unusedFunction
-std::unique_ptr<SceneModuleInterface>
-AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
+SMIPtr AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
   return std::make_unique<AvoidanceByLaneChangeInterface>(
     name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_,
