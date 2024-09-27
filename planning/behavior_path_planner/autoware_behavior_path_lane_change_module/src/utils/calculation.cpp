@@ -28,15 +28,6 @@ rclcpp::Logger get_logger()
   return logger;
 }
 
-double calc_ego_dist_to_terminal_end(const CommonDataPtr & common_data_ptr)
-{
-  const auto & lanes_ptr = common_data_ptr->lanes_ptr;
-  const auto & current_lanes = lanes_ptr->current;
-  const auto & current_pose = common_data_ptr->get_ego_pose();
-
-  return calc_dist_from_pose_to_terminal_end(common_data_ptr, current_lanes, current_pose);
-}
-
 double calc_dist_from_pose_to_terminal_end(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes,
   const Pose & src_pose)
@@ -45,10 +36,10 @@ double calc_dist_from_pose_to_terminal_end(
     return 0.0;
   }
 
-  const auto & lanes_ptr = common_data_ptr->lanes_ptr;
-  const auto & goal_pose = common_data_ptr->route_handler_ptr->getGoalPose();
-
-  if (lanes_ptr->current_lane_in_goal_section) {
+  const auto in_goal_route_section =
+    common_data_ptr->route_handler_ptr->isInGoalRouteSection(lanes.back());
+  if (in_goal_route_section) {
+    const auto & goal_pose = common_data_ptr->route_handler_ptr->getGoalPose();
     return utils::getSignedDistance(src_pose, goal_pose, lanes);
   }
   return utils::getDistanceToEndOfLane(src_pose, lanes);
@@ -137,8 +128,7 @@ double calc_ego_dist_to_lanes_start(
     return std::numeric_limits<double>::max();
   }
 
-  const auto path =
-    route_handler_ptr->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto & path = common_data_ptr->current_lanes_path;
 
   if (path.points.empty()) {
     return std::numeric_limits<double>::max();
@@ -148,44 +138,6 @@ double calc_ego_dist_to_lanes_start(
   const auto ego_position = common_data_ptr->get_ego_pose().position;
 
   return motion_utils::calcSignedArcLength(path.points, ego_position, target_front_pt);
-}
-
-double calc_minimum_lane_change_length(
-  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals)
-{
-  if (shift_intervals.empty()) {
-    return 0.0;
-  }
-
-  const auto min_vel = lane_change_parameters.minimum_lane_changing_velocity;
-  const auto min_max_lat_acc = lane_change_parameters.lane_change_lat_acc_map.find(min_vel);
-  // const auto min_lat_acc = std::get<0>(min_max_lat_acc);
-  const auto max_lat_acc = std::get<1>(min_max_lat_acc);
-  const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
-  const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
-
-  const auto calc_sum = [&](double sum, double shift_interval) {
-    const auto t = PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
-    return sum + (min_vel * t + finish_judge_buffer);
-  };
-
-  const auto total_length =
-    std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
-
-  const auto backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
-  return total_length + backward_buffer * (static_cast<double>(shift_intervals.size()) - 1.0);
-}
-
-double calc_minimum_lane_change_length(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
-  const LaneChangeParameters & lane_change_parameters, Direction direction)
-{
-  if (!route_handler) {
-    return std::numeric_limits<double>::max();
-  }
-
-  const auto shift_intervals = route_handler->getLateralIntervalsToPreferredLane(lane, direction);
-  return calc_minimum_lane_change_length(lane_change_parameters, shift_intervals);
 }
 
 double calc_maximum_lane_change_length(
@@ -238,6 +190,128 @@ double calc_maximum_lane_change_length(
     common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity);
   return calc_maximum_lane_change_length(
     vel, *common_data_ptr->lc_param_ptr, shift_intervals, max_acc);
+}
+
+std::vector<double> calc_all_min_lc_lengths(
+  const LCParamPtr & lc_param_ptr, const std::vector<double> & shift_intervals)
+{
+  if (shift_intervals.empty()) {
+    return {};
+  }
+
+  const auto min_vel = lc_param_ptr->minimum_lane_changing_velocity;
+  const auto min_max_lat_acc = lc_param_ptr->lane_change_lat_acc_map.find(min_vel);
+  const auto max_lat_acc = std::get<1>(min_max_lat_acc);
+  const auto lat_jerk = lc_param_ptr->lane_changing_lateral_jerk;
+
+  std::vector<double> min_lc_lengths{};
+  min_lc_lengths.reserve(shift_intervals.size());
+
+  const auto min_lc_length = [&](const auto shift_interval) {
+    const auto t = PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
+    return min_vel * t;
+  };
+
+  std::transform(
+    shift_intervals.cbegin(), shift_intervals.cend(), std::back_inserter(min_lc_lengths),
+    min_lc_length);
+
+  return min_lc_lengths;
+}
+
+std::vector<double> calc_all_max_lc_lengths(
+  const CommonDataPtr & common_data_ptr, const std::vector<double> & shift_intervals)
+{
+  if (shift_intervals.empty()) {
+    return {};
+  }
+
+  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
+  const auto lat_jerk = lc_param_ptr->lane_changing_lateral_jerk;
+  const auto t_prepare = lc_param_ptr->lane_change_prepare_duration;
+  const auto max_acc = common_data_ptr->transient_data.acc.max;
+
+  const auto limit_vel = [&](const auto vel) {
+    const auto max_global_vel = common_data_ptr->bpp_param_ptr->max_vel;
+    return std::clamp(vel, lc_param_ptr->minimum_lane_changing_velocity, max_global_vel);
+  };
+
+  auto vel = limit_vel(common_data_ptr->get_ego_speed());
+
+  std::vector<double> max_lc_lengths{};
+
+  const auto max_lc_length = [&](const auto shift_interval) {
+    // prepare section
+    vel = limit_vel(vel + max_acc * t_prepare);
+    const auto prepare_length = vel * t_prepare + 0.5 * max_acc * t_prepare * t_prepare;
+
+    // lane changing section
+    const auto [min_lat_acc, max_lat_acc] = lc_param_ptr->lane_change_lat_acc_map.find(vel);
+    const auto t_lane_changing =
+      PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
+    const auto lane_changing_length =
+      vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
+
+    vel = limit_vel(vel + max_acc * t_lane_changing);
+    return prepare_length + lane_changing_length;
+  };
+
+  std::transform(
+    shift_intervals.cbegin(), shift_intervals.cend(), std::back_inserter(max_lc_lengths),
+    max_lc_length);
+  return max_lc_lengths;
+}
+
+double calc_distance_buffer(
+  const LCParamPtr & lc_param_ptr, const std::vector<double> & min_lc_lengths)
+{
+  if (min_lc_lengths.empty()) {
+    return std::numeric_limits<double>::max();
+  }
+
+  const auto finish_judge_buffer = lc_param_ptr->lane_change_finish_judge_buffer;
+  const auto backward_buffer = calc_stopping_distance(lc_param_ptr);
+  const auto lengths_sum = std::accumulate(min_lc_lengths.begin(), min_lc_lengths.end(), 0.0);
+  const auto num_of_lane_changes = static_cast<double>(min_lc_lengths.size());
+  return lengths_sum + (num_of_lane_changes * finish_judge_buffer) +
+         ((num_of_lane_changes - 1.0) * backward_buffer);
+}
+
+std::vector<double> calc_shift_intervals(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes)
+{
+  if (!common_data_ptr || !common_data_ptr->is_data_available() || lanes.empty()) {
+    return {};
+  }
+
+  const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+  const auto direction = common_data_ptr->direction;
+
+  return route_handler_ptr->getLateralIntervalsToPreferredLane(lanes.back(), direction);
+}
+
+std::pair<MinMaxValue, MinMaxValue> calc_lc_length_and_dist_buffer(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes)
+{
+  if (!common_data_ptr || !common_data_ptr->is_data_available() || lanes.empty()) {
+    return {};
+  }
+  const auto shift_intervals = calculation::calc_shift_intervals(common_data_ptr, lanes);
+  const auto all_min_lc_lengths =
+    calculation::calc_all_min_lc_lengths(common_data_ptr->lc_param_ptr, shift_intervals);
+  const auto min_lc_length =
+    !all_min_lc_lengths.empty() ? all_min_lc_lengths.front() : std::numeric_limits<double>::max();
+  const auto min_dist_buffer =
+    calculation::calc_distance_buffer(common_data_ptr->lc_param_ptr, all_min_lc_lengths);
+
+  const auto all_max_lc_lengths =
+    calculation::calc_all_max_lc_lengths(common_data_ptr, shift_intervals);
+  const auto max_lc_length =
+    !all_max_lc_lengths.empty() ? all_max_lc_lengths.front() : std::numeric_limits<double>::max();
+  const auto max_dist_buffer =
+    calculation::calc_distance_buffer(common_data_ptr->lc_param_ptr, all_max_lc_lengths);
+
+  return {{min_lc_length, max_lc_length}, {min_dist_buffer, max_dist_buffer}};
 }
 
 double calc_phase_length(
