@@ -106,7 +106,7 @@ perception/autoware_bytetrack/** manato.hirabayashi@tier4.jp yoshi.ri@tier4.jp
 perception/autoware_cluster_merger/** dai.nguyen@tier4.jp shunsuke.miura@tier4.jp yukihiro.saito@tier4.jp
 perception/autoware_compare_map_segmentation/** abrahammonrroy@yahoo.com dai.nguyen@tier4.jp yukihiro.saito@tier4.jp
 perception/autoware_crosswalk_traffic_light_estimator/** satoshi.ota@tier4.jp shunsuke.miura@tier4.jp tao.zhong@tier4.jp
-perception/autoware_detected_object_feature_remover/** tomoya.kimura@tier4.jp
+perception/autoware_detected_object_feature_remover/** tomoya.kimura@tier4.jp yoshi.ri@tier4.jp kotaro.uetake@tier4.jp
 perception/autoware_detected_object_validation/** dai.nguyen@tier4.jp shintaro.tomie@tier4.jp shunsuke.miura@tier4.jp yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
 perception/autoware_detection_by_tracker/** taekjin.lee@tier4.jp yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
 perception/autoware_elevation_map_loader/** kosuke.takeuchi@tier4.jp shintaro.tomie@tier4.jp taichi.higashide@tier4.jp
@@ -236,7 +236,6 @@ system/mrm_comfortable_stop_operator/** makoto.kurihara@tier4.jp tomohito.ando@t
 system/mrm_emergency_stop_operator/** makoto.kurihara@tier4.jp tomohito.ando@tier4.jp
 system/mrm_handler/** makoto.kurihara@tier4.jp ryuta.kambe@tier4.jp tetsuhiro.kawaguchi@tier4.jp
 system/system_diagnostic_monitor/** isamu.takagi@tier4.jp
-system/system_error_monitor/** fumihito.ito@tier4.jp
 system/system_monitor/** fumihito.ito@tier4.jp tetsuhiro.kawaguchi@tier4.jp
 system/topic_state_monitor/** ryohsuke.mitsudome@tier4.jp
 system/velodyne_monitor/** fumihito.ito@tier4.jp

@@ -161,6 +161,22 @@ std::string makePathPriorityDebugMessage(
   const std::map<size_t, double> & path_id_to_rough_margin_map,
   const std::function<bool(const PullOverPath &)> & isSoftMargin,
   const std::function<bool(const PullOverPath &)> & isHighCurvature);
+/**
+ * @brief combine two points
+ * @param points lane points
+ * @param points_next next lane points
+ * @return combined points
+ */
+lanelet::Points3d combineLanePoints(
+  const lanelet::Points3d & points, const lanelet::Points3d & points_next);
+/** @brief Create a lanelet that represents the departure check area.
+ * @param [in] pull_over_lanes Lanelets that the vehicle will pull over to.
+ * @param [in] route_handler RouteHandler object.
+ * @return Lanelet that goal footprints should be inside.
+ */
+lanelet::Lanelet createDepartureCheckLanelet(
+  const lanelet::ConstLanelets & pull_over_lanes, const route_handler::RouteHandler & route_handler,
+  const bool left_side_parking);
 }  // namespace autoware::behavior_path_planner::goal_planner_utils
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_

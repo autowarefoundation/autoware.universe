@@ -750,8 +750,8 @@ bool isObviousAvoidanceTarget(
 }
 
 bool isSatisfiedWithCommonCondition(
-  ObjectData & object, const AvoidancePlanningData & data, const double forward_detection_range,
-  const std::shared_ptr<const PlannerData> & planner_data,
+  ObjectData & object, const PathWithLaneId & path, const double forward_detection_range,
+  const double to_goal_distance, const Point & ego_pos, const bool is_allowed_goal_modification,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   // Step1. filtered by target object type.
@@ -767,8 +767,7 @@ bool isSatisfiedWithCommonCondition(
   }
 
   // Step3. filtered by longitudinal distance.
-  const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
-  fillLongitudinalAndLengthByClosestEnvelopeFootprint(data.reference_path_rough, ego_pos, object);
+  fillLongitudinalAndLengthByClosestEnvelopeFootprint(path, ego_pos, object);
 
   if (object.longitudinal < -parameters->object_check_backward_distance) {
     object.info = ObjectInfo::FURTHER_THAN_THRESHOLD;
@@ -783,20 +782,12 @@ bool isSatisfiedWithCommonCondition(
   // Step4. filtered by distance between object and goal position.
   // TODO(Satoshi OTA): remove following two conditions after it can execute avoidance and goal
   // planner module simultaneously.
-  const auto & rh = planner_data->route_handler;
-  const auto ego_idx = planner_data->findEgoIndex(data.reference_path_rough.points);
-  const auto to_goal_distance =
-    rh->isInGoalRouteSection(data.current_lanelets.back())
-      ? autoware::motion_utils::calcSignedArcLength(
-          data.reference_path_rough.points, ego_idx, data.reference_path_rough.points.size() - 1)
-      : std::numeric_limits<double>::max();
-
   if (object.longitudinal > to_goal_distance) {
     object.info = ObjectInfo::FURTHER_THAN_GOAL;
     return false;
   }
 
-  if (!utils::isAllowedGoalModification(planner_data->route_handler)) {
+  if (!is_allowed_goal_modification) {
     if (
       object.longitudinal + object.length / 2 + parameters->object_check_goal_distance >
       to_goal_distance) {
@@ -1822,6 +1813,9 @@ void updateRoadShoulderDistance(
       clip_objects.push_back(object);
     }
   });
+
+  if (clip_objects.empty()) return;
+
   for (auto & o : clip_objects) {
     const auto & vehicle_width = planner_data->parameters.vehicle_width;
     const auto object_type = utils::getHighestProbLabel(o.object.classification);
@@ -1864,9 +1858,21 @@ void filterTargetObjects(
     data.target_objects.push_back(object);
   };
 
+  const auto & rh = planner_data->route_handler;
+  const auto ego_idx = planner_data->findEgoIndex(data.reference_path_rough.points);
+  const auto to_goal_distance =
+    rh->isInGoalRouteSection(data.current_lanelets.back())
+      ? autoware::motion_utils::calcSignedArcLength(
+          data.reference_path_rough.points, ego_idx, data.reference_path_rough.points.size() - 1)
+      : std::numeric_limits<double>::max();
+  const auto & is_allowed_goal_modification =
+    utils::isAllowedGoalModification(planner_data->route_handler);
+
   for (auto & o : objects) {
     if (!filtering_utils::isSatisfiedWithCommonCondition(
-          o, data, forward_detection_range, planner_data, parameters)) {
+          o, data.reference_path_rough, forward_detection_range, to_goal_distance,
+          planner_data->self_odometry->pose.pose.position, is_allowed_goal_modification,
+          parameters)) {
       data.other_objects.push_back(o);
       continue;
     }
@@ -1886,6 +1892,7 @@ void filterTargetObjects(
         data.other_objects.push_back(o);
         continue;
       }
+      o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
     } else if (filtering_utils::isVehicleTypeObject(o)) {
       // TARGET: CAR, TRUCK, BUS, TRAILER, MOTORCYCLE
 
