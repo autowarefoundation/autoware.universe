@@ -166,7 +166,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     int index = -1;
     bool associated = false;
     double max_iou = 0.0;
-    bool is_roi_label_known =
+    const bool is_roi_label_known =
       feature_obj.object.classification.front().label != ObjectClassification::UNKNOWN;
     for (const auto & cluster_map : m_cluster_roi) {
       double iou(0.0);
@@ -196,34 +196,18 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     }
 
     if (!output_cluster_msg.feature_objects.empty()) {
-      bool is_roi_existence_prob_higher =
-        output_cluster_msg.feature_objects.at(index).object.existence_probability <=
-        feature_obj.object.existence_probability;
-      if (iou_threshold_ < max_iou && is_roi_existence_prob_higher && is_roi_label_known) {
-        output_cluster_msg.feature_objects.at(index).object.classification =
-          feature_obj.object.classification;
+      auto & fused_object = output_cluster_msg.feature_objects.at(index).object;
+      const bool is_roi_existence_prob_higher =
+        fused_object.existence_probability <= feature_obj.object.existence_probability;
+      const bool is_roi_iou_over_threshold =
+        (is_roi_label_known && iou_threshold_ < max_iou) ||
+        (!is_roi_label_known && unknown_iou_threshold_ < max_iou);
 
+      if (is_roi_iou_over_threshold && is_roi_existence_prob_higher) {
+        fused_object.classification = feature_obj.object.classification;
         // Update existence_probability for fused objects
-        if (
-          output_cluster_msg.feature_objects.at(index).object.existence_probability <
-          min_roi_existence_prob_) {
-          output_cluster_msg.feature_objects.at(index).object.existence_probability =
-            min_roi_existence_prob_;
-        }
-      }
-
-      // fuse with unknown roi
-
-      if (unknown_iou_threshold_ < max_iou && is_roi_existence_prob_higher && !is_roi_label_known) {
-        output_cluster_msg.feature_objects.at(index).object.classification =
-          feature_obj.object.classification;
-        // Update existence_probability for fused objects
-        if (
-          output_cluster_msg.feature_objects.at(index).object.existence_probability <
-          min_roi_existence_prob_) {
-          output_cluster_msg.feature_objects.at(index).object.existence_probability =
-            min_roi_existence_prob_;
-        }
+        fused_object.existence_probability =
+          std::clamp(feature_obj.object.existence_probability, min_roi_existence_prob_, 1.0f);
       }
     }
     if (debugger_) debugger_->image_rois_.push_back(feature_obj.feature.roi);
