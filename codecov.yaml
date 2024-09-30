@@ -30,3 +30,4 @@ flag_management:
 ignore:
   - "**/test/*"
   - "**/test/**/*"
+  - "**/debug.*"
