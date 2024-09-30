@@ -711,12 +711,12 @@ bool isParkedObject(
   using lanelet::geometry::toArcCoordinates;
 
   const double object_vel_norm =
-    std::hypot(object.initial_twist.twist.linear.x, object.initial_twist.twist.linear.y);
+    std::hypot(object.initial_twist.linear.x, object.initial_twist.linear.y);
   if (object_vel_norm > static_object_velocity_threshold) {
     return false;
   }
 
-  const auto & object_pose = object.initial_pose.pose;
+  const auto & object_pose = object.initial_pose;
   const auto object_closest_index =
     autoware::motion_utils::findNearestIndex(path.points, object_pose.position);
   const auto object_closest_pose = path.points.at(object_closest_index).point.pose;
@@ -783,7 +783,7 @@ bool isParkedObject(
 {
   using lanelet::geometry::distance2d;
 
-  const auto & obj_pose = object.initial_pose.pose;
+  const auto & obj_pose = object.initial_pose;
   const auto & obj_shape = object.shape;
   const auto obj_poly = autoware::universe_utils::toPolygon2d(obj_pose, obj_shape);
   const auto obj_point = obj_pose.position;
@@ -842,7 +842,7 @@ bool passed_parked_objects(
   const auto & leading_obj = objects.at(*leading_obj_idx);
   auto debug = utils::path_safety_checker::createObjectDebug(leading_obj);
   const auto leading_obj_poly =
-    autoware::universe_utils::toPolygon2d(leading_obj.initial_pose.pose, leading_obj.shape);
+    autoware::universe_utils::toPolygon2d(leading_obj.initial_pose, leading_obj.shape);
   if (leading_obj_poly.outer().empty()) {
     return true;
   }
@@ -874,7 +874,7 @@ bool passed_parked_objects(
 
   const auto current_pose = common_data_ptr->get_ego_pose();
   const auto dist_ego_to_obj = motion_utils::calcSignedArcLength(
-    current_lane_path.points, current_pose.position, leading_obj.initial_pose.pose.position);
+    current_lane_path.points, current_pose.position, leading_obj.initial_pose.position);
 
   if (dist_ego_to_obj < lane_change_path.info.length.lane_changing) {
     return true;
@@ -903,12 +903,11 @@ std::optional<size_t> getLeadingStaticObjectIdx(
   std::optional<size_t> leading_obj_idx = std::nullopt;
   for (size_t obj_idx = 0; obj_idx < objects.size(); ++obj_idx) {
     const auto & obj = objects.at(obj_idx);
-    const auto & obj_pose = obj.initial_pose.pose;
+    const auto & obj_pose = obj.initial_pose;
 
     // ignore non-static object
     // TODO(shimizu): parametrize threshold
-    const double obj_vel_norm =
-      std::hypot(obj.initial_twist.twist.linear.x, obj.initial_twist.twist.linear.y);
+    const double obj_vel_norm = std::hypot(obj.initial_twist.linear.x, obj.initial_twist.linear.y);
     if (obj_vel_norm > 1.0) {
       continue;
     }
@@ -964,8 +963,8 @@ ExtendedPredictedObject transform(
   const auto & prepare_duration = lane_change_parameters.lane_change_prepare_duration;
   const auto & velocity_threshold = lane_change_parameters.stopped_object_velocity_threshold;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
-  const double obj_vel_norm = std::hypot(
-    extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
+  const double obj_vel_norm =
+    std::hypot(extended_object.initial_twist.linear.x, extended_object.initial_twist.linear.y);
 
   extended_object.predicted_paths.resize(object.kinematics.predicted_paths.size());
   for (size_t i = 0; i < object.kinematics.predicted_paths.size(); ++i) {
