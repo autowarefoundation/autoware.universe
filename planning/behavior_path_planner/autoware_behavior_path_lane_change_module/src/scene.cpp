@@ -241,10 +241,7 @@ bool NormalLaneChange::is_near_regulatory_element() const
 {
   if (!common_data_ptr_ || !common_data_ptr_->is_data_available()) return false;
 
-  const auto max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
-  const auto dist_to_terminal_start = common_data_ptr_->transient_data.dist_to_terminal_start;
-
-  if (dist_to_terminal_start <= max_prepare_length) return false;
+  if (common_data_ptr_->transient_data.is_ego_near_current_terminal_start) return false;
 
   const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
 
@@ -252,8 +249,9 @@ bool NormalLaneChange::is_near_regulatory_element() const
     RCLCPP_DEBUG(logger_, "Stop time is over threshold. Ignore crosswalk and intersection checks.");
   }
 
-  return max_prepare_length > utils::lane_change::get_distance_to_next_regulatory_element(
-                                common_data_ptr_, only_tl, only_tl);
+  return common_data_ptr_->transient_data.max_prepare_length >
+         utils::lane_change::get_distance_to_next_regulatory_element(
+           common_data_ptr_, only_tl, only_tl);
 }
 
 bool NormalLaneChange::isStoppedAtRedTrafficLight() const
@@ -1379,6 +1377,60 @@ bool NormalLaneChange::hasEnoughLength(
   return true;
 }
 
+std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_prepare_metrics() const
+{
+  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
+  const auto current_velocity = getEgoVelocity();
+
+  // get sampling acceleration values
+  const auto longitudinal_acc_sampling_values =
+    sampleLongitudinalAccValues(current_lanes, target_lanes);
+
+  const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
+
+  RCLCPP_DEBUG(
+    logger_, "lane change sampling start. Sampling num for prep_time: %lu, acc: %lu",
+    prepare_durations.size(), longitudinal_acc_sampling_values.size());
+
+  const auto dist_to_target_start =
+    calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
+  return calculation::calc_prepare_phase_metrics(
+    common_data_ptr_, prepare_durations, longitudinal_acc_sampling_values, current_velocity,
+    dist_to_target_start, common_data_ptr_->transient_data.dist_to_terminal_start);
+}
+
+std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
+  const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metric,
+  const double shift_length, const double dist_to_reg_element) const
+{
+  const auto & route_handler = getRouteHandler();
+  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
+  const auto & transient_data = common_data_ptr_->transient_data;
+  const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
+    common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor,
+    prep_segment.points.back().point.pose);
+
+  const auto max_lane_changing_length = std::invoke([&]() {
+    double max_length =
+      transient_data.is_ego_near_current_terminal_start
+        ? transient_data.dist_to_terminal_end - prep_metric.length
+        : std::min(transient_data.dist_to_terminal_end, dist_to_reg_element) - prep_metric.length;
+    auto target_lane_buffer = lane_change_parameters_->lane_change_finish_judge_buffer +
+                              transient_data.next_dist_buffer.min;
+    if (std::abs(route_handler->getNumLaneToPreferredLane(target_lanes.back(), direction_)) > 0) {
+      target_lane_buffer += lane_change_parameters_->backward_length_buffer_for_end_of_lane;
+    }
+    max_length = std::min(max_length, dist_lc_start_to_end_of_lanes - target_lane_buffer);
+    return max_length;
+  });
+
+  const auto max_path_velocity = prep_segment.points.back().point.longitudinal_velocity_mps;
+  return calculation::calc_shift_phase_metrics(
+    common_data_ptr_, shift_length, prep_metric.velocity, max_path_velocity,
+    prep_metric.sampled_lon_accel, max_lane_changing_length);
+}
+
 bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) const
 {
   lane_change_debug_.collision_check_objects.clear();
@@ -1402,39 +1454,21 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
   }
 
   const auto & route_handler = *getRouteHandler();
-  const auto & transient_data = common_data_ptr_->transient_data;
-
-  // get velocity
   const auto current_velocity = getEgoVelocity();
-
-  // get sampling acceleration values
-  const auto longitudinal_acc_sampling_values =
-    sampleLongitudinalAccValues(current_lanes, target_lanes);
 
   const auto sorted_lane_ids =
     utils::lane_change::getSortedLaneIds(route_handler, getEgoPose(), current_lanes, target_lanes);
 
   const auto target_objects = getTargetObjects(filtered_objects_, current_lanes);
 
-  const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
+  const auto prepare_phase_metrics = get_prepare_metrics();
 
   candidate_paths.reserve(
-    longitudinal_acc_sampling_values.size() * lane_change_parameters_->lateral_acc_sampling_num *
-    prepare_durations.size());
-
-  RCLCPP_DEBUG(
-    logger_, "lane change sampling start. Sampling num for prep_time: %lu, acc: %lu",
-    prepare_durations.size(), longitudinal_acc_sampling_values.size());
+    prepare_phase_metrics.size() * lane_change_parameters_->lateral_acc_sampling_num);
 
   const bool only_tl = getStopTime() >= lane_change_parameters_->stop_time_threshold;
   const auto dist_to_next_regulatory_element =
     utils::lane_change::get_distance_to_next_regulatory_element(common_data_ptr_, only_tl, only_tl);
-
-  const auto dist_to_target_start =
-    calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
-  const auto prepare_phase_metrics = calculation::calc_prepare_phase_metrics(
-    common_data_ptr_, prepare_durations, longitudinal_acc_sampling_values, current_velocity,
-    dist_to_target_start, transient_data.dist_to_terminal_start);
 
   auto check_length_diff =
     [&](const double prep_length, const double lc_length, const bool check_lc) {
@@ -1558,37 +1592,6 @@ bool NormalLaneChange::is_valid_prepare_segment(const PathWithLaneId & prepare_s
 
   // Check if the lane changing start point is not on the lanes next to target lanes,
   return target_length_from_lane_change_start_pose < std::numeric_limits<double>::epsilon();
-}
-
-std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
-  const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metric,
-  const double shift_length, const double dist_to_reg_element) const
-{
-  const auto & route_handler = getRouteHandler();
-  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
-  const auto & transient_data = common_data_ptr_->transient_data;
-  const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
-    common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor,
-    prep_segment.points.back().point.pose);
-
-  const auto max_lane_changing_length = std::invoke([&]() {
-    double max_length =
-      transient_data.dist_to_terminal_start > transient_data.max_prepare_length
-        ? std::min(transient_data.dist_to_terminal_end, dist_to_reg_element) - prep_metric.length
-        : transient_data.dist_to_terminal_end - prep_metric.length;
-    auto target_lane_buffer = lane_change_parameters_->lane_change_finish_judge_buffer +
-                              transient_data.next_dist_buffer.min;
-    if (std::abs(route_handler->getNumLaneToPreferredLane(target_lanes.back(), direction_)) > 0) {
-      target_lane_buffer += lane_change_parameters_->backward_length_buffer_for_end_of_lane;
-    }
-    max_length = std::min(max_length, dist_lc_start_to_end_of_lanes - target_lane_buffer);
-    return max_length;
-  });
-
-  const auto max_path_velocity = prep_segment.points.back().point.longitudinal_velocity_mps;
-  return calculation::calc_shift_phase_metrics(
-    common_data_ptr_, shift_length, prep_metric.velocity, max_path_velocity,
-    prep_metric.sampled_lon_accel, max_lane_changing_length);
 }
 
 LaneChangePath NormalLaneChange::get_candidate_path(
