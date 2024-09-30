@@ -15,7 +15,6 @@
 #include "autoware_raw_vehicle_cmd_converter/csv_loader.hpp"
 
 #include <algorithm>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -48,10 +47,7 @@ bool CSVLoader::readCSV(Table & result, const char delim)
       result.push_back(tokens);
     }
   }
-  if (!validateData(result, csv_path_)) {
-    return false;
-  }
-  return true;
+  return validateData(result, csv_path_);
 }
 
 bool CSVLoader::validateMap(const Map & map, const bool is_col_decent)
@@ -119,7 +115,7 @@ Map CSVLoader::getMap(const Table & table)
   return map;
 }
 
-std::vector<double> CSVLoader::getRowIndex(const Table & table)
+std::vector<double> CSVLoader::getColumnIndex(const Table & table)
 {
   std::vector<double> index = {};
   for (size_t i = 1; i < table[0].size(); i++) {
@@ -128,7 +124,7 @@ std::vector<double> CSVLoader::getRowIndex(const Table & table)
   return index;
 }
 
-std::vector<double> CSVLoader::getColumnIndex(const Table & table)
+std::vector<double> CSVLoader::getRowIndex(const Table & table)
 {
   std::vector<double> index = {};
   for (size_t i = 1; i < table.size(); i++) {

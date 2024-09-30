@@ -538,6 +538,7 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
   return marker_ptr;
 }
 
+// cppcheck-suppress unusedFunction
 visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   const autoware_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
