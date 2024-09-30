@@ -1198,7 +1198,8 @@ void GoalPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  if (thread_safe_data_.getPullOverPlannerType() == PullOverPlannerType::FREESPACE) {
+  const auto planner_type_opt = thread_safe_data_.getPullOverPlannerType();
+  if (planner_type_opt && planner_type_opt.value() == PullOverPlannerType::FREESPACE) {
     const double drivable_area_margin = planner_data_->parameters.vehicle_width;
     output.drivable_area_info.drivable_margin =
       planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
@@ -1329,8 +1330,9 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(
     return getPreviousModuleOutput();
   }
 
+  const auto planner_type_opt = thread_safe_data_.getPullOverPlannerType();
   const bool is_freespace =
-    thread_safe_data_.getPullOverPlannerType() == PullOverPlannerType::FREESPACE;
+    planner_type_opt && planner_type_opt.value() == PullOverPlannerType::FREESPACE;
   if (
     path_decision_controller_.get_current_state().state ==
       PathDecisionState::DecisionKind::NOT_DECIDED &&
@@ -1808,7 +1810,8 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo()
   constexpr bool is_lane_change = false;
   constexpr bool is_pull_over = true;
   const bool override_ego_stopped_check = std::invoke([&]() {
-    if (thread_safe_data_.getPullOverPlannerType() == PullOverPlannerType::SHIFT) {
+    const auto planner_type_opt = thread_safe_data_.getPullOverPlannerType();
+    if (planner_type_opt && planner_type_opt.value() == PullOverPlannerType::SHIFT) {
       return false;
     }
     constexpr double distance_threshold = 1.0;
@@ -2461,8 +2464,9 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
     marker.pose = thread_safe_data_.get_modified_goal_pose()
                     ? thread_safe_data_.get_modified_goal_pose()->goal_pose
                     : planner_data_->self_odometry->pose.pose;
-    marker.text = magic_enum::enum_name(thread_safe_data_.getPullOverPlannerType());
-    if (thread_safe_data_.foundPullOverPath()) {
+    const auto planner_type_opt = thread_safe_data_.getPullOverPlannerType();
+    if (planner_type_opt) {
+      marker.text = magic_enum::enum_name(planner_type_opt.value());
       marker.text +=
         " " + std::to_string(thread_safe_data_.get_pull_over_path()->path_idx()) + "/" +
         std::to_string(thread_safe_data_.get_pull_over_path()->partial_paths().size() - 1);
