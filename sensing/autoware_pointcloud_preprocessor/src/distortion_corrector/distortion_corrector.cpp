@@ -20,17 +20,15 @@
 #include <autoware/universe_utils/math/trigonometry.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
-#include <cstddef>
-
 namespace autoware::pointcloud_preprocessor
 {
 
-bool DistortionCorrectorBase::pointcloud_transform_exists()
+bool DistortionCorrectorBase::pointcloud_transform_exists() const
 {
   return pointcloud_transform_exists_;
 }
 
-bool DistortionCorrectorBase::pointcloud_transform_needed()
+bool DistortionCorrectorBase::pointcloud_transform_needed() const
 {
   return pointcloud_transform_needed_;
 }
@@ -364,7 +362,7 @@ void DistortionCorrector<T>::undistort_pointcloud(
       is_imu_valid = false;
     }
 
-    float time_offset = static_cast<float>(global_point_stamp - prev_time_stamp_sec);
+    auto time_offset = static_cast<float>(global_point_stamp - prev_time_stamp_sec);
 
     // Undistort a single point based on the strategy
     undistort_point(it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
@@ -443,7 +441,8 @@ inline void DistortionCorrector2D::undistort_point_implementation(
   const bool & is_twist_valid, const bool & is_imu_valid)
 {
   // Initialize linear velocity and angular velocity
-  float v{0.0f}, w{0.0f};
+  float v{0.0f};
+  float w{0.0f};
   if (is_twist_valid) {
     v = static_cast<float>(it_twist->twist.linear.x);
     w = static_cast<float>(it_twist->twist.angular.z);
@@ -491,19 +490,24 @@ inline void DistortionCorrector3D::undistort_point_implementation(
   const bool & is_twist_valid, const bool & is_imu_valid)
 {
   // Initialize linear velocity and angular velocity
-  float v_x_{0.0f}, v_y_{0.0f}, v_z_{0.0f}, w_x_{0.0f}, w_y_{0.0f}, w_z_{0.0f};
+  float v_x{0.0f};
+  float v_y{0.0f};
+  float v_z{0.0f};
+  float w_x{0.0f};
+  float w_y{0.0f};
+  float w_z{0.0f};
   if (is_twist_valid) {
-    v_x_ = static_cast<float>(it_twist->twist.linear.x);
-    v_y_ = static_cast<float>(it_twist->twist.linear.y);
-    v_z_ = static_cast<float>(it_twist->twist.linear.z);
-    w_x_ = static_cast<float>(it_twist->twist.angular.x);
-    w_y_ = static_cast<float>(it_twist->twist.angular.y);
-    w_z_ = static_cast<float>(it_twist->twist.angular.z);
+    v_x = static_cast<float>(it_twist->twist.linear.x);
+    v_y = static_cast<float>(it_twist->twist.linear.y);
+    v_z = static_cast<float>(it_twist->twist.linear.z);
+    w_x = static_cast<float>(it_twist->twist.angular.x);
+    w_y = static_cast<float>(it_twist->twist.angular.y);
+    w_z = static_cast<float>(it_twist->twist.angular.z);
   }
   if (is_imu_valid) {
-    w_x_ = static_cast<float>(it_imu->vector.x);
-    w_y_ = static_cast<float>(it_imu->vector.y);
-    w_z_ = static_cast<float>(it_imu->vector.z);
+    w_x = static_cast<float>(it_imu->vector.x);
+    w_y = static_cast<float>(it_imu->vector.y);
+    w_z = static_cast<float>(it_imu->vector.z);
   }
 
   // Undistort point
@@ -512,7 +516,7 @@ inline void DistortionCorrector3D::undistort_point_implementation(
     point_eigen_ = eigen_lidar_to_base_link_ * point_eigen_;
   }
 
-  Sophus::SE3f::Tangent twist(v_x_, v_y_, v_z_, w_x_, w_y_, w_z_);
+  Sophus::SE3f::Tangent twist(v_x, v_y, v_z, w_x, w_y, w_z);
   twist = twist * time_offset;
   transformation_matrix_ = Sophus::SE3f::exp(twist).matrix();
   transformation_matrix_ = transformation_matrix_ * prev_transformation_matrix_;

@@ -43,7 +43,6 @@
 #include <deque>
 #include <memory>
 #include <string>
-#include <tuple>
 
 namespace autoware::pointcloud_preprocessor
 {
@@ -81,7 +80,8 @@ protected:
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu);
   void warn_if_timestamp_is_too_late(
     bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late);
-  void convert_matrix_to_transform(const Eigen::Matrix4f & matrix, tf2::Transform & transform);
+  static void convert_matrix_to_transform(
+    const Eigen::Matrix4f & matrix, tf2::Transform & transform);
 
 public:
   explicit DistortionCorrectorBase(rclcpp::Node * node, const bool & has_static_tf_only)
@@ -90,8 +90,8 @@ public:
     managed_tf_buffer_ =
       std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(node, has_static_tf_only);
   }
-  bool pointcloud_transform_exists();
-  bool pointcloud_transform_needed();
+  [[nodiscard]] bool pointcloud_transform_exists() const;
+  [[nodiscard]] bool pointcloud_transform_needed() const;
   std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue();
   std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue();
   void process_twist_message(

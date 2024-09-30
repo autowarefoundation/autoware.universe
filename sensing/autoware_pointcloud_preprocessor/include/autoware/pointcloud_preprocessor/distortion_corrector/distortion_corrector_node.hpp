@@ -65,7 +65,7 @@ private:
 
   std::unique_ptr<DistortionCorrectorBase> distortion_corrector_;
 
-  void pointcloud_callback(PointCloud2::UniquePtr points_msg);
+  void pointcloud_callback(PointCloud2::UniquePtr pointcloud_msg);
   void twist_callback(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg);
   void imu_callback(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
