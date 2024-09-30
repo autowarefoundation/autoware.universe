@@ -20,24 +20,18 @@
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <boost/geometry.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2/utils.h>
 
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#else
-#include <tf2_eigen/tf2_eigen.hpp>
-#endif
-
-#include <iostream>
 #include <vector>
 
 namespace
 {
-pcl::PointCloud<pcl::PointXYZ> getTransformedPointCloud(
+pcl::PointCloud<pcl::PointXYZ> get_transformed_point_cloud(
   const sensor_msgs::msg::PointCloud2 & pointcloud_msg,
   const geometry_msgs::msg::Transform & transform)
 {
@@ -52,7 +46,7 @@ pcl::PointCloud<pcl::PointXYZ> getTransformedPointCloud(
   return transformed_pointcloud;
 }
 
-pcl::PointCloud<pcl::PointXYZ> filterPointCloudByTrajectory(
+pcl::PointCloud<pcl::PointXYZ> filter_point_cloud_by_trajectory(
   const pcl::PointCloud<pcl::PointXYZ> & pointcloud,
   const autoware_planning_msgs::msg::Trajectory & trajectory, const double radius)
 {
@@ -70,7 +64,7 @@ pcl::PointCloud<pcl::PointXYZ> filterPointCloudByTrajectory(
   return filtered_pointcloud;
 }
 
-double calcBrakingDistance(
+double calc_braking_distance(
   const double abs_velocity, const double max_deceleration, const double delay_time)
 {
   const double idling_distance = abs_velocity * delay_time;
@@ -82,7 +76,7 @@ double calcBrakingDistance(
 
 namespace obstacle_collision_checker
 {
-Output update(const Input & input)
+Output check_for_collisions(const Input & input)
 {
   Output output;
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
@@ -92,32 +86,32 @@ Output update(const Input & input)
   const auto & raw_abs_velocity = std::abs(input.current_twist->linear.x);
   const auto abs_velocity = raw_abs_velocity < min_velocity ? 0.0 : raw_abs_velocity;
   const auto braking_distance =
-    calcBrakingDistance(abs_velocity, input.param.max_deceleration, input.param.delay_time);
-  output.resampled_trajectory = cutTrajectory(
-    resampleTrajectory(*input.predicted_trajectory, input.param.resample_interval),
+    calc_braking_distance(abs_velocity, input.param.max_deceleration, input.param.delay_time);
+  output.resampled_trajectory = cut_trajectory(
+    resample_trajectory(*input.predicted_trajectory, input.param.resample_interval),
     braking_distance);
   output.processing_time_map["resampleTrajectory"] = stop_watch.toc(true);
 
   // resample pointcloud
   const auto obstacle_pointcloud =
-    getTransformedPointCloud(*input.obstacle_pointcloud, input.obstacle_transform->transform);
-  const auto filtered_obstacle_pointcloud = filterPointCloudByTrajectory(
+    get_transformed_point_cloud(*input.obstacle_pointcloud, input.obstacle_transform->transform);
+  const auto filtered_obstacle_pointcloud = filter_point_cloud_by_trajectory(
     obstacle_pointcloud, output.resampled_trajectory, input.param.search_radius);
 
   output.vehicle_footprints =
-    createVehicleFootprints(output.resampled_trajectory, input.param, input.vehicle_info);
+    create_vehicle_footprints(output.resampled_trajectory, input.param, input.vehicle_info);
   output.processing_time_map["createVehicleFootprints"] = stop_watch.toc(true);
 
-  output.vehicle_passing_areas = createVehiclePassingAreas(output.vehicle_footprints);
+  output.vehicle_passing_areas = create_vehicle_passing_areas(output.vehicle_footprints);
   output.processing_time_map["createVehiclePassingAreas"] = stop_watch.toc(true);
 
-  output.will_collide = willCollide(filtered_obstacle_pointcloud, output.vehicle_passing_areas);
+  output.will_collide = will_collide(filtered_obstacle_pointcloud, output.vehicle_passing_areas);
   output.processing_time_map["willCollide"] = stop_watch.toc(true);
 
   return output;
 }
 
-autoware_planning_msgs::msg::Trajectory resampleTrajectory(
+autoware_planning_msgs::msg::Trajectory resample_trajectory(
   const autoware_planning_msgs::msg::Trajectory & trajectory, const double interval)
 {
   autoware_planning_msgs::msg::Trajectory resampled;
@@ -140,7 +134,7 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
   return resampled;
 }
 
-autoware_planning_msgs::msg::Trajectory cutTrajectory(
+autoware_planning_msgs::msg::Trajectory cut_trajectory(
   const autoware_planning_msgs::msg::Trajectory & trajectory, const double length)
 {
   autoware_planning_msgs::msg::Trajectory cut;
@@ -183,7 +177,7 @@ autoware_planning_msgs::msg::Trajectory cutTrajectory(
   return cut;
 }
 
-std::vector<LinearRing2d> createVehicleFootprints(
+std::vector<LinearRing2d> create_vehicle_footprints(
   const autoware_planning_msgs::msg::Trajectory & trajectory, const Param & param,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
 {
@@ -201,7 +195,7 @@ std::vector<LinearRing2d> createVehicleFootprints(
   return vehicle_footprints;
 }
 
-std::vector<LinearRing2d> createVehiclePassingAreas(
+std::vector<LinearRing2d> create_vehicle_passing_areas(
   const std::vector<LinearRing2d> & vehicle_footprints)
 {
   // Create hull from two adjacent vehicle footprints
@@ -209,13 +203,13 @@ std::vector<LinearRing2d> createVehiclePassingAreas(
   for (size_t i = 0; i < vehicle_footprints.size() - 1; ++i) {
     const auto & footprint1 = vehicle_footprints.at(i);
     const auto & footprint2 = vehicle_footprints.at(i + 1);
-    areas.push_back(createHullFromFootprints(footprint1, footprint2));
+    areas.push_back(create_hull_from_footprints(footprint1, footprint2));
   }
 
   return areas;
 }
 
-LinearRing2d createHullFromFootprints(const LinearRing2d & area1, const LinearRing2d & area2)
+LinearRing2d create_hull_from_footprints(const LinearRing2d & area1, const LinearRing2d & area2)
 {
   autoware::universe_utils::MultiPoint2d combined;
   for (const auto & p : area1) {
@@ -229,14 +223,14 @@ LinearRing2d createHullFromFootprints(const LinearRing2d & area1, const LinearRi
   return hull;
 }
 
-bool willCollide(
+bool will_collide(
   const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
   const std::vector<LinearRing2d> & vehicle_footprints)
 {
   for (size_t i = 1; i < vehicle_footprints.size(); i++) {
     // skip first footprint because surround obstacle checker handle it
     const auto & vehicle_footprint = vehicle_footprints.at(i);
-    if (hasCollision(obstacle_pointcloud, vehicle_footprint)) {
+    if (has_collision(obstacle_pointcloud, vehicle_footprint)) {
       RCLCPP_WARN(rclcpp::get_logger("obstacle_collision_checker"), "willCollide");
       return true;
     }
@@ -245,7 +239,7 @@ bool willCollide(
   return false;
 }
 
-bool hasCollision(
+bool has_collision(
   const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
   const LinearRing2d & vehicle_footprint)
 {

@@ -39,7 +39,7 @@ namespace obstacle_collision_checker
 {
 struct NodeParam
 {
-  double update_rate;
+  double update_rate{};
 };
 
 class ObstacleCollisionCheckerNode : public rclcpp::Node
@@ -68,10 +68,10 @@ private:
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
   // Callback
-  void onObstaclePointcloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
-  void onReferenceTrajectory(const autoware_planning_msgs::msg::Trajectory::SharedPtr msg);
-  void onPredictedTrajectory(const autoware_planning_msgs::msg::Trajectory::SharedPtr msg);
-  void onOdom(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void on_obstacle_pointcloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
+  void on_reference_trajectory(const autoware_planning_msgs::msg::Trajectory::SharedPtr msg);
+  void on_predicted_trajectory(const autoware_planning_msgs::msg::Trajectory::SharedPtr msg);
+  void on_odom(const nav_msgs::msg::Odometry::SharedPtr msg);
 
   // Publisher
   std::shared_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
@@ -79,18 +79,18 @@ private:
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
-  void initTimer(double period_s);
+  void init_timer(double period_s);
 
-  bool isDataReady();
-  bool isDataTimeout();
-  void onTimer();
+  bool is_data_ready();
+  bool is_data_timeout();
+  void on_timer();
 
   // Parameter
   NodeParam node_param_;
 
   // Dynamic Reconfigure
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
-  rcl_interfaces::msg::SetParametersResult paramCallback(
+  rcl_interfaces::msg::SetParametersResult param_callback(
     const std::vector<rclcpp::Parameter> & parameters);
 
   // Core
@@ -100,10 +100,10 @@ private:
   // Diagnostic Updater
   diagnostic_updater::Updater updater_;
 
-  void checkLaneDeparture(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void check_lane_departure(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   // Visualization
-  visualization_msgs::msg::MarkerArray createMarkerArray() const;
+  visualization_msgs::msg::MarkerArray create_marker_array() const;
 };
 }  // namespace obstacle_collision_checker
 

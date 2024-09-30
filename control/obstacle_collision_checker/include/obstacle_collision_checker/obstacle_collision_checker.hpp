@@ -64,29 +64,29 @@ struct Output
   std::vector<LinearRing2d> vehicle_passing_areas;
 };
 
-Output update(const Input & input);
+Output check_for_collisions(const Input & input);
 
 //! This function assumes the input trajectory is sampled dense enough
-autoware_planning_msgs::msg::Trajectory resampleTrajectory(
+autoware_planning_msgs::msg::Trajectory resample_trajectory(
   const autoware_planning_msgs::msg::Trajectory & trajectory, const double interval);
 
-autoware_planning_msgs::msg::Trajectory cutTrajectory(
+autoware_planning_msgs::msg::Trajectory cut_trajectory(
   const autoware_planning_msgs::msg::Trajectory & trajectory, const double length);
 
-std::vector<LinearRing2d> createVehicleFootprints(
+std::vector<LinearRing2d> create_vehicle_footprints(
   const autoware_planning_msgs::msg::Trajectory & trajectory, const Param & param,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 
-std::vector<LinearRing2d> createVehiclePassingAreas(
+std::vector<LinearRing2d> create_vehicle_passing_areas(
   const std::vector<LinearRing2d> & vehicle_footprints);
 
-LinearRing2d createHullFromFootprints(const LinearRing2d & area1, const LinearRing2d & area2);
+LinearRing2d create_hull_from_footprints(const LinearRing2d & area1, const LinearRing2d & area2);
 
-bool willCollide(
+bool will_collide(
   const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
   const std::vector<LinearRing2d> & vehicle_footprints);
 
-bool hasCollision(
+bool has_collision(
   const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
   const LinearRing2d & vehicle_footprint);
 }  // namespace obstacle_collision_checker
