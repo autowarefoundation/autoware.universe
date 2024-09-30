@@ -483,14 +483,14 @@ void NormalLaneChange::insertStopPoint(
 
     for (const auto & object : target_objects.current_lane) {
       // check if stationary
-      const auto obj_v = std::abs(object.initial_twist.twist.linear.x);
+      const auto obj_v = std::abs(object.initial_twist.linear.x);
       if (obj_v > lane_change_parameters_->stopped_object_velocity_threshold) {
         continue;
       }
 
       // calculate distance from path front to the stationary object polygon on the ego lane.
       const auto polygon =
-        autoware::universe_utils::toPolygon2d(object.initial_pose.pose, object.shape).outer();
+        autoware::universe_utils::toPolygon2d(object.initial_pose, object.shape).outer();
       for (const auto & polygon_p : polygon) {
         const auto p_fp = autoware::universe_utils::toMsg(polygon_p.to_3d());
         const auto lateral_fp = autoware::motion_utils::calcLateralOffset(path.points, p_fp);
@@ -535,21 +535,21 @@ void NormalLaneChange::insertStopPoint(
     const bool has_blocking_target_lane_obj = std::any_of(
       target_objects.target_lane_leading.begin(), target_objects.target_lane_leading.end(),
       [&](const auto & o) {
-        const auto v = std::abs(o.initial_twist.twist.linear.x);
+        const auto v = std::abs(o.initial_twist.linear.x);
         if (v > lane_change_parameters_->stopped_object_velocity_threshold) {
           return false;
         }
 
         // target_objects includes objects out of target lanes, so filter them out
         if (!boost::geometry::intersects(
-              autoware::universe_utils::toPolygon2d(o.initial_pose.pose, o.shape).outer(),
+              autoware::universe_utils::toPolygon2d(o.initial_pose, o.shape).outer(),
               lanelet::utils::combineLaneletsShape(get_target_lanes())
                 .polygon2d()
                 .basicPolygon())) {
           return false;
         }
 
-        const double distance_to_target_lane_obj = getDistanceAlongLanelet(o.initial_pose.pose);
+        const double distance_to_target_lane_obj = getDistanceAlongLanelet(o.initial_pose);
         return stopping_distance_for_obj < distance_to_target_lane_obj &&
                distance_to_target_lane_obj < distance_to_ego_lane_obj;
       });
@@ -2121,10 +2121,10 @@ bool NormalLaneChange::has_collision_with_decel_patterns(
         utils::path_safety_checker::convertToPredictedPath(ego_predicted_path, time_resolution);
 
       return std::any_of(objects.begin(), objects.end(), [&](const auto & obj) {
-        const auto selected_rss_param = (obj.initial_twist.twist.linear.x <=
-                                         lane_change_parameters_->stopped_object_velocity_threshold)
-                                          ? lane_change_parameters_->rss_params_for_parked
-                                          : rss_param;
+        const auto selected_rss_param =
+          (obj.initial_twist.linear.x <= lane_change_parameters_->stopped_object_velocity_threshold)
+            ? lane_change_parameters_->rss_params_for_parked
+            : rss_param;
         return is_collided(
           lane_change_path.path, obj, ego_predicted_path, selected_rss_param, debug_data);
       });
@@ -2218,10 +2218,10 @@ bool NormalLaneChange::isVehicleStuck(
   const auto base_distance = getArcCoordinates(current_lanes, getEgoPose()).length;
 
   for (const auto & object : lane_change_debug_.filtered_objects.current_lane) {
-    const auto & p = object.initial_pose.pose;  // TODO(Horibe): consider footprint point
+    const auto & p = object.initial_pose;  // TODO(Horibe): consider footprint point
 
     // Note: it needs chattering prevention.
-    if (std::abs(object.initial_twist.twist.linear.x) > 0.3) {  // check if stationary
+    if (std::abs(object.initial_twist.linear.x) > 0.3) {  // check if stationary
       continue;
     }
 
