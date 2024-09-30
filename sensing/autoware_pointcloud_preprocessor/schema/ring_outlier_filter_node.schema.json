@@ -10,13 +10,13 @@
           "type": "number",
           "description": "distance_ratio",
           "default": "1.03",
-          "minimum": 0
+          "minimum": 0.0
         },
         "object_length_threshold": {
           "type": "number",
           "description": "object_length_threshold",
           "default": "0.1",
-          "minimum": 0
+          "minimum": 0.0
         },
         "num_points_threshold": {
           "type": "integer",
@@ -45,20 +45,20 @@
           "type": "number",
           "description": "The left limit of azimuth for visibility score calculation",
           "default": "0.0",
-          "minimum": 0
+          "minimum": 0.0
         },
         "max_azimuth_deg": {
           "type": "number",
           "description": "The right limit of azimuth for visibility score calculation",
           "default": "360.0",
-          "minimum": 0,
-          "maximum": 360
+          "minimum": 0.0,
+          "maximum": 360.0
         },
         "max_distance": {
           "type": "number",
           "description": "The limit distance for visibility score calculation",
           "default": "12.0",
-          "minimum": 0
+          "minimum": 0.0
         },
         "vertical_bins": {
           "type": "integer",
@@ -75,7 +75,8 @@
         "noise_threshold": {
           "type": "integer",
           "description": "The threshold value for distinguishing noise from valid points in the frequency image",
-          "default": "2"
+          "default": "2",
+          "minimum": 0
         }
       },
       "required": [
