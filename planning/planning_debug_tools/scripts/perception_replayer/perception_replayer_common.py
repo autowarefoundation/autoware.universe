@@ -22,8 +22,8 @@ import time
 from autoware_auto_perception_msgs.msg import DetectedObjects
 from autoware_auto_perception_msgs.msg import PredictedObjects
 from autoware_auto_perception_msgs.msg import TrackedObjects
-from autoware_auto_perception_msgs.msg import TrafficSignalArray as AutoTrafficSignalArray
 from autoware_perception_msgs.msg import TrafficSignalArray
+from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 import psutil
@@ -32,6 +32,7 @@ from rclpy.serialization import deserialize_message
 from rosbag2_py import StorageFilter
 from rosidl_runtime_py.utilities import get_message
 from sensor_msgs.msg import PointCloud2
+from utils import get_starting_time
 from utils import open_reader
 
 
@@ -40,11 +41,10 @@ class PerceptionReplayerCommon(Node):
         super().__init__(name)
         self.args = args
 
-        self.ego_pose = None
+        self.ego_odom = None
         self.rosbag_objects_data = []
         self.rosbag_ego_odom_data = []
         self.rosbag_traffic_signals_data = []
-        self.is_auto_traffic_signals = False
 
         # subscriber
         self.sub_odom = self.create_subscription(
@@ -76,31 +76,33 @@ class PerceptionReplayerCommon(Node):
             Odometry, "/perception_reproducer/rosbag_ego_odom", 1
         )
 
+        self.goal_pose_publisher = self.create_publisher(
+            PoseStamped, "/planning/mission_planning/goal", 1
+        )
+
+        self.traffic_signals_pub = self.create_publisher(
+            TrafficSignalArray, "/perception/traffic_light_recognition/traffic_signals", 1
+        )
+
         # load rosbag
         print("Stared loading rosbag")
         if os.path.isdir(args.bag):
-            for bag_file in sorted(os.listdir(args.bag)):
-                if bag_file.endswith(self.args.rosbag_format):
-                    self.load_rosbag(args.bag + "/" + bag_file)
+            bags = [
+                os.path.join(args.bag, base_name)
+                for base_name in os.listdir(args.bag)
+                if base_name.endswith(args.rosbag_format)
+            ]
+            for bag_file in sorted(bags, key=get_starting_time):
+                self.load_rosbag(bag_file)
         else:
             self.load_rosbag(args.bag)
         print("Ended loading rosbag")
-
-        # temporary support old auto msgs
-        if self.is_auto_traffic_signals:
-            self.auto_traffic_signals_pub = self.create_publisher(
-                AutoTrafficSignalArray, "/perception/traffic_light_recognition/traffic_signals", 1
-            )
-        else:
-            self.traffic_signals_pub = self.create_publisher(
-                TrafficSignalArray, "/perception/traffic_light_recognition/traffic_signals", 1
-            )
 
         # wait for ready to publish/subscribe
         time.sleep(1.0)
 
     def on_odom(self, odom):
-        self.ego_pose = odom.pose.pose
+        self.ego_odom = odom
 
     def load_rosbag(self, rosbag2_path: str):
         reader = open_reader(str(rosbag2_path))
@@ -126,14 +128,18 @@ class PerceptionReplayerCommon(Node):
             msg_type = get_message(type_map[topic])
             msg = deserialize_message(data, msg_type)
             if topic == objects_topic:
+                assert isinstance(
+                    msg, self.objects_pub.msg_type
+                ), f"Unsupported conversion from {type(msg)}"
                 self.rosbag_objects_data.append((stamp, msg))
             if topic == ego_odom_topic:
+                assert isinstance(msg, Odometry), f"Unsupported conversion from {type(msg)}"
                 self.rosbag_ego_odom_data.append((stamp, msg))
             if topic == traffic_signals_topic:
+                assert isinstance(
+                    msg, TrafficSignalArray
+                ), f"Unsupported conversion from {type(msg)}"
                 self.rosbag_traffic_signals_data.append((stamp, msg))
-                self.is_auto_traffic_signals = (
-                    "autoware_auto_perception_msgs" in type(msg).__module__
-                )
 
     def kill_online_perception_node(self):
         # kill node if required
@@ -153,6 +159,9 @@ class PerceptionReplayerCommon(Node):
                 pass
 
     def binary_search(self, data, timestamp):
+        if not data:
+            return None
+
         if data[-1][0] < timestamp:
             return data[-1][1]
         elif data[0][0] > timestamp:
