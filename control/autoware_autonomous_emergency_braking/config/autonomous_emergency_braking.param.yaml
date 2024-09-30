@@ -27,6 +27,7 @@
     # Point cloud cropping
     expand_width: 0.1
     path_footprint_extra_margin: 4.0
+    speed_calculation_expansion_margin: 0.5
 
     # Point cloud clustering
     cluster_tolerance: 0.15 #[m]

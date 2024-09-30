@@ -91,7 +91,7 @@ bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
 
-bool pathFootprintExceedsTargetLaneBound(
+bool path_footprint_exceeds_target_lane_bound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
   const double margin = 0.1);
 
@@ -120,11 +120,6 @@ std::vector<DrivableLanes> generateDrivableLanes(
   const lanelet::ConstLanelets & lane_change_lanes);
 
 double getLateralShift(const LaneChangePath & path);
-
-bool hasEnoughLengthToLaneChangeAfterAbort(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const Pose & curent_pose, const double abort_return_dist,
-  const LaneChangeParameters & lane_change_parameters, const Direction direction);
 
 CandidateOutput assignToCandidate(
   const LaneChangePath & lane_change_path, const Point & ego_position);
@@ -257,10 +252,6 @@ bool is_same_lane_with_prev_iteration(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
 
-Pose to_pose(
-  const autoware::universe_utils::Point2d & point,
-  const geometry_msgs::msg::Quaternion & orientation);
-
 bool is_ahead_of_ego(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
   const PredictedObject & object);
@@ -279,14 +270,5 @@ double get_distance_to_next_regulatory_element(
   const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
   const bool ignore_intersection = false);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
-
-namespace autoware::behavior_path_planner::utils::lane_change::debug
-{
-geometry_msgs::msg::Point32 create_point32(const geometry_msgs::msg::Pose & pose);
-
-geometry_msgs::msg::Polygon createExecutionArea(
-  const VehicleInfo & vehicle_info, const Pose & pose, double additional_lon_offset,
-  double additional_lat_offset);
-}  // namespace autoware::behavior_path_planner::utils::lane_change::debug
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
