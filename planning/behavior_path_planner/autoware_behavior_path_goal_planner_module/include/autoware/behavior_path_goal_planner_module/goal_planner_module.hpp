@@ -20,7 +20,6 @@
 #include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
 #include "autoware/behavior_path_goal_planner_module/thread_data.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware/behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 #include "autoware/behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
@@ -120,48 +119,6 @@ struct PullOverContextData
   const bool is_stable_safe_path;
   const PredictedObjects static_target_objects;
   const PredictedObjects dynamic_target_objects;
-};
-
-class PathDecisionStateController
-{
-public:
-  PathDecisionStateController() = default;
-
-  /**
-   * @brief update current state and save old current state to prev state
-   */
-  void transit_state(
-    const bool found_pull_over_path, const rclcpp::Time & now,
-    const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
-    const std::optional<GoalCandidate> modified_goal_opt,
-    const std::shared_ptr<const PlannerData> planner_data,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const bool is_current_safe, const GoalPlannerParameters & parameters,
-    const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
-    const std::optional<PullOverPath> & pull_over_path,
-    std::vector<Polygon2d> & ego_polygons_expanded);
-
-  PathDecisionState get_current_state() const { return current_state_; }
-
-  PathDecisionState get_prev_state() const { return prev_state_; }
-
-private:
-  PathDecisionState current_state_{};
-  PathDecisionState prev_state_{};
-
-  /**
-   * @brief update current state and save old current state to prev state
-   */
-  PathDecisionState get_next_state(
-    const bool found_pull_over_path, const rclcpp::Time & now,
-    const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
-    const std::optional<GoalCandidate> modified_goal_opt,
-    const std::shared_ptr<const PlannerData> planner_data,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const bool is_current_safe, const GoalPlannerParameters & parameters,
-    const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
-    const std::optional<PullOverPath> & pull_over_path_opt,
-    std::vector<Polygon2d> & ego_polygons_expanded) const;
 };
 
 class GoalPlannerModule : public SceneModuleInterface

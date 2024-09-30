@@ -15,8 +15,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__THREAD_DATA_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__THREAD_DATA_HPP_
 
-#include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
-#include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
+#include "autoware/behavior_path_goal_planner_module/decision_state.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -48,21 +47,6 @@ public:                                                       \
 #define DEFINE_SETTER_GETTER_WITH_MUTEX(TYPE, NAME) \
   DEFINE_SETTER_WITH_MUTEX(TYPE, NAME)              \
   DEFINE_GETTER_WITH_MUTEX(TYPE, NAME)
-
-class PathDecisionState
-{
-public:
-  enum class DecisionKind {
-    NOT_DECIDED,
-    DECIDING,
-    DECIDED,
-  };
-
-  DecisionKind state{DecisionKind::NOT_DECIDED};
-  rclcpp::Time stamp{};
-  bool is_stable_safe{false};
-  std::optional<rclcpp::Time> safe_start_time{std::nullopt};
-};
 
 class ThreadSafeData
 {
