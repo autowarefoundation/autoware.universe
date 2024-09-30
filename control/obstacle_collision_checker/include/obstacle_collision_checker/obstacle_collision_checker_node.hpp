@@ -22,6 +22,7 @@
 #include <autoware/universe_utils/ros/processing_time_publisher.hpp>
 #include <autoware/universe_utils/ros/self_pose_listener.hpp>
 #include <autoware/universe_utils/ros/transform_listener.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -64,6 +65,7 @@ private:
   geometry_msgs::msg::TransformStamped::ConstSharedPtr obstacle_transform_;
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr reference_trajectory_;
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr predicted_trajectory_;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
   // Callback
   void onObstaclePointcloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
@@ -85,7 +87,6 @@ private:
 
   // Parameter
   NodeParam node_param_;
-  Param param_;
 
   // Dynamic Reconfigure
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -95,7 +96,6 @@ private:
   // Core
   Input input_;
   Output output_;
-  std::unique_ptr<ObstacleCollisionChecker> obstacle_collision_checker_;
 
   // Diagnostic Updater
   diagnostic_updater::Updater updater_;

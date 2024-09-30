@@ -47,7 +47,9 @@ bool update_param(
 namespace obstacle_collision_checker
 {
 ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOptions & node_options)
-: Node("obstacle_collision_checker_node", node_options), updater_(this)
+: Node("obstacle_collision_checker_node", node_options),
+  vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo()),
+  updater_(this)
 {
   using std::placeholders::_1;
 
@@ -55,19 +57,15 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   node_param_.update_rate = declare_parameter<double>("update_rate");
 
   // Core Parameter
-  param_.delay_time = declare_parameter<double>("delay_time");
-  param_.footprint_margin = declare_parameter<double>("footprint_margin");
-  param_.max_deceleration = declare_parameter<double>("max_deceleration");
-  param_.resample_interval = declare_parameter<double>("resample_interval");
-  param_.search_radius = declare_parameter<double>("search_radius");
+  input_.param.delay_time = declare_parameter<double>("delay_time");
+  input_.param.footprint_margin = declare_parameter<double>("footprint_margin");
+  input_.param.max_deceleration = declare_parameter<double>("max_deceleration");
+  input_.param.resample_interval = declare_parameter<double>("resample_interval");
+  input_.param.search_radius = declare_parameter<double>("search_radius");
 
   // Dynamic Reconfigure
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&ObstacleCollisionCheckerNode::paramCallback, this, _1));
-
-  // Core
-  obstacle_collision_checker_ = std::make_unique<ObstacleCollisionChecker>(*this);
-  obstacle_collision_checker_->setParam(param_);
 
   // Subscriber
   self_pose_listener_ = std::make_shared<autoware::universe_utils::SelfPoseListener>(this);
@@ -223,8 +221,9 @@ void ObstacleCollisionCheckerNode::onTimer()
   input_.reference_trajectory = reference_trajectory_;
   input_.predicted_trajectory = predicted_trajectory_;
   input_.current_twist = current_twist_;
+  input_.vehicle_info = vehicle_info_;
 
-  output_ = obstacle_collision_checker_->update(input_);
+  output_ = update(input_);
 
   updater_.force_update();
 
@@ -249,17 +248,13 @@ rcl_interfaces::msg::SetParametersResult ObstacleCollisionCheckerNode::paramCall
       update_param(parameters, "update_rate", p.update_rate);
     }
 
-    auto & p = param_;
+    auto & p = input_.param;
 
     update_param(parameters, "delay_time", p.delay_time);
     update_param(parameters, "footprint_margin", p.footprint_margin);
     update_param(parameters, "max_deceleration", p.max_deceleration);
     update_param(parameters, "resample_interval", p.resample_interval);
     update_param(parameters, "search_radius", p.search_radius);
-
-    if (obstacle_collision_checker_) {
-      obstacle_collision_checker_->setParam(param_);
-    }
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();
