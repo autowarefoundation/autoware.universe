@@ -121,11 +121,9 @@ autoware_planning_msgs::msg::Trajectory resample_trajectory(
   for (size_t i = 1; i < trajectory.points.size() - 1; ++i) {
     const auto & point = trajectory.points.at(i);
 
-    const auto p1 =
-      autoware::universe_utils::fromMsg(resampled.points.back().pose.position).to_2d();
-    const auto p2 = autoware::universe_utils::fromMsg(point.pose.position).to_2d();
-
-    if (boost::geometry::distance(p1, p2) > interval) {
+    const auto distance =
+      autoware::universe_utils::calcDistance2d(resampled.points.back(), point.pose.position);
+    if (distance > interval) {
       resampled.points.push_back(point);
     }
   }
@@ -147,8 +145,8 @@ autoware_planning_msgs::msg::Trajectory cut_trajectory(
 
     const auto p1 = autoware::universe_utils::fromMsg(cut.points.back().pose.position);
     const auto p2 = autoware::universe_utils::fromMsg(point.pose.position);
-    const auto points_distance = boost::geometry::distance(p1.to_2d(), p2.to_2d());
 
+    const auto points_distance = boost::geometry::distance(p1, p2);
     const auto remain_distance = length - total_length;
 
     // Over length
