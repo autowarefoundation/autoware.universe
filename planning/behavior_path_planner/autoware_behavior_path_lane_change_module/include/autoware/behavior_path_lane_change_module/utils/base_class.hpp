@@ -67,6 +67,8 @@ public:
 
   virtual void update_lanes(const bool is_approved) = 0;
 
+  virtual void update_transient_data() = 0;
+
   virtual void update_filtered_objects() = 0;
 
   virtual void updateLaneChangeStatus() = 0;
@@ -230,6 +232,8 @@ public:
   void resetStopPose() { lane_change_stop_pose_ = std::nullopt; }
 
   virtual TurnSignalInfo get_current_turn_signal_info() const = 0;
+
+  virtual bool is_near_regulatory_element() const = 0;
 
 protected:
   virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;

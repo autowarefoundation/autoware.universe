@@ -116,6 +116,8 @@ TEST_F(TestAEB, checkCollision)
   ObjectData object_collision;
   object_collision.distance_to_object = 0.5;
   object_collision.velocity = 0.1;
+  object_collision.position.x = 1.0;
+  object_collision.position.y = 1.0;
   ASSERT_TRUE(aeb_node_->hasCollision(longitudinal_velocity, object_collision));
 
   ObjectData object_no_collision;
@@ -161,8 +163,7 @@ TEST_F(TestAEB, checkImuPathGeneration)
   aeb_node_->getPointsBelongingToClusterHulls(
     obstacle_points_ptr, points_belonging_to_cluster_hulls, debug_markers);
   std::vector<ObjectData> objects;
-  aeb_node_->getClosestObjectsOnPath(
-    imu_path, footprint, stamp, points_belonging_to_cluster_hulls, objects);
+  aeb_node_->getClosestObjectsOnPath(imu_path, stamp, points_belonging_to_cluster_hulls, objects);
   ASSERT_FALSE(objects.empty());
 }
 

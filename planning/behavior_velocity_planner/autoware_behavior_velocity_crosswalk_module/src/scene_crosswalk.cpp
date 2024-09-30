@@ -332,7 +332,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   const double dist_default_stop =
     default_stop_pose_opt.has_value()
       ? calcSignedArcLength(ego_path.points, ego_pos, default_stop_pose_opt->position)
-      : std::numeric_limits<double>::max();
+      : 0.0;
   updateObjectState(
     dist_default_stop, sparse_resample_path, crosswalk_attention_range, attention_area);
 
