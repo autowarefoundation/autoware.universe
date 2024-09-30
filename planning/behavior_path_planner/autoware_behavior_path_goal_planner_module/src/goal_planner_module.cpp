@@ -2159,7 +2159,7 @@ bool GoalPlannerModule::isSafePath(
     return false;
   }
   const auto & pull_over_path = pull_over_path_opt.value();
-  const auto current_pull_over_path = pull_over_path.getCurrentPath();
+  const auto & current_pull_over_path = pull_over_path.getCurrentPath();
   const auto & current_pose = planner_data->self_odometry->pose.pose;
   const double current_velocity = std::hypot(
     planner_data->self_odometry->twist.twist.linear.x,
@@ -2173,10 +2173,8 @@ bool GoalPlannerModule::isSafePath(
     *route_handler, left_side_parking_, parameters.backward_goal_search_length,
     parameters.forward_goal_search_length);
   const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(current_pull_over_path.points);
-  // TODO(soblin): getPairsTerminalVelocityAndAccelはPullOverPathのメンバ関数にする
   const std::pair<double, double> terminal_velocity_and_accel =
-    utils::parking_departure::getPairsTerminalVelocityAndAccel(
-      pull_over_path.pairs_terminal_velocity_and_accel, pull_over_path.path_idx);
+    pull_over_path.getPairsTerminalVelocityAndAccel();
   RCLCPP_DEBUG(
     getLogger(), "pairs_terminal_velocity_and_accel for goal_planner: %f, %f",
     terminal_velocity_and_accel.first, terminal_velocity_and_accel.second);
@@ -2471,7 +2469,7 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
     marker.text = magic_enum::enum_name(thread_safe_data_.getPullOverPlannerType());
     if (thread_safe_data_.foundPullOverPath()) {
       marker.text +=
-        " " + std::to_string(thread_safe_data_.get_pull_over_path()->path_idx) + "/" +
+        " " + std::to_string(thread_safe_data_.get_pull_over_path()->path_idx()) + "/" +
         std::to_string(thread_safe_data_.get_pull_over_path()->partial_paths().size() - 1);
     }
 

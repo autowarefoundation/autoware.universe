@@ -257,13 +257,12 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   // set pull over path
   auto pull_over_path_opt = PullOverPath::create(
     getPlannerType(), goal_id, id, {shifted_path.path}, path_shifter.getShiftLines().front().start,
-    path_shifter.getShiftLines().front().end);
+    path_shifter.getShiftLines().front().end, {std::make_pair(pull_over_velocity, 0)});
 
   if (!pull_over_path_opt) {
     return {};
   }
   auto & pull_over_path = pull_over_path_opt.value();
-  pull_over_path.pairs_terminal_velocity_and_accel.push_back(std::make_pair(pull_over_velocity, 0));
   pull_over_path.debug_poses.push_back(shift_end_pose_prev_module_path);
   pull_over_path.debug_poses.push_back(actual_shift_end_pose);
   pull_over_path.debug_poses.push_back(goal_pose);

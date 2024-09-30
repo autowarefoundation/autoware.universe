@@ -74,12 +74,11 @@ std::optional<PullOverPath> GeometricPullOver::plan(
 
   auto pull_over_path_opt = PullOverPath::create(
     getPlannerType(), goal_id, id, planner_.getPaths(), planner_.getStartPose(),
-    planner_.getArcEndPose());
+    planner_.getArcEndPose(), planner_.getPairsTerminalVelocityAndAccel());
   if (!pull_over_path_opt) {
     return {};
   }
   auto & pull_over_path = pull_over_path_opt.value();
-  pull_over_path.pairs_terminal_velocity_and_accel = planner_.getPairsTerminalVelocityAndAccel();
 
   return pull_over_path;
 }

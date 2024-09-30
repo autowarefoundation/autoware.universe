@@ -19,7 +19,8 @@ namespace autoware::behavior_path_planner
 
 std::optional<PullOverPath> PullOverPath::create(
   const PullOverPlannerType & type, const size_t goal_id, const size_t id,
-  const std::vector<PathWithLaneId> & partial_paths, const Pose & start_pose, const Pose & end_pose)
+  const std::vector<PathWithLaneId> & partial_paths, const Pose & start_pose, const Pose & end_pose,
+  const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel)
 {
   if (partial_paths.empty()) {
     return std::nullopt;
@@ -77,13 +78,11 @@ std::optional<PullOverPath> PullOverPath::create(
   return PullOverPath(
     type, goal_id, id, start_pose, end_pose, partial_paths, full_path, parking_path,
     full_path_curvatures, parking_path_curvatures, full_path_max_curvature,
-    parking_path_max_curvature);
+    parking_path_max_curvature, pairs_terminal_velocity_and_accel);
 }
 
 PullOverPath::PullOverPath(const PullOverPath & other)
-: path_idx(other.path_idx),
-  pairs_terminal_velocity_and_accel(other.pairs_terminal_velocity_and_accel),
-  type_(other.type_),
+: type_(other.type_),
   goal_id_(other.goal_id_),
   id_(other.id_),
   start_pose_(other.start_pose_),
@@ -94,7 +93,9 @@ PullOverPath::PullOverPath(const PullOverPath & other)
   full_path_curvatures_(other.full_path_curvatures_),
   parking_path_curvatures_(other.parking_path_curvatures_),
   full_path_max_curvature_(other.full_path_max_curvature_),
-  parking_path_max_curvature_(other.parking_path_max_curvature_)
+  parking_path_max_curvature_(other.parking_path_max_curvature_),
+  path_idx_(other.path_idx_),
+  pairs_terminal_velocity_and_accel_(other.pairs_terminal_velocity_and_accel_)
 {
 }
 
@@ -104,7 +105,8 @@ PullOverPath::PullOverPath(
   const PathWithLaneId & full_path, const PathWithLaneId & parking_path,
   const std::vector<double> & full_path_curvatures,
   const std::vector<double> & parking_path_curvatures, const double full_path_max_curvature,
-  const double parking_path_max_curvature)
+  const double parking_path_max_curvature,
+  const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel)
 : type_(type),
   goal_id_(goal_id),
   id_(id),
@@ -116,35 +118,37 @@ PullOverPath::PullOverPath(
   full_path_curvatures_(full_path_curvatures),
   parking_path_curvatures_(parking_path_curvatures),
   full_path_max_curvature_(full_path_max_curvature),
-  parking_path_max_curvature_(parking_path_max_curvature)
+  parking_path_max_curvature_(parking_path_max_curvature),
+  path_idx_(0),
+  pairs_terminal_velocity_and_accel_(pairs_terminal_velocity_and_accel)
 {
 }
 
 bool PullOverPath::incrementPathIndex()
 {
   {
-    if (partial_paths_.size() - 1 <= path_idx) {
+    if (partial_paths_.size() - 1 <= path_idx_) {
       return false;
     }
-    path_idx += 1;
+    path_idx_ += 1;
     return true;
   }
 }
 
 PathWithLaneId & PullOverPath::getCurrentPath()
 {
-  if (partial_paths_.size() <= path_idx) {
+  if (partial_paths_.size() <= path_idx_) {
     return partial_paths_.back();
   }
-  return partial_paths_.at(path_idx);
+  return partial_paths_.at(path_idx_);
 }
 
 const PathWithLaneId & PullOverPath::getCurrentPath() const
 {
-  if (partial_paths_.size() <= path_idx) {
+  if (partial_paths_.size() <= path_idx_) {
     return partial_paths_.back();
   }
-  return partial_paths_.at(path_idx);
+  return partial_paths_.at(path_idx_);
 }
 
 }  // namespace autoware::behavior_path_planner
