@@ -23,6 +23,7 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <vector>
 
 namespace autoware::behavior_path_planner
@@ -120,9 +121,12 @@ public:
     return true;
   }
 
-  PullOverPlannerType getPullOverPlannerType() const
+  std::optional<PullOverPlannerType> getPullOverPlannerType() const
   {
     const std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (!pull_over_path_) {
+      return std::nullopt;
+    }
     return pull_over_path_->type();
   };
 
