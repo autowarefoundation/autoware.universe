@@ -73,13 +73,13 @@ Here is a flowchart depicting the process and the predefined thresholds:
 
 ```mermaid
 graph TD
-    gnss_poser["gnss_poser"] --> |"/sensing/gnss/\npose_with_covariance"| pose_covariance_modifier_node
-    ndt_scan_matcher["ndt_scan_matcher"] --> |"/localization/pose_estimator/ndt_scan_matcher/\npose_with_covariance"| pose_covariance_modifier_node
+    gnss_poser["gnss_poser"] --> |"/sensing/gnss/<br/>pose_with_covariance"| pose_covariance_modifier_node
+    ndt_scan_matcher["ndt_scan_matcher"] --> |"/localization/pose_estimator/ndt_scan_matcher/<br/>pose_with_covariance"| pose_covariance_modifier_node
 
     subgraph pose_covariance_modifier_node ["Pose Covariance Modifier Node"]
-        pc1{{"gnss_pose_yaw\nstddev"}}
-        pc1 -->|"<= 0.3 rad"| pc2{{"gnss_pose_z\nstddev"}}
-        pc2 -->|"<= 0.1 m"| pc3{{"gnss_pose_xy\nstddev"}}
+        pc1{{"gnss_pose_yaw<br/>stddev"}}
+        pc1 -->|"<= 0.3 rad"| pc2{{"gnss_pose_z<br/>stddev"}}
+        pc2 -->|"<= 0.1 m"| pc3{{"gnss_pose_xy<br/>stddev"}}
         pc2 -->|"> 0.1 m"| ndt_pose("NDT Pose")
         pc3 -->|"<= 0.1 m"| gnss_pose("GNSS Pose")
         pc3 -->|"0.1 m < x <= 0.2 m"| gnss_ndt_pose("`Both GNSS and NDT Pose
