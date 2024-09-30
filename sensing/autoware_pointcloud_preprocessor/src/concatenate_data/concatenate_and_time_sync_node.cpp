@@ -45,7 +45,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   //  initialize parameters
   params_.has_static_tf_only = declare_parameter<bool>("has_static_tf_only");
-  params_.maximum_queue_size = declare_parameter<int>("maximum_queue_size");
+  params_.maximum_queue_size = static_cast<size_t>(declare_parameter<int>("maximum_queue_size"));
   params_.timeout_sec = declare_parameter<double>("timeout_sec");
   params_.is_motion_compensated = declare_parameter<bool>("is_motion_compensated");
   params_.publish_synchronized_pointcloud =
@@ -66,7 +66,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   if (params_.input_topics.empty()) {
     throw std::runtime_error("Need a 'input_topics' parameter to be set before continuing.");
-  } else if (params_.input_topics.size() == 1) {
+  }
+  if (params_.input_topics.size() == 1) {
     throw std::runtime_error("Only one topic given. Need at least two topics to continue.");
   }
 
@@ -155,17 +156,17 @@ std::string PointCloudConcatenateDataSynchronizerComponent::replace_sync_topic_n
 {
   std::string replaced_topic_name;
   // separate the topic name by '/' and replace the last element with the new postfix
-  size_t pos = original_topic_name.find_last_of("/");
+  size_t pos = original_topic_name.find_last_of('/');
   if (pos == std::string::npos) {
     // not found '/': this is not a namespaced topic
     RCLCPP_WARN_STREAM(
       get_logger(),
       "The topic name is not namespaced. The postfix will be added to the end of the topic name.");
     return original_topic_name + postfix;
-  } else {
-    // replace the last element with the new postfix
-    replaced_topic_name = original_topic_name.substr(0, pos) + "/" + postfix;
   }
+
+  // replace the last element with the new postfix
+  replaced_topic_name = original_topic_name.substr(0, pos) + "/" + postfix;
 
   // if topic name is the same with original topic name, add postfix to the end of the topic name
   if (replaced_topic_name == original_topic_name) {
@@ -175,7 +176,7 @@ std::string PointCloudConcatenateDataSynchronizerComponent::replace_sync_topic_n
                       << " have the same postfix with synchronized pointcloud. We use "
                          "the postfix "
                          "to the end of the topic name.");
-    replaced_topic_name = original_topic_name + default_sync_topic_postfix_;
+    replaced_topic_name = original_topic_name + default_sync_topic_postfix;
   }
   return replaced_topic_name;
 }
@@ -203,10 +204,10 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
     return;
-  } else {
-    // convert to XYZIRC pointcloud if pointcloud is not empty
-    convert_to_xyzirc_cloud(input, xyzirc_input_ptr);
   }
+
+  // convert to XYZIRC pointcloud if pointcloud is not empty
+  convert_to_xyzirc_cloud(input, xyzirc_input_ptr);
 
   // protect cloud collectors list
   std::unique_lock<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
@@ -259,7 +260,7 @@ void PointCloudConcatenateDataSynchronizerComponent::odom_callback(
   combine_cloud_handler_->process_odometry(input);
 }
 
-void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
+void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
   ConcatenatedCloudResult concatenated_cloud_result, double reference_timestamp_min,
   double reference_timestamp_max)
 {
@@ -286,7 +287,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publishClouds(
     if (
       params_.publish_synchronized_pointcloud &&
       concatenated_cloud_result.topic_to_transformed_cloud_map) {
-      for (auto topic : params_.input_topics) {
+      for (const auto & topic : params_.input_topics) {
         // Get a reference to the internal map
         if (
           (*concatenated_cloud_result.topic_to_transformed_cloud_map).find(topic) !=
@@ -403,36 +404,33 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
 
     bool topic_miss = false;
 
-    int concatenate_status = 1;
-    for (auto topic : params_.input_topics) {
-      int cloud_status;  // 1 for success, 0 for failure
+    int concatenated_cloud_status = 1;  // 1 for success, 0 for failure
+    int cloud_status = 1;               // for each lidar's pointcloud
+    for (const auto & topic : params_.input_topics) {
       if (
         diagnostic_topic_to_original_stamp_map_.find(topic) !=
         diagnostic_topic_to_original_stamp_map_.end()) {
-        cloud_status = 1;
         stat.add(
           topic + " timestamp", format_timestamp(diagnostic_topic_to_original_stamp_map_[topic]));
       } else {
         topic_miss = true;
+        concatenated_cloud_status = 0;
         cloud_status = 0;
-        concatenate_status = 0;
       }
       stat.add(topic, cloud_status);
     }
 
-    stat.add("concatenate status", concatenate_status);
+    stat.add("concatenate status", concatenated_cloud_status);
 
-    int8_t level;
-    std::string message;
+    int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+    std::string message = "Concatenated pointcloud is published and include all topics";
+
     if (topic_miss) {
       level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
       message = "Concatenated pointcloud is published but miss some topics";
     } else if (drop_previous_but_late_pointcloud_) {
       level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
       message = "Concatenated pointcloud is not published as it is too late";
-    } else {
-      level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-      message = "Concatenated pointcloud is published and include all topics";
     }
 
     stat.summary(level, message);

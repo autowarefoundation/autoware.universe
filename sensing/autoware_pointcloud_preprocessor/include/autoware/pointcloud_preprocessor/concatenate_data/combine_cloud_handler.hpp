@@ -16,15 +16,12 @@
 
 #include <deque>
 #include <memory>
-#include <mutex>
 #include <optional>
-#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 // ROS includes
-#include "autoware_point_types/types.hpp"
 
 #include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>

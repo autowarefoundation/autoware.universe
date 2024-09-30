@@ -17,7 +17,6 @@
 #include <list>
 #include <memory>
 #include <mutex>
-#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -57,8 +56,8 @@ class PointCloudConcatenateDataSynchronizerComponent : public rclcpp::Node
 {
 public:
   explicit PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options);
-  virtual ~PointCloudConcatenateDataSynchronizerComponent() {}
-  void publishClouds(
+  ~PointCloudConcatenateDataSynchronizerComponent() override = default;
+  void publish_clouds(
     ConcatenatedCloudResult concatenated_cloud_result, double reference_timestamp_min,
     double reference_timestamp_max);
 
@@ -96,7 +95,7 @@ private:
   std::unordered_map<std::string, double> topic_to_noise_window_map_;
 
   // default postfix name for synchronized pointcloud
-  static constexpr const char * default_sync_topic_postfix_ = "_synchronized";
+  static constexpr const char * default_sync_topic_postfix = "_synchronized";
 
   // subscribers
   std::vector<rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr> pointcloud_subs_;
@@ -117,11 +116,11 @@ private:
   void twist_callback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input);
   void odom_callback(const nav_msgs::msg::Odometry::ConstSharedPtr input);
 
-  std::string format_timestamp(double timestamp);
+  static std::string format_timestamp(double timestamp);
   void check_concat_status(diagnostic_updater::DiagnosticStatusWrapper & stat);
   std::string replace_sync_topic_name_postfix(
     const std::string & original_topic_name, const std::string & postfix);
-  void convert_to_xyzirc_cloud(
+  static void convert_to_xyzirc_cloud(
     const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
     sensor_msgs::msg::PointCloud2::SharedPtr & output_ptr);
 };

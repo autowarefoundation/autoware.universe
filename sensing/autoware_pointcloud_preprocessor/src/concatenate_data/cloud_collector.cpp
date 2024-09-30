@@ -25,10 +25,10 @@ namespace autoware::pointcloud_preprocessor
 {
 
 CloudCollector::CloudCollector(
-  std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node,
+  std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
   std::list<std::shared_ptr<CloudCollector>> & collectors,
   std::shared_ptr<CombineCloudHandler> combine_cloud_handler, int num_of_clouds, double timeout_sec)
-: ros2_parent_node_(ros2_parent_node),
+: ros2_parent_node_(std::move(ros2_parent_node)),
   collectors_(collectors),
   combine_cloud_handler_(combine_cloud_handler),
   num_of_clouds_(num_of_clouds),
@@ -80,7 +80,7 @@ void CloudCollector::concatenate_callback()
   // lock for protecting collector list and concatenated pointcloud
   std::lock_guard<std::mutex> lock(mutex_);
   auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
-  ros2_parent_node_->publishClouds(
+  ros2_parent_node_->publish_clouds(
     concatenated_cloud_result, reference_timestamp_min_, reference_timestamp_max_);
   delete_collector();
 }
