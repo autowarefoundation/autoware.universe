@@ -9,11 +9,13 @@
         "maximum_queue_size": {
           "type": "integer",
           "default": "5",
+          "minimum": 1,
           "description": "Maximum size of the queue for the Keep Last policy in QoS history."
         },
         "timeout_sec": {
           "type": "number",
           "default": "0.1",
+          "minimum": 0.001,
           "description": "Timer's timeout duration in seconds when collectors are created. Collectors will concatenate the point clouds when timeout_sec reaches zero."
         },
         "is_motion_compensated": {
@@ -43,36 +45,44 @@
         },
         "input_twist_topic_type": {
           "type": "string",
+          "enum": ["twist", "odom"],
           "default": "twist",
           "description": "Type of the input twist topic."
         },
         "input_topics": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
-          "default": [],
+          "default": ["cloud_topic1", "cloud_topic2", "cloud_topic3"],
+          "minItems": 2,
           "description": "List of input point cloud topics."
         },
         "output_frame": {
           "type": "string",
           "default": "base_link",
+          "minLength": 1,
           "description": "Output frame."
         },
         "lidar_timestamp_offsets": {
           "type": "array",
           "items": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0.0
           },
-          "default": [],
-          "description": "List of LiDAR timestamp offsets in seconds. The offset values should be specified in the same order as the input_topics."
+          "default": [0.0, 0.0, 0.0],
+          "minItems": 2,
+          "description": "List of LiDAR timestamp offsets in seconds (relative to the earliest LiDAR timestamp). The offsets should be provided in the same order as the input topics."
         },
         "lidar_timestamp_noise_window": {
           "type": "array",
           "items": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0.0
           },
-          "default": [],
+          "default": [0.01, 0.01, 0.01],
+          "minItems": 2,
           "description": "List of LiDAR timestamp noise windows in seconds. The noise values should be specified in the same order as the input_topics."
         },
         "has_static_tf_only": {
