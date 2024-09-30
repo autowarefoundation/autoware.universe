@@ -15,24 +15,16 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
 
-#include "autoware/behavior_path_goal_planner_module/default_fixed_goal_planner.hpp"
+#include "autoware/behavior_path_goal_planner_module/fixed_goal_planner_base.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
-#include "autoware/behavior_path_goal_planner_module/pull_over_planner/freespace_pull_over.hpp"
-#include "autoware/behavior_path_goal_planner_module/pull_over_planner/geometric_pull_over.hpp"
-#include "autoware/behavior_path_goal_planner_module/pull_over_planner/shift_pull_over.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 #include "autoware/behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
-#include "autoware/behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
-#include <autoware/freespace_planning_algorithms/astar_search.hpp>
-#include <autoware/freespace_planning_algorithms/rrtstar.hpp>
 #include <autoware/lane_departure_checker/lane_departure_checker.hpp>
-#include <autoware/motion_utils/distance/distance.hpp>
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
@@ -41,7 +33,6 @@
 
 #include <atomic>
 #include <deque>
-#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -61,8 +52,6 @@ using autoware::freespace_planning_algorithms::AbstractPlanningAlgorithm;
 using autoware::freespace_planning_algorithms::AstarParam;
 using autoware::freespace_planning_algorithms::AstarSearch;
 using autoware::freespace_planning_algorithms::PlannerCommonParam;
-using autoware::freespace_planning_algorithms::RRTStar;
-using autoware::freespace_planning_algorithms::RRTStarParam;
 
 using autoware::behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using autoware::behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
