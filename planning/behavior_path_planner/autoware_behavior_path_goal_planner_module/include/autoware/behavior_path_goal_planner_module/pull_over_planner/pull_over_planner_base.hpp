@@ -48,15 +48,12 @@ public:
 
   PullOverPath(const PullOverPath & other);
 
-  // ThreadSafeDataのsetterで変更するから全てconstにできない
   PullOverPlannerType type() const { return type_; }
   size_t goal_id() const { return goal_id_; }
   size_t id() const { return id_; }
   Pose start_pose() const { return start_pose_; }
   Pose end_pose() const { return end_pose_; }
 
-  // todo: multithreadでこれを参照するとアウト
-  // けどそれだとmultithread以外の所で毎回コピーが発生する
   std::vector<PathWithLaneId> & partial_paths() { return partial_paths_; }
   const std::vector<PathWithLaneId> & partial_paths() const { return partial_paths_; }
 
@@ -71,7 +68,7 @@ public:
 
   bool incrementPathIndex();
 
-  // todo: decelerateBeforeSearchStartのせいでconstにできない
+  // TODO(soblin): this cannot be const due to decelerateBeforeSearchStart
   PathWithLaneId & getCurrentPath();
 
   const PathWithLaneId & getCurrentPath() const;
