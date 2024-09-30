@@ -1109,8 +1109,8 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
     parameters_->object_recognition_collision_check_hard_margins.back();
   for (const size_t i : sorted_path_indices) {
     const auto & path = pull_over_path_candidates[i];
-    const PathWithLaneId parking_path = path.parking_path();
-    const auto parking_path_curvatures = path.parking_path_curvatures();
+    const PathWithLaneId & parking_path = path.parking_path();
+    const auto & parking_path_curvatures = path.parking_path_curvatures();
     if (
       parameters_->use_object_recognition &&
       goal_planner_utils::checkObjectsCollision(
@@ -1261,9 +1261,6 @@ void GoalPlannerModule::decideVelocity()
 
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
 
-  // todo:
-  // これのせいでPullOverPathのpartial_pathsをconstにできない．ここで速度を変更するのがおかしい
-  // full_pathの速度は変更されないため．なのでfull_pathは毎回求め直さないといけないかもしれない
   // partial_paths
   auto & first_path = thread_safe_data_.get_pull_over_path()->partial_paths().front();
   const auto vel =
@@ -1931,9 +1928,7 @@ void GoalPlannerModule::deceleratePath(PullOverPath & pull_over_path) const
   const auto min_decel_distance = calcFeasibleDecelDistance(
     planner_data_, parameters_->maximum_deceleration, parameters_->maximum_jerk,
     parameters_->pull_over_velocity);
-  // todo: partial pathだけ速度を変えてもful_pathには反映されない
-  // auto &で参照しないと速度を変えられない
-  for (auto p : first_path.points) {
+  for (auto & p : first_path.points) {
     const double distance_from_ego = calcSignedArcLengthFromEgo(first_path, p.point.pose);
     if (min_decel_distance && distance_from_ego < *min_decel_distance) {
       continue;
