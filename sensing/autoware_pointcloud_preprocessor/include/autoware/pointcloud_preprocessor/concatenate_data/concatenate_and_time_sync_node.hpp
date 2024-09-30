@@ -88,7 +88,6 @@ private:
   std::unordered_map<std::string, double> diagnostic_topic_to_original_stamp_map_;
 
   std::shared_ptr<CombineCloudHandler> combine_cloud_handler_;
-  std::shared_ptr<CloudCollector> cloud_collector_;
   std::list<std::shared_ptr<CloudCollector>> cloud_collectors_;
   std::mutex cloud_collectors_mutex_;
   std::unordered_map<std::string, double> topic_to_offset_map_;
