@@ -16,6 +16,7 @@
 
 #include "types.hpp"
 
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
@@ -164,7 +165,10 @@ void calculate_out_lanelet_rtree(
   for (const auto & p : ego_data.trajectory_points) {
     trajectory_ls.emplace_back(p.pose.position.x, p.pose.position.y);
   }
-
+  // add a point beyond the last trajectory point to account for the ego front offset
+  const auto pose_beyond = universe_utils::calcOffsetPose(
+    ego_data.trajectory_points.back().pose, params.front_offset, 0.0, 0.0, 0.0);
+  trajectory_ls.emplace_back(pose_beyond.position.x, pose_beyond.position.y);
   const auto trajectory_lanelets = calculate_trajectory_lanelets(trajectory_ls, route_handler);
   const auto ignored_lanelets = calculate_ignored_lanelets(trajectory_lanelets, route_handler);
 

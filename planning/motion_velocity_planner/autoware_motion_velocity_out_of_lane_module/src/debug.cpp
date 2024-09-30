@@ -162,7 +162,7 @@ void add_out_lanelets(
   for (const auto & ll : out_lanelets) {
     drivable_lane_polygons.push_back(ll.polygon2d().basicPolygon());
   }
-  base_marker.ns = "ego_lane";
+  base_marker.ns = "out_lanelets";
   base_marker.color = universe_utils::createMarkerColor(0.0, 0.0, 1.0, 1.0);
   add_polygons_markers(marker_array, base_marker, drivable_lane_polygons);
 }
