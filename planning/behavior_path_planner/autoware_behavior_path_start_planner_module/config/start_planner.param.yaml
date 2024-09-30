@@ -69,10 +69,11 @@
         search_configs:
           theta_size: 120
           angle_goal_range: 6.0
-          curve_weight: 0.5
-          reverse_weight: 1.0
           lateral_goal_range: 0.5
           longitudinal_goal_range: 2.0
+          curve_weight: 0.5
+          reverse_weight: 1.0
+          direction_change_weight: 1.5
         # costmap configs
         costmap_configs:
           obstacle_threshold: 30
@@ -81,7 +82,13 @@
           search_method: "forward"  # options: forward, backward
           only_behind_solutions: false
           use_back: true
+          adapt_expansion_distance: true
+          expansion_distance: 0.5
+          near_goal_distance: 3.0
           distance_heuristic_weight: 2.0
+          smoothness_weight: 0.5
+          obstacle_distance_weight: 1.75
+          goal_lat_distance_weight: 5.0
         # -- RRT* search Configurations --
         rrtstar:
           enable_update: true

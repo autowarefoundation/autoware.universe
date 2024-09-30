@@ -40,7 +40,6 @@ CustomSegmentedButtonItem * CustomSegmentedButton::addButton(const QString & tex
   return button;
 }
 
-// cppcheck-suppress unusedFunction
 QButtonGroup * CustomSegmentedButton::getButtonGroup() const
 {
   return buttonGroup;

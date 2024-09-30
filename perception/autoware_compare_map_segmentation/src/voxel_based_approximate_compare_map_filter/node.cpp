@@ -86,7 +86,7 @@ VoxelBasedApproximateCompareMapFilterComponent::VoxelBasedApproximateCompareMapF
 
   distance_threshold_ = declare_parameter<double>("distance_threshold");
   bool use_dynamic_map_loading = declare_parameter<bool>("use_dynamic_map_loading");
-  double downsize_ratio_z_axis = declare_parameter<bool>("downsize_ratio_z_axis");
+  double downsize_ratio_z_axis = declare_parameter<double>("downsize_ratio_z_axis");
   if (downsize_ratio_z_axis <= 0.0) {
     RCLCPP_ERROR(this->get_logger(), "downsize_ratio_z_axis should be positive");
     return;
