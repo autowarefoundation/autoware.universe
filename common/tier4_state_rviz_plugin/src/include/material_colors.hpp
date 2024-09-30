@@ -39,8 +39,9 @@ struct MaterialColors
   std::string on_tertiary_container = "#E3DFFF";
   std::string error = "#FFB4AB";
   std::string on_error = "#690005";
-  std::string error_container = "#93000A";
-  std::string on_error_container = "#FFDAD6";
+  std::string error_container = "#820008";
+  std::string error_press = "#982127";
+  std::string on_error_container = "#8c0f16";
   std::string background = "#0F1417";
   std::string on_background = "#DFE3E7";
   std::string surface = "#0F1417";
@@ -78,6 +79,20 @@ struct MaterialColors
   std::string warning = "#EEF08B";
   std::string info = "#8BD0F0";
   std::string danger = "#F08B8B";
+
+  std::string enabled_button_bg = "#8BD0F0";
+  std::string hover_button_bg = "#84c2e6";
+  std::string pressed_button_bg = "#699BB8";
+  std::string checked_button_bg = "#699BB8";
+  std::string disabled_button_bg = "#292d30";
+  std::string disabled_button_text = "#6e7276";
+
+  std::string on_surface_hover_bg = "#212429";
+  std::string on_surface_pressed_bg = "#292d32";
+  std::string on_surface_disabled = "#5e6266";
+
+  std::string surface_container_low_hover = "#262931";
+  std::string surface_container_low_pressed = "#2d303a";
 };
 
 inline MaterialColors default_colors;

@@ -69,7 +69,6 @@ double SimModelDelaySteerAccGearedWoFallGuard::getAx()
 double SimModelDelaySteerAccGearedWoFallGuard::getWz()
 {
   return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
-  ;
 }
 double SimModelDelaySteerAccGearedWoFallGuard::getSteer()
 {

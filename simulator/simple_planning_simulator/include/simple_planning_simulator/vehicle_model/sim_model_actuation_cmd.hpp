@@ -15,9 +15,9 @@
 #ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_ACTUATION_CMD_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_ACTUATION_CMD_HPP_
 
+#include "autoware/interpolation/linear_interpolation.hpp"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
-#include "interpolation/linear_interpolation.hpp"
 #include "simple_planning_simulator/utils/csv_loader.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
