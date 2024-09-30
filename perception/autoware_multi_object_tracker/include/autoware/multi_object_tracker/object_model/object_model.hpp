@@ -144,6 +144,7 @@ public:
         process_limit.acc_long_max = const_g;
         process_limit.acc_lat_max = const_g;
         process_limit.vel_long_max = kmph2mps(140.0);
+        process_limit.yaw_rate_max = deg2rad(15.0);
 
         // initial covariance
         initial_covariance.pos_x = sq(1.0);
@@ -188,6 +189,7 @@ public:
         process_limit.acc_long_max = const_g;
         process_limit.acc_lat_max = const_g;
         process_limit.vel_long_max = kmph2mps(140.0);
+        process_limit.yaw_rate_max = deg2rad(15.0);
 
         // initial covariance
         initial_covariance.pos_x = sq(1.5);
@@ -232,6 +234,7 @@ public:
         process_limit.acc_long_max = const_g;
         process_limit.acc_lat_max = const_g;
         process_limit.vel_long_max = kmph2mps(120.0);
+        process_limit.yaw_rate_max = deg2rad(15.0);
 
         // initial covariance
         initial_covariance.pos_x = sq(0.8);

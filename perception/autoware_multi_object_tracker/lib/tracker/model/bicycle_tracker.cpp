@@ -97,7 +97,7 @@ BicycleTracker::BicycleTracker(
   // Set motion limits
   {
     const double max_vel = object_model_.process_limit.vel_long_max;
-    const double max_slip = object_model_.bicycle_state.slip_angle_max;
+    const double max_slip = object_model_.process_limit.yaw_rate_max;
     motion_model_.setMotionLimits(max_vel, max_slip);  // maximum velocity and slip angle
   }
 
