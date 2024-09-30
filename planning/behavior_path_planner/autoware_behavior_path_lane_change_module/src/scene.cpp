@@ -129,6 +129,15 @@ void NormalLaneChange::update_transient_data()
 
   transient_data.max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
 
+  transient_data.target_lane_length =
+    lanelet::utils::getLaneletLength2d(common_data_ptr_->lanes_ptr->target);
+
+  transient_data.current_lanes_ego_arc = lanelet::utils::getArcCoordinates(
+    common_data_ptr_->lanes_ptr->current, common_data_ptr_->get_ego_pose());
+  
+  transient_data.target_lanes_ego_arc = lanelet::utils::getArcCoordinates(
+    common_data_ptr_->lanes_ptr->target, common_data_ptr_->get_ego_pose());
+
   transient_data.is_ego_near_current_terminal_start =
     transient_data.dist_to_terminal_start < transient_data.max_prepare_length;
 
