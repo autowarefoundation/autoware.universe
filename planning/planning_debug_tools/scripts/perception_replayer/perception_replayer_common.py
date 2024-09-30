@@ -128,13 +128,13 @@ class PerceptionReplayerCommon(Node):
             msg_type = get_message(type_map[topic])
             msg = deserialize_message(data, msg_type)
             if topic == objects_topic:
-                assert isinstance(msg, self.objects_pub.msg_type),f"Unsupported conversion from {type(msg)}"
+                assert isinstance(msg, self.objects_pub.msg_type), f"Unsupported conversion from {type(msg)}"
                 self.rosbag_objects_data.append((stamp, msg))
             if topic == ego_odom_topic:
-                assert isinstance(msg, Odometry),f"Unsupported conversion from {type(msg)}"
+                assert isinstance(msg, Odometry), f"Unsupported conversion from {type(msg)}"
                 self.rosbag_ego_odom_data.append((stamp, msg))
             if topic == traffic_signals_topic:
-                assert isinstance(msg, TrafficSignalArray),f"Unsupported conversion from {type(msg)}"
+                assert isinstance(msg, TrafficSignalArray), f"Unsupported conversion from {type(msg)}"
                 self.rosbag_traffic_signals_data.append((stamp, msg))
 
     def kill_online_perception_node(self):
