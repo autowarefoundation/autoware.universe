@@ -112,6 +112,8 @@ public:
 
   std::vector<PointList2d> & inners() noexcept { return inners_; }
 
+  autoware::universe_utils::Polygon2d to_boost() const;
+
 protected:
   Polygon2d(const PointList2d & outer, const std::vector<PointList2d> & inners)
   : outer_(outer), inners_(inners)
