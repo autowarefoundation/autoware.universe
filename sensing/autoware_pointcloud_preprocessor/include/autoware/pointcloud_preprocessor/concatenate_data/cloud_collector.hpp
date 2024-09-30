@@ -34,7 +34,7 @@ public:
   CloudCollector(
     std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
     std::list<std::shared_ptr<CloudCollector>> & collectors,
-    std::shared_ptr<CombineCloudHandler> combine_cloud_handler, int num_of_clouds, double time);
+    std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds, double time);
 
   void set_reference_timestamp(double timestamp, double noise_window);
   std::tuple<double, double> get_reference_timestamp_boundary();

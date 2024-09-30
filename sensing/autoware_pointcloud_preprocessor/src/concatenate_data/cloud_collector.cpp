@@ -27,7 +27,8 @@ namespace autoware::pointcloud_preprocessor
 CloudCollector::CloudCollector(
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
   std::list<std::shared_ptr<CloudCollector>> & collectors,
-  std::shared_ptr<CombineCloudHandler> combine_cloud_handler, int num_of_clouds, double timeout_sec)
+  std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds,
+  double timeout_sec)
 : ros2_parent_node_(std::move(ros2_parent_node)),
   collectors_(collectors),
   combine_cloud_handler_(combine_cloud_handler),
