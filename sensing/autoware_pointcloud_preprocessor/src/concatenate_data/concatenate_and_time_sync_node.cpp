@@ -43,7 +43,6 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   stop_watch_ptr_->tic("cyclic_time");
   stop_watch_ptr_->tic("processing_time");
 
-  bool parameters_valid = true;
   //  initialize parameters
   params_.has_static_tf_only = declare_parameter<bool>("has_static_tf_only");
   params_.maximum_queue_size = declare_parameter<int>("maximum_queue_size");
@@ -66,26 +65,21 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     declare_parameter<std::vector<double>>("lidar_timestamp_noise_window");
 
   if (params_.input_topics.empty()) {
-    RCLCPP_ERROR(get_logger(), "Need a 'input_topics' parameter to be set before continuing!");
-    parameters_valid = false;
+    throw std::runtime_error("Need a 'input_topics' parameter to be set before continuing.");
   } else if (params_.input_topics.size() == 1) {
-    RCLCPP_ERROR(get_logger(), "Only one topic given. Need at least two topics to continue.");
-    parameters_valid = false;
+    throw std::runtime_error("Only one topic given. Need at least two topics to continue.");
   }
 
   if (params_.output_frame.empty()) {
-    RCLCPP_ERROR(get_logger(), "Need an 'output_frame' parameter to be set before continuing!");
-    parameters_valid = false;
+    throw std::runtime_error("Need an 'output_frame' parameter to be set before continuing.");
   }
   if (params_.lidar_timestamp_offsets.size() != params_.input_topics.size()) {
-    RCLCPP_ERROR(
-      get_logger(), "The number of topics does not match the number of timestamp offsets");
-    parameters_valid = false;
+    throw std::runtime_error(
+      "The number of topics does not match the number of timestamp offsets.");
   }
   if (params_.lidar_timestamp_noise_window.size() != params_.input_topics.size()) {
-    RCLCPP_ERROR(
-      get_logger(), "The number of topics does not match the number of timestamp noise window");
-    parameters_valid = false;
+    throw std::runtime_error(
+      "The number of topics does not match the number of timestamp noise window.");
   }
 
   for (size_t i = 0; i < params_.input_topics.size(); i++) {
@@ -123,16 +117,9 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
           &PointCloudConcatenateDataSynchronizerComponent::odom_callback, this,
           std::placeholders::_1));
     } else {
-      RCLCPP_ERROR_STREAM(
-        get_logger(), "input_twist_topic_type is invalid: " << params_.input_twist_topic_type);
-      parameters_valid = false;
+      throw std::runtime_error(
+        "input_twist_topic_type is invalid: " + params_.input_twist_topic_type);
     }
-  }
-
-  if (!parameters_valid) {
-    throw std::runtime_error(
-      "Invalid parameter setting detected. Please review the provided parameter values and refer "
-      "to the error logs for detailed information.");
   }
 
   for (const std::string & topic : params_.input_topics) {
