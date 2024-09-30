@@ -277,6 +277,17 @@ void MultiObjectTracker::runProcess(
   // Model the object uncertainty if it is empty
   DetectedObjects input_objects_with_uncertainty = uncertainty::modelUncertainty(input_objects);
 
+  // Add the odometry uncertainty to the object uncertainty
+  nav_msgs::msg::Odometry odometry;
+  // nav_msgs::msg::Odometry::SharedPtr odometry_msg = std::make_shared<nav_msgs::msg::Odometry>(odometry);
+  {
+    auto & odom_pose_cov = odometry.pose.covariance;
+    odom_pose_cov[0] = 0.1;   // x-x
+    odom_pose_cov[7] = 0.1;   // y-y
+    odom_pose_cov[35] = 0.1;  // yaw-yaw
+  }
+  uncertainty::addOdometryUncertainty(odometry, input_objects_with_uncertainty);
+
   // Normalize the object uncertainty
   uncertainty::normalizeUncertainty(input_objects_with_uncertainty);
 

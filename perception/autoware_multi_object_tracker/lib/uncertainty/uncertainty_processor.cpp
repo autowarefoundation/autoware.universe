@@ -135,5 +135,36 @@ void normalizeUncertainty(DetectedObjects & detected_objects)
   }
 }
 
+void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detected_objects)
+{
+  // auto & pose = odometry.pose.pose;
+  auto & pose_cov = odometry.pose.covariance;
+
+  for (auto & object : detected_objects.objects) {
+    auto & object_pose_cov = object.kinematics.pose_with_covariance.covariance;
+    
+    // add odometry position uncertainty to the position covariance
+    // add number is not correct. this is for PoC
+    // object position and it covariance is based on the world frame (map)
+    object_pose_cov[XYZRPY_COV_IDX::X_X] += pose_cov[0];       // x-x
+    object_pose_cov[XYZRPY_COV_IDX::X_Y] += pose_cov[1];       // x-y
+    object_pose_cov[XYZRPY_COV_IDX::Y_X] += pose_cov[6];       // y-x
+    object_pose_cov[XYZRPY_COV_IDX::Y_Y] += pose_cov[7];       // y-y
+    object_pose_cov[XYZRPY_COV_IDX::YAW_YAW] += pose_cov[35];  // yaw-yaw
+
+    // // add odometry heading uncertainty to the yaw covariance
+    // // uncertainty is proportional to the distance between the object and the odometry
+    // // and the uncertainty orientation is vertical to the vector of the odometry position to the object    
+    // auto & object_pose = object.kinematics.pose_with_covariance.pose;
+    // const double dx = object_pose.position.x - pose.position.x;
+    // const double dy = object_pose.position.y - pose.position.y;
+    // const double r = std::sqrt(dx * dx + dy * dy);
+    // const double cov_yaw = pose_cov[35] * r * r;
+
+
+
+  }
+}
+
 }  // namespace uncertainty
 }  // namespace autoware::multi_object_tracker
