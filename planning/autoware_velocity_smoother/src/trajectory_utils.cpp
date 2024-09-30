@@ -14,9 +14,9 @@
 
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/linear_interpolation.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -88,10 +88,10 @@ TrajectoryPoint calcInterpolatedTrajectoryPoint(
     const auto & seg_pt = trajectory.at(seg_idx);
     const auto & next_pt = trajectory.at(seg_idx + 1);
     traj_p.pose = autoware::universe_utils::calcInterpolatedPose(seg_pt.pose, next_pt.pose, prop);
-    traj_p.longitudinal_velocity_mps = interpolation::lerp(
+    traj_p.longitudinal_velocity_mps = autoware::interpolation::lerp(
       seg_pt.longitudinal_velocity_mps, next_pt.longitudinal_velocity_mps, prop);
     traj_p.acceleration_mps2 =
-      interpolation::lerp(seg_pt.acceleration_mps2, next_pt.acceleration_mps2, prop);
+      autoware::interpolation::lerp(seg_pt.acceleration_mps2, next_pt.acceleration_mps2, prop);
   }
 
   return traj_p;

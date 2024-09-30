@@ -74,7 +74,7 @@ void insertNewlines(std::string & str, const size_t max_line_length)
 
 std::optional<std::string> generateMrmMessage(diagnostic_msgs::msg::DiagnosticStatus diag_status)
 {
-  if (diag_status.hardware_id == "" || diag_status.hardware_id == "system_error_monitor") {
+  if (diag_status.hardware_id == "") {
     return std::nullopt;
   } else if (diag_status.level == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
     std::string msg = "- ERROR: " + diag_status.name + " (" + diag_status.message + ")";
