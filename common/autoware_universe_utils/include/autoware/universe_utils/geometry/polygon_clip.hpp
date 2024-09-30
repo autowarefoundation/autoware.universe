@@ -17,6 +17,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 namespace autoware::universe_utils
@@ -24,29 +25,45 @@ namespace autoware::universe_utils
 
 struct Vertex
 {
-  double x, y;
-  Vertex * next;
-  Vertex * prev;
-  Vertex * corresponding;
+  double x;
+  double y;
+  std::optional<std::size_t> next;
+  std::optional<std::size_t> prev;
+  std::optional<std::size_t> corresponding;
   double distance;
   bool isEntry;
   bool isIntersection;
   bool visited;
 
-  // Constructor with all parameters
+  // Default constructor
+  Vertex()
+  : x(0.0),
+    y(0.0),
+    next(std::nullopt),
+    prev(std::nullopt),
+    corresponding(std::nullopt),
+    distance(0.0),
+    isEntry(true),
+    isIntersection(false),
+    visited(false)
+  {
+  }
+
+  // Parameterized constructor
   Vertex(
-    double xCoord, double yCoord, Vertex * next = nullptr, Vertex * prev = nullptr,
-    Vertex * corresponding = nullptr, double distance = 0.0, bool isEntry = true,
-    bool isIntersection = false, bool visited = false)
+    double xCoord, double yCoord, std::optional<std::size_t> nextIndex = std::nullopt,
+    std::optional<std::size_t> prevIndex = std::nullopt,
+    std::optional<std::size_t> correspondingIndex = std::nullopt, double dist = 0.0,
+    bool entry = true, bool intersection = false, bool visitedState = false)
   : x(xCoord),
     y(yCoord),
-    next(next),
-    prev(prev),
-    corresponding(corresponding),
-    distance(distance),
-    isEntry(isEntry),
-    isIntersection(isIntersection),
-    visited(visited)
+    next(nextIndex),
+    prev(prevIndex),
+    corresponding(correspondingIndex),
+    distance(dist),
+    isEntry(entry),
+    isIntersection(intersection),
+    visited(visitedState)
   {
   }
 };
@@ -58,51 +75,52 @@ struct Intersection
 
 struct Polygon
 {
-  Vertex * first;
-  int vertices;
-  Vertex * lastUnprocessed;
+  std::size_t first;
+  std::vector<Vertex> vertices;
+  std::optional<std::size_t> lastUnprocessed;
   bool arrayVertices;
-  Vertex * firstIntersect;
+  std::optional<std::size_t> firstIntersect;
+
   // Default constructor
   Polygon()
-  : first(nullptr),
+  : first(0),
     vertices(0),
-    lastUnprocessed(nullptr),
+    lastUnprocessed(std::nullopt),
     arrayVertices(true),
-    firstIntersect(nullptr)
+    firstIntersect(std::nullopt)
   {
   }
 
   // Constructor
   explicit Polygon(bool arrayVertices)
-  : first(nullptr),
+  : first(0),
     vertices(0),
-    lastUnprocessed(nullptr),
+    lastUnprocessed(std::nullopt),
     arrayVertices(arrayVertices),
-    firstIntersect(nullptr)
-  {
-  }
+    firstIntersect(std::nullopt)
   {
   }
 };
 
 // Vertex methods
-Vertex * createIntersection(double x, double y, double distance);
-void visit(Vertex * vertex);
-bool equals(const Vertex * v1, const Vertex * v2);
-bool isInside(const Vertex * v, const Polygon & poly);
+void visit(std::vector<Vertex> & vertices, std::vector<Vertex> & vertices_2, std::size_t index);
+bool equals(const Vertex & v1, const Vertex & v2);
+bool isInside(const Vertex & v, const Polygon & poly, const std::vector<Vertex> & vertices);
 
 // Intersection methods
 Intersection createIntersection(
-  const Vertex * s1, const Vertex * s2, const Vertex * c1, const Vertex * c2);
+  const std::vector<Vertex> & source_vertices, std::size_t s1Index, std::size_t s2Index,
+  const std::vector<Vertex> & clip_vertices, std::size_t c1Index, std::size_t c2Index);
 bool valid(const Intersection & intersection);
 
 // Polygon methods
 Polygon createPolygon(const std::vector<std::vector<double>> & p, bool arrayVertices = true);
-void addVertex(Polygon & polygon, Vertex * vertex);
-void insertVertex(Polygon & polygon, Vertex * vertex, Vertex * start, Vertex * end);
-Vertex * getNext(Vertex * v);
-Vertex * getFirstIntersect(Polygon & polygon);
+std::size_t addVertex(
+  Polygon & polygon, const Vertex & newVertex, const std::size_t last_index = 0);
+std::size_t insertVertex(
+  std::vector<Vertex> & vertices, const Vertex & vertex, std::size_t start, std::size_t end);
+std::size_t getNext(std::size_t vIndex, const std::vector<Vertex> & vertices);
+std::size_t getFirstIntersect(Polygon & polygon, const std::vector<Vertex> & vertices);
 bool hasUnprocessed(Polygon & polygon);
 std::vector<std::vector<double>> getPoints(const Polygon & polygon);
 std::vector<std::vector<std::vector<double>>> clip(
@@ -112,7 +130,6 @@ std::vector<std::vector<std::vector<double>>> clip(
 std::vector<std::vector<std::vector<double>>> difference(
   const std::vector<std::vector<double>> & polygonA,
   const std::vector<std::vector<double>> & polygonB);
-
 std::vector<std::vector<std::vector<double>>> unionPolygons(
   const std::vector<std::vector<double>> & polygonA,
   const std::vector<std::vector<double>> & polygonB);
