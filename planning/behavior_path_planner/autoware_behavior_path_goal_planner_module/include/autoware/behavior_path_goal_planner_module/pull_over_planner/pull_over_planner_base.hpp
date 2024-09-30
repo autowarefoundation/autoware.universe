@@ -43,7 +43,8 @@ public:
   static std::optional<PullOverPath> create(
     const PullOverPlannerType & type, const size_t goal_id, const size_t id,
     const std::vector<PathWithLaneId> & partial_paths, const Pose & start_pose,
-    const Pose & end_pose);
+    const Pose & end_pose,
+    const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel);
 
   PullOverPath(const PullOverPath & other);
 
@@ -66,6 +67,7 @@ public:
   std::vector<double> parking_path_curvatures() const { return parking_path_curvatures_; }
   double full_path_max_curvature() const { return full_path_max_curvature_; }
   double parking_path_max_curvature() const { return parking_path_max_curvature_; }
+  size_t path_idx() const { return path_idx_; }
 
   bool incrementPathIndex();
 
@@ -74,10 +76,14 @@ public:
 
   const PathWithLaneId & getCurrentPath() const;
 
-  // accelerate with constant acceleration to the target velocity
-  // TODO(soblin): 後でprivatenにする
-  size_t path_idx{0};
-  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel{};
+  std::pair<double, double> getPairsTerminalVelocityAndAccel() const
+  {
+    if (pairs_terminal_velocity_and_accel_.size() <= path_idx_) {
+      return std::make_pair(0.0, 0.0);
+    }
+    return pairs_terminal_velocity_and_accel_.at(path_idx_);
+  }
+
   std::vector<Pose> debug_poses{};
 
 private:
@@ -87,7 +93,8 @@ private:
     const std::vector<PathWithLaneId> & partial_paths, const PathWithLaneId & full_path,
     const PathWithLaneId & parking_path, const std::vector<double> & full_path_curvatures,
     const std::vector<double> & parking_path_curvatures, const double full_path_max_curvature,
-    const double parking_path_max_curvature);
+    const double parking_path_max_curvature,
+    const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel);
 
   PullOverPlannerType type_;
   size_t goal_id_;
@@ -102,6 +109,10 @@ private:
   std::vector<double> parking_path_curvatures_;
   double full_path_max_curvature_;
   double parking_path_max_curvature_;
+
+  // accelerate with constant acceleration to the target velocity
+  size_t path_idx_;
+  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel_;
 };
 
 class PullOverPlannerBase

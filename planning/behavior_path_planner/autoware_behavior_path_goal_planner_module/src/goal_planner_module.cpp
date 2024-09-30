@@ -2173,7 +2173,6 @@ bool GoalPlannerModule::isSafePath(
     *route_handler, left_side_parking_, parameters.backward_goal_search_length,
     parameters.forward_goal_search_length);
   const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(current_pull_over_path.points);
-  // TODO(soblin): getPairsTerminalVelocityAndAccelはPullOverPathのメンバ関数にする
   const std::pair<double, double> terminal_velocity_and_accel =
     pull_over_path.getPairsTerminalVelocityAndAccel();
   RCLCPP_DEBUG(
