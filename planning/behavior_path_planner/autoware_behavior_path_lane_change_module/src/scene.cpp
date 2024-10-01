@@ -731,35 +731,6 @@ lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
     lane_change_lane.value(), getEgoPose(), backward_length, forward_length);
 }
 
-bool NormalLaneChange::isNearEndOfCurrentLanes(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-  const double threshold) const
-{
-  if (current_lanes.empty()) {
-    return false;
-  }
-
-  const auto & route_handler = getRouteHandler();
-  const auto & current_pose = getEgoPose();
-
-  // TODO(Azu) fully change to transient data
-  const auto distance_to_lane_change_end = std::invoke([&]() {
-    auto distance_to_end = utils::getDistanceToEndOfLane(current_pose, current_lanes);
-
-    if (!target_lanes.empty() && route_handler->isInGoalRouteSection(target_lanes.back())) {
-      distance_to_end = std::min(
-        distance_to_end,
-        utils::getSignedDistance(current_pose, route_handler->getGoalPose(), current_lanes));
-    }
-
-    return std::max(0.0, distance_to_end) -
-           common_data_ptr_->transient_data.current_dist_buffer.min;
-  });
-
-  lane_change_debug_.distance_to_end_of_current_lane = distance_to_lane_change_end;
-  return distance_to_lane_change_end < threshold;
-}
-
 bool NormalLaneChange::hasFinishedLaneChange() const
 {
   const auto & current_pose = getEgoPose();
@@ -986,7 +957,7 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   const auto current_max_dist_buffer =
     calculation::calc_maximum_lane_change_length(common_data_ptr_, current_lanes.back(), max_acc);
 
-  if (current_max_dist_buffer > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
+  if (current_max_dist_buffer > common_data_ptr_->transient_data.dist_to_terminal_end) {
     RCLCPP_DEBUG(
       logger_, "No enough distance to the end of lane. Normal sampling for acc: [%f ~ %f]", min_acc,
       max_acc);
@@ -1023,22 +994,23 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   return utils::lane_change::getAccelerationValues(min_acc, max_acc, longitudinal_acc_sampling_num);
 }
 
-std::vector<double> NormalLaneChange::calcPrepareDuration(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
+std::vector<double> NormalLaneChange::calcPrepareDuration() const
 {
-  const auto base_link2front = planner_data_->parameters.base_link2front;
-  const auto threshold =
-    lane_change_parameters_->min_length_for_turn_signal_activation + base_link2front;
+  const auto & lc_param_ptr = common_data_ptr_->lc_param_ptr;
+  const auto threshold = common_data_ptr_->bpp_param_ptr->base_link2front +
+                         lc_param_ptr->min_length_for_turn_signal_activation;
+  const auto max_prepare_duration = lc_param_ptr->lane_change_prepare_duration;
+
+  // TODO(Azu) this check seems to cause scenario failures.
+  if (common_data_ptr_->transient_data.dist_to_terminal_start >= threshold) {
+    return {max_prepare_duration};
+  }
 
   std::vector<double> prepare_durations;
   constexpr double step = 0.5;
 
-  for (double duration = lane_change_parameters_->lane_change_prepare_duration; duration >= 0.0;
-       duration -= step) {
+  for (double duration = max_prepare_duration; duration >= 0.0; duration -= step) {
     prepare_durations.push_back(duration);
-    if (!isNearEndOfCurrentLanes(current_lanes, target_lanes, threshold)) {
-      break;
-    }
   }
 
   return prepare_durations;
@@ -1370,7 +1342,7 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_prepare_metrics() cons
   const auto longitudinal_acc_sampling_values =
     sampleLongitudinalAccValues(current_lanes, target_lanes);
 
-  const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
+  const auto prepare_durations = calcPrepareDuration();
 
   RCLCPP_DEBUG(
     logger_, "lane change sampling start. Sampling num for prep_time: %lu, acc: %lu",
@@ -1852,10 +1824,9 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
 bool NormalLaneChange::isRequiredStop(const bool is_trailing_object)
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  const auto threshold = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
   if (
-    isNearEndOfCurrentLanes(get_current_lanes(), get_target_lanes(), threshold) &&
-    isAbleToStopSafely() && is_trailing_object) {
+    common_data_ptr_->transient_data.is_ego_near_current_terminal_start && isAbleToStopSafely() &&
+    is_trailing_object) {
     current_lane_change_state_ = LaneChangeStates::Stop;
     return true;
   }
