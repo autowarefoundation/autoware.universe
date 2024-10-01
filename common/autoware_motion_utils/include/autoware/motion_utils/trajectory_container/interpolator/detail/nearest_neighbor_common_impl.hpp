@@ -17,11 +17,17 @@
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__NEAREST_NEIGHBOR_COMMON_IMPL_HPP_  // NOLINT
 // clang-format on
 
-#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_mixin.hpp"
 
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_container::interpolator::detail
+namespace autoware::motion_utils::trajectory_container::interpolator
+{
+
+template <typename T>
+class NearestNeighbor;
+
+namespace detail
 {
 /**
  * @brief Common Implementation of nearest neighbor.
@@ -31,7 +37,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator::detail
  * @tparam T The type of the values being interpolated.
  */
 template <typename T>
-class NearestNeighborCommonImpl : public Interpolator<T>
+class NearestNeighborCommonImpl : public detail::InterpolatorMixin<NearestNeighbor<T>, T>
 {
 protected:
   std::vector<T> values_;  ///< Interpolation values.
@@ -45,7 +51,7 @@ protected:
   [[nodiscard]] T compute_impl(const double & s) const override
   {
     const int32_t idx = this->get_index(s);
-    return (std::abs(s - this->axis_[idx]) <= std::abs(s - this->axis_[idx + 1]))
+    return (std::abs(s - this->bases_[idx]) <= std::abs(s - this->bases_[idx + 1]))
              ? this->values_.at(idx)
              : this->values_.at(idx + 1);
   }
@@ -53,14 +59,13 @@ protected:
   /**
    * @brief Build the interpolator with the given values.
    *
-   * @param axis The axis values.
+   * @param bases The bases values.
    * @param values The values to interpolate.
    * @return True if the interpolator was built successfully, false otherwise.
    */
-  void build_impl(
-    const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<T> & values) override
+  void build_impl(const std::vector<double> & bases, const std::vector<T> & values) override
   {
-    this->axis_ = axis;
+    this->bases_ = bases;
     this->values_ = values;
   }
 
@@ -73,8 +78,8 @@ public:
   [[nodiscard]] size_t minimum_required_points() const override { return 1; }
 };
 
-}  // namespace autoware::motion_utils::trajectory_container::interpolator::detail
-
+}  // namespace detail
+}  // namespace autoware::motion_utils::trajectory_container::interpolator
 // clang-format off
 #endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__NEAREST_NEIGHBOR_COMMON_IMPL_HPP_  // NOLINT
 // clang-format on

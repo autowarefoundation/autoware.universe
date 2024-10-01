@@ -327,7 +327,7 @@ ExtendedPredictedObject transform(
 {
   ExtendedPredictedObject extended_object(object);
 
-  const auto obj_velocity = extended_object.initial_twist.twist.linear.x;
+  const auto obj_velocity = extended_object.initial_twist.linear.x;
 
   extended_object.predicted_paths.resize(object.kinematics.predicted_paths.size());
   for (size_t i = 0; i < object.kinematics.predicted_paths.size(); ++i) {

@@ -221,12 +221,10 @@ void prepare_stop_lines_rtree(
   ego_data.stop_lines_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
 }
 
-out_of_lane::OutOfLaneData prepare_out_of_lane_data(
-  const out_of_lane::EgoData & ego_data, const route_handler::RouteHandler & route_handler)
+out_of_lane::OutOfLaneData prepare_out_of_lane_data(const out_of_lane::EgoData & ego_data)
 {
   out_of_lane::OutOfLaneData out_of_lane_data;
   out_of_lane_data.outside_points = out_of_lane::calculate_out_of_lane_points(ego_data);
-  out_of_lane::calculate_overlapped_lanelets(out_of_lane_data, route_handler);
   out_of_lane::prepare_out_of_lane_areas_rtree(out_of_lane_data);
   return out_of_lane_data;
 }
@@ -255,11 +253,11 @@ VelocityPlanningResult OutOfLaneModule::plan(
   const auto calculate_trajectory_footprints_us = stopwatch.toc("calculate_trajectory_footprints");
 
   stopwatch.tic("calculate_lanelets");
-  out_of_lane::calculate_drivable_lane_polygons(ego_data, *planner_data->route_handler);
+  out_of_lane::calculate_out_lanelet_rtree(ego_data, *planner_data->route_handler, params_);
   const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");
 
   stopwatch.tic("calculate_out_of_lane_areas");
-  auto out_of_lane_data = prepare_out_of_lane_data(ego_data, *planner_data->route_handler);
+  auto out_of_lane_data = prepare_out_of_lane_data(ego_data);
   const auto calculate_out_of_lane_areas_us = stopwatch.toc("calculate_out_of_lane_areas");
 
   stopwatch.tic("filter_predicted_objects");
@@ -275,9 +273,12 @@ VelocityPlanningResult OutOfLaneModule::plan(
   out_of_lane::calculate_collisions_to_avoid(out_of_lane_data, ego_data.trajectory_points, params_);
   const auto calculate_times_us = stopwatch.toc("calculate_times");
 
-  if (
-    params_.skip_if_already_overlapping && !ego_data.drivable_lane_polygons.empty() &&
-    !lanelet::geometry::within(ego_data.current_footprint, ego_data.drivable_lane_polygons)) {
+  const auto is_already_overlapping =
+    params_.skip_if_already_overlapping &&
+    std::find_if(ego_data.out_lanelets.begin(), ego_data.out_lanelets.end(), [&](const auto & ll) {
+      return !boost::geometry::disjoint(ll.polygon2d().basicPolygon(), ego_data.current_footprint);
+    }) != ego_data.out_lanelets.end();
+  if (is_already_overlapping) {
     RCLCPP_WARN(logger_, "Ego is already out of lane, skipping the module\n");
     debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(
       ego_data, out_of_lane_data, objects, debug_data_));

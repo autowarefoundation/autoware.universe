@@ -194,7 +194,7 @@ bool CTRVMotionModel::updateStatePoseHeadVel(
 
   // update state
   Eigen::MatrixXd Y(DIM_Y, 1);
-  Y << x, y, yaw, vel;
+  Y << x, y, fixed_yaw, vel;
 
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(DIM_Y, DIM);
   C(0, IDX::X) = 1.0;

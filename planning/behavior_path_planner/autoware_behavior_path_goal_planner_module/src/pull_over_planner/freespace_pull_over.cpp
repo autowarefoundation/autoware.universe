@@ -20,11 +20,18 @@
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
+#include <autoware/freespace_planning_algorithms/astar_search.hpp>
+#include <autoware/freespace_planning_algorithms/rrtstar.hpp>
+
 #include <memory>
 #include <vector>
 
 namespace autoware::behavior_path_planner
 {
+
+using autoware::freespace_planning_algorithms::AstarSearch;
+using autoware::freespace_planning_algorithms::RRTStar;
+
 FreespacePullOver::FreespacePullOver(
   rclcpp::Node & node, const GoalPlannerParameters & parameters,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
@@ -50,7 +57,7 @@ FreespacePullOver::FreespacePullOver(
 }
 
 std::optional<PullOverPath> FreespacePullOver::plan(
-  const std::shared_ptr<const PlannerData> planner_data,
+  const size_t goal_id, const size_t id, const std::shared_ptr<const PlannerData> planner_data,
   [[maybe_unused]] const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose)
 {
   const Pose & current_pose = planner_data->self_odometry->pose.pose;
@@ -138,11 +145,12 @@ std::optional<PullOverPath> FreespacePullOver::plan(
     }
   }
 
-  PullOverPath pull_over_path{};
-  pull_over_path.pairs_terminal_velocity_and_accel = pairs_terminal_velocity_and_accel;
-  pull_over_path.setPaths(partial_paths, current_pose, goal_pose);
-  pull_over_path.type = getPlannerType();
-
-  return pull_over_path;
+  auto pull_over_path_opt = PullOverPath::create(
+    getPlannerType(), goal_id, id, partial_paths, current_pose, goal_pose,
+    pairs_terminal_velocity_and_accel);
+  if (!pull_over_path_opt) {
+    return {};
+  }
+  return pull_over_path_opt.value();
 }
 }  // namespace autoware::behavior_path_planner

@@ -28,6 +28,7 @@
 
 namespace autoware::pose_initializer
 {
+class PoseErrorCheckModule;
 class StopCheckModule;
 class LocalizationModule;
 class GnssModule;
@@ -56,6 +57,7 @@ private:
   std::unique_ptr<LocalizationModule> ndt_;
   std::unique_ptr<LocalizationModule> yabloc_;
   std::unique_ptr<StopCheckModule> stop_check_;
+  std::unique_ptr<PoseErrorCheckModule> pose_error_check_;
   std::unique_ptr<EkfLocalizationTriggerModule> ekf_localization_trigger_;
   std::unique_ptr<NdtLocalizationTriggerModule> ndt_localization_trigger_;
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;

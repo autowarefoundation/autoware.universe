@@ -692,10 +692,11 @@ IntersectionModule::CollisionStatus IntersectionModule::detectCollision(
         object_info->predicted_object());
       continue;
     }
-    if (!object_info->unsafe_info()) {
+    const auto unsafe_info_opt = object_info->unsafe_info();
+    if (!unsafe_info_opt) {
       continue;
     }
-    const auto & unsafe_info = object_info->unsafe_info().value();
+    const auto & unsafe_info = unsafe_info_opt.value();
     // ==========================================================================================
     // if ego is over the pass judge lines, then the visualization as "too_late_objects" or
     // "misjudge_objects" is more important than that for "unsafe"

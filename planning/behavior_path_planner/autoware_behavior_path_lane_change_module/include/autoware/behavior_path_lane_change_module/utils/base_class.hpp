@@ -67,6 +67,8 @@ public:
 
   virtual void update_lanes(const bool is_approved) = 0;
 
+  virtual void update_transient_data() = 0;
+
   virtual void update_filtered_objects() = 0;
 
   virtual void updateLaneChangeStatus() = 0;

@@ -16,7 +16,6 @@
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR_HPP_
 #include <autoware/motion_utils/trajectory_container/interpolator/akima_spline.hpp>
 #include <autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp>
-#include <autoware/motion_utils/trajectory_container/interpolator/interpolator_creator.hpp>
 #include <autoware/motion_utils/trajectory_container/interpolator/linear.hpp>
 #include <autoware/motion_utils/trajectory_container/interpolator/nearest_neighbor.hpp>
 #include <autoware/motion_utils/trajectory_container/interpolator/stairstep.hpp>

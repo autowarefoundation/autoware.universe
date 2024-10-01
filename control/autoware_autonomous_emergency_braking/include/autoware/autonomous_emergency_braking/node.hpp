@@ -33,6 +33,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -87,6 +88,7 @@ struct ObjectData
   double velocity{0.0};
   double rss{0.0};
   double distance_to_object{0.0};
+  bool is_target{true};
 };
 
 /**
@@ -342,6 +344,7 @@ public:
   rclcpp::Publisher<MarkerArray>::SharedPtr info_marker_publisher_;
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
     debug_processing_time_detail_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr debug_rss_distance_publisher_;
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
   mutable std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
@@ -436,12 +439,14 @@ public:
    * @brief Create object data using point cloud clusters
    * @param ego_path Ego vehicle path
    * @param ego_polys Polygons representing the ego vehicle footprint
+   * @param speed_calc_ego_polys Polygons representing the expanded ego vehicle footprint for speed
+   * calculation area
    * @param stamp Timestamp of the data
    * @param objects Vector to store the created object data
    * @param obstacle_points_ptr Pointer to the point cloud of obstacles
    */
   void getClosestObjectsOnPath(
-    const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
+    const Path & ego_path, const rclcpp::Time & stamp,
     const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects);
 
   /**
@@ -551,6 +556,7 @@ public:
   bool use_object_velocity_calculation_;
   bool check_autoware_state_;
   double path_footprint_extra_margin_;
+  double speed_calculation_expansion_margin_;
   double detection_range_min_height_;
   double detection_range_max_height_margin_;
   double voxel_grid_x_;

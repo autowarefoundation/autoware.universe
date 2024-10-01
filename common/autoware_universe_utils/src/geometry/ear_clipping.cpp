@@ -211,7 +211,7 @@ bool is_valid_diagonal(
 }
 
 std::size_t insert_point(
-  const Point2d & pt, std::vector<LinkedPoint> & points,
+  const alt::Point2d & pt, std::vector<LinkedPoint> & points,
   const std::optional<std::size_t> last_index)
 {
   std::size_t p_idx = points.size();
@@ -236,22 +236,19 @@ std::size_t insert_point(
 }
 
 std::size_t linked_list(
-  const LinearRing2d & ring, const bool clockwise, std::size_t & vertices,
+  const alt::PointList2d & ring, const bool forward, std::size_t & vertices,
   std::vector<LinkedPoint> & points)
 {
-  double sum = 0;
   const std::size_t len = ring.size();
   std::optional<std::size_t> last_index = std::nullopt;
 
-  for (std::size_t i = 0, j = len > 0 ? len - 1 : 0; i < len; j = i++) {
-    const auto & p1 = ring[i];
-    const auto & p2 = ring[j];
-    sum += (p2.x() - p1.x()) * (p1.y() + p2.y());
-  }
-
-  if (clockwise == (sum > 0)) {
-    for (const auto & point : ring) {
-      last_index = insert_point(point, points, last_index);
+  // create forward linked list if forward is true and ring is counter-clockwise, or
+  //                               forward is false and ring is clockwise
+  // create reverse linked list if forward is true and ring is clockwise, or
+  //                               forward is false and ring is counter-clockwise
+  if (forward == !is_clockwise(ring)) {
+    for (auto it = ring.begin(); it != ring.end(); ++it) {
+      last_index = insert_point(*it, points, last_index);
     }
   } else {
     for (auto it = ring.rbegin(); it != ring.rend(); ++it) {
@@ -417,7 +414,7 @@ std::size_t eliminate_hole(
 }
 
 std::size_t eliminate_holes(
-  const std::vector<LinearRing2d> & inners, std::size_t outer_index, std::size_t & vertices,
+  const std::vector<alt::PointList2d> & inners, std::size_t outer_index, std::size_t & vertices,
   std::vector<LinkedPoint> & points)
 {
   std::vector<std::size_t> queue;
@@ -565,7 +562,7 @@ void ear_clipping_linked(
 }
 
 std::vector<LinkedPoint> perform_triangulation(
-  const Polygon2d & polygon, std::vector<std::size_t> & indices)
+  const alt::Polygon2d & polygon, std::vector<std::size_t> & indices)
 {
   indices.clear();
   std::vector<LinkedPoint> points;
@@ -592,12 +589,12 @@ std::vector<LinkedPoint> perform_triangulation(
   return points;
 }
 
-std::vector<Polygon2d> triangulate(const Polygon2d & poly)
+std::vector<alt::ConvexPolygon2d> triangulate(const alt::Polygon2d & poly)
 {
   std::vector<std::size_t> indices;
   auto points = perform_triangulation(poly, indices);
 
-  std::vector<Polygon2d> triangles;
+  std::vector<alt::ConvexPolygon2d> triangles;
   const std::size_t num_indices = indices.size();
 
   if (num_indices % 3 != 0) {
@@ -605,16 +602,30 @@ std::vector<Polygon2d> triangulate(const Polygon2d & poly)
   }
 
   for (std::size_t i = 0; i < num_indices; i += 3) {
-    Polygon2d triangle;
-    triangle.outer().push_back(points[indices[i]].pt);
-    triangle.outer().push_back(points[indices[i + 1]].pt);
-    triangle.outer().push_back(points[indices[i + 2]].pt);
-    triangle.outer().push_back(points[indices[i]].pt);
+    alt::PointList2d vertices;
+    vertices.push_back(points[indices[i]].pt);
+    vertices.push_back(points[indices[i + 1]].pt);
+    vertices.push_back(points[indices[i + 2]].pt);
+    vertices.push_back(points[indices[i]].pt);
 
-    triangles.push_back(triangle);
+    triangles.push_back(alt::ConvexPolygon2d::create(vertices).value());
   }
   points.clear();
   return triangles;
 }
 
+std::vector<Polygon2d> triangulate(const Polygon2d & poly)
+{
+  const auto alt_poly = alt::Polygon2d::create(poly);
+  if (!alt_poly.has_value()) {
+    return {};
+  }
+
+  const auto alt_triangles = triangulate(alt_poly.value());
+  std::vector<Polygon2d> triangles;
+  for (const auto & alt_triangle : alt_triangles) {
+    triangles.push_back(alt_triangle.to_boost());
+  }
+  return triangles;
+}
 }  // namespace autoware::universe_utils

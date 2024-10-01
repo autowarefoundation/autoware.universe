@@ -593,7 +593,7 @@ std::vector<Polygon2d> getCollidedPolygons(
   {
     debug.ego_predicted_path = predicted_ego_path;
     debug.obj_predicted_path = target_object_path.path;
-    debug.current_obj_pose = target_object.initial_pose.pose;
+    debug.current_obj_pose = target_object.initial_pose;
   }
 
   std::vector<Polygon2d> collided_polygons{};
@@ -709,11 +709,10 @@ bool checkPolygonsIntersects(
 CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj)
 {
   CollisionCheckDebug debug;
-  debug.current_obj_pose = obj.initial_pose.pose;
-  debug.extended_obj_polygon =
-    autoware::universe_utils::toPolygon2d(obj.initial_pose.pose, obj.shape);
+  debug.current_obj_pose = obj.initial_pose;
+  debug.extended_obj_polygon = autoware::universe_utils::toPolygon2d(obj.initial_pose, obj.shape);
   debug.obj_shape = obj.shape;
-  debug.current_twist = obj.initial_twist.twist;
+  debug.current_twist = obj.initial_twist;
   return {autoware::universe_utils::toBoostUUID(obj.uuid), debug};
 }
 

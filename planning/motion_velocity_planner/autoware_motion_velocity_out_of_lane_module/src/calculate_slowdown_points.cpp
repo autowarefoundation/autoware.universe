@@ -21,8 +21,7 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
-#include <autoware_planning_msgs/msg/detail/trajectory_point__struct.hpp>
-#include <geometry_msgs/msg/detail/pose__struct.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <boost/geometry/algorithms/disjoint.hpp>
@@ -78,7 +77,7 @@ std::optional<geometry_msgs::msg::Pose> calculate_pose_ahead_of_collision(
     const auto interpolated_pose =
       motion_utils::calcInterpolatedPose(ego_data.trajectory_points, l);
     const auto interpolated_footprint = project_to_pose(footprint, interpolated_pose);
-    if (boost::geometry::intersects(interpolated_footprint, point_to_avoid.outside_ring)) {
+    if (!boost::geometry::disjoint(interpolated_footprint, point_to_avoid.out_overlaps)) {
       return interpolated_pose;
     }
   }

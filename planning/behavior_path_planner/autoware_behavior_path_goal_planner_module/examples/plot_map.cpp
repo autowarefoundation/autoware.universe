@@ -265,7 +265,7 @@ int main(int argc, char ** argv)
   auto shift_pull_over_planner = autoware::behavior_path_planner::ShiftPullOver(
     *node, goal_planner_parameter, lane_departure_checker);
   const auto pull_over_path_opt =
-    shift_pull_over_planner.plan(planner_data, reference_path, route_msg.goal_pose);
+    shift_pull_over_planner.plan(0, 0, planner_data, reference_path, route_msg.goal_pose);
 
   pybind11::scoped_interpreter guard{};
   auto plt = matplotlibcpp17::pyplot::import();
@@ -282,7 +282,7 @@ int main(int argc, char ** argv)
   std::cout << pull_over_path_opt.has_value() << std::endl;
   if (pull_over_path_opt) {
     const auto & pull_over_path = pull_over_path_opt.value();
-    const auto full_path = pull_over_path.getFullPath();
+    const auto & full_path = pull_over_path.full_path;
     plot_path_with_lane_id(ax, full_path);
   }
   ax.set_aspect(Args("equal"));

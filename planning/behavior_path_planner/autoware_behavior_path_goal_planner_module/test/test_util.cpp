@@ -82,3 +82,86 @@ TEST_F(TestUtilWithMap, isWithinAreas)
       baselink_footprint, bus_stop_area_polygons),
     true);
 }
+
+TEST_F(TestUtilWithMap, combineLanePoints)
+{
+  // 1) combine points with no duplicate IDs
+  {
+    lanelet::Points3d points{
+      {lanelet::Point3d(1, 0, 0), lanelet::Point3d(2, 0, 0), lanelet::Point3d(3, 0, 0)}};
+    lanelet::Points3d points_next{
+      {lanelet::Point3d(4, 0, 0), lanelet::Point3d(5, 0, 0), lanelet::Point3d(6, 0, 0)}};
+
+    const auto combined_points =
+      autoware::behavior_path_planner::goal_planner_utils::combineLanePoints(points, points_next);
+    EXPECT_EQ(combined_points.size(), 6);
+  }
+
+  // 2) combine points with duplicate IDs
+  {
+    lanelet::Points3d points{
+      {lanelet::Point3d(1, 0, 0), lanelet::Point3d(2, 0, 0), lanelet::Point3d(3, 0, 0)}};
+    lanelet::Points3d points_next{
+      {lanelet::Point3d(3, 0, 0), lanelet::Point3d(4, 0, 0), lanelet::Point3d(5, 0, 0)}};
+
+    const auto combined_points =
+      autoware::behavior_path_planner::goal_planner_utils::combineLanePoints(points, points_next);
+    EXPECT_EQ(combined_points.size(), 5);
+  }
+}
+
+TEST_F(TestUtilWithMap, createDepartureCheckLanelet)
+{
+  const auto lanelet_map_ptr = route_handler->getLaneletMapPtr();
+
+  const geometry_msgs::msg::Pose goal_pose =
+    geometry_msgs::build<geometry_msgs::msg::Pose>()
+      .position(geometry_msgs::build<geometry_msgs::msg::Point>()
+                  .x(433.42254638671875)
+                  .y(465.3381652832031)
+                  .z(0.0))
+      .orientation(geometry_msgs::build<geometry_msgs::msg::Quaternion>()
+                     .x(0.0)
+                     .y(0.0)
+                     .z(0.306785474523741)
+                     .w(0.9517786888879384));
+
+  // 1) get target shoulder lane and check it's lane id
+  const auto target_shoulder_lane = route_handler->getPullOverTarget(goal_pose);
+  EXPECT_EQ(target_shoulder_lane.has_value(), true);
+  EXPECT_EQ(target_shoulder_lane.value().id(), 18391);
+
+  // 2) get shoulder lane sequence
+  const auto target_shoulder_lanes =
+    route_handler->getShoulderLaneletSequence(target_shoulder_lane.value(), goal_pose);
+  EXPECT_EQ(target_shoulder_lanes.size(), 3);
+
+  // 3) check if the right bound of the departure check lane extended to the right end matches the
+  // right bound of the rightmost lanelet
+  const auto to_points3d = [](const lanelet::ConstLineString3d & bound) {
+    lanelet::Points3d points;
+    for (const auto & pt : bound) {
+      points.push_back(lanelet::Point3d(pt));
+    }
+    return points;
+  };
+
+  const auto departure_check_lane =
+    autoware::behavior_path_planner::goal_planner_utils::createDepartureCheckLanelet(
+      target_shoulder_lanes, *route_handler, true);
+  const auto departure_check_lane_right_bound_points =
+    to_points3d(departure_check_lane.rightBound());
+
+  const std::vector<lanelet::Id> most_right_lanelet_ids = {18381, 18383, 18388};
+  lanelet::Points3d right_bound_points;
+  for (const auto & id : most_right_lanelet_ids) {
+    const auto lanelet = lanelet_map_ptr->laneletLayer.get(id);
+    right_bound_points = autoware::behavior_path_planner::goal_planner_utils::combineLanePoints(
+      right_bound_points, to_points3d(lanelet.rightBound()));
+  }
+
+  EXPECT_EQ(departure_check_lane_right_bound_points.size(), right_bound_points.size());
+  for (size_t i = 0; i < departure_check_lane_right_bound_points.size(); ++i) {
+    EXPECT_EQ(departure_check_lane_right_bound_points.at(i).id(), right_bound_points.at(i).id());
+  }
+}

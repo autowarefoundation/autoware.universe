@@ -16,7 +16,6 @@
 
 namespace autoware::universe_utils
 {
-
 visualization_msgs::msg::Marker createDefaultMarker(
   const std::string & frame_id, const rclcpp::Time & now, const std::string & ns, const int32_t id,
   const int32_t type, const geometry_msgs::msg::Vector3 & scale,
