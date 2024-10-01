@@ -130,6 +130,8 @@ TEST(alt_geometry, coveredBy)
   using autoware::universe_utils::covered_by;
   using autoware::universe_utils::alt::ConvexPolygon2d;
   using autoware::universe_utils::alt::Point2d;
+  using autoware::universe_utils::alt::PointList2d;
+  using autoware::universe_utils::alt::Polygon2d;
 
   {  // The point is within the polygon
     const Point2d point = {0.0, 0.0};
@@ -160,6 +162,42 @@ TEST(alt_geometry, coveredBy)
     const Point2d p3 = {0.0, -1.0};
     const Point2d p4 = {0.0, 1.0};
     const auto result = covered_by(point, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // The point is within the concave polygon
+    PointList2d outer;
+    outer.push_back({1.0, 1.0});
+    outer.push_back({1.0, -1.0});
+    outer.push_back({0.0, -0.5});
+    outer.push_back({-1.0, -1.0});
+    outer.push_back({-1.0, 1.0});
+    outer.push_back({0.0, 0.5});
+
+    const Point2d point = {0.0, 0.0};
+
+    const auto result = covered_by(point, Polygon2d::create(outer, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // The point is on the edge of the hole of the polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+
+    PointList2d inner;
+    inner.push_back({0.5, 0.5});
+    inner.push_back({0.5, 1.5});
+    inner.push_back({1.5, 1.5});
+    inner.push_back({1.5, 0.5});
+
+    const Point2d point = {0.5, 1.0};
+
+    const auto result = covered_by(point, Polygon2d::create(outer, {inner}).value());
 
     EXPECT_TRUE(result);
   }
@@ -679,6 +717,8 @@ TEST(alt_geometry, within)
   using autoware::universe_utils::within;
   using autoware::universe_utils::alt::ConvexPolygon2d;
   using autoware::universe_utils::alt::Point2d;
+  using autoware::universe_utils::alt::PointList2d;
+  using autoware::universe_utils::alt::Polygon2d;
 
   {  // The point is within the polygon
     const Point2d point = {0.0, 0.0};
@@ -709,6 +749,42 @@ TEST(alt_geometry, within)
     const Point2d p3 = {0.0, -1.0};
     const Point2d p4 = {0.0, 1.0};
     const auto result = within(point, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // The point is within the concave polygon
+    PointList2d outer;
+    outer.push_back({1.0, 1.0});
+    outer.push_back({1.0, -1.0});
+    outer.push_back({0.0, -0.5});
+    outer.push_back({-1.0, -1.0});
+    outer.push_back({-1.0, 1.0});
+    outer.push_back({0.0, 0.5});
+
+    const Point2d point = {0.0, 0.0};
+
+    const auto result = within(point, Polygon2d::create(outer, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // The point is on the edge of the hole of the polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+
+    PointList2d inner;
+    inner.push_back({0.5, 0.5});
+    inner.push_back({0.5, 1.5});
+    inner.push_back({1.5, 1.5});
+    inner.push_back({1.5, 0.5});
+
+    const Point2d point = {0.5, 1.0};
+
+    const auto result = within(point, Polygon2d::create(outer, {inner}).value());
 
     EXPECT_FALSE(result);
   }
