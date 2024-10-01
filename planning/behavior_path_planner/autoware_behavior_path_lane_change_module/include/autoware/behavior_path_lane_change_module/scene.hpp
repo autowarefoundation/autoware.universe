@@ -182,15 +182,9 @@ protected:
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
     const RSSparams & selected_rss_param, CollisionCheckDebugMap & debug_data) const;
 
-  //! @brief Check if the ego vehicle is in stuck by a stationary obstacle.
-  //! @param obstacle_check_distance Distance to check ahead for any objects that might be
-  //! obstructing ego path. It makes sense to use values like the maximum lane change distance.
-  bool isVehicleStuck(
-    const lanelet::ConstLanelets & current_lanes, const double obstacle_check_distance) const;
-
   double get_max_velocity_for_safety_check() const;
 
-  bool isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const;
+  bool isVehicleStuck() const;
 
   /**
    * @brief Checks if the given pose is a valid starting point for a lane change.

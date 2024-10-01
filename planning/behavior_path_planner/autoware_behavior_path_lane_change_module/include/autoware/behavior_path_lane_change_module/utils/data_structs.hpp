@@ -344,6 +344,7 @@ struct TransientData
   lanelet::ArcCoordinates target_lanes_ego_arc;   // arc coordinates of ego pose along target lanes
 
   bool is_ego_near_current_terminal_start{false};
+  bool is_ego_stuck{false};
 };
 
 using RouteHandlerPtr = std::shared_ptr<RouteHandler>;

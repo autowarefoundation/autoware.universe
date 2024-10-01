@@ -141,6 +141,9 @@ void NormalLaneChange::update_transient_data()
   transient_data.is_ego_near_current_terminal_start =
     transient_data.dist_to_terminal_start < transient_data.max_prepare_length;
 
+  updateStopTime();
+  transient_data.is_ego_stuck = isVehicleStuck();
+
   RCLCPP_DEBUG(
     logger_, "acc - min: %.4f, max: %.4f", transient_data.acc.min, transient_data.acc.max);
   RCLCPP_DEBUG(
@@ -168,7 +171,6 @@ void NormalLaneChange::update_filtered_objects()
 void NormalLaneChange::updateLaneChangeStatus()
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  updateStopTime();
   const auto [found_valid_path, found_safe_path] = getSafePath(status_.lane_change_path);
 
   // Update status
@@ -934,6 +936,7 @@ std::pair<double, double> NormalLaneChange::calcCurrentMinMaxAcceleration() cons
 std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
 {
+  // TODO(Azu): sampler should work even when we're not approaching terminal
   if (prev_module_output_.path.points.empty()) {
     return {};
   }
@@ -966,7 +969,7 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   }
 
   // If the ego is in stuck, sampling all possible accelerations to find avoiding path.
-  if (isVehicleStuck(current_lanes)) {
+  if (common_data_ptr_->transient_data.is_ego_stuck) {
     auto clock = rclcpp::Clock(RCL_ROS_TIME);
     RCLCPP_INFO_THROTTLE(
       logger_, clock, 1000, "Vehicle is in stuck. Sample all possible acc: [%f ~ %f]", min_acc,
@@ -1055,12 +1058,11 @@ bool NormalLaneChange::get_prepare_segment(
 
 lane_change::TargetObjects NormalLaneChange::getTargetObjects(
   const FilteredByLanesExtendedObjects & filtered_objects,
-  const lanelet::ConstLanelets & current_lanes) const
+  [[maybe_unused]] const lanelet::ConstLanelets & current_lanes) const
 {
   ExtendedPredictedObjects leading_objects = filtered_objects.target_lane_leading;
-  const auto is_stuck = isVehicleStuck(current_lanes);
   const auto chk_obj_in_curr_lanes = lane_change_parameters_->check_objects_on_current_lanes;
-  if (chk_obj_in_curr_lanes || is_stuck) {
+  if (chk_obj_in_curr_lanes || common_data_ptr_->transient_data.is_ego_stuck) {
     leading_objects.insert(
       leading_objects.end(), filtered_objects.current_lane.begin(),
       filtered_objects.current_lane.end());
@@ -2126,63 +2128,6 @@ bool NormalLaneChange::is_collided(
   return !is_collided;
 }
 
-// Check if the ego vehicle is in stuck by a stationary obstacle or by the terminal of current lanes
-bool NormalLaneChange::isVehicleStuck(
-  const lanelet::ConstLanelets & current_lanes, const double obstacle_check_distance) const
-{
-  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  // Ego is still moving, not in stuck
-  if (std::abs(getEgoVelocity()) > lane_change_parameters_->stop_velocity_threshold) {
-    RCLCPP_DEBUG(logger_, "Ego is still moving, not in stuck");
-    return false;
-  }
-
-  // Ego is just stopped, not sure it is in stuck yet.
-  if (getStopTime() < lane_change_parameters_->stop_time_threshold) {
-    RCLCPP_DEBUG(logger_, "Ego is just stopped, counting for stuck judge... (%f)", getStopTime());
-    return false;
-  }
-
-  // Check if any stationary object exist in obstacle_check_distance
-  const auto base_distance = common_data_ptr_->transient_data.current_lanes_ego_arc.length;
-
-  for (const auto & object : lane_change_debug_.filtered_objects.current_lane) {
-    const auto & p = object.initial_pose;  // TODO(Horibe): consider footprint point
-
-    // Note: it needs chattering prevention.
-    if (std::abs(object.initial_twist.linear.x) > 0.3) {  // check if stationary
-      continue;
-    }
-
-    const auto ego_to_obj_dist =
-      lanelet::utils::getArcCoordinates(current_lanes, p).length - base_distance;
-    if (0 < ego_to_obj_dist && ego_to_obj_dist < obstacle_check_distance) {
-      RCLCPP_DEBUG(logger_, "Stationary object is in front of ego.");
-      return true;  // Stationary object is in front of ego.
-    }
-  }
-
-  // Check if Ego is in terminal of current lanes
-  const auto & route_handler = getRouteHandler();
-  const double distance_to_terminal =
-    route_handler->isInGoalRouteSection(current_lanes.back())
-      ? utils::getSignedDistance(getEgoPose(), route_handler->getGoalPose(), current_lanes)
-      : utils::getDistanceToEndOfLane(getEgoPose(), current_lanes);
-  const auto current_min_dist_buffer = common_data_ptr_->transient_data.current_dist_buffer.min;
-  const double stop_point_buffer = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
-  const double terminal_judge_buffer = current_min_dist_buffer + stop_point_buffer + 1.0;
-  if (distance_to_terminal < terminal_judge_buffer) {
-    return true;
-  }
-
-  // No stationary objects found in obstacle_check_distance and Ego is not in terminal of current
-  RCLCPP_DEBUG(
-    logger_,
-    "No stationary objects found in obstacle_check_distance and Ego is not in "
-    "terminal of current lanes");
-  return false;
-}
-
 double NormalLaneChange::get_max_velocity_for_safety_check() const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
@@ -2195,35 +2140,56 @@ double NormalLaneChange::get_max_velocity_for_safety_check() const
   return getCommonParam().max_vel;
 }
 
-bool NormalLaneChange::isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const
+bool NormalLaneChange::isVehicleStuck() const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  if (current_lanes.empty()) {
-    lane_change_debug_.is_stuck = false;
-    return false;  // can not check
+  const auto & lc_param_ptr = common_data_ptr_->lc_param_ptr;
+
+  if (std::abs(common_data_ptr_->get_ego_speed()) > lc_param_ptr->stop_velocity_threshold) {
+    RCLCPP_DEBUG(logger_, "Ego is still moving, not in stuck");
+    return false;
   }
 
-  const auto [min_acc, max_acc] = calcCurrentMinMaxAcceleration();
-  const auto current_max_dist_buffer = common_data_ptr_->transient_data.current_dist_buffer.max;
-  const auto rss_dist = calcRssDistance(
-    0.0, lane_change_parameters_->minimum_lane_changing_velocity,
-    lane_change_parameters_->rss_params);
+  // Ego is just stopped, not sure it is in stuck yet.
+  if (getStopTime() < lc_param_ptr->stop_time_threshold) {
+    RCLCPP_DEBUG(logger_, "Ego is just stopped, counting for stuck judge... (%f)", getStopTime());
+    return false;
+  }
+
+  // Check if any stationary object exist in obstacle_check_distance
+  const auto & current_lanes_path = common_data_ptr_->current_lanes_path;
+  const auto & ego_pose = common_data_ptr_->get_ego_pose();
+  const auto rss_dist =
+    calcRssDistance(0.0, lc_param_ptr->minimum_lane_changing_velocity, lc_param_ptr->rss_params);
 
   // It is difficult to define the detection range. If it is too short, the stuck will not be
   // determined, even though you are stuck by an obstacle. If it is too long,
   // the ego will be judged to be stuck by a distant vehicle, even though the ego is only
   // stopped at a traffic light. Essentially, the calculation should be based on the information of
   // the stop reason, but this is outside the scope of one module. I keep it as a TODO.
-  constexpr double DETECTION_DISTANCE_MARGIN = 10.0;
-  const auto detection_distance = current_max_dist_buffer + rss_dist +
-                                  getCommonParam().base_link2front + DETECTION_DISTANCE_MARGIN;
-  RCLCPP_DEBUG(
-    logger_, "current_max_dist_buffer: %f, max_acc: %f", current_max_dist_buffer, max_acc);
+  constexpr auto detection_distance_margin = 10.0;
+  const auto obstacle_check_distance = common_data_ptr_->transient_data.lane_changing_length.max +
+                                       rss_dist + common_data_ptr_->bpp_param_ptr->base_link2front +
+                                       detection_distance_margin;
+  const auto has_object_blocking = std::any_of(
+    filtered_objects_.current_lane.begin(), filtered_objects_.current_lane.end(),
+    [&](const auto & object) {
+      // Note: it needs chattering prevention.
+      if (
+        std::abs(object.initial_twist.linear.x) >
+        lc_param_ptr->stopped_object_velocity_threshold) {  // check if stationary
+        return false;
+      }
 
-  auto is_vehicle_stuck = isVehicleStuck(current_lanes, detection_distance);
+      const auto ego_to_obj_dist =
+        calcSignedArcLength(
+          current_lanes_path.points, ego_pose.position, object.initial_pose.position) -
+        obstacle_check_distance;
+      return ego_to_obj_dist < 0.0;
+    });
 
-  lane_change_debug_.is_stuck = is_vehicle_stuck;
-  return is_vehicle_stuck;
+  lane_change_debug_.is_stuck = has_object_blocking;
+  return has_object_blocking;
 }
 
 bool NormalLaneChange::is_valid_start_point(
