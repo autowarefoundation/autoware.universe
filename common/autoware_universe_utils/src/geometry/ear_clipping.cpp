@@ -420,6 +420,9 @@ std::size_t eliminate_holes(
   std::vector<std::size_t> queue;
 
   for (const auto & ring : inners) {
+    if (ring.empty()) {
+        continue; 
+    }
     auto inner_index = linked_list(ring, false, vertices, points);
 
     if (points[inner_index].next_index.value() == inner_index) {
@@ -561,6 +564,26 @@ void ear_clipping_linked(
   }
 }
 
+double calculate_triangle_area(const autoware::universe_utils::Polygon2d& triangle) {
+    const auto& points = triangle.outer();
+    double x1 = points[0].x();
+    double y1 = points[0].y();
+    double x2 = points[1].x();
+    double y2 = points[1].y();
+    double x3 = points[2].x();
+    double y3 = points[2].y();
+
+    return std::abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
+}
+
+double calculate_total_triangle(const std::vector<autoware::universe_utils::Polygon2d>& triangles) {
+    double totalArea = 0.0;
+    for (const auto& triangle : triangles) {
+        totalArea += calculate_triangle_area(triangle);
+    }
+    return totalArea;
+}
+
 std::vector<LinkedPoint> perform_triangulation(
   const alt::Polygon2d & polygon, std::vector<std::size_t> & indices)
 {
@@ -582,12 +605,7 @@ std::vector<LinkedPoint> perform_triangulation(
   }
 
   if (!polygon.inners().empty()) {
-    const auto & inner_rings = polygon.inners();
-    bool has_non_empty_holes = std::any_of(
-      inner_rings.begin(), inner_rings.end(), [](const auto & ring) { return !ring.empty(); });
-    if (has_non_empty_holes) {
-      outer_point_index = eliminate_holes(inner_rings, outer_point_index, vertices, points);
-    }
+    outer_point_index = eliminate_holes(polygon.inners(), outer_point_index, vertices, points);
   }
 
   ear_clipping_linked(outer_point_index, indices, points);
@@ -622,10 +640,6 @@ std::vector<alt::ConvexPolygon2d> triangulate(const alt::Polygon2d & poly)
 std::vector<Polygon2d> triangulate(const Polygon2d & poly)
 {
   const auto alt_poly = alt::Polygon2d::create(poly);
-  if (!alt_poly.has_value()) {
-    return {};
-  }
-
   const auto alt_triangles = triangulate(alt_poly.value());
   std::vector<Polygon2d> triangles;
   for (const auto & alt_triangle : alt_triangles) {

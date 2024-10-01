@@ -2021,6 +2021,97 @@ TEST(geometry, intersectPolygonRand)
   }
 }
 
+TEST(geometry, PolygonTriangulation)
+{
+  using autoware::universe_utils::Polygon2d;
+  using autoware::universe_utils::triangulate;
+  using autoware::universe_utils::calculate_total_triangle;
+
+  
+  {  // concave polygon
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+    boost::geometry::correct(poly);
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_triangle(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+
+  {  // concave polygon with empty inners
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+    boost::geometry::correct(poly);
+
+    poly.inners().emplace_back();
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_triangle(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+
+  {  // concave polygon with hole
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+
+    poly.inners().emplace_back();
+    poly.inners().back().emplace_back(1.0, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.5);
+    poly.inners().back().emplace_back(1.0, 1.5);
+    boost::geometry::correct(poly);
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_triangle(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+
+  {  // concave polygon with one empty inners and one hole
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+
+    poly.inners().emplace_back();
+    poly.inners().emplace_back();
+    poly.inners().back().emplace_back(1.0, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.5);
+    poly.inners().back().emplace_back(1.0, 1.5);
+    boost::geometry::correct(poly);
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_triangle(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+}
+
 TEST(geometry, intersectPolygonWithHoles)
 {
   using autoware::universe_utils::Polygon2d;

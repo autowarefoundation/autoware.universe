@@ -84,6 +84,11 @@ std::size_t eliminate_holes(
   std::vector<LinkedPoint> & points);
 
 /**
+ * @brief helper function to calcuate total area of triangles
+ */
+double calculate_total_triangle(const std::vector<autoware::universe_utils::Polygon2d>& triangles);
+
+/**
  * @brief triangulates a polygon into convex triangles
  * @details simplifies a concave polygon, with or without holes, into a set of triangles
  * the size of the `points` vector at the end of the perform_triangulation algorithm is described as
