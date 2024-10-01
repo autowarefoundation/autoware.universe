@@ -168,7 +168,8 @@ bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & p
 double distance(
   const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 
-double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
+template <typename PolyT>
+double distance(const alt::Point2d & point, const PolyT & poly);
 
 std::optional<alt::ConvexPolygon2d> envelope(const alt::Polygon2d & poly);
 

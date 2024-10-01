@@ -351,14 +351,15 @@ double distance(
   }
 }
 
-double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
+template <typename PolyT>
+double distance(const alt::Point2d & point, const PolyT & poly)
 {
   if (covered_by(point, poly)) {
     return 0.0;
   }
 
   // TODO(mitukou1109): Use plane sweep method to improve performance?
-  const auto & vertices = poly.vertices();
+  const auto & vertices = poly.outer();
   double min_distance = std::numeric_limits<double>::max();
   for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
     min_distance = std::min(min_distance, distance(point, *it, *std::next(it)));
@@ -678,4 +679,7 @@ bool within(
 
   return true;
 }
+
+template double distance(const alt::Point2d &, const alt::ConvexPolygon2d &);
+template double distance(const alt::Point2d &, const alt::Polygon2d &);
 }  // namespace autoware::universe_utils
