@@ -548,10 +548,13 @@ double getLateralShift(const LaneChangePath & path)
   return path.shifted_path.shift_length.at(end_idx) - path.shifted_path.shift_length.at(start_idx);
 }
 
-std::vector<std::vector<int64_t>> getSortedLaneIds(
-  const RouteHandler & route_handler, const Pose & current_pose,
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes)
+std::vector<std::vector<int64_t>> get_sorted_lane_ids(const CommonDataPtr & common_data_ptr)
 {
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  const auto & route_handler = *common_data_ptr->route_handler_ptr;
+  const auto & current_pose = common_data_ptr->get_ego_pose();
+
   const auto rough_shift_length =
     lanelet::utils::getArcCoordinates(target_lanes, current_pose).distance;
 

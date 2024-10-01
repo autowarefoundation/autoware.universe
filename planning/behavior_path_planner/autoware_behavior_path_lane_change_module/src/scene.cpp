@@ -1435,30 +1435,22 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
 {
   lane_change_debug_.collision_check_objects.clear();
 
-  const auto & current_lanes = get_current_lanes();
-  const auto & target_lanes = get_target_lanes();
-  const auto is_stuck = isVehicleStuck(current_lanes);
-
-  const auto is_empty = [&](const auto & data, const auto & s) {
-    if (!data.empty()) return false;
-    RCLCPP_WARN(logger_, "%s is empty. Not expected.", s);
-    return true;
-  };
-
-  const auto target_lane_neighbors_polygon_2d =
-    common_data_ptr_->lanes_polygon_ptr->target_neighbor;
-  if (
-    is_empty(current_lanes, "current_lanes") || is_empty(target_lanes, "target_lanes") ||
-    is_empty(target_lane_neighbors_polygon_2d, "target_lane_neighbors_polygon_2d")) {
+  if (!common_data_ptr_->is_lanes_available()) {
+    RCLCPP_WARN(logger_, "lanes are not available. Not expected.");
     return false;
   }
 
-  const auto & route_handler = *getRouteHandler();
+  if (common_data_ptr_->lanes_polygon_ptr->target_neighbor.empty()) {
+    RCLCPP_WARN(logger_, "target_lane_neighbors_polygon_2d is empty. Not expected.");
+    return false;
+  }
+
+  const auto & current_lanes = get_current_lanes();
+  const auto & target_lanes = get_target_lanes();
+
+  const auto is_stuck = isVehicleStuck(current_lanes);
   const auto current_velocity = getEgoVelocity();
-
-  const auto sorted_lane_ids =
-    utils::lane_change::getSortedLaneIds(route_handler, getEgoPose(), current_lanes, target_lanes);
-
+  const auto sorted_lane_ids = utils::lane_change::get_sorted_lane_ids(common_data_ptr_);
   const auto target_objects = getTargetObjects(filtered_objects_, current_lanes);
 
   const auto prepare_phase_metrics = get_prepare_metrics();
@@ -1498,17 +1490,14 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
     auto prepare_segment = getPrepareSegment(
       current_lanes, planner_data_->parameters.backward_path_length, prep_metric.length);
 
-    bool valid_prep_seg = false;
     try {
-      valid_prep_seg = is_valid_prepare_segment(prepare_segment);
+      if (!is_valid_prepare_segment(prepare_segment)) {
+        debug_print("lane change start is behind target lanelet!");
+        break;
+      }
     } catch (const std::exception & e) {
       debug_print(std::string("Reject: ") + e.what());
       continue;
-    }
-
-    if (!valid_prep_seg) {
-      debug_print("lane change start is behind target lanelet!");
-      break;
     }
 
     debug_print("Prepare path satisfy constraints");
@@ -1547,17 +1536,14 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
 
       candidate_paths.push_back(candidate_path);
 
-      bool is_safe = false;
       try {
-        is_safe = check_candidate_path_safety(candidate_path, target_objects, is_stuck);
+        if (check_candidate_path_safety(candidate_path, target_objects, is_stuck)) {
+          debug_print_lat("ACCEPT!!!: it is valid and safe!");
+          return true;
+        }
       } catch (const std::exception & e) {
         debug_print_lat(std::string("Reject: ") + e.what());
         return false;
-      }
-
-      if (is_safe) {
-        debug_print_lat("ACCEPT!!!: it is valid and safe!");
-        return true;
       }
 
       debug_print_lat("Reject: sampled path is not safe.");
@@ -1712,8 +1698,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   const auto current_min_dist_buffer = common_data_ptr_->transient_data.current_dist_buffer.min;
   const auto next_min_dist_buffer = common_data_ptr_->transient_data.next_dist_buffer.min;
 
-  const auto sorted_lane_ids =
-    utils::lane_change::getSortedLaneIds(route_handler, getEgoPose(), current_lanes, target_lanes);
+  const auto sorted_lane_ids = utils::lane_change::get_sorted_lane_ids(common_data_ptr_);
 
   // lane changing start getEgoPose() is at the end of prepare segment
   const auto current_lane_terminal_point =
