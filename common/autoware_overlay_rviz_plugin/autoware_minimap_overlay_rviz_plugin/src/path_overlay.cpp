@@ -53,6 +53,8 @@ std::pair<double, double> PathOverlay::localToGeographic(
   } else if (projector_type_ == tier4_map_msgs::msg::MapProjectorInfo::LOCAL_CARTESIAN_UTM) {
     return localToGeographicUTM(local_x, local_y, origin_lat, origin_lon);
   }
+  // Return a default pair if none of the conditions match
+  return std::make_pair(0.0, 0.0);  // Adjust as necessary
 }
 
 std::pair<double, double> PathOverlay::localToGeographicUTM(
