@@ -1105,8 +1105,7 @@ FilteredByLanesExtendedObjects NormalLaneChange::filterObjects() const
     return {};
   }
 
-  const auto path =
-    route_handler->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto & path = common_data_ptr_->current_lanes_path;
 
   auto filtered_by_lanes_objects = filterObjectsByLanelets(objects, path);
 
