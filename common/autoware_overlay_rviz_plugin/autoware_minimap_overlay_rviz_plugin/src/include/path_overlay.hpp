@@ -21,6 +21,8 @@
 #include <QPainterPath>
 #include <QRectF>
 
+#include "tier4_map_msgs/msg/map_projector_info.hpp"
+
 #include <string>
 #include <tuple>
 #include <utility>

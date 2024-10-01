@@ -21,6 +21,8 @@
 #include <QPainter>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
+#include "tier4_map_msgs/msg/map_projector_info.hpp"
+
 #include <string>
 #include <tuple>
 #include <utility>
