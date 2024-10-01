@@ -151,7 +151,7 @@ private:
 };
 }  // namespace alt
 
-double area(const alt::PointList2d & vertices);
+double area(const alt::PointList2d & ring);
 
 double area(const alt::Polygon2d & poly);
 
@@ -186,7 +186,7 @@ bool intersects(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d &
 bool is_above(
   const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 
-bool is_clockwise(const alt::PointList2d & vertices);
+bool is_clockwise(const alt::PointList2d & ring);
 
 bool is_convex(const alt::Polygon2d & poly);
 
@@ -195,7 +195,7 @@ alt::PointList2d simplify(const alt::PointList2d & line, const double max_distan
 bool touches(
   const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 
-bool touches(const alt::Point2d & point, const alt::PointList2d & vertices);
+bool touches(const alt::Point2d & point, const alt::PointList2d & line);
 
 bool touches(const alt::Point2d & point, const alt::Polygon2d & poly);
 
