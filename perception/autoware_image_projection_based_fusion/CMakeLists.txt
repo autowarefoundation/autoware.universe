@@ -24,6 +24,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/roi_detected_object_fusion/node.cpp
   src/segmentation_pointcloud_fusion/node.cpp
   src/roi_pointcloud_fusion/node.cpp
+  src/mask_cluster_fusion/node.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -49,6 +50,11 @@ rclcpp_components_register_node(${PROJECT_NAME}
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::image_projection_based_fusion::RoiPointCloudFusionNode"
   EXECUTABLE roi_pointcloud_fusion_node
+)
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "autoware::image_projection_based_fusion::MaskClusterFusionNode"
+  EXECUTABLE mask_cluster_fusion_node
 )
 
 set(CUDA_VERBOSE OFF)
