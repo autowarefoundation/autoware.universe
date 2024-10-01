@@ -65,8 +65,8 @@ MILLISECONDS = 1000000
 STANDARD_TOLERANCE = 1e-4
 COARSE_TOLERANCE = TIMESTAMP_NOISE * 2
 
-global_seconds = 10
-global_nanoseconds = 100000000
+GLOBAL_SECONDS = 10
+GLOBAL_NANOSECONDS = 100000000
 
 
 @pytest.mark.launch_test
@@ -216,7 +216,7 @@ def generate_transform_msg(
     qw: float,
 ) -> TransformStamped:
     tf_msg = TransformStamped()
-    tf_msg.header.stamp = Time(seconds=global_seconds, nanoseconds=global_nanoseconds).to_msg()
+    tf_msg.header.stamp = Time(seconds=GLOBAL_SECONDS, nanoseconds=GLOBAL_NANOSECONDS).to_msg()
     tf_msg.header.frame_id = parent_frame
     tf_msg.child_frame_id = child_frame
     tf_msg.transform.translation.x = x
@@ -271,7 +271,7 @@ def generate_static_transform_msgs() -> List[TransformStamped]:
 
 def generate_twist_msg() -> TwistWithCovarianceStamped:
     twist_header = Header()
-    twist_header.stamp = Time(seconds=global_seconds, nanoseconds=global_nanoseconds).to_msg()
+    twist_header.stamp = Time(seconds=GLOBAL_SECONDS, nanoseconds=GLOBAL_NANOSECONDS).to_msg()
     twist_header.frame_id = "base_link"
     twist_msg = TwistWithCovarianceStamped()
     twist_msg.header = twist_header
@@ -355,14 +355,14 @@ class TestConcatenateNode(unittest.TestCase):
         2. The motion compensation of concatenation works well.
         """
         time.sleep(1)
-        global global_seconds
+        global GLOBAL_SECONDS
 
         twist_msg = generate_twist_msg()
         self.twist_publisher.publish(twist_msg)
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS):
-            pointcloud_seconds = global_seconds
-            pointcloud_nanoseconds = global_nanoseconds + frame_idx * MILLISECONDS * 40  # add 40 ms
+            pointcloud_seconds = GLOBAL_SECONDS
+            pointcloud_nanoseconds = GLOBAL_NANOSECONDS + frame_idx * MILLISECONDS * 40  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
             ).to_msg()
@@ -414,7 +414,7 @@ class TestConcatenateNode(unittest.TestCase):
             "The concatenate pointcloud frame id is not base_link",
         )
 
-        global_seconds += 1
+        GLOBAL_SECONDS += 1
 
     def test_2_normal_inputs_with_noise(self):
         """Test the normal situation when no pointcloud is delayed or dropped. Additionally, the pointcloud's timestamp is not ideal which has some noise.
@@ -423,16 +423,16 @@ class TestConcatenateNode(unittest.TestCase):
         1. Concatenate works fine when pointclouds' timestamp has noise.
         """
         time.sleep(1)
-        global global_seconds
+        global GLOBAL_SECONDS
 
         twist_msg = generate_twist_msg()
         self.twist_publisher.publish(twist_msg)
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS):
             noise = random.uniform(-10, 10) * MILLISECONDS
-            pointcloud_seconds = global_seconds
+            pointcloud_seconds = GLOBAL_SECONDS
             pointcloud_nanoseconds = (
-                global_nanoseconds + frame_idx * MILLISECONDS * 40 + noise
+                GLOBAL_NANOSECONDS + frame_idx * MILLISECONDS * 40 + noise
             )  # add 40 ms and noise (-10 to 10 ms)
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
@@ -485,14 +485,14 @@ class TestConcatenateNode(unittest.TestCase):
         1. The concatenate node ignore empty pointcloud and concatenate the remain pointcloud.
         """
         time.sleep(1)
-        global global_seconds
+        global GLOBAL_SECONDS
 
         twist_msg = generate_twist_msg()
         self.twist_publisher.publish(twist_msg)
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS):
-            pointcloud_seconds = global_seconds
-            pointcloud_nanoseconds = global_nanoseconds + frame_idx * MILLISECONDS * 40  # add 40 ms
+            pointcloud_seconds = GLOBAL_SECONDS
+            pointcloud_nanoseconds = GLOBAL_NANOSECONDS + frame_idx * MILLISECONDS * 40  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
             ).to_msg()
@@ -545,7 +545,7 @@ class TestConcatenateNode(unittest.TestCase):
             "The concatenation node have weird output",
         )
 
-        global_seconds += 1
+        GLOBAL_SECONDS += 1
 
     def test_4_abnormal_null_pointcloud_and_drop(self):
         """Test the abnormal situation when a pointcloud is empty and other pointclouds are dropped.
@@ -554,13 +554,13 @@ class TestConcatenateNode(unittest.TestCase):
         1. The concatenate node ignore empty pointcloud and do not publish any pointcloud.
         """
         time.sleep(1)
-        global global_seconds
+        global GLOBAL_SECONDS
 
         twist_msg = generate_twist_msg()
         self.twist_publisher.publish(twist_msg)
 
-        pointcloud_seconds = global_seconds
-        pointcloud_nanoseconds = global_nanoseconds
+        pointcloud_seconds = GLOBAL_SECONDS
+        pointcloud_nanoseconds = GLOBAL_NANOSECONDS
         pointcloud_timestamp = Time(
             seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
         ).to_msg()
@@ -584,7 +584,7 @@ class TestConcatenateNode(unittest.TestCase):
             "The number of concatenate pointcloud has different number as expected.",
         )
 
-        global_seconds += 1
+        GLOBAL_SECONDS += 1
 
     def test_5_abnormal_multiple_pointcloud_drop(self):
         """Test the abnormal situation when multiple pointclouds were dropped (only one pointcloud arrive).
@@ -593,13 +593,13 @@ class TestConcatenateNode(unittest.TestCase):
         1. The concatenate node concatenates the single pointcloud after the timeout.
         """
         time.sleep(1)
-        global global_seconds
+        global GLOBAL_SECONDS
 
         twist_msg = generate_twist_msg()
         self.twist_publisher.publish(twist_msg)
 
-        pointcloud_seconds = global_seconds
-        pointcloud_nanoseconds = global_nanoseconds
+        pointcloud_seconds = GLOBAL_SECONDS
+        pointcloud_nanoseconds = GLOBAL_NANOSECONDS
         pointcloud_timestamp = Time(
             seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
         ).to_msg()
@@ -648,14 +648,14 @@ class TestConcatenateNode(unittest.TestCase):
         1. The concatenate node concatenate the remain pointcloud after the timeout.
         """
         time.sleep(1)
-        global global_seconds
+        global GLOBAL_SECONDS
 
         twist_msg = generate_twist_msg()
         self.twist_publisher.publish(twist_msg)
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS[:-1]):
-            pointcloud_seconds = global_seconds
-            pointcloud_nanoseconds = global_nanoseconds + frame_idx * MILLISECONDS * 40  # add 40 ms
+            pointcloud_seconds = GLOBAL_SECONDS
+            pointcloud_nanoseconds = GLOBAL_NANOSECONDS + frame_idx * MILLISECONDS * 40  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
             ).to_msg()
@@ -699,7 +699,7 @@ class TestConcatenateNode(unittest.TestCase):
             "The concatenation node have weird output",
         )
 
-        global_seconds += 1
+        GLOBAL_SECONDS += 1
 
     def test_7_abnormal_pointcloud_delay(self):
         """Test the abnormal situation when a pointcloud was delayed after the timeout.
@@ -709,14 +709,14 @@ class TestConcatenateNode(unittest.TestCase):
         2. The concatenate node will publish the delayed pointcloud after the timeout.
         """
         time.sleep(1)
-        global global_seconds
+        global GLOBAL_SECONDS
 
         twist_msg = generate_twist_msg()
         self.twist_publisher.publish(twist_msg)
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS[:-1]):
-            pointcloud_seconds = global_seconds
-            pointcloud_nanoseconds = global_nanoseconds + frame_idx * MILLISECONDS * 40  # add 40 ms
+            pointcloud_seconds = GLOBAL_SECONDS
+            pointcloud_nanoseconds = GLOBAL_NANOSECONDS + frame_idx * MILLISECONDS * 40  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
             ).to_msg()
@@ -732,9 +732,9 @@ class TestConcatenateNode(unittest.TestCase):
         time.sleep(TIMEOUT_SEC)  # timeout threshold
         rclpy.spin_once(self.node, timeout_sec=0.1)
 
-        pointcloud_seconds = global_seconds
+        pointcloud_seconds = GLOBAL_SECONDS
         pointcloud_nanoseconds = (
-            global_nanoseconds + (len(INPUT_LIDAR_TOPICS) - 1) * MILLISECONDS * 40
+            GLOBAL_NANOSECONDS + (len(INPUT_LIDAR_TOPICS) - 1) * MILLISECONDS * 40
         )  # add 40 ms
         pointcloud_timestamp = Time(
             seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
@@ -797,7 +797,7 @@ class TestConcatenateNode(unittest.TestCase):
             "The concatenation node have weird output",
         )
 
-        global_seconds += 1
+        GLOBAL_SECONDS += 1
 
     def test_8_abnormal_pointcloud_drop_continue_normal(self):
         """Test the abnormal situation when a pointcloud was dropped. Afterward, next iteration of pointclouds comes normally.
@@ -807,14 +807,14 @@ class TestConcatenateNode(unittest.TestCase):
         2. The concatenate node concatenate next iteration pointclouds when all of the pointcloud arrived.
         """
         time.sleep(1)
-        global global_seconds
+        global GLOBAL_SECONDS
 
         twist_msg = generate_twist_msg()
         self.twist_publisher.publish(twist_msg)
 
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS[:-1]):
-            pointcloud_seconds = global_seconds
-            pointcloud_nanoseconds = global_nanoseconds + frame_idx * MILLISECONDS * 40  # add 40 ms
+            pointcloud_seconds = GLOBAL_SECONDS
+            pointcloud_nanoseconds = GLOBAL_NANOSECONDS + frame_idx * MILLISECONDS * 40  # add 40 ms
             pointcloud_timestamp = Time(
                 seconds=pointcloud_seconds, nanoseconds=pointcloud_nanoseconds
             ).to_msg()
@@ -830,9 +830,9 @@ class TestConcatenateNode(unittest.TestCase):
         time.sleep(TIMEOUT_SEC)
         rclpy.spin_once(self.node)
 
-        next_global_nanosecond = global_nanoseconds + 100 * MILLISECONDS
+        next_global_nanosecond = GLOBAL_NANOSECONDS + 100 * MILLISECONDS
         for frame_idx, _ in enumerate(INPUT_LIDAR_TOPICS):
-            pointcloud_seconds = global_seconds
+            pointcloud_seconds = GLOBAL_SECONDS
             pointcloud_nanoseconds = (
                 next_global_nanosecond + frame_idx * MILLISECONDS * 40
             )  # add 40 ms
@@ -901,4 +901,4 @@ class TestConcatenateNode(unittest.TestCase):
             "The concatenation node have weird output",
         )
 
-        global_seconds += 1
+        GLOBAL_SECONDS += 1

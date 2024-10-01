@@ -60,9 +60,8 @@ protected:
       node_options);
     combine_cloud_handler_ =
       std::make_shared<autoware::pointcloud_preprocessor::CombineCloudHandler>(
-        *concatenate_node_.get(),
-        std::vector<std::string>{"lidar_top", "lidar_left", "lidar_right"}, "base_link", true, true,
-        true, false);
+        *concatenate_node_, std::vector<std::string>{"lidar_top", "lidar_left", "lidar_right"},
+        "base_link", true, true, true, false);
 
     collector_ = std::make_shared<autoware::pointcloud_preprocessor::CloudCollector>(
       std::dynamic_pointer_cast<
@@ -74,7 +73,7 @@ protected:
 
     // Setup TF
     tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(concatenate_node_);
-    tf_broadcaster_->sendTransform(generateStaticTransformMsg());
+    tf_broadcaster_->sendTransform(generate_static_transform_msgs());
 
     // Spin the node for a while to ensure transforms are published
     auto start = std::chrono::steady_clock::now();
@@ -85,7 +84,7 @@ protected:
     }
   }
 
-  geometry_msgs::msg::TransformStamped generateTransformMsg(
+  static geometry_msgs::msg::TransformStamped generate_transform_msg(
     const std::string & parent_frame, const std::string & child_frame, double x, double y, double z,
     double qx, double qy, double qz, double qw)
   {
@@ -104,8 +103,9 @@ protected:
     return tf_msg;
   }
 
-  sensor_msgs::msg::PointCloud2 generatePointCloudMsg(
-    bool generate_points, bool is_lidar_frame, std::string topic_name, rclcpp::Time stamp)
+  static sensor_msgs::msg::PointCloud2 generate_pointcloud_msg(
+    bool generate_points, bool is_lidar_frame, const std::string & topic_name,
+    const rclcpp::Time & stamp)
   {
     sensor_msgs::msg::PointCloud2 pointcloud_msg;
     pointcloud_msg.header.stamp = stamp;
@@ -156,13 +156,13 @@ protected:
     return pointcloud_msg;
   }
 
-  std::vector<geometry_msgs::msg::TransformStamped> generateStaticTransformMsg()
+  static std::vector<geometry_msgs::msg::TransformStamped> generate_static_transform_msgs()
   {
     // generate defined transformations
     return {
-      generateTransformMsg("base_link", "lidar_top", 5.0, 5.0, 5.0, 0.683, 0.5, 0.183, 0.499),
-      generateTransformMsg("base_link", "lidar_left", 1.0, 1.0, 3.0, 0.278, 0.717, 0.441, 0.453)};
-    generateTransformMsg("base_link", "lidar_right", 1.0, 1.0, 3.0, 0.278, 0.717, 0.441, 0.453);
+      generate_transform_msg("base_link", "lidar_top", 5.0, 5.0, 5.0, 0.683, 0.5, 0.183, 0.499),
+      generate_transform_msg("base_link", "lidar_left", 1.0, 1.0, 3.0, 0.278, 0.717, 0.441, 0.453)};
+    generate_transform_msg("base_link", "lidar_right", 1.0, 1.0, 3.0, 0.278, 0.717, 0.441, 0.453);
   }
 
   std::shared_ptr<autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>
@@ -302,11 +302,11 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
   rclcpp::Time left_timestamp(timestamp_seconds, timestamp_nanoseconds + 40'000'000, RCL_ROS_TIME);
   rclcpp::Time right_timestamp(timestamp_seconds, timestamp_nanoseconds + 80'000'000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 top_pointcloud =
-    generatePointCloudMsg(true, false, "lidar_top", top_timestamp);
+    generate_pointcloud_msg(true, false, "lidar_top", top_timestamp);
   sensor_msgs::msg::PointCloud2 left_pointcloud =
-    generatePointCloudMsg(true, false, "lidar_left", left_timestamp);
+    generate_pointcloud_msg(true, false, "lidar_left", left_timestamp);
   sensor_msgs::msg::PointCloud2 right_pointcloud =
-    generatePointCloudMsg(true, false, "lidar_right", right_timestamp);
+    generate_pointcloud_msg(true, false, "lidar_right", right_timestamp);
 
   sensor_msgs::msg::PointCloud2::SharedPtr top_pointcloud_ptr =
     std::make_shared<sensor_msgs::msg::PointCloud2>(top_pointcloud);
@@ -453,7 +453,7 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 {
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 top_pointcloud =
-    generatePointCloudMsg(true, false, "lidar_top", timestamp);
+    generate_pointcloud_msg(true, false, "lidar_top", timestamp);
   sensor_msgs::msg::PointCloud2::SharedPtr top_pointcloud_ptr =
     std::make_shared<sensor_msgs::msg::PointCloud2>(top_pointcloud);
   collector_->process_pointcloud("lidar_top", top_pointcloud_ptr);
@@ -476,11 +476,11 @@ TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
   rclcpp::Time left_timestamp(timestamp_seconds, timestamp_nanoseconds + 40'000'000, RCL_ROS_TIME);
   rclcpp::Time right_timestamp(timestamp_seconds, timestamp_nanoseconds + 80'000'000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 top_pointcloud =
-    generatePointCloudMsg(true, false, "lidar_top", top_timestamp);
+    generate_pointcloud_msg(true, false, "lidar_top", top_timestamp);
   sensor_msgs::msg::PointCloud2 left_pointcloud =
-    generatePointCloudMsg(true, false, "lidar_left", left_timestamp);
+    generate_pointcloud_msg(true, false, "lidar_left", left_timestamp);
   sensor_msgs::msg::PointCloud2 right_pointcloud =
-    generatePointCloudMsg(true, false, "lidar_right", right_timestamp);
+    generate_pointcloud_msg(true, false, "lidar_right", right_timestamp);
 
   sensor_msgs::msg::PointCloud2::SharedPtr top_pointcloud_ptr =
     std::make_shared<sensor_msgs::msg::PointCloud2>(top_pointcloud);
