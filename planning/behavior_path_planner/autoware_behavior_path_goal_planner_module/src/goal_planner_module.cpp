@@ -303,8 +303,7 @@ void GoalPlannerModule::onTimer()
                                     const std::shared_ptr<PullOverPlannerBase> & planner,
                                     const GoalCandidate & goal_candidate) {
     const auto pull_over_path = planner->plan(
-      goal_candidate.id, path_candidates.size(), local_planner_data, previous_module_output,
-      goal_candidate.goal_pose);
+      goal_candidate, path_candidates.size(), local_planner_data, previous_module_output);
     if (pull_over_path) {
       // calculate absolute maximum curvature of parking path(start pose to end pose) for path
       // priority
@@ -803,9 +802,8 @@ bool GoalPlannerModule::planFreespacePath(
       continue;
     }
     const auto freespace_path = freespace_planner_->plan(
-      goal_candidate.id, 0, planner_data,
-      BehaviorModuleOutput{},  // NOTE: not used so passing {} is OK
-      goal_candidate.goal_pose);
+      goal_candidate, 0, planner_data, BehaviorModuleOutput{}  // NOTE: not used so passing {} is OK
+    );
     if (!freespace_path) {
       continue;
     }
@@ -1824,7 +1822,7 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo(const PullOverContextData &
     return ignore_signal_.value() == id;
   };
 
-  const auto update_ignore_signal = [this](const lanelet::Id & id, const bool is_ignore) {
+  const auto update_ignore_signal = [](const lanelet::Id & id, const bool is_ignore) {
     return is_ignore ? std::make_optional(id) : std::nullopt;
   };
 
