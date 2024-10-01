@@ -2086,7 +2086,7 @@ TEST(geometry, PolygonTriangulation)
     EXPECT_NEAR(triangle_area, poly_area, epsilon);
   }
 
-  {  // concave polygon with one empty inners and one hole
+  {  // concave polygon with one empty inner followed by one hole
     Polygon2d poly;
 
     poly.outer().emplace_back(0.0, 0.0);
