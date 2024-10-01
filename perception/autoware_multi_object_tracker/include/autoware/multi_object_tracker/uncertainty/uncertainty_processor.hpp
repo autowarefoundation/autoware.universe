@@ -39,7 +39,7 @@ ObjectModel decodeObjectModel(const ObjectClassification & object_class);
 
 DetectedObjects modelUncertainty(const DetectedObjects & detected_objects);
 
-DetectedObject modelUncertaintyByClass(
+object_model::StateCovariance covarianceFromObjectClass(
   const DetectedObject & detected_object, const ObjectClassification & object_class);
 
 void normalizeUncertainty(DetectedObjects & detected_objects);

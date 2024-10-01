@@ -23,7 +23,7 @@ namespace uncertainty
 {
 using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
-ObjectModel decodeObjectModel(const ObjectClassification & object_class)
+object_model::StateCovariance covarianceFromObjectClass(const ObjectClassification & object_class)
 {
   const auto & label = object_class.label;
   ObjectModel obj_class_model(object_model::ObjectModelType::Unknown);
@@ -47,7 +47,7 @@ ObjectModel decodeObjectModel(const ObjectClassification & object_class)
       obj_class_model = object_model::normal_vehicle;
       break;
   }
-  return obj_class_model;
+  return obj_class_model.measurement_covariance;
 }
 
 DetectedObject modelUncertaintyByClass(
@@ -56,10 +56,11 @@ DetectedObject modelUncertaintyByClass(
   DetectedObject updating_object = object;
 
   // measurement noise covariance
-  ObjectModel obj_class_model = decodeObjectModel(object_class);
+  const object_model::StateCovariance measurement_covariance =
+    covarianceFromObjectClass(object_class);
 
-  auto r_cov_x = obj_class_model.measurement_covariance.pos_x;
-  auto r_cov_y = obj_class_model.measurement_covariance.pos_y;
+  const auto & r_cov_x = measurement_covariance.pos_x;
+  const auto & r_cov_y = measurement_covariance.pos_y;
 
   // yaw angle
   const double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
@@ -73,13 +74,13 @@ DetectedObject modelUncertaintyByClass(
     r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;           // x - x
   pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5 * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
   pose_cov[XYZRPY_COV_IDX::Y_Y] =
-    r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;                     // y - y
-  pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];                   // y - x
-  pose_cov[XYZRPY_COV_IDX::X_YAW] = 0.0;                                           // x - yaw
-  pose_cov[XYZRPY_COV_IDX::Y_YAW] = 0.0;                                           // y - yaw
-  pose_cov[XYZRPY_COV_IDX::YAW_X] = 0.0;                                           // yaw - x
-  pose_cov[XYZRPY_COV_IDX::YAW_Y] = 0.0;                                           // yaw - y
-  pose_cov[XYZRPY_COV_IDX::YAW_YAW] = obj_class_model.measurement_covariance.yaw;  // yaw - yaw
+    r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;     // y - y
+  pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];   // y - x
+  pose_cov[XYZRPY_COV_IDX::X_YAW] = 0.0;                           // x - yaw
+  pose_cov[XYZRPY_COV_IDX::Y_YAW] = 0.0;                           // y - yaw
+  pose_cov[XYZRPY_COV_IDX::YAW_X] = 0.0;                           // yaw - x
+  pose_cov[XYZRPY_COV_IDX::YAW_Y] = 0.0;                           // yaw - y
+  pose_cov[XYZRPY_COV_IDX::YAW_YAW] = measurement_covariance.yaw;  // yaw - yaw
   const bool is_yaw_available =
     object.kinematics.orientation_availability !=
     autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
@@ -89,10 +90,10 @@ DetectedObject modelUncertaintyByClass(
 
   // fill twist covariance matrix
   auto & twist_cov = updating_object.kinematics.twist_with_covariance.covariance;
-  twist_cov[XYZRPY_COV_IDX::X_X] = obj_class_model.measurement_covariance.vel_long;
+  twist_cov[XYZRPY_COV_IDX::X_X] = measurement_covariance.vel_long;
   twist_cov[XYZRPY_COV_IDX::X_Y] = 0.0;
   twist_cov[XYZRPY_COV_IDX::Y_X] = 0.0;
-  twist_cov[XYZRPY_COV_IDX::Y_Y] = obj_class_model.measurement_covariance.vel_lat;
+  twist_cov[XYZRPY_COV_IDX::Y_Y] = measurement_covariance.vel_lat;
 
   return updating_object;
 }
