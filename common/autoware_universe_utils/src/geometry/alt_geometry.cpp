@@ -142,10 +142,10 @@ std::optional<ConvexPolygon2d> ConvexPolygon2d::create(
 }
 }  // namespace alt
 
-double area(const alt::PointList2d & vertices)
+double area(const alt::PointList2d & ring)
 {
   double area_2 = 0.;
-  for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
+  for (auto it = ring.cbegin(); it != std::prev(ring.cend()); ++it) {
     area_2 += (*std::next(it)).cross(*it);
   }
 
@@ -486,10 +486,10 @@ bool is_above(
   return (seg_end - seg_start).cross(point - seg_start) > 0;
 }
 
-bool is_clockwise(const alt::PointList2d & vertices)
+bool is_clockwise(const alt::PointList2d & ring)
 {
   double sum = 0.;
-  for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
+  for (auto it = ring.cbegin(); it != std::prev(ring.cend()); ++it) {
     sum += (std::next(it)->x() - it->x()) * (std::next(it)->y() + it->y());
   }
 
@@ -569,16 +569,16 @@ bool touches(
   return std::abs(start_vec.cross(end_vec)) < epsilon && start_vec.dot(end_vec) <= 0;
 }
 
-bool touches(const alt::Point2d & point, const alt::PointList2d & vertices)
+bool touches(const alt::Point2d & point, const alt::PointList2d & line)
 {
   const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
-    vertices.begin(), std::prev(vertices.end()),
+    line.begin(), std::prev(line.end()),
     [](const auto & a, const auto & b) { return a.y() < b.y(); });
   if (point.y() < y_min_vertex->y() || point.y() > y_max_vertex->y()) {
     return false;
   }
 
-  for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
+  for (auto it = line.cbegin(); it != std::prev(line.cend()); ++it) {
     // check if the point is on each edge of the polygon
     if (touches(point, *it, *std::next(it))) {
       return true;
