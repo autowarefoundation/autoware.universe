@@ -582,7 +582,12 @@ std::vector<LinkedPoint> perform_triangulation(
   }
 
   if (!polygon.inners().empty()) {
-    outer_point_index = eliminate_holes(polygon.inners(), outer_point_index, vertices, points);
+    const auto & inner_rings = polygon.inners();
+    bool has_non_empty_holes = std::any_of(
+      inner_rings.begin(), inner_rings.end(), [](const auto & ring) { return !ring.empty(); });
+    if (has_non_empty_holes) {
+      outer_point_index = eliminate_holes(inner_rings, outer_point_index, vertices, points);
+    }
   }
 
   ear_clipping_linked(outer_point_index, indices, points);

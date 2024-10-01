@@ -140,24 +140,17 @@ bool intersecting(const Edge & e, const Polygon2d & polygon)
 /// @brief checks if an edge is valid for a given polygon and set of points
 bool is_valid(const Edge & e, const Polygon2d & P, const std::vector<Point2d> & Q)
 {
-  bool valid = false;
-  size_t i = 0;
-
-  while (!valid && i < Q.size()) {
-    const Point2d & q = Q[i];
+  for (const Point2d & q : Q) {
     Edge e1 = {e.first, q};
     Edge e2 = {q, e.second};
     bool intersects_e1 = intersecting(e1, P);
     bool intersects_e2 = intersecting(e2, P);
-
-    if (!intersects_e1 && !intersects_e2) {
-      valid = true;
+    if (intersects_e1 || intersects_e2) {
+      return false;
     }
-
-    ++i;
   }
 
-  return valid;
+  return true;
 }
 
 /// @brief finds the nearest node from a set of points to an edge
