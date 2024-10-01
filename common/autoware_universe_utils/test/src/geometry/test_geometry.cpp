@@ -2023,11 +2023,10 @@ TEST(geometry, intersectPolygonRand)
 
 TEST(geometry, PolygonTriangulation)
 {
+  using autoware::universe_utils::calculate_total_triangle;
   using autoware::universe_utils::Polygon2d;
   using autoware::universe_utils::triangulate;
-  using autoware::universe_utils::calculate_total_triangle;
 
-  
   {  // concave polygon
     Polygon2d poly;
 

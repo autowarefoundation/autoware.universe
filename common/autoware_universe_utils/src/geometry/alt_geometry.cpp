@@ -69,7 +69,7 @@ std::optional<Polygon2d> Polygon2d::create(
   for (const auto & inner : polygon.inners()) {
     PointList2d _inner;
     if (inner.empty()) {
-        continue; 
+      continue;
     }
     for (const auto & point : inner) {
       _inner.push_back(Point2d(point));

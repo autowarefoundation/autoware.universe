@@ -86,7 +86,7 @@ std::size_t eliminate_holes(
 /**
  * @brief helper function to calcuate total area of triangles
  */
-double calculate_total_triangle(const std::vector<autoware::universe_utils::Polygon2d>& triangles);
+double calculate_total_triangle(const std::vector<autoware::universe_utils::Polygon2d> & triangles);
 
 /**
  * @brief triangulates a polygon into convex triangles
