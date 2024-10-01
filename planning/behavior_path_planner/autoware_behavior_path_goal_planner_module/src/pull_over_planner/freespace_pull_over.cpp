@@ -20,11 +20,18 @@
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
+#include <autoware/freespace_planning_algorithms/astar_search.hpp>
+#include <autoware/freespace_planning_algorithms/rrtstar.hpp>
+
 #include <memory>
 #include <vector>
 
 namespace autoware::behavior_path_planner
 {
+
+using autoware::freespace_planning_algorithms::AstarSearch;
+using autoware::freespace_planning_algorithms::RRTStar;
+
 FreespacePullOver::FreespacePullOver(
   rclcpp::Node & node, const GoalPlannerParameters & parameters,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
@@ -144,8 +151,6 @@ std::optional<PullOverPath> FreespacePullOver::plan(
   if (!pull_over_path_opt) {
     return {};
   }
-  auto & pull_over_path = pull_over_path_opt.value();
-
-  return pull_over_path;
+  return pull_over_path_opt.value();
 }
 }  // namespace autoware::behavior_path_planner

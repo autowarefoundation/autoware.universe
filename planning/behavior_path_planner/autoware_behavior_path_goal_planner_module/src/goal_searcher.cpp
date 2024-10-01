@@ -15,13 +15,11 @@
 #include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
 
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
-#include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/no_parking_area.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
-#include "autoware_lanelet2_extension/utility/query.hpp"
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
 
 #include <boost/geometry/algorithms/union.hpp>
@@ -33,7 +31,6 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware::lane_departure_checker::LaneDepartureChecker;
 using autoware::universe_utils::calcOffsetPose;
 using lanelet::autoware::NoParkingArea;
 using lanelet::autoware::NoStoppingArea;

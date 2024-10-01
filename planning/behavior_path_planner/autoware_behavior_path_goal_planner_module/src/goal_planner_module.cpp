@@ -14,8 +14,13 @@
 
 #include "autoware/behavior_path_goal_planner_module/goal_planner_module.hpp"
 
+#include "autoware/behavior_path_goal_planner_module/default_fixed_goal_planner.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/freespace_pull_over.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/geometric_pull_over.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/shift_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware/behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
 #include "autoware/behavior_path_planner_common/utils/parking_departure/utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
