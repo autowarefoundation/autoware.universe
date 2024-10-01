@@ -14,7 +14,7 @@
 
 #include "debug.hpp"
 
-#include "scene.hpp"
+#include "run_out_module.hpp"  // TODO(Maxime): rm this dependency
 
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
@@ -28,7 +28,7 @@ using autoware::universe_utils::createMarkerOrientation;
 using autoware::universe_utils::createMarkerScale;
 using autoware::universe_utils::createPoint;
 
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 namespace
 {
@@ -132,7 +132,7 @@ void RunOutDebug::pushCollisionObstaclePolygons(
   collision_obstacle_polygons_.push_back(polygon);
 }
 
-void RunOutDebug::pushDetectionAreaPolygons(const Polygon2d & debug_polygon)
+void RunOutDebug::pushDetectionAreaPolygons(const universe_utils::Polygon2d & debug_polygon)
 {
   std::vector<geometry_msgs::msg::Point> ros_points;
   for (const auto & p : debug_polygon.outer()) {
@@ -142,7 +142,7 @@ void RunOutDebug::pushDetectionAreaPolygons(const Polygon2d & debug_polygon)
   detection_area_polygons_.push_back(ros_points);
 }
 
-void RunOutDebug::pushMandatoryDetectionAreaPolygons(const Polygon2d & debug_polygon)
+void RunOutDebug::pushMandatoryDetectionAreaPolygons(const universe_utils::Polygon2d & debug_polygon)
 {
   std::vector<geometry_msgs::msg::Point> ros_points;
   for (const auto & p : debug_polygon.outer()) {
@@ -368,4 +368,4 @@ autoware::motion_utils::VirtualWalls RunOutModule::createVirtualWalls()
   return debug_ptr_->createVirtualWalls();
 }
 
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner

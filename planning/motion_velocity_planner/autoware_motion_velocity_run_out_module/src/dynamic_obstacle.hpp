@@ -21,6 +21,7 @@
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/motion_velocity_planner_common/planner_data.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -42,7 +43,7 @@
 #include <memory>
 #include <vector>
 
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -52,9 +53,6 @@ using run_out_utils::DynamicObstacleData;
 using run_out_utils::DynamicObstacleParam;
 using run_out_utils::PlannerParam;
 using run_out_utils::PredictedPath;
-using tier4_planning_msgs::msg::PathPointWithLaneId;
-using tier4_planning_msgs::msg::PathWithLaneId;
-using PathPointsWithLaneId = std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>;
 
 /**
  * @brief base class for creating dynamic obstacles from multiple types of input
@@ -76,12 +74,12 @@ public:
   virtual std::vector<DynamicObstacle> createDynamicObstacles() = 0;
   void setData(
     const PlannerData & planner_data, const PlannerParam & planner_param,
-    const PathWithLaneId & path, const PathWithLaneId & smoothed_path)
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory, const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_path)
   {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    dynamic_obstacle_data_.predicted_objects = *planner_data.predicted_objects;
-    dynamic_obstacle_data_.path = path;
+    dynamic_obstacle_data_.predicted_objects = planner_data.predicted_objects;
+    dynamic_obstacle_data_.trajectory = trajectory;
 
     // detection area is used only when detection target is Points
     if (planner_param.run_out.detection_method == "Points") {
@@ -124,8 +122,8 @@ public:
 };
 
 /**
- * @brief create dynamic obstacles from predicted objects, but overwrite the path to be normal to
- *        the path of ego vehicle.
+ * @brief create dynamic obstacles from predicted objects, but overwrite the trajectory to be normal to
+ *        the trajectory of ego vehicle.
  */
 class DynamicObstacleCreatorForObjectWithoutPath : public DynamicObstacleCreator
 {
@@ -138,7 +136,7 @@ public:
 
 /**
  * @brief create dynamic obstacles from points.
- *        predicted path is created to be normal to the path of ego vehicle.
+ *        predicted trajectory is created to be normal to the trajectory of ego vehicle.
  */
 class DynamicObstacleCreatorForPoints : public DynamicObstacleCreator
 {
@@ -171,6 +169,6 @@ private:
   pcl::PointCloud<pcl::PointXYZ> obstacle_points_map_filtered_;
 };
 
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner
 
 #endif  // DYNAMIC_OBSTACLE_HPP_

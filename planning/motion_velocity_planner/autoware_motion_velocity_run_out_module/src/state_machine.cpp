@@ -14,7 +14,7 @@
 
 #include "state_machine.hpp"
 
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 namespace run_out_utils
 {
@@ -107,4 +107,4 @@ void StateMachine::updateState(const StateInput & state_input, rclcpp::Clock & c
 }
 
 }  // namespace run_out_utils
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner

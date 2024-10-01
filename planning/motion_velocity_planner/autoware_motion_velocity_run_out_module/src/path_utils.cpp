@@ -15,7 +15,7 @@
 #include "path_utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-namespace autoware::behavior_velocity_planner::run_out_utils
+namespace autoware::motion_velocity_planner::run_out_utils
 {
 geometry_msgs::msg::Point findLongitudinalNearestPoint(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points,
@@ -36,4 +36,4 @@ geometry_msgs::msg::Point findLongitudinalNearestPoint(
   return min_dist_point;
 }
 
-}  // namespace autoware::behavior_velocity_planner::run_out_utils
+}  // namespace autoware::motion_velocity_planner::run_out_utils

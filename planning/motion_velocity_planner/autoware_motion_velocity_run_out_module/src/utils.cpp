@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2022-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 #include "utils.hpp"
 
 #include <autoware/motion_utils/distance/distance.hpp>
-#include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -26,17 +26,12 @@
 #include <algorithm>
 #include <limits>
 
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner::run_out_utils
 {
-namespace run_out_utils
-{
+  namespace bg = boost::geometry;
 Polygon2d createBoostPolyFromMsg(const std::vector<geometry_msgs::msg::Point> & input_poly)
 {
   Polygon2d bg_poly;
@@ -135,27 +130,27 @@ bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg:
 }
 
 // insert path velocity which doesn't exceed original velocity
-void insertPathVelocityFromIndexLimited(
-  const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points)
+void insertTrajectoryVelocityFromIndexLimited(
+  const size_t & start_idx, const float velocity_mps, std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory_points)
 {
-  for (size_t i = start_idx; i < path_points.size(); i++) {
-    const auto current_path_vel = path_points.at(i).point.longitudinal_velocity_mps;
-    path_points.at(i).point.longitudinal_velocity_mps = std::min(velocity_mps, current_path_vel);
+  for (size_t i = start_idx; i < trajectory_points.size(); i++) {
+    const auto current_path_vel = trajectory_points.at(i).longitudinal_velocity_mps;
+    trajectory_points.at(i).longitudinal_velocity_mps = std::min(velocity_mps, current_path_vel);
   }
 }
 
-void insertPathVelocityFromIndex(
-  const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points)
+void insertTrajectoryVelocityFromIndex(
+  const size_t & start_idx, const float velocity_mps, std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory_points)
 {
-  for (size_t i = start_idx; i < path_points.size(); i++) {
-    path_points.at(i).point.longitudinal_velocity_mps = velocity_mps;
+  for (size_t i = start_idx; i < trajectory_points.size(); i++) {
+    trajectory_points.at(i).longitudinal_velocity_mps = velocity_mps;
   }
 }
 
-std::optional<size_t> findFirstStopPointIdx(const PathPointsWithLaneId & path_points)
+std::optional<size_t> findFirstStopPointIdx(const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory_points)
 {
-  for (size_t i = 0; i < path_points.size(); i++) {
-    const auto vel = path_points.at(i).point.longitudinal_velocity_mps;
+  for (size_t i = 0; i < trajectory_points.size(); i++) {
+    const auto vel = trajectory_points.at(i).longitudinal_velocity_mps;
     if (vel < std::numeric_limits<float>::epsilon()) {
       return i;
     }
@@ -198,15 +193,15 @@ LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly)
 }
 
 std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
-  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathPointsWithLaneId & path_points,
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory_points,
   const lanelet::BasicPolygon2d & partition)
 {
   std::vector<DynamicObstacle> extracted_dynamic_obstacle;
   for (const auto & obstacle : dynamic_obstacles) {
     const auto obstacle_nearest_idx =
-      autoware::motion_utils::findNearestIndex(path_points, obstacle.pose.position);
+      autoware::motion_utils::findNearestIndex(trajectory_points, obstacle.pose.position);
     const auto & obstacle_nearest_path_point =
-      path_points.at(obstacle_nearest_idx).point.pose.position;
+      trajectory_points.at(obstacle_nearest_idx).pose.position;
 
     // create linestring from traj point to obstacle
     const LineString2d path_point_to_obstacle{
@@ -226,60 +221,31 @@ std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
   return extracted_dynamic_obstacle;
 }
 
-PathPointsWithLaneId decimatePathPoints(
-  const PathPointsWithLaneId & input_path_points, const float step)
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> decimateTrajectoryPoints(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & input_trajectory_points, const float step)
 {
-  if (input_path_points.empty()) {
-    return PathPointsWithLaneId();
+  if (input_trajectory_points.empty()) {
+    return {};
   }
 
   float dist_sum = 0.0;
-  PathPointsWithLaneId decimate_path_points;
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> decimate_trajectory_points;
   // push first point
-  decimate_path_points.emplace_back(input_path_points.front());
+  decimate_trajectory_points.emplace_back(input_trajectory_points.front());
 
-  for (size_t i = 1; i < input_path_points.size(); i++) {
-    const auto p1 = input_path_points.at(i - 1);
-    const auto p2 = input_path_points.at(i);
+  for (size_t i = 1; i < input_trajectory_points.size(); i++) {
+    const auto p1 = input_trajectory_points.at(i - 1);
+    const auto p2 = input_trajectory_points.at(i);
     const auto dist = autoware::universe_utils::calcDistance2d(p1, p2);
     dist_sum += dist;
 
     if (dist_sum > step) {
-      decimate_path_points.emplace_back(p2);
+      decimate_trajectory_points.emplace_back(p2);
       dist_sum = 0.0;
     }
   }
 
-  return decimate_path_points;
-}
-
-// trim path from self_pose to trim_distance
-PathWithLaneId trimPathFromSelfPose(
-  const PathWithLaneId & input, const geometry_msgs::msg::Pose & self_pose,
-  const double trim_distance)
-{
-  const size_t nearest_idx =
-    autoware::motion_utils::findNearestIndex(input.points, self_pose.position);
-
-  PathWithLaneId output{};
-  output.header = input.header;
-  output.left_bound = input.left_bound;
-  output.right_bound = input.right_bound;
-  double dist_sum = 0;
-  for (size_t i = nearest_idx; i < input.points.size(); ++i) {
-    output.points.push_back(input.points.at(i));
-
-    if (i != nearest_idx) {
-      dist_sum +=
-        autoware::universe_utils::calcDistance2d(input.points.at(i - 1), input.points.at(i));
-    }
-
-    if (dist_sum > trim_distance) {
-      break;
-    }
-  }
-
-  return output;
+  return decimate_trajectory_points;
 }
 
 // create polygon for passing lines and deceleration line calculated by stopping jerk
@@ -310,28 +276,29 @@ std::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon
   return detection_area_polygon;
 }
 
-PathPointWithLaneId createExtendPathPoint(
-  const double extend_distance, const PathPointWithLaneId & goal_point)
+autoware_planning_msgs::msg::TrajectoryPoint
+createExtendTrajectoryPoint(
+  const double extend_distance, const autoware_planning_msgs::msg::TrajectoryPoint & goal_point)
 {
-  PathPointWithLaneId extend_path_point = goal_point;
-  extend_path_point.point.pose =
-    autoware::universe_utils::calcOffsetPose(goal_point.point.pose, extend_distance, 0.0, 0.0);
+  autoware_planning_msgs::msg::TrajectoryPoint extend_path_point = goal_point;
+  extend_path_point.pose =
+    autoware::universe_utils::calcOffsetPose(goal_point.pose, extend_distance, 0.0, 0.0);
   return extend_path_point;
 }
 
-PathWithLaneId extendPath(const PathWithLaneId & input, const double extend_distance)
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> extendTrajectory(const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & input, const double extend_distance)
 {
-  PathWithLaneId output = input;
-  if (extend_distance < std::numeric_limits<double>::epsilon() || input.points.empty()) {
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> output = input;
+  if (extend_distance < std::numeric_limits<double>::epsilon() || input.empty()) {
     return output;
   }
 
-  const auto goal_point = input.points.back();
+  const auto goal_point = input.back();
   constexpr double interpolation_interval = 0.1;
   double extend_sum = interpolation_interval;
   while (extend_sum < extend_distance) {
-    const auto extend_path_point = createExtendPathPoint(extend_sum, goal_point);
-    output.points.push_back(extend_path_point);
+    const auto extend_traj_point = createExtendTrajectoryPoint(extend_sum, goal_point);
+    output.push_back(extend_traj_point);
     extend_sum += interpolation_interval;
   }
 
@@ -352,14 +319,14 @@ DetectionMethod toEnum(const std::string & detection_method)
 }
 
 Polygons2d createDetectionAreaPolygon(
-  const PathWithLaneId & path, const PlannerData & planner_data, const PlannerParam & planner_param)
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory , const PlannerData & planner_data, const PlannerParam & planner_param)
 {
   const auto & pd = planner_data;
   const auto & pp = planner_param;
 
   // calculate distance needed to stop with jerk and acc constraints
-  const float initial_vel = pd.current_velocity->twist.linear.x;
-  const float initial_acc = pd.current_acceleration->accel.accel.linear.x;
+  const float initial_vel = pd.current_odometry.twist.twist.linear.x;
+  const float initial_acc = pd.current_acceleration.accel.accel.linear.x;
   const float target_vel = 0.0;
   const float jerk_dec_max = pp.smoother.start_jerk;
   const float jerk_dec =
@@ -375,7 +342,7 @@ Polygons2d createDetectionAreaPolygon(
   }
 
   // create detection area polygon
-  DetectionRange da_range;
+  behavior_velocity_planner::DetectionRange da_range;
   const double obstacle_vel_mps = pp.dynamic_obstacle.max_vel_kmph / 3.6;
   da_range.interval = pp.run_out.detection_distance;
   da_range.min_longitudinal_distance =
@@ -387,26 +354,27 @@ Polygons2d createDetectionAreaPolygon(
   da_range.left_overhang = pp.vehicle_param.left_overhang;
   da_range.max_lateral_distance = obstacle_vel_mps * pp.dynamic_obstacle.max_prediction_time;
   Polygons2d detection_area_poly;
-  const size_t ego_seg_idx =
-    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, pd.current_odometry->pose, pd.ego_nearest_dist_threshold,
-      pd.ego_nearest_yaw_threshold);
-  planning_utils::createDetectionAreaPolygons(
-    detection_area_poly, path, pd.current_odometry->pose, ego_seg_idx, da_range,
-    pp.dynamic_obstacle.max_vel_kmph / 3.6);
+  // TODO(Maxime): FIX THIS
+  // const size_t ego_seg_idx =
+  //   autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+  //     trajectory, pd.current_odometry.pose.pose, pd.ego_nearest_dist_threshold,
+  //     pd.ego_nearest_yaw_threshold);
+  // behavior_velocity_planner::planning_utils::createDetectionAreaPolygons(
+  //   detection_area_poly, trajectory, pd.current_odometry.pose, ego_seg_idx, da_range,
+  //   pp.dynamic_obstacle.max_vel_kmph / 3.6);
 
   return detection_area_poly;
 }
 
 Polygons2d createMandatoryDetectionAreaPolygon(
-  const PathWithLaneId & path, const PlannerData & planner_data, const PlannerParam & planner_param)
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory, const PlannerData & planner_data, const PlannerParam & planner_param)
 {
   const auto & pd = planner_data;
   const auto & pp = planner_param;
 
   // calculate distance needed to stop with jerk and acc constraints
-  const float initial_vel = pd.current_velocity->twist.linear.x;
-  const float initial_acc = pd.current_acceleration->accel.accel.linear.x;
+  const float initial_vel = pd.current_odometry.twist.twist.linear.x;
+  const float initial_acc = pd.current_acceleration.accel.accel.linear.x;
   const float target_vel = 0.0;
   const float jerk_dec = pp.mandatory_area.decel_jerk;
   const float jerk_acc = std::abs(jerk_dec);
@@ -420,7 +388,7 @@ Polygons2d createMandatoryDetectionAreaPolygon(
   }
 
   // create detection area polygon
-  DetectionRange da_range;
+  behavior_velocity_planner::DetectionRange da_range;
   const double obstacle_vel_mps = pp.dynamic_obstacle.max_vel_kmph / 3.6;
   da_range.interval = pp.run_out.detection_distance;
   da_range.min_longitudinal_distance = pp.vehicle_param.base_to_front;
@@ -430,16 +398,16 @@ Polygons2d createMandatoryDetectionAreaPolygon(
   da_range.left_overhang = pp.vehicle_param.left_overhang;
   da_range.max_lateral_distance = obstacle_vel_mps * pp.dynamic_obstacle.max_prediction_time;
   Polygons2d detection_area_poly;
-  const size_t ego_seg_idx =
-    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, pd.current_odometry->pose, pd.ego_nearest_dist_threshold,
-      pd.ego_nearest_yaw_threshold);
-  planning_utils::createDetectionAreaPolygons(
-    detection_area_poly, path, pd.current_odometry->pose, ego_seg_idx, da_range,
-    pp.dynamic_obstacle.max_vel_kmph / 3.6);
+  // TODO(Maxime): FIX THIS
+  // const size_t ego_seg_idx =
+  //   autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+  //     trajectory, pd.current_odometry.pose.pose, pd.ego_nearest_dist_threshold,
+  //     pd.ego_nearest_yaw_threshold);
+  // behavior_velocity_planner::planning_utils::createDetectionAreaPolygons(
+  //   detection_area_poly, trajectory, pd.current_odometry.pose, ego_seg_idx, da_range,
+  //   pp.dynamic_obstacle.max_vel_kmph / 3.6);
 
   return detection_area_poly;
 }
 
-}  // namespace run_out_utils
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner::run_out_utils

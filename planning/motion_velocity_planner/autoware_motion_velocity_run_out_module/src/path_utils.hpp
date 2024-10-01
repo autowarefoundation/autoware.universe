@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 namespace run_out_utils
 {
@@ -36,5 +36,5 @@ geometry_msgs::msg::Point findLongitudinalNearestPoint(
   const std::vector<geometry_msgs::msg::Point> & target_points);
 
 }  // namespace run_out_utils
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner
 #endif  // PATH_UTILS_HPP_

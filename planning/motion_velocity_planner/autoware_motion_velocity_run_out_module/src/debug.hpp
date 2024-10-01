@@ -24,7 +24,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 using sensor_msgs::msg::PointCloud2;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
@@ -105,8 +105,8 @@ public:
   void pushPredictedObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushCollisionObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushEgoCutLine(const std::vector<geometry_msgs::msg::Point> & line);
-  void pushDetectionAreaPolygons(const Polygon2d & debug_polygon);
-  void pushMandatoryDetectionAreaPolygons(const Polygon2d & debug_polygon);
+  void pushDetectionAreaPolygons(const universe_utils::Polygon2d & debug_polygon);
+  void pushMandatoryDetectionAreaPolygons(const universe_utils::Polygon2d & debug_polygon);
   void pushTravelTimeTexts(
     const double travel_time, const geometry_msgs::msg::Pose pose, const float lateral_offset);
   void setAccelReason(const AccelReason & accel_reason);
@@ -143,6 +143,6 @@ private:
   double height_{0};
 };
 
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner
 
 #endif  // DEBUG_HPP_
