@@ -1360,43 +1360,6 @@ PathWithLaneId NormalLaneChange::getTargetSegment(
   return target_segment;
 }
 
-bool NormalLaneChange::hasEnoughLength(
-  const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, [[maybe_unused]] const Direction direction) const
-{
-  if (target_lanes.empty()) {
-    return false;
-  }
-
-  const auto current_pose = getEgoPose();
-  const auto & route_handler = getRouteHandler();
-  const auto overall_graphs_ptr = route_handler->getOverallGraphPtr();
-  const auto minimum_lane_change_length_to_preferred_lane =
-    common_data_ptr_->transient_data.next_dist_buffer.min;
-
-  const double lane_change_length = path.info.length.sum();
-  if (lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
-    return false;
-  }
-
-  const auto goal_pose = route_handler->getGoalPose();
-  if (
-    route_handler->isInGoalRouteSection(current_lanes.back()) &&
-    lane_change_length + minimum_lane_change_length_to_preferred_lane >
-      utils::getSignedDistance(current_pose, goal_pose, current_lanes)) {
-    return false;
-  }
-
-  // return if there are no target lanes
-  if (
-    lane_change_length + minimum_lane_change_length_to_preferred_lane >
-    utils::getDistanceToEndOfLane(current_pose, target_lanes)) {
-    return false;
-  }
-
-  return true;
-}
-
 std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_prepare_metrics() const
 {
   const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
@@ -1578,7 +1541,6 @@ LaneChangePath NormalLaneChange::get_candidate_path(
   const Pose & lc_start_pose, const double shift_length) const
 {
   const auto & route_handler = *getRouteHandler();
-  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
   const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
 
   const auto resample_interval =
@@ -1609,7 +1571,10 @@ LaneChangePath NormalLaneChange::get_candidate_path(
     throw std::logic_error("failed to generate candidate path!");
   }
 
-  if (!hasEnoughLength(*candidate_path, current_lanes, target_lanes, direction_)) {
+  if (
+    candidate_path.value().info.length.sum() +
+      common_data_ptr_->transient_data.next_dist_buffer.min >
+    common_data_ptr_->transient_data.dist_to_terminal_end) {
     throw std::logic_error("invalid candidate path length!");
   }
 
