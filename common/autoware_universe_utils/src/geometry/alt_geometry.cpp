@@ -298,7 +298,12 @@ bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
 
 bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly)
 {
-  for (const auto & triangle : triangulate(poly)) {
+  auto _poly = poly;
+  if (!poly.inners().empty()) {
+    _poly = alt::Polygon2d::create(poly.outer(), {}).value();
+  }
+
+  for (const auto & triangle : triangulate(_poly)) {
     if (covered_by(point, triangle)) {
       return true;
     }
