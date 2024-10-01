@@ -159,8 +159,6 @@ std::optional<alt::ConvexPolygon2d> convex_hull(const alt::Points2d & points);
 
 void correct(alt::Polygon2d & poly);
 
-bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
-
 bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly);
 
 bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2);
@@ -168,8 +166,7 @@ bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & p
 double distance(
   const alt::Point2d & point, const alt::Point2d & seg_start, const alt::Point2d & seg_end);
 
-template <typename PolyT>
-double distance(const alt::Point2d & point, const PolyT & poly);
+double distance(const alt::Point2d & point, const alt::Polygon2d & poly);
 
 std::optional<alt::ConvexPolygon2d> envelope(const alt::Polygon2d & poly);
 
@@ -202,7 +199,7 @@ bool touches(const alt::Point2d & point, const alt::PointList2d & vertices);
 
 bool touches(const alt::Point2d & point, const alt::Polygon2d & poly);
 
-bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly);
+bool within(const alt::Point2d & point, const alt::Polygon2d & poly);
 
 bool within(
   const alt::ConvexPolygon2d & poly_contained, const alt::ConvexPolygon2d & poly_containing);
