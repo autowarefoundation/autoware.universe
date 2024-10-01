@@ -178,11 +178,13 @@ void BirdEyeViewController::update(float dt, float ros_dt)
   updateCamera();
 }
 
+// cppcheck-suppress unusedFunction
 void BirdEyeViewController::lookAt(const Ogre::Vector3 & point)
 {
   setPosition(point - target_scene_node_->getPosition());
 }
 
+// cppcheck-suppress unusedFunction
 void BirdEyeViewController::onTargetFrameChanged(
   const Ogre::Vector3 & old_reference_position,
   const Ogre::Quaternion & /*old_reference_orientation*/)

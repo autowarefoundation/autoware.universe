@@ -11,7 +11,9 @@ The Lane Change module is activated when lane change is needed and can be safely
   - `allow_lane_change` tags is set as `true`
 - During lane change request condition
   - The ego-vehicle isn’t on a `preferred_lane`.
-  - There is neither intersection nor crosswalk on the path of the lane change
+  - The ego-vehicle isn't approaching a traffic light. (condition parameterized)
+  - The ego-vehicle isn't approaching a crosswalk. (condition parameterized)
+  - The ego-vehicle isn't approaching an intersection. (condition parameterized)
 - lane change ready condition
   - Path of the lane change does not collide with other dynamic objects (see the figure below)
   - Lane change candidate path is approved by an operator.
@@ -21,6 +23,108 @@ The Lane Change module is activated when lane change is needed and can be safely
 The lane change candidate path is divided into two phases: preparation and lane-changing. The following figure illustrates each phase of the lane change candidate path.
 
 ![lane-change-phases](./images/lane_change-lane_change_phases.png)
+
+The following chart illustrates the process of sampling candidate paths for lane change.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+start
+
+if (Is current lanes, target lanes OR target neighbor lanes polygon empty?) then (yes)
+  #LightPink:Return prev approved path;
+  stop
+else (no)
+endif
+
+:Get target objects;
+
+:Calculate prepare phase metrics;
+
+:Start loop through prepare phase metrics;
+
+repeat
+  :Get prepare segment;
+
+  if (Is LC start point outside target lanes range) then (yes)
+    if (Is found a valid path) then (yes)
+      #Orange:Return first valid path;
+      stop
+    else (no)
+      #LightPink:Return prev approved path;
+      stop
+    endif
+  else (no)
+  endif
+
+  :Calculate shift phase metrics;
+
+  :Start loop through shift phase metrics;
+  repeat
+    :Get candidate path;
+    note left: Details shown in the next chart
+    if (Is valid candidate path?) then (yes)
+      :Store candidate path;
+      if (Is candidate path safe?) then (yes)
+        #LightGreen:Return candidate path;
+        stop
+      else (no)
+      endif
+    else (no)
+    endif
+    repeat while (Finished looping shift phase metrics) is (FALSE)
+  repeat while (Is finished looping prepare phase metrics) is (FALSE)
+
+if (Is found a valid path) then (yes)
+  #Orange:Return first valid path;
+  stop
+else (no)
+endif
+
+#LightPink:Return prev approved path;
+stop
+
+@enduml
+```
+
+While the following chart demonstrates the process of generating a valid candidate path.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+start
+
+:Calculate resample interval;
+
+:Get reference path from target lanes;
+
+if (Is reference path empty?) then (yes)
+  #LightPink:Return;
+  stop
+else (no)
+endif
+
+:Get LC shift line;
+
+:Set lane change Info;
+note left: set information from sampled prepare phase and shift phase metrics\n<color:red>(duration, length, velocity, and acceleration)
+
+:Construct candidate path;
+
+if (Candidate path has enough length?) then (yes)
+  #LightGreen:Return valid candidate path;
+  stop
+else (no)
+  #LightPink:Return;
+  stop
+endif
+
+@enduml
+```
 
 ### Preparation phase
 
@@ -182,11 +286,9 @@ A candidate path is considered valid if it meets the following criteria:
 1. The distance from the ego vehicle's current position to the end of the current lanes is sufficient to perform a single lane change.
 2. The distance from the ego vehicle's current position to the goal along the current lanes is adequate to complete multiple lane changes.
 3. The distance from the ego vehicle's current position to the end of the target lanes is adequate for completing multiple lane changes.
-4. Intersection requirements are met (conditions are parameterized).
-5. Crosswalk requirements are satisfied (conditions are parameterized).
-6. Traffic light regulations are adhered to (conditions are parameterized).
-7. The lane change can be completed after passing a parked vehicle.
-8. The lane change is deemed safe to execute.
+4. The distance from the ego vehicle's current position to the next regulatory element is adequate to perform a single lane change.
+5. The lane change can be completed after passing a parked vehicle.
+6. The lane change is deemed safe to execute.
 
 The following flow chart illustrates the validity check.
 
@@ -229,43 +331,6 @@ group check for distance #LightYellow
       stop
     else (no)
     endif
-end group
-
-
-
-group evaluate on Crosswalk #LightCyan
-if (regulate_on_crosswalk and not enough length to crosswalk) then (yes)
-  if (stop time < stop time threshold\n(Related to stuck detection)) then (yes)
-    #LightPink:Reject path;
-    stop
-  else (no)
-    :Allow lane change in crosswalk;
-  endif
-else (no)
-endif
-end group
-
-group evaluate on Intersection #LightGreen
-if (regulate_on_intersection and not enough length to intersection) then (yes)
-  if (stop time < stop time threshold\n(Related to stuck detection)) then (yes)
-    #LightPink:Reject path;
-    stop
-  else (no)
-    :Allow lane change in intersection;
-  endif
-else (no)
-endif
-end group
-
-group evaluate on Traffic Light #Lavender
-if (regulate_on_traffic_light and not enough length to complete lane change before stop line) then (yes)
-  #LightPink:Reject path;
-  stop
-elseif (stopped at red traffic light within distance) then (yes)
-  #LightPink:Reject path;
-  stop
-else (no)
-endif
 end group
 
 if (ego is not stuck but parked vehicle exists in target lane) then (yes)
@@ -517,8 +582,8 @@ The function to stop by keeping a margin against forward obstacle in the previou
 
 ### Lane change regulations
 
-If you want to regulate lane change on crosswalks or intersections, the lane change module finds a lane change path excluding it includes crosswalks or intersections.
-To regulate lane change on crosswalks or intersections, change `regulation.crosswalk` or `regulation.intersection` to `true`.
+If you want to regulate lane change on crosswalks, intersections, or traffic lights, the lane change module is disabled near any of them.
+To regulate lane change on crosswalks, intersections, or traffic lights, set `regulation.crosswalk`, `regulation.intersection` or `regulation.traffic_light` to `true`.
 If the ego vehicle gets stuck, to avoid stuck, it enables lane change in crosswalk/intersection.
 If the ego vehicle stops more than `stuck_detection.stop_time` seconds, it is regarded as a stuck.
 If the ego vehicle velocity is smaller than `stuck_detection.velocity`, it is regarded as stopping.
@@ -573,6 +638,8 @@ detach
 @enduml
 ```
 
+During a lane change, a safety check is made in consideration of the deceleration of the ego vehicle, and a safety check is made for `cancel.deceleration_sampling_num` deceleration patterns, and the lane change will be canceled if the abort condition is satisfied for all deceleration patterns.
+
 To preventive measure for lane change path oscillations caused by alternating safe and unsafe conditions, an additional hysteresis count check is implemented before executing an abort or cancel maneuver. If unsafe, the `unsafe_hysteresis_count_` is incremented and compared against `unsafe_hysteresis_threshold`; exceeding it prompts an abort condition check, ensuring decisions are made with consideration to recent safety assessments as shown in flow chart above. This mechanism stabilizes decision-making, preventing abrupt changes due to transient unsafe conditions.
 
 ```plantuml
@@ -618,6 +685,61 @@ The last behavior will also occur if the ego vehicle has departed from the curre
 
 ![stop](./images/lane_change-cant_cancel_no_abort.png)
 
+## Lane change completion checks
+
+To determine if the ego vehicle has successfully changed lanes, one of two criteria must be met: either the longitudinal or the lateral criteria.
+
+For the longitudinal criteria, the ego vehicle must pass the lane-changing end pose and be within the `finish_judge_buffer` distance from it. The module then checks if the ego vehicle is in the target lane. If true, the module returns success. This check ensures that the planner manager updates the root lanelet correctly based on the ego vehicle's current pose. Without this check, if the ego vehicle is changing lanes while avoiding an obstacle and its current pose is in the original lane, the planner manager might set the root lanelet as the original lane. This would force the ego vehicle to perform the lane change again. With the target lane check, the ego vehicle is confirmed to be in the target lane, and the planner manager can correctly update the root lanelets.
+
+If the longitudinal criteria are not met, the module evaluates the lateral criteria. For the lateral criteria, the ego vehicle must be within `finish_judge_lateral_threshold` distance from the target lane's centerline, and the angle deviation must be within `finish_judge_lateral_angle_deviation` degrees. The angle deviation check ensures there is no sudden steering. If the angle deviation is set too high, the ego vehicle's orientation could deviate significantly from the centerline, causing the trajectory follower to aggressively correct the steering to return to the centerline. Keeping the angle deviation value as small as possible avoids this issue.
+
+The process of determining lane change completion is shown in the following diagram.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+title Lane change completion judge
+
+start
+
+:Calculate distance from current ego pose to lane change end pose;
+
+if (Is ego velocity < 1.0?) then (<color:green><b>YES</b></color>)
+  :Set <b>finish_judge_buffer</b> to 0.0;
+else (<color:red><b>NO</b></color>)
+  :Set <b>finish_judge_buffer</b> to lane_change_finish_judge_buffer;
+endif
+
+if (ego has passed the end_pose and ego is <b>finish_judge_buffer</b> meters away from end_pose?) then (<color:green><b>YES</b></color>)
+  if (Current ego pose is in target lanes' polygon?) then (<color:green><b>YES</b></color>)
+    :Lane change is <color:green><b>completed</b></color>;
+    stop
+  else (<color:red><b>NO</b></color>)
+:Lane change is <color:red><b>NOT</b></color> completed;
+stop
+  endif
+else (<color:red><b>NO</b></color>)
+endif
+
+if (ego's yaw deviation to centerline exceeds finish_judge_lateral_angle_deviation?) then (<color:red><b>YES</b></color>)
+  :Lane change is <color:red><b>NOT</b></color> completed;
+  stop
+else (<color:green><b>NO</b></color>)
+  :Calculate distance to the target lanes' centerline;
+  if (abs(distance to the target lanes' centerline) is less than finish_judge_lateral_threshold?) then (<color:green><b>YES</b></color>)
+    :Lane change is <color:green><b>completed</b></color>;
+    stop
+  else (<color:red><b>NO</b></color>)
+    :Lane change is <color:red><b>NOT</b></color> completed;
+    stop
+  endif
+endif
+
+@enduml
+```
+
 ## Parameters
 
 ### Essential lane change parameters
@@ -631,7 +753,6 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `backward_length_buffer_for_end_of_lane`     | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change                                  | 3.0                |
 | `backward_length_buffer_for_blocking_object` | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change when there is an object in front | 3.0                |
 | `lane_change_finish_judge_buffer`            | [m]    | double | The additional buffer used to confirm lane change process completion                                                   | 2.0                |
-| `finish_judge_lateral_threshold`             | [m]    | double | Lateral distance threshold to confirm lane change process completion                                                   | 0.2                |
 | `lane_changing_lateral_jerk`                 | [m/s3] | double | Lateral jerk value for lane change path generation                                                                     | 0.5                |
 | `minimum_lane_changing_velocity`             | [m/s]  | double | Minimum speed during lane changing process.                                                                            | 2.78               |
 | `prediction_time_resolution`                 | [s]    | double | Time resolution for object's path interpolation and collision check.                                                   | 0.5                |
@@ -646,6 +767,16 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `lateral_acceleration.velocity`              | [m/s]  | double | Reference velocity for lateral acceleration calculation (look up table)                                                | [0.0, 4.0, 10.0]   |
 | `lateral_acceleration.min_values`            | [m/ss] | double | Min lateral acceleration values corresponding to velocity (look up table)                                              | [0.4, 0.4, 0.4]    |
 | `lateral_acceleration.max_values`            | [m/ss] | double | Max lateral acceleration values corresponding to velocity (look up table)                                              | [0.65, 0.65, 0.65] |
+
+### Parameter to judge if lane change is completed
+
+The following parameters are used to judge lane change completion.
+
+| Name                                   | Unit  | Type   | Description                                                                                                            | Default value |
+| :------------------------------------- | ----- | ------ | ---------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `lane_change_finish_judge_buffer`      | [m]   | double | The longitudinal distance starting from the lane change end pose.                                                      | 2.0           |
+| `finish_judge_lateral_threshold`       | [m]   | double | The lateral distance from targets lanes' centerline. Used in addition with `finish_judge_lateral_angle_deviation`      | 0.1           |
+| `finish_judge_lateral_angle_deviation` | [deg] | double | Ego angle deviation with reference to target lanes' centerline. Used in addition with `finish_judge_lateral_threshold` | 2.0           |
 
 ### Lane change regulations
 
@@ -709,6 +840,18 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `safety_check.execution.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
 | `safety_check.cancel.longitudinal_velocity_delta_time`       | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
 
+#### safety constraints specifically for stopped or parked vehicles
+
+| Name                                                      | Unit    | Type   | Description                                                                                                                                                    | Default value |
+| :-------------------------------------------------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `safety_check.parked.expected_front_deceleration`         | [m/s^2] | double | The front object's maximum deceleration when the front vehicle perform sudden braking. (\*1)                                                                   | -1.0          |
+| `safety_check.parked.expected_rear_deceleration`          | [m/s^2] | double | The rear object's maximum deceleration when the rear vehicle perform sudden braking. (\*1)                                                                     | -2.0          |
+| `safety_check.parked.rear_vehicle_reaction_time`          | [s]     | double | The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle until the driver step on the brake. | 1.0           |
+| `safety_check.parked.rear_vehicle_safety_time_margin`     | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 0.8           |
+| `safety_check.parked.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 1.0           |
+| `safety_check.parked.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
+| `safety_check.parked.longitudinal_velocity_delta_time`    | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
+
 ##### safety constraints to cancel lane change path
 
 | Name                                                      | Unit    | Type   | Description                                                                                                                                                    | Default value |
@@ -747,7 +890,8 @@ The following parameters are configurable in `lane_change.param.yaml`.
 | `cancel.duration`                      | [s]     | double  | The time taken to complete returning to the center line.                                                         | 3.0           |
 | `cancel.max_lateral_jerk`              | [m/sss] | double  | The maximum lateral jerk for abort path                                                                          | 1000.0        |
 | `cancel.overhang_tolerance`            | [m]     | double  | Lane change cancel is prohibited if the vehicle head exceeds the lane boundary more than this tolerance distance | 0.0           |
-| `unsafe_hysteresis_threshold`          | [-]     | int     | threshold that helps prevent frequent switching between safe and unsafe decisions                                | 10            |
+| `cancel.unsafe_hysteresis_threshold`   | [-]     | int     | threshold that helps prevent frequent switching between safe and unsafe decisions                                | 10            |
+| `cancel.deceleration_sampling_num`     | [-]     | int     | Number of deceleration patterns to check safety to cancel lane change                                            | 5             |
 
 ### Debug
 

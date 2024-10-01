@@ -22,6 +22,7 @@
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -66,15 +67,11 @@ private:
     const std::string & frame_id, const builtin_interfaces::msg::Time & stamp,
     const float & robot_pose_z, const nav2_costmap_2d::Costmap2D & occupancy_grid_map);
 
-  nav2_costmap_2d::Costmap2D OccupancyGridMsgToCostmap2D(
-    const nav_msgs::msg::OccupancyGrid & occupancy_grid_map);
   OccupancyGridMapFixedBlindSpot OccupancyGridMsgToGridMap(
     const nav_msgs::msg::OccupancyGrid & occupancy_grid_map);
   OccupancyGridMapFixedBlindSpot SingleFrameOccupancyFusion(
     std::vector<OccupancyGridMapFixedBlindSpot> & occupancy_grid_maps,
     const builtin_interfaces::msg::Time latest_stamp, const std::vector<double> & weights);
-
-  void updateGridMap(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & occupancy_grid_msg);
 
   void setPeriod(const int64_t new_period);
   void timer_callback();
@@ -122,6 +119,11 @@ private:
   float fusion_map_length_y_;
   float fusion_map_resolution_;
   fusion_policy::FusionMethod fusion_method_;
+
+  // time keeper
+  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
+    detailed_processing_time_publisher_;
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
 };
 
 }  // namespace autoware::occupancy_grid_map

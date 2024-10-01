@@ -18,6 +18,7 @@
 
 #include <QColor>
 #include <QHBoxLayout>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPushButton>
@@ -30,9 +31,6 @@ class CustomSegmentedButtonItem : public QPushButton
 public:
   explicit CustomSegmentedButtonItem(const QString & text, QWidget * parent = nullptr);
 
-  void setColors(
-    const QColor & bg, const QColor & checkedBg, const QColor & activeText,
-    const QColor & inactiveText);
   void setActivated(bool activated);
   void setCheckableButton(bool checkable);
   void setDisabledButton(bool disabled);
@@ -42,23 +40,25 @@ protected:
   void paintEvent(QPaintEvent * event) override;
   void enterEvent(QEvent * event) override;
   void leaveEvent(QEvent * event) override;
+  void mousePressEvent(QMouseEvent * event) override;
+  void mouseReleaseEvent(QMouseEvent * event) override;
 
 private:
   void updateCheckableState();
 
   QColor bgColor;
   QColor checkedBgColor;
-  QColor hoverColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str());
+  QColor hoverColor;
+  QColor pressedColor;
   QColor inactiveTextColor;
   QColor activeTextColor;
-  QColor disabledBgColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_dim.c_str());
-  QColor disabledTextColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface_variant.c_str());
-  bool isHovered = false;
-  bool isActivated = false;
-  bool isDisabled = false;
+  QColor disabledBgColor;
+  QColor disabledTextColor;
+
+  bool isHovered;
+  bool isActivated;
+  bool isDisabled;
+  bool isPressed;
 };
 
 #endif  // CUSTOM_SEGMENTED_BUTTON_ITEM_HPP_

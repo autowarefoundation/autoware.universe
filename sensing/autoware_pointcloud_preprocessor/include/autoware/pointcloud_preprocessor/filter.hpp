@@ -74,13 +74,9 @@
 #include <pcl_msgs/msg/model_coefficients.h>
 #include <pcl_msgs/msg/point_indices.h>
 
-// Include TF
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/create_timer_ros.h>
-#include <tf2_ros/transform_listener.h>
-
 // Include tier4 autoware utils
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 
@@ -173,6 +169,9 @@ protected:
    * if input.header.frame_id is different. */
   std::string tf_output_frame_;
 
+  /** \brief The flag to indicate if only static TF are used. */
+  bool has_static_tf_only_;
+
   /** \brief Internal mutex. */
   std::mutex mutex_;
 
@@ -239,8 +238,7 @@ protected:
    * versus an exact one (false by default). */
   bool approximate_sync_ = false;
 
-  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+  std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
   inline bool isValid(
     const PointCloud2ConstPtr & cloud, const std::string & /*topic_name*/ = "input")
@@ -288,10 +286,6 @@ private:
   bool calculate_transform_matrix(
     const std::string & target_frame, const sensor_msgs::msg::PointCloud2 & from,
     TransformInfo & transform_info /*output*/);
-
-  bool _calculate_transform_matrix(
-    const std::string & target_frame, const sensor_msgs::msg::PointCloud2 & from,
-    const tf2_ros::Buffer & tf_buffer, Eigen::Matrix4f & eigen_transform /*output*/);
 
   bool convert_output_costly(std::unique_ptr<PointCloud2> & output);
 

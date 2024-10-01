@@ -15,14 +15,14 @@
 #ifndef AUTOWARE_PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_
 #define AUTOWARE_PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware_path_sampler/common_structs.hpp"
 #include "autoware_path_sampler/type_alias.hpp"
 #include "autoware_sampler_common/structures.hpp"
 #include "eigen3/Eigen/Core"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
@@ -116,10 +116,6 @@ inline std::vector<TrajectoryPoint> convertToTrajectoryPoints(
   }
   return traj_points;
 }
-
-void compensateLastPose(
-  const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
-  const double delta_dist_threshold, const double delta_yaw_threshold);
 
 template <class T>
 size_t findEgoIndex(

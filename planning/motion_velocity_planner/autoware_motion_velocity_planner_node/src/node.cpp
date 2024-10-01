@@ -16,13 +16,13 @@
 
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/ros/wait_for_param.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
 #include <autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 #include <autoware/velocity_smoother/trajectory_utils.hpp>
-#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
@@ -31,7 +31,9 @@
 
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <tf2/time.h>
 
+#include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
@@ -85,6 +87,9 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
       "~/output/velocity_factors", 1);
   processing_time_publisher_ =
     this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  debug_viz_pub_ =
+    this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 1);
+  diagnostics_pub_ = this->create_publisher<DiagnosticArray>("/diagnostics", 10);
 
   // Parameters
   smooth_velocity_before_planning_ = declare_parameter<bool>("smooth_velocity_before_planning");
@@ -98,7 +103,7 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
     // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
-    if (name == "") {
+    if (name.empty()) {
       break;
     }
     planner_manager_.load_module_plugin(*this, name);
@@ -127,46 +132,55 @@ void MotionVelocityPlannerNode::on_unload_plugin(
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
-bool MotionVelocityPlannerNode::update_planner_data()
+bool MotionVelocityPlannerNode::update_planner_data(
+  std::map<std::string, double> & processing_times)
 {
   auto clock = *get_clock();
   auto is_ready = true;
   const auto check_with_log = [&](const auto ptr, const auto & log) {
     constexpr auto throttle_duration = 3000;  // [ms]
     if (!ptr) {
-      RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, log);
+      RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, "%s", log);
       is_ready = false;
       return false;
     }
     return true;
   };
 
+  universe_utils::StopWatch<std::chrono::milliseconds> sw;
   const auto ego_state_ptr = sub_vehicle_odometry_.takeData();
   if (check_with_log(ego_state_ptr, "Waiting for current odometry"))
     planner_data_.current_odometry = *ego_state_ptr;
+  processing_times["update_planner_data.odom"] = sw.toc(true);
 
   const auto ego_accel_ptr = sub_acceleration_.takeData();
   if (check_with_log(ego_accel_ptr, "Waiting for current acceleration"))
     planner_data_.current_acceleration = *ego_accel_ptr;
+  processing_times["update_planner_data.accel"] = sw.toc(true);
 
   const auto predicted_objects_ptr = sub_predicted_objects_.takeData();
   if (check_with_log(predicted_objects_ptr, "Waiting for predicted objects"))
     planner_data_.predicted_objects = *predicted_objects_ptr;
+  processing_times["update_planner_data.pred_obj"] = sw.toc(true);
 
   const auto no_ground_pointcloud_ptr = sub_no_ground_pointcloud_.takeData();
   if (check_with_log(no_ground_pointcloud_ptr, "Waiting for pointcloud")) {
     const auto no_ground_pointcloud = process_no_ground_pointcloud(no_ground_pointcloud_ptr);
     if (no_ground_pointcloud) planner_data_.no_ground_pointcloud = *no_ground_pointcloud;
   }
+  processing_times["update_planner_data.pcd"] = sw.toc(true);
 
   const auto occupancy_grid_ptr = sub_occupancy_grid_.takeData();
   if (check_with_log(occupancy_grid_ptr, "Waiting for the occupancy grid"))
     planner_data_.occupancy_grid = *occupancy_grid_ptr;
+  processing_times["update_planner_data.occ_grid"] = sw.toc(true);
 
   // here we use bitwise operator to not short-circuit the logging messages
   is_ready &= check_with_log(map_ptr_, "Waiting for the map");
+  processing_times["update_planner_data.map"] = sw.toc(true);
   is_ready &= check_with_log(
     planner_data_.velocity_smoother_, "Waiting for the initialization of the velocity smoother");
+  processing_times["update_planner_data.smoother"] = sw.toc(true);
 
   // optional data
   const auto traffic_signals_ptr = sub_traffic_signals_.takeData();
@@ -174,6 +188,7 @@ bool MotionVelocityPlannerNode::update_planner_data()
   const auto virtual_traffic_light_states_ptr = sub_virtual_traffic_light_states_.takeData();
   if (virtual_traffic_light_states_ptr)
     planner_data_.virtual_traffic_light_states = *virtual_traffic_light_states_ptr;
+  processing_times["update_planner_data.traffic_lights"] = sw.toc(true);
 
   return is_ready;
 }
@@ -184,8 +199,7 @@ MotionVelocityPlannerNode::process_no_ground_pointcloud(
 {
   geometry_msgs::msg::TransformStamped transform;
   try {
-    transform = tf_buffer_.lookupTransform(
-      "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
+    transform = tf_buffer_.lookupTransform("map", msg->header.frame_id, tf2::TimePointZero);
   } catch (tf2::TransformException & e) {
     RCLCPP_WARN(get_logger(), "no transform found for no_ground_pointcloud: %s", e.what());
     return {};
@@ -259,7 +273,7 @@ void MotionVelocityPlannerNode::on_trajectory(
   std::map<std::string, double> processing_times;
   stop_watch.tic("Total");
 
-  if (!update_planner_data()) {
+  if (!update_planner_data(processing_times)) {
     return;
   }
   processing_times["update_planner_data"] = stop_watch.toc(true);
@@ -277,8 +291,7 @@ void MotionVelocityPlannerNode::on_trajectory(
 
   autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points{
     input_trajectory_msg->points.begin(), input_trajectory_msg->points.end()};
-
-  auto output_trajectory_msg = generate_trajectory(input_trajectory_points);
+  auto output_trajectory_msg = generate_trajectory(input_trajectory_points, processing_times);
   output_trajectory_msg.header = input_trajectory_msg->header;
   processing_times["generate_trajectory"] = stop_watch.toc(true);
 
@@ -293,6 +306,13 @@ void MotionVelocityPlannerNode::on_trajectory(
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = processing_times["Total"];
   processing_time_publisher_->publish(processing_time_msg);
+
+  std::shared_ptr<DiagnosticArray> diagnostics =
+    planner_manager_.get_diagnostics(get_clock()->now());
+  if (!diagnostics->status.empty()) {
+    diagnostics_pub_->publish(*diagnostics);
+  }
+  planner_manager_.clear_diagnostics();
 }
 
 void MotionVelocityPlannerNode::insert_stop(
@@ -324,8 +344,12 @@ void MotionVelocityPlannerNode::insert_slowdown(
   const auto to_insert_idx =
     autoware::motion_utils::insertTargetPoint(to_seg_idx, slowdown_interval.to, trajectory.points);
   if (from_insert_idx && to_insert_idx) {
-    for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx)
-      trajectory.points[idx].longitudinal_velocity_mps = slowdown_interval.velocity;
+    for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx) {
+      trajectory.points[idx].longitudinal_velocity_mps =
+        std::min(  // prevent the node from increasing the velocity
+          trajectory.points[idx].longitudinal_velocity_mps,
+          static_cast<float>(slowdown_interval.velocity));
+    }
   } else {
     RCLCPP_WARN(get_logger(), "Failed to insert slowdown point");
   }
@@ -348,9 +372,7 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
     smoother->applySteeringRateLimit(traj_lateral_acc_filtered, false);
 
   // Resample trajectory with ego-velocity based interval distances
-  auto traj_resampled = smoother->resampleTrajectory(
-    traj_steering_rate_limited, v0, current_pose, planner_data.ego_nearest_dist_threshold,
-    planner_data.ego_nearest_yaw_threshold);
+  auto traj_resampled = traj_steering_rate_limited;
   const size_t traj_resampled_closest =
     autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       traj_resampled, current_pose, planner_data.ego_nearest_dist_threshold,
@@ -360,32 +382,54 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
   autoware::motion_velocity_planner::TrajectoryPoints clipped;
   autoware::motion_velocity_planner::TrajectoryPoints traj_smoothed;
   clipped.insert(
-    clipped.end(), traj_resampled.begin() + traj_resampled_closest, traj_resampled.end());
+    clipped.end(), std::next(traj_resampled.begin(), static_cast<int64_t>(traj_resampled_closest)),
+    traj_resampled.end());
   if (!smoother->apply(v0, a0, clipped, traj_smoothed, debug_trajectories, false)) {
     RCLCPP_ERROR(get_logger(), "failed to smooth");
   }
-  traj_smoothed.insert(
-    traj_smoothed.begin(), traj_resampled.begin(), traj_resampled.begin() + traj_resampled_closest);
-
   if (external_v_limit) {
     autoware::velocity_smoother::trajectory_utils::applyMaximumVelocityLimit(
-      traj_resampled_closest, traj_smoothed.size(), external_v_limit->max_velocity, traj_smoothed);
+      0LU, traj_smoothed.size(), external_v_limit->max_velocity, traj_smoothed);
   }
   return traj_smoothed;
 }
 
 autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_trajectory(
-  autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points)
+  autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points,
+  std::map<std::string, double> & processing_times)
 {
+  universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   autoware_planning_msgs::msg::Trajectory output_trajectory_msg;
   output_trajectory_msg.points = {input_trajectory_points.begin(), input_trajectory_points.end()};
-  if (smooth_velocity_before_planning_)
+  if (smooth_velocity_before_planning_) {
+    stop_watch.tic("smooth");
     input_trajectory_points = smooth_trajectory(input_trajectory_points, planner_data_);
-  const auto resampled_trajectory =
-    autoware::motion_utils::resampleTrajectory(output_trajectory_msg, 0.5);
-
+    processing_times["velocity_smoothing"] = stop_watch.toc("smooth");
+  }
+  stop_watch.tic("resample");
+  TrajectoryPoints resampled_trajectory;
+  // skip points that are too close together to make computation easier
+  if (!input_trajectory_points.empty()) {
+    resampled_trajectory.push_back(input_trajectory_points.front());
+    constexpr auto min_interval_squared = 0.5 * 0.5;  // TODO(Maxime): change to a parameter
+    for (auto i = 1UL; i < input_trajectory_points.size(); ++i) {
+      const auto & p = input_trajectory_points[i];
+      const auto dist_to_prev_point =
+        universe_utils::calcSquaredDistance2d(resampled_trajectory.back(), p);
+      if (dist_to_prev_point > min_interval_squared) {
+        resampled_trajectory.push_back(p);
+      }
+    }
+  }
+  processing_times["resample"] = stop_watch.toc("resample");
+  stop_watch.tic("calculate_time_from_start");
+  motion_utils::calculate_time_from_start(
+    resampled_trajectory, planner_data_.current_odometry.pose.pose.position);
+  processing_times["calculate_time_from_start"] = stop_watch.toc("calculate_time_from_start");
+  stop_watch.tic("plan_velocities");
   const auto planning_results = planner_manager_.plan_velocities(
-    resampled_trajectory.points, std::make_shared<const PlannerData>(planner_data_));
+    resampled_trajectory, std::make_shared<const PlannerData>(planner_data_));
+  processing_times["plan_velocities"] = stop_watch.toc("plan_velocities");
 
   autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factors;
   velocity_factors.header.frame_id = "map";

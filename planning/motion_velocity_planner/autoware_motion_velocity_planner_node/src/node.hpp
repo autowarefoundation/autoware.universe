@@ -38,10 +38,13 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
+
+using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
 
 namespace autoware::motion_velocity_planner
 {
@@ -101,6 +104,7 @@ private:
     this, "~/debug/processing_time_ms_diag"};
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_publisher_;
   autoware::universe_utils::PublishedTimePublisher published_time_publisher_{this};
+  rclcpp::Publisher<DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   //  parameters
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_callback_;
@@ -130,7 +134,7 @@ private:
   // function
   /// @brief update the PlannerData instance with the latest messages received
   /// @return false if some data is not available
-  bool update_planner_data();
+  bool update_planner_data(std::map<std::string, double> & processing_times);
   void insert_stop(
     autoware_planning_msgs::msg::Trajectory & trajectory,
     const geometry_msgs::msg::Point & stop_point) const;
@@ -141,7 +145,8 @@ private:
     const autoware::motion_velocity_planner::TrajectoryPoints & trajectory_points,
     const autoware::motion_velocity_planner::PlannerData & planner_data) const;
   autoware_planning_msgs::msg::Trajectory generate_trajectory(
-    autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points);
+    autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points,
+    std::map<std::string, double> & processing_times);
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 };

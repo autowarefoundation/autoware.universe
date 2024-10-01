@@ -18,6 +18,7 @@
 #include "types.hpp"
 
 #include <autoware/route_handler/route_handler.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 
@@ -43,7 +44,9 @@ inline bool contains_lanelet(const lanelet::ConstLanelets & lanelets, const lane
 /// @param [in] route_handler route handler
 /// @return lanelets crossed by the ego vehicle
 lanelet::ConstLanelets calculate_trajectory_lanelets(
-  const EgoData & ego_data, const std::shared_ptr<const route_handler::RouteHandler> route_handler);
+  const universe_utils::LineString2d & trajectory_ls,
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler);
+
 /// @brief calculate lanelets that may not be crossed by the trajectory but may be overlapped during
 /// a lane change
 /// @param [in] trajectory_lanelets lanelets driven by the ego vehicle
@@ -52,28 +55,30 @@ lanelet::ConstLanelets calculate_trajectory_lanelets(
 /// trajectory_lanelets)
 lanelet::ConstLanelets get_missing_lane_change_lanelets(
   const lanelet::ConstLanelets & trajectory_lanelets,
-  const std::shared_ptr<const route_handler::RouteHandler> route_handler);
+  const std::shared_ptr<const route_handler::RouteHandler> & route_handler);
+
 /// @brief calculate lanelets that should be ignored
-/// @param [in] ego_data data about the ego vehicle
-/// @param [in] trajectory_lanelets lanelets driven by the ego vehicle
+/// @param [in] trajectory_lanelets lanelets followed by the ego vehicle
 /// @param [in] route_handler route handler
-/// @param [in] params parameters
 /// @return lanelets to ignore
 lanelet::ConstLanelets calculate_ignored_lanelets(
-  const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
-  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
-  const PlannerParam & params);
-/// @brief calculate lanelets that should be checked by the module
-/// @param [in] ego_data data about the ego vehicle
-/// @param [in] trajectory_lanelets lanelets driven by the ego vehicle
-/// @param [in] ignored_lanelets lanelets to ignore
-/// @param [in] route_handler route handler
-/// @param [in] params parameters
-/// @return lanelets to check for overlaps
-lanelet::ConstLanelets calculate_other_lanelets(
-  const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
-  const lanelet::ConstLanelets & ignored_lanelets,
-  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
+  const lanelet::ConstLanelets & trajectory_lanelets,
+  const std::shared_ptr<const route_handler::RouteHandler> & route_handler);
+
+/// @brief calculate the polygons representing the ego lane and add it to the ego data
+/// @param [inout] ego_data ego data
+/// @param [in] route_handler route handler with map information
+// void calculate_drivable_lane_polygons(
+//   EgoData & ego_data, const route_handler::RouteHandler & route_handler);
+
+/// @brief calculate the lanelets overlapped at each out of lane point
+/// @param [out] out_of_lane_data data with the out of lane points
+/// @param [in] route_handler route handler with the lanelet map
+void calculate_overlapped_lanelets(
+  OutOfLaneData & out_of_lane_data, const route_handler::RouteHandler & route_handler);
+
+void calculate_out_lanelet_rtree(
+  EgoData & ego_data, const route_handler::RouteHandler & route_handler,
   const PlannerParam & params);
 }  // namespace autoware::motion_velocity_planner::out_of_lane
 
