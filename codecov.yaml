@@ -92,3 +92,24 @@ component_management:
         - planning/motion_velocity_planner/autoware_motion_velocity_out_of_lane_module/**
         - planning/motion_velocity_planner/autoware_motion_velocity_planner_common/**
         - planning/motion_velocity_planner/autoware_motion_velocity_planner_node/**
+
+    - component_id: control-tier-iv-maintained-packages
+      name: Control TIER IV Maintained Packages
+      paths:
+        - control/autoware_autonomous_emergency_braking/**
+        - control/autoware_control_validator/**
+        - control/autoware_external_cmd_selector/**
+        # - control/autoware_joy_controller/**
+        - control/autoware_lane_departure_checker/**
+        - control/autoware_mpc_lateral_controller/**
+        - control/autoware_operation_mode_transition_manager/**
+        - control/autoware_pid_longitudinal_controller/**
+        # - control/autoware_pure_pursuit/**
+        - control/autoware_shift_decider/**
+        # - control/autoware_smart_mpc_trajectory_follower/**
+        - control/autoware_trajectory_follower_base/**
+        - control/autoware_trajectory_follower_node/**
+        - control/autoware_vehicle_cmd_gate/**
+        # - control/control_performance_analysis/**
+        - control/obstacle_collision_checker/**
+        # - control/predicted_path_checker/**
