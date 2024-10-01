@@ -280,8 +280,6 @@ void MultiObjectTracker::runProcess(
   // Normalize the object uncertainty
   uncertainty::normalizeUncertainty(input_objects_with_uncertainty);
 
-  // Add the odometry uncertainty to the object uncertainty
-
   // Transform the objects to the world frame
   DetectedObjects transformed_objects;
   if (!object_recognition_utils::transformObjects(
