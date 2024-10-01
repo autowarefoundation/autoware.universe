@@ -32,8 +32,8 @@ bool BrakeMap::readBrakeMapFromCSV(const std::string & csv_path, const bool vali
   }
 
   vehicle_name_ = table[0][0];
-  vel_index_ = CSVLoader::getRowIndex(table);
-  brake_index_ = CSVLoader::getColumnIndex(table);
+  vel_index_ = CSVLoader::getColumnIndex(table);
+  brake_index_ = CSVLoader::getRowIndex(table);
   brake_map_ = CSVLoader::getMap(table);
   brake_index_rev_ = brake_index_;
   if (validation && !CSVLoader::validateMap(brake_map_, false)) {

@@ -200,8 +200,7 @@ bool isPathInLanelets(
   return true;
 }
 
-// cppcheck-suppress unusedFunction
-bool pathFootprintExceedsTargetLaneBound(
+bool path_footprint_exceeds_target_lane_bound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
   const double margin)
 {
@@ -549,31 +548,6 @@ double getLateralShift(const LaneChangePath & path)
   return path.shifted_path.shift_length.at(end_idx) - path.shifted_path.shift_length.at(start_idx);
 }
 
-bool hasEnoughLengthToLaneChangeAfterAbort(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const Pose & current_pose, const double abort_return_dist,
-  const LaneChangeParameters & lane_change_parameters, const Direction direction)
-{
-  if (current_lanes.empty()) {
-    return false;
-  }
-
-  const auto minimum_lane_change_length = calculation::calc_minimum_lane_change_length(
-    route_handler, current_lanes.back(), lane_change_parameters, direction);
-  const auto abort_plus_lane_change_length = abort_return_dist + minimum_lane_change_length;
-  if (abort_plus_lane_change_length > utils::getDistanceToEndOfLane(current_pose, current_lanes)) {
-    return false;
-  }
-
-  if (
-    abort_plus_lane_change_length >
-    utils::getSignedDistance(current_pose, route_handler->getGoalPose(), current_lanes)) {
-    return false;
-  }
-
-  return true;
-}
-
 std::vector<std::vector<int64_t>> getSortedLaneIds(
   const RouteHandler & route_handler, const Pose & current_pose,
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes)
@@ -737,12 +711,12 @@ bool isParkedObject(
   using lanelet::geometry::toArcCoordinates;
 
   const double object_vel_norm =
-    std::hypot(object.initial_twist.twist.linear.x, object.initial_twist.twist.linear.y);
+    std::hypot(object.initial_twist.linear.x, object.initial_twist.linear.y);
   if (object_vel_norm > static_object_velocity_threshold) {
     return false;
   }
 
-  const auto & object_pose = object.initial_pose.pose;
+  const auto & object_pose = object.initial_pose;
   const auto object_closest_index =
     autoware::motion_utils::findNearestIndex(path.points, object_pose.position);
   const auto object_closest_pose = path.points.at(object_closest_index).point.pose;
@@ -809,7 +783,7 @@ bool isParkedObject(
 {
   using lanelet::geometry::distance2d;
 
-  const auto & obj_pose = object.initial_pose.pose;
+  const auto & obj_pose = object.initial_pose;
   const auto & obj_shape = object.shape;
   const auto obj_poly = autoware::universe_utils::toPolygon2d(obj_pose, obj_shape);
   const auto obj_point = obj_pose.position;
@@ -852,9 +826,7 @@ bool passed_parked_objects(
     lane_change_parameters.object_check_min_road_shoulder_width;
   const auto & object_shiftable_ratio_threshold =
     lane_change_parameters.object_shiftable_ratio_threshold;
-  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
-  const auto current_lane_path =
-    route_handler.getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto & current_lane_path = common_data_ptr->current_lanes_path;
 
   if (objects.empty() || lane_change_path.path.points.empty() || current_lane_path.points.empty()) {
     return true;
@@ -870,7 +842,7 @@ bool passed_parked_objects(
   const auto & leading_obj = objects.at(*leading_obj_idx);
   auto debug = utils::path_safety_checker::createObjectDebug(leading_obj);
   const auto leading_obj_poly =
-    autoware::universe_utils::toPolygon2d(leading_obj.initial_pose.pose, leading_obj.shape);
+    autoware::universe_utils::toPolygon2d(leading_obj.initial_pose, leading_obj.shape);
   if (leading_obj_poly.outer().empty()) {
     return true;
   }
@@ -902,7 +874,7 @@ bool passed_parked_objects(
 
   const auto current_pose = common_data_ptr->get_ego_pose();
   const auto dist_ego_to_obj = motion_utils::calcSignedArcLength(
-    current_lane_path.points, current_pose.position, leading_obj.initial_pose.pose.position);
+    current_lane_path.points, current_pose.position, leading_obj.initial_pose.position);
 
   if (dist_ego_to_obj < lane_change_path.info.length.lane_changing) {
     return true;
@@ -931,12 +903,11 @@ std::optional<size_t> getLeadingStaticObjectIdx(
   std::optional<size_t> leading_obj_idx = std::nullopt;
   for (size_t obj_idx = 0; obj_idx < objects.size(); ++obj_idx) {
     const auto & obj = objects.at(obj_idx);
-    const auto & obj_pose = obj.initial_pose.pose;
+    const auto & obj_pose = obj.initial_pose;
 
     // ignore non-static object
     // TODO(shimizu): parametrize threshold
-    const double obj_vel_norm =
-      std::hypot(obj.initial_twist.twist.linear.x, obj.initial_twist.twist.linear.y);
+    const double obj_vel_norm = std::hypot(obj.initial_twist.linear.x, obj.initial_twist.linear.y);
     if (obj_vel_norm > 1.0) {
       continue;
     }
@@ -992,8 +963,8 @@ ExtendedPredictedObject transform(
   const auto & prepare_duration = lane_change_parameters.lane_change_prepare_duration;
   const auto & velocity_threshold = lane_change_parameters.stopped_object_velocity_threshold;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
-  const double obj_vel_norm = std::hypot(
-    extended_object.initial_twist.twist.linear.x, extended_object.initial_twist.twist.linear.y);
+  const double obj_vel_norm =
+    std::hypot(extended_object.initial_twist.linear.x, extended_object.initial_twist.linear.y);
 
   extended_object.predicted_paths.resize(object.kinematics.predicted_paths.size());
   for (size_t i = 0; i < object.kinematics.predicted_paths.size(); ++i) {
@@ -1145,16 +1116,6 @@ bool is_same_lane_with_prev_iteration(
          (prev_target_lanes.back().id() == prev_target_lanes.back().id());
 }
 
-Pose to_pose(
-  const autoware::universe_utils::Point2d & point,
-  const geometry_msgs::msg::Quaternion & orientation)
-{
-  Pose pose;
-  pose.position = autoware::universe_utils::createPoint(point.x(), point.y(), 0.0);
-  pose.orientation = orientation;
-  return pose;
-}
-
 bool is_ahead_of_ego(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
   const PredictedObject & object)
@@ -1279,47 +1240,3 @@ double get_distance_to_next_regulatory_element(
   return distance;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
-
-namespace autoware::behavior_path_planner::utils::lane_change::debug
-{
-geometry_msgs::msg::Point32 create_point32(const geometry_msgs::msg::Pose & pose)
-{
-  geometry_msgs::msg::Point32 p;
-  p.x = static_cast<float>(pose.position.x);
-  p.y = static_cast<float>(pose.position.y);
-  p.z = static_cast<float>(pose.position.z);
-  return p;
-};
-
-geometry_msgs::msg::Polygon createExecutionArea(
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const Pose & pose,
-  double additional_lon_offset, double additional_lat_offset)
-{
-  const double & base_to_front = vehicle_info.max_longitudinal_offset_m;
-  const double & width = vehicle_info.vehicle_width_m;
-  const double & base_to_rear = vehicle_info.rear_overhang_m;
-
-  // if stationary object, extend forward and backward by the half of lon length
-  const double forward_lon_offset = base_to_front + additional_lon_offset;
-  const double backward_lon_offset = -base_to_rear;
-  const double lat_offset = width / 2.0 + additional_lat_offset;
-
-  const auto p1 =
-    autoware::universe_utils::calcOffsetPose(pose, forward_lon_offset, lat_offset, 0.0);
-  const auto p2 =
-    autoware::universe_utils::calcOffsetPose(pose, forward_lon_offset, -lat_offset, 0.0);
-  const auto p3 =
-    autoware::universe_utils::calcOffsetPose(pose, backward_lon_offset, -lat_offset, 0.0);
-  const auto p4 =
-    autoware::universe_utils::calcOffsetPose(pose, backward_lon_offset, lat_offset, 0.0);
-  geometry_msgs::msg::Polygon polygon;
-
-  polygon.points.push_back(create_point32(p1));
-  polygon.points.push_back(create_point32(p2));
-  polygon.points.push_back(create_point32(p3));
-  polygon.points.push_back(create_point32(p4));
-
-  return polygon;
-}
-
-}  // namespace autoware::behavior_path_planner::utils::lane_change::debug

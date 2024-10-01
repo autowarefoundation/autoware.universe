@@ -35,7 +35,7 @@ ShiftPullOver::ShiftPullOver(
 {
 }
 std::optional<PullOverPath> ShiftPullOver::plan(
-  const std::shared_ptr<const PlannerData> planner_data,
+  const size_t goal_id, const size_t id, const std::shared_ptr<const PlannerData> planner_data,
   const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose)
 {
   const auto & route_handler = planner_data->route_handler;
@@ -59,7 +59,8 @@ std::optional<PullOverPath> ShiftPullOver::plan(
   // find safe one from paths with different jerk
   for (double lateral_jerk = min_jerk; lateral_jerk <= max_jerk; lateral_jerk += jerk_resolution) {
     const auto pull_over_path = generatePullOverPath(
-      planner_data, previous_module_output, road_lanes, pull_over_lanes, goal_pose, lateral_jerk);
+      goal_id, id, planner_data, previous_module_output, road_lanes, pull_over_lanes, goal_pose,
+      lateral_jerk);
     if (!pull_over_path) continue;
     return *pull_over_path;
   }
@@ -126,7 +127,7 @@ std::optional<PathWithLaneId> ShiftPullOver::cropPrevModulePath(
 }
 
 std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
-  const std::shared_ptr<const PlannerData> planner_data,
+  const size_t goal_id, const size_t id, const std::shared_ptr<const PlannerData> planner_data,
   const BehaviorModuleOutput & previous_module_output, const lanelet::ConstLanelets & road_lanes,
   const lanelet::ConstLanelets & shoulder_lanes, const Pose & goal_pose,
   const double lateral_jerk) const
@@ -254,13 +255,14 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   }
 
   // set pull over path
-  PullOverPath pull_over_path{};
-  pull_over_path.type = getPlannerType();
-  std::vector<PathWithLaneId> partial_paths{shifted_path.path};
-  pull_over_path.setPaths(
-    partial_paths, path_shifter.getShiftLines().front().start,
-    path_shifter.getShiftLines().front().end);
-  pull_over_path.pairs_terminal_velocity_and_accel.push_back(std::make_pair(pull_over_velocity, 0));
+  auto pull_over_path_opt = PullOverPath::create(
+    getPlannerType(), goal_id, id, {shifted_path.path}, path_shifter.getShiftLines().front().start,
+    path_shifter.getShiftLines().front().end, {std::make_pair(pull_over_velocity, 0)});
+
+  if (!pull_over_path_opt) {
+    return {};
+  }
+  auto & pull_over_path = pull_over_path_opt.value();
   pull_over_path.debug_poses.push_back(shift_end_pose_prev_module_path);
   pull_over_path.debug_poses.push_back(actual_shift_end_pose);
   pull_over_path.debug_poses.push_back(goal_pose);
@@ -275,7 +277,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
     const auto parking_lot_polygons =
       lanelet::utils::query::getAllParkingLots(planner_data->route_handler->getLaneletMapPtr());
     const auto path_footprints = goal_planner_utils::createPathFootPrints(
-      pull_over_path.getParkingPath(), p.base_link2front, p.base_link2rear, p.vehicle_width);
+      pull_over_path.parking_path(), p.base_link2front, p.base_link2rear, p.vehicle_width);
     const auto is_footprint_in_any_polygon = [&parking_lot_polygons](const auto & footprint) {
       return std::any_of(
         parking_lot_polygons.begin(), parking_lot_polygons.end(),
@@ -299,7 +301,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
     const auto combined_drivable = utils::combineDrivableLanes(
       expanded_lanes, previous_module_output.drivable_area_info.drivable_lanes);
     return !lane_departure_checker_.checkPathWillLeaveLane(
-      utils::transformToLanelets(combined_drivable), pull_over_path.getParkingPath());
+      utils::transformToLanelets(combined_drivable), pull_over_path.parking_path());
   });
   if (!is_in_parking_lots && !is_in_lanes) {
     return {};

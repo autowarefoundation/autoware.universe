@@ -14,7 +14,6 @@
 
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
 
-#include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/bus_stop_area.hpp"
@@ -34,7 +33,6 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -671,20 +669,75 @@ std::string makePathPriorityDebugMessage(
   for (size_t i = 0; i < sorted_path_indices.size(); ++i) {
     const auto & path = pull_over_path_candidates[sorted_path_indices[i]];
     // goal_index is same to goal priority including unsafe goal
-    const int goal_index = static_cast<int>(goal_id_to_index.at(path.goal_id));
+    const int goal_index = static_cast<int>(goal_id_to_index.at(path.goal_id()));
     const bool is_safe_goal = goal_candidates[goal_index].is_safe;
-    const int goal_priority = goal_id_and_priority[path.goal_id];
+    const int goal_priority = goal_id_and_priority[path.goal_id()];
 
-    ss << "path_priority: " << i << ", path_type: " << magic_enum::enum_name(path.type)
-       << ", path_id: " << path.id << ", goal_id: " << path.goal_id
+    ss << "path_priority: " << i << ", path_type: " << magic_enum::enum_name(path.type())
+       << ", path_id: " << path.id() << ", goal_id: " << path.goal_id()
        << ", goal_priority: " << (is_safe_goal ? std::to_string(goal_priority) : "unsafe")
-       << ", margin: " << path_id_to_rough_margin_map.at(path.id)
+       << ", margin: " << path_id_to_rough_margin_map.at(path.id())
        << (isSoftMargin(path) ? " (soft)" : " (hard)")
-       << ", curvature: " << path.getParkingPathMaxCurvature()
+       << ", curvature: " << path.parking_path_max_curvature()
        << (isHighCurvature(path) ? " (high)" : " (low)") << "\n";
   }
   ss << "-----------------------------------------------------------\n";
   return ss.str();
+}
+
+lanelet::Points3d combineLanePoints(
+  const lanelet::Points3d & points, const lanelet::Points3d & points_next)
+{
+  lanelet::Points3d combined_points;
+  std::unordered_set<lanelet::Id> point_ids;
+  for (const auto & point : points) {
+    if (point_ids.insert(point.id()).second) {
+      combined_points.push_back(point);
+    }
+  }
+  for (const auto & point : points_next) {
+    if (point_ids.insert(point.id()).second) {
+      combined_points.push_back(point);
+    }
+  }
+  return combined_points;
+}
+
+lanelet::Lanelet createDepartureCheckLanelet(
+  const lanelet::ConstLanelets & pull_over_lanes, const route_handler::RouteHandler & route_handler,
+  const bool left_side_parking)
+{
+  const auto getBoundPoints =
+    [&](const lanelet::ConstLanelet & lane, const bool is_outer) -> lanelet::Points3d {
+    lanelet::Points3d points;
+    const auto & bound = left_side_parking ? (is_outer ? lane.leftBound() : lane.rightBound())
+                                           : (is_outer ? lane.rightBound() : lane.leftBound());
+    for (const auto & pt : bound) {
+      points.push_back(lanelet::Point3d(pt));
+    }
+    return points;
+  };
+
+  const auto getMostInnerLane = [&](const lanelet::ConstLanelet & lane) -> lanelet::ConstLanelet {
+    return left_side_parking ? route_handler.getMostRightLanelet(lane, false, true)
+                             : route_handler.getMostLeftLanelet(lane, false, true);
+  };
+
+  lanelet::Points3d outer_bound_points{};
+  lanelet::Points3d inner_bound_points{};
+  for (const auto & lane : pull_over_lanes) {
+    const auto current_outer_bound_points = getBoundPoints(lane, true);
+    const auto most_inner_lane = getMostInnerLane(lane);
+    const auto current_inner_bound_points = getBoundPoints(most_inner_lane, false);
+    outer_bound_points = combineLanePoints(outer_bound_points, current_outer_bound_points);
+    inner_bound_points = combineLanePoints(inner_bound_points, current_inner_bound_points);
+  }
+
+  const auto outer_linestring = lanelet::LineString3d(lanelet::InvalId, outer_bound_points);
+  const auto inner_linestring = lanelet::LineString3d(lanelet::InvalId, inner_bound_points);
+  return lanelet::Lanelet(
+    lanelet::InvalId, left_side_parking ? outer_linestring : inner_linestring,
+    left_side_parking ? inner_linestring : outer_linestring);
 }
 
 }  // namespace autoware::behavior_path_planner::goal_planner_utils
