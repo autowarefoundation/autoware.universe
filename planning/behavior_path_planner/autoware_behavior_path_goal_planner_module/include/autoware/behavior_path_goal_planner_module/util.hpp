@@ -17,7 +17,6 @@
 
 #include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
-#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 
 #include <autoware/lane_departure_checker/lane_departure_checker.hpp>
 
@@ -31,7 +30,6 @@
 #include <lanelet2_core/Forward.h>
 
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
