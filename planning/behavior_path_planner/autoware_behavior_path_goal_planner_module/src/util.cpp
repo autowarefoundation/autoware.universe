@@ -671,16 +671,16 @@ std::string makePathPriorityDebugMessage(
   for (size_t i = 0; i < sorted_path_indices.size(); ++i) {
     const auto & path = pull_over_path_candidates[sorted_path_indices[i]];
     // goal_index is same to goal priority including unsafe goal
-    const int goal_index = static_cast<int>(goal_id_to_index.at(path.goal_id));
+    const int goal_index = static_cast<int>(goal_id_to_index.at(path.goal_id()));
     const bool is_safe_goal = goal_candidates[goal_index].is_safe;
-    const int goal_priority = goal_id_and_priority[path.goal_id];
+    const int goal_priority = goal_id_and_priority[path.goal_id()];
 
-    ss << "path_priority: " << i << ", path_type: " << magic_enum::enum_name(path.type)
-       << ", path_id: " << path.id << ", goal_id: " << path.goal_id
+    ss << "path_priority: " << i << ", path_type: " << magic_enum::enum_name(path.type())
+       << ", path_id: " << path.id() << ", goal_id: " << path.goal_id()
        << ", goal_priority: " << (is_safe_goal ? std::to_string(goal_priority) : "unsafe")
-       << ", margin: " << path_id_to_rough_margin_map.at(path.id)
+       << ", margin: " << path_id_to_rough_margin_map.at(path.id())
        << (isSoftMargin(path) ? " (soft)" : " (hard)")
-       << ", curvature: " << path.getParkingPathMaxCurvature()
+       << ", curvature: " << path.parking_path_max_curvature()
        << (isHighCurvature(path) ? " (high)" : " (low)") << "\n";
   }
   ss << "-----------------------------------------------------------\n";
