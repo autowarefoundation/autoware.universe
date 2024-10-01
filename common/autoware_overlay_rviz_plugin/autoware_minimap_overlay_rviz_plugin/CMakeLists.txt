@@ -50,7 +50,6 @@ ament_auto_add_library(
 target_compile_options(
   ${PROJECT_NAME}
   PUBLIC
-  "-DVEHICLEMAP_VERSION=\"${vehicle_map_VERSION}\""
 )
 
 include_directories(
