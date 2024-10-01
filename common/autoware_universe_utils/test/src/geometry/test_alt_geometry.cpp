@@ -209,6 +209,8 @@ TEST(alt_geometry, distance)
   using autoware::universe_utils::distance;
   using autoware::universe_utils::alt::ConvexPolygon2d;
   using autoware::universe_utils::alt::Point2d;
+  using autoware::universe_utils::alt::PointList2d;
+  using autoware::universe_utils::alt::Polygon2d;
 
   {  // Normal setting
     const Point2d p = {0.0, 1.0};
@@ -296,6 +298,44 @@ TEST(alt_geometry, distance)
     const Point2d p3 = {-1.0, -1.0};
     const Point2d p4 = {-1.0, 1.0};
     const auto result = distance(p, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    EXPECT_NEAR(result, 0.0, epsilon);
+  }
+
+  {  // The point is outside the concave polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({1.0, 1.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+    outer.push_back({0.0, 0.0});
+
+    const Point2d p = {1.0, 2.0};
+
+    const auto result = distance(p, Polygon2d::create(outer, {}).value());
+
+    EXPECT_NEAR(result, std::pow(2, -0.5), epsilon);
+  }
+
+  {  // The point is inside the hole of the polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+    outer.push_back({0.0, 0.0});
+
+    PointList2d inner;
+    inner.push_back({0.5, 0.5});
+    inner.push_back({0.5, 1.5});
+    inner.push_back({1.5, 1.5});
+    inner.push_back({1.5, 0.5});
+    inner.push_back({0.5, 0.5});
+
+    const Point2d p = {1.0, 1.0};
+
+    const auto result = distance(p, Polygon2d::create(outer, {inner}).value());
 
     EXPECT_NEAR(result, 0.0, epsilon);
   }
