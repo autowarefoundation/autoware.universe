@@ -932,41 +932,66 @@ std::pair<double, double> NormalLaneChange::calcCurrentMinMaxAcceleration() cons
 }
 
 std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
-  const lanelet::ConstLanelets & current_lanes) const
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
 {
   if (prev_module_output_.path.points.empty()) {
     return {};
   }
 
-  const auto & transient_data = common_data_ptr_->transient_data;
-  const auto max_acc = transient_data.acc.max;
-  const auto sample_acc_values = [&](std::string && reason_for_sampling) {
-    const auto min_acc = transient_data.acc.min;
-    const auto lon_acc_sampling_num = common_data_ptr_->lc_param_ptr->longitudinal_acc_sampling_num;
+  const auto & route_handler = *getRouteHandler();
+  const auto current_pose = getEgoPose();
+  const auto longitudinal_acc_sampling_num = lane_change_parameters_->longitudinal_acc_sampling_num;
 
-    RCLCPP_DEBUG(
-      logger_, "%sSample all possible acc: [%f ~ %f]", reason_for_sampling.data(), min_acc,
-      max_acc);
-    return utils::lane_change::getAccelerationValues(min_acc, max_acc, lon_acc_sampling_num);
-  };
+  const auto [min_acc, max_acc] = calcCurrentMinMaxAcceleration();
 
   // if max acc is not positive, then we do the normal sampling
   if (max_acc <= 0.0) {
-    return sample_acc_values("Maximum acceleration <= 0. ");
+    RCLCPP_DEBUG(
+      logger_, "Available max acc <= 0. Normal sampling for acc: [%f ~ %f]", min_acc, max_acc);
+    return utils::lane_change::getAccelerationValues(
+      min_acc, max_acc, longitudinal_acc_sampling_num);
+  }
+
+  // calculate maximum lane change length
+  // TODO(Azu) Double check why it's failing with transient data
+  const auto current_max_dist_buffer =
+    calculation::calc_maximum_lane_change_length(common_data_ptr_, current_lanes.back(), max_acc);
+
+  if (current_max_dist_buffer > common_data_ptr_->transient_data.dist_to_terminal_end) {
+    RCLCPP_DEBUG(
+      logger_, "No enough distance to the end of lane. Normal sampling for acc: [%f ~ %f]", min_acc,
+      max_acc);
+    return utils::lane_change::getAccelerationValues(
+      min_acc, max_acc, longitudinal_acc_sampling_num);
   }
 
   // If the ego is in stuck, sampling all possible accelerations to find avoiding path.
   if (isVehicleStuck(current_lanes)) {
-    return sample_acc_values("Ego is stuck. ");
+    auto clock = rclcpp::Clock(RCL_ROS_TIME);
+    RCLCPP_INFO_THROTTLE(
+      logger_, clock, 1000, "Vehicle is in stuck. Sample all possible acc: [%f ~ %f]", min_acc,
+      max_acc);
+    return utils::lane_change::getAccelerationValues(
+      min_acc, max_acc, longitudinal_acc_sampling_num);
   }
 
-  const auto max_lc_length =
-    transient_data.max_prepare_length + transient_data.current_dist_buffer.max;
-  if (max_lc_length <= transient_data.dist_to_terminal_end) {
+  // if maximum lane change length is less than length to goal or the end of target lanes, only
+  // sample max acc
+  if (route_handler.isInGoalRouteSection(target_lanes.back())) {
+    const auto goal_pose = route_handler.getGoalPose();
+    if (current_max_dist_buffer < utils::getSignedDistance(current_pose, goal_pose, target_lanes)) {
+      RCLCPP_DEBUG(
+        logger_, "Distance to goal has enough distance. Sample only max_acc: %f", max_acc);
+      return {max_acc};
+    }
+  } else if (current_max_dist_buffer < utils::getDistanceToEndOfLane(current_pose, target_lanes)) {
+    RCLCPP_DEBUG(
+      logger_, "Distance to end of lane has enough distance. Sample only max_acc: %f", max_acc);
     return {max_acc};
   }
 
-  return sample_acc_values("");
+  RCLCPP_DEBUG(logger_, "Normal sampling for acc: [%f ~ %f]", min_acc, max_acc);
+  return utils::lane_change::getAccelerationValues(min_acc, max_acc, longitudinal_acc_sampling_num);
 }
 
 std::vector<double> NormalLaneChange::calcPrepareDuration() const
@@ -1314,7 +1339,8 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_prepare_metrics() cons
   const auto current_velocity = getEgoVelocity();
 
   // get sampling acceleration values
-  const auto longitudinal_acc_sampling_values = sampleLongitudinalAccValues(current_lanes);
+  const auto longitudinal_acc_sampling_values =
+    sampleLongitudinalAccValues(current_lanes, target_lanes);
 
   const auto prepare_durations = calcPrepareDuration();
 
