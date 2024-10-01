@@ -44,15 +44,19 @@ Detail description of each ground segmentation algorithm is in the following lin
 | `approximate_sync`   | bool   | false         | flag to use approximate sync option   |
 
 ### Ground Segmentation
+
 {{ json_to_markdown("perception/autoware_ground_segmentation/schema/ground_segmentation.schema.json") }}
 
 ### RANSAC Ground Filter
+
 {{ json_to_markdown("perception/autoware_ground_segmentation/schema/ransac_ground_filter.schema.json") }}
 
 ### Ray Ground Filter
+
 {{ json_to_markdown("perception/autoware_ground_segmentation/schema/ray_ground_filter.schema.json") }}
 
 ### Scan Ground Filter
+
 {{ json_to_markdown("perception/autoware_ground_segmentation/schema/scan_ground_filter.schema.json") }}
 
 ## Assumptions / Known limits
