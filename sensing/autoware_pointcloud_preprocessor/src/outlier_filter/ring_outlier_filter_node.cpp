@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/outlier_filter/ring_outlier_filter_node.hpp"
 
 #include "autoware_point_types/types.hpp"
 
@@ -47,22 +47,21 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
 
   // set initial parameters
   {
-    distance_ratio_ = static_cast<double>(declare_parameter("distance_ratio", 1.03));
-    object_length_threshold_ =
-      static_cast<double>(declare_parameter("object_length_threshold", 0.1));
-    num_points_threshold_ = static_cast<int>(declare_parameter("num_points_threshold", 4));
-    max_rings_num_ = static_cast<uint16_t>(declare_parameter("max_rings_num", 128));
+    distance_ratio_ = declare_parameter<double>("distance_ratio");
+    object_length_threshold_ = declare_parameter<double>("object_length_threshold");
+    num_points_threshold_ = declare_parameter<int>("num_points_threshold");
+    max_rings_num_ = static_cast<uint16_t>(declare_parameter<int64_t>("max_rings_num"));
     max_points_num_per_ring_ =
-      static_cast<size_t>(declare_parameter("max_points_num_per_ring", 4000));
-    publish_outlier_pointcloud_ =
-      static_cast<bool>(declare_parameter("publish_outlier_pointcloud", false));
+      static_cast<size_t>(declare_parameter<int64_t>("max_points_num_per_ring"));
 
-    min_azimuth_deg_ = static_cast<float>(declare_parameter("min_azimuth_deg", 0.0));
-    max_azimuth_deg_ = static_cast<float>(declare_parameter("max_azimuth_deg", 360.0));
-    max_distance_ = static_cast<float>(declare_parameter("max_distance", 12.0));
-    vertical_bins_ = static_cast<int>(declare_parameter("vertical_bins", 128));
-    horizontal_bins_ = static_cast<int>(declare_parameter("horizontal_bins", 36));
-    noise_threshold_ = static_cast<int>(declare_parameter("noise_threshold", 2));
+    publish_outlier_pointcloud_ = declare_parameter<bool>("publish_outlier_pointcloud");
+
+    min_azimuth_deg_ = declare_parameter<float>("min_azimuth_deg");
+    max_azimuth_deg_ = declare_parameter<float>("max_azimuth_deg");
+    max_distance_ = declare_parameter<float>("max_distance");
+    vertical_bins_ = declare_parameter<int>("vertical_bins");
+    horizontal_bins_ = declare_parameter<int>("horizontal_bins");
+    noise_threshold_ = declare_parameter<int>("noise_threshold");
   }
 
   using std::placeholders::_1;
