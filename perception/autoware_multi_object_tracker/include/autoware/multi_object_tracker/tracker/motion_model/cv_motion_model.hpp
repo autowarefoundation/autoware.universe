@@ -41,7 +41,7 @@ private:
   // attributes
   rclcpp::Logger logger_;
 
-  // motion parameters
+  // motion parameters: process noise and motion limits
   struct MotionParams
   {
     double q_cov_x = 0.025;    // [m^2/s^2] uncertain position in x, 0.5m/s

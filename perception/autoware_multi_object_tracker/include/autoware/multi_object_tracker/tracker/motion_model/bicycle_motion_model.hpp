@@ -45,7 +45,7 @@ private:
   double lf_;
   double lr_;
 
-  // motion parameters
+  // motion parameters: process noise and motion limits
   struct MotionParams
   {
     double q_stddev_acc_long = 3.43;         // [m/s^2] uncertain longitudinal acceleration, 0.35G
