@@ -160,17 +160,16 @@ public:
       return false;
     }
 
-    return pull_over_path_->isValidPath();
+    return true;
   }
 
-  PullOverPlannerType getPullOverPlannerType() const
+  std::optional<PullOverPlannerType> getPullOverPlannerType() const
   {
     const std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!pull_over_path_) {
-      return PullOverPlannerType::NONE;
+      return std::nullopt;
     }
-
-    return pull_over_path_->type;
+    return pull_over_path_->type();
   };
 
   void reset()
@@ -206,7 +205,7 @@ private:
   void set_pull_over_path_no_lock(const PullOverPath & path)
   {
     pull_over_path_ = std::make_shared<PullOverPath>(path);
-    if (path.type != PullOverPlannerType::NONE && path.type != PullOverPlannerType::FREESPACE) {
+    if (path.type() != PullOverPlannerType::FREESPACE) {
       lane_parking_pull_over_path_ = std::make_shared<PullOverPath>(path);
     }
 
@@ -216,7 +215,7 @@ private:
   void set_pull_over_path_no_lock(const std::shared_ptr<PullOverPath> & path)
   {
     pull_over_path_ = path;
-    if (path->type != PullOverPlannerType::NONE && path->type != PullOverPlannerType::FREESPACE) {
+    if (path->type() != PullOverPlannerType::FREESPACE) {
       lane_parking_pull_over_path_ = path;
     }
     last_path_update_time_ = clock_->now();
