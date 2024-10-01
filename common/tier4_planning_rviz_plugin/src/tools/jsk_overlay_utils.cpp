@@ -62,11 +62,6 @@ ScopedPixelBuffer::~ScopedPixelBuffer()
   pixel_buffer_->unlock();
 }
 
-Ogre::HardwarePixelBufferSharedPtr ScopedPixelBuffer::getPixelBuffer()
-{
-  return pixel_buffer_;
-}
-
 QImage ScopedPixelBuffer::getQImage(unsigned int width, unsigned int height)
 {
   const Ogre::PixelBox & pixelBox = pixel_buffer_->getCurrentLock();
@@ -116,7 +111,7 @@ OverlayObject::OverlayObject(
 
 OverlayObject::~OverlayObject()
 {
-  hide();
+  OverlayObject::hide();
   panel_material_->unload();
   Ogre::MaterialManager::getSingleton().remove(panel_material_->getName());
   // Ogre::OverlayManager* mOverlayMgr = Ogre::OverlayManager::getSingletonPtr();

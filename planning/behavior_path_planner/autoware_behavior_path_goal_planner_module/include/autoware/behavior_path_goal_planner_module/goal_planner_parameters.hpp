@@ -61,6 +61,12 @@ struct GoalPlannerParameters
   double ignore_distance_from_lane_start{0.0};
   double margin_from_boundary{0.0};
   double high_curvature_threshold{0.0};
+  struct BusStopArea
+  {
+    bool use_bus_stop_area{false};
+    double goal_search_interval{0.0};
+    double lateral_offset_interval{0.0};
+  } bus_stop_area;
 
   // occupancy grid map
   bool use_occupancy_grid_for_goal_search{false};
@@ -89,6 +95,7 @@ struct GoalPlannerParameters
   double maximum_jerk{0.0};
   std::string path_priority;  // "efficient_path" or "close_goal"
   std::vector<std::string> efficient_path_order{};
+  double lane_departure_check_expansion_margin{0.0};
 
   // shift path
   bool enable_shift_parking{false};

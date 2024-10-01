@@ -271,6 +271,8 @@ void PointPaintingFusionNode::fuseOnSingleImage(
     return;
   }
 
+  if (!checkCameraInfo(camera_info)) return;
+
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
   std::vector<Eigen::Vector2d> debug_image_points;
 
@@ -349,7 +351,6 @@ dc   | dc dc dc  dc ||zc|
       // paint current point if it is inside bbox
       int label2d = feature_object.object.classification.front().label;
       if (!isUnknown(label2d) && isInsideBbox(projected_point.x(), projected_point.y(), roi, p_z)) {
-        data = &painted_pointcloud_msg.data[0];
         // cppcheck-suppress invalidPointerCast
         auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
         for (const auto & cls : isClassTable_) {

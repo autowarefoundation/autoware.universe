@@ -16,6 +16,7 @@
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 
 #include <Eigen/Core>
+#include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sophus/se3.hpp>
 
@@ -25,6 +26,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
+#include <tf2/LinearMath/Transform.h>
 #include <tf2/convert.h>
 #include <tf2/transform_datatypes.h>
 
@@ -72,8 +74,7 @@ protected:
   bool pointcloud_transform_exists_{false};
   bool imu_transform_exists_{false};
   rclcpp::Node * node_;
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
+  std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
@@ -95,11 +96,13 @@ protected:
     static_cast<T *>(this)->undistortPointImplementation(
       it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
   };
+  void convertMatrixToTransform(const Eigen::Matrix4f & matrix, tf2::Transform & transform);
 
 public:
-  explicit DistortionCorrector(rclcpp::Node * node)
-  : node_(node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
+  explicit DistortionCorrector(rclcpp::Node * node, const bool & has_static_tf_only) : node_(node)
   {
+    managed_tf_buffer_ =
+      std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(node, has_static_tf_only);
   }
   bool pointcloud_transform_exists();
   bool pointcloud_transform_needed();
@@ -131,7 +134,10 @@ private:
   tf2::Transform tf2_base_link_to_lidar_;
 
 public:
-  explicit DistortionCorrector2D(rclcpp::Node * node) : DistortionCorrector(node) {}
+  explicit DistortionCorrector2D(rclcpp::Node * node, const bool & has_static_tf_only)
+  : DistortionCorrector(node, has_static_tf_only)
+  {
+  }
   void initialize() override;
   void undistortPointImplementation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
@@ -158,7 +164,10 @@ private:
   Eigen::Matrix4f eigen_base_link_to_lidar_;
 
 public:
-  explicit DistortionCorrector3D(rclcpp::Node * node) : DistortionCorrector(node) {}
+  explicit DistortionCorrector3D(rclcpp::Node * node, const bool & has_static_tf_only)
+  : DistortionCorrector(node, has_static_tf_only)
+  {
+  }
   void initialize() override;
   void undistortPointImplementation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,

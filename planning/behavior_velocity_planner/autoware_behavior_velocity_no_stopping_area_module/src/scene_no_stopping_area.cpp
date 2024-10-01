@@ -17,10 +17,10 @@
 #include <autoware/behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/interpolation/spline_interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
-#include <interpolation/spline_interpolation.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/utility/Optional.h>
@@ -48,7 +48,8 @@ NoStoppingAreaModule::NoStoppingAreaModule(
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   no_stopping_area_reg_elem_(no_stopping_area_reg_elem),
-  planner_param_(planner_param)
+  planner_param_(planner_param),
+  debug_data_()
 {
   velocity_factor_.init(PlanningBehavior::NO_STOPPING_AREA);
   state_machine_.setState(StateMachine::State::GO);

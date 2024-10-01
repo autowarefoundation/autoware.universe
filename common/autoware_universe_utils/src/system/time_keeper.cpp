@@ -14,6 +14,9 @@
 
 #include "autoware/universe_utils/system/time_keeper.hpp"
 
+#include <rclcpp/logging.hpp>
+#include <rclcpp/rclcpp.hpp>
+
 #include <fmt/format.h>
 
 #include <stdexcept>
@@ -28,7 +31,7 @@ ProcessingTimeNode::ProcessingTimeNode(const std::string & name) : name_(name)
 std::shared_ptr<ProcessingTimeNode> ProcessingTimeNode::add_child(const std::string & name)
 {
   auto new_child_node = std::make_shared<ProcessingTimeNode>(name);
-  new_child_node->parent_node_ = shared_from_this();
+  new_child_node->parent_node_ = weak_from_this();
   child_nodes_.push_back(new_child_node);
   return new_child_node;
 }
@@ -86,7 +89,7 @@ tier4_debug_msgs::msg::ProcessingTimeTree ProcessingTimeNode::to_msg() const
   return time_tree_msg;
 }
 
-std::shared_ptr<ProcessingTimeNode> ProcessingTimeNode::get_parent_node() const
+std::weak_ptr<ProcessingTimeNode> ProcessingTimeNode::get_parent_node() const
 {
   return parent_node_;
 }
@@ -129,7 +132,14 @@ void TimeKeeper::start_track(const std::string & func_name)
   if (current_time_node_ == nullptr) {
     current_time_node_ = std::make_shared<ProcessingTimeNode>(func_name);
     root_node_ = current_time_node_;
+    root_node_thread_id_ = std::this_thread::get_id();
   } else {
+    if (root_node_thread_id_ != std::this_thread::get_id()) {
+      RCLCPP_WARN(
+        rclcpp::get_logger("TimeKeeper"),
+        "TimeKeeper::start_track() is called from a different thread. Ignoring the call.");
+      return;
+    }
     current_time_node_ = current_time_node_->add_child(func_name);
   }
   stop_watch_.tic(func_name);
@@ -145,6 +155,9 @@ void TimeKeeper::comment(const std::string & comment)
 
 void TimeKeeper::end_track(const std::string & func_name)
 {
+  if (root_node_thread_id_ != std::this_thread::get_id()) {
+    return;
+  }
   if (current_time_node_->get_name() != func_name) {
     throw std::runtime_error(fmt::format(
       "You must call end_track({}) first, but end_track({}) is called",
@@ -152,7 +165,7 @@ void TimeKeeper::end_track(const std::string & func_name)
   }
   const double processing_time = stop_watch_.toc(func_name);
   current_time_node_->set_time(processing_time);
-  current_time_node_ = current_time_node_->get_parent_node();
+  current_time_node_ = current_time_node_->get_parent_node().lock();
 
   if (current_time_node_ == nullptr) {
     report();
@@ -178,7 +191,7 @@ ScopedTimeTrack::ScopedTimeTrack(const std::string & func_name, TimeKeeper & tim
   time_keeper_.start_track(func_name_);
 }
 
-ScopedTimeTrack::~ScopedTimeTrack()
+ScopedTimeTrack::~ScopedTimeTrack()  // NOLINT
 {
   time_keeper_.end_track(func_name_);
 }

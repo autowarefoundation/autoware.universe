@@ -26,11 +26,6 @@
 #include <memory>
 #include <string>
 
-inline std::string Bool2String(const bool var)
-{
-  return var ? "True" : "False";
-}
-
 namespace tier4_adapi_rviz_plugins
 {
 
@@ -565,6 +560,7 @@ void StatePanel::onEmergencyStatus(
 void StatePanel::onClickVelocityLimit()
 {
   auto velocity_limit = std::make_shared<tier4_planning_msgs::msg::VelocityLimit>();
+  velocity_limit->stamp = raw_node_->now();
   velocity_limit->max_velocity = pub_velocity_limit_input_->value() / 3.6;
   pub_velocity_limit_->publish(*velocity_limit);
 }

@@ -91,6 +91,7 @@ public:
   void endMeasurementTime(const rclcpp::Time & now);
   void startPublishTime(const rclcpp::Time & now);
   void endPublishTime(const rclcpp::Time & now, const rclcpp::Time & object_time);
+  // cppcheck-suppress functionConst
   void checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   // Debug object
