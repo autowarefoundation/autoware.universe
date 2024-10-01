@@ -140,6 +140,58 @@ double calc_ego_dist_to_lanes_start(
   return motion_utils::calcSignedArcLength(path.points, ego_position, target_front_pt);
 }
 
+double calc_maximum_lane_change_length(
+  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
+  const std::vector<double> & shift_intervals, const double max_acc)
+{
+  if (shift_intervals.empty()) {
+    return 0.0;
+  }
+
+  const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
+  const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
+  const auto t_prepare = lane_change_parameters.lane_change_prepare_duration;
+
+  auto vel = current_velocity;
+
+  const auto calc_sum = [&](double sum, double shift_interval) {
+    // prepare section
+    const auto prepare_length = vel * t_prepare + 0.5 * max_acc * t_prepare * t_prepare;
+    vel = vel + max_acc * t_prepare;
+
+    // lane changing section
+    const auto [min_lat_acc, max_lat_acc] =
+      lane_change_parameters.lane_change_lat_acc_map.find(vel);
+    const auto t_lane_changing =
+      PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
+    const auto lane_changing_length =
+      vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
+
+    vel = vel + max_acc * t_lane_changing;
+    return sum + (prepare_length + lane_changing_length + finish_judge_buffer);
+  };
+
+  const auto total_length =
+    std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
+
+  const auto backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
+  return total_length + backward_buffer * (static_cast<double>(shift_intervals.size()) - 1.0);
+}
+
+double calc_maximum_lane_change_length(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
+  const double max_acc)
+{
+  const auto shift_intervals =
+    common_data_ptr->route_handler_ptr->getLateralIntervalsToPreferredLane(
+      current_terminal_lanelet);
+  const auto vel = std::max(
+    common_data_ptr->get_ego_speed(),
+    common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity);
+  return calc_maximum_lane_change_length(
+    vel, *common_data_ptr->lc_param_ptr, shift_intervals, max_acc);
+}
+
 std::vector<double> calc_all_min_lc_lengths(
   const LCParamPtr & lc_param_ptr, const std::vector<double> & shift_intervals)
 {
