@@ -253,11 +253,11 @@ void correct(alt::Polygon2d & poly)
   }
 }
 
-bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
+bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly)
 {
   constexpr double epsilon = 1e-6;
 
-  const auto & vertices = poly.vertices();
+  const auto & vertices = poly.outer();
   std::size_t winding_number = 0;
 
   const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
@@ -294,22 +294,6 @@ bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
   }
 
   return winding_number != 0;
-}
-
-bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly)
-{
-  auto _poly = poly;
-  if (!poly.inners().empty()) {
-    _poly = alt::Polygon2d::create(poly.outer(), {}).value();
-  }
-
-  for (const auto & triangle : triangulate(_poly)) {
-    if (covered_by(point, triangle)) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
@@ -351,8 +335,7 @@ double distance(
   }
 }
 
-template <typename PolyT>
-double distance(const alt::Point2d & point, const PolyT & poly)
+double distance(const alt::Point2d & point, const alt::Polygon2d & poly)
 {
   if (covered_by(point, poly)) {
     return 0.0;
@@ -620,11 +603,11 @@ bool touches(const alt::Point2d & point, const alt::Polygon2d & poly)
   return false;
 }
 
-bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
+bool within(const alt::Point2d & point, const alt::Polygon2d & poly)
 {
   constexpr double epsilon = 1e-6;
 
-  const auto & vertices = poly.vertices();
+  const auto & vertices = poly.outer();
   int64_t winding_number = 0;
 
   const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
@@ -660,7 +643,17 @@ bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
     }
   }
 
-  return winding_number != 0;
+  if (winding_number == 0) {
+    return false;
+  }
+
+  for (const auto & inner : poly.inners()) {
+    if (touches(point, inner)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool within(
@@ -679,7 +672,4 @@ bool within(
 
   return true;
 }
-
-template double distance(const alt::Point2d &, const alt::ConvexPolygon2d &);
-template double distance(const alt::Point2d &, const alt::Polygon2d &);
 }  // namespace autoware::universe_utils
