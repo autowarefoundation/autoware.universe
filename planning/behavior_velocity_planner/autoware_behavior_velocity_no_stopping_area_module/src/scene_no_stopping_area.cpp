@@ -24,15 +24,8 @@
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/utility/Optional.h>
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#else
-#include <tf2_eigen/tf2_eigen.hpp>
-#endif
 
-#include <algorithm>
 #include <limits>
-#include <memory>
 #include <utility>
 #include <vector>
 
@@ -43,7 +36,7 @@ namespace bg = boost::geometry;
 NoStoppingAreaModule::NoStoppingAreaModule(
   const int64_t module_id, const int64_t lane_id,
   const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const PlannerParam & planner_param, const rclcpp::Logger & logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
@@ -56,7 +49,7 @@ NoStoppingAreaModule::NoStoppingAreaModule(
   state_machine_.setMarginTime(planner_param_.state_clear_time);
 }
 
-boost::optional<LineString2d> NoStoppingAreaModule::getStopLineGeometry2d(
+std::optional<LineString2d> NoStoppingAreaModule::getStopLineGeometry2d(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const double stop_line_margin) const
 {
   // get stop line from map
@@ -172,11 +165,11 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
     state_machine_.setState(StateMachine::State::GO);
     setSafe(true);
     return false;
-  } else {
-    state_machine_.setStateWithMarginTime(
-      is_entry_prohibited ? StateMachine::State::STOP : StateMachine::State::GO,
-      logger_.get_child("state_machine"), *clock_);
   }
+
+  state_machine_.setStateWithMarginTime(
+    is_entry_prohibited ? StateMachine::State::STOP : StateMachine::State::GO,
+    logger_.get_child("state_machine"), *clock_);
 
   setSafe(state_machine_.getState() != StateMachine::State::STOP);
   if (!isActivated()) {
@@ -357,25 +350,6 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
   return ego_area;
 }
 
-bool NoStoppingAreaModule::isTargetStuckVehicleType(
-  const autoware_perception_msgs::msg::PredictedObject & object) const
-{
-  if (
-    object.classification.front().label ==
-      autoware_perception_msgs::msg::ObjectClassification::CAR ||
-    object.classification.front().label ==
-      autoware_perception_msgs::msg::ObjectClassification::BUS ||
-    object.classification.front().label ==
-      autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
-    object.classification.front().label ==
-      autoware_perception_msgs::msg::ObjectClassification::TRAILER ||
-    object.classification.front().label ==
-      autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
-    return true;
-  }
-  return false;
-}
-
 bool NoStoppingAreaModule::isStoppable(
   const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const
 {
@@ -411,19 +385,4 @@ bool NoStoppingAreaModule::isStoppable(
   return is_stoppable_;
 }
 
-void NoStoppingAreaModule::insertStopPoint(
-  tier4_planning_msgs::msg::PathWithLaneId & path, const PathIndexWithPose & stop_point)
-{
-  size_t insert_idx = static_cast<size_t>(stop_point.first + 1);
-  const auto stop_pose = stop_point.second;
-
-  // To PathPointWithLaneId
-  tier4_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
-  stop_point_with_lane_id = path.points.at(insert_idx);
-  stop_point_with_lane_id.point.pose = stop_pose;
-  stop_point_with_lane_id.point.longitudinal_velocity_mps = 0.0;
-
-  // Insert stop point or replace with zero velocity
-  planning_utils::insertVelocity(path, stop_point_with_lane_id, 0.0, insert_idx);
-}
 }  // namespace autoware::behavior_velocity_planner

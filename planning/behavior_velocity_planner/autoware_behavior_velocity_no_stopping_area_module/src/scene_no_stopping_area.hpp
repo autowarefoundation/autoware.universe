@@ -15,35 +15,24 @@
 #ifndef SCENE_NO_STOPPING_AREA_HPP_
 #define SCENE_NO_STOPPING_AREA_HPP_
 
-#define EIGEN_MPL2_ONLY
+#include "utils.hpp"
 
-#include <Eigen/Core>
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/state_machine.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/no_stopping_area.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
-#include <boost/optional.hpp>
-
-#include <lanelet2_core/LaneletMap.h>
-#include <tf2/LinearMath/Transform.h>
-
 #include <memory>
-#include <utility>
+#include <optional>
 #include <vector>
 
 namespace autoware::behavior_velocity_planner
 {
-using PathIndexWithPose = std::pair<size_t, geometry_msgs::msg::Pose>;  // front index, pose
-using PathIndexWithPoint2d = std::pair<size_t, Point2d>;                // front index, point2d
-using PathIndexWithOffset = std::pair<size_t, double>;                  // front index, offset
-
 class NoStoppingAreaModule : public SceneModuleInterface
 {
 public:
@@ -76,11 +65,10 @@ public:
     double path_expand_width;           //! [m] path width to calculate the edge line for both side
   };
 
-public:
   NoStoppingAreaModule(
     const int64_t module_id, const int64_t lane_id,
     const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
@@ -142,7 +130,7 @@ private:
    * @param stop_line_margin      stop line margin from the stopping area lane
    * @return generated stop line
    */
-  boost::optional<LineString2d> getStopLineGeometry2d(
+  std::optional<LineString2d> getStopLineGeometry2d(
     const tier4_planning_msgs::msg::PathWithLaneId & path, const double stop_line_margin) const;
 
   /**
@@ -160,7 +148,8 @@ private:
    * @param stop_point    stop line point on the lane
    */
   void insertStopPoint(
-    tier4_planning_msgs::msg::PathWithLaneId & path, const PathIndexWithPose & stop_point);
+    tier4_planning_msgs::msg::PathWithLaneId & path,
+    const no_stopping_area::PathIndexWithPose & stop_point);
 
   // Key Feature
   const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem_;
