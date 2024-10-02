@@ -641,47 +641,33 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   ini_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
   ini_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
   path.push_back(ini_pose);
+  const double & dt = imu_prediction_time_interval_;
+  const double distance_between_points = curr_v * dt;
 
-  if (std::abs(curr_v) < 0.1) {
+  if (std::abs(curr_v) < 0.1 || distance_between_points < 1e-2) {
     // if current velocity is too small, assume it stops at the same point
     return path;
   }
 
-  constexpr double epsilon = std::numeric_limits<double>::epsilon();
-  const double & dt = imu_prediction_time_interval_;
   const double & horizon = imu_prediction_time_horizon_;
   double path_arc_length = 0.0;
-  for (double t = 0.0; t < horizon + epsilon; t += dt) {
-    curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
-    curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
-    curr_yaw = curr_yaw + curr_w * dt;
-    geometry_msgs::msg::Pose current_pose;
-    current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
-    current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-    const double distance_between_points = curr_v * dt;
-    if (distance_between_points < 1e-2) {
-      continue;
-    }
-    path_arc_length += distance_between_points;
-    path.push_back(current_pose);
-    if (path_arc_length > max_generated_imu_path_length_) {
-      break;
-    }
-  }
+  double t = 0.0;
 
-  // If path is shorter than minimum path length
-  while (path_arc_length < min_generated_imu_path_length_) {
+  bool finished_creating_path = false;
+  while (!finished_creating_path) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
     curr_yaw = curr_yaw + curr_w * dt;
     geometry_msgs::msg::Pose current_pose;
     current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
     current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-    const double distance_between_points = curr_v * dt;
-    if (distance_between_points < 1e-2) {
-      continue;
-    }
+
+    t += dt;
     path_arc_length += distance_between_points;
+
+    finished_creating_path = (t > horizon) && (path_arc_length > min_generated_imu_path_length_);
+    finished_creating_path =
+      (finished_creating_path) || (path_arc_length > max_generated_imu_path_length_);
     path.push_back(current_pose);
   }
   return path;
