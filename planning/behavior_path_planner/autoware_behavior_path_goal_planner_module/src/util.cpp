@@ -14,7 +14,6 @@
 
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
 
-#include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/bus_stop_area.hpp"
@@ -34,7 +33,6 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
-#include <memory>
 #include <string>
 #include <vector>
 
