@@ -122,7 +122,8 @@ struct PullOverContextData
   const bool is_stable_safe_path;
   const PredictedObjects static_target_objects;
   const PredictedObjects dynamic_target_objects;
-  const std::optional<PullOverPath> pull_over_path_opt;
+  // TODO(soblin): due to deceleratePath(), this cannot be const member(velocity is modified by it)
+  std::optional<PullOverPath> pull_over_path_opt;
   const std::vector<PullOverPath> pull_over_path_candidates;
   // TODO(soblin): goal_candidate_from_thread, modifed_goal_pose_from_thread, closest_start_pose
 };

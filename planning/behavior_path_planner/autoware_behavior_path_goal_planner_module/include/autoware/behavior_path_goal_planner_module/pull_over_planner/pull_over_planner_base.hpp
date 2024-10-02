@@ -47,6 +47,7 @@ public:
     const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel);
 
   PullOverPath(const PullOverPath & other);
+  PullOverPath & operator=(const PullOverPath & other) = default;
 
   PullOverPlannerType type() const { return type_; }
   size_t goal_id() const { return goal_id_; }
