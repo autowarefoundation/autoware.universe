@@ -406,7 +406,7 @@ private:
   BehaviorModuleOutput planPullOver(const PullOverContextData & context_data);
   BehaviorModuleOutput planPullOverAsOutput(const PullOverContextData & context_data);
   BehaviorModuleOutput planPullOverAsCandidate(const PullOverContextData & context_data);
-  std::optional<std::pair<PullOverPath, GoalCandidate>> selectPullOverPath(
+  std::optional<PullOverPath> selectPullOverPath(
     const PullOverContextData & context_data,
     const std::vector<PullOverPath> & pull_over_path_candidates,
     const GoalCandidates & goal_candidates) const;
