@@ -186,7 +186,6 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   avoidance_parameters_ = std::make_shared<AvoidanceByLCParameters>(p);
 }
 
-// cppcheck-suppress unusedFunction
 SMIPtr AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
   return std::make_unique<AvoidanceByLaneChangeInterface>(
