@@ -658,8 +658,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
     geometry_msgs::msg::Pose current_pose;
     current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
     current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-    const double distance_between_points =
-      autoware::universe_utils::calcDistance2d(path.back(), current_pose);
+    const double distance_between_points = curr_v * dt;
     if (distance_between_points < 1e-2) {
       continue;
     }
@@ -678,8 +677,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
     geometry_msgs::msg::Pose current_pose;
     current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
     current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-    const double distance_between_points =
-      autoware::universe_utils::calcDistance2d(path.back(), current_pose);
+    const double distance_between_points = curr_v * dt;
     if (distance_between_points < 1e-2) {
       continue;
     }
