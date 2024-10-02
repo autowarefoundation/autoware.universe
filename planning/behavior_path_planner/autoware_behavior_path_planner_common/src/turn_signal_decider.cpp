@@ -138,7 +138,8 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
   const size_t current_seg_idx, const RouteHandler & route_handler,
   const double nearest_dist_threshold, const double nearest_yaw_threshold)
 {
-  const auto requires_turn_signal = [&](const auto & turn_direction, const bool is_in_turn_lane) {
+  const auto requires_turn_signal = [&current_vel](
+                                      const auto & turn_direction, const bool is_in_turn_lane) {
     constexpr double stop_velocity_threshold = 0.1;
     return (
       turn_direction == "right" || turn_direction == "left" ||
