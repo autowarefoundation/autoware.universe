@@ -165,7 +165,8 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   voxel_grid_x_ = declare_parameter<double>("voxel_grid_x");
   voxel_grid_y_ = declare_parameter<double>("voxel_grid_y");
   voxel_grid_z_ = declare_parameter<double>("voxel_grid_z");
-  min_generated_path_length_ = declare_parameter<double>("min_generated_path_length");
+  min_generated_imu_path_length_ = declare_parameter<double>("min_generated_imu_path_length");
+  max_generated_imu_path_length_ = declare_parameter<double>("max_generated_imu_path_length");
   expand_width_ = declare_parameter<double>("expand_width");
   longitudinal_offset_ = declare_parameter<double>("longitudinal_offset");
   t_response_ = declare_parameter<double>("t_response");
@@ -227,7 +228,8 @@ rcl_interfaces::msg::SetParametersResult AEB::onParameter(
   updateParam<double>(parameters, "voxel_grid_x", voxel_grid_x_);
   updateParam<double>(parameters, "voxel_grid_y", voxel_grid_y_);
   updateParam<double>(parameters, "voxel_grid_z", voxel_grid_z_);
-  updateParam<double>(parameters, "min_generated_path_length", min_generated_path_length_);
+  updateParam<double>(parameters, "min_generated_imu_path_length", min_generated_imu_path_length_);
+  updateParam<double>(parameters, "max_generated_imu_path_length", max_generated_imu_path_length_);
   updateParam<double>(parameters, "expand_width", expand_width_);
   updateParam<double>(parameters, "longitudinal_offset", longitudinal_offset_);
   updateParam<double>(parameters, "t_response", t_response_);
@@ -648,6 +650,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   constexpr double epsilon = std::numeric_limits<double>::epsilon();
   const double & dt = imu_prediction_time_interval_;
   const double & horizon = imu_prediction_time_horizon_;
+  double path_arc_length = 0.0;
   for (double t = 0.0; t < horizon + epsilon; t += dt) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
@@ -655,23 +658,32 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
     geometry_msgs::msg::Pose current_pose;
     current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
     current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-    if (autoware::universe_utils::calcDistance2d(path.back(), current_pose) < 1e-2) {
+    const double distance_between_points =
+      autoware::universe_utils::calcDistance2d(path.back(), current_pose);
+    if (distance_between_points < 1e-2) {
       continue;
     }
+    path_arc_length += distance_between_points;
     path.push_back(current_pose);
+    if (path_arc_length > max_generated_imu_path_length_) {
+      break;
+    }
   }
 
   // If path is shorter than minimum path length
-  while (autoware::motion_utils::calcArcLength(path) < min_generated_path_length_) {
+  while (path_arc_length < min_generated_imu_path_length_) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
     curr_yaw = curr_yaw + curr_w * dt;
     geometry_msgs::msg::Pose current_pose;
     current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
     current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-    if (autoware::universe_utils::calcDistance2d(path.back(), current_pose) < 1e-2) {
+    const double distance_between_points =
+      autoware::universe_utils::calcDistance2d(path.back(), current_pose);
+    if (distance_between_points < 1e-2) {
       continue;
     }
+    path_arc_length += distance_between_points;
     path.push_back(current_pose);
   }
   return path;
