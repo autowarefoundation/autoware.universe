@@ -38,7 +38,7 @@
         },
         "negative": {
           "type": "boolean",
-          "description": "if the value is true, filter points inside the box; otherwise, filter points outside the box",
+          "description": "if true, remove points within the box from the pointcloud; otherwise, remove points outside the box.",
           "default": "false"
         }
       },
