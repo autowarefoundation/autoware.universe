@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc. All rights reserved.
+// Copyright 2024 TIER IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,8 +48,8 @@
  * $Id: voxel_grid.cpp 35876 2011-02-09 01:04:36Z rusu $
  *
  */
-#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__APPROXIMATE_DOWNSAMPLE_FILTER_NODELET_HPP_  // NOLINT
-#define AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__APPROXIMATE_DOWNSAMPLE_FILTER_NODELET_HPP_  // NOLINT
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__APPROXIMATE_DOWNSAMPLE_FILTER_NODE_HPP_  // NOLINT
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__APPROXIMATE_DOWNSAMPLE_FILTER_NODE_HPP_  // NOLINT
 
 #include "autoware/pointcloud_preprocessor/filter.hpp"
 
@@ -72,9 +72,9 @@ protected:
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
 private:
-  double voxel_size_x_;
-  double voxel_size_y_;
-  double voxel_size_z_;
+  float voxel_size_x_;
+  float voxel_size_y_;
+  float voxel_size_z_;
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
@@ -83,5 +83,5 @@ public:
 }  // namespace autoware::pointcloud_preprocessor
 
 // clang-format off
-#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__APPROXIMATE_DOWNSAMPLE_FILTER_NODELET_HPP_  // NOLINT
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__APPROXIMATE_DOWNSAMPLE_FILTER_NODE_HPP_  // NOLINT
 // clang-format on
