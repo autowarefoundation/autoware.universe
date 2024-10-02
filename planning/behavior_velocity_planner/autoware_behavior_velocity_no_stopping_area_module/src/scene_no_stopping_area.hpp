@@ -15,8 +15,6 @@
 #ifndef SCENE_NO_STOPPING_AREA_HPP_
 #define SCENE_NO_STOPPING_AREA_HPP_
 
-#include "utils.hpp"
-
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/state_machine.hpp>
@@ -84,20 +82,12 @@ private:
   StateMachine state_machine_;  //! for state
 
   /**
-   * @brief check if the object has a target type for stuck check
-   * @param object target object
-   * @return true if the object has a target type
-   */
-  bool isTargetStuckVehicleType(
-    const autoware_perception_msgs::msg::PredictedObject & object) const;
-
-  /**
    * @brief Check if there is a stopped vehicle in stuck vehicle detect area.
    * @param poly            ego focusing area polygon
    * @param objects_ptr     target objects
    * @return true if exists
    */
-  bool checkStuckVehiclesInNoStoppingArea(
+  bool check_stuck_vehicles_in_no_stopping_area(
     const Polygon2d & poly,
     const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr & predicted_obj_arr_ptr);
 
@@ -107,7 +97,7 @@ private:
    * @param poly            ego focusing area polygon
    * @return true if exists
    */
-  bool checkStopLinesInNoStoppingArea(
+  bool check_stop_lines_in_no_stopping_area(
     const tier4_planning_msgs::msg::PathWithLaneId & path, const Polygon2d & poly);
 
   /**
@@ -119,7 +109,7 @@ private:
    * @param extra_dist     extra distance from the end point of the no stopping area lanelet
    * @return generated polygon
    */
-  Polygon2d generateEgoNoStoppingAreaLanePolygon(
+  Polygon2d generate_ego_no_stopping_area_lane_polygon(
     const tier4_planning_msgs::msg::PathWithLaneId & path,
     const geometry_msgs::msg::Pose & ego_pose, const double margin, const double extra_dist) const;
 
@@ -130,7 +120,7 @@ private:
    * @param stop_line_margin      stop line margin from the stopping area lane
    * @return generated stop line
    */
-  std::optional<LineString2d> getStopLineGeometry2d(
+  std::optional<universe_utils::LineString2d> get_stop_line_geometry2d(
     const tier4_planning_msgs::msg::PathWithLaneId & path, const double stop_line_margin) const;
 
   /**
@@ -139,17 +129,8 @@ private:
    * @param line_pose       stop line pose on the lane
    * @return is stoppable in front of no stopping area
    */
-  bool isStoppable(
+  bool is_stoppable(
     const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const;
-
-  /**
-   * @brief insert stop point on ego path
-   * @param path          original path
-   * @param stop_point    stop line point on the lane
-   */
-  void insertStopPoint(
-    tier4_planning_msgs::msg::PathWithLaneId & path,
-    const no_stopping_area::PathIndexWithPose & stop_point);
 
   // Key Feature
   const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem_;

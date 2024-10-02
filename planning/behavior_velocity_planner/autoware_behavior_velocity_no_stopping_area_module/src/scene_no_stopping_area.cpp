@@ -14,6 +14,8 @@
 
 #include "scene_no_stopping_area.hpp"
 
+#include "utils.hpp"
+
 #include <autoware/behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
@@ -23,6 +25,7 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/primitives/Polygon.h>
 #include <lanelet2_core/utility/Optional.h>
 
 #include <limits>
@@ -49,53 +52,18 @@ NoStoppingAreaModule::NoStoppingAreaModule(
   state_machine_.setMarginTime(planner_param_.state_clear_time);
 }
 
-std::optional<LineString2d> NoStoppingAreaModule::getStopLineGeometry2d(
+std::optional<LineString2d> NoStoppingAreaModule::get_stop_line_geometry2d(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const double stop_line_margin) const
 {
-  // get stop line from map
-  {
-    const auto & stop_line = no_stopping_area_reg_elem_.stopLine();
-    if (stop_line) {
-      return planning_utils::extendLine(
-        stop_line.value()[0], stop_line.value()[1], planner_data_->stop_line_extend_length);
-    }
+  const auto & stop_line = no_stopping_area_reg_elem_.stopLine();
+  if (stop_line && stop_line->size() >= 2) {
+    // get stop line from map
+    return planning_utils::extendLine(
+      stop_line.value()[0], stop_line.value()[1], planner_data_->stop_line_extend_length);
   }
-  // auto gen stop line
-  {
-    LineString2d stop_line;
-    /**
-     * @brief auto gen no stopping area stop line from area polygon if stop line is not set
-     *        ---------------
-     * ------col-------------|--> ego path
-     *        |     Area     |
-     *        ---------------
-     **/
-
-    for (const auto & no_stopping_area : no_stopping_area_reg_elem_.noStoppingAreas()) {
-      const auto & area_poly = lanelet::utils::to2D(no_stopping_area).basicPolygon();
-      lanelet::BasicLineString2d path_line;
-      for (size_t i = 0; i < path.points.size() - 1; ++i) {
-        const auto p0 = path.points.at(i).point.pose.position;
-        const auto p1 = path.points.at(i + 1).point.pose.position;
-        const LineString2d line{{p0.x, p0.y}, {p1.x, p1.y}};
-        std::vector<Point2d> collision_points;
-        bg::intersection(area_poly, line, collision_points);
-        if (!collision_points.empty()) {
-          const double yaw = autoware::universe_utils::calcAzimuthAngle(p0, p1);
-          const double w = planner_data_->vehicle_info_.vehicle_width_m;
-          const double l = stop_line_margin;
-          stop_line.emplace_back(
-            -l * std::cos(yaw) + collision_points.front().x() + w * std::cos(yaw + M_PI_2),
-            collision_points.front().y() + w * std::sin(yaw + M_PI_2));
-          stop_line.emplace_back(
-            -l * std::cos(yaw) + collision_points.front().x() + w * std::cos(yaw - M_PI_2),
-            collision_points.front().y() + w * std::sin(yaw - M_PI_2));
-          return stop_line;
-        }
-      }
-    }
-  }
-  return {};
+  return no_stopping_area::generate_stop_line(
+    path, no_stopping_area_reg_elem_.noStoppingAreas(),
+    planner_data_->vehicle_info_.vehicle_width_m, stop_line_margin);
 }
 
 bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -113,7 +81,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   *stop_reason = planning_utils::initializeStopReason(StopReason::NO_STOPPING_AREA);
 
   // Get stop line geometry
-  const auto stop_line = getStopLineGeometry2d(original_path, planner_param_.stop_line_margin);
+  const auto stop_line = get_stop_line_geometry2d(original_path, planner_param_.stop_line_margin);
   if (!stop_line) {
     setSafe(true);
     return true;
@@ -139,12 +107,12 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   const double margin = planner_param_.stop_line_margin;
   const double ego_space_in_front_of_stuck_vehicle =
     margin + vi.vehicle_length_m + planner_param_.stuck_vehicle_front_margin;
-  const Polygon2d stuck_vehicle_detect_area = generateEgoNoStoppingAreaLanePolygon(
+  const Polygon2d stuck_vehicle_detect_area = generate_ego_no_stopping_area_lane_polygon(
     *path, current_pose->pose, ego_space_in_front_of_stuck_vehicle,
     planner_param_.detection_area_length);
   const double ego_space_in_front_of_stop_line =
     margin + planner_param_.stop_margin + vi.rear_overhang_m;
-  const Polygon2d stop_line_detect_area = generateEgoNoStoppingAreaLanePolygon(
+  const Polygon2d stop_line_detect_area = generate_ego_no_stopping_area_lane_polygon(
     *path, current_pose->pose, ego_space_in_front_of_stop_line,
     planner_param_.detection_area_length);
   if (stuck_vehicle_detect_area.outer().empty() && stop_line_detect_area.outer().empty()) {
@@ -155,13 +123,13 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   debug_data_.stop_line_detect_area = toGeomPoly(stop_line_detect_area);
   // Find stuck vehicle in no stopping area
   const bool is_entry_prohibited_by_stuck_vehicle =
-    checkStuckVehiclesInNoStoppingArea(stuck_vehicle_detect_area, predicted_obj_arr_ptr);
+    check_stuck_vehicles_in_no_stopping_area(stuck_vehicle_detect_area, predicted_obj_arr_ptr);
   // Find stop line in no stopping area
   const bool is_entry_prohibited_by_stop_line =
-    checkStopLinesInNoStoppingArea(*path, stop_line_detect_area);
+    check_stop_lines_in_no_stopping_area(*path, stop_line_detect_area);
   const bool is_entry_prohibited =
     is_entry_prohibited_by_stuck_vehicle || is_entry_prohibited_by_stop_line;
-  if (!isStoppable(current_pose->pose, stop_point->second)) {
+  if (!is_stoppable(current_pose->pose, stop_point->second)) {
     state_machine_.setState(StateMachine::State::GO);
     setSafe(true);
     return false;
@@ -174,7 +142,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   setSafe(state_machine_.getState() != StateMachine::State::STOP);
   if (!isActivated()) {
     // ----------------stop reason and stop point--------------------------
-    insertStopPoint(*path, *stop_point);
+    no_stopping_area::insert_stop_point(*path, *stop_point);
     // For virtual wall
     debug_data_.stop_poses.push_back(stop_pose);
 
@@ -207,13 +175,13 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   return true;
 }
 
-bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
+bool NoStoppingAreaModule::check_stuck_vehicles_in_no_stopping_area(
   const Polygon2d & poly,
   const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr & predicted_obj_arr_ptr)
 {
   // stuck points by predicted objects
   for (const auto & object : predicted_obj_arr_ptr->objects) {
-    if (!isTargetStuckVehicleType(object)) {
+    if (!no_stopping_area::is_target_stuck_vehicle_type(object)) {
       continue;  // not target vehicle type
     }
     const auto obj_v = std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x);
@@ -241,7 +209,7 @@ bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
   }
   return false;
 }
-bool NoStoppingAreaModule::checkStopLinesInNoStoppingArea(
+bool NoStoppingAreaModule::check_stop_lines_in_no_stopping_area(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const Polygon2d & poly)
 {
   const double stop_vel = std::numeric_limits<float>::min();
@@ -281,7 +249,7 @@ bool NoStoppingAreaModule::checkStopLinesInNoStoppingArea(
   return false;
 }
 
-Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
+Polygon2d NoStoppingAreaModule::generate_ego_no_stopping_area_lane_polygon(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
   const double margin, const double extra_dist) const
 {
@@ -350,7 +318,7 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
   return ego_area;
 }
 
-bool NoStoppingAreaModule::isStoppable(
+bool NoStoppingAreaModule::is_stoppable(
   const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const
 {
   // get vehicle info and compute pass_judge_line_distance
