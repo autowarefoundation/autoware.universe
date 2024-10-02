@@ -643,9 +643,11 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   path.push_back(ini_pose);
   const double & dt = imu_prediction_time_interval_;
   const double distance_between_points = curr_v * dt;
-
-  if (std::abs(curr_v) < 0.1 || distance_between_points < 1e-2) {
-    // if current velocity is too small, assume it stops at the same point
+  constexpr double minimum_distance_between_points{1e-2};
+  // if current velocity is too small, assume it stops at the same point
+  // if distance between points is too small, arc length calculation is unreliable, so we skip
+  // creating the path
+  if (std::abs(curr_v) < 0.1 || distance_between_points < minimum_distance_between_points) {
     return path;
   }
 
@@ -687,12 +689,15 @@ std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
   time_keeper_->start_track("createPath");
   Path path;
   path.reserve(predicted_traj.points.size());
+  constexpr double minimum_distance_between_points{1e-2};
   for (size_t i = 0; i < predicted_traj.points.size(); ++i) {
     geometry_msgs::msg::Pose map_pose;
     tf2::doTransform(predicted_traj.points.at(i).pose, map_pose, transform_stamped.value());
 
     // skip points that are too close to the last point in the path
-    if (autoware::universe_utils::calcDistance2d(path.back(), map_pose) < 1e-2) {
+    if (
+      autoware::universe_utils::calcDistance2d(path.back(), map_pose) <
+      minimum_distance_between_points) {
       continue;
     }
 
