@@ -173,15 +173,18 @@
     </group>
 
     <!-- obstacle collision checker -->
-    <node pkg="obstacle_collision_checker" exec="obstacle_collision_checker_node" name="obstacle_collision_checker" launch-prefix="konsole -e gdb -ex run --args">
-      <remap from="input/lanelet_map_bin" to="/map/vector_map"/>
-      <remap from="input/obstacle_pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
-      <remap from="input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
-      <remap from="input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
-      <remap from="input/odometry" to="/localization/kinematic_state"/>
-      <param from="$(var obstacle_collision_checker_param_path)"/>
-      <param from="$(var vehicle_param_file)"/>
-    </node>
+    <load_composable_node target="/control/control_container" if="$(var enable_obstacle_collision_checker)">
+      <composable_node pkg="obstacle_collision_checker" plugin="obstacle_collision_checker::ObstacleCollisionCheckerNode" name="obstacle_collision_checker">
+        <remap from="input/lanelet_map_bin" to="/map/vector_map"/>
+        <remap from="input/obstacle_pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
+        <remap from="input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+        <remap from="input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
+        <remap from="input/odometry" to="/localization/kinematic_state"/>
+        <param from="$(var obstacle_collision_checker_param_path)"/>
+        <param from="$(var vehicle_param_file)"/>
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
+      </composable_node>
+    </load_composable_node>
 
     <!-- autonomous emergency braking -->
     <load_composable_node target="/control/control_container" if="$(var enable_autonomous_emergency_braking)">
