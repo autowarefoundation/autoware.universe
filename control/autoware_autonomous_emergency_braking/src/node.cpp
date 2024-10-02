@@ -461,7 +461,9 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const auto ego_polys = generatePathFootprint(path, expand_width_);
     std::vector<ObjectData> objects;
     // Crop out Pointcloud using an extra wide ego path
-    if (use_pointcloud_data_ && !points_belonging_to_cluster_hulls->empty()) {
+    if (
+      use_pointcloud_data_ && points_belonging_to_cluster_hulls &&
+      !points_belonging_to_cluster_hulls->empty()) {
       const auto current_time = obstacle_ros_pointcloud_ptr_->header.stamp;
       getClosestObjectsOnPath(path, current_time, points_belonging_to_cluster_hulls, objects);
     }
@@ -712,6 +714,9 @@ void AEB::generatePathFootprint(
   const Path & path, const double extra_width_margin, std::vector<Polygon2d> & polygons)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  if (path.empty()) {
+    return;
+  }
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.push_back(
       createPolygon(path.at(i), path.at(i + 1), vehicle_info_, extra_width_margin));
@@ -721,8 +726,11 @@ void AEB::generatePathFootprint(
 std::vector<Polygon2d> AEB::generatePathFootprint(
   const Path & path, const double extra_width_margin)
 {
-  std::vector<Polygon2d> polygons;
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  if (path.empty()) {
+    return {};
+  }
+  std::vector<Polygon2d> polygons;
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.push_back(
       createPolygon(path.at(i), path.at(i + 1), vehicle_info_, extra_width_margin));
@@ -735,7 +743,7 @@ void AEB::createObjectDataUsingPredictedObjects(
   std::vector<ObjectData> & object_data_vector)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  if (predicted_objects_ptr_->objects.empty()) return;
+  if (predicted_objects_ptr_->objects.empty() || ego_polys.empty()) return;
 
   const double current_ego_speed = current_velocity_ptr_->longitudinal_velocity;
   const auto & objects = predicted_objects_ptr_->objects;
@@ -926,6 +934,9 @@ void AEB::cropPointCloudWithEgoFootprintPath(
   const std::vector<Polygon2d> & ego_polys, PointCloud::Ptr filtered_objects)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  if (ego_polys.empty()) {
+    return;
+  }
   PointCloud::Ptr full_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *full_points_ptr);
   // Create a Point cloud with the points of the ego footprint

@@ -6,7 +6,7 @@
     "bluetooth_monitor": {
       "type": "object",
       "properties": {
-        "address": {
+        "addresses": {
           "type": "array",
           "description": "Bluetooth addresses of the device to monitor",
           "items": {
@@ -30,7 +30,7 @@
           "default": 0.1
         }
       },
-      "required": ["address", "port", "timeout", "rtt_warn"],
+      "required": ["addresses", "port", "timeout", "rtt_warn"],
       "additionalProperties": false
     }
   },
