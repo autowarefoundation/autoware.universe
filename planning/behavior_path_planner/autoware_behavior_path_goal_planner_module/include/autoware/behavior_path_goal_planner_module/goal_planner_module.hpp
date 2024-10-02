@@ -412,17 +412,18 @@ private:
 
   // lanes and drivable area
   std::vector<DrivableLanes> generateDrivableLanes() const;
-  void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
+  void setDrivableAreaInfo(
+    const PullOverContextData & context_data, BehaviorModuleOutput & output) const;
 
   // output setter
   void setOutput(const PullOverContextData & context_data, BehaviorModuleOutput & output);
 
   void setModifiedGoal(
     const PullOverContextData & context_data, BehaviorModuleOutput & output) const;
-  void setTurnSignalInfo(BehaviorModuleOutput & output);
+  void setTurnSignalInfo(const PullOverContextData & context_data, BehaviorModuleOutput & output);
 
   // new turn signal
-  TurnSignalInfo calcTurnSignalInfo();
+  TurnSignalInfo calcTurnSignalInfo(const PullOverContextData & context_data);
   std::optional<lanelet::Id> ignore_signal_{std::nullopt};
 
   bool hasPreviousModulePathShapeChanged(const BehaviorModuleOutput & previous_module_output) const;
@@ -438,7 +439,8 @@ private:
 
   // steering factor
   void updateSteeringFactor(
-    const std::array<Pose, 2> & pose, const std::array<double, 2> distance, const uint16_t type);
+    const PullOverContextData & context_data, const std::array<Pose, 2> & pose,
+    const std::array<double, 2> distance, const uint16_t type);
 
   // rtc
   std::pair<double, double> calcDistanceToPathChange(

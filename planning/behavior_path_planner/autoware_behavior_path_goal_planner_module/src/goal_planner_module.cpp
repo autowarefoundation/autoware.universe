@@ -1163,18 +1163,18 @@ void GoalPlannerModule::setOutput(
     output.path = generateStopPath(context_data);
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path, generate stop path");
-    setDrivableAreaInfo(output);
+    setDrivableAreaInfo(context_data, output);
     return;
   }
 
+  const auto & pull_over_path = context_data.pull_over_path_opt.value();
   if (
     parameters_->safety_check_params.enable_safety_check && !context_data.is_stable_safe_path &&
     isActivated()) {
     // situation : not safe against dynamic objects after approval
     // insert stop point in current path if ego is able to stop with acceleration and jerk
     // constraints
-    output.path =
-      generateFeasibleStopPath(thread_safe_data_.get_pull_over_path()->getCurrentPath());
+    output.path = generateFeasibleStopPath(pull_over_path.getCurrentPath());
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not safe against dynamic objects, generate stop path");
     debug_stop_pose_with_info_.set(std::string("feasible stop after approval"));
@@ -1183,29 +1183,31 @@ void GoalPlannerModule::setOutput(
     // before approval) don't stop
     // keep stop if not enough time passed,
     // because it takes time for the trajectory to be reflected
-    auto current_path = thread_safe_data_.get_pull_over_path()->getCurrentPath();
+    auto current_path = pull_over_path.getCurrentPath();
     keepStoppedWithCurrentPath(current_path);
     output.path = current_path;
   }
 
   setModifiedGoal(context_data, output);
-  setDrivableAreaInfo(output);
+  setDrivableAreaInfo(context_data, output);
 
   // set hazard and turn signal
   if (
     path_decision_controller_.get_current_state().state ==
       PathDecisionState::DecisionKind::DECIDED &&
     isActivated()) {
-    setTurnSignalInfo(output);
+    setTurnSignalInfo(context_data, output);
   }
 }
 
-void GoalPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) const
+void GoalPlannerModule::setDrivableAreaInfo(
+  const PullOverContextData & context_data, BehaviorModuleOutput & output) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  const auto planner_type_opt = thread_safe_data_.getPullOverPlannerType();
-  if (planner_type_opt && planner_type_opt.value() == PullOverPlannerType::FREESPACE) {
+  if (
+    context_data.pull_over_path_opt &&
+    context_data.pull_over_path_opt.value().type() == PullOverPlannerType::FREESPACE) {
     const double drivable_area_margin = planner_data_->parameters.vehicle_width;
     output.drivable_area_info.drivable_margin =
       planner_data_->parameters.vehicle_width / 2.0 + drivable_area_margin;
@@ -1235,10 +1237,11 @@ void GoalPlannerModule::setModifiedGoal(
   }
 }
 
-void GoalPlannerModule::setTurnSignalInfo(BehaviorModuleOutput & output)
+void GoalPlannerModule::setTurnSignalInfo(
+  const PullOverContextData & context_data, BehaviorModuleOutput & output)
 {
   const auto original_signal = getPreviousModuleOutput().turn_signal_info;
-  const auto new_signal = calcTurnSignalInfo();
+  const auto new_signal = calcTurnSignalInfo(context_data);
   const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
   output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
     output.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
@@ -1247,10 +1250,11 @@ void GoalPlannerModule::setTurnSignalInfo(BehaviorModuleOutput & output)
 }
 
 void GoalPlannerModule::updateSteeringFactor(
-  const std::array<Pose, 2> & pose, const std::array<double, 2> distance, const uint16_t type)
+  const PullOverContextData & context_data, const std::array<Pose, 2> & pose,
+  const std::array<double, 2> distance, const uint16_t type)
 {
-  const uint16_t steering_factor_direction = std::invoke([this]() {
-    const auto turn_signal = calcTurnSignalInfo();
+  const uint16_t steering_factor_direction = std::invoke([&]() {
+    const auto turn_signal = calcTurnSignalInfo(context_data);
     if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
       return SteeringFactor::LEFT;
     } else if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
@@ -1270,6 +1274,7 @@ void GoalPlannerModule::decideVelocity()
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
 
   // partial_paths
+  // TODO(soblin): only update velocity on main thread side, use that on main thread side
   auto & first_path = thread_safe_data_.get_pull_over_path()->partial_paths().front();
   const auto vel =
     static_cast<float>(std::max(current_vel, parameters_->pull_over_minimum_velocity));
@@ -1430,6 +1435,7 @@ void GoalPlannerModule::postProcess()
   }
 
   updateSteeringFactor(
+    context_data,
     {pull_over_path.start_pose(), thread_safe_data_.get_modified_goal_pose()->goal_pose},
     {distance_to_path_change.first, distance_to_path_change.second},
     has_decided_path ? SteeringFactor::TURNING : SteeringFactor::APPROACHING);
@@ -1767,16 +1773,21 @@ bool GoalPlannerModule::isOnModifiedGoal(
          parameters.th_arrived_distance;
 }
 
-TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo()
+TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo(const PullOverContextData & context_data)
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  const auto path = thread_safe_data_.get_pull_over_path()->full_path();
+  if (!context_data.pull_over_path_opt) {
+    return {};
+  }
+  const auto & pull_over_path = context_data.pull_over_path_opt.value();
+
+  const auto & path = pull_over_path.full_path();
   if (path.points.empty()) return getPreviousModuleOutput().turn_signal_info;
 
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
-  const auto & start_pose = thread_safe_data_.get_pull_over_path()->start_pose();
-  const auto & end_pose = thread_safe_data_.get_pull_over_path()->end_pose();
+  const auto & start_pose = pull_over_path.start_pose();
+  const auto & end_pose = pull_over_path.end_pose();
 
   const auto shift_start_idx =
     autoware::motion_utils::findNearestIndex(path.points, start_pose.position);
@@ -1820,13 +1831,11 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo()
   constexpr bool is_lane_change = false;
   constexpr bool is_pull_over = true;
   const bool override_ego_stopped_check = std::invoke([&]() {
-    const auto planner_type_opt = thread_safe_data_.getPullOverPlannerType();
-    if (planner_type_opt && planner_type_opt.value() == PullOverPlannerType::SHIFT) {
+    if (pull_over_path.type() == PullOverPlannerType::SHIFT) {
       return false;
     }
     constexpr double distance_threshold = 1.0;
-    const auto stop_point =
-      thread_safe_data_.get_pull_over_path()->partial_paths().front().points.back();
+    const auto stop_point = pull_over_path.partial_paths().front().points.back();
     const double distance_from_ego_to_stop_point =
       std::abs(autoware::motion_utils::calcSignedArcLength(
         path.points, stop_point.point.pose.position, current_pose.position));
@@ -2470,19 +2479,22 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
     marker.pose = thread_safe_data_.get_modified_goal_pose()
                     ? thread_safe_data_.get_modified_goal_pose()->goal_pose
                     : planner_data_->self_odometry->pose.pose;
-    const auto planner_type_opt = thread_safe_data_.getPullOverPlannerType();
-    if (planner_type_opt) {
-      marker.text = magic_enum::enum_name(planner_type_opt.value());
-      marker.text +=
-        " " + std::to_string(thread_safe_data_.get_pull_over_path()->path_idx()) + "/" +
-        std::to_string(thread_safe_data_.get_pull_over_path()->partial_paths().size() - 1);
+    if (context_data.pull_over_path_opt) {
+      const auto & pull_over_path = context_data.pull_over_path_opt.value();
+      marker.text = magic_enum::enum_name(pull_over_path.type());
+      marker.text += " " + std::to_string(pull_over_path.path_idx()) + "/" +
+                     std::to_string(pull_over_path.partial_paths().size() - 1);
     }
 
+    /*
+      TODO(soblin): disable until thread safe design is done
     if (isStuck(
           context_data.static_target_objects, context_data.dynamic_target_objects, planner_data_,
           occupancy_grid_map_, *parameters_)) {
       marker.text += " stuck";
-    } else if (isStopped()) {
+    }
+    */
+    if (isStopped()) {
       marker.text += " stopped";
     }
 
