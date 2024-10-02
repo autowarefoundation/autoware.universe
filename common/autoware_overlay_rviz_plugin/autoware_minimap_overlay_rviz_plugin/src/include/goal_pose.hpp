@@ -54,8 +54,7 @@ private:
   std::pair<double, double> localToGeographicUTM(
     double local_x, double local_y, double origin_lat, double origin_lon);
   std::pair<double, double> localToGeographicMGRS(
-    double local_x, double local_y, double origin_lat, double origin_lon,
-    const std::string & mgrs_grid);
+    double local_x, double local_y, const std::string & mgrs_grid);
   std::pair<int, int> getTileOffsets(
     double lat, double lon, int zoom, const QRectF & backgroundRect);
 };
