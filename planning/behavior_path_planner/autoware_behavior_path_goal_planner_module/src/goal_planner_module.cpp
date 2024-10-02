@@ -2409,7 +2409,7 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
     }
 
     // Visualize debug poses
-    const auto & debug_poses = thread_safe_data_.get_pull_over_path()->debug_poses;
+    const auto & debug_poses = pull_over_path.debug_poses;
     for (size_t i = 0; i < debug_poses.size(); ++i) {
       add(createPoseMarkerArray(
         debug_poses.at(i), "debug_pose_" + std::to_string(i), 0, 0.3, 0.3, 0.3));
