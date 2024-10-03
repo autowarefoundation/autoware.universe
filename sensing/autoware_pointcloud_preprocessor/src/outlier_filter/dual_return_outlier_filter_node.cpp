@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/pointcloud_preprocessor/outlier_filter/dual_return_outlier_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/outlier_filter/dual_return_outlier_filter_node.hpp"
 
 #include "autoware_point_types/types.hpp"
 
@@ -38,29 +38,24 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
 {
   // set initial parameters
   {
-    x_max_ = static_cast<float>(declare_parameter("x_max", 18.0));
-    x_min_ = static_cast<float>(declare_parameter("x_min", -12.0));
-    y_max_ = static_cast<float>(declare_parameter("y_max", 2.0));
-    y_min_ = static_cast<float>(declare_parameter("y_min", -2.0));
-    z_max_ = static_cast<float>(declare_parameter("z_max", 10.0));
-    z_min_ = static_cast<float>(declare_parameter("z_min", 0.0));
-    min_azimuth_deg_ = static_cast<float>(declare_parameter("min_azimuth_deg", 135.0));
-    max_azimuth_deg_ = static_cast<float>(declare_parameter("max_azimuth_deg", 225.0));
-    max_distance_ = static_cast<float>(declare_parameter("max_distance", 12.0));
-    vertical_bins_ = static_cast<int>(declare_parameter("vertical_bins", 128));
-    max_azimuth_diff_ = static_cast<float>(declare_parameter("max_azimuth_diff", 50.0));
-    weak_first_distance_ratio_ =
-      static_cast<double>(declare_parameter("weak_first_distance_ratio", 1.004));
-    general_distance_ratio_ =
-      static_cast<double>(declare_parameter("general_distance_ratio", 1.03));
+    x_max_ = declare_parameter<float>("x_max");
+    x_min_ = declare_parameter<float>("x_min");
+    y_max_ = declare_parameter<float>("y_max");
+    y_min_ = declare_parameter<float>("y_min");
+    z_max_ = declare_parameter<float>("z_max");
+    z_min_ = declare_parameter<float>("z_min");
+    min_azimuth_deg_ = declare_parameter<float>("min_azimuth_deg");
+    max_azimuth_deg_ = declare_parameter<float>("max_azimuth_deg");
+    max_distance_ = declare_parameter<float>("max_distance");
+    vertical_bins_ = declare_parameter<int>("vertical_bins");
+    max_azimuth_diff_ = declare_parameter<float>("max_azimuth_diff");
+    weak_first_distance_ratio_ = declare_parameter<double>("weak_first_distance_ratio");
+    general_distance_ratio_ = declare_parameter<double>("general_distance_ratio");
 
-    weak_first_local_noise_threshold_ =
-      static_cast<int>(declare_parameter("weak_first_local_noise_threshold", 2));
-    roi_mode_ = static_cast<std::string>(declare_parameter("roi_mode", "Fixed_xyz_ROI"));
-    visibility_error_threshold_ =
-      static_cast<float>(declare_parameter("visibility_error_threshold", 0.5));
-    visibility_warn_threshold_ =
-      static_cast<float>(declare_parameter("visibility_warn_threshold", 0.7));
+    weak_first_local_noise_threshold_ = declare_parameter<int>("weak_first_local_noise_threshold");
+    roi_mode_ = declare_parameter<std::string>("roi_mode");
+    visibility_error_threshold_ = declare_parameter<double>("visibility_error_threshold");
+    visibility_warn_threshold_ = declare_parameter<double>("visibility_warn_threshold");
   }
   updater_.setHardwareID("dual_return_outlier_filter");
   updater_.add(
