@@ -21,13 +21,10 @@
 
 #include "boost/lexical_cast.hpp"
 
-#include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace planning_diagnostics
