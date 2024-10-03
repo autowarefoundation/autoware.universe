@@ -39,6 +39,7 @@ class PointcloudMapFilterPipeline:
         self.downsize_ratio_z_axis = self.pointcloud_map_filter_param["downsize_ratio_z_axis"]
         self.timer_interval_ms = self.pointcloud_map_filter_param["timer_interval_ms"]
         self.use_dynamic_map_loading = self.pointcloud_map_filter_param["use_dynamic_map_loading"]
+        self.max_map_grid_size = self.pointcloud_map_filter_param["max_map_grid_size"]
         self.map_update_distance_threshold = self.pointcloud_map_filter_param[
             "map_update_distance_threshold"
         ]
@@ -124,6 +125,7 @@ class PointcloudMapFilterPipeline:
                         "map_update_distance_threshold": self.map_update_distance_threshold,
                         "map_loader_radius": self.map_loader_radius,
                         "publish_debug_pcd": self.publish_debug_pcd,
+                        "max_map_grid_size": self.max_map_grid_size,
                         "input_frame": "map",
                     }
                 ],
