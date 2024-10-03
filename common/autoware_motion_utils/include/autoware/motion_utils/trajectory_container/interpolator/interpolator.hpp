@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__INTERPOLATOR_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__INTERPOLATOR_HPP_
 
-#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_common_impl.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_common_interface.hpp"
 
 #include <memory>
 
@@ -29,10 +29,10 @@ namespace autoware::motion_utils::trajectory_container::interpolator
  * @tparam T The type of the values being interpolated. (e.g. double, int, etc.)
  */
 template <typename T>
-class Interpolator : public detail::InterpolatorCommonImpl<T>
+class InterpolatorInterface : public detail::InterpolatorCommonInterface<T>
 {
 public:
-  [[nodiscard]] virtual std::shared_ptr<Interpolator<T>> clone() const = 0;
+  [[nodiscard]] virtual std::shared_ptr<InterpolatorInterface<T>> clone() const = 0;
 };
 
 /**
@@ -41,7 +41,7 @@ public:
  * This class adds methods for computing first and second derivatives.
  */
 template <>
-class Interpolator<double> : public detail::InterpolatorCommonImpl<double>
+class InterpolatorInterface<double> : public detail::InterpolatorCommonInterface<double>
 {
 protected:
   /**
@@ -89,7 +89,7 @@ public:
     return compute_second_derivative_impl(s);
   }
 
-  [[nodiscard]] virtual std::shared_ptr<Interpolator<double>> clone() const = 0;
+  [[nodiscard]] virtual std::shared_ptr<InterpolatorInterface<double>> clone() const = 0;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

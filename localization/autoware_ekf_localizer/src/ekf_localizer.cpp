@@ -17,7 +17,7 @@
 #include "autoware/ekf_localizer/diagnostics.hpp"
 #include "autoware/ekf_localizer/string.hpp"
 #include "autoware/ekf_localizer/warning_message.hpp"
-#include "localization_util/covariance_ellipse.hpp"
+#include "autoware/localization_util/covariance_ellipse.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>

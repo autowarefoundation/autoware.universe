@@ -33,6 +33,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -65,6 +66,7 @@ using sensor_msgs::msg::Imu;
 using sensor_msgs::msg::PointCloud2;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 using autoware::universe_utils::Polygon2d;
+using autoware::universe_utils::Polygon3d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
@@ -86,6 +88,7 @@ struct ObjectData
   double velocity{0.0};
   double rss{0.0};
   double distance_to_object{0.0};
+  bool is_target{true};
 };
 
 /**
@@ -341,6 +344,7 @@ public:
   rclcpp::Publisher<MarkerArray>::SharedPtr info_marker_publisher_;
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
     debug_processing_time_detail_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr debug_rss_distance_publisher_;
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
   mutable std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
@@ -435,12 +439,14 @@ public:
    * @brief Create object data using point cloud clusters
    * @param ego_path Ego vehicle path
    * @param ego_polys Polygons representing the ego vehicle footprint
+   * @param speed_calc_ego_polys Polygons representing the expanded ego vehicle footprint for speed
+   * calculation area
    * @param stamp Timestamp of the data
    * @param objects Vector to store the created object data
    * @param obstacle_points_ptr Pointer to the point cloud of obstacles
    */
   void getClosestObjectsOnPath(
-    const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
+    const Path & ego_path, const rclcpp::Time & stamp,
     const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects);
 
   /**
@@ -496,7 +502,7 @@ public:
    * @param debug_markers Marker array for debugging
    */
   void addClusterHullMarkers(
-    const rclcpp::Time & current_time, const std::vector<Polygon2d> & hulls,
+    const rclcpp::Time & current_time, const std::vector<Polygon3d> & hulls,
     const colorTuple & debug_colors, const std::string & ns, MarkerArray & debug_markers);
 
   /**
@@ -550,12 +556,14 @@ public:
   bool use_object_velocity_calculation_;
   bool check_autoware_state_;
   double path_footprint_extra_margin_;
+  double speed_calculation_expansion_margin_;
   double detection_range_min_height_;
   double detection_range_max_height_margin_;
   double voxel_grid_x_;
   double voxel_grid_y_;
   double voxel_grid_z_;
-  double min_generated_path_length_;
+  double min_generated_imu_path_length_;
+  double max_generated_imu_path_length_;
   double expand_width_;
   double longitudinal_offset_;
   double t_response_;

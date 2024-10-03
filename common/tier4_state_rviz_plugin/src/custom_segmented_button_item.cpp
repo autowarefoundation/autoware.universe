@@ -44,14 +44,12 @@ CustomSegmentedButtonItem::CustomSegmentedButtonItem(const QString & text, QWidg
 //   setFixedSize(width, height);
 // }
 
-// cppcheck-suppress unusedFunction
 void CustomSegmentedButtonItem::setHovered(bool hovered)
 {
   isHovered = hovered;
   updateCheckableState();
 }
 
-// cppcheck-suppress unusedFunction
 void CustomSegmentedButtonItem::setCheckableButton(bool checkable)
 {
   setCheckable(checkable);
@@ -66,14 +64,12 @@ void CustomSegmentedButtonItem::updateCheckableState()
   update();
 }
 
-// cppcheck-suppress unusedFunction
 void CustomSegmentedButtonItem::setDisabledButton(bool disabled)
 {
   isDisabled = disabled;
   updateCheckableState();
 }
 
-// cppcheck-suppress unusedFunction
 void CustomSegmentedButtonItem::setActivated(bool activated)
 {
   isActivated = activated;
