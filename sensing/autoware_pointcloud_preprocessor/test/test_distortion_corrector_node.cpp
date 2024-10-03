@@ -966,40 +966,13 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudNotUpdatingAzimuthAndDist
   auto angle_conversion_opt =
     distortion_corrector_2d_->try_compute_angle_conversion(pointcloud_base_link);
 
-  distortion_corrector_2d_->undistort_pointcloud(true, angle_conversion_opt, pointcloud_base_link);
-
-  auto original_pointcloud_base_link =
-    generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
-
-  sensor_msgs::PointCloud2ConstIterator<float> test_iter_azimuth_base_link(
-    pointcloud_base_link, "azimuth");
-  sensor_msgs::PointCloud2ConstIterator<float> test_iter_distance_base_link(
-    pointcloud_base_link, "distance");
-
-  sensor_msgs::PointCloud2ConstIterator<float> original_iter_azimuth_base_link(
-    original_pointcloud_base_link, "azimuth");
-  sensor_msgs::PointCloud2ConstIterator<float> original_iter_distance_base_link(
-    original_pointcloud_base_link, "distance");
-
-  size_t i = 0;
-  std::ostringstream oss;
-
-  oss << "Expected pointcloud:\n";
-  for (; test_iter_azimuth_base_link != test_iter_azimuth_base_link.end();
-       ++test_iter_azimuth_base_link, ++test_iter_distance_base_link,
-       ++original_iter_azimuth_base_link, ++original_iter_distance_base_link, ++i) {
-    oss << "Point " << i << " - Output azimuth and distance: (" << *test_iter_azimuth_base_link
-        << ", " << *test_iter_distance_base_link << ")"
-        << " vs Original azimuth and distance: (" << *original_iter_azimuth_base_link << ", "
-        << *original_iter_distance_base_link << ")\n";
-
-    EXPECT_FLOAT_EQ(*test_iter_azimuth_base_link, *original_iter_azimuth_base_link);
-    EXPECT_FLOAT_EQ(*test_iter_distance_base_link, *original_iter_distance_base_link);
-  }
-
-  if (debug_) {
-    RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
-  }
+  // Test for expected runtime error
+  EXPECT_THROW(
+    {
+      distortion_corrector_2d_->undistort_pointcloud(
+        true, angle_conversion_opt, pointcloud_base_link);
+    },
+    std::runtime_error);
 
   // Test the case when the cloud will not update the azimuth and distance values
   // 2. when the return value of try_compute_angle_conversion is std::nullopt (couldn't find the
@@ -1034,9 +1007,8 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudNotUpdatingAzimuthAndDist
   sensor_msgs::PointCloud2ConstIterator<float> original_iter_distance_lidar_top(
     original_pointcloud_lidar_top, "distance");
 
-  i = 0;
-  oss.str("");
-  oss.clear();
+  size_t i = 0;
+  std::ostringstream oss;
 
   oss << "Expected pointcloud:\n";
   for (; test_iter_azimuth_lidar_top != test_iter_azimuth_lidar_top.end();
