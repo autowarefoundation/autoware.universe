@@ -16,7 +16,7 @@
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
-namespace autoware::freespace_planner
+namespace autoware::freespace_planner::utils
 {
 
 PoseArray trajectory_to_pose_array(const Trajectory & trajectory)
@@ -168,4 +168,4 @@ bool is_stopped(
   }
   return true;
 }
-}  // namespace autoware::freespace_planner
+}  // namespace autoware::freespace_planner::utils

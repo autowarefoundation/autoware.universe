@@ -30,7 +30,7 @@
 #include <deque>
 #include <vector>
 
-namespace autoware::freespace_planner
+namespace autoware::freespace_planner::utils
 {
 using autoware::freespace_planning_algorithms::PlannerWaypoint;
 using autoware::freespace_planning_algorithms::PlannerWaypoints;
@@ -70,6 +70,6 @@ Trajectory create_stop_trajectory(const Trajectory & trajectory);
 
 bool is_stopped(
   const std::deque<Odometry::ConstSharedPtr> & odom_buffer, const double th_stopped_velocity_mps);
-}  // namespace autoware::freespace_planner
+}  // namespace autoware::freespace_planner::utils
 
 #endif  // AUTOWARE__FREESPACE_PLANNER__UTILS_HPP_
