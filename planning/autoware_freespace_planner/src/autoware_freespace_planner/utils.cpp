@@ -16,7 +16,7 @@
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
-namespace autoware::freespace_planner
+namespace autoware::freespace_planner::utils
 {
 
 PoseArray trajectory_to_pose_array(const Trajectory & trajectory)
@@ -175,4 +175,4 @@ bool is_near_target(const Pose & target_pose, const Pose & current_pose, const d
     autoware::universe_utils::calcLongitudinalDeviation(target_pose, current_pose.position);
   return std::abs(long_disp_to_target) < th_distance_m;
 }
-}  // namespace autoware::freespace_planner
+}  // namespace autoware::freespace_planner::utils
