@@ -1,65 +1,70 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Static Centerline Generator Params",
-    "type": "object",
-    "definitions": {
-        "static_centerline_generator": {
-        "type": "object",
-        "properties": {
-            "marker_color": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "description": "Marker colors in hexadecimal format",
-            "default": ["FF0000", "FF5A00", "FFFF00"]
-            },
-            "marker_color_dist_thresh": {
-            "type": "array",
-            "items": {
-                "type": "number"
-            },
-            "description": "Threshold values for marker color distance",
-            "default": [0.1, 0.2, 0.3]
-            },
-            "output_trajectory_interval": {
-            "type": "number",
-            "description": "Interval for output trajectory [s]",
-            "default": 1.0
-            },
-            "validation": {
-            "type": "object",
-            "properties": {
-                "dist_threshold_to_road_border": {
-                "type": "number",
-                "description": "Distance threshold to road border [m]",
-                "default": 0.0
-                },
-                "max_steer_angle_margin": {
-                "type": "number",
-                "description": "Max steer angle margin [rad] (Positive value decreases the max steer angle threshold)",
-                "default": 0.0
-                }
-            },
-            "required": ["dist_threshold_to_road_border", "max_steer_angle_margin"]
-            }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Static Centerline Generator Params",
+  "type": "object",
+  "definitions": {
+    "static_centerline_generator": {
+      "type": "object",
+      "properties": {
+        "marker_color": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Marker colors in hexadecimal format",
+          "default": ["FF0000", "FF5A00", "FFFF00"]
         },
-        "required": ["marker_color", "marker_color_dist_thresh", "output_trajectory_interval", "validation"],
-        "additionalProperties": false
-        }
-    },
-    "properties": {
-        "/**": {
-        "type": "object",
-        "properties": {
-            "ros__parameters": {
-            "$ref": "#/definitions/static_centerline_generator"
-            }
+        "marker_color_dist_thresh": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Threshold values for marker color distance",
+          "default": [0.1, 0.2, 0.3]
         },
-        "required": ["ros__parameters"],
-        "additionalProperties": false
+        "output_trajectory_interval": {
+          "type": "number",
+          "description": "Interval for output trajectory [s]",
+          "default": 1.0
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "dist_threshold_to_road_border": {
+              "type": "number",
+              "description": "Distance threshold to road border [m]",
+              "default": 0.0
+            },
+            "max_steer_angle_margin": {
+              "type": "number",
+              "description": "Max steer angle margin [rad] (Positive value decreases the max steer angle threshold)",
+              "default": 0.0
+            }
+          },
+          "required": ["dist_threshold_to_road_border", "max_steer_angle_margin"]
         }
-    },
-    "required": ["/**"],
-    "additionalProperties": false
+      },
+      "required": [
+        "marker_color",
+        "marker_color_dist_thresh",
+        "output_trajectory_interval",
+        "validation"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/static_centerline_generator"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
 }

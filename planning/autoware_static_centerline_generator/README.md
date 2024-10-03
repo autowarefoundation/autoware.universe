@@ -85,13 +85,17 @@ By default, footprints' color is
 ## Parameters
 
 ### Common Parameters
+
 {{ json_to_markdown("planning/autoware_static_centerline_generator/schema/common.schema.json") }}
 
 ### Nearest Search
+
 {{ json_to_markdown("planning/autoware_static_centerline_generator/schema/nearest_search.schema.json") }}
 
 ### Static Centerline Generator
+
 {{ json_to_markdown("planning/autoware_static_centerline_generator/schema/static_centerline_generator.schema.json") }}
 
 ### Vehicle Info
+
 {{ json_to_markdown("planning/autoware_static_centerline_generator/schema/vehicle_info.schema.json") }}

@@ -1,89 +1,89 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Vehicle Info Params",
-    "type": "object",
-    "definitions": {
-        "vehicle_info": {
-        "type": "object",
-        "properties": {
-            "wheel_radius": {
-            "type": "number",
-            "description": "radius of the vehicle's wheels",
-            "default": 0.39
-            },
-            "wheel_width": {
-            "type": "number",
-            "description": "width of the vehicle's wheels",
-            "default": 0.42
-            },
-            "wheel_base": {
-            "type": "number",
-            "description": "distance between front and rear wheel centers",
-            "default": 2.74
-            },
-            "wheel_tread": {
-            "type": "number",
-            "description": "distance between left and right wheel centers",
-            "default": 1.63
-            },
-            "front_overhang": {
-            "type": "number",
-            "description": "distance between front wheel center and vehicle front",
-            "default": 1.0
-            },
-            "rear_overhang": {
-            "type": "number",
-            "description": "distance between rear wheel center and vehicle rear",
-            "default": 1.03
-            },
-            "left_overhang": {
-            "type": "number",
-            "description": "distance between left wheel center and vehicle left",
-            "default": 0.1
-            },
-            "right_overhang": {
-            "type": "number",
-            "description": "distance between right wheel center and vehicle right",
-            "default": 0.1
-            },
-            "vehicle_height": {
-            "type": "number",
-            "description": "height of the vehicle",
-            "default": 2.5
-            },
-            "max_steer_angle": {
-            "type": "number",
-            "description": "maximum steering angle in radians",
-            "default": 0.70
-            }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Vehicle Info Params",
+  "type": "object",
+  "definitions": {
+    "vehicle_info": {
+      "type": "object",
+      "properties": {
+        "wheel_radius": {
+          "type": "number",
+          "description": "radius of the vehicle's wheels",
+          "default": 0.39
         },
-        "required": [
-            "wheel_radius",
-            "wheel_width",
-            "wheel_base",
-            "wheel_tread",
-            "front_overhang",
-            "rear_overhang",
-            "left_overhang",
-            "right_overhang",
-            "vehicle_height",
-            "max_steer_angle"
-        ],
-        "additionalProperties": false
-        }
-    },
-    "properties": {
-        "/**": {
-        "type": "object",
-        "properties": {
-            "ros__parameters": {
-            "$ref": "#/definitions/vehicle_info"
-            }
+        "wheel_width": {
+          "type": "number",
+          "description": "width of the vehicle's wheels",
+          "default": 0.42
         },
-        "required": ["ros__parameters"],
-        "additionalProperties": false
+        "wheel_base": {
+          "type": "number",
+          "description": "distance between front and rear wheel centers",
+          "default": 2.74
+        },
+        "wheel_tread": {
+          "type": "number",
+          "description": "distance between left and right wheel centers",
+          "default": 1.63
+        },
+        "front_overhang": {
+          "type": "number",
+          "description": "distance between front wheel center and vehicle front",
+          "default": 1.0
+        },
+        "rear_overhang": {
+          "type": "number",
+          "description": "distance between rear wheel center and vehicle rear",
+          "default": 1.03
+        },
+        "left_overhang": {
+          "type": "number",
+          "description": "distance between left wheel center and vehicle left",
+          "default": 0.1
+        },
+        "right_overhang": {
+          "type": "number",
+          "description": "distance between right wheel center and vehicle right",
+          "default": 0.1
+        },
+        "vehicle_height": {
+          "type": "number",
+          "description": "height of the vehicle",
+          "default": 2.5
+        },
+        "max_steer_angle": {
+          "type": "number",
+          "description": "maximum steering angle in radians",
+          "default": 0.7
         }
-    },
-    "required": ["/**"],
-    "additionalProperties": false
+      },
+      "required": [
+        "wheel_radius",
+        "wheel_width",
+        "wheel_base",
+        "wheel_tread",
+        "front_overhang",
+        "rear_overhang",
+        "left_overhang",
+        "right_overhang",
+        "vehicle_height",
+        "max_steer_angle"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/vehicle_info"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
 }
