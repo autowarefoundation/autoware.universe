@@ -54,8 +54,7 @@ std::unique_ptr<Ogre::ColourValue> gradation(
   color_ptr->g =
     static_cast<float>(color_max.greenF() * ratio + color_min.greenF() * (1.0 - ratio));
   color_ptr->r = static_cast<float>(color_max.redF() * ratio + color_min.redF() * (1.0 - ratio));
-  color_ptr->b =
-    static_cast<float>(color_max.blueF() * ratio + color_min.blueF() * (1.0 - ratio));
+  color_ptr->b = static_cast<float>(color_max.blueF() * ratio + color_min.blueF() * (1.0 - ratio));
 
   return color_ptr;
 }
