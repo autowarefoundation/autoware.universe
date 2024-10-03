@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "scene_no_stopping_area.hpp"
+#include "utils.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/debug.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
@@ -28,7 +29,7 @@ namespace autoware::behavior_velocity_planner
 namespace
 {
 const double marker_lifetime = 0.2;
-using DebugData = NoStoppingAreaModule::DebugData;
+using DebugData = no_stopping_area::DebugData;
 using autoware::universe_utils::appendMarkerArray;
 using autoware::universe_utils::createDefaultMarker;
 using autoware::universe_utils::createMarkerColor;

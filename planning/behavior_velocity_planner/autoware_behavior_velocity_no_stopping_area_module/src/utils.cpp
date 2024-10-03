@@ -14,7 +14,9 @@
 
 #include "utils.hpp"
 
+#include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <boost/geometry/geometry.hpp>
@@ -22,7 +24,7 @@
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/geometry/Polygon.h>
 
-#include <vector>
+#include <limits>
 
 namespace autoware::behavior_velocity_planner::no_stopping_area
 {
@@ -88,4 +90,170 @@ std::optional<LineString2d> generate_stop_line(
   }
   return {};
 }
+
+bool is_stoppable(
+  PassJudge & pass_judge, const geometry_msgs::msg::Pose & self_pose,
+  const geometry_msgs::msg::Pose & line_pose, const PlannerData & planner_data,
+  const rclcpp::Logger & logger)
+{
+  // get vehicle info and compute pass_judge_line_distance
+  const auto current_velocity = planner_data.current_velocity->twist.linear.x;
+  const auto current_acceleration = planner_data.current_acceleration->accel.accel.linear.x;
+  const double max_acc = planner_data.max_stop_acceleration_threshold;
+  const double max_jerk = planner_data.max_stop_jerk_threshold;
+  const double delay_response_time = planner_data.delay_response_time;
+  const double stoppable_distance = planning_utils::calcJudgeLineDistWithJerkLimit(
+    current_velocity, current_acceleration, max_acc, max_jerk, delay_response_time);
+  const double signed_arc_length =
+    arc_lane_utils::calcSignedDistance(self_pose, line_pose.position);
+  const bool distance_stoppable = stoppable_distance < signed_arc_length;
+  const bool slow_velocity = planner_data.current_velocity->twist.linear.x < 2.0;
+  // ego vehicle is high speed and can't stop before stop line -> GO
+  const bool not_stoppable = !distance_stoppable && !slow_velocity;
+  // stoppable or not is judged only once
+  RCLCPP_DEBUG(
+    logger, "stoppable_dist: %lf signed_arc_length: %lf", stoppable_distance, signed_arc_length);
+  if (!distance_stoppable && !pass_judge.pass_judged) {
+    pass_judge.pass_judged = true;
+    // can't stop using maximum brake consider jerk limit
+    if (not_stoppable) {
+      // pass through
+      pass_judge.is_stoppable = false;
+      RCLCPP_WARN_THROTTLE(
+        logger, *planner_data.clock_, 1000,
+        "[NoStoppingArea] can't stop in front of no stopping area");
+    } else {
+      pass_judge.is_stoppable = true;
+    }
+  }
+  return pass_judge.is_stoppable;
+}
+
+Polygon2d generate_ego_no_stopping_area_lane_polygon(
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
+  const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem, const double margin,
+  const double extra_dist, const double path_expand_width, const rclcpp::Logger & logger,
+  rclcpp::Clock & clock)
+{
+  Polygon2d ego_area;  // open polygon
+  double dist_from_start_sum = 0.0;
+  const double interpolation_interval = 0.5;
+  bool is_in_area = false;
+  tier4_planning_msgs::msg::PathWithLaneId interpolated_path;
+  if (!splineInterpolate(path, interpolation_interval, interpolated_path, logger)) {
+    return ego_area;
+  }
+  auto & pp = interpolated_path.points;
+  /* calc closest index */
+  const auto closest_idx_opt =
+    autoware::motion_utils::findNearestIndex(interpolated_path.points, ego_pose, 3.0, M_PI_4);
+  if (!closest_idx_opt) {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger, clock, 1000 /* ms */, "autoware::motion_utils::findNearestIndex fail");
+    return ego_area;
+  }
+  const size_t closest_idx = closest_idx_opt.value();
+
+  const int num_ignore_nearest = 1;  // Do not consider nearest lane polygon
+  size_t ego_area_start_idx = closest_idx + num_ignore_nearest;
+  // return if area size is not intentional
+  if (no_stopping_area_reg_elem.noStoppingAreas().size() != 1) {
+    return ego_area;
+  }
+  const auto no_stopping_area = no_stopping_area_reg_elem.noStoppingAreas().front();
+  for (size_t i = closest_idx + num_ignore_nearest; i < pp.size() - 1; ++i) {
+    dist_from_start_sum += autoware::universe_utils::calcDistance2d(pp.at(i), pp.at(i - 1));
+    const auto & p = pp.at(i).point.pose.position;
+    if (bg::within(Point2d{p.x, p.y}, lanelet::utils::to2D(no_stopping_area).basicPolygon())) {
+      is_in_area = true;
+      break;
+    }
+    if (dist_from_start_sum > extra_dist) {
+      return ego_area;
+    }
+    ++ego_area_start_idx;
+  }
+  if (ego_area_start_idx > num_ignore_nearest) {
+    ego_area_start_idx--;
+  }
+  if (!is_in_area) {
+    return ego_area;
+  }
+  double dist_from_area_sum = 0.0;
+  // decide end idx with extract distance
+  size_t ego_area_end_idx = ego_area_start_idx;
+  for (size_t i = ego_area_start_idx; i < pp.size() - 1; ++i) {
+    dist_from_start_sum += autoware::universe_utils::calcDistance2d(pp.at(i), pp.at(i - 1));
+    const auto & p = pp.at(i).point.pose.position;
+    if (!bg::within(Point2d{p.x, p.y}, lanelet::utils::to2D(no_stopping_area).basicPolygon())) {
+      dist_from_area_sum += autoware::universe_utils::calcDistance2d(pp.at(i), pp.at(i - 1));
+    }
+    if (dist_from_start_sum > extra_dist || dist_from_area_sum > margin) {
+      break;
+    }
+    ++ego_area_end_idx;
+  }
+
+  const auto width = path_expand_width;
+  ego_area = planning_utils::generatePathPolygon(
+    interpolated_path, ego_area_start_idx, ego_area_end_idx, width);
+  return ego_area;
+}
+
+bool check_stop_lines_in_no_stopping_area(
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const Polygon2d & poly,
+  no_stopping_area::DebugData & debug_data)
+{
+  const double stop_vel = std::numeric_limits<float>::min();
+
+  // if the detected stop point is near goal, it's ignored.
+  static constexpr double close_to_goal_distance = 1.0;
+
+  // stuck points by stop line
+  for (size_t i = 0; i < path.points.size() - 1; ++i) {
+    const auto p0 = path.points.at(i).point.pose.position;
+    const auto p1 = path.points.at(i + 1).point.pose.position;
+    const auto v0 = path.points.at(i).point.longitudinal_velocity_mps;
+    const auto v1 = path.points.at(i + 1).point.longitudinal_velocity_mps;
+    if (v0 > stop_vel && v1 > stop_vel) {
+      continue;
+    }
+    // judge if stop point p0 is near goal, by its distance to the path end.
+    const double dist_to_path_end =
+      autoware::motion_utils::calcSignedArcLength(path.points, i, path.points.size() - 1);
+    if (dist_to_path_end < close_to_goal_distance) {
+      // exit with false, cause position is near goal.
+      return false;
+    }
+
+    const LineString2d line{{p0.x, p0.y}, {p1.x, p1.y}};
+    std::vector<Point2d> collision_points;
+    bg::intersection(poly, line, collision_points);
+    if (!collision_points.empty()) {
+      geometry_msgs::msg::Point point;
+      point.x = collision_points.front().x();
+      point.y = collision_points.front().y();
+      point.z = 0.0;
+      debug_data.stuck_points.emplace_back(point);
+      return true;
+    }
+  }
+  return false;
+}
+
+std::optional<LineString2d> get_stop_line_geometry2d(
+  const tier4_planning_msgs::msg::PathWithLaneId & path,
+  const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem,
+  const double stop_line_margin, const double stop_line_extend_length, const double vehicle_width)
+{
+  const auto & stop_line = no_stopping_area_reg_elem.stopLine();
+  if (stop_line && stop_line->size() >= 2) {
+    // get stop line from map
+    return planning_utils::extendLine(
+      stop_line.value()[0], stop_line.value()[1], stop_line_extend_length);
+  }
+  return generate_stop_line(
+    path, no_stopping_area_reg_elem.noStoppingAreas(), vehicle_width, stop_line_margin);
+}
+
 }  // namespace autoware::behavior_velocity_planner::no_stopping_area
