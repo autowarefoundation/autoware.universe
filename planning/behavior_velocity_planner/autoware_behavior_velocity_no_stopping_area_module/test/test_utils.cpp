@@ -21,6 +21,9 @@
 #include <tier4_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
 
 #include <gtest/gtest.h>
+#include <lanelet2_core/Forward.h>
+#include <lanelet2_core/primitives/Point.h>
+#include <lanelet2_core/primitives/Polygon.h>
 
 #include <stdexcept>
 
@@ -89,4 +92,65 @@ TEST(NoStoppingAreaTest, insertStopPoint)
   stop_point.first = path.points.size() - 1;
   stop_point.second = path.points.back().point.pose;
   EXPECT_THROW(insert_stop_point(path, stop_point), std::out_of_range);
+}
+
+TEST(NoStoppingAreaTest, generateStopLine)
+{
+  using autoware::behavior_velocity_planner::no_stopping_area::generate_stop_line;
+  tier4_planning_msgs::msg::PathWithLaneId path;
+  constexpr auto nb_points = 10;
+  for (auto x = 0; x < nb_points; ++x) {
+    tier4_planning_msgs::msg::PathPointWithLaneId p;
+    p.point.pose.position.x = 1.0 * x;
+    p.point.pose.position.y = 0.0;
+    path.points.push_back(p);
+  }
+  lanelet::ConstPolygons3d no_stopping_areas;
+  double ego_width = 0.0;
+  double stop_line_margin = 0.0;
+  // no areas, expect no stop line
+  auto stop_line = generate_stop_line(path, no_stopping_areas, ego_width, stop_line_margin);
+  EXPECT_FALSE(stop_line.has_value());
+
+  // area outside of the path
+  lanelet::Polygon3d poly;
+  poly.push_back(lanelet::Point3d(lanelet::InvalId, 3.0, -2.0));
+  poly.push_back(lanelet::Point3d(lanelet::InvalId, 3.0, -0.5));
+  poly.push_back(lanelet::Point3d(lanelet::InvalId, 5.0, -0.5));
+  poly.push_back(lanelet::Point3d(lanelet::InvalId, 5.0, -2.0));
+  no_stopping_areas.push_back(poly);
+  stop_line = generate_stop_line(path, no_stopping_areas, ego_width, stop_line_margin);
+  EXPECT_FALSE(stop_line.has_value());
+  // area on the path, 0 margin and 0 width
+  poly.push_back(lanelet::Point3d(lanelet::InvalId, 5.0, -1.0));
+  poly.push_back(lanelet::Point3d(lanelet::InvalId, 5.0, 1.0));
+  poly.push_back(lanelet::Point3d(lanelet::InvalId, 6.0, 1.0));
+  poly.push_back(lanelet::Point3d(lanelet::InvalId, 6.0, -1.0));
+  no_stopping_areas.push_back(poly);
+  stop_line = generate_stop_line(path, no_stopping_areas, ego_width, stop_line_margin);
+  EXPECT_TRUE(stop_line.has_value());
+  ASSERT_EQ(stop_line->size(), 2UL);
+  EXPECT_EQ(stop_line->front().x(), 5.0);
+  EXPECT_EQ(stop_line->front().y(), 0.0);
+  EXPECT_EQ(stop_line->back().x(), 5.0);
+  EXPECT_EQ(stop_line->back().y(), 0.0);
+  // set a margin
+  stop_line_margin = 1.0;
+  stop_line = generate_stop_line(path, no_stopping_areas, ego_width, stop_line_margin);
+  EXPECT_TRUE(stop_line.has_value());
+  ASSERT_EQ(stop_line->size(), 2UL);
+  EXPECT_EQ(stop_line->front().x(), 4.0);
+  EXPECT_EQ(stop_line->front().y(), 0.0);
+  EXPECT_EQ(stop_line->back().x(), 4.0);
+  EXPECT_EQ(stop_line->back().y(), 0.0);
+  // set a width
+  ego_width = 2.0;
+  stop_line = generate_stop_line(path, no_stopping_areas, ego_width, stop_line_margin);
+  EXPECT_TRUE(stop_line.has_value());
+  ASSERT_EQ(stop_line->size(), 2UL);
+  // TODO(anyone): if we stop at this stop line ego overlaps the 1st area, is this okay ?
+  EXPECT_EQ(stop_line->front().x(), 4.0);
+  EXPECT_EQ(stop_line->front().y(), 2.0);
+  EXPECT_EQ(stop_line->back().x(), 4.0);
+  EXPECT_EQ(stop_line->back().y(), -2.0);
 }

@@ -68,11 +68,15 @@ void insert_stop_point(
   tier4_planning_msgs::msg::PathWithLaneId & path, const PathIndexWithPose & stop_point);
 
 /**
- * @brief auto gen no stopping area stop line from area polygon if stop line is not set
- *        ---------------
- * ------col-------------|--> ego path
- *        |     Area     |
- *        ---------------
+ * @brief generate stop line from no stopping area polygons
+ *          ________________
+ * ------|--|--------------|--> ego path
+ *  stop |  |     Area     |
+ *  line |  L______________/
+ * @param path input path
+ * @param no_stopping_areas no stopping area polygons
+ * @param ego_width [m] width of ego
+ * @param stop_line_margin [m] margin to keep between the stop line and the no stopping areas
  **/
 std::optional<universe_utils::LineString2d> generate_stop_line(
   const tier4_planning_msgs::msg::PathWithLaneId & path,

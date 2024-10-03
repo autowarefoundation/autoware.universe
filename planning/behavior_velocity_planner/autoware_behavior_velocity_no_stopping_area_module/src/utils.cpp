@@ -69,7 +69,6 @@ std::optional<LineString2d> generate_stop_line(
   LineString2d stop_line;
   for (const auto & no_stopping_area : no_stopping_areas) {
     const auto & area_poly = lanelet::utils::to2D(no_stopping_area).basicPolygon();
-    lanelet::BasicLineString2d path_line;
     for (size_t i = 0; i < path.points.size() - 1; ++i) {
       const auto p0 = path.points.at(i).point.pose.position;
       const auto p1 = path.points.at(i + 1).point.pose.position;
