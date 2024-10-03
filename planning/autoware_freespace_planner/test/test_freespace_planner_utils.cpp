@@ -21,10 +21,10 @@
 #include <deque>
 #include <vector>
 
-using autoware::freespace_planner::Odometry;
-using autoware::freespace_planner::Scenario;
-using autoware::freespace_planner::Trajectory;
-using autoware::freespace_planner::TrajectoryPoint;
+using autoware::freespace_planner::utils::Odometry;
+using autoware::freespace_planner::utils::Scenario;
+using autoware::freespace_planner::utils::Trajectory;
+using autoware::freespace_planner::utils::TrajectoryPoint;
 using autoware::freespace_planning_algorithms::PlannerWaypoint;
 using autoware::freespace_planning_algorithms::PlannerWaypoints;
 
@@ -112,54 +112,57 @@ TEST(FreespacePlannerUtilsTest, testIsActive)
 {
   Scenario::ConstSharedPtr scenario_ptr;
 
-  EXPECT_FALSE(autoware::freespace_planner::is_active(scenario_ptr));
+  EXPECT_FALSE(autoware::freespace_planner::utils::is_active(scenario_ptr));
 
   Scenario scenario;
   scenario.current_scenario = Scenario::EMPTY;
   scenario_ptr = std::make_shared<Scenario>(scenario);
-  EXPECT_FALSE(autoware::freespace_planner::is_active(scenario_ptr));
+  EXPECT_FALSE(autoware::freespace_planner::utils::is_active(scenario_ptr));
 
   scenario.current_scenario = Scenario::LANEDRIVING;
   scenario_ptr = std::make_shared<Scenario>(scenario);
-  EXPECT_FALSE(autoware::freespace_planner::is_active(scenario_ptr));
+  EXPECT_FALSE(autoware::freespace_planner::utils::is_active(scenario_ptr));
 
   scenario.current_scenario = Scenario::PARKING;
   scenario.activating_scenarios.push_back(Scenario::PARKING);
   scenario_ptr = std::make_shared<Scenario>(scenario);
-  EXPECT_TRUE(autoware::freespace_planner::is_active(scenario_ptr));
+  EXPECT_TRUE(autoware::freespace_planner::utils::is_active(scenario_ptr));
 }
 
 TEST(FreespacePlannerUtilsTest, testIsStopped)
 {
   std::deque<Odometry::ConstSharedPtr> odometry_buffer;
   const double th_stopped_velocity_mps = 0.01;
-  EXPECT_TRUE(autoware::freespace_planner::is_stopped(odometry_buffer, th_stopped_velocity_mps));
+  EXPECT_TRUE(
+    autoware::freespace_planner::utils::is_stopped(odometry_buffer, th_stopped_velocity_mps));
 
   Odometry odometry;
   odometry.twist.twist.linear.x = 0.0;
   odometry_buffer.push_back(std::make_shared<Odometry>(odometry));
-  EXPECT_TRUE(autoware::freespace_planner::is_stopped(odometry_buffer, th_stopped_velocity_mps));
+  EXPECT_TRUE(
+    autoware::freespace_planner::utils::is_stopped(odometry_buffer, th_stopped_velocity_mps));
 
   odometry.twist.twist.linear.x = 1.0;
   odometry_buffer.push_back(std::make_shared<Odometry>(odometry));
-  EXPECT_FALSE(autoware::freespace_planner::is_stopped(odometry_buffer, th_stopped_velocity_mps));
+  EXPECT_FALSE(
+    autoware::freespace_planner::utils::is_stopped(odometry_buffer, th_stopped_velocity_mps));
 }
 
 TEST(FreespacePlannerUtilsTest, testGetReversingIndices)
 {
   auto trajectory = get_trajectory(0ul);
-  auto reversing_indices = autoware::freespace_planner::get_reversing_indices(trajectory);
+  auto reversing_indices = autoware::freespace_planner::utils::get_reversing_indices(trajectory);
   EXPECT_EQ(reversing_indices.size(), 0ul);
 
   trajectory = get_trajectory(1ul);
-  reversing_indices = autoware::freespace_planner::get_reversing_indices(trajectory);
+  reversing_indices = autoware::freespace_planner::utils::get_reversing_indices(trajectory);
   EXPECT_EQ(reversing_indices.size(), 1ul);
   if (!reversing_indices.empty()) {
     EXPECT_EQ(reversing_indices.front(), 10ul);
   }
 
   trajectory = get_trajectory(2ul);
-  reversing_indices = autoware::freespace_planner::get_reversing_indices(trajectory);
+  reversing_indices = autoware::freespace_planner::utils::get_reversing_indices(trajectory);
   EXPECT_EQ(reversing_indices.size(), 2ul);
   if (!reversing_indices.empty()) {
     EXPECT_EQ(reversing_indices.front(), 10ul);
@@ -170,22 +173,22 @@ TEST(FreespacePlannerUtilsTest, testGetReversingIndices)
 TEST(FreespacePlannerUtilsTest, testGetNextTargetIndex)
 {
   auto trajectory = get_trajectory(0ul);
-  auto reversing_indices = autoware::freespace_planner::get_reversing_indices(trajectory);
+  auto reversing_indices = autoware::freespace_planner::utils::get_reversing_indices(trajectory);
   auto current_target_index = 0ul;
-  auto next_target_index = autoware::freespace_planner::get_next_target_index(
+  auto next_target_index = autoware::freespace_planner::utils::get_next_target_index(
     trajectory.points.size(), reversing_indices, current_target_index);
   EXPECT_EQ(next_target_index, trajectory.points.size() - 1);
 
   trajectory = get_trajectory(2ul);
-  reversing_indices = autoware::freespace_planner::get_reversing_indices(trajectory);
+  reversing_indices = autoware::freespace_planner::utils::get_reversing_indices(trajectory);
   ASSERT_EQ(reversing_indices.size(), 2ul);
 
-  next_target_index = autoware::freespace_planner::get_next_target_index(
+  next_target_index = autoware::freespace_planner::utils::get_next_target_index(
     trajectory.points.size(), reversing_indices, current_target_index);
   EXPECT_EQ(next_target_index, reversing_indices.front());
 
   current_target_index = reversing_indices.front();
-  next_target_index = autoware::freespace_planner::get_next_target_index(
+  next_target_index = autoware::freespace_planner::utils::get_next_target_index(
     trajectory.points.size(), reversing_indices, current_target_index);
   EXPECT_EQ(next_target_index, reversing_indices.back());
 }
@@ -193,19 +196,20 @@ TEST(FreespacePlannerUtilsTest, testGetNextTargetIndex)
 TEST(FreespacePlannerUtilsTest, testGetPartialTrajectory)
 {
   const auto trajectory = get_trajectory(2ul);
-  const auto reversing_indices = autoware::freespace_planner::get_reversing_indices(trajectory);
+  const auto reversing_indices =
+    autoware::freespace_planner::utils::get_reversing_indices(trajectory);
 
   ASSERT_EQ(reversing_indices.size(), 2ul);
 
-  auto partial_traj =
-    autoware::freespace_planner::get_partial_trajectory(trajectory, 0ul, reversing_indices.front());
+  auto partial_traj = autoware::freespace_planner::utils::get_partial_trajectory(
+    trajectory, 0ul, reversing_indices.front());
   ASSERT_FALSE(partial_traj.points.empty());
   auto expected_size = reversing_indices.front() + 1ul;
   EXPECT_EQ(partial_traj.points.size(), expected_size);
   EXPECT_TRUE(partial_traj.points.front().longitudinal_velocity_mps > 0.0);
   EXPECT_FLOAT_EQ(partial_traj.points.back().longitudinal_velocity_mps, 0.0);
 
-  partial_traj = autoware::freespace_planner::get_partial_trajectory(
+  partial_traj = autoware::freespace_planner::utils::get_partial_trajectory(
     trajectory, reversing_indices.front(), reversing_indices.back());
   ASSERT_FALSE(partial_traj.points.empty());
   expected_size = reversing_indices.back() - reversing_indices.front() + 1ul;
@@ -223,7 +227,7 @@ TEST(FreespacePlannerUtilsTest, testCreateTrajectory)
   const double velocity = 1.0;
 
   const auto trajectory =
-    autoware::freespace_planner::create_trajectory(current_pose, waypoints, velocity);
+    autoware::freespace_planner::utils::create_trajectory(current_pose, waypoints, velocity);
 
   ASSERT_FALSE(trajectory.points.empty());
   EXPECT_EQ(trajectory.points.size(), waypoints.waypoints.size());
@@ -238,7 +242,7 @@ TEST(FreespacePlannerUtilsTest, testCreateStopTrajectory)
   geometry_msgs::msg::PoseStamped current_pose;
   current_pose.pose.position.x = 1.0;
 
-  auto stop_traj = autoware::freespace_planner::create_stop_trajectory(current_pose);
+  auto stop_traj = autoware::freespace_planner::utils::create_stop_trajectory(current_pose);
   EXPECT_EQ(stop_traj.points.size(), 1ul);
   if (!stop_traj.points.empty()) {
     EXPECT_DOUBLE_EQ(stop_traj.points.front().pose.position.x, 1.0);
@@ -246,7 +250,7 @@ TEST(FreespacePlannerUtilsTest, testCreateStopTrajectory)
   }
 
   const auto trajectory = get_trajectory(0ul);
-  stop_traj = autoware::freespace_planner::create_stop_trajectory(trajectory);
+  stop_traj = autoware::freespace_planner::utils::create_stop_trajectory(trajectory);
   EXPECT_EQ(stop_traj.points.size(), trajectory.points.size());
   if (!stop_traj.points.empty()) {
     EXPECT_DOUBLE_EQ(
