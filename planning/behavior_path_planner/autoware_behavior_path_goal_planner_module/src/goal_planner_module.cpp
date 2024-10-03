@@ -548,7 +548,7 @@ void GoalPlannerModule::updateData()
       return std::nullopt;
     }
     const auto & pull_over_path = pull_over_path_recv.value();
-    return pull_over_path.modified_goal_pose();
+    return pull_over_path.modified_goal();
   }();
 
   const bool is_current_safe = isSafePath(
@@ -2391,7 +2391,8 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
     const auto & pull_over_path = context_data.pull_over_path_opt.value();
     add(
       createPoseMarkerArray(pull_over_path.start_pose(), "pull_over_start_pose", 0, 0.3, 0.3, 0.9));
-    add(createPoseMarkerArray(pull_over_path.end_pose(), "pull_over_end_pose", 0, 0.3, 0.3, 0.9));
+    add(createPoseMarkerArray(
+      pull_over_path.modified_goal_pose(), "pull_over_end_pose", 0, 0.3, 0.3, 0.9));
     add(createPathMarkerArray(pull_over_path.full_path(), "full_path", 0, 0.0, 0.5, 0.9));
     add(createPathMarkerArray(pull_over_path.getCurrentPath(), "current_path", 0, 0.9, 0.5, 0.0));
 
