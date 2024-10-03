@@ -367,22 +367,29 @@ void DistortionCorrector<T>::undistort_pointcloud(
     // Undistort a single point based on the strategy
     undistort_point(it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
 
-    if (angle_conversion_opt.has_value() && pointcloud_transform_needed()) {
-      float cartesian_coordinate_azimuth =
-        autoware::universe_utils::opencv_fast_atan2(*it_y, *it_x);
-      float updated_azimuth = angle_conversion_opt->offset_rad +
-                              angle_conversion_opt->sign * cartesian_coordinate_azimuth;
-      if (updated_azimuth < 0) {
-        updated_azimuth += autoware::universe_utils::pi * 2;
-      } else if (updated_azimuth > 2 * autoware::universe_utils::pi) {
-        updated_azimuth -= autoware::universe_utils::pi * 2;
+    if (angle_conversion_opt.has_value()) {
+      if (pointcloud_transform_needed_) {
+        float cartesian_coordinate_azimuth =
+          autoware::universe_utils::opencv_fast_atan2(*it_y, *it_x);
+        float updated_azimuth = angle_conversion_opt->offset_rad +
+                                angle_conversion_opt->sign * cartesian_coordinate_azimuth;
+        if (updated_azimuth < 0) {
+          updated_azimuth += autoware::universe_utils::pi * 2;
+        } else if (updated_azimuth > 2 * autoware::universe_utils::pi) {
+          updated_azimuth -= autoware::universe_utils::pi * 2;
+        }
+
+        *it_azimuth = updated_azimuth;
+        *it_distance = sqrt(*it_x * *it_x + *it_y * *it_y + *it_z * *it_z);
+
+        ++it_azimuth;
+        ++it_distance;
+      } else {
+        throw std::runtime_error(
+          "The pointcloud is not in the sensor frame, thus it will not update azimuth and distance "
+          "values. Please change the input pointcloud or set update_azimuth_and_distance_ to "
+          "false.");
       }
-
-      *it_azimuth = updated_azimuth;
-      *it_distance = sqrt(*it_x * *it_x + *it_y * *it_y + *it_z * *it_z);
-
-      ++it_azimuth;
-      ++it_distance;
     }
 
     prev_time_stamp_sec = global_point_stamp;
