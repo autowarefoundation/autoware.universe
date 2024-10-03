@@ -119,19 +119,19 @@ double calcDiffAngleAgainstTrajectory(
 }
 
 /**
- * @brief Projects the obstacle's velocity onto the trajectory.
+ * @brief Calculates the obstacle's longitudinal and approach velocities relative to the trajectory.
  *
  * This function calculates the obstacle's velocity components relative to the trajectory.
- * It returns the longitudinal and perpendicular components of the obstacle's velocity
- * with respect to the trajectory. Negative perpendicular velocity indicates that the
+ * It returns the longitudinal and approach components of the obstacle's velocity
+ * with respect to the trajectory. Negative approach velocity indicates that the
  * obstacle is getting far away from the trajectory.
  *
  * @param traj_points The trajectory points.
  * @param obstacle_pose The current pose of the obstacle.
  * @param obstacle_twist The twist (velocity) of the obstacle.
- * @return A pair containing the longitudinal and perpendicular velocity components.
+ * @return A pair containing the longitudinal and approach velocity components.
  */
-std::pair<double, double> projectObstacleVelocityToTrajectory(
+std::pair<double, double> calculateObstacleVelocitiesRelativeToTrajectory(
   const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & obstacle_pose,
   const geometry_msgs::msg::Twist & obstacle_twist)
 {
@@ -837,7 +837,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
     // brkay54: When use_prediction is true, we observed wrong orientation for the object in
     // scenario simulator.
     const auto & current_obstacle_pose =
-      obstacle_cruise_utils::getCurrentObjectPose(predicted_object, obj_stamp, now(), false);
+      obstacle_cruise_utils::getCurrentObjectPose(predicted_object, obj_stamp, now(), true);
 
     // 1. Check if the obstacle's label is target
     const uint8_t label = predicted_object.classification.front().label;
@@ -850,7 +850,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       continue;
     }
 
-    const auto projected_vel = projectObstacleVelocityToTrajectory(
+    const auto projected_vel = calculateObstacleVelocitiesRelativeToTrajectory(
       traj_points, current_obstacle_pose.pose,
       predicted_object.kinematics.initial_twist_with_covariance.twist);
 
@@ -1271,7 +1271,7 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
     return std::nullopt;
   }
 
-  if (obstacle.tangent_velocity < 0.0) {
+  if (obstacle.longitudinal_velocity < 0.0) {
     RCLCPP_INFO_EXPRESSION(
       get_logger(), enable_debug_info_,
       "[Cruise] Ignore obstacle (%s) since it's driving in opposite direction.", object_id.c_str());
@@ -1279,7 +1279,7 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
   }
 
   if (p.max_lat_margin_for_cruise < precise_lat_dist) {
-    const auto time_to_traj = precise_lat_dist / std::max(1e-6, obstacle.normal_velocity);
+    const auto time_to_traj = precise_lat_dist / std::max(1e-6, obstacle.approach_velocity);
     if (time_to_traj > p.max_lat_time_margin_for_cruise) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), enable_debug_info_,
@@ -1317,8 +1317,8 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
     obstacle.uuid,
     obstacle.stamp,
     obstacle.pose,
-    obstacle.tangent_velocity,
-    obstacle.normal_velocity,
+    obstacle.longitudinal_velocity,
+    obstacle.approach_velocity,
     *collision_points};
 }
 
@@ -1371,13 +1371,13 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createYieldCruiseObstac
 
   if (!collision_points) return std::nullopt;
   // check if obstacle is driving on the opposite direction
-  if (obstacle.tangent_velocity < 0.0) return std::nullopt;
+  if (obstacle.longitudinal_velocity < 0.0) return std::nullopt;
   return CruiseObstacle{
     obstacle.uuid,
     obstacle.stamp,
     obstacle.pose,
-    obstacle.tangent_velocity,
-    obstacle.normal_velocity,
+    obstacle.longitudinal_velocity,
+    obstacle.approach_velocity,
     collision_points.value()};
 }
 
@@ -1480,14 +1480,14 @@ ObstacleCruisePlannerNode::createCollisionPointsForInsideCruiseObstacle(
       getObstacleFromUuid(prev_cruise_object_obstacles_, obstacle.uuid).has_value();
 
     if (is_prev_obstacle_cruise) {
-      if (obstacle.tangent_velocity < p.obstacle_velocity_threshold_from_cruise_to_stop) {
+      if (obstacle.longitudinal_velocity < p.obstacle_velocity_threshold_from_cruise_to_stop) {
         return std::nullopt;
       }
       // NOTE: else is keeping cruise
     } else {  // if (is_prev_obstacle_stop) {
       // TODO(murooka) consider hysteresis for slow down
       // If previous obstacle is stop or does not exist.
-      if (obstacle.tangent_velocity < p.obstacle_velocity_threshold_from_stop_to_cruise) {
+      if (obstacle.longitudinal_velocity < p.obstacle_velocity_threshold_from_stop_to_cruise) {
         return std::nullopt;
       }
       // NOTE: else is cruise from stop
@@ -1666,7 +1666,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPred
       return std::nullopt;
     }
 
-    const auto time_to_traj = precise_lat_dist / std::max(1e-6, obstacle.normal_velocity);
+    const auto time_to_traj = precise_lat_dist / std::max(1e-6, obstacle.approach_velocity);
     if (time_to_traj > p.max_lat_time_margin_for_stop) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), enable_debug_info_,
@@ -1680,11 +1680,11 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPred
     if (obstacle.classification.label == ObjectClassification::PEDESTRIAN) {
       resample_time_horizon =
         std::sqrt(std::pow(obstacle.twist.linear.x, 2) + std::pow(obstacle.twist.linear.y, 2)) /
-        p.pedestrian_deceleration_rate;
+        (2.0 * p.pedestrian_deceleration_rate);
     } else if (obstacle.classification.label == ObjectClassification::BICYCLE) {
       resample_time_horizon =
         std::sqrt(std::pow(obstacle.twist.linear.x, 2) + std::pow(obstacle.twist.linear.y, 2)) /
-        p.bicycle_deceleration_rate;
+        (2.0 * p.bicycle_deceleration_rate);
     }
 
     // Get the highest confidence predicted path
@@ -1716,8 +1716,8 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPred
         obstacle.classification,
         obstacle.pose,
         obstacle.shape,
-        obstacle.tangent_velocity,
-        obstacle.normal_velocity,
+        obstacle.longitudinal_velocity,
+        obstacle.approach_velocity,
         collision_point->first,
         collision_point->second};
     }
@@ -1784,8 +1784,8 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPred
     obstacle.classification,
     obstacle.pose,
     obstacle.shape,
-    obstacle.tangent_velocity,
-    obstacle.normal_velocity,
+    obstacle.longitudinal_velocity,
+    obstacle.approach_velocity,
     collision_point->first,
     collision_point->second};
 }
@@ -1951,8 +1951,8 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
     obstacle.stamp,
     obstacle.classification,
     obstacle.pose,
-    obstacle.tangent_velocity,
-    obstacle.normal_velocity,
+    obstacle.longitudinal_velocity,
+    obstacle.approach_velocity,
     precise_lat_dist,
     front_collision_point,
     back_collision_point};
