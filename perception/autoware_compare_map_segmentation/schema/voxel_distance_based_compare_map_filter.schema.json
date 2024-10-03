@@ -44,7 +44,7 @@
         "max_map_grid_size": {
           "type": "number",
           "default": "100.0",
-          "description": "Threshold of grid size to split map pointcloud"
+          "description": "Maximum size of the pcd map with dynamic map loading."
         }
       },
       "required": [
