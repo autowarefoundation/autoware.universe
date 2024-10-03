@@ -17,6 +17,9 @@
 
 #include "autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp"
 
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+
 namespace autoware::multi_object_tracker
 {
 namespace uncertainty
@@ -137,14 +140,13 @@ void normalizeUncertainty(DetectedObjects & detected_objects)
 
 void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detected_objects)
 {
-  // auto & pose = odometry.pose.pose;
+  auto & pose = odometry.pose.pose;
   auto & pose_cov = odometry.pose.covariance;
 
   for (auto & object : detected_objects.objects) {
     auto & object_pose_cov = object.kinematics.pose_with_covariance.covariance;
     
-    // add odometry position uncertainty to the position covariance
-    // add number is not correct. this is for PoC
+    // 1. add odometry position uncertainty to the position covariance
     // object position and it covariance is based on the world frame (map)
     object_pose_cov[XYZRPY_COV_IDX::X_X] += pose_cov[0];       // x-x
     object_pose_cov[XYZRPY_COV_IDX::X_Y] += pose_cov[1];       // x-y
@@ -152,16 +154,31 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
     object_pose_cov[XYZRPY_COV_IDX::Y_Y] += pose_cov[7];       // y-y
     object_pose_cov[XYZRPY_COV_IDX::YAW_YAW] += pose_cov[35];  // yaw-yaw
 
-    // // add odometry heading uncertainty to the yaw covariance
-    // // uncertainty is proportional to the distance between the object and the odometry
-    // // and the uncertainty orientation is vertical to the vector of the odometry position to the object    
-    // auto & object_pose = object.kinematics.pose_with_covariance.pose;
-    // const double dx = object_pose.position.x - pose.position.x;
-    // const double dy = object_pose.position.y - pose.position.y;
-    // const double r = std::sqrt(dx * dx + dy * dy);
-    // const double cov_yaw = pose_cov[35] * r * r;
+    // 2. add odometry heading uncertainty to the yaw covariance
+    // uncertainty is proportional to the distance between the object and the odometry
+    // and the uncertainty orientation is vertical to the vector of the odometry position to the object    
+    auto & object_pose = object.kinematics.pose_with_covariance.pose;
+    const double dx = object_pose.position.x - pose.position.x;
+    const double dy = object_pose.position.y - pose.position.y;
+    const double r = std::sqrt(dx * dx + dy * dy);
+    const double theta = std::atan2(dy, dx);
+    const double cov_yaw = pose_cov[35] * r * r;
 
+    // get the position covariance of the object
+    Eigen::MatrixXd cov = Eigen::MatrixXd(2, 2);
+    cov << pose_cov[0], pose_cov[1], pose_cov[6], pose_cov[7];
+    // rotate the covariance matrix, add the yaw uncertainty, and rotate back
+    Eigen::MatrixXd Rot = Eigen::Rotation2D(theta).toRotationMatrix();
+    Eigen::MatrixXd cov_rot = Rot.transpose() * cov * Rot;
+    cov_rot(1,1) += cov_yaw; // yaw uncertainty is added to y-y element
+    cov = Rot * cov_rot * Rot.transpose();
+    // update the covariance matrix
+    object_pose_cov[XYZRPY_COV_IDX::X_X] = cov(0,0);
+    object_pose_cov[XYZRPY_COV_IDX::X_Y] = cov(0,1);
+    object_pose_cov[XYZRPY_COV_IDX::Y_X] = cov(1,0);
+    object_pose_cov[XYZRPY_COV_IDX::Y_Y] = cov(1,1);
 
+    // 3. add odometry velocity uncertainty to the velocity covariance
 
   }
 }

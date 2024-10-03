@@ -284,7 +284,7 @@ void MultiObjectTracker::runProcess(
     auto & odom_pose_cov = odometry.pose.covariance;
     odom_pose_cov[0] = 0.1;   // x-x
     odom_pose_cov[7] = 0.1;   // y-y
-    odom_pose_cov[35] = 0.1;  // yaw-yaw
+    odom_pose_cov[35] = 0.001;  // yaw-yaw
   }
   uncertainty::addOdometryUncertainty(odometry, input_objects_with_uncertainty);
 
