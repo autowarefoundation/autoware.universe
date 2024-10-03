@@ -97,20 +97,21 @@ jobs:
         id: get-modified-packages
         uses: autowarefoundation/autoware-github-actions/get-modified-packages@v1
 
-      - name: Get changed files (existing files only)
-        id: get-changed-files
+      - name: Get target packages
+        id: get-target-packages
         run: |
-          echo "changed-files=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD | grep -E '\.(cpp|hpp)$' | while read -r file; do [ -e "$file" ] && echo -n "$file "; done)" >> $GITHUB_OUTPUT
+          sudo snap install yq
+          PACKAGES=$(yq e '.[]' clang-tidy-required-packages.yaml | grep -Fxf - <(echo "${{ steps.get-modified-packages.outputs.modified-packages }}" | tr ' ' '\n') | xargs)
+          echo "target-packages=${PACKAGES}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Run clang-tidy
-        if: ${{ steps.get-changed-files.outputs.changed-files != '' }}
+        if: ${{ steps.get-target-packages.outputs.target-packages != '' }}
         uses: autowarefoundation/autoware-github-actions/clang-tidy@v1
         with:
           rosdistro: humble
-          target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
-          target-files: ${{ steps.get-changed-files.outputs.changed-files }}
           clang-tidy-config-url: https://raw.githubusercontent.com/autowarefoundation/autoware/main/.clang-tidy-ci
+          target-packages: ${{ steps.get-target-packages.outputs.target-packages }}
           build-depends-repos: build_depends.repos
           cache-key-element: cuda
 
