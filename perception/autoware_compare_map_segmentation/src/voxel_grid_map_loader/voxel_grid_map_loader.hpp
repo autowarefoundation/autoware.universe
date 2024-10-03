@@ -272,8 +272,11 @@ public:
     map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;
     map_grid_size_y_ = map_cell_to_add.metadata.max_y - map_cell_to_add.metadata.min_y;
     if (map_grid_size_x_ > max_map_grid_size_ || map_grid_size_y_ > max_map_grid_size_) {
-      throw std::runtime_error(
-        "Map was not split or split map grid size is too large. Split map with smaller grid.");
+      RCLCPP_ERROR(
+        logger_,
+        "Map was not split or split map grid size is too large. Split map with grid size smaller "
+        "than %f",
+        max_map_grid_size_);
     }
 
     origin_x_remainder_ = std::remainder(map_cell_to_add.metadata.min_x, map_grid_size_x_);
