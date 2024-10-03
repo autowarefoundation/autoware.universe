@@ -14,14 +14,16 @@
 
 #include "autoware/obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
 
+#include "autoware/interpolation/spline_interpolation.hpp"
 #include "autoware/motion_utils/marker/marker_helper.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
-#include "interpolation/spline_interpolation.hpp"
 
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"
+
+using autoware::signal_processing::LowpassFilter1d;
 
 namespace
 {
@@ -607,7 +609,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::getAccelerationLimitedTrajectory(
       if (unique_s_vec.back() < sum_dist) {
         return unique_v_vec.back();
       }
-      return interpolation::spline(unique_s_vec, unique_v_vec, {sum_dist}).front();
+      return autoware::interpolation::spline(unique_s_vec, unique_v_vec, {sum_dist}).front();
     }();
 
     acc_limited_traj_points.at(i).longitudinal_velocity_mps = std::clamp(

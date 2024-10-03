@@ -27,18 +27,18 @@ The length of the trajectory used for generating the footprints is limited by th
 
 ![ego_footprints](./docs/footprints.png)
 
-### 2. Ego lanelets
+### 2. Other lanelets
 
-In the second step, we calculate the lanelets followed by the ego trajectory.
-We select all lanelets crossed by the trajectory linestring (sequence of trajectory points), as well as their preceding lanelets.
+In the second step, we calculate the lanelets where collisions should be avoided.
+We consider all lanelets around the ego vehicle that are not crossed by the trajectory linestring (sequence of trajectory points) or their preceding lanelets.
 
-![ego_lane](./docs/ego_lane.png)
+![other_lanes](./docs/other_lanes.png)
 
-In the debug visualization the combination of all ego lanelets is shown as a blue polygon.
+In the debug visualization, these other lanelets are shown as blue polygons.
 
 ### 3. Out of lane areas
 
-Next, for each trajectory point, we create the corresponding out of lane areas by subtracting the ego lanelets (from step 2) from the trajectory point footprint (from step 1).
+Next, for each trajectory point, we create the corresponding out of lane areas by intersection the other lanelets (from step 2) with the trajectory point footprint (from step 1).
 Each area is associated with the lanelets overlapped by the area and with the corresponding ego trajectory point.
 
 ![out_of_lane_areas](./docs/out_of_lane_areas.png)

@@ -14,6 +14,7 @@
 
 #include "static_centerline_generator_node.hpp"
 
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/map_projection_loader/load_info_from_lanelet2_map.hpp"
 #include "autoware/map_projection_loader/map_projection_loader.hpp"
 #include "autoware/motion_utils/resample/resample.hpp"
@@ -25,7 +26,6 @@
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
 #include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
 #include "centerline_source/bag_ego_trajectory_based_centerline.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "map_loader/lanelet2_map_loader_node.hpp"
 #include "type_alias.hpp"
 #include "utils.hpp"
@@ -625,7 +625,7 @@ void StaticCenterlineGeneratorNode::validate()
   }
 
   // calculate curvature
-  SplineInterpolationPoints2d centerline_spline(centerline);
+  autoware::interpolation::SplineInterpolationPoints2d centerline_spline(centerline);
   const auto curvature_vec = centerline_spline.getSplineInterpolatedCurvatures();
   const double curvature_threshold = vehicle_info_.calcCurvatureFromSteerAngle(
     vehicle_info_.max_steer_angle_rad - max_steer_angle_margin);
