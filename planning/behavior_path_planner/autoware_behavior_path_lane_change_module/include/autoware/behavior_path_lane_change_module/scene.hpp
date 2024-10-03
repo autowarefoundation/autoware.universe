@@ -142,9 +142,8 @@ protected:
   FilteredByLanesObjects filterObjectsByLanelets(
     const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path) const;
 
-  PathWithLaneId getPrepareSegment(
-    const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
-    const double prepare_length) const override;
+  bool get_prepare_segment(
+    PathWithLaneId & prepare_segment, const double prepare_length) const override;
 
   PathWithLaneId getTargetSegment(
     const lanelet::ConstLanelets & target_lanes, const Pose & lane_changing_start_pose,
@@ -161,8 +160,6 @@ protected:
     const double shift_length, const double dist_to_reg_element) const;
 
   bool get_lane_change_paths(LaneChangePaths & candidate_paths) const;
-
-  bool is_valid_prepare_segment(const PathWithLaneId & prepare_segment) const;
 
   LaneChangePath get_candidate_path(
     const LaneChangePhaseMetrics & prep_metrics, const LaneChangePhaseMetrics & lc_metrics,

@@ -1044,21 +1044,41 @@ std::vector<double> NormalLaneChange::calcPrepareDuration(
   return prepare_durations;
 }
 
-PathWithLaneId NormalLaneChange::getPrepareSegment(
-  const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
-  const double prepare_length) const
+bool NormalLaneChange::get_prepare_segment(
+  PathWithLaneId & prepare_segment, const double prepare_length) const
 {
-  if (current_lanes.empty()) {
-    return PathWithLaneId();
+  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
+  const auto backward_path_length = common_data_ptr_->bpp_param_ptr->backward_path_length;
+
+  if (current_lanes.empty() || target_lanes.empty()) {
+    return false;
   }
 
-  auto prepare_segment = prev_module_output_.path;
+  prepare_segment = prev_module_output_.path;
   const size_t current_seg_idx =
     autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       prepare_segment.points, getEgoPose(), 3.0, 1.0);
   utils::clipPathLength(prepare_segment, current_seg_idx, prepare_length, backward_path_length);
 
-  return prepare_segment;
+  if (prepare_segment.points.empty()) return false;
+
+  const auto & lc_start_pose = prepare_segment.points.back().point.pose;
+
+  // TODO(Quda, Azu): Is it possible to remove these checks if we ensure prepare segment length is
+  // larger than distance to target lane start
+  if (!is_valid_start_point(common_data_ptr_, lc_start_pose)) return false;
+
+  // lane changing start is at the end of prepare segment
+  const auto target_length_from_lane_change_start_pose =
+    utils::getArcLengthToTargetLanelet(current_lanes, target_lanes.front(), lc_start_pose);
+
+  // Check if the lane changing start point is not on the lanes next to target lanes,
+  if (target_length_from_lane_change_start_pose > std::numeric_limits<double>::epsilon()) {
+    throw std::logic_error("lane change start is behind target lanelet!");
+  }
+
+  return true;
 }
 
 lane_change::TargetObjects NormalLaneChange::getTargetObjects(
@@ -1487,17 +1507,15 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
       continue;
     }
 
-    auto prepare_segment = getPrepareSegment(
-      current_lanes, planner_data_->parameters.backward_path_length, prep_metric.length);
-
+    PathWithLaneId prepare_segment;
     try {
-      if (!is_valid_prepare_segment(prepare_segment)) {
-        debug_print("lane change start is behind target lanelet!");
-        break;
+      if (!get_prepare_segment(prepare_segment, prep_metric.length)) {
+        debug_print("Reject: failed to get valid prepare segment!");
+        continue;
       }
     } catch (const std::exception & e) {
-      debug_print(std::string("Reject: ") + e.what());
-      continue;
+      debug_print(e.what());
+      break;
     }
 
     debug_print("Prepare path satisfy constraints");
@@ -1552,32 +1570,6 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
 
   RCLCPP_DEBUG(logger_, "No safety path found.");
   return false;
-}
-
-bool NormalLaneChange::is_valid_prepare_segment(const PathWithLaneId & prepare_segment) const
-{
-  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
-  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
-
-  if (prepare_segment.points.empty()) {
-    throw std::logic_error("prepare segment is empty!");
-  }
-
-  const auto & lc_start_pose = prepare_segment.points.back().point.pose;
-
-  // TODO(Quda, Azu): Is it possible to remove these checks if we ensure prepare segment length is
-  // larger than distance to target lane start
-  if (!is_valid_start_point(common_data_ptr_, lc_start_pose)) {
-    throw std::logic_error(
-      "lane changing start point is not within the preferred lanes or its neighbors");
-  }
-
-  // lane changing start is at the end of prepare segment
-  const auto target_length_from_lane_change_start_pose =
-    utils::getArcLengthToTargetLanelet(current_lanes, target_lanes.front(), lc_start_pose);
-
-  // Check if the lane changing start point is not on the lanes next to target lanes,
-  return target_length_from_lane_change_start_pose < std::numeric_limits<double>::epsilon();
 }
 
 LaneChangePath NormalLaneChange::get_candidate_path(
