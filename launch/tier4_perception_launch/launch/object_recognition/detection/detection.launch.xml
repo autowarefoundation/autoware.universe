@@ -6,6 +6,7 @@
   <!-- Pipeline junctions -->
   <arg name="mode" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
   <arg name="lidar_detection_model" description="options: `transfusion`, `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
+  <arg name="lidar_detection_model_type" description="options: `default`, `tiny`, `sigma`"/>
   <arg name="use_object_filter" description="use object filter"/>
   <arg name="objects_filter_method" description="options: `lanelet_filter` or `position_filter`"/>
   <arg name="use_pointcloud_map" description="use pointcloud map filter"/>
@@ -160,6 +161,7 @@
       <arg name="output/rule_detector/objects" value="$(var camera_lidar_rule_detector/output/objects)"/>
       <arg name="node/pointcloud_container" value="$(var node/pointcloud_container)"/>
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
+      <arg name="lidar_detection_model_type" value="$(var lidar_detection_model_type)"/>
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
       <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
@@ -174,6 +176,7 @@
       <arg name="output/objects" value="$(var lidar_ml_detector/output/objects)"/>
       <arg name="node/pointcloud_container" value="$(var node/pointcloud_container)"/>
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
+      <arg name="lidar_detection_model_type" value="$(var lidar_detection_model_type)"/>
     </include>
   </group>
   <group if="$(var switch/detector/lidar_rule)">
