@@ -97,13 +97,13 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
     margin + vi.vehicle_length_m + planner_param_.stuck_vehicle_front_margin;
   const Polygon2d stuck_vehicle_detect_area =
     no_stopping_area::generate_ego_no_stopping_area_lane_polygon(
-      *path, current_pose->pose, ego_space_in_front_of_stuck_vehicle,
+      *path, current_pose->pose, no_stopping_area_reg_elem_, ego_space_in_front_of_stuck_vehicle,
       planner_param_.detection_area_length, planner_param_.path_expand_width, logger_, *clock_);
   const double ego_space_in_front_of_stop_line =
     margin + planner_param_.stop_margin + vi.rear_overhang_m;
   const Polygon2d stop_line_detect_area =
     no_stopping_area::generate_ego_no_stopping_area_lane_polygon(
-      *path, current_pose->pose, ego_space_in_front_of_stop_line,
+      *path, current_pose->pose, no_stopping_area_reg_elem_, ego_space_in_front_of_stop_line,
       planner_param_.detection_area_length, planner_param_.path_expand_width, logger_, *clock_);
   if (stuck_vehicle_detect_area.outer().empty() && stop_line_detect_area.outer().empty()) {
     setSafe(true);
@@ -173,7 +173,7 @@ bool NoStoppingAreaModule::check_stuck_vehicles_in_no_stopping_area(
 {
   // stuck points by predicted objects
   for (const auto & object : predicted_obj_arr_ptr->objects) {
-    if (!no_stopping_area::is_target_stuck_vehicle_type(object)) {
+    if (!no_stopping_area::is_vehicle_type(object)) {
       continue;  // not target vehicle type
     }
     const auto obj_v = std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x);

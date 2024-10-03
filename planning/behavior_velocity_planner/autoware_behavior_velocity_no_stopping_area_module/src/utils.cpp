@@ -29,18 +29,20 @@
 namespace autoware::behavior_velocity_planner::no_stopping_area
 {
 
-bool is_target_stuck_vehicle_type(const autoware_perception_msgs::msg::PredictedObject & object)
+bool is_vehicle_type(const autoware_perception_msgs::msg::PredictedObject & object)
 {
-  return object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::CAR ||
-         object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::BUS ||
-         object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
-         object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::TRAILER ||
-         object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE;
+  // TODO(anyone): should we switch to using functions from the common object_recognition_utils ?
+  return !object.classification.empty() &&
+         (object.classification.front().label ==
+            autoware_perception_msgs::msg::ObjectClassification::CAR ||
+          object.classification.front().label ==
+            autoware_perception_msgs::msg::ObjectClassification::BUS ||
+          object.classification.front().label ==
+            autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
+          object.classification.front().label ==
+            autoware_perception_msgs::msg::ObjectClassification::TRAILER ||
+          object.classification.front().label ==
+            autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE);
 }
 
 void insert_stop_point(

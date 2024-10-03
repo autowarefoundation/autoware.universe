@@ -53,11 +53,11 @@ struct DebugData
 };
 
 /**
- * @brief check if the object has a target type for stuck check
- * @param object target object
- * @return true if the object has a target type
+ * @brief check if the object is a vehicle (car, bus, truck, trailer, motorcycle)
+ * @param object input object
+ * @return true if the object is a vehicle
  */
-bool is_target_stuck_vehicle_type(const autoware_perception_msgs::msg::PredictedObject & object);
+bool is_vehicle_type(const autoware_perception_msgs::msg::PredictedObject & object);
 
 /**
  * @brief insert stop point on ego path
@@ -104,8 +104,9 @@ bool is_stoppable(
  */
 Polygon2d generate_ego_no_stopping_area_lane_polygon(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
-  const double margin, const double extra_dist, const double path_expand_width,
-  const rclcpp::Logger & logger, rclcpp::Clock & clock);
+  const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem, const double margin,
+  const double extra_dist, const double path_expand_width, const rclcpp::Logger & logger,
+  rclcpp::Clock & clock);
 
 /**
  * @brief Check if there is a stop line in "stop line detect area".
