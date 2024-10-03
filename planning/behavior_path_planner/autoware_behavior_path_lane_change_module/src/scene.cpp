@@ -1588,16 +1588,11 @@ LaneChangePath NormalLaneChange::get_candidate_path(
   const auto & route_handler = *getRouteHandler();
   const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
   const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
-  const auto & target_lane_length = common_data_ptr_->transient_data.target_lane_length;
-  const auto & forward_path_length = planner_data_->parameters.forward_path_length;
-  const auto & is_goal_in_route = common_data_ptr_->lanes_ptr->target_lane_in_goal_section;
-  const auto & next_lc_buffer = common_data_ptr_->transient_data.next_dist_buffer.min;
 
   const auto resample_interval =
     utils::lane_change::calcLaneChangeResampleInterval(lc_metrics.length, prep_metrics.velocity);
-  const auto target_lane_reference_path = utils::lane_change::getReferencePathFromTargetLane(
-    route_handler, target_lanes, lc_start_pose, target_lane_length, lc_metrics.length,
-    forward_path_length, resample_interval, is_goal_in_route, next_lc_buffer);
+  const auto target_lane_reference_path = utils::lane_change::get_reference_path_from_target_Lane(
+    common_data_ptr_, lc_start_pose, lc_metrics.length, resample_interval);
 
   if (target_lane_reference_path.points.empty()) {
     throw std::logic_error("target_lane_reference_path is empty!");
@@ -1633,11 +1628,10 @@ bool NormalLaneChange::check_candidate_path_safety(
   const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects,
   const bool is_stuck) const
 {
-  const auto & lane_change_buffer = common_data_ptr_->transient_data.current_dist_buffer.min;
   if (
     !is_stuck && !utils::lane_change::passed_parked_objects(
                    common_data_ptr_, candidate_path, filtered_objects_.target_lane_leading,
-                   lane_change_buffer, lane_change_debug_.collision_check_objects)) {
+                   lane_change_debug_.collision_check_objects)) {
     throw std::logic_error(
       "Ego is not stuck and parked vehicle exists in the target lane. Skip lane change.");
   }
@@ -1687,9 +1681,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   }
 
   const auto & route_handler = *getRouteHandler();
-  const auto & common_parameters = planner_data_->parameters;
 
-  const auto forward_path_length = common_parameters.forward_path_length;
   const auto minimum_lane_changing_velocity =
     lane_change_parameters_->minimum_lane_changing_velocity;
 
@@ -1737,7 +1729,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   const auto lane_changing_time = PathShifter::calcShiftTimeFromJerk(
     shift_length, lane_change_parameters_->lane_changing_lateral_jerk, max_lateral_acc);
 
-  const auto & target_lane_length = common_data_ptr_->transient_data.target_lane_length;
+  const auto target_lane_length = common_data_ptr_->transient_data.target_lane_length;
   const auto target_segment = getTargetSegment(
     target_lanes, lane_changing_start_pose.value(), target_lane_length, current_min_dist_buffer,
     minimum_lane_changing_velocity, next_min_dist_buffer);
@@ -1768,10 +1760,8 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
 
   const auto resample_interval = utils::lane_change::calcLaneChangeResampleInterval(
     current_min_dist_buffer, minimum_lane_changing_velocity);
-  const auto target_lane_reference_path = utils::lane_change::getReferencePathFromTargetLane(
-    route_handler, target_lanes, lane_changing_start_pose.value(), target_lane_length,
-    current_min_dist_buffer, forward_path_length, resample_interval, is_goal_in_route,
-    next_min_dist_buffer);
+  const auto target_lane_reference_path = utils::lane_change::get_reference_path_from_target_Lane(
+    common_data_ptr_, lane_changing_start_pose.value(), current_min_dist_buffer, resample_interval);
 
   if (target_lane_reference_path.points.empty()) {
     RCLCPP_DEBUG(logger_, "Reject: target_lane_reference_path is empty!!");
@@ -1812,11 +1802,8 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
 
   CollisionCheckDebugMap debug_data;
 
-  const auto current_min_dist_buffer = common_data_ptr_->transient_data.current_dist_buffer.min;
-
   const auto has_passed_parked_objects = utils::lane_change::passed_parked_objects(
-    common_data_ptr_, path, filtered_objects_.target_lane_leading, current_min_dist_buffer,
-    debug_data);
+    common_data_ptr_, path, filtered_objects_.target_lane_leading, debug_data);
 
   if (!has_passed_parked_objects) {
     RCLCPP_DEBUG(logger_, "Lane change has been delayed.");

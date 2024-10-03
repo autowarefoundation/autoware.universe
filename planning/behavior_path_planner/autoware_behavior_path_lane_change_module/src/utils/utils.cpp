@@ -322,12 +322,17 @@ std::optional<LaneChangePath> construct_candidate_path(
   return std::optional<LaneChangePath>{candidate_path};
 }
 
-PathWithLaneId getReferencePathFromTargetLane(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & lane_changing_start_pose, const double target_lane_length,
-  const double lane_changing_length, const double forward_path_length,
-  const double resample_interval, const bool is_goal_in_route, const double next_lane_change_buffer)
+PathWithLaneId get_reference_path_from_target_Lane(
+  const CommonDataPtr & common_data_ptr, const Pose & lane_changing_start_pose,
+  const double lane_changing_length, const double resample_interval)
 {
+  const auto & route_handler = *common_data_ptr->route_handler_ptr;
+  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  const auto target_lane_length = common_data_ptr->transient_data.target_lane_length;
+  const auto is_goal_in_route = common_data_ptr->lanes_ptr->target_lane_in_goal_section;
+  const auto next_lc_buffer = common_data_ptr->transient_data.next_dist_buffer.min;
+  const auto forward_path_length = common_data_ptr->bpp_param_ptr->forward_path_length;
+
   const ArcCoordinates lane_change_start_arc_position =
     lanelet::utils::getArcCoordinates(target_lanes, lane_changing_start_pose);
 
@@ -337,10 +342,10 @@ PathWithLaneId getReferencePathFromTargetLane(
     if (is_goal_in_route) {
       const double s_goal =
         lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose()).length -
-        next_lane_change_buffer;
+        next_lc_buffer;
       return std::min(dist_from_lc_start, s_goal);
     }
-    return std::min(dist_from_lc_start, target_lane_length - next_lane_change_buffer);
+    return std::min(dist_from_lc_start, target_lane_length - next_lc_buffer);
   });
 
   constexpr double epsilon = 1e-4;
@@ -820,8 +825,7 @@ bool isParkedObject(
 
 bool passed_parked_objects(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & objects, const double minimum_lane_change_length,
-  CollisionCheckDebugMap & object_debug)
+  const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & object_debug)
 {
   const auto route_handler = *common_data_ptr->route_handler_ptr;
   const auto lane_change_parameters = *common_data_ptr->lc_param_ptr;
@@ -871,7 +875,7 @@ bool passed_parked_objects(
   });
 
   // If there are still enough length after the target object, we delay the lane change
-  if (min_dist_to_end_of_current_lane <= minimum_lane_change_length) {
+  if (min_dist_to_end_of_current_lane <= common_data_ptr->transient_data.current_dist_buffer.min) {
     return true;
   }
 
