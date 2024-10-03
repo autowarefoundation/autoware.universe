@@ -370,9 +370,8 @@ void DistortionCorrector<T>::undistort_pointcloud(
     if (angle_conversion_opt.has_value()) {
       if (!pointcloud_transform_needed_) {
         throw std::runtime_error(
-          "The pointcloud is not in the sensor frame, thus it will not update azimuth and distance "
-          "values. Please change the input pointcloud or set update_azimuth_and_distance_ to "
-          "false.");
+          "The pointcloud is not in the sensor's frame and thus azimuth and distance cannot be updated. " 
+          "Please change the input pointcloud or set update_azimuth_and_distance to false.");
       }
       float cartesian_coordinate_azimuth =
         autoware::universe_utils::opencv_fast_atan2(*it_y, *it_x);
