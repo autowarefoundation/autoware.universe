@@ -4,7 +4,11 @@
   <arg name="lidar_detection_model" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
   <arg name="lidar_detection_model_type" description="options: `default`, `tiny`, `sigma`"/>
   <arg name="lidar_detection_model_name" default="$(var lidar_detection_model)" if="$(eval &quot;'$(var lidar_detection_model_type)'=='default'&quot;)"/>
-  <arg name="lidar_detection_model_name" default="$(eval &quot;'$(var lidar_detection_model)' + '_' + '$(var lidar_detection_model_type)'&quot;)" unless="$(eval &quot;'$(var lidar_detection_model_type)'=='default'&quot;)"/>
+  <arg
+    name="lidar_detection_model_name"
+    default="$(eval &quot;'$(var lidar_detection_model)' + '_' + '$(var lidar_detection_model_type)'&quot;)"
+    unless="$(eval &quot;'$(var lidar_detection_model_type)'=='default'&quot;)"
+  />
   <arg name="use_roi_based_cluster"/>
   <arg name="use_low_intensity_cluster_filter"/>
   <arg name="use_image_segmentation_based_filter"/>

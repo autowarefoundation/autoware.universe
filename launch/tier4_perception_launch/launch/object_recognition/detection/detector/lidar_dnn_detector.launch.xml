@@ -5,11 +5,13 @@
   <arg name="lidar_detection_model_type" description="options: `default`, `tiny`, `sigma`"/>
   <!-- Lidar detector parameters -->
   <arg name="lidar_detection_model_name" default="$(var lidar_detection_model)" if="$(eval &quot;'$(var lidar_detection_model_type)'=='default'&quot;)"/>
-  <arg name="lidar_detection_model_name" default="$(eval &quot;'$(var lidar_detection_model)' + '_' + '$(var lidar_detection_model_type)'&quot;)" unless="$(eval &quot;'$(var lidar_detection_model_type)'=='default'&quot;)"/>
+  <arg
+    name="lidar_detection_model_name"
+    default="$(eval &quot;'$(var lidar_detection_model)' + '_' + '$(var lidar_detection_model_type)'&quot;)"
+    unless="$(eval &quot;'$(var lidar_detection_model_type)'=='default'&quot;)"
+  />
   <arg name="centerpoint_model_path" default="$(var data_path)/lidar_centerpoint"/>
   <arg name="transfusion_model_path" default="$(var data_path)/lidar_transfusion"/>
-
-
 
   <!-- Lidar detector centerpoint parameters -->
   <arg name="centerpoint_model_name" default="centerpoint_tiny" description="options: `centerpoint`, `centerpoint_tiny` or `centerpoint_sigma`"/>
