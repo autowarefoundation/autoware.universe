@@ -165,7 +165,7 @@ void PlanningEvaluatorNode::AddLaneletMetricMsg(
 void PlanningEvaluatorNode::AddKinematicStateMetricMsg(
   const AccelWithCovarianceStamped & accel_stamped, const Odometry::ConstSharedPtr ego_state_ptr)
 {
-  const std::string base_name = "ego_lane_info/";
+  const std::string base_name = "kinematic_state/";
   MetricMsg metric_msg;
 
   metric_msg.name = base_name + "vel";
@@ -227,8 +227,6 @@ void PlanningEvaluatorNode::AddMetricMsg(
 
 void PlanningEvaluatorNode::onTimer()
 {
-  metrics_msg_.stamp = now();
-
   const auto ego_state_ptr = odometry_sub_.takeData();
   onOdometry(ego_state_ptr);
   {
@@ -251,9 +249,10 @@ void PlanningEvaluatorNode::onTimer()
   }
 
   if (!metrics_msg_.metric_array.empty()) {
+    metrics_msg_.stamp = now();
     metrics_pub_->publish(metrics_msg_);
+    metrics_msg_ = MetricArrayMsg{};
   }
-  metrics_msg_ = MetricArrayMsg{};
 }
 
 void PlanningEvaluatorNode::onTrajectory(

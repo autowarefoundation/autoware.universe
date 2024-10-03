@@ -14,15 +14,11 @@
 
 #include "autoware/control_evaluator/control_evaluator_node.hpp"
 
-#include "autoware/evaluator_utils/evaluator_utils.hpp"
-
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
-#include <algorithm>
 #include <limits>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace control_diagnostics
@@ -31,11 +27,9 @@ ControlEvaluatorNode::ControlEvaluatorNode(const rclcpp::NodeOptions & node_opti
 : Node("control_evaluator", node_options)
 {
   using std::placeholders::_1;
-  control_diag_sub_ = create_subscription<DiagnosticArray>(
-    "~/input/diagnostics", 1, std::bind(&ControlEvaluatorNode::onDiagnostics, this, _1));
 
   // Publisher
-  metrics_pub_ = create_publisher<DiagnosticArray>("~/metrics", 1);
+  metrics_pub_ = create_publisher<MetricArrayMsg>("~/metrics", 1);
 
   // Timer callback to publish evaluator diagnostics
   using namespace std::literals::chrono_literals;
@@ -66,28 +60,7 @@ void ControlEvaluatorNode::getRouteData()
   }
 }
 
-void ControlEvaluatorNode::onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg)
-{
-  // add target diagnostics to the queue and remove old ones
-  for (const auto & function : target_functions_) {
-    autoware::evaluator_utils::updateDiagnosticQueue(*diag_msg, function, now(), diag_queue_);
-  }
-}
-
-DiagnosticStatus ControlEvaluatorNode::generateAEBDiagnosticStatus(const DiagnosticStatus & diag)
-{
-  DiagnosticStatus status;
-  status.level = status.OK;
-  status.name = diag.name;
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "decision";
-  const bool is_emergency_brake = (diag.level == DiagnosticStatus::ERROR);
-  key_value.value = (is_emergency_brake) ? "deceleration" : "none";
-  status.values.push_back(key_value);
-  return status;
-}
-
-DiagnosticStatus ControlEvaluatorNode::generateLaneletDiagnosticStatus(const Pose & ego_pose) const
+void ControlEvaluatorNode::AddLaneletMetricMsg(const Pose & ego_pose)
 {
   const auto current_lanelets = [&]() {
     lanelet::ConstLanelet closest_route_lanelet;
@@ -102,37 +75,44 @@ DiagnosticStatus ControlEvaluatorNode::generateLaneletDiagnosticStatus(const Pos
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(current_lanelets, ego_pose, &current_lane);
 
-  DiagnosticStatus status;
-  status.name = "ego_lane_info";
-  status.level = status.OK;
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "lane_id";
-  key_value.value = std::to_string(current_lane.id());
-  status.values.push_back(key_value);
-  key_value.key = "s";
-  key_value.value = std::to_string(arc_coordinates.length);
-  status.values.push_back(key_value);
-  key_value.key = "t";
-  key_value.value = std::to_string(arc_coordinates.distance);
-  status.values.push_back(key_value);
-  return status;
+  const std::string base_name = "ego_lane_info/";
+  MetricMsg metric_msg;
+
+  {
+  metric_msg.name = base_name+ "lane_id";
+  metric_msg.value = std::to_string(current_lane.id());
+  metrics_msg_.metric_array.push_back(metric_msg);
+  }
+
+  {
+  metric_msg.name = base_name + "s";
+  metric_msg.value = std::to_string(arc_coordinates.length);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  }
+  
+  {
+  metric_msg.name = base_name + "t";
+  metric_msg.value = std::to_string(arc_coordinates.distance);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  }
+  return;
 }
 
-DiagnosticStatus ControlEvaluatorNode::generateKinematicStateDiagnosticStatus(
+void ControlEvaluatorNode::AddKinematicStateMetricMsg(
   const Odometry & odom, const AccelWithCovarianceStamped & accel_stamped)
 {
-  DiagnosticStatus status;
-  status.name = "kinematic_state";
-  status.level = status.OK;
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "vel";
-  key_value.value = std::to_string(odom.twist.twist.linear.x);
-  status.values.push_back(key_value);
-  key_value.key = "acc";
+  const std::string base_name = "kinematic_state/";
+  MetricMsg metric_msg;
+  
+  metric_msg.name = base_name + "vel";
+  metric_msg.value = std::to_string(odom.twist.twist.linear.x);
+  metrics_msg_.metric_array.push_back(metric_msg);
+
+  metric_msg.name = base_name + "acc";
   const auto & acc = accel_stamped.accel.accel.linear.x;
-  key_value.value = std::to_string(acc);
-  status.values.push_back(key_value);
-  key_value.key = "jerk";
+  metric_msg.value = std::to_string(acc);
+  metrics_msg_.metric_array.push_back(metric_msg);
+
   const auto jerk = [&]() {
     if (!prev_acc_stamped_.has_value()) {
       prev_acc_stamped_ = accel_stamped;
@@ -149,138 +129,108 @@ DiagnosticStatus ControlEvaluatorNode::generateKinematicStateDiagnosticStatus(
     prev_acc_stamped_ = accel_stamped;
     return (acc - prev_acc) / dt;
   }();
-  key_value.value = std::to_string(jerk);
-  status.values.push_back(key_value);
-  return status;
+
+  metric_msg.name = base_name + "jerk";
+  metric_msg.value = std::to_string(jerk);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  return;
 }
 
-DiagnosticStatus ControlEvaluatorNode::generateLateralDeviationDiagnosticStatus(
+void ControlEvaluatorNode::AddLateralDeviationMetricMsg(
   const Trajectory & traj, const Point & ego_point)
 {
   const double lateral_deviation = metrics::calcLateralDeviation(traj, ego_point);
 
-  DiagnosticStatus status;
-  status.level = status.OK;
-  status.name = "lateral_deviation";
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "metric_value";
-  key_value.value = std::to_string(lateral_deviation);
-  status.values.push_back(key_value);
-
-  return status;
+  MetricMsg metric_msg;
+  metric_msg.name = "lateral_deviation";
+  metric_msg.value = std::to_string(lateral_deviation);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  return;
 }
 
-DiagnosticStatus ControlEvaluatorNode::generateYawDeviationDiagnosticStatus(
+void ControlEvaluatorNode::AddYawDeviationMetricMsg(
   const Trajectory & traj, const Pose & ego_pose)
 {
   const double yaw_deviation = metrics::calcYawDeviation(traj, ego_pose);
 
-  DiagnosticStatus status;
-  status.level = status.OK;
-  status.name = "yaw_deviation";
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "metric_value";
-  key_value.value = std::to_string(yaw_deviation);
-  status.values.push_back(key_value);
-
-  return status;
+  MetricMsg metric_msg;
+  metric_msg.name = "yaw_deviation";
+  metric_msg.value = std::to_string(yaw_deviation);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  return;
 }
 
-DiagnosticStatus ControlEvaluatorNode::generateGoalLongitudinalDeviationDiagnosticStatus(
+void ControlEvaluatorNode::AddGoalLongitudinalDeviationMetricMsg(
   const Pose & ego_pose)
 {
-  DiagnosticStatus status;
   const double longitudinal_deviation =
     metrics::calcLongitudinalDeviation(route_handler_.getGoalPose(), ego_pose.position);
 
-  status.level = status.OK;
-  status.name = "goal_longitudinal_deviation";
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "metrics_value";
-  key_value.value = std::to_string(longitudinal_deviation);
-  status.values.push_back(key_value);
-  return status;
+  MetricMsg metric_msg;
+  metric_msg.name = "goal_longitudinal_deviation";
+  metric_msg.value = std::to_string(longitudinal_deviation);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  return;
 }
 
-DiagnosticStatus ControlEvaluatorNode::generateGoalLateralDeviationDiagnosticStatus(
+void ControlEvaluatorNode::AddGoalLateralDeviationMetricMsg(
   const Pose & ego_pose)
 {
-  DiagnosticStatus status;
   const double lateral_deviation =
     metrics::calcLateralDeviation(route_handler_.getGoalPose(), ego_pose.position);
 
-  status.level = status.OK;
-  status.name = "goal_lateral_deviation";
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "metrics_value";
-  key_value.value = std::to_string(lateral_deviation);
-  status.values.push_back(key_value);
-  return status;
+  MetricMsg metric_msg;
+  metric_msg.name = "goal_lateral_deviation";
+  metric_msg.value = std::to_string(lateral_deviation);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  return;
 }
 
-DiagnosticStatus ControlEvaluatorNode::generateGoalYawDeviationDiagnosticStatus(
+void ControlEvaluatorNode::AddGoalYawDeviationMetricMsg(
   const Pose & ego_pose)
 {
-  DiagnosticStatus status;
   const double yaw_deviation = metrics::calcYawDeviation(route_handler_.getGoalPose(), ego_pose);
 
-  status.level = status.OK;
-  status.name = "goal_yaw_deviation";
-  diagnostic_msgs::msg::KeyValue key_value;
-  key_value.key = "metrics_value";
-  key_value.value = std::to_string(yaw_deviation);
-  status.values.push_back(key_value);
-  return status;
+  MetricMsg metric_msg;
+  metric_msg.name = "goal_yaw_deviation";
+  metric_msg.value = std::to_string(yaw_deviation);
+  metrics_msg_.metric_array.push_back(metric_msg);
+  return;
 }
 
 void ControlEvaluatorNode::onTimer()
 {
-  DiagnosticArray metrics_msg;
   const auto traj = traj_sub_.takeData();
   const auto odom = odometry_sub_.takeData();
   const auto acc = accel_sub_.takeData();
 
-  // generate decision diagnostics from input diagnostics
-  for (const auto & function : target_functions_) {
-    const auto it = std::find_if(
-      diag_queue_.begin(), diag_queue_.end(),
-      [&function](const std::pair<diagnostic_msgs::msg::DiagnosticStatus, rclcpp::Time> & p) {
-        return p.first.name.find(function) != std::string::npos;
-      });
-    if (it == diag_queue_.end()) {
-      continue;
-    }
-    // generate each decision diagnostics
-    // - AEB decision
-    if (it->first.name.find("autonomous_emergency_braking") != std::string::npos) {
-      metrics_msg.status.push_back(generateAEBDiagnosticStatus(it->first));
-    }
-  }
-
   // calculate deviation metrics
   if (odom && traj && !traj->points.empty()) {
     const Pose ego_pose = odom->pose.pose;
-    metrics_msg.status.push_back(
-      generateLateralDeviationDiagnosticStatus(*traj, ego_pose.position));
-    metrics_msg.status.push_back(generateYawDeviationDiagnosticStatus(*traj, ego_pose));
+    AddLateralDeviationMetricMsg(*traj, ego_pose.position);
+    AddYawDeviationMetricMsg(*traj, ego_pose);
   }
 
   getRouteData();
   if (odom && route_handler_.isHandlerReady()) {
     const Pose ego_pose = odom->pose.pose;
-    metrics_msg.status.push_back(generateLaneletDiagnosticStatus(ego_pose));
+    AddLaneletMetricMsg(ego_pose);
 
-    metrics_msg.status.push_back(generateGoalLongitudinalDeviationDiagnosticStatus(ego_pose));
-    metrics_msg.status.push_back(generateGoalLateralDeviationDiagnosticStatus(ego_pose));
-    metrics_msg.status.push_back(generateGoalYawDeviationDiagnosticStatus(ego_pose));
+    AddGoalLongitudinalDeviationMetricMsg(ego_pose);
+    AddGoalLateralDeviationMetricMsg(ego_pose);
+    AddGoalYawDeviationMetricMsg(ego_pose);
   }
 
   if (odom && acc) {
-    metrics_msg.status.push_back(generateKinematicStateDiagnosticStatus(*odom, *acc));
+    AddKinematicStateMetricMsg(*odom, *acc);
   }
 
-  metrics_msg.header.stamp = now();
-  metrics_pub_->publish(metrics_msg);
+  if (!metrics_msg_.metric_array.empty()) {
+    metrics_msg_.stamp = now();
+    metrics_pub_->publish(metrics_msg_);
+    metrics_msg_ = MetricArrayMsg{};
+  }
+
 }
 }  // namespace control_diagnostics
 
