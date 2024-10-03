@@ -48,8 +48,8 @@ bool is_vehicle_type(const autoware_perception_msgs::msg::PredictedObject & obje
 void insert_stop_point(
   tier4_planning_msgs::msg::PathWithLaneId & path, const PathIndexWithPose & stop_point)
 {
-  auto insert_idx = static_cast<size_t>(stop_point.first + 1);
-  const auto stop_pose = stop_point.second;
+  auto insert_idx = stop_point.first + 1UL;
+  const auto & stop_pose = stop_point.second;
 
   // To PathPointWithLaneId
   tier4_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
