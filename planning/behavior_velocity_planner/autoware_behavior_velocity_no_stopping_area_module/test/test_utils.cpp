@@ -14,8 +14,11 @@
 
 #include "../src/utils.hpp"
 
+#include <autoware/behavior_velocity_planner_common/planner_data.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
+#include <rclcpp/clock.hpp>
+#include <rclcpp/logger.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <tier4_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
@@ -153,4 +156,50 @@ TEST(NoStoppingAreaTest, generateStopLine)
   EXPECT_EQ(stop_line->front().y(), 2.0);
   EXPECT_EQ(stop_line->back().x(), 4.0);
   EXPECT_EQ(stop_line->back().y(), -2.0);
+}
+
+TEST(NoStoppingAreaTest, isStoppable)
+{
+  using autoware::behavior_velocity_planner::no_stopping_area::is_stoppable;
+  autoware::behavior_velocity_planner::no_stopping_area::PassJudge pass_judge;
+  geometry_msgs::msg::Pose self_pose;
+  geometry_msgs::msg::Pose line_pose;
+  rclcpp::Clock clock;
+  auto logger = rclcpp::get_logger("test_logger");
+  logger.set_level(rclcpp::Logger::Level::Debug);
+  autoware::behavior_velocity_planner::no_stopping_area::EgoData ego_data;
+  ego_data.current_velocity = 1.0;
+  ego_data.current_acceleration = 0.0;
+  ego_data.delay_response_time = 0.0;
+  ego_data.max_stop_acc = -1.0;
+  ego_data.max_stop_jerk = -1.0;
+  // try to stop 1m ahead
+  self_pose.position.x = 0.0;
+  self_pose.position.y = 0.0;
+  line_pose.position.x = 1.0;
+  line_pose.position.y = 0.0;
+
+  // enough distance to stop and slow velocity
+  EXPECT_TRUE(is_stoppable(pass_judge, self_pose, line_pose, ego_data, logger, clock));
+  EXPECT_TRUE(pass_judge.is_stoppable);
+  EXPECT_FALSE(pass_judge.pass_judged);
+
+  // unstoppable and fast velocity
+  ego_data.current_velocity = 10.0;
+  EXPECT_FALSE(is_stoppable(pass_judge, self_pose, line_pose, ego_data, logger, clock));
+  EXPECT_FALSE(pass_judge.is_stoppable);
+  EXPECT_TRUE(pass_judge.pass_judged);
+
+  // unstoppable and slow velocity, but since we already judged, it is not updated
+  ego_data.current_velocity = 1.9;
+  EXPECT_FALSE(is_stoppable(pass_judge, self_pose, line_pose, ego_data, logger, clock));
+  EXPECT_FALSE(pass_judge.is_stoppable);
+  EXPECT_TRUE(pass_judge.pass_judged);
+
+  // reset and result is updated
+  // TODO(someone): is this the correct behavior ? distance is unstoppable but result is stoppable
+  pass_judge.pass_judged = false;
+  EXPECT_TRUE(is_stoppable(pass_judge, self_pose, line_pose, ego_data, logger, clock));
+  EXPECT_TRUE(pass_judge.is_stoppable);
+  EXPECT_TRUE(pass_judge.pass_judged);
 }

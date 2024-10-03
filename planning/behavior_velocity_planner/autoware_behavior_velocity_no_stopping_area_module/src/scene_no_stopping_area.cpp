@@ -66,6 +66,8 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   *stop_reason = planning_utils::initializeStopReason(StopReason::NO_STOPPING_AREA);
 
+  const no_stopping_area::EgoData ego_data(*planner_data_);
+
   // Get stop line geometry
   const auto stop_line = no_stopping_area::get_stop_line_geometry2d(
     original_path, no_stopping_area_reg_elem_, planner_param_.stop_line_margin,
@@ -121,7 +123,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   const bool is_entry_prohibited =
     is_entry_prohibited_by_stuck_vehicle || is_entry_prohibited_by_stop_line;
   if (!no_stopping_area::is_stoppable(
-        pass_judge_, current_pose->pose, stop_point->second, *planner_data_, logger_)) {
+        pass_judge_, current_pose->pose, stop_point->second, ego_data, logger_, *clock_)) {
     state_machine_.setState(StateMachine::State::GO);
     setSafe(true);
     return false;

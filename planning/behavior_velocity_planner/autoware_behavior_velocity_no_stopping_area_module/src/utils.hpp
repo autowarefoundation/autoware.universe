@@ -52,6 +52,26 @@ struct DebugData
   geometry_msgs::msg::Polygon stop_line_detect_area;
 };
 
+// intermediate data about the ego vehicle taken from the PlannerData
+struct EgoData
+{
+  EgoData() = default;
+  explicit EgoData(const PlannerData & planner_data)
+  {
+    current_velocity = planner_data.current_velocity->twist.linear.x;
+    current_acceleration = planner_data.current_acceleration->accel.accel.linear.x;
+    max_stop_acc = planner_data.max_stop_acceleration_threshold;
+    max_stop_jerk = planner_data.max_stop_jerk_threshold;
+    delay_response_time = planner_data.delay_response_time;
+  }
+
+  double current_velocity{};
+  double current_acceleration{};
+  double max_stop_acc{};
+  double max_stop_jerk{};
+  double delay_response_time{};
+};
+
 /**
  * @brief check if the object is a vehicle (car, bus, truck, trailer, motorcycle)
  * @param object input object
@@ -88,14 +108,15 @@ std::optional<universe_utils::LineString2d> generate_stop_line(
  * @param [inout] pass_judge the pass judge decision to update
  * @param self_pose       ego-car pose
  * @param line_pose       stop line pose on the lane
- * @param planner_data planner data with ego pose, velocity, etc
+ * @param ego_data planner data with ego pose, velocity, etc
  * @param logger ros logger
+ * @param clock ros clock
  * @return is stoppable in front of no stopping area
  */
 bool is_stoppable(
   PassJudge & pass_judge, const geometry_msgs::msg::Pose & self_pose,
-  const geometry_msgs::msg::Pose & line_pose, const PlannerData & planner_data,
-  const rclcpp::Logger & logger);
+  const geometry_msgs::msg::Pose & line_pose, const EgoData & ego_data,
+  const rclcpp::Logger & logger, rclcpp::Clock & clock);
 
 /**
  * @brief Calculate the polygon of the path from the ego-car position to the end of the

@@ -18,6 +18,7 @@
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+#include <rclcpp/clock.hpp>
 
 #include <boost/geometry/geometry.hpp>
 
@@ -94,21 +95,17 @@ std::optional<LineString2d> generate_stop_line(
 
 bool is_stoppable(
   PassJudge & pass_judge, const geometry_msgs::msg::Pose & self_pose,
-  const geometry_msgs::msg::Pose & line_pose, const PlannerData & planner_data,
-  const rclcpp::Logger & logger)
+  const geometry_msgs::msg::Pose & line_pose, const EgoData & ego_data,
+  const rclcpp::Logger & logger, rclcpp::Clock & clock)
 {
-  // get vehicle info and compute pass_judge_line_distance
-  const auto current_velocity = planner_data.current_velocity->twist.linear.x;
-  const auto current_acceleration = planner_data.current_acceleration->accel.accel.linear.x;
-  const double max_acc = planner_data.max_stop_acceleration_threshold;
-  const double max_jerk = planner_data.max_stop_jerk_threshold;
-  const double delay_response_time = planner_data.delay_response_time;
+  // compute pass_judge_line_distance
   const double stoppable_distance = planning_utils::calcJudgeLineDistWithJerkLimit(
-    current_velocity, current_acceleration, max_acc, max_jerk, delay_response_time);
+    ego_data.current_velocity, ego_data.current_acceleration, ego_data.max_stop_acc,
+    ego_data.max_stop_jerk, ego_data.delay_response_time);
   const double signed_arc_length =
     arc_lane_utils::calcSignedDistance(self_pose, line_pose.position);
   const bool distance_stoppable = stoppable_distance < signed_arc_length;
-  const bool slow_velocity = planner_data.current_velocity->twist.linear.x < 2.0;
+  const bool slow_velocity = ego_data.current_velocity < 2.0;
   // ego vehicle is high speed and can't stop before stop line -> GO
   const bool not_stoppable = !distance_stoppable && !slow_velocity;
   // stoppable or not is judged only once
@@ -117,12 +114,11 @@ bool is_stoppable(
   if (!distance_stoppable && !pass_judge.pass_judged) {
     pass_judge.pass_judged = true;
     // can't stop using maximum brake consider jerk limit
-    if (not_stoppable) {
+    if (not_stoppable) {  // TODO(someone): this can be replaced by !slow_velocity, is this correct?
       // pass through
       pass_judge.is_stoppable = false;
       RCLCPP_WARN_THROTTLE(
-        logger, *planner_data.clock_, 1000,
-        "[NoStoppingArea] can't stop in front of no stopping area");
+        logger, clock, 1000, "[NoStoppingArea] can't stop in front of no stopping area");
     } else {
       pass_judge.is_stoppable = true;
     }
