@@ -2699,6 +2699,10 @@ PathDecisionState PathDecisionStateController::get_next_state(
   // If it is dangerous against dynamic objects before approval, do not determine the path.
   // This eliminates a unsafe path to be approved
   if (enable_safety_check && !next_state.is_stable_safe && !is_activated) {
+    RCLCPP_DEBUG(
+      logger_,
+      "[DecidingPathStatus]: NOT_DECIDED. path is not safe against dynamic objects before "
+      "approval");
     next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
     return next_state;
   }
@@ -2712,6 +2716,7 @@ PathDecisionState PathDecisionStateController::get_next_state(
       modified_goal_opt && !goal_searcher->isSafeGoalWithMarginScaleFactor(
                              modified_goal_opt.value(), hysteresis_factor, occupancy_grid_map,
                              planner_data, static_target_objects)) {
+      RCLCPP_DEBUG(logger_, "[DecidingPathStatus]: DECIDING->NOT_DECIDED. goal is not safe");
       next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
       return next_state;
     }
@@ -2727,11 +2732,16 @@ PathDecisionState PathDecisionStateController::get_next_state(
           /*extract_static_objects=*/false, parameters.maximum_deceleration,
           parameters.object_recognition_collision_check_max_extra_stopping_margin,
           ego_polygons_expanded, true)) {
+      RCLCPP_DEBUG(
+        logger_, "[DecidingPathStatus]: DECIDING->NOT_DECIDED. path has collision with objects");
       next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
       return next_state;
     }
 
     if (enable_safety_check && !next_state.is_stable_safe) {
+      RCLCPP_DEBUG(
+        logger_,
+        "[DecidingPathStatus]: DECIDING->NOT_DECIDED. path is not safe against dynamic objects");
       next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
       return next_state;
     }
@@ -2740,11 +2750,15 @@ PathDecisionState PathDecisionStateController::get_next_state(
     constexpr double check_collision_duration = 1.0;
     const double elapsed_time_from_deciding = (now - prev_state_.stamp).seconds();
     if (elapsed_time_from_deciding > check_collision_duration) {
+      RCLCPP_DEBUG(logger_, "[DecidingPathStatus]: DECIDING->DECIDED. has enough safe time passed");
       next_state.state = PathDecisionState::DecisionKind::DECIDED;
       return next_state;
     }
 
     // if enough time has NOT passed since deciding status starts, keep DECIDING
+    RCLCPP_DEBUG(
+      logger_, "[DecidingPathStatus]: keep DECIDING. elapsed_time_from_deciding: %f",
+      elapsed_time_from_deciding);
     return next_state;
   }
 
@@ -2766,7 +2780,11 @@ PathDecisionState PathDecisionStateController::get_next_state(
   // if object recognition for path collision check is enabled, transition to DECIDING to check
   // collision for a certain period of time. Otherwise, transition to DECIDED directly.
   if (parameters.use_object_recognition) {
-    next_state.state = PathDecisionState::DecisionKind::DECIDED;
+    RCLCPP_DEBUG(
+      logger_,
+      "[DecidingPathStatus]: NOT_DECIDED->DECIDING. start checking collision for certain "
+      "period of time");
+    next_state.state = PathDecisionState::DecisionKind::DECIDING;
     return next_state;
   }
   return {PathDecisionState::DecisionKind::DECIDED, now};

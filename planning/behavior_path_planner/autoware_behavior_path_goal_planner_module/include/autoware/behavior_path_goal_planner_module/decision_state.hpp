@@ -43,7 +43,7 @@ public:
 class PathDecisionStateController
 {
 public:
-  PathDecisionStateController() = default;
+  explicit PathDecisionStateController(rclcpp::Logger logger) : logger_(logger) {}
 
   /**
    * @brief update current state and save old current state to prev state
@@ -65,6 +65,8 @@ public:
   PathDecisionState get_prev_state() const { return prev_state_; }
 
 private:
+  rclcpp::Logger logger_;
+
   PathDecisionState current_state_{};
   PathDecisionState prev_state_{};
 
