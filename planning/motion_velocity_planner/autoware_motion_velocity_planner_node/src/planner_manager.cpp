@@ -76,7 +76,6 @@ std::shared_ptr<Metric> MotionVelocityPlannerManager::make_decision_metric(
 {
   auto metric = std::make_shared<Metric>();
   metric->name = module_name + "/decision";
-  metric->unit = "string";
   metric->value = reason;
   return metric;
 }

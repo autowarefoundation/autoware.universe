@@ -142,6 +142,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
     virtual_wall_publisher_ = this->create_publisher<MarkerArray>("~/virtual_wall", 1);
     debug_rss_distance_publisher_ =
       this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/rss_distance", 1);
+    metrics_pub_ = this->create_publisher<MetricArray>("~/metrics", 1);
   }
   // Diagnostics
   {
@@ -416,6 +417,16 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
       }
     }
     addVirtualStopWallMarker(virtual_wall_marker);
+
+    // publish metrics
+    auto metric = Metric();
+    metric.name = "decision";
+    metric.value = "brake";
+    auto metrics = MetricArray();
+    metrics.stamp = get_clock()->now();
+    metrics.metric_array.push_back(metric);
+    metrics_pub_->publish(metrics);
+
   } else {
     const std::string error_msg = "[AEB]: No Collision";
     const auto diag_level = DiagnosticStatus::OK;
