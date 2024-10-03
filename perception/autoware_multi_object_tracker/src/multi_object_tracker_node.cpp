@@ -291,6 +291,11 @@ void MultiObjectTracker::runProcess(
     odom_twist.linear.x = 10.0;  // m/s
     odom_twist.linear.y = 0.1;   // m/s
     odom_twist.angular.z = 0.1;  // rad/s
+
+    auto & odom_twist_cov = odometry.twist.covariance;
+    odom_twist_cov[0] = 2.0;     // x-x [m^2/s^2]
+    odom_twist_cov[7] = 0.2;     // y-y [m^2/s^2]
+    odom_twist_cov[35] = 0.001;  // yaw-yaw [rad^2/s^2]
   }
   uncertainty::addOdometryUncertainty(odometry, input_objects_with_uncertainty);
 

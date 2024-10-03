@@ -140,10 +140,10 @@ void normalizeUncertainty(DetectedObjects & detected_objects)
 
 void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detected_objects)
 {
-  auto & odom_pose = odometry.pose.pose;
-  auto & odom_pose_cov = odometry.pose.covariance;
-  auto & odom_twist = odometry.twist.twist;
-  // auto & twist_cov = odometry.twist.covariance;
+  const auto & odom_pose = odometry.pose.pose;
+  const auto & odom_pose_cov = odometry.pose.covariance;
+  const auto & odom_twist = odometry.twist.twist;
+  const auto & odom_twist_cov = odometry.twist.covariance;
 
   // ego motion uncertainty, velocity multiplied by time uncertainty
   const double ego_yaw = tf2::getYaw(odom_pose.orientation);
@@ -153,19 +153,23 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
   Eigen::MatrixXd m_cov_motion = Eigen::MatrixXd(2, 2);
   m_cov_motion << odom_twist.linear.x * odom_twist.linear.x * dt * dt, 0, 0,
     odom_twist.linear.y * odom_twist.linear.y * dt * dt;
-  m_cov_motion = m_rot_ego.transpose() * m_cov_motion * m_rot_ego;
 
   // ego position uncertainty, position covariance + motion covariance
   Eigen::MatrixXd m_cov_ego_pose = Eigen::MatrixXd(2, 2);
   m_cov_ego_pose << odom_pose_cov[0], odom_pose_cov[1], odom_pose_cov[6], odom_pose_cov[7];
-  m_cov_ego_pose = m_cov_ego_pose + m_cov_motion;
+  m_cov_ego_pose = m_cov_ego_pose + m_rot_ego.transpose() * m_cov_motion * m_rot_ego;
 
   // ego yaw uncertainty, position covariance + yaw motion covariance
   const double & cov_ego_yaw = odom_pose_cov[35];
   const double cov_yaw = cov_ego_yaw + odom_twist.angular.z * odom_twist.angular.z * dt * dt;
 
+  // ego velocity uncertainty, velocity covariance
+  Eigen::MatrixXd m_cov_ego_twist = Eigen::MatrixXd(2, 2);
+  m_cov_ego_twist << odom_twist_cov[0], odom_twist_cov[1], odom_twist_cov[6], odom_twist_cov[7];
+
   for (auto & object : detected_objects.objects) {
     // 1. add odometry position and motion uncertainty to the object position covariance
+    auto & object_pose = object.kinematics.pose_with_covariance.pose;
     auto & object_pose_cov = object.kinematics.pose_with_covariance.covariance;
     Eigen::MatrixXd m_pose_cov = Eigen::MatrixXd(2, 2);
     m_pose_cov << object_pose_cov[XYZRPY_COV_IDX::X_X], object_pose_cov[XYZRPY_COV_IDX::X_Y],
@@ -180,7 +184,6 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
       // uncertainty is proportional to the distance between the object and the odometry
       // and the uncertainty orientation is vertical to the vector of the odometry position to the
       // object
-      auto & object_pose = object.kinematics.pose_with_covariance.pose;
       const double dx = object_pose.position.x - odom_pose.position.x;
       const double dy = object_pose.position.y - odom_pose.position.y;
       const double r = std::sqrt(dx * dx + dy * dy);
@@ -201,7 +204,24 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
     object_pose_cov[XYZRPY_COV_IDX::Y_X] = m_pose_cov(1, 0);
     object_pose_cov[XYZRPY_COV_IDX::Y_Y] = m_pose_cov(1, 1);
 
-    // 3. add odometry velocity uncertainty to the velocity covariance
+    // 2. add odometry velocity uncertainty to the object velocity covariance
+    auto & object_twist_cov = object.kinematics.twist_with_covariance.covariance;
+    Eigen::MatrixXd m_twist_cov = Eigen::MatrixXd(2, 2);
+    m_twist_cov << object_twist_cov[XYZRPY_COV_IDX::X_X], object_twist_cov[XYZRPY_COV_IDX::X_Y],
+      object_twist_cov[XYZRPY_COV_IDX::Y_X], object_twist_cov[XYZRPY_COV_IDX::Y_Y];
+
+    // 2-a. add odometry velocity uncertainty to the object linear twist covariance
+    const double obj_yaw = tf2::getYaw(object_pose.orientation);  // object yaw is global frame
+    Eigen::MatrixXd m_rot_theta = Eigen::Rotation2D(obj_yaw - ego_yaw).toRotationMatrix();
+    m_twist_cov = m_twist_cov + m_rot_theta.transpose() * m_cov_ego_twist * m_rot_theta;
+
+    // 2-b. add odometry yaw rate uncertainty to the object linear twist covariance
+
+    // update the covariance matrix
+    object_twist_cov[XYZRPY_COV_IDX::X_X] = m_twist_cov(0, 0);
+    object_twist_cov[XYZRPY_COV_IDX::X_Y] = m_twist_cov(0, 1);
+    object_twist_cov[XYZRPY_COV_IDX::Y_X] = m_twist_cov(1, 0);
+    object_twist_cov[XYZRPY_COV_IDX::Y_Y] = m_twist_cov(1, 1);
   }
 }
 
