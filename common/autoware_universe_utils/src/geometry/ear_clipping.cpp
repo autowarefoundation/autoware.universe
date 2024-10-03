@@ -564,28 +564,6 @@ void ear_clipping_linked(
   }
 }
 
-double calculate_triangle_area(const autoware::universe_utils::Polygon2d & triangle)
-{
-  const auto & points = triangle.outer();
-  double x1 = points[0].x();
-  double y1 = points[0].y();
-  double x2 = points[1].x();
-  double y2 = points[1].y();
-  double x3 = points[2].x();
-  double y3 = points[2].y();
-
-  return std::abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
-}
-
-double calculate_total_triangle(const std::vector<autoware::universe_utils::Polygon2d> & triangles)
-{
-  double totalArea = 0.0;
-  for (const auto & triangle : triangles) {
-    totalArea += calculate_triangle_area(triangle);
-  }
-  return totalArea;
-}
-
 std::vector<LinkedPoint> perform_triangulation(
   const alt::Polygon2d & polygon, std::vector<std::size_t> & indices)
 {

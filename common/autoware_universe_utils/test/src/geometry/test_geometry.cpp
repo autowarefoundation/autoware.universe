@@ -2021,9 +2021,18 @@ TEST(geometry, intersectPolygonRand)
   }
 }
 
+double calculate_total_polygon_area(
+  const std::vector<autoware::universe_utils::Polygon2d> & polygons)
+{
+  double totalArea = 0.0;
+  for (const auto & polygon : polygons) {
+    totalArea += boost::geometry::area(polygon);
+  }
+  return totalArea;
+}
+
 TEST(geometry, PolygonTriangulation)
 {
-  using autoware::universe_utils::calculate_total_triangle;
   using autoware::universe_utils::Polygon2d;
   using autoware::universe_utils::triangulate;
 
@@ -2039,7 +2048,7 @@ TEST(geometry, PolygonTriangulation)
 
     const auto triangles = triangulate(poly);
 
-    const auto triangle_area = calculate_total_triangle(triangles);
+    const auto triangle_area = calculate_total_polygon_area(triangles);
     const auto poly_area = boost::geometry::area(poly);
     EXPECT_NEAR(triangle_area, poly_area, epsilon);
   }
@@ -2058,7 +2067,7 @@ TEST(geometry, PolygonTriangulation)
 
     const auto triangles = triangulate(poly);
 
-    const auto triangle_area = calculate_total_triangle(triangles);
+    const auto triangle_area = calculate_total_polygon_area(triangles);
     const auto poly_area = boost::geometry::area(poly);
     EXPECT_NEAR(triangle_area, poly_area, epsilon);
   }
@@ -2081,7 +2090,7 @@ TEST(geometry, PolygonTriangulation)
 
     const auto triangles = triangulate(poly);
 
-    const auto triangle_area = calculate_total_triangle(triangles);
+    const auto triangle_area = calculate_total_polygon_area(triangles);
     const auto poly_area = boost::geometry::area(poly);
     EXPECT_NEAR(triangle_area, poly_area, epsilon);
   }
@@ -2105,7 +2114,7 @@ TEST(geometry, PolygonTriangulation)
 
     const auto triangles = triangulate(poly);
 
-    const auto triangle_area = calculate_total_triangle(triangles);
+    const auto triangle_area = calculate_total_polygon_area(triangles);
     const auto poly_area = boost::geometry::area(poly);
     EXPECT_NEAR(triangle_area, poly_area, epsilon);
   }
