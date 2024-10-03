@@ -30,7 +30,7 @@
 #include <deque>
 #include <vector>
 
-namespace autoware::freespace_planner
+namespace autoware::freespace_planner::utils
 {
 using autoware::freespace_planning_algorithms::PlannerWaypoint;
 using autoware::freespace_planning_algorithms::PlannerWaypoints;
@@ -73,6 +73,6 @@ bool is_stopped(
 
 bool is_near_target(
   const Pose & target_pose, const Pose & current_pose, const double th_distance_m);
-}  // namespace autoware::freespace_planner
+}  // namespace autoware::freespace_planner::utils
 
 #endif  // AUTOWARE__FREESPACE_PLANNER__UTILS_HPP_
