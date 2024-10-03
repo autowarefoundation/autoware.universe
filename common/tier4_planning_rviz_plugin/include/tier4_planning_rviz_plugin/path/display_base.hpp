@@ -47,6 +47,45 @@
 
 namespace
 {
+std::unique_ptr<Ogre::ColourValue> gradation(
+  const QColor & color_min, const QColor & color_max, const double ratio)
+{
+  std::unique_ptr<Ogre::ColourValue> color_ptr(new Ogre::ColourValue);
+  color_ptr->g =
+    static_cast<float>(color_max.greenF() * ratio + color_min.greenF() * (1.0 - ratio));
+  color_ptr->r = static_cast<float>(color_max.redF() * ratio + color_min.redF() * (1.0 - ratio));
+  color_ptr->b =
+    static_cast<float>(color_max.blueF() * ratio + color_min.blueF() * (1.0 - ratio));
+
+  return color_ptr;
+}
+
+std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
+  const double vel_max, const double cmd_vel,
+  const rviz_common::properties::ColorProperty & color_min,
+  const rviz_common::properties::ColorProperty & color_mid,
+  const rviz_common::properties::ColorProperty & color_max)
+{
+  const double cmd_vel_abs = std::fabs(cmd_vel);
+  const double vel_min = 0.0;
+
+  std::unique_ptr<Ogre::ColourValue> color_ptr(new Ogre::ColourValue());
+  if (vel_min < cmd_vel_abs && cmd_vel_abs <= (vel_max / 2.0)) {
+    double ratio = (cmd_vel_abs) / (vel_max / 2.0);
+    color_ptr = gradation(color_min.getColor(), color_mid.getColor(), ratio);
+  } else if ((vel_max / 2.0) < cmd_vel_abs && cmd_vel_abs <= vel_max) {
+    double ratio = (cmd_vel_abs - vel_max / 2.0) / (vel_max / 2.0);
+
+    color_ptr = gradation(color_mid.getColor(), color_max.getColor(), ratio);
+  } else if (vel_max < cmd_vel_abs) {
+    // Use max color when velocity exceeds max
+    *color_ptr = rviz_common::properties::qtToOgre(color_max.getColor());
+  } else {
+    // Use min color when velocity is below min
+    *color_ptr = rviz_common::properties::qtToOgre(color_min.getColor());
+  }
+  return color_ptr;
+}
 
 template <typename T>
 bool validateFloats(const typename T::ConstSharedPtr & msg_ptr)
@@ -201,43 +240,6 @@ public:
   }
 
 protected:
-  std::unique_ptr<Ogre::ColourValue> gradation(
-    const QColor & color_min, const QColor & color_max, const double ratio)
-  {
-    std::unique_ptr<Ogre::ColourValue> color_ptr(new Ogre::ColourValue);
-    color_ptr->g =
-      static_cast<float>(color_max.greenF() * ratio + color_min.greenF() * (1.0 - ratio));
-    color_ptr->r = static_cast<float>(color_max.redF() * ratio + color_min.redF() * (1.0 - ratio));
-    color_ptr->b =
-      static_cast<float>(color_max.blueF() * ratio + color_min.blueF() * (1.0 - ratio));
-
-    return color_ptr;
-  }
-
-  std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
-    const double vel_max, const double cmd_vel)
-  {
-    const double cmd_vel_abs = std::fabs(cmd_vel);
-    const double vel_min = 0.0;
-
-    std::unique_ptr<Ogre::ColourValue> color_ptr(new Ogre::ColourValue());
-    if (vel_min < cmd_vel_abs && cmd_vel_abs <= (vel_max / 2.0)) {
-      double ratio = (cmd_vel_abs) / (vel_max / 2.0);
-      color_ptr = gradation(property_min_color_.getColor(), property_mid_color_.getColor(), ratio);
-    } else if ((vel_max / 2.0) < cmd_vel_abs && cmd_vel_abs <= vel_max) {
-      double ratio = (cmd_vel_abs - vel_max / 2.0) / (vel_max / 2.0);
-
-      color_ptr = gradation(property_mid_color_.getColor(), property_max_color_.getColor(), ratio);
-    } else if (vel_max < cmd_vel_abs) {
-      // Use max color when velocity exceeds max
-      *color_ptr = rviz_common::properties::qtToOgre(property_max_color_.getColor());
-    } else {
-      // Use min color when velocity is below min
-      *color_ptr = rviz_common::properties::qtToOgre(property_min_color_.getColor());
-    }
-
-    return color_ptr;
-  }
   virtual void visualizeDrivableArea([[maybe_unused]] const typename T::ConstSharedPtr msg_ptr) {}
   virtual void preProcessMessageDetail() {}
   virtual void preVisualizePathFootprintDetail(
@@ -388,8 +390,9 @@ protected:
         Ogre::ColourValue color;
 
         // color change depending on velocity
-        std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-          setColorDependsOnVelocity(property_vel_max_.getFloat(), velocity);
+        std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr = setColorDependsOnVelocity(
+          property_vel_max_.getFloat(), velocity, property_min_color_, property_mid_color_,
+          property_max_color_);
         color = *dynamic_color_ptr;
 
         // lower color.a of the color for the last 20% of the path
@@ -443,8 +446,9 @@ protected:
           color = rviz_common::properties::qtToOgre(property_velocity_color_.getColor());
         } else {
           /* color change depending on velocity */
-          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-            setColorDependsOnVelocity(property_vel_max_.getFloat(), velocity);
+          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr = setColorDependsOnVelocity(
+            property_vel_max_.getFloat(), velocity, property_min_color_, property_mid_color_,
+            property_max_color_);
           color = *dynamic_color_ptr;
         }
         color.a = property_velocity_alpha_.getFloat();
