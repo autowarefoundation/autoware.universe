@@ -47,6 +47,7 @@ public:
     const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel);
 
   PullOverPath(const PullOverPath & other);
+  PullOverPath & operator=(const PullOverPath & other) = default;
 
   PullOverPlannerType type() const { return type_; }
   size_t goal_id() const { return goal_id_; }
@@ -58,7 +59,7 @@ public:
   const std::vector<PathWithLaneId> & partial_paths() const { return partial_paths_; }
 
   // TODO(soblin): use reference to avoid copy once thread-safe design is finished
-  PathWithLaneId full_path() const { return full_path_; }
+  const PathWithLaneId & full_path() const { return full_path_; }
   PathWithLaneId parking_path() const { return parking_path_; }
   std::vector<double> full_path_curvatures() { return full_path_curvatures_; }
   std::vector<double> parking_path_curvatures() const { return parking_path_curvatures_; }
