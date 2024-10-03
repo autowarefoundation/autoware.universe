@@ -17,6 +17,7 @@
 
 #include "multi_object_tracker_node.hpp"
 
+#include "autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp"
 #include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
@@ -260,11 +261,11 @@ void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
 }
 
 void MultiObjectTracker::runProcess(
-  const DetectedObjects & input_objects_msg, const uint & channel_index)
+  const DetectedObjects & input_objects, const uint & channel_index)
 {
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
-    rclcpp::Time(input_objects_msg.header.stamp, this->now().get_clock_type());
+    rclcpp::Time(input_objects.header.stamp, this->now().get_clock_type());
 
   // Get the transform of the self frame
   const auto self_transform =
@@ -273,10 +274,16 @@ void MultiObjectTracker::runProcess(
     return;
   }
 
+  // Model the object uncertainty if it is empty
+  DetectedObjects input_objects_with_uncertainty = uncertainty::modelUncertainty(input_objects);
+
+  // Normalize the object uncertainty
+  uncertainty::normalizeUncertainty(input_objects_with_uncertainty);
+
   // Transform the objects to the world frame
   DetectedObjects transformed_objects;
   if (!object_recognition_utils::transformObjects(
-        input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
+        input_objects_with_uncertainty, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
 
