@@ -166,6 +166,7 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
   // ego velocity uncertainty, velocity covariance
   Eigen::MatrixXd m_cov_ego_twist = Eigen::MatrixXd(2, 2);
   m_cov_ego_twist << odom_twist_cov[0], odom_twist_cov[1], odom_twist_cov[6], odom_twist_cov[7];
+  const double & cov_yaw_rate = odom_twist_cov[35];
 
   for (auto & object : detected_objects.objects) {
     // 1. add odometry position and motion uncertainty to the object position covariance
@@ -174,6 +175,10 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
     Eigen::MatrixXd m_pose_cov = Eigen::MatrixXd(2, 2);
     m_pose_cov << object_pose_cov[XYZRPY_COV_IDX::X_X], object_pose_cov[XYZRPY_COV_IDX::X_Y],
       object_pose_cov[XYZRPY_COV_IDX::Y_X], object_pose_cov[XYZRPY_COV_IDX::Y_Y];
+    const double dx = object_pose.position.x - odom_pose.position.x;
+    const double dy = object_pose.position.y - odom_pose.position.y;
+    const double r = std::sqrt(dx * dx + dy * dy);
+    const double theta = std::atan2(dy, dx);
 
     // 1-a. add odometry position uncertainty to the object position covariance
     // object position and it covariance is based on the world frame (map)
@@ -184,10 +189,6 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
       // uncertainty is proportional to the distance between the object and the odometry
       // and the uncertainty orientation is vertical to the vector of the odometry position to the
       // object
-      const double dx = object_pose.position.x - odom_pose.position.x;
-      const double dy = object_pose.position.y - odom_pose.position.y;
-      const double r = std::sqrt(dx * dx + dy * dy);
-      const double theta = std::atan2(dy, dx);
       const double cov_by_yaw = cov_ego_yaw * r * r;
       // rotate the covariance matrix, add the yaw uncertainty, and rotate back
       Eigen::MatrixXd m_rot_theta = Eigen::Rotation2D(theta).toRotationMatrix();
@@ -216,6 +217,13 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
     m_twist_cov = m_twist_cov + m_rot_theta.transpose() * m_cov_ego_twist * m_rot_theta;
 
     // 2-b. add odometry yaw rate uncertainty to the object linear twist covariance
+    {
+      const double cov_by_yaw_rate = cov_yaw_rate * r * r;
+      Eigen::MatrixXd m_rot_theta = Eigen::Rotation2D(theta).toRotationMatrix();
+      Eigen::MatrixXd m_twist_cov_rot = m_rot_theta.transpose() * m_twist_cov * m_rot_theta;
+      m_twist_cov_rot(1, 1) += cov_by_yaw_rate;  // yaw rate uncertainty is added to y-y element
+      m_twist_cov = m_rot_theta * m_twist_cov_rot * m_rot_theta.transpose();
+    }
 
     // update the covariance matrix
     object_twist_cov[XYZRPY_COV_IDX::X_X] = m_twist_cov(0, 0);
