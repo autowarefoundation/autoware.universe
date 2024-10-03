@@ -147,8 +147,8 @@ bool FreespacePlannerNode::isPlanRequired()
   }
 
   if (node_param_.replan_when_course_out) {
-    const bool is_course_out =
-      calc_distance_2d(trajectory_, current_pose_.pose) > node_param_.th_course_out_distance_m;
+    const bool is_course_out = utils::calc_distance_2d(trajectory_, current_pose_.pose) >
+                               node_param_.th_course_out_distance_m;
     if (is_course_out) {
       RCLCPP_INFO(get_logger(), "Course out");
       return true;
@@ -166,10 +166,10 @@ bool FreespacePlannerNode::checkCurrentTrajectoryCollision()
     partial_trajectory_.points, current_pose_.pose.position);
   const size_t end_index_partial = partial_trajectory_.points.size() - 1;
   const auto forward_trajectory =
-    get_partial_trajectory(partial_trajectory_, nearest_index_partial, end_index_partial);
+    utils::get_partial_trajectory(partial_trajectory_, nearest_index_partial, end_index_partial);
 
   const bool is_obs_found =
-    algo_->hasObstacleOnTrajectory(trajectory_to_pose_array(forward_trajectory));
+    algo_->hasObstacleOnTrajectory(utils::trajectory_to_pose_array(forward_trajectory));
 
   if (!is_obs_found) {
     obs_found_time_ = {};
@@ -187,11 +187,11 @@ void FreespacePlannerNode::updateTargetIndex()
     trajectory_.points.at(target_index_).pose, current_pose_.pose.position);
   const auto is_near_target = std::abs(long_disp_to_target) < node_param_.th_arrived_distance_m;
 
-  const auto is_ego_stopped = is_stopped(odom_buffer_, node_param_.th_stopped_velocity_mps);
+  const auto is_ego_stopped = utils::is_stopped(odom_buffer_, node_param_.th_stopped_velocity_mps);
 
   if (is_near_target && is_ego_stopped) {
     const auto new_target_index =
-      get_next_target_index(trajectory_.points.size(), reversing_indices_, target_index_);
+      utils::get_next_target_index(trajectory_.points.size(), reversing_indices_, target_index_);
 
     if (new_target_index == target_index_) {
       // Finished publishing all partial trajectories
@@ -276,7 +276,7 @@ bool FreespacePlannerNode::isDataReady()
 void FreespacePlannerNode::onTimer()
 {
   scenario_ = scenario_sub_.takeData();
-  if (!is_active(scenario_)) {
+  if (!utils::is_active(scenario_)) {
     reset();
     return;
   }
@@ -289,7 +289,7 @@ void FreespacePlannerNode::onTimer()
 
   if (is_completed_) {
     partial_trajectory_.header = odom_->header;
-    const auto stop_trajectory = create_stop_trajectory(partial_trajectory_);
+    const auto stop_trajectory = utils::create_stop_trajectory(partial_trajectory_);
     trajectory_pub_->publish(stop_trajectory);
     return;
   }
@@ -309,11 +309,11 @@ void FreespacePlannerNode::onTimer()
     // stops.
     if (!is_new_parking_cycle_) {
       const auto stop_trajectory = partial_trajectory_.points.empty()
-                                     ? create_stop_trajectory(current_pose_)
-                                     : create_stop_trajectory(partial_trajectory_);
+                                     ? utils::create_stop_trajectory(current_pose_)
+                                     : utils::create_stop_trajectory(partial_trajectory_);
       trajectory_pub_->publish(stop_trajectory);
-      debug_pose_array_pub_->publish(trajectory_to_pose_array(stop_trajectory));
-      debug_partial_pose_array_pub_->publish(trajectory_to_pose_array(stop_trajectory));
+      debug_pose_array_pub_->publish(utils::trajectory_to_pose_array(stop_trajectory));
+      debug_partial_pose_array_pub_->publish(utils::trajectory_to_pose_array(stop_trajectory));
     }
 
     reset();
@@ -322,7 +322,8 @@ void FreespacePlannerNode::onTimer()
   }
 
   if (reset_in_progress_) {
-    const auto is_ego_stopped = is_stopped(odom_buffer_, node_param_.th_stopped_velocity_mps);
+    const auto is_ego_stopped =
+      utils::is_stopped(odom_buffer_, node_param_.th_stopped_velocity_mps);
     if (is_ego_stopped) {
       // Plan new trajectory
       planTrajectory();
@@ -343,12 +344,13 @@ void FreespacePlannerNode::onTimer()
 
   // Update partial trajectory
   updateTargetIndex();
-  partial_trajectory_ = get_partial_trajectory(trajectory_, prev_target_index_, target_index_);
+  partial_trajectory_ =
+    utils::get_partial_trajectory(trajectory_, prev_target_index_, target_index_);
 
   // Publish messages
   trajectory_pub_->publish(partial_trajectory_);
-  debug_pose_array_pub_->publish(trajectory_to_pose_array(trajectory_));
-  debug_partial_pose_array_pub_->publish(trajectory_to_pose_array(partial_trajectory_));
+  debug_pose_array_pub_->publish(utils::trajectory_to_pose_array(trajectory_));
+  debug_partial_pose_array_pub_->publish(utils::trajectory_to_pose_array(partial_trajectory_));
 
   is_new_parking_cycle_ = false;
 }
@@ -363,11 +365,11 @@ void FreespacePlannerNode::planTrajectory()
   algo_->setMap(*occupancy_grid_);
 
   // Calculate poses in costmap frame
-  const auto current_pose_in_costmap_frame = transform_pose(
+  const auto current_pose_in_costmap_frame = utils::transform_pose(
     current_pose_.pose,
     getTransform(occupancy_grid_->header.frame_id, current_pose_.header.frame_id));
 
-  const auto goal_pose_in_costmap_frame = transform_pose(
+  const auto goal_pose_in_costmap_frame = utils::transform_pose(
     goal_pose_.pose, getTransform(occupancy_grid_->header.frame_id, goal_pose_.header.frame_id));
 
   // execute planning
@@ -385,12 +387,12 @@ void FreespacePlannerNode::planTrajectory()
 
   if (result) {
     RCLCPP_DEBUG(get_logger(), "Found goal!");
-    trajectory_ =
-      create_trajectory(current_pose_, algo_->getWaypoints(), node_param_.waypoints_velocity);
-    reversing_indices_ = get_reversing_indices(trajectory_);
+    trajectory_ = utils::create_trajectory(
+      current_pose_, algo_->getWaypoints(), node_param_.waypoints_velocity);
+    reversing_indices_ = utils::get_reversing_indices(trajectory_);
     prev_target_index_ = 0;
-    target_index_ =
-      get_next_target_index(trajectory_.points.size(), reversing_indices_, prev_target_index_);
+    target_index_ = utils::get_next_target_index(
+      trajectory_.points.size(), reversing_indices_, prev_target_index_);
   } else {
     RCLCPP_INFO(get_logger(), "Can't find goal: %s", error_msg.c_str());
     reset();
