@@ -21,8 +21,6 @@
 #include <algorithm>
 #include <memory>
 #include <string>
-#include <tuple>
-#include <utility>
 #include <vector>
 
 namespace autoware::pointcloud_preprocessor
@@ -135,7 +133,7 @@ ConcatenatedCloudResult CombineCloudHandler::combine_pointclouds(
 
   std::vector<rclcpp::Time> pc_stamps;
   for (const auto & [topic, cloud] : topic_to_cloud_map) {
-    pc_stamps.push_back(rclcpp::Time(cloud->header.stamp));
+    pc_stamps.emplace_back(rclcpp::Time(cloud->header.stamp));
   }
   std::sort(pc_stamps.begin(), pc_stamps.end(), std::greater<rclcpp::Time>());
   const auto oldest_stamp = pc_stamps.back();

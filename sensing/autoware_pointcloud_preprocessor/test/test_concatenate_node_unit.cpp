@@ -67,9 +67,8 @@ protected:
       std::dynamic_pointer_cast<
         autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>(
         concatenate_node_->shared_from_this()),
-      collectors_, combine_cloud_handler_, number_of_pointcloud, timeout_sec);
+      combine_cloud_handler_, number_of_pointcloud, timeout_sec);
 
-    collectors_.push_back(collector_);
 
     // Setup TF
     tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(concatenate_node_);
@@ -167,7 +166,6 @@ protected:
 
   std::shared_ptr<autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>
     concatenate_node_;
-  std::list<std::shared_ptr<autoware::pointcloud_preprocessor::CloudCollector>> collectors_;
   std::shared_ptr<autoware::pointcloud_preprocessor::CombineCloudHandler> combine_cloud_handler_;
   std::shared_ptr<autoware::pointcloud_preprocessor::CloudCollector> collector_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
@@ -445,12 +443,15 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
 
 TEST_F(ConcatenateCloudTest, TestDeleteCollector)
 {
-  collector_->delete_collector();
-  EXPECT_TRUE(collectors_.empty());
+  concatenate_node_->add_cloud_collector(collector_);
+  concatenate_node_->delete_collector(*collector_);
+  EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
 }
 
 TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 {
+  concatenate_node_->add_cloud_collector(collector_);
+
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 top_pointcloud =
     generate_pointcloud_msg(true, false, "lidar_top", timestamp);
@@ -460,18 +461,20 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 
   auto topic_to_cloud_map = collector_->get_topic_to_cloud_map();
   EXPECT_EQ(topic_to_cloud_map["lidar_top"], top_pointcloud_ptr);
-  EXPECT_FALSE(collectors_.empty());
+  EXPECT_FALSE(concatenate_node_->get_cloud_collectors().empty());
 
   // Sleep for timeout seconds (200 ms)
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
   rclcpp::spin_some(concatenate_node_);
 
   // Collector should concatenate and publish the pointcloud, also delete itself.
-  EXPECT_TRUE(collectors_.empty());
+  EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
 }
 
 TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
 {
+  concatenate_node_->add_cloud_collector(collector_);
+
   rclcpp::Time top_timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   rclcpp::Time left_timestamp(timestamp_seconds, timestamp_nanoseconds + 40'000'000, RCL_ROS_TIME);
   rclcpp::Time right_timestamp(timestamp_seconds, timestamp_nanoseconds + 80'000'000, RCL_ROS_TIME);
@@ -493,7 +496,7 @@ TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
   collector_->process_pointcloud("lidar_left", left_pointcloud_ptr);
   collector_->process_pointcloud("lidar_right", right_pointcloud_ptr);
 
-  EXPECT_TRUE(collectors_.empty());
+  EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
 }
 
 int main(int argc, char ** argv)

@@ -16,7 +16,6 @@
 
 #include "combine_cloud_handler.hpp"
 
-#include <list>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -28,12 +27,11 @@ namespace autoware::pointcloud_preprocessor
 class PointCloudConcatenateDataSynchronizerComponent;
 class CombineCloudHandler;
 
-class CloudCollector
+class CloudCollector 
 {
 public:
   CloudCollector(
     std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
-    std::list<std::shared_ptr<CloudCollector>> & collectors,
     std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds, double time);
 
   void set_reference_timestamp(double timestamp, double noise_window);
@@ -44,14 +42,13 @@ public:
 
   ConcatenatedCloudResult concatenate_pointclouds(
     std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map);
-  void delete_collector();
+  //void delete_collector();
 
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
   get_topic_to_cloud_map();
 
 private:
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node_;
-  std::list<std::shared_ptr<CloudCollector>> & collectors_;
   std::shared_ptr<CombineCloudHandler> combine_cloud_handler_;
   rclcpp::TimerBase::SharedPtr timer_;
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map_;
@@ -59,7 +56,6 @@ private:
   double timeout_sec_;
   double reference_timestamp_min_{0.0};
   double reference_timestamp_max_{0.0};
-  std::mutex mutex_;
 };
 
 }  // namespace autoware::pointcloud_preprocessor

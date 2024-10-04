@@ -60,6 +60,9 @@ public:
   void publish_clouds(
     ConcatenatedCloudResult concatenated_cloud_result, double reference_timestamp_min,
     double reference_timestamp_max);
+  void delete_collector(CloudCollector & cloud_collector);
+  std::list<std::shared_ptr<CloudCollector>> get_cloud_collectors();
+  void add_cloud_collector(const std::shared_ptr<CloudCollector> & collector);
 
 private:
   struct Parameters

@@ -26,11 +26,9 @@ namespace autoware::pointcloud_preprocessor
 
 CloudCollector::CloudCollector(
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
-  std::list<std::shared_ptr<CloudCollector>> & collectors,
   std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds,
   double timeout_sec)
 : ros2_parent_node_(std::move(ros2_parent_node)),
-  collectors_(collectors),
   combine_cloud_handler_(combine_cloud_handler),
   num_of_clouds_(num_of_clouds),
   timeout_sec_(timeout_sec)
@@ -78,12 +76,11 @@ void CloudCollector::concatenate_callback()
   // pointclouds in the collector.
   timer_->cancel();
 
-  // lock for protecting collector list and concatenated pointcloud
-  std::lock_guard<std::mutex> lock(mutex_);
   auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
+
   ros2_parent_node_->publish_clouds(
     concatenated_cloud_result, reference_timestamp_min_, reference_timestamp_max_);
-  delete_collector();
+  ros2_parent_node_->delete_collector(*this);
 }
 
 ConcatenatedCloudResult CloudCollector::concatenate_pointclouds(
@@ -92,15 +89,6 @@ ConcatenatedCloudResult CloudCollector::concatenate_pointclouds(
   return combine_cloud_handler_->combine_pointclouds(topic_to_cloud_map);
 }
 
-void CloudCollector::delete_collector()
-{
-  auto it = std::find_if(
-    collectors_.begin(), collectors_.end(),
-    [this](const std::shared_ptr<CloudCollector> & collector) { return collector.get() == this; });
-  if (it != collectors_.end()) {
-    collectors_.erase(it);
-  }
-}
 
 std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
 CloudCollector::get_topic_to_cloud_map()

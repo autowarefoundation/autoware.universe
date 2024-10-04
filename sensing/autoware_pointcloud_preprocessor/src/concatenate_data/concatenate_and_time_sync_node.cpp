@@ -237,7 +237,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   if (!collector_found) {
     auto new_cloud_collector = std::make_shared<CloudCollector>(
       std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(shared_from_this()),
-      cloud_collectors_, combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec);
+      combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec);
 
     cloud_collectors_.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();
@@ -330,6 +330,23 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
     }
   }
 }
+
+void PointCloudConcatenateDataSynchronizerComponent::delete_collector(CloudCollector & cloud_collector) {
+  // protect cloud collectors list
+  std::lock_guard<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
+
+  // change this to something else
+  auto it = std::find_if(
+    cloud_collectors_.begin(), cloud_collectors_.end(),
+    [&cloud_collector](const std::shared_ptr<CloudCollector> & collector) { return collector.get() == &cloud_collector; });
+  if (it != cloud_collectors_.end()) {
+    cloud_collectors_.erase(it);
+  }
+  else {
+    throw std::runtime_error("Try to delete a cloud_collector that is not in the cloud_collectors");
+  }
+}
+
 
 void PointCloudConcatenateDataSynchronizerComponent::convert_to_xyzirc_cloud(
   const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
@@ -444,6 +461,17 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
     stat.summary(level, message);
   }
 }
+
+std::list<std::shared_ptr<CloudCollector>> PointCloudConcatenateDataSynchronizerComponent::get_cloud_collectors() 
+{
+  return cloud_collectors_;
+}
+
+void PointCloudConcatenateDataSynchronizerComponent::add_cloud_collector(const std::shared_ptr<CloudCollector> & collector)
+{
+  cloud_collectors_.push_back(collector);
+}
+
 
 }  // namespace autoware::pointcloud_preprocessor
 
