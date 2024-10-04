@@ -997,7 +997,7 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
   return utils::lane_change::getAccelerationValues(min_acc, max_acc, longitudinal_acc_sampling_num);
 }
 
-std::vector<double> NormalLaneChange::calcPrepareDuration() const
+std::vector<double> NormalLaneChange::calc_prepare_durations() const
 {
   const auto & lc_param_ptr = common_data_ptr_->lc_param_ptr;
   const auto threshold = common_data_ptr_->bpp_param_ptr->base_link2front +
@@ -1343,7 +1343,7 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_prepare_metrics() cons
   const auto longitudinal_acc_sampling_values =
     sampleLongitudinalAccValues(current_lanes, target_lanes);
 
-  const auto prepare_durations = calcPrepareDuration();
+  const auto prepare_durations = calc_prepare_durations();
 
   RCLCPP_DEBUG(
     logger_, "lane change sampling start. Sampling num for prep_time: %lu, acc: %lu",
