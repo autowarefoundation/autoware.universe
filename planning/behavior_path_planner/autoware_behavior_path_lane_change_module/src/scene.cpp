@@ -1404,7 +1404,6 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
   const auto & current_lanes = get_current_lanes();
   const auto & target_lanes = get_target_lanes();
 
-  const auto is_stuck = isVehicleStuck(current_lanes);
   const auto current_velocity = getEgoVelocity();
   const auto sorted_lane_ids = utils::lane_change::get_sorted_lane_ids(common_data_ptr_);
   const auto target_objects = getTargetObjects(filtered_objects_, current_lanes);
@@ -1491,7 +1490,7 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
       candidate_paths.push_back(candidate_path);
 
       try {
-        if (check_candidate_path_safety(candidate_path, target_objects, is_stuck)) {
+        if (check_candidate_path_safety(candidate_path, target_objects)) {
           debug_print_lat("ACCEPT!!!: it is valid and safe!");
           return true;
         }
@@ -1555,9 +1554,9 @@ LaneChangePath NormalLaneChange::get_candidate_path(
 }
 
 bool NormalLaneChange::check_candidate_path_safety(
-  const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects,
-  const bool is_stuck) const
+  const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const
 {
+  const auto is_stuck = common_data_ptr_->transient_data.is_ego_stuck;
   if (
     !is_stuck && !utils::lane_change::passed_parked_objects(
                    common_data_ptr_, candidate_path, filtered_objects_.target_lane_leading,

@@ -157,8 +157,7 @@ protected:
     const Pose & lc_start_pose, const double shift_length) const;
 
   bool check_candidate_path_safety(
-    const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects,
-    const bool is_stuck) const;
+    const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const;
 
   std::optional<LaneChangePath> calcTerminalLaneChangePath(
     const lanelet::ConstLanelets & current_lanes,
