@@ -34,6 +34,24 @@ ignore:
 
 component_management:
   individual_components:
+    - component_id: localization-tier-iv-maintained-packages
+      name: Localization TIER IV Maintained Packages
+      paths:
+        - localization/autoware_ekf_localizer/**
+        - localization/autoware_gyro_odometer/**
+        - localization/autoware_localization_error_monitor/**
+        - localization/autoware_localization_util/**
+        - localization/autoware_ndt_scan_matcher/**
+        - localization/autoware_pose_initializer/**
+        - localization/autoware_pose_instability_detector/**
+        - localization/autoware_stop_filter/**
+        - localization/autoware_twist2accel/**
+
+    - component_id: map-tier-iv-maintained-packages
+      name: Map TIER IV Maintained Packages
+      paths:
+        - map/**/**
+
     - component_id: planning-tier-iv-maintained-packages
       name: Planning TIER IV Maintained Packages
       paths:
