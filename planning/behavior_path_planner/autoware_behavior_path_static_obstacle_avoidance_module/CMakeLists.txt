@@ -17,6 +17,14 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/shift_line_generator.cpp
 )
 
+target_link_libraries(${PROJECT_NAME}
+  static_obstacle_avoidance_parameters
+)
+
+target_compile_options(${PROJECT_NAME} PUBLIC
+  -Wno-error=deprecated-declarations
+)
+
 if(BUILD_TESTING)
   ament_add_ros_isolated_gmock(test_${PROJECT_NAME}
     test/test_utils.cpp
