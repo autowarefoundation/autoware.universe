@@ -41,6 +41,10 @@ BicycleMotionModel::BicycleMotionModel() : logger_(rclcpp::get_logger("BicycleMo
   // set prediction parameters
   constexpr double dt_max = 0.11;  // [s] maximum time interval for prediction
   setMaxDeltaTime(dt_max);
+
+  if (motion_params_.max_reverse_vel > 0) {
+    RCLCPP_WARN(logger_, "BicycleMotionModel: maximum reverse velocity should be less than 0.");
+  }
 }
 
 void BicycleMotionModel::setMotionParams(
@@ -228,7 +232,7 @@ bool BicycleMotionModel::limitStates()
   ekf_.getP(P_t);
 
   // maximum reverse velocity
-  if (X_t(IDX::VEL) < 0 && X_t(IDX::VEL) < motion_params_.max_reverse_vel) {
+  if (motion_params_.max_reverse_vel < 0 && X_t(IDX::VEL) < motion_params_.max_reverse_vel) {
     // rotate the object orientation by 180 degrees
     X_t(IDX::VEL) = -X_t(IDX::VEL);
     X_t(IDX::YAW) = X_t(IDX::YAW) + M_PI;
