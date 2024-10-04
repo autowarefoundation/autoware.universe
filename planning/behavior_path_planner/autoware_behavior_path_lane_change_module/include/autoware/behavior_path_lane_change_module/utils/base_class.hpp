@@ -67,6 +67,8 @@ public:
 
   virtual void update_lanes(const bool is_approved) = 0;
 
+  virtual void update_transient_data() = 0;
+
   virtual void update_filtered_objects() = 0;
 
   virtual void updateLaneChangeStatus() = 0;
@@ -236,9 +238,8 @@ public:
 protected:
   virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
 
-  virtual PathWithLaneId getPrepareSegment(
-    const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
-    const double prepare_length) const = 0;
+  virtual bool get_prepare_segment(
+    PathWithLaneId & prepare_segment, const double prepare_length) const = 0;
 
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 

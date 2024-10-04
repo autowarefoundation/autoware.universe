@@ -76,6 +76,7 @@ void LaneChangeInterface::updateData()
   universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
   module_type_->update_lanes(getCurrentStatus() == ModuleStatus::RUNNING);
+  module_type_->update_transient_data();
   module_type_->update_filtered_objects();
   module_type_->updateSpecialData();
 
@@ -125,16 +126,21 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   } else {
     const auto path =
       assignToCandidate(module_type_->getLaneChangePath(), module_type_->getEgoPosition());
-    const auto force_activated = std::any_of(
+    const auto is_registered = std::any_of(
       rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
-      [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
-    if (!force_activated) {
+      [&](const auto & rtc) { return rtc.second->isRegistered(uuid_map_.at(rtc.first)); });
+
+    if (!is_registered) {
       updateRTCStatus(
         path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
-        State::RUNNING);
+        State::WAITING_FOR_EXECUTION);
     } else {
+      const auto force_activated = std::any_of(
+        rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+        [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
+      const bool safe = force_activated ? false : true;
       updateRTCStatus(
-        path.start_distance_to_path_change, path.finish_distance_to_path_change, false,
+        path.start_distance_to_path_change, path.finish_distance_to_path_change, safe,
         State::RUNNING);
     }
   }
