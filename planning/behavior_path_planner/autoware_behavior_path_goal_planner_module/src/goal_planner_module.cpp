@@ -2162,7 +2162,7 @@ static std::vector<utils::path_safety_checker::ExtendedPredictedObject> filterOb
   const auto & target_object_types = params->object_types_to_check;
 
   PredictedObjects filtered_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    *objects, ignore_object_velocity_threshold, false);
+    *objects, ignore_object_velocity_threshold, true);
 
   utils::path_safety_checker::filterObjectsByClass(filtered_objects, target_object_types);
 
