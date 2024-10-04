@@ -41,10 +41,6 @@ BicycleMotionModel::BicycleMotionModel() : logger_(rclcpp::get_logger("BicycleMo
   // set prediction parameters
   constexpr double dt_max = 0.11;  // [s] maximum time interval for prediction
   setMaxDeltaTime(dt_max);
-
-  if (motion_params_.max_reverse_vel > 0) {
-    RCLCPP_WARN(logger_, "BicycleMotionModel: maximum reverse velocity should be less than 0.");
-  }
 }
 
 void BicycleMotionModel::setMotionParams(
