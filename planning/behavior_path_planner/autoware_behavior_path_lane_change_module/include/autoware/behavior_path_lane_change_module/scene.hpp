@@ -142,9 +142,8 @@ protected:
   FilteredByLanesObjects filterObjectsByLanelets(
     const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path) const;
 
-  PathWithLaneId getPrepareSegment(
-    const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
-    const double prepare_length) const override;
+  bool get_prepare_segment(
+    PathWithLaneId & prepare_segment, const double prepare_length) const override;
 
   PathWithLaneId getTargetSegment(
     const lanelet::ConstLanelets & target_lanes, const Pose & lane_changing_start_pose,
@@ -155,17 +154,21 @@ protected:
     const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes, const Direction direction = Direction::NONE) const;
 
+  std::vector<LaneChangePhaseMetrics> get_prepare_metrics() const;
+  std::vector<LaneChangePhaseMetrics> get_lane_changing_metrics(
+    const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metrics,
+    const double shift_length, const double dist_to_reg_element) const;
+
   bool get_lane_change_paths(LaneChangePaths & candidate_paths) const;
 
   LaneChangePath get_candidate_path(
     const LaneChangePhaseMetrics & prep_metrics, const LaneChangePhaseMetrics & lc_metrics,
     const PathWithLaneId & prep_segment, const std::vector<std::vector<int64_t>> & sorted_lane_ids,
-    const Pose & lc_start_pose, const double target_lane_length, const double shift_length,
-    const double next_lc_buffer, const bool is_goal_in_route) const;
+    const Pose & lc_start_pose, const double shift_length) const;
 
   bool check_candidate_path_safety(
     const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects,
-    const double lane_change_buffer, const bool is_stuck) const;
+    const bool is_stuck) const;
 
   std::optional<LaneChangePath> calcTerminalLaneChangePath(
     const lanelet::ConstLanelets & current_lanes,

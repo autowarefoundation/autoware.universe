@@ -35,7 +35,7 @@ public:
   };
 
   DecisionKind state{DecisionKind::NOT_DECIDED};
-  rclcpp::Time stamp{};
+  std::optional<rclcpp::Time> deciding_start_time{std::nullopt};
   bool is_stable_safe{false};
   std::optional<rclcpp::Time> safe_start_time{std::nullopt};
 };
@@ -43,7 +43,7 @@ public:
 class PathDecisionStateController
 {
 public:
-  PathDecisionStateController() = default;
+  explicit PathDecisionStateController(rclcpp::Logger logger) : logger_(logger) {}
 
   /**
    * @brief update current state and save old current state to prev state
@@ -62,11 +62,10 @@ public:
 
   PathDecisionState get_current_state() const { return current_state_; }
 
-  PathDecisionState get_prev_state() const { return prev_state_; }
-
 private:
+  rclcpp::Logger logger_;
+
   PathDecisionState current_state_{};
-  PathDecisionState prev_state_{};
 
   /**
    * @brief update current state and save old current state to prev state

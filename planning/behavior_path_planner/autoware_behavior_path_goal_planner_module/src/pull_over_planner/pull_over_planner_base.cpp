@@ -73,7 +73,7 @@ std::optional<PullOverPath> PullOverPath::create(
   double parking_path_max_curvature{};
   std::tie(full_path_curvatures, full_path_max_curvature) = calculateCurvaturesAndMax(full_path);
   std::tie(parking_path_curvatures, parking_path_max_curvature) =
-    calculateCurvaturesAndMax(full_path);
+    calculateCurvaturesAndMax(parking_path);
 
   return PullOverPath(
     type, goal_id, id, start_pose, end_pose, partial_paths, full_path, parking_path,
