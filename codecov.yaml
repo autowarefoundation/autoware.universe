@@ -113,3 +113,8 @@ component_management:
         # - control/control_performance_analysis/**
         - control/obstacle_collision_checker/**
         # - control/predicted_path_checker/**
+
+    - component_id: perception-tier-iv-maintained-packages
+      name: Perception TIER IV Maintained Packages
+      paths:
+        - perception/[^lidar_apollo_instance_segmentation]/**
