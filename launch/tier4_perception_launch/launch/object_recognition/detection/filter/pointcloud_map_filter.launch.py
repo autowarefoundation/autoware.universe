@@ -110,7 +110,7 @@ class PointcloudMapFilterPipeline:
                     self.pointcloud_map_filter_param,
                     {
                         "input_frame": "map",
-                    }
+                    },
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": False},
