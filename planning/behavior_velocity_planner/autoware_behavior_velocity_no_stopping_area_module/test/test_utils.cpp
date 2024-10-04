@@ -15,13 +15,17 @@
 #include "../src/utils.hpp"
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
-#include <autoware/route_handler/route_handler.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logger.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
-#include <tier4_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
+
+#include <boost/geometry/geometry.hpp>
+#include <boost/geometry/io/wkt/write.hpp>
 
 #include <gtest/gtest.h>
 #include <lanelet2_core/Forward.h>
@@ -29,6 +33,14 @@
 #include <lanelet2_core/primitives/Polygon.h>
 
 #include <stdexcept>
+
+template <class Point, class Polygon>
+bool point_in_polygon(const Point & p, const Polygon & poly)
+{
+  return std::find_if(poly.outer().begin(), poly.outer().end(), [&](const auto & o) {
+           return p.x() == o.x() && p.y() == o.y();
+         }) != poly.outer().end();
+}
 
 TEST(NoStoppingAreaTest, isTargetStuckVehicleType)
 {
@@ -202,4 +214,144 @@ TEST(NoStoppingAreaTest, isStoppable)
   EXPECT_TRUE(is_stoppable(pass_judge, self_pose, line_pose, ego_data, logger, clock));
   EXPECT_TRUE(pass_judge.is_stoppable);
   EXPECT_TRUE(pass_judge.pass_judged);
+}
+
+TEST(NoStoppingAreaTest, generateEgoNoStoppingAreaLanePolygon)
+{
+  using autoware::behavior_velocity_planner::no_stopping_area::
+    generate_ego_no_stopping_area_lane_polygon;
+  using autoware::universe_utils::Point2d;
+  geometry_msgs::msg::Pose ego_pose;  // ego at (0,0)
+  ego_pose.position.x = 0.0;
+  ego_pose.position.y = 0.0;
+  tier4_planning_msgs::msg::PathWithLaneId path;  // ego path at x = 0, 1,..., 7 and y=0
+  for (auto x = 0; x <= 7; ++x) {
+    tier4_planning_msgs::msg::PathPointWithLaneId p;
+    p.point.pose.position.x = 1.0 * x;
+    p.point.pose.position.y = 0.0;
+    path.points.push_back(p);
+  }
+  double margin = 1.0;  // desired margin added to the polygon after the end of the area
+  double max_polygon_length = 10.0;  // maximum length of the generated polygon
+  double path_expand_width = 2.0;    // width of the generated polygon
+  auto logger = rclcpp::get_logger("test_logger");
+  logger.set_level(rclcpp::Logger::Level::Debug);
+  rclcpp::Clock clock;
+
+  lanelet::Polygon3d no_stopping_area;
+  no_stopping_area.push_back(lanelet::Point3d(lanelet::InvalId, 3.0, -1.0));
+  no_stopping_area.push_back(lanelet::Point3d(lanelet::InvalId, 3.0, 1.0));
+  no_stopping_area.push_back(lanelet::Point3d(lanelet::InvalId, 5.0, 1.0));
+  no_stopping_area.push_back(lanelet::Point3d(lanelet::InvalId, 5.0, -1.0));
+  const auto no_stopping_area_reg_elem =
+    lanelet::autoware::NoStoppingArea::make(lanelet::InvalId, {}, {no_stopping_area}, {});
+  // basic case
+  {
+    const auto lane_poly = generate_ego_no_stopping_area_lane_polygon(
+      path, ego_pose, *no_stopping_area_reg_elem, margin, max_polygon_length, path_expand_width,
+      logger, clock);
+    autoware::universe_utils::Polygon2d simplified_poly;
+    EXPECT_FALSE(lane_poly.outer().empty());
+    EXPECT_TRUE(lane_poly.inners().empty());
+    // simplify the polygon to make it easier to check
+    boost::geometry::simplify(lane_poly, simplified_poly, 1.0);
+    EXPECT_EQ(simplified_poly.outer().size(), 5UL);  // closed polygon so 1st point == last point
+    // polygon over the path/no_stop_area overlap and with the desired width
+    // TODO(someone): we expect x=6 (end of area [5] + margin [1]) but current is 5.5 because a
+    // point is counted twice
+    EXPECT_TRUE(point_in_polygon(Point2d(6.0, 2.0), simplified_poly));
+    EXPECT_TRUE(point_in_polygon(Point2d(6.0, -2.0), simplified_poly));
+    EXPECT_TRUE(point_in_polygon(Point2d(3.0, 2.0), simplified_poly));
+    EXPECT_TRUE(point_in_polygon(Point2d(3.0, -2.0), simplified_poly));
+  }
+
+  // big margin -> get a polygon until the end of the path
+  {
+    const double big_margin = 10.0;
+    const auto lane_poly = generate_ego_no_stopping_area_lane_polygon(
+      path, ego_pose, *no_stopping_area_reg_elem, big_margin, max_polygon_length, path_expand_width,
+      logger, clock);
+    autoware::universe_utils::Polygon2d simplified_poly;
+    EXPECT_FALSE(lane_poly.outer().empty());
+    EXPECT_TRUE(lane_poly.inners().empty());
+    // simplify the polygon to make it easier to check
+    boost::geometry::simplify(lane_poly, simplified_poly, 1.0);
+    EXPECT_EQ(simplified_poly.outer().size(), 5UL);  // closed polygon so 1st point == last point
+    std::cout << boost::geometry::wkt(lane_poly) << std::endl;
+    std::cout << boost::geometry::wkt(simplified_poly) << std::endl;
+    // polygon over the path/no_stop_area overlap and with the desired width
+    EXPECT_TRUE(point_in_polygon(Point2d(7.0, 2.0), simplified_poly));
+    EXPECT_TRUE(point_in_polygon(Point2d(7.0, -2.0), simplified_poly));
+    EXPECT_TRUE(point_in_polygon(Point2d(3.0, 2.0), simplified_poly));
+    EXPECT_TRUE(point_in_polygon(Point2d(3.0, -2.0), simplified_poly));
+  }
+  // small max polygon length
+  {
+    const double small_polygon_length = 5.0;
+    const auto lane_poly = generate_ego_no_stopping_area_lane_polygon(
+      path, ego_pose, *no_stopping_area_reg_elem, margin, small_polygon_length, path_expand_width,
+      logger, clock);
+    autoware::universe_utils::Polygon2d simplified_poly;
+    EXPECT_FALSE(lane_poly.outer().empty());
+    EXPECT_TRUE(lane_poly.inners().empty());
+    // simplify the polygon to make it easier to check
+    boost::geometry::simplify(lane_poly, simplified_poly, 1.0);
+    EXPECT_EQ(simplified_poly.outer().size(), 5UL);  // closed polygon so 1st point == last point
+    // polygon over the path/no_stop_area overlap and with the desired width
+    // TODO(someone): the length calculation is currently buggy
+    // ego at x=0, no_stopping_area starts at x=3 so we expect a lane polygon of length = 2.0, but
+    // some point is counted twice so the length is only 1.5 (interpolation interval is 0.5)
+    EXPECT_TRUE(point_in_polygon(Point2d(4.0, 2.0), simplified_poly));
+    EXPECT_TRUE(point_in_polygon(Point2d(4.0, -2.0), simplified_poly));
+    EXPECT_TRUE(point_in_polygon(Point2d(3.0, 2.0), simplified_poly));
+    EXPECT_TRUE(point_in_polygon(Point2d(3.0, -2.0), simplified_poly));
+  }
+
+  // cases where the polygon returned is empty
+  // path is empty
+  {
+    tier4_planning_msgs::msg::PathWithLaneId empty_path;
+    const auto lane_poly = generate_ego_no_stopping_area_lane_polygon(
+      empty_path, ego_pose, *no_stopping_area_reg_elem, margin, max_polygon_length,
+      path_expand_width, logger, clock);
+    EXPECT_TRUE(lane_poly.outer().empty());
+    EXPECT_TRUE(lane_poly.inners().empty());
+  }
+  // path points do not enter the no stopping area
+  // ego is far from the path
+  {
+    auto far_ego_pose = ego_pose;
+    far_ego_pose.position.y = 10.0;
+    const auto lane_poly = generate_ego_no_stopping_area_lane_polygon(
+      path, far_ego_pose, *no_stopping_area_reg_elem, margin, max_polygon_length, path_expand_width,
+      logger, clock);
+    EXPECT_TRUE(lane_poly.outer().empty());
+    EXPECT_TRUE(lane_poly.inners().empty());
+  }
+  // no stopping area starts after the minimum length
+  {
+    const double short_max_polygon_length = 2.0;
+    const auto lane_poly = generate_ego_no_stopping_area_lane_polygon(
+      path, ego_pose, *no_stopping_area_reg_elem, margin, short_max_polygon_length,
+      path_expand_width, logger, clock);
+    EXPECT_TRUE(lane_poly.outer().empty());
+    EXPECT_TRUE(lane_poly.inners().empty());
+  }
+  // path crosses the no stopping area but the current interpolation (0.5) is not enough to detect
+  // it
+  // TODO(someone): should this be fixed ?
+  {
+    lanelet::Polygon3d small_no_stopping_area;
+    small_no_stopping_area.push_back(lanelet::Point3d(lanelet::InvalId, 3.1, -1.0));
+    small_no_stopping_area.push_back(lanelet::Point3d(lanelet::InvalId, 3.1, 1.0));
+    small_no_stopping_area.push_back(lanelet::Point3d(lanelet::InvalId, 3.4, 1.0));
+    small_no_stopping_area.push_back(lanelet::Point3d(lanelet::InvalId, 3.4, -1.0));
+    const auto small_no_stopping_area_reg_elem =
+      lanelet::autoware::NoStoppingArea::make(lanelet::InvalId, {}, {small_no_stopping_area}, {});
+    const auto lane_poly = generate_ego_no_stopping_area_lane_polygon(
+      path, ego_pose, *small_no_stopping_area_reg_elem, margin, max_polygon_length,
+      path_expand_width, logger, clock);
+    EXPECT_TRUE(lane_poly.outer().empty());
+    EXPECT_TRUE(lane_poly.inners().empty());
+  }
 }

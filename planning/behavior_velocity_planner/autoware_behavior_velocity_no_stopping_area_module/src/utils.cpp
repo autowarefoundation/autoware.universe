@@ -129,21 +129,20 @@ bool is_stoppable(
 Polygon2d generate_ego_no_stopping_area_lane_polygon(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
   const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem, const double margin,
-  const double extra_dist, const double path_expand_width, const rclcpp::Logger & logger,
+  const double max_polygon_length, const double path_expand_width, const rclcpp::Logger & logger,
   rclcpp::Clock & clock)
 {
   Polygon2d ego_area;  // open polygon
   double dist_from_start_sum = 0.0;
-  const double interpolation_interval = 0.5;
+  constexpr double interpolation_interval = 0.5;
   bool is_in_area = false;
   tier4_planning_msgs::msg::PathWithLaneId interpolated_path;
   if (!splineInterpolate(path, interpolation_interval, interpolated_path, logger)) {
     return ego_area;
   }
-  auto & pp = interpolated_path.points;
+  const auto & pp = interpolated_path.points;
   /* calc closest index */
-  const auto closest_idx_opt =
-    autoware::motion_utils::findNearestIndex(interpolated_path.points, ego_pose, 3.0, M_PI_4);
+  const auto closest_idx_opt = autoware::motion_utils::findNearestIndex(pp, ego_pose, 3.0, M_PI_4);
   if (!closest_idx_opt) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger, clock, 1000 /* ms */, "autoware::motion_utils::findNearestIndex fail");
@@ -158,19 +157,25 @@ Polygon2d generate_ego_no_stopping_area_lane_polygon(
     return ego_area;
   }
   const auto no_stopping_area = no_stopping_area_reg_elem.noStoppingAreas().front();
-  for (size_t i = closest_idx + num_ignore_nearest; i < pp.size() - 1; ++i) {
+  for (size_t i = ego_area_start_idx; i < pp.size() - 1; ++i) {
     dist_from_start_sum += autoware::universe_utils::calcDistance2d(pp.at(i), pp.at(i - 1));
     const auto & p = pp.at(i).point.pose.position;
+    // TODO(someone): within will skip points on the edge of polygons so some points can be skipped
+    // depending on the interpolation
     if (bg::within(Point2d{p.x, p.y}, lanelet::utils::to2D(no_stopping_area).basicPolygon())) {
       is_in_area = true;
       break;
     }
-    if (dist_from_start_sum > extra_dist) {
+    if (dist_from_start_sum > max_polygon_length) {
       return ego_area;
     }
     ++ego_area_start_idx;
   }
   if (ego_area_start_idx > num_ignore_nearest) {
+    // TODO(someone): check if this is a bug
+    // this -1 causes pp[ego_area_start_idx] to be outside the no_stopping_area
+    // it causes "dist_from_area" to count the first point in the next loop
+    // moreover it causes the "dist_from_start_sum" to count the same point twice
     ego_area_start_idx--;
   }
   if (!is_in_area) {
@@ -182,18 +187,19 @@ Polygon2d generate_ego_no_stopping_area_lane_polygon(
   for (size_t i = ego_area_start_idx; i < pp.size() - 1; ++i) {
     dist_from_start_sum += autoware::universe_utils::calcDistance2d(pp.at(i), pp.at(i - 1));
     const auto & p = pp.at(i).point.pose.position;
+    // TODO(someone): within will skip points on the edge of polygons so some points can be skipped
+    // depending on the interpolation
     if (!bg::within(Point2d{p.x, p.y}, lanelet::utils::to2D(no_stopping_area).basicPolygon())) {
       dist_from_area_sum += autoware::universe_utils::calcDistance2d(pp.at(i), pp.at(i - 1));
     }
-    if (dist_from_start_sum > extra_dist || dist_from_area_sum > margin) {
+    if (dist_from_start_sum > max_polygon_length || dist_from_area_sum > margin) {
       break;
     }
     ++ego_area_end_idx;
   }
 
-  const auto width = path_expand_width;
   ego_area = planning_utils::generatePathPolygon(
-    interpolated_path, ego_area_start_idx, ego_area_end_idx, width);
+    interpolated_path, ego_area_start_idx, ego_area_end_idx, path_expand_width);
   return ego_area;
 }
 

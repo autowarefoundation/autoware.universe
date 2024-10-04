@@ -124,13 +124,13 @@ bool is_stoppable(
  * @param path           ego-car lane
  * @param ego_pose       ego-car pose
  * @param margin         margin from the end point of the ego-no stopping area lane
- * @param extra_dist     extra distance from the end point of the no stopping area lanelet
+ * @param max_polygon_length minimum length of the polygon
  * @return generated polygon
  */
 Polygon2d generate_ego_no_stopping_area_lane_polygon(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
   const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem, const double margin,
-  const double extra_dist, const double path_expand_width, const rclcpp::Logger & logger,
+  const double max_polygon_length, const double path_expand_width, const rclcpp::Logger & logger,
   rclcpp::Clock & clock);
 
 /**
