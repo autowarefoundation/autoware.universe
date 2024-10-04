@@ -51,7 +51,8 @@ class BehaviorVelocityPlannerNode;
 struct PlannerData
 {
   explicit PlannerData(rclcpp::Node & node)
-  : vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo())
+  : clock_(node.get_clock()),
+    vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo())
   {
     max_stop_acceleration_threshold = node.declare_parameter<double>(
       "max_accel");  // TODO(someone): read min_acc in velocity_controller.param.yaml?
@@ -59,6 +60,8 @@ struct PlannerData
     system_delay = node.declare_parameter<double>("system_delay");
     delay_response_time = node.declare_parameter<double>("delay_response_time");
   }
+
+  rclcpp::Clock::SharedPtr clock_;
 
   // msgs from callbacks that are used for data-ready
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_odometry;
@@ -108,7 +111,7 @@ struct PlannerData
     }
 
     // Get velocities within stop_duration
-    const auto now = rclcpp::Clock{RCL_ROS_TIME}.now();
+    const auto now = clock_->now();
     std::vector<double> vs;
     for (const auto & velocity : velocity_buffer) {
       vs.push_back(velocity.twist.linear.x);

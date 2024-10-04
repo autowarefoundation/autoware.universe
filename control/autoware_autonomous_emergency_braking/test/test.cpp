@@ -171,7 +171,7 @@ TEST_F(TestAEB, checkIncompleteImuPathGeneration)
 {
   const double dt = aeb_node_->imu_prediction_time_interval_;
   const double horizon = aeb_node_->imu_prediction_time_horizon_;
-  const double min_generated_path_length = aeb_node_->min_generated_path_length_;
+  const double min_generated_path_length = aeb_node_->min_generated_imu_path_length_;
   const double slow_velocity = min_generated_path_length / (2.0 * horizon);
   constexpr double yaw_rate = 0.05;
   const auto imu_path = aeb_node_->generateEgoPath(slow_velocity, yaw_rate);
@@ -179,6 +179,26 @@ TEST_F(TestAEB, checkIncompleteImuPathGeneration)
   ASSERT_FALSE(imu_path.empty());
   ASSERT_TRUE(imu_path.size() >= static_cast<size_t>(horizon / dt));
   ASSERT_TRUE(autoware::motion_utils::calcArcLength(imu_path) >= min_generated_path_length);
+
+  const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
+  ASSERT_FALSE(footprint.empty());
+  ASSERT_TRUE(footprint.size() == imu_path.size() - 1);
+}
+
+TEST_F(TestAEB, checkImuPathGenerationIsCut)
+{
+  const double dt = aeb_node_->imu_prediction_time_interval_;
+  const double horizon = aeb_node_->imu_prediction_time_horizon_;
+  const double max_generated_path_length = aeb_node_->max_generated_imu_path_length_;
+  const double fast_velocity = 2.0 * max_generated_path_length / (horizon);
+  constexpr double yaw_rate = 0.05;
+  const auto imu_path = aeb_node_->generateEgoPath(fast_velocity, yaw_rate);
+
+  ASSERT_FALSE(imu_path.empty());
+  constexpr double epsilon{1e-3};
+  ASSERT_TRUE(
+    autoware::motion_utils::calcArcLength(imu_path) <=
+    max_generated_path_length + dt * fast_velocity + epsilon);
 
   const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
   ASSERT_FALSE(footprint.empty());

@@ -16,8 +16,8 @@
 // Author: v1.0 Taekjin Lee
 //
 
-#ifndef AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__OBJECT_MODEL__OBJECT_MODEL_HPP_
-#define AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__OBJECT_MODEL__OBJECT_MODEL_HPP_
+#ifndef AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__OBJECT_MODEL_HPP_
+#define AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__OBJECT_MODEL_HPP_
 
 #include <cmath>
 
@@ -53,6 +53,7 @@ namespace object_model
 {
 
 enum class ObjectModelType { NormalVehicle, BigVehicle, Bicycle, Pedestrian, Unknown };
+
 struct ObjectSize
 {
   double length{0.0};  // [m]
@@ -287,7 +288,16 @@ public:
         measurement_covariance.pos_x = sq(0.4);
         measurement_covariance.pos_y = sq(0.4);
         measurement_covariance.yaw = sq(deg2rad(30.0));
+        measurement_covariance.vel_long = sq(kmph2mps(5.0));
+        break;
 
+      case ObjectModelType::Unknown:
+        // measurement noise model
+        measurement_covariance.pos_x = sq(1.0);
+        measurement_covariance.pos_y = sq(1.0);
+        measurement_covariance.yaw = sq(deg2rad(360.0));
+        measurement_covariance.vel_long = sq(kmph2mps(10.0));
+        measurement_covariance.vel_lat = sq(kmph2mps(10.0));
         break;
 
       default:
@@ -302,8 +312,9 @@ static const ObjectModel normal_vehicle(ObjectModelType::NormalVehicle);
 static const ObjectModel big_vehicle(ObjectModelType::BigVehicle);
 static const ObjectModel bicycle(ObjectModelType::Bicycle);
 static const ObjectModel pedestrian(ObjectModelType::Pedestrian);
+static const ObjectModel unknown(ObjectModelType::Unknown);
 
 }  // namespace object_model
 }  // namespace autoware::multi_object_tracker
 
-#endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__OBJECT_MODEL__OBJECT_MODEL_HPP_
+#endif  // AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__OBJECT_MODEL_HPP_

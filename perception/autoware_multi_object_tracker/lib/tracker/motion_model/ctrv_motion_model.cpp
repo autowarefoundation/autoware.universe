@@ -36,26 +36,6 @@ using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 CTRVMotionModel::CTRVMotionModel() : logger_(rclcpp::get_logger("CTRVMotionModel"))
 {
-  // Initialize motion parameters
-  setDefaultParams();
-}
-
-void CTRVMotionModel::setDefaultParams()
-{
-  // process noise covariance
-  constexpr double q_stddev_x = 0.5;                                      // [m/s]
-  constexpr double q_stddev_y = 0.5;                                      // [m/s]
-  constexpr double q_stddev_yaw = autoware::universe_utils::deg2rad(20);  // [rad/s]
-  constexpr double q_stddev_vel = 9.8 * 0.3;                              // [m/(s*s)]
-  constexpr double q_stddev_wz = autoware::universe_utils::deg2rad(30);   // [rad/(s*s)]
-
-  setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vel, q_stddev_wz);
-
-  // set motion limitations
-  constexpr double max_vel = autoware::universe_utils::kmph2mps(10);  // [m/s] maximum velocity
-  constexpr double max_wz = 30.0;                                     // [deg] maximum yaw rate
-  setMotionLimits(max_vel, max_wz);
-
   // set prediction parameters
   constexpr double dt_max = 0.11;  // [s] maximum time interval for prediction
   setMaxDeltaTime(dt_max);
@@ -77,7 +57,7 @@ void CTRVMotionModel::setMotionLimits(const double & max_vel, const double & max
 {
   // set motion limitations
   motion_params_.max_vel = max_vel;
-  motion_params_.max_wz = autoware::universe_utils::deg2rad(max_wz);
+  motion_params_.max_wz = max_wz;
 }
 
 bool CTRVMotionModel::initialize(

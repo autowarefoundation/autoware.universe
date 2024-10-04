@@ -162,42 +162,6 @@ autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
     }
   }
 
-  // UNCERTAINTY MODEL
-  if (!object.kinematics.has_position_covariance) {
-    // measurement noise covariance
-    auto r_cov_x = object_model_.measurement_covariance.pos_x;
-    auto r_cov_y = object_model_.measurement_covariance.pos_y;
-
-    // yaw angle fix
-    const double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-    const bool is_yaw_available =
-      object.kinematics.orientation_availability !=
-      autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
-
-    // fill covariance matrix
-    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-    auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
-    const double cos_yaw = std::cos(pose_yaw);
-    const double sin_yaw = std::sin(pose_yaw);
-    const double sin_2yaw = std::sin(2.0 * pose_yaw);
-    pose_cov[XYZRPY_COV_IDX::X_X] =
-      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;           // x - x
-    pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5 * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
-    pose_cov[XYZRPY_COV_IDX::Y_Y] =
-      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;                   // y - y
-    pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];                 // y - x
-    pose_cov[XYZRPY_COV_IDX::X_YAW] = 0.0;                                         // x - yaw
-    pose_cov[XYZRPY_COV_IDX::Y_YAW] = 0.0;                                         // y - yaw
-    pose_cov[XYZRPY_COV_IDX::YAW_X] = 0.0;                                         // yaw - x
-    pose_cov[XYZRPY_COV_IDX::YAW_Y] = 0.0;                                         // yaw - y
-    pose_cov[XYZRPY_COV_IDX::YAW_YAW] = object_model_.measurement_covariance.yaw;  // yaw - yaw
-    if (!is_yaw_available) {
-      pose_cov[XYZRPY_COV_IDX::YAW_YAW] *= 1e3;  // yaw is not available, multiply large value
-    }
-    auto & twist_cov = updating_object.kinematics.twist_with_covariance.covariance;
-    twist_cov[XYZRPY_COV_IDX::X_X] = object_model_.measurement_covariance.vel_long;  // vel - vel
-  }
-
   return updating_object;
 }
 
