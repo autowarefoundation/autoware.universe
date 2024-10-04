@@ -71,10 +71,10 @@ std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
 
   std::unique_ptr<Ogre::ColourValue> color_ptr(new Ogre::ColourValue());
   if (vel_min < cmd_vel_abs && cmd_vel_abs <= (vel_max / 2.0)) {
-    double ratio = (cmd_vel_abs) / (vel_max / 2.0);
+    double ratio = (cmd_vel_abs - vel_min) / (vel_max / 2.0 - vel_min);
     color_ptr = gradation(color_min.getColor(), color_mid.getColor(), ratio);
   } else if ((vel_max / 2.0) < cmd_vel_abs && cmd_vel_abs <= vel_max) {
-    double ratio = (cmd_vel_abs - vel_max / 2.0) / (vel_max / 2.0);
+    double ratio = (cmd_vel_abs - vel_max / 2.0) / (vel_max - vel_max / 2.0);
     color_ptr = gradation(color_mid.getColor(), color_max.getColor(), ratio);
   } else if (vel_max < cmd_vel_abs) {
     // Use max color when velocity exceeds max
