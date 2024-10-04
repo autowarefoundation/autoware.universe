@@ -176,8 +176,12 @@ class PerceptionReproducer(PerceptionReplayerCommon):
                 (ego_pose.position.x - ego_odom_msg.pose.pose.position.x) ** 2
                 + (ego_pose.position.y - ego_odom_msg.pose.pose.position.y) ** 2
             )
-            repeat_flag = ego_rosbag_speed > ego_speed * 5 and ego_rosbag_dist > 1.0
-            # set the speed threshold to many (5) times then ego_speed because this constraint is mainly for departing/stopping (ego speed is close to 0).
+            repeat_flag = (
+                ego_rosbag_speed > ego_speed * 2
+                and ego_rosbag_speed > 3.0
+                and ego_rosbag_dist > self.ego_odom_search_radius
+            )
+            # if ego_rosbag_speed is too fast than ego_speed, stop publishing the rosbag's ego odom message temporarily.
 
         if not repeat_flag:
             self.stopwatch.tic("find_topics_by_timestamp")
