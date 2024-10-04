@@ -195,7 +195,7 @@ if (max_lane_change_length >  ego's distance to the end of the current lanes.) t
   stop
 endif
 
-if (isVehicleStuck(current_lanes)) then (yes)
+if ego is stuck in the current lanes then (yes)
   :Return **sampled acceleration values**;
   stop
 else (no)

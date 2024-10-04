@@ -64,6 +64,8 @@ private:
     double lr_min = 1.0;       // [m] minimum distance from the center to the rear wheel
     double max_vel = 27.8;     // [m/s] maximum velocity, 100km/h
     double max_slip = 0.5236;  // [rad] maximum slip angle, 30deg
+    double max_reverse_vel =
+      -1.389;  // [m/s] maximum reverse velocity, -5km/h. The value is expected to be negative
   } motion_params_;
 
 public:
