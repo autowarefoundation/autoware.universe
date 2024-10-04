@@ -36,6 +36,7 @@
 #include <OgreSceneNode.h>
 
 #include <deque>
+#include <limits>
 #include <memory>
 #include <vector>
 
