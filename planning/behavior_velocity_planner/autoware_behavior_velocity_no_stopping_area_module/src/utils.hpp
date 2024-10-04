@@ -145,10 +145,14 @@ bool check_stop_lines_in_no_stopping_area(
   DebugData & debug_data);
 
 /**
- * @brief Calculate the polygon of the path from the ego-car position to the end of the
- * no stopping lanelet (+ extra distance).
- * @param path                  ego-car lane
- * @param stop_line_margin      stop line margin from the stopping area lane
+ * @brief Calculate the stop line of a no stopping area
+ * @details use the stop line of the regulatory element if it exists, otherwise generate it
+ * @param path ego path
+ * @param no_stopping_area_reg_elem no_stopping_area regulatory element
+ * @param stop_line_margin [m] margin between the stop line and the start of the no stopping area
+ * @param stop_line_extend_length [m] extra length to add on each side of the stop line (only added
+ * to the stop line of the regulatory element)
+ * @param vehicle_width [m] width of the ego vehicle
  * @return generated stop line
  */
 std::optional<universe_utils::LineString2d> get_stop_line_geometry2d(
