@@ -89,10 +89,6 @@ public:
 
   bool isRequiredStop(const bool is_trailing_object) override;
 
-  bool isNearEndOfCurrentLanes(
-    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    const double threshold) const override;
-
   bool hasFinishedLaneChange() const override;
 
   bool isAbleToReturnCurrentLane() const override;
@@ -127,9 +123,7 @@ protected:
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
-  std::vector<double> calcPrepareDuration(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
+  std::vector<double> calc_prepare_durations() const;
 
   lane_change::TargetObjects getTargetObjects(
     const FilteredByLanesExtendedObjects & predicted_objects,
@@ -150,10 +144,6 @@ protected:
     const double target_lane_length, const double lane_changing_length,
     const double lane_changing_velocity, const double buffer_for_next_lane_change) const;
 
-  bool hasEnoughLength(
-    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes, const Direction direction = Direction::NONE) const;
-
   std::vector<LaneChangePhaseMetrics> get_prepare_metrics() const;
   std::vector<LaneChangePhaseMetrics> get_lane_changing_metrics(
     const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metrics,
@@ -167,8 +157,7 @@ protected:
     const Pose & lc_start_pose, const double shift_length) const;
 
   bool check_candidate_path_safety(
-    const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects,
-    const bool is_stuck) const;
+    const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const;
 
   std::optional<LaneChangePath> calcTerminalLaneChangePath(
     const lanelet::ConstLanelets & current_lanes,
@@ -192,15 +181,9 @@ protected:
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
     const RSSparams & selected_rss_param, CollisionCheckDebugMap & debug_data) const;
 
-  //! @brief Check if the ego vehicle is in stuck by a stationary obstacle.
-  //! @param obstacle_check_distance Distance to check ahead for any objects that might be
-  //! obstructing ego path. It makes sense to use values like the maximum lane change distance.
-  bool isVehicleStuck(
-    const lanelet::ConstLanelets & current_lanes, const double obstacle_check_distance) const;
-
   double get_max_velocity_for_safety_check() const;
 
-  bool isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const;
+  bool is_ego_stuck() const;
 
   /**
    * @brief Checks if the given pose is a valid starting point for a lane change.
