@@ -87,6 +87,15 @@ std::vector<LinearRing2d> createVehicleFootprints(
 PoseDeviation calcTrajectoryDeviation(
   const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
   const double yaw_threshold);
+
+/**
+ * @brief calculate the maximum search length for boundaries considering the vehicle dimensions
+ * @param trajectory target trajectory
+ * @param vehicle_info vehicle information
+ * @return maximum search length for boundaries
+ */
+double calcMaxSearchLengthForBoundaries(
+  const Trajectory & trajectory, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 }  // namespace autoware::lane_departure_checker::utils
 
 #endif  // AUTOWARE__LANE_DEPARTURE_CHECKER__UTILS_HPP_

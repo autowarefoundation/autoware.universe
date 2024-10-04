@@ -163,8 +163,6 @@ private:
     const lanelet::ConstLanelets & candidate_lanelets,
     const std::vector<LinearRing2d> & vehicle_footprints) const;
 
-  double calcMaxSearchLengthForBoundaries(const Trajectory & trajectory) const;
-
   static SegmentRtree extractUncrossableBoundaries(
     const lanelet::LaneletMap & lanelet_map, const geometry_msgs::msg::Point & ego_point,
     const double max_search_length, const std::vector<std::string> & boundary_types_to_detect);
