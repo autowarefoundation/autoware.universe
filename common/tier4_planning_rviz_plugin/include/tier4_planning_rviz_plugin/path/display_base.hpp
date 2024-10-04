@@ -363,26 +363,38 @@ protected:
     const float right = property_path_width_view_.getBool() ? property_path_width_.getFloat() / 2.0
                                                             : info->width / 2.0;
 
-    std::vector<double> distances(msg_ptr->points.size(), 0.0);
-    double total_distance = 0.0;
+    // Initialize alphas with the default alpha value
+    std::vector<float> alphas(msg_ptr->points.size(), property_path_alpha_.getFloat());
 
-    for (size_t point_idx = 1; point_idx < msg_ptr->points.size(); point_idx++) {
-      const auto & prev_point =
-        autoware::universe_utils::getPose(msg_ptr->points.at(point_idx - 1));
-      const auto & curr_point = autoware::universe_utils::getPose(msg_ptr->points.at(point_idx));
-      distances[point_idx] = std::sqrt(
-        autoware::universe_utils::calcSquaredDistance2d(prev_point.position, curr_point.position));
-      total_distance += distances[point_idx];
+    // Backward iteration to adjust alpha values for the last x meters
+    if (property_fade_out_distance_.getFloat() > std::numeric_limits<float>::epsilon()) {
+      alphas.back() = 0.0f;
+      float cumulative_distance = 0.0f;
+      for (size_t point_idx = msg_ptr->points.size() - 1; point_idx > 0; point_idx--) {
+        const auto & curr_point = autoware::universe_utils::getPose(msg_ptr->points.at(point_idx));
+        const auto & prev_point =
+          autoware::universe_utils::getPose(msg_ptr->points.at(point_idx - 1));
+        float distance = std::sqrt(autoware::universe_utils::calcSquaredDistance2d(
+          prev_point.position, curr_point.position));
+        cumulative_distance += distance;
+
+        if (cumulative_distance <= property_fade_out_distance_.getFloat()) {
+          auto ratio =
+            static_cast<float>(cumulative_distance / property_fade_out_distance_.getFloat());
+          float alpha = property_path_alpha_.getFloat() * ratio;
+          alphas.at(point_idx - 1) = alpha;
+        } else {
+          // If the distance exceeds the fade out distance, break the loop
+          break;
+        }
+      }
     }
 
-    double cumulative_distance = 0.0;
-
+    // Forward iteration to visualize path
     for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
       const auto & path_point = msg_ptr->points.at(point_idx);
       const auto & pose = autoware::universe_utils::getPose(path_point);
       const auto & velocity = autoware::universe_utils::getLongitudinalVelocity(path_point);
-      // find out the distance between current and start point
-      cumulative_distance += distances[point_idx];  // Use precomputed distances
 
       // path
       if (property_path_view_.getBool()) {
@@ -393,17 +405,7 @@ protected:
           property_vel_max_.getFloat(), velocity, property_min_color_, property_mid_color_,
           property_max_color_);
         color = *dynamic_color_ptr;
-
-        // lower color.a of the color for the last 20% of the path
-        if (point_idx > 0) {
-          const double ratio = cumulative_distance / total_distance;
-          if (ratio > 0.8) {
-            // color = Ogre::ColourValue::Red;
-            color.a = property_path_alpha_.getFloat() * (1.0 - (ratio - 0.8) / 0.2);
-          } else {
-            color.a = property_path_alpha_.getFloat();
-          }
-        }
+        color.a = alphas.at(point_idx);
 
         Eigen::Vector3f vec_in;
         Eigen::Vector3f vec_out;
