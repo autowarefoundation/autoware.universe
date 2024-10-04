@@ -103,7 +103,7 @@ Output LaneDepartureChecker::update(const Input & input)
 
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
-  output.trajectory_deviation = calcTrajectoryDeviation(
+  output.trajectory_deviation = utils::calcTrajectoryDeviation(
     *input.reference_trajectory, input.current_odom->pose.pose, param_.ego_nearest_dist_threshold,
     param_.ego_nearest_yaw_threshold);
   output.processing_time_map["calcTrajectoryDeviation"] = stop_watch.toc(true);
@@ -167,15 +167,6 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
     utils::createVehicleFootprints(path, *vehicle_info_ptr_, param_.footprint_extra_margin);
   lanelet::ConstLanelets candidate_lanelets = getCandidateLanelets(lanelets, vehicle_footprints);
   return willLeaveLane(candidate_lanelets, vehicle_footprints);
-}
-
-PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
-  const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
-  const double yaw_threshold)
-{
-  const auto nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
-    trajectory.points, pose, dist_threshold, yaw_threshold);
-  return autoware::universe_utils::calcPoseDeviation(trajectory.points.at(nearest_idx).pose, pose);
 }
 
 std::vector<LinearRing2d> LaneDepartureChecker::createVehiclePassingAreas(

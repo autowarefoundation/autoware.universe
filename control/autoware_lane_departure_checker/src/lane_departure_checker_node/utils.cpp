@@ -14,6 +14,7 @@
 
 #include "autoware/lane_departure_checker/utils.hpp"
 
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <boost/geometry.hpp>
@@ -160,5 +161,14 @@ std::vector<LinearRing2d> createVehicleFootprints(
   }
 
   return vehicle_footprints;
+}
+
+PoseDeviation calcTrajectoryDeviation(
+  const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
+  const double yaw_threshold)
+{
+  const auto nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+    trajectory.points, pose, dist_threshold, yaw_threshold);
+  return autoware::universe_utils::calcPoseDeviation(trajectory.points.at(nearest_idx).pose, pose);
 }
 }  // namespace autoware::lane_departure_checker::utils

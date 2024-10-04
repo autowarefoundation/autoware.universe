@@ -16,6 +16,7 @@
 #define AUTOWARE__LANE_DEPARTURE_CHECKER__UTILS_HPP_
 
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory.hpp>
@@ -28,6 +29,7 @@
 namespace autoware::lane_departure_checker::utils
 {
 using autoware::universe_utils::LinearRing2d;
+using autoware::universe_utils::PoseDeviation;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using tier4_planning_msgs::msg::PathWithLaneId;
@@ -73,6 +75,18 @@ std::vector<LinearRing2d> createVehicleFootprints(
 std::vector<LinearRing2d> createVehicleFootprints(
   const PathWithLaneId & path, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const double footprint_extra_margin);
+
+/**
+ * @brief calculate the deviation of the given pose from the nearest pose on the trajectory
+ * @param trajectory target trajectory
+ * @param pose vehicle pose
+ * @param dist_threshold distance threshold used for searching for first nearest index to given pose
+ * @param yaw_threshold yaw threshold used for searching for first nearest index to given pose
+ * @return deviation of the given pose from the trajectory
+ */
+PoseDeviation calcTrajectoryDeviation(
+  const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
+  const double yaw_threshold);
 }  // namespace autoware::lane_departure_checker::utils
 
 #endif  // AUTOWARE__LANE_DEPARTURE_CHECKER__UTILS_HPP_
