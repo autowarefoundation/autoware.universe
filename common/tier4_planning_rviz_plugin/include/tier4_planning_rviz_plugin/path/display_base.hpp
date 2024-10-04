@@ -651,11 +651,11 @@ protected:
   rviz_common::properties::BoolProperty property_path_width_view_;
   rviz_common::properties::FloatProperty property_path_width_;
   rviz_common::properties::FloatProperty property_path_alpha_;
-  // Properties for customizable colors
+  // Gradient points for velocity color
   rviz_common::properties::ColorProperty property_min_color_;
   rviz_common::properties::ColorProperty property_mid_color_;
   rviz_common::properties::ColorProperty property_max_color_;
-  // Property for fading out the path
+  // Last x meters of the path will fade out to transparent
   rviz_common::properties::FloatProperty property_fade_out_distance_;
 
   rviz_common::properties::FloatProperty property_vel_max_;
