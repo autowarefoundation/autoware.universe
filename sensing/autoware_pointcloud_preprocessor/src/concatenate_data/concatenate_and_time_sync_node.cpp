@@ -331,22 +331,24 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
   }
 }
 
-void PointCloudConcatenateDataSynchronizerComponent::delete_collector(CloudCollector & cloud_collector) {
+void PointCloudConcatenateDataSynchronizerComponent::delete_collector(
+  CloudCollector & cloud_collector)
+{
   // protect cloud collectors list
   std::lock_guard<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
   // change this to something else
   auto it = std::find_if(
     cloud_collectors_.begin(), cloud_collectors_.end(),
-    [&cloud_collector](const std::shared_ptr<CloudCollector> & collector) { return collector.get() == &cloud_collector; });
+    [&cloud_collector](const std::shared_ptr<CloudCollector> & collector) {
+      return collector.get() == &cloud_collector;
+    });
   if (it != cloud_collectors_.end()) {
     cloud_collectors_.erase(it);
-  }
-  else {
+  } else {
     throw std::runtime_error("Try to delete a cloud_collector that is not in the cloud_collectors");
   }
 }
-
 
 void PointCloudConcatenateDataSynchronizerComponent::convert_to_xyzirc_cloud(
   const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
@@ -462,16 +464,17 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
   }
 }
 
-std::list<std::shared_ptr<CloudCollector>> PointCloudConcatenateDataSynchronizerComponent::get_cloud_collectors() 
+std::list<std::shared_ptr<CloudCollector>>
+PointCloudConcatenateDataSynchronizerComponent::get_cloud_collectors()
 {
   return cloud_collectors_;
 }
 
-void PointCloudConcatenateDataSynchronizerComponent::add_cloud_collector(const std::shared_ptr<CloudCollector> & collector)
+void PointCloudConcatenateDataSynchronizerComponent::add_cloud_collector(
+  const std::shared_ptr<CloudCollector> & collector)
 {
   cloud_collectors_.push_back(collector);
 }
-
 
 }  // namespace autoware::pointcloud_preprocessor
 

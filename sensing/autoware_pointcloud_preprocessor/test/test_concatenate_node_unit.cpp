@@ -69,7 +69,6 @@ protected:
         concatenate_node_->shared_from_this()),
       combine_cloud_handler_, number_of_pointcloud, timeout_sec);
 
-
     // Setup TF
     tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(concatenate_node_);
     tf_broadcaster_->sendTransform(generate_static_transform_msgs());

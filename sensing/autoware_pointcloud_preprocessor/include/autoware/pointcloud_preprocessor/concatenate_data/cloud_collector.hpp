@@ -27,7 +27,7 @@ namespace autoware::pointcloud_preprocessor
 class PointCloudConcatenateDataSynchronizerComponent;
 class CombineCloudHandler;
 
-class CloudCollector 
+class CloudCollector
 {
 public:
   CloudCollector(
@@ -42,7 +42,7 @@ public:
 
   ConcatenatedCloudResult concatenate_pointclouds(
     std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map);
-  //void delete_collector();
+  // void delete_collector();
 
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
   get_topic_to_cloud_map();
