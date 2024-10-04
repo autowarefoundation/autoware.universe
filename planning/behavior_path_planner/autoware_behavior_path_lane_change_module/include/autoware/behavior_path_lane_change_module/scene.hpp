@@ -183,7 +183,7 @@ protected:
 
   double get_max_velocity_for_safety_check() const;
 
-  bool isVehicleStuck() const;
+  bool is_ego_stuck() const;
 
   /**
    * @brief Checks if the given pose is a valid starting point for a lane change.

@@ -142,7 +142,7 @@ void NormalLaneChange::update_transient_data()
     transient_data.dist_to_terminal_start < transient_data.max_prepare_length;
 
   updateStopTime();
-  transient_data.is_ego_stuck = isVehicleStuck();
+  transient_data.is_ego_stuck = is_ego_stuck();
 
   RCLCPP_DEBUG(
     logger_, "acc - min: %.4f, max: %.4f", transient_data.acc.min, transient_data.acc.max);
@@ -2139,7 +2139,7 @@ double NormalLaneChange::get_max_velocity_for_safety_check() const
   return getCommonParam().max_vel;
 }
 
-bool NormalLaneChange::isVehicleStuck() const
+bool NormalLaneChange::is_ego_stuck() const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   const auto & lc_param_ptr = common_data_ptr_->lc_param_ptr;
