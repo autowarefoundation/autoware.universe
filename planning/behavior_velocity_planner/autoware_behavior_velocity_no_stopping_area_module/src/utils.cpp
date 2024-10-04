@@ -213,7 +213,7 @@ bool check_stop_lines_in_no_stopping_area(
   static constexpr double close_to_goal_distance = 1.0;
 
   // stuck points by stop line
-  for (size_t i = 0; i < path.points.size() - 1; ++i) {
+  for (size_t i = 0; i + 1 < path.points.size(); ++i) {
     const auto p0 = path.points.at(i).point.pose.position;
     const auto p1 = path.points.at(i + 1).point.pose.position;
     const auto v0 = path.points.at(i).point.longitudinal_velocity_mps;

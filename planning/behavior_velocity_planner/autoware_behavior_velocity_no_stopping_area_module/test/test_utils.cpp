@@ -355,3 +355,48 @@ TEST(NoStoppingAreaTest, generateEgoNoStoppingAreaLanePolygon)
     EXPECT_TRUE(lane_poly.inners().empty());
   }
 }
+
+TEST(NoStoppingAreaTest, check_stop_lines_in_no_stopping_area)
+{
+  using autoware::behavior_velocity_planner::no_stopping_area::check_stop_lines_in_no_stopping_area;
+  tier4_planning_msgs::msg::PathWithLaneId path;
+  autoware::universe_utils::Polygon2d poly;
+  autoware::behavior_velocity_planner::no_stopping_area::DebugData debug_data;
+
+  // empty inputs
+  EXPECT_FALSE(check_stop_lines_in_no_stopping_area(path, poly, debug_data));
+
+  constexpr auto nb_points = 10;
+  constexpr auto non_stopped_velocity = 5.0;
+  tier4_planning_msgs::msg::PathWithLaneId non_stopping_path;
+  for (auto x = 0; x < nb_points; ++x) {
+    tier4_planning_msgs::msg::PathPointWithLaneId p;
+    p.point.pose.position.x = 1.0 * x;
+    p.point.pose.position.y = 0.0;
+    p.point.longitudinal_velocity_mps = non_stopped_velocity;
+    non_stopping_path.points.push_back(p);
+    path.points.push_back(p);
+  }
+  // set x=4 and x=5 to be stopping points
+  path.points[4].point.longitudinal_velocity_mps = 0.0;
+  path.points[5].point.longitudinal_velocity_mps = 0.0;
+  // empty polygon
+  EXPECT_FALSE(check_stop_lines_in_no_stopping_area(path, poly, debug_data));
+  // non stopping path
+  poly.outer().emplace_back(3.0, -1.0);
+  poly.outer().emplace_back(3.0, 1.0);
+  poly.outer().emplace_back(5.0, 1.0);
+  poly.outer().emplace_back(5.0, -1.0);
+  poly.outer().push_back(poly.outer().front());  // close the polygon
+  EXPECT_FALSE(check_stop_lines_in_no_stopping_area(non_stopping_path, poly, debug_data));
+  // stop in the area
+  EXPECT_TRUE(check_stop_lines_in_no_stopping_area(path, poly, debug_data));
+  // if stop in the area is within 1m of the end of the path we ignore it: only for 1st stop
+  path.points[8].point.longitudinal_velocity_mps = 0.0;
+  path.points[9].point.longitudinal_velocity_mps = 0.0;
+  EXPECT_TRUE(check_stop_lines_in_no_stopping_area(path, poly, debug_data));
+  // if stop in the area is within 1m of the end of the path we ignore it
+  path.points[4].point.longitudinal_velocity_mps = non_stopped_velocity;
+  path.points[5].point.longitudinal_velocity_mps = non_stopped_velocity;
+  EXPECT_FALSE(check_stop_lines_in_no_stopping_area(path, poly, debug_data));
+}

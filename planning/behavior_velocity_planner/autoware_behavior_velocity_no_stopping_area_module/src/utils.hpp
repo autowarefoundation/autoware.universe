@@ -137,6 +137,7 @@ Polygon2d generate_ego_no_stopping_area_lane_polygon(
  * @brief Check if there is a stop line in "stop line detect area".
  * @param path            ego-car lane
  * @param poly            ego focusing area polygon
+ * @param [out] debug_data structure to store the stuck points for debugging
  * @return true if exists
  */
 bool check_stop_lines_in_no_stopping_area(
