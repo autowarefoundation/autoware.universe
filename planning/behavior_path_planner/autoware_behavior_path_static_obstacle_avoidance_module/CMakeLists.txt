@@ -5,6 +5,10 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 pluginlib_export_plugin_description_file(autoware_behavior_path_planner plugins.xml)
 
+generate_parameter_library(static_obstacle_avoidance_parameters
+  param/static_obstacle_avoidance_parameters.yaml
+)
+
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/scene.cpp
   src/debug.cpp

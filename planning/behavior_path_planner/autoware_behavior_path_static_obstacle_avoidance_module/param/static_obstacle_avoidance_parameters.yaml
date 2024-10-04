@@ -1,0 +1,724 @@
+static_obstacle_avoidance:
+  resample_interval_for_planning:
+    type: double
+    description: Path resample interval for avoidance planning path.
+  resample_interval_for_output:
+    type: double
+    description: Path resample interval for output path. Too short interval increases computational cost for latter modules.
+
+  use_lane_type:
+    type: string
+    description: Drivable lane configuration.
+    validation:
+      one_of<>: [["current_lane", "same_direction_lane", "opposite_direction_lane"]]
+  use_intersection_areas:
+    type: bool
+    description: Extend drivable to intersection area.
+  use_hatched_road_markings:
+    type: bool
+    description: Extend drivable to hatched road marking area.
+  use_freespace_areas:
+    type: bool
+    description: Extend drivable to freespace area.
+
+  target_object:
+    # TODO(mitukou1109): use mapped parameters
+    # https://github.com/PickNikRobotics/generate_parameter_library/issues/191
+    # object_types:
+    #   type: string_array
+    #   default_value: [car, truck, bus, trailer, unknown, bicycle, motorcycle, pedestrian]
+    # __map_object_types:
+    car:
+      th_moving_speed:
+        type: double
+        description: Objects with speed greater than this will be judged as moving ones.
+        validation:
+          gt_eq<>: 0.0
+      th_moving_time:
+        type: double
+        description: Objects keep moving longer duration than this will be excluded from avoidance target.
+      longitudinal_margin:
+        type: double
+        description: Creates an additional longitudinal gap that will prevent the vehicle from getting to near to the obstacle.
+      lateral_margin:
+        soft_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin_for_parked_vehicle:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+      max_expand_ratio:
+        type: double
+        description: This value will be applied envelope_buffer_margin according to the distance between the ego and object.
+      envelope_buffer_margin:
+        type: double
+        description: The buffer between raw boundary box of detected objects and enveloped polygon that is used for avoidance path generation.
+      th_error_eclipse_long_radius:
+        type: double
+        description: This value will be applied to judge whether the eclipse error is to large
+    truck:
+      th_moving_speed:
+        type: double
+        description: Objects with speed greater than this will be judged as moving ones.
+        validation:
+          gt_eq<>: 0.0
+      th_moving_time:
+        type: double
+        description: Objects keep moving longer duration than this will be excluded from avoidance target.
+      longitudinal_margin:
+        type: double
+        description: Creates an additional longitudinal gap that will prevent the vehicle from getting to near to the obstacle.
+      lateral_margin:
+        soft_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin_for_parked_vehicle:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+      max_expand_ratio:
+        type: double
+        description: This value will be applied envelope_buffer_margin according to the distance between the ego and object.
+      envelope_buffer_margin:
+        type: double
+        description: The buffer between raw boundary box of detected objects and enveloped polygon that is used for avoidance path generation.
+      th_error_eclipse_long_radius:
+        type: double
+        description: This value will be applied to judge whether the eclipse error is to large
+    bus:
+      th_moving_speed:
+        type: double
+        description: Objects with speed greater than this will be judged as moving ones.
+        validation:
+          gt_eq<>: 0.0
+      th_moving_time:
+        type: double
+        description: Objects keep moving longer duration than this will be excluded from avoidance target.
+      longitudinal_margin:
+        type: double
+        description: Creates an additional longitudinal gap that will prevent the vehicle from getting to near to the obstacle.
+      lateral_margin:
+        soft_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin_for_parked_vehicle:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+      max_expand_ratio:
+        type: double
+        description: This value will be applied envelope_buffer_margin according to the distance between the ego and object.
+      envelope_buffer_margin:
+        type: double
+        description: The buffer between raw boundary box of detected objects and enveloped polygon that is used for avoidance path generation.
+      th_error_eclipse_long_radius:
+        type: double
+        description: This value will be applied to judge whether the eclipse error is to large
+    trailer:
+      th_moving_speed:
+        type: double
+        description: Objects with speed greater than this will be judged as moving ones.
+        validation:
+          gt_eq<>: 0.0
+      th_moving_time:
+        type: double
+        description: Objects keep moving longer duration than this will be excluded from avoidance target.
+      longitudinal_margin:
+        type: double
+        description: Creates an additional longitudinal gap that will prevent the vehicle from getting to near to the obstacle.
+      lateral_margin:
+        soft_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin_for_parked_vehicle:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+      max_expand_ratio:
+        type: double
+        description: This value will be applied envelope_buffer_margin according to the distance between the ego and object.
+      envelope_buffer_margin:
+        type: double
+        description: The buffer between raw boundary box of detected objects and enveloped polygon that is used for avoidance path generation.
+      th_error_eclipse_long_radius:
+        type: double
+        description: This value will be applied to judge whether the eclipse error is to large
+    unknown:
+      th_moving_speed:
+        type: double
+        description: Objects with speed greater than this will be judged as moving ones.
+        validation:
+          gt_eq<>: 0.0
+      th_moving_time:
+        type: double
+        description: Objects keep moving longer duration than this will be excluded from avoidance target.
+      longitudinal_margin:
+        type: double
+        description: Creates an additional longitudinal gap that will prevent the vehicle from getting to near to the obstacle.
+      lateral_margin:
+        soft_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin_for_parked_vehicle:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+      max_expand_ratio:
+        type: double
+        description: This value will be applied envelope_buffer_margin according to the distance between the ego and object.
+      envelope_buffer_margin:
+        type: double
+        description: The buffer between raw boundary box of detected objects and enveloped polygon that is used for avoidance path generation.
+      th_error_eclipse_long_radius:
+        type: double
+        description: This value will be applied to judge whether the eclipse error is to large
+    bicycle:
+      th_moving_speed:
+        type: double
+        description: Objects with speed greater than this will be judged as moving ones.
+        validation:
+          gt_eq<>: 0.0
+      th_moving_time:
+        type: double
+        description: Objects keep moving longer duration than this will be excluded from avoidance target.
+      longitudinal_margin:
+        type: double
+        description: Creates an additional longitudinal gap that will prevent the vehicle from getting to near to the obstacle.
+      lateral_margin:
+        soft_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin_for_parked_vehicle:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+      max_expand_ratio:
+        type: double
+        description: This value will be applied envelope_buffer_margin according to the distance between the ego and object.
+      envelope_buffer_margin:
+        type: double
+        description: The buffer between raw boundary box of detected objects and enveloped polygon that is used for avoidance path generation.
+      th_error_eclipse_long_radius:
+        type: double
+        description: This value will be applied to judge whether the eclipse error is to large
+    motorcycle:
+      th_moving_speed:
+        type: double
+        description: Objects with speed greater than this will be judged as moving ones.
+        validation:
+          gt_eq<>: 0.0
+      th_moving_time:
+        type: double
+        description: Objects keep moving longer duration than this will be excluded from avoidance target.
+      longitudinal_margin:
+        type: double
+        description: Creates an additional longitudinal gap that will prevent the vehicle from getting to near to the obstacle.
+      lateral_margin:
+        soft_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin_for_parked_vehicle:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+      max_expand_ratio:
+        type: double
+        description: This value will be applied envelope_buffer_margin according to the distance between the ego and object.
+      envelope_buffer_margin:
+        type: double
+        description: The buffer between raw boundary box of detected objects and enveloped polygon that is used for avoidance path generation.
+      th_error_eclipse_long_radius:
+        type: double
+        description: This value will be applied to judge whether the eclipse error is to large
+    pedestrian:
+      th_moving_speed:
+        type: double
+        description: Objects with speed greater than this will be judged as moving ones.
+        validation:
+          gt_eq<>: 0.0
+      th_moving_time:
+        type: double
+        description: Objects keep moving longer duration than this will be excluded from avoidance target.
+      longitudinal_margin:
+        type: double
+        description: Creates an additional longitudinal gap that will prevent the vehicle from getting to near to the obstacle.
+      lateral_margin:
+        soft_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+        hard_margin_for_parked_vehicle:
+          type: double
+          description: Lateral distance between ego and avoidance targets.
+      max_expand_ratio:
+        type: double
+        description: This value will be applied envelope_buffer_margin according to the distance between the ego and object.
+      envelope_buffer_margin:
+        type: double
+        description: The buffer between raw boundary box of detected objects and enveloped polygon that is used for avoidance path generation.
+      th_error_eclipse_long_radius:
+        type: double
+        description: This value will be applied to judge whether the eclipse error is to large
+    lower_distance_for_polygon_expansion:
+      type: double
+      description: If the distance between the ego and object is less than this, the expand ratio will be zero.
+    upper_distance_for_polygon_expansion:
+      type: double
+      description: If the distance between the ego and object is larger than this, the expand ratio will be max_expand_ratio.
+
+  target_filtering:
+    target_type:
+      car:
+        type: bool
+        description: Enable avoidance maneuver for CAR.
+      truck:
+        type: bool
+        description: Enable avoidance maneuver for TRUCK.
+      bus:
+        type: bool
+        description: Enable avoidance maneuver for BUS.
+      trailer:
+        type: bool
+        description: Enable avoidance maneuver for TRAILER.
+      unknown:
+        type: bool
+        description: Enable avoidance maneuver for UNKNOWN.
+      bicycle:
+        type: bool
+        description: Enable avoidance maneuver for BICYCLE.
+      motorcycle:
+        type: bool
+        description: Enable avoidance maneuver for MOTORCYCLE.
+      pedestrian:
+        type: bool
+        description: Enable avoidance maneuver for PEDESTRIAN.
+    object_check_goal_distance:
+      type: double
+      description: If the distance between object and goal position is less than this parameter, the module do not return center line.
+    object_check_return_pose_distance:
+      type: double
+      description: If the distance between object and return position is less than this parameter, the module do not return center line.
+    max_compensation_time:
+      type: double
+      description:
+        For the compensation of the detection lost. The object is registered once it is observed as an avoidance target.
+        When the detection loses, the timer will start and the object will be un-registered when the time exceeds this limit.
+
+    detection_area:
+      dynamic:
+        type: bool
+        description: If false, the detection area longitudinal range is calculated based on current ego speed.
+      min_forward_distance:
+        type: double
+        description: Minimum forward distance to search the avoidance target.
+      max_forward_distance:
+        type: double
+        description: Maximum forward distance to search the avoidance target.
+      backward_distance:
+        type: double
+        description: Backward distance to search the avoidance target.
+
+    parked_vehicle:
+      th_offset_from_centerline:
+        type: double
+        description: Vehicles around the center line within this distance will be excluded from avoidance target.
+      th_shiftable_ratio:
+        type: double
+        description: Vehicles around the center line within this distance will be excluded from avoidance target.
+        validation:
+          bounds<>: [0.0, 1.0]
+      min_road_shoulder_width:
+        type: double
+        description: Width considered as a road shoulder if the lane does not have a road shoulder target.
+
+    merging_vehicle:
+      th_overhang_distance:
+        type: double
+        description:
+          Distance threshold to ignore merging/deviating vehicle to/from ego driving lane.
+          The distance represents how the object polygon overlaps ego lane, and it's calculated from polygon overhang point and lane centerline.
+          If the distance is more than this param, the module never avoid the object. (Basically, the ego stops behind of it.)
+
+    avoidance_for_ambiguous_vehicle:
+      policy:
+        type: string
+        description: Ego behavior policy for ambiguous vehicle.
+        validation:
+          one_of<>: [["auto", "manual", "ignore"]]
+      condition:
+        th_stopped_time:
+          type: double
+          description: Never avoid object whose stopped time is less than this param.
+        th_moving_distance:
+          type: double
+          description: Never avoid object which moves more than this param.
+      ignore_area:
+        traffic_light:
+          front_distance:
+            type: double
+            description: If the distance between traffic light and vehicle is less than this parameter, this module will ignore it.
+        crosswalk:
+          front_distance:
+            type: double
+            description: If the front distance between crosswalk and vehicle is less than this parameter, this module will ignore it.
+          behind_distance:
+            type: double
+            description: If the back distance between crosswalk and vehicle is less than this parameter, this module will ignore it.
+      wait_and_see:
+        target_behaviors:
+          type: string_array
+          description: This module doesn't avoid these behaviors vehicle until it gets closer than threshold.
+          validation:
+            subset_of<>: [["NONE", "MERGING", "DEVIATING"]]
+        th_closest_distance:
+          type: double
+          description: Threshold to check whether the ego gets close enough the ambiguous vehicle.
+
+    intersection:
+      yaw_deviation:
+        type: double
+        description: Yaw deviation threshold param to judge if the object is not merging or deviating vehicle.
+
+    freespace:
+      condition:
+        th_stopped_time:
+          type: double
+          description: This module delays avoidance maneuver to see vehicle behavior in freespace.
+
+  safety_check:
+    target_type:
+      car:
+        type: bool
+        description: Enable safety check for CAR.
+      truck:
+        type: bool
+        description: Enable safety check for TRUCK.
+      bus:
+        type: bool
+        description: Enable safety check for BUS.
+      trailer:
+        type: bool
+        description: Enable safety check for TRAILER.
+      unknown:
+        type: bool
+        description: Enable safety check for UNKNOWN.
+      bicycle:
+        type: bool
+        description: Enable safety check for BICYCLE.
+      motorcycle:
+        type: bool
+        description: Enable safety check for MOTORCYCLE.
+      pedestrian:
+        type: bool
+        description: Enable safety check for PEDESTRIAN.
+    enable:
+      type: bool
+      description: Enable to use safety check feature.
+    check_current_lane:
+      type: bool
+      description: Check objects on current driving lane.
+    check_shift_side_lane:
+      type: bool
+      description: Check objects on shift side lane.
+    check_other_side_lane:
+      type: bool
+      description: Check objects on other side lane.
+    check_unavoidable_object:
+      type: bool
+      description: Check collision between ego and unavoidable objects.
+    check_other_object:
+      type: bool
+      description: Check collision between ego and non avoidance target objects.
+    check_all_predicted_path:
+      type: bool
+      description: Check all prediction path of safety check target objects.
+    safety_check_backward_distance:
+      type: double
+      description: Backward distance to search the dynamic objects.
+    hysteresis_factor_expand_rate:
+      type: double
+      description: Hysteresis factor that be used for chattering prevention.
+    hysteresis_factor_safe_count:
+      type: int
+      description: Hysteresis count that be used for chattering prevention.
+    collision_check_yaw_diff_threshold:
+      type: double
+      description: Max yaw difference between ego and object when doing collision check
+    min_velocity:
+      type: double
+      description: Minimum velocity of the ego vehicle's predicted path.
+    max_velocity:
+      type: double
+      description: Maximum velocity of the ego vehicle's predicted path.
+    time_resolution:
+      type: double
+      description: Time resolution for the ego vehicle's predicted path.
+    time_horizon_for_front_object:
+      type: double
+      description: Time horizon for predicting front objects.
+    time_horizon_for_rear_object:
+      type: double
+      description: Time horizon for predicting rear objects.
+    delay_until_departure:
+      type: double
+      description: Delay until the ego vehicle departs.
+    extended_polygon_policy:
+      type: string
+      description: See https://github.com/autowarefoundation/autoware.universe/pull/6336.
+      validation:
+        one_of<>: [["rectangle", "along_path"]]
+    expected_front_deceleration:
+      type: double
+      description: The front object's maximum deceleration when the front vehicle perform sudden braking.
+    expected_rear_deceleration:
+      type: double
+      description: The rear object's maximum deceleration when the rear vehicle perform sudden braking.
+    rear_vehicle_reaction_time:
+      type: double
+      description:
+        The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle
+        until the driver step on the brake.
+    rear_vehicle_safety_time_margin:
+      type: double
+      description: The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.
+    lateral_distance_max_threshold:
+      type: double
+      description:
+        The lateral distance threshold that is used to determine whether lateral distance between two object is enough and
+        whether lane change is safe.
+    longitudinal_distance_min_threshold:
+      type: double
+      description:
+        The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and
+        whether lane change is safe.
+    longitudinal_velocity_delta_time:
+      type: double
+      description: The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)
+
+  avoid:
+    lateral:
+      th_avoid_execution:
+        type: double
+        description: The lateral distance deviation threshold between the current path and suggested avoidance point to execute avoidance.
+      th_small_shift_length:
+        type: double
+        description: The shift lines whose lateral offset is less than this will be applied with other ones.
+      soft_drivable_bound_margin:
+        type: double
+        description: Keep distance to drivable bound.
+      hard_drivable_bound_margin:
+        type: double
+        description: Keep distance to drivable bound.
+      max_right_shift_length:
+        type: double
+        description: Maximum shift length for right direction.
+      max_left_shift_length:
+        type: double
+        description: Maximum shift length for left direction.
+      max_deviation_from_lane:
+        type: double
+        description: Use in validation phase to check if the avoidance path is in drivable area.
+      ratio_for_return_shift_approval:
+        type: double
+        description: This parameter is added to allow waiting for the return of shift approval until the occlusion behind the avoid target is clear.
+        validation:
+          bounds<>: [0.0, 1.0]
+    longitudinal:
+      min_prepare_time:
+        type: double
+        description: Avoidance shift starts from point ahead of this time x ego speed at least.
+      max_prepare_time:
+        type: double
+        description: Avoidance shift starts from point ahead of this time x ego speed if possible.
+      min_prepare_distance:
+        type: double
+        description: Minimum prepare distance.
+      min_slow_down_speed:
+        type: double
+        description: Minimum slow speed for avoidance prepare section.
+      buf_slow_down_speed:
+        type: double
+        description:
+          Buffer for controller tracking error. Basically, vehicle always cannot follow velocity profile precisely.
+          Therefore, the module inserts lower speed than target speed that satisfies conditions to avoid object within accel/jerk constraints
+          so that the avoidance path always can be output even if the current speed is a little bit higher than target speed.
+      nominal_avoidance_speed:
+        type: double
+        description: Nominal avoidance speed.
+      consider_front_overhang:
+        type: bool
+        description: Flag to consider vehicle front overhang in shift line generation logic.
+      consider_rear_overhang:
+        type: bool
+        description: Flag to consider vehicle rear overhang in shift line generation logic.
+    return_dead_line:
+      goal:
+        enable:
+          type: bool
+          description: Insert stop point in order to return original lane before reaching goal.
+        buffer:
+          type: double
+          description: Buffer distance to return original lane before reaching goal.
+      traffic_light:
+        enable:
+          type: bool
+          description: Insert stop point in order to return original lane before reaching traffic light.
+        buffer:
+          type: double
+          description: Buffer distance to return original lane before reaching traffic light.
+
+  cancel:
+    enable:
+      type: bool
+      description: Flag to enable cancel maneuver.
+    force:
+      duration_time:
+        type: double
+        description: force deactivate duration time
+
+  yield:
+    enable:
+      type: bool
+      description: Flag to enable yield maneuver.
+    enable_during_shifting:
+      type: bool
+      description: Flag to enable yield maneuver during shifting.
+
+  stop:
+    max_distance:
+      type: double
+      description: Maximum stop distance in the situation where avoidance maneuver is not approved or in yield maneuver.
+    stop_buffer:
+      type: double
+      description: Buffer distance in the situation where avoidance maneuver is not approved or in yield maneuver.
+
+  policy:
+    make_approval_request:
+      type: string
+      description: "policy for rtc request. select 'per_shift_line' or 'per_avoidance_maneuver'.
+        'per_shift_line': request approval for each shift line.
+        'per_avoidance_maneuver': request approval for avoidance maneuver (avoid + return)."
+      validation:
+        one_of<>: [["per_shift_line", "per_avoidance_maneuver"]]
+    deceleration:
+      type: string
+      description: "policy for vehicle slow down behavior. select 'best_effort' or 'reliable'.
+        'best_effort': slow down deceleration & jerk are limited by constraints but there is a possibility that the vehicle can't stop in front of the vehicle.
+        'reliable': insert stop or slow down point with ignoring decel/jerk constraints.
+        make it possible to increase chance to avoid but uncomfortable deceleration maybe happen."
+      validation:
+        one_of<>: [["reliable", "best_effort"]]
+    lateral_margin:
+      type: string
+      description: "policy for voidance lateral margin. select 'best_effort' or 'reliable'.
+        'best_effort': output avoidance path with shorten lateral margin when there is no enough longitudinal margin to avoid.
+        'reliable': module output avoidance path with safe (rtc cooperate) state only when the vehicle can avoid with expected lateral margin."
+      validation:
+        one_of<>: [["reliable", "best_effort"]]
+    use_shorten_margin_immediately:
+      type: bool
+      description: if true, module doesn't wait deceleration and outputs avoidance path by best effort margin.
+
+  constraints:
+    lateral:
+      velocity:
+        type: double_array
+        description: Velocity array to decide current lateral accel/jerk limit.
+      max_accel_values:
+        type: double_array
+        description: Avoidance path gets sharp up to this accel limit when there is not enough distance from ego.
+      min_jerk_values:
+        type: double_array
+        description: Avoidance path is generated with this jerk when there is enough distance from ego.
+      max_jerk_values:
+        type: double_array
+        description: Avoidance path gets sharp up to this jerk limit when there is not enough distance from ego.
+
+    longitudinal:
+      nominal_deceleration:
+        type: double
+        description: Nominal deceleration limit.
+      nominal_jerk:
+        type: double
+        description: Nominal jerk limit.
+      max_deceleration:
+        type: double
+        description: Max deceleration limit.
+      max_jerk:
+        type: double
+        description: Max jerk limit.
+      max_acceleration:
+        type: double
+        description: Maximum acceleration during avoidance.
+      min_velocity_to_limit_max_acceleration:
+        type: double
+        description: If the ego speed is faster than this param, the module applies acceleration limit max_acceleration.
+
+  path_generation_method:
+    type: string
+    description: "path generation method. select 'shift_line_base' or 'optimization_base' or both.
+      'shift_line_base': Create avoidance path based on shift line. User can control avoidance maneuver execution via RTC.
+      However, this method doesn't support complex avoidance scenario (e.g. S-shape maneuver).
+      'optimization_base': This module selects avoidance target object and bpp module clips drivable area based on avoidance target object polygon shape.
+      But this module doesn't modify the path shape. On the other hand, autoware_path_optimizer module optimizes path shape instead of this module
+      so that the path can be within drivable area. This method is able to deal with complex avoidance scenario.
+      However, user can't control avoidance manuever execution.
+      'both': Use both method."
+
+  shift_line_pipeline:
+    trim:
+      quantize_size:
+        type: double
+        description: Lateral shift length quantize size.
+      th_similar_grad_1:
+        type: double
+        description: Lateral shift length threshold to merge similar gradient shift lines.
+      th_similar_grad_2:
+        type: double
+        description: Lateral shift length threshold to merge similar gradient shift lines.
+      th_similar_grad_3:
+        type: double
+        description: Lateral shift length threshold to merge similar gradient shift lines.
+
+  debug:
+    enable_other_objects_marker:
+      type: bool
+      description: Publish other objects marker.
+    enable_other_objects_info:
+      type: bool
+      description: Publish other objects detail information.
+    enable_detection_area_marker:
+      type: bool
+      description: Publish detection area.
+    enable_drivable_bound_marker:
+      type: bool
+      description: Publish drivable area boundary.
+    enable_safety_check_marker:
+      type: bool
+      description: Publish safety check information.
+    enable_shift_line_marker:
+      type: bool
+      description: Publish shift line information.
+    enable_lane_marker:
+      type: bool
+      description: Publish lane information.
+    enable_misc_marker:
+      type: bool
+      description: Publish misc markers.
