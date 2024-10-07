@@ -23,6 +23,7 @@
 #include <boost/geometry/algorithms/distance.hpp>
 
 #include <algorithm>
+#include <cstddef>
 
 namespace autoware::behavior_path_planner::utils::path_safety_checker::filter
 {
@@ -39,6 +40,8 @@ bool position_filter(
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance)
 {
+  if (path_points.empty()) return false;
+
   const auto dist_ego_to_obj = autoware::motion_utils::calcSignedArcLength(
     path_points, current_pose, object.kinematics.initial_pose_with_covariance.pose.position);
 

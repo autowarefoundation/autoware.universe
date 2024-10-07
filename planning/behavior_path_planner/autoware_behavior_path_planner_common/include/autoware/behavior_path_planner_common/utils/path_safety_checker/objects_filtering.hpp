@@ -38,9 +38,13 @@ bool velocity_filter(
   const PredictedObject & object, double velocity_threshold, double max_velocity);
 
 bool position_filter(
-  PredictedObject & object, const std::vector<PathPointWithLaneId> & path_points,
+  const PredictedObject & object, const std::vector<PathPointWithLaneId> & path_points,
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance);
+
+bool is_within_circle(
+  const geometry_msgs::msg::Point & object_pos, const geometry_msgs::msg::Point & reference_point,
+  const double search_radius);
 
 }  // namespace autoware::behavior_path_planner::utils::path_safety_checker::filter
 
