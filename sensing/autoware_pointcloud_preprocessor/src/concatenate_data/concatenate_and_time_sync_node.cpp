@@ -437,9 +437,9 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
 
     bool topic_miss = false;
 
-    int concatenated_cloud_status = 1;  // 1 for success, 0 for failure
-    int cloud_status = 1;               // for each lidar's pointcloud
+    int concatenated_cloud_status = 1;  // Status of concatenated cloud, 1: success, 0: failure
     for (const auto & topic : params_.input_topics) {
+      int cloud_status = 1;  // Status of each lidar's pointcloud
       if (
         diagnostic_topic_to_original_stamp_map_.find(topic) !=
         diagnostic_topic_to_original_stamp_map_.end()) {
