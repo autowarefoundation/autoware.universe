@@ -123,5 +123,7 @@ TEST_F(SurroundObstacleCheckerNodeTest, isStopRequired)
     EXPECT_FALSE(is_stop);
     EXPECT_EQ(stop_time, std::nullopt);
   }
+
+  rclcpp::shutdown();
 }
 }  // namespace autoware::surround_obstacle_checker
