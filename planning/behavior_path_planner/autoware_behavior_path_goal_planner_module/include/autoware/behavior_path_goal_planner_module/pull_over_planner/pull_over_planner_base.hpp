@@ -15,6 +15,7 @@
 #pragma once
 
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -41,19 +42,20 @@ struct PullOverPath
 {
 public:
   static std::optional<PullOverPath> create(
-    const PullOverPlannerType & type, const size_t goal_id, const size_t id,
+    const PullOverPlannerType & type, const size_t id,
     const std::vector<PathWithLaneId> & partial_paths, const Pose & start_pose,
-    const Pose & end_pose,
+    const GoalCandidate & modified_goal_pose,
     const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel);
 
   PullOverPath(const PullOverPath & other);
   PullOverPath & operator=(const PullOverPath & other) = default;
 
   PullOverPlannerType type() const { return type_; }
-  size_t goal_id() const { return goal_id_; }
+  size_t goal_id() const { return modified_goal_pose_.id; }
   size_t id() const { return id_; }
   Pose start_pose() const { return start_pose_; }
-  Pose end_pose() const { return end_pose_; }
+  Pose end_pose() const { return modified_goal_pose_.goal_pose; }
+  GoalCandidate modified_goal_pose() const { return modified_goal_pose_; }
 
   std::vector<PathWithLaneId> & partial_paths() { return partial_paths_; }
   const std::vector<PathWithLaneId> & partial_paths() const { return partial_paths_; }
@@ -86,19 +88,18 @@ public:
 
 private:
   PullOverPath(
-    const PullOverPlannerType & type, const size_t goal_id, const size_t id,
-    const Pose & start_pose, const Pose & end_pose,
-    const std::vector<PathWithLaneId> & partial_paths, const PathWithLaneId & full_path,
-    const PathWithLaneId & parking_path, const std::vector<double> & full_path_curvatures,
+    const PullOverPlannerType & type, const size_t id, const Pose & start_pose,
+    const GoalCandidate & modified_goal_pose, const std::vector<PathWithLaneId> & partial_paths,
+    const PathWithLaneId & full_path, const PathWithLaneId & parking_path,
+    const std::vector<double> & full_path_curvatures,
     const std::vector<double> & parking_path_curvatures, const double full_path_max_curvature,
     const double parking_path_max_curvature,
     const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel);
 
   PullOverPlannerType type_;
-  size_t goal_id_;
+  GoalCandidate modified_goal_pose_;
   size_t id_;
   Pose start_pose_;
-  Pose end_pose_;
 
   std::vector<PathWithLaneId> partial_paths_;
   PathWithLaneId full_path_;
@@ -126,8 +127,9 @@ public:
 
   virtual PullOverPlannerType getPlannerType() const = 0;
   virtual std::optional<PullOverPath> plan(
-    const size_t goal_id, const size_t id, const std::shared_ptr<const PlannerData> planner_data,
-    const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose) = 0;
+    const GoalCandidate & modified_goal_pose, const size_t id,
+    const std::shared_ptr<const PlannerData> planner_data,
+    const BehaviorModuleOutput & previous_module_output) = 0;
 
 protected:
   const autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
