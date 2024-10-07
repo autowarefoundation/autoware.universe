@@ -23,7 +23,6 @@
 #include <boost/geometry/algorithms/distance.hpp>
 
 #include <algorithm>
-#include <cstddef>
 
 namespace autoware::behavior_path_planner::utils::path_safety_checker::filter
 {
