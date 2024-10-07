@@ -30,7 +30,6 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <memory>
 #include <vector>
@@ -101,9 +100,6 @@ private:
   diagnostic_updater::Updater updater_;
 
   void check_lane_departure(diagnostic_updater::DiagnosticStatusWrapper & stat);
-
-  // Visualization
-  visualization_msgs::msg::MarkerArray create_marker_array() const;
 };
 }  // namespace obstacle_collision_checker
 

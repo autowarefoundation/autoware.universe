@@ -12,8 +12,7 @@ include_directories(
 )
 
 ament_auto_add_library(obstacle_collision_checker SHARED
-  src/obstacle_collision_checker_node/obstacle_collision_checker.cpp
-  src/obstacle_collision_checker_node/obstacle_collision_checker_node.cpp
+  DIRECTORY src
 )
 
 rclcpp_components_register_node(obstacle_collision_checker
