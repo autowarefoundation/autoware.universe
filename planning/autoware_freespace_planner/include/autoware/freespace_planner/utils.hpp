@@ -70,6 +70,9 @@ Trajectory create_stop_trajectory(const Trajectory & trajectory);
 
 bool is_stopped(
   const std::deque<Odometry::ConstSharedPtr> & odom_buffer, const double th_stopped_velocity_mps);
+
+bool is_near_target(
+  const Pose & target_pose, const Pose & current_pose, const double th_distance_m);
 }  // namespace autoware::freespace_planner
 
 #endif  // AUTOWARE__FREESPACE_PLANNER__UTILS_HPP_

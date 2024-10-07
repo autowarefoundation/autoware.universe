@@ -183,28 +183,30 @@ bool FreespacePlannerNode::checkCurrentTrajectoryCollision()
 
 void FreespacePlannerNode::updateTargetIndex()
 {
-  const double long_disp_to_target = autoware::universe_utils::calcLongitudinalDeviation(
-    trajectory_.points.at(target_index_).pose, current_pose_.pose.position);
-  const auto is_near_target = std::abs(long_disp_to_target) < node_param_.th_arrived_distance_m;
+  if (!is_stopped(odom_buffer_, node_param_.th_stopped_velocity_mps)) {
+    return;
+  }
 
-  const auto is_ego_stopped = is_stopped(odom_buffer_, node_param_.th_stopped_velocity_mps);
+  const auto is_near_target = is_near_target(
+    trajectory_.points.at(target_index_).pose, current_pose_.pose.position,
+    node_param_.th_arrived_distance_m);
 
-  if (is_near_target && is_ego_stopped) {
-    const auto new_target_index =
-      get_next_target_index(trajectory_.points.size(), reversing_indices_, target_index_);
+  if (!is_near_target) return;
 
-    if (new_target_index == target_index_) {
-      // Finished publishing all partial trajectories
-      is_completed_ = true;
-      RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, "Freespace planning completed");
-      std_msgs::msg::Bool is_completed_msg;
-      is_completed_msg.data = is_completed_;
-      parking_state_pub_->publish(is_completed_msg);
-    } else {
-      // Switch to next partial trajectory
-      prev_target_index_ = target_index_;
-      target_index_ = new_target_index;
-    }
+  const auto new_target_index =
+    get_next_target_index(trajectory_.points.size(), reversing_indices_, target_index_);
+
+  if (new_target_index == target_index_) {
+    // Finished publishing all partial trajectories
+    is_completed_ = true;
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, "Freespace planning completed");
+    std_msgs::msg::Bool is_completed_msg;
+    is_completed_msg.data = is_completed_;
+    parking_state_pub_->publish(is_completed_msg);
+  } else {
+    // Switch to next partial trajectory
+    prev_target_index_ = target_index_;
+    target_index_ = new_target_index;
   }
 }
 
