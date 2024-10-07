@@ -148,6 +148,25 @@ TEST(FreespacePlannerUtilsTest, testIsStopped)
     autoware::freespace_planner::utils::is_stopped(odometry_buffer, th_stopped_velocity_mps));
 }
 
+TEST(FreespacePlannerUtilsTest, testIsNearTarget)
+{
+  const auto trajectory = get_trajectory(0ul);
+  const auto target_pose = trajectory.points.back().pose;
+
+  auto current_pose = target_pose;
+  current_pose.position.x -= 1.0;
+  current_pose.position.y += 1.0;
+
+  const double th_distance_m = 0.5;
+
+  EXPECT_FALSE(
+    autoware::freespace_planner::utils::is_near_target(target_pose, current_pose, th_distance_m));
+
+  current_pose.position.x += 0.6;
+  EXPECT_TRUE(
+    autoware::freespace_planner::utils::is_near_target(target_pose, current_pose, th_distance_m));
+}
+
 TEST(FreespacePlannerUtilsTest, testGetReversingIndices)
 {
   auto trajectory = get_trajectory(0ul);

@@ -188,7 +188,7 @@ void FreespacePlannerNode::updateTargetIndex()
   }
 
   const auto is_near_target = utils::is_near_target(
-    trajectory_.points.at(target_index_).pose, current_pose_.pose.position,
+    trajectory_.points.at(target_index_).pose, current_pose_.pose,
     node_param_.th_arrived_distance_m);
 
   if (!is_near_target) return;
