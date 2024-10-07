@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc. All rights reserved.
+// Copyright 2020-2024 Tier IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,37 +17,19 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
-
-namespace
-{
-template <class T>
-bool update_param(
-  const std::vector<rclcpp::Parameter> & params, const std::string & name, T & value)
-{
-  const auto itr = std::find_if(
-    params.cbegin(), params.cend(),
-    [&name](const rclcpp::Parameter & p) { return p.get_name() == name; });
-
-  // Not found
-  if (itr == params.cend()) {
-    return false;
-  }
-
-  value = itr->template get_value<T>();
-  return true;
-}
-}  // namespace
 
 namespace obstacle_collision_checker
 {
 ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOptions & node_options)
-: Node("obstacle_collision_checker_node", node_options), updater_(this)
+: Node("obstacle_collision_checker_node", node_options),
+  vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo()),
+  updater_(this)
 {
   using std::placeholders::_1;
 
@@ -55,19 +37,15 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   node_param_.update_rate = declare_parameter<double>("update_rate");
 
   // Core Parameter
-  param_.delay_time = declare_parameter<double>("delay_time");
-  param_.footprint_margin = declare_parameter<double>("footprint_margin");
-  param_.max_deceleration = declare_parameter<double>("max_deceleration");
-  param_.resample_interval = declare_parameter<double>("resample_interval");
-  param_.search_radius = declare_parameter<double>("search_radius");
+  input_.param.delay_time = declare_parameter<double>("delay_time");
+  input_.param.footprint_margin = declare_parameter<double>("footprint_margin");
+  input_.param.max_deceleration = declare_parameter<double>("max_deceleration");
+  input_.param.resample_interval = declare_parameter<double>("resample_interval");
+  input_.param.search_radius = declare_parameter<double>("search_radius");
 
   // Dynamic Reconfigure
-  set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&ObstacleCollisionCheckerNode::paramCallback, this, _1));
-
-  // Core
-  obstacle_collision_checker_ = std::make_unique<ObstacleCollisionChecker>(*this);
-  obstacle_collision_checker_->setParam(param_);
+  set_param_res_ = this->add_on_set_parameters_callback(std::bind(
+    &::obstacle_collision_checker::ObstacleCollisionCheckerNode::param_callback, this, _1));
 
   // Subscriber
   self_pose_listener_ = std::make_shared<autoware::universe_utils::SelfPoseListener>(this);
@@ -75,15 +53,15 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
 
   sub_obstacle_pointcloud_ = create_subscription<sensor_msgs::msg::PointCloud2>(
     "input/obstacle_pointcloud", rclcpp::SensorDataQoS(),
-    std::bind(&ObstacleCollisionCheckerNode::onObstaclePointcloud, this, _1));
+    std::bind(&ObstacleCollisionCheckerNode::on_obstacle_pointcloud, this, _1));
   sub_reference_trajectory_ = create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "input/reference_trajectory", 1,
-    std::bind(&ObstacleCollisionCheckerNode::onReferenceTrajectory, this, _1));
+    std::bind(&ObstacleCollisionCheckerNode::on_reference_trajectory, this, _1));
   sub_predicted_trajectory_ = create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "input/predicted_trajectory", 1,
-    std::bind(&ObstacleCollisionCheckerNode::onPredictedTrajectory, this, _1));
+    std::bind(&ObstacleCollisionCheckerNode::on_predicted_trajectory, this, _1));
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
-    "input/odometry", 1, std::bind(&ObstacleCollisionCheckerNode::onOdom, this, _1));
+    "input/odometry", 1, std::bind(&ObstacleCollisionCheckerNode::on_odom, this, _1));
 
   // Publisher
   debug_publisher_ =
@@ -94,47 +72,47 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   updater_.setHardwareID("obstacle_collision_checker");
 
   updater_.add(
-    "obstacle_collision_checker", this, &ObstacleCollisionCheckerNode::checkLaneDeparture);
+    "obstacle_collision_checker", this, &ObstacleCollisionCheckerNode::check_lane_departure);
 
   // Wait for first self pose
   self_pose_listener_->waitForFirstPose();
 
   // Timer
-  initTimer(1.0 / node_param_.update_rate);
+  init_timer(1.0 / node_param_.update_rate);
 }
 
-void ObstacleCollisionCheckerNode::onObstaclePointcloud(
+void ObstacleCollisionCheckerNode::on_obstacle_pointcloud(
   const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
   obstacle_pointcloud_ = msg;
 }
 
-void ObstacleCollisionCheckerNode::onReferenceTrajectory(
+void ObstacleCollisionCheckerNode::on_reference_trajectory(
   const autoware_planning_msgs::msg::Trajectory::SharedPtr msg)
 {
   reference_trajectory_ = msg;
 }
 
-void ObstacleCollisionCheckerNode::onPredictedTrajectory(
+void ObstacleCollisionCheckerNode::on_predicted_trajectory(
   const autoware_planning_msgs::msg::Trajectory::SharedPtr msg)
 {
   predicted_trajectory_ = msg;
 }
 
-void ObstacleCollisionCheckerNode::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg)
+void ObstacleCollisionCheckerNode::on_odom(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   current_twist_ = std::make_shared<geometry_msgs::msg::Twist>(msg->twist.twist);
 }
 
-void ObstacleCollisionCheckerNode::initTimer(double period_s)
+void ObstacleCollisionCheckerNode::init_timer(double period_s)
 {
   const auto period_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
   timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns, std::bind(&ObstacleCollisionCheckerNode::onTimer, this));
+    this, get_clock(), period_ns, std::bind(&ObstacleCollisionCheckerNode::on_timer, this));
 }
 
-bool ObstacleCollisionCheckerNode::isDataReady()
+bool ObstacleCollisionCheckerNode::is_data_ready()
 {
   if (!current_pose_) {
     RCLCPP_INFO_THROTTLE(
@@ -178,7 +156,7 @@ bool ObstacleCollisionCheckerNode::isDataReady()
   return true;
 }
 
-bool ObstacleCollisionCheckerNode::isDataTimeout()
+bool ObstacleCollisionCheckerNode::is_data_timeout()
 {
   const auto now = this->now();
 
@@ -193,7 +171,7 @@ bool ObstacleCollisionCheckerNode::isDataTimeout()
   return false;
 }
 
-void ObstacleCollisionCheckerNode::onTimer()
+void ObstacleCollisionCheckerNode::on_timer()
 {
   current_pose_ = self_pose_listener_->getCurrentPose();
   if (obstacle_pointcloud_) {
@@ -209,11 +187,11 @@ void ObstacleCollisionCheckerNode::onTimer()
     }
   }
 
-  if (!isDataReady()) {
+  if (!is_data_ready()) {
     return;
   }
 
-  if (isDataTimeout()) {
+  if (is_data_timeout()) {
     return;
   }
 
@@ -223,17 +201,18 @@ void ObstacleCollisionCheckerNode::onTimer()
   input_.reference_trajectory = reference_trajectory_;
   input_.predicted_trajectory = predicted_trajectory_;
   input_.current_twist = current_twist_;
+  input_.vehicle_info = vehicle_info_;
 
-  output_ = obstacle_collision_checker_->update(input_);
+  output_ = check_for_collisions(input_);
 
   updater_.force_update();
 
-  debug_publisher_->publish("marker_array", createMarkerArray());
+  debug_publisher_->publish("marker_array", create_marker_array());
 
   time_publisher_->publish(output_.processing_time_map);
 }
 
-rcl_interfaces::msg::SetParametersResult ObstacleCollisionCheckerNode::paramCallback(
+rcl_interfaces::msg::SetParametersResult ObstacleCollisionCheckerNode::param_callback(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
@@ -241,25 +220,22 @@ rcl_interfaces::msg::SetParametersResult ObstacleCollisionCheckerNode::paramCall
   result.reason = "success";
 
   try {
+    using autoware::universe_utils::updateParam;
     // Node Parameter
     {
       auto & p = node_param_;
 
       // Update params
-      update_param(parameters, "update_rate", p.update_rate);
+      updateParam(parameters, "update_rate", p.update_rate);
     }
 
-    auto & p = param_;
+    auto & p = input_.param;
 
-    update_param(parameters, "delay_time", p.delay_time);
-    update_param(parameters, "footprint_margin", p.footprint_margin);
-    update_param(parameters, "max_deceleration", p.max_deceleration);
-    update_param(parameters, "resample_interval", p.resample_interval);
-    update_param(parameters, "search_radius", p.search_radius);
-
-    if (obstacle_collision_checker_) {
-      obstacle_collision_checker_->setParam(param_);
-    }
+    updateParam(parameters, "delay_time", p.delay_time);
+    updateParam(parameters, "footprint_margin", p.footprint_margin);
+    updateParam(parameters, "max_deceleration", p.max_deceleration);
+    updateParam(parameters, "resample_interval", p.resample_interval);
+    updateParam(parameters, "search_radius", p.search_radius);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();
@@ -267,7 +243,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleCollisionCheckerNode::paramCall
   return result;
 }
 
-void ObstacleCollisionCheckerNode::checkLaneDeparture(
+void ObstacleCollisionCheckerNode::check_lane_departure(
   diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
@@ -281,7 +257,7 @@ void ObstacleCollisionCheckerNode::checkLaneDeparture(
   stat.summary(level, msg);
 }
 
-visualization_msgs::msg::MarkerArray ObstacleCollisionCheckerNode::createMarkerArray() const
+visualization_msgs::msg::MarkerArray ObstacleCollisionCheckerNode::create_marker_array() const
 {
   using autoware::universe_utils::createDefaultMarker;
   using autoware::universe_utils::createMarkerColor;
@@ -339,8 +315,8 @@ visualization_msgs::msg::MarkerArray ObstacleCollisionCheckerNode::createMarkerA
 
     for (const auto & vehicle_footprint : output_.vehicle_footprints) {
       for (size_t i = 0; i < vehicle_footprint.size() - 1; ++i) {
-        const auto p1 = vehicle_footprint.at(i);
-        const auto p2 = vehicle_footprint.at(i + 1);
+        const auto & p1 = vehicle_footprint.at(i);
+        const auto & p2 = vehicle_footprint.at(i + 1);
 
         marker.points.push_back(toMsg(p1.to_3d(base_link_z)));
         marker.points.push_back(toMsg(p2.to_3d(base_link_z)));
