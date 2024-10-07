@@ -2126,7 +2126,7 @@ bool GoalPlannerModule::isCrossingPossible(const PullOverPath & pull_over_path) 
 {
   const lanelet::ConstLanelets lanes = utils::transformToLanelets(generateDrivableLanes());
   const Pose & start_pose = pull_over_path.start_pose();
-  const Pose & end_pose = pull_over_path.end_pose();
+  const Pose & end_pose = pull_over_path.modified_goal_pose();
 
   return isCrossingPossible(start_pose, end_pose, lanes);
 }
