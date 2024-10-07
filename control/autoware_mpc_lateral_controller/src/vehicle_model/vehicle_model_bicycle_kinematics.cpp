@@ -94,8 +94,8 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
 
   // update state in the world coordinate
   const auto updateState = [&](
-                             const Eigen::VectorXd & state_w, const double & input,
-                             const double dt, const double velocity) {
+                             const Eigen::VectorXd & state_w, const double & input, const double dt,
+                             const double velocity) {
     const auto yaw = state_w(2);
 
     Eigen::VectorXd dstate = Eigen::VectorXd::Zero(4);
