@@ -256,7 +256,11 @@ void SurroundObstacleCheckerNode::onTimer()
       const auto is_obstacle_found =
         !nearest_obstacle ? false : nearest_obstacle.value().first < epsilon;
 
-      if (!isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
+      bool is_stop_required = false;
+      std::tie(is_stop_required, last_obstacle_found_time_) = isStopRequired(
+        is_obstacle_found, is_vehicle_stopped, state_, last_obstacle_found_time_,
+        param.state_clear_time);
+      if (!is_stop_required) {
         break;
       }
 
@@ -281,7 +285,11 @@ void SurroundObstacleCheckerNode::onTimer()
                                                        : nearest_obstacle.value().first <
                                                            param.surround_check_hysteresis_distance;
 
-      if (isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
+      bool is_stop_required = false;
+      std::tie(is_stop_required, last_obstacle_found_time_) = isStopRequired(
+        is_obstacle_found, is_vehicle_stopped, state_, last_obstacle_found_time_,
+        param.state_clear_time);
+      if (is_stop_required) {
         break;
       }
 
@@ -465,34 +473,32 @@ std::optional<geometry_msgs::msg::TransformStamped> SurroundObstacleCheckerNode:
   return transform_stamped;
 }
 
-bool SurroundObstacleCheckerNode::isStopRequired(
-  const bool is_obstacle_found, const bool is_vehicle_stopped)
+auto SurroundObstacleCheckerNode::isStopRequired(
+  const bool is_obstacle_found, const bool is_vehicle_stopped, const State & state,
+  const std::optional<rclcpp::Time> & last_obstacle_found_time,
+  const double time_threshold) const -> std::pair<bool, std::optional<rclcpp::Time>>
 {
   if (!is_vehicle_stopped) {
-    return false;
+    return std::make_pair(false, std::nullopt);
   }
 
   if (is_obstacle_found) {
-    last_obstacle_found_time_ = std::make_shared<const rclcpp::Time>(this->now());
-    return true;
+    return std::make_pair(true, this->now());
   }
 
-  if (state_ != State::STOP) {
-    return false;
+  if (state != State::STOP) {
+    return std::make_pair(false, std::nullopt);
   }
-
-  const auto param = param_listener_->get_params();
 
   // Keep stop state
-  if (last_obstacle_found_time_) {
-    const auto elapsed_time = this->now() - *last_obstacle_found_time_;
-    if (elapsed_time.seconds() <= param.state_clear_time) {
-      return true;
+  if (last_obstacle_found_time.has_value()) {
+    const auto elapsed_time = this->now() - last_obstacle_found_time.value();
+    if (elapsed_time.seconds() <= time_threshold) {
+      return std::make_pair(true, last_obstacle_found_time.value());
     }
   }
 
-  last_obstacle_found_time_ = {};
-  return false;
+  return std::make_pair(false, std::nullopt);
 }
 
 }  // namespace autoware::surround_obstacle_checker
