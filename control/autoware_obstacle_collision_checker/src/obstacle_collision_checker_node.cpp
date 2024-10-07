@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_collision_checker/obstacle_collision_checker_node.hpp"
+#include "autoware/obstacle_collision_checker/obstacle_collision_checker_node.hpp"
 
-#include "obstacle_collision_checker/debug.hpp"
+#include "autoware/obstacle_collision_checker/debug.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace obstacle_collision_checker
+namespace autoware::obstacle_collision_checker
 {
 ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOptions & node_options)
 : Node("obstacle_collision_checker_node", node_options),
@@ -46,7 +46,7 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
 
   // Dynamic Reconfigure
   set_param_res_ = this->add_on_set_parameters_callback(std::bind(
-    &::obstacle_collision_checker::ObstacleCollisionCheckerNode::param_callback, this, _1));
+    &autoware::obstacle_collision_checker::ObstacleCollisionCheckerNode::param_callback, this, _1));
 
   // Subscriber
   self_pose_listener_ = std::make_shared<autoware::universe_utils::SelfPoseListener>(this);
@@ -258,7 +258,7 @@ void ObstacleCollisionCheckerNode::check_lane_departure(
 
   stat.summary(level, msg);
 }
-}  // namespace obstacle_collision_checker
+}  // namespace autoware::obstacle_collision_checker
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(obstacle_collision_checker::ObstacleCollisionCheckerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::obstacle_collision_checker::ObstacleCollisionCheckerNode)

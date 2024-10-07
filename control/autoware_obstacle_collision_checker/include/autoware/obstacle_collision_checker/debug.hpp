@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBSTACLE_COLLISION_CHECKER__DEBUG_HPP_
-#define OBSTACLE_COLLISION_CHECKER__DEBUG_HPP_
+#ifndef AUTOWARE__OBSTACLE_COLLISION_CHECKER__DEBUG_HPP_
+#define AUTOWARE__OBSTACLE_COLLISION_CHECKER__DEBUG_HPP_
 
-#include "obstacle_collision_checker/obstacle_collision_checker.hpp"
+#include "autoware/obstacle_collision_checker/obstacle_collision_checker.hpp"
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
-namespace obstacle_collision_checker
+namespace autoware::obstacle_collision_checker
 {
 /// @brief create debug markers of the given output
 /// @param output structure with output data calculated by the obstacle_collision_checker module
@@ -28,5 +28,5 @@ namespace obstacle_collision_checker
 /// @return debug markers
 visualization_msgs::msg::MarkerArray create_marker_array(
   const Output & output, const double base_link_z, const rclcpp::Time & now);
-}  // namespace obstacle_collision_checker
-#endif  // OBSTACLE_COLLISION_CHECKER__DEBUG_HPP_
+}  // namespace autoware::obstacle_collision_checker
+#endif  // AUTOWARE__OBSTACLE_COLLISION_CHECKER__DEBUG_HPP_

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(obstacle_collision_checker)
+project(autoware_obstacle_collision_checker)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -16,7 +16,7 @@ ament_auto_add_library(obstacle_collision_checker SHARED
 )
 
 rclcpp_components_register_node(obstacle_collision_checker
-  PLUGIN "obstacle_collision_checker::ObstacleCollisionCheckerNode"
+  PLUGIN "autoware::obstacle_collision_checker::ObstacleCollisionCheckerNode"
   EXECUTABLE obstacle_collision_checker_node
 )
 

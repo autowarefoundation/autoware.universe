@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_collision_checker/debug.hpp"
+#include "autoware/obstacle_collision_checker/debug.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 
-namespace obstacle_collision_checker
+namespace autoware::obstacle_collision_checker
 {
 visualization_msgs::msg::MarkerArray create_marker_array(
   const Output & output, const double base_link_z, const rclcpp::Time & now)
@@ -86,4 +86,4 @@ visualization_msgs::msg::MarkerArray create_marker_array(
 
   return marker_array;
 }
-}  // namespace obstacle_collision_checker
+}  // namespace autoware::obstacle_collision_checker
