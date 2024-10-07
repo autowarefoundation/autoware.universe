@@ -85,6 +85,8 @@ def generate_test_description():
             parameters=[
                 {
                     "has_static_tf_only": False,
+                    "rosbag_replay": False,
+                    "rosbag_length": 0.0,
                     "maximum_queue_size": 5,
                     "timeout_sec": TIMEOUT_SEC,
                     "is_motion_compensated": True,

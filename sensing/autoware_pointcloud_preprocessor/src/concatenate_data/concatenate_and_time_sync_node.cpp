@@ -45,6 +45,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   //  initialize parameters
   params_.has_static_tf_only = declare_parameter<bool>("has_static_tf_only");
+  params_.rosbag_replay = declare_parameter<bool>("rosbag_replay");
+  params_.rosbag_length = declare_parameter<double>("rosbag_length");
   params_.maximum_queue_size = static_cast<size_t>(declare_parameter<int>("maximum_queue_size"));
   params_.timeout_sec = declare_parameter<double>("timeout_sec");
   params_.is_motion_compensated = declare_parameter<bool>("is_motion_compensated");
@@ -275,9 +277,21 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
   if (
     current_concatenate_cloud_timestamp_ < latest_concatenate_cloud_timestamp_ &&
     !params_.publish_previous_but_late_pointcloud) {
-    drop_previous_but_late_pointcloud_ = true;
+    // Check if we're in rosbag replay mode and the time difference is close to the rosbag length
+    if (
+      params_.rosbag_replay &&
+      (latest_concatenate_cloud_timestamp_ - current_concatenate_cloud_timestamp_ >
+       params_.rosbag_length)) {
+      publish_pointcloud_ = true;  // Force publishing in this case
+    } else {
+      drop_previous_but_late_pointcloud_ = true;  // Otherwise, drop the late pointcloud
+    }
   } else {
+    // Publish pointcloud if timestamps are valid or the condition doesn't apply
     publish_pointcloud_ = true;
+  }
+
+  if (publish_pointcloud_) {
     latest_concatenate_cloud_timestamp_ = current_concatenate_cloud_timestamp_;
     auto concatenate_pointcloud_output = std::make_unique<sensor_msgs::msg::PointCloud2>(
       *concatenated_cloud_result.concatenate_cloud_ptr);

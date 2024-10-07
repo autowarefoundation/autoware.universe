@@ -6,6 +6,22 @@
     "concatenate_and_time_sync_node": {
       "type": "object",
       "properties": {
+        "has_static_tf_only": {
+          "type": "boolean",
+          "default": false,
+          "description": "Flag to indicate if only static TF is used."
+        },
+        "rosbag_replay": {
+          "type": "boolean",
+          "default": true,
+          "description": "Flag to indicate whether the user is replaying the rosbag in loops without relaunching the node."
+        },
+        "rosbag_length": {
+          "type": "boolean",
+          "default": 20.0,
+          "minimum": 0.0,
+          "description": "If rosbag_replay is enabled, this value helps the node determine if the rosbag has started from the beginning again. The value should be set slightly smaller (by 2-3 seconds) than the actual length of the bag."
+        },
         "maximum_queue_size": {
           "type": "integer",
           "default": "5",
@@ -84,14 +100,12 @@
           "default": [0.01, 0.01, 0.01],
           "minItems": 2,
           "description": "List of LiDAR timestamp noise windows in seconds. The noise values should be specified in the same order as the input_topics."
-        },
-        "has_static_tf_only": {
-          "type": "boolean",
-          "default": false,
-          "description": "Flag to indicate if only static TF is used."
         }
       },
       "required": [
+        "has_static_tf_only",
+        "rosbag_replay",
+        "rosbag_length",
         "maximum_queue_size",
         "timeout_sec",
         "is_motion_compensated",
@@ -103,8 +117,7 @@
         "input_topics",
         "output_frame",
         "lidar_timestamp_offsets",
-        "lidar_timestamp_noise_window",
-        "has_static_tf_only"
+        "lidar_timestamp_noise_window"
       ]
     }
   },

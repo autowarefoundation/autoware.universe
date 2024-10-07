@@ -42,6 +42,8 @@ protected:
     // They just helps to setup the concatenate node
     node_options.parameter_overrides(
       {{"has_static_tf_only", false},
+       {"rosbag_replay", false},
+       {"rosbag_length", 0.0},
        {"maximum_queue_size", 5},
        {"timeout_sec", 0.2},
        {"is_motion_compensated", true},

@@ -68,6 +68,8 @@ private:
   struct Parameters
   {
     bool has_static_tf_only;
+    bool rosbag_replay;
+    double rosbag_length;
     int maximum_queue_size;
     double timeout_sec;
     bool is_motion_compensated;
