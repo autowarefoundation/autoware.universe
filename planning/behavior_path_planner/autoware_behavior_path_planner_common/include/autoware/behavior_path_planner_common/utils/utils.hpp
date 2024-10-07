@@ -104,6 +104,19 @@ FrenetPoint convertToFrenetPoint(
   return frenet_point;
 }
 
+template <class LaneletPointType>
+Pose to_geom_msg_pose(const LaneletPointType & src_point, const lanelet::ConstLanelet & target_lane)
+{
+  const auto point = lanelet::utils::conversion::toGeomMsgPt(src_point);
+  const auto yaw = lanelet::utils::getLaneletAngle(target_lane, point);
+  geometry_msgs::msg::Pose pose;
+  pose.position = point;
+  tf2::Quaternion quat;
+  quat.setRPY(0, 0, yaw);
+  pose.orientation = tf2::toMsg(quat);
+  return pose;
+}
+
 // distance (arclength) calculation
 
 double l2Norm(const Vector3 vector);
