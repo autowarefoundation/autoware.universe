@@ -168,4 +168,11 @@ bool is_stopped(
   }
   return true;
 }
+
+bool is_near_target(const Pose & target_pose, const Pose & current_pose, const double th_distance_m)
+{
+  const double long_disp_to_target =
+    autoware::universe_utils::calcLongitudinalDeviation(target_pose, current_pose.position);
+  return std::abs(long_disp_to_target) < th_distance_m;
+}
 }  // namespace autoware::freespace_planner
