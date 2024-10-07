@@ -70,12 +70,12 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   lanelet::ConstLineString3d lanelet_stop_lines = *(traffic_light_reg_elem_.stopLine());
 
   // Calculate stop pose and insert index
-  Eigen::Vector2d stop_line_point{};
-  size_t stop_line_point_idx{};
-  if (!calcStopPointAndInsertIndex(
-        input_path, lanelet_stop_lines,
-        planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
-        planner_data_->stop_line_extend_length, stop_line_point, stop_line_point_idx)) {
+  const auto stop_line = calcStopPointAndInsertIndex(
+    input_path, lanelet_stop_lines,
+    planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
+    planner_data_->stop_line_extend_length);
+
+  if (!stop_line.has_value()) {
     RCLCPP_WARN_STREAM_ONCE(
       logger_, "Failed to calculate stop point and insert index for regulatory element id "
                  << traffic_light_reg_elem_.id());
@@ -86,8 +86,8 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   // Calculate dist to stop pose
   geometry_msgs::msg::Point stop_line_point_msg;
-  stop_line_point_msg.x = stop_line_point.x();
-  stop_line_point_msg.y = stop_line_point.y();
+  stop_line_point_msg.x = stop_line.value().second.x();
+  stop_line_point_msg.y = stop_line.value().second.y();
   const double signed_arc_length_to_stop_point = autoware::motion_utils::calcSignedArcLength(
     input_path.points, self_pose->pose.position, stop_line_point_msg);
   setDistance(signed_arc_length_to_stop_point);
@@ -103,7 +103,7 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       return true;
     }
 
-    first_ref_stop_path_point_index_ = stop_line_point_idx;
+    first_ref_stop_path_point_index_ = stop_line.value().first;
 
     // Check if stop is coming.
     const bool is_stop_signal = isStopSignal();
@@ -133,7 +133,8 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
     // Decide whether to stop or pass even if a stop signal is received.
     if (!isPassthrough(signed_arc_length_to_stop_point)) {
-      *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason);
+      *path =
+        insertStopPose(input_path, stop_line.value().first, stop_line.value().second, stop_reason);
       is_prev_state_stop_ = true;
     }
     return true;

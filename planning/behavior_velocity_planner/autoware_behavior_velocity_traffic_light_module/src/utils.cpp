@@ -19,27 +19,22 @@
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
 
-#include <algorithm>
-#include <limits>
-#include <string>
-#include <vector>
-
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 
-bool getBackwardPointFromBasePoint(
+auto getBackwardPointFromBasePoint(
   const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
-  const Eigen::Vector2d & base_point, const double backward_length, Eigen::Vector2d & output_point)
+  const Eigen::Vector2d & base_point, const double backward_length) -> Eigen::Vector2d
 {
   Eigen::Vector2d line_vec = line_point2 - line_point1;
   Eigen::Vector2d backward_vec = backward_length * line_vec.normalized();
-  output_point = base_point + backward_vec;
-  return true;
+  return base_point + backward_vec;
 }
 
-std::optional<Point2d> findNearestCollisionPoint(
-  const LineString2d & line1, const LineString2d & line2, const Point2d & origin)
+auto findNearestCollisionPoint(
+  const LineString2d & line1, const LineString2d & line2,
+  const Point2d & origin) -> std::optional<Point2d>
 {
   std::vector<Point2d> collision_points;
   bg::intersection(line1, line2, collision_points);
@@ -62,13 +57,14 @@ std::optional<Point2d> findNearestCollisionPoint(
   return nearest_collision_point;
 }
 
-bool createTargetPoint(
+auto createTargetPoint(
   const tier4_planning_msgs::msg::PathWithLaneId & input, const LineString2d & stop_line,
-  const double offset, size_t & target_point_idx, Eigen::Vector2d & target_point)
+  const double offset) -> std::optional<std::pair<size_t, Eigen::Vector2d>>
 {
   if (input.points.size() < 2) {
-    return false;
+    return std::nullopt;
   }
+  size_t target_point_idx{};
   for (size_t i = 0; i < input.points.size() - 1; ++i) {
     Point2d path_line_begin = {
       input.points.at(i).point.pose.position.x, input.points.at(i).point.pose.position.y};
@@ -120,18 +116,17 @@ bool createTargetPoint(
       }
     }
     // create target point
-    getBackwardPointFromBasePoint(
-      point2, point1, point2, std::fabs(length_sum - offset), target_point);
-    return true;
+    return std::make_pair(
+      target_point_idx,
+      getBackwardPointFromBasePoint(point2, point1, point2, std::fabs(length_sum - offset)));
   }
-  return false;
+  return std::nullopt;
 }
 
-bool calcStopPointAndInsertIndex(
+auto calcStopPointAndInsertIndex(
   const tier4_planning_msgs::msg::PathWithLaneId & input_path,
   const lanelet::ConstLineString3d & lanelet_stop_lines, const double & offset,
-  const double & stop_line_extend_length, Eigen::Vector2d & stop_line_point,
-  size_t & stop_line_point_idx)
+  const double & stop_line_extend_length) -> std::optional<std::pair<size_t, Eigen::Vector2d>>
 {
   LineString2d stop_line;
 
@@ -141,10 +136,11 @@ bool calcStopPointAndInsertIndex(
 
     // Calculate stop pose and insert index,
     // if there is a collision point between path and stop line
-    if (createTargetPoint(input_path, stop_line, offset, stop_line_point_idx, stop_line_point)) {
-      return true;
+    const auto output = createTargetPoint(input_path, stop_line, offset);
+    if (output.has_value()) {
+      return output;
     }
   }
-  return false;
+  return std::nullopt;
 }
 }  // namespace autoware::behavior_velocity_planner

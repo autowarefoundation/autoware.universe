@@ -15,9 +15,8 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
-#include <memory>
 #include <optional>
-#include <tuple>
+#include <utility>
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
@@ -31,22 +30,22 @@
 namespace autoware::behavior_velocity_planner
 {
 
-bool getBackwardPointFromBasePoint(
+auto getBackwardPointFromBasePoint(
   const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
-  const Eigen::Vector2d & base_point, const double backward_length, Eigen::Vector2d & output_point);
+  const Eigen::Vector2d & base_point, const double backward_length) -> Eigen::Vector2d;
 
-std::optional<Point2d> findNearestCollisionPoint(
-  const LineString2d & line1, const LineString2d & line2, const Point2d & origin);
+auto findNearestCollisionPoint(
+  const LineString2d & line1, const LineString2d & line2,
+  const Point2d & origin) -> std::optional<Point2d>;
 
-bool createTargetPoint(
+auto createTargetPoint(
   const tier4_planning_msgs::msg::PathWithLaneId & input, const LineString2d & stop_line,
-  const double offset, size_t & target_point_idx, Eigen::Vector2d & target_point);
+  const double offset) -> std::optional<std::pair<size_t, Eigen::Vector2d>>;
 
-bool calcStopPointAndInsertIndex(
+auto calcStopPointAndInsertIndex(
   const tier4_planning_msgs::msg::PathWithLaneId & input_path,
   const lanelet::ConstLineString3d & lanelet_stop_lines, const double & offset,
-  const double & stop_line_extend_length, Eigen::Vector2d & stop_line_point,
-  size_t & stop_line_point_idx);
+  const double & stop_line_extend_length) -> std::optional<std::pair<size_t, Eigen::Vector2d>>;
 
 }  // namespace autoware::behavior_velocity_planner
 
