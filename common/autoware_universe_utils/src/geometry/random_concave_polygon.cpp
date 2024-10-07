@@ -19,6 +19,7 @@
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
+#include <boost/geometry/algorithms/is_valid.hpp>
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
 #include <random>
@@ -369,7 +370,7 @@ Polygon2d random_concave_polygon(const size_t vertices, const double max)
     // apply inward denting algorithm
     poly = inward_denting(points);
     // check for convexity
-    if (!is_convex(poly)) {
+    if (!is_convex(poly) && boost::geometry::is_valid(poly)) {
       is_non_convex = true;
     }
     LinearRing2d poly_outer = poly.outer();
