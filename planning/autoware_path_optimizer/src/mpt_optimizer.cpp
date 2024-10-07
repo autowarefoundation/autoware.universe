@@ -477,8 +477,13 @@ std::vector<TrajectoryPoint> MPTOptimizer::optimizeTrajectory(const PlannerData 
 
   const auto get_prev_optimized_traj_points = [&]() {
     if (prev_optimized_traj_points_ptr_) {
+      RCLCPP_WARN(logger_, "return the previous optimized_trajectory as exceptional behavior.");
       return *prev_optimized_traj_points_ptr_;
     }
+    RCLCPP_WARN(
+      logger_,
+      "Try to return the previous optimized_trajectory as exceptional behavior, "
+      "but this failure also. Then return path_smoother output.");
     return traj_points;
   };
 
@@ -505,8 +510,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::optimizeTrajectory(const PlannerData 
   // 6. optimize steer angles
   const auto optimized_variables = calcOptimizedSteerAngles(ref_points, obj_mat, const_mat);
   if (!optimized_variables) {
-    RCLCPP_INFO_EXPRESSION(
-      logger_, enable_debug_info_, "return std::nullopt since could not solve qp");
+    RCLCPP_WARN(logger_, "return std::nullopt since could not solve qp");
     return get_prev_optimized_traj_points();
   }
 

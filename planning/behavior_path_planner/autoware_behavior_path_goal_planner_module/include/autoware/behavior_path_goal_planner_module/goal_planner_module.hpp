@@ -321,7 +321,7 @@ private:
   // context_data_ is initialized in updateData(), used in plan() and refreshed in postProcess()
   std::optional<PullOverContextData> context_data_{std::nullopt};
   // path_decision_controller is updated in updateData(), and used in plan()
-  PathDecisionStateController path_decision_controller_{};
+  PathDecisionStateController path_decision_controller_{getLogger()};
   std::unique_ptr<LastApprovalData> last_approval_data_{nullptr};
 
   // approximate distance from the start point to the end point of pull_over.

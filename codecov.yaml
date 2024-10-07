@@ -31,9 +31,116 @@ ignore:
   - "**/test/*"
   - "**/test/**/*"
   - "**/debug.*"
+  - tools/**
 
 component_management:
   individual_components:
+    # each entire component
+    - component_id: common-packages
+      name: Common Packages
+      paths:
+        - common/**/**
+
+    - component_id: control-packages
+      name: Control Packages
+      paths:
+        - control/**/**
+
+    - component_id: evaluator-packages
+      name: Evaluator Packages
+      paths:
+        - evaluator/**/**
+
+    - component_id: launch-packages
+      name: Launch Packages
+      paths:
+        - launch/**/**
+
+    - component_id: Localizatoin-packages
+      name: Localization Packages
+      paths:
+        - localization/**/**
+
+    - component_id: map-packages
+      name: map Packages
+      paths:
+        - map/**/**
+
+    - component_id: perception-packages
+      name: Perception Packages
+      paths:
+        - perception/**/**
+
+    - component_id: planning-packages
+      name: Planning Packages
+      paths:
+        - planning/**/**
+
+    - component_id: sensing-packages
+      name: Sensing Packages
+      paths:
+        - sensing/**/**
+
+    - component_id: simulator-packages
+      name: Simulator Packages
+      paths:
+        - simulator/**/**
+
+    - component_id: system-packages
+      name: System Packages
+      paths:
+        - system/**/**
+
+    - component_id: vehicle-packages
+      name: Vehicle Packages
+      paths:
+        - vehicle/**/**
+
+    # TIER IV maintained packages
+    - component_id: control-tier-iv-maintained-packages
+      name: Control TIER IV Maintained Packages
+      paths:
+        - control/autoware_autonomous_emergency_braking/**
+        - control/autoware_control_validator/**
+        - control/autoware_external_cmd_selector/**
+        # - control/autoware_joy_controller/**
+        - control/autoware_lane_departure_checker/**
+        - control/autoware_mpc_lateral_controller/**
+        - control/autoware_operation_mode_transition_manager/**
+        - control/autoware_pid_longitudinal_controller/**
+        # - control/autoware_pure_pursuit/**
+        - control/autoware_shift_decider/**
+        # - control/autoware_smart_mpc_trajectory_follower/**
+        - control/autoware_trajectory_follower_base/**
+        - control/autoware_trajectory_follower_node/**
+        - control/autoware_vehicle_cmd_gate/**
+        # - control/control_performance_analysis/**
+        - control/obstacle_collision_checker/**
+        # - control/predicted_path_checker/**
+
+    - component_id: localization-tier-iv-maintained-packages
+      name: Localization TIER IV Maintained Packages
+      paths:
+        - localization/autoware_ekf_localizer/**
+        - localization/autoware_gyro_odometer/**
+        - localization/autoware_localization_error_monitor/**
+        - localization/autoware_localization_util/**
+        - localization/autoware_ndt_scan_matcher/**
+        - localization/autoware_pose_initializer/**
+        - localization/autoware_pose_instability_detector/**
+        - localization/autoware_stop_filter/**
+        - localization/autoware_twist2accel/**
+
+    - component_id: map-tier-iv-maintained-packages
+      name: Map TIER IV Maintained Packages
+      paths:
+        - map/**/**
+
+    - component_id: perception-tier-iv-maintained-packages
+      name: Perception TIER IV Maintained Packages
+      paths:
+        - perception/[^lidar_apollo_instance_segmentation]/**
+
     - component_id: planning-tier-iv-maintained-packages
       name: Planning TIER IV Maintained Packages
       paths:
@@ -92,24 +199,3 @@ component_management:
         - planning/motion_velocity_planner/autoware_motion_velocity_out_of_lane_module/**
         - planning/motion_velocity_planner/autoware_motion_velocity_planner_common/**
         - planning/motion_velocity_planner/autoware_motion_velocity_planner_node/**
-
-    - component_id: control-tier-iv-maintained-packages
-      name: Control TIER IV Maintained Packages
-      paths:
-        - control/autoware_autonomous_emergency_braking/**
-        - control/autoware_control_validator/**
-        - control/autoware_external_cmd_selector/**
-        # - control/autoware_joy_controller/**
-        - control/autoware_lane_departure_checker/**
-        - control/autoware_mpc_lateral_controller/**
-        - control/autoware_operation_mode_transition_manager/**
-        - control/autoware_pid_longitudinal_controller/**
-        # - control/autoware_pure_pursuit/**
-        - control/autoware_shift_decider/**
-        # - control/autoware_smart_mpc_trajectory_follower/**
-        - control/autoware_trajectory_follower_base/**
-        - control/autoware_trajectory_follower_node/**
-        - control/autoware_vehicle_cmd_gate/**
-        # - control/control_performance_analysis/**
-        - control/obstacle_collision_checker/**
-        # - control/predicted_path_checker/**

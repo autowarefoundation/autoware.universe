@@ -37,8 +37,9 @@ public:
   PullOverPlannerType getPlannerType() const override { return PullOverPlannerType::FREESPACE; }
 
   std::optional<PullOverPath> plan(
-    const size_t goal_id, const size_t id, const std::shared_ptr<const PlannerData> planner_data,
-    const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose) override;
+    const GoalCandidate & modified_goal_pose, const size_t id,
+    const std::shared_ptr<const PlannerData> planner_data,
+    const BehaviorModuleOutput & previous_module_output) override;
 
 protected:
   const double velocity_;

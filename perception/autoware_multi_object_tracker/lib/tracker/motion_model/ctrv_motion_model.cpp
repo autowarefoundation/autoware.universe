@@ -203,15 +203,26 @@ bool CTRVMotionModel::limitStates()
   Eigen::MatrixXd P_t(DIM, DIM);
   ekf_.getX(X_t);
   ekf_.getP(P_t);
-  X_t(IDX::YAW) = autoware::universe_utils::normalizeRadian(X_t(IDX::YAW));
+
+  // maximum reverse velocity
+  if (X_t(IDX::VEL) < 0 && X_t(IDX::VEL) < motion_params_.max_reverse_vel) {
+    // rotate the object orientation by 180 degrees
+    X_t(IDX::VEL) = -X_t(IDX::VEL);
+    X_t(IDX::YAW) = X_t(IDX::YAW) + M_PI;
+  }
+  // maximum velocity
   if (!(-motion_params_.max_vel <= X_t(IDX::VEL) && X_t(IDX::VEL) <= motion_params_.max_vel)) {
     X_t(IDX::VEL) = X_t(IDX::VEL) < 0 ? -motion_params_.max_vel : motion_params_.max_vel;
   }
+  // maximum yaw rate
   if (!(-motion_params_.max_wz <= X_t(IDX::WZ) && X_t(IDX::WZ) <= motion_params_.max_wz)) {
     X_t(IDX::WZ) = X_t(IDX::WZ) < 0 ? -motion_params_.max_wz : motion_params_.max_wz;
   }
-  ekf_.init(X_t, P_t);
+  // normalize yaw
+  X_t(IDX::YAW) = autoware::universe_utils::normalizeRadian(X_t(IDX::YAW));
 
+  // overwrite state
+  ekf_.init(X_t, P_t);
   return true;
 }
 
