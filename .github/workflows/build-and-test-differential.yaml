@@ -107,7 +107,7 @@ jobs:
 
       - name: Run clang-tidy
         if: ${{ steps.get-target-packages.outputs.target-packages != '' }}
-        uses: autowarefoundation/autoware-github-actions/clang-tidy@v1
+        uses: yhisaki/autoware-github-actions/clang-tidy@use-ament_clang_tidy
         with:
           rosdistro: humble
           clang-tidy-config-url: https://raw.githubusercontent.com/autowarefoundation/autoware/main/.clang-tidy-ci
