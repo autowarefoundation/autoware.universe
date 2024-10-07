@@ -14,6 +14,7 @@
 
 #include "node.hpp"
 
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
@@ -80,70 +81,6 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
   no_start_reason_diag_kv.value = jsonDumpsPose(stop_pose);
   no_start_reason_diag.values.push_back(no_start_reason_diag_kv);
   return no_start_reason_diag;
-}
-
-geometry_msgs::msg::Point32 createPoint32(const double x, const double y, const double z)
-{
-  geometry_msgs::msg::Point32 p;
-  p.x = x;
-  p.y = y;
-  p.z = z;
-  return p;
-}
-
-Polygon2d createObjPolygon(
-  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Polygon & footprint)
-{
-  geometry_msgs::msg::Polygon transformed_polygon{};
-  geometry_msgs::msg::TransformStamped geometry_tf{};
-  geometry_tf.transform = pose2transform(pose);
-  tf2::doTransform(footprint, transformed_polygon, geometry_tf);
-
-  Polygon2d object_polygon;
-  for (const auto & p : transformed_polygon.points) {
-    object_polygon.outer().push_back(Point2d(p.x, p.y));
-  }
-
-  bg::correct(object_polygon);
-
-  return object_polygon;
-}
-
-Polygon2d createObjPolygon(
-  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size)
-{
-  const double & length_m = size.x / 2.0;
-  const double & width_m = size.y / 2.0;
-
-  geometry_msgs::msg::Polygon polygon{};
-
-  polygon.points.push_back(createPoint32(length_m, -width_m, 0.0));
-  polygon.points.push_back(createPoint32(length_m, width_m, 0.0));
-  polygon.points.push_back(createPoint32(-length_m, width_m, 0.0));
-  polygon.points.push_back(createPoint32(-length_m, -width_m, 0.0));
-
-  return createObjPolygon(pose, polygon);
-}
-
-Polygon2d createSelfPolygon(
-  const VehicleInfo & vehicle_info, const double front_margin, const double side_margin,
-  const double rear_margin)
-{
-  const double & front_m = vehicle_info.max_longitudinal_offset_m + front_margin;
-  const double & width_left_m = vehicle_info.max_lateral_offset_m + side_margin;
-  const double & width_right_m = vehicle_info.min_lateral_offset_m - side_margin;
-  const double & rear_m = vehicle_info.min_longitudinal_offset_m - rear_margin;
-
-  Polygon2d ego_polygon;
-
-  ego_polygon.outer().push_back(Point2d(front_m, width_left_m));
-  ego_polygon.outer().push_back(Point2d(front_m, width_right_m));
-  ego_polygon.outer().push_back(Point2d(rear_m, width_right_m));
-  ego_polygon.outer().push_back(Point2d(rear_m, width_left_m));
-
-  bg::correct(ego_polygon);
-
-  return ego_polygon;
 }
 }  // namespace
 
@@ -256,7 +193,11 @@ void SurroundObstacleCheckerNode::onTimer()
       const auto is_obstacle_found =
         !nearest_obstacle ? false : nearest_obstacle.value().first < epsilon;
 
-      if (!isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
+      bool is_stop_required = false;
+      std::tie(is_stop_required, last_obstacle_found_time_) = isStopRequired(
+        is_obstacle_found, is_vehicle_stopped, state_, last_obstacle_found_time_,
+        param.state_clear_time);
+      if (!is_stop_required) {
         break;
       }
 
@@ -281,7 +222,11 @@ void SurroundObstacleCheckerNode::onTimer()
                                                        : nearest_obstacle.value().first <
                                                            param.surround_check_hysteresis_distance;
 
-      if (isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
+      bool is_stop_required = false;
+      std::tie(is_stop_required, last_obstacle_found_time_) = isStopRequired(
+        is_obstacle_found, is_vehicle_stopped, state_, last_obstacle_found_time_,
+        param.state_clear_time);
+      if (is_stop_required) {
         break;
       }
 
@@ -365,7 +310,11 @@ std::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByPointCl
   const double front_margin = pointcloud_param.surround_check_front_distance;
   const double side_margin = pointcloud_param.surround_check_side_distance;
   const double back_margin = pointcloud_param.surround_check_back_distance;
-  const auto ego_polygon = createSelfPolygon(vehicle_info_, front_margin, side_margin, back_margin);
+  const double base_to_front = vehicle_info_.max_longitudinal_offset_m + front_margin;
+  const double base_to_rear = vehicle_info_.rear_overhang_m + back_margin;
+  const double width = vehicle_info_.vehicle_width_m + side_margin * 2;
+  const auto ego_polygon = autoware::universe_utils::toFootprint(
+    odometry_ptr_->pose.pose, base_to_front, base_to_rear, width);
 
   geometry_msgs::msg::Point nearest_point;
   double minimum_distance = std::numeric_limits<double>::max();
@@ -392,17 +341,7 @@ std::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByDynamic
 {
   if (!object_ptr_ || !getUseDynamicObject()) return std::nullopt;
 
-  const auto transform_stamped =
-    getTransform(object_ptr_->header.frame_id, "base_link", object_ptr_->header.stamp, 0.5);
-
-  if (!transform_stamped) {
-    return std::nullopt;
-  }
-
   const auto param = param_listener_->get_params();
-
-  tf2::Transform tf_src2target;
-  tf2::fromMsg(transform_stamped.value().transform, tf_src2target);
 
   // TODO(murooka) check computation cost
   geometry_msgs::msg::Point nearest_point;
@@ -420,19 +359,13 @@ std::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByDynamic
     const double front_margin = object_param.surround_check_front_distance;
     const double side_margin = object_param.surround_check_side_distance;
     const double back_margin = object_param.surround_check_back_distance;
-    const auto ego_polygon =
-      createSelfPolygon(vehicle_info_, front_margin, side_margin, back_margin);
+    const double base_to_front = vehicle_info_.max_longitudinal_offset_m + front_margin;
+    const double base_to_rear = vehicle_info_.rear_overhang_m + back_margin;
+    const double width = vehicle_info_.vehicle_width_m + side_margin * 2;
+    const auto ego_polygon = autoware::universe_utils::toFootprint(
+      odometry_ptr_->pose.pose, base_to_front, base_to_rear, width);
 
-    tf2::Transform tf_src2object;
-    tf2::fromMsg(object_pose, tf_src2object);
-
-    geometry_msgs::msg::Pose transformed_object_pose;
-    tf2::toMsg(tf_src2target.inverse() * tf_src2object, transformed_object_pose);
-
-    const auto object_polygon =
-      object.shape.type == Shape::POLYGON
-        ? createObjPolygon(transformed_object_pose, object.shape.footprint)
-        : createObjPolygon(transformed_object_pose, object.shape.dimensions);
+    const auto object_polygon = autoware::universe_utils::toPolygon2d(object);
 
     const auto distance_to_object = bg::distance(ego_polygon, object_polygon);
 
@@ -465,34 +398,32 @@ std::optional<geometry_msgs::msg::TransformStamped> SurroundObstacleCheckerNode:
   return transform_stamped;
 }
 
-bool SurroundObstacleCheckerNode::isStopRequired(
-  const bool is_obstacle_found, const bool is_vehicle_stopped)
+auto SurroundObstacleCheckerNode::isStopRequired(
+  const bool is_obstacle_found, const bool is_vehicle_stopped, const State & state,
+  const std::optional<rclcpp::Time> & last_obstacle_found_time,
+  const double time_threshold) const -> std::pair<bool, std::optional<rclcpp::Time>>
 {
   if (!is_vehicle_stopped) {
-    return false;
+    return std::make_pair(false, std::nullopt);
   }
 
   if (is_obstacle_found) {
-    last_obstacle_found_time_ = std::make_shared<const rclcpp::Time>(this->now());
-    return true;
+    return std::make_pair(true, this->now());
   }
 
-  if (state_ != State::STOP) {
-    return false;
+  if (state != State::STOP) {
+    return std::make_pair(false, std::nullopt);
   }
-
-  const auto param = param_listener_->get_params();
 
   // Keep stop state
-  if (last_obstacle_found_time_) {
-    const auto elapsed_time = this->now() - *last_obstacle_found_time_;
-    if (elapsed_time.seconds() <= param.state_clear_time) {
-      return true;
+  if (last_obstacle_found_time.has_value()) {
+    const auto elapsed_time = this->now() - last_obstacle_found_time.value();
+    if (elapsed_time.seconds() <= time_threshold) {
+      return std::make_pair(true, last_obstacle_found_time.value());
     }
   }
 
-  last_obstacle_found_time_ = {};
-  return false;
+  return std::make_pair(false, std::nullopt);
 }
 
 }  // namespace autoware::surround_obstacle_checker
