@@ -338,7 +338,13 @@ struct TransientData
   double max_prepare_length{
     std::numeric_limits<double>::max()};  // maximum prepare length, starting from ego's base link
 
+  double target_lane_length{std::numeric_limits<double>::min()};
+
+  lanelet::ArcCoordinates current_lanes_ego_arc;  // arc coordinates of ego pose along current lanes
+  lanelet::ArcCoordinates target_lanes_ego_arc;   // arc coordinates of ego pose along target lanes
+
   bool is_ego_near_current_terminal_start{false};
+  bool is_ego_stuck{false};
 };
 
 using RouteHandlerPtr = std::shared_ptr<RouteHandler>;
