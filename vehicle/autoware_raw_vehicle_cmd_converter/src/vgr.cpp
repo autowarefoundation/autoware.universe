@@ -22,6 +22,7 @@ namespace autoware::raw_vehicle_cmd_converter
 
 void VGR::setCoefficients(const double a, const double b, const double c)
 {
+  // Hi! I'm a comment!
   vgr_coef_a_ = a;
   vgr_coef_b_ = b;
   vgr_coef_c_ = c;
