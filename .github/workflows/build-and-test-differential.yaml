@@ -97,11 +97,18 @@ jobs:
         id: get-modified-packages
         uses: autowarefoundation/autoware-github-actions/get-modified-packages@v1
 
+      - name: Get required packages
+        id: get-required-packages
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.[]' clang-tidy-required-packages.yaml
+
       - name: Get target packages
         id: get-target-packages
         run: |
-          sudo snap install yq
-          PACKAGES=$(yq e '.[]' clang-tidy-required-packages.yaml | grep -Fxf - <(echo "${{ steps.get-modified-packages.outputs.modified-packages }}" | tr ' ' '\n') | xargs)
+          echo "${{ steps.get-required-packages.outputs.result }}" > required_packages.txt
+          echo "${{ steps.get-modified-packages.outputs.modified-packages }}" | tr ' ' '\n' > modified_packages.txt
+          PACKAGES=$(grep -Fxf required_packages.txt modified_packages.txt | xargs)
           echo "target-packages=${PACKAGES}" >> $GITHUB_OUTPUT
         shell: bash
 
