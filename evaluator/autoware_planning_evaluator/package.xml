@@ -20,7 +20,6 @@
   <depend>autoware_route_handler</depend>
   <depend>autoware_universe_utils</depend>
   <depend>tier4_metric_msgs</depend>
-  <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
