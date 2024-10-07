@@ -241,9 +241,6 @@ protected:
 
   virtual bool isAbleToStopSafely() const = 0;
 
-  virtual lanelet::ConstLanelets getLaneChangeLanes(
-    const lanelet::ConstLanelets & current_lanes, Direction direction) const = 0;
-
   virtual TurnSignalInfo get_terminal_turn_signal_info() const = 0;
 
   TurnSignalInfo get_turn_signal(const Pose & start, const Pose & end) const
