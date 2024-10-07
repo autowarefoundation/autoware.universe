@@ -54,7 +54,6 @@ public:
   size_t goal_id() const { return modified_goal_pose_.id; }
   size_t id() const { return id_; }
   Pose start_pose() const { return start_pose_; }
-  Pose end_pose() const { return modified_goal_pose_.goal_pose; }
   Pose modified_goal_pose() const { return modified_goal_pose_.goal_pose; }
   GoalCandidate modified_goal() const { return modified_goal_pose_; }
 
