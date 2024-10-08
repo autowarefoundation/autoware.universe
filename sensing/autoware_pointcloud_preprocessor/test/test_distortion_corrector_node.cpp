@@ -56,7 +56,7 @@ protected:
 
     // Setup TF
     tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);
-    tf_broadcaster_->sendTransform(generateStaticTransformMsg());
+    tf_broadcaster_->sendTransform(generate_static_transform_msgs());
 
     // Spin the node for a while to ensure transforms are published
     auto start = std::chrono::steady_clock::now();
@@ -69,23 +69,23 @@ protected:
 
   void TearDown() override {}
 
-  void checkInput(int ms) { ASSERT_LT(ms, 1000) << "ms should be less than a second."; }
+  static void check_input(int ms) { ASSERT_LT(ms, 1000) << "ms should be less than a second."; }
 
-  rclcpp::Time addMilliseconds(rclcpp::Time stamp, int ms)
+  static rclcpp::Time add_milliseconds(const rclcpp::Time & stamp, int ms)
   {
-    checkInput(ms);
+    check_input(ms);
     auto ms_in_ns = rclcpp::Duration(0, ms * 1000000);
     return stamp + ms_in_ns;
   }
 
-  rclcpp::Time subtractMilliseconds(rclcpp::Time stamp, int ms)
+  static rclcpp::Time subtract_milliseconds(const rclcpp::Time & stamp, int ms)
   {
-    checkInput(ms);
+    check_input(ms);
     auto ms_in_ns = rclcpp::Duration(0, ms * 1000000);
     return stamp - ms_in_ns;
   }
 
-  geometry_msgs::msg::TransformStamped generateTransformMsg(
+  static geometry_msgs::msg::TransformStamped generate_transform_msg(
     const std::string & parent_frame, const std::string & child_frame, double x, double y, double z,
     double qx, double qy, double qz, double qw)
   {
@@ -104,16 +104,16 @@ protected:
     return tf_msg;
   }
 
-  std::vector<geometry_msgs::msg::TransformStamped> generateStaticTransformMsg()
+  static std::vector<geometry_msgs::msg::TransformStamped> generate_static_transform_msgs()
   {
     // generate defined transformations
     return {
-      generateTransformMsg("base_link", "lidar_top", 5.0, 5.0, 5.0, 0.683, 0.5, 0.183, 0.499),
-      generateTransformMsg("base_link", "imu_link", 1.0, 1.0, 3.0, 0.278, 0.717, 0.441, 0.453)};
+      generate_transform_msg("base_link", "lidar_top", 5.0, 5.0, 5.0, 0.683, 0.5, 0.183, 0.499),
+      generate_transform_msg("base_link", "imu_link", 1.0, 1.0, 3.0, 0.278, 0.717, 0.441, 0.453)};
   }
 
-  std::shared_ptr<geometry_msgs::msg::TwistWithCovarianceStamped> generateTwistMsg(
-    double linear_x, double angular_z, rclcpp::Time stamp)
+  static std::shared_ptr<geometry_msgs::msg::TwistWithCovarianceStamped> generate_twist_msg(
+    double linear_x, double angular_z, const rclcpp::Time & stamp)
   {
     auto twist_msg = std::make_shared<geometry_msgs::msg::TwistWithCovarianceStamped>();
     twist_msg->header.stamp = stamp;
@@ -123,8 +123,8 @@ protected:
     return twist_msg;
   }
 
-  std::shared_ptr<sensor_msgs::msg::Imu> generateImuMsg(
-    double angular_vel_x, double angular_vel_y, double angular_vel_z, rclcpp::Time stamp)
+  static std::shared_ptr<sensor_msgs::msg::Imu> generate_imu_msg(
+    double angular_vel_x, double angular_vel_y, double angular_vel_z, const rclcpp::Time & stamp)
   {
     auto imu_msg = std::make_shared<sensor_msgs::msg::Imu>();
     imu_msg->header.stamp = stamp;
@@ -135,42 +135,42 @@ protected:
     return imu_msg;
   }
 
-  std::vector<std::shared_ptr<geometry_msgs::msg::TwistWithCovarianceStamped>> generateTwistMsgs(
-    rclcpp::Time pointcloud_timestamp)
+  static std::vector<std::shared_ptr<geometry_msgs::msg::TwistWithCovarianceStamped>>
+  generate_twist_msgs(const rclcpp::Time & pointcloud_timestamp)
   {
     std::vector<std::shared_ptr<geometry_msgs::msg::TwistWithCovarianceStamped>> twist_msgs;
-    rclcpp::Time twist_stamp = subtractMilliseconds(pointcloud_timestamp, 5);
+    rclcpp::Time twist_stamp = subtract_milliseconds(pointcloud_timestamp, 5);
 
     for (int i = 0; i < number_of_twist_msgs; ++i) {
-      auto twist_msg = generateTwistMsg(
+      auto twist_msg = generate_twist_msg(
         twist_linear_x + i * twist_linear_x_increment,
         twist_angular_z + i * twist_angular_z_increment, twist_stamp);
       twist_msgs.push_back(twist_msg);
 
-      twist_stamp = addMilliseconds(twist_stamp, twist_msgs_interval_ms);
+      twist_stamp = add_milliseconds(twist_stamp, twist_msgs_interval_ms);
     }
 
     return twist_msgs;
   }
 
-  std::vector<std::shared_ptr<sensor_msgs::msg::Imu>> generateImuMsgs(
-    rclcpp::Time pointcloud_timestamp)
+  static std::vector<std::shared_ptr<sensor_msgs::msg::Imu>> generate_imu_msgs(
+    const rclcpp::Time & pointcloud_timestamp)
   {
     std::vector<std::shared_ptr<sensor_msgs::msg::Imu>> imu_msgs;
-    rclcpp::Time imu_stamp = subtractMilliseconds(pointcloud_timestamp, 10);
+    rclcpp::Time imu_stamp = subtract_milliseconds(pointcloud_timestamp, 10);
 
     for (int i = 0; i < number_of_imu_msgs; ++i) {
-      auto imu_msg = generateImuMsg(
+      auto imu_msg = generate_imu_msg(
         imu_angular_x + i * imu_angular_x_increment, imu_angular_y + i * imu_angular_y_increment,
         imu_angular_z + i * imu_angular_z_increment, imu_stamp);
       imu_msgs.push_back(imu_msg);
-      imu_stamp = addMilliseconds(imu_stamp, imu_msgs_interval_ms);
+      imu_stamp = add_milliseconds(imu_stamp, imu_msgs_interval_ms);
     }
 
     return imu_msgs;
   }
 
-  std::tuple<std::vector<Eigen::Vector3f>, std::vector<float>> generateDefaultPointcloud(
+  static std::tuple<std::vector<Eigen::Vector3f>, std::vector<float>> generate_default_pointcloud(
     AngleCoordinateSystem coordinate_system)
   {
     // Generate all combinations of signs { -, 0, + } x { -, 0, + } for x and y.
@@ -218,14 +218,14 @@ protected:
     return std::make_tuple(default_points, default_azimuths);
   }
 
-  sensor_msgs::msg::PointCloud2 generateEmptyPointCloudMsg(rclcpp::Time stamp)
+  sensor_msgs::msg::PointCloud2 generate_empty_pointcloud_msg(const rclcpp::Time & stamp)
   {
-    auto empty_pointcloud_msg = generatePointCloudMsg(true, stamp, {}, {});
+    auto empty_pointcloud_msg = generate_pointcloud_msg(true, stamp, {}, {});
     return empty_pointcloud_msg;
   }
 
-  sensor_msgs::msg::PointCloud2 generatePointCloudMsg(
-    bool is_lidar_frame, rclcpp::Time stamp, std::vector<Eigen::Vector3f> points,
+  sensor_msgs::msg::PointCloud2 generate_pointcloud_msg(
+    bool is_lidar_frame, const rclcpp::Time & stamp, std::vector<Eigen::Vector3f> points,
     std::vector<float> azimuths)
   {
     sensor_msgs::msg::PointCloud2 pointcloud_msg;
@@ -236,7 +236,7 @@ protected:
     pointcloud_msg.is_bigendian = false;
 
     // Generate timestamps for the points
-    std::vector<std::uint32_t> timestamps = generatePointTimestamps(stamp, points.size());
+    std::vector<std::uint32_t> timestamps = generate_point_timestamps(stamp, points.size());
 
     sensor_msgs::PointCloud2Modifier modifier(pointcloud_msg);
     modifier.setPointCloud2Fields(
@@ -276,35 +276,35 @@ protected:
     return pointcloud_msg;
   }
 
-  std::vector<std::uint32_t> generatePointTimestamps(
-    rclcpp::Time pointcloud_timestamp, size_t number_of_points)
+  std::vector<std::uint32_t> generate_point_timestamps(
+    const rclcpp::Time & pointcloud_timestamp, size_t number_of_points)
   {
     std::vector<std::uint32_t> timestamps;
     rclcpp::Time global_point_stamp = pointcloud_timestamp;
     for (size_t i = 0; i < number_of_points; ++i) {
       std::uint32_t relative_timestamp = (global_point_stamp - pointcloud_timestamp).nanoseconds();
       timestamps.push_back(relative_timestamp);
-      global_point_stamp = addMilliseconds(global_point_stamp, points_interval_ms);
+      global_point_stamp = add_milliseconds(global_point_stamp, points_interval_ms);
     }
 
     return timestamps;
   }
 
   template <typename T>
-  void generateAndProcessTwistMsgs(
-    const std::shared_ptr<T> & distortion_corrector, rclcpp::Time timestamp)
+  void generate_and_process_twist_msgs(
+    const std::shared_ptr<T> & distortion_corrector, const rclcpp::Time & timestamp)
   {
-    auto twist_msgs = generateTwistMsgs(timestamp);
+    auto twist_msgs = generate_twist_msgs(timestamp);
     for (const auto & twist_msg : twist_msgs) {
       distortion_corrector->process_twist_message(twist_msg);
     }
   }
 
   template <typename T>
-  void generateAndProcessIMUMsgs(
-    const std::shared_ptr<T> & distortion_corrector, rclcpp::Time timestamp)
+  void generate_and_process_imu_msgs(
+    const std::shared_ptr<T> & distortion_corrector, const rclcpp::Time & timestamp)
   {
-    auto imu_msgs = generateImuMsgs(timestamp);
+    auto imu_msgs = generate_imu_msgs(timestamp);
     for (const auto & imu_msg : imu_msgs) {
       distortion_corrector->process_imu_message("base_link", imu_msg);
     }
@@ -348,7 +348,7 @@ protected:
 TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
 {
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
-  auto twist_msg = generateTwistMsg(twist_linear_x, twist_angular_z, timestamp);
+  auto twist_msg = generate_twist_msg(twist_linear_x, twist_angular_z, timestamp);
   distortion_corrector_2d_->process_twist_message(twist_msg);
 
   ASSERT_FALSE(distortion_corrector_2d_->get_twist_queue().empty());
@@ -359,7 +359,7 @@ TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
 TEST_F(DistortionCorrectorTest, TestProcessImuMessage)
 {
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
-  auto imu_msg = generateImuMsg(imu_angular_x, imu_angular_y, imu_angular_z, timestamp);
+  auto imu_msg = generate_imu_msg(imu_angular_x, imu_angular_y, imu_angular_z, timestamp);
   distortion_corrector_2d_->process_imu_message("base_link", imu_msg);
 
   ASSERT_FALSE(distortion_corrector_2d_->get_angular_velocity_queue().empty());
@@ -373,13 +373,13 @@ TEST_F(DistortionCorrectorTest, TestIsPointcloudValid)
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
 
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
-  auto pointcloud = generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
+  auto pointcloud = generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
   auto result = distortion_corrector_2d_->is_pointcloud_valid(pointcloud);
   EXPECT_TRUE(result);
 
   // input empty pointcloud
-  auto empty_pointcloud = generateEmptyPointCloudMsg(timestamp);
+  auto empty_pointcloud = generate_empty_pointcloud_msg(timestamp);
   result = distortion_corrector_2d_->is_pointcloud_valid(empty_pointcloud);
   EXPECT_FALSE(result);
 }
@@ -410,8 +410,8 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithEmptyTwist)
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   // Generate the point cloud message
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
-  auto pointcloud = generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
+  auto pointcloud = generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
 
   // Process empty twist queue
   distortion_corrector_2d_->initialize();
@@ -449,10 +449,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithEmptyPointCloud)
 {
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
   // Generate an empty point cloud message
 
-  auto empty_pointcloud = generateEmptyPointCloudMsg(timestamp);
+  auto empty_pointcloud = generate_empty_pointcloud_msg(timestamp);
   // Process empty point cloud
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->undistort_pointcloud(true, std::nullopt, empty_pointcloud);
@@ -467,11 +467,11 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloud2dWithoutImuInBaseLink)
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
-  auto pointcloud = generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
+  auto pointcloud = generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
 
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
 
   // Test using only twist
   distortion_corrector_2d_->initialize();
@@ -512,14 +512,14 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloud2dWithImuInBaseLink)
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
-  auto pointcloud = generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
+  auto pointcloud = generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
 
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_imu_msgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->set_pointcloud_transform("base_link", "base_link");
@@ -559,14 +559,14 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloud2dWithImuInLidarFrame)
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
-  auto pointcloud = generatePointCloudMsg(true, timestamp, default_points, default_azimuths);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
+  auto pointcloud = generate_pointcloud_msg(true, timestamp, default_points, default_azimuths);
 
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_imu_msgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->set_pointcloud_transform("base_link", "lidar_top");
@@ -609,11 +609,11 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloud3dWithoutImuInBaseLink)
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
-  auto pointcloud = generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
+  auto pointcloud = generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
 
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_3d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_3d_, timestamp);
 
   // Test using only twist
   distortion_corrector_3d_->initialize();
@@ -654,14 +654,14 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloud3dWithImuInBaseLink)
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
-  auto pointcloud = generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
+  auto pointcloud = generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
 
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_3d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_3d_, timestamp);
 
   // Generate and process multiple IMU messages
-  generateAndProcessIMUMsgs(distortion_corrector_3d_, timestamp);
+  generate_and_process_imu_msgs(distortion_corrector_3d_, timestamp);
 
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->set_pointcloud_transform("base_link", "base_link");
@@ -704,14 +704,14 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloud3dWithImuInLidarFrame)
   // Generate the point cloud message
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
-  auto pointcloud = generatePointCloudMsg(true, timestamp, default_points, default_azimuths);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
+  auto pointcloud = generate_pointcloud_msg(true, timestamp, default_points, default_azimuths);
 
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_3d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_3d_, timestamp);
 
   // Generate and process multiple IMU messages
-  generateAndProcessIMUMsgs(distortion_corrector_3d_, timestamp);
+  generate_and_process_imu_msgs(distortion_corrector_3d_, timestamp);
 
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->set_pointcloud_transform("base_link", "lidar_top");
@@ -752,14 +752,14 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithPureLinearMotion)
 {
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
   auto test2d_pointcloud =
-    generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
   auto test3d_pointcloud =
-    generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
 
   // Generate and process a single twist message with constant linear velocity
-  auto twist_msg = generateTwistMsg(1.0, 0.0, timestamp);
+  auto twist_msg = generate_twist_msg(1.0, 0.0, timestamp);
 
   distortion_corrector_2d_->process_twist_message(twist_msg);
   distortion_corrector_2d_->initialize();
@@ -773,7 +773,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithPureLinearMotion)
 
   // Generate expected point cloud for testing
   auto expected_pointcloud =
-    generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
 
   // Calculate expected point cloud values based on constant linear motion
   double velocity = 1.0;  // 1 m/s linear velocity
@@ -843,14 +843,14 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithPureRotationalMotion)
 {
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
   auto test2d_pointcloud =
-    generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
   auto test3d_pointcloud =
-    generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
 
   // Generate and process a single twist message with constant angular velocity
-  auto twist_msg = generateTwistMsg(0.0, 0.1, timestamp);
+  auto twist_msg = generate_twist_msg(0.0, 0.1, timestamp);
 
   distortion_corrector_2d_->process_twist_message(twist_msg);
   distortion_corrector_2d_->initialize();
@@ -864,7 +864,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithPureRotationalMotion)
 
   // Generate expected point cloud for testing
   auto expected_pointcloud =
-    generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
 
   // Calculate expected point cloud values based on constant rotational motion
   double angular_velocity = 0.1;  // 0.1 rad/s rotational velocity
@@ -951,15 +951,15 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudNotUpdatingAzimuthAndDist
   // Generate the point cloud message in base_link
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::CARTESIAN);
+    generate_default_pointcloud(AngleCoordinateSystem::CARTESIAN);
   auto pointcloud_base_link =
-    generatePointCloudMsg(false, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(false, timestamp, default_points, default_azimuths);
 
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_imu_msgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->set_pointcloud_transform("base_link", "base_link");
@@ -980,13 +980,13 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudNotUpdatingAzimuthAndDist
 
   // Generate the point cloud message in sensor frame
   auto pointcloud_lidar_top =
-    generatePointCloudMsg(true, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(true, timestamp, default_points, default_azimuths);
 
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_imu_msgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->set_pointcloud_transform("base_link", "lidar_top");
@@ -995,7 +995,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudNotUpdatingAzimuthAndDist
   distortion_corrector_2d_->undistort_pointcloud(true, angle_conversion_opt, pointcloud_lidar_top);
 
   auto original_pointcloud_lidar_top =
-    generatePointCloudMsg(true, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(true, timestamp, default_points, default_azimuths);
 
   sensor_msgs::PointCloud2ConstIterator<float> test_iter_azimuth_lidar_top(
     pointcloud_lidar_top, "azimuth");
@@ -1033,14 +1033,14 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudUpdateAzimuthAndDistanceI
   // Generate the point cloud message in sensor frame
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   auto [default_points, default_azimuths] =
-    generateDefaultPointcloud(AngleCoordinateSystem::VELODYNE);
-  auto pointcloud = generatePointCloudMsg(true, timestamp, default_points, default_azimuths);
+    generate_default_pointcloud(AngleCoordinateSystem::VELODYNE);
+  auto pointcloud = generate_pointcloud_msg(true, timestamp, default_points, default_azimuths);
 
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_imu_msgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->set_pointcloud_transform("base_link", "lidar_top");
@@ -1049,7 +1049,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudUpdateAzimuthAndDistanceI
   distortion_corrector_2d_->undistort_pointcloud(true, angle_conversion_opt, pointcloud);
 
   auto original_pointcloud =
-    generatePointCloudMsg(true, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(true, timestamp, default_points, default_azimuths);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_azimuth(pointcloud, "azimuth");
   sensor_msgs::PointCloud2ConstIterator<float> iter_distance(pointcloud, "distance");
@@ -1092,14 +1092,15 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudUpdateAzimuthAndDistanceI
   // Generate the point cloud message in sensor frame
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
 
-  auto [default_points, default_azimuths] = generateDefaultPointcloud(AngleCoordinateSystem::HESAI);
-  auto pointcloud = generatePointCloudMsg(true, timestamp, default_points, default_azimuths);
+  auto [default_points, default_azimuths] =
+    generate_default_pointcloud(AngleCoordinateSystem::HESAI);
+  auto pointcloud = generate_pointcloud_msg(true, timestamp, default_points, default_azimuths);
 
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
 
   // Generate and process multiple IMU messages
-  generateAndProcessIMUMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_imu_msgs(distortion_corrector_2d_, timestamp);
 
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->set_pointcloud_transform("base_link", "lidar_top");
@@ -1108,7 +1109,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudUpdateAzimuthAndDistanceI
   distortion_corrector_2d_->undistort_pointcloud(true, angle_conversion_opt, pointcloud);
 
   auto original_pointcloud =
-    generatePointCloudMsg(true, timestamp, default_points, default_azimuths);
+    generate_pointcloud_msg(true, timestamp, default_points, default_azimuths);
 
   sensor_msgs::PointCloud2ConstIterator<float> iter_azimuth(pointcloud, "azimuth");
   sensor_msgs::PointCloud2ConstIterator<float> iter_distance(pointcloud, "distance");
@@ -1151,7 +1152,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnEmptyPointcloud)
   // test empty pointcloud
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
 
-  auto empty_pointcloud = generateEmptyPointCloudMsg(timestamp);
+  auto empty_pointcloud = generate_empty_pointcloud_msg(timestamp);
   auto angle_conversion_opt =
     distortion_corrector_2d_->try_compute_angle_conversion(empty_pointcloud);
 
@@ -1172,7 +1173,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnVelodynePointclou
     0.0f, autoware::universe_utils::pi / 4, autoware::universe_utils::pi / 2};
 
   auto velodyne_pointcloud =
-    generatePointCloudMsg(true, timestamp, velodyne_points, velodyne_azimuths);
+    generate_pointcloud_msg(true, timestamp, velodyne_points, velodyne_azimuths);
   auto angle_conversion_opt =
     distortion_corrector_2d_->try_compute_angle_conversion(velodyne_pointcloud);
   EXPECT_TRUE(angle_conversion_opt.has_value());
@@ -1194,7 +1195,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnHesaiPointcloud)
     autoware::universe_utils::pi / 2, autoware::universe_utils::pi * 3 / 4,
     autoware::universe_utils::pi};
 
-  auto hesai_pointcloud = generatePointCloudMsg(true, timestamp, hesai_points, hesai_azimuths);
+  auto hesai_pointcloud = generate_pointcloud_msg(true, timestamp, hesai_points, hesai_azimuths);
   auto angle_conversion_opt =
     distortion_corrector_2d_->try_compute_angle_conversion(hesai_pointcloud);
 
@@ -1209,7 +1210,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionCartesianPointcloud
   // test pointcloud that use cartesian coordinate for azimuth (x-axis: 0 degree, y-axis: 90 degree)
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
 
   std::vector<Eigen::Vector3f> cartesian_points = {
     Eigen::Vector3f(0.0f, 0.0f, 0.0f),
@@ -1220,7 +1221,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionCartesianPointcloud
     0, autoware::universe_utils::pi / 4, autoware::universe_utils::pi / 2};
 
   auto cartesian_pointcloud =
-    generatePointCloudMsg(true, timestamp, cartesian_points, cartesian_azimuths);
+    generate_pointcloud_msg(true, timestamp, cartesian_points, cartesian_azimuths);
   auto angle_conversion_opt =
     distortion_corrector_2d_->try_compute_angle_conversion(cartesian_pointcloud);
 
@@ -1234,7 +1235,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnRandomPointcloud)
   // test pointcloud that use coordinate (x-axis: 270 degree, y-axis: 0 degree)
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
 
   std::vector<Eigen::Vector3f> points = {
     Eigen::Vector3f(0.0f, 1.0f, 0.0f),
@@ -1244,7 +1245,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnRandomPointcloud)
   std::vector<float> azimuths = {
     0, autoware::universe_utils::pi * 3 / 2, autoware::universe_utils::pi * 7 / 4};
 
-  auto pointcloud = generatePointCloudMsg(true, timestamp, points, azimuths);
+  auto pointcloud = generate_pointcloud_msg(true, timestamp, points, azimuths);
   auto angle_conversion_opt = distortion_corrector_2d_->try_compute_angle_conversion(pointcloud);
 
   EXPECT_TRUE(angle_conversion_opt.has_value());
@@ -1260,7 +1261,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnBadAzimuthPointcl
   // 2. azimuth value is wrong
   rclcpp::Time timestamp(timestamp_seconds, timestamp_nanoseconds, RCL_ROS_TIME);
   // Generate and process multiple twist messages
-  generateAndProcessTwistMsgs(distortion_corrector_2d_, timestamp);
+  generate_and_process_twist_msgs(distortion_corrector_2d_, timestamp);
 
   std::vector<Eigen::Vector3f> points = {
     Eigen::Vector3f(0.0f, 1.0f, 0.0f),
@@ -1271,7 +1272,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnBadAzimuthPointcl
   // generate random bad azimuths
   std::vector<float> azimuths = {0, 0, autoware::universe_utils::pi};
 
-  auto pointcloud = generatePointCloudMsg(true, timestamp, points, azimuths);
+  auto pointcloud = generate_pointcloud_msg(true, timestamp, points, azimuths);
   auto angle_conversion_opt = distortion_corrector_2d_->try_compute_angle_conversion(pointcloud);
 
   EXPECT_FALSE(angle_conversion_opt.has_value());
