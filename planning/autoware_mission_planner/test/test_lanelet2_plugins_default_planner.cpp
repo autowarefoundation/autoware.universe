@@ -394,7 +394,7 @@ TEST_F(DefaultPlannerTest, visualize)
   }
 }
 
-TEST_F(DefaultPlannerTest, visualizeDebugFootrprint)
+TEST_F(DefaultPlannerTest, visualizeDebugFootprint)
 {
   DefaultPlanner planner;
   planner_.set_default_test_map();
