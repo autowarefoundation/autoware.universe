@@ -54,7 +54,8 @@ struct AngleConversion
   // offset_rad is restricted to be a multiple of 90, and sign is restricted to be 1 or -1.
   float offset_rad{0};
   float sign{1};
-  static constexpr float offset_rad_threshold{0.087f};  // (5 / 180) * M_PI
+  static constexpr float offset_rad_threshold{(5.0f / 180.0f) * M_PI};
+
   static constexpr float sign_threshold{0.1f};
 };
 
