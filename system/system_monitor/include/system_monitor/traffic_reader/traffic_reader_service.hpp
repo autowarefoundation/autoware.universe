@@ -70,6 +70,11 @@ protected:
   void start_nethogs(boost::archive::text_iarchive & archive);
 
   /**
+   * @brief Stop nethogs
+   */
+  void stop_nethogs();
+
+  /**
    * @brief Get command line of process from nethogs output
    * @param[in] line nethogs output
    * @return Command line of process
