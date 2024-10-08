@@ -28,6 +28,7 @@ void box3DToDetectedObject(
   autoware_perception_msgs::msg::DetectedObject & obj)
 {
   obj.existence_probability = box3d.score;
+
   // classification
   autoware_perception_msgs::msg::ObjectClassification classification;
   classification.probability = 1.0f;
@@ -38,11 +39,14 @@ void box3DToDetectedObject(
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("lidar_transfusion"), "Unexpected label: UNKNOWN is set.");
   }
+
   if (object_recognition_utils::isCarLikeVehicle(classification.label)) {
     obj.kinematics.orientation_availability =
       autoware_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
   }
+
   obj.classification.emplace_back(classification);
+
   // pose and shape
   // mmdet3d yaw format to ros yaw format
   float yaw = box3d.yaw;
