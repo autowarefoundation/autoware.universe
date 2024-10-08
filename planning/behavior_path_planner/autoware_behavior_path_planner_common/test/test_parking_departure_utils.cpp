@@ -84,7 +84,7 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, calcFeasibleDecelDistance)
   ASSERT_TRUE(distance.has_value());
   EXPECT_NEAR(distance.value(), 18.7730133, epsilon);
 
-  // condition: nota valid condition
+  // condition: not valid condition
   velocity = 0.3;
   target_velocity = 0.0;
   acceleration = -1.5;
