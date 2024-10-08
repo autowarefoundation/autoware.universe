@@ -141,10 +141,10 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
   const size_t in_cloud_data_size = in_cloud->data.size();
   const size_t in_cloud_point_step = in_cloud->point_step;
 
-  {  // grouping pointcloud by its horizontal angle
+  {  // grouping pointcloud by its azimuth angle
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("horizontal_angle_grouping", *time_keeper_);
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("azimuth_angle_grouping", *time_keeper_);
 
     size_t point_index = 0;
     pcl::PointXYZ input_point;
@@ -156,9 +156,11 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
       auto radius{static_cast<float>(std::hypot(x, input_point.y))};
       auto theta{normalizeRadian(std::atan2(x, input_point.y), 0.0)};
 
-      // divide by vertical angle
+      // divide by azimuth angle
       auto radial_div{static_cast<size_t>(std::floor(theta * inv_radial_divider_angle_rad))};
       uint16_t grid_id = 0;
+      // TODO(technolojin): radius to grid_id conversion can be a function for better readability
+      // and cached for performance
       if (radius <= grid_mode_switch_radius_) {
         grid_id = static_cast<uint16_t>(radius * inv_grid_size_m);
       } else {
@@ -176,7 +178,7 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
     }
   }
 
-  {  // sorting pointcloud by distance, on each horizontal angle group
+  {  // sorting pointcloud by distance, on each azimuth angle group
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_) inner_st_ptr = std::make_unique<ScopedTimeTrack>("sort", *time_keeper_);
 
@@ -202,10 +204,10 @@ void ScanGroundFilterComponent::convertPointcloud(
   const size_t in_cloud_data_size = in_cloud->data.size();
   const size_t in_cloud_point_step = in_cloud->point_step;
 
-  {  // grouping pointcloud by its horizontal angle
+  {  // grouping pointcloud by its azimuth angle
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("horizontal_angle_grouping", *time_keeper_);
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("azimuth_angle_grouping", *time_keeper_);
 
     size_t point_index = 0;
     pcl::PointXYZ input_point;
@@ -228,7 +230,7 @@ void ScanGroundFilterComponent::convertPointcloud(
     }
   }
 
-  {  // sorting pointcloud by distance, on each horizontal angle group
+  {  // sorting pointcloud by distance, on each azimuth angle group
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_) inner_st_ptr = std::make_unique<ScopedTimeTrack>("sort", *time_keeper_);
 
@@ -455,7 +457,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         ground_cluster.initialize();
       }
 
-      // 1: height is out-of-range 
+      // 1: height is out-of-range
       if (p_orig_point.z - gnd_grids.back().avg_height > detection_range_z_max_) {
         p->point_state = PointLabel::OUT_OF_RANGE;
         continue;
