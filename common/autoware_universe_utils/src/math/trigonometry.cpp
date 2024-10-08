@@ -72,7 +72,7 @@ std::pair<float, float> sin_and_cos(float radian)
   }
 }
 
-// This code is modified from part of OpenCV project
+// This code is modified from a part of the OpenCV project
 // (https://github.com/opencv/opencv/blob/4.x/modules/core/src/mathfuncs_core.simd.hpp). It is
 // subject to the license terms in the LICENSE file found in the top-level directory of this
 // distribution and at http://opencv.org/license.html.
