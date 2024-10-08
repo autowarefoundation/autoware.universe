@@ -50,9 +50,9 @@ protected:
   {
     node_ = std::make_shared<rclcpp::Node>("test_node");
     distortion_corrector_2d_ =
-      std::make_shared<autoware::pointcloud_preprocessor::DistortionCorrector2D>(node_.get(), true);
+      std::make_shared<autoware::pointcloud_preprocessor::DistortionCorrector2D>(*node_, true);
     distortion_corrector_3d_ =
-      std::make_shared<autoware::pointcloud_preprocessor::DistortionCorrector3D>(node_.get(), true);
+      std::make_shared<autoware::pointcloud_preprocessor::DistortionCorrector3D>(*node_, true);
 
     // Setup TF
     tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);

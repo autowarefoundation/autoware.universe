@@ -71,7 +71,7 @@ protected:
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
-  rclcpp::Node * node_;
+  rclcpp::Node & node_;
 
   void get_imu_transformation(const std::string & base_frame, const std::string & imu_frame);
   void enqueue_imu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
@@ -85,11 +85,11 @@ protected:
     const Eigen::Matrix4f & matrix, tf2::Transform & transform);
 
 public:
-  explicit DistortionCorrectorBase(rclcpp::Node * node, const bool & has_static_tf_only)
+  explicit DistortionCorrectorBase(rclcpp::Node & node, const bool & has_static_tf_only)
   : node_(node)
   {
     managed_tf_buffer_ =
-      std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(node, has_static_tf_only);
+      std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(&node, has_static_tf_only);
   }
   [[nodiscard]] bool pointcloud_transform_exists() const;
   [[nodiscard]] bool pointcloud_transform_needed() const;
@@ -118,7 +118,7 @@ template <class T>
 class DistortionCorrector : public DistortionCorrectorBase
 {
 public:
-  explicit DistortionCorrector(rclcpp::Node * node, const bool & has_static_tf_only)
+  explicit DistortionCorrector(rclcpp::Node & node, const bool & has_static_tf_only)
   : DistortionCorrectorBase(node, has_static_tf_only)
   {
   }
@@ -156,7 +156,7 @@ private:
   tf2::Transform tf2_base_link_to_lidar_;
 
 public:
-  explicit DistortionCorrector2D(rclcpp::Node * node, const bool & has_static_tf_only)
+  explicit DistortionCorrector2D(rclcpp::Node & node, const bool & has_static_tf_only)
   : DistortionCorrector(node, has_static_tf_only)
   {
   }
@@ -185,7 +185,7 @@ private:
   Eigen::Matrix4f eigen_base_link_to_lidar_;
 
 public:
-  explicit DistortionCorrector3D(rclcpp::Node * node, const bool & has_static_tf_only)
+  explicit DistortionCorrector3D(rclcpp::Node & node, const bool & has_static_tf_only)
   : DistortionCorrector(node, has_static_tf_only)
   {
   }

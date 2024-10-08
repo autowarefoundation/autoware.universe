@@ -62,9 +62,9 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   // Setup the distortion corrector
 
   if (use_3d_distortion_correction_) {
-    distortion_corrector_ = std::make_unique<DistortionCorrector3D>(this, has_static_tf_only);
+    distortion_corrector_ = std::make_unique<DistortionCorrector3D>(*this, has_static_tf_only);
   } else {
-    distortion_corrector_ = std::make_unique<DistortionCorrector2D>(this, has_static_tf_only);
+    distortion_corrector_ = std::make_unique<DistortionCorrector2D>(*this, has_static_tf_only);
   }
 }
 

@@ -143,7 +143,7 @@ bool DistortionCorrectorBase::is_pointcloud_valid(sensor_msgs::msg::PointCloud2 
 {
   if (pointcloud.data.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 10000 /* ms */, "Input pointcloud is empty.");
+      node_.get_logger(), *node_.get_clock(), 10000 /* ms */, "Input pointcloud is empty.");
     return false;
   }
 
@@ -152,19 +152,18 @@ bool DistortionCorrectorBase::is_pointcloud_valid(sensor_msgs::msg::PointCloud2 
     [](const sensor_msgs::msg::PointField & field) { return field.name == "time_stamp"; });
   if (time_stamp_field_it == pointcloud.fields.cend()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+      node_.get_logger(), *node_.get_clock(), 10000 /* ms */,
       "Required field time stamp doesn't exist in the point cloud.");
     return false;
   }
 
   if (!utils::is_data_layout_compatible_with_point_xyzircaedt(pointcloud)) {
     RCLCPP_ERROR(
-      node_->get_logger(),
-      "The pointcloud layout is not compatible with PointXYZIRCAEDT. Aborting");
+      node_.get_logger(), "The pointcloud layout is not compatible with PointXYZIRCAEDT. Aborting");
 
     if (utils::is_data_layout_compatible_with_point_xyziradrt(pointcloud)) {
       RCLCPP_ERROR(
-        node_->get_logger(),
+        node_.get_logger(),
         "The pointcloud layout is compatible with PointXYZIRADRT. You may be using legacy "
         "code/data");
     }
@@ -199,7 +198,7 @@ std::optional<AngleConversion> DistortionCorrectorBase::try_compute_angle_conver
     next_it_azimuth = it_azimuth + 1;
   } else {
     RCLCPP_WARN_STREAM_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+      node_.get_logger(), *node_.get_clock(), 10000 /* ms */,
       "Current point cloud only has a single point. Could not calculate the angle conversion.");
     return std::nullopt;
   }
@@ -215,7 +214,7 @@ std::optional<AngleConversion> DistortionCorrectorBase::try_compute_angle_conver
       abs(*next_it_azimuth - *it_azimuth) == 0 ||
       abs(next_cartesian_rad - current_cartesian_rad) == 0) {
       RCLCPP_DEBUG_STREAM_THROTTLE(
-        node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+        node_.get_logger(), *node_.get_clock(), 10000 /* ms */,
         "Angle between two points is 0 degrees. Iterate to next point ...");
       continue;
     }
@@ -238,7 +237,7 @@ std::optional<AngleConversion> DistortionCorrectorBase::try_compute_angle_conver
       angle_conversion.sign = -1.0f;
     } else {
       RCLCPP_DEBUG_STREAM_THROTTLE(
-        node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+        node_.get_logger(), *node_.get_clock(), 10000 /* ms */,
         "Value of sign is not close to 1 or -1. Iterate to next point ...");
       continue;
     }
@@ -250,7 +249,7 @@ std::optional<AngleConversion> DistortionCorrectorBase::try_compute_angle_conver
       std::abs(offset_rad - multiple_of_90_degrees * (autoware::universe_utils::pi / 2)) >
       angle_conversion.offset_rad_threshold) {
       RCLCPP_DEBUG_STREAM_THROTTLE(
-        node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+        node_.get_logger(), *node_.get_clock(), 10000 /* ms */,
         "Value of offset_rad is not close to multiplication of 90 degrees. Iterate to next point "
         "...");
       continue;
@@ -271,13 +270,13 @@ void DistortionCorrectorBase::warn_if_timestamp_is_too_late(
 {
   if (is_twist_time_stamp_too_late) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+      node_.get_logger(), *node_.get_clock(), 10000 /* ms */,
       "Twist time_stamp is too late. Could not interpolate.");
   }
 
   if (is_imu_time_stamp_too_late) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+      node_.get_logger(), *node_.get_clock(), 10000 /* ms */,
       "IMU time_stamp is too late. Could not interpolate.");
   }
 }
@@ -299,7 +298,7 @@ void DistortionCorrector<T>::undistort_pointcloud(
   if (!is_pointcloud_valid(pointcloud)) return;
   if (twist_queue_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 10000 /* ms */, "Twist queue is empty.");
+      node_.get_logger(), *node_.get_clock(), 10000 /* ms */, "Twist queue is empty.");
     return;
   }
 
