@@ -75,6 +75,11 @@ struct LaneChangeCancelParameters
   double duration{5.0};
   double max_lateral_jerk{10.0};
   double overhang_tolerance{0.0};
+
+  // unsafe_hysteresis_threshold will be compare with the number of detected unsafe instance. If the
+  // number of unsafe exceeds unsafe_hysteresis_threshold, the lane change will be cancelled or
+  // aborted.
+  int unsafe_hysteresis_threshold{2};
 };
 
 struct LaneChangeParameters
@@ -132,6 +137,7 @@ struct LaneChangeParameters
   // safety check
   bool allow_loose_check_for_cancel{true};
   utils::path_safety_checker::RSSparams rss_params{};
+  utils::path_safety_checker::RSSparams rss_params_for_parked{};
   utils::path_safety_checker::RSSparams rss_params_for_abort{};
   utils::path_safety_checker::RSSparams rss_params_for_stuck{};
 

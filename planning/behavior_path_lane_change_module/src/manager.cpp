@@ -116,6 +116,23 @@ void LaneChangeModuleManager::init(rclcpp::Node * node)
   p.rss_params.lateral_distance_max_threshold = getOrDeclareParameter<double>(
     *node, parameter("safety_check.execution.lateral_distance_max_threshold"));
 
+  p.rss_params_for_parked.longitudinal_distance_min_threshold = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.longitudinal_distance_min_threshold"));
+  p.rss_params_for_parked.longitudinal_distance_min_threshold = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.longitudinal_distance_min_threshold"));
+  p.rss_params_for_parked.longitudinal_velocity_delta_time = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.longitudinal_velocity_delta_time"));
+  p.rss_params_for_parked.front_vehicle_deceleration = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.expected_front_deceleration"));
+  p.rss_params_for_parked.rear_vehicle_deceleration = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.expected_rear_deceleration"));
+  p.rss_params_for_parked.rear_vehicle_reaction_time = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.rear_vehicle_reaction_time"));
+  p.rss_params_for_parked.rear_vehicle_safety_time_margin = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.rear_vehicle_safety_time_margin"));
+  p.rss_params_for_parked.lateral_distance_max_threshold = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.parked.lateral_distance_max_threshold"));
+
   p.rss_params_for_abort.longitudinal_distance_min_threshold = getOrDeclareParameter<double>(
     *node, parameter("safety_check.cancel.longitudinal_distance_min_threshold"));
   p.rss_params_for_abort.longitudinal_velocity_delta_time = getOrDeclareParameter<double>(
@@ -215,6 +232,8 @@ void LaneChangeModuleManager::init(rclcpp::Node * node)
     getOrDeclareParameter<double>(*node, parameter("cancel.max_lateral_jerk"));
   p.cancel.overhang_tolerance =
     getOrDeclareParameter<double>(*node, parameter("cancel.overhang_tolerance"));
+  p.cancel.unsafe_hysteresis_threshold =
+    getOrDeclareParameter<int>(*node, parameter("cancel.unsafe_hysteresis_threshold"));
 
   p.finish_judge_lateral_threshold =
     getOrDeclareParameter<double>(*node, parameter("finish_judge_lateral_threshold"));

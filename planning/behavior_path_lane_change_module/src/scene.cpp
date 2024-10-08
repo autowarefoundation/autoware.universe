@@ -420,6 +420,7 @@ void NormalLaneChange::resetParameters()
   is_abort_approval_requested_ = false;
   current_lane_change_state_ = LaneChangeStates::Normal;
   abort_path_ = nullptr;
+  unsafe_hysteresis_count_ = 0;
 
   object_debug_.clear();
 }
@@ -1451,6 +1452,28 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
   return safety_status;
 }
 
+PathSafetyStatus NormalLaneChange::evaluateApprovedPathWithUnsafeHysteresis(
+  PathSafetyStatus approved_path_safety_status)
+{
+  if (!approved_path_safety_status.is_safe) {
+    ++unsafe_hysteresis_count_;
+    RCLCPP_DEBUG(
+      logger_, "%s: Increasing hysteresis count to %d.", __func__, unsafe_hysteresis_count_);
+  } else {
+    if (unsafe_hysteresis_count_ > 0) {
+      RCLCPP_DEBUG(logger_, "%s: Lane change is now SAFE. Resetting hysteresis count.", __func__);
+    }
+    unsafe_hysteresis_count_ = 0;
+  }
+  if (unsafe_hysteresis_count_ > lane_change_parameters_->cancel.unsafe_hysteresis_threshold) {
+    RCLCPP_DEBUG(
+      logger_, "%s: hysteresis count exceed threshold. lane change is now %s", __func__,
+      (approved_path_safety_status.is_safe ? "safe" : "UNSAFE"));
+    return approved_path_safety_status;
+  }
+  return {};
+}
+
 bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
 {
   const auto & route_handler = planner_data_->route_handler;
@@ -1692,9 +1715,13 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
       obj, lane_change_parameters_->use_all_predicted_path);
     auto is_safe = true;
+    const auto selected_rss_param =
+      (obj.initial_twist.twist.linear.x <= lane_change_parameters_->stop_velocity_threshold)
+        ? lane_change_parameters_->rss_params_for_parked
+        : rss_params;
     for (const auto & obj_path : obj_predicted_paths) {
       const auto collided_polygons = utils::path_safety_checker::getCollidedPolygons(
-        path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
+        path, ego_predicted_path, obj, obj_path, common_parameters, selected_rss_param, 1.0,
         current_debug_data.second);
 
       if (collided_polygons.empty()) {
