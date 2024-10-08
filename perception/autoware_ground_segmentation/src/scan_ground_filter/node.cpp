@@ -71,7 +71,7 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
       normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
       normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
     tan_grid_size_rad_ = std::tan(grid_size_rad_);
-    offset_initialized_ = false;
+    data_offset_initialized_ = false;
   }
 
   using std::placeholders::_1;
@@ -98,27 +98,27 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
   }
 }
 
-inline void ScanGroundFilterComponent::set_field_offsets(const PointCloud2ConstPtr & input)
+inline void ScanGroundFilterComponent::set_field_index_offsets(const PointCloud2ConstPtr & input)
 {
-  x_offset_ = input->fields[pcl::getFieldIndex(*input, "x")].offset;
-  y_offset_ = input->fields[pcl::getFieldIndex(*input, "y")].offset;
-  z_offset_ = input->fields[pcl::getFieldIndex(*input, "z")].offset;
+  data_offset_x_ = input->fields[pcl::getFieldIndex(*input, "x")].offset;
+  data_offset_y_ = input->fields[pcl::getFieldIndex(*input, "y")].offset;
+  data_offset_z_ = input->fields[pcl::getFieldIndex(*input, "z")].offset;
   int intensity_index = pcl::getFieldIndex(*input, "intensity");
   if (intensity_index != -1) {
-    intensity_offset_ = input->fields[intensity_index].offset;
+    data_offset_intensity_ = input->fields[intensity_index].offset;
     intensity_type_ = input->fields[intensity_index].datatype;
   } else {
-    intensity_offset_ = -1;
+    data_offset_intensity_ = -1;
   }
-  offset_initialized_ = true;
+  data_offset_initialized_ = true;
 }
 
-inline void ScanGroundFilterComponent::get_point_from_global_offset(
-  const PointCloud2ConstPtr & input, pcl::PointXYZ & point, size_t global_offset)
+inline void ScanGroundFilterComponent::get_point_from_data_index(
+  const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point)
 {
-  point.x = *reinterpret_cast<const float *>(&input->data[global_offset + x_offset_]);
-  point.y = *reinterpret_cast<const float *>(&input->data[global_offset + y_offset_]);
-  point.z = *reinterpret_cast<const float *>(&input->data[global_offset + z_offset_]);
+  point.x = *reinterpret_cast<const float *>(&input->data[data_index + data_offset_x_]);
+  point.y = *reinterpret_cast<const float *>(&input->data[data_index + data_offset_y_]);
+  point.z = *reinterpret_cast<const float *>(&input->data[data_index + data_offset_z_]);
 }
 
 void ScanGroundFilterComponent::convertPointcloudGridScan(
@@ -148,9 +148,9 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
 
     size_t point_index = 0;
     pcl::PointXYZ input_point;
-    for (size_t global_offset = 0; global_offset + in_cloud_point_step <= in_cloud_data_size;
-         global_offset += in_cloud_point_step) {
-      get_point_from_global_offset(in_cloud, input_point, global_offset);
+    for (size_t data_index = 0; data_index + in_cloud_point_step <= in_cloud_data_size;
+         data_index += in_cloud_point_step) {
+      get_point_from_data_index(in_cloud, data_index, input_point);
 
       auto x{input_point.x - x_shift};  // base on front wheel center
       auto radius{static_cast<float>(std::hypot(x, input_point.y))};
@@ -211,10 +211,10 @@ void ScanGroundFilterComponent::convertPointcloud(
 
     size_t point_index = 0;
     pcl::PointXYZ input_point;
-    for (size_t global_offset = 0; global_offset + in_cloud_point_step <= in_cloud_data_size;
-         global_offset += in_cloud_point_step) {
+    for (size_t data_index = 0; data_index + in_cloud_point_step <= in_cloud_data_size;
+         data_index += in_cloud_point_step) {
       // Point
-      get_point_from_global_offset(in_cloud, input_point, global_offset);
+      get_point_from_data_index(in_cloud, data_index, input_point);
 
       auto radius{static_cast<float>(std::hypot(input_point.x, input_point.y))};
       auto theta{normalizeRadian(std::atan2(input_point.x, input_point.y), 0.0)};
@@ -403,7 +403,8 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
       // set the current point
       p = &point;
-      get_point_from_global_offset(in_cloud, p_orig_point, in_cloud->point_step * p->orig_index);
+      const size_t data_index = in_cloud->point_step * p->orig_index;
+      get_point_from_data_index(in_cloud, data_index, p_orig_point);
 
       // set the thresholds
       const float global_slope_ratio_p = p_orig_point.z / p->radius;
@@ -538,7 +539,8 @@ void ScanGroundFilterComponent::classifyPointCloud(
       const float local_slope_max_angle = local_slope_max_angle_rad_;
       prev_p_orig_point = p_orig_point;
       auto * p = &in_radial_ordered_clouds[i][j];
-      get_point_from_global_offset(in_cloud, p_orig_point, in_cloud->point_step * p->orig_index);
+      const size_t data_index = in_cloud->point_step * p->orig_index;
+      get_point_from_data_index(in_cloud, data_index, p_orig_point);
       if (j == 0) {
         bool is_front_side = (p_orig_point.x > virtual_ground_point.x);
         if (use_virtual_ground_point_ && is_front_side) {
@@ -655,8 +657,8 @@ void ScanGroundFilterComponent::faster_filter(
   std::scoped_lock lock(mutex_);
   stop_watch_ptr_->toc("processing_time", true);
 
-  if (!offset_initialized_) {
-    set_field_offsets(input);
+  if (!data_offset_initialized_) {
+    set_field_index_offsets(input);
   }
   std::vector<PointCloudVector> radial_ordered_points;
 

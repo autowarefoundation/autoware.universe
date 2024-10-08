@@ -160,17 +160,17 @@ private:
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
-  int x_offset_;
-  int y_offset_;
-  int z_offset_;
-  int intensity_offset_;
+  int data_offset_x_;
+  int data_offset_y_;
+  int data_offset_z_;
+  int data_offset_intensity_;
   int intensity_type_;
-  bool offset_initialized_;
+  bool data_offset_initialized_;
 
-  void set_field_offsets(const PointCloud2ConstPtr & input);
+  void set_field_index_offsets(const PointCloud2ConstPtr & input);
 
-  void get_point_from_global_offset(
-    const PointCloud2ConstPtr & input, pcl::PointXYZ & point, size_t global_offset);
+  void get_point_from_data_index(
+    const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point);
 
   const uint16_t gnd_grid_continual_thresh_ = 3;
   bool elevation_grid_mode_;
