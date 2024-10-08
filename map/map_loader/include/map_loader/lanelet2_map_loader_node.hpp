@@ -28,6 +28,8 @@
 #include <memory>
 #include <string>
 
+
+// Hi! I'm a comment!
 class Lanelet2MapLoaderNode : public rclcpp::Node
 {
 public:
