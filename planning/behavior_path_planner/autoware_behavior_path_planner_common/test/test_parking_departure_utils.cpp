@@ -21,14 +21,15 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <lanelet2_core/Forward.h>
+
 #include <cstddef>
 
 constexpr double epsilon = 1e-6;
 
-using autoware_planning_msgs::msg::Trajectory;
-using tier4_planning_msgs::msg::PathWithLaneId;
-using tier4_planning_msgs::msg::PathPointWithLaneId;
 using autoware::behavior_path_planner::PlannerData;
+using autoware_planning_msgs::msg::Trajectory;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 using autoware::test_utils::generateTrajectory;
 
@@ -60,25 +61,28 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, calcFeasibleDecelDistance)
   auto odometry = std::make_shared<nav_msgs::msg::Odometry>();
   odometry->pose.pose = autoware::test_utils::createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   odometry->twist.twist.linear.x = velocity;
-  auto accel_with_covariance = std::make_shared<autoware::behavior_path_planner::AccelWithCovarianceStamped>();
+  auto accel_with_covariance =
+    std::make_shared<autoware::behavior_path_planner::AccelWithCovarianceStamped>();
   accel_with_covariance->accel.accel.linear.x = acceleration;
   data->self_odometry = odometry;
   data->self_acceleration = accel_with_covariance;
   auto planner_data = std::static_pointer_cast<const PlannerData>(data);
 
   // condition: current velocity is slower than target velocity
-  auto distance = calcFeasibleDecelDistance(planner_data, acceleration_limit, jerk_limit, target_velocity);
+  auto distance =
+    calcFeasibleDecelDistance(planner_data, acceleration_limit, jerk_limit, target_velocity);
   ASSERT_TRUE(distance.has_value());
-  EXPECT_NEAR(distance.value(),0.0,epsilon);
+  EXPECT_NEAR(distance.value(), 0.0, epsilon);
 
   // condition: calculates deceleration distance
   velocity = 5.0;
   odometry->twist.twist.linear.x = velocity;
   data->self_odometry = odometry;
   planner_data = std::static_pointer_cast<const PlannerData>(data);
-  distance = calcFeasibleDecelDistance(planner_data, acceleration_limit, jerk_limit, target_velocity);
+  distance =
+    calcFeasibleDecelDistance(planner_data, acceleration_limit, jerk_limit, target_velocity);
   ASSERT_TRUE(distance.has_value());
-  EXPECT_NEAR(distance.value(),18.7730133,epsilon);
+  EXPECT_NEAR(distance.value(), 18.7730133, epsilon);
 
   // condition: nota valid condition
   velocity = 0.3;
@@ -91,7 +95,8 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, calcFeasibleDecelDistance)
   data->self_odometry = odometry;
   data->self_acceleration = accel_with_covariance;
   planner_data = std::static_pointer_cast<const PlannerData>(data);
-  distance = calcFeasibleDecelDistance(planner_data, acceleration_limit, jerk_limit, target_velocity);
+  distance =
+    calcFeasibleDecelDistance(planner_data, acceleration_limit, jerk_limit, target_velocity);
   ASSERT_FALSE(distance.has_value());
 }
 
@@ -105,8 +110,10 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, modifyVelocityByDirection)
 
   std::vector<PathWithLaneId> paths;
   auto short_path = trajectory_to_path_with_lane_id(generateTrajectory<Trajectory>(1, 1.0));
-  auto long_path = trajectory_to_path_with_lane_id(generateTrajectory<Trajectory>(10, 1.0,-velocity));
-  auto reverse_path = trajectory_to_path_with_lane_id(generateTrajectory<Trajectory>(10, -1.0, velocity, -M_PI));
+  auto long_path =
+    trajectory_to_path_with_lane_id(generateTrajectory<Trajectory>(10, 1.0, -velocity));
+  auto reverse_path =
+    trajectory_to_path_with_lane_id(generateTrajectory<Trajectory>(10, -1.0, velocity, -M_PI));
 
   paths.push_back(short_path);
   paths.push_back(long_path);
@@ -118,7 +125,7 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, modifyVelocityByDirection)
   terminal_vel_acc_pairs.emplace_back(1.5, 1.5);
 
   modifyVelocityByDirection(paths, terminal_vel_acc_pairs, target_velocity, acceleration);
-  
+
   // condition: number of point less than 2
   EXPECT_NEAR(terminal_vel_acc_pairs.at(0).first, 0.0, epsilon);
   EXPECT_NEAR(terminal_vel_acc_pairs.at(0).second, 0.0, epsilon);
@@ -127,23 +134,27 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, modifyVelocityByDirection)
   EXPECT_NEAR(terminal_vel_acc_pairs.at(1).first, target_velocity, epsilon);
   EXPECT_NEAR(terminal_vel_acc_pairs.at(1).second, acceleration, epsilon);
   for (const auto & point : paths.at(1).points) {
-    if (point == paths.at(1).points.back()) EXPECT_NEAR(point.point.longitudinal_velocity_mps, 0.0, epsilon);
-    else EXPECT_NEAR(point.point.longitudinal_velocity_mps, velocity, epsilon);
+    if (point == paths.at(1).points.back())
+      EXPECT_NEAR(point.point.longitudinal_velocity_mps, 0.0, epsilon);
+    else
+      EXPECT_NEAR(point.point.longitudinal_velocity_mps, velocity, epsilon);
   }
 
-  //condition: reverse driving
+  // condition: reverse driving
   EXPECT_NEAR(terminal_vel_acc_pairs.at(2).first, -target_velocity, epsilon);
   EXPECT_NEAR(terminal_vel_acc_pairs.at(2).second, -acceleration, epsilon);
   for (const auto & point : paths.at(2).points) {
-    if (point == paths.at(2).points.back()) EXPECT_NEAR(point.point.longitudinal_velocity_mps, 0.0, epsilon);
-    else EXPECT_NEAR(point.point.longitudinal_velocity_mps, -velocity, epsilon);
+    if (point == paths.at(2).points.back())
+      EXPECT_NEAR(point.point.longitudinal_velocity_mps, 0.0, epsilon);
+    else
+      EXPECT_NEAR(point.point.longitudinal_velocity_mps, -velocity, epsilon);
   }
 }
 
 TEST(BehaviorPathPlanningParkingDepartureUtil, updatePathProperty)
 {
-  using autoware::behavior_path_planner::utils::parking_departure::updatePathProperty;
   using autoware::behavior_path_planner::utils::parking_departure::EgoPredictedPathParams;
+  using autoware::behavior_path_planner::utils::parking_departure::updatePathProperty;
 
   auto params = std::make_shared<EgoPredictedPathParams>();
   params->min_acceleration = 1.0;
@@ -173,7 +184,7 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, getPairsTerminalVelocityAndAccel)
 {
   using autoware::behavior_path_planner::utils::parking_departure::getPairsTerminalVelocityAndAccel;
 
-  std::vector<std::pair<double, double>>  pairs_terminal_velocity_and_accel;
+  std::vector<std::pair<double, double>> pairs_terminal_velocity_and_accel;
   pairs_terminal_velocity_and_accel.emplace_back(2.0, 1.0);
   pairs_terminal_velocity_and_accel.emplace_back(0.05, -1.0);
 
@@ -191,7 +202,7 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, getPairsTerminalVelocityAndAccel)
 TEST(BehaviorPathPlanningParkingDepartureUtil, generateFeasibleStopPath)
 {
   using autoware::behavior_path_planner::utils::parking_departure::generateFeasibleStopPath;
-  
+
   auto data = std::make_shared<PlannerData>();
   double velocity = 0.3;
   double acceleration = -1.5;
@@ -201,22 +212,25 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, generateFeasibleStopPath)
   auto odometry = std::make_shared<nav_msgs::msg::Odometry>();
   odometry->pose.pose = autoware::test_utils::createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   odometry->twist.twist.linear.x = velocity;
-  auto accel_with_covariance = std::make_shared<autoware::behavior_path_planner::AccelWithCovarianceStamped>();
+  auto accel_with_covariance =
+    std::make_shared<autoware::behavior_path_planner::AccelWithCovarianceStamped>();
   accel_with_covariance->accel.accel.linear.x = acceleration;
   data->self_odometry = odometry;
   data->self_acceleration = accel_with_covariance;
   auto planner_data = std::static_pointer_cast<const PlannerData>(data);
 
-  std::optional<geometry_msgs::msg::Pose>  stop_pose;
+  std::optional<geometry_msgs::msg::Pose> stop_pose;
 
   // condition: empty path
   PathWithLaneId path;
-  auto stop_path = generateFeasibleStopPath(path, planner_data, stop_pose, maximum_deceleration, maximum_jerk);
+  auto stop_path =
+    generateFeasibleStopPath(path, planner_data, stop_pose, maximum_deceleration, maximum_jerk);
   EXPECT_FALSE(stop_path.has_value());
 
   // condition: not valid condition for stop distance
   path = trajectory_to_path_with_lane_id(generateTrajectory<Trajectory>(10, 1.0, velocity));
-  stop_path = generateFeasibleStopPath(path, planner_data, stop_pose, maximum_deceleration, maximum_jerk);
+  stop_path =
+    generateFeasibleStopPath(path, planner_data, stop_pose, maximum_deceleration, maximum_jerk);
   EXPECT_FALSE(stop_path.has_value());
 
   // condition: not valid condition for stop index
@@ -228,19 +242,22 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, generateFeasibleStopPath)
   data->self_acceleration = accel_with_covariance;
   planner_data = std::static_pointer_cast<const PlannerData>(data);
   path = trajectory_to_path_with_lane_id(generateTrajectory<Trajectory>(10, 1.0, velocity));
-  stop_path = generateFeasibleStopPath(path, planner_data, stop_pose, maximum_deceleration, maximum_jerk);
+  stop_path =
+    generateFeasibleStopPath(path, planner_data, stop_pose, maximum_deceleration, maximum_jerk);
   EXPECT_FALSE(stop_path.has_value());
 
   // condition: valid condition
   maximum_jerk = 5.0;
   maximum_deceleration = -3.0;
-  stop_path = generateFeasibleStopPath(path, planner_data, stop_pose, maximum_deceleration, maximum_jerk);
+  stop_path =
+    generateFeasibleStopPath(path, planner_data, stop_pose, maximum_deceleration, maximum_jerk);
   size_t i = 0;
   ASSERT_TRUE(stop_path.has_value());
-  for(const auto & point : stop_path->points)
-  {
-    if(i < 7) EXPECT_NEAR(point.point.longitudinal_velocity_mps, velocity, epsilon);
-    else EXPECT_NEAR(point.point.longitudinal_velocity_mps, 0.0, epsilon);
+  for (const auto & point : stop_path->points) {
+    if (i < 7)
+      EXPECT_NEAR(point.point.longitudinal_velocity_mps, velocity, epsilon);
+    else
+      EXPECT_NEAR(point.point.longitudinal_velocity_mps, 0.0, epsilon);
     i++;
   }
 }
@@ -251,7 +268,7 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, calcEndArcLength)
 
   lanelet::LineString3d left_bound;
   lanelet::LineString3d right_bound;
-  
+
   left_bound.push_back(lanelet::Point3d{lanelet::InvalId, -1, -1});
   left_bound.push_back(lanelet::Point3d{lanelet::InvalId, 0, -1});
   left_bound.push_back(lanelet::Point3d{lanelet::InvalId, 1, -1});
@@ -270,24 +287,24 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, calcEndArcLength)
 
   double s_start = 0.2;
   double forward_path_length = 0.1;
-  auto goal_pose = autoware::test_utils::createPose(5.0,5.0,0.0,0.0,0.0,0.0);
+  auto goal_pose = autoware::test_utils::createPose(5.0, 5.0, 0.0, 0.0, 0.0, 0.0);
 
   // condition: goal pose not in lanelets
   auto end_arc = calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
-  EXPECT_NEAR(end_arc.first, s_start+forward_path_length, epsilon);
+  EXPECT_NEAR(end_arc.first, s_start + forward_path_length, epsilon);
   EXPECT_FALSE(end_arc.second);
 
   // condition: goal pose behind start
   goal_pose.position.x = -0.9;
   goal_pose.position.y = 0.0;
   end_arc = calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
-  EXPECT_NEAR(end_arc.first, s_start+forward_path_length, epsilon);
+  EXPECT_NEAR(end_arc.first, s_start + forward_path_length, epsilon);
   EXPECT_FALSE(end_arc.second);
 
   // condition: goal pose beyond start
   goal_pose.position.x = 0.0;
   end_arc = calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
-  EXPECT_NEAR(end_arc.first, s_start+forward_path_length, epsilon);
+  EXPECT_NEAR(end_arc.first, s_start + forward_path_length, epsilon);
   EXPECT_FALSE(end_arc.second);
 
   // condition: path end is goal
