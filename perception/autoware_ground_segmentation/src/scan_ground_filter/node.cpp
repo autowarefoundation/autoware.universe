@@ -114,7 +114,7 @@ inline void ScanGroundFilterComponent::set_field_index_offsets(const PointCloud2
 }
 
 inline void ScanGroundFilterComponent::get_point_from_data_index(
-  const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point)
+  const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point) const
 {
   point.x = *reinterpret_cast<const float *>(&input->data[data_index + data_offset_x_]);
   point.y = *reinterpret_cast<const float *>(&input->data[data_index + data_offset_y_]);
@@ -122,7 +122,8 @@ inline void ScanGroundFilterComponent::get_point_from_data_index(
 }
 
 void ScanGroundFilterComponent::convertPointcloudGridScan(
-  const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & out_radial_ordered_points)
+  const PointCloud2ConstPtr & in_cloud,
+  std::vector<PointCloudVector> & out_radial_ordered_points) const
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -191,7 +192,8 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
 }
 
 void ScanGroundFilterComponent::convertPointcloud(
-  const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & out_radial_ordered_points)
+  const PointCloud2ConstPtr & in_cloud,
+  std::vector<PointCloudVector> & out_radial_ordered_points) const
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -242,14 +244,14 @@ void ScanGroundFilterComponent::convertPointcloud(
   }
 }
 
-void ScanGroundFilterComponent::calcVirtualGroundOrigin(pcl::PointXYZ & point)
+void ScanGroundFilterComponent::calcVirtualGroundOrigin(pcl::PointXYZ & point) const
 {
   point.x = vehicle_info_.wheel_base_m;
   point.y = 0;
   point.z = 0;
 }
 
-inline float ScanGroundFilterComponent::calcGridSize(const PointData & pd)
+inline float ScanGroundFilterComponent::calcGridSize(const PointData & pd) const
 {
   float grid_size = grid_size_m_;
   uint16_t back_steps_num = 1;
@@ -266,7 +268,7 @@ inline float ScanGroundFilterComponent::calcGridSize(const PointData & pd)
 }
 
 void ScanGroundFilterComponent::initializeFirstGndGrids(
-  const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids)
+  const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids) const
 {
   GridCenter curr_gnd_grid;
   for (int ind_grid = id - 1 - gnd_grid_buffer_size_; ind_grid < id - 1; ++ind_grid) {
@@ -285,7 +287,8 @@ void ScanGroundFilterComponent::initializeFirstGndGrids(
 }
 
 void ScanGroundFilterComponent::checkContinuousGndGrid(
-  PointData & pd, const pcl::PointXYZ & point_curr, const std::vector<GridCenter> & gnd_grids_list)
+  PointData & pd, const pcl::PointXYZ & point_curr,
+  const std::vector<GridCenter> & gnd_grids_list) const
 {
   float next_gnd_z = 0.0f;
   float curr_gnd_slope_ratio = 0.0f;
@@ -327,7 +330,8 @@ void ScanGroundFilterComponent::checkContinuousGndGrid(
 }
 
 void ScanGroundFilterComponent::checkDiscontinuousGndGrid(
-  PointData & pd, const pcl::PointXYZ & point_curr, const std::vector<GridCenter> & gnd_grids_list)
+  PointData & pd, const pcl::PointXYZ & point_curr,
+  const std::vector<GridCenter> & gnd_grids_list) const
 {
   float tmp_delta_max_z = point_curr.z - gnd_grids_list.back().max_height;
   float tmp_delta_avg_z = point_curr.z - gnd_grids_list.back().avg_height;
@@ -345,7 +349,8 @@ void ScanGroundFilterComponent::checkDiscontinuousGndGrid(
 }
 
 void ScanGroundFilterComponent::checkBreakGndGrid(
-  PointData & pd, const pcl::PointXYZ & point_curr, const std::vector<GridCenter> & gnd_grids_list)
+  PointData & pd, const pcl::PointXYZ & point_curr,
+  const std::vector<GridCenter> & gnd_grids_list) const
 {
   float tmp_delta_avg_z = point_curr.z - gnd_grids_list.back().avg_height;
   float tmp_delta_radius = pd.radius - gnd_grids_list.back().radius;
@@ -359,7 +364,7 @@ void ScanGroundFilterComponent::checkBreakGndGrid(
 
 void ScanGroundFilterComponent::recheckGroundCluster(
   const PointsCentroid & gnd_cluster, const float non_ground_threshold, const bool use_lowest_point,
-  pcl::PointIndices & non_ground_indices)
+  pcl::PointIndices & non_ground_indices) const
 {
   float reference_height =
     use_lowest_point ? gnd_cluster.getMinHeight() : gnd_cluster.getAverageHeight();
@@ -375,7 +380,7 @@ void ScanGroundFilterComponent::recheckGroundCluster(
 void ScanGroundFilterComponent::classifyPointCloudGridScan(
   const PointCloud2ConstPtr & in_cloud,
   const std::vector<PointCloudVector> & in_radial_ordered_clouds,
-  pcl::PointIndices & out_no_ground_indices)
+  pcl::PointIndices & out_no_ground_indices) const
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -523,7 +528,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 void ScanGroundFilterComponent::classifyPointCloud(
   const PointCloud2ConstPtr & in_cloud,
   const std::vector<PointCloudVector> & in_radial_ordered_clouds,
-  pcl::PointIndices & out_no_ground_indices)
+  pcl::PointIndices & out_no_ground_indices) const
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -649,7 +654,7 @@ void ScanGroundFilterComponent::classifyPointCloud(
 
 void ScanGroundFilterComponent::extractObjectPoints(
   const PointCloud2ConstPtr & in_cloud_ptr, const pcl::PointIndices & in_indices,
-  PointCloud2 & out_object_cloud)
+  PointCloud2 & out_object_cloud) const
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);

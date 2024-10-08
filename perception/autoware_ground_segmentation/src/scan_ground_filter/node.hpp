@@ -134,7 +134,7 @@ private:
       addPoint(radius, height);
     }
 
-    float getAverageSlope() { return std::atan2(height_avg, radius_avg); }
+    float getAverageSlope() const { return std::atan2(height_avg, radius_avg); }
 
     float getAverageHeight() const { return height_avg; }
 
@@ -170,7 +170,7 @@ private:
   void set_field_index_offsets(const PointCloud2ConstPtr & input);
 
   void get_point_from_data_index(
-    const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point);
+    const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point) const;
 
   const uint16_t gnd_grid_continual_thresh_ = 3;
   bool elevation_grid_mode_;
@@ -224,17 +224,17 @@ private:
    */
   void convertPointcloud(
     const PointCloud2ConstPtr & in_cloud,
-    std::vector<PointCloudVector> & out_radial_ordered_points);
+    std::vector<PointCloudVector> & out_radial_ordered_points) const;
   void convertPointcloudGridScan(
     const PointCloud2ConstPtr & in_cloud,
-    std::vector<PointCloudVector> & out_radial_ordered_points);
+    std::vector<PointCloudVector> & out_radial_ordered_points) const;
   /*!
    * Output ground center of front wheels as the virtual ground point
    * @param[out] point Virtual ground origin point
    */
-  void calcVirtualGroundOrigin(pcl::PointXYZ & point);
+  void calcVirtualGroundOrigin(pcl::PointXYZ & point) const;
 
-  float calcGridSize(const PointData & pd);
+  float calcGridSize(const PointData & pd) const;
 
   /*!
    * Classifies Points in the PointCloud as Ground and Not Ground
@@ -245,25 +245,25 @@ private:
    */
 
   void initializeFirstGndGrids(
-    const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids);
+    const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids) const;
 
   void checkContinuousGndGrid(
     PointData & pd, const pcl::PointXYZ & point_curr,
-    const std::vector<GridCenter> & gnd_grids_list);
+    const std::vector<GridCenter> & gnd_grids_list) const;
   void checkDiscontinuousGndGrid(
     PointData & pd, const pcl::PointXYZ & point_curr,
-    const std::vector<GridCenter> & gnd_grids_list);
+    const std::vector<GridCenter> & gnd_grids_list) const;
   void checkBreakGndGrid(
     PointData & pd, const pcl::PointXYZ & point_curr,
-    const std::vector<GridCenter> & gnd_grids_list);
+    const std::vector<GridCenter> & gnd_grids_list) const;
   void classifyPointCloud(
     const PointCloud2ConstPtr & in_cloud,
     const std::vector<PointCloudVector> & in_radial_ordered_clouds,
-    pcl::PointIndices & out_no_ground_indices);
+    pcl::PointIndices & out_no_ground_indices) const;
   void classifyPointCloudGridScan(
     const PointCloud2ConstPtr & in_cloud,
     const std::vector<PointCloudVector> & in_radial_ordered_clouds,
-    pcl::PointIndices & out_no_ground_indices);
+    pcl::PointIndices & out_no_ground_indices) const;
   /*!
    * Re-classifies point of ground cluster based on their height
    * @param gnd_cluster Input ground cluster for re-checking
@@ -272,7 +272,7 @@ private:
    */
   void recheckGroundCluster(
     const PointsCentroid & gnd_cluster, const float non_ground_threshold,
-    const bool use_lowest_point, pcl::PointIndices & non_ground_indices);
+    const bool use_lowest_point, pcl::PointIndices & non_ground_indices) const;
   /*!
    * Returns the resulting complementary PointCloud, one with the points kept
    * and the other removed as indicated in the indices
@@ -282,7 +282,7 @@ private:
    */
   void extractObjectPoints(
     const PointCloud2ConstPtr & in_cloud_ptr, const pcl::PointIndices & in_indices,
-    PointCloud2 & out_object_cloud);
+    PointCloud2 & out_object_cloud) const;
 
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
