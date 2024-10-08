@@ -78,6 +78,12 @@ rclcpp::Logger get_logger()
   return logger;
 }
 
+bool is_mandatory_lane_change(const ModuleType lc_type)
+{
+  return lc_type == LaneChangeModuleType::NORMAL ||
+         lc_type == LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE;
+}
+
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity)
 {
@@ -160,14 +166,13 @@ lanelet::ConstLanelets getTargetNeighborLanes(
   lanelet::ConstLanelets neighbor_lanes;
 
   for (const auto & current_lane : current_lanes) {
+    const auto mandatory_lane_change = is_mandatory_lane_change(type);
     if (route_handler.getNumLaneToPreferredLane(current_lane) != 0) {
-      if (
-        type == LaneChangeModuleType::NORMAL ||
-        type == LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE) {
+      if (mandatory_lane_change) {
         neighbor_lanes.push_back(current_lane);
       }
     } else {
-      if (type != LaneChangeModuleType::NORMAL) {
+      if (!mandatory_lane_change) {
         neighbor_lanes.push_back(current_lane);
       }
     }
@@ -633,17 +638,16 @@ CandidateOutput assignToCandidate(
   return candidate_output;
 }
 
-std::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const LaneChangeModuleType type, const Direction & direction)
+std::optional<lanelet::ConstLanelet> get_lane_change_target_lane(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes)
 {
-  if (
-    type == LaneChangeModuleType::NORMAL ||
-    type == LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE) {
-    return route_handler.getLaneChangeTarget(current_lanes, direction);
+  const auto direction = common_data_ptr->direction;
+  const auto route_handler_ptr = common_data_ptr->route_handler_ptr;
+  if (is_mandatory_lane_change(common_data_ptr->lc_type)) {
+    return route_handler_ptr->getLaneChangeTarget(current_lanes, direction);
   }
 
-  return route_handler.getLaneChangeTargetExceptPreferredLane(current_lanes, direction);
+  return route_handler_ptr->getLaneChangeTargetExceptPreferredLane(current_lanes, direction);
 }
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(

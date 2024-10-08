@@ -896,25 +896,8 @@ double getArcLengthToTargetLanelet(
 
   const auto target_center_line = target_lane.centerline().basicLineString();
 
-  Pose front_pose, back_pose;
-
-  {
-    const auto front_point = lanelet::utils::conversion::toGeomMsgPt(target_center_line.front());
-    const double front_yaw = lanelet::utils::getLaneletAngle(target_lane, front_point);
-    front_pose.position = front_point;
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, front_yaw);
-    front_pose.orientation = tf2::toMsg(tf_quat);
-  }
-
-  {
-    const auto back_point = lanelet::utils::conversion::toGeomMsgPt(target_center_line.back());
-    const double back_yaw = lanelet::utils::getLaneletAngle(target_lane, back_point);
-    back_pose.position = back_point;
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, back_yaw);
-    back_pose.orientation = tf2::toMsg(tf_quat);
-  }
+  const auto front_pose = to_geom_msg_pose(target_center_line.front(), target_lane);
+  const auto back_pose = to_geom_msg_pose(target_center_line.back(), target_lane);
 
   const auto arc_front = lanelet::utils::getArcCoordinates(lanelet_sequence, front_pose);
   const auto arc_back = lanelet::utils::getArcCoordinates(lanelet_sequence, back_pose);
