@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc. All rights reserved.
+// Copyright 2020-2024 Tier IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 #ifndef OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_HPP_
 #define OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_HPP_
 
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory.hpp>
@@ -23,8 +22,6 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-
-#include <boost/optional.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -54,6 +51,8 @@ struct Input
   geometry_msgs::msg::TransformStamped::ConstSharedPtr obstacle_transform;
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr reference_trajectory;
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr predicted_trajectory;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info;
+  Param param;
 };
 
 struct Output
@@ -65,43 +64,31 @@ struct Output
   std::vector<LinearRing2d> vehicle_passing_areas;
 };
 
-class ObstacleCollisionChecker
-{
-public:
-  explicit ObstacleCollisionChecker(rclcpp::Node & node);
-  Output update(const Input & input);
+Output check_for_collisions(const Input & input);
 
-  void setParam(const Param & param) { param_ = param; }
+//! This function assumes the input trajectory is sampled dense enough
+autoware_planning_msgs::msg::Trajectory resample_trajectory(
+  const autoware_planning_msgs::msg::Trajectory & trajectory, const double interval);
 
-private:
-  Param param_;
-  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
+autoware_planning_msgs::msg::Trajectory cut_trajectory(
+  const autoware_planning_msgs::msg::Trajectory & trajectory, const double length);
 
-  //! This function assumes the input trajectory is sampled dense enough
-  static autoware_planning_msgs::msg::Trajectory resampleTrajectory(
-    const autoware_planning_msgs::msg::Trajectory & trajectory, const double interval);
+std::vector<LinearRing2d> create_vehicle_footprints(
+  const autoware_planning_msgs::msg::Trajectory & trajectory, const Param & param,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 
-  static autoware_planning_msgs::msg::Trajectory cutTrajectory(
-    const autoware_planning_msgs::msg::Trajectory & trajectory, const double length);
+std::vector<LinearRing2d> create_vehicle_passing_areas(
+  const std::vector<LinearRing2d> & vehicle_footprints);
 
-  static std::vector<LinearRing2d> createVehicleFootprints(
-    const autoware_planning_msgs::msg::Trajectory & trajectory, const Param & param,
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
+LinearRing2d create_hull_from_footprints(const LinearRing2d & area1, const LinearRing2d & area2);
 
-  static std::vector<LinearRing2d> createVehiclePassingAreas(
-    const std::vector<LinearRing2d> & vehicle_footprints);
+bool will_collide(
+  const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
+  const std::vector<LinearRing2d> & vehicle_footprints);
 
-  static LinearRing2d createHullFromFootprints(
-    const LinearRing2d & area1, const LinearRing2d & area2);
-
-  static bool willCollide(
-    const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
-    const std::vector<LinearRing2d> & vehicle_footprints);
-
-  static bool hasCollision(
-    const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
-    const LinearRing2d & vehicle_footprint);
-};
+bool has_collision(
+  const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
+  const LinearRing2d & vehicle_footprint);
 }  // namespace obstacle_collision_checker
 
 #endif  // OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_HPP_

@@ -303,8 +303,7 @@ void GoalPlannerModule::onTimer()
                                     const std::shared_ptr<PullOverPlannerBase> & planner,
                                     const GoalCandidate & goal_candidate) {
     const auto pull_over_path = planner->plan(
-      goal_candidate.id, path_candidates.size(), local_planner_data, previous_module_output,
-      goal_candidate.goal_pose);
+      goal_candidate, path_candidates.size(), local_planner_data, previous_module_output);
     if (pull_over_path) {
       // calculate absolute maximum curvature of parking path(start pose to end pose) for path
       // priority
@@ -803,9 +802,8 @@ bool GoalPlannerModule::planFreespacePath(
       continue;
     }
     const auto freespace_path = freespace_planner_->plan(
-      goal_candidate.id, 0, planner_data,
-      BehaviorModuleOutput{},  // NOTE: not used so passing {} is OK
-      goal_candidate.goal_pose);
+      goal_candidate, 0, planner_data, BehaviorModuleOutput{}  // NOTE: not used so passing {} is OK
+    );
     if (!freespace_path) {
       continue;
     }
@@ -1824,7 +1822,7 @@ TurnSignalInfo GoalPlannerModule::calcTurnSignalInfo(const PullOverContextData &
     return ignore_signal_.value() == id;
   };
 
-  const auto update_ignore_signal = [this](const lanelet::Id & id, const bool is_ignore) {
+  const auto update_ignore_signal = [](const lanelet::Id & id, const bool is_ignore) {
     return is_ignore ? std::make_optional(id) : std::nullopt;
   };
 
@@ -2162,7 +2160,7 @@ static std::vector<utils::path_safety_checker::ExtendedPredictedObject> filterOb
   const auto & target_object_types = params->object_types_to_check;
 
   PredictedObjects filtered_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    *objects, ignore_object_velocity_threshold, false);
+    *objects, ignore_object_velocity_threshold, true);
 
   utils::path_safety_checker::filterObjectsByClass(filtered_objects, target_object_types);
 
@@ -2643,7 +2641,6 @@ void PathDecisionStateController::transit_state(
     found_pull_over_path, now, static_target_objects, dynamic_target_objects, modified_goal_opt,
     planner_data, occupancy_grid_map, is_current_safe, parameters, goal_searcher, is_activated,
     pull_over_path, ego_polygons_expanded);
-  prev_state_ = current_state_;
   current_state_ = next_state;
 }
 
@@ -2658,10 +2655,7 @@ PathDecisionState PathDecisionStateController::get_next_state(
   const std::optional<PullOverPath> & pull_over_path_opt,
   std::vector<Polygon2d> & ego_polygons_expanded) const
 {
-  auto next_state = prev_state_;
-
-  // update timestamp
-  next_state.stamp = now;
+  auto next_state = current_state_;
 
   // update safety
   if (!parameters.safety_check_params.enable_safety_check) {
@@ -2684,7 +2678,6 @@ PathDecisionState PathDecisionStateController::get_next_state(
 
   // Once this function returns true, it will continue to return true thereafter
   if (next_state.state == PathDecisionState::DecisionKind::DECIDED) {
-    next_state.state = PathDecisionState::DecisionKind::DECIDED;
     return next_state;
   }
 
@@ -2699,12 +2692,16 @@ PathDecisionState PathDecisionStateController::get_next_state(
   // If it is dangerous against dynamic objects before approval, do not determine the path.
   // This eliminates a unsafe path to be approved
   if (enable_safety_check && !next_state.is_stable_safe && !is_activated) {
+    RCLCPP_DEBUG(
+      logger_,
+      "[DecidingPathStatus]: NOT_DECIDED. path is not safe against dynamic objects before "
+      "approval");
     next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
     return next_state;
   }
 
   const auto & current_path = pull_over_path.getCurrentPath();
-  if (prev_state_.state == PathDecisionState::DecisionKind::DECIDING) {
+  if (current_state_.state == PathDecisionState::DecisionKind::DECIDING) {
     const double hysteresis_factor = 0.9;
 
     // check goal pose collision
@@ -2712,7 +2709,9 @@ PathDecisionState PathDecisionStateController::get_next_state(
       modified_goal_opt && !goal_searcher->isSafeGoalWithMarginScaleFactor(
                              modified_goal_opt.value(), hysteresis_factor, occupancy_grid_map,
                              planner_data, static_target_objects)) {
+      RCLCPP_DEBUG(logger_, "[DecidingPathStatus]: DECIDING->NOT_DECIDED. goal is not safe");
       next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
+      next_state.deciding_start_time = std::nullopt;
       return next_state;
     }
 
@@ -2727,24 +2726,36 @@ PathDecisionState PathDecisionStateController::get_next_state(
           /*extract_static_objects=*/false, parameters.maximum_deceleration,
           parameters.object_recognition_collision_check_max_extra_stopping_margin,
           ego_polygons_expanded, true)) {
+      RCLCPP_DEBUG(
+        logger_, "[DecidingPathStatus]: DECIDING->NOT_DECIDED. path has collision with objects");
       next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
+      next_state.deciding_start_time = std::nullopt;
       return next_state;
     }
 
     if (enable_safety_check && !next_state.is_stable_safe) {
+      RCLCPP_DEBUG(
+        logger_,
+        "[DecidingPathStatus]: DECIDING->NOT_DECIDED. path is not safe against dynamic objects");
       next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
       return next_state;
     }
 
     // if enough time has passed since deciding status starts, transition to DECIDED
     constexpr double check_collision_duration = 1.0;
-    const double elapsed_time_from_deciding = (now - prev_state_.stamp).seconds();
+    const double elapsed_time_from_deciding =
+      (now - current_state_.deciding_start_time.value()).seconds();
     if (elapsed_time_from_deciding > check_collision_duration) {
+      RCLCPP_DEBUG(logger_, "[DecidingPathStatus]: DECIDING->DECIDED. has enough safe time passed");
       next_state.state = PathDecisionState::DecisionKind::DECIDED;
+      next_state.deciding_start_time = std::nullopt;
       return next_state;
     }
 
     // if enough time has NOT passed since deciding status starts, keep DECIDING
+    RCLCPP_DEBUG(
+      logger_, "[DecidingPathStatus]: keep DECIDING. elapsed_time_from_deciding: %f",
+      elapsed_time_from_deciding);
     return next_state;
   }
 
@@ -2766,10 +2777,15 @@ PathDecisionState PathDecisionStateController::get_next_state(
   // if object recognition for path collision check is enabled, transition to DECIDING to check
   // collision for a certain period of time. Otherwise, transition to DECIDED directly.
   if (parameters.use_object_recognition) {
-    next_state.state = PathDecisionState::DecisionKind::DECIDED;
+    RCLCPP_DEBUG(
+      logger_,
+      "[DecidingPathStatus]: NOT_DECIDED->DECIDING. start checking collision for certain "
+      "period of time");
+    next_state.state = PathDecisionState::DecisionKind::DECIDING;
+    next_state.deciding_start_time = now;
     return next_state;
   }
-  return {PathDecisionState::DecisionKind::DECIDED, now};
+  return {PathDecisionState::DecisionKind::DECIDED, std::nullopt};
 }
 
 }  // namespace autoware::behavior_path_planner
