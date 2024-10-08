@@ -73,7 +73,7 @@
 # - autoware_map_height_fitter
 # - autoware_map_projection_loader
 # - autoware_map_tf_generator
-# - map_loader
+- map_loader
 ##### perception #####
 # - autoware_bytetrack
 # - autoware_cluster_merger
