@@ -81,8 +81,7 @@ protected:
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu);
   void warn_if_timestamp_is_too_late(
     bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late);
-  static void convert_matrix_to_transform(
-    const Eigen::Matrix4f & matrix, tf2::Transform & transform);
+  static tf2::Transform convert_matrix_to_transform(const Eigen::Matrix4f & matrix);
 
 public:
   explicit DistortionCorrectorBase(rclcpp::Node & node, const bool & has_static_tf_only)

@@ -84,11 +84,10 @@ void DistortionCorrectorBase::get_imu_transformation(
     return;
   }
 
-  tf2::Transform tf2_imu_to_base_link;
   Eigen::Matrix4f eigen_imu_to_base_link;
   imu_transform_exists_ =
     managed_tf_buffer_->getTransform(base_frame, imu_frame, eigen_imu_to_base_link);
-  convert_matrix_to_transform(eigen_imu_to_base_link, tf2_imu_to_base_link);
+  tf2::Transform tf2_imu_to_base_link = convert_matrix_to_transform(eigen_imu_to_base_link);
 
   geometry_imu_to_base_link_ptr_ = std::make_shared<geometry_msgs::msg::TransformStamped>();
   geometry_imu_to_base_link_ptr_->transform.rotation =
@@ -221,8 +220,8 @@ std::optional<AngleConversion> DistortionCorrectorBase::try_compute_angle_conver
     // If the angle exceeds 180 degrees, it may cross the 0-degree axis,
     // which could disrupt the calculation of the formula.
     if (
-      abs(*next_it_azimuth - *it_azimuth) == 0 ||
-      abs(next_cartesian_rad - current_cartesian_rad) == 0) {
+      std::abs(*next_it_azimuth - *it_azimuth) == 0 ||
+      std::abs(next_cartesian_rad - current_cartesian_rad) == 0) {
       RCLCPP_DEBUG_STREAM_THROTTLE(
         node_.get_logger(), *node_.get_clock(), 10000 /* ms */,
         "Angle between two points is 0 degrees. Iterate to next point ...");
@@ -230,12 +229,13 @@ std::optional<AngleConversion> DistortionCorrectorBase::try_compute_angle_conver
     }
 
     // restrict the angle difference between [-180, 180] (degrees)
-    float azimuth_diff = abs(*next_it_azimuth - *it_azimuth) > autoware::universe_utils::pi
-                           ? abs(*next_it_azimuth - *it_azimuth) - 2 * autoware::universe_utils::pi
-                           : *next_it_azimuth - *it_azimuth;
+    float azimuth_diff =
+      std::abs(*next_it_azimuth - *it_azimuth) > autoware::universe_utils::pi
+        ? std::abs(*next_it_azimuth - *it_azimuth) - 2 * autoware::universe_utils::pi
+        : *next_it_azimuth - *it_azimuth;
     float cartesian_rad_diff =
-      abs(next_cartesian_rad - current_cartesian_rad) > autoware::universe_utils::pi
-        ? abs(next_cartesian_rad - current_cartesian_rad) - 2 * autoware::universe_utils::pi
+      std::abs(next_cartesian_rad - current_cartesian_rad) > autoware::universe_utils::pi
+        ? std::abs(next_cartesian_rad - current_cartesian_rad) - 2 * autoware::universe_utils::pi
         : next_cartesian_rad - current_cartesian_rad;
 
     float sign = azimuth_diff / cartesian_rad_diff;
@@ -291,13 +291,14 @@ void DistortionCorrectorBase::warn_if_timestamp_is_too_late(
   }
 }
 
-void DistortionCorrectorBase::convert_matrix_to_transform(
-  const Eigen::Matrix4f & matrix, tf2::Transform & transform)
+tf2::Transform DistortionCorrectorBase::convert_matrix_to_transform(const Eigen::Matrix4f & matrix)
 {
+  tf2::Transform transform;
   transform.setOrigin(tf2::Vector3(matrix(0, 3), matrix(1, 3), matrix(2, 3)));
   transform.setBasis(tf2::Matrix3x3(
     matrix(0, 0), matrix(0, 1), matrix(0, 2), matrix(1, 0), matrix(1, 1), matrix(1, 2),
     matrix(2, 0), matrix(2, 1), matrix(2, 2)));
+  return transform;
 }
 
 template <class T>
@@ -430,7 +431,7 @@ void DistortionCorrector2D::set_pointcloud_transform(
   Eigen::Matrix4f eigen_lidar_to_base_link;
   pointcloud_transform_exists_ =
     managed_tf_buffer_->getTransform(base_frame, lidar_frame, eigen_lidar_to_base_link);
-  convert_matrix_to_transform(eigen_lidar_to_base_link, tf2_lidar_to_base_link_);
+  tf2_lidar_to_base_link_ = convert_matrix_to_transform(eigen_lidar_to_base_link);
   tf2_base_link_to_lidar_ = tf2_lidar_to_base_link_.inverse();
   pointcloud_transform_needed_ = base_frame != lidar_frame && pointcloud_transform_exists_;
 }
