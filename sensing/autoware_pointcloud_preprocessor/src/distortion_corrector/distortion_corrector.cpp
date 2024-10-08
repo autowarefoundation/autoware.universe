@@ -49,20 +49,25 @@ void DistortionCorrectorBase::process_twist_message(
   geometry_msgs::msg::TwistStamped msg;
   msg.header = twist_msg->header;
   msg.twist = twist_msg->twist.twist;
-  twist_queue_.push_back(msg);
 
-  while (!twist_queue_.empty()) {
-    // for replay rosbag
-    if (rclcpp::Time(twist_queue_.front().header.stamp) > rclcpp::Time(twist_msg->header.stamp)) {
-      twist_queue_.pop_front();
-    } else if (  // NOLINT
-      rclcpp::Time(twist_queue_.front().header.stamp) <
-      rclcpp::Time(twist_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
-      twist_queue_.pop_front();
-    } else {
-      break;
+  // If time jumps backwards (e.g. when a rosbag restarts), clear buffer
+  if (!twist_queue_.empty()) {
+    if (rclcpp::Time(twist_queue_.front().header.stamp) > rclcpp::Time(msg.header.stamp)) {
+      twist_queue_.clear();
     }
   }
+
+  // Twist data in the queue that is older than the current twist by 1 second will be cleared.
+  auto cutoff_time = rclcpp::Time(msg.header.stamp) - rclcpp::Duration::from_seconds(1.0);
+
+  while (!twist_queue_.empty()) {
+    if (rclcpp::Time(twist_queue_.front().header.stamp) > cutoff_time) {
+      break;
+    }
+    twist_queue_.pop_front();
+  }
+
+  twist_queue_.push_back(msg);
 }
 
 void DistortionCorrectorBase::process_imu_message(
@@ -98,22 +103,27 @@ void DistortionCorrectorBase::enqueue_imu(const sensor_msgs::msg::Imu::ConstShar
   geometry_msgs::msg::Vector3Stamped transformed_angular_velocity;
   tf2::doTransform(angular_velocity, transformed_angular_velocity, *geometry_imu_to_base_link_ptr_);
   transformed_angular_velocity.header = imu_msg->header;
-  angular_velocity_queue_.push_back(transformed_angular_velocity);
 
-  while (!angular_velocity_queue_.empty()) {
-    // for replay rosbag
+  // If time jumps backwards (e.g. when a rosbag restarts), clear buffer
+  if (!angular_velocity_queue_.empty()) {
     if (
       rclcpp::Time(angular_velocity_queue_.front().header.stamp) >
       rclcpp::Time(imu_msg->header.stamp)) {
-      angular_velocity_queue_.pop_front();
-    } else if (  // NOLINT
-      rclcpp::Time(angular_velocity_queue_.front().header.stamp) <
-      rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
-      angular_velocity_queue_.pop_front();
-    } else {
-      break;
+      angular_velocity_queue_.clear();
     }
   }
+
+  // IMU data in the queue that is older than the current imu msg by 1 second will be cleared.
+  auto cutoff_time = rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0);
+
+  while (!angular_velocity_queue_.empty()) {
+    if (rclcpp::Time(angular_velocity_queue_.front().header.stamp) > cutoff_time) {
+      break;
+    }
+    angular_velocity_queue_.pop_front();
+  }
+
+  angular_velocity_queue_.push_back(transformed_angular_velocity);
 }
 
 void DistortionCorrectorBase::get_twist_and_imu_iterator(
