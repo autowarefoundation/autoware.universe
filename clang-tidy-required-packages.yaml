@@ -130,7 +130,7 @@
 # - autoware_behavior_velocity_blind_spot_module
 # - autoware_behavior_velocity_crosswalk_module
 # - autoware_behavior_velocity_detection_area_module
-# - autoware_behavior_velocity_intersection_module
+- autoware_behavior_velocity_intersection_module
 # - autoware_behavior_velocity_no_drivable_lane_module
 # - autoware_behavior_velocity_no_stopping_area_module
 # - autoware_behavior_velocity_occlusion_spot_module
