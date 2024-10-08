@@ -64,6 +64,8 @@
 #include <string>
 #include <vector>
 
+class TestFreespacePlanner;
+
 namespace autoware::freespace_planner
 {
 using autoware::freespace_planning_algorithms::AbstractPlanningAlgorithm;
@@ -175,6 +177,8 @@ private:
   TransformStamped getTransform(const std::string & from, const std::string & to);
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
+
+  friend class ::TestFreespacePlanner;
 };
 }  // namespace autoware::freespace_planner
 
