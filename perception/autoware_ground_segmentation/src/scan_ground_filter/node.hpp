@@ -234,7 +234,7 @@ private:
    */
   void calcVirtualGroundOrigin(pcl::PointXYZ & point);
 
-  float calcGridSize(const PointData & p);
+  float calcGridSize(const PointData & pd);
 
   /*!
    * Classifies Points in the PointCloud as Ground and Not Ground
@@ -248,19 +248,20 @@ private:
     const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids);
 
   void checkContinuousGndGrid(
-    PointData & p, const pcl::PointXYZ & p_orig_point,
+    PointData & pd, const pcl::PointXYZ & point_curr,
     const std::vector<GridCenter> & gnd_grids_list);
   void checkDiscontinuousGndGrid(
-    PointData & p, const pcl::PointXYZ & p_orig_point,
+    PointData & pd, const pcl::PointXYZ & point_curr,
     const std::vector<GridCenter> & gnd_grids_list);
   void checkBreakGndGrid(
-    PointData & p, const pcl::PointXYZ & p_orig_point,
+    PointData & pd, const pcl::PointXYZ & point_curr,
     const std::vector<GridCenter> & gnd_grids_list);
   void classifyPointCloud(
     const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
   void classifyPointCloudGridScan(
-    const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & in_radial_ordered_clouds,
+    const PointCloud2ConstPtr & in_cloud,
+    const std::vector<PointCloudVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
   /*!
    * Re-classifies point of ground cluster based on their height
@@ -286,7 +287,8 @@ private:
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
   /** \brief Parameter service callback */
-  rcl_interfaces::msg::SetParametersResult onParameter(const std::vector<rclcpp::Parameter> & p);
+  rcl_interfaces::msg::SetParametersResult onParameter(
+    const std::vector<rclcpp::Parameter> & param);
 
   // debugger
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{
