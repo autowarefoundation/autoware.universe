@@ -144,8 +144,8 @@ private:
 
     float getMinHeight() const { return height_min; }
 
-    pcl::PointIndices & getIndicesRef() { return pcl_indices; }
-    std::vector<float> & getHeightListRef() { return height_list; }
+    const pcl::PointIndices & getIndicesRef() const { return pcl_indices; }
+    const std::vector<float> & getHeightListRef() const { return height_list; }
   };
 
   void filter(
@@ -269,8 +269,8 @@ private:
    * @param non_ground_indices Output non-ground PointCloud indices
    */
   void recheckGroundCluster(
-    PointsCentroid & gnd_cluster, const float non_ground_threshold, const bool use_lowest_point,
-    pcl::PointIndices & non_ground_indices);
+    const PointsCentroid & gnd_cluster, const float non_ground_threshold,
+    const bool use_lowest_point, pcl::PointIndices & non_ground_indices);
   /*!
    * Returns the resulting complementary PointCloud, one with the points kept
    * and the other removed as indicated in the indices

@@ -357,7 +357,7 @@ void ScanGroundFilterComponent::checkBreakGndGrid(
 }
 
 void ScanGroundFilterComponent::recheckGroundCluster(
-  PointsCentroid & gnd_cluster, const float non_ground_threshold, const bool use_lowest_point,
+  const PointsCentroid & gnd_cluster, const float non_ground_threshold, const bool use_lowest_point,
   pcl::PointIndices & non_ground_indices)
 {
   float reference_height =
@@ -380,10 +380,9 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
   out_no_ground_indices.indices.clear();
   for (size_t i = 0; i < in_radial_ordered_clouds.size(); ++i) {
-    PointsCentroid ground_cluster;
-    ground_cluster.initialize();
+    PointsCentroid centroid_bin;
+    centroid_bin.initialize();
     std::vector<GridCenter> gnd_grids;
-    GridCenter curr_gnd_grid;
 
     // check empty ray
     if (in_radial_ordered_clouds[i].size() == 0) {
@@ -424,7 +423,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         } else if (
           abs(global_slope_ratio_p) < global_slope_max_ratio_ &&
           abs(p_orig_point.z) < non_ground_height_threshold_local) {
-          ground_cluster.addPoint(p->radius, p_orig_point.z, p->orig_index);
+          centroid_bin.addPoint(p->radius, p_orig_point.z, p->orig_index);
           p->point_state = PointLabel::GROUND;
           // if the gird id is not the initial grid_id, then the first gnd grid is initialized
           initialized_first_gnd_grid = static_cast<bool>(p->grid_id - prev_p->grid_id);
@@ -433,29 +432,31 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         continue;
       }
 
-      // initialize lists of previous gnd grids
+      // initialize gnd_grids based on the initial centroid_bin
       if (!prev_list_init) {
-        float h = ground_cluster.getAverageHeight();
-        float r = ground_cluster.getAverageRadius();
+        float h = centroid_bin.getAverageHeight();
+        float r = centroid_bin.getAverageRadius();
         initializeFirstGndGrids(h, r, p->grid_id, gnd_grids);
         prev_list_init = true;
       }
 
-      // move to new grid
-      if (p->grid_id > prev_p->grid_id && ground_cluster.getAverageRadius() > 0.0) {
+      // finalize the current centroid_bin
+      if (p->grid_id > prev_p->grid_id && centroid_bin.getAverageRadius() > 0.0) {
         // check if the prev grid have ground point cloud
         if (use_recheck_ground_cluster_) {
           recheckGroundCluster(
-            ground_cluster, non_ground_height_threshold_, use_lowest_point_, out_no_ground_indices);
+            centroid_bin, non_ground_height_threshold_, use_lowest_point_, out_no_ground_indices);
+          // centroid_bin is not modified. should be rechecked by out_no_ground_indices?
         }
-        // save the ground cluster to the last gnd grid
-        curr_gnd_grid.radius = ground_cluster.getAverageRadius();
-        curr_gnd_grid.avg_height = ground_cluster.getAverageHeight();
-        curr_gnd_grid.max_height = ground_cluster.getMaxHeight();
+        // convert the centroid_bin to gnd grid and add it to the gnd_grids
+        GridCenter curr_gnd_grid;
+        curr_gnd_grid.radius = centroid_bin.getAverageRadius();
+        curr_gnd_grid.avg_height = centroid_bin.getAverageHeight();
+        curr_gnd_grid.max_height = centroid_bin.getMaxHeight();
         curr_gnd_grid.grid_id = prev_p->grid_id;
         gnd_grids.push_back(curr_gnd_grid);
-        // clear the ground cluster
-        ground_cluster.initialize();
+        // clear the centroid_bin
+        centroid_bin.initialize();
       }
 
       // 1: height is out-of-range
@@ -504,7 +505,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       if (p->point_state == PointLabel::NON_GROUND) {
         out_no_ground_indices.indices.push_back(p->orig_index);
       } else if (p->point_state == PointLabel::GROUND) {
-        ground_cluster.addPoint(p->radius, p_orig_point.z, p->orig_index);
+        centroid_bin.addPoint(p->radius, p_orig_point.z, p->orig_index);
       }
       // else, the point is not classified
     }
