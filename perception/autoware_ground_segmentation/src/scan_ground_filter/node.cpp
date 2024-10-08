@@ -399,6 +399,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
     PointData pd_curr, pd_prev;
     pcl::PointXYZ point_curr, point_prev;
 
+    // initialize the previous point
     pd_curr = in_radial_ordered_clouds[i][0];
 
     // iterate over the points in the ray
@@ -447,7 +448,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         prev_list_init = true;
       }
 
-      // finalize the current centroid_bin
+      // finalize the current centroid_bin and update the gnd_grids
       if (pd_curr.grid_id > pd_prev.grid_id && centroid_bin.getAverageRadius() > 0.0) {
         // check if the prev grid have ground point cloud
         if (use_recheck_ground_cluster_) {
@@ -455,7 +456,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
             centroid_bin, non_ground_height_threshold_, use_lowest_point_, out_no_ground_indices);
           // centroid_bin is not modified. should be rechecked by out_no_ground_indices?
         }
-        // convert the centroid_bin to gnd grid and add it to the gnd_grids
+        // convert the centroid_bin to grid-center and add it to the gnd_grids
         GridCenter curr_gnd_grid;
         curr_gnd_grid.radius = centroid_bin.getAverageRadius();
         curr_gnd_grid.avg_height = centroid_bin.getAverageHeight();
@@ -520,7 +521,8 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 }
 
 void ScanGroundFilterComponent::classifyPointCloud(
-  const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & in_radial_ordered_clouds,
+  const PointCloud2ConstPtr & in_cloud,
+  const std::vector<PointCloudVector> & in_radial_ordered_clouds,
   pcl::PointIndices & out_no_ground_indices)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -537,16 +539,25 @@ void ScanGroundFilterComponent::classifyPointCloud(
     float prev_gnd_radius = 0.0f;
     float prev_gnd_slope = 0.0f;
     PointsCentroid ground_cluster, non_ground_cluster;
-    PointLabel prev_point_label = PointLabel::INIT;
+    PointLabel point_label_prev = PointLabel::INIT;
+    PointLabel point_label_curr = PointLabel::INIT;
+
     pcl::PointXYZ prev_gnd_point(0, 0, 0), point_curr, point_prev;
 
     // iterate over the points in the ray
     for (size_t j = 0; j < in_radial_ordered_clouds[i].size(); ++j) {
       float points_distance = 0.0f;
       const float local_slope_max_angle = local_slope_max_angle_rad_;
+
+      // set the previous point
       point_prev = point_curr;
-      auto * p = &in_radial_ordered_clouds[i][j];
-      const size_t data_index = in_cloud->point_step * p->orig_index;
+      point_label_prev = point_label_curr;
+
+      // set the current point
+      const PointData & pd = in_radial_ordered_clouds[i][j];
+      point_label_curr = pd.point_state;
+
+      const size_t data_index = in_cloud->point_step * pd.orig_index;
       get_point_from_data_index(in_cloud, data_index, point_curr);
       if (j == 0) {
         bool is_front_side = (point_curr.x > virtual_ground_point.x);
@@ -564,73 +575,73 @@ void ScanGroundFilterComponent::classifyPointCloud(
         points_distance = calcDistance3d(point_curr, point_prev);
       }
 
-      float radius_distance_from_gnd = p->radius - prev_gnd_radius;
+      float radius_distance_from_gnd = pd.radius - prev_gnd_radius;
       float height_from_gnd = point_curr.z - prev_gnd_point.z;
       float height_from_obj = point_curr.z - non_ground_cluster.getAverageHeight();
       bool calculate_slope = false;
       bool is_point_close_to_prev =
         (points_distance <
-         (p->radius * radial_divider_angle_rad_ + split_points_distance_tolerance_));
+         (pd.radius * radial_divider_angle_rad_ + split_points_distance_tolerance_));
 
-      float global_slope_ratio = point_curr.z / p->radius;
+      float global_slope_ratio = point_curr.z / pd.radius;
       // check points which is far enough from previous point
       if (global_slope_ratio > global_slope_max_ratio_) {
-        p->point_state = PointLabel::NON_GROUND;
+        point_label_curr = PointLabel::NON_GROUND;
         calculate_slope = false;
       } else if (
-        (prev_point_label == PointLabel::NON_GROUND) &&
+        (point_label_prev == PointLabel::NON_GROUND) &&
         (std::abs(height_from_obj) >= split_height_distance_)) {
         calculate_slope = true;
       } else if (is_point_close_to_prev && std::abs(height_from_gnd) < split_height_distance_) {
         // close to the previous point, set point follow label
-        p->point_state = PointLabel::POINT_FOLLOW;
+        point_label_curr = PointLabel::POINT_FOLLOW;
         calculate_slope = false;
       } else {
         calculate_slope = true;
       }
       if (is_point_close_to_prev) {
         height_from_gnd = point_curr.z - ground_cluster.getAverageHeight();
-        radius_distance_from_gnd = p->radius - ground_cluster.getAverageRadius();
+        radius_distance_from_gnd = pd.radius - ground_cluster.getAverageRadius();
       }
       if (calculate_slope) {
         // far from the previous point
         auto local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
         if (local_slope - prev_gnd_slope > local_slope_max_angle) {
           // the point is outside of the local slope threshold
-          p->point_state = PointLabel::NON_GROUND;
+          point_label_curr = PointLabel::NON_GROUND;
         } else {
-          p->point_state = PointLabel::GROUND;
+          point_label_curr = PointLabel::GROUND;
         }
       }
 
-      if (p->point_state == PointLabel::GROUND) {
+      if (point_label_curr == PointLabel::GROUND) {
         ground_cluster.initialize();
         non_ground_cluster.initialize();
       }
-      if (p->point_state == PointLabel::NON_GROUND) {
-        out_no_ground_indices.indices.push_back(p->orig_index);
+      if (point_label_curr == PointLabel::NON_GROUND) {
+        out_no_ground_indices.indices.push_back(pd.orig_index);
       } else if (  // NOLINT
-        (prev_point_label == PointLabel::NON_GROUND) &&
-        (p->point_state == PointLabel::POINT_FOLLOW)) {
-        p->point_state = PointLabel::NON_GROUND;
-        out_no_ground_indices.indices.push_back(p->orig_index);
+        (point_label_prev == PointLabel::NON_GROUND) &&
+        (point_label_curr == PointLabel::POINT_FOLLOW)) {
+        point_label_curr = PointLabel::NON_GROUND;
+        out_no_ground_indices.indices.push_back(pd.orig_index);
       } else if (  // NOLINT
-        (prev_point_label == PointLabel::GROUND) && (p->point_state == PointLabel::POINT_FOLLOW)) {
-        p->point_state = PointLabel::GROUND;
+        (point_label_prev == PointLabel::GROUND) &&
+        (point_label_curr == PointLabel::POINT_FOLLOW)) {
+        point_label_curr = PointLabel::GROUND;
       } else {
       }
 
       // update the ground state
-      prev_point_label = p->point_state;
-      if (p->point_state == PointLabel::GROUND) {
-        prev_gnd_radius = p->radius;
+      if (point_label_curr == PointLabel::GROUND) {
+        prev_gnd_radius = pd.radius;
         prev_gnd_point = pcl::PointXYZ(point_curr.x, point_curr.y, point_curr.z);
-        ground_cluster.addPoint(p->radius, point_curr.z);
+        ground_cluster.addPoint(pd.radius, point_curr.z);
         prev_gnd_slope = ground_cluster.getAverageSlope();
       }
       // update the non ground state
-      if (p->point_state == PointLabel::NON_GROUND) {
-        non_ground_cluster.addPoint(p->radius, point_curr.z);
+      if (point_label_curr == PointLabel::NON_GROUND) {
+        non_ground_cluster.addPoint(pd.radius, point_curr.z);
       }
     }
   }

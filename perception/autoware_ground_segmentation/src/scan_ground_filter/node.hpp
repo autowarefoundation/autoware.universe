@@ -257,7 +257,8 @@ private:
     PointData & pd, const pcl::PointXYZ & point_curr,
     const std::vector<GridCenter> & gnd_grids_list);
   void classifyPointCloud(
-    const PointCloud2ConstPtr & in_cloud, std::vector<PointCloudVector> & in_radial_ordered_clouds,
+    const PointCloud2ConstPtr & in_cloud,
+    const std::vector<PointCloudVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
   void classifyPointCloudGridScan(
     const PointCloud2ConstPtr & in_cloud,
