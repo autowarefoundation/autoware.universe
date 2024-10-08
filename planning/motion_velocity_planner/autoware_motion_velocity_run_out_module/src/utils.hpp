@@ -17,7 +17,7 @@
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
 
-#include <autoware/behavior_velocity_planner_common/planner_data.hpp>
+#include <autoware/motion_velocity_planner_common/planner_data.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
@@ -29,23 +29,20 @@
 
 #include <string>
 #include <vector>
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 namespace run_out_utils
 {
-namespace bg = boost::geometry;
 using autoware::universe_utils::Box2d;
 using autoware::universe_utils::LineString2d;
 using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
+using Polygons2d = autoware::universe_utils::MultiPolygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
-using autoware_planning_msgs::msg::PathPoint;
 using tier4_debug_msgs::msg::Float32Stamped;
-using tier4_planning_msgs::msg::PathWithLaneId;
-using PathPointsWithLaneId = std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>;
 struct CommonParam
 {
   double normal_min_jerk;  // min jerk limit for mild stop [m/sss]
@@ -198,7 +195,7 @@ struct DynamicObstacle
 struct DynamicObstacleData
 {
   PredictedObjects predicted_objects;
-  PathWithLaneId path;
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory;
   Polygons2d detection_area;
   Polygons2d mandatory_detection_area;
 };
@@ -226,26 +223,21 @@ bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg:
 
 // insert path velocity which doesn't exceed original velocity
 void insertPathVelocityFromIndexLimited(
-  const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
+  const size_t & start_idx, const float velocity_mps, std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory_points);
 
 void insertPathVelocityFromIndex(
-  const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
+  const size_t & start_idx, const float velocity_mps, std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory_points);
 
-std::optional<size_t> findFirstStopPointIdx(const PathPointsWithLaneId & path_points);
+std::optional<size_t> findFirstStopPointIdx(const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory_points);
 
 LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly);
 
 std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
-  const std::vector<DynamicObstacle> & dynamic_obstacles, const PathPointsWithLaneId & path_points,
+  const std::vector<DynamicObstacle> & dynamic_obstacles, const autoware_planning_msgs::msg::TrajectoryPoint & path_points,
   const lanelet::BasicPolygon2d & partition);
 
-PathPointsWithLaneId decimatePathPoints(
-  const PathPointsWithLaneId & input_path_points, const float step);
-
-// trim path from self_pose to trim_distance
-PathWithLaneId trimPathFromSelfPose(
-  const PathWithLaneId & input, const geometry_msgs::msg::Pose & self_pose,
-  const double trim_distance);
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> decimateTrajectoryPoints(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & input_trajectory_points, const float step);
 
 // create polygon for passing lines and deceleration line calculated by stopping jerk
 // note that this polygon is not closed
@@ -254,18 +246,18 @@ std::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon
   const size_t deceleration_line_idx);
 
 // extend path to the pose of goal
-PathWithLaneId extendPath(const PathWithLaneId & input, const double extend_distance);
-PathPoint createExtendPathPoint(const double extend_distance, const PathPoint & goal_point);
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> extendTrajectory(const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & input, const double extend_distance);
+autoware_planning_msgs::msg::TrajectoryPoint createExtendTrajectoryPoint(const double extend_distance, const autoware_planning_msgs::msg::TrajectoryPoint & goal_point);
 
 DetectionMethod toEnum(const std::string & detection_method);
 
 Polygons2d createDetectionAreaPolygon(
-  const PathWithLaneId & path, const PlannerData & planner_data,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory, const PlannerData & planner_data,
   const PlannerParam & planner_param);
 
 Polygons2d createMandatoryDetectionAreaPolygon(
-  const PathWithLaneId & path, const PlannerData & planner_data,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory, const PlannerData & planner_data,
   const PlannerParam & planner_param);
 }  // namespace run_out_utils
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner
 #endif  // UTILS_HPP_

@@ -30,16 +30,16 @@
 #include <limits>
 #include <string>
 
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 namespace
 {
 // create quaternion facing to the nearest trajectory point
 geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
-  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & point)
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & path_points, const geometry_msgs::msg::Point & point)
 {
   const auto nearest_idx = autoware::motion_utils::findNearestIndex(path_points, point);
-  const auto & nearest_pose = path_points.at(nearest_idx).point.pose;
+  const auto & nearest_pose = path_points.at(nearest_idx).pose;
 
   const auto longitudinal_offset =
     autoware::universe_utils::calcLongitudinalDeviation(nearest_pose, point);
@@ -50,7 +50,7 @@ geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
   return autoware::universe_utils::createQuaternionFromYaw(azimuth_angle);
 }
 
-// create predicted path assuming that obstacles move with constant velocity
+// create predicted trajectory assuming that obstacles move with constant velocity
 std::vector<geometry_msgs::msg::Pose> createPredictedPath(
   const geometry_msgs::msg::Pose & initial_pose, const float time_step,
   const float max_velocity_mps, const float max_prediction_time)
@@ -121,7 +121,7 @@ bool isAheadOf(
 }
 
 pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithinPolygon(
-  const pcl::PointCloud<pcl::PointXYZ> & input_points, const Polygons2d & polys)
+  const pcl::PointCloud<pcl::PointXYZ> & input_points, const universe_utils::MultiPolygon2d & polys)
 {
   namespace bg = boost::geometry;
 
@@ -138,7 +138,7 @@ pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithinPolygon(
   for (const auto & poly : polys) {
     const auto bounding_box = bg::return_envelope<autoware::universe_utils::Box2d>(poly);
     for (const auto & p : input_points) {
-      Point2d point(p.x, p.y);
+      universe_utils::Point2d point(p.x, p.y);
 
       // filter with bounding box to reduce calculation time
       if (!bg::covered_by(point, bounding_box)) {
@@ -156,9 +156,9 @@ pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithinPolygon(
   return output_points;
 }
 
-// group points with its nearest segment of path points
+// group points with its nearest segment of trajectory points
 std::vector<pcl::PointCloud<pcl::PointXYZ>> groupPointsWithNearestSegmentIndex(
-  const pcl::PointCloud<pcl::PointXYZ> & input_points, const PathPointsWithLaneId & path_points)
+  const pcl::PointCloud<pcl::PointXYZ> & input_points, const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & path_points)
 {
   // assign nearest segment index to each point
   std::vector<pcl::PointCloud<pcl::PointXYZ>> points_with_index;
@@ -169,10 +169,10 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>> groupPointsWithNearestSegmentIndex(
     const size_t nearest_seg_idx =
       autoware::motion_utils::findNearestSegmentIndex(path_points, ros_point);
 
-    // if the point is ahead of end of the path, index should be path.size() - 1
+    // if the point is ahead of end of the trajectory, index should be trajectory.size() - 1
     if (
       nearest_seg_idx == path_points.size() - 2 &&
-      isAheadOf(ros_point, path_points.back().point.pose)) {
+      isAheadOf(ros_point, path_points.back().pose)) {
       points_with_index.back().push_back(p);
       continue;
     }
@@ -202,7 +202,7 @@ pcl::PointXYZ calculateLateralNearestPoint(
 
 pcl::PointCloud<pcl::PointXYZ> selectLateralNearestPoints(
   const std::vector<pcl::PointCloud<pcl::PointXYZ>> & points_with_index,
-  const PathPointsWithLaneId & path_points)
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & path_points)
 {
   pcl::PointCloud<pcl::PointXYZ> lateral_nearest_points;
   for (size_t idx = 0; idx < points_with_index.size(); idx++) {
@@ -211,32 +211,33 @@ pcl::PointCloud<pcl::PointXYZ> selectLateralNearestPoints(
     }
 
     lateral_nearest_points.push_back(
-      calculateLateralNearestPoint(points_with_index.at(idx), path_points.at(idx).point.pose));
+      calculateLateralNearestPoint(points_with_index.at(idx), path_points.at(idx).pose));
   }
 
   return lateral_nearest_points;
 }
 
-// extract lateral nearest points for nearest segment of the path
-// path is interpolated with given interval
+// extract lateral nearest points for nearest segment of the trajectory
+// trajectory is interpolated with given interval
 pcl::PointCloud<pcl::PointXYZ> extractLateralNearestPoints(
-  const pcl::PointCloud<pcl::PointXYZ> & input_points, const PathWithLaneId & path,
+  const pcl::PointCloud<pcl::PointXYZ> & input_points, const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
   const float interval)
 {
-  // interpolate path points with given interval
-  PathWithLaneId interpolated_path;
-  if (!splineInterpolate(
-        path, interval, interpolated_path, rclcpp::get_logger("dynamic_obstacle_creator"))) {
-    return input_points;
-  }
+  // interpolate trajectory points with given interval
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> interpolated_trajectory;
+  // TODO(Maxime): fix
+  // if (!splineInterpolate(
+  //       trajectory, interval, interpolated_trajectory, rclcpp::get_logger("dynamic_obstacle_creator"))) {
+  //   return input_points;
+  // }
 
   // divide points into groups according to nearest segment index
   const auto points_with_index =
-    groupPointsWithNearestSegmentIndex(input_points, interpolated_path.points);
+    groupPointsWithNearestSegmentIndex(input_points, interpolated_trajectory);
 
   // select the lateral nearest point for each group
   const auto lateral_nearest_points =
-    selectLateralNearestPoints(points_with_index, interpolated_path.points);
+    selectLateralNearestPoints(points_with_index, interpolated_trajectory);
 
   return lateral_nearest_points;
 }
@@ -320,7 +321,7 @@ double convertDurationToDouble(const builtin_interfaces::msg::Duration & duratio
   return duration.sec + duration.nanosec / 1e9;
 }
 
-// Create a path leading up to a specified prediction time
+// Create a trajectory leading up to a specified prediction time
 std::vector<geometry_msgs::msg::Pose> createPathToPredictionTime(
   const autoware_perception_msgs::msg::PredictedPath & predicted_path, double prediction_time)
 {
@@ -331,7 +332,7 @@ std::vector<geometry_msgs::msg::Pose> createPathToPredictionTime(
     // Handle the case where time_step_seconds is zero or too close to zero
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("run_out: createPathToPredictionTime"),
-      "time_step of the path is too close to zero. Use the input path");
+      "time_step of the trajectory is too close to zero. Use the input trajectory");
     const std::vector<geometry_msgs::msg::Pose> input_path(
       predicted_path.path.begin(), predicted_path.path.end());
     return input_path;
@@ -339,7 +340,7 @@ std::vector<geometry_msgs::msg::Pose> createPathToPredictionTime(
   const size_t poses_to_include =
     std::min(static_cast<size_t>(prediction_time / time_step_seconds), predicted_path.path.size());
 
-  // Construct the path to the specified prediction time
+  // Construct the trajectory to the specified prediction time
   std::vector<geometry_msgs::msg::Pose> path_to_prediction_time;
   path_to_prediction_time.reserve(poses_to_include);
   for (size_t i = 0; i < poses_to_include; ++i) {
@@ -378,10 +379,10 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForObject::createDynamicObsta
     dynamic_obstacle.uuid = predicted_object.object_id;
 
     // get predicted paths of predicted_objects
-    for (const auto & path : predicted_object.kinematics.predicted_paths) {
+    for (const auto & trajectory : predicted_object.kinematics.predicted_paths) {
       PredictedPath predicted_path;
-      predicted_path.confidence = path.confidence;
-      predicted_path.path = createPathToPredictionTime(path, param_.max_prediction_time);
+      predicted_path.confidence = trajectory.confidence;
+      predicted_path.path = createPathToPredictionTime(trajectory, param_.max_prediction_time);
 
       dynamic_obstacle.predicted_paths.emplace_back(predicted_path);
     }
@@ -407,14 +408,14 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForObjectWithoutPath::createD
     dynamic_obstacle.pose.position =
       predicted_object.kinematics.initial_pose_with_covariance.pose.position;
     dynamic_obstacle.pose.orientation = createQuaternionFacingToTrajectory(
-      dynamic_obstacle_data_.path.points, dynamic_obstacle.pose.position);
+      dynamic_obstacle_data_.trajectory, dynamic_obstacle.pose.position);
 
     dynamic_obstacle.min_velocity_mps = autoware::universe_utils::kmph2mps(param_.min_vel_kmph);
     dynamic_obstacle.max_velocity_mps = autoware::universe_utils::kmph2mps(param_.max_vel_kmph);
     dynamic_obstacle.classifications = predicted_object.classification;
     dynamic_obstacle.shape = predicted_object.shape;
 
-    // replace predicted path with path that runs straight to lane
+    // replace predicted trajectory with trajectory that runs straight to lane
     PredictedPath predicted_path;
     predicted_path.path = createPredictedPath(
       dynamic_obstacle.pose, param_.time_step, dynamic_obstacle.max_velocity_mps,
@@ -471,7 +472,7 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
     dynamic_obstacle.pose.position =
       autoware::universe_utils::createPoint(point.x, point.y, point.z);
     dynamic_obstacle.pose.orientation = createQuaternionFacingToTrajectory(
-      dynamic_obstacle_data_.path.points, dynamic_obstacle.pose.position);
+      dynamic_obstacle_data_.trajectory, dynamic_obstacle.pose.position);
 
     dynamic_obstacle.min_velocity_mps = autoware::universe_utils::kmph2mps(param_.min_vel_kmph);
     dynamic_obstacle.max_velocity_mps = autoware::universe_utils::kmph2mps(param_.max_vel_kmph);
@@ -488,7 +489,7 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
     dynamic_obstacle.shape.dimensions.y = param_.diameter;
     dynamic_obstacle.shape.dimensions.z = param_.height;
 
-    // create predicted path of points
+    // create predicted trajectory of points
     PredictedPath predicted_path;
     predicted_path.path = createPredictedPath(
       dynamic_obstacle.pose, param_.time_step, dynamic_obstacle.max_velocity_mps,
@@ -526,7 +527,7 @@ void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
   // these variables are written in another callback
   mutex_.lock();
   const auto detection_area_polygon = dynamic_obstacle_data_.detection_area;
-  const auto path = dynamic_obstacle_data_.path;
+  const auto trajectory = dynamic_obstacle_data_.trajectory;
   mutex_.unlock();
 
   // filter obstacle points within detection area polygon
@@ -535,7 +536,7 @@ void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
 
   // filter points that have lateral nearest distance
   const auto lateral_nearest_points =
-    extractLateralNearestPoints(detection_area_filtered_points, path, param_.points_interval);
+    extractLateralNearestPoints(detection_area_filtered_points, trajectory, param_.points_interval);
 
   std::lock_guard<std::mutex> lock(mutex_);
   obstacle_points_map_filtered_ = lateral_nearest_points;
@@ -576,7 +577,7 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
   mutex_.lock();
   const auto mandatory_detection_area = dynamic_obstacle_data_.mandatory_detection_area;
   const auto detection_area = dynamic_obstacle_data_.detection_area;
-  const auto path = dynamic_obstacle_data_.path;
+  const auto trajectory = dynamic_obstacle_data_.trajectory;
   mutex_.unlock();
 
   // filter obstacle points within detection area polygon
@@ -594,7 +595,7 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
 
   // filter points that have lateral nearest distance
   const auto lateral_nearest_points =
-    extractLateralNearestPoints(concat_points_no_overlap, path, param_.points_interval);
+    extractLateralNearestPoints(concat_points_no_overlap, trajectory, param_.points_interval);
 
   // publish filtered pointcloud for debug
   debug_ptr_->publishFilteredPointCloud(lateral_nearest_points, concat_points.header);
@@ -602,4 +603,4 @@ void DynamicObstacleCreatorForPoints::onSynchronizedPointCloud(
   std::lock_guard<std::mutex> lock(mutex_);
   obstacle_points_map_filtered_ = lateral_nearest_points;
 }
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner

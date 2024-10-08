@@ -23,7 +23,7 @@
 
 #include <memory>
 
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 class RunOutModuleManager : public SceneModuleManagerInterface
 {
@@ -49,6 +49,6 @@ class RunOutModulePlugin : public PluginWrapper<RunOutModuleManager>
 {
 };
 
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner
 
 #endif  // MANAGER_HPP_

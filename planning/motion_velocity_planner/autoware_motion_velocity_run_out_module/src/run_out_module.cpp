@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2022-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene.hpp"
+#include "run_out_module.hpp"
 
-#include "autoware/behavior_velocity_crosswalk_module/util.hpp"
 #include "path_utils.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
@@ -27,6 +26,7 @@
 #include <boost/geometry/algorithms/intersection.hpp>
 #include <boost/geometry/algorithms/within.hpp>
 
+#include <lanelet2_core/Forward.h>
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_core/geometry/Polygon.h>
 
@@ -34,64 +34,47 @@
 #include <limits>
 #include <utility>
 
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 namespace bg = boost::geometry;
 using object_recognition_utils::convertLabelToString;
 
-RunOutModule::RunOutModule(
-  const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
-  std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator,
-  const std::shared_ptr<RunOutDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
-  planner_param_(planner_param),
-  dynamic_obstacle_creator_(std::move(dynamic_obstacle_creator)),
-  debug_ptr_(debug_ptr),
-  state_machine_(std::make_unique<run_out_utils::StateMachine>(planner_param.approaching.state))
-{
-  velocity_factor_.init(PlanningBehavior::UNKNOWN);
+void RunOutModule::init(rclcpp::Node & node, const std::string & module_name) {
+  module_name_ = module_name;
+  logger_ = node.get_logger();
+  clock_ = node.get_clock();
+  // init_parameters(node);  // TODO
+  velocity_factor_interface_.init(motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
+  state_machine_ = std::make_unique<run_out_utils::StateMachine>(planner_param_.approaching.state);
+  // dynamic_obstacle_creator_(std::move(dynamic_obstacle_creator));
+  // debug_ptr_(debug_ptr);
+}
 
-  if (planner_param.run_out.use_partition_lanelet) {
-    const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
-    planning_utils::getAllPartitionLanelets(ll, partition_lanelets_);
+VelocityPlanningResult RunOutModule::plan(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  const std::shared_ptr<const PlannerData> planner_data)
+{
+  // TODO(Maxime): this should not be done each iteration (or the query should be based on the current ego pose)
+  if (planner_param_.run_out.use_partition_lanelet) {
+    const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler->getLaneletMapPtr();
+    // planning_utils::getAllPartitionLanelets(ll, partition_lanelets_);
   }
-}
-
-void RunOutModule::setPlannerParam(const PlannerParam & planner_param)
-{
-  planner_param_ = planner_param;
-}
-
-bool RunOutModule::modifyPathVelocity(
-  PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
-{
   // timer starts
+  // TODO(Maxime): replace with timekeeper/stopwatch
   const auto t_start = std::chrono::system_clock::now();
 
   // set planner data
-  const auto current_vel = planner_data_->current_velocity->twist.linear.x;
-  const auto current_acc = planner_data_->current_acceleration->accel.accel.linear.x;
-  const auto & current_pose = planner_data_->current_odometry->pose;
+  const auto current_vel = planner_data->current_odometry.twist.twist.linear.x;
+  const auto current_acc = planner_data->current_acceleration.accel.accel.linear.x;
+  const auto & current_pose = planner_data->current_odometry.pose.pose;
 
   // set height of debug data
   debug_ptr_->setHeight(current_pose.position.z);
 
   // extend path to consider obstacles after the goal
   const auto extended_path =
-    run_out_utils::extendPath(*path, planner_param_.vehicle_param.base_to_front);
-
-  // trim path ahead of the base_link to make calculation easier
-  const double trim_distance = planner_param_.run_out.detection_distance;
-  const auto trim_path =
-    run_out_utils::trimPathFromSelfPose(extended_path, current_pose, trim_distance);
-
-  // smooth velocity of the path to calculate time to collision accurately
-  PathWithLaneId extended_smoothed_path;
-  if (!smoothPath(trim_path, extended_smoothed_path, planner_data_)) {
-    return true;
-  }
-
+    run_out_utils::extendTrajectory(ego_trajectory_points, planner_param_.vehicle_param.base_to_front);
+  
   // record time for path processing
   const auto t_path_processing = std::chrono::system_clock::now();
   const auto elapsed_path_processing =
@@ -100,7 +83,7 @@ bool RunOutModule::modifyPathVelocity(
     DebugValues::TYPE::CALCULATION_TIME_PATH_PROCESSING, elapsed_path_processing.count() / 1000.0);
 
   // create abstracted dynamic obstacles from objects or points
-  dynamic_obstacle_creator_->setData(*planner_data_, planner_param_, *path, extended_smoothed_path);
+  dynamic_obstacle_creator_->setData(*planner_data, planner_param_, ego_trajectory_points, extended_path);
   const auto dynamic_obstacles = dynamic_obstacle_creator_->createDynamicObstacles();
   debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles.size());
 
@@ -109,13 +92,13 @@ bool RunOutModule::modifyPathVelocity(
     const auto target_obstacles = excludeObstaclesBasedOnLabel(dynamic_obstacles);
     // extract obstacles using lanelet information
     const auto partition_excluded_obstacles =
-      excludeObstaclesOutSideOfPartition(target_obstacles, extended_smoothed_path, current_pose);
+      excludeObstaclesOutSideOfPartition(target_obstacles, extended_path, current_pose);
     // extract obstacles that cross the ego's cut line
     const auto ego_cut_line_excluded_obstacles =
       excludeObstaclesCrossingEgoCutLine(partition_excluded_obstacles, current_pose);
     // extract obstacles already on the ego's path
     const auto obstacles_outside_ego_path =
-      excludeObstaclesOnEgoPath(ego_cut_line_excluded_obstacles, extended_smoothed_path);
+      excludeObstaclesOnEgoPath(ego_cut_line_excluded_obstacles, extended_path);
     return obstacles_outside_ego_path;
   });
 
@@ -128,14 +111,16 @@ bool RunOutModule::modifyPathVelocity(
     elapsed_obstacle_creation.count() / 1000.0);
 
   // detect collision with dynamic obstacles using velocity planning of ego
-  const auto crosswalk_lanelets = planner_param_.run_out.suppress_on_crosswalk
-                                    ? getCrosswalksOnPath(
-                                        planner_data_->current_odometry->pose, *path,
-                                        planner_data_->route_handler_->getLaneletMapPtr(),
-                                        planner_data_->route_handler_->getOverallGraphPtr())
-                                    : std::vector<std::pair<int64_t, lanelet::ConstLanelet>>();
+  // TODO(Maxime): get crosswalk lanelets
+  const auto crosswalk_lanelets = lanelet::ConstLanelets();
+  // planner_param_.run_out.suppress_on_crosswalk
+  //                                   ? getCrosswalksOnPath(
+  //                                       planner_data_->current_odometry->pose, *path,
+  //                                       planner_data_->route_handler_->getLaneletMapPtr(),
+  //                                       planner_data_->route_handler_->getOverallGraphPtr())
+  //                                   : std::vector<std::pair<int64_t, lanelet::ConstLanelet>>();
   const auto dynamic_obstacle =
-    detectCollision(filtered_obstacles, extended_smoothed_path, crosswalk_lanelets);
+    detectCollision(filtered_obstacles, extended_path, crosswalk_lanelets);
 
   // record time for collision check
   const auto t_collision_check = std::chrono::system_clock::now();
@@ -159,12 +144,12 @@ bool RunOutModule::modifyPathVelocity(
     // after a certain amount of time has elapsed since the ego stopped,
     // approach the obstacle with slow velocity
     insertVelocityForState(
-      dynamic_obstacle, *planner_data_, planner_param_, extended_smoothed_path, *path);
+      dynamic_obstacle, *planner_data, planner_param_, extended_path, ego_trajectory_points);
   } else {
     // just insert zero velocity for stopping
     std::optional<geometry_msgs::msg::Pose> stop_point;
     const bool is_stopping_point_inserted = insertStoppingVelocity(
-      dynamic_obstacle, current_pose, current_vel, current_acc, *path, stop_point);
+      dynamic_obstacle, current_pose, current_vel, current_acc, ego_trajectory_points, stop_point);
 
     stop_point_generation_time_ = (is_stopping_point_inserted)
                                     ? std::make_optional(clock_->now().seconds())
@@ -173,7 +158,7 @@ bool RunOutModule::modifyPathVelocity(
 
     const bool is_maintain_stop_point = should_maintain_stop_point(is_stopping_point_inserted);
     if (is_maintain_stop_point) {
-      insertStopPoint(last_stop_point_, *path);
+      insertStopPoint(last_stop_point_, ego_trajectory_points);
       // debug
       debug_ptr_->setAccelReason(RunOutDebug::AccelReason::STOP);
       debug_ptr_->pushStopPose(autoware::universe_utils::calcOffsetPose(
@@ -183,10 +168,10 @@ bool RunOutModule::modifyPathVelocity(
 
   // apply max jerk limit if the ego can't stop with specified max jerk and acc
   if (planner_param_.slow_down_limit.enable) {
-    applyMaxJerkLimit(current_pose, current_vel, current_acc, *path);
+    applyMaxJerkLimit(current_pose, current_vel, current_acc, ego_trajectory_points);
   }
 
-  publishDebugValue(extended_smoothed_path, filtered_obstacles, dynamic_obstacle, current_pose);
+  publishDebugValue(extended_path, filtered_obstacles, dynamic_obstacle, current_pose);
 
   // record time for collision check
   const auto t_path_planning = std::chrono::system_clock::now();
@@ -1031,4 +1016,4 @@ bool RunOutModule::isMomentaryDetection()
 
   return elapsed_time_since_detection < planner_param_.ignore_momentary_detection.time_threshold;
 }
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner

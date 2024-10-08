@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2022-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_HPP_
-#define SCENE_HPP_
+#ifndef RUN_OUT_MODULE_HPP_
+#define RUN_OUT_MODULE_HPP_
 
 #include "debug.hpp"
 #include "dynamic_obstacle.hpp"
@@ -21,7 +21,7 @@
 #include "state_machine.hpp"
 #include "utils.hpp"
 
-#include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware/motion_velocity_planner_common/plugin_module_interface.hpp>
 
 #include <memory>
 #include <optional>
@@ -30,7 +30,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 using autoware_perception_msgs::msg::PredictedObjects;
 using run_out_utils::PlannerParam;
@@ -40,25 +40,22 @@ using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
-class RunOutModule : public SceneModuleInterface
+class RunOutModule : public PluginModuleInterface
 {
 public:
-  RunOutModule(
-    const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
-    std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator,
-    const std::shared_ptr<RunOutDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock);
-
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
-
-  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
-
-  void setPlannerParam(const PlannerParam & planner_param);
+  void init(rclcpp::Node & node, const std::string & module_name) override;
+  void update_parameters(const std::vector<rclcpp::Parameter> & parameters) override;
+  VelocityPlanningResult plan(
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+    const std::shared_ptr<const PlannerData> planner_data) override;
+  std::string get_module_name() const override { return module_name_; }
 
 private:
+  inline static const std::string ns_ = "run_out";
+  std::string module_name_{"uninitialized"};
   // Parameter
   PlannerParam planner_param_;
+  rclcpp::Clock::SharedPtr clock_{nullptr};
 
   // Variable
   BasicPolygons2d partition_lanelets_;
@@ -73,8 +70,6 @@ private:
   std::unordered_map<std::string, double> obstacle_in_ego_path_times_;
 
   // Function
-  Polygons2d createDetectionAreaPolygon(const PathWithLaneId & smoothed_path) const;
-
   std::optional<DynamicObstacle> detectCollision(
     const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path,
     const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets);
@@ -99,16 +94,16 @@ private:
     const float velocity_mps) const;
 
   bool checkCollisionWithShape(
-    const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
+    const universe_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
     const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
   bool checkCollisionWithCylinder(
-    const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const float radius,
+    const universe_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const float radius,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
   bool checkCollisionWithBoundingBox(
-    const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
+    const universe_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
     const geometry_msgs::msg::Vector3 & dimension,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
@@ -177,6 +172,6 @@ private:
 
   bool isMomentaryDetection();
 };
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner
 
 #endif  // SCENE_HPP_

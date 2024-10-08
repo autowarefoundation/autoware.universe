@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::behavior_velocity_planner
+namespace autoware::motion_velocity_planner
 {
 using autoware::universe_utils::getOrDeclareParameter;
 RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
@@ -145,29 +145,6 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
   setDynamicObstacleCreator(node, debug_ptr_);
 }
 
-void RunOutModuleManager::launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path)
-{
-  if (path.points.empty()) {
-    return;
-  }
-
-  constexpr int64_t module_id = 0;
-  if (!isModuleRegistered(module_id)) {
-    registerModule(std::make_shared<RunOutModule>(
-      module_id, planner_data_, planner_param_, logger_.get_child("run_out_module"),
-      std::move(dynamic_obstacle_creator_), debug_ptr_, clock_));
-  }
-}
-
-std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-RunOutModuleManager::getModuleExpiredFunction(const tier4_planning_msgs::msg::PathWithLaneId & path)
-{
-  return
-    [&path]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {
-      return false;
-    };
-}
-
 void RunOutModuleManager::setDynamicObstacleCreator(
   rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr)
 {
@@ -197,9 +174,9 @@ void RunOutModuleManager::setDynamicObstacleCreator(
       break;
   }
 }
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::motion_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  autoware::behavior_velocity_planner::RunOutModulePlugin,
-  autoware::behavior_velocity_planner::PluginInterface)
+  autoware::motion_velocity_planner::RunOutModulePlugin,
+  autoware::motion_velocity_planner::PluginInterface)
