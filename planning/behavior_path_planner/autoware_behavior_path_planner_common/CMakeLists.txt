@@ -58,6 +58,14 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
   )
 
+  ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_parking_departure
+    test/test_parking_departure_utils.cpp
+  )
+
+  target_link_libraries(test_${PROJECT_NAME}_parking_departure
+    ${PROJECT_NAME}
+  )
+
   ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_turn_signal
     test/test_turn_signal.cpp
   )
