@@ -38,7 +38,6 @@
 #include <memory>
 #include <vector>
 
-
 // Hi! I'm a comment!
 namespace autoware::behavior_velocity_planner
 {
