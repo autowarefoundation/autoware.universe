@@ -92,18 +92,18 @@ private:
   bool is_initialized_ = false;
 
   // configured parameters
-  float grid_size_m_;
-  float mode_switch_radius_;
-  float virtual_lidar_z_;
+  float grid_size_m_ = 0.0f;
+  float mode_switch_radius_ = 0.0f;
+  float virtual_lidar_z_ = 0.0f;
 
   // calculated parameters
-  float inv_grid_size_m_;
-  float grid_size_rad_;
-  float inv_grid_size_rad_;
-  float tan_grid_size_rad_;
-  float mode_switch_grid_id_;
-  float mode_switch_angle_rad_;
-  float grid_id_offset_;
+  float inv_grid_size_m_ = 0.0f;
+  float grid_size_rad_ = 0.0f;
+  float inv_grid_size_rad_ = 0.0f;
+  float tan_grid_size_rad_ = 0.0f;
+  float mode_switch_grid_id_ = 0.0f;
+  float mode_switch_angle_rad_ = 0.0f;
+  float grid_id_offset_ = 0.0f;
 };
 
 }  // namespace autoware::ground_segmentation
