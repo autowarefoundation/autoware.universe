@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_collision_checker/obstacle_collision_checker.hpp"
+#include "autoware/obstacle_collision_checker/obstacle_collision_checker.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
@@ -74,7 +74,7 @@ double calc_braking_distance(
 
 }  // namespace
 
-namespace obstacle_collision_checker
+namespace autoware::obstacle_collision_checker
 {
 Output check_for_collisions(const Input & input)
 {
@@ -253,4 +253,4 @@ bool has_collision(
 
   return false;
 }
-}  // namespace obstacle_collision_checker
+}  // namespace autoware::obstacle_collision_checker

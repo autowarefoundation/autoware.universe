@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_NODE_HPP_
-#define OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_NODE_HPP_
+#ifndef AUTOWARE__OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_NODE_HPP_
+#define AUTOWARE__OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_NODE_HPP_
 
-#include "obstacle_collision_checker/obstacle_collision_checker.hpp"
+#include "autoware/obstacle_collision_checker/obstacle_collision_checker.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
@@ -30,12 +30,11 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <memory>
 #include <vector>
 
-namespace obstacle_collision_checker
+namespace autoware::obstacle_collision_checker
 {
 struct NodeParam
 {
@@ -101,10 +100,7 @@ private:
   diagnostic_updater::Updater updater_;
 
   void check_lane_departure(diagnostic_updater::DiagnosticStatusWrapper & stat);
-
-  // Visualization
-  visualization_msgs::msg::MarkerArray create_marker_array() const;
 };
-}  // namespace obstacle_collision_checker
+}  // namespace autoware::obstacle_collision_checker
 
-#endif  // OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_NODE_HPP_
+#endif  // AUTOWARE__OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_NODE_HPP_
