@@ -56,7 +56,7 @@ component_management:
       paths:
         - launch/**/**
 
-    - component_id: Localizatoin-packages
+    - component_id: localization-packages
       name: Localization Packages
       paths:
         - localization/**/**
@@ -139,7 +139,53 @@ component_management:
     - component_id: perception-tier-iv-maintained-packages
       name: Perception TIER IV Maintained Packages
       paths:
-        - perception/[^lidar_apollo_instance_segmentation]/**
+        - perception/autoware_bytetrack/**
+        - perception/autoware_cluster_merger/**
+        - perception/autoware_compare_map_segmentation/**
+        - perception/autoware_crosswalk_traffic_light_estimator/**
+        - perception/autoware_detected_object_feature_remover/**
+        - perception/autoware_detected_object_validation/**
+        - perception/autoware_detection_by_tracker/**
+        - perception/autoware_elevation_map_loader/**
+        - perception/autoware_euclidean_cluster/**
+        - perception/autoware_ground_segmentation/**
+        - perception/autoware_image_projection_based_fusion/**
+        - perception/autoware_lidar_centerpoint/**
+        - perception/autoware_lidar_transfusion/**
+        - perception/autoware_map_based_prediction/**
+        - perception/autoware_multi_object_tracker/**
+        - perception/autoware_object_merger/**
+        - perception/autoware_object_range_splitter/**
+        - perception/autoware_object_velocity_splitter/**
+        - perception/autoware_occupancy_grid_map_outlier_filter/**
+        - perception/autoware_probabilistic_occupancy_grid_map/**
+        - perception/autoware_radar_crossing_objects_noise_filter/**
+        - perception/autoware_radar_fusion_to_detected_object/**
+        - perception/autoware_radar_object_clustering/**
+        - perception/autoware_radar_object_tracker/**
+        - perception/autoware_radar_tracks_msgs_converter/**
+        - perception/autoware_raindrop_cluster_filter/**
+        - perception/autoware_shape_estimation/**
+        - perception/autoware_simple_object_merger/**
+        - perception/autoware_tensorrt_classifier/**
+        - perception/autoware_tensorrt_yolox/**
+        - perception/autoware_tracking_object_merger/**
+        - perception/autoware_traffic_light_arbiter/**
+        - perception/autoware_traffic_light_classifier/**
+        - perception/autoware_traffic_light_fine_detector/**
+        - perception/autoware_traffic_light_map_based_detector/**
+        - perception/autoware_traffic_light_multi_camera_fusion/**
+        - perception/autoware_traffic_light_occlusion_predictor/**
+        - perception/autoware_traffic_light_visualization/**
+        - perception/image_projection_based_fusion/**
+        # - perception/lidar_apollo_instance_segmentation/**
+        - perception/lidar_centerpoint/**
+        - perception/perception_utils/**
+        - perception/tensorrt_yolo/**
+        - perception/tensorrt_yolox/**
+        - perception/traffic_light_classifier/**
+        - perception/traffic_light_fine_detector/**
+        - perception/traffic_light_ssd_fine_detector/**
 
     - component_id: planning-tier-iv-maintained-packages
       name: Planning TIER IV Maintained Packages

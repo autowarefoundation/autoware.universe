@@ -69,7 +69,7 @@ void NormalLaneChange::update_lanes(const bool is_approved)
     return;
   }
 
-  const auto target_lanes = getLaneChangeLanes(current_lanes, direction_);
+  const auto target_lanes = get_lane_change_lanes(current_lanes);
   if (target_lanes.empty()) {
     return;
   }
@@ -345,7 +345,7 @@ BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
   }
 
   const auto terminal_path =
-    calcTerminalLaneChangePath(current_lanes, getLaneChangeLanes(current_lanes, direction_));
+    calcTerminalLaneChangePath(current_lanes, get_lane_change_lanes(current_lanes));
   if (!terminal_path) {
     RCLCPP_DEBUG(logger_, "Terminal path not found. Returning previous module's path as output.");
     return prev_module_output_;
@@ -636,15 +636,7 @@ std::optional<PathWithLaneId> NormalLaneChange::extendPath()
       return getRouteHandler()->getGoalPose();
     }
 
-    Pose back_pose;
-    const auto back_point =
-      lanelet::utils::conversion::toGeomMsgPt(next_lane.centerline2d().back());
-    const double front_yaw = lanelet::utils::getLaneletAngle(next_lane, back_point);
-    back_pose.position = back_point;
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, front_yaw);
-    back_pose.orientation = tf2::toMsg(tf_quat);
-    return back_pose;
+    return utils::to_geom_msg_pose(next_lane.centerline2d().back(), next_lane);
   });
 
   const auto dist_to_target_pose =
@@ -689,8 +681,8 @@ TurnSignalInfo NormalLaneChange::updateOutputTurnSignal() const
   return new_signal;
 }
 
-lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
-  const lanelet::ConstLanelets & current_lanes, Direction direction) const
+lanelet::ConstLanelets NormalLaneChange::get_lane_change_lanes(
+  const lanelet::ConstLanelets & current_lanes) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   if (current_lanes.empty()) {
@@ -699,34 +691,21 @@ lanelet::ConstLanelets NormalLaneChange::getLaneChangeLanes(
   // Get lane change lanes
   const auto & route_handler = getRouteHandler();
 
-  const auto lane_change_lane = utils::lane_change::getLaneChangeTargetLane(
-    *getRouteHandler(), current_lanes, type_, direction);
+  const auto lane_change_lane =
+    utils::lane_change::get_lane_change_target_lane(common_data_ptr_, current_lanes);
 
   if (!lane_change_lane) {
     return {};
   }
 
-  const auto front_pose = std::invoke([&lane_change_lane]() {
-    const auto & p = lane_change_lane->centerline().front();
-    const auto front_point = lanelet::utils::conversion::toGeomMsgPt(p);
-    const auto front_yaw = lanelet::utils::getLaneletAngle(*lane_change_lane, front_point);
-    geometry_msgs::msg::Pose front_pose;
-    front_pose.position = front_point;
-    tf2::Quaternion quat;
-    quat.setRPY(0, 0, front_yaw);
-    front_pose.orientation = tf2::toMsg(quat);
-    return front_pose;
-  });
-
   const auto forward_length = std::invoke([&]() {
+    const auto front_pose =
+      utils::to_geom_msg_pose(lane_change_lane->centerline().front(), *lane_change_lane);
     const auto signed_distance = utils::getSignedDistance(front_pose, getEgoPose(), current_lanes);
     const auto forward_path_length = planner_data_->parameters.forward_path_length;
-    if (signed_distance <= 0.0) {
-      return forward_path_length;
-    }
-
-    return signed_distance + forward_path_length;
+    return forward_path_length + std::max(signed_distance, 0.0);
   });
+
   const auto backward_length = lane_change_parameters_->backward_lane_length;
 
   return route_handler->getLaneletSequence(

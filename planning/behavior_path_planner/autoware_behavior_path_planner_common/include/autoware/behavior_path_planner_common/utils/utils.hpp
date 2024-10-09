@@ -104,6 +104,33 @@ FrenetPoint convertToFrenetPoint(
   return frenet_point;
 }
 
+/**
+ * @brief Converts a Lanelet point to a ROS Pose message.
+ *
+ * This function converts a point from a Lanelet map to a ROS geometry_msgs::msg::Pose.
+ * It sets the position from the point and calculates the orientation (yaw) based on the target
+ * lane.
+ *
+ * @tparam LaneletPointType The type of the input point.
+ *
+ * @param[in] src_point The point to convert.
+ * @param[in] target_lane The lanelet used to determine the orientation.
+ *
+ * @return A Pose message with the position and orientation of the point.
+ */
+template <class LaneletPointType>
+Pose to_geom_msg_pose(const LaneletPointType & src_point, const lanelet::ConstLanelet & target_lane)
+{
+  const auto point = lanelet::utils::conversion::toGeomMsgPt(src_point);
+  const auto yaw = lanelet::utils::getLaneletAngle(target_lane, point);
+  geometry_msgs::msg::Pose pose;
+  pose.position = point;
+  tf2::Quaternion quat;
+  quat.setRPY(0, 0, yaw);
+  pose.orientation = tf2::toMsg(quat);
+  return pose;
+}
+
 // distance (arclength) calculation
 
 double l2Norm(const Vector3 vector);

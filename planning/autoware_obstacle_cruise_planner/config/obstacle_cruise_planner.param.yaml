@@ -29,15 +29,26 @@
       suppress_sudden_obstacle_stop: false
 
       stop_obstacle_type:
-        unknown: true
-        car: true
-        truck: true
-        bus: true
-        trailer: true
-        motorcycle: true
-        bicycle: true
-        pedestrian: true
         pointcloud: false
+        inside:
+          unknown: true
+          car: true
+          truck: true
+          bus: true
+          trailer: true
+          motorcycle: true
+          bicycle: true
+          pedestrian: true
+
+        outside:
+          unknown: false
+          car: true
+          truck: true
+          bus: true
+          trailer: true
+          motorcycle: true
+          bicycle: true
+          pedestrian: true
 
       cruise_obstacle_type:
         inside:
@@ -99,6 +110,12 @@
       stop:
         max_lat_margin: 0.3 # lateral margin between the obstacles except for unknown and ego's footprint
         max_lat_margin_against_unknown: 0.3 # lateral margin between the unknown obstacles and ego's footprint
+        min_velocity_to_reach_collision_point: 2.0 # minimum velocity margin to calculate time to reach collision [m/s]
+        outside_obstacle:
+          max_lateral_time_margin: 4.0 # time threshold of lateral margin between the obstacles and ego's footprint [s]
+          num_of_predicted_paths: 3 # number of the highest confidence predicted path to check collision between obstacle and ego
+          pedestrian_deceleration_rate: 0.5 # planner perceives pedestrians will stop with this rate to avoid unnecessary stops [m/ss]
+          bicycle_deceleration_rate: 0.5 # planner perceives bicycles will stop with this rate to avoid unnecessary stops [m/ss]
         crossing_obstacle:
           collision_time_margin : 4.0 # time threshold of collision between obstacle adn ego for cruise or stop [s]
 
@@ -108,6 +125,8 @@
           obstacle_velocity_threshold : 3.5 # minimum velocity threshold of obstacles outside the trajectory to cruise or stop [m/s]
           ego_obstacle_overlap_time_threshold : 2.0 #  time threshold to decide cut-in obstacle for cruise or stop [s]
           max_prediction_time_for_collision_check : 20.0 # prediction time to check collision between obstacle and ego
+          max_lateral_time_margin: 5.0 # time threshold of lateral margin between obstacle and trajectory band with ego's width [s]
+          num_of_predicted_paths: 3 # number of the highest confidence predicted path to check collision between obstacle and ego
         yield:
           enable_yield: true
           lat_distance_threshold: 5.0 # lateral margin between obstacle in neighbor lanes and trajectory band with ego's width for yielding

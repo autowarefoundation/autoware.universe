@@ -112,8 +112,7 @@ public:
   TurnSignalInfo get_current_turn_signal_info() const final;
 
 protected:
-  lanelet::ConstLanelets getLaneChangeLanes(
-    const lanelet::ConstLanelets & current_lanes, Direction direction) const override;
+  lanelet::ConstLanelets get_lane_change_lanes(const lanelet::ConstLanelets & current_lanes) const;
 
   int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
 
