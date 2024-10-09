@@ -1137,9 +1137,9 @@ double PidLongitudinalController::applyVelocityFeedback(const ControlData & cont
   const bool vehicle_is_stuck =
     !vehicle_is_moving && time_under_control > m_time_threshold_before_pid_integrate;
 
-  const bool enable_integration =
-    (vehicle_is_moving || (m_enable_integration_at_low_speed && vehicle_is_stuck)) &&
-    is_under_control;
+  const bool enable_integration = 1 ||
+    ((vehicle_is_moving || (m_enable_integration_at_low_speed && vehicle_is_stuck)) &&
+    is_under_control);
 
   const double error_vel_filtered = m_lpf_vel_error->filter(diff_vel);
 
@@ -1160,6 +1160,9 @@ double PidLongitudinalController::applyVelocityFeedback(const ControlData & cont
     control_data.interpolated_traj.points.at(control_data.target_idx).acceleration_mps2 * ff_scale;
 
   const double feedback_acc = ff_acc + pid_acc;
+  std::cerr << "feedback_acc: " << feedback_acc << std::endl;
+  std::cerr << "ff_acc: " << ff_acc << std::endl;
+  std::cerr << "pid_acc: " << pid_acc << std::endl;
 
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_PID_APPLIED, feedback_acc);
   m_debug_values.setValues(DebugValues::TYPE::ERROR_VEL_FILTERED, error_vel_filtered);
