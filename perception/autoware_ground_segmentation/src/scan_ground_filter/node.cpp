@@ -14,10 +14,10 @@
 
 #include "node.hpp"
 
-#include "autoware/universe_utils/geometry/geometry.hpp"
-#include "autoware/universe_utils/math/normalization.hpp"
-#include "autoware/universe_utils/math/unit_conversion.hpp"
-#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <memory>
 #include <string>
@@ -38,39 +38,52 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
 {
   // set initial parameters
   {
-    low_priority_region_x_ = declare_parameter<float>("low_priority_region_x");
-    detection_range_z_max_ = declare_parameter<float>("detection_range_z_max");
-    center_pcl_shift_ = declare_parameter<float>("center_pcl_shift");
-    non_ground_height_threshold_ = declare_parameter<float>("non_ground_height_threshold");
-    grid_mode_switch_radius_ = declare_parameter<float>("grid_mode_switch_radius");
-
-    grid_size_m_ = declare_parameter<float>("grid_size_m");
-    gnd_grid_buffer_size_ = declare_parameter<int>("gnd_grid_buffer_size");
+    // modes
     elevation_grid_mode_ = declare_parameter<bool>("elevation_grid_mode");
+
+    // common parameters
+    radial_divider_angle_rad_ = deg2rad(declare_parameter<float>("radial_divider_angle_deg"));
+    radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);
+
+    // common thresholds
     global_slope_max_angle_rad_ = deg2rad(declare_parameter<float>("global_slope_max_angle_deg"));
     local_slope_max_angle_rad_ = deg2rad(declare_parameter<float>("local_slope_max_angle_deg"));
     global_slope_max_ratio_ = std::tan(global_slope_max_angle_rad_);
     local_slope_max_ratio_ = std::tan(local_slope_max_angle_rad_);
-    radial_divider_angle_rad_ = deg2rad(declare_parameter<float>("radial_divider_angle_deg"));
     split_points_distance_tolerance_ = declare_parameter<float>("split_points_distance_tolerance");
     split_points_distance_tolerance_square_ =
       split_points_distance_tolerance_ * split_points_distance_tolerance_;
-    split_height_distance_ = declare_parameter<float>("split_height_distance");
-    use_virtual_ground_point_ = declare_parameter<bool>("use_virtual_ground_point");
-    use_recheck_ground_cluster_ = declare_parameter<bool>("use_recheck_ground_cluster");
-    use_lowest_point_ = declare_parameter<bool>("use_lowest_point");
-    radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);
+
+    // vehicle info
     vehicle_info_ = VehicleInfoUtils(*this).getVehicleInfo();
 
+    // non-grid parameters
+    use_virtual_ground_point_ = declare_parameter<bool>("use_virtual_ground_point");
+    split_height_distance_ = declare_parameter<float>("split_height_distance");
+
+    // grid mode parameters
+    use_recheck_ground_cluster_ = declare_parameter<bool>("use_recheck_ground_cluster");
+    use_lowest_point_ = declare_parameter<bool>("use_lowest_point");
+    detection_range_z_max_ = declare_parameter<float>("detection_range_z_max");
+    low_priority_region_x_ = declare_parameter<float>("low_priority_region_x");
+    center_pcl_shift_ = declare_parameter<float>("center_pcl_shift");
+    non_ground_height_threshold_ = declare_parameter<float>("non_ground_height_threshold");
+
+    // grid parameters
+    grid_size_m_ = declare_parameter<float>("grid_size_m");
+    grid_mode_switch_radius_ = declare_parameter<float>("grid_mode_switch_radius");
+    gnd_grid_buffer_size_ = declare_parameter<int>("gnd_grid_buffer_size");
+    virtual_lidar_z_ = vehicle_info_.vehicle_height_m;
+    // calculate grid parameters
     grid_mode_switch_grid_id_ =
       grid_mode_switch_radius_ / grid_size_m_;  // changing the mode of grid division
-    virtual_lidar_z_ = vehicle_info_.vehicle_height_m;
     grid_mode_switch_angle_rad_ = std::atan2(grid_mode_switch_radius_, virtual_lidar_z_);
-
     grid_size_rad_ =
       normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
       normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
     tan_grid_size_rad_ = std::tan(grid_size_rad_);
+
+    // data access
     data_offset_initialized_ = false;
   }
 
@@ -260,7 +273,8 @@ inline float ScanGroundFilterComponent::calcGridSize(const PointData & pd) const
     pd.radius > grid_mode_switch_radius_ &&
     pd.grid_id > grid_mode_switch_grid_id_ + back_steps_num) {
     // equivalent to grid_size = (std::tan(gamma) - std::tan(gamma - grid_size_rad_)) *
-    // virtual_lidar_z_ when gamma = normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)
+    // virtual_lidar_z_
+    // where gamma = normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)
     grid_size = pd.radius - (pd.radius - tan_grid_size_rad_ * virtual_lidar_z_) /
                               (1 + pd.radius * tan_grid_size_rad_ / virtual_lidar_z_);
   }

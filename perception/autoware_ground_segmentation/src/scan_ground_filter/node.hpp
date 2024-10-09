@@ -167,40 +167,51 @@ private:
   int intensity_type_;
   bool data_offset_initialized_;
 
-  void set_field_index_offsets(const PointCloud2ConstPtr & input);
-
-  void get_point_from_data_index(
-    const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point) const;
-
   const uint16_t gnd_grid_continual_thresh_ = 3;
   bool elevation_grid_mode_;
   float non_ground_height_threshold_;
-  float grid_size_rad_;
-  float tan_grid_size_rad_;
-  float grid_size_m_;
   float low_priority_region_x_;
-  uint16_t gnd_grid_buffer_size_;
-  float grid_mode_switch_grid_id_;
-  float grid_mode_switch_angle_rad_;
-  float virtual_lidar_z_;
-  float detection_range_z_max_;
-  float center_pcl_shift_;             // virtual center of pcl to center mass
-  float grid_mode_switch_radius_;      // non linear grid size switching distance
+  float center_pcl_shift_;  // virtual center of pcl to center mass
+
+  // common parameters
+  double radial_divider_angle_rad_;  // distance in rads between dividers
+  size_t radial_dividers_num_;
+  VehicleInfo vehicle_info_;
+
+  // common thresholds
   double global_slope_max_angle_rad_;  // radians
   double local_slope_max_angle_rad_;   // radians
   double global_slope_max_ratio_;
   double local_slope_max_ratio_;
-  double radial_divider_angle_rad_;         // distance in rads between dividers
   double split_points_distance_tolerance_;  // distance in meters between concentric divisions
   double split_points_distance_tolerance_square_;
+
+  // non-grid mode parameters
+  bool use_virtual_ground_point_;
   double                     // minimum height threshold regardless the slope,
     split_height_distance_;  // useful for close points
-  bool use_virtual_ground_point_;
+
+  // grid mode parameters
   bool use_recheck_ground_cluster_;  // to enable recheck ground cluster
   bool use_lowest_point_;  // to select lowest point for reference in recheck ground cluster,
                            // otherwise select middle point
-  size_t radial_dividers_num_;
-  VehicleInfo vehicle_info_;
+  float detection_range_z_max_;
+
+  // grid parameters
+  float grid_size_m_;
+  float grid_mode_switch_radius_;  // non linear grid size switching distance
+  uint16_t gnd_grid_buffer_size_;
+  float virtual_lidar_z_;
+
+  float grid_mode_switch_grid_id_;
+  float grid_mode_switch_angle_rad_;
+  float grid_size_rad_;
+  float tan_grid_size_rad_;
+
+  // data access methods
+  void set_field_index_offsets(const PointCloud2ConstPtr & input);
+  void get_point_from_data_index(
+    const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point) const;
 
   // time keeper related
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
