@@ -124,7 +124,7 @@ bool is_stoppable(
  * @param path           ego-car lane
  * @param ego_pose       ego-car pose
  * @param margin         margin from the end point of the ego-no stopping area lane
- * @param max_polygon_length minimum length of the polygon
+ * @param max_polygon_length maximum length of the polygon
  * @return generated polygon
  */
 Polygon2d generate_ego_no_stopping_area_lane_polygon(
