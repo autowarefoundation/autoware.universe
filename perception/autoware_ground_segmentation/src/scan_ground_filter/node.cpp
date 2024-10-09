@@ -524,7 +524,6 @@ void ScanGroundFilterComponent::classifyPointCloud(
     float prev_gnd_radius = 0.0f;
     float prev_gnd_slope = 0.0f;
     PointsCentroid ground_cluster, non_ground_cluster;
-    PointLabel point_label_prev;
     PointLabel point_label_curr = PointLabel::INIT;
 
     pcl::PointXYZ prev_gnd_point(0, 0, 0), point_curr, point_prev;
@@ -536,7 +535,7 @@ void ScanGroundFilterComponent::classifyPointCloud(
 
       // set the previous point
       point_prev = point_curr;
-      point_label_prev = point_label_curr;
+      PointLabel point_label_prev = point_label_curr;
 
       // set the current point
       const PointData & pd = in_radial_ordered_clouds[i][j];
