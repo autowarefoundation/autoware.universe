@@ -101,20 +101,13 @@ void DistortionCorrectorComponent::pointcloud_callback(PointCloud2::UniquePtr po
     if (angle_conversion_opt_.has_value()) {
       RCLCPP_INFO(
         this->get_logger(),
-        "Success to get the conversion formula between cartesian coordinates and LiDAR azimuth "
+        "Success to get the conversion formula between Cartesian coordinates and LiDAR azimuth "
         "coordinates");
     } else {
-      RCLCPP_WARN_STREAM_THROTTLE(
+      RCLCPP_ERROR_STREAM_THROTTLE(
         this->get_logger(), *this->get_clock(), 10000 /* ms */,
         "Failed to get the angle conversion between Cartesian coordinates and LiDAR azimuth "
         "coordinates. This pointcloud will not update azimuth and distance");
-      angle_conversion_failure_num_++;
-
-      if (angle_conversion_failure_num_ > failure_tolerance) {
-        throw std::runtime_error(
-          "Angle conversion failed more than " + std::to_string(failure_tolerance) +
-          " times. Please check the LiDAR azimuth coordinates.");
-      }
     }
   }
 

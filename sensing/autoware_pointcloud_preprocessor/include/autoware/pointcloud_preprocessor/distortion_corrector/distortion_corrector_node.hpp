@@ -56,13 +56,6 @@ private:
 
   std::optional<AngleConversion> angle_conversion_opt_;
 
-  /// @brief Counts the number of pointclouds for which angle conversion failed.
-  int angle_conversion_failure_num_{0};
-
-  /// @brief The maximum number of failed angle conversions due to pointclouds not containing enough
-  /// points before throwing an error.
-  static constexpr int failure_tolerance{20};
-
   std::unique_ptr<DistortionCorrectorBase> distortion_corrector_;
 
   void pointcloud_callback(PointCloud2::UniquePtr pointcloud_msg);
