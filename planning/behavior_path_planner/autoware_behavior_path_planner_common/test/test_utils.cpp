@@ -29,8 +29,6 @@ using ObjectClassification = autoware_perception_msgs::msg::ObjectClassification
 using autoware::test_utils::createPose;
 using autoware::test_utils::generateTrajectory;
 
-constexpr double epsilon = 1e-6;
-
 PathWithLaneId trajectory_to_path_with_lane_id(const Trajectory & trajectory)
 {
   PathWithLaneId path_with_lane_id;
@@ -51,11 +49,11 @@ TEST(BehaviorPathPlanningUtilTest, l2Norm)
 
   geometry_msgs::msg::Vector3 vector = autoware::universe_utils::createVector3(0.0, 0.0, 0.0);
   auto norm = l2Norm(vector);
-  EXPECT_NEAR(norm, 0.0, epsilon);
+  EXPECT_DOUBLE_EQ(norm, 0.0);
 
   vector = autoware::universe_utils::createVector3(1.0, 2.0, 2.0);
   norm = l2Norm(vector);
-  EXPECT_NEAR(norm, 3.0, epsilon);
+  EXPECT_DOUBLE_EQ(norm, 3.0);
 }
 
 TEST(BehaviorPathPlanningUtilTest, checkCollisionBetweenPathFootprintsAndObjects)
@@ -135,15 +133,15 @@ TEST(BehaviorPathPlanningUtilTest, calcLateralDistanceFromEgoToObject)
 
   // Condition: overlapping
   obj.kinematics.initial_pose_with_covariance.pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  EXPECT_NEAR(calcLateralDistanceFromEgoToObject(ego_pose, vehicle_width, obj), 0.0, epsilon);
+  EXPECT_DOUBLE_EQ(calcLateralDistanceFromEgoToObject(ego_pose, vehicle_width, obj), 0.0);
 
   // Condition: object on left
   obj.kinematics.initial_pose_with_covariance.pose.position.y = 5.0;
-  EXPECT_NEAR(calcLateralDistanceFromEgoToObject(ego_pose, vehicle_width, obj), 3.0, epsilon);
+  EXPECT_DOUBLE_EQ(calcLateralDistanceFromEgoToObject(ego_pose, vehicle_width, obj), 3.0);
 
   // Condition: object on right
   obj.kinematics.initial_pose_with_covariance.pose.position.y = -5.0;
-  EXPECT_NEAR(calcLateralDistanceFromEgoToObject(ego_pose, vehicle_width, obj), 3.0, epsilon);
+  EXPECT_DOUBLE_EQ(calcLateralDistanceFromEgoToObject(ego_pose, vehicle_width, obj), 3.0);
 }
 
 TEST(BehaviorPathPlanningUtilTest, calc_longitudinal_distance_from_ego_to_object)
@@ -160,24 +158,24 @@ TEST(BehaviorPathPlanningUtilTest, calc_longitudinal_distance_from_ego_to_object
   double base_link2front = 0.0;
   double base_link2rear = 0.0;
   obj.kinematics.initial_pose_with_covariance.pose = createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  EXPECT_NEAR(
+  EXPECT_DOUBLE_EQ(
     calc_longitudinal_distance_from_ego_to_object(ego_pose, base_link2front, base_link2rear, obj),
-    0.0, epsilon);
+    0.0);
 
   // Condition: object in front
   base_link2front = 1.0;
   base_link2rear = -1.0;
   obj.kinematics.initial_pose_with_covariance.pose.position.x = 4.0;
   obj.kinematics.initial_pose_with_covariance.pose.position.y = 2.0;
-  EXPECT_NEAR(
+  EXPECT_DOUBLE_EQ(
     calc_longitudinal_distance_from_ego_to_object(ego_pose, base_link2front, base_link2rear, obj),
-    2.0, epsilon);
+    2.0);
 
   // Condition: object in rear
   obj.kinematics.initial_pose_with_covariance.pose.position.x = -4.0;
-  EXPECT_NEAR(
+  EXPECT_DOUBLE_EQ(
     calc_longitudinal_distance_from_ego_to_object(ego_pose, base_link2front, base_link2rear, obj),
-    2.0, epsilon);
+    2.0);
 }
 
 TEST(BehaviorPathPlanningUtilTest, calcLongitudinalDistanceFromEgoToObjects)
@@ -191,9 +189,9 @@ TEST(BehaviorPathPlanningUtilTest, calcLongitudinalDistanceFromEgoToObjects)
   PredictedObjects objs;
 
   // Condition: none object
-  EXPECT_NEAR(
+  EXPECT_DOUBLE_EQ(
     calcLongitudinalDistanceFromEgoToObjects(ego_pose, base_link2front, base_link2rear, objs),
-    std::numeric_limits<double>::max(), epsilon);
+    std::numeric_limits<double>::max());
 
   // Condition: both object in front
   PredictedObject near_obj;
@@ -210,9 +208,8 @@ TEST(BehaviorPathPlanningUtilTest, calcLongitudinalDistanceFromEgoToObjects)
 
   objs.objects.push_back(near_obj);
   objs.objects.push_back(far_obj);
-  EXPECT_NEAR(
-    calcLongitudinalDistanceFromEgoToObjects(ego_pose, base_link2front, base_link2rear, objs), 3.0,
-    epsilon);
+  EXPECT_DOUBLE_EQ(
+    calcLongitudinalDistanceFromEgoToObjects(ego_pose, base_link2front, base_link2rear, objs), 3.0);
 }
 
 TEST(BehaviorPathPlanningUtilTest, getHighestProbLabel)
