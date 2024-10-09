@@ -375,14 +375,20 @@ void NetMonitor::update_network_list()
     return;
   }
 
+  const bool use_loopback = std::any_of(
+    device_params_.begin(), device_params_.end(),
+    [this](const std::string& device) { return device == loopback_interface_name_ || device == "*"; });
+
   for (const auto * interface = interfaces; interface; interface = interface->ifa_next) {
     // Skip no addr
     if (!interface->ifa_addr) {
       continue;
     }
-    // Skip loopback
-    if (interface->ifa_flags & IFF_LOOPBACK) {
-      continue;
+    if (!use_loopback) {
+      // Skip loopback
+      if (interface->ifa_flags & IFF_LOOPBACK) {
+        continue;
+      }
     }
     // Skip non AF_PACKET
     if (interface->ifa_addr->sa_family != AF_PACKET) {
@@ -458,6 +464,12 @@ void NetMonitor::update_network_capacity(NetworkInfomation & network, int socket
     return;
   }
 
+  // capacity is not available for loopback
+  if (network.interface_name == loopback_interface_name_) {
+    network.speed = -1;
+    return;
+  }
+
   // Possibly wireless connection, get bitrate(MBit/s)
   float ret = nl80211_.getBitrate(network.interface_name.c_str());
   if (ret <= 0) {
@@ -495,8 +507,10 @@ void NetMonitor::update_traffic(
       to_mbit(stats->rx_bytes - bytes_entry->second.rx_bytes) / duration.seconds();
     network.tx_traffic =
       to_mbit(stats->tx_bytes - bytes_entry->second.tx_bytes) / duration.seconds();
-    network.rx_usage = network.rx_traffic / network.speed;
-    network.tx_usage = network.tx_traffic / network.speed;
+    if (network.speed > 0) {
+      network.rx_usage = network.rx_traffic / network.speed;
+      network.tx_usage = network.tx_traffic / network.speed;
+    }
   }
 
   bytes_[network.interface_name].rx_bytes = stats->rx_bytes;
@@ -612,6 +626,7 @@ void NetMonitor::send_start_nethogs_request()
   for (const auto & network : network_list_) {
     // Skip if network is not supported
     if (network.is_invalid) continue;
+    if (network.interface_name == loopback_interface_name_) continue;
 
     interface_names.push_back(network.interface_name);
   }
