@@ -48,12 +48,10 @@ void box3DToDetectedObject(
   obj.classification.emplace_back(classification);
 
   // pose and shape
-  // mmdet3d yaw format to ros yaw format
-  float yaw = box3d.yaw + autoware::universe_utils::pi / 2;
   obj.kinematics.pose_with_covariance.pose.position =
     autoware::universe_utils::createPoint(box3d.x, box3d.y, box3d.z);
   obj.kinematics.pose_with_covariance.pose.orientation =
-    autoware::universe_utils::createQuaternionFromYaw(yaw);
+    autoware::universe_utils::createQuaternionFromYaw(box3d.yaw);
   obj.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
   obj.shape.dimensions =
     autoware::universe_utils::createTranslation(box3d.length, box3d.width, box3d.height);

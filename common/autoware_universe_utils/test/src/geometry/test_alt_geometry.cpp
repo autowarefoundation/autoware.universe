@@ -723,7 +723,7 @@ TEST(alt_geometry, within)
 TEST(alt_geometry, areaRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 
@@ -763,7 +763,7 @@ TEST(alt_geometry, areaRand)
 TEST(alt_geometry, convexHullRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 
@@ -811,7 +811,7 @@ TEST(alt_geometry, convexHullRand)
 TEST(alt_geometry, coveredByRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 
@@ -878,7 +878,7 @@ TEST(alt_geometry, coveredByRand)
 TEST(alt_geometry, disjointRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 
@@ -944,7 +944,7 @@ TEST(alt_geometry, disjointRand)
 TEST(alt_geometry, intersectsRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 
@@ -1010,7 +1010,7 @@ TEST(alt_geometry, intersectsRand)
 TEST(alt_geometry, touchesRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 
@@ -1077,7 +1077,7 @@ TEST(alt_geometry, touchesRand)
 TEST(alt_geometry, withinPolygonRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 

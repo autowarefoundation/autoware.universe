@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc. All rights reserved.
+// Copyright 2024 TIER IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@
  *
  */
 
-#include "autoware/pointcloud_preprocessor/downsample_filter/approximate_downsample_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/downsample_filter/approximate_downsample_filter_node.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
@@ -64,9 +64,9 @@ ApproximateDownsampleFilterComponent::ApproximateDownsampleFilterComponent(
 : Filter("ApproximateDownsampleFilter", options)
 {
   {
-    voxel_size_x_ = static_cast<double>(declare_parameter("voxel_size_x", 0.3));
-    voxel_size_y_ = static_cast<double>(declare_parameter("voxel_size_y", 0.3));
-    voxel_size_z_ = static_cast<double>(declare_parameter("voxel_size_z", 0.1));
+    voxel_size_x_ = declare_parameter<float>("voxel_size_x");
+    voxel_size_y_ = declare_parameter<float>("voxel_size_y");
+    voxel_size_z_ = declare_parameter<float>("voxel_size_z");
   }
 
   using std::placeholders::_1;
