@@ -36,13 +36,17 @@ public:
     mode_switch_radius_ = grid_mode_switch_radius;
     virtual_lidar_z_ = virtual_lidar_z;
 
-    mode_switch_grid_id_ = mode_switch_radius_ / grid_size_m_;
+    // calculate parameters
+    inv_grid_size_m_ = 1.0f / grid_size_m_;
+    mode_switch_grid_id_ = mode_switch_radius_ * inv_grid_size_m_;
     mode_switch_angle_rad_ = std::atan2(mode_switch_radius_, virtual_lidar_z_);
 
     grid_size_rad_ = universe_utils::normalizeRadian(
                        std::atan2(mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
                      universe_utils::normalizeRadian(mode_switch_angle_rad_);
+    inv_grid_size_rad_ = 1.0f / grid_size_rad_;
     tan_grid_size_rad_ = std::tan(grid_size_rad_);
+    grid_id_offset_ = mode_switch_grid_id_ - mode_switch_angle_rad_ * inv_grid_size_rad_;
 
     // generate grid array
     generateGridArray();
@@ -91,15 +95,11 @@ public:
   {
     uint16_t grid_id = 0;
 
-    const auto inv_grid_size_rad = 1.0f / grid_size_rad_;
-    const auto inv_grid_size_m = 1.0f / grid_size_m_;
-    const auto grid_id_offset = mode_switch_grid_id_ - mode_switch_angle_rad_ * inv_grid_size_rad;
-
     if (radius <= mode_switch_radius_) {
-      grid_id = static_cast<uint16_t>(radius * inv_grid_size_m);
+      grid_id = static_cast<uint16_t>(radius * inv_grid_size_m_);
     } else {
       auto gamma{universe_utils::normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
-      grid_id = grid_id_offset + gamma * inv_grid_size_rad;
+      grid_id = grid_id_offset_ + gamma * inv_grid_size_rad_;
     }
     return grid_id;
   }
@@ -113,10 +113,13 @@ private:
   float virtual_lidar_z_;
 
   // calculated parameters
+  float inv_grid_size_m_;
   float grid_size_rad_;
+  float inv_grid_size_rad_;
   float tan_grid_size_rad_;
   float mode_switch_grid_id_;
   float mode_switch_angle_rad_;
+  float grid_id_offset_;
 };
 
 }  // namespace autoware::ground_segmentation
