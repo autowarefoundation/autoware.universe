@@ -30,8 +30,8 @@ inline NetworkIO nameToNetworkIO(const char * name)
     {"num_points", NetworkIO::num_points},
     {"coors", NetworkIO::coors},
     {"cls_score0", NetworkIO::cls_score},
-    {"dir_cls_pred0", NetworkIO::dir_pred},
-    {"bbox_pred0", NetworkIO::bbox_pred}};
+    {"bbox_pred0", NetworkIO::bbox_pred},
+    {"dir_cls_pred0", NetworkIO::dir_pred},};
 
   auto it = name_to_enum.find(name);
   if (it != name_to_enum.end()) {
