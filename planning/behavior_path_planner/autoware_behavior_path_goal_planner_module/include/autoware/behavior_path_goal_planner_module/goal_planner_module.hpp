@@ -372,10 +372,13 @@ private:
   bool isStopped(
     std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer, const double time);
   bool hasFinishedCurrentPath(const PullOverContextData & ctx_data);
-  bool isOnModifiedGoal(const Pose & current_pose, const GoalPlannerParameters & parameters) const;
+  bool isOnModifiedGoal(
+    const Pose & current_pose, const std::optional<GoalCandidate> & modified_goal_opt,
+    const GoalPlannerParameters & parameters) const;
   double calcModuleRequestLength() const;
   bool needPathUpdate(
     const Pose & current_pose, const double path_update_duration,
+    const std::optional<GoalCandidate> & modified_goal_opt,
     const GoalPlannerParameters & parameters) const;
   bool isStuck(
     const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
@@ -406,7 +409,7 @@ private:
   BehaviorModuleOutput planPullOver(const PullOverContextData & context_data);
   BehaviorModuleOutput planPullOverAsOutput(const PullOverContextData & context_data);
   BehaviorModuleOutput planPullOverAsCandidate(const PullOverContextData & context_data);
-  std::optional<std::pair<PullOverPath, GoalCandidate>> selectPullOverPath(
+  std::optional<PullOverPath> selectPullOverPath(
     const PullOverContextData & context_data,
     const std::vector<PullOverPath> & pull_over_path_candidates,
     const GoalCandidates & goal_candidates) const;

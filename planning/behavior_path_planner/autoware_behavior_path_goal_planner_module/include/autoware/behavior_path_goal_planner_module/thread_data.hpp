@@ -105,22 +105,12 @@ public:
     return true;
   }
 
-  std::optional<PullOverPlannerType> getPullOverPlannerType() const
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (!pull_over_path_) {
-      return std::nullopt;
-    }
-    return pull_over_path_->type();
-  };
-
   void reset()
   {
     const std::lock_guard<std::recursive_mutex> lock(mutex_);
     pull_over_path_ = nullptr;
     pull_over_path_candidates_.clear();
     goal_candidates_.clear();
-    modified_goal_pose_ = std::nullopt;
     last_path_update_time_ = std::nullopt;
     last_path_idx_increment_time_ = std::nullopt;
     closest_start_pose_ = std::nullopt;
@@ -135,7 +125,6 @@ public:
 
   DEFINE_SETTER_GETTER_WITH_MUTEX(std::vector<PullOverPath>, pull_over_path_candidates)
   DEFINE_SETTER_GETTER_WITH_MUTEX(GoalCandidates, goal_candidates)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<GoalCandidate>, modified_goal_pose)
   DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<Pose>, closest_start_pose)
   DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<BehaviorModuleOutput>, last_previous_module_output)
   DEFINE_SETTER_GETTER_WITH_MUTEX(
@@ -168,7 +157,6 @@ private:
   void set_no_lock(const std::vector<PullOverPath> & arg) { pull_over_path_candidates_ = arg; }
   void set_no_lock(const std::shared_ptr<PullOverPath> & arg) { set_pull_over_path_no_lock(arg); }
   void set_no_lock(const PullOverPath & arg) { set_pull_over_path_no_lock(arg); }
-  void set_no_lock(const GoalCandidate & arg) { modified_goal_pose_ = arg; }
   void set_no_lock(const BehaviorModuleOutput & arg) { last_previous_module_output_ = arg; }
   void set_no_lock(const utils::path_safety_checker::CollisionCheckDebugMap & arg)
   {
@@ -179,7 +167,6 @@ private:
   std::shared_ptr<PullOverPath> lane_parking_pull_over_path_{nullptr};
   std::vector<PullOverPath> pull_over_path_candidates_;
   GoalCandidates goal_candidates_{};
-  std::optional<GoalCandidate> modified_goal_pose_;
   std::optional<rclcpp::Time> last_path_update_time_;
   std::optional<rclcpp::Time> last_path_idx_increment_time_;
   std::optional<Pose> closest_start_pose_{};

@@ -54,8 +54,8 @@ public:
   size_t goal_id() const { return modified_goal_pose_.id; }
   size_t id() const { return id_; }
   Pose start_pose() const { return start_pose_; }
-  Pose end_pose() const { return modified_goal_pose_.goal_pose; }
-  GoalCandidate modified_goal_pose() const { return modified_goal_pose_; }
+  Pose modified_goal_pose() const { return modified_goal_pose_.goal_pose; }
+  GoalCandidate modified_goal() const { return modified_goal_pose_; }
 
   std::vector<PathWithLaneId> & partial_paths() { return partial_paths_; }
   const std::vector<PathWithLaneId> & partial_paths() const { return partial_paths_; }
