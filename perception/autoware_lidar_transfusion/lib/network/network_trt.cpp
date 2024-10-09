@@ -23,7 +23,7 @@
 namespace autoware::lidar_transfusion
 {
 
-inline NetworkIO nameToNetworkIO(const char* name)
+inline NetworkIO nameToNetworkIO(const char * name)
 {
   static const std::unordered_map<std::string_view, NetworkIO> name_to_enum = {
     {"voxels", NetworkIO::voxels},
@@ -31,8 +31,7 @@ inline NetworkIO nameToNetworkIO(const char* name)
     {"coors", NetworkIO::coors},
     {"cls_score0", NetworkIO::cls_score},
     {"dir_cls_pred0", NetworkIO::dir_pred},
-    {"bbox_pred0", NetworkIO::bbox_pred}
-  };
+    {"bbox_pred0", NetworkIO::bbox_pred}};
 
   auto it = name_to_enum.find(name);
   if (it != name_to_enum.end()) {
@@ -271,14 +270,14 @@ bool NetworkTRT::validateNetworkIO()
       << ". Actual size: " << engine->getNbIOTensors() << "." << std::endl;
     throw std::runtime_error("Failed to initialize TRT network.");
   }
-  
+
   // Initialize tensors_names_ with null values
   tensors_names_.resize(NetworkIO::ENUM_SIZE, nullptr);
 
   // Loop over the tensor names and place them in the correct positions
   for (int i = 0; i < NetworkIO::ENUM_SIZE; ++i) {
-      const char* name = engine->getIOTensorName(i);
-      tensors_names_[nameToNetworkIO(name)] = name;
+    const char * name = engine->getIOTensorName(i);
+    tensors_names_[nameToNetworkIO(name)] = name;
   }
 
   // Log the network IO
