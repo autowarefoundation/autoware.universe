@@ -19,6 +19,7 @@
 #include "autoware/pointcloud_preprocessor/transform_info.hpp"
 #include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
+#include "grid.hpp"
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -203,10 +204,8 @@ private:
   uint16_t gnd_grid_buffer_size_;
   float virtual_lidar_z_;
 
-  float grid_mode_switch_grid_id_;
-  float grid_mode_switch_angle_rad_;
-  float grid_size_rad_;
-  float tan_grid_size_rad_;
+  // grid data
+  ScanGroundGrid grid_;
 
   // data access methods
   void set_field_index_offsets(const PointCloud2ConstPtr & input);
@@ -244,8 +243,6 @@ private:
    * @param[out] point Virtual ground origin point
    */
   void calcVirtualGroundOrigin(pcl::PointXYZ & point) const;
-
-  float calcGridSize(const PointData & pd) const;
 
   /*!
    * Classifies Points in the PointCloud as Ground and Not Ground

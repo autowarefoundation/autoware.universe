@@ -74,14 +74,9 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     grid_mode_switch_radius_ = declare_parameter<float>("grid_mode_switch_radius");
     gnd_grid_buffer_size_ = declare_parameter<int>("gnd_grid_buffer_size");
     virtual_lidar_z_ = vehicle_info_.vehicle_height_m;
-    // calculate grid parameters
-    grid_mode_switch_grid_id_ =
-      grid_mode_switch_radius_ / grid_size_m_;  // changing the mode of grid division
-    grid_mode_switch_angle_rad_ = std::atan2(grid_mode_switch_radius_, virtual_lidar_z_);
-    grid_size_rad_ =
-      normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
-      normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
-    tan_grid_size_rad_ = std::tan(grid_size_rad_);
+
+    // initialize grid
+    grid_.initialize(grid_size_m_, grid_mode_switch_radius_, virtual_lidar_z_);
 
     // data access
     data_offset_initialized_ = false;
@@ -145,11 +140,6 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
   PointData current_point;
 
   const auto inv_radial_divider_angle_rad = 1.0f / radial_divider_angle_rad_;
-  const auto inv_grid_size_rad = 1.0f / grid_size_rad_;
-  const auto inv_grid_size_m = 1.0f / grid_size_m_;
-
-  const auto grid_id_offset =
-    grid_mode_switch_grid_id_ - grid_mode_switch_angle_rad_ * inv_grid_size_rad;
   const auto x_shift = vehicle_info_.wheel_base_m / 2.0f + center_pcl_shift_;
 
   const size_t in_cloud_data_size = in_cloud->data.size();
@@ -172,15 +162,8 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
 
       // divide by azimuth angle
       auto radial_div{static_cast<size_t>(std::floor(theta * inv_radial_divider_angle_rad))};
-      uint16_t grid_id = 0;
-      // TODO(technolojin): radius to grid_id conversion can be a function for better readability
-      // and cached for performance
-      if (radius <= grid_mode_switch_radius_) {
-        grid_id = static_cast<uint16_t>(radius * inv_grid_size_m);
-      } else {
-        auto gamma{normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
-        grid_id = grid_id_offset + gamma * inv_grid_size_rad;
-      }
+      uint16_t grid_id = grid_.getGridId(radius);
+
       current_point.grid_id = grid_id;
       current_point.radius = radius;
       current_point.point_state = PointLabel::INIT;
@@ -262,23 +245,6 @@ void ScanGroundFilterComponent::calcVirtualGroundOrigin(pcl::PointXYZ & point) c
   point.x = vehicle_info_.wheel_base_m;
   point.y = 0;
   point.z = 0;
-}
-
-inline float ScanGroundFilterComponent::calcGridSize(const PointData & pd) const
-{
-  float grid_size = grid_size_m_;
-  uint16_t back_steps_num = 1;
-
-  if (
-    pd.radius > grid_mode_switch_radius_ &&
-    pd.grid_id > grid_mode_switch_grid_id_ + back_steps_num) {
-    // equivalent to grid_size = (std::tan(gamma) - std::tan(gamma - grid_size_rad_)) *
-    // virtual_lidar_z_
-    // where gamma = normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)
-    grid_size = pd.radius - (pd.radius - tan_grid_size_rad_ * virtual_lidar_z_) /
-                              (1 + pd.radius * tan_grid_size_rad_ / virtual_lidar_z_);
-  }
-  return grid_size;
 }
 
 void ScanGroundFilterComponent::initializeFirstGndGrids(
@@ -513,7 +479,8 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
       uint16_t next_gnd_grid_id_thresh = (gnd_grids.end() - gnd_grid_buffer_size_)->grid_id +
                                          gnd_grid_buffer_size_ + gnd_grid_continual_thresh_;
-      float curr_grid_size = calcGridSize(pd_curr);
+      // float curr_grid_size = calcGridSize(pd_curr);
+      float curr_grid_size = grid_.getGridSize(pd_curr.radius, pd_curr.grid_id);
       if (
         // 4: the point is in the same grid
         pd_curr.grid_id < next_gnd_grid_id_thresh &&
@@ -744,31 +711,10 @@ rcl_interfaces::msg::SetParametersResult ScanGroundFilterComponent::onParameter(
   const std::vector<rclcpp::Parameter> & param)
 {
   if (get_param(param, "grid_size_m", grid_size_m_)) {
-    grid_mode_switch_grid_id_ = grid_mode_switch_radius_ / grid_size_m_;
-    grid_size_rad_ =
-      normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
-      normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
-    tan_grid_size_rad_ = std::tan(grid_size_rad_);
-    RCLCPP_DEBUG(get_logger(), "Setting grid_size_m to: %f.", grid_size_m_);
-    RCLCPP_DEBUG(
-      get_logger(), "Setting grid_mode_switch_grid_id to: %f.", grid_mode_switch_grid_id_);
-    RCLCPP_DEBUG(get_logger(), "Setting grid_size_rad to: %f.", grid_size_rad_);
-    RCLCPP_DEBUG(get_logger(), "Setting tan_grid_size_rad to: %f.", tan_grid_size_rad_);
+    grid_.initialize(grid_size_m_, grid_mode_switch_radius_, virtual_lidar_z_);
   }
   if (get_param(param, "grid_mode_switch_radius", grid_mode_switch_radius_)) {
-    grid_mode_switch_grid_id_ = grid_mode_switch_radius_ / grid_size_m_;
-    grid_mode_switch_angle_rad_ = std::atan2(grid_mode_switch_radius_, virtual_lidar_z_);
-    grid_size_rad_ =
-      normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
-      normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
-    tan_grid_size_rad_ = std::tan(grid_size_rad_);
-    RCLCPP_DEBUG(get_logger(), "Setting grid_mode_switch_radius to: %f.", grid_mode_switch_radius_);
-    RCLCPP_DEBUG(
-      get_logger(), "Setting grid_mode_switch_grid_id to: %f.", grid_mode_switch_grid_id_);
-    RCLCPP_DEBUG(
-      get_logger(), "Setting grid_mode_switch_angle_rad to: %f.", grid_mode_switch_angle_rad_);
-    RCLCPP_DEBUG(get_logger(), "Setting grid_size_rad to: %f.", grid_size_rad_);
-    RCLCPP_DEBUG(get_logger(), "Setting tan_grid_size_rad to: %f.", tan_grid_size_rad_);
+    grid_.initialize(grid_size_m_, grid_mode_switch_radius_, virtual_lidar_z_);
   }
   double global_slope_max_angle_deg{get_parameter("global_slope_max_angle_deg").as_double()};
   if (get_param(param, "global_slope_max_angle_deg", global_slope_max_angle_deg)) {

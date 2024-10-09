@@ -1,0 +1,124 @@
+// Copyright 2024 TIER IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef SCAN_GROUND_FILTER__GRID_HPP_
+#define SCAN_GROUND_FILTER__GRID_HPP_
+
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
+
+#include <cmath>
+
+namespace autoware::ground_segmentation
+{
+
+class ScanGroundGrid
+{
+public:
+  ScanGroundGrid() = default;
+  ~ScanGroundGrid() = default;
+
+  void initialize(
+    const float grid_size_m, const float grid_mode_switch_radius, const float virtual_lidar_z)
+  {
+    grid_size_m_ = grid_size_m;
+    mode_switch_radius_ = grid_mode_switch_radius;
+    virtual_lidar_z_ = virtual_lidar_z;
+
+    mode_switch_grid_id_ = mode_switch_radius_ / grid_size_m_;
+    mode_switch_angle_rad_ = std::atan2(mode_switch_radius_, virtual_lidar_z_);
+
+    grid_size_rad_ = universe_utils::normalizeRadian(
+                       std::atan2(mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
+                     universe_utils::normalizeRadian(mode_switch_angle_rad_);
+    tan_grid_size_rad_ = std::tan(grid_size_rad_);
+
+    // generate grid array
+    generateGridArray();
+
+    is_initialized_ = true;
+  }
+
+  bool generateGridArray()
+  {
+    if (!is_initialized_) {
+      return false;
+    }
+
+    // generate grid array
+
+    return true;
+  }
+
+  bool checkGridArray(
+    const float grid_size_m, const float grid_mode_switch_radius, const float virtual_lidar_z)
+  {
+    if (!is_initialized_) return false;
+    if (grid_size_m != grid_size_m_) return false;
+    if (grid_mode_switch_radius != mode_switch_radius_) return false;
+    if (virtual_lidar_z != virtual_lidar_z_) return false;
+    // all parameters are the same and the grid array is already generated
+    return true;
+  }
+
+  float getGridSize(const float radius, const size_t grid_id) const
+  {
+    float grid_size = grid_size_m_;
+    constexpr uint16_t back_steps_num = 1;
+
+    if (radius > mode_switch_radius_ && grid_id > mode_switch_grid_id_ + back_steps_num) {
+      // equivalent to grid_size = (std::tan(gamma) - std::tan(gamma - grid_size_rad_)) *
+      // virtual_lidar_z_
+      // where gamma = normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)
+      grid_size = radius - (radius - tan_grid_size_rad_ * virtual_lidar_z_) /
+                             (1 + radius * tan_grid_size_rad_ / virtual_lidar_z_);
+    }
+    return grid_size;
+  }
+
+  uint16_t getGridId(const float radius) const
+  {
+    uint16_t grid_id = 0;
+
+    const auto inv_grid_size_rad = 1.0f / grid_size_rad_;
+    const auto inv_grid_size_m = 1.0f / grid_size_m_;
+    const auto grid_id_offset = mode_switch_grid_id_ - mode_switch_angle_rad_ * inv_grid_size_rad;
+
+    if (radius <= mode_switch_radius_) {
+      grid_id = static_cast<uint16_t>(radius * inv_grid_size_m);
+    } else {
+      auto gamma{universe_utils::normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
+      grid_id = grid_id_offset + gamma * inv_grid_size_rad;
+    }
+    return grid_id;
+  }
+
+private:
+  bool is_initialized_ = false;
+
+  // configured parameters
+  float grid_size_m_;
+  float mode_switch_radius_;
+  float virtual_lidar_z_;
+
+  // calculated parameters
+  float grid_size_rad_;
+  float tan_grid_size_rad_;
+  float mode_switch_grid_id_;
+  float mode_switch_angle_rad_;
+};
+
+}  // namespace autoware::ground_segmentation
+
+#endif  // SCAN_GROUND_FILTER__GRID_HPP_
