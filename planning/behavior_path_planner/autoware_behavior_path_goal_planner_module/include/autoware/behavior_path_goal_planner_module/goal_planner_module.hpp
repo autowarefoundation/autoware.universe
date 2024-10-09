@@ -372,10 +372,13 @@ private:
   bool isStopped(
     std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer, const double time);
   bool hasFinishedCurrentPath(const PullOverContextData & ctx_data);
-  bool isOnModifiedGoal(const Pose & current_pose, const GoalPlannerParameters & parameters) const;
+  bool isOnModifiedGoal(
+    const Pose & current_pose, const std::optional<GoalCandidate> & modified_goal_opt,
+    const GoalPlannerParameters & parameters) const;
   double calcModuleRequestLength() const;
   bool needPathUpdate(
     const Pose & current_pose, const double path_update_duration,
+    const std::optional<GoalCandidate> & modified_goal_opt,
     const GoalPlannerParameters & parameters) const;
   bool isStuck(
     const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
