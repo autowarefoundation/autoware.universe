@@ -72,7 +72,7 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, calcFeasibleDecelDistance)
   auto distance =
     calcFeasibleDecelDistance(planner_data, acceleration_limit, jerk_limit, target_velocity);
   ASSERT_TRUE(distance.has_value());
-  EXPECT_NEAR(distance.value(), 0.0, epsilon);
+  EXPECT_DOUBLE_EQ(distance.value(), 0.0);
 
   // condition: calculates deceleration distance
   velocity = 5.0;
@@ -127,27 +127,27 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, modifyVelocityByDirection)
   modifyVelocityByDirection(paths, terminal_vel_acc_pairs, target_velocity, acceleration);
 
   // condition: number of point less than 2
-  EXPECT_NEAR(terminal_vel_acc_pairs.at(0).first, 0.0, epsilon);
-  EXPECT_NEAR(terminal_vel_acc_pairs.at(0).second, 0.0, epsilon);
+  EXPECT_DOUBLE_EQ(terminal_vel_acc_pairs.at(0).first, 0.0);
+  EXPECT_DOUBLE_EQ(terminal_vel_acc_pairs.at(0).second, 0.0);
 
   // condition: forward driving
-  EXPECT_NEAR(terminal_vel_acc_pairs.at(1).first, target_velocity, epsilon);
-  EXPECT_NEAR(terminal_vel_acc_pairs.at(1).second, acceleration, epsilon);
+  EXPECT_DOUBLE_EQ(terminal_vel_acc_pairs.at(1).first, target_velocity);
+  EXPECT_DOUBLE_EQ(terminal_vel_acc_pairs.at(1).second, acceleration);
   for (const auto & point : paths.at(1).points) {
     if (point == paths.at(1).points.back())
-      EXPECT_NEAR(point.point.longitudinal_velocity_mps, 0.0, epsilon);
+      EXPECT_DOUBLE_EQ(point.point.longitudinal_velocity_mps, 0.0);
     else
-      EXPECT_NEAR(point.point.longitudinal_velocity_mps, velocity, epsilon);
+      EXPECT_DOUBLE_EQ(point.point.longitudinal_velocity_mps, velocity);
   }
 
   // condition: reverse driving
-  EXPECT_NEAR(terminal_vel_acc_pairs.at(2).first, -target_velocity, epsilon);
-  EXPECT_NEAR(terminal_vel_acc_pairs.at(2).second, -acceleration, epsilon);
+  EXPECT_DOUBLE_EQ(terminal_vel_acc_pairs.at(2).first, -target_velocity);
+  EXPECT_DOUBLE_EQ(terminal_vel_acc_pairs.at(2).second, -acceleration);
   for (const auto & point : paths.at(2).points) {
     if (point == paths.at(2).points.back())
-      EXPECT_NEAR(point.point.longitudinal_velocity_mps, 0.0, epsilon);
+      EXPECT_DOUBLE_EQ(point.point.longitudinal_velocity_mps, 0.0);
     else
-      EXPECT_NEAR(point.point.longitudinal_velocity_mps, -velocity, epsilon);
+      EXPECT_DOUBLE_EQ(point.point.longitudinal_velocity_mps, -velocity);
   }
 }
 
@@ -163,8 +163,8 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, updatePathProperty)
   auto pair_terminal_velocity_and_accel = std::make_pair(3.0, 2.0);
 
   updatePathProperty(params, pair_terminal_velocity_and_accel);
-  EXPECT_NEAR(params->max_velocity, 3.0, epsilon);
-  EXPECT_NEAR(params->acceleration, 2.0, epsilon);
+  EXPECT_DOUBLE_EQ(params->max_velocity, 3.0);
+  EXPECT_DOUBLE_EQ(params->acceleration, 2.0);
 }
 
 TEST(BehaviorPathPlanningParkingDepartureUtil, initializeCollisionCheckDebugMap)
@@ -190,13 +190,13 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, getPairsTerminalVelocityAndAccel)
 
   // condition: current path idx exceeds pairs size
   auto pair = getPairsTerminalVelocityAndAccel(pairs_terminal_velocity_and_accel, 2);
-  EXPECT_NEAR(pair.first, 0.0, epsilon);
-  EXPECT_NEAR(pair.first, 0.0, epsilon);
+  EXPECT_DOUBLE_EQ(pair.first, 0.0);
+  EXPECT_DOUBLE_EQ(pair.first, 0.0);
 
   // condition: get current idx pair
   pair = getPairsTerminalVelocityAndAccel(pairs_terminal_velocity_and_accel, 1);
-  EXPECT_NEAR(pair.first, 0.05, epsilon);
-  EXPECT_NEAR(pair.second, -1.0, epsilon);
+  EXPECT_DOUBLE_EQ(pair.first, 0.05);
+  EXPECT_DOUBLE_EQ(pair.second, -1.0);
 }
 
 TEST(BehaviorPathPlanningParkingDepartureUtil, generateFeasibleStopPath)
@@ -255,9 +255,9 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, generateFeasibleStopPath)
   ASSERT_TRUE(stop_path.has_value());
   for (const auto & point : stop_path->points) {
     if (i < 7)
-      EXPECT_NEAR(point.point.longitudinal_velocity_mps, velocity, epsilon);
+      EXPECT_DOUBLE_EQ(point.point.longitudinal_velocity_mps, velocity);
     else
-      EXPECT_NEAR(point.point.longitudinal_velocity_mps, 0.0, epsilon);
+      EXPECT_DOUBLE_EQ(point.point.longitudinal_velocity_mps, 0.0);
     i++;
   }
 }
@@ -291,25 +291,25 @@ TEST(BehaviorPathPlanningParkingDepartureUtil, calcEndArcLength)
 
   // condition: goal pose not in lanelets
   auto end_arc = calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
-  EXPECT_NEAR(end_arc.first, s_start + forward_path_length, epsilon);
+  EXPECT_DOUBLE_EQ(end_arc.first, s_start + forward_path_length);
   EXPECT_FALSE(end_arc.second);
 
   // condition: goal pose behind start
   goal_pose.position.x = -0.9;
   goal_pose.position.y = 0.0;
   end_arc = calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
-  EXPECT_NEAR(end_arc.first, s_start + forward_path_length, epsilon);
+  EXPECT_DOUBLE_EQ(end_arc.first, s_start + forward_path_length);
   EXPECT_FALSE(end_arc.second);
 
   // condition: goal pose beyond start
   goal_pose.position.x = 0.0;
   end_arc = calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
-  EXPECT_NEAR(end_arc.first, s_start + forward_path_length, epsilon);
+  EXPECT_DOUBLE_EQ(end_arc.first, s_start + forward_path_length);
   EXPECT_FALSE(end_arc.second);
 
   // condition: path end is goal
   goal_pose.position.x = -0.75;
   end_arc = calcEndArcLength(s_start, forward_path_length, road_lanes, goal_pose);
-  EXPECT_NEAR(end_arc.first, 0.25, epsilon);
+  EXPECT_DOUBLE_EQ(end_arc.first, 0.25);
   EXPECT_TRUE(end_arc.second);
 }
