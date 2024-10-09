@@ -154,22 +154,21 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
     pcl::PointXYZ input_point;
     for (size_t data_index = 0; data_index + in_cloud_point_step <= in_cloud_data_size;
          data_index += in_cloud_point_step) {
+      // Get Point
       get_point_from_data_index(in_cloud, data_index, input_point);
 
+      // determine the azimuth angle group
       auto x{input_point.x - x_shift};  // base on front wheel center
       auto radius{static_cast<float>(std::hypot(x, input_point.y))};
       auto theta{normalizeRadian(std::atan2(x, input_point.y), 0.0)};
-
-      // divide by azimuth angle
       auto radial_div{static_cast<size_t>(std::floor(theta * inv_radial_divider_angle_rad))};
-      uint16_t grid_id = grid_.getGridId(radius);
 
-      current_point.grid_id = grid_id;
       current_point.radius = radius;
       current_point.point_state = PointLabel::INIT;
       current_point.orig_index = point_index;
+      current_point.grid_id = grid_.getGridId(radius);
 
-      // radial divisions
+      // store the point in the corresponding radial division
       out_radial_ordered_points[radial_div].emplace_back(current_point);
       ++point_index;
     }
@@ -211,9 +210,10 @@ void ScanGroundFilterComponent::convertPointcloud(
     pcl::PointXYZ input_point;
     for (size_t data_index = 0; data_index + in_cloud_point_step <= in_cloud_data_size;
          data_index += in_cloud_point_step) {
-      // Point
+      // Get Point
       get_point_from_data_index(in_cloud, data_index, input_point);
 
+      // determine the azimuth angle group
       auto radius{static_cast<float>(std::hypot(input_point.x, input_point.y))};
       auto theta{normalizeRadian(std::atan2(input_point.x, input_point.y), 0.0)};
       auto radial_div{static_cast<size_t>(std::floor(theta * inv_radial_divider_angle_rad))};
@@ -222,7 +222,7 @@ void ScanGroundFilterComponent::convertPointcloud(
       current_point.point_state = PointLabel::INIT;
       current_point.orig_index = point_index;
 
-      // radial divisions
+      // store the point in the corresponding radial division
       out_radial_ordered_points[radial_div].emplace_back(current_point);
       ++point_index;
     }
