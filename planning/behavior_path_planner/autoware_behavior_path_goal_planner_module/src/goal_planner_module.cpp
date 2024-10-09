@@ -292,6 +292,7 @@ void GoalPlannerModule::onTimer()
     // TODO(someone): The generated path inherits the velocity of the path of the previous module.
     // Therefore, if the velocity of the path of the previous module changes (e.g. stop points are
     // inserted, deleted), the path should be regenerated.
+
     return false;
   });
   if (!need_update) {
@@ -1737,9 +1738,8 @@ bool GoalPlannerModule::isStuck(
     return false;
   }
 
-  // any path has never been found
-  if (!thread_safe_data_.get_pull_over_path()) {
-    return false;
+  if (!found_pull_over_path) {
+    return true;
   }
 
   const auto & pull_over_path = pull_over_path_opt.value();
