@@ -119,11 +119,10 @@ namespace py = pybind11;
 // cppcheck-suppress syntaxError
 PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
 {
-  auto pyPlannerWaypointsVector =
-    py::class_<PlannerWaypointsVector>(p, "PlannerWaypointsVector")
-      .def(py::init<>())
-      .def_readwrite("waypoints", &PlannerWaypointsVector::waypoints)
-      .def_readwrite("length", &PlannerWaypointsVector::length);
+  auto pyPlannerWaypointsVector = py::class_<PlannerWaypointsVector>(p, "PlannerWaypointsVector")
+                                    .def(py::init<>())
+                                    .def_readwrite("waypoints", &PlannerWaypointsVector::waypoints)
+                                    .def_readwrite("length", &PlannerWaypointsVector::length);
   auto pyAstarParam =
     py::class_<freespace_planning_algorithms::AstarParam>(p, "AstarParam")
       .def(py::init<>())
@@ -150,8 +149,7 @@ PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
         "goal_lat_distance_weight",
         &freespace_planning_algorithms::AstarParam::goal_lat_distance_weight);
   auto pyPlannerCommonParam =
-    py::class_<freespace_planning_algorithms::PlannerCommonParam>(
-      p, "PlannerCommonParam")
+    py::class_<freespace_planning_algorithms::PlannerCommonParam>(p, "PlannerCommonParam")
       .def(py::init<>())
       .def_readwrite("time_limit", &freespace_planning_algorithms::PlannerCommonParam::time_limit)
       .def_readwrite("theta_size", &freespace_planning_algorithms::PlannerCommonParam::theta_size)
