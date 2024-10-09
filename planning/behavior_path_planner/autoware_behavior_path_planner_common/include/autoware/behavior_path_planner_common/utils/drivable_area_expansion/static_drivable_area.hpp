@@ -42,7 +42,7 @@ void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
   const bool enable_expanding_freespace_areas,
-  const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward = true);
+  const std::shared_ptr<const PlannerData> planner_data);
 
 void generateDrivableArea(
   PathWithLaneId & path, const double vehicle_length, const double offset,
@@ -81,14 +81,12 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> planner_data,
   const std::vector<DrivableLanes> & drivable_lanes,
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
-  const bool enable_expanding_freespace_areas, const bool is_left,
-  const bool is_driving_forward = true);
+  const bool enable_expanding_freespace_areas, const bool is_left);
 
 std::vector<geometry_msgs::msg::Point> postProcess(
   const std::vector<geometry_msgs::msg::Point> & original_bound, const PathWithLaneId & path,
   const std::shared_ptr<const PlannerData> planner_data,
-  const std::vector<DrivableLanes> & drivable_lanes, const bool is_left,
-  const bool is_driving_forward = true);
+  const std::vector<DrivableLanes> & drivable_lanes, const bool is_left);
 
 DrivableAreaInfo combineDrivableAreaInfo(
   const DrivableAreaInfo & drivable_area_info1, const DrivableAreaInfo & drivable_area_info2);
