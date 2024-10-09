@@ -188,7 +188,7 @@ double calcLateralDistanceFromEgoToObject(
  * @brief calculate longitudinal distance from ego pose to object
  * @return distance from ego pose to object
  */
-double calcLongitudinalDistanceFromEgoToObject(
+double calc_longitudinal_distance_from_ego_to_object(
   const Pose & ego_pose, const double base_link2front, const double base_link2rear,
   const PredictedObject & dynamic_object);
 
@@ -222,7 +222,7 @@ std::optional<lanelet::ConstLanelet> getLeftLanelet(
  * @param [in] goal_lane_id [unused]
  * @param [in] output_ptr output path with modified points for the goal
  */
-bool setGoal(
+bool set_goal(
   const double search_radius_range, const double search_rad_range, const PathWithLaneId & input,
   const Pose & goal, const int64_t goal_lane_id, PathWithLaneId * output_ptr);
 
