@@ -479,19 +479,18 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
       uint16_t next_gnd_grid_id_thresh = (gnd_grids.end() - gnd_grid_buffer_size_)->grid_id +
                                          gnd_grid_buffer_size_ + gnd_grid_continual_thresh_;
-      // float curr_grid_size = calcGridSize(pd_curr);
       float curr_grid_size = grid_.getGridSize(pd_curr.radius, pd_curr.grid_id);
       if (
-        // 4: the point is in the same grid
+        // 4: the point is continuous with the previous grid
         pd_curr.grid_id < next_gnd_grid_id_thresh &&
         pd_curr.radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * curr_grid_size) {
         checkContinuousGndGrid(pd_curr, point_curr, gnd_grids);
       } else if (
-        // 5: the point is in the next grid
+        // 5: the point is discontinuous with the previous grid
         pd_curr.radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * curr_grid_size) {
         checkDiscontinuousGndGrid(pd_curr, point_curr, gnd_grids);
       } else {
-        // 6: the point is in the break grid
+        // 6: the point is break the previous grid
         checkBreakGndGrid(pd_curr, point_curr, gnd_grids);
       }
 
