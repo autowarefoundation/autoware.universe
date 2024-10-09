@@ -292,6 +292,7 @@ void GoalPlannerModule::onTimer()
     // TODO(someone): The generated path inherits the velocity of the path of the previous module.
     // Therefore, if the velocity of the path of the previous module changes (e.g. stop points are
     // inserted, deleted), the path should be regenerated.
+
     return false;
   });
   if (!need_update) {
