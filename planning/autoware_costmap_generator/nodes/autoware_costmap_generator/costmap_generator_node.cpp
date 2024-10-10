@@ -281,6 +281,11 @@ void CostmapGenerator::onTimer()
   autoware::universe_utils::ScopedTimeTrack scoped_time_track(__func__, *time_keeper_);
   stop_watch.tic();
   if (!isActive()) {
+    // Publish ProcessingTime
+    tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+    processing_time_msg.stamp = get_clock()->now();
+    processing_time_msg.data = stop_watch.toc();
+    pub_processing_time_ms_->publish(processing_time_msg);
     return;
   }
 
