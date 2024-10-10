@@ -41,17 +41,16 @@ PathWithLaneId generatePath(const geometry_msgs::msg::Pose & pose)
   return traj;
 }
 
-TEST(BehaviorTrafficLightModuleUtilsTest, getBackwardPointFromBasePoint)
+TEST(BehaviorTrafficLightModuleUtilsTest, getOffsetPoint)
 {
   constexpr double length = 2.0;
   Point2d p1 = {0.0, 0.0};
   Point2d p2 = {1.0, 1.0};
-  Point2d p3 = {0.0, 1.0};
 
-  const auto output = getBackwardPointFromBasePoint(p1, p2, p3, length);
+  const auto output = getOffsetPoint(p1, p2, length);
 
   EXPECT_DOUBLE_EQ(output.x(), 1.41421356237309505);
-  EXPECT_DOUBLE_EQ(output.y(), 2.41421356237309505);
+  EXPECT_DOUBLE_EQ(output.y(), 1.41421356237309505);
 }
 
 TEST(BehaviorTrafficLightModuleUtilsTest, findNearestCollisionPoint)

@@ -23,13 +23,12 @@ namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 
-auto getBackwardPointFromBasePoint(
-  const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
-  const Eigen::Vector2d & base_point, const double backward_length) -> Eigen::Vector2d
+auto getOffsetPoint(const Eigen::Vector2d & src, const Eigen::Vector2d & dst, const double length)
+  -> Eigen::Vector2d
 {
-  Eigen::Vector2d line_vec = line_point2 - line_point1;
-  Eigen::Vector2d backward_vec = backward_length * line_vec.normalized();
-  return base_point + backward_vec;
+  Eigen::Vector2d line_vec = dst - src;
+  Eigen::Vector2d backward_vec = length * line_vec.normalized();
+  return src + backward_vec;
 }
 
 auto findNearestCollisionPoint(
@@ -117,8 +116,7 @@ auto createTargetPoint(
     }
     // create target point
     return std::make_pair(
-      target_point_idx,
-      getBackwardPointFromBasePoint(point2, point1, point2, std::fabs(length_sum - offset)));
+      target_point_idx, getOffsetPoint(point2, point1, std::fabs(length_sum - offset)));
   }
   return std::nullopt;
 }
