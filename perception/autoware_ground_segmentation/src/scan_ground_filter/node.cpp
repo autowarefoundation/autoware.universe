@@ -282,42 +282,54 @@ void ScanGroundFilterComponent::checkContinuousGndGrid(
   PointData & pd, const pcl::PointXYZ & point_curr,
   const std::vector<GridCenter> & gnd_grids_list) const
 {
-  float next_gnd_z = 0.0f;
-  float curr_gnd_slope_ratio = 0.0f;
+  // 1. check local slope
+  {
+    // reference gird is the last-1
+    const auto reference_grid_it = gnd_grids_list.end() - 2;
+    const float delta_z = point_curr.z - reference_grid_it->avg_height;
+    const float delta_radius = pd.radius - reference_grid_it->radius;
+    const float local_slope_ratio = delta_z / delta_radius;
+
+    if (abs(local_slope_ratio) < local_slope_max_ratio_) {
+      pd.point_state = PointLabel::GROUND;
+      return;
+    }
+  }
+
+  // 2. mean of grid buffer(filtering)
+  // get mean of buffer except the last grid
   float gnd_buff_z_mean = 0.0f;
   float gnd_buff_radius = 0.0f;
-
   for (auto it = gnd_grids_list.end() - gnd_grid_buffer_size_ - 1; it < gnd_grids_list.end() - 1;
        ++it) {
     gnd_buff_radius += it->radius;
     gnd_buff_z_mean += it->avg_height;
   }
+  gnd_buff_radius /= static_cast<float>(gnd_grid_buffer_size_);
+  gnd_buff_z_mean /= static_cast<float>(gnd_grid_buffer_size_);
 
-  gnd_buff_radius /= static_cast<float>(gnd_grid_buffer_size_ - 1);
-  gnd_buff_z_mean /= static_cast<float>(gnd_grid_buffer_size_ - 1);
-
-  float tmp_delta_mean_z = gnd_grids_list.back().avg_height - gnd_buff_z_mean;
-  float tmp_delta_radius = gnd_grids_list.back().radius - gnd_buff_radius;
-
-  curr_gnd_slope_ratio = tmp_delta_mean_z / tmp_delta_radius;
-  curr_gnd_slope_ratio = curr_gnd_slope_ratio < -global_slope_max_ratio_ ? -global_slope_max_ratio_
-                                                                         : curr_gnd_slope_ratio;
+  // reference gradient(slope) from mean of previous gnd grids
+  // reference position is the last grid
+  const float delta_z = gnd_grids_list.back().avg_height - gnd_buff_z_mean;
+  const float delta_radius = gnd_grids_list.back().radius - gnd_buff_radius;
+  float curr_gnd_slope_ratio = delta_z / delta_radius;
   curr_gnd_slope_ratio =
-    curr_gnd_slope_ratio > global_slope_max_ratio_ ? global_slope_max_ratio_ : curr_gnd_slope_ratio;
+    std::clamp(curr_gnd_slope_ratio, -global_slope_max_ratio_, global_slope_max_ratio_);
 
-  next_gnd_z = curr_gnd_slope_ratio * (pd.radius - gnd_buff_radius) + gnd_buff_z_mean;
+  // extrapolate next ground height
+  float next_gnd_z = curr_gnd_slope_ratio * (pd.radius - gnd_buff_radius) + gnd_buff_z_mean;
 
-  float gnd_z_local_thresh = std::tan(DEG2RAD(5.0)) * (pd.radius - gnd_grids_list.back().radius);
+  // calculate fixed angular threshold from the reference position
+  const float gnd_z_local_thresh =
+    std::tan(DEG2RAD(5.0)) * (pd.radius - gnd_grids_list.back().radius);
 
-  tmp_delta_mean_z = point_curr.z - (gnd_grids_list.end() - 2)->avg_height;
-  tmp_delta_radius = pd.radius - (gnd_grids_list.end() - 2)->radius;
-  float local_slope_ratio = tmp_delta_mean_z / tmp_delta_radius;
-  if (
-    abs(point_curr.z - next_gnd_z) <= non_ground_height_threshold_ + gnd_z_local_thresh ||
-    abs(local_slope_ratio) <= local_slope_max_ratio_) {
+  if (abs(point_curr.z - next_gnd_z) <= non_ground_height_threshold_ + gnd_z_local_thresh) {
     pd.point_state = PointLabel::GROUND;
-  } else if (point_curr.z - next_gnd_z > non_ground_height_threshold_ + gnd_z_local_thresh) {
+    return;
+  }
+  if (point_curr.z - next_gnd_z > non_ground_height_threshold_ + gnd_z_local_thresh) {
     pd.point_state = PointLabel::NON_GROUND;
+    return;
   }
 }
 
