@@ -156,7 +156,7 @@ void SurroundObstacleCheckerNode::onTimer()
 {
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic();
-  
+
   odometry_ptr_ = sub_odometry_.takeData();
   pointcloud_ptr_ = sub_pointcloud_.takeData();
   object_ptr_ = sub_dynamic_objects_.takeData();
