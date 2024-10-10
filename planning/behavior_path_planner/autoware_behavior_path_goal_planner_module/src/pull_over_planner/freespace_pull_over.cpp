@@ -20,11 +20,18 @@
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
+#include <autoware/freespace_planning_algorithms/astar_search.hpp>
+#include <autoware/freespace_planning_algorithms/rrtstar.hpp>
+
 #include <memory>
 #include <vector>
 
 namespace autoware::behavior_path_planner
 {
+
+using autoware::freespace_planning_algorithms::AstarSearch;
+using autoware::freespace_planning_algorithms::RRTStar;
+
 FreespacePullOver::FreespacePullOver(
   rclcpp::Node & node, const GoalPlannerParameters & parameters,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
@@ -50,8 +57,9 @@ FreespacePullOver::FreespacePullOver(
 }
 
 std::optional<PullOverPath> FreespacePullOver::plan(
+  const GoalCandidate & modified_goal_pose, const size_t id,
   const std::shared_ptr<const PlannerData> planner_data,
-  [[maybe_unused]] const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose)
+  [[maybe_unused]] const BehaviorModuleOutput & previous_module_output)
 {
   const Pose & current_pose = planner_data->self_odometry->pose.pose;
 
@@ -60,6 +68,7 @@ std::optional<PullOverPath> FreespacePullOver::plan(
   // offset goal pose to make straight path near goal for improving parking precision
   // todo: support straight path when using back
   constexpr double straight_distance = 1.0;
+  const auto & goal_pose = modified_goal_pose.goal_pose;
   const Pose end_pose =
     use_back_ ? goal_pose
               : autoware::universe_utils::calcOffsetPose(goal_pose, -straight_distance, 0.0, 0.0);
@@ -138,11 +147,12 @@ std::optional<PullOverPath> FreespacePullOver::plan(
     }
   }
 
-  PullOverPath pull_over_path{};
-  pull_over_path.pairs_terminal_velocity_and_accel = pairs_terminal_velocity_and_accel;
-  pull_over_path.setPaths(partial_paths, current_pose, goal_pose);
-  pull_over_path.type = getPlannerType();
-
-  return pull_over_path;
+  auto pull_over_path_opt = PullOverPath::create(
+    getPlannerType(), id, partial_paths, current_pose, modified_goal_pose,
+    pairs_terminal_velocity_and_accel);
+  if (!pull_over_path_opt) {
+    return {};
+  }
+  return pull_over_path_opt.value();
 }
 }  // namespace autoware::behavior_path_planner

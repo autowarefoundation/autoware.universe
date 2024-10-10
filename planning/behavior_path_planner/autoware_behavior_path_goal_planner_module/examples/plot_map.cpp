@@ -258,14 +258,14 @@ int main(int argc, char ** argv)
   const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(*node).getVehicleInfo();
   autoware::lane_departure_checker::LaneDepartureChecker lane_departure_checker{};
   lane_departure_checker.setVehicleInfo(vehicle_info);
-  autoware::lane_departure_checker::Param lane_depature_checker_params;
-  lane_depature_checker_params.footprint_extra_margin =
+  autoware::lane_departure_checker::Param lane_departure_checker_params;
+  lane_departure_checker_params.footprint_extra_margin =
     goal_planner_parameter.lane_departure_check_expansion_margin;
-  lane_departure_checker.setParam(lane_depature_checker_params);
+  lane_departure_checker.setParam(lane_departure_checker_params);
   auto shift_pull_over_planner = autoware::behavior_path_planner::ShiftPullOver(
     *node, goal_planner_parameter, lane_departure_checker);
   const auto pull_over_path_opt =
-    shift_pull_over_planner.plan(planner_data, reference_path, route_msg.goal_pose);
+    shift_pull_over_planner.plan(0, 0, planner_data, reference_path, route_msg.goal_pose);
 
   pybind11::scoped_interpreter guard{};
   auto plt = matplotlibcpp17::pyplot::import();
@@ -282,7 +282,7 @@ int main(int argc, char ** argv)
   std::cout << pull_over_path_opt.has_value() << std::endl;
   if (pull_over_path_opt) {
     const auto & pull_over_path = pull_over_path_opt.value();
-    const auto full_path = pull_over_path.getFullPath();
+    const auto & full_path = pull_over_path.full_path;
     plot_path_with_lane_id(ax, full_path);
   }
   ax.set_aspect(Args("equal"));

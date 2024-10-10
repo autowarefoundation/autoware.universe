@@ -49,6 +49,7 @@ bool AvoidanceByLaneChangeInterface::isExecutionRequested() const
   return module_type_->isLaneChangeRequired() && module_type_->specialRequiredCheck() &&
          module_type_->isValidPath();
 }
+
 void AvoidanceByLaneChangeInterface::processOnEntry()
 {
   waitApproval();
