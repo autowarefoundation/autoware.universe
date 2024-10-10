@@ -109,7 +109,6 @@ public:
     goal_candidates_.clear();
     last_path_update_time_ = std::nullopt;
     closest_start_pose_ = std::nullopt;
-    last_previous_module_output_ = std::nullopt;
     prev_data_ = PathDecisionState{};
   }
 
@@ -118,7 +117,6 @@ public:
   DEFINE_SETTER_GETTER_WITH_MUTEX(PredictedObjects, dynamic_target_objects)
   // main --> lane
   DEFINE_SETTER_GETTER_WITH_MUTEX(PathDecisionState, prev_data)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<BehaviorModuleOutput>, last_previous_module_output)
 
   // lane --> main
   DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<Pose>, closest_start_pose)
@@ -150,7 +148,6 @@ private:
   void set_no_lock(const std::vector<PullOverPath> & arg) { pull_over_path_candidates_ = arg; }
   void set_no_lock(const std::shared_ptr<PullOverPath> & arg) { set_pull_over_path_no_lock(arg); }
   void set_no_lock(const PullOverPath & arg) { set_pull_over_path_no_lock(arg); }
-  void set_no_lock(const BehaviorModuleOutput & arg) { last_previous_module_output_ = arg; }
   void set_no_lock(const utils::path_safety_checker::CollisionCheckDebugMap & arg)
   {
     collision_check_ = arg;
@@ -161,7 +158,6 @@ private:
   GoalCandidates goal_candidates_{};
   std::optional<rclcpp::Time> last_path_update_time_;
   std::optional<Pose> closest_start_pose_{};
-  std::optional<BehaviorModuleOutput> last_previous_module_output_{};
   utils::path_safety_checker::CollisionCheckDebugMap collision_check_{};
   PredictedObjects static_target_objects_{};
   PredictedObjects dynamic_target_objects_{};
