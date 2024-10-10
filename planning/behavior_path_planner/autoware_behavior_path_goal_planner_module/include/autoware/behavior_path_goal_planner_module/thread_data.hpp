@@ -119,7 +119,6 @@ public:
   }
 
   DEFINE_GETTER_WITH_MUTEX(std::shared_ptr<PullOverPath>, pull_over_path)
-  DEFINE_GETTER_WITH_MUTEX(std::shared_ptr<PullOverPath>, lane_parking_pull_over_path)
   DEFINE_GETTER_WITH_MUTEX(std::optional<rclcpp::Time>, last_path_update_time)
   DEFINE_GETTER_WITH_MUTEX(std::optional<rclcpp::Time>, last_path_idx_increment_time)
 
@@ -137,9 +136,6 @@ private:
   void set_pull_over_path_no_lock(const PullOverPath & path)
   {
     pull_over_path_ = std::make_shared<PullOverPath>(path);
-    if (path.type() != PullOverPlannerType::FREESPACE) {
-      lane_parking_pull_over_path_ = std::make_shared<PullOverPath>(path);
-    }
 
     last_path_update_time_ = clock_->now();
   }
@@ -147,9 +143,6 @@ private:
   void set_pull_over_path_no_lock(const std::shared_ptr<PullOverPath> & path)
   {
     pull_over_path_ = path;
-    if (path->type() != PullOverPlannerType::FREESPACE) {
-      lane_parking_pull_over_path_ = path;
-    }
     last_path_update_time_ = clock_->now();
   }
 
@@ -164,7 +157,6 @@ private:
   }
 
   std::shared_ptr<PullOverPath> pull_over_path_{nullptr};
-  std::shared_ptr<PullOverPath> lane_parking_pull_over_path_{nullptr};
   std::vector<PullOverPath> pull_over_path_candidates_;
   GoalCandidates goal_candidates_{};
   std::optional<rclcpp::Time> last_path_update_time_;

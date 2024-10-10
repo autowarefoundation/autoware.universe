@@ -17,6 +17,7 @@
 #include "autoware/behavior_path_goal_planner_module/default_fixed_goal_planner.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/freespace_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/geometric_pull_over.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/shift_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
@@ -856,13 +857,16 @@ bool GoalPlannerModule::canReturnToLaneParking(const PullOverContextData & conte
     return false;
   }
 
-  const auto lane_parking_path = thread_safe_data_.get_lane_parking_pull_over_path();
-  if (!lane_parking_path) {
+  if (!context_data.pull_over_path_opt) {
     return false;
   }
+  if (context_data.pull_over_path_opt.value().type() == PullOverPlannerType::FREESPACE) {
+    return false;
+  }
+  const auto & lane_parking_path = context_data.pull_over_path_opt.value();
 
-  const PathWithLaneId path = lane_parking_path->full_path();
-  const std::vector<double> curvatures = lane_parking_path->full_path_curvatures();
+  const auto & path = lane_parking_path.full_path();
+  const auto & curvatures = lane_parking_path.full_path_curvatures();
   if (
     parameters_->use_object_recognition &&
     goal_planner_utils::checkObjectsCollision(
@@ -1438,7 +1442,12 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(
 
   // return to lane parking if it is possible
   if (is_freespace && canReturnToLaneParking(context_data_with_velocity)) {
-    thread_safe_data_.set_pull_over_path(thread_safe_data_.get_lane_parking_pull_over_path());
+    // TODO(soblin): return from freespace to lane is disabled temporarily, because if
+    // context_data_with_velocity contained freespace path, since lane_parking_pull_over_path is
+    // deleted, freespace path is set again
+    if (context_data_with_velocity.pull_over_path_opt) {
+      thread_safe_data_.set_pull_over_path(context_data_with_velocity.pull_over_path_opt.value());
+    }
   }
 
   // For debug
@@ -2728,7 +2737,7 @@ PathDecisionState PathDecisionStateController::get_next_state(
 
     // check current parking path collision
     const auto & parking_path = pull_over_path.parking_path();
-    const std::vector<double> parking_path_curvatures = pull_over_path.parking_path_curvatures();
+    const auto & parking_path_curvatures = pull_over_path.parking_path_curvatures();
     const double margin =
       parameters.object_recognition_collision_check_hard_margins.back() * hysteresis_factor;
     if (goal_planner_utils::checkObjectsCollision(
