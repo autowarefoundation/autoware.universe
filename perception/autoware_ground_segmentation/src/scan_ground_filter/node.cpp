@@ -474,9 +474,10 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
       // 0: set the thresholds
       const float global_slope_ratio_p = point_curr.z / pd_curr.radius;
+      const auto & grid_ref = gnd_grids.back();
 
       // 1: height is out-of-range
-      if (point_curr.z - gnd_grids.back().avg_height > detection_range_z_max_) {
+      if (point_curr.z - grid_ref.avg_height > detection_range_z_max_) {
         pd_curr.point_state = PointLabel::OUT_OF_RANGE;
         continue;
       }
@@ -500,17 +501,17 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         continue;
       }
 
-      uint16_t next_gnd_grid_id_thresh = (gnd_grids.end() - gnd_grid_buffer_size_)->grid_id +
-                                         gnd_grid_buffer_size_ + gnd_grid_continual_thresh_;
-      float curr_grid_size = grid_.getGridSize(pd_curr.radius, pd_curr.grid_id);
+      const uint16_t next_gnd_grid_id_thresh = (gnd_grids.end() - gnd_grid_buffer_size_)->grid_id +
+                                               gnd_grid_buffer_size_ + gnd_grid_continual_thresh_;
+      const float curr_grid_width = grid_.getGridSize(pd_curr.radius, pd_curr.grid_id);
       if (
         // 4: the point is continuous with the previous grid
         pd_curr.grid_id < next_gnd_grid_id_thresh &&
-        pd_curr.radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * curr_grid_size) {
+        pd_curr.radius - grid_ref.radius < gnd_grid_continual_thresh_ * curr_grid_width) {
         checkContinuousGndGrid(pd_curr, point_curr, gnd_grids);
       } else if (
         // 5: the point is discontinuous with the previous grid
-        pd_curr.radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * curr_grid_size) {
+        pd_curr.radius - grid_ref.radius < gnd_grid_continual_thresh_ * curr_grid_width) {
         checkDiscontinuousGndGrid(pd_curr, point_curr, gnd_grids);
       } else {
         // 6: the point is break the previous grid
