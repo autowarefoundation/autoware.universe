@@ -17,7 +17,6 @@
 #include <autoware_test_utils/autoware_test_utils.hpp>
 
 #include <gtest/gtest.h>
-#include <cstddef>
 
 using autoware::behavior_path_planner::OccupancyGridBasedCollisionDetector;
 using autoware::behavior_path_planner::OccupancyGridMapParam;
