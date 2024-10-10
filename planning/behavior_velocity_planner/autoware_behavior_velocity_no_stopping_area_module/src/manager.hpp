@@ -37,7 +37,7 @@ public:
   const char * getModuleName() override { return "no_stopping_area"; }
 
 private:
-  NoStoppingAreaModule::PlannerParam planner_param_;
+  NoStoppingAreaModule::PlannerParam planner_param_{};
 
   void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
