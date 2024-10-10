@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Elevation Map Loader Params",
+  "type": "object",
+  "definitions": {
+    "elevation_map_loader": {
+      "type": "object",
+      "properties": {
+        "node": { "$ref": "sub/node.json#/definitions/node" },
+        "cloud_transform": { "$ref": "sub/cloud_transform.json#/definitions/cloud_transform" },
+        "cluster_extraction": {
+          "$ref": "sub/cluster_extraction.json#/definitions/cluster_extraction"
+        },
+        "outlier_removal": { "$ref": "sub/outlier_removal.json#/definitions/outlier_removal" },
+        "downsampling": { "$ref": "sub/downsampling.json#/definitions/downsampling" },
+        "grid_map": { "$ref": "sub/grid_map.json#/definitions/grid_map" }
+      },
+      "required": [
+        "node",
+        "cloud_transform",
+        "cluster_extraction",
+        "outlier_removal",
+        "downsampling",
+        "grid_map"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/elevation_map_loader"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
