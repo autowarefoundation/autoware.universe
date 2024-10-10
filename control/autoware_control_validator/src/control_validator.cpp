@@ -138,7 +138,7 @@ bool ControlValidator::is_data_ready()
 void ControlValidator::on_predicted_trajectory(const Trajectory::ConstSharedPtr msg)
 {
   stop_watch.tic();
-  
+
   current_predicted_trajectory_ = msg;
   current_reference_trajectory_ = sub_reference_traj_->takeData();
   current_kinematics_ = sub_kinematics_->takeData();

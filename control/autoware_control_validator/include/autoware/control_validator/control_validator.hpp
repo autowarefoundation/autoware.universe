@@ -169,7 +169,7 @@ private:
   Trajectory::ConstSharedPtr current_predicted_trajectory_;
 
   Odometry::ConstSharedPtr current_kinematics_;
-  
+
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   std::shared_ptr<ControlValidatorDebugMarkerPublisher> debug_pose_publisher_;
