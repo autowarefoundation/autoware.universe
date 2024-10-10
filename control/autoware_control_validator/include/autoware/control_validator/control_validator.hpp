@@ -20,14 +20,14 @@
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
 #include "diagnostic_updater/diagnostic_updater.hpp"
 
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_control_validator/msg/control_validator_status.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
-#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
 #include <cstdint>
 #include <memory>

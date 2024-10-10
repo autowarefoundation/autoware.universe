@@ -25,8 +25,8 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/bool.hpp>
-#include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <tier4_planning_msgs/msg/scenario.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
