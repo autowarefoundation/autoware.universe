@@ -108,6 +108,96 @@ bool transformObjects(
   return true;
 }
 template <class T>
+bool transformTrajectory(
+  const T & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
+  T & output_msg)
+{
+  output_msg = input_msg;
+
+  // transform to world coordinate
+  if (input_msg.header.frame_id != target_frame_id) {
+    output_msg.header.frame_id = target_frame_id;
+    tf2::Transform tf_target2trajectory_world;
+    tf2::Transform tf_target2trajectory;
+    tf2::Transform tf_trajectory_world2trajectory;
+    {
+      const auto ros_target2trajectory_world = detail::getTransform(
+        tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
+      if (!ros_target2trajectory_world) {
+        return false;
+      }
+      tf2::fromMsg(*ros_target2trajectory_world, tf_target2trajectory_world);
+    }
+    for (auto & point : output_msg.points) {
+      tf2::fromMsg(point.pose, tf_trajectory_world2trajectory);
+      tf_target2trajectory = tf_target2trajectory_world * tf_trajectory_world2trajectory;
+      tf2::toMsg(tf_target2trajectory, point.pose);
+    }
+  }
+  return true;
+}
+template <class T>
+bool transformPath(
+  const T & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
+  T & output_msg)
+{
+  output_msg = input_msg;
+
+  // transform to world coordinate
+  if (input_msg.header.frame_id != target_frame_id) {
+    output_msg.header.frame_id = target_frame_id;
+    tf2::Transform tf_target2path_world;
+    tf2::Transform tf_target2path;
+    tf2::Transform tf_path_world2path;
+    {
+      const auto ros_target2path_world = detail::getTransform(
+        tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
+      if (!ros_target2path_world) {
+        return false;
+      }
+      tf2::fromMsg(*ros_target2path_world, tf_target2path_world);
+    }
+
+    geometry_msgs::msg::Quaternion q;
+    q.x = 0.0;
+    q.y = 0.0;
+    q.z = 0.0;
+    q.w = 1.0;
+
+    for (auto & pathPoint : output_msg.points) {
+      geometry_msgs::msg::Pose pose_ = pathPoint.pose;
+
+      tf2::fromMsg(pose_, tf_path_world2path);
+      tf_target2path = tf_target2path_world * tf_path_world2path;
+      tf2::toMsg(tf_target2path, pose_);
+      pathPoint.pose = pose_;
+    }
+
+    for (auto & left_bound : output_msg.left_bound) {
+      geometry_msgs::msg::Pose pose;
+      pose.position = left_bound;
+      pose.orientation = q;
+
+      tf2::fromMsg(pose, tf_path_world2path);
+      tf_target2path = tf_target2path_world * tf_path_world2path;
+      tf2::toMsg(tf_target2path, pose);
+      left_bound = pose.position;
+    }
+    for (auto & right_bound : output_msg.right_bound) {
+      geometry_msgs::msg::Pose pose;
+      pose.position = right_bound;
+      pose.orientation = q;
+
+      tf2::fromMsg(pose, tf_path_world2path);
+      tf_target2path = tf_target2path_world * tf_path_world2path;
+      tf2::toMsg(tf_target2path, pose);
+
+      right_bound = pose.position;
+    }
+  }
+  return true;
+}
+template <class T>
 bool transformObjectsWithFeature(
   const T & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
   T & output_msg)
