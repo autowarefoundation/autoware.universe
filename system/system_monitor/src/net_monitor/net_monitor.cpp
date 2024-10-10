@@ -375,9 +375,10 @@ void NetMonitor::update_network_list()
     return;
   }
 
-  const bool use_loopback = std::any_of(
-    device_params_.begin(), device_params_.end(),
-    [this](const std::string& device) { return device == loopback_interface_name_ || device == "*"; });
+  const bool use_loopback =
+    std::any_of(device_params_.begin(), device_params_.end(), [this](const std::string & device) {
+      return device == loopback_interface_name_ || device == "*";
+    });
 
   for (const auto * interface = interfaces; interface; interface = interface->ifa_next) {
     // Skip no addr
