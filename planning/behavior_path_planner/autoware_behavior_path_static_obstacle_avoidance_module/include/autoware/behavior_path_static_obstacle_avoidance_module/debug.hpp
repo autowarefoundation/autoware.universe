@@ -24,7 +24,6 @@
 namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 {
 
-using autoware::behavior_path_planner::AvoidanceParameters;
 using autoware::behavior_path_planner::AvoidancePlanningData;
 using autoware::behavior_path_planner::AvoidLineArray;
 using autoware::behavior_path_planner::DebugData;

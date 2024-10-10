@@ -143,7 +143,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       return std::make_pair(desire_shift_length, avoidance_distance);
     }
 
-    if (!isBestEffort(parameters_->policy_lateral_margin)) {
+    if (!isBestEffort(parameters_->policy.lateral_margin)) {
       return std::make_pair(desire_shift_length, avoidance_distance);
     }
 
@@ -160,7 +160,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // don't relax shift length since it can stop in front of the object.
-    if (object.is_stoppable && !parameters_->use_shorten_margin_immediately) {
+    if (object.is_stoppable && !parameters_->policy.use_shorten_margin_immediately) {
       return std::make_pair(desire_shift_length, avoidance_distance);
     }
 
@@ -190,7 +190,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     constexpr double LON_DIST_BUFFER = 1e-3;
 
     // avoidance distance is not enough. unavoidable.
-    if (!isBestEffort(parameters_->policy_deceleration)) {
+    if (!isBestEffort(parameters_->policy.deceleration)) {
       if (avoidance_distance < helper_->getMinAvoidanceDistance(avoiding_shift) + LON_DIST_BUFFER) {
         object.info = ObjectInfo::INSUFFICIENT_LONGITUDINAL_DISTANCE;
         return std::nullopt;
@@ -204,7 +204,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     const auto feasible_relative_shift_length = PathShifter::calcLateralDistFromJerk(
       avoidance_distance, helper_->getLateralMaxJerkLimit(), helper_->getAvoidanceEgoSpeed());
 
-    if (std::abs(feasible_relative_shift_length) < parameters_->lateral_execution_threshold) {
+    if (std::abs(feasible_relative_shift_length) < parameters_->avoid.lateral.th_avoid_execution) {
       object.info = ObjectInfo::LESS_THAN_EXECUTION_THRESHOLD;
       return std::nullopt;
     }
@@ -389,13 +389,13 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
         data.reference_path.points, 0, goal_pose.position);
       const bool is_return_shift_to_goal =
         std::abs(al_return.end_longitudinal - goal_longitudinal_distance) <
-        parameters_->object_check_return_pose_distance;
+        parameters_->target_filtering.object_check_return_pose_distance;
       if (is_return_shift_to_goal) {
         return true;
       }
       const bool has_object_near_goal =
         autoware::universe_utils::calcDistance2d(goal_pose.position, o.getPosition()) <
-        parameters_->object_check_goal_distance;
+        parameters_->target_filtering.object_check_goal_distance;
       return has_object_near_goal;
     }();
 
@@ -903,7 +903,7 @@ AvoidLineArray ShiftLineGenerator::applyTrimProcess(
   // - Combine avoid points that have almost same gradient.
   // this is to remove the noise.
   {
-    const auto THRESHOLD = parameters_->th_similar_grad_1;
+    const auto THRESHOLD = parameters_->shift_line_pipeline.trim.th_similar_grad_1;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
     debug.step3_grad_filtered_1st = sl_array_trimmed;
   }
@@ -911,7 +911,7 @@ AvoidLineArray ShiftLineGenerator::applyTrimProcess(
   // - Quantize the shift length to reduce the shift point noise
   // This is to remove the noise coming from detection accuracy, interpolation, resampling, etc.
   {
-    const auto THRESHOLD = parameters_->quantize_size;
+    const auto THRESHOLD = parameters_->shift_line_pipeline.trim.quantize_size;
     applyQuantizeProcess(sl_array_trimmed, THRESHOLD);
     debug.step3_quantize_filtered = sl_array_trimmed;
   }
@@ -925,14 +925,14 @@ AvoidLineArray ShiftLineGenerator::applyTrimProcess(
 
   // - Combine avoid points that have almost same gradient (again)
   {
-    const auto THRESHOLD = parameters_->th_similar_grad_2;
+    const auto THRESHOLD = parameters_->shift_line_pipeline.trim.th_similar_grad_2;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
     debug.step3_grad_filtered_2nd = sl_array_trimmed;
   }
 
   // - Combine avoid points that have almost same gradient (again)
   {
-    const auto THRESHOLD = parameters_->th_similar_grad_3;
+    const auto THRESHOLD = parameters_->shift_line_pipeline.trim.th_similar_grad_3;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
     debug.step3_grad_filtered_3rd = sl_array_trimmed;
   }
@@ -1057,7 +1057,7 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
       std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
         return autoware::universe_utils::calcDistance2d(
                  data_->route_handler->getGoalPose().position, o.getPosition()) <
-               parameters_->object_check_goal_distance;
+               parameters_->target_filtering.object_check_goal_distance;
       });
     if (has_object_near_goal) {
       RCLCPP_DEBUG(rclcpp::get_logger(""), "object near goal exists so skip adding return shift");
@@ -1126,7 +1126,7 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     const bool has_last_shift_near_goal =
       std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
         return autoware::universe_utils::calcDistance2d(last_sl.end.position, o.getPosition()) <
-               parameters_->object_check_goal_distance;
+               parameters_->target_filtering.object_check_goal_distance;
       });
     if (has_last_shift_near_goal) {
       RCLCPP_DEBUG(rclcpp::get_logger(""), "last shift line is near the objects");
@@ -1181,7 +1181,8 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     utils::isAllowedGoalModification(data_->route_handler)
       ? data.to_return_point
       : std::min(
-          arclength_from_ego.back() - parameters_->dead_line_buffer_for_goal, data.to_return_point);
+          arclength_from_ego.back() - parameters_->avoid.return_dead_line.goal.buffer,
+          data.to_return_point);
 
   // If the avoidance point has already been set, the return shift must be set after the point.
   const auto last_sl_distance = data.arclength_from_ego.at(last_sl.end_idx);
@@ -1273,7 +1274,7 @@ AvoidLineArray ShiftLineGenerator::findNewShiftLine(
       for (size_t i = start_idx; i < shift_lines.size(); ++i) {
         if (
           std::abs(shift_lines.at(i).getRelativeLength()) >
-          parameters_->lateral_small_shift_threshold) {
+          parameters_->avoid.lateral.th_small_shift_length) {
           if (has_large_shift) {
             return;
           }
@@ -1307,9 +1308,9 @@ AvoidLineArray ShiftLineGenerator::findNewShiftLine(
 
     if (
       std::abs(shift_lines.at(i).getRelativeLength()) <
-      parameters_->lateral_small_shift_threshold) {
-      const auto has_large_shift =
-        shift_lines.at(i + 1).getRelativeLength() > parameters_->lateral_small_shift_threshold;
+      parameters_->avoid.lateral.th_small_shift_length) {
+      const auto has_large_shift = shift_lines.at(i + 1).getRelativeLength() >
+                                   parameters_->avoid.lateral.th_small_shift_length;
 
       // candidate.at(i) is small length shift line. add large length shift line.
       subsequent.push_back(shift_lines.at(i + 1));
@@ -1324,7 +1325,8 @@ AvoidLineArray ShiftLineGenerator::findNewShiftLine(
 
   // check ignore or not.
   const auto is_ignore_shift = [this](const auto & s) {
-    return std::abs(helper_->getRelativeShiftToPath(s)) < parameters_->lateral_execution_threshold;
+    return std::abs(helper_->getRelativeShiftToPath(s)) <
+           parameters_->avoid.lateral.th_avoid_execution;
   };
 
   for (size_t i = 0; i < shift_lines.size(); ++i) {
@@ -1339,7 +1341,7 @@ AvoidLineArray ShiftLineGenerator::findNewShiftLine(
       continue;
     }
 
-    if (perManeuver(parameters_->policy_approval)) {
+    if (perManeuver(parameters_->policy.make_approval_request)) {
       debug.step4_new_shift_line = shift_lines;
       return shift_lines;
     }

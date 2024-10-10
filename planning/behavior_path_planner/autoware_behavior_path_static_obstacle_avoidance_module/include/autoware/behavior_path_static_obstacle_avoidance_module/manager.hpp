@@ -16,7 +16,6 @@
 #define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__MANAGER_HPP_
 
 #include "autoware/behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
-#include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/scene.hpp"
 
 #include <rclcpp/node.hpp>
@@ -47,6 +46,7 @@ public:
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
 
 private:
+  std::shared_ptr<::static_obstacle_avoidance::ParamListener> param_listener_;
   std::shared_ptr<AvoidanceParameters> parameters_;
 };
 

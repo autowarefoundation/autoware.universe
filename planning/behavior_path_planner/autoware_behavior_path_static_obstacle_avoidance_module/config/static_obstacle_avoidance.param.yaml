@@ -129,7 +129,7 @@
 
         # detection area generation parameters
         detection_area:
-          static: false                                 # [-]
+          dynamic: true                                 # [-]
           min_forward_distance: 50.0                    # [m]
           max_forward_distance: 150.0                   # [m]
           backward_distance: 10.0                       # [m]
@@ -215,7 +215,7 @@
         longitudinal_velocity_delta_time: 0.0           # [s]
 
       # For avoidance maneuver
-      avoidance:
+      avoid:
         # avoidance lateral parameters
         lateral:
           th_avoid_execution: 0.09                      # [m] FOR DEVELOPER

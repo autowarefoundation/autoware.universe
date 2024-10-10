@@ -143,7 +143,7 @@ AvoidanceState StaticObstacleAvoidanceModule::getCurrentModuleState(
 
   const bool has_shift_point = !path_shifter_.getShiftLines().empty();
   const bool has_base_offset =
-    std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_execution_threshold;
+    std::abs(path_shifter_.getBaseOffset()) > parameters_->avoid.lateral.th_avoid_execution;
 
   if (has_base_offset) {
     return AvoidanceState::RUNNING;
@@ -155,7 +155,7 @@ AvoidanceState StaticObstacleAvoidanceModule::getCurrentModuleState(
   }
 
   // Be able to canceling avoidance path. -> EXIT.
-  if (!helper_->isShifted() && parameters_->enable_cancel_maneuver) {
+  if (!helper_->isShifted() && parameters_->cancel.enable) {
     return AvoidanceState::CANCEL;
   }
 
@@ -404,8 +404,8 @@ ObjectData StaticObstacleAvoidanceModule::createObjectData(
 
   object_data.object = object;
 
-  const auto lower = parameters_->lower_distance_for_polygon_expansion;
-  const auto upper = parameters_->upper_distance_for_polygon_expansion;
+  const auto lower = parameters_->target_object.lower_distance_for_polygon_expansion;
+  const auto upper = parameters_->target_object.upper_distance_for_polygon_expansion;
   const auto clamp =
     std::clamp(calcDistance2d(getEgoPose(), object_pose) - lower, 0.0, upper) / upper;
   object_data.distance_factor = object_parameter.max_expand_ratio * clamp + 1.0;
@@ -641,7 +641,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
    * If the yield maneuver is disabled, use unapproved_new_sl for avoidance path generation even if
    * the shift line is unsafe.
    */
-  if (!parameters_->enable_yield_maneuver) {
+  if (!parameters_->yield.enable) {
     data.yield_required = false;
     data.safe_shift_line = data.new_shift_line;
     return;
@@ -740,7 +740,7 @@ void StaticObstacleAvoidanceModule::updateEgoBehavior(
 
   const auto insert_velocity = [this, &data, &path]() {
     if (data.yield_required) {
-      insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
+      insertWaitPoint(isBestEffort(parameters_->policy.deceleration), path);
       return;
     }
 
@@ -749,21 +749,21 @@ void StaticObstacleAvoidanceModule::updateEgoBehavior(
     }
 
     if (!data.found_avoidance_path) {
-      insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
+      insertWaitPoint(isBestEffort(parameters_->policy.deceleration), path);
       return;
     }
 
     if (isWaitingApproval() && path_shifter_.getShiftLines().empty()) {
-      insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
+      insertWaitPoint(isBestEffort(parameters_->policy.deceleration), path);
       return;
     }
 
-    insertStopPoint(isBestEffort(parameters_->policy_deceleration), path);
+    insertStopPoint(isBestEffort(parameters_->policy.deceleration), path);
   };
 
   insert_velocity();
 
-  insertReturnDeadLine(isBestEffort(parameters_->policy_deceleration), path);
+  insertReturnDeadLine(isBestEffort(parameters_->policy.deceleration), path);
 
   setStopReason(StopReason::AVOIDANCE, path.path);
 }
@@ -778,7 +778,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
     return false;
   }
 
-  if (!parameters_->enable_safety_check) {
+  if (!parameters_->safety_check.enable) {
     return true;  // if safety check is disabled, it always return safe.
   }
 
@@ -788,7 +788,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
     for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
       const auto length = shifted_path.shift_length.at(i);
 
-      if (parameters_->lateral_execution_threshold < length) {
+      if (parameters_->avoid.lateral.th_avoid_execution < length) {
         return true;
       }
     }
@@ -800,7 +800,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
     for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
       const auto length = shifted_path.shift_length.at(i);
 
-      if (parameters_->lateral_execution_threshold < -1.0 * length) {
+      if (parameters_->avoid.lateral.th_avoid_execution < -1.0 * length) {
         return true;
       }
     }
@@ -812,7 +812,8 @@ bool StaticObstacleAvoidanceModule::isSafePath(
     return true;
   }
 
-  const auto hysteresis_factor = safe_ ? 1.0 : parameters_->hysteresis_factor_expand_rate;
+  const auto hysteresis_factor =
+    safe_ ? 1.0 : parameters_->safety_check.hysteresis_factor_expand_rate;
 
   const auto safety_check_target_objects =
     utils::static_obstacle_avoidance::getSafetyCheckTargetObjects(
@@ -854,7 +855,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
       utils::path_safety_checker::isTargetObjectOncoming(getEgoPose(), object.initial_pose);
 
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
-      object, parameters_->check_all_predicted_path);
+      object, parameters_->safety_check.check_all_predicted_path);
 
     const auto & ego_predicted_path = is_object_front && !is_object_oncoming
                                         ? ego_predicted_path_for_front_object
@@ -863,7 +864,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
     for (const auto & obj_path : obj_predicted_paths) {
       if (!utils::path_safety_checker::checkCollision(
             shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
-            hysteresis_factor, parameters_->collision_check_yaw_diff_threshold,
+            hysteresis_factor, parameters_->safety_check.collision_check_yaw_diff_threshold,
             current_debug_data.second)) {
         utils::path_safety_checker::updateCollisionCheckDebugMap(
           debug.collision_check, current_debug_data, false);
@@ -878,7 +879,8 @@ bool StaticObstacleAvoidanceModule::isSafePath(
 
   safe_count_++;
 
-  return safe_ || safe_count_ > parameters_->hysteresis_factor_safe_count;
+  return safe_ ||
+         safe_count_ > static_cast<size_t>(parameters_->safety_check.hysteresis_factor_safe_count);
 }
 
 PathWithLaneId StaticObstacleAvoidanceModule::extendBackwardLength(
@@ -1022,7 +1024,7 @@ auto StaticObstacleAvoidanceModule::getTurnSignal(
       // output turn signal for far shift line.
       if (
         calcSignedArcLength(points, idx, s2.start_idx) <
-        getEgoSpeed() * parameters_->max_prepare_time) {
+        getEgoSpeed() * parameters_->avoid.longitudinal.max_prepare_time) {
         return s2;
       }
 
@@ -1319,8 +1321,8 @@ void StaticObstacleAvoidanceModule::addNewShiftLines(
   const double shift_time = PathShifter::calcShiftTimeFromJerk(
     front_new_shift_line.getRelativeLength(), helper_->getLateralMaxJerkLimit(),
     helper_->getLateralMaxAccelLimit());
-  const double longitudinal_acc =
-    std::clamp(road_velocity / shift_time, 0.0, parameters_->max_acceleration);
+  const double longitudinal_acc = std::clamp(
+    road_velocity / shift_time, 0.0, parameters_->constraints.longitudinal.max_acceleration);
 
   path_shifter.setShiftLines(future);
   path_shifter.setVelocity(getEgoSpeed());
@@ -1367,8 +1369,8 @@ bool StaticObstacleAvoidanceModule::isValidShiftLine(
   // check if the vehicle is in road. (yaw angle is not considered)
   {
     const auto minimum_distance = 0.5 * planner_data_->parameters.vehicle_width +
-                                  parameters_->hard_drivable_bound_margin -
-                                  parameters_->max_deviation_from_lane;
+                                  parameters_->avoid.lateral.hard_drivable_bound_margin -
+                                  parameters_->avoid.lateral.max_deviation_from_lane;
 
     for (const auto & shift_line : shift_lines) {
       const size_t start_idx = shift_line.start_idx;
@@ -1376,7 +1378,7 @@ bool StaticObstacleAvoidanceModule::isValidShiftLine(
 
       if (is_return_shift(
             shift_line.start_shift_length, shift_line.end_shift_length,
-            parameters_->lateral_small_shift_threshold)) {
+            parameters_->avoid.lateral.th_small_shift_length)) {
         continue;
       }
 
@@ -1465,7 +1467,7 @@ void StaticObstacleAvoidanceModule::updateData()
 
   if (
     (clock_->now() - last_deactivation_triggered_time_).seconds() >
-    parameters_->force_deactivate_duration_time) {
+    parameters_->cancel.force.duration_time) {
     RCLCPP_INFO(getLogger(), "The force deactivation is released");
     force_deactivated_ = false;
   }
@@ -1552,7 +1554,8 @@ void StaticObstacleAvoidanceModule::updateInfoMarker(const AvoidancePlanningData
   appendMarkerArray(createStopTargetObjectMarkerArray(data), &info_marker_);
   appendMarkerArray(
     createAmbiguousObjectsMarkerArray(
-      data.target_objects, getEgoPose(), parameters_->policy_ambiguous_vehicle),
+      data.target_objects, getEgoPose(),
+      parameters_->target_filtering.avoidance_for_ambiguous_vehicle.policy),
     &info_marker_);
 }
 
@@ -1620,8 +1623,8 @@ double StaticObstacleAvoidanceModule::calcDistanceToStopLine(const ObjectData & 
 
   return object.longitudinal -
          std::min(
-           avoidance_distance + constant_distance + prepare_distance + p->stop_buffer,
-           p->stop_max_distance);
+           avoidance_distance + constant_distance + prepare_distance + p->stop.stop_buffer,
+           p->stop.max_distance);
 }
 
 void StaticObstacleAvoidanceModule::insertReturnDeadLine(
@@ -1657,7 +1660,7 @@ void StaticObstacleAvoidanceModule::insertReturnDeadLine(
   // and return immediately
   if (!use_constraints_for_decel) {
     utils::static_obstacle_avoidance::insertDecelPoint(
-      getEgoPosition(), to_stop_line - parameters_->stop_buffer, 0.0, shifted_path.path,
+      getEgoPosition(), to_stop_line - parameters_->stop.stop_buffer, 0.0, shifted_path.path,
       stop_pose_);
     return;
   }
@@ -1670,7 +1673,8 @@ void StaticObstacleAvoidanceModule::insertReturnDeadLine(
   }
 
   utils::static_obstacle_avoidance::insertDecelPoint(
-    getEgoPosition(), to_stop_line - parameters_->stop_buffer, 0.0, shifted_path.path, stop_pose_);
+    getEgoPosition(), to_stop_line - parameters_->stop.stop_buffer, 0.0, shifted_path.path,
+    stop_pose_);
 
   // insert slow down speed.
   const double current_target_velocity = PathShifter::calcFeasibleVelocityFromJerk(
@@ -1695,8 +1699,9 @@ void StaticObstacleAvoidanceModule::insertReturnDeadLine(
     const double v_target = PathShifter::calcFeasibleVelocityFromJerk(
       shift_length, helper_->getLateralMinJerkLimit(), shift_longitudinal_distance);
     const double v_original = shifted_path.path.points.at(i).point.longitudinal_velocity_mps;
-    const double v_insert =
-      std::max(v_target - parameters_->buf_slow_down_speed, parameters_->min_slow_down_speed);
+    const double v_insert = std::max(
+      v_target - parameters_->avoid.longitudinal.buf_slow_down_speed,
+      parameters_->avoid.longitudinal.min_slow_down_speed);
 
     shifted_path.path.points.at(i).point.longitudinal_velocity_mps = std::min(v_original, v_insert);
   }
@@ -1731,7 +1736,7 @@ void StaticObstacleAvoidanceModule::insertWaitPoint(
 
   // If the stop distance is not enough for comfortable stop, don't insert wait point.
   const auto is_comfortable_stop = helper_->getFeasibleDecelDistance(0.0) < data.to_stop_line;
-  const auto is_slow_speed = getEgoSpeed() < parameters_->min_slow_down_speed;
+  const auto is_slow_speed = getEgoSpeed() < parameters_->avoid.longitudinal.min_slow_down_speed;
   if (!is_comfortable_stop && !is_slow_speed) {
     RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "not execute uncomfortable deceleration.");
     return;
@@ -1761,7 +1766,7 @@ void StaticObstacleAvoidanceModule::insertStopPoint(
     return;
   }
 
-  if (!parameters_->enable_yield_maneuver_during_shifting) {
+  if (!parameters_->yield.enable_during_shifting) {
     return;
   }
 
@@ -1871,21 +1876,24 @@ void StaticObstacleAvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_
   const auto min_avoid_distance = helper_->getMinAvoidanceDistance(shift_length);
   const auto distance_to_object = object.value().longitudinal;
   const auto remaining_distance = distance_to_object - min_avoid_distance;
-  const auto decel_distance = helper_->getFeasibleDecelDistance(parameters_->velocity_map.front());
+  const auto decel_distance =
+    helper_->getFeasibleDecelDistance(parameters_->constraints.lateral.velocity.front());
   if (remaining_distance < decel_distance) {
     return;
   }
 
   // decide slow down lower limit.
-  const auto lower_speed = object.value().avoid_required ? 0.0 : parameters_->min_slow_down_speed;
+  const auto lower_speed =
+    object.value().avoid_required ? 0.0 : parameters_->avoid.longitudinal.min_slow_down_speed;
 
   // insert slow down speed.
   const double current_target_velocity = PathShifter::calcFeasibleVelocityFromJerk(
     shift_length, helper_->getLateralMinJerkLimit(), distance_to_object);
-  if (current_target_velocity < getEgoSpeed() + parameters_->buf_slow_down_speed) {
+  if (
+    current_target_velocity < getEgoSpeed() + parameters_->avoid.longitudinal.buf_slow_down_speed) {
     utils::static_obstacle_avoidance::insertDecelPoint(
-      getEgoPosition(), decel_distance, parameters_->velocity_map.front(), shifted_path.path,
-      slow_pose_);
+      getEgoPosition(), decel_distance, parameters_->constraints.lateral.velocity.front(),
+      shifted_path.path, slow_pose_);
     return;
   }
 
@@ -1904,7 +1912,8 @@ void StaticObstacleAvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_
     const double v_target = PathShifter::calcFeasibleVelocityFromJerk(
       shift_length, helper_->getLateralMinJerkLimit(), shift_longitudinal_distance);
     const double v_original = shifted_path.path.points.at(i).point.longitudinal_velocity_mps;
-    const double v_insert = std::max(v_target - parameters_->buf_slow_down_speed, lower_speed);
+    const double v_insert =
+      std::max(v_target - parameters_->avoid.longitudinal.buf_slow_down_speed, lower_speed);
 
     shifted_path.path.points.at(i).point.longitudinal_velocity_mps = std::min(v_original, v_insert);
   }
@@ -1946,7 +1955,7 @@ void StaticObstacleAvoidanceModule::insertAvoidanceVelocity(ShiftedPath & shifte
     }
 
     const double v_target_square =
-      v_max * v_max - 2.0 * parameters_->max_acceleration * accel_distance;
+      v_max * v_max - 2.0 * parameters_->constraints.longitudinal.max_acceleration * accel_distance;
     if (v_target_square < 1e-3) {
       break;
     }

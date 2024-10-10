@@ -591,7 +591,7 @@ MarkerArray createDebugMarkerArray(
     };
 
   const auto addObjects = [&](const ObjectDataArray & objects, const auto & ns) {
-    add(createOtherObjectsMarkerArray(objects, ns, parameters->enable_other_objects_info));
+    add(createOtherObjectsMarkerArray(objects, ns, parameters->debug.enable_other_objects_info));
   };
 
   const auto addShiftLength =
@@ -606,7 +606,7 @@ MarkerArray createDebugMarkerArray(
   };
 
   // ignore objects
-  if (parameters->enable_other_objects_marker) {
+  if (parameters->debug.enable_other_objects_marker) {
     addObjects(data.other_objects, ObjectInfo::FURTHER_THAN_THRESHOLD);
     addObjects(data.other_objects, ObjectInfo::IS_NOT_TARGET_OBJECT);
     addObjects(data.other_objects, ObjectInfo::FURTHER_THAN_GOAL);
@@ -626,7 +626,7 @@ MarkerArray createDebugMarkerArray(
     addObjects(data.other_objects, ObjectInfo::INVALID_SHIFT_LINE);
   }
 
-  if (parameters->enable_shift_line_marker) {
+  if (parameters->debug.enable_shift_line_marker) {
     // shift line pre-process
     addAvoidLine(debug.step1_registered_shift_line, "step1_registered_shift_line", 0.2, 0.2, 1.0);
     addAvoidLine(debug.step1_current_shift_line, "step1_current_shift_line", 0.2, 0.4, 0.8, 0.3);
@@ -659,14 +659,14 @@ MarkerArray createDebugMarkerArray(
   }
 
   // safety check
-  if (parameters->enable_safety_check_marker) {
+  if (parameters->debug.enable_safety_check_marker) {
     add(showSafetyCheckInfo(debug.collision_check, "object_debug_info"));
     add(showPredictedPath(debug.collision_check, "ego_predicted_path"));
     add(showPolygon(debug.collision_check, "ego_and_target_polygon_relation"));
   }
 
   // detection area
-  if (parameters->enable_detection_area_marker) {
+  if (parameters->debug.enable_detection_area_marker) {
     size_t i = 0;
     for (const auto & detection_area : debug.detection_areas) {
       add(createPolygonMarkerArray(detection_area, "detection_area", i++, 0.16, 1.0, 0.69, 0.1));
@@ -674,12 +674,12 @@ MarkerArray createDebugMarkerArray(
   }
 
   // drivable bound
-  if (parameters->enable_drivable_bound_marker) {
+  if (parameters->debug.enable_drivable_bound_marker) {
     add(createDrivableBounds(data, "drivable_bound", 1.0, 0.0, 0.42));
   }
 
   // lane
-  if (parameters->enable_lane_marker) {
+  if (parameters->debug.enable_lane_marker) {
     add(laneletsAsTriangleMarkerArray(
       "drivable_lanes", transformToLanelets(data.drivable_lanes),
       createMarkerColor(0.16, 1.0, 0.69, 0.2)));
@@ -690,7 +690,7 @@ MarkerArray createDebugMarkerArray(
   }
 
   // misc
-  if (parameters->enable_misc_marker) {
+  if (parameters->debug.enable_misc_marker) {
     add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
     add(createTurnSignalMarkerArray(output.turn_signal_info, "turn_signal_info"));
   }
