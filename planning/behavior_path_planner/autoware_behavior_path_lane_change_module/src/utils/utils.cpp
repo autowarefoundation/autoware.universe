@@ -1312,7 +1312,6 @@ bool has_blocking_target_object_for_stopping(
       const auto arc_length_to_target_lane_obj = motion_utils::calcSignedArcLength(
         path.points, path.points.front().point.pose.position, o.initial_pose.position);
       const auto width_margin = o.shape.dimensions.x / 2;
-      std::cerr << arc_length_to_target_lane_obj - width_margin << '\n';
       return (arc_length_to_target_lane_obj - width_margin) >= stop_arc_length;
     });
 }
