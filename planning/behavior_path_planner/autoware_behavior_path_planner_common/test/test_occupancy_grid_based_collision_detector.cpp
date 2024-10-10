@@ -31,11 +31,11 @@ protected:
 
   void SetUp() override
   {
-    costmap_.info.width = 10;
-    costmap_.info.height = 10;
-    costmap_.info.resolution = 1.0;
-    costmap_.data = std::vector<int8_t>(100, 0);
-    costmap_.data[7 * costmap_.info.width + 7] = 100;
+    costmap_.info.width = 40;
+    costmap_.info.height = 40;
+    costmap_.info.resolution = 0.25;
+    costmap_.data = std::vector<int8_t>(1600, 0);
+    costmap_.data[28 * costmap_.info.width + 28] = 100;
     costmap_.info.origin = createPose(1.0, 1.0, 0.0, 0.0, 0.0, 0.0);
 
     param_.theta_size = 8;
@@ -67,8 +67,8 @@ TEST_F(OccupancyGridBasedCollisionDetectorTest, pose2index)
   int theta_size = 8;
   auto index = pose2index(costmap_, pose_local, theta_size);
 
-  EXPECT_EQ(index.x, 2);
-  EXPECT_EQ(index.y, 3);
+  EXPECT_EQ(index.x, 8);
+  EXPECT_EQ(index.y, 12);
   EXPECT_EQ(index.theta, 0);
 }
 
@@ -81,8 +81,8 @@ TEST_F(OccupancyGridBasedCollisionDetectorTest, index2pose)
   int theta_size = 8;
   auto pose_local = index2pose(costmap_, index, theta_size);
 
-  EXPECT_DOUBLE_EQ(pose_local.position.x, 4.0);
-  EXPECT_DOUBLE_EQ(pose_local.position.y, 6.0);
+  EXPECT_DOUBLE_EQ(pose_local.position.x, 1.0);
+  EXPECT_DOUBLE_EQ(pose_local.position.y, 1.5);
   EXPECT_DOUBLE_EQ(tf2::getYaw(pose_local.orientation), M_PI * 0.5);
 }
 
@@ -103,8 +103,8 @@ TEST_F(OccupancyGridBasedCollisionDetectorTest, detectCollision)
 
   // Condition: map not set
   IndexXYT base_index{0, 0, 0};
-  base_index.x = 6;
-  base_index.y = 6;
+  base_index.x = 24;
+  base_index.y = 24;
   EXPECT_FALSE(detector_.detectCollision(base_index, true));
 
   // Condition: with object
@@ -112,8 +112,8 @@ TEST_F(OccupancyGridBasedCollisionDetectorTest, detectCollision)
   EXPECT_TRUE(detector_.detectCollision(base_index, true));
 
   // Condition: position without obstacle
-  base_index.x = 1;
-  base_index.y = 1;
+  base_index.x = 4;
+  base_index.y = 4;
   EXPECT_FALSE(detector_.detectCollision(base_index, true));
 
   // Condition: position out of range
