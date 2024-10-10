@@ -266,6 +266,14 @@ ExtendedPredictedObjects transform_to_extended_objects(
 double get_distance_to_next_regulatory_element(
   const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
   const bool ignore_intersection = false);
+
+double get_min_dist_to_current_lanes_obj(
+  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
+  const double dist_to_target_lane_start, const PathWithLaneId & path);
+
+bool has_blocking_target_object_for_stopping(
+  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
+  const double stop_arc_length, const PathWithLaneId & path);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
