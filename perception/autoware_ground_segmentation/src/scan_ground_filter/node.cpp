@@ -323,11 +323,11 @@ void ScanGroundFilterComponent::checkContinuousGndGrid(
   const float gnd_z_local_thresh =
     std::tan(DEG2RAD(5.0)) * (pd.radius - gnd_grids_list.back().radius);
 
-  if (abs(point_curr.z - next_gnd_z) <= non_ground_height_threshold_ + gnd_z_local_thresh) {
+  if (abs(point_curr.z - next_gnd_z) < non_ground_height_threshold_ + gnd_z_local_thresh) {
     pd.point_state = PointLabel::GROUND;
     return;
   }
-  if (point_curr.z - next_gnd_z > non_ground_height_threshold_ + gnd_z_local_thresh) {
+  if (point_curr.z - next_gnd_z >= non_ground_height_threshold_ + gnd_z_local_thresh) {
     pd.point_state = PointLabel::NON_GROUND;
     return;
   }
@@ -354,7 +354,7 @@ void ScanGroundFilterComponent::checkDiscontinuousGndGrid(
     pd.point_state = PointLabel::GROUND;
     return;
   }
-  if (local_slope_ratio > local_slope_max_ratio_) {
+  if (local_slope_ratio >= local_slope_max_ratio_) {
     pd.point_state = PointLabel::NON_GROUND;
     return;
   }
@@ -364,13 +364,17 @@ void ScanGroundFilterComponent::checkBreakGndGrid(
   PointData & pd, const pcl::PointXYZ & point_curr,
   const std::vector<GridCenter> & gnd_grids_list) const
 {
-  float tmp_delta_avg_z = point_curr.z - gnd_grids_list.back().avg_height;
-  float tmp_delta_radius = pd.radius - gnd_grids_list.back().radius;
-  float local_slope_ratio = tmp_delta_avg_z / tmp_delta_radius;
+  const auto & grid_ref = gnd_grids_list.back();
+  const float delta_avg_z = point_curr.z - grid_ref.avg_height;
+  const float delta_radius = pd.radius - grid_ref.radius;
+  const float local_slope_ratio = delta_avg_z / delta_radius;
   if (abs(local_slope_ratio) < global_slope_max_ratio_) {
     pd.point_state = PointLabel::GROUND;
-  } else if (local_slope_ratio > global_slope_max_ratio_) {
+    return;
+  }
+  if (local_slope_ratio >= global_slope_max_ratio_) {
     pd.point_state = PointLabel::NON_GROUND;
+    return;
   }
 }
 
@@ -378,7 +382,7 @@ void ScanGroundFilterComponent::recheckGroundCluster(
   const PointsCentroid & gnd_cluster, const float non_ground_threshold, const bool use_lowest_point,
   pcl::PointIndices & non_ground_indices) const
 {
-  float reference_height =
+  const float reference_height =
     use_lowest_point ? gnd_cluster.getMinHeight() : gnd_cluster.getAverageHeight();
   const pcl::PointIndices & gnd_indices = gnd_cluster.getIndicesRef();
   const std::vector<float> & height_list = gnd_cluster.getHeightListRef();
