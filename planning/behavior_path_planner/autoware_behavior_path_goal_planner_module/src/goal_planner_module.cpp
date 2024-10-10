@@ -1442,6 +1442,9 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(
 
   // return to lane parking if it is possible
   if (is_freespace && canReturnToLaneParking(context_data_with_velocity)) {
+    // TODO(soblin): return from freespace to lane is disabled temporarily, because if
+    // context_data_with_velocity contained freespace path, since lane_parking_pull_over_path is
+    // deleted, freespace path is set again
     if (context_data_with_velocity.pull_over_path_opt) {
       thread_safe_data_.set_pull_over_path(context_data_with_velocity.pull_over_path_opt.value());
     }
