@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(osqp_interface)
+project(autoware_osqp_interface)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -17,9 +17,9 @@ set(OSQP_INTERFACE_LIB_SRC
 )
 
 set(OSQP_INTERFACE_LIB_HEADERS
-  include/osqp_interface/csc_matrix_conv.hpp
-  include/osqp_interface/osqp_interface.hpp
-  include/osqp_interface/visibility_control.hpp
+  include/autoware/osqp_interface/csc_matrix_conv.hpp
+  include/autoware/osqp_interface/osqp_interface.hpp
+  include/autoware/osqp_interface/visibility_control.hpp
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
@@ -28,18 +28,18 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-error=old-style-cast -Wno-error=useless-cast)
 
-target_include_directories(osqp_interface
+target_include_directories(${PROJECT_NAME}
   SYSTEM PUBLIC
     "${OSQP_INCLUDE_DIR}"
     "${EIGEN3_INCLUDE_DIR}"
 )
 
-ament_target_dependencies(osqp_interface
+ament_target_dependencies(${PROJECT_NAME}
   Eigen3
   osqp_vendor
 )
 
-# crucial so downstream package builds because osqp_interface exposes osqp.hpp
+# crucial so downstream package builds because autoware_osqp_interface exposes osqp.hpp
 ament_export_include_directories("${OSQP_INCLUDE_DIR}")
 # crucial so the linking order is correct in a downstream package: libosqp_interface.a should come before libosqp.a
 ament_export_libraries(osqp::osqp)

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "osqp_interface/osqp_interface.hpp"
+#include "autoware/osqp_interface/osqp_interface.hpp"
 
+#include "autoware/osqp_interface/csc_matrix_conv.hpp"
 #include "osqp/osqp.h"
-#include "osqp_interface/csc_matrix_conv.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -25,11 +25,7 @@
 #include <tuple>
 #include <vector>
 
-namespace autoware
-{
-namespace common
-{
-namespace osqp
+namespace autoware::osqp_interface
 {
 OSQPInterface::OSQPInterface(const c_float eps_abs, const bool polish)
 : m_work{nullptr, OSQPWorkspaceDeleter}
@@ -436,6 +432,4 @@ void OSQPInterface::logUnsolvedStatus(const std::string & prefix_message) const
   // log with warning
   RCLCPP_WARN(rclcpp::get_logger("osqp_interface"), output_message.c_str());
 }
-}  // namespace osqp
-}  // namespace common
-}  // namespace autoware
+}  // namespace autoware::osqp_interface

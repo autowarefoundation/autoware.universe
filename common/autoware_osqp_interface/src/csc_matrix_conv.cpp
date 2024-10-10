@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "osqp_interface/csc_matrix_conv.hpp"
+#include "autoware/osqp_interface/csc_matrix_conv.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/SparseCore>
@@ -21,11 +21,7 @@
 #include <iostream>
 #include <vector>
 
-namespace autoware
-{
-namespace common
-{
-namespace osqp
+namespace autoware::osqp_interface
 {
 CSC_Matrix calCSCMatrix(const Eigen::MatrixXd & mat)
 {
@@ -136,6 +132,4 @@ void printCSCMatrix(const CSC_Matrix & csc_mat)
   std::cout << "]\n";
 }
 
-}  // namespace osqp
-}  // namespace common
-}  // namespace autoware
+}  // namespace autoware::osqp_interface

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/osqp_interface/csc_matrix_conv.hpp"
 #include "gtest/gtest.h"
-#include "osqp_interface/csc_matrix_conv.hpp"
 
 #include <Eigen/Core>
 
@@ -23,8 +23,8 @@
 
 TEST(TestCscMatrixConv, Nominal)
 {
-  using autoware::common::osqp::calCSCMatrix;
-  using autoware::common::osqp::CSC_Matrix;
+  using autoware::osqp_interface::calCSCMatrix;
+  using autoware::osqp_interface::CSC_Matrix;
 
   Eigen::MatrixXd rect1(1, 2);
   rect1 << 0.0, 1.0;
@@ -117,8 +117,8 @@ TEST(TestCscMatrixConv, Nominal)
 }
 TEST(TestCscMatrixConv, Trapezoidal)
 {
-  using autoware::common::osqp::calCSCMatrixTrapezoidal;
-  using autoware::common::osqp::CSC_Matrix;
+  using autoware::osqp_interface::calCSCMatrixTrapezoidal;
+  using autoware::osqp_interface::CSC_Matrix;
 
   Eigen::MatrixXd square1(2, 2);
   Eigen::MatrixXd square2(3, 3);
@@ -166,10 +166,10 @@ TEST(TestCscMatrixConv, Trapezoidal)
 }
 TEST(TestCscMatrixConv, Print)
 {
-  using autoware::common::osqp::calCSCMatrix;
-  using autoware::common::osqp::calCSCMatrixTrapezoidal;
-  using autoware::common::osqp::CSC_Matrix;
-  using autoware::common::osqp::printCSCMatrix;
+  using autoware::osqp_interface::calCSCMatrix;
+  using autoware::osqp_interface::calCSCMatrixTrapezoidal;
+  using autoware::osqp_interface::CSC_Matrix;
+  using autoware::osqp_interface::printCSCMatrix;
   Eigen::MatrixXd square1(2, 2);
   Eigen::MatrixXd rect1(1, 2);
   square1 << 1.0, 2.0, 2.0, 4.0;

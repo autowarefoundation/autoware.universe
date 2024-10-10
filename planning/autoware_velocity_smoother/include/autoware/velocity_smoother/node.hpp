@@ -17,6 +17,7 @@
 
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/osqp_interface/osqp_interface.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
@@ -31,7 +32,6 @@
 #include "autoware/velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
-#include "osqp_interface/osqp_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/transform_listener.h"

@@ -414,7 +414,7 @@ MPTOptimizer::MPTOptimizer(
     StateEquationGenerator(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad, time_keeper_);
 
   // osqp solver
-  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(osqp_epsilon_);
+  osqp_solver_ptr_ = std::make_unique<autoware::osqp_interface::OSQPInterface>(osqp_epsilon_);
 
   // publisher
   debug_fixed_traj_pub_ = node->create_publisher<Trajectory>("~/debug/mpt_fixed_traj", 1);
@@ -1330,8 +1330,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
 
   // NOTE: The following takes 1 [ms]
   Eigen::MatrixXd A = Eigen::MatrixXd::Zero(A_rows, N_v);
-  Eigen::VectorXd lb = Eigen::VectorXd::Constant(A_rows, -autoware::common::osqp::INF);
-  Eigen::VectorXd ub = Eigen::VectorXd::Constant(A_rows, autoware::common::osqp::INF);
+  Eigen::VectorXd lb = Eigen::VectorXd::Constant(A_rows, -autoware::osqp_interface::INF);
+  Eigen::VectorXd ub = Eigen::VectorXd::Constant(A_rows, autoware::osqp_interface::INF);
   size_t A_rows_end = 0;
 
   // 1. State equation
@@ -1502,9 +1502,9 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   // initialize or update solver according to warm start
   time_keeper_->start_track("initOsqp");
 
-  const autoware::common::osqp::CSC_Matrix P_csc =
-    autoware::common::osqp::calCSCMatrixTrapezoidal(H);
-  const autoware::common::osqp::CSC_Matrix A_csc = autoware::common::osqp::calCSCMatrix(A);
+  const autoware::osqp_interface::CSC_Matrix P_csc =
+    autoware::osqp_interface::calCSCMatrixTrapezoidal(H);
+  const autoware::osqp_interface::CSC_Matrix A_csc = autoware::osqp_interface::calCSCMatrix(A);
   if (
     prev_solution_status_ == 1 && mpt_param_.enable_warm_start && prev_mat_n_ == H.rows() &&
     prev_mat_m_ == A.rows()) {
@@ -1515,7 +1515,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
     osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
   } else {
     RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "no warm start");
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+    osqp_solver_ptr_ = std::make_unique<autoware::osqp_interface::OSQPInterface>(
       P_csc, A_csc, f, lower_bound, upper_bound, osqp_epsilon_);
   }
   prev_mat_n_ = H.rows();

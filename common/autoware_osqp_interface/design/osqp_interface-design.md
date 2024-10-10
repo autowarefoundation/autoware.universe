@@ -1,6 +1,6 @@
 # Interface for the OSQP library
 
-This is the design document for the `osqp_interface` package.
+This is the design document for the `autoware_osqp_interface` package.
 
 ## Purpose / Use cases
 
