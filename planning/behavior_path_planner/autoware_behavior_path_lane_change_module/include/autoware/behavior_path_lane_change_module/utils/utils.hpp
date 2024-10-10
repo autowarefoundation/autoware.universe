@@ -45,11 +45,13 @@ using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVeloc
 using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 using autoware::route_handler::Direction;
 using autoware::universe_utils::Polygon2d;
+using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
 using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LanesPolygon;
+using behavior_path_planner::lane_change::ModuleType;
 using behavior_path_planner::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -57,19 +59,10 @@ using geometry_msgs::msg::Twist;
 using path_safety_checker::CollisionCheckDebugMap;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
+bool is_mandatory_lane_change(const ModuleType lc_type);
+
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);
-
-double calcMinimumLaneChangeLength(
-  const LaneChangeParameters & lane_change_parameters, const std::vector<double> & shift_intervals);
-
-double calcMinimumLaneChangeLength(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lane,
-  const LaneChangeParameters & lane_change_parameters, Direction direction);
-
-double calcMaximumLaneChangeLength(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc);
 
 double calcMinimumAcceleration(
   const double current_velocity, const double min_longitudinal_acc,
@@ -78,10 +71,6 @@ double calcMinimumAcceleration(
 double calcMaximumAcceleration(
   const double current_velocity, const double current_max_velocity,
   const double max_longitudinal_acc, const LaneChangeParameters & lane_change_parameters);
-
-double calcLaneChangingAcceleration(
-  const double initial_lane_changing_velocity, const double max_path_velocity,
-  const double lane_changing_time, const double prepare_longitudinal_acc);
 
 void setPrepareVelocity(
   PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity);
@@ -93,9 +82,7 @@ std::vector<int64_t> replaceWithSortedIds(
   const std::vector<int64_t> & original_lane_ids,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 
-std::vector<std::vector<int64_t>> getSortedLaneIds(
-  const RouteHandler & route_handler, const Pose & current_pose,
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes);
+std::vector<std::vector<int64_t>> get_sorted_lane_ids(const CommonDataPtr & common_data_ptr);
 
 lanelet::ConstLanelets getTargetNeighborLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
@@ -105,26 +92,22 @@ bool isPathInLanelets(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
 
-std::optional<LaneChangePath> constructCandidatePath(
+bool path_footprint_exceeds_target_lane_bound(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
+  const double margin = 0.1);
+
+std::optional<LaneChangePath> construct_candidate_path(
   const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
-  const PathWithLaneId & target_lane_reference_path,
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 
-ShiftLine getLaneChangingShiftLine(
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_segment,
-  const PathWithLaneId & reference_path, const double shift_length);
-
-ShiftLine getLaneChangingShiftLine(
+ShiftLine get_lane_changing_shift_line(
   const Pose & lane_changing_start_pose, const Pose & lane_changing_end_pose,
   const PathWithLaneId & reference_path, const double shift_length);
 
-PathWithLaneId getReferencePathFromTargetLane(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & lane_changing_start_pose, const double target_lane_length,
-  const double lane_changing_length, const double forward_path_length,
-  const double resample_interval, const bool is_goal_in_route,
-  const double next_lane_change_buffer);
+PathWithLaneId get_reference_path_from_target_Lane(
+  const CommonDataPtr & common_data_ptr, const Pose & lane_changing_start_pose,
+  const double lane_changing_length, const double resample_interval);
 
 std::vector<DrivableLanes> generateDrivableLanes(
   const std::vector<DrivableLanes> & original_drivable_lanes, const RouteHandler & route_handler,
@@ -136,16 +119,11 @@ std::vector<DrivableLanes> generateDrivableLanes(
 
 double getLateralShift(const LaneChangePath & path);
 
-bool hasEnoughLengthToLaneChangeAfterAbort(
-  const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const Pose & curent_pose, const double abort_return_dist,
-  const LaneChangeParameters & lane_change_parameters, const Direction direction);
-
 CandidateOutput assignToCandidate(
   const LaneChangePath & lane_change_path, const Point & ego_position);
-std::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const LaneChangeModuleType type, const Direction & direction);
+
+std::optional<lanelet::ConstLanelet> get_lane_change_target_lane(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes);
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & pose,
@@ -165,8 +143,7 @@ bool isParkedObject(
 
 bool passed_parked_objects(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & objects, const double minimum_lane_change_length,
-  CollisionCheckDebugMap & object_debug);
+  const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & object_debug);
 
 std::optional<size_t> getLeadingStaticObjectIdx(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
@@ -228,8 +205,9 @@ rclcpp::Logger getLogger(const std::string & type);
  *
  * @return Polygon2d A polygon representing the current 2D footprint of the ego vehicle.
  */
-Polygon2d getEgoCurrentFootprint(
-  const Pose & ego_pose, const autoware::vehicle_info_utils::VehicleInfo & ego_info);
+Polygon2d getEgoCurrentFootprint(const Pose & ego_pose, const VehicleInfo & ego_info);
+
+Point getEgoFrontVertex(const Pose & ego_pose, const VehicleInfo & ego_info, bool left);
 
 /**
  * @brief Checks if the given polygon is within an intersection area.
@@ -265,32 +243,11 @@ bool isWithinIntersection(
  */
 bool isWithinTurnDirectionLanes(const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon);
 
-/**
- * @brief Calculates the distance required during a lane change operation.
- *
- * Used for computing prepare or lane change length based on current and maximum velocity,
- * acceleration, and duration, returning the lesser of accelerated distance or distance at max
- * velocity.
- *
- * @param velocity The current velocity of the vehicle in meters per second (m/s).
- * @param maximum_velocity The maximum velocity the vehicle can reach in meters per second (m/s).
- * @param acceleration The acceleration of the vehicle in meters per second squared (m/s^2).
- * @param duration The duration of the lane change in seconds (s).
- * @return The calculated minimum distance in meters (m).
- */
-double calcPhaseLength(
-  const double velocity, const double maximum_velocity, const double acceleration,
-  const double time);
-
 LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr);
 
 bool is_same_lane_with_prev_iteration(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
-
-Pose to_pose(
-  const autoware::universe_utils::Point2d & point,
-  const geometry_msgs::msg::Quaternion & orientation);
 
 bool is_ahead_of_ego(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
@@ -305,15 +262,10 @@ double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, co
 ExtendedPredictedObjects transform_to_extended_objects(
   const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects,
   const bool check_prepare_phase);
+
+double get_distance_to_next_regulatory_element(
+  const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
+  const bool ignore_intersection = false);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
-
-namespace autoware::behavior_path_planner::utils::lane_change::debug
-{
-geometry_msgs::msg::Point32 create_point32(const geometry_msgs::msg::Pose & pose);
-
-geometry_msgs::msg::Polygon createExecutionArea(
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const Pose & pose,
-  double additional_lon_offset, double additional_lat_offset);
-}  // namespace autoware::behavior_path_planner::utils::lane_change::debug
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_

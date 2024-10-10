@@ -14,11 +14,11 @@
 
 #include "autoware/mpc_lateral_controller/mpc_utils.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/normalization.hpp"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -134,10 +134,10 @@ std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
   convertEulerAngleToMonotonic(input_yaw);
 
   const auto lerp_arc_length = [&](const auto & input_value) {
-    return interpolation::lerp(input_arclength, input_value, output_arclength);
+    return autoware::interpolation::lerp(input_arclength, input_value, output_arclength);
   };
   const auto spline_arc_length = [&](const auto & input_value) {
-    return interpolation::spline(input_arclength, input_value, output_arclength);
+    return autoware::interpolation::spline(input_arclength, input_value, output_arclength);
   };
 
   output.x = spline_arc_length(input.x);
@@ -165,7 +165,7 @@ bool linearInterpMPCTrajectory(
   convertEulerAngleToMonotonic(in_traj_yaw);
 
   const auto lerp_arc_length = [&](const auto & input_value) {
-    return interpolation::lerp(in_index, input_value, out_index);
+    return autoware::interpolation::lerp(in_index, input_value, out_index);
   };
 
   try {

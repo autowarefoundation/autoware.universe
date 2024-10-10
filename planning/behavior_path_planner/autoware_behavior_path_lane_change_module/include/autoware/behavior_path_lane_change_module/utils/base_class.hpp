@@ -67,6 +67,8 @@ public:
 
   virtual void update_lanes(const bool is_approved) = 0;
 
+  virtual void update_transient_data() = 0;
+
   virtual void update_filtered_objects() = 0;
 
   virtual void updateLaneChangeStatus() = 0;
@@ -109,10 +111,6 @@ public:
 
   virtual PathSafetyStatus evaluateApprovedPathWithUnsafeHysteresis(
     PathSafetyStatus approve_path_safety_status) = 0;
-
-  virtual bool isNearEndOfCurrentLanes(
-    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    const double threshold) const = 0;
 
   virtual bool isStoppedAtRedTrafficLight() const = 0;
 
@@ -231,19 +229,17 @@ public:
 
   virtual TurnSignalInfo get_current_turn_signal_info() const = 0;
 
+  virtual bool is_near_regulatory_element() const = 0;
+
 protected:
   virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
 
-  virtual PathWithLaneId getPrepareSegment(
-    const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
-    const double prepare_length) const = 0;
+  virtual bool get_prepare_segment(
+    PathWithLaneId & prepare_segment, const double prepare_length) const = 0;
 
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
   virtual bool isAbleToStopSafely() const = 0;
-
-  virtual lanelet::ConstLanelets getLaneChangeLanes(
-    const lanelet::ConstLanelets & current_lanes, Direction direction) const = 0;
 
   virtual TurnSignalInfo get_terminal_turn_signal_info() const = 0;
 

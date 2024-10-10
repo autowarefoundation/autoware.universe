@@ -11,7 +11,9 @@ The Lane Change module is activated when lane change is needed and can be safely
   - `allow_lane_change` tags is set as `true`
 - During lane change request condition
   - The ego-vehicle isn’t on a `preferred_lane`.
-  - There is neither intersection nor crosswalk on the path of the lane change
+  - The ego-vehicle isn't approaching a traffic light. (condition parameterized)
+  - The ego-vehicle isn't approaching a crosswalk. (condition parameterized)
+  - The ego-vehicle isn't approaching an intersection. (condition parameterized)
 - lane change ready condition
   - Path of the lane change does not collide with other dynamic objects (see the figure below)
   - Lane change candidate path is approved by an operator.
@@ -21,6 +23,108 @@ The Lane Change module is activated when lane change is needed and can be safely
 The lane change candidate path is divided into two phases: preparation and lane-changing. The following figure illustrates each phase of the lane change candidate path.
 
 ![lane-change-phases](./images/lane_change-lane_change_phases.png)
+
+The following chart illustrates the process of sampling candidate paths for lane change.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+start
+
+if (Is current lanes, target lanes OR target neighbor lanes polygon empty?) then (yes)
+  #LightPink:Return prev approved path;
+  stop
+else (no)
+endif
+
+:Get target objects;
+
+:Calculate prepare phase metrics;
+
+:Start loop through prepare phase metrics;
+
+repeat
+  :Get prepare segment;
+
+  if (Is LC start point outside target lanes range) then (yes)
+    if (Is found a valid path) then (yes)
+      #Orange:Return first valid path;
+      stop
+    else (no)
+      #LightPink:Return prev approved path;
+      stop
+    endif
+  else (no)
+  endif
+
+  :Calculate shift phase metrics;
+
+  :Start loop through shift phase metrics;
+  repeat
+    :Get candidate path;
+    note left: Details shown in the next chart
+    if (Is valid candidate path?) then (yes)
+      :Store candidate path;
+      if (Is candidate path safe?) then (yes)
+        #LightGreen:Return candidate path;
+        stop
+      else (no)
+      endif
+    else (no)
+    endif
+    repeat while (Finished looping shift phase metrics) is (FALSE)
+  repeat while (Is finished looping prepare phase metrics) is (FALSE)
+
+if (Is found a valid path) then (yes)
+  #Orange:Return first valid path;
+  stop
+else (no)
+endif
+
+#LightPink:Return prev approved path;
+stop
+
+@enduml
+```
+
+While the following chart demonstrates the process of generating a valid candidate path.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+start
+
+:Calculate resample interval;
+
+:Get reference path from target lanes;
+
+if (Is reference path empty?) then (yes)
+  #LightPink:Return;
+  stop
+else (no)
+endif
+
+:Get LC shift line;
+
+:Set lane change Info;
+note left: set information from sampled prepare phase and shift phase metrics\n<color:red>(duration, length, velocity, and acceleration)
+
+:Construct candidate path;
+
+if (Candidate path has enough length?) then (yes)
+  #LightGreen:Return valid candidate path;
+  stop
+else (no)
+  #LightPink:Return;
+  stop
+endif
+
+@enduml
+```
 
 ### Preparation phase
 
@@ -91,7 +195,7 @@ if (max_lane_change_length >  ego's distance to the end of the current lanes.) t
   stop
 endif
 
-if (isVehicleStuck(current_lanes)) then (yes)
+if ego is stuck in the current lanes then (yes)
   :Return **sampled acceleration values**;
   stop
 else (no)
@@ -182,11 +286,9 @@ A candidate path is considered valid if it meets the following criteria:
 1. The distance from the ego vehicle's current position to the end of the current lanes is sufficient to perform a single lane change.
 2. The distance from the ego vehicle's current position to the goal along the current lanes is adequate to complete multiple lane changes.
 3. The distance from the ego vehicle's current position to the end of the target lanes is adequate for completing multiple lane changes.
-4. Intersection requirements are met (conditions are parameterized).
-5. Crosswalk requirements are satisfied (conditions are parameterized).
-6. Traffic light regulations are adhered to (conditions are parameterized).
-7. The lane change can be completed after passing a parked vehicle.
-8. The lane change is deemed safe to execute.
+4. The distance from the ego vehicle's current position to the next regulatory element is adequate to perform a single lane change.
+5. The lane change can be completed after passing a parked vehicle.
+6. The lane change is deemed safe to execute.
 
 The following flow chart illustrates the validity check.
 
@@ -229,43 +331,6 @@ group check for distance #LightYellow
       stop
     else (no)
     endif
-end group
-
-
-
-group evaluate on Crosswalk #LightCyan
-if (regulate_on_crosswalk and not enough length to crosswalk) then (yes)
-  if (stop time < stop time threshold\n(Related to stuck detection)) then (yes)
-    #LightPink:Reject path;
-    stop
-  else (no)
-    :Allow lane change in crosswalk;
-  endif
-else (no)
-endif
-end group
-
-group evaluate on Intersection #LightGreen
-if (regulate_on_intersection and not enough length to intersection) then (yes)
-  if (stop time < stop time threshold\n(Related to stuck detection)) then (yes)
-    #LightPink:Reject path;
-    stop
-  else (no)
-    :Allow lane change in intersection;
-  endif
-else (no)
-endif
-end group
-
-group evaluate on Traffic Light #Lavender
-if (regulate_on_traffic_light and not enough length to complete lane change before stop line) then (yes)
-  #LightPink:Reject path;
-  stop
-elseif (stopped at red traffic light within distance) then (yes)
-  #LightPink:Reject path;
-  stop
-else (no)
-endif
 end group
 
 if (ego is not stuck but parked vehicle exists in target lane) then (yes)
@@ -517,8 +582,8 @@ The function to stop by keeping a margin against forward obstacle in the previou
 
 ### Lane change regulations
 
-If you want to regulate lane change on crosswalks or intersections, the lane change module finds a lane change path excluding it includes crosswalks or intersections.
-To regulate lane change on crosswalks or intersections, change `regulation.crosswalk` or `regulation.intersection` to `true`.
+If you want to regulate lane change on crosswalks, intersections, or traffic lights, the lane change module is disabled near any of them.
+To regulate lane change on crosswalks, intersections, or traffic lights, set `regulation.crosswalk`, `regulation.intersection` or `regulation.traffic_light` to `true`.
 If the ego vehicle gets stuck, to avoid stuck, it enables lane change in crosswalk/intersection.
 If the ego vehicle stops more than `stuck_detection.stop_time` seconds, it is regarded as a stuck.
 If the ego vehicle velocity is smaller than `stuck_detection.velocity`, it is regarded as stopping.

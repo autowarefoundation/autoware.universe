@@ -15,10 +15,10 @@
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/ros/uuid_helper.hpp"
-#include "interpolation/linear_interpolation.hpp"
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -364,7 +364,7 @@ std::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
       const auto interpolated_pose =
         autoware::universe_utils::calcInterpolatedPose(prev_pt.pose, pt.pose, ratio, false);
       const double interpolated_velocity =
-        interpolation::lerp(prev_pt.velocity, pt.velocity, ratio);
+        autoware::interpolation::lerp(prev_pt.velocity, pt.velocity, ratio);
       return PoseWithVelocityStamped{relative_time, interpolated_pose, interpolated_velocity};
     }
   }
@@ -593,7 +593,7 @@ std::vector<Polygon2d> getCollidedPolygons(
   {
     debug.ego_predicted_path = predicted_ego_path;
     debug.obj_predicted_path = target_object_path.path;
-    debug.current_obj_pose = target_object.initial_pose.pose;
+    debug.current_obj_pose = target_object.initial_pose;
   }
 
   std::vector<Polygon2d> collided_polygons{};
@@ -709,11 +709,10 @@ bool checkPolygonsIntersects(
 CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj)
 {
   CollisionCheckDebug debug;
-  debug.current_obj_pose = obj.initial_pose.pose;
-  debug.extended_obj_polygon =
-    autoware::universe_utils::toPolygon2d(obj.initial_pose.pose, obj.shape);
+  debug.current_obj_pose = obj.initial_pose;
+  debug.extended_obj_polygon = autoware::universe_utils::toPolygon2d(obj.initial_pose, obj.shape);
   debug.obj_shape = obj.shape;
-  debug.current_twist = obj.initial_twist.twist;
+  debug.current_twist = obj.initial_twist;
   return {autoware::universe_utils::toBoostUUID(obj.uuid), debug};
 }
 

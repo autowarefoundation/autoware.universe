@@ -10,6 +10,7 @@ autoware_package()
 pluginlib_export_plugin_description_file(autoware_behavior_path_planner plugins.xml)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/pull_over_planner/pull_over_planner_base.cpp
   src/pull_over_planner/freespace_pull_over.cpp
   src/pull_over_planner/geometric_pull_over.cpp
   src/pull_over_planner/shift_pull_over.cpp
@@ -39,6 +40,16 @@ if(BUILD_EXAMPLES)
     set_source_files_properties(${example_file} PROPERTIES COMPILE_FLAGS -Wno-error -Wno-attributes -Wno-unused-parameter)
     target_link_libraries(${example_name} matplotlibcpp17::matplotlibcpp17)
   endforeach()
+endif()
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+  file(GLOB_RECURSE TEST_SOURCES test/*.cpp)
+  ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
+    ${TEST_SOURCES}
+  )
+  target_link_libraries(test_${PROJECT_NAME} ${PROJECT_NAME})
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE config)

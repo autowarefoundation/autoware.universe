@@ -118,7 +118,7 @@ PredictedObjects filterObjects(
   const ObjectTypesToCheck & target_object_types = params->object_types_to_check;
 
   PredictedObjects filtered_objects =
-    filterObjectsByVelocity(*objects, ignore_object_velocity_threshold, false);
+    filterObjectsByVelocity(*objects, ignore_object_velocity_threshold, true);
 
   filterObjectsByClass(filtered_objects, target_object_types);
 
@@ -136,7 +136,7 @@ PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, const double velocity_threshold,
   const bool remove_above_threshold)
 {
-  if (remove_above_threshold) {
+  if (!remove_above_threshold) {
     return filterObjectsByVelocity(objects, -velocity_threshold, velocity_threshold);
   }
   return filterObjectsByVelocity(objects, velocity_threshold, std::numeric_limits<double>::max());
@@ -327,7 +327,7 @@ ExtendedPredictedObject transform(
 {
   ExtendedPredictedObject extended_object(object);
 
-  const auto obj_velocity = extended_object.initial_twist.twist.linear.x;
+  const auto obj_velocity = extended_object.initial_twist.linear.x;
 
   extended_object.predicted_paths.resize(object.kinematics.predicted_paths.size());
   for (size_t i = 0; i < object.kinematics.predicted_paths.size(); ++i) {

@@ -14,7 +14,8 @@
 
 #include "autoware/behavior_path_goal_planner_module/manager.hpp"
 
-#include "autoware/behavior_path_goal_planner_module/util.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_planner_module.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -25,6 +26,13 @@
 
 namespace autoware::behavior_path_planner
 {
+
+std::unique_ptr<SceneModuleInterface> GoalPlannerModuleManager::createNewSceneModuleInstance()
+{
+  return std::make_unique<GoalPlannerModule>(
+    name_, *node_, parameters_, rtc_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_, steering_factor_interface_ptr_);
+}
 
 GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
   rclcpp::Node * node, const std::string & base_ns)
@@ -59,6 +67,12 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
       node->declare_parameter<double>(ns + "ignore_distance_from_lane_start");
     p.margin_from_boundary = node->declare_parameter<double>(ns + "margin_from_boundary");
     p.high_curvature_threshold = node->declare_parameter<double>(ns + "high_curvature_threshold");
+    p.bus_stop_area.use_bus_stop_area =
+      node->declare_parameter<bool>(ns + "bus_stop_area.use_bus_stop_area");
+    p.bus_stop_area.goal_search_interval =
+      node->declare_parameter<double>(ns + "bus_stop_area.goal_search_interval");
+    p.bus_stop_area.lateral_offset_interval =
+      node->declare_parameter<double>(ns + "bus_stop_area.lateral_offset_interval");
 
     const std::string parking_policy_name =
       node->declare_parameter<std::string>(ns + "parking_policy");
