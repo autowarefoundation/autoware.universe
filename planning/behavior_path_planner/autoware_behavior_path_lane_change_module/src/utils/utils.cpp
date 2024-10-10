@@ -1280,7 +1280,7 @@ double get_min_dist_to_current_lanes_obj(
       const auto lateral_fp = motion_utils::calcLateralOffset(path_points, p_fp);
 
       // ignore if the point is around the ego path
-      if (std::abs(lateral_fp) > common_data_ptr->bpp_param_ptr->vehicle_width) {
+      if (std::abs(lateral_fp) > (common_data_ptr->bpp_param_ptr->vehicle_width / 2)) {
         continue;
       }
 
