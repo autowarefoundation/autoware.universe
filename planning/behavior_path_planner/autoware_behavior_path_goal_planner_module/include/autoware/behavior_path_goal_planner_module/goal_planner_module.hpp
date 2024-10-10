@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
 
+#include "autoware/behavior_path_goal_planner_module/decision_state.hpp"
 #include "autoware/behavior_path_goal_planner_module/fixed_goal_planner_base.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
@@ -111,12 +112,15 @@ struct PullOverContextData
   explicit PullOverContextData(
     const bool is_stable_safe_path, const PredictedObjects & static_objects,
     const PredictedObjects & dynamic_objects, std::optional<PullOverPath> && pull_over_path_opt,
-    const std::vector<PullOverPath> & pull_over_path_candidates)
+    const std::vector<PullOverPath> & pull_over_path_candidates,
+    const PathDecisionState & prev_state)
   : is_stable_safe_path(is_stable_safe_path),
     static_target_objects(static_objects),
     dynamic_target_objects(dynamic_objects),
     pull_over_path_opt(pull_over_path_opt),
-    pull_over_path_candidates(pull_over_path_candidates)
+    pull_over_path_candidates(pull_over_path_candidates),
+    prev_state_for_debug(prev_state),
+    last_path_idx_increment_time(std::nullopt)
   {
   }
   const bool is_stable_safe_path;
@@ -126,6 +130,8 @@ struct PullOverContextData
   std::optional<PullOverPath> pull_over_path_opt;
   const std::vector<PullOverPath> pull_over_path_candidates;
   // TODO(soblin): goal_candidate_from_thread, modifed_goal_pose_from_thread, closest_start_pose
+  const PathDecisionState prev_state_for_debug;
+  std::optional<rclcpp::Time> last_path_idx_increment_time;
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -364,7 +370,8 @@ private:
   PathWithLaneId generateStopPath(const PullOverContextData & context_data) const;
   PathWithLaneId generateFeasibleStopPath(const PathWithLaneId & path) const;
 
-  void keepStoppedWithCurrentPath(PathWithLaneId & path) const;
+  void keepStoppedWithCurrentPath(
+    const PullOverContextData & ctx_data, PathWithLaneId & path) const;
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
 
   // status
@@ -464,7 +471,7 @@ private:
    */
   bool isSafePath(
     const std::shared_ptr<const PlannerData> planner_data, const bool found_pull_over_path,
-    const std::optional<PullOverPath> & pull_over_path_opt,
+    const std::optional<PullOverPath> & pull_over_path_opt, const PathDecisionState & prev_data,
     const GoalPlannerParameters & parameters,
     const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
     const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
