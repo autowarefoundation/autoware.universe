@@ -50,6 +50,14 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}
   )
 
+  ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_occupancy_grid_based_collision_detector
+    test/test_occupancy_grid_based_collision_detector.cpp
+  )
+
+  target_link_libraries(test_${PROJECT_NAME}_occupancy_grid_based_collision_detector
+    ${PROJECT_NAME}
+  )
+
   ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_safety_check
     test/test_safety_check.cpp
   )
