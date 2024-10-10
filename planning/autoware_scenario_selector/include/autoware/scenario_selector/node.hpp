@@ -25,6 +25,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -37,6 +38,7 @@
 #endif
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -95,6 +97,7 @@ private:
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_parking_trajectory_;
   rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory_;
   rclcpp::Publisher<tier4_planning_msgs::msg::Scenario>::SharedPtr pub_scenario_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_;
 
   // polling subscribers
   universe_utils::InterProcessPollingSubscriber<
@@ -130,6 +133,9 @@ private:
 
   static constexpr double lane_stopping_timeout_s = 5.0;
   static constexpr double empty_parking_trajectory_timeout_s = 3.0;
+
+  // processing time
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 };
 }  // namespace autoware::scenario_selector
 #endif  // AUTOWARE__SCENARIO_SELECTOR__NODE_HPP_

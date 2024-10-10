@@ -20,12 +20,14 @@
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
 #include "diagnostic_updater/diagnostic_updater.hpp"
 
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_control_validator/msg/control_validator_status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -143,6 +145,7 @@ private:
   universe_utils::InterProcessPollingSubscriber<Trajectory>::SharedPtr sub_reference_traj_;
   rclcpp::Publisher<ControlValidatorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_;
 
   // system parameters
   int64_t diag_error_count_threshold_ = 0;
@@ -166,6 +169,8 @@ private:
   Trajectory::ConstSharedPtr current_predicted_trajectory_;
 
   Odometry::ConstSharedPtr current_kinematics_;
+
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   std::shared_ptr<ControlValidatorDebugMarkerPublisher> debug_pose_publisher_;
 };
