@@ -14,6 +14,8 @@
 
 #include "autoware/universe_utils/geometry/alt_geometry.hpp"
 
+#include "autoware/universe_utils/geometry/ear_clipping.hpp"
+
 namespace autoware::universe_utils
 {
 // Alternatives for Boost.Geometry ----------------------------------------------------------------
@@ -140,16 +142,26 @@ std::optional<ConvexPolygon2d> ConvexPolygon2d::create(
 }
 }  // namespace alt
 
-double area(const alt::ConvexPolygon2d & poly)
+double area(const alt::PointList2d & ring)
 {
-  const auto & vertices = poly.vertices();
-
-  double area = 0.;
-  for (auto it = std::next(vertices.cbegin()); it != std::prev(vertices.cend(), 2); ++it) {
-    area += (*std::next(it) - vertices.front()).cross(*it - vertices.front()) / 2;
+  double area_2 = 0.;
+  for (auto it = ring.cbegin(); it != std::prev(ring.cend()); ++it) {
+    area_2 += (*std::next(it)).cross(*it);
   }
 
-  return area;
+  return area_2 / 2;
+}
+
+double area(const alt::Polygon2d & poly)
+{
+  const auto outer_area = area(poly.outer());
+
+  double inner_area = 0.;
+  for (const auto & inner : poly.inners()) {
+    inner_area += area(inner);
+  }
+
+  return outer_area - inner_area;
 }
 
 std::optional<alt::ConvexPolygon2d> convex_hull(const alt::Points2d & points)
@@ -241,11 +253,11 @@ void correct(alt::Polygon2d & poly)
   }
 }
 
-bool covered_by(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
+bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly)
 {
   constexpr double epsilon = 1e-6;
 
-  const auto & vertices = poly.vertices();
+  const auto & vertices = poly.outer();
   std::size_t winding_number = 0;
 
   const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
@@ -323,14 +335,14 @@ double distance(
   }
 }
 
-double distance(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
+double distance(const alt::Point2d & point, const alt::Polygon2d & poly)
 {
   if (covered_by(point, poly)) {
     return 0.0;
   }
 
   // TODO(mitukou1109): Use plane sweep method to improve performance?
-  const auto & vertices = poly.vertices();
+  const auto & vertices = poly.outer();
   double min_distance = std::numeric_limits<double>::max();
   for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
     min_distance = std::min(min_distance, distance(point, *it, *std::next(it)));
@@ -474,10 +486,10 @@ bool is_above(
   return (seg_end - seg_start).cross(point - seg_start) > 0;
 }
 
-bool is_clockwise(const alt::PointList2d & vertices)
+bool is_clockwise(const alt::PointList2d & ring)
 {
   double sum = 0.;
-  for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
+  for (auto it = ring.cbegin(); it != std::prev(ring.cend()); ++it) {
     sum += (std::next(it)->x() - it->x()) * (std::next(it)->y() + it->y());
   }
 
@@ -557,18 +569,16 @@ bool touches(
   return std::abs(start_vec.cross(end_vec)) < epsilon && start_vec.dot(end_vec) <= 0;
 }
 
-bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
+bool touches(const alt::Point2d & point, const alt::PointList2d & line)
 {
-  const auto & vertices = poly.vertices();
-
   const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
-    vertices.begin(), std::prev(vertices.end()),
+    line.begin(), std::prev(line.end()),
     [](const auto & a, const auto & b) { return a.y() < b.y(); });
   if (point.y() < y_min_vertex->y() || point.y() > y_max_vertex->y()) {
     return false;
   }
 
-  for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
+  for (auto it = line.cbegin(); it != std::prev(line.cend()); ++it) {
     // check if the point is on each edge of the polygon
     if (touches(point, *it, *std::next(it))) {
       return true;
@@ -578,11 +588,26 @@ bool touches(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
   return false;
 }
 
-bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
+bool touches(const alt::Point2d & point, const alt::Polygon2d & poly)
+{
+  if (touches(point, poly.outer())) {
+    return true;
+  }
+
+  for (const auto & inner : poly.inners()) {
+    if (touches(point, inner)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool within(const alt::Point2d & point, const alt::Polygon2d & poly)
 {
   constexpr double epsilon = 1e-6;
 
-  const auto & vertices = poly.vertices();
+  const auto & vertices = poly.outer();
   int64_t winding_number = 0;
 
   const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
@@ -618,18 +643,27 @@ bool within(const alt::Point2d & point, const alt::ConvexPolygon2d & poly)
     }
   }
 
-  return winding_number != 0;
+  if (winding_number == 0) {
+    return false;
+  }
+
+  for (const auto & inner : poly.inners()) {
+    if (touches(point, inner)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
-bool within(
-  const alt::ConvexPolygon2d & poly_contained, const alt::ConvexPolygon2d & poly_containing)
+bool within(const alt::Polygon2d & poly_contained, const alt::ConvexPolygon2d & poly_containing)
 {
   if (equals(poly_contained, poly_containing)) {
     return true;
   }
 
   // check if all points of poly_contained are within poly_containing
-  for (const auto & vertex : poly_contained.vertices()) {
+  for (const auto & vertex : poly_contained.outer()) {
     if (!within(vertex, poly_containing)) {
       return false;
     }
