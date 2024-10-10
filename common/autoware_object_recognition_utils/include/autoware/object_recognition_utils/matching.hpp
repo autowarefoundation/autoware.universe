@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBJECT_RECOGNITION_UTILS__MATCHING_HPP_
-#define OBJECT_RECOGNITION_UTILS__MATCHING_HPP_
+#ifndef AUTOWARE__OBJECT_RECOGNITION_UTILS__MATCHING_HPP_
+#define AUTOWARE__OBJECT_RECOGNITION_UTILS__MATCHING_HPP_
 
+#include "autoware/object_recognition_utils/geometry.hpp"
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
-#include "object_recognition_utils/geometry.hpp"
 
 #include <boost/geometry.hpp>
 
@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace object_recognition_utils
+namespace autoware::object_recognition_utils
 {
 using autoware::universe_utils::Polygon2d;
 // minimum area to avoid division by zero
@@ -126,6 +126,6 @@ double get2dRecall(const T1 source_object, const T2 target_object)
 
   return std::min(1.0, intersection_area / target_area);
 }
-}  // namespace object_recognition_utils
+}  // namespace autoware::object_recognition_utils
 
-#endif  // OBJECT_RECOGNITION_UTILS__MATCHING_HPP_
+#endif  // AUTOWARE__OBJECT_RECOGNITION_UTILS__MATCHING_HPP_

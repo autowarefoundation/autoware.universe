@@ -21,7 +21,7 @@
 
 #define EIGEN_MPL2_ONLY
 #include "autoware/multi_object_tracker/utils/utils.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
@@ -79,7 +79,7 @@ public:
   }
   std::uint8_t getHighestProbLabel() const
   {
-    return object_recognition_utils::getHighestProbLabel(classification_);
+    return autoware::object_recognition_utils::getHighestProbLabel(classification_);
   }
 
   // existence states

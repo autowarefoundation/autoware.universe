@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/object_recognition_utils/matching.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "object_recognition_utils/matching.hpp"
 
 #include <autoware_perception_msgs/msg/detected_object.hpp>
 
@@ -37,8 +37,8 @@ geometry_msgs::msg::Pose createPose(const double x, const double y, const double
 
 TEST(matching, test_get2dIoU)
 {
+  using autoware::object_recognition_utils::get2dIoU;
   using autoware_perception_msgs::msg::DetectedObject;
-  using object_recognition_utils::get2dIoU;
 
   const double quart_circle = 0.16237976320958225;
 
@@ -93,7 +93,7 @@ TEST(matching, test_get2dIoU)
 
 TEST(object_recognition_utils, test_get2dGeneralizedIoU)
 {
-  using object_recognition_utils::get2dGeneralizedIoU;
+  using autoware::object_recognition_utils::get2dGeneralizedIoU;
   // TODO(Shin-kyoto):
   // get2dGeneralizedIoU uses outer points of each polygon.
   // But these points contain an sampling error of outer line,
@@ -153,8 +153,8 @@ TEST(object_recognition_utils, test_get2dGeneralizedIoU)
 
 TEST(matching, test_get2dPrecision)
 {
+  using autoware::object_recognition_utils::get2dPrecision;
   using autoware_perception_msgs::msg::DetectedObject;
-  using object_recognition_utils::get2dPrecision;
   const double quart_circle = 0.16237976320958225;
 
   {  // non overlapped
@@ -220,8 +220,8 @@ TEST(matching, test_get2dPrecision)
 
 TEST(matching, test_get2dRecall)
 {
+  using autoware::object_recognition_utils::get2dRecall;
   using autoware_perception_msgs::msg::DetectedObject;
-  using object_recognition_utils::get2dRecall;
   const double quart_circle = 0.16237976320958225;
 
   {  // non overlapped

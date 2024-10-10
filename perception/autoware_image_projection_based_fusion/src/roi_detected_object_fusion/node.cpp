@@ -14,7 +14,7 @@
 
 #include "autoware/image_projection_based_fusion/roi_detected_object_fusion/node.hpp"
 
-#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
 #include <autoware/image_projection_based_fusion/utils/geometry.hpp>
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
@@ -50,8 +50,9 @@ void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
   ignored_object_flags.resize(output_msg.objects.size());
   for (std::size_t obj_i = 0; obj_i < output_msg.objects.size(); ++obj_i) {
     const auto & object = output_msg.objects.at(obj_i);
-    const auto label = object_recognition_utils::getHighestProbLabel(object.classification);
-    const auto pos = object_recognition_utils::getPose(object).position;
+    const auto label =
+      autoware::object_recognition_utils::getHighestProbLabel(object.classification);
+    const auto pos = autoware::object_recognition_utils::getPose(object).position;
     const auto object_sqr_dist = pos.x * pos.x + pos.y * pos.y;
     const auto prob_threshold =
       fusion_params_.passthrough_lower_bound_probability_thresholds.at(label);
@@ -222,9 +223,9 @@ void RoiDetectedObjectFusionNode::fuseObjectsOnImage(
     for (const auto & image_roi : image_rois) {
       const auto & object_roi = object_pair.second;
       const auto object_roi_label =
-        object_recognition_utils::getHighestProbLabel(object_roi.object.classification);
+        autoware::object_recognition_utils::getHighestProbLabel(object_roi.object.classification);
       const auto image_roi_label =
-        object_recognition_utils::getHighestProbLabel(image_roi.object.classification);
+        autoware::object_recognition_utils::getHighestProbLabel(image_roi.object.classification);
       if (!fusion_params_.can_assign_matrix(object_roi_label, image_roi_label)) {
         continue;
       }

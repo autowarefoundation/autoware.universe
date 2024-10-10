@@ -48,7 +48,9 @@ bool PedestrianAndBicycleTracker::measure(
 {
   pedestrian_tracker_.measure(object, time, self_transform);
   bicycle_tracker_.measure(object, time, self_transform);
-  if (object_recognition_utils::getHighestProbLabel(object.classification) != Label::UNKNOWN)
+  if (
+    autoware::object_recognition_utils::getHighestProbLabel(object.classification) !=
+    Label::UNKNOWN)
     updateClassification(object.classification);
   return true;
 }

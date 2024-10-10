@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/object_recognition_utils/conversion.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "object_recognition_utils/conversion.hpp"
 
 #include <gtest/gtest.h>
 
@@ -42,8 +42,8 @@ autoware_perception_msgs::msg::ObjectClassification createObjectClassification(
 // NOTE: covariance is not checked
 TEST(conversion, test_toDetectedObject)
 {
+  using autoware::object_recognition_utils::toDetectedObject;
   using autoware_perception_msgs::msg::ObjectClassification;
-  using object_recognition_utils::toDetectedObject;
 
   autoware_perception_msgs::msg::TrackedObject tracked_obj;
   // existence probability
@@ -160,8 +160,8 @@ TEST(conversion, test_toDetectedObject)
 // NOTE: covariance is not checked
 TEST(conversion, test_toTrackedObject)
 {
+  using autoware::object_recognition_utils::toTrackedObject;
   using autoware_perception_msgs::msg::ObjectClassification;
-  using object_recognition_utils::toTrackedObject;
 
   autoware_perception_msgs::msg::DetectedObject detected_obj;
   // existence probability

@@ -16,9 +16,9 @@
 
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
+#include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/signal_processing/lowpass_filter_1d.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
@@ -796,7 +796,7 @@ void DynamicObstacleAvoidanceModule::determineWhetherToAvoidAgainstRegulatedObje
         return is_object_left;
       }
       const auto future_obj_pose =
-        object_recognition_utils::calcInterpolatedPose(obj_path, time_to_collision);
+        autoware::object_recognition_utils::calcInterpolatedPose(obj_path, time_to_collision);
       const size_t future_obj_idx =
         autoware::motion_utils::findNearestIndex(input_path.points, future_obj_pose->position);
 
@@ -1001,7 +1001,7 @@ DynamicObstacleAvoidanceModule::calcCollisionSection(
 
     const auto future_ego_pose = ego_path.at(i);
     const auto future_obj_pose =
-      object_recognition_utils::calcInterpolatedPose(obj_path, elapsed_time);
+      autoware::object_recognition_utils::calcInterpolatedPose(obj_path, elapsed_time);
 
     if (future_obj_pose) {
       const double dist_ego_to_obj =

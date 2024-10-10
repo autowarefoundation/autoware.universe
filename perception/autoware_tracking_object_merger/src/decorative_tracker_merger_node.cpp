@@ -16,9 +16,9 @@
 
 #include "autoware/tracking_object_merger/decorative_tracker_merger_node.hpp"
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/tracking_object_merger/association/solver/ssp.hpp"
 #include "autoware/tracking_object_merger/utils/utils.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -200,7 +200,7 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
 
   /* transform to target merge coordinate */
   TrackedObjects transformed_objects;
-  if (!object_recognition_utils::transformObjects(
+  if (!autoware::object_recognition_utils::transformObjects(
         *main_objects, merge_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
@@ -258,7 +258,7 @@ void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::Const
 {
   /* transform to target merge coordinate */
   TrackedObjects transformed_objects;
-  if (!object_recognition_utils::transformObjects(
+  if (!autoware::object_recognition_utils::transformObjects(
         *msg, merge_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }

@@ -19,8 +19,8 @@
 #include "autoware/multi_object_tracker/tracker/model/pass_through_tracker.hpp"
 
 #include "autoware/multi_object_tracker/utils/utils.hpp"
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/ros/msg_covariance.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -91,7 +91,7 @@ bool PassThroughTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
   using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-  object = object_recognition_utils::toTrackedObject(object_);
+  object = autoware::object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
   object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::X_X] = 0.0;

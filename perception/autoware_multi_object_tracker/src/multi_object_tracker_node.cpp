@@ -282,7 +282,7 @@ void MultiObjectTracker::runProcess(
 
   // Transform the objects to the world frame
   DetectedObjects transformed_objects;
-  if (!object_recognition_utils::transformObjects(
+  if (!autoware::object_recognition_utils::transformObjects(
         input_objects_with_uncertainty, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }

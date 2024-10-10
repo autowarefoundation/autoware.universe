@@ -108,7 +108,7 @@ DetectedObjects modelUncertainty(const DetectedObjects & detected_objects)
       continue;
     }
     const ObjectClassification & object_class =
-      object_recognition_utils::getHighestProbClassification(object.classification);
+      autoware::object_recognition_utils::getHighestProbClassification(object.classification);
     updating_objects.objects.push_back(modelUncertaintyByClass(object, object_class));
   }
   return updating_objects;
