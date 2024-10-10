@@ -23,6 +23,7 @@
 #include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
@@ -106,6 +107,7 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr pub_stop_reason_;
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_;
 
   // parameter callback result
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
