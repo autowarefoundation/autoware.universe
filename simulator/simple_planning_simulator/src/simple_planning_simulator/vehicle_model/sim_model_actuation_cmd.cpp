@@ -27,13 +27,10 @@ bool ActuationMap::readActuationMapFromCSV(const std::string & csv_path, const b
     return false;
   }
 
-  state_index_ = CSVLoader::getRowIndex(table);
-  actuation_index_ = CSVLoader::getColumnIndex(table);
+  state_index_ = CSVLoader::getColumnIndex(table);
+  actuation_index_ = CSVLoader::getRowIndex(table);
   actuation_map_ = CSVLoader::getMap(table);
-  if (validation && !CSVLoader::validateMap(actuation_map_, true)) {
-    return false;
-  }
-  return true;
+  return !validation || CSVLoader::validateMap(actuation_map_, true);
 }
 
 double ActuationMap::getControlCommand(const double actuation, const double state) const
@@ -41,13 +38,15 @@ double ActuationMap::getControlCommand(const double actuation, const double stat
   std::vector<double> interpolated_control_vec{};
   const double clamped_state = CSVLoader::clampValue(state, state_index_);
 
-  for (std::vector<double> control_command_values : actuation_map_) {
+  interpolated_control_vec.reserve(actuation_map_.size());
+  for (const std::vector<double> & control_command_values : actuation_map_) {
     interpolated_control_vec.push_back(
-      interpolation::lerp(state_index_, control_command_values, clamped_state));
+      autoware::interpolation::lerp(state_index_, control_command_values, clamped_state));
   }
 
   const double clamped_actuation = CSVLoader::clampValue(actuation, actuation_index_);
-  return interpolation::lerp(actuation_index_, interpolated_control_vec, clamped_actuation);
+  return autoware::interpolation::lerp(
+    actuation_index_, interpolated_control_vec, clamped_actuation);
 }
 
 std::optional<double> AccelMap::getThrottle(const double acc, double vel) const
@@ -60,8 +59,10 @@ std::optional<double> AccelMap::getThrottle(const double acc, double vel) const
   const double clamped_vel = CSVLoader::clampValue(vel, vel_indices);
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
-  for (std::vector<double> accelerations : accel_map) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_indices, accelerations, clamped_vel));
+  interpolated_acc_vec.reserve(accel_map.size());
+  for (const std::vector<double> & accelerations : accel_map) {
+    interpolated_acc_vec.push_back(
+      autoware::interpolation::lerp(vel_indices, accelerations, clamped_vel));
   }
 
   // calculate throttle
@@ -69,11 +70,12 @@ std::optional<double> AccelMap::getThrottle(const double acc, double vel) const
   // When the desired acceleration is greater than the throttle area, return max throttle
   if (acc < interpolated_acc_vec.front()) {
     return std::nullopt;
-  } else if (interpolated_acc_vec.back() < acc) {
+  }
+  if (interpolated_acc_vec.back() < acc) {
     return throttle_indices.back();
   }
 
-  return interpolation::lerp(interpolated_acc_vec, throttle_indices, acc);
+  return autoware::interpolation::lerp(interpolated_acc_vec, throttle_indices, acc);
 }
 
 double BrakeMap::getBrake(const double acc, double vel) const
@@ -86,8 +88,10 @@ double BrakeMap::getBrake(const double acc, double vel) const
   const double clamped_vel = CSVLoader::clampValue(vel, vel_indices);
 
   // (brake, vel, acc) map => (brake, acc) map by fixing vel
-  for (std::vector<double> accelerations : brake_map) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_indices, accelerations, clamped_vel));
+  interpolated_acc_vec.reserve(brake_map.size());
+  for (const std::vector<double> & accelerations : brake_map) {
+    interpolated_acc_vec.push_back(
+      autoware::interpolation::lerp(vel_indices, accelerations, clamped_vel));
   }
 
   // calculate brake
@@ -95,12 +99,13 @@ double BrakeMap::getBrake(const double acc, double vel) const
   // When the desired acceleration is greater than the brake area, return min brake on the map
   if (acc < interpolated_acc_vec.back()) {
     return brake_indices.back();
-  } else if (interpolated_acc_vec.front() < acc) {
+  }
+  if (interpolated_acc_vec.front() < acc) {
     return brake_indices.front();
   }
 
   std::reverse(std::begin(interpolated_acc_vec), std::end(interpolated_acc_vec));
-  return interpolation::lerp(interpolated_acc_vec, brake_indices, acc);
+  return autoware::interpolation::lerp(interpolated_acc_vec, brake_indices, acc);
 }
 
 // steer map sim model

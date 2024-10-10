@@ -15,7 +15,6 @@
 #include <autoware/motion_utils/trajectory_container/interpolator.hpp>
 
 #include <gtest/gtest.h>
-#include <gtest/internal/gtest-type-util.h>
 
 #include <optional>
 #include <random>
@@ -26,7 +25,7 @@ class TestInterpolator : public ::testing::Test
 {
 public:
   std::optional<Interpolator> interpolator;
-  std::vector<double> axis;
+  std::vector<double> bases;
   std::vector<double> values;
 
   void SetUp() override
@@ -35,10 +34,10 @@ public:
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(-1, 1);
-    axis.resize(10);
+    bases.resize(10);
     values.resize(10);
-    for (size_t i = 0; i < axis.size(); ++i) {
-      axis[i] = static_cast<double>(i);
+    for (size_t i = 0; i < bases.size(); ++i) {
+      bases[i] = static_cast<double>(i);
       values[i] = dis(gen);
     }
   }
@@ -55,11 +54,10 @@ TYPED_TEST_SUITE(TestInterpolator, Interpolators, );
 
 TYPED_TEST(TestInterpolator, compute)
 {
-  using autoware::motion_utils::trajectory_container::interpolator::InterpolatorCreator;
   this->interpolator =
-    InterpolatorCreator<TypeParam>().set_axis(this->axis).set_values(this->values).create();
-  for (size_t i = 0; i < this->axis.size(); ++i) {
-    EXPECT_NEAR(this->values[i], this->interpolator->compute(this->axis[i]), 1e-6);
+    typename TypeParam::Builder().set_bases(this->bases).set_values(this->values).build();
+  for (size_t i = 0; i < this->bases.size(); ++i) {
+    EXPECT_NEAR(this->values[i], this->interpolator->compute(this->bases[i]), 1e-6);
   }
 }
 

@@ -44,7 +44,6 @@ PoseHistory::PoseHistory() : last_stamp_(0, 0, RCL_ROS_TIME)
 
 PoseHistory::~PoseHistory() = default;  // Properties are deleted by Qt
 
-// cppcheck-suppress unusedFunction
 void PoseHistory::onInitialize()
 {
   MFDClass::onInitialize();

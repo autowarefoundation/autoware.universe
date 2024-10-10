@@ -56,7 +56,7 @@ void SpeedDisplay::updateSpeedData(
     // Assuming msg->state.longitudinal_velocity_mps is the field you're interested in
     float speed = msg->longitudinal_velocity;
     // we received it as a m/s value, but we want to display it in km/h
-    current_speed_ = (speed * 3.6);
+    current_speed_ = std::abs(speed * 3.6);
   } catch (const std::exception & e) {
     // Log the error
     std::cerr << "Error in processMessage: " << e.what() << std::endl;

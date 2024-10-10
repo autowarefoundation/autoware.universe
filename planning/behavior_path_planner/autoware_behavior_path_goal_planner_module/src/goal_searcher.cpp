@@ -15,13 +15,11 @@
 #include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
 
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
-#include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/no_parking_area.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
-#include "autoware_lanelet2_extension/utility/query.hpp"
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
 
 #include <boost/geometry/algorithms/union.hpp>
@@ -33,7 +31,6 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware::lane_departure_checker::LaneDepartureChecker;
 using autoware::universe_utils::calcOffsetPose;
 using lanelet::autoware::NoParkingArea;
 using lanelet::autoware::NoStoppingArea;
@@ -119,11 +116,8 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
   const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
     *route_handler, left_side_parking_, parameters_.backward_goal_search_length,
     parameters_.forward_goal_search_length);
-  auto lanes = utils::getExtendedCurrentLanes(
-    planner_data, backward_length, forward_length,
-    /*forward_only_in_route*/ false);
-  lanes.insert(lanes.end(), pull_over_lanes.begin(), pull_over_lanes.end());
-
+  const auto departure_check_lane = goal_planner_utils::createDepartureCheckLanelet(
+    pull_over_lanes, *route_handler, left_side_parking_);
   const auto goal_arc_coords =
     lanelet::utils::getArcCoordinates(pull_over_lanes, reference_goal_pose_);
   const double s_start = std::max(0.0, goal_arc_coords.length - backward_length);
@@ -194,7 +188,8 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
         break;
       }
 
-      if (LaneDepartureChecker::isOutOfLane(lanes, transformed_vehicle_footprint)) {
+      if (!boost::geometry::within(
+            transformed_vehicle_footprint, departure_check_lane.polygon2d().basicPolygon())) {
         continue;
       }
 

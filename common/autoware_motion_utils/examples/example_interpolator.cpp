@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/motion_utils/trajectory_container/interpolator/akima_spline.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/linear.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/nearest_neighbor.hpp"
 
 #include <autoware/motion_utils/trajectory_container/interpolator.hpp>
 
@@ -27,26 +31,25 @@ int main()
   auto plt = matplotlibcpp17::pyplot::import();
 
   // create random values
-  std::vector<double> axis = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0};
+  std::vector<double> bases = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0};
   std::vector<double> values;
   std::random_device seed_gen;
   std::mt19937 engine(seed_gen());
   std::uniform_real_distribution<> dist(-1.0, 1.0);
-  for (size_t i = 0; i < axis.size(); ++i) {
+  for (size_t i = 0; i < bases.size(); ++i) {
     values.push_back(dist(engine));
   }
   // Scatter Data
-  plt.scatter(Args(axis, values));
+  plt.scatter(Args(bases, values));
 
-  using autoware::motion_utils::trajectory_container::interpolator::Interpolator;
-  using autoware::motion_utils::trajectory_container::interpolator::InterpolatorCreator;
+  using autoware::motion_utils::trajectory_container::interpolator::InterpolatorInterface;
   // Linear Interpolator
   {
     using autoware::motion_utils::trajectory_container::interpolator::Linear;
-    auto interpolator = *InterpolatorCreator<Linear>().set_axis(axis).set_values(values).create();
+    auto interpolator = *Linear::Builder{}.set_bases(bases).set_values(values).build();
     std::vector<double> x;
     std::vector<double> y;
-    for (double i = axis.front(); i < axis.back(); i += 0.01) {
+    for (double i = bases.front(); i < bases.back(); i += 0.01) {
       x.push_back(i);
       y.push_back(interpolator.compute(i));
     }
@@ -56,11 +59,11 @@ int main()
   // AkimaSpline Interpolator
   {
     using autoware::motion_utils::trajectory_container::interpolator::AkimaSpline;
-    auto interpolator =
-      *InterpolatorCreator<AkimaSpline>().set_axis(axis).set_values(values).create();
+
+    auto interpolator = *AkimaSpline::Builder{}.set_bases(bases).set_values(values).build();
     std::vector<double> x;
     std::vector<double> y;
-    for (double i = axis.front(); i < axis.back(); i += 0.01) {
+    for (double i = bases.front(); i < bases.back(); i += 0.01) {
       x.push_back(i);
       y.push_back(interpolator.compute(i));
     }
@@ -70,11 +73,10 @@ int main()
   // CubicSpline Interpolator
   {
     using autoware::motion_utils::trajectory_container::interpolator::CubicSpline;
-    auto interpolator =
-      *InterpolatorCreator<CubicSpline>().set_axis(axis).set_values(values).create();
+    auto interpolator = *CubicSpline::Builder{}.set_bases(bases).set_values(values).build();
     std::vector<double> x;
     std::vector<double> y;
-    for (double i = axis.front(); i < axis.back(); i += 0.01) {
+    for (double i = bases.front(); i < bases.back(); i += 0.01) {
       x.push_back(i);
       y.push_back(interpolator.compute(i));
     }
@@ -85,10 +87,10 @@ int main()
   {
     using autoware::motion_utils::trajectory_container::interpolator::NearestNeighbor;
     auto interpolator =
-      *InterpolatorCreator<NearestNeighbor<double>>().set_axis(axis).set_values(values).create();
+      *NearestNeighbor<double>::Builder{}.set_bases(bases).set_values(values).build();
     std::vector<double> x;
     std::vector<double> y;
-    for (double i = axis.front(); i < axis.back(); i += 0.01) {
+    for (double i = bases.front(); i < bases.back(); i += 0.01) {
       x.push_back(i);
       y.push_back(interpolator.compute(i));
     }
@@ -98,11 +100,10 @@ int main()
   // Stairstep Interpolator
   {
     using autoware::motion_utils::trajectory_container::interpolator::Stairstep;
-    auto interpolator =
-      *InterpolatorCreator<Stairstep<double>>().set_axis(axis).set_values(values).create();
+    auto interpolator = *Stairstep<double>::Builder{}.set_bases(bases).set_values(values).build();
     std::vector<double> x;
     std::vector<double> y;
-    for (double i = axis.front(); i < axis.back(); i += 0.01) {
+    for (double i = bases.front(); i < bases.back(); i += 0.01) {
       x.push_back(i);
       y.push_back(interpolator.compute(i));
     }

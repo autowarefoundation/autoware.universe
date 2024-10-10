@@ -24,6 +24,108 @@ The lane change candidate path is divided into two phases: preparation and lane-
 
 ![lane-change-phases](./images/lane_change-lane_change_phases.png)
 
+The following chart illustrates the process of sampling candidate paths for lane change.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+start
+
+if (Is current lanes, target lanes OR target neighbor lanes polygon empty?) then (yes)
+  #LightPink:Return prev approved path;
+  stop
+else (no)
+endif
+
+:Get target objects;
+
+:Calculate prepare phase metrics;
+
+:Start loop through prepare phase metrics;
+
+repeat
+  :Get prepare segment;
+
+  if (Is LC start point outside target lanes range) then (yes)
+    if (Is found a valid path) then (yes)
+      #Orange:Return first valid path;
+      stop
+    else (no)
+      #LightPink:Return prev approved path;
+      stop
+    endif
+  else (no)
+  endif
+
+  :Calculate shift phase metrics;
+
+  :Start loop through shift phase metrics;
+  repeat
+    :Get candidate path;
+    note left: Details shown in the next chart
+    if (Is valid candidate path?) then (yes)
+      :Store candidate path;
+      if (Is candidate path safe?) then (yes)
+        #LightGreen:Return candidate path;
+        stop
+      else (no)
+      endif
+    else (no)
+    endif
+    repeat while (Finished looping shift phase metrics) is (FALSE)
+  repeat while (Is finished looping prepare phase metrics) is (FALSE)
+
+if (Is found a valid path) then (yes)
+  #Orange:Return first valid path;
+  stop
+else (no)
+endif
+
+#LightPink:Return prev approved path;
+stop
+
+@enduml
+```
+
+While the following chart demonstrates the process of generating a valid candidate path.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+start
+
+:Calculate resample interval;
+
+:Get reference path from target lanes;
+
+if (Is reference path empty?) then (yes)
+  #LightPink:Return;
+  stop
+else (no)
+endif
+
+:Get LC shift line;
+
+:Set lane change Info;
+note left: set information from sampled prepare phase and shift phase metrics\n<color:red>(duration, length, velocity, and acceleration)
+
+:Construct candidate path;
+
+if (Candidate path has enough length?) then (yes)
+  #LightGreen:Return valid candidate path;
+  stop
+else (no)
+  #LightPink:Return;
+  stop
+endif
+
+@enduml
+```
+
 ### Preparation phase
 
 The preparation trajectory is the candidate path's first and the straight portion generated along the ego vehicle's current lane. The length of the preparation trajectory is computed as follows.
