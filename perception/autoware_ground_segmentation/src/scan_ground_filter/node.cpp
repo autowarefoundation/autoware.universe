@@ -337,18 +337,26 @@ void ScanGroundFilterComponent::checkDiscontinuousGndGrid(
   PointData & pd, const pcl::PointXYZ & point_curr,
   const std::vector<GridCenter> & gnd_grids_list) const
 {
-  float tmp_delta_max_z = point_curr.z - gnd_grids_list.back().max_height;
-  float tmp_delta_avg_z = point_curr.z - gnd_grids_list.back().avg_height;
-  float tmp_delta_radius = pd.radius - gnd_grids_list.back().radius;
-  float local_slope_ratio = tmp_delta_avg_z / tmp_delta_radius;
-
-  if (
-    abs(local_slope_ratio) < local_slope_max_ratio_ ||
-    abs(tmp_delta_avg_z) < non_ground_height_threshold_ ||
-    abs(tmp_delta_max_z) < non_ground_height_threshold_) {
+  const auto & grid_ref = gnd_grids_list.back();
+  const float delta_avg_z = point_curr.z - grid_ref.avg_height;
+  if (abs(delta_avg_z) < non_ground_height_threshold_) {
     pd.point_state = PointLabel::GROUND;
-  } else if (local_slope_ratio > global_slope_max_ratio_) {
+    return;
+  }
+  const float delta_max_z = point_curr.z - grid_ref.max_height;
+  if (abs(delta_max_z) < non_ground_height_threshold_) {
+    pd.point_state = PointLabel::GROUND;
+    return;
+  }
+  const float delta_radius = pd.radius - grid_ref.radius;
+  const float local_slope_ratio = delta_avg_z / delta_radius;
+  if (abs(local_slope_ratio) < local_slope_max_ratio_) {
+    pd.point_state = PointLabel::GROUND;
+    return;
+  }
+  if (local_slope_ratio > local_slope_max_ratio_) {
     pd.point_state = PointLabel::NON_GROUND;
+    return;
   }
 }
 
