@@ -395,27 +395,6 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
   return {base_lon, base_lat};
 }
 
-std::vector<double> PathShifter::calcLateralJerk() const
-{
-  const auto arclength_arr = utils::calcPathArcLengthArray(reference_path_);
-
-  constexpr double epsilon = 1.0e-8;  // to avoid 0 division
-
-  std::vector<double> lateral_jerk{};
-
-  // TODO(Watanabe) write docs.
-  double current_shift = base_offset_;
-  for (const auto & shift_line : shift_lines_) {
-    const double delta_shift = shift_line.end_shift_length - current_shift;
-    const auto shifting_arclength = std::max(
-      arclength_arr.at(shift_line.end_idx) - arclength_arr.at(shift_line.start_idx), epsilon);
-    lateral_jerk.push_back((delta_shift / 2.0) / std::pow(shifting_arclength / 4.0, 3.0));
-    current_shift = shift_line.end_shift_length;
-  }
-
-  return lateral_jerk;
-}
-
 void PathShifter::updateShiftLinesIndices(ShiftLineArray & shift_lines) const
 {
   if (reference_path_.points.empty()) {
@@ -611,15 +590,6 @@ double PathShifter::calcJerkFromLatLonDistance(
   const double lon = std::max(std::abs(longitudinal), ep);
   const double v = std::abs(velocity);
   return 0.5 * lat * std::pow(4.0 * v / lon, 3);
-}
-
-double PathShifter::getTotalShiftLength() const
-{
-  double sum = base_offset_;
-  for (const auto & l : shift_lines_) {
-    sum += l.end_shift_length;
-  }
-  return sum;
 }
 
 double PathShifter::getLastShiftLength() const
