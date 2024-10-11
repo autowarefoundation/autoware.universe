@@ -289,5 +289,54 @@ bool isWithinTurnDirectionLanes(const lanelet::ConstLanelet & lanelet, const Pol
 double calcPhaseLength(
   const double velocity, const double maximum_velocity, const double acceleration,
   const double time);
+
+/**
+ * @brief Calculates the minimum distance to a stationary object in the current lanes.
+ *
+ * This function determines the closest distance from the ego vehicle to a stationary object
+ * in the current lanes. It checks if the object is within the stopping criteria based on its
+ * velocity and calculates the distance while accounting for the object's size. Only objects
+ * positioned after the specified distance to the target lane's start are considered.
+ *
+ * @param filtered_objects A collection of lane change target objects, including those in the
+ * current lane.
+ * @param bpp_param Parameters for the behavior path planner, such as vehicle dimensions.
+ * @param lc_param Parameters for the lane change process, including the velocity threshold for
+ * stopping.
+ * @param dist_to_target_lane_start The distance from the ego vehicle to the start of the target
+ * lane.
+ * @param ego_pose The current pose of the ego vehicle.
+ * @param path The current path of the ego vehicle, containing path points and lane information.
+ * @return The minimum distance to a stationary object in the current lanes. If no valid object is
+ * found, returns the maximum possible double value.
+ */
+double get_min_dist_to_current_lanes_obj(
+  const LaneChangeTargetObjects & filtered_objects, const BehaviorPathPlannerParameters & bpp_param,
+  const LaneChangeParameters & lc_param, const double dist_to_target_lane_start, const Pose & pose,
+  const PathWithLaneId & path);
+
+/**
+ * @brief Checks if there is any stationary object in the target lanes that would affect the lane
+ * change stop decision.
+ *
+ * This function determines whether there are any stationary objects in the target lanes that could
+ * impact the decision to insert a stop point for the ego vehicle. It checks each object's velocity,
+ * position relative to the ego vehicle, and overlap with the target lanes to identify if any object
+ * meets the criteria for being a blocking obstacle.
+ *
+ * @param target_lanes A collection of lanelets representing the target lanes for the lane change.
+ * @param filtered_objects A collection of lane change target objects, including those in the target
+ * lanes.
+ * @param lc_param Parameters for the lane change process, such as the stop velocity threshold.
+ * @param stop_arc_length The arc length at which the ego vehicle is expected to stop.
+ * @param ego_pose The current pose of the ego vehicle.
+ * @param path The current path of the ego vehicle, containing path points and lane information.
+ * @return true if there is a stationary object in the target lanes that meets the criteria for
+ * being a blocking object; otherwise, false.
+ */
+bool has_blocking_target_object(
+  const lanelet::ConstLanelets & target_lanes, const LaneChangeTargetObjects & filtered_objects,
+  const LaneChangeParameters & lc_param, const double stop_arc_length, const Pose & ego_pose,
+  const PathWithLaneId & path);
 }  // namespace behavior_path_planner::utils::lane_change
 #endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_

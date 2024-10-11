@@ -1219,4 +1219,90 @@ double calcPhaseLength(
   const auto length_with_max_velocity = maximum_velocity * duration;
   return std::min(length_with_acceleration, length_with_max_velocity);
 }
+
+double get_min_dist_to_current_lanes_obj(
+  const LaneChangeTargetObjects & filtered_objects, const BehaviorPathPlannerParameters & bpp_param,
+  const LaneChangeParameters & lc_param, const double dist_to_target_lane_start,
+  const Pose & ego_pose, const PathWithLaneId & path)
+{
+  const auto & path_points = path.points;
+
+  auto min_dist_to_obj = std::numeric_limits<double>::max();
+  for (const auto & object : filtered_objects.current_lane) {
+    // check if stationary
+    const auto obj_v = std::abs(object.initial_twist.twist.linear.x);
+    if (obj_v > lc_param.stop_velocity_threshold) {
+      continue;
+    }
+
+    // provide "estimation" based on size of object
+    const auto dist_to_obj =
+      motion_utils::calcSignedArcLength(
+        path_points, path_points.front().point.pose.position, object.initial_pose.pose.position) -
+      (object.shape.dimensions.x / 2);
+
+    const auto dist_to_ego = motion_utils::calcSignedArcLength(
+                               path_points, ego_pose.position, object.initial_pose.pose.position) -
+                             (object.shape.dimensions.x / 2);
+
+    if (dist_to_obj < dist_to_target_lane_start || dist_to_obj < dist_to_ego) {
+      continue;
+    }
+
+    // calculate distance from path front to the stationary object polygon on the ego lane.
+    const auto obj_poly =
+      tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape).outer();
+    for (const auto & polygon_p : obj_poly) {
+      const auto p_fp = tier4_autoware_utils::toMsg(polygon_p.to_3d());
+      const auto lateral_fp = motion_utils::calcLateralOffset(path_points, p_fp);
+
+      // ignore if the point is not on ego path
+      if (std::abs(lateral_fp) > (bpp_param.vehicle_width / 2)) {
+        continue;
+      }
+
+      const auto current_distance_to_obj = motion_utils::calcSignedArcLength(path_points, 0, p_fp);
+      min_dist_to_obj = std::min(min_dist_to_obj, current_distance_to_obj);
+    }
+  }
+  return min_dist_to_obj;
+}
+
+bool has_blocking_target_object(
+  const lanelet::ConstLanelets & target_lanes, const LaneChangeTargetObjects & filtered_objects,
+  const LaneChangeParameters & lc_param, const double stop_arc_length, const Pose & ego_pose,
+  const PathWithLaneId & path)
+{
+  const auto target_lane_poly =
+    lanelet::utils::combineLaneletsShape(target_lanes).polygon2d().basicPolygon();
+  return std::any_of(
+    filtered_objects.target_lane.begin(), filtered_objects.target_lane.end(),
+    [&](const auto & object) {
+      const auto v = std::abs(object.initial_twist.twist.linear.x);
+      if (v > lc_param.stop_velocity_threshold) {
+        return false;
+      }
+
+      const auto arc_length_to_ego =
+        motion_utils::calcSignedArcLength(
+          path.points, ego_pose.position, object.initial_pose.pose.position) -
+        (object.shape.dimensions.x / 2);
+
+      if (arc_length_to_ego < 0.0) {
+        return false;
+      }
+
+      const auto obj_poly =
+        tier4_autoware_utils::toPolygon2d(object.initial_pose.pose, object.shape);
+      // filtered_objects includes objects out of target lanes, so filter them out
+      if (boost::geometry::disjoint(obj_poly, target_lane_poly)) {
+        return false;
+      }
+
+      const auto arc_length_to_target_lane_obj = motion_utils::calcSignedArcLength(
+        path.points, path.points.front().point.pose.position, object.initial_pose.pose.position);
+      const auto width_margin = object.shape.dimensions.x / 2;
+      return (arc_length_to_target_lane_obj - width_margin) >= stop_arc_length;
+    });
+}
 }  // namespace behavior_path_planner::utils::lane_change
