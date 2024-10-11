@@ -1297,21 +1297,21 @@ bool has_blocking_target_object_for_stopping(
 {
   return std::any_of(
     filtered_objects.target_lane_leading.begin(), filtered_objects.target_lane_leading.end(),
-    [&](const ExtendedPredictedObject & o) {
-      const auto v = std::abs(o.initial_twist.linear.x);
+    [&](const auto & object) {
+      const auto v = std::abs(object.initial_twist.linear.x);
       if (v > common_data_ptr->lc_param_ptr->stop_velocity_threshold) {
         return false;
       }
 
       // filtered_objects includes objects out of target lanes, so filter them out
       if (boost::geometry::disjoint(
-            o.initial_polygon, common_data_ptr->lanes_polygon_ptr->target.value())) {
+            object.initial_polygon, common_data_ptr->lanes_polygon_ptr->target.value())) {
         return false;
       }
 
       const auto arc_length_to_target_lane_obj = motion_utils::calcSignedArcLength(
-        path.points, path.points.front().point.pose.position, o.initial_pose.position);
-      const auto width_margin = o.shape.dimensions.x / 2;
+        path.points, path.points.front().point.pose.position, object.initial_pose.position);
+      const auto width_margin = object.shape.dimensions.x / 2;
       return (arc_length_to_target_lane_obj - width_margin) >= stop_arc_length;
     });
 }
