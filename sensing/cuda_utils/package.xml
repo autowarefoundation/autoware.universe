@@ -5,8 +5,9 @@
   <description>cuda utility library</description>
 
   <author email="daisuke.nishimatsu@tier4.jp">Daisuke Nishimatsu</author>
-  <maintainer email="daisuke.nishimatsu@tier4.jp">Daisuke Nishimatsu</maintainer>
   <maintainer email="manato.hirabayashi@tier4.jp">Manato Hirabayashi</maintainer>
+  <maintainer email="kenzo.lobos@tier4.jp">Kenzo Lobos-Tsunekawa</maintainer>
+  <maintainer email="amadeusz.szymko.2@tier4.jp">Amadeusz Szymko</maintainer>
 
   <license>Apache License 2.0</license>
 

@@ -36,6 +36,7 @@
 #include <OgreSceneNode.h>
 
 #include <deque>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -60,7 +61,10 @@ std::unique_ptr<Ogre::ColourValue> gradation(
 }
 
 std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
-  const double vel_max, const double cmd_vel)
+  const double vel_max, const double cmd_vel,
+  const rviz_common::properties::ColorProperty & color_min,
+  const rviz_common::properties::ColorProperty & color_mid,
+  const rviz_common::properties::ColorProperty & color_max)
 {
   const double cmd_vel_abs = std::fabs(cmd_vel);
   const double vel_min = 0.0;
@@ -68,16 +72,17 @@ std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
   std::unique_ptr<Ogre::ColourValue> color_ptr(new Ogre::ColourValue());
   if (vel_min < cmd_vel_abs && cmd_vel_abs <= (vel_max / 2.0)) {
     double ratio = (cmd_vel_abs - vel_min) / (vel_max / 2.0 - vel_min);
-    color_ptr = gradation(Qt::red, Qt::yellow, ratio);
+    color_ptr = gradation(color_min.getColor(), color_mid.getColor(), ratio);
   } else if ((vel_max / 2.0) < cmd_vel_abs && cmd_vel_abs <= vel_max) {
     double ratio = (cmd_vel_abs - vel_max / 2.0) / (vel_max - vel_max / 2.0);
-    color_ptr = gradation(Qt::yellow, Qt::green, ratio);
+    color_ptr = gradation(color_mid.getColor(), color_max.getColor(), ratio);
   } else if (vel_max < cmd_vel_abs) {
-    *color_ptr = Ogre::ColourValue::Green;
+    // Use max color when velocity exceeds max
+    *color_ptr = rviz_common::properties::qtToOgre(color_max.getColor());
   } else {
-    *color_ptr = Ogre::ColourValue::Red;
+    // Use min color when velocity is below min
+    *color_ptr = rviz_common::properties::qtToOgre(color_min.getColor());
   }
-
   return color_ptr;
 }
 
@@ -109,8 +114,10 @@ public:
     property_path_width_view_{"Constant Width", false, "", &property_path_view_},
     property_path_width_{"Width", 2.0, "", &property_path_view_},
     property_path_alpha_{"Alpha", 1.0, "", &property_path_view_},
-    property_path_color_view_{"Constant Color", false, "", &property_path_view_},
-    property_path_color_{"Color", Qt::black, "", &property_path_view_},
+    property_min_color_("Min Velocity Color", QColor("#3F2EE3"), "", &property_path_view_),
+    property_mid_color_("Mid Velocity Color", QColor("#208AAE"), "", &property_path_view_),
+    property_max_color_("Max Velocity Color", QColor("#00E678"), "", &property_path_view_),
+    property_fade_out_distance_{"Fade Out Distance", 0.0, "[m]", &property_path_view_},
     property_vel_max_{"Color Border Vel Max", 3.0, "[m/s]", this},
     // velocity
     property_velocity_view_{"View Velocity", true, "", this},
@@ -356,6 +363,34 @@ protected:
     const float right = property_path_width_view_.getBool() ? property_path_width_.getFloat() / 2.0
                                                             : info->width / 2.0;
 
+    // Initialize alphas with the default alpha value
+    std::vector<float> alphas(msg_ptr->points.size(), property_path_alpha_.getFloat());
+
+    // Backward iteration to adjust alpha values for the last x meters
+    if (property_fade_out_distance_.getFloat() > std::numeric_limits<float>::epsilon()) {
+      alphas.back() = 0.0f;
+      float cumulative_distance = 0.0f;
+      for (size_t point_idx = msg_ptr->points.size() - 1; point_idx > 0; point_idx--) {
+        const auto & curr_point = autoware::universe_utils::getPose(msg_ptr->points.at(point_idx));
+        const auto & prev_point =
+          autoware::universe_utils::getPose(msg_ptr->points.at(point_idx - 1));
+        float distance = std::sqrt(autoware::universe_utils::calcSquaredDistance2d(
+          prev_point.position, curr_point.position));
+        cumulative_distance += distance;
+
+        if (cumulative_distance <= property_fade_out_distance_.getFloat()) {
+          auto ratio =
+            static_cast<float>(cumulative_distance / property_fade_out_distance_.getFloat());
+          float alpha = property_path_alpha_.getFloat() * ratio;
+          alphas.at(point_idx - 1) = alpha;
+        } else {
+          // If the distance exceeds the fade out distance, break the loop
+          break;
+        }
+      }
+    }
+
+    // Forward iteration to visualize path
     for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
       const auto & path_point = msg_ptr->points.at(point_idx);
       const auto & pose = autoware::universe_utils::getPose(path_point);
@@ -364,15 +399,14 @@ protected:
       // path
       if (property_path_view_.getBool()) {
         Ogre::ColourValue color;
-        if (property_path_color_view_.getBool()) {
-          color = rviz_common::properties::qtToOgre(property_path_color_.getColor());
-        } else {
-          // color change depending on velocity
-          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-            setColorDependsOnVelocity(property_vel_max_.getFloat(), velocity);
-          color = *dynamic_color_ptr;
-        }
-        color.a = property_path_alpha_.getFloat();
+
+        // color change depending on velocity
+        std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr = setColorDependsOnVelocity(
+          property_vel_max_.getFloat(), velocity, property_min_color_, property_mid_color_,
+          property_max_color_);
+        color = *dynamic_color_ptr;
+        color.a = alphas.at(point_idx);
+
         Eigen::Vector3f vec_in;
         Eigen::Vector3f vec_out;
         Eigen::Quaternionf quat_yaw_reverse(0, 0, 0, 1);
@@ -413,8 +447,9 @@ protected:
           color = rviz_common::properties::qtToOgre(property_velocity_color_.getColor());
         } else {
           /* color change depending on velocity */
-          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-            setColorDependsOnVelocity(property_vel_max_.getFloat(), velocity);
+          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr = setColorDependsOnVelocity(
+            property_vel_max_.getFloat(), velocity, property_min_color_, property_mid_color_,
+            property_max_color_);
           color = *dynamic_color_ptr;
         }
         color.a = property_velocity_alpha_.getFloat();
@@ -616,8 +651,13 @@ protected:
   rviz_common::properties::BoolProperty property_path_width_view_;
   rviz_common::properties::FloatProperty property_path_width_;
   rviz_common::properties::FloatProperty property_path_alpha_;
-  rviz_common::properties::BoolProperty property_path_color_view_;
-  rviz_common::properties::ColorProperty property_path_color_;
+  // Gradient points for velocity color
+  rviz_common::properties::ColorProperty property_min_color_;
+  rviz_common::properties::ColorProperty property_mid_color_;
+  rviz_common::properties::ColorProperty property_max_color_;
+  // Last x meters of the path will fade out to transparent
+  rviz_common::properties::FloatProperty property_fade_out_distance_;
+
   rviz_common::properties::FloatProperty property_vel_max_;
   rviz_common::properties::BoolProperty property_velocity_view_;
   rviz_common::properties::FloatProperty property_velocity_alpha_;

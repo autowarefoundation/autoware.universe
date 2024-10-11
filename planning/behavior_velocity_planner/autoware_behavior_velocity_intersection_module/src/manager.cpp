@@ -441,6 +441,7 @@ void IntersectionModuleManager::setActivation()
     scene_module->setActivation(rtc_interface_.isActivated(getUUID(scene_module->getModuleId())));
     intersection_module->setOcclusionActivation(
       occlusion_rtc_interface_.isActivated(occlusion_uuid));
+    scene_module->setRTCEnabled(rtc_interface_.isRTCEnabled(getUUID(scene_module->getModuleId())));
   }
 }
 

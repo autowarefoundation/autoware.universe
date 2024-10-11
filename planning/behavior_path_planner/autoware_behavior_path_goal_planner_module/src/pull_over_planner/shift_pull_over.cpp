@@ -35,8 +35,9 @@ ShiftPullOver::ShiftPullOver(
 {
 }
 std::optional<PullOverPath> ShiftPullOver::plan(
-  const size_t goal_id, const size_t id, const std::shared_ptr<const PlannerData> planner_data,
-  const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose)
+  const GoalCandidate & modified_goal_pose, const size_t id,
+  const std::shared_ptr<const PlannerData> planner_data,
+  const BehaviorModuleOutput & previous_module_output)
 {
   const auto & route_handler = planner_data->route_handler;
   const double min_jerk = parameters_.minimum_lateral_jerk;
@@ -59,7 +60,7 @@ std::optional<PullOverPath> ShiftPullOver::plan(
   // find safe one from paths with different jerk
   for (double lateral_jerk = min_jerk; lateral_jerk <= max_jerk; lateral_jerk += jerk_resolution) {
     const auto pull_over_path = generatePullOverPath(
-      goal_id, id, planner_data, previous_module_output, road_lanes, pull_over_lanes, goal_pose,
+      modified_goal_pose, id, planner_data, previous_module_output, road_lanes, pull_over_lanes,
       lateral_jerk);
     if (!pull_over_path) continue;
     return *pull_over_path;
@@ -127,13 +128,15 @@ std::optional<PathWithLaneId> ShiftPullOver::cropPrevModulePath(
 }
 
 std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
-  const size_t goal_id, const size_t id, const std::shared_ptr<const PlannerData> planner_data,
+  const GoalCandidate & goal_candidate, const size_t id,
+  const std::shared_ptr<const PlannerData> planner_data,
   const BehaviorModuleOutput & previous_module_output, const lanelet::ConstLanelets & road_lanes,
-  const lanelet::ConstLanelets & shoulder_lanes, const Pose & goal_pose,
-  const double lateral_jerk) const
+  const lanelet::ConstLanelets & shoulder_lanes, const double lateral_jerk) const
 {
   const double pull_over_velocity = parameters_.pull_over_velocity;
   const double after_shift_straight_distance = parameters_.after_shift_straight_distance;
+
+  const auto & goal_pose = goal_candidate.goal_pose;
 
   // shift end pose is longitudinal offset from goal pose to improve parking angle accuracy
   const Pose shift_end_pose =
@@ -256,8 +259,8 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
 
   // set pull over path
   auto pull_over_path_opt = PullOverPath::create(
-    getPlannerType(), goal_id, id, {shifted_path.path}, path_shifter.getShiftLines().front().start,
-    path_shifter.getShiftLines().front().end, {std::make_pair(pull_over_velocity, 0)});
+    getPlannerType(), id, {shifted_path.path}, path_shifter.getShiftLines().front().start,
+    goal_candidate, {std::make_pair(pull_over_velocity, 0)});
 
   if (!pull_over_path_opt) {
     return {};

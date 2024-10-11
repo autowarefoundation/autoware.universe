@@ -15,7 +15,6 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include "autoware/motion_utils/trajectory/path_with_lane_id.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
@@ -156,7 +155,7 @@ double calcLateralDistanceFromEgoToObject(
   return min_distance;
 }
 
-double calcLongitudinalDistanceFromEgoToObject(
+double calc_longitudinal_distance_from_ego_to_object(
   const Pose & ego_pose, const double base_link2front, const double base_link2rear,
   const PredictedObject & dynamic_object)
 {
@@ -196,16 +195,10 @@ double calcLongitudinalDistanceFromEgoToObjects(
   double min_distance = std::numeric_limits<double>::max();
   for (const auto & object : dynamic_objects.objects) {
     min_distance = std::min(
-      min_distance,
-      calcLongitudinalDistanceFromEgoToObject(ego_pose, base_link2front, base_link2rear, object));
+      min_distance, calc_longitudinal_distance_from_ego_to_object(
+                      ego_pose, base_link2front, base_link2rear, object));
   }
   return min_distance;
-}
-
-template <typename T>
-bool exists(std::vector<T> vec, T element)
-{
-  return std::find(vec.begin(), vec.end(), element) != vec.end();
 }
 
 std::optional<size_t> findIndexOutOfGoalSearchRange(
@@ -253,7 +246,7 @@ std::optional<size_t> findIndexOutOfGoalSearchRange(
 }
 
 // goal does not have z
-bool setGoal(
+bool set_goal(
   const double search_radius_range, [[maybe_unused]] const double search_rad_range,
   const PathWithLaneId & input, const Pose & goal, const int64_t goal_lane_id,
   PathWithLaneId * output_ptr)
@@ -383,7 +376,7 @@ PathWithLaneId refinePathForGoal(
     filtered_path.points.back().point.longitudinal_velocity_mps = 0.0;
   }
 
-  if (setGoal(
+  if (set_goal(
         search_radius_range, search_rad_range, filtered_path, goal, goal_lane_id,
         &path_with_goal)) {
     return path_with_goal;
@@ -896,25 +889,8 @@ double getArcLengthToTargetLanelet(
 
   const auto target_center_line = target_lane.centerline().basicLineString();
 
-  Pose front_pose, back_pose;
-
-  {
-    const auto front_point = lanelet::utils::conversion::toGeomMsgPt(target_center_line.front());
-    const double front_yaw = lanelet::utils::getLaneletAngle(target_lane, front_point);
-    front_pose.position = front_point;
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, front_yaw);
-    front_pose.orientation = tf2::toMsg(tf_quat);
-  }
-
-  {
-    const auto back_point = lanelet::utils::conversion::toGeomMsgPt(target_center_line.back());
-    const double back_yaw = lanelet::utils::getLaneletAngle(target_lane, back_point);
-    back_pose.position = back_point;
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, back_yaw);
-    back_pose.orientation = tf2::toMsg(tf_quat);
-  }
+  const auto front_pose = to_geom_msg_pose(target_center_line.front(), target_lane);
+  const auto back_pose = to_geom_msg_pose(target_center_line.back(), target_lane);
 
   const auto arc_front = lanelet::utils::getArcCoordinates(lanelet_sequence, front_pose);
   const auto arc_back = lanelet::utils::getArcCoordinates(lanelet_sequence, back_pose);

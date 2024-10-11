@@ -112,10 +112,6 @@ public:
   virtual PathSafetyStatus evaluateApprovedPathWithUnsafeHysteresis(
     PathSafetyStatus approve_path_safety_status) = 0;
 
-  virtual bool isNearEndOfCurrentLanes(
-    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    const double threshold) const = 0;
-
   virtual bool isStoppedAtRedTrafficLight() const = 0;
 
   virtual bool calcAbortPath() = 0;
@@ -131,7 +127,7 @@ public:
 
   virtual void updateSpecialData() {}
 
-  virtual void insertStopPoint(
+  virtual void insert_stop_point(
     [[maybe_unused]] const lanelet::ConstLanelets & lanelets,
     [[maybe_unused]] PathWithLaneId & path)
   {
@@ -244,9 +240,6 @@ protected:
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
   virtual bool isAbleToStopSafely() const = 0;
-
-  virtual lanelet::ConstLanelets getLaneChangeLanes(
-    const lanelet::ConstLanelets & current_lanes, Direction direction) const = 0;
 
   virtual TurnSignalInfo get_terminal_turn_signal_info() const = 0;
 

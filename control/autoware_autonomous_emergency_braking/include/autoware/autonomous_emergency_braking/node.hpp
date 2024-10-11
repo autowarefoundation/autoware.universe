@@ -341,7 +341,7 @@ public:
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr info_marker_publisher_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr virtual_wall_publisher_;
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
     debug_processing_time_detail_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr debug_rss_distance_publisher_;

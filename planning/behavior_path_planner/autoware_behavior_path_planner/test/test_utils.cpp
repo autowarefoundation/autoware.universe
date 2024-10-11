@@ -73,7 +73,7 @@ TEST(BehaviorPathPlanningUtilitiesBehaviorTest, setGoal)
   path.points.at(4).lane_ids.push_back(5);
 
   PathWithLaneId path_with_goal;
-  autoware::behavior_path_planner::utils::setGoal(
+  autoware::behavior_path_planner::utils::set_goal(
     3.5, M_PI * 0.5, path, path.points.back().point.pose, 5, &path_with_goal);
 
   // Check if skipped lane ids by smooth skip connection are filled in output path.
