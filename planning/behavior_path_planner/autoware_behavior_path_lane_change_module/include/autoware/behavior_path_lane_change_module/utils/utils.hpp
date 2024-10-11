@@ -266,6 +266,48 @@ ExtendedPredictedObjects transform_to_extended_objects(
 double get_distance_to_next_regulatory_element(
   const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
   const bool ignore_intersection = false);
+
+/**
+ * @brief Calculates the minimum distance to a stationary object in the current lanes.
+ *
+ * This function determines the closest distance from the ego vehicle to a stationary object
+ * in the current lanes. It checks if the object is within the stopping criteria based on its
+ * velocity and calculates the distance while accounting for the object's size. Only objects
+ * positioned after the specified distance to the target lane's start are considered.
+ *
+ * @param common_data_ptr Pointer to the common data structure containing parameters for lane
+ * change.
+ * @param filtered_objects A collection of objects filtered by lanes, including those in the current
+ * lane.
+ * @param dist_to_target_lane_start The distance to the start of the target lane from the ego
+ * vehicle.
+ * @param path The current path of the ego vehicle, containing path points and lane information.
+ * @return The minimum distance to a stationary object in the current lanes. If no valid object is
+ * found, returns the maximum possible double value.
+ */
+double get_min_dist_to_current_lanes_obj(
+  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
+  const double dist_to_target_lane_start, const PathWithLaneId & path);
+
+/**
+ * @brief Checks if there is an object in the target lane that influences the decision to insert a
+ * stop point.
+ *
+ * This function determines whether any objects exist in the target lane that would affect
+ * the decision to place a stop point behind a blocking object in the current lane.
+ *
+ * @param common_data_ptr Pointer to the common data structure containing parameters for the lane
+ * change.
+ * @param filtered_objects A collection of objects filtered by lanes, including those in the target
+ * lane.
+ * @param stop_arc_length The arc length at which the ego vehicle is expected to stop.
+ * @param path The current path of the ego vehicle, containing path points and lane information.
+ * @return true if there is an object in the target lane that influences the stop point decision;
+ * otherwise, false.
+ */
+bool has_blocking_target_object(
+  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
+  const double stop_arc_length, const PathWithLaneId & path);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
