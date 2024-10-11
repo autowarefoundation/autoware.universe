@@ -557,33 +557,38 @@ start
 if (number of lane changes is zero?) then (<color:green><b>YES</b></color>)
 stop
 else (<color:red><b>NO</b></color>)
-  if (do we want to insert stop point in current lanes?) then (<color:red><b>NO</b></color>)
-  #LightPink:Insert stop point at next lane change terminal start.;
-  stop
-  else (<color:green><b>YES</b></color>)
-    if (Is there leading object in the current lanes that blocks ego's path?) then (<color:red><b>NO</b></color>)
-    #LightPink:Insert stop point at terminal stop.;
-    stop
-    else (<color:green><b>YES</b></color>)
-      if (Blocking object's position is after target lane's start position?) then (<color:red><b>NO</b></color>)
-      #LightPink:Insert stop at the target lane's start position.;
-      stop
-      else (<color:green><b>YES</b></color>)
-        if (Blocking object's position is before terminal stop position?) then (<color:red><b>NO</b></color>)
-        #LightPink:Insert stop at the terminal stop position;
-        stop
-        else (<color:green><b>YES</b></color>)
-          if (Are there target lane objects between the ego and the blocking object?) then (<color:red><b>NO</b></color>)
-          #LightPink:Insert stop behind the blocking object;
-          stop
-          else (<color:green><b>YES</b></color>)
-          #LightPink:Insert stop at terminal stop;
-          stop
-        endif
-      endif
-    endif
-  endif
 endif
+
+if (do we want to insert stop point in current lanes?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop point at next lane change terminal start.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Is there leading object in the current lanes that blocks ego's path?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop point at terminal stop.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Blocking object's position is after target lane's start position?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop at the target lane's start position.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Blocking object's position is before terminal stop position?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop at the terminal stop position;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Are there target lane objects between the ego and the blocking object?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop behind the blocking object;
+stop
+else (<color:green><b>YES</b></color>)
+#LightPink:Insert stop at terminal stop;
+stop
 @enduml
 ```
 
