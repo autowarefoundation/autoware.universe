@@ -1087,10 +1087,11 @@ FilteredByLanesExtendedObjects NormalLaneChange::filterObjects() const
       });
   }
 
+  // TODO(Azu): We have to think about how to remove is_within_vel_th without breaking AW behavior
   utils::path_safety_checker::filterObjects(
     filtered_by_lanes_objects.current_lane, [&](const PredictedObject & object) {
       const auto ahead_of_ego = utils::lane_change::is_ahead_of_ego(common_data_ptr_, path, object);
-      return ahead_of_ego;
+      return is_within_vel_th(object) && ahead_of_ego;
     });
 
   const auto is_check_prepare_phase = check_prepare_phase();
