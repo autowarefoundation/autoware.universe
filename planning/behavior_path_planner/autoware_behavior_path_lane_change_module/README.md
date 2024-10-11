@@ -584,7 +584,7 @@ else (<color:green><b>YES</b></color>)
 endif
 
 if (Are there target lane objects between the ego and the blocking object?) then (<color:red><b>NO</b></color>)
-#LightPink:Insert stop behind the blocking object;
+#LightGreen:Insert stop behind the blocking object;
 stop
 else (<color:green><b>YES</b></color>)
 #LightPink:Insert stop at terminal stop;
