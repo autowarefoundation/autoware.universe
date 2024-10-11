@@ -70,7 +70,9 @@ public:
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) const override;
 
-  void insertStopPoint(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path) override;
+  void insert_stop_point(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path) override;
+
+  void insert_stop_point_on_current_lanes(PathWithLaneId & path);
 
   PathWithLaneId getReferencePath() const override;
 
@@ -209,7 +211,7 @@ protected:
 
   std::pair<double, double> calcCurrentMinMaxAcceleration() const;
 
-  void setStopPose(const Pose & stop_pose);
+  void set_stop_pose(const double arc_length_to_stop_pose, PathWithLaneId & path);
 
   void updateStopTime();
 
