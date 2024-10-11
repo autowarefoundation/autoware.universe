@@ -242,8 +242,8 @@ std::vector<double> calc_all_max_lc_lengths(
 
   const auto max_lc_length = [&](const auto shift_interval) {
     // prepare section
-    vel = limit_vel(vel + max_acc * t_prepare);
     const auto prepare_length = vel * t_prepare + 0.5 * max_acc * t_prepare * t_prepare;
+    vel = limit_vel(vel + max_acc * t_prepare);
 
     // lane changing section
     const auto [min_lat_acc, max_lat_acc] = lc_param_ptr->lane_change_lat_acc_map.find(vel);

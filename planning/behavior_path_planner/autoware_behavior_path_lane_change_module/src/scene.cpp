@@ -912,8 +912,7 @@ std::pair<double, double> NormalLaneChange::calcCurrentMinMaxAcceleration() cons
   return {min_acc, max_acc};
 }
 
-std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
+std::vector<double> NormalLaneChange::sampleLongitudinalAccValues() const
 {
   // TODO(Azu): sampler should work even when we're not approaching terminal
   if (prev_module_output_.path.points.empty()) {
@@ -936,8 +935,7 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
 
   // calculate maximum lane change length
   // TODO(Azu) Double check why it's failing with transient data
-  const auto current_max_dist_buffer =
-    calculation::calc_maximum_lane_change_length(common_data_ptr_, current_lanes.back(), max_acc);
+  const auto current_max_dist_buffer = common_data_ptr_->transient_data.current_dist_buffer.max;
 
   if (current_max_dist_buffer > common_data_ptr_->transient_data.dist_to_terminal_end) {
     RCLCPP_DEBUG(
@@ -956,6 +954,8 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues(
     return utils::lane_change::getAccelerationValues(
       min_acc, max_acc, longitudinal_acc_sampling_num);
   }
+
+  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
 
   // if maximum lane change length is less than length to goal or the end of target lanes, only
   // sample max acc
@@ -1319,8 +1319,7 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_prepare_metrics() cons
   const auto current_velocity = getEgoVelocity();
 
   // get sampling acceleration values
-  const auto longitudinal_acc_sampling_values =
-    sampleLongitudinalAccValues(current_lanes, target_lanes);
+  const auto longitudinal_acc_sampling_values = sampleLongitudinalAccValues();
 
   const auto prepare_durations = calc_prepare_durations();
 

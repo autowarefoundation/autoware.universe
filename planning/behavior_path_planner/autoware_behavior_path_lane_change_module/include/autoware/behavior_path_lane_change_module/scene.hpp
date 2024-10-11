@@ -118,9 +118,7 @@ protected:
 
   TurnSignalInfo get_terminal_turn_signal_info() const final;
 
-  std::vector<double> sampleLongitudinalAccValues(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
+  std::vector<double> sampleLongitudinalAccValues() const;
 
   std::vector<double> calc_prepare_durations() const;
 
