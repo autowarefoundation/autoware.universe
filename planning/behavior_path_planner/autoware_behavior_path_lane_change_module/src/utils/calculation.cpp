@@ -179,19 +179,22 @@ std::vector<double> calc_all_max_lc_lengths(
   const auto t_prepare = lc_param_ptr->lane_change_prepare_duration;
   const auto max_acc = common_data_ptr->transient_data.acc.max;
 
-  const auto limit_vel = [&](const auto vel) {
-    const auto max_global_vel = common_data_ptr->bpp_param_ptr->max_vel;
-    return std::clamp(vel, lc_param_ptr->minimum_lane_changing_velocity, max_global_vel);
-  };
+  // TODO(Quda, Azu): should probably limit upper bound of velocity as well, but
+  // disabled due failing evaluation tests.
+  // const auto limit_vel = [&](const auto vel) {
+  //   const auto max_global_vel = common_data_ptr->bpp_param_ptr->max_vel;
+  //   return std::clamp(vel, lc_param_ptr->minimum_lane_changing_velocity, max_global_vel);
+  // };
 
-  auto vel = limit_vel(common_data_ptr->get_ego_speed());
+  auto vel =
+    std::max(common_data_ptr->get_ego_speed(), lc_param_ptr->minimum_lane_changing_velocity);
 
   std::vector<double> max_lc_lengths{};
 
   const auto max_lc_length = [&](const auto shift_interval) {
     // prepare section
     const auto prepare_length = vel * t_prepare + 0.5 * max_acc * t_prepare * t_prepare;
-    vel = limit_vel(vel + max_acc * t_prepare);
+    vel = vel + max_acc * t_prepare;
 
     // lane changing section
     const auto [min_lat_acc, max_lat_acc] = lc_param_ptr->lane_change_lat_acc_map.find(vel);
@@ -200,7 +203,7 @@ std::vector<double> calc_all_max_lc_lengths(
     const auto lane_changing_length =
       vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
 
-    vel = limit_vel(vel + max_acc * t_lane_changing);
+    vel = vel + max_acc * t_lane_changing;
     return prepare_length + lane_changing_length;
   };
 

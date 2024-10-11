@@ -934,7 +934,6 @@ std::vector<double> NormalLaneChange::sampleLongitudinalAccValues() const
   }
 
   // calculate maximum lane change length
-  // TODO(Azu) Double check why it's failing with transient data
   const auto current_max_dist_buffer = common_data_ptr_->transient_data.current_dist_buffer.max;
 
   if (current_max_dist_buffer > common_data_ptr_->transient_data.dist_to_terminal_end) {
