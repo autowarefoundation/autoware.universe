@@ -1291,7 +1291,7 @@ double get_min_dist_to_current_lanes_obj(
   return min_dist_to_obj;
 }
 
-bool has_blocking_target_object_for_stopping(
+bool has_blocking_target_object(
   const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
   const double stop_arc_length, const PathWithLaneId & path)
 {

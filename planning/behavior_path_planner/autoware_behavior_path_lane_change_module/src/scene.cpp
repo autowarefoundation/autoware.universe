@@ -539,9 +539,8 @@ void NormalLaneChange::insert_stop_point_on_current_lanes(PathWithLaneId & path)
   //  ----------------------------------------------------------
   //    [ego]>          | <--- stop margin --->  [obj]>
   //  ----------------------------------------------------------
-  const auto has_blocking_target_lane_obj =
-    utils::lane_change::has_blocking_target_object_for_stopping(
-      common_data_ptr_, filtered_objects_, stop_arc_length_behind_obj, path);
+  const auto has_blocking_target_lane_obj = utils::lane_change::has_blocking_target_object(
+    common_data_ptr_, filtered_objects_, stop_arc_length_behind_obj, path);
 
   if (has_blocking_target_lane_obj || stop_arc_length_behind_obj <= 0.0) {
     set_stop_pose(dist_to_terminal_stop, path);
