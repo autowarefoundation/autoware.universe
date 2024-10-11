@@ -84,7 +84,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
     return true;
   }
   const auto & stop_pose = stop_point->second;
-  setDistance(autoware::motion_utils::calcSignedArcLength(
+  setDistance(autoware::motion_utils::calcSignedArcwLength(
     original_path.points, current_pose->pose.position, stop_pose.position));
   if (planning_utils::isOverLine(
         original_path, current_pose->pose, stop_pose, planner_param_.dead_line_margin)) {
