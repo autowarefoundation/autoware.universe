@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/behavior_velocity_planner_common/utilization/util.hpp"
+#include "autoware/motion_utils/marker/virtual_wall_marker_creator.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "scene.hpp"
 
-#include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/ros/marker_helper.hpp>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -44,7 +44,7 @@ visualization_msgs::msg::MarkerArray createStopLineCollisionCheck(
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.ns = "search_segments";
-    marker.id = module_id;
+    marker.id = static_cast<int>(module_id);
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
     marker.action = visualization_msgs::msg::Marker::ADD;
@@ -64,7 +64,8 @@ visualization_msgs::msg::MarkerArray createStopLineCollisionCheck(
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.ns = "search_stopline";
-    marker.id = module_id;
+    marker.id = static_cast<int>(module_id);
+    ;
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
     marker.action = visualization_msgs::msg::Marker::ADD;
