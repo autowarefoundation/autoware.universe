@@ -57,7 +57,7 @@ double calc_longitudinal_dist_from_jerk(
   const double v = std::abs(velocity);
   if (j < 1.0e-8) {
     const std::string error_message(
-      std::string(__func__) + ": Failed to calculate lateral distance due to invalid arg");
+      std::string(__func__) + ": Failed to calculate longitudinal distance due to invalid arg");
     RCLCPP_WARN(get_logger(), "%s", error_message.c_str());
     return 1.0e10;
   }
@@ -71,7 +71,7 @@ double calc_shift_time_from_jerk(const double lateral, const double jerk, const 
   const double l = std::abs(lateral);
   if (j < 1.0e-8 || a < 1.0e-8) {
     const std::string error_message(
-      std::string(__func__) + ": Failed to calculate lateral distance due to invalid arg");
+      std::string(__func__) + ": Failed to calculate shift time due to invalid arg");
     RCLCPP_WARN(get_logger(), "%s", error_message.c_str());
     return 1.0e10;  // TODO(Horibe) maybe invalid arg?
   }
