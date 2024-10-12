@@ -100,3 +100,64 @@ TEST(path_shift_test, calc_longitudinal_dist_from_jerk)
   EXPECT_DOUBLE_EQ(
     calc_longitudinal_dist_from_jerk(lateral_distance, lateral_jerk, velocity), 96.0);
 }
+
+TEST(path_shift_test, calc_shift_time_from_jerk)
+{
+  constexpr double epsilon = 1e-6;
+
+  using autoware::motion_utils::calc_shift_time_from_jerk;
+
+  double lateral_distance = 0.0;
+  double lateral_jerk = 0.0;
+  double lateral_acceleation = 0.0;
+
+  // Condition: zero lateral jerk
+  EXPECT_DOUBLE_EQ(
+    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleation), 1.0e10);
+
+  // Condition: zero lateral acceleration
+  lateral_jerk = -2.0;
+  EXPECT_DOUBLE_EQ(
+    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleation), 1.0e10);
+
+  // Condition: zero lateral distance
+  lateral_acceleation = -4.0;
+  EXPECT_DOUBLE_EQ(
+    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleation), 0.0);
+
+  // Condition: random (TODO: use DOUBLE_EQ in future. currently not precise enough)
+  lateral_distance = 80.0;
+  EXPECT_NEAR(
+    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleation), 11.16515139,
+    epsilon);
+}
+
+TEST(path_shift_test, calc_jerk_from_lat_lon_distance)
+{
+  using autoware::motion_utils::calc_jerk_from_lat_lon_distance;
+
+  double lateral_distance = 0.0;
+  double longitudinal_distance = 100.0;
+  double velocity = 10.0;
+
+  // Condition: zero lateral distance
+  EXPECT_DOUBLE_EQ(
+    calc_jerk_from_lat_lon_distance(lateral_distance, longitudinal_distance, velocity), 0.0);
+
+  // Condition: zero velocity
+  lateral_distance = 5.0;
+  velocity = 0.0;
+  EXPECT_DOUBLE_EQ(
+    calc_jerk_from_lat_lon_distance(lateral_distance, longitudinal_distance, velocity), 0.0);
+
+  // Condition: zero longitudinal distance
+  longitudinal_distance = 0.0;
+  velocity = 10.0;
+  EXPECT_DOUBLE_EQ(
+    calc_jerk_from_lat_lon_distance(lateral_distance, longitudinal_distance, velocity), 1.6 * 1e14);
+
+  // Condition: random
+  longitudinal_distance = 100.0;
+  EXPECT_DOUBLE_EQ(
+    calc_jerk_from_lat_lon_distance(lateral_distance, longitudinal_distance, velocity), 0.16);
+}
