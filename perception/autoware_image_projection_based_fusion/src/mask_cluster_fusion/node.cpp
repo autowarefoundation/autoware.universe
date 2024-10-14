@@ -107,6 +107,7 @@ void MaskClusterFusionNode::fuseOnSingleImage(
     transform_stamped = transform_stamped_optional.value();
   }
 
+  MatchedClusters matched_clusters;
   for (std::size_t i = 0; i < input_cluster_msg.feature_objects.size(); ++i) {
     if (input_cluster_msg.feature_objects.at(i).feature.cluster.data.empty()) {
       continue;
@@ -132,7 +133,8 @@ void MaskClusterFusionNode::fuseOnSingleImage(
     int32_t max_y(0);
 
     double total_projected_points = 0;
-    std::vector<double> point_counter_each_class = {0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<uint32_t> point_counter_each_class(
+      input_mask_msg.config.classification.size(), 0.0);
 
     for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cluster, "x"),
          iter_y(transformed_cluster, "y"), iter_z(transformed_cluster, "z");
@@ -154,19 +156,18 @@ void MaskClusterFusionNode::fuseOnSingleImage(
 
       const uint8_t pixel_value = mask.at<uint8_t>(
         static_cast<uint16_t>(projected_point.y()), static_cast<uint16_t>(projected_point.x()));
-      const auto label_id = static_cast<int>(
-        static_cast<uint8_t>(input_mask_msg.config.classification[pixel_value - 1].label));
       if (pixel_value != 0) {
         min_x = std::min(static_cast<int32_t>(projected_point.x()), min_x);
         min_y = std::min(static_cast<int32_t>(projected_point.y()), min_y);
         max_x = std::max(static_cast<int32_t>(projected_point.x()), max_x);
         max_y = std::max(static_cast<int32_t>(projected_point.y()), max_y);
 
-        point_counter_each_class[label_id]++;
+        point_counter_each_class[static_cast<uint32_t>(pixel_value - 1)]++;
       }
       total_projected_points++;
     }
 
+    // If there is no point projected on the mask, skip the cluster
     bool all_zero = std::all_of(
       point_counter_each_class.begin(), point_counter_each_class.end(),
       [](double value) { return value == 0; });
@@ -174,25 +175,44 @@ void MaskClusterFusionNode::fuseOnSingleImage(
       continue;
     }
 
-    auto max_it =
+    // Find the mask with the most projected points
+    auto max_object_it =
       std::max_element(point_counter_each_class.begin(), point_counter_each_class.end());
-    auto max_index = std::distance(point_counter_each_class.begin(), max_it);
+    auto max_object_index = std::distance(point_counter_each_class.begin(), max_object_it);
 
-    RCLCPP_DEBUG(get_logger(), "Number of points in the cluster: %f", *max_it);
+    RCLCPP_DEBUG(get_logger(), "Number of points in the cluster: %u", *max_object_it);
     RCLCPP_DEBUG(get_logger(), "Total projected points: %f", total_projected_points);
-    RCLCPP_DEBUG(get_logger(), "Fusion ratio: %f", *max_it / total_projected_points);
+    RCLCPP_DEBUG(get_logger(), "Fusion ratio: %f", *max_object_it / total_projected_points);
 
-    if (*max_it / total_projected_points < fusion_ratio_) {
+    // check if the ratio of the cluster is smaller than the fusion ratio
+    if (*max_object_it / total_projected_points < fusion_ratio_) {
       continue;
     }
 
-    // Set classification of the object
-    std::vector<autoware_perception_msgs::msg::ObjectClassification> classification;
-    autoware_perception_msgs::msg::ObjectClassification object_classification;
-    object_classification.label = static_cast<uint8_t>(max_index);
-    object_classification.probability = 1.0;
-    classification.push_back(object_classification);
-    output_object_msg.feature_objects.at(i).object.classification = classification;
+    // check if there is a cluster that has the same mask with better iou
+    bool is_any_bigger_ratio_with_same_mask = std::any_of(
+      matched_clusters.begin(), matched_clusters.end(),
+      [max_object_it, max_object_index](const MatchedCluster & matched_cluster) {
+        return matched_cluster.mask_index == max_object_index &&
+               matched_cluster.valid_point_number > *max_object_it;
+      });
+    if (is_any_bigger_ratio_with_same_mask) {
+      continue;
+    }
+
+    // remove the previous matched cluster with the same mask if it exists
+    matched_clusters.erase(
+      std::remove_if(
+        matched_clusters.begin(), matched_clusters.end(),
+        [max_object_index](const MatchedCluster & matched_cluster) {
+          return matched_cluster.mask_index == max_object_index;
+        }),
+      matched_clusters.end());
+
+    MatchedCluster matched_cluster;
+    matched_cluster.mask_index = max_object_index;
+    matched_cluster.cluster_index = i;
+    matched_cluster.valid_point_number = *max_object_it;
 
     // Set roi of the object
     sensor_msgs::msg::RegionOfInterest roi;
@@ -200,7 +220,21 @@ void MaskClusterFusionNode::fuseOnSingleImage(
     roi.y_offset = min_y;
     roi.width = max_x - min_x;
     roi.height = max_y - min_y;
-    output_object_msg.feature_objects.at(i).feature.roi = roi;
+    matched_cluster.roi = roi;
+
+    matched_clusters.push_back(matched_cluster);
+  }
+
+  for (const auto & matched_cluster : matched_clusters) {
+    // Set classification of the object
+    std::vector<autoware_perception_msgs::msg::ObjectClassification> classification;
+    autoware_perception_msgs::msg::ObjectClassification object_classification;
+    object_classification.label =
+      static_cast<uint8_t>(input_mask_msg.config.classification[matched_cluster.mask_index].label);
+    object_classification.probability = 1.0;
+    classification.push_back(object_classification);
+    output_object_msg.feature_objects.at(matched_cluster.cluster_index).object.classification =
+      classification;
   }
 }
 

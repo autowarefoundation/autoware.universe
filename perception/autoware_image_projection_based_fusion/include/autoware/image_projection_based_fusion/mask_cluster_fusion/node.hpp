@@ -23,11 +23,23 @@
 
 namespace autoware::image_projection_based_fusion
 {
+struct MatchedCluster
+{
+  uint32_t mask_index{};
+  uint32_t cluster_index{};
+  uint32_t valid_point_number{};
+  sensor_msgs::msg::RegionOfInterest roi;
+};
+using MatchedClusters = std::vector<MatchedCluster>;
+
 class MaskClusterFusionNode
 : public FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, SegmentationMask>
 {
 public:
   explicit MaskClusterFusionNode(const rclcpp::NodeOptions & options);
+
+private:
+  rclcpp::Publisher<DetectedObjects>::SharedPtr detected_objects_pub_;
 
 protected:
   void preprocess(DetectedObjectsWithFeature & output_msg) override;
