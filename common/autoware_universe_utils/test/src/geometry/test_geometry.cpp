@@ -14,21 +14,20 @@
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "autoware/universe_utils/geometry/polygon_clip.hpp"
 #include "autoware/universe_utils/geometry/random_convex_polygon.hpp"
 #include "autoware/universe_utils/geometry/sat_2d.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
+#include "autoware/universe_utils/geometry/polygon_clip.hpp"
 
 #include <geometry_msgs/msg/point32.hpp>
 
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
-#include <boost/geometry/algorithms/difference.hpp>
-#include <boost/geometry/algorithms/touches.hpp>
-#include <boost/geometry/algorithms/union.hpp>
 #include <boost/geometry/io/wkt/write.hpp>
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
+#include <boost/geometry/algorithms/difference.hpp>
+#include <boost/geometry/algorithms/union.hpp>
 
 #include <gtest/gtest.h>
 
