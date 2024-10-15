@@ -109,26 +109,26 @@ TEST(path_shift_test, calc_shift_time_from_jerk)
 
   double lateral_distance = 0.0;
   double lateral_jerk = 0.0;
-  double lateral_acceleation = 0.0;
+  double lateral_acceleration = 0.0;
 
   // Condition: zero lateral jerk
   EXPECT_DOUBLE_EQ(
-    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleation), 1.0e10);
+    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleration), 1.0e10);
 
   // Condition: zero lateral acceleration
   lateral_jerk = -2.0;
   EXPECT_DOUBLE_EQ(
-    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleation), 1.0e10);
+    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleration), 1.0e10);
 
   // Condition: zero lateral distance
-  lateral_acceleation = -4.0;
+  lateral_acceleration = -4.0;
   EXPECT_DOUBLE_EQ(
-    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleation), 0.0);
+    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleration), 0.0);
 
   // Condition: random (TODO: use DOUBLE_EQ in future. currently not precise enough)
   lateral_distance = 80.0;
   EXPECT_NEAR(
-    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleation), 11.16515139,
+    calc_shift_time_from_jerk(lateral_distance, lateral_jerk, lateral_acceleration), 11.16515139,
     epsilon);
 }
 
