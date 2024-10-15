@@ -118,8 +118,6 @@ protected:
 
   TurnSignalInfo get_terminal_turn_signal_info() const final;
 
-  std::vector<double> sampleLongitudinalAccValues() const;
-
   std::vector<double> calc_prepare_durations() const;
 
   lane_change::TargetObjects getTargetObjects(
@@ -201,11 +199,6 @@ protected:
     const lane_change::CommonDataPtr & common_data_ptr, const Pose & pose) const;
 
   bool check_prepare_phase() const;
-
-  double calcMaximumLaneChangeLength(
-    const lanelet::ConstLanelet & current_terminal_lanelet, const double max_acc) const;
-
-  std::pair<double, double> calcCurrentMinMaxAcceleration() const;
 
   void setStopPose(const Pose & stop_pose);
 

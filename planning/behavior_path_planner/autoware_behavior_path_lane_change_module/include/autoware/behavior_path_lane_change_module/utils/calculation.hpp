@@ -124,15 +124,19 @@ double calc_phase_length(
   const double velocity, const double maximum_velocity, const double acceleration,
   const double duration);
 
+std::vector<double> calc_lon_acceleration_samples(
+  const CommonDataPtr & common_data_ptr, const double max_path_velocity,
+  const double prepare_duration);
+
 std::vector<PhaseMetrics> calc_prepare_phase_metrics(
   const CommonDataPtr & common_data_ptr, const std::vector<double> & prepare_durations,
-  const std::vector<double> & lon_accel_values, const double current_velocity,
+  const double current_velocity, const double max_path_velocity,
   const double min_length_threshold = 0.0,
   const double max_length_threshold = std::numeric_limits<double>::max());
 
 std::vector<PhaseMetrics> calc_shift_phase_metrics(
   const CommonDataPtr & common_data_ptr, const double shift_length, const double initial_velocity,
-  const double max_velocity, const double lon_accel,
+  const double max_path_velocity, const double lon_accel,
   const double max_length_threshold = std::numeric_limits<double>::max());
 
 /**

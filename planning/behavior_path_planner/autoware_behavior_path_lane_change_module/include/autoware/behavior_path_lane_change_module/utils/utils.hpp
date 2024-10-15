@@ -64,19 +64,8 @@ bool is_mandatory_lane_change(const ModuleType lc_type);
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);
 
-double calcMinimumAcceleration(
-  const double current_velocity, const double min_longitudinal_acc,
-  const LaneChangeParameters & lane_change_parameters);
-
-double calcMaximumAcceleration(
-  const double current_velocity, const double current_max_velocity,
-  const double max_longitudinal_acc, const LaneChangeParameters & lane_change_parameters);
-
 void setPrepareVelocity(
   PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity);
-
-std::vector<double> getAccelerationValues(
-  const double min_acc, const double max_acc, const size_t sampling_num);
 
 std::vector<int64_t> replaceWithSortedIds(
   const std::vector<int64_t> & original_lane_ids,
