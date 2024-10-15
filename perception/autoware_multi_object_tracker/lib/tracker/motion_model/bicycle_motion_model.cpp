@@ -38,40 +38,6 @@ using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 BicycleMotionModel::BicycleMotionModel() : logger_(rclcpp::get_logger("BicycleMotionModel"))
 {
-  // Initialize motion parameters
-  setDefaultParams();
-}
-
-void BicycleMotionModel::setDefaultParams()
-{
-  // set default motion parameters
-  constexpr double q_stddev_acc_long = 9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
-  constexpr double q_stddev_acc_lat = 9.8 * 0.15;   // [m/(s*s)] uncertain lateral acceleration
-  constexpr double q_stddev_yaw_rate_min =
-    autoware::universe_utils::deg2rad(1.5);  // [rad/s] uncertain yaw change rate
-  constexpr double q_stddev_yaw_rate_max =
-    autoware::universe_utils::deg2rad(15.0);  // [rad/s] uncertain yaw change rate
-  constexpr double q_stddev_slip_rate_min =
-    autoware::universe_utils::deg2rad(0.3);  // [rad/s] uncertain slip angle change rate
-  constexpr double q_stddev_slip_rate_max =
-    autoware::universe_utils::deg2rad(10.0);  // [rad/s] uncertain slip angle change rate
-  constexpr double q_max_slip_angle =
-    autoware::universe_utils::deg2rad(30.0);  // [rad] max slip angle
-  // extended state parameters
-  constexpr double lf_ratio = 0.3;   // 30% front from the center
-  constexpr double lf_min = 1.0;     // minimum of 1.0m
-  constexpr double lr_ratio = 0.25;  // 25% rear from the center
-  constexpr double lr_min = 1.0;     // minimum of 1.0m
-  setMotionParams(
-    q_stddev_acc_long, q_stddev_acc_lat, q_stddev_yaw_rate_min, q_stddev_yaw_rate_max,
-    q_stddev_slip_rate_min, q_stddev_slip_rate_max, q_max_slip_angle, lf_ratio, lf_min, lr_ratio,
-    lr_min);
-
-  // set motion limitations
-  constexpr double max_vel = autoware::universe_utils::kmph2mps(100);  // [m/s] maximum velocity
-  constexpr double max_slip = 30.0;                                    // [deg] maximum slip angle
-  setMotionLimits(max_vel, max_slip);
-
   // set prediction parameters
   constexpr double dt_max = 0.11;  // [s] maximum time interval for prediction
   setMaxDeltaTime(dt_max);
@@ -101,8 +67,8 @@ void BicycleMotionModel::setMotionParams(
       logger_,
       "BicycleMotionModel::setMotionParams: minimum wheel position should be greater than 0.01m.");
   }
-  motion_params_.lf_min = (lf_min < minimum_wheel_pos) ? minimum_wheel_pos : lf_min;
-  motion_params_.lr_min = (lr_min < minimum_wheel_pos) ? minimum_wheel_pos : lr_min;
+  motion_params_.lf_min = std::max(minimum_wheel_pos, lf_min);
+  motion_params_.lr_min = std::max(minimum_wheel_pos, lr_min);
   motion_params_.lf_ratio = lf_ratio;
   motion_params_.lr_ratio = lr_ratio;
 }
@@ -231,7 +197,7 @@ bool BicycleMotionModel::updateStatePoseHeadVel(
 
   // update state
   Eigen::MatrixXd Y(DIM_Y, 1);
-  Y << x, y, yaw, vel;
+  Y << x, y, fixed_yaw, vel;
 
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(DIM_Y, DIM);
   C(0, IDX::X) = 1.0;
@@ -260,15 +226,26 @@ bool BicycleMotionModel::limitStates()
   Eigen::MatrixXd P_t(DIM, DIM);
   ekf_.getX(X_t);
   ekf_.getP(P_t);
-  X_t(IDX::YAW) = autoware::universe_utils::normalizeRadian(X_t(IDX::YAW));
+
+  // maximum reverse velocity
+  if (motion_params_.max_reverse_vel < 0 && X_t(IDX::VEL) < motion_params_.max_reverse_vel) {
+    // rotate the object orientation by 180 degrees
+    X_t(IDX::VEL) = -X_t(IDX::VEL);
+    X_t(IDX::YAW) = X_t(IDX::YAW) + M_PI;
+  }
+  // maximum velocity
   if (!(-motion_params_.max_vel <= X_t(IDX::VEL) && X_t(IDX::VEL) <= motion_params_.max_vel)) {
     X_t(IDX::VEL) = X_t(IDX::VEL) < 0 ? -motion_params_.max_vel : motion_params_.max_vel;
   }
+  // maximum slip angle
   if (!(-motion_params_.max_slip <= X_t(IDX::SLIP) && X_t(IDX::SLIP) <= motion_params_.max_slip)) {
     X_t(IDX::SLIP) = X_t(IDX::SLIP) < 0 ? -motion_params_.max_slip : motion_params_.max_slip;
   }
-  ekf_.init(X_t, P_t);
+  // normalize yaw
+  X_t(IDX::YAW) = autoware::universe_utils::normalizeRadian(X_t(IDX::YAW));
 
+  // overwrite state
+  ekf_.init(X_t, P_t);
   return true;
 }
 

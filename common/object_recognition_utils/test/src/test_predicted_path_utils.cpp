@@ -16,6 +16,8 @@
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
+#include <boost/optional/optional_io.hpp>
+
 #include <gtest/gtest.h>
 
 using autoware::universe_utils::Point2d;
@@ -75,7 +77,7 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
     for (double t = 0.0; t < 9.0 + 1e-6; t += 1.0) {
       const auto p = calcInterpolatedPose(path, t);
 
-      EXPECT_NE(p, boost::none);
+      EXPECT_TRUE(p);
       EXPECT_NEAR(p->position.x, t * 1.0, epsilon);
       EXPECT_NEAR(p->position.y, 0.0, epsilon);
       EXPECT_NEAR(p->position.z, 0.0, epsilon);
@@ -92,7 +94,7 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
     for (double t = 0.0; t < 9.0; t += 0.3) {
       const auto p = calcInterpolatedPose(path, t);
 
-      EXPECT_NE(p, boost::none);
+      EXPECT_TRUE(p);
       EXPECT_NEAR(p->position.x, t * 1.0, epsilon);
       EXPECT_NEAR(p->position.y, 0.0, epsilon);
       EXPECT_NEAR(p->position.z, 0.0, epsilon);
@@ -108,20 +110,20 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
     // Negative time
     {
       const auto p = calcInterpolatedPose(path, -1.0);
-      EXPECT_EQ(p, boost::none);
+      EXPECT_FALSE(p);
     }
 
     // Over the time horizon
     {
       const auto p = calcInterpolatedPose(path, 11.0);
-      EXPECT_EQ(p, boost::none);
+      EXPECT_FALSE(p);
     }
 
     // Empty Path
     {
       PredictedPath empty_path;
       const auto p = calcInterpolatedPose(empty_path, 5.0);
-      EXPECT_EQ(p, boost::none);
+      EXPECT_FALSE(p);
     }
   }
 }

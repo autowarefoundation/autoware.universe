@@ -16,9 +16,9 @@
 
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 
+#include <autoware/interpolation/spline_interpolation.hpp>
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
-#include <interpolation/spline_interpolation.hpp>
 
 #include <string>
 #include <utility>
@@ -252,7 +252,7 @@ void PathShifter::applySplineShifter(ShiftedPath * shifted_path, const bool offs
       query_distance.push_back(dist_from_start);
     }
     if (!query_distance.empty()) {
-      query_length = interpolation::spline(base_distance, base_length, query_distance);
+      query_length = autoware::interpolation::spline(base_distance, base_length, query_distance);
     }
 
     // Apply shifting.
@@ -395,27 +395,6 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
   return {base_lon, base_lat};
 }
 
-std::vector<double> PathShifter::calcLateralJerk() const
-{
-  const auto arclength_arr = utils::calcPathArcLengthArray(reference_path_);
-
-  constexpr double epsilon = 1.0e-8;  // to avoid 0 division
-
-  std::vector<double> lateral_jerk{};
-
-  // TODO(Watanabe) write docs.
-  double current_shift = base_offset_;
-  for (const auto & shift_line : shift_lines_) {
-    const double delta_shift = shift_line.end_shift_length - current_shift;
-    const auto shifting_arclength = std::max(
-      arclength_arr.at(shift_line.end_idx) - arclength_arr.at(shift_line.start_idx), epsilon);
-    lateral_jerk.push_back((delta_shift / 2.0) / std::pow(shifting_arclength / 4.0, 3.0));
-    current_shift = shift_line.end_shift_length;
-  }
-
-  return lateral_jerk;
-}
-
 void PathShifter::updateShiftLinesIndices(ShiftLineArray & shift_lines) const
 {
   if (reference_path_.points.empty()) {
@@ -540,86 +519,6 @@ void PathShifter::shiftBaseLength(ShiftedPath * path, double offset)
       addLateralOffsetOnIndexPoint(path, offset, i);
     }
   }
-}
-
-double PathShifter::calcShiftTimeFromJerk(const double lateral, const double jerk, const double acc)
-{
-  const double j = std::abs(jerk);
-  const double a = std::abs(acc);
-  const double l = std::abs(lateral);
-  if (j < 1.0e-8 || a < 1.0e-8) {
-    return 1.0e10;  // TODO(Horibe) maybe invalid arg?
-  }
-
-  // time with constant jerk
-  double tj = a / j;
-
-  // time with constant acceleration (zero jerk)
-  double ta = (std::sqrt(a * a + 4.0 * j * j * l / a) - 3.0 * a) / (2.0 * j);
-
-  if (ta < 0.0) {
-    // it will not hit the acceleration limit this time
-    tj = std::pow(l / (2.0 * j), 1.0 / 3.0);
-    ta = 0.0;
-  }
-
-  const double t_total = 4.0 * tj + 2.0 * ta;
-  return t_total;
-}
-
-double PathShifter::calcFeasibleVelocityFromJerk(
-  const double lateral, const double jerk, const double longitudinal_distance)
-{
-  const double j = std::abs(jerk);
-  const double l = std::abs(lateral);
-  const double d = std::abs(longitudinal_distance);
-  if (j < 1.0e-8) {
-    return 1.0e10;  // TODO(Horibe) maybe invalid arg?
-  }
-  return d / (4.0 * std::pow(0.5 * l / j, 1.0 / 3.0));
-}
-
-double PathShifter::calcLateralDistFromJerk(
-  const double longitudinal, const double jerk, const double velocity)
-{
-  const double j = std::abs(jerk);
-  const double d = std::abs(longitudinal);
-  const double v = std::abs(velocity);
-  if (j < 1.0e-8) {
-    return 1.0e10;  // TODO(Horibe) maybe invalid arg?
-  }
-  return 2.0 * std::pow(d / (4.0 * v), 3.0) * j;
-}
-
-double PathShifter::calcLongitudinalDistFromJerk(
-  const double lateral, const double jerk, const double velocity)
-{
-  const double j = std::abs(jerk);
-  const double l = std::abs(lateral);
-  const double v = std::abs(velocity);
-  if (j < 1.0e-8) {
-    return 1.0e10;  // TODO(Horibe) maybe invalid arg?
-  }
-  return 4.0 * std::pow(0.5 * l / j, 1.0 / 3.0) * v;
-}
-
-double PathShifter::calcJerkFromLatLonDistance(
-  const double lateral, const double longitudinal, const double velocity)
-{
-  constexpr double ep = 1.0e-3;
-  const double lat = std::abs(lateral);
-  const double lon = std::max(std::abs(longitudinal), ep);
-  const double v = std::abs(velocity);
-  return 0.5 * lat * std::pow(4.0 * v / lon, 3);
-}
-
-double PathShifter::getTotalShiftLength() const
-{
-  double sum = base_offset_;
-  for (const auto & l : shift_lines_) {
-    sum += l.end_shift_length;
-  }
-  return sum;
 }
 
 double PathShifter::getLastShiftLength() const

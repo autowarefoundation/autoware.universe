@@ -17,7 +17,6 @@
 
 #include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
-#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 
 #include <autoware/lane_departure_checker/lane_departure_checker.hpp>
 
@@ -31,7 +30,6 @@
 #include <lanelet2_core/Forward.h>
 
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -51,29 +49,27 @@ lanelet::ConstLanelets getPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
   const double forward_distance);
 
-/*
- * @brief expand pull_over_lanes to the opposite side of drivable roads by bound_offset.
- * bound_offset must be positive regardless of left_side is true/false
- */
-lanelet::ConstLanelets generateExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, const double bound_offset);
-
 lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
   const lanelet::ConstLanelets & pull_over_lanes, const bool left_side,
   const geometry_msgs::msg::Pose ego_pose,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const double outer_road_offset,
   const double inner_road_offset);
-PredictedObjects extractObjectsInExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, double bound_offset, const PredictedObjects & objects);
+
+/*
+ * @brief generate polygon to extract objects
+ * @param pull_over_lanes pull over lanes
+ * @param left_side left side or right side
+ * @param outer_offset outer offset from pull over lane boundary
+ * @param inner_offset inner offset from pull over lane boundary
+ * @return polygon to extract objects
+ */
+std::optional<Polygon2d> generateObjectExtractionPolygon(
+  const lanelet::ConstLanelets & pull_over_lanes, const bool left_side, const double outer_offset,
+  const double inner_offset);
+
 PredictedObjects filterObjectsByLateralDistance(
   const Pose & ego_pose, const double vehicle_width, const PredictedObjects & objects,
   const double distance_thresh, const bool filter_inside);
-PredictedObjects extractStaticObjectsInExpandedPullOverLanes(
-  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
-  const double forward_distance, double bound_offset, const PredictedObjects & objects,
-  const double velocity_thresh);
 
 double calcLateralDeviationBetweenPaths(
   const PathWithLaneId & reference_path, const PathWithLaneId & target_path);
@@ -114,6 +110,32 @@ std::vector<Polygon2d> createPathFootPrints(
   const PathWithLaneId & path, const double base_to_front, const double base_to_rear,
   const double width);
 
+/**
+ * @brief check if footprint intersects with given areas
+ */
+bool isIntersectingAreas(
+  const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas);
+
+/**
+ * @brief check if footprint is within one of the areas
+ */
+bool isWithinAreas(
+  const LinearRing2d & footprint, const std::vector<lanelet::BasicPolygon2d> & areas);
+
+/**
+ * @brief query BusStopArea polygons associated with given lanes
+ */
+std::vector<lanelet::BasicPolygon2d> getBusStopAreaPolygons(const lanelet::ConstLanelets & lanes);
+
+bool checkObjectsCollision(
+  const PathWithLaneId & path, const std::vector<double> & curvatures,
+  const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
+  const BehaviorPathPlannerParameters & behavior_path_parameters,
+  const double collision_check_margin, const bool extract_static_objects,
+  const double maximum_deceleration,
+  const double object_recognition_collision_check_max_extra_stopping_margin,
+  std::vector<Polygon2d> & ego_polygons_expanded, const bool update_debug_data = false);
+
 // debug
 MarkerArray createPullOverAreaMarkerArray(
   const autoware::universe_utils::MultiPolygon2d area_polygons,
@@ -137,6 +159,22 @@ std::string makePathPriorityDebugMessage(
   const std::map<size_t, double> & path_id_to_rough_margin_map,
   const std::function<bool(const PullOverPath &)> & isSoftMargin,
   const std::function<bool(const PullOverPath &)> & isHighCurvature);
+/**
+ * @brief combine two points
+ * @param points lane points
+ * @param points_next next lane points
+ * @return combined points
+ */
+lanelet::Points3d combineLanePoints(
+  const lanelet::Points3d & points, const lanelet::Points3d & points_next);
+/** @brief Create a lanelet that represents the departure check area.
+ * @param [in] pull_over_lanes Lanelets that the vehicle will pull over to.
+ * @param [in] route_handler RouteHandler object.
+ * @return Lanelet that goal footprints should be inside.
+ */
+lanelet::Lanelet createDepartureCheckLanelet(
+  const lanelet::ConstLanelets & pull_over_lanes, const route_handler::RouteHandler & route_handler,
+  const bool left_side_parking);
 }  // namespace autoware::behavior_path_planner::goal_planner_utils
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_

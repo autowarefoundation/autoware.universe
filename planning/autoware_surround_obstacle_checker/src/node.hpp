@@ -18,6 +18,7 @@
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "debug_marker.hpp"
+#include "surround_obstacle_checker_node_parameters.hpp"
 
 #include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
@@ -62,28 +63,10 @@ class SurroundObstacleCheckerNode : public rclcpp::Node
 public:
   explicit SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options);
 
-  struct NodeParam
-  {
-    bool is_surround_obstacle;
-    std::unordered_map<int, bool> enable_check_map;
-    std::unordered_map<int, double> surround_check_front_distance_map;
-    std::unordered_map<int, double> surround_check_side_distance_map;
-    std::unordered_map<int, double> surround_check_back_distance_map;
-    bool pointcloud_enable_check;
-    double pointcloud_surround_check_front_distance;
-    double pointcloud_surround_check_side_distance;
-    double pointcloud_surround_check_back_distance;
-    double surround_check_hysteresis_distance;
-    double state_clear_time;
-    bool publish_debug_footprints;
-    std::string debug_footprint_label;
-  };
-
 private:
-  rcl_interfaces::msg::SetParametersResult onParam(
-    const std::vector<rclcpp::Parameter> & parameters);
-
   std::array<double, 3> getCheckDistances(const std::string & str_label) const;
+
+  bool getUseDynamicObject() const;
 
   void onTimer();
 
@@ -103,7 +86,10 @@ private:
     const std::string & source, const std::string & target, const rclcpp::Time & stamp,
     double duration_sec) const;
 
-  bool isStopRequired(const bool is_obstacle_found, const bool is_vehicle_stopped);
+  auto isStopRequired(
+    const bool is_obstacle_found, const bool is_vehicle_stopped, const State & state,
+    const std::optional<rclcpp::Time> & last_obstacle_found_time,
+    const double time_threshold) const -> std::pair<bool, std::optional<rclcpp::Time>>;
 
   // ros
   mutable tf2_ros::Buffer tf_buffer_{get_clock()};
@@ -131,7 +117,7 @@ private:
   std::shared_ptr<SurroundObstacleCheckerDebugNode> debug_ptr_;
 
   // parameter
-  NodeParam node_param_;
+  std::shared_ptr<surround_obstacle_checker_node::ParamListener> param_listener_;
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
   // data
@@ -141,13 +127,14 @@ private:
 
   // State Machine
   State state_ = State::PASS;
-  std::shared_ptr<const rclcpp::Time> last_obstacle_found_time_;
+  std::optional<rclcpp::Time> last_obstacle_found_time_;
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
-  bool use_dynamic_object_;
+  std::unordered_map<int, std::string> label_map_;
 
-  std::unordered_map<std::string, int> label_map_;
+public:
+  friend class SurroundObstacleCheckerNodeTest;
 };
 }  // namespace autoware::surround_obstacle_checker
 

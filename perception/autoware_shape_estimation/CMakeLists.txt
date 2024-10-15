@@ -33,6 +33,8 @@ set(${PROJECT_NAME}_SOURCES
   lib/filter/utils.cpp
   lib/corrector/utils.cpp
   lib/corrector/no_corrector.cpp
+  lib/corrector/vehicle_corrector.cpp
+  lib/corrector/reference_shape_size_corrector.cpp
 )
 
 if(${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND})
@@ -104,15 +106,15 @@ ament_auto_package(INSTALL_TO_SHARE
 ## Tests
 if(BUILD_TESTING)
   find_package(ament_cmake_ros REQUIRED)
-  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
+  set(ament_cmake_uncrustify_FOUND TRUE)
 
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  file(GLOB_RECURSE test_files test/*.cpp test/**/*.cpp)
+  ament_add_ros_isolated_gtest(test_${PROJECT_NAME} ${test_files})
 
-  file(GLOB_RECURSE test_files test/**/*.cpp)
-  ament_add_ros_isolated_gtest(test_shape_estimation ${test_files})
-
-  target_link_libraries(test_shape_estimation
-    ${PROJECT_NAME}
+  target_include_directories(test_${PROJECT_NAME} PRIVATE src)
+  target_link_libraries(test_${PROJECT_NAME} ${${PROJECT_NAME}_LIBRARIES})
+  ament_target_dependencies(test_${PROJECT_NAME}
+    ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS}
+    ${${PROJECT_NAME}_FOUND_TEST_DEPENDS}
   )
 endif()
