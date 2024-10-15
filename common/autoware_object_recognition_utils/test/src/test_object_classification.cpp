@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "object_recognition_utils/object_classification.hpp"
+#include "autoware/object_recognition_utils/object_classification.hpp"
 
 #include <gtest/gtest.h>
 
@@ -34,8 +34,8 @@ autoware_perception_msgs::msg::ObjectClassification createObjectClassification(
 
 TEST(object_classification, test_getHighestProbLabel)
 {
+  using autoware::object_recognition_utils::getHighestProbLabel;
   using autoware_perception_msgs::msg::ObjectClassification;
-  using object_recognition_utils::getHighestProbLabel;
 
   {  // empty
     std::vector<autoware_perception_msgs::msg::ObjectClassification> classifications;
@@ -67,8 +67,8 @@ TEST(object_classification, test_getHighestProbLabel)
 // Test isVehicle
 TEST(object_classification, test_isVehicle)
 {
+  using autoware::object_recognition_utils::isVehicle;
   using autoware_perception_msgs::msg::ObjectClassification;
-  using object_recognition_utils::isVehicle;
 
   {  // True Case with uint8_t
     EXPECT_TRUE(isVehicle(ObjectClassification::BICYCLE));
@@ -106,8 +106,8 @@ TEST(object_classification, test_isVehicle)
 // TEST isCarLikeVehicle
 TEST(object_classification, test_isCarLikeVehicle)
 {
+  using autoware::object_recognition_utils::isCarLikeVehicle;
   using autoware_perception_msgs::msg::ObjectClassification;
-  using object_recognition_utils::isCarLikeVehicle;
 
   {  // True Case with uint8_t
     EXPECT_TRUE(isCarLikeVehicle(ObjectClassification::BUS));
@@ -157,8 +157,8 @@ TEST(object_classification, test_isCarLikeVehicle)
 // TEST isLargeVehicle
 TEST(object_classification, test_isLargeVehicle)
 {
+  using autoware::object_recognition_utils::isLargeVehicle;
   using autoware_perception_msgs::msg::ObjectClassification;
-  using object_recognition_utils::isLargeVehicle;
 
   {  // True Case with uint8_t
     EXPECT_TRUE(isLargeVehicle(ObjectClassification::BUS));
@@ -197,8 +197,8 @@ TEST(object_classification, test_isLargeVehicle)
 
 TEST(object_classification, test_getHighestProbClassification)
 {
+  using autoware::object_recognition_utils::getHighestProbClassification;
   using autoware_perception_msgs::msg::ObjectClassification;
-  using object_recognition_utils::getHighestProbClassification;
 
   {  // empty
     std::vector<autoware_perception_msgs::msg::ObjectClassification> classifications;
@@ -232,10 +232,10 @@ TEST(object_classification, test_getHighestProbClassification)
 
 TEST(object_classification, test_fromString)
 {
+  using autoware::object_recognition_utils::toLabel;
+  using autoware::object_recognition_utils::toObjectClassification;
+  using autoware::object_recognition_utils::toObjectClassifications;
   using autoware_perception_msgs::msg::ObjectClassification;
-  using object_recognition_utils::toLabel;
-  using object_recognition_utils::toObjectClassification;
-  using object_recognition_utils::toObjectClassifications;
 
   // toLabel
   {
@@ -266,8 +266,8 @@ TEST(object_classification, test_fromString)
 
 TEST(object_classification, test_convertLabelToString)
 {
+  using autoware::object_recognition_utils::convertLabelToString;
   using autoware_perception_msgs::msg::ObjectClassification;
-  using object_recognition_utils::convertLabelToString;
 
   // from label
   {
