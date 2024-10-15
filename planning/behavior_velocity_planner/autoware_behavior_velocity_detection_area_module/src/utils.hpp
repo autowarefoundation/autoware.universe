@@ -33,6 +33,10 @@
 namespace autoware::behavior_velocity_planner::detection_area
 {
 
+/// @brief get the extended stop line of the given detection area
+/// @param [in] detection_area detection area
+/// @param [in] extend_length [m] extension length to add on each edge of the stop line
+/// @return extended stop line
 universe_utils::LineString2d get_stop_line_geometry2d(
   const lanelet::autoware::DetectionArea & detection_area, const double extend_length);
 
