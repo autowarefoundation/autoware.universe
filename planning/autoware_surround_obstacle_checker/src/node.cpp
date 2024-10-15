@@ -17,6 +17,7 @@
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
 
 #include <boost/assert.hpp>
@@ -109,6 +110,8 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     "~/output/velocity_limit_clear_command", rclcpp::QoS{1}.transient_local());
   pub_velocity_limit_ = this->create_publisher<VelocityLimit>(
     "~/output/max_velocity", rclcpp::QoS{1}.transient_local());
+  pub_processing_time_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(
@@ -151,6 +154,9 @@ bool SurroundObstacleCheckerNode::getUseDynamicObject() const
 
 void SurroundObstacleCheckerNode::onTimer()
 {
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic();
+
   odometry_ptr_ = sub_odometry_.takeData();
   pointcloud_ptr_ = sub_pointcloud_.takeData();
   object_ptr_ = sub_dynamic_objects_.takeData();
@@ -255,6 +261,11 @@ void SurroundObstacleCheckerNode::onTimer()
     debug_ptr_->pushPose(odometry_ptr_->pose.pose, PoseType::NoStart);
     no_start_reason_diag = makeStopReasonDiag("obstacle", odometry_ptr_->pose.pose);
   }
+
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = stop_watch.toc();
+  pub_processing_time_->publish(processing_time_msg);
 
   pub_stop_reason_->publish(no_start_reason_diag);
   debug_ptr_->publish();
