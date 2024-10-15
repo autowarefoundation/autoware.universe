@@ -370,7 +370,7 @@ Polygon2d random_concave_polygon(const size_t vertices, const double max)
     // apply inward denting algorithm
     poly = inward_denting(points);
     // check for convexity
-    if (!is_convex(poly) && boost::geometry::is_valid(poly)) {
+    if (!is_convex(poly) && boost::geometry::is_valid(poly) && poly.outer().size() != vertices) {
       is_non_convex = true;
     }
     LinearRing2d poly_outer = poly.outer();
