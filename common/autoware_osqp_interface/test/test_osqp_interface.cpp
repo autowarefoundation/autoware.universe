@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/osqp_interface/osqp_interface.hpp"
 #include "gtest/gtest.h"
-#include "osqp_interface/osqp_interface.hpp"
 
 #include <Eigen/Core>
 
@@ -39,9 +39,9 @@ namespace
 
 TEST(TestOsqpInterface, BasicQp)
 {
-  using autoware::common::osqp::calCSCMatrix;
-  using autoware::common::osqp::calCSCMatrixTrapezoidal;
-  using autoware::common::osqp::CSC_Matrix;
+  using autoware::osqp_interface::calCSCMatrix;
+  using autoware::osqp_interface::calCSCMatrixTrapezoidal;
+  using autoware::osqp_interface::CSC_Matrix;
 
   auto check_result =
     [](const std::tuple<std::vector<double>, std::vector<double>, int, int, int> & result) {
@@ -66,12 +66,12 @@ TEST(TestOsqpInterface, BasicQp)
   const Eigen::MatrixXd P = (Eigen::MatrixXd(2, 2) << 4, 1, 1, 2).finished();
   const Eigen::MatrixXd A = (Eigen::MatrixXd(4, 2) << 1, 1, 1, 0, 0, 1, 0, 1).finished();
   const std::vector<double> q = {1.0, 1.0};
-  const std::vector<double> l = {1.0, 0.0, 0.0, -autoware::common::osqp::INF};
-  const std::vector<double> u = {1.0, 0.7, 0.7, autoware::common::osqp::INF};
+  const std::vector<double> l = {1.0, 0.0, 0.0, -autoware::osqp_interface::INF};
+  const std::vector<double> u = {1.0, 0.7, 0.7, autoware::osqp_interface::INF};
 
   {
     // Define problem during optimization
-    autoware::common::osqp::OSQPInterface osqp;
+    autoware::osqp_interface::OSQPInterface osqp;
     std::tuple<std::vector<double>, std::vector<double>, int, int, int> result =
       osqp.optimize(P, A, q, l, u);
     check_result(result);
@@ -79,7 +79,7 @@ TEST(TestOsqpInterface, BasicQp)
 
   {
     // Define problem during initialization
-    autoware::common::osqp::OSQPInterface osqp(P, A, q, l, u, 1e-6);
+    autoware::osqp_interface::OSQPInterface osqp(P, A, q, l, u, 1e-6);
     std::tuple<std::vector<double>, std::vector<double>, int, int, int> result = osqp.optimize();
     check_result(result);
   }
@@ -92,7 +92,7 @@ TEST(TestOsqpInterface, BasicQp)
     std::vector<double> q_ini(2, 0.0);
     std::vector<double> l_ini(4, 0.0);
     std::vector<double> u_ini(4, 0.0);
-    autoware::common::osqp::OSQPInterface osqp(P_ini, A_ini, q_ini, l_ini, u_ini, 1e-6);
+    autoware::osqp_interface::OSQPInterface osqp(P_ini, A_ini, q_ini, l_ini, u_ini, 1e-6);
     osqp.optimize();
 
     // Redefine problem before optimization
@@ -105,7 +105,7 @@ TEST(TestOsqpInterface, BasicQp)
     // Define problem during initialization with csc matrix
     CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
     CSC_Matrix A_csc = calCSCMatrix(A);
-    autoware::common::osqp::OSQPInterface osqp(P_csc, A_csc, q, l, u, 1e-6);
+    autoware::osqp_interface::OSQPInterface osqp(P_csc, A_csc, q, l, u, 1e-6);
     std::tuple<std::vector<double>, std::vector<double>, int, int, int> result = osqp.optimize();
     check_result(result);
   }
@@ -118,7 +118,7 @@ TEST(TestOsqpInterface, BasicQp)
     std::vector<double> q_ini(2, 0.0);
     std::vector<double> l_ini(4, 0.0);
     std::vector<double> u_ini(4, 0.0);
-    autoware::common::osqp::OSQPInterface osqp(P_ini_csc, A_ini_csc, q_ini, l_ini, u_ini, 1e-6);
+    autoware::osqp_interface::OSQPInterface osqp(P_ini_csc, A_ini_csc, q_ini, l_ini, u_ini, 1e-6);
     osqp.optimize();
 
     // Redefine problem before optimization
@@ -138,7 +138,7 @@ TEST(TestOsqpInterface, BasicQp)
     std::vector<double> q_ini(2, 0.0);
     std::vector<double> l_ini(4, 0.0);
     std::vector<double> u_ini(4, 0.0);
-    autoware::common::osqp::OSQPInterface osqp(P_ini_csc, A_ini_csc, q_ini, l_ini, u_ini, 1e-6);
+    autoware::osqp_interface::OSQPInterface osqp(P_ini_csc, A_ini_csc, q_ini, l_ini, u_ini, 1e-6);
     osqp.optimize();
 
     // Redefine problem before optimization
