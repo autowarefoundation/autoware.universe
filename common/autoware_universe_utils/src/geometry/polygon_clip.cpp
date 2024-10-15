@@ -14,43 +14,49 @@
 
 #include "autoware/universe_utils/geometry/polygon_clip.hpp"
 
-#include <iostream>
+#include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/algorithms/simplify.hpp>
+#include <boost/geometry/algorithms/within.hpp>
+
+#include <set>
 
 namespace autoware::universe_utils
 {
 
-// Vertex methods
-void visit(std::vector<Vertex> & vertices, std::vector<Vertex> & vertices_2, std::size_t index)
+// LinkedVertex methods
+void visit(
+  std::vector<LinkedVertex> & vertices, std::vector<LinkedVertex> & vertices_2, std::size_t index)
 {
-  Vertex & vertex = vertices[index];
+  LinkedVertex & vertex = vertices[index];
   vertex.visited = true;
 
   if (vertex.corresponding.has_value()) {
-    std::size_t correspondingIndex = *vertex.corresponding;
-
-    if (!vertices_2[correspondingIndex].visited) {
-      visit(vertices_2, vertices, correspondingIndex);
+    std::size_t corresponding_index = vertex.corresponding.value();
+    if (corresponding_index < vertices_2.size()) {
+      if (!vertices_2[corresponding_index].visited) {
+        visit(vertices_2, vertices, corresponding_index);
+      }
     }
   }
 }
 
-bool equals(const Vertex & v1, const Vertex & v2)
+bool equals(const LinkedVertex & v1, const LinkedVertex & v2)
 {
   return v1.x == v2.x && v1.y == v2.y;
 }
 
-bool isInside(const Vertex & v, const Polygon & poly)
+bool is_inside(const LinkedVertex & v, const ExtendedPolygon & poly)
 {
   bool contains = false;
   int32_t winding_num = 0;
   constexpr double tolerance = 1e-9;
 
   std::size_t vertexIndex = poly.first;
-  std::size_t nextIndex = poly.vertices[vertexIndex].next.value_or(poly.first);
+  std::size_t next_index = poly.vertices[vertexIndex].next.value_or(poly.first);
 
   do {
-    const Vertex & vertex = poly.vertices[vertexIndex];
-    const Vertex & next = poly.vertices[nextIndex];
+    const LinkedVertex & vertex = poly.vertices[vertexIndex];
+    const LinkedVertex & next = poly.vertices[next_index];
 
     bool y_intersects = ((next.y < v.y) != (vertex.y < v.y)) &&
                         (v.x < (vertex.x - next.x) * (v.y - next.y) / (vertex.y - next.y) + next.x);
@@ -59,8 +65,8 @@ bool isInside(const Vertex & v, const Polygon & poly)
       contains = !contains;
 
       if (std::abs(vertex.x - next.x) < tolerance && std::abs(vertex.y - next.y) < tolerance) {
-        vertexIndex = nextIndex;
-        nextIndex = poly.vertices[vertexIndex].next.value_or(poly.first);
+        vertexIndex = next_index;
+        next_index = poly.vertices[vertexIndex].next.value_or(poly.first);
         continue;
       }
 
@@ -71,23 +77,74 @@ bool isInside(const Vertex & v, const Polygon & poly)
       }
     }
 
-    vertexIndex = nextIndex;
-    nextIndex = poly.vertices[vertexIndex].next.value_or(poly.first);
+    vertexIndex = next_index;
+    next_index = poly.vertices[vertexIndex].next.value_or(poly.first);
   } while (vertexIndex != poly.first);
 
   return contains;
 }
 
-Intersection createIntersection(
-  const std::vector<Vertex> & source_vertices, std::size_t s1Index, std::size_t s2Index,
-  const std::vector<Vertex> & clip_vertices, std::size_t c1Index, std::size_t c2Index)
+std::vector<autoware::universe_utils::Point2d> intersection(
+  const autoware::universe_utils::Point2d & s1, const autoware::universe_utils::Point2d & s2,
+  const autoware::universe_utils::Point2d & c1, const autoware::universe_utils::Point2d & c2)
+{
+  std::vector<autoware::universe_utils::Point2d> intersection_points;
+
+  double d = (c2.y() - c1.y()) * (s2.x() - s1.x()) - (c2.x() - c1.x()) * (s2.y() - s1.y());
+
+  if (std::abs(d) > 1e-9) {
+    double t1 = ((c2.x() - c1.x()) * (s1.y() - c1.y()) - (c2.y() - c1.y()) * (s1.x() - c1.x())) / d;
+    double t2 = ((s2.x() - s1.x()) * (s1.y() - c1.y()) - (s2.y() - s1.y()) * (s1.x() - c1.x())) / d;
+
+    if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
+      autoware::universe_utils::Point2d intersection;
+      intersection.x() = t1 * s2.x() + (1.0 - t1) * s1.x();
+      intersection.y() = t1 * s2.y() + (1.0 - t1) * s1.y();
+      intersection_points.push_back(intersection);
+    }
+  }
+
+  return intersection_points;
+}
+
+std::vector<autoware::universe_utils::Point2d> intersection(
+  const autoware::universe_utils::Segment2d & source_segment,
+  const autoware::universe_utils::Segment2d & clip_segment)
+{
+  std::vector<autoware::universe_utils::Point2d> intersection_points;
+
+  const auto & s1 = source_segment.first;
+  const auto & s2 = source_segment.second;
+  const auto & c1 = clip_segment.first;
+  const auto & c2 = clip_segment.second;
+
+  double d = (c2.y() - c1.y()) * (s2.x() - s1.x()) - (c2.x() - c1.x()) * (s2.y() - s1.y());
+
+  if (std::abs(d) > 1e-9) {
+    double t1 = ((c2.x() - c1.x()) * (s1.y() - c1.y()) - (c2.y() - c1.y()) * (s1.x() - c1.x())) / d;
+    double t2 = ((s2.x() - s1.x()) * (s1.y() - c1.y()) - (s2.y() - s1.y()) * (s1.x() - c1.x())) / d;
+
+    if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
+      autoware::universe_utils::Point2d intersection;
+      intersection.x() = t1 * s2.x() + (1.0 - t1) * s1.x();
+      intersection.y() = t1 * s2.y() + (1.0 - t1) * s1.y();
+      intersection_points.push_back(intersection);
+    }
+  }
+
+  return intersection_points;
+}
+
+Intersection intersection(
+  const std::vector<LinkedVertex> & source_vertices, std::size_t s1_index, std::size_t s2_index,
+  const std::vector<LinkedVertex> & clip_vertices, std::size_t c1_index, std::size_t c2_index)
 {
   Intersection intersection;
 
-  const Vertex & s1 = source_vertices[s1Index];
-  const Vertex & s2 = source_vertices[s2Index];
-  const Vertex & c1 = clip_vertices[c1Index];
-  const Vertex & c2 = clip_vertices[c2Index];
+  const LinkedVertex & s1 = source_vertices[s1_index];
+  const LinkedVertex & s2 = source_vertices[s2_index];
+  const LinkedVertex & c1 = clip_vertices[c1_index];
+  const LinkedVertex & c2 = clip_vertices[c2_index];
 
   double d = (c2.y - c1.y) * (s2.x - s1.x) - (c2.x - c1.x) * (s2.y - s1.y);
 
@@ -96,32 +153,33 @@ Intersection createIntersection(
     double t2 = ((s2.x - s1.x) * (s1.y - c1.y) - (s2.y - s1.y) * (s1.x - c1.x)) / d;
 
     if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
-      intersection.x = s1.x + t1 * (s2.x - s1.x);
-      intersection.y = s1.y + t1 * (s2.y - s1.y);
-      intersection.toSource = t1;
-      intersection.toClip = t2;
+      intersection.x = t1 * s2.x + (1.0 - t1) * s1.x;
+      intersection.y = t1 * s2.y + (1.0 - t1) * s1.y;
+      intersection.distance_to_source = t1;
+      intersection.distance_to_clip = t2;
       return intersection;
     }
   }
 
   intersection.x = std::numeric_limits<double>::quiet_NaN();
   intersection.y = std::numeric_limits<double>::quiet_NaN();
-  intersection.toSource = 0;
-  intersection.toClip = 0;
+  intersection.distance_to_source = 0;
+  intersection.distance_to_clip = 0;
 
   return intersection;
 }
 
 bool valid(const Intersection & intersection)
 {
-  return (intersection.toSource > 0 && intersection.toSource < 1) &&
-         (intersection.toClip > 0 && intersection.toClip < 1);
+  return (intersection.distance_to_source > 0 && intersection.distance_to_source < 1) &&
+         (intersection.distance_to_clip > 0 && intersection.distance_to_clip < 1);
 }
 
-std::size_t addVertex(Polygon & polygon, const Vertex & newVertex, const std::size_t last_index)
+std::size_t add_vertex(
+  ExtendedPolygon & polygon, const LinkedVertex & new_vertex, const std::size_t last_index)
 {
   std::size_t p_idx = polygon.vertices.size();
-  polygon.vertices.push_back(newVertex);
+  polygon.vertices.push_back(new_vertex);
   if (!polygon.vertices.empty()) {
     std::size_t last = last_index;
     std::size_t next = polygon.vertices[last].next.value();
@@ -135,149 +193,154 @@ std::size_t addVertex(Polygon & polygon, const Vertex & newVertex, const std::si
   return p_idx;
 }
 
-Polygon createPolygon(const std::vector<std::vector<double>> & p, bool arrayVertices)
+ExtendedPolygon create_extended_polygon(const autoware::universe_utils::Polygon2d & poly2d)
 {
-  Polygon polygon;
-  polygon.arrayVertices = arrayVertices;
+  ExtendedPolygon polygon;
 
-  if (p.empty()) return polygon;
+  const auto & outer = poly2d.outer();
+  polygon.vertices.resize(outer.size());
 
-  polygon.vertices.resize(p.size());
+  for (std::size_t i = 0; i < outer.size(); ++i) {
+    const auto & point = outer[i];
+    LinkedVertex vertex{point.x(), point.y()};
 
-  for (std::size_t i = 0; i < p.size(); ++i) {
-    Vertex vertex{p[i][0], p[i][1]};
-
-    vertex.prev = (i == 0) ? p.size() - 1 : i - 1;
-
-    vertex.next = (i + 1) % p.size();
+    vertex.prev = (i == 0) ? outer.size() - 1 : i - 1;
+    vertex.next = (i + 1) % outer.size();
 
     polygon.vertices[i] = vertex;
   }
-
   return polygon;
 }
 
-Polygon createPolygon(const Vertex & vertex, bool arrayVertices)
+ExtendedPolygon create_extended_polygon(const LinkedVertex & vertex)
 {
-  Polygon polygon;
-  polygon.arrayVertices = arrayVertices;
+  ExtendedPolygon polygon;
 
   polygon.vertices.push_back(vertex);
 
   polygon.vertices.back().prev = 0;
   polygon.vertices.back().next = 0;
-
   return polygon;
 }
 
-void insertVertex(
-  std::vector<Vertex> & vertices, Vertex & vertex, std::size_t startIndex, std::size_t endIndex)
+void insert_vertex(
+  std::vector<LinkedVertex> & vertices, const std::size_t & vertex_index,
+  const std::size_t start_index, const std::size_t end_index)
 {
-  std::size_t currIndex = startIndex;
+  std::size_t current_index = start_index;
 
-  while (currIndex != endIndex && vertices[currIndex].distance < vertex.distance) {
-    currIndex = vertices[currIndex].next.value();
+  while (current_index != end_index &&
+         vertices[current_index].distance < vertices[vertex_index].distance) {
+    current_index = vertices[current_index].next.value();
   }
 
-  vertex.next = currIndex;
-  vertex.prev = vertices[currIndex].prev.value();
-  std::size_t prevIndex = vertex.prev.value();
+  vertices[vertex_index].next = current_index;
+  vertices[vertex_index].prev = vertices[current_index].prev.value();
+  std::size_t prev_index = vertices[current_index].prev.value();
 
-  if (prevIndex != currIndex) {
-    vertices[prevIndex].next = &vertex - &vertices[0];
+  if (prev_index != current_index) {
+    vertices[prev_index].next = vertex_index;
   }
-  vertices[currIndex].prev = &vertex - &vertices[0];
+  vertices[current_index].prev = vertex_index;
 
-  if (currIndex == startIndex) {
-    vertex.prev = startIndex;
-    vertex.next = startIndex;
+  if (current_index == start_index) {
+    vertices[vertex_index].prev = start_index;
+    vertices[vertex_index].next = start_index;
   }
 }
 
-std::size_t getNext(std::size_t index, const std::vector<Vertex> & vertices)
+std::size_t get_next(std::size_t index, const std::vector<LinkedVertex> & vertices)
 {
-  std::size_t currIndex = index;
-  while (vertices[currIndex].isIntersection) {
-    currIndex = vertices[currIndex].next.value();
+  std::size_t current_index = index;
+  while (vertices[current_index].is_intersection) {
+    current_index = vertices[current_index].next.value();
   }
-  return currIndex;
+  return current_index;
 }
 
-std::size_t getFirstIntersect(Polygon & polygon)
+std::size_t get_first_intersect(ExtendedPolygon & polygon)
 {
   std::size_t v =
-    polygon.firstIntersect.has_value() ? polygon.firstIntersect.value() : polygon.first;
+    polygon.first_intersect.has_value() ? polygon.first_intersect.value() : polygon.first;
 
   do {
-    if (polygon.vertices[v].isIntersection && !polygon.vertices[v].visited) break;
+    if (polygon.vertices[v].is_intersection && !polygon.vertices[v].visited) break;
     v = polygon.vertices[v].next.value();
   } while (v != polygon.first);
 
-  polygon.firstIntersect = v;
+  polygon.first_intersect = v;
   return v;
 }
 
-bool hasUnprocessed(Polygon & polygon)
+bool has_unprocessed(ExtendedPolygon & polygon)
 {
   std::size_t v =
-    polygon.lastUnprocessed.has_value() ? polygon.lastUnprocessed.value() : polygon.first;
+    polygon.last_unprocessed.has_value() ? polygon.last_unprocessed.value() : polygon.first;
 
   do {
-    if (polygon.vertices[v].isIntersection && !polygon.vertices[v].visited) {
-      polygon.lastUnprocessed = v;
+    if (polygon.vertices[v].is_intersection && !polygon.vertices[v].visited) {
+      polygon.last_unprocessed = v;
       return true;
     }
     v = polygon.vertices[v].next.value();
   } while (v != polygon.first);
-  polygon.lastUnprocessed = std::nullopt;
+  polygon.last_unprocessed = std::nullopt;
   return false;
 }
 
-std::vector<std::vector<double>> getPoints(const Polygon & polygon)
+autoware::universe_utils::Polygon2d get_points(const ExtendedPolygon & polygon)
 {
-  std::vector<std::vector<double>> points;
-
-  std::size_t vIndex = polygon.first;
-  std::size_t startIndex = vIndex;
+  autoware::universe_utils::Polygon2d poly;
+  std::size_t v_index = polygon.first;
+  std::size_t start_index = v_index;
+  autoware::universe_utils::LinearRing2d outer_ringA;
+  std::set<std::pair<double, double>> unique_points;
 
   do {
-    const auto & vertex = polygon.vertices[vIndex];
-    points.push_back({vertex.x, vertex.y});
+    const auto & vertex = polygon.vertices[v_index];
+    autoware::universe_utils::Point2d point(vertex.x, vertex.y);
+    if (unique_points.insert(std::make_pair(vertex.x, vertex.y)).second) {
+      outer_ringA.push_back(point);
+    }
 
-    vIndex = vertex.next.value();
-  } while (vIndex != startIndex);
+    v_index = vertex.next.value();
+  } while (v_index != start_index);
 
-  return points;
+  boost::geometry::append(poly.outer(), outer_ringA);
+  boost::geometry::correct(poly);
+  return poly;
 }
 
-std::vector<std::vector<std::vector<double>>> clip(
-  Polygon & source, Polygon & clip, bool sourceForwards, bool clipForwards)
+std::vector<autoware::universe_utils::Polygon2d> clip(
+  ExtendedPolygon & source, ExtendedPolygon & clip, bool source_forwards, bool clip_forwards)
 {
-  std::size_t sourceVertexIndex = source.first;
-  std::size_t clipVertexIndex = clip.first;
-  bool sourceInClip, clipInSource;
+  std::size_t source_vertex_index = source.first;
+  std::size_t clip_vertex_index = clip.first;
+  bool source_in_clip, clip_in_source;
 
-  bool isUnion = !sourceForwards && !clipForwards;
-  bool isIntersection = sourceForwards && clipForwards;
-
+  bool is_union = !source_forwards && !clip_forwards;
+  bool is_intersection = source_forwards && clip_forwards;
+  bool intersection_exist = false;
   do {
-    if (!source.vertices[sourceVertexIndex].isIntersection) {
+    if (!source.vertices[source_vertex_index].is_intersection) {
       do {
-        if (!clip.vertices[clipVertexIndex].isIntersection) {
-          Intersection i = createIntersection(
-            source.vertices, sourceVertexIndex,
-            getNext(source.vertices[sourceVertexIndex].next.value(), source.vertices),
-            clip.vertices, clipVertexIndex,
-            getNext(clip.vertices[clipVertexIndex].next.value(), clip.vertices));
-
+        if (!clip.vertices[clip_vertex_index].is_intersection) {
+          Intersection i = intersection(
+            source.vertices, source_vertex_index,
+            get_next(source.vertices[source_vertex_index].next.value(), source.vertices),
+            clip.vertices, clip_vertex_index,
+            get_next(clip.vertices[clip_vertex_index].next.value(), clip.vertices));
           if (valid(i)) {
-            Vertex intersectionVertex1{i.x,        i.y,   std::nullopt, std::nullopt, std::nullopt,
-                                       i.toSource, false, true,         false};
-            Vertex intersectionVertex2{i.x,      i.y,   std::nullopt, std::nullopt, std::nullopt,
-                                       i.toClip, false, true,         false};
+            intersection_exist = valid(i);
+            LinkedVertex intersection_vertex_1{i.x,          i.y,          std::nullopt,
+                                               std::nullopt, std::nullopt, i.distance_to_source,
+                                               false,        true,         false};
+            LinkedVertex intersection_vertex_2{i.x,          i.y,          std::nullopt,
+                                               std::nullopt, std::nullopt, i.distance_to_clip,
+                                               false,        true,         false};
 
-            source.vertices.push_back(intersectionVertex1);
-            clip.vertices.push_back(intersectionVertex2);
+            source.vertices.push_back(intersection_vertex_1);
+            clip.vertices.push_back(intersection_vertex_2);
 
             std::size_t index1 = source.vertices.size() - 1;
             std::size_t index2 = clip.vertices.size() - 1;
@@ -285,142 +348,174 @@ std::vector<std::vector<std::vector<double>>> clip(
             source.vertices[index1].corresponding = index2;
             clip.vertices[index2].corresponding = index1;
 
-            insertVertex(
-              source.vertices, source.vertices[index1], sourceVertexIndex,
-              getNext(source.vertices[sourceVertexIndex].next.value(), source.vertices));
-            insertVertex(
-              clip.vertices, clip.vertices[index2], clipVertexIndex,
-              getNext(clip.vertices[clipVertexIndex].next.value(), clip.vertices));
+            insert_vertex(
+              source.vertices, index1, source_vertex_index,
+              get_next(source.vertices[source_vertex_index].next.value(), source.vertices));
+            insert_vertex(
+              clip.vertices, index2, clip_vertex_index,
+              get_next(clip.vertices[clip_vertex_index].next.value(), clip.vertices));
           }
         }
 
-        clipVertexIndex = clip.vertices[clipVertexIndex].next.value();
-      } while (clipVertexIndex != clip.first);
+        clip_vertex_index = clip.vertices[clip_vertex_index].next.value();
+      } while (clip_vertex_index != clip.first);
     }
 
-    sourceVertexIndex = source.vertices[sourceVertexIndex].next.value();
-  } while (sourceVertexIndex != source.first);
+    source_vertex_index = source.vertices[source_vertex_index].next.value();
+  } while (source_vertex_index != source.first);
 
-  sourceVertexIndex = source.first;
-  clipVertexIndex = clip.first;
+  source_vertex_index = source.first;
+  clip_vertex_index = clip.first;
 
-  sourceInClip = isInside(source.vertices[sourceVertexIndex], clip);
-  clipInSource = isInside(clip.vertices[clipVertexIndex], source);
-
-  sourceForwards ^= sourceInClip;
-  clipForwards ^= clipInSource;
+  source_in_clip = is_inside(source.vertices[source_vertex_index], clip);
+  clip_in_source = is_inside(clip.vertices[clip_vertex_index], source);
+  source_forwards ^= source_in_clip;
+  clip_forwards ^= clip_in_source;
 
   do {
-    if (source.vertices[sourceVertexIndex].isIntersection) {
-      source.vertices[sourceVertexIndex].isEntry = sourceForwards;
-      sourceForwards = !sourceForwards;
+    if (source.vertices[source_vertex_index].is_intersection) {
+      source.vertices[source_vertex_index].is_entry = source_forwards;
+      source_forwards = !source_forwards;
     }
-    sourceVertexIndex = source.vertices[sourceVertexIndex].next.value();
-  } while (sourceVertexIndex != source.first);
+    source_vertex_index = source.vertices[source_vertex_index].next.value();
+  } while (source_vertex_index != source.first);
 
   do {
-    if (clip.vertices[clipVertexIndex].isIntersection) {
-      clip.vertices[clipVertexIndex].isEntry = clipForwards;
-      clipForwards = !clipForwards;
+    if (clip.vertices[clip_vertex_index].is_intersection) {
+      clip.vertices[clip_vertex_index].is_entry = clip_forwards;
+      clip_forwards = !clip_forwards;
     }
-    clipVertexIndex = clip.vertices[clipVertexIndex].next.value();
-  } while (clipVertexIndex != clip.first);
+    clip_vertex_index = clip.vertices[clip_vertex_index].next.value();
+  } while (clip_vertex_index != clip.first);
 
-  std::vector<std::vector<std::vector<double>>> list;
-
-  while (hasUnprocessed(source)) {
-    std::size_t currentIndex = getFirstIntersect(source);
-    Polygon clipped = createPolygon(source.vertices[currentIndex], source.arrayVertices);
+  std::vector<autoware::universe_utils::Polygon2d> polygon_vector;
+  while (has_unprocessed(source)) {
+    std::size_t currentIndex = get_first_intersect(source);
+    ExtendedPolygon clipped = create_extended_polygon(source.vertices[currentIndex]);
     std::size_t last_idx = 0;
     bool usingSource = true;
 
     do {
-      visit(source.vertices, clip.vertices, currentIndex);
+      if (usingSource) {
+        visit(source.vertices, clip.vertices, currentIndex);
+      } else {
+        visit(clip.vertices, source.vertices, currentIndex);
+      }
 
       if (usingSource) {
-        if (source.vertices[currentIndex].isEntry) {
+        if (source.vertices[currentIndex].is_entry) {
           do {
             currentIndex = source.vertices[currentIndex].next.value();
-            last_idx = addVertex(clipped, source.vertices[currentIndex], last_idx);
-          } while (!source.vertices[currentIndex].isIntersection);
+            last_idx = add_vertex(clipped, source.vertices[currentIndex], last_idx);
+          } while (!source.vertices[currentIndex].is_intersection);
         } else {
           do {
             currentIndex = source.vertices[currentIndex].prev.value();
-            last_idx = addVertex(clipped, source.vertices[currentIndex], last_idx);
-          } while (!source.vertices[currentIndex].isIntersection);
+            last_idx = add_vertex(clipped, source.vertices[currentIndex], last_idx);
+          } while (!source.vertices[currentIndex].is_intersection);
         }
       } else {
-        if (clip.vertices[currentIndex].isEntry) {
+        if (clip.vertices[currentIndex].is_entry) {
           do {
             currentIndex = clip.vertices[currentIndex].next.value();
-            last_idx = addVertex(clipped, clip.vertices[currentIndex], last_idx);
-          } while (!clip.vertices[currentIndex].isIntersection);
+            last_idx = add_vertex(clipped, clip.vertices[currentIndex], last_idx);
+          } while (!clip.vertices[currentIndex].is_intersection);
         } else {
           do {
             currentIndex = clip.vertices[currentIndex].prev.value();
-            last_idx = addVertex(clipped, clip.vertices[currentIndex], last_idx);
-          } while (!clip.vertices[currentIndex].isIntersection);
+            last_idx = add_vertex(clipped, clip.vertices[currentIndex], last_idx);
+          } while (!clip.vertices[currentIndex].is_intersection);
         }
       }
+
       currentIndex = (usingSource ? source.vertices[currentIndex] : clip.vertices[currentIndex])
                        .corresponding.value();
       usingSource = !usingSource;
     } while (
       !((usingSource ? source.vertices[currentIndex] : clip.vertices[currentIndex]).visited));
 
-    auto points = getPoints(clipped);
-    list.push_back(points);
+    auto points = get_points(clipped);
+    if (is_union && !polygon_vector.empty()) {
+      const auto & existing_polygon = polygon_vector[0];
+
+      if (boost::geometry::within(points, existing_polygon)) {
+        continue;
+      } else if (boost::geometry::within(existing_polygon, points)) {
+        polygon_vector[0] = points;
+        continue;
+      }
+
+    } else {
+      polygon_vector.push_back(points);
+    }
   }
 
-  if (list.empty()) {
-    if (isUnion) {
-      if (sourceInClip) {
-        list.push_back(getPoints(clip));
-      } else if (clipInSource) {
-        list.push_back(getPoints(source));
+  if (!intersection_exist) {
+    polygon_vector.clear();
+    if (is_union) {
+      if (source_in_clip) {
+        polygon_vector.push_back(get_points(clip));
+      } else if (clip_in_source) {
+        polygon_vector.push_back(get_points(source));
       } else {
-        list.push_back(getPoints(source));
-        list.push_back(getPoints(clip));
+        polygon_vector.push_back(get_points(source));
+        polygon_vector.push_back(get_points(clip));
       }
-    } else if (isIntersection) {
-      if (sourceInClip) {
-        list.push_back(getPoints(source));
-      } else if (clipInSource) {
-        list.push_back(getPoints(clip));
+    } else if (is_intersection) {
+      if (source_in_clip) {
+        polygon_vector.push_back(get_points(source));
+      } else if (clip_in_source) {
+        polygon_vector.push_back(get_points(clip));
       }
     } else {  // Difference
-      if (sourceInClip) {
-        list.push_back(getPoints(clip));
-        list.push_back(getPoints(source));
-      } else if (clipInSource) {
-        list.push_back(getPoints(source));
-        list.push_back(getPoints(clip));
+      if (source_in_clip) {
+      } else if (clip_in_source) {
+        polygon_vector.push_back(get_points(source));
       } else {
-        list.push_back(getPoints(source));
+        polygon_vector.push_back(get_points(source));
       }
     }
   }
-  return list;
+  return polygon_vector;
 }
 
 // Difference function
-std::vector<std::vector<std::vector<double>>> difference(
-  const std::vector<std::vector<double>> & polygonA,
-  const std::vector<std::vector<double>> & polygonB)
+std::vector<autoware::universe_utils::Polygon2d> difference(
+  const autoware::universe_utils::Polygon2d & polygon_a,
+  const autoware::universe_utils::Polygon2d & polygon_b)
 {
-  Polygon polyA = createPolygon(polygonA);
-  Polygon polyB = createPolygon(polygonB);
-  return clip(polyA, polyB, false, true);
+  if (polygon_a.outer().size() < 3 || polygon_b.outer().size() < 3) {
+    return std::vector<Polygon2d>{polygon_a, polygon_b};
+  }
+  ExtendedPolygon poly_a = create_extended_polygon(polygon_a);
+  ExtendedPolygon poly_b = create_extended_polygon(polygon_b);
+  return clip(poly_a, poly_b, false, true);
 }
 
 // Union function
-std::vector<std::vector<std::vector<double>>> unionPolygons(
-  const std::vector<std::vector<double>> & polygonA,
-  const std::vector<std::vector<double>> & polygonB)
+std::vector<autoware::universe_utils::Polygon2d> union_(
+  const autoware::universe_utils::Polygon2d & polygon_a,
+  const autoware::universe_utils::Polygon2d & polygon_b)
 {
-  Polygon polyA = createPolygon(polygonA);
-  Polygon polyB = createPolygon(polygonB);
-  return clip(polyA, polyB, false, false);
+  if (polygon_a.outer().size() < 3 || polygon_b.outer().size() < 3) {
+    return std::vector<Polygon2d>{polygon_a, polygon_b};
+  }
+  ExtendedPolygon poly_a = create_extended_polygon(polygon_a);
+  ExtendedPolygon poly_b = create_extended_polygon(polygon_b);
+  return clip(poly_a, poly_b, false, false);
+}
+
+// Intersection function
+std::vector<autoware::universe_utils::Polygon2d> intersection(
+  const autoware::universe_utils::Polygon2d & polygon_a,
+  const autoware::universe_utils::Polygon2d & polygon_b)
+{
+  if (polygon_a.outer().size() < 3 || polygon_b.outer().size() < 3) {
+    return std::vector<Polygon2d>{polygon_a, polygon_b};
+  }
+  ExtendedPolygon poly_a = create_extended_polygon(polygon_a);
+  ExtendedPolygon poly_b = create_extended_polygon(polygon_b);
+  return clip(poly_a, poly_b, true, true);
 }
 
 }  // namespace autoware::universe_utils
