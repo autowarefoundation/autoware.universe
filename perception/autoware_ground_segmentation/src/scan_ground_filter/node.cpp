@@ -279,6 +279,8 @@ void ScanGroundFilterComponent::initializeFirstGndGrids(
     curr_gnd_grid.radius = interpolated_r;
     curr_gnd_grid.avg_height = interpolated_z;
     curr_gnd_grid.max_height = interpolated_z;
+    curr_gnd_grid.gradient = gradient;
+    curr_gnd_grid.intercept = 0.0f;
     curr_gnd_grid.grid_id = ind_grid;
     gnd_grids.push_back(curr_gnd_grid);
   }
@@ -300,6 +302,8 @@ void ScanGroundFilterComponent::fitLineFromGndGrid(
     sum_x2 += it->radius * it->radius;
   }
   const float n = static_cast<float>(end_idx - start_idx);
+
+  // y = a * x + b
   a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
   b = (sum_y - a * sum_x) / n;
 }
@@ -507,7 +511,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         // clear the centroid_bin
         centroid_bin.initialize();
 
-        // calcluate local ground gradient
+        // calculate local ground gradient
         float a, b;
         fitLineFromGndGrid(
           gnd_grids, gnd_grids.size() - gnd_grid_buffer_size_, gnd_grids.size(), a, b);
