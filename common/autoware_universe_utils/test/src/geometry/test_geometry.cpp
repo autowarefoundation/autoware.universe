@@ -22,11 +22,11 @@
 
 #include <geometry_msgs/msg/point32.hpp>
 
+#include <boost/geometry/algorithms/difference.hpp>
+#include <boost/geometry/algorithms/union.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/io/wkt/write.hpp>
-#include <boost/geometry/algorithms/difference.hpp>
-#include <boost/geometry/algorithms/union.hpp>
 
 
 #include <gtest/gtest.h>
