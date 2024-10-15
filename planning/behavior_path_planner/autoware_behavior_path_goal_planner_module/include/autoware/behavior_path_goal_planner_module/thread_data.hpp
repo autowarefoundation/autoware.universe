@@ -63,11 +63,7 @@ public:
       return false;
     }
 
-    if (pull_over_path_->incrementPathIndex()) {
-      last_path_idx_increment_time_ = clock_->now();
-      return true;
-    }
-    return false;
+    return pull_over_path_->incrementPathIndex();
   }
 
   void set_pull_over_path(const PullOverPath & path)
@@ -105,52 +101,41 @@ public:
     return true;
   }
 
-  std::optional<PullOverPlannerType> getPullOverPlannerType() const
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (!pull_over_path_) {
-      return std::nullopt;
-    }
-    return pull_over_path_->type();
-  };
-
   void reset()
   {
     const std::lock_guard<std::recursive_mutex> lock(mutex_);
     pull_over_path_ = nullptr;
     pull_over_path_candidates_.clear();
     goal_candidates_.clear();
-    modified_goal_pose_ = std::nullopt;
     last_path_update_time_ = std::nullopt;
-    last_path_idx_increment_time_ = std::nullopt;
     closest_start_pose_ = std::nullopt;
     last_previous_module_output_ = std::nullopt;
     prev_data_ = PathDecisionState{};
   }
 
-  DEFINE_GETTER_WITH_MUTEX(std::shared_ptr<PullOverPath>, pull_over_path)
-  DEFINE_GETTER_WITH_MUTEX(std::shared_ptr<PullOverPath>, lane_parking_pull_over_path)
-  DEFINE_GETTER_WITH_MUTEX(std::optional<rclcpp::Time>, last_path_update_time)
-  DEFINE_GETTER_WITH_MUTEX(std::optional<rclcpp::Time>, last_path_idx_increment_time)
-
-  DEFINE_SETTER_GETTER_WITH_MUTEX(std::vector<PullOverPath>, pull_over_path_candidates)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(GoalCandidates, goal_candidates)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<GoalCandidate>, modified_goal_pose)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<Pose>, closest_start_pose)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<BehaviorModuleOutput>, last_previous_module_output)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(
-    utils::path_safety_checker::CollisionCheckDebugMap, collision_check)
+  // main --> lane/freespace
   DEFINE_SETTER_GETTER_WITH_MUTEX(PredictedObjects, static_target_objects)
   DEFINE_SETTER_GETTER_WITH_MUTEX(PredictedObjects, dynamic_target_objects)
+  // main --> lane
   DEFINE_SETTER_GETTER_WITH_MUTEX(PathDecisionState, prev_data)
+  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<BehaviorModuleOutput>, last_previous_module_output)
+
+  // lane --> main
+  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<Pose>, closest_start_pose)
+  DEFINE_SETTER_GETTER_WITH_MUTEX(std::vector<PullOverPath>, pull_over_path_candidates)
+
+  // main <--> lane/freespace
+  DEFINE_GETTER_WITH_MUTEX(std::shared_ptr<PullOverPath>, pull_over_path)
+  DEFINE_GETTER_WITH_MUTEX(std::optional<rclcpp::Time>, last_path_update_time)
+
+  DEFINE_SETTER_GETTER_WITH_MUTEX(GoalCandidates, goal_candidates)
+  DEFINE_SETTER_GETTER_WITH_MUTEX(
+    utils::path_safety_checker::CollisionCheckDebugMap, collision_check)
 
 private:
   void set_pull_over_path_no_lock(const PullOverPath & path)
   {
     pull_over_path_ = std::make_shared<PullOverPath>(path);
-    if (path.type() != PullOverPlannerType::FREESPACE) {
-      lane_parking_pull_over_path_ = std::make_shared<PullOverPath>(path);
-    }
 
     last_path_update_time_ = clock_->now();
   }
@@ -158,9 +143,6 @@ private:
   void set_pull_over_path_no_lock(const std::shared_ptr<PullOverPath> & path)
   {
     pull_over_path_ = path;
-    if (path->type() != PullOverPlannerType::FREESPACE) {
-      lane_parking_pull_over_path_ = path;
-    }
     last_path_update_time_ = clock_->now();
   }
 
@@ -168,7 +150,6 @@ private:
   void set_no_lock(const std::vector<PullOverPath> & arg) { pull_over_path_candidates_ = arg; }
   void set_no_lock(const std::shared_ptr<PullOverPath> & arg) { set_pull_over_path_no_lock(arg); }
   void set_no_lock(const PullOverPath & arg) { set_pull_over_path_no_lock(arg); }
-  void set_no_lock(const GoalCandidate & arg) { modified_goal_pose_ = arg; }
   void set_no_lock(const BehaviorModuleOutput & arg) { last_previous_module_output_ = arg; }
   void set_no_lock(const utils::path_safety_checker::CollisionCheckDebugMap & arg)
   {
@@ -176,12 +157,9 @@ private:
   }
 
   std::shared_ptr<PullOverPath> pull_over_path_{nullptr};
-  std::shared_ptr<PullOverPath> lane_parking_pull_over_path_{nullptr};
   std::vector<PullOverPath> pull_over_path_candidates_;
   GoalCandidates goal_candidates_{};
-  std::optional<GoalCandidate> modified_goal_pose_;
   std::optional<rclcpp::Time> last_path_update_time_;
-  std::optional<rclcpp::Time> last_path_idx_increment_time_;
   std::optional<Pose> closest_start_pose_{};
   std::optional<BehaviorModuleOutput> last_previous_module_output_{};
   utils::path_safety_checker::CollisionCheckDebugMap collision_check_{};

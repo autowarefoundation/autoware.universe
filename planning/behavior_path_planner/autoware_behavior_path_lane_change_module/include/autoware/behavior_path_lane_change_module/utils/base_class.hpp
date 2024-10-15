@@ -127,7 +127,7 @@ public:
 
   virtual void updateSpecialData() {}
 
-  virtual void insertStopPoint(
+  virtual void insert_stop_point(
     [[maybe_unused]] const lanelet::ConstLanelets & lanelets,
     [[maybe_unused]] PathWithLaneId & path)
   {

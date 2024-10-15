@@ -195,7 +195,7 @@ if (max_lane_change_length >  ego's distance to the end of the current lanes.) t
   stop
 endif
 
-if ego is stuck in the current lanes then (yes)
+if (ego is stuck in the current lanes) then (yes)
   :Return **sampled acceleration values**;
   stop
 else (no)
@@ -540,14 +540,65 @@ The following figure illustrates when the lane is blocked in multiple lane chang
 
 ![multiple-lane-changes](./images/lane_change-when_cannot_change_lanes.png)
 
-#### Stopping position when an object exists ahead
+### Stopping behavior
 
-When an obstacle is in front of the ego vehicle, stop with keeping a distance for lane change.
-The position to be stopped depends on the situation, such as when the lane change is blocked by the target lane obstacle, or when the lane change is not needed immediately.The following shows the division in that case.
+The stopping behavior of the ego vehicle is determined based on various factors, such as the number of lane changes required, the presence of obstacles, and the position of blocking objects in relation to the lane change plan. The objective is to choose a suitable stopping point that allows for a safe and effective lane change while adapting to different traffic scenarios.
 
-##### When the ego vehicle is near the end of the lane change
+The following flowchart and subsections explain the conditions for deciding where to insert a stop point when an obstacle is ahead.
 
-Regardless of the presence or absence of objects in the lane change target lane, stop by keeping the distance necessary for lane change to the object ahead.
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+title Inserting Stop Point
+
+start
+if (number of lane changes is zero?) then (<color:green><b>YES</b></color>)
+stop
+else (<color:red><b>NO</b></color>)
+endif
+
+if (do we want to insert stop point in current lanes?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop point at next lane change terminal start.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Is there leading object in the current lanes that blocks ego's path?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop point at terminal stop.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Blocking object's position is after target lane's start position?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop at the target lane's start position.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Blocking object's position is before terminal stop position?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop at the terminal stop position;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Are there target lane objects between the ego and the blocking object?) then (<color:red><b>NO</b></color>)
+#LightGreen:Insert stop behind the blocking object;
+stop
+else (<color:green><b>YES</b></color>)
+#LightPink:Insert stop at terminal stop;
+stop
+@enduml
+```
+
+#### Ego vehicle's stopping position when an object exists ahead
+
+When the ego vehicle encounters an obstacle ahead, it stops while maintaining a safe distance to prepare for a possible lane change. The exact stopping position depends on factors like whether the target lane is clear or if the lane change needs to be delayed. The following explains how different stopping scenarios are handled:
+
+##### When the near the end of the lane change
+
+Whether the target lane has obstacles or is clear, the ego vehicle stops while keeping a safe distance from the obstacle ahead, ensuring there is enough room for the lane change.
 
 ![stop_at_terminal_no_block](./images/lane_change-stop_at_terminal_no_block.drawio.svg)
 
@@ -555,19 +606,39 @@ Regardless of the presence or absence of objects in the lane change target lane,
 
 ##### When the ego vehicle is not near the end of the lane change
 
-If there are NO objects in the lane change section of the target lane, stop by keeping the distance necessary for lane change to the object ahead.
+The ego vehicle stops while maintaining a safe distance from the obstacle ahead, ensuring there is enough space for a lane change.
 
 ![stop_not_at_terminal_no_blocking_object](./images/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
 
-If there are objects in the lane change section of the target lane, stop WITHOUT keeping the distance necessary for lane change to the object ahead.
+#### Ego vehicle's stopping position when an object exists in the lane changing section
+
+If there are objects within the lane change section of the target lane, the ego vehicle stops closer to the obstacle ahead, without maintaining the usual distance for a lane change.
+
+##### When near the end of the lane change
+
+Regardless of whether there are obstacles in the target lane, the ego vehicle stops while keeping a safe distance from the obstacle ahead, allowing for the lane change.
+
+![stop_at_terminal_no_block](./images/lane_change-stop_at_terminal_no_block.drawio.svg)
+
+![stop_at_terminal](./images/lane_change-stop_at_terminal.drawio.svg)
+
+##### When not near the end of the lane change
+
+If there are no obstacles in the lane change section of the target lane, the ego vehicle stops while keeping a safe distance from the obstacle ahead to accommodate the lane change.
+
+![stop_not_at_terminal_no_blocking_object](./images/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
+
+If there are obstacles within the lane change section of the target lane, the ego vehicle stops closer to the obstacle ahead, without keeping the usual distance needed for a lane change.
 
 ![stop_not_at_terminal](./images/lane_change-stop_not_at_terminal.drawio.svg)
 
-##### When the target lane is far away
+#### When the target lane is far away
 
-When the target lane for lane change is far away and not next to the current lane, do not keep the distance necessary for lane change to the object ahead.
+If the target lane for the lane change is far away and not next to the current lane, the ego vehicle stops closer to the obstacle ahead, as maintaining the usual distance for a lane change is not necessary.
 
 ![stop_far_from_target_lane](./images/lane_change-stop_far_from_target_lane.drawio.svg)
+
+![stop_not_at_terminal](./images/lane_change-stop_not_at_terminal.drawio.svg)
 
 ### Lane Change When Stuck
 
