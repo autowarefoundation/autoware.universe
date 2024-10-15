@@ -300,7 +300,7 @@ void ScanGroundFilterComponent::checkContinuousGndGrid(
   // get mean of buffer except the last grid
   float gnd_buff_z_mean = 0.0f;
   float gnd_buff_radius = 0.0f;
-  for (auto it = gnd_grids_list.end() - 1 - gnd_grid_buffer_size_ ; it < gnd_grids_list.end() - 1;
+  for (auto it = gnd_grids_list.end() - 1 - gnd_grid_buffer_size_; it < gnd_grids_list.end() - 1;
        ++it) {
     gnd_buff_radius += it->radius;
     gnd_buff_z_mean += it->avg_height;
