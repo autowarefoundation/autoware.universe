@@ -111,12 +111,12 @@ std::pair<lanelet::BasicPoint2d, double> get_smallest_enclosing_circle(
                          const lanelet::BasicPoint2d & p1, const lanelet::BasicPoint2d & p2,
                          const lanelet::BasicPoint2d & p3) -> void {
     // reference for circumcenter vector https://en.wikipedia.org/wiki/Circumscribed_circle
-    const double A = (p2 - p3).squaredNorm();
-    const double B = (p3 - p1).squaredNorm();
-    const double C = (p1 - p2).squaredNorm();
-    const double S = cross(p2 - p1, p3 - p1);
-    if (std::abs(S) < eps) return;
-    center = (A * (B + C - A) * p1 + B * (C + A - B) * p2 + C * (A + B - C) * p3) / (4 * S * S);
+    const double a = (p2 - p3).squaredNorm();
+    const double b = (p3 - p1).squaredNorm();
+    const double c = (p1 - p2).squaredNorm();
+    const double s = cross(p2 - p1, p3 - p1);
+    if (std::abs(s) < eps) return;
+    center = (a * (b + c - a) * p1 + b * (c + a - b) * p2 + c * (a + b - c) * p3) / (4 * s * s);
     radius_squared = (center - p1).squaredNorm() + eps;
   };
 

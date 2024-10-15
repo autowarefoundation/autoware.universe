@@ -66,7 +66,7 @@ public:
   DetectionAreaModule(
     const int64_t module_id, const int64_t lane_id,
     const lanelet::autoware::DetectionArea & detection_area_reg_elem,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
