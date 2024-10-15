@@ -894,28 +894,6 @@ int NormalLaneChange::getNumToPreferredLane(const lanelet::ConstLanelet & lane) 
   return std::abs(getRouteHandler()->getNumLaneToPreferredLane(lane, get_opposite_direction));
 }
 
-std::vector<double> NormalLaneChange::calc_prepare_durations() const
-{
-  const auto & lc_param_ptr = common_data_ptr_->lc_param_ptr;
-  const auto threshold = common_data_ptr_->bpp_param_ptr->base_link2front +
-                         lc_param_ptr->min_length_for_turn_signal_activation;
-  const auto max_prepare_duration = lc_param_ptr->lane_change_prepare_duration;
-
-  // TODO(Azu) this check seems to cause scenario failures.
-  if (common_data_ptr_->transient_data.dist_to_terminal_start >= threshold) {
-    return {max_prepare_duration};
-  }
-
-  std::vector<double> prepare_durations;
-  constexpr double step = 0.5;
-
-  for (double duration = max_prepare_duration; duration >= 0.0; duration -= step) {
-    prepare_durations.push_back(duration);
-  }
-
-  return prepare_durations;
-}
-
 bool NormalLaneChange::get_prepare_segment(
   PathWithLaneId & prepare_segment, const double prepare_length) const
 {
@@ -1237,12 +1215,10 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_prepare_metrics() cons
   const auto current_velocity = getEgoVelocity();
   const auto max_path_velocity = common_data_ptr_->transient_data.current_path_velocity;
 
-  const auto prepare_durations = calc_prepare_durations();
-
   const auto dist_to_target_start =
     calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
   return calculation::calc_prepare_phase_metrics(
-    common_data_ptr_, prepare_durations, current_velocity, max_path_velocity, dist_to_target_start,
+    common_data_ptr_, current_velocity, max_path_velocity, dist_to_target_start,
     common_data_ptr_->transient_data.dist_to_terminal_start);
 }
 

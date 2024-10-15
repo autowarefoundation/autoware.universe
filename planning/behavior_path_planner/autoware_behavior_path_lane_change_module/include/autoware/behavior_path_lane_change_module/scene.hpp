@@ -118,8 +118,6 @@ protected:
 
   TurnSignalInfo get_terminal_turn_signal_info() const final;
 
-  std::vector<double> calc_prepare_durations() const;
-
   lane_change::TargetObjects getTargetObjects(
     const FilteredByLanesExtendedObjects & predicted_objects,
     const lanelet::ConstLanelets & current_lanes) const;
