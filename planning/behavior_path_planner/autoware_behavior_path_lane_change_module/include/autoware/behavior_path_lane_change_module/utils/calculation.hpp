@@ -27,6 +27,8 @@ using behavior_path_planner::lane_change::LCParamPtr;
 using behavior_path_planner::lane_change::MinMaxValue;
 using behavior_path_planner::lane_change::PhaseMetrics;
 
+static constexpr double eps = 0.001;
+
 double calc_dist_from_pose_to_terminal_end(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes,
   const Pose & src_pose);

@@ -145,15 +145,17 @@ double calc_minimum_acceleration(
   const LaneChangeParameters & lane_change_parameters, const double current_velocity,
   const double min_acc_threshold, const double prepare_duration)
 {
+  if (prepare_duration < eps) return -std::abs(min_acc_threshold);
   const double min_lc_velocity = lane_change_parameters.minimum_lane_changing_velocity;
   const double acc = (min_lc_velocity - current_velocity) / prepare_duration;
-  return std::clamp(acc, -std::abs(min_acc_threshold), -std::numeric_limits<double>::epsilon());
+  return std::clamp(acc, -std::abs(min_acc_threshold), -eps);
 }
 
 double calc_maximum_acceleration(
   const double prepare_duration, const double current_velocity, const double current_max_velocity,
   const double max_acc_threshold)
 {
+  if (prepare_duration < eps) return max_acc_threshold;
   const double acc = (current_max_velocity - current_velocity) / prepare_duration;
   return std::clamp(acc, 0.0, max_acc_threshold);
 }
@@ -326,14 +328,13 @@ std::vector<double> calc_acceleration_values(
     return {min_accel};
   }
 
-  constexpr double epsilon = 0.001;
   const auto resolution = std::abs(max_accel - min_accel) / sampling_num;
 
   std::vector<double> sampled_values{min_accel};
   for (double accel = min_accel + resolution;
        accel < max_accel + std::numeric_limits<double>::epsilon(); accel += resolution) {
     // check whether if we need to add 0.0
-    if (sampled_values.back() < -epsilon && accel > epsilon) {
+    if (sampled_values.back() < -eps && accel > eps) {
       sampled_values.push_back(0.0);
     }
 
