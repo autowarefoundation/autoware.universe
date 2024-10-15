@@ -12,21 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
-#define OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
+#ifndef AUTOWARE__OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
+#define AUTOWARE__OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
 
+#include "autoware/osqp_interface/visibility_control.hpp"
 #include "osqp/glob_opts.h"  // for 'c_int' type ('long' or 'long long')
-#include "osqp_interface/visibility_control.hpp"
 
 #include <Eigen/Core>
 
 #include <vector>
 
-namespace autoware
-{
-namespace common
-{
-namespace osqp
+namespace autoware::osqp_interface
 {
 /// \brief Compressed-Column-Sparse Matrix
 struct OSQP_INTERFACE_PUBLIC CSC_Matrix
@@ -46,8 +42,6 @@ OSQP_INTERFACE_PUBLIC CSC_Matrix calCSCMatrixTrapezoidal(const Eigen::MatrixXd &
 /// \brief Print the given CSC matrix to the standard output
 OSQP_INTERFACE_PUBLIC void printCSCMatrix(const CSC_Matrix & csc_mat);
 
-}  // namespace osqp
-}  // namespace common
-}  // namespace autoware
+}  // namespace autoware::osqp_interface
 
-#endif  // OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
+#endif  // AUTOWARE__OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
