@@ -15,8 +15,6 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY__PATH_SHIFT_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY__PATH_SHIFT_HPP_
 
-#include <cmath>
-
 namespace autoware::motion_utils
 {
 /**
