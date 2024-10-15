@@ -20,7 +20,7 @@
 
 #include "autoware/multi_object_tracker/object_model/object_model.hpp"
 
-#include <object_recognition_utils/object_recognition_utils.hpp>
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
 

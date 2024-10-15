@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "object_recognition_utils/conversion.hpp"
+#include "autoware/object_recognition_utils/conversion.hpp"
 
-namespace object_recognition_utils
+namespace autoware::object_recognition_utils
 {
 using autoware_perception_msgs::msg::DetectedObject;
 using autoware_perception_msgs::msg::DetectedObjects;
@@ -68,4 +68,4 @@ TrackedObject toTrackedObject(const DetectedObject & detected_object)
   tracked_object.shape = detected_object.shape;
   return tracked_object;
 }
-}  // namespace object_recognition_utils
+}  // namespace autoware::object_recognition_utils
