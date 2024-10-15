@@ -80,12 +80,12 @@ graph TD
         pc1{{"gnss_pose_yaw<br/>stddev"}}
         pc1 -->|"<= 0.3 rad"| pc2{{"gnss_pose_z<br/>stddev"}}
         pc2 -->|"<= 0.1 m"| pc3{{"gnss_pose_xy<br/>stddev"}}
-        pc2 -->|"> 0.1 m"| ndt_pose("NDT Pose")
+        pc2 -->|"&gt; 0.1 m"| ndt_pose("NDT Pose")
         pc3 -->|"<= 0.1 m"| gnss_pose("GNSS Pose")
         pc3 -->|"0.1 m < x <= 0.2 m"| gnss_ndt_pose("`Both GNSS and NDT Pose
         (_with modified covariance_)`")
-        pc3 -->|"> 0.2 m"| ndt_pose
-        pc1 -->|"> 0.3 rad"| ndt_pose
+        pc3 -->|"&gt; 0.2 m"| ndt_pose
+        pc1 -->|"&gt; 0.3 rad"| ndt_pose
     end
 
     pose_covariance_modifier_node -->|"/localization/pose_estimator/pose_with_covariance"| ekf_localizer["ekf_localizer"]

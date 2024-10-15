@@ -14,8 +14,8 @@
 
 #include "perception_online_evaluator/metrics/detection_count.hpp"
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 #include "perception_online_evaluator/utils/objects_filtering.hpp"
 
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
@@ -72,7 +72,8 @@ void DetectionCounter::addObjects(
 
   for (const auto & object : objects.objects) {
     const auto uuid = toHexString(object.object_id);
-    const auto label = object_recognition_utils::getHighestProbLabel(object.classification);
+    const auto label =
+      autoware::object_recognition_utils::getHighestProbLabel(object.classification);
     if (!isCountObject(label, parameters_->object_parameters)) {
       continue;
     }
