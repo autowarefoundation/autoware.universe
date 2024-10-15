@@ -44,7 +44,6 @@ namespace autoware::behavior_path_planner
 using autoware::motion_utils::calcSignedArcLength;
 using utils::lane_change::create_lanes_polygon;
 using utils::path_safety_checker::isPolygonOverlapLanelet;
-using utils::traffic_light::getDistanceToNextTrafficLight;
 namespace calculation = utils::lane_change::calculation;
 
 NormalLaneChange::NormalLaneChange(
@@ -558,7 +557,7 @@ PathWithLaneId NormalLaneChange::getReferencePath() const
         get_target_lanes(), getEgoPose(), &closest_lanelet)) {
     return prev_module_output_.reference_path;
   }
-  const auto reference_path = utils::getCenterLinePathFromLanelet(closest_lanelet, planner_data_);
+  auto reference_path = utils::getCenterLinePathFromLanelet(closest_lanelet, planner_data_);
   if (reference_path.points.empty()) {
     return prev_module_output_.reference_path;
   }
@@ -1665,7 +1664,8 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   utils::clipPathLength(reference_segment, 0, length_to_lane_changing_start, 0.0);
   // remove terminal points because utils::clipPathLength() calculates extra long path
   reference_segment.points.pop_back();
-  reference_segment.points.back().point.longitudinal_velocity_mps = minimum_lane_changing_velocity;
+  reference_segment.points.back().point.longitudinal_velocity_mps =
+    static_cast<float>(minimum_lane_changing_velocity);
 
   const auto terminal_lane_change_path = utils::lane_change::construct_candidate_path(
     common_data_ptr_, lane_change_info, reference_segment, target_lane_reference_path,
@@ -1771,11 +1771,7 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
   }
 
   // check relative angle
-  if (!utils::checkPathRelativeAngle(path, M_PI)) {
-    return false;
-  }
-
-  return true;
+  return utils::checkPathRelativeAngle(path, M_PI);
 }
 
 bool NormalLaneChange::isRequiredStop(const bool is_trailing_object)
@@ -1920,7 +1916,7 @@ bool NormalLaneChange::calcAbortPath()
     PathWithLaneId aborting_path;
     aborting_path.points.insert(
       aborting_path.points.begin(), shifted_path.path.points.begin(),
-      shifted_path.path.points.begin() + abort_return_idx);
+      shifted_path.path.points.begin() + static_cast<int>(abort_return_idx));
 
     if (!reference_lane_segment.points.empty()) {
       abort_path.path = utils::combinePath(aborting_path, reference_lane_segment);
