@@ -15,6 +15,7 @@
 
 #include <autoware/behavior_path_lane_change_module/utils/calculation.hpp>
 #include <autoware/behavior_path_planner_common/utils/utils.hpp>
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
 
 #include <boost/geometry/algorithms/buffer.hpp>
 
@@ -163,7 +164,7 @@ double calc_maximum_lane_change_length(
     const auto [min_lat_acc, max_lat_acc] =
       lane_change_parameters.lane_change_lat_acc_map.find(vel);
     const auto t_lane_changing =
-      PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
+      autoware::motion_utils::calc_shift_time_from_jerk(shift_interval, lat_jerk, max_lat_acc);
     const auto lane_changing_length =
       vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
 
@@ -208,7 +209,8 @@ std::vector<double> calc_all_min_lc_lengths(
   min_lc_lengths.reserve(shift_intervals.size());
 
   const auto min_lc_length = [&](const auto shift_interval) {
-    const auto t = PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
+    const auto t =
+      autoware::motion_utils::calc_shift_time_from_jerk(shift_interval, lat_jerk, max_lat_acc);
     return min_vel * t;
   };
 
@@ -248,7 +250,7 @@ std::vector<double> calc_all_max_lc_lengths(
     // lane changing section
     const auto [min_lat_acc, max_lat_acc] = lc_param_ptr->lane_change_lat_acc_map.find(vel);
     const auto t_lane_changing =
-      PathShifter::calcShiftTimeFromJerk(shift_interval, lat_jerk, max_lat_acc);
+      autoware::motion_utils::calc_shift_time_from_jerk(shift_interval, lat_jerk, max_lat_acc);
     const auto lane_changing_length =
       vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
 
@@ -410,7 +412,7 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
 
   for (double lat_acc = min_lateral_acc; lat_acc < max_lateral_acc + eps;
        lat_acc += lateral_acc_resolution) {
-    const auto lane_changing_duration = PathShifter::calcShiftTimeFromJerk(
+    const auto lane_changing_duration = autoware::motion_utils::calc_shift_time_from_jerk(
       shift_length, common_data_ptr->lc_param_ptr->lane_changing_lateral_jerk, lat_acc);
 
     const double lane_changing_accel = calc_lane_changing_acceleration(
