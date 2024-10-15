@@ -97,7 +97,7 @@ private:
       height_sum(0.0f),
       radius_avg(0.0f),
       height_avg(0.0f),
-      height_max(0.0f),
+      height_max(-10.0f),
       height_min(10.0f),
       point_num(0),
       grid_id(0)
@@ -110,7 +110,7 @@ private:
       height_sum = 0.0f;
       radius_avg = 0.0f;
       height_avg = 0.0f;
-      height_max = 0.0f;
+      height_max = -10.0f;
       height_min = 10.0f;
       point_num = 0;
       grid_id = 0;
