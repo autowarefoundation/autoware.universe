@@ -23,6 +23,8 @@
 #include "autoware/behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <autoware/universe_utils/system/time_keeper.hpp>
@@ -1612,7 +1614,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   const auto [min_lateral_acc, max_lateral_acc] =
     lane_change_parameters_->lane_change_lat_acc_map.find(minimum_lane_changing_velocity);
 
-  const auto lane_changing_time = PathShifter::calcShiftTimeFromJerk(
+  const auto lane_changing_time = autoware::motion_utils::calc_shift_time_from_jerk(
     shift_length, lane_change_parameters_->lane_changing_lateral_jerk, max_lateral_acc);
 
   const auto target_lane_length = common_data_ptr_->transient_data.target_lane_length;
@@ -1876,9 +1878,8 @@ bool NormalLaneChange::calcAbortPath()
   PathShifter path_shifter;
   path_shifter.setPath(lane_changing_path);
   path_shifter.addShiftLine(shift_line);
-  const auto lateral_jerk =
-    autoware::behavior_path_planner::PathShifter::calcJerkFromLatLonDistance(
-      shift_line.end_shift_length, abort_start_dist, current_velocity);
+  const auto lateral_jerk = autoware::motion_utils::calc_jerk_from_lat_lon_distance(
+    shift_line.end_shift_length, abort_start_dist, current_velocity);
   path_shifter.setVelocity(current_velocity);
   const auto lateral_acc_range =
     lane_change_parameters_->lane_change_lat_acc_map.find(current_velocity);
