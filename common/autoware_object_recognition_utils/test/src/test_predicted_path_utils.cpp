@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <boost/optional/optional_io.hpp>
 
@@ -64,10 +64,10 @@ PredictedPath createTestPredictedPath(
 
 TEST(predicted_path_utils, testCalcInterpolatedPose)
 {
+  using autoware::object_recognition_utils::calcInterpolatedPose;
   using autoware::universe_utils::createQuaternionFromRPY;
   using autoware::universe_utils::createQuaternionFromYaw;
   using autoware::universe_utils::deg2rad;
-  using object_recognition_utils::calcInterpolatedPose;
 
   const auto path = createTestPredictedPath(100, 0.1, 1.0);
 
@@ -130,10 +130,10 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
 
 TEST(predicted_path_utils, resamplePredictedPath_by_vector)
 {
+  using autoware::object_recognition_utils::resamplePredictedPath;
   using autoware::universe_utils::createQuaternionFromRPY;
   using autoware::universe_utils::createQuaternionFromYaw;
   using autoware::universe_utils::deg2rad;
-  using object_recognition_utils::resamplePredictedPath;
 
   const auto path = createTestPredictedPath(10, 1.0, 1.0);
 
@@ -207,10 +207,10 @@ TEST(predicted_path_utils, resamplePredictedPath_by_vector)
 
 TEST(predicted_path_utils, resamplePredictedPath_by_sampling_time)
 {
+  using autoware::object_recognition_utils::resamplePredictedPath;
   using autoware::universe_utils::createQuaternionFromRPY;
   using autoware::universe_utils::createQuaternionFromYaw;
   using autoware::universe_utils::deg2rad;
-  using object_recognition_utils::resamplePredictedPath;
 
   const auto path = createTestPredictedPath(10, 1.0, 1.0);
 
