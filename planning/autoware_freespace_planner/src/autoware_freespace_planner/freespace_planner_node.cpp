@@ -209,7 +209,10 @@ bool isStopped(
   const std::deque<Odometry::ConstSharedPtr> & odom_buffer, const double th_stopped_velocity_mps)
 {
   for (const auto & odom : odom_buffer) {
-    if (std::abs(odom->twist.twist.linear.x) > th_stopped_velocity_mps) {
+    double x = odom->twist.twist.linear.x;
+    double y = odom->twist.twist.linear.y;
+    double z = odom->twist.twist.linear.z;
+    if (std::abs(x * x + y * y + z * z) > th_stopped_velocity_mps * th_stopped_velocity_mps) {
       return false;
     }
   }
