@@ -113,7 +113,7 @@ PredictedObjects filterObjects(
  */
 PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, const double velocity_threshold,
-  const bool remove_above_threshold = true);
+  const bool remove_above_threshold = false);
 
 /**
  * @brief Helper function to filter objects based on their velocity.
