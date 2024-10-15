@@ -27,6 +27,7 @@
 
 namespace autoware::behavior_path_planner
 {
+using autoware::behavior_path_planner::lane_change::LCParamPtr;
 using autoware::route_handler::Direction;
 
 class LaneChangeModuleManager : public SceneModuleManagerInterface
@@ -43,6 +44,8 @@ public:
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override;
 
   void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) override;
+
+  static LCParamPtr set_params(rclcpp::Node * node, const std::string & node_name);
 
 protected:
   void initParams(rclcpp::Node * node);
