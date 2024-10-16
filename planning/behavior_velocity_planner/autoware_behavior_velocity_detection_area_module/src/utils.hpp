@@ -40,6 +40,10 @@ namespace autoware::behavior_velocity_planner::detection_area
 universe_utils::LineString2d get_stop_line_geometry2d(
   const lanelet::autoware::DetectionArea & detection_area, const double extend_length);
 
+/// @brief get the obstacle points found inside a detection area
+/// @param [in] detection_areas detection area polygons
+/// @param [in] points obstacle points
+/// @return the first obstacle point found in each detection area
 std::vector<geometry_msgs::msg::Point> get_obstacle_points(
   const lanelet::ConstPolygons3d & detection_areas, const pcl::PointCloud<pcl::PointXYZ> & points);
 

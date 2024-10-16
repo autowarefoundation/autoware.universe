@@ -52,3 +52,57 @@ TEST(TestUtils, getStopLine)
     EXPECT_EQ(stop_line[1].y(), line[1].y() + extend_length);
   }
 }
+
+TEST(TestUtils, getObstaclePoints)
+{
+  using autoware::behavior_velocity_planner::detection_area::get_obstacle_points;
+  lanelet::ConstPolygons3d detection_areas;
+  lanelet::Polygon3d area;
+  area.push_back(lanelet::Point3d(lanelet::InvalId, 1.0, -1.0));
+  area.push_back(lanelet::Point3d(lanelet::InvalId, 1.0, 1.0));
+  area.push_back(lanelet::Point3d(lanelet::InvalId, 3.0, 1.0));
+  area.push_back(lanelet::Point3d(lanelet::InvalId, 3.0, -1.0));
+  detection_areas.push_back(area);
+  pcl::PointCloud<pcl::PointXYZ> points;
+  // empty points
+  {
+    const auto obstacle_points = get_obstacle_points(detection_areas, points);
+    EXPECT_TRUE(obstacle_points.empty());
+  }
+  // add points outside the detection area
+  points.emplace_back(0.0, 0.0, 0.0);
+  points.emplace_back(4.0, 4.0, 0.0);
+  {
+    const auto obstacle_points = get_obstacle_points(detection_areas, points);
+    EXPECT_TRUE(obstacle_points.empty());
+  }
+  // add point on the edge of the detection area (will not be found)
+  points.emplace_back(1.0, 1.0, 0.0);
+  {
+    const auto obstacle_points = get_obstacle_points(detection_areas, points);
+    EXPECT_TRUE(obstacle_points.empty());
+  }
+  // add point inside the detection area (will be found)
+  points.emplace_back(2.0, 0.0, 0.0);
+  {
+    const auto obstacle_points = get_obstacle_points(detection_areas, points);
+    ASSERT_EQ(obstacle_points.size(), 1UL);
+    EXPECT_EQ(obstacle_points[0].x, points[3].x);
+    EXPECT_EQ(obstacle_points[0].y, points[3].y);
+  }
+  // add a detection area that covers all points
+  lanelet::Polygon3d full_area;
+  full_area.push_back(lanelet::Point3d(lanelet::InvalId, -10.0, -10.0));
+  full_area.push_back(lanelet::Point3d(lanelet::InvalId, -10.0, 10.0));
+  full_area.push_back(lanelet::Point3d(lanelet::InvalId, 10.0, 10.0));
+  full_area.push_back(lanelet::Point3d(lanelet::InvalId, 10.0, -10.0));
+  detection_areas.push_back(full_area);
+  {
+    const auto obstacle_points = get_obstacle_points(detection_areas, points);
+    ASSERT_EQ(obstacle_points.size(), 2UL);  // only the 1st point found for each area are returned
+    EXPECT_EQ(obstacle_points[0].x, points[3].x);
+    EXPECT_EQ(obstacle_points[0].y, points[3].y);
+    EXPECT_EQ(obstacle_points[1].x, points[0].x);
+    EXPECT_EQ(obstacle_points[1].y, points[0].y);
+  }
+}
