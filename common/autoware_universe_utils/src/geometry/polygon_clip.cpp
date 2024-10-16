@@ -97,10 +97,10 @@ std::vector<autoware::universe_utils::Point2d> intersection(
     double t2 = ((s2.x() - s1.x()) * (s1.y() - c1.y()) - (s2.y() - s1.y()) * (s1.x() - c1.x())) / d;
 
     if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
-      autoware::universe_utils::Point2d intersection;
-      intersection.x() = t1 * s2.x() + (1.0 - t1) * s1.x();
-      intersection.y() = t1 * s2.y() + (1.0 - t1) * s1.y();
-      intersection_points.push_back(intersection);
+      autoware::universe_utils::Point2d intersection_;
+      intersection_.x() = t1 * s2.x() + (1.0 - t1) * s1.x();
+      intersection_.y() = t1 * s2.y() + (1.0 - t1) * s1.y();
+      intersection_points.push_back(intersection_);
     }
   }
 
@@ -125,10 +125,10 @@ std::vector<autoware::universe_utils::Point2d> intersection(
     double t2 = ((s2.x() - s1.x()) * (s1.y() - c1.y()) - (s2.y() - s1.y()) * (s1.x() - c1.x())) / d;
 
     if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
-      autoware::universe_utils::Point2d intersection;
-      intersection.x() = t1 * s2.x() + (1.0 - t1) * s1.x();
-      intersection.y() = t1 * s2.y() + (1.0 - t1) * s1.y();
-      intersection_points.push_back(intersection);
+      autoware::universe_utils::Point2d intersection_;
+      intersection_.x() = t1 * s2.x() + (1.0 - t1) * s1.x();
+      intersection_.y() = t1 * s2.y() + (1.0 - t1) * s1.y();
+      intersection_points.push_back(intersection_);
     }
   }
 
@@ -139,7 +139,7 @@ Intersection intersection(
   const std::vector<LinkedVertex> & source_vertices, std::size_t s1_index, std::size_t s2_index,
   const std::vector<LinkedVertex> & clip_vertices, std::size_t c1_index, std::size_t c2_index)
 {
-  Intersection intersection;
+  Intersection intersection_;
 
   const LinkedVertex & s1 = source_vertices[s1_index];
   const LinkedVertex & s2 = source_vertices[s2_index];
@@ -153,26 +153,26 @@ Intersection intersection(
     double t2 = ((s2.x - s1.x) * (s1.y - c1.y) - (s2.y - s1.y) * (s1.x - c1.x)) / d;
 
     if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
-      intersection.x = t1 * s2.x + (1.0 - t1) * s1.x;
-      intersection.y = t1 * s2.y + (1.0 - t1) * s1.y;
-      intersection.distance_to_source = t1;
-      intersection.distance_to_clip = t2;
-      return intersection;
+      intersection_.x = t1 * s2.x + (1.0 - t1) * s1.x;
+      intersection_.y = t1 * s2.y + (1.0 - t1) * s1.y;
+      intersection_.distance_to_source = t1;
+      intersection_.distance_to_clip = t2;
+      return intersection_;
     }
   }
 
-  intersection.x = std::numeric_limits<double>::quiet_NaN();
-  intersection.y = std::numeric_limits<double>::quiet_NaN();
-  intersection.distance_to_source = 0;
-  intersection.distance_to_clip = 0;
+  intersection_.x = std::numeric_limits<double>::quiet_NaN();
+  intersection_.y = std::numeric_limits<double>::quiet_NaN();
+  intersection_.distance_to_source = 0;
+  intersection_.distance_to_clip = 0;
 
-  return intersection;
+  return intersection_;
 }
 
-bool valid(const Intersection & intersection)
+bool valid(const Intersection & intersection_)
 {
-  return (intersection.distance_to_source > 0 && intersection.distance_to_source < 1) &&
-         (intersection.distance_to_clip > 0 && intersection.distance_to_clip < 1);
+  return (intersection_.distance_to_source > 0 && intersection_.distance_to_source < 1) &&
+         (intersection_.distance_to_clip > 0 && intersection_.distance_to_clip < 1);
 }
 
 std::size_t add_vertex(
@@ -468,11 +468,10 @@ std::vector<autoware::universe_utils::Polygon2d> clip(
         polygon_vector.push_back(get_points(clip));
       }
     } else {  // Difference
-      if (source_in_clip) {
+      if (!source_in_clip) {
+          polygon_vector.push_back(get_points(source));
       } else if (clip_in_source) {
-        polygon_vector.push_back(get_points(source));
-      } else {
-        polygon_vector.push_back(get_points(source));
+          polygon_vector.push_back(get_points(source));
       }
     }
   }

@@ -150,6 +150,7 @@ void insert_vertex(
 std::size_t get_first_intersect(
   ExtendedPolygon & polygon, const std::vector<LinkedVertex> & vertices);
 
+// cSpell:ignore Greiner, Hormann
 /**
  * @brief Clips one polygon using another and returns the resulting polygons.
  * @param source The source polygon to be clipped.
@@ -172,8 +173,8 @@ std::size_t get_first_intersect(
  * primarily due to the difference in the way Boost.Geometry handles
  * intersection points. The difference could reach 1.0 error.
  * In a cases where the found clipped polygon is small, Boost geometry will ignore/simplify the
- * multipolygon thus ignoring the small/negligible polygon. But that is not the case is shapely and
- * our costum polygon clip, as shown in 'test_geometry.cpp' line.
+ * multi polygon thus ignoring the small/negligible polygon. But that is not the case is shapely and
+ * our custom polygon clip, as shown in 'test_geometry.cpp' line.
  */
 std::vector<autoware::universe_utils::Polygon2d> clip(
   ExtendedPolygon & source, ExtendedPolygon & clip, bool source_forwards, bool clip_forwards);
