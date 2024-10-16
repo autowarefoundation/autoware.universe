@@ -323,7 +323,7 @@ void ScanGroundFilterComponent::checkContinuousGndGrid(
   const float gnd_z_local_thresh =
     std::tan(DEG2RAD(5.0)) * (pd.radius - gnd_grids_list.back().radius);
 
-  if (abs(point_curr.z - next_gnd_z) < non_ground_height_threshold_ + gnd_z_local_thresh) {
+  if (abs(point_curr.z - next_gnd_z) <= non_ground_height_threshold_ + gnd_z_local_thresh) {
     pd.point_state = PointLabel::GROUND;
     return;
   }
