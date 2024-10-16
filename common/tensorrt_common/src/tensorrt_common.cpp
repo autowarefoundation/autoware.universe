@@ -591,7 +591,8 @@ bool TrtCommon::enqueueV3(cudaStream_t stream)
   }
   return context_->enqueueV3(stream);
 }
-#elif (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH < 10000
+#endif
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH < 10000
 bool TrtCommon::enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed)
 {
   if (build_config_->profile_per_layer) {
