@@ -225,7 +225,7 @@ void TrtCommon::setup()
   is_initialized_ = true;
 }
 
-#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8050
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8500
 void TrtCommon::setupBindings(std::vector<void *> & bindings)
 {
   for (int32_t i = 0, e = engine_->getNbIOTensors(); i < e; i++) {
@@ -575,7 +575,7 @@ bool TrtCommon::setBindingDimensions(const int32_t index, const nvinfer1::Dims &
   return context_->setBindingDimensions(index, dimensions);
 }
 
-#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8050
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8500
 bool TrtCommon::enqueueV3(cudaStream_t stream)
 {
   if (build_config_->profile_per_layer) {
@@ -591,7 +591,7 @@ bool TrtCommon::enqueueV3(cudaStream_t stream)
   }
   return context_->enqueueV3(stream);
 }
-#else
+#elif (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH < 10000
 bool TrtCommon::enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed)
 {
   if (build_config_->profile_per_layer) {
