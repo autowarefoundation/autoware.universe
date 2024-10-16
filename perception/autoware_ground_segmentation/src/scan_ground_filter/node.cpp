@@ -42,15 +42,19 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     elevation_grid_mode_ = declare_parameter<bool>("elevation_grid_mode");
 
     // common parameters
-    radial_divider_angle_rad_ = deg2rad(declare_parameter<float>("radial_divider_angle_deg"));
+    radial_divider_angle_rad_ =
+      static_cast<float>(deg2rad(declare_parameter<double>("radial_divider_angle_deg")));
     radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);
 
     // common thresholds
-    global_slope_max_angle_rad_ = deg2rad(declare_parameter<float>("global_slope_max_angle_deg"));
-    local_slope_max_angle_rad_ = deg2rad(declare_parameter<float>("local_slope_max_angle_deg"));
+    global_slope_max_angle_rad_ =
+      static_cast<float>(deg2rad(declare_parameter<double>("global_slope_max_angle_deg")));
+    local_slope_max_angle_rad_ =
+      static_cast<float>(deg2rad(declare_parameter<double>("local_slope_max_angle_deg")));
     global_slope_max_ratio_ = std::tan(global_slope_max_angle_rad_);
     local_slope_max_ratio_ = std::tan(local_slope_max_angle_rad_);
-    split_points_distance_tolerance_ = declare_parameter<float>("split_points_distance_tolerance");
+    split_points_distance_tolerance_ =
+      static_cast<float>(declare_parameter<double>("split_points_distance_tolerance"));
     split_points_distance_tolerance_square_ =
       split_points_distance_tolerance_ * split_points_distance_tolerance_;
 
@@ -59,19 +63,21 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
 
     // non-grid parameters
     use_virtual_ground_point_ = declare_parameter<bool>("use_virtual_ground_point");
-    split_height_distance_ = declare_parameter<float>("split_height_distance");
+    split_height_distance_ = static_cast<float>(declare_parameter<double>("split_height_distance"));
 
     // grid mode parameters
     use_recheck_ground_cluster_ = declare_parameter<bool>("use_recheck_ground_cluster");
     use_lowest_point_ = declare_parameter<bool>("use_lowest_point");
-    detection_range_z_max_ = declare_parameter<float>("detection_range_z_max");
-    low_priority_region_x_ = declare_parameter<float>("low_priority_region_x");
-    center_pcl_shift_ = declare_parameter<float>("center_pcl_shift");
-    non_ground_height_threshold_ = declare_parameter<float>("non_ground_height_threshold");
+    detection_range_z_max_ = static_cast<float>(declare_parameter<double>("detection_range_z_max"));
+    low_priority_region_x_ = static_cast<float>(declare_parameter<double>("low_priority_region_x"));
+    center_pcl_shift_ = static_cast<float>(declare_parameter<double>("center_pcl_shift"));
+    non_ground_height_threshold_ =
+      static_cast<float>(declare_parameter<double>("non_ground_height_threshold"));
 
     // grid parameters
-    grid_size_m_ = declare_parameter<float>("grid_size_m");
-    grid_mode_switch_radius_ = declare_parameter<float>("grid_mode_switch_radius");
+    grid_size_m_ = static_cast<float>(declare_parameter<double>("grid_size_m"));
+    grid_mode_switch_radius_ =
+      static_cast<float>(declare_parameter<double>("grid_mode_switch_radius"));
     gnd_grid_buffer_size_ = declare_parameter<int>("gnd_grid_buffer_size");
     virtual_lidar_z_ = vehicle_info_.vehicle_height_m;
 
