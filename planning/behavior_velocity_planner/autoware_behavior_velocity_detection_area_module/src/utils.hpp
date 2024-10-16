@@ -27,7 +27,6 @@
 #include <pcl/point_types.h>
 
 #include <memory>
-#include <utility>
 #include <vector>
 
 namespace autoware::behavior_velocity_planner::detection_area
@@ -47,19 +46,26 @@ universe_utils::LineString2d get_stop_line_geometry2d(
 std::vector<geometry_msgs::msg::Point> get_obstacle_points(
   const lanelet::ConstPolygons3d & detection_areas, const pcl::PointCloud<pcl::PointXYZ> & points);
 
+/// @brief return true if the stop state can be cleared
+/// @details can be cleared if enough time passed since last detecting an obstacle
+/// @param [in] last_obstacle_found_time pointer to the time when an obstacle was last detected
+/// @param [in] now current time
+/// @param [in] state_clear_time [s] minimum duration since last obstacle detection to clear the
+/// stop state
+/// @return true if the stop state can be cleared
 bool can_clear_stop_state(
   const std::shared_ptr<const rclcpp::Time> & last_obstacle_found_time, const rclcpp::Time & now,
   const double state_clear_time);
 
+/// @brief return true if distance to brake is enough
+/// @param self_pose current ego pose
+/// @param line_pose stop pose
+/// @param pass_judge_line_distance braking distance
+/// @param current_velocity current ego velocity
+/// @return true if the distance to brake is enough
 bool has_enough_braking_distance(
   const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose,
   const double pass_judge_line_distance, const double current_velocity);
-
-// calc smallest enclosing circle with average O(N) algorithm
-// reference:
-// https://erickimphotography.com/blog/wp-content/uploads/2018/09/Computational-Geometry-Algorithms-and-Applications-3rd-Ed.pdf
-std::pair<lanelet::BasicPoint2d, double> get_smallest_enclosing_circle(
-  const lanelet::ConstPolygon2d & poly);
 }  // namespace autoware::behavior_velocity_planner::detection_area
 
 #endif  // UTILS_HPP_
