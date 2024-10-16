@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "component_interface_specs/vehicle.hpp"
+#include "autoware/component_interface_specs/vehicle.hpp"
 #include "gtest/gtest.h"
 
 TEST(vehicle, interface)
 {
   {
-    using vehicle_interface::SteeringStatus;
+    using autoware::component_interface_specs::vehicle_interface::SteeringStatus;
     SteeringStatus status;
     size_t depth = 1;
     EXPECT_EQ(status.depth, depth);
@@ -27,7 +27,7 @@ TEST(vehicle, interface)
   }
 
   {
-    using vehicle_interface::GearStatus;
+    using autoware::component_interface_specs::vehicle_interface::GearStatus;
     GearStatus status;
     size_t depth = 1;
     EXPECT_EQ(status.depth, depth);
@@ -36,7 +36,7 @@ TEST(vehicle, interface)
   }
 
   {
-    using vehicle_interface::TurnIndicatorStatus;
+    using autoware::component_interface_specs::vehicle_interface::TurnIndicatorStatus;
     TurnIndicatorStatus status;
     size_t depth = 1;
     EXPECT_EQ(status.depth, depth);
@@ -45,7 +45,7 @@ TEST(vehicle, interface)
   }
 
   {
-    using vehicle_interface::HazardLightStatus;
+    using autoware::component_interface_specs::vehicle_interface::HazardLightStatus;
     HazardLightStatus status;
     size_t depth = 1;
     EXPECT_EQ(status.depth, depth);
@@ -54,7 +54,7 @@ TEST(vehicle, interface)
   }
 
   {
-    using vehicle_interface::EnergyStatus;
+    using autoware::component_interface_specs::vehicle_interface::EnergyStatus;
     EnergyStatus status;
     size_t depth = 1;
     EXPECT_EQ(status.depth, depth);

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_
-#define COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_
 
 #include <rclcpp/qos.hpp>
 
@@ -22,7 +22,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_localization_msgs/srv/initialize_localization.hpp>
 
-namespace localization_interface
+namespace autoware::component_interface_specs::localization_interface
 {
 
 struct Initialize
@@ -58,6 +58,6 @@ struct Acceleration
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace localization_interface
+}  // namespace autoware::component_interface_specs::localization_interface
 
-#endif  // COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_

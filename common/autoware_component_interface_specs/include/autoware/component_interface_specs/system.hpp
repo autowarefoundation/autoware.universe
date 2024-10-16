@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_SPECS__SYSTEM_HPP_
-#define COMPONENT_INTERFACE_SPECS__SYSTEM_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_SPECS__SYSTEM_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_SPECS__SYSTEM_HPP_
 
 #include <rclcpp/qos.hpp>
 
@@ -22,7 +22,7 @@
 #include <tier4_system_msgs/srv/change_autoware_control.hpp>
 #include <tier4_system_msgs/srv/change_operation_mode.hpp>
 
-namespace system_interface
+namespace autoware::component_interface_specs::system_interface
 {
 
 struct MrmState
@@ -55,6 +55,6 @@ struct OperationModeState
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace system_interface
+}  // namespace autoware::component_interface_specs::system_interface
 
-#endif  // COMPONENT_INTERFACE_SPECS__SYSTEM_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__SYSTEM_HPP_
