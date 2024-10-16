@@ -512,12 +512,12 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         centroid_bin.initialize();
 
         // calculate local ground gradient
-        float a, b;
+        float gradient, intercept;
         fitLineFromGndGrid(
-          gnd_grids, gnd_grids.size() - gnd_grid_buffer_size_, gnd_grids.size(), a, b);
+          gnd_grids, gnd_grids.size() - gnd_grid_buffer_size_, gnd_grids.size(), gradient, intercept);
         // update the current grid
-        gnd_grids.back().gradient = a;
-        gnd_grids.back().intercept = b;
+        gnd_grids.back().gradient = gradient;
+        gnd_grids.back().intercept = intercept;
       }
 
       // 0: set the thresholds
