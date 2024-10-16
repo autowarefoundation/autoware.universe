@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VEHICLE_VELOCITY_CONVERTER__VEHICLE_VELOCITY_CONVERTER_HPP_
-#define VEHICLE_VELOCITY_CONVERTER__VEHICLE_VELOCITY_CONVERTER_HPP_
+#ifndef VEHICLE_VELOCITY_CONVERTER_HPP_
+#define VEHICLE_VELOCITY_CONVERTER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+namespace autoware::vehicle_velocity_converter
+{
 class VehicleVelocityConverter : public rclcpp::Node
 {
 public:
@@ -43,5 +45,6 @@ private:
   double stddev_wz_;
   double speed_scale_factor_;
 };
+}  // namespace autoware::vehicle_velocity_converter
 
-#endif  // VEHICLE_VELOCITY_CONVERTER__VEHICLE_VELOCITY_CONVERTER_HPP_
+#endif  // VEHICLE_VELOCITY_CONVERTER_HPP_
