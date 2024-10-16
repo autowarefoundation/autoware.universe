@@ -14,10 +14,10 @@
 
 #include "autoware/tracking_object_merger/association/data_association.hpp"
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/tracking_object_merger/association/solver/gnn_solver.hpp"
 #include "autoware/tracking_object_merger/utils/utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -178,9 +178,9 @@ double DataAssociation::calcScoreBetweenObjects(
   const autoware_perception_msgs::msg::TrackedObject & object1) const
 {
   const std::uint8_t object1_label =
-    object_recognition_utils::getHighestProbLabel(object1.classification);
+    autoware::object_recognition_utils::getHighestProbLabel(object1.classification);
   const std::uint8_t object0_label =
-    object_recognition_utils::getHighestProbLabel(object0.classification);
+    autoware::object_recognition_utils::getHighestProbLabel(object0.classification);
 
   double score = 0.0;
   if (can_assign_matrix_(object1_label, object0_label)) {
@@ -206,7 +206,8 @@ double DataAssociation::calcScoreBetweenObjects(
     if (passed_gate) {
       const double min_iou = min_iou_matrix_(object1_label, object0_label);
       const double min_union_iou_area = 1e-2;
-      const double iou = object_recognition_utils::get2dIoU(object0, object1, min_union_iou_area);
+      const double iou =
+        autoware::object_recognition_utils::get2dIoU(object0, object1, min_union_iou_area);
       if (iou < min_iou) passed_gate = false;
     }
     // max velocity diff gate
