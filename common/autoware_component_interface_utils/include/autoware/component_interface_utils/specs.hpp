@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_UTILS__SPECS_HPP_
-#define COMPONENT_INTERFACE_UTILS__SPECS_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_UTILS__SPECS_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_UTILS__SPECS_HPP_
 
 #include <rclcpp/qos.hpp>
 
-namespace component_interface_utils
+namespace autoware::component_interface_utils
 {
 
 template <class SpecT>
@@ -29,6 +29,6 @@ rclcpp::QoS get_qos()
   return qos;
 }
 
-}  // namespace component_interface_utils
+}  // namespace autoware::component_interface_utils
 
-#endif  // COMPONENT_INTERFACE_UTILS__SPECS_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_UTILS__SPECS_HPP_

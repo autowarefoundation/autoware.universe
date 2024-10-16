@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
-#define COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
 
-#include <component_interface_utils/rclcpp/interface.hpp>
-#include <component_interface_utils/rclcpp/service_client.hpp>
-#include <component_interface_utils/rclcpp/service_server.hpp>
-#include <component_interface_utils/rclcpp/topic_publisher.hpp>
-#include <component_interface_utils/rclcpp/topic_subscription.hpp>
-#include <component_interface_utils/specs.hpp>
+#include <autoware/component_interface_utils/rclcpp/interface.hpp>
+#include <autoware/component_interface_utils/rclcpp/service_client.hpp>
+#include <autoware/component_interface_utils/rclcpp/service_server.hpp>
+#include <autoware/component_interface_utils/rclcpp/topic_publisher.hpp>
+#include <autoware/component_interface_utils/rclcpp/topic_subscription.hpp>
+#include <autoware/component_interface_utils/specs.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <utility>
 
-namespace component_interface_utils
+namespace autoware::component_interface_utils
 {
 
 /// Create a client wrapper for logging. This is a private implementation.
@@ -72,6 +72,6 @@ typename Subscription<SpecT>::SharedPtr create_subscription_impl(
   return Subscription<SpecT>::make_shared(subscription);
 }
 
-}  // namespace component_interface_utils
+}  // namespace autoware::component_interface_utils
 
-#endif  // COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
