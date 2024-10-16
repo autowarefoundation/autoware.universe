@@ -16,9 +16,10 @@
 #include "autoware/behavior_path_lane_change_module/scene.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
+#include "autoware_test_utils/autoware_test_utils.hpp"
+#include "autoware_test_utils/mock_data_parser.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <autoware_test_utils/autoware_test_utils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -30,15 +31,14 @@ using autoware::behavior_path_planner::NormalLaneChange;
 using autoware::behavior_path_planner::PlannerData;
 using autoware::behavior_path_planner::lane_change::LCParamPtr;
 using autoware::route_handler::Direction;
+using autoware::route_handler::RouteHandler;
+using autoware::test_utils::get_absolute_path_to_lanelet_map;
+using autoware::test_utils::get_absolute_path_to_route;
+using autoware_map_msgs::msg::LaneletMapBin;
 
 class TestNormalLaneChange : public ::testing::Test
 {
 public:
-  static void SetUpTestSuite()
-  {
-    rclcpp::init(0, nullptr);  // Call this only once
-  }
-
   void SetUp() override
   {
     init_param();
@@ -67,6 +67,18 @@ public:
     auto node = rclcpp::Node(name, node_options);
     planner_data_->init_parameters(node);
     auto lc_param = LaneChangeModuleManager::set_params(&node, node.get_name());
+
+    std::string autoware_route_handler_dir{"autoware_route_handler"};
+    std::string lane_change_right_test_route_filename{"lane_change_test_route.yaml"};
+    std::string lanelet_map_filename{"2km_test.osm"};
+    const auto lanelet2_path =
+      get_absolute_path_to_lanelet_map(autoware_test_utils_dir, lanelet_map_filename);
+    const auto map_bin_msg = autoware::test_utils::make_map_bin_msg(lanelet2_path, 5.0);
+    planner_data_->route_handler = std::make_shared<RouteHandler>(map_bin_msg);
+    const auto rh_test_route =
+      get_absolute_path_to_route(autoware_route_handler_dir, lane_change_right_test_route_filename);
+    planner_data_->route_handler->setRoute(
+      autoware::test_utils::parse_lanelet_route_file(rh_test_route));
   }
 
   void init_module()
@@ -83,24 +95,31 @@ public:
   Direction lc_direction_{Direction::RIGHT};
   std::string name = "test_lane_change_scene";
 
+  autoware::behavior_path_planner::lane_change::CommonDataPtr get_common_data_ptr()
+  {
+    return normal_lane_change_->common_data_ptr_;
+  }
+
   void TearDown() override
   {
     normal_lane_change_ = nullptr;
     lc_param_ptr_ = nullptr;
     planner_data_ = nullptr;
+    rclcpp::shutdown();
   }
 };
 
-TEST_F(TestNormalLaneChange, testBaseClassGetType)
+TEST_F(TestNormalLaneChange, testBaseClassInitialize)
 {
   const auto type = normal_lane_change_->getModuleType();
   const auto type_str = normal_lane_change_->getModuleTypeStr();
 
   ASSERT_EQ(type, LaneChangeModuleType::NORMAL);
   ASSERT_TRUE(type_str == "NORMAL");
-}
 
-TEST_F(TestNormalLaneChange, testBaseClassGetDirection)
-{
   ASSERT_EQ(normal_lane_change_->getDirection(), Direction::RIGHT);
+
+  ASSERT_TRUE(get_common_data_ptr());
+
+  ASSERT_FALSE(get_common_data_ptr()->is_data_available());
 }
