@@ -150,3 +150,34 @@ TEST(TestUtils, canClearStopState)
   EXPECT_TRUE(
     can_clear_stop_state(last_obstacle_found_time, rclcpp::Time(2, 0), negative_state_clear_time));
 }
+
+TEST(TestUtils, hasEnoughBrakingDistance)
+{
+  using autoware::behavior_velocity_planner::detection_area::has_enough_braking_distance;
+  // prepare a stop pose 10m away from the self pose
+  geometry_msgs::msg::Pose self_pose;
+  self_pose.position.x = 0.0;
+  self_pose.position.y = 0.0;
+  geometry_msgs::msg::Pose line_pose;
+  line_pose.position.x = 10.0;
+  line_pose.position.y = 0.0;
+  // can always brake at zero velocity
+  for (auto pass_judge_line_distance = 0.0; pass_judge_line_distance <= 20.0;
+       pass_judge_line_distance += 0.1) {
+    double current_velocity = 0.0;
+    EXPECT_TRUE(has_enough_braking_distance(
+      self_pose, line_pose, pass_judge_line_distance, current_velocity));
+  }
+  // if velocity is not zero, can brake if the pass judge line distance is lower than 10m
+  const double current_velocity = 5.0;
+  for (auto pass_judge_line_distance = 0.0; pass_judge_line_distance < 10.0;
+       pass_judge_line_distance += 0.1) {
+    EXPECT_TRUE(has_enough_braking_distance(
+      self_pose, line_pose, pass_judge_line_distance, current_velocity));
+  }
+  for (auto pass_judge_line_distance = 10.0; pass_judge_line_distance <= 20.0;
+       pass_judge_line_distance += 0.1) {
+    EXPECT_FALSE(has_enough_braking_distance(
+      self_pose, line_pose, pass_judge_line_distance, current_velocity));
+  }
+}
