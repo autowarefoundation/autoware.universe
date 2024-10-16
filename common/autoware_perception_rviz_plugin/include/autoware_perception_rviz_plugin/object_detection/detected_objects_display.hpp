@@ -18,6 +18,8 @@
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
 
+#include <set>
+
 namespace autoware
 {
 namespace rviz_plugins
@@ -37,6 +39,7 @@ public:
 
 private:
   void processMessage(DetectedObjects::ConstSharedPtr msg) override;
+  std::set<rviz_default_plugins::displays::MarkerID> existing_marker_ids;
 };
 
 }  // namespace object_detection
