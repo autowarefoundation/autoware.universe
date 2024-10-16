@@ -18,6 +18,7 @@
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
@@ -181,7 +182,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
       .y;
 
   // calculate shift start pose on road lane
-  const double pull_over_distance = PathShifter::calcLongitudinalDistFromJerk(
+  const double pull_over_distance = autoware::motion_utils::calc_longitudinal_dist_from_jerk(
     shift_end_road_to_target_distance, lateral_jerk, pull_over_velocity);
   const double before_shifted_pull_over_distance = calcBeforeShiftedArcLength(
     processed_prev_module_path.value(), pull_over_distance, shift_end_road_to_target_distance);
