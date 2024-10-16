@@ -20,11 +20,11 @@
 #include "autoware/multi_object_tracker/tracker/model/normal_vehicle_tracker.hpp"
 
 #include "autoware/multi_object_tracker/utils/utils.hpp"
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/math/normalization.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "autoware/universe_utils/ros/msg_covariance.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -195,50 +195,6 @@ autoware_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpdatingO
     bounding_box_.width, bounding_box_.length, nearest_corner_index, bbox_object, tracked_yaw,
     updating_object, tracking_offset_);
 
-  // UNCERTAINTY MODEL
-  if (!object.kinematics.has_position_covariance) {
-    // measurement noise covariance
-    auto r_cov_x = object_model_.measurement_covariance.pos_x;
-    auto r_cov_y = object_model_.measurement_covariance.pos_y;
-    const uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
-    if (utils::isLargeVehicleLabel(label)) {
-      // if label is changed, enlarge the measurement noise covariance
-      constexpr float r_stddev_x = 2.0;  // [m]
-      constexpr float r_stddev_y = 2.0;  // [m]
-      r_cov_x = r_stddev_x * r_stddev_x;
-      r_cov_y = r_stddev_y * r_stddev_y;
-    }
-
-    // yaw angle fix
-    const double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-    const bool is_yaw_available =
-      object.kinematics.orientation_availability !=
-      autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
-
-    // fill covariance matrix
-    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-    auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
-    const double cos_yaw = std::cos(pose_yaw);
-    const double sin_yaw = std::sin(pose_yaw);
-    const double sin_2yaw = std::sin(2.0 * pose_yaw);
-    pose_cov[XYZRPY_COV_IDX::X_X] =
-      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;           // x - x
-    pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5 * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
-    pose_cov[XYZRPY_COV_IDX::Y_Y] =
-      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;                   // y - y
-    pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];                 // y - x
-    pose_cov[XYZRPY_COV_IDX::X_YAW] = 0.0;                                         // x - yaw
-    pose_cov[XYZRPY_COV_IDX::Y_YAW] = 0.0;                                         // y - yaw
-    pose_cov[XYZRPY_COV_IDX::YAW_X] = 0.0;                                         // yaw - x
-    pose_cov[XYZRPY_COV_IDX::YAW_Y] = 0.0;                                         // yaw - y
-    pose_cov[XYZRPY_COV_IDX::YAW_YAW] = object_model_.measurement_covariance.yaw;  // yaw - yaw
-    if (!is_yaw_available) {
-      pose_cov[XYZRPY_COV_IDX::YAW_YAW] *= 1e3;  // yaw is not available, multiply large value
-    }
-    auto & twist_cov = updating_object.kinematics.twist_with_covariance.covariance;
-    twist_cov[XYZRPY_COV_IDX::X_X] = object_model_.measurement_covariance.vel_long;  // vel - vel
-  }
-
   return updating_object;
 }
 
@@ -347,7 +303,9 @@ bool NormalVehicleTracker::measure(
 
   // update classification
   const auto & current_classification = getClassification();
-  if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+  if (
+    autoware::object_recognition_utils::getHighestProbLabel(object.classification) ==
+    Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
@@ -373,7 +331,7 @@ bool NormalVehicleTracker::measure(
 bool NormalVehicleTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
-  object = object_recognition_utils::toTrackedObject(object_);
+  object = autoware::object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 

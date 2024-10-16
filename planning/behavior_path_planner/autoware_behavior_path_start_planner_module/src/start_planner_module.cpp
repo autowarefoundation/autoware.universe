@@ -329,7 +329,7 @@ bool StartPlannerModule::noMovingObjectsAround() const
   utils::path_safety_checker::filterObjectsByClass(
     dynamic_objects, parameters_->surround_moving_obstacles_type_to_check);
   const auto filtered_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    dynamic_objects, parameters_->th_moving_obstacle_velocity, false);
+    dynamic_objects, parameters_->th_moving_obstacle_velocity, true);
   if (!filtered_objects.objects.empty()) {
     DEBUG_PRINT("Moving objects exist in the safety check area");
   }
