@@ -321,6 +321,19 @@ public:
     });
   }
 
+  bool isFeasible(const AvoidLineArray & shift_lines) const
+  {
+    const auto JERK_BUFFER = 0.1;  // [m/sss]
+    const auto & values = parameters_->velocity_map;
+    const auto idx = getConstraintsMapIndex(0.0, values);  // use minimum avoidance speed
+    const auto jerk_limit = parameters_->lateral_max_jerk_map.at(idx);
+    return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
+      return PathShifter::calcJerkFromLatLonDistance(
+               line.getRelativeLength(), line.getRelativeLongitudinal(), values.at(idx)) <
+             jerk_limit + JERK_BUFFER;
+    });
+  }
+
   bool isReady(const ObjectDataArray & objects) const
   {
     if (objects.empty()) {
