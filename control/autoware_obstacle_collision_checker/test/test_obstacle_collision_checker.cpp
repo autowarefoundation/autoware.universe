@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc. All rights reserved.
+// Copyright 2022-2024 Tier IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../src/obstacle_collision_checker_node/obstacle_collision_checker.cpp"  // NOLINT
+#include "../src/obstacle_collision_checker.cpp"  // NOLINT
 #include "gtest/gtest.h"
-#include "obstacle_collision_checker/obstacle_collision_checker.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
@@ -159,7 +158,7 @@ TEST(test_obstacle_collision_checker, calcBrakingDistance)
 
 TEST(test_obstacle_collision_checker, check_for_collisions)
 {
-  obstacle_collision_checker::Input input;
+  autoware::obstacle_collision_checker::Input input;
   // call with empty input causes a segfault
   // const auto output = check_for_collisions(input);
   input.param.delay_time = 1.0;

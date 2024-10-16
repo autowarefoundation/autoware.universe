@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_HPP_
-#define OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_HPP_
+#ifndef AUTOWARE__OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_HPP_
+#define AUTOWARE__OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_HPP_
 
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace obstacle_collision_checker
+namespace autoware::obstacle_collision_checker
 {
 using autoware::universe_utils::LinearRing2d;
 
@@ -89,6 +89,6 @@ bool will_collide(
 bool has_collision(
   const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
   const LinearRing2d & vehicle_footprint);
-}  // namespace obstacle_collision_checker
+}  // namespace autoware::obstacle_collision_checker
 
-#endif  // OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_HPP_
+#endif  // AUTOWARE__OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_HPP_
