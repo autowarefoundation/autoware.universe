@@ -469,9 +469,9 @@ std::vector<autoware::universe_utils::Polygon2d> clip(
       }
     } else {  // Difference
       if (!source_in_clip) {
-          polygon_vector.push_back(get_points(source));
+        polygon_vector.push_back(get_points(source));
       } else if (clip_in_source) {
-          polygon_vector.push_back(get_points(source));
+        polygon_vector.push_back(get_points(source));
       }
     }
   }
