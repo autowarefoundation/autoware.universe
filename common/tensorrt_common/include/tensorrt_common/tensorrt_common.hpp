@@ -184,7 +184,7 @@ public:
    */
   void setup();
 
-#if (NV_TENSORRT_MAJOR * 10000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 80500
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8050
   void setupBindings(std::vector<void *> & bindings);
 #endif
 
@@ -193,9 +193,10 @@ public:
   nvinfer1::Dims getBindingDimensions(const int32_t index) const;
   int32_t getNbBindings();
   bool setBindingDimensions(const int32_t index, const nvinfer1::Dims & dimensions) const;
-  bool enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed);
-#if (NV_TENSORRT_MAJOR * 10000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 80500
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8050
   bool enqueueV3(cudaStream_t stream);
+#else
+  bool enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed);
 #endif
 
   /**
