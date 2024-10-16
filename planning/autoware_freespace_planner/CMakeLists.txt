@@ -17,8 +17,8 @@ rclcpp_components_register_node(freespace_planner_node
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
     test/test_freespace_planner_node_interface.cpp
-    test/test_freespace_planner.cpp
     test/test_freespace_planner_utils.cpp
+    test/test_freespace_planner.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
     freespace_planner_node
