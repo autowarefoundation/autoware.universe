@@ -58,7 +58,7 @@ bool can_clear_stop_state(
   const double state_clear_time)
 {
   // vehicle can clear stop state if the obstacle has never appeared in detection area
-  if (last_obstacle_found_time) {
+  if (!last_obstacle_found_time) {
     return true;
   }
 

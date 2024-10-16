@@ -17,6 +17,10 @@
 #include <gtest/gtest.h>
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/primitives/Polygon.h>
+#include <rcl/time.h>
+
+#include <cstddef>
+#include <memory>
 
 TEST(TestUtils, getStopLine)
 {
@@ -105,4 +109,44 @@ TEST(TestUtils, getObstaclePoints)
     EXPECT_EQ(obstacle_points[1].x, points[0].x);
     EXPECT_EQ(obstacle_points[1].y, points[0].y);
   }
+}
+
+TEST(TestUtils, canClearStopState)
+{
+  using autoware::behavior_velocity_planner::detection_area::can_clear_stop_state;
+  std::shared_ptr<const rclcpp::Time> last_obstacle_found_time = nullptr;
+  // can clear if we never found an obstacle
+  for (auto now_s = 0; now_s <= 10; now_s += 1) {
+    for (auto now_ns = 0; now_ns <= 1e9; now_ns += 1e8) {
+      for (double state_clear_time = 0.0; state_clear_time <= 10.0; state_clear_time += 0.1) {
+        const auto can_clear = can_clear_stop_state(
+          last_obstacle_found_time, rclcpp::Time(now_s, now_ns, RCL_CLOCK_UNINITIALIZED),
+          state_clear_time);
+        EXPECT_TRUE(can_clear);
+      }
+    }
+  }
+  last_obstacle_found_time = std::make_shared<rclcpp::Time>(1.0, 0.0);
+  const auto state_clear_time = 1.0;
+  // special case for negative time difference which may occur with simulated time
+  EXPECT_TRUE(can_clear_stop_state(last_obstacle_found_time, rclcpp::Time(0, 0), state_clear_time));
+  EXPECT_TRUE(
+    can_clear_stop_state(last_obstacle_found_time, rclcpp::Time(0, 9 * 1e8), state_clear_time));
+  // cannot clear before the time has passed since the obstacle disappeared
+  EXPECT_FALSE(
+    can_clear_stop_state(last_obstacle_found_time, rclcpp::Time(1, 1), state_clear_time));
+  EXPECT_FALSE(
+    can_clear_stop_state(last_obstacle_found_time, rclcpp::Time(1, 1e9 - 1), state_clear_time));
+  // can clear after the time has passed
+  EXPECT_TRUE(can_clear_stop_state(last_obstacle_found_time, rclcpp::Time(2, 1), state_clear_time));
+  EXPECT_TRUE(
+    can_clear_stop_state(last_obstacle_found_time, rclcpp::Time(100, 0), state_clear_time));
+  // negative time
+  const auto negative_state_clear_time = -1.0;
+  EXPECT_TRUE(
+    can_clear_stop_state(last_obstacle_found_time, rclcpp::Time(0, 0), negative_state_clear_time));
+  EXPECT_TRUE(
+    can_clear_stop_state(last_obstacle_found_time, rclcpp::Time(1, 0), negative_state_clear_time));
+  EXPECT_TRUE(
+    can_clear_stop_state(last_obstacle_found_time, rclcpp::Time(2, 0), negative_state_clear_time));
 }
