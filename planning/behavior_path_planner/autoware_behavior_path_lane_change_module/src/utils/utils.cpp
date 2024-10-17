@@ -1049,9 +1049,16 @@ bool isWithinIntersection(
     return false;
   }
 
-  const auto lanelet_polygon =
-    route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(id.c_str()));
+  if (!std::atoi(id.c_str())) {
+    return false;
+  }
 
+  const auto lanelet_polygon_opt = route_handler->getLaneletMapPtr()->polygonLayer.find(std::atoi(id.c_str()));
+  if (lanelet_polygon_opt == route_handler->getLaneletMapPtr()->polygonLayer.end()) {
+    return false;
+  }
+  const auto& lanelet_polygon = *lanelet_polygon_opt;
+  
   return boost::geometry::within(
     polygon, utils::toPolygon2d(lanelet::utils::to2D(lanelet_polygon.basicPolygon())));
 }
