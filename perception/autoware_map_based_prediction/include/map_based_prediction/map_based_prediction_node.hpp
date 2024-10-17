@@ -154,6 +154,7 @@ using autoware_perception_msgs::msg::TrafficLightGroupArray;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using tier4_debug_msgs::msg::StringStamped;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using LaneletPathWithPathInfo = std::pair<lanelet::routing::LaneletPath, PredictedRefPath>;
 class MapBasedPredictionNode : public rclcpp::Node
 {
 public:
@@ -290,9 +291,12 @@ private:
     const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users);
   std::optional<size_t> searchProperStartingRefPathIndex(
     const TrackedObject & object, const PosePath & pose_path) const;
-  std::vector<PredictedRefPath> getPredictedReferencePath(
+  std::vector<LaneletPathWithPathInfo> getPredictedReferencePath(
     const TrackedObject & object, const LaneletsData & current_lanelets_data,
     const double object_detected_time, const double time_horizon);
+  std::vector<PredictedRefPath> convertPredictedReferencePath(
+    const TrackedObject & object,
+    const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths) const;
   Maneuver predictObjectManeuver(
     const std::string & object_id, const geometry_msgs::msg::Pose & object_pose,
     const LaneletData & current_lanelet_data, const double object_detected_time);
