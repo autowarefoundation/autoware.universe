@@ -24,13 +24,16 @@
 namespace autoware::default_adapi
 {
 
-using GearReport = vehicle_interface::GearStatus::Message;
+using GearReport = autoware::component_interface_specs::vehicle_interface::GearStatus::Message;
 using ApiGear = autoware_adapi_v1_msgs::msg::Gear;
-using TurnIndicatorsReport = vehicle_interface::TurnIndicatorStatus::Message;
+using TurnIndicatorsReport =
+  autoware::component_interface_specs::vehicle_interface::TurnIndicatorStatus::Message;
 using ApiTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicators;
-using HazardLightsReport = vehicle_interface::HazardLightStatus::Message;
+using HazardLightsReport =
+  autoware::component_interface_specs::vehicle_interface::HazardLightStatus::Message;
 using ApiHazardLight = autoware_adapi_v1_msgs::msg::HazardLights;
-using MapProjectorInfo = map_interface::MapProjectorInfo::Message;
+using MapProjectorInfo =
+  autoware::component_interface_specs::map_interface::MapProjectorInfo::Message;
 
 std::unordered_map<uint8_t, uint8_t> gear_type_ = {
   {GearReport::NONE, ApiGear::UNKNOWN},    {GearReport::NEUTRAL, ApiGear::NEUTRAL},
@@ -89,19 +92,21 @@ uint8_t VehicleNode::mapping(
 }
 
 void VehicleNode::kinematic_state(
-  const localization_interface::KinematicState::Message::ConstSharedPtr msg_ptr)
+  const autoware::component_interface_specs::localization_interface::KinematicState::Message::
+    ConstSharedPtr msg_ptr)
 {
   kinematic_state_msgs_ = msg_ptr;
 }
 
 void VehicleNode::acceleration_status(
-  const localization_interface::Acceleration::Message::ConstSharedPtr msg_ptr)
+  const autoware::component_interface_specs::localization_interface::Acceleration::Message::
+    ConstSharedPtr msg_ptr)
 {
   acceleration_msgs_ = msg_ptr;
 }
 
-void VehicleNode::steering_status(
-  const vehicle_interface::SteeringStatus::Message::ConstSharedPtr msg_ptr)
+void VehicleNode::steering_status(const autoware::component_interface_specs::vehicle_interface::
+                                    SteeringStatus::Message::ConstSharedPtr msg_ptr)
 {
   steering_status_msgs_ = msg_ptr;
 }
@@ -121,8 +126,8 @@ void VehicleNode::hazard_light_status(const HazardLightsReport::ConstSharedPtr m
   hazard_light_status_msgs_ = msg_ptr;
 }
 
-void VehicleNode::energy_status(
-  const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr)
+void VehicleNode::energy_status(const autoware::component_interface_specs::vehicle_interface::
+                                  EnergyStatus::Message::ConstSharedPtr msg_ptr)
 {
   energy_status_msgs_ = msg_ptr;
 }
