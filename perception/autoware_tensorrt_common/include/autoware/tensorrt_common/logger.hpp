@@ -29,7 +29,6 @@
 #include <string>
 #include <thread>
 
-
 namespace autoware
 {
 namespace tensorrt_common

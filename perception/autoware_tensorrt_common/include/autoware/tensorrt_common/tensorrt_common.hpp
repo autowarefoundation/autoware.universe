@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__TENSORRT_COMMON__AUTOWARE__TENSORRT_COMMON_HPP_
-#define AUTOWARE__TENSORRT_COMMON__AUTOWARE__TENSORRT_COMMON_HPP_
+#ifndef AUTOWARE__TENSORRT_COMMON__TENSORRT_COMMON_HPP_
+#define AUTOWARE__TENSORRT_COMMON__TENSORRT_COMMON_HPP_
 
 #ifndef YOLOX_STANDALONE
 #include <rclcpp/rclcpp.hpp>
@@ -240,4 +240,4 @@ private:
 }  // namespace tensorrt_common
 }  // namespace autoware
 
-#endif  // AUTOWARE__TENSORRT_COMMON__AUTOWARE__TENSORRT_COMMON_HPP_
+#endif  // AUTOWARE__TENSORRT_COMMON__TENSORRT_COMMON_HPP_
