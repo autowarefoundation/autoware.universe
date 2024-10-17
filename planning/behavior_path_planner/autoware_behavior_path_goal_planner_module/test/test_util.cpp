@@ -37,7 +37,7 @@ protected:
 
     // lanelet map
     const std::string shoulder_map_path = autoware::test_utils::get_absolute_path_to_lanelet_map(
-      "autoware_behavior_path_planner_common", "road_shoulder/lanelet2_map.osm");
+      "autoware_test_utils", "road_shoulder/lanelet2_map.osm");
     const auto map_bin_msg = autoware::test_utils::make_map_bin_msg(shoulder_map_path, 0.5);
 
     // load map
