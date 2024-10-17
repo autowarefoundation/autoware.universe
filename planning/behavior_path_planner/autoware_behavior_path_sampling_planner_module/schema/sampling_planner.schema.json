@@ -1,0 +1,136 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for sampling_planner",
+  "type": "object",
+  "definitions": {
+    "sampling_planner": {
+      "type": "object",
+      "properties": {
+        "max_curvature": {
+          "type": "number",
+          "default": 0.1,
+          "description": "Maximum curvature for the start planner."
+        },
+        "min_curvature": {
+          "type": "number",
+          "default": -0.1,
+          "description": "Minimum curvature for the start planner."
+        },
+        "lateral_deviation_weight": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Weight for lateral deviation."
+        },
+        "length_weight": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Weight for path length."
+        },
+        "curvature_weight": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Weight for curvature."
+        },
+        "enable_frenet": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Frenet frame for the planner."
+        },
+        "enable_bezier": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Bezier curve for the planner."
+        },
+        "resolution": {
+          "type": "number",
+          "default": 0.5,
+          "description": "Resolution for the path planning."
+        },
+        "previous_path_reuse_points_nb": {
+          "type": "number",
+          "default": 2,
+          "description": "Number of points to reuse from the previous path."
+        },
+        "nb_target_lateral_positions": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Number of target lateral positions."
+        },
+        "target_lengths": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Target lengths for the planner."
+        },
+        "target_lateral_positions": {
+          "type": "number",
+          "default": 2,
+          "description": "Number of target lateral positions."
+        },
+        "target_lateral_velocities": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Target lateral velocities for the planner."
+        },
+        "target_lateral_accelerations": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Target lateral accelerations for the planner."
+        },
+        "force_zero_deviation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Force zero lateral deviation."
+        },
+        "force_zero_heading": {
+          "type": "boolean",
+          "default": true,
+          "description": "Force zero heading deviation."
+        },
+        "smooth_reference": {
+          "type": "boolean",
+          "default": false,
+          "description": "Smooth the reference path."
+        }
+      },
+      "required": [
+        "max_curvature",
+        "min_curvature",
+        "lateral_deviation_weight",
+        "length_weight",
+        "curvature_weight",
+        "enable_frenet",
+        "enable_bezier",
+        "resolution",
+        "previous_path_reuse_points_nb",
+        "nb_target_lateral_positions",
+        "target_lengths",
+        "target_lateral_positions",
+        "target_lateral_velocities",
+        "target_lateral_accelerations",
+        "force_zero_deviation",
+        "force_zero_heading",
+        "smooth_reference"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/sampling_planner"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}

@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for behavior_path_planner",
+  "type": "object",
+  "definitions": {
+    "behavior_path_planner": {
+      "type": "object",
+      "properties": {
+        "max_iteration_num": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of iterations for path planning."
+        },
+        "traffic_light_signal_timeout": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Timeout for traffic light signal [seconds]."
+        },
+        "planning_hz": {
+          "type": "number",
+          "default": 10.0,
+          "description": "Frequency of planning [Hz]."
+        },
+        "backward_path_length": {
+          "type": "number",
+          "default": 5.0,
+          "description": "Length of backward path [meters]."
+        },
+        "forward_path_length": {
+          "type": "number",
+          "default": 300.0,
+          "description": "Length of forward path [meters]."
+        },
+        "backward_length_buffer_for_end_of_pull_over": {
+          "type": "number",
+          "default": 5.0,
+          "description": "Buffer length for end of pull over [meters]."
+        },
+        "backward_length_buffer_for_end_of_pull_out": {
+          "type": "number",
+          "default": 5.0,
+          "description": "Buffer length for end of pull out [meters]."
+        },
+        "minimum_pull_over_length": {
+          "type": "number",
+          "default": 16.0,
+          "description": "Minimum length for pull over [meters]."
+        },
+        "refine_goal_search_radius_range": {
+          "type": "number",
+          "default": 7.5,
+          "description": "Search radius range for refining goal [meters]."
+        },
+        "turn_signal_intersection_search_distance": {
+          "type": "number",
+          "default": 30.0,
+          "description": "Search distance for turn signal at intersections [meters]."
+        },
+        "turn_signal_intersection_angle_threshold_deg": {
+          "type": "number",
+          "default": 15.0,
+          "description": "Angle threshold for turn signal at intersections [degrees]."
+        },
+        "turn_signal_minimum_search_distance": {
+          "type": "number",
+          "default": 10.0,
+          "description": "Minimum search distance for turn signal [meters]."
+        },
+        "turn_signal_search_time": {
+          "type": "number",
+          "default": 3.0,
+          "description": "Search time for turn signal [seconds]."
+        },
+        "turn_signal_shift_length_threshold": {
+          "type": "number",
+          "default": 0.3,
+          "description": "Shift length threshold for turn signal [meters]."
+        },
+        "turn_signal_remaining_shift_length_threshold": {
+          "type": "number",
+          "default": 0.1,
+          "description": "Remaining shift length threshold for turn signal [meters]."
+        },
+        "turn_signal_on_swerving": {
+          "type": "boolean",
+          "default": true,
+          "description": "Turn signal on when swerving."
+        },
+        "enable_akima_spline_first": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Akima spline first."
+        },
+        "enable_cog_on_centerline": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable center of gravity on centerline."
+        },
+        "input_path_interval": {
+          "type": "number",
+          "default": 2.0,
+          "description": "Input path interval [meters]."
+        },
+        "output_path_interval": {
+          "type": "number",
+          "default": 2.0,
+          "description": "Output path interval [meters]."
+        },
+        "closest_lanelet": {
+          "type": "object",
+          "properties": {
+            "distance_threshold": {
+              "type": "number",
+              "default": 5.0,
+              "description": "Distance threshold for closest lanelet [meters]."
+            },
+            "yaw_threshold": {
+              "type": "number",
+              "default": 0.79,
+              "description": "Yaw threshold for closest lanelet [radians]."
+            }
+          },
+          "required": ["distance_threshold", "yaw_threshold"],
+          "description": "Parameters for closest lanelet."
+        }
+      },
+      "required": [
+        "max_iteration_num",
+        "traffic_light_signal_timeout",
+        "planning_hz",
+        "backward_path_length",
+        "forward_path_length",
+        "backward_length_buffer_for_end_of_pull_over",
+        "backward_length_buffer_for_end_of_pull_out",
+        "minimum_pull_over_length",
+        "refine_goal_search_radius_range",
+        "turn_signal_intersection_search_distance",
+        "turn_signal_intersection_angle_threshold_deg",
+        "turn_signal_minimum_search_distance",
+        "turn_signal_search_time",
+        "turn_signal_shift_length_threshold",
+        "turn_signal_remaining_shift_length_threshold",
+        "turn_signal_on_swerving",
+        "enable_akima_spline_first",
+        "enable_cog_on_centerline",
+        "input_path_interval",
+        "output_path_interval",
+        "closest_lanelet"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/behavior_path_planner"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
