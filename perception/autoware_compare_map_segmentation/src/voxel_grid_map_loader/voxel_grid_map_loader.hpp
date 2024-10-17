@@ -245,9 +245,9 @@ public:
       return;
     }
 
-    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     current_voxel_grid_array_.assign(
       map_grids_x_ * map_grid_size_y_, std::make_shared<MapGridVoxelInfo>());
+    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     for (const auto & kv : current_voxel_grid_dict_) {
       int index = static_cast<int>(
         std::floor((kv.second.min_b_x - origin_x_) / map_grid_size_x_) +

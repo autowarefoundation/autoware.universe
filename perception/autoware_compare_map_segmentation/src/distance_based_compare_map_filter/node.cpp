@@ -72,7 +72,6 @@ bool DistanceBasedStaticMapLoader::is_close_to_map(
 bool DistanceBasedDynamicMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
   if (current_voxel_grid_dict_.size() == 0) {
     return false;
   }

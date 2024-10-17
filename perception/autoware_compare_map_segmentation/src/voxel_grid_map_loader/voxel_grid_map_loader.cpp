@@ -321,7 +321,6 @@ void VoxelGridDynamicMapLoader::onEstimatedPoseCallback(nav_msgs::msg::Odometry:
 bool VoxelGridDynamicMapLoader::is_close_to_next_map_grid(
   const pcl::PointXYZ & point, const int current_map_grid_index, const double distance_threshold)
 {
-  std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
   int neighbor_map_grid_index = static_cast<int>(
     std::floor((point.x - origin_x_) / map_grid_size_x_) +
     map_grids_x_ * std::floor((point.y - origin_y_) / map_grid_size_y_));
@@ -344,7 +343,6 @@ bool VoxelGridDynamicMapLoader::is_close_to_next_map_grid(
 bool VoxelGridDynamicMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
   if (current_voxel_grid_dict_.size() == 0) {
     return false;
   }
