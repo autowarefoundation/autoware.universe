@@ -1959,11 +1959,14 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
                            : 0.0;
   const double t_h = time_horizon;
   const double lambda = std::log(2) / acceleration_exponential_half_life_;
+  const double validate_time_horizon = t_h * prediction_time_horizon_rate_for_validate_lane_length_;
+  const double final_speed_after_acceleration =
+    obj_vel + obj_acc * (1.0 / lambda) * (1.0 - std::exp(-lambda * t_h));
 
   auto get_search_distance_with_decaying_acc = [&]() -> double {
     const double acceleration_distance =
       obj_acc * (1.0 / lambda) * t_h +
-      obj_acc * (1.0 / std::pow(lambda, 2)) * std::expm1(-lambda * t_h);
+      obj_acc * (1.0 / (lambda * lambda)) * std::expm1(-lambda * t_h);
     double search_dist = acceleration_distance + obj_vel * t_h;
     return search_dist;
   };
@@ -1986,6 +1989,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       final_speed * (t_h - t_f);
     return search_dist;
   };
+
   std::string object_id = autoware::universe_utils::toHexString(object.object_id);
   geometry_msgs::msg::Pose object_pose = object.kinematics.pose_with_covariance.pose;
 
@@ -1996,25 +2000,22 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     std::vector<std::pair<lanelet::routing::LaneletPath, PredictedRefPath>> ref_paths_per_lanelet;
 
     // Set condition on each lanelet
-    const lanelet::traffic_rules::SpeedLimitInformation limit =
-      traffic_rules_ptr_->speedLimit(current_lanelet_data.lanelet);
-    const double legal_speed_limit = static_cast<double>(limit.speedLimit.value());
+    lanelet::routing::PossiblePathsParams possible_params{0, {}, 0, false, true};
+    double target_speed_limit = 0.0;
+    {
+      const lanelet::traffic_rules::SpeedLimitInformation limit =
+        traffic_rules_ptr_->speedLimit(current_lanelet_data.lanelet);
+      const double legal_speed_limit = static_cast<double>(limit.speedLimit.value());
+      target_speed_limit = legal_speed_limit * speed_limit_multiplier_;
+      const bool final_speed_surpasses_limit = final_speed_after_acceleration > target_speed_limit;
+      const bool object_has_surpassed_limit_already = obj_vel > target_speed_limit;
 
-    double final_speed_after_acceleration =
-      obj_vel + obj_acc * (1.0 / lambda) * (1.0 - std::exp(-lambda * t_h));
-
-    const double final_speed_limit = legal_speed_limit * speed_limit_multiplier_;
-    const bool final_speed_surpasses_limit = final_speed_after_acceleration > final_speed_limit;
-    const bool object_has_surpassed_limit_already = obj_vel > final_speed_limit;
-
-    double search_dist = (final_speed_surpasses_limit && !object_has_surpassed_limit_already)
-                           ? get_search_distance_with_partial_acc(final_speed_limit)
-                           : get_search_distance_with_decaying_acc();
-    search_dist += lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
-
-    lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
-    const double validate_time_horizon =
-      t_h * prediction_time_horizon_rate_for_validate_lane_length_;
+      double search_dist = (final_speed_surpasses_limit && !object_has_surpassed_limit_already)
+                             ? get_search_distance_with_partial_acc(target_speed_limit)
+                             : get_search_distance_with_decaying_acc();
+      search_dist += lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
+      possible_params.routingCostLimit = search_dist;
+    }
 
     // lambda function to get possible paths for isolated lanelet
     // isolated is often caused by lanelet with no connection e.g. shoulder-lane
@@ -2069,7 +2070,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     }
     PredictedRefPath left_ref_path_info;
     left_ref_path_info.maneuver = Maneuver::LEFT_LANE_CHANGE;
-    left_ref_path_info.speed_limit = final_speed_limit;
+    left_ref_path_info.speed_limit = target_speed_limit;
     for (auto & path : left_paths) {
       ref_paths_per_lanelet.emplace_back(path, left_ref_path_info);
     }
@@ -2082,7 +2083,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     }
     PredictedRefPath right_ref_path_info;
     right_ref_path_info.maneuver = Maneuver::RIGHT_LANE_CHANGE;
-    right_ref_path_info.speed_limit = final_speed_limit;
+    right_ref_path_info.speed_limit = target_speed_limit;
     for (auto & path : right_paths) {
       ref_paths_per_lanelet.emplace_back(path, right_ref_path_info);
     }
@@ -2092,7 +2093,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       getPathsForNormalOrIsolatedLanelet(current_lanelet_data.lanelet);
     PredictedRefPath center_ref_path_info;
     center_ref_path_info.maneuver = Maneuver::LANE_FOLLOW;
-    center_ref_path_info.speed_limit = final_speed_limit;
+    center_ref_path_info.speed_limit = target_speed_limit;
     for (auto & path : center_paths) {
       ref_paths_per_lanelet.emplace_back(path, center_ref_path_info);
     }
