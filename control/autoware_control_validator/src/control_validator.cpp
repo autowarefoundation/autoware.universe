@@ -70,10 +70,11 @@ void ControlValidator::setup_parameters()
     p.over_velocity_offset = declare_parameter<double>(t + "over_velocity_offset");
     p.over_velocity_ratio = declare_parameter<double>(t + "over_velocity_ratio");
   }
-  vehicle_vel_.setGain(declare_parameter<double>("vel_lpf_gain"));
-  target_vel_.setGain(declare_parameter<double>("vel_lpf_gain"));
+  const auto lpf_gain = declare_parameter<double>("vel_lpf_gain");
+  vehicle_vel_.setGain(lpf_gain);
+  target_vel_.setGain(lpf_gain);
 
-  hold_velocity_error_until_stop_ = declare_parameter<double>("hold_velocity_error_until_stop");
+  hold_velocity_error_until_stop_ = declare_parameter<bool>("hold_velocity_error_until_stop");
 
   try {
     vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
@@ -122,7 +123,7 @@ void ControlValidator::setup_diag()
   d.add(ns + "over_velocity", [&](auto & stat) {
     set_status(
       stat, !validation_status_.is_over_velocity,
-      "The vehicle is over-speeding compared to the target.");
+      "The vehicle is over-speeding against the target.");
   });
 }
 
