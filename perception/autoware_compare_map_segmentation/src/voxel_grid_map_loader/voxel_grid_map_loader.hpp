@@ -120,7 +120,7 @@ protected:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
   VoxelGridPointXYZ voxel_grid_;
   PointCloudPtr voxel_map_ptr_;
-  std::mutex stastic_map_loader_mutex_;
+  std::mutex static_map_loader_mutex_;
 
 public:
   explicit VoxelGridStaticMapLoader(
