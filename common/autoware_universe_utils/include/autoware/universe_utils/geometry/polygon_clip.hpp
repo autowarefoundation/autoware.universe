@@ -24,7 +24,8 @@
 
 namespace autoware::universe_utils
 {
-
+namespace polygon_clip
+{
 struct LinkedVertex
 {
   double x;
@@ -70,7 +71,10 @@ struct LinkedVertex
 
 struct Intersection
 {
-  double x, y, distance_to_source, distance_to_clip;
+  double x;
+  double y;
+  double distance_to_source;
+  double distance_to_clip;
 };
 
 struct ExtendedPolygon
@@ -98,7 +102,7 @@ struct ExtendedPolygon
  * @param c2_index index of the second vertex of the clipping polygon edge.
  * @return intersection object with point and distance to each vertex.
  */
-Intersection find_vertex_intersection(
+Intersection intersection(
   const std::vector<LinkedVertex> & source_vertices, std::size_t s1_index, std::size_t s2_index,
   const std::vector<LinkedVertex> & clip_vertices, std::size_t c1_index, std::size_t c2_index);
 
@@ -144,11 +148,9 @@ void insert_vertex(
 /**
  * @brief gets the index of the first intersection vertex in the polygon.
  * @param polygon the ExtendedPolygon to check.
- * @param vertices a vector of LinkedVertex objects.
  * @return the index of the first intersection vertex.
  */
-std::size_t get_first_intersect(
-  ExtendedPolygon & polygon, const std::vector<LinkedVertex> & vertices);
+std::size_t get_first_intersect(ExtendedPolygon & polygon);
 
 // cSpell:ignore Greiner, Hormann
 /**
@@ -164,6 +166,10 @@ std::size_t get_first_intersect(
  * - false, true : difference
  * - false, false : union
  * - true, true : intersection
+ * The Clipping is splitted into three main parts:
+ * 1. Marking Intersections
+ * 2. Identify Entry and Exit Points
+ * 3. Construct Clipped Polygons
  * @return A vector of Polygon2d objects representing the clipped result.
  *
  * @note This implementation may encounter precision errors due to the
@@ -179,8 +185,12 @@ std::size_t get_first_intersect(
 std::vector<autoware::universe_utils::Polygon2d> clip(
   ExtendedPolygon & source, ExtendedPolygon & clip, bool source_forwards, bool clip_forwards);
 
+}  // namespace polygon_clip
+
 /**
  * @brief computes the difference between two polygons.
+ * @param polygon_a The source polygon.
+ * @param polygon_b The clip polygon.
  * @return a vector of Polygon2d objects representing the difference.
  */
 std::vector<autoware::universe_utils::Polygon2d> difference(
@@ -189,6 +199,8 @@ std::vector<autoware::universe_utils::Polygon2d> difference(
 
 /**
  * @brief computes the union of two polygons.
+ * @param polygon_a The source polygon.
+ * @param polygon_b The clip polygon.
  * @return a vector of Polygon2d objects representing the union.
  */
 std::vector<autoware::universe_utils::Polygon2d> union_(
@@ -197,6 +209,8 @@ std::vector<autoware::universe_utils::Polygon2d> union_(
 
 /**
  * @brief computes the intersection of two polygons.
+ * @param polygon_a The source polygon.
+ * @param polygon_b The clip polygon.
  * @return a vector of Polygon2d objects representing the intersection.
  */
 std::vector<autoware::universe_utils::Polygon2d> intersection(
