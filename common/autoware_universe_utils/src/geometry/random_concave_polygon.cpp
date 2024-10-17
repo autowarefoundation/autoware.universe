@@ -19,6 +19,7 @@
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
+#include <boost/geometry/algorithms/is_valid.hpp>
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
 #include <random>
@@ -140,24 +141,17 @@ bool intersecting(const Edge & e, const Polygon2d & polygon)
 /// @brief checks if an edge is valid for a given polygon and set of points
 bool is_valid(const Edge & e, const Polygon2d & P, const std::vector<Point2d> & Q)
 {
-  bool valid = false;
-  size_t i = 0;
-
-  while (!valid && i < Q.size()) {
-    const Point2d & q = Q[i];
+  for (const Point2d & q : Q) {
     Edge e1 = {e.first, q};
     Edge e2 = {q, e.second};
     bool intersects_e1 = intersecting(e1, P);
     bool intersects_e2 = intersecting(e2, P);
-
-    if (!intersects_e1 && !intersects_e2) {
-      valid = true;
+    if (intersects_e1 || intersects_e2) {
+      return false;
     }
-
-    ++i;
   }
 
-  return valid;
+  return true;
 }
 
 /// @brief finds the nearest node from a set of points to an edge
@@ -376,7 +370,7 @@ Polygon2d random_concave_polygon(const size_t vertices, const double max)
     // apply inward denting algorithm
     poly = inward_denting(points);
     // check for convexity
-    if (!is_convex(poly)) {
+    if (!is_convex(poly) && boost::geometry::is_valid(poly) && poly.outer().size() != vertices) {
       is_non_convex = true;
     }
     LinearRing2d poly_outer = poly.outer();
