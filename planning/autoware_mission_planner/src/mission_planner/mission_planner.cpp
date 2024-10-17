@@ -200,6 +200,16 @@ void MissionPlanner::on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr 
     RCLCPP_ERROR(get_logger(), "The planned route is empty.");
   }
 
+  // skip reroute if the new goal lane is the same as the current goal lane
+  if (
+    current_route_->segments.back().preferred_primitive.id ==
+    route.segments.back().preferred_primitive.id) {
+    cancel_route();
+    change_state(RouteState::SET);
+    RCLCPP_INFO(get_logger(), "New goal lane is the same as the current goal lane. Skip reroute.");
+    return;
+  }
+
   change_route(route);
   change_state(RouteState::SET);
   RCLCPP_INFO(get_logger(), "Changed the route with the modified goal");
