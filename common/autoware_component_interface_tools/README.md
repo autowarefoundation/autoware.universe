@@ -1,4 +1,4 @@
-# component_interface_tools
+# autoware_component_interface_tools
 
 This package provides the following tools for component interface.
 
