@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MAP_LOADER__LANELET2_MAP_VISUALIZATION_NODE_HPP_
-#define MAP_LOADER__LANELET2_MAP_VISUALIZATION_NODE_HPP_
+#ifndef LANELET2_MAP_VISUALIZATION_NODE_HPP_
+#define LANELET2_MAP_VISUALIZATION_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+namespace autoware::lanelet2_map_visualizer
+{
 class Lanelet2MapVisualizationNode : public rclcpp::Node
 {
 public:
@@ -36,5 +38,6 @@ private:
 
   void on_map_bin(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg);
 };
+}  // namespace autoware::lanelet2_map_visualizer
 
-#endif  // MAP_LOADER__LANELET2_MAP_VISUALIZATION_NODE_HPP_
+#endif  // LANELET2_MAP_VISUALIZATION_NODE_HPP_
