@@ -59,19 +59,15 @@
 namespace std
 {
 template <>
-struct hash<lanelet::routing::LaneletPaths>
+struct hash<lanelet::routing::LaneletPath>
 {
   // 0x9e3779b9 is a magic number. See
   // https://stackoverflow.com/questions/4948780/magic-number-in-boosthash-combine
-  size_t operator()(const lanelet::routing::LaneletPaths & paths) const
+  size_t operator()(const lanelet::routing::LaneletPath & path) const
   {
     size_t seed = 0;
-    for (const auto & path : paths) {
-      for (const auto & lanelet : path) {
-        seed ^= hash<int64_t>{}(lanelet.id()) + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
-      }
-      // Add a separator between paths
-      seed ^= hash<int>{}(0) + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
+    for (const auto & lanelet : path) {
+      seed ^= hash<int64_t>{}(lanelet.id()) + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
     }
     return seed;
   }
@@ -308,21 +304,14 @@ private:
   double calcLeftLateralOffset(
     const lanelet::ConstLineString2d & boundary_line, const geometry_msgs::msg::Pose & search_pose);
   ManeuverProbability calculateManeuverProbability(
-    const Maneuver & predicted_maneuver, const lanelet::routing::LaneletPaths & left_paths,
-    const lanelet::routing::LaneletPaths & right_paths,
-    const lanelet::routing::LaneletPaths & center_paths);
-
-  void addReferencePaths(
-    const std::string  & object_id, const lanelet::routing::LaneletPaths & candidate_paths,
-    const float path_probability, const ManeuverProbability & maneuver_probability,
-    const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths,
-    const double speed_limit = 0.0);
+    const Maneuver & predicted_maneuver, const bool & left_paths_exists, const bool & right_paths_exists,
+  const bool & center_paths_exists) const;
 
   mutable universe_utils::LRUCache<
-    lanelet::routing::LaneletPaths, std::vector<std::pair<PosePath, double>>>
+    lanelet::routing::LaneletPath, std::pair<PosePath, double>>
     lru_cache_of_convert_path_type_{1000};
-  std::vector<std::pair<PosePath, double>> convertPathType(
-    const lanelet::routing::LaneletPaths & paths) const;
+  std::pair<PosePath, double> convertLaneletPathToPosePath(
+    const lanelet::routing::LaneletPath & path) const;
 
   void updateFuturePossibleLanelets(
     const std::string  & object_id, const lanelet::routing::LaneletPaths & paths);
