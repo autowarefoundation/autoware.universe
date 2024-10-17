@@ -1063,8 +1063,19 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
 lanelet::ConstLanelets getCurrentLanesFromPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data)
 {
+  if (path.points.empty() || !planner_data) {
+    return {};
+  }
+
   const auto & route_handler = planner_data->route_handler;
-  const auto & current_pose = planner_data->self_odometry->pose.pose;
+  const auto & self_odometry = planner_data->self_odometry;
+
+  if (!route_handler || !self_odometry) {
+    return {};
+  }
+
+  const auto & current_pose = self_odometry->pose.pose;
+
   const auto & p = planner_data->parameters;
 
   std::set<lanelet::Id> lane_ids;

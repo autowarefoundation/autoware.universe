@@ -247,9 +247,9 @@ public:
 
   virtual void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) = 0;
 
-protected:
   void initInterface(rclcpp::Node * node, const std::vector<std::string> & rtc_types);
 
+protected:
   virtual std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() = 0;
 
   rclcpp::Node * node_ = nullptr;

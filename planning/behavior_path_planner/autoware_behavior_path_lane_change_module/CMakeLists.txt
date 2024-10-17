@@ -18,6 +18,7 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gmock(test_${PROJECT_NAME}
     test/test_behavior_path_planner_node_interface.cpp
     test/test_lane_change_utils.cpp
+    test/test_lane_change_scene.cpp
   )
 
   target_link_libraries(test_${PROJECT_NAME}
