@@ -1989,6 +1989,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
   // Step 2. Get possible paths for each lanelet
   std::vector<PredictedRefPath> all_ref_paths;
+  std::vector<std::pair<lanelet::routing::LaneletPaths, Maneuver>> ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {
     // Set condition on each lanelet
     const lanelet::traffic_rules::SpeedLimitInformation limit =
@@ -2062,6 +2063,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     if (!!left_lanelet) {
       left_paths = getPathsForNormalOrIsolatedLanelet(left_lanelet.value());
     }
+    ref_paths.emplace_back(left_paths, Maneuver::LEFT_LANE_CHANGE);
 
     // a-2. Get the right lanelet
     lanelet::routing::LaneletPaths right_paths;
@@ -2078,10 +2080,12 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     if (left_paths.empty() && right_paths.empty() && center_paths.empty()) {
       continue;
     }
+    std::string object_id = autoware::universe_utils::toHexString(object.object_id);
+    geometry_msgs::msg::Pose object_pose = object.kinematics.pose_with_covariance.pose;
 
     // b. Predict Object Maneuver
     const Maneuver predicted_maneuver =
-      predictObjectManeuver(object, current_lanelet_data, object_detected_time);
+      predictObjectManeuver(object_id, object_pose, current_lanelet_data, object_detected_time);
 
     // c. Allocate probability for each predicted maneuver
     const auto maneuver_prob =
@@ -2091,7 +2095,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     const float path_prob = current_lanelet_data.probability;
     const auto addReferencePathsLocal = [&](const auto & paths, const auto & maneuver) {
       addReferencePaths(
-        object, paths, path_prob, maneuver_prob, maneuver, all_ref_paths, final_speed_limit);
+        object_id, paths, path_prob, maneuver_prob, maneuver, all_ref_paths, final_speed_limit);
     };
     addReferencePathsLocal(left_paths, Maneuver::LEFT_LANE_CHANGE);
     addReferencePathsLocal(right_paths, Maneuver::RIGHT_LANE_CHANGE);
@@ -2131,7 +2135,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
  * @return predicted manuever (lane follow, left/right lane change)
  */
 Maneuver MapBasedPredictionNode::predictObjectManeuver(
-  const TrackedObject & object, const LaneletData & current_lanelet_data,
+  const std::string & object_id, const geometry_msgs::msg::Pose & object_pose, const LaneletData & current_lanelet_data,
   const double object_detected_time)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -2141,15 +2145,14 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
   const auto current_maneuver = [&]() {
     if (lane_change_detection_method_ == "time_to_change_lane") {
       return predictObjectManeuverByTimeToLaneChange(
-        object, current_lanelet_data, object_detected_time);
+        object_id, current_lanelet_data, object_detected_time);
     } else if (lane_change_detection_method_ == "lat_diff_distance") {
       return predictObjectManeuverByLatDiffDistance(
-        object, current_lanelet_data, object_detected_time);
+        object_id, object_pose, current_lanelet_data, object_detected_time);
     }
     throw std::logic_error("Lane change detection method is invalid.");
   }();
 
-  const std::string object_id = autoware::universe_utils::toHexString(object.object_id);
   if (road_users_history.count(object_id) == 0) {
     return current_maneuver;
   }
@@ -2184,14 +2187,13 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
 }
 
 Maneuver MapBasedPredictionNode::predictObjectManeuverByTimeToLaneChange(
-  const TrackedObject & object, const LaneletData & current_lanelet_data,
+  const std::string & object_id, const LaneletData & current_lanelet_data,
   const double /*object_detected_time*/)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   // Step1. Check if we have the object in the buffer
-  const std::string object_id = autoware::universe_utils::toHexString(object.object_id);
   if (road_users_history.count(object_id) == 0) {
     return Maneuver::LANE_FOLLOW;
   }
@@ -2258,14 +2260,13 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByTimeToLaneChange(
 }
 
 Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
-  const TrackedObject & object, const LaneletData & current_lanelet_data,
+  const std::string & object_id, const geometry_msgs::msg::Pose & object_pose, const LaneletData & current_lanelet_data,
   const double /*object_detected_time*/)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   // Step1. Check if we have the object in the buffer
-  const std::string object_id = autoware::universe_utils::toHexString(object.object_id);
   if (road_users_history.count(object_id) == 0) {
     return Maneuver::LANE_FOLLOW;
   }
@@ -2312,7 +2313,7 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
 
   // Step4. Check if the vehicle has changed lane
   const auto current_lanelet = current_lanelet_data.lanelet;
-  const auto current_pose = object.kinematics.pose_with_covariance.pose;
+  const auto current_pose = object_pose;
   const double dist = autoware::universe_utils::calcDistance2d(prev_pose, current_pose);
   lanelet::routing::LaneletPaths possible_paths =
     routing_graph_ptr_->possiblePaths(prev_lanelet, dist + 2.0, 0, false);
@@ -2424,12 +2425,11 @@ double MapBasedPredictionNode::calcLeftLateralOffset(
 }
 
 void MapBasedPredictionNode::updateFuturePossibleLanelets(
-  const TrackedObject & object, const lanelet::routing::LaneletPaths & paths)
+  const std::string & object_id, const lanelet::routing::LaneletPaths & paths)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  std::string object_id = autoware::universe_utils::toHexString(object.object_id);
   if (road_users_history.count(object_id) == 0) {
     return;
   }
@@ -2448,7 +2448,7 @@ void MapBasedPredictionNode::updateFuturePossibleLanelets(
 }
 
 void MapBasedPredictionNode::addReferencePaths(
-  const TrackedObject & object, const lanelet::routing::LaneletPaths & candidate_paths,
+  const std::string & object_id, const lanelet::routing::LaneletPaths & candidate_paths,
   const float path_probability, const ManeuverProbability & maneuver_probability,
   const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths,
   const double speed_limit)
@@ -2457,7 +2457,7 @@ void MapBasedPredictionNode::addReferencePaths(
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   if (!candidate_paths.empty()) {
-    updateFuturePossibleLanelets(object, candidate_paths);
+    updateFuturePossibleLanelets(object_id, candidate_paths);
     const auto converted_paths = convertPathType(candidate_paths);
     for (const auto & converted_path : converted_paths) {
       PredictedRefPath predicted_path;
