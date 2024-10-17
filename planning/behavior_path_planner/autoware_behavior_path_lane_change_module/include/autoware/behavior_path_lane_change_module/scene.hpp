@@ -126,8 +126,8 @@ protected:
 
   std::vector<double> calc_prepare_durations() const;
 
-  lane_change::TargetObjects getTargetObjects(
-    const FilteredByLanesExtendedObjects & predicted_objects,
+  lane_change::TargetObjects get_target_objects(
+    const FilteredByLanesExtendedObjects & filtered_objects,
     const lanelet::ConstLanelets & current_lanes) const;
 
   FilteredByLanesExtendedObjects filterObjects() const;
