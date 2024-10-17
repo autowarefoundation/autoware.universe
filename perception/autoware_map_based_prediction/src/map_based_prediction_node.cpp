@@ -1968,40 +1968,53 @@ std::vector<LaneletPathWithPathInfo> MapBasedPredictionNode::getPredictedReferen
       return std::nullopt;
     };
 
+    bool left_paths_exists = false;
+    bool right_paths_exists = false;
+    bool center_paths_exists = false;
+
     // a-1. Get the left lanelet
-    lanelet::routing::LaneletPaths left_paths;
-    const auto left_lanelet = getLeftOrRightLanelets(current_lanelet_data.lanelet, true);
-    if (!!left_lanelet) {
-      left_paths = getPathsForNormalOrIsolatedLanelet(left_lanelet.value());
-    }
-    PredictedRefPath left_ref_path_info;
-    left_ref_path_info.maneuver = Maneuver::LEFT_LANE_CHANGE;
-    left_ref_path_info.speed_limit = target_speed_limit;
-    for (auto & path : left_paths) {
-      ref_paths_per_lanelet.emplace_back(path, left_ref_path_info);
+    {
+      PredictedRefPath ref_path_info;
+      lanelet::routing::LaneletPaths left_paths;
+      const auto left_lanelet = getLeftOrRightLanelets(current_lanelet_data.lanelet, true);
+      if (!!left_lanelet) {
+        left_paths = getPathsForNormalOrIsolatedLanelet(left_lanelet.value());
+        left_paths_exists = !left_paths.empty();
+      }
+      ref_path_info.speed_limit = target_speed_limit;
+      ref_path_info.maneuver = Maneuver::LEFT_LANE_CHANGE;
+      for (auto & path : left_paths) {
+        ref_paths_per_lanelet.emplace_back(path, ref_path_info);
+      }
     }
 
     // a-2. Get the right lanelet
-    lanelet::routing::LaneletPaths right_paths;
-    const auto right_lanelet = getLeftOrRightLanelets(current_lanelet_data.lanelet, false);
-    if (!!right_lanelet) {
-      right_paths = getPathsForNormalOrIsolatedLanelet(right_lanelet.value());
-    }
-    PredictedRefPath right_ref_path_info;
-    right_ref_path_info.maneuver = Maneuver::RIGHT_LANE_CHANGE;
-    right_ref_path_info.speed_limit = target_speed_limit;
-    for (auto & path : right_paths) {
-      ref_paths_per_lanelet.emplace_back(path, right_ref_path_info);
+    {
+      PredictedRefPath ref_path_info;
+      lanelet::routing::LaneletPaths right_paths;
+      const auto right_lanelet = getLeftOrRightLanelets(current_lanelet_data.lanelet, false);
+      if (!!right_lanelet) {
+        right_paths = getPathsForNormalOrIsolatedLanelet(right_lanelet.value());
+        right_paths_exists = !right_paths.empty();
+      }
+      ref_path_info.speed_limit = target_speed_limit;
+      ref_path_info.maneuver = Maneuver::RIGHT_LANE_CHANGE;
+      for (auto & path : right_paths) {
+        ref_paths_per_lanelet.emplace_back(path, ref_path_info);
+      }
     }
 
     // a-3. Get the center lanelet
-    lanelet::routing::LaneletPaths center_paths =
-      getPathsForNormalOrIsolatedLanelet(current_lanelet_data.lanelet);
-    PredictedRefPath center_ref_path_info;
-    center_ref_path_info.maneuver = Maneuver::LANE_FOLLOW;
-    center_ref_path_info.speed_limit = target_speed_limit;
-    for (auto & path : center_paths) {
-      ref_paths_per_lanelet.emplace_back(path, center_ref_path_info);
+    {
+      PredictedRefPath ref_path_info;
+      lanelet::routing::LaneletPaths center_paths =
+        getPathsForNormalOrIsolatedLanelet(current_lanelet_data.lanelet);
+      center_paths_exists = !center_paths.empty();
+      ref_path_info.speed_limit = target_speed_limit;
+      ref_path_info.maneuver = Maneuver::LANE_FOLLOW;
+      for (auto & path : center_paths) {
+        ref_paths_per_lanelet.emplace_back(path, ref_path_info);
+      }
     }
 
     // Skip calculations if all paths are empty
@@ -2015,9 +2028,6 @@ std::vector<LaneletPathWithPathInfo> MapBasedPredictionNode::getPredictedReferen
 
     // c. Allocate probability for each predicted maneuver
     const float & path_prob = current_lanelet_data.probability;
-    const bool left_paths_exists = !left_paths.empty();
-    const bool right_paths_exists = !right_paths.empty();
-    const bool center_paths_exists = !center_paths.empty();
     const auto maneuver_prob = calculateManeuverProbability(
       predicted_maneuver, left_paths_exists, right_paths_exists, center_paths_exists);
     for (auto & ref_path : ref_paths_per_lanelet) {
