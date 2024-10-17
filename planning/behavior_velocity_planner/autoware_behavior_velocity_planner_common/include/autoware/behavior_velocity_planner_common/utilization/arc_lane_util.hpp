@@ -165,7 +165,8 @@ geometry_msgs::msg::Pose calcTargetPose(const T & path, const PathIndexWithOffse
   const auto p_eigen_back = Eigen::Vector2d(p_back.x, p_back.y);
 
   // Calculate interpolation ratio
-  const auto interpolate_ratio = remain_offset_length / (p_eigen_back - p_eigen_front).norm();
+  const auto segment_length = (p_eigen_back - p_eigen_front).norm();
+  const auto interpolate_ratio = (segment_length - remain_offset_length) / segment_length;
 
   // Add offset to front point
   const auto target_point_2d = p_eigen_front + interpolate_ratio * (p_eigen_back - p_eigen_front);
