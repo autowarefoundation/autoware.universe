@@ -323,7 +323,7 @@ public:
 
   bool isFeasible(const AvoidLineArray & shift_lines) const
   {
-    const auto JERK_BUFFER = 0.1;  // [m/sss]
+    constexpr double JERK_BUFFER = 0.1;  // [m/sss]
     const auto & values = parameters_->velocity_map;
     const auto idx = getConstraintsMapIndex(0.0, values);  // use minimum avoidance speed
     const auto jerk_limit = parameters_->lateral_max_jerk_map.at(idx);
