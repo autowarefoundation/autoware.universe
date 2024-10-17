@@ -197,17 +197,21 @@ public:
   inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc() const
   {
     pcl::PointCloud<pcl::PointXYZ> output;
+    (*mutex_ptr_).lock();
     for (const auto & kv : current_voxel_grid_dict_) {
       output = output + *(kv.second.map_cell_pc_ptr);
     }
+    (*mutex_ptr_).unlock();
     return output;
   }
   inline std::vector<std::string> getCurrentMapIDs() const
   {
     std::vector<std::string> current_map_ids{};
+    (*mutex_ptr_).lock();
     for (auto & kv : current_voxel_grid_dict_) {
       current_map_ids.push_back(kv.first);
     }
+    (*mutex_ptr_).unlock();
     return current_map_ids;
   }
   inline void updateDifferentialMapCells(
