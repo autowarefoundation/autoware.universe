@@ -54,8 +54,8 @@ public:
   size_t goal_id() const { return modified_goal_pose_.id; }
   size_t id() const { return id_; }
   Pose start_pose() const { return start_pose_; }
-  Pose end_pose() const { return modified_goal_pose_.goal_pose; }
-  GoalCandidate modified_goal_pose() const { return modified_goal_pose_; }
+  Pose modified_goal_pose() const { return modified_goal_pose_.goal_pose; }
+  const GoalCandidate & modified_goal() const { return modified_goal_pose_; }
 
   std::vector<PathWithLaneId> & partial_paths() { return partial_paths_; }
   const std::vector<PathWithLaneId> & partial_paths() const { return partial_paths_; }
@@ -63,8 +63,8 @@ public:
   // TODO(soblin): use reference to avoid copy once thread-safe design is finished
   const PathWithLaneId & full_path() const { return full_path_; }
   PathWithLaneId parking_path() const { return parking_path_; }
-  std::vector<double> full_path_curvatures() { return full_path_curvatures_; }
-  std::vector<double> parking_path_curvatures() const { return parking_path_curvatures_; }
+  const std::vector<double> & full_path_curvatures() const { return full_path_curvatures_; }
+  const std::vector<double> & parking_path_curvatures() const { return parking_path_curvatures_; }
   double full_path_max_curvature() const { return full_path_max_curvature_; }
   double parking_path_max_curvature() const { return parking_path_max_curvature_; }
   size_t path_idx() const { return path_idx_; }

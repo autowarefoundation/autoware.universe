@@ -225,6 +225,16 @@ void TrtCommon::setup()
   is_initialized_ = true;
 }
 
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8500
+void TrtCommon::setupBindings(std::vector<void *> & bindings)
+{
+  for (int32_t i = 0, e = engine_->getNbIOTensors(); i < e; i++) {
+    auto const name = engine_->getIOTensorName(i);
+    context_->setTensorAddress(name, bindings.at(i));
+  }
+}
+#endif
+
 bool TrtCommon::loadEngine(const std::string & engine_file_path)
 {
   std::ifstream engine_file(engine_file_path);
@@ -303,8 +313,7 @@ void TrtCommon::printNetworkInfo(const std::string & onnx_file_path)
       total_gflops += gflops;
       total_params += num_weights;
       std::cout << "L" << i << " [conv " << k_dims.d[0] << "x" << k_dims.d[1] << " (" << groups
-                << ") "
-                << "/" << s_dims.d[0] << "] " << dim_in.d[3] << "x" << dim_in.d[2] << "x"
+                << ") " << "/" << s_dims.d[0] << "] " << dim_in.d[3] << "x" << dim_in.d[2] << "x"
                 << dim_in.d[1] << " -> " << dim_out.d[3] << "x" << dim_out.d[2] << "x"
                 << dim_out.d[1];
       std::cout << " weights:" << num_weights;
@@ -369,8 +378,7 @@ bool TrtCommon::buildEngineFromOnnx(
     if (num_available_dla > 0) {
       std::cout << "###" << num_available_dla << " DLAs are supported! ###" << std::endl;
     } else {
-      std::cout << "###Warning : "
-                << "No DLA is supported! ###" << std::endl;
+      std::cout << "###Warning : " << "No DLA is supported! ###" << std::endl;
     }
     config->setDefaultDeviceType(nvinfer1::DeviceType::kDLA);
     config->setDLACore(build_config_->dla_core_id);
@@ -567,6 +575,24 @@ bool TrtCommon::setBindingDimensions(const int32_t index, const nvinfer1::Dims &
   return context_->setBindingDimensions(index, dimensions);
 }
 
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8500
+bool TrtCommon::enqueueV3(cudaStream_t stream)
+{
+  if (build_config_->profile_per_layer) {
+    auto inference_start = std::chrono::high_resolution_clock::now();
+
+    bool ret = context_->enqueueV3(stream);
+
+    auto inference_end = std::chrono::high_resolution_clock::now();
+    host_profiler_.reportLayerTime(
+      "inference",
+      std::chrono::duration<float, std::milli>(inference_end - inference_start).count());
+    return ret;
+  }
+  return context_->enqueueV3(stream);
+}
+#endif
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH < 10000
 bool TrtCommon::enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed)
 {
   if (build_config_->profile_per_layer) {
@@ -583,6 +609,7 @@ bool TrtCommon::enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * i
     return context_->enqueueV2(bindings, stream, input_consumed);
   }
 }
+#endif
 
 void TrtCommon::printProfiling()
 {
