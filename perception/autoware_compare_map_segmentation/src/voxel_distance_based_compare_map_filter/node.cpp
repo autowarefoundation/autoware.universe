@@ -33,7 +33,7 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   pcl::fromROSMsg<pcl::PointXYZ>(*map, map_pcl);
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
 
-  (*mutex_ptr_).lock();
+  std::lock_guard<std::mutex> lock(static_map_loader_mutex_);
   map_ptr_ = map_pcl_ptr;
   *tf_map_input_frame_ = map_ptr_->header.frame_id;
   // voxel
@@ -53,7 +53,6 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
     }
   }
   tree_->setInputCloud(map_ptr_);
-  (*mutex_ptr_).unlock();
 }
 
 bool VoxelDistanceBasedStaticMapLoader::is_close_to_map(
@@ -124,11 +123,10 @@ VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterC
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
     main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     voxel_distance_based_map_loader_ = std::make_unique<VoxelDistanceBasedDynamicMapLoader>(
-      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, &mutex_,
-      main_callback_group);
+      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, main_callback_group);
   } else {
     voxel_distance_based_map_loader_ = std::make_unique<VoxelDistanceBasedStaticMapLoader>(
-      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, &mutex_);
+      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_);
   }
 }
 
