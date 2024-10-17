@@ -294,8 +294,8 @@ private:
     const TrackedObject & object, const LaneletsData & current_lanelets_data,
     const double object_detected_time, const double time_horizon);
   Maneuver predictObjectManeuver(
-    const std::string  & object_id, const geometry_msgs::msg::Pose & object_pose, const LaneletData & current_lanelet_data,
-    const double object_detected_time);
+    const std::string & object_id, const geometry_msgs::msg::Pose & object_pose,
+    const LaneletData & current_lanelet_data, const double object_detected_time);
   geometry_msgs::msg::Pose compensateTimeDelay(
     const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,
     const double dt) const;
@@ -304,17 +304,16 @@ private:
   double calcLeftLateralOffset(
     const lanelet::ConstLineString2d & boundary_line, const geometry_msgs::msg::Pose & search_pose);
   ManeuverProbability calculateManeuverProbability(
-    const Maneuver & predicted_maneuver, const bool & left_paths_exists, const bool & right_paths_exists,
-  const bool & center_paths_exists) const;
+    const Maneuver & predicted_maneuver, const bool & left_paths_exists,
+    const bool & right_paths_exists, const bool & center_paths_exists) const;
 
-  mutable universe_utils::LRUCache<
-    lanelet::routing::LaneletPath, std::pair<PosePath, double>>
+  mutable universe_utils::LRUCache<lanelet::routing::LaneletPath, std::pair<PosePath, double>>
     lru_cache_of_convert_path_type_{1000};
   std::pair<PosePath, double> convertLaneletPathToPosePath(
     const lanelet::routing::LaneletPath & path) const;
 
   void updateFuturePossibleLanelets(
-    const std::string  & object_id, const lanelet::routing::LaneletPaths & paths);
+    const std::string & object_id, const lanelet::routing::LaneletPaths & paths);
 
   bool isDuplicated(
     const std::pair<double, lanelet::ConstLanelet> & target_lanelet,
@@ -331,11 +330,11 @@ private:
     const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num);
 
   Maneuver predictObjectManeuverByTimeToLaneChange(
-    const std::string  & object_id, const LaneletData & current_lanelet_data,
+    const std::string & object_id, const LaneletData & current_lanelet_data,
     const double object_detected_time);
   Maneuver predictObjectManeuverByLatDiffDistance(
-    const std::string  & object_id, const geometry_msgs::msg::Pose & object_pose, const LaneletData & current_lanelet_data,
-    const double object_detected_time);
+    const std::string & object_id, const geometry_msgs::msg::Pose & object_pose,
+    const LaneletData & current_lanelet_data, const double object_detected_time);
 
   void publish(
     const PredictedObjects & output,

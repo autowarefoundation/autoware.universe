@@ -1988,8 +1988,8 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   };
 
   // Step 2. Get possible paths for each lanelet
-  std::vector<PredictedRefPath> all_ref_paths;
-  std::vector<std::pair<lanelet::routing::LaneletPath, Maneuver>> ref_paths;
+  std::vector<PredictedRefPath> converted_ref_paths;
+  std::vector<std::pair<lanelet::routing::LaneletPath, Maneuver>> lanelet_ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {
     // Set condition on each lanelet
     const lanelet::traffic_rules::SpeedLimitInformation limit =
@@ -2064,7 +2064,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       left_paths = getPathsForNormalOrIsolatedLanelet(left_lanelet.value());
     }
     for (auto & path : left_paths) {
-      ref_paths.emplace_back(path, Maneuver::LEFT_LANE_CHANGE);
+      lanelet_ref_paths.emplace_back(path, Maneuver::LEFT_LANE_CHANGE);
     }
 
     // a-2. Get the right lanelet
@@ -2074,18 +2074,18 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       right_paths = getPathsForNormalOrIsolatedLanelet(right_lanelet.value());
     }
     for (auto & path : right_paths) {
-      ref_paths.emplace_back(path, Maneuver::RIGHT_LANE_CHANGE);
+      lanelet_ref_paths.emplace_back(path, Maneuver::RIGHT_LANE_CHANGE);
     }
 
     // a-3. Get the center lanelet
     lanelet::routing::LaneletPaths center_paths =
       getPathsForNormalOrIsolatedLanelet(current_lanelet_data.lanelet);
     for (auto & path : center_paths) {
-      ref_paths.emplace_back(path, Maneuver::LANE_FOLLOW);
+      lanelet_ref_paths.emplace_back(path, Maneuver::LANE_FOLLOW);
     }
 
     // Skip calculations if all paths are empty
-    if (ref_paths.empty()) {
+    if (lanelet_ref_paths.empty()) {
       continue;
     }
 
@@ -2099,19 +2099,20 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     const bool left_paths_exists = !left_paths.empty();
     const bool right_paths_exists = !right_paths.empty();
     const bool center_paths_exists = !center_paths.empty();
-    const auto maneuver_prob =
-      calculateManeuverProbability(predicted_maneuver, left_paths_exists, right_paths_exists, center_paths_exists);
+    const auto maneuver_prob = calculateManeuverProbability(
+      predicted_maneuver, left_paths_exists, right_paths_exists, center_paths_exists);
 
-    // d. add candidate reference paths to the all_ref_paths
+    // d. add candidate reference paths to the converted_ref_paths
 
     // update future possible lanelets
     if (road_users_history.count(object_id) != 0) {
       std::vector<lanelet::ConstLanelet> & possible_lanelets =
         road_users_history.at(object_id).back().future_possible_lanelets;
-      for (const auto & ref_path : ref_paths) {
+      for (const auto & ref_path : lanelet_ref_paths) {
         for (const auto & lanelet : ref_path.first) {
-          if (std::find(possible_lanelets.begin(), possible_lanelets.end(), lanelet) ==
-              possible_lanelets.end()) {
+          if (
+            std::find(possible_lanelets.begin(), possible_lanelets.end(), lanelet) ==
+            possible_lanelets.end()) {
             possible_lanelets.push_back(lanelet);
           }
         }
@@ -2121,7 +2122,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     // add reference paths
     const float & path_prob = current_lanelet_data.probability;
     const double & speed_limit = final_speed_limit;
-    for (auto & ref_path : ref_paths) {
+    for (auto & ref_path : lanelet_ref_paths) {
       const auto & lanelet_path = ref_path.first;
       const auto & maneuver = ref_path.second;
       const auto converted_path = convertLaneletPathToPosePath(lanelet_path);
@@ -2131,12 +2132,12 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       predicted_path.width = converted_path.second;
       predicted_path.maneuver = maneuver;
       predicted_path.speed_limit = speed_limit;
-      all_ref_paths.push_back(predicted_path);
+      converted_ref_paths.push_back(predicted_path);
     }
   }
 
   // Step 3. Search starting point for each reference path
-  for (auto it = all_ref_paths.begin(); it != all_ref_paths.end();) {
+  for (auto it = converted_ref_paths.begin(); it != converted_ref_paths.end();) {
     std::unique_ptr<ScopedTimeTrack> st1_ptr;
     if (time_keeper_)
       st1_ptr =
@@ -2156,11 +2157,11 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       ++it;
     } else {
       // Proper starting point is not found, remove the reference path
-      it = all_ref_paths.erase(it);
+      it = converted_ref_paths.erase(it);
     }
   }
 
-  return all_ref_paths;
+  return converted_ref_paths;
 }
 
 /**
@@ -2168,8 +2169,8 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
  * @return predicted manuever (lane follow, left/right lane change)
  */
 Maneuver MapBasedPredictionNode::predictObjectManeuver(
-  const std::string & object_id, const geometry_msgs::msg::Pose & object_pose, const LaneletData & current_lanelet_data,
-  const double object_detected_time)
+  const std::string & object_id, const geometry_msgs::msg::Pose & object_pose,
+  const LaneletData & current_lanelet_data, const double object_detected_time)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -2293,8 +2294,8 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByTimeToLaneChange(
 }
 
 Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
-  const std::string & object_id, const geometry_msgs::msg::Pose & object_pose, const LaneletData & current_lanelet_data,
-  const double /*object_detected_time*/)
+  const std::string & object_id, const geometry_msgs::msg::Pose & object_pose,
+  const LaneletData & current_lanelet_data, const double /*object_detected_time*/)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -2480,10 +2481,9 @@ void MapBasedPredictionNode::updateFuturePossibleLanelets(
   }
 }
 
-
 ManeuverProbability MapBasedPredictionNode::calculateManeuverProbability(
-  const Maneuver & predicted_maneuver, const bool & left_paths_exists, const bool & right_paths_exists,
-  const bool & center_paths_exists) const
+  const Maneuver & predicted_maneuver, const bool & left_paths_exists,
+  const bool & right_paths_exists, const bool & center_paths_exists) const
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -2528,8 +2528,8 @@ ManeuverProbability MapBasedPredictionNode::calculateManeuverProbability(
     lane_follow_probability = 0.0;
 
     // If the given lane is empty, the probability goes to 0
-    left_lane_change_probability = left_paths_exists ? LC_PROB:0.0;
-    right_lane_change_probability = right_paths_exists ? RC_PROB:0.0;
+    left_lane_change_probability = left_paths_exists ? LC_PROB : 0.0;
+    right_lane_change_probability = right_paths_exists ? RC_PROB : 0.0;
   }
 
   const float MIN_PROBABILITY = 1e-3;
