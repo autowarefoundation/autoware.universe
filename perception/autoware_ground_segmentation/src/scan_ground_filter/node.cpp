@@ -455,7 +455,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
           non_ground_height_threshold_local =
             non_ground_height_threshold_ * abs(point_prev.x / low_priority_region_x_);
         }
-        // is non_ground_height_threshold_local only for initialization?
+        // non_ground_height_threshold_local is only for initialization
 
         // prepare centroid_bin for the first grid
         if (
