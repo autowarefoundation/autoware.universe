@@ -293,6 +293,7 @@ VoxelGridDynamicMapLoader::VoxelGridDynamicMapLoader(
   auto timer_interval_ms = node->declare_parameter<int>("timer_interval_ms");
   map_update_distance_threshold_ = node->declare_parameter<double>("map_update_distance_threshold");
   map_loader_radius_ = node->declare_parameter<double>("map_loader_radius");
+  max_map_grid_size_ = node->declare_parameter<double>("max_map_grid_size");
   auto main_sub_opt = rclcpp::SubscriptionOptions();
   main_sub_opt.callback_group = main_callback_group;
   sub_kinematic_state_ = node->create_subscription<nav_msgs::msg::Odometry>(

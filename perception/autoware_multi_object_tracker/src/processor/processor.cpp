@@ -15,7 +15,7 @@
 #include "processor.hpp"
 
 #include "autoware/multi_object_tracker/tracker/tracker.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
 #include "autoware_perception_msgs/msg/tracked_objects.hpp"
 
@@ -90,7 +90,8 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
   const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const
 {
-  const std::uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
+  const std::uint8_t label =
+    autoware::object_recognition_utils::getHighestProbLabel(object.classification);
   if (tracker_map_.count(label) != 0) {
     const auto tracker = tracker_map_.at(label);
     if (tracker == "bicycle_tracker")
@@ -168,7 +169,8 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
 
       // Check the Intersection over Union (IoU) between the two objects
       const double min_union_iou_area = 1e-2;
-      const auto iou = object_recognition_utils::get2dIoU(object1, object2, min_union_iou_area);
+      const auto iou =
+        autoware::object_recognition_utils::get2dIoU(object1, object2, min_union_iou_area);
       const auto & label1 = (*itr1)->getHighestProbLabel();
       const auto & label2 = (*itr2)->getHighestProbLabel();
       bool should_delete_tracker1 = false;

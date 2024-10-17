@@ -138,7 +138,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
     pub_obstacle_pointcloud_ =
       this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
     debug_marker_publisher_ = this->create_publisher<MarkerArray>("~/debug/markers", 1);
-    info_marker_publisher_ = this->create_publisher<MarkerArray>("~/info/markers", 1);
+    virtual_wall_publisher_ = this->create_publisher<MarkerArray>("~/virtual_wall", 1);
     debug_rss_distance_publisher_ =
       this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/rss_distance", 1);
   }
@@ -398,7 +398,7 @@ bool AEB::fetchLatestData()
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   MarkerArray debug_markers;
-  MarkerArray info_markers;
+  MarkerArray virtual_wall_marker;
   checkCollision(debug_markers);
 
   if (!collision_data_keeper_.checkCollisionExpired()) {
@@ -414,7 +414,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
         addCollisionMarker(data.value(), debug_markers);
       }
     }
-    addVirtualStopWallMarker(info_markers);
+    addVirtualStopWallMarker(virtual_wall_marker);
   } else {
     const std::string error_msg = "[AEB]: No Collision";
     const auto diag_level = DiagnosticStatus::OK;
@@ -423,7 +423,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 
   // publish debug markers
   debug_marker_publisher_->publish(debug_markers);
-  info_marker_publisher_->publish(info_markers);
+  virtual_wall_publisher_->publish(virtual_wall_marker);
 }
 
 bool AEB::checkCollision(MarkerArray & debug_markers)
