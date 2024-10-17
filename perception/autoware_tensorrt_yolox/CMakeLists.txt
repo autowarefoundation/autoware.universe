@@ -3,7 +3,7 @@ project(autoware_tensorrt_yolox)
 
 find_package(autoware_tensorrt_common)
 if(NOT ${autoware_tensorrt_common_FOUND})
-  message(WARNING "The tensorrt_common package is not found. Please check its dependencies.")
+  message(WARNING "The autoware_tensorrt_common package is not found. Please check its dependencies.")
   return()
 endif()
 
