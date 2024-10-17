@@ -323,7 +323,6 @@ struct MinMaxValue
 
 struct TransientData
 {
-  MinMaxValue acc;                   // acceleration profile for accelerating lane change path
   MinMaxValue lane_changing_length;  // lane changing length for a single lane change
   MinMaxValue
     current_dist_buffer;  // distance buffer computed backward from current lanes' terminal end
@@ -342,6 +341,9 @@ struct TransientData
 
   lanelet::ArcCoordinates current_lanes_ego_arc;  // arc coordinates of ego pose along current lanes
   lanelet::ArcCoordinates target_lanes_ego_arc;   // arc coordinates of ego pose along target lanes
+
+  size_t current_path_seg_idx;   // index of nearest segment to ego along current path
+  double current_path_velocity;  // velocity of the current path at the ego position along the path
 
   bool is_ego_near_current_terminal_start{false};
   bool is_ego_stuck{false};
