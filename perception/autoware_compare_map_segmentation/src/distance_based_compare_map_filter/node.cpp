@@ -32,8 +32,7 @@ void DistanceBasedStaticMapLoader::onMapCallback(
   pcl::PointCloud<pcl::PointXYZ> map_pcl;
   pcl::fromROSMsg<pcl::PointXYZ>(*map, map_pcl);
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
-
-  (*mutex_ptr_).lock();
+  std::lock_guard<std::mutex> lock(stastic_map_loader_mutex_);
   map_ptr_ = map_pcl_ptr;
   *tf_map_input_frame_ = map_ptr_->header.frame_id;
   if (!tree_) {
@@ -44,8 +43,6 @@ void DistanceBasedStaticMapLoader::onMapCallback(
     }
   }
   tree_->setInputCloud(map_ptr_);
-
-  (*mutex_ptr_).unlock();
 }
 
 bool DistanceBasedStaticMapLoader::is_close_to_map(
@@ -75,6 +72,7 @@ bool DistanceBasedStaticMapLoader::is_close_to_map(
 bool DistanceBasedDynamicMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
+  std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
   if (current_voxel_grid_dict_.size() == 0) {
     return false;
   }
@@ -126,10 +124,10 @@ DistanceBasedCompareMapFilterComponent::DistanceBasedCompareMapFilterComponent(
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
     main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     distance_based_map_loader_ = std::make_unique<DistanceBasedDynamicMapLoader>(
-      this, distance_threshold_, &tf_input_frame_, &mutex_, main_callback_group);
+      this, distance_threshold_, &tf_input_frame_, main_callback_group);
   } else {
-    distance_based_map_loader_ = std::make_unique<DistanceBasedStaticMapLoader>(
-      this, distance_threshold_, &tf_input_frame_, &mutex_);
+    distance_based_map_loader_ =
+      std::make_unique<DistanceBasedStaticMapLoader>(this, distance_threshold_, &tf_input_frame_);
   }
 }
 
