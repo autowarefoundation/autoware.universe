@@ -37,7 +37,7 @@
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
-using object_recognition_utils::convertLabelToString;
+using autoware::object_recognition_utils::convertLabelToString;
 
 RunOutModule::RunOutModule(
   const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,

@@ -8,8 +8,10 @@ on:
       - beta/v0.[0-9]+.[1-9]+
 
 jobs:
-  comment:
-    runs-on: ubuntu-latest
+  comment-on-pr:
+    runs-on: ubuntu-22.04
+    permissions:
+      pull-requests: write
     steps:
       - name: Create comments
         run: |

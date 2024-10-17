@@ -51,12 +51,15 @@ using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
 using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LanesPolygon;
+using behavior_path_planner::lane_change::ModuleType;
 using behavior_path_planner::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using path_safety_checker::CollisionCheckDebugMap;
 using tier4_planning_msgs::msg::PathWithLaneId;
+
+bool is_mandatory_lane_change(const ModuleType lc_type);
 
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);
@@ -79,9 +82,7 @@ std::vector<int64_t> replaceWithSortedIds(
   const std::vector<int64_t> & original_lane_ids,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 
-std::vector<std::vector<int64_t>> getSortedLaneIds(
-  const RouteHandler & route_handler, const Pose & current_pose,
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes);
+std::vector<std::vector<int64_t>> get_sorted_lane_ids(const CommonDataPtr & common_data_ptr);
 
 lanelet::ConstLanelets getTargetNeighborLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
@@ -104,12 +105,9 @@ ShiftLine get_lane_changing_shift_line(
   const Pose & lane_changing_start_pose, const Pose & lane_changing_end_pose,
   const PathWithLaneId & reference_path, const double shift_length);
 
-PathWithLaneId getReferencePathFromTargetLane(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & lane_changing_start_pose, const double target_lane_length,
-  const double lane_changing_length, const double forward_path_length,
-  const double resample_interval, const bool is_goal_in_route,
-  const double next_lane_change_buffer);
+PathWithLaneId get_reference_path_from_target_Lane(
+  const CommonDataPtr & common_data_ptr, const Pose & lane_changing_start_pose,
+  const double lane_changing_length, const double resample_interval);
 
 std::vector<DrivableLanes> generateDrivableLanes(
   const std::vector<DrivableLanes> & original_drivable_lanes, const RouteHandler & route_handler,
@@ -123,9 +121,9 @@ double getLateralShift(const LaneChangePath & path);
 
 CandidateOutput assignToCandidate(
   const LaneChangePath & lane_change_path, const Point & ego_position);
-std::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const LaneChangeModuleType type, const Direction & direction);
+
+std::optional<lanelet::ConstLanelet> get_lane_change_target_lane(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes);
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & pose,
@@ -145,8 +143,7 @@ bool isParkedObject(
 
 bool passed_parked_objects(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & objects, const double minimum_lane_change_length,
-  CollisionCheckDebugMap & object_debug);
+  const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & object_debug);
 
 std::optional<size_t> getLeadingStaticObjectIdx(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
@@ -269,6 +266,48 @@ ExtendedPredictedObjects transform_to_extended_objects(
 double get_distance_to_next_regulatory_element(
   const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
   const bool ignore_intersection = false);
+
+/**
+ * @brief Calculates the minimum distance to a stationary object in the current lanes.
+ *
+ * This function determines the closest distance from the ego vehicle to a stationary object
+ * in the current lanes. It checks if the object is within the stopping criteria based on its
+ * velocity and calculates the distance while accounting for the object's size. Only objects
+ * positioned after the specified distance to the target lane's start are considered.
+ *
+ * @param common_data_ptr Pointer to the common data structure containing parameters for lane
+ * change.
+ * @param filtered_objects A collection of objects filtered by lanes, including those in the current
+ * lane.
+ * @param dist_to_target_lane_start The distance to the start of the target lane from the ego
+ * vehicle.
+ * @param path The current path of the ego vehicle, containing path points and lane information.
+ * @return The minimum distance to a stationary object in the current lanes. If no valid object is
+ * found, returns the maximum possible double value.
+ */
+double get_min_dist_to_current_lanes_obj(
+  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
+  const double dist_to_target_lane_start, const PathWithLaneId & path);
+
+/**
+ * @brief Checks if there is an object in the target lane that influences the decision to insert a
+ * stop point.
+ *
+ * This function determines whether any objects exist in the target lane that would affect
+ * the decision to place a stop point behind a blocking object in the current lane.
+ *
+ * @param common_data_ptr Pointer to the common data structure containing parameters for the lane
+ * change.
+ * @param filtered_objects A collection of objects filtered by lanes, including those in the target
+ * lane.
+ * @param stop_arc_length The arc length at which the ego vehicle is expected to stop.
+ * @param path The current path of the ego vehicle, containing path points and lane information.
+ * @return true if there is an object in the target lane that influences the stop point decision;
+ * otherwise, false.
+ */
+bool has_blocking_target_object(
+  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
+  const double stop_arc_length, const PathWithLaneId & path);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_

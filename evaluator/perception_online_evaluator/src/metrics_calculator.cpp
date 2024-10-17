@@ -15,16 +15,16 @@
 #include "perception_online_evaluator/metrics_calculator.hpp"
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/object_recognition_utils/object_classification.hpp"
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "object_recognition_utils/object_classification.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
 
 namespace perception_diagnostics
 {
+using autoware::object_recognition_utils::convertLabelToString;
 using autoware::universe_utils::inverseTransformPoint;
-using object_recognition_utils::convertLabelToString;
 
 std::optional<MetricsMap> MetricsCalculator::calculate(const Metric & metric) const
 {
