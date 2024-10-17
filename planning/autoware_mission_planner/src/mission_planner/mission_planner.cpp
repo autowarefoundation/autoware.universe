@@ -198,6 +198,7 @@ void MissionPlanner::on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr 
     cancel_route();
     change_state(RouteState::SET);
     RCLCPP_ERROR(get_logger(), "The planned route is empty.");
+    return;
   }
 
   change_route(route);
