@@ -1109,9 +1109,10 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
         // Get Predicted Reference Path for Each Maneuver and current lanelets
         // return: <probability, paths>
-        const auto ref_paths = getPredictedReferencePath(
+        const auto lanelet_ref_paths = getPredictedReferencePath(
           transformed_object, current_lanelets, objects_detected_time,
           prediction_time_horizon_.vehicle);
+        const auto ref_paths = convertPredictedReferencePath(transformed_object, lanelet_ref_paths);
 
         // If predicted reference path is empty, assume this object is out of the lane
         if (ref_paths.empty()) {
@@ -1845,101 +1846,7 @@ void MapBasedPredictionNode::updateRoadUsersHistory(
   }
 }
 
-std::optional<size_t> MapBasedPredictionNode::searchProperStartingRefPathIndex(
-  const TrackedObject & object, const PosePath & pose_path) const
-{
-  std::unique_ptr<ScopedTimeTrack> st1_ptr;
-  if (time_keeper_) st1_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-  bool is_position_found = false;
-  std::optional<size_t> opt_index{std::nullopt};
-  auto & index = opt_index.emplace();
-
-  // starting segment index is a segment close enough to the object
-  const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
-  {
-    std::unique_ptr<ScopedTimeTrack> st2_ptr;
-    if (time_keeper_)
-      st2_ptr = std::make_unique<ScopedTimeTrack>("find_close_segment_index", *time_keeper_);
-    double min_dist_sq = std::numeric_limits<double>::max();
-    constexpr double acceptable_dist_sq = 1.0;  // [m2]
-    for (size_t i = 0; i < pose_path.size(); i++) {
-      const double dx = pose_path.at(i).position.x - obj_point.x;
-      const double dy = pose_path.at(i).position.y - obj_point.y;
-      const double dist_sq = dx * dx + dy * dy;
-      if (dist_sq < min_dist_sq) {
-        min_dist_sq = dist_sq;
-        index = i;
-      }
-      if (dist_sq < acceptable_dist_sq) {
-        break;
-      }
-    }
-  }
-
-  // calculate score that object can reach the target path smoothly, and search the
-  // starting segment index that have the best score
-  size_t idx = 0;
-  {  // find target segmentation index
-    std::unique_ptr<ScopedTimeTrack> st3_ptr;
-    if (time_keeper_)
-      st3_ptr = std::make_unique<ScopedTimeTrack>("find_target_seg_index", *time_keeper_);
-
-    constexpr double search_distance = 22.0;       // [m]
-    constexpr double yaw_diff_limit = M_PI / 3.0;  // 60 degrees
-
-    const double obj_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-    const size_t search_segment_count =
-      static_cast<size_t>(std::floor(search_distance / reference_path_resolution_));
-    const size_t search_segment_num =
-      std::min(search_segment_count, static_cast<size_t>(pose_path.size() - index));
-
-    // search for the best score, which is the smallest
-    double best_score = 1e9;  // initial value is large enough
-    for (size_t i = 0; i < search_segment_num; ++i) {
-      const auto & path_pose = pose_path.at(index + i);
-      // yaw difference
-      const double path_yaw = tf2::getYaw(path_pose.orientation);
-      const double relative_path_yaw = autoware_utils::normalize_radian(path_yaw - obj_yaw);
-      if (std::abs(relative_path_yaw) > yaw_diff_limit) {
-        continue;
-      }
-
-      const double dx = path_pose.position.x - obj_point.x;
-      const double dy = path_pose.position.y - obj_point.y;
-      const double dx_cp = std::cos(obj_yaw) * dx + std::sin(obj_yaw) * dy;
-      const double dy_cp = -std::sin(obj_yaw) * dx + std::cos(obj_yaw) * dy;
-      const double neutral_yaw = std::atan2(dy_cp, dx_cp) * 2.0;
-      const double delta_yaw = autoware_utils::normalize_radian(path_yaw - obj_yaw - neutral_yaw);
-      if (std::abs(delta_yaw) > yaw_diff_limit) {
-        continue;
-      }
-
-      // objective function score
-      constexpr double weight_ratio = 0.01;
-      double score = delta_yaw * delta_yaw + weight_ratio * neutral_yaw * neutral_yaw;
-      constexpr double acceptable_score = 1e-3;
-
-      if (score < best_score) {
-        best_score = score;
-        idx = i;
-        is_position_found = true;
-        if (score < acceptable_score) {
-          // if the score is small enough, we can break the loop
-          break;
-        }
-      }
-    }
-  }
-
-  // update starting segment index
-  index += idx;
-  index = std::clamp(index, 0ul, pose_path.size() - 1);
-
-  return is_position_found ? opt_index : std::nullopt;
-}
-
-std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
+std::vector<LaneletPathWithPathInfo> MapBasedPredictionNode::getPredictedReferencePath(
   const TrackedObject & object, const LaneletsData & current_lanelets_data,
   const double object_detected_time, const double time_horizon)
 {
@@ -1994,10 +1901,9 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   geometry_msgs::msg::Pose object_pose = object.kinematics.pose_with_covariance.pose;
 
   // Step 2. Get possible paths for each lanelet
-  std::vector<PredictedRefPath> converted_ref_paths;
-  std::vector<std::pair<lanelet::routing::LaneletPath, PredictedRefPath>> lanelet_ref_paths;
+  std::vector<LaneletPathWithPathInfo> lanelet_ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {
-    std::vector<std::pair<lanelet::routing::LaneletPath, PredictedRefPath>> ref_paths_per_lanelet;
+    std::vector<LaneletPathWithPathInfo> ref_paths_per_lanelet;
 
     // Set condition on each lanelet
     lanelet::routing::PossiblePathsParams possible_params{0, {}, 0, false, true};
@@ -2139,46 +2045,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     }
   }
 
-  // Step 3. Convert lanelet path to pose path
-  for (const auto & ref_path : lanelet_ref_paths) {
-    const auto & lanelet_path = ref_path.first;
-    const auto & ref_path_info = ref_path.second;
-    const auto converted_path = convertLaneletPathToPosePath(lanelet_path);
-    PredictedRefPath predicted_path;
-    predicted_path.probability = ref_path_info.probability;
-    predicted_path.path = converted_path.first;
-    predicted_path.width = converted_path.second;
-    predicted_path.maneuver = ref_path_info.maneuver;
-    predicted_path.speed_limit = ref_path_info.speed_limit;
-    converted_ref_paths.push_back(predicted_path);
-  }
-
-  // Step 4. Search starting point for each reference path
-  for (auto it = converted_ref_paths.begin(); it != converted_ref_paths.end();) {
-    std::unique_ptr<ScopedTimeTrack> st1_ptr;
-    if (time_keeper_)
-      st1_ptr =
-        std::make_unique<ScopedTimeTrack>("searching_ref_path_starting_point", *time_keeper_);
-
-    auto & pose_path = it->path;
-    if (pose_path.empty()) {
-      continue;
-    }
-
-    const std::optional<size_t> opt_starting_idx =
-      searchProperStartingRefPathIndex(object, pose_path);
-
-    if (opt_starting_idx.has_value()) {
-      // Trim the reference path
-      pose_path.erase(pose_path.begin(), pose_path.begin() + opt_starting_idx.value());
-      ++it;
-    } else {
-      // Proper starting point is not found, remove the reference path
-      it = converted_ref_paths.erase(it);
-    }
-  }
-
-  return converted_ref_paths;
+  return lanelet_ref_paths;
 }
 
 /**
@@ -2564,6 +2431,54 @@ ManeuverProbability MapBasedPredictionNode::calculateManeuverProbability(
   return maneuver_prob;
 }
 
+std::vector<PredictedRefPath> MapBasedPredictionNode::convertPredictedReferencePath(
+  const TrackedObject & object,
+  const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths) const
+{
+  std::vector<PredictedRefPath> converted_ref_paths;
+
+  // Step 3. Convert lanelet path to pose path
+  for (const auto & ref_path : lanelet_ref_paths) {
+    const auto & lanelet_path = ref_path.first;
+    const auto & ref_path_info = ref_path.second;
+    const auto converted_path = convertLaneletPathToPosePath(lanelet_path);
+    PredictedRefPath predicted_path;
+    predicted_path.probability = ref_path_info.probability;
+    predicted_path.path = converted_path.first;
+    predicted_path.width = converted_path.second;
+    predicted_path.maneuver = ref_path_info.maneuver;
+    predicted_path.speed_limit = ref_path_info.speed_limit;
+    converted_ref_paths.push_back(predicted_path);
+  }
+
+  // Step 4. Search starting point for each reference path
+  for (auto it = converted_ref_paths.begin(); it != converted_ref_paths.end();) {
+    std::unique_ptr<ScopedTimeTrack> st1_ptr;
+    if (time_keeper_)
+      st1_ptr =
+        std::make_unique<ScopedTimeTrack>("searching_ref_path_starting_point", *time_keeper_);
+
+    auto & pose_path = it->path;
+    if (pose_path.empty()) {
+      continue;
+    }
+
+    const std::optional<size_t> opt_starting_idx =
+      searchProperStartingRefPathIndex(object, pose_path);
+
+    if (opt_starting_idx.has_value()) {
+      // Trim the reference path
+      pose_path.erase(pose_path.begin(), pose_path.begin() + opt_starting_idx.value());
+      ++it;
+    } else {
+      // Proper starting point is not found, remove the reference path
+      it = converted_ref_paths.erase(it);
+    }
+  }
+
+  return converted_ref_paths;
+}
+
 std::pair<PosePath, double> MapBasedPredictionNode::convertLaneletPathToPosePath(
   const lanelet::routing::LaneletPath & path) const
 {
@@ -2669,6 +2584,100 @@ std::pair<PosePath, double> MapBasedPredictionNode::convertLaneletPathToPosePath
 
   lru_cache_of_convert_path_type_.put(path, converted_path_and_width);
   return converted_path_and_width;
+}
+
+std::optional<size_t> MapBasedPredictionNode::searchProperStartingRefPathIndex(
+  const TrackedObject & object, const PosePath & pose_path) const
+{
+  std::unique_ptr<ScopedTimeTrack> st1_ptr;
+  if (time_keeper_) st1_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  bool is_position_found = false;
+  std::optional<size_t> opt_index{std::nullopt};
+  auto & index = opt_index.emplace();
+
+  // starting segment index is a segment close enough to the object
+  const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
+  {
+    std::unique_ptr<ScopedTimeTrack> st2_ptr;
+    if (time_keeper_)
+      st2_ptr = std::make_unique<ScopedTimeTrack>("find_close_segment_index", *time_keeper_);
+    double min_dist_sq = std::numeric_limits<double>::max();
+    constexpr double acceptable_dist_sq = 1.0;  // [m2]
+    for (size_t i = 0; i < pose_path.size(); i++) {
+      const double dx = pose_path.at(i).position.x - obj_point.x;
+      const double dy = pose_path.at(i).position.y - obj_point.y;
+      const double dist_sq = dx * dx + dy * dy;
+      if (dist_sq < min_dist_sq) {
+        min_dist_sq = dist_sq;
+        index = i;
+      }
+      if (dist_sq < acceptable_dist_sq) {
+        break;
+      }
+    }
+  }
+
+  // calculate score that object can reach the target path smoothly, and search the
+  // starting segment index that have the best score
+  size_t idx = 0;
+  {  // find target segmentation index
+    std::unique_ptr<ScopedTimeTrack> st3_ptr;
+    if (time_keeper_)
+      st3_ptr = std::make_unique<ScopedTimeTrack>("find_target_seg_index", *time_keeper_);
+
+    constexpr double search_distance = 22.0;       // [m]
+    constexpr double yaw_diff_limit = M_PI / 3.0;  // 60 degrees
+
+    const double obj_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    const size_t search_segment_count =
+      static_cast<size_t>(std::floor(search_distance / reference_path_resolution_));
+    const size_t search_segment_num =
+      std::min(search_segment_count, static_cast<size_t>(pose_path.size() - index));
+
+    // search for the best score, which is the smallest
+    double best_score = 1e9;  // initial value is large enough
+    for (size_t i = 0; i < search_segment_num; ++i) {
+      const auto & path_pose = pose_path.at(index + i);
+      // yaw difference
+      const double path_yaw = tf2::getYaw(path_pose.orientation);
+      const double relative_path_yaw = autoware_utils::normalize_radian(path_yaw - obj_yaw);
+      if (std::abs(relative_path_yaw) > yaw_diff_limit) {
+        continue;
+      }
+
+      const double dx = path_pose.position.x - obj_point.x;
+      const double dy = path_pose.position.y - obj_point.y;
+      const double dx_cp = std::cos(obj_yaw) * dx + std::sin(obj_yaw) * dy;
+      const double dy_cp = -std::sin(obj_yaw) * dx + std::cos(obj_yaw) * dy;
+      const double neutral_yaw = std::atan2(dy_cp, dx_cp) * 2.0;
+      const double delta_yaw = autoware_utils::normalize_radian(path_yaw - obj_yaw - neutral_yaw);
+      if (std::abs(delta_yaw) > yaw_diff_limit) {
+        continue;
+      }
+
+      // objective function score
+      constexpr double weight_ratio = 0.01;
+      double score = delta_yaw * delta_yaw + weight_ratio * neutral_yaw * neutral_yaw;
+      constexpr double acceptable_score = 1e-3;
+
+      if (score < best_score) {
+        best_score = score;
+        idx = i;
+        is_position_found = true;
+        if (score < acceptable_score) {
+          // if the score is small enough, we can break the loop
+          break;
+        }
+      }
+    }
+  }
+
+  // update starting segment index
+  index += idx;
+  index = std::clamp(index, 0ul, pose_path.size() - 1);
+
+  return is_position_found ? opt_index : std::nullopt;
 }
 
 bool MapBasedPredictionNode::isDuplicated(
