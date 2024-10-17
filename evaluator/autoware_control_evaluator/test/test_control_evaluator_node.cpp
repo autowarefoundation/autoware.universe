@@ -16,6 +16,8 @@
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
+#include "tf2_ros/transform_broadcaster.h"
+#include <tf2/LinearMath/Quaternion.h>
 
 #include <autoware/control_evaluator/control_evaluator_node.hpp>
 
@@ -36,7 +38,6 @@ using TrajectoryPoint = autoware_planning_msgs::msg::TrajectoryPoint;
 using diagnostic_msgs::msg::DiagnosticArray;
 using nav_msgs::msg::Odometry;
 
-constexpr double epsilon = 1e-6;
 
 class EvalTest : public ::testing::Test
 {
@@ -158,16 +159,43 @@ protected:
 
 TEST_F(EvalTest, TestYawDeviation)
 {
+  auto setYaw = [](geometry_msgs::msg::Quaternion & msg, const double yaw_rad) {
+    tf2::Quaternion q;
+    q.setRPY(0.0, 0.0, yaw_rad);
+    msg.x = q.x();
+    msg.y = q.y();
+    msg.z = q.z();
+    msg.w = q.w();
+  };
   setTargetMetric("yaw_deviation");
+  Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 0.0}});
+  for (auto & p : t.points) {
+    setYaw(p.pose.orientation, M_PI);
+  }
 
+  publishEgoPose(0.0, 0.0, M_PI);
+  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
+
+  publishEgoPose(0.0, 0.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), -M_PI);
+
+  publishEgoPose(0.0, 0.0, -M_PI);
+  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
 }
 
 TEST_F(EvalTest, TestLateralDeviation)
 {
   setTargetMetric("lateral_deviation");
+  Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 0.0}});
+
+  publishEgoPose(0.0, 0.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
+
+  publishEgoPose(1.0, 1.0, 0.0);
+  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 1.0);
 }
 
-TEST_F(EvalTest, TestKinematicState)
-{
-  setTargetMetric("longitudinal_deviation");
-}
+// TEST_F(EvalTest, TestKinematicState)
+// {
+//   setTargetMetric("longitudinal_deviation");
+// }
