@@ -154,7 +154,7 @@ std::vector<double> getAccelerationValues(
   return sampled_values;
 }
 
-lanelet::ConstLanelets getTargetNeighborLanes(
+lanelet::ConstLanelets get_target_neighbor_lanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType & type)
 {

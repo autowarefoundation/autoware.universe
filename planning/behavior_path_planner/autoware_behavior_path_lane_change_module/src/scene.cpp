@@ -88,7 +88,7 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   common_data_ptr_->current_lanes_path =
     route_handler_ptr->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
 
-  common_data_ptr_->lanes_ptr->target_neighbor = utils::lane_change::getTargetNeighborLanes(
+  common_data_ptr_->lanes_ptr->target_neighbor = utils::lane_change::get_target_neighbor_lanes(
     *route_handler_ptr, current_lanes, common_data_ptr_->lc_type);
 
   common_data_ptr_->lanes_ptr->current_lane_in_goal_section =
@@ -1011,7 +1011,7 @@ bool NormalLaneChange::get_prepare_segment(
   return true;
 }
 
-lane_change::TargetObjects NormalLaneChange::getTargetObjects(
+lane_change::TargetObjects NormalLaneChange::get_target_objects(
   const FilteredByLanesExtendedObjects & filtered_objects,
   [[maybe_unused]] const lanelet::ConstLanelets & current_lanes) const
 {
@@ -1362,7 +1362,7 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
 
   const auto current_velocity = getEgoVelocity();
   const auto sorted_lane_ids = utils::lane_change::get_sorted_lane_ids(common_data_ptr_);
-  const auto target_objects = getTargetObjects(filtered_objects_, current_lanes);
+  const auto target_objects = get_target_objects(filtered_objects_, current_lanes);
 
   const auto prepare_phase_metrics = get_prepare_metrics();
 
@@ -1684,7 +1684,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     return {true, true};
   }
 
-  const auto target_objects = getTargetObjects(filtered_objects_, current_lanes);
+  const auto target_objects = get_target_objects(filtered_objects_, current_lanes);
 
   CollisionCheckDebugMap debug_data;
 
