@@ -334,9 +334,6 @@ void ScanGroundFilterComponent::checkContinuousGndGrid(
   // extrapolate next ground height
   const float next_gnd_z = gradient * pd.radius + intercept;
 
-  // extrapolate next ground height
-  const float next_gnd_z = curr_gnd_slope_ratio * pd.radius + gnd_buff_z_mean;
-
   // calculate fixed angular threshold from the reference position
   const float gnd_z_local_thresh =
     std::tan(DEG2RAD(5.0)) * (pd.radius - gnd_grids_list.back().radius);
@@ -509,8 +506,8 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         curr_gnd_grid.avg_height = centroid_bin.getAverageHeight();
         curr_gnd_grid.max_height = centroid_bin.getMaxHeight();
         curr_gnd_grid.grid_id = pd_prev.grid_id;
-        curr_gnd_grid.gradient = 0.0f; // not calculated yet
-        curr_gnd_grid.intercept = 0.0f; // not calculated yet
+        curr_gnd_grid.gradient = 0.0f;   // not calculated yet
+        curr_gnd_grid.intercept = 0.0f;  // not calculated yet
         gnd_grids.push_back(curr_gnd_grid);
         // clear the centroid_bin
         centroid_bin.initialize();
@@ -521,8 +518,8 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
           gnd_grids, gnd_grids.size() - gnd_grid_buffer_size_, gnd_grids.size(), gradient,
           intercept);
         // update the current grid
-        gnd_grids.back().gradient = gradient; // update the gradient
-        gnd_grids.back().intercept = intercept; // update the intercept
+        gnd_grids.back().gradient = gradient;    // update the gradient
+        gnd_grids.back().intercept = intercept;  // update the intercept
       }
 
       // 0: set the thresholds
