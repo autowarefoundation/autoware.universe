@@ -42,7 +42,7 @@
         <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
 
-      <composable_node pkg="map_loader" plugin="Lanelet2MapVisualizationNode" name="lanelet2_map_visualization">
+      <composable_node pkg="autoware_lanelet2_map_visualizer" plugin="autoware::lanelet2_map_visualizer::Lanelet2MapVisualizationNode" name="lanelet2_map_visualization">
         <remap from="input/lanelet2_map" to="vector_map"/>
         <remap from="output/lanelet2_map_marker" to="vector_map_marker"/>
         <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>

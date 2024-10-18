@@ -152,23 +152,3 @@ Please see [tier4_autoware_msgs/msg/MapProjectorInfo.msg](https://github.com/tie
 
 `use_waypoints` decides how to handle a centerline.
 This flag enables to use the `overwriteLaneletsCenterlineWithWaypoints` function instead of `overwriteLaneletsCenterline`. Please see [the document of the autoware_lanelet2_extension package](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md#centerline) in detail.
-
----
-
-## lanelet2_map_visualization
-
-### Feature
-
-lanelet2_map_visualization visualizes autoware_map_msgs/LaneletMapBin messages into visualization_msgs/MarkerArray.
-
-### How to Run
-
-`ros2 run map_loader lanelet2_map_visualization`
-
-### Subscribed Topics
-
-- ~input/lanelet2_map (autoware_map_msgs/LaneletMapBin) : binary data of Lanelet2 Map
-
-### Published Topics
-
-- ~output/lanelet2_map_marker (visualization_msgs/MarkerArray) : visualization messages for RViz
