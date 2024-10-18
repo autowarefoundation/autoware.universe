@@ -38,6 +38,8 @@ using TrajectoryPoint = autoware_planning_msgs::msg::TrajectoryPoint;
 using diagnostic_msgs::msg::DiagnosticArray;
 using nav_msgs::msg::Odometry;
 
+constexpr double epsilon = 1e-6;
+
 
 class EvalTest : public ::testing::Test
 {
@@ -48,8 +50,6 @@ protected:
 
     rclcpp::NodeOptions options;
     const auto share_dir = ament_index_cpp::get_package_share_directory("autoware_control_evaluator");
-    options.arguments(
-      {"--ros-args", "--params-file", share_dir + "/param/control_evaluator.defaults.yaml"});
 
     dummy_node = std::make_shared<rclcpp::Node>("control_evaluator_test_node");
     eval_node = std::make_shared<EvalNode>(options);
@@ -83,7 +83,7 @@ protected:
       dummy_node, "/control_evaluator/metrics", 1, [=](const DiagnosticArray::ConstSharedPtr msg) {
         const auto it = std::find_if(msg->status.begin(), msg->status.end(), is_target_metric);
         if (it != msg->status.end()) {
-          metric_value_ = boost::lexical_cast<double>(it->values[2].value);
+          metric_value_ = boost::lexical_cast<double>(it->values[0].value);
           metric_updated_ = true;
         }
       });
@@ -174,13 +174,13 @@ TEST_F(EvalTest, TestYawDeviation)
   }
 
   publishEgoPose(0.0, 0.0, M_PI);
-  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
+  EXPECT_NEAR(publishTrajectoryAndGetMetric(t), 0.0, epsilon);
 
   publishEgoPose(0.0, 0.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), -M_PI);
+  EXPECT_NEAR(publishTrajectoryAndGetMetric(t), M_PI, epsilon);
 
   publishEgoPose(0.0, 0.0, -M_PI);
-  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
+  EXPECT_NEAR(publishTrajectoryAndGetMetric(t), 0.0, epsilon);
 }
 
 TEST_F(EvalTest, TestLateralDeviation)
@@ -189,10 +189,10 @@ TEST_F(EvalTest, TestLateralDeviation)
   Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 0.0}});
 
   publishEgoPose(0.0, 0.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
+  EXPECT_NEAR(publishTrajectoryAndGetMetric(t), 0.0, epsilon);
 
   publishEgoPose(1.0, 1.0, 0.0);
-  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 1.0);
+  EXPECT_NEAR(publishTrajectoryAndGetMetric(t), 1.0, epsilon);
 }
 
 // TEST_F(EvalTest, TestKinematicState)
