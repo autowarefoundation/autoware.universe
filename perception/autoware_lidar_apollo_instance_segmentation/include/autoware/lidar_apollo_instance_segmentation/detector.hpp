@@ -19,10 +19,10 @@
 #include "autoware/lidar_apollo_instance_segmentation/feature_generator.hpp"
 #include "autoware/lidar_apollo_instance_segmentation/node.hpp"
 
+#include <autoware/tensorrt_common/tensorrt_common.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
 #include <cuda_utils/cuda_unique_ptr.hpp>
 #include <cuda_utils/stream_unique_ptr.hpp>
-#include <tensorrt_common/tensorrt_common.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <tf2_ros/buffer_interface.h>
@@ -54,7 +54,7 @@ private:
     const sensor_msgs::msg::PointCloud2 & input, sensor_msgs::msg::PointCloud2 & transformed_cloud,
     float z_offset);
 
-  std::unique_ptr<tensorrt_common::TrtCommon> trt_common_;
+  std::unique_ptr<autoware::tensorrt_common::TrtCommon> trt_common_;
 
   rclcpp::Node * node_;
   std::shared_ptr<Cluster2D> cluster2d_;

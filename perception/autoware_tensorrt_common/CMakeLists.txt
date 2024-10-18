@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(tensorrt_common)
+project(autoware_tensorrt_common)
 
 find_package(ament_cmake REQUIRED)
 find_package(cudnn_cmake_module REQUIRED)
@@ -42,7 +42,7 @@ set_target_properties(${PROJECT_NAME}
     CXX_EXTENSIONS NO
 )
 
-# TODO(tensorrt_common): Remove -Wno-deprecated-declarations once upgrading to TensorRT 8.5 is complete
+# TODO(autoware_tensorrt_common): Remove -Wno-deprecated-declarations once upgrading to TensorRT 8.5 is complete
 target_compile_options(${PROJECT_NAME} PRIVATE
   -Wall -Wextra -Wpedantic -Werror -Wno-deprecated-declarations
 )

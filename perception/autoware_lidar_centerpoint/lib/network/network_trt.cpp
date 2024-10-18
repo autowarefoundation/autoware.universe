@@ -63,7 +63,7 @@ bool HeadTRT::setProfile(
     if (
       out_name == std::string("heatmap") &&
       network.getOutput(ci)->getDimensions().d[1] != static_cast<int32_t>(out_channel_sizes_[ci])) {
-      tensorrt_common::LOG_ERROR(logger_)
+      autoware::tensorrt_common::LOG_ERROR(logger_)
         << "Expected and actual number of classes do not match" << std::endl;
       return false;
     }
