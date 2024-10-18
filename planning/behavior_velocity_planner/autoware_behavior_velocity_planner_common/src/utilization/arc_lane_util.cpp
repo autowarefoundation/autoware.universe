@@ -26,8 +26,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include <algorithm>
-#include <memory>
 #include <utility>
 #include <vector>
 
@@ -109,10 +107,10 @@ std::optional<PathIndexWithOffset> findOffsetSegment(
 
 std::optional<PathIndexWithPose> createTargetPoint(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
-  const double margin, const double vehicle_offset)
+  const std::vector<int64_t> & lane_ids, const double margin, const double vehicle_offset)
 {
   // Find collision segment
-  const auto collision_segment = findCollisionSegment(path, stop_line);
+  const auto collision_segment = findCollisionSegment(path, stop_line, lane_ids);
   if (!collision_segment) {
     // No collision
     return {};
