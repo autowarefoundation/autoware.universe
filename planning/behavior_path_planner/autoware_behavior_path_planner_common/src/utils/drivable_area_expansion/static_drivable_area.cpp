@@ -291,9 +291,11 @@ PolygonPoint transformBoundFrenetCoordinate(
     dist_to_bound_segment_vec.push_back(dist_to_bound_segment);
   }
 
-  const size_t min_dist_seg_idx = std::distance(
-    dist_to_bound_segment_vec.begin(),
-    std::min_element(dist_to_bound_segment_vec.begin(), dist_to_bound_segment_vec.end()));
+  const size_t min_dist_seg_idx =
+    std::distance(
+      dist_to_bound_segment_vec.begin(),
+      std::min_element(dist_to_bound_segment_vec.begin(), dist_to_bound_segment_vec.end())) -
+    1;
   const double lon_dist_to_segment = autoware::motion_utils::calcLongitudinalOffsetToSegment(
     bound_points, min_dist_seg_idx, target_point);
   const double lat_dist_to_segment =
@@ -306,6 +308,9 @@ std::vector<PolygonPoint> generatePolygonInsideBounds(
   const bool is_object_right)
 {
   constexpr double invalid_lat_dist_to_bound = 10.0;
+
+  // it can't execute this process if the bound point size is less than 2.
+  if (bound.size() < 2) return {};
 
   std::vector<PolygonPoint> full_polygon;
   for (const auto & edge_point : edge_points) {
