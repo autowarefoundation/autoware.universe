@@ -194,8 +194,3 @@ TEST_F(EvalTest, TestLateralDeviation)
   publishEgoPose(1.0, 1.0, 0.0);
   EXPECT_NEAR(publishTrajectoryAndGetMetric(t), 1.0, epsilon);
 }
-
-// TEST_F(EvalTest, TestKinematicState)
-// {
-//   setTargetMetric("longitudinal_deviation");
-// }
