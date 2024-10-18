@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>tensorrt_common</name>
+  <name>autoware_tensorrt_common</name>
   <version>0.0.1</version>
   <description>tensorrt utility wrapper</description>
 

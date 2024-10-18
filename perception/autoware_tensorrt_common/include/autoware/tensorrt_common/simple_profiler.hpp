@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TENSORRT_COMMON__SIMPLE_PROFILER_HPP_
-#define TENSORRT_COMMON__SIMPLE_PROFILER_HPP_
+#ifndef AUTOWARE__TENSORRT_COMMON__SIMPLE_PROFILER_HPP_
+#define AUTOWARE__TENSORRT_COMMON__SIMPLE_PROFILER_HPP_
 
 #include <NvInfer.h>
 
@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+namespace autoware
+{
 namespace tensorrt_common
 {
 struct LayerInfo
@@ -67,4 +69,5 @@ private:
   std::map<std::string, LayerInfo> m_layer_dict;
 };
 }  // namespace tensorrt_common
-#endif  // TENSORRT_COMMON__SIMPLE_PROFILER_HPP_
+}  // namespace autoware
+#endif  // AUTOWARE__TENSORRT_COMMON__SIMPLE_PROFILER_HPP_

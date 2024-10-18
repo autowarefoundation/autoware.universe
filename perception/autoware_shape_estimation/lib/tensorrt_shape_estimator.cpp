@@ -25,10 +25,10 @@ namespace autoware::shape_estimation
 {
 TrtShapeEstimator::TrtShapeEstimator(
   const std::string & model_path, const std::string & precision,
-  const tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size,
-  const tensorrt_common::BuildConfig build_config)
+  const autoware::tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size,
+  const autoware::tensorrt_common::BuildConfig build_config)
 {
-  trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
+  trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
     model_path, precision, nullptr, batch_config, max_workspace_size, build_config);
 
   trt_common_->setup();

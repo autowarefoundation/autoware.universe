@@ -15,11 +15,11 @@
 #ifndef AUTOWARE__TENSORRT_CLASSIFIER__TENSORRT_CLASSIFIER_HPP_
 #define AUTOWARE__TENSORRT_CLASSIFIER__TENSORRT_CLASSIFIER_HPP_
 
+#include <autoware/tensorrt_common/tensorrt_common.hpp>
 #include <cuda_utils/cuda_check_error.hpp>
 #include <cuda_utils/cuda_unique_ptr.hpp>
 #include <cuda_utils/stream_unique_ptr.hpp>
 #include <opencv2/opencv.hpp>
-#include <tensorrt_common/tensorrt_common.hpp>
 
 #include <memory>
 #include <string>
@@ -54,12 +54,12 @@ public:
    */
   TrtClassifier(
     const std::string & model_path, const std::string & precision,
-    const tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
+    const autoware::tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
     const std::vector<float> & mean = {123.675, 116.28, 103.53},
     const std::vector<float> & std = {58.395, 57.12, 57.375},
     const size_t max_workspace_size = (1 << 30), const std::string & calibration_images = "",
-    const tensorrt_common::BuildConfig build_config =
-      tensorrt_common::BuildConfig("MinMax", -1, false, false, false, 0.0),
+    const autoware::tensorrt_common::BuildConfig build_config =
+      autoware::tensorrt_common::BuildConfig("MinMax", -1, false, false, false, 0.0),
     const bool cuda = false);
   /**
    * @brief Deconstruct TrtClassifier
@@ -102,7 +102,7 @@ private:
     const std::vector<cv::Mat> & images, std::vector<int> & results,
     std::vector<float> & probabilities);
 
-  std::unique_ptr<tensorrt_common::TrtCommon> trt_common_;
+  std::unique_ptr<autoware::tensorrt_common::TrtCommon> trt_common_;
 
   std::vector<float> input_h_;
   CudaUniquePtr<float[]> input_d_;

@@ -19,10 +19,10 @@
 
   <build_depend>autoware_cmake</build_depend>
 
+  <depend>autoware_tensorrt_common</depend>
   <depend>cuda_utils</depend>
   <depend>libopencv-dev</depend>
   <depend>rclcpp</depend>
-  <depend>tensorrt_common</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

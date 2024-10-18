@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TENSORRT_COMMON__LOGGER_HPP_
-#define TENSORRT_COMMON__LOGGER_HPP_
+#ifndef AUTOWARE__TENSORRT_COMMON__LOGGER_HPP_
+#define AUTOWARE__TENSORRT_COMMON__LOGGER_HPP_
 
 #include "NvInferRuntimeCommon.h"
 
@@ -29,6 +29,8 @@
 #include <string>
 #include <thread>
 
+namespace autoware
+{
 namespace tensorrt_common
 {
 using Severity = nvinfer1::ILogger::Severity;
@@ -548,5 +550,6 @@ inline LogStreamConsumer LOG_FATAL(const Logger & logger)
 
 }  // anonymous namespace
 }  // namespace tensorrt_common
+}  // namespace autoware
 
-#endif  // TENSORRT_COMMON__LOGGER_HPP_
+#endif  // AUTOWARE__TENSORRT_COMMON__LOGGER_HPP_

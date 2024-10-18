@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TENSORRT_COMMON__TENSORRT_COMMON_HPP_
-#define TENSORRT_COMMON__TENSORRT_COMMON_HPP_
+#ifndef AUTOWARE__TENSORRT_COMMON__TENSORRT_COMMON_HPP_
+#define AUTOWARE__TENSORRT_COMMON__TENSORRT_COMMON_HPP_
 
 #ifndef YOLOX_STANDALONE
 #include <rclcpp/rclcpp.hpp>
@@ -30,14 +30,16 @@ namespace fs = ::std::filesystem;
 namespace fs = ::std::experimental::filesystem;
 #endif
 
-#include <tensorrt_common/logger.hpp>
-#include <tensorrt_common/simple_profiler.hpp>
+#include <autoware/tensorrt_common/logger.hpp>
+#include <autoware/tensorrt_common/simple_profiler.hpp>
 
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
+namespace autoware
+{
 namespace tensorrt_common
 {
 /**
@@ -236,5 +238,6 @@ private:
 };
 
 }  // namespace tensorrt_common
+}  // namespace autoware
 
-#endif  // TENSORRT_COMMON__TENSORRT_COMMON_HPP_
+#endif  // AUTOWARE__TENSORRT_COMMON__TENSORRT_COMMON_HPP_

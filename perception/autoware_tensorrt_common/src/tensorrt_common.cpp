@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <tensorrt_common/tensorrt_common.hpp>
+#include <autoware/tensorrt_common/tensorrt_common.hpp>
 
 #include <NvInferPlugin.h>
 #include <dlfcn.h>
@@ -33,6 +33,8 @@ bool contain(const std::string & s, const T & v)
 }
 }  // anonymous namespace
 
+namespace autoware
+{
 namespace tensorrt_common
 {
 nvinfer1::Dims get_input_dims(const std::string & onnx_file_path)
@@ -632,3 +634,4 @@ std::string TrtCommon::getLayerInformation(nvinfer1::LayerInformationFormat form
 #endif
 
 }  // namespace tensorrt_common
+}  // namespace autoware
