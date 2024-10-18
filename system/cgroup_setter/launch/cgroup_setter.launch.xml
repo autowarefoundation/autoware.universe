@@ -1,0 +1,6 @@
+<launch>
+  <arg name="cgroup_setting_config_path" default="$(find-pkg-share cgroup_setter)/config/cgroup.yaml"/>
+  <node pkg="cgroup_setter" exec="cgroup_setter" name="cgroup_setter">
+    <param name="cgroup_setting_config_path" value="$(var cgroup_setting_config_path)"/>
+  </node>
+</launch>
