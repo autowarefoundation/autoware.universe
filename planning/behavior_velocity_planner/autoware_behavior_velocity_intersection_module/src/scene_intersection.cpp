@@ -103,7 +103,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   {
     const std::string decision_type =
-      "intersection" + std::to_string(module_id_) + " : " + formatDecisionResult(decision_result);
+      "intersection" + std::to_string(module_id_) + " : " +
+      formatDecisionResult(decision_result, activated_, occlusion_activated_);
     internal_debug_data_.decision_type = decision_type;
   }
 
