@@ -16,9 +16,9 @@
 
 #include "detection_by_tracker_node.hpp"
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -161,14 +161,14 @@ void DetectionByTracker::onObjects(
       tracker_handler_.estimateTrackedObjects(input_msg->header.stamp, objects);
     if (
       !available_trackers ||
-      !object_recognition_utils::transformObjects(
+      !autoware::object_recognition_utils::transformObjects(
         objects, input_msg->header.frame_id, tf_buffer_, transformed_objects)) {
       objects_pub_->publish(detected_objects);
       published_time_publisher_->publish_if_subscribed(objects_pub_, detected_objects.header.stamp);
       return;
     }
     // to simplify post processes, convert tracked_objects to DetectedObjects message.
-    tracked_objects = object_recognition_utils::toDetectedObjects(transformed_objects);
+    tracked_objects = autoware::object_recognition_utils::toDetectedObjects(transformed_objects);
   }
   debugger_->publishInitialObjects(*input_msg);
   debugger_->publishTrackedObjects(tracked_objects);
@@ -233,9 +233,9 @@ void DetectionByTracker::divideUnderSegmentedObjects(
       }
       // detect under segmented cluster
       const float recall =
-        object_recognition_utils::get2dRecall(initial_object.object, tracked_object);
+        autoware::object_recognition_utils::get2dRecall(initial_object.object, tracked_object);
       const float precision =
-        object_recognition_utils::get2dPrecision(initial_object.object, tracked_object);
+        autoware::object_recognition_utils::get2dPrecision(initial_object.object, tracked_object);
       const bool is_under_segmented =
         (recall_min_threshold < recall && precision < precision_max_threshold);
       if (!is_under_segmented) {
@@ -310,7 +310,7 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
       if (!is_shape_estimated) {
         continue;
       }
-      const float iou = object_recognition_utils::get2dIoU(
+      const float iou = autoware::object_recognition_utils::get2dIoU(
         highest_iou_object_in_current_iter.object, target_object);
       if (highest_iou_in_current_iter < iou) {
         highest_iou_in_current_iter = iou;
@@ -332,7 +332,7 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
   // build output
   highest_iou_object.object.classification = target_object.classification;
   highest_iou_object.object.existence_probability =
-    object_recognition_utils::get2dIoU(target_object, highest_iou_object.object);
+    autoware::object_recognition_utils::get2dIoU(target_object, highest_iou_object.object);
 
   output = highest_iou_object;
   return highest_iou;
@@ -370,8 +370,8 @@ void DetectionByTracker::mergeOverSegmentedObjects(
       }
 
       // If there is an initial object in the tracker, it will be merged.
-      const float precision =
-        object_recognition_utils::get2dPrecision(initial_object.object, extended_tracked_object);
+      const float precision = autoware::object_recognition_utils::get2dPrecision(
+        initial_object.object, extended_tracked_object);
       if (precision < precision_threshold) {
         continue;
       }
@@ -401,7 +401,7 @@ void DetectionByTracker::mergeOverSegmentedObjects(
     }
 
     feature_object.object.existence_probability =
-      object_recognition_utils::get2dIoU(tracked_object, feature_object.object);
+      autoware::object_recognition_utils::get2dIoU(tracked_object, feature_object.object);
     setClusterInObjectWithFeature(in_cluster_objects.header, pcl_merged_cluster, feature_object);
     out_objects.feature_objects.push_back(feature_object);
   }

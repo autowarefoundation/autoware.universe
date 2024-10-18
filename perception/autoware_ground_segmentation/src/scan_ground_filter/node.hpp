@@ -97,7 +97,7 @@ private:
       height_sum(0.0f),
       radius_avg(0.0f),
       height_avg(0.0f),
-      height_max(0.0f),
+      height_max(-10.0f),
       height_min(10.0f),
       point_num(0),
       grid_id(0)
@@ -110,7 +110,7 @@ private:
       height_sum = 0.0f;
       radius_avg = 0.0f;
       height_avg = 0.0f;
-      height_max = 0.0f;
+      height_max = -10.0f;
       height_min = 10.0f;
       point_num = 0;
       grid_id = 0;
@@ -175,21 +175,21 @@ private:
   float center_pcl_shift_;  // virtual center of pcl to center mass
 
   // common parameters
-  double radial_divider_angle_rad_;  // distance in rads between dividers
+  float radial_divider_angle_rad_;  // distance in rads between dividers
   size_t radial_dividers_num_;
   VehicleInfo vehicle_info_;
 
   // common thresholds
-  double global_slope_max_angle_rad_;  // radians
-  double local_slope_max_angle_rad_;   // radians
-  double global_slope_max_ratio_;
-  double local_slope_max_ratio_;
-  double split_points_distance_tolerance_;  // distance in meters between concentric divisions
-  double split_points_distance_tolerance_square_;
+  float global_slope_max_angle_rad_;  // radians
+  float local_slope_max_angle_rad_;   // radians
+  float global_slope_max_ratio_;
+  float local_slope_max_ratio_;
+  float split_points_distance_tolerance_;  // distance in meters between concentric divisions
+  float split_points_distance_tolerance_square_;
 
   // non-grid mode parameters
   bool use_virtual_ground_point_;
-  double                     // minimum height threshold regardless the slope,
+  float                      // minimum height threshold regardless the slope,
     split_height_distance_;  // useful for close points
 
   // grid mode parameters

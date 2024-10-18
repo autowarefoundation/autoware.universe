@@ -109,11 +109,6 @@ public:
   std::vector<ShiftLine> getShiftLines() const { return shift_lines_; }
 
   /**
-   * @brief  Get shift points size.
-   */
-  size_t getShiftLinesSize() const { return shift_lines_.size(); }
-
-  /**
    * @brief  Get base offset.
    */
   double getBaseOffset() const { return base_offset_; }
@@ -138,35 +133,9 @@ public:
    */
   void removeBehindShiftLineAndSetBaseOffset(const size_t nearest_idx);
 
-  ////////////////////////////////////////
-  // Utility Functions
-  ////////////////////////////////////////
-
-  static double calcFeasibleVelocityFromJerk(
-    const double lateral, const double jerk, const double longitudinal_distance);
-
-  static double calcLateralDistFromJerk(
-    const double longitudinal, const double jerk, const double velocity);
-
-  static double calcLongitudinalDistFromJerk(
-    const double lateral, const double jerk, const double velocity);
-
-  static double calcShiftTimeFromJerk(const double lateral, const double jerk, const double acc);
-
-  static double calcJerkFromLatLonDistance(
-    const double lateral, const double longitudinal, const double velocity);
-
-  double getTotalShiftLength() const;
-
   double getLastShiftLength() const;
 
   std::optional<ShiftLine> getLastShiftLine() const;
-
-  /**
-   * @brief  Calculate the theoretical lateral jerk by spline shifting for current shift_lines_.
-   * @return Jerk array. The size is same as the shift points.
-   */
-  std::vector<double> calcLateralJerk() const;
 
 private:
   // The reference path along which the shift will be performed.

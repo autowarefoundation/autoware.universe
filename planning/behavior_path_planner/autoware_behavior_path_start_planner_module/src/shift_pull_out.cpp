@@ -22,6 +22,7 @@
 #include "autoware/motion_utils/trajectory/path_with_lane_id.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <memory>
@@ -306,7 +307,7 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     path_shifter.setPath(road_lane_reference_path);
 
     const double shift_time =
-      PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, lateral_acc);
+      autoware::motion_utils::calc_shift_time_from_jerk(shift_length, lateral_jerk, lateral_acc);
     const double longitudinal_acc = std::clamp(road_velocity / shift_time, 0.0, /* max acc */ 1.0);
     const auto pull_out_distance = calcPullOutLongitudinalDistance(
       longitudinal_acc, shift_time, shift_length, maximum_curvature,
