@@ -357,27 +357,4 @@ PathWithLaneId loadPathWithLaneIdInYaml()
   }
   return path_msg;
 }
-
-PathWithLaneId generate_simple_path_with_lane_id(
-  const size_t num_points, const double point_interval, const double velocity,
-  const double init_theta, const double delta_theta, const size_t overlapping_point_index)
-{
-  auto trajectory = generateTrajectory<autoware_planning_msgs::msg::Trajectory>(
-    num_points, point_interval, velocity, init_theta, delta_theta, overlapping_point_index);
-
-  PathWithLaneId path_with_lane_id;
-  PathPointWithLaneId path_point_with_lane_id;
-  size_t i = 0;
-  for (const auto & point : trajectory.points) {
-    path_point_with_lane_id.point.pose = point.pose;
-    path_point_with_lane_id.point.lateral_velocity_mps = point.lateral_velocity_mps;
-    path_point_with_lane_id.point.longitudinal_velocity_mps = point.longitudinal_velocity_mps;
-    path_point_with_lane_id.point.heading_rate_rps = point.heading_rate_rps;
-    path_point_with_lane_id.lane_ids.push_back(static_cast<int64_t>(i));
-    path_with_lane_id.points.push_back(path_point_with_lane_id);
-    i++;
-  }
-  return path_with_lane_id;
-}
-
 }  // namespace autoware::test_utils

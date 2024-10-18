@@ -27,7 +27,7 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 using ObjectClassification = autoware_perception_msgs::msg::ObjectClassification;
 
 using autoware::test_utils::createPose;
-using autoware::test_utils::generate_simple_path_with_lane_id;
+using autoware::test_utils::generateTrajectory;
 
 TEST(BehaviorPathPlanningUtilTest, l2Norm)
 {
@@ -65,12 +65,12 @@ TEST(BehaviorPathPlanningUtilTest, checkCollisionBetweenPathFootprintsAndObjects
     checkCollisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
 
   // Condition: object in front of path
-  ego_path = generate_simple_path_with_lane_id(5, 1.0);
+  ego_path = generateTrajectory<PathWithLaneId>(5, 1.0);
   EXPECT_FALSE(
     checkCollisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
 
   // Condition: object overlapping path
-  ego_path = generate_simple_path_with_lane_id(10, 1.0);
+  ego_path = generateTrajectory<PathWithLaneId>(10, 1.0);
   EXPECT_TRUE(
     checkCollisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
 }
