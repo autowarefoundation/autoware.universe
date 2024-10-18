@@ -29,20 +29,6 @@ using ObjectClassification = autoware_perception_msgs::msg::ObjectClassification
 using autoware::test_utils::createPose;
 using autoware::test_utils::generateTrajectory;
 
-PathWithLaneId trajectory_to_path_with_lane_id(const Trajectory & trajectory)
-{
-  PathWithLaneId path_with_lane_id;
-  PathPointWithLaneId path_point_with_lane_id;
-  for (const auto & point : trajectory.points) {
-    path_point_with_lane_id.point.pose = point.pose;
-    path_point_with_lane_id.point.lateral_velocity_mps = point.lateral_velocity_mps;
-    path_point_with_lane_id.point.longitudinal_velocity_mps = point.longitudinal_velocity_mps;
-    path_point_with_lane_id.point.heading_rate_rps = point.heading_rate_rps;
-    path_with_lane_id.points.push_back(path_point_with_lane_id);
-  }
-  return path_with_lane_id;
-}
-
 TEST(BehaviorPathPlanningUtilTest, l2Norm)
 {
   using autoware::behavior_path_planner::utils::l2Norm;
@@ -79,12 +65,12 @@ TEST(BehaviorPathPlanningUtilTest, checkCollisionBetweenPathFootprintsAndObjects
     checkCollisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
 
   // Condition: object in front of path
-  ego_path = trajectory_to_path_with_lane_id(generateTrajectory<Trajectory>(5, 1.0));
+  ego_path = generateTrajectory<PathWithLaneId>(5, 1.0);
   EXPECT_FALSE(
     checkCollisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
 
   // Condition: object overlapping path
-  ego_path = trajectory_to_path_with_lane_id(generateTrajectory<Trajectory>(10, 1.0));
+  ego_path = generateTrajectory<PathWithLaneId>(10, 1.0);
   EXPECT_TRUE(
     checkCollisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
 }

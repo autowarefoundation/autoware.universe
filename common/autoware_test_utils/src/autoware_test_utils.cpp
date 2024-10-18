@@ -357,5 +357,4 @@ PathWithLaneId loadPathWithLaneIdInYaml()
   }
   return path_msg;
 }
-
 }  // namespace autoware::test_utils

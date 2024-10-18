@@ -387,6 +387,32 @@ T generateTrajectory(
   return traj;
 }
 
+template <>
+inline PathWithLaneId generateTrajectory<PathWithLaneId>(
+  const size_t num_points, const double point_interval, const double velocity,
+  const double init_theta, const double delta_theta, const size_t overlapping_point_index)
+{
+  PathWithLaneId traj;
+
+  for (size_t i = 0; i < num_points; i++) {
+    const double theta = init_theta + i * delta_theta;
+    const double x = i * point_interval * std::cos(theta);
+    const double y = i * point_interval * std::sin(theta);
+
+    PathPointWithLaneId p;
+    p.point.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
+    p.point.longitudinal_velocity_mps = velocity;
+    p.lane_ids.push_back(i);
+    traj.points.push_back(p);
+
+    if (i == overlapping_point_index) {
+      auto value_to_insert = traj.points.at(overlapping_point_index);
+      traj.points.insert(traj.points.begin() + overlapping_point_index + 1, value_to_insert);
+    }
+  }
+  return traj;
+}
+
 /**
  * @brief Creates a publisher with appropriate QoS settings.
  *
