@@ -327,10 +327,12 @@ void ScanGroundFilterComponent::checkContinuousGndGrid(
   }
 
   // 2. mean of grid buffer(filtering)
-  float curr_gnd_slope_ratio = gnd_grids_list.back().gradient;
-  curr_gnd_slope_ratio =
-    std::clamp(curr_gnd_slope_ratio, -global_slope_max_ratio_, global_slope_max_ratio_);
-  float gnd_buff_z_mean = gnd_grids_list.back().intercept;
+  const float gradient =
+    std::clamp(gnd_grids_list.back().gradient, -global_slope_max_ratio_, global_slope_max_ratio_);
+  const float & intercept = gnd_grids_list.back().intercept;
+
+  // extrapolate next ground height
+  const float next_gnd_z = gradient * pd.radius + intercept;
 
   // extrapolate next ground height
   const float next_gnd_z = curr_gnd_slope_ratio * pd.radius + gnd_buff_z_mean;
