@@ -32,6 +32,8 @@
 #include <memory>
 #include <string>
 
+class TestExternalCmdConverter;
+
 namespace autoware::external_cmd_converter
 {
 using GearCommand = autoware_vehicle_msgs::msg::GearCommand;
@@ -103,6 +105,8 @@ private:
 
   double calculate_acc(const ExternalControlCommand & cmd, const double vel);
   double get_shift_velocity_sign(const GearCommand & cmd);
+
+  friend class ::TestExternalCmdConverter;
 };
 
 }  // namespace autoware::external_cmd_converter
