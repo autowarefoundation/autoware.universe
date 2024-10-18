@@ -35,10 +35,11 @@ using tier4_autoware_utils::getOrDeclareParameter;
 IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
     node, getModuleName(),
-    getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection")),
+    getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".enable_rtc.intersection")),
   occlusion_rtc_interface_(
     &node, "intersection_occlusion",
-    getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
+    getOrDeclareParameter<bool>(
+      node, std::string(getModuleName()) + ".enable_rtc.intersection_to_occlusion"))
 {
   const std::string ns(getModuleName());
   auto & ip = intersection_param_;
@@ -345,10 +346,10 @@ void IntersectionModuleManager::launchNewModules(
     const UUID uuid = getUUID(new_module->getModuleId());
     const auto occlusion_uuid = new_module->getOcclusionUUID();
     rtc_interface_.updateCooperateStatus(
-      uuid, true, State::RUNNING, std::numeric_limits<double>::lowest(),
-      std::numeric_limits<double>::lowest(), clock_->now());
+      uuid, true, std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(),
+      clock_->now());
     occlusion_rtc_interface_.updateCooperateStatus(
-      occlusion_uuid, true, State::RUNNING, std::numeric_limits<double>::lowest(),
+      occlusion_uuid, true, std::numeric_limits<double>::lowest(),
       std::numeric_limits<double>::lowest(), clock_->now());
     registerModule(std::move(new_module));
   }
@@ -404,13 +405,12 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
     const UUID uuid = getUUID(scene_module->getModuleId());
     const bool safety =
       scene_module->isSafe() && (!intersection_module->isOcclusionFirstStopRequired());
-    updateRTCStatus(uuid, safety, State::RUNNING, scene_module->getDistance(), stamp);
+    updateRTCStatus(uuid, safety, scene_module->getDistance(), stamp);
     const auto occlusion_uuid = intersection_module->getOcclusionUUID();
     const auto occlusion_distance = intersection_module->getOcclusionDistance();
     const auto occlusion_safety = intersection_module->getOcclusionSafety();
     occlusion_rtc_interface_.updateCooperateStatus(
-      occlusion_uuid, occlusion_safety, State::RUNNING, occlusion_distance, occlusion_distance,
-      stamp);
+      occlusion_uuid, occlusion_safety, occlusion_distance, occlusion_distance, stamp);
 
     // ==========================================================================================
     // module debug data

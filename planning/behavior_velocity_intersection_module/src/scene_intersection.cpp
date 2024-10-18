@@ -20,7 +20,6 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <motion_utils/factor/velocity_factor_interface.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>  // for toPolygon2d
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -45,7 +44,6 @@ namespace bg = boost::geometry;
 using intersection::make_err;
 using intersection::make_ok;
 using intersection::Result;
-using motion_utils::VelocityFactorInterface;
 
 IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id,
@@ -1282,14 +1280,13 @@ void IntersectionModule::updateTrafficSignalObservation()
     return;
   }
   const auto [tl_id, point] = tl_id_and_point_.value();
-  const auto tl_info_opt =
-    planner_data_->getTrafficSignal(tl_id, true /* traffic light module keeps last observation*/);
+  const auto tl_info_opt = planner_data_->getTrafficSignal(tl_id);
   if (!tl_info_opt) {
     // the info of this traffic light is not available
     return;
   }
-  last_tl_valid_observation_ = tl_info_opt.value();
-  internal_debug_data_.tl_observation = tl_info_opt.value();
+  last_tl_valid_observation_ = *tl_info_opt;
+  internal_debug_data_.tl_observation = *tl_info_opt;
 }
 
 IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStatus(
