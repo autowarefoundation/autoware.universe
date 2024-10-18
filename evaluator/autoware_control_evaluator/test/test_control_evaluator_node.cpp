@@ -17,7 +17,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
 #include "tf2_ros/transform_broadcaster.h"
-#include <tf2/LinearMath/Quaternion.h>
 
 #include <autoware/control_evaluator/control_evaluator_node.hpp>
 
@@ -26,6 +25,8 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 
 #include "boost/lexical_cast.hpp"
+
+#include <tf2/LinearMath/Quaternion.h>
 
 #include <memory>
 #include <string>
@@ -40,7 +41,6 @@ using nav_msgs::msg::Odometry;
 
 constexpr double epsilon = 1e-6;
 
-
 class EvalTest : public ::testing::Test
 {
 protected:
@@ -49,7 +49,8 @@ protected:
     rclcpp::init(0, nullptr);
 
     rclcpp::NodeOptions options;
-    const auto share_dir = ament_index_cpp::get_package_share_directory("autoware_control_evaluator");
+    const auto share_dir =
+      ament_index_cpp::get_package_share_directory("autoware_control_evaluator");
 
     dummy_node = std::make_shared<rclcpp::Node>("control_evaluator_test_node");
     eval_node = std::make_shared<EvalNode>(options);
@@ -73,7 +74,7 @@ protected:
   }
 
   ~EvalTest() override { rclcpp::shutdown(); }
-  
+
   void setTargetMetric(const std::string & metric_str)
   {
     const auto is_target_metric = [metric_str](const auto & status) {
