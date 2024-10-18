@@ -1,4 +1,5 @@
 <launch>
+  <!-- topics -->
   <arg name="input/odometry" default="/localization/kinematic_state"/>
   <arg name="input/acceleration" default="/localization/acceleration"/>
   <arg name="input/trajectory" default="/planning/scenario_planning/trajectory"/>
@@ -8,11 +9,16 @@
   <arg name="input/map_topic" default="/map/vector_map"/>
   <arg name="input/route_topic" default="/planning/mission_planning/route"/>
   <arg name="input/diagnostics" default="/diagnostics"/>
+  <!-- log -->
+  <arg name="result_archive_path" default=""/>
+  <let name="output_file" value="" if="$(eval &quot;'$(var result_archive_path)' == ''&quot;)"/>
+  <let name="output_file" value="$(var result_archive_path)/planning_evaluator/metric.log" unless="$(eval &quot;'$(var result_archive_path)' == ''&quot;)"/>
 
   <!-- planning evaluator -->
   <group>
     <node name="planning_evaluator" exec="planning_evaluator" pkg="autoware_planning_evaluator">
       <param from="$(find-pkg-share autoware_planning_evaluator)/config/planning_evaluator.param.yaml"/>
+      <param name="output_file" value="$(var output_file)"/>
       <remap from="~/input/odometry" to="$(var input/odometry)"/>
       <remap from="~/input/acceleration" to="$(var input/acceleration)"/>
       <remap from="~/input/trajectory" to="$(var input/trajectory)"/>
