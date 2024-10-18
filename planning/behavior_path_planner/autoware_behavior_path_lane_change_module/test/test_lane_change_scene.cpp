@@ -31,7 +31,6 @@ using autoware::behavior_path_planner::NormalLaneChange;
 using autoware::behavior_path_planner::PlannerData;
 using autoware::behavior_path_planner::lane_change::CommonDataPtr;
 using autoware::behavior_path_planner::lane_change::LCParamPtr;
-using autoware::behavior_path_planner::lane_change::Parameters;
 using autoware::behavior_path_planner::lane_change::RouteHandlerPtr;
 using autoware::route_handler::Direction;
 using autoware::route_handler::RouteHandler;
@@ -39,6 +38,7 @@ using autoware::test_utils::get_absolute_path_to_config;
 using autoware::test_utils::get_absolute_path_to_lanelet_map;
 using autoware::test_utils::get_absolute_path_to_route;
 using autoware_map_msgs::msg::LaneletMapBin;
+using geometry_msgs::msg::Pose;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 class TestNormalLaneChange : public ::testing::Test
@@ -59,18 +59,10 @@ public:
     lc_param_ptr_ = LaneChangeModuleManager::set_params(&node, node.get_name());
     planner_data_->route_handler = init_route_handler();
 
-    const auto current_pose = autoware::test_utils::createPose(-50.0, 1.75, 0.0, 0.0, 0.0, 0.0);
-    nav_msgs::msg::Odometry odom;
-
-    // Initialize it with values as needed
-    odom.pose.pose = current_pose;
-
-    // Create a shared pointer to the Odometry object
-    std::shared_ptr<nav_msgs::msg::Odometry> odom_ptr =
-      std::make_shared<nav_msgs::msg::Odometry>(odom);
-
-    planner_data_->self_odometry =
-      std::static_pointer_cast<const nav_msgs::msg::Odometry>(odom_ptr);
+    ego_pose_ = autoware::test_utils::createPose(-50.0, 1.75, 0.0, 0.0, 0.0, 0.0);
+    planner_data_->self_odometry = set_odometry(ego_pose_);
+    planner_data_->dynamic_object =
+      std::make_shared<autoware_perception_msgs::msg::PredictedObjects>();
   }
 
   void init_module()
@@ -78,7 +70,7 @@ public:
     normal_lane_change_ =
       std::make_shared<NormalLaneChange>(lc_param_ptr_, lc_type_, lc_direction_);
     normal_lane_change_->setData(planner_data_);
-    normal_lane_change_->prev_module_output_.path = create_previous_approved_path();
+    set_previous_approved_path();
   }
 
   [[nodiscard]] const CommonDataPtr & get_common_data_ptr() const
@@ -128,12 +120,25 @@ public:
     return route_handler_ptr;
   }
 
+  static std::shared_ptr<nav_msgs::msg::Odometry> set_odometry(const Pose & pose)
+  {
+    nav_msgs::msg::Odometry odom;
+    odom.pose.pose = pose;
+    return std::make_shared<nav_msgs::msg::Odometry>(odom);
+  }
+
+  void set_previous_approved_path()
+  {
+    normal_lane_change_->prev_module_output_.path = create_previous_approved_path();
+  }
+
   [[nodiscard]] PathWithLaneId create_previous_approved_path() const
   {
     const auto & common_data_ptr = get_common_data_ptr();
     const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
-    const auto closest_lane = route_handler_ptr->getLaneletsFromId(4765);
-    const auto current_pose = autoware::test_utils::createPose(-50.0, 1.75, 0.0, 0.0, 0.0, 0.0);
+    lanelet::ConstLanelet closest_lane;
+    const auto current_pose = planner_data_->self_odometry->pose.pose;
+    route_handler_ptr->getClosestLaneletWithinRoute(current_pose, &closest_lane);
     const auto backward_distance = common_data_ptr->bpp_param_ptr->backward_path_length;
     const auto forward_distance = common_data_ptr->bpp_param_ptr->forward_path_length;
     const auto current_lanes = route_handler_ptr->getLaneletSequence(
@@ -158,6 +163,7 @@ public:
   Direction lc_direction_{Direction::RIGHT};
   std::string name = "test_lane_change_scene";
   std::string test_utils_dir{"autoware_test_utils"};
+  Pose ego_pose_;
 };
 
 TEST_F(TestNormalLaneChange, testBaseClassInitialize)
@@ -166,7 +172,8 @@ TEST_F(TestNormalLaneChange, testBaseClassInitialize)
   const auto type_str = normal_lane_change_->getModuleTypeStr();
 
   ASSERT_EQ(type, LaneChangeModuleType::NORMAL);
-  ASSERT_TRUE(type_str == "NORMAL");
+  const auto is_type_str = type_str == "NORMAL";
+  ASSERT_TRUE(is_type_str);
 
   ASSERT_EQ(normal_lane_change_->getDirection(), Direction::RIGHT);
 
@@ -185,7 +192,33 @@ TEST_F(TestNormalLaneChange, testUpdateLanes)
   ASSERT_FALSE(get_common_data_ptr()->is_lanes_available());
 
   normal_lane_change_->update_lanes(!is_approved);
-  normal_lane_change_->update_transient_data();
 
   ASSERT_TRUE(get_common_data_ptr()->is_lanes_available());
+}
+
+TEST_F(TestNormalLaneChange, testGetPathWhenInvalid)
+{
+  constexpr auto is_approved = true;
+  normal_lane_change_->update_lanes(!is_approved);
+  normal_lane_change_->update_filtered_objects();
+  normal_lane_change_->update_transient_data();
+  normal_lane_change_->updateLaneChangeStatus();
+  const auto & lc_status = normal_lane_change_->getLaneChangeStatus();
+
+  ASSERT_FALSE(lc_status.is_valid_path);
+}
+
+TEST_F(TestNormalLaneChange, testGetPathWhenValid)
+{
+  constexpr auto is_approved = true;
+  ego_pose_ = autoware::test_utils::createPose(1.0, 1.75, 0.0, 0.0, 0.0, 0.0);
+  planner_data_->self_odometry = set_odometry(ego_pose_);
+  set_previous_approved_path();
+  normal_lane_change_->update_lanes(!is_approved);
+  normal_lane_change_->update_filtered_objects();
+  normal_lane_change_->update_transient_data();
+  normal_lane_change_->updateLaneChangeStatus();
+  const auto & lc_status = normal_lane_change_->getLaneChangeStatus();
+
+  ASSERT_TRUE(lc_status.is_valid_path);
 }
