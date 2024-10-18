@@ -94,6 +94,12 @@ PathWithLaneId calcCenterLinePath(
   const double longest_dist_to_shift_line,
   const std::optional<PathWithLaneId> & prev_module_path = std::nullopt);
 
+/**
+ * @brief combines 2 path with do not overlap
+ * @param [in] path1 first path
+ * @param [in] path2 second path
+ * @return combined path
+ */
 PathWithLaneId combinePath(const PathWithLaneId & path1, const PathWithLaneId & path2);
 
 BehaviorModuleOutput getReferencePath(

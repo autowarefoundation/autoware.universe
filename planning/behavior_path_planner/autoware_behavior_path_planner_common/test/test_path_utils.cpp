@@ -18,19 +18,16 @@
 
 #include <gtest/gtest.h>
 
-#include <cmath>
-#include <cstddef>
-#include <vector>
-
 using tier4_planning_msgs::msg::PathWithLaneId;
 
-using autoware::test_utils::simple_path_with_lane_id;
+using autoware::test_utils::createPose;
+using autoware::test_utils::generateTrajectory;
 
 TEST(BehaviorPathPlanningPathUtilTest, calcPathArcLengthArray)
 {
   using autoware::behavior_path_planner::utils::calcPathArcLengthArray;
 
-  auto path = simple_path_with_lane_id(10, 1.0);
+  auto path = generateTrajectory<PathWithLaneId>(10, 1.0);
   auto arc_length_array = calcPathArcLengthArray(path);
 
   ASSERT_EQ(arc_length_array.size(), path.points.size());
@@ -47,17 +44,17 @@ TEST(BehaviorPathPlanningPathUtilTest, resamplePathWithSpline)
   using autoware::behavior_path_planner::utils::resamplePathWithSpline;
 
   // Condition: path point less than 2
-  auto path = simple_path_with_lane_id(1, 1.0);
+  auto path = generateTrajectory<PathWithLaneId>(1, 1.0);
   EXPECT_EQ(resamplePathWithSpline(path, 1.0).points.size(), path.points.size());
 
   // Condition: not enough point for spline interpolation
-  path = simple_path_with_lane_id(10, 0.01);
+  path = generateTrajectory<PathWithLaneId>(10, 0.01);
   EXPECT_EQ(resamplePathWithSpline(path, 1.0).points.size(), path.points.size());
 
   // Condition: spline interpolation
-  path = simple_path_with_lane_id(10, 0.1);
+  path = generateTrajectory<PathWithLaneId>(10, 0.1);
   auto resampled_path = resamplePathWithSpline(path, 1.0);
-  EXPECT_EQ(resampled_path.points.size(), 6);
+  EXPECT_EQ(resampled_path.points.size(), 5);
 }
 
 TEST(BehaviorPathPlanningPathUtilTest, getIdxByArclength)
@@ -70,7 +67,7 @@ TEST(BehaviorPathPlanningPathUtilTest, getIdxByArclength)
   EXPECT_ANY_THROW(getIdxByArclength(path, 5, 1.0));
 
   // Condition: negative arc with idx 0
-  path = simple_path_with_lane_id(10, 1.0);
+  path = generateTrajectory<PathWithLaneId>(10, 1.0);
   EXPECT_EQ(getIdxByArclength(path, 0, -1.0), 0);
 
   // Condition: negative arc
@@ -85,12 +82,12 @@ TEST(BehaviorPathPlanningPathUtilTest, clipPathLength)
   using autoware::behavior_path_planner::utils::clipPathLength;
 
   // Condition: path point less than 3
-  auto path = simple_path_with_lane_id(2, 1.0);
+  auto path = generateTrajectory<PathWithLaneId>(2, 1.0);
   clipPathLength(path, 5, 10.0, 1.0);
   EXPECT_EQ(path.points.size(), 2);
 
   // Condition: path to be cropped
-  path = simple_path_with_lane_id(10, 1.0);
+  path = generateTrajectory<PathWithLaneId>(10, 1.0);
   clipPathLength(path, 5, 10.0, 1.0);
   EXPECT_EQ(path.points.size(), 7);
 
@@ -104,7 +101,7 @@ TEST(BehaviorPathPlanningPathUtilTest, clipPathLength)
   BehaviorPathPlannerParameters param;
   param.forward_path_length = 20.0;
   param.backward_path_length = 1.0;
-  path = simple_path_with_lane_id(10, 1.0);
+  path = generateTrajectory<PathWithLaneId>(10, 1.0);
   clipPathLength(path, 5, param);
   EXPECT_EQ(path.points.size(), 7);
 
@@ -120,7 +117,7 @@ TEST(BehaviorPathPlanningPathUtilTest, getReversingIndices)
   using autoware::behavior_path_planner::utils::getReversingIndices;
 
   size_t target_index = 7;
-  auto path = simple_path_with_lane_id(10, 1.0, 1.0);
+  auto path = generateTrajectory<PathWithLaneId>(10, 1.0, 1.0);
   path.points.at(target_index).point.longitudinal_velocity_mps = -1.0;
   auto reversing_indices = getReversingIndices(path);
   EXPECT_EQ(reversing_indices.size(), 2);
@@ -135,7 +132,7 @@ TEST(BehaviorPathPlanningPathUtilTest, getReversingIndices)
 TEST(BehaviorPathPlanningPathUtilTest, dividePath)
 {
   using autoware::behavior_path_planner::utils::dividePath;
-  auto path = simple_path_with_lane_id(10, 1.0);
+  auto path = generateTrajectory<PathWithLaneId>(10, 1.0);
 
   // Condition: empty indices
   std::vector<size_t> indices;
@@ -159,9 +156,9 @@ TEST(BehaviorPathPlanningPathUtilTest, correctDividedPathVelocity)
   double velocity = 1.0;
   std::vector<PathWithLaneId> divided_paths;
   // forward driving
-  divided_paths.push_back(simple_path_with_lane_id(10, 1.0, velocity));
+  divided_paths.push_back(generateTrajectory<PathWithLaneId>(10, 1.0, velocity));
   // reverse driving
-  divided_paths.push_back(simple_path_with_lane_id(10, -1.0, velocity, M_PI));
+  divided_paths.push_back(generateTrajectory<PathWithLaneId>(10, -1.0, velocity, M_PI));
   correctDividedPathVelocity(divided_paths);
 
   for (const auto & point : divided_paths.at(0).points) {
@@ -181,10 +178,59 @@ TEST(BehaviorPathPlanningPathUtilTest, correctDividedPathVelocity)
   }
 }
 
-TEST(BehaviorPathPlanningPathUtilTest, spline_two_points)
+TEST(BehaviorPathPlanningPathUtilTest, interpolatePose)
 {
-  using autoware::behavior_path_planner::utils::spline_two_points;
+  using autoware::behavior_path_planner::utils::interpolatePose;
 
-  std::vector<double> base_s;
-  std::vector<double> base_x;
+  auto start_pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  auto end_pose = createPose(10.0, 2.0, 0.0, 0.0, 0.0, M_PI_2);
+  double resample_interval = 1.0;
+
+  auto resampled_pose = interpolatePose(start_pose, end_pose, resample_interval);
+  EXPECT_EQ(resampled_pose.size(), 10);
+}
+
+TEST(BehaviorPathPlanningPathUtilTest, combinePath)
+{
+  using autoware::behavior_path_planner::utils::combinePath;
+
+  PathWithLaneId first_path;
+  auto second_path = generateTrajectory<PathWithLaneId>(10, 1.0);
+
+  // Condition: first path empty
+  auto combined_path = combinePath(first_path, second_path);
+  EXPECT_EQ(combined_path.points.size(), 10);
+  size_t i = 0;
+  for (const auto & point : combined_path.points) {
+    EXPECT_DOUBLE_EQ(point.point.pose.position.x, static_cast<double>(i));
+    i++;
+  }
+
+  // Condition: second path empty
+  first_path = generateTrajectory<PathWithLaneId>(4, 0.5);
+  second_path.points.clear();
+  combined_path = combinePath(first_path, second_path);
+  EXPECT_EQ(combined_path.points.size(), 4);
+  i = 0;
+  for (const auto & point : combined_path.points) {
+    EXPECT_DOUBLE_EQ(point.point.pose.position.x, static_cast<double>(i) * 0.5);
+    i++;
+  }
+
+  // Condition: combine path
+  second_path = generateTrajectory<PathWithLaneId>(20, 0.25);
+  for (auto & point : second_path.points) {
+    point.point.pose.position.x += 1.5;
+  }
+  combined_path = combinePath(first_path, second_path);
+  EXPECT_EQ(combined_path.points.size(), 23);
+  i = 0;
+  for (const auto & point : combined_path.points) {
+    if (i < 4)
+      EXPECT_DOUBLE_EQ(point.point.pose.position.x, static_cast<double>(i) * 0.5);
+    else
+      EXPECT_DOUBLE_EQ(point.point.pose.position.x, static_cast<double>(i - 3) * 0.25 + 1.5);
+
+    i++;
+  }
 }
