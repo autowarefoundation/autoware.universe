@@ -279,9 +279,33 @@ void ScanGroundFilterComponent::initializeFirstGndGrids(
     curr_gnd_grid.radius = interpolated_r;
     curr_gnd_grid.avg_height = interpolated_z;
     curr_gnd_grid.max_height = interpolated_z;
+    curr_gnd_grid.gradient = gradient;
+    curr_gnd_grid.intercept = 0.0f;
     curr_gnd_grid.grid_id = ind_grid;
     gnd_grids.push_back(curr_gnd_grid);
   }
+}
+
+void ScanGroundFilterComponent::fitLineFromGndGrid(
+  const std::vector<GridCenter> & gnd_grids_list, const size_t start_idx, const size_t end_idx,
+  float & a, float & b) const
+{
+  // calculate local gradient by least square method
+  float sum_x = 0.0f;
+  float sum_y = 0.0f;
+  float sum_xy = 0.0f;
+  float sum_x2 = 0.0f;
+  for (auto it = gnd_grids_list.begin() + start_idx; it < gnd_grids_list.begin() + end_idx; ++it) {
+    sum_x += it->radius;
+    sum_y += it->avg_height;
+    sum_xy += it->radius * it->avg_height;
+    sum_x2 += it->radius * it->radius;
+  }
+  const float n = static_cast<float>(end_idx - start_idx);
+
+  // y = a * x + b
+  a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
+  b = (sum_y - a * sum_x) / n;
 }
 
 void ScanGroundFilterComponent::checkContinuousGndGrid(
@@ -303,27 +327,12 @@ void ScanGroundFilterComponent::checkContinuousGndGrid(
   }
 
   // 2. mean of grid buffer(filtering)
-  // get mean of buffer except the last grid
-  float gnd_buff_z_mean = 0.0f;
-  float gnd_buff_radius = 0.0f;
-  for (auto it = gnd_grids_list.end() - 1 - gnd_grid_buffer_size_; it < gnd_grids_list.end() - 1;
-       ++it) {
-    gnd_buff_radius += it->radius;
-    gnd_buff_z_mean += it->avg_height;
-  }
-  gnd_buff_radius /= static_cast<float>(gnd_grid_buffer_size_);
-  gnd_buff_z_mean /= static_cast<float>(gnd_grid_buffer_size_);
-
-  // reference gradient(slope) from mean of previous gnd grids
-  // reference position is the last grid
-  const float delta_z = gnd_grids_list.back().avg_height - gnd_buff_z_mean;
-  const float delta_radius = gnd_grids_list.back().radius - gnd_buff_radius;
-  float curr_gnd_slope_ratio = delta_z / delta_radius;
-  curr_gnd_slope_ratio =
-    std::clamp(curr_gnd_slope_ratio, -global_slope_max_ratio_, global_slope_max_ratio_);
+  const float gradient =
+    std::clamp(gnd_grids_list.back().gradient, -global_slope_max_ratio_, global_slope_max_ratio_);
+  const float & intercept = gnd_grids_list.back().intercept;
 
   // extrapolate next ground height
-  const float next_gnd_z = curr_gnd_slope_ratio * (pd.radius - gnd_buff_radius) + gnd_buff_z_mean;
+  const float next_gnd_z = gradient * pd.radius + intercept;
 
   // calculate fixed angular threshold from the reference position
   const float gnd_z_local_thresh =
@@ -497,9 +506,20 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         curr_gnd_grid.avg_height = centroid_bin.getAverageHeight();
         curr_gnd_grid.max_height = centroid_bin.getMaxHeight();
         curr_gnd_grid.grid_id = pd_prev.grid_id;
+        curr_gnd_grid.gradient = 0.0f;   // not calculated yet
+        curr_gnd_grid.intercept = 0.0f;  // not calculated yet
         gnd_grids.push_back(curr_gnd_grid);
         // clear the centroid_bin
         centroid_bin.initialize();
+
+        // calculate local ground gradient
+        float gradient, intercept;
+        fitLineFromGndGrid(
+          gnd_grids, gnd_grids.size() - gnd_grid_buffer_size_, gnd_grids.size(), gradient,
+          intercept);
+        // update the current grid
+        gnd_grids.back().gradient = gradient;    // update the gradient
+        gnd_grids.back().intercept = intercept;  // update the intercept
       }
 
       // 0: set the thresholds
