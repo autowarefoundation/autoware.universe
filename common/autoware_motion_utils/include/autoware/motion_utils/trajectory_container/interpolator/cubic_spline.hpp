@@ -82,6 +82,7 @@ private:
 
 public:
   CubicSpline() = default;
+  virtual ~CubicSpline() {}
 
   /**
    * @brief Get the minimum number of required points for the interpolator.
