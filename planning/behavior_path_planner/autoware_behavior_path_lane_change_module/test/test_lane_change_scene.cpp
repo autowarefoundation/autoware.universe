@@ -217,6 +217,10 @@ TEST_F(TestNormalLaneChange, testGetPathWhenValid)
   normal_lane_change_->update_lanes(!is_approved);
   normal_lane_change_->update_filtered_objects();
   normal_lane_change_->update_transient_data();
+  const auto lane_change_required = normal_lane_change_->isLaneChangeRequired();
+
+  ASSERT_TRUE(lane_change_required);
+
   normal_lane_change_->updateLaneChangeStatus();
   const auto & lc_status = normal_lane_change_->getLaneChangeStatus();
 
