@@ -154,7 +154,7 @@ pcl::PointCloud<pcl::PointXYZ> getTransformedPointCloud(
 
 namespace autoware::costmap_generator
 {
-CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
+CostmapGeneratorNode::CostmapGeneratorNode(const rclcpp::NodeOptions & node_options)
 : Node("costmap_generator", node_options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   param_listener_ = std::make_shared<::costmap_generator_node::ParamListener>(
@@ -176,15 +176,15 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
   // Subscribers
   using std::placeholders::_1;
   sub_objects_ = this->create_subscription<autoware_perception_msgs::msg::PredictedObjects>(
-    "~/input/objects", 1, std::bind(&CostmapGenerator::onObjects, this, _1));
+    "~/input/objects", 1, std::bind(&CostmapGeneratorNode::onObjects, this, _1));
   sub_points_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/points_no_ground", rclcpp::SensorDataQoS(),
-    std::bind(&CostmapGenerator::onPoints, this, _1));
+    std::bind(&CostmapGeneratorNode::onPoints, this, _1));
   sub_lanelet_bin_map_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&CostmapGenerator::onLaneletMapBin, this, _1));
+    std::bind(&CostmapGeneratorNode::onLaneletMapBin, this, _1));
   sub_scenario_ = this->create_subscription<tier4_planning_msgs::msg::Scenario>(
-    "~/input/scenario", 1, std::bind(&CostmapGenerator::onScenario, this, _1));
+    "~/input/scenario", 1, std::bind(&CostmapGeneratorNode::onScenario, this, _1));
 
   // Publishers
   pub_costmap_ = this->create_publisher<grid_map_msgs::msg::GridMap>("~/output/grid_map", 1);
@@ -198,14 +198,14 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
 
   // Timer
   const auto period_ns = rclcpp::Rate(param_->update_rate).period();
-  timer_ =
-    rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&CostmapGenerator::onTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&CostmapGeneratorNode::onTimer, this));
 
   // Initialize
   initGridmap();
 }
 
-void CostmapGenerator::loadRoadAreasFromLaneletMap(
+void CostmapGeneratorNode::loadRoadAreasFromLaneletMap(
   const lanelet::LaneletMapPtr lanelet_map,
   std::vector<std::vector<geometry_msgs::msg::Point>> * area_points)
 {
@@ -221,7 +221,7 @@ void CostmapGenerator::loadRoadAreasFromLaneletMap(
   }
 }
 
-void CostmapGenerator::loadParkingAreasFromLaneletMap(
+void CostmapGeneratorNode::loadParkingAreasFromLaneletMap(
   const lanelet::LaneletMapPtr lanelet_map,
   std::vector<std::vector<geometry_msgs::msg::Point>> * area_points)
 {
@@ -246,7 +246,7 @@ void CostmapGenerator::loadParkingAreasFromLaneletMap(
   }
 }
 
-void CostmapGenerator::onLaneletMapBin(
+void CostmapGeneratorNode::onLaneletMapBin(
   const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg)
 {
   lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
@@ -261,23 +261,23 @@ void CostmapGenerator::onLaneletMapBin(
   }
 }
 
-void CostmapGenerator::onObjects(
+void CostmapGeneratorNode::onObjects(
   const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
 {
   objects_ = msg;
 }
 
-void CostmapGenerator::onPoints(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
+void CostmapGeneratorNode::onPoints(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
   points_ = msg;
 }
 
-void CostmapGenerator::onScenario(const tier4_planning_msgs::msg::Scenario::ConstSharedPtr msg)
+void CostmapGeneratorNode::onScenario(const tier4_planning_msgs::msg::Scenario::ConstSharedPtr msg)
 {
   scenario_ = msg;
 }
 
-void CostmapGenerator::onTimer()
+void CostmapGeneratorNode::onTimer()
 {
   autoware::universe_utils::ScopedTimeTrack scoped_time_track(__func__, *time_keeper_);
   stop_watch.tic();
@@ -331,7 +331,7 @@ void CostmapGenerator::onTimer()
   publishCostmap(costmap_);
 }
 
-bool CostmapGenerator::isActive()
+bool CostmapGeneratorNode::isActive()
 {
   if (!lanelet_map_) {
     return false;
@@ -354,7 +354,7 @@ bool CostmapGenerator::isActive()
   }
 }
 
-void CostmapGenerator::initGridmap()
+void CostmapGeneratorNode::initGridmap()
 {
   costmap_.setFrameId(param_->costmap_frame);
   costmap_.setGeometry(
@@ -367,7 +367,7 @@ void CostmapGenerator::initGridmap()
   costmap_.add(LayerName::combined, param_->grid_min_value);
 }
 
-grid_map::Matrix CostmapGenerator::generatePointsCostmap(
+grid_map::Matrix CostmapGeneratorNode::generatePointsCostmap(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & in_points)
 {
   geometry_msgs::msg::TransformStamped points2costmap;
@@ -413,7 +413,7 @@ autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr transformObjects
   return autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr(objects);
 }
 
-grid_map::Matrix CostmapGenerator::generateObjectsCostmap(
+grid_map::Matrix CostmapGeneratorNode::generateObjectsCostmap(
   const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects)
 {
   const auto object_frame = in_objects->header.frame_id;
@@ -426,7 +426,7 @@ grid_map::Matrix CostmapGenerator::generateObjectsCostmap(
   return objects_costmap;
 }
 
-grid_map::Matrix CostmapGenerator::generatePrimitivesCostmap()
+grid_map::Matrix CostmapGeneratorNode::generatePrimitivesCostmap()
 {
   grid_map::GridMap lanelet2_costmap = costmap_;
   if (!primitives_points_.empty()) {
@@ -438,7 +438,7 @@ grid_map::Matrix CostmapGenerator::generatePrimitivesCostmap()
   return lanelet2_costmap[LayerName::primitives];
 }
 
-grid_map::Matrix CostmapGenerator::generateCombinedCostmap()
+grid_map::Matrix CostmapGeneratorNode::generateCombinedCostmap()
 {
   // assuming combined_costmap is calculated by element wise max operation
   grid_map::GridMap combined_costmap = costmap_;
@@ -457,7 +457,7 @@ grid_map::Matrix CostmapGenerator::generateCombinedCostmap()
   return combined_costmap[LayerName::combined];
 }
 
-void CostmapGenerator::publishCostmap(const grid_map::GridMap & costmap)
+void CostmapGeneratorNode::publishCostmap(const grid_map::GridMap & costmap)
 {
   // Set header
   std_msgs::msg::Header header;
@@ -486,4 +486,4 @@ void CostmapGenerator::publishCostmap(const grid_map::GridMap & costmap)
 }  // namespace autoware::costmap_generator
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::costmap_generator::CostmapGenerator)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::costmap_generator::CostmapGeneratorNode)

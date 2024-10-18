@@ -75,10 +75,10 @@
 
 namespace autoware::costmap_generator
 {
-class CostmapGenerator : public rclcpp::Node
+class CostmapGeneratorNode : public rclcpp::Node
 {
 public:
-  explicit CostmapGenerator(const rclcpp::NodeOptions & node_options);
+  explicit CostmapGeneratorNode(const rclcpp::NodeOptions & node_options);
 
 private:
   std::shared_ptr<::costmap_generator_node::ParamListener> param_listener_;
