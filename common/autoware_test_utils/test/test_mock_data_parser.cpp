@@ -132,4 +132,53 @@ TEST(ParseFunction, CompleteFromFilename)
   EXPECT_EQ(segment1.primitives[3].id, 88);
   EXPECT_EQ(segment1.primitives[3].primitive_type, "lane");
 }
+
+TEST(ParseFunction, ParsePathWithLaneID)
+{
+  const auto autoware_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("autoware_test_utils");
+  const auto parser_test_path =
+    autoware_test_utils_dir + "/test_data/path_with_lane_id_parser_test.yaml";
+
+  const auto path = parse_path_with_lane_id_file(parser_test_path);
+  EXPECT_EQ(path.header.stamp.sec, 20);
+  EXPECT_EQ(path.header.stamp.nanosec, 5);
+
+  const auto path_points = path.points;
+  const auto & p1 = path_points.front();
+  EXPECT_DOUBLE_EQ(p1.point.pose.position.x, 12.9);
+  EXPECT_DOUBLE_EQ(p1.point.pose.position.y, 3.8);
+  EXPECT_DOUBLE_EQ(p1.point.pose.position.z, 4.7);
+  EXPECT_DOUBLE_EQ(p1.point.pose.orientation.x, 1.0);
+  EXPECT_DOUBLE_EQ(p1.point.pose.orientation.y, 2.0);
+  EXPECT_DOUBLE_EQ(p1.point.pose.orientation.z, 3.0);
+  EXPECT_DOUBLE_EQ(p1.point.pose.orientation.w, 4.0);
+  EXPECT_FLOAT_EQ(p1.point.longitudinal_velocity_mps, 1.2);
+  EXPECT_FLOAT_EQ(p1.point.lateral_velocity_mps, 3.4);
+  EXPECT_FLOAT_EQ(p1.point.heading_rate_rps, 5.6);
+  EXPECT_TRUE(p1.point.is_final);
+  EXPECT_EQ(p1.lane_ids.front(), 912);
+
+  const auto & p2 = path_points.back();
+  EXPECT_DOUBLE_EQ(p2.point.pose.position.x, 0.0);
+  EXPECT_DOUBLE_EQ(p2.point.pose.position.y, 20.5);
+  EXPECT_DOUBLE_EQ(p2.point.pose.position.z, 90.11);
+  EXPECT_DOUBLE_EQ(p2.point.pose.orientation.x, 4.0);
+  EXPECT_DOUBLE_EQ(p2.point.pose.orientation.y, 3.0);
+  EXPECT_DOUBLE_EQ(p2.point.pose.orientation.z, 2.0);
+  EXPECT_DOUBLE_EQ(p2.point.pose.orientation.w, 1.0);
+  EXPECT_FLOAT_EQ(p2.point.longitudinal_velocity_mps, 2.1);
+  EXPECT_FLOAT_EQ(p2.point.lateral_velocity_mps, 4.3);
+  EXPECT_FLOAT_EQ(p2.point.heading_rate_rps, 6.5);
+  EXPECT_FALSE(p2.point.is_final);
+  EXPECT_EQ(p2.lane_ids.front(), 205);
+
+  EXPECT_DOUBLE_EQ(path.left_bound.front().x, 55.0);
+  EXPECT_DOUBLE_EQ(path.left_bound.front().y, 66.0);
+  EXPECT_DOUBLE_EQ(path.left_bound.front().z, 77.0);
+
+  EXPECT_DOUBLE_EQ(path.right_bound.front().x, 0.55);
+  EXPECT_DOUBLE_EQ(path.right_bound.front().y, 0.66);
+  EXPECT_DOUBLE_EQ(path.right_bound.front().z, 0.77);
+}
 }  // namespace autoware::test_utils
