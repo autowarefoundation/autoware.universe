@@ -2445,9 +2445,12 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::convertPredictedReferenceP
   const TrackedObject & object,
   const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths) const
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   std::vector<PredictedRefPath> converted_ref_paths;
 
-  // Step 3. Convert lanelet path to pose path
+  // Step 1. Convert lanelet path to pose path
   for (const auto & ref_path : lanelet_ref_paths) {
     const auto & lanelet_path = ref_path.first;
     const auto & ref_path_info = ref_path.second;
@@ -2461,13 +2464,8 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::convertPredictedReferenceP
     converted_ref_paths.push_back(predicted_path);
   }
 
-  // Step 4. Search starting point for each reference path
+  // Step 2. Search starting point for each reference path
   for (auto it = converted_ref_paths.begin(); it != converted_ref_paths.end();) {
-    std::unique_ptr<ScopedTimeTrack> st1_ptr;
-    if (time_keeper_)
-      st1_ptr =
-        std::make_unique<ScopedTimeTrack>("searching_ref_path_starting_point", *time_keeper_);
-
     auto & pose_path = it->path;
     if (pose_path.empty()) {
       continue;
