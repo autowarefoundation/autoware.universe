@@ -344,6 +344,21 @@ void updateNodeOptions(
 PathWithLaneId loadPathWithLaneIdInYaml();
 
 /**
+ * @brief Generates a path with lane ID. (Converts trajectory to path with lane ID)
+ * @param num_points The number of points in path.
+ * @param point_interval The distance between consecutive points.
+ * @param velocity The longitudinal velocity for each point.
+ * @param init_theta The initial theta angle.
+ * @param delta_theta The change in theta per point.
+ * @param overlapping_point_index The index of the point to overlap.
+ * @return A path with lane ID.
+ */
+PathWithLaneId generate_simple_path_with_lane_id(
+  const size_t num_points, const double point_interval, const double velocity = 0.0,
+  const double init_theta = 0.0, const double delta_theta = 0.0,
+  const size_t overlapping_point_index = std::numeric_limits<size_t>::max());
+
+/**
  * @brief Generates a trajectory with specified parameters.
  *
  * This function generates a trajectory of type T with a given number of points,
