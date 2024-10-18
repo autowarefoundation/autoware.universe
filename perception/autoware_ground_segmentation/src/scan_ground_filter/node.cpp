@@ -514,7 +514,8 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         // calculate local ground gradient
         float gradient, intercept;
         fitLineFromGndGrid(
-          gnd_grids, gnd_grids.size() - gnd_grid_buffer_size_, gnd_grids.size(), gradient, intercept);
+          gnd_grids, gnd_grids.size() - gnd_grid_buffer_size_, gnd_grids.size(), gradient,
+          intercept);
         // update the current grid
         gnd_grids.back().gradient = gradient;
         gnd_grids.back().intercept = intercept;
