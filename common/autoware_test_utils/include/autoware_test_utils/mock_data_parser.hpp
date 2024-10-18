@@ -19,6 +19,7 @@
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <yaml-cpp/yaml.h>
 
@@ -30,7 +31,11 @@ namespace autoware::test_utils
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::LaneletSegment;
+using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
+using std_msgs::msg::Header;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 Pose parse_pose(const YAML::Node & node);
 
@@ -40,7 +45,15 @@ std::vector<LaneletPrimitive> parse_lanelet_primitives(const YAML::Node & node);
 
 std::vector<LaneletSegment> parse_segments(const YAML::Node & node);
 
+Header parse_header(const YAML::Node & node);
+
+std::vector<Point> parse_geom_points(const YAML::Node & node);
+
+std::vector<PathPointWithLaneId> parse_path_points_with_lane_id(const YAML::Node & node);
+
 LaneletRoute parse_lanelet_route_file(const std::string & filename);
+
+PathWithLaneId parse_path_with_lane_id_file(const std::string & filename);
 }  // namespace autoware::test_utils
 
 #endif  // AUTOWARE_TEST_UTILS__MOCK_DATA_PARSER_HPP_
