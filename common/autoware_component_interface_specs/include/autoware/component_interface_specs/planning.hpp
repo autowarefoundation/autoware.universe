@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_SPECS__PLANNING_HPP_
-#define COMPONENT_INTERFACE_SPECS__PLANNING_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_SPECS__PLANNING_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_SPECS__PLANNING_HPP_
 
 #include <rclcpp/qos.hpp>
 
@@ -24,7 +24,7 @@
 #include <tier4_planning_msgs/srv/set_lanelet_route.hpp>
 #include <tier4_planning_msgs/srv/set_waypoint_route.hpp>
 
-namespace planning_interface
+namespace autoware::component_interface_specs::planning_interface
 {
 
 struct SetLaneletRoute
@@ -73,6 +73,6 @@ struct Trajectory
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace planning_interface
+}  // namespace autoware::component_interface_specs::planning_interface
 
-#endif  // COMPONENT_INTERFACE_SPECS__PLANNING_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__PLANNING_HPP_
