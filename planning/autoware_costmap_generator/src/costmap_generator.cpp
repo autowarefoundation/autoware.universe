@@ -42,8 +42,9 @@
  *  OF private_node SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ********************/
 
-#include "autoware_costmap_generator/costmap_generator.hpp"
-#include "autoware_costmap_generator/object_map_utils.hpp"
+#include "autoware/costmap_generator/costmap_generator.hpp"
+
+#include "autoware/costmap_generator/utils/object_map_utils.hpp"
 
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>

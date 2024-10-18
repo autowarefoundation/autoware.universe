@@ -30,7 +30,7 @@
  *
  */
 
-#include "autoware_costmap_generator/object_map_utils.hpp"
+#include "autoware/costmap_generator/utils/object_map_utils.hpp"
 
 #include <tf2/time.h>
 

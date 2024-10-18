@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <autoware_costmap_generator/objects_to_costmap.hpp>
+#include <autoware/costmap_generator/utils/objects_to_costmap.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <gtest/gtest.h>

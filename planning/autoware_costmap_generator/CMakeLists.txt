@@ -16,9 +16,9 @@ include_directories(
 )
 
 ament_auto_add_library(costmap_generator_lib SHARED
-  nodes/autoware_costmap_generator/points_to_costmap.cpp
-  nodes/autoware_costmap_generator/objects_to_costmap.cpp
-  nodes/autoware_costmap_generator/object_map_utils.cpp
+  src/utils/points_to_costmap.cpp
+  src/utils/objects_to_costmap.cpp
+  src/utils/object_map_utils.cpp
 )
 target_link_libraries(costmap_generator_lib
   ${PCL_LIBRARIES}
@@ -37,7 +37,7 @@ generate_parameter_library(costmap_generator_node_parameters
 )
 
 ament_auto_add_library(costmap_generator_node SHARED
-  nodes/autoware_costmap_generator/costmap_generator_node.cpp
+  src/costmap_generator.cpp
 )
 target_link_libraries(costmap_generator_node
   ${PCL_LIBRARIES}
@@ -49,7 +49,7 @@ target_compile_options(costmap_generator_node PUBLIC
 )
 
 rclcpp_components_register_node(costmap_generator_node
-  PLUGIN "autoware::costmap_generator::CostmapGenerator"
+  PLUGIN "autoware::costmap_generator::CostmapGeneratorNode"
   EXECUTABLE costmap_generator
 )
 

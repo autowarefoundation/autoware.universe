@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
-#define AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
+#ifndef AUTOWARE__COSTMAP_GENERATOR__UTILS__OBJECT_MAP_UTILS_HPP_
+#define AUTOWARE__COSTMAP_GENERATOR__UTILS__OBJECT_MAP_UTILS_HPP_
 
 #include <grid_map_cv/grid_map_cv.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
@@ -75,4 +75,4 @@ void FillPolygonAreas(
 
 }  // namespace object_map
 
-#endif  // AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
+#endif  // AUTOWARE__COSTMAP_GENERATOR__UTILS__OBJECT_MAP_UTILS_HPP_

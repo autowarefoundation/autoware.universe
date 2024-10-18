@@ -42,11 +42,11 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ********************/
 
-#ifndef AUTOWARE_COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
-#define AUTOWARE_COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
+#ifndef AUTOWARE__COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
+#define AUTOWARE__COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
 
-#include "autoware_costmap_generator/objects_to_costmap.hpp"
-#include "autoware_costmap_generator/points_to_costmap.hpp"
+#include "autoware/costmap_generator/utils/objects_to_costmap.hpp"
+#include "autoware/costmap_generator/utils/points_to_costmap.hpp"
 #include "costmap_generator_node_parameters.hpp"
 
 #include <autoware/universe_utils/ros/processing_time_publisher.hpp>
@@ -185,4 +185,4 @@ private:
 };
 }  // namespace autoware::costmap_generator
 
-#endif  // AUTOWARE_COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
+#endif  // AUTOWARE__COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
