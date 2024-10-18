@@ -79,7 +79,7 @@ std::vector<PathWithLaneId> dividePath(
 void correctDividedPathVelocity(std::vector<PathWithLaneId> & divided_paths);
 
 // only two points is supported
-std::vector<double> splineTwoPoints(
+std::vector<double> spline_two_points(
   const std::vector<double> & base_s, const std::vector<double> & base_x, const double begin_diff,
   const double end_diff, const std::vector<double> & new_s);
 
