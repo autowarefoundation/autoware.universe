@@ -722,6 +722,10 @@ double calcSignedArcLength(const T & points, const size_t src_idx, const size_t 
     return -calcSignedArcLength(points, dst_idx, src_idx);
   }
 
+  if (src_idx == dst_idx) {
+    return 0.0;
+  }
+
   double dist_sum = 0.0;
   for (size_t i = src_idx; i < dst_idx; ++i) {
     dist_sum += autoware::universe_utils::calcDistance2d(points.at(i), points.at(i + 1));
