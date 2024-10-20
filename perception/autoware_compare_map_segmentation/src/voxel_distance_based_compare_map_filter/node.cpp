@@ -33,10 +33,10 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   pcl::fromROSMsg<pcl::PointXYZ>(*map, map_pcl);
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
 
-  std::unique_lock<std::mutex> lock(static_map_loader_mutex_);
   map_ptr_ = map_pcl_ptr;
   *tf_map_input_frame_ = map_ptr_->header.frame_id;
   // voxel
+  std::lock_guard<std::mutex> lock(static_map_loader_mutex_);
   voxel_map_ptr_.reset(new pcl::PointCloud<pcl::PointXYZ>);
   voxel_grid_.setLeafSize(voxel_leaf_size_, voxel_leaf_size_, voxel_leaf_size_);
   voxel_grid_.setInputCloud(map_pcl_ptr);
@@ -53,7 +53,6 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
     }
   }
   tree_->setInputCloud(map_ptr_);
-  lock.unlock();
 }
 
 bool VoxelDistanceBasedStaticMapLoader::is_close_to_map(
