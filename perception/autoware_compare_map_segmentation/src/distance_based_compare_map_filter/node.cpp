@@ -32,7 +32,7 @@ void DistanceBasedStaticMapLoader::onMapCallback(
   pcl::PointCloud<pcl::PointXYZ> map_pcl;
   pcl::fromROSMsg<pcl::PointXYZ>(*map, map_pcl);
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
-  std::lock_guard<std::mutex> lock(static_map_loader_mutex_);
+  std::unique_lock<std::mutex> lock(static_map_loader_mutex_);
   map_ptr_ = map_pcl_ptr;
   *tf_map_input_frame_ = map_ptr_->header.frame_id;
   if (!tree_) {
@@ -43,6 +43,7 @@ void DistanceBasedStaticMapLoader::onMapCallback(
     }
   }
   tree_->setInputCloud(map_ptr_);
+  lock.unlock();
 }
 
 bool DistanceBasedStaticMapLoader::is_close_to_map(

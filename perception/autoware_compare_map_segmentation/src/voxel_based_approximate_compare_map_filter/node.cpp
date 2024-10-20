@@ -29,7 +29,6 @@ namespace autoware::compare_map_segmentation
 bool VoxelBasedApproximateStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, [[maybe_unused]] const double distance_threshold)
 {
-  std::lock_guard<std::mutex> lock(static_map_loader_mutex_);
   if (voxel_map_ptr_ == NULL) {
     return false;
   }
