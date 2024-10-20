@@ -71,6 +71,14 @@ if(BUILD_TESTING)
   target_link_libraries(test_objects_to_costmap
     costmap_generator_lib
   )
+
+  ament_add_ros_isolated_gtest(test_object_map_utils
+    test/test_object_map_utils.cpp
+  )
+
+  target_link_libraries(test_object_map_utils
+    costmap_generator_lib
+  )
 endif()
 
 ament_auto_package(

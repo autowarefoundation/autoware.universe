@@ -44,9 +44,7 @@ void FillPolygonAreas(
   grid_map::GridMap & out_grid_map,
   const std::vector<std::vector<geometry_msgs::msg::Point>> & in_points,
   const std::string & in_grid_layer_name, const int in_layer_background_value,
-  const int in_fill_color, const int in_layer_min_value, const int in_layer_max_value,
-  const std::string & in_tf_target_frame, const std::string & in_tf_source_frame,
-  const tf2_ros::Buffer & in_tf_buffer)
+  const int in_fill_color, const int in_layer_min_value, const int in_layer_max_value)
 {
   if (!out_grid_map.exists(in_grid_layer_name)) {
     out_grid_map.add(in_grid_layer_name);
@@ -60,10 +58,6 @@ void FillPolygonAreas(
 
   cv::Mat merged_filled_image = original_image.clone();
 
-  geometry_msgs::msg::TransformStamped transform;
-  transform =
-    in_tf_buffer.lookupTransform(in_tf_target_frame, in_tf_source_frame, tf2::TimePointZero);
-
   // calculate out_grid_map position
   grid_map::Position map_pos = out_grid_map.getPosition();
   const double origin_x_offset = out_grid_map.getLength().x() / 2.0 - map_pos.x();
@@ -71,20 +65,12 @@ void FillPolygonAreas(
 
   for (const auto & points : in_points) {
     std::vector<cv::Point> cv_polygon;
-
     for (const auto & p : points) {
-      // transform to GridMap coordinate
-      geometry_msgs::msg::Point transformed_point;
-      geometry_msgs::msg::PointStamped output_stamped, input_stamped;
-      input_stamped.point = p;
-      tf2::doTransform(input_stamped, output_stamped, transform);
-      transformed_point = output_stamped.point;
-
       // coordinate conversion for cv image
-      const double cv_x = (out_grid_map.getLength().y() - origin_y_offset - transformed_point.y) /
-                          out_grid_map.getResolution();
-      const double cv_y = (out_grid_map.getLength().x() - origin_x_offset - transformed_point.x) /
-                          out_grid_map.getResolution();
+      const double cv_x =
+        (out_grid_map.getLength().y() - origin_y_offset - p.y) / out_grid_map.getResolution();
+      const double cv_y =
+        (out_grid_map.getLength().x() - origin_x_offset - p.x) / out_grid_map.getResolution();
       cv_polygon.emplace_back(cv_x, cv_y);
     }
 

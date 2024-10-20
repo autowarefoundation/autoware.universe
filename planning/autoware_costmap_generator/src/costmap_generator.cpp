@@ -150,6 +150,25 @@ pcl::PointCloud<pcl::PointXYZ> getTransformedPointCloud(
   return transformed_pointcloud;
 }
 
+std::vector<std::vector<geometry_msgs::msg::Point>> getTransformedPrimitivesPoints(
+  const std::vector<std::vector<geometry_msgs::msg::Point>> & in_points,
+  const geometry_msgs::msg::TransformStamped & transform)
+{
+  std::vector<std::vector<geometry_msgs::msg::Point>> out_points;
+  for (const auto & points : in_points) {
+    std::vector<geometry_msgs::msg::Point> transformed_points;
+    for (const auto & p : points) {
+      // transform to GridMap coordinate
+      geometry_msgs::msg::PointStamped output_stamped, input_stamped;
+      input_stamped.point = p;
+      tf2::doTransform(input_stamped, output_stamped, transform);
+      transformed_points.emplace_back(output_stamped.point);
+    }
+    out_points.emplace_back(transformed_points);
+  }
+  return out_points;
+}
+
 }  // namespace
 
 namespace autoware::costmap_generator
@@ -429,12 +448,19 @@ grid_map::Matrix CostmapGeneratorNode::generateObjectsCostmap(
 grid_map::Matrix CostmapGeneratorNode::generatePrimitivesCostmap()
 {
   grid_map::GridMap lanelet2_costmap = costmap_;
-  if (!primitives_points_.empty()) {
-    object_map::FillPolygonAreas(
-      lanelet2_costmap, primitives_points_, LayerName::primitives, param_->grid_max_value,
-      param_->grid_min_value, param_->grid_min_value, param_->grid_max_value, param_->costmap_frame,
-      param_->map_frame, tf_buffer_);
+  if (primitives_points_.empty()) {
+    return lanelet2_costmap[LayerName::primitives];
   }
+
+  const auto transform =
+    tf_buffer_.lookupTransform(param_->costmap_frame, param_->map_frame, tf2::TimePointZero);
+  const auto transformed_primitives_points =
+    getTransformedPrimitivesPoints(primitives_points_, transform);
+
+  object_map::FillPolygonAreas(
+    lanelet2_costmap, transformed_primitives_points, LayerName::primitives, param_->grid_max_value,
+    param_->grid_min_value, param_->grid_min_value, param_->grid_max_value);
+
   return lanelet2_costmap[LayerName::primitives];
 }
 
