@@ -12,11 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 
 #include <autoware_test_utils/autoware_test_utils.hpp>
 
+#include <tier4_planning_msgs/msg/detail/path_with_lane_id__struct.hpp>
+
 #include <gtest/gtest.h>
+
+#include <cstddef>
 
 using tier4_planning_msgs::msg::PathWithLaneId;
 
@@ -188,6 +193,29 @@ TEST(BehaviorPathPlanningPathUtilTest, interpolatePose)
 
   auto resampled_pose = interpolatePose(start_pose, end_pose, resample_interval);
   EXPECT_EQ(resampled_pose.size(), 10);
+}
+
+TEST(BehaviorPathPlanningPathUtilTest, getUnshiftedEgoPose)
+{
+  using autoware::behavior_path_planner::utils::getUnshiftedEgoPose;
+
+  auto ego_pose = createPose(2.0, 4.0, 0.0, 0.0, 0.0, 0.0);
+  autoware::behavior_path_planner::ShiftedPath shifted_path;
+
+  // Condition: empty path
+  auto unshifted_ego_pose = getUnshiftedEgoPose(ego_pose, shifted_path);
+  EXPECT_DOUBLE_EQ(unshifted_ego_pose.position.x, ego_pose.position.x);
+  EXPECT_DOUBLE_EQ(unshifted_ego_pose.position.y, ego_pose.position.y);
+
+  shifted_path.path = generateTrajectory<PathWithLaneId>(10, 1.0);
+  for (size_t i = 0; i < shifted_path.path.points.size(); i++) {
+    shifted_path.shift_length.push_back(static_cast<double>(i) * 0.1);
+  }
+
+  // Condition: path with increasing offset
+  unshifted_ego_pose = getUnshiftedEgoPose(ego_pose, shifted_path);
+  EXPECT_DOUBLE_EQ(unshifted_ego_pose.position.x, ego_pose.position.x);
+  EXPECT_DOUBLE_EQ(unshifted_ego_pose.position.y, -0.2);
 }
 
 TEST(BehaviorPathPlanningPathUtilTest, combinePath)

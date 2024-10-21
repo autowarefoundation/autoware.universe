@@ -71,11 +71,28 @@ PathWithLaneId convertWayPointsToPathWithLaneId(
   const autoware::freespace_planning_algorithms::PlannerWaypoints & waypoints,
   const double velocity, const lanelet::ConstLanelets & lanelets);
 
+/**
+ * @brief Get indices where the driving direction would reverse
+ * @param [in] path original path
+ * @return Indices
+ */
 std::vector<size_t> getReversingIndices(const PathWithLaneId & path);
 
+/**
+ * @brief Divide path by given indices
+ * @param [in] path original path
+ * @param [in] indices where to split the path
+ * @return divided paths
+ */
 std::vector<PathWithLaneId> dividePath(
   const PathWithLaneId & path, const std::vector<size_t> & indices);
 
+/**
+ * @brief corrects the velocity implemented in the trajectory by judging the vehicle driving
+ * direction
+ * @param [in] divided_paths multiple path with lane ID
+ * @return
+ */
 void correctDividedPathVelocity(std::vector<PathWithLaneId> & divided_paths);
 
 // only two points is supported
@@ -83,6 +100,13 @@ std::vector<double> spline_two_points(
   const std::vector<double> & base_s, const std::vector<double> & base_x, const double begin_diff,
   const double end_diff, const std::vector<double> & new_s);
 
+/**
+ * @brief interpolates pse between 2 pose
+ * @param [in] start_pose start pose
+ * @param [in] end_pose end pose
+ * @param [in] resample_interval resampling interval
+ * @return array of pose
+ */
 std::vector<Pose> interpolatePose(
   const Pose & start_pose, const Pose & end_pose, const double resample_interval);
 
@@ -95,7 +119,7 @@ PathWithLaneId calcCenterLinePath(
   const std::optional<PathWithLaneId> & prev_module_path = std::nullopt);
 
 /**
- * @brief combines 2 path with do not overlap
+ * @brief combines 2 path which do not overlap
  * @param [in] path1 first path
  * @param [in] path2 second path
  * @return combined path
