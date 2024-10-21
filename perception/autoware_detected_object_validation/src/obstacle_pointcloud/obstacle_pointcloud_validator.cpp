@@ -16,8 +16,8 @@
 
 #include "obstacle_pointcloud_validator.hpp"
 
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
-#include <object_recognition_utils/object_recognition_utils.hpp>
 
 #include <boost/geometry.hpp>
 
@@ -325,7 +325,7 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
 
   // Transform to pointcloud frame
   autoware_perception_msgs::msg::DetectedObjects transformed_objects;
-  if (!object_recognition_utils::transformObjects(
+  if (!autoware::object_recognition_utils::transformObjects(
         *input_objects, input_obstacle_pointcloud->header.frame_id, tf_buffer_,
         transformed_objects)) {
     // objects_pub_->publish(*input_objects);
