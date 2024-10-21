@@ -954,6 +954,8 @@ void CrosswalkModule::applySlowDownByOcclusion(
   const auto detection_areas = calculate_detection_areas(
     crosswalk_, {first_path_point_on_crosswalk.x, first_path_point_on_crosswalk.y},
     detection_range);
+  debug_data_.occlusion_detection_areas = detection_areas;
+  debug_data_.crosswalk_origin = first_path_point_on_crosswalk;
   if (is_crosswalk_occluded(
         *planner_data_->occupancy_grid, detection_areas, objects_ptr->objects, planner_param_)) {
     if (!current_initial_occlusion_time_) {

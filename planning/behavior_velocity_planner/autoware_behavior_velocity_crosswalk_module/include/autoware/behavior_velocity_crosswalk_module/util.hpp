@@ -15,6 +15,8 @@
 #ifndef AUTOWARE__BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_
 #define AUTOWARE__BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_
 
+#include <geometry_msgs/msg/detail/point__struct.hpp>
+
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/geometry.hpp>
@@ -83,6 +85,10 @@ struct DebugData
   std::vector<geometry_msgs::msg::Point> crosswalk_polygon;
   std::vector<std::vector<geometry_msgs::msg::Point>> ego_polygons;
   std::vector<std::vector<geometry_msgs::msg::Point>> obj_polygons;
+
+  // occlusion data
+  std::vector<lanelet::BasicPolygon2d> occlusion_detection_areas;
+  geometry_msgs::msg::Point crosswalk_origin;
 };
 
 std::vector<std::pair<int64_t, lanelet::ConstLanelet>> getCrosswalksOnPath(
