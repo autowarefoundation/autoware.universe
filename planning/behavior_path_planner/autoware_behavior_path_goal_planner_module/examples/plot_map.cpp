@@ -20,6 +20,7 @@
 #include <autoware/behavior_path_planner/behavior_path_planner_node.hpp>
 #include <autoware/behavior_path_planner_common/data_manager.hpp>
 #include <autoware/behavior_path_planner_common/utils/parking_departure/utils.hpp>
+#include <autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp>
 #include <autoware/behavior_path_planner_common/utils/path_utils.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
@@ -43,9 +44,18 @@
 
 using namespace std::chrono_literals;  // NOLINT
 
+using autoware::behavior_path_planner::BehaviorModuleOutput;
+using autoware::behavior_path_planner::GoalCandidate;
+using autoware::behavior_path_planner::GoalCandidates;
+using autoware::behavior_path_planner::GoalPlannerParameters;
+using autoware::behavior_path_planner::PlannerData;
+using autoware::behavior_path_planner::PullOverPath;
+using autoware::behavior_path_planner::utils::parking_departure::calcFeasibleDecelDistance;
+using autoware_planning_msgs::msg::LaneletRoute;
+using tier4_planning_msgs::msg::PathWithLaneId;
+
 void plot_path_with_lane_id(
-  matplotlibcpp17::axes::Axes & axes, const tier4_planning_msgs::msg::PathWithLaneId path,
-  const std::string color = "red")
+  matplotlibcpp17::axes::Axes & axes, const PathWithLaneId path, const std::string color = "red")
 {
   std::vector<double> xs, ys;
   for (const auto & point : path.points) {
@@ -86,9 +96,8 @@ void plot_lanelet(
     Kwargs("color"_a = "black", "linewidth"_a = linewidth, "linestyle"_a = "dashed"));
 }
 
-std::shared_ptr<const autoware::behavior_path_planner::PlannerData> instantiate_planner_data(
-  rclcpp::Node::SharedPtr node, const std::string & map_path,
-  const autoware_planning_msgs::msg::LaneletRoute & route_msg)
+std::shared_ptr<const PlannerData> instantiate_planner_data(
+  rclcpp::Node::SharedPtr node, const std::string & map_path, const LaneletRoute & route_msg)
 {
   lanelet::ErrorMessages errors{};
   lanelet::projection::MGRSProjector projector{};
@@ -103,7 +112,7 @@ std::shared_ptr<const autoware::behavior_path_planner::PlannerData> instantiate_
   lanelet::utils::conversion::toBinMsg(
     lanelet_map_ptr, &map_bin);  // TODO(soblin): pass lanelet_map_ptr to RouteHandler
 
-  auto planner_data = std::make_shared<autoware::behavior_path_planner::PlannerData>();
+  auto planner_data = std::make_shared<PlannerData>();
   planner_data->init_parameters(*node);
   planner_data->route_handler->setMap(map_bin);
   planner_data->route_handler->setRoute(route_msg);
@@ -122,11 +131,11 @@ std::shared_ptr<const autoware::behavior_path_planner::PlannerData> instantiate_
 }
 
 bool hasEnoughDistance(
-  const autoware::behavior_path_planner::PullOverPath & pull_over_path,
-  const tier4_planning_msgs::msg::PathWithLaneId & long_tail_reference_path,
-  const std::shared_ptr<const autoware::behavior_path_planner::PlannerData> planner_data,
-  const autoware::behavior_path_planner::GoalPlannerParameters & parameters)
+  const PullOverPath & pull_over_path, const PathWithLaneId & long_tail_reference_path,
+  const std::shared_ptr<const PlannerData> planner_data, const GoalPlannerParameters & parameters)
 {
+  using autoware::motion_utils::calcSignedArcLength;
+
   const Pose & current_pose = planner_data->self_odometry->pose.pose;
   const double current_vel = planner_data->self_odometry->twist.twist.linear.x;
 
@@ -136,7 +145,7 @@ bool hasEnoughDistance(
   // distance to restart should be less than decide_path_distance.
   // otherwise, the goal would change immediately after departure.
   const bool is_separated_path = pull_over_path.partial_paths().size() > 1;
-  const double distance_to_start = autoware::motion_utils::calcSignedArcLength(
+  const double distance_to_start = calcSignedArcLength(
     long_tail_reference_path.points, current_pose.position, pull_over_path.start_pose().position);
   const double distance_to_restart = parameters.decide_path_distance / 2;
   const double eps_vel = 0.01;
@@ -145,9 +154,8 @@ bool hasEnoughDistance(
     return false;
   }
 
-  const auto current_to_stop_distance =
-    autoware::behavior_path_planner::utils::parking_departure::calcFeasibleDecelDistance(
-      planner_data, parameters.maximum_deceleration, parameters.maximum_jerk, 0.0);
+  const auto current_to_stop_distance = calcFeasibleDecelDistance(
+    planner_data, parameters.maximum_deceleration, parameters.maximum_jerk, 0.0);
   if (!current_to_stop_distance) {
     return false;
   }
@@ -164,13 +172,14 @@ bool hasEnoughDistance(
   return true;
 }
 
-std::vector<autoware::behavior_path_planner::PullOverPath> selectPullOverPaths(
-  const std::vector<autoware::behavior_path_planner::PullOverPath> pull_over_path_candidates,
-  const autoware::behavior_path_planner::GoalCandidates & goal_candidates,
-  const std::shared_ptr<const autoware::behavior_path_planner::PlannerData> planner_data,
-  const autoware::behavior_path_planner::GoalPlannerParameters & parameters,
-  const autoware::behavior_path_planner::BehaviorModuleOutput & previous_module_output)
+std::vector<PullOverPath> selectPullOverPaths(
+  const std::vector<PullOverPath> pull_over_path_candidates, const GoalCandidates & goal_candidates,
+  const std::shared_ptr<const PlannerData> planner_data, const GoalPlannerParameters & parameters,
+  const BehaviorModuleOutput & previous_module_output)
 {
+  using autoware::behavior_path_planner::utils::getExtendedCurrentLanesFromPath;
+  using autoware::motion_utils::calcSignedArcLength;
+
   const auto & goal_pose = planner_data->route_handler->getOriginalGoalPose();
   const double backward_length =
     parameters.backward_goal_search_length + parameters.decide_path_distance;
@@ -178,7 +187,7 @@ std::vector<autoware::behavior_path_planner::PullOverPath> selectPullOverPaths(
   std::vector<size_t> sorted_path_indices;
   sorted_path_indices.reserve(pull_over_path_candidates.size());
 
-  std::unordered_map<int, autoware::behavior_path_planner::GoalCandidate> goal_candidate_map;
+  std::unordered_map<int, GoalCandidate> goal_candidate_map;
   for (const auto & goal_candidate : goal_candidates) {
     goal_candidate_map[goal_candidate.id] = goal_candidate;
   }
@@ -190,7 +199,7 @@ std::vector<autoware::behavior_path_planner::PullOverPath> selectPullOverPaths(
     }
   }
 
-  const double prev_path_front_to_goal_dist = autoware::motion_utils::calcSignedArcLength(
+  const double prev_path_front_to_goal_dist = calcSignedArcLength(
     previous_module_output.path.points,
     previous_module_output.path.points.front().point.pose.position, goal_pose.position);
   const auto & long_tail_reference_path = [&]() {
@@ -198,7 +207,7 @@ std::vector<autoware::behavior_path_planner::PullOverPath> selectPullOverPaths(
       return previous_module_output.path;
     }
     // get road lanes which is at least backward_length[m] behind the goal
-    const auto road_lanes = autoware::behavior_path_planner::utils::getExtendedCurrentLanesFromPath(
+    const auto road_lanes = getExtendedCurrentLanesFromPath(
       previous_module_output.path, planner_data, backward_length, 0.0, false);
     const auto goal_pose_length = lanelet::utils::getArcCoordinates(road_lanes, goal_pose).length;
     return planner_data->route_handler->getCenterLinePath(
@@ -215,15 +224,120 @@ std::vector<autoware::behavior_path_planner::PullOverPath> selectPullOverPaths(
       }),
     sorted_path_indices.end());
 
-  std::vector<autoware::behavior_path_planner::PullOverPath> selected;
+  // compare to sort pull_over_path_candidates based on the order in efficient_path_order
+  const auto comparePathTypePriority = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
+    const auto & order = parameters.efficient_path_order;
+    const auto a_pos = std::find(order.begin(), order.end(), magic_enum::enum_name(a.type()));
+    const auto b_pos = std::find(order.begin(), order.end(), magic_enum::enum_name(b.type()));
+    return a_pos < b_pos;
+  };
+
+  const auto & soft_margins = parameters.object_recognition_collision_check_soft_margins;
+  const auto & hard_margins = parameters.object_recognition_collision_check_hard_margins;
+
+  const auto [margins, margins_with_zero] =
+    std::invoke([&]() -> std::tuple<std::vector<double>, std::vector<double>> {
+      std::vector<double> margins = soft_margins;
+      margins.insert(margins.end(), hard_margins.begin(), hard_margins.end());
+      std::vector<double> margins_with_zero = margins;
+      margins_with_zero.push_back(0.0);
+      return std::make_tuple(margins, margins_with_zero);
+    });
+
+  // Create a map of PullOverPath pointer to largest collision check margin
+  std::map<size_t, double> path_id_to_rough_margin_map;
+  const auto & target_objects = autoware_perception_msgs::msg::PredictedObjects{};
+  for (const size_t i : sorted_path_indices) {
+    const auto & path = pull_over_path_candidates[i];
+    const double distance =
+      autoware::behavior_path_planner::utils::path_safety_checker::calculateRoughDistanceToObjects(
+        path.parking_path(), target_objects, planner_data->parameters, false, "max");
+    auto it = std::lower_bound(
+      margins_with_zero.begin(), margins_with_zero.end(), distance, std::greater<double>());
+    if (it == margins_with_zero.end()) {
+      path_id_to_rough_margin_map[path.id()] = margins_with_zero.back();
+    } else {
+      path_id_to_rough_margin_map[path.id()] = *it;
+    }
+  }
+
+  // sorts in descending order so the item with larger margin comes first
+  std::stable_sort(
+    sorted_path_indices.begin(), sorted_path_indices.end(),
+    [&](const size_t a_i, const size_t b_i) {
+      const auto & a = pull_over_path_candidates[a_i];
+      const auto & b = pull_over_path_candidates[b_i];
+      if (
+        std::abs(path_id_to_rough_margin_map[a.id()] - path_id_to_rough_margin_map[b.id()]) <
+        0.01) {
+        return false;
+      }
+      return path_id_to_rough_margin_map[a.id()] > path_id_to_rough_margin_map[b.id()];
+    });
+
+  // STEP2-3: Sort by curvature
+  // If the curvature is less than the threshold, prioritize the path.
+  const auto isHighCurvature = [&](const PullOverPath & path) -> bool {
+    return path.parking_path_max_curvature() >= parameters.high_curvature_threshold;
+  };
+
+  const auto isSoftMargin = [&](const PullOverPath & path) -> bool {
+    const double margin = path_id_to_rough_margin_map[path.id()];
+    return std::any_of(
+      soft_margins.begin(), soft_margins.end(),
+      [margin](const double soft_margin) { return std::abs(margin - soft_margin) < 0.01; });
+  };
+  const auto isSameHardMargin = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
+    return !isSoftMargin(a) && !isSoftMargin(b) &&
+           std::abs(path_id_to_rough_margin_map[a.id()] - path_id_to_rough_margin_map[b.id()]) <
+             0.01;
+  };
+
+  // NOTE: this is just partition sort based on curvature threshold within each sub partitions
+  std::stable_sort(
+    sorted_path_indices.begin(), sorted_path_indices.end(),
+    [&](const size_t a_i, const size_t b_i) {
+      const auto & a = pull_over_path_candidates[a_i];
+      const auto & b = pull_over_path_candidates[b_i];
+      // if both are soft margin or both are same hard margin, prioritize the path with lower
+      // curvature.
+      if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
+        return !isHighCurvature(a) && isHighCurvature(b);
+      }
+      // otherwise, keep the order based on the margin.
+      return false;
+    });
+
+  // STEP2-4: Sort pull_over_path_candidates based on the order in efficient_path_order keeping
+  // the collision check margin and curvature priority.
+  if (parameters.path_priority == "efficient_path") {
+    std::stable_sort(
+      sorted_path_indices.begin(), sorted_path_indices.end(),
+      [&](const size_t a_i, const size_t b_i) {
+        // if any of following conditions are met, sort by path type priority
+        // - both are soft margin
+        // - both are same hard margin
+        const auto & a = pull_over_path_candidates[a_i];
+        const auto & b = pull_over_path_candidates[b_i];
+        if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
+          return comparePathTypePriority(a, b);
+        }
+        // otherwise, keep the order.
+        return false;
+      });
+  }
+
+  std::vector<PullOverPath> selected;
   for (const auto & sorted_indice : sorted_path_indices) {
     selected.push_back(pull_over_path_candidates.at(sorted_indice));
   }
+
   return selected;
 }
 
 int main(int argc, char ** argv)
 {
+  using autoware::behavior_path_planner::utils::getReferencePath;
   rclcpp::init(argc, argv);
 
   autoware_planning_msgs::msg::LaneletRoute route_msg;
@@ -329,8 +443,7 @@ int main(int argc, char ** argv)
   lanelet::ConstLanelet current_route_lanelet;
   planner_data->route_handler->getClosestLaneletWithinRoute(
     route_msg.start_pose, &current_route_lanelet);
-  const auto reference_path =
-    autoware::behavior_path_planner::utils::getReferencePath(current_route_lanelet, planner_data);
+  const auto reference_path = getReferencePath(current_route_lanelet, planner_data);
   auto goal_planner_parameter =
     autoware::behavior_path_planner::GoalPlannerModuleManager::initGoalPlannerParameters(
       node.get(), "goal_planner.");
@@ -347,18 +460,21 @@ int main(int argc, char ** argv)
 
   pybind11::scoped_interpreter guard{};
   auto plt = matplotlibcpp17::pyplot::import();
-  auto [fig, ax] = plt.subplots();
+  auto [fig, axes] = plt.subplots(1, 2);
 
+  auto & ax1 = axes[0];
+  auto & ax2 = axes[1];
   const std::vector<lanelet::Id> ids{15213, 15214, 15225, 15226, 15224, 15227,
                                      15228, 15229, 15230, 15231, 15232};
   for (const auto & id : ids) {
     const auto lanelet = planner_data->route_handler->getLaneletMapPtr()->laneletLayer.get(id);
-    plot_lanelet(ax, lanelet);
+    plot_lanelet(ax1, lanelet);
+    plot_lanelet(ax2, lanelet);
   }
 
-  plot_path_with_lane_id(ax, reference_path.path, "green");
+  plot_path_with_lane_id(ax1, reference_path.path, "green");
 
-  std::vector<autoware::behavior_path_planner::PullOverPath> candidates;
+  std::vector<PullOverPath> candidates;
   for (const auto & goal_candidate : goal_candidates) {
     auto shift_pull_over_planner = autoware::behavior_path_planner::ShiftPullOver(
       *node, goal_planner_parameter, lane_departure_checker);
@@ -368,16 +484,17 @@ int main(int argc, char ** argv)
       const auto & pull_over_path = pull_over_path_opt.value();
       const auto & full_path = pull_over_path.full_path();
       candidates.push_back(pull_over_path);
-      plot_path_with_lane_id(ax, full_path);
+      plot_path_with_lane_id(ax1, full_path);
     }
   }
   const auto filtered_paths = selectPullOverPaths(
     candidates, goal_candidates, planner_data, goal_planner_parameter, reference_path);
   for (const auto & filtered_path : filtered_paths) {
-    plot_path_with_lane_id(ax, filtered_path.full_path(), "blue");
+    plot_path_with_lane_id(ax2, filtered_path.full_path(), "blue");
   }
 
-  ax.set_aspect(Args("equal"));
+  ax1.set_aspect(Args("equal"));
+  ax2.set_aspect(Args("equal"));
   plt.show();
 
   rclcpp::shutdown();
