@@ -98,6 +98,8 @@ public:
 
   virtual bool isAbleToReturnCurrentLane() const = 0;
 
+  virtual bool is_within_turn_direction_lanes() const = 0;
+
   virtual bool is_near_terminal() const = 0;
 
   virtual LaneChangePath getLaneChangePath() const = 0;

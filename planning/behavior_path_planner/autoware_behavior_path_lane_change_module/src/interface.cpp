@@ -352,7 +352,7 @@ bool LaneChangeInterface::canTransitFailureState()
 
   if (!module_type_->isAbleToReturnCurrentLane()) {
     log_debug_throttled("It's is not possible to return to original lane. Continue lane change.");
-    return false;
+    return module_type_->is_within_turn_direction_lanes();
   }
 
   const auto found_abort_path = module_type_->calcAbortPath();

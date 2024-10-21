@@ -39,6 +39,7 @@ using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 using route_handler::Direction;
 using route_handler::RouteHandler;
+using universe_utils::Polygon2d;
 using utils::path_safety_checker::ExtendedPredictedObjects;
 
 struct LateralAccelerationMap
@@ -323,6 +324,8 @@ struct MinMaxValue
 
 struct TransientData
 {
+  Polygon2d ego_polygon;  // ego's polygon at current pose
+
   MinMaxValue acc;                   // acceleration profile for accelerating lane change path
   MinMaxValue lane_changing_length;  // lane changing length for a single lane change
   MinMaxValue

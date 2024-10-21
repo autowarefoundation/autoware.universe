@@ -142,6 +142,9 @@ void NormalLaneChange::update_transient_data()
   transient_data.is_ego_near_current_terminal_start =
     transient_data.dist_to_terminal_start < transient_data.max_prepare_length;
 
+  transient_data.ego_polygon = utils::lane_change::get_ego_current_polygon(
+    common_data_ptr_->get_ego_pose(), common_data_ptr_->bpp_param_ptr->vehicle_info);
+
   updateStopTime();
   transient_data.is_ego_stuck = is_ego_stuck();
 
@@ -750,6 +753,10 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
     return false;
   }
 
+  if (is_within_turn_direction_lanes()) {
+    return true;
+  }
+
   const auto nearest_idx = autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     status_.lane_change_path.path.points, getEgoPose(),
     planner_data_->parameters.ego_nearest_dist_threshold,
@@ -775,6 +782,23 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
   lane_change_debug_.is_able_to_return_to_current_lane = true;
   return true;
 }
+
+bool NormalLaneChange::is_within_turn_direction_lanes() const
+{
+  if (!common_data_ptr_ || !common_data_ptr_->is_lanes_available()) {
+    return false;
+  }
+  const auto & route_handler_ptr = common_data_ptr_->route_handler_ptr;
+
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler_ptr->getClosestLaneletWithinRoute(
+        common_data_ptr_->get_ego_pose(), &current_lane)) {
+    return false;
+  }
+
+  return utils::lane_change::is_within_turn_direction_lanes(
+    current_lane, common_data_ptr_->transient_data.ego_polygon);
+};
 
 bool NormalLaneChange::is_near_terminal() const
 {
@@ -2187,7 +2211,6 @@ void NormalLaneChange::updateStopTime()
 bool NormalLaneChange::check_prepare_phase() const
 {
   const auto & route_handler = getRouteHandler();
-  const auto & vehicle_info = getCommonParam().vehicle_info;
 
   const auto check_in_general_lanes =
     lane_change_parameters_->enable_collision_check_for_prepare_phase_in_general_lanes;
@@ -2200,7 +2223,7 @@ bool NormalLaneChange::check_prepare_phase() const
     return check_in_general_lanes;
   }
 
-  const auto ego_footprint = utils::lane_change::getEgoCurrentFootprint(getEgoPose(), vehicle_info);
+  const auto & ego_footprint = common_data_ptr_->transient_data.ego_polygon;
 
   const auto check_in_intersection = std::invoke([&]() {
     if (!lane_change_parameters_->enable_collision_check_for_prepare_phase_in_intersection) {
@@ -2215,7 +2238,7 @@ bool NormalLaneChange::check_prepare_phase() const
       return false;
     }
 
-    return utils::lane_change::isWithinTurnDirectionLanes(current_lane, ego_footprint);
+    return is_within_turn_direction_lanes();
   });
 
   return check_in_intersection || check_in_turns || check_in_general_lanes;

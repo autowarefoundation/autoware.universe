@@ -1022,7 +1022,7 @@ rclcpp::Logger getLogger(const std::string & type)
   return rclcpp::get_logger("lane_change").get_child(type);
 }
 
-Polygon2d getEgoCurrentFootprint(
+Polygon2d get_ego_current_polygon(
   const Pose & ego_pose, const autoware::vehicle_info_utils::VehicleInfo & ego_info)
 {
   const auto base_to_front = ego_info.max_longitudinal_offset_m;
@@ -1056,9 +1056,10 @@ bool isWithinIntersection(
     polygon, utils::toPolygon2d(lanelet::utils::to2D(lanelet_polygon.basicPolygon())));
 }
 
-bool isWithinTurnDirectionLanes(const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon)
+bool is_within_turn_direction_lanes(
+  const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon)
 {
-  const std::string turn_direction = lanelet.attributeOr("turn_direction", "else");
+  const std::string_view turn_direction = lanelet.attributeOr("turn_direction", "else");
   if (turn_direction == "else" || turn_direction == "straight") {
     return false;
   }
@@ -1141,7 +1142,7 @@ bool is_ahead_of_ego(
     return dist_to_base_link >= 0.0;
   }
 
-  const auto ego_polygon = getEgoCurrentFootprint(current_ego_pose, ego_info).outer();
+  const auto & ego_polygon = common_data_ptr->transient_data.ego_polygon.outer();
   auto ego_min_dist_to_end = std::numeric_limits<double>::max();
   for (const auto & ego_edge_point : ego_polygon) {
     const auto ego_edge =
