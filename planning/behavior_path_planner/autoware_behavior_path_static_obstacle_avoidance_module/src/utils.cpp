@@ -162,6 +162,12 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
 
 namespace filtering_utils
 {
+/**
+ * @brief check whether the object is avoidance target object type.
+ * @param object data.
+ * @param parameters.
+ * @return if the object is avoidance target object type, return true.
+ */
 bool isAvoidanceTargetObjectType(
   const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -174,6 +180,12 @@ bool isAvoidanceTargetObjectType(
   return parameters->object_parameters.at(object_type).is_avoidance_target;
 }
 
+/**
+ * @brief check whether the object is safety check target object type.
+ * @param object data.
+ * @param parameters.
+ * @return if the object is safety check target object type, return true.
+ */
 bool isSafetyCheckTargetObjectType(
   const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -186,12 +198,23 @@ bool isSafetyCheckTargetObjectType(
   return parameters->object_parameters.at(object_type).is_safety_check_target;
 }
 
+/**
+ * @brief check whether the object type is ObjectClassification::UNKNOWN.
+ * @param object data.
+ * @return if the object label whose probability is the highest among the candidate is UNKNOWN,
+ * return true.
+ */
 bool isUnknownTypeObject(const ObjectData & object)
 {
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
   return object_type == ObjectClassification::UNKNOWN;
 }
 
+/**
+ * @brief classify object by whether it's vehicle or not.
+ * @param object data.
+ * @return if the object type is vehicle, return true.
+ */
 bool isVehicleTypeObject(const ObjectData & object)
 {
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
@@ -207,6 +230,14 @@ bool isVehicleTypeObject(const ObjectData & object)
   return true;
 }
 
+/**
+ * @brief check whether the object is moving or not.
+ * @param object data.
+ * @param parameters.
+ * @return if the object keeps moving more than threshold time duration, return true. if the object
+ * hasn't been moving for more than threshold time, this function return false even if the object
+ * speed is NOT zero.
+ */
 bool isMovingObject(
   const ObjectData & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -291,6 +322,12 @@ bool isWithinFreespace(
     lanelet::utils::to2D(polygons.front().basicPolygon()));
 }
 
+/**
+ * @brief check whether the object is on ego driving lane.
+ * @param object data.
+ * @param route handler.
+ * @return if the object is on ego lane, return true.
+ */
 bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler)
 {
   if (boost::geometry::within(
@@ -370,6 +407,14 @@ bool isMergingToEgoLane(const ObjectData & object)
   return true;
 }
 
+/**
+ * @brief check whether the object is parking on road shoulder.
+ * @param object polygon.
+ * @param avoidance module data.
+ * @param route handler.
+ * @param parameters.
+ * @return if the object is close to road shoulder of the lane, return true.
+ */
 bool isParkedVehicle(
   ObjectData & object, const AvoidancePlanningData & data,
   const std::shared_ptr<RouteHandler> & route_handler,
@@ -749,6 +794,18 @@ bool isObviousAvoidanceTarget(
   return false;
 }
 
+/**
+ * @brief this function includes some conditions which apply to both vehicle and non-vehicle object.
+ * @param object data.
+ * @param current reference path.
+ * @param object detection range.
+ * @param distance between object and goal point.
+ * @param ego position.
+ * @param if the goal point can be moved by external module when there is obstacle around the goal,
+ * this flag will be true.
+ * @param parameters.
+ * @return if the object is potentially target object, return true.
+ */
 bool isSatisfiedWithCommonCondition(
   ObjectData & object, const PathWithLaneId & path, const double forward_detection_range,
   const double to_goal_distance, const Point & ego_pos, const bool is_allowed_goal_modification,
@@ -860,6 +917,13 @@ bool isSatisfiedWithNonVehicleCondition(
   return true;
 }
 
+/**
+ * @brief estimate object's behavior based on its relative yaw angle to lane.
+ * @param object data.
+ * @param parameters.
+ * @return return DEVIATING, MERGING and NONE. NONE means the object has no intent to leave or merge
+ * the ego lane.
+ */
 ObjectData::Behavior getObjectBehavior(
   const ObjectData & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -927,6 +991,13 @@ bool isSatisfiedWithVehicleCondition(
   return false;
 }
 
+/**
+ * @brief check the ego has to avoid the object for lateral margin.
+ * @param object data.
+ * @param parameters.
+ * @return if the ego doesn't have to shift driving position to avoid object, return false. if the
+ * shift length is less than threshold, this fuction returns false.
+ */
 bool isNoNeedAvoidanceBehavior(
   ObjectData & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -949,6 +1020,13 @@ bool isNoNeedAvoidanceBehavior(
   return false;
 }
 
+/**
+ * @brief get avoidance lateral margin based on road width.
+ * @param object data.
+ * @param planner data, which includes ego vehicle footprint info.
+ * @param parameters.
+ * @return if this function finds there is no enough space to avoid, return nullopt.
+ */
 std::optional<double> getAvoidMargin(
   const ObjectData & object, const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters)
@@ -982,6 +1060,13 @@ std::optional<double> getAvoidMargin(
   return std::min(soft_lateral_distance_limit, max_avoid_margin);
 }
 
+/**
+ * @brief get avoidance lateral margin based on road width.
+ * @param object data.
+ * @param avoidance module data, which includes current reference path.
+ * @param planner data, which includes ego vehicle footprint info.
+ * @return if this function finds there is no enough space to avoid, return nullopt.
+ */
 double getRoadShoulderDistance(
   ObjectData & object, const AvoidancePlanningData & data,
   const std::shared_ptr<const PlannerData> & planner_data)
