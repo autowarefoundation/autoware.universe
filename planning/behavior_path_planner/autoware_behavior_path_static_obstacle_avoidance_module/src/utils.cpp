@@ -1486,7 +1486,7 @@ void fillObjectEnvelopePolygon(
     calcErrorEclipseLongRadius(object_data.object.kinematics.initial_pose_with_covariance);
 
   if (error_eclipse_long_radius > object_parameter.th_error_eclipse_long_radius) {
-    if (error_eclipse_long_radius < object_data.error_eclipse_max) {
+    if (error_eclipse_long_radius < same_id_obj->error_eclipse_max) {
       object_data.error_eclipse_max = error_eclipse_long_radius;
       object_data.envelope_poly = one_shot_envelope_poly;
       return;
