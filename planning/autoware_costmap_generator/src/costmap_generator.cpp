@@ -452,10 +452,16 @@ grid_map::Matrix CostmapGeneratorNode::generatePrimitivesCostmap()
     return lanelet2_costmap[LayerName::primitives];
   }
 
-  const auto transform =
-    tf_buffer_.lookupTransform(param_->costmap_frame, param_->map_frame, tf2::TimePointZero);
+  geometry_msgs::msg::TransformStamped primitives2costmap;
+  try {
+    primitives2costmap =
+      tf_buffer_.lookupTransform(param_->costmap_frame, param_->map_frame, tf2::TimePointZero);
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_ERROR(rclcpp::get_logger("costmap_generator"), "%s", ex.what());
+  }
+
   const auto transformed_primitives_points =
-    getTransformedPrimitivesPoints(primitives_points_, transform);
+    getTransformedPrimitivesPoints(primitives_points_, primitives2costmap);
 
   object_map::FillPolygonAreas(
     lanelet2_costmap, transformed_primitives_points, LayerName::primitives, param_->grid_max_value,
