@@ -159,6 +159,8 @@ std::optional<alt::ConvexPolygon2d> convex_hull(const alt::Points2d & points);
 
 void correct(alt::Polygon2d & poly);
 
+bool covered_by(const alt::Point2d & point, const alt::PointList2d & ring);
+
 bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly);
 
 bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2);
@@ -198,6 +200,8 @@ bool touches(
 bool touches(const alt::Point2d & point, const alt::PointList2d & line);
 
 bool touches(const alt::Point2d & point, const alt::Polygon2d & poly);
+
+bool within(const alt::Point2d & point, const alt::PointList2d & ring);
 
 bool within(const alt::Point2d & point, const alt::Polygon2d & poly);
 

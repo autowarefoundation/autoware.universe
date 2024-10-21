@@ -253,22 +253,21 @@ void correct(alt::Polygon2d & poly)
   }
 }
 
-bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly)
+bool covered_by(const alt::Point2d & point, const alt::PointList2d & ring)
 {
   constexpr double epsilon = 1e-6;
 
-  const auto & vertices = poly.outer();
   std::size_t winding_number = 0;
 
   const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
-    vertices.begin(), std::prev(vertices.end()),
+    ring.begin(), std::prev(ring.end()),
     [](const auto & a, const auto & b) { return a.y() < b.y(); });
   if (point.y() < y_min_vertex->y() || point.y() > y_max_vertex->y()) {
     return false;
   }
 
   double cross;
-  for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
+  for (auto it = ring.cbegin(); it != std::prev(ring.cend()); ++it) {
     const auto & p1 = *it;
     const auto & p2 = *std::next(it);
 
@@ -294,6 +293,17 @@ bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly)
   }
 
   return winding_number != 0;
+}
+
+bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly)
+{
+  for (const auto & inner : poly.inners()) {
+    if (within(point, inner)) {
+      return false;
+    }
+  }
+
+  return covered_by(point, poly.outer());
 }
 
 bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
@@ -337,7 +347,7 @@ double distance(
 
 double distance(const alt::Point2d & point, const alt::Polygon2d & poly)
 {
-  if (covered_by(point, poly)) {
+  if (covered_by(point, poly.outer())) {
     return 0.0;
   }
 
@@ -603,22 +613,21 @@ bool touches(const alt::Point2d & point, const alt::Polygon2d & poly)
   return false;
 }
 
-bool within(const alt::Point2d & point, const alt::Polygon2d & poly)
+bool within(const alt::Point2d & point, const alt::PointList2d & ring)
 {
   constexpr double epsilon = 1e-6;
 
-  const auto & vertices = poly.outer();
   int64_t winding_number = 0;
 
   const auto [y_min_vertex, y_max_vertex] = std::minmax_element(
-    vertices.begin(), std::prev(vertices.end()),
+    ring.begin(), std::prev(ring.end()),
     [](const auto & a, const auto & b) { return a.y() < b.y(); });
   if (point.y() <= y_min_vertex->y() || point.y() >= y_max_vertex->y()) {
     return false;
   }
 
   double cross;
-  for (auto it = vertices.cbegin(); it != std::prev(vertices.cend()); ++it) {
+  for (auto it = ring.cbegin(); it != std::prev(ring.cend()); ++it) {
     const auto & p1 = *it;
     const auto & p2 = *std::next(it);
 
@@ -647,13 +656,18 @@ bool within(const alt::Point2d & point, const alt::Polygon2d & poly)
     return false;
   }
 
+  return true;
+}
+
+bool within(const alt::Point2d & point, const alt::Polygon2d & poly)
+{
   for (const auto & inner : poly.inners()) {
-    if (touches(point, inner)) {
+    if (covered_by(point, inner)) {
       return false;
     }
   }
 
-  return true;
+  return within(point, poly.outer());
 }
 
 bool within(const alt::Polygon2d & poly_contained, const alt::ConvexPolygon2d & poly_containing)
