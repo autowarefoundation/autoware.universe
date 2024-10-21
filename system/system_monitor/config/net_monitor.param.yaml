@@ -2,6 +2,7 @@
   ros__parameters:
     devices: ["*"]
     monitor_program: "greengrass"
+    enable_traffic_monitor: true
     crc_error_check_duration: 1
     crc_error_count_threshold: 1
     reassembles_failed_check_duration: 1
