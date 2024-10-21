@@ -46,7 +46,6 @@
 #include <tf2_ros/buffer.h>
 #include <yaml-cpp/yaml.h>
 
-#include <cstdint>
 #include <limits>
 #include <memory>
 #include <optional>
