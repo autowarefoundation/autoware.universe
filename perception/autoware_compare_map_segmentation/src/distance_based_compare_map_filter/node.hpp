@@ -38,6 +38,7 @@ class DistanceBasedStaticMapLoader : public VoxelGridStaticMapLoader
 private:
   PointCloudConstPtr map_ptr_;
   pcl::search::Search<pcl::PointXYZ>::Ptr tree_;
+  std::atomic_bool is_tree_initialized_{false};
 
 public:
   DistanceBasedStaticMapLoader(
