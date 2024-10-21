@@ -182,6 +182,26 @@ TEST(alt_geometry, coveredBy)
     EXPECT_TRUE(result);
   }
 
+  {  // The point is within the hole of the polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+
+    PointList2d inner;
+    inner.push_back({0.5, 0.5});
+    inner.push_back({0.5, 1.5});
+    inner.push_back({1.5, 1.5});
+    inner.push_back({1.5, 0.5});
+
+    const Point2d point = {1.0, 1.0};
+
+    const auto result = covered_by(point, Polygon2d::create(outer, {inner}).value());
+
+    EXPECT_FALSE(result);
+  }
+
   {  // The point is on the edge of the hole of the polygon
     PointList2d outer;
     outer.push_back({0.0, 0.0});
@@ -767,6 +787,26 @@ TEST(alt_geometry, within)
     const auto result = within(point, Polygon2d::create(outer, {}).value());
 
     EXPECT_TRUE(result);
+  }
+
+  {  // The point is within the hole of the polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+
+    PointList2d inner;
+    inner.push_back({0.5, 0.5});
+    inner.push_back({0.5, 1.5});
+    inner.push_back({1.5, 1.5});
+    inner.push_back({1.5, 0.5});
+
+    const Point2d point = {1.0, 1.0};
+
+    const auto result = within(point, Polygon2d::create(outer, {inner}).value());
+
+    EXPECT_FALSE(result);
   }
 
   {  // The point is on the edge of the hole of the polygon
