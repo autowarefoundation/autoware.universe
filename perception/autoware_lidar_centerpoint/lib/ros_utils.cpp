@@ -14,9 +14,9 @@
 
 #include "autoware/lidar_centerpoint/ros_utils.hpp"
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/constants.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 namespace autoware::lidar_centerpoint
 {
@@ -41,7 +41,7 @@ void box3DToDetectedObject(
       rclcpp::get_logger("lidar_centerpoint"), "Unexpected label: UNKNOWN is set.");
   }
 
-  if (object_recognition_utils::isCarLikeVehicle(classification.label)) {
+  if (autoware::object_recognition_utils::isCarLikeVehicle(classification.label)) {
     obj.kinematics.orientation_availability =
       autoware_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
   }
@@ -50,7 +50,7 @@ void box3DToDetectedObject(
 
   // pose and shape
   // mmdet3d yaw format to ros yaw format
-  float yaw = -box3d.yaw - autoware::universe_utils::pi / 2;
+  const float yaw = -box3d.yaw - autoware::universe_utils::pi / 2;
   obj.kinematics.pose_with_covariance.pose.position =
     autoware::universe_utils::createPoint(box3d.x, box3d.y, box3d.z);
   obj.kinematics.pose_with_covariance.pose.orientation =
@@ -67,14 +67,18 @@ void box3DToDetectedObject(
   if (has_twist) {
     float vel_x = box3d.vel_x;
     float vel_y = box3d.vel_y;
+
+    // twist of the object is based on the object coordinate system
     geometry_msgs::msg::Twist twist;
-    twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
-    twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
+    twist.linear.x = std::cos(yaw) * vel_x + std::sin(yaw) * vel_y;
+    twist.linear.y = -std::sin(yaw) * vel_x + std::cos(yaw) * vel_y;
+    twist.angular.z = 0;  // angular velocity is not supported
+
     obj.kinematics.twist_with_covariance.twist = twist;
     obj.kinematics.has_twist = has_twist;
     if (has_variance) {
       obj.kinematics.has_twist_covariance = has_variance;
-      obj.kinematics.twist_with_covariance.covariance = convertTwistCovarianceMatrix(box3d);
+      obj.kinematics.twist_with_covariance.covariance = convertTwistCovarianceMatrix(box3d, yaw);
     }
   }
 }
@@ -111,12 +115,21 @@ std::array<double, 36> convertPoseCovarianceMatrix(const Box3D & box3d)
   return pose_covariance;
 }
 
-std::array<double, 36> convertTwistCovarianceMatrix(const Box3D & box3d)
+std::array<double, 36> convertTwistCovarianceMatrix(const Box3D & box3d, const float yaw)
 {
   using POSE_IDX = autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+
+  // twist covariance matrix is based on the object coordinate system
   std::array<double, 36> twist_covariance{};
-  twist_covariance[POSE_IDX::X_X] = box3d.vel_x_variance;
-  twist_covariance[POSE_IDX::Y_Y] = box3d.vel_y_variance;
+  const float cos_yaw = std::cos(yaw);
+  const float sin_yaw = std::sin(yaw);
+  twist_covariance[POSE_IDX::X_X] =
+    box3d.vel_x_variance * cos_yaw * cos_yaw + box3d.vel_y_variance * sin_yaw * sin_yaw;
+  twist_covariance[POSE_IDX::X_Y] =
+    (box3d.vel_y_variance - box3d.vel_x_variance) * sin_yaw * cos_yaw;
+  twist_covariance[POSE_IDX::Y_X] = twist_covariance[POSE_IDX::X_Y];
+  twist_covariance[POSE_IDX::Y_Y] =
+    box3d.vel_x_variance * sin_yaw * sin_yaw + box3d.vel_y_variance * cos_yaw * cos_yaw;
   return twist_covariance;
 }
 

@@ -18,19 +18,14 @@
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
 
 #include <autoware/freespace_planning_algorithms/abstract_algorithm.hpp>
-#include <autoware/freespace_planning_algorithms/astar_search.hpp>
-#include <autoware/freespace_planning_algorithms/rrtstar.hpp>
 
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
-#include <vector>
 
 namespace autoware::behavior_path_planner
 {
 using autoware::freespace_planning_algorithms::AbstractPlanningAlgorithm;
-using autoware::freespace_planning_algorithms::AstarSearch;
-using autoware::freespace_planning_algorithms::RRTStar;
 
 class FreespacePullOver : public PullOverPlannerBase
 {
@@ -42,8 +37,9 @@ public:
   PullOverPlannerType getPlannerType() const override { return PullOverPlannerType::FREESPACE; }
 
   std::optional<PullOverPath> plan(
+    const GoalCandidate & modified_goal_pose, const size_t id,
     const std::shared_ptr<const PlannerData> planner_data,
-    const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose) override;
+    const BehaviorModuleOutput & previous_module_output) override;
 
 protected:
   const double velocity_;

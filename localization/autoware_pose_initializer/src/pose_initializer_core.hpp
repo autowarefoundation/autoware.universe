@@ -15,7 +15,7 @@
 #ifndef POSE_INITIALIZER_CORE_HPP_
 #define POSE_INITIALIZER_CORE_HPP_
 
-#include "localization_util/diagnostics_module.hpp"
+#include "autoware/localization_util/diagnostics_module.hpp"
 
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <component_interface_specs/localization.hpp>
@@ -28,6 +28,7 @@
 
 namespace autoware::pose_initializer
 {
+class PoseErrorCheckModule;
 class StopCheckModule;
 class LocalizationModule;
 class GnssModule;
@@ -56,10 +57,11 @@ private:
   std::unique_ptr<LocalizationModule> ndt_;
   std::unique_ptr<LocalizationModule> yabloc_;
   std::unique_ptr<StopCheckModule> stop_check_;
+  std::unique_ptr<PoseErrorCheckModule> pose_error_check_;
   std::unique_ptr<EkfLocalizationTriggerModule> ekf_localization_trigger_;
   std::unique_ptr<NdtLocalizationTriggerModule> ndt_localization_trigger_;
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
-  std::unique_ptr<DiagnosticsModule> diagnostics_pose_reliable_;
+  std::unique_ptr<autoware::localization_util::DiagnosticsModule> diagnostics_pose_reliable_;
   double stop_check_duration_;
 
   void change_node_trigger(bool flag, bool need_spin = false);

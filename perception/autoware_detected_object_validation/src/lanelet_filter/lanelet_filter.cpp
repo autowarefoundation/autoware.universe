@@ -14,11 +14,11 @@
 
 #include "lanelet_filter.hpp"
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware_lanelet2_extension/utility/message_conversion.hpp"
 #include "autoware_lanelet2_extension/utility/query.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
@@ -42,14 +42,14 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
   using std::placeholders::_1;
 
   // Set parameters
-  filter_target_.UNKNOWN = declare_parameter<bool>("filter_target_label.UNKNOWN", false);
-  filter_target_.CAR = declare_parameter<bool>("filter_target_label.CAR", false);
-  filter_target_.TRUCK = declare_parameter<bool>("filter_target_label.TRUCK", false);
-  filter_target_.BUS = declare_parameter<bool>("filter_target_label.BUS", false);
-  filter_target_.TRAILER = declare_parameter<bool>("filter_target_label.TRAILER", false);
-  filter_target_.MOTORCYCLE = declare_parameter<bool>("filter_target_label.MOTORCYCLE", false);
-  filter_target_.BICYCLE = declare_parameter<bool>("filter_target_label.BICYCLE", false);
-  filter_target_.PEDESTRIAN = declare_parameter<bool>("filter_target_label.PEDESTRIAN", false);
+  filter_target_.UNKNOWN = declare_parameter<bool>("filter_target_label.UNKNOWN");
+  filter_target_.CAR = declare_parameter<bool>("filter_target_label.CAR");
+  filter_target_.TRUCK = declare_parameter<bool>("filter_target_label.TRUCK");
+  filter_target_.BUS = declare_parameter<bool>("filter_target_label.BUS");
+  filter_target_.TRAILER = declare_parameter<bool>("filter_target_label.TRAILER");
+  filter_target_.MOTORCYCLE = declare_parameter<bool>("filter_target_label.MOTORCYCLE");
+  filter_target_.BICYCLE = declare_parameter<bool>("filter_target_label.BICYCLE");
+  filter_target_.PEDESTRIAN = declare_parameter<bool>("filter_target_label.PEDESTRIAN");
   // Set filter settings
   filter_settings_.polygon_overlap_filter =
     declare_parameter<bool>("filter_settings.polygon_overlap_filter.enabled");
@@ -97,7 +97,7 @@ void ObjectLaneletFilterNode::objectCallback(
     return;
   }
   autoware_perception_msgs::msg::DetectedObjects transformed_objects;
-  if (!object_recognition_utils::transformObjects(
+  if (!autoware::object_recognition_utils::transformObjects(
         *input_msg, lanelet_frame_id_, tf_buffer_, transformed_objects)) {
     RCLCPP_ERROR(get_logger(), "Failed transform to %s.", lanelet_frame_id_.c_str());
     return;

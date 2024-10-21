@@ -176,10 +176,11 @@ geometry_msgs::msg::Pose findTrajectoryPoseAfterDistance(
       const auto p0 = trajectory.points.at(i).pose;
       const auto p1 = trajectory.points.at(i + 1).pose;
       p = trajectory.points.at(i).pose;
-      p.position.x = interpolation::lerp(p0.position.x, p1.position.x, ratio);
-      p.position.y = interpolation::lerp(p0.position.y, p1.position.y, ratio);
-      p.position.z = interpolation::lerp(p0.position.z, p1.position.z, ratio);
-      p.orientation = interpolation::lerpOrientation(p0.orientation, p1.orientation, ratio);
+      p.position.x = autoware::interpolation::lerp(p0.position.x, p1.position.x, ratio);
+      p.position.y = autoware::interpolation::lerp(p0.position.y, p1.position.y, ratio);
+      p.position.z = autoware::interpolation::lerp(p0.position.z, p1.position.z, ratio);
+      p.orientation =
+        autoware::interpolation::lerpOrientation(p0.orientation, p1.orientation, ratio);
       break;
     }
     remain_dist -= dist;

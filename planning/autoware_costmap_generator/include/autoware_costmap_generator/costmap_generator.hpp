@@ -49,6 +49,8 @@
 #include "autoware_costmap_generator/points_to_costmap.hpp"
 #include "costmap_generator_node_parameters.hpp"
 
+#include <autoware/universe_utils/ros/processing_time_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware/universe_utils/system/time_keeper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
@@ -58,6 +60,7 @@
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 
 #include <grid_map_msgs/msg/grid_map.h>
@@ -91,6 +94,7 @@ private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr pub_costmap_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_occupancy_grid_;
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_ms_;
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_points_;
   rclcpp::Subscription<autoware_perception_msgs::msg::PredictedObjects>::SharedPtr sub_objects_;
@@ -175,6 +179,9 @@ private:
 
   /// \brief calculate cost for final output
   grid_map::Matrix generateCombinedCostmap();
+
+  /// \brief measure processing time
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 };
 }  // namespace autoware::costmap_generator
 

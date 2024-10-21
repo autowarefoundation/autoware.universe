@@ -18,15 +18,16 @@
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <autoware/behavior_path_planner_common/parameters.hpp>
+#include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <interpolation/linear_interpolation.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -74,8 +75,8 @@ struct LateralAccelerationMap
       return std::make_pair(base_min_acc.back(), base_max_acc.back());
     }
 
-    const double min_acc = interpolation::lerp(base_vel, base_min_acc, velocity);
-    const double max_acc = interpolation::lerp(base_vel, base_max_acc, velocity);
+    const double min_acc = autoware::interpolation::lerp(base_vel, base_min_acc, velocity);
+    const double max_acc = autoware::interpolation::lerp(base_vel, base_max_acc, velocity);
 
     return std::make_pair(min_acc, max_acc);
   }
@@ -154,6 +155,7 @@ struct Parameters
 
   // safety check
   bool allow_loose_check_for_cancel{true};
+  bool enable_target_lane_bound_check{true};
   double collision_check_yaw_diff_threshold{3.1416};
   utils::path_safety_checker::RSSparams rss_params{};
   utils::path_safety_checker::RSSparams rss_params_for_parked{};
@@ -192,9 +194,32 @@ struct PhaseInfo
   }
 };
 
+struct PhaseMetrics
+{
+  double duration{0.0};
+  double length{0.0};
+  double velocity{0.0};
+  double sampled_lon_accel{0.0};
+  double actual_lon_accel{0.0};
+  double lat_accel{0.0};
+
+  PhaseMetrics(
+    const double _duration, const double _length, const double _velocity,
+    const double _sampled_lon_accel, const double _actual_lon_accel, const double _lat_accel)
+  : duration(_duration),
+    length(_length),
+    velocity(_velocity),
+    sampled_lon_accel(_sampled_lon_accel),
+    actual_lon_accel(_actual_lon_accel),
+    lat_accel(_lat_accel)
+  {
+  }
+};
+
 struct Lanes
 {
   bool current_lane_in_goal_section{false};
+  bool target_lane_in_goal_section{false};
   lanelet::ConstLanelets current;
   lanelet::ConstLanelets target_neighbor;
   lanelet::ConstLanelets target;
@@ -215,6 +240,23 @@ struct Info
 
   double lateral_acceleration{0.0};
   double terminal_lane_changing_velocity{0.0};
+
+  Info() = default;
+  Info(
+    const PhaseMetrics & _prep_metrics, const PhaseMetrics & _lc_metrics,
+    const Pose & _lc_start_pose, const Pose & _lc_end_pose, const ShiftLine & _shift_line)
+  {
+    longitudinal_acceleration =
+      PhaseInfo{_prep_metrics.actual_lon_accel, _lc_metrics.actual_lon_accel};
+    duration = PhaseInfo{_prep_metrics.duration, _lc_metrics.duration};
+    velocity = PhaseInfo{_prep_metrics.velocity, _prep_metrics.velocity};
+    length = PhaseInfo{_prep_metrics.length, _lc_metrics.length};
+    lane_changing_start = _lc_start_pose;
+    lane_changing_end = _lc_end_pose;
+    lateral_acceleration = _lc_metrics.lat_accel;
+    terminal_lane_changing_velocity = _lc_metrics.velocity;
+    shift_line = _shift_line;
+  }
 };
 
 template <typename Object>
@@ -273,6 +315,38 @@ struct LanesPolygon
   std::vector<lanelet::BasicPolygon2d> preceding_target;
 };
 
+struct MinMaxValue
+{
+  double min{std::numeric_limits<double>::infinity()};
+  double max{std::numeric_limits<double>::infinity()};
+};
+
+struct TransientData
+{
+  MinMaxValue acc;                   // acceleration profile for accelerating lane change path
+  MinMaxValue lane_changing_length;  // lane changing length for a single lane change
+  MinMaxValue
+    current_dist_buffer;  // distance buffer computed backward from current lanes' terminal end
+  MinMaxValue
+    next_dist_buffer;  // distance buffer computed backward  from target lanes' terminal end
+  double dist_to_terminal_end{
+    std::numeric_limits<double>::min()};  // distance from ego base link to the current lanes'
+                                          // terminal end
+  double dist_to_terminal_start{
+    std::numeric_limits<double>::min()};  // distance from ego base link to the current lanes'
+                                          // terminal start
+  double max_prepare_length{
+    std::numeric_limits<double>::max()};  // maximum prepare length, starting from ego's base link
+
+  double target_lane_length{std::numeric_limits<double>::min()};
+
+  lanelet::ArcCoordinates current_lanes_ego_arc;  // arc coordinates of ego pose along current lanes
+  lanelet::ArcCoordinates target_lanes_ego_arc;   // arc coordinates of ego pose along target lanes
+
+  bool is_ego_near_current_terminal_start{false};
+  bool is_ego_stuck{false};
+};
+
 using RouteHandlerPtr = std::shared_ptr<RouteHandler>;
 using BppParamPtr = std::shared_ptr<BehaviorPathPlannerParameters>;
 using LCParamPtr = std::shared_ptr<Parameters>;
@@ -287,12 +361,14 @@ struct CommonData
   LCParamPtr lc_param_ptr;
   LanesPtr lanes_ptr;
   LanesPolygonPtr lanes_polygon_ptr;
+  TransientData transient_data;
+  PathWithLaneId current_lanes_path;
   ModuleType lc_type;
   Direction direction;
 
-  [[nodiscard]] Pose get_ego_pose() const { return self_odometry_ptr->pose.pose; }
+  [[nodiscard]] const Pose & get_ego_pose() const { return self_odometry_ptr->pose.pose; }
 
-  [[nodiscard]] Twist get_ego_twist() const { return self_odometry_ptr->twist.twist; }
+  [[nodiscard]] const Twist & get_ego_twist() const { return self_odometry_ptr->twist.twist; }
 
   [[nodiscard]] double get_ego_speed(bool use_norm = false) const
   {
@@ -303,6 +379,18 @@ struct CommonData
     const auto x = get_ego_twist().linear.x;
     const auto y = get_ego_twist().linear.y;
     return std::hypot(x, y);
+  }
+
+  [[nodiscard]] bool is_data_available() const
+  {
+    return route_handler_ptr && self_odometry_ptr && bpp_param_ptr && lc_param_ptr && lanes_ptr &&
+           lanes_polygon_ptr;
+  }
+
+  [[nodiscard]] bool is_lanes_available() const
+  {
+    return lanes_ptr && !lanes_ptr->current.empty() && !lanes_ptr->target.empty() &&
+           !lanes_ptr->target_neighbor.empty();
   }
 };
 using CommonDataPtr = std::shared_ptr<CommonData>;
@@ -316,6 +404,7 @@ using LaneChangeModuleType = lane_change::ModuleType;
 using LaneChangeParameters = lane_change::Parameters;
 using LaneChangeStates = lane_change::States;
 using LaneChangePhaseInfo = lane_change::PhaseInfo;
+using LaneChangePhaseMetrics = lane_change::PhaseMetrics;
 using LaneChangeInfo = lane_change::Info;
 using FilteredByLanesObjects = lane_change::LanesObjects<std::vector<PredictedObject>>;
 using FilteredByLanesExtendedObjects = lane_change::LanesObjects<ExtendedPredictedObjects>;

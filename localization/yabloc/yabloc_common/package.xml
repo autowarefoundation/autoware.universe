@@ -18,6 +18,7 @@
 
   <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_map_msgs</depend>
+  <depend>autoware_signal_processing</depend>
   <depend>autoware_universe_utils</depend>
   <depend>cv_bridge</depend>
   <depend>geometry_msgs</depend>
@@ -26,7 +27,6 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>signal_processing</depend>
   <depend>sophus</depend>
   <depend>std_msgs</depend>
   <depend>tf2_ros</depend>

@@ -14,13 +14,13 @@
 
 #include "autoware/path_optimizer/mpt_optimizer.hpp"
 
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/path_optimizer/utils/geometry_utils.hpp"
 #include "autoware/path_optimizer/utils/trajectory_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/normalization.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "tf2/utils.h"
 
 #include <algorithm>
@@ -414,7 +414,7 @@ MPTOptimizer::MPTOptimizer(
     StateEquationGenerator(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad, time_keeper_);
 
   // osqp solver
-  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(osqp_epsilon_);
+  osqp_solver_ptr_ = std::make_unique<autoware::osqp_interface::OSQPInterface>(osqp_epsilon_);
 
   // publisher
   debug_fixed_traj_pub_ = node->create_publisher<Trajectory>("~/debug/mpt_fixed_traj", 1);
@@ -477,8 +477,13 @@ std::vector<TrajectoryPoint> MPTOptimizer::optimizeTrajectory(const PlannerData 
 
   const auto get_prev_optimized_traj_points = [&]() {
     if (prev_optimized_traj_points_ptr_) {
+      RCLCPP_WARN(logger_, "return the previous optimized_trajectory as exceptional behavior.");
       return *prev_optimized_traj_points_ptr_;
     }
+    RCLCPP_WARN(
+      logger_,
+      "Try to return the previous optimized_trajectory as exceptional behavior, "
+      "but this failure also. Then return path_smoother output.");
     return traj_points;
   };
 
@@ -505,8 +510,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::optimizeTrajectory(const PlannerData 
   // 6. optimize steer angles
   const auto optimized_variables = calcOptimizedSteerAngles(ref_points, obj_mat, const_mat);
   if (!optimized_variables) {
-    RCLCPP_INFO_EXPRESSION(
-      logger_, enable_debug_info_, "return std::nullopt since could not solve qp");
+    RCLCPP_WARN(logger_, "return std::nullopt since could not solve qp");
     return get_prev_optimized_traj_points();
   }
 
@@ -568,7 +572,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
 
   // remove repeated points
   ref_points = trajectory_utils::sanitizePoints(ref_points);
-  SplineInterpolationPoints2d ref_points_spline(ref_points);
+  autoware::interpolation::SplineInterpolationPoints2d ref_points_spline(ref_points);
   ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
 
   // 3. calculate orientation and curvature
@@ -580,7 +584,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   ref_points = autoware::motion_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
     backward_traj_length);
-  ref_points_spline = SplineInterpolationPoints2d(ref_points);
+  ref_points_spline = autoware::interpolation::SplineInterpolationPoints2d(ref_points);
   ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
 
   // 5. update fixed points, and resample
@@ -588,7 +592,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   //       New start point may be added and resampled. Spline calculation is required.
   updateFixedPoint(ref_points);
   ref_points = trajectory_utils::sanitizePoints(ref_points);
-  ref_points_spline = SplineInterpolationPoints2d(ref_points);
+  ref_points_spline = autoware::interpolation::SplineInterpolationPoints2d(ref_points);
 
   // 6. update bounds
   // NOTE: After this, resample must not be called since bounds are not interpolated.
@@ -614,7 +618,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
 
 void MPTOptimizer::updateOrientation(
   std::vector<ReferencePoint> & ref_points,
-  const SplineInterpolationPoints2d & ref_points_spline) const
+  const autoware::interpolation::SplineInterpolationPoints2d & ref_points_spline) const
 {
   const auto yaw_vec = ref_points_spline.getSplineInterpolatedYaws();
   for (size_t i = 0; i < ref_points.size(); ++i) {
@@ -625,7 +629,7 @@ void MPTOptimizer::updateOrientation(
 
 void MPTOptimizer::updateCurvature(
   std::vector<ReferencePoint> & ref_points,
-  const SplineInterpolationPoints2d & ref_points_spline) const
+  const autoware::interpolation::SplineInterpolationPoints2d & ref_points_spline) const
 {
   const auto curvature_vec = ref_points_spline.getSplineInterpolatedCurvatures();
   for (size_t i = 0; i < ref_points.size(); ++i) {
@@ -1092,7 +1096,7 @@ void MPTOptimizer::avoidSuddenSteering(
 
 void MPTOptimizer::updateVehicleBounds(
   std::vector<ReferencePoint> & ref_points,
-  const SplineInterpolationPoints2d & ref_points_spline) const
+  const autoware::interpolation::SplineInterpolationPoints2d & ref_points_spline) const
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
@@ -1181,10 +1185,10 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
       }
       // for avoidance
       if (0 < ref_points.at(i).normalized_avoidance_cost) {
-        const double lat_error_weight = interpolation::lerp(
+        const double lat_error_weight = autoware::interpolation::lerp(
           mpt_param_.lat_error_weight, mpt_param_.avoidance_lat_error_weight,
           ref_points.at(i).normalized_avoidance_cost);
-        const double yaw_error_weight = interpolation::lerp(
+        const double yaw_error_weight = autoware::interpolation::lerp(
           mpt_param_.yaw_error_weight, mpt_param_.avoidance_yaw_error_weight,
           ref_points.at(i).normalized_avoidance_cost);
         return {lat_error_weight, yaw_error_weight};
@@ -1206,7 +1210,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
   // update R
   std::vector<Eigen::Triplet<double>> R_triplet_vec;
   for (size_t i = 0; i < N_ref - 1; ++i) {
-    const double adaptive_steer_weight = interpolation::lerp(
+    const double adaptive_steer_weight = autoware::interpolation::lerp(
       mpt_param_.steer_input_weight, mpt_param_.avoidance_steer_input_weight,
       ref_points.at(i).normalized_avoidance_cost);
     R_triplet_vec.push_back(Eigen::Triplet<double>(D_u * i, D_u * i, adaptive_steer_weight));
@@ -1326,8 +1330,8 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
 
   // NOTE: The following takes 1 [ms]
   Eigen::MatrixXd A = Eigen::MatrixXd::Zero(A_rows, N_v);
-  Eigen::VectorXd lb = Eigen::VectorXd::Constant(A_rows, -autoware::common::osqp::INF);
-  Eigen::VectorXd ub = Eigen::VectorXd::Constant(A_rows, autoware::common::osqp::INF);
+  Eigen::VectorXd lb = Eigen::VectorXd::Constant(A_rows, -autoware::osqp_interface::INF);
+  Eigen::VectorXd ub = Eigen::VectorXd::Constant(A_rows, autoware::osqp_interface::INF);
   size_t A_rows_end = 0;
 
   // 1. State equation
@@ -1498,9 +1502,9 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   // initialize or update solver according to warm start
   time_keeper_->start_track("initOsqp");
 
-  const autoware::common::osqp::CSC_Matrix P_csc =
-    autoware::common::osqp::calCSCMatrixTrapezoidal(H);
-  const autoware::common::osqp::CSC_Matrix A_csc = autoware::common::osqp::calCSCMatrix(A);
+  const autoware::osqp_interface::CSC_Matrix P_csc =
+    autoware::osqp_interface::calCSCMatrixTrapezoidal(H);
+  const autoware::osqp_interface::CSC_Matrix A_csc = autoware::osqp_interface::calCSCMatrix(A);
   if (
     prev_solution_status_ == 1 && mpt_param_.enable_warm_start && prev_mat_n_ == H.rows() &&
     prev_mat_m_ == A.rows()) {
@@ -1511,7 +1515,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
     osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
   } else {
     RCLCPP_INFO_EXPRESSION(logger_, enable_debug_info_, "no warm start");
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+    osqp_solver_ptr_ = std::make_unique<autoware::osqp_interface::OSQPInterface>(
       P_csc, A_csc, f, lower_bound, upper_bound, osqp_epsilon_);
   }
   prev_mat_n_ = H.rows();
