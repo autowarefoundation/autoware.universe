@@ -133,7 +133,7 @@ ConcatenatedCloudResult CombineCloudHandler::combine_pointclouds(
 
   std::vector<rclcpp::Time> pc_stamps;
   for (const auto & [topic, cloud] : topic_to_cloud_map) {
-    pc_stamps.emplace_back(rclcpp::Time(cloud->header.stamp));
+    pc_stamps.emplace_back(cloud->header.stamp);
   }
   std::sort(pc_stamps.begin(), pc_stamps.end(), std::greater<rclcpp::Time>());
   const auto oldest_stamp = pc_stamps.back();
