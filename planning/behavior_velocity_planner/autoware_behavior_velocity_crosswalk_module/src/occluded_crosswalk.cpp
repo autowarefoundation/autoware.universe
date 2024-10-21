@@ -14,8 +14,6 @@
 
 #include "occluded_crosswalk.hpp"
 
-#include "autoware/behavior_velocity_crosswalk_module/util.hpp"
-
 #include <autoware_grid_map_utils/polygon_iterator.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 
@@ -27,7 +25,7 @@
 namespace autoware::behavior_velocity_planner
 {
 bool is_occluded(
-  const grid_map::GridMap & grid_map, const int min_nb_of_cells, const grid_map::Index idx,
+  const grid_map::GridMap & grid_map, const int min_nb_of_cells, const grid_map::Index & idx,
   const autoware::behavior_velocity_planner::CrosswalkModule::PlannerParam & params)
 {
   grid_map::Index idx_offset;
@@ -114,7 +112,7 @@ void clear_occlusions_behind_objects(
   };
   const lanelet::BasicPoint2d grid_map_position = grid_map.getPosition();
   const auto range = grid_map.getLength().maxCoeff() / 2.0;
-  for (auto object : objects) {
+  for (auto & object : objects) {
     const lanelet::BasicPoint2d object_position = {
       object.kinematics.initial_pose_with_covariance.pose.position.x,
       object.kinematics.initial_pose_with_covariance.pose.position.y};

@@ -26,7 +26,6 @@
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Point.h>
 
-#include <optional>
 #include <vector>
 
 namespace autoware::behavior_velocity_planner
@@ -39,7 +38,7 @@ namespace autoware::behavior_velocity_planner
 /// @param [in] params parameters
 /// @return true if the index is occluded
 bool is_occluded(
-  const grid_map::GridMap & grid_map, const int min_nb_of_cells, const grid_map::Index idx,
+  const grid_map::GridMap & grid_map, const int min_nb_of_cells, const grid_map::Index & idx,
   const autoware::behavior_velocity_planner::CrosswalkModule::PlannerParam & params);
 
 /// @brief interpolate a point beyond the end of the given segment

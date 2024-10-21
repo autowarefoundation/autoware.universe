@@ -49,13 +49,11 @@ using autoware::motion_utils::calcLongitudinalOffsetPose;
 using autoware::motion_utils::calcSignedArcLength;
 using autoware::motion_utils::calcSignedArcLengthPartialSum;
 using autoware::motion_utils::findNearestSegmentIndex;
-using autoware::motion_utils::insertTargetPoint;
 using autoware::motion_utils::resamplePath;
 using autoware::universe_utils::createPoint;
 using autoware::universe_utils::getPose;
 using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
-using autoware::universe_utils::pose2transform;
 using autoware::universe_utils::toHexString;
 
 namespace

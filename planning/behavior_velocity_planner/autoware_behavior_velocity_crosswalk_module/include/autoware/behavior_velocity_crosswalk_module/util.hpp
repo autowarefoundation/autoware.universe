@@ -15,15 +15,12 @@
 #ifndef AUTOWARE__BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_
 #define AUTOWARE__BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_
 
-#include <geometry_msgs/msg/detail/point__struct.hpp>
-
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 
-#include <limits>
 #include <memory>
 #include <optional>
 #include <set>

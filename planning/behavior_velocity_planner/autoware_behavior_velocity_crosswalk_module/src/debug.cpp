@@ -24,8 +24,6 @@
 namespace autoware::behavior_velocity_planner
 {
 
-using autoware::motion_utils::createSlowDownVirtualWallMarker;
-using autoware::motion_utils::createStopVirtualWallMarker;
 using autoware::universe_utils::appendMarkerArray;
 using autoware::universe_utils::calcOffsetPose;
 using autoware::universe_utils::createDefaultMarker;
