@@ -19,6 +19,8 @@
 #include <autoware_grid_map_utils/polygon_iterator.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 
+#include <lanelet2_core/primitives/Polygon.h>
+
 #include <algorithm>
 #include <vector>
 
@@ -137,9 +139,8 @@ void clear_occlusions_behind_objects(
 }
 
 bool is_crosswalk_occluded(
-  const lanelet::ConstLanelet & crosswalk_lanelet,
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-  const geometry_msgs::msg::Point & path_intersection, const double detection_range,
+  const std::vector<lanelet::BasicPolygon2d> & detection_areas,
   const std::vector<autoware_perception_msgs::msg::PredictedObject> & dynamic_objects,
   const autoware::behavior_velocity_planner::CrosswalkModule::PlannerParam & params)
 {
@@ -153,8 +154,7 @@ bool is_crosswalk_occluded(
     clear_occlusions_behind_objects(grid_map, objects);
   }
   const auto min_nb_of_cells = std::ceil(params.occlusion_min_size / grid_map.getResolution());
-  for (const auto & detection_area : calculate_detection_areas(
-         crosswalk_lanelet, {path_intersection.x, path_intersection.y}, detection_range)) {
+  for (const auto & detection_area : detection_areas) {
     grid_map::Polygon poly;
     for (const auto & p : detection_area) poly.addVertex(grid_map::Position(p.x(), p.y()));
     for (autoware::grid_map_utils::PolygonIterator iter(grid_map, poly); !iter.isPastEnd(); ++iter)
