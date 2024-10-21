@@ -60,37 +60,16 @@ bool isTargetObjectOncoming(
 
 bool isTargetObjectFront(
   const geometry_msgs::msg::Pose & ego_pose, const Polygon2d & obj_polygon,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
+  const double base_to_front)
 {
-  const double base_to_front = vehicle_info.max_longitudinal_offset_m;
   const auto ego_offset_pose =
     autoware::universe_utils::calcOffsetPose(ego_pose, base_to_front, 0.0, 0.0);
 
   // check all edges in the polygon
-  const auto obj_polygon_outer = obj_polygon.outer();
+  const auto & obj_polygon_outer = obj_polygon.outer();
   for (const auto & obj_edge : obj_polygon_outer) {
     const auto obj_point = autoware::universe_utils::createPoint(obj_edge.x(), obj_edge.y(), 0.0);
     if (autoware::universe_utils::calcLongitudinalDeviation(ego_offset_pose, obj_point) > 0.0) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool isTargetObjectFront(
-  const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon)
-{
-  const double base_to_front = vehicle_info.max_longitudinal_offset_m;
-  const auto ego_point =
-    autoware::universe_utils::calcOffsetPose(ego_pose, base_to_front, 0.0, 0.0).position;
-
-  // check all edges in the polygon
-  const auto obj_polygon_outer = obj_polygon.outer();
-  for (const auto & obj_edge : obj_polygon_outer) {
-    const auto obj_point = autoware::universe_utils::createPoint(obj_edge.x(), obj_edge.y(), 0.0);
-    if (autoware::motion_utils::isTargetPointFront(path.points, ego_point, obj_point)) {
       return true;
     }
   }
@@ -199,7 +178,7 @@ Polygon2d createExtendedPolygon(
            : autoware::universe_utils::inverseClockwise(polygon);
 }
 
-Polygon2d createExtendedPolygonAlongPath(
+Polygon2d create_extended_polygon_along_path(
   const PathWithLaneId & planned_path, const Pose & base_link_pose,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const double lon_length,
   const double lat_margin, const bool is_stopped_obj, CollisionCheckDebug & debug)
@@ -637,7 +616,8 @@ std::vector<Polygon2d> getCollidedPolygons(
     }
 
     // compute which one is at the front of the other
-    const bool is_object_front = isTargetObjectFront(ego_pose, obj_polygon, ego_vehicle_info);
+    const bool is_object_front =
+      isTargetObjectFront(ego_pose, obj_polygon, ego_vehicle_info.max_longitudinal_offset_m);
     const auto & [front_object_velocity, rear_object_velocity] =
       is_object_front ? std::make_pair(object_velocity, ego_velocity)
                       : std::make_pair(ego_velocity, object_velocity);
@@ -665,7 +645,7 @@ std::vector<Polygon2d> getCollidedPolygons(
       }
 
       if (rss_parameters.extended_polygon_policy == "along_path") {
-        return createExtendedPolygonAlongPath(
+        return create_extended_polygon_along_path(
           planned_path, ego_pose, ego_vehicle_info, lon_offset, lat_margin, is_stopped_object,
           debug);
       }
@@ -729,13 +709,15 @@ void updateCollisionCheckDebugMap(
   debug_map.insert(object_debug);
 }
 
-double calcObstacleMinLength(const Shape & shape)
+double calc_obstacle_min_length(const Shape & shape)
 {
   if (shape.type == Shape::BOUNDING_BOX) {
     return std::min(shape.dimensions.x / 2.0, shape.dimensions.y / 2.0);
-  } else if (shape.type == Shape::CYLINDER) {
+  }
+  if (shape.type == Shape::CYLINDER) {
     return shape.dimensions.x / 2.0;
-  } else if (shape.type == Shape::POLYGON) {
+  }
+  if (shape.type == Shape::POLYGON) {
     double min_length_to_point = std::numeric_limits<double>::max();
     for (const auto rel_point : shape.footprint.points) {
       const double length_to_point = std::hypot(rel_point.x, rel_point.y);
@@ -749,13 +731,15 @@ double calcObstacleMinLength(const Shape & shape)
   throw std::logic_error("The shape type is not supported in obstacle_cruise_planner.");
 }
 
-double calcObstacleMaxLength(const Shape & shape)
+double calc_obstacle_max_length(const Shape & shape)
 {
   if (shape.type == Shape::BOUNDING_BOX) {
     return std::hypot(shape.dimensions.x / 2.0, shape.dimensions.y / 2.0);
-  } else if (shape.type == Shape::CYLINDER) {
+  }
+  if (shape.type == Shape::CYLINDER) {
     return shape.dimensions.x / 2.0;
-  } else if (shape.type == Shape::POLYGON) {
+  }
+  if (shape.type == Shape::POLYGON) {
     double max_length_to_point = 0.0;
     for (const auto rel_point : shape.footprint.points) {
       const double length_to_point = std::hypot(rel_point.x, rel_point.y);
@@ -796,8 +780,8 @@ std::pair<bool, bool> checkObjectsCollisionRough(
     });
 
     // calculate min and max length from object center to edge
-    const double object_min_length = calcObstacleMinLength(object.shape);
-    const double object_max_length = calcObstacleMaxLength(object.shape);
+    const double object_min_length = calc_obstacle_min_length(object.shape);
+    const double object_max_length = calc_obstacle_max_length(object.shape);
 
     // calculate min and max length from ego base_link to edge
     const auto & p = parameters;
@@ -834,7 +818,8 @@ double calculateRoughDistanceToObjects(
       return std::max(
         std::hypot(p.vehicle_width / 2, p.front_overhang),
         std::hypot(p.vehicle_width / 2, p.rear_overhang));
-    } else if (distance_type == "max") {
+    }
+    if (distance_type == "max") {
       return std::min({p.vehicle_width / 2, p.front_overhang / 2, p.rear_overhang / 2});
     }
     throw std::invalid_argument("Invalid distance type");
@@ -844,9 +829,10 @@ double calculateRoughDistanceToObjects(
   for (const auto & object : objects.objects) {
     const double object_length = std::invoke([&]() -> double {
       if (distance_type == "min") {
-        return calcObstacleMaxLength(object.shape);
-      } else if (distance_type == "max") {
-        return calcObstacleMinLength(object.shape);
+        return calc_obstacle_max_length(object.shape);
+      }
+      if (distance_type == "max") {
+        return calc_obstacle_min_length(object.shape);
       }
       throw std::invalid_argument("Invalid distance type");
     });

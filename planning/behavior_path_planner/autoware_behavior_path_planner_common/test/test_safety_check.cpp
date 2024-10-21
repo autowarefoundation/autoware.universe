@@ -12,17 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
+#include "autoware/behavior_path_planner_common/parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
 
+#include <autoware_perception_msgs/msg/detail/predicted_objects__struct.hpp>
+#include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <tier4_planning_msgs/msg/detail/path_with_lane_id__struct.hpp>
 
 #include <boost/geometry.hpp>
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 constexpr double epsilon = 1e-6;
@@ -30,23 +34,11 @@ constexpr double epsilon = 1e-6;
 using autoware::behavior_path_planner::utils::path_safety_checker::calcInterpolatedPoseWithVelocity;
 using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
-using autoware::universe_utils::createPoint;
-using autoware::universe_utils::createQuaternionFromRPY;
-using autoware::universe_utils::Point2d;
+using autoware::test_utils::createPose;
+using autoware::test_utils::generateTrajectory;
 using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::Shape;
-using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
-using geometry_msgs::msg::Twist;
-
-geometry_msgs::msg::Pose createPose(
-  double x, double y, double z, double roll, double pitch, double yaw)
-{
-  geometry_msgs::msg::Pose p;
-  p.position = createPoint(x, y, z);
-  p.orientation = createQuaternionFromRPY(roll, pitch, yaw);
-  return p;
-}
 
 std::vector<PoseWithVelocityStamped> createTestPath()
 {
@@ -55,6 +47,53 @@ std::vector<PoseWithVelocityStamped> createTestPath()
   path.emplace_back(1.0, createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0), 2.0);
   path.emplace_back(2.0, createPose(2.0, 0.0, 0.0, 0.0, 0.0, 0.0), 3.0);
   return path;
+}
+
+TEST(BehaviorPathPlanningSafetyUtilsTest, isTargetObjectOncoming)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::isTargetObjectOncoming;
+
+  auto vehicle_pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  auto object_pose = createPose(10.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+
+  // Condition: same orientation
+  EXPECT_FALSE(isTargetObjectOncoming(vehicle_pose, object_pose));
+
+  // Condition: facing each other
+  object_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(M_PI);
+  EXPECT_TRUE(isTargetObjectOncoming(vehicle_pose, object_pose));
+
+  // Condition: Narrow angle threshold
+  double angle_threshold = 0.75 * M_PI;
+  object_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(M_PI_2);
+  EXPECT_FALSE(isTargetObjectOncoming(vehicle_pose, object_pose, angle_threshold));
+}
+
+TEST(BehaviorPathPlanningSafetyUtilsTest, isTargetObjectFront)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::isTargetObjectFront;
+
+  auto ego_pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  double base_to_front = 0.5;
+  Shape shape;
+  shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  shape.dimensions.x = 5.0;
+  shape.dimensions.y = 2.0;
+  auto obj_polygon =
+    autoware::universe_utils::toPolygon2d(createPose(10.0, 0.0, 0.0, 0.0, 0.0, 0.0), shape);
+
+  // Condition: object in front
+  EXPECT_TRUE(isTargetObjectFront(ego_pose, obj_polygon, base_to_front));
+
+  // Condition: object behind
+  obj_polygon =
+    autoware::universe_utils::toPolygon2d(createPose(-10.0, 0.0, 0.0, 0.0, 0.0, 0.0), shape);
+  EXPECT_FALSE(isTargetObjectFront(ego_pose, obj_polygon, base_to_front));
+
+  // Condition: object overlapping
+  obj_polygon =
+    autoware::universe_utils::toPolygon2d(createPose(3.0, 0.0, 0.0, 0.0, 0.0, 0.0), shape);
+  EXPECT_TRUE(isTargetObjectFront(ego_pose, obj_polygon, base_to_front));
 }
 
 TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedEgoPolygon)
@@ -299,4 +338,87 @@ TEST(CalcInterpolatedPoseWithVelocityTest, DISABLED_SpecialCases)
 
   auto reverse_time_result = calcInterpolatedPoseWithVelocity(reverse_time_path, 1.5);
   ASSERT_FALSE(reverse_time_result.has_value());
+}
+
+TEST(BehaviorPathPlanningSafetyUtilsTest, calc_obstacle_length)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::calc_obstacle_max_length;
+  using autoware::behavior_path_planner::utils::path_safety_checker::calc_obstacle_min_length;
+
+  Shape shape;
+
+  // Condition: bounding box
+  shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  shape.dimensions.x = 6.0;
+  shape.dimensions.y = 8.0;
+  EXPECT_DOUBLE_EQ(calc_obstacle_min_length(shape), 3.0);
+  EXPECT_DOUBLE_EQ(calc_obstacle_max_length(shape), 5.0);
+
+  // Condition: cylinder
+  shape.type = autoware_perception_msgs::msg::Shape::CYLINDER;
+  EXPECT_DOUBLE_EQ(calc_obstacle_min_length(shape), 3.0);
+  EXPECT_DOUBLE_EQ(calc_obstacle_max_length(shape), 3.0);
+
+  // Condition: polygon
+  shape.type = autoware_perception_msgs::msg::Shape::POLYGON;
+  shape.footprint.points.resize(5);
+  shape.footprint.points.at(0).x = 3.0;
+  shape.footprint.points.at(0).y = 0.0;
+  shape.footprint.points.at(1).x = 0.0;
+  shape.footprint.points.at(1).y = -2.0;
+  shape.footprint.points.at(2).x = -2.0;
+  shape.footprint.points.at(2).y = 0.0;
+  shape.footprint.points.at(3).x = 0.0;
+  shape.footprint.points.at(3).y = 1.0;
+  shape.footprint.points.at(4).x = 1.0;
+  shape.footprint.points.at(4).y = 1.0;
+  EXPECT_DOUBLE_EQ(calc_obstacle_min_length(shape), 1.0);
+  EXPECT_DOUBLE_EQ(calc_obstacle_max_length(shape), 3.0);
+
+  // Condition: invalid shape
+  shape.type = 100;
+  EXPECT_ANY_THROW(calc_obstacle_min_length(shape));
+  EXPECT_ANY_THROW(calc_obstacle_max_length(shape));
+}
+
+TEST(BehaviorPathPlanningSafetyUtilsTest, checkObjectsCollisionRough)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::checkObjectsCollisionRough;
+
+  auto path = generateTrajectory<tier4_planning_msgs::msg::PathWithLaneId>(10, 1.0);
+  autoware_perception_msgs::msg::PredictedObjects objs;
+  double margin = 0.1;
+  BehaviorPathPlannerParameters param;
+  param.vehicle_width = 2.0;
+  param.front_overhang = 1.0;
+  param.rear_overhang = 1.0;
+  bool use_offset_ego_point = true;
+
+  // Condition: no object
+  auto rough_object_collision =
+    checkObjectsCollisionRough(path, objs, margin, param, use_offset_ego_point);
+  EXPECT_FALSE(rough_object_collision.first);
+  EXPECT_FALSE(rough_object_collision.second);
+
+  // Condition: collides with minimum distance
+  autoware_perception_msgs::msg::PredictedObject obj;
+  obj.kinematics.initial_pose_with_covariance.pose = createPose(8.0, 3.0, 0.0, 0.0, 0.0, 0.0);
+  obj.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  obj.shape.dimensions.x = 3.0;
+  obj.shape.dimensions.y = 1.0;
+  objs.objects.push_back(obj);
+
+  rough_object_collision =
+    checkObjectsCollisionRough(path, objs, margin, param, use_offset_ego_point);
+  EXPECT_TRUE(rough_object_collision.first);
+  EXPECT_FALSE(rough_object_collision.second);
+
+  // Condition: collides with both distance
+  obj.kinematics.initial_pose_with_covariance.pose = createPose(2.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+  objs.objects.clear();
+  objs.objects.push_back(obj);
+  rough_object_collision =
+    checkObjectsCollisionRough(path, objs, margin, param, use_offset_ego_point);
+  EXPECT_TRUE(rough_object_collision.first);
+  EXPECT_TRUE(rough_object_collision.second);
 }

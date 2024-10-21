@@ -45,16 +45,27 @@ using autoware_perception_msgs::msg::Shape;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 
+/**
+ * @brief Checks if the object is coming toward the ego vehicle judging by yaw deviation
+ * @param vehicle_pose Ego vehicle pose.
+ * @param object_pose Object pose.
+ * @param angle_threshold Angle threshold.
+ * @return True if the object vehicle is coming towards the ego vehicle
+ */
 bool isTargetObjectOncoming(
   const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose,
   const double angle_threshold = M_PI_2);
 
+/**
+ * @brief Checks if the object is in front of the ego vehicle.
+ * @param ego_pose Ego vehicle pose.
+ * @param obj_polygon Polygon of object.
+ * @param base_to_front Base link to vehicle front.
+ * @return True if object is in front.
+ */
 bool isTargetObjectFront(
   const geometry_msgs::msg::Pose & ego_pose, const Polygon2d & obj_polygon,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
-bool isTargetObjectFront(
-  const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon);
+  const double base_to_front);
 
 Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
@@ -167,8 +178,20 @@ bool checkSafetyWithIntegralPredictedPolygon(
   const ExtendedPredictedObjects & objects, const bool check_all_predicted_path,
   const IntegralPredictedPolygonParams & params, CollisionCheckDebugMap & debug_map);
 
-double calcObstacleMinLength(const Shape & shape);
-double calcObstacleMaxLength(const Shape & shape);
+/**
+ * @brief Calculates the minimum length from obstacle centroid to outer point.
+ * @param shape Object shape.
+ * @return Minimum distance.
+ */
+double calc_obstacle_min_length(const Shape & shape);
+
+/**
+ * @brief Calculates the maximum length from obstacle centroid to outer point.
+ * @param shape Object shape.
+ * @return Maximum distance.
+ */
+double calc_obstacle_max_length(const Shape & shape);
+
 std::pair<bool, bool> checkObjectsCollisionRough(
   const PathWithLaneId & path, const PredictedObjects & objects, const double margin,
   const BehaviorPathPlannerParameters & parameters, const bool use_offset_ego_point);
