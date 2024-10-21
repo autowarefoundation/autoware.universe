@@ -20,6 +20,7 @@
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
 #include "diagnostic_updater/diagnostic_updater.hpp"
 
+#include <autoware/signal_processing/lowpass_filter_1d.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_control_validator/msg/control_validator_status.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -47,8 +48,9 @@ using nav_msgs::msg::Odometry;
 struct ValidationParams
 {
   double max_distance_deviation_threshold;
-  double max_reverse_velocity_threshold;
-  double max_over_velocity_ratio_threshold;
+  double rolling_back_velocity;
+  double over_velocity_ratio;
+  double over_velocity_offset;
 };
 
 /**
@@ -81,16 +83,8 @@ public:
   std::pair<double, bool> calc_lateral_deviation_status(
     const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory) const;
 
-  /**
-   * @brief Calculate the velocity deviation between the reference trajectory and the current
-   * vehicle kinematics.
-   * @param reference_trajectory Reference trajectory
-   * @param kinematics Current vehicle kinematics
-   * @return A tuple containing the current velocity, desired velocity, and a boolean indicating
-   * validity
-   */
-  std::tuple<double, double, bool> calc_velocity_deviation_status(
-    const Trajectory & reference_trajectory, const Odometry & kinematics) const;
+  void calc_velocity_deviation_status(
+    const Trajectory & reference_trajectory, const Odometry & kinematics);
 
 private:
   /**
@@ -155,6 +149,10 @@ private:
 
   ControlValidatorStatus validation_status_;
   ValidationParams validation_params_;  // for thresholds
+  bool is_velocity_valid_{true};
+  autoware::signal_processing::LowpassFilter1d vehicle_vel_{0.0};
+  autoware::signal_processing::LowpassFilter1d target_vel_{0.0};
+  bool hold_velocity_error_until_stop_{false};
 
   vehicle_info_utils::VehicleInfo vehicle_info_;
 
