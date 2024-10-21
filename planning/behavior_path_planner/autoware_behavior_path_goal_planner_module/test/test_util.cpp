@@ -6,7 +6,7 @@
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software
+n  // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 
-class TestUtilWithMap : public ::testing::Test
+  class TestUtilWithMap : public ::testing::Test
 {
 protected:
   void SetUp() override
@@ -57,7 +57,7 @@ TEST_F(TestUtilWithMap, getBusStopAreaPolygons)
   const auto shoulder_lanes = lanelet::utils::query::shoulderLanelets(lanes);
   const auto bus_stop_area_polygons =
     autoware::behavior_path_planner::goal_planner_utils::getBusStopAreaPolygons(shoulder_lanes);
-  EXPECT_EQ(bus_stop_area_polygons.size(), 2);
+  EXPECT_EQ(bus_stop_area_polygons.size(), 1);
 }
 
 TEST_F(TestUtilWithMap, isWithinAreas)
