@@ -35,8 +35,7 @@ void VehicleDoorNode::on_status(
 {
   utils::notify(
     pub_status_, status_, *msg,
-    utils::ignore_stamp<
-      autoware::component_interface_specs::vehicle::DoorStatus::Message>);
+    utils::ignore_stamp<autoware::component_interface_specs::vehicle::DoorStatus::Message>);
 }
 
 }  // namespace autoware::default_adapi

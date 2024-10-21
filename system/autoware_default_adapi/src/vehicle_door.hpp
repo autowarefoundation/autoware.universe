@@ -34,8 +34,7 @@ public:
 
 private:
   void on_status(
-    autoware::component_interface_specs::vehicle::DoorStatus::Message::ConstSharedPtr
-      msg);
+    autoware::component_interface_specs::vehicle::DoorStatus::Message::ConstSharedPtr msg);
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   Srv<autoware_ad_api::vehicle::DoorCommand> srv_command_;
   Srv<autoware_ad_api::vehicle::DoorLayout> srv_layout_;
@@ -43,8 +42,7 @@ private:
   Cli<autoware::component_interface_specs::vehicle::DoorCommand> cli_command_;
   Cli<autoware::component_interface_specs::vehicle::DoorLayout> cli_layout_;
   Sub<autoware::component_interface_specs::vehicle::DoorStatus> sub_status_;
-  std::optional<autoware::component_interface_specs::vehicle::DoorStatus::Message>
-    status_;
+  std::optional<autoware::component_interface_specs::vehicle::DoorStatus::Message> status_;
 };
 
 }  // namespace autoware::default_adapi

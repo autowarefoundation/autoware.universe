@@ -42,28 +42,26 @@ private:
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   Pub<autoware_ad_api::vehicle::VehicleKinematics> pub_kinematics_;
   Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
-  Sub<autoware::component_interface_specs::localization::KinematicState>
-    sub_kinematic_state_;
+  Sub<autoware::component_interface_specs::localization::KinematicState> sub_kinematic_state_;
   Sub<autoware::component_interface_specs::localization::Acceleration> sub_acceleration_;
   Sub<autoware::component_interface_specs::vehicle::SteeringStatus> sub_steering_;
   Sub<autoware::component_interface_specs::vehicle::GearStatus> sub_gear_state_;
-  Sub<autoware::component_interface_specs::vehicle::TurnIndicatorStatus>
-    sub_turn_indicator_;
+  Sub<autoware::component_interface_specs::vehicle::TurnIndicatorStatus> sub_turn_indicator_;
   Sub<autoware::component_interface_specs::vehicle::HazardLightStatus> sub_hazard_light_;
   Sub<autoware::component_interface_specs::vehicle::EnergyStatus> sub_energy_level_;
   Sub<autoware::component_interface_specs::map::MapProjectorInfo> sub_map_projector_info_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  autoware::component_interface_specs::localization::KinematicState::Message::
-    ConstSharedPtr kinematic_state_msgs_;
+  autoware::component_interface_specs::localization::KinematicState::Message::ConstSharedPtr
+    kinematic_state_msgs_;
   autoware::component_interface_specs::localization::Acceleration::Message::ConstSharedPtr
     acceleration_msgs_;
   autoware::component_interface_specs::vehicle::SteeringStatus::Message::ConstSharedPtr
     steering_status_msgs_;
   autoware::component_interface_specs::vehicle::GearStatus::Message::ConstSharedPtr
     gear_status_msgs_;
-  autoware::component_interface_specs::vehicle::TurnIndicatorStatus::Message::
-    ConstSharedPtr turn_indicator_status_msgs_;
+  autoware::component_interface_specs::vehicle::TurnIndicatorStatus::Message::ConstSharedPtr
+    turn_indicator_status_msgs_;
   autoware::component_interface_specs::vehicle::HazardLightStatus::Message::ConstSharedPtr
     hazard_light_status_msgs_;
   autoware::component_interface_specs::vehicle::EnergyStatus::Message::ConstSharedPtr
@@ -71,22 +69,30 @@ private:
   autoware::component_interface_specs::map::MapProjectorInfo::Message::ConstSharedPtr
     map_projector_info_;
 
-  void kinematic_state(const autoware::component_interface_specs::localization::
-                         KinematicState::Message::ConstSharedPtr msg_ptr);
-  void acceleration_status(const autoware::component_interface_specs::localization::
-                             Acceleration::Message::ConstSharedPtr msg_ptr);
-  void steering_status(const autoware::component_interface_specs::vehicle::
-                         SteeringStatus::Message::ConstSharedPtr msg_ptr);
-  void gear_status(const autoware::component_interface_specs::vehicle::GearStatus::
-                     Message::ConstSharedPtr msg_ptr);
-  void turn_indicator_status(const autoware::component_interface_specs::vehicle::
-                               TurnIndicatorStatus::Message::ConstSharedPtr msg_ptr);
-  void map_projector_info(const autoware::component_interface_specs::map::
-                            MapProjectorInfo::Message::ConstSharedPtr msg_ptr);
-  void hazard_light_status(const autoware::component_interface_specs::vehicle::
-                             HazardLightStatus::Message::ConstSharedPtr msg_ptr);
-  void energy_status(const autoware::component_interface_specs::vehicle::EnergyStatus::
-                       Message::ConstSharedPtr msg_ptr);
+  void kinematic_state(
+    const autoware::component_interface_specs::localization::KinematicState::Message::ConstSharedPtr
+      msg_ptr);
+  void acceleration_status(
+    const autoware::component_interface_specs::localization::Acceleration::Message::ConstSharedPtr
+      msg_ptr);
+  void steering_status(
+    const autoware::component_interface_specs::vehicle::SteeringStatus::Message::ConstSharedPtr
+      msg_ptr);
+  void gear_status(
+    const autoware::component_interface_specs::vehicle::GearStatus::Message::ConstSharedPtr
+      msg_ptr);
+  void turn_indicator_status(
+    const autoware::component_interface_specs::vehicle::TurnIndicatorStatus::Message::ConstSharedPtr
+      msg_ptr);
+  void map_projector_info(
+    const autoware::component_interface_specs::map::MapProjectorInfo::Message::ConstSharedPtr
+      msg_ptr);
+  void hazard_light_status(
+    const autoware::component_interface_specs::vehicle::HazardLightStatus::Message::ConstSharedPtr
+      msg_ptr);
+  void energy_status(
+    const autoware::component_interface_specs::vehicle::EnergyStatus::Message::ConstSharedPtr
+      msg_ptr);
   uint8_t mapping(
     std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);
   void publish_kinematics();

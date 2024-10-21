@@ -41,8 +41,7 @@ private:
   Pub<autoware_ad_api::planning::VelocityFactors> pub_velocity_factors_;
   Pub<autoware_ad_api::planning::SteeringFactors> pub_steering_factors_;
   Sub<autoware::component_interface_specs::planning::Trajectory> sub_trajectory_;
-  Sub<autoware::component_interface_specs::localization::KinematicState>
-    sub_kinematic_state_;
+  Sub<autoware::component_interface_specs::localization::KinematicState> sub_kinematic_state_;
   std::vector<rclcpp::Subscription<VelocityFactorArray>::SharedPtr> sub_velocity_factors_;
   std::vector<rclcpp::Subscription<SteeringFactorArray>::SharedPtr> sub_steering_factors_;
   std::vector<VelocityFactorArray::ConstSharedPtr> velocity_factors_;
@@ -51,8 +50,7 @@ private:
 
   using VehicleStopChecker = autoware::motion_utils::VehicleStopCheckerBase;
   using Trajectory = autoware::component_interface_specs::planning::Trajectory::Message;
-  using KinematicState =
-    autoware::component_interface_specs::localization::KinematicState::Message;
+  using KinematicState = autoware::component_interface_specs::localization::KinematicState::Message;
   void on_trajectory(const Trajectory::ConstSharedPtr msg);
   void on_kinematic_state(const KinematicState::ConstSharedPtr msg);
   void on_timer();
