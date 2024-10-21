@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <tensorrt_common/simple_profiler.hpp>
+#include <autoware/tensorrt_common/simple_profiler.hpp>
 
 #include <iomanip>
 
+namespace autoware
+{
 namespace tensorrt_common
 {
 
@@ -130,3 +132,4 @@ std::ostream & operator<<(std::ostream & out, const SimpleProfiler & value)
   return out;
 }
 }  // namespace tensorrt_common
+}  // namespace autoware
