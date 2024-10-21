@@ -36,7 +36,6 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
   map_ptr_ = map_pcl_ptr;
   *tf_map_input_frame_ = map_ptr_->header.frame_id;
   // voxel
-  std::lock_guard<std::mutex> lock(static_map_loader_mutex_);
   voxel_map_ptr_.reset(new pcl::PointCloud<pcl::PointXYZ>);
   voxel_grid_.setLeafSize(voxel_leaf_size_, voxel_leaf_size_, voxel_leaf_size_);
   voxel_grid_.setInputCloud(map_pcl_ptr);
@@ -53,13 +52,13 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
     }
   }
   tree_->setInputCloud(map_ptr_);
-  is_tree_initialized_.store(true, std::memory_order_release);
+  is_initialized_.store(true, std::memory_order_release);
 }
 
 bool VoxelDistanceBasedStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  if (!is_tree_initialized_.load(std::memory_order_acquire)) {
+  if (!is_initialized_.load(std::memory_order_acquire)) {
     return false;
   }
   if (voxel_map_ptr_ == NULL) {

@@ -34,7 +34,6 @@ void DistanceBasedStaticMapLoader::onMapCallback(
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
   map_ptr_ = map_pcl_ptr;
   *tf_map_input_frame_ = map_ptr_->header.frame_id;
-  std::lock_guard<std::mutex> lock(static_map_loader_mutex_);
   if (!tree_) {
     if (map_ptr_->isOrganized()) {
       tree_.reset(new pcl::search::OrganizedNeighbor<pcl::PointXYZ>());
@@ -43,13 +42,13 @@ void DistanceBasedStaticMapLoader::onMapCallback(
     }
   }
   tree_->setInputCloud(map_ptr_);
-  is_tree_initialized_.store(true, std::memory_order_release);
+  is_initialized_.store(true, std::memory_order_release);
 }
 
 bool DistanceBasedStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  if (!is_tree_initialized_.load(std::memory_order_acquire)) {
+  if (!is_initialized_.load(std::memory_order_acquire)) {
     return false;
   }
   if (map_ptr_ == NULL) {

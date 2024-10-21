@@ -21,7 +21,6 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
 
-#include <atomic>
 #include <map>
 #include <memory>
 #include <string>
@@ -40,7 +39,6 @@ class VoxelDistanceBasedStaticMapLoader : public VoxelGridStaticMapLoader
 private:
   PointCloudConstPtr map_ptr_;
   pcl::search::Search<pcl::PointXYZ>::Ptr tree_;
-  std::atomic_bool is_tree_initialized_{false};
 
 public:
   explicit VoxelDistanceBasedStaticMapLoader(

@@ -26,6 +26,7 @@
 #include <pcl/search/pcl_search.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <string>
@@ -120,7 +121,7 @@ protected:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
   VoxelGridPointXYZ voxel_grid_;
   PointCloudPtr voxel_map_ptr_;
-  std::mutex static_map_loader_mutex_;
+  std::atomic_bool is_initialized_{false};
 
 public:
   explicit VoxelGridStaticMapLoader(
