@@ -219,9 +219,13 @@ private:
    */
   struct GoalPlannerData
   {
-    GoalPlannerData(const PlannerData & planner_data, const GoalPlannerParameters & parameters)
+    GoalPlannerData(
+      const PlannerData & planner_data, const GoalPlannerParameters & parameters,
+      const BehaviorModuleOutput & previous_module_output_)
     {
       initializeOccupancyGridMap(planner_data, parameters);
+      previous_module_output = previous_module_output_;
+      last_previous_module_output = previous_module_output_;
     };
     GoalPlannerParameters parameters;
     autoware::universe_utils::LinearRing2d vehicle_footprint;
@@ -229,6 +233,7 @@ private:
     PlannerData planner_data;
     ModuleStatus current_status;
     BehaviorModuleOutput previous_module_output;
+    BehaviorModuleOutput last_previous_module_output;  //<! previous "previous_module_output"
     // collision detector
     // need to be shared_ptr to be used in planner and goal searcher
     std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map;
@@ -437,9 +442,12 @@ private:
   TurnSignalInfo calcTurnSignalInfo(const PullOverContextData & context_data);
   std::optional<lanelet::Id> ignore_signal_{std::nullopt};
 
-  bool hasPreviousModulePathShapeChanged(const BehaviorModuleOutput & previous_module_output) const;
+  bool hasPreviousModulePathShapeChanged(
+    const BehaviorModuleOutput & previous_module_output,
+    const BehaviorModuleOutput & last_previous_module_output) const;
   bool hasDeviatedFromLastPreviousModulePath(
-    const std::shared_ptr<const PlannerData> planner_data) const;
+    const std::shared_ptr<const PlannerData> planner_data,
+    const BehaviorModuleOutput & last_previous_module_output) const;
   bool hasDeviatedFromCurrentPreviousModulePath(
     const std::shared_ptr<const PlannerData> planner_data,
     const BehaviorModuleOutput & previous_module_output) const;
