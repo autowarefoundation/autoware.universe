@@ -46,7 +46,6 @@ namespace autoware::behavior_path_planner
 using autoware::motion_utils::calcSignedArcLength;
 using utils::lane_change::create_lanes_polygon;
 using utils::path_safety_checker::isPolygonOverlapLanelet;
-using utils::traffic_light::getDistanceToNextTrafficLight;
 namespace calculation = utils::lane_change::calculation;
 
 NormalLaneChange::NormalLaneChange(
@@ -91,7 +90,7 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   common_data_ptr_->current_lanes_path =
     route_handler_ptr->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
 
-  common_data_ptr_->lanes_ptr->target_neighbor = utils::lane_change::getTargetNeighborLanes(
+  common_data_ptr_->lanes_ptr->target_neighbor = utils::lane_change::get_target_neighbor_lanes(
     *route_handler_ptr, current_lanes, common_data_ptr_->lc_type);
 
   common_data_ptr_->lanes_ptr->current_lane_in_goal_section =
@@ -560,7 +559,7 @@ PathWithLaneId NormalLaneChange::getReferencePath() const
         get_target_lanes(), getEgoPose(), &closest_lanelet)) {
     return prev_module_output_.reference_path;
   }
-  const auto reference_path = utils::getCenterLinePathFromLanelet(closest_lanelet, planner_data_);
+  auto reference_path = utils::getCenterLinePathFromLanelet(closest_lanelet, planner_data_);
   if (reference_path.points.empty()) {
     return prev_module_output_.reference_path;
   }
@@ -1014,7 +1013,7 @@ bool NormalLaneChange::get_prepare_segment(
   return true;
 }
 
-lane_change::TargetObjects NormalLaneChange::getTargetObjects(
+lane_change::TargetObjects NormalLaneChange::get_target_objects(
   const FilteredByLanesExtendedObjects & filtered_objects,
   [[maybe_unused]] const lanelet::ConstLanelets & current_lanes) const
 {
@@ -1365,7 +1364,7 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
 
   const auto current_velocity = getEgoVelocity();
   const auto sorted_lane_ids = utils::lane_change::get_sorted_lane_ids(common_data_ptr_);
-  const auto target_objects = getTargetObjects(filtered_objects_, current_lanes);
+  const auto target_objects = get_target_objects(filtered_objects_, current_lanes);
 
   const auto prepare_phase_metrics = get_prepare_metrics();
 
@@ -1667,7 +1666,8 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
   utils::clipPathLength(reference_segment, 0, length_to_lane_changing_start, 0.0);
   // remove terminal points because utils::clipPathLength() calculates extra long path
   reference_segment.points.pop_back();
-  reference_segment.points.back().point.longitudinal_velocity_mps = minimum_lane_changing_velocity;
+  reference_segment.points.back().point.longitudinal_velocity_mps =
+    static_cast<float>(minimum_lane_changing_velocity);
 
   const auto terminal_lane_change_path = utils::lane_change::construct_candidate_path(
     common_data_ptr_, lane_change_info, reference_segment, target_lane_reference_path,
@@ -1686,7 +1686,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     return {true, true};
   }
 
-  const auto target_objects = getTargetObjects(filtered_objects_, current_lanes);
+  const auto target_objects = get_target_objects(filtered_objects_, current_lanes);
 
   CollisionCheckDebugMap debug_data;
 
@@ -1773,11 +1773,7 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
   }
 
   // check relative angle
-  if (!utils::checkPathRelativeAngle(path, M_PI)) {
-    return false;
-  }
-
-  return true;
+  return utils::checkPathRelativeAngle(path, M_PI);
 }
 
 bool NormalLaneChange::isRequiredStop(const bool is_trailing_object)
@@ -1921,7 +1917,7 @@ bool NormalLaneChange::calcAbortPath()
     PathWithLaneId aborting_path;
     aborting_path.points.insert(
       aborting_path.points.begin(), shifted_path.path.points.begin(),
-      shifted_path.path.points.begin() + abort_return_idx);
+      shifted_path.path.points.begin() + static_cast<int>(abort_return_idx));
 
     if (!reference_lane_segment.points.empty()) {
       abort_path.path = utils::combinePath(aborting_path, reference_lane_segment);

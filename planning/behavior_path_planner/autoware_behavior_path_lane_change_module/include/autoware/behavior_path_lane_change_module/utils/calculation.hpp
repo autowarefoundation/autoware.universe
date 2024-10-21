@@ -140,7 +140,7 @@ std::vector<PhaseMetrics> calc_prepare_phase_metrics(
 
 std::vector<PhaseMetrics> calc_shift_phase_metrics(
   const CommonDataPtr & common_data_ptr, const double shift_length, const double initial_velocity,
-  const double max_velocity, const double lon_accel,
+  const double max_path_velocity, const double lon_accel,
   const double max_length_threshold = std::numeric_limits<double>::max());
 
 /**
