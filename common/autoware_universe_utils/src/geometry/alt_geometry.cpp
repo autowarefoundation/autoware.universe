@@ -436,6 +436,50 @@ bool intersects(
   return true;
 }
 
+bool intersects(const alt::Polygon2d & poly1, const alt::Polygon2d & poly2)
+{
+  // TODO(mitukou1109): Use plane sweep method to improve performance
+  for (const auto & vertex : poly1.outer()) {
+    if (within(vertex, poly2)) {
+      return true;
+    }
+  }
+
+  for (const auto & vertex : poly2.outer()) {
+    if (within(vertex, poly1)) {
+      return true;
+    }
+  }
+
+  for (auto it1 = poly1.outer().cbegin(); it1 != std::prev(poly1.outer().cend()); ++it1) {
+    for (auto it2 = poly2.outer().cbegin(); it2 != std::prev(poly2.outer().cend()); ++it2) {
+      if (intersects(*it1, *std::next(it1), *it2, *std::next(it2))) {
+        return true;
+      }
+    }
+
+    for (const auto & inner : poly2.inners()) {
+      for (auto it2 = inner.cbegin(); it2 != std::prev(inner.cend()); ++it2) {
+        if (intersects(*it1, *std::next(it1), *it2, *std::next(it2))) {
+          return true;
+        }
+      }
+    }
+  }
+
+  for (const auto & inner : poly1.inners()) {
+    for (auto it1 = inner.cbegin(); it1 != std::prev(inner.cend()); ++it1) {
+      for (auto it2 = poly2.outer().cbegin(); it2 != std::prev(poly2.outer().cend()); ++it2) {
+        if (intersects(*it1, *std::next(it1), *it2, *std::next(it2))) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 bool intersects(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
 {
   for (const auto & vertex : poly1.vertices()) {

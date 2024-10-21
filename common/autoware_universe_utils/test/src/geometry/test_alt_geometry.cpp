@@ -470,6 +470,7 @@ TEST(alt_geometry, intersects)
   using autoware::universe_utils::alt::ConvexPolygon2d;
   using autoware::universe_utils::alt::Point2d;
   using autoware::universe_utils::alt::PointList2d;
+  using autoware::universe_utils::alt::Polygon2d;
 
   {  // Normally crossing
     const Point2d p1 = {0.0, -1.0};
@@ -600,19 +601,176 @@ TEST(alt_geometry, intersects)
   }
 
   {  // Two polygons share a vertex
-    const Point2d p1 = {1.0, 1.0};
-    const Point2d p2 = {1.0, -1.0};
-    const Point2d p3 = {-1.0, -1.0};
-    const Point2d p4 = {-1.0, 1.0};
-    const Point2d p5 = {2.0, 2.0};
-    const Point2d p6 = {2.0, 1.0};
-    const Point2d p7 = {1.0, 1.0};
-    const Point2d p8 = {1.0, 2.0};
+    PointList2d vertices1;
+    vertices1.push_back({1.0, 1.0});
+    vertices1.push_back({1.0, -1.0});
+    vertices1.push_back({-1.0, -1.0});
+    vertices1.push_back({-1.0, 1.0});
+
+    PointList2d vertices2;
+    vertices2.push_back({2.0, 2.0});
+    vertices2.push_back({2.0, 1.0});
+    vertices2.push_back({1.0, 1.0});
+    vertices2.push_back({1.0, 2.0});
+
     const auto result = intersects(
-      ConvexPolygon2d::create({p1, p2, p3, p4}).value(),
-      ConvexPolygon2d::create({p5, p6, p7, p8}).value());
+      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // One concave polygon intersects the other
+    PointList2d outer1;
+    outer1.push_back({0.0, 0.0});
+    outer1.push_back({0.0, 2.0});
+    outer1.push_back({1.0, 1.0});
+    outer1.push_back({2.0, 2.0});
+    outer1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({-0.5, 1.5});
+    outer2.push_back({2.5, 1.5});
+    outer2.push_back({2.5, -0.5});
+    outer2.push_back({-0.5, -0.5});
+
+    const auto result =
+      intersects(Polygon2d::create(outer1, {}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // Two concave polygon does not intersect each other
+    PointList2d outer1;
+    outer1.push_back({0.0, 0.0});
+    outer1.push_back({0.0, 2.0});
+    outer1.push_back({1.0, 1.0});
+    outer1.push_back({2.0, 2.0});
+    outer1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({0.0, 3.0});
+    outer2.push_back({0.0, 4.0});
+    outer2.push_back({2.0, 4.0});
+    outer2.push_back({2.0, 3.0});
+
+    const auto result =
+      intersects(Polygon2d::create(outer1, {}).value(), Polygon2d::create(outer2, {}).value());
 
     EXPECT_FALSE(result);
+  }
+
+  {  // Two concave polygons share a vertex
+    PointList2d outer1;
+    outer1.push_back({0.0, 0.0});
+    outer1.push_back({0.0, 2.0});
+    outer1.push_back({1.0, 1.0});
+    outer1.push_back({2.0, 2.0});
+    outer1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({1.0, 1.0});
+    outer2.push_back({0.0, 3.0});
+    outer2.push_back({2.0, 3.0});
+
+    const auto result =
+      intersects(Polygon2d::create(outer1, {}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // One concave polygon is within the other
+    PointList2d outer1;
+    outer1.push_back({0.0, 0.0});
+    outer1.push_back({0.0, 2.0});
+    outer1.push_back({1.0, 1.0});
+    outer1.push_back({2.0, 2.0});
+    outer1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({0.5, 0.5});
+    outer2.push_back({0.5, 1.0});
+    outer2.push_back({1.0, 0.5});
+
+    const auto result =
+      intersects(Polygon2d::create(outer1, {}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // One concave polygon intersects the hole of the other
+    PointList2d outer1;
+    outer1.push_back({-1.0, -1.0});
+    outer1.push_back({-1.0, 3.0});
+    outer1.push_back({3.0, 3.0});
+    outer1.push_back({3.0, -1.0});
+
+    PointList2d inner1;
+    inner1.push_back({0.0, 0.0});
+    inner1.push_back({0.0, 2.0});
+    inner1.push_back({1.0, 1.0});
+    inner1.push_back({2.0, 2.0});
+    inner1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({0.5, 1.5});
+    outer2.push_back({1.5, 1.5});
+    outer2.push_back({1.5, 0.5});
+    outer2.push_back({0.5, 0.5});
+
+    const auto result = intersects(
+      Polygon2d::create(outer1, {inner1}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // One concave polygon is within the hole of the other
+    PointList2d outer1;
+    outer1.push_back({-1.0, -1.0});
+    outer1.push_back({-1.0, 3.0});
+    outer1.push_back({3.0, 3.0});
+    outer1.push_back({3.0, -1.0});
+
+    PointList2d inner1;
+    inner1.push_back({0.0, 0.0});
+    inner1.push_back({0.0, 2.0});
+    inner1.push_back({1.0, 1.0});
+    inner1.push_back({2.0, 2.0});
+    inner1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({0.5, 0.5});
+    outer2.push_back({0.5, 1.0});
+    outer2.push_back({1.0, 0.5});
+
+    const auto result = intersects(
+      Polygon2d::create(outer1, {inner1}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // One concave polygon and the hole of the other share a vertex
+    PointList2d outer1;
+    outer1.push_back({-1.0, -1.0});
+    outer1.push_back({-1.0, 3.0});
+    outer1.push_back({3.0, 3.0});
+    outer1.push_back({3.0, -1.0});
+
+    PointList2d inner1;
+    inner1.push_back({0.0, 0.0});
+    inner1.push_back({0.0, 2.0});
+    inner1.push_back({1.0, 1.0});
+    inner1.push_back({2.0, 2.0});
+    inner1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({1.0, 1.0});
+    outer2.push_back({1.5, 0.5});
+    outer2.push_back({0.5, 0.5});
+
+    const auto result = intersects(
+      Polygon2d::create(outer1, {inner1}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_TRUE(result);
   }
 }
 
@@ -1298,6 +1456,72 @@ TEST(alt_geometry, intersectsRand)
           autoware::universe_utils::alt::ConvexPolygon2d::create(polygons[i]).value();
         const auto alt_poly2 =
           autoware::universe_utils::alt::ConvexPolygon2d::create(polygons[j]).value();
+        sw.tic();
+        const auto alt = autoware::universe_utils::intersects(alt_poly1, alt_poly2);
+        if (alt) {
+          alt_intersect_ns += sw.toc();
+        } else {
+          alt_no_intersect_ns += sw.toc();
+        }
+
+        if (ground_truth != alt) {
+          std::cout << "Failed for the 2 polygons: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
+        EXPECT_EQ(ground_truth, alt);
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %d pairs with intersects\n", polygons_nb, vertices,
+      intersect_count, polygons_nb * polygons_nb);
+    std::printf(
+      "\tIntersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_intersect_ns / 1e6, alt_intersect_ns / 1e6);
+    std::printf(
+      "\tNo intersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_no_intersect_ns / 1e6, alt_no_intersect_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      (ground_truth_no_intersect_ns + ground_truth_intersect_ns) / 1e6,
+      (alt_no_intersect_ns + alt_intersect_ns) / 1e6);
+  }
+}
+
+TEST(alt_geometry, intersectsConcaveRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 100;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_intersect_ns = 0.0;
+    double ground_truth_no_intersect_ns = 0.0;
+    double alt_intersect_ns = 0.0;
+    double alt_no_intersect_ns = 0.0;
+    int intersect_count = 0;
+
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (auto j = 0UL; j < polygons.size(); ++j) {
+        sw.tic();
+        const auto ground_truth = boost::geometry::intersects(polygons[i], polygons[j]);
+        if (ground_truth) {
+          ++intersect_count;
+          ground_truth_intersect_ns += sw.toc();
+        } else {
+          ground_truth_no_intersect_ns += sw.toc();
+        }
+
+        const auto alt_poly1 =
+          autoware::universe_utils::alt::Polygon2d::create(polygons[i]).value();
+        const auto alt_poly2 =
+          autoware::universe_utils::alt::Polygon2d::create(polygons[j]).value();
         sw.tic();
         const auto alt = autoware::universe_utils::intersects(alt_poly1, alt_poly2);
         if (alt) {
