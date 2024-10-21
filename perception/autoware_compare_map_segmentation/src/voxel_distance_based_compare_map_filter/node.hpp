@@ -21,6 +21,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <string>

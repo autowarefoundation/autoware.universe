@@ -53,13 +53,13 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
     }
   }
   tree_->setInputCloud(map_ptr_);
-  is_tree_initialized_ = true;
+  is_tree_initialized_.store(true, std::memory_order_release);
 }
 
 bool VoxelDistanceBasedStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  if (!is_tree_initialized_) {
+  if (!is_tree_initialized_.load(std::memory_order_acquire)) {
     return false;
   }
   if (voxel_map_ptr_ == NULL) {
