@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "component_interface_specs/perception.hpp"
+#include "autoware/component_interface_specs/map.hpp"
 #include "gtest/gtest.h"
 
-TEST(perception, interface)
+TEST(map, interface)
 {
   {
-    using perception_interface::ObjectRecognition;
-    ObjectRecognition object_recognition;
+    using autoware::component_interface_specs::map_interface::MapProjectorInfo;
+    MapProjectorInfo map_projector;
     size_t depth = 1;
-    EXPECT_EQ(object_recognition.depth, depth);
-    EXPECT_EQ(object_recognition.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-    EXPECT_EQ(object_recognition.durability, RMW_QOS_POLICY_DURABILITY_VOLATILE);
+    EXPECT_EQ(map_projector.depth, depth);
+    EXPECT_EQ(map_projector.reliability, RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+    EXPECT_EQ(map_projector.durability, RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,25 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_SPECS__PERCEPTION_HPP_
-#define COMPONENT_INTERFACE_SPECS__PERCEPTION_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_SPECS__MAP_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_SPECS__MAP_HPP_
 
 #include <rclcpp/qos.hpp>
 
-#include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <tier4_map_msgs/msg/map_projector_info.hpp>
 
-namespace perception_interface
+namespace autoware::component_interface_specs::map_interface
 {
 
-struct ObjectRecognition
+struct MapProjectorInfo
 {
-  using Message = autoware_perception_msgs::msg::PredictedObjects;
-  static constexpr char name[] = "/perception/object_recognition/objects";
+  using Message = tier4_map_msgs::msg::MapProjectorInfo;
+  static constexpr char name[] = "/map/map_projector_info";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
-  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace perception_interface
+}  // namespace autoware::component_interface_specs::map_interface
 
-#endif  // COMPONENT_INTERFACE_SPECS__PERCEPTION_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__MAP_HPP_

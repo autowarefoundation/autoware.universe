@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "component_interface_specs/localization.hpp"
+#include "autoware/component_interface_specs/localization.hpp"
 #include "gtest/gtest.h"
 
 TEST(localization, interface)
 {
   {
-    using localization_interface::InitializationState;
+    using autoware::component_interface_specs::localization_interface::InitializationState;
     InitializationState initialization_state;
     size_t depth = 1;
     EXPECT_EQ(initialization_state.depth, depth);
@@ -27,7 +27,7 @@ TEST(localization, interface)
   }
 
   {
-    using localization_interface::KinematicState;
+    using autoware::component_interface_specs::localization_interface::KinematicState;
     KinematicState kinematic_state;
     size_t depth = 1;
     EXPECT_EQ(kinematic_state.depth, depth);
@@ -36,7 +36,7 @@ TEST(localization, interface)
   }
 
   {
-    using localization_interface::Acceleration;
+    using autoware::component_interface_specs::localization_interface::Acceleration;
     Acceleration acceleration;
     size_t depth = 1;
     EXPECT_EQ(acceleration.depth, depth);
