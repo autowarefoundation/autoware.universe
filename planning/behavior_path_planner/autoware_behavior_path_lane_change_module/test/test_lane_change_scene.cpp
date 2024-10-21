@@ -53,8 +53,8 @@ public:
 
   void init_param()
   {
-    auto node_options = init_node_options();
-    auto node = rclcpp::Node(name, node_options);
+    auto node_options = get_node_options();
+    auto node = rclcpp::Node(name_, node_options);
     planner_data_->init_parameters(node);
     lc_param_ptr_ = LaneChangeModuleManager::set_params(&node, node.get_name());
     planner_data_->route_handler = init_route_handler();
@@ -78,15 +78,16 @@ public:
     return normal_lane_change_->common_data_ptr_;
   }
 
-  [[nodiscard]] rclcpp::NodeOptions init_node_options() const
+  [[nodiscard]] rclcpp::NodeOptions get_node_options() const
   {
     auto node_options = rclcpp::NodeOptions{};
 
-    const auto common_param = get_absolute_path_to_config(test_utils_dir, "test_common.param.yaml");
+    const auto common_param =
+      get_absolute_path_to_config(test_utils_dir_, "test_common.param.yaml");
     const auto nearest_search_param =
-      get_absolute_path_to_config(test_utils_dir, "test_nearest_search.param.yaml");
+      get_absolute_path_to_config(test_utils_dir_, "test_nearest_search.param.yaml");
     const auto vehicle_info_param =
-      get_absolute_path_to_config(test_utils_dir, "test_vehicle_info.param.yaml");
+      get_absolute_path_to_config(test_utils_dir_, "test_vehicle_info.param.yaml");
 
     std::string bpp_dir{"autoware_behavior_path_planner"};
     const auto bpp_param = get_absolute_path_to_config(bpp_dir, "behavior_path_planner.param.yaml");
@@ -110,7 +111,7 @@ public:
     std::string lane_change_right_test_route_filename{"lane_change_test_route.yaml"};
     std::string lanelet_map_filename{"2km_test.osm"};
     const auto lanelet2_path =
-      get_absolute_path_to_lanelet_map(test_utils_dir, lanelet_map_filename);
+      get_absolute_path_to_lanelet_map(test_utils_dir_, lanelet_map_filename);
     const auto map_bin_msg = autoware::test_utils::make_map_bin_msg(lanelet2_path, 5.0);
     auto route_handler_ptr = std::make_shared<RouteHandler>(map_bin_msg);
     const auto rh_test_route =
@@ -161,8 +162,8 @@ public:
   std::shared_ptr<PlannerData> planner_data_ = std::make_shared<PlannerData>();
   LaneChangeModuleType lc_type_{LaneChangeModuleType::NORMAL};
   Direction lc_direction_{Direction::RIGHT};
-  std::string name = "test_lane_change_scene";
-  std::string test_utils_dir{"autoware_test_utils"};
+  std::string name_{"test_lane_change_scene"};
+  std::string test_utils_dir_{"autoware_test_utils"};
   Pose ego_pose_;
 };
 
