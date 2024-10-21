@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "autoware/universe_utils/geometry/alt_geometry.hpp"
+#include "autoware/universe_utils/geometry/ear_clipping.hpp"
+#include "autoware/universe_utils/geometry/random_concave_polygon.hpp"
 #include "autoware/universe_utils/geometry/random_convex_polygon.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
@@ -33,14 +35,15 @@ TEST(alt_geometry, area)
 {
   using autoware::universe_utils::area;
   using autoware::universe_utils::alt::ConvexPolygon2d;
-  using autoware::universe_utils::alt::Point2d;
+  using autoware::universe_utils::alt::PointList2d;
 
   {
-    const Point2d p1 = {0.0, 0.0};
-    const Point2d p2 = {0.0, 7.0};
-    const Point2d p3 = {4.0, 2.0};
-    const Point2d p4 = {2.0, 0.0};
-    const auto result = area(ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+    PointList2d vertices;
+    vertices.push_back({0.0, 0.0});
+    vertices.push_back({0.0, 7.0});
+    vertices.push_back({4.0, 2.0});
+    vertices.push_back({2.0, 0.0});
+    const auto result = area(ConvexPolygon2d::create(vertices).value());
 
     EXPECT_NEAR(result, 16.0, epsilon);
   }
@@ -128,36 +131,103 @@ TEST(alt_geometry, coveredBy)
   using autoware::universe_utils::covered_by;
   using autoware::universe_utils::alt::ConvexPolygon2d;
   using autoware::universe_utils::alt::Point2d;
+  using autoware::universe_utils::alt::PointList2d;
+  using autoware::universe_utils::alt::Polygon2d;
 
   {  // The point is within the polygon
     const Point2d point = {0.0, 0.0};
-    const Point2d p1 = {1.0, 1.0};
-    const Point2d p2 = {1.0, -1.0};
-    const Point2d p3 = {-1.0, -1.0};
-    const Point2d p4 = {-1.0, 1.0};
-    const auto result = covered_by(point, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    PointList2d vertices;
+    vertices.push_back({1.0, 1.0});
+    vertices.push_back({1.0, -1.0});
+    vertices.push_back({-1.0, -1.0});
+    vertices.push_back({-1.0, 1.0});
+
+    const auto result = covered_by(point, ConvexPolygon2d::create(vertices).value());
 
     EXPECT_TRUE(result);
   }
 
   {  // The point is outside the polygon
     const Point2d point = {0.0, 0.0};
-    const Point2d p1 = {2.0, 2.0};
-    const Point2d p2 = {2.0, 1.0};
-    const Point2d p3 = {1.0, 1.0};
-    const Point2d p4 = {1.0, 2.0};
-    const auto result = covered_by(point, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    PointList2d vertices;
+    vertices.push_back({2.0, 2.0});
+    vertices.push_back({2.0, 1.0});
+    vertices.push_back({1.0, 1.0});
+    vertices.push_back({1.0, 2.0});
+
+    const auto result = covered_by(point, ConvexPolygon2d::create(vertices).value());
 
     EXPECT_FALSE(result);
   }
 
   {  // The point is on the edge of the polygon
     const Point2d point = {0.0, 0.0};
-    const Point2d p1 = {2.0, 1.0};
-    const Point2d p2 = {2.0, -1.0};
-    const Point2d p3 = {0.0, -1.0};
-    const Point2d p4 = {0.0, 1.0};
-    const auto result = covered_by(point, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    PointList2d vertices;
+    vertices.push_back({2.0, 1.0});
+    vertices.push_back({2.0, -1.0});
+    vertices.push_back({0.0, -1.0});
+    vertices.push_back({0.0, 1.0});
+
+    const auto result = covered_by(point, ConvexPolygon2d::create(vertices).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // The point is within the concave polygon
+    PointList2d outer;
+    outer.push_back({1.0, 1.0});
+    outer.push_back({1.0, -1.0});
+    outer.push_back({0.0, -0.5});
+    outer.push_back({-1.0, -1.0});
+    outer.push_back({-1.0, 1.0});
+    outer.push_back({0.0, 0.5});
+
+    const Point2d point = {0.0, 0.0};
+
+    const auto result = covered_by(point, Polygon2d::create(outer, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // The point is within the hole of the polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+
+    PointList2d inner;
+    inner.push_back({0.5, 0.5});
+    inner.push_back({0.5, 1.5});
+    inner.push_back({1.5, 1.5});
+    inner.push_back({1.5, 0.5});
+
+    const Point2d point = {1.0, 1.0};
+
+    const auto result = covered_by(point, Polygon2d::create(outer, {inner}).value());
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // The point is on the edge of the hole of the polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+
+    PointList2d inner;
+    inner.push_back({0.5, 0.5});
+    inner.push_back({0.5, 1.5});
+    inner.push_back({1.5, 1.5});
+    inner.push_back({1.5, 0.5});
+
+    const Point2d point = {0.5, 1.0};
+
+    const auto result = covered_by(point, Polygon2d::create(outer, {inner}).value());
 
     EXPECT_TRUE(result);
   }
@@ -167,36 +237,42 @@ TEST(alt_geometry, disjoint)
 {
   using autoware::universe_utils::disjoint;
   using autoware::universe_utils::alt::ConvexPolygon2d;
-  using autoware::universe_utils::alt::Point2d;
+  using autoware::universe_utils::alt::PointList2d;
 
   {  // Disjoint
-    const Point2d p1 = {0.0, 2.0};
-    const Point2d p2 = {-2.0, 0.0};
-    const Point2d p3 = {-4.0, 2.0};
-    const Point2d p4 = {-2.0, 4.0};
-    const Point2d p5 = {2.0, 2.0};
-    const Point2d p6 = {4.0, 4.0};
-    const Point2d p7 = {6.0, 2.0};
-    const Point2d p8 = {4.0, 0.0};
+    PointList2d vertices1;
+    vertices1.push_back({0.0, 2.0});
+    vertices1.push_back({-2.0, 0.0});
+    vertices1.push_back({-4.0, 2.0});
+    vertices1.push_back({-2.0, 4.0});
+
+    PointList2d vertices2;
+    vertices2.push_back({2.0, 2.0});
+    vertices2.push_back({4.0, 4.0});
+    vertices2.push_back({6.0, 2.0});
+    vertices2.push_back({4.0, 0.0});
+
     const auto result = disjoint(
-      ConvexPolygon2d::create({p1, p2, p3, p4}).value(),
-      ConvexPolygon2d::create({p5, p6, p7, p8}).value());
+      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
 
     EXPECT_TRUE(result);
   }
 
   {  // Not disjoint (two polygons share a vertex)
-    const Point2d p1 = {0.0, 2.0};
-    const Point2d p2 = {-2.0, 0.0};
-    const Point2d p3 = {-4.0, 2.0};
-    const Point2d p4 = {-2.0, 4.0};
-    const Point2d p5 = {0.0, 2.0};
-    const Point2d p6 = {2.0, 4.0};
-    const Point2d p7 = {4.0, 2.0};
-    const Point2d p8 = {2.0, 0.0};
+    PointList2d vertices1;
+    vertices1.push_back({0.0, 2.0});
+    vertices1.push_back({-2.0, 0.0});
+    vertices1.push_back({-4.0, 2.0});
+    vertices1.push_back({-2.0, 4.0});
+
+    PointList2d vertices2;
+    vertices2.push_back({0.0, 2.0});
+    vertices2.push_back({2.0, 4.0});
+    vertices2.push_back({4.0, 2.0});
+    vertices2.push_back({2.0, 0.0});
+
     const auto result = disjoint(
-      ConvexPolygon2d::create({p1, p2, p3, p4}).value(),
-      ConvexPolygon2d::create({p5, p6, p7, p8}).value());
+      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
 
     EXPECT_FALSE(result);
   }
@@ -207,6 +283,8 @@ TEST(alt_geometry, distance)
   using autoware::universe_utils::distance;
   using autoware::universe_utils::alt::ConvexPolygon2d;
   using autoware::universe_utils::alt::Point2d;
+  using autoware::universe_utils::alt::PointList2d;
+  using autoware::universe_utils::alt::Polygon2d;
 
   {  // Normal setting
     const Point2d p = {0.0, 1.0};
@@ -277,23 +355,67 @@ TEST(alt_geometry, distance)
   }
 
   {  // The point is outside the polygon
-    const Point2d p = {0.0, 0.0};
-    const Point2d p1 = {3.0, 1.0};
-    const Point2d p2 = {3.0, -1.0};
-    const Point2d p3 = {1.0, -1.0};
-    const Point2d p4 = {1.0, 1.0};
-    const auto result = distance(p, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+    const Point2d point = {0.0, 0.0};
+
+    PointList2d vertices;
+    vertices.push_back({3.0, 1.0});
+    vertices.push_back({3.0, -1.0});
+    vertices.push_back({1.0, -1.0});
+    vertices.push_back({1.0, 1.0});
+
+    const auto result = distance(point, ConvexPolygon2d::create(vertices).value());
 
     EXPECT_NEAR(result, 1.0, epsilon);
   }
 
   {  // The point is within the polygon
-    const Point2d p = {0.0, 0.0};
-    const Point2d p1 = {2.0, 1.0};
-    const Point2d p2 = {2.0, -1.0};
-    const Point2d p3 = {-1.0, -1.0};
-    const Point2d p4 = {-1.0, 1.0};
-    const auto result = distance(p, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+    const Point2d point = {0.0, 0.0};
+
+    PointList2d vertices;
+    vertices.push_back({2.0, 1.0});
+    vertices.push_back({2.0, -1.0});
+    vertices.push_back({-1.0, -1.0});
+    vertices.push_back({-1.0, 1.0});
+
+    const auto result = distance(point, ConvexPolygon2d::create(vertices).value());
+
+    EXPECT_NEAR(result, 0.0, epsilon);
+  }
+
+  {  // The point is outside the concave polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({1.0, 1.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+    outer.push_back({0.0, 0.0});
+
+    const Point2d point = {1.0, 2.0};
+
+    const auto result = distance(point, Polygon2d::create(outer, {}).value());
+
+    EXPECT_NEAR(result, std::pow(2, -0.5), epsilon);
+  }
+
+  {  // The point is inside the hole of the polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+    outer.push_back({0.0, 0.0});
+
+    PointList2d inner;
+    inner.push_back({0.5, 0.5});
+    inner.push_back({0.5, 1.5});
+    inner.push_back({1.5, 1.5});
+    inner.push_back({1.5, 0.5});
+    inner.push_back({0.5, 0.5});
+
+    const Point2d point = {1.0, 1.0};
+
+    const auto result = distance(point, Polygon2d::create(outer, {inner}).value());
 
     EXPECT_NEAR(result, 0.0, epsilon);
   }
@@ -306,23 +428,28 @@ TEST(geometry, envelope)
   using autoware::universe_utils::alt::Polygon2d;
 
   {
-    const auto poly = Polygon2d::create(
-                        PointList2d{
-                          {2.0, 1.3},
-                          {2.4, 1.7},
-                          {2.8, 1.8},
-                          {3.4, 1.2},
-                          {3.7, 1.6},
-                          {3.4, 2.0},
-                          {4.1, 3.0},
-                          {5.3, 2.6},
-                          {5.4, 1.2},
-                          {4.9, 0.8},
-                          {2.9, 0.7},
-                          {2.0, 1.3}},
-                        {PointList2d{{4.0, 2.0}, {4.2, 1.4}, {4.8, 1.9}, {4.4, 2.2}, {4.0, 2.0}}})
-                        .value();
-    const auto result = envelope(poly);
+    PointList2d outer;
+    outer.push_back({2.0, 1.3});
+    outer.push_back({2.4, 1.7});
+    outer.push_back({2.8, 1.8});
+    outer.push_back({3.4, 1.2});
+    outer.push_back({3.7, 1.6});
+    outer.push_back({3.4, 2.0});
+    outer.push_back({4.1, 3.0});
+    outer.push_back({5.3, 2.6});
+    outer.push_back({5.4, 1.2});
+    outer.push_back({4.9, 0.8});
+    outer.push_back({2.9, 0.7});
+    outer.push_back({2.0, 1.3});
+
+    PointList2d inner;
+    inner.push_back({4.0, 2.0});
+    inner.push_back({4.2, 1.4});
+    inner.push_back({4.8, 1.9});
+    inner.push_back({4.4, 2.2});
+    inner.push_back({4.0, 2.0});
+
+    const auto result = envelope(Polygon2d::create(outer, {inner}).value());
 
     ASSERT_TRUE(result);
 
@@ -342,6 +469,8 @@ TEST(alt_geometry, intersects)
   using autoware::universe_utils::intersects;
   using autoware::universe_utils::alt::ConvexPolygon2d;
   using autoware::universe_utils::alt::Point2d;
+  using autoware::universe_utils::alt::PointList2d;
+  using autoware::universe_utils::alt::Polygon2d;
 
   {  // Normally crossing
     const Point2d p1 = {0.0, -1.0};
@@ -434,51 +563,214 @@ TEST(alt_geometry, intersects)
   }
 
   {  // One polygon intersects the other
-    const Point2d p1 = {1.0, 1.0};
-    const Point2d p2 = {1.0, -1.0};
-    const Point2d p3 = {-1.0, -1.0};
-    const Point2d p4 = {-1.0, 1.0};
-    const Point2d p5 = {2.0, 2.0};
-    const Point2d p6 = {2.0, 0.0};
-    const Point2d p7 = {0.0, 0.0};
-    const Point2d p8 = {0.0, 2.0};
+    PointList2d vertices1;
+    vertices1.push_back({1.0, 1.0});
+    vertices1.push_back({1.0, -1.0});
+    vertices1.push_back({-1.0, -1.0});
+    vertices1.push_back({-1.0, 1.0});
+
+    PointList2d vertices2;
+    vertices2.push_back({2.0, 2.0});
+    vertices2.push_back({2.0, 0.0});
+    vertices2.push_back({0.0, 0.0});
+    vertices2.push_back({0.0, 2.0});
+
     const auto result = intersects(
-      ConvexPolygon2d::create({p1, p2, p3, p4}).value(),
-      ConvexPolygon2d::create({p5, p6, p7, p8}).value());
+      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
 
     EXPECT_TRUE(result);
   }
 
   {  // Two polygons do not intersect each other
-    const Point2d p1 = {1.0, 1.0};
-    const Point2d p2 = {1.0, -1.0};
-    const Point2d p3 = {-1.0, -1.0};
-    const Point2d p4 = {-1.0, 1.0};
-    const Point2d p5 = {3.0, 3.0};
-    const Point2d p6 = {3.0, 2.0};
-    const Point2d p7 = {2.0, 2.0};
-    const Point2d p8 = {2.0, 3.0};
+    PointList2d vertices1;
+    vertices1.push_back({1.0, 1.0});
+    vertices1.push_back({1.0, -1.0});
+    vertices1.push_back({-1.0, -1.0});
+    vertices1.push_back({-1.0, 1.0});
+
+    PointList2d vertices2;
+    vertices2.push_back({3.0, 3.0});
+    vertices2.push_back({3.0, 2.0});
+    vertices2.push_back({2.0, 2.0});
+    vertices2.push_back({2.0, 3.0});
+
     const auto result = intersects(
-      ConvexPolygon2d::create({p1, p2, p3, p4}).value(),
-      ConvexPolygon2d::create({p5, p6, p7, p8}).value());
+      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
 
     EXPECT_FALSE(result);
   }
 
   {  // Two polygons share a vertex
-    const Point2d p1 = {1.0, 1.0};
-    const Point2d p2 = {1.0, -1.0};
-    const Point2d p3 = {-1.0, -1.0};
-    const Point2d p4 = {-1.0, 1.0};
-    const Point2d p5 = {2.0, 2.0};
-    const Point2d p6 = {2.0, 1.0};
-    const Point2d p7 = {1.0, 1.0};
-    const Point2d p8 = {1.0, 2.0};
+    PointList2d vertices1;
+    vertices1.push_back({1.0, 1.0});
+    vertices1.push_back({1.0, -1.0});
+    vertices1.push_back({-1.0, -1.0});
+    vertices1.push_back({-1.0, 1.0});
+
+    PointList2d vertices2;
+    vertices2.push_back({2.0, 2.0});
+    vertices2.push_back({2.0, 1.0});
+    vertices2.push_back({1.0, 1.0});
+    vertices2.push_back({1.0, 2.0});
+
     const auto result = intersects(
-      ConvexPolygon2d::create({p1, p2, p3, p4}).value(),
-      ConvexPolygon2d::create({p5, p6, p7, p8}).value());
+      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // One concave polygon intersects the other
+    PointList2d outer1;
+    outer1.push_back({0.0, 0.0});
+    outer1.push_back({0.0, 2.0});
+    outer1.push_back({1.0, 1.0});
+    outer1.push_back({2.0, 2.0});
+    outer1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({-0.5, 1.5});
+    outer2.push_back({2.5, 1.5});
+    outer2.push_back({2.5, -0.5});
+    outer2.push_back({-0.5, -0.5});
+
+    const auto result =
+      intersects(Polygon2d::create(outer1, {}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // Two concave polygon does not intersect each other
+    PointList2d outer1;
+    outer1.push_back({0.0, 0.0});
+    outer1.push_back({0.0, 2.0});
+    outer1.push_back({1.0, 1.0});
+    outer1.push_back({2.0, 2.0});
+    outer1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({0.0, 3.0});
+    outer2.push_back({0.0, 4.0});
+    outer2.push_back({2.0, 4.0});
+    outer2.push_back({2.0, 3.0});
+
+    const auto result =
+      intersects(Polygon2d::create(outer1, {}).value(), Polygon2d::create(outer2, {}).value());
 
     EXPECT_FALSE(result);
+  }
+
+  {  // Two concave polygons share a vertex
+    PointList2d outer1;
+    outer1.push_back({0.0, 0.0});
+    outer1.push_back({0.0, 2.0});
+    outer1.push_back({1.0, 1.0});
+    outer1.push_back({2.0, 2.0});
+    outer1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({1.0, 1.0});
+    outer2.push_back({0.0, 3.0});
+    outer2.push_back({2.0, 3.0});
+
+    const auto result =
+      intersects(Polygon2d::create(outer1, {}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // One concave polygon is within the other
+    PointList2d outer1;
+    outer1.push_back({0.0, 0.0});
+    outer1.push_back({0.0, 2.0});
+    outer1.push_back({1.0, 1.0});
+    outer1.push_back({2.0, 2.0});
+    outer1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({0.5, 0.5});
+    outer2.push_back({0.5, 1.0});
+    outer2.push_back({1.0, 0.5});
+
+    const auto result =
+      intersects(Polygon2d::create(outer1, {}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // One concave polygon intersects the hole of the other
+    PointList2d outer1;
+    outer1.push_back({-1.0, -1.0});
+    outer1.push_back({-1.0, 3.0});
+    outer1.push_back({3.0, 3.0});
+    outer1.push_back({3.0, -1.0});
+
+    PointList2d inner1;
+    inner1.push_back({0.0, 0.0});
+    inner1.push_back({0.0, 2.0});
+    inner1.push_back({1.0, 1.0});
+    inner1.push_back({2.0, 2.0});
+    inner1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({0.5, 1.5});
+    outer2.push_back({1.5, 1.5});
+    outer2.push_back({1.5, 0.5});
+    outer2.push_back({0.5, 0.5});
+
+    const auto result = intersects(
+      Polygon2d::create(outer1, {inner1}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // One concave polygon is within the hole of the other
+    PointList2d outer1;
+    outer1.push_back({-1.0, -1.0});
+    outer1.push_back({-1.0, 3.0});
+    outer1.push_back({3.0, 3.0});
+    outer1.push_back({3.0, -1.0});
+
+    PointList2d inner1;
+    inner1.push_back({0.0, 0.0});
+    inner1.push_back({0.0, 2.0});
+    inner1.push_back({1.0, 1.0});
+    inner1.push_back({2.0, 2.0});
+    inner1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({0.5, 0.5});
+    outer2.push_back({0.5, 1.0});
+    outer2.push_back({1.0, 0.5});
+
+    const auto result = intersects(
+      Polygon2d::create(outer1, {inner1}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // One concave polygon and the hole of the other share a vertex
+    PointList2d outer1;
+    outer1.push_back({-1.0, -1.0});
+    outer1.push_back({-1.0, 3.0});
+    outer1.push_back({3.0, 3.0});
+    outer1.push_back({3.0, -1.0});
+
+    PointList2d inner1;
+    inner1.push_back({0.0, 0.0});
+    inner1.push_back({0.0, 2.0});
+    inner1.push_back({1.0, 1.0});
+    inner1.push_back({2.0, 2.0});
+    inner1.push_back({2.0, 0.0});
+
+    PointList2d outer2;
+    outer2.push_back({1.0, 1.0});
+    outer2.push_back({1.5, 0.5});
+    outer2.push_back({0.5, 0.5});
+
+    const auto result = intersects(
+      Polygon2d::create(outer1, {inner1}).value(), Polygon2d::create(outer2, {}).value());
+
+    EXPECT_TRUE(result);
   }
 }
 
@@ -569,6 +861,7 @@ TEST(alt_geometry, touches)
   using autoware::universe_utils::touches;
   using autoware::universe_utils::alt::ConvexPolygon2d;
   using autoware::universe_utils::alt::Point2d;
+  using autoware::universe_utils::alt::PointList2d;
 
   {
     // The point is on the segment
@@ -611,22 +904,28 @@ TEST(alt_geometry, touches)
 
   {  // The point is on the edge of the polygon
     const Point2d point = {0.0, 0.0};
-    const Point2d p1 = {2.0, 1.0};
-    const Point2d p2 = {2.0, -1.0};
-    const Point2d p3 = {0.0, -1.0};
-    const Point2d p4 = {0.0, 1.0};
-    const auto result = touches(point, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    PointList2d vertices;
+    vertices.push_back({2.0, 1.0});
+    vertices.push_back({2.0, -1.0});
+    vertices.push_back({0.0, -1.0});
+    vertices.push_back({0.0, 1.0});
+
+    const auto result = touches(point, ConvexPolygon2d::create(vertices).value());
 
     EXPECT_TRUE(result);
   }
 
   {  // The point is outside the polygon
     const Point2d point = {0.0, 0.0};
-    const Point2d p1 = {2.0, 2.0};
-    const Point2d p2 = {2.0, 1.0};
-    const Point2d p3 = {1.0, 1.0};
-    const Point2d p4 = {1.0, 2.0};
-    const auto result = touches(point, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    PointList2d vertices;
+    vertices.push_back({2.0, 2.0});
+    vertices.push_back({2.0, 1.0});
+    vertices.push_back({1.0, 1.0});
+    vertices.push_back({1.0, 2.0});
+
+    const auto result = touches(point, ConvexPolygon2d::create(vertices).value());
 
     EXPECT_FALSE(result);
   }
@@ -637,84 +936,160 @@ TEST(alt_geometry, within)
   using autoware::universe_utils::within;
   using autoware::universe_utils::alt::ConvexPolygon2d;
   using autoware::universe_utils::alt::Point2d;
+  using autoware::universe_utils::alt::PointList2d;
+  using autoware::universe_utils::alt::Polygon2d;
 
   {  // The point is within the polygon
     const Point2d point = {0.0, 0.0};
-    const Point2d p1 = {1.0, 1.0};
-    const Point2d p2 = {1.0, -1.0};
-    const Point2d p3 = {-1.0, -1.0};
-    const Point2d p4 = {-1.0, 1.0};
-    const auto result = within(point, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    PointList2d vertices;
+    vertices.push_back({1.0, 1.0});
+    vertices.push_back({1.0, -1.0});
+    vertices.push_back({-1.0, -1.0});
+    vertices.push_back({-1.0, 1.0});
+
+    const auto result = within(point, ConvexPolygon2d::create(vertices).value());
 
     EXPECT_TRUE(result);
   }
 
   {  // The point is outside the polygon
     const Point2d point = {0.0, 0.0};
-    const Point2d p1 = {2.0, 2.0};
-    const Point2d p2 = {2.0, 1.0};
-    const Point2d p3 = {1.0, 1.0};
-    const Point2d p4 = {1.0, 2.0};
-    const auto result = within(point, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    PointList2d vertices;
+    vertices.push_back({2.0, 2.0});
+    vertices.push_back({2.0, 1.0});
+    vertices.push_back({1.0, 1.0});
+    vertices.push_back({1.0, 2.0});
+
+    const auto result = within(point, ConvexPolygon2d::create(vertices).value());
 
     EXPECT_FALSE(result);
   }
 
   {  // The point is on the edge of the polygon
     const Point2d point = {0.0, 0.0};
-    const Point2d p1 = {2.0, 1.0};
-    const Point2d p2 = {2.0, -1.0};
-    const Point2d p3 = {0.0, -1.0};
-    const Point2d p4 = {0.0, 1.0};
-    const auto result = within(point, ConvexPolygon2d::create({p1, p2, p3, p4}).value());
+
+    PointList2d vertices;
+    vertices.push_back({2.0, 1.0});
+    vertices.push_back({2.0, -1.0});
+    vertices.push_back({0.0, -1.0});
+    vertices.push_back({0.0, 1.0});
+
+    const auto result = within(point, ConvexPolygon2d::create(vertices).value());
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // The point is within the concave polygon
+    PointList2d outer;
+    outer.push_back({1.0, 1.0});
+    outer.push_back({1.0, -1.0});
+    outer.push_back({0.0, -0.5});
+    outer.push_back({-1.0, -1.0});
+    outer.push_back({-1.0, 1.0});
+    outer.push_back({0.0, 0.5});
+
+    const Point2d point = {0.0, 0.0};
+
+    const auto result = within(point, Polygon2d::create(outer, {}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // The point is within the hole of the polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+
+    PointList2d inner;
+    inner.push_back({0.5, 0.5});
+    inner.push_back({0.5, 1.5});
+    inner.push_back({1.5, 1.5});
+    inner.push_back({1.5, 0.5});
+
+    const Point2d point = {1.0, 1.0};
+
+    const auto result = within(point, Polygon2d::create(outer, {inner}).value());
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // The point is on the edge of the hole of the polygon
+    PointList2d outer;
+    outer.push_back({0.0, 0.0});
+    outer.push_back({0.0, 2.0});
+    outer.push_back({2.0, 2.0});
+    outer.push_back({2.0, 0.0});
+
+    PointList2d inner;
+    inner.push_back({0.5, 0.5});
+    inner.push_back({0.5, 1.5});
+    inner.push_back({1.5, 1.5});
+    inner.push_back({1.5, 0.5});
+
+    const Point2d point = {0.5, 1.0};
+
+    const auto result = within(point, Polygon2d::create(outer, {inner}).value());
 
     EXPECT_FALSE(result);
   }
 
   {  // One polygon is within the other
-    const Point2d p1 = {1.0, 1.0};
-    const Point2d p2 = {1.0, -1.0};
-    const Point2d p3 = {-1.0, -1.0};
-    const Point2d p4 = {-1.0, 1.0};
-    const Point2d p5 = {2.0, 2.0};
-    const Point2d p6 = {2.0, -2.0};
-    const Point2d p7 = {-2.0, -2.0};
-    const Point2d p8 = {-2.0, 2.0};
+    PointList2d vertices1;
+    vertices1.push_back({1.0, 1.0});
+    vertices1.push_back({1.0, -1.0});
+    vertices1.push_back({-1.0, -1.0});
+    vertices1.push_back({-1.0, 1.0});
+
+    PointList2d vertices2;
+    vertices2.push_back({2.0, 2.0});
+    vertices2.push_back({2.0, -2.0});
+    vertices2.push_back({-2.0, -2.0});
+    vertices2.push_back({-2.0, 2.0});
+
     const auto result = within(
-      ConvexPolygon2d::create({p1, p2, p3, p4}).value(),
-      ConvexPolygon2d::create({p5, p6, p7, p8}).value());
+      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
 
     EXPECT_TRUE(result);
   }
 
   {  // One polygon is outside the other
-    const Point2d p1 = {1.0, 1.0};
-    const Point2d p2 = {1.0, -1.0};
-    const Point2d p3 = {-1.0, -1.0};
-    const Point2d p4 = {-1.0, 1.0};
-    const Point2d p5 = {3.0, 3.0};
-    const Point2d p6 = {3.0, 2.0};
-    const Point2d p7 = {2.0, 2.0};
-    const Point2d p8 = {2.0, 3.0};
+    PointList2d vertices1;
+    vertices1.push_back({1.0, 1.0});
+    vertices1.push_back({1.0, -1.0});
+    vertices1.push_back({-1.0, -1.0});
+    vertices1.push_back({-1.0, 1.0});
+
+    PointList2d vertices2;
+    vertices2.push_back({3.0, 3.0});
+    vertices2.push_back({3.0, 2.0});
+    vertices2.push_back({2.0, 2.0});
+    vertices2.push_back({2.0, 3.0});
+
     const auto result = within(
-      ConvexPolygon2d::create({p1, p2, p3, p4}).value(),
-      ConvexPolygon2d::create({p5, p6, p7, p8}).value());
+      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
 
     EXPECT_FALSE(result);
   }
 
   {  // Both polygons are the same
-    const Point2d p1 = {1.0, 1.0};
-    const Point2d p2 = {1.0, -1.0};
-    const Point2d p3 = {-1.0, -1.0};
-    const Point2d p4 = {-1.0, 1.0};
-    const Point2d p5 = {1.0, 1.0};
-    const Point2d p6 = {1.0, -1.0};
-    const Point2d p7 = {-1.0, -1.0};
-    const Point2d p8 = {-1.0, 1.0};
+    PointList2d vertices1;
+    vertices1.push_back({1.0, 1.0});
+    vertices1.push_back({1.0, -1.0});
+    vertices1.push_back({-1.0, -1.0});
+    vertices1.push_back({-1.0, 1.0});
+
+    PointList2d vertices2;
+    vertices2.push_back({1.0, 1.0});
+    vertices2.push_back({1.0, -1.0});
+    vertices2.push_back({-1.0, -1.0});
+    vertices2.push_back({-1.0, 1.0});
+
     const auto result = within(
-      ConvexPolygon2d::create({p1, p2, p3, p4}).value(),
-      ConvexPolygon2d::create({p5, p6, p7, p8}).value());
+      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
 
     EXPECT_TRUE(result);
   }
@@ -743,6 +1118,45 @@ TEST(alt_geometry, areaRand)
 
       const auto alt_poly =
         autoware::universe_utils::alt::ConvexPolygon2d::create(polygons[i]).value();
+      sw.tic();
+      const auto alt = autoware::universe_utils::area(alt_poly);
+      alt_area_ns += sw.toc();
+
+      if (std::abs(alt - ground_truth) > epsilon) {
+        std::cout << "Alt failed for the polygon: ";
+        std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
+      }
+      EXPECT_NEAR(ground_truth, alt, epsilon);
+    }
+    std::printf("polygons_nb = %d, vertices = %ld\n", polygons_nb, vertices);
+    std::printf(
+      "\tArea:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n", ground_truth_area_ns / 1e6,
+      alt_area_ns / 1e6);
+  }
+}
+
+TEST(alt_geometry, areaConcaveRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_area_ns = 0.0;
+    double alt_area_ns = 0.0;
+
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      sw.tic();
+      const auto ground_truth = boost::geometry::area(polygons[i]);
+      ground_truth_area_ns += sw.toc();
+
+      const auto alt_poly = autoware::universe_utils::alt::Polygon2d::create(polygons[i]).value();
       sw.tic();
       const auto alt = autoware::universe_utils::area(alt_poly);
       alt_area_ns += sw.toc();
@@ -842,6 +1256,73 @@ TEST(alt_geometry, coveredByRand)
           const auto alt_point = autoware::universe_utils::alt::Point2d(point);
           const auto alt_poly =
             autoware::universe_utils::alt::ConvexPolygon2d::create(polygons[j]).value();
+          sw.tic();
+          const auto alt = autoware::universe_utils::covered_by(alt_point, alt_poly);
+          if (alt) {
+            alt_covered_ns += sw.toc();
+          } else {
+            alt_not_covered_ns += sw.toc();
+          }
+
+          if (ground_truth != alt) {
+            std::cout << "Alt failed for the point and polygon: ";
+            std::cout << boost::geometry::wkt(point) << boost::geometry::wkt(polygons[j])
+                      << std::endl;
+          }
+          EXPECT_EQ(ground_truth, alt);
+        }
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %ld covered pairs\n", polygons_nb, vertices,
+      covered_count, polygons_nb * vertices * polygons_nb);
+    std::printf(
+      "\tCovered:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_covered_ns / 1e6, alt_covered_ns / 1e6);
+    std::printf(
+      "\tNot covered:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_not_covered_ns / 1e6, alt_not_covered_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      (ground_truth_not_covered_ns + ground_truth_covered_ns) / 1e6,
+      (alt_not_covered_ns + alt_covered_ns) / 1e6);
+  }
+}
+
+TEST(alt_geometry, coveredByConcaveRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_covered_ns = 0.0;
+    double ground_truth_not_covered_ns = 0.0;
+    double alt_covered_ns = 0.0;
+    double alt_not_covered_ns = 0.0;
+    int covered_count = 0;
+
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (const auto & point : polygons[i].outer()) {
+        for (auto j = 0UL; j < polygons.size(); ++j) {
+          sw.tic();
+          const auto ground_truth = boost::geometry::covered_by(point, polygons[j]);
+          if (ground_truth) {
+            ++covered_count;
+            ground_truth_covered_ns += sw.toc();
+          } else {
+            ground_truth_not_covered_ns += sw.toc();
+          }
+
+          const auto alt_point = autoware::universe_utils::alt::Point2d(point);
+          const auto alt_poly =
+            autoware::universe_utils::alt::Polygon2d::create(polygons[j]).value();
           sw.tic();
           const auto alt = autoware::universe_utils::covered_by(alt_point, alt_poly);
           if (alt) {
@@ -1041,6 +1522,73 @@ TEST(alt_geometry, touchesRand)
           const auto alt_point = autoware::universe_utils::alt::Point2d(point);
           const auto alt_poly =
             autoware::universe_utils::alt::ConvexPolygon2d::create(polygons[j]).value();
+          sw.tic();
+          const auto alt = autoware::universe_utils::touches(alt_point, alt_poly);
+          if (alt) {
+            alt_touching_ns += sw.toc();
+          } else {
+            alt_not_touching_ns += sw.toc();
+          }
+
+          if (ground_truth != alt) {
+            std::cout << "Alt failed for the point and polygon: ";
+            std::cout << boost::geometry::wkt(point) << boost::geometry::wkt(polygons[j])
+                      << std::endl;
+          }
+          EXPECT_EQ(ground_truth, alt);
+        }
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %ld touching pairs\n", polygons_nb, vertices,
+      touching_count, polygons_nb * vertices * polygons_nb);
+    std::printf(
+      "\tTouching:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_touching_ns / 1e6, alt_touching_ns / 1e6);
+    std::printf(
+      "\tNot touching:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_not_touching_ns / 1e6, alt_not_touching_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      (ground_truth_not_touching_ns + ground_truth_touching_ns) / 1e6,
+      (alt_not_touching_ns + alt_touching_ns) / 1e6);
+  }
+}
+
+TEST(alt_geometry, touchesConcaveRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_touching_ns = 0.0;
+    double ground_truth_not_touching_ns = 0.0;
+    double alt_touching_ns = 0.0;
+    double alt_not_touching_ns = 0.0;
+    int touching_count = 0;
+
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (const auto & point : polygons[i].outer()) {
+        for (auto j = 0UL; j < polygons.size(); ++j) {
+          sw.tic();
+          const auto ground_truth = boost::geometry::touches(point, polygons[j]);
+          if (ground_truth) {
+            ++touching_count;
+            ground_truth_touching_ns += sw.toc();
+          } else {
+            ground_truth_not_touching_ns += sw.toc();
+          }
+
+          const auto alt_point = autoware::universe_utils::alt::Point2d(point);
+          const auto alt_poly =
+            autoware::universe_utils::alt::Polygon2d::create(polygons[j]).value();
           sw.tic();
           const auto alt = autoware::universe_utils::touches(alt_point, alt_poly);
           if (alt) {
