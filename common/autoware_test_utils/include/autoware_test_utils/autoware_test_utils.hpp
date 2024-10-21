@@ -46,6 +46,7 @@
 #include <tf2_ros/buffer.h>
 #include <yaml-cpp/yaml.h>
 
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -369,9 +370,9 @@ T generateTrajectory(
 
   T traj;
   for (size_t i = 0; i < num_points; ++i) {
-    const double theta = init_theta + i * delta_theta;
-    const double x = i * point_interval * std::cos(theta);
-    const double y = i * point_interval * std::sin(theta);
+    const double theta = init_theta + static_cast<double>(i) * delta_theta;
+    const double x = static_cast<double>(i) * point_interval * std::cos(theta);
+    const double y = static_cast<double>(i) * point_interval * std::sin(theta);
 
     Point p;
     p.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
@@ -395,19 +396,20 @@ inline PathWithLaneId generateTrajectory<PathWithLaneId>(
   PathWithLaneId traj;
 
   for (size_t i = 0; i < num_points; i++) {
-    const double theta = init_theta + i * delta_theta;
-    const double x = i * point_interval * std::cos(theta);
-    const double y = i * point_interval * std::sin(theta);
+    const double theta = init_theta + static_cast<double>(i) * delta_theta;
+    const double x = static_cast<double>(i) * point_interval * std::cos(theta);
+    const double y = static_cast<double>(i) * point_interval * std::sin(theta);
 
     PathPointWithLaneId p;
     p.point.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
-    p.point.longitudinal_velocity_mps = velocity;
-    p.lane_ids.push_back(i);
+    p.point.longitudinal_velocity_mps = static_cast<float>(velocity);
+    p.lane_ids.push_back(static_cast<int64_t>(i));
     traj.points.push_back(p);
 
     if (i == overlapping_point_index) {
       auto value_to_insert = traj.points.at(overlapping_point_index);
-      traj.points.insert(traj.points.begin() + overlapping_point_index + 1, value_to_insert);
+      traj.points.insert(
+        traj.points.begin() + static_cast<int64_t>(overlapping_point_index) + 1, value_to_insert);
     }
   }
   return traj;
