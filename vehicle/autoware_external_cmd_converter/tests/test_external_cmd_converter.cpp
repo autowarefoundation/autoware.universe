@@ -22,6 +22,7 @@
 
 #include <gtest/gtest.h>
 
+#include <limits>
 #include <memory>
 using autoware::external_cmd_converter::ExternalCmdConverterNode;
 using nav_msgs::msg::Odometry;
@@ -58,22 +59,27 @@ public:
     rclcpp::shutdown();
   }
 
-  bool test_check_remote_topic_rate(bool received_data, bool is_external, bool time_has_passed)
+  /**
+   * @brief Test the external command converter's check_remote_topic_rate method under
+   * different circumstances:
+   * @param received_data wether to simulate if the emergency heartbeat and gate mode messages have
+   * been received or not
+   * @param is_external set the gate mode to Auto or External
+   * @param time_has_passed wether to sleep for a certain time to make sure the timeout period of
+   * the function has expired or not.
+   */
+  bool test_check_remote_topic_rate(bool received_data, bool is_auto, bool time_has_passed)
   {
     if (!received_data) {
       return external_cmd_converter_->check_remote_topic_rate();
     }
     GateMode gate;
-    gate.data = tier4_control_msgs::msg::GateMode::AUTO;
+    gate.data = (is_auto) ? tier4_control_msgs::msg::GateMode::AUTO
+                          : tier4_control_msgs::msg::GateMode::EXTERNAL;
     external_cmd_converter_->current_gate_mode_ = std::make_shared<GateMode>(gate);
     external_cmd_converter_->latest_cmd_received_time_ =
       std::make_shared<rclcpp::Time>(external_cmd_converter_->now());
-    if (!is_external) {
-      return external_cmd_converter_->check_remote_topic_rate();
-    }
 
-    gate.data = tier4_control_msgs::msg::GateMode::EXTERNAL;
-    external_cmd_converter_->current_gate_mode_ = std::make_shared<GateMode>(gate);
     if (!time_has_passed) {
       return external_cmd_converter_->check_remote_topic_rate();
     }
@@ -82,6 +88,15 @@ public:
     return external_cmd_converter_->check_remote_topic_rate();
   }
 
+  /**
+   * @brief Test the external command converter's check_emergency_stop_topic_timeout method under
+   * different circumstances:
+   * @param received_data wether to simulate if the emergency heartbeat and gate mode messages have
+   * been received or not
+   * @param is_auto set the gate mode to Auto or External
+   * @param time_has_passed wether to sleep for a certain time to make sure the timeout period of
+   * the function has expired or not.
+   */
   bool test_check_emergency_stop_topic_timeout(
     bool received_data, bool is_auto, bool time_has_passed)
   {
@@ -100,11 +115,20 @@ public:
     return external_cmd_converter_->check_emergency_stop_topic_timeout();
   }
 
+  /**
+   * @brief Test the external command converter's get_shift_velocity_sign. This function is a
+   * wrapper to call the converter's function during the test and does nothing but pass the command
+   * to the function.
+   * @param cmd the command to be passed to the get_shift_velocity_sign member function.
+   */
   double test_get_shift_velocity_sign(const GearCommand & cmd)
   {
     return external_cmd_converter_->get_shift_velocity_sign(cmd);
   }
 
+  /**
+   * @brief Helper function to initialize the accel and brake maps for testing.
+   */
   void initialize_maps(const std::string & accel_map, const std::string & brake_map)
   {
     external_cmd_converter_->accel_map_.readAccelMapFromCSV(accel_map);
@@ -112,6 +136,13 @@ public:
     external_cmd_converter_->acc_map_initialized_ = true;
   }
 
+  /**
+   * @brief Test the external command converter's calculate_acc. This function is a
+   * wrapper to call the converter's function during the test and does nothing but pass the command
+   * to the function.
+   * @param cmd the command to be passed to the calculate_acc member function.
+   * @param vel the velocity to be passed to the calculate_acc member function.
+   */
   double test_calculate_acc(
 
     const ExternalControlCommand & cmd, const double vel)
@@ -122,6 +153,12 @@ public:
   std::shared_ptr<ExternalCmdConverterNode> external_cmd_converter_;
 };
 
+/**
+ * @brief Test the external command converter's check_emergency_stop_topic_timeout method under
+ * different circumstances by setting different combinations of conditions for the function
+ * execution. the test_check_emergency_stop_topic_timeout() function's brief should be read for
+ * further details.
+ */
 TEST_F(TestExternalCmdConverter, testCheckEmergencyStopTimeout)
 {
   EXPECT_TRUE(test_check_emergency_stop_topic_timeout(false, false, false));
@@ -130,13 +167,24 @@ TEST_F(TestExternalCmdConverter, testCheckEmergencyStopTimeout)
   EXPECT_FALSE(test_check_emergency_stop_topic_timeout(true, false, true));
 }
 
+/**
+ * @brief Test the external command converter's check_remote_topic_rate method under
+ * different circumstances by setting different combinations of conditions for the function
+ * execution. the test_check_remote_topic_rate() function's brief should be read for further
+ * details.
+ */
 TEST_F(TestExternalCmdConverter, testRemoteTopicRate)
 {
   EXPECT_TRUE(test_check_remote_topic_rate(false, false, false));
   EXPECT_TRUE(test_check_remote_topic_rate(true, true, false));
-  EXPECT_FALSE(test_check_remote_topic_rate(true, true, true));
+  EXPECT_TRUE(test_check_remote_topic_rate(true, true, true));
+  EXPECT_FALSE(test_check_remote_topic_rate(true, false, true));
 }
 
+/**
+ * @brief Test the external command converter's get_shift_velocity_sign function. It tests different
+ * combinations of input commands for the functions.
+ */
 TEST_F(TestExternalCmdConverter, testGetShiftVelocitySign)
 {
   GearCommand cmd;
@@ -150,6 +198,10 @@ TEST_F(TestExternalCmdConverter, testGetShiftVelocitySign)
   EXPECT_DOUBLE_EQ(0.0, test_get_shift_velocity_sign(cmd));
 }
 
+/**
+ * @brief Test the external command converter's calculate_acc function. It tests different
+ * combinations of input commands and velocities for the functions.
+ */
 TEST_F(TestExternalCmdConverter, testCalculateAcc)
 {
   const auto map_dir =
@@ -158,12 +210,36 @@ TEST_F(TestExternalCmdConverter, testCalculateAcc)
   const auto brake_map_path = map_dir + "/data/default/brake_map.csv";
   initialize_maps(accel_map_path, brake_map_path);
 
-  ExternalControlCommand cmd;
-  cmd.control.throttle = 1.0;
-  cmd.control.brake = 0.0;
-  double vel = 0.0;
-  EXPECT_TRUE(test_calculate_acc(cmd, vel) > 0.0);
-  cmd.control.throttle = 0.0;
-  cmd.control.brake = 1.0;
-  EXPECT_TRUE(test_calculate_acc(cmd, vel) < 0.0);
+  // test standard cases
+  {
+    ExternalControlCommand cmd;
+    cmd.control.throttle = 1.0;
+    cmd.control.brake = 0.0;
+    double vel = 0.0;
+    EXPECT_TRUE(test_calculate_acc(cmd, vel) > 0.0);
+    cmd.control.throttle = 0.0;
+    cmd.control.brake = 1.0;
+    EXPECT_TRUE(test_calculate_acc(cmd, vel) < 0.0);
+  }
+  // test border cases
+  {
+    // input brake or throttle are infinite. finite velocity.
+    ExternalControlCommand cmd;
+    cmd.control.throttle = std::numeric_limits<double>::infinity();
+    cmd.control.brake = 0.0;
+    double vel = 0.0;
+    EXPECT_TRUE(test_calculate_acc(cmd, vel) > 0.0);
+    cmd.control.throttle = 0.0;
+    cmd.control.brake = std::numeric_limits<double>::infinity();
+    EXPECT_TRUE(test_calculate_acc(cmd, vel) < 0.0);
+
+    // input brake or throttle are infinite. velocity is infinite.
+    vel = std::numeric_limits<double>::infinity();
+    cmd.control.throttle = std::numeric_limits<double>::infinity();
+    cmd.control.brake = 0.0;
+    EXPECT_TRUE(test_calculate_acc(cmd, vel) > 0.0);
+    cmd.control.throttle = 0.0;
+    cmd.control.brake = std::numeric_limits<double>::infinity();
+    EXPECT_TRUE(test_calculate_acc(cmd, vel) < 0.0);
+  }
 }
