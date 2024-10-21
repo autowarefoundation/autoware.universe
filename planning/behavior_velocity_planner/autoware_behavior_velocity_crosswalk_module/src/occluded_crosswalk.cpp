@@ -169,6 +169,6 @@ double calculate_detection_range(
 {
   constexpr double min_ego_velocity = 1.0;
   const auto time_to_crosswalk = dist_ego_to_crosswalk / std::max(min_ego_velocity, ego_velocity);
-  return time_to_crosswalk > 0.0 ? time_to_crosswalk / occluded_object_velocity : 20.0;
+  return time_to_crosswalk > 0.0 ? time_to_crosswalk * occluded_object_velocity : 20.0;
 }
 }  // namespace autoware::behavior_velocity_planner
