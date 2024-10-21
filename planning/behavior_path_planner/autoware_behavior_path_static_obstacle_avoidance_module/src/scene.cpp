@@ -1125,7 +1125,9 @@ BehaviorModuleOutput StaticObstacleAvoidanceModule::plan()
   path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
   const size_t ego_idx = planner_data_->findEgoIndex(output.path.points);
-  utils::clipPathLength(output.path, ego_idx, planner_data_->parameters);
+  utils::clipPathLength(
+    output.path, ego_idx, planner_data_->parameters.forward_path_length,
+    planner_data_->parameters.backward_path_length);
 
   // Drivable area generation.
   {
@@ -1176,7 +1178,9 @@ CandidateOutput StaticObstacleAvoidanceModule::planCandidate() const
 
   if (data.safe_shift_line.empty()) {
     const size_t ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
-    utils::clipPathLength(shifted_path.path, ego_idx, planner_data_->parameters);
+    utils::clipPathLength(
+      shifted_path.path, ego_idx, planner_data_->parameters.forward_path_length,
+      planner_data_->parameters.backward_path_length);
 
     output.path_candidate = shifted_path.path;
     return output;

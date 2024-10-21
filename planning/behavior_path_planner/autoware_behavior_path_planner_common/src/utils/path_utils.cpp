@@ -202,13 +202,6 @@ void clipPathLength(
   path.points = clipped_points;
 }
 
-// TODO(murooka) This function should be replaced with autoware::motion_utils::cropPoints
-void clipPathLength(
-  PathWithLaneId & path, const size_t target_idx, const BehaviorPathPlannerParameters & params)
-{
-  clipPathLength(path, target_idx, params.forward_path_length, params.backward_path_length);
-}
-
 PathWithLaneId convertWayPointsToPathWithLaneId(
   const autoware::freespace_planning_algorithms::PlannerWaypoints & waypoints,
   const double velocity, const lanelet::ConstLanelets & lanelets)

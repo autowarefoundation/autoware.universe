@@ -101,20 +101,6 @@ TEST(BehaviorPathPlanningPathUtilTest, clipPathLength)
     EXPECT_DOUBLE_EQ(point.point.pose.position.x, 3.0 + i);
     i++;
   }
-
-  // Condition: using parameters
-  BehaviorPathPlannerParameters param;
-  param.forward_path_length = 20.0;
-  param.backward_path_length = 1.0;
-  path = generateTrajectory<PathWithLaneId>(10, 1.0);
-  clipPathLength(path, 5, param);
-  EXPECT_EQ(path.points.size(), 7);
-
-  i = 0;
-  for (const auto & point : path.points) {
-    EXPECT_DOUBLE_EQ(point.point.pose.position.x, 3.0 + i);
-    i++;
-  }
 }
 
 TEST(BehaviorPathPlanningPathUtilTest, getReversingIndices)
