@@ -58,7 +58,7 @@ public:
   explicit PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options);
   ~PointCloudConcatenateDataSynchronizerComponent() override = default;
   void publish_clouds(
-    ConcatenatedCloudResult concatenated_cloud_result, double reference_timestamp_min,
+    ConcatenatedCloudResult && concatenated_cloud_result, double reference_timestamp_min,
     double reference_timestamp_max);
   void delete_collector(CloudCollector & cloud_collector);
   std::list<std::shared_ptr<CloudCollector>> get_cloud_collectors();

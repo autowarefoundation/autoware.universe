@@ -79,7 +79,7 @@ void CloudCollector::concatenate_callback()
   auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
 
   ros2_parent_node_->publish_clouds(
-    concatenated_cloud_result, reference_timestamp_min_, reference_timestamp_max_);
+    std::move(concatenated_cloud_result), reference_timestamp_min_, reference_timestamp_max_);
   ros2_parent_node_->delete_collector(*this);
 }
 

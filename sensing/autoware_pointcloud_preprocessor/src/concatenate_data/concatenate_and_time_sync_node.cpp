@@ -263,7 +263,7 @@ void PointCloudConcatenateDataSynchronizerComponent::odom_callback(
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
-  ConcatenatedCloudResult concatenated_cloud_result, double reference_timestamp_min,
+  ConcatenatedCloudResult && concatenated_cloud_result, double reference_timestamp_min,
   double reference_timestamp_max)
 {
   // should never come to this state.
@@ -294,7 +294,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
   if (publish_pointcloud_) {
     latest_concatenate_cloud_timestamp_ = current_concatenate_cloud_timestamp_;
     auto concatenate_pointcloud_output = std::make_unique<sensor_msgs::msg::PointCloud2>(
-      *concatenated_cloud_result.concatenate_cloud_ptr);
+      std::move(*concatenated_cloud_result.concatenate_cloud_ptr));
     concatenated_cloud_publisher_->publish(std::move(concatenate_pointcloud_output));
 
     // publish transformed raw pointclouds
