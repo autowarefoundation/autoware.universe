@@ -704,11 +704,19 @@ bool GoalPlannerModule::isExecutionRequested() const
   lanelet::ConstLanelet target_lane{};
   lanelet::utils::query::getClosestLanelet(pull_over_lanes, goal_pose, &target_lane);
 
-  lanelet::ConstLanelet previous_module_terminal_lane{};
+  // Get the lanelet of the ego vehicle's side edge at the terminal pose of the previous module's
+  // path. Check if the lane is the target lane or the neighboring lane. NOTE: This is because in
+  // the case of avoidance, there is a possibility of base_link entering the neighboring lane, and
+  // we want to activate the pull over at this time as well.
+  const Pose previous_terminal_pose = getPreviousModuleOutput().path.points.back().point.pose;
+  const double vehicle_half_width = planner_data_->parameters.vehicle_width / 2.0;
+  const Pose previous_terminal_vehicle_edge_pose = calcOffsetPose(
+    previous_terminal_pose, 0, left_side_parking_ ? vehicle_half_width : -vehicle_half_width, 0);
+  lanelet::ConstLanelet previous_module_terminal_vehicle_edge_lane{};
   route_handler->getClosestLaneletWithinRoute(
-    getPreviousModuleOutput().path.points.back().point.pose, &previous_module_terminal_lane);
+    previous_terminal_vehicle_edge_pose, &previous_module_terminal_vehicle_edge_lane);
 
-  if (!isCrossingPossible(previous_module_terminal_lane, target_lane)) {
+  if (!isCrossingPossible(previous_module_terminal_vehicle_edge_lane, target_lane)) {
     return false;
   }
 
