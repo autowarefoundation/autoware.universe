@@ -428,3 +428,7 @@ Unimplemented parts / limitations for freespace parking
 - When a short path is generated, the ego does can not drive with it.
 - Complex cases take longer to generate or fail.
 - The drivable area is not guaranteed to fit in the parking_lot.
+
+## Appendix: All Parameters
+
+{{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_goal_planner_module/schema/goal_planner.schema.json") }}
