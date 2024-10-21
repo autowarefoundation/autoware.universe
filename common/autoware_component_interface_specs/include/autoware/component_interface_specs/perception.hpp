@@ -19,7 +19,7 @@
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 
-namespace autoware::component_interface_specs::perception_interface
+namespace autoware::component_interface_specs::perception
 {
 
 struct ObjectRecognition
@@ -31,6 +31,6 @@ struct ObjectRecognition
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace autoware::component_interface_specs::perception_interface
+}  // namespace autoware::component_interface_specs::perception
 
 #endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__PERCEPTION_HPP_

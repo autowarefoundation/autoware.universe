@@ -23,7 +23,7 @@
 #include <tier4_control_msgs/srv/set_pause.hpp>
 #include <tier4_control_msgs/srv/set_stop.hpp>
 
-namespace autoware::component_interface_specs::control_interface
+namespace autoware::component_interface_specs::control
 {
 
 struct SetPause
@@ -65,6 +65,6 @@ struct IsStopped
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware::component_interface_specs::control_interface
+}  // namespace autoware::component_interface_specs::control
 
 #endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__CONTROL_HPP_

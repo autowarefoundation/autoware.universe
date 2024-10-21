@@ -34,9 +34,9 @@ public:
 
 private:
   using OperationModeState =
-    autoware::component_interface_specs::system_interface::OperationModeState;
-  using State = autoware::component_interface_specs::planning_interface::RouteState;
-  using Route = autoware::component_interface_specs::planning_interface::LaneletRoute;
+    autoware::component_interface_specs::system::OperationModeState;
+  using State = autoware::component_interface_specs::planning::RouteState;
+  using Route = autoware::component_interface_specs::planning::LaneletRoute;
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   Pub<autoware_ad_api::routing::RouteState> pub_state_;
@@ -46,16 +46,16 @@ private:
   Srv<autoware_ad_api::routing::ChangeRoutePoints> srv_change_route_points_;
   Srv<autoware_ad_api::routing::ChangeRoute> srv_change_route_;
   Srv<autoware_ad_api::routing::ClearRoute> srv_clear_route_;
-  Sub<autoware::component_interface_specs::planning_interface::RouteState> sub_state_;
-  Sub<autoware::component_interface_specs::planning_interface::LaneletRoute> sub_route_;
-  Cli<autoware::component_interface_specs::planning_interface::SetWaypointRoute>
+  Sub<autoware::component_interface_specs::planning::RouteState> sub_state_;
+  Sub<autoware::component_interface_specs::planning::LaneletRoute> sub_route_;
+  Cli<autoware::component_interface_specs::planning::SetWaypointRoute>
     cli_set_waypoint_route_;
-  Cli<autoware::component_interface_specs::planning_interface::SetLaneletRoute>
+  Cli<autoware::component_interface_specs::planning::SetLaneletRoute>
     cli_set_lanelet_route_;
-  Cli<autoware::component_interface_specs::planning_interface::ClearRoute> cli_clear_route_;
-  Cli<autoware::component_interface_specs::system_interface::ChangeOperationMode>
+  Cli<autoware::component_interface_specs::planning::ClearRoute> cli_clear_route_;
+  Cli<autoware::component_interface_specs::system::ChangeOperationMode>
     cli_operation_mode_;
-  Sub<autoware::component_interface_specs::system_interface::OperationModeState>
+  Sub<autoware::component_interface_specs::system::OperationModeState>
     sub_operation_mode_;
   bool is_auto_mode_;
   State::Message state_;

@@ -18,7 +18,7 @@
 TEST(perception, interface)
 {
   {
-    using autoware::component_interface_specs::perception_interface::ObjectRecognition;
+    using autoware::component_interface_specs::perception::ObjectRecognition;
     ObjectRecognition object_recognition;
     size_t depth = 1;
     EXPECT_EQ(object_recognition.depth, depth);

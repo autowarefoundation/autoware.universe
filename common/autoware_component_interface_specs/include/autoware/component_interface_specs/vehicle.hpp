@@ -26,7 +26,7 @@
 #include <autoware_vehicle_msgs/msg/turn_indicators_report.hpp>
 #include <tier4_vehicle_msgs/msg/battery_status.hpp>
 
-namespace autoware::component_interface_specs::vehicle_interface
+namespace autoware::component_interface_specs::vehicle
 {
 
 struct SteeringStatus
@@ -95,6 +95,6 @@ struct DoorStatus
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace autoware::component_interface_specs::vehicle_interface
+}  // namespace autoware::component_interface_specs::vehicle
 
 #endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__VEHICLE_HPP_

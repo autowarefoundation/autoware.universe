@@ -28,9 +28,9 @@ namespace autoware::vehicle_cmd_gate
 class ModerateStopInterface
 {
 private:
-  using SetStop = autoware::component_interface_specs::control_interface::SetStop;
-  using IsStopped = autoware::component_interface_specs::control_interface::IsStopped;
-  using IsStartRequested = autoware::component_interface_specs::control_interface::IsStartRequested;
+  using SetStop = autoware::component_interface_specs::control::SetStop;
+  using IsStopped = autoware::component_interface_specs::control::IsStopped;
+  using IsStartRequested = autoware::component_interface_specs::control::IsStartRequested;
 
 public:
   explicit ModerateStopInterface(rclcpp::Node * node);

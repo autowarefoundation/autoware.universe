@@ -24,7 +24,7 @@
 #include <tier4_planning_msgs/srv/set_lanelet_route.hpp>
 #include <tier4_planning_msgs/srv/set_waypoint_route.hpp>
 
-namespace autoware::component_interface_specs::planning_interface
+namespace autoware::component_interface_specs::planning
 {
 
 struct SetLaneletRoute
@@ -73,6 +73,6 @@ struct Trajectory
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace autoware::component_interface_specs::planning_interface
+}  // namespace autoware::component_interface_specs::planning
 
 #endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__PLANNING_HPP_

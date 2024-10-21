@@ -34,7 +34,7 @@ public:
 private:
   using MrmState = autoware_ad_api::fail_safe::MrmState::Message;
   Pub<autoware_ad_api::fail_safe::MrmState> pub_mrm_state_;
-  Sub<autoware::component_interface_specs::system_interface::MrmState> sub_mrm_state_;
+  Sub<autoware::component_interface_specs::system::MrmState> sub_mrm_state_;
   MrmState prev_state_;
   void on_state(const MrmState::ConstSharedPtr msg);
 };

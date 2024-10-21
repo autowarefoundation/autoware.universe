@@ -23,7 +23,7 @@
 namespace autoware::pose_initializer
 {
 using ServiceException = component_interface_utils::ServiceException;
-using Initialize = autoware::component_interface_specs::localization_interface::Initialize;
+using Initialize = autoware::component_interface_specs::localization::Initialize;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
 LocalizationModule::LocalizationModule(rclcpp::Node * node, const std::string & service_name)

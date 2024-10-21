@@ -47,7 +47,7 @@ public:
   explicit GNSSPoser(const rclcpp::NodeOptions & node_options);
 
 private:
-  using MapProjectorInfo = autoware::component_interface_specs::map_interface::MapProjectorInfo;
+  using MapProjectorInfo = autoware::component_interface_specs::map::MapProjectorInfo;
 
   void callback_map_projector_info(const MapProjectorInfo::Message::ConstSharedPtr msg);
   void callback_nav_sat_fix(const sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr);

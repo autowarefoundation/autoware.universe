@@ -34,8 +34,8 @@ private:
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   Srv<autoware_ad_api::localization::Initialize> srv_initialize_;
   Pub<autoware_ad_api::localization::InitializationState> pub_state_;
-  Cli<autoware::component_interface_specs::localization_interface::Initialize> cli_initialize_;
-  Sub<autoware::component_interface_specs::localization_interface::InitializationState> sub_state_;
+  Cli<autoware::component_interface_specs::localization::Initialize> cli_initialize_;
+  Sub<autoware::component_interface_specs::localization::InitializationState> sub_state_;
 
   void on_initialize(
     const autoware_ad_api::localization::Initialize::Service::Request::SharedPtr req,

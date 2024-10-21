@@ -122,7 +122,7 @@ void MotionNode::change_pause(bool pause)
 {
   if (!is_calling_set_pause_ && cli_set_pause_->service_is_ready()) {
     const auto req = std::make_shared<
-      autoware::component_interface_specs::control_interface::SetPause::Service::Request>();
+      autoware::component_interface_specs::control::SetPause::Service::Request>();
     req->pause = pause;
     is_calling_set_pause_ = true;
     cli_set_pause_->async_send_request(req, [this](auto) { is_calling_set_pause_ = false; });
@@ -135,7 +135,7 @@ void MotionNode::on_timer()
 }
 
 void MotionNode::on_is_paused(
-  const autoware::component_interface_specs::control_interface::IsPaused::Message::ConstSharedPtr
+  const autoware::component_interface_specs::control::IsPaused::Message::ConstSharedPtr
     msg)
 {
   is_paused_ = msg->data;
@@ -143,7 +143,7 @@ void MotionNode::on_is_paused(
 }
 
 void MotionNode::on_is_start_requested(
-  const autoware::component_interface_specs::control_interface::IsStartRequested::Message::
+  const autoware::component_interface_specs::control::IsStartRequested::Message::
     ConstSharedPtr msg)
 {
   is_start_requested_ = msg->data;

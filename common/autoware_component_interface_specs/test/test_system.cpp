@@ -18,7 +18,7 @@
 TEST(system, interface)
 {
   {
-    using autoware::component_interface_specs::system_interface::MrmState;
+    using autoware::component_interface_specs::system::MrmState;
     MrmState state;
     size_t depth = 1;
     EXPECT_EQ(state.depth, depth);
@@ -27,7 +27,7 @@ TEST(system, interface)
   }
 
   {
-    using autoware::component_interface_specs::system_interface::OperationModeState;
+    using autoware::component_interface_specs::system::OperationModeState;
     OperationModeState state;
     size_t depth = 1;
     EXPECT_EQ(state.depth, depth);

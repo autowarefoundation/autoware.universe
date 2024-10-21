@@ -18,7 +18,7 @@
 TEST(localization, interface)
 {
   {
-    using autoware::component_interface_specs::localization_interface::InitializationState;
+    using autoware::component_interface_specs::localization::InitializationState;
     InitializationState initialization_state;
     size_t depth = 1;
     EXPECT_EQ(initialization_state.depth, depth);
@@ -27,7 +27,7 @@ TEST(localization, interface)
   }
 
   {
-    using autoware::component_interface_specs::localization_interface::KinematicState;
+    using autoware::component_interface_specs::localization::KinematicState;
     KinematicState kinematic_state;
     size_t depth = 1;
     EXPECT_EQ(kinematic_state.depth, depth);
@@ -36,7 +36,7 @@ TEST(localization, interface)
   }
 
   {
-    using autoware::component_interface_specs::localization_interface::Acceleration;
+    using autoware::component_interface_specs::localization::Acceleration;
     Acceleration acceleration;
     size_t depth = 1;
     EXPECT_EQ(acceleration.depth, depth);

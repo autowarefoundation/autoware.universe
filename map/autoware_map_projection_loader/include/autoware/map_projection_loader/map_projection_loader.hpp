@@ -34,7 +34,7 @@ public:
   explicit MapProjectionLoader(const rclcpp::NodeOptions & options);
 
 private:
-  using MapProjectorInfo = autoware::component_interface_specs::map_interface::MapProjectorInfo;
+  using MapProjectorInfo = autoware::component_interface_specs::map::MapProjectorInfo;
   component_interface_utils::Publisher<MapProjectorInfo>::SharedPtr publisher_;
 };
 }  // namespace autoware::map_projection_loader

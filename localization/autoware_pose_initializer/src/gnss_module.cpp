@@ -37,7 +37,7 @@ void GnssModule::on_pose(PoseWithCovarianceStamped::ConstSharedPtr msg)
 
 geometry_msgs::msg::PoseWithCovarianceStamped GnssModule::get_pose()
 {
-  using Initialize = autoware::component_interface_specs::localization_interface::Initialize;
+  using Initialize = autoware::component_interface_specs::localization::Initialize;
 
   if (!pose_) {
     throw component_interface_utils::ServiceException(

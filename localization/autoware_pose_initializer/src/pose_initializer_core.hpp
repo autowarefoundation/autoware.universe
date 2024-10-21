@@ -42,8 +42,8 @@ public:
 
 private:
   using ServiceException = component_interface_utils::ServiceException;
-  using Initialize = autoware::component_interface_specs::localization_interface::Initialize;
-  using State = autoware::component_interface_specs::localization_interface::InitializationState;
+  using Initialize = autoware::component_interface_specs::localization::Initialize;
+  using State = autoware::component_interface_specs::localization::InitializationState;
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
   rclcpp::CallbackGroup::SharedPtr group_srv_;

@@ -39,9 +39,9 @@ private:
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   Srv<autoware_ad_api::motion::AcceptStart> srv_accept_;
   Pub<autoware_ad_api::motion::State> pub_state_;
-  Cli<autoware::component_interface_specs::control_interface::SetPause> cli_set_pause_;
-  Sub<autoware::component_interface_specs::control_interface::IsPaused> sub_is_paused_;
-  Sub<autoware::component_interface_specs::control_interface::IsStartRequested>
+  Cli<autoware::component_interface_specs::control::SetPause> cli_set_pause_;
+  Sub<autoware::component_interface_specs::control::IsPaused> sub_is_paused_;
+  Sub<autoware::component_interface_specs::control::IsStartRequested>
     sub_is_start_requested_;
 
   enum class State { Unknown, Pausing, Paused, Starting, Resuming, Resumed, Moving };
@@ -59,9 +59,9 @@ private:
   void change_pause(bool pause);
   void on_timer();
   void on_is_paused(
-    const autoware::component_interface_specs::control_interface::IsPaused::Message::ConstSharedPtr
+    const autoware::component_interface_specs::control::IsPaused::Message::ConstSharedPtr
       msg);
-  void on_is_start_requested(const autoware::component_interface_specs::control_interface::
+  void on_is_start_requested(const autoware::component_interface_specs::control::
                                IsStartRequested::Message::ConstSharedPtr msg);
   void on_accept(
     const autoware_ad_api::motion::AcceptStart::Service::Request::SharedPtr req,

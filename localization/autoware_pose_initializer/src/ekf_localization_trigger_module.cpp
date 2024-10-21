@@ -23,7 +23,7 @@
 namespace autoware::pose_initializer
 {
 using ServiceException = component_interface_utils::ServiceException;
-using Initialize = autoware::component_interface_specs::localization_interface::Initialize;
+using Initialize = autoware::component_interface_specs::localization::Initialize;
 
 EkfLocalizationTriggerModule::EkfLocalizationTriggerModule(rclcpp::Node * node) : node_(node)
 {

@@ -18,7 +18,7 @@
 TEST(control, interface)
 {
   {
-    using autoware::component_interface_specs::control_interface::IsPaused;
+    using autoware::component_interface_specs::control::IsPaused;
     IsPaused is_paused;
     size_t depth = 1;
     EXPECT_EQ(is_paused.depth, depth);
@@ -27,7 +27,7 @@ TEST(control, interface)
   }
 
   {
-    using autoware::component_interface_specs::control_interface::IsStartRequested;
+    using autoware::component_interface_specs::control::IsStartRequested;
     IsStartRequested is_start_requested;
     size_t depth = 1;
     EXPECT_EQ(is_start_requested.depth, depth);
@@ -36,7 +36,7 @@ TEST(control, interface)
   }
 
   {
-    using autoware::component_interface_specs::control_interface::IsStopped;
+    using autoware::component_interface_specs::control::IsStopped;
     IsStopped is_stopped;
     size_t depth = 1;
     EXPECT_EQ(is_stopped.depth, depth);

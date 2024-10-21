@@ -22,7 +22,7 @@
 #include <tier4_system_msgs/srv/change_autoware_control.hpp>
 #include <tier4_system_msgs/srv/change_operation_mode.hpp>
 
-namespace autoware::component_interface_specs::system_interface
+namespace autoware::component_interface_specs::system
 {
 
 struct MrmState
@@ -55,6 +55,6 @@ struct OperationModeState
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware::component_interface_specs::system_interface
+}  // namespace autoware::component_interface_specs::system
 
 #endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__SYSTEM_HPP_

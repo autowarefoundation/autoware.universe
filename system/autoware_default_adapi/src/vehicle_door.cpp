@@ -31,12 +31,12 @@ VehicleDoorNode::VehicleDoorNode(const rclcpp::NodeOptions & options)
 }
 
 void VehicleDoorNode::on_status(
-  autoware::component_interface_specs::vehicle_interface::DoorStatus::Message::ConstSharedPtr msg)
+  autoware::component_interface_specs::vehicle::DoorStatus::Message::ConstSharedPtr msg)
 {
   utils::notify(
     pub_status_, status_, *msg,
     utils::ignore_stamp<
-      autoware::component_interface_specs::vehicle_interface::DoorStatus::Message>);
+      autoware::component_interface_specs::vehicle::DoorStatus::Message>);
 }
 
 }  // namespace autoware::default_adapi

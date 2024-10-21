@@ -44,7 +44,7 @@ public:
     const rclcpp::Time & now);
 
 private:
-  using MapProjectorInfo = autoware::component_interface_specs::map_interface::MapProjectorInfo;
+  using MapProjectorInfo = autoware::component_interface_specs::map::MapProjectorInfo;
 
   void on_map_projector_info(const MapProjectorInfo::Message::ConstSharedPtr msg);
 

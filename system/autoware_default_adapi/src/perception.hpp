@@ -41,9 +41,9 @@ public:
 
 private:
   Pub<autoware_ad_api::perception::DynamicObjectArray> pub_object_recognized_;
-  Sub<autoware::component_interface_specs::perception_interface::ObjectRecognition>
+  Sub<autoware::component_interface_specs::perception::ObjectRecognition>
     sub_object_recognized_;
-  void object_recognize(const autoware::component_interface_specs::perception_interface::
+  void object_recognize(const autoware::component_interface_specs::perception::
                           ObjectRecognition::Message::ConstSharedPtr msg);
   uint8_t mapping(
     std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);

@@ -36,11 +36,11 @@ public:
 
 private:
   using ChangeAutowareControlAPI =
-    autoware::component_interface_specs::system_interface::ChangeAutowareControl;
+    autoware::component_interface_specs::system::ChangeAutowareControl;
   using ChangeOperationModeAPI =
-    autoware::component_interface_specs::system_interface::ChangeOperationMode;
+    autoware::component_interface_specs::system::ChangeOperationMode;
   using OperationModeStateAPI =
-    autoware::component_interface_specs::system_interface::OperationModeState;
+    autoware::component_interface_specs::system::OperationModeState;
   component_interface_utils::Service<ChangeAutowareControlAPI>::SharedPtr srv_autoware_control_;
   component_interface_utils::Service<ChangeOperationModeAPI>::SharedPtr srv_operation_mode_;
   component_interface_utils::Publisher<OperationModeStateAPI>::SharedPtr pub_operation_mode_;

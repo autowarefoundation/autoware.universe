@@ -19,7 +19,7 @@
 
 #include <tier4_map_msgs/msg/map_projector_info.hpp>
 
-namespace autoware::component_interface_specs::map_interface
+namespace autoware::component_interface_specs::map
 {
 
 struct MapProjectorInfo
@@ -31,6 +31,6 @@ struct MapProjectorInfo
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware::component_interface_specs::map_interface
+}  // namespace autoware::component_interface_specs::map
 
 #endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__MAP_HPP_

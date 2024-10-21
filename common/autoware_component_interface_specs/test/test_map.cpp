@@ -18,7 +18,7 @@
 TEST(map, interface)
 {
   {
-    using autoware::component_interface_specs::map_interface::MapProjectorInfo;
+    using autoware::component_interface_specs::map::MapProjectorInfo;
     MapProjectorInfo map_projector;
     size_t depth = 1;
     EXPECT_EQ(map_projector.depth, depth);

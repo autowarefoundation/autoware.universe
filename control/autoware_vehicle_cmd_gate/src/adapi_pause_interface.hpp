@@ -29,9 +29,9 @@ class AdapiPauseInterface
 private:
   static constexpr double eps = 1e-3;
   using Control = autoware_control_msgs::msg::Control;
-  using SetPause = autoware::component_interface_specs::control_interface::SetPause;
-  using IsPaused = autoware::component_interface_specs::control_interface::IsPaused;
-  using IsStartRequested = autoware::component_interface_specs::control_interface::IsStartRequested;
+  using SetPause = autoware::component_interface_specs::control::SetPause;
+  using IsPaused = autoware::component_interface_specs::control::IsPaused;
+  using IsStartRequested = autoware::component_interface_specs::control::IsStartRequested;
 
 public:
   explicit AdapiPauseInterface(rclcpp::Node * node);

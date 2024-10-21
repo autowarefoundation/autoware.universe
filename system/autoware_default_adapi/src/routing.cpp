@@ -75,7 +75,7 @@ RoutingNode::RoutingNode(const rclcpp::NodeOptions & options) : Node("routing", 
 void RoutingNode::change_stop_mode()
 {
   using OperationModeRequest =
-    autoware::component_interface_specs::system_interface::ChangeOperationMode::Service::Request;
+    autoware::component_interface_specs::system::ChangeOperationMode::Service::Request;
   if (is_auto_mode_) {
     const auto req = std::make_shared<OperationModeRequest>();
     req->mode = OperationModeRequest::STOP;

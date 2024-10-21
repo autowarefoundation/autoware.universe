@@ -18,7 +18,7 @@
 TEST(planning, interface)
 {
   {
-    using autoware::component_interface_specs::planning_interface::RouteState;
+    using autoware::component_interface_specs::planning::RouteState;
     RouteState state;
     size_t depth = 1;
     EXPECT_EQ(state.depth, depth);
@@ -27,7 +27,7 @@ TEST(planning, interface)
   }
 
   {
-    using autoware::component_interface_specs::planning_interface::LaneletRoute;
+    using autoware::component_interface_specs::planning::LaneletRoute;
     LaneletRoute route;
     size_t depth = 1;
     EXPECT_EQ(route.depth, depth);
@@ -36,7 +36,7 @@ TEST(planning, interface)
   }
 
   {
-    using autoware::component_interface_specs::planning_interface::Trajectory;
+    using autoware::component_interface_specs::planning::Trajectory;
     Trajectory trajectory;
     size_t depth = 1;
     EXPECT_EQ(trajectory.depth, depth);
