@@ -44,6 +44,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   stop_watch_ptr_->tic("processing_time");
 
   //  initialize parameters
+  params_.debug_mode = declare_parameter<bool>("debug_mode");
   params_.has_static_tf_only = declare_parameter<bool>("has_static_tf_only");
   params_.rosbag_replay = declare_parameter<bool>("rosbag_replay");
   params_.rosbag_length = declare_parameter<double>("rosbag_length");
@@ -200,6 +201,14 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     return;
   }
 
+  if (params_.debug_mode) {
+    RCLCPP_INFO(
+      this->get_logger(), " pointcloud %s  timestamp: %lf arrive time: %lf seconds, latency: %lf",
+      topic_name.c_str(), rclcpp::Time(input_ptr->header.stamp).seconds(),
+      this->get_clock()->now().seconds(),
+      this->get_clock()->now().seconds() - rclcpp::Time(input_ptr->header.stamp).seconds());
+  }
+
   sensor_msgs::msg::PointCloud2::SharedPtr xyzirc_input_ptr(new sensor_msgs::msg::PointCloud2());
   auto input = std::make_shared<sensor_msgs::msg::PointCloud2>(*input_ptr);
   if (input->data.empty()) {
@@ -239,7 +248,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   if (!collector_found) {
     auto new_cloud_collector = std::make_shared<CloudCollector>(
       std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(shared_from_this()),
-      combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec);
+      combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec, params_.debug_mode);
 
     cloud_collectors_.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();

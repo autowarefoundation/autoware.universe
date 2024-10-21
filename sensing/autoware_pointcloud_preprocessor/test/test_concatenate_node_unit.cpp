@@ -41,7 +41,8 @@ protected:
     // Instead of "input_topics", other parameters are not used.
     // They just helps to setup the concatenate node
     node_options.parameter_overrides(
-      {{"has_static_tf_only", false},
+      {{"debug_mode", true},
+       {"has_static_tf_only", false},
        {"rosbag_replay", false},
        {"rosbag_length", 0.0},
        {"maximum_queue_size", 5},
@@ -69,7 +70,7 @@ protected:
       std::dynamic_pointer_cast<
         autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>(
         concatenate_node_->shared_from_this()),
-      combine_cloud_handler_, number_of_pointcloud, timeout_sec);
+      combine_cloud_handler_, number_of_pointcloud, timeout_sec, collector_debug_mode);
 
     // Setup TF
     tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(concatenate_node_);
@@ -177,7 +178,8 @@ protected:
   static constexpr float standard_tolerance{1e-4};
   static constexpr int number_of_pointcloud{3};
   static constexpr float timeout_sec{0.2};
-  bool debug_{false};
+  static constexpr bool collector_debug_mode{true};  // For showing collector information
+  bool debug_{false};                                // For the Unit test
 };
 
 //////////////////////////////// Test combine_cloud_handler ////////////////////////////////

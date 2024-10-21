@@ -27,11 +27,12 @@ namespace autoware::pointcloud_preprocessor
 CloudCollector::CloudCollector(
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
   std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds,
-  double timeout_sec)
+  double timeout_sec, bool debug_mode)
 : ros2_parent_node_(std::move(ros2_parent_node)),
   combine_cloud_handler_(combine_cloud_handler),
   num_of_clouds_(num_of_clouds),
-  timeout_sec_(timeout_sec)
+  timeout_sec_(timeout_sec),
+  debug_mode_(debug_mode)
 {
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(timeout_sec_));
@@ -74,12 +75,36 @@ void CloudCollector::concatenate_callback()
 {
   // All pointclouds are received or the timer has timed out, cancel the timer and concatenate the
   // pointclouds in the collector.
+  auto time_until_trigger = timer_->time_until_trigger();
   timer_->cancel();
 
   auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
+  if (debug_mode_) {
+    std::stringstream log_stream;
+    log_stream << "Collector's concatenate callback time: "
+               << ros2_parent_node_->get_clock()->now().seconds() << " seconds\n";
+
+    log_stream << "Collector's reference time min: " << reference_timestamp_min_
+               << " to max: " << reference_timestamp_max_ << " seconds\n";
+
+    log_stream << "Time until trigger: " << (time_until_trigger.count() / 1e9) << " seconds\n";
+
+    log_stream << "Pointclouds: [";
+    for (auto it = concatenated_cloud_result.topic_to_original_stamp_map.begin();
+         it != concatenated_cloud_result.topic_to_original_stamp_map.end(); ++it) {
+      log_stream << "[" << it->first << ", " << it->second << "]";
+      if (std::next(it) != concatenated_cloud_result.topic_to_original_stamp_map.end()) {
+        log_stream << ", ";
+      }
+    }
+    log_stream << "]\n";
+
+    RCLCPP_INFO(ros2_parent_node_->get_logger(), "%s", log_stream.str().c_str());
+  }
 
   ros2_parent_node_->publish_clouds(
     std::move(concatenated_cloud_result), reference_timestamp_min_, reference_timestamp_max_);
+
   ros2_parent_node_->delete_collector(*this);
 }
 

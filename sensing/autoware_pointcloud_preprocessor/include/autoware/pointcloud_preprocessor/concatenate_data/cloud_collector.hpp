@@ -32,7 +32,8 @@ class CloudCollector
 public:
   CloudCollector(
     std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
-    std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds, double time);
+    std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds,
+    double timeout_sec, bool debug_mode);
 
   void set_reference_timestamp(double timestamp, double noise_window);
   std::tuple<double, double> get_reference_timestamp_boundary();
@@ -55,6 +56,7 @@ private:
   double timeout_sec_;
   double reference_timestamp_min_{0.0};
   double reference_timestamp_max_{0.0};
+  bool debug_mode_;
 };
 
 }  // namespace autoware::pointcloud_preprocessor
