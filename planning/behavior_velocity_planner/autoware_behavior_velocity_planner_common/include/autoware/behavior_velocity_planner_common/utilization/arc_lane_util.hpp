@@ -166,9 +166,9 @@ geometry_msgs::msg::Pose calcTargetPose(const T & path, const PathIndexWithOffse
 
   // Calculate interpolation ratio
   /**
-  * (front) <--  (seg_length - remain_length) --> (interp) <-- remain_length --> (back)
-  * r : (1 - r)
-  */ 
+   * (front) <--  (seg_length - remain_length) --> (interp) <-- remain_length --> (back)
+   * r : (1 - r)
+   */
   const auto segment_length = (p_eigen_back - p_eigen_front).norm();
   const auto interpolate_ratio = (segment_length - remain_offset_length) / segment_length;
 
