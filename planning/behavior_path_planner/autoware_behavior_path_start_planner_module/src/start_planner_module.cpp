@@ -18,7 +18,6 @@
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
-#include "autoware/behavior_path_start_planner_module/debug.hpp"
 #include "autoware/behavior_path_start_planner_module/util.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 
@@ -59,8 +58,9 @@ StartPlannerModule::StartPlannerModule(
   const std::shared_ptr<StartPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
+    objects_of_interest_marker_interface_ptr_map,
+  std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, steering_factor_interface_ptr},  // NOLINT
   parameters_{parameters},
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
   is_freespace_planner_cb_running_{false}
@@ -301,8 +301,24 @@ bool StartPlannerModule::receivedNewRoute() const
 
 bool StartPlannerModule::requiresDynamicObjectsCollisionDetection() const
 {
-  return parameters_->safety_check_params.enable_safety_check && status_.driving_forward &&
-         !isPreventingRearVehicleFromPassingThrough();
+  const auto & safety_params = parameters_->safety_check_params;
+  const auto & skip_rear_vehicle_check = parameters_->skip_rear_vehicle_check;
+
+  // Return false and do not perform collision detection if any of the following conditions are
+  // true:
+  // - Safety check is disabled.
+  // - The vehicle is not driving forward.
+  if (!safety_params.enable_safety_check || !status_.driving_forward) {
+    return false;
+  }
+
+  // Return true and always perform collision detection if the following condition is true:
+  // - Rear vehicle check is set to be skipped.
+  if (skip_rear_vehicle_check) {
+    return true;
+  }
+
+  return !isPreventingRearVehicleFromPassingThrough();
 }
 
 bool StartPlannerModule::noMovingObjectsAround() const
@@ -313,7 +329,7 @@ bool StartPlannerModule::noMovingObjectsAround() const
   utils::path_safety_checker::filterObjectsByClass(
     dynamic_objects, parameters_->surround_moving_obstacles_type_to_check);
   const auto filtered_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    dynamic_objects, parameters_->th_moving_obstacle_velocity, false);
+    dynamic_objects, parameters_->th_moving_obstacle_velocity, true);
   if (!filtered_objects.objects.empty()) {
     DEBUG_PRINT("Moving objects exist in the safety check area");
   }
@@ -543,7 +559,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
       target_objects_on_lane.on_current_lane.begin(), target_objects_on_lane.on_current_lane.end(),
       [&](const auto & o) {
         const auto arc_length = autoware::motion_utils::calcSignedArcLength(
-          centerline_path.points, ego_pose.position, o.initial_pose.pose.position);
+          centerline_path.points, ego_pose.position, o.initial_pose.position);
         if (arc_length > 0.0) return;
         if (std::abs(arc_length) >= std::abs(arc_length_to_closet_object)) return;
         arc_length_to_closet_object = arc_length;

@@ -95,13 +95,19 @@ std::optional<PathIndexWithOffset> findForwardOffsetSegment(
 {
   double sum_length = 0.0;
   for (size_t i = base_idx; i < path.points.size() - 1; ++i) {
-    sum_length +=
+    const double segment_length =
       autoware::universe_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
 
     // If it's over offset point, return front index and remain offset length
-    if (sum_length >= offset_length) {
-      return std::make_pair(i, sum_length - offset_length);
+    /**
+     *   (base_idx) --- offset_length --------->
+     *              --------- (i) <-- remain -->-----------> (i+1)
+     */
+    if (sum_length + segment_length >= offset_length) {
+      return std::make_pair(i, offset_length - sum_length);
     }
+
+    sum_length += segment_length;
   }
 
   // No enough path length
@@ -119,6 +125,10 @@ std::optional<PathIndexWithOffset> findBackwardOffsetSegment(
       autoware::universe_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
 
     // If it's over offset point, return front index and remain offset length
+    /**
+     *                         <-------- offset_length --- (base_idx)
+     *  ----- (i) <-- remain -->-------> (i+1)
+     */
     if (sum_length >= offset_length) {
       const auto k = static_cast<std::size_t>(i);
       return std::make_pair(k, sum_length - offset_length);
@@ -165,6 +175,9 @@ geometry_msgs::msg::Pose calcTargetPose(const T & path, const PathIndexWithOffse
   const auto p_eigen_back = Eigen::Vector2d(p_back.x, p_back.y);
 
   // Calculate interpolation ratio
+  /**
+   * (front) <-- remain_length --> (interp) <----> (back)
+   */
   const auto interpolate_ratio = remain_offset_length / (p_eigen_back - p_eigen_front).norm();
 
   // Add offset to front point

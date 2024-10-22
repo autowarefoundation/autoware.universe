@@ -17,11 +17,14 @@
 
 CustomElevatedButton::CustomElevatedButton(
   const QString & text, const QColor & bgColor, const QColor & textColor, const QColor & hoverColor,
-  const QColor & disabledBgColor, const QColor & disabledTextColor, QWidget * parent)
+  const QColor & pressedColor, const QColor & checkedColor, const QColor & disabledBgColor,
+  const QColor & disabledTextColor, QWidget * parent)
 : QPushButton(text, parent),
   backgroundColor(bgColor),
   textColor(textColor),
   hoverColor(hoverColor),
+  pressedColor(pressedColor),
+  checkedColor(checkedColor),
   disabledBgColor(disabledBgColor),
   disabledTextColor(disabledTextColor)
 {
@@ -34,12 +37,13 @@ CustomElevatedButton::CustomElevatedButton(
   font.setFamily("Roboto");
   setFont(font);
 
+  QColor shadowColor = QColor(autoware::state_rviz_plugin::colors::default_colors.shadow.c_str());
+  shadowColor.setAlpha(255 * 0.6);
   // Set up drop shadow effect
   QGraphicsDropShadowEffect * shadowEffect = new QGraphicsDropShadowEffect(this);
-  shadowEffect->setBlurRadius(15);
-  shadowEffect->setOffset(3, 3);
-  shadowEffect->setColor(
-    QColor(autoware::state_rviz_plugin::colors::default_colors.shadow.c_str()));
+  shadowEffect->setBlurRadius(5);
+  shadowEffect->setOffset(0, 1);
+  shadowEffect->setColor(shadowColor);
   setGraphicsEffect(shadowEffect);
 }
 
@@ -53,6 +57,7 @@ QSize CustomElevatedButton::sizeHint() const
   return QSize(width, height);
 }
 
+// cppcheck-suppress unusedFunction
 QSize CustomElevatedButton::minimumSizeHint() const
 {
   return sizeHint();
@@ -60,17 +65,21 @@ QSize CustomElevatedButton::minimumSizeHint() const
 
 void CustomElevatedButton::updateStyle(
   const QString & text, const QColor & bgColor, const QColor & textColor, const QColor & hoverColor,
-  const QColor & disabledBgColor, const QColor & disabledTextColor)
+  const QColor & pressedColor, const QColor & checkedColor, const QColor & disabledBgColor,
+  const QColor & disabledTextColor)
 {
   setText(text);
   backgroundColor = bgColor;
   this->textColor = textColor;
   this->hoverColor = hoverColor;
+  this->pressedColor = pressedColor;
+  this->checkedColor = checkedColor;
   this->disabledBgColor = disabledBgColor;
   this->disabledTextColor = disabledTextColor;
   update();  // Force repaint
 }
 
+// cppcheck-suppress unusedFunction
 void CustomElevatedButton::paintEvent(QPaintEvent *)
 {
   QPainter painter(this);
@@ -85,10 +94,16 @@ void CustomElevatedButton::paintEvent(QPaintEvent *)
   if (!isEnabled()) {
     buttonColor = disabledBgColor;
     currentTextColor = disabledTextColor;
-  } else if (isHovered) {
-    buttonColor = hoverColor;
   } else {
-    buttonColor = backgroundColor;
+    if (isPressed) {
+      buttonColor = pressedColor;
+    } else if (isChecked) {
+      buttonColor = checkedColor;
+    } else if (isHovered) {
+      buttonColor = hoverColor;
+    } else {
+      buttonColor = backgroundColor;
+    }
   }
 
   int cornerRadius = height() / 2;  // Making the corner radius proportional to the height
@@ -97,9 +112,7 @@ void CustomElevatedButton::paintEvent(QPaintEvent *)
   QPainterPath backgroundPath;
   backgroundPath.addRoundedRect(r, cornerRadius, cornerRadius);
   if (!isEnabled()) {
-    painter.setBrush(
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
-    painter.setOpacity(0.12);
+    painter.setBrush(disabledBgColor);
   } else {
     painter.setBrush(buttonColor);
   }
@@ -107,9 +120,6 @@ void CustomElevatedButton::paintEvent(QPaintEvent *)
   painter.drawPath(backgroundPath);
 
   // Draw button text
-  if (!isEnabled()) {
-    painter.setOpacity(0.38);
-  }
   painter.setPen(currentTextColor);
   painter.drawText(r, Qt::AlignCenter, text());
 }
@@ -126,4 +136,24 @@ void CustomElevatedButton::leaveEvent(QEvent * event)
   isHovered = false;
   update();
   QPushButton::leaveEvent(event);
+}
+
+void CustomElevatedButton::mousePressEvent(QMouseEvent * event)
+{
+  isPressed = true;
+  update();
+  QPushButton::mousePressEvent(event);
+}
+
+void CustomElevatedButton::mouseReleaseEvent(QMouseEvent * event)
+{
+  isPressed = false;
+  update();
+  QPushButton::mouseReleaseEvent(event);
+}
+
+void CustomElevatedButton::setChecked(bool checked)
+{
+  isChecked = checked;
+  update();
 }

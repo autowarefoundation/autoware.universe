@@ -15,18 +15,18 @@
   <buildtool_export_depend>cudnn_cmake_module</buildtool_export_depend>
   <buildtool_export_depend>tensorrt_cmake_module</buildtool_export_depend>
 
+  <depend>autoware_kalman_filter</depend>
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_tensorrt_common</depend>
   <depend>cuda_utils</depend>
   <depend>cv_bridge</depend>
   <depend>eigen</depend>
   <depend>image_transport</depend>
-  <depend>kalman_filter</depend>
   <depend>libboost-system-dev</depend>
   <depend>libopencv-dev</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>tensorrt_common</depend>
   <depend>tier4_perception_msgs</depend>
   <depend>yaml-cpp</depend>
 

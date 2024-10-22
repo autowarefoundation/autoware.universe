@@ -33,8 +33,9 @@ SamplingPlannerModule::SamplingPlannerModule(
   const std::shared_ptr<SamplingPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
+    objects_of_interest_marker_interface_ptr_map,
+  std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, steering_factor_interface_ptr},  // NOLINT
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()}
 {
   internal_params_ = std::make_shared<SamplingPlannerInternalParameters>();
@@ -955,7 +956,7 @@ autoware::frenet_planner::SamplingParameters SamplingPlannerModule::prepareSampl
     max_d -= params_.constraints.ego_width / 2.0;
     if (min_d < max_d) {
       for (auto r = 0.0; r <= 1.0; r += 1.0 / (params_.sampling.nb_target_lateral_positions - 1))
-        target_lateral_positions.push_back(interpolation::lerp(min_d, max_d, r));
+        target_lateral_positions.push_back(autoware::interpolation::lerp(min_d, max_d, r));
     }
   } else {
     target_lateral_positions = params_.sampling.target_lateral_positions;

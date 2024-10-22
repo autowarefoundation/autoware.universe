@@ -17,10 +17,10 @@
 #include "autoware_raw_vehicle_cmd_converter/brake_map.hpp"
 #include "autoware_raw_vehicle_cmd_converter/pid.hpp"
 #include "autoware_raw_vehicle_cmd_converter/steer_map.hpp"
+#include "autoware_raw_vehicle_cmd_converter/vgr.hpp"
 #include "gtest/gtest.h"
 
 #include <cmath>
-#include <stdexcept>
 
 /*
  * Throttle data: (vel, throttle -> acc)
@@ -52,6 +52,7 @@ using autoware::raw_vehicle_cmd_converter::AccelMap;
 using autoware::raw_vehicle_cmd_converter::BrakeMap;
 using autoware::raw_vehicle_cmd_converter::PIDController;
 using autoware::raw_vehicle_cmd_converter::SteerMap;
+using autoware::raw_vehicle_cmd_converter::VGR;
 double epsilon = 1e-4;
 // may throw PackageNotFoundError exception for invalid package
 const auto map_path =
@@ -122,6 +123,9 @@ TEST(ConverterTests, LoadValidPath)
   EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_1col_map.csv", true));
   EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_inconsistent_rows_map.csv", true));
   EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_not_interpolatable.csv", true));
+  EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_empty_map.csv", true));
+
+  EXPECT_FALSE(steer_map.readSteerMapFromCSV(map_path + "test_not_interpolatable.csv", true));
 }
 
 TEST(ConverterTests, AccelMapCalculation)
@@ -134,6 +138,16 @@ TEST(ConverterTests, AccelMapCalculation)
     return output;
   };
 
+  // for get function in acceleration
+  std::vector<double> map_column_idx = {0.0, 5.0, 10.0};
+  std::vector<double> map_raw_idx = {0.0, 0.5, 1.0};
+  std::vector<std::vector<double>> map_value = {
+    {0.0, -0.3, -0.5}, {1.0, 0.5, 0.0}, {3.0, 2.0, 1.5}};
+
+  EXPECT_EQ(accel_map.getVelIdx(), map_column_idx);
+  EXPECT_EQ(accel_map.getThrottleIdx(), map_raw_idx);
+  EXPECT_EQ(accel_map.getAccelMap(), map_value);
+
   // case for max vel nominal acc
   EXPECT_DOUBLE_EQ(calcThrottle(0.0, 20.0), 0.5);
 
@@ -145,6 +159,9 @@ TEST(ConverterTests, AccelMapCalculation)
 
   // case for interpolation
   EXPECT_DOUBLE_EQ(calcThrottle(2.0, 0.0), 0.75);
+
+  // case for max throttle
+  EXPECT_DOUBLE_EQ(calcThrottle(2.0, 10.0), 1.0);
 
   const auto calcAcceleration = [&](double throttle, double vel) {
     double output;
@@ -175,6 +192,15 @@ TEST(ConverterTests, BrakeMapCalculation)
     return output;
   };
 
+  // for get function in brake
+  std::vector<double> map_column_idx = {0.0, 5.0, 10.0};
+  std::vector<double> map_raw_idx = {0.0, 0.5, 1.0};
+  std::vector<std::vector<double>> map_value = {
+    {0.0, -0.4, -0.5}, {-1.5, -2.0, -2.0}, {-2.0, -2.5, -3.0}};
+  EXPECT_EQ(brake_map.getVelIdx(), map_column_idx);
+  EXPECT_EQ(brake_map.getBrakeIdx(), map_raw_idx);
+  EXPECT_EQ(brake_map.getBrakeMap(), map_value);
+
   // case for min vel min acc
   EXPECT_DOUBLE_EQ(calcBrake(-2.5, 0.0), 1.0);
 
@@ -186,6 +212,9 @@ TEST(ConverterTests, BrakeMapCalculation)
 
   // case for interpolation
   EXPECT_DOUBLE_EQ(calcBrake(-2.25, 5.0), 0.75);
+
+  // case for min brake
+  EXPECT_DOUBLE_EQ(calcBrake(1.0, 5.0), 0.0);
 
   const auto calcAcceleration = [&](double brake, double vel) {
     double output;
@@ -296,4 +325,50 @@ TEST(PIDTests, calculateFB)
   EXPECT_NEAR(pid_contributions.at(0), 8.0, epsilon);
   EXPECT_NEAR(pid_contributions.at(1), 0.21825, epsilon);
   EXPECT_NEAR(pid_contributions.at(2), -0.15, epsilon);
+}
+
+TEST(VGRTests, roundTrip)
+{
+  VGR vgr;
+  vgr.setCoefficients(15.713, 0.053, 0.042);
+  double vel = 5.0;
+  double steer_wheel = 0.1;
+  double gear_ratio = vgr.calculateVariableGearRatio(vel, steer_wheel);
+  double steer = vgr.calculateSteeringTireState(vel, steer_wheel);
+  double steer_wheel2 = steer * gear_ratio;
+  EXPECT_NEAR(steer_wheel, steer_wheel2, epsilon);
+}
+
+TEST(VGRTests, boundaryValues)
+{
+  VGR vgr;
+  vgr.setCoefficients(15.713, 0.053, 0.042);
+
+  const double vel = 0.0;
+  const double steer_wheel = 0.0;
+  const double gear_ratio = vgr.calculateVariableGearRatio(vel, steer_wheel);
+  EXPECT_NEAR(gear_ratio, 15.713, epsilon);
+
+  const double steer_wheel_small = 1e-5;
+  const double steer = vgr.calculateSteeringTireState(vel, steer_wheel_small);
+  const double steer_wheel2 = steer * gear_ratio;
+  EXPECT_NEAR(steer_wheel, steer_wheel2, epsilon);
+}
+
+TEST(VGRTests, zeroCoefficients)
+{
+  VGR vgr;
+  vgr.setCoefficients(0.0, 0.0, 0.0);
+
+  const double vel = 10.0;
+  const double steer_wheel = 0.5;
+
+  // Gear ratio should return the minimum value since all coefficients are zero
+  const double gear_ratio = vgr.calculateVariableGearRatio(vel, steer_wheel);
+  EXPECT_EQ(gear_ratio, 1e-5);
+
+  // Steering tire state calculation is also performed with the minimum gear ratio
+  const double steer = vgr.calculateSteeringTireState(vel, steer_wheel);
+  const double steer_wheel2 = steer * gear_ratio;
+  EXPECT_NEAR(steer_wheel, steer_wheel2, epsilon);
 }

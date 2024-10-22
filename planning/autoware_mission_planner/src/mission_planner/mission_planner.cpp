@@ -47,6 +47,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   map_frame_ = declare_parameter<std::string>("map_frame");
   reroute_time_threshold_ = declare_parameter<double>("reroute_time_threshold");
   minimum_reroute_length_ = declare_parameter<double>("minimum_reroute_length");
+  allow_reroute_in_autonomous_mode_ = declare_parameter<bool>("allow_reroute_in_autonomous_mode");
 
   planner_ =
     plugin_loader_.createSharedInstance("autoware::mission_planner::lanelet2::DefaultPlanner");
@@ -197,6 +198,7 @@ void MissionPlanner::on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr 
     cancel_route();
     change_state(RouteState::SET);
     RCLCPP_ERROR(get_logger(), "The planned route is empty.");
+    return;
   }
 
   change_route(route);
@@ -239,6 +241,11 @@ void MissionPlanner::on_set_lanelet_route(
     operation_mode_state_ ? operation_mode_state_->mode == OperationModeState::AUTONOMOUS &&
                               operation_mode_state_->is_autoware_control_enabled
                           : false;
+
+  if (is_reroute && !allow_reroute_in_autonomous_mode_ && is_autonomous_driving) {
+    throw service_utils::ServiceException(
+      ResponseCode::ERROR_INVALID_STATE, "Reroute is not allowed in autonomous mode.");
+  }
 
   if (is_reroute && is_autonomous_driving) {
     const auto reroute_availability = sub_reroute_availability_.takeData();

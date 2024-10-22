@@ -35,6 +35,7 @@
 #include <string>
 #include <utility>
 
+class TestNormalLaneChange;
 namespace autoware::behavior_path_planner
 {
 using autoware::route_handler::Direction;
@@ -66,6 +67,8 @@ public:
   virtual ~LaneChangeBase() = default;
 
   virtual void update_lanes(const bool is_approved) = 0;
+
+  virtual void update_transient_data() = 0;
 
   virtual void update_filtered_objects() = 0;
 
@@ -110,10 +113,6 @@ public:
   virtual PathSafetyStatus evaluateApprovedPathWithUnsafeHysteresis(
     PathSafetyStatus approve_path_safety_status) = 0;
 
-  virtual bool isNearEndOfCurrentLanes(
-    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    const double threshold) const = 0;
-
   virtual bool isStoppedAtRedTrafficLight() const = 0;
 
   virtual bool calcAbortPath() = 0;
@@ -129,7 +128,7 @@ public:
 
   virtual void updateSpecialData() {}
 
-  virtual void insertStopPoint(
+  virtual void insert_stop_point(
     [[maybe_unused]] const lanelet::ConstLanelets & lanelets,
     [[maybe_unused]] PathWithLaneId & path)
   {
@@ -213,7 +212,7 @@ public:
 
   LaneChangeModuleType getModuleType() const { return type_; }
 
-  TurnSignalDecider getTurnSignalDecider() { return planner_data_->turn_signal_decider; }
+  TurnSignalDecider getTurnSignalDecider() const { return planner_data_->turn_signal_decider; }
 
   Direction getDirection() const
   {
@@ -229,21 +228,44 @@ public:
 
   void resetStopPose() { lane_change_stop_pose_ = std::nullopt; }
 
-  virtual TurnSignalInfo get_current_turn_signal_info() = 0;
+  virtual TurnSignalInfo get_current_turn_signal_info() const = 0;
+
+  virtual bool is_near_regulatory_element() const = 0;
 
 protected:
   virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
 
-  virtual PathWithLaneId getPrepareSegment(
-    const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
-    const double prepare_length) const = 0;
+  virtual bool get_prepare_segment(
+    PathWithLaneId & prepare_segment, const double prepare_length) const = 0;
 
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
   virtual bool isAbleToStopSafely() const = 0;
 
-  virtual lanelet::ConstLanelets getLaneChangeLanes(
-    const lanelet::ConstLanelets & current_lanes, Direction direction) const = 0;
+  virtual TurnSignalInfo get_terminal_turn_signal_info() const = 0;
+
+  TurnSignalInfo get_turn_signal(const Pose & start, const Pose & end) const
+  {
+    TurnSignalInfo turn_signal;
+    switch (direction_) {
+      case Direction::LEFT:
+        turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+        break;
+      case Direction::RIGHT:
+        turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+        break;
+      default:
+        turn_signal.turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
+        break;
+    }
+
+    turn_signal.desired_start_point = start;
+    turn_signal.desired_end_point = end;
+    turn_signal.required_start_point = turn_signal.desired_start_point;
+    turn_signal.required_end_point = turn_signal.desired_end_point;
+
+    return turn_signal;
+  }
 
   LaneChangeStatus status_{};
   PathShifter path_shifter_{};
@@ -275,6 +297,8 @@ protected:
   mutable rclcpp::Clock clock_{RCL_ROS_TIME};
 
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+
+  friend class ::TestNormalLaneChange;
 };
 }  // namespace autoware::behavior_path_planner
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__BASE_CLASS_HPP_

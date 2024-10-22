@@ -27,6 +27,7 @@
 #include <geometry_msgs/msg/twist.hpp>
 
 #include <cmath>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -75,6 +76,14 @@ double calcMinimumLongitudinalLength(
   const double front_object_velocity, const double rear_object_velocity,
   const RSSparams & rss_params);
 
+/**
+ * @brief Calculates an interpolated pose with velocity for a given relative time along a path.
+ * @param path A vector of PoseWithVelocityStamped objects representing the path.
+ * @param relative_time The relative time at which to calculate the interpolated pose and velocity.
+ * @return An optional PoseWithVelocityStamped object. If the interpolation is successful,
+ *         it contains the interpolated pose, velocity, and time. If the interpolation fails
+ *         (e.g., empty path, negative time, or time beyond the path), it returns std::nullopt.
+ */
 std::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
   const std::vector<PoseWithVelocityStamped> & path, const double relative_time);
 
@@ -164,6 +173,22 @@ std::pair<bool, bool> checkObjectsCollisionRough(
   const PathWithLaneId & path, const PredictedObjects & objects, const double margin,
   const BehaviorPathPlannerParameters & parameters, const bool use_offset_ego_point);
 
+/**
+ * @brief Calculate the rough distance between the ego vehicle and the objects.
+ * @param path The path of the ego vehicle.
+ * @param objects The predicted objects.
+ * @param parameters The common parameters used in behavior path planner.
+ * @param use_offset_ego_point If true, the closest point to the object is calculated by
+ * interpolating the path points.
+ * @param distance_type The type of distance to calculate. "min" or "max". Calculate the distance
+ * when the distance is minimized or maximized when the direction of the ego and the object is
+ * changed.
+ * @return The rough distance between the ego vehicle and the objects.
+ */
+double calculateRoughDistanceToObjects(
+  const PathWithLaneId & path, const PredictedObjects & objects,
+  const BehaviorPathPlannerParameters & parameters, const bool use_offset_ego_point,
+  const std::string & distance_type);
 // debug
 CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj);
 void updateCollisionCheckDebugMap(

@@ -20,6 +20,8 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -118,26 +120,27 @@ public:
     const auto nominal_speed = std::max(getEgoSpeed(), p->nominal_avoidance_speed);
     const auto nominal_jerk =
       p->lateral_min_jerk_map.at(getConstraintsMapIndex(nominal_speed, p->velocity_map));
-    return PathShifter::calcLongitudinalDistFromJerk(shift_length, nominal_jerk, nominal_speed);
+    return autoware::motion_utils::calc_longitudinal_dist_from_jerk(
+      shift_length, nominal_jerk, nominal_speed);
   }
 
   double getMinAvoidanceDistance(const double shift_length) const
   {
     const auto & p = parameters_;
-    return PathShifter::calcLongitudinalDistFromJerk(
+    return autoware::motion_utils::calc_longitudinal_dist_from_jerk(
       shift_length, p->lateral_max_jerk_map.front(), p->velocity_map.front());
   }
 
   double getMaxAvoidanceDistance(const double shift_length) const
   {
-    const auto distance_from_jerk = PathShifter::calcLongitudinalDistFromJerk(
+    const auto distance_from_jerk = autoware::motion_utils::calc_longitudinal_dist_from_jerk(
       shift_length, getLateralMinJerkLimit(), getAvoidanceEgoSpeed());
     return std::max(getNominalAvoidanceDistance(shift_length), distance_from_jerk);
   }
 
   double getSharpAvoidanceDistance(const double shift_length) const
   {
-    return PathShifter::calcLongitudinalDistFromJerk(
+    return autoware::motion_utils::calc_longitudinal_dist_from_jerk(
       shift_length, getLateralMaxJerkLimit(), getAvoidanceEgoSpeed());
   }
 
@@ -227,8 +230,8 @@ public:
 
     const auto max_shift_length = std::max(
       std::abs(parameters_->max_right_shift_length), std::abs(parameters_->max_left_shift_length));
-    const auto dynamic_distance =
-      PathShifter::calcLongitudinalDistFromJerk(max_shift_length, getLateralMinJerkLimit(), speed);
+    const auto dynamic_distance = autoware::motion_utils::calc_longitudinal_dist_from_jerk(
+      max_shift_length, getLateralMinJerkLimit(), speed);
 
     return std::clamp(
       1.5 * dynamic_distance + getNominalPrepareDistance(),
@@ -305,16 +308,29 @@ public:
   {
     const auto & p = parameters_;
     return prepare_distance >
-           std::max(getEgoSpeed() * p->min_prepare_distance, p->min_prepare_distance);
+           std::max(getEgoSpeed() * p->min_prepare_time, p->min_prepare_distance);
   }
 
   bool isComfortable(const AvoidLineArray & shift_lines) const
   {
     const auto JERK_BUFFER = 0.1;  // [m/sss]
     return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
-      return PathShifter::calcJerkFromLatLonDistance(
+      return autoware::motion_utils::calc_jerk_from_lat_lon_distance(
                line.getRelativeLength(), line.getRelativeLongitudinal(), getAvoidanceEgoSpeed()) <
              getLateralMaxJerkLimit() + JERK_BUFFER;
+    });
+  }
+
+  bool isFeasible(const AvoidLineArray & shift_lines) const
+  {
+    constexpr double JERK_BUFFER = 0.1;  // [m/sss]
+    const auto & values = parameters_->velocity_map;
+    const auto idx = getConstraintsMapIndex(0.0, values);  // use minimum avoidance speed
+    const auto jerk_limit = parameters_->lateral_max_jerk_map.at(idx);
+    return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
+      return autoware::motion_utils::calc_jerk_from_lat_lon_distance(
+               line.getRelativeLength(), line.getRelativeLongitudinal(), values.at(idx)) <
+             jerk_limit + JERK_BUFFER;
     });
   }
 

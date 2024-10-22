@@ -6,6 +6,7 @@
   <description>Node of the motion_velocity_planner</description>
 
   <maintainer email="maxime.clement@tier4.jp">Maxime Clement</maintainer>
+  <maintainer email="alqudah.mohammad@tier4.jp">Alqudah Mohammad</maintainer>
 
   <license>Apache License 2.0</license>
 
@@ -17,7 +18,6 @@
 
   <build_depend>rosidl_default_generators</build_depend>
 
-  <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_map_msgs</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_motion_velocity_planner_common</depend>

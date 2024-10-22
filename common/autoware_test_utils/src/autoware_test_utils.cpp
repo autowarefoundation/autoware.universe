@@ -138,6 +138,7 @@ std::string get_absolute_path_to_lanelet_map(
   return dir + "/test_map/" + map_filename;
 }
 
+// cppcheck-suppress unusedFunction
 std::string get_absolute_path_to_route(
   const std::string & package_name, const std::string & route_filename)
 {
@@ -228,6 +229,7 @@ Scenario makeScenarioMsg(const std::string & scenario)
   return scenario_msg;
 }
 
+// cppcheck-suppress unusedFunction
 RouteSections combineConsecutiveRouteSections(
   const RouteSections & route_sections1, const RouteSections & route_sections2)
 {
@@ -267,6 +269,7 @@ LaneletRoute makeBehaviorNormalRoute()
   return route;
 }
 
+// cppcheck-suppress unusedFunction
 void spinSomeNodes(
   rclcpp::Node::SharedPtr test_node, rclcpp::Node::SharedPtr target_node, const int repeat_count)
 {
@@ -354,5 +357,4 @@ PathWithLaneId loadPathWithLaneIdInYaml()
   }
   return path_msg;
 }
-
 }  // namespace autoware::test_utils

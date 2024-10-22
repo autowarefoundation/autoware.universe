@@ -17,6 +17,7 @@
 
 #include "multi_object_tracker_node.hpp"
 
+#include "autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp"
 #include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
@@ -73,7 +74,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("multi_object_tracker", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
-  last_published_time_(this->now())
+  last_published_time_(this->now()),
+  last_updated_time_(this->now())
 {
   // glog for debug
   if (!google::IsGoogleLoggingInitialized()) {
@@ -153,7 +155,9 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // If the delay compensation is enabled, the timer is used to publish the output at the correct
   // time.
   if (enable_delay_compensation) {
-    const auto timer_period = rclcpp::Rate(publish_rate).period();
+    publisher_period_ = 1.0 / publish_rate;    // [s]
+    constexpr double timer_multiplier = 10.0;  // 10 times frequent for publish timing check
+    const auto timer_period = rclcpp::Rate(publish_rate * timer_multiplier).period();
     publish_timer_ = rclcpp::create_timer(
       this, get_clock(), timer_period, std::bind(&MultiObjectTracker::onTimer, this));
   }
@@ -221,21 +225,30 @@ void MultiObjectTracker::onTimer()
 {
   const rclcpp::Time current_time = this->now();
 
-  // get objects from the input manager and run process
-  ObjectsList objects_list;
-  const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
-  if (is_objects_ready) {
-    onMessage(objects_list);
+  // ensure minimum interval: room for the next process(prediction)
+  const double minimum_publish_interval = publisher_period_ * minimum_publish_interval_ratio;
+  const auto elapsed_time = (current_time - last_published_time_).seconds();
+  if (elapsed_time < minimum_publish_interval) {
+    return;
   }
 
-  // Publish with delay compensation
-  checkAndPublish(current_time);
+  // if there was update after publishing, publish new messages
+  bool should_publish = last_published_time_ < last_updated_time_;
+
+  // if there was no update, publish if the elapsed time is longer than the maximum publish latency
+  // in this case, it will perform extrapolate/remove old objects
+  const double maximum_publish_interval = publisher_period_ * maximum_publish_interval_ratio;
+  should_publish = should_publish || elapsed_time > maximum_publish_interval;
+
+  // Publish with delay compensation to the current time
+  if (should_publish) checkAndPublish(current_time);
 }
 
 void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
 {
   const rclcpp::Time current_time = this->now();
   const rclcpp::Time oldest_time(objects_list.front().second.header.stamp);
+  last_updated_time_ = current_time;
 
   // process start
   debugger_->startMeasurementTime(this->now(), oldest_time);
@@ -248,11 +261,11 @@ void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
 }
 
 void MultiObjectTracker::runProcess(
-  const DetectedObjects & input_objects_msg, const uint & channel_index)
+  const DetectedObjects & input_objects, const uint & channel_index)
 {
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
-    rclcpp::Time(input_objects_msg.header.stamp, this->now().get_clock_type());
+    rclcpp::Time(input_objects.header.stamp, this->now().get_clock_type());
 
   // Get the transform of the self frame
   const auto self_transform =
@@ -261,10 +274,16 @@ void MultiObjectTracker::runProcess(
     return;
   }
 
+  // Model the object uncertainty if it is empty
+  DetectedObjects input_objects_with_uncertainty = uncertainty::modelUncertainty(input_objects);
+
+  // Normalize the object uncertainty
+  uncertainty::normalizeUncertainty(input_objects_with_uncertainty);
+
   // Transform the objects to the world frame
   DetectedObjects transformed_objects;
-  if (!object_recognition_utils::transformObjects(
-        input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
+  if (!autoware::object_recognition_utils::transformObjects(
+        input_objects_with_uncertainty, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
 

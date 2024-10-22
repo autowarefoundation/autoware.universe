@@ -7,6 +7,7 @@
   <author email="daisuke.nishimatsu@tier4.jp">Daisuke Nishimatsu</author>
   <maintainer email="dan.umeda@tier4.jp">Dan Umeda</maintainer>
   <maintainer email="manato.hirabayashi@tier4.jp">Manato Hirabayashi</maintainer>
+  <maintainer email="kotaro.uetake@tier4.jp">Kotaro Uetake</maintainer>
 
   <license>Apache License 2.0</license>
 
@@ -18,17 +19,17 @@
   <buildtool_export_depend>cudnn_cmake_module</buildtool_export_depend>
   <buildtool_export_depend>tensorrt_cmake_module</buildtool_export_depend>
 
+  <depend>autoware_object_recognition_utils</depend>
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_tensorrt_common</depend>
   <depend>cuda_utils</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
   <depend>libopencv-dev</depend>
-  <depend>object_recognition_utils</depend>
   <depend>perception_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>tensorrt_common</depend>
   <depend>tier4_perception_msgs</depend>
 
   <exec_depend>autoware_image_transport_decompressor</exec_depend>

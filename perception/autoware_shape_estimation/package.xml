@@ -18,6 +18,7 @@
   <buildtool_export_depend>tensorrt_cmake_module</buildtool_export_depend>
 
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_tensorrt_common</depend>
   <depend>autoware_universe_utils</depend>
   <depend>cuda_utils</depend>
   <depend>eigen</depend>
@@ -26,7 +27,6 @@
   <depend>pcl_conversions</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tensorrt_common</depend>
   <depend>tf2</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
@@ -35,6 +35,7 @@
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
+  <test_depend>autoware_test_utils</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -47,8 +47,8 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
   z_offset_ = node_->declare_parameter<float>("z_offset", -2.0);
   const auto precision = node_->declare_parameter("precision", "fp32");
 
-  trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
-    onnx_file, precision, nullptr, tensorrt_common::BatchConfig{1, 1, 1}, 1 << 30);
+  trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
+    onnx_file, precision, nullptr, autoware::tensorrt_common::BatchConfig{1, 1, 1}, 1 << 30);
   trt_common_->setup();
 
   if (!trt_common_->isInitialized()) {
@@ -136,7 +136,7 @@ bool LidarApolloInstanceSegmentation::detectDynamicObjects(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud_raw_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   // pcl::fromROSMsg(transformed_cloud, *pcl_pointcloud_raw_ptr);
 
-  auto pcl_pointcloud_raw = *pcl_pointcloud_raw_ptr;
+  auto & pcl_pointcloud_raw = *pcl_pointcloud_raw_ptr;
   pcl_pointcloud_raw.width = transformed_cloud.width;
   pcl_pointcloud_raw.height = transformed_cloud.height;
   pcl_pointcloud_raw.is_dense = transformed_cloud.is_dense == 1;

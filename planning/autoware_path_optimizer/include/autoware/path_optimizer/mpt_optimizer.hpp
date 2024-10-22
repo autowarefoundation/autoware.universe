@@ -15,6 +15,9 @@
 #ifndef AUTOWARE__PATH_OPTIMIZER__MPT_OPTIMIZER_HPP_
 #define AUTOWARE__PATH_OPTIMIZER__MPT_OPTIMIZER_HPP_
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
+#include "autoware/osqp_interface/osqp_interface.hpp"
 #include "autoware/path_optimizer/common_structs.hpp"
 #include "autoware/path_optimizer/state_equation_generator.hpp"
 #include "autoware/path_optimizer/type_alias.hpp"
@@ -22,9 +25,6 @@
 #include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "gtest/gtest.h"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
-#include "osqp_interface/osqp_interface.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Sparse>
@@ -45,9 +45,9 @@ struct Bounds
   static Bounds lerp(Bounds prev_bounds, Bounds next_bounds, double ratio)
   {
     const double lower_bound =
-      interpolation::lerp(prev_bounds.lower_bound, next_bounds.lower_bound, ratio);
+      autoware::interpolation::lerp(prev_bounds.lower_bound, next_bounds.lower_bound, ratio);
     const double upper_bound =
-      interpolation::lerp(prev_bounds.upper_bound, next_bounds.upper_bound, ratio);
+      autoware::interpolation::lerp(prev_bounds.upper_bound, next_bounds.upper_bound, ratio);
 
     return Bounds{lower_bound, upper_bound};
   }
@@ -228,7 +228,7 @@ private:
   MPTParam mpt_param_;
 
   StateEquationGenerator state_equation_generator_;
-  std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
+  std::unique_ptr<autoware::osqp_interface::OSQPInterface> osqp_solver_ptr_;
 
   const double osqp_epsilon_ = 1.0e-3;
 
@@ -249,10 +249,10 @@ private:
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points) const;
   void updateCurvature(
     std::vector<ReferencePoint> & ref_points,
-    const SplineInterpolationPoints2d & ref_points_spline) const;
+    const autoware::interpolation::SplineInterpolationPoints2d & ref_points_spline) const;
   void updateOrientation(
     std::vector<ReferencePoint> & ref_points,
-    const SplineInterpolationPoints2d & ref_points_spline) const;
+    const autoware::interpolation::SplineInterpolationPoints2d & ref_points_spline) const;
   void updateBounds(
     std::vector<ReferencePoint> & ref_points,
     const std::vector<geometry_msgs::msg::Point> & left_bound,
@@ -266,7 +266,7 @@ private:
     const double ego_vel) const;
   void updateVehicleBounds(
     std::vector<ReferencePoint> & ref_points,
-    const SplineInterpolationPoints2d & ref_points_spline) const;
+    const autoware::interpolation::SplineInterpolationPoints2d & ref_points_spline) const;
   void updateFixedPoint(std::vector<ReferencePoint> & ref_points) const;
   void updateDeltaArcLength(std::vector<ReferencePoint> & ref_points) const;
   void updateExtraPoints(std::vector<ReferencePoint> & ref_points) const;

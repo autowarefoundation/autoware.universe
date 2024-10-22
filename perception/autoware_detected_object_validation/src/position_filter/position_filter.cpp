@@ -26,18 +26,18 @@ ObjectPositionFilterNode::ObjectPositionFilterNode(const rclcpp::NodeOptions & n
   using std::placeholders::_1;
 
   // Set parameters
-  upper_bound_x_ = declare_parameter<float>("upper_bound_x", 100.0);
-  upper_bound_y_ = declare_parameter<float>("upper_bound_y", 50.0);
-  lower_bound_x_ = declare_parameter<float>("lower_bound_x", 0.0);
-  lower_bound_y_ = declare_parameter<float>("lower_bound_y", -50.0);
-  filter_target_.UNKNOWN = declare_parameter<bool>("filter_target_label.UNKNOWN", false);
-  filter_target_.CAR = declare_parameter<bool>("filter_target_label.CAR", false);
-  filter_target_.TRUCK = declare_parameter<bool>("filter_target_label.TRUCK", false);
-  filter_target_.BUS = declare_parameter<bool>("filter_target_label.BUS", false);
-  filter_target_.TRAILER = declare_parameter<bool>("filter_target_label.TRAILER", false);
-  filter_target_.MOTORCYCLE = declare_parameter<bool>("filter_target_label.MOTORCYCLE", false);
-  filter_target_.BICYCLE = declare_parameter<bool>("filter_target_label.BICYCLE", false);
-  filter_target_.PEDESTRIAN = declare_parameter<bool>("filter_target_label.PEDESTRIAN", false);
+  upper_bound_x_ = declare_parameter<float>("upper_bound_x");
+  upper_bound_y_ = declare_parameter<float>("upper_bound_y");
+  lower_bound_x_ = declare_parameter<float>("lower_bound_x");
+  lower_bound_y_ = declare_parameter<float>("lower_bound_y");
+  filter_target_.UNKNOWN = declare_parameter<bool>("filter_target_label.UNKNOWN");
+  filter_target_.CAR = declare_parameter<bool>("filter_target_label.CAR");
+  filter_target_.TRUCK = declare_parameter<bool>("filter_target_label.TRUCK");
+  filter_target_.BUS = declare_parameter<bool>("filter_target_label.BUS");
+  filter_target_.TRAILER = declare_parameter<bool>("filter_target_label.TRAILER");
+  filter_target_.MOTORCYCLE = declare_parameter<bool>("filter_target_label.MOTORCYCLE");
+  filter_target_.BICYCLE = declare_parameter<bool>("filter_target_label.BICYCLE");
+  filter_target_.PEDESTRIAN = declare_parameter<bool>("filter_target_label.PEDESTRIAN");
 
   // Set publisher/subscriber
   object_sub_ = this->create_subscription<autoware_perception_msgs::msg::DetectedObjects>(

@@ -132,8 +132,18 @@ public:
   std::optional<autoware::universe_utils::Polygon2d> getFusedLaneletPolygonForPath(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
 
+  bool updateFusedLaneletPolygonForPath(
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
+    std::vector<lanelet::Id> & fused_lanelets_id,
+    std::optional<autoware::universe_utils::Polygon2d> & fused_lanelets_polygon) const;
+
   bool checkPathWillLeaveLane(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
+
+  bool checkPathWillLeaveLane(
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
+    std::vector<lanelet::Id> & fused_lanelets_id,
+    std::optional<autoware::universe_utils::Polygon2d> & fused_lanelets_polygon) const;
 
   PathWithLaneId cropPointsOutsideOfLanes(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
@@ -149,16 +159,6 @@ private:
   static PoseDeviation calcTrajectoryDeviation(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
     const double dist_threshold, const double yaw_threshold);
-
-  //! This function assumes the input trajectory is sampled dense enough
-  static TrajectoryPoints resampleTrajectory(const Trajectory & trajectory, const double interval);
-
-  static TrajectoryPoints cutTrajectory(const TrajectoryPoints & trajectory, const double length);
-
-  std::vector<LinearRing2d> createVehicleFootprints(
-    const geometry_msgs::msg::PoseWithCovariance & covariance, const TrajectoryPoints & trajectory,
-    const Param & param);
-  std::vector<LinearRing2d> createVehicleFootprints(const PathWithLaneId & path) const;
 
   static std::vector<LinearRing2d> createVehiclePassingAreas(
     const std::vector<LinearRing2d> & vehicle_footprints);
@@ -176,6 +176,9 @@ private:
   bool willCrossBoundary(
     const std::vector<LinearRing2d> & vehicle_footprints,
     const SegmentRtree & uncrossable_segments) const;
+
+  lanelet::BasicPolygon2d toBasicPolygon2D(const LinearRing2d & footprint_hull) const;
+  autoware::universe_utils::Polygon2d toPolygon2D(const lanelet::BasicPolygon2d & poly) const;
 
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
 };

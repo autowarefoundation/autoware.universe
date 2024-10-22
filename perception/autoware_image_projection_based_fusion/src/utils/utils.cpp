@@ -14,8 +14,32 @@
 
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
 
+#include <sensor_msgs/distortion_models.hpp>
+
 namespace autoware::image_projection_based_fusion
 {
+bool checkCameraInfo(const sensor_msgs::msg::CameraInfo & camera_info)
+{
+  const bool is_supported_model =
+    (camera_info.distortion_model == sensor_msgs::distortion_models::PLUMB_BOB ||
+     camera_info.distortion_model == sensor_msgs::distortion_models::RATIONAL_POLYNOMIAL);
+  if (!is_supported_model) {
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("image_projection_based_fusion"),
+      "checkCameraInfo: Unsupported distortion model: " << camera_info.distortion_model);
+    return false;
+  }
+  const bool is_supported_distortion_param =
+    (camera_info.d.size() == 5 || camera_info.d.size() == 8);
+  if (!is_supported_distortion_param) {
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("image_projection_based_fusion"),
+      "checkCameraInfo: Unsupported distortion coefficients size: " << camera_info.d.size());
+    return false;
+  }
+  return true;
+}
+
 Eigen::Vector2d calcRawImageProjectedPoint(
   const image_geometry::PinholeCameraModel & pinhole_camera_model, const cv::Point3d & point3d)
 {
@@ -46,18 +70,6 @@ Eigen::Affine3d transformToEigen(const geometry_msgs::msg::Transform & t)
   Eigen::Affine3d a;
   a.matrix() = tf2::transformToEigen(t).matrix();
   return a;
-}
-
-void convertCluster2FeatureObject(
-  const std_msgs::msg::Header & header, const PointCloud & cluster,
-  DetectedObjectWithFeature & feature_obj)
-{
-  PointCloud2 ros_cluster;
-  pcl::toROSMsg(cluster, ros_cluster);
-  ros_cluster.header = header;
-  feature_obj.feature.cluster = ros_cluster;
-  feature_obj.object.kinematics.pose_with_covariance.pose.position = getCentroid(ros_cluster);
-  feature_obj.object.existence_probability = 1.0f;
 }
 
 void closest_cluster(
@@ -174,73 +186,6 @@ void updateOutputFusedObjects(
   }
 }
 
-void addShapeAndKinematic(
-  const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  tier4_perception_msgs::msg::DetectedObjectWithFeature & feature_obj)
-{
-  if (cluster.empty()) {
-    return;
-  }
-  pcl::PointXYZ centroid = pcl::PointXYZ(0.0, 0.0, 0.0);
-  float max_z = -1e6;
-  float min_z = 1e6;
-  for (const auto & point : cluster) {
-    centroid.x += point.x;
-    centroid.y += point.y;
-    centroid.z += point.z;
-    max_z = max_z < point.z ? point.z : max_z;
-    min_z = min_z > point.z ? point.z : min_z;
-  }
-  centroid.x = centroid.x / static_cast<double>(cluster.size());
-  centroid.y = centroid.y / static_cast<double>(cluster.size());
-  centroid.z = centroid.z / static_cast<double>(cluster.size());
-
-  std::vector<cv::Point> cluster2d;
-  std::vector<cv::Point> cluster2d_convex;
-
-  for (size_t i = 0; i < cluster.size(); ++i) {
-    cluster2d.push_back(
-      cv::Point((cluster.at(i).x - centroid.x) * 1000.0, (cluster.at(i).y - centroid.y) * 1000.));
-  }
-  cv::convexHull(cluster2d, cluster2d_convex);
-  if (cluster2d_convex.empty()) {
-    return;
-  }
-  pcl::PointXYZ polygon_centroid = pcl::PointXYZ(0.0, 0.0, 0.0);
-  for (size_t i = 0; i < cluster2d_convex.size(); ++i) {
-    polygon_centroid.x += static_cast<double>(cluster2d_convex.at(i).x) / 1000.0;
-    polygon_centroid.y += static_cast<double>(cluster2d_convex.at(i).y) / 1000.0;
-  }
-  polygon_centroid.x = polygon_centroid.x / static_cast<double>(cluster2d_convex.size());
-  polygon_centroid.y = polygon_centroid.y / static_cast<double>(cluster2d_convex.size());
-
-  autoware_perception_msgs::msg::Shape shape;
-  for (size_t i = 0; i < cluster2d_convex.size(); ++i) {
-    geometry_msgs::msg::Point32 point;
-    point.x = cluster2d_convex.at(i).x / 1000.0;
-    point.y = cluster2d_convex.at(i).y / 1000.0;
-    point.z = 0.0;
-    shape.footprint.points.push_back(point);
-  }
-  shape.type = autoware_perception_msgs::msg::Shape::POLYGON;
-  constexpr float eps = 0.01;
-  shape.dimensions.x = 0;
-  shape.dimensions.y = 0;
-  shape.dimensions.z = std::max((max_z - min_z), eps);
-  feature_obj.object.shape = shape;
-  feature_obj.object.kinematics.pose_with_covariance.pose.position.x =
-    centroid.x + polygon_centroid.x;
-  feature_obj.object.kinematics.pose_with_covariance.pose.position.y =
-    centroid.y + polygon_centroid.y;
-  feature_obj.object.kinematics.pose_with_covariance.pose.position.z =
-    min_z + shape.dimensions.z * 0.5;
-  feature_obj.object.existence_probability = 1.0;
-  feature_obj.object.kinematics.pose_with_covariance.pose.orientation.x = 0;
-  feature_obj.object.kinematics.pose_with_covariance.pose.orientation.y = 0;
-  feature_obj.object.kinematics.pose_with_covariance.pose.orientation.z = 0;
-  feature_obj.object.kinematics.pose_with_covariance.pose.orientation.w = 1;
-}
-
 geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & pointcloud)
 {
   geometry_msgs::msg::Point centroid;
@@ -259,22 +204,6 @@ geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & poin
   centroid.y = centroid.y / static_cast<float>(size);
   centroid.z = centroid.z / static_cast<float>(size);
   return centroid;
-}
-
-pcl::PointXYZ getClosestPoint(const pcl::PointCloud<pcl::PointXYZ> & cluster)
-{
-  pcl::PointXYZ closest_point;
-  double min_dist = 1e6;
-  pcl::PointXYZ orig_point = pcl::PointXYZ(0.0, 0.0, 0.0);
-  for (std::size_t i = 0; i < cluster.points.size(); ++i) {
-    pcl::PointXYZ point = cluster.points.at(i);
-    double dist_closest_point = autoware::universe_utils::calcDistance2d(point, orig_point);
-    if (min_dist > dist_closest_point) {
-      min_dist = dist_closest_point;
-      closest_point = pcl::PointXYZ(point.x, point.y, point.z);
-    }
-  }
-  return closest_point;
 }
 
 }  // namespace autoware::image_projection_based_fusion

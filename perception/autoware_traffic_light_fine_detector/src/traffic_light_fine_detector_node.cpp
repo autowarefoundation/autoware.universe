@@ -49,11 +49,6 @@ float calWeightedIou(
 
 namespace autoware::traffic_light
 {
-inline std::vector<float> toFloatVector(const std::vector<double> & double_vector)
-{
-  return std::vector<float>(double_vector.begin(), double_vector.end());
-}
-
 TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOptions & options)
 : Node("traffic_light_fine_detector_node", options)
 {
@@ -65,6 +60,7 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
   std::string model_path = declare_parameter("fine_detector_model_path", "");
   std::string label_path = declare_parameter("fine_detector_label_path", "");
   std::string precision = declare_parameter("fine_detector_precision", "fp32");
+  const uint8_t gpu_id = declare_parameter("gpu_id", 0);
   // Objects with a score lower than this value will be ignored.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
   score_thresh_ = declare_parameter("fine_detector_score_thresh", 0.3);
@@ -77,21 +73,28 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
     RCLCPP_ERROR(this->get_logger(), "Could not find tlr id");
   }
 
-  const tensorrt_common::BuildConfig build_config =
-    tensorrt_common::BuildConfig("MinMax", -1, false, false, false, 0.0);
+  const autoware::tensorrt_common::BuildConfig build_config =
+    autoware::tensorrt_common::BuildConfig("MinMax", -1, false, false, false, 0.0);
 
   const bool cuda_preprocess = true;
   const std::string calib_image_list = "";
   const double scale = 1.0;
   const std::string cache_dir = "";
-  nvinfer1::Dims input_dim = tensorrt_common::get_input_dims(model_path);
+  nvinfer1::Dims input_dim = autoware::tensorrt_common::get_input_dims(model_path);
   assert(input_dim.d[0] > 0);
   batch_size_ = input_dim.d[0];
-  const tensorrt_common::BatchConfig batch_config{batch_size_, batch_size_, batch_size_};
+  const autoware::tensorrt_common::BatchConfig batch_config{batch_size_, batch_size_, batch_size_};
 
   trt_yolox_ = std::make_unique<autoware::tensorrt_yolox::TrtYoloX>(
     model_path, precision, num_class, score_thresh_, nms_threshold, build_config, cuda_preprocess,
-    calib_image_list, scale, cache_dir, batch_config);
+    gpu_id, calib_image_list, scale, cache_dir, batch_config);
+
+  if (!trt_yolox_->isGPUInitialized()) {
+    RCLCPP_ERROR(this->get_logger(), "GPU %d does not exist or is not suitable.", gpu_id);
+    rclcpp::shutdown();
+    return;
+  }
+  RCLCPP_INFO(this->get_logger(), "GPU %d is selected for the inference!", gpu_id);
 
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(
