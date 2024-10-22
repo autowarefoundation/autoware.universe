@@ -324,15 +324,14 @@ std::vector<double> calc_acceleration_values(
 {
   if (min_accel > max_accel) return {};
 
-  if (max_accel - min_accel < std::numeric_limits<double>::epsilon()) {
+  if (max_accel - min_accel < eps) {
     return {min_accel};
   }
 
   const auto resolution = std::abs(max_accel - min_accel) / sampling_num;
 
   std::vector<double> sampled_values{min_accel};
-  for (double accel = min_accel + resolution;
-       accel < max_accel + std::numeric_limits<double>::epsilon(); accel += resolution) {
+  for (double accel = min_accel + resolution; accel < max_accel + eps; accel += resolution) {
     // check whether if we need to add 0.0
     if (sampled_values.back() < -eps && accel > eps) {
       sampled_values.push_back(0.0);
@@ -350,39 +349,33 @@ std::vector<double> calc_lon_acceleration_samples(
   const double prepare_duration)
 {
   const auto & transient_data = common_data_ptr->transient_data;
+  const auto & current_pose = common_data_ptr->get_ego_pose();
+  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  const auto goal_pose = common_data_ptr->route_handler_ptr->getGoalPose();
   const auto sampling_num = common_data_ptr->lc_param_ptr->longitudinal_acc_sampling_num;
 
   const auto [min_accel, max_accel] =
     calc_min_max_acceleration(common_data_ptr, max_path_velocity, prepare_duration);
 
-  if (max_accel < 0.0) {
+  const auto is_sampling_required = std::invoke([&]() -> bool {
+    if (max_accel < 0.0 || transient_data.is_ego_stuck) return true;
+
+    const auto max_dist_buffer = transient_data.current_dist_buffer.max;
+    if (max_dist_buffer > transient_data.dist_to_terminal_end) return true;
+
+    const auto dist_to_target_lane_end =
+      common_data_ptr->lanes_ptr->target_lane_in_goal_section
+        ? utils::getSignedDistance(current_pose, goal_pose, target_lanes)
+        : utils::getDistanceToEndOfLane(current_pose, target_lanes);
+
+    return max_dist_buffer >= dist_to_target_lane_end;
+  });
+
+  if (is_sampling_required) {
     return calc_acceleration_values(min_accel, max_accel, sampling_num);
   }
 
-  const auto max_dist_buffer = transient_data.current_dist_buffer.max;
-
-  if (max_dist_buffer > transient_data.dist_to_terminal_end) {
-    return calc_acceleration_values(min_accel, max_accel, sampling_num);
-  }
-
-  if (transient_data.is_ego_stuck) {
-    return calc_acceleration_values(min_accel, max_accel, sampling_num);
-  }
-
-  const auto & current_pose = common_data_ptr->get_ego_pose();
-  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
-  const auto goal_pose = common_data_ptr->route_handler_ptr->getGoalPose();
-
-  // does it make sense to use target lane for goal section check?
-  if (common_data_ptr->lanes_ptr->target_lane_in_goal_section) {
-    if (max_dist_buffer < utils::getSignedDistance(current_pose, goal_pose, target_lanes)) {
-      return {max_accel};
-    }
-  } else if (max_dist_buffer < utils::getDistanceToEndOfLane(current_pose, target_lanes)) {
-    return {max_accel};
-  }
-
-  return calc_acceleration_values(min_accel, max_accel, sampling_num);
+  return {max_accel};
 }
 
 double calc_lane_changing_acceleration(

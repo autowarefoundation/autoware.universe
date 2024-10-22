@@ -314,9 +314,9 @@ TurnSignalInfo NormalLaneChange::get_terminal_turn_signal_info() const
   const auto terminal_turn_signal_info =
     get_turn_signal(*start_pose, getLaneChangePath().info.lane_changing_end);
 
-  const double nearest_dist_threshold = common_param.ego_nearest_dist_threshold;
-  const double nearest_yaw_threshold = common_param.ego_nearest_yaw_threshold;
-  const size_t current_nearest_seg_idx = common_data_ptr_->transient_data.current_path_seg_idx;
+  const auto nearest_dist_threshold = common_param.ego_nearest_dist_threshold;
+  const auto nearest_yaw_threshold = common_param.ego_nearest_yaw_threshold;
+  const auto current_nearest_seg_idx = common_data_ptr_->transient_data.current_path_seg_idx;
 
   return getTurnSignalDecider().overwrite_turn_signal(
     path, current_pose, current_nearest_seg_idx, original_turn_signal_info,
@@ -1193,6 +1193,7 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_prepare_metrics() cons
   const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
   const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
   const auto current_velocity = getEgoVelocity();
+  // set speed limit to be current path velocity;
   const auto max_path_velocity = common_data_ptr_->transient_data.current_path_velocity;
 
   const auto dist_to_target_start =
