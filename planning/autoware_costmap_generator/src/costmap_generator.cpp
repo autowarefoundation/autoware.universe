@@ -192,18 +192,10 @@ CostmapGeneratorNode::CostmapGeneratorNode(const rclcpp::NodeOptions & node_opti
     rclcpp::sleep_for(std::chrono::milliseconds(5000));
   }
 
-  // Subscribers
-  using std::placeholders::_1;
-  sub_objects_ = this->create_subscription<autoware_perception_msgs::msg::PredictedObjects>(
-    "~/input/objects", 1, std::bind(&CostmapGeneratorNode::onObjects, this, _1));
-  sub_points_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "~/input/points_no_ground", rclcpp::SensorDataQoS(),
-    std::bind(&CostmapGeneratorNode::onPoints, this, _1));
+  // Lanelet map subscriber
   sub_lanelet_bin_map_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&CostmapGeneratorNode::onLaneletMapBin, this, _1));
-  sub_scenario_ = this->create_subscription<tier4_planning_msgs::msg::Scenario>(
-    "~/input/scenario", 1, std::bind(&CostmapGeneratorNode::onScenario, this, _1));
+    std::bind(&CostmapGeneratorNode::onLaneletMapBin, this, std::placeholders::_1));
 
   // Publishers
   pub_costmap_ = this->create_publisher<grid_map_msgs::msg::GridMap>("~/output/grid_map", 1);
@@ -280,24 +272,17 @@ void CostmapGeneratorNode::onLaneletMapBin(
   }
 }
 
-void CostmapGeneratorNode::onObjects(
-  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
+void CostmapGeneratorNode::update_data()
 {
-  objects_ = msg;
-}
-
-void CostmapGeneratorNode::onPoints(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
-{
-  points_ = msg;
-}
-
-void CostmapGeneratorNode::onScenario(const tier4_planning_msgs::msg::Scenario::ConstSharedPtr msg)
-{
-  scenario_ = msg;
+  objects_ = sub_objects_.takeData();
+  points_ = sub_points_.takeData();
+  scenario_ = sub_scenario_.takeData();
 }
 
 void CostmapGeneratorNode::onTimer()
 {
+  update_data();
+
   autoware::universe_utils::ScopedTimeTrack scoped_time_track(__func__, *time_keeper_);
   stop_watch.tic();
   if (!isActive()) {
@@ -406,12 +391,11 @@ grid_map::Matrix CostmapGeneratorNode::generatePointsCostmap(
   return points_costmap;
 }
 
-autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr transformObjects(
-  const tf2_ros::Buffer & tf_buffer,
-  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects,
+PredictedObjects::ConstSharedPtr transformObjects(
+  const tf2_ros::Buffer & tf_buffer, const PredictedObjects::ConstSharedPtr in_objects,
   const std::string & target_frame_id, const std::string & src_frame_id)
 {
-  auto objects = new autoware_perception_msgs::msg::PredictedObjects();
+  auto objects = new PredictedObjects();
   *objects = *in_objects;
   objects->header.frame_id = target_frame_id;
 
@@ -429,11 +413,11 @@ autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr transformObjects
     object.kinematics.initial_pose_with_covariance.pose = output_stamped.pose;
   }
 
-  return autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr(objects);
+  return PredictedObjects::ConstSharedPtr(objects);
 }
 
 grid_map::Matrix CostmapGeneratorNode::generateObjectsCostmap(
-  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects)
+  const PredictedObjects::ConstSharedPtr in_objects)
 {
   const auto object_frame = in_objects->header.frame_id;
   const auto transformed_objects =
