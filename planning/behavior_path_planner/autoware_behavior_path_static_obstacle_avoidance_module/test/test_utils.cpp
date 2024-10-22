@@ -18,6 +18,7 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware_test_utils/autoware_test_utils.hpp"
 
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
@@ -39,26 +40,6 @@ using autoware::universe_utils::deg2rad;
 using autoware::universe_utils::generateUUID;
 
 constexpr double epsilon = 1e-6;
-
-PathWithLaneId create_test_path()
-{
-  constexpr double interval_distance = 1.0;
-
-  const auto pose = geometry_msgs::build<geometry_msgs::msg::Pose>()
-                      .position(createPoint(0.0, 0.0, 0.0))
-                      .orientation(createQuaternionFromRPY(0.0, 0.0, 0.0));
-
-  PathWithLaneId traj;
-  for (double s = 0.0; s <= 50.0 * interval_distance; s += interval_distance) {
-    PathPointWithLaneId p;
-    p.point.pose = pose;
-    p.point.pose.position.x += s;
-    p.point.longitudinal_velocity_mps = 20.0;  // m/s
-    traj.points.push_back(p);
-  }
-
-  return traj;
-}
 
 ObjectData create_test_object(
   const Pose & pose, const Vector3 & velocity, const Shape & shape, const uint8_t type)
@@ -334,7 +315,8 @@ TEST(TestUtils, isNoNeedAvoidanceBehavior)
 {
   const auto parameters = get_parameters();
 
-  const auto path = create_test_path();
+  const auto path = autoware::test_utils::generateTrajectory<PathWithLaneId>(
+    50L, 1.0, 20.0, 0.0, 0.0, std::numeric_limits<size_t>::max());
 
   const auto object_pose = geometry_msgs::build<geometry_msgs::msg::Pose>()
                              .position(createPoint(0.0, 0.0, 0.0))
@@ -519,7 +501,8 @@ TEST(TestUtils, isSatisfiedWithCommonCondition)
 {
   constexpr double forward_detection_range = 5.5;
 
-  const auto path = create_test_path();
+  const auto path = autoware::test_utils::generateTrajectory<PathWithLaneId>(
+    50L, 1.0, 20.0, 0.0, 0.0, std::numeric_limits<size_t>::max());
 
   const auto parameters = get_parameters();
 
@@ -830,7 +813,8 @@ TEST(TestUtils, insertDecelPoint)
 {
   // invalid target decel point
   {
-    auto path = create_test_path();
+    auto path = autoware::test_utils::generateTrajectory<PathWithLaneId>(
+      50L, 1.0, 20.0, 0.0, 0.0, std::numeric_limits<size_t>::max());
 
     const auto ego_position = createPoint(2.5, 0.5, 0.0);
     constexpr double offset = 100.0;
@@ -847,7 +831,8 @@ TEST(TestUtils, insertDecelPoint)
 
   // nominal case
   {
-    auto path = create_test_path();
+    auto path = autoware::test_utils::generateTrajectory<PathWithLaneId>(
+      50L, 1.0, 20.0, 0.0, 0.0, std::numeric_limits<size_t>::max());
 
     const auto ego_position = createPoint(3.5, 0.5, 0.0);
     constexpr double offset = 3.0;
@@ -973,7 +958,8 @@ TEST(TestUtils, fillObjectMovingTime)
 
 TEST(TestUtils, calcEnvelopeOverhangDistance)
 {
-  const auto path = create_test_path();
+  const auto path = autoware::test_utils::generateTrajectory<PathWithLaneId>(
+    50L, 1.0, 20.0, 0.0, 0.0, std::numeric_limits<size_t>::max());
 
   const auto object_pose = geometry_msgs::build<geometry_msgs::msg::Pose>()
                              .position(createPoint(0.0, 0.0, 0.0))
@@ -1158,7 +1144,8 @@ TEST(TestUtils, generateObstaclePolygonsForDrivableArea)
 
 TEST(TestUtils, fillLongitudinalAndLengthByClosestEnvelopeFootprint)
 {
-  const auto path = create_test_path();
+  const auto path = autoware::test_utils::generateTrajectory<PathWithLaneId>(
+    50L, 1.0, 20.0, 0.0, 0.0, std::numeric_limits<size_t>::max());
 
   const auto object_pose = geometry_msgs::build<geometry_msgs::msg::Pose>()
                              .position(createPoint(2.5, 1.0, 0.0))
@@ -1186,7 +1173,8 @@ TEST(TestUtils, fillLongitudinalAndLengthByClosestEnvelopeFootprint)
 
 TEST(TestUtils, fillObjectEnvelopePolygon)
 {
-  const auto path = create_test_path();
+  const auto path = autoware::test_utils::generateTrajectory<PathWithLaneId>(
+    50L, 1.0, 20.0, 0.0, 0.0, std::numeric_limits<size_t>::max());
 
   const auto parameters = get_parameters();
 
