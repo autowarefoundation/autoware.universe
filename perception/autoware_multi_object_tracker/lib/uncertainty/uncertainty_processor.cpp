@@ -147,12 +147,13 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
 
   // ego motion uncertainty, velocity multiplied by time uncertainty
   const double ego_yaw = tf2::getYaw(odom_pose.orientation);
-  // const double dt = (odometry.header.stamp - detected_objects.header.stamp).seconds();
-  const double dt = 0.01;  // temporary value
+  const double dt =
+    (rclcpp::Time(odometry.header.stamp) - rclcpp::Time(detected_objects.header.stamp)).seconds();
+  const double dt2 = dt * dt;
   Eigen::MatrixXd m_rot_ego = Eigen::Rotation2D(ego_yaw).toRotationMatrix();
   Eigen::MatrixXd m_cov_motion = Eigen::MatrixXd(2, 2);
-  m_cov_motion << odom_twist.linear.x * odom_twist.linear.x * dt * dt, 0, 0,
-    odom_twist.linear.y * odom_twist.linear.y * dt * dt;
+  m_cov_motion << odom_twist.linear.x * odom_twist.linear.x * dt2, 0, 0,
+    odom_twist.linear.y * odom_twist.linear.y * dt2;
 
   // ego position uncertainty, position covariance + motion covariance
   Eigen::MatrixXd m_cov_ego_pose = Eigen::MatrixXd(2, 2);
@@ -161,7 +162,7 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
 
   // ego yaw uncertainty, position covariance + yaw motion covariance
   const double & cov_ego_yaw = odom_pose_cov[35];
-  const double cov_yaw = cov_ego_yaw + odom_twist.angular.z * odom_twist.angular.z * dt * dt;
+  const double cov_yaw = cov_ego_yaw + odom_twist.angular.z * odom_twist.angular.z * dt2;
 
   // ego velocity uncertainty, velocity covariance
   Eigen::MatrixXd m_cov_ego_twist = Eigen::MatrixXd(2, 2);

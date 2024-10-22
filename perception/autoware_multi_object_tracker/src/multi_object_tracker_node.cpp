@@ -87,6 +87,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
+  consider_odometry_uncertainty_ = declare_parameter<bool>("consider_odometry_uncertainty");
 
   declare_parameter("selected_input_channels", std::vector<std::string>());
   std::vector<std::string> selected_input_channels =
@@ -274,9 +275,12 @@ void MultiObjectTracker::runProcess(
     return;
   }
 
-  // Create a modeled odometry message
-  nav_msgs::msg::Odometry odometry;
-  {
+  // the object uncertainty
+  DetectedObjects input_objects_with_uncertainty = input_objects;
+  if (consider_odometry_uncertainty_) {
+    // Create a modeled odometry message
+    nav_msgs::msg::Odometry odometry;
+    odometry.header.stamp = measurement_time + rclcpp::Duration::from_seconds(0.001);
     auto & odom_pose_cov = odometry.pose.covariance;
     odom_pose_cov[0] = 0.1;     // x-x
     odom_pose_cov[7] = 0.1;     // y-y
@@ -291,11 +295,10 @@ void MultiObjectTracker::runProcess(
     odom_twist_cov[0] = 2.0;     // x-x [m^2/s^2]
     odom_twist_cov[7] = 0.2;     // y-y [m^2/s^2]
     odom_twist_cov[35] = 0.001;  // yaw-yaw [rad^2/s^2]
-  }
-  // Add the odometry uncertainty to the object uncertainty
-  DetectedObjects input_objects_with_uncertainty = input_objects;
-  uncertainty::addOdometryUncertainty(odometry, input_objects_with_uncertainty);
 
+    // Add the odometry uncertainty to the object uncertainty
+    uncertainty::addOdometryUncertainty(odometry, input_objects_with_uncertainty);
+  }
   // Normalize the object uncertainty
   uncertainty::normalizeUncertainty(input_objects_with_uncertainty);
 
