@@ -81,6 +81,7 @@ void CloudCollector::concatenate_callback()
   auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
   if (debug_mode_) {
     std::stringstream log_stream;
+    log_stream << std::fixed << std::setprecision(6);
     log_stream << "Collector's concatenate callback time: "
                << ros2_parent_node_->get_clock()->now().seconds() << " seconds\n";
 
