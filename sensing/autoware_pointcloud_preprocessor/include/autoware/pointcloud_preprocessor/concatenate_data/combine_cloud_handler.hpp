@@ -22,6 +22,7 @@
 #include <vector>
 
 // ROS includes
+#include "autoware_point_types/types.hpp"
 
 #include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -44,6 +45,8 @@
 
 namespace autoware::pointcloud_preprocessor
 {
+using autoware_point_types::PointXYZIRC;
+using point_cloud_msg_wrapper::PointCloud2Modifier;
 
 struct ConcatenatedCloudResult
 {
@@ -76,6 +79,10 @@ private:
       return std::hash<int64_t>()(t.nanoseconds());
     }
   };
+
+  static void convert_to_xyzirc_cloud(
+    const sensor_msgs::msg::PointCloud2::SharedPtr & input_cloud,
+    sensor_msgs::msg::PointCloud2::SharedPtr & xyzirc_cloud);
 
   void correct_pointcloud_motion(
     const std::shared_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,

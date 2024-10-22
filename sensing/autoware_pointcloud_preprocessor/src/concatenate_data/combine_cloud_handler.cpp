@@ -100,6 +100,61 @@ std::deque<geometry_msgs::msg::TwistStamped> CombineCloudHandler::get_twist_queu
   return twist_queue_;
 }
 
+void CombineCloudHandler::convert_to_xyzirc_cloud(
+  const sensor_msgs::msg::PointCloud2::SharedPtr & input_cloud,
+  sensor_msgs::msg::PointCloud2::SharedPtr & xyzirc_cloud)
+{
+  xyzirc_cloud->header = input_cloud->header;
+
+  PointCloud2Modifier<PointXYZIRC, autoware_point_types::PointXYZIRCGenerator> output_modifier{
+    *xyzirc_cloud, input_cloud->header.frame_id};
+  output_modifier.reserve(input_cloud->width);
+
+  bool has_valid_intensity =
+    std::any_of(input_cloud->fields.begin(), input_cloud->fields.end(), [](const auto & field) {
+      return field.name == "intensity" && field.datatype == sensor_msgs::msg::PointField::UINT8;
+    });
+
+  bool has_valid_return_type =
+    std::any_of(input_cloud->fields.begin(), input_cloud->fields.end(), [](const auto & field) {
+      return field.name == "return_type" && field.datatype == sensor_msgs::msg::PointField::UINT8;
+    });
+
+  bool has_valid_channel =
+    std::any_of(input_cloud->fields.begin(), input_cloud->fields.end(), [](const auto & field) {
+      return field.name == "channel" && field.datatype == sensor_msgs::msg::PointField::UINT16;
+    });
+
+  sensor_msgs::PointCloud2Iterator<float> it_x(*input_cloud, "x");
+  sensor_msgs::PointCloud2Iterator<float> it_y(*input_cloud, "y");
+  sensor_msgs::PointCloud2Iterator<float> it_z(*input_cloud, "z");
+
+  if (has_valid_intensity && has_valid_return_type && has_valid_channel) {
+    sensor_msgs::PointCloud2Iterator<std::uint8_t> it_i(*input_cloud, "intensity");
+    sensor_msgs::PointCloud2Iterator<std::uint8_t> it_r(*input_cloud, "return_type");
+    sensor_msgs::PointCloud2Iterator<std::uint16_t> it_c(*input_cloud, "channel");
+
+    for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_i, ++it_r, ++it_c) {
+      PointXYZIRC point;
+      point.x = *it_x;
+      point.y = *it_y;
+      point.z = *it_z;
+      point.intensity = *it_i;
+      point.return_type = *it_r;
+      point.channel = *it_c;
+      output_modifier.push_back(std::move(point));
+    }
+  } else {
+    for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z) {
+      PointXYZIRC point;
+      point.x = *it_x;
+      point.y = *it_y;
+      point.z = *it_z;
+      output_modifier.push_back(std::move(point));
+    }
+  }
+}
+
 void CombineCloudHandler::correct_pointcloud_motion(
   const std::shared_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
   const std::vector<rclcpp::Time> & pc_stamps,
@@ -153,8 +208,14 @@ ConcatenatedCloudResult CombineCloudHandler::combine_pointclouds(
   concatenate_cloud_result.concatenate_cloud_ptr->data.reserve(total_data_size);
 
   for (const auto & [topic, cloud] : topic_to_cloud_map) {
+    // convert to XYZIRC pointcloud if pointcloud is not empty
+    // auto xyzirc_cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
+
+    sensor_msgs::msg::PointCloud2::SharedPtr xyzirc_cloud(new sensor_msgs::msg::PointCloud2());
+    convert_to_xyzirc_cloud(cloud, xyzirc_cloud);
+
     auto transformed_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
-    managed_tf_buffer_->transformPointcloud(output_frame_, *cloud, *transformed_cloud_ptr);
+    managed_tf_buffer_->transformPointcloud(output_frame_, *xyzirc_cloud, *transformed_cloud_ptr);
 
     concatenate_cloud_result.topic_to_original_stamp_map[topic] =
       rclcpp::Time(cloud->header.stamp).seconds();

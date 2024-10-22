@@ -22,7 +22,6 @@
 #include <vector>
 
 // ROS includes
-#include "autoware_point_types/types.hpp"
 #include "cloud_collector.hpp"
 #include "combine_cloud_handler.hpp"
 
@@ -48,10 +47,6 @@
 
 namespace autoware::pointcloud_preprocessor
 {
-
-using autoware_point_types::PointXYZIRC;
-using point_cloud_msg_wrapper::PointCloud2Modifier;
-
 class PointCloudConcatenateDataSynchronizerComponent : public rclcpp::Node
 {
 public:
@@ -125,9 +120,6 @@ private:
   void check_concat_status(diagnostic_updater::DiagnosticStatusWrapper & stat);
   std::string replace_sync_topic_name_postfix(
     const std::string & original_topic_name, const std::string & postfix);
-  static void convert_to_xyzirc_cloud(
-    const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
-    sensor_msgs::msg::PointCloud2::SharedPtr & output_ptr);
 };
 
 }  // namespace autoware::pointcloud_preprocessor

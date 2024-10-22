@@ -209,16 +209,11 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
       this->get_clock()->now().seconds() - rclcpp::Time(input_ptr->header.stamp).seconds());
   }
 
-  sensor_msgs::msg::PointCloud2::SharedPtr xyzirc_input_ptr(new sensor_msgs::msg::PointCloud2());
-  auto input = std::make_shared<sensor_msgs::msg::PointCloud2>(*input_ptr);
-  if (input->data.empty()) {
+  if (input_ptr->data.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
     return;
   }
-
-  // convert to XYZIRC pointcloud if pointcloud is not empty
-  convert_to_xyzirc_cloud(input, xyzirc_input_ptr);
 
   // protect cloud collectors list
   std::unique_lock<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
@@ -368,61 +363,6 @@ void PointCloudConcatenateDataSynchronizerComponent::delete_collector(
     cloud_collectors_.erase(it);
   } else {
     throw std::runtime_error("Try to delete a cloud_collector that is not in the cloud_collectors");
-  }
-}
-
-void PointCloudConcatenateDataSynchronizerComponent::convert_to_xyzirc_cloud(
-  const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
-  sensor_msgs::msg::PointCloud2::SharedPtr & output_ptr)
-{
-  output_ptr->header = input_ptr->header;
-
-  PointCloud2Modifier<PointXYZIRC, autoware_point_types::PointXYZIRCGenerator> output_modifier{
-    *output_ptr, input_ptr->header.frame_id};
-  output_modifier.reserve(input_ptr->width);
-
-  bool has_valid_intensity =
-    std::any_of(input_ptr->fields.begin(), input_ptr->fields.end(), [](const auto & field) {
-      return field.name == "intensity" && field.datatype == sensor_msgs::msg::PointField::UINT8;
-    });
-
-  bool has_valid_return_type =
-    std::any_of(input_ptr->fields.begin(), input_ptr->fields.end(), [](const auto & field) {
-      return field.name == "return_type" && field.datatype == sensor_msgs::msg::PointField::UINT8;
-    });
-
-  bool has_valid_channel =
-    std::any_of(input_ptr->fields.begin(), input_ptr->fields.end(), [](const auto & field) {
-      return field.name == "channel" && field.datatype == sensor_msgs::msg::PointField::UINT16;
-    });
-
-  sensor_msgs::PointCloud2Iterator<float> it_x(*input_ptr, "x");
-  sensor_msgs::PointCloud2Iterator<float> it_y(*input_ptr, "y");
-  sensor_msgs::PointCloud2Iterator<float> it_z(*input_ptr, "z");
-
-  if (has_valid_intensity && has_valid_return_type && has_valid_channel) {
-    sensor_msgs::PointCloud2Iterator<std::uint8_t> it_i(*input_ptr, "intensity");
-    sensor_msgs::PointCloud2Iterator<std::uint8_t> it_r(*input_ptr, "return_type");
-    sensor_msgs::PointCloud2Iterator<std::uint16_t> it_c(*input_ptr, "channel");
-
-    for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_i, ++it_r, ++it_c) {
-      PointXYZIRC point;
-      point.x = *it_x;
-      point.y = *it_y;
-      point.z = *it_z;
-      point.intensity = *it_i;
-      point.return_type = *it_r;
-      point.channel = *it_c;
-      output_modifier.push_back(std::move(point));
-    }
-  } else {
-    for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z) {
-      PointXYZIRC point;
-      point.x = *it_x;
-      point.y = *it_y;
-      point.z = *it_z;
-      output_modifier.push_back(std::move(point));
-    }
   }
 }
 
