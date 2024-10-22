@@ -760,15 +760,15 @@ TEST(TestUtils, isSameDirectionShift)
     ObjectData object;
     object.direction = Direction::RIGHT;
 
-    ASSERT_TRUE(isSameDirectionShift(isOnRight(object), negative_shift_length));
-    ASSERT_FALSE(isSameDirectionShift(isOnRight(object), positive_shift_length));
+    EXPECT_TRUE(isSameDirectionShift(isOnRight(object), negative_shift_length));
+    EXPECT_FALSE(isSameDirectionShift(isOnRight(object), positive_shift_length));
   }
 
   {
     ObjectData object;
     object.direction = Direction::LEFT;
-    ASSERT_TRUE(isSameDirectionShift(isOnRight(object), positive_shift_length));
-    ASSERT_FALSE(isSameDirectionShift(isOnRight(object), negative_shift_length));
+    EXPECT_TRUE(isSameDirectionShift(isOnRight(object), positive_shift_length));
+    EXPECT_FALSE(isSameDirectionShift(isOnRight(object), negative_shift_length));
   }
 
   {
@@ -787,15 +787,15 @@ TEST(TestUtils, isShiftNecessary)
     ObjectData object;
     object.direction = Direction::RIGHT;
 
-    ASSERT_TRUE(isShiftNecessary(isOnRight(object), positive_shift_length));
-    ASSERT_FALSE(isShiftNecessary(isOnRight(object), negative_shift_length));
+    EXPECT_TRUE(isShiftNecessary(isOnRight(object), positive_shift_length));
+    EXPECT_FALSE(isShiftNecessary(isOnRight(object), negative_shift_length));
   }
 
   {
     ObjectData object;
     object.direction = Direction::LEFT;
-    ASSERT_TRUE(isShiftNecessary(isOnRight(object), negative_shift_length));
-    ASSERT_FALSE(isShiftNecessary(isOnRight(object), positive_shift_length));
+    EXPECT_TRUE(isShiftNecessary(isOnRight(object), negative_shift_length));
+    EXPECT_FALSE(isShiftNecessary(isOnRight(object), positive_shift_length));
   }
 
   {
@@ -856,7 +856,7 @@ TEST(TestUtils, insertDecelPoint)
     std::optional<geometry_msgs::msg::Pose> p_out{std::nullopt};
     insertDecelPoint(ego_position, offset, velocity, path, p_out);
 
-    EXPECT_TRUE(p_out.has_value());
+    ASSERT_TRUE(p_out.has_value());
     EXPECT_DOUBLE_EQ(p_out.value().position.x, 6.5);
     EXPECT_DOUBLE_EQ(p_out.value().position.y, 0.0);
     EXPECT_DOUBLE_EQ(p_out.value().position.z, 0.0);
