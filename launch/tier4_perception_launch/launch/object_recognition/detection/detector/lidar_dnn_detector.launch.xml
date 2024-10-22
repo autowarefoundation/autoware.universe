@@ -14,6 +14,7 @@
 
   <!-- TransFusion -->
   <group if="$(eval &quot;'$(var detection_model_name)'=='transfusion'&quot;)">
+    <let name="detection_model_config" value="$(eval &quot;'transfusion' if '' in '$(var detection_model_config)' else '$(var detection_model_config)'&quot;)"/>
     <push-ros-namespace namespace="transfusion"/>
     <arg name="lidar_model_param_path" default="$(find-pkg-share autoware_lidar_transfusion)/config"/>
 

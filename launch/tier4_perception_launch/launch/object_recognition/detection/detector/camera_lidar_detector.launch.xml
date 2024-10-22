@@ -57,6 +57,7 @@
 
   <!-- PointPainting -->
   <group if="$(eval &quot;'$(var detection_model_name)'=='pointpainting'&quot;)">
+    <let name="detection_model_config" value="$(eval &quot;'pointpainting' if '' in '$(var detection_model_config)' else '$(var detection_model_config)'&quot;)"/>
     <push-ros-namespace namespace="pointpainting"/>
     <include file="$(find-pkg-share autoware_image_projection_based_fusion)/launch/pointpainting_fusion.launch.xml">
       <arg name="input/rois_number" value="$(var number_of_cameras)"/>
