@@ -303,6 +303,6 @@ PathWithLaneId loadPathWithLaneIdInYaml()
   const auto yaml_path =
     get_absolute_path_to_config("autoware_test_utils", "path_with_lane_id_data.yaml");
 
-  return parse_path_with_lane_id_file(yaml_path);
+  return parse<PathWithLaneId>(yaml_path);
 }
 }  // namespace autoware::test_utils

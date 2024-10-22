@@ -18,8 +18,12 @@
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "autoware_test_utils/mock_data_parser.hpp"
 
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+
 namespace autoware::test_utils
 {
+using tier4_planning_msgs::msg::PathWithLaneId;
+
 // Example YAML structure as a string for testing
 const char g_complete_yaml[] = R"(
 start_pose:
@@ -58,8 +62,8 @@ TEST(ParseFunctions, CompleteYAMLTest)
   YAML::Node config = YAML::Load(g_complete_yaml);
 
   // Test parsing of start_pose and goal_pose
-  Pose start_pose = parse_pose(config["start_pose"]);
-  Pose goal_pose = parse_pose(config["goal_pose"]);
+  Pose start_pose = parse<Pose>(config["start_pose"]);
+  Pose goal_pose = parse<Pose>(config["goal_pose"]);
 
   EXPECT_DOUBLE_EQ(start_pose.position.x, 1.0);
   EXPECT_DOUBLE_EQ(start_pose.position.y, 2.0);
@@ -79,7 +83,7 @@ TEST(ParseFunctions, CompleteYAMLTest)
   EXPECT_DOUBLE_EQ(goal_pose.orientation.w, 0.8);
 
   // Test parsing of segments
-  std::vector<LaneletSegment> segments = parse_segments(config["segments"]);
+  const auto segments = parse<std::vector<LaneletSegment>>(config["segments"]);
   ASSERT_EQ(
     segments.size(), uint64_t(1));  // Assuming only one segment in the provided YAML for this test
 
@@ -99,7 +103,7 @@ TEST(ParseFunction, CompleteFromFilename)
   const auto parser_test_route =
     autoware_test_utils_dir + "/test_data/lanelet_route_parser_test.yaml";
 
-  const auto lanelet_route = parse_lanelet_route_file(parser_test_route);
+  const auto lanelet_route = parse<LaneletRoute>(parser_test_route);
   EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.x, 1.0);
   EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.y, 2.0);
   EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.z, 3.0);
@@ -140,7 +144,7 @@ TEST(ParseFunction, ParsePathWithLaneID)
   const auto parser_test_path =
     autoware_test_utils_dir + "/test_data/path_with_lane_id_parser_test.yaml";
 
-  const auto path = parse_path_with_lane_id_file(parser_test_path);
+  const auto path = parse<PathWithLaneId>(parser_test_path);
   EXPECT_EQ(path.header.stamp.sec, 20);
   EXPECT_EQ(path.header.stamp.nanosec, 5);
 
