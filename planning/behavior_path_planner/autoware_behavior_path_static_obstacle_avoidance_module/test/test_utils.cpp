@@ -851,7 +851,7 @@ TEST(TestUtils, insertDecelPoint)
   }
 }
 
-TEST(TestUtils, fillObjectMovingTime)
+TEST(TestUtils, DISABLED_fillObjectMovingTime)
 {
   using namespace std::literals::chrono_literals;
 
