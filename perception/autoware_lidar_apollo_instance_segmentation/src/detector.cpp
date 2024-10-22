@@ -47,8 +47,8 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
   z_offset_ = node_->declare_parameter<float>("z_offset", -2.0);
   const auto precision = node_->declare_parameter("precision", "fp32");
 
-  trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
-    onnx_file, precision, nullptr, tensorrt_common::BatchConfig{1, 1, 1}, 1 << 30);
+  trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
+    onnx_file, precision, nullptr, autoware::tensorrt_common::BatchConfig{1, 1, 1}, 1 << 30);
   trt_common_->setup();
 
   if (!trt_common_->isInitialized()) {
