@@ -374,7 +374,7 @@ TEST(TestUtils, isNoNeedAvoidanceBehavior)
     EXPECT_EQ(object_data.info, ObjectInfo::ENOUGH_LATERAL_DISTANCE);
   }
 
-  // larger than execution threshold.
+  // smaller than execution threshold.
   {
     object_data.object.kinematics.initial_pose_with_covariance.pose =
       geometry_msgs::build<geometry_msgs::msg::Pose>()
