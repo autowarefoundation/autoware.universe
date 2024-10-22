@@ -21,6 +21,8 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
+#include "autoware_planning_msgs/msg/lanelet_route.hpp"
+
 #include <gtest/gtest.h>
 
 #include <memory>
@@ -38,6 +40,7 @@ using autoware::test_utils::get_absolute_path_to_config;
 using autoware::test_utils::get_absolute_path_to_lanelet_map;
 using autoware::test_utils::get_absolute_path_to_route;
 using autoware_map_msgs::msg::LaneletMapBin;
+using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::Pose;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
@@ -116,7 +119,7 @@ public:
     auto route_handler_ptr = std::make_shared<RouteHandler>(map_bin_msg);
     const auto rh_test_route =
       get_absolute_path_to_route(autoware_route_handler_dir, lane_change_right_test_route_filename);
-    route_handler_ptr->setRoute(autoware::test_utils::parse_lanelet_route_file(rh_test_route));
+    route_handler_ptr->setRoute(autoware::test_utils::parse<LaneletRoute>(rh_test_route));
 
     return route_handler_ptr;
   }
