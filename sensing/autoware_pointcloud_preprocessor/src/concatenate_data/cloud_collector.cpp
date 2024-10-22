@@ -73,13 +73,8 @@ void CloudCollector::process_pointcloud(
 
 void CloudCollector::concatenate_callback()
 {
-  // All pointclouds are received or the timer has timed out, cancel the timer and concatenate the
-  // pointclouds in the collector.
-  auto time_until_trigger = timer_->time_until_trigger();
-  timer_->cancel();
-
-  auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
   if (debug_mode_) {
+    auto time_until_trigger = timer_->time_until_trigger();
     std::stringstream log_stream;
     log_stream << std::fixed << std::setprecision(6);
     log_stream << "Collector's concatenate callback time: "
@@ -91,17 +86,23 @@ void CloudCollector::concatenate_callback()
     log_stream << "Time until trigger: " << (time_until_trigger.count() / 1e9) << " seconds\n";
 
     log_stream << "Pointclouds: [";
-    for (auto it = concatenated_cloud_result.topic_to_original_stamp_map.begin();
-         it != concatenated_cloud_result.topic_to_original_stamp_map.end(); ++it) {
-      log_stream << "[" << it->first << ", " << it->second << "]";
-      if (std::next(it) != concatenated_cloud_result.topic_to_original_stamp_map.end()) {
-        log_stream << ", ";
-      }
+    std::string separator = "";
+    for (const auto & [topic, cloud] : topic_to_cloud_map_) {
+      log_stream << separator;
+      log_stream << "[" << topic << ", " << rclcpp::Time(cloud->header.stamp).seconds() << "]";
+      separator = ", ";
     }
+
     log_stream << "]\n";
 
     RCLCPP_INFO(ros2_parent_node_->get_logger(), "%s", log_stream.str().c_str());
   }
+
+  // All pointclouds are received or the timer has timed out, cancel the timer and concatenate the
+  // pointclouds in the collector.
+  timer_->cancel();
+
+  auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
 
   ros2_parent_node_->publish_clouds(
     std::move(concatenated_cloud_result), reference_timestamp_min_, reference_timestamp_max_);
