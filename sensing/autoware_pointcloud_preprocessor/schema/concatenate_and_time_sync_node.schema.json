@@ -6,6 +6,11 @@
     "concatenate_and_time_sync_node": {
       "type": "object",
       "properties": {
+        "debug_mode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Flag to enables debug mode to display additional logging information."
+        },
         "has_static_tf_only": {
           "type": "boolean",
           "default": false,
@@ -17,7 +22,7 @@
           "description": "Flag to indicate whether the user is replaying the rosbag in loops without relaunching the node."
         },
         "rosbag_length": {
-          "type": "boolean",
+          "type": "number",
           "default": 20.0,
           "minimum": 0.0,
           "description": "If rosbag_replay is enabled, this value helps the node determine if the rosbag has started from the beginning again. The value should be set slightly smaller (by 2-3 seconds) than the actual length of the bag."
@@ -103,6 +108,7 @@
         }
       },
       "required": [
+        "debug_mode",
         "has_static_tf_only",
         "rosbag_replay",
         "rosbag_length",
