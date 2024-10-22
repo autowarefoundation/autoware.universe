@@ -87,7 +87,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
-  consider_odometry_uncertainty_ = declare_parameter<bool>("consider_odometry_uncertainty");
+  enable_odometry_uncertainty_ = declare_parameter<bool>("consider_odometry_uncertainty");
 
   declare_parameter("selected_input_channels", std::vector<std::string>());
   std::vector<std::string> selected_input_channels =
@@ -277,7 +277,7 @@ void MultiObjectTracker::runProcess(
 
   // the object uncertainty
   DetectedObjects input_objects_with_uncertainty = input_objects;
-  if (consider_odometry_uncertainty_) {
+  if (enable_odometry_uncertainty_) {
     // Create a modeled odometry message
     nav_msgs::msg::Odometry odometry;
     odometry.header.stamp = measurement_time + rclcpp::Duration::from_seconds(0.001);
