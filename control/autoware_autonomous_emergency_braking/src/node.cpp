@@ -467,7 +467,9 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       use_pointcloud_data_ && points_belonging_to_cluster_hulls &&
       !points_belonging_to_cluster_hulls->empty()) {
       const auto current_time = obstacle_ros_pointcloud_ptr_->header.stamp;
-      getClosestObjectsOnPath(path, current_time, points_belonging_to_cluster_hulls, objects);
+      const bool ego_moves_forward = current_v > 0.0;
+      getClosestObjectsOnPath(
+        path, current_time, points_belonging_to_cluster_hulls, objects, ego_moves_forward);
     }
     if (use_predicted_object_data_) {
       createObjectDataUsingPredictedObjects(path, ego_polys, objects);
@@ -642,7 +644,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   ini_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
   path.push_back(ini_pose);
   const double & dt = imu_prediction_time_interval_;
-  const double distance_between_points = curr_v * dt;
+  const double distance_between_points = std::abs(curr_v) * dt;
   constexpr double minimum_distance_between_points{1e-2};
   // if current velocity is too small, assume it stops at the same point
   // if distance between points is too small, arc length calculation is unreliable, so we skip
@@ -880,7 +882,8 @@ void AEB::getPointsBelongingToClusterHulls(
 
 void AEB::getClosestObjectsOnPath(
   const Path & ego_path, const rclcpp::Time & stamp,
-  const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects)
+  const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects,
+  const bool ego_moves_forward)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   // check if the predicted path has a valid number of points
@@ -916,8 +919,7 @@ void AEB::getClosestObjectsOnPath(
 
     // If the object is behind the ego, we need to use the backward long offset. The distance should
     // be a positive number in any case
-    const bool is_object_in_front_of_ego = obj_arc_length > 0.0;
-    const double dist_ego_to_object = (is_object_in_front_of_ego)
+    const double dist_ego_to_object = (ego_moves_forward)
                                         ? obj_arc_length - vehicle_info_.max_longitudinal_offset_m
                                         : obj_arc_length + vehicle_info_.min_longitudinal_offset_m;
 
