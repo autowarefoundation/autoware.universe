@@ -16,6 +16,7 @@
 #define AUTOWARE__PLANNING_VALIDATOR__PLANNING_VALIDATOR_HPP_
 
 #include "autoware/planning_validator/debug_marker.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
@@ -26,6 +27,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -36,7 +38,10 @@
 
 namespace autoware::planning_validator
 {
+using autoware::universe_utils::Polygon2d;
 using autoware::universe_utils::StopWatch;
+using autoware::vehicle_info_utils::VehicleInfo;
+using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using autoware_planning_validator::msg::PlanningValidatorStatus;
@@ -86,6 +91,26 @@ public:
   bool checkValidDistanceDeviation(const Trajectory & trajectory);
   bool checkValidLongitudinalDistanceDeviation(const Trajectory & trajectory);
   bool checkValidForwardTrajectoryLength(const Trajectory & trajectory);
+  bool checkValidNoCollision(const Trajectory & trajectory);
+  /**
+   * @brief Check for potential collisions between the ego vehicle's planned trajectory and the
+   * predicted paths of nearby objects.
+   * This function considers the highest confidence predicted path for each object within a
+   * specified distance threshold and performs collision detection over time.
+   * @param predicted_objects List of predicted objects with their predicted paths.
+   * @param trajectory Planned trajectory of the ego vehicle.
+   * @param current_ego_position Current position of the ego vehicle.
+   * @param vehicle_info Information about the ego vehicle (e.g., dimensions).
+   * @param collision_check_distance_threshold Maximum distance to consider objects for collision
+   * checking.
+   * @return True if a potential collision is detected; false otherwise.
+   */
+  bool checkCollision(
+    const PredictedObjects & objects, const Trajectory & trajectory,
+    const geometry_msgs::msg::Point & current_ego_point, const VehicleInfo & vehicle_info,
+    const double collision_check_distance_threshold = 10.0);
+  Polygon2d createVehicleFootprintPolygon(
+    const geometry_msgs::msg::Pose & pose, const VehicleInfo & vehicle_info);
 
 private:
   void setupDiag();
@@ -105,6 +130,8 @@ private:
 
   autoware::universe_utils::InterProcessPollingSubscriber<Odometry> sub_kinematics_{
     this, "~/input/kinematics"};
+  autoware::universe_utils::InterProcessPollingSubscriber<PredictedObjects> sub_obj_{
+    this, "~/input/objects"};
   rclcpp::Subscription<Trajectory>::SharedPtr sub_traj_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_traj_;
   rclcpp::Publisher<PlanningValidatorStatus>::SharedPtr pub_status_;
@@ -126,7 +153,7 @@ private:
   PlanningValidatorStatus validation_status_;
   ValidationParams validation_params_;  // for thresholds
 
-  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
+  VehicleInfo vehicle_info_;
 
   bool isAllValid(const PlanningValidatorStatus & status) const;
 
@@ -134,6 +161,7 @@ private:
   Trajectory::ConstSharedPtr previous_published_trajectory_;
 
   Odometry::ConstSharedPtr current_kinematics_;
+  PredictedObjects::ConstSharedPtr current_objects_;
 
   std::shared_ptr<PlanningValidatorDebugMarkerPublisher> debug_pose_publisher_;
 
