@@ -158,7 +158,7 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
   // ego position uncertainty, position covariance + motion covariance
   Eigen::MatrixXd m_cov_ego_pose = Eigen::MatrixXd(2, 2);
   m_cov_ego_pose << odom_pose_cov[0], odom_pose_cov[1], odom_pose_cov[6], odom_pose_cov[7];
-  m_cov_ego_pose = m_cov_ego_pose + m_rot_ego.transpose() * m_cov_motion * m_rot_ego;
+  m_cov_ego_pose = m_cov_ego_pose + m_rot_ego * m_cov_motion * m_rot_ego.transpose();
 
   // ego yaw uncertainty, position covariance + yaw motion covariance
   const double & cov_ego_yaw = odom_pose_cov[35];
@@ -178,7 +178,7 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
       object_pose_cov[XYZRPY_COV_IDX::Y_X], object_pose_cov[XYZRPY_COV_IDX::Y_Y];
     const double dx = object_pose.position.x - odom_pose.position.x;
     const double dy = object_pose.position.y - odom_pose.position.y;
-    const double r = std::sqrt(dx * dx + dy * dy);
+    const double r2 = dx * dx + dy * dy;
     const double theta = std::atan2(dy, dx);
 
     // 1-a. add odometry position uncertainty to the object position covariance
@@ -190,7 +190,7 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
       // uncertainty is proportional to the distance between the object and the odometry
       // and the uncertainty orientation is vertical to the vector of the odometry position to the
       // object
-      const double cov_by_yaw = cov_ego_yaw * r * r;
+      const double cov_by_yaw = cov_ego_yaw * r2;
       // rotate the covariance matrix, add the yaw uncertainty, and rotate back
       Eigen::MatrixXd m_rot_theta = Eigen::Rotation2D(theta).toRotationMatrix();
       Eigen::MatrixXd m_cov_rot = m_rot_theta.transpose() * m_pose_cov * m_rot_theta;
@@ -219,7 +219,7 @@ void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detecte
 
     // 2-b. add odometry yaw rate uncertainty to the object linear twist covariance
     {
-      const double cov_by_yaw_rate = cov_yaw_rate * r * r;
+      const double cov_by_yaw_rate = cov_yaw_rate * r2;
       Eigen::MatrixXd m_rot_theta = Eigen::Rotation2D(theta).toRotationMatrix();
       Eigen::MatrixXd m_twist_cov_rot = m_rot_theta.transpose() * m_twist_cov * m_rot_theta;
       m_twist_cov_rot(1, 1) += cov_by_yaw_rate;  // yaw rate uncertainty is added to y-y element
