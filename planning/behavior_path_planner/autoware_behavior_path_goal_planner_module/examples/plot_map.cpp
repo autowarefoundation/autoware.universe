@@ -329,7 +329,7 @@ std::vector<PullOverPath> selectPullOverPaths(
   }
 
   std::vector<PullOverPath> selected;
-  for (const auto & sorted_indice : sorted_path_indices) {
+  for (const auto & sorted_index : sorted_path_indices) {
     selected.push_back(pull_over_path_candidates.at(sorted_indice));
   }
 
