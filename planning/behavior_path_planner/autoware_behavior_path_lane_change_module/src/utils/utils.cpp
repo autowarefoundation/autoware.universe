@@ -14,10 +14,8 @@
 
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
 
-#include "autoware/behavior_path_lane_change_module/utils/calculation.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/path.hpp"
-#include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 #include "autoware/behavior_path_planner_common/parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
@@ -52,7 +50,6 @@
 #include <iterator>
 #include <limits>
 #include <memory>
-#include <numeric>
 #include <optional>
 #include <string>
 #include <vector>
@@ -61,7 +58,6 @@ namespace autoware::behavior_path_planner::utils::lane_change
 {
 using autoware::route_handler::RouteHandler;
 using autoware::universe_utils::LineString2d;
-using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -93,34 +89,14 @@ double calcLaneChangeResampleInterval(
     lane_changing_length / min_resampling_points, lane_changing_velocity * resampling_dt);
 }
 
-double calcMinimumAcceleration(
-  const double current_velocity, const double min_longitudinal_acc,
-  const LaneChangeParameters & lane_change_parameters)
-{
-  const double min_lane_changing_velocity = lane_change_parameters.minimum_lane_changing_velocity;
-  const double prepare_duration = lane_change_parameters.lane_change_prepare_duration;
-  const double acc = (min_lane_changing_velocity - current_velocity) / prepare_duration;
-  return std::clamp(acc, -std::abs(min_longitudinal_acc), -std::numeric_limits<double>::epsilon());
-}
-
-double calcMaximumAcceleration(
-  const double current_velocity, const double current_max_velocity,
-  const double max_longitudinal_acc, const LaneChangeParameters & lane_change_parameters)
-{
-  const double prepare_duration = lane_change_parameters.lane_change_prepare_duration;
-  const double acc = (current_max_velocity - current_velocity) / prepare_duration;
-  return std::clamp(acc, 0.0, max_longitudinal_acc);
-}
-
 void setPrepareVelocity(
   PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity)
 {
   if (current_velocity < prepare_velocity) {
     // acceleration
-    for (size_t i = 0; i < prepare_segment.points.size(); ++i) {
-      prepare_segment.points.at(i).point.longitudinal_velocity_mps = std::min(
-        prepare_segment.points.at(i).point.longitudinal_velocity_mps,
-        static_cast<float>(prepare_velocity));
+    for (auto & point : prepare_segment.points) {
+      point.point.longitudinal_velocity_mps =
+        std::min(point.point.longitudinal_velocity_mps, static_cast<float>(prepare_velocity));
     }
   } else {
     // deceleration
@@ -130,36 +106,7 @@ void setPrepareVelocity(
   }
 }
 
-std::vector<double> getAccelerationValues(
-  const double min_acc, const double max_acc, const size_t sampling_num)
-{
-  if (min_acc > max_acc) {
-    return {};
-  }
-
-  if (max_acc - min_acc < std::numeric_limits<double>::epsilon()) {
-    return {min_acc};
-  }
-
-  constexpr double epsilon = 0.001;
-  const auto resolution = std::abs(max_acc - min_acc) / sampling_num;
-
-  std::vector<double> sampled_values{min_acc};
-  for (double sampled_acc = min_acc + resolution;
-       sampled_acc < max_acc + std::numeric_limits<double>::epsilon(); sampled_acc += resolution) {
-    // check whether if we need to add 0.0
-    if (sampled_values.back() < -epsilon && sampled_acc > epsilon) {
-      sampled_values.push_back(0.0);
-    }
-
-    sampled_values.push_back(sampled_acc);
-  }
-  std::reverse(sampled_values.begin(), sampled_values.end());
-
-  return sampled_values;
-}
-
-lanelet::ConstLanelets getTargetNeighborLanes(
+lanelet::ConstLanelets get_target_neighbor_lanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType & type)
 {
@@ -430,7 +377,7 @@ std::vector<DrivableLanes> generateDrivableLanes(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & lane_change_lanes)
 {
   const auto has_same_lane =
-    [](const lanelet::ConstLanelets lanes, const lanelet::ConstLanelet & lane) {
+    [](const lanelet::ConstLanelets & lanes, const lanelet::ConstLanelet & lane) {
       if (lanes.empty()) return false;
       const auto has_same = [&](const auto & ll) { return ll.id() == lane.id(); };
       return std::find_if(lanes.begin(), lanes.end(), has_same) != lanes.end();
@@ -752,7 +699,7 @@ bool isParkedObject(
       most_left_lanelet.attribute(lanelet::AttributeName::Subtype);
 
     for (const auto & ll : most_left_lanelet_candidates) {
-      const lanelet::Attribute sub_type = ll.attribute(lanelet::AttributeName::Subtype);
+      const auto & sub_type = ll.attribute(lanelet::AttributeName::Subtype);
       if (sub_type.value() == "road_shoulder") {
         most_left_lanelet = ll;
       }
@@ -773,7 +720,7 @@ bool isParkedObject(
       most_right_lanelet.attribute(lanelet::AttributeName::Subtype);
 
     for (const auto & ll : most_right_lanelet_candidates) {
-      const lanelet::Attribute sub_type = ll.attribute(lanelet::AttributeName::Subtype);
+      const auto & sub_type = ll.attribute(lanelet::AttributeName::Subtype);
       if (sub_type.value() == "road_shoulder") {
         most_right_lanelet = ll;
       }

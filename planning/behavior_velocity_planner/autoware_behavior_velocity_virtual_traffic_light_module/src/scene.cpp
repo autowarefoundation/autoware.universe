@@ -14,174 +14,25 @@
 
 #include "scene.hpp"
 
+#include "utils.hpp"
+
 #include <autoware/behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-
-#include <tier4_v2x_msgs/msg/key_value.hpp>
 
 #include <string>
 #include <vector>
 
 namespace autoware::behavior_velocity_planner
 {
-namespace
-{
-using autoware::universe_utils::calcDistance2d;
-
-struct SegmentIndexWithPoint
-{
-  size_t index;
-  geometry_msgs::msg::Point point;
-};
-
-struct SegmentIndexWithOffset
-{
-  size_t index;
-};
-
-tier4_v2x_msgs::msg::KeyValue createKeyValue(const std::string & key, const std::string & value)
-{
-  return tier4_v2x_msgs::build<tier4_v2x_msgs::msg::KeyValue>().key(key).value(value);
-}
-
-autoware::universe_utils::LineString3d toAutowarePoints(
-  const lanelet::ConstLineString3d & line_string)
-{
-  autoware::universe_utils::LineString3d output;
-  for (const auto & p : line_string) {
-    output.emplace_back(p.x(), p.y(), p.z());
-  }
-  return output;
-}
-
-std::optional<autoware::universe_utils::LineString3d> toAutowarePoints(
-  const lanelet::Optional<lanelet::ConstLineString3d> & line_string)
-{
-  if (!line_string) {
-    return {};
-  }
-  return toAutowarePoints(*line_string);
-}
-
-std::vector<autoware::universe_utils::LineString3d> toAutowarePoints(
-  const lanelet::ConstLineStrings3d & line_strings)
-{
-  std::vector<autoware::universe_utils::LineString3d> output;
-  for (const auto & line_string : line_strings) {
-    output.emplace_back(toAutowarePoints(line_string));
-  }
-  return output;
-}
-
-[[maybe_unused]] autoware::universe_utils::LineString2d to_2d(
-  const autoware::universe_utils::LineString3d & line_string)
-{
-  autoware::universe_utils::LineString2d output;
-  for (const auto & p : line_string) {
-    output.emplace_back(p.x(), p.y());
-  }
-  return output;
-}
-
-autoware::universe_utils::Point3d calcCenter(
-  const autoware::universe_utils::LineString3d & line_string)
-{
-  const auto p1 = line_string.front();
-  const auto p2 = line_string.back();
-  const auto p_center = (p1 + p2) / 2;
-  return {p_center.x(), p_center.y(), p_center.z()};
-}
-
-geometry_msgs::msg::Pose calcHeadPose(
-  const geometry_msgs::msg::Pose & base_link_pose, const double base_link_to_front)
-{
-  return autoware::universe_utils::calcOffsetPose(base_link_pose, base_link_to_front, 0.0, 0.0);
-}
-
-geometry_msgs::msg::Point convertToGeomPoint(const autoware::universe_utils::Point3d & p)
-{
-  geometry_msgs::msg::Point geom_p;
-  geom_p.x = p.x();
-  geom_p.y = p.y();
-
-  return geom_p;
-}
-
-template <class T>
-std::optional<SegmentIndexWithPoint> findLastCollisionBeforeEndLine(
-  const T & points, const autoware::universe_utils::LineString3d & target_line,
-  const size_t end_line_idx)
-{
-  const auto target_line_p1 = convertToGeomPoint(target_line.at(0));
-  const auto target_line_p2 = convertToGeomPoint(target_line.at(1));
-
-  for (size_t i = end_line_idx; 0 < i;
-       --i) {  // NOTE: size_t can be used since it will not be negative.
-    const auto & p1 = autoware::universe_utils::getPoint(points.at(i));
-    const auto & p2 = autoware::universe_utils::getPoint(points.at(i - 1));
-    const auto collision_point =
-      arc_lane_utils::checkCollision(p1, p2, target_line_p1, target_line_p2);
-
-    if (collision_point) {
-      return SegmentIndexWithPoint{i, collision_point.value()};
-    }
-  }
-
-  return {};
-}
-
-template <class T>
-std::optional<SegmentIndexWithPoint> findLastCollisionBeforeEndLine(
-  const T & points, const std::vector<autoware::universe_utils::LineString3d> & lines,
-  const size_t end_line_idx)
-{
-  for (const auto & line : lines) {
-    const auto collision = findLastCollisionBeforeEndLine(points, line, end_line_idx);
-    if (collision) {
-      return collision;
-    }
-  }
-
-  return {};
-}
-
-void insertStopVelocityFromStart(tier4_planning_msgs::msg::PathWithLaneId * path)
-{
-  for (auto & p : path->points) {
-    p.point.longitudinal_velocity_mps = 0.0;
-  }
-}
-
-std::optional<size_t> insertStopVelocityAtCollision(
-  const SegmentIndexWithPoint & collision, const double offset,
-  tier4_planning_msgs::msg::PathWithLaneId * path)
-{
-  const auto collision_offset = autoware::motion_utils::calcLongitudinalOffsetToSegment(
-    path->points, collision.index, collision.point);
-
-  const auto offset_segment =
-    arc_lane_utils::findOffsetSegment(*path, collision.index, offset + collision_offset);
-  if (!offset_segment) {
-    return {};
-  }
-
-  const auto interpolated_pose = arc_lane_utils::calcTargetPose(*path, *offset_segment);
-
-  if (offset_segment->second < 0) {
-    insertStopVelocityFromStart(path);
-    return 0;
-  }
-
-  auto insert_index = static_cast<size_t>(offset_segment->first + 1);
-  auto insert_point = path->points.at(insert_index);
-  insert_point.point.pose = interpolated_pose;
-  // Insert 0 velocity after stop point or replace velocity with 0
-  autoware::behavior_velocity_planner::planning_utils::insertVelocity(
-    *path, insert_point, 0.0, insert_index);
-  return insert_index;
-}
-}  // namespace
+using virtual_traffic_light::calcCenter;
+using virtual_traffic_light::calcHeadPose;
+using virtual_traffic_light::createKeyValue;
+using virtual_traffic_light::findLastCollisionBeforeEndLine;
+using virtual_traffic_light::insertStopVelocityFromStart;
+using virtual_traffic_light::SegmentIndexWithOffset;
+using virtual_traffic_light::SegmentIndexWithPoint;
+using virtual_traffic_light::toAutowarePoints;
 
 VirtualTrafficLightModule::VirtualTrafficLightModule(
   const int64_t module_id, const int64_t lane_id,

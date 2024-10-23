@@ -21,6 +21,7 @@
 
   <depend>autoware_object_recognition_utils</depend>
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_tensorrt_common</depend>
   <depend>cuda_utils</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
@@ -29,7 +30,6 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>tensorrt_common</depend>
   <depend>tier4_perception_msgs</depend>
 
   <exec_depend>autoware_image_transport_decompressor</exec_depend>

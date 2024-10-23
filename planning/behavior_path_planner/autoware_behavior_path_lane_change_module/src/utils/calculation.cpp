@@ -141,59 +141,26 @@ double calc_ego_dist_to_lanes_start(
   return motion_utils::calcSignedArcLength(path.points, ego_position, target_front_pt);
 }
 
-double calc_maximum_lane_change_length(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc)
+double calc_minimum_acceleration(
+  const LaneChangeParameters & lane_change_parameters, const double current_velocity,
+  const double min_acc_threshold, const double prepare_duration)
 {
-  if (shift_intervals.empty()) {
-    return 0.0;
-  }
-
-  const auto finish_judge_buffer = lane_change_parameters.lane_change_finish_judge_buffer;
-  const auto lat_jerk = lane_change_parameters.lane_changing_lateral_jerk;
-  const auto t_prepare = lane_change_parameters.lane_change_prepare_duration;
-
-  auto vel = current_velocity;
-
-  const auto calc_sum = [&](double sum, double shift_interval) {
-    // prepare section
-    const auto prepare_length = vel * t_prepare + 0.5 * max_acc * t_prepare * t_prepare;
-    vel = vel + max_acc * t_prepare;
-
-    // lane changing section
-    const auto [min_lat_acc, max_lat_acc] =
-      lane_change_parameters.lane_change_lat_acc_map.find(vel);
-    const auto t_lane_changing =
-      autoware::motion_utils::calc_shift_time_from_jerk(shift_interval, lat_jerk, max_lat_acc);
-    const auto lane_changing_length =
-      vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
-
-    vel = vel + max_acc * t_lane_changing;
-    return sum + (prepare_length + lane_changing_length + finish_judge_buffer);
-  };
-
-  const auto total_length =
-    std::accumulate(shift_intervals.begin(), shift_intervals.end(), 0.0, calc_sum);
-
-  const auto backward_buffer = lane_change_parameters.backward_length_buffer_for_end_of_lane;
-  return total_length + backward_buffer * (static_cast<double>(shift_intervals.size()) - 1.0);
+  if (prepare_duration < eps) return -std::abs(min_acc_threshold);
+  const double min_lc_velocity = lane_change_parameters.minimum_lane_changing_velocity;
+  const double acc = (min_lc_velocity - current_velocity) / prepare_duration;
+  return std::clamp(acc, -std::abs(min_acc_threshold), -eps);
 }
 
-double calc_maximum_lane_change_length(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
-  const double max_acc)
+double calc_maximum_acceleration(
+  const double prepare_duration, const double current_velocity, const double current_max_velocity,
+  const double max_acc_threshold)
 {
-  const auto shift_intervals =
-    common_data_ptr->route_handler_ptr->getLateralIntervalsToPreferredLane(
-      current_terminal_lanelet);
-  const auto vel = std::max(
-    common_data_ptr->get_ego_speed(),
-    common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity);
-  return calc_maximum_lane_change_length(
-    vel, *common_data_ptr->lc_param_ptr, shift_intervals, max_acc);
+  if (prepare_duration < eps) return max_acc_threshold;
+  const double acc = (current_max_velocity - current_velocity) / prepare_duration;
+  return std::clamp(acc, 0.0, max_acc_threshold);
 }
 
-std::vector<double> calc_all_min_lc_lengths(
+std::vector<double> calc_min_lane_change_lengths(
   const LCParamPtr & lc_param_ptr, const std::vector<double> & shift_intervals)
 {
   if (shift_intervals.empty()) {
@@ -221,7 +188,7 @@ std::vector<double> calc_all_min_lc_lengths(
   return min_lc_lengths;
 }
 
-std::vector<double> calc_all_max_lc_lengths(
+std::vector<double> calc_max_lane_change_lengths(
   const CommonDataPtr & common_data_ptr, const std::vector<double> & shift_intervals)
 {
   if (shift_intervals.empty()) {
@@ -231,21 +198,28 @@ std::vector<double> calc_all_max_lc_lengths(
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
   const auto lat_jerk = lc_param_ptr->lane_changing_lateral_jerk;
   const auto t_prepare = lc_param_ptr->lane_change_prepare_duration;
-  const auto max_acc = common_data_ptr->transient_data.acc.max;
+  const auto current_velocity = common_data_ptr->get_ego_speed();
+  const auto path_velocity = common_data_ptr->transient_data.current_path_velocity;
 
-  const auto limit_vel = [&](const auto vel) {
-    const auto max_global_vel = common_data_ptr->bpp_param_ptr->max_vel;
-    return std::clamp(vel, lc_param_ptr->minimum_lane_changing_velocity, max_global_vel);
-  };
+  const auto max_acc = calc_maximum_acceleration(
+    t_prepare, current_velocity, path_velocity, lc_param_ptr->max_longitudinal_acc);
 
-  auto vel = limit_vel(common_data_ptr->get_ego_speed());
+  // TODO(Quda, Azu): should probably limit upper bound of velocity as well, but
+  // disabled due failing evaluation tests.
+  // const auto limit_vel = [&](const auto vel) {
+  //   const auto max_global_vel = common_data_ptr->bpp_param_ptr->max_vel;
+  //   return std::clamp(vel, lc_param_ptr->minimum_lane_changing_velocity, max_global_vel);
+  // };
+
+  auto vel =
+    std::max(common_data_ptr->get_ego_speed(), lc_param_ptr->minimum_lane_changing_velocity);
 
   std::vector<double> max_lc_lengths{};
 
   const auto max_lc_length = [&](const auto shift_interval) {
     // prepare section
-    vel = limit_vel(vel + max_acc * t_prepare);
     const auto prepare_length = vel * t_prepare + 0.5 * max_acc * t_prepare * t_prepare;
+    vel = vel + max_acc * t_prepare;
 
     // lane changing section
     const auto [min_lat_acc, max_lat_acc] = lc_param_ptr->lane_change_lat_acc_map.find(vel);
@@ -254,7 +228,7 @@ std::vector<double> calc_all_max_lc_lengths(
     const auto lane_changing_length =
       vel * t_lane_changing + 0.5 * max_acc * t_lane_changing * t_lane_changing;
 
-    vel = limit_vel(vel + max_acc * t_lane_changing);
+    vel = vel + max_acc * t_lane_changing;
     return prepare_length + lane_changing_length;
   };
 
@@ -264,17 +238,16 @@ std::vector<double> calc_all_max_lc_lengths(
   return max_lc_lengths;
 }
 
-double calc_distance_buffer(
-  const LCParamPtr & lc_param_ptr, const std::vector<double> & min_lc_lengths)
+double calc_distance_buffer(const LCParamPtr & lc_param_ptr, const std::vector<double> & lc_lengths)
 {
-  if (min_lc_lengths.empty()) {
+  if (lc_lengths.empty()) {
     return std::numeric_limits<double>::max();
   }
 
   const auto finish_judge_buffer = lc_param_ptr->lane_change_finish_judge_buffer;
   const auto backward_buffer = calc_stopping_distance(lc_param_ptr);
-  const auto lengths_sum = std::accumulate(min_lc_lengths.begin(), min_lc_lengths.end(), 0.0);
-  const auto num_of_lane_changes = static_cast<double>(min_lc_lengths.size());
+  const auto lengths_sum = std::accumulate(lc_lengths.begin(), lc_lengths.end(), 0.0);
+  const auto num_of_lane_changes = static_cast<double>(lc_lengths.size());
   return lengths_sum + (num_of_lane_changes * finish_judge_buffer) +
          ((num_of_lane_changes - 1.0) * backward_buffer);
 }
@@ -299,19 +272,19 @@ std::pair<MinMaxValue, MinMaxValue> calc_lc_length_and_dist_buffer(
     return {};
   }
   const auto shift_intervals = calculation::calc_shift_intervals(common_data_ptr, lanes);
-  const auto all_min_lc_lengths =
-    calculation::calc_all_min_lc_lengths(common_data_ptr->lc_param_ptr, shift_intervals);
+  const auto min_lc_lengths =
+    calculation::calc_min_lane_change_lengths(common_data_ptr->lc_param_ptr, shift_intervals);
   const auto min_lc_length =
-    !all_min_lc_lengths.empty() ? all_min_lc_lengths.front() : std::numeric_limits<double>::max();
+    !min_lc_lengths.empty() ? min_lc_lengths.front() : std::numeric_limits<double>::max();
   const auto min_dist_buffer =
-    calculation::calc_distance_buffer(common_data_ptr->lc_param_ptr, all_min_lc_lengths);
+    calculation::calc_distance_buffer(common_data_ptr->lc_param_ptr, min_lc_lengths);
 
-  const auto all_max_lc_lengths =
-    calculation::calc_all_max_lc_lengths(common_data_ptr, shift_intervals);
+  const auto max_lc_lengths =
+    calculation::calc_max_lane_change_lengths(common_data_ptr, shift_intervals);
   const auto max_lc_length =
-    !all_max_lc_lengths.empty() ? all_max_lc_lengths.front() : std::numeric_limits<double>::max();
+    !max_lc_lengths.empty() ? max_lc_lengths.front() : std::numeric_limits<double>::max();
   const auto max_dist_buffer =
-    calculation::calc_distance_buffer(common_data_ptr->lc_param_ptr, all_max_lc_lengths);
+    calculation::calc_distance_buffer(common_data_ptr->lc_param_ptr, max_lc_lengths);
 
   return {{min_lc_length, max_lc_length}, {min_dist_buffer, max_dist_buffer}};
 }
@@ -324,6 +297,85 @@ double calc_phase_length(
     velocity * duration + 0.5 * acceleration * std::pow(duration, 2);
   const auto length_with_max_velocity = maximum_velocity * duration;
   return std::min(length_with_acceleration, length_with_max_velocity);
+}
+
+std::pair<double, double> calc_min_max_acceleration(
+  const CommonDataPtr & common_data_ptr, const double max_path_velocity,
+  const double prepare_duration)
+{
+  const auto & lc_params = *common_data_ptr->lc_param_ptr;
+  const auto & bpp_params = *common_data_ptr->bpp_param_ptr;
+  const auto current_ego_velocity = common_data_ptr->get_ego_speed();
+
+  const auto min_accel_threshold = std::max(bpp_params.min_acc, lc_params.min_longitudinal_acc);
+  const auto max_accel_threshold = std::min(bpp_params.max_acc, lc_params.max_longitudinal_acc);
+
+  // calculate minimum and maximum acceleration
+  const auto min_acc = calc_minimum_acceleration(
+    lc_params, current_ego_velocity, min_accel_threshold, prepare_duration);
+  const auto max_acc = calc_maximum_acceleration(
+    prepare_duration, current_ego_velocity, max_path_velocity, max_accel_threshold);
+
+  return {min_acc, max_acc};
+}
+
+std::vector<double> calc_acceleration_values(
+  const double min_accel, const double max_accel, const double sampling_num)
+{
+  if (min_accel > max_accel) return {};
+
+  if (max_accel - min_accel < eps) {
+    return {min_accel};
+  }
+
+  const auto resolution = std::abs(max_accel - min_accel) / sampling_num;
+
+  std::vector<double> sampled_values{min_accel};
+  for (double accel = min_accel + resolution; accel < max_accel + eps; accel += resolution) {
+    // check whether if we need to add 0.0
+    if (sampled_values.back() < -eps && accel > eps) {
+      sampled_values.push_back(0.0);
+    }
+
+    sampled_values.push_back(accel);
+  }
+  std::reverse(sampled_values.begin(), sampled_values.end());
+
+  return sampled_values;
+}
+
+std::vector<double> calc_lon_acceleration_samples(
+  const CommonDataPtr & common_data_ptr, const double max_path_velocity,
+  const double prepare_duration)
+{
+  const auto & transient_data = common_data_ptr->transient_data;
+  const auto & current_pose = common_data_ptr->get_ego_pose();
+  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  const auto goal_pose = common_data_ptr->route_handler_ptr->getGoalPose();
+  const auto sampling_num = common_data_ptr->lc_param_ptr->longitudinal_acc_sampling_num;
+
+  const auto [min_accel, max_accel] =
+    calc_min_max_acceleration(common_data_ptr, max_path_velocity, prepare_duration);
+
+  const auto is_sampling_required = std::invoke([&]() -> bool {
+    if (max_accel < 0.0 || transient_data.is_ego_stuck) return true;
+
+    const auto max_dist_buffer = transient_data.current_dist_buffer.max;
+    if (max_dist_buffer > transient_data.dist_to_terminal_end) return true;
+
+    const auto dist_to_target_lane_end =
+      common_data_ptr->lanes_ptr->target_lane_in_goal_section
+        ? utils::getSignedDistance(current_pose, goal_pose, target_lanes)
+        : utils::getDistanceToEndOfLane(current_pose, target_lanes);
+
+    return max_dist_buffer >= dist_to_target_lane_end;
+  });
+
+  if (is_sampling_required) {
+    return calc_acceleration_values(min_accel, max_accel, sampling_num);
+  }
+
+  return {max_accel};
 }
 
 double calc_lane_changing_acceleration(
@@ -339,10 +391,32 @@ double calc_lane_changing_acceleration(
     prepare_longitudinal_acc);
 }
 
+std::vector<double> calc_prepare_durations(const CommonDataPtr & common_data_ptr)
+{
+  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
+  const auto threshold = common_data_ptr->bpp_param_ptr->base_link2front +
+                         lc_param_ptr->min_length_for_turn_signal_activation;
+  const auto max_prepare_duration = lc_param_ptr->lane_change_prepare_duration;
+
+  // TODO(Azu) this check seems to cause scenario failures.
+  if (common_data_ptr->transient_data.dist_to_terminal_start >= threshold) {
+    return {max_prepare_duration};
+  }
+
+  std::vector<double> prepare_durations;
+  constexpr double step = 0.5;
+
+  for (double duration = max_prepare_duration; duration >= 0.0; duration -= step) {
+    prepare_durations.push_back(duration);
+  }
+
+  return prepare_durations;
+}
+
 std::vector<PhaseMetrics> calc_prepare_phase_metrics(
-  const CommonDataPtr & common_data_ptr, const std::vector<double> & prepare_durations,
-  const std::vector<double> & lon_accel_values, const double current_velocity,
-  const double min_length_threshold, const double max_length_threshold)
+  const CommonDataPtr & common_data_ptr, const double current_velocity,
+  const double max_path_velocity, const double min_length_threshold,
+  const double max_length_threshold)
 {
   const auto & min_lc_vel = common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity;
   const auto & max_vel = common_data_ptr->bpp_param_ptr->max_vel;
@@ -360,9 +434,12 @@ std::vector<PhaseMetrics> calc_prepare_phase_metrics(
     return false;
   };
 
-  metrics.reserve(prepare_durations.size() * lon_accel_values.size());
+  const auto prepare_durations = calc_prepare_durations(common_data_ptr);
+
   for (const auto & prepare_duration : prepare_durations) {
-    for (const auto & lon_accel : lon_accel_values) {
+    const auto lon_accel_samples =
+      calc_lon_acceleration_samples(common_data_ptr, max_path_velocity, prepare_duration);
+    for (const auto & lon_accel : lon_accel_samples) {
       const auto prepare_velocity =
         std::clamp(current_velocity + lon_accel * prepare_duration, min_lc_vel, max_vel);
 
