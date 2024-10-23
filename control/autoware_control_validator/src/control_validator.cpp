@@ -66,9 +66,15 @@ void ControlValidator::setup_parameters()
     auto & p = validation_params_;
     const std::string t = "thresholds.";
     p.max_distance_deviation_threshold = declare_parameter<double>(t + "max_distance_deviation");
-    p.max_reverse_velocity_threshold = declare_parameter<double>(t + "max_reverse_velocity");
-    p.max_over_velocity_ratio_threshold = declare_parameter<double>(t + "max_over_velocity_ratio");
+    p.rolling_back_velocity = declare_parameter<double>(t + "rolling_back_velocity");
+    p.over_velocity_offset = declare_parameter<double>(t + "over_velocity_offset");
+    p.over_velocity_ratio = declare_parameter<double>(t + "over_velocity_ratio");
   }
+  const auto lpf_gain = declare_parameter<double>("vel_lpf_gain");
+  vehicle_vel_.setGain(lpf_gain);
+  target_vel_.setGain(lpf_gain);
+
+  hold_velocity_error_until_stop_ = declare_parameter<bool>("hold_velocity_error_until_stop");
 
   try {
     vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
@@ -109,10 +115,15 @@ void ControlValidator::setup_diag()
       stat, validation_status_.is_valid_max_distance_deviation,
       "control output is deviated from trajectory");
   });
-  d.add(ns + "velocity_deviation", [&](auto & stat) {
+  d.add(ns + "rolling_back", [&](auto & stat) {
     set_status(
-      stat, validation_status_.is_valid_velocity_deviation,
-      "current velocity is deviated from the desired velocity");
+      stat, !validation_status_.is_rolling_back,
+      "The vehicle is rolling back. The velocity has the opposite sign to the target.");
+  });
+  d.add(ns + "over_velocity", [&](auto & stat) {
+    set_status(
+      stat, !validation_status_.is_over_velocity,
+      "The vehicle is over-speeding against the target.");
   });
 }
 
@@ -198,10 +209,7 @@ void ControlValidator::validate(
     validation_status_.max_distance_deviation, validation_status_.is_valid_max_distance_deviation) =
     calc_lateral_deviation_status(predicted_trajectory, *current_reference_trajectory_);
 
-  std::tie(
-    validation_status_.current_velocity, validation_status_.desired_velocity,
-    validation_status_.is_valid_velocity_deviation) =
-    calc_velocity_deviation_status(*current_reference_trajectory_, kinematics);
+  calc_velocity_deviation_status(*current_reference_trajectory_, kinematics);
 
   validation_status_.invalid_count =
     is_all_valid(validation_status_) ? 0 : validation_status_.invalid_count + 1;
@@ -217,28 +225,37 @@ std::pair<double, bool> ControlValidator::calc_lateral_deviation_status(
     max_distance_deviation <= validation_params_.max_distance_deviation_threshold};
 }
 
-std::tuple<double, double, bool> ControlValidator::calc_velocity_deviation_status(
-  const Trajectory & reference_trajectory, const Odometry & kinematics) const
+void ControlValidator::calc_velocity_deviation_status(
+  const Trajectory & reference_trajectory, const Odometry & kinematics)
 {
-  const double current_vel = kinematics.twist.twist.linear.x;
-  const double desired_vel =
+  auto & status = validation_status_;
+  const auto & params = validation_params_;
+  status.vehicle_vel = vehicle_vel_.filter(kinematics.twist.twist.linear.x);
+  status.target_vel = target_vel_.filter(
     autoware::motion_utils::calcInterpolatedPoint(reference_trajectory, kinematics.pose.pose)
-      .longitudinal_velocity_mps;
+      .longitudinal_velocity_mps);
+
+  const bool is_rolling_back = std::signbit(status.vehicle_vel * status.target_vel) &&
+                               std::abs(status.vehicle_vel) > params.rolling_back_velocity;
+  if (
+    !hold_velocity_error_until_stop_ || !status.is_rolling_back ||
+    std::abs(status.vehicle_vel) < 0.05) {
+    status.is_rolling_back = is_rolling_back;
+  }
 
   const bool is_over_velocity =
-    std::abs(current_vel) >
-    std::abs(desired_vel) * (1.0 + validation_params_.max_over_velocity_ratio_threshold) +
-      validation_params_.max_reverse_velocity_threshold;
-  const bool is_reverse_velocity =
-    std::signbit(current_vel * desired_vel) &&
-    std::abs(current_vel) > validation_params_.max_reverse_velocity_threshold;
-
-  return {current_vel, desired_vel, !(is_over_velocity || is_reverse_velocity)};
+    std::abs(status.vehicle_vel) >
+    std::abs(status.target_vel) * (1.0 + params.over_velocity_ratio) + params.over_velocity_offset;
+  if (
+    !hold_velocity_error_until_stop_ || !status.is_over_velocity ||
+    std::abs(status.vehicle_vel) < 0.05) {
+    status.is_over_velocity = is_over_velocity;
+  }
 }
 
 bool ControlValidator::is_all_valid(const ControlValidatorStatus & s)
 {
-  return s.is_valid_max_distance_deviation && s.is_valid_velocity_deviation;
+  return s.is_valid_max_distance_deviation && !s.is_rolling_back && !s.is_over_velocity;
 }
 
 void ControlValidator::display_status()
