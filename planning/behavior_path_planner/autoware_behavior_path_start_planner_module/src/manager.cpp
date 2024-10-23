@@ -129,6 +129,12 @@ void StartPlannerModuleManager::updateModuleParams(
     update_param<double>(
       parameters, ns + "pull_out_max_steer_angle",
       p->parallel_parking_parameters.pull_out_max_steer_angle);
+    update_param<double>(
+      parameters, ns + "pull_out_steer_rate_lim",
+      p->parallel_parking_parameters.pull_out_steer_rate_lim);
+    update_param<bool>(
+      parameters, ns + "pull_out_use_clothoid",
+      p->parallel_parking_parameters.pull_out_use_clothoid);
     update_param<bool>(parameters, ns + "enable_back", p->enable_back);
     update_param<double>(parameters, ns + "backward_velocity", p->backward_velocity);
     update_param<double>(
