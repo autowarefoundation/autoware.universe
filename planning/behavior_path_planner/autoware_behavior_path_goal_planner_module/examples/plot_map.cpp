@@ -55,7 +55,8 @@ using autoware_planning_msgs::msg::LaneletRoute;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 void plot_path_with_lane_id(
-  matplotlibcpp17::axes::Axes & axes, const PathWithLaneId path, const std::string color = "red")
+  matplotlibcpp17::axes::Axes & axes, const PathWithLaneId & path,
+  const std::string & color = "red")
 {
   std::vector<double> xs, ys;
   for (const auto & point : path.points) {
@@ -173,9 +174,9 @@ bool hasEnoughDistance(
 }
 
 std::vector<PullOverPath> selectPullOverPaths(
-  const std::vector<PullOverPath> pull_over_path_candidates, const GoalCandidates & goal_candidates,
-  const std::shared_ptr<const PlannerData> planner_data, const GoalPlannerParameters & parameters,
-  const BehaviorModuleOutput & previous_module_output)
+  const std::vector<PullOverPath> & pull_over_path_candidates,
+  const GoalCandidates & goal_candidates, const std::shared_ptr<const PlannerData> planner_data,
+  const GoalPlannerParameters & parameters, const BehaviorModuleOutput & previous_module_output)
 {
   using autoware::behavior_path_planner::utils::getExtendedCurrentLanesFromPath;
   using autoware::motion_utils::calcSignedArcLength;
