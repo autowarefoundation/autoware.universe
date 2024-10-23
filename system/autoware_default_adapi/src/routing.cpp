@@ -118,7 +118,12 @@ void RoutingNode::on_clear_route(
   const autoware_ad_api::routing::ClearRoute::Service::Request::SharedPtr req,
   const autoware_ad_api::routing::ClearRoute::Service::Response::SharedPtr res)
 {
-  change_stop_mode();
+  if (is_auto_mode_) {
+    res->status.success = false;
+    res->status.code = ResponseStatus::UNKNOWN;
+    res->status.message = "The route cannot be cleared during autonomous mode.";
+    return;
+  }
   res->status = conversion::convert_call(cli_clear_route_, req);
 }
 
