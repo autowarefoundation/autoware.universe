@@ -205,7 +205,7 @@ rclcpp::Logger getLogger(const std::string & type);
  *
  * @return Polygon2d A polygon representing the current 2D footprint of the ego vehicle.
  */
-Polygon2d getEgoCurrentFootprint(const Pose & ego_pose, const VehicleInfo & ego_info);
+Polygon2d get_ego_current_polygon(const Pose & ego_pose, const VehicleInfo & ego_info);
 
 Point getEgoFrontVertex(const Pose & ego_pose, const VehicleInfo & ego_info, bool left);
 
@@ -241,7 +241,8 @@ bool isWithinIntersection(
  * @return bool True if the polygon is within a lane designated for turning, false if it is within a
  *              straight lane or no turn direction is specified.
  */
-bool isWithinTurnDirectionLanes(const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon);
+bool is_within_turn_direction_lanes(
+  const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon);
 
 LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr);
 

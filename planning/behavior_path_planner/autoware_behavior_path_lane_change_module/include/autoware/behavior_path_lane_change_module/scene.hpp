@@ -95,6 +95,18 @@ public:
 
   bool isAbleToReturnCurrentLane() const override;
 
+  /**
+   * @brief Determines if ego vehicle is within lanes designated for turning.
+   *
+   * Checks if ego's polygon overlaps with lanelets tagged for turning directions (excluding
+   * 'straight'). It evaluates the lanelet's 'turn_direction' attribute and determines overlap with
+   * the lanelet's area.
+   *
+   * @return bool True if the ego's polygon is within a lane designated for turning, false if it is
+   * within a straight lane or no turn direction is specified.
+   */
+  bool is_within_turn_direction_lanes() const final;
+
   bool is_near_terminal() const final;
 
   bool isEgoOnPreparePhase() const override;
