@@ -57,7 +57,7 @@
 
   <!-- PointPainting -->
   <group if="$(eval &quot;'$(var lidar_detection_model_type)'=='pointpainting'&quot;)">
-    <let name="lidar_detection_model_name" value="$(eval &quot;'pointpainting' if '' in '$(var lidar_detection_model_name)' else '$(var lidar_detection_model_name)'&quot;)"/>
+    <let name="lidar_detection_model_name" value="$(eval &quot;'pointpainting' if ''=='$(var lidar_detection_model_name)' else '$(var lidar_detection_model_name)'&quot;)"/>
     <push-ros-namespace namespace="pointpainting"/>
     <include file="$(find-pkg-share autoware_image_projection_based_fusion)/launch/pointpainting_fusion.launch.xml">
       <arg name="input/rois_number" value="$(var number_of_cameras)"/>

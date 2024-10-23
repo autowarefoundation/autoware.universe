@@ -14,7 +14,7 @@
 
   <!-- TransFusion -->
   <group if="$(eval &quot;'$(var lidar_detection_model_type)'=='transfusion'&quot;)">
-    <let name="lidar_detection_model_name" value="$(eval &quot;'transfusion' if '' in '$(var lidar_detection_model_name)' else '$(var lidar_detection_model_name)'&quot;)"/>
+    <let name="lidar_detection_model_name" value="$(eval &quot;'transfusion' if ''=='$(var lidar_detection_model_name)' else '$(var lidar_detection_model_name)'&quot;)"/>
     <push-ros-namespace namespace="transfusion"/>
     <arg name="lidar_model_param_path" default="$(find-pkg-share autoware_lidar_transfusion)/config"/>
 
@@ -36,7 +36,7 @@
 
   <!-- CenterPoint -->
   <group if="$(eval &quot;'$(var lidar_detection_model_type)'=='centerpoint'&quot;)">
-    <let name="lidar_detection_model_name" value="$(eval &quot;'centerpoint_tiny' if '' in '$(var lidar_detection_model_name)' else '$(var lidar_detection_model_name)'&quot;)"/>
+    <let name="lidar_detection_model_name" value="$(eval &quot;'centerpoint_tiny' if ''=='$(var lidar_detection_model_name)' else '$(var lidar_detection_model_name)'&quot;)"/>
     <push-ros-namespace namespace="centerpoint"/>
     <arg name="lidar_model_param_path" default="$(find-pkg-share autoware_lidar_centerpoint)/config"/>
 
