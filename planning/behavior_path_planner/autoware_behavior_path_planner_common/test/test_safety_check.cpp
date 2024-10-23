@@ -19,9 +19,8 @@
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
-#include <autoware_perception_msgs/msg/detail/predicted_objects__struct.hpp>
-#include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <tier4_planning_msgs/msg/detail/path_with_lane_id__struct.hpp>
 
@@ -29,9 +28,13 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+#include <vector>
+
 constexpr double epsilon = 1e-6;
 
-using autoware::behavior_path_planner::utils::path_safety_checker::calcInterpolatedPoseWithVelocity;
+using autoware::behavior_path_planner::utils::path_safety_checker::
+  calc_interpolated_pose_with_velocity;
 using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using autoware::test_utils::createPose;
@@ -39,6 +42,7 @@ using autoware::test_utils::generateTrajectory;
 using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::Shape;
 using geometry_msgs::msg::Pose;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 std::vector<PoseWithVelocityStamped> createTestPath()
 {
@@ -273,7 +277,7 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, calcRssDistance)
 TEST(CalcInterpolatedPoseWithVelocityTest, BasicInterpolation)
 {
   auto path = createTestPath();
-  auto result = calcInterpolatedPoseWithVelocity(path, 0.5);
+  auto result = calc_interpolated_pose_with_velocity(path, 0.5);
 
   ASSERT_TRUE(result.has_value());
   EXPECT_NEAR(result->time, 0.5, 1e-6);
@@ -287,14 +291,14 @@ TEST(CalcInterpolatedPoseWithVelocityTest, BoundaryConditions)
   auto path = createTestPath();
 
   // First point of the path
-  auto start_result = calcInterpolatedPoseWithVelocity(path, 0.0);
+  auto start_result = calc_interpolated_pose_with_velocity(path, 0.0);
   ASSERT_TRUE(start_result.has_value());
   EXPECT_NEAR(start_result->time, 0.0, 1e-6);
   EXPECT_NEAR(start_result->pose.position.x, 0.0, 1e-6);
   EXPECT_NEAR(start_result->velocity, 1.0, 1e-6);
 
   // Last point of the path
-  auto end_result = calcInterpolatedPoseWithVelocity(path, 2.0);
+  auto end_result = calc_interpolated_pose_with_velocity(path, 2.0);
   ASSERT_TRUE(end_result.has_value());
   EXPECT_NEAR(end_result->time, 2.0, 1e-6);
   EXPECT_NEAR(end_result->pose.position.x, 2.0, 1e-6);
@@ -307,13 +311,13 @@ TEST(CalcInterpolatedPoseWithVelocityTest, InvalidInput)
   auto path = createTestPath();
 
   // Empty path
-  EXPECT_FALSE(calcInterpolatedPoseWithVelocity({}, 1.0).has_value());
+  EXPECT_FALSE(calc_interpolated_pose_with_velocity({}, 1.0).has_value());
 
   // Negative relative time
-  EXPECT_FALSE(calcInterpolatedPoseWithVelocity(path, -1.0).has_value());
+  EXPECT_FALSE(calc_interpolated_pose_with_velocity(path, -1.0).has_value());
 
   // Relative time greater than the last time in the path
-  EXPECT_FALSE(calcInterpolatedPoseWithVelocity(path, 3.0).has_value());
+  EXPECT_FALSE(calc_interpolated_pose_with_velocity(path, 3.0).has_value());
 }
 
 // Special cases test
@@ -325,7 +329,7 @@ TEST(CalcInterpolatedPoseWithVelocityTest, DISABLED_SpecialCases)
   same_time_path.emplace_back(0.0, createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0), 2.0);
   same_time_path.emplace_back(1.0, createPose(2.0, 0.0, 0.0, 0.0, 0.0, 0.0), 3.0);
 
-  auto same_time_result = calcInterpolatedPoseWithVelocity(same_time_path, 0.0);
+  auto same_time_result = calc_interpolated_pose_with_velocity(same_time_path, 0.0);
   ASSERT_TRUE(same_time_result.has_value());
   EXPECT_NEAR(same_time_result->pose.position.x, 0.0, 1e-6);
   EXPECT_NEAR(same_time_result->velocity, 1.0, 1e-6);
@@ -336,8 +340,57 @@ TEST(CalcInterpolatedPoseWithVelocityTest, DISABLED_SpecialCases)
   reverse_time_path.emplace_back(1.0, createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0), 2.0);
   reverse_time_path.emplace_back(0.0, createPose(2.0, 0.0, 0.0, 0.0, 0.0, 0.0), 3.0);
 
-  auto reverse_time_result = calcInterpolatedPoseWithVelocity(reverse_time_path, 1.5);
+  auto reverse_time_result = calc_interpolated_pose_with_velocity(reverse_time_path, 1.5);
   ASSERT_FALSE(reverse_time_result.has_value());
+}
+
+TEST(BehaviorPathPlanningSafetyUtilsTest, get_interpolated_pose_with_velocity_and_polygon_stamped)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::
+    get_interpolated_pose_with_velocity_and_polygon_stamped;
+
+  std::vector<PoseWithVelocityStamped> pred_path;
+  double current_time = 0.5;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info{};
+  vehicle_info.max_longitudinal_offset_m = 1.0;
+  vehicle_info.rear_overhang_m = 1.0;
+  vehicle_info.vehicle_width_m = 2.0;
+
+  // Condition: empty path
+  EXPECT_FALSE(
+    get_interpolated_pose_with_velocity_and_polygon_stamped(pred_path, current_time, vehicle_info)
+      .has_value());
+
+  // Condition: with path
+  pred_path = createTestPath();
+  auto interpolation_result =
+    get_interpolated_pose_with_velocity_and_polygon_stamped(pred_path, current_time, vehicle_info);
+  EXPECT_TRUE(interpolation_result.has_value());
+}
+
+TEST(BehaviorPathPlanningSafetyUtilsTest, checkPolygonsIntersects)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::checkPolygonsIntersects;
+
+  std::vector<Polygon2d> poly_1;
+  std::vector<Polygon2d> poly_2;
+  Shape shape;
+  shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  shape.dimensions.x = 5.0;
+  shape.dimensions.y = 2.0;
+
+  poly_1.push_back(
+    autoware::universe_utils::toPolygon2d(createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0), shape));
+  poly_2.push_back(
+    autoware::universe_utils::toPolygon2d(createPose(10.0, 2.0, 0.0, 0.0, 0.0, 0.0), shape));
+
+  // Condition: no collision
+  EXPECT_FALSE(checkPolygonsIntersects(poly_1, poly_2));
+
+  // Condition: collide
+  poly_2.push_back(
+    autoware::universe_utils::toPolygon2d(createPose(1.0, 2.0, 0.0, 0.0, 0.0, 0.0), shape));
+  EXPECT_TRUE(checkPolygonsIntersects(poly_1, poly_2));
 }
 
 TEST(BehaviorPathPlanningSafetyUtilsTest, calc_obstacle_length)
@@ -385,7 +438,7 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkObjectsCollisionRough)
 {
   using autoware::behavior_path_planner::utils::path_safety_checker::checkObjectsCollisionRough;
 
-  auto path = generateTrajectory<tier4_planning_msgs::msg::PathWithLaneId>(10, 1.0);
+  auto path = generateTrajectory<PathWithLaneId>(10, 1.0);
   autoware_perception_msgs::msg::PredictedObjects objs;
   double margin = 0.1;
   BehaviorPathPlannerParameters param;
@@ -421,4 +474,49 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkObjectsCollisionRough)
     checkObjectsCollisionRough(path, objs, margin, param, use_offset_ego_point);
   EXPECT_TRUE(rough_object_collision.first);
   EXPECT_TRUE(rough_object_collision.second);
+
+  // Condition: use_offset_ego_point set to false
+  use_offset_ego_point = false;
+  rough_object_collision =
+    checkObjectsCollisionRough(path, objs, margin, param, use_offset_ego_point);
+  EXPECT_TRUE(rough_object_collision.first);
+  EXPECT_TRUE(rough_object_collision.second);
+}
+
+TEST(BehaviorPathPlanningSafetyUtilsTest, calculateRoughDistanceToObjects)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::
+    calculateRoughDistanceToObjects;
+
+  auto path = generateTrajectory<PathWithLaneId>(10, 0.1);
+  autoware_perception_msgs::msg::PredictedObjects objs;
+  BehaviorPathPlannerParameters param;
+  param.vehicle_width = 2.0;
+  param.front_overhang = 1.0;
+  param.rear_overhang = 1.0;
+  bool use_offset_ego_point = true;
+  std::string distance_type = "none";
+
+  autoware_perception_msgs::msg::PredictedObject obj;
+  obj.kinematics.initial_pose_with_covariance.pose = createPose(8.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+  obj.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  obj.shape.dimensions.x = 3.0;
+  obj.shape.dimensions.y = 1.0;
+  objs.objects.push_back(obj);
+
+  // Condition: invalid distance_type
+  EXPECT_ANY_THROW(
+    calculateRoughDistanceToObjects(path, objs, param, use_offset_ego_point, distance_type));
+
+  // Condition: minimum distance
+  distance_type = "min";
+  EXPECT_NEAR(
+    calculateRoughDistanceToObjects(path, objs, param, use_offset_ego_point, distance_type),
+    4.1747243156, epsilon);
+
+  // Condition: maximum distance
+  distance_type = "max";
+  EXPECT_NEAR(
+    calculateRoughDistanceToObjects(path, objs, param, use_offset_ego_point, distance_type),
+    6.1700767081, epsilon);
 }

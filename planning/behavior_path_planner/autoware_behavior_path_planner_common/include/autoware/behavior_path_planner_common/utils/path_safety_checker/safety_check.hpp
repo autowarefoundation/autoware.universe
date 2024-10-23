@@ -95,15 +95,19 @@ double calcMinimumLongitudinalLength(
  *         it contains the interpolated pose, velocity, and time. If the interpolation fails
  *         (e.g., empty path, negative time, or time beyond the path), it returns std::nullopt.
  */
-std::optional<PoseWithVelocityStamped> calcInterpolatedPoseWithVelocity(
+std::optional<PoseWithVelocityStamped> calc_interpolated_pose_with_velocity(
   const std::vector<PoseWithVelocityStamped> & path, const double relative_time);
 
-std::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
+std::optional<PoseWithVelocityAndPolygonStamped>
+get_interpolated_pose_with_velocity_and_polygon_stamped(
   const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
   const VehicleInfo & ego_info);
-std::optional<PoseWithVelocityAndPolygonStamped> getInterpolatedPoseWithVelocityAndPolygonStamped(
+
+std::optional<PoseWithVelocityAndPolygonStamped>
+get_interpolated_pose_with_velocity_and_polygon_stamped(
   const std::vector<PoseWithVelocityStamped> & pred_path, const double current_time,
   const Shape & shape);
+
 template <typename T, typename F>
 std::vector<T> filterPredictedPathByTimeHorizon(
   const std::vector<T> & path, const double time_horizon, const F & interpolateFunc);
@@ -162,14 +166,13 @@ bool checkCollision(
  * @param debug The debug information for collision checking.
  * @return a list of polygon when collision is expected.
  */
-std::vector<Polygon2d> getCollidedPolygons(
+std::vector<Polygon2d> get_collided_polygons(
   const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,
-  const PredictedPathWithPolygon & target_object_path,
-  const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
-  const double hysteresis_factor, const double max_velocity_limit, const double yaw_difference_th,
-  CollisionCheckDebug & debug);
+  const PredictedPathWithPolygon & target_object_path, const VehicleInfo & vehicle_info,
+  const RSSparams & rss_parameters, const double hysteresis_factor, const double max_velocity_limit,
+  const double yaw_difference_th, CollisionCheckDebug & debug);
 
 bool checkPolygonsIntersects(
   const std::vector<Polygon2d> & polys_1, const std::vector<Polygon2d> & polys_2);
