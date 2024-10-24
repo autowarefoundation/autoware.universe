@@ -67,7 +67,7 @@ private:
     float radius;  // cylindrical coords on XY Plane
     PointLabel point_state{PointLabel::INIT};
     uint16_t grid_id;   // id of grid in vertical
-    size_t orig_index;  // index of this point in the source pointcloud
+    size_t data_index;  // index of this point data in the source pointcloud
   };
   using PointCloudVector = std::vector<PointData>;
 
@@ -91,7 +91,7 @@ private:
     float height_min;
     uint32_t point_num;
     uint16_t grid_id;
-    pcl::PointIndices pcl_indices;
+    std::vector<size_t> pcl_indices;
     std::vector<float> height_list;
 
     PointsCentroid()
@@ -116,7 +116,7 @@ private:
       height_min = 10.0f;
       point_num = 0;
       grid_id = 0;
-      pcl_indices.indices.clear();
+      pcl_indices.clear();
       height_list.clear();
     }
 
@@ -130,9 +130,9 @@ private:
       height_max = height_max < height ? height : height_max;
       height_min = height_min > height ? height : height_min;
     }
-    void addPoint(const float radius, const float height, const uint index)
+    void addPoint(const float radius, const float height, const size_t index)
     {
-      pcl_indices.indices.push_back(index);
+      pcl_indices.push_back(index);
       height_list.push_back(height);
       addPoint(radius, height);
     }
@@ -147,7 +147,7 @@ private:
 
     float getMinHeight() const { return height_min; }
 
-    const pcl::PointIndices & getIndicesRef() const { return pcl_indices; }
+    const std::vector<size_t> & getIndicesRef() const { return pcl_indices; }
     const std::vector<float> & getHeightListRef() const { return height_list; }
   };
 

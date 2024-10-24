@@ -156,7 +156,6 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("azimuth_angle_grouping", *time_keeper_);
 
-    size_t point_index = 0;
     pcl::PointXYZ input_point;
     for (size_t data_index = 0; data_index + in_cloud_point_step <= in_cloud_data_size;
          data_index += in_cloud_point_step) {
@@ -171,12 +170,11 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
 
       current_point.radius = radius;
       current_point.point_state = PointLabel::INIT;
-      current_point.orig_index = point_index;
+      current_point.data_index = data_index;
       current_point.grid_id = grid_.getGridId(radius);
 
       // store the point in the corresponding radial division
       out_radial_ordered_points[radial_div].emplace_back(current_point);
-      ++point_index;
     }
   }
 
@@ -212,7 +210,6 @@ void ScanGroundFilterComponent::convertPointcloud(
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("azimuth_angle_grouping", *time_keeper_);
 
-    size_t point_index = 0;
     pcl::PointXYZ input_point;
     for (size_t data_index = 0; data_index + in_cloud_point_step <= in_cloud_data_size;
          data_index += in_cloud_point_step) {
@@ -226,11 +223,10 @@ void ScanGroundFilterComponent::convertPointcloud(
 
       current_point.radius = radius;
       current_point.point_state = PointLabel::INIT;
-      current_point.orig_index = point_index;
+      current_point.data_index = data_index;
 
       // store the point in the corresponding radial division
       out_radial_ordered_points[radial_div].emplace_back(current_point);
-      ++point_index;
     }
   }
 
@@ -399,11 +395,11 @@ void ScanGroundFilterComponent::recheckGroundCluster(
 {
   const float reference_height =
     use_lowest_point ? gnd_cluster.getMinHeight() : gnd_cluster.getAverageHeight();
-  const pcl::PointIndices & gnd_indices = gnd_cluster.getIndicesRef();
+  const std::vector<size_t> & gnd_indices = gnd_cluster.getIndicesRef();
   const std::vector<float> & height_list = gnd_cluster.getHeightListRef();
   for (size_t i = 0; i < height_list.size(); ++i) {
     if (height_list.at(i) >= reference_height + non_ground_threshold) {
-      non_ground_indices.indices.push_back(gnd_indices.indices.at(i));
+      non_ground_indices.indices.push_back(gnd_indices.at(i));
     }
   }
 }
@@ -437,8 +433,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
     // initialize the previous point
     {
       pd_curr = in_radial_ordered_clouds[i][0];
-      const size_t data_index = in_cloud->point_step * pd_curr.orig_index;
-      get_point_from_data_index(in_cloud, data_index, point_curr);
+      get_point_from_data_index(in_cloud, pd_curr.data_index, point_curr);
     }
 
     // iterate over the points in the ray
@@ -449,8 +444,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
       // set the current point
       pd_curr = point;
-      const size_t data_index = in_cloud->point_step * pd_curr.orig_index;
-      get_point_from_data_index(in_cloud, data_index, point_curr);
+      get_point_from_data_index(in_cloud, pd_curr.data_index, point_curr);
 
       // determine if the current point is in new grid
       const bool is_curr_in_next_grid = pd_curr.grid_id > pd_prev.grid_id;
@@ -471,12 +465,12 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
           // classify previous point
           global_slope_ratio_p >= global_slope_max_ratio_ &&
           point_prev.z > non_ground_height_threshold_local) {
-          out_no_ground_indices.indices.push_back(pd_prev.orig_index);
+          out_no_ground_indices.indices.push_back(pd_prev.data_index);
           pd_prev.point_state = PointLabel::NON_GROUND;
         } else if (
           abs(global_slope_ratio_p) < global_slope_max_ratio_ &&
           abs(point_prev.z) < non_ground_height_threshold_local) {
-          centroid_bin.addPoint(pd_prev.radius, point_prev.z, pd_prev.orig_index);
+          centroid_bin.addPoint(pd_prev.radius, point_prev.z, pd_prev.data_index);
           pd_prev.point_state = PointLabel::GROUND;
           // centroid_bin is filled at least once
           // if the current point is in the next gird, it is ready to be initialized
@@ -493,7 +487,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       }
 
       // finalize the current centroid_bin and update the gnd_grids
-      if (is_curr_in_next_grid && centroid_bin.getIndicesRef().indices.size() > 0) {
+      if (is_curr_in_next_grid && centroid_bin.getIndicesRef().size() > 0) {
         // check if the prev grid have ground point cloud
         if (use_recheck_ground_cluster_) {
           recheckGroundCluster(
@@ -541,13 +535,13 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         points_xy_distance_square < split_points_distance_tolerance_square_ &&
         point_curr.z > point_prev.z) {
         pd_curr.point_state = PointLabel::NON_GROUND;
-        out_no_ground_indices.indices.push_back(pd_curr.orig_index);
+        out_no_ground_indices.indices.push_back(pd_curr.data_index);
         continue;
       }
 
       // 3: the angle is exceed the global slope threshold
       if (global_slope_ratio_p > global_slope_max_ratio_) {
-        out_no_ground_indices.indices.push_back(pd_curr.orig_index);
+        out_no_ground_indices.indices.push_back(pd_curr.data_index);
         continue;
       }
 
@@ -570,9 +564,9 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
       // update the point label and update the ground cluster
       if (pd_curr.point_state == PointLabel::NON_GROUND) {
-        out_no_ground_indices.indices.push_back(pd_curr.orig_index);
+        out_no_ground_indices.indices.push_back(pd_curr.data_index);
       } else if (pd_curr.point_state == PointLabel::GROUND) {
-        centroid_bin.addPoint(pd_curr.radius, point_curr.z, pd_curr.orig_index);
+        centroid_bin.addPoint(pd_curr.radius, point_curr.z, pd_curr.data_index);
       }
       // else, the point is not classified
     }
@@ -615,8 +609,7 @@ void ScanGroundFilterComponent::classifyPointCloud(
       const PointData & pd = in_radial_ordered_clouds[i][j];
       point_label_curr = pd.point_state;
 
-      const size_t data_index = in_cloud->point_step * pd.orig_index;
-      get_point_from_data_index(in_cloud, data_index, point_curr);
+      get_point_from_data_index(in_cloud, pd.data_index, point_curr);
       if (j == 0) {
         bool is_front_side = (point_curr.x > virtual_ground_point.x);
         if (use_virtual_ground_point_ && is_front_side) {
@@ -677,12 +670,12 @@ void ScanGroundFilterComponent::classifyPointCloud(
         non_ground_cluster.initialize();
       }
       if (point_label_curr == PointLabel::NON_GROUND) {
-        out_no_ground_indices.indices.push_back(pd.orig_index);
+        out_no_ground_indices.indices.push_back(pd.data_index);
       } else if (  // NOLINT
         (point_label_prev == PointLabel::NON_GROUND) &&
         (point_label_curr == PointLabel::POINT_FOLLOW)) {
         point_label_curr = PointLabel::NON_GROUND;
-        out_no_ground_indices.indices.push_back(pd.orig_index);
+        out_no_ground_indices.indices.push_back(pd.data_index);
       } else if (  // NOLINT
         (point_label_prev == PointLabel::GROUND) &&
         (point_label_curr == PointLabel::POINT_FOLLOW)) {
@@ -714,9 +707,9 @@ void ScanGroundFilterComponent::extractObjectPoints(
 
   size_t output_data_size = 0;
 
-  for (const auto & i : in_indices.indices) {
+  for (const auto & idx : in_indices.indices) {
     std::memcpy(
-      &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[i * in_cloud_ptr->point_step],
+      &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[idx],
       in_cloud_ptr->point_step * sizeof(uint8_t));
     output_data_size += in_cloud_ptr->point_step;
   }
