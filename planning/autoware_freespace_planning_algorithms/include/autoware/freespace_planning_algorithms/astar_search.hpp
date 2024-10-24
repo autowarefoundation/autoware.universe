@@ -117,7 +117,7 @@ public:
         node.declare_parameter<double>("astar.smoothness_weight"),
         node.declare_parameter<double>("astar.obstacle_distance_weight"),
         node.declare_parameter<double>("astar.goal_lat_distance_weight")},
-        node.get_clock())
+      node.get_clock())
   {
   }
 
