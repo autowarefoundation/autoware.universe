@@ -132,7 +132,7 @@ void PredictedPathCheckerNode::onAccel(
 }
 
 void PredictedPathCheckerNode::onIsStopped(
-  const control_interface::IsStopped::Message::ConstSharedPtr msg)
+  const autoware::component_interface_specs::control::IsStopped::Message::ConstSharedPtr msg)
 {
   is_stopped_ptr_ = msg;
 
@@ -415,7 +415,8 @@ void PredictedPathCheckerNode::checkVehicleState(diagnostic_updater::DiagnosticS
 void PredictedPathCheckerNode::sendRequest(bool make_stop_vehicle)
 {
   if (!is_calling_set_stop_ && cli_set_stop_->service_is_ready()) {
-    const auto req = std::make_shared<control_interface::SetStop::Service::Request>();
+    const auto req =
+      std::make_shared<autoware::component_interface_specs::control::SetStop::Service::Request>();
     req->stop = make_stop_vehicle;
     req->request_source = "predicted_path_checker";
     is_calling_set_stop_ = true;

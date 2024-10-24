@@ -15,8 +15,8 @@
 #ifndef OPERATION_MODE_HPP_
 #define OPERATION_MODE_HPP_
 
+#include <autoware/component_interface_specs/system.hpp>
 #include <autoware_ad_api_specs/operation_mode.hpp>
-#include <component_interface_specs/system.hpp>
 #include <component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -45,8 +45,10 @@ private:
   using ChangeToAutonomous = autoware_ad_api::operation_mode::ChangeToAutonomous;
   using ChangeToLocal = autoware_ad_api::operation_mode::ChangeToLocal;
   using ChangeToRemote = autoware_ad_api::operation_mode::ChangeToRemote;
-  using OperationModeRequest = system_interface::ChangeOperationMode::Service::Request;
-  using AutowareControlRequest = system_interface::ChangeAutowareControl::Service::Request;
+  using OperationModeRequest =
+    autoware::component_interface_specs::system::ChangeOperationMode::Service::Request;
+  using AutowareControlRequest =
+    autoware::component_interface_specs::system::ChangeAutowareControl::Service::Request;
   using OperationModeAvailability = tier4_system_msgs::msg::OperationModeAvailability;
 
   OperationModeState::Message curr_state_;
@@ -62,9 +64,9 @@ private:
   Srv<autoware_ad_api::operation_mode::ChangeToRemote> srv_remote_mode_;
   Srv<autoware_ad_api::operation_mode::EnableAutowareControl> srv_enable_control_;
   Srv<autoware_ad_api::operation_mode::DisableAutowareControl> srv_disable_control_;
-  Sub<system_interface::OperationModeState> sub_state_;
-  Cli<system_interface::ChangeOperationMode> cli_mode_;
-  Cli<system_interface::ChangeAutowareControl> cli_control_;
+  Sub<autoware::component_interface_specs::system::OperationModeState> sub_state_;
+  Cli<autoware::component_interface_specs::system::ChangeOperationMode> cli_mode_;
+  Cli<autoware::component_interface_specs::system::ChangeAutowareControl> cli_control_;
   rclcpp::Subscription<OperationModeAvailability>::SharedPtr sub_availability_;
 
   void on_change_to_stop(

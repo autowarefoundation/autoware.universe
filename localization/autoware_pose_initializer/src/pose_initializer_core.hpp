@@ -17,8 +17,8 @@
 
 #include "autoware/localization_util/diagnostics_module.hpp"
 
+#include <autoware/component_interface_specs/localization.hpp>
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
-#include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -42,8 +42,8 @@ public:
 
 private:
   using ServiceException = component_interface_utils::ServiceException;
-  using Initialize = localization_interface::Initialize;
-  using State = localization_interface::InitializationState;
+  using Initialize = autoware::component_interface_specs::localization::Initialize;
+  using State = autoware::component_interface_specs::localization::InitializationState;
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
   rclcpp::CallbackGroup::SharedPtr group_srv_;

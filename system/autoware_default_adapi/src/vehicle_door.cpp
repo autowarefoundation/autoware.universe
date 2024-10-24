@@ -30,10 +30,12 @@ VehicleDoorNode::VehicleDoorNode(const rclcpp::NodeOptions & options)
   adaptor.init_sub(sub_status_, this, &VehicleDoorNode::on_status);
 }
 
-void VehicleDoorNode::on_status(vehicle_interface::DoorStatus::Message::ConstSharedPtr msg)
+void VehicleDoorNode::on_status(
+  autoware::component_interface_specs::vehicle::DoorStatus::Message::ConstSharedPtr msg)
 {
   utils::notify(
-    pub_status_, status_, *msg, utils::ignore_stamp<vehicle_interface::DoorStatus::Message>);
+    pub_status_, status_, *msg,
+    utils::ignore_stamp<autoware::component_interface_specs::vehicle::DoorStatus::Message>);
 }
 
 }  // namespace autoware::default_adapi

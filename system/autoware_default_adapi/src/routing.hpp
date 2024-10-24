@@ -15,9 +15,9 @@
 #ifndef ROUTING_HPP_
 #define ROUTING_HPP_
 
+#include <autoware/component_interface_specs/planning.hpp>
+#include <autoware/component_interface_specs/system.hpp>
 #include <autoware_ad_api_specs/routing.hpp>
-#include <component_interface_specs/planning.hpp>
-#include <component_interface_specs/system.hpp>
 #include <component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -33,9 +33,9 @@ public:
   explicit RoutingNode(const rclcpp::NodeOptions & options);
 
 private:
-  using OperationModeState = system_interface::OperationModeState;
-  using State = planning_interface::RouteState;
-  using Route = planning_interface::LaneletRoute;
+  using OperationModeState = autoware::component_interface_specs::system::OperationModeState;
+  using State = autoware::component_interface_specs::planning::RouteState;
+  using Route = autoware::component_interface_specs::planning::LaneletRoute;
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   Pub<autoware_ad_api::routing::RouteState> pub_state_;
@@ -45,13 +45,13 @@ private:
   Srv<autoware_ad_api::routing::ChangeRoutePoints> srv_change_route_points_;
   Srv<autoware_ad_api::routing::ChangeRoute> srv_change_route_;
   Srv<autoware_ad_api::routing::ClearRoute> srv_clear_route_;
-  Sub<planning_interface::RouteState> sub_state_;
-  Sub<planning_interface::LaneletRoute> sub_route_;
-  Cli<planning_interface::SetWaypointRoute> cli_set_waypoint_route_;
-  Cli<planning_interface::SetLaneletRoute> cli_set_lanelet_route_;
-  Cli<planning_interface::ClearRoute> cli_clear_route_;
-  Cli<system_interface::ChangeOperationMode> cli_operation_mode_;
-  Sub<system_interface::OperationModeState> sub_operation_mode_;
+  Sub<autoware::component_interface_specs::planning::RouteState> sub_state_;
+  Sub<autoware::component_interface_specs::planning::LaneletRoute> sub_route_;
+  Cli<autoware::component_interface_specs::planning::SetWaypointRoute> cli_set_waypoint_route_;
+  Cli<autoware::component_interface_specs::planning::SetLaneletRoute> cli_set_lanelet_route_;
+  Cli<autoware::component_interface_specs::planning::ClearRoute> cli_clear_route_;
+  Cli<autoware::component_interface_specs::system::ChangeOperationMode> cli_operation_mode_;
+  Sub<autoware::component_interface_specs::system::OperationModeState> sub_operation_mode_;
   bool is_auto_mode_;
   State::Message state_;
 
