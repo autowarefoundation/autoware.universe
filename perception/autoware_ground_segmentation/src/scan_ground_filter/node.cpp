@@ -278,7 +278,7 @@ void ScanGroundFilterComponent::initializeFirstGndGrids(
     curr_gnd_grid.gradient = gradient;
     curr_gnd_grid.intercept = 0.0f;
     curr_gnd_grid.grid_id = ind_grid;
-    gnd_grids.push_back(curr_gnd_grid);
+    gnd_grids.emplace_back(curr_gnd_grid);
   }
 }
 
@@ -502,7 +502,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         curr_gnd_grid.grid_id = pd_prev.grid_id;
         curr_gnd_grid.gradient = 0.0f;   // not calculated yet
         curr_gnd_grid.intercept = 0.0f;  // not calculated yet
-        gnd_grids.push_back(curr_gnd_grid);
+        gnd_grids.emplace_back(curr_gnd_grid);
         // clear the centroid_bin
         centroid_bin.initialize();
 
