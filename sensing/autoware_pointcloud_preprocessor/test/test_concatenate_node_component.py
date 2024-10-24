@@ -58,7 +58,6 @@ TIMESTAMP_OFFSET = [0.0, 0.04, 0.08]
 TIMESTAMP_NOISE = 0.01  # 10 ms
 
 NUM_OF_POINTS = 3
-DEBUG = False
 MILLISECONDS = 1000000
 
 
@@ -67,6 +66,9 @@ COARSE_TOLERANCE = TIMESTAMP_NOISE * 2
 
 GLOBAL_SECONDS = 10
 GLOBAL_NANOSECONDS = 100000000
+
+# Set to True if you want to check the output of the component tests.
+DEBUG = False
 
 
 @pytest.mark.launch_test
@@ -84,7 +86,7 @@ def generate_test_description():
             ],
             parameters=[
                 {
-                    "debug_mode": True,
+                    "debug_mode": False,
                     "has_static_tf_only": False,
                     "rosbag_replay": False,
                     "rosbag_length": 0.0,

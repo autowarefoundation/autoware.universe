@@ -41,7 +41,7 @@ protected:
     // Instead of "input_topics", other parameters are not used.
     // They just helps to setup the concatenate node
     node_options.parameter_overrides(
-      {{"debug_mode", true},
+      {{"debug_mode", false},
        {"has_static_tf_only", false},
        {"rosbag_replay", false},
        {"rosbag_length", 0.0},
@@ -178,8 +178,8 @@ protected:
   static constexpr float standard_tolerance{1e-4};
   static constexpr int number_of_pointcloud{3};
   static constexpr float timeout_sec{0.2};
-  static constexpr bool collector_debug_mode{true};  // For showing collector information
-  bool debug_{false};                                // For the Unit test
+  static constexpr bool collector_debug_mode{false};  // For showing collector information
+  bool debug_{false};                                 // For the Unit test
 };
 
 //////////////////////////////// Test combine_cloud_handler ////////////////////////////////
