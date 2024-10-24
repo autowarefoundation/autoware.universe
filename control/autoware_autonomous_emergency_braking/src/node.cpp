@@ -15,6 +15,7 @@
 #include <autoware/autonomous_emergency_braking/node.hpp>
 #include <autoware/autonomous_emergency_braking/utils.hpp>
 #include <autoware/motion_utils/marker/marker_helper.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
@@ -467,9 +468,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       use_pointcloud_data_ && points_belonging_to_cluster_hulls &&
       !points_belonging_to_cluster_hulls->empty()) {
       const auto current_time = obstacle_ros_pointcloud_ptr_->header.stamp;
-      const bool ego_moves_forward = current_v > 0.0;
-      getClosestObjectsOnPath(
-        path, current_time, points_belonging_to_cluster_hulls, objects, ego_moves_forward);
+      getClosestObjectsOnPath(path, current_time, points_belonging_to_cluster_hulls, objects);
     }
     if (use_predicted_object_data_) {
       createObjectDataUsingPredictedObjects(path, ego_polys, objects);
@@ -882,15 +881,18 @@ void AEB::getPointsBelongingToClusterHulls(
 
 void AEB::getClosestObjectsOnPath(
   const Path & ego_path, const rclcpp::Time & stamp,
-  const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects,
-  const bool ego_moves_forward)
+  const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   // check if the predicted path has a valid number of points
   if (ego_path.size() < 2 || points_belonging_to_cluster_hulls->empty()) {
     return;
   }
-
+  const auto ego_is_driving_forward_opt = autoware::motion_utils::isDrivingForward(ego_path);
+  if (!ego_is_driving_forward_opt.has_value()) {
+    return;
+  }
+  const bool ego_is_driving_forward = ego_is_driving_forward_opt.value();
   // select points inside the ego footprint path
   const auto current_p = [&]() {
     const auto & first_point_of_path = ego_path.front();
@@ -919,10 +921,9 @@ void AEB::getClosestObjectsOnPath(
 
     // If the object is behind the ego, we need to use the backward long offset. The distance should
     // be a positive number in any case
-    const double dist_ego_to_object = (ego_moves_forward)
+    const double dist_ego_to_object = (ego_is_driving_forward)
                                         ? obj_arc_length - vehicle_info_.max_longitudinal_offset_m
                                         : obj_arc_length + vehicle_info_.min_longitudinal_offset_m;
-
     ObjectData obj;
     obj.stamp = stamp;
     obj.position = obj_position;

@@ -447,8 +447,7 @@ public:
    */
   void getClosestObjectsOnPath(
     const Path & ego_path, const rclcpp::Time & stamp,
-    const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects,
-    const bool ego_moves_forward);
+    const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects);
 
   /**
    * @brief Create object data using point cloud clusters
