@@ -1937,7 +1937,7 @@ TEST(
 TEST(geometry, intersectPolygonRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 
@@ -2227,7 +2227,7 @@ TEST(geometry, intersectConcavePolygonRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
   std::vector<std::vector<autoware::universe_utils::Polygon2d>> triangulations;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 

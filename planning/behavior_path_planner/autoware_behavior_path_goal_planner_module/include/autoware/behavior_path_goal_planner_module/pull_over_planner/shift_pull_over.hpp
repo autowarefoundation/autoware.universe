@@ -36,8 +36,9 @@ public:
     const LaneDepartureChecker & lane_departure_checker);
   PullOverPlannerType getPlannerType() const override { return PullOverPlannerType::SHIFT; };
   std::optional<PullOverPath> plan(
+    const GoalCandidate & modified_goal_pose, const size_t id,
     const std::shared_ptr<const PlannerData> planner_data,
-    const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose) override;
+    const BehaviorModuleOutput & previous_module_output) override;
 
 protected:
   PathWithLaneId generateReferencePath(
@@ -46,10 +47,10 @@ protected:
   std::optional<PathWithLaneId> cropPrevModulePath(
     const PathWithLaneId & prev_module_path, const Pose & shift_end_pose) const;
   std::optional<PullOverPath> generatePullOverPath(
+    const GoalCandidate & goal_candidate, const size_t id,
     const std::shared_ptr<const PlannerData> planner_data,
     const BehaviorModuleOutput & previous_module_output, const lanelet::ConstLanelets & road_lanes,
-    const lanelet::ConstLanelets & shoulder_lanes, const Pose & goal_pose,
-    const double lateral_jerk) const;
+    const lanelet::ConstLanelets & shoulder_lanes, const double lateral_jerk) const;
   static double calcBeforeShiftedArcLength(
     const PathWithLaneId & path, const double after_shifted_arc_length, const double dr);
   static std::vector<double> splineTwoPoints(

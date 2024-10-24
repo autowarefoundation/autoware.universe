@@ -331,6 +331,9 @@ bool ScenarioSelectorNode::isDataReady()
 void ScenarioSelectorNode::updateData()
 {
   {
+    stop_watch.tic();
+  }
+  {
     auto msg = sub_parking_state_->takeData();
     is_parking_completed_ = msg ? msg->data : is_parking_completed_;
   }
@@ -370,6 +373,12 @@ void ScenarioSelectorNode::onTimer()
   }
 
   pub_scenario_->publish(scenario);
+
+  // Publish ProcessingTime
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = stop_watch.toc();
+  pub_processing_time_->publish(processing_time_msg);
 }
 
 void ScenarioSelectorNode::onLaneDrivingTrajectory(
@@ -466,6 +475,8 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
     this, get_clock(), period_ns, std::bind(&ScenarioSelectorNode::onTimer, this));
   published_time_publisher_ =
     std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
+  pub_processing_time_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 }
 }  // namespace autoware::scenario_selector
 

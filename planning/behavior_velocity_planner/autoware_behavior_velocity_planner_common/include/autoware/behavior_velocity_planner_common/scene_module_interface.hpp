@@ -274,7 +274,7 @@ protected:
 
   void deleteExpiredModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
-  bool getEnableRTC(rclcpp::Node & node, const std::string & param_name)
+  static bool getEnableRTC(rclcpp::Node & node, const std::string & param_name)
   {
     bool enable_rtc = true;
 
