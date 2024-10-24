@@ -209,9 +209,7 @@ ConcatenatedCloudResult CombineCloudHandler::combine_pointclouds(
 
   for (const auto & [topic, cloud] : topic_to_cloud_map) {
     // convert to XYZIRC pointcloud if pointcloud is not empty
-    // auto xyzirc_cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
-
-    sensor_msgs::msg::PointCloud2::SharedPtr xyzirc_cloud(new sensor_msgs::msg::PointCloud2());
+    auto xyzirc_cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
     convert_to_xyzirc_cloud(cloud, xyzirc_cloud);
 
     auto transformed_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
