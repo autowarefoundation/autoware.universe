@@ -19,12 +19,32 @@
 #include "autoware/pure_pursuit/autoware_pure_pursuit_lateral_controller.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 
+#include <autoware/trajectory_follower_base/lateral_controller_base.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+namespace
+{
+template <typename T>
+std::vector<T> resizeHorizonByZeroOrderHold(
+  const std::vector<T> & original_horizon, const double original_time_step_ms,
+  const double new_time_step_ms)
+{
+  std::vector<T> resized_horizon;
+  const int step_factor = static_cast<int>(original_time_step_ms / new_time_step_ms);
+  for (const auto & command : original_horizon) {
+    for (int i = 0; i < step_factor; ++i) {
+      resized_horizon.push_back(command);
+    }
+  }
+  return resized_horizon;
+}
+}  // namespace
 
 namespace autoware::motion::control::trajectory_follower_node
 {
@@ -73,6 +93,9 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
     create_publisher<Float64Stamped>("~/longitudinal/debug/processing_time_ms", 1);
   debug_marker_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_marker", rclcpp::QoS{1});
+
+  control_cmd_horizon_pub_ = create_publisher<autoware_control_msgs::msg::ControlHorizon>(
+    "~/experimental/control_cmd_horizon", 1);
 
   // Timer
   {
@@ -215,6 +238,15 @@ void Controller::callbackTimerControl()
   // 6. publish debug
   published_time_publisher_->publish_if_subscribed(control_cmd_pub_, out.stamp);
   publishDebugMarker(*input_data, lat_out);
+
+  // 7. publish experimental topic
+  // NOTE: It is possible that using control_horizon could be expected to enhance performance,
+  // but it is not a formal interface topic, only an experimental one.
+  const auto control_horizon =
+    createControlHorizon(lat_out.control_cmd_horizon, lon_out.control_cmd_horizon, this->now());
+  if (control_horizon.has_value()) {
+    control_cmd_horizon_pub_->publish(control_horizon.value());
+  }
 }
 
 void Controller::publishDebugMarker(
@@ -252,6 +284,75 @@ void Controller::publishProcessingTime(
   msg.stamp = this->now();
   msg.data = t_ms;
   pub->publish(msg);
+}
+
+std::optional<ControlHorizon> Controller::createControlHorizon(
+  const LateralHorizon & lateral_horizon, const LongitudinalHorizon & longitudinal_horizon,
+  const rclcpp::Time & stamp)
+{
+  if (lateral_horizon.controls.empty() || longitudinal_horizon.controls.empty()) {
+    return std::nullopt;
+  }
+
+  autoware_control_msgs::msg::ControlHorizon control_horizon{};
+  control_horizon.stamp = stamp;
+
+  // If either of the horizons has only one control, repeat the control to match the other horizon.
+  if (lateral_horizon.controls.size() == 1) {
+    control_horizon.time_step_ms = longitudinal_horizon.time_step_ms;
+    const auto lateral = lateral_horizon.controls.front();
+    for (const auto & longitudinal : longitudinal_horizon.controls) {
+      autoware_control_msgs::msg::Control control;
+      control.longitudinal = longitudinal;
+      control.lateral = lateral;
+      control.stamp = stamp;
+      control_horizon.controls.push_back(control);
+    }
+    return control_horizon;
+  }
+  if (longitudinal_horizon.controls.size() == 1) {
+    control_horizon.time_step_ms = lateral_horizon.time_step_ms;
+    const auto longitudinal = longitudinal_horizon.controls.front();
+    for (const auto & lateral : lateral_horizon.controls) {
+      autoware_control_msgs::msg::Control control;
+      control.longitudinal = longitudinal;
+      control.lateral = lateral;
+      control.stamp = stamp;
+      control_horizon.controls.push_back(control);
+    }
+    return control_horizon;
+  }
+
+  // If both horizons have multiple controls, align the time steps and zero-order hold the controls.
+  // calculate greatest common divisor of time steps
+  const auto gcd_double = [](const double a, const double b) {
+    const double precision = 1e9;
+    const int int_a = static_cast<int>(round(a * precision));
+    const int int_b = static_cast<int>(round(b * precision));
+    return static_cast<double>(std::gcd(int_a, int_b)) / precision;
+  };
+  const double time_step_ms =
+    gcd_double(lateral_horizon.time_step_ms, longitudinal_horizon.time_step_ms);
+  control_horizon.time_step_ms = time_step_ms;
+
+  const auto lateral_controls = resizeHorizonByZeroOrderHold(
+    lateral_horizon.controls, lateral_horizon.time_step_ms, time_step_ms);
+  const auto longitudinal_controls = resizeHorizonByZeroOrderHold(
+    longitudinal_horizon.controls, longitudinal_horizon.time_step_ms, time_step_ms);
+
+  if (lateral_controls.size() != longitudinal_controls.size()) {
+    return std::nullopt;
+  }
+
+  const size_t num_steps = lateral_controls.size();
+  for (size_t i = 0; i < num_steps; ++i) {
+    autoware_control_msgs::msg::Control control{};
+    control.stamp = stamp;
+    control.lateral = lateral_controls.at(i);
+    control.longitudinal = longitudinal_controls.at(i);
+    control_horizon.controls.push_back(control);
+  }
+  return control_horizon;
 }
 
 }  // namespace autoware::motion::control::trajectory_follower_node
