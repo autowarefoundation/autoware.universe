@@ -342,8 +342,12 @@ std::optional<autoware::universe_utils::Polygon2d> getIntersectionArea(
 {
   const std::string area_id_str = assigned_lane.attributeOr("intersection_area", "else");
   if (area_id_str == "else") return std::nullopt;
+  if (!std::atoi(area_id_str.c_str())) return std::nullopt;
 
   const lanelet::Id area_id = std::atoi(area_id_str.c_str());
+  const auto polygon_opt = lanelet_map_ptr->polygonLayer.find(area_id);
+  if (polygon_opt == lanelet_map_ptr->polygonLayer.end()) return std::nullopt;
+
   const auto poly_3d = lanelet_map_ptr->polygonLayer.get(area_id);
   Polygon2d poly{};
   for (const auto & p : poly_3d) poly.outer().emplace_back(p.x(), p.y());

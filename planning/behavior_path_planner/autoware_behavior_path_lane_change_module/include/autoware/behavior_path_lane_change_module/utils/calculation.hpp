@@ -27,6 +27,8 @@ using behavior_path_planner::lane_change::LCParamPtr;
 using behavior_path_planner::lane_change::MinMaxValue;
 using behavior_path_planner::lane_change::PhaseMetrics;
 
+static constexpr double eps = 0.001;
+
 double calc_dist_from_pose_to_terminal_end(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & lanes,
   const Pose & src_pose);
@@ -103,14 +105,6 @@ double calc_ego_dist_to_lanes_start(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes);
 
-double calc_maximum_lane_change_length(
-  const double current_velocity, const LaneChangeParameters & lane_change_parameters,
-  const std::vector<double> & shift_intervals, const double max_acc);
-
-double calc_maximum_lane_change_length(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelet & current_terminal_lanelet,
-  const double max_acc);
-
 double calc_lane_changing_acceleration(
   const double initial_lane_changing_velocity, const double max_path_velocity,
   const double lane_changing_time, const double prepare_longitudinal_acc);
@@ -132,10 +126,13 @@ double calc_phase_length(
   const double velocity, const double maximum_velocity, const double acceleration,
   const double duration);
 
+std::vector<double> calc_lon_acceleration_samples(
+  const CommonDataPtr & common_data_ptr, const double max_path_velocity,
+  const double prepare_duration);
+
 std::vector<PhaseMetrics> calc_prepare_phase_metrics(
-  const CommonDataPtr & common_data_ptr, const std::vector<double> & prepare_durations,
-  const std::vector<double> & lon_accel_values, const double current_velocity,
-  const double min_length_threshold = 0.0,
+  const CommonDataPtr & common_data_ptr, const double current_velocity,
+  const double max_path_velocity, const double min_length_threshold = 0.0,
   const double max_length_threshold = std::numeric_limits<double>::max());
 
 std::vector<PhaseMetrics> calc_shift_phase_metrics(
