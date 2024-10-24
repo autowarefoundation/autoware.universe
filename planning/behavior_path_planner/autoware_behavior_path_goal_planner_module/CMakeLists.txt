@@ -3,7 +3,7 @@ project(autoware_behavior_path_goal_planner_module)
 
 set(ament_cmake_lint_cmake_FOUND TRUE)
 
-option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_EXAMPLES "Build examples" ON)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -27,7 +27,7 @@ if(BUILD_EXAMPLES)
   FetchContent_Declare(
     matplotlibcpp17
     GIT_REPOSITORY https://github.com/soblin/matplotlibcpp17.git
-    GIT_TAG main
+    GIT_TAG master
   )
   FetchContent_MakeAvailable(matplotlibcpp17)
 

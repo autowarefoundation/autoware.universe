@@ -20,6 +20,7 @@
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/no_parking_area.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
+#include "autoware_lanelet2_extension/utility/query.hpp"
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
 
 #include <boost/geometry/algorithms/union.hpp>
@@ -193,8 +194,26 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
         continue;
       }
 
+      // TODO(soblin): fix pose
+      const auto vehicle_front_midpoint =
+        (transformed_vehicle_footprint.at(0) + transformed_vehicle_footprint.at(1)) / 2.0;
+      [[maybe_unused]] const auto & vehicle_front_pose_on_path =
+        center_line_path.points
+          .at(autoware::motion_utils::findNearestIndex(
+            center_line_path.points,
+            autoware::universe_utils::createPoint(
+              vehicle_front_midpoint.x(), vehicle_front_midpoint.y(), search_pose.position.z)))
+          .point.pose;
+      lanelet::ConstLanelet vehicle_front_closest_lanelet;
+      lanelet::utils::query::getClosestLanelet(
+        pull_over_lanes, search_pose, &vehicle_front_closest_lanelet);
+      const auto vehicle_front_pose_for_left_bound = goal_planner_utils::calcClosestPose(
+        vehicle_front_closest_lanelet.leftBound(),
+        autoware::universe_utils::createPoint(
+          vehicle_front_midpoint.x(), vehicle_front_midpoint.y(), search_pose.position.z));
       GoalCandidate goal_candidate{};
       goal_candidate.goal_pose = search_pose;
+      goal_candidate.goal_pose.orientation = vehicle_front_pose_for_left_bound.orientation;
       goal_candidate.lateral_offset = dy;
       goal_candidate.id = goal_id;
       goal_id++;
