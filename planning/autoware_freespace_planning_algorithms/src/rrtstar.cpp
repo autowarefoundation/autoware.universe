@@ -26,9 +26,9 @@ rrtstar_core::Pose poseMsgToPose(const geometry_msgs::msg::Pose & pose_msg)
 
 RRTStar::RRTStar(
   const PlannerCommonParam & planner_common_param, const VehicleShape & original_vehicle_shape,
-  const RRTStarParam & rrtstar_param)
+  const RRTStarParam & rrtstar_param, const rclcpp::Clock::SharedPtr & clock)
 : AbstractPlanningAlgorithm(
-    planner_common_param, VehicleShape(
+    planner_common_param, clock, VehicleShape(
                             original_vehicle_shape.length + 2 * rrtstar_param.margin,
                             original_vehicle_shape.width + 2 * rrtstar_param.margin,
                             original_vehicle_shape.base_length, original_vehicle_shape.max_steering,
@@ -130,7 +130,7 @@ bool RRTStar::hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & traj
 void RRTStar::setRRTPath(const std::vector<rrtstar_core::Pose> & waypoints)
 {
   std_msgs::msg::Header header;
-  header.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
+  header.stamp = clock_->now();
   header.frame_id = costmap_.header.frame_id;
 
   waypoints_.header = header;
