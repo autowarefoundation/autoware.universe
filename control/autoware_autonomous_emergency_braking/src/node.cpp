@@ -15,6 +15,7 @@
 #include <autoware/autonomous_emergency_braking/node.hpp>
 #include <autoware/autonomous_emergency_braking/utils.hpp>
 #include <autoware/motion_utils/marker/marker_helper.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
@@ -138,7 +139,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
     pub_obstacle_pointcloud_ =
       this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
     debug_marker_publisher_ = this->create_publisher<MarkerArray>("~/debug/markers", 1);
-    info_marker_publisher_ = this->create_publisher<MarkerArray>("~/info/markers", 1);
+    virtual_wall_publisher_ = this->create_publisher<MarkerArray>("~/virtual_wall", 1);
     debug_rss_distance_publisher_ =
       this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/rss_distance", 1);
   }
@@ -398,7 +399,7 @@ bool AEB::fetchLatestData()
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   MarkerArray debug_markers;
-  MarkerArray info_markers;
+  MarkerArray virtual_wall_marker;
   checkCollision(debug_markers);
 
   if (!collision_data_keeper_.checkCollisionExpired()) {
@@ -414,7 +415,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
         addCollisionMarker(data.value(), debug_markers);
       }
     }
-    addVirtualStopWallMarker(info_markers);
+    addVirtualStopWallMarker(virtual_wall_marker);
   } else {
     const std::string error_msg = "[AEB]: No Collision";
     const auto diag_level = DiagnosticStatus::OK;
@@ -423,7 +424,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 
   // publish debug markers
   debug_marker_publisher_->publish(debug_markers);
-  info_marker_publisher_->publish(info_markers);
+  virtual_wall_publisher_->publish(virtual_wall_marker);
 }
 
 bool AEB::checkCollision(MarkerArray & debug_markers)
@@ -642,7 +643,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   ini_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
   path.push_back(ini_pose);
   const double & dt = imu_prediction_time_interval_;
-  const double distance_between_points = curr_v * dt;
+  const double distance_between_points = std::abs(curr_v) * dt;
   constexpr double minimum_distance_between_points{1e-2};
   // if current velocity is too small, assume it stops at the same point
   // if distance between points is too small, arc length calculation is unreliable, so we skip
@@ -887,7 +888,11 @@ void AEB::getClosestObjectsOnPath(
   if (ego_path.size() < 2 || points_belonging_to_cluster_hulls->empty()) {
     return;
   }
-
+  const auto ego_is_driving_forward_opt = autoware::motion_utils::isDrivingForward(ego_path);
+  if (!ego_is_driving_forward_opt.has_value()) {
+    return;
+  }
+  const bool ego_is_driving_forward = ego_is_driving_forward_opt.value();
   // select points inside the ego footprint path
   const auto current_p = [&]() {
     const auto & first_point_of_path = ego_path.front();
@@ -916,11 +921,9 @@ void AEB::getClosestObjectsOnPath(
 
     // If the object is behind the ego, we need to use the backward long offset. The distance should
     // be a positive number in any case
-    const bool is_object_in_front_of_ego = obj_arc_length > 0.0;
-    const double dist_ego_to_object = (is_object_in_front_of_ego)
+    const double dist_ego_to_object = (ego_is_driving_forward)
                                         ? obj_arc_length - vehicle_info_.max_longitudinal_offset_m
                                         : obj_arc_length + vehicle_info_.min_longitudinal_offset_m;
-
     ObjectData obj;
     obj.stamp = stamp;
     obj.position = obj_position;
