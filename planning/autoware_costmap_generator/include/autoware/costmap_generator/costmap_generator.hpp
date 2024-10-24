@@ -74,6 +74,8 @@
 #include <string>
 #include <vector>
 
+class TestCostmapGenerator;
+
 namespace autoware::costmap_generator
 {
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -177,6 +179,8 @@ private:
 
   /// \brief measure processing time
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+
+  friend class ::TestCostmapGenerator;
 };
 }  // namespace autoware::costmap_generator
 

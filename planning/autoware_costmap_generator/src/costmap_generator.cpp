@@ -180,18 +180,6 @@ CostmapGeneratorNode::CostmapGeneratorNode(const rclcpp::NodeOptions & node_opti
     this->get_node_parameters_interface());
   param_ = std::make_shared<::costmap_generator_node::Params>(param_listener_->get_params());
 
-  // Wait for first tf
-  // We want to do this before creating subscriptions
-  while (rclcpp::ok()) {
-    try {
-      tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
-      break;
-    } catch (const tf2::TransformException & ex) {
-      RCLCPP_INFO(this->get_logger(), "waiting for initial pose...");
-    }
-    rclcpp::sleep_for(std::chrono::milliseconds(5000));
-  }
-
   // Lanelet map subscriber
   sub_lanelet_bin_map_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
