@@ -220,6 +220,14 @@ TEST_F(TestExternalCmdConverter, testCalculateAcc)
     cmd.control.throttle = 0.0;
     cmd.control.brake = 1.0;
     EXPECT_TRUE(test_calculate_acc(cmd, vel) < 0.0);
+
+    cmd.control.throttle = 1.0;
+    cmd.control.brake = 0.5;
+    vel = 1.0;
+    EXPECT_TRUE(test_calculate_acc(cmd, vel) > 0.0);
+    cmd.control.throttle = 0.5;
+    cmd.control.brake = 1.0;
+    EXPECT_TRUE(test_calculate_acc(cmd, vel) < 0.0);
   }
   // test border cases
   {
@@ -228,18 +236,49 @@ TEST_F(TestExternalCmdConverter, testCalculateAcc)
     cmd.control.throttle = std::numeric_limits<double>::infinity();
     cmd.control.brake = 0.0;
     double vel = 0.0;
-    EXPECT_TRUE(test_calculate_acc(cmd, vel) > 0.0);
+    double acc = test_calculate_acc(cmd, vel);
+    EXPECT_DOUBLE_EQ(acc, 0.0);
     cmd.control.throttle = 0.0;
     cmd.control.brake = std::numeric_limits<double>::infinity();
-    EXPECT_TRUE(test_calculate_acc(cmd, vel) < 0.0);
+    acc = test_calculate_acc(cmd, vel);
+    EXPECT_DOUBLE_EQ(acc, 0.0);
 
     // input brake or throttle are infinite. velocity is infinite.
+    // Check that acc is not NaN and not infinite
+
     vel = std::numeric_limits<double>::infinity();
     cmd.control.throttle = std::numeric_limits<double>::infinity();
     cmd.control.brake = 0.0;
-    EXPECT_TRUE(test_calculate_acc(cmd, vel) > 0.0);
+    acc = test_calculate_acc(cmd, vel);
+    EXPECT_FALSE(std::isnan(acc));
+    EXPECT_FALSE(std::isinf(acc));
+    EXPECT_DOUBLE_EQ(acc, 0.0);
     cmd.control.throttle = 0.0;
     cmd.control.brake = std::numeric_limits<double>::infinity();
-    EXPECT_TRUE(test_calculate_acc(cmd, vel) < 0.0);
+    acc = test_calculate_acc(cmd, vel);
+    EXPECT_FALSE(std::isnan(acc));
+    EXPECT_FALSE(std::isinf(acc));
+    EXPECT_DOUBLE_EQ(acc, 0.0);
+
+    cmd.control.throttle = std::numeric_limits<double>::infinity();
+    cmd.control.brake = std::numeric_limits<double>::infinity();
+    acc = test_calculate_acc(cmd, vel);
+    EXPECT_FALSE(std::isnan(acc));
+    EXPECT_FALSE(std::isinf(acc));
+    EXPECT_DOUBLE_EQ(acc, 0.0);
+
+    cmd.control.throttle = std::numeric_limits<double>::quiet_NaN();
+    cmd.control.brake = std::numeric_limits<double>::quiet_NaN();
+    acc = test_calculate_acc(cmd, vel);
+    EXPECT_FALSE(std::isnan(acc));
+    EXPECT_FALSE(std::isinf(acc));
+    EXPECT_DOUBLE_EQ(acc, 0.0);
+
+    cmd.control.throttle = std::numeric_limits<double>::signaling_NaN();
+    cmd.control.brake = std::numeric_limits<double>::signaling_NaN();
+    acc = test_calculate_acc(cmd, vel);
+    EXPECT_FALSE(std::isnan(acc));
+    EXPECT_FALSE(std::isinf(acc));
+    EXPECT_DOUBLE_EQ(acc, 0.0);
   }
 }
