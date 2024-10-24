@@ -1200,12 +1200,13 @@ std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
     // Step1. extract intersection partial bound.
     std::vector<lanelet::ConstPoint3d> intersection_bound{};
     {
-      const auto polygon_opt = route_handler->getLaneletMapPtr()->polygonLayer.find(std::atoi(id.c_str()));
+      const auto polygon_opt =
+        route_handler->getLaneletMapPtr()->polygonLayer.find(std::atoi(id.c_str()));
       if (polygon_opt == route_handler->getLaneletMapPtr()->polygonLayer.end()) {
         continue;
       }
-      const auto& polygon = *polygon_opt;
-      
+      const auto & polygon = *polygon_opt;
+
       const auto is_clockwise_polygon =
         boost::geometry::is_valid(lanelet::utils::to2D(polygon.basicPolygon()));
       const auto is_clockwise_iteration = is_clockwise_polygon ? is_left : !is_left;

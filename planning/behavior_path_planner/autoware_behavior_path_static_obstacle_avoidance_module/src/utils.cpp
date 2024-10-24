@@ -260,12 +260,13 @@ bool isWithinIntersection(
     return false;
   }
 
-  const auto polygon_opt = route_handler->getLaneletMapPtr()->polygonLayer.find(std::atoi(area_id.c_str()));
+  const auto polygon_opt =
+    route_handler->getLaneletMapPtr()->polygonLayer.find(std::atoi(area_id.c_str()));
   if (polygon_opt == route_handler->getLaneletMapPtr()->polygonLayer.end()) {
     return false;
   }
-  const auto& polygon = *polygon_opt;
-  
+  const auto & polygon = *polygon_opt;
+
   return boost::geometry::within(
     lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
       .basicPoint(),
