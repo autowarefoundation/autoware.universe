@@ -22,32 +22,47 @@ namespace autoware::vehicle_info_utils
 /// Data class for vehicle info
 struct VehicleInfo
 {
+  VehicleInfo() = default;
+
   // Base parameters. These describe the vehicle's bounding box and the
   // position and radius of the wheels.
-  double wheel_radius_m;
-  double wheel_width_m;
-  double wheel_base_m;
-  double wheel_tread_m;
-  double front_overhang_m;
-  double rear_overhang_m;
-  double left_overhang_m;
-  double right_overhang_m;
-  double vehicle_height_m;
-  double max_steer_angle_rad;
+  double wheel_radius_m{};
+  double wheel_width_m{};
+  double wheel_base_m{};
+  double wheel_tread_m{};
+  double front_overhang_m{};
+  double rear_overhang_m{};
+  double left_overhang_m{};
+  double right_overhang_m{};
+  double vehicle_height_m{};
+  double max_steer_angle_rad{};
 
   // Derived parameters, i.e. calculated from base parameters
   // The offset values are relative to the base frame origin, which is located
   // on the ground below the middle of the rear axle, and can be negative.
-  double vehicle_length_m;
-  double vehicle_width_m;
-  double min_longitudinal_offset_m;
-  double max_longitudinal_offset_m;
-  double min_lateral_offset_m;
-  double max_lateral_offset_m;
-  double min_height_offset_m;
-  double max_height_offset_m;
+  double vehicle_length_m{};
+  double vehicle_width_m{};
+  double min_longitudinal_offset_m{};
+  double max_longitudinal_offset_m{};
+  double min_lateral_offset_m{};
+  double max_lateral_offset_m{};
+  double min_height_offset_m{};
+  double max_height_offset_m{};
 
+  /**
+   * @brief calculate the vehicle footprint in clockwise manner starting from the front-left edge,
+   * through front-right edge, center-right point, to front-left edge again to form a enclosed
+   * polygon
+   * @param margin the longitudinal and lateral inflation margin
+   */
   autoware::universe_utils::LinearRing2d createFootprint(const double margin = 0.0) const;
+
+  /**
+   * @brief calculate the vehicle footprint in clockwise manner starting from the front-left edge,
+   * through front-right edge, center-right point, to front-left edge again to form a enclosed
+   * polygon
+   * @param margin the longitudinal and lateral inflation margin
+   */
   autoware::universe_utils::LinearRing2d createFootprint(
     const double lat_margin, const double lon_margin) const;
 
