@@ -315,7 +315,7 @@ double calcRssDistance(
   return rear_object_stop_length - front_object_stop_length;
 }
 
-double calcMinimumLongitudinalLength(
+double calc_minimum_longitudinal_length(
   const double front_object_velocity, const double rear_object_velocity,
   const RSSparams & rss_params)
 {
@@ -629,7 +629,7 @@ std::vector<Polygon2d> get_collided_polygons(
 
     // minimum longitudinal length
     const auto min_lon_length =
-      calcMinimumLongitudinalLength(front_object_velocity, rear_object_velocity, rss_parameters);
+      calc_minimum_longitudinal_length(front_object_velocity, rear_object_velocity, rss_parameters);
 
     const auto & lon_offset = std::max(rss_dist, min_lon_length) * hysteresis_factor;
     const auto & lat_margin = rss_parameters.lateral_distance_max_threshold * hysteresis_factor;

@@ -83,7 +83,15 @@ double calcRssDistance(
   const double front_object_velocity, const double rear_object_velocity,
   const RSSparams & rss_params);
 
-double calcMinimumLongitudinalLength(
+/**
+ * @brief Calculates the minimum longitudinal length using rss parameter. The object is either ego
+ * vehicle or target object.
+ * @param front_object_velocity Front object velocity.
+ * @param rear_object_velocity Front object velocity.
+ * @param RSSparams RSS parameters
+ * @return Maximum distance.
+ */
+double calc_minimum_longitudinal_length(
   const double front_object_velocity, const double rear_object_velocity,
   const RSSparams & rss_params);
 
@@ -195,6 +203,16 @@ double calc_obstacle_min_length(const Shape & shape);
  */
 double calc_obstacle_max_length(const Shape & shape);
 
+/**
+ * @brief Calculate collision roughly by comparing minimum/maximum distance with margin.
+ * @param path The path of the ego vehicle.
+ * @param objects The predicted objects.
+ * @param margin Distance margin to judge collision.
+ * @param parameters The common parameters used in behavior path planner.
+ * @param use_offset_ego_point If true, the closest point to the object is calculated by
+ * interpolating the path points.
+ * @return Collision (rough) between minimum distance and maximum distance
+ */
 std::pair<bool, bool> checkObjectsCollisionRough(
   const PathWithLaneId & path, const PredictedObjects & objects, const double margin,
   const BehaviorPathPlannerParameters & parameters, const bool use_offset_ego_point);

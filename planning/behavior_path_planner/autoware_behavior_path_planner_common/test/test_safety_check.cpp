@@ -21,6 +21,7 @@
 #include <autoware_test_utils/autoware_test_utils.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
+#include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <tier4_planning_msgs/msg/detail/path_with_lane_id__struct.hpp>
 
@@ -33,9 +34,9 @@
 
 constexpr double epsilon = 1e-6;
 
-using autoware::behavior_path_planner::utils::path_safety_checker::
-  calc_interpolated_pose_with_velocity;
 using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
+using autoware::behavior_path_planner::utils::path_safety_checker::
+  PoseWithVelocityAndPolygonStamped;
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using autoware::test_utils::createPose;
 using autoware::test_utils::generateTrajectory;
@@ -273,6 +274,24 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, calcRssDistance)
   }
 }
 
+TEST(BehaviorPathPlanningSafetyUtilsTest, calc_minimum_longitudinal_length)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::
+    calc_minimum_longitudinal_length;
+
+  double front_object_velocity = 10.0;
+  double rear_object_velocity = 5.0;
+  autoware::behavior_path_planner::utils::path_safety_checker::RSSparams param;
+  param.longitudinal_distance_min_threshold = 4.0;
+  param.longitudinal_velocity_delta_time = 2.0;
+
+  // Condition: front is faster than rear object
+  EXPECT_DOUBLE_EQ(
+    calc_minimum_longitudinal_length(front_object_velocity, rear_object_velocity, param), 24.0);
+
+  // Condition: front is faster than rear object
+}
+
 // Basic interpolation test
 TEST(CalcInterpolatedPoseWithVelocityTest, BasicInterpolation)
 {
@@ -308,6 +327,9 @@ TEST(CalcInterpolatedPoseWithVelocityTest, BoundaryConditions)
 // Invalid input test
 TEST(CalcInterpolatedPoseWithVelocityTest, InvalidInput)
 {
+  using autoware::behavior_path_planner::utils::path_safety_checker::
+    calc_interpolated_pose_with_velocity;
+
   auto path = createTestPath();
 
   // Empty path
@@ -350,11 +372,13 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, get_interpolated_pose_with_velocity_an
     get_interpolated_pose_with_velocity_and_polygon_stamped;
 
   std::vector<PoseWithVelocityStamped> pred_path;
+  std::vector<PoseWithVelocityAndPolygonStamped> pred_path_with_polygon;
   double current_time = 0.5;
   autoware::vehicle_info_utils::VehicleInfo vehicle_info{};
   vehicle_info.max_longitudinal_offset_m = 1.0;
   vehicle_info.rear_overhang_m = 1.0;
   vehicle_info.vehicle_width_m = 2.0;
+  Shape shape;
 
   // Condition: empty path
   EXPECT_FALSE(
