@@ -18,7 +18,7 @@
         },
         "rosbag_replay": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Flag to indicate whether the user is replaying the rosbag in loops without relaunching the node."
         },
         "rosbag_length": {
