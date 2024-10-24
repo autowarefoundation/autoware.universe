@@ -42,7 +42,7 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ********************/
 
-#include "autoware_costmap_generator/objects_to_costmap.hpp"
+#include "autoware/costmap_generator/utils/objects_to_costmap.hpp"
 
 #include <tf2/utils.h>
 

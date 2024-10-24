@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
-#define AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
+#ifndef AUTOWARE__COSTMAP_GENERATOR__UTILS__OBJECT_MAP_UTILS_HPP_
+#define AUTOWARE__COSTMAP_GENERATOR__UTILS__OBJECT_MAP_UTILS_HPP_
 
 #include <grid_map_cv/grid_map_cv.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
@@ -69,10 +69,8 @@ void FillPolygonAreas(
   grid_map::GridMap & out_grid_map,
   const std::vector<std::vector<geometry_msgs::msg::Point>> & in_points,
   const std::string & in_grid_layer_name, const int in_layer_background_value,
-  const int in_fill_color, const int in_layer_min_value, const int in_layer_max_value,
-  const std::string & in_tf_target_frame, const std::string & in_tf_source_frame,
-  const tf2_ros::Buffer & in_tf_buffer);
+  const int in_fill_color, const int in_layer_min_value, const int in_layer_max_value);
 
 }  // namespace object_map
 
-#endif  // AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
+#endif  // AUTOWARE__COSTMAP_GENERATOR__UTILS__OBJECT_MAP_UTILS_HPP_
