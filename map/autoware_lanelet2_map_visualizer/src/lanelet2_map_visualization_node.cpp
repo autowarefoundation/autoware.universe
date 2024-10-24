@@ -31,7 +31,7 @@
  *
  */
 
-#include "map_loader/lanelet2_map_visualization_node.hpp"
+#include "lanelet2_map_visualization_node.hpp"
 
 #include <autoware_lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
@@ -49,7 +49,7 @@
 #include <memory>
 #include <vector>
 
-namespace
+namespace autoware::lanelet2_map_visualizer
 {
 void insert_marker_array(
   visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2)
@@ -64,7 +64,6 @@ void set_color(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, doub
   cl->b = static_cast<float>(b);
   cl->a = static_cast<float>(a);
 }
-}  // namespace
 
 Lanelet2MapVisualizationNode::Lanelet2MapVisualizationNode(const rclcpp::NodeOptions & options)
 : Node("lanelet2_map_visualization", options)
@@ -314,6 +313,7 @@ void Lanelet2MapVisualizationNode::on_map_bin(
 
   pub_marker_->publish(map_marker_array);
 }
+}  // namespace autoware::lanelet2_map_visualizer
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(Lanelet2MapVisualizationNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::lanelet2_map_visualizer::Lanelet2MapVisualizationNode)
