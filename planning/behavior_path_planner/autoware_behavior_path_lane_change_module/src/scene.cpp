@@ -290,6 +290,10 @@ TurnSignalInfo NormalLaneChange::get_current_turn_signal_info() const
     return get_terminal_turn_signal_info();
   }
 
+  if (!signal_activation_time_) {
+    signal_activation_time_ = clock_.now();
+  }
+
   return get_turn_signal(getEgoPose(), getLaneChangePath().info.lane_changing_end);
 }
 
@@ -318,9 +322,17 @@ TurnSignalInfo NormalLaneChange::get_terminal_turn_signal_info() const
   const auto nearest_yaw_threshold = common_param.ego_nearest_yaw_threshold;
   const auto current_nearest_seg_idx = common_data_ptr_->transient_data.current_path_seg_idx;
 
-  return getTurnSignalDecider().overwrite_turn_signal(
+  const auto turn_signal_info = getTurnSignalDecider().overwrite_turn_signal(
     path, current_pose, current_nearest_seg_idx, original_turn_signal_info,
     terminal_turn_signal_info, nearest_dist_threshold, nearest_yaw_threshold);
+
+  if (turn_signal_info.turn_signal.command != terminal_turn_signal_info.turn_signal.command) {
+    signal_activation_time_ = std::nullopt;
+  } else if (!signal_activation_time_) {
+    signal_activation_time_ = clock_.now();
+  }
+
+  return turn_signal_info;
 }
 
 LaneChangePath NormalLaneChange::getLaneChangePath() const
@@ -391,8 +403,6 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
       output.path = utils::combinePath(output.path, *found_extended_path);
     }
     output.reference_path = getReferencePath();
-    output.turn_signal_info =
-      get_turn_signal(getEgoPose(), status_.lane_change_path.info.lane_changing_end);
 
     if (isStopState()) {
       const auto current_velocity = getEgoVelocity();
@@ -408,11 +418,19 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
 
   extendOutputDrivableArea(output);
 
+  const auto turn_signal_info =
+    get_turn_signal(getEgoPose(), status_.lane_change_path.info.lane_changing_end);
   const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
   output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
     output.path, getEgoPose(), current_seg_idx, prev_module_output_.turn_signal_info,
-    output.turn_signal_info, planner_data_->parameters.ego_nearest_dist_threshold,
+    turn_signal_info, planner_data_->parameters.ego_nearest_dist_threshold,
     planner_data_->parameters.ego_nearest_yaw_threshold);
+
+  if (output.turn_signal_info.turn_signal.command != turn_signal_info.turn_signal.command) {
+    signal_activation_time_ = std::nullopt;
+  } else if (!signal_activation_time_) {
+    signal_activation_time_ = clock_.now();
+  }
 
   return output;
 }
@@ -1196,11 +1214,14 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_prepare_metrics() cons
   // set speed limit to be current path velocity;
   const auto max_path_velocity = common_data_ptr_->transient_data.current_path_velocity;
 
+  const auto active_signal_duration =
+    signal_activation_time_ ? (clock_.now() - signal_activation_time_.value()).seconds() : 0.0;
+
   const auto dist_to_target_start =
     calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
   return calculation::calc_prepare_phase_metrics(
-    common_data_ptr_, current_velocity, max_path_velocity, dist_to_target_start,
-    common_data_ptr_->transient_data.dist_to_terminal_start);
+    common_data_ptr_, current_velocity, max_path_velocity, active_signal_duration,
+    dist_to_target_start, common_data_ptr_->transient_data.dist_to_terminal_start);
 }
 
 std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(

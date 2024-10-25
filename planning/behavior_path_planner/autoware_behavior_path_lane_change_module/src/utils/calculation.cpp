@@ -391,16 +391,18 @@ double calc_lane_changing_acceleration(
     prepare_longitudinal_acc);
 }
 
-std::vector<double> calc_prepare_durations(const CommonDataPtr & common_data_ptr)
+std::vector<double> calc_prepare_durations(
+  const CommonDataPtr & common_data_ptr, const double active_signal_duration)
 {
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
   const auto threshold = common_data_ptr->bpp_param_ptr->base_link2front +
                          lc_param_ptr->min_length_for_turn_signal_activation;
   const auto max_prepare_duration = lc_param_ptr->maximum_prepare_duration;
+  const auto min_prepare_duration = lc_param_ptr->minimum_prepare_duration;
 
   // TODO(Azu) this check seems to cause scenario failures.
   if (common_data_ptr->transient_data.dist_to_terminal_start >= threshold) {
-    return {max_prepare_duration};
+    return {std::max(max_prepare_duration - active_signal_duration, min_prepare_duration)};
   }
 
   std::vector<double> prepare_durations;
@@ -418,8 +420,8 @@ std::vector<double> calc_prepare_durations(const CommonDataPtr & common_data_ptr
 
 std::vector<PhaseMetrics> calc_prepare_phase_metrics(
   const CommonDataPtr & common_data_ptr, const double current_velocity,
-  const double max_path_velocity, const double min_length_threshold,
-  const double max_length_threshold)
+  const double max_path_velocity, const double active_signal_duration,
+  const double min_length_threshold, const double max_length_threshold)
 {
   const auto & min_lc_vel = common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity;
   const auto & max_vel = common_data_ptr->bpp_param_ptr->max_vel;
@@ -437,7 +439,7 @@ std::vector<PhaseMetrics> calc_prepare_phase_metrics(
     return false;
   };
 
-  const auto prepare_durations = calc_prepare_durations(common_data_ptr);
+  const auto prepare_durations = calc_prepare_durations(common_data_ptr, active_signal_duration);
 
   for (const auto & prepare_duration : prepare_durations) {
     const auto lon_accel_samples =
