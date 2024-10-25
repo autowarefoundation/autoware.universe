@@ -1125,7 +1125,9 @@ BehaviorModuleOutput StaticObstacleAvoidanceModule::plan()
   path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
   const size_t ego_idx = planner_data_->findEgoIndex(output.path.points);
-  utils::clipPathLength(output.path, ego_idx, planner_data_->parameters);
+  utils::clipPathLength(
+    output.path, ego_idx, planner_data_->parameters.forward_path_length,
+    planner_data_->parameters.backward_path_length);
 
   // Drivable area generation.
   {
@@ -1176,7 +1178,9 @@ CandidateOutput StaticObstacleAvoidanceModule::planCandidate() const
 
   if (data.safe_shift_line.empty()) {
     const size_t ego_idx = planner_data_->findEgoIndex(shifted_path.path.points);
-    utils::clipPathLength(shifted_path.path, ego_idx, planner_data_->parameters);
+    utils::clipPathLength(
+      shifted_path.path, ego_idx, planner_data_->parameters.forward_path_length,
+      planner_data_->parameters.backward_path_length);
 
     output.path_candidate = shifted_path.path;
     return output;
@@ -1316,7 +1320,7 @@ void StaticObstacleAvoidanceModule::addNewShiftLines(
 
   const double road_velocity = avoid_data_.reference_path.points.at(front_new_shift_line.start_idx)
                                  .point.longitudinal_velocity_mps;
-  const double shift_time = PathShifter::calcShiftTimeFromJerk(
+  const double shift_time = autoware::motion_utils::calc_shift_time_from_jerk(
     front_new_shift_line.getRelativeLength(), helper_->getLateralMaxJerkLimit(),
     helper_->getLateralMaxAccelLimit());
   const double longitudinal_acc =
@@ -1642,6 +1646,16 @@ void StaticObstacleAvoidanceModule::insertReturnDeadLine(
     return;
   }
 
+  if (data.new_shift_line.empty()) {
+    RCLCPP_WARN(getLogger(), "module doesn't have return shift line.");
+    return;
+  }
+
+  if (!helper_->isFeasible(data.new_shift_line)) {
+    RCLCPP_WARN(getLogger(), "return shift line is not feasible. do nothing..");
+    return;
+  }
+
   // Consider the difference in path length between the shifted path and original path (the path
   // that is shifted inward has a shorter distance to the end of the path than the other one.)
   const auto & to_reference_path_end = data.arclength_from_ego.back();
@@ -1652,6 +1666,10 @@ void StaticObstacleAvoidanceModule::insertReturnDeadLine(
   const auto min_return_distance =
     helper_->getMinAvoidanceDistance(shift_length) + helper_->getNominalPrepareDistance(0.0);
   const auto to_stop_line = data.to_return_point - min_return_distance - buffer;
+  if (to_stop_line < 0.0) {
+    RCLCPP_WARN(getLogger(), "ego overran return shift dead line. do nothing.");
+    return;
+  }
 
   // If we don't need to consider deceleration constraints, insert a deceleration point
   // and return immediately
@@ -1673,7 +1691,7 @@ void StaticObstacleAvoidanceModule::insertReturnDeadLine(
     getEgoPosition(), to_stop_line - parameters_->stop_buffer, 0.0, shifted_path.path, stop_pose_);
 
   // insert slow down speed.
-  const double current_target_velocity = PathShifter::calcFeasibleVelocityFromJerk(
+  const double current_target_velocity = autoware::motion_utils::calc_feasible_velocity_from_jerk(
     shift_length, helper_->getLateralMinJerkLimit(), to_stop_line);
   if (current_target_velocity < getEgoSpeed()) {
     RCLCPP_DEBUG(getLogger(), "current velocity exceeds target slow down speed.");
@@ -1692,7 +1710,7 @@ void StaticObstacleAvoidanceModule::insertReturnDeadLine(
     }
 
     // target speed with nominal jerk limits.
-    const double v_target = PathShifter::calcFeasibleVelocityFromJerk(
+    const double v_target = autoware::motion_utils::calc_feasible_velocity_from_jerk(
       shift_length, helper_->getLateralMinJerkLimit(), shift_longitudinal_distance);
     const double v_original = shifted_path.path.points.at(i).point.longitudinal_velocity_mps;
     const double v_insert =
@@ -1718,6 +1736,11 @@ void StaticObstacleAvoidanceModule::insertWaitPoint(
   }
 
   if (helper_->isShifted()) {
+    return;
+  }
+
+  if (data.to_stop_line < 0.0) {
+    RCLCPP_WARN(getLogger(), "ego overran avoidance dead line. do nothing.");
     return;
   }
 
@@ -1880,7 +1903,7 @@ void StaticObstacleAvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_
   const auto lower_speed = object.value().avoid_required ? 0.0 : parameters_->min_slow_down_speed;
 
   // insert slow down speed.
-  const double current_target_velocity = PathShifter::calcFeasibleVelocityFromJerk(
+  const double current_target_velocity = autoware::motion_utils::calc_feasible_velocity_from_jerk(
     shift_length, helper_->getLateralMinJerkLimit(), distance_to_object);
   if (current_target_velocity < getEgoSpeed() + parameters_->buf_slow_down_speed) {
     utils::static_obstacle_avoidance::insertDecelPoint(
@@ -1901,7 +1924,7 @@ void StaticObstacleAvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_
     }
 
     // target speed with nominal jerk limits.
-    const double v_target = PathShifter::calcFeasibleVelocityFromJerk(
+    const double v_target = autoware::motion_utils::calc_feasible_velocity_from_jerk(
       shift_length, helper_->getLateralMinJerkLimit(), shift_longitudinal_distance);
     const double v_original = shifted_path.path.points.at(i).point.longitudinal_velocity_mps;
     const double v_insert = std::max(v_target - parameters_->buf_slow_down_speed, lower_speed);

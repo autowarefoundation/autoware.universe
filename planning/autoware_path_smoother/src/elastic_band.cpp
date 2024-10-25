@@ -381,7 +381,7 @@ void EBPathSmoother::updateConstraint(
     osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
     osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
   } else {
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+    osqp_solver_ptr_ = std::make_unique<autoware::osqp_interface::OSQPInterface>(
       P, A, q, lower_bound, upper_bound, p.qp_param.eps_abs);
     osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
     osqp_solver_ptr_->updateEpsAbs(p.qp_param.eps_abs);

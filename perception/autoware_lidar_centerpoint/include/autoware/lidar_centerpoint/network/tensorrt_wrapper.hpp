@@ -17,7 +17,7 @@
 
 #include "NvInfer.h"
 #include "autoware/lidar_centerpoint/centerpoint_config.hpp"
-#include "tensorrt_common/tensorrt_common.hpp"
+#include "autoware/tensorrt_common/tensorrt_common.hpp"
 
 #include <iostream>
 #include <memory>
@@ -36,7 +36,7 @@ public:
   bool init(
     const std::string & onnx_path, const std::string & engine_path, const std::string & precision);
 
-  tensorrt_common::TrtUniquePtr<nvinfer1::IExecutionContext> context_{nullptr};
+  autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IExecutionContext> context_{nullptr};
 
 protected:
   virtual bool setProfile(
@@ -44,7 +44,7 @@ protected:
     nvinfer1::IBuilderConfig & config) = 0;
 
   CenterPointConfig config_;
-  tensorrt_common::Logger logger_;
+  autoware::tensorrt_common::Logger logger_;
 
 private:
   bool parseONNX(
@@ -57,9 +57,9 @@ private:
 
   bool createContext();
 
-  tensorrt_common::TrtUniquePtr<nvinfer1::IRuntime> runtime_{nullptr};
-  tensorrt_common::TrtUniquePtr<nvinfer1::IHostMemory> plan_{nullptr};
-  tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine> engine_{nullptr};
+  autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IRuntime> runtime_{nullptr};
+  autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IHostMemory> plan_{nullptr};
+  autoware::tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine> engine_{nullptr};
 };
 
 }  // namespace autoware::lidar_centerpoint

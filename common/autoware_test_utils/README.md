@@ -15,7 +15,7 @@ The objective of the `test_utils` is to develop a unit testing library for the A
 
 ## Available Maps
 
-The following maps are available [here](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/autoware_test_utils/test_map)
+The following maps are available [here](https://github.com/autowarefoundation/autoware.universe/tree/main/common/autoware_test_utils/test_map)
 
 ### Common
 
@@ -32,6 +32,40 @@ The 2 km straight lanelet map consists of two lanes that run in the same directi
 The following illustrates the design of the map.
 
 ![straight_diagram](./images/2km-test.svg)
+
+### road_shoulders
+
+The road_shoulders lanelet map consist of a variety of pick-up/drop-off site maps with road_shoulder tags including:
+
+- pick-up/drop-off sites on the side of street lanes
+- pick-up/drop-off sites on the side of curved lanes
+- pick-up/drop-off sites inside a private area
+
+![road_shoulder_test](./images/road_shoulder_test_map.png)
+
+You can easily launch planning_simulator by
+
+```bash
+ros2 launch autoware_test_utils psim_road_shoulder.launch.xml vehicle_model:=<> sensor_model:=<> use_sim_time:=true
+```
+
+### intersection
+
+The intersections lanelet map consist of a variety of intersections including:
+
+- 4-way crossing with traffic light
+- 4-way crossing without traffic light
+- T-shape crossing without traffic light
+- intersection with a loop
+- complicated intersection
+
+![intersection_test](./images/intersection_test_map.png)
+
+You can easily launch planning_simulator by
+
+```bash
+ros2 launch autoware_test_utils psim_intersection.launch.xml vehicle_model:=<> sensor_model:=<> use_sim_time:=true
+```
 
 ## Example use cases
 
