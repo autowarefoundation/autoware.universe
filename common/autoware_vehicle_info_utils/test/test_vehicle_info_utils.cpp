@@ -38,9 +38,10 @@ protected:
 
 TEST_F(VehicleInfoUtilTest, check_vehicle_info_value)
 {
-  std::optional<autoware::vehicle_info_utils::VehicleInfoUtils> vehicle_info_util_opt{std::nullopt};
-  ASSERT_NO_THROW(
-    { vehicle_info_util_opt.emplace(autoware::vehicle_info_utils::VehicleInfoUtils(*node_)); });
+  using autoware::vehicle_info_utils::VehicleInfo;
+  using autoware::vehicle_info_utils::VehicleInfoUtils;
+  std::optional<VehicleInfoUtils> vehicle_info_util_opt{std::nullopt};
+  ASSERT_NO_THROW({ vehicle_info_util_opt.emplace(VehicleInfoUtils(*node_)); });
   const auto & vehicle_info_util = vehicle_info_util_opt.value();
   const auto vehicle_info = vehicle_info_util.getVehicleInfo();
 
@@ -49,4 +50,23 @@ TEST_F(VehicleInfoUtilTest, check_vehicle_info_value)
   EXPECT_FLOAT_EQ(2.74, vehicle_info.wheel_base_m);
   EXPECT_FLOAT_EQ(1.63, vehicle_info.wheel_tread_m);
   EXPECT_FLOAT_EQ(1.0, vehicle_info.front_overhang_m);
+  EXPECT_FLOAT_EQ(1.03, vehicle_info.rear_overhang_m);
+  EXPECT_FLOAT_EQ(0.1, vehicle_info.left_overhang_m);
+  EXPECT_FLOAT_EQ(0.1, vehicle_info.right_overhang_m);
+  EXPECT_FLOAT_EQ(2.5, vehicle_info.vehicle_height_m);
+  EXPECT_FLOAT_EQ(0.7, vehicle_info.max_steer_angle_rad);
+
+  const auto footprint = vehicle_info.createFootprint();
+  // front-left
+  EXPECT_FLOAT_EQ(footprint.at(VehicleInfo::FrontLeftIndex).x(), 2.74 + 1.0);
+  EXPECT_FLOAT_EQ(footprint.at(VehicleInfo::FrontLeftIndex).y(), 1.63 / 2 + 0.1);
+  // front-right
+  EXPECT_FLOAT_EQ(footprint.at(VehicleInfo::FrontRightIndex).x(), 2.74 + 1.0);
+  EXPECT_FLOAT_EQ(footprint.at(VehicleInfo::FrontRightIndex).y(), -(1.63 / 2 + 0.1));
+  // rear-right
+  EXPECT_FLOAT_EQ(footprint.at(VehicleInfo::RearRightIndex).x(), -1.03);
+  EXPECT_FLOAT_EQ(footprint.at(VehicleInfo::RearRightIndex).y(), -(1.63 / 2 + 0.1));
+  // rear-left
+  EXPECT_FLOAT_EQ(footprint.at(VehicleInfo::RearLeftIndex).x(), -1.03);
+  EXPECT_FLOAT_EQ(footprint.at(VehicleInfo::RearLeftIndex).y(), 1.63 / 2 + 0.1);
 }
