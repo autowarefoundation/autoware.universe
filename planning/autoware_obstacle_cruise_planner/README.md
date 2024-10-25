@@ -246,6 +246,10 @@ $$
 | `lpf(val)`        | apply low-pass filter to `val`          |
 | `pid(val)`        | apply pid to `val`                      |
 
+#### Block diagram
+
+![cruise_planning_block_diagram](./media/cruise_planning_block_diagram.drawio.svg)
+
 ### Slow down planning
 
 | Parameter                                                         | Type           | Description                                                                                                                                                                                                                                                                                                  |
