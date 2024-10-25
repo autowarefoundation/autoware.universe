@@ -2602,7 +2602,7 @@ std::optional<size_t> MapBasedPredictionNode::searchProperStartingRefPathIndex(
 
   bool is_position_found = false;
   std::optional<size_t> opt_index{std::nullopt};
-  auto & index = opt_index.emplace();
+  auto & index = opt_index.emplace(0);
 
   // starting segment index is a segment close enough to the object
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
