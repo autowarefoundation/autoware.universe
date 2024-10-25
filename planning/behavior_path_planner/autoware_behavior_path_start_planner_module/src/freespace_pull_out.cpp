@@ -43,8 +43,8 @@ FreespacePullOut::FreespacePullOut(
   } else if (parameters.freespace_planner_algorithm == "rrtstar") {
     use_back_ = true;  // no option for disabling back in rrtstar
     planner_ = std::make_unique<RRTStar>(
-      parameters.freespace_planner_common_parameters, vehicle_shape,
-      parameters.rrt_star_parameters, node.get_clock());
+      parameters.freespace_planner_common_parameters, vehicle_shape, parameters.rrt_star_parameters,
+      node.get_clock());
   }
 }
 
