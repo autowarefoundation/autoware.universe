@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DIAGNOSTIC_CONVERTER__CONVERTER_NODE_HPP_
-#define DIAGNOSTIC_CONVERTER__CONVERTER_NODE_HPP_
+#ifndef SCENARIO_SIMULATOR_V2_ADAPTER__CONVERTER_NODE_HPP_
+#define SCENARIO_SIMULATOR_V2_ADAPTER__CONVERTER_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include <tier4_metric_msgs/msg/metric.hpp>
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 #include "tier4_simulation_msgs/msg/user_defined_value.hpp"
 #include "tier4_simulation_msgs/msg/user_defined_value_type.hpp"
 
@@ -26,41 +27,40 @@
 #include <unordered_map>
 #include <vector>
 
-namespace diagnostic_converter
+namespace scenario_simulator_v2_adapter
 {
-using diagnostic_msgs::msg::DiagnosticArray;
-using diagnostic_msgs::msg::DiagnosticStatus;
-using diagnostic_msgs::msg::KeyValue;
+using tier4_metric_msgs::msg::Metric;
+using tier4_metric_msgs::msg::MetricArray;
 using tier4_simulation_msgs::msg::UserDefinedValue;
 using tier4_simulation_msgs::msg::UserDefinedValueType;
 
 /**
- * @brief Node for converting from DiagnosticArray to UserDefinedValue
+ * @brief Node for converting Autoware's messages to UserDefinedValue
  */
-class DiagnosticConverter : public rclcpp::Node
+class MetricConverter : public rclcpp::Node
 {
 public:
-  explicit DiagnosticConverter(const rclcpp::NodeOptions & node_options);
+  explicit MetricConverter(const rclcpp::NodeOptions & node_options);
 
   /**
-   * @brief callback for DiagnosticArray msgs that publishes equivalent UserDefinedValue msgs
-   * @param [in] diag_msg received diagnostic message
+   * @brief callback for MetricArray msgs that publishes equivalent UserDefinedValue msgs
+   * @param [in] metrics_msg received metrics message
    */
-  void onDiagnostic(
-    const DiagnosticArray::ConstSharedPtr diag_msg, const size_t diag_idx,
+  void onMetrics(
+    const MetricArray::ConstSharedPtr metrics_msg, const size_t topic_idx,
     const std::string & topic);
 
-  UserDefinedValue createUserDefinedValue(const KeyValue & key_value) const;
+  UserDefinedValue createUserDefinedValue(const Metric & metric) const;
 
   rclcpp::Publisher<UserDefinedValue>::SharedPtr getPublisher(
-    const std::string & topic, const size_t pub_idx);
+    const std::string & topic, const size_t topic_idx);
 
 private:
   // ROS
-  std::vector<rclcpp::Subscription<DiagnosticArray>::SharedPtr> diagnostics_sub_;
+  std::vector<rclcpp::Subscription<MetricArray>::SharedPtr> metrics_sub_;
   std::vector<std::unordered_map<std::string, rclcpp::Publisher<UserDefinedValue>::SharedPtr>>
     params_pub_;
 };
-}  // namespace diagnostic_converter
+}  // namespace scenario_simulator_v2_adapter
 
-#endif  // DIAGNOSTIC_CONVERTER__CONVERTER_NODE_HPP_
+#endif  // SCENARIO_SIMULATOR_V2_ADAPTER__CONVERTER_NODE_HPP_
