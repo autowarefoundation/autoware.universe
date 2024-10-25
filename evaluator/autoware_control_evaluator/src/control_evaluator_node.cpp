@@ -190,8 +190,8 @@ DiagnosticStatus ControlEvaluatorNode::generateGoalLongitudinalDeviationDiagnost
   const Pose & ego_pose)
 {
   DiagnosticStatus status;
-  const double long_goal = metrics::calcLongitudinalDeviation(
-    ego_pose, route_handler_.getGoalPose().position);
+  const double long_goal =
+    metrics::calcLongitudinalDeviation(ego_pose, route_handler_.getGoalPose().position);
 
   status.level = status.OK;
   status.name = "goal_longitudinal_deviation";
@@ -206,8 +206,8 @@ DiagnosticStatus ControlEvaluatorNode::generateGoalLateralDeviationDiagnosticSta
   const Pose & ego_pose)
 {
   DiagnosticStatus status;
-  const double long_goal = metrics::calcLateralDeviation(
-    ego_pose, route_handler_.getGoalPose().position);
+  const double long_goal =
+    metrics::calcLateralDeviation(ego_pose, route_handler_.getGoalPose().position);
 
   status.level = status.OK;
   status.name = "goal_lateral_deviation";
@@ -222,8 +222,7 @@ DiagnosticStatus ControlEvaluatorNode::generateGoalYawDeviationDiagnosticStatus(
   const Pose & ego_pose)
 {
   DiagnosticStatus status;
-  const double long_goal = metrics::calcYawDeviation(
-    ego_pose, route_handler_.getGoalPose());
+  const double long_goal = metrics::calcYawDeviation(ego_pose, route_handler_.getGoalPose());
 
   status.level = status.OK;
   status.name = "goal_yaw_deviation";
