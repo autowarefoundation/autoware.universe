@@ -104,7 +104,7 @@ double calc_dist_to_last_fit_width(
 
 double calc_maximum_prepare_length(const CommonDataPtr & common_data_ptr)
 {
-  const auto max_prepare_duration = common_data_ptr->lc_param_ptr->lane_change_prepare_duration;
+  const auto max_prepare_duration = common_data_ptr->lc_param_ptr->maximum_prepare_duration;
   const auto ego_max_speed = common_data_ptr->bpp_param_ptr->max_vel;
 
   return max_prepare_duration * ego_max_speed;
@@ -197,7 +197,7 @@ std::vector<double> calc_max_lane_change_lengths(
 
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
   const auto lat_jerk = lc_param_ptr->lane_changing_lateral_jerk;
-  const auto t_prepare = lc_param_ptr->lane_change_prepare_duration;
+  const auto t_prepare = lc_param_ptr->maximum_prepare_duration;
   const auto current_velocity = common_data_ptr->get_ego_speed();
   const auto path_velocity = common_data_ptr->transient_data.current_path_velocity;
 
@@ -396,7 +396,7 @@ std::vector<double> calc_prepare_durations(const CommonDataPtr & common_data_ptr
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
   const auto threshold = common_data_ptr->bpp_param_ptr->base_link2front +
                          lc_param_ptr->min_length_for_turn_signal_activation;
-  const auto max_prepare_duration = lc_param_ptr->lane_change_prepare_duration;
+  const auto max_prepare_duration = lc_param_ptr->maximum_prepare_duration;
 
   // TODO(Azu) this check seems to cause scenario failures.
   if (common_data_ptr->transient_data.dist_to_terminal_start >= threshold) {
@@ -406,8 +406,11 @@ std::vector<double> calc_prepare_durations(const CommonDataPtr & common_data_ptr
   std::vector<double> prepare_durations;
   constexpr double step = 0.5;
 
-  for (double duration = max_prepare_duration; duration >= 0.0; duration -= step) {
+  for (double duration = max_prepare_duration; duration >= min_prepare_duration; duration -= step) {
     prepare_durations.push_back(duration);
+    if (duration - step < min_prepare_duration) {
+      prepare_durations.push_back(min_prepare_duration);
+    }
   }
 
   return prepare_durations;

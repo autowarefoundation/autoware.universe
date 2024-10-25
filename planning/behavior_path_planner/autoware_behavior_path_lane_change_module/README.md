@@ -820,7 +820,8 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | Name                                         | Unit   | Type   | Description                                                                                                            | Default value      |
 | :------------------------------------------- | ------ | ------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `backward_lane_length`                       | [m]    | double | The backward length to check incoming objects in lane change target lane.                                              | 200.0              |
-| `prepare_duration`                           | [m]    | double | The preparation time for the ego vehicle to be ready to perform lane change.                                           | 4.0                |
+| `max_prepare_duration`                       | [m]    | double | The maximum preparation time for the ego vehicle to be ready to perform lane change.                                   | 4.0                |
+| `min_prepare_duration`                       | [m]    | double | The minimum preparation time for the ego vehicle to be ready to perform lane change.                                   | 0.2                |
 | `backward_length_buffer_for_end_of_lane`     | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change                                  | 3.0                |
 | `backward_length_buffer_for_blocking_object` | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change when there is an object in front | 3.0                |
 | `lane_change_finish_judge_buffer`            | [m]    | double | The additional buffer used to confirm lane change process completion                                                   | 2.0                |

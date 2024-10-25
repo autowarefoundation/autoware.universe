@@ -918,7 +918,7 @@ ExtendedPredictedObject transform(
   ExtendedPredictedObject extended_object(object);
 
   const auto & time_resolution = lane_change_parameters.prediction_time_resolution;
-  const auto & prepare_duration = lane_change_parameters.lane_change_prepare_duration;
+  const auto & prepare_duration = lane_change_parameters.maximum_prepare_duration;
   const auto & velocity_threshold = lane_change_parameters.stopped_object_velocity_threshold;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
   const double obj_vel_norm =

@@ -179,12 +179,14 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     getOrDeclareParameter<double>(*node, parameter("backward_length_buffer_for_blocking_object"));
   p.lane_changing_lateral_jerk =
     getOrDeclareParameter<double>(*node, parameter("lane_changing_lateral_jerk"));
-  p.lane_change_prepare_duration =
-    getOrDeclareParameter<double>(*node, parameter("prepare_duration"));
+  p.maximum_prepare_duration =
+    getOrDeclareParameter<double>(*node, parameter("max_prepare_duration"));
+  p.minimum_prepare_duration =
+    getOrDeclareParameter<double>(*node, parameter("min_prepare_duration"));
   p.minimum_lane_changing_velocity =
     getOrDeclareParameter<double>(*node, parameter("minimum_lane_changing_velocity"));
   p.minimum_lane_changing_velocity =
-    std::min(p.minimum_lane_changing_velocity, max_acc * p.lane_change_prepare_duration);
+    std::min(p.minimum_lane_changing_velocity, max_acc * p.maximum_prepare_duration);
 
   if (p.backward_length_buffer_for_end_of_lane < 1.0) {
     RCLCPP_WARN_STREAM(
@@ -321,7 +323,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
   {
     const std::string ns = "lane_change.";
     updateParam<double>(parameters, ns + "backward_lane_length", p->backward_lane_length);
-    updateParam<double>(parameters, ns + "prepare_duration", p->lane_change_prepare_duration);
+    updateParam<double>(parameters, ns + "max_prepare_duration", p->maximum_prepare_duration);
+    updateParam<double>(parameters, ns + "min_prepare_duration", p->minimum_prepare_duration);
 
     updateParam<double>(
       parameters, ns + "backward_length_buffer_for_end_of_lane",

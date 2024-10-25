@@ -112,7 +112,8 @@ struct Parameters
   double backward_length_buffer_for_blocking_object{0.0};
   double lane_changing_lateral_jerk{0.5};
   double minimum_lane_changing_velocity{5.6};
-  double lane_change_prepare_duration{4.0};
+  double maximum_prepare_duration{4.0};
+  double minimum_prepare_duration{4.0};
   LateralAccelerationMap lane_change_lat_acc_map;
 
   // parked vehicle

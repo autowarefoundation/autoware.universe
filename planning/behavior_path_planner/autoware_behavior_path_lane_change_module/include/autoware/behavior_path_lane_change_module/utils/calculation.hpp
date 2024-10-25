@@ -75,7 +75,7 @@ double calc_dist_to_last_fit_width(
  * of the maximum lane change preparation duration and the maximum velocity of the ego vehicle.
  *
  * @param common_data_ptr Shared pointer to a CommonData structure, which should include:
- *  - `lc_param_ptr->lane_change_prepare_duration`: The duration allowed for lane change
+ *  - `lc_param_ptr->maximum_prepare_duration`: The maximum duration allowed for lane change
  * preparation.
  *  - `bpp_param_ptr->max_vel`: The maximum velocity of the ego vehicle.
  *
