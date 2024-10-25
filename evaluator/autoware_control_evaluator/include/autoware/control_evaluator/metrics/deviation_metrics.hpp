@@ -42,6 +42,30 @@ double calcLateralDeviation(const Trajectory & traj, const Point & point);
  */
 double calcYawDeviation(const Trajectory & traj, const Pose & pose);
 
+/**
+ * @brief calculate longitudinal deviation of the given pose and point
+ * @param [in] pose input pose
+ * @param [in] point input point
+ * @return longitudinal deviation
+ */
+double calcLongitudinalDeviation(const Pose & base_pose, const Point & target_point);
+
+/**
+ * @brief calculate lateral deviation of the given pose and point
+ * @param [in] pose input pose
+ * @param [in] point input point
+ * @return lateral deviation
+ */
+double calcLateralDeviation(const Pose & base_pose, const Point & target_point);
+
+/**
+ * @brief calculate yaw deviation of the given poses
+ * @param [in] pose input pose
+ * @param [in] pose input pose
+ * @return yaw deviation
+ */
+double calcYawDeviation(const Pose & base_pose, const Pose & target_pose);
+
 }  // namespace metrics
 }  // namespace control_diagnostics
 

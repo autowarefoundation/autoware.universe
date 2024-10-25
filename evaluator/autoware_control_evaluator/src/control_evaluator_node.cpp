@@ -186,6 +186,54 @@ DiagnosticStatus ControlEvaluatorNode::generateYawDeviationDiagnosticStatus(
   return status;
 }
 
+DiagnosticStatus ControlEvaluatorNode::generateGoalLongitudinalDeviationDiagnosticStatus(
+  const Pose & ego_pose)
+{
+  DiagnosticStatus status;
+  const double long_goal = metrics::calcLongitudinalDeviation(
+    ego_pose, route_handler_.getGoalPose().position);
+
+  status.level = status.OK;
+  status.name = "goal_longitudinal_deviation";
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "metrics_value";
+  key_value.value = std::to_string(long_goal);
+  status.values.push_back(key_value);
+  return status;
+}
+
+DiagnosticStatus ControlEvaluatorNode::generateGoalLateralDeviationDiagnosticStatus(
+  const Pose & ego_pose)
+{
+  DiagnosticStatus status;
+  const double long_goal = metrics::calcLateralDeviation(
+    ego_pose, route_handler_.getGoalPose().position);
+
+  status.level = status.OK;
+  status.name = "goal_lateral_deviation";
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "metrics_value";
+  key_value.value = std::to_string(long_goal);
+  status.values.push_back(key_value);
+  return status;
+}
+
+DiagnosticStatus ControlEvaluatorNode::generateGoalYawDeviationDiagnosticStatus(
+  const Pose & ego_pose)
+{
+  DiagnosticStatus status;
+  const double long_goal = metrics::calcYawDeviation(
+    ego_pose, route_handler_.getGoalPose());
+
+  status.level = status.OK;
+  status.name = "goal_yaw_deviation";
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "metrics_value";
+  key_value.value = std::to_string(long_goal);
+  status.values.push_back(key_value);
+  return status;
+}
+
 void ControlEvaluatorNode::onTimer()
 {
   DiagnosticArray metrics_msg;
@@ -222,6 +270,10 @@ void ControlEvaluatorNode::onTimer()
   if (odom && route_handler_.isHandlerReady()) {
     const Pose ego_pose = odom->pose.pose;
     metrics_msg.status.push_back(generateLaneletDiagnosticStatus(ego_pose));
+
+    metrics_msg.status.push_back(generateGoalLongitudinalDeviationDiagnosticStatus(ego_pose));
+    metrics_msg.status.push_back(generateGoalLateralDeviationDiagnosticStatus(ego_pose));
+    metrics_msg.status.push_back(generateGoalYawDeviationDiagnosticStatus(ego_pose));
   }
 
   if (odom && acc) {
