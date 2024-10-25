@@ -170,7 +170,7 @@ CollisionDetectorNode::CollisionDetectorNode(const rclcpp::NodeOptions & node_op
 
   // Diagnostics Updater
   updater_.setHardwareID("collision_detector");
-  updater_.add("collision_check", this, &CollisionDetectorNode::checkCollision);
+  updater_.add("collision_detect", this, &CollisionDetectorNode::checkCollision);
   updater_.setPeriod(0.1);
 }
 
