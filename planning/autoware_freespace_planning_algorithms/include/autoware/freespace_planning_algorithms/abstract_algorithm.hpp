@@ -158,8 +158,11 @@ class AbstractPlanningAlgorithm
 {
 public:
   AbstractPlanningAlgorithm(
-    const PlannerCommonParam & planner_common_param, const rclcpp::Clock::SharedPtr & clock, const VehicleShape & collision_vehicle_shape)
-  : planner_common_param_(planner_common_param), collision_vehicle_shape_(collision_vehicle_shape), clock_(clock)
+    const PlannerCommonParam & planner_common_param, const rclcpp::Clock::SharedPtr & clock,
+    const VehicleShape & collision_vehicle_shape)
+  : planner_common_param_(planner_common_param),
+    collision_vehicle_shape_(collision_vehicle_shape),
+    clock_(clock)
   {
     planner_common_param_.turning_steps = std::max(planner_common_param_.turning_steps, 1);
     collision_vehicle_shape_.max_steering *= planner_common_param_.max_turning_ratio;
@@ -168,8 +171,11 @@ public:
 
   AbstractPlanningAlgorithm(
     const PlannerCommonParam & planner_common_param,
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const rclcpp::Clock::SharedPtr & clock, const double margin = 0.0)
-  : planner_common_param_(planner_common_param), collision_vehicle_shape_(vehicle_info, margin), clock_(clock)
+    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
+    const rclcpp::Clock::SharedPtr & clock, const double margin = 0.0)
+  : planner_common_param_(planner_common_param),
+    collision_vehicle_shape_(vehicle_info, margin),
+    clock_(clock)
   {
     planner_common_param_.turning_steps = std::max(planner_common_param_.turning_steps, 1);
     collision_vehicle_shape_.max_steering *= planner_common_param_.max_turning_ratio;

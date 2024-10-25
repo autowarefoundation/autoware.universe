@@ -165,8 +165,8 @@ bool FreespacePlannerNode::checkCurrentTrajectoryCollision()
   const size_t nearest_index_partial = autoware::motion_utils::findNearestIndex(
     partial_trajectory_.points, current_pose_.pose.position);
   const size_t end_index_partial = partial_trajectory_.points.size() - 1;
-  const auto forward_trajectory =
-    utils::get_partial_trajectory(partial_trajectory_, nearest_index_partial, end_index_partial, get_clock());
+  const auto forward_trajectory = utils::get_partial_trajectory(
+    partial_trajectory_, nearest_index_partial, end_index_partial, get_clock());
 
   const bool is_obs_found =
     algo_->hasObstacleOnTrajectory(utils::trajectory_to_pose_array(forward_trajectory));

@@ -52,7 +52,7 @@ public:
         node.declare_parameter<double>("rrtstar.max_planning_time"),
         node.declare_parameter<double>("rrtstar.neighbor_radius"),
         node.declare_parameter<double>("rrtstar.margin")},
-        node.get_clock())
+      node.get_clock())
   {
   }
 

@@ -72,7 +72,8 @@ Pose calcRelativePose(const Pose & base_pose, const Pose & pose)
 AstarSearch::AstarSearch(
   const PlannerCommonParam & planner_common_param, const VehicleShape & collision_vehicle_shape,
   const AstarParam & astar_param)
-: AbstractPlanningAlgorithm(planner_common_param, std::make_shared<rclcpp::Clock>(RCL_ROS_TIME), collision_vehicle_shape),
+: AbstractPlanningAlgorithm(
+    planner_common_param, std::make_shared<rclcpp::Clock>(RCL_ROS_TIME), collision_vehicle_shape),
   astar_param_(astar_param),
   goal_node_(nullptr),
   use_reeds_shepp_(true)

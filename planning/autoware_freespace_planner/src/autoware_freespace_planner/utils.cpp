@@ -87,7 +87,7 @@ size_t get_next_target_index(
 }
 
 Trajectory get_partial_trajectory(
-  const Trajectory & trajectory, const size_t start_index, const size_t end_index, 
+  const Trajectory & trajectory, const size_t start_index, const size_t end_index,
   const rclcpp::Clock::SharedPtr clock)
 {
   Trajectory partial_trajectory;
@@ -135,8 +135,8 @@ Trajectory create_trajectory(
   return trajectory;
 }
 
-Trajectory create_stop_trajectory(const PoseStamped & current_pose, 
-const rclcpp::Clock::SharedPtr clock)
+Trajectory create_stop_trajectory(
+  const PoseStamped & current_pose, const rclcpp::Clock::SharedPtr clock)
 {
   PlannerWaypoints waypoints;
   PlannerWaypoint waypoint;
