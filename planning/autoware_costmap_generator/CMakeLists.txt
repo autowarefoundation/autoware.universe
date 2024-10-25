@@ -49,7 +49,7 @@ target_compile_options(costmap_generator_node PUBLIC
 )
 
 rclcpp_components_register_node(costmap_generator_node
-  PLUGIN "autoware::costmap_generator::CostmapGeneratorNode"
+  PLUGIN "autoware::costmap_generator::CostmapGenerator"
   EXECUTABLE costmap_generator
 )
 

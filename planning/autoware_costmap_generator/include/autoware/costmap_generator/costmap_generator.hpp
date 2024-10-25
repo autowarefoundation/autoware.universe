@@ -80,10 +80,10 @@ namespace autoware::costmap_generator
 {
 using autoware_perception_msgs::msg::PredictedObjects;
 
-class CostmapGeneratorNode : public rclcpp::Node
+class CostmapGenerator : public rclcpp::Node
 {
 public:
-  explicit CostmapGeneratorNode(const rclcpp::NodeOptions & node_options);
+  explicit CostmapGenerator(const rclcpp::NodeOptions & node_options);
 
 private:
   std::shared_ptr<::costmap_generator_node::ParamListener> param_listener_;

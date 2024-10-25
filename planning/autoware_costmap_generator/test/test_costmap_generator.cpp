@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 
-using autoware::costmap_generator::CostmapGeneratorNode;
+using autoware::costmap_generator::CostmapGenerator;
 using tier4_planning_msgs::msg::Scenario;
 
 class TestCostmapGenerator : public ::testing::Test
@@ -41,7 +41,7 @@ public:
     node_options.arguments(
       {"--ros-args", "--params-file",
        costmap_generator_dir + "/config/costmap_generator.param.yaml"});
-    costmap_generator_ = std::make_shared<CostmapGeneratorNode>(node_options);
+    costmap_generator_ = std::make_shared<CostmapGenerator>(node_options);
   }
 
   void setup_lanelet_map()
@@ -131,7 +131,7 @@ public:
     lanelet_map_ = nullptr;
   }
 
-  std::shared_ptr<CostmapGeneratorNode> costmap_generator_;
+  std::shared_ptr<CostmapGenerator> costmap_generator_;
   lanelet::LaneletMapPtr lanelet_map_;
 };
 
