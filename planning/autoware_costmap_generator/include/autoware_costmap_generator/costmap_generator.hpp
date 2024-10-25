@@ -106,7 +106,7 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  std::vector<std::vector<geometry_msgs::msg::Point>> primitives_points_;
+  std::vector<geometry_msgs::msg::Polygon> primitives_polygons_;
 
   PointsToCostmap points2costmap_;
   ObjectsToCostmap objects2costmap_;
@@ -150,19 +150,19 @@ private:
   /// \param[in] gridmap with calculated cost
   void publishCostmap(const grid_map::GridMap & costmap);
 
-  /// \brief set area_points from lanelet polygons
-  /// \param [in] input lanelet_map
-  /// \param [out] calculated area_points of lanelet polygons
+  /// \brief fill a vector with road area polygons
+  /// \param [in] lanelet_map input lanelet map
+  /// \param [out] area_polygons polygon vector to fill
   void loadRoadAreasFromLaneletMap(
     const lanelet::LaneletMapPtr lanelet_map,
-    std::vector<std::vector<geometry_msgs::msg::Point>> * area_points);
+    std::vector<geometry_msgs::msg::Polygon> & area_polygons);
 
-  /// \brief set area_points from parking-area polygons
-  /// \param [in] input lanelet_map
-  /// \param [out] calculated area_points of lanelet polygons
+  /// \brief fill a vector with parking-area polygons
+  /// \param [in] lanelet_map input lanelet map
+  /// \param [out] area_polygons polygon vector to fill
   void loadParkingAreasFromLaneletMap(
     const lanelet::LaneletMapPtr lanelet_map,
-    std::vector<std::vector<geometry_msgs::msg::Point>> * area_points);
+    std::vector<geometry_msgs::msg::Polygon> & area_polygons);
 
   /// \brief calculate cost from pointcloud data
   /// \param[in] in_points: subscribed pointcloud data

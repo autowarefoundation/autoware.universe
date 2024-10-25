@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2020-2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,46 +33,38 @@
 #ifndef AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
 #define AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
 
-#include <grid_map_cv/grid_map_cv.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <geometry_msgs/msg/polygon.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
-
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <string>
 #include <vector>
 
-namespace object_map
+namespace autoware::costmap_generator::object_map
 {
 /*!
- * Projects the in_area_points forming the road, stores the result in out_grid_map.
+ * Fill the grid_map in the areas defined by the given polygons
  * @param[out] out_grid_map GridMap object to add the road grid
- * @param[in] in_points Array of points containing the selected primitives
+ * @param[in] in_polygons polygons to fill in the grid map
  * @param[in] in_grid_layer_name Name to assign to the layer
  * @param[in] in_layer_background_value Empty state value
- * @param[in] in_fill_color Value to fill on selected primitives
- * @param[in] in_layer_min_value Minimum value in the layer
- * @param[in] in_layer_max_value Maximum value in the layer
+ * @param[in] in_fill_value Value to fill inside the given polygons
  * @param[in] in_tf_target_frame Target frame to transform the points
  * @param[in] in_tf_source_frame Source frame, where the points are located
  * @param[in] in_tf_listener Valid listener to obtain the transformation
  */
-void FillPolygonAreas(
-  grid_map::GridMap & out_grid_map,
-  const std::vector<std::vector<geometry_msgs::msg::Point>> & in_points,
-  const std::string & in_grid_layer_name, const int in_layer_background_value,
-  const int in_fill_color, const int in_layer_min_value, const int in_layer_max_value,
-  const std::string & in_tf_target_frame, const std::string & in_tf_source_frame,
-  const tf2_ros::Buffer & in_tf_buffer);
+void fill_polygon_areas(
+  grid_map::GridMap & out_grid_map, const std::vector<geometry_msgs::msg::Polygon> & in_polygons,
+  const std::string & in_grid_layer_name, const float in_layer_background_value,
+  const float in_fill_value, const std::string & in_tf_target_frame,
+  const std::string & in_tf_source_frame, const tf2_ros::Buffer & in_tf_buffer);
 
-}  // namespace object_map
+}  // namespace autoware::costmap_generator::object_map
 
 #endif  // AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_

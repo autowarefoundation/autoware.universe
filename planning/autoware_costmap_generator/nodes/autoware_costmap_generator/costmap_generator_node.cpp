@@ -52,6 +52,7 @@
 #include <pcl_ros/transforms.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
+#include <lanelet2_core/Forward.h>
 #include <lanelet2_core/geometry/Polygon.h>
 #include <tf2/time.h>
 #include <tf2/utils.h>
@@ -118,20 +119,6 @@ bool isInParkingLot(
   }
 
   return lanelet::geometry::within(search_point, nearest_parking_lot->basicPolygon());
-}
-
-// Convert from Point32 to Point
-std::vector<geometry_msgs::msg::Point> poly2vector(const geometry_msgs::msg::Polygon & poly)
-{
-  std::vector<geometry_msgs::msg::Point> ps;
-  for (const auto & p32 : poly.points) {
-    geometry_msgs::msg::Point p;
-    p.x = p32.x;
-    p.y = p32.y;
-    p.z = p32.z;
-    ps.push_back(p);
-  }
-  return ps;
 }
 
 pcl::PointCloud<pcl::PointXYZ> getTransformedPointCloud(
@@ -206,7 +193,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
 
 void CostmapGenerator::loadRoadAreasFromLaneletMap(
   const lanelet::LaneletMapPtr lanelet_map,
-  std::vector<std::vector<geometry_msgs::msg::Point>> * area_points)
+  std::vector<geometry_msgs::msg::Polygon> & area_polygons)
 {
   // use all lanelets in map of subtype road to give way area
   lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map);
@@ -215,21 +202,25 @@ void CostmapGenerator::loadRoadAreasFromLaneletMap(
   // convert lanelets to polygons and put into area_points array
   for (const auto & ll : road_lanelets) {
     geometry_msgs::msg::Polygon poly;
-    lanelet::visualization::lanelet2Polygon(ll, &poly);
-    area_points->push_back(poly2vector(poly));
+    geometry_msgs::msg::Point32 pt;
+    for (const auto & p : ll.polygon3d().basicPolygon()) {
+      lanelet::utils::conversion::toGeomMsgPt32(p, &pt);
+      poly.points.push_back(pt);
+    }
+    area_polygons.push_back(poly);
   }
 }
 
 void CostmapGenerator::loadParkingAreasFromLaneletMap(
   const lanelet::LaneletMapPtr lanelet_map,
-  std::vector<std::vector<geometry_msgs::msg::Point>> * area_points)
+  std::vector<geometry_msgs::msg::Polygon> & area_polygons)
 {
   // Parking lots
   lanelet::ConstPolygons3d all_parking_lots = lanelet::utils::query::getAllParkingLots(lanelet_map);
   for (const auto & ll_poly : all_parking_lots) {
     geometry_msgs::msg::Polygon poly;
     lanelet::utils::conversion::toGeomMsgPoly(ll_poly, &poly);
-    area_points->push_back(poly2vector(poly));
+    area_polygons.push_back(poly);
   }
 
   // Parking spaces
@@ -238,10 +229,9 @@ void CostmapGenerator::loadParkingAreasFromLaneletMap(
   for (const auto & parking_space : all_parking_spaces) {
     lanelet::ConstPolygon3d ll_poly;
     lanelet::utils::lineStringWithWidthToPolygon(parking_space, &ll_poly);
-
     geometry_msgs::msg::Polygon poly;
     lanelet::utils::conversion::toGeomMsgPoly(ll_poly, &poly);
-    area_points->push_back(poly2vector(poly));
+    area_polygons.push_back(poly);
   }
 }
 
@@ -252,11 +242,11 @@ void CostmapGenerator::onLaneletMapBin(
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_);
 
   if (param_->use_wayarea) {
-    loadRoadAreasFromLaneletMap(lanelet_map_, &primitives_points_);
+    loadRoadAreasFromLaneletMap(lanelet_map_, primitives_polygons_);
   }
 
   if (param_->use_parkinglot) {
-    loadParkingAreasFromLaneletMap(lanelet_map_, &primitives_points_);
+    loadParkingAreasFromLaneletMap(lanelet_map_, primitives_polygons_);
   }
 }
 
@@ -428,11 +418,10 @@ grid_map::Matrix CostmapGenerator::generateObjectsCostmap(
 grid_map::Matrix CostmapGenerator::generatePrimitivesCostmap()
 {
   grid_map::GridMap lanelet2_costmap = costmap_;
-  if (!primitives_points_.empty()) {
-    object_map::FillPolygonAreas(
-      lanelet2_costmap, primitives_points_, LayerName::primitives, param_->grid_max_value,
-      param_->grid_min_value, param_->grid_min_value, param_->grid_max_value, param_->costmap_frame,
-      param_->map_frame, tf_buffer_);
+  if (!primitives_polygons_.empty()) {
+    object_map::fill_polygon_areas(
+      lanelet2_costmap, primitives_polygons_, LayerName::primitives, param_->grid_max_value,
+      param_->grid_min_value, param_->costmap_frame, param_->map_frame, tf_buffer_);
   }
   return lanelet2_costmap[LayerName::primitives];
 }
