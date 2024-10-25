@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    use_pointcloud: false # use pointcloud as obstacle check
+    use_dynamic_object: true # use dynamic object as obstacle check
+    collision_distance: 0.1 # Distance at which an object is determined to have collided with ego [m]
