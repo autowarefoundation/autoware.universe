@@ -163,6 +163,8 @@ bool covered_by(const alt::Point2d & point, const alt::PointList2d & ring);
 
 bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly);
 
+bool disjoint(const alt::Polygon2d & poly1, const alt::Polygon2d & poly2);
+
 bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2);
 
 double distance(

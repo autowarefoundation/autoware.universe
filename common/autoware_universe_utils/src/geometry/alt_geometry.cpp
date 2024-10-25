@@ -306,23 +306,14 @@ bool covered_by(const alt::Point2d & point, const alt::Polygon2d & poly)
   return covered_by(point, poly.outer());
 }
 
+bool disjoint(const alt::Polygon2d & poly1, const alt::Polygon2d & poly2)
+{
+  return !intersects(poly1, poly2);
+}
+
 bool disjoint(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
 {
-  if (equals(poly1, poly2)) {
-    return false;
-  }
-
-  if (intersects(poly1, poly2)) {
-    return false;
-  }
-
-  for (const auto & vertex : poly1.vertices()) {
-    if (touches(vertex, poly2)) {
-      return false;
-    }
-  }
-
-  return true;
+  return !intersects(poly1, poly2);
 }
 
 double distance(
