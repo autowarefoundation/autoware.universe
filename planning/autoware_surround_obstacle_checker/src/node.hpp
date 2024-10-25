@@ -89,8 +89,8 @@ private:
 
   auto isStopRequired(
     const bool is_obstacle_found, const bool is_vehicle_stopped, const State & state,
-    const std::optional<rclcpp::Time> & last_obstacle_found_time,
-    const double time_threshold) const -> std::pair<bool, std::optional<rclcpp::Time>>;
+    const std::optional<rclcpp::Time> & last_obstacle_found_time, const double time_threshold) const
+    -> std::pair<bool, std::optional<rclcpp::Time>>;
 
   // ros
   mutable tf2_ros::Buffer tf_buffer_{get_clock()};
