@@ -76,6 +76,10 @@ The obstacles not in front of the ego will be ignored.
 
 ![determine_cruise_stop_slow_down](./media/determine_cruise_stop_slow_down.drawio.svg)
 
+The behavior determination flowchart is shown below.
+
+![behavior_determination_flowchart](./media/behavior_determination_flowchart.drawio.svg)
+
 #### Determine cruise vehicles
 
 The obstacles meeting the following condition are determined as obstacles for cruising.
