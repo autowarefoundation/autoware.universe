@@ -1,4 +1,4 @@
-# Collision Checker
+# Collision Detector
 
 ## Purpose
 
@@ -13,6 +13,30 @@ This module subscribes required data (ego-pose, obstacles, etc), and publishes d
 ### Check data
 
 Check that `collision_detector` receives no ground pointcloud, dynamic objects.
+
+### Object Filtering
+
+#### Recognition Assumptions
+
+1. If the classification changes but it's considered the same object, the uuid does not change.
+2. It's possible for the same uuid to be recognized after being lost for a few frames.
+3. Once an object is determined to be excluded, it continues to be excluded for a certain period of time.
+
+#### Filtering Process
+
+1. Initial Recognition and Exclusion:
+
+   - The system checks if a newly recognized object's classification is listed in `nearby_object_type_filters`.
+   - If so, and the object is within the `nearby_filter_radius`, it is marked for exclusion.
+
+2. New Object Determination:
+
+   - An object is considered "new" based on its UUID.
+   - If the UUID is not found in recent frame data, the object is treated as new.
+
+3. Exclusion Mechanism:
+   - Newly excluded objects are recorded by their UUID.
+   - These objects continue to be excluded for a set period (`keep_ignoring_time`) as long as they maintain the classification specified in `nearby_object_type_filters` and remain within the `nearby_filter_radius`.
 
 ### Get distance to nearest object
 
@@ -38,11 +62,14 @@ In this function, it calculates the minimum distance between the polygon of ego 
 
 ## Parameters
 
-| Name                 | Type     | Description                                                      | Default value |
-| :------------------- | :------- | :--------------------------------------------------------------- | :------------ |
-| `use_pointcloud`     | `bool`   | Use pointcloud as obstacle check                                 | `false`       |
-| `use_dynamic_object` | `bool`   | Use dynamic object as obstacle check                             | `true`        |
-| `collision_distance` | `double` | If objects exist in this distance, publish error diagnostics [m] | 0.1           |
+| Name                         | Type                    | Description                                                                                     | Default value                    |
+| :--------------------------- | :---------------------- | :---------------------------------------------------------------------------------------------- | :------------------------------- |
+| `use_pointcloud`             | `bool`                  | Use pointcloud as obstacle check                                                                | `true`                           |
+| `use_dynamic_object`         | `bool`                  | Use dynamic object as obstacle check                                                            | `true`                           |
+| `collision_distance`         | `double`                | If objects exist in this distance, publish error diagnostics [m]                                | 0.15                             |
+| `nearby_filter_radius`       | `double`                | If objects appear in this distance with specified classification, publish error diagnostics [m] | 5.0                              |
+| `keep_ignoring_time`         | `double`                | Time to keep filtering objects that first appeared in the vicinity [sec]                        | 10.0                             |
+| `nearby_object_type_filters` | `object of bool values` | Specifies which object types to filter. Only objects with `true` value will be filtered.        | `{unknown: true, others: false}` |
 
 ## Assumptions / Known limits
 

@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,13 +31,16 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace autoware::collision_detector
 {
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
+using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
 
@@ -48,14 +51,44 @@ class CollisionDetectorNode : public rclcpp::Node
 public:
   explicit CollisionDetectorNode(const rclcpp::NodeOptions & node_options);
 
+  struct NearbyObjectTypeFilters
+  {
+    bool filter_car{false};
+    bool filter_truck{false};
+    bool filter_bus{false};
+    bool filter_trailer{false};
+    bool filter_unknown{false};
+    bool filter_bicycle{false};
+    bool filter_motorcycle{false};
+    bool filter_pedestrian{false};
+  };
+
   struct NodeParam
   {
     bool use_pointcloud;
     bool use_dynamic_object;
     double collision_distance;
+    double nearby_filter_radius;
+    double keep_ignoring_time;
+    NearbyObjectTypeFilters nearby_object_type_filters;
+  };
+
+  struct TimestampedObject
+  {
+    unique_identifier_msgs::msg::UUID object_id;
+    rclcpp::Time timestamp;
   };
 
 private:
+  PredictedObjects filterObjects(const PredictedObjects & objects);
+
+  void removeOldObjects(
+    std::vector<TimestampedObject> & container, const rclcpp::Time & current_time,
+    const rclcpp::Duration & duration_sec);
+
+  bool shouldBeFiltered(
+    const autoware_perception_msgs::msg::ObjectClassification::_label_type & classification) const;
+
   void checkCollision(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   void onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
@@ -93,6 +126,9 @@ private:
   PredictedObjects::ConstSharedPtr object_ptr_;
   OperationModeState::ConstSharedPtr operation_mode_ptr_;
   rclcpp::Time last_obstacle_found_stamp_;
+  std::shared_ptr<PredictedObjects> filtered_object_ptr_;
+  std::vector<TimestampedObject> observed_objects_;
+  std::vector<TimestampedObject> ignored_objects_;
 
   // Diagnostic Updater
   diagnostic_updater::Updater updater_;
