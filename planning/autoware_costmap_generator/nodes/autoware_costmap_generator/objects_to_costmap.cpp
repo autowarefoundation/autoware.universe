@@ -44,6 +44,7 @@
 
 #include "autoware_costmap_generator/objects_to_costmap.hpp"
 
+#include <autoware_grid_map_utils/polygon_iterator.hpp>
 #include <grid_map_core/TypeDefs.hpp>
 
 #include <Eigen/src/Core/util/Constants.h>
@@ -151,7 +152,7 @@ void ObjectsToCostmap::setCostInPolygon(
   const grid_map::Polygon & polygon, const std::string & gridmap_layer_name, const float score,
   grid_map::GridMap & objects_costmap)
 {
-  for (grid_map::PolygonIterator itr(objects_costmap, polygon); !itr.isPastEnd(); ++itr) {
+  for (grid_map_utils::PolygonIterator itr(objects_costmap, polygon); !itr.isPastEnd(); ++itr) {
     const float current_score = objects_costmap.at(gridmap_layer_name, *itr);
     if (score > current_score) {
       objects_costmap.at(gridmap_layer_name, *itr) = score;
