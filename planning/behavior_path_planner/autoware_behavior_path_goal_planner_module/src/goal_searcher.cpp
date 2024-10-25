@@ -23,6 +23,8 @@
 #include "autoware_lanelet2_extension/utility/query.hpp"
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
 
+#include <autoware_vehicle_info_utils/vehicle_info.hpp>
+
 #include <boost/geometry/algorithms/union.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
@@ -194,26 +196,23 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
         continue;
       }
 
-      // TODO(soblin): fix pose
+      // modify the goal_pose orientation so that vehicle footprint front heading is parallel to the
+      // lane boundary
       const auto vehicle_front_midpoint =
-        (transformed_vehicle_footprint.at(0) + transformed_vehicle_footprint.at(1)) / 2.0;
-      [[maybe_unused]] const auto & vehicle_front_pose_on_path =
-        center_line_path.points
-          .at(autoware::motion_utils::findNearestIndex(
-            center_line_path.points,
-            autoware::universe_utils::createPoint(
-              vehicle_front_midpoint.x(), vehicle_front_midpoint.y(), search_pose.position.z)))
-          .point.pose;
+        (transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::FrontLeftIndex) +
+         transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::FrontRightIndex)) /
+        2.0;
       lanelet::ConstLanelet vehicle_front_closest_lanelet;
       lanelet::utils::query::getClosestLanelet(
         pull_over_lanes, search_pose, &vehicle_front_closest_lanelet);
-      const auto vehicle_front_pose_for_left_bound = goal_planner_utils::calcClosestPose(
-        vehicle_front_closest_lanelet.leftBound(),
+      const auto vehicle_front_pose_for_bound = goal_planner_utils::calcClosestPose(
+        left_side_parking_ ? vehicle_front_closest_lanelet.leftBound()
+                           : vehicle_front_closest_lanelet.rightBound(),
         autoware::universe_utils::createPoint(
           vehicle_front_midpoint.x(), vehicle_front_midpoint.y(), search_pose.position.z));
       GoalCandidate goal_candidate{};
       goal_candidate.goal_pose = search_pose;
-      goal_candidate.goal_pose.orientation = vehicle_front_pose_for_left_bound.orientation;
+      goal_candidate.goal_pose.orientation = vehicle_front_pose_for_bound.orientation;
       goal_candidate.lateral_offset = dy;
       goal_candidate.id = goal_id;
       goal_id++;
