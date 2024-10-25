@@ -438,8 +438,10 @@ bool intersects(
 
 bool intersects(const alt::ConvexPolygon2d & poly1, const alt::ConvexPolygon2d & poly2)
 {
-  if (equals(poly1, poly2)) {
-    return true;
+  for (const auto & vertex : poly1.vertices()) {
+    if (touches(vertex, poly2)) {
+      return true;
+    }
   }
 
   // GJK algorithm
@@ -589,7 +591,7 @@ bool touches(const alt::Point2d & point, const alt::PointList2d & line)
   }
 
   for (auto it = line.cbegin(); it != std::prev(line.cend()); ++it) {
-    // check if the point is on each edge of the polygon
+    // check if the point is on each segment
     if (touches(point, *it, *std::next(it))) {
       return true;
     }
