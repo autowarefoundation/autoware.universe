@@ -190,14 +190,14 @@ DiagnosticStatus ControlEvaluatorNode::generateGoalLongitudinalDeviationDiagnost
   const Pose & ego_pose)
 {
   DiagnosticStatus status;
-  const double long_goal =
+  const double longitudinal_deviation =
     metrics::calcLongitudinalDeviation(route_handler_.getGoalPose(), ego_pose.position);
 
   status.level = status.OK;
   status.name = "goal_longitudinal_deviation";
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = "metrics_value";
-  key_value.value = std::to_string(long_goal);
+  key_value.value = std::to_string(longitudinal_deviation);
   status.values.push_back(key_value);
   return status;
 }
@@ -206,14 +206,14 @@ DiagnosticStatus ControlEvaluatorNode::generateGoalLateralDeviationDiagnosticSta
   const Pose & ego_pose)
 {
   DiagnosticStatus status;
-  const double lateral_goal =
+  const double lateral_deviation =
     metrics::calcLateralDeviation(route_handler_.getGoalPose(), ego_pose.position);
 
   status.level = status.OK;
   status.name = "goal_lateral_deviation";
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = "metrics_value";
-  key_value.value = std::to_string(lateral_goal);
+  key_value.value = std::to_string(lateral_deviation);
   status.values.push_back(key_value);
   return status;
 }
@@ -222,13 +222,13 @@ DiagnosticStatus ControlEvaluatorNode::generateGoalYawDeviationDiagnosticStatus(
   const Pose & ego_pose)
 {
   DiagnosticStatus status;
-  const double yaw_goal = metrics::calcYawDeviation(route_handler_.getGoalPose(), ego_pose);
+  const double yaw_deviation = metrics::calcYawDeviation(route_handler_.getGoalPose(), ego_pose);
 
   status.level = status.OK;
   status.name = "goal_yaw_deviation";
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = "metrics_value";
-  key_value.value = std::to_string(yaw_goal);
+  key_value.value = std::to_string(yaw_deviation);
   status.values.push_back(key_value);
   return status;
 }
