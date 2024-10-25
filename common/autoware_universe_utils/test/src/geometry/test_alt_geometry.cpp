@@ -1089,60 +1089,182 @@ TEST(alt_geometry, within)
   }
 
   {  // One polygon is within the other
-    PointList2d vertices1;
-    vertices1.push_back({1.0, 1.0});
-    vertices1.push_back({1.0, -1.0});
-    vertices1.push_back({-1.0, -1.0});
-    vertices1.push_back({-1.0, 1.0});
+    PointList2d outer_contained;
+    outer_contained.push_back({0.5, 0.5});
+    outer_contained.push_back({0.5, 1.0});
+    outer_contained.push_back({1.0, 0.5});
 
-    PointList2d vertices2;
-    vertices2.push_back({2.0, 2.0});
-    vertices2.push_back({2.0, -2.0});
-    vertices2.push_back({-2.0, -2.0});
-    vertices2.push_back({-2.0, 2.0});
+    PointList2d outer_containing;
+    outer_containing.push_back({0.0, 0.0});
+    outer_containing.push_back({0.0, 2.0});
+    outer_containing.push_back({1.0, 1.0});
+    outer_containing.push_back({2.0, 2.0});
+    outer_containing.push_back({2.0, 0.0});
 
     const auto result = within(
-      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
+      Polygon2d::create(outer_contained, {}).value(),
+      Polygon2d::create(outer_containing, {}).value());
 
     EXPECT_TRUE(result);
   }
 
   {  // One polygon is outside the other
-    PointList2d vertices1;
-    vertices1.push_back({1.0, 1.0});
-    vertices1.push_back({1.0, -1.0});
-    vertices1.push_back({-1.0, -1.0});
-    vertices1.push_back({-1.0, 1.0});
+    PointList2d outer_contained;
+    outer_contained.push_back({1.0, 1.0});
+    outer_contained.push_back({1.0, -1.0});
+    outer_contained.push_back({-1.0, -1.0});
+    outer_contained.push_back({-1.0, 1.0});
 
-    PointList2d vertices2;
-    vertices2.push_back({3.0, 3.0});
-    vertices2.push_back({3.0, 2.0});
-    vertices2.push_back({2.0, 2.0});
-    vertices2.push_back({2.0, 3.0});
+    PointList2d outer_containing;
+    outer_containing.push_back({3.0, 3.0});
+    outer_containing.push_back({3.0, 2.0});
+    outer_containing.push_back({2.0, 2.0});
+    outer_containing.push_back({2.0, 3.0});
 
     const auto result = within(
-      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
+      Polygon2d::create(outer_contained, {}).value(),
+      Polygon2d::create(outer_containing, {}).value());
 
     EXPECT_FALSE(result);
   }
 
   {  // Both polygons are the same
-    PointList2d vertices1;
-    vertices1.push_back({1.0, 1.0});
-    vertices1.push_back({1.0, -1.0});
-    vertices1.push_back({-1.0, -1.0});
-    vertices1.push_back({-1.0, 1.0});
+    PointList2d outer_contained;
+    outer_contained.push_back({1.0, 1.0});
+    outer_contained.push_back({1.0, -1.0});
+    outer_contained.push_back({-1.0, -1.0});
+    outer_contained.push_back({-1.0, 1.0});
 
-    PointList2d vertices2;
-    vertices2.push_back({1.0, 1.0});
-    vertices2.push_back({1.0, -1.0});
-    vertices2.push_back({-1.0, -1.0});
-    vertices2.push_back({-1.0, 1.0});
+    PointList2d outer_containing;
+    outer_containing.push_back({1.0, 1.0});
+    outer_containing.push_back({1.0, -1.0});
+    outer_containing.push_back({-1.0, -1.0});
+    outer_containing.push_back({-1.0, 1.0});
 
     const auto result = within(
-      ConvexPolygon2d::create(vertices1).value(), ConvexPolygon2d::create(vertices2).value());
+      Polygon2d::create(outer_contained, {}).value(),
+      Polygon2d::create(outer_containing, {}).value());
 
     EXPECT_TRUE(result);
+  }
+
+  {  // One polygon is within the hole of the other
+    PointList2d outer_contained;
+    outer_contained.push_back({0.5, 0.5});
+    outer_contained.push_back({0.5, 1.0});
+    outer_contained.push_back({1.0, 0.5});
+
+    PointList2d outer_containing;
+    outer_containing.push_back({-1.0, -1.0});
+    outer_containing.push_back({-1.0, 3.0});
+    outer_containing.push_back({3.0, 3.0});
+    outer_containing.push_back({3.0, -1.0});
+
+    PointList2d inner_containing;
+    inner_containing.push_back({0.0, 0.0});
+    inner_containing.push_back({0.0, 2.0});
+    inner_containing.push_back({1.0, 1.0});
+    inner_containing.push_back({2.0, 2.0});
+    inner_containing.push_back({2.0, 0.0});
+
+    const auto result = within(
+      Polygon2d::create(outer_contained, {}).value(),
+      Polygon2d::create(outer_containing, {inner_containing}).value());
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // One polygon intersects the hole of the other
+    PointList2d outer_contained;
+    outer_contained.push_back({0.5, 1.5});
+    outer_contained.push_back({1.5, 1.5});
+    outer_contained.push_back({1.5, 0.5});
+    outer_contained.push_back({0.5, 0.5});
+
+    PointList2d outer_containing;
+    outer_containing.push_back({-1.0, -1.0});
+    outer_containing.push_back({-1.0, 3.0});
+    outer_containing.push_back({3.0, 3.0});
+    outer_containing.push_back({3.0, -1.0});
+
+    PointList2d inner_containing;
+    inner_containing.push_back({0.0, 0.0});
+    inner_containing.push_back({0.0, 2.0});
+    inner_containing.push_back({1.0, 1.0});
+    inner_containing.push_back({2.0, 2.0});
+    inner_containing.push_back({2.0, 0.0});
+
+    const auto result = within(
+      Polygon2d::create(outer_contained, {}).value(),
+      Polygon2d::create(outer_containing, {inner_containing}).value());
+
+    EXPECT_FALSE(result);
+  }
+
+  {
+    // One polygon with a hole is within the other
+    PointList2d outer_contained;
+    outer_contained.push_back({-1.5, -1.5});
+    outer_contained.push_back({-1.5, 1.5});
+    outer_contained.push_back({1.5, 1.5});
+    outer_contained.push_back({1.5, -1.5});
+
+    PointList2d inner_contained;
+    inner_contained.push_back({-1.0, -1.0});
+    inner_contained.push_back({-1.0, 1.0});
+    inner_contained.push_back({1.0, 1.0});
+    inner_contained.push_back({1.0, -1.0});
+
+    PointList2d outer_containing;
+    outer_containing.push_back({-2.0, -2.0});
+    outer_containing.push_back({-2.0, 2.0});
+    outer_containing.push_back({2.0, 2.0});
+    outer_containing.push_back({2.0, -2.0});
+
+    PointList2d inner_containing;
+    inner_containing.push_back({-0.5, -0.5});
+    inner_containing.push_back({-0.5, 0.5});
+    inner_containing.push_back({0.5, 0.5});
+    inner_containing.push_back({0.5, -0.5});
+
+    const auto result = within(
+      Polygon2d::create(outer_contained, {inner_contained}).value(),
+      Polygon2d::create(outer_containing, {inner_containing}).value());
+
+    EXPECT_TRUE(result);
+  }
+
+  {
+    // One polygon with a hole is not within the other
+    PointList2d outer_contained;
+    outer_contained.push_back({-1.5, -1.5});
+    outer_contained.push_back({-1.5, 1.5});
+    outer_contained.push_back({1.5, 1.5});
+    outer_contained.push_back({1.5, -1.5});
+
+    PointList2d inner_contained;
+    inner_contained.push_back({-0.5, -0.5});
+    inner_contained.push_back({-0.5, 0.5});
+    inner_contained.push_back({0.5, 0.5});
+    inner_contained.push_back({0.5, -0.5});
+
+    PointList2d outer_containing;
+    outer_containing.push_back({-2.0, -2.0});
+    outer_containing.push_back({-2.0, 2.0});
+    outer_containing.push_back({2.0, 2.0});
+    outer_containing.push_back({2.0, -2.0});
+
+    PointList2d inner_containing;
+    inner_containing.push_back({-1.0, -1.0});
+    inner_containing.push_back({-1.0, 1.0});
+    inner_containing.push_back({1.0, 1.0});
+    inner_containing.push_back({1.0, -1.0});
+
+    const auto result = within(
+      Polygon2d::create(outer_contained, {inner_contained}).value(),
+      Polygon2d::create(outer_containing, {inner_containing}).value());
+
+    EXPECT_FALSE(result);
   }
 }
 
@@ -1839,6 +1961,72 @@ TEST(alt_geometry, withinPolygonRand)
           autoware::universe_utils::alt::ConvexPolygon2d::create(polygons[i]).value();
         const auto alt_poly2 =
           autoware::universe_utils::alt::ConvexPolygon2d::create(polygons[j]).value();
+        sw.tic();
+        const auto alt = autoware::universe_utils::within(alt_poly1, alt_poly2);
+        if (alt) {
+          alt_within_ns += sw.toc();
+        } else {
+          alt_not_within_ns += sw.toc();
+        }
+
+        if (ground_truth != alt) {
+          std::cout << "Alt failed for the 2 polygons: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
+        EXPECT_EQ(ground_truth, alt);
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %d pairs either of which is within the other\n",
+      polygons_nb, vertices, within_count, polygons_nb * polygons_nb);
+    std::printf(
+      "\tWithin:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_within_ns / 1e6, alt_within_ns / 1e6);
+    std::printf(
+      "\tNot within:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_not_within_ns / 1e6, alt_not_within_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      (ground_truth_not_within_ns + ground_truth_within_ns) / 1e6,
+      (alt_not_within_ns + alt_within_ns) / 1e6);
+  }
+}
+
+TEST(alt_geometry, withinPolygonConcaveRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 100;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_within_ns = 0.0;
+    double ground_truth_not_within_ns = 0.0;
+    double alt_within_ns = 0.0;
+    double alt_not_within_ns = 0.0;
+    int within_count = 0;
+
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (auto j = 0UL; j < polygons.size(); ++j) {
+        sw.tic();
+        const auto ground_truth = boost::geometry::within(polygons[i], polygons[j]);
+        if (ground_truth) {
+          ++within_count;
+          ground_truth_within_ns += sw.toc();
+        } else {
+          ground_truth_not_within_ns += sw.toc();
+        }
+
+        const auto alt_poly1 =
+          autoware::universe_utils::alt::Polygon2d::create(polygons[i]).value();
+        const auto alt_poly2 =
+          autoware::universe_utils::alt::Polygon2d::create(polygons[j]).value();
         sw.tic();
         const auto alt = autoware::universe_utils::within(alt_poly1, alt_poly2);
         if (alt) {

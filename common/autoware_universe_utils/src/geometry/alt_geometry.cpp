@@ -707,7 +707,7 @@ bool within(const alt::Point2d & point, const alt::Polygon2d & poly)
   return within(point, poly.outer());
 }
 
-bool within(const alt::Polygon2d & poly_contained, const alt::ConvexPolygon2d & poly_containing)
+bool within(const alt::Polygon2d & poly_contained, const alt::Polygon2d & poly_containing)
 {
   if (equals(poly_contained, poly_containing)) {
     return true;
@@ -717,6 +717,14 @@ bool within(const alt::Polygon2d & poly_contained, const alt::ConvexPolygon2d & 
   for (const auto & vertex : poly_contained.outer()) {
     if (!within(vertex, poly_containing)) {
       return false;
+    }
+  }
+
+  for (const auto & inner : poly_contained.inners()) {
+    for (const auto & vertex : inner) {
+      if (!within(vertex, poly_containing)) {
+        return false;
+      }
     }
   }
 

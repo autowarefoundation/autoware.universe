@@ -209,7 +209,7 @@ bool within(const alt::Point2d & point, const alt::PointList2d & ring);
 
 bool within(const alt::Point2d & point, const alt::Polygon2d & poly);
 
-bool within(const alt::Polygon2d & poly_contained, const alt::ConvexPolygon2d & poly_containing);
+bool within(const alt::Polygon2d & poly_contained, const alt::Polygon2d & poly_containing);
 }  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__ALT_GEOMETRY_HPP_
