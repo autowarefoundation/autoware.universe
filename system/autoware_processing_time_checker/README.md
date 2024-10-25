@@ -25,7 +25,7 @@ ros2 launch autoware_processing_time_checker processing_time_checker.launch.xml
 
 | Name                                      | Type                              | Description                        |
 | ----------------------------------------- | --------------------------------- | ---------------------------------- |
-| `/system/processing_time_checker/metrics` | `diagnostic_msgs/DiagnosticArray` | processing time of all the modules |
+| `/system/processing_time_checker/metrics` | `tier4_metric_msgs::msg::MetricArray` | processing time of all the modules |
 
 ## Parameters
 

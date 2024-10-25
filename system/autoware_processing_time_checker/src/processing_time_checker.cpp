@@ -16,7 +16,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <chrono>
 #include <string>
 #include <vector>
 
@@ -84,7 +83,7 @@ ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_op
     // clang-format on
   }
 
-  diag_pub_ = create_publisher<DiagnosticArray>("~/metrics", 1);
+  metrics_pub_ = create_publisher<MetricArrayMsg>("~/metrics", 1);
 
   const auto period_ns = rclcpp::Rate(update_rate).period();
   timer_ = rclcpp::create_timer(
@@ -93,28 +92,23 @@ ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_op
 
 void ProcessingTimeChecker::on_timer()
 {
-  // create diagnostic status
-  DiagnosticStatus status;
-  status.level = status.OK;
-  status.name = "processing_time";
+  // create MetricArrayMsg
+  MetricArrayMsg metrics_msg;
   for (const auto & processing_time_iterator : processing_time_map_) {
     const auto processing_time_topic_name = processing_time_iterator.first;
     const double processing_time = processing_time_iterator.second;
 
-    // generate diagnostic status
-    diagnostic_msgs::msg::KeyValue key_value;
-    key_value.key = processing_time_topic_name;
-    key_value.value = std::to_string(processing_time);
-    status.values.push_back(key_value);
+    // generate MetricMsg
+    MetricMsg metric;
+    metric.name = processing_time_topic_name + "/processing_time";
+    metric.value = std::to_string(processing_time);
+    metric.unit = "millisecond";
+    metrics_msg.metric_array.push_back(metric);
   }
 
-  // create diagnostic array
-  DiagnosticArray diag_msg;
-  diag_msg.header.stamp = now();
-  diag_msg.status.push_back(status);
-
   // publish
-  diag_pub_->publish(diag_msg);
+  metrics_msg.stamp = now();
+  metrics_pub_->publish(metrics_msg);
 }
 }  // namespace autoware::processing_time_checker
 
