@@ -15,13 +15,13 @@
   <arg name="build_only" default="false" description="exit after trt engine is built"/>
 
   <arg name="param_file" default="$(find-pkg-share autoware_image_transport_decompressor)/config/image_transport_decompressor.param.yaml"/>
-  <node pkg="autoware_image_transport_decompressor" exec="image_transport_decompressor_node" name="image_transport_decompressor_node" if="$(var use_decompress)">
+  <node pkg="autoware_image_transport_decompressor" exec="image_transport_decompressor_node" name="$(anon image_transport_decompressor_node)" if="$(var use_decompress)">
     <remap from="~/input/compressed_image" to="$(var input/image)/compressed"/>
     <remap from="~/output/raw_image" to="$(var input/image)"/>
     <param from="$(var param_file)"/>
   </node>
 
-  <node pkg="autoware_tensorrt_yolox" exec="autoware_tensorrt_yolox_node_exe" name="tensorrt_yolox" output="screen">
+  <node pkg="autoware_tensorrt_yolox" exec="autoware_tensorrt_yolox_node_exe" name="$(anon tensorrt_yolox)" output="screen">
     <remap from="~/in/image" to="$(var input/image)"/>
     <remap from="~/out/objects" to="$(var output/objects)"/>
     <remap from="~/out/mask" to="$(var output/mask)"/>
