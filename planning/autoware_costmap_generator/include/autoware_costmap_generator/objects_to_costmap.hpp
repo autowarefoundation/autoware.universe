@@ -72,7 +72,7 @@ public:
   /// \param[out] calculated cost in grid_map::Matrix format
   grid_map::Matrix makeCostmapFromObjects(
     const grid_map::GridMap & costmap, const double expand_polygon_size,
-    const double size_of_expansion_kernel,
+    const int64_t size_of_expansion_kernel,
     const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects);
 
 private:
