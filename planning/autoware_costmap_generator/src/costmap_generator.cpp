@@ -267,12 +267,20 @@ void CostmapGeneratorNode::update_data()
   scenario_ = sub_scenario_.takeData();
 }
 
+void CostmapGeneratorNode::set_current_pose()
+{
+  current_pose_ = getCurrentPose(tf_buffer_, this->get_logger());
+}
+
 void CostmapGeneratorNode::onTimer()
 {
   update_data();
 
   autoware::universe_utils::ScopedTimeTrack scoped_time_track(__func__, *time_keeper_);
   stop_watch.tic();
+
+  if (!param_->activate_by_scenario) set_current_pose();
+
   if (!isActive()) {
     // Publish ProcessingTime
     tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
@@ -330,20 +338,15 @@ bool CostmapGeneratorNode::isActive()
   }
 
   if (param_->activate_by_scenario) {
-    if (scenario_) {
-      const auto & s = scenario_->activating_scenarios;
-      if (
-        std::find(std::begin(s), std::end(s), tier4_planning_msgs::msg::Scenario::PARKING) !=
-        std::end(s)) {
-        return true;
-      }
-    }
-    return false;
-  } else {
-    const auto & current_pose_wrt_map = getCurrentPose(tf_buffer_, this->get_logger());
-    if (!current_pose_wrt_map) return false;
-    return isInParkingLot(lanelet_map_, current_pose_wrt_map->pose);
+    if (!scenario_) return false;
+    const auto & s = scenario_->activating_scenarios;
+    return std::any_of(s.begin(), s.end(), [](const auto scen) {
+      return scen == tier4_planning_msgs::msg::Scenario::PARKING;
+    });
   }
+
+  if (!current_pose_) return false;
+  return isInParkingLot(lanelet_map_, current_pose_->pose);
 }
 
 void CostmapGeneratorNode::initGridmap()

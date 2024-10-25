@@ -88,6 +88,7 @@ public:
 private:
   std::shared_ptr<::costmap_generator_node::ParamListener> param_listener_;
   std::shared_ptr<::costmap_generator_node::Params> param_;
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
 
   lanelet::LaneletMapPtr lanelet_map_;
   PredictedObjects::ConstSharedPtr objects_;
@@ -136,6 +137,8 @@ private:
   void onLaneletMapBin(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg);
 
   void update_data();
+
+  void set_current_pose();
 
   void onTimer();
 

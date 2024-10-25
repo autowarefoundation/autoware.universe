@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 
 using autoware::costmap_generator::CostmapGeneratorNode;
+using tier4_planning_msgs::msg::Scenario;
 
 class TestCostmapGenerator : public ::testing::Test
 {
@@ -80,6 +81,49 @@ public:
     return parking_areas.size();
   }
 
+  bool test_is_active_by_pos(
+    const bool is_within_parking_lot = true, const bool no_lanelet_map = false)
+  {
+    costmap_generator_->lanelet_map_.reset();
+    if (no_lanelet_map) {
+      return costmap_generator_->isActive();
+    }
+
+    costmap_generator_->lanelet_map_ = lanelet_map_;
+    costmap_generator_->param_->activate_by_scenario = false;
+
+    geometry_msgs::msg::PoseStamped::SharedPtr p(new geometry_msgs::msg::PoseStamped());
+    p->pose.position.x = 3697.07;
+    p->pose.position.y = 73735.49;
+    if (!is_within_parking_lot) {
+      p->pose.position.x += 10.0;
+    }
+
+    costmap_generator_->current_pose_ = p;
+    return costmap_generator_->isActive();
+  }
+
+  bool test_is_active_by_scenario(
+    const bool is_parking_scenario = true, const bool no_lanelet_map = false)
+  {
+    costmap_generator_->lanelet_map_.reset();
+    if (no_lanelet_map) {
+      return costmap_generator_->isActive();
+    }
+
+    costmap_generator_->lanelet_map_ = lanelet_map_;
+    costmap_generator_->param_->activate_by_scenario = true;
+
+    Scenario scenario;
+    scenario.current_scenario = is_parking_scenario ? Scenario::PARKING : Scenario::LANEDRIVING;
+    if (is_parking_scenario) {
+      scenario.activating_scenarios.push_back(Scenario::PARKING);
+    }
+
+    costmap_generator_->scenario_ = std::make_shared<Scenario>(scenario);
+    return costmap_generator_->isActive();
+  }
+
   void TearDown() override
   {
     rclcpp::shutdown();
@@ -112,4 +156,15 @@ TEST_F(TestCostmapGenerator, testLoadAreasFromLaneletMap)
 {
   EXPECT_EQ(test_load_road_areas(), 12ul);
   EXPECT_EQ(test_load_parking_areas(), 10ul);
+}
+
+TEST_F(TestCostmapGenerator, testIsActive)
+{
+  EXPECT_TRUE(test_is_active_by_pos());
+  EXPECT_FALSE(test_is_active_by_pos(false));
+  EXPECT_FALSE(test_is_active_by_pos(true, true));
+
+  EXPECT_TRUE(test_is_active_by_scenario());
+  EXPECT_FALSE(test_is_active_by_scenario(false));
+  EXPECT_FALSE(test_is_active_by_scenario(true, true));
 }
