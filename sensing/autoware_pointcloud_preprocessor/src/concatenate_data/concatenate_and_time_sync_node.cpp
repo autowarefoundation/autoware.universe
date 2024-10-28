@@ -403,12 +403,17 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
     int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     std::string message = "Concatenated pointcloud is published and include all topics";
 
-    if (topic_miss) {
+    if (topic_miss && drop_previous_but_late_pointcloud_) {
       level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-      message = "Concatenated pointcloud is published but miss some topics";
+      message =
+        "Concatenated pointcloud is missing some topics and is not published because it arrived "
+        "too late.";
     } else if (drop_previous_but_late_pointcloud_) {
       level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
       message = "Concatenated pointcloud is not published as it is too late";
+    } else if (topic_miss) {
+      level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+      message = "Concatenated pointcloud is published but miss some topics";
     }
 
     stat.summary(level, message);
