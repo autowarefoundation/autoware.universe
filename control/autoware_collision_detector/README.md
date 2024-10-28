@@ -62,14 +62,14 @@ In this function, it calculates the minimum distance between the polygon of ego 
 
 ## Parameters
 
-| Name                         | Type                    | Description                                                                                     | Default value                    |
-| :--------------------------- | :---------------------- | :---------------------------------------------------------------------------------------------- | :------------------------------- |
-| `use_pointcloud`             | `bool`                  | Use pointcloud as obstacle check                                                                | `true`                           |
-| `use_dynamic_object`         | `bool`                  | Use dynamic object as obstacle check                                                            | `true`                           |
-| `collision_distance`         | `double`                | If objects exist in this distance, publish error diagnostics [m]                                | 0.15                             |
-| `nearby_filter_radius`       | `double`                | If objects appear in this distance with specified classification, publish error diagnostics [m] | 5.0                              |
-| `keep_ignoring_time`         | `double`                | Time to keep filtering objects that first appeared in the vicinity [sec]                        | 10.0                             |
-| `nearby_object_type_filters` | `object of bool values` | Specifies which object types to filter. Only objects with `true` value will be filtered.        | `{unknown: true, others: false}` |
+| Name                         | Type                    | Description                                                                              | Default value                    |
+| :--------------------------- | :---------------------- | :--------------------------------------------------------------------------------------- | :------------------------------- |
+| `use_pointcloud`             | `bool`                  | Use pointcloud as obstacle check                                                         | `true`                           |
+| `use_dynamic_object`         | `bool`                  | Use dynamic object as obstacle check                                                     | `true`                           |
+| `collision_distance`         | `double`                | Distance threshold at which an object is considered a collision. [m]                     | 0.15                             |
+| `nearby_filter_radius`       | `double`                | Distance range for filtering objects. Objects within this radius are considered. [m]     | 5.0                              |
+| `keep_ignoring_time`         | `double`                | Time to keep filtering objects that first appeared in the vicinity [sec]                 | 10.0                             |
+| `nearby_object_type_filters` | `object of bool values` | Specifies which object types to filter. Only objects with `true` value will be filtered. | `{unknown: true, others: false}` |
 
 ## Assumptions / Known limits
 
