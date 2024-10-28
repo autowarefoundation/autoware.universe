@@ -161,7 +161,8 @@ void ObjectsToCostmap::setCostInPolygon(
 }
 
 void naive_mean_filter_on_grid_edges(
-  grid_map::Matrix & output, const grid_map::Matrix & input, const int kernel_size)
+  // cppcheck-suppress constParameterReference
+  const grid_map::Matrix & input, const int kernel_size, grid_map::Matrix & output)
 {
   for (auto i = 0; i < input.rows(); ++i) {
     for (auto j = 0; j < input.cols(); ++j) {
@@ -207,8 +208,8 @@ grid_map::Matrix ObjectsToCostmap::makeCostmapFromObjects(
     const auto highest_probability_label = *std::max_element(
       object.classification.begin(), object.classification.end(),
       [](const auto & c1, const auto & c2) { return c1.probability < c2.probability; });
-    const double highest_probability = static_cast<double>(highest_probability_label.probability);
-    setCostInPolygon(polygon, OBJECTS_COSTMAP_LAYER_, highest_probability, objects_costmap);
+    setCostInPolygon(
+      polygon, OBJECTS_COSTMAP_LAYER_, highest_probability_label.probability, objects_costmap);
   }
   objects_costmap.add(BLURRED_OBJECTS_COSTMAP_LAYER_, 0.0);
 
@@ -216,8 +217,8 @@ grid_map::Matrix ObjectsToCostmap::makeCostmapFromObjects(
   const auto & original_matrix = objects_costmap[OBJECTS_COSTMAP_LAYER_];
   Eigen::MatrixXf & filtered_matrix = objects_costmap[BLURRED_OBJECTS_COSTMAP_LAYER_];
   // edge of the grid: naive filter
-  const auto kernel_size = static_cast<int>(size_of_expansion_kernel / 2.0);
-  naive_mean_filter_on_grid_edges(filtered_matrix, original_matrix, kernel_size);
+  const auto kernel_size = static_cast<int>(static_cast<double>(size_of_expansion_kernel) / 2.0);
+  naive_mean_filter_on_grid_edges(original_matrix, kernel_size, filtered_matrix);
   // inside the grid: optimized filter using Eigen block
   for (auto i = 0; i < filtered_matrix.rows() - size_of_expansion_kernel; ++i) {
     for (auto j = 0; j < filtered_matrix.cols() - size_of_expansion_kernel; ++j) {

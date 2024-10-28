@@ -70,7 +70,6 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace autoware::costmap_generator
@@ -108,7 +107,7 @@ private:
 
   std::vector<geometry_msgs::msg::Polygon> primitives_polygons_;
 
-  PointsToCostmap points2costmap_;
+  PointsToCostmap points2costmap_{};
   ObjectsToCostmap objects2costmap_;
 
   tier4_planning_msgs::msg::Scenario::ConstSharedPtr scenario_;
@@ -153,14 +152,14 @@ private:
   /// \brief fill a vector with road area polygons
   /// \param [in] lanelet_map input lanelet map
   /// \param [out] area_polygons polygon vector to fill
-  void loadRoadAreasFromLaneletMap(
+  static void loadRoadAreasFromLaneletMap(
     const lanelet::LaneletMapPtr lanelet_map,
     std::vector<geometry_msgs::msg::Polygon> & area_polygons);
 
   /// \brief fill a vector with parking-area polygons
   /// \param [in] lanelet_map input lanelet map
   /// \param [out] area_polygons polygon vector to fill
-  void loadParkingAreasFromLaneletMap(
+  static void loadParkingAreasFromLaneletMap(
     const lanelet::LaneletMapPtr lanelet_map,
     std::vector<geometry_msgs::msg::Polygon> & area_polygons);
 

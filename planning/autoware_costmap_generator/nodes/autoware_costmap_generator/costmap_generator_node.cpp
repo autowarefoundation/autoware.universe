@@ -92,15 +92,14 @@ std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
   const lanelet::BasicPoint2d & current_position)
 {
-  const auto linked_parking_lot = std::make_shared<lanelet::ConstPolygon3d>();
+  auto linked_parking_lot = std::make_shared<lanelet::ConstPolygon3d>();
   const auto result = lanelet::utils::query::getLinkedParkingLot(
     current_position, lanelet_map_ptr, linked_parking_lot.get());
 
   if (result) {
     return linked_parking_lot;
-  } else {
-    return {};
   }
+  return {};
 }
 
 // copied from scenario selector
@@ -336,11 +335,10 @@ bool CostmapGenerator::isActive()
       }
     }
     return false;
-  } else {
-    const auto & current_pose_wrt_map = getCurrentPose(tf_buffer_, this->get_logger());
-    if (!current_pose_wrt_map) return false;
-    return isInParkingLot(lanelet_map_, current_pose_wrt_map->pose);
   }
+  const auto & current_pose_wrt_map = getCurrentPose(tf_buffer_, this->get_logger());
+  if (!current_pose_wrt_map) return false;
+  return isInParkingLot(lanelet_map_, current_pose_wrt_map->pose);
 }
 
 void CostmapGenerator::initGridmap()
@@ -393,7 +391,8 @@ autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr transformObjects
   }
 
   for (auto & object : objects->objects) {
-    geometry_msgs::msg::PoseStamped output_stamped, input_stamped;
+    geometry_msgs::msg::PoseStamped output_stamped;
+    geometry_msgs::msg::PoseStamped input_stamped;
     input_stamped.pose = object.kinematics.initial_pose_with_covariance.pose;
     tf2::doTransform(input_stamped, output_stamped, objects2costmap);
     object.kinematics.initial_pose_with_covariance.pose = output_stamped.pose;
