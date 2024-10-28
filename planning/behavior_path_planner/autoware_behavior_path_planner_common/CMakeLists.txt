@@ -10,6 +10,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/turn_signal_decider.cpp
   src/interface/steering_factor_interface.cpp
   src/interface/scene_module_visitor.cpp
+  src/interface/scene_module_interface.cpp
+  src/interface/scene_module_manager_interface.cpp
   src/utils/utils.cpp
   src/utils/path_utils.cpp
   src/utils/traffic_light_utils.cpp
@@ -32,18 +34,45 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_utilities
-    test/test_drivable_area_expansion.cpp
+    test/test_utils.cpp
+    test/test_path_utils.cpp
   )
 
   target_link_libraries(test_${PROJECT_NAME}_utilities
+  ${PROJECT_NAME}
+  )
+
+  ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_drivable_area_expansion
+    test/test_drivable_area_expansion.cpp
+    test/test_footprints.cpp
+  )
+
+  target_link_libraries(test_${PROJECT_NAME}_drivable_area_expansion
+    ${PROJECT_NAME}
+  )
+
+  ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_occupancy_grid_based_collision_detector
+    test/test_occupancy_grid_based_collision_detector.cpp
+  )
+
+  target_link_libraries(test_${PROJECT_NAME}_occupancy_grid_based_collision_detector
     ${PROJECT_NAME}
   )
 
   ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_safety_check
     test/test_safety_check.cpp
+    test/test_objects_filtering.cpp
   )
 
   target_link_libraries(test_${PROJECT_NAME}_safety_check
+    ${PROJECT_NAME}
+  )
+
+  ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_parking_departure
+    test/test_parking_departure_utils.cpp
+  )
+
+  target_link_libraries(test_${PROJECT_NAME}_parking_departure
     ${PROJECT_NAME}
   )
 

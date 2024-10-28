@@ -21,10 +21,9 @@
 namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
-void Linear::build_impl(
-  const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<double> & values)
+void Linear::build_impl(const std::vector<double> & bases, const std::vector<double> & values)
 {
-  this->axis_ = axis;
+  this->bases_ = bases;
   this->values_ =
     Eigen::Map<const Eigen::VectorXd>(values.data(), static_cast<Eigen::Index>(values.size()));
 }
@@ -32,8 +31,8 @@ void Linear::build_impl(
 double Linear::compute_impl(const double & s) const
 {
   const int32_t idx = this->get_index(s);
-  const double x0 = this->axis_(idx);
-  const double x1 = this->axis_(idx + 1);
+  const double x0 = this->bases_.at(idx);
+  const double x1 = this->bases_.at(idx + 1);
   const double y0 = this->values_(idx);
   const double y1 = this->values_(idx + 1);
   return y0 + (y1 - y0) * (s - x0) / (x1 - x0);
@@ -42,8 +41,8 @@ double Linear::compute_impl(const double & s) const
 double Linear::compute_first_derivative_impl(const double & s) const
 {
   const int32_t idx = this->get_index(s);
-  const double x0 = this->axis_(idx);
-  const double x1 = this->axis_(idx + 1);
+  const double x0 = this->bases_.at(idx);
+  const double x1 = this->bases_.at(idx + 1);
   const double y0 = this->values_(idx);
   const double y1 = this->values_(idx + 1);
   return (y1 - y0) / (x1 - x0);
@@ -58,5 +57,4 @@ size_t Linear::minimum_required_points() const
 {
   return 2;
 }
-
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

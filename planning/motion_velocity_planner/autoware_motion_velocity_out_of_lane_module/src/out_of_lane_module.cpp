@@ -25,6 +25,7 @@
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/motion_velocity_planner_common/planner_data.hpp>
+#include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
@@ -76,8 +77,6 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
   pp.mode = getOrDeclareParameter<std::string>(node, ns_ + ".mode");
   pp.skip_if_already_overlapping =
     getOrDeclareParameter<bool>(node, ns_ + ".skip_if_already_overlapping");
-  pp.ignore_lane_changeable_lanelets =
-    getOrDeclareParameter<bool>(node, ns_ + ".ignore_overlaps_over_lane_changeable_lanelets");
   pp.max_arc_length = getOrDeclareParameter<double>(node, ns_ + ".max_arc_length");
 
   pp.time_threshold = getOrDeclareParameter<double>(node, ns_ + ".threshold.time_threshold");
@@ -118,9 +117,6 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(parameters, ns_ + ".mode", pp.mode);
   updateParam(parameters, ns_ + ".skip_if_already_overlapping", pp.skip_if_already_overlapping);
   updateParam(parameters, ns_ + ".max_arc_length", pp.max_arc_length);
-  updateParam(
-    parameters, ns_ + ".ignore_overlaps_over_lane_changeable_lanelets",
-    pp.ignore_lane_changeable_lanelets);
 
   updateParam(parameters, ns_ + ".threshold.time_threshold", pp.time_threshold);
   updateParam(parameters, ns_ + ".ttc.threshold", pp.ttc_threshold);
@@ -225,6 +221,14 @@ void prepare_stop_lines_rtree(
   ego_data.stop_lines_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
 }
 
+out_of_lane::OutOfLaneData prepare_out_of_lane_data(const out_of_lane::EgoData & ego_data)
+{
+  out_of_lane::OutOfLaneData out_of_lane_data;
+  out_of_lane_data.outside_points = out_of_lane::calculate_out_of_lane_points(ego_data);
+  out_of_lane::prepare_out_of_lane_areas_rtree(out_of_lane_data);
+  return out_of_lane_data;
+}
+
 VelocityPlanningResult OutOfLaneModule::plan(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
@@ -249,12 +253,11 @@ VelocityPlanningResult OutOfLaneModule::plan(
   const auto calculate_trajectory_footprints_us = stopwatch.toc("calculate_trajectory_footprints");
 
   stopwatch.tic("calculate_lanelets");
-  out_of_lane::calculate_drivable_lane_polygons(ego_data, *planner_data->route_handler);
+  out_of_lane::calculate_out_lanelet_rtree(ego_data, *planner_data->route_handler, params_);
   const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");
 
   stopwatch.tic("calculate_out_of_lane_areas");
-  auto out_of_lane_data = calculate_out_of_lane_areas(ego_data);
-  out_of_lane::calculate_overlapped_lanelets(out_of_lane_data, *planner_data->route_handler);
+  auto out_of_lane_data = prepare_out_of_lane_data(ego_data);
   const auto calculate_out_of_lane_areas_us = stopwatch.toc("calculate_out_of_lane_areas");
 
   stopwatch.tic("filter_predicted_objects");
@@ -270,9 +273,12 @@ VelocityPlanningResult OutOfLaneModule::plan(
   out_of_lane::calculate_collisions_to_avoid(out_of_lane_data, ego_data.trajectory_points, params_);
   const auto calculate_times_us = stopwatch.toc("calculate_times");
 
-  if (
-    params_.skip_if_already_overlapping && !ego_data.drivable_lane_polygons.empty() &&
-    !lanelet::geometry::within(ego_data.current_footprint, ego_data.drivable_lane_polygons)) {
+  const auto is_already_overlapping =
+    params_.skip_if_already_overlapping &&
+    std::find_if(ego_data.out_lanelets.begin(), ego_data.out_lanelets.end(), [&](const auto & ll) {
+      return !boost::geometry::disjoint(ll.polygon2d().basicPolygon(), ego_data.current_footprint);
+    }) != ego_data.out_lanelets.end();
+  if (is_already_overlapping) {
     RCLCPP_WARN(logger_, "Ego is already out of lane, skipping the module\n");
     debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(
       ego_data, out_of_lane_data, objects, debug_data_));
@@ -308,7 +314,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   if (should_use_previous_pose) {
     // if the trajectory changed the prev point is no longer on the trajectory so we project it
     const auto new_arc_length = motion_utils::calcSignedArcLength(
-      ego_trajectory_points, ego_data.first_trajectory_idx, previous_slowdown_pose_->position);
+      ego_trajectory_points, 0LU, previous_slowdown_pose_->position);
     slowdown_pose = motion_utils::calcInterpolatedPose(ego_trajectory_points, new_arc_length);
   }
   if (slowdown_pose) {

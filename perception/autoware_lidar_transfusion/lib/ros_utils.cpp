@@ -14,9 +14,9 @@
 
 #include "autoware/lidar_transfusion/ros_utils.hpp"
 
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/constants.hpp>
-#include <object_recognition_utils/object_recognition_utils.hpp>
 
 namespace autoware::lidar_transfusion
 {
@@ -40,7 +40,7 @@ void box3DToDetectedObject(
       rclcpp::get_logger("lidar_transfusion"), "Unexpected label: UNKNOWN is set.");
   }
 
-  if (object_recognition_utils::isCarLikeVehicle(classification.label)) {
+  if (autoware::object_recognition_utils::isCarLikeVehicle(classification.label)) {
     obj.kinematics.orientation_availability =
       autoware_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
   }
@@ -48,12 +48,10 @@ void box3DToDetectedObject(
   obj.classification.emplace_back(classification);
 
   // pose and shape
-  // mmdet3d yaw format to ros yaw format
-  float yaw = box3d.yaw + autoware::universe_utils::pi / 2;
   obj.kinematics.pose_with_covariance.pose.position =
     autoware::universe_utils::createPoint(box3d.x, box3d.y, box3d.z);
   obj.kinematics.pose_with_covariance.pose.orientation =
-    autoware::universe_utils::createQuaternionFromYaw(yaw);
+    autoware::universe_utils::createQuaternionFromYaw(box3d.yaw);
   obj.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
   obj.shape.dimensions =
     autoware::universe_utils::createTranslation(box3d.length, box3d.width, box3d.height);

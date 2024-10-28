@@ -12,15 +12,15 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <depend>autoware_object_recognition_utils</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_point_types</depend>
+  <depend>autoware_tensorrt_common</depend>
   <depend>autoware_universe_utils</depend>
   <depend>launch_ros</depend>
-  <depend>object_recognition_utils</depend>
   <depend>pcl_ros</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tensorrt_common</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_sensor_msgs</depend>

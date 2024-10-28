@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #include <autoware/autonomous_emergency_braking/utils.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+
+#include <optional>
 
 namespace autoware::motion::control::autonomous_emergency_braking::utils
 {
@@ -25,7 +28,7 @@ using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::Vector3;
 
 PredictedObject transformObjectFrame(
-  const PredictedObject & input, geometry_msgs::msg::TransformStamped & transform_stamped)
+  const PredictedObject & input, const geometry_msgs::msg::TransformStamped & transform_stamped)
 {
   PredictedObject output = input;
   const auto & linear_twist = input.kinematics.initial_twist_with_covariance.twist.linear;
@@ -149,4 +152,55 @@ Polygon2d convertObjToPolygon(const PredictedObject & obj)
   }
   return object_polygon;
 }
+
+std::optional<geometry_msgs::msg::TransformStamped> getTransform(
+  const std::string & target_frame, const std::string & source_frame,
+  const tf2_ros::Buffer & tf_buffer, const rclcpp::Logger & logger)
+{
+  geometry_msgs::msg::TransformStamped tf_current_pose;
+  try {
+    tf_current_pose = tf_buffer.lookupTransform(
+      target_frame, source_frame, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_ERROR_STREAM(
+      logger, "[AEB] Failed to look up transform from " + source_frame + " to " + target_frame);
+    return std::nullopt;
+  }
+  return std::make_optional(tf_current_pose);
+}
+
+void fillMarkerFromPolygon(
+  const std::vector<Polygon2d> & polygons, visualization_msgs::msg::Marker & polygon_marker)
+{
+  for (const auto & poly : polygons) {
+    for (size_t dp_idx = 0; dp_idx < poly.outer().size(); ++dp_idx) {
+      const auto & boost_cp = poly.outer().at(dp_idx);
+      const auto & boost_np = poly.outer().at((dp_idx + 1) % poly.outer().size());
+      const auto curr_point =
+        autoware::universe_utils::createPoint(boost_cp.x(), boost_cp.y(), 0.0);
+      const auto next_point =
+        autoware::universe_utils::createPoint(boost_np.x(), boost_np.y(), 0.0);
+      polygon_marker.points.push_back(curr_point);
+      polygon_marker.points.push_back(next_point);
+    }
+  }
+}
+
+void fillMarkerFromPolygon(
+  const std::vector<Polygon3d> & polygons, visualization_msgs::msg::Marker & polygon_marker)
+{
+  for (const auto & poly : polygons) {
+    for (size_t dp_idx = 0; dp_idx < poly.outer().size(); ++dp_idx) {
+      const auto & boost_cp = poly.outer().at(dp_idx);
+      const auto & boost_np = poly.outer().at((dp_idx + 1) % poly.outer().size());
+      const auto curr_point =
+        autoware::universe_utils::createPoint(boost_cp.x(), boost_cp.y(), boost_cp.z());
+      const auto next_point =
+        autoware::universe_utils::createPoint(boost_np.x(), boost_np.y(), boost_np.z());
+      polygon_marker.points.push_back(curr_point);
+      polygon_marker.points.push_back(next_point);
+    }
+  }
+}
+
 }  // namespace autoware::motion::control::autonomous_emergency_braking::utils

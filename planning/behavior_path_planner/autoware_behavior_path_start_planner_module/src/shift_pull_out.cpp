@@ -22,6 +22,7 @@
 #include "autoware/motion_utils/trajectory/path_with_lane_id.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <memory>
@@ -63,6 +64,9 @@ std::optional<PullOutPath> ShiftPullOut::plan(
 
   const auto lanelet_map_ptr = planner_data_->route_handler->getLaneletMapPtr();
 
+  std::vector<lanelet::Id> fused_id_start_to_end{};
+  std::optional<autoware::universe_utils::Polygon2d> fused_polygon_start_to_end = std::nullopt;
+
   // get safe path
   for (auto & pull_out_path : pull_out_paths) {
     universe_utils::ScopedTimeTrack st("get safe path", *time_keeper_);
@@ -99,8 +103,9 @@ std::optional<PullOutPath> ShiftPullOut::plan(
     // computational cost.
 
     if (
-      is_lane_departure_check_required &&
-      lane_departure_checker_->checkPathWillLeaveLane(lanelet_map_ptr, path_shift_start_to_end)) {
+      is_lane_departure_check_required && lane_departure_checker_->checkPathWillLeaveLane(
+                                            lanelet_map_ptr, path_shift_start_to_end,
+                                            fused_id_start_to_end, fused_polygon_start_to_end)) {
       planner_debug_data.conditions_evaluation.emplace_back("lane departure");
       continue;
     }
@@ -302,7 +307,7 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     path_shifter.setPath(road_lane_reference_path);
 
     const double shift_time =
-      PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, lateral_acc);
+      autoware::motion_utils::calc_shift_time_from_jerk(shift_length, lateral_jerk, lateral_acc);
     const double longitudinal_acc = std::clamp(road_velocity / shift_time, 0.0, /* max acc */ 1.0);
     const auto pull_out_distance = calcPullOutLongitudinalDistance(
       longitudinal_acc, shift_time, shift_length, maximum_curvature,

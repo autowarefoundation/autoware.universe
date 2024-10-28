@@ -40,10 +40,7 @@ class Stairstep;
 template <typename T>
 class Stairstep : public detail::StairstepCommonImpl<T>
 {
-  template <typename InterpolatorType>
-  friend class InterpolatorCreator;
-
-private:
+public:
   Stairstep() = default;
 };
 
@@ -55,11 +52,7 @@ private:
 template <>
 class Stairstep<double> : public detail::StairstepCommonImpl<double>
 {
-  template <typename InterpolatorType>
-  friend class InterpolatorCreator;
-
 private:
-  Stairstep() = default;
   /**
    * @brief Compute the first derivative at the given point.
    *
@@ -75,6 +68,9 @@ private:
    * @return The second derivative.
    */
   [[nodiscard]] double compute_second_derivative_impl(const double &) const override { return 0.0; }
+
+public:
+  Stairstep() = default;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::interpolator

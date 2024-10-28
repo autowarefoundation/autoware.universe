@@ -34,7 +34,7 @@ void LaneChangeModuleManager::init(rclcpp::Node * node)
   initParams(node);
 }
 
-void LaneChangeModuleManager::initParams(rclcpp::Node * node)
+LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::string & node_name)
 {
   using autoware::universe_utils::getOrDeclareParameter;
 
@@ -102,6 +102,8 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
   // safety check
   p.allow_loose_check_for_cancel =
     getOrDeclareParameter<bool>(*node, parameter("safety_check.allow_loose_check_for_cancel"));
+  p.enable_target_lane_bound_check =
+    getOrDeclareParameter<bool>(*node, parameter("safety_check.enable_target_lane_bound_check"));
   p.collision_check_yaw_diff_threshold = getOrDeclareParameter<double>(
     *node, parameter("safety_check.collision_check_yaw_diff_threshold"));
 
@@ -186,7 +188,7 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
 
   if (p.backward_length_buffer_for_end_of_lane < 1.0) {
     RCLCPP_WARN_STREAM(
-      node->get_logger().get_child(name()),
+      node->get_logger().get_child(node_name),
       "Lane change buffer must be more than 1 meter. Modifying the buffer.");
   }
 
@@ -201,7 +203,7 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
     lateral_acc_velocity.size() != min_lateral_acc.size() ||
     lateral_acc_velocity.size() != max_lateral_acc.size()) {
     RCLCPP_ERROR(
-      node->get_logger().get_child(name()),
+      node->get_logger().get_child(node_name),
       "Lane change lateral acceleration map has invalid size.");
     exit(EXIT_FAILURE);
   }
@@ -257,7 +259,7 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
   // validation of parameters
   if (p.longitudinal_acc_sampling_num < 1 || p.lateral_acc_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
-      node->get_logger().get_child(name()),
+      node->get_logger().get_child(node_name),
       "lane_change_sampling_num must be positive integer. Given longitudinal parameter: "
         << p.longitudinal_acc_sampling_num
         << "Given lateral parameter: " << p.lateral_acc_sampling_num << std::endl
@@ -282,26 +284,31 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
       p.rss_params.longitudinal_velocity_delta_time >
         p.rss_params_for_abort.longitudinal_velocity_delta_time) {
       RCLCPP_FATAL_STREAM(
-        node->get_logger().get_child(name()),
+        node->get_logger().get_child(node_name),
         "abort parameter might be loose... Terminating the program...");
       exit(EXIT_FAILURE);
     }
   }
   if (p.cancel.delta_time < 1.0) {
     RCLCPP_WARN_STREAM(
-      node->get_logger().get_child(name()),
+      node->get_logger().get_child(node_name),
       "cancel.delta_time: " << p.cancel.delta_time
                             << ", is too short. This could cause a danger behavior.");
   }
 
-  parameters_ = std::make_shared<LaneChangeParameters>(p);
+  return std::make_shared<lane_change::Parameters>(p);
+}
+
+void LaneChangeModuleManager::initParams(rclcpp::Node * node)
+{
+  parameters_ = set_params(node, name());
 }
 
 std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneModuleInstance()
 {
   return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
-    objects_of_interest_marker_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_, steering_factor_interface_ptr_,
     std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
 }
 

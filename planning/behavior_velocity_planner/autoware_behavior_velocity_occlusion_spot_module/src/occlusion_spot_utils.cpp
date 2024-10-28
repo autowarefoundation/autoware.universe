@@ -18,10 +18,10 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/interpolation/spline_interpolation.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
-#include <interpolation/spline_interpolation.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <deque>

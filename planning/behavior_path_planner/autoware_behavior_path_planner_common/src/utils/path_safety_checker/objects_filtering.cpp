@@ -15,7 +15,7 @@
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
+#include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
@@ -39,6 +39,8 @@ bool position_filter(
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance)
 {
+  if (path_points.empty()) return false;
+
   const auto dist_ego_to_obj = autoware::motion_utils::calcSignedArcLength(
     path_points, current_pose, object.kinematics.initial_pose_with_covariance.pose.position);
 
@@ -118,7 +120,7 @@ PredictedObjects filterObjects(
   const ObjectTypesToCheck & target_object_types = params->object_types_to_check;
 
   PredictedObjects filtered_objects =
-    filterObjectsByVelocity(*objects, ignore_object_velocity_threshold, false);
+    filterObjectsByVelocity(*objects, ignore_object_velocity_threshold, true);
 
   filterObjectsByClass(filtered_objects, target_object_types);
 
@@ -136,7 +138,7 @@ PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, const double velocity_threshold,
   const bool remove_above_threshold)
 {
-  if (remove_above_threshold) {
+  if (!remove_above_threshold) {
     return filterObjectsByVelocity(objects, -velocity_threshold, velocity_threshold);
   }
   return filterObjectsByVelocity(objects, velocity_threshold, std::numeric_limits<double>::max());
@@ -327,7 +329,7 @@ ExtendedPredictedObject transform(
 {
   ExtendedPredictedObject extended_object(object);
 
-  const auto obj_velocity = extended_object.initial_twist.twist.linear.x;
+  const auto obj_velocity = extended_object.initial_twist.linear.x;
 
   extended_object.predicted_paths.resize(object.kinematics.predicted_paths.size());
   for (size_t i = 0; i < object.kinematics.predicted_paths.size(); ++i) {
@@ -336,7 +338,7 @@ ExtendedPredictedObject transform(
 
     // Create path based on time horizon and resolution
     for (double t = 0.0; t < safety_check_time_horizon + 1e-3; t += safety_check_time_resolution) {
-      const auto obj_pose = object_recognition_utils::calcInterpolatedPose(path, t);
+      const auto obj_pose = autoware::object_recognition_utils::calcInterpolatedPose(path, t);
       if (obj_pose) {
         const auto obj_polygon = autoware::universe_utils::toPolygon2d(*obj_pose, object.shape);
         extended_object.predicted_paths[i].path.emplace_back(

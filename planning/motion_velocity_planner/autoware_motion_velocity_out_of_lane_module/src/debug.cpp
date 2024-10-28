@@ -21,17 +21,23 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 
-#include <geometry_msgs/msg/detail/pose__struct.hpp>
-#include <visualization_msgs/msg/detail/marker__struct.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <std_msgs/msg/color_rgba.hpp>
 #include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
+#include <boost/geometry/algorithms/centroid.hpp>
 #include <boost/geometry/algorithms/for_each.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/primitives/LineString.h>
+#include <lanelet2_core/primitives/Point.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
 #include <string>
+#include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane::debug
 {
@@ -54,16 +60,15 @@ visualization_msgs::msg::Marker get_base_marker()
 }
 void add_polygons_markers(
   visualization_msgs::msg::MarkerArray & debug_marker_array,
-  const lanelet::BasicPolygons2d & polygons, const double z, const std::string & ns)
+  const visualization_msgs::msg::Marker & base_marker, const lanelet::BasicPolygons2d & polygons)
 {
-  auto debug_marker = get_base_marker();
-  debug_marker.ns = ns;
+  auto debug_marker = base_marker;
   debug_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
   for (const auto & f : polygons) {
     boost::geometry::for_each_segment(f, [&](const auto & s) {
       const auto & [p1, p2] = s;
-      debug_marker.points.push_back(universe_utils::createMarkerPosition(p1.x(), p1.y(), z + 0.5));
-      debug_marker.points.push_back(universe_utils::createMarkerPosition(p2.x(), p2.y(), z + 0.5));
+      debug_marker.points.push_back(universe_utils::createMarkerPosition(p1.x(), p1.y(), 0.0));
+      debug_marker.points.push_back(universe_utils::createMarkerPosition(p2.x(), p2.y(), 0.0));
     });
   }
   debug_marker_array.markers.push_back(debug_marker);
@@ -148,6 +153,68 @@ size_t add_stop_line_markers(
   }
   return max_id;
 }
+
+void add_out_lanelets(
+  visualization_msgs::msg::MarkerArray & marker_array, visualization_msgs::msg::Marker base_marker,
+  const lanelet::ConstLanelets & out_lanelets)
+{
+  lanelet::BasicPolygons2d drivable_lane_polygons;
+  for (const auto & ll : out_lanelets) {
+    drivable_lane_polygons.push_back(ll.polygon2d().basicPolygon());
+  }
+  base_marker.ns = "out_lanelets";
+  base_marker.color = universe_utils::createMarkerColor(0.0, 0.0, 1.0, 1.0);
+  add_polygons_markers(marker_array, base_marker, drivable_lane_polygons);
+}
+
+void add_out_of_lane_overlaps(
+  visualization_msgs::msg::MarkerArray & marker_array, visualization_msgs::msg::Marker base_marker,
+  const std::vector<OutOfLanePoint> & outside_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory)
+{
+  lanelet::BasicPolygons2d out_of_lane_overlaps;
+  lanelet::BasicPolygon2d out_of_lane_overlap;
+  for (const auto & p : outside_points) {
+    for (const auto & overlap : p.out_overlaps) {
+      boost::geometry::convert(overlap, out_of_lane_overlap);
+      out_of_lane_overlaps.push_back(out_of_lane_overlap);
+    }
+  }
+  base_marker.ns = "out_of_lane_areas";
+  base_marker.color = universe_utils::createMarkerColor(1.0, 0.0, 0.0, 1.0);
+  add_polygons_markers(marker_array, base_marker, out_of_lane_overlaps);
+  for (const auto & p : outside_points) {
+    for (const auto & a : p.out_overlaps) {
+      marker_array.markers.back().points.push_back(trajectory[p.trajectory_index].pose.position);
+      const auto centroid = boost::geometry::return_centroid<lanelet::BasicPoint2d>(a);
+      marker_array.markers.back().points.push_back(
+        geometry_msgs::msg::Point().set__x(centroid.x()).set__y(centroid.y()));
+    }
+  }
+}
+void add_predicted_paths(
+  visualization_msgs::msg::MarkerArray & marker_array, visualization_msgs::msg::Marker base_marker,
+  const autoware_perception_msgs::msg::PredictedObjects & objects,
+  const geometry_msgs::msg::Pose & ego_pose)
+{
+  base_marker.ns = "objects";
+  base_marker.color = universe_utils::createMarkerColor(0.0, 1.0, 0.0, 1.0);
+  lanelet::BasicPolygons2d object_polygons;
+  constexpr double max_draw_distance = 50.0;
+  for (const auto & o : objects.objects) {
+    for (const auto & path : o.kinematics.predicted_paths) {
+      for (const auto & pose : path.path) {
+        // limit the draw distance to improve performance
+        if (universe_utils::calcDistance2d(pose, ego_pose) < max_draw_distance) {
+          const auto poly = universe_utils::toPolygon2d(pose, o.shape).outer();
+          lanelet::BasicPolygon2d ll_poly(poly.begin(), poly.end());
+          object_polygons.push_back(ll_poly);
+        }
+      }
+    }
+  }
+  add_polygons_markers(marker_array, base_marker, object_polygons);
+}
 }  // namespace
 
 visualization_msgs::msg::MarkerArray create_debug_marker_array(
@@ -157,34 +224,17 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   const auto z = ego_data.pose.position.z;
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
-  // add_polygons_markers(debug_marker_array, ego_data.trajectory_footprints, z, "footprints");
-
-  lanelet::BasicPolygons2d drivable_lane_polygons;
-  for (const auto & poly : ego_data.drivable_lane_polygons) {
-    drivable_lane_polygons.push_back(poly.outer);
-  }
-  add_polygons_markers(debug_marker_array, drivable_lane_polygons, z, "ego_lane");
-
-  lanelet::BasicPolygons2d out_of_lane_areas;
-  for (const auto & p : out_of_lane_data.outside_points) {
-    out_of_lane_areas.push_back(p.outside_ring);
-  }
-  add_polygons_markers(debug_marker_array, out_of_lane_areas, z, "out_of_lane_areas");
-
-  lanelet::BasicPolygons2d object_polygons;
-  for (const auto & o : objects.objects) {
-    for (const auto & path : o.kinematics.predicted_paths) {
-      for (const auto & pose : path.path) {
-        // limit the draw distance to improve performance
-        if (universe_utils::calcDistance2d(pose, ego_data.pose) < 50.0) {
-          const auto poly = universe_utils::toPolygon2d(pose, o.shape).outer();
-          lanelet::BasicPolygon2d ll_poly(poly.begin(), poly.end());
-          object_polygons.push_back(ll_poly);
-        }
-      }
-    }
-  }
-  add_polygons_markers(debug_marker_array, object_polygons, z, "objects");
+  auto base_marker = get_base_marker();
+  base_marker.pose.position.z = z + 0.5;
+  base_marker.ns = "footprints";
+  base_marker.color = universe_utils::createMarkerColor(1.0, 1.0, 1.0, 1.0);
+  // TODO(Maxime): move the debug marker publishing AFTER the trajectory generation
+  // disabled to prevent performance issues when publishing the debug markers
+  // add_polygons_markers(debug_marker_array, base_marker, ego_data.trajectory_footprints);
+  add_out_lanelets(debug_marker_array, base_marker, ego_data.out_lanelets);
+  add_out_of_lane_overlaps(
+    debug_marker_array, base_marker, out_of_lane_data.outside_points, ego_data.trajectory_points);
+  add_predicted_paths(debug_marker_array, base_marker, objects, ego_data.pose);
 
   add_current_overlap_marker(debug_marker_array, ego_data.current_footprint, z);
 

@@ -9,7 +9,6 @@ nav:
       - 'comparisons': common/autoware_auto_common/design/comparisons
     - 'autoware_grid_map_utils': common/autoware_grid_map_utils
     - 'autoware_point_types': common/autoware_point_types
-    - 'Cuda Utils': common/cuda_utils
     - 'Geography Utils': common/geography_utils
     - 'Global Parameter Loader': common/global_parameter_loader/Readme
     - 'Glog Component': common/glog_component
@@ -24,7 +23,6 @@ nav:
     - 'Signal Processing':
       - 'Introduction': common/signal_processing
       - 'Butterworth Filter': common/signal_processing/documentation/ButterworthFilter
-    - 'TensorRT Common': common/tensorrt_common
     - 'autoware_universe_utils': common/autoware_universe_utils
     - 'traffic_light_utils': common/traffic_light_utils
     - 'TVM Utility':
@@ -41,7 +39,6 @@ nav:
     - 'tier4_camera_view_rviz_plugin': common/tier4_camera_view_rviz_plugin
     - 'tier4_datetime_rviz_plugin': common/tier4_datetime_rviz_plugin
     - 'tier4_localization_rviz_plugin': common/tier4_localization_rviz_plugin
-    - 'tier4_perception_rviz_plugin': common/tier4_perception_rviz_plugin
     - 'tier4_planning_rviz_plugin': common/tier4_planning_rviz_plugin
     - 'tier4_state_rviz_plugin': common/tier4_state_rviz_plugin
     - 'tier4_system_rviz_plugin': common/tier4_system_rviz_plugin

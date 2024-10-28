@@ -14,13 +14,18 @@
 
 #include "utility_functions.hpp"
 
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+
 #include <boost/geometry.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
 
-#include <unordered_set>
-#include <utility>
+#include <limits>
 
+namespace autoware::mission_planner::lanelet2
+{
 autoware::universe_utils::Polygon2d convert_linear_ring_to_polygon(
   autoware::universe_utils::LinearRing2d footprint)
 {
@@ -39,63 +44,6 @@ void insert_marker_array(
   visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2)
 {
   a1->markers.insert(a1->markers.end(), a2.markers.begin(), a2.markers.end());
-}
-
-lanelet::ConstLanelet combine_lanelets_with_shoulder(
-  const lanelet::ConstLanelets & lanelets,
-  const autoware::route_handler::RouteHandler & route_handler)
-{
-  lanelet::Points3d lefts;
-  lanelet::Points3d rights;
-  lanelet::Points3d centers;
-  std::vector<uint64_t> left_bound_ids;
-  std::vector<uint64_t> right_bound_ids;
-
-  for (const auto & llt : lanelets) {
-    if (llt.id() != lanelet::InvalId) {
-      left_bound_ids.push_back(llt.leftBound().id());
-      right_bound_ids.push_back(llt.rightBound().id());
-    }
-  }
-
-  // lambda to add bound to target_bound
-  const auto add_bound = [](const auto & bound, auto & target_bound) {
-    std::transform(
-      bound.begin(), bound.end(), std::back_inserter(target_bound),
-      [](const auto & pt) { return lanelet::Point3d(pt); });
-  };
-  for (const auto & llt : lanelets) {
-    // check if shoulder lanelets which has RIGHT bound same to LEFT bound of lanelet exist
-    const auto left_shared_shoulder = route_handler.getLeftShoulderLanelet(llt);
-    if (left_shared_shoulder) {
-      // if exist, add left bound of SHOULDER lanelet to lefts
-      add_bound(left_shared_shoulder->leftBound(), lefts);
-    } else if (
-      // if not exist, add left bound of lanelet to lefts
-      // if the **left** of this lanelet does not match any of the **right** bounds of `lanelets`,
-      // then its left bound constitutes the left boundary of the entire merged lanelet
-      std::count(right_bound_ids.begin(), right_bound_ids.end(), llt.leftBound().id()) < 1) {
-      add_bound(llt.leftBound(), lefts);
-    }
-
-    // check if shoulder lanelets which has LEFT bound same to RIGHT bound of lanelet exist
-    const auto right_shared_shoulder = route_handler.getRightShoulderLanelet(llt);
-    if (right_shared_shoulder) {
-      // if exist, add right bound of SHOULDER lanelet to rights
-      add_bound(right_shared_shoulder->rightBound(), rights);
-    } else if (
-      // if not exist, add right bound of lanelet to rights
-      // if the **right** of this lanelet does not match any of the **left** bounds of `lanelets`,
-      // then its right bound constitutes the right boundary of the entire merged lanelet
-      std::count(left_bound_ids.begin(), left_bound_ids.end(), llt.rightBound().id()) < 1) {
-      add_bound(llt.rightBound(), rights);
-    }
-  }
-
-  const auto left_bound = lanelet::LineString3d(lanelet::InvalId, lefts);
-  const auto right_bound = lanelet::LineString3d(lanelet::InvalId, rights);
-  auto combined_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
-  return std::move(combined_lanelet);
 }
 
 std::vector<geometry_msgs::msg::Point> convertCenterlineToPoints(const lanelet::Lanelet & lanelet)
@@ -124,3 +72,89 @@ geometry_msgs::msg::Pose convertBasicPoint3dToPose(
 
   return pose;
 }
+
+bool is_in_lane(const lanelet::ConstLanelet & lanelet, const lanelet::ConstPoint3d & point)
+{
+  // check if goal is on a lane at appropriate angle
+  const auto distance = boost::geometry::distance(
+    lanelet.polygon2d().basicPolygon(), lanelet::utils::to2D(point).basicPoint());
+  constexpr double th_distance = std::numeric_limits<double>::epsilon();
+  return distance < th_distance;
+}
+
+bool is_in_parking_space(
+  const lanelet::ConstLineStrings3d & parking_spaces, const lanelet::ConstPoint3d & point)
+{
+  for (const auto & parking_space : parking_spaces) {
+    lanelet::ConstPolygon3d parking_space_polygon;
+    if (!lanelet::utils::lineStringWithWidthToPolygon(parking_space, &parking_space_polygon)) {
+      continue;
+    }
+
+    const double distance = boost::geometry::distance(
+      lanelet::utils::to2D(parking_space_polygon).basicPolygon(),
+      lanelet::utils::to2D(point).basicPoint());
+    constexpr double th_distance = std::numeric_limits<double>::epsilon();
+    if (distance < th_distance) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool is_in_parking_lot(
+  const lanelet::ConstPolygons3d & parking_lots, const lanelet::ConstPoint3d & point)
+{
+  for (const auto & parking_lot : parking_lots) {
+    const double distance = boost::geometry::distance(
+      lanelet::utils::to2D(parking_lot).basicPolygon(), lanelet::utils::to2D(point).basicPoint());
+    constexpr double th_distance = std::numeric_limits<double>::epsilon();
+    if (distance < th_distance) {
+      return true;
+    }
+  }
+  return false;
+}
+
+double project_goal_to_map(
+  const lanelet::ConstLanelet & lanelet_component, const lanelet::ConstPoint3d & goal_point)
+{
+  const lanelet::ConstLineString3d center_line =
+    lanelet::utils::generateFineCenterline(lanelet_component);
+  lanelet::BasicPoint3d project = lanelet::geometry::project(center_line, goal_point.basicPoint());
+  return project.z();
+}
+
+geometry_msgs::msg::Pose get_closest_centerline_pose(
+  const lanelet::ConstLanelets & road_lanelets, const geometry_msgs::msg::Pose & point,
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info)
+{
+  lanelet::Lanelet closest_lanelet;
+  if (!lanelet::utils::query::getClosestLaneletWithConstrains(
+        road_lanelets, point, &closest_lanelet, 0.0)) {
+    // point is not on any lanelet.
+    return point;
+  }
+
+  const auto refined_center_line = lanelet::utils::generateFineCenterline(closest_lanelet, 1.0);
+  closest_lanelet.setCenterline(refined_center_line);
+
+  const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, point.position);
+
+  const auto nearest_idx = autoware::motion_utils::findNearestIndex(
+    convertCenterlineToPoints(closest_lanelet), point.position);
+  const auto nearest_point = closest_lanelet.centerline()[nearest_idx];
+
+  // shift nearest point on its local y axis so that vehicle's right and left edges
+  // would have approx the same clearance from road border
+  const auto shift_length = (vehicle_info.right_overhang_m - vehicle_info.left_overhang_m) / 2.0;
+  const auto delta_x = -shift_length * std::sin(lane_yaw);
+  const auto delta_y = shift_length * std::cos(lane_yaw);
+
+  lanelet::BasicPoint3d refined_point(
+    nearest_point.x() + delta_x, nearest_point.y() + delta_y, nearest_point.z());
+
+  return convertBasicPoint3dToPose(refined_point, lane_yaw);
+}
+
+}  // namespace autoware::mission_planner::lanelet2

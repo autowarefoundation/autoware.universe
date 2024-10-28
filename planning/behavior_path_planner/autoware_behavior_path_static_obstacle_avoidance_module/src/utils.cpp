@@ -66,54 +66,6 @@ geometry_msgs::msg::Polygon toMsg(
   return ret;
 }
 
-template <class T>
-size_t findFirstNearestIndex(const T & points, const geometry_msgs::msg::Point & point)
-{
-  autoware::motion_utils::validateNonEmpty(points);
-
-  double min_dist = std::numeric_limits<double>::max();
-  size_t min_idx = 0;
-  bool decreasing = false;
-
-  for (size_t i = 0; i < points.size(); ++i) {
-    const auto dist = autoware::universe_utils::calcSquaredDistance2d(points.at(i), point);
-    if (dist < min_dist) {
-      decreasing = true;
-      min_dist = dist;
-      min_idx = i;
-      continue;
-    }
-
-    if (decreasing) {
-      return min_idx;
-    }
-  }
-
-  return min_idx;
-}
-
-template <class T>
-size_t findFirstNearestSegmentIndex(const T & points, const geometry_msgs::msg::Point & point)
-{
-  const size_t nearest_idx = findFirstNearestIndex(points, point);
-
-  if (nearest_idx == 0) {
-    return 0;
-  }
-  if (nearest_idx == points.size() - 1) {
-    return points.size() - 2;
-  }
-
-  const double signed_length =
-    autoware::motion_utils::calcLongitudinalOffsetToSegment(points, nearest_idx, point);
-
-  if (signed_length <= 0) {
-    return nearest_idx - 1;
-  }
-
-  return nearest_idx;
-}
-
 geometry_msgs::msg::Polygon createVehiclePolygon(
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const double offset)
 {
@@ -210,6 +162,12 @@ void pushUniqueVector(T & base_vector, const T & additional_vector)
 
 namespace filtering_utils
 {
+/**
+ * @brief check whether the object is avoidance target object type.
+ * @param object data.
+ * @param parameters.
+ * @return if the object is avoidance target object type, return true.
+ */
 bool isAvoidanceTargetObjectType(
   const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -222,6 +180,12 @@ bool isAvoidanceTargetObjectType(
   return parameters->object_parameters.at(object_type).is_avoidance_target;
 }
 
+/**
+ * @brief check whether the object is safety check target object type.
+ * @param object data.
+ * @param parameters.
+ * @return if the object is safety check target object type, return true.
+ */
 bool isSafetyCheckTargetObjectType(
   const PredictedObject & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -234,12 +198,23 @@ bool isSafetyCheckTargetObjectType(
   return parameters->object_parameters.at(object_type).is_safety_check_target;
 }
 
+/**
+ * @brief check whether the object type is ObjectClassification::UNKNOWN.
+ * @param object data.
+ * @return if the object label whose probability is the highest among the candidate is UNKNOWN,
+ * return true.
+ */
 bool isUnknownTypeObject(const ObjectData & object)
 {
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
   return object_type == ObjectClassification::UNKNOWN;
 }
 
+/**
+ * @brief classify object by whether it's vehicle or not.
+ * @param object data.
+ * @return if the object type is vehicle, return true.
+ */
 bool isVehicleTypeObject(const ObjectData & object)
 {
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
@@ -255,6 +230,14 @@ bool isVehicleTypeObject(const ObjectData & object)
   return true;
 }
 
+/**
+ * @brief check whether the object is moving or not.
+ * @param object data.
+ * @param parameters.
+ * @return if the object keeps moving more than threshold time duration, return true. if the object
+ * hasn't been moving for more than threshold time, this function return false even if the object
+ * speed is NOT zero.
+ */
 bool isMovingObject(
   const ObjectData & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -299,15 +282,21 @@ bool isWithinIntersection(
     return false;
   }
 
+  if (!std::atoi(area_id.c_str())) {
+    return false;
+  }
+
   const std::string location = object.overhang_lanelet.attributeOr("location", "else");
   if (location == "private") {
     return false;
   }
 
-  const auto object_polygon = autoware::universe_utils::toPolygon2d(object.object);
-
-  const auto polygon =
-    route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(area_id.c_str()));
+  const auto polygon_opt =
+    route_handler->getLaneletMapPtr()->polygonLayer.find(std::atoi(area_id.c_str()));
+  if (polygon_opt == route_handler->getLaneletMapPtr()->polygonLayer.end()) {
+    return false;
+  }
+  const auto & polygon = *polygon_opt;
 
   return boost::geometry::within(
     lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
@@ -341,6 +330,12 @@ bool isWithinFreespace(
     lanelet::utils::to2D(polygons.front().basicPolygon()));
 }
 
+/**
+ * @brief check whether the object is on ego driving lane.
+ * @param object data.
+ * @param route handler.
+ * @return if the object is on ego lane, return true.
+ */
 bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler)
 {
   if (boost::geometry::within(
@@ -420,6 +415,14 @@ bool isMergingToEgoLane(const ObjectData & object)
   return true;
 }
 
+/**
+ * @brief check whether the object is parking on road shoulder.
+ * @param object polygon.
+ * @param avoidance module data.
+ * @param route handler.
+ * @param parameters.
+ * @return if the object is close to road shoulder of the lane, return true.
+ */
 bool isParkedVehicle(
   ObjectData & object, const AvoidancePlanningData & data,
   const std::shared_ptr<RouteHandler> & route_handler,
@@ -799,9 +802,21 @@ bool isObviousAvoidanceTarget(
   return false;
 }
 
+/**
+ * @brief this function includes some conditions which apply to both vehicle and non-vehicle object.
+ * @param object data.
+ * @param current reference path.
+ * @param object detection range.
+ * @param distance between object and goal point.
+ * @param ego position.
+ * @param if the goal point can be moved by external module when there is obstacle around the goal,
+ * this flag will be true.
+ * @param parameters.
+ * @return if the object is potentially target object, return true.
+ */
 bool isSatisfiedWithCommonCondition(
-  ObjectData & object, const AvoidancePlanningData & data, const double forward_detection_range,
-  const std::shared_ptr<const PlannerData> & planner_data,
+  ObjectData & object, const PathWithLaneId & path, const double forward_detection_range,
+  const double to_goal_distance, const Point & ego_pos, const bool is_allowed_goal_modification,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   // Step1. filtered by target object type.
@@ -817,8 +832,7 @@ bool isSatisfiedWithCommonCondition(
   }
 
   // Step3. filtered by longitudinal distance.
-  const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
-  fillLongitudinalAndLengthByClosestEnvelopeFootprint(data.reference_path_rough, ego_pos, object);
+  fillLongitudinalAndLengthByClosestEnvelopeFootprint(path, ego_pos, object);
 
   if (object.longitudinal < -parameters->object_check_backward_distance) {
     object.info = ObjectInfo::FURTHER_THAN_THRESHOLD;
@@ -833,20 +847,12 @@ bool isSatisfiedWithCommonCondition(
   // Step4. filtered by distance between object and goal position.
   // TODO(Satoshi OTA): remove following two conditions after it can execute avoidance and goal
   // planner module simultaneously.
-  const auto & rh = planner_data->route_handler;
-  const auto ego_idx = planner_data->findEgoIndex(data.reference_path_rough.points);
-  const auto to_goal_distance =
-    rh->isInGoalRouteSection(data.current_lanelets.back())
-      ? autoware::motion_utils::calcSignedArcLength(
-          data.reference_path_rough.points, ego_idx, data.reference_path_rough.points.size() - 1)
-      : std::numeric_limits<double>::max();
-
   if (object.longitudinal > to_goal_distance) {
     object.info = ObjectInfo::FURTHER_THAN_GOAL;
     return false;
   }
 
-  if (!utils::isAllowedGoalModification(planner_data->route_handler)) {
+  if (!is_allowed_goal_modification) {
     if (
       object.longitudinal + object.length / 2 + parameters->object_check_goal_distance >
       to_goal_distance) {
@@ -919,6 +925,13 @@ bool isSatisfiedWithNonVehicleCondition(
   return true;
 }
 
+/**
+ * @brief estimate object's behavior based on its relative yaw angle to lane.
+ * @param object data.
+ * @param parameters.
+ * @return return DEVIATING, MERGING and NONE. NONE means the object has no intent to leave or merge
+ * the ego lane.
+ */
 ObjectData::Behavior getObjectBehavior(
   const ObjectData & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -986,6 +999,13 @@ bool isSatisfiedWithVehicleCondition(
   return false;
 }
 
+/**
+ * @brief check the ego has to avoid the object for lateral margin.
+ * @param object data.
+ * @param parameters.
+ * @return if the ego doesn't have to shift driving position to avoid object, return false. if the
+ * shift length is less than threshold, this fuction returns false.
+ */
 bool isNoNeedAvoidanceBehavior(
   ObjectData & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
@@ -1008,6 +1028,13 @@ bool isNoNeedAvoidanceBehavior(
   return false;
 }
 
+/**
+ * @brief get avoidance lateral margin based on road width.
+ * @param object data.
+ * @param planner data, which includes ego vehicle footprint info.
+ * @param parameters.
+ * @return if this function finds there is no enough space to avoid, return nullopt.
+ */
 std::optional<double> getAvoidMargin(
   const ObjectData & object, const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters)
@@ -1041,6 +1068,13 @@ std::optional<double> getAvoidMargin(
   return std::min(soft_lateral_distance_limit, max_avoid_margin);
 }
 
+/**
+ * @brief get avoidance lateral margin based on road width.
+ * @param object data.
+ * @param avoidance module data, which includes current reference path.
+ * @param planner data, which includes ego vehicle footprint info.
+ * @return if this function finds there is no enough space to avoid, return nullopt.
+ */
 double getRoadShoulderDistance(
   ObjectData & object, const AvoidancePlanningData & data,
   const std::shared_ptr<const PlannerData> & planner_data)
@@ -1545,7 +1579,7 @@ void fillObjectEnvelopePolygon(
     calcErrorEclipseLongRadius(object_data.object.kinematics.initial_pose_with_covariance);
 
   if (error_eclipse_long_radius > object_parameter.th_error_eclipse_long_radius) {
-    if (error_eclipse_long_radius < object_data.error_eclipse_max) {
+    if (error_eclipse_long_radius < same_id_obj->error_eclipse_max) {
       object_data.error_eclipse_max = error_eclipse_long_radius;
       object_data.envelope_poly = one_shot_envelope_poly;
       return;
@@ -1872,6 +1906,9 @@ void updateRoadShoulderDistance(
       clip_objects.push_back(object);
     }
   });
+
+  if (clip_objects.empty()) return;
+
   for (auto & o : clip_objects) {
     const auto & vehicle_width = planner_data->parameters.vehicle_width;
     const auto object_type = utils::getHighestProbLabel(o.object.classification);
@@ -1914,9 +1951,21 @@ void filterTargetObjects(
     data.target_objects.push_back(object);
   };
 
+  const auto & rh = planner_data->route_handler;
+  const auto ego_idx = planner_data->findEgoIndex(data.reference_path_rough.points);
+  const auto to_goal_distance =
+    rh->isInGoalRouteSection(data.current_lanelets.back())
+      ? autoware::motion_utils::calcSignedArcLength(
+          data.reference_path_rough.points, ego_idx, data.reference_path_rough.points.size() - 1)
+      : std::numeric_limits<double>::max();
+  const auto & is_allowed_goal_modification =
+    utils::isAllowedGoalModification(planner_data->route_handler);
+
   for (auto & o : objects) {
     if (!filtering_utils::isSatisfiedWithCommonCondition(
-          o, data, forward_detection_range, planner_data, parameters)) {
+          o, data.reference_path_rough, forward_detection_range, to_goal_distance,
+          planner_data->self_odometry->pose.pose.position, is_allowed_goal_modification,
+          parameters)) {
       data.other_objects.push_back(o);
       continue;
     }
@@ -1936,6 +1985,7 @@ void filterTargetObjects(
         data.other_objects.push_back(o);
         continue;
       }
+      o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
     } else if (filtering_utils::isVehicleTypeObject(o)) {
       // TARGET: CAR, TRUCK, BUS, TRAILER, MOTORCYCLE
 

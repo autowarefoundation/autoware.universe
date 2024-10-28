@@ -15,7 +15,6 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include "autoware/motion_utils/trajectory/path_with_lane_id.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
@@ -99,7 +98,6 @@ double l2Norm(const Vector3 vector)
   return std::sqrt(std::pow(vector.x, 2) + std::pow(vector.y, 2) + std::pow(vector.z, 2));
 }
 
-// cppcheck-suppress unusedFunction
 bool checkCollisionBetweenPathFootprintsAndObjects(
   const autoware::universe_utils::LinearRing2d & local_vehicle_footprint,
   const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects, const double margin)
@@ -157,7 +155,7 @@ double calcLateralDistanceFromEgoToObject(
   return min_distance;
 }
 
-double calcLongitudinalDistanceFromEgoToObject(
+double calc_longitudinal_distance_from_ego_to_object(
   const Pose & ego_pose, const double base_link2front, const double base_link2rear,
   const PredictedObject & dynamic_object)
 {
@@ -197,16 +195,10 @@ double calcLongitudinalDistanceFromEgoToObjects(
   double min_distance = std::numeric_limits<double>::max();
   for (const auto & object : dynamic_objects.objects) {
     min_distance = std::min(
-      min_distance,
-      calcLongitudinalDistanceFromEgoToObject(ego_pose, base_link2front, base_link2rear, object));
+      min_distance, calc_longitudinal_distance_from_ego_to_object(
+                      ego_pose, base_link2front, base_link2rear, object));
   }
   return min_distance;
-}
-
-template <typename T>
-bool exists(std::vector<T> vec, T element)
-{
-  return std::find(vec.begin(), vec.end(), element) != vec.end();
 }
 
 std::optional<size_t> findIndexOutOfGoalSearchRange(
@@ -254,7 +246,7 @@ std::optional<size_t> findIndexOutOfGoalSearchRange(
 }
 
 // goal does not have z
-bool setGoal(
+bool set_goal(
   const double search_radius_range, [[maybe_unused]] const double search_rad_range,
   const PathWithLaneId & input, const Pose & goal, const int64_t goal_lane_id,
   PathWithLaneId * output_ptr)
@@ -384,7 +376,7 @@ PathWithLaneId refinePathForGoal(
     filtered_path.points.back().point.longitudinal_velocity_mps = 0.0;
   }
 
-  if (setGoal(
+  if (set_goal(
         search_radius_range, search_rad_range, filtered_path, goal, goal_lane_id,
         &path_with_goal)) {
     return path_with_goal;
@@ -897,25 +889,8 @@ double getArcLengthToTargetLanelet(
 
   const auto target_center_line = target_lane.centerline().basicLineString();
 
-  Pose front_pose, back_pose;
-
-  {
-    const auto front_point = lanelet::utils::conversion::toGeomMsgPt(target_center_line.front());
-    const double front_yaw = lanelet::utils::getLaneletAngle(target_lane, front_point);
-    front_pose.position = front_point;
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, front_yaw);
-    front_pose.orientation = tf2::toMsg(tf_quat);
-  }
-
-  {
-    const auto back_point = lanelet::utils::conversion::toGeomMsgPt(target_center_line.back());
-    const double back_yaw = lanelet::utils::getLaneletAngle(target_lane, back_point);
-    back_pose.position = back_point;
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, back_yaw);
-    back_pose.orientation = tf2::toMsg(tf_quat);
-  }
+  const auto front_pose = to_geom_msg_pose(target_center_line.front(), target_lane);
+  const auto back_pose = to_geom_msg_pose(target_center_line.back(), target_lane);
 
   const auto arc_front = lanelet::utils::getArcCoordinates(lanelet_sequence, front_pose);
   const auto arc_back = lanelet::utils::getArcCoordinates(lanelet_sequence, back_pose);
@@ -1044,39 +1019,6 @@ PathWithLaneId getCenterLinePath(
   return resampled_path_with_lane_id;
 }
 
-// TODO(murooka) remove calcSignedArcLength using findNearestSegmentIndex inside the
-// function
-// cppcheck-suppress unusedFunction
-PathWithLaneId setDecelerationVelocity(
-  const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
-  const double buffer, const double deceleration_interval)
-{
-  auto reference_path = input;
-
-  for (auto & point : reference_path.points) {
-    const auto arclength_to_target = std::max(
-      0.0, autoware::motion_utils::calcSignedArcLength(
-             reference_path.points, point.point.pose.position, target_pose.position) +
-             buffer);
-    if (arclength_to_target > deceleration_interval) continue;
-    point.point.longitudinal_velocity_mps = std::min(
-      point.point.longitudinal_velocity_mps,
-      static_cast<float>(
-        (arclength_to_target / deceleration_interval) *
-          (point.point.longitudinal_velocity_mps - target_velocity) +
-        target_velocity));
-  }
-
-  const auto stop_point_length =
-    autoware::motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position) +
-    buffer;
-  if (std::abs(target_velocity) < eps && stop_point_length > 0.0) {
-    const auto stop_point = utils::insertStopPoint(stop_point_length, reference_path);
-  }
-
-  return reference_path;
-}
-
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification)
 {
   std::uint8_t label = ObjectClassification::UNKNOWN;
@@ -1121,8 +1063,19 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
 lanelet::ConstLanelets getCurrentLanesFromPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data)
 {
+  if (path.points.empty() || !planner_data) {
+    return {};
+  }
+
   const auto & route_handler = planner_data->route_handler;
-  const auto & current_pose = planner_data->self_odometry->pose.pose;
+  const auto & self_odometry = planner_data->self_odometry;
+
+  if (!route_handler || !self_odometry) {
+    return {};
+  }
+
+  const auto & current_pose = self_odometry->pose.pose;
+
   const auto & p = planner_data->parameters;
 
   std::set<lanelet::Id> lane_ids;
@@ -1493,7 +1446,6 @@ lanelet::ConstLanelets getLaneletsFromPath(
   return lanelets;
 }
 
-// cppcheck-suppress unusedFunction
 std::string convertToSnakeCase(const std::string & input_str)
 {
   std::string output_str = std::string{static_cast<char>(std::tolower(input_str.at(0)))};

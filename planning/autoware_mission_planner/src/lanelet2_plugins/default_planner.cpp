@@ -17,6 +17,7 @@
 #include "utility_functions.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
@@ -27,104 +28,18 @@
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
+#include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/algorithms/difference.hpp>
+#include <boost/geometry/algorithms/is_empty.hpp>
+
+#include <lanelet2_core/Forward.h>
 #include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/geometry/Lanelet.h>
-#include <lanelet2_routing/Route.h>
-#include <lanelet2_routing/RoutingCost.h>
 #include <tf2/utils.h>
 
 #include <limits>
 #include <vector>
-
-namespace
-{
-using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
-
-bool is_in_lane(const lanelet::ConstLanelet & lanelet, const lanelet::ConstPoint3d & point)
-{
-  // check if goal is on a lane at appropriate angle
-  const auto distance = boost::geometry::distance(
-    lanelet.polygon2d().basicPolygon(), lanelet::utils::to2D(point).basicPoint());
-  constexpr double th_distance = std::numeric_limits<double>::epsilon();
-  return distance < th_distance;
-}
-
-bool is_in_parking_space(
-  const lanelet::ConstLineStrings3d & parking_spaces, const lanelet::ConstPoint3d & point)
-{
-  for (const auto & parking_space : parking_spaces) {
-    lanelet::ConstPolygon3d parking_space_polygon;
-    if (!lanelet::utils::lineStringWithWidthToPolygon(parking_space, &parking_space_polygon)) {
-      continue;
-    }
-
-    const double distance = boost::geometry::distance(
-      lanelet::utils::to2D(parking_space_polygon).basicPolygon(),
-      lanelet::utils::to2D(point).basicPoint());
-    constexpr double th_distance = std::numeric_limits<double>::epsilon();
-    if (distance < th_distance) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool is_in_parking_lot(
-  const lanelet::ConstPolygons3d & parking_lots, const lanelet::ConstPoint3d & point)
-{
-  for (const auto & parking_lot : parking_lots) {
-    const double distance = boost::geometry::distance(
-      lanelet::utils::to2D(parking_lot).basicPolygon(), lanelet::utils::to2D(point).basicPoint());
-    constexpr double th_distance = std::numeric_limits<double>::epsilon();
-    if (distance < th_distance) {
-      return true;
-    }
-  }
-  return false;
-}
-
-double project_goal_to_map(
-  const lanelet::ConstLanelet & lanelet_component, const lanelet::ConstPoint3d & goal_point)
-{
-  const lanelet::ConstLineString3d center_line =
-    lanelet::utils::generateFineCenterline(lanelet_component);
-  lanelet::BasicPoint3d project = lanelet::geometry::project(center_line, goal_point.basicPoint());
-  return project.z();
-}
-
-geometry_msgs::msg::Pose get_closest_centerline_pose(
-  const lanelet::ConstLanelets & road_lanelets, const geometry_msgs::msg::Pose & point,
-  autoware::vehicle_info_utils::VehicleInfo vehicle_info)
-{
-  lanelet::Lanelet closest_lanelet;
-  if (!lanelet::utils::query::getClosestLaneletWithConstrains(
-        road_lanelets, point, &closest_lanelet, 0.0)) {
-    // point is not on any lanelet.
-    return point;
-  }
-
-  const auto refined_center_line = lanelet::utils::generateFineCenterline(closest_lanelet, 1.0);
-  closest_lanelet.setCenterline(refined_center_line);
-
-  const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, point.position);
-
-  const auto nearest_idx = autoware::motion_utils::findNearestIndex(
-    convertCenterlineToPoints(closest_lanelet), point.position);
-  const auto nearest_point = closest_lanelet.centerline()[nearest_idx];
-
-  // shift nearest point on its local y axis so that vehicle's right and left edges
-  // would have approx the same clearance from road border
-  const auto shift_length = (vehicle_info.right_overhang_m - vehicle_info.left_overhang_m) / 2.0;
-  const auto delta_x = -shift_length * std::sin(lane_yaw);
-  const auto delta_y = shift_length * std::cos(lane_yaw);
-
-  lanelet::BasicPoint3d refined_point(
-    nearest_point.x() + delta_x, nearest_point.y() + delta_y, nearest_point.z());
-
-  return convertBasicPoint3dToPose(refined_point, lane_yaw);
-}
-
-}  // anonymous namespace
 
 namespace autoware::mission_planner::lanelet2
 {
@@ -216,7 +131,7 @@ PlannerPlugin::MarkerArray DefaultPlanner::visualize(const LaneletRoute & route)
 }
 
 visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
-  autoware::universe_utils::LinearRing2d goal_footprint) const
+  autoware::universe_utils::LinearRing2d goal_footprint)
 {
   visualization_msgs::msg::MarkerArray msg;
   auto marker = autoware::universe_utils::createDefaultMarker(
@@ -244,52 +159,63 @@ visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
   return msg;
 }
 
-bool DefaultPlanner::check_goal_footprint_inside_lanes(
-  const lanelet::ConstLanelet & current_lanelet,
-  const lanelet::ConstLanelet & combined_prev_lanelet,
-  const autoware::universe_utils::Polygon2d & goal_footprint, double & next_lane_length,
-  const double search_margin)
+lanelet::ConstLanelets next_lanelets_up_to(
+  const lanelet::ConstLanelet & start_lanelet, const double up_to_distance,
+  const route_handler::RouteHandler & route_handler)
 {
-  // check if goal footprint is in current lane
-  if (boost::geometry::within(goal_footprint, combined_prev_lanelet.polygon2d().basicPolygon())) {
-    return true;
+  lanelet::ConstLanelets lanelets;
+  if (up_to_distance <= 0.0) {
+    return lanelets;
   }
-  const auto following = route_handler_.getNextLanelets(current_lanelet);
-  // check if goal footprint is in between many lanelets in depth-first search manner
-  for (const auto & next_lane : following) {
-    next_lane_length += lanelet::utils::getLaneletLength2d(next_lane);
-    lanelet::ConstLanelets lanelets;
-    lanelets.push_back(combined_prev_lanelet);
+  for (const auto & next_lane : route_handler.getNextLanelets(start_lanelet)) {
     lanelets.push_back(next_lane);
-    lanelet::ConstLanelet combined_lanelets =
-      combine_lanelets_with_shoulder(lanelets, route_handler_);
-
-    // if next lanelet length is longer than vehicle longitudinal offset
-    if (vehicle_info_.max_longitudinal_offset_m + search_margin < next_lane_length) {
-      next_lane_length -= lanelet::utils::getLaneletLength2d(next_lane);
-      // and if the goal_footprint is within the (accumulated) combined_lanelets, terminate the
-      // query
-      if (boost::geometry::within(goal_footprint, combined_lanelets.polygon2d().basicPolygon())) {
-        return true;
-      }
-      // if not, iteration continues to next next_lane, and this subtree is terminated
-    } else {  // if next lanelet length is shorter than vehicle longitudinal offset, check the
-              // overlap with the polygon including the next_lane(s) until the additional lanes get
-              // longer than ego vehicle length
-      if (!check_goal_footprint_inside_lanes(
-            next_lane, combined_lanelets, goal_footprint, next_lane_length)) {
-        next_lane_length -= lanelet::utils::getLaneletLength2d(next_lane);
-        continue;
-      } else {
-        return true;
-      }
-    }
+    const auto next_lanelets = next_lanelets_up_to(
+      next_lane, up_to_distance - lanelet::geometry::length2d(next_lane), route_handler);
+    lanelets.insert(lanelets.end(), next_lanelets.begin(), next_lanelets.end());
   }
-  return false;
+  return lanelets;
+}
+
+bool DefaultPlanner::check_goal_footprint_inside_lanes(
+  const lanelet::ConstLanelet & closest_lanelet_to_goal,
+  const lanelet::ConstLanelets & path_lanelets,
+  const universe_utils::Polygon2d & goal_footprint) const
+{
+  universe_utils::MultiPolygon2d ego_lanes;
+  universe_utils::Polygon2d poly;
+  for (const auto & ll : path_lanelets) {
+    const auto left_shoulder = route_handler_.getLeftShoulderLanelet(ll);
+    if (left_shoulder) {
+      boost::geometry::convert(left_shoulder->polygon2d().basicPolygon(), poly);
+      boost::geometry::correct(poly);
+      ego_lanes.push_back(poly);
+    }
+    const auto right_shoulder = route_handler_.getRightShoulderLanelet(ll);
+    if (right_shoulder) {
+      boost::geometry::convert(right_shoulder->polygon2d().basicPolygon(), poly);
+      boost::geometry::correct(poly);
+      ego_lanes.push_back(poly);
+    }
+    boost::geometry::convert(ll.polygon2d().basicPolygon(), poly);
+    boost::geometry::correct(poly);
+    ego_lanes.push_back(poly);
+  }
+  const auto next_lanelets = next_lanelets_up_to(
+    closest_lanelet_to_goal, vehicle_info_.max_longitudinal_offset_m, route_handler_);
+  for (const auto & ll : next_lanelets) {
+    boost::geometry::convert(ll.polygon2d().basicPolygon(), poly);
+    boost::geometry::correct(poly);
+    ego_lanes.push_back(poly);
+  }
+
+  // check if goal footprint is in the ego lane
+  universe_utils::MultiPolygon2d difference;
+  boost::geometry::difference(goal_footprint, ego_lanes, difference);
+  return boost::geometry::is_empty(difference);
 }
 
 bool DefaultPlanner::is_goal_valid(
-  const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets)
+  const geometry_msgs::msg::Pose & goal, const lanelet::ConstLanelets & path_lanelets)
 {
   const auto logger = node_->get_logger();
 
@@ -308,9 +234,10 @@ bool DefaultPlanner::is_goal_valid(
       return true;
     }
   }
-  lanelet::ConstLanelet closest_lanelet;
+  lanelet::ConstLanelet closest_lanelet_to_goal;
   const auto road_lanelets_at_goal = route_handler_.getRoadLaneletsAtPose(goal);
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_at_goal, goal, &closest_lanelet)) {
+  if (!lanelet::utils::query::getClosestLanelet(
+        road_lanelets_at_goal, goal, &closest_lanelet_to_goal)) {
     // if no road lanelets directly at the goal, find the closest one
     const lanelet::BasicPoint2d goal_point{goal.position.x, goal.position.y};
     auto closest_dist = std::numeric_limits<double>::max();
@@ -324,7 +251,7 @@ bool DefaultPlanner::is_goal_valid(
           const auto dist = lanelet::geometry::distance2d(goal_point, ll.polygon2d());
           if (route_handler_.isRoadLanelet(ll) && dist < closest_dist) {
             closest_dist = dist;
-            closest_lanelet = ll;
+            closest_lanelet_to_goal = ll;
           }
           return false;  // continue the search
         });
@@ -337,16 +264,10 @@ bool DefaultPlanner::is_goal_valid(
   pub_goal_footprint_marker_->publish(visualize_debug_footprint(goal_footprint));
   const auto polygon_footprint = convert_linear_ring_to_polygon(goal_footprint);
 
-  double next_lane_length = 0.0;
-  // combine calculated route lanelets
-  const lanelet::ConstLanelet combined_prev_lanelet =
-    combine_lanelets_with_shoulder(path_lanelets, route_handler_);
-
   // check if goal footprint exceeds lane when the goal isn't in parking_lot
   if (
     param_.check_footprint_inside_lanes &&
-    !check_goal_footprint_inside_lanes(
-      closest_lanelet, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
+    !check_goal_footprint_inside_lanes(closest_lanelet_to_goal, path_lanelets, polygon_footprint) &&
     !is_in_parking_lot(
       lanelet::utils::query::getAllParkingLots(route_handler_.getLaneletMapPtr()),
       lanelet::utils::conversion::toLaneletPoint(goal.position))) {
@@ -354,8 +275,8 @@ bool DefaultPlanner::is_goal_valid(
     return false;
   }
 
-  if (is_in_lane(closest_lanelet, goal_lanelet_pt)) {
-    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, goal.position);
+  if (is_in_lane(closest_lanelet_to_goal, goal_lanelet_pt)) {
+    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet_to_goal, goal.position);
     const auto goal_yaw = tf2::getYaw(goal.orientation);
     const auto angle_diff = autoware::universe_utils::normalizeRadian(lane_yaw - goal_yaw);
 
@@ -375,11 +296,7 @@ bool DefaultPlanner::is_goal_valid(
   // check if goal is in parking lot
   const auto parking_lots =
     lanelet::utils::query::getAllParkingLots(route_handler_.getLaneletMapPtr());
-  if (is_in_parking_lot(parking_lots, goal_lanelet_pt)) {
-    return true;
-  }
-
-  return false;
+  return is_in_parking_lot(parking_lots, goal_lanelet_pt);
 }
 
 PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
@@ -388,8 +305,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
 
   std::stringstream log_ss;
   for (const auto & point : points) {
-    log_ss << "x: " << point.position.x << " "
-           << "y: " << point.position.y << std::endl;
+    log_ss << "x: " << point.position.x << " " << "y: " << point.position.y << std::endl;
   }
   RCLCPP_DEBUG_STREAM(
     logger, "start planning route with check points: " << std::endl
@@ -429,7 +345,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     return route_msg;
   }
 
-  if (route_handler_.isRouteLooped(route_sections)) {
+  if (route_handler::RouteHandler::isRouteLooped(route_sections)) {
     RCLCPP_WARN(logger, "Loop detected within route!");
     return route_msg;
   }

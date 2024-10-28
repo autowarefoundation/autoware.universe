@@ -23,6 +23,7 @@
 #include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_vehicle_cmd_gate/msg/is_filter_activated.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -41,6 +42,7 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_debug_msgs/msg/bool_stamped.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/msg/heartbeat.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
@@ -114,6 +116,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr filter_activated_marker_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr filter_activated_marker_raw_pub_;
   rclcpp::Publisher<BoolStamped>::SharedPtr filter_activated_flag_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_pub_;
   // Parameter callback
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onParameter(
@@ -267,6 +270,9 @@ private:
   // stop checker
   std::unique_ptr<VehicleStopChecker> vehicle_stop_checker_;
   double stop_check_duration_;
+
+  // processing time
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   // debug
   MarkerArray createMarkerArray(const IsFilterActivated & filter_activated);

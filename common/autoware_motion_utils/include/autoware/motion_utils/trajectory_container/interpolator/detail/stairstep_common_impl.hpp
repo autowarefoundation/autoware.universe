@@ -17,11 +17,17 @@
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__STAIRSTEP_COMMON_IMPL_HPP_  // NOLINT
 // clang-format on
 
-#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/detail/interpolator_mixin.hpp"
 
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_container::interpolator::detail
+namespace autoware::motion_utils::trajectory_container::interpolator
+{
+
+template <typename T>
+class Stairstep;
+
+namespace detail
 {
 
 /**
@@ -32,7 +38,7 @@ namespace autoware::motion_utils::trajectory_container::interpolator::detail
  * @tparam T The type of the values being interpolated.
  */
 template <typename T>
-class StairstepCommonImpl : public Interpolator<T>
+class StairstepCommonImpl : public detail::InterpolatorMixin<Stairstep<T>, T>
 {
 protected:
   std::vector<T> values_;  ///< Interpolation values.
@@ -51,13 +57,12 @@ protected:
   /**
    * @brief Build the interpolator with the given values.
    *
-   * @param axis The axis values.
+   * @param bases The bases values.
    * @param values The values to interpolate.
    */
-  void build_impl(
-    const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<T> & values) override
+  void build_impl(const std::vector<double> & bases, const std::vector<T> & values) override
   {
-    this->axis_ = axis;
+    this->bases_ = bases;
     this->values_ = values;
   }
 
@@ -72,8 +77,8 @@ public:
    */
   [[nodiscard]] size_t minimum_required_points() const override { return 2; }
 };
-
-}  // namespace autoware::motion_utils::trajectory_container::interpolator::detail
+}  // namespace detail
+}  // namespace autoware::motion_utils::trajectory_container::interpolator
 
 // clang-format off
 #endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__DETAIL__STAIRSTEP_COMMON_IMPL_HPP_  // NOLINT

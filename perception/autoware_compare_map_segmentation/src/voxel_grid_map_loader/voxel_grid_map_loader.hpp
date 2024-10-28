@@ -36,15 +36,6 @@
 namespace autoware::compare_map_segmentation
 {
 template <typename T, typename U>
-double distance3D(const T p1, const U p2)
-{
-  double dx = p1.x - p2.x;
-  double dy = p1.y - p2.y;
-  double dz = p1.z - p2.z;
-  return dx * dx + dy * dy + dz * dz;
-}
-
-template <typename T, typename U>
 double distance2D(const T p1, const U p2)
 {
   double dx = p1.x - p2.x;
@@ -161,6 +152,7 @@ protected:
   rclcpp::TimerBase::SharedPtr map_update_timer_;
   double map_update_distance_threshold_;
   double map_loader_radius_;
+  double max_map_grid_size_;
   rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedPtr
     map_update_client_;
   rclcpp::CallbackGroup::SharedPtr client_callback_group_;
@@ -279,6 +271,13 @@ public:
   {
     map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;
     map_grid_size_y_ = map_cell_to_add.metadata.max_y - map_cell_to_add.metadata.min_y;
+    if (map_grid_size_x_ > max_map_grid_size_ || map_grid_size_y_ > max_map_grid_size_) {
+      RCLCPP_ERROR(
+        logger_,
+        "Map was not split or split map grid size is too large. Split map with grid size smaller "
+        "than %f",
+        max_map_grid_size_);
+    }
 
     origin_x_remainder_ = std::remainder(map_cell_to_add.metadata.min_x, map_grid_size_x_);
     origin_y_remainder_ = std::remainder(map_cell_to_add.metadata.min_y, map_grid_size_y_);

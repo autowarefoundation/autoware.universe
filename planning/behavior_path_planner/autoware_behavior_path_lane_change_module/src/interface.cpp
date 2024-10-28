@@ -38,14 +38,14 @@ LaneChangeInterface::LaneChangeInterface(
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
     objects_of_interest_marker_interface_ptr_map,
+  std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr,
   std::unique_ptr<LaneChangeBase> && module_type)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, steering_factor_interface_ptr},  // NOLINT
   parameters_{std::move(parameters)},
   module_type_{std::move(module_type)},
   prev_approved_path_{std::make_unique<PathWithLaneId>()}
 {
   module_type_->setTimeKeeper(getTimeKeeper());
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, name);
   logger_ = utils::lane_change::getLogger(module_type_->getModuleTypeStr());
 }
 
@@ -77,6 +77,7 @@ void LaneChangeInterface::updateData()
   module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
   module_type_->update_lanes(getCurrentStatus() == ModuleStatus::RUNNING);
   module_type_->update_filtered_objects();
+  module_type_->update_transient_data();
   module_type_->updateSpecialData();
 
   if (isWaitingApproval() || module_type_->isAbortState()) {
@@ -125,16 +126,21 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   } else {
     const auto path =
       assignToCandidate(module_type_->getLaneChangePath(), module_type_->getEgoPosition());
-    const auto force_activated = std::any_of(
+    const auto is_registered = std::any_of(
       rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
-      [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
-    if (!force_activated) {
+      [&](const auto & rtc) { return rtc.second->isRegistered(uuid_map_.at(rtc.first)); });
+
+    if (!is_registered) {
       updateRTCStatus(
         path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
-        State::RUNNING);
+        State::WAITING_FOR_EXECUTION);
     } else {
+      const auto force_activated = std::any_of(
+        rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+        [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
+      const bool safe = force_activated ? false : true;
       updateRTCStatus(
-        path.start_distance_to_path_change, path.finish_distance_to_path_change, false,
+        path.start_distance_to_path_change, path.finish_distance_to_path_change, safe,
         State::RUNNING);
     }
   }
@@ -147,7 +153,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   *prev_approved_path_ = getPreviousModuleOutput().path;
 
   BehaviorModuleOutput out = getPreviousModuleOutput();
-  module_type_->insertStopPoint(module_type_->get_current_lanes(), out.path);
+
+  module_type_->insert_stop_point(module_type_->get_current_lanes(), out.path);
   out.turn_signal_info = module_type_->get_current_turn_signal_info();
 
   const auto & lane_change_debug = module_type_->getDebugData();
@@ -160,9 +167,6 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   stop_pose_ = module_type_->getStopPose();
 
   if (!module_type_->isValidPath()) {
-    updateRTCStatus(
-      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), false,
-      State::FAILED);
     path_candidate_ = std::make_shared<PathWithLaneId>();
     return out;
   }
@@ -252,6 +256,13 @@ bool LaneChangeInterface::canTransitFailureState()
   }
 
   if (isWaitingApproval()) {
+    if (module_type_->is_near_regulatory_element()) {
+      log_debug_throttled("Ego is close to regulatory element. Cancel lane change");
+      updateRTCStatus(
+        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+        State::FAILED);
+      return true;
+    }
     log_debug_throttled("Can't transit to failure state. Module is WAITING_FOR_APPROVAL");
     return false;
   }

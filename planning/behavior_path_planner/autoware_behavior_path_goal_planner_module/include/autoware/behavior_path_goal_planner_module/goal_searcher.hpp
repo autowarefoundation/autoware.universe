@@ -16,7 +16,6 @@
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_SEARCHER_HPP_
 
 #include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
-#include "autoware/behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 
 #include <memory>
 #include <vector>
@@ -31,13 +30,12 @@ class GoalSearcher : public GoalSearcherBase
 public:
   GoalSearcher(const GoalPlannerParameters & parameters, const LinearRing2d & vehicle_footprint);
 
-  GoalCandidates search(
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const std::shared_ptr<const PlannerData> & planner_data) override;
+  GoalCandidates search(const std::shared_ptr<const PlannerData> & planner_data) override;
   void update(
     GoalCandidates & goal_candidates,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const std::shared_ptr<const PlannerData> & planner_data) const override;
+    const std::shared_ptr<const PlannerData> & planner_data,
+    const PredictedObjects & objects) const override;
 
   // todo(kosuke55): Functions for this specific use should not be in the interface,
   // so it is better to consider interface design when we implement other goal searchers.
@@ -47,7 +45,8 @@ public:
   bool isSafeGoalWithMarginScaleFactor(
     const GoalCandidate & goal_candidate, const double margin_scale_factor,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const std::shared_ptr<const PlannerData> & planner_data) const override;
+    const std::shared_ptr<const PlannerData> & planner_data,
+    const PredictedObjects & objects) const override;
 
 private:
   void countObjectsToAvoid(
@@ -65,7 +64,6 @@ private:
     const std::shared_ptr<const PlannerData> & planner_data) const;
   BasicPolygons2d getNoParkingAreaPolygons(const lanelet::ConstLanelets & lanes) const;
   BasicPolygons2d getNoStoppingAreaPolygons(const lanelet::ConstLanelets & lanes) const;
-  bool isInAreas(const LinearRing2d & footprint, const BasicPolygons2d & areas) const;
 
   LinearRing2d vehicle_footprint_{};
   bool left_side_parking_{true};

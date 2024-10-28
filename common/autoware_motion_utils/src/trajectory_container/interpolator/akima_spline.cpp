@@ -23,11 +23,11 @@ namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
 void AkimaSpline::compute_parameters(
-  const Eigen::Ref<const Eigen::VectorXd> & axis, const Eigen::Ref<const Eigen::VectorXd> & values)
+  const Eigen::Ref<const Eigen::VectorXd> & bases, const Eigen::Ref<const Eigen::VectorXd> & values)
 {
-  const auto n = static_cast<int32_t>(axis.size());
+  const auto n = static_cast<int32_t>(bases.size());
 
-  Eigen::VectorXd h = axis.tail(n - 1) - axis.head(n - 1);
+  Eigen::VectorXd h = bases.tail(n - 1) - bases.head(n - 1);
 
   Eigen::VectorXd m(n - 1);
   for (int32_t i = 0; i < n - 1; ++i) {
@@ -60,33 +60,32 @@ void AkimaSpline::compute_parameters(
   }
 }
 
-void AkimaSpline::build_impl(
-  const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<double> & values)
+void AkimaSpline::build_impl(const std::vector<double> & bases, const std::vector<double> & values)
 {
-  this->axis_ = axis;
+  this->bases_ = bases;
   compute_parameters(
-    this->axis_,
+    Eigen::Map<const Eigen::VectorXd>(bases.data(), static_cast<Eigen::Index>(bases.size())),
     Eigen::Map<const Eigen::VectorXd>(values.data(), static_cast<Eigen::Index>(values.size())));
 }
 
 double AkimaSpline::compute_impl(const double & s) const
 {
   const int32_t i = this->get_index(s);
-  const double dx = s - this->axis_[i];
+  const double dx = s - this->bases_[i];
   return a_[i] + b_[i] * dx + c_[i] * dx * dx + d_[i] * dx * dx * dx;
 }
 
 double AkimaSpline::compute_first_derivative_impl(const double & s) const
 {
   const int32_t i = this->get_index(s);
-  const double dx = s - this->axis_[i];
+  const double dx = s - this->bases_[i];
   return b_[i] + 2 * c_[i] * dx + 3 * d_[i] * dx * dx;
 }
 
 double AkimaSpline::compute_second_derivative_impl(const double & s) const
 {
   const int32_t i = this->get_index(s);
-  const double dx = s - this->axis_[i];
+  const double dx = s - this->bases_[i];
   return 2 * c_[i] + 6 * d_[i] * dx;
 }
 

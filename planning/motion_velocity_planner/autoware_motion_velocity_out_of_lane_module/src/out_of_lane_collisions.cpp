@@ -20,15 +20,15 @@
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <rclcpp/duration.hpp>
 
-#include <autoware_planning_msgs/msg/detail/trajectory_point__struct.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 
-#include <boost/geometry/algorithms/detail/envelope/interface.hpp>
-#include <boost/geometry/algorithms/detail/overlaps/interface.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
 #include <boost/geometry/index/predicates.hpp>
 
+#include <lanelet2_core/Forward.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/primitives/BoundingBox.h>
+#include <lanelet2_core/primitives/Polygon.h>
 
 #include <algorithm>
 #include <iterator>
@@ -47,7 +47,7 @@ void update_collision_times(
     auto & out_of_lane_point = out_of_lane_data.outside_points[index];
     if (out_of_lane_point.collision_times.count(time) == 0UL) {
       const auto has_collision =
-        !boost::geometry::disjoint(out_of_lane_point.outside_ring, object_footprint.outer());
+        !boost::geometry::disjoint(out_of_lane_point.out_overlaps, object_footprint.outer());
       if (has_collision) {
         out_of_lane_point.collision_times.insert(time);
       }
@@ -129,38 +129,56 @@ void calculate_collisions_to_avoid(
   }
 }
 
-OutOfLaneData calculate_outside_points(const EgoData & ego_data)
+OutOfLanePoint calculate_out_of_lane_point(
+  const lanelet::BasicPolygon2d & footprint, const lanelet::ConstLanelets & out_lanelets,
+  const OutLaneletRtree & out_lanelets_rtree)
 {
-  OutOfLaneData out_of_lane_data;
-  out_of_lane::OutOfLanePoint p;
-  for (auto i = 0UL; i < ego_data.trajectory_footprints.size(); ++i) {
-    p.trajectory_index = i + ego_data.first_trajectory_idx;
-    const auto & footprint = ego_data.trajectory_footprints[i];
-    out_of_lane::Polygons out_of_lane_polygons;
-    boost::geometry::difference(footprint, ego_data.drivable_lane_polygons, out_of_lane_polygons);
-    for (const auto & area : out_of_lane_polygons) {
-      if (!area.outer.empty()) {
-        p.outside_ring = area.outer;
-        out_of_lane_data.outside_points.push_back(p);
-      }
+  OutOfLanePoint p;
+  std::vector<LaneletNode> candidates;
+  out_lanelets_rtree.query(
+    boost::geometry::index::intersects(footprint), std::back_inserter(candidates));
+  for (const auto & [_, idx] : candidates) {
+    const auto & lanelet = out_lanelets[idx];
+    lanelet::BasicPolygons2d intersections;
+    boost::geometry::intersection(footprint, lanelet.polygon2d().basicPolygon(), intersections);
+    for (const auto & intersection : intersections) {
+      universe_utils::Polygon2d poly;
+      boost::geometry::convert(intersection, poly);
+      p.out_overlaps.push_back(poly);
+    }
+    if (!intersections.empty()) {
+      p.overlapped_lanelets.push_back(lanelet);
     }
   }
-  return out_of_lane_data;
+  return p;
+}
+std::vector<OutOfLanePoint> calculate_out_of_lane_points(const EgoData & ego_data)
+{
+  std::vector<OutOfLanePoint> out_of_lane_points;
+  for (auto i = 0UL; i < ego_data.trajectory_footprints.size(); ++i) {
+    const auto & footprint = ego_data.trajectory_footprints[i];
+    OutOfLanePoint p =
+      calculate_out_of_lane_point(footprint, ego_data.out_lanelets, ego_data.out_lanelets_rtree);
+    p.trajectory_index = ego_data.first_trajectory_idx + i;
+    if (!p.overlapped_lanelets.empty()) {
+      out_of_lane_points.push_back(p);
+    }
+  }
+  return out_of_lane_points;
 }
 
-OutOfLaneData calculate_out_of_lane_areas(const EgoData & ego_data)
+void prepare_out_of_lane_areas_rtree(OutOfLaneData & out_of_lane_data)
 {
-  auto out_of_lane_data = calculate_outside_points(ego_data);
   std::vector<OutAreaNode> rtree_nodes;
   for (auto i = 0UL; i < out_of_lane_data.outside_points.size(); ++i) {
-    OutAreaNode n;
-    n.first = boost::geometry::return_envelope<universe_utils::Box2d>(
-      out_of_lane_data.outside_points[i].outside_ring);
-    n.second = i;
-    rtree_nodes.push_back(n);
+    for (const auto & out_overlap : out_of_lane_data.outside_points[i].out_overlaps) {
+      OutAreaNode n;
+      n.first = boost::geometry::return_envelope<universe_utils::Box2d>(out_overlap);
+      n.second = i;
+      rtree_nodes.push_back(n);
+    }
   }
   out_of_lane_data.outside_areas_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
-  return out_of_lane_data;
 }
 
 }  // namespace autoware::motion_velocity_planner::out_of_lane
