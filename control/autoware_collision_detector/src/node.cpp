@@ -213,10 +213,10 @@ PredictedObjects CollisionDetectorNode::filterObjects(const PredictedObjects & i
     const double object_distance = transformed_position.head<2>().norm();
     const bool is_within_range = (object_distance <= node_param_.nearby_filter_radius);
 
-    // Determine if the object should be filtered based on its classification
-    bool should_be_filtered_class = shouldBeFiltered(object.classification.front().label);
+    // Determine if the object should be excluded based on its classification
+    bool should_be_excluded = shouldBeExcluded(object.classification.front().label);
 
-    const bool is_within_range_and_filtering_class = is_within_range && should_be_filtered_class;
+    const bool is_within_range_and_filtering_class = is_within_range && should_be_excluded;
 
     // If the object is not within range or not a class to be filtered, add it directly
     if (!is_within_range_and_filtering_class) {
@@ -273,7 +273,7 @@ PredictedObjects CollisionDetectorNode::filterObjects(const PredictedObjects & i
 
     if (was_observed) {
       observed_it->timestamp = current_object_time;
-      // Add without filtering
+      // Add without exclusion check
       filtered_objects.objects.push_back(object);
     } else {
       // Add as a newly observed object and to the ignore list
@@ -298,7 +298,7 @@ void CollisionDetectorNode::removeOldObjects(
     container.end());
 }
 
-bool CollisionDetectorNode::shouldBeFiltered(
+bool CollisionDetectorNode::shouldBeExcluded(
   const autoware_perception_msgs::msg::ObjectClassification::_label_type & classification) const
 {
   switch (classification) {

@@ -86,7 +86,7 @@ private:
     std::vector<TimestampedObject> & container, const rclcpp::Time & current_time,
     const rclcpp::Duration & duration_sec);
 
-  bool shouldBeFiltered(
+  bool shouldBeExcluded(
     const autoware_perception_msgs::msg::ObjectClassification::_label_type & classification) const;
 
   void checkCollision(diagnostic_updater::DiagnosticStatusWrapper & stat);
