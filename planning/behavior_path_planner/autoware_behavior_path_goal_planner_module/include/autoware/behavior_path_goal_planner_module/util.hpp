@@ -182,7 +182,8 @@ std::optional<Pose> calcRefinedGoal(
   const bool left_side_parking, const double vehicle_width, const double base_link2front,
   const double base_link2rear, const GoalPlannerParameters & parameters);
 
-Pose calcClosestPose(lanelet::ConstLineString3d line, const Point & query_point);
+std::optional<Pose> calcClosestPose(
+  const lanelet::ConstLineString3d line, const Point & query_point);
 
 }  // namespace autoware::behavior_path_planner::goal_planner_utils
 

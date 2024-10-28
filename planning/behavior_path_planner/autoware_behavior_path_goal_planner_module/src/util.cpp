@@ -793,12 +793,13 @@ std::optional<Pose> calcRefinedGoal(
   return refined_goal_pose;
 }
 
-Pose calcClosestPose(lanelet::ConstLineString3d line, const Point & query_point)
+std::optional<Pose> calcClosestPose(
+  const lanelet::ConstLineString3d line, const Point & query_point)
 {
   const auto segment =
     lanelet::utils::getClosestSegment(lanelet::BasicPoint2d{query_point.x, query_point.y}, line);
   if (segment.empty()) {
-    return geometry_msgs::msg::Pose{};
+    return std::nullopt;
   }
 
   const Eigen::Vector2d direction(

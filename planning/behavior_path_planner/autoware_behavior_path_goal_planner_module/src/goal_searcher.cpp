@@ -205,11 +205,15 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
       lanelet::ConstLanelet vehicle_front_closest_lanelet;
       lanelet::utils::query::getClosestLanelet(
         pull_over_lanes, search_pose, &vehicle_front_closest_lanelet);
-      const auto vehicle_front_pose_for_bound = goal_planner_utils::calcClosestPose(
+      const auto vehicle_front_pose_for_bound_opt = goal_planner_utils::calcClosestPose(
         left_side_parking_ ? vehicle_front_closest_lanelet.leftBound()
                            : vehicle_front_closest_lanelet.rightBound(),
         autoware::universe_utils::createPoint(
           vehicle_front_midpoint.x(), vehicle_front_midpoint.y(), search_pose.position.z));
+      if (!vehicle_front_pose_for_bound_opt) {
+        continue;
+      }
+      const auto & vehicle_front_pose_for_bound = vehicle_front_pose_for_bound_opt.value();
       GoalCandidate goal_candidate{};
       goal_candidate.goal_pose = search_pose;
       goal_candidate.goal_pose.orientation = vehicle_front_pose_for_bound.orientation;
