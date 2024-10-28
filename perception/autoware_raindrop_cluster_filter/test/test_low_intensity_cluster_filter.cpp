@@ -27,9 +27,9 @@
 #include <vector>
 
 using autoware::low_intensity_cluster_filter::LowIntensityClusterFilter;
-using autoware_perception_msgs::msg::ObjectClassification;
 using autoware::point_types::PointXYZIRC;
 using autoware::point_types::PointXYZIRCGenerator;
+using autoware_perception_msgs::msg::ObjectClassification;
 using point_cloud_msg_wrapper::PointCloud2Modifier;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;

@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODE_HPP_
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODE_HPP_
 
+#include "autoware/point_types/types.hpp"
 #include "autoware/pointcloud_preprocessor/filter.hpp"
 #include "autoware/pointcloud_preprocessor/transform_info.hpp"
-#include "autoware/point_types/types.hpp"
 
 #include <image_transport/image_transport.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>

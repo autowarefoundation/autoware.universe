@@ -14,9 +14,9 @@
 
 #include "lidar_marker_localizer.hpp"
 
+#include <autoware/point_types/types.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
-#include <autoware/point_types/types.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/qos.hpp>
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_POINT_TYPES__TYPES_HPP_
-#define AUTOWARE_POINT_TYPES__TYPES_HPP_
+#ifndef AUTOWARE__POINT_TYPES__TYPES_HPP_
+#define AUTOWARE__POINT_TYPES__TYPES_HPP_
 
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
@@ -185,4 +185,4 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(
     std::uint8_t, return_type,
     return_type)(std::uint16_t, channel, channel)(float, azimuth, azimuth)(
     float, elevation, elevation)(float, distance, distance)(std::uint32_t, time_stamp, time_stamp))
-#endif  // AUTOWARE_POINT_TYPES__TYPES_HPP_
+#endif  // AUTOWARE__POINT_TYPES__TYPES_HPP_
