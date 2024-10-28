@@ -59,13 +59,13 @@ void VoxelDistanceBasedStaticMapLoader::onMapCallback(
 bool VoxelDistanceBasedStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  if (voxel_map_ptr_ == NULL) {
+  if (voxel_map_ptr_ == nullptr) {
     return false;
   }
-  if (map_ptr_ == NULL) {
+  if (map_ptr_ == nullptr) {
     return false;
   }
-  if (tree_ == NULL) {
+  if (tree_ == nullptr) {
     return false;
   }
   if (is_close_to_neighbor_voxels(point, distance_threshold, voxel_grid_, tree_)) {
@@ -89,7 +89,7 @@ bool VoxelDistanceBasedDynamicMapLoader::is_close_to_map(
     return false;
   }
   if (
-    current_voxel_grid_array_.at(map_grid_index) != NULL &&
+    current_voxel_grid_array_.at(map_grid_index) != nullptr &&
     is_close_to_neighbor_voxels(
       point, distance_threshold, current_voxel_grid_array_.at(map_grid_index)->map_cell_voxel_grid,
       current_voxel_grid_array_.at(map_grid_index)->map_cell_kdtree)) {

@@ -51,10 +51,10 @@ void DistanceBasedStaticMapLoader::onMapCallback(
 bool DistanceBasedStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  if (map_ptr_ == NULL) {
+  if (map_ptr_ == nullptr) {
     return false;
   }
-  if (tree_ == NULL) {
+  if (tree_ == nullptr) {
     return false;
   }
 
@@ -89,8 +89,8 @@ bool DistanceBasedDynamicMapLoader::is_close_to_map(
   if (static_cast<size_t>(map_grid_index) >= current_voxel_grid_array_.size()) {
     return false;
   }
-  if (current_voxel_grid_array_.at(map_grid_index) != NULL) {
-    if (current_voxel_grid_array_.at(map_grid_index)->map_cell_kdtree == NULL) {
+  if (current_voxel_grid_array_.at(map_grid_index) != nullptr) {
+    if (current_voxel_grid_array_.at(map_grid_index)->map_cell_kdtree == nullptr) {
       return false;
     }
     std::vector<int> nn_indices(1);

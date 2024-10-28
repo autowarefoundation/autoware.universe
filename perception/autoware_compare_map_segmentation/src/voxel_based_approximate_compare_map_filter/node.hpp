@@ -23,7 +23,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace autoware::compare_map_segmentation
 {
@@ -60,8 +59,8 @@ class VoxelBasedApproximateCompareMapFilterComponent
 : public autoware::pointcloud_preprocessor::Filter
 {
 protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
 private:
   double distance_threshold_;

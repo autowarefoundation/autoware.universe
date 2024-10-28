@@ -22,11 +22,9 @@
 #include <pcl/segmentation/segment_differences.h>
 
 #include <string>
-#include <vector>
 
 namespace autoware::compare_map_segmentation
 {
-using autoware::pointcloud_preprocessor::get_param;
 
 VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)

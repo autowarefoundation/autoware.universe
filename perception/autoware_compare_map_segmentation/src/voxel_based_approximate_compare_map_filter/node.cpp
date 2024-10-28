@@ -29,7 +29,7 @@ namespace autoware::compare_map_segmentation
 bool VoxelBasedApproximateStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, [[maybe_unused]] const double distance_threshold)
 {
-  if (voxel_map_ptr_ == NULL) {
+  if (voxel_map_ptr_ == nullptr) {
     return false;
   }
   const int index =
@@ -55,7 +55,7 @@ bool VoxelBasedApproximateDynamicMapLoader::is_close_to_map(
   if (static_cast<size_t>(map_grid_index) >= current_voxel_grid_array_.size()) {
     return false;
   }
-  if (current_voxel_grid_array_.at(map_grid_index) != NULL) {
+  if (current_voxel_grid_array_.at(map_grid_index) != nullptr) {
     const int index = current_voxel_grid_array_.at(map_grid_index)
                         ->map_cell_voxel_grid.getCentroidIndexAt(
                           current_voxel_grid_array_.at(map_grid_index)
