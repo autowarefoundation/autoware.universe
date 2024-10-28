@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_GRID_MAP_UTILS__POLYGON_ITERATOR_HPP_
-#define AUTOWARE_GRID_MAP_UTILS__POLYGON_ITERATOR_HPP_
+#ifndef AUTOWARE__GRID_MAP_UTILS__POLYGON_ITERATOR_HPP_
+#define AUTOWARE__GRID_MAP_UTILS__POLYGON_ITERATOR_HPP_
 
 #include "grid_map_core/TypeDefs.hpp"
 
@@ -126,4 +126,4 @@ private:
 };
 }  // namespace autoware::grid_map_utils
 
-#endif  // AUTOWARE_GRID_MAP_UTILS__POLYGON_ITERATOR_HPP_
+#endif  // AUTOWARE__GRID_MAP_UTILS__POLYGON_ITERATOR_HPP_
