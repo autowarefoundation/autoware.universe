@@ -26,6 +26,7 @@
 #include <pcl/search/pcl_search.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <string>
@@ -85,7 +86,6 @@ class VoxelGridMapLoader
 {
 protected:
   rclcpp::Logger logger_;
-  std::mutex * mutex_ptr_;
   double voxel_leaf_size_;
   double voxel_leaf_size_z_{};
   double downsize_ratio_z_axis_;
@@ -98,7 +98,7 @@ public:
   typedef typename PointCloud::Ptr PointCloudPtr;
   explicit VoxelGridMapLoader(
     rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
-    std::string * tf_map_input_frame, std::mutex * mutex);
+    std::string * tf_map_input_frame);
 
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
   static bool is_close_to_neighbor_voxels(
@@ -121,11 +121,12 @@ protected:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
   VoxelGridPointXYZ voxel_grid_;
   PointCloudPtr voxel_map_ptr_;
+  std::atomic_bool is_initialized_{false};
 
 public:
   explicit VoxelGridStaticMapLoader(
     rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
-    std::string * tf_map_input_frame, std::mutex * mutex);
+    std::string * tf_map_input_frame);
   virtual void onMapCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map);
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
 };
@@ -145,6 +146,7 @@ protected:
 
   /** \brief Map to hold loaded map grid id and it's voxel filter */
   VoxelGridDict current_voxel_grid_dict_;
+  std::mutex dynamic_map_loader_mutex_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_kinematic_state_;
 
   std::optional<geometry_msgs::msg::Point> current_position_ = std::nullopt;
@@ -182,8 +184,7 @@ protected:
 public:
   explicit VoxelGridDynamicMapLoader(
     rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
-    std::string * tf_map_input_frame, std::mutex * mutex,
-    rclcpp::CallbackGroup::SharedPtr main_callback_group);
+    std::string * tf_map_input_frame, rclcpp::CallbackGroup::SharedPtr main_callback_group);
   void onEstimatedPoseCallback(nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
   void timer_callback();
@@ -194,17 +195,19 @@ public:
   bool is_close_to_next_map_grid(
     const pcl::PointXYZ & point, const int current_map_grid_index, const double distance_threshold);
 
-  inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc() const
+  inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc()
   {
     pcl::PointCloud<pcl::PointXYZ> output;
+    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     for (const auto & kv : current_voxel_grid_dict_) {
       output = output + *(kv.second.map_cell_pc_ptr);
     }
     return output;
   }
-  inline std::vector<std::string> getCurrentMapIDs() const
+  inline std::vector<std::string> getCurrentMapIDs()
   {
     std::vector<std::string> current_map_ids{};
+    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     for (auto & kv : current_voxel_grid_dict_) {
       current_map_ids.push_back(kv.first);
     }
@@ -243,9 +246,9 @@ public:
       return;
     }
 
-    (*mutex_ptr_).lock();
     current_voxel_grid_array_.assign(
       map_grids_x_ * map_grid_size_y_, std::make_shared<MapGridVoxelInfo>());
+    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     for (const auto & kv : current_voxel_grid_dict_) {
       int index = static_cast<int>(
         std::floor((kv.second.min_b_x - origin_x_) / map_grid_size_x_) +
@@ -256,14 +259,12 @@ public:
       }
       current_voxel_grid_array_.at(index) = std::make_shared<MapGridVoxelInfo>(kv.second);
     }
-    (*mutex_ptr_).unlock();
   }
 
   inline void removeMapCell(const std::string & map_cell_id_to_remove)
   {
-    (*mutex_ptr_).lock();
+    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     current_voxel_grid_dict_.erase(map_cell_id_to_remove);
-    (*mutex_ptr_).unlock();
   }
 
   virtual inline void addMapCellAndFilter(
@@ -310,9 +311,8 @@ public:
     current_voxel_grid_list_item.map_cell_pc_ptr.reset(new pcl::PointCloud<pcl::PointXYZ>);
     current_voxel_grid_list_item.map_cell_pc_ptr = std::move(map_cell_downsampled_pc_ptr_tmp);
     // add
-    (*mutex_ptr_).lock();
+    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     current_voxel_grid_dict_.insert({map_cell_to_add.cell_id, current_voxel_grid_list_item});
-    (*mutex_ptr_).unlock();
   }
 };
 

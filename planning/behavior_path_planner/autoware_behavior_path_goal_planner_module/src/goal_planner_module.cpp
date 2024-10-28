@@ -585,8 +585,14 @@ void GoalPlannerModule::updateData()
 
   // update goal searcher and generate goal candidates
   if (thread_safe_data_.get_goal_candidates().empty()) {
-    goal_searcher_->setReferenceGoal(
-      calcRefinedGoal(planner_data_->route_handler->getOriginalGoalPose()));
+    const auto refined_goal = goal_planner_utils::calcRefinedGoal(
+      planner_data_->route_handler->getOriginalGoalPose(), planner_data_->route_handler,
+      left_side_parking_, planner_data_->parameters.vehicle_width,
+      planner_data_->parameters.base_link2front, planner_data_->parameters.base_link2rear,
+      *parameters_);
+    if (refined_goal) {
+      goal_searcher_->setReferenceGoal(refined_goal.value());
+    }
     thread_safe_data_.set_goal_candidates(generateGoalCandidates());
   }
 
@@ -755,61 +761,6 @@ double GoalPlannerModule::calcModuleRequestLength() const
                                         approximate_pull_over_distance_;
 
   return std::max(minimum_request_length, parameters_->pull_over_minimum_request_length);
-}
-
-Pose GoalPlannerModule::calcRefinedGoal(const Pose & goal_pose) const
-{
-  const double vehicle_width = planner_data_->parameters.vehicle_width;
-  const double base_link2front = planner_data_->parameters.base_link2front;
-  const double base_link2rear = planner_data_->parameters.base_link2rear;
-
-  const lanelet::ConstLanelets pull_over_lanes = goal_planner_utils::getPullOverLanes(
-    *(planner_data_->route_handler), left_side_parking_, parameters_->backward_goal_search_length,
-    parameters_->forward_goal_search_length);
-
-  lanelet::Lanelet closest_pull_over_lanelet{};
-  lanelet::utils::query::getClosestLanelet(pull_over_lanes, goal_pose, &closest_pull_over_lanelet);
-
-  // calc closest center line pose
-  Pose center_pose{};
-  {
-    // find position
-    const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(goal_pose.position);
-    const auto segment = lanelet::utils::getClosestSegment(
-      lanelet::utils::to2D(lanelet_point), closest_pull_over_lanelet.centerline());
-    const auto p1 = segment.front().basicPoint();
-    const auto p2 = segment.back().basicPoint();
-    const auto direction_vector = (p2 - p1).normalized();
-    const auto p1_to_goal = lanelet_point.basicPoint() - p1;
-    const double s = direction_vector.dot(p1_to_goal);
-    const auto refined_point = p1 + direction_vector * s;
-
-    center_pose.position.x = refined_point.x();
-    center_pose.position.y = refined_point.y();
-    center_pose.position.z = refined_point.z();
-
-    // find orientation
-    const double yaw = std::atan2(direction_vector.y(), direction_vector.x());
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, yaw);
-    center_pose.orientation = tf2::toMsg(tf_quat);
-  }
-
-  const auto distance_from_bound = utils::getSignedDistanceFromBoundary(
-    pull_over_lanes, vehicle_width, base_link2front, base_link2rear, center_pose,
-    left_side_parking_);
-  if (!distance_from_bound) {
-    RCLCPP_ERROR(getLogger(), "fail to calculate refined goal");
-    return goal_pose;
-  }
-
-  const double sign = left_side_parking_ ? -1.0 : 1.0;
-  const double offset_from_center_line =
-    sign * (distance_from_bound.value() + parameters_->margin_from_boundary);
-
-  const auto refined_goal_pose = calcOffsetPose(center_pose, 0, -offset_from_center_line, 0);
-
-  return refined_goal_pose;
 }
 
 bool GoalPlannerModule::planFreespacePath(
