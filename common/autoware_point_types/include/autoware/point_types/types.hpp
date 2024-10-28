@@ -22,7 +22,7 @@
 #include <cmath>
 #include <tuple>
 
-namespace autoware_point_types
+namespace autoware::point_types
 {
 template <class T>
 bool float_eq(const T a, const T b, const T eps = 10e-6)
@@ -166,21 +166,21 @@ using PointXYZIRCAEDTGenerator = std::tuple<
   field_return_type_generator, field_channel_generator, field_azimuth_generator,
   field_elevation_generator, field_distance_generator, field_time_stamp_generator>;
 
-}  // namespace autoware_point_types
+}  // namespace autoware::point_types
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
-  autoware_point_types::PointXYZIRC,
+  autoware::point_types::PointXYZIRC,
   (float, x, x)(float, y, y)(float, z, z)(std::uint8_t, intensity, intensity)(
     std::uint8_t, return_type, return_type)(std::uint16_t, channel, channel))
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
-  autoware_point_types::PointXYZIRADRT,
+  autoware::point_types::PointXYZIRADRT,
   (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint16_t, ring, ring)(
     float, azimuth, azimuth)(float, distance, distance)(std::uint8_t, return_type, return_type)(
     double, time_stamp, time_stamp))
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
-  autoware_point_types::PointXYZIRCAEDT,
+  autoware::point_types::PointXYZIRCAEDT,
   (float, x, x)(float, y, y)(float, z, z)(std::uint8_t, intensity, intensity)(
     std::uint8_t, return_type,
     return_type)(std::uint16_t, channel, channel)(float, azimuth, azimuth)(
