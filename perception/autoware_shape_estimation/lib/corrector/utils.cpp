@@ -433,10 +433,9 @@ bool correctWithReferenceShapeAndPose(
   v_points.push_back(Eigen::Vector3d(-shape.dimensions.x * 0.5, -shape.dimensions.y * 0.5, 0.0));
 
   double max_dist = -1.0;
-  double tmp_dist = 0.0;
   // search the most distant index (c1) from the reference object's center
   for (std::size_t i = 0; i < v_points.size(); ++i) {
-    tmp_dist = ((base2obj_transform * v_points[i]) - ref_center).squaredNorm();
+    const double tmp_dist = ((base2obj_transform * v_points[i]) - ref_center).squaredNorm();
     if (tmp_dist > max_dist) {
       local_c1 = v_points[i];
       max_dist = tmp_dist;
