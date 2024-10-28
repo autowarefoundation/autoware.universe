@@ -125,7 +125,7 @@ public:
 class VoxelDistanceBasedCompareMapFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
 protected:
-   void filter(
+  void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
   void input_target_callback(const PointCloud2ConstPtr map);
