@@ -155,10 +155,11 @@ namespace autoware::tensorrt_yolox
 {
 TrtYoloX::TrtYoloX(
   const std::string & model_path, const std::string & precision, const int num_class,
-  const float score_threshold, const float nms_threshold, tensorrt_common::BuildConfig build_config,
-  const bool use_gpu_preprocess, const uint8_t gpu_id, std::string calibration_image_list_path,
-  const double norm_factor, [[maybe_unused]] const std::string & cache_dir,
-  const tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size,
+  const float score_threshold, const float nms_threshold,
+  autoware::tensorrt_common::BuildConfig build_config, const bool use_gpu_preprocess,
+  const uint8_t gpu_id, std::string calibration_image_list_path, const double norm_factor,
+  [[maybe_unused]] const std::string & cache_dir,
+  const autoware::tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size,
   const std::string & color_map_path)
 : gpu_id_(gpu_id), is_gpu_initialized_(false)
 {
@@ -188,7 +189,7 @@ TrtYoloX::TrtYoloX(
     }
 
     int max_batch_size = batch_size_;
-    nvinfer1::Dims input_dims = tensorrt_common::get_input_dims(model_path);
+    nvinfer1::Dims input_dims = autoware::tensorrt_common::get_input_dims(model_path);
     std::vector<std::string> calibration_images;
     if (calibration_image_list_path != "") {
       calibration_images = loadImageList(calibration_image_list_path, "");
@@ -226,10 +227,10 @@ TrtYoloX::TrtYoloX(
       calibrator.reset(
         new tensorrt_yolox::Int8MinMaxCalibrator(stream, calibration_table, norm_factor_));
     }
-    trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
+    trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
       model_path, precision, std::move(calibrator), batch_config, max_workspace_size, build_config);
   } else {
-    trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
+    trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
       model_path, precision, nullptr, batch_config, max_workspace_size, build_config);
   }
   trt_common_->setup();

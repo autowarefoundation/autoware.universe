@@ -14,6 +14,7 @@ setup(
         ("share/" + package_name, glob("calibration_maps/*.csv")),
         ("share/" + package_name, ["package.xml"]),
         (os.path.join("share", package_name), glob("launch/autoware_carla_interface.launch.xml")),
+        ("share/ament_index/resource_index/packages", ["resource/autoware_carla_interface"]),
     ],
     install_requires=["setuptools"],
     zip_safe=True,

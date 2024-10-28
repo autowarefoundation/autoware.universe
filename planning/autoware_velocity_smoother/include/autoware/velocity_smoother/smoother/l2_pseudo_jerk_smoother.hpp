@@ -16,10 +16,10 @@
 #define AUTOWARE__VELOCITY_SMOOTHER__SMOOTHER__L2_PSEUDO_JERK_SMOOTHER_HPP_
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/osqp_interface/osqp_interface.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
-#include "osqp_interface/osqp_interface.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 
@@ -57,7 +57,7 @@ public:
 
 private:
   Param smoother_param_;
-  autoware::common::osqp::OSQPInterface qp_solver_;
+  autoware::osqp_interface::OSQPInterface qp_solver_;
   rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("l2_pseudo_jerk_smoother")};
 };
 }  // namespace autoware::velocity_smoother
