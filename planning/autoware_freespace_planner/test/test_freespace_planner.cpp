@@ -134,7 +134,8 @@ public:
     freespace_planner_->reversing_indices_ = reversing_indices;
     freespace_planner_->partial_trajectory_ =
       autoware::freespace_planner::utils::get_partial_trajectory(
-        trajectory_, 0, reversing_indices.front(), std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME));
+        trajectory_, 0, reversing_indices.front(),
+        std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME));
     freespace_planner_->current_pose_.pose = trajectory_.points.front().pose;
 
     if (colliding) {
