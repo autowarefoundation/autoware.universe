@@ -12,9 +12,9 @@ find_package(autoware_universe_utils REQUIRED)
 find_package(tier4_debug_msgs REQUIRED)
 find_package(tier4_perception_msgs REQUIRED)
 
-find_package(tensorrt_common)
-if(NOT ${tensorrt_common_FOUND})
-  message(WARNING "The tensorrt_common package is not found. Please check its dependencies.")
+find_package(autoware_tensorrt_common)
+if(NOT ${autoware_tensorrt_common_FOUND})
+  message(WARNING "The autoware_tensorrt_common package is not found. Please check its dependencies.")
   # to avoid launch file missing without a gpu
   ament_package()
   install(
@@ -48,8 +48,8 @@ target_link_libraries(${PROJECT_NAME}
   pcl_common
   rclcpp::rclcpp
   rclcpp_components::component
-  tensorrt_common::tensorrt_common
   tf2_eigen::tf2_eigen
+  ${autoware_tensorrt_common_TARGETS}
   ${tier4_debug_msgs_TARGETS}
   ${tier4_perception_msgs_TARGETS}
 )
