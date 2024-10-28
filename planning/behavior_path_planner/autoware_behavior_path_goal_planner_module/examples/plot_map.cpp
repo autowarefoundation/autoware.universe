@@ -580,7 +580,7 @@ int main(int argc, char ** argv)
       plot_path_with_lane_id(ax1, full_path);
     }
   }
-  const auto filtered_paths = selectPullOverPaths(
+  [[maybe_unused]] const auto filtered_paths = selectPullOverPaths(
     candidates, goal_candidates, planner_data, goal_planner_parameter, reference_path);
 
   const auto centerline_path =
