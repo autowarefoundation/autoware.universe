@@ -74,8 +74,8 @@ Polygon2d createObjPolygon(
 Polygon2d createObjPolygon(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size)
 {
-  const double & length_m = size.x / 2.0;
-  const double & width_m = size.y / 2.0;
+  const double length_m = size.x / 2.0;
+  const double width_m = size.y / 2.0;
 
   geometry_msgs::msg::Polygon polygon{};
 
