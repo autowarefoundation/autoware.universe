@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "autoware/universe_utils/geometry/alt_geometry.hpp"
-#include "autoware/universe_utils/geometry/ear_clipping.hpp"
 #include "autoware/universe_utils/geometry/random_concave_polygon.hpp"
 #include "autoware/universe_utils/geometry/random_convex_polygon.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"

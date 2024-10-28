@@ -14,8 +14,6 @@
 
 #include "autoware/universe_utils/geometry/alt_geometry.hpp"
 
-#include "autoware/universe_utils/geometry/ear_clipping.hpp"
-
 namespace autoware::universe_utils
 {
 // Alternatives for Boost.Geometry ----------------------------------------------------------------
