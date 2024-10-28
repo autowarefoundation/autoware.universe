@@ -454,17 +454,26 @@ std::vector<autoware::universe_utils::Polygon2d> clip(
 
 }  // namespace polygon_clip
 
+std::vector<autoware::universe_utils::Polygon2d> apply_operation(
+  const autoware::universe_utils::Polygon2d & polygon_a,
+  const autoware::universe_utils::Polygon2d & polygon_b, bool source_forwards, bool clip_forwards)
+{
+  if (polygon_a.outer().size() < 3 || polygon_b.outer().size() < 3) {
+    return std::vector<autoware::universe_utils::Polygon2d>{polygon_a, polygon_b};
+  }
+
+  polygon_clip::ExtendedPolygon poly_a = polygon_clip::create_extended_polygon(polygon_a);
+  polygon_clip::ExtendedPolygon poly_b = polygon_clip::create_extended_polygon(polygon_b);
+
+  return polygon_clip::clip(poly_a, poly_b, source_forwards, clip_forwards);
+}
+
 // Difference function
 std::vector<autoware::universe_utils::Polygon2d> difference(
   const autoware::universe_utils::Polygon2d & polygon_a,
   const autoware::universe_utils::Polygon2d & polygon_b)
 {
-  if (polygon_a.outer().size() < 3 || polygon_b.outer().size() < 3) {
-    return std::vector<Polygon2d>{polygon_a, polygon_b};
-  }
-  polygon_clip::ExtendedPolygon poly_a = polygon_clip::create_extended_polygon(polygon_a);
-  polygon_clip::ExtendedPolygon poly_b = polygon_clip::create_extended_polygon(polygon_b);
-  return polygon_clip::clip(poly_a, poly_b, false, true);
+  return apply_operation(polygon_a, polygon_b, false, true);
 }
 
 // Union function
@@ -472,12 +481,7 @@ std::vector<autoware::universe_utils::Polygon2d> union_(
   const autoware::universe_utils::Polygon2d & polygon_a,
   const autoware::universe_utils::Polygon2d & polygon_b)
 {
-  if (polygon_a.outer().size() < 3 || polygon_b.outer().size() < 3) {
-    return std::vector<Polygon2d>{polygon_a, polygon_b};
-  }
-  polygon_clip::ExtendedPolygon poly_a = polygon_clip::create_extended_polygon(polygon_a);
-  polygon_clip::ExtendedPolygon poly_b = polygon_clip::create_extended_polygon(polygon_b);
-  return polygon_clip::clip(poly_a, poly_b, false, false);
+  return apply_operation(polygon_a, polygon_b, false, false);
 }
 
 // Intersection function
@@ -485,12 +489,7 @@ std::vector<autoware::universe_utils::Polygon2d> intersection(
   const autoware::universe_utils::Polygon2d & polygon_a,
   const autoware::universe_utils::Polygon2d & polygon_b)
 {
-  if (polygon_a.outer().size() < 3 || polygon_b.outer().size() < 3) {
-    return std::vector<Polygon2d>{polygon_a, polygon_b};
-  }
-  polygon_clip::ExtendedPolygon poly_a = polygon_clip::create_extended_polygon(polygon_a);
-  polygon_clip::ExtendedPolygon poly_b = polygon_clip::create_extended_polygon(polygon_b);
-  return polygon_clip::clip(poly_a, poly_b, true, true);
+  return apply_operation(polygon_a, polygon_b, true, true);
 }
 
 std::vector<autoware::universe_utils::Point2d> intersection(
