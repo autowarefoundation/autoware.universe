@@ -1,4 +1,19 @@
+// Copyright 2024 TIER IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include <autoware/behavior_path_planner_common/data_manager.hpp>
+#include <autoware/behavior_path_planner_common/planner_data_yaml.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <rclcpp/executors/multi_threaded_executor.hpp>
 
@@ -18,12 +33,68 @@ public:
       "/planning/planner_data_server",
       std::bind(
         &PlannerDataServer::on_service, this, std::placeholders::_1, std::placeholders::_2));
-    planner_data_.route_handler = std::make_shared<autoware::route_handler::RouteHandler>();
   }
 
 private:
   void take_data()
   {
+    // odometry
+    {
+      const auto msg = velocity_subscriber_.takeData();
+      if (msg) {
+        self_odometry_ = msg;
+      }
+    }
+
+    // acceleration
+    {
+      const auto msg = acceleration_subscriber_.takeData();
+      if (msg) {
+        self_acceleration_ = msg;
+      }
+    }
+
+    // perception
+    {
+      const auto msg = perception_subscriber_.takeData();
+      if (msg) {
+        dynamic_object_ = msg;
+      }
+    }
+
+    // occupancy_grid
+    {
+      const auto msg = occupancy_grid_subscriber_.takeData();
+      if (msg) {
+        occupancy_grid_ = msg;
+      }
+    }
+
+    // costmap
+    {
+      const auto msg = costmap_subscriber_.takeData();
+      if (msg) {
+        costmap_ = msg;
+      }
+    }
+
+    // lateral_offset
+    {
+      const auto msg = lateral_offset_subscriber_.takeData();
+      if (msg) {
+        lateral_offset_ = msg;
+      }
+    }
+
+    // operation_mode
+    {
+      const auto msg = operation_mode_subscriber_.takeData();
+      if (msg) {
+        operation_mode_ = msg;
+      }
+    }
+
+    // route
     {
       const auto msg = route_subscriber_.takeData();
       if (msg) {
@@ -33,96 +104,15 @@ private:
         route_ptr_ = msg;
       }
     }
-    autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr map_ptr = nullptr;
-    {
-      const auto msg = vector_map_subscriber_.takeData();
-      if (msg) {
-        map_ptr = msg;
-      }
-    }
-    // handle route_handler
-    if (map_ptr) {
-      planner_data_.route_handler->setMap(*map_ptr);
-    }
-    if (route_ptr_) {
-      planner_data_.route_handler->setRoute(*route_ptr_);
-    }
 
-    // velocity
-    {
-      const auto msg = velocity_subscriber_.takeData();
-      if (msg) {
-        planner_data_.self_odometry = msg;
-      }
-    }
-    // acceleration
-    {
-      const auto msg = acceleration_subscriber_.takeData();
-      if (msg) {
-        planner_data_.self_acceleration = msg;
-      }
-    }
-    // perception
-    {
-      const auto msg = perception_subscriber_.takeData();
-      if (msg) {
-        planner_data_.dynamic_object = msg;
-      }
-    }
-    // occupancy_grid
-    {
-      const auto msg = occupancy_grid_subscriber_.takeData();
-      if (msg) {
-        planner_data_.occupancy_grid = msg;
-      }
-    }
-    // costmap
-    {
-      const auto msg = costmap_subscriber_.takeData();
-      if (msg) {
-        planner_data_.costmap = msg;
-      }
-    }
     // traffic_signal
     {
       const auto msg = traffic_signals_subscriber_.takeData();
       if (msg) {
-        planner_data_.traffic_light_id_map.clear();
-        for (const auto & signal : msg->traffic_light_groups) {
-          autoware::behavior_path_planner::TrafficSignalStamped traffic_signal;
-          traffic_signal.stamp = msg->stamp;
-          traffic_signal.signal = signal;
-          planner_data_.traffic_light_id_map[signal.traffic_light_group_id] = traffic_signal;
-        }
+        traffic_signal_ = msg;
       }
     }
-    // lateral_offset
-    {
-      const auto msg = lateral_offset_subscriber_.takeData();
-      if (msg) {
-        if (!planner_data_.lateral_offset) {
-          planner_data_.lateral_offset = msg;
-          return;
-        }
 
-        const auto & new_offset = msg->lateral_offset;
-        const auto & old_offset = planner_data_.lateral_offset->lateral_offset;
-
-        // offset is not changed.
-        if (std::abs(old_offset - new_offset) < 1e-4) {
-          return;
-        }
-
-        planner_data_.lateral_offset = msg;
-      }
-    }
-    // operation_mode
-    {
-      const auto msg = operation_mode_subscriber_.takeData();
-      if (msg) {
-        planner_data_.operation_mode = msg;
-      }
-    }
     /*
     // external_velocity_limiter
     {
@@ -134,58 +124,59 @@ private:
     */
   }
 
-  autoware::behavior_path_planner::PlannerData planner_data_;
-
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr server_;
 
-  autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr route_ptr_;
-
   // subscriber
-  autoware::universe_utils::InterProcessPollingSubscriber<
-    autoware_planning_msgs::msg::LaneletRoute, autoware::universe_utils::polling_policy::Newest>
-    route_subscriber_{this, "/planning/mission_planning/route", rclcpp::QoS{1}.transient_local()};
-
-  autoware::universe_utils::InterProcessPollingSubscriber<
-    autoware_map_msgs::msg::LaneletMapBin, autoware::universe_utils::polling_policy::Newest>
-    vector_map_subscriber_{this, "/map/vector_map", rclcpp::QoS{1}.transient_local()};
-
+  nav_msgs::msg::Odometry::ConstSharedPtr self_odometry_;
   autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>
     velocity_subscriber_{this, "/localization/kinematic_state"};
 
+  geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr self_acceleration_;
   autoware::universe_utils::InterProcessPollingSubscriber<
     geometry_msgs::msg::AccelWithCovarianceStamped>
     acceleration_subscriber_{this, "/localization/acceleration"};
 
-  /*
-  autoware::universe_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::Scenario>
-    scenario_subscriber_{this, "/planning/scenario_planning/scenario"};
-  */
-
+  autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr dynamic_object_;
   autoware::universe_utils::InterProcessPollingSubscriber<
     autoware_perception_msgs::msg::PredictedObjects>
     perception_subscriber_{this, "/perception/object_recognition/objects"};
 
+  nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid_;
   autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid>
     occupancy_grid_subscriber_{this, "/perception/occupancy_grid_map/map"};
 
+  nav_msgs::msg::OccupancyGrid::ConstSharedPtr costmap_;
   autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid>
     costmap_subscriber_{
       this, "/planning/scenario_planning/parking/costmap_generator/occupancy_grid"};
 
-  autoware::universe_utils::InterProcessPollingSubscriber<
-    autoware_perception_msgs::msg::TrafficLightGroupArray>
-    traffic_signals_subscriber_{this, "/perception/traffic_light_recognition/traffic_signals"};
-
+  tier4_planning_msgs::msg::LateralOffset::ConstSharedPtr lateral_offset_;
   autoware::universe_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::LateralOffset>
     lateral_offset_subscriber_{
       this,
       "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/input/"
       "lateral_offset"};
 
+  autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr operation_mode_;
   autoware::universe_utils::InterProcessPollingSubscriber<
     autoware_adapi_v1_msgs::msg::OperationModeState>
     operation_mode_subscriber_{
       this, "/system/operation_mode/state", rclcpp::QoS{1}.transient_local()};
+
+  autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr route_ptr_;
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    autoware_planning_msgs::msg::LaneletRoute, autoware::universe_utils::polling_policy::Newest>
+    route_subscriber_{this, "/planning/mission_planning/route", rclcpp::QoS{1}.transient_local()};
+
+  /*
+  autoware::universe_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::Scenario>
+    scenario_subscriber_{this, "/planning/scenario_planning/scenario"};
+  */
+
+  autoware_perception_msgs::msg::TrafficLightGroupArray::ConstSharedPtr traffic_signal_;
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    autoware_perception_msgs::msg::TrafficLightGroupArray>
+    traffic_signals_subscriber_{this, "/perception/traffic_light_recognition/traffic_signals"};
 
   /*
   autoware::universe_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::VelocityLimit>
@@ -199,38 +190,49 @@ private:
     RCLCPP_INFO(this->get_logger(), "Received planner_data save request");
     take_data();
 
-    YAML::Node planner_data;
-    if (route_ptr_) {
-      planner_data["route"] = YAML::Load(autoware_planning_msgs::msg::to_yaml(*route_ptr_));
-    }
-    if (planner_data_.self_odometry) {
-      planner_data["self_odometry"] =
-        YAML::Load(nav_msgs::msg::to_yaml(*planner_data_.self_odometry));
-    }
-    if (planner_data_.self_acceleration) {
-      planner_data["self_acceleration"] =
-        YAML::Load(geometry_msgs::msg::to_yaml(*planner_data_.self_acceleration));
-    }
-    if (planner_data_.dynamic_object) {
-      planner_data["dynamic_object"] =
-        YAML::Load(autoware_perception_msgs::msg::to_yaml(*planner_data_.dynamic_object));
-    }
-    if (planner_data_.lateral_offset) {
-      planner_data["lateral_offset"] =
-        YAML::Load(tier4_planning_msgs::msg::to_yaml(*planner_data_.lateral_offset));
-    }
-    if (planner_data_.operation_mode) {
-      planner_data["operation_mode"] =
-        YAML::Load(autoware_adapi_v1_msgs::msg::to_yaml(*planner_data_.operation_mode));
-    }
-    for (const auto & [id, traffic_signal] : planner_data_.traffic_light_id_map) {
-      planner_data["traffic_light_id_map"][std::to_string(id)]["stamp"] =
-        YAML::Load(builtin_interfaces::msg::to_yaml(traffic_signal.stamp));
-      planner_data["traffic_light_id_map"][std::to_string(id)]["signal"] =
-        YAML::Load(autoware_perception_msgs::msg::to_yaml(traffic_signal.signal));
+    if (!self_odometry_) {
+      RCLCPP_INFO(this->get_logger(), "self_odometry message is not ready yet, not saving");
+      return;
     }
 
+    if (!self_acceleration_) {
+      RCLCPP_INFO(this->get_logger(), "self_acceleration message is not ready yet, not saving");
+      return;
+    }
+
+    if (!dynamic_object_) {
+      RCLCPP_INFO(this->get_logger(), "dynamic_object message is not ready yet, not saving");
+      return;
+    }
+
+    if (!lateral_offset_) {
+      RCLCPP_INFO(
+        this->get_logger(),
+        "lateral offset message is not ready yet, but is is optional, skipping");
+    }
+
+    if (!operation_mode_) {
+      RCLCPP_INFO(this->get_logger(), "operation_mode message is not ready yet, not saving");
+      return;
+    }
+
+    if (!route_ptr_) {
+      RCLCPP_INFO(this->get_logger(), "route message is not ready yet, not saving");
+      return;
+    }
+
+    if (!traffic_signal_) {
+      RCLCPP_INFO(
+        this->get_logger(),
+        "traffic_signal message is not ready yet, but it is optional, skipping");
+    }
+
+    const auto [planner_data, desc] = autoware::behavior_path_planner::get_planner_data_yaml(
+      *self_odometry_, *self_acceleration_, *dynamic_object_, *occupancy_grid_, *costmap_,
+      lateral_offset_, *operation_mode_, *route_ptr_, traffic_signal_);
+
     std::ofstream ofs("planner_data.yaml");
+    ofs << desc;
     ofs << planner_data;
 
     RCLCPP_INFO(this->get_logger(), "saved planner_data");

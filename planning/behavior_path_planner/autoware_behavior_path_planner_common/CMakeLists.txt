@@ -26,6 +26,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/utils/parking_departure/utils.cpp
   src/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.cpp
   src/marker_utils/utils.cpp
+  src/planner_data_yaml.cpp
 )
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC

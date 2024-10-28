@@ -63,6 +63,7 @@
   <depend>tier4_planning_msgs</depend>
   <depend>traffic_light_utils</depend>
   <depend>visualization_msgs</depend>
+  <depend>yaml-cpp</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
