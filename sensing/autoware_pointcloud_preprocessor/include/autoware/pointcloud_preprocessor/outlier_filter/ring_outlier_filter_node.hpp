@@ -17,7 +17,7 @@
 
 #include "autoware/pointcloud_preprocessor/filter.hpp"
 #include "autoware/pointcloud_preprocessor/transform_info.hpp"
-#include "autoware_point_types/types.hpp"
+#include "autoware/point_types/types.hpp"
 
 #include <image_transport/image_transport.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
@@ -40,9 +40,9 @@ using point_cloud_msg_wrapper::PointCloud2Modifier;
 class RingOutlierFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
 protected:
-  using InputPointIndex = autoware_point_types::PointXYZIRCAEDTIndex;
-  using InputPointType = autoware_point_types::PointXYZIRCAEDT;
-  using OutputPointType = autoware_point_types::PointXYZIRC;
+  using InputPointIndex = autoware::point_types::PointXYZIRCAEDTIndex;
+  using InputPointType = autoware::point_types::PointXYZIRCAEDT;
+  using OutputPointType = autoware::point_types::PointXYZIRC;
 
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
