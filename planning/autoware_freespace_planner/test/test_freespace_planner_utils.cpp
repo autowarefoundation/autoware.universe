@@ -219,9 +219,8 @@ TEST(FreespacePlannerUtilsTest, testGetPartialTrajectory)
     autoware::freespace_planner::utils::get_reversing_indices(trajectory);
 
   ASSERT_EQ(reversing_indices.size(), 2ul);
-
   auto partial_traj = autoware::freespace_planner::utils::get_partial_trajectory(
-    trajectory, 0ul, reversing_indices.front());
+    trajectory, 0ul, reversing_indices.front(), std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME));
   ASSERT_FALSE(partial_traj.points.empty());
   auto expected_size = reversing_indices.front() + 1ul;
   EXPECT_EQ(partial_traj.points.size(), expected_size);
@@ -229,7 +228,7 @@ TEST(FreespacePlannerUtilsTest, testGetPartialTrajectory)
   EXPECT_FLOAT_EQ(partial_traj.points.back().longitudinal_velocity_mps, 0.0);
 
   partial_traj = autoware::freespace_planner::utils::get_partial_trajectory(
-    trajectory, reversing_indices.front(), reversing_indices.back());
+    trajectory, reversing_indices.front(), reversing_indices.back(), std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME));
   ASSERT_FALSE(partial_traj.points.empty());
   expected_size = reversing_indices.back() - reversing_indices.front() + 1ul;
   EXPECT_EQ(partial_traj.points.size(), expected_size);
@@ -261,7 +260,8 @@ TEST(FreespacePlannerUtilsTest, testCreateStopTrajectory)
   geometry_msgs::msg::PoseStamped current_pose;
   current_pose.pose.position.x = 1.0;
 
-  auto stop_traj = autoware::freespace_planner::utils::create_stop_trajectory(current_pose);
+  auto stop_traj = autoware::freespace_planner::utils::create_stop_trajectory(current_pose,
+  std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME));
   EXPECT_EQ(stop_traj.points.size(), 1ul);
   if (!stop_traj.points.empty()) {
     EXPECT_DOUBLE_EQ(stop_traj.points.front().pose.position.x, 1.0);

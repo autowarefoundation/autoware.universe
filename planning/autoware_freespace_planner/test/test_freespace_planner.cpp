@@ -134,7 +134,7 @@ public:
     freespace_planner_->reversing_indices_ = reversing_indices;
     freespace_planner_->partial_trajectory_ =
       autoware::freespace_planner::utils::get_partial_trajectory(
-        trajectory_, 0, reversing_indices.front());
+        trajectory_, 0, reversing_indices.front(), std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME));
     freespace_planner_->current_pose_.pose = trajectory_.points.front().pose;
 
     if (colliding) {
@@ -161,7 +161,8 @@ public:
       trajectory_.points.size(), reversing_indices, freespace_planner_->prev_target_index_);
     freespace_planner_->partial_trajectory_ =
       autoware::freespace_planner::utils::get_partial_trajectory(
-        trajectory_, freespace_planner_->prev_target_index_, freespace_planner_->target_index_);
+        trajectory_, freespace_planner_->prev_target_index_, freespace_planner_->target_index_,
+        std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME));
 
     Odometry odom;
     odom.pose.pose = trajectory_.points.front().pose;
