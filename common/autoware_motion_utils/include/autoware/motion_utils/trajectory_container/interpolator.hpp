@@ -18,5 +18,6 @@
 #include <autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp>
 #include <autoware/motion_utils/trajectory_container/interpolator/linear.hpp>
 #include <autoware/motion_utils/trajectory_container/interpolator/nearest_neighbor.hpp>
+#include <autoware/motion_utils/trajectory_container/interpolator/spherical_linear.hpp>
 #include <autoware/motion_utils/trajectory_container/interpolator/stairstep.hpp>
 #endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR_HPP_
