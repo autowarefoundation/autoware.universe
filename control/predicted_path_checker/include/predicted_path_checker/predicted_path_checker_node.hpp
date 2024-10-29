@@ -15,13 +15,13 @@
 #ifndef PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
 #define PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
 
+#include <autoware/component_interface_specs/control.hpp>
 #include <autoware/motion_utils/trajectory/conversion.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/self_pose_listener.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
-#include <component_interface_specs/control.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <predicted_path_checker/collision_checker.hpp>
@@ -96,10 +96,12 @@ private:
     sub_predicted_trajectory_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_accel_;
-  component_interface_utils::Subscription<control_interface::IsStopped>::SharedPtr sub_stop_state_;
+  component_interface_utils::Subscription<
+    autoware::component_interface_specs::control::IsStopped>::SharedPtr sub_stop_state_;
 
   // Client
-  component_interface_utils::Client<control_interface::SetStop>::SharedPtr cli_set_stop_;
+  component_interface_utils::Client<
+    autoware::component_interface_specs::control::SetStop>::SharedPtr cli_set_stop_;
 
   // Data Buffer
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
@@ -108,7 +110,8 @@ private:
   PredictedObjects::ConstSharedPtr object_ptr_{nullptr};
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr reference_trajectory_;
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr predicted_trajectory_;
-  control_interface::IsStopped::Message::ConstSharedPtr is_stopped_ptr_{nullptr};
+  autoware::component_interface_specs::control::IsStopped::Message::ConstSharedPtr is_stopped_ptr_{
+    nullptr};
 
   // Core
   std::unique_ptr<CollisionChecker> collision_checker_;
@@ -126,7 +129,8 @@ private:
   void onPredictedTrajectory(const autoware_planning_msgs::msg::Trajectory::SharedPtr msg);
   void onOdom(const nav_msgs::msg::Odometry::SharedPtr msg);
   void onAccel(const geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr msg);
-  void onIsStopped(const control_interface::IsStopped::Message::ConstSharedPtr msg);
+  void onIsStopped(
+    const autoware::component_interface_specs::control::IsStopped::Message::ConstSharedPtr msg);
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;

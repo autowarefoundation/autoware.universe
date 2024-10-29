@@ -55,6 +55,161 @@ segments:
       primitive_type: lane
     - id: 33
       primitive_type: lane
+self_odometry:
+  header:
+    stamp:
+      sec: 100
+      nanosec: 100
+    frame_id: map
+  child_frame_id: base_link
+  pose:
+    pose:
+      position:
+        x: 100
+        y: 200
+        z: 300
+      orientation:
+        x: 0.00000
+        y: 0.00000
+        z: 0.282884
+        w: 0.959154
+    covariance:
+      - 0.000100000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.000100000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+  twist:
+    twist:
+      linear:
+        x: 1.00000
+        y: 2.00000
+        z: 3.00000
+      angular:
+        x: 1.00000
+        y: 2.00000
+        z: 3.00000
+    covariance:
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+self_acceleration:
+  header:
+    stamp:
+      sec: 100
+      nanosec: 100
+    frame_id: /base_link
+  accel:
+    accel:
+      linear:
+        x: 1.00000
+        y: 2.00000
+        z: 3.00000
+      angular:
+        x: 1.00000
+        y: 2.00000
+        z: 3.00000
+    covariance:
+      - 0.00100000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00100000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00100000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00100000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00100000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00000
+      - 0.00100000
 )";
 
 TEST(ParseFunctions, CompleteYAMLTest)
@@ -94,6 +249,38 @@ TEST(ParseFunctions, CompleteYAMLTest)
   EXPECT_EQ(segment0.primitives[0].primitive_type, "lane");
   EXPECT_EQ(segment0.primitives[1].id, 33);
   EXPECT_EQ(segment0.primitives[1].primitive_type, "lane");
+
+  const auto self_odometry = parse<Odometry>(config["self_odometry"]);
+  EXPECT_DOUBLE_EQ(self_odometry.header.stamp.sec, 100);
+  EXPECT_DOUBLE_EQ(self_odometry.header.stamp.nanosec, 100);
+  EXPECT_EQ(self_odometry.header.frame_id, "map");
+  EXPECT_EQ(self_odometry.child_frame_id, "base_link");
+  EXPECT_DOUBLE_EQ(self_odometry.pose.pose.position.x, 100);
+  EXPECT_DOUBLE_EQ(self_odometry.pose.pose.position.y, 200);
+  EXPECT_DOUBLE_EQ(self_odometry.pose.pose.position.z, 300);
+  EXPECT_DOUBLE_EQ(self_odometry.pose.pose.orientation.x, 0.0);
+  EXPECT_DOUBLE_EQ(self_odometry.pose.pose.orientation.y, 0.0);
+  EXPECT_DOUBLE_EQ(self_odometry.pose.pose.orientation.z, 0.282884);
+  EXPECT_DOUBLE_EQ(self_odometry.pose.pose.orientation.w, 0.959154);
+  EXPECT_DOUBLE_EQ(self_odometry.pose.covariance[0], 0.0001);
+  EXPECT_DOUBLE_EQ(self_odometry.twist.twist.linear.x, 1.0);
+  EXPECT_DOUBLE_EQ(self_odometry.twist.twist.linear.y, 2.0);
+  EXPECT_DOUBLE_EQ(self_odometry.twist.twist.linear.z, 3.0);
+  EXPECT_DOUBLE_EQ(self_odometry.twist.twist.angular.x, 1.0);
+  EXPECT_DOUBLE_EQ(self_odometry.twist.twist.angular.y, 2.0);
+  EXPECT_DOUBLE_EQ(self_odometry.twist.twist.angular.z, 3.0);
+
+  const auto self_acceleration = parse<AccelWithCovarianceStamped>(config["self_acceleration"]);
+  EXPECT_DOUBLE_EQ(self_acceleration.header.stamp.sec, 100);
+  EXPECT_DOUBLE_EQ(self_acceleration.header.stamp.nanosec, 100);
+  EXPECT_EQ(self_acceleration.header.frame_id, "/base_link");
+  EXPECT_DOUBLE_EQ(self_acceleration.accel.accel.linear.x, 1.00);
+  EXPECT_DOUBLE_EQ(self_acceleration.accel.accel.linear.y, 2.00);
+  EXPECT_DOUBLE_EQ(self_acceleration.accel.accel.linear.z, 3.00);
+  EXPECT_DOUBLE_EQ(self_acceleration.accel.accel.angular.x, 1.00);
+  EXPECT_DOUBLE_EQ(self_acceleration.accel.accel.angular.y, 2.00);
+  EXPECT_DOUBLE_EQ(self_acceleration.accel.accel.angular.z, 3.00);
+  EXPECT_DOUBLE_EQ(self_acceleration.accel.covariance[0], 0.001);
 }
 
 TEST(ParseFunction, CompleteFromFilename)
