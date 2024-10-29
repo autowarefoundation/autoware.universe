@@ -541,6 +541,15 @@ TEST(ParseFunctions, CompleteYAMLTest)
   EXPECT_EQ(dynamic_object.objects.at(0).shape.type, 0);
   EXPECT_DOUBLE_EQ(dynamic_object.objects.at(0).shape.dimensions.x, 4.40000);
   EXPECT_DOUBLE_EQ(dynamic_object.objects.at(0).shape.dimensions.y, 1.85564);
+
+  const auto traffic_signal = parse<TrafficLightGroupArray>(config["traffic_signal"]);
+  EXPECT_EQ(traffic_signal.stamp.sec, 1730184609);
+  EXPECT_EQ(traffic_signal.stamp.nanosec, 816275300);
+  EXPECT_EQ(traffic_signal.traffic_light_groups.at(0).traffic_light_group_id, 10352);
+  EXPECT_EQ(traffic_signal.traffic_light_groups.at(0).elements.at(0).color, 3);
+  EXPECT_EQ(traffic_signal.traffic_light_groups.at(0).elements.at(0).shape, 1);
+  EXPECT_EQ(traffic_signal.traffic_light_groups.at(0).elements.at(0).status, 2);
+  EXPECT_FLOAT_EQ(traffic_signal.traffic_light_groups.at(0).elements.at(0).confidence, 1.0);
 }
 
 TEST(ParseFunction, CompleteFromFilename)
