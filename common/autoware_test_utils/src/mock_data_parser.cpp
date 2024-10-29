@@ -29,6 +29,47 @@
 
 namespace autoware::test_utils
 {
+
+template <>
+Header parse(const YAML::Node & node)
+{
+  Header header;
+
+  header.stamp.sec = node["stamp"]["sec"].as<int>();
+  header.stamp.nanosec = node["stamp"]["nanosec"].as<uint32_t>();
+  header.frame_id = node["frame_id"].as<std::string>();
+
+  return header;
+}
+
+template <>
+std::array<double, 36> parse(const YAML::Node & node)
+{
+  std::array<double, 36> msg{};
+  const auto cov = node.as<std::vector<double>>();
+  for (size_t i = 0; i < 36; ++i) {
+    msg[i] = cov.at(i);
+  }
+  return msg;
+}
+
+template <>
+std::vector<Point> parse(const YAML::Node & node)
+{
+  std::vector<Point> geom_points;
+
+  std::transform(
+    node.begin(), node.end(), std::back_inserter(geom_points), [&](const YAML::Node & input) {
+      Point point;
+      point.x = input["x"].as<double>();
+      point.y = input["y"].as<double>();
+      point.z = input["z"].as<double>();
+      return point;
+    });
+
+  return geom_points;
+}
+
 template <>
 Pose parse(const YAML::Node & node)
 {
@@ -41,6 +82,79 @@ Pose parse(const YAML::Node & node)
   pose.orientation.z = node["orientation"]["z"].as<double>();
   pose.orientation.w = node["orientation"]["w"].as<double>();
   return pose;
+}
+
+template <>
+PoseWithCovariance parse(const YAML::Node & node)
+{
+  PoseWithCovariance msg;
+  msg.pose = parse<Pose>(node["pose"]);
+  msg.covariance = parse<std::array<double, 36>>(node["covariance"]);
+  return msg;
+}
+
+template <>
+Twist parse(const YAML::Node & node)
+{
+  Twist msg;
+  msg.linear.x = node["linear"]["x"].as<double>();
+  msg.linear.y = node["linear"]["y"].as<double>();
+  msg.linear.z = node["linear"]["z"].as<double>();
+  msg.angular.x = node["angular"]["x"].as<double>();
+  msg.angular.y = node["angular"]["y"].as<double>();
+  msg.angular.z = node["angular"]["z"].as<double>();
+  return msg;
+}
+
+template <>
+TwistWithCovariance parse(const YAML::Node & node)
+{
+  TwistWithCovariance msg;
+  msg.twist = parse<Twist>(node["twist"]);
+  msg.covariance = parse<std::array<double, 36>>(node["covariance"]);
+  return msg;
+}
+
+template <>
+Odometry parse(const YAML::Node & node)
+{
+  Odometry msg;
+  msg.header = parse<Header>(node["header"]);
+  msg.child_frame_id = node["child_frame_id"].as<std::string>();
+  msg.pose = parse<PoseWithCovariance>(node["pose"]);
+  msg.twist = parse<TwistWithCovariance>(node["twist"]);
+  return msg;
+}
+
+template <>
+Accel parse(const YAML::Node & node)
+{
+  Accel msg;
+  msg.linear.x = node["linear"]["x"].as<double>();
+  msg.linear.y = node["linear"]["y"].as<double>();
+  msg.linear.z = node["linear"]["z"].as<double>();
+  msg.angular.x = node["angular"]["x"].as<double>();
+  msg.angular.y = node["angular"]["y"].as<double>();
+  msg.angular.z = node["angular"]["z"].as<double>();
+  return msg;
+}
+
+template <>
+AccelWithCovariance parse(const YAML::Node & node)
+{
+  AccelWithCovariance msg;
+  msg.accel = parse<Accel>(node["accel"]);
+  msg.covariance = parse<std::array<double, 36>>(node["covariance"]);
+  return msg;
+}
+
+template <>
+AccelWithCovarianceStamped parse(const YAML::Node & node)
+{
+  AccelWithCovarianceStamped msg;
+  msg.header = parse<Header>(node["header"]);
+  msg.accel = parse<AccelWithCovariance>(node["accel"]);
+  return msg;
 }
 
 template <>
@@ -77,39 +191,6 @@ std::vector<LaneletSegment> parse(const YAML::Node & node)
   });
 
   return segments;
-}
-
-template <>
-std::vector<Point> parse(const YAML::Node & node)
-{
-  std::vector<Point> geom_points;
-
-  std::transform(
-    node.begin(), node.end(), std::back_inserter(geom_points), [&](const YAML::Node & input) {
-      Point point;
-      point.x = input["x"].as<double>();
-      point.y = input["y"].as<double>();
-      point.z = input["z"].as<double>();
-      return point;
-    });
-
-  return geom_points;
-}
-
-template <>
-Header parse(const YAML::Node & node)
-{
-  Header header;
-
-  if (!node["header"]) {
-    return header;
-  }
-
-  header.stamp.sec = node["header"]["stamp"]["sec"].as<int>();
-  header.stamp.nanosec = node["header"]["stamp"]["nanosec"].as<uint32_t>();
-  header.frame_id = node["header"]["frame_id"].as<std::string>();
-
-  return header;
 }
 
 template <>
@@ -167,10 +248,10 @@ template <>
 PathWithLaneId parse(const std::string & filename)
 {
   PathWithLaneId path;
-  try {
-    YAML::Node yaml_node = YAML::LoadFile(filename);
+  YAML::Node yaml_node = YAML::LoadFile(filename);
 
-    path.header = parse<Header>(yaml_node);
+  try {
+    path.header = parse<Header>(yaml_node["header"]);
     path.points = parse<std::vector<PathPointWithLaneId>>(yaml_node);
     path.left_bound = parse<std::vector<Point>>(yaml_node["left_bound"]);
     path.right_bound = parse<std::vector<Point>>(yaml_node["right_bound"]);
