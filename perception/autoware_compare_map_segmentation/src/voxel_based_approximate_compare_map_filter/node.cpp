@@ -95,11 +95,10 @@ VoxelBasedApproximateCompareMapFilterComponent::VoxelBasedApproximateCompareMapF
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
     main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     voxel_based_approximate_map_loader_ = std::make_unique<VoxelBasedApproximateDynamicMapLoader>(
-      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, &mutex_,
-      main_callback_group);
+      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, main_callback_group);
   } else {
     voxel_based_approximate_map_loader_ = std::make_unique<VoxelBasedApproximateStaticMapLoader>(
-      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, &mutex_);
+      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_);
   }
 }
 
