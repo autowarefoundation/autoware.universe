@@ -142,6 +142,7 @@ void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstShared
     geometry_msgs::msg::Pose pose;
     boost::optional<ReferenceYawInfo> ref_yaw_info = boost::none;
     boost::optional<ReferenceShapeSizeInfo> ref_shape_size_info = boost::none;
+    boost::optional<geometry_msgs::msg::Pose> ref_pose = boost::none;
     if (use_vehicle_reference_yaw_ && is_vehicle) {
       ref_yaw_info = ReferenceYawInfo{
         static_cast<float>(tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation)),
@@ -151,7 +152,7 @@ void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstShared
       ref_shape_size_info = ReferenceShapeSizeInfo{object.shape, ReferenceShapeSizeInfo::Mode::Min};
     }
     const bool estimated_success = estimator_->estimateShapeAndPose(
-      label, *cluster, ref_yaw_info, ref_shape_size_info, shape, pose);
+      label, *cluster, ref_yaw_info, ref_shape_size_info, ref_pose, shape, pose);
 
     // If the shape estimation fails, change to Unknown object.
     if (!fix_filtered_objects_label_to_unknown_ && !estimated_success) {

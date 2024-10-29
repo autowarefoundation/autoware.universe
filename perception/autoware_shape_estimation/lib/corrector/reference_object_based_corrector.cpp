@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2024 TIER IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__UNIVERSE_UTILS__MATH__TRIGONOMETRY_HPP_
-#define AUTOWARE__UNIVERSE_UTILS__MATH__TRIGONOMETRY_HPP_
+#include "autoware/shape_estimation/corrector/reference_object_based_corrector.hpp"
 
-#include <utility>
-
-namespace autoware::universe_utils
+namespace autoware::shape_estimation
 {
+namespace corrector
+{
+bool ReferenceObjectBasedVehicleCorrector::correct(
+  autoware_perception_msgs::msg::Shape & shape, geometry_msgs::msg::Pose & pose)
+{
+  return corrector_utils::correctWithReferenceShapeAndPose(
+    ref_shape_size_info_, ref_pose_, shape, pose);
+}
 
-float sin(float radian);
-
-float cos(float radian);
-
-std::pair<float, float> sin_and_cos(float radian);
-
-float opencv_fast_atan2(float dy, float dx);
-
-}  // namespace autoware::universe_utils
-
-#endif  // AUTOWARE__UNIVERSE_UTILS__MATH__TRIGONOMETRY_HPP_
+}  // namespace corrector
+}  // namespace autoware::shape_estimation
