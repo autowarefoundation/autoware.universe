@@ -15,6 +15,7 @@
 #ifndef AUTOWARE_TEST_UTILS__MOCK_DATA_PARSER_HPP_
 #define AUTOWARE_TEST_UTILS__MOCK_DATA_PARSER_HPP_
 
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>

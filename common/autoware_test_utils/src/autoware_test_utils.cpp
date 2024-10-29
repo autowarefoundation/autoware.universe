@@ -13,19 +13,27 @@
 // limitations under the License.
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
+#include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
 #include <autoware_test_utils/mock_data_parser.hpp>
-#include <rclcpp/clock.hpp>
-#include <rclcpp/executors/single_threaded_executor.hpp>
-#include <rclcpp/logging.hpp>
 #include <rclcpp/node.hpp>
 
 #include <lanelet2_core/geometry/LineString.h>
+#include <tf2/utils.h>
+#include <yaml-cpp/yaml.h>
 
 #include <utility>
 
 namespace autoware::test_utils
 {
+
+using autoware::universe_utils::createPoint;
+using autoware::universe_utils::createQuaternionFromRPY;
+using geometry_msgs::msg::TransformStamped;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)
