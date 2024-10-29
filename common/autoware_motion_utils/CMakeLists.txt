@@ -7,14 +7,9 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Boost REQUIRED)
-find_package(fmt REQUIRED)
 
 ament_auto_add_library(autoware_motion_utils SHARED
   DIRECTORY src
-)
-
-target_link_libraries(autoware_motion_utils
-  fmt::fmt
 )
 
 if(BUILD_TESTING)
@@ -45,6 +40,7 @@ if(BUILD_EXAMPLES)
   foreach(example_file ${example_files})
     get_filename_component(example_name ${example_file} NAME_WE)
     ament_auto_add_executable(${example_name} ${example_file})
+    set_source_files_properties(${example_file} PROPERTIES COMPILE_FLAGS -Wno-error -Wno-attributes -Wno-unused-parameter)
     target_link_libraries(${example_name}
       autoware_motion_utils
       matplotlibcpp17::matplotlibcpp17

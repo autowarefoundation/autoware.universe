@@ -329,7 +329,7 @@ bool StartPlannerModule::noMovingObjectsAround() const
   utils::path_safety_checker::filterObjectsByClass(
     dynamic_objects, parameters_->surround_moving_obstacles_type_to_check);
   const auto filtered_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    dynamic_objects, parameters_->th_moving_obstacle_velocity, false);
+    dynamic_objects, parameters_->th_moving_obstacle_velocity, true);
   if (!filtered_objects.objects.empty()) {
     DEBUG_PRINT("Moving objects exist in the safety check area");
   }
@@ -559,7 +559,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
       target_objects_on_lane.on_current_lane.begin(), target_objects_on_lane.on_current_lane.end(),
       [&](const auto & o) {
         const auto arc_length = autoware::motion_utils::calcSignedArcLength(
-          centerline_path.points, ego_pose.position, o.initial_pose.pose.position);
+          centerline_path.points, ego_pose.position, o.initial_pose.position);
         if (arc_length > 0.0) return;
         if (std::abs(arc_length) >= std::abs(arc_length_to_closet_object)) return;
         arc_length_to_closet_object = arc_length;

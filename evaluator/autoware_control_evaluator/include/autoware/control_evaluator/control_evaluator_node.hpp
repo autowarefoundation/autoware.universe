@@ -56,8 +56,9 @@ public:
     const Trajectory & traj, const Point & ego_point);
   DiagnosticStatus generateYawDeviationDiagnosticStatus(
     const Trajectory & traj, const Pose & ego_pose);
-  std::optional<DiagnosticStatus> generateStopDiagnosticStatus(
-    const DiagnosticArray & diag, const std::string & function_name);
+  DiagnosticStatus generateGoalLongitudinalDeviationDiagnosticStatus(const Pose & ego_pose);
+  DiagnosticStatus generateGoalLateralDeviationDiagnosticStatus(const Pose & ego_pose);
+  DiagnosticStatus generateGoalYawDeviationDiagnosticStatus(const Pose & ego_pose);
 
   DiagnosticStatus generateAEBDiagnosticStatus(const DiagnosticStatus & diag);
   DiagnosticStatus generateLaneletDiagnosticStatus(const Pose & ego_pose) const;

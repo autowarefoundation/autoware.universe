@@ -15,12 +15,12 @@
 #ifndef AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 #define AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 
+#include <autoware/component_interface_specs/planning.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
-#include <component_interface_specs/planning.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
@@ -369,9 +369,9 @@ T generateTrajectory(
 
   T traj;
   for (size_t i = 0; i < num_points; ++i) {
-    const double theta = init_theta + i * delta_theta;
-    const double x = i * point_interval * std::cos(theta);
-    const double y = i * point_interval * std::sin(theta);
+    const double theta = init_theta + static_cast<double>(i) * delta_theta;
+    const double x = static_cast<double>(i) * point_interval * std::cos(theta);
+    const double y = static_cast<double>(i) * point_interval * std::sin(theta);
 
     Point p;
     p.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
@@ -384,6 +384,33 @@ T generateTrajectory(
     }
   }
 
+  return traj;
+}
+
+template <>
+inline PathWithLaneId generateTrajectory<PathWithLaneId>(
+  const size_t num_points, const double point_interval, const double velocity,
+  const double init_theta, const double delta_theta, const size_t overlapping_point_index)
+{
+  PathWithLaneId traj;
+
+  for (size_t i = 0; i < num_points; i++) {
+    const double theta = init_theta + static_cast<double>(i) * delta_theta;
+    const double x = static_cast<double>(i) * point_interval * std::cos(theta);
+    const double y = static_cast<double>(i) * point_interval * std::sin(theta);
+
+    PathPointWithLaneId p;
+    p.point.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
+    p.point.longitudinal_velocity_mps = static_cast<float>(velocity);
+    p.lane_ids.push_back(static_cast<int64_t>(i));
+    traj.points.push_back(p);
+
+    if (i == overlapping_point_index) {
+      auto value_to_insert = traj.points.at(overlapping_point_index);
+      traj.points.insert(
+        traj.points.begin() + static_cast<int64_t>(overlapping_point_index) + 1, value_to_insert);
+    }
+  }
   return traj;
 }
 

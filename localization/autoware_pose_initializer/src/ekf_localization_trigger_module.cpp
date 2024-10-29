@@ -14,7 +14,7 @@
 
 #include "ekf_localization_trigger_module.hpp"
 
-#include <component_interface_specs/localization.hpp>
+#include <autoware/component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp/exceptions.hpp>
 
 #include <memory>
@@ -23,7 +23,7 @@
 namespace autoware::pose_initializer
 {
 using ServiceException = component_interface_utils::ServiceException;
-using Initialize = localization_interface::Initialize;
+using Initialize = autoware::component_interface_specs::localization::Initialize;
 
 EkfLocalizationTriggerModule::EkfLocalizationTriggerModule(rclcpp::Node * node) : node_(node)
 {

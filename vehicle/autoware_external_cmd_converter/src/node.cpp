@@ -15,6 +15,7 @@
 #include "autoware_external_cmd_converter/node.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <utility>
@@ -147,6 +148,14 @@ double ExternalCmdConverterNode::calculate_acc(const ExternalControlCommand & cm
 {
   const double desired_throttle = cmd.control.throttle;
   const double desired_brake = cmd.control.brake;
+  if (
+    std::isnan(desired_throttle) || std::isnan(desired_brake) || std::isinf(desired_throttle) ||
+    std::isinf(desired_brake)) {
+    std::cerr << "Input brake or throttle is out of range. returning 0.0 acceleration."
+              << std::endl;
+    return 0.0;
+  }
+
   const double desired_pedal = desired_throttle - desired_brake;
 
   double ref_acceleration = 0.0;

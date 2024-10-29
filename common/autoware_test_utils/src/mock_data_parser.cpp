@@ -29,7 +29,49 @@
 
 namespace autoware::test_utils
 {
-Pose parse_pose(const YAML::Node & node)
+
+template <>
+Header parse(const YAML::Node & node)
+{
+  Header header;
+
+  header.stamp.sec = node["stamp"]["sec"].as<int>();
+  header.stamp.nanosec = node["stamp"]["nanosec"].as<uint32_t>();
+  header.frame_id = node["frame_id"].as<std::string>();
+
+  return header;
+}
+
+template <>
+std::array<double, 36> parse(const YAML::Node & node)
+{
+  std::array<double, 36> msg{};
+  const auto cov = node.as<std::vector<double>>();
+  for (size_t i = 0; i < 36; ++i) {
+    msg[i] = cov.at(i);
+  }
+  return msg;
+}
+
+template <>
+std::vector<Point> parse(const YAML::Node & node)
+{
+  std::vector<Point> geom_points;
+
+  std::transform(
+    node.begin(), node.end(), std::back_inserter(geom_points), [&](const YAML::Node & input) {
+      Point point;
+      point.x = input["x"].as<double>();
+      point.y = input["y"].as<double>();
+      point.z = input["z"].as<double>();
+      return point;
+    });
+
+  return geom_points;
+}
+
+template <>
+Pose parse(const YAML::Node & node)
 {
   Pose pose;
   pose.position.x = node["position"]["x"].as<double>();
@@ -42,7 +84,81 @@ Pose parse_pose(const YAML::Node & node)
   return pose;
 }
 
-LaneletPrimitive parse_lanelet_primitive(const YAML::Node & node)
+template <>
+PoseWithCovariance parse(const YAML::Node & node)
+{
+  PoseWithCovariance msg;
+  msg.pose = parse<Pose>(node["pose"]);
+  msg.covariance = parse<std::array<double, 36>>(node["covariance"]);
+  return msg;
+}
+
+template <>
+Twist parse(const YAML::Node & node)
+{
+  Twist msg;
+  msg.linear.x = node["linear"]["x"].as<double>();
+  msg.linear.y = node["linear"]["y"].as<double>();
+  msg.linear.z = node["linear"]["z"].as<double>();
+  msg.angular.x = node["angular"]["x"].as<double>();
+  msg.angular.y = node["angular"]["y"].as<double>();
+  msg.angular.z = node["angular"]["z"].as<double>();
+  return msg;
+}
+
+template <>
+TwistWithCovariance parse(const YAML::Node & node)
+{
+  TwistWithCovariance msg;
+  msg.twist = parse<Twist>(node["twist"]);
+  msg.covariance = parse<std::array<double, 36>>(node["covariance"]);
+  return msg;
+}
+
+template <>
+Odometry parse(const YAML::Node & node)
+{
+  Odometry msg;
+  msg.header = parse<Header>(node["header"]);
+  msg.child_frame_id = node["child_frame_id"].as<std::string>();
+  msg.pose = parse<PoseWithCovariance>(node["pose"]);
+  msg.twist = parse<TwistWithCovariance>(node["twist"]);
+  return msg;
+}
+
+template <>
+Accel parse(const YAML::Node & node)
+{
+  Accel msg;
+  msg.linear.x = node["linear"]["x"].as<double>();
+  msg.linear.y = node["linear"]["y"].as<double>();
+  msg.linear.z = node["linear"]["z"].as<double>();
+  msg.angular.x = node["angular"]["x"].as<double>();
+  msg.angular.y = node["angular"]["y"].as<double>();
+  msg.angular.z = node["angular"]["z"].as<double>();
+  return msg;
+}
+
+template <>
+AccelWithCovariance parse(const YAML::Node & node)
+{
+  AccelWithCovariance msg;
+  msg.accel = parse<Accel>(node["accel"]);
+  msg.covariance = parse<std::array<double, 36>>(node["covariance"]);
+  return msg;
+}
+
+template <>
+AccelWithCovarianceStamped parse(const YAML::Node & node)
+{
+  AccelWithCovarianceStamped msg;
+  msg.header = parse<Header>(node["header"]);
+  msg.accel = parse<AccelWithCovariance>(node["accel"]);
+  return msg;
+}
+
+template <>
+LaneletPrimitive parse(const YAML::Node & node)
 {
   LaneletPrimitive primitive;
   primitive.id = node["id"].as<int64_t>();
@@ -51,43 +167,98 @@ LaneletPrimitive parse_lanelet_primitive(const YAML::Node & node)
   return primitive;
 }
 
-std::vector<LaneletPrimitive> parse_lanelet_primitives(const YAML::Node & node)
+template <>
+std::vector<LaneletPrimitive> parse(const YAML::Node & node)
 {
   std::vector<LaneletPrimitive> primitives;
   primitives.reserve(node.size());
   std::transform(node.begin(), node.end(), std::back_inserter(primitives), [&](const auto & p) {
-    return parse_lanelet_primitive(p);
+    return parse<LaneletPrimitive>(p);
   });
 
   return primitives;
 }
 
-std::vector<LaneletSegment> parse_segments(const YAML::Node & node)
+template <>
+std::vector<LaneletSegment> parse(const YAML::Node & node)
 {
   std::vector<LaneletSegment> segments;
   std::transform(node.begin(), node.end(), std::back_inserter(segments), [&](const auto & input) {
     LaneletSegment segment;
-    segment.preferred_primitive = parse_lanelet_primitive(input["preferred_primitive"]);
-    segment.primitives = parse_lanelet_primitives(input["primitives"]);
+    segment.preferred_primitive = parse<LaneletPrimitive>(input["preferred_primitive"]);
+    segment.primitives = parse<std::vector<LaneletPrimitive>>(input["primitives"]);
     return segment;
   });
 
   return segments;
 }
 
-// cppcheck-suppress unusedFunction
-LaneletRoute parse_lanelet_route_file(const std::string & filename)
+template <>
+std::vector<PathPointWithLaneId> parse<std::vector<PathPointWithLaneId>>(const YAML::Node & node)
+{
+  std::vector<PathPointWithLaneId> path_points;
+
+  if (!node["points"]) {
+    return path_points;
+  }
+
+  const auto & points = node["points"];
+  path_points.reserve(points.size());
+  std::transform(
+    points.begin(), points.end(), std::back_inserter(path_points), [&](const YAML::Node & input) {
+      PathPointWithLaneId point;
+      if (!input["point"]) {
+        return point;
+      }
+      const auto & point_node = input["point"];
+      point.point.pose = parse<Pose>(point_node["pose"]);
+
+      point.point.longitudinal_velocity_mps = point_node["longitudinal_velocity_mps"].as<float>();
+      point.point.lateral_velocity_mps = point_node["lateral_velocity_mps"].as<float>();
+      point.point.heading_rate_rps = point_node["heading_rate_rps"].as<float>();
+      point.point.is_final = point_node["is_final"].as<bool>();
+      // Fill the lane_ids
+      for (const auto & lane_id_node : input["lane_ids"]) {
+        point.lane_ids.push_back(lane_id_node.as<int64_t>());
+      }
+
+      return point;
+    });
+
+  return path_points;
+}
+
+template <>
+LaneletRoute parse(const std::string & filename)
 {
   LaneletRoute lanelet_route;
   try {
     YAML::Node config = YAML::LoadFile(filename);
 
-    lanelet_route.start_pose = (config["start_pose"]) ? parse_pose(config["start_pose"]) : Pose();
-    lanelet_route.goal_pose = (config["goal_pose"]) ? parse_pose(config["goal_pose"]) : Pose();
-    lanelet_route.segments = parse_segments(config["segments"]);
+    lanelet_route.start_pose = (config["start_pose"]) ? parse<Pose>(config["start_pose"]) : Pose();
+    lanelet_route.goal_pose = (config["goal_pose"]) ? parse<Pose>(config["goal_pose"]) : Pose();
+    lanelet_route.segments = parse<std::vector<LaneletSegment>>(config["segments"]);
   } catch (const std::exception & e) {
     RCLCPP_DEBUG(rclcpp::get_logger("autoware_test_utils"), "Exception caught: %s", e.what());
   }
   return lanelet_route;
+}
+
+template <>
+PathWithLaneId parse(const std::string & filename)
+{
+  PathWithLaneId path;
+  YAML::Node yaml_node = YAML::LoadFile(filename);
+
+  try {
+    path.header = parse<Header>(yaml_node["header"]);
+    path.points = parse<std::vector<PathPointWithLaneId>>(yaml_node);
+    path.left_bound = parse<std::vector<Point>>(yaml_node["left_bound"]);
+    path.right_bound = parse<std::vector<Point>>(yaml_node["right_bound"]);
+  } catch (const std::exception & e) {
+    RCLCPP_DEBUG(rclcpp::get_logger("autoware_test_utils"), "Exception caught: %s", e.what());
+  }
+
+  return path;
 }
 }  // namespace autoware::test_utils

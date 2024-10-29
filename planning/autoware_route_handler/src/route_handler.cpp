@@ -47,6 +47,8 @@ namespace autoware::route_handler
 {
 namespace
 {
+using autoware::universe_utils::createPoint;
+using autoware::universe_utils::createQuaternionFromYaw;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::Path;
 using geometry_msgs::msg::Pose;
@@ -2034,5 +2036,30 @@ std::optional<lanelet::routing::LaneletPath> RouteHandler::findDrivableLanePath(
   const auto route = drivable_routing_graph_ptr->getRoute(start_lanelet, goal_lanelet, 0);
   if (route) return route->shortestPath();
   return {};
+}
+
+Pose RouteHandler::get_pose_from_2d_arc_length(
+  const lanelet::ConstLanelets & lanelet_sequence, const double s) const
+{
+  double accumulated_distance2d = 0;
+  for (const auto & llt : lanelet_sequence) {
+    const auto & centerline = llt.centerline();
+    for (auto it = centerline.begin(); std::next(it) != centerline.end(); ++it) {
+      const auto pt = *it;
+      const auto next_pt = *std::next(it);
+      const double distance2d = lanelet::geometry::distance2d(to2D(pt), to2D(next_pt));
+      if (accumulated_distance2d + distance2d > s) {
+        const double ratio = (s - accumulated_distance2d) / distance2d;
+        const auto interpolated_pt = pt.basicPoint() * (1 - ratio) + next_pt.basicPoint() * ratio;
+        const auto yaw = std::atan2(next_pt.y() - pt.y(), next_pt.x() - pt.x());
+        Pose pose;
+        pose.position = createPoint(interpolated_pt.x(), interpolated_pt.y(), interpolated_pt.z());
+        pose.orientation = createQuaternionFromYaw(yaw);
+        return pose;
+      }
+      accumulated_distance2d += distance2d;
+    }
+  }
+  return Pose{};
 }
 }  // namespace autoware::route_handler
