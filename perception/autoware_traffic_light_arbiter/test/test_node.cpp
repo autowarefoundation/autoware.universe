@@ -134,7 +134,8 @@ bool isMsgEqual(const TrafficSignalArray & input_msg, const TrafficSignalArray &
       return false;
     }
 
-    for (size_t element_idx = 0; element_idx < input_traffic_light_group.elements.size(); ++element_idx) {
+    for (size_t element_idx = 0; element_idx < input_traffic_light_group.elements.size();
+         ++element_idx) {
       const auto & input_traffic_light_element = input_traffic_light_group.elements.at(element_idx);
       const auto & gt_traffic_light_element = gt_traffic_light_group.elements.at(element_idx);
 
@@ -155,7 +156,9 @@ bool isMsgEqual(const TrafficSignalArray & input_msg, const TrafficSignalArray &
 
       // check confidence
       constexpr float error = std::numeric_limits<float>::epsilon();
-      if (std::fabs(input_traffic_light_element.confidence - gt_traffic_light_element.confidence) > error) {
+      if (
+        std::fabs(input_traffic_light_element.confidence - gt_traffic_light_element.confidence) >
+        error) {
         return false;
       }
     }
