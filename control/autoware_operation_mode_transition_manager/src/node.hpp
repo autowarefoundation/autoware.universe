@@ -18,8 +18,8 @@
 #include "compatibility.hpp"
 #include "state.hpp"
 
+#include <autoware/component_interface_specs/system.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
-#include <component_interface_specs/system.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -35,9 +35,10 @@ public:
   explicit OperationModeTransitionManager(const rclcpp::NodeOptions & options);
 
 private:
-  using ChangeAutowareControlAPI = system_interface::ChangeAutowareControl;
-  using ChangeOperationModeAPI = system_interface::ChangeOperationMode;
-  using OperationModeStateAPI = system_interface::OperationModeState;
+  using ChangeAutowareControlAPI =
+    autoware::component_interface_specs::system::ChangeAutowareControl;
+  using ChangeOperationModeAPI = autoware::component_interface_specs::system::ChangeOperationMode;
+  using OperationModeStateAPI = autoware::component_interface_specs::system::OperationModeState;
   component_interface_utils::Service<ChangeAutowareControlAPI>::SharedPtr srv_autoware_control_;
   component_interface_utils::Service<ChangeOperationModeAPI>::SharedPtr srv_operation_mode_;
   component_interface_utils::Publisher<OperationModeStateAPI>::SharedPtr pub_operation_mode_;
