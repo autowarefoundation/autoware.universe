@@ -364,7 +364,6 @@ private:
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const;
 
   // goal seach
-  Pose calcRefinedGoal(const Pose & goal_pose) const;
   GoalCandidates generateGoalCandidates() const;
 
   // stop or decelerate

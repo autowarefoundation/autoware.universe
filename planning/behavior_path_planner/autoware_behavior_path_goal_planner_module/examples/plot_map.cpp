@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
+#include "autoware/behavior_path_goal_planner_module/util.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware/behavior_path_goal_planner_module/manager.hpp>
@@ -23,6 +24,7 @@
 #include <autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp>
 #include <autoware/behavior_path_planner_common/utils/path_utils.hpp>
 #include <autoware/route_handler/route_handler.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
@@ -40,6 +42,7 @@
 #include <matplotlibcpp17/pyplot.h>
 
 #include <chrono>
+#include <cmath>
 #include <iostream>
 
 using namespace std::chrono_literals;  // NOLINT
@@ -54,16 +57,58 @@ using autoware::behavior_path_planner::utils::parking_departure::calcFeasibleDec
 using autoware_planning_msgs::msg::LaneletRoute;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
+void plot_footprint(
+  matplotlibcpp17::axes::Axes & axes, const autoware::universe_utils::LinearRing2d & footprint,
+  const std::string & color = "blue")
+{
+  std::vector<double> xs, ys;
+  for (const auto & pt : footprint) {
+    xs.push_back(pt.x());
+    ys.push_back(pt.y());
+  }
+  xs.push_back(xs.front());
+  ys.push_back(ys.front());
+  axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linestyle"_a = "dotted"));
+}
+
+void plot_goal_candidates(
+  matplotlibcpp17::axes::Axes & axes, const GoalCandidates & goals,
+  const autoware::universe_utils::LinearRing2d & local_footprint,
+  const std::string & color = "green")
+{
+  std::vector<double> xs, ys;
+  std::vector<double> yaw_cos, yaw_sin;
+  for (const auto & goal : goals) {
+    const auto goal_footprint =
+      transformVector(local_footprint, autoware::universe_utils::pose2transform(goal.goal_pose));
+    plot_footprint(axes, goal_footprint);
+    xs.push_back(goal.goal_pose.position.x);
+    ys.push_back(goal.goal_pose.position.y);
+    axes.text(Args(xs.back(), ys.back(), std::to_string(goal.id)));
+    const double yaw = autoware::universe_utils::getRPY(goal.goal_pose).z;
+    yaw_cos.push_back(std::cos(yaw));
+    yaw_sin.push_back(std::sin(yaw));
+  }
+  axes.scatter(Args(xs, ys), Kwargs("color"_a = color));
+  axes.quiver(
+    Args(xs, ys, yaw_cos, yaw_sin),
+    Kwargs("angles"_a = "xy", "scale_units"_a = "xy", "scale"_a = 1.0));
+}
+
 void plot_path_with_lane_id(
   matplotlibcpp17::axes::Axes & axes, const PathWithLaneId & path,
-  const std::string & color = "red")
+  const std::string & color = "red", const std::string & label = "")
 {
   std::vector<double> xs, ys;
   for (const auto & point : path.points) {
     xs.push_back(point.point.pose.position.x);
     ys.push_back(point.point.pose.position.y);
   }
-  axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linewidth"_a = 1.0));
+  if (label == "") {
+    axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linewidth"_a = 1.0));
+  } else {
+    axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linewidth"_a = 1.0, "label"_a = label));
+  }
 }
 
 void plot_lanelet(
@@ -97,7 +142,7 @@ void plot_lanelet(
     Kwargs("color"_a = "black", "linewidth"_a = linewidth, "linestyle"_a = "dashed"));
 }
 
-std::shared_ptr<const PlannerData> instantiate_planner_data(
+std::shared_ptr<PlannerData> instantiate_planner_data(
   rclcpp::Node::SharedPtr node, const std::string & map_path, const LaneletRoute & route_msg)
 {
   lanelet::ErrorMessages errors{};
@@ -336,6 +381,51 @@ std::vector<PullOverPath> selectPullOverPaths(
   return selected;
 }
 
+std::optional<PathWithLaneId> calculate_centerline_path(
+  const geometry_msgs::msg::Pose & original_goal_pose,
+  const std::shared_ptr<PlannerData> planner_data, const GoalPlannerParameters & parameters)
+{
+  const auto refined_goal_opt =
+    autoware::behavior_path_planner::goal_planner_utils::calcRefinedGoal(
+      original_goal_pose, planner_data->route_handler, true,
+      planner_data->parameters.vehicle_length, planner_data->parameters.base_link2front,
+      planner_data->parameters.base_link2front, parameters);
+  if (!refined_goal_opt) {
+    return std::nullopt;
+  }
+  const auto & refined_goal = refined_goal_opt.value();
+
+  const auto & route_handler = planner_data->route_handler;
+  const double forward_length = parameters.forward_goal_search_length;
+  const double backward_length = parameters.backward_goal_search_length;
+  const bool use_bus_stop_area = parameters.bus_stop_area.use_bus_stop_area;
+  /*
+  const double margin_from_boundary = parameters.margin_from_boundary;
+  const double lateral_offset_interval = use_bus_stop_area
+                                           ? parameters.bus_stop_area.lateral_offset_interval
+                                           : parameters.lateral_offset_interval;
+  const double max_lateral_offset = parameters.max_lateral_offset;
+  const double ignore_distance_from_lane_start = parameters.ignore_distance_from_lane_start;
+  */
+
+  const auto pull_over_lanes =
+    autoware::behavior_path_planner::goal_planner_utils::getPullOverLanes(
+      *route_handler, true, parameters.backward_goal_search_length,
+      parameters.forward_goal_search_length);
+  const auto departure_check_lane =
+    autoware::behavior_path_planner::goal_planner_utils::createDepartureCheckLanelet(
+      pull_over_lanes, *route_handler, true);
+  const auto goal_arc_coords = lanelet::utils::getArcCoordinates(pull_over_lanes, refined_goal);
+  const double s_start = std::max(0.0, goal_arc_coords.length - backward_length);
+  const double s_end = goal_arc_coords.length + forward_length;
+  const double longitudinal_interval = use_bus_stop_area
+                                         ? parameters.bus_stop_area.goal_search_interval
+                                         : parameters.goal_search_interval;
+  auto center_line_path = autoware::behavior_path_planner::utils::resamplePathWithSpline(
+    route_handler->getCenterLinePath(pull_over_lanes, s_start, s_end), longitudinal_interval);
+  return center_line_path;
+}
+
 int main(int argc, char ** argv)
 {
   using autoware::behavior_path_planner::utils::getReferencePath;
@@ -455,8 +545,8 @@ int main(int argc, char ** argv)
   lane_departure_checker_params.footprint_extra_margin =
     goal_planner_parameter.lane_departure_check_expansion_margin;
   lane_departure_checker.setParam(lane_departure_checker_params);
-  autoware::behavior_path_planner::GoalSearcher goal_searcher(
-    goal_planner_parameter, vehicle_info.createFootprint());
+  const auto footprint = vehicle_info.createFootprint();
+  autoware::behavior_path_planner::GoalSearcher goal_searcher(goal_planner_parameter, footprint);
   const auto goal_candidates = goal_searcher.search(planner_data);
 
   pybind11::scoped_interpreter guard{};
@@ -473,7 +563,9 @@ int main(int argc, char ** argv)
     plot_lanelet(ax2, lanelet);
   }
 
-  plot_path_with_lane_id(ax1, reference_path.path, "green");
+  plot_goal_candidates(ax1, goal_candidates, footprint);
+
+  plot_path_with_lane_id(ax2, reference_path.path, "green", "reference_path");
 
   std::vector<PullOverPath> candidates;
   for (const auto & goal_candidate : goal_candidates) {
@@ -488,14 +580,18 @@ int main(int argc, char ** argv)
       plot_path_with_lane_id(ax1, full_path);
     }
   }
-  const auto filtered_paths = selectPullOverPaths(
+  [[maybe_unused]] const auto filtered_paths = selectPullOverPaths(
     candidates, goal_candidates, planner_data, goal_planner_parameter, reference_path);
-  for (const auto & filtered_path : filtered_paths) {
-    plot_path_with_lane_id(ax2, filtered_path.full_path(), "blue");
-  }
 
+  const auto centerline_path =
+    calculate_centerline_path(route_msg.goal_pose, planner_data, goal_planner_parameter);
+  if (centerline_path) {
+    plot_path_with_lane_id(ax2, centerline_path.value(), "red", "centerline_path");
+  }
   ax1.set_aspect(Args("equal"));
   ax2.set_aspect(Args("equal"));
+  ax1.legend();
+  ax2.legend();
   plt.show();
 
   rclcpp::shutdown();
