@@ -32,7 +32,7 @@
 
 #include "autoware_costmap_generator/object_map_utils.hpp"
 
-#include <autoware_grid_map_utils/polygon_iterator.hpp>
+#include <autoware/grid_map_utils/polygon_iterator.hpp>
 #include <grid_map_core/Polygon.hpp>
 
 #include <tf2/time.h>
