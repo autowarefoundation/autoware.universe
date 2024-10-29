@@ -44,6 +44,10 @@
 
 #include "autoware_costmap_generator/objects_to_costmap.hpp"
 
+#include <autoware_grid_map_utils/polygon_iterator.hpp>
+#include <grid_map_core/TypeDefs.hpp>
+
+#include <Eigen/src/Core/util/Constants.h>
 #include <tf2/utils.h>
 
 #include <cmath>
@@ -148,7 +152,7 @@ void ObjectsToCostmap::setCostInPolygon(
   const grid_map::Polygon & polygon, const std::string & gridmap_layer_name, const float score,
   grid_map::GridMap & objects_costmap)
 {
-  for (grid_map::PolygonIterator itr(objects_costmap, polygon); !itr.isPastEnd(); ++itr) {
+  for (grid_map_utils::PolygonIterator itr(objects_costmap, polygon); !itr.isPastEnd(); ++itr) {
     const float current_score = objects_costmap.at(gridmap_layer_name, *itr);
     if (score > current_score) {
       objects_costmap.at(gridmap_layer_name, *itr) = score;
@@ -156,14 +160,40 @@ void ObjectsToCostmap::setCostInPolygon(
   }
 }
 
+void naive_mean_filter_on_grid_edges(
+  // cppcheck-suppress constParameterReference
+  const grid_map::Matrix & input, const int kernel_size, grid_map::Matrix & output)
+{
+  for (auto i = 0; i < input.rows(); ++i) {
+    for (auto j = 0; j < input.cols(); ++j) {
+      const auto is_inside =
+        (i > kernel_size + 1 && j > kernel_size + 1) &&
+        (i + kernel_size + 1 < input.rows() && j + kernel_size + 1 < input.cols());
+      if (is_inside) {
+        continue;
+      }
+      auto size = 0.0f;
+      auto sum = 0.0f;
+      for (auto i_offset = std::max(0, i - kernel_size);
+           i_offset < i + kernel_size && i_offset < input.rows(); ++i_offset) {
+        for (auto j_offset = std::max(0, j - kernel_size);
+             j_offset < j + kernel_size && j_offset < input.cols(); ++j_offset) {
+          ++size;
+          sum += input(i_offset, j_offset);
+        }
+      }
+      output(i, j) = sum / size;
+    }
+  }
+}
+
 grid_map::Matrix ObjectsToCostmap::makeCostmapFromObjects(
   const grid_map::GridMap & costmap, const double expand_polygon_size,
-  const double size_of_expansion_kernel,
+  const int64_t size_of_expansion_kernel,
   const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects)
 {
   grid_map::GridMap objects_costmap = costmap;
   objects_costmap.add(OBJECTS_COSTMAP_LAYER_, 0);
-  objects_costmap.add(BLURRED_OBJECTS_COSTMAP_LAYER_, 0);
 
   for (const auto & object : in_objects->objects) {
     grid_map::Polygon polygon;
@@ -178,23 +208,28 @@ grid_map::Matrix ObjectsToCostmap::makeCostmapFromObjects(
     const auto highest_probability_label = *std::max_element(
       object.classification.begin(), object.classification.end(),
       [](const auto & c1, const auto & c2) { return c1.probability < c2.probability; });
-    const double highest_probability = static_cast<double>(highest_probability_label.probability);
-    setCostInPolygon(polygon, OBJECTS_COSTMAP_LAYER_, highest_probability, objects_costmap);
-    setCostInPolygon(polygon, BLURRED_OBJECTS_COSTMAP_LAYER_, highest_probability, objects_costmap);
+    setCostInPolygon(
+      polygon, OBJECTS_COSTMAP_LAYER_, highest_probability_label.probability, objects_costmap);
   }
+  objects_costmap.add(BLURRED_OBJECTS_COSTMAP_LAYER_, 0.0);
 
   // Applying mean filter to expanded gridmap
-  const grid_map::SlidingWindowIterator::EdgeHandling edge_handling =
-    grid_map::SlidingWindowIterator::EdgeHandling::CROP;
-  for (grid_map::SlidingWindowIterator iterator(
-         objects_costmap, BLURRED_OBJECTS_COSTMAP_LAYER_, edge_handling, size_of_expansion_kernel);
-       !iterator.isPastEnd(); ++iterator) {
-    objects_costmap.at(BLURRED_OBJECTS_COSTMAP_LAYER_, *iterator) =
-      iterator.getData().meanOfFinites();  // Blurring.
+  const auto & original_matrix = objects_costmap[OBJECTS_COSTMAP_LAYER_];
+  Eigen::MatrixXf & filtered_matrix = objects_costmap[BLURRED_OBJECTS_COSTMAP_LAYER_];
+  // edge of the grid: naive filter
+  const auto kernel_size = static_cast<int>(static_cast<double>(size_of_expansion_kernel) / 2.0);
+  naive_mean_filter_on_grid_edges(original_matrix, kernel_size, filtered_matrix);
+  // inside the grid: optimized filter using Eigen block
+  for (auto i = 0; i < filtered_matrix.rows() - size_of_expansion_kernel; ++i) {
+    for (auto j = 0; j < filtered_matrix.cols() - size_of_expansion_kernel; ++j) {
+      const auto mean =
+        original_matrix.block(i, j, size_of_expansion_kernel, size_of_expansion_kernel).mean();
+      filtered_matrix(i + kernel_size, j + kernel_size) = mean;
+    }
   }
 
-  objects_costmap[OBJECTS_COSTMAP_LAYER_] = objects_costmap[OBJECTS_COSTMAP_LAYER_].cwiseMax(
-    objects_costmap[BLURRED_OBJECTS_COSTMAP_LAYER_]);
+  objects_costmap[OBJECTS_COSTMAP_LAYER_] =
+    objects_costmap[OBJECTS_COSTMAP_LAYER_].cwiseMax(filtered_matrix);
 
   return objects_costmap[OBJECTS_COSTMAP_LAYER_];
 }

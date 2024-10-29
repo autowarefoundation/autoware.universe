@@ -147,7 +147,6 @@ std::string get_absolute_path_to_lanelet_map(
   return dir + "/test_map/" + map_filename;
 }
 
-// cppcheck-suppress unusedFunction
 std::string get_absolute_path_to_route(
   const std::string & package_name, const std::string & route_filename)
 {
