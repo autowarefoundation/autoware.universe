@@ -76,7 +76,7 @@ jobs:
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
           build-depends-repos: ${{ matrix.build-depends-repos }}
           cache-key-element: ${{ env.BUILD_TYPE_CUDA_STATE }}
-          build-pre-command: taskset --cpu-list 0-6
+          build-pre-command: taskset --cpu-list 0-5
 
       - name: Test
         id: test

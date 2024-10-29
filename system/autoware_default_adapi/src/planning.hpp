@@ -15,10 +15,10 @@
 #ifndef PLANNING_HPP_
 #define PLANNING_HPP_
 
+#include <autoware/component_interface_specs/localization.hpp>
+#include <autoware/component_interface_specs/planning.hpp>
 #include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware_ad_api_specs/planning.hpp>
-#include <component_interface_specs/localization.hpp>
-#include <component_interface_specs/planning.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -40,8 +40,8 @@ private:
   using SteeringFactorArray = autoware_adapi_v1_msgs::msg::SteeringFactorArray;
   Pub<autoware_ad_api::planning::VelocityFactors> pub_velocity_factors_;
   Pub<autoware_ad_api::planning::SteeringFactors> pub_steering_factors_;
-  Sub<planning_interface::Trajectory> sub_trajectory_;
-  Sub<localization_interface::KinematicState> sub_kinematic_state_;
+  Sub<autoware::component_interface_specs::planning::Trajectory> sub_trajectory_;
+  Sub<autoware::component_interface_specs::localization::KinematicState> sub_kinematic_state_;
   std::vector<rclcpp::Subscription<VelocityFactorArray>::SharedPtr> sub_velocity_factors_;
   std::vector<rclcpp::Subscription<SteeringFactorArray>::SharedPtr> sub_steering_factors_;
   std::vector<VelocityFactorArray::ConstSharedPtr> velocity_factors_;
@@ -49,8 +49,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   using VehicleStopChecker = autoware::motion_utils::VehicleStopCheckerBase;
-  using Trajectory = planning_interface::Trajectory::Message;
-  using KinematicState = localization_interface::KinematicState::Message;
+  using Trajectory = autoware::component_interface_specs::planning::Trajectory::Message;
+  using KinematicState = autoware::component_interface_specs::localization::KinematicState::Message;
   void on_trajectory(const Trajectory::ConstSharedPtr msg);
   void on_kinematic_state(const KinematicState::ConstSharedPtr msg);
   void on_timer();

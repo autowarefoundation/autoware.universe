@@ -24,14 +24,13 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace autoware::compare_map_segmentation
 {
 
-typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
-typedef typename PointCloud::Ptr PointCloudPtr;
-typedef typename PointCloud::ConstPtr PointCloudConstPtr;
+using PointCloud = typename pcl::Filter<pcl::PointXYZ>::PointCloud;
+using PointCloudPtr = typename PointCloud::Ptr;
+using PointCloudConstPtr = typename PointCloud::ConstPtr;
 
 class DistanceBasedStaticMapLoader : public VoxelGridStaticMapLoader
 {
@@ -102,8 +101,8 @@ public:
 class DistanceBasedCompareMapFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
 protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
 private:
   double distance_threshold_;
