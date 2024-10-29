@@ -1905,7 +1905,9 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
     lanelet::ConstLanelet closest_lanelet;
     if (getClosestPreferredLaneletWithinRoute(goal_checkpoint, &closest_lanelet)) {
       if (std::find(candidates.begin(), candidates.end(), closest_lanelet) != candidates.end()) {
-        return closest_lanelet;
+        if (lanelet::utils::isInLanelet(goal_checkpoint, closest_lanelet)) {
+          return closest_lanelet;
+        }
       }
     }
     return std::nullopt;
