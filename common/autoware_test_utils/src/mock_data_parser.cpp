@@ -45,6 +45,15 @@ Duration parse(const YAML::Node & node)
 }
 
 template <>
+Time parse(const YAML::Node & node)
+{
+  Time msg;
+  msg.sec = node["sec"].as<int>();
+  msg.nanosec = node["nanosec"].as<int>();
+  return msg;
+}
+
+template <>
 std::array<double, 36> parse(const YAML::Node & node)
 {
   std::array<double, 36> msg{};
@@ -317,6 +326,39 @@ PredictedObjects parse(const YAML::Node & node)
   msg.header = parse<Header>(node["header"]);
   for (const auto & object_node : node["objects"]) {
     msg.objects.push_back(parse<PredictedObject>(object_node));
+  }
+  return msg;
+}
+
+template <>
+TrafficLightElement parse(const YAML::Node & node)
+{
+  TrafficLightElement msg;
+  msg.color = node["color"].as<uint8_t>();
+  msg.shape = node["shape"].as<uint8_t>();
+  msg.status = node["status"].as<uint8_t>();
+  msg.confidence = node["confidence"].as<float>();
+  return msg;
+}
+
+template <>
+TrafficLightGroup parse(const YAML::Node & node)
+{
+  TrafficLightGroup msg;
+  msg.traffic_light_group_id = node["traffic_light_group_id"].as<int>();
+  for (const auto & element_node : node["elements"]) {
+    msg.elements.push_back(parse<TrafficLightElement>(element_node));
+  }
+  return msg;
+}
+
+template <>
+TrafficLightGroupArray parse(const YAML::Node & node)
+{
+  TrafficLightGroupArray msg;
+  msg.stamp = parse<Time>(node["stamp"]);
+  for (const auto & traffic_light_group_node : node["traffic_light_groups"]) {
+    msg.traffic_light_groups.push_back(parse<TrafficLightGroup>(traffic_light_group_node));
   }
   return msg;
 }
