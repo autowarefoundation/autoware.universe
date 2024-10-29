@@ -44,7 +44,7 @@
 
 #include "autoware_costmap_generator/objects_to_costmap.hpp"
 
-#include <autoware_grid_map_utils/polygon_iterator.hpp>
+#include <autoware/grid_map_utils/polygon_iterator.hpp>
 #include <grid_map_core/TypeDefs.hpp>
 
 #include <Eigen/src/Core/util/Constants.h>
