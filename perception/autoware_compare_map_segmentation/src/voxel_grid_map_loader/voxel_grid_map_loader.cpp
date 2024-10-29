@@ -47,7 +47,7 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
   if (index != -1) {
     return true;
   }
-  if (tree == NULL) {
+  if (tree == nullptr) {
     return false;
   }
   std::vector<int> nn_indices(1);
@@ -64,7 +64,7 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
 {
   // check map downsampled pc
   double distance_threshold_z = downsize_ratio_z_axis_ * distance_threshold;
-  if (map == NULL) {
+  if (map == nullptr) {
     return false;
   }
   if (is_in_voxel(
@@ -331,7 +331,7 @@ bool VoxelGridDynamicMapLoader::is_close_to_next_map_grid(
   if (
     static_cast<size_t>(neighbor_map_grid_index) >= current_voxel_grid_array_.size() ||
     neighbor_map_grid_index == current_map_grid_index ||
-    current_voxel_grid_array_.at(neighbor_map_grid_index) != NULL) {
+    current_voxel_grid_array_.at(neighbor_map_grid_index) != nullptr) {
     return false;
   }
   if (is_close_to_neighbor_voxels(
@@ -360,7 +360,7 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
     return false;
   }
   if (
-    current_voxel_grid_array_.at(map_grid_index) != NULL &&
+    current_voxel_grid_array_.at(map_grid_index) != nullptr &&
     is_close_to_neighbor_voxels(
       point, distance_threshold, current_voxel_grid_array_.at(map_grid_index)->map_cell_pc_ptr,
       current_voxel_grid_array_.at(map_grid_index)->map_cell_voxel_grid)) {
