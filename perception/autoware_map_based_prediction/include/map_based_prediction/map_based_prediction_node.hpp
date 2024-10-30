@@ -203,54 +203,60 @@ private:
   // Fences
   lanelet::LaneletMapUPtr fence_layer_{nullptr};
 
-  // Parameters
+  ////// Parameters
+
+  // Object Parameters
   bool enable_delay_compensation_;
-  PredictionTimeHorizon prediction_time_horizon_;
+
+  // Path generation parameters
   double lateral_control_time_horizon_;
+  PredictionTimeHorizon prediction_time_horizon_;
   double prediction_time_horizon_rate_for_validate_lane_length_;
   double prediction_sampling_time_interval_;
+
   double min_velocity_for_map_based_prediction_;
-  double min_crosswalk_user_velocity_;
-  double max_crosswalk_user_delta_yaw_threshold_for_lanelet_;
-  double debug_accumulated_time_;
+
+  //// Vehicle Parameters
+  // Lanelet Parameters
   double dist_threshold_for_searching_lanelet_;
   double delta_yaw_threshold_for_searching_lanelet_;
   double sigma_lateral_offset_;
   double sigma_yaw_angle_deg_;
+  bool consider_only_routable_neighbours_;
+
+  // Pedestrian Parameters
+  double min_crosswalk_user_velocity_;
+  double max_crosswalk_user_delta_yaw_threshold_for_lanelet_;
+  bool use_crosswalk_signal_;
+  double threshold_velocity_assumed_as_stopping_;
+  std::vector<double> distance_set_for_no_intention_to_walk_;
+  std::vector<double> timeout_set_for_no_intention_to_walk_;
+  bool match_lost_and_appeared_crosswalk_users_;
+  bool remember_lost_crosswalk_users_;
+
+  // Object history parameters
   double object_buffer_time_length_;
   double history_time_length_;
+  double cutoff_freq_of_velocity_lpf_;
+
+  // Prediction Parameters
   std::string lane_change_detection_method_;
   double dist_threshold_to_bound_;
   double time_threshold_to_bound_;
-  double cutoff_freq_of_velocity_lpf_;
   double dist_ratio_threshold_to_left_bound_;
   double dist_ratio_threshold_to_right_bound_;
   double diff_dist_threshold_to_left_bound_;
   double diff_dist_threshold_to_right_bound_;
   int num_continuous_state_transition_;
-  bool consider_only_routable_neighbours_;
-  double reference_path_resolution_;
 
+  // Path generation parameters
+  double reference_path_resolution_;
   bool check_lateral_acceleration_constraints_;
   double max_lateral_accel_;
   double min_acceleration_before_curve_;
-
   bool use_vehicle_acceleration_;
   double speed_limit_multiplier_;
   double acceleration_exponential_half_life_;
-
-  bool use_crosswalk_signal_;
-  double threshold_velocity_assumed_as_stopping_;
-  std::vector<double> distance_set_for_no_intention_to_walk_;
-  std::vector<double> timeout_set_for_no_intention_to_walk_;
-
-  bool match_lost_and_appeared_crosswalk_users_;
-  bool remember_lost_crosswalk_users_;
-
-  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
-  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
-    detailed_processing_time_publisher_;
-  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
 
   ////// Member Functions
   // Node callbacks
@@ -307,8 +313,6 @@ private:
   void updateRoadUsersHistory(
     const std_msgs::msg::Header & header, const TrackedObject & object,
     const LaneletsData & current_lanelets_data);
-  void updateFuturePossibleLanelets(
-    const std::string & object_id, const lanelet::routing::LaneletPaths & paths);
 
   // Vehicle Maneuver Prediction
   Maneuver predictObjectManeuver(
@@ -343,7 +347,11 @@ private:
   std::pair<PosePath, double> convertLaneletPathToPosePath(
     const lanelet::routing::LaneletPath & path) const;
 
-  // Debug process
+  ////// Debugger
+  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
+  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
+    detailed_processing_time_publisher_;
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
   visualization_msgs::msg::Marker getDebugMarker(
     const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num);
 

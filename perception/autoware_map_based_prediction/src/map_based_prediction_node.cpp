@@ -743,7 +743,7 @@ void replaceObjectYawWithLaneletsYaw(
 }  // namespace
 
 MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_options)
-: Node("map_based_prediction", node_options), debug_accumulated_time_(0.0)
+: Node("map_based_prediction", node_options)
 {
   if (!google::IsGoogleLoggingInitialized()) {
     google::InitGoogleLogging("map_based_prediction_node");
@@ -2350,29 +2350,6 @@ double MapBasedPredictionNode::calcLeftLateralOffset(
   const lanelet::ConstLineString2d & boundary_line, const geometry_msgs::msg::Pose & search_pose)
 {
   return -calcRightLateralOffset(boundary_line, search_pose);
-}
-
-void MapBasedPredictionNode::updateFuturePossibleLanelets(
-  const std::string & object_id, const lanelet::routing::LaneletPaths & paths)
-{
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-  if (road_users_history.count(object_id) == 0) {
-    return;
-  }
-
-  std::vector<lanelet::ConstLanelet> & possible_lanelets =
-    road_users_history.at(object_id).back().future_possible_lanelets;
-  for (const auto & path : paths) {
-    for (const auto & lanelet : path) {
-      bool not_in_buffer = std::find(possible_lanelets.begin(), possible_lanelets.end(), lanelet) ==
-                           possible_lanelets.end();
-      if (not_in_buffer) {
-        possible_lanelets.push_back(lanelet);
-      }
-    }
-  }
 }
 
 ManeuverProbability MapBasedPredictionNode::calculateManeuverProbability(
