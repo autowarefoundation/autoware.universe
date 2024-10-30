@@ -270,7 +270,7 @@ TEST(TrafficLightArbiterTest, testTrafficSignalBothMsg)
   test_manager->test_pub_msg<TrafficSignalArray>(
     test_target_node, input_perception_topic, perception_msg);
 
-  // latest_msg should be equal to perception_msg bacause it has higher confidence than external_msg
+  // latest_msg should be equal to perception_msg because it has higher confidence than external_msg
   EXPECT_EQ(isMsgEqual(latest_msg, perception_msg), true);
   rclcpp::shutdown();
 }
