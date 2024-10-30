@@ -14,6 +14,8 @@
 
 #include "map_based_prediction/map_based_prediction_node.hpp"
 
+#include "map_based_prediction/utils.hpp"
+
 #include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
@@ -208,25 +210,6 @@ void updateLateralKinematicsVector(
 }
 
 /**
- * @brief calc absolute normalized yaw difference between lanelet and object
- *
- * @param object
- * @param lanelet
- * @return double
- */
-double calcAbsYawDiffBetweenLaneletAndObject(
-  const TrackedObject & object, const lanelet::ConstLanelet & lanelet)
-{
-  const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  const double lane_yaw =
-    lanelet::utils::getLaneletAngle(lanelet, object.kinematics.pose_with_covariance.pose.position);
-  const double delta_yaw = object_yaw - lane_yaw;
-  const double normalized_delta_yaw = autoware::universe_utils::normalizeRadian(delta_yaw);
-  const double abs_norm_delta = std::fabs(normalized_delta_yaw);
-  return abs_norm_delta;
-}
-
-/**
  * @brief Get the Right LineSharing Lanelets object
  *
  * @param current_lanelet
@@ -359,49 +342,6 @@ CrosswalkEdgePoints getCrosswalkEdgePoints(const lanelet::ConstLanelet & crosswa
 
   return CrosswalkEdgePoints{front_center_point, r_p_front, l_p_front,
                              back_center_point,  r_p_back,  l_p_back};
-}
-
-bool withinRoadLanelet(
-  const TrackedObject & object,
-  const std::vector<std::pair<double, lanelet::Lanelet>> & surrounding_lanelets_with_dist,
-  const bool use_yaw_information = false)
-{
-  for (const auto & [dist, lanelet] : surrounding_lanelets_with_dist) {
-    if (lanelet.hasAttribute(lanelet::AttributeName::Subtype)) {
-      lanelet::Attribute attr = lanelet.attribute(lanelet::AttributeName::Subtype);
-      if (
-        attr.value() == lanelet::AttributeValueString::Crosswalk ||
-        attr.value() == lanelet::AttributeValueString::Walkway) {
-        continue;
-      }
-    }
-
-    constexpr float yaw_threshold = 0.6;
-    bool within_lanelet = std::abs(dist) < 1e-5;
-    if (use_yaw_information) {
-      within_lanelet =
-        within_lanelet && calcAbsYawDiffBetweenLaneletAndObject(object, lanelet) < yaw_threshold;
-    }
-    if (within_lanelet) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool withinRoadLanelet(
-  const TrackedObject & object, const lanelet::LaneletMapPtr & lanelet_map_ptr,
-  const bool use_yaw_information = false)
-{
-  const auto & obj_pos = object.kinematics.pose_with_covariance.pose.position;
-  lanelet::BasicPoint2d search_point(obj_pos.x, obj_pos.y);
-  // nearest lanelet
-  constexpr double search_radius = 10.0;  // [m]
-  const auto surrounding_lanelets_with_dist =
-    lanelet::geometry::findWithin2d(lanelet_map_ptr->laneletLayer, search_point, search_radius);
-
-  return withinRoadLanelet(object, surrounding_lanelets_with_dist, use_yaw_information);
 }
 
 boost::optional<CrosswalkEdgePoints> isReachableCrosswalkEdgePoints(
@@ -615,65 +555,6 @@ std::unordered_set<std::string> removeOldObjectsHistory(
   }
 
   return invalid_object_id;
-}
-
-/**
- * @brief change label for prediction
- *
- * @param label
- * @return ObjectClassification::_label_type
- */
-ObjectClassification::_label_type changeLabelForPrediction(
-  const ObjectClassification::_label_type & label, const TrackedObject & object,
-  const lanelet::LaneletMapPtr & lanelet_map_ptr_)
-{
-  // for car like vehicle do not change labels
-  switch (label) {
-    case ObjectClassification::CAR:
-    case ObjectClassification::BUS:
-    case ObjectClassification::TRUCK:
-    case ObjectClassification::TRAILER:
-    case ObjectClassification::UNKNOWN:
-      return label;
-
-    case ObjectClassification::MOTORCYCLE:
-    case ObjectClassification::BICYCLE: {  // if object is within road lanelet and satisfies yaw
-                                           // constraints
-      const bool within_road_lanelet = withinRoadLanelet(object, lanelet_map_ptr_, true);
-      // if the object is within lanelet, do the same estimation with vehicle
-      if (within_road_lanelet) return ObjectClassification::MOTORCYCLE;
-
-      constexpr float high_speed_threshold =
-        autoware::universe_utils::kmph2mps(25.0);  // High speed bicycle 25 km/h
-      // calc abs speed from x and y velocity
-      const double abs_speed = std::hypot(
-        object.kinematics.twist_with_covariance.twist.linear.x,
-        object.kinematics.twist_with_covariance.twist.linear.y);
-      const bool high_speed_object = abs_speed > high_speed_threshold;
-      // high speed object outside road lanelet will move like unknown object
-      // return ObjectClassification::UNKNOWN; // temporary disabled
-      if (high_speed_object) return label;  // Do nothing for now
-      return ObjectClassification::BICYCLE;
-    }
-
-    case ObjectClassification::PEDESTRIAN: {
-      const float max_velocity_for_human_mps =
-        autoware::universe_utils::kmph2mps(25.0);  // Max human being motion speed is 25km/h
-      const double abs_speed = std::hypot(
-        object.kinematics.twist_with_covariance.twist.linear.x,
-        object.kinematics.twist_with_covariance.twist.linear.y);
-      const bool high_speed_object = abs_speed > max_velocity_for_human_mps;
-      // fast, human-like object: like segway
-      // return ObjectClassification::MOTORCYCLE;
-      if (high_speed_object) return label;  // currently do nothing
-      // fast human outside road lanelet will move like unknown object
-      // return ObjectClassification::UNKNOWN;
-      return label;
-    }
-
-    default:
-      return label;
-  }
 }
 
 // NOTE: These two functions are copied from the route_handler package.
@@ -978,17 +859,19 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
       trafficSignalsCallback(msg);
     }
   }
+  removeStaleTrafficLightInfo(in_objects);
 
   // Guard for map pointer and frame transformation
   if (!lanelet_map_ptr_) {
     return;
   }
 
-  // Remove old objects information in object history
   const double objects_detected_time = rclcpp::Time(in_objects->header.stamp).seconds();
-  removeOldObjectsHistory(objects_detected_time, object_buffer_time_length_, road_users_history_);
-  removeStaleTrafficLightInfo(in_objects);
 
+  // Remove old objects information in object history
+  // road users
+  removeOldObjectsHistory(objects_detected_time, object_buffer_time_length_, road_users_history_);
+  // crosswalk users
   auto invalidated_crosswalk_users = removeOldObjectsHistory(
     objects_detected_time, object_buffer_time_length_, crosswalk_users_history_);
   // delete matches that point to invalid object
@@ -1011,8 +894,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   // get current crosswalk users for later prediction
   std::unordered_map<std::string, TrackedObject> current_crosswalk_users;
   for (const auto & object : in_objects->objects) {
-    const auto label_for_prediction =
-      changeLabelForPrediction(object.classification.front().label, object, lanelet_map_ptr_);
+    const auto label_for_prediction = utils::changeLabelForPrediction(
+      object.classification.front().label, object, lanelet_map_ptr_);
     if (
       label_for_prediction == ObjectClassification::PEDESTRIAN ||
       label_for_prediction == ObjectClassification::BICYCLE) {
@@ -1048,7 +931,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
     // get tracking label and update it for the prediction
     const auto & label_ = transformed_object.classification.front().label;
-    const auto label = changeLabelForPrediction(label_, object, lanelet_map_ptr_);
+    const auto label = utils::changeLabelForPrediction(label_, object, lanelet_map_ptr_);
 
     switch (label) {
       case ObjectClassification::PEDESTRIAN:
@@ -1464,7 +1347,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
     // If the object is not crossing the crosswalk, in the road lanelets, try to find the closest
     // crosswalk and generate path to the crosswalk edge
-  } else if (withinRoadLanelet(object, surrounding_lanelets_with_dist)) {
+  } else if (utils::withinRoadLanelet(object, surrounding_lanelets_with_dist)) {
     lanelet::ConstLanelet closest_crosswalk{};
     const auto & obj_pose = object.kinematics.pose_with_covariance.pose;
     const auto found_closest_crosswalk =
