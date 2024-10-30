@@ -626,16 +626,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   utils::removeOldObjectsHistory(
     objects_detected_time, object_buffer_time_length_, road_users_history_);
   // crosswalk users
-  // auto invalidated_crosswalk_users = removeOldObjectsHistory(
-  //   objects_detected_time, object_buffer_time_length_, crosswalk_users_history_);
-  // // delete matches that point to invalid object
-  // for (auto it = known_matches_.begin(); it != known_matches_.end();) {
-  //   if (invalidated_crosswalk_users.count(it->second)) {
-  //     it = known_matches_.erase(it);
-  //   } else {
-  //     ++it;
-  //   }
-  // }
   predictor_vru_->removeOldKnownMatches(objects_detected_time, object_buffer_time_length_);
 
   // result output
@@ -647,18 +637,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   visualization_msgs::msg::MarkerArray debug_markers;
 
   // get current crosswalk users for later prediction
-  // std::unordered_map<std::string, TrackedObject> current_crosswalk_users;
-  // for (const auto & object : in_objects->objects) {
-  //   const auto label_for_prediction = utils::changeLabelForPrediction(
-  //     object.classification.front().label, object, lanelet_map_ptr_);
-  //   if (
-  //     label_for_prediction == ObjectClassification::PEDESTRIAN ||
-  //     label_for_prediction == ObjectClassification::BICYCLE) {
-  //     const std::string object_id = autoware::universe_utils::toHexString(object.object_id);
-  //     current_crosswalk_users.emplace(object_id, object);
-  //   }
-  // }
-  // std::unordered_set<std::string> predicted_crosswalk_users_ids;
   predictor_vru_->loadCurrentCrosswalkUsers(*in_objects);
 
   // get world to map transform
@@ -692,15 +670,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     switch (label) {
       case ObjectClassification::PEDESTRIAN:
       case ObjectClassification::BICYCLE: {
-        // std::string object_id = autoware::universe_utils::toHexString(object.object_id);
-        // if (match_lost_and_appeared_crosswalk_users_) {
-        //   object_id = tryMatchNewObjectToDisappeared(object_id, current_crosswalk_users);
-        // }
-        // predicted_crosswalk_users_ids.insert(object_id);
-        // updateCrosswalkUserHistory(output.header, transformed_object, object_id);
-        // const auto predicted_object_crosswalk =
-        //   getPredictedObjectAsCrosswalkUser(transformed_object);
-        // output.objects.push_back(predicted_object_crosswalk);
+        // Run pedestrian/bicycle prediction
         const auto predicted_vru = predictor_vru_->predict(output.header, transformed_object);
         output.objects.emplace_back(predicted_vru);
         break;
@@ -872,15 +842,6 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // process lost crosswalk users to tackle unstable detection
   if (remember_lost_crosswalk_users_) {
-    // for (const auto & [id, crosswalk_user] : crosswalk_users_history_) {
-    //   // get a predicted path for crosswalk users in history who didn't get path yet using latest
-    //   // message
-    //   if (predicted_crosswalk_users_ids.count(id) == 0) {
-    //     const auto predicted_object =
-    //       getPredictedObjectAsCrosswalkUser(crosswalk_user.back().tracked_object);
-    //     output.objects.push_back(predicted_object);
-    //   }
-    // }
     PredictedObjects retrived_objects = predictor_vru_->retrieveUndetectedObjects();
     output.objects.insert(
       output.objects.end(), retrived_objects.objects.begin(), retrived_objects.objects.end());
@@ -2055,24 +2016,6 @@ bool MapBasedPredictionNode::isDuplicated(
 
   return false;
 }
-
-// std::optional<TrafficLightElement> MapBasedPredictionNode::getTrafficSignalElement(
-//   const lanelet::Id & id)
-// {
-//   std::unique_ptr<ScopedTimeTrack> st_ptr;
-//   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-//   if (traffic_signal_id_map_.count(id) != 0) {
-//     const auto & signal_elements = traffic_signal_id_map_.at(id).elements;
-//     if (signal_elements.size() > 1) {
-//       RCLCPP_ERROR(
-//         get_logger(), "[Map Based Prediction]: Multiple TrafficSignalElement_ are received.");
-//     } else if (!signal_elements.empty()) {
-//       return signal_elements.front();
-//     }
-//   }
-//   return std::nullopt;
-// }
 
 }  // namespace autoware::map_based_prediction
 

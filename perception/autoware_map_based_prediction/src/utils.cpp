@@ -186,6 +186,14 @@ std::unordered_set<std::string> removeOldObjectsHistory(
   return invalid_object_id;
 }
 
+// Explicit instantiation definitions
+template std::unordered_set<std::string> removeOldObjectsHistory<ObjectData>(
+  const double current_time, const double buffer_time,
+  std::unordered_map<std::string, std::deque<ObjectData>> & target_objects);
+template std::unordered_set<std::string> removeOldObjectsHistory<CrosswalkUserData>(
+  const double current_time, const double buffer_time,
+  std::unordered_map<std::string, std::deque<CrosswalkUserData>> & target_objects);
+
 PredictedObjectKinematics convertToPredictedKinematics(
   const TrackedObjectKinematics & tracked_object)
 {
