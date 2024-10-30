@@ -252,11 +252,13 @@ private:
     detailed_processing_time_publisher_;
   std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
 
-  // Member Functions
+  ////// Member Functions
+  // Node callbacks
   void mapCallback(const LaneletMapBin::ConstSharedPtr msg);
   void trafficSignalsCallback(const TrafficLightGroupArray::ConstSharedPtr msg);
   void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
 
+  // Map process
   bool doesPathCrossAnyFence(const PredictedPath & predicted_path);
   bool doesPathCrossFence(
     const PredictedPath & predicted_path, const lanelet::ConstLineString3d & fence_line);
@@ -265,44 +267,60 @@ private:
     const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2,
     const lanelet::ConstPoint3d & point3, const lanelet::ConstPoint3d & point4);
 
+  // Object process
   PredictedObjectKinematics convertToPredictedKinematics(
     const TrackedObjectKinematics & tracked_object);
-
   PredictedObject convertToPredictedObject(const TrackedObject & tracked_object);
-
-  PredictedObject getPredictedObjectAsCrosswalkUser(const TrackedObject & object);
-
   void removeStaleTrafficLightInfo(const TrackedObjects::ConstSharedPtr in_objects);
-
-  LaneletsData getCurrentLanelets(const TrackedObject & object);
-  bool checkCloseLaneletCondition(
-    const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object);
-  float calculateLocalLikelihood(
-    const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const;
   void updateObjectData(TrackedObject & object);
+  geometry_msgs::msg::Pose compensateTimeDelay(
+    const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,
+    const double dt) const;
 
-  void updateRoadUsersHistory(
-    const std_msgs::msg::Header & header, const TrackedObject & object,
-    const LaneletsData & current_lanelets_data);
+  //// Pedestrian process
+  PredictedObject getPredictedObjectAsCrosswalkUser(const TrackedObject & object);
   void updateCrosswalkUserHistory(
     const std_msgs::msg::Header & header, const TrackedObject & object,
     const std::string & object_id);
   std::string tryMatchNewObjectToDisappeared(
     const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users);
-  std::optional<size_t> searchProperStartingRefPathIndex(
-    const TrackedObject & object, const PosePath & pose_path) const;
-  std::vector<LaneletPathWithPathInfo> getPredictedReferencePath(
-    const TrackedObject & object, const LaneletsData & current_lanelets_data,
-    const double object_detected_time, const double time_horizon);
-  std::vector<PredictedRefPath> convertPredictedReferencePath(
-    const TrackedObject & object,
-    const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths) const;
+  bool calcIntentionToCrossWithTrafficSignal(
+    const TrackedObject & object, const lanelet::ConstLanelet & crosswalk,
+    const lanelet::Id & signal_id);
+
+  //// Vehicle process
+  // Lanelet process
+  LaneletsData getCurrentLanelets(const TrackedObject & object);
+  bool checkCloseLaneletCondition(
+    const std::pair<double, lanelet::Lanelet> & lanelet, const TrackedObject & object);
+  float calculateLocalLikelihood(
+    const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const;
+  bool isDuplicated(
+    const std::pair<double, lanelet::ConstLanelet> & target_lanelet,
+    const LaneletsData & lanelets_data);
+  bool isDuplicated(
+    const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths);
+  std::optional<lanelet::Id> getTrafficSignalId(const lanelet::ConstLanelet & way_lanelet);
+  std::optional<TrafficLightElement> getTrafficSignalElement(const lanelet::Id & id);
+
+  // Vehicle history process
+  void updateRoadUsersHistory(
+    const std_msgs::msg::Header & header, const TrackedObject & object,
+    const LaneletsData & current_lanelets_data);
+  void updateFuturePossibleLanelets(
+    const std::string & object_id, const lanelet::routing::LaneletPaths & paths);
+
+  // Vehicle Maneuver Prediction
   Maneuver predictObjectManeuver(
     const std::string & object_id, const geometry_msgs::msg::Pose & object_pose,
     const LaneletData & current_lanelet_data, const double object_detected_time);
-  geometry_msgs::msg::Pose compensateTimeDelay(
-    const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,
-    const double dt) const;
+  Maneuver predictObjectManeuverByTimeToLaneChange(
+    const std::string & object_id, const LaneletData & current_lanelet_data,
+    const double object_detected_time);
+  Maneuver predictObjectManeuverByLatDiffDistance(
+    const std::string & object_id, const geometry_msgs::msg::Pose & object_pose,
+    const LaneletData & current_lanelet_data, const double object_detected_time);
+
   double calcRightLateralOffset(
     const lanelet::ConstLineString2d & boundary_line, const geometry_msgs::msg::Pose & search_pose);
   double calcLeftLateralOffset(
@@ -311,35 +329,25 @@ private:
     const Maneuver & predicted_maneuver, const bool & left_paths_exists,
     const bool & right_paths_exists, const bool & center_paths_exists) const;
 
+  // Vehicle path process
+  std::optional<size_t> searchProperStartingRefPathIndex(
+    const TrackedObject & object, const PosePath & pose_path) const;
+  std::vector<LaneletPathWithPathInfo> getPredictedReferencePath(
+    const TrackedObject & object, const LaneletsData & current_lanelets_data,
+    const double object_detected_time, const double time_horizon);
+  std::vector<PredictedRefPath> convertPredictedReferencePath(
+    const TrackedObject & object,
+    const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths) const;
   mutable universe_utils::LRUCache<lanelet::routing::LaneletPath, std::pair<PosePath, double>>
     lru_cache_of_convert_path_type_{1000};
   std::pair<PosePath, double> convertLaneletPathToPosePath(
     const lanelet::routing::LaneletPath & path) const;
 
-  void updateFuturePossibleLanelets(
-    const std::string & object_id, const lanelet::routing::LaneletPaths & paths);
-
-  bool isDuplicated(
-    const std::pair<double, lanelet::ConstLanelet> & target_lanelet,
-    const LaneletsData & lanelets_data);
-  bool isDuplicated(
-    const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths);
-  std::optional<lanelet::Id> getTrafficSignalId(const lanelet::ConstLanelet & way_lanelet);
-  std::optional<TrafficLightElement> getTrafficSignalElement(const lanelet::Id & id);
-  bool calcIntentionToCrossWithTrafficSignal(
-    const TrackedObject & object, const lanelet::ConstLanelet & crosswalk,
-    const lanelet::Id & signal_id);
-
+  // Debug process
   visualization_msgs::msg::Marker getDebugMarker(
     const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num);
 
-  Maneuver predictObjectManeuverByTimeToLaneChange(
-    const std::string & object_id, const LaneletData & current_lanelet_data,
-    const double object_detected_time);
-  Maneuver predictObjectManeuverByLatDiffDistance(
-    const std::string & object_id, const geometry_msgs::msg::Pose & object_pose,
-    const LaneletData & current_lanelet_data, const double object_detected_time);
-
+  //// Node functions
   void publish(
     const PredictedObjects & output,
     const visualization_msgs::msg::MarkerArray & debug_markers) const;
