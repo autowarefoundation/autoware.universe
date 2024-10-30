@@ -13,4 +13,9 @@
     <arg name="use_sim_time" value="$(var use_sim_time)"/>
     <arg name="rviz_config" value="$(var rviz_config)"/>
   </include>
+
+  <node pkg="autoware_test_utils" exec="topic_snapshot_saver" name="topic_snapshot_saver">
+    <param name="map_path" value="package://autoware_test_utils/test_map/road_shoulder/lanelet2_map.osm"/>
+    <param name="config_path" value="package://autoware_test_utils/config/sample_topic_snapshot.yaml"/>
+  </node>
 </launch>

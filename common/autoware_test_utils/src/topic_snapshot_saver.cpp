@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <autoware_test_utils/mock_data_parser.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -27,6 +28,7 @@
 
 #include <array>
 #include <filesystem>
+#include <fstream>
 #include <mutex>
 #include <optional>
 #include <regex>
@@ -65,6 +67,8 @@ std::optional<size_t> get_topic_index(const std::string & name)
   return std::nullopt;
 }
 
+std::mutex g_mutex;
+
 template <size_t TypeIndex, typename Callback>
 typename rclcpp::SubscriptionBase::SharedPtr create_subscriber(
   const std::string & topic_name, rclcpp::Node & node, Callback && callback)
@@ -77,19 +81,34 @@ template <typename Message>
 class CallbackHandler
 {
 public:
-  CallbackHandler(std::mutex & m, MessageType & buffer) : mutex_(m), buffer_(buffer) {}
+  CallbackHandler(MessageType & buffer) : buffer_(buffer) {}
 
-  // nav_msgs::msg::Odometry_<std::allocator<void>>::SharedPtr
   void on_callback(const typename Message::SharedPtr msg)
   {
-    std::lock_guard guard(mutex_);
-    buffer_ = *msg;
+    std::lock_guard guard(g_mutex);
+    if (msg) {
+      buffer_ = *msg;
+    }
   }
 
 private:
-  std::mutex & mutex_;
   MessageType & buffer_;
 };
+
+namespace detail
+{
+template <typename T>
+struct CallbackHandlerType;
+
+template <typename... Ts>
+struct CallbackHandlerType<std::variant<Ts...>>
+{
+  using type = std::variant<CallbackHandler<Ts>...>;
+};
+}  // namespace detail
+
+template <typename T>
+using CallbackHandlerType = typename detail::CallbackHandlerType<T>::type;
 
 std::optional<std::string> resolve_pkg_share_uri(const std::string & uri_path)
 {
@@ -111,12 +130,14 @@ public:
     const std::string & map_path, const std::string & config_path, rclcpp::Node & node)
   : map_path_(map_path), config_path_(config_path)
   {
+    std::lock_guard guard(g_mutex);
+
     server_ = node.create_service<std_srvs::srv::Empty>(
       "/autoware_test_utils/topic_snapshot_saver",
       std::bind(
         &TopicSnapShotSaver::on_service, this, std::placeholders::_1, std::placeholders::_2));
 
-    // get map hash
+    // get map version
     // setup subscribers and callbacks
     const auto config = YAML::LoadFile(config_path);
     for (const auto field : config["fields"]) {
@@ -127,33 +148,106 @@ public:
       }
       const auto type_index = type_index_opt.value();
       const auto topic = field["topic"].as<std::string>();
-      if (type_index == 0) {
+      field_2_topic_type_[name] = type_index;
+
+      /*
+      if (0 == type_index) {
         CallbackHandler<typename std::variant_alternative_t<0, MessageType>> handler(
-          mutex_, message_buffer_.at(0));
-        const auto sub = create_subscriber<0>(
+          std::ref(mutex_), std::ref(message_buffer_.at(0)));
+        handlers_.emplace_back(handler);
+        auto & handler_ref =
+          std::get<CallbackHandler<typename std::variant_alternative_t<0, MessageType>>>(
+            handlers_.back());
+        subscribers_[0] = create_subscriber<0>(
           topic, node,
           std::bind(
-            &CallbackHandler<std::variant_alternative_t<0, MessageType>>::on_callback, &handler,
+            &CallbackHandler<std::variant_alternative_t<0, MessageType>>::on_callback, &handler_ref,
             std::placeholders::_1));
       }
+      */
+
+      /**
+       * NOTE: for a specific topic-type, only one topic-name is allowed
+       *
+       * `message_buffer_` holds buffer for each topic-type for the lifetime duration of this class
+       *
+       * `subscribers_` holds a subscriber for each topic-type for the lifetime duration of this
+       * class
+       *
+       * `handlers_` holds a handler for each topic-type for the lifetime duration of this
+       * class
+       *
+       */
+
+#define REGISTER_CALLBACK(arg)                                                                     \
+  if (arg == type_index) {                                                                         \
+    CallbackHandler<typename std::variant_alternative_t<arg, MessageType>> handler(                \
+      std::ref(message_buffer_.at(arg)));                                                          \
+    handlers_.emplace_back(handler);                                                               \
+    auto & handler_ref =                                                                           \
+      std::get<CallbackHandler<typename std::variant_alternative_t<arg, MessageType>>>(            \
+        handlers_.back());                                                                         \
+    subscribers_[arg] = create_subscriber<arg>(                                                    \
+      topic, node,                                                                                 \
+      std::bind(                                                                                   \
+        &CallbackHandler<std::variant_alternative_t<arg, MessageType>>::on_callback, &handler_ref, \
+        std::placeholders::_1));                                                                   \
+  }
+
+      REGISTER_CALLBACK(0);
+      REGISTER_CALLBACK(1);
+      REGISTER_CALLBACK(2);
+      REGISTER_CALLBACK(3);
+      REGISTER_CALLBACK(4);
+      REGISTER_CALLBACK(5);
     }
   }
 
-  void on_callback([[maybe_unused]] const nav_msgs::msg::Odometry::SharedPtr msg) { return; }
-
+private:
   const std::string map_path_;
   const std::string config_path_;
 
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr server_;
-  std::unordered_map<std::string, rclcpp::SubscriptionBase::SharedPtr> subscribers_;
 
+  std::unordered_map<size_t, rclcpp::SubscriptionBase::SharedPtr> subscribers_;
+  std::vector<CallbackHandlerType<MessageType>> handlers_;
   std::array<MessageType, std::variant_size_v<MessageType>> message_buffer_;
-  std::mutex mutex_;
-
+  std::unordered_map<std::string, size_t> field_2_topic_type_;
   void on_service(
     [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Empty::Request> req,
     [[maybe_unused]] std::shared_ptr<std_srvs::srv::Empty::Response> res)
   {
+    std::lock_guard guard(g_mutex);
+
+    YAML::Node yaml;
+
+    yaml["format_version"] = 1;
+
+    for (const auto & [field, type_index] : field_2_topic_type_) {
+      if (0 == type_index) {
+        const auto & msg = std::get<typename std::variant_alternative_t<0, MessageType>>(
+          message_buffer_.at(type_index));
+        yaml[field] = to_yaml(msg);  // NOTE: ADL works fine!
+      }
+    }
+
+    const std::string desc = std::string(R"(#
+# AUTO GENERATED by autoware_test_utils::topic_snapshot_saver
+# format1:
+#
+# format_version: <format-major-version, int>
+# fields(this is array)
+#   - name: <field-name-for-your-yaml-of-this-topic, str>
+#     type: either {Odometry | AccelWithCovarianceStamped | PredictedObjects | OperationModeState | LaneletRoute | TrafficLightGroupArray}
+#     topic: <topic-name, str>
+#
+)");
+
+    std::ofstream ofs("topic_snapshot.yaml");
+    ofs << desc;
+    ofs << yaml;
+
+    std::cout << "saved planner_data" << std::endl;
   }
 };
 
@@ -165,6 +259,7 @@ public:
     const auto map_path_uri = declare_parameter<std::string>("map_path", "none");
     const auto config_path_uri = declare_parameter<std::string>("config_path", "none");
     if (map_path_uri == "none" || config_path_uri == "none") {
+      RCLCPP_ERROR(get_logger(), "map_path_uri and/or config_path_uri are not provided");
       return;
     }
     const auto map_path = resolve_pkg_share_uri(map_path_uri);
@@ -192,4 +287,14 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
+
+  rclcpp::executors::SingleThreadedExecutor exec;
+
+  auto node = std::make_shared<TopicSnapShotSaverFrontEnd>();
+
+  exec.add_node(node);
+
+  exec.spin();
+
+  rclcpp::shutdown();
 }
