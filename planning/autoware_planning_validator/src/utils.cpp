@@ -14,8 +14,12 @@
 
 #include "autoware/planning_validator/utils.hpp"
 
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+
+#include <boost/geometry/algorithms/intersects.hpp>
 
 #include <memory>
 #include <string>
@@ -287,6 +291,139 @@ std::pair<double, size_t> calcMaxSteeringRates(
   }
 
   return {max_steering_rate, max_index};
+}
+
+bool checkCollision(
+  const PredictedObjects & predicted_objects, const Trajectory & trajectory,
+  const geometry_msgs::msg::Point & current_ego_position, const VehicleInfo & vehicle_info,
+  const double collision_check_distance_threshold)
+{
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> filtered_trajectory;
+  filtered_trajectory.reserve(trajectory.points.size());
+
+  for (size_t i = 0; i < trajectory.points.size(); ++i) {
+    const auto & point = trajectory.points[i];
+    const double dist_to_point = autoware::motion_utils::calcSignedArcLength(
+      trajectory.points, current_ego_position, size_t(i));
+
+    // Only include points that are ahead of current position (positive distance)
+    if (dist_to_point > 0.0) {
+      filtered_trajectory.push_back(point);
+    }
+  }
+
+  // Calculate timestamps for each trajectory point
+  motion_utils::calculate_time_from_start(filtered_trajectory, current_ego_position);
+
+  // Generate vehicle footprint polygons along the trajectory
+  std::vector<Polygon2d> vehicle_footprints;
+  vehicle_footprints.reserve(filtered_trajectory.size());
+  for (const auto & point : filtered_trajectory) {
+    vehicle_footprints.push_back(createVehicleFootprintPolygon(point.pose, vehicle_info));
+  }
+
+  const double time_tolerance = 0.1;
+  // Check each predicted object for potential collisions
+  for (const auto & object : predicted_objects.objects) {
+    // Calculate distance to object and skip if too far from trajectory
+    const auto & object_position = object.kinematics.initial_pose_with_covariance.pose.position;
+    const size_t nearest_index =
+      autoware::motion_utils::findNearestIndex(filtered_trajectory, object_position);
+    const double object_distance_to_nearest_point =
+      autoware::universe_utils::calcDistance2d(filtered_trajectory[nearest_index], object_position);
+
+    if (object_distance_to_nearest_point > collision_check_distance_threshold) {
+      continue;
+    }
+
+    // Find the predicted path with highest confidence for this object
+    const auto selected_predicted_path =
+      [&object]() -> const autoware_perception_msgs::msg::PredictedPath * {
+      const auto max_confidence_it = std::max_element(
+        object.kinematics.predicted_paths.begin(), object.kinematics.predicted_paths.end(),
+        [](const auto & a, const auto & b) { return a.confidence < b.confidence; });
+
+      return max_confidence_it != object.kinematics.predicted_paths.end() ? &(*max_confidence_it)
+                                                                          : nullptr;
+    }();
+
+    // Skip if no valid predicted path exists
+    if (!selected_predicted_path) {
+      continue;
+    }
+
+    // Generate polygons for all predicted positions of the object
+    std::vector<Polygon2d> predicted_object_polygons;
+    predicted_object_polygons.reserve(selected_predicted_path->path.size());
+
+    const double predicted_time_step =
+      selected_predicted_path->time_step.sec + selected_predicted_path->time_step.nanosec * 1e-9;
+
+    for (const auto & pose : selected_predicted_path->path) {
+      predicted_object_polygons.push_back(
+        autoware::universe_utils::toPolygon2d(pose, object.shape));
+    }
+
+    // Check for collisions by comparing vehicle and object polygons at matching timestamps
+    for (size_t i = 0; i < filtered_trajectory.size(); ++i) {
+      const auto & trajectory_point = filtered_trajectory[i];
+      const double trajectory_time =
+        trajectory_point.time_from_start.sec + trajectory_point.time_from_start.nanosec * 1e-9;
+
+      for (size_t j = 0; j < selected_predicted_path->path.size(); ++j) {
+        const double predicted_time = j * predicted_time_step;
+
+        // Skip if timestamps don't match within tolerance
+        if (std::fabs(trajectory_time - predicted_time) > time_tolerance) {
+          continue;
+        }
+
+        // Skip collision check if object is too far away
+        const double distance = autoware::universe_utils::calcDistance2d(
+          trajectory_point.pose.position, selected_predicted_path->path[j].position);
+        if (distance >= 10.0) {
+          continue;
+        }
+
+        // Check for geometric intersection between vehicle and object polygons
+        if (boost::geometry::intersects(vehicle_footprints[i], predicted_object_polygons[j])) {
+          return false;
+        }
+      }
+    }
+  }
+
+  // No collisions detected
+  return true;
+}
+
+Polygon2d createVehicleFootprintPolygon(
+  const geometry_msgs::msg::Pose & pose, const VehicleInfo & vehicle_info)
+{
+  using autoware::universe_utils::Point2d;
+  const double length = vehicle_info.vehicle_length_m;
+  const double width = vehicle_info.vehicle_width_m;
+  const double rear_overhang = vehicle_info.rear_overhang_m;
+  const double yaw = tf2::getYaw(pose.orientation);
+
+  // Calculate relative positions of vehicle corners
+  std::vector<Point2d> footprint_points{
+    Point2d(length - rear_overhang, width / 2.0), Point2d(length - rear_overhang, -width / 2.0),
+    Point2d(-rear_overhang, -width / 2.0), Point2d(-rear_overhang, width / 2.0)};
+
+  Polygon2d footprint_polygon;
+  footprint_polygon.outer().reserve(footprint_points.size() + 1);
+
+  for (const auto & point : footprint_points) {
+    Point2d transformed_point;
+    transformed_point.x() = pose.position.x + point.x() * std::cos(yaw) - point.y() * std::sin(yaw);
+    transformed_point.y() = pose.position.y + point.x() * std::sin(yaw) + point.y() * std::cos(yaw);
+    footprint_polygon.outer().push_back(transformed_point);
+  }
+
+  footprint_polygon.outer().push_back(footprint_polygon.outer().front());
+
+  return footprint_polygon;
 }
 
 bool checkFinite(const TrajectoryPoint & point)

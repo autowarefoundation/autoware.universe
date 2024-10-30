@@ -15,8 +15,12 @@
 #ifndef AUTOWARE__PLANNING_VALIDATOR__UTILS_HPP_
 #define AUTOWARE__PLANNING_VALIDATOR__UTILS_HPP_
 
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 
 #include <string>
@@ -25,6 +29,9 @@
 
 namespace autoware::planning_validator
 {
+using autoware::universe_utils::Polygon2d;
+using autoware::vehicle_info_utils::VehicleInfo;
+using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 
@@ -56,6 +63,31 @@ std::pair<double, size_t> calcMaxSteeringAngles(
 
 std::pair<double, size_t> calcMaxSteeringRates(
   const Trajectory & trajectory, const double wheelbase);
+
+/**
+ * @brief Validates trajectory for potential collisions with predicted objects
+ *
+ * This function checks if the planned trajectory will result in any collisions with
+ * predicted objects in the environment. It performs the following steps:
+ * 1. Resamples the trajectory for efficient checking
+ * 2. Generates vehicle footprints along the trajectory
+ * 3. Checks for intersections with predicted object paths
+ *
+ * @param predicted_objects List of predicted objects with their predicted paths.
+ * @param trajectory Planned trajectory of the ego vehicle.
+ * @param current_ego_point Current position of the ego vehicle.
+ * @param vehicle_info Information about the ego vehicle (e.g., dimensions).
+ * @param collision_check_distance_threshold Maximum distance to consider objects for collision
+ * checking.
+ * @return True if a potential collision is detected; false otherwise.
+ */
+bool checkCollision(
+  const PredictedObjects & objects, const Trajectory & trajectory,
+  const geometry_msgs::msg::Point & current_ego_point, const VehicleInfo & vehicle_info,
+  const double collision_check_distance_threshold = 10.0);
+
+Polygon2d createVehicleFootprintPolygon(
+  const geometry_msgs::msg::Pose & pose, const VehicleInfo & vehicle_info);
 
 bool checkFinite(const TrajectoryPoint & point);
 

@@ -15,12 +15,9 @@
 #include "autoware/planning_validator/planning_validator.hpp"
 
 #include "autoware/planning_validator/utils.hpp"
-#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
-
-#include <boost/geometry/algorithms/intersects.hpp>
 
 #include <memory>
 #include <string>
@@ -171,6 +168,9 @@ void PlanningValidator::setupDiag()
     setStatus(
       stat, validation_status_.is_valid_forward_trajectory_length,
       "trajectory length is too short");
+  });
+  d->add(ns + "trajectory_collision", [&](auto & stat) {
+    setStatus(stat, validation_status_.is_valid_no_collision, "collision is detected");
   });
 }
 
@@ -327,7 +327,7 @@ void PlanningValidator::validate(const Trajectory & trajectory)
   s.is_valid_lateral_acc = checkValidLateralAcceleration(resampled);
   s.is_valid_steering = checkValidSteering(resampled);
   s.is_valid_steering_rate = checkValidSteeringRate(resampled);
-  s.is_valid_no_collision = checkValidNoCollision(resampled);
+  s.is_valid_no_collision = checkValidTrajectoryCollision(resampled);
 
   s.invalid_count = isAllValid(s) ? 0 : s.invalid_count + 1;
 }
@@ -553,160 +553,16 @@ bool PlanningValidator::checkValidForwardTrajectoryLength(const Trajectory & tra
   return forward_length > forward_length_required;
 }
 
-bool PlanningValidator::checkValidNoCollision(const Trajectory & trajectory)
+bool PlanningValidator::checkValidTrajectoryCollision(const Trajectory & trajectory)
 {
-  const bool collision_check_unnecessary = current_kinematics_->twist.twist.linear.x < 0.1;
-  if (collision_check_unnecessary) {
-    return true;
+  const auto ego_speed = std::abs(current_kinematics_->twist.twist.linear.x);
+  if (ego_speed < 1.0 / 3.6) {
+    return true;  // Ego is almost stopped.
   }
+
   const bool is_collision = checkCollision(
     *current_objects_, trajectory, current_kinematics_->pose.pose.position, vehicle_info_);
   return is_collision;
-}
-
-// TODO(Sugahara): move to utils
-bool PlanningValidator::checkCollision(
-  const PredictedObjects & predicted_objects, const Trajectory & trajectory,
-  const geometry_msgs::msg::Point & current_ego_position, const VehicleInfo & vehicle_info,
-  const double collision_check_distance_threshold)
-{
-  // TODO(Sugahara): Detect collision if collision is detected in consecutive frames
-
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> resampled_trajectory;
-  resampled_trajectory.reserve(trajectory.points.size());
-
-  if (!trajectory.points.empty()) {
-    resampled_trajectory.push_back(trajectory.points.front());
-
-    constexpr double min_interval = 0.5;
-    for (size_t i = 1; i < trajectory.points.size(); ++i) {
-      const auto & current_point = trajectory.points[i];
-      if (current_point.longitudinal_velocity_mps < 0.1) {
-        continue;
-      }
-      const double distance_to_previous_point =
-        universe_utils::calcDistance2d(resampled_trajectory.back(), current_point);
-      if (distance_to_previous_point > min_interval) {
-        resampled_trajectory.push_back(current_point);
-      }
-    }
-  }
-  motion_utils::calculate_time_from_start(resampled_trajectory, current_ego_position);
-
-  // generate vehicle footprint along the trajectory
-  std::vector<Polygon2d> vehicle_footprints;
-  vehicle_footprints.reserve(resampled_trajectory.size());
-
-  for (const auto & point : resampled_trajectory) {
-    vehicle_footprints.push_back(createVehicleFootprintPolygon(point.pose, vehicle_info));
-  }
-
-  const double time_tolerance = 0.1;  // time tolerance threshold
-  for (const auto & object : predicted_objects.objects) {
-    // Calculate distance between object position and nearest point on trajectory
-    const auto & object_position = object.kinematics.initial_pose_with_covariance.pose.position;
-    const size_t nearest_index =
-      autoware::motion_utils::findNearestIndex(resampled_trajectory, object_position);
-    const double object_distance_to_nearest_point = autoware::universe_utils::calcDistance2d(
-      resampled_trajectory[nearest_index], object_position);
-
-    // Skip collision check if object is too far from trajectory
-    if (object_distance_to_nearest_point > collision_check_distance_threshold) {
-      continue;
-    }
-
-    // Select path with highest confidence from object's predicted paths
-    const auto selected_predicted_path =
-      [&object]() -> const autoware_perception_msgs::msg::PredictedPath * {
-      const auto max_confidence_it = std::max_element(
-        object.kinematics.predicted_paths.begin(), object.kinematics.predicted_paths.end(),
-        [](const auto & a, const auto & b) { return a.confidence < b.confidence; });
-
-      return max_confidence_it != object.kinematics.predicted_paths.end() ? &(*max_confidence_it)
-                                                                          : nullptr;
-    }();
-
-    if (!selected_predicted_path) {
-      continue;
-    }
-
-    // Generate polygons for predicted object positions
-    std::vector<Polygon2d> predicted_object_polygons;
-    predicted_object_polygons.reserve(selected_predicted_path->path.size());
-
-    const double predicted_time_step =
-      selected_predicted_path->time_step.sec + selected_predicted_path->time_step.nanosec * 1e-9;
-
-    for (const auto & pose : selected_predicted_path->path) {
-      predicted_object_polygons.push_back(
-        autoware::universe_utils::toPolygon2d(pose, object.shape));
-    }
-
-    // Check for collision (considering time)
-    for (size_t i = 0; i < resampled_trajectory.size(); ++i) {
-      const auto & trajectory_point = resampled_trajectory[i];
-      const double trajectory_time =
-        trajectory_point.time_from_start.sec + trajectory_point.time_from_start.nanosec * 1e-9;
-
-      for (size_t j = 0; j < selected_predicted_path->path.size(); ++j) {
-        const double predicted_time = j * predicted_time_step;
-
-        if (std::fabs(trajectory_time - predicted_time) > time_tolerance) {
-          continue;
-        }
-
-        const double distance = autoware::universe_utils::calcDistance2d(
-          trajectory_point.pose.position, selected_predicted_path->path[j].position);
-
-        if (distance >= 10.0) {
-          continue;
-        }
-
-        if (boost::geometry::intersects(vehicle_footprints[i], predicted_object_polygons[j])) {
-          // Collision detected
-          std::cerr << "Collision detected at " << std::endl;
-          std::cerr << "  trajectory_time: " << trajectory_time << std::endl;
-          std::cerr << "  predicted_time: " << predicted_time << std::endl;
-          std::cerr << "object velocity: "
-                    << object.kinematics.initial_twist_with_covariance.twist.linear.x << "m/s"
-                    << std::endl;
-          return false;
-        }
-      }
-    }
-  }
-
-  return true;
-}
-
-// TODO(Sugahara): move to utils
-Polygon2d PlanningValidator::createVehicleFootprintPolygon(
-  const geometry_msgs::msg::Pose & pose, const VehicleInfo & vehicle_info)
-{
-  using autoware::universe_utils::Point2d;
-  const double length = vehicle_info.vehicle_length_m;
-  const double width = vehicle_info.vehicle_width_m;
-  const double rear_overhang = vehicle_info.rear_overhang_m;
-  const double yaw = tf2::getYaw(pose.orientation);
-
-  // Calculate relative positions of vehicle corners
-  std::vector<Point2d> footprint_points{
-    Point2d(length - rear_overhang, width / 2.0), Point2d(length - rear_overhang, -width / 2.0),
-    Point2d(-rear_overhang, -width / 2.0), Point2d(-rear_overhang, width / 2.0)};
-
-  Polygon2d footprint_polygon;
-  footprint_polygon.outer().reserve(footprint_points.size() + 1);
-
-  for (const auto & point : footprint_points) {
-    Point2d transformed_point;
-    transformed_point.x() = pose.position.x + point.x() * std::cos(yaw) - point.y() * std::sin(yaw);
-    transformed_point.y() = pose.position.y + point.x() * std::sin(yaw) + point.y() * std::cos(yaw);
-    footprint_polygon.outer().push_back(transformed_point);
-  }
-
-  footprint_polygon.outer().push_back(footprint_polygon.outer().front());
-
-  return footprint_polygon;
 }
 
 bool PlanningValidator::isAllValid(const PlanningValidatorStatus & s) const
