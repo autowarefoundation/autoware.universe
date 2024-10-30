@@ -49,13 +49,11 @@ using autoware::motion_utils::calcLongitudinalOffsetPose;
 using autoware::motion_utils::calcSignedArcLength;
 using autoware::motion_utils::calcSignedArcLengthPartialSum;
 using autoware::motion_utils::findNearestSegmentIndex;
-using autoware::motion_utils::insertTargetPoint;
 using autoware::motion_utils::resamplePath;
 using autoware::universe_utils::createPoint;
 using autoware::universe_utils::getPose;
 using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
-using autoware::universe_utils::pose2transform;
 using autoware::universe_utils::toHexString;
 
 namespace
@@ -936,37 +934,46 @@ void CrosswalkModule::applySlowDownByOcclusion(
   const auto is_crosswalk_ignored =
     (planner_param_.occlusion_ignore_with_traffic_light && crosswalk_has_traffic_light) ||
     crosswalk_.hasAttribute("skip_occluded_slowdown");
-  if (planner_param_.occlusion_enable && !is_crosswalk_ignored) {
-    const auto dist_ego_to_crosswalk =
-      calcSignedArcLength(output.points, ego_pos, first_path_point_on_crosswalk);
-    const auto detection_range =
-      planner_data_->vehicle_info_.max_lateral_offset_m +
-      calculate_detection_range(
-        planner_param_.occlusion_occluded_object_velocity, dist_ego_to_crosswalk,
-        planner_data_->current_velocity->twist.linear.x);
-    const auto is_ego_on_the_crosswalk =
-      dist_ego_to_crosswalk <= planner_data_->vehicle_info_.max_longitudinal_offset_m;
-    if (!is_ego_on_the_crosswalk) {
-      if (is_crosswalk_occluded(
-            crosswalk_, *planner_data_->occupancy_grid, first_path_point_on_crosswalk,
-            detection_range, objects_ptr->objects, planner_param_)) {
-        if (!current_initial_occlusion_time_) current_initial_occlusion_time_ = now;
-        if (cmp_with_time_buffer(current_initial_occlusion_time_, std::greater_equal<double>{}))
-          most_recent_occlusion_time_ = now;
-      } else if (!cmp_with_time_buffer(most_recent_occlusion_time_, std::greater<double>{})) {
-        current_initial_occlusion_time_.reset();
-      }
-
-      if (cmp_with_time_buffer(most_recent_occlusion_time_, std::less_equal<double>{})) {
-        const auto target_velocity = calcTargetVelocity(first_path_point_on_crosswalk, output);
-        applySlowDown(
-          output, first_path_point_on_crosswalk, last_path_point_on_crosswalk,
-          std::max(target_velocity, planner_param_.occlusion_slow_down_velocity));
-        debug_data_.virtual_wall_suffix = " (occluded)";
-      } else {
-        most_recent_occlusion_time_.reset();
-      }
+  if (!planner_param_.occlusion_enable || is_crosswalk_ignored) {
+    return;
+  }
+  const auto dist_ego_to_crosswalk =
+    calcSignedArcLength(output.points, ego_pos, first_path_point_on_crosswalk);
+  const auto is_ego_on_the_crosswalk =
+    dist_ego_to_crosswalk <= planner_data_->vehicle_info_.max_longitudinal_offset_m;
+  if (is_ego_on_the_crosswalk) {
+    return;
+  }
+  const auto detection_range =
+    planner_data_->vehicle_info_.max_lateral_offset_m +
+    calculate_detection_range(
+      planner_param_.occlusion_occluded_object_velocity, dist_ego_to_crosswalk,
+      planner_data_->current_velocity->twist.linear.x);
+  const auto detection_areas = calculate_detection_areas(
+    crosswalk_, {first_path_point_on_crosswalk.x, first_path_point_on_crosswalk.y},
+    detection_range);
+  debug_data_.occlusion_detection_areas = detection_areas;
+  debug_data_.crosswalk_origin = first_path_point_on_crosswalk;
+  if (is_crosswalk_occluded(
+        *planner_data_->occupancy_grid, detection_areas, objects_ptr->objects, planner_param_)) {
+    if (!current_initial_occlusion_time_) {
+      current_initial_occlusion_time_ = now;
     }
+    if (cmp_with_time_buffer(current_initial_occlusion_time_, std::greater_equal<double>{})) {
+      most_recent_occlusion_time_ = now;
+    }
+  } else if (!cmp_with_time_buffer(most_recent_occlusion_time_, std::greater<double>{})) {
+    current_initial_occlusion_time_.reset();
+  }
+
+  if (cmp_with_time_buffer(most_recent_occlusion_time_, std::less_equal<double>{})) {
+    const auto target_velocity = calcTargetVelocity(first_path_point_on_crosswalk, output);
+    applySlowDown(
+      output, first_path_point_on_crosswalk, last_path_point_on_crosswalk,
+      std::max(target_velocity, planner_param_.occlusion_slow_down_velocity));
+    debug_data_.virtual_wall_suffix = " (occluded)";
+  } else {
+    most_recent_occlusion_time_.reset();
   }
 }
 

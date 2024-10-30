@@ -144,21 +144,17 @@ GoalPlannerModule::GoalPlannerModule(
 }
 
 bool GoalPlannerModule::hasPreviousModulePathShapeChanged(
-  const BehaviorModuleOutput & previous_module_output) const
+  const BehaviorModuleOutput & previous_module_output,
+  const BehaviorModuleOutput & last_previous_module_output) const
 {
-  const auto last_previous_module_output = thread_safe_data_.get_last_previous_module_output();
-  if (!last_previous_module_output) {
-    return true;
-  }
-
   // Calculate the lateral distance between each point of the current path and the nearest point of
   // the last path
   constexpr double LATERAL_DEVIATION_THRESH = 0.3;
   for (const auto & p : previous_module_output.path.points) {
     const size_t nearest_seg_idx = autoware::motion_utils::findNearestSegmentIndex(
-      last_previous_module_output->path.points, p.point.pose.position);
-    const auto seg_front = last_previous_module_output->path.points.at(nearest_seg_idx);
-    const auto seg_back = last_previous_module_output->path.points.at(nearest_seg_idx + 1);
+      last_previous_module_output.path.points, p.point.pose.position);
+    const auto seg_front = last_previous_module_output.path.points.at(nearest_seg_idx);
+    const auto seg_back = last_previous_module_output.path.points.at(nearest_seg_idx + 1);
     // Check if the target point is within the segment
     const Eigen::Vector3d segment_vec{
       seg_back.point.pose.position.x - seg_front.point.pose.position.x,
@@ -174,7 +170,7 @@ bool GoalPlannerModule::hasPreviousModulePathShapeChanged(
       continue;
     }
     const double lateral_distance = std::abs(autoware::motion_utils::calcLateralOffset(
-      last_previous_module_output->path.points, p.point.pose.position, nearest_seg_idx));
+      last_previous_module_output.path.points, p.point.pose.position, nearest_seg_idx));
     if (lateral_distance > LATERAL_DEVIATION_THRESH) {
       return true;
     }
@@ -183,14 +179,11 @@ bool GoalPlannerModule::hasPreviousModulePathShapeChanged(
 }
 
 bool GoalPlannerModule::hasDeviatedFromLastPreviousModulePath(
-  const std::shared_ptr<const PlannerData> planner_data) const
+  const std::shared_ptr<const PlannerData> planner_data,
+  const BehaviorModuleOutput & last_previous_module_output) const
 {
-  const auto last_previous_module_output = thread_safe_data_.get_last_previous_module_output();
-  if (!last_previous_module_output) {
-    return true;
-  }
   return std::abs(autoware::motion_utils::calcLateralOffset(
-           last_previous_module_output->path.points,
+           last_previous_module_output.path.points,
            planner_data->self_odometry->pose.pose.position)) > 0.3;
 }
 
@@ -212,6 +205,7 @@ void GoalPlannerModule::onTimer()
   std::shared_ptr<const PlannerData> local_planner_data{nullptr};
   std::optional<ModuleStatus> current_status_opt{std::nullopt};
   std::optional<BehaviorModuleOutput> previous_module_output_opt{std::nullopt};
+  std::optional<BehaviorModuleOutput> last_previous_module_output_opt{std::nullopt};
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map{nullptr};
   std::optional<GoalPlannerParameters> parameters_opt{std::nullopt};
   std::shared_ptr<GoalSearcherBase> goal_searcher{nullptr};
@@ -224,6 +218,7 @@ void GoalPlannerModule::onTimer()
       local_planner_data = std::make_shared<const PlannerData>(gp_planner_data.planner_data);
       current_status_opt = gp_planner_data.current_status;
       previous_module_output_opt = gp_planner_data.previous_module_output;
+      last_previous_module_output_opt = gp_planner_data.last_previous_module_output;
       occupancy_grid_map = gp_planner_data.occupancy_grid_map;
       parameters_opt = gp_planner_data.parameters;
       goal_searcher = gp_planner_data.goal_searcher;
@@ -232,7 +227,7 @@ void GoalPlannerModule::onTimer()
   // end of critical section
   if (
     !local_planner_data || !current_status_opt || !previous_module_output_opt ||
-    !occupancy_grid_map || !parameters_opt || !goal_searcher) {
+    !last_previous_module_output_opt || !occupancy_grid_map || !parameters_opt || !goal_searcher) {
     RCLCPP_ERROR(
       getLogger(),
       "failed to get valid "
@@ -242,6 +237,7 @@ void GoalPlannerModule::onTimer()
   }
   const auto & current_status = current_status_opt.value();
   const auto & previous_module_output = previous_module_output_opt.value();
+  const auto & last_previous_module_output = last_previous_module_output_opt.value();
   const auto & parameters = parameters_opt.value();
 
   if (current_status == ModuleStatus::IDLE) {
@@ -280,12 +276,12 @@ void GoalPlannerModule::onTimer()
     if (thread_safe_data_.get_pull_over_path_candidates().empty()) {
       return true;
     }
-    if (hasPreviousModulePathShapeChanged(previous_module_output)) {
+    if (hasPreviousModulePathShapeChanged(previous_module_output, last_previous_module_output)) {
       RCLCPP_DEBUG(getLogger(), "has previous module path shape changed");
       return true;
     }
     if (
-      hasDeviatedFromLastPreviousModulePath(local_planner_data) &&
+      hasDeviatedFromLastPreviousModulePath(local_planner_data, last_previous_module_output) &&
       current_state != PathDecisionState::DecisionKind::DECIDED) {
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
@@ -369,8 +365,6 @@ void GoalPlannerModule::onTimer()
   thread_safe_data_.set_pull_over_path_candidates(path_candidates);
   thread_safe_data_.set_closest_start_pose(closest_start_pose);
   RCLCPP_INFO(getLogger(), "generated %lu pull over path candidates", path_candidates.size());
-
-  thread_safe_data_.set_last_previous_module_output(previous_module_output);
 }
 
 void GoalPlannerModule::onFreespaceParkingTimer()
@@ -518,7 +512,7 @@ void GoalPlannerModule::updateData()
   {
     std::lock_guard<std::mutex> guard(gp_planner_data_mutex_);
     if (!gp_planner_data_) {
-      gp_planner_data_ = GoalPlannerData(*planner_data_, *parameters_);
+      gp_planner_data_ = GoalPlannerData(*planner_data_, *parameters_, getPreviousModuleOutput());
     }
     auto & gp_planner_data = gp_planner_data_.value();
     // NOTE: for the above reasons, PlannerManager/behavior_path_planner_node ensure that
@@ -591,8 +585,14 @@ void GoalPlannerModule::updateData()
 
   // update goal searcher and generate goal candidates
   if (thread_safe_data_.get_goal_candidates().empty()) {
-    goal_searcher_->setReferenceGoal(
-      calcRefinedGoal(planner_data_->route_handler->getOriginalGoalPose()));
+    const auto refined_goal = goal_planner_utils::calcRefinedGoal(
+      planner_data_->route_handler->getOriginalGoalPose(), planner_data_->route_handler,
+      left_side_parking_, planner_data_->parameters.vehicle_width,
+      planner_data_->parameters.base_link2front, planner_data_->parameters.base_link2rear,
+      *parameters_);
+    if (refined_goal) {
+      goal_searcher_->setReferenceGoal(refined_goal.value());
+    }
     thread_safe_data_.set_goal_candidates(generateGoalCandidates());
   }
 
@@ -710,11 +710,19 @@ bool GoalPlannerModule::isExecutionRequested() const
   lanelet::ConstLanelet target_lane{};
   lanelet::utils::query::getClosestLanelet(pull_over_lanes, goal_pose, &target_lane);
 
-  lanelet::ConstLanelet previous_module_terminal_lane{};
+  // Get the lanelet of the ego vehicle's side edge at the terminal pose of the previous module's
+  // path. Check if the lane is the target lane or the neighboring lane. NOTE: This is because in
+  // the case of avoidance, there is a possibility of base_link entering the neighboring lane, and
+  // we want to activate the pull over at this time as well.
+  const Pose previous_terminal_pose = getPreviousModuleOutput().path.points.back().point.pose;
+  const double vehicle_half_width = planner_data_->parameters.vehicle_width / 2.0;
+  const Pose previous_terminal_vehicle_edge_pose = calcOffsetPose(
+    previous_terminal_pose, 0, left_side_parking_ ? vehicle_half_width : -vehicle_half_width, 0);
+  lanelet::ConstLanelet previous_module_terminal_vehicle_edge_lane{};
   route_handler->getClosestLaneletWithinRoute(
-    getPreviousModuleOutput().path.points.back().point.pose, &previous_module_terminal_lane);
+    previous_terminal_vehicle_edge_pose, &previous_module_terminal_vehicle_edge_lane);
 
-  if (!isCrossingPossible(previous_module_terminal_lane, target_lane)) {
+  if (!isCrossingPossible(previous_module_terminal_vehicle_edge_lane, target_lane)) {
     return false;
   }
 
@@ -753,61 +761,6 @@ double GoalPlannerModule::calcModuleRequestLength() const
                                         approximate_pull_over_distance_;
 
   return std::max(minimum_request_length, parameters_->pull_over_minimum_request_length);
-}
-
-Pose GoalPlannerModule::calcRefinedGoal(const Pose & goal_pose) const
-{
-  const double vehicle_width = planner_data_->parameters.vehicle_width;
-  const double base_link2front = planner_data_->parameters.base_link2front;
-  const double base_link2rear = planner_data_->parameters.base_link2rear;
-
-  const lanelet::ConstLanelets pull_over_lanes = goal_planner_utils::getPullOverLanes(
-    *(planner_data_->route_handler), left_side_parking_, parameters_->backward_goal_search_length,
-    parameters_->forward_goal_search_length);
-
-  lanelet::Lanelet closest_pull_over_lanelet{};
-  lanelet::utils::query::getClosestLanelet(pull_over_lanes, goal_pose, &closest_pull_over_lanelet);
-
-  // calc closest center line pose
-  Pose center_pose{};
-  {
-    // find position
-    const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(goal_pose.position);
-    const auto segment = lanelet::utils::getClosestSegment(
-      lanelet::utils::to2D(lanelet_point), closest_pull_over_lanelet.centerline());
-    const auto p1 = segment.front().basicPoint();
-    const auto p2 = segment.back().basicPoint();
-    const auto direction_vector = (p2 - p1).normalized();
-    const auto p1_to_goal = lanelet_point.basicPoint() - p1;
-    const double s = direction_vector.dot(p1_to_goal);
-    const auto refined_point = p1 + direction_vector * s;
-
-    center_pose.position.x = refined_point.x();
-    center_pose.position.y = refined_point.y();
-    center_pose.position.z = refined_point.z();
-
-    // find orientation
-    const double yaw = std::atan2(direction_vector.y(), direction_vector.x());
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, yaw);
-    center_pose.orientation = tf2::toMsg(tf_quat);
-  }
-
-  const auto distance_from_bound = utils::getSignedDistanceFromBoundary(
-    pull_over_lanes, vehicle_width, base_link2front, base_link2rear, center_pose,
-    left_side_parking_);
-  if (!distance_from_bound) {
-    RCLCPP_ERROR(getLogger(), "fail to calculate refined goal");
-    return goal_pose;
-  }
-
-  const double sign = left_side_parking_ ? -1.0 : 1.0;
-  const double offset_from_center_line =
-    sign * (distance_from_bound.value() + parameters_->margin_from_boundary);
-
-  const auto refined_goal_pose = calcOffsetPose(center_pose, 0, -offset_from_center_line, 0);
-
-  return refined_goal_pose;
 }
 
 bool GoalPlannerModule::planFreespacePath(
@@ -2618,7 +2571,8 @@ void GoalPlannerModule::GoalPlannerData::initializeOccupancyGridMap(
 
 GoalPlannerModule::GoalPlannerData GoalPlannerModule::GoalPlannerData::clone() const
 {
-  GoalPlannerModule::GoalPlannerData gp_planner_data(planner_data, parameters);
+  GoalPlannerModule::GoalPlannerData gp_planner_data(
+    planner_data, parameters, last_previous_module_output);
   gp_planner_data.update(
     parameters, planner_data, current_status, previous_module_output, goal_searcher,
     vehicle_footprint);
@@ -2637,6 +2591,7 @@ void GoalPlannerModule::GoalPlannerData::update(
   planner_data = planner_data_;
   planner_data.route_handler = std::make_shared<RouteHandler>(*(planner_data_.route_handler));
   current_status = current_status_;
+  last_previous_module_output = previous_module_output;
   previous_module_output = previous_module_output_;
   occupancy_grid_map->setMap(*(planner_data.occupancy_grid));
   // to create a deepcopy of GoalPlanner(not GoalPlannerBase), goal_searcher_ is not enough, so

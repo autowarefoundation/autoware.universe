@@ -64,19 +64,8 @@ bool is_mandatory_lane_change(const ModuleType lc_type);
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);
 
-double calcMinimumAcceleration(
-  const double current_velocity, const double min_longitudinal_acc,
-  const LaneChangeParameters & lane_change_parameters);
-
-double calcMaximumAcceleration(
-  const double current_velocity, const double current_max_velocity,
-  const double max_longitudinal_acc, const LaneChangeParameters & lane_change_parameters);
-
 void setPrepareVelocity(
   PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity);
-
-std::vector<double> getAccelerationValues(
-  const double min_acc, const double max_acc, const size_t sampling_num);
 
 std::vector<int64_t> replaceWithSortedIds(
   const std::vector<int64_t> & original_lane_ids,
@@ -84,8 +73,8 @@ std::vector<int64_t> replaceWithSortedIds(
 
 std::vector<std::vector<int64_t>> get_sorted_lane_ids(const CommonDataPtr & common_data_ptr);
 
-lanelet::ConstLanelets getTargetNeighborLanes(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
+lanelet::ConstLanelets get_target_neighbor_lanes(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType & type);
 
 bool isPathInLanelets(

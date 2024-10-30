@@ -125,8 +125,8 @@ private:
     const Header & header, const std::vector<LaneletSegment> & segments, const Pose & goal_pose,
     const UUID & uuid, const bool allow_goal_modification);
   LaneletRoute create_route(
-    const Header & header, const std::vector<Pose> & waypoints, const Pose & goal_pose,
-    const UUID & uuid, const bool allow_goal_modification);
+    const Header & header, const std::vector<Pose> & waypoints, const Pose & start_pose,
+    const Pose & goal_pose, const UUID & uuid, const bool allow_goal_modification);
 
   void publish_pose_log(const Pose & pose, const std::string & pose_type);
 
