@@ -50,7 +50,8 @@ uint8_t PerceptionNode::mapping(
 }
 
 void PerceptionNode::object_recognize(
-  const perception_interface::ObjectRecognition::Message::ConstSharedPtr msg)
+  const autoware::component_interface_specs::perception::ObjectRecognition::Message::ConstSharedPtr
+    msg)
 {
   DynamicObjectArray::Message objects;
   objects.header = msg->header;

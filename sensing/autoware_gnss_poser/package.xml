@@ -19,9 +19,9 @@
 
   <build_depend>libboost-dev</build_depend>
 
+  <depend>autoware_component_interface_specs</depend>
   <depend>autoware_geography_utils</depend>
   <depend>autoware_sensing_msgs</depend>
-  <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
   <depend>geographic_msgs</depend>
   <depend>geographiclib</depend>
