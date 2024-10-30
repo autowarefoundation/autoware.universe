@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__TENSORRT_YOLOX__PREPROCESS_HPP_
-#define AUTOWARE__TENSORRT_YOLOX__PREPROCESS_HPP_
+#ifndef AUTOWARE__TENSORRT_YOLOV10__PREPROCESS_HPP_
+#define AUTOWARE__TENSORRT_YOLOV10__PREPROCESS_HPP_
 
 #include <cublas_v2.h>
 #include <cuda.h>
@@ -199,4 +199,4 @@ extern void argmax_gpu(
   cudaStream_t stream);
 }  // namespace tensorrt_yolox
 }  // namespace autoware
-#endif  // AUTOWARE__TENSORRT_YOLOX__PREPROCESS_HPP_
+#endif  // AUTOWARE__TENSORRT_YOLOV10__PREPROCESS_HPP_
