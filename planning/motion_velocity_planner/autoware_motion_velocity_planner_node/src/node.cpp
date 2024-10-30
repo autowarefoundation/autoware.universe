@@ -306,8 +306,7 @@ void MotionVelocityPlannerNode::on_trajectory(
   processing_time_msg.data = processing_times["Total"];
   processing_time_publisher_->publish(processing_time_msg);
 
-  std::shared_ptr<MetricArray> metrics =
-    planner_manager_.get_metrics(get_clock()->now());
+  std::shared_ptr<MetricArray> metrics = planner_manager_.get_metrics(get_clock()->now());
   if (!metrics->metric_array.empty()) {
     metrics_pub_->publish(*metrics);
   }

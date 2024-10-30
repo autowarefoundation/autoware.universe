@@ -118,8 +118,7 @@ void PlanningEvaluatorNode::getRouteData()
   }
 }
 
-void PlanningEvaluatorNode::AddLaneletMetricMsg(
-  const Odometry::ConstSharedPtr ego_state_ptr)
+void PlanningEvaluatorNode::AddLaneletMetricMsg(const Odometry::ConstSharedPtr ego_state_ptr)
 {
   const auto & ego_pose = ego_state_ptr->pose.pose;
   const auto current_lanelets = [&]() {
@@ -140,21 +139,21 @@ void PlanningEvaluatorNode::AddLaneletMetricMsg(
   MetricMsg metric_msg;
 
   {
-  metric_msg.name = base_name+ "lane_id";
-  metric_msg.value = std::to_string(current_lane.id());
-  metrics_msg_.metric_array.push_back(metric_msg);
+    metric_msg.name = base_name + "lane_id";
+    metric_msg.value = std::to_string(current_lane.id());
+    metrics_msg_.metric_array.push_back(metric_msg);
   }
 
   {
-  metric_msg.name = base_name + "s";
-  metric_msg.value = std::to_string(arc_coordinates.length);
-  metrics_msg_.metric_array.push_back(metric_msg);
+    metric_msg.name = base_name + "s";
+    metric_msg.value = std::to_string(arc_coordinates.length);
+    metrics_msg_.metric_array.push_back(metric_msg);
   }
-  
+
   {
-  metric_msg.name = base_name + "t";
-  metric_msg.value = std::to_string(arc_coordinates.distance);
-  metrics_msg_.metric_array.push_back(metric_msg);
+    metric_msg.name = base_name + "t";
+    metric_msg.value = std::to_string(arc_coordinates.distance);
+    metrics_msg_.metric_array.push_back(metric_msg);
   }
   return;
 }
@@ -196,27 +195,26 @@ void PlanningEvaluatorNode::AddKinematicStateMetricMsg(
   return;
 }
 
-void PlanningEvaluatorNode::AddMetricMsg(
-  const Metric & metric, const Stat<double> & metric_stat)
+void PlanningEvaluatorNode::AddMetricMsg(const Metric & metric, const Stat<double> & metric_stat)
 {
   const std::string base_name = metric_to_str.at(metric) + "/";
   MetricMsg metric_msg;
   {
-  metric_msg.name = base_name + "min";
-  metric_msg.value = boost::lexical_cast<decltype(metric_msg.value)>(metric_stat.min());
-  metrics_msg_.metric_array.push_back(metric_msg);
+    metric_msg.name = base_name + "min";
+    metric_msg.value = boost::lexical_cast<decltype(metric_msg.value)>(metric_stat.min());
+    metrics_msg_.metric_array.push_back(metric_msg);
   }
 
   {
-  metric_msg.name = base_name + "max";
-  metric_msg.value = boost::lexical_cast<decltype(metric_msg.value)>(metric_stat.max());
-  metrics_msg_.metric_array.push_back(metric_msg);
+    metric_msg.name = base_name + "max";
+    metric_msg.value = boost::lexical_cast<decltype(metric_msg.value)>(metric_stat.max());
+    metrics_msg_.metric_array.push_back(metric_msg);
   }
 
   {
-  metric_msg.name = base_name + "mean";
-  metric_msg.value = boost::lexical_cast<decltype(metric_msg.value)>(metric_stat.mean());
-  metrics_msg_.metric_array.push_back(metric_msg);
+    metric_msg.name = base_name + "mean";
+    metric_msg.value = boost::lexical_cast<decltype(metric_msg.value)>(metric_stat.mean());
+    metrics_msg_.metric_array.push_back(metric_msg);
   }
 
   return;

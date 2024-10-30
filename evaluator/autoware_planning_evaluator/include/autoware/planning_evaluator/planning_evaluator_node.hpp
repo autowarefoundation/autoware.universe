@@ -96,8 +96,7 @@ public:
   /**
    * @brief publish the given metric statistic
    */
-  void AddMetricMsg(
-    const Metric & metric, const Stat<double> & metric_stat);
+  void AddMetricMsg(const Metric & metric, const Stat<double> & metric_stat);
 
   /**
    * @brief publish current ego lane info

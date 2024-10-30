@@ -12,22 +12,15 @@
           "exclusiveMinimum": 2,
           "description": "The scanning and update frequency of the checker."
         },
-        "processing_time_topic_list": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "The topic name list of the processing time."
-        },
         "metric_topic_list": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "The topic name list of the metrics."
+          "description": "The topic name list of the processing time."
         }
       },
-      "required": ["update_rate", "processing_time_topic_list", "metric_topic_list"]
+      "required": ["update_rate", "metric_topic_list"]
     }
   },
   "properties": {

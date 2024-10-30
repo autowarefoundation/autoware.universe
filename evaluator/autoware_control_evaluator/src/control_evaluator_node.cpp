@@ -79,21 +79,21 @@ void ControlEvaluatorNode::AddLaneletMetricMsg(const Pose & ego_pose)
   MetricMsg metric_msg;
 
   {
-  metric_msg.name = base_name+ "lane_id";
-  metric_msg.value = std::to_string(current_lane.id());
-  metrics_msg_.metric_array.push_back(metric_msg);
+    metric_msg.name = base_name + "lane_id";
+    metric_msg.value = std::to_string(current_lane.id());
+    metrics_msg_.metric_array.push_back(metric_msg);
   }
 
   {
-  metric_msg.name = base_name + "s";
-  metric_msg.value = std::to_string(arc_coordinates.length);
-  metrics_msg_.metric_array.push_back(metric_msg);
+    metric_msg.name = base_name + "s";
+    metric_msg.value = std::to_string(arc_coordinates.length);
+    metrics_msg_.metric_array.push_back(metric_msg);
   }
-  
+
   {
-  metric_msg.name = base_name + "t";
-  metric_msg.value = std::to_string(arc_coordinates.distance);
-  metrics_msg_.metric_array.push_back(metric_msg);
+    metric_msg.name = base_name + "t";
+    metric_msg.value = std::to_string(arc_coordinates.distance);
+    metrics_msg_.metric_array.push_back(metric_msg);
   }
   return;
 }
@@ -103,7 +103,7 @@ void ControlEvaluatorNode::AddKinematicStateMetricMsg(
 {
   const std::string base_name = "kinematic_state/";
   MetricMsg metric_msg;
-  
+
   metric_msg.name = base_name + "vel";
   metric_msg.value = std::to_string(odom.twist.twist.linear.x);
   metrics_msg_.metric_array.push_back(metric_msg);
@@ -148,8 +148,7 @@ void ControlEvaluatorNode::AddLateralDeviationMetricMsg(
   return;
 }
 
-void ControlEvaluatorNode::AddYawDeviationMetricMsg(
-  const Trajectory & traj, const Pose & ego_pose)
+void ControlEvaluatorNode::AddYawDeviationMetricMsg(const Trajectory & traj, const Pose & ego_pose)
 {
   const double yaw_deviation = metrics::calcYawDeviation(traj, ego_pose);
 
@@ -160,8 +159,7 @@ void ControlEvaluatorNode::AddYawDeviationMetricMsg(
   return;
 }
 
-void ControlEvaluatorNode::AddGoalLongitudinalDeviationMetricMsg(
-  const Pose & ego_pose)
+void ControlEvaluatorNode::AddGoalLongitudinalDeviationMetricMsg(const Pose & ego_pose)
 {
   const double longitudinal_deviation =
     metrics::calcLongitudinalDeviation(route_handler_.getGoalPose(), ego_pose.position);
@@ -173,8 +171,7 @@ void ControlEvaluatorNode::AddGoalLongitudinalDeviationMetricMsg(
   return;
 }
 
-void ControlEvaluatorNode::AddGoalLateralDeviationMetricMsg(
-  const Pose & ego_pose)
+void ControlEvaluatorNode::AddGoalLateralDeviationMetricMsg(const Pose & ego_pose)
 {
   const double lateral_deviation =
     metrics::calcLateralDeviation(route_handler_.getGoalPose(), ego_pose.position);
@@ -186,8 +183,7 @@ void ControlEvaluatorNode::AddGoalLateralDeviationMetricMsg(
   return;
 }
 
-void ControlEvaluatorNode::AddGoalYawDeviationMetricMsg(
-  const Pose & ego_pose)
+void ControlEvaluatorNode::AddGoalYawDeviationMetricMsg(const Pose & ego_pose)
 {
   const double yaw_deviation = metrics::calcYawDeviation(route_handler_.getGoalPose(), ego_pose);
 
@@ -230,7 +226,6 @@ void ControlEvaluatorNode::onTimer()
     metrics_pub_->publish(metrics_msg_);
     metrics_msg_ = MetricArrayMsg{};
   }
-
 }
 }  // namespace control_diagnostics
 

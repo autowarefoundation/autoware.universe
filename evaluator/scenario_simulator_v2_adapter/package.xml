@@ -12,10 +12,10 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
-  <depend>tier4_metric_msgs</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>tier4_metric_msgs</depend>
   <depend>tier4_simulation_msgs</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>

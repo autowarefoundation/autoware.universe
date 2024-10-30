@@ -16,10 +16,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_metric_msgs/msg/metric.hpp>
-#include <tier4_metric_msgs/msg/metric_array.hpp>
 #include "tier4_simulation_msgs/msg/user_defined_value.hpp"
 #include "tier4_simulation_msgs/msg/user_defined_value_type.hpp"
+#include <tier4_metric_msgs/msg/metric.hpp>
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include <gtest/gtest.h>
 

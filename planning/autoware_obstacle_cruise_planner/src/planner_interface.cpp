@@ -857,13 +857,13 @@ std::vector<Metric> PlannerInterface::makeMetrics(
   }
 
   if (stop_pose.has_value() && planner_data.has_value()) {  // Stop info
-    Metric stop_posision_metric;
-    stop_posision_metric.name = module_name + "/stop_position";
-    stop_posision_metric.unit = "string";
+    Metric stop_position_metric;
+    stop_position_metric.name = module_name + "/stop_position";
+    stop_position_metric.unit = "string";
     const auto & p = stop_pose.value().position;
-    stop_posision_metric.value =
+    stop_position_metric.value =
       "{" + std::to_string(p.x) + ", " + std::to_string(p.y) + ", " + std::to_string(p.z) + "}";
-    metrics.push_back(stop_posision_metric);
+    metrics.push_back(stop_position_metric);
 
     Metric stop_orientation_metric;
     stop_orientation_metric.name = module_name + "/stop_orientation";

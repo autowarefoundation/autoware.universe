@@ -51,10 +51,8 @@ class ControlEvaluatorNode : public rclcpp::Node
 {
 public:
   explicit ControlEvaluatorNode(const rclcpp::NodeOptions & node_options);
-  void AddLateralDeviationMetricMsg(
-    const Trajectory & traj, const Point & ego_point);
-  void AddYawDeviationMetricMsg(
-    const Trajectory & traj, const Pose & ego_pose);
+  void AddLateralDeviationMetricMsg(const Trajectory & traj, const Point & ego_point);
+  void AddYawDeviationMetricMsg(const Trajectory & traj, const Pose & ego_pose);
   void AddGoalLongitudinalDeviationMetricMsg(const Pose & ego_pose);
   void AddGoalLateralDeviationMetricMsg(const Pose & ego_pose);
   void AddGoalYawDeviationMetricMsg(const Pose & ego_pose);
