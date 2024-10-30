@@ -15,15 +15,16 @@
 #ifndef MAP_BASED_PREDICTION__MAP_BASED_PREDICTION_NODE_HPP_
 #define MAP_BASED_PREDICTION__MAP_BASED_PREDICTION_NODE_HPP_
 
-#include "autoware/universe_utils/geometry/geometry.hpp"
-#include "autoware/universe_utils/ros/update_param.hpp"
+#include "map_based_prediction/data_structure.hpp"
 #include "map_based_prediction/path_generator.hpp"
-#include "tf2/LinearMath/Quaternion.h"
+#include "map_based_prediction/predictor_vru.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <autoware/universe_utils/ros/transform_listener.hpp>
+#include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <autoware/universe_utils/system/lru_cache.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -44,6 +45,7 @@
 #include <lanelet2_routing/Forward.h>
 #include <lanelet2_routing/LaneletPath.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 #include <algorithm>
 #include <deque>
@@ -75,67 +77,6 @@ struct hash<lanelet::routing::LaneletPath>
 }  // namespace std
 namespace autoware::map_based_prediction
 {
-struct LateralKinematicsToLanelet
-{
-  double dist_from_left_boundary;
-  double dist_from_right_boundary;
-  double left_lateral_velocity;
-  double right_lateral_velocity;
-  double filtered_left_lateral_velocity;
-  double filtered_right_lateral_velocity;
-};
-
-enum class Maneuver {
-  UNINITIALIZED = 0,
-  LANE_FOLLOW = 1,
-  LEFT_LANE_CHANGE = 2,
-  RIGHT_LANE_CHANGE = 3,
-};
-
-struct ObjectData
-{
-  std_msgs::msg::Header header;
-  lanelet::ConstLanelets current_lanelets;
-  lanelet::ConstLanelets future_possible_lanelets;
-  geometry_msgs::msg::Pose pose;
-  geometry_msgs::msg::Twist twist;
-  double time_delay;
-  // for lane change prediction
-  std::unordered_map<lanelet::ConstLanelet, LateralKinematicsToLanelet> lateral_kinematics_set;
-  Maneuver one_shot_maneuver{Maneuver::UNINITIALIZED};
-  Maneuver output_maneuver{
-    Maneuver::UNINITIALIZED};  // output maneuver considering previous one shot maneuvers
-};
-
-struct CrosswalkUserData
-{
-  std_msgs::msg::Header header;
-  autoware_perception_msgs::msg::TrackedObject tracked_object;
-};
-
-struct LaneletData
-{
-  lanelet::Lanelet lanelet;
-  float probability;
-};
-
-struct PredictedRefPath
-{
-  float probability;
-  double speed_limit;
-  double width;
-  PosePath path;
-  Maneuver maneuver;
-};
-
-struct PredictionTimeHorizon
-{
-  // NOTE(Mamoru Sobue): motorcycle belongs to "vehicle" and bicycle to "pedestrian"
-  double vehicle;
-  double pedestrian;
-  double unknown;
-};
-
 using LaneletsData = std::vector<LaneletData>;
 using ManeuverProbability = std::unordered_map<Maneuver, float>;
 using autoware::universe_utils::StopWatch;
@@ -176,15 +117,11 @@ private:
   // Object History
   std::unordered_map<std::string, std::deque<ObjectData>> road_users_history_;
   std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
-  std::unordered_map<std::string, std::deque<CrosswalkUserData>> crosswalk_users_history_;
-  std::unordered_map<std::string, std::string> known_matches_;
 
   // Lanelet Map Pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
   std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph_ptr_;
   std::shared_ptr<lanelet::traffic_rules::TrafficRules> traffic_rules_ptr_;
-
-  std::unordered_map<lanelet::Id, TrafficLightGroup> traffic_signal_id_map_;
 
   // parameter update
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -196,6 +133,9 @@ private:
 
   // Path Generator
   std::shared_ptr<PathGenerator> path_generator_;
+
+  // Predictor
+  std::shared_ptr<PredictorVru> predictor_vru_;
 
   // Crosswalk Entry Points
   lanelet::ConstLanelets crosswalks_;
@@ -225,13 +165,13 @@ private:
   bool consider_only_routable_neighbours_;
 
   // Pedestrian Parameters
-  double min_crosswalk_user_velocity_;
-  double max_crosswalk_user_delta_yaw_threshold_for_lanelet_;
-  bool use_crosswalk_signal_;
-  double threshold_velocity_assumed_as_stopping_;
-  std::vector<double> distance_set_for_no_intention_to_walk_;
-  std::vector<double> timeout_set_for_no_intention_to_walk_;
-  bool match_lost_and_appeared_crosswalk_users_;
+  // double min_crosswalk_user_velocity_;
+  // double max_crosswalk_user_delta_yaw_threshold_for_lanelet_;
+  // bool use_crosswalk_signal_;
+  // double threshold_velocity_assumed_as_stopping_;
+  // std::vector<double> distance_set_for_no_intention_to_walk_;
+  // std::vector<double> timeout_set_for_no_intention_to_walk_;
+  // bool match_lost_and_appeared_crosswalk_users_;
   bool remember_lost_crosswalk_users_;
 
   // Object history parameters
@@ -265,34 +205,17 @@ private:
   void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
 
   // Map process
-  bool doesPathCrossAnyFence(const PredictedPath & predicted_path);
   bool doesPathCrossFence(
     const PredictedPath & predicted_path, const lanelet::ConstLineString3d & fence_line);
   lanelet::BasicLineString2d convertToFenceLine(const lanelet::ConstLineString3d & fence);
-  bool isIntersecting(
-    const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2,
-    const lanelet::ConstPoint3d & point3, const lanelet::ConstPoint3d & point4);
 
   // Object process
-  PredictedObjectKinematics convertToPredictedKinematics(
-    const TrackedObjectKinematics & tracked_object);
   PredictedObject convertToPredictedObject(const TrackedObject & tracked_object);
   void removeStaleTrafficLightInfo(const TrackedObjects::ConstSharedPtr in_objects);
   void updateObjectData(TrackedObject & object);
   geometry_msgs::msg::Pose compensateTimeDelay(
     const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,
     const double dt) const;
-
-  //// Pedestrian process
-  PredictedObject getPredictedObjectAsCrosswalkUser(const TrackedObject & object);
-  void updateCrosswalkUserHistory(
-    const std_msgs::msg::Header & header, const TrackedObject & object,
-    const std::string & object_id);
-  std::string tryMatchNewObjectToDisappeared(
-    const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users);
-  bool calcIntentionToCrossWithTrafficSignal(
-    const TrackedObject & object, const lanelet::ConstLanelet & crosswalk,
-    const lanelet::Id & signal_id);
 
   //// Vehicle process
   // Lanelet process
@@ -307,7 +230,6 @@ private:
   bool isDuplicated(
     const PredictedPath & predicted_path, const std::vector<PredictedPath> & predicted_paths);
   std::optional<lanelet::Id> getTrafficSignalId(const lanelet::ConstLanelet & way_lanelet);
-  std::optional<TrafficLightElement> getTrafficSignalElement(const lanelet::Id & id);
 
   // Vehicle history process
   void updateRoadUsersHistory(

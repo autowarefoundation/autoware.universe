@@ -16,7 +16,9 @@ include_directories(
 ament_auto_add_library(map_based_prediction_node SHARED
   src/map_based_prediction_node.cpp
   src/path_generator.cpp
+  src/predictor_vru.cpp
   src/debug.cpp
+  src/utils.cpp
 )
 
 target_link_libraries(map_based_prediction_node glog::glog)
