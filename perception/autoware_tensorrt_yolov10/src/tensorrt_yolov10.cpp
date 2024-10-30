@@ -111,19 +111,11 @@ std::vector<std::string> loadImageList(const std::string & filename, const std::
 namespace autoware::tensorrt_yolov10
 {
 TrtYolov10::TrtYolov10(
-    const std::string & model_path, 
-    const std::string & precision, 
-    const int num_class,
-    const float score_threshold, 
-    const tensorrt_common::BuildConfig build_config,
-    const bool use_gpu_preprocess, 
-    const uint8_t gpu_id,
-    std::string calibration_image_list_path,
-    const double norm_factor,
-    [[maybe_unused]] const std::string & cache_dir,
-    const tensorrt_common::BatchConfig & batch_config,
-    const size_t max_workspace_size
-    )
+  const std::string & model_path, const std::string & precision, const int num_class,
+  const float score_threshold, const tensorrt_common::BuildConfig build_config,
+  const bool use_gpu_preprocess, const uint8_t gpu_id, std::string calibration_image_list_path,
+  const double norm_factor, [[maybe_unused]] const std::string & cache_dir,
+  const tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size)
 : gpu_id_(gpu_id), is_gpu_initialized_(false)
 {
   if (!setCudaDeviceId(gpu_id_)) {
@@ -436,22 +428,22 @@ bool TrtYolov10::doInference(const std::vector<cv::Mat> & images, ObjectArrays &
 
   std::vector<float> input_data(640 * 640 * 3);
   preprocess(images, input_data);
-  CHECK_CUDA_ERROR(
-    cudaMemcpy(input_d_.get(), input_data.data(), 3 * 640 * 640 * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERROR(cudaMemcpy(
+    input_d_.get(), input_data.data(), 3 * 640 * 640 * sizeof(float), cudaMemcpyHostToDevice));
 
-    // preprocess(images);
+  // preprocess(images);
 
   return feedforward(images, objects);
 }
 
 bool TrtYolov10::feedforward(const std::vector<cv::Mat> & images, ObjectArrays & objects)
 {
-//   PRINT_DEBUG_INFO
+  //   PRINT_DEBUG_INFO
   std::vector<void *> buffers = {input_d_.get(), out_d_.get()};
 
   trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
 
-//   printf("out_elem_num_:%d\n", (int)out_elem_num_);
+  //   printf("out_elem_num_:%d\n", (int)out_elem_num_);
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     out_h_.get(), out_d_.get(), sizeof(float) * out_elem_num_, cudaMemcpyDeviceToHost, *stream_));
 
@@ -463,7 +455,7 @@ bool TrtYolov10::feedforward(const std::vector<cv::Mat> & images, ObjectArrays &
     // auto image_size = images[i].size();
     float * batch_prob = out_h_.get() + (i * out_elem_num_per_batch_);
 
-    ObjectArray object_array = postprocess(batch_prob,factor_);
+    ObjectArray object_array = postprocess(batch_prob, factor_);
     objects.emplace_back(object_array);
   }
 

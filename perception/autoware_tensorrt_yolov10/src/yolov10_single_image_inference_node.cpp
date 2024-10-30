@@ -56,7 +56,6 @@ public:
     // // std::vector<cv::Mat> color_masks;
     trt_yolov10->doInference({image}, objects);
     for (const auto & object : objects[0]) {
-
       const auto left = object.x_offset;
       const auto top = object.y_offset;
       const auto right = std::clamp(left + object.width, 0, image.cols);

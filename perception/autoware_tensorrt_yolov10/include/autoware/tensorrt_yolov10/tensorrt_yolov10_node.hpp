@@ -64,7 +64,6 @@ private:
   std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
   rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr objects_pub_;
   image_transport::Publisher image_pub_;
-
 };
 
 }  // namespace autoware::tensorrt_yolov10
