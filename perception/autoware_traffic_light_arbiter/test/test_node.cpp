@@ -16,7 +16,7 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
-
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <gtest/gtest.h>
 
 #include <cmath>
