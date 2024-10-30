@@ -18,11 +18,15 @@
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
-#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance.hpp>
+#include <geometry_msgs/msg/twist_with_covariance.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <yaml-cpp/yaml.h>
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -31,8 +35,15 @@ namespace autoware::test_utils
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::LaneletSegment;
+using geometry_msgs::msg::Accel;
+using geometry_msgs::msg::AccelWithCovariance;
+using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::PoseWithCovariance;
+using geometry_msgs::msg::Twist;
+using geometry_msgs::msg::TwistWithCovariance;
+using nav_msgs::msg::Odometry;
 using std_msgs::msg::Header;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
@@ -51,7 +62,37 @@ template <typename T>
 T parse(const YAML::Node & node);
 
 template <>
+Header parse(const YAML::Node & node);
+
+template <>
+std::vector<Point> parse(const YAML::Node & node);
+
+template <>
+std::array<double, 36> parse(const YAML::Node & node);
+
+template <>
 Pose parse(const YAML::Node & node);
+
+template <>
+PoseWithCovariance parse(const YAML::Node & node);
+
+template <>
+Twist parse(const YAML::Node & node);
+
+template <>
+TwistWithCovariance parse(const YAML::Node & node);
+
+template <>
+Odometry parse(const YAML::Node & node);
+
+template <>
+Accel parse(const YAML::Node & node);
+
+template <>
+AccelWithCovariance parse(const YAML::Node & node);
+
+template <>
+AccelWithCovarianceStamped parse(const YAML::Node & node);
 
 template <>
 LaneletPrimitive parse(const YAML::Node & node);
@@ -61,12 +102,6 @@ std::vector<LaneletPrimitive> parse(const YAML::Node & node);
 
 template <>
 std::vector<LaneletSegment> parse(const YAML::Node & node);
-
-template <>
-std::vector<Point> parse(const YAML::Node & node);
-
-template <>
-Header parse(const YAML::Node & node);
 
 template <>
 std::vector<PathPointWithLaneId> parse(const YAML::Node & node);
