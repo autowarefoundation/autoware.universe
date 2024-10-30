@@ -16,13 +16,6 @@
 
 #include <rclcpp/logging.hpp>
 
-#include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
-#include <autoware_planning_msgs/msg/lanelet_route.hpp>
-#include <autoware_planning_msgs/msg/lanelet_segment.hpp>
-#include <geometry_msgs/msg/pose.hpp>
-
-#include <yaml-cpp/yaml.h>
-
 #include <algorithm>
 #include <string>
 #include <vector>
