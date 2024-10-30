@@ -174,7 +174,7 @@
 
     <!-- obstacle collision checker -->
     <load_composable_node target="/control/control_container" if="$(var enable_obstacle_collision_checker)">
-      <composable_node pkg="obstacle_collision_checker" plugin="obstacle_collision_checker::ObstacleCollisionCheckerNode" name="obstacle_collision_checker">
+      <composable_node pkg="autoware_obstacle_collision_checker" plugin="autoware::obstacle_collision_checker::ObstacleCollisionCheckerNode" name="obstacle_collision_checker">
         <remap from="input/lanelet_map_bin" to="/map/vector_map"/>
         <remap from="input/obstacle_pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
         <remap from="input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
@@ -192,7 +192,7 @@
         <remap from="~/input/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
         <remap from="~/input/velocity" to="/vehicle/status/velocity_status"/>
         <remap from="~/input/imu" to="/sensing/imu/imu_data"/>
-        <remap from="~/input/objects" to="/perception/obstacle_segmentation/objects"/>
+        <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
         <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
         <param from="$(var aeb_param_path)"/>
         <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
