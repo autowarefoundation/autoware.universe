@@ -174,7 +174,7 @@ private:
   std::unique_ptr<autoware::universe_utils::DebugPublisher> processing_time_publisher_;
 
   // Object History
-  std::unordered_map<std::string, std::deque<ObjectData>> road_users_history;
+  std::unordered_map<std::string, std::deque<ObjectData>> road_users_history_;
   std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
   std::unordered_map<std::string, std::deque<CrosswalkUserData>> crosswalk_users_history_;
   std::unordered_map<std::string, std::string> known_matches_;

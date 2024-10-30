@@ -986,7 +986,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // Remove old objects information in object history
   const double objects_detected_time = rclcpp::Time(in_objects->header.stamp).seconds();
-  removeOldObjectsHistory(objects_detected_time, object_buffer_time_length_, road_users_history);
+  removeOldObjectsHistory(objects_detected_time, object_buffer_time_length_, road_users_history_);
   removeStaleTrafficLightInfo(in_objects);
 
   auto invalidated_crosswalk_users = removeOldObjectsHistory(
@@ -1730,9 +1730,9 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
   // If the object is in the objects history, we check if the target lanelet is
   // inside the current lanelets id or following lanelets
   const std::string object_id = autoware::universe_utils::toHexString(object.object_id);
-  if (road_users_history.count(object_id) != 0) {
+  if (road_users_history_.count(object_id) != 0) {
     const std::vector<lanelet::ConstLanelet> & possible_lanelet =
-      road_users_history.at(object_id).back().future_possible_lanelets;
+      road_users_history_.at(object_id).back().future_possible_lanelets;
 
     bool not_in_possible_lanelet =
       std::find(possible_lanelet.begin(), possible_lanelet.end(), lanelet.second) ==
@@ -1830,13 +1830,13 @@ void MapBasedPredictionNode::updateRoadUsersHistory(
     single_object_data.lateral_kinematics_set[current_lane] = lateral_kinematics;
   }
 
-  if (road_users_history.count(object_id) == 0) {
+  if (road_users_history_.count(object_id) == 0) {
     // New Object(Create a new object in object histories)
     std::deque<ObjectData> object_data = {single_object_data};
-    road_users_history.emplace(object_id, object_data);
+    road_users_history_.emplace(object_id, object_data);
   } else {
     // Object that is already in the object buffer
-    std::deque<ObjectData> & object_data = road_users_history.at(object_id);
+    std::deque<ObjectData> & object_data = road_users_history_.at(object_id);
     // get previous object data and update
     const auto prev_object_data = object_data.back();
     updateLateralKinematicsVector(
@@ -2041,9 +2041,9 @@ std::vector<LaneletPathWithPathInfo> MapBasedPredictionNode::getPredictedReferen
   }
 
   // update future possible lanelets
-  if (road_users_history.count(object_id) != 0) {
+  if (road_users_history_.count(object_id) != 0) {
     std::vector<lanelet::ConstLanelet> & possible_lanelets =
-      road_users_history.at(object_id).back().future_possible_lanelets;
+      road_users_history_.at(object_id).back().future_possible_lanelets;
     for (const auto & ref_path : lanelet_ref_paths) {
       for (const auto & lanelet : ref_path.first) {
         if (
@@ -2081,10 +2081,10 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
     throw std::logic_error("Lane change detection method is invalid.");
   }();
 
-  if (road_users_history.count(object_id) == 0) {
+  if (road_users_history_.count(object_id) == 0) {
     return current_maneuver;
   }
-  auto & object_info = road_users_history.at(object_id);
+  auto & object_info = road_users_history_.at(object_id);
 
   // update maneuver in object history
   if (!object_info.empty()) {
@@ -2122,11 +2122,11 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByTimeToLaneChange(
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   // Step1. Check if we have the object in the buffer
-  if (road_users_history.count(object_id) == 0) {
+  if (road_users_history_.count(object_id) == 0) {
     return Maneuver::LANE_FOLLOW;
   }
 
-  const std::deque<ObjectData> & object_info = road_users_history.at(object_id);
+  const std::deque<ObjectData> & object_info = road_users_history_.at(object_id);
 
   // Step2. Check if object history length longer than history_time_length
   const int latest_id = static_cast<int>(object_info.size()) - 1;
@@ -2195,11 +2195,11 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   // Step1. Check if we have the object in the buffer
-  if (road_users_history.count(object_id) == 0) {
+  if (road_users_history_.count(object_id) == 0) {
     return Maneuver::LANE_FOLLOW;
   }
 
-  const std::deque<ObjectData> & object_info = road_users_history.at(object_id);
+  const std::deque<ObjectData> & object_info = road_users_history_.at(object_id);
   const double current_time = (this->get_clock()->now()).seconds();
 
   // Step2. Get the previous id
