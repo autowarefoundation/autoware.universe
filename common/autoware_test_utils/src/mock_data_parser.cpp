@@ -364,6 +364,21 @@ TrafficLightGroupArray parse(const YAML::Node & node)
 }
 
 template <>
+OperationModeState parse(const YAML::Node & node)
+{
+  OperationModeState msg;
+  msg.stamp = parse<Time>(node["stamp"]);
+  msg.mode = node["mode"].as<uint8_t>();
+  msg.is_autoware_control_enabled = node["is_autoware_control_enabled"].as<bool>();
+  msg.is_in_transition = node["is_in_transition"].as<bool>();
+  msg.is_stop_mode_available = node["is_stop_mode_available"].as<bool>();
+  msg.is_autonomous_mode_available = node["is_autonomous_mode_available"].as<bool>();
+  msg.is_local_mode_available = node["is_local_mode_available"].as<bool>();
+  msg.is_remote_mode_available = node["is_remote_mode_available"].as<bool>();
+  return msg;
+}
+
+template <>
 LaneletRoute parse(const std::string & filename)
 {
   LaneletRoute lanelet_route;

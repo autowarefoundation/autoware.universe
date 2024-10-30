@@ -38,6 +38,7 @@
 
 namespace autoware::test_utils
 {
+using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjectKinematics;
@@ -160,6 +161,9 @@ TrafficLightGroup parse(const YAML::Node & node);
 
 template <>
 TrafficLightElement parse(const YAML::Node & node);
+
+template <>
+OperationModeState parse(const YAML::Node & node);
 
 /**
  * @brief Parses a YAML file and converts it into an object of type T.

@@ -448,6 +448,17 @@ traffic_signal:
           shape: 1
           status: 2
           confidence: 1.00000
+operation_mode:
+  stamp:
+    sec: 0
+    nanosec: 204702031
+  mode: 1
+  is_autoware_control_enabled: true
+  is_in_transition: false
+  is_stop_mode_available: true
+  is_autonomous_mode_available: true
+  is_local_mode_available: true
+  is_remote_mode_available: true
 )";
 
 TEST(ParseFunctions, CompleteYAMLTest)
@@ -550,6 +561,17 @@ TEST(ParseFunctions, CompleteYAMLTest)
   EXPECT_EQ(traffic_signal.traffic_light_groups.at(0).elements.at(0).shape, 1);
   EXPECT_EQ(traffic_signal.traffic_light_groups.at(0).elements.at(0).status, 2);
   EXPECT_FLOAT_EQ(traffic_signal.traffic_light_groups.at(0).elements.at(0).confidence, 1.0);
+
+  const auto operation_mode = parse<OperationModeState>(config["operation_mode"]);
+  EXPECT_EQ(operation_mode.stamp.sec, 0);
+  EXPECT_EQ(operation_mode.stamp.nanosec, 204702031);
+  EXPECT_EQ(operation_mode.mode, 1);
+  EXPECT_EQ(operation_mode.is_autoware_control_enabled, true);
+  EXPECT_EQ(operation_mode.is_in_transition, false);
+  EXPECT_EQ(operation_mode.is_stop_mode_available, true);
+  EXPECT_EQ(operation_mode.is_autonomous_mode_available, true);
+  EXPECT_EQ(operation_mode.is_local_mode_available, true);
+  EXPECT_EQ(operation_mode.is_remote_mode_available, true);
 }
 
 TEST(ParseFunction, CompleteFromFilename)
