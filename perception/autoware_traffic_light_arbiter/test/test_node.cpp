@@ -116,7 +116,7 @@ bool isMsgEqual(const TrafficSignalArray & input_msg, const TrafficSignalArray &
     return false;
   }
 
-  for (size_t group_idx = 0; group_idx < input_msg.traffic_light_groups.size(); ++group_idx) {
+  for (std::size_t group_idx = 0; group_idx < input_msg.traffic_light_groups.size(); ++group_idx) {
     const auto & input_traffic_light_group = input_msg.traffic_light_groups.at(group_idx);
     const auto & gt_traffic_light_group = gt_msg.traffic_light_groups.at(group_idx);
 
@@ -134,7 +134,7 @@ bool isMsgEqual(const TrafficSignalArray & input_msg, const TrafficSignalArray &
       return false;
     }
 
-    for (size_t element_idx = 0; element_idx < input_traffic_light_group.elements.size();
+    for (std::size_t element_idx = 0; element_idx < input_traffic_light_group.elements.size();
          ++element_idx) {
       const auto & input_traffic_light_element = input_traffic_light_group.elements.at(element_idx);
       const auto & gt_traffic_light_element = gt_traffic_light_group.elements.at(element_idx);
