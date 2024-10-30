@@ -135,7 +135,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
   const bool is_any_module_running =
     is_any_approved_module_running || is_any_candidate_module_running_or_idle;
 
-  updateCurrentRouteLanelet(data);
+  updateCurrentRouteLanelet(data, is_any_approved_module_running);
 
   const bool is_out_of_route = utils::isEgoOutOfRoute(
     data->self_odometry->pose.pose, current_route_lanelet_->value(), data->prev_modified_goal,
@@ -228,7 +228,8 @@ void PlannerManager::generateCombinedDrivableArea(
   utils::extractObstaclesFromDrivableArea(output.path, di.obstacles);
 }
 
-void PlannerManager::updateCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data)
+void PlannerManager::updateCurrentRouteLanelet(
+  const std::shared_ptr<PlannerData> & data, const bool is_any_approved_module_running)
 {
   const auto & route_handler = data->route_handler;
   const auto & pose = data->self_odometry->pose.pose;
@@ -256,10 +257,11 @@ void PlannerManager::updateCurrentRouteLanelet(const std::shared_ptr<PlannerData
       p.ego_nearest_yaw_threshold) ||
     lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane);
 
-  if (could_calculate_closest_lanelet)
+  if (could_calculate_closest_lanelet) {
     *current_route_lanelet_ = closest_lane;
-  else
+  } else if (!is_any_approved_module_running) {
     resetCurrentRouteLanelet(data);
+  }
 }
 
 BehaviorModuleOutput PlannerManager::getReferencePath(
