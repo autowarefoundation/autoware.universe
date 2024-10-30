@@ -15,7 +15,9 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_POINT_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_POINT_HPP_
 
+#include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/linear.hpp"
 #include "autoware/motion_utils/trajectory_container/trajectory/detail/utils.hpp"
 
 #include <Eigen/Dense>
@@ -23,6 +25,7 @@
 #include <geometry_msgs/msg/point.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -43,12 +46,15 @@ class TrajectoryContainer<geometry_msgs::msg::Point>
   using PointType = geometry_msgs::msg::Point;
 
 protected:
-  std::shared_ptr<interpolator::Interpolator<double>> x_interpolator_;  //!< Interpolator for x
-  std::shared_ptr<interpolator::Interpolator<double>> y_interpolator_;  //!< Interpolator for y
-  std::shared_ptr<interpolator::Interpolator<double>> z_interpolator_;  //!< Interpolator for z
+  std::shared_ptr<interpolator::InterpolatorInterface<double>>
+    x_interpolator_;  //!< Interpolator for x
+  std::shared_ptr<interpolator::InterpolatorInterface<double>>
+    y_interpolator_;  //!< Interpolator for y
+  std::shared_ptr<interpolator::InterpolatorInterface<double>>
+    z_interpolator_;  //!< Interpolator for z
 
-  Eigen::VectorXd axis_;  //!< Interpolation axis of the trajectory. It is approximately same as the
-                          //!< length of the trajectory.
+  std::vector<double> bases_;  //!< Axis of the trajectory
+
   double start_{0.0}, end_{0.0};  //!< Start and end of the arc length of the trajectory
 
   using ConstraintFunction = std::function<bool(const double & s)>;
@@ -60,11 +66,6 @@ protected:
   [[nodiscard]] double clamp(const double & s, bool show_warning = false) const;
 
 public:
-  TrajectoryContainer(
-    const std::shared_ptr<interpolator::Interpolator<double>> & x_interpolator,
-    const std::shared_ptr<interpolator::Interpolator<double>> & y_interpolator,
-    const std::shared_ptr<interpolator::Interpolator<double>> & z_interpolator);
-
   /**
    * @brief Get the length of the trajectory
    * @return Length of the trajectory
@@ -90,7 +91,7 @@ public:
    * @param s Arc length
    * @return Direction in radians
    */
-  [[nodiscard]] double direction(double s) const;
+  [[nodiscard]] double azimuth(double s) const;
 
   /**
    * @brief Get the curvature at a given s value
@@ -115,13 +116,13 @@ public:
     std::vector<double> distances_from_segments;
     std::vector<double> lengthes_from_start_points;
 
-    auto axis = detail::crop_axis(axis_, start_, end_);
+    auto axis = detail::crop_bases(bases_, start_, end_);
 
-    for (int i = 1; i < axis.size(); ++i) {
+    for (size_t i = 1; i < axis.size(); ++i) {
       Eigen::Vector2d p0;
       Eigen::Vector2d p1;
-      p0 << x_interpolator_->compute(axis(i - 1)), y_interpolator_->compute(axis(i - 1));
-      p1 << x_interpolator_->compute(axis(i)), y_interpolator_->compute(axis(i));
+      p0 << x_interpolator_->compute(axis.at(i - 1)), y_interpolator_->compute(axis.at(i - 1));
+      p1 << x_interpolator_->compute(axis.at(i)), y_interpolator_->compute(axis.at(i));
       Eigen::Vector2d v = p1 - p0;
       Eigen::Vector2d w = point - p0;
       double c1 = w.dot(v);
@@ -129,13 +130,13 @@ public:
       double length_from_start_point = NAN;
       double distance_from_segment = NAN;
       if (c1 <= 0) {
-        length_from_start_point = axis(i - 1);
+        length_from_start_point = axis.at(i - 1);
         distance_from_segment = (point - p0).norm();
       } else if (c2 <= c1) {
-        length_from_start_point = axis(i);
+        length_from_start_point = axis.at(i);
         distance_from_segment = (point - p1).norm();
       } else {
-        length_from_start_point = axis(i - 1) + c1 / c2 * (p1 - p0).norm();
+        length_from_start_point = axis.at(i - 1) + c1 / c2 * (p1 - p0).norm();
         distance_from_segment = (point - (p0 + (c1 / c2) * v)).norm();
       }
       if (constraints(length_from_start_point)) {
@@ -146,6 +147,7 @@ public:
     if (distances_from_segments.empty()) {
       return std::nullopt;
     }
+
     auto min_it = std::min_element(distances_from_segments.begin(), distances_from_segments.end());
 
     return lengthes_from_start_points[std::distance(distances_from_segments.begin(), min_it)] -
@@ -182,13 +184,13 @@ public:
     Eigen::Vector2d line_end(to_point(end).x, to_point(end).y);
     Eigen::Vector2d line_dir = line_end - line_start;
 
-    auto axis = detail::crop_axis(axis_, start_, end_);
+    auto axis = detail::crop_bases(bases_, start_, end_);
 
-    for (int i = 1; i < axis.size(); ++i) {
+    for (size_t i = 1; i < axis.size(); ++i) {
       Eigen::Vector2d p0;
       Eigen::Vector2d p1;
-      p0 << x_interpolator_->compute(axis(i - 1)), y_interpolator_->compute(axis(i - 1));
-      p1 << x_interpolator_->compute(axis(i)), y_interpolator_->compute(axis(i));
+      p0 << x_interpolator_->compute(axis.at(i - 1)), y_interpolator_->compute(axis.at(i - 1));
+      p1 << x_interpolator_->compute(axis.at(i)), y_interpolator_->compute(axis.at(i));
 
       Eigen::Vector2d segment_dir = p1 - p0;
 
@@ -205,7 +207,7 @@ public:
         (p0_to_line_start.x() * segment_dir.y() - p0_to_line_start.y() * segment_dir.x()) / det;
 
       if (t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0) {
-        double intersection_s = axis(i - 1) + t * (axis(i) - axis(i - 1));
+        double intersection_s = axis.at(i - 1) + t * (axis.at(i) - axis.at(i - 1));
         if (constraints(intersection_s)) {
           return intersection_s - start_;
         }
@@ -239,6 +241,49 @@ public:
   void crop_in_place(const double & start, const double & length);
 
   [[nodiscard]] TrajectoryContainer crop(const double & start, const double & length) const;
+
+  class Builder
+  {
+  private:
+    std::unique_ptr<TrajectoryContainer> trajectory_;
+
+  public:
+    Builder()
+    {
+      trajectory_ = std::make_unique<TrajectoryContainer>();
+      // Default interpolators
+      set_xy_interpolator<interpolator::CubicSpline>();
+      set_z_interpolator<interpolator::Linear>();
+    }
+
+    template <class InterpolatorType, class... Args>
+    Builder & set_xy_interpolator(Args &&... args)
+    {
+      trajectory_->x_interpolator_ =
+        std::make_shared<InterpolatorType>(std::forward<Args>(args)...);
+      trajectory_->y_interpolator_ =
+        std::make_shared<InterpolatorType>(std::forward<Args>(args)...);
+      return *this;
+    }
+
+    template <class InterpolatorType, class... Args>
+    Builder & set_z_interpolator(Args &&... args)
+    {
+      trajectory_->z_interpolator_ =
+        std::make_shared<InterpolatorType>(std::forward<Args>(args)...);
+      return *this;
+    }
+
+    std::optional<TrajectoryContainer> build(const std::vector<PointType> & points)
+    {
+      if (trajectory_->build(points)) {
+        auto result = std::make_optional<TrajectoryContainer>(std::move(*trajectory_));
+        trajectory_.reset();
+        return result;
+      }
+      return std::nullopt;
+    }
+  };
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory

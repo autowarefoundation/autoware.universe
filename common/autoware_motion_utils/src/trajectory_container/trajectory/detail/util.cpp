@@ -14,6 +14,9 @@
 
 #include "autoware/motion_utils/trajectory_container/trajectory/detail/utils.hpp"
 
+#include <algorithm>
+#include <vector>
+
 namespace autoware::motion_utils::trajectory_container::trajectory::detail
 {
 
@@ -67,7 +70,7 @@ geometry_msgs::msg::Point to_point(const lanelet::ConstPoint3d & p)
   return point;
 }
 
-Eigen::VectorXd fill_axis(const Eigen::Ref<const Eigen::VectorXd> & x, Eigen::Index min_points)
+std::vector<double> fill_bases(const std::vector<double> & x, const size_t & min_points)
 {
   const auto original_size = x.size();
 
@@ -78,31 +81,31 @@ Eigen::VectorXd fill_axis(const Eigen::Ref<const Eigen::VectorXd> & x, Eigen::In
   const auto points_to_add = min_points - original_size;
   const auto num_gaps = original_size - 1;
 
-  std::vector<Eigen::Index> points_per_gap(num_gaps, points_to_add / num_gaps);
+  std::vector<size_t> points_per_gap(num_gaps, points_to_add / num_gaps);
   std::fill_n(points_per_gap.begin(), points_to_add % num_gaps, points_per_gap[0] + 1);
 
-  Eigen::VectorXd result(min_points);
-  Eigen::Index index = 0;
+  std::vector<double> result;
+  result.reserve(min_points);
 
-  for (Eigen::Index i = 0; i < original_size - 1; ++i) {
-    result[index++] = x[i];
+  for (size_t i = 0; i < original_size - 1; ++i) {
+    result.push_back(x[i]);
 
     const double start = x[i];
     const double end = x[i + 1];
     const double step = (end - start) / static_cast<int16_t>(points_per_gap[i] + 1);
 
-    for (Eigen::Index j = 0; j < points_per_gap[i]; ++j) {
-      result[index++] = start + static_cast<int16_t>(j + 1) * step;
+    for (size_t j = 0; j < points_per_gap[i]; ++j) {
+      result.push_back(start + static_cast<int16_t>(j + 1) * step);
     }
   }
 
-  result[index] = x[original_size - 1];
+  result.push_back(x[original_size - 1]);
 
   return result;
 }
 
-Eigen::VectorXd crop_axis(
-  const Eigen::Ref<const Eigen::VectorXd> & x, const double & start, const double & end)
+std::vector<double> crop_bases(
+  const std::vector<double> & x, const double & start, const double & end)
 {
   std::vector<double> result;
 
@@ -123,8 +126,7 @@ Eigen::VectorXd crop_axis(
     result.push_back(end);
   }
 
-  // Convert std::vector to Eigen::VectorXd
-  return Eigen::Map<Eigen::VectorXd>(result.data(), static_cast<Eigen::Index>(result.size()));
+  return result;
 }
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory::detail

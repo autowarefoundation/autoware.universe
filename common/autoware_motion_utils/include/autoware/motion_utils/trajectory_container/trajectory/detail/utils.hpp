@@ -67,23 +67,10 @@ Eigen::VectorXd merge_vectors(const Vectors &... vectors)
     static_cast<Eigen::Index>(unique_elements.size()));
 }
 
-/**
- * @brief Fill the given axis with additional points to meet the minimum point requirement.
- * @param x The input vector to be filled.
- * @param min_points The minimum number of points required.
- * @return Eigen::VectorXd The filled vector.
- */
-Eigen::VectorXd fill_axis(const Eigen::Ref<const Eigen::VectorXd> & x, Eigen::Index min_points);
+std::vector<double> fill_bases(const std::vector<double> & x, const size_t & min_points);
 
-/**
- * @brief Crop the given axis between the specified start and end values.
- * @param x The input vector to be cropped.
- * @param start The start value for cropping.
- * @param end The end value for cropping.
- * @return Eigen::VectorXd The cropped vector.
- */
-Eigen::VectorXd crop_axis(
-  const Eigen::Ref<const Eigen::VectorXd> & x, const double & start, const double & end);
+std::vector<double> crop_bases(
+  const std::vector<double> & x, const double & start, const double & end);
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory::detail
 

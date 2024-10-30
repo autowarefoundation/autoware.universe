@@ -28,22 +28,13 @@ namespace autoware::motion_utils::trajectory_container::trajectory
 
 using PointType = geometry_msgs::msg::Point;
 
-TrajectoryContainer<PointType>::TrajectoryContainer(
-  const std::shared_ptr<interpolator::Interpolator<double>> & x_interpolator,
-  const std::shared_ptr<interpolator::Interpolator<double>> & y_interpolator,
-  const std::shared_ptr<interpolator::Interpolator<double>> & z_interpolator)
-: x_interpolator_(x_interpolator), y_interpolator_(y_interpolator), z_interpolator_(z_interpolator)
-{
-}
-
 bool TrajectoryContainer<PointType>::build(const std::vector<PointType> & points)
 {
   std::vector<double> xs;
   std::vector<double> ys;
   std::vector<double> zs;
 
-  axis_.resize(static_cast<Eigen::Index>(points.size()));
-  axis_(0) = 0.0;
+  bases_.emplace_back(0.0);
   xs.emplace_back(points[0].x);
   ys.emplace_back(points[0].y);
   zs.emplace_back(points[0].z);
@@ -51,20 +42,19 @@ bool TrajectoryContainer<PointType>::build(const std::vector<PointType> & points
   for (size_t i = 1; i < points.size(); ++i) {
     Eigen::Vector2d p0(points[i - 1].x, points[i - 1].y);
     Eigen::Vector2d p1(points[i].x, points[i].y);
-    axis_(static_cast<Eigen::Index>(i)) =
-      axis_(static_cast<Eigen::Index>(i - 1)) + (p1 - p0).norm();
+    bases_.emplace_back(bases_.back() + (p1 - p0).norm());
     xs.emplace_back(points[i].x);
     ys.emplace_back(points[i].y);
     zs.emplace_back(points[i].z);
   }
 
-  start_ = axis_(0);
-  end_ = axis_(axis_.size() - 1);
+  start_ = bases_.front();
+  end_ = bases_.back();
 
   bool is_valid = true;
-  is_valid &= x_interpolator_->build(axis_, xs);
-  is_valid &= y_interpolator_->build(axis_, ys);
-  is_valid &= z_interpolator_->build(axis_, zs);
+  is_valid &= x_interpolator_->build(bases_, xs);
+  is_valid &= y_interpolator_->build(bases_, ys);
+  is_valid &= z_interpolator_->build(bases_, zs);
 
   return is_valid;
 }
@@ -94,7 +84,7 @@ PointType TrajectoryContainer<PointType>::compute(double s) const
   return result;
 }
 
-double TrajectoryContainer<PointType>::direction(double s) const
+double TrajectoryContainer<PointType>::azimuth(double s) const
 {
   s = clamp(s, true);
   double dx = x_interpolator_->compute_first_derivative(s);
@@ -114,11 +104,11 @@ double TrajectoryContainer<PointType>::curvature(double s) const
 
 std::vector<PointType> TrajectoryContainer<PointType>::restore(const size_t & min_points) const
 {
-  auto axis = detail::crop_axis(axis_, start_, end_);
-  axis = detail::fill_axis(axis, static_cast<Eigen::Index>(min_points));
+  auto bases = detail::crop_bases(bases_, start_, end_);
+  bases = detail::fill_bases(bases, static_cast<Eigen::Index>(min_points));
   std::vector<PointType> points;
-  points.reserve(axis.size());
-  for (const auto & s : axis) {
+  points.reserve(bases.size());
+  for (const auto & s : bases) {
     PointType p;
     p.x = x_interpolator_->compute(s);
     p.y = y_interpolator_->compute(s);

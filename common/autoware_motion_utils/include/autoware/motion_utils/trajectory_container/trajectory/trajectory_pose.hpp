@@ -15,6 +15,8 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_POSE_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_POSE_HPP_
 
+#include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
 #include "autoware/motion_utils/trajectory_container/trajectory/trajectory_point.hpp"
 
 #include <memory>
@@ -33,25 +35,7 @@ class TrajectoryContainer<geometry_msgs::msg::Pose>
   using BaseClass = TrajectoryContainer<geometry_msgs::msg::Point>;
   using PointType = geometry_msgs::msg::Pose;
 
-private:
-  std::shared_ptr<interpolator::Interpolator<double>> orientation_x_interpolator_;
-  std::shared_ptr<interpolator::Interpolator<double>> orientation_y_interpolator_;
-  std::shared_ptr<interpolator::Interpolator<double>> orientation_z_interpolator_;
-  std::shared_ptr<interpolator::Interpolator<double>> orientation_w_interpolator_;
-
 public:
-  /**
-   * @brief Constructor
-   */
-  TrajectoryContainer(
-    const std::shared_ptr<interpolator::Interpolator<double>> & x_interpolator,
-    const std::shared_ptr<interpolator::Interpolator<double>> & y_interpolator,
-    const std::shared_ptr<interpolator::Interpolator<double>> & z_interpolator,
-    const std::shared_ptr<interpolator::Interpolator<double>> & orientation_x_interpolator,
-    const std::shared_ptr<interpolator::Interpolator<double>> & orientation_y_interpolator,
-    const std::shared_ptr<interpolator::Interpolator<double>> & orientation_z_interpolator,
-    const std::shared_ptr<interpolator::Interpolator<double>> & orientation_w_interpolator);
-
   bool build(const std::vector<PointType> & points);
 
   /**
@@ -67,7 +51,37 @@ public:
    */
   [[nodiscard]] std::vector<PointType> restore(const size_t & min_points = 100) const;
 
-  [[nodiscard]] TrajectoryContainer crop(const double & start, const double & length) const;
+  class Builder
+  {
+  private:
+    std::unique_ptr<TrajectoryContainer> trajectory_;
+
+  public:
+    Builder()
+    {
+      trajectory_ = std::make_unique<TrajectoryContainer>();
+      set_xy_interpolator<interpolator::CubicSpline>();
+      set_z_interpolator<interpolator::Linear>();
+    }
+
+    template <class InterpolatorType, class... Args>
+    Builder & set_xy_interpolator(Args &&... args)
+    {
+      trajectory_->x_interpolator_ =
+        std::make_shared<InterpolatorType>(std::forward<Args>(args)...);
+      trajectory_->y_interpolator_ =
+        std::make_shared<InterpolatorType>(std::forward<Args>(args)...);
+      return *this;
+    }
+
+    template <class InterpolatorType, class... Args>
+    Builder & set_z_interpolator(Args &&... args)
+    {
+      trajectory_->z_interpolator_ =
+        std::make_shared<InterpolatorType>(std::forward<Args>(args)...);
+      return *this;
+    }
+  };
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory

@@ -13,8 +13,8 @@
 // limitations under the License.
 
 // clang-format off
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__DETAIL__MANIPULABLE_INTERPOLATED_ARRAY_HPP_  // NOLINT
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__DETAIL__MANIPULABLE_INTERPOLATED_ARRAY_HPP_  // NOLINT
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__DETAIL__INTERPOLATED_ARRAY_HPP_  // NOLINT
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__DETAIL__INTERPOLATED_ARRAY_HPP_  // NOLINT
 // clang-format on
 
 #include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
@@ -31,16 +31,16 @@ namespace autoware::motion_utils::trajectory_container::trajectory::detail
 {
 
 template <typename T>
-class ManipulableInterpolatedArray;
+class InterpolatedArray;
 
 /**
- * @brief Class for setting values in a specific range of a ManipulableInterpolatedArray.
+ * @brief Class for setting values in a specific range of a InterpolatedArray.
  * @tparam T The type of values stored in the array.
  */
 template <typename T>
 class RangeSetter
 {
-  friend class ManipulableInterpolatedArray<T>;
+  friend class InterpolatedArray<T>;
 
 public:
   /**
@@ -89,16 +89,16 @@ public:
 private:
   /**
    * @brief Construct a RangeSetter.
-   * @param parent Reference to the ManipulableInterpolatedArray.
+   * @param parent Reference to the InterpolatedArray.
    * @param start Start of the range.
    * @param end End of the range.
    */
-  RangeSetter(ManipulableInterpolatedArray<T> & parent, double start, double end)
+  RangeSetter(InterpolatedArray<T> & parent, double start, double end)
   : parent_(parent), start_(start), end_(end)
   {
   }
 
-  ManipulableInterpolatedArray<T> & parent_;
+  InterpolatedArray<T> & parent_;
   double start_;
   double end_;
 };
@@ -108,37 +108,37 @@ private:
  * @tparam T The type of values stored in the array.
  */
 template <typename T>
-class ManipulableInterpolatedArray
+class InterpolatedArray
 {
   friend class RangeSetter<T>;
 
-  using InterpolatorType = interpolator::Interpolator<T>;
+  using InterpolatorType = interpolator::InterpolatorInterface<T>;
 
 private:
   Eigen::VectorXd axis_;
   std::vector<T> values_;
-  std::shared_ptr<interpolator::Interpolator<T>> interpolator_;
+  std::shared_ptr<interpolator::InterpolatorInterface<T>> interpolator_;
 
 public:
   /**
-   * @brief Construct a ManipulableInterpolatedArray with a given interpolator.
+   * @brief Construct a InterpolatedArray with a given interpolator.
    * @param interpolator Shared pointer to the interpolator.
    */
-  explicit ManipulableInterpolatedArray(const std::shared_ptr<InterpolatorType> & interpolator)
+  explicit InterpolatedArray(const std::shared_ptr<InterpolatorType> & interpolator)
   : interpolator_(interpolator)
   {
   }
 
   /**
    * @brief Copy constructor.
-   * @param other The ManipulableInterpolatedArray to copy from.
+   * @param other The InterpolatedArray to copy from.
    */
-  ManipulableInterpolatedArray(const ManipulableInterpolatedArray & other)
+  InterpolatedArray(const InterpolatedArray & other)
   : axis_(other.axis_), values_(other.values_), interpolator_(other.interpolator_->clone())
   {
   }
 
-  ManipulableInterpolatedArray(ManipulableInterpolatedArray && other) = default;
+  InterpolatedArray(InterpolatedArray && other) = default;
 
   bool build(const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<T> & values)
   {
@@ -149,16 +149,16 @@ public:
 
   /**
    * @brief Move constructor.
-   * @param other The ManipulableInterpolatedArray to move from.
+   * @param other The InterpolatedArray to move from.
    */
-  ManipulableInterpolatedArray & operator=(ManipulableInterpolatedArray && other) = default;
+  InterpolatedArray & operator=(InterpolatedArray && other) = default;
 
   /**
    * @brief Copy assignment operator.
-   * @param other The ManipulableInterpolatedArray to copy from.
-   * @return Reference to this ManipulableInterpolatedArray.
+   * @param other The InterpolatedArray to copy from.
+   * @return Reference to this InterpolatedArray.
    */
-  ManipulableInterpolatedArray & operator=(const ManipulableInterpolatedArray & other)
+  InterpolatedArray & operator=(const InterpolatedArray & other)
   {
     axis_ = other.axis_;
     values_ = other.values_;
@@ -167,7 +167,7 @@ public:
   }
 
   // Destructor
-  ~ManipulableInterpolatedArray() = default;
+  ~InterpolatedArray() = default;
 
   /**
    * @brief Get the start value of the axis.
@@ -191,7 +191,7 @@ public:
   {
     if (start < this->start() || end > this->end()) {
       RCLCPP_WARN(
-        rclcpp::get_logger("ManipulableInterpolatedArray"),
+        rclcpp::get_logger("InterpolatedArray"),
         "The range [%f, %f] is out of the array range [%f, %f]", start, end, this->start(),
         this->end());
       start = std::max(start, this->start());
@@ -203,9 +203,9 @@ public:
   /**
    * @brief Assign a value to the entire array.
    * @param value Value to be assigned.
-   * @return Reference to the ManipulableInterpolatedArray object.
+   * @return Reference to the InterpolatedArray object.
    */
-  ManipulableInterpolatedArray & operator=(const T & value)
+  InterpolatedArray & operator=(const T & value)
   {
     std::fill(values_.begin(), values_.end(), value);
     interpolator_->build(axis_, values_);
@@ -229,5 +229,5 @@ public:
 }  // namespace autoware::motion_utils::trajectory_container::trajectory::detail
 
 // clang-format off
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__DETAIL__MANIPULABLE_INTERPOLATED_ARRAY_HPP_  // NOLINT
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__DETAIL__INTERPOLATED_ARRAY_HPP_  // NOLINT
 // clang-format on

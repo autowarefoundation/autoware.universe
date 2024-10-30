@@ -14,6 +14,7 @@
 
 #include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
 #include "autoware/motion_utils/trajectory_container/trajectory/trajectory_creator.hpp"
+#include "autoware/motion_utils/trajectory_container/trajectory/trajectory_point.hpp"
 
 #include <geometry_msgs/msg/point.hpp>
 
@@ -58,12 +59,12 @@ int main()
   }
 
   using autoware::motion_utils::trajectory_container::interpolator::CubicSpline;
-  using autoware::motion_utils::trajectory_container::trajectory::TrajectoryCreator;
+  using autoware::motion_utils::trajectory_container::trajectory::TrajectoryContainer;
 
-  auto trajectory =
-    TrajectoryCreator<geometry_msgs::msg::Point>().set_xy_interpolator<CubicSpline>().create(
-      points);
-
+  auto trajectory = TrajectoryContainer<geometry_msgs::msg::Point>::Builder()
+                      .set_xy_interpolator<CubicSpline>()
+                      .set_z_interpolator<CubicSpline>()
+                      .build(points);
   std::cout << "Trajectory length: " << trajectory->length() << std::endl;
 
   trajectory = trajectory->crop(2.0, trajectory->length() - 4.0);
