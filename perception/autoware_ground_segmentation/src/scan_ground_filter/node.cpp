@@ -526,18 +526,18 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         continue;
       }
 
-      // 2: continuously non-ground
-      float points_xy_distance_square =
-        (point_curr.x - point_prev.x) * (point_curr.x - point_prev.x) +
-        (point_curr.y - point_prev.y) * (point_curr.y - point_prev.y);
-      if (
-        pd_prev.point_state == PointLabel::NON_GROUND &&
-        points_xy_distance_square < split_points_distance_tolerance_square_ &&
-        point_curr.z > point_prev.z) {
-        pd_curr.point_state = PointLabel::NON_GROUND;
-        out_no_ground_indices.indices.push_back(pd_curr.data_index);
-        continue;
-      }
+      // // 2: continuously non-ground
+      // float points_xy_distance_square =
+      //   (point_curr.x - point_prev.x) * (point_curr.x - point_prev.x) +
+      //   (point_curr.y - point_prev.y) * (point_curr.y - point_prev.y);
+      // if (
+      //   pd_prev.point_state == PointLabel::NON_GROUND &&
+      //   points_xy_distance_square < split_points_distance_tolerance_square_ &&
+      //   point_curr.z > point_prev.z) {
+      //   pd_curr.point_state = PointLabel::NON_GROUND;
+      //   out_no_ground_indices.indices.push_back(pd_curr.data_index);
+      //   continue;
+      // }
 
       // 3: the angle is exceed the global slope threshold
       if (global_slope_ratio_p > global_slope_max_ratio_) {
@@ -729,14 +729,15 @@ void ScanGroundFilterComponent::faster_filter(
   if (!data_offset_initialized_) {
     set_field_index_offsets(input);
   }
-  std::vector<PointCloudVector> radial_ordered_points;
 
   pcl::PointIndices no_ground_indices;
 
   if (elevation_grid_mode_) {
+    std::vector<PointCloudVector> radial_ordered_points;
     convertPointcloudGridScan(input, radial_ordered_points);
     classifyPointCloudGridScan(input, radial_ordered_points, no_ground_indices);
   } else {
+    std::vector<PointCloudVector> radial_ordered_points;
     convertPointcloud(input, radial_ordered_points);
     classifyPointCloud(input, radial_ordered_points, no_ground_indices);
   }
