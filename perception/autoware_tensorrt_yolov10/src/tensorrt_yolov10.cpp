@@ -369,13 +369,13 @@ void TrtYolov10::preProcess(cv::Mat * img, int length, float * factor, std::vect
 
 void TrtYolov10::preprocess(const std::vector<cv::Mat> & images, std::vector<float> & inputData)
 {
-  //todo: support multi images. now assume that infer only one image.
+  // todo: support multi images. now assume that infer only one image.
   for (cv::Mat image : images) {
     int length = 640;  // 模型输入的大小
     factor_ = 1.0;
 
     preProcess(&image, length, &factor_, inputData);
-    
+
     // // check sum
     // float sum = std::accumulate(inputData.begin(), inputData.end(), 0.0f);
     // printf("sum=%.2f\n", sum);
