@@ -39,11 +39,11 @@ using autoware_perception_msgs::msg::PredictedPath;
 using autoware_perception_msgs::msg::Shape;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
-using Point = boost::geometry::model::d2::point_xy<double>;
+using Point = autoware::universe_utils::Point2d;
 using Box = boost::geometry::model::box<Point>;
-using BoxTimePair = std::pair<autoware::universe_utils::Box2d, double>;
+using BoxTimeIndexPair = std::pair<Box, std::pair<double, std::size_t>>;
+using Rtree = boost::geometry::index::rtree<BoxTimeIndexPair, boost::geometry::index::rstar<16, 4>>;
 
-using Rtree = boost::geometry::index::rtree<BoxTimePair, boost::geometry::index::rstar<16, 4>>;
 std::pair<double, size_t> getAbsMaxValAndIdx(const std::vector<double> & v);
 
 Trajectory resampleTrajectory(const Trajectory & trajectory, const double min_interval);
@@ -90,10 +90,9 @@ std::pair<double, size_t> calcMaxSteeringRates(
  * checking.
  * @return True if a potential collision is detected; false otherwise.
  */
-bool check_collision(
+std::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>> check_collision(
   const PredictedObjects & objects, const Trajectory & trajectory,
-  const geometry_msgs::msg::Point & current_ego_point, const VehicleInfo & vehicle_info,
-  const double collision_check_distance_threshold = 10.0);
+  const geometry_msgs::msg::Point & current_ego_point, const VehicleInfo & vehicle_info);
 
 Rtree make_ego_footprint_rtree(
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
@@ -101,14 +100,16 @@ Rtree make_ego_footprint_rtree(
 
 std::optional<PredictedObjects> filter_objects(
   const PredictedObjects & objects,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
-  const double collision_check_distance_threshold);
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory);
 
 std::optional<PredictedPath> find_highest_confidence_path(const PredictedObject & object);
 
 void make_predicted_object_rtree(
   const PredictedPath & highest_confidence_path, const Shape & object_shape,
-  const double predicted_time_step, std::vector<BoxTimePair> & predicted_object_rtree_nodes);
+  const double predicted_time_step, std::vector<BoxTimeIndexPair> & predicted_object_rtree_nodes);
+
+std::vector<std::pair<size_t, size_t>> detect_collisions(
+  const Rtree & ego_rtree, const Rtree & predicted_object_rtree, double time_tolerance);
 
 bool checkFinite(const TrajectoryPoint & point);
 

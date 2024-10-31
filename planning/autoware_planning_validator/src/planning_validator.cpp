@@ -560,16 +560,23 @@ bool PlanningValidator::checkValidTrajectoryCollision(const Trajectory & traject
     return true;  // Ego is almost stopped.
   }
 
-  const bool is_collision = check_collision(
+  const auto & collided_points = check_collision(
     *current_objects_, trajectory, current_kinematics_->pose.pose.position, vehicle_info_);
-  return is_collision;
+
+  if (collided_points) {
+    for (const auto & p : *collided_points) {
+      debug_pose_publisher_->pushPoseMarker(p.pose, "collision", 0);
+    }
+  }
+  return !collided_points;
 }
 
 bool PlanningValidator::isAllValid(const PlanningValidatorStatus & s) const
 {
   // TODO(Sugahara): Add s.is_valid_no_collision after verifying that:
-  // 1. The false value of is_valid_no_collision correctly identifies path problems
+  // 1. The value of is_valid_no_collision correctly identifies path problems
   // 2. Adding this check won't incorrectly invalidate otherwise valid paths
+  //
   // want to avoid false negatives where good paths are marked invalid just because
   // isAllValid becomes false
   return s.is_valid_size && s.is_valid_finite_value && s.is_valid_interval &&
@@ -608,10 +615,10 @@ void PlanningValidator::displayStatus()
     s.is_valid_longitudinal_distance_deviation,
     "planning trajectory is too far from ego in longitudinal direction!!");
   warn(s.is_valid_forward_trajectory_length, "planning trajectory forward length is not enough!!");
-  warn(
-    s.is_valid_no_collision,
-    "planning trajectory has collision!! but this validation is not utilized for trajectory "
-    "validation.");
+  // warn(
+  //   s.is_valid_no_collision,
+  //   "planning trajectory has collision!! but this validation is not utilized for trajectory "
+  //   "validation.");
 }
 
 }  // namespace autoware::planning_validator
