@@ -52,8 +52,7 @@ public:
     auto trt_yolov10 = std::make_unique<tensorrt_yolov10::TrtYolov10>(model_path, precision);
     auto image = cv::imread(image_path);
     tensorrt_yolov10::ObjectArrays objects;
-    // // std::vector<cv::Mat> masks;
-    // // std::vector<cv::Mat> color_masks;
+
     trt_yolov10->doInference({image}, objects);
     for (const auto & object : objects[0]) {
       const auto left = object.x_offset;

@@ -247,73 +247,6 @@ bool TrtYolov10::setCudaDeviceId(const uint8_t gpu_id)
   }
 }
 
-// void TrtYolov10::initPreprocessBuffer(int width, int height)
-// {
-//   // if size of source input has been changed...
-//   if (src_width_ != -1 || src_height_ != -1) {
-//     if (width != src_width_ || height != src_height_) {
-//       // Free cuda memory to reallocate
-//       if (image_buf_h_) {
-//         image_buf_h_.reset();
-//       }
-//       if (image_buf_d_) {
-//         image_buf_d_.reset();
-//       }
-//     }
-//   }
-//   src_width_ = width;
-//   src_height_ = height;
-//   if (use_gpu_preprocess_) {
-//     auto input_dims = trt_common_->getBindingDimensions(0);
-//     bool const hasRuntimeDim = std::any_of(
-//       input_dims.d, input_dims.d + input_dims.nbDims,
-//       [](int32_t input_dim) { return input_dim == -1; });
-//     if (hasRuntimeDim) {
-//       input_dims.d[0] = batch_size_;
-//     }
-//     if (!image_buf_h_) {
-//       trt_common_->setBindingDimensions(0, input_dims);
-//       scales_.clear();
-//     }
-//     const float input_height = static_cast<float>(input_dims.d[2]);
-//     const float input_width = static_cast<float>(input_dims.d[3]);
-//     if (!image_buf_h_) {
-//       const float scale = std::min(input_width / width, input_height / height);
-//       for (int b = 0; b < batch_size_; b++) {
-//         scales_.emplace_back(scale);
-//       }
-//       image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
-//         width * height * 3 * batch_size_, cudaHostAllocWriteCombined);
-//       image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(width * height * 3 * batch_size_);
-//     }
-//     if (multitask_) {
-//       size_t argmax_out_elem_num = 0;
-//       for (int m = 0; m < multitask_; m++) {
-//         const auto output_dims =
-//           trt_common_->getBindingDimensions(m + 2);  // 0 : input, 1 : output for detections
-//         const float scale = std::min(
-//           output_dims.d[3] / static_cast<float>(width),
-//           output_dims.d[2] / static_cast<float>(height));
-//         int out_w = static_cast<int>(width * scale);
-//         int out_h = static_cast<int>(height * scale);
-//         // size_t out_elem_num = std::accumulate(
-//         // output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
-//         // out_elem_num = out_elem_num * batch_size_;
-//         size_t out_elem_num = out_w * out_h * batch_size_;
-//         argmax_out_elem_num += out_elem_num;
-//       }
-//       argmax_buf_h_ =
-//         cuda_utils::make_unique_host<unsigned char[]>(argmax_out_elem_num,
-//         cudaHostAllocPortable);
-//       argmax_buf_d_ = cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num);
-//     }
-//   }
-// }
-
-// void TrtYolov10::printProfiling(void)
-// {
-//   trt_common_->printProfiling();
-// }
 
 void TrtYolov10::preProcess(cv::Mat * img, int length, float * factor, std::vector<float> & data)
 {
@@ -330,8 +263,6 @@ void TrtYolov10::preProcess(cv::Mat * img, int length, float * factor, std::vect
   // Determine the size of the new square image (largest dimension of the input image)
   int maxImageLength = rw > rh ? rw : rh;
 
-  // Create a new square image filled with zeros (black) with dimensions maxImageLength x
-  // maxImageLength
   cv::Mat maxImage = cv::Mat::zeros(maxImageLength, maxImageLength, CV_8UC3);
 
   // Set all pixels to 255 (white)
@@ -382,39 +313,6 @@ void TrtYolov10::preprocess(const std::vector<cv::Mat> & images, std::vector<flo
   }
 }
 
-// void TrtYolov10::preprocess(const std::vector<cv::Mat> & images)
-// {
-//   const auto batch_size = images.size();
-//   auto input_dims = trt_common_->getBindingDimensions(0);
-//   input_dims.d[0] = batch_size;
-//   trt_common_->setBindingDimensions(0, input_dims);
-//   const float input_height = static_cast<float>(input_dims.d[2]);
-//   const float input_width = static_cast<float>(input_dims.d[3]);
-//   std::vector<cv::Mat> dst_images;
-//   scales_.clear();
-//   for (const auto & image : images) {
-//     cv::Mat dst_image;
-//     const float scale = std::min(input_width / image.cols, input_height / image.rows);
-//     scales_.emplace_back(scale);
-//     const auto scale_size = cv::Size(image.cols * scale, image.rows * scale);
-//     cv::resize(image, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
-//     const auto bottom = input_height - dst_image.rows;
-//     const auto right = input_width - dst_image.cols;
-//     copyMakeBorder(dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114,
-//     114}); dst_images.emplace_back(dst_image);
-//   }
-//   const auto chw_images = cv::dnn::blobFromImages(
-//     dst_images, norm_factor_, cv::Size(), cv::Scalar(), false, false, CV_32F);
-
-//   const auto data_length = chw_images.total();
-//   input_h_.reserve(data_length);
-//   const auto flat = chw_images.reshape(1, data_length);
-//   input_h_ = chw_images.isContinuous() ? flat : flat.clone();
-//   CHECK_CUDA_ERROR(cudaMemcpy(
-//     input_d_.get(), input_h_.data(), input_h_.size() * sizeof(float), cudaMemcpyHostToDevice));
-//   // No Need for Sync
-// }
-
 bool TrtYolov10::doInference(const std::vector<cv::Mat> & images, ObjectArrays & objects)
 {
   if (!setCudaDeviceId(gpu_id_)) {
@@ -429,8 +327,6 @@ bool TrtYolov10::doInference(const std::vector<cv::Mat> & images, ObjectArrays &
   preprocess(images, input_data);
   CHECK_CUDA_ERROR(cudaMemcpy(
     input_d_.get(), input_data.data(), 3 * 640 * 640 * sizeof(float), cudaMemcpyHostToDevice));
-
-  // preprocess(images);
 
   return feedforward(images, objects);
 }
@@ -464,9 +360,6 @@ bool TrtYolov10::feedforward(const std::vector<cv::Mat> & images, ObjectArrays &
 ObjectArray TrtYolov10::postprocess(float * result, float factor)
 {
   ObjectArray object_array;
-  std::vector<cv::Rect> positionBoxes;  // Stores bounding boxes of detected objects
-  std::vector<int> classIds;            // Stores class IDs for detected objects
-  std::vector<float> confidences;       // Stores confidence scores for detected objects
 
   // yolov10m out: 1 x 300 x 6
   for (int i = 0; i < max_detections_; i++) {
@@ -476,29 +369,17 @@ ObjectArray TrtYolov10::postprocess(float * result, float factor)
     // printf("i:%d,score:%.3f\n",i,(float)result[s + 4]);
 
     if (score > score_threshold_) {
-      printf("i:%d,score:%.3f\n", i, (float)result[s + 4]);
+    //   printf("i:%d,score:%.3f\n", i, (float)result[s + 4]);
 
-      // Extract the coordinates and dimensions of the bounding box (normalized values)
-      float cx = result[s + 0];  // Center x-coordinate
-      float cy = result[s + 1];  // Center y-coordinate
-      float dx = result[s + 2];  // Bottom-right x-coordinate
-      float dy = result[s + 3];  // Bottom-right y-coordinate
+      float ltx = result[s + 0];  
+      float lty = result[s + 1];  
+      float rbx = result[s + 2];  
+      float rby = result[s + 3];  
 
-      // Convert normalized coordinates and dimensions to pixel values using the scaling factor
-      int x = (int)((cx)*factor);              // Top-left x-coordinate of the bounding box
-      int y = (int)((cy)*factor);              // Top-left y-coordinate of the bounding box
-      int width = (int)((dx - cx) * factor);   // Width of the bounding box
-      int height = (int)((dy - cy) * factor);  // Height of the bounding box
-
-      // Create a cv::Rect object to represent the bounding box
-      cv::Rect box(x, y, width, height);
-
-      // Store the bounding box, class ID, and confidence score in the corresponding vectors
-      positionBoxes.push_back(box);
-      classIds.push_back(
-        (int)result[s + 5]);  // Class ID is stored at position s + 5 in the 'result' array
-      confidences.push_back((
-        float)result[s + 4]);  // Confidence score is stored at position s + 4 in the 'result' array
+      int x = (int)((ltx)*factor);              
+      int y = (int)((lty)*factor);              
+      int width = (int)((rbx - ltx) * factor);   
+      int height = (int)((rby - lty) * factor);  
 
       Object object;
       object.x_offset = x;

@@ -27,7 +27,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>tensorrt_common</depend>
+  <depend>autoware_tensorrt_common</depend>
   <depend>tier4_perception_msgs</depend>
 
   <exec_depend>autoware_image_transport_decompressor</exec_depend>
