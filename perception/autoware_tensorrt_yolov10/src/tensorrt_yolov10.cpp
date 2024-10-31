@@ -254,8 +254,8 @@ void TrtYolov10::preProcess(cv::Mat * img, int length, float * factor, std::vect
   cv::Mat mat;
 
   // Get the dimensions and number of channels of the input image
-  int rh = img->rows;        // Height of the input image
-  int rw = img->cols;        // Width of the input image
+  int rh = img->rows;  // Height of the input image
+  int rw = img->cols;  // Width of the input image
 
   // Convert the input image from BGR to RGB color space
   cv::cvtColor(*img, mat, cv::COLOR_BGR2RGB);
