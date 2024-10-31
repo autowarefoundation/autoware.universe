@@ -1,10 +1,10 @@
 #ifndef AUTOWARE__TENSORRT_YOLOV10__TENSORRT_YOLOV10_HPP_
 #define AUTOWARE__TENSORRT_YOLOV10__TENSORRT_YOLOV10_HPP_
 
+#include <autoware/tensorrt_common/tensorrt_common.hpp>
 #include <cuda_utils/cuda_unique_ptr.hpp>
 #include <cuda_utils/stream_unique_ptr.hpp>
 #include <opencv2/opencv.hpp>
-#include <autoware/tensorrt_common/tensorrt_common.hpp>
 
 #include <memory>
 #include <string>
