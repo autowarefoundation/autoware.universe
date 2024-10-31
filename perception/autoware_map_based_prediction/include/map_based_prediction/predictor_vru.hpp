@@ -109,7 +109,7 @@ lanelet::LaneletMapUPtr fence_layer_{nullptr};
   std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
   std::unordered_map<std::string, std::string> known_matches_;
   std::unordered_map<lanelet::Id, TrafficLightGroup> traffic_signal_id_map_;
-  lanelet::LaneletMapUPtr fence_layer_{nullptr};
+  
 
   // Parameters
   double prediction_time_horizon_;
