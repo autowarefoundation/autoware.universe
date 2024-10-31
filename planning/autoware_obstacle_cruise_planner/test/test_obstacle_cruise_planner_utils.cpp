@@ -25,12 +25,12 @@ StopObstacle generate_labeled_null_stop_obstacle(uint8_t label)
 {
   const std::string uuid{};
   const rclcpp::Time time{};
-  ObjectClassification object_classification;
+  ObjectClassification object_classification{};
   object_classification.label = label;
   const geometry_msgs::msg::Pose pose{};
   const Shape shape{};
-  const double lon_velocity{0.0};
-  const double lat_velocity{0.0};
+  const double lon_velocity{};
+  const double lat_velocity{};
   const geometry_msgs::msg::Point collision_point{};
   const double dist{10.0};
 
