@@ -20,6 +20,7 @@ The following features are supported for trajectory validation and can have thre
 - **Distance deviation** : invalid if the ego is too far from the trajectory
 - **Longitudinal distance deviation** : invalid if the trajectory is too far from ego in longitudinal direction
 - **Forward trajectory length** : invalid if the trajectory length is not enough to stop within a given deceleration
+- **Potential collision** : invalid if the planned trajectory is too close to the obstacle in the time horizon
 
 The following features are to be implemented.
 
@@ -31,10 +32,11 @@ The following features are to be implemented.
 
 The `autoware_planning_validator` takes in the following inputs:
 
-| Name                 | Type                              | Description                                    |
-| -------------------- | --------------------------------- | ---------------------------------------------- |
-| `~/input/kinematics` | nav_msgs/Odometry                 | ego pose and twist                             |
-| `~/input/trajectory` | autoware_planning_msgs/Trajectory | target trajectory to be validated in this node |
+| Name                 | Type                                      | Description                                    |
+| -------------------- | ----------------------------------------- | ---------------------------------------------- |
+| `~/input/kinematics` | nav_msgs/Odometry                         | ego pose and twist                             |
+| `~/input/trajectory` | autoware_planning_msgs/Trajectory         | target trajectory to be validated in this node |
+| `~/input/objects`    | autoware_perception_msgs/PredictedObjects | obstacles in the environment                   |
 
 ### Outputs
 
