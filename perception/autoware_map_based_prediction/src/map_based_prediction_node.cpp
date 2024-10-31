@@ -582,13 +582,7 @@ void MapBasedPredictionNode::mapCallback(const LaneletMapBin::ConstSharedPtr msg
 void MapBasedPredictionNode::trafficSignalsCallback(
   const TrafficLightGroupArray::ConstSharedPtr msg)
 {
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-  // traffic_signal_id_map_.clear();
-  // for (const auto & signal : msg->traffic_light_groups) {
-  //   traffic_signal_id_map_[signal.traffic_light_group_id] = signal;
-  // }
+  // load traffic signals to the predictor
   predictor_vru_->setTrafficSignal(*msg);
 }
 
@@ -606,13 +600,24 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
       trafficSignalsCallback(msg);
     }
   }
-  removeStaleTrafficLightInfo(in_objects);
 
   // Guard for map pointer and frame transformation
   if (!lanelet_map_ptr_) {
     return;
   }
 
+  // get world to map transform
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr world2map_transform;
+  bool is_object_not_in_map_frame = in_objects->header.frame_id != "map";
+  if (is_object_not_in_map_frame) {
+    world2map_transform = transform_listener_.getTransform(
+      "map",                        // target
+      in_objects->header.frame_id,  // src
+      in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
+    if (!world2map_transform) return;
+  }
+
+  // Get objects detected time
   const double objects_detected_time = rclcpp::Time(in_objects->header.stamp).seconds();
 
   // Remove old objects information in object history
@@ -633,18 +638,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   // get current crosswalk users for later prediction
   predictor_vru_->loadCurrentCrosswalkUsers(*in_objects);
 
-  // get world to map transform
-  geometry_msgs::msg::TransformStamped::ConstSharedPtr world2map_transform;
-
-  bool is_object_not_in_map_frame = in_objects->header.frame_id != "map";
-  if (is_object_not_in_map_frame) {
-    world2map_transform = transform_listener_.getTransform(
-      "map",                        // target
-      in_objects->header.frame_id,  // src
-      in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
-    if (!world2map_transform) return;
-  }
-
+  // for each object
   for (const auto & object : in_objects->objects) {
     TrackedObject transformed_object = object;
 
@@ -917,23 +911,6 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   object.kinematics.twist_with_covariance.twist.linear.y *= -1.0;
 
   return;
-}
-
-void MapBasedPredictionNode::removeStaleTrafficLightInfo(
-  const TrackedObjects::ConstSharedPtr in_objects)
-{
-  for (auto it = stopped_times_against_green_.begin(); it != stopped_times_against_green_.end();) {
-    const bool isDisappeared = std::none_of(
-      in_objects->objects.begin(), in_objects->objects.end(),
-      [&it](autoware_perception_msgs::msg::TrackedObject obj) {
-        return autoware::universe_utils::toHexString(obj.object_id) == it->first.first;
-      });
-    if (isDisappeared) {
-      it = stopped_times_against_green_.erase(it);
-    } else {
-      ++it;
-    }
-  }
 }
 
 LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & object)

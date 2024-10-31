@@ -116,7 +116,6 @@ private:
 
   // Object History
   std::unordered_map<std::string, std::deque<ObjectData>> road_users_history_;
-  std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
 
   // Lanelet Map Pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
@@ -137,24 +136,10 @@ private:
   // Predictor
   std::shared_ptr<PredictorVru> predictor_vru_;
 
-  // Crosswalk Entry Points
-  lanelet::ConstLanelets crosswalks_;
-
-  // Fences
-  lanelet::LaneletMapUPtr fence_layer_{nullptr};
-
   ////// Parameters
 
   // Object Parameters
   bool enable_delay_compensation_;
-
-  // Path generation parameters
-  double lateral_control_time_horizon_;
-  PredictionTimeHorizon prediction_time_horizon_;
-  double prediction_time_horizon_rate_for_validate_lane_length_;
-  double prediction_sampling_time_interval_;
-
-  double min_velocity_for_map_based_prediction_;
 
   //// Vehicle Parameters
   // Lanelet Parameters
@@ -165,13 +150,6 @@ private:
   bool consider_only_routable_neighbours_;
 
   // Pedestrian Parameters
-  // double min_crosswalk_user_velocity_;
-  // double max_crosswalk_user_delta_yaw_threshold_for_lanelet_;
-  // bool use_crosswalk_signal_;
-  // double threshold_velocity_assumed_as_stopping_;
-  // std::vector<double> distance_set_for_no_intention_to_walk_;
-  // std::vector<double> timeout_set_for_no_intention_to_walk_;
-  // bool match_lost_and_appeared_crosswalk_users_;
   bool remember_lost_crosswalk_users_;
 
   // Object history parameters
@@ -190,6 +168,11 @@ private:
   int num_continuous_state_transition_;
 
   // Path generation parameters
+  double lateral_control_time_horizon_;
+  PredictionTimeHorizon prediction_time_horizon_;
+  double prediction_time_horizon_rate_for_validate_lane_length_;
+  double prediction_sampling_time_interval_;
+  double min_velocity_for_map_based_prediction_;
   double reference_path_resolution_;
   bool check_lateral_acceleration_constraints_;
   double max_lateral_accel_;
@@ -211,7 +194,6 @@ private:
 
   // Object process
   PredictedObject convertToPredictedObject(const TrackedObject & tracked_object);
-  void removeStaleTrafficLightInfo(const TrackedObjects::ConstSharedPtr in_objects);
   void updateObjectData(TrackedObject & object);
   geometry_msgs::msg::Pose compensateTimeDelay(
     const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,

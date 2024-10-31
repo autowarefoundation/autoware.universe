@@ -252,9 +252,12 @@ void PredictorVru::setTrafficSignal(const TrafficLightGroupArray & traffic_signa
 
 void PredictorVru::setLaneletMap(std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   lanelet_map_ptr_ = std::move(lanelet_map_ptr);
 
-  const auto all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr);
+  const auto all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   const auto crosswalks = lanelet::utils::query::crosswalkLanelets(all_lanelets);
   const auto walkways = lanelet::utils::query::walkwayLanelets(all_lanelets);
   crosswalks_.insert(crosswalks_.end(), crosswalks.begin(), crosswalks.end());
@@ -339,6 +342,9 @@ void PredictorVru::removeOldKnownMatches(const double current_time, const double
 PredictedObject PredictorVru::predict(
   const std_msgs::msg::Header & header, const TrackedObject & object)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   std::string object_id = autoware::universe_utils::toHexString(object.object_id);
   if (match_lost_and_appeared_crosswalk_users_) {
     object_id = tryMatchNewObjectToDisappeared(object_id, current_crosswalk_users_);
