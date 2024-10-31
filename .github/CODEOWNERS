@@ -20,6 +20,7 @@ common/autoware_polar_grid/** yukihiro.saito@tier4.jp
 common/autoware_signal_processing/** ali.boyali@tier4.jp fumiya.watanabe@tier4.jp kyoichi.sugahara@tier4.jp takamasa.horibe@tier4.jp takayuki.murooka@tier4.jp
 common/autoware_test_utils/** kyoichi.sugahara@tier4.jp mamoru.sobue@tier4.jp takamasa.horibe@tier4.jp zulfaqar.azmi@tier4.jp
 common/autoware_testing/** adam.dabrowski@robotec.ai satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
+common/autoware_time_utils/** christopherj.ho@gmail.com shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 common/autoware_universe_utils/** mamoru.sobue@tier4.jp takamasa.horibe@tier4.jp takayuki.murooka@tier4.jp
 common/autoware_vehicle_info_utils/** mamoru.sobue@tier4.jp shumpei.wakabayashi@tier4.jp taiki.tanaka@tier4.jp tomoya.kimura@tier4.jp
 common/bag_time_manager_rviz_plugin/** taiki.tanaka@tier4.jp
@@ -38,7 +39,6 @@ common/tier4_state_rviz_plugin/** hiroki.ota@tier4.jp isamu.takagi@tier4.jp khal
 common/tier4_system_rviz_plugin/** koji.minoda@tier4.jp
 common/tier4_traffic_light_rviz_plugin/** satoshi.ota@tier4.jp
 common/tier4_vehicle_rviz_plugin/** yukihiro.saito@tier4.jp
-common/time_utils/** christopherj.ho@gmail.com shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 common/traffic_light_recognition_marker_publisher/** shumpei.wakabayashi@tier4.jp takeshi.miura@tier4.jp tomoya.kimura@tier4.jp
 common/traffic_light_utils/** kotaro.uetake@tier4.jp satoshi.ota@tier4.jp shunsuke.miura@tier4.jp
 common/tvm_utility/** ambroise.vincent@arm.com xinyu.wang@tier4.jp
