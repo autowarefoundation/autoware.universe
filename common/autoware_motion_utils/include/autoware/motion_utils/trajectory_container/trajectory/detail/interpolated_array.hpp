@@ -30,79 +30,6 @@
 namespace autoware::motion_utils::trajectory_container::trajectory::detail
 {
 
-template <typename T>
-class InterpolatedArray;
-
-/**
- * @brief Class for setting values in a specific range of a InterpolatedArray.
- * @tparam T The type of values stored in the array.
- */
-template <typename T>
-class RangeSetter
-{
-  friend class InterpolatedArray<T>;
-
-public:
-  /**
-   * @brief Assign a value to the specified range.
-   * @param value Value to be assigned.
-   * @return Reference to the RangeSetter object.
-   */
-  RangeSetter & operator=(const T & value)
-  {
-    Eigen::VectorXd & axis = parent_.axis_;
-    std::vector<T> & values = parent_.values_;
-
-    auto insert_if_not_present = [&](double val) -> typename std::vector<T>::iterator {
-      auto axis_it = std::lower_bound(axis.begin(), axis.end(), val) - 1;
-      auto values_it = values.begin() + (axis_it - axis.begin()) + 1;
-      if (axis_it == (axis.end() - 1) || *axis_it != val) {
-        int old_size = axis.size();
-        int insert_pos = axis_it - axis.begin() + 1;
-
-        // Resize and shift elements in axis
-        axis.conservativeResize(old_size + 1);
-        for (int i = old_size; i > insert_pos; --i) {
-          axis(i) = axis(i - 1);
-        }
-        axis(insert_pos) = val;
-
-        // Insert new value and return its iterator
-        return values.insert(values_it, value);
-      }
-      return values_it;
-    };
-    // Insert start if not present
-    auto start_it = insert_if_not_present(start_);
-
-    // Insert end if not present
-    auto end_it = insert_if_not_present(end_);
-
-    // Set value in the specified range
-    std::fill(start_it, end_it + 1, value);
-
-    parent_.interpolator_->build(axis, values);
-
-    return *this;
-  }
-
-private:
-  /**
-   * @brief Construct a RangeSetter.
-   * @param parent Reference to the InterpolatedArray.
-   * @param start Start of the range.
-   * @param end End of the range.
-   */
-  RangeSetter(InterpolatedArray<T> & parent, double start, double end)
-  : parent_(parent), start_(start), end_(end)
-  {
-  }
-
-  InterpolatedArray<T> & parent_;
-  double start_;
-  double end_;
-};
-
 /**
  * @brief Class representing an array with interpolatable values that can be manipulated.
  * @tparam T The type of values stored in the array.
@@ -110,12 +37,10 @@ private:
 template <typename T>
 class InterpolatedArray
 {
-  friend class RangeSetter<T>;
-
   using InterpolatorType = interpolator::InterpolatorInterface<T>;
 
 private:
-  Eigen::VectorXd axis_;
+  std::vector<double> bases_;
   std::vector<T> values_;
   std::shared_ptr<interpolator::InterpolatorInterface<T>> interpolator_;
 
@@ -134,17 +59,17 @@ public:
    * @param other The InterpolatedArray to copy from.
    */
   InterpolatedArray(const InterpolatedArray & other)
-  : axis_(other.axis_), values_(other.values_), interpolator_(other.interpolator_->clone())
+  : bases_(other.bases_), values_(other.values_), interpolator_(other.interpolator_->clone())
   {
   }
 
   InterpolatedArray(InterpolatedArray && other) = default;
 
-  bool build(const Eigen::Ref<const Eigen::VectorXd> & axis, const std::vector<T> & values)
+  bool build(const std::vector<double> & bases, const std::vector<T> & values)
   {
-    axis_ = axis;
+    bases_ = bases;
     values_ = values;
-    return interpolator_->build(axis_, values_);
+    return interpolator_->build(bases_, values_);
   }
 
   /**
@@ -160,7 +85,7 @@ public:
    */
   InterpolatedArray & operator=(const InterpolatedArray & other)
   {
-    axis_ = other.axis_;
+    bases_ = other.bases_;
     values_ = other.values_;
     interpolator_ = other.interpolator_->clone();
     return *this;
@@ -170,24 +95,76 @@ public:
   ~InterpolatedArray() = default;
 
   /**
-   * @brief Get the start value of the axis.
+   * @brief Get the start value of the base.
    * @return The start value.
    */
-  [[nodiscard]] double start() const { return axis_(0); }
+  [[nodiscard]] double start() const { return bases_.front(); }
 
   /**
-   * @brief Get the end value of the axis.
+   * @brief Get the end value of the base.
    * @return The end value.
    */
-  [[nodiscard]] double end() const { return axis_(axis_.size() - 1); }
+  [[nodiscard]] double end() const { return bases_.at(bases_.size() - 1); }
+
+  class Segment
+  {
+    friend class InterpolatedArray;
+
+    double start_;
+    double end_;
+    InterpolatedArray<T> & parent_;
+    Segment(InterpolatedArray<T> & parent, double start, double end)
+    : start_(start), end_(end), parent_(parent)
+    {
+    }
+
+  public:
+    auto & operator=(const T & value)
+    {
+      std::vector<double> & bases = parent_.bases_;
+      std::vector<T> & values = parent_.values_;
+
+      auto insert_if_not_present = [&](double val) -> size_t {
+        auto it = std::lower_bound(bases.begin(), bases.end(), val);
+        size_t index = std::distance(bases.begin(), it);
+
+        if (it != bases.end() && *it == val) {
+          // Return the index if the value already exists
+          return index;
+        }  // Insert into bases
+        bases.insert(it, val);
+        // Insert into values at the corresponding position
+        values.insert(values.begin() + index, value);
+        return index;
+      };
+
+      // Insert the start value if not present
+      size_t start_index = insert_if_not_present(start_);
+
+      // Insert the end value if not present
+      size_t end_index = insert_if_not_present(end_);
+
+      // Ensure the indices are in ascending order
+      if (start_index > end_index) {
+        std::swap(start_index, end_index);
+      }
+
+      // Set the values in the specified range
+      std::fill(values.begin() + start_index, values.begin() + end_index + 1, value);
+
+      parent_.interpolator_->build(bases, values);
+
+      return *this;
+    }
+  };
 
   /**
-   * @brief Get a RangeSetter object for the specified range.
+   * @brief Get a Segment object to set values in a specific range.
    * @param start Start of the range.
    * @param end End of the range.
    * @return RangeSetter object.
    */
-  RangeSetter<T> operator()(double start, double end)
+  Segment operator()(double start, double end)
   {
     if (start < this->start() || end > this->end()) {
       RCLCPP_WARN(
@@ -197,7 +174,7 @@ public:
       start = std::max(start, this->start());
       end = std::min(end, this->end());
     }
-    return RangeSetter<T>{*this, start, end};
+    return Segment{*this, start, end};
   }
 
   /**
@@ -208,7 +185,7 @@ public:
   InterpolatedArray & operator=(const T & value)
   {
     std::fill(values_.begin(), values_.end(), value);
-    interpolator_->build(axis_, values_);
+    interpolator_->build(bases_, values_);
     return *this;
   }
 
@@ -223,7 +200,7 @@ public:
    * @brief Get the underlying data of the array.
    * @return A pair containing the axis and values.
    */
-  std::pair<Eigen::VectorXd, std::vector<T>> get_data() const { return {axis_, values_}; }
+  std::pair<std::vector<double>, std::vector<T>> get_data() const { return {bases_, values_}; }
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory::detail

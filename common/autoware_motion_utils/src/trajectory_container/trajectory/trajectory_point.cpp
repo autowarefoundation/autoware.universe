@@ -92,6 +92,13 @@ double TrajectoryContainer<PointType>::azimuth(double s) const
   return std::atan2(dy, dx);
 }
 
+double TrajectoryContainer<PointType>::elevation(double s) const
+{
+  s = clamp(s, true);
+  double dz = z_interpolator_->compute_first_derivative(s);
+  return std::atan2(dz, 1.0);
+}
+
 double TrajectoryContainer<PointType>::curvature(double s) const
 {
   s = clamp(s, true);
@@ -118,18 +125,10 @@ std::vector<PointType> TrajectoryContainer<PointType>::restore(const size_t & mi
   return points;
 }
 
-void TrajectoryContainer<PointType>::crop_in_place(const double & start, const double & length)
+void TrajectoryContainer<PointType>::crop(const double & start, const double & length)
 {
   start_ = std::clamp(start_ + start, start_, end_);
   end_ = std::clamp(start_ + length, start_, end_);
-}
-
-TrajectoryContainer<PointType> TrajectoryContainer<PointType>::crop(
-  const double & start, const double & length) const
-{
-  auto cropped = *this;
-  cropped.crop_in_place(start, length);
-  return cropped;
 }
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory

@@ -29,6 +29,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace autoware::motion_utils::trajectory_container::trajectory
@@ -87,11 +88,18 @@ public:
   bool build(const std::vector<PointType> & points);
 
   /**
-   * @brief Get the direction at a given s value
+   * @brief Get the azimuth angle at a given s value
    * @param s Arc length
-   * @return Direction in radians
+   * @return Azimuth in radians
    */
   [[nodiscard]] double azimuth(double s) const;
+
+  /**
+   * @brief Get the elevation angle at a given s value
+   * @param s Arc length
+   * @return Elevation in radians
+   */
+  [[nodiscard]] double elevation(double s) const;
 
   /**
    * @brief Get the curvature at a given s value
@@ -238,9 +246,7 @@ public:
    */
   [[nodiscard]] std::vector<PointType> restore(const size_t & min_points = 100) const;
 
-  void crop_in_place(const double & start, const double & length);
-
-  [[nodiscard]] TrajectoryContainer crop(const double & start, const double & length) const;
+  void crop(const double & start, const double & length);
 
   class Builder
   {

@@ -46,10 +46,10 @@ geometry_msgs::msg::Point to_point(const lanelet::ConstPoint3d & p);
  * @brief Merge multiple vectors into one, keeping only unique elements.
  * @tparam Vectors Variadic template parameter for vector types.
  * @param vectors Vectors to be merged.
- * @return Eigen::VectorXd Merged vector with unique elements.
+ * @return std::vector<double> Merged vector with unique elements.
  */
 template <typename... Vectors>
-Eigen::VectorXd merge_vectors(const Vectors &... vectors)
+std::vector<double> merge_vectors(const Vectors &... vectors)
 {
   std::set<double> unique_elements;
 
@@ -61,10 +61,8 @@ Eigen::VectorXd merge_vectors(const Vectors &... vectors)
   // Expand the parameter pack and insert elements from each vector
   (insert_elements(vectors), ...);
 
-  // Convert the set to Eigen::VectorXd
-  return Eigen::Map<Eigen::VectorXd>(
-    std::vector<double>(unique_elements.begin(), unique_elements.end()).data(),
-    static_cast<Eigen::Index>(unique_elements.size()));
+  // Convert the set to std::vector<double>
+  return {unique_elements.begin(), unique_elements.end()};
 }
 
 std::vector<double> fill_bases(const std::vector<double> & x, const size_t & min_points);

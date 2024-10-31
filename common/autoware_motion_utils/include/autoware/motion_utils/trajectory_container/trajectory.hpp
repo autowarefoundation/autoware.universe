@@ -14,7 +14,6 @@
 
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY_HPP_
-#include <autoware/motion_utils/trajectory_container/trajectory/trajectory_creator.hpp>
 #include <autoware/motion_utils/trajectory_container/trajectory/trajectory_path_point.hpp>
 #include <autoware/motion_utils/trajectory_container/trajectory/trajectory_path_point_with_lane_id.hpp>
 #include <autoware/motion_utils/trajectory_container/trajectory/trajectory_point.hpp>

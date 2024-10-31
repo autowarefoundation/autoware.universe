@@ -17,9 +17,13 @@
 
 #include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/spherical_linear.hpp"
 #include "autoware/motion_utils/trajectory_container/trajectory/trajectory_point.hpp"
 
+#include <geometry_msgs/msg/quaternion.hpp>
+
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace autoware::motion_utils::trajectory_container::trajectory
@@ -34,6 +38,10 @@ class TrajectoryContainer<geometry_msgs::msg::Pose>
 {
   using BaseClass = TrajectoryContainer<geometry_msgs::msg::Point>;
   using PointType = geometry_msgs::msg::Pose;
+
+protected:
+  std::shared_ptr<interpolator::InterpolatorInterface<geometry_msgs::msg::Quaternion>>
+    orientation_interpolator_;  //!< Interpolator for orientations
 
 public:
   bool build(const std::vector<PointType> & points);
@@ -51,6 +59,11 @@ public:
    */
   [[nodiscard]] std::vector<PointType> restore(const size_t & min_points = 100) const;
 
+  /**
+   * @brief Align the orientation with the direction
+   */
+  void align_orientation_with_trajectory_direction();
+
   class Builder
   {
   private:
@@ -62,6 +75,7 @@ public:
       trajectory_ = std::make_unique<TrajectoryContainer>();
       set_xy_interpolator<interpolator::CubicSpline>();
       set_z_interpolator<interpolator::Linear>();
+      set_orientation_interpolator<interpolator::SphericalLinear>();
     }
 
     template <class InterpolatorType, class... Args>
@@ -80,6 +94,24 @@ public:
       trajectory_->z_interpolator_ =
         std::make_shared<InterpolatorType>(std::forward<Args>(args)...);
       return *this;
+    }
+
+    template <class InterpolatorType, class... Args>
+    Builder & set_orientation_interpolator(Args &&... args)
+    {
+      trajectory_->orientation_interpolator_ =
+        std::make_shared<InterpolatorType>(std::forward<Args>(args)...);
+      return *this;
+    }
+
+    std::optional<TrajectoryContainer> build(const std::vector<PointType> & points)
+    {
+      if (trajectory_->build(points)) {
+        auto result = std::make_optional<TrajectoryContainer>(std::move(*trajectory_));
+        trajectory_.reset();
+        return result;
+      }
+      return std::nullopt;
     }
   };
 };

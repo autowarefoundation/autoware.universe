@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
-#include "autoware/motion_utils/trajectory_container/trajectory/trajectory_creator.hpp"
 #include "autoware/motion_utils/trajectory_container/trajectory/trajectory_point.hpp"
 
 #include <geometry_msgs/msg/point.hpp>
@@ -23,7 +22,7 @@
 #include <iostream>
 #include <vector>
 
-geometry_msgs::msg::Point path_point(double x, double y)
+geometry_msgs::msg::Point pose(double x, double y)
 {
   geometry_msgs::msg::Point p;
   p.x = x;
@@ -38,13 +37,11 @@ int main()
   auto plt = matplotlibcpp17::pyplot::import();
 
   std::vector<geometry_msgs::msg::Point> points = {
-    path_point(0.49, 0.59), path_point(0.61, 1.22), path_point(0.86, 1.93), path_point(1.20, 2.56),
-    path_point(1.51, 3.17), path_point(1.85, 3.76), path_point(2.14, 4.26), path_point(2.60, 4.56),
-    path_point(3.07, 4.55), path_point(3.61, 4.30), path_point(3.95, 4.01), path_point(4.29, 3.68),
-    path_point(4.90, 3.25), path_point(5.54, 3.10), path_point(6.24, 3.18), path_point(6.88, 3.54),
-    path_point(7.51, 4.25), path_point(7.85, 4.93), path_point(8.03, 5.73), path_point(8.16, 6.52),
-    path_point(8.31, 7.28), path_point(8.45, 7.93), path_point(8.68, 8.45), path_point(8.96, 8.96),
-    path_point(9.32, 9.36)};
+    pose(0.49, 0.59), pose(0.61, 1.22), pose(0.86, 1.93), pose(1.20, 2.56), pose(1.51, 3.17),
+    pose(1.85, 3.76), pose(2.14, 4.26), pose(2.60, 4.56), pose(3.07, 4.55), pose(3.61, 4.30),
+    pose(3.95, 4.01), pose(4.29, 3.68), pose(4.90, 3.25), pose(5.54, 3.10), pose(6.24, 3.18),
+    pose(6.88, 3.54), pose(7.51, 4.25), pose(7.85, 4.93), pose(8.03, 5.73), pose(8.16, 6.52),
+    pose(8.31, 7.28), pose(8.45, 7.93), pose(8.68, 8.45), pose(8.96, 8.96), pose(9.32, 9.36)};
 
   {
     std::vector<double> x;
@@ -67,7 +64,7 @@ int main()
                       .build(points);
   std::cout << "Trajectory length: " << trajectory->length() << std::endl;
 
-  trajectory = trajectory->crop(2.0, trajectory->length() - 4.0);
+  trajectory->crop(2.0, trajectory->length() - 4.0);
 
   std::cout << "Trajectory length after cropping: " << trajectory->length() << std::endl;
 
