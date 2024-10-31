@@ -323,7 +323,6 @@ void TrtYolov10::preProcess(cv::Mat * img, int length, float * factor, std::vect
   // Get the dimensions and number of channels of the input image
   int rh = img->rows;        // Height of the input image
   int rw = img->cols;        // Width of the input image
-  int rc = img->channels();  // Number of channels (e.g., 3 for RGB)
 
   // Convert the input image from BGR to RGB color space
   cv::cvtColor(*img, mat, cv::COLOR_BGR2RGB);
@@ -359,7 +358,7 @@ void TrtYolov10::preProcess(cv::Mat * img, int length, float * factor, std::vect
   // Update the height, width, and number of channels for the resized image
   rh = resizeImg.rows;
   rw = resizeImg.cols;
-  rc = resizeImg.channels();
+  int rc = resizeImg.channels();
 
   // Extract each channel of the resized image and store it in the 'data' vector
   for (int i = 0; i < rc; ++i) {

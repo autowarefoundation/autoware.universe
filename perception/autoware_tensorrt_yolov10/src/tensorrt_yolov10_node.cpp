@@ -44,17 +44,8 @@ TrtYolov10Node::TrtYolov10Node(const rclcpp::NodeOptions & node_options)
   using std::chrono_literals::operator""ms;
 
   const std::string model_path = this->declare_parameter<std::string>("model_path");
-  //   const std::string label_path = this->declare_parameter<std::string>("label_path");
   const std::string precision = this->declare_parameter<std::string>("precision", "fp16");
-  //   const float score_threshold =
-  //     static_cast<float>(this->declare_parameter<double>("score_threshold"));
-  //   const int dla_core_id = this->declare_parameter<int>("dla_core_id");
   const uint8_t gpu_id = this->declare_parameter<uint8_t>("gpu_id", 0);
-
-  //   const double norm_factor = 1.0;
-  const std::string cache_dir = "";
-  //   const tensorrt_common::BatchConfig batch_config{1, 1, 1};
-  //   const size_t max_workspace_size = (1 << 30);
 
   trt_yolov10_ = std::make_unique<tensorrt_yolov10::TrtYolov10>(model_path, precision);
 
