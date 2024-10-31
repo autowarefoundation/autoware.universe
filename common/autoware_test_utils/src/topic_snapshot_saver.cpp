@@ -14,6 +14,7 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_test_utils/mock_data_parser.hpp>
+#include <rclcpp/logger.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -81,18 +82,16 @@ template <typename Message>
 class CallbackHandler
 {
 public:
-  CallbackHandler(MessageType & buffer) : buffer_(buffer) {}
+  explicit CallbackHandler(std::shared_ptr<MessageType> buffer) : buffer_(buffer) {}
 
-  void on_callback(const typename Message::SharedPtr msg)
+  void on_callback([[maybe_unused]] const typename Message::SharedPtr msg)
   {
     std::lock_guard guard(g_mutex);
-    if (msg) {
-      buffer_ = *msg;
-    }
+    *buffer_ = *msg;
   }
 
 private:
-  MessageType & buffer_;
+  std::shared_ptr<MessageType> buffer_;
 };
 
 namespace detail
@@ -128,11 +127,11 @@ class TopicSnapShotSaver
 public:
   TopicSnapShotSaver(
     const std::string & map_path, const std::string & config_path, rclcpp::Node & node)
-  : map_path_(map_path), config_path_(config_path)
+  : map_path_(map_path), config_path_(config_path), node_(node), logger_(node.get_logger())
   {
     std::lock_guard guard(g_mutex);
 
-    server_ = node.create_service<std_srvs::srv::Empty>(
+    server_ = node_.create_service<std_srvs::srv::Empty>(
       "/autoware_test_utils/topic_snapshot_saver",
       std::bind(
         &TopicSnapShotSaver::on_service, this, std::placeholders::_1, std::placeholders::_2));
@@ -150,21 +149,22 @@ public:
       const auto topic = field["topic"].as<std::string>();
       field_2_topic_type_[name] = type_index;
 
-      /*
       if (0 == type_index) {
-        CallbackHandler<typename std::variant_alternative_t<0, MessageType>> handler(
-          std::ref(mutex_), std::ref(message_buffer_.at(0)));
+        typename std::variant_alternative_t<0, MessageType> payload{};
+        auto msg = std::make_shared<MessageType>(payload);
+        message_buffer_[0] = msg;
+        auto handler = std::make_shared<CallbackHandlerType<MessageType>>(
+          CallbackHandler<typename std::variant_alternative_t<0, MessageType>>(msg));
         handlers_.emplace_back(handler);
         auto & handler_ref =
           std::get<CallbackHandler<typename std::variant_alternative_t<0, MessageType>>>(
-            handlers_.back());
+            *handlers_.back());
         subscribers_[0] = create_subscriber<0>(
           topic, node,
           std::bind(
             &CallbackHandler<std::variant_alternative_t<0, MessageType>>::on_callback, &handler_ref,
             std::placeholders::_1));
       }
-      */
 
       /**
        * NOTE: for a specific topic-type, only one topic-name is allowed
@@ -181,12 +181,15 @@ public:
 
 #define REGISTER_CALLBACK(arg)                                                                     \
   if (arg == type_index) {                                                                         \
-    CallbackHandler<typename std::variant_alternative_t<arg, MessageType>> handler(                \
-      std::ref(message_buffer_.at(arg)));                                                          \
+    typename std::variant_alternative_t<arg, MessageType> payload{};                               \
+    auto msg = std::make_shared<MessageType>(payload);                                             \
+    message_buffer_[arg] = msg;                                                                    \
+    auto handler = std::make_shared<CallbackHandlerType<MessageType>>(                             \
+      CallbackHandler<typename std::variant_alternative_t<arg, MessageType>>(msg));                \
     handlers_.emplace_back(handler);                                                               \
     auto & handler_ref =                                                                           \
       std::get<CallbackHandler<typename std::variant_alternative_t<arg, MessageType>>>(            \
-        handlers_.back());                                                                         \
+        *handlers_.back());                                                                        \
     subscribers_[arg] = create_subscriber<arg>(                                                    \
       topic, node,                                                                                 \
       std::bind(                                                                                   \
@@ -206,12 +209,14 @@ public:
 private:
   const std::string map_path_;
   const std::string config_path_;
+  rclcpp::Node & node_;
+  rclcpp::Logger logger_;
 
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr server_;
 
   std::unordered_map<size_t, rclcpp::SubscriptionBase::SharedPtr> subscribers_;
-  std::vector<CallbackHandlerType<MessageType>> handlers_;
-  std::array<MessageType, std::variant_size_v<MessageType>> message_buffer_;
+  std::vector<std::shared_ptr<CallbackHandlerType<MessageType>>> handlers_;
+  std::unordered_map<size_t, std::shared_ptr<MessageType>> message_buffer_;
   std::unordered_map<std::string, size_t> field_2_topic_type_;
   void on_service(
     [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Empty::Request> req,
@@ -224,11 +229,25 @@ private:
     yaml["format_version"] = 1;
 
     for (const auto & [field, type_index] : field_2_topic_type_) {
-      if (0 == type_index) {
-        const auto & msg = std::get<typename std::variant_alternative_t<0, MessageType>>(
-          message_buffer_.at(type_index));
-        yaml[field] = to_yaml(msg);  // NOTE: ADL works fine!
-      }
+      // instantiate for each type
+
+#define REGISTER_WRITE_TYPE(arg)                                                      \
+  if (arg == type_index) {                                                            \
+    const auto it = message_buffer_.find(arg);                                        \
+    if (it == message_buffer_.end()) {                                                \
+      continue;                                                                       \
+    }                                                                                 \
+    const auto & msg =                                                                \
+      std::get<typename std::variant_alternative_t<arg, MessageType>>(*(it->second)); \
+    yaml[field] = YAML::Load(to_yaml(msg));                                           \
+  }
+
+      REGISTER_WRITE_TYPE(0);
+      REGISTER_WRITE_TYPE(1);
+      REGISTER_WRITE_TYPE(2);
+      REGISTER_WRITE_TYPE(3);
+      REGISTER_WRITE_TYPE(4);
+      REGISTER_WRITE_TYPE(5);
     }
 
     const std::string desc = std::string(R"(#
