@@ -170,13 +170,12 @@ void SceneModuleManagerInterface::deleteExpiredModules(
 {
   const auto isModuleExpired = getModuleExpiredFunction(path);
 
-  // Copy container to avoid iterator corruption
-  // due to scene_modules_.erase() in unregisterModule()
-  const auto copied_scene_modules = scene_modules_;
-
-  for (const auto & scene_module : copied_scene_modules) {
-    if (isModuleExpired(scene_module)) {
-      unregisterModule(scene_module);
+  auto itr = scene_modules_.begin();
+  while (itr != scene_modules_.end()) {
+    if (isModuleExpired(*itr)) {
+      itr = scene_modules_.erase(itr);
+    } else {
+      itr++;
     }
   }
 }
@@ -278,18 +277,17 @@ void SceneModuleManagerInterfaceWithRTC::deleteExpiredModules(
 {
   const auto isModuleExpired = getModuleExpiredFunction(path);
 
-  // Copy container to avoid iterator corruption
-  // due to scene_modules_.erase() in unregisterModule()
-  const auto copied_scene_modules = scene_modules_;
-
-  for (const auto & scene_module : copied_scene_modules) {
-    if (isModuleExpired(scene_module)) {
-      const UUID uuid = getUUID(scene_module->getModuleId());
+  auto itr = scene_modules_.begin();
+  while (itr != scene_modules_.end()) {
+    if (isModuleExpired(*itr)) {
+      const UUID uuid = getUUID((*itr)->getModuleId());
       updateRTCStatus(
-        uuid, scene_module->isSafe(), State::SUCCEEDED, std::numeric_limits<double>::lowest(),
+        uuid, (*itr)->isSafe(), State::SUCCEEDED, std::numeric_limits<double>::lowest(),
         clock_->now());
-      removeUUID(scene_module->getModuleId());
-      unregisterModule(scene_module);
+      removeUUID((*itr)->getModuleId());
+      itr = scene_modules_.erase(itr);
+    } else {
+      itr++;
     }
   }
 }
