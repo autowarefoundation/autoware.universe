@@ -281,7 +281,7 @@ void TrtYolov10::preProcess(cv::Mat * img, int length, float * factor, std::vect
   cv::resize(maxImage, resizeImg, cv::Size(length, length), 0.0f, 0.0f, cv::INTER_LINEAR);
 
   // Calculate the scaling factor and store it in the 'factor' variable
-  *factor = (float)((float)maxImageLength / (float)length);
+  *factor = (1.0 * maxImageLength) / ( 1.0 * length);
 
   // Convert the resized image to floating-point format with values in range [0, 1]
   resizeImg.convertTo(resizeImg, CV_32FC3, 1 / 255.0);
@@ -376,10 +376,10 @@ ObjectArray TrtYolov10::postprocess(float * result, float factor)
       float rbx = result[s + 2];  
       float rby = result[s + 3];  
 
-      int x = (int)((ltx)*factor);              
-      int y = (int)((lty)*factor);              
-      int width = (int)((rbx - ltx) * factor);   
-      int height = (int)((rby - lty) * factor);  
+      int x = static_cast<int>((ltx)*factor);              
+      int y = static_cast<int>((lty)*factor);              
+      int width = static_cast<int>((rbx - ltx) * factor);   
+      int height = static_cast<int>((rby - lty) * factor);  
 
       Object object;
       object.x_offset = x;
