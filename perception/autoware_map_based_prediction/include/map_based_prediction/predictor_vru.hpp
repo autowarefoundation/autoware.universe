@@ -99,7 +99,7 @@ private:
   // Map data
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
   lanelet::ConstLanelets crosswalks_;
-
+lanelet::LaneletMapUPtr fence_layer_{nullptr};
   std::shared_ptr<PathGenerator> path_generator_;
 
   // Data
