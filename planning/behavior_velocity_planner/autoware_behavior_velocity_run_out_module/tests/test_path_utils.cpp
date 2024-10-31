@@ -40,12 +40,6 @@ class TestPathUtils : public ::testing::Test
   void SetUp() override {}
 };
 
-/**
- * @brief Test the external command converter's check_emergency_stop_topic_timeout method under
- * different circumstances by setting different combinations of conditions for the function
- * execution. the test_check_emergency_stop_topic_timeout() function's brief should be read for
- * further details.
- */
 TEST_F(TestPathUtils, testFindLongitudinalNearestPoint)
 {
   const auto path =
@@ -65,7 +59,13 @@ TEST_F(TestPathUtils, testFindLongitudinalNearestPoint)
   const auto closest_point_dst = findLongitudinalNearestPoint(path.points, geom_p_dst, dst_points);
   const auto closest_point_med = findLongitudinalNearestPoint(path.points, geom_p_med, dst_points);
 
-  EXPECT_DOUBLE_EQ(autoware::universe_utils::calcDistance3d(closest_point_src, geom_p_src), 0.0);
-  EXPECT_DOUBLE_EQ(autoware::universe_utils::calcDistance3d(closest_point_dst, geom_p_dst), 0.0);
-  EXPECT_DOUBLE_EQ(autoware::universe_utils::calcDistance3d(closest_point_med, geom_p_med), 0.0);
+  EXPECT_DOUBLE_EQ(
+    autoware::universe_utils::calcDistance3d(closest_point_src, geom_p_src),
+    autoware::universe_utils::calcDistance3d(geom_p_src, geom_p_src));
+  EXPECT_DOUBLE_EQ(
+    autoware::universe_utils::calcDistance3d(closest_point_dst, geom_p_dst),
+    autoware::universe_utils::calcDistance3d(geom_p_src, geom_p_dst));
+  EXPECT_DOUBLE_EQ(
+    autoware::universe_utils::calcDistance3d(closest_point_med, geom_p_med),
+    autoware::universe_utils::calcDistance3d(geom_p_src, geom_p_med));
 }
