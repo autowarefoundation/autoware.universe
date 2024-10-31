@@ -15,6 +15,10 @@
 #ifndef AUTOWARE_TEST_UTILS__MOCK_DATA_PARSER_HPP_
 #define AUTOWARE_TEST_UTILS__MOCK_DATA_PARSER_HPP_
 
+#include <builtin_interfaces/msg/duration.hpp>
+
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
@@ -32,9 +36,16 @@
 
 namespace autoware::test_utils
 {
+using autoware_perception_msgs::msg::ObjectClassification;
+using autoware_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObjectKinematics;
+using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedPath;
+using autoware_perception_msgs::msg::Shape;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::LaneletSegment;
+using builtin_interfaces::msg::Duration;
 using geometry_msgs::msg::Accel;
 using geometry_msgs::msg::AccelWithCovariance;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
@@ -47,6 +58,7 @@ using nav_msgs::msg::Odometry;
 using std_msgs::msg::Header;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
+using unique_identifier_msgs::msg::UUID;
 
 /**
  * @brief Parses a YAML node and converts it into an object of type T.
@@ -63,6 +75,9 @@ T parse(const YAML::Node & node);
 
 template <>
 Header parse(const YAML::Node & node);
+
+template <>
+Duration parse(const YAML::Node & node);
 
 template <>
 std::vector<Point> parse(const YAML::Node & node);
@@ -105,6 +120,27 @@ std::vector<LaneletSegment> parse(const YAML::Node & node);
 
 template <>
 std::vector<PathPointWithLaneId> parse(const YAML::Node & node);
+
+template <>
+UUID parse(const YAML::Node & node);
+
+template <>
+PredictedPath parse(const YAML::Node & node);
+
+template <>
+ObjectClassification parse(const YAML::Node & node);
+
+template <>
+Shape parse(const YAML::Node & node);
+
+template <>
+PredictedObjectKinematics parse(const YAML::Node & node);
+
+template <>
+PredictedObject parse(const YAML::Node & node);
+
+template <>
+PredictedObjects parse(const YAML::Node & node);
 
 /**
  * @brief Parses a YAML file and converts it into an object of type T.

@@ -15,36 +15,25 @@
 #ifndef AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 #define AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 
-#include <autoware/component_interface_specs/planning.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
-#include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
-#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
-#include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rosgraph_msgs/msg/clock.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <std_msgs/msg/bool.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
-#include <unique_identifier_msgs/msg/uuid.hpp>
 
-#include <cxxabi.h>
 #include <lanelet2_io/Io.h>
-#include <tf2/utils.h>
-#include <tf2_ros/buffer.h>
-#include <yaml-cpp/yaml.h>
 
 #include <limits>
 #include <memory>
@@ -65,18 +54,13 @@ using autoware_planning_msgs::msg::Trajectory;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
-using autoware::universe_utils::createPoint;
-using autoware::universe_utils::createQuaternionFromRPY;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
-using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_planning_msgs::msg::Scenario;
-using unique_identifier_msgs::msg::UUID;
 
 /**
  * @brief Creates a Pose message with the specified position and orientation.
