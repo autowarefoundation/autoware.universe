@@ -63,6 +63,9 @@ struct ValidationParams
   double velocity_deviation_threshold;
   double distance_deviation_threshold;
   double longitudinal_distance_deviation_threshold;
+  double trajectory_to_object_distance_threshold;
+  double ego_to_object_distance_threshold;
+  double time_tolerance_threshold;
 
   // parameters
   double forward_trajectory_length_acceleration;

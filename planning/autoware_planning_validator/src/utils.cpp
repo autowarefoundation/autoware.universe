@@ -295,7 +295,9 @@ std::pair<double, size_t> calcMaxSteeringRates(
 
 std::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>> check_collision(
   const PredictedObjects & predicted_objects, const Trajectory & trajectory,
-  const geometry_msgs::msg::Point & current_ego_position, const VehicleInfo & vehicle_info)
+  const geometry_msgs::msg::Point & current_ego_position, const VehicleInfo & vehicle_info,
+  const double trajectory_to_object_distance_threshold, ,
+  const double ego_to_object_distance_threshold, const double time_tolerance_threshold)
 {
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> filtered_trajectory;
 
@@ -319,12 +321,12 @@ std::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>> check_c
 
   const auto & ego_rtree = make_ego_footprint_rtree(filtered_trajectory, vehicle_info);
 
-  const auto filtered_objects = filter_objects(predicted_objects, filtered_trajectory);
+  const auto filtered_objects = filter_objects(
+    predicted_objects, filtered_trajectory, trajectory_to_object_distance_threshold,
+    ego_to_object_distance_threshold);
   if (!filtered_objects) {
     return std::nullopt;
   }
-
-  const double time_tolerance = 0.1;
 
   std::vector<BoxTimeIndexPair> predicted_object_rtree_nodes;
 
@@ -347,7 +349,7 @@ std::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>> check_c
     predicted_object_rtree_nodes.begin(), predicted_object_rtree_nodes.end());
 
   const auto & collision_index_set =
-    detect_collisions(ego_rtree, predicted_object_rtree, time_tolerance);
+    detect_collisions(ego_rtree, predicted_object_rtree, time_tolerance_threshold);
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> collision_points;
   for (const auto & [ego_index, obj_index] : collision_index_set) {
     collision_points.push_back(filtered_trajectory[ego_index]);
@@ -382,11 +384,11 @@ Rtree make_ego_footprint_rtree(
 
 std::optional<PredictedObjects> filter_objects(
   const PredictedObjects & objects,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory)
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const double trajectory_to_object_distance_threshold,
+  const double ego_to_object_distance_threshold)
 {
   PredictedObjects filtered_objects;
-  constexpr double trajectory_to_object_distance_threshold = 20.0;
-  constexpr double ego_to_object_distance_threshold = 50.0;
 
   for (const auto & object : objects.objects) {
     const auto & object_position = object.kinematics.initial_pose_with_covariance.pose.position;

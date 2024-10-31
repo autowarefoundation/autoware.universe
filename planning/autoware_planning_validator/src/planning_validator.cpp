@@ -561,7 +561,9 @@ bool PlanningValidator::checkValidTrajectoryCollision(const Trajectory & traject
   }
 
   const auto & collided_points = check_collision(
-    *current_objects_, trajectory, current_kinematics_->pose.pose.position, vehicle_info_);
+    *current_objects_, trajectory, current_kinematics_->pose.pose.position, vehicle_info_,
+    validator_params_.trajectory_to_object_distance_threshold,
+    validator_params_.ego_to_object_distance_threshold, validator_params_.time_tolerance_threshold);
 
   if (collided_points) {
     for (const auto & p : *collided_points) {

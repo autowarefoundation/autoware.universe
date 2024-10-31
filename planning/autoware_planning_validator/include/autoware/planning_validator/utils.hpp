@@ -73,26 +73,11 @@ std::pair<double, size_t> calcMaxSteeringAngles(
 std::pair<double, size_t> calcMaxSteeringRates(
   const Trajectory & trajectory, const double wheelbase);
 
-/**
- * @brief Validates trajectory for potential collisions with predicted objects
- *
- * This function checks if the planned trajectory will result in any collisions with
- * predicted objects in the environment. It performs the following steps:
- * 1. Resamples the trajectory for efficient checking
- * 2. Generates vehicle footprints along the trajectory
- * 3. Checks for intersections with predicted object paths
- *
- * @param predicted_objects List of predicted objects with their predicted paths.
- * @param trajectory Planned trajectory of the ego vehicle.
- * @param current_ego_point Current position of the ego vehicle.
- * @param vehicle_info Information about the ego vehicle (e.g., dimensions).
- * @param collision_check_distance_threshold Maximum distance to consider objects for collision
- * checking.
- * @return True if a potential collision is detected; false otherwise.
- */
 std::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>> check_collision(
-  const PredictedObjects & objects, const Trajectory & trajectory,
-  const geometry_msgs::msg::Point & current_ego_point, const VehicleInfo & vehicle_info);
+  const PredictedObjects & predicted_objects, const Trajectory & trajectory,
+  const geometry_msgs::msg::Point & current_ego_position, const VehicleInfo & vehicle_info,
+  const double trajectory_to_object_distance_threshold, ,
+  const double ego_to_object_distance_threshold, const double time_tolerance_threshold);
 
 Rtree make_ego_footprint_rtree(
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
@@ -100,7 +85,9 @@ Rtree make_ego_footprint_rtree(
 
 std::optional<PredictedObjects> filter_objects(
   const PredictedObjects & objects,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory);
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const double trajectory_to_object_distance_threshold,
+  const double ego_to_object_distance_threshold);
 
 std::optional<PredictedPath> find_highest_confidence_path(const PredictedObject & object);
 
