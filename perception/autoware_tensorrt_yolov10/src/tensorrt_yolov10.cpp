@@ -247,7 +247,6 @@ bool TrtYolov10::setCudaDeviceId(const uint8_t gpu_id)
   }
 }
 
-
 void TrtYolov10::preProcess(cv::Mat * img, int length, float * factor, std::vector<float> & data)
 {
   // Create a new cv::Mat object for storing the image after conversion
@@ -369,17 +368,17 @@ ObjectArray TrtYolov10::postprocess(float * result, float factor)
     // printf("i:%d,score:%.3f\n",i,(float)result[s + 4]);
 
     if (score > score_threshold_) {
-    //   printf("i:%d,score:%.3f\n", i, (float)result[s + 4]);
+      //   printf("i:%d,score:%.3f\n", i, (float)result[s + 4]);
 
-      float ltx = result[s + 0];  
-      float lty = result[s + 1];  
-      float rbx = result[s + 2];  
-      float rby = result[s + 3];  
+      float ltx = result[s + 0];
+      float lty = result[s + 1];
+      float rbx = result[s + 2];
+      float rby = result[s + 3];
 
-      int x = (int)((ltx)*factor);              
-      int y = (int)((lty)*factor);              
-      int width = (int)((rbx - ltx) * factor);   
-      int height = (int)((rby - lty) * factor);  
+      int x = (int)((ltx)*factor);
+      int y = (int)((lty)*factor);
+      int width = (int)((rbx - ltx) * factor);
+      int height = (int)((rby - lty) * factor);
 
       Object object;
       object.x_offset = x;
