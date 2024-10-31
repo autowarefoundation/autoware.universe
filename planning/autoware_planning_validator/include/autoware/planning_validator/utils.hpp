@@ -76,7 +76,7 @@ std::pair<double, size_t> calcMaxSteeringRates(
 std::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>> check_collision(
   const PredictedObjects & predicted_objects, const Trajectory & trajectory,
   const geometry_msgs::msg::Point & current_ego_position, const VehicleInfo & vehicle_info,
-  const double trajectory_to_object_distance_threshold, ,
+  const double trajectory_to_object_distance_threshold,
   const double ego_to_object_distance_threshold, const double time_tolerance_threshold);
 
 Rtree make_ego_footprint_rtree(
