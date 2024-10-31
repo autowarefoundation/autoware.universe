@@ -560,7 +560,7 @@ bool PlanningValidator::checkValidTrajectoryCollision(const Trajectory & traject
     return true;  // Ego is almost stopped.
   }
 
-  const bool is_collision = checkCollision(
+  const bool is_collision = check_collision(
     *current_objects_, trajectory, current_kinematics_->pose.pose.position, vehicle_info_);
   return is_collision;
 }

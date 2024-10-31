@@ -18,12 +18,14 @@
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 
-#include <string>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/index/rtree.hpp>
+
 #include <utility>
 #include <vector>
 
@@ -31,10 +33,17 @@ namespace autoware::planning_validator
 {
 using autoware::universe_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
+using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedPath;
+using autoware_perception_msgs::msg::Shape;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using Point = boost::geometry::model::d2::point_xy<double>;
+using Box = boost::geometry::model::box<Point>;
+using BoxTimePair = std::pair<autoware::universe_utils::Box2d, double>;
 
+using Rtree = boost::geometry::index::rtree<BoxTimePair, boost::geometry::index::rstar<16, 4>>;
 std::pair<double, size_t> getAbsMaxValAndIdx(const std::vector<double> & v);
 
 Trajectory resampleTrajectory(const Trajectory & trajectory, const double min_interval);
@@ -81,13 +90,25 @@ std::pair<double, size_t> calcMaxSteeringRates(
  * checking.
  * @return True if a potential collision is detected; false otherwise.
  */
-bool checkCollision(
+bool check_collision(
   const PredictedObjects & objects, const Trajectory & trajectory,
   const geometry_msgs::msg::Point & current_ego_point, const VehicleInfo & vehicle_info,
   const double collision_check_distance_threshold = 10.0);
 
-Polygon2d createVehicleFootprintPolygon(
-  const geometry_msgs::msg::Pose & pose, const VehicleInfo & vehicle_info);
+Rtree make_ego_footprint_rtree(
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const VehicleInfo & vehicle_info);
+
+std::optional<PredictedObjects> filter_objects(
+  const PredictedObjects & objects,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const double collision_check_distance_threshold);
+
+std::optional<PredictedPath> find_highest_confidence_path(const PredictedObject & object);
+
+void make_predicted_object_rtree(
+  const PredictedPath & highest_confidence_path, const Shape & object_shape,
+  const double predicted_time_step, std::vector<BoxTimePair> & predicted_object_rtree_nodes);
 
 bool checkFinite(const TrajectoryPoint & point);
 
