@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/motion_utils/trajectory_container/interpolator/spherical_linear.hpp"
+
 #include <autoware/motion_utils/trajectory_container/interpolator.hpp>
+
+#include <geometry_msgs/msg/quaternion.hpp>
 
 #include <gtest/gtest.h>
 
@@ -71,3 +75,50 @@ template class TestInterpolator<
   autoware::motion_utils::trajectory_container::interpolator::NearestNeighbor<double>>;
 template class TestInterpolator<
   autoware::motion_utils::trajectory_container::interpolator::Stairstep<double>>;
+
+/*
+ * Test SphericalLinear interpolator
+ */
+
+geometry_msgs::msg::Quaternion create_quaternion(double w, double x, double y, double z)
+{
+  geometry_msgs::msg::Quaternion q;
+  q.w = w;
+  q.x = x;
+  q.y = y;
+  q.z = z;
+  return q;
+}
+
+TEST(TestSphericalLinearInterpolator, compute)
+{
+  using autoware::motion_utils::trajectory_container::interpolator::SphericalLinear;
+
+  std::vector<double> bases = {0.0, 1.0};
+  std::vector<geometry_msgs::msg::Quaternion> quaternions = {
+    create_quaternion(1.0, 0.0, 0.0, 0.0), create_quaternion(0.0, 1.0, 0.0, 0.0)};
+
+  auto interpolator =
+    autoware::motion_utils::trajectory_container::interpolator::SphericalLinear::Builder()
+      .set_bases(bases)
+      .set_values(quaternions)
+      .build();
+
+  if (!interpolator) {
+    FAIL();
+  }
+
+  double s = 0.5;
+  geometry_msgs::msg::Quaternion result = interpolator->compute(s);
+
+  // Expected values (from SLERP calculation)
+  double expected_w = std::sqrt(2.0) / 2.0;
+  double expected_x = std::sqrt(2.0) / 2.0;
+  double expected_y = 0.0;
+  double expected_z = 0.0;
+
+  EXPECT_NEAR(result.w, expected_w, 1e-6);
+  EXPECT_NEAR(result.x, expected_x, 1e-6);
+  EXPECT_NEAR(result.y, expected_y, 1e-6);
+  EXPECT_NEAR(result.z, expected_z, 1e-6);
+}

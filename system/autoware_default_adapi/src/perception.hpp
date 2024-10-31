@@ -15,8 +15,8 @@
 #ifndef PERCEPTION_HPP_
 #define PERCEPTION_HPP_
 
+#include <autoware/component_interface_specs/perception.hpp>
 #include <autoware_ad_api_specs/perception.hpp>
-#include <component_interface_specs/perception.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/dynamic_object.hpp>
@@ -41,8 +41,9 @@ public:
 
 private:
   Pub<autoware_ad_api::perception::DynamicObjectArray> pub_object_recognized_;
-  Sub<perception_interface::ObjectRecognition> sub_object_recognized_;
-  void object_recognize(const perception_interface::ObjectRecognition::Message::ConstSharedPtr msg);
+  Sub<autoware::component_interface_specs::perception::ObjectRecognition> sub_object_recognized_;
+  void object_recognize(const autoware::component_interface_specs::perception::ObjectRecognition::
+                          Message::ConstSharedPtr msg);
   uint8_t mapping(
     std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);
 };

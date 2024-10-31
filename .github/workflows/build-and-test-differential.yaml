@@ -46,7 +46,7 @@ jobs:
             build-depends-repos: build_depends.repos
           - container-suffix: -cuda
             runner: codebuild-autoware-us-east-1-${{ github.run_id }}-${{ github.run_attempt }}-ubuntu-7.0-large
-            build-pre-command: taskset --cpu-list 0-6
+            build-pre-command: taskset --cpu-list 0-5
           - container-suffix: ""
             runner: ubuntu-latest
             build-pre-command: ""
