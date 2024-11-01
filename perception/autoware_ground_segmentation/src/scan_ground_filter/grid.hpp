@@ -18,6 +18,8 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
 
+#include <glob.h>
+
 #include <cmath>
 #include <vector>
 
@@ -113,6 +115,15 @@ public:
   // list of point indices
   std::vector<size_t> point_indices_;
 
+  // method to check if the cell is empty
+  bool is_empty() const { return point_indices_.empty(); }
+
+  // geometric properties of the cell
+  float center_radius_;
+  float center_azimuth_;
+  float radial_size_;
+  float azimuth_size_;
+
   // statistics of the points in the cell
   float avg_height_;
   float max_height_;
@@ -161,30 +172,89 @@ public:
     // generate grid geometry
     setGridBoundaries();
 
-    //
+    // initialize and resize cells
+    cells_.clear();
+    cells_.resize(grid_id_offsets_.back() + azimuth_grids_per_radial_.back());
 
     // set initialized flag
     is_initialized_ = true;
   }
 
-  // the grid is cylindrical mesh grid
-  // azimuth interval: constant angle
-  // radial interval: constant distance within mode switch radius
-  //                  constant elevation angle outside mode switch radius
+  // method to add a point to the grid
+  void addPoint(const float x, const float y, const size_t point_idx)
+  {
+    // check if initialized
+    if (!is_initialized_) {
+      throw std::runtime_error("Grid is not initialized.");
+    }
 
+    // calculate the grid id
+    const float radius = std::hypot(x, y);
+    const float azimuth = std::atan2(y, x);
+    const int grid_id = getGridIdx(radius, azimuth);
+
+    // check if the point is within the grid
+    if (grid_id < 0) {
+      return;
+    }
+
+    // add the point to the cell
+    cells_[grid_id].point_indices_.push_back(point_idx);
+  }
+
+  // method to get the cell
+  const Cell & getCell(const int grid_id) const
+  {
+    // check if initialized
+    if (!is_initialized_) {
+      throw std::runtime_error("Grid is not initialized.");
+    }
+
+    return cells_[grid_id];
+  }
+
+  // method to get cell idx of the next cell
+  // which is radially adjacent to the current cell
+  int getNextCellIdx(const int grid_id) const
+  {
+    // check if initialized
+    if (!is_initialized_) {
+      throw std::runtime_error("Grid is not initialized.");
+    }
+
+    // check if the grid id is valid
+    if (grid_id < 0 || grid_id >= static_cast<int>(cells_.size())) {
+      return -1;
+    }
+
+    // get the grid id of the next cell
+    // which is radially adjacent to the current cell
+
+    // geometry calculation for the grid... not implemented yet
+
+    int next_grid_id = 0;
+
+    return next_grid_id;
+  }
+
+private:
   // array of grid boundaries
   std::vector<float> grid_radial_boundaries_;
   std::vector<int> azimuth_grids_per_radial_;
   std::vector<float> grid_azimuth_boundaries_;
   std::vector<int> grid_id_offsets_;
 
-  // generate grid geometry
+  // Generate grid geometry
+  // the grid is cylindrical mesh grid
+  // azimuth interval: constant angle
+  // radial interval: constant distance within mode switch radius
+  //                  constant elevation angle outside mode switch radius
   void setGridBoundaries()
   {
     // radial boundaries
     {
       int idx = 0;
-      float radius = 0.0f;
+      float radius = 1.0f;  // initial grid of 1 meter
       // 1. within mode switch radius, constant distance
       while (radius < grid_linearity_switch_radius_) {
         grid_radial_boundaries_.push_back(radius);
@@ -250,7 +320,7 @@ public:
     float azimuth_norm = universe_utils::normalizeRadian(azimuth, 0.0f);
 
     // determine the grid id
-    int grid_rad_idx = 0;
+    int grid_rad_idx = -1;
     // radial grid id
     for (size_t i = 0; i < grid_radial_boundaries_.size(); ++i) {
       if (radius < grid_radial_boundaries_[i]) {
@@ -258,7 +328,7 @@ public:
         break;
       }
     }
-    int grid_az_idx = 0;
+    int grid_az_idx = -1;
     // azimuth grid id
     for (size_t i = 0; i < grid_azimuth_boundaries_.size(); ++i) {
       if (azimuth_norm < grid_azimuth_boundaries_[i]) {
@@ -267,9 +337,18 @@ public:
       }
     }
 
+    if (grid_rad_idx < 0 || grid_az_idx < 0) {
+      return -1;
+    }
+
     const int grid_id = grid_id_offsets_[grid_rad_idx] + grid_az_idx;
 
     return grid_id;
+  }
+
+  void setCellGeometry()
+  {
+    //
   }
 
   // list of cells
