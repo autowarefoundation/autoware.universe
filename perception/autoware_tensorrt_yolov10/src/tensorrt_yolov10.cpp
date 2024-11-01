@@ -386,7 +386,7 @@ ObjectArray TrtYolov10::postprocess(float * result, float factor)
       object.width = width;
       object.height = height;
       object.score = score;
-      object.type = int(result[s + 5]);
+      object.type = static_cast<int>(result[s + 5]);
       object_array.emplace_back(object);
     }
   }
