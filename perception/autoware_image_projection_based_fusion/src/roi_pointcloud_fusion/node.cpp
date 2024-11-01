@@ -42,14 +42,14 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
   cluster_debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
-void RoiPointCloudFusionNode::preprocess(
-  __attribute__((unused)) sensor_msgs::msg::PointCloud2 & pointcloud_msg)
+void RoiPointCloudFusionNode::preprocess(__attribute__((unused))
+                                         sensor_msgs::msg::PointCloud2 & pointcloud_msg)
 {
   return;
 }
 
-void RoiPointCloudFusionNode::postprocess(
-  __attribute__((unused)) sensor_msgs::msg::PointCloud2 & pointcloud_msg)
+void RoiPointCloudFusionNode::postprocess(__attribute__((unused))
+                                          sensor_msgs::msg::PointCloud2 & pointcloud_msg)
 {
   const auto objects_sub_count = pub_objects_ptr_->get_subscription_count() +
                                  pub_objects_ptr_->get_intra_process_subscription_count();
@@ -151,7 +151,9 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
       const auto & check_roi = feature_obj.feature.roi;
       auto & cluster = clusters.at(i);
 
-      if (clusters_data_size.at(i) >= static_cast<size_t>(max_cluster_size_ * point_step)) {
+      if (
+        clusters_data_size.at(i) >=
+        static_cast<size_t>(max_cluster_size_) * static_cast<size_t>(point_step)) {
         continue;
       }
       if (
