@@ -285,6 +285,7 @@ void SceneModuleManagerInterfaceWithRTC::deleteExpiredModules(
         uuid, (*itr)->isSafe(), State::SUCCEEDED, std::numeric_limits<double>::lowest(),
         clock_->now());
       removeUUID((*itr)->getModuleId());
+      registered_module_id_set_.erase((*itr)->getModuleId());
       itr = scene_modules_.erase(itr);
     } else {
       itr++;
