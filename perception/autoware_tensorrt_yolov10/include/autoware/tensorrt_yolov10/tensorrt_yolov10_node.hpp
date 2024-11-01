@@ -68,7 +68,7 @@ private:
   rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr objects_pub_;
   image_transport::Publisher image_pub_;
 
-  std::map<int,std::string> label_map_;
+  std::map<int, std::string> label_map_;
 };
 
 }  // namespace autoware::tensorrt_yolov10
