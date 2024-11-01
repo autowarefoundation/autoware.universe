@@ -87,6 +87,11 @@ void PlanningValidator::setupParameters()
       declare_parameter<double>(ps + "forward_trajectory_length_acceleration");
     p.forward_trajectory_length_margin =
       declare_parameter<double>(ps + "forward_trajectory_length_margin");
+    p.trajectory_to_object_distance_threshold =
+      declare_parameter<double>(ps + "trajectory_to_object_distance_threshold");
+    p.ego_to_object_distance_threshold =
+      declare_parameter<double>(ps + "ego_to_object_distance_threshold");
+    p.time_tolerance_threshold = declare_parameter<double>(ps + "time_tolerance_threshold");
   }
 
   try {
