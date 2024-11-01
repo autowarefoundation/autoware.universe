@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
 #include <autoware_test_utils/mock_data_parser.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -27,11 +27,9 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <filesystem>
 #include <fstream>
 #include <mutex>
 #include <optional>
-#include <regex>
 #include <unordered_map>
 #include <variant>
 
@@ -123,19 +121,6 @@ typename rclcpp::SubscriptionBase::SharedPtr create_subscriber(
 {
   return node.create_subscription<RosMsgType<TypeIndex>>(
     topic_name, 1, std::forward<Callback>(callback));
-}
-
-std::optional<std::string> resolve_pkg_share_uri(const std::string & uri_path)
-{
-  std::smatch match;
-  std::regex pattern(R"(package://([^/]+)/(.+))");
-  if (std::regex_match(uri_path, match, pattern)) {
-    const std::string pkg_name = ament_index_cpp::get_package_share_directory(match[1].str());
-    const std::string resource_path = match[2].str();
-    const auto path = std::filesystem::path(pkg_name) / std::filesystem::path(resource_path);
-    return std::filesystem::exists(path) ? std::make_optional<std::string>(path) : std::nullopt;
-  }
-  return std::nullopt;
 }
 
 class TopicSnapShotSaver
@@ -253,7 +238,7 @@ private:
 # format1:
 #
 # format_version: <format-major-version, int>
-# map_path_uri: <uri-to-map>
+# map_path_uri: package://<package-name>/<resouce-path>
 # fields(this is array)
 #   - name: <field-name-for-your-yaml-of-this-topic, str>
 #     type: either {Odometry | AccelWithCovarianceStamped | PredictedObjects | OperationModeState | LaneletRoute | TrafficLightGroupArray | TBD}
@@ -280,8 +265,8 @@ public:
       RCLCPP_ERROR(get_logger(), "map_path_uri and/or config_path_uri are not provided");
       return;
     }
-    const auto map_path = resolve_pkg_share_uri(map_path_uri);
-    const auto config_path = resolve_pkg_share_uri(config_path_uri);
+    const auto map_path = autoware::test_utils::resolve_pkg_share_uri(map_path_uri);
+    const auto config_path = autoware::test_utils::resolve_pkg_share_uri(config_path_uri);
     if (!map_path) {
       RCLCPP_ERROR(
         get_logger(),
