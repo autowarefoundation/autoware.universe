@@ -26,6 +26,8 @@ namespace fs = ::std::experimental::filesystem;
 #include <memory>
 #include <string>
 
+using namespace std;
+
 #define PRINT_DEBUG_INFO printf("line:%d\n", __LINE__);
 
 namespace autoware::tensorrt_yolov10
@@ -38,7 +40,7 @@ public:
   {
     const auto image_path = declare_parameter("image_path", "");
     const auto model_path = declare_parameter("model_path", "");
-    const auto precision = declare_parameter("precision", "fp32");
+    const auto precision = declare_parameter("precision", "fp16");
     const auto save_image = declare_parameter("save_image", true);
 
     printf("image_path:%s\n", image_path.c_str());
@@ -61,6 +63,9 @@ public:
       const auto bottom = std::clamp(top + object.height, 0, image.rows);
       cv::rectangle(
         image, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3, 8, 0);
+      
+      string cls_id = std::to_string(object.type);
+      cv::putText(image, cls_id, cv::Point(left,top), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 255), 1, 8, 0);
     }
     if (!save_image) {
       cv::imshow("inference image", image);

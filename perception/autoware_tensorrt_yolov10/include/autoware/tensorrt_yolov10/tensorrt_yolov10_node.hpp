@@ -55,6 +55,8 @@ private:
   void onConnect();
   void onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg);
 
+  bool readLabelFile(const std::string & label_path);
+
   std::unique_ptr<tensorrt_yolov10::TrtYolov10> trt_yolov10_;
 
   image_transport::Subscriber image_sub_;
@@ -64,6 +66,8 @@ private:
   std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
   rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr objects_pub_;
   image_transport::Publisher image_pub_;
+
+  std::map<int,std::string> label_map_;
 };
 
 }  // namespace autoware::tensorrt_yolov10

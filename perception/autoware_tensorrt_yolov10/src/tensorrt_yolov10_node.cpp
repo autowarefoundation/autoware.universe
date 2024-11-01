@@ -46,8 +46,14 @@ TrtYolov10Node::TrtYolov10Node(const rclcpp::NodeOptions & node_options)
   const std::string model_path = this->declare_parameter<std::string>("model_path");
   const std::string precision = this->declare_parameter<std::string>("precision", "fp16");
   const uint8_t gpu_id = this->declare_parameter<uint8_t>("gpu_id", 0);
+  const std::string label_path = this->declare_parameter<std::string>("label_path");
 
   trt_yolov10_ = std::make_unique<tensorrt_yolov10::TrtYolov10>(model_path, precision);
+
+  if (!readLabelFile(label_path)) {
+    RCLCPP_ERROR(this->get_logger(), "Could not find label file");
+    rclcpp::shutdown();
+  }
 
   if (!trt_yolov10_->isGPUInitialized()) {
     RCLCPP_ERROR(this->get_logger(), "GPU %d does not exist or is not suitable.", gpu_id);
@@ -109,8 +115,7 @@ void TrtYolov10Node::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     object.feature.roi.width = yolov10_object.width;
     object.feature.roi.height = yolov10_object.height;
     object.object.existence_probability = yolov10_object.score;
-    // object.object.classification =
-    // object_recognition_utils::toObjectClassifications(label_map_[yolov10_object.type], 1.0f);
+    // object.object.classification = object_recognition_utils::toObjectClassifications(label_map_[yolov10_object.type], 1.0f);
     out_objects.feature_objects.push_back(object);
     const auto left = std::max(0, static_cast<int>(object.feature.roi.x_offset));
     const auto top = std::max(0, static_cast<int>(object.feature.roi.y_offset));
@@ -121,6 +126,8 @@ void TrtYolov10Node::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     cv::rectangle(
       in_image_ptr->image, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
       8, 0);
+
+    cv::putText(in_image_ptr->image, label_map_[yolov10_object.type], cv::Point(left,top), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 255), 1, 8, 0);
   }
 
   image_pub_.publish(in_image_ptr->toImageMsg());
@@ -142,6 +149,25 @@ void TrtYolov10Node::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/pipeline_latency_ms", pipeline_latency_ms);
   }
+}
+
+
+bool TrtYolov10Node::readLabelFile(const std::string & label_path)
+{
+  std::ifstream label_file(label_path);
+  if (!label_file.is_open()) {
+    RCLCPP_ERROR(this->get_logger(), "Could not open label file. [%s]", label_path.c_str());
+    return false;
+  }
+  int label_index{};
+  std::string label;
+  while (getline(label_file, label)) {
+    std::transform(
+      label.begin(), label.end(), label.begin(), [](auto c) { return std::toupper(c); });
+    label_map_.insert({label_index, label});
+    ++label_index;
+  }
+  return true;
 }
 
 }  // namespace autoware::tensorrt_yolov10
