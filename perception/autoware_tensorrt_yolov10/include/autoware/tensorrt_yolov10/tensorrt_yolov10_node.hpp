@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__TENSORRT_YOLOV10__TENSORRT_YOLOV10_NODE_HPP_
 #define AUTOWARE__TENSORRT_YOLOV10__TENSORRT_YOLOV10_NODE_HPP_
 
-#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
 #include <autoware/tensorrt_yolov10/tensorrt_yolov10.hpp>
 #include <autoware/universe_utils/ros/debug_publisher.hpp>

@@ -14,7 +14,7 @@
 
 #include "autoware/tensorrt_yolov10/tensorrt_yolov10_node.hpp"
 
-#include "object_recognition_utils/object_classification.hpp"
+#include "autoware/object_recognition_utils/object_classification.hpp"
 #include "perception_utils/run_length_encoder.hpp"
 
 #include <autoware_perception_msgs/msg/object_classification.hpp>
