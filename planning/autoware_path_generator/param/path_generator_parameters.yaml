@@ -1,0 +1,21 @@
+path_generator:
+  forward_path_length:
+    type: double
+
+  backward_path_length:
+    type: double
+
+  input_path_interval:
+    type: double
+
+  enable_akima_spline_first:
+    type: bool
+
+  enable_cog_on_centerline:
+    type: bool
+
+  ego_nearest_dist_threshold:
+    type: double
+
+  ego_nearest_yaw_threshold:
+    type: double
