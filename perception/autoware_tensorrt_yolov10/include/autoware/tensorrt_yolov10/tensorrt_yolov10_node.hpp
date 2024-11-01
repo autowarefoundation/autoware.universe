@@ -56,6 +56,7 @@ private:
   void onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg);
 
   bool readLabelFile(const std::string & label_path);
+  void replaceLabelMap();
 
   std::unique_ptr<tensorrt_yolov10::TrtYolov10> trt_yolov10_;
 

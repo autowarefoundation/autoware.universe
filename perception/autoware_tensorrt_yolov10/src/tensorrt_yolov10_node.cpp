@@ -54,6 +54,7 @@ TrtYolov10Node::TrtYolov10Node(const rclcpp::NodeOptions & node_options)
     RCLCPP_ERROR(this->get_logger(), "Could not find label file");
     rclcpp::shutdown();
   }
+  replaceLabelMap();
 
   if (!trt_yolov10_->isGPUInitialized()) {
     RCLCPP_ERROR(this->get_logger(), "GPU %d does not exist or is not suitable.", gpu_id);
@@ -115,7 +116,7 @@ void TrtYolov10Node::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     object.feature.roi.width = yolov10_object.width;
     object.feature.roi.height = yolov10_object.height;
     object.object.existence_probability = yolov10_object.score;
-    // object.object.classification = object_recognition_utils::toObjectClassifications(label_map_[yolov10_object.type], 1.0f);
+    object.object.classification = object_recognition_utils::toObjectClassifications(label_map_[yolov10_object.type], 1.0f);
     out_objects.feature_objects.push_back(object);
     const auto left = std::max(0, static_cast<int>(object.feature.roi.x_offset));
     const auto top = std::max(0, static_cast<int>(object.feature.roi.y_offset));
@@ -168,6 +169,23 @@ bool TrtYolov10Node::readLabelFile(const std::string & label_path)
     ++label_index;
   }
   return true;
+}
+
+//we need this because autoware::object_recognition_utils::toLabel(const std::string & class_name) limit label type
+void TrtYolov10Node::replaceLabelMap()
+{
+  for (std::size_t i = 0; i < label_map_.size(); ++i) {
+    auto & label = label_map_[i];
+    if (label == "PERSON") {
+      label = "PEDESTRIAN";
+    } else if (label == "MOTORBIKE") {
+      label = "MOTORCYCLE";
+    } else if (
+      label != "CAR" && label != "PEDESTRIAN" && label != "BUS" && label != "TRUCK" &&
+      label != "BICYCLE" && label != "MOTORCYCLE") {
+      label = "UNKNOWN";
+    }
+  }
 }
 
 }  // namespace autoware::tensorrt_yolov10
