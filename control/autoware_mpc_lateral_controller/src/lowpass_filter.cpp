@@ -125,7 +125,7 @@ bool filt_vector(const int num, std::vector<double> & u)
     }
 
     for (int j = -num_tmp; j <= num_tmp; ++j) {
-      tmp += u[static_cast<size_t>(i + j)];
+      tmp += u[static_cast<size_t>(i) + static_cast<size_t>(j)];
       ++count;
     }
     filtered_u[static_cast<size_t>(i)] = tmp / count;
