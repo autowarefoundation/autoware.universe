@@ -21,7 +21,7 @@
 
 #include <gtest/gtest.h>
 
-StopObstacle generate_labeled_null_stop_obstacle(uint8_t label)
+StopObstacle generate_stop_obstacle(uint8_t label, double dist)
 {
   const std::string uuid{};
   const rclcpp::Time time{};
@@ -32,7 +32,6 @@ StopObstacle generate_labeled_null_stop_obstacle(uint8_t label)
   const double lon_velocity{};
   const double lat_velocity{};
   const geometry_msgs::msg::Point collision_point{};
-  const double dist{10.0};
 
   return StopObstacle{uuid,         time,         object_classification, pose, shape,
                       lon_velocity, lat_velocity, collision_point,       dist};
@@ -45,15 +44,30 @@ TEST(ObstacleCruisePlannerUtilsTest, getClosestStopObstacles)
   std::vector<StopObstacle> stop_obstacles;
   EXPECT_EQ(0, obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles).size());
 
-  stop_obstacles.emplace_back(generate_labeled_null_stop_obstacle(ObjectClassification::UNKNOWN));
+  stop_obstacles.emplace_back(generate_stop_obstacle(ObjectClassification::UNKNOWN, 10.0));
   EXPECT_EQ(1, obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles).size());
+  EXPECT_EQ(
+    10.0, obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles)
+            .front()
+            .dist_to_collide_on_decimated_traj);
 
-  stop_obstacles.emplace_back(generate_labeled_null_stop_obstacle(ObjectClassification::UNKNOWN));
+  stop_obstacles.emplace_back(generate_stop_obstacle(ObjectClassification::UNKNOWN, 20.0));
   EXPECT_EQ(1, obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles).size());
+  EXPECT_EQ(
+    10.0, obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles)
+            .front()
+            .dist_to_collide_on_decimated_traj);
 
-  stop_obstacles.emplace_back(generate_labeled_null_stop_obstacle(ObjectClassification::CAR));
+  stop_obstacles.emplace_back(generate_stop_obstacle(ObjectClassification::UNKNOWN, 5.0));
+  EXPECT_EQ(1, obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles).size());
+  EXPECT_EQ(
+    5.0, obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles)
+           .front()
+           .dist_to_collide_on_decimated_traj);
+
+  stop_obstacles.emplace_back(generate_stop_obstacle(ObjectClassification::CAR, 10.0));
   EXPECT_EQ(2, obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles).size());
 
-  stop_obstacles.emplace_back(generate_labeled_null_stop_obstacle(ObjectClassification::BUS));
+  stop_obstacles.emplace_back(generate_stop_obstacle(ObjectClassification::BUS, 10.0));
   EXPECT_EQ(3, obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles).size());
 }
