@@ -691,9 +691,9 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // process lost crosswalk users to tackle unstable detection
   if (remember_lost_crosswalk_users_) {
-    PredictedObjects retrived_objects = predictor_vru_->retrieveUndetectedObjects();
+    PredictedObjects retrieved_objects = predictor_vru_->retrieveUndetectedObjects();
     output.objects.insert(
-      output.objects.end(), retrived_objects.objects.begin(), retrived_objects.objects.end());
+      output.objects.end(), retrieved_objects.objects.begin(), retrieved_objects.objects.end());
   }
 
   // Publish Results
