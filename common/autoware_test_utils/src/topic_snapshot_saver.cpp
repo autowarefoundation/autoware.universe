@@ -27,7 +27,6 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <array>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
@@ -70,21 +69,13 @@ std::optional<size_t> get_topic_index(const std::string & name)
 
 std::mutex g_mutex;
 
-template <size_t TypeIndex, typename Callback>
-typename rclcpp::SubscriptionBase::SharedPtr create_subscriber(
-  const std::string & topic_name, rclcpp::Node & node, Callback && callback)
-{
-  return node.create_subscription<typename std::variant_alternative_t<TypeIndex, MessageType>>(
-    topic_name, 1, std::forward<Callback>(callback));
-}
-
 template <typename Message>
 class CallbackHandler
 {
 public:
   explicit CallbackHandler(std::shared_ptr<MessageType> buffer) : buffer_(buffer) {}
 
-  void on_callback([[maybe_unused]] const typename Message::SharedPtr msg)
+  void on_callback(const typename Message::SharedPtr msg)
   {
     std::lock_guard guard(g_mutex);
     *buffer_ = *msg;
@@ -97,17 +88,42 @@ private:
 namespace detail
 {
 template <typename T>
-struct CallbackHandlerType;
+struct CallbackHandlerTypeFunctor;
 
 template <typename... Ts>
-struct CallbackHandlerType<std::variant<Ts...>>
+struct CallbackHandlerTypeFunctor<std::variant<Ts...>>
 {
   using type = std::variant<CallbackHandler<Ts>...>;
 };
+
+template <size_t TypeIndex>
+struct RosMsgTypeFunctor
+{
+  static_assert(TypeIndex < std::variant_size_v<MessageType>);
+  using type = std::variant_alternative_t<TypeIndex, MessageType>;
+};
+
 }  // namespace detail
 
+/**
+ * @brief convert std::variant<T1...Tn> to std::variant<CallbackHandler<T1>...CallbackHandler<Tn>>
+ */
 template <typename T>
-using CallbackHandlerType = typename detail::CallbackHandlerType<T>::type;
+using CallbackHandlerType = typename detail::CallbackHandlerTypeFunctor<T>::type;
+
+/**
+ * @brief get n-th type of MessageType
+ */
+template <size_t TypeIndex>
+using RosMsgType = typename detail::RosMsgTypeFunctor<TypeIndex>::type;
+
+template <size_t TypeIndex, typename Callback>
+typename rclcpp::SubscriptionBase::SharedPtr create_subscriber(
+  const std::string & topic_name, rclcpp::Node & node, Callback && callback)
+{
+  return node.create_subscription<RosMsgType<TypeIndex>>(
+    topic_name, 1, std::forward<Callback>(callback));
+}
 
 std::optional<std::string> resolve_pkg_share_uri(const std::string & uri_path)
 {
@@ -126,8 +142,9 @@ class TopicSnapShotSaver
 {
 public:
   TopicSnapShotSaver(
-    const std::string & map_path, const std::string & config_path, rclcpp::Node & node)
-  : map_path_(map_path), config_path_(config_path), node_(node), logger_(node.get_logger())
+    const std::string & map_path, const std::string & map_path_uri, const std::string & config_path,
+    rclcpp::Node & node)
+  : map_path_(map_path), map_path_uri_(map_path_uri), config_path_(config_path), node_(node)
   {
     std::lock_guard guard(g_mutex);
 
@@ -136,7 +153,6 @@ public:
       std::bind(
         &TopicSnapShotSaver::on_service, this, std::placeholders::_1, std::placeholders::_2));
 
-    // get map version
     // setup subscribers and callbacks
     const auto config = YAML::LoadFile(config_path);
     for (const auto field : config["fields"]) {
@@ -148,23 +164,6 @@ public:
       const auto type_index = type_index_opt.value();
       const auto topic = field["topic"].as<std::string>();
       field_2_topic_type_[name] = type_index;
-
-      if (0 == type_index) {
-        typename std::variant_alternative_t<0, MessageType> payload{};
-        auto msg = std::make_shared<MessageType>(payload);
-        message_buffer_[0] = msg;
-        auto handler = std::make_shared<CallbackHandlerType<MessageType>>(
-          CallbackHandler<typename std::variant_alternative_t<0, MessageType>>(msg));
-        handlers_.emplace_back(handler);
-        auto & handler_ref =
-          std::get<CallbackHandler<typename std::variant_alternative_t<0, MessageType>>>(
-            *handlers_.back());
-        subscribers_[0] = create_subscriber<0>(
-          topic, node,
-          std::bind(
-            &CallbackHandler<std::variant_alternative_t<0, MessageType>>::on_callback, &handler_ref,
-            std::placeholders::_1));
-      }
 
       /**
        * NOTE: for a specific topic-type, only one topic-name is allowed
@@ -180,23 +179,21 @@ public:
        */
 
 #define REGISTER_CALLBACK(arg)                                                                     \
-  if (arg == type_index) {                                                                         \
-    typename std::variant_alternative_t<arg, MessageType> payload{};                               \
+  if ((arg) == type_index) {                                                                       \
+    using RosMsgTypeI = RosMsgType<(arg)>;                                                         \
+    RosMsgTypeI payload{};                                                                         \
     auto msg = std::make_shared<MessageType>(payload);                                             \
     message_buffer_[arg] = msg;                                                                    \
-    auto handler = std::make_shared<CallbackHandlerType<MessageType>>(                             \
-      CallbackHandler<typename std::variant_alternative_t<arg, MessageType>>(msg));                \
+    auto handler =                                                                                 \
+      std::make_shared<CallbackHandlerType<MessageType>>(CallbackHandler<RosMsgTypeI>(msg));       \
     handlers_.emplace_back(handler);                                                               \
-    auto & handler_ref =                                                                           \
-      std::get<CallbackHandler<typename std::variant_alternative_t<arg, MessageType>>>(            \
-        *handlers_.back());                                                                        \
+    auto & handler_ref = std::get<CallbackHandler<RosMsgTypeI>>(*handler);                         \
     subscribers_[arg] = create_subscriber<arg>(                                                    \
       topic, node,                                                                                 \
-      std::bind(                                                                                   \
-        &CallbackHandler<std::variant_alternative_t<arg, MessageType>>::on_callback, &handler_ref, \
-        std::placeholders::_1));                                                                   \
+      std::bind(&CallbackHandler<RosMsgTypeI>::on_callback, &handler_ref, std::placeholders::_1)); \
   }
 
+      handlers_.reserve(std::variant_size_v<MessageType>);
       REGISTER_CALLBACK(0);
       REGISTER_CALLBACK(1);
       REGISTER_CALLBACK(2);
@@ -208,9 +205,9 @@ public:
 
 private:
   const std::string map_path_;
+  const std::string map_path_uri_;
   const std::string config_path_;
   rclcpp::Node & node_;
-  rclcpp::Logger logger_;
 
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr server_;
 
@@ -228,18 +225,19 @@ private:
 
     yaml["format_version"] = 1;
 
+    yaml["map_path_uri"] = map_path_uri_;
+
     for (const auto & [field, type_index] : field_2_topic_type_) {
       // instantiate for each type
 
-#define REGISTER_WRITE_TYPE(arg)                                                      \
-  if (arg == type_index) {                                                            \
-    const auto it = message_buffer_.find(arg);                                        \
-    if (it == message_buffer_.end()) {                                                \
-      continue;                                                                       \
-    }                                                                                 \
-    const auto & msg =                                                                \
-      std::get<typename std::variant_alternative_t<arg, MessageType>>(*(it->second)); \
-    yaml[field] = YAML::Load(to_yaml(msg));                                           \
+#define REGISTER_WRITE_TYPE(arg)                                   \
+  if ((arg) == type_index) {                                       \
+    const auto it = message_buffer_.find(arg);                     \
+    if (it == message_buffer_.end()) {                             \
+      continue;                                                    \
+    }                                                              \
+    const auto & msg = std::get<RosMsgType<(arg)>>(*(it->second)); \
+    yaml[field] = YAML::Load(to_yaml(msg));                        \
   }
 
       REGISTER_WRITE_TYPE(0);
@@ -255,9 +253,10 @@ private:
 # format1:
 #
 # format_version: <format-major-version, int>
+# map_path_uri: <uri-to-map>
 # fields(this is array)
 #   - name: <field-name-for-your-yaml-of-this-topic, str>
-#     type: either {Odometry | AccelWithCovarianceStamped | PredictedObjects | OperationModeState | LaneletRoute | TrafficLightGroupArray}
+#     type: either {Odometry | AccelWithCovarianceStamped | PredictedObjects | OperationModeState | LaneletRoute | TrafficLightGroupArray | TBD}
 #     topic: <topic-name, str>
 #
 )");
@@ -273,7 +272,7 @@ private:
 class TopicSnapShotSaverFrontEnd : public rclcpp::Node
 {
 public:
-  TopicSnapShotSaverFrontEnd() : Node("topic_snapshot_saver_frontned")
+  TopicSnapShotSaverFrontEnd() : Node("topic_snapshot_saver_frontend")
   {
     const auto map_path_uri = declare_parameter<std::string>("map_path", "none");
     const auto config_path_uri = declare_parameter<std::string>("config_path", "none");
@@ -294,8 +293,8 @@ public:
         "failed to resolve %s. expected form is package://<package-name>/<resouce-path>",
         config_path_uri.c_str());
     } else {
-      snap_shot_saver_ =
-        std::make_shared<TopicSnapShotSaver>(map_path.value(), config_path.value(), *this);
+      snap_shot_saver_ = std::make_shared<TopicSnapShotSaver>(
+        map_path.value(), map_path_uri, config_path.value(), *this);
     }
   }
 
