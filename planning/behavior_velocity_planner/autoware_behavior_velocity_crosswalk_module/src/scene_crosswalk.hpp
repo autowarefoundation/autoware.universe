@@ -62,6 +62,10 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace
 {
+/**
+ * @param x_vec strictly monotone increasing is required
+ * @param y_vec same number of elements as key_map is reqired
+ */
 double interpolateEgoPassMargin(
   const std::vector<double> & x_vec, const std::vector<double> & y_vec, const double target_x)
 {
@@ -77,6 +81,10 @@ double interpolateEgoPassMargin(
   return y_vec.back();
 }
 
+/**
+ * @param key_map strictly monotone increasing is required
+ * @param value_map same number of elements as key_map is reqired
+ */
 double InterpolateMap(
   const std::vector<double> & key_map, const std::vector<double> & value_map, const double query)
 {
