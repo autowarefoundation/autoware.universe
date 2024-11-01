@@ -32,8 +32,7 @@
 
 namespace autoware::behavior_velocity_planner
 {
-namespace
-{
+
 // create quaternion facing to the nearest trajectory point
 geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
   const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & point)
@@ -348,8 +347,6 @@ std::vector<geometry_msgs::msg::Pose> createPathToPredictionTime(
 
   return path_to_prediction_time;
 }
-
-}  // namespace
 
 DynamicObstacleCreatorForObject::DynamicObstacleCreatorForObject(
   rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr, const DynamicObstacleParam & param)

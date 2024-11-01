@@ -171,6 +171,19 @@ private:
   pcl::PointCloud<pcl::PointXYZ> obstacle_points_map_filtered_;
 };
 
+geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
+  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & point);
+
+std::vector<geometry_msgs::msg::Pose> createPredictedPath(
+  const geometry_msgs::msg::Pose & initial_pose, const float time_step,
+  const float max_velocity_mps, const float max_prediction_time);
+
+pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
+  const pcl::PointCloud<pcl::PointXYZ> & input_points);
+
+pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
+  const sensor_msgs::msg::PointCloud2 & input_points);
+
 }  // namespace autoware::behavior_velocity_planner
 
 #endif  // DYNAMIC_OBSTACLE_HPP_
