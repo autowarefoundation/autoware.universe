@@ -30,6 +30,9 @@
 #include <geometry_msgs/msg/detail/point__struct.hpp>
 #include <tier4_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
 
+#include <boost/geometry/algorithms/covered_by.hpp>
+#include <boost/geometry/algorithms/envelope.hpp>
+
 #include <gtest/gtest.h>
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -131,6 +134,8 @@ TEST_F(TestDynamicObstacle, testCreatePredictedPath)
 
 TEST_F(TestDynamicObstacle, testApplyVoxelGridFilter)
 {
+  namespace bg = boost::geometry;
+
   pcl::PointCloud<pcl::PointXYZ> point_cloud;
   constexpr int number_points_in_axis{10};
   for (size_t i = 0; i < number_points_in_axis; ++i) {
@@ -153,6 +158,27 @@ TEST_F(TestDynamicObstacle, testApplyVoxelGridFilter)
       filtered_point_cloud.begin(), filtered_point_cloud.end(),
       [](const auto & p) { return std::abs(p.z) < std::numeric_limits<double>::epsilon(); });
     EXPECT_TRUE(points_have_no_height);
+
+    Polygons2d polys;
+    const auto empty_cloud = extractObstaclePointsWithinPolygon(filtered_point_cloud, polys);
+    EXPECT_TRUE(empty_cloud.empty());
+
+    Polygon2d poly;
+    Point2d p1;
+    p1.x() = 0.0;
+    p1.y() = 0.0;
+
+    Point2d p2;
+    p2.x() = 0.1;
+    p2.y() = 0.0;
+
+    Point2d p3;
+    p3.x() = 0.1;
+    p3.y() = 0.1;
+    poly.outer().push_back(p1);
+    poly.outer().push_back(p2);
+    poly.outer().push_back(p3);
+    poly.outer().push_back(p1);
   }
 
   sensor_msgs::msg::PointCloud2 ros_pointcloud;
@@ -169,7 +195,7 @@ TEST_F(TestDynamicObstacle, testApplyVoxelGridFilter)
   }
 }
 
-TEST_F(TestDynamicObstacle, testIsAheadOf)
+TEST_F(TestDynamicObstacle, extractObstaclePointsWithinPolygon)
 {
 }
 
