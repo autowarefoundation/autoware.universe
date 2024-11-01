@@ -49,6 +49,7 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 using autoware::behavior_velocity_planner::applyVoxelGridFilter;
 using autoware::behavior_velocity_planner::createPredictedPath;
 using autoware::behavior_velocity_planner::createQuaternionFacingToTrajectory;
+using autoware::behavior_velocity_planner::isAheadOf;
 using autoware::behavior_velocity_planner::run_out_utils::createExtendPathPoint;
 class TestDynamicObstacle : public ::testing::Test
 {
@@ -89,6 +90,9 @@ TEST_F(TestDynamicObstacle, testCreateQuaternionFacingToTrajectory)
     const auto rpy = autoware::universe_utils::getRPY(quaternion_facing_traj);
     const auto yaw = autoware::universe_utils::normalizeRadian(rpy.z);
     EXPECT_DOUBLE_EQ(yaw, M_PI_2);
+    geometry_msgs::msg::Pose geom_base_point;
+    geom_base_point.position = base_point.point.pose.position;
+    EXPECT_TRUE(isAheadOf(point, geom_base_point));
   }
 
   {
@@ -101,6 +105,9 @@ TEST_F(TestDynamicObstacle, testCreateQuaternionFacingToTrajectory)
     const auto rpy = autoware::universe_utils::getRPY(quaternion_facing_traj);
     const auto yaw = autoware::universe_utils::normalizeRadian(rpy.z);
     EXPECT_DOUBLE_EQ(std::abs(yaw), M_PI_2);
+    geometry_msgs::msg::Pose geom_base_point;
+    geom_base_point.position = base_point.point.pose.position;
+    EXPECT_TRUE(isAheadOf(point, geom_base_point));
   }
 }
 
@@ -161,5 +168,11 @@ TEST_F(TestDynamicObstacle, testApplyVoxelGridFilter)
     EXPECT_TRUE(points_have_no_height);
   }
 }
+
+TEST_F(TestDynamicObstacle, testIsAheadOf)
+{
+}
+
+// TEST_F(TestDynamicObstacle, testApplyVoxelGridFilter)
 
 }  // namespace autoware::behavior_velocity_planner

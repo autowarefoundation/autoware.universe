@@ -113,10 +113,7 @@ pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
 bool isAheadOf(
   const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Pose & base_pose)
 {
-  const auto longitudinal_deviation =
-    autoware::universe_utils::calcLongitudinalDeviation(base_pose, target_point);
-  const bool is_ahead = longitudinal_deviation > 0;
-  return is_ahead;
+  return autoware::universe_utils::calcLongitudinalDeviation(base_pose, target_point) > 0;
 }
 
 pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithinPolygon(
