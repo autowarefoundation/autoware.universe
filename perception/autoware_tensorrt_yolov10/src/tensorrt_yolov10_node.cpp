@@ -78,7 +78,7 @@ void TrtYolov10Node::onConnect()
     objects_pub_->get_subscription_count() == 0 &&
     objects_pub_->get_intra_process_subscription_count() == 0 &&
     image_pub_.getNumSubscribers() == 0) {
-    // printf("no suber who sub from objects_pub_ or image_pub_,shut down image_sub_\n");
+    // printf("no subscribers who sub from objects_pub_ or image_pub_,shut down image_sub_\n");
     image_sub_.shutdown();
   } else if (!image_sub_) {
     image_sub_ = image_transport::create_subscription(
