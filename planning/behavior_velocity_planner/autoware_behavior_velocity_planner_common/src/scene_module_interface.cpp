@@ -190,16 +190,6 @@ void SceneModuleManagerInterface::registerModule(
   scene_modules_.insert(scene_module);
 }
 
-void SceneModuleManagerInterface::unregisterModule(
-  const std::shared_ptr<SceneModuleInterface> & scene_module)
-{
-  RCLCPP_DEBUG(
-    logger_, "unregister task: module = %s, id = %lu", getModuleName(),
-    scene_module->getModuleId());
-  registered_module_id_set_.erase(scene_module->getModuleId());
-  scene_modules_.erase(scene_module);
-}
-
 SceneModuleManagerInterfaceWithRTC::SceneModuleManagerInterfaceWithRTC(
   rclcpp::Node & node, const char * module_name, const bool enable_rtc)
 : SceneModuleManagerInterface(node, module_name),
