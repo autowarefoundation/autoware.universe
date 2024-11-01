@@ -1940,10 +1940,10 @@ bool NormalLaneChange::is_collided(
   const auto & bpp_param = *common_data_ptr_->bpp_param_ptr;
 
   for (const auto & obj_path : obj_predicted_paths) {
-    const auto collided_polygons = utils::path_safety_checker::getCollidedPolygons(
-      lane_change_path, ego_predicted_path, obj, obj_path, bpp_param, selected_rss_param,
-      hysteresis_factor, safety_check_max_vel, collision_check_yaw_diff_threshold,
-      current_debug_data.second);
+    const auto collided_polygons = utils::path_safety_checker::get_collided_polygons(
+      lane_change_path, ego_predicted_path, obj, obj_path, bpp_param.vehicle_info,
+      selected_rss_param, hysteresis_factor, safety_check_max_vel,
+      collision_check_yaw_diff_threshold, current_debug_data.second);
 
     if (collided_polygons.empty()) {
       utils::path_safety_checker::updateCollisionCheckDebugMap(
