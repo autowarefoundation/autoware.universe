@@ -116,7 +116,8 @@ void TrtYolov10Node::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     object.feature.roi.width = yolov10_object.width;
     object.feature.roi.height = yolov10_object.height;
     object.object.existence_probability = yolov10_object.score;
-    object.object.classification = object_recognition_utils::toObjectClassifications(label_map_[yolov10_object.type], 1.0f);
+    object.object.classification =
+      object_recognition_utils::toObjectClassifications(label_map_[yolov10_object.type], 1.0f);
     out_objects.feature_objects.push_back(object);
     const auto left = std::max(0, static_cast<int>(object.feature.roi.x_offset));
     const auto top = std::max(0, static_cast<int>(object.feature.roi.y_offset));
@@ -128,7 +129,9 @@ void TrtYolov10Node::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       in_image_ptr->image, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
       8, 0);
 
-    cv::putText(in_image_ptr->image, label_map_[yolov10_object.type], cv::Point(left,top), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 255), 1, 8, 0);
+    cv::putText(
+      in_image_ptr->image, label_map_[yolov10_object.type], cv::Point(left, top),
+      cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 255), 1, 8, 0);
   }
 
   image_pub_.publish(in_image_ptr->toImageMsg());
@@ -152,7 +155,6 @@ void TrtYolov10Node::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
   }
 }
 
-
 bool TrtYolov10Node::readLabelFile(const std::string & label_path)
 {
   std::ifstream label_file(label_path);
@@ -171,7 +173,8 @@ bool TrtYolov10Node::readLabelFile(const std::string & label_path)
   return true;
 }
 
-//we need this because autoware::object_recognition_utils::toLabel(const std::string & class_name) limit label type
+// we need this because autoware::object_recognition_utils::toLabel(const std::string & class_name)
+// limit label type
 void TrtYolov10Node::replaceLabelMap()
 {
   for (std::size_t i = 0; i < label_map_.size(); ++i) {

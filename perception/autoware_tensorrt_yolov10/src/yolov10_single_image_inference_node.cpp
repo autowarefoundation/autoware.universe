@@ -63,9 +63,11 @@ public:
       const auto bottom = std::clamp(top + object.height, 0, image.rows);
       cv::rectangle(
         image, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3, 8, 0);
-      
+
       string cls_id = std::to_string(object.type);
-      cv::putText(image, cls_id, cv::Point(left,top), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 255), 1, 8, 0);
+      cv::putText(
+        image, cls_id, cv::Point(left, top), cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(0, 255, 255),
+        1, 8, 0);
     }
     if (!save_image) {
       cv::imshow("inference image", image);
