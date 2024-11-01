@@ -130,10 +130,13 @@ std::vector<double> calc_lon_acceleration_samples(
   const CommonDataPtr & common_data_ptr, const double max_path_velocity,
   const double prepare_duration);
 
+double calc_actual_prepare_duration(
+  const CommonDataPtr & common_data_ptr, const double current_velocity,
+  const double active_signal_duration);
+
 std::vector<PhaseMetrics> calc_prepare_phase_metrics(
   const CommonDataPtr & common_data_ptr, const double current_velocity,
-  const double max_path_velocity, const double active_signal_duration,
-  const double min_length_threshold = 0.0,
+  const double max_path_velocity, const double min_length_threshold = 0.0,
   const double max_length_threshold = std::numeric_limits<double>::max());
 
 std::vector<PhaseMetrics> calc_shift_phase_metrics(

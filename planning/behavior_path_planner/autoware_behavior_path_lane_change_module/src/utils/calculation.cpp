@@ -391,28 +391,42 @@ double calc_lane_changing_acceleration(
     prepare_longitudinal_acc);
 }
 
-std::vector<double> calc_prepare_durations(
-  const CommonDataPtr & common_data_ptr, const double active_signal_duration)
+double calc_actual_prepare_duration(
+  const CommonDataPtr & common_data_ptr, const double current_velocity,
+  const double active_signal_duration)
+{
+  const auto max_prepare_duration = common_data_ptr->lc_param_ptr->maximum_prepare_duration;
+  const auto min_lc_velocity = common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity;
+
+  // need to ensure min prep duration is sufficient to reach minimum lane changing velocity
+  const auto min_prepare_duration = std::invoke([&]() -> double {
+    if (current_velocity >= min_lc_velocity) {
+      return common_data_ptr->lc_param_ptr->minimum_prepare_duration;
+    }
+    const auto max_acc = common_data_ptr->bpp_param_ptr->max_acc;
+    return (min_lc_velocity - current_velocity) / max_acc;
+  });
+
+  return std::max(max_prepare_duration - active_signal_duration, min_prepare_duration);
+}
+
+std::vector<double> calc_prepare_durations(const CommonDataPtr & common_data_ptr)
 {
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
   const auto threshold = common_data_ptr->bpp_param_ptr->base_link2front +
                          lc_param_ptr->min_length_for_turn_signal_activation;
-  const auto max_prepare_duration = lc_param_ptr->maximum_prepare_duration;
-  const auto min_prepare_duration = lc_param_ptr->minimum_prepare_duration;
 
   // TODO(Azu) this check seems to cause scenario failures.
   if (common_data_ptr->transient_data.dist_to_terminal_start >= threshold) {
-    return {std::max(max_prepare_duration - active_signal_duration, min_prepare_duration)};
+    return {common_data_ptr->transient_data.lane_change_prepare_duration};
   }
 
+  const auto max_prepare_duration = lc_param_ptr->maximum_prepare_duration;
   std::vector<double> prepare_durations;
   constexpr double step = 0.5;
 
-  for (double duration = max_prepare_duration; duration >= min_prepare_duration; duration -= step) {
+  for (double duration = max_prepare_duration; duration >= 0.0; duration -= step) {
     prepare_durations.push_back(duration);
-    if (duration - step < min_prepare_duration) {
-      prepare_durations.push_back(min_prepare_duration);
-    }
   }
 
   return prepare_durations;
@@ -420,8 +434,8 @@ std::vector<double> calc_prepare_durations(
 
 std::vector<PhaseMetrics> calc_prepare_phase_metrics(
   const CommonDataPtr & common_data_ptr, const double current_velocity,
-  const double max_path_velocity, const double active_signal_duration,
-  const double min_length_threshold, const double max_length_threshold)
+  const double max_path_velocity, const double min_length_threshold,
+  const double max_length_threshold)
 {
   const auto & min_lc_vel = common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity;
   const auto & max_vel = common_data_ptr->bpp_param_ptr->max_vel;
@@ -439,7 +453,7 @@ std::vector<PhaseMetrics> calc_prepare_phase_metrics(
     return false;
   };
 
-  const auto prepare_durations = calc_prepare_durations(common_data_ptr, active_signal_duration);
+  const auto prepare_durations = calc_prepare_durations(common_data_ptr);
 
   for (const auto & prepare_duration : prepare_durations) {
     const auto lon_accel_samples =

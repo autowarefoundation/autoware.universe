@@ -124,6 +124,11 @@ void NormalLaneChange::update_transient_data()
     prev_module_output_.path.points.at(nearest_seg_idx).point.longitudinal_velocity_mps;
   transient_data.current_path_seg_idx = nearest_seg_idx;
 
+  const auto active_signal_duration =
+    signal_activation_time_ ? (clock_.now() - signal_activation_time_.value()).seconds() : 0.0;
+  transient_data.lane_change_prepare_duration = calculation::calc_actual_prepare_duration(
+    common_data_ptr_, common_data_ptr_->get_ego_speed(), active_signal_duration);
+
   std::tie(transient_data.lane_changing_length, transient_data.current_dist_buffer) =
     calculation::calc_lc_length_and_dist_buffer(common_data_ptr_, get_current_lanes());
 
@@ -1214,14 +1219,11 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_prepare_metrics() cons
   // set speed limit to be current path velocity;
   const auto max_path_velocity = common_data_ptr_->transient_data.current_path_velocity;
 
-  const auto active_signal_duration =
-    signal_activation_time_ ? (clock_.now() - signal_activation_time_.value()).seconds() : 0.0;
-
   const auto dist_to_target_start =
     calculation::calc_ego_dist_to_lanes_start(common_data_ptr_, current_lanes, target_lanes);
   return calculation::calc_prepare_phase_metrics(
-    common_data_ptr_, current_velocity, max_path_velocity, active_signal_duration,
-    dist_to_target_start, common_data_ptr_->transient_data.dist_to_terminal_start);
+    common_data_ptr_, current_velocity, max_path_velocity, dist_to_target_start,
+    common_data_ptr_->transient_data.dist_to_terminal_start);
 }
 
 std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(

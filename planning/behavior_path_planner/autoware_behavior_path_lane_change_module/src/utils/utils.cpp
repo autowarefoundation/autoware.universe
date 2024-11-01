@@ -911,15 +911,15 @@ std::optional<lanelet::BasicPolygon2d> createPolygon(
 }
 
 ExtendedPredictedObject transform(
-  const PredictedObject & object,
-  [[maybe_unused]] const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters, const bool check_at_prepare_phase)
+  const PredictedObject & object, const CommonDataPtr & common_data_ptr,
+  const bool check_at_prepare_phase)
 {
   ExtendedPredictedObject extended_object(object);
 
-  const auto & time_resolution = lane_change_parameters.prediction_time_resolution;
-  const auto & prepare_duration = lane_change_parameters.maximum_prepare_duration;
-  const auto & velocity_threshold = lane_change_parameters.stopped_object_velocity_threshold;
+  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
+  const auto & time_resolution = lc_param_ptr->prediction_time_resolution;
+  const auto & velocity_threshold = lc_param_ptr->stopped_object_velocity_threshold;
+  const auto & prepare_duration = common_data_ptr->transient_data.lane_change_prepare_duration;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
   const double obj_vel_norm =
     std::hypot(extended_object.initial_twist.linear.x, extended_object.initial_twist.linear.y);
@@ -1169,11 +1169,9 @@ ExtendedPredictedObjects transform_to_extended_objects(
   ExtendedPredictedObjects extended_objects;
   extended_objects.reserve(objects.size());
 
-  const auto & bpp_param = *common_data_ptr->bpp_param_ptr;
-  const auto & lc_param = *common_data_ptr->lc_param_ptr;
   std::transform(
     objects.begin(), objects.end(), std::back_inserter(extended_objects), [&](const auto & object) {
-      return utils::lane_change::transform(object, bpp_param, lc_param, check_prepare_phase);
+      return utils::lane_change::transform(object, common_data_ptr, check_prepare_phase);
     });
 
   return extended_objects;

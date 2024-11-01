@@ -143,8 +143,8 @@ std::optional<lanelet::BasicPolygon2d> createPolygon(
   const lanelet::ConstLanelets & lanes, const double start_dist, const double end_dist);
 
 ExtendedPredictedObject transform(
-  const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters, const bool check_at_prepare_phase);
+  const PredictedObject & object, const CommonDataPtr & common_data_ptr,
+  const bool check_at_prepare_phase);
 
 bool isCollidedPolygonsInLanelet(
   const std::vector<Polygon2d> & collided_polygons,
