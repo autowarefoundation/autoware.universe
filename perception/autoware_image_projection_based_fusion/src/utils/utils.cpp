@@ -159,8 +159,10 @@ void updateOutputFusedObjects(
     cluster.data.resize(clusters_data_size.at(i));
     auto & feature_obj = output_objs.at(i);
     if (
-      cluster.data.size() < std::size_t(min_cluster_size * cluster.point_step) ||
-      cluster.data.size() >= std::size_t(max_cluster_size * cluster.point_step)) {
+      cluster.data.size() <
+        static_cast<std::size_t>(min_cluster_size) * static_cast<std::size_t>(cluster.point_step) ||
+      cluster.data.size() >=
+        static_cast<std::size_t>(max_cluster_size) * static_cast<std::size_t>(cluster.point_step)) {
       continue;
     }
 
@@ -169,7 +171,9 @@ void updateOutputFusedObjects(
     sensor_msgs::msg::PointCloud2 refine_cluster;
     closest_cluster(
       cluster, cluster_2d_tolerance, min_cluster_size, camera_orig_point_frame, refine_cluster);
-    if (refine_cluster.data.size() < std::size_t(min_cluster_size * cluster.point_step)) {
+    if (
+      refine_cluster.data.size() <
+      static_cast<std::size_t>(min_cluster_size) * static_cast<std::size_t>(cluster.point_step)) {
       continue;
     }
 
