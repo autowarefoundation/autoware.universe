@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
-#define COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
 
-#include <component_interface_utils/rclcpp/create_interface.hpp>
-#include <component_interface_utils/rclcpp/interface.hpp>
-#include <component_interface_utils/rclcpp/service_client.hpp>
-#include <component_interface_utils/rclcpp/service_server.hpp>
-#include <component_interface_utils/rclcpp/topic_publisher.hpp>
-#include <component_interface_utils/rclcpp/topic_subscription.hpp>
+#include <autoware/component_interface_utils/rclcpp/create_interface.hpp>
+#include <autoware/component_interface_utils/rclcpp/interface.hpp>
+#include <autoware/component_interface_utils/rclcpp/service_client.hpp>
+#include <autoware/component_interface_utils/rclcpp/service_server.hpp>
+#include <autoware/component_interface_utils/rclcpp/topic_publisher.hpp>
+#include <autoware/component_interface_utils/rclcpp/topic_subscription.hpp>
 
 #include <memory>
 #include <optional>
 #include <utility>
 
-namespace component_interface_utils
+namespace autoware::component_interface_utils
 {
 
 class NodeAdaptor
@@ -123,6 +123,6 @@ private:
   NodeInterface::SharedPtr interface_;
 };
 
-}  // namespace component_interface_utils
+}  // namespace autoware::component_interface_utils
 
-#endif  // COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_

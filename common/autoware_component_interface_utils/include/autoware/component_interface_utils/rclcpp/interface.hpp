@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__INTERFACE_HPP_
-#define COMPONENT_INTERFACE_UTILS__RCLCPP__INTERFACE_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__INTERFACE_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__INTERFACE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,7 +23,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace component_interface_utils
+namespace autoware::component_interface_utils
 {
 
 struct NodeInterface
@@ -68,6 +68,6 @@ struct NodeInterface
   std::string node_name;
 };
 
-}  // namespace component_interface_utils
+}  // namespace autoware::component_interface_utils
 
-#endif  // COMPONENT_INTERFACE_UTILS__RCLCPP__INTERFACE_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__INTERFACE_HPP_
