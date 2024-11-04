@@ -207,10 +207,13 @@ public:
   }
   inline std::vector<std::string> getCurrentMapIDs()
   {
-    std::vector<std::string> current_map_ids{};
-    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
-    for (auto & kv : current_voxel_grid_dict_) {
-      current_map_ids.push_back(kv.first);
+    std::vector<std::string> current_map_ids;
+    {
+      std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
+      current_map_ids.reserve(current_voxel_grid_dict_.size());
+      for (const auto & kv : current_voxel_grid_dict_) {
+        current_map_ids.push_back(kv.first);
+      }
     }
     return current_map_ids;
   }

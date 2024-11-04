@@ -151,7 +151,9 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
       const auto & check_roi = feature_obj.feature.roi;
       auto & cluster = clusters.at(i);
 
-      if (clusters_data_size.at(i) >= static_cast<size_t>(max_cluster_size_ * point_step)) {
+      if (
+        clusters_data_size.at(i) >=
+        static_cast<size_t>(max_cluster_size_) * static_cast<size_t>(point_step)) {
         continue;
       }
       if (
