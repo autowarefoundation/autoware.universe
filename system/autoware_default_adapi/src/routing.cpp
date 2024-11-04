@@ -50,7 +50,7 @@ namespace autoware::default_adapi
 
 RoutingNode::RoutingNode(const rclcpp::NodeOptions & options) : Node("routing", options)
 {
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   adaptor.init_pub(pub_state_);
   adaptor.init_pub(pub_route_);

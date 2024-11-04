@@ -16,10 +16,10 @@
 #define MOTION_HPP_
 
 #include <autoware/component_interface_specs/control.hpp>
+#include <autoware/component_interface_utils/rclcpp.hpp>
+#include <autoware/component_interface_utils/status.hpp>
 #include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware_ad_api_specs/motion.hpp>
-#include <component_interface_utils/rclcpp.hpp>
-#include <component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 // This file should be included after messages.
