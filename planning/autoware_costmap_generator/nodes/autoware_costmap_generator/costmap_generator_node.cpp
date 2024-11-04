@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2020-2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,18 +50,15 @@
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <pcl_ros/transforms.hpp>
-
-#include <lanelet2_core/geometry/Polygon.h>
-#include <tf2/utils.h>
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#else
 #include <tf2_eigen/tf2_eigen.hpp>
-#endif
+
+#include <lanelet2_core/Forward.h>
+#include <lanelet2_core/geometry/Polygon.h>
+#include <tf2/time.h>
+#include <tf2/utils.h>
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace
@@ -95,15 +92,14 @@ std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
   const lanelet::BasicPoint2d & current_position)
 {
-  const auto linked_parking_lot = std::make_shared<lanelet::ConstPolygon3d>();
+  auto linked_parking_lot = std::make_shared<lanelet::ConstPolygon3d>();
   const auto result = lanelet::utils::query::getLinkedParkingLot(
     current_position, lanelet_map_ptr, linked_parking_lot.get());
 
   if (result) {
     return linked_parking_lot;
-  } else {
-    return {};
   }
+  return {};
 }
 
 // copied from scenario selector
@@ -122,20 +118,6 @@ bool isInParkingLot(
   }
 
   return lanelet::geometry::within(search_point, nearest_parking_lot->basicPolygon());
-}
-
-// Convert from Point32 to Point
-std::vector<geometry_msgs::msg::Point> poly2vector(const geometry_msgs::msg::Polygon & poly)
-{
-  std::vector<geometry_msgs::msg::Point> ps;
-  for (const auto & p32 : poly.points) {
-    geometry_msgs::msg::Point p;
-    p.x = p32.x;
-    p.y = p32.y;
-    p.z = p32.z;
-    ps.push_back(p);
-  }
-  return ps;
 }
 
 pcl::PointCloud<pcl::PointXYZ> getTransformedPointCloud(
@@ -160,27 +142,9 @@ namespace autoware::costmap_generator
 CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
 : Node("costmap_generator", node_options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-  // Parameters
-  costmap_frame_ = declare_parameter<std::string>("costmap_frame");
-  vehicle_frame_ = declare_parameter<std::string>("vehicle_frame");
-  map_frame_ = declare_parameter<std::string>("map_frame");
-  update_rate_ = declare_parameter<double>("update_rate");
-  activate_by_scenario_ = declare_parameter<bool>("activate_by_scenario");
-  grid_min_value_ = declare_parameter<double>("grid_min_value");
-  grid_max_value_ = declare_parameter<double>("grid_max_value");
-  grid_resolution_ = declare_parameter<double>("grid_resolution");
-  grid_length_x_ = declare_parameter<double>("grid_length_x");
-  grid_length_y_ = declare_parameter<double>("grid_length_y");
-  grid_position_x_ = declare_parameter<double>("grid_position_x");
-  grid_position_y_ = declare_parameter<double>("grid_position_y");
-  maximum_lidar_height_thres_ = declare_parameter<double>("maximum_lidar_height_thres");
-  minimum_lidar_height_thres_ = declare_parameter<double>("minimum_lidar_height_thres");
-  use_objects_ = declare_parameter<bool>("use_objects");
-  use_points_ = declare_parameter<bool>("use_points");
-  use_wayarea_ = declare_parameter<bool>("use_wayarea");
-  use_parkinglot_ = declare_parameter<bool>("use_parkinglot");
-  expand_polygon_size_ = declare_parameter<double>("expand_polygon_size");
-  size_of_expansion_kernel_ = declare_parameter<int64_t>("size_of_expansion_kernel");
+  param_listener_ = std::make_shared<::costmap_generator_node::ParamListener>(
+    this->get_node_parameters_interface());
+  param_ = std::make_shared<::costmap_generator_node::Params>(param_listener_->get_params());
 
   // Wait for first tf
   // We want to do this before creating subscriptions
@@ -211,9 +175,14 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
   pub_costmap_ = this->create_publisher<grid_map_msgs::msg::GridMap>("~/output/grid_map", 1);
   pub_occupancy_grid_ =
     this->create_publisher<nav_msgs::msg::OccupancyGrid>("~/output/occupancy_grid", 1);
+  pub_processing_time_ =
+    create_publisher<autoware::universe_utils::ProcessingTimeDetail>("processing_time", 1);
+  time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(pub_processing_time_);
+  pub_processing_time_ms_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 
   // Timer
-  const auto period_ns = rclcpp::Rate(update_rate_).period();
+  const auto period_ns = rclcpp::Rate(param_->update_rate).period();
   timer_ =
     rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&CostmapGenerator::onTimer, this));
 
@@ -223,7 +192,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
 
 void CostmapGenerator::loadRoadAreasFromLaneletMap(
   const lanelet::LaneletMapPtr lanelet_map,
-  std::vector<std::vector<geometry_msgs::msg::Point>> * area_points)
+  std::vector<geometry_msgs::msg::Polygon> & area_polygons)
 {
   // use all lanelets in map of subtype road to give way area
   lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map);
@@ -232,21 +201,25 @@ void CostmapGenerator::loadRoadAreasFromLaneletMap(
   // convert lanelets to polygons and put into area_points array
   for (const auto & ll : road_lanelets) {
     geometry_msgs::msg::Polygon poly;
-    lanelet::visualization::lanelet2Polygon(ll, &poly);
-    area_points->push_back(poly2vector(poly));
+    geometry_msgs::msg::Point32 pt;
+    for (const auto & p : ll.polygon3d().basicPolygon()) {
+      lanelet::utils::conversion::toGeomMsgPt32(p, &pt);
+      poly.points.push_back(pt);
+    }
+    area_polygons.push_back(poly);
   }
 }
 
 void CostmapGenerator::loadParkingAreasFromLaneletMap(
   const lanelet::LaneletMapPtr lanelet_map,
-  std::vector<std::vector<geometry_msgs::msg::Point>> * area_points)
+  std::vector<geometry_msgs::msg::Polygon> & area_polygons)
 {
   // Parking lots
   lanelet::ConstPolygons3d all_parking_lots = lanelet::utils::query::getAllParkingLots(lanelet_map);
   for (const auto & ll_poly : all_parking_lots) {
     geometry_msgs::msg::Polygon poly;
     lanelet::utils::conversion::toGeomMsgPoly(ll_poly, &poly);
-    area_points->push_back(poly2vector(poly));
+    area_polygons.push_back(poly);
   }
 
   // Parking spaces
@@ -255,10 +228,9 @@ void CostmapGenerator::loadParkingAreasFromLaneletMap(
   for (const auto & parking_space : all_parking_spaces) {
     lanelet::ConstPolygon3d ll_poly;
     lanelet::utils::lineStringWithWidthToPolygon(parking_space, &ll_poly);
-
     geometry_msgs::msg::Polygon poly;
     lanelet::utils::conversion::toGeomMsgPoly(ll_poly, &poly);
-    area_points->push_back(poly2vector(poly));
+    area_polygons.push_back(poly);
   }
 }
 
@@ -268,12 +240,12 @@ void CostmapGenerator::onLaneletMapBin(
   lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_);
 
-  if (use_wayarea_) {
-    loadRoadAreasFromLaneletMap(lanelet_map_, &primitives_points_);
+  if (param_->use_wayarea) {
+    loadRoadAreasFromLaneletMap(lanelet_map_, primitives_polygons_);
   }
 
-  if (use_parkinglot_) {
-    loadParkingAreasFromLaneletMap(lanelet_map_, &primitives_points_);
+  if (param_->use_parkinglot) {
+    loadParkingAreasFromLaneletMap(lanelet_map_, primitives_polygons_);
   }
 }
 
@@ -295,19 +267,28 @@ void CostmapGenerator::onScenario(const tier4_planning_msgs::msg::Scenario::Cons
 
 void CostmapGenerator::onTimer()
 {
+  autoware::universe_utils::ScopedTimeTrack scoped_time_track(__func__, *time_keeper_);
+  stop_watch.tic();
   if (!isActive()) {
+    // Publish ProcessingTime
+    tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+    processing_time_msg.stamp = get_clock()->now();
+    processing_time_msg.data = stop_watch.toc();
+    pub_processing_time_ms_->publish(processing_time_msg);
     return;
   }
 
   // Get current pose
+  time_keeper_->start_track("lookupTransform");
   geometry_msgs::msg::TransformStamped tf;
   try {
-    tf = tf_buffer_.lookupTransform(
-      costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
+    tf =
+      tf_buffer_.lookupTransform(param_->costmap_frame, param_->vehicle_frame, tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
     return;
   }
+  time_keeper_->end_track("lookupTransform");
 
   // Set grid center
   grid_map::Position p;
@@ -315,19 +296,25 @@ void CostmapGenerator::onTimer()
   p.y() = tf.transform.translation.y;
   costmap_.setPosition(p);
 
-  if ((use_wayarea_ || use_parkinglot_) && lanelet_map_) {
+  if ((param_->use_wayarea || param_->use_parkinglot) && lanelet_map_) {
+    autoware::universe_utils::ScopedTimeTrack st("generatePrimitivesCostmap()", *time_keeper_);
     costmap_[LayerName::primitives] = generatePrimitivesCostmap();
   }
 
-  if (use_objects_ && objects_) {
+  if (param_->use_objects && objects_) {
+    autoware::universe_utils::ScopedTimeTrack st("generateObjectsCostmap()", *time_keeper_);
     costmap_[LayerName::objects] = generateObjectsCostmap(objects_);
   }
 
-  if (use_points_ && points_) {
+  if (param_->use_points && points_) {
+    autoware::universe_utils::ScopedTimeTrack st("generatePointsCostmap()", *time_keeper_);
     costmap_[LayerName::points] = generatePointsCostmap(points_);
   }
 
-  costmap_[LayerName::combined] = generateCombinedCostmap();
+  {
+    autoware::universe_utils::ScopedTimeTrack st("generateCombinedCostmap()", *time_keeper_);
+    costmap_[LayerName::combined] = generateCombinedCostmap();
+  }
 
   publishCostmap(costmap_);
 }
@@ -338,7 +325,7 @@ bool CostmapGenerator::isActive()
     return false;
   }
 
-  if (activate_by_scenario_) {
+  if (param_->activate_by_scenario) {
     if (scenario_) {
       const auto & s = scenario_->activating_scenarios;
       if (
@@ -348,24 +335,23 @@ bool CostmapGenerator::isActive()
       }
     }
     return false;
-  } else {
-    const auto & current_pose_wrt_map = getCurrentPose(tf_buffer_, this->get_logger());
-    if (!current_pose_wrt_map) return false;
-    return isInParkingLot(lanelet_map_, current_pose_wrt_map->pose);
   }
+  const auto & current_pose_wrt_map = getCurrentPose(tf_buffer_, this->get_logger());
+  if (!current_pose_wrt_map) return false;
+  return isInParkingLot(lanelet_map_, current_pose_wrt_map->pose);
 }
 
 void CostmapGenerator::initGridmap()
 {
-  costmap_.setFrameId(costmap_frame_);
+  costmap_.setFrameId(param_->costmap_frame);
   costmap_.setGeometry(
-    grid_map::Length(grid_length_x_, grid_length_y_), grid_resolution_,
-    grid_map::Position(grid_position_x_, grid_position_y_));
+    grid_map::Length(param_->grid_length_x, param_->grid_length_y), param_->grid_resolution,
+    grid_map::Position(param_->grid_position_x, param_->grid_position_y));
 
-  costmap_.add(LayerName::points, grid_min_value_);
-  costmap_.add(LayerName::objects, grid_min_value_);
-  costmap_.add(LayerName::primitives, grid_min_value_);
-  costmap_.add(LayerName::combined, grid_min_value_);
+  costmap_.add(LayerName::points, param_->grid_min_value);
+  costmap_.add(LayerName::objects, param_->grid_min_value);
+  costmap_.add(LayerName::primitives, param_->grid_min_value);
+  costmap_.add(LayerName::combined, param_->grid_min_value);
 }
 
 grid_map::Matrix CostmapGenerator::generatePointsCostmap(
@@ -373,8 +359,8 @@ grid_map::Matrix CostmapGenerator::generatePointsCostmap(
 {
   geometry_msgs::msg::TransformStamped points2costmap;
   try {
-    points2costmap =
-      tf_buffer_.lookupTransform(costmap_frame_, in_points->header.frame_id, tf2::TimePointZero);
+    points2costmap = tf_buffer_.lookupTransform(
+      param_->costmap_frame, in_points->header.frame_id, tf2::TimePointZero);
   } catch (const tf2::TransformException & ex) {
     RCLCPP_ERROR(rclcpp::get_logger("costmap_generator"), "%s", ex.what());
   }
@@ -382,8 +368,8 @@ grid_map::Matrix CostmapGenerator::generatePointsCostmap(
   const auto transformed_points = getTransformedPointCloud(*in_points, points2costmap.transform);
 
   grid_map::Matrix points_costmap = points2costmap_.makeCostmapFromPoints(
-    maximum_lidar_height_thres_, minimum_lidar_height_thres_, grid_min_value_, grid_max_value_,
-    costmap_, LayerName::points, transformed_points);
+    param_->maximum_lidar_height_thres, param_->minimum_lidar_height_thres, param_->grid_min_value,
+    param_->grid_max_value, costmap_, LayerName::points, transformed_points);
 
   return points_costmap;
 }
@@ -405,7 +391,8 @@ autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr transformObjects
   }
 
   for (auto & object : objects->objects) {
-    geometry_msgs::msg::PoseStamped output_stamped, input_stamped;
+    geometry_msgs::msg::PoseStamped output_stamped;
+    geometry_msgs::msg::PoseStamped input_stamped;
     input_stamped.pose = object.kinematics.initial_pose_with_covariance.pose;
     tf2::doTransform(input_stamped, output_stamped, objects2costmap);
     object.kinematics.initial_pose_with_covariance.pose = output_stamped.pose;
@@ -419,10 +406,10 @@ grid_map::Matrix CostmapGenerator::generateObjectsCostmap(
 {
   const auto object_frame = in_objects->header.frame_id;
   const auto transformed_objects =
-    transformObjects(tf_buffer_, in_objects, costmap_frame_, object_frame);
+    transformObjects(tf_buffer_, in_objects, param_->costmap_frame, object_frame);
 
   grid_map::Matrix objects_costmap = objects2costmap_.makeCostmapFromObjects(
-    costmap_, expand_polygon_size_, size_of_expansion_kernel_, transformed_objects);
+    costmap_, param_->expand_polygon_size, param_->size_of_expansion_kernel, transformed_objects);
 
   return objects_costmap;
 }
@@ -430,10 +417,10 @@ grid_map::Matrix CostmapGenerator::generateObjectsCostmap(
 grid_map::Matrix CostmapGenerator::generatePrimitivesCostmap()
 {
   grid_map::GridMap lanelet2_costmap = costmap_;
-  if (!primitives_points_.empty()) {
-    object_map::FillPolygonAreas(
-      lanelet2_costmap, primitives_points_, LayerName::primitives, grid_max_value_, grid_min_value_,
-      grid_min_value_, grid_max_value_, costmap_frame_, map_frame_, tf_buffer_);
+  if (!primitives_polygons_.empty()) {
+    object_map::fill_polygon_areas(
+      lanelet2_costmap, primitives_polygons_, LayerName::primitives, param_->grid_max_value,
+      param_->grid_min_value, param_->costmap_frame, param_->map_frame, tf_buffer_);
   }
   return lanelet2_costmap[LayerName::primitives];
 }
@@ -443,7 +430,7 @@ grid_map::Matrix CostmapGenerator::generateCombinedCostmap()
   // assuming combined_costmap is calculated by element wise max operation
   grid_map::GridMap combined_costmap = costmap_;
 
-  combined_costmap[LayerName::combined].setConstant(grid_min_value_);
+  combined_costmap[LayerName::combined].setConstant(param_->grid_min_value);
 
   combined_costmap[LayerName::combined] =
     combined_costmap[LayerName::combined].cwiseMax(combined_costmap[LayerName::points]);
@@ -461,13 +448,14 @@ void CostmapGenerator::publishCostmap(const grid_map::GridMap & costmap)
 {
   // Set header
   std_msgs::msg::Header header;
-  header.frame_id = costmap_frame_;
+  header.frame_id = param_->costmap_frame;
   header.stamp = this->now();
 
   // Publish OccupancyGrid
   nav_msgs::msg::OccupancyGrid out_occupancy_grid;
   grid_map::GridMapRosConverter::toOccupancyGrid(
-    costmap, LayerName::combined, grid_min_value_, grid_max_value_, out_occupancy_grid);
+    costmap, LayerName::combined, param_->grid_min_value, param_->grid_max_value,
+    out_occupancy_grid);
   out_occupancy_grid.header = header;
   pub_occupancy_grid_->publish(out_occupancy_grid);
 
@@ -475,6 +463,12 @@ void CostmapGenerator::publishCostmap(const grid_map::GridMap & costmap)
   auto out_gridmap_msg = grid_map::GridMapRosConverter::toMessage(costmap);
   out_gridmap_msg->header = header;
   pub_costmap_->publish(*out_gridmap_msg);
+
+  // Publish ProcessingTime
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = stop_watch.toc();
+  pub_processing_time_ms_->publish(processing_time_msg);
 }
 }  // namespace autoware::costmap_generator
 

@@ -22,10 +22,10 @@ NOTE: **We strongly recommend to use divided maps when using large pointcloud ma
 
 You may provide either a single .pcd file or multiple .pcd files. If you are using multiple PCD data, it MUST obey the following rules:
 
-1. **The pointcloud map should be projected on the same coordinate defined in `map_projection_loader`**, in order to be consistent with the lanelet2 map and other packages that converts between local and geodetic coordinates. For more information, please refer to [the readme of `map_projection_loader`](https://github.com/autowarefoundation/autoware.universe/tree/main/map/map_projection_loader/README.md).
+1. **The pointcloud map should be projected on the same coordinate defined in `map_projection_loader`**, in order to be consistent with the lanelet2 map and other packages that converts between local and geodetic coordinates. For more information, please refer to [the readme of `map_projection_loader`](https://github.com/autowarefoundation/autoware.universe/tree/main/map/autoware_map_projection_loader/README.md).
 2. **It must be divided by straight lines parallel to the x-axis and y-axis**. The system does not support division by diagonal lines or curved lines.
 3. **The division size along each axis should be equal.**
-4. **The division size should be about 20m x 20m.** Particularly, care should be taken as using too large division size (for example, more than 100m) may have adverse effects on dynamic map loading features in [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher) and [autoware_compare_map_segmentation](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/autoware_compare_map_segmentation).
+4. **The division size should be about 20m x 20m.** Particularly, care should be taken as using too large division size (for example, more than 100m) may have adverse effects on dynamic map loading features in [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/autoware_ndt_scan_matcher) and [autoware_compare_map_segmentation](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/autoware_compare_map_segmentation).
 5. **All the split maps should not overlap with each other.**
 6. **Metadata file should also be provided.** The metadata structure description is provided below.
 
@@ -48,7 +48,7 @@ where,
 - `A.pcd`, `B.pcd`, etc, are the names of PCD files.
 - List such as `[1200, 2500]` are the values indicate that for this PCD file, x coordinates are between 1200 and 1220 (`x_resolution` + `x_coordinate`) and y coordinates are between 2500 and 2520 (`y_resolution` + `y_coordinate`).
 
-You may use [pointcloud_divider](https://github.com/MapIV/pointcloud_divider) from MAP IV for dividing pointcloud map as well as generating the compatible metadata.yaml.
+You may use [pointcloud_divider](https://github.com/autowarefoundation/autoware_tools/tree/main/map/autoware_pointcloud_divider) for dividing pointcloud map as well as generating the compatible metadata.yaml.
 
 #### Directory structure of these files
 

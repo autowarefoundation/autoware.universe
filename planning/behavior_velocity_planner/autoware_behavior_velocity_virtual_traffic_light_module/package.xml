@@ -8,6 +8,7 @@
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
   <maintainer email="shumpei.wakabayashi@tier4.jp">Shumpei Wakabayashi</maintainer>
+  <maintainer email="mamoru.sobue@tier4.jp">Mamoru Sobue</maintainer>
 
   <license>Apache License 2.0</license>
 
@@ -32,6 +33,7 @@
   <depend>tier4_v2x_msgs</depend>
   <depend>visualization_msgs</depend>
 
+  <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 

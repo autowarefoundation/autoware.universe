@@ -14,7 +14,7 @@
 #ifndef AUTOWARE__GNSS_POSER__GNSS_POSER_NODE_HPP_
 #define AUTOWARE__GNSS_POSER__GNSS_POSER_NODE_HPP_
 
-#include <component_interface_specs/map.hpp>
+#include <autoware/component_interface_specs/map.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -47,7 +47,7 @@ public:
   explicit GNSSPoser(const rclcpp::NodeOptions & node_options);
 
 private:
-  using MapProjectorInfo = map_interface::MapProjectorInfo;
+  using MapProjectorInfo = autoware::component_interface_specs::map::MapProjectorInfo;
 
   void callback_map_projector_info(const MapProjectorInfo::Message::ConstSharedPtr msg);
   void callback_nav_sat_fix(const sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr);

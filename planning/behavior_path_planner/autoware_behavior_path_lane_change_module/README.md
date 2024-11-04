@@ -11,7 +11,9 @@ The Lane Change module is activated when lane change is needed and can be safely
   - `allow_lane_change` tags is set as `true`
 - During lane change request condition
   - The ego-vehicle isn’t on a `preferred_lane`.
-  - There is neither intersection nor crosswalk on the path of the lane change
+  - The ego-vehicle isn't approaching a traffic light. (condition parameterized)
+  - The ego-vehicle isn't approaching a crosswalk. (condition parameterized)
+  - The ego-vehicle isn't approaching an intersection. (condition parameterized)
 - lane change ready condition
   - Path of the lane change does not collide with other dynamic objects (see the figure below)
   - Lane change candidate path is approved by an operator.
@@ -21,6 +23,108 @@ The Lane Change module is activated when lane change is needed and can be safely
 The lane change candidate path is divided into two phases: preparation and lane-changing. The following figure illustrates each phase of the lane change candidate path.
 
 ![lane-change-phases](./images/lane_change-lane_change_phases.png)
+
+The following chart illustrates the process of sampling candidate paths for lane change.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+start
+
+if (Is current lanes, target lanes OR target neighbor lanes polygon empty?) then (yes)
+  #LightPink:Return prev approved path;
+  stop
+else (no)
+endif
+
+:Get target objects;
+
+:Calculate prepare phase metrics;
+
+:Start loop through prepare phase metrics;
+
+repeat
+  :Get prepare segment;
+
+  if (Is LC start point outside target lanes range) then (yes)
+    if (Is found a valid path) then (yes)
+      #Orange:Return first valid path;
+      stop
+    else (no)
+      #LightPink:Return prev approved path;
+      stop
+    endif
+  else (no)
+  endif
+
+  :Calculate shift phase metrics;
+
+  :Start loop through shift phase metrics;
+  repeat
+    :Get candidate path;
+    note left: Details shown in the next chart
+    if (Is valid candidate path?) then (yes)
+      :Store candidate path;
+      if (Is candidate path safe?) then (yes)
+        #LightGreen:Return candidate path;
+        stop
+      else (no)
+      endif
+    else (no)
+    endif
+    repeat while (Finished looping shift phase metrics) is (FALSE)
+  repeat while (Is finished looping prepare phase metrics) is (FALSE)
+
+if (Is found a valid path) then (yes)
+  #Orange:Return first valid path;
+  stop
+else (no)
+endif
+
+#LightPink:Return prev approved path;
+stop
+
+@enduml
+```
+
+While the following chart demonstrates the process of generating a valid candidate path.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+start
+
+:Calculate resample interval;
+
+:Get reference path from target lanes;
+
+if (Is reference path empty?) then (yes)
+  #LightPink:Return;
+  stop
+else (no)
+endif
+
+:Get LC shift line;
+
+:Set lane change Info;
+note left: set information from sampled prepare phase and shift phase metrics\n<color:red>(duration, length, velocity, and acceleration)
+
+:Construct candidate path;
+
+if (Candidate path has enough length?) then (yes)
+  #LightGreen:Return valid candidate path;
+  stop
+else (no)
+  #LightPink:Return;
+  stop
+endif
+
+@enduml
+```
 
 ### Preparation phase
 
@@ -91,7 +195,7 @@ if (max_lane_change_length >  ego's distance to the end of the current lanes.) t
   stop
 endif
 
-if (isVehicleStuck(current_lanes)) then (yes)
+if (ego is stuck in the current lanes) then (yes)
   :Return **sampled acceleration values**;
   stop
 else (no)
@@ -182,11 +286,9 @@ A candidate path is considered valid if it meets the following criteria:
 1. The distance from the ego vehicle's current position to the end of the current lanes is sufficient to perform a single lane change.
 2. The distance from the ego vehicle's current position to the goal along the current lanes is adequate to complete multiple lane changes.
 3. The distance from the ego vehicle's current position to the end of the target lanes is adequate for completing multiple lane changes.
-4. Intersection requirements are met (conditions are parameterized).
-5. Crosswalk requirements are satisfied (conditions are parameterized).
-6. Traffic light regulations are adhered to (conditions are parameterized).
-7. The lane change can be completed after passing a parked vehicle.
-8. The lane change is deemed safe to execute.
+4. The distance from the ego vehicle's current position to the next regulatory element is adequate to perform a single lane change.
+5. The lane change can be completed after passing a parked vehicle.
+6. The lane change is deemed safe to execute.
 
 The following flow chart illustrates the validity check.
 
@@ -229,43 +331,6 @@ group check for distance #LightYellow
       stop
     else (no)
     endif
-end group
-
-
-
-group evaluate on Crosswalk #LightCyan
-if (regulate_on_crosswalk and not enough length to crosswalk) then (yes)
-  if (stop time < stop time threshold\n(Related to stuck detection)) then (yes)
-    #LightPink:Reject path;
-    stop
-  else (no)
-    :Allow lane change in crosswalk;
-  endif
-else (no)
-endif
-end group
-
-group evaluate on Intersection #LightGreen
-if (regulate_on_intersection and not enough length to intersection) then (yes)
-  if (stop time < stop time threshold\n(Related to stuck detection)) then (yes)
-    #LightPink:Reject path;
-    stop
-  else (no)
-    :Allow lane change in intersection;
-  endif
-else (no)
-endif
-end group
-
-group evaluate on Traffic Light #Lavender
-if (regulate_on_traffic_light and not enough length to complete lane change before stop line) then (yes)
-  #LightPink:Reject path;
-  stop
-elseif (stopped at red traffic light within distance) then (yes)
-  #LightPink:Reject path;
-  stop
-else (no)
-endif
 end group
 
 if (ego is not stuck but parked vehicle exists in target lane) then (yes)
@@ -475,14 +540,65 @@ The following figure illustrates when the lane is blocked in multiple lane chang
 
 ![multiple-lane-changes](./images/lane_change-when_cannot_change_lanes.png)
 
-#### Stopping position when an object exists ahead
+### Stopping behavior
 
-When an obstacle is in front of the ego vehicle, stop with keeping a distance for lane change.
-The position to be stopped depends on the situation, such as when the lane change is blocked by the target lane obstacle, or when the lane change is not needed immediately.The following shows the division in that case.
+The stopping behavior of the ego vehicle is determined based on various factors, such as the number of lane changes required, the presence of obstacles, and the position of blocking objects in relation to the lane change plan. The objective is to choose a suitable stopping point that allows for a safe and effective lane change while adapting to different traffic scenarios.
 
-##### When the ego vehicle is near the end of the lane change
+The following flowchart and subsections explain the conditions for deciding where to insert a stop point when an obstacle is ahead.
 
-Regardless of the presence or absence of objects in the lane change target lane, stop by keeping the distance necessary for lane change to the object ahead.
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+title Inserting Stop Point
+
+start
+if (number of lane changes is zero?) then (<color:green><b>YES</b></color>)
+stop
+else (<color:red><b>NO</b></color>)
+endif
+
+if (do we want to insert stop point in current lanes?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop point at next lane change terminal start.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Is there leading object in the current lanes that blocks ego's path?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop point at terminal stop.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Blocking object's position is after target lane's start position?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop at the target lane's start position.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Blocking object's position is before terminal stop position?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop at the terminal stop position;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Are there target lane objects between the ego and the blocking object?) then (<color:red><b>NO</b></color>)
+#LightGreen:Insert stop behind the blocking object;
+stop
+else (<color:green><b>YES</b></color>)
+#LightPink:Insert stop at terminal stop;
+stop
+@enduml
+```
+
+#### Ego vehicle's stopping position when an object exists ahead
+
+When the ego vehicle encounters an obstacle ahead, it stops while maintaining a safe distance to prepare for a possible lane change. The exact stopping position depends on factors like whether the target lane is clear or if the lane change needs to be delayed. The following explains how different stopping scenarios are handled:
+
+##### When the near the end of the lane change
+
+Whether the target lane has obstacles or is clear, the ego vehicle stops while keeping a safe distance from the obstacle ahead, ensuring there is enough room for the lane change.
 
 ![stop_at_terminal_no_block](./images/lane_change-stop_at_terminal_no_block.drawio.svg)
 
@@ -490,19 +606,39 @@ Regardless of the presence or absence of objects in the lane change target lane,
 
 ##### When the ego vehicle is not near the end of the lane change
 
-If there are NO objects in the lane change section of the target lane, stop by keeping the distance necessary for lane change to the object ahead.
+The ego vehicle stops while maintaining a safe distance from the obstacle ahead, ensuring there is enough space for a lane change.
 
 ![stop_not_at_terminal_no_blocking_object](./images/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
 
-If there are objects in the lane change section of the target lane, stop WITHOUT keeping the distance necessary for lane change to the object ahead.
+#### Ego vehicle's stopping position when an object exists in the lane changing section
+
+If there are objects within the lane change section of the target lane, the ego vehicle stops closer to the obstacle ahead, without maintaining the usual distance for a lane change.
+
+##### When near the end of the lane change
+
+Regardless of whether there are obstacles in the target lane, the ego vehicle stops while keeping a safe distance from the obstacle ahead, allowing for the lane change.
+
+![stop_at_terminal_no_block](./images/lane_change-stop_at_terminal_no_block.drawio.svg)
+
+![stop_at_terminal](./images/lane_change-stop_at_terminal.drawio.svg)
+
+##### When not near the end of the lane change
+
+If there are no obstacles in the lane change section of the target lane, the ego vehicle stops while keeping a safe distance from the obstacle ahead to accommodate the lane change.
+
+![stop_not_at_terminal_no_blocking_object](./images/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
+
+If there are obstacles within the lane change section of the target lane, the ego vehicle stops closer to the obstacle ahead, without keeping the usual distance needed for a lane change.
 
 ![stop_not_at_terminal](./images/lane_change-stop_not_at_terminal.drawio.svg)
 
-##### When the target lane is far away
+#### When the target lane is far away
 
-When the target lane for lane change is far away and not next to the current lane, do not keep the distance necessary for lane change to the object ahead.
+If the target lane for the lane change is far away and not next to the current lane, the ego vehicle stops closer to the obstacle ahead, as maintaining the usual distance for a lane change is not necessary.
 
 ![stop_far_from_target_lane](./images/lane_change-stop_far_from_target_lane.drawio.svg)
+
+![stop_not_at_terminal](./images/lane_change-stop_not_at_terminal.drawio.svg)
 
 ### Lane Change When Stuck
 
@@ -517,8 +653,8 @@ The function to stop by keeping a margin against forward obstacle in the previou
 
 ### Lane change regulations
 
-If you want to regulate lane change on crosswalks or intersections, the lane change module finds a lane change path excluding it includes crosswalks or intersections.
-To regulate lane change on crosswalks or intersections, change `regulation.crosswalk` or `regulation.intersection` to `true`.
+If you want to regulate lane change on crosswalks, intersections, or traffic lights, the lane change module is disabled near any of them.
+To regulate lane change on crosswalks, intersections, or traffic lights, set `regulation.crosswalk`, `regulation.intersection` or `regulation.traffic_light` to `true`.
 If the ego vehicle gets stuck, to avoid stuck, it enables lane change in crosswalk/intersection.
 If the ego vehicle stops more than `stuck_detection.stop_time` seconds, it is regarded as a stuck.
 If the ego vehicle velocity is smaller than `stuck_detection.velocity`, it is regarded as stopping.

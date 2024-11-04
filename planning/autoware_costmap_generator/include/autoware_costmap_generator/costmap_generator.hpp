@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2020-2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,7 +47,11 @@
 
 #include "autoware_costmap_generator/objects_to_costmap.hpp"
 #include "autoware_costmap_generator/points_to_costmap.hpp"
+#include "costmap_generator_node_parameters.hpp"
 
+#include <autoware/universe_utils/ros/processing_time_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
@@ -55,21 +59,17 @@
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 
 #include <grid_map_msgs/msg/grid_map.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace autoware::costmap_generator
@@ -80,40 +80,20 @@ public:
   explicit CostmapGenerator(const rclcpp::NodeOptions & node_options);
 
 private:
-  bool use_objects_;
-  bool use_points_;
-  bool use_wayarea_;
-  bool use_parkinglot_;
+  std::shared_ptr<::costmap_generator_node::ParamListener> param_listener_;
+  std::shared_ptr<::costmap_generator_node::Params> param_;
 
   lanelet::LaneletMapPtr lanelet_map_;
   autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_;
   sensor_msgs::msg::PointCloud2::ConstSharedPtr points_;
 
-  std::string costmap_frame_;
-  std::string vehicle_frame_;
-  std::string map_frame_;
-
-  double update_rate_;
-  bool activate_by_scenario_;
-
-  double grid_min_value_;
-  double grid_max_value_;
-  double grid_resolution_;
-  double grid_length_x_;
-  double grid_length_y_;
-  double grid_position_x_;
-  double grid_position_y_;
-
-  double maximum_lidar_height_thres_;
-  double minimum_lidar_height_thres_;
-
-  double expand_polygon_size_;
-  int size_of_expansion_kernel_;
-
   grid_map::GridMap costmap_;
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
 
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr pub_costmap_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_occupancy_grid_;
+  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_ms_;
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_points_;
   rclcpp::Subscription<autoware_perception_msgs::msg::PredictedObjects>::SharedPtr sub_objects_;
@@ -125,9 +105,9 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  std::vector<std::vector<geometry_msgs::msg::Point>> primitives_points_;
+  std::vector<geometry_msgs::msg::Polygon> primitives_polygons_;
 
-  PointsToCostmap points2costmap_;
+  PointsToCostmap points2costmap_{};
   ObjectsToCostmap objects2costmap_;
 
   tier4_planning_msgs::msg::Scenario::ConstSharedPtr scenario_;
@@ -169,19 +149,19 @@ private:
   /// \param[in] gridmap with calculated cost
   void publishCostmap(const grid_map::GridMap & costmap);
 
-  /// \brief set area_points from lanelet polygons
-  /// \param [in] input lanelet_map
-  /// \param [out] calculated area_points of lanelet polygons
-  void loadRoadAreasFromLaneletMap(
+  /// \brief fill a vector with road area polygons
+  /// \param [in] lanelet_map input lanelet map
+  /// \param [out] area_polygons polygon vector to fill
+  static void loadRoadAreasFromLaneletMap(
     const lanelet::LaneletMapPtr lanelet_map,
-    std::vector<std::vector<geometry_msgs::msg::Point>> * area_points);
+    std::vector<geometry_msgs::msg::Polygon> & area_polygons);
 
-  /// \brief set area_points from parking-area polygons
-  /// \param [in] input lanelet_map
-  /// \param [out] calculated area_points of lanelet polygons
-  void loadParkingAreasFromLaneletMap(
+  /// \brief fill a vector with parking-area polygons
+  /// \param [in] lanelet_map input lanelet map
+  /// \param [out] area_polygons polygon vector to fill
+  static void loadParkingAreasFromLaneletMap(
     const lanelet::LaneletMapPtr lanelet_map,
-    std::vector<std::vector<geometry_msgs::msg::Point>> * area_points);
+    std::vector<geometry_msgs::msg::Polygon> & area_polygons);
 
   /// \brief calculate cost from pointcloud data
   /// \param[in] in_points: subscribed pointcloud data
@@ -198,6 +178,9 @@ private:
 
   /// \brief calculate cost for final output
   grid_map::Matrix generateCombinedCostmap();
+
+  /// \brief measure processing time
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 };
 }  // namespace autoware::costmap_generator
 

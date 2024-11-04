@@ -81,6 +81,7 @@ PlaneBasis getPlaneBasis(const Eigen::Vector3d & plane_normal)
 }
 
 using autoware::pointcloud_preprocessor::get_param;
+using autoware::universe_utils::ScopedTimeTrack;
 
 RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptions & options)
 : Filter("RANSACGroundFilter", options)
@@ -116,7 +117,17 @@ RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptio
 
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
-  static_tf_buffer_ = std::make_unique<autoware::universe_utils::StaticTransformBuffer>();
+  managed_tf_buffer_ =
+    std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(this, has_static_tf_only_);
+
+  bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
+  if (use_time_keeper) {
+    detailed_processing_time_publisher_ =
+      this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+        "~/debug/processing_time_detail_ms", 1);
+    auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
+    time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
+  }
 }
 
 void RANSACGroundFilterComponent::setDebugPublisher()
@@ -163,8 +174,7 @@ bool RANSACGroundFilterComponent::transformPointCloud(
     return true;
   }
 
-  return static_tf_buffer_->transformPointcloud(
-    this, in_target_frame, *in_cloud_ptr, *out_cloud_ptr);
+  return managed_tf_buffer_->transformPointcloud(in_target_frame, *in_cloud_ptr, *out_cloud_ptr);
 }
 
 void RANSACGroundFilterComponent::extractPointsIndices(
@@ -204,6 +214,9 @@ void RANSACGroundFilterComponent::applyRANSAC(
   const pcl::PointCloud<PointType>::Ptr & input, pcl::PointIndices::Ptr & output_inliers,
   pcl::ModelCoefficients::Ptr & output_coefficients)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   pcl::SACSegmentation<PointType> seg;
   seg.setOptimizeCoefficients(true);
   seg.setRadiusLimits(0.3, std::numeric_limits<double>::max());
@@ -219,6 +232,9 @@ void RANSACGroundFilterComponent::filter(
   const PointCloud2::ConstSharedPtr & input, [[maybe_unused]] const IndicesPtr & indices,
   PointCloud2 & output)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   std::scoped_lock lock(mutex_);
   sensor_msgs::msg::PointCloud2::SharedPtr input_transformed_ptr(new sensor_msgs::msg::PointCloud2);
   if (!transformPointCloud(base_frame_, input, input_transformed_ptr)) {

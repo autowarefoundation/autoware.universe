@@ -18,7 +18,7 @@
 #include "autoware/lidar_transfusion/transfusion_config.hpp"
 #include "autoware/lidar_transfusion/utils.hpp"
 
-#include <tensorrt_common/tensorrt_common.hpp>
+#include <autoware/tensorrt_common/tensorrt_common.hpp>
 
 #include <NvInfer.h>
 
@@ -57,13 +57,13 @@ public:
     const std::string & onnx_path, const std::string & engine_path, const std::string & precision);
   const char * getTensorName(NetworkIO name);
 
-  tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine> engine{nullptr};
-  tensorrt_common::TrtUniquePtr<nvinfer1::IExecutionContext> context{nullptr};
+  autoware::tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine> engine{nullptr};
+  autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IExecutionContext> context{nullptr};
 
 private:
   bool parseONNX(
     const std::string & onnx_path, const std::string & engine_path, const std::string & precision,
-    size_t workspace_size = (1ULL << 30));
+    std::size_t workspace_size = (1ULL << 30));
   bool saveEngine(const std::string & engine_path);
   bool loadEngine(const std::string & engine_path);
   bool createContext();
@@ -73,9 +73,9 @@ private:
   bool validateNetworkIO();
   nvinfer1::Dims validateTensorShape(NetworkIO name, const std::vector<int> shape);
 
-  tensorrt_common::TrtUniquePtr<nvinfer1::IRuntime> runtime_{nullptr};
-  tensorrt_common::TrtUniquePtr<nvinfer1::IHostMemory> plan_{nullptr};
-  tensorrt_common::Logger logger_;
+  autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IRuntime> runtime_{nullptr};
+  autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IHostMemory> plan_{nullptr};
+  autoware::tensorrt_common::Logger logger_;
   TransfusionConfig config_;
   std::vector<const char *> tensors_names_;
 

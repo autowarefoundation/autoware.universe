@@ -5,7 +5,7 @@
   <arg name="object_recognition_detection_object_merger_distance_threshold_list_path" default="$(find-pkg-share autoware_object_merger)/config/overlapped_judge.param.yaml"/>
 
   <!-- Pipeline junctions -->
-  <arg name="lidar_detection_model"/>
+  <arg name="lidar_detection_model_type"/>
   <arg name="use_detection_by_tracker"/>
 
   <arg name="use_validator" description="use obstacle_pointcloud based validator"/>
@@ -19,7 +19,7 @@
   <!-- external interfaces -->
   <arg name="input/pointcloud_map/pointcloud"/>
   <arg name="input/obstacle_segmentation/pointcloud"/>
-  <arg name="input/lidar_ml/objects" default="$(var lidar_detection_model)/objects"/>
+  <arg name="input/lidar_ml/objects" default="$(var lidar_detection_model_type)/objects"/>
   <arg name="input/lidar_rule/objects" default="clustering/objects"/>
   <arg name="input/detection_by_tracker/objects" default="detection_by_tracker/objects"/>
   <arg name="output/objects"/>
@@ -28,7 +28,7 @@
   <let name="validator/input/objects" value="$(var input/lidar_ml/objects)"/>
   <let name="validator/input/obstacle_pointcloud" value="$(var input/pointcloud_map/pointcloud)" if="$(var use_pointcloud_map)"/>
   <let name="validator/input/obstacle_pointcloud" value="$(var input/obstacle_segmentation/pointcloud)" unless="$(var use_pointcloud_map)"/>
-  <let name="validator/output/objects" value="$(var lidar_detection_model)/validation/objects"/>
+  <let name="validator/output/objects" value="$(var lidar_detection_model_type)/validation/objects"/>
 
   <let name="merger1/input/objects0" value="$(var validator/output/objects)" if="$(var use_validator)"/>
   <let name="merger1/input/objects0" value="$(var input/lidar_ml/objects)" unless="$(var use_validator)"/>

@@ -89,7 +89,7 @@ private:
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         uuid_map_.at("left"), isExecutionReady(), State::WAITING_FOR_EXECUTION,
         candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
-        clock_->now());
+        clock_->now(), avoid_data_.request_operator);
       candidate_uuid_ = uuid_map_.at("left");
       return;
     }
@@ -97,7 +97,7 @@ private:
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         uuid_map_.at("right"), isExecutionReady(), State::WAITING_FOR_EXECUTION,
         candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
-        clock_->now());
+        clock_->now(), avoid_data_.request_operator);
       candidate_uuid_ = uuid_map_.at("right");
       return;
     }
@@ -162,16 +162,26 @@ private:
    */
   void removeCandidateRTCStatus()
   {
+    bool candidate_registered = false;
+
     if (rtc_interface_ptr_map_.at("left")->isRegistered(candidate_uuid_)) {
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         candidate_uuid_, true, State::FAILED, std::numeric_limits<double>::lowest(),
         std::numeric_limits<double>::lowest(), clock_->now());
+      candidate_registered = true;
     }
 
     if (rtc_interface_ptr_map_.at("right")->isRegistered(candidate_uuid_)) {
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         candidate_uuid_, true, State::FAILED, std::numeric_limits<double>::lowest(),
         std::numeric_limits<double>::lowest(), clock_->now());
+      candidate_registered = true;
+    }
+
+    if (candidate_registered) {
+      uuid_map_.at("left") = generateUUID();
+      uuid_map_.at("right") = generateUUID();
+      candidate_uuid_ = generateUUID();
     }
   }
 
@@ -346,7 +356,8 @@ private:
    * @brief fill debug markers.
    */
   void updateDebugMarker(
-    const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug) const;
+    const BehaviorModuleOutput & output, const AvoidancePlanningData & data,
+    const PathShifter & shifter, const DebugData & debug) const;
 
   /**
    * @brief fill information markers that are shown in Rviz by default.
@@ -367,6 +378,9 @@ private:
    * @return result.
    */
   bool isSafePath(ShiftedPath & shifted_path, DebugData & debug) const;
+
+  auto getTurnSignal(const ShiftedPath & spline_shift_path, const ShiftedPath & linear_shift_path)
+    -> TurnSignalInfo;
 
   // post process
 

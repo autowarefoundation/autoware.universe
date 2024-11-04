@@ -15,9 +15,12 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <depend>autoware_grid_map_utils</depend>
   <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_map_msgs</depend>
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_universe_utils</depend>
+  <depend>generate_parameter_library</depend>
   <depend>grid_map_ros</depend>
   <depend>libpcl-all-dev</depend>
   <depend>pcl_conversions</depend>

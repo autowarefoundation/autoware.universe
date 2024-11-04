@@ -100,7 +100,7 @@ private:
   void onMessage(const ObjectsList & objects_list);
 
   // publish processes
-  void runProcess(const DetectedObjects & input_objects_msg, const uint & channel_index);
+  void runProcess(const DetectedObjects & input_objects, const uint & channel_index);
   void checkAndPublish(const rclcpp::Time & time);
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;

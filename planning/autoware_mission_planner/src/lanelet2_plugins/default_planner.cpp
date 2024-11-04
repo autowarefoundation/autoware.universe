@@ -28,6 +28,7 @@
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
+#include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/difference.hpp>
 #include <boost/geometry/algorithms/is_empty.hpp>
 
@@ -39,96 +40,6 @@
 
 #include <limits>
 #include <vector>
-
-namespace
-{
-using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
-
-bool is_in_lane(const lanelet::ConstLanelet & lanelet, const lanelet::ConstPoint3d & point)
-{
-  // check if goal is on a lane at appropriate angle
-  const auto distance = boost::geometry::distance(
-    lanelet.polygon2d().basicPolygon(), lanelet::utils::to2D(point).basicPoint());
-  constexpr double th_distance = std::numeric_limits<double>::epsilon();
-  return distance < th_distance;
-}
-
-bool is_in_parking_space(
-  const lanelet::ConstLineStrings3d & parking_spaces, const lanelet::ConstPoint3d & point)
-{
-  for (const auto & parking_space : parking_spaces) {
-    lanelet::ConstPolygon3d parking_space_polygon;
-    if (!lanelet::utils::lineStringWithWidthToPolygon(parking_space, &parking_space_polygon)) {
-      continue;
-    }
-
-    const double distance = boost::geometry::distance(
-      lanelet::utils::to2D(parking_space_polygon).basicPolygon(),
-      lanelet::utils::to2D(point).basicPoint());
-    constexpr double th_distance = std::numeric_limits<double>::epsilon();
-    if (distance < th_distance) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool is_in_parking_lot(
-  const lanelet::ConstPolygons3d & parking_lots, const lanelet::ConstPoint3d & point)
-{
-  for (const auto & parking_lot : parking_lots) {
-    const double distance = boost::geometry::distance(
-      lanelet::utils::to2D(parking_lot).basicPolygon(), lanelet::utils::to2D(point).basicPoint());
-    constexpr double th_distance = std::numeric_limits<double>::epsilon();
-    if (distance < th_distance) {
-      return true;
-    }
-  }
-  return false;
-}
-
-double project_goal_to_map(
-  const lanelet::ConstLanelet & lanelet_component, const lanelet::ConstPoint3d & goal_point)
-{
-  const lanelet::ConstLineString3d center_line =
-    lanelet::utils::generateFineCenterline(lanelet_component);
-  lanelet::BasicPoint3d project = lanelet::geometry::project(center_line, goal_point.basicPoint());
-  return project.z();
-}
-
-geometry_msgs::msg::Pose get_closest_centerline_pose(
-  const lanelet::ConstLanelets & road_lanelets, const geometry_msgs::msg::Pose & point,
-  autoware::vehicle_info_utils::VehicleInfo vehicle_info)
-{
-  lanelet::Lanelet closest_lanelet;
-  if (!lanelet::utils::query::getClosestLaneletWithConstrains(
-        road_lanelets, point, &closest_lanelet, 0.0)) {
-    // point is not on any lanelet.
-    return point;
-  }
-
-  const auto refined_center_line = lanelet::utils::generateFineCenterline(closest_lanelet, 1.0);
-  closest_lanelet.setCenterline(refined_center_line);
-
-  const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, point.position);
-
-  const auto nearest_idx = autoware::motion_utils::findNearestIndex(
-    convertCenterlineToPoints(closest_lanelet), point.position);
-  const auto nearest_point = closest_lanelet.centerline()[nearest_idx];
-
-  // shift nearest point on its local y axis so that vehicle's right and left edges
-  // would have approx the same clearance from road border
-  const auto shift_length = (vehicle_info.right_overhang_m - vehicle_info.left_overhang_m) / 2.0;
-  const auto delta_x = -shift_length * std::sin(lane_yaw);
-  const auto delta_y = shift_length * std::cos(lane_yaw);
-
-  lanelet::BasicPoint3d refined_point(
-    nearest_point.x() + delta_x, nearest_point.y() + delta_y, nearest_point.z());
-
-  return convertBasicPoint3dToPose(refined_point, lane_yaw);
-}
-
-}  // anonymous namespace
 
 namespace autoware::mission_planner::lanelet2
 {
@@ -266,7 +177,8 @@ lanelet::ConstLanelets next_lanelets_up_to(
 }
 
 bool DefaultPlanner::check_goal_footprint_inside_lanes(
-  const lanelet::ConstLanelet & current_lanelet, const lanelet::ConstLanelets & path_lanelets,
+  const lanelet::ConstLanelet & closest_lanelet_to_goal,
+  const lanelet::ConstLanelets & path_lanelets,
   const universe_utils::Polygon2d & goal_footprint) const
 {
   universe_utils::MultiPolygon2d ego_lanes;
@@ -275,20 +187,24 @@ bool DefaultPlanner::check_goal_footprint_inside_lanes(
     const auto left_shoulder = route_handler_.getLeftShoulderLanelet(ll);
     if (left_shoulder) {
       boost::geometry::convert(left_shoulder->polygon2d().basicPolygon(), poly);
+      boost::geometry::correct(poly);
       ego_lanes.push_back(poly);
     }
     const auto right_shoulder = route_handler_.getRightShoulderLanelet(ll);
     if (right_shoulder) {
       boost::geometry::convert(right_shoulder->polygon2d().basicPolygon(), poly);
+      boost::geometry::correct(poly);
       ego_lanes.push_back(poly);
     }
     boost::geometry::convert(ll.polygon2d().basicPolygon(), poly);
+    boost::geometry::correct(poly);
     ego_lanes.push_back(poly);
   }
-  const auto next_lanelets =
-    next_lanelets_up_to(current_lanelet, vehicle_info_.max_longitudinal_offset_m, route_handler_);
+  const auto next_lanelets = next_lanelets_up_to(
+    closest_lanelet_to_goal, vehicle_info_.max_longitudinal_offset_m, route_handler_);
   for (const auto & ll : next_lanelets) {
     boost::geometry::convert(ll.polygon2d().basicPolygon(), poly);
+    boost::geometry::correct(poly);
     ego_lanes.push_back(poly);
   }
 
@@ -318,9 +234,10 @@ bool DefaultPlanner::is_goal_valid(
       return true;
     }
   }
-  lanelet::ConstLanelet closest_lanelet;
+  lanelet::ConstLanelet closest_lanelet_to_goal;
   const auto road_lanelets_at_goal = route_handler_.getRoadLaneletsAtPose(goal);
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_at_goal, goal, &closest_lanelet)) {
+  if (!lanelet::utils::query::getClosestLanelet(
+        road_lanelets_at_goal, goal, &closest_lanelet_to_goal)) {
     // if no road lanelets directly at the goal, find the closest one
     const lanelet::BasicPoint2d goal_point{goal.position.x, goal.position.y};
     auto closest_dist = std::numeric_limits<double>::max();
@@ -334,7 +251,7 @@ bool DefaultPlanner::is_goal_valid(
           const auto dist = lanelet::geometry::distance2d(goal_point, ll.polygon2d());
           if (route_handler_.isRoadLanelet(ll) && dist < closest_dist) {
             closest_dist = dist;
-            closest_lanelet = ll;
+            closest_lanelet_to_goal = ll;
           }
           return false;  // continue the search
         });
@@ -350,7 +267,7 @@ bool DefaultPlanner::is_goal_valid(
   // check if goal footprint exceeds lane when the goal isn't in parking_lot
   if (
     param_.check_footprint_inside_lanes &&
-    !check_goal_footprint_inside_lanes(closest_lanelet, path_lanelets, polygon_footprint) &&
+    !check_goal_footprint_inside_lanes(closest_lanelet_to_goal, path_lanelets, polygon_footprint) &&
     !is_in_parking_lot(
       lanelet::utils::query::getAllParkingLots(route_handler_.getLaneletMapPtr()),
       lanelet::utils::conversion::toLaneletPoint(goal.position))) {
@@ -358,8 +275,8 @@ bool DefaultPlanner::is_goal_valid(
     return false;
   }
 
-  if (is_in_lane(closest_lanelet, goal_lanelet_pt)) {
-    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, goal.position);
+  if (is_in_lane(closest_lanelet_to_goal, goal_lanelet_pt)) {
+    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet_to_goal, goal.position);
     const auto goal_yaw = tf2::getYaw(goal.orientation);
     const auto angle_diff = autoware::universe_utils::normalizeRadian(lane_yaw - goal_yaw);
 
@@ -388,8 +305,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
 
   std::stringstream log_ss;
   for (const auto & point : points) {
-    log_ss << "x: " << point.position.x << " "
-           << "y: " << point.position.y << std::endl;
+    log_ss << "x: " << point.position.x << " " << "y: " << point.position.y << std::endl;
   }
   RCLCPP_DEBUG_STREAM(
     logger, "start planning route with check points: " << std::endl
