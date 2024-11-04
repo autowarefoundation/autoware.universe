@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__EXCEPTIONS_HPP_
-#define COMPONENT_INTERFACE_UTILS__RCLCPP__EXCEPTIONS_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__EXCEPTIONS_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__EXCEPTIONS_HPP_
 
 #include <autoware_adapi_v1_msgs/msg/response_status.hpp>
 
 #include <exception>
 #include <string>
 
-namespace component_interface_utils
+namespace autoware::component_interface_utils
 {
 
 class ServiceException : public std::exception
@@ -104,6 +104,6 @@ public:
   }
 };
 
-}  // namespace component_interface_utils
+}  // namespace autoware::component_interface_utils
 
-#endif  // COMPONENT_INTERFACE_UTILS__RCLCPP__EXCEPTIONS_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__EXCEPTIONS_HPP_

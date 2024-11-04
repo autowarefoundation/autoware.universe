@@ -62,7 +62,7 @@ std::unordered_map<uint8_t, uint8_t> hazard_light_type_ = {
 
 VehicleNode::VehicleNode(const rclcpp::NodeOptions & options) : Node("vehicle", options)
 {
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   adaptor.init_pub(pub_kinematics_);
   adaptor.init_pub(pub_status_);

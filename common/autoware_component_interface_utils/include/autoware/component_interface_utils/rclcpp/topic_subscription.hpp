@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_SUBSCRIPTION_HPP_
-#define COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_SUBSCRIPTION_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_SUBSCRIPTION_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_SUBSCRIPTION_HPP_
 
 #include <rclcpp/subscription.hpp>
 
-namespace component_interface_utils
+namespace autoware::component_interface_utils
 {
 
 /// The wrapper class of rclcpp::Subscription. This is for future use and no functionality now.
@@ -40,6 +40,6 @@ private:
   typename WrapType::SharedPtr subscription_;
 };
 
-}  // namespace component_interface_utils
+}  // namespace autoware::component_interface_utils
 
-#endif  // COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_SUBSCRIPTION_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_SUBSCRIPTION_HPP_

@@ -27,7 +27,7 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
   require_accept_start_ = declare_parameter<bool>("require_accept_start");
   is_calling_set_pause_ = false;
 
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   adaptor.init_srv(srv_accept_, this, &MotionNode::on_accept);
   adaptor.init_pub(pub_state_);
@@ -154,7 +154,7 @@ void MotionNode::on_accept(
 {
   if (state_ != State::Starting) {
     using AcceptStartResponse = autoware_ad_api::motion::AcceptStart::Service::Response;
-    throw component_interface_utils::ServiceException(
+    throw autoware::component_interface_utils::ServiceException(
       AcceptStartResponse::ERROR_NOT_STARTING, "The motion state is not starting");
   }
   change_state(State::Resuming);
