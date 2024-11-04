@@ -6,6 +6,7 @@
   <arg name="enable_autonomous_emergency_braking"/>
   <arg name="check_external_emergency_heartbeat"/>
   <arg name="trajectory_follower_mode" default="trajectory_follower_node"/>
+  <arg name="enable_collision_detector"/>
 
   <!-- common param path -->
   <arg name="vehicle_param_file"/>
@@ -24,6 +25,7 @@
   <arg name="external_cmd_selector_param_path"/>
   <arg name="aeb_param_path"/>
   <arg name="predicted_path_checker_param_path"/>
+  <arg name="collision_detector_param_path"/>
 
   <!-- component -->
   <arg name="use_intra_process" default="false" description="use ROS 2 component container communication"/>
@@ -223,6 +225,15 @@
         <remap from="~/metrics" to="/control/control_evaluator/metrics"/>
         <remap from="~/input/vector_map" to="/map/vector_map"/>
         <remap from="~/input/route" to="/planning/mission_planning/route"/>
+      </composable_node>
+    </load_composable_node>
+
+    <!-- collision detector-->
+    <load_composable_node target="/control/control_container" if="$(var enable_collision_detector)">
+      <composable_node pkg="autoware_collision_detector" plugin="autoware::collision_detector::CollisionDetectorNode" name="collision_detector">
+        <remap from="~/input/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
+        <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
+        <param from="$(var collision_detector_param_path)"/>
       </composable_node>
     </load_composable_node>
   </group>

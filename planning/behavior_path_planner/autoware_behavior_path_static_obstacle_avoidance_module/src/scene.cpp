@@ -531,8 +531,10 @@ void StaticObstacleAvoidanceModule::fillShiftLine(
    */
   data.comfortable = helper_->isComfortable(data.new_shift_line);
   data.safe = isSafePath(data.candidate_path, debug);
+  const auto avoidance_ready = helper_->isReady(data.target_objects);
   data.ready = helper_->isReady(data.new_shift_line, path_shifter_.getLastShiftLength()) &&
-               helper_->isReady(data.target_objects);
+               avoidance_ready.first;
+  data.request_operator = avoidance_ready.second;
 }
 
 void StaticObstacleAvoidanceModule::fillEgoStatus(
@@ -840,8 +842,8 @@ bool StaticObstacleAvoidanceModule::isSafePath(
     const auto obj_polygon =
       autoware::universe_utils::toPolygon2d(object.initial_pose, object.shape);
 
-    const auto is_object_front =
-      utils::path_safety_checker::isTargetObjectFront(getEgoPose(), obj_polygon, p.vehicle_info);
+    const auto is_object_front = utils::path_safety_checker::isTargetObjectFront(
+      getEgoPose(), obj_polygon, p.vehicle_info.max_longitudinal_offset_m);
 
     const auto & object_twist = object.initial_twist;
     const auto v_norm = std::hypot(object_twist.linear.x, object_twist.linear.y);
