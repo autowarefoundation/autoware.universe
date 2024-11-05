@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tvm_utility/pipeline.hpp"
+#include "autoware/tvm_utility/pipeline.hpp"
 #include "yolo_v2_tiny/inference_engine_tvm_config.hpp"
 
 #include <opencv2/opencv.hpp>
@@ -27,7 +27,7 @@
 
 using model_zoo::perception::camera_obstacle_detection::yolo_v2_tiny::tensorflow_fp32_coco::config;
 
-namespace tvm_utility
+namespace autoware::tvm_utility
 {
 namespace yolo_v2_tiny
 {
@@ -233,7 +233,7 @@ private:
 };
 
 }  // namespace yolo_v2_tiny
-}  // namespace tvm_utility
+}  // namespace autoware::tvm_utility
 
 bool check_near(double expected, double actual, double tolerance)
 {

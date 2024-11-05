@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
-#include "tvm_utility/pipeline.hpp"
+#include "autoware/tvm_utility/pipeline.hpp"
 // file for current arch x86 or arm is chosen in cmake file
 #include <inference_engine_tvm_config.hpp>
 #include <opencv2/opencv.hpp>
@@ -26,7 +26,7 @@
 
 using model_zoo::inf_test::engine_load::abs_model::config;
 
-namespace tvm_utility
+namespace autoware::tvm_utility
 {
 namespace abs_model
 {
@@ -143,4 +143,4 @@ TEST(PipelineExamples, SimplePipeline)
 }
 
 }  // namespace abs_model
-}  // namespace tvm_utility
+}  // namespace autoware::tvm_utility

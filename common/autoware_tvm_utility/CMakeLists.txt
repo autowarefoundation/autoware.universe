@@ -13,7 +13,7 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.14)
-project(tvm_utility)
+project(autoware_tvm_utility)
 
 include("${PROJECT_NAME}-extras.cmake")
 
@@ -72,7 +72,7 @@ if(BUILD_TESTING)
 
       target_include_directories("${TEST_CASE_NAME}" SYSTEM PUBLIC
         "${OpenCV_INCLUDE_DIRS}"
-        "${tvm_utility_FOUND_INCLUDE_DIRS}"
+        "${autoware_tvm_utility_FOUND_INCLUDE_DIRS}"
         "data/models/${TEST_CASE_NAME}_${CMAKE_SYSTEM_PROCESSOR}"
         "include"
       )
@@ -130,7 +130,7 @@ if(BUILD_EXAMPLE)
 
       target_include_directories("${EXAMPLE_NAME}" SYSTEM PUBLIC
         "${OpenCV_INCLUDE_DIRS}"
-        "${tvm_utility_FOUND_INCLUDE_DIRS}"
+        "${autoware_tvm_utility_FOUND_INCLUDE_DIRS}"
         "data/models"
         "include"
       )

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tvm_utility/pipeline.hpp"
+#include "autoware/tvm_utility/pipeline.hpp"
 
-#ifndef COMMON__TVM_UTILITY__DATA__MODELS__ABS_MODEL_AARCH64__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
-#define COMMON__TVM_UTILITY__DATA__MODELS__ABS_MODEL_AARCH64__INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#ifndef COMMON__TVM_UTILITY__DATA__MODELS__ABS_MODEL_X86_64__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#define COMMON__TVM_UTILITY__DATA__MODELS__ABS_MODEL_X86_64__INFERENCE_ENGINE_TVM_CONFIG_HPP_
 
 namespace model_zoo
 {
@@ -29,9 +29,8 @@ namespace abs_model
 static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
   {0, 0, 0},  // modelzoo_version
 
-  // cspell: ignore mtriple
-  "abs_model_aarch64",                // network_name
-  "llvm -mtriple=aarch64-linux-gnu",  // network_backend
+  "abs_model_x86_64",  // network_name
+  "llvm",              // network_backend
 
   "deploy_lib.so",        // network_module_path
   "deploy_graph.json",    // network_graph_path
@@ -50,5 +49,5 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
 }  // namespace engine_load
 }  // namespace inf_test
 }  // namespace model_zoo
-#endif  // COMMON__TVM_UTILITY__DATA__MODELS__ABS_MODEL_AARCH64__INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#endif  // COMMON__TVM_UTILITY__DATA__MODELS__ABS_MODEL_X86_64__INFERENCE_ENGINE_TVM_CONFIG_HPP_
         // NOLINT

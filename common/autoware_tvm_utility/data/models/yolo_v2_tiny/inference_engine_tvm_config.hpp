@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tvm_utility/pipeline.hpp"
+#include "autoware/tvm_utility/pipeline.hpp"
 
 #ifndef COMMON__TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
 #define COMMON__TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_

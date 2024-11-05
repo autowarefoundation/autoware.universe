@@ -30,7 +30,7 @@
 #include <utility>
 #include <vector>
 
-namespace tvm_utility
+namespace autoware::tvm_utility
 {
 
 /**
@@ -410,5 +410,5 @@ private:
 };
 
 }  // namespace pipeline
-}  // namespace tvm_utility
+}  // namespace autoware::tvm_utility
 #endif  // TVM_UTILITY__PIPELINE_HPP_
