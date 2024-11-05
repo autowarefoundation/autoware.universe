@@ -98,7 +98,7 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
   sub_steering_factors_ =
     init_factors<SteeringFactorArray>(this, steering_factors_, steering_factor_topics);
 
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(pub_velocity_factors_);
   adaptor.init_pub(pub_steering_factors_);
   adaptor.init_sub(sub_kinematic_state_, this, &PlanningNode::on_kinematic_state);

@@ -1,4 +1,4 @@
-# component_interface_utils
+# autoware_component_interface_utils
 
 ## Features
 
@@ -40,13 +40,13 @@ Create the wrapper using the above definition as follows.
 
 ```cpp
 // header file
-component_interface_utils::Service<SampleService>::SharedPtr srv_;
-component_interface_utils::Client<SampleService>::SharedPtr cli_;
-component_interface_utils::Publisher<SampleMessage>::SharedPtr pub_;
-component_interface_utils::Subscription<SampleMessage>::SharedPtr sub_;
+autoware::component_interface_utils::Service<SampleService>::SharedPtr srv_;
+autoware::component_interface_utils::Client<SampleService>::SharedPtr cli_;
+autoware::component_interface_utils::Publisher<SampleMessage>::SharedPtr pub_;
+autoware::component_interface_utils::Subscription<SampleMessage>::SharedPtr sub_;
 
 // source file
-const auto node = component_interface_utils::NodeAdaptor(this);
+const auto node = autoware::component_interface_utils::NodeAdaptor(this);
 node.init_srv(srv_, callback);
 node.init_cli(cli_);
 node.init_pub(pub_);
@@ -94,7 +94,7 @@ void service_callback(Request req, Response res)
 There are utilities for relaying services and messages of the same type.
 
 ```cpp
-const auto node = component_interface_utils::NodeAdaptor(this);
+const auto node = autoware::component_interface_utils::NodeAdaptor(this);
 service_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 node.relay_message(pub_, sub_);
 node.relay_service(cli_, srv_, service_callback_group_);  // group is for avoiding deadlocks

@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "component_interface_utils/rclcpp/exceptions.hpp"
-#include "component_interface_utils/specs.hpp"
-#include "component_interface_utils/status.hpp"
+#include "autoware/component_interface_utils/rclcpp/exceptions.hpp"
+#include "autoware/component_interface_utils/specs.hpp"
+#include "autoware/component_interface_utils/status.hpp"
 #include "gtest/gtest.h"
 
 TEST(interface, utils)
 {
   {
-    using component_interface_utils::ServiceException;
+    using autoware::component_interface_utils::ServiceException;
     using ResponseStatus = autoware_adapi_v1_msgs::msg::ResponseStatus;
     using ResponseStatusCode = ResponseStatus::_code_type;
 
@@ -34,7 +34,7 @@ TEST(interface, utils)
   }
 
   {
-    using component_interface_utils::ServiceException;
+    using autoware::component_interface_utils::ServiceException;
     using ResponseStatus = autoware_adapi_v1_msgs::msg::ResponseStatus;
     using ResponseStatusCode = ResponseStatus::_code_type;
 
@@ -48,10 +48,10 @@ TEST(interface, utils)
   }
 
   {
-    using component_interface_utils::ServiceException;
+    using autoware::component_interface_utils::ServiceException;
     using ResponseStatus = autoware_adapi_v1_msgs::msg::ResponseStatus;
     using ResponseStatusCode = ResponseStatus::_code_type;
-    using component_interface_utils::status::copy;
+    using autoware::component_interface_utils::status::copy;
 
     class status_test
     {

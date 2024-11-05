@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_PUBLISHER_HPP_
-#define COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_PUBLISHER_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_PUBLISHER_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_PUBLISHER_HPP_
 
 #include <rclcpp/publisher.hpp>
 
-namespace component_interface_utils
+namespace autoware::component_interface_utils
 {
 
 /// The wrapper class of rclcpp::Publisher. This is for future use and no functionality now.
@@ -43,6 +43,6 @@ private:
   typename WrapType::SharedPtr publisher_;
 };
 
-}  // namespace component_interface_utils
+}  // namespace autoware::component_interface_utils
 
-#endif  // COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_PUBLISHER_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_PUBLISHER_HPP_
