@@ -199,8 +199,6 @@ CrosswalkModule::CrosswalkModule(
 
   collision_info_pub_ =
     node.create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/collision_info", 1);
-
-  vehicle_stop_checker_ = std::make_unique<autoware::motion_utils::VehicleStopChecker>(&node);
 }
 
 bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -1389,8 +1387,7 @@ void CrosswalkModule::planStop(
 bool CrosswalkModule::checkRestartSuppression(
   const PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const
 {
-  const auto is_vehicle_stopped = vehicle_stop_checker_->isVehicleStopped();
-  if (!is_vehicle_stopped) {
+  if (!planner_data_->isVehicleStopped()) {
     return false;
   }
 
