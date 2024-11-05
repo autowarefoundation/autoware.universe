@@ -1286,7 +1286,7 @@ bool has_passed_intersection_turn_direction(const CommonDataPtr & common_data_pt
 
 std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & object)
 {
-  const auto transform = [](const auto & predicted_path) -> LineString2d {
+  const auto to_linestring_2d = [](const auto & predicted_path) -> LineString2d {
     LineString2d line_string;
     const auto & path = predicted_path.path;
     line_string.reserve(path.size());
@@ -1300,7 +1300,7 @@ std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & 
 
   const auto paths = object.predicted_paths;
   std::vector<LineString2d> line_strings;
-  std::transform(paths.begin(), paths.end(), std::back_inserter(line_strings), transform);
+  std::transform(paths.begin(), paths.end(), std::back_inserter(line_strings), to_linestring_2d);
 
   return line_strings;
 }
