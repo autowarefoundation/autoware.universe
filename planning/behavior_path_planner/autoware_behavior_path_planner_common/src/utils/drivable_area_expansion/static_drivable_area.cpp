@@ -626,8 +626,6 @@ std::vector<Point> updateBoundary(
 
 namespace autoware::behavior_path_planner::utils
 {
-using autoware::universe_utils::Point2d;
-
 std::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes)
 {
   auto overlaps = [](const DrivableLanes & lanes, const DrivableLanes & target_lanes) {

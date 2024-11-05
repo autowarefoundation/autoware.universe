@@ -25,6 +25,12 @@ namespace autoware::behavior_path_planner::utils
 {
 using autoware::behavior_path_planner::drivable_area_expansion::DrivableAreaExpansionParameters;
 
+/**
+ * @brief finds the index of the first lane in the provided vector that overlaps with a preceding
+ * lane (excluding the immediate predecessor in the vector)
+ * @param [ink] lanes vector of DrivableLanes
+ * @return the index of the first overlapping lane (if any)
+ */
 std::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes);
 
 std::vector<DrivableLanes> cutOverlappedLanes(
