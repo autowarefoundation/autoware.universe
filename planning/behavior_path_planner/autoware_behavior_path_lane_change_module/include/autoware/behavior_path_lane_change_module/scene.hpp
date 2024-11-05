@@ -211,6 +211,9 @@ protected:
     return common_data_ptr_->lanes_ptr->target;
   }
 
+  void update_dist_from_intersection();
+
+  std::vector<PathPointWithLaneId> path_after_intersection_;
   double stop_time_{0.0};
   static constexpr double floating_err_th{1e-3};
 };
