@@ -34,11 +34,13 @@ double getDistanceToNextTrafficLight(
     lanelet::utils::to2D(lanelet_point).basicPoint());
 
   for (const auto & element : current_lanelet.regulatoryElementsAs<lanelet::TrafficLight>()) {
-    lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().value();
+    const auto lanelet_stop_lines = element->stopLine();
+
+    if (!lanelet_stop_lines.has_value()) continue;
 
     const auto to_stop_line = lanelet::geometry::toArcCoordinates(
       lanelet::utils::to2D(current_lanelet.centerline()),
-      lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
+      lanelet::utils::to2D(lanelet_stop_lines.value()).front().basicPoint());
 
     const auto distance_object_to_stop_line = to_stop_line.length - to_object.length;
 
@@ -61,11 +63,13 @@ double getDistanceToNextTrafficLight(
     }
 
     for (const auto & element : llt.regulatoryElementsAs<lanelet::TrafficLight>()) {
-      lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().value();
+      const auto lanelet_stop_lines = element->stopLine();
+
+      if (!lanelet_stop_lines.has_value()) continue;
 
       const auto to_stop_line = lanelet::geometry::toArcCoordinates(
         lanelet::utils::to2D(llt.centerline()),
-        lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
+        lanelet::utils::to2D(lanelet_stop_lines.value()).front().basicPoint());
 
       return distance + to_stop_line.length - to_object.length;
     }
