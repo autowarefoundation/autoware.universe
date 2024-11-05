@@ -33,12 +33,12 @@ protected:
   void SetUp() override { path_shifter_.set_base_offset(0.01); }
 
   static ShiftedPath generate_shifted_path(
-    size_t num_points, double longitdunal_interval, double lateral_interval)
+    size_t num_points, double longitudinal_interval, double lateral_interval)
   {
     ShiftedPath path;
     auto trajectory =
       autoware::test_utils::generateTrajectory<autoware_planning_msgs::msg::Trajectory>(
-        num_points, longitdunal_interval);
+        num_points, longitudinal_interval);
 
     size_t i = 0;
     for (auto const & point : trajectory.points) {
