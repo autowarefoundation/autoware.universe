@@ -1309,8 +1309,8 @@ bool has_overtaking_turn_lane_object(
   const CommonDataPtr & common_data_ptr, const ExtendedPredictedObjects & trailing_objects)
 {
   // Note: This situation is only applicable if the ego is in a turn lane.
-  if (!has_passed_intersection_turn_direction(common_data_ptr)) {
-    return true;
+  if (has_passed_intersection_turn_direction(common_data_ptr)) {
+    return false;
   }
 
   const auto is_path_overlap_with_target = [&](const LineString2d & path) {
