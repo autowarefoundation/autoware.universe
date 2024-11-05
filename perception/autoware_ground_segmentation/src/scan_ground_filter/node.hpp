@@ -15,11 +15,12 @@
 #ifndef SCAN_GROUND_FILTER__NODE_HPP_
 #define SCAN_GROUND_FILTER__NODE_HPP_
 
-#include "autoware/pointcloud_preprocessor/filter.hpp"
-#include "autoware/pointcloud_preprocessor/transform_info.hpp"
-#include "autoware/universe_utils/system/time_keeper.hpp"
-#include "autoware_vehicle_info_utils/vehicle_info.hpp"
 #include "grid.hpp"
+
+#include <autoware/pointcloud_preprocessor/filter.hpp>
+#include <autoware/pointcloud_preprocessor/transform_info.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -208,6 +209,7 @@ private:
 
   // grid data
   ScanGroundGrid grid_;
+  std::unique_ptr<Grid> grid_ptr_;
 
   // data access methods
   void set_field_index_offsets(const PointCloud2ConstPtr & input);
