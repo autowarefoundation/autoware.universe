@@ -326,7 +326,7 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calc_base_lengt
 
   if (v0 < 1.0e-5 && a < acc_threshold) {
     // no need to consider acceleration limit
-    RCLCPP_INFO(logger_, "set velocity is zero. lateral acc limit is ignored");
+    RCLCPP_DEBUG(logger_, "set velocity is zero. lateral acc limit is ignored");
     return get_base_lengths_without_accel_limit(arclength, shift_length, offset_back);
   }
 
@@ -337,7 +337,7 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calc_base_lengt
 
   if (lateral_a_max < lateral_acc_limit_) {
     // no need to consider acceleration limit
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_DEBUG_THROTTLE(
       logger_, clock_, 3000, "No need to consider lateral acc limit. max: %f, limit: %f",
       lateral_a_max, lateral_acc_limit_);
     return get_base_lengths_without_accel_limit(S, shift_length, v0, a, T, offset_back);
