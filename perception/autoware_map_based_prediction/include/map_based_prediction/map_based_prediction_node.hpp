@@ -238,6 +238,11 @@ private:
     const bool & right_paths_exists, const bool & center_paths_exists) const;
 
   // Vehicle path process
+  PredictedObject getPredictionForNonVehicleObject(
+    const std_msgs::msg::Header & header, const TrackedObject & object);
+  std::optional<PredictedObject> getPredictionForVehicleObject(
+    const std_msgs::msg::Header & header, const TrackedObject & object,
+    const double objects_detected_time, visualization_msgs::msg::MarkerArray & debug_markers);
   std::optional<size_t> searchProperStartingRefPathIndex(
     const TrackedObject & object, const PosePath & pose_path) const;
   std::vector<LaneletPathWithPathInfo> getPredictedReferencePath(
