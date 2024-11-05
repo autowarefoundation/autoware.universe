@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
-#define QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
+#ifndef AUTOWARE__QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
+#define AUTOWARE__QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
 
 #include "osqp/glob_opts.h"
 
@@ -43,4 +43,4 @@ void printCSCMatrix(const CSC_Matrix & csc_mat);
 
 }  // namespace autoware::qp_interface
 
-#endif  // QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
+#endif  // AUTOWARE__QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
