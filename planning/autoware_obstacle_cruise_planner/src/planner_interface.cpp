@@ -912,9 +912,7 @@ void PlannerInterface::publishMetrics(const rclcpp::Time & current_time)
   addMetrics(debug_data_ptr_->stop_metrics);
   addMetrics(debug_data_ptr_->slow_down_metrics);
   addMetrics(debug_data_ptr_->cruise_metrics);
-  if (!metrics_msg.metric_array.empty()) {
-    metrics_pub_->publish(metrics_msg);
-  }
+  metrics_pub_->publish(metrics_msg);
   clearMetrics();
 }
 

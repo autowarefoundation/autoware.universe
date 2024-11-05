@@ -401,6 +401,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   MarkerArray debug_markers;
   MarkerArray virtual_wall_marker;
+  auto metrics = MetricArray();
   checkCollision(debug_markers);
 
   if (!collision_data_keeper_.checkCollisionExpired()) {
@@ -418,14 +419,12 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
     }
     addVirtualStopWallMarker(virtual_wall_marker);
 
-    // publish metrics
-    auto metric = Metric();
-    metric.name = "decision";
-    metric.value = "brake";
-    auto metrics = MetricArray();
-    metrics.stamp = get_clock()->now();
-    metrics.metric_array.push_back(metric);
-    metrics_pub_->publish(metrics);
+    {
+      auto metric = Metric();
+      metric.name = "decision";
+      metric.value = "brake";
+      metrics.metric_array.push_back(metric);
+    }
 
   } else {
     const std::string error_msg = "[AEB]: No Collision";
@@ -436,6 +435,9 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
   // publish debug markers
   debug_marker_publisher_->publish(debug_markers);
   virtual_wall_publisher_->publish(virtual_wall_marker);
+  // publish metrics
+  metrics.stamp = get_clock()->now();
+  metrics_pub_->publish(metrics);
 }
 
 bool AEB::checkCollision(MarkerArray & debug_markers)

@@ -243,11 +243,10 @@ void PlanningEvaluatorNode::onTimer()
     onModifiedGoal(modified_goal_msg, ego_state_ptr);
   }
 
-  if (!metrics_msg_.metric_array.empty()) {
-    metrics_msg_.stamp = now();
-    metrics_pub_->publish(metrics_msg_);
-    metrics_msg_ = MetricArrayMsg{};
-  }
+  // Publish metrics
+  metrics_msg_.stamp = now();
+  metrics_pub_->publish(metrics_msg_);
+  metrics_msg_ = MetricArrayMsg{};
 }
 
 void PlanningEvaluatorNode::onTrajectory(

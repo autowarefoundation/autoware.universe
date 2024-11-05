@@ -221,11 +221,10 @@ void ControlEvaluatorNode::onTimer()
     AddKinematicStateMetricMsg(*odom, *acc);
   }
 
-  if (!metrics_msg_.metric_array.empty()) {
-    metrics_msg_.stamp = now();
-    metrics_pub_->publish(metrics_msg_);
-    metrics_msg_ = MetricArrayMsg{};
-  }
+  // Publish metrics
+  metrics_msg_.stamp = now();
+  metrics_pub_->publish(metrics_msg_);
+  metrics_msg_ = MetricArrayMsg{};
 }
 }  // namespace control_diagnostics
 
