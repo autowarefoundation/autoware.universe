@@ -14,8 +14,8 @@
 
 #include "autoware/tvm_utility/pipeline.hpp"
 
-#ifndef COMMON__TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
-#define COMMON__TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#ifndef COMMON__AUTOWARE_TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#define COMMON__AUTOWARE_TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_
 
 namespace model_zoo
 {
@@ -52,5 +52,5 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
 }  // namespace camera_obstacle_detection
 }  // namespace perception
 }  // namespace model_zoo
-#endif  // COMMON__TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#endif  // COMMON__AUTOWARE_TVM_UTILITY__DATA__MODELS__YOLO_V2_TINY__INFERENCE_ENGINE_TVM_CONFIG_HPP_
         // NOLINT

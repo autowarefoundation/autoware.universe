@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include "autoware/tvm_utility/pipeline.hpp"
+#include "gtest/gtest.h"
 // file for current arch x86 or arm is chosen in cmake file
 #include <inference_engine_tvm_config.hpp>
 #include <opencv2/opencv.hpp>

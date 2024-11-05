@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TVM_UTILITY__PIPELINE_HPP_
-#define TVM_UTILITY__PIPELINE_HPP_
+#ifndef AUTOWARE__TVM_UTILITY__PIPELINE_HPP_
+#define AUTOWARE__TVM_UTILITY__PIPELINE_HPP_
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
@@ -411,4 +411,4 @@ private:
 
 }  // namespace pipeline
 }  // namespace autoware::tvm_utility
-#endif  // TVM_UTILITY__PIPELINE_HPP_
+#endif  // AUTOWARE__TVM_UTILITY__PIPELINE_HPP_
