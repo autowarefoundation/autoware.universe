@@ -60,7 +60,7 @@ public:
 
 private:
   Param smoother_param_;
-  std::shared_ptr<autoware::common::QPInterface> qp_interface_;
+  std::shared_ptr<autoware::qp_interface::QPInterface> qp_interface_;
   rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother")};
 
   TrajectoryPoints forwardJerkFilter(
