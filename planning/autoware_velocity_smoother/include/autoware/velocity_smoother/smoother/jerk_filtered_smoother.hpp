@@ -16,10 +16,10 @@
 #define AUTOWARE__VELOCITY_SMOOTHER__SMOOTHER__JERK_FILTERED_SMOOTHER_HPP_
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/qp_interface/qp_interface.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
-#include "autoware/qp_interface/qp_interface.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 

@@ -14,8 +14,8 @@
 
 #include "autoware/velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 
-#include "autoware/velocity_smoother/trajectory_utils.hpp"
 #include "autoware/qp_interface/proxqp_interface.hpp"
+#include "autoware/velocity_smoother/trajectory_utils.hpp"
 
 #include <Eigen/Core>
 

@@ -15,9 +15,9 @@
 #ifndef QP_INTERFACE__OSQP_INTERFACE_HPP_
 #define QP_INTERFACE__OSQP_INTERFACE_HPP_
 
-#include "osqp/osqp.h"
 #include "autoware/qp_interface/osqp_csc_matrix_conv.hpp"
 #include "autoware/qp_interface/qp_interface.hpp"
+#include "osqp/osqp.h"
 
 #include <limits>
 #include <memory>

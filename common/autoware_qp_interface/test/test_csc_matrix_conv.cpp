@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include "autoware/qp_interface/osqp_csc_matrix_conv.hpp"
+#include "gtest/gtest.h"
 
 #include <Eigen/Core>
 
