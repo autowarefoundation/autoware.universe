@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/qp_interface/osqp_interface.hpp"
 #include "gtest/gtest.h"
+#include "autoware/qp_interface/osqp_interface.hpp"
 
 #include <Eigen/Core>
 
@@ -39,9 +39,9 @@ namespace
 
 TEST(TestOsqpInterface, BasicQp)
 {
-  using autoware::common::calCSCMatrix;
-  using autoware::common::calCSCMatrixTrapezoidal;
-  using autoware::common::CSC_Matrix;
+  using autoware::qp_interface::calCSCMatrix;
+  using autoware::qp_interface::calCSCMatrixTrapezoidal;
+  using autoware::qp_interface::CSC_Matrix;
 
   auto check_result =
     [](const auto & solution, const std::string & status, const int polish_status) {
@@ -58,12 +58,12 @@ TEST(TestOsqpInterface, BasicQp)
   const Eigen::MatrixXd P = (Eigen::MatrixXd(2, 2) << 4, 1, 1, 2).finished();
   const Eigen::MatrixXd A = (Eigen::MatrixXd(4, 2) << 1, 1, 1, 0, 0, 1, 0, 1).finished();
   const std::vector<double> q = {1.0, 1.0};
-  const std::vector<double> l = {1.0, 0.0, 0.0, -autoware::common::OSQP_INF};
-  const std::vector<double> u = {1.0, 0.7, 0.7, autoware::common::OSQP_INF};
+  const std::vector<double> l = {1.0, 0.0, 0.0, -autoware::qp_interface::OSQP_INF};
+  const std::vector<double> u = {1.0, 0.7, 0.7, autoware::qp_interface::OSQP_INF};
 
   {
     // Define problem during optimization
-    autoware::common::OSQPInterface osqp(false, 4000, 1e-6);
+    autoware::qp_interface::OSQPInterface osqp(false, 4000, 1e-6);
     const auto solution = osqp.QPInterface::optimize(P, A, q, l, u);
     const auto status = osqp.getStatus();
     const auto polish_status = osqp.getPolishStatus();
@@ -72,7 +72,7 @@ TEST(TestOsqpInterface, BasicQp)
 
   {
     // Define problem during initialization
-    autoware::common::OSQPInterface osqp(false, 4000, 1e-6);
+    autoware::qp_interface::OSQPInterface osqp(false, 4000, 1e-6);
     const auto solution = osqp.QPInterface::optimize(P, A, q, l, u);
     const auto status = osqp.getStatus();
     const auto polish_status = osqp.getPolishStatus();
@@ -87,7 +87,7 @@ TEST(TestOsqpInterface, BasicQp)
     std::vector<double> q_ini(2, 0.0);
     std::vector<double> l_ini(4, 0.0);
     std::vector<double> u_ini(4, 0.0);
-    autoware::common::OSQPInterface osqp(false, 4000, 1e-6);
+    autoware::qp_interface::OSQPInterface osqp(false, 4000, 1e-6);
     osqp.QPInterface::optimize(P_ini, A_ini, q_ini, l_ini, u_ini);
   }
 
@@ -95,7 +95,7 @@ TEST(TestOsqpInterface, BasicQp)
     // Define problem during initialization with csc matrix
     CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
     CSC_Matrix A_csc = calCSCMatrix(A);
-    autoware::common::OSQPInterface osqp(false, 4000, 1e-6);
+    autoware::qp_interface::OSQPInterface osqp(false, 4000, 1e-6);
 
     const auto solution = osqp.optimize(P_csc, A_csc, q, l, u);
     const auto status = osqp.getStatus();
@@ -111,7 +111,7 @@ TEST(TestOsqpInterface, BasicQp)
     std::vector<double> q_ini(2, 0.0);
     std::vector<double> l_ini(4, 0.0);
     std::vector<double> u_ini(4, 0.0);
-    autoware::common::OSQPInterface osqp(false, 4000, 1e-6);
+    autoware::qp_interface::OSQPInterface osqp(false, 4000, 1e-6);
     osqp.optimize(P_ini_csc, A_ini_csc, q_ini, l_ini, u_ini);
 
     // Redefine problem before optimization
@@ -132,7 +132,7 @@ TEST(TestOsqpInterface, BasicQp)
     std::vector<double> q_ini(2, 0.0);
     std::vector<double> l_ini(4, 0.0);
     std::vector<double> u_ini(4, 0.0);
-    autoware::common::OSQPInterface osqp(true, 4000, 1e-6);  // enable warm start
+    autoware::qp_interface::OSQPInterface osqp(true, 4000, 1e-6);  // enable warm start
     osqp.optimize(P_ini_csc, A_ini_csc, q_ini, l_ini, u_ini);
 
     // Redefine problem before optimization

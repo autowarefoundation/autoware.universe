@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/qp_interface/osqp_csc_matrix_conv.hpp"
 #include "gtest/gtest.h"
+#include "autoware/qp_interface/osqp_csc_matrix_conv.hpp"
 
 #include <Eigen/Core>
 
@@ -23,8 +23,8 @@
 
 TEST(TestCscMatrixConv, Nominal)
 {
-  using autoware::common::calCSCMatrix;
-  using autoware::common::CSC_Matrix;
+  using autoware::qp_interface::calCSCMatrix;
+  using autoware::qp_interface::CSC_Matrix;
 
   Eigen::MatrixXd rect1(1, 2);
   rect1 << 0.0, 1.0;
@@ -117,8 +117,8 @@ TEST(TestCscMatrixConv, Nominal)
 }
 TEST(TestCscMatrixConv, Trapezoidal)
 {
-  using autoware::common::calCSCMatrixTrapezoidal;
-  using autoware::common::CSC_Matrix;
+  using autoware::qp_interface::calCSCMatrixTrapezoidal;
+  using autoware::qp_interface::CSC_Matrix;
 
   Eigen::MatrixXd square1(2, 2);
   Eigen::MatrixXd square2(3, 3);
@@ -166,10 +166,10 @@ TEST(TestCscMatrixConv, Trapezoidal)
 }
 TEST(TestCscMatrixConv, Print)
 {
-  using autoware::common::calCSCMatrix;
-  using autoware::common::calCSCMatrixTrapezoidal;
-  using autoware::common::CSC_Matrix;
-  using autoware::common::printCSCMatrix;
+  using autoware::qp_interface::calCSCMatrix;
+  using autoware::qp_interface::calCSCMatrixTrapezoidal;
+  using autoware::qp_interface::CSC_Matrix;
+  using autoware::qp_interface::printCSCMatrix;
   Eigen::MatrixXd square1(2, 2);
   Eigen::MatrixXd rect1(1, 2);
   square1 << 1.0, 2.0, 2.0, 4.0;
