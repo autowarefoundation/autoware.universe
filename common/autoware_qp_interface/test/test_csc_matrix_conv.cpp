@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
-#include "qp_interface/osqp_csc_matrix_conv.hpp"
+#include "autoware/qp_interface/osqp_csc_matrix_conv.hpp"
 
 #include <Eigen/Core>
 

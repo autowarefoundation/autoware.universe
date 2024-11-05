@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "qp_interface/osqp_interface.hpp"
+#include "autoware/qp_interface/osqp_interface.hpp"
 
-#include "qp_interface/osqp_csc_matrix_conv.hpp"
+#include "autoware/qp_interface/osqp_csc_matrix_conv.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-namespace autoware::common
+namespace autoware::qp_interface
 {
 OSQPInterface::OSQPInterface(
   const bool enable_warm_start, const int max_iteration, const c_float eps_abs,
@@ -386,4 +386,4 @@ std::vector<double> OSQPInterface::optimize(
   return result;
 }
 
-}  // namespace autoware::common
+}  // namespace autoware::qp_interface

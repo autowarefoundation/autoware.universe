@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::common
+namespace autoware::qp_interface
 {
 class QPInterface
 {
@@ -56,6 +56,6 @@ protected:
   std::optional<size_t> variables_num_{std::nullopt};
   std::optional<size_t> constraints_num_{std::nullopt};
 };
-}  // namespace autoware::common
+}  // namespace autoware::qp_interface
 
 #endif  // QP_INTERFACE__QP_INTERFACE_HPP_

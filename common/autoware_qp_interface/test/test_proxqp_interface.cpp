@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
-#include "qp_interface/proxqp_interface.hpp"
+#include "autoware/qp_interface/proxqp_interface.hpp"
 
 #include <Eigen/Core>
 

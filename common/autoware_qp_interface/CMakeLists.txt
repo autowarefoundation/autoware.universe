@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(qp_interface)
+project(autoware_qp_interface)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -20,10 +20,10 @@ set(QP_INTERFACE_LIB_SRC
 )
 
 set(QP_INTERFACE_LIB_HEADERS
-  include/qp_interface/qp_interface.hpp
-  include/qp_interface/osqp_interface.hpp
-  include/qp_interface/osqp_csc_matrix_conv.hpp
-  include/qp_interface/proxqp_interface.hpp
+  include/autoware/qp_interface/qp_interface.hpp
+  include/autoware/qp_interface/osqp_interface.hpp
+  include/autoware/qp_interface/osqp_csc_matrix_conv.hpp
+  include/autoware/qp_interface/proxqp_interface.hpp
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED

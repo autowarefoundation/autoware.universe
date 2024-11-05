@@ -15,7 +15,7 @@
 #ifndef QP_INTERFACE__PROXQP_INTERFACE_HPP_
 #define QP_INTERFACE__PROXQP_INTERFACE_HPP_
 
-#include "qp_interface/qp_interface.hpp"
+#include "autoware/qp_interface/qp_interface.hpp"
 
 #include <proxsuite/helpers/optional.hpp>
 #include <proxsuite/proxqp/sparse/sparse.hpp>
@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::common
+namespace autoware::qp_interface
 {
 class ProxQPInterface : public QPInterface
 {
@@ -52,6 +52,6 @@ private:
 
   std::vector<double> optimizeImpl() override;
 };
-}  // namespace autoware::common
+}  // namespace autoware::qp_interface
 
 #endif  // QP_INTERFACE__PROXQP_INTERFACE_HPP_
