@@ -100,7 +100,7 @@ void ProcessingTimeChecker::on_timer()
 
     // generate MetricMsg
     MetricMsg metric;
-    metric.name = processing_time_topic_name + "/processing_time";
+    metric.name = "processing_time/" + processing_time_topic_name;
     metric.value = std::to_string(processing_time);
     metric.unit = "millisecond";
     metrics_msg.metric_array.push_back(metric);
