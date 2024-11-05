@@ -17,28 +17,36 @@
 // https://creativecommons.org/publicdomain/zero/1.0/deed.en
 // borrowed from https://proc-cpuinfo.fixstars.com/2019/02/cuda_smart_pointer/
 
-#ifndef CUDA_UTILS__CUDA_CHECK_ERROR_HPP_
-#define CUDA_UTILS__CUDA_CHECK_ERROR_HPP_
+#ifndef AUTOWARE__CUDA_UTILS__STREAM_UNIQUE_PTR_HPP_
+#define AUTOWARE__CUDA_UTILS__STREAM_UNIQUE_PTR_HPP_
 
 #include <cuda_runtime_api.h>
 
-#include <sstream>
-#include <stdexcept>
+#include <memory>
 
-namespace cuda_utils
+namespace autoware::cuda_utils
 {
-template <typename F, typename N>
-void cuda_check_error(const ::cudaError_t e, F && f, N && n)
+struct StreamDeleter
 {
-  if (e != ::cudaSuccess) {
-    std::stringstream s;
-    s << ::cudaGetErrorName(e) << " (" << e << ")@" << f << "#L" << n << ": "
-      << ::cudaGetErrorString(e);
-    throw std::runtime_error{s.str()};
+  void operator()(cudaStream_t * stream)
+  {
+    if (stream) {
+      cudaStreamDestroy(*stream);
+      delete stream;
+    }
   }
+};
+
+using StreamUniquePtr = std::unique_ptr<cudaStream_t, StreamDeleter>;
+
+inline StreamUniquePtr makeCudaStream(const uint32_t flags = cudaStreamDefault)
+{
+  StreamUniquePtr stream(new cudaStream_t, StreamDeleter());
+  if (cudaStreamCreateWithFlags(stream.get(), flags) != cudaSuccess) {
+    stream.reset(nullptr);
+  }
+  return stream;
 }
-}  // namespace cuda_utils
+}  // namespace autoware::cuda_utils
 
-#define CHECK_CUDA_ERROR(e) (cuda_utils::cuda_check_error(e, __FILE__, __LINE__))
-
-#endif  // CUDA_UTILS__CUDA_CHECK_ERROR_HPP_
+#endif  // AUTOWARE__CUDA_UTILS__STREAM_UNIQUE_PTR_HPP_

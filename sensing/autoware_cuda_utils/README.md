@@ -1,4 +1,4 @@
-# cuda_utils
+# autoware_cuda_utils
 
 ## Purpose
 
