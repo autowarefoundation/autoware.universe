@@ -90,7 +90,7 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
       const float point_origin_y = 0.0f;
       const float point_origin_z = virtual_lidar_z_;
       grid_ptr_ = std::make_unique<Grid>(point_origin_x, point_origin_y, point_origin_z);
-      grid_ptr_->initialize(grid_size_m_, grid_size_m_, grid_mode_switch_radius_);
+      grid_ptr_->initialize(grid_size_m_, radial_divider_angle_rad_, grid_mode_switch_radius_);
     }
 
     // data access
@@ -184,6 +184,9 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
 
       // store the point in the corresponding radial division
       out_radial_ordered_points[radial_div].emplace_back(current_point);
+
+      // store the point to the new grid
+      grid_ptr_->addPoint(input_point.x, input_point.y, data_index);
     }
   }
 
@@ -196,6 +199,10 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
         out_radial_ordered_points[i].begin(), out_radial_ordered_points[i].end(),
         [](const PointData & a, const PointData & b) { return a.radius < b.radius; });
     }
+  }
+
+  {
+    grid_ptr_->setGridStatistics();
   }
 }
 
