@@ -13,18 +13,27 @@
 // limitations under the License.
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
+#include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
-#include <rclcpp/clock.hpp>
-#include <rclcpp/executors/single_threaded_executor.hpp>
-#include <rclcpp/logging.hpp>
+#include <autoware_test_utils/mock_data_parser.hpp>
 #include <rclcpp/node.hpp>
 
 #include <lanelet2_core/geometry/LineString.h>
+#include <tf2/utils.h>
+#include <yaml-cpp/yaml.h>
 
 #include <utility>
 
 namespace autoware::test_utils
 {
+
+using autoware::universe_utils::createPoint;
+using autoware::universe_utils::createQuaternionFromRPY;
+using geometry_msgs::msg::TransformStamped;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)
@@ -138,7 +147,6 @@ std::string get_absolute_path_to_lanelet_map(
   return dir + "/test_map/" + map_filename;
 }
 
-// cppcheck-suppress unusedFunction
 std::string get_absolute_path_to_route(
   const std::string & package_name, const std::string & route_filename)
 {
@@ -301,61 +309,7 @@ PathWithLaneId loadPathWithLaneIdInYaml()
 {
   const auto yaml_path =
     get_absolute_path_to_config("autoware_test_utils", "path_with_lane_id_data.yaml");
-  YAML::Node yaml_node = YAML::LoadFile(yaml_path);
-  PathWithLaneId path_msg;
 
-  // Convert YAML data to PathWithLaneId message
-  // Fill the header
-  path_msg.header.stamp.sec = yaml_node["header"]["stamp"]["sec"].as<int>();
-  path_msg.header.stamp.nanosec = yaml_node["header"]["stamp"]["nanosec"].as<uint32_t>();
-  path_msg.header.frame_id = yaml_node["header"]["frame_id"].as<std::string>();
-
-  // Fill the points
-  for (const auto & point_node : yaml_node["points"]) {
-    PathPointWithLaneId point;
-    // Fill the PathPoint data
-    point.point.pose.position.x = point_node["point"]["pose"]["position"]["x"].as<double>();
-    point.point.pose.position.y = point_node["point"]["pose"]["position"]["y"].as<double>();
-    point.point.pose.position.z = point_node["point"]["pose"]["position"]["z"].as<double>();
-    point.point.pose.orientation.x = point_node["point"]["pose"]["orientation"]["x"].as<double>();
-    point.point.pose.orientation.y = point_node["point"]["pose"]["orientation"]["y"].as<double>();
-    point.point.pose.orientation.z = point_node["point"]["pose"]["orientation"]["z"].as<double>();
-    point.point.pose.orientation.w = point_node["point"]["pose"]["orientation"]["w"].as<double>();
-    point.point.longitudinal_velocity_mps =
-      point_node["point"]["longitudinal_velocity_mps"].as<float>();
-    point.point.lateral_velocity_mps = point_node["point"]["lateral_velocity_mps"].as<float>();
-    point.point.heading_rate_rps = point_node["point"]["heading_rate_rps"].as<float>();
-    point.point.is_final = point_node["point"]["is_final"].as<bool>();
-    // Fill the lane_ids
-    for (const auto & lane_id_node : point_node["lane_ids"]) {
-      point.lane_ids.push_back(lane_id_node.as<int64_t>());
-    }
-
-    path_msg.points.push_back(point);
-  }
-
-  // Fill the left_bound
-  for (const auto & point_node : yaml_node["left_bound"]) {
-    Point point;
-    // Fill the Point data (left_bound)
-    point.x = point_node["x"].as<double>();
-    point.y = point_node["y"].as<double>();
-    point.z = point_node["z"].as<double>();
-
-    path_msg.left_bound.push_back(point);
-  }
-
-  // Fill the right_bound
-  for (const auto & point_node : yaml_node["right_bound"]) {
-    Point point;
-    // Fill the Point data
-    point.x = point_node["x"].as<double>();
-    point.y = point_node["y"].as<double>();
-    point.z = point_node["z"].as<double>();
-
-    path_msg.right_bound.push_back(point);
-  }
-  return path_msg;
+  return parse<PathWithLaneId>(yaml_path);
 }
-
 }  // namespace autoware::test_utils

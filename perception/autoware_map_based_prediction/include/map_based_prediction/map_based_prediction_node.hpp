@@ -59,19 +59,15 @@
 namespace std
 {
 template <>
-struct hash<lanelet::routing::LaneletPaths>
+struct hash<lanelet::routing::LaneletPath>
 {
   // 0x9e3779b9 is a magic number. See
   // https://stackoverflow.com/questions/4948780/magic-number-in-boosthash-combine
-  size_t operator()(const lanelet::routing::LaneletPaths & paths) const
+  size_t operator()(const lanelet::routing::LaneletPath & path) const
   {
     size_t seed = 0;
-    for (const auto & path : paths) {
-      for (const auto & lanelet : path) {
-        seed ^= hash<int64_t>{}(lanelet.id()) + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
-      }
-      // Add a separator between paths
-      seed ^= hash<int>{}(0) + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
+    for (const auto & lanelet : path) {
+      seed ^= hash<int64_t>{}(lanelet.id()) + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
     }
     return seed;
   }
@@ -158,6 +154,7 @@ using autoware_perception_msgs::msg::TrafficLightGroupArray;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using tier4_debug_msgs::msg::StringStamped;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using LaneletPathWithPathInfo = std::pair<lanelet::routing::LaneletPath, PredictedRefPath>;
 class MapBasedPredictionNode : public rclcpp::Node
 {
 public:
@@ -294,12 +291,15 @@ private:
     const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users);
   std::optional<size_t> searchProperStartingRefPathIndex(
     const TrackedObject & object, const PosePath & pose_path) const;
-  std::vector<PredictedRefPath> getPredictedReferencePath(
+  std::vector<LaneletPathWithPathInfo> getPredictedReferencePath(
     const TrackedObject & object, const LaneletsData & current_lanelets_data,
     const double object_detected_time, const double time_horizon);
+  std::vector<PredictedRefPath> convertPredictedReferencePath(
+    const TrackedObject & object,
+    const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths) const;
   Maneuver predictObjectManeuver(
-    const TrackedObject & object, const LaneletData & current_lanelet_data,
-    const double object_detected_time);
+    const std::string & object_id, const geometry_msgs::msg::Pose & object_pose,
+    const LaneletData & current_lanelet_data, const double object_detected_time);
   geometry_msgs::msg::Pose compensateTimeDelay(
     const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,
     const double dt) const;
@@ -308,24 +308,16 @@ private:
   double calcLeftLateralOffset(
     const lanelet::ConstLineString2d & boundary_line, const geometry_msgs::msg::Pose & search_pose);
   ManeuverProbability calculateManeuverProbability(
-    const Maneuver & predicted_maneuver, const lanelet::routing::LaneletPaths & left_paths,
-    const lanelet::routing::LaneletPaths & right_paths,
-    const lanelet::routing::LaneletPaths & center_paths);
+    const Maneuver & predicted_maneuver, const bool & left_paths_exists,
+    const bool & right_paths_exists, const bool & center_paths_exists) const;
 
-  void addReferencePaths(
-    const TrackedObject & object, const lanelet::routing::LaneletPaths & candidate_paths,
-    const float path_probability, const ManeuverProbability & maneuver_probability,
-    const Maneuver & maneuver, std::vector<PredictedRefPath> & reference_paths,
-    const double speed_limit = 0.0);
-
-  mutable universe_utils::LRUCache<
-    lanelet::routing::LaneletPaths, std::vector<std::pair<PosePath, double>>>
+  mutable universe_utils::LRUCache<lanelet::routing::LaneletPath, std::pair<PosePath, double>>
     lru_cache_of_convert_path_type_{1000};
-  std::vector<std::pair<PosePath, double>> convertPathType(
-    const lanelet::routing::LaneletPaths & paths) const;
+  std::pair<PosePath, double> convertLaneletPathToPosePath(
+    const lanelet::routing::LaneletPath & path) const;
 
   void updateFuturePossibleLanelets(
-    const TrackedObject & object, const lanelet::routing::LaneletPaths & paths);
+    const std::string & object_id, const lanelet::routing::LaneletPaths & paths);
 
   bool isDuplicated(
     const std::pair<double, lanelet::ConstLanelet> & target_lanelet,
@@ -342,11 +334,11 @@ private:
     const TrackedObject & object, const Maneuver & maneuver, const size_t obj_num);
 
   Maneuver predictObjectManeuverByTimeToLaneChange(
-    const TrackedObject & object, const LaneletData & current_lanelet_data,
+    const std::string & object_id, const LaneletData & current_lanelet_data,
     const double object_detected_time);
   Maneuver predictObjectManeuverByLatDiffDistance(
-    const TrackedObject & object, const LaneletData & current_lanelet_data,
-    const double object_detected_time);
+    const std::string & object_id, const geometry_msgs::msg::Pose & object_pose,
+    const LaneletData & current_lanelet_data, const double object_detected_time);
 
   void publish(
     const PredictedObjects & output,

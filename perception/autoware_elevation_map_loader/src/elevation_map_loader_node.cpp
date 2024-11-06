@@ -16,7 +16,7 @@
 
 #include "elevation_map_loader_node.hpp"
 
-#include "autoware_grid_map_utils/polygon_iterator.hpp"
+#include "autoware/grid_map_utils/polygon_iterator.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
