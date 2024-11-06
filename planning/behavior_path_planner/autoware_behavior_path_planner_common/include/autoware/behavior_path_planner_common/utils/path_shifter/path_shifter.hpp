@@ -162,12 +162,35 @@ private:
   // Clock
   mutable rclcpp::Clock clock_{RCL_ROS_TIME};
 
+  /**
+   * @brief Calculate basic points to generate shifted path.
+   * @param arclength Longitudinal length in the Frenet coordinate.
+   * @param shift_length Lateral length in the Frenet coordinate.
+   * @param offset_back Whether to apply shifting after shift.
+   * @return First is longitudinal points, and second is lateral points.
+   */
   std::pair<std::vector<double>, std::vector<double>> calc_base_lengths(
     const double arclength, const double shift_length, const bool offset_back) const;
 
+  /**
+   * @brief Calculate basic points to generate shifted path without considering acceleration
+   * limitation.
+   * @param arclength Longitudinal length in the Frenet coordinate.
+   * @param shift_length Lateral length in the Frenet coordinate.
+   * @param offset_back Whether to apply shifting after shift.
+   * @return First is longitudinal points, and second is lateral points.
+   */
   static std::pair<std::vector<double>, std::vector<double>> get_base_lengths_without_accel_limit(
     const double arclength, const double shift_length, const bool offset_back);
 
+  /**
+   * @brief Calculate basic points to generate shifted path without considering acceleration
+   * limitation.
+   * @param arclength Longitudinal length in the Frenet coordinate.
+   * @param shift_length Lateral length in the Frenet coordinate.
+   * @param offset_back Whether to apply shifting after shift.
+   * @return First is longitudinal points, and second is lateral points.
+   */
   static std::pair<std::vector<double>, std::vector<double>> get_base_lengths_without_accel_limit(
     const double arclength, const double shift_length, const double velocity,
     const double longitudinal_acc, const double total_time, const bool offset_back);
@@ -204,8 +227,19 @@ private:
    */
   bool check_shift_lines_alignment(const ShiftLineArray & shift_lines) const;
 
+  /**
+   * @brief Add offset to specific point in shifted path.
+   * @param path Shifted path.
+   * @param offset Lateral offset.
+   * @param index Target point index.
+   */
   static void add_lateral_offset_on_index_point(ShiftedPath * path, double offset, size_t index);
 
+  /**
+   * @brief Add offset distance ti shifted path.
+   * @param path Shifted path.
+   * @param offset Lateral offset.
+   */
   static void shift_base_length(ShiftedPath * path, double offset);
 
   void set_base_offset(const double val)
