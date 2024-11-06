@@ -1,6 +1,6 @@
 # Interface for QP solvers
 
-This is the design document for the `qp_interface` package.
+This is the design document for the `autoware_qp_interface` package.
 
 ## Purpose / Use cases
 

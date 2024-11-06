@@ -33,7 +33,9 @@
 #include <yaml-cpp/yaml.h>
 
 #include <array>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::test_utils
@@ -183,6 +185,14 @@ LaneletRoute parse(const std::string & filename);
 
 template <>
 PathWithLaneId parse(const std::string & filename);
+
+template <typename MessageType>
+auto create_const_shared_ptr(MessageType && payload)
+{
+  using UnqualifiedType = typename std::decay_t<MessageType>;
+  return std::make_shared<const UnqualifiedType>(std::forward<MessageType>(payload));
+}
+
 }  // namespace autoware::test_utils
 
 #endif  // AUTOWARE_TEST_UTILS__MOCK_DATA_PARSER_HPP_

@@ -342,8 +342,8 @@ dc   | dc dc dc  dc ||zc|
       continue;
     }
     // project
-    Eigen::Vector2d projected_point =
-      calcRawImageProjectedPoint(pinhole_camera_model, cv::Point3d(p_x, p_y, p_z));
+    Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
+      pinhole_camera_model, cv::Point3d(p_x, p_y, p_z), point_project_to_unrectified_image_);
 
     // iterate 2d bbox
     for (const auto & feature_object : objects) {

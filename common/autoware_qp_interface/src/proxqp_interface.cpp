@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "qp_interface/proxqp_interface.hpp"
+#include "autoware/qp_interface/proxqp_interface.hpp"
 
-namespace autoware::common
+namespace autoware::qp_interface
 {
 using proxsuite::proxqp::QPSolverOutput;
 
@@ -150,4 +150,4 @@ std::vector<double> ProxQPInterface::optimizeImpl()
   }
   return result;
 }
-}  // namespace autoware::common
+}  // namespace autoware::qp_interface
