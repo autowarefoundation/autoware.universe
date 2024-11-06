@@ -17,10 +17,10 @@
 /// \copyright Copyright 2021 Apex.AI, Inc.
 /// All rights reserved.
 
-#ifndef FAKE_TEST_NODE__FAKE_TEST_NODE_HPP_
-#define FAKE_TEST_NODE__FAKE_TEST_NODE_HPP_
+#ifndef AUTOWARE__FAKE_TEST_NODE__FAKE_TEST_NODE_HPP_
+#define AUTOWARE__FAKE_TEST_NODE__FAKE_TEST_NODE_HPP_
 
-#include <fake_test_node/visibility_control.hpp>
+#include <autoware/fake_test_node/visibility_control.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <gtest/gtest.h>
@@ -30,11 +30,7 @@
 #include <string>
 #include <type_traits>
 
-namespace autoware
-{
-namespace tools
-{
-namespace testing
+namespace autoware::fake_test_node
 {
 
 ///
@@ -237,8 +233,6 @@ public:
   void TearDown() override;
 };
 
-}  // namespace testing
-}  // namespace tools
-}  // namespace autoware
+}  // namespace autoware::fake_test_node
 
-#endif  // FAKE_TEST_NODE__FAKE_TEST_NODE_HPP_
+#endif  // AUTOWARE__FAKE_TEST_NODE__FAKE_TEST_NODE_HPP_

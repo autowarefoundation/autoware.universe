@@ -10,8 +10,8 @@ fixture.
 This package contains a library that introduces two utility classes that can be used in place of
 custom fixtures described above to write integration tests for a node:
 
-- `autoware::tools::testing::FakeTestNode` - to use as a custom test fixture with `TEST_F` tests
-- `autoware::tools::testing::FakeTestNodeParametrized` - to use a custom test fixture with the
+- `autoware::fake_test_node::FakeTestNode` - to use as a custom test fixture with `TEST_F` tests
+- `autoware::fake_test_node::FakeTestNodeParametrized` - to use a custom test fixture with the
   parametrized `TEST_P` tests (accepts a template parameter that gets forwarded to
   `testing::TestWithParam<T>`)
 
@@ -30,10 +30,10 @@ Let's say there is a node `NodeUnderTest` that requires testing. It just
 subscribes to `std_msgs::msg::Int32` messages and publishes a
 `std_msgs::msg::Bool` to indicate that the input is positive. To test such a
 node the following code can be used utilizing the
-`autoware::tools::testing::FakeTestNode`:
+`autoware::fake_test_node::FakeTestNode`:
 
 ```cpp
-using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
+using FakeNodeFixture = autoware::fake_test_node::FakeTestNode;
 
 /// @test Test that we can use a non-parametrized test.
 TEST_F(FakeNodeFixture, Test) {
