@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_AD_API_SPECS__INTERFACE_HPP_
-#define AUTOWARE_AD_API_SPECS__INTERFACE_HPP_
+#ifndef AUTOWARE__AD_API_SPECS__INTERFACE_HPP_
+#define AUTOWARE__AD_API_SPECS__INTERFACE_HPP_
 
 #include <autoware_adapi_version_msgs/srv/interface_version.hpp>
 
@@ -28,4 +28,4 @@ struct Version
 
 }  // namespace autoware::ad_api_specs::interface
 
-#endif  // AUTOWARE_AD_API_SPECS__INTERFACE_HPP_
+#endif  // AUTOWARE__AD_API_SPECS__INTERFACE_HPP_

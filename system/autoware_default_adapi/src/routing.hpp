@@ -15,10 +15,10 @@
 #ifndef ROUTING_HPP_
 #define ROUTING_HPP_
 
+#include <autoware/ad_api_specs/routing.hpp>
 #include <autoware/component_interface_specs/planning.hpp>
 #include <autoware/component_interface_specs/system.hpp>
 #include <autoware/component_interface_utils/status.hpp>
-#include <autoware/ad_api_specs/routing.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 // This file should be included after messages.

@@ -15,10 +15,10 @@
 #ifndef VEHICLE_HPP_
 #define VEHICLE_HPP_
 
+#include <autoware/ad_api_specs/vehicle.hpp>
 #include <autoware/component_interface_specs/localization.hpp>
 #include <autoware/component_interface_specs/map.hpp>
 #include <autoware/component_interface_specs/vehicle.hpp>
-#include <autoware/ad_api_specs/vehicle.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/gear.hpp>

@@ -15,9 +15,9 @@
 #ifndef FAIL_SAFE_HPP_
 #define FAIL_SAFE_HPP_
 
+#include <autoware/ad_api_specs/fail_safe.hpp>
 #include <autoware/component_interface_specs/system.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
-#include <autoware/ad_api_specs/fail_safe.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 // This file should be included after messages.

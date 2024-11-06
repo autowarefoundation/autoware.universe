@@ -15,8 +15,8 @@
 #ifndef LOCALIZATION_HPP_
 #define LOCALIZATION_HPP_
 
-#include <autoware/component_interface_specs/localization.hpp>
 #include <autoware/ad_api_specs/localization.hpp>
+#include <autoware/component_interface_specs/localization.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 // This file should be included after messages.

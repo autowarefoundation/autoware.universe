@@ -15,9 +15,9 @@
 #ifndef OPERATION_MODE_HPP_
 #define OPERATION_MODE_HPP_
 
+#include <autoware/ad_api_specs/operation_mode.hpp>
 #include <autoware/component_interface_specs/system.hpp>
 #include <autoware/component_interface_utils/status.hpp>
-#include <autoware/ad_api_specs/operation_mode.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <string>

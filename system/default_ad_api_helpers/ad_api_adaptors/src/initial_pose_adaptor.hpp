@@ -15,9 +15,9 @@
 #ifndef INITIAL_POSE_ADAPTOR_HPP_
 #define INITIAL_POSE_ADAPTOR_HPP_
 
+#include <autoware/ad_api_specs/localization.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware/map_height_fitter/map_height_fitter.hpp>
-#include <autoware/ad_api_specs/localization.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>

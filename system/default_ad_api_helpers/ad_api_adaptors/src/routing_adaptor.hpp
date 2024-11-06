@@ -15,8 +15,8 @@
 #ifndef ROUTING_ADAPTOR_HPP_
 #define ROUTING_ADAPTOR_HPP_
 
-#include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware/ad_api_specs/routing.hpp>
+#include <autoware/component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>

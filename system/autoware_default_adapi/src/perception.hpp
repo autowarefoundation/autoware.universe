@@ -15,8 +15,8 @@
 #ifndef PERCEPTION_HPP_
 #define PERCEPTION_HPP_
 
-#include <autoware/component_interface_specs/perception.hpp>
 #include <autoware/ad_api_specs/perception.hpp>
+#include <autoware/component_interface_specs/perception.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/dynamic_object.hpp>

@@ -18,8 +18,8 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
-#include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware/ad_api_specs/vehicle.hpp>
+#include <autoware/component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 

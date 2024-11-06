@@ -15,8 +15,8 @@
 #ifndef AUTOMATIC_POSE_INITIALIZER_HPP_
 #define AUTOMATIC_POSE_INITIALIZER_HPP_
 
-#include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware/ad_api_specs/localization.hpp>
+#include <autoware/component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace automatic_pose_initializer

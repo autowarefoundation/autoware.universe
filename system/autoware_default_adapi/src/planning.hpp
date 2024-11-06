@@ -15,10 +15,10 @@
 #ifndef PLANNING_HPP_
 #define PLANNING_HPP_
 
+#include <autoware/ad_api_specs/planning.hpp>
 #include <autoware/component_interface_specs/localization.hpp>
 #include <autoware/component_interface_specs/planning.hpp>
 #include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
-#include <autoware/ad_api_specs/planning.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>

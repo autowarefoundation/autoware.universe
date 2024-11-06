@@ -15,11 +15,11 @@
 #ifndef MOTION_HPP_
 #define MOTION_HPP_
 
+#include <autoware/ad_api_specs/motion.hpp>
 #include <autoware/component_interface_specs/control.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware/component_interface_utils/status.hpp>
 #include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
-#include <autoware/ad_api_specs/motion.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 // This file should be included after messages.
