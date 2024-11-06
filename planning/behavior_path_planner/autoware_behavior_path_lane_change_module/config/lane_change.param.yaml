@@ -3,7 +3,7 @@
     lane_change:
       backward_lane_length: 200.0 #[m]
       max_prepare_duration: 4.0   #[s]
-      min_prepare_duration: 0.5   #[s]
+      min_prepare_duration: 1.0   #[s]
 
       backward_length_buffer_for_end_of_lane: 3.0 # [m]
       backward_length_buffer_for_blocking_object: 3.0 # [m]
