@@ -16,12 +16,6 @@
 
 #include "autoware/motion_utils/trajectory_container/trajectory/detail/utils.hpp"
 
-// #include "autoware/motion_utils/trajectory_container/trajectory/trajectory_point.hpp"
-
-// #include <autoware_planning_msgs/msg/path_point.hpp>
-
-// #include <vector>
-
 namespace autoware::motion_utils::trajectory_container::trajectory
 {
 

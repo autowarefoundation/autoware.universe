@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__DETAIL__UTILS_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__DETAIL__UTILS_HPP_
 
-#include "lanelet2_core/primitives/Point.h"
+// #include "lanelet2_core/primitives/Point.h"
 
 #include <Eigen/Core>
 
@@ -39,8 +39,8 @@ geometry_msgs::msg::Point to_point(const geometry_msgs::msg::Pose & p);
 geometry_msgs::msg::Point to_point(const Eigen::Ref<const Eigen::Vector2d> & p);
 geometry_msgs::msg::Point to_point(const autoware_planning_msgs::msg::PathPoint & p);
 geometry_msgs::msg::Point to_point(const tier4_planning_msgs::msg::PathPointWithLaneId & p);
-geometry_msgs::msg::Point to_point(const lanelet::BasicPoint2d & p);
-geometry_msgs::msg::Point to_point(const lanelet::ConstPoint3d & p);
+// geometry_msgs::msg::Point to_point(const lanelet::BasicPoint2d & p);
+// geometry_msgs::msg::Point to_point(const lanelet::ConstPoint3d & p);
 
 /**
  * @brief Merge multiple vectors into one, keeping only unique elements.
