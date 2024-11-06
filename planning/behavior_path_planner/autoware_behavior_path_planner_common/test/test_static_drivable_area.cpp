@@ -15,6 +15,8 @@
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+
 #include <gtest/gtest.h>
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/LaneletMap.h>
@@ -46,6 +48,23 @@ DrivableLanes make_drivable_lanes(const lanelet::ConstLanelet & ll)
   l.right_lane = ll;
   l.middle_lanes = {ll};
   return l;
+}
+
+bool equal(const DrivableLanes & l1, const DrivableLanes & l2)
+{
+  if (l1.middle_lanes.size() != l2.middle_lanes.size()) {
+    return false;
+  }
+  auto are_equal = true;
+  are_equal &= boost::geometry::equals(
+    l1.left_lane.polygon2d().basicPolygon(), l2.left_lane.polygon2d().basicPolygon());
+  are_equal &= boost::geometry::equals(
+    l1.right_lane.polygon2d().basicPolygon(), l2.right_lane.polygon2d().basicPolygon());
+  for (auto i = 0UL; i < l1.middle_lanes.size(); ++i) {
+    are_equal &= boost::geometry::equals(
+      l1.middle_lanes[i].polygon2d().basicPolygon(), l2.middle_lanes[i].polygon2d().basicPolygon());
+  }
+  return are_equal;
 }
 
 TEST(StaticDrivableArea, getOverlappedLaneletId)
@@ -101,5 +120,102 @@ TEST(StaticDrivableArea, getOverlappedLaneletId)
     const auto result = getOverlappedLaneletId(lanes);
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(*result, 4UL);
+  }
+}
+
+TEST(StaticDrivableArea, cutOverlappedLanes)
+{
+  using autoware::behavior_path_planner::utils::cutOverlappedLanes;
+  tier4_planning_msgs::msg::PathWithLaneId path;
+  std::vector<DrivableLanes> lanes;
+  {  // empty inputs
+    const auto result = cutOverlappedLanes(path, lanes);
+    EXPECT_TRUE(result.empty());
+    EXPECT_TRUE(path.points.empty());
+  }
+  constexpr auto path_size = 10UL;
+  const auto reset_path = [&]() {
+    path.points.clear();
+    for (auto i = 0UL; i < path_size; ++i) {
+      path.points.emplace_back();
+      path.points.back().point.pose.position.x = static_cast<double>(i) * 1.0;
+      path.points.back().point.pose.position.y = 0.0;
+    }
+  };
+  {  // add some path points
+    reset_path();
+    const auto result = cutOverlappedLanes(path, lanes);
+    EXPECT_TRUE(result.empty());
+    ASSERT_EQ(path.points.size(), path_size);
+    for (auto i = 0UL; i < path_size; ++i) {
+      EXPECT_EQ(path.points[i].point.pose.position.x, i * 1.0);
+      EXPECT_EQ(path.points[i].point.pose.position.y, 0.0);
+    }
+  }
+  {  // add some drivable lanes without any overlap (no overlap -> path is not modified)
+    reset_path();
+    lanes.push_back(
+      make_drivable_lanes(make_lanelet({0.0, 1.0}, {2.0, 1.0}, {0.0, -1.0}, {2.0, -1.0})));
+    const auto result = cutOverlappedLanes(path, lanes);
+    ASSERT_EQ(result.size(), lanes.size());
+    EXPECT_TRUE(equal(result.front(), lanes.front()));
+    ASSERT_EQ(path.points.size(), path_size);
+    for (auto i = 0UL; i < path_size; ++i) {
+      EXPECT_EQ(path.points[i].point.pose.position.x, i * 1.0);
+      EXPECT_EQ(path.points[i].point.pose.position.y, 0.0);
+    }
+  }
+  {  // add more drivable lanes without an overlap (no overlap -> path is not modified)
+    reset_path();
+    lanes.push_back(
+      make_drivable_lanes(make_lanelet({2.0, 1.0}, {4.0, 1.0}, {2.0, -1.0}, {4.0, -1.0})));
+    lanes.push_back(
+      make_drivable_lanes(make_lanelet({4.0, 1.0}, {6.0, 1.0}, {4.0, -1.0}, {6.0, -1.0})));
+    const auto result = cutOverlappedLanes(path, lanes);
+    ASSERT_EQ(result.size(), lanes.size());
+    for (auto i = 0UL; i < result.size(); ++i) {
+      EXPECT_TRUE(equal(result[i], lanes[i]));
+    }
+    ASSERT_EQ(path.points.size(), path_size);
+    for (auto i = 0UL; i < path_size; ++i) {
+      EXPECT_EQ(path.points[i].point.pose.position.x, i * 1.0);
+      EXPECT_EQ(path.points[i].point.pose.position.y, 0.0);
+    }
+  }
+  {  // add an overlapping lane
+    reset_path();
+    lanes.push_back(
+      make_drivable_lanes(make_lanelet({2.5, -1.0}, {2.5, 1.0}, {3.5, -1.0}, {3.5, 1.0})));
+    const auto result = cutOverlappedLanes(path, lanes);
+    // the last lane is cut
+    ASSERT_EQ(result.size() + 1, lanes.size());
+    for (auto i = 0UL; i < result.size(); ++i) {
+      EXPECT_TRUE(equal(result[i], lanes[i]));
+    }
+    // since the path points do not have ids, all points are cut
+    EXPECT_TRUE(path.points.empty());
+  }
+  {  // add the overlapping lane id to the path points
+    reset_path();
+    for (auto & p : path.points) {
+      p.lane_ids.push_back(lanes.back().left_lane.id());
+    }
+    cutOverlappedLanes(path, lanes);
+    // since the overlapped lane was removed, the path points were still cut
+    EXPECT_TRUE(path.points.empty());
+  }
+  {  // add the first lane id to some path points, only these points will be kept
+    reset_path();
+    constexpr auto filtered_start = 3UL;
+    constexpr auto filtered_size = 5UL;
+    for (auto i = filtered_start; i < filtered_start + filtered_size; ++i) {
+      path.points[i].lane_ids.push_back(lanes.front().left_lane.id());
+    }
+    cutOverlappedLanes(path, lanes);
+    ASSERT_EQ(path.points.size(), filtered_size);
+    for (auto i = 0UL; i < filtered_size; ++i) {
+      EXPECT_EQ(path.points[i].point.pose.position.x, (i + filtered_start) * 1.0);
+      EXPECT_EQ(path.points[i].point.pose.position.y, 0.0);
+    }
   }
 }

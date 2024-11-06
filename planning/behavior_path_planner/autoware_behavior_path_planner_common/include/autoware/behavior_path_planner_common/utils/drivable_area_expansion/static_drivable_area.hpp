@@ -33,6 +33,13 @@ using autoware::behavior_path_planner::drivable_area_expansion::DrivableAreaExpa
  */
 std::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes);
 
+/**
+ * @brief modify a path to only keep points inside the given lanes (before any lane overlap)
+ * @details the path point lanelet_ids are used to determine if they are inside a lanelet
+ * @param [inout] path path to be cut
+ * @param [in] lanes lanes used to cut the path
+ * @return the shortened lanes without overlaps
+ */
 std::vector<DrivableLanes> cutOverlappedLanes(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes);
 
