@@ -105,7 +105,7 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   *common_data_ptr_->lanes_polygon_ptr = create_lanes_polygon(common_data_ptr_);
 }
 
-void NormalLaneChange::update_transient_data()
+void NormalLaneChange::update_transient_data(const bool is_approved)
 {
   if (
     !common_data_ptr_ || !common_data_ptr_->is_data_available() ||
@@ -126,8 +126,10 @@ void NormalLaneChange::update_transient_data()
 
   const auto active_signal_duration =
     signal_activation_time_ ? (clock_.now() - signal_activation_time_.value()).seconds() : 0.0;
-  transient_data.lane_change_prepare_duration = calculation::calc_actual_prepare_duration(
-    common_data_ptr_, common_data_ptr_->get_ego_speed(), active_signal_duration);
+  transient_data.lane_change_prepare_duration =
+    is_approved ? status_.lane_change_path.info.duration.prepare
+                : calculation::calc_actual_prepare_duration(
+                    common_data_ptr_, common_data_ptr_->get_ego_speed(), active_signal_duration);
 
   std::tie(transient_data.lane_changing_length, transient_data.current_dist_buffer) =
     calculation::calc_lc_length_and_dist_buffer(common_data_ptr_, get_current_lanes());

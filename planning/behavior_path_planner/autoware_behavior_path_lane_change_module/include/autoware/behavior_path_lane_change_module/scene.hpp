@@ -54,7 +54,7 @@ public:
 
   void update_lanes(const bool is_approved) final;
 
-  void update_transient_data() final;
+  void update_transient_data(const bool is_approved) final;
 
   void update_filtered_objects() final;
 
