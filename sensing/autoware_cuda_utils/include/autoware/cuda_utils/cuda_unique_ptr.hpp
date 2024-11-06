@@ -17,15 +17,15 @@
 // https://creativecommons.org/publicdomain/zero/1.0/deed.en
 // borrowed from https://proc-cpuinfo.fixstars.com/2019/02/cuda_smart_pointer/
 
-#ifndef CUDA_UTILS__CUDA_UNIQUE_PTR_HPP_
-#define CUDA_UTILS__CUDA_UNIQUE_PTR_HPP_
+#ifndef AUTOWARE__CUDA_UTILS__CUDA_UNIQUE_PTR_HPP_
+#define AUTOWARE__CUDA_UTILS__CUDA_UNIQUE_PTR_HPP_
 
-#include "cuda_utils/cuda_check_error.hpp"
+#include "autoware/cuda_utils/cuda_check_error.hpp"
 
 #include <memory>
 #include <type_traits>
 
-namespace cuda_utils
+namespace autoware::cuda_utils
 {
 struct CudaDeleter
 {
@@ -76,6 +76,6 @@ CudaUniquePtrHost<T> make_unique_host(unsigned int flag = cudaHostAllocDefault)
   CHECK_CUDA_ERROR(::cudaHostAlloc(reinterpret_cast<void **>(&p), sizeof(T), flag));
   return CudaUniquePtrHost<T>{p};
 }
-}  // namespace cuda_utils
+}  // namespace autoware::cuda_utils
 
-#endif  // CUDA_UTILS__CUDA_UNIQUE_PTR_HPP_
+#endif  // AUTOWARE__CUDA_UTILS__CUDA_UNIQUE_PTR_HPP_
