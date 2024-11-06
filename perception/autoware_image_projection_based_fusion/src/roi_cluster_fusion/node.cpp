@@ -133,8 +133,9 @@ void RoiClusterFusionNode::fuseOnSingleImage(
         continue;
       }
 
-      Eigen::Vector2d projected_point =
-        calcRawImageProjectedPoint(pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z));
+      Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
+        pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z),
+        point_project_to_unrectified_image_);
       if (
         0 <= static_cast<int>(projected_point.x()) &&
         static_cast<int>(projected_point.x()) <= static_cast<int>(camera_info.width) - 1 &&

@@ -41,10 +41,14 @@ bool checkCameraInfo(const sensor_msgs::msg::CameraInfo & camera_info)
 }
 
 Eigen::Vector2d calcRawImageProjectedPoint(
-  const image_geometry::PinholeCameraModel & pinhole_camera_model, const cv::Point3d & point3d)
+  const image_geometry::PinholeCameraModel & pinhole_camera_model, const cv::Point3d & point3d,
+  const bool & unrectify)
 {
   const cv::Point2d rectified_image_point = pinhole_camera_model.project3dToPixel(point3d);
 
+  if (!unrectify) {
+    return Eigen::Vector2d(rectified_image_point.x, rectified_image_point.y);
+  }
   const cv::Point2d raw_image_point = pinhole_camera_model.unrectifyPoint(rectified_image_point);
 
   return Eigen::Vector2d(raw_image_point.x, raw_image_point.y);
