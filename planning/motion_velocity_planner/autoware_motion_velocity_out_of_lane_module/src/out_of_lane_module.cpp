@@ -220,7 +220,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   ego_data.pose = planner_data->current_odometry.pose.pose;
   limit_trajectory_size(ego_data, ego_trajectory_points, params_.max_arc_length);
   out_of_lane::calculate_min_stop_and_slowdown_distances(
-    ego_data, *planner_data, previous_slowdown_pose_, params_.slow_velocity);
+    ego_data, *planner_data, previous_slowdown_pose_);
   prepare_stop_lines_rtree(ego_data, *planner_data, params_.max_arc_length);
   const auto preprocessing_us = stopwatch.toc("preprocessing");
 

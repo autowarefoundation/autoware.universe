@@ -59,10 +59,8 @@ std::optional<geometry_msgs::msg::Pose> calculate_slowdown_point(
 /// @param [inout] ego_data ego data where minimum stop and slowdown distances are set
 /// @param [in] planner_data data with vehicle related information
 /// @param [in] previous_slowdown_pose previous slowdown pose
-/// @param [in] slow_velocity [m/s] velocity used for slowdown
 void calculate_min_stop_and_slowdown_distances(
   out_of_lane::EgoData & ego_data, const PlannerData & planner_data,
-  const std::optional<geometry_msgs::msg::Pose> & previous_slowdown_pose,
-  const double slow_velocity);
+  const std::optional<geometry_msgs::msg::Pose> & previous_slowdown_pose);
 }  // namespace autoware::motion_velocity_planner::out_of_lane
 #endif  // CALCULATE_SLOWDOWN_POINTS_HPP_

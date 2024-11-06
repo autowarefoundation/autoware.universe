@@ -102,7 +102,6 @@ struct EgoData
     longitudinal_offset_to_first_trajectory_index{};  // longitudinal offset of ego along the
                                                       // closest segment on the original trajectory
   double min_stop_distance{};
-  double min_slowdown_distance{};
   double min_stop_arc_length{};  // [m] minimum arc length along the filtered trajectory where ego
                                  // can stop
 
