@@ -12,7 +12,10 @@
   <arg name="check_external_emergency_heartbeat"/>
 
   <!-- option available for test/debug only -->
-  <arg name="launch_trajectory_follower_components" default="true"/>
+  <arg name="launch_lane_departure_checker" default="true"/>
+  <arg name="launch_shift_decider" default="true"/>
+  <arg name="launch_vehicle_cmd_gate" default="true"/>
+  <arg name="launch_operation_mode_transition_manager" default="true"/>
   <arg name="launch_external_cmd_selector" default="true"/>
   <arg name="launch_external_cmd_converter" default="true"/>
   <arg name="launch_control_evaluator" default="true"/>
@@ -75,8 +78,8 @@
         </composable_node>
       </load_composable_node>
 
-      <load_composable_node target="/control/control_container" if="$(var launch_trajectory_follower_components)">
-        <!-- lane departure checker -->
+      <!-- lane departure checker -->
+      <load_composable_node target="/control/control_container" if="$(var launch_lane_departure_checker)">
         <composable_node pkg="autoware_lane_departure_checker" plugin="autoware::lane_departure_checker::LaneDepartureCheckerNode" name="lane_departure_checker_node" namespace="trajectory_follower">
           <remap from="~/input/odometry" to="/localization/kinematic_state"/>
           <remap from="~/input/lanelet_map_bin" to="/map/vector_map"/>
@@ -88,8 +91,10 @@
           <param from="$(var vehicle_param_file)"/>
           <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
         </composable_node>
+      </load_composable_node>
 
-        <!-- shift decider -->
+      <!-- shift decider -->
+      <load_composable_node target="/control/control_container" if="$(var launch_shift_decider)">
         <composable_node pkg="autoware_shift_decider" plugin="autoware::shift_decider::ShiftDecider" name="autoware_shift_decider">
           <remap from="input/control_cmd" to="/control/trajectory_follower/control_cmd"/>
           <remap from="input/state" to="/autoware/state"/>
@@ -98,8 +103,10 @@
           <param from="$(var shift_decider_param_path)"/>
           <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
         </composable_node>
+      </load_composable_node>
 
-        <!-- vehicle cmd gate -->
+      <!-- vehicle cmd gate -->
+      <load_composable_node target="/control/control_container" if="$(var launch_vehicle_cmd_gate)">
         <composable_node pkg="autoware_vehicle_cmd_gate" plugin="autoware::vehicle_cmd_gate::VehicleCmdGate" name="vehicle_cmd_gate">
           <remap from="input/steering" to="/vehicle/status/steering_status"/>
           <remap from="input/operation_mode" to="/system/operation_mode/state"/>
@@ -139,8 +146,10 @@
           <param name="check_external_emergency_heartbeat" value="$(var check_external_emergency_heartbeat)"/>
           <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
         </composable_node>
+      </load_composable_node>
 
-        <!-- operation mode transition manager -->
+      <!-- operation mode transition manager -->
+      <load_composable_node target="/control/control_container" if="$(var launch_operation_mode_transition_manager)">
         <composable_node
           pkg="autoware_operation_mode_transition_manager"
           plugin="autoware::operation_mode_transition_manager::OperationModeTransitionManager"
@@ -162,9 +171,9 @@
           <param from="$(var vehicle_param_file)"/>
           <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
         </composable_node>
+      </load_composable_node>
 
         <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_component"/>
-      </load_composable_node>
     </group>
 
     <!-- external cmd selector -->
