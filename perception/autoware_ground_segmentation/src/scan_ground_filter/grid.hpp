@@ -137,7 +137,9 @@ public:
   float avg_height_;
   float max_height_;
   float min_height_;
-  float std_dev_height_;
+  // float std_dev_height_;
+  float gradient_;
+  float intercept_;
 
   // process flags
   bool is_processed_;
@@ -319,6 +321,9 @@ private:
   std::vector<float> azimuth_interval_per_radial_;
   std::vector<int> radial_idx_offsets_;
 
+  // list of cells
+  std::vector<Cell> cells_;
+
   // Generate grid geometry
   // the grid is cylindrical mesh grid
   // azimuth interval: constant angle
@@ -408,23 +413,23 @@ private:
   // method to determine the grid id of a point
   // -1 means out of range
   // range limit is horizon angle
-  int getGridIdx(const float radius, const float azimuth) const
+  int getGridIdx(const float & radius, const float & azimuth) const
   {
     // check if initialized
     if (!is_initialized_) {
       throw std::runtime_error("Grid is not initialized.");
     }
 
-    int grid_rad_idx = getRadialIdx(radius);
+    const int grid_rad_idx = getRadialIdx(radius);
     if (grid_rad_idx < 0) {
       return -1;
     }
 
     // normalize azimuth, make sure it is within [0, 2pi)
-    float azimuth_norm = universe_utils::normalizeRadian(azimuth, 0.0f);
+    const float azimuth_norm = universe_utils::normalizeRadian(azimuth, 0.0f);
 
     // azimuth grid id
-    int grid_az_idx = getAzimuthGridIdx(grid_rad_idx, azimuth_norm);
+    const int grid_az_idx = getAzimuthGridIdx(grid_rad_idx, azimuth_norm);
     if (grid_az_idx < 0) {
       return -1;
     }
@@ -483,7 +488,6 @@ private:
         // find nearest azimuth grid in the next radial grid
         const float azimuth = cell.center_azimuth_;
         const size_t azimuth_idx_next_radial_grid = getAzimuthGridIdx(radial_idx + 1, azimuth);
-        next_grid_id = radial_idx_offsets_[radial_idx + 1] + azimuth_idx_next_radial_grid;
         next_grid_id = getGridIdx(radial_idx + 1, azimuth_idx_next_radial_grid);
       }
       cell.next_grid_idx_ = next_grid_id;
@@ -501,9 +505,6 @@ private:
       cell.prev_grid_idx_ = prev_grid_id;
     }
   }
-
-  // list of cells
-  std::vector<Cell> cells_;
 };
 
 }  // namespace autoware::ground_segmentation
