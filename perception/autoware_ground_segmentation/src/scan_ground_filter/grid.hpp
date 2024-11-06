@@ -279,7 +279,7 @@ public:
     for (size_t i = 0; i < radial_idx_offsets_.size(); ++i) {
       size_t radial_idx = i;
       size_t azimuth_idx = 3;
-      const Cell & cell = cells_[radial_idx_offsets_[radial_idx]+azimuth_idx];
+      const Cell & cell = cells_[radial_idx_offsets_[radial_idx] + azimuth_idx];
       std::cout << "Grid id: " << radial_idx_offsets_[i] << std::endl;
       std::cout << "Number of points: " << cell.point_indices_.size() << std::endl;
 
@@ -408,21 +408,29 @@ private:
       for (size_t i = 0; i < radial_idx_offsets_.size(); ++i) {
         if (cell_id < radial_idx_offsets_[i]) {
           radial_idx = i - 1;
-          azimuth_idx = radial_idx_offsets_[i - 1] - cell_id;
+          azimuth_idx = cell_id - radial_idx_offsets_[i - 1];
           break;
         }
+      }
+      if (cell_id >= radial_idx_offsets_.back()) {
+        radial_idx = radial_idx_offsets_.size() - 1;
+        azimuth_idx = cell_id - radial_idx_offsets_.back();
       }
       cell.grid_id_ = cell_id;
       cell.radial_idx_ = radial_idx;
       cell.azimuth_idx_ = azimuth_idx;
 
       // set width of the cell
-      cell.radial_size_ =
-        grid_radial_boundaries_[radial_idx + 1] - grid_radial_boundaries_[radial_idx];
+      if (radial_idx < grid_radial_boundaries_.size() - 1) {
+        cell.radial_size_ =
+          grid_radial_boundaries_[radial_idx + 1] - grid_radial_boundaries_[radial_idx];
+      } else {
+        cell.radial_size_ = grid_radial_limit_ - grid_radial_boundaries_[radial_idx];
+      }
       cell.azimuth_size_ = azimuth_interval_per_radial_[radial_idx];
 
       // set center of the cell
-      cell.center_radius_ = grid_radial_boundaries_[radial_idx];
+      cell.center_radius_ = grid_radial_boundaries_[radial_idx] + cell.radial_size_ * 0.5f;
       cell.center_azimuth_ = (static_cast<float>(azimuth_idx) + 0.5f) * cell.azimuth_size_;
     }
   }
