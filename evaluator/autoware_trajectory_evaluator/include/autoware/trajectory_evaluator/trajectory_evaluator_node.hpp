@@ -70,7 +70,7 @@ struct TrajectoryPointWithTime {
 };
 
 struct TrajectoryWithTimestamp {
-    Trajectory::ConstSharedPtr trajectory;
+    std::vector<TrajectoryPointWithTime> trajectory_points;
     rclcpp::Time time_stamp;
 };
 
@@ -80,21 +80,19 @@ class TrajectoryEvaluatorNode : public rclcpp::Node
 {
 public:
     explicit TrajectoryEvaluatorNode(const rclcpp::NodeOptions& node_options);
-void onTrajectory(const Trajectory::ConstSharedPtr traj_msg);
+void onTrajectory(const Trajectory::ConstSharedPtr traj_msg, const nav_msgs::msg::Odometry::ConstSharedPtr odom_msg);
+void onKinematicState(const nav_msgs::msg::Odometry::ConstSharedPtr odom_msg);
 bool is_pose_equal(const geometry_msgs::msg::Pose& pose1, const geometry_msgs::msg::Pose& pose2);
 
 private:
     std::shared_ptr<rclcpp::TimerBase> traj_timer_;
     std::shared_ptr<rclcpp::TimerBase> odom_timer_;
-    /**
-    * @brief fetch data and publish diagnostics
-    */
     void onTimer();
 
-    void onKinematicState(const Odometry::ConstSharedPtr odom_msg);
+    // void onKinematicState(const Odometry::ConstSharedPtr odom_msg);
     void calculate_time_from_start(
-const TrajectoryWithTimestamp & trajectory,
-  const geometry_msgs::msg::Point & current_ego_point, const float min_velocity,  std::vector<TrajectoryPointWithTime> &trajectory_with_time);
+ TrajectoryWithTimestamp & trajectory,
+  const geometry_msgs::msg::Point & current_ego_point, const float min_velocity);
     
     // Subscribers
     autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{

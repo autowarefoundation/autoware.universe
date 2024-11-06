@@ -34,86 +34,118 @@ void TrajectoryEvaluatorNode::onTimer()
     auto current_time = now();
 
     const auto ego_state_ptr = kinematic_state_sub_.takeData();
+    const auto traj_msg = traj_sub_.takeData();
+    onTrajectory(traj_msg, ego_state_ptr);
     onKinematicState(ego_state_ptr);
 
-    const auto traj_msg = traj_sub_.takeData();
-    onTrajectory(traj_msg);
 }
 
 
-void TrajectoryEvaluatorNode::onTrajectory(Trajectory::ConstSharedPtr traj_msg) {
+void TrajectoryEvaluatorNode::onTrajectory(const Trajectory::ConstSharedPtr traj_msg, const nav_msgs::msg::Odometry::ConstSharedPtr odom_msg) {
     if (traj_msg != nullptr) {
-        trajectory_history_.push_back({traj_msg, this->now()});
-        if (trajectory_history_.size() > 100) {
+        TrajectoryWithTimestamp trajectory_with_timestamp;
+        trajectory_with_timestamp.time_stamp = this->now();
+        const auto current_position = odom_msg->pose.pose.position;
+        std::vector<TrajectoryPointWithTime> trajectory_with_time;
+
+        for (const auto& point : traj_msg->points) {
+            TrajectoryPointWithTime point_with_time(point, rclcpp::Duration::from_seconds(0), trajectory_with_timestamp.time_stamp);
+            trajectory_with_timestamp.trajectory_points.push_back(point_with_time);
+        }
+
+        calculate_time_from_start(trajectory_with_timestamp, current_position, 1e-3);
+        trajectory_history_.push_back(trajectory_with_timestamp);
+        if (trajectory_history_.size() > 10) {
             trajectory_history_.erase(trajectory_history_.begin());
         }
     }
 }
 
 void TrajectoryEvaluatorNode::calculate_time_from_start(
-    const TrajectoryWithTimestamp &trajectory_with_timestamp,
-    const geometry_msgs::msg::Point &current_ego_point, const float min_velocity, std::vector<TrajectoryPointWithTime> &trajectory_with_time)
+    TrajectoryWithTimestamp &trajectory,
+    const geometry_msgs::msg::Point &current_ego_point, 
+    const float min_velocity)
 {
-    auto trajectory_ = trajectory_with_timestamp.trajectory->points;
-    const auto nearest_segment_idx = autoware::motion_utils::findNearestSegmentIndex(trajectory_, current_ego_point);
-    if (nearest_segment_idx + 1 >= trajectory_.size()) {
+    auto &trajectory_points = trajectory.trajectory_points;
+    std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory_points_sequence;
+    for (const auto& traj_point_with_time : trajectory_points) {
+        trajectory_points_sequence.push_back(traj_point_with_time.point);
+    }
+
+    const auto nearest_segment_idx = autoware::motion_utils::findNearestSegmentIndex(trajectory_points_sequence, current_ego_point);
+    
+    if (nearest_segment_idx + 1 >= trajectory_points.size()) {
         return; 
     }
 
-    // Initialize trajectory_with_time with timestamps
-    for (const auto &p : trajectory_) {
-        trajectory_with_time.push_back(TrajectoryPointWithTime(p, rclcpp::Duration::from_seconds(0), trajectory_with_timestamp.time_stamp));
+    for (auto &point_with_time : trajectory_points) {
+        point_with_time.time_from_start = rclcpp::Duration::from_seconds(0);
     }
 
-    // Calculate the time from start and save timestamps
-    for (auto idx = nearest_segment_idx + 1; idx < trajectory_with_time.size(); ++idx) {
-        const auto &from = trajectory_with_time[idx - 1].point; 
-        const auto velocity = std::max(min_velocity, from.longitudinal_velocity_mps);
+    for (size_t idx = nearest_segment_idx + 1; idx < trajectory_points.size(); ++idx) {
+        const auto &from = trajectory_points[idx - 1];
+        const auto velocity = std::max(min_velocity, from.point.longitudinal_velocity_mps);
+        
         if (velocity != 0.0) {
-            auto &to = trajectory_with_time[idx];
-            const auto t = autoware::universe_utils::calcDistance2d(from, to.point) / velocity;
+            auto &to = trajectory_points[idx];
+            const double distance = autoware::universe_utils::calcDistance2d(from.point.pose, to.point.pose);
+            const double time_delta = distance / velocity;
 
-            to.time_from_start = rclcpp::Duration::from_seconds(t) + trajectory_with_time[idx - 1].time_from_start;
+            to.time_from_start = rclcpp::Duration::from_seconds(time_delta) + trajectory_points[idx - 1].time_from_start;
 
-            to.time_stamp = trajectory_with_time[idx - 1].time_stamp;
+            to.time_stamp = trajectory_points[idx - 1].time_stamp + rclcpp::Duration::from_seconds(time_delta);
         }
     }
 }
 
 void TrajectoryEvaluatorNode::onKinematicState(const nav_msgs::msg::Odometry::ConstSharedPtr odom_msg) {
-    const geometry_msgs::msg::Pose& pose = odom_msg->pose.pose;
+    if (odom_msg != nullptr) {
+        const geometry_msgs::msg::Pose& pose = odom_msg->pose.pose;
+        
+        const double velocity = std::sqrt(
+            std::pow(odom_msg->twist.twist.linear.x, 2) +
+            std::pow(odom_msg->twist.twist.linear.y, 2) +
+            std::pow(odom_msg->twist.twist.linear.z, 2)
+        );
 
-    std::vector<double> time_errors_;
-
-    for (const auto& trajectory : trajectory_history_) {
-        std::vector<TrajectoryPointWithTime> trajectory_with_time;
-        calculate_time_from_start(trajectory, pose.position, 1e-3, trajectory_with_time);
-
-        double min_distance = std::numeric_limits<double>::max();
-        size_t closest_index = trajectory_with_time.size();
-
-        for (size_t i = 0; i < trajectory_with_time.size(); ++i) {
-            const auto& trajectory_point_pose = trajectory_with_time[i].point.pose;
-            double distance = std::sqrt(
-                std::pow(trajectory_point_pose.position.x - pose.position.x, 2) +
-                std::pow(trajectory_point_pose.position.y - pose.position.y, 2)
-            );
-
-            if (distance < min_distance) {
-                min_distance = distance;
-                closest_index = i; 
-            }
+        // Skip processing if the vehicle is stationary
+        if (velocity == 0.0) {
+            return;
         }
 
-        if (closest_index < trajectory_with_time.size()) {
-            const auto& closest_point = trajectory_with_time[closest_index];
-            rclcpp::Time timestamp = closest_point.time_stamp; 
-            double actual_time = std::abs(timestamp.seconds() - odom_msg->header.stamp.sec);
-            double time_error = std::abs(actual_time - closest_point.time_from_start.seconds()); 
-            time_errors_.push_back(time_error);
-            RCLCPP_INFO(get_logger(), "Trajectory.time_stamp for closest trajectory point %zu: %f seconds", closest_index, closest_point.time_stamp.seconds());
-            RCLCPP_INFO(get_logger(), "Closest point expected for closest trajectory point %zu: %f seconds", closest_index, closest_point.time_from_start.seconds());
-            RCLCPP_INFO(get_logger(), "Time error for closest trajectory point %zu: %f seconds", closest_index, time_error);
+        std::vector<double> time_errors_;
+
+        rclcpp::Time current_time = this->now();
+
+        for (const auto& trajectory : trajectory_history_) {
+            double min_distance = std::numeric_limits<double>::max();
+            size_t closest_index = trajectory.trajectory_points.size();
+
+            for (size_t i = 0; i < trajectory.trajectory_points.size(); ++i) {
+                const auto& trajectory_point_pose = trajectory.trajectory_points[i].point.pose;
+                double distance = std::sqrt(
+                    std::pow(trajectory_point_pose.position.x - pose.position.x, 2) +
+                    std::pow(trajectory_point_pose.position.y - pose.position.y, 2)
+                );
+
+                if (distance < min_distance) {
+                    min_distance = distance;
+                    closest_index = i; 
+                }
+            }
+
+            if (closest_index < trajectory.trajectory_points.size()) {
+                const auto& closest_point = trajectory.trajectory_points[closest_index];
+
+                double time_at_pose = (current_time - trajectory.time_stamp).seconds(); // t_P
+                double time_error = std::abs(time_at_pose - closest_point.time_from_start.seconds());
+                time_errors_.push_back(time_error);
+
+                // Log information
+                RCLCPP_INFO(get_logger(), "Trajectory published at %f seconds", trajectory.time_stamp.seconds());
+                RCLCPP_INFO(get_logger(), "Closest point expected at: %f seconds", closest_point.time_from_start.seconds());
+                RCLCPP_INFO(get_logger(), "Time error for closest trajectory point: %f seconds", time_error);
+            }
         }
     }
 }
