@@ -73,8 +73,8 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
   pub_biased_pose_cov_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "ekf_biased_pose_with_covariance", 1);
   pub_diag_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
-  pub_processing_time_ =
-    create_publisher<autoware::universe_utils::ProcessingTimeDetail>("~/debug/processing_time_ms", 1);
+  pub_processing_time_ = create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+    "~/debug/processing_time_ms", 1);
   sub_initialpose_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 1, std::bind(&EKFLocalizer::callback_initial_pose, this, _1));
   sub_pose_with_cov_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -95,8 +95,7 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
   ekf_module_ = std::make_unique<EKFModule>(warning_, params_);
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
 
-  time_keeper_ =
-    std::make_shared<autoware::universe_utils::TimeKeeper>(pub_processing_time_, &std::cerr);
+  time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(pub_processing_time_);
 }
 
 /*
