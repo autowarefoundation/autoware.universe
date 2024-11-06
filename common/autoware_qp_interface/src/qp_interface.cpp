@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "qp_interface/qp_interface.hpp"
+#include "autoware/qp_interface/qp_interface.hpp"
 
 #include <iostream>
 #include <string>
 #include <vector>
 
-namespace autoware::common
+namespace autoware::qp_interface
 {
 void QPInterface::initializeProblem(
   const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
@@ -67,4 +67,4 @@ std::vector<double> QPInterface::optimize(
 
   return result;
 }
-}  // namespace autoware::common
+}  // namespace autoware::qp_interface

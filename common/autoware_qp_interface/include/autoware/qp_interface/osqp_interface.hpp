@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef QP_INTERFACE__OSQP_INTERFACE_HPP_
-#define QP_INTERFACE__OSQP_INTERFACE_HPP_
+#ifndef AUTOWARE__QP_INTERFACE__OSQP_INTERFACE_HPP_
+#define AUTOWARE__QP_INTERFACE__OSQP_INTERFACE_HPP_
 
+#include "autoware/qp_interface/osqp_csc_matrix_conv.hpp"
+#include "autoware/qp_interface/qp_interface.hpp"
 #include "osqp/osqp.h"
-#include "qp_interface/osqp_csc_matrix_conv.hpp"
-#include "qp_interface/qp_interface.hpp"
 
 #include <limits>
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace autoware::common
+namespace autoware::qp_interface
 {
 constexpr c_float OSQP_INF = 1e30;
 
@@ -142,6 +142,6 @@ private:
 
   std::vector<double> optimizeImpl() override;
 };
-}  // namespace autoware::common
+}  // namespace autoware::qp_interface
 
-#endif  // QP_INTERFACE__OSQP_INTERFACE_HPP_
+#endif  // AUTOWARE__QP_INTERFACE__OSQP_INTERFACE_HPP_
