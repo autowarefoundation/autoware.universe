@@ -22,7 +22,7 @@
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
-#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
@@ -85,6 +85,8 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_biased_pose_cov_;
   //!< @brief diagnostics publisher
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_diag_;
+  //!< @brief processing time publisher
+  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_;
   //!< @brief initial pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
   //!< @brief measurement pose with covariance subscriber
@@ -123,6 +125,8 @@ private:
 
   AgedObjectQueue<geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr> pose_queue_;
   AgedObjectQueue<geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr> twist_queue_;
+
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
@@ -183,8 +187,6 @@ private:
   void service_trigger_node(
     const std_srvs::srv::SetBool::Request::SharedPtr req,
     std_srvs::srv::SetBool::Response::SharedPtr res);
-
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
   friend class EKFLocalizerTestSuite;  // for test code
 };

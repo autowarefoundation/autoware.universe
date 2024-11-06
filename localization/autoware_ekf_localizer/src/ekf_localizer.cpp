@@ -73,6 +73,8 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
   pub_biased_pose_cov_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "ekf_biased_pose_with_covariance", 1);
   pub_diag_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
+  pub_processing_time_ =
+    create_publisher<autoware::universe_utils::ProcessingTimeDetail>("~/debug/processing_time_ms", 1);
   sub_initialpose_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 1, std::bind(&EKFLocalizer::callback_initial_pose, this, _1));
   sub_pose_with_cov_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -92,6 +94,9 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
 
   ekf_module_ = std::make_unique<EKFModule>(warning_, params_);
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
+
+  time_keeper_ =
+    std::make_shared<autoware::universe_utils::TimeKeeper>(pub_processing_time_, &std::cerr);
 }
 
 /*
@@ -144,10 +149,10 @@ void EKFLocalizer::timer_callback()
   update_predict_frequency(current_time);
 
   /* predict model in EKF */
-  stop_watch_.tic();
   DEBUG_INFO(get_logger(), "------------------------- start prediction -------------------------");
+  time_keeper_->start_track("predict_with_delay");
   ekf_module_->predict_with_delay(ekf_dt_);
-  DEBUG_INFO(get_logger(), "[EKF] predictKinematicsModel calc time = %f [ms]", stop_watch_.toc());
+  time_keeper_->end_track("predict_with_delay");
   DEBUG_INFO(get_logger(), "------------------------- end prediction -------------------------\n");
 
   /* pose measurement update */
@@ -162,7 +167,7 @@ void EKFLocalizer::timer_callback()
 
   if (!pose_queue_.empty()) {
     DEBUG_INFO(get_logger(), "------------------------- start Pose -------------------------");
-    stop_watch_.tic();
+    autoware::universe_utils::ScopedTimeTrack st("measurement_update_pose", *time_keeper_);
 
     // save the initial size because the queue size can change in the loop
     const size_t n = pose_queue_.size();
@@ -173,8 +178,6 @@ void EKFLocalizer::timer_callback()
         pose_is_updated = true;
       }
     }
-    DEBUG_INFO(
-      get_logger(), "[EKF] measurement_update_pose calc time = %f [ms]", stop_watch_.toc());
     DEBUG_INFO(get_logger(), "------------------------- end Pose -------------------------\n");
   }
   pose_diag_info_.no_update_count = pose_is_updated ? 0 : (pose_diag_info_.no_update_count + 1);
@@ -191,7 +194,7 @@ void EKFLocalizer::timer_callback()
 
   if (!twist_queue_.empty()) {
     DEBUG_INFO(get_logger(), "------------------------- start Twist -------------------------");
-    stop_watch_.tic();
+    autoware::universe_utils::ScopedTimeTrack st("measurement_update_twist", *time_keeper_);
 
     // save the initial size because the queue size can change in the loop
     const size_t n = twist_queue_.size();
@@ -203,8 +206,6 @@ void EKFLocalizer::timer_callback()
         twist_is_updated = true;
       }
     }
-    DEBUG_INFO(
-      get_logger(), "[EKF] measurement_update_twist calc time = %f [ms]", stop_watch_.toc());
     DEBUG_INFO(get_logger(), "------------------------- end Twist -------------------------\n");
   }
   twist_diag_info_.no_update_count = twist_is_updated ? 0 : (twist_diag_info_.no_update_count + 1);
