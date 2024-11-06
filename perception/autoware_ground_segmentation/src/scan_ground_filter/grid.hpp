@@ -117,12 +117,16 @@ public:
   std::vector<size_t> point_indices_;
 
   // method to check if the cell is empty
-  bool is_empty() const { return point_indices_.empty(); }
+  bool isEmpty() const { return point_indices_.empty(); }
+
+  int getPointNum() const { return point_indices_.size(); }
 
   // index of the cell
   int grid_id_;
   int radial_idx_;
   int azimuth_idx_;
+
+  int next_grid_id_;
 
   // geometric properties of the cell
   float center_radius_;
@@ -147,19 +151,6 @@ public:
   {
   }
   ~Grid() = default;
-
-  // given parameters
-  float origin_x_;
-  float origin_y_;
-  float origin_z_;
-  float grid_dist_size_;                // meters
-  float grid_azimuth_size_;             // radians
-  float grid_linearity_switch_radius_;  // meters
-
-  // calculated parameters
-  float grid_radial_limit_;   // meters
-  float grid_dist_size_rad_;  // radians
-  bool is_initialized_ = false;
 
   void initialize(
     const float grid_dist_size, const float grid_azimuth_size,
@@ -235,6 +226,16 @@ public:
     cells_[grid_id].point_indices_.push_back(point_idx);
   }
 
+  size_t getGridSize() const
+  {
+    // check if initialized
+    if (!is_initialized_) {
+      throw std::runtime_error("Grid is not initialized.");
+    }
+
+    return cells_.size();
+  }
+
   // method to get the cell
   const Cell & getCell(const int grid_id) const
   {
@@ -246,32 +247,20 @@ public:
     return cells_[grid_id];
   }
 
-  // method to get cell idx of the next cell
-  // which is radially adjacent to the current cell
-  int getNextCellIdx(const int grid_id) const
+  void resetCells()
+  {
+    for (auto & cell : cells_) {
+      cell.point_indices_.clear();
+    }
+  }
+
+  void setGridStatistics()
   {
     // check if initialized
     if (!is_initialized_) {
       throw std::runtime_error("Grid is not initialized.");
     }
 
-    // check if the grid id is valid
-    if (grid_id < 0 || grid_id >= static_cast<int>(cells_.size())) {
-      return -1;
-    }
-
-    // get the grid id of the next cell
-    // which is radially adjacent to the current cell
-
-    // geometry calculation for the grid... not implemented yet
-
-    int next_grid_id = 0;
-
-    return next_grid_id;
-  }
-
-  void setGridStatistics()
-  {
     // debug information for new grid
 
     // check number of points in cells, azimuth grid index of 0
@@ -280,8 +269,8 @@ public:
       size_t radial_idx = i;
       size_t azimuth_idx = 3;
       const Cell & cell = cells_[radial_idx_offsets_[radial_idx] + azimuth_idx];
-      std::cout << "Grid id: " << radial_idx_offsets_[i] << std::endl;
-      std::cout << "Number of points: " << cell.point_indices_.size() << std::endl;
+      std::cout << "====== Grid id: " << radial_idx_offsets_[i]
+                << ", Number of points: " << cell.point_indices_.size() << std::endl;
 
       // print index of the cell
       std::cout << "index: " << cell.grid_id_ << " radial: " << cell.radial_idx_
@@ -290,10 +279,31 @@ public:
       // print position of the cell
       std::cout << "position radius: " << cell.center_radius_
                 << " azimuth: " << cell.center_azimuth_ * 180 / M_PI << std::endl;
+
+      // print next grid, only exists
+      if (cell.next_grid_id_ >= 0) {
+        const Cell & next_cell = cells_[cell.next_grid_id_];
+        std::cout << "--- next grid id: " << next_cell.grid_id_ << std::endl;
+        std::cout << "position radius: " << next_cell.center_radius_
+                  << " azimuth: " << next_cell.center_azimuth_ * 180 / M_PI << std::endl;
+      }
     }
   }
 
 private:
+  // given parameters
+  float origin_x_;
+  float origin_y_;
+  float origin_z_;
+  float grid_dist_size_;                // meters
+  float grid_azimuth_size_;             // radians
+  float grid_linearity_switch_radius_;  // meters
+
+  // calculated parameters
+  float grid_radial_limit_;   // meters
+  float grid_dist_size_rad_;  // radians
+  bool is_initialized_ = false;
+
   // array of grid boundaries
   std::vector<float> grid_radial_boundaries_;
   std::vector<int> azimuth_grids_per_radial_;
@@ -332,12 +342,13 @@ private:
         throw std::runtime_error("Grid azimuth size is not positive.");
       }
 
-      // number of azimuth grids per radial grid, which is constant
+      // number of azimuth grids per radial grid
       const int azimuth_grid_num = std::max(static_cast<int>(2.0 * M_PI / grid_azimuth_size_), 1);
       const float azimuth_interval_evened = 2.0f * M_PI / azimuth_grid_num;
       azimuth_grids_per_radial_.resize(grid_radial_boundaries_.size());
       azimuth_interval_per_radial_.resize(grid_radial_boundaries_.size());
       for (size_t i = 0; i < grid_radial_boundaries_.size(); ++i) {
+        // constant azimuth interval
         azimuth_grids_per_radial_[i] = azimuth_grid_num;
         azimuth_interval_per_radial_[i] = azimuth_interval_evened;
       }
@@ -385,6 +396,7 @@ private:
     // azimuth grid id
     int grid_az_idx = -1;
     if (grid_rad_idx >= 0) {
+      // constant azimuth interval
       grid_az_idx = static_cast<int>(azimuth_norm / azimuth_interval_per_radial_[grid_rad_idx]);
     }
 
@@ -432,6 +444,19 @@ private:
       // set center of the cell
       cell.center_radius_ = grid_radial_boundaries_[radial_idx] + cell.radial_size_ * 0.5f;
       cell.center_azimuth_ = (static_cast<float>(azimuth_idx) + 0.5f) * cell.azimuth_size_;
+
+      // set next grid id, which is radially next
+      int next_grid_id = -1;
+      // only if the next radial grid exists
+      if (radial_idx < grid_radial_boundaries_.size() - 1) {
+        // find nearest azimuth grid in the next radial grid
+        float azimuth = cell.center_azimuth_;
+        // constant azimuth interval
+        size_t azimuth_idx_next_radial_grid =
+          static_cast<int>(azimuth / azimuth_interval_per_radial_[radial_idx + 1]);
+        next_grid_id = radial_idx_offsets_[radial_idx + 1] + azimuth_idx_next_radial_grid;
+      }
+      cell.next_grid_id_ = next_grid_id;
     }
   }
 

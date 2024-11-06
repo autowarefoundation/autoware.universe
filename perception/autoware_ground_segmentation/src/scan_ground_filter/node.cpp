@@ -165,6 +165,9 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("azimuth_angle_grouping", *time_keeper_);
 
+    // reset grid cells
+    grid_ptr_->resetCells();
+
     pcl::PointXYZ input_point;
     for (size_t data_index = 0; data_index + in_cloud_point_step <= in_cloud_data_size;
          data_index += in_cloud_point_step) {
@@ -585,6 +588,31 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         centroid_bin.addPoint(pd_curr.radius, point_curr.z, pd_curr.data_index);
       }
       // else, the point is not classified
+    }
+  }
+
+  // run ground segmentation for the new grid
+  out_no_ground_indices.indices.clear();
+  {
+    constexpr float NON_GROUND_HEIGHT = 0.0f;
+
+    const auto grid_size = grid_ptr_->getGridSize();
+    // loop over grid cells
+    for (size_t idx = 0; idx < grid_size; idx++) {
+      const auto & cell = grid_ptr_->getCell(idx);
+      // iterate over points in the grid cell
+      const auto num_points = static_cast<size_t>(cell.getPointNum());
+      for (size_t j = 0; j < num_points; ++j) {
+        const auto & pt_idx = cell.point_indices_[j];
+        pcl::PointXYZ point_curr;
+        get_point_from_data_index(in_cloud, pt_idx, point_curr);
+
+        // simple logic for now
+        // if z is higher than the threshold, it is non-ground
+        if (point_curr.z > NON_GROUND_HEIGHT) {
+          out_no_ground_indices.indices.push_back(pt_idx);
+        }
+      }
     }
   }
 }
