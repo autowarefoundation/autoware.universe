@@ -905,7 +905,10 @@ void AEB::getClosestObjectsOnPath(
     const auto obj_position = autoware::universe_utils::createPoint(p.x, p.y, p.z);
     const double obj_arc_length =
       autoware::motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
-    if (std::isnan(obj_arc_length) || obj_arc_length > path_length) continue;
+    if (
+      std::isnan(obj_arc_length) ||
+      obj_arc_length > path_length + vehicle_info_.max_longitudinal_offset_m)
+      continue;
 
     // calculate the lateral offset between the ego vehicle and the object
     const double lateral_offset =
