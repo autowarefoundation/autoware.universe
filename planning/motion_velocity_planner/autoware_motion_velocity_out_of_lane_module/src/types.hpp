@@ -95,7 +95,7 @@ using OutLaneletRtree = bgi::rtree<LaneletNode, bgi::rstar<16>>;
 struct EgoData
 {
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint>
-    trajectory_points;  // filtered trajectory starting from the 1st point ahead of ego
+    trajectory_points;  // filtered trajectory starting from the 1st point behind ego
   geometry_msgs::msg::Pose pose;
   size_t first_trajectory_idx{};  // segment index closest to ego on the original trajectory
   double
