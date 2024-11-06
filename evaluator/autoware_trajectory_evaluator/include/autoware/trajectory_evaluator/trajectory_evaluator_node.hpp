@@ -16,45 +16,21 @@
 #define AUTOWARE__TRAJECTORY_EVALUATOR__TRAJECTORY_EVALUATOR_NODE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
 
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
-
-#include "autoware_perception_msgs/msg/predicted_objects.hpp"
-#include "autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include <autoware_planning_msgs/msg/lanelet_route.hpp>
-#include "std_msgs/msg/string.hpp"
-
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "autoware/universe_utils/geometry/pose_deviation.hpp"
-#include "autoware/universe_utils/math/constants.hpp"
-#include "autoware/universe_utils/system/backtrace.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 
-#include <array>
-#include <deque>
-#include <memory>
-#include <string>
 #include <vector>
-#include <limits>
 #include <cmath>
 #include <chrono>
+#include <deque>
 
 namespace trajectory_evaluator {
-
-using autoware_perception_msgs::msg::PredictedObjects;
-using autoware_planning_msgs::msg::PoseWithUuidStamped;
-using autoware_planning_msgs::msg::Trajectory;
-using autoware_planning_msgs::msg::TrajectoryPoint;
-using diagnostic_msgs::msg::DiagnosticArray;
-using nav_msgs::msg::Odometry;
-using geometry_msgs::msg::Pose;
 
 struct TrajectoryPointWithTime {
     autoware_planning_msgs::msg::TrajectoryPoint point;
@@ -80,7 +56,7 @@ class TrajectoryEvaluatorNode : public rclcpp::Node
 {
 public:
     explicit TrajectoryEvaluatorNode(const rclcpp::NodeOptions& node_options);
-void onTrajectory(const Trajectory::ConstSharedPtr traj_msg, const nav_msgs::msg::Odometry::ConstSharedPtr odom_msg);
+void onTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr traj_msg, const nav_msgs::msg::Odometry::ConstSharedPtr odom_msg);
 void onKinematicState(const nav_msgs::msg::Odometry::ConstSharedPtr odom_msg);
 bool is_pose_equal(const geometry_msgs::msg::Pose& pose1, const geometry_msgs::msg::Pose& pose2);
 
@@ -95,9 +71,9 @@ private:
   const geometry_msgs::msg::Point & current_ego_point, const float min_velocity);
     
     // Subscribers
-    autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{
+    autoware::universe_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::Trajectory> traj_sub_{
         this, "/planning/scenario_planning/trajectory"};
-    autoware::universe_utils::InterProcessPollingSubscriber<Odometry> kinematic_state_sub_{
+    autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> kinematic_state_sub_{
         this, "/localization/kinematic_state"};
 
     // Store past trajectory messages
