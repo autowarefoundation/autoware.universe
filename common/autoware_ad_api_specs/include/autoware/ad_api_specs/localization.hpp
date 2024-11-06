@@ -20,7 +20,7 @@
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/initialize_localization.hpp>
 
-namespace autoware_ad_api::localization
+namespace autoware::ad_api_specs::localization
 {
 
 struct Initialize
@@ -38,6 +38,6 @@ struct InitializationState
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware_ad_api::localization
+}  // namespace autoware::ad_api_specs::localization
 
 #endif  // AUTOWARE_AD_API_SPECS__LOCALIZATION_HPP_

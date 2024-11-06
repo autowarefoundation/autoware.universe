@@ -12,25 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_AD_API_SPECS__PERCEPTION_HPP_
-#define AUTOWARE_AD_API_SPECS__PERCEPTION_HPP_
+#ifndef AUTOWARE_AD_API_SPECS__FAIL_SAFE_HPP_
+#define AUTOWARE_AD_API_SPECS__FAIL_SAFE_HPP_
 
 #include <rclcpp/qos.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 
-namespace autoware_ad_api::perception
+namespace autoware::ad_api_specs::fail_safe
 {
 
-struct DynamicObjectArray
+struct MrmState
 {
-  using Message = autoware_adapi_v1_msgs::msg::DynamicObjectArray;
-  static constexpr char name[] = "/api/perception/objects";
+  using Message = autoware_adapi_v1_msgs::msg::MrmState;
+  static constexpr char name[] = "/api/fail_safe/mrm_state";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
-  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware_ad_api::perception
+}  // namespace autoware::ad_api_specs::fail_safe
 
-#endif  // AUTOWARE_AD_API_SPECS__PERCEPTION_HPP_
+#endif  // AUTOWARE_AD_API_SPECS__FAIL_SAFE_HPP_

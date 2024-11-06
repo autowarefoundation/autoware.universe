@@ -20,7 +20,7 @@
 #include <autoware_adapi_v1_msgs/msg/motion_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/accept_start.hpp>
 
-namespace autoware_ad_api::motion
+namespace autoware::ad_api_specs::motion
 {
 
 struct AcceptStart
@@ -38,6 +38,6 @@ struct State
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware_ad_api::motion
+}  // namespace autoware::ad_api_specs::motion
 
 #endif  // AUTOWARE_AD_API_SPECS__MOTION_HPP_

@@ -23,7 +23,7 @@
 #include <autoware_adapi_v1_msgs/srv/set_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
 
-namespace autoware_ad_api::routing
+namespace autoware::ad_api_specs::routing
 {
 
 struct SetRoutePoints
@@ -74,6 +74,6 @@ struct Route
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware_ad_api::routing
+}  // namespace autoware::ad_api_specs::routing
 
 #endif  // AUTOWARE_AD_API_SPECS__ROUTING_HPP_

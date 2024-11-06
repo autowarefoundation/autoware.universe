@@ -16,7 +16,7 @@
 #define LOCALIZATION_HPP_
 
 #include <autoware/component_interface_specs/localization.hpp>
-#include <autoware_ad_api_specs/localization.hpp>
+#include <autoware/ad_api_specs/localization.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 // This file should be included after messages.
@@ -32,14 +32,14 @@ public:
 
 private:
   rclcpp::CallbackGroup::SharedPtr group_cli_;
-  Srv<autoware_ad_api::localization::Initialize> srv_initialize_;
-  Pub<autoware_ad_api::localization::InitializationState> pub_state_;
+  Srv<autoware::ad_api_specs::localization::Initialize> srv_initialize_;
+  Pub<autoware::ad_api_specs::localization::InitializationState> pub_state_;
   Cli<autoware::component_interface_specs::localization::Initialize> cli_initialize_;
   Sub<autoware::component_interface_specs::localization::InitializationState> sub_state_;
 
   void on_initialize(
-    const autoware_ad_api::localization::Initialize::Service::Request::SharedPtr req,
-    const autoware_ad_api::localization::Initialize::Service::Response::SharedPtr res);
+    const autoware::ad_api_specs::localization::Initialize::Service::Request::SharedPtr req,
+    const autoware::ad_api_specs::localization::Initialize::Service::Response::SharedPtr res);
 };
 
 }  // namespace autoware::default_adapi

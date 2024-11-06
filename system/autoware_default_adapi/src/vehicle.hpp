@@ -18,7 +18,7 @@
 #include <autoware/component_interface_specs/localization.hpp>
 #include <autoware/component_interface_specs/map.hpp>
 #include <autoware/component_interface_specs/vehicle.hpp>
-#include <autoware_ad_api_specs/vehicle.hpp>
+#include <autoware/ad_api_specs/vehicle.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/gear.hpp>
@@ -40,8 +40,8 @@ public:
 
 private:
   rclcpp::CallbackGroup::SharedPtr group_cli_;
-  Pub<autoware_ad_api::vehicle::VehicleKinematics> pub_kinematics_;
-  Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
+  Pub<autoware::ad_api_specs::vehicle::VehicleKinematics> pub_kinematics_;
+  Pub<autoware::ad_api_specs::vehicle::VehicleStatus> pub_status_;
   Sub<autoware::component_interface_specs::localization::KinematicState> sub_kinematic_state_;
   Sub<autoware::component_interface_specs::localization::Acceleration> sub_acceleration_;
   Sub<autoware::component_interface_specs::vehicle::SteeringStatus> sub_steering_;

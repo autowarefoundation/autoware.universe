@@ -16,7 +16,7 @@
 #define ROUTING_ADAPTOR_HPP_
 
 #include <autoware/component_interface_utils/rclcpp.hpp>
-#include <autoware_ad_api_specs/routing.hpp>
+#include <autoware/ad_api_specs/routing.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -33,10 +33,10 @@ public:
 
 private:
   using PoseStamped = geometry_msgs::msg::PoseStamped;
-  using SetRoutePoints = autoware_ad_api::routing::SetRoutePoints;
-  using ChangeRoutePoints = autoware_ad_api::routing::ChangeRoutePoints;
-  using ClearRoute = autoware_ad_api::routing::ClearRoute;
-  using RouteState = autoware_ad_api::routing::RouteState;
+  using SetRoutePoints = autoware::ad_api_specs::routing::SetRoutePoints;
+  using ChangeRoutePoints = autoware::ad_api_specs::routing::ChangeRoutePoints;
+  using ClearRoute = autoware::ad_api_specs::routing::ClearRoute;
+  using RouteState = autoware::ad_api_specs::routing::RouteState;
   autoware::component_interface_utils::Client<ChangeRoutePoints>::SharedPtr cli_reroute_;
   autoware::component_interface_utils::Client<SetRoutePoints>::SharedPtr cli_route_;
   autoware::component_interface_utils::Client<ClearRoute>::SharedPtr cli_clear_;
