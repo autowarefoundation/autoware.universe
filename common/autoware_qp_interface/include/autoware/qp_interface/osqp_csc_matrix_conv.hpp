@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
-#define QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
+#ifndef AUTOWARE__QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
+#define AUTOWARE__QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
 
 #include "osqp/glob_opts.h"
 
@@ -21,7 +21,7 @@
 
 #include <vector>
 
-namespace autoware::common
+namespace autoware::qp_interface
 {
 /// \brief Compressed-Column-Sparse Matrix
 struct CSC_Matrix
@@ -41,6 +41,6 @@ CSC_Matrix calCSCMatrixTrapezoidal(const Eigen::MatrixXd & mat);
 /// \brief Print the given CSC matrix to the standard output
 void printCSCMatrix(const CSC_Matrix & csc_mat);
 
-}  // namespace autoware::common
+}  // namespace autoware::qp_interface
 
-#endif  // QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_
+#endif  // AUTOWARE__QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_

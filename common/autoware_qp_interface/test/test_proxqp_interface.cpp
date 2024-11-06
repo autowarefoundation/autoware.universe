@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/qp_interface/proxqp_interface.hpp"
 #include "gtest/gtest.h"
-#include "qp_interface/proxqp_interface.hpp"
 
 #include <Eigen/Core>
 
@@ -57,7 +57,7 @@ TEST(TestProxqpInterface, BasicQp)
 
   {
     // Define problem during optimization
-    autoware::common::ProxQPInterface proxqp(false, 4000, 1e-9, 1e-9, false);
+    autoware::qp_interface::ProxQPInterface proxqp(false, 4000, 1e-9, 1e-9, false);
     const auto solution = proxqp.QPInterface::optimize(P, A, q, l, u);
     const auto status = proxqp.getStatus();
     check_result(solution, status);
@@ -65,7 +65,7 @@ TEST(TestProxqpInterface, BasicQp)
 
   {
     // Define problem during optimization with warm start
-    autoware::common::ProxQPInterface proxqp(true, 4000, 1e-9, 1e-9, false);
+    autoware::qp_interface::ProxQPInterface proxqp(true, 4000, 1e-9, 1e-9, false);
     {
       const auto solution = proxqp.QPInterface::optimize(P, A, q, l, u);
       const auto status = proxqp.getStatus();
