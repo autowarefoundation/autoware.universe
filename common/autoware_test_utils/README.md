@@ -101,4 +101,4 @@ self_odometry:
     ...
 ```
 
-Each field can be parsed to ROS2 message type using the functions defined in `autoware_test_utils/mock_data_parser.hpp`
+Each field can be parsed to ROS message type using the functions defined in `autoware_test_utils/mock_data_parser.hpp`

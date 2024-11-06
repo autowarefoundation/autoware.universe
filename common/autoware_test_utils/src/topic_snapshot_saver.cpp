@@ -238,7 +238,7 @@ private:
 # format1:
 #
 # format_version: <format-major-version, int>
-# map_path_uri: package://<package-name>/<resouce-path>
+# map_path_uri: package://<package-name>/<resource-path>
 # fields(this is array)
 #   - name: <field-name-for-your-yaml-of-this-topic, str>
 #     type: either {Odometry | AccelWithCovarianceStamped | PredictedObjects | OperationModeState | LaneletRoute | TrafficLightGroupArray | TBD}
