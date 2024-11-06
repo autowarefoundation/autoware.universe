@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_LIGHT_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
-#define TRAFFIC_LIGHT_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
+#ifndef AUTOWARE__TRAFFIC_LIGHT_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
+#define AUTOWARE__TRAFFIC_LIGHT_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
 
 #include "autoware_perception_msgs/msg/traffic_light_element.hpp"
 #include "autoware_perception_msgs/msg/traffic_light_group.hpp"
@@ -27,7 +27,7 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Transform.h>
 
-namespace traffic_light_utils
+namespace autoware::traffic_light_utils
 {
 
 void setSignalUnknown(tier4_perception_msgs::msg::TrafficLight & signal, float confidence = -1);
@@ -79,6 +79,6 @@ tf2::Vector3 getTrafficLightBottomRight(const lanelet::ConstLineString3d & traff
 
 tf2::Vector3 getTrafficLightCenter(const lanelet::ConstLineString3d & traffic_light);
 
-}  // namespace traffic_light_utils
+}  // namespace autoware::traffic_light_utils
 
-#endif  // TRAFFIC_LIGHT_UTILS__TRAFFIC_LIGHT_UTILS_HPP_
+#endif  // AUTOWARE__TRAFFIC_LIGHT_UTILS__TRAFFIC_LIGHT_UTILS_HPP_

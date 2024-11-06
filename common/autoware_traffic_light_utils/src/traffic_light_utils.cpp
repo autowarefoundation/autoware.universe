@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traffic_light_utils/traffic_light_utils.hpp"
+#include "autoware/traffic_light_utils/traffic_light_utils.hpp"
 
-namespace traffic_light_utils
+namespace autoware::traffic_light_utils
 {
 
 void setSignalUnknown(tier4_perception_msgs::msg::TrafficLight & signal, float confidence)
@@ -105,4 +105,4 @@ tf2::Vector3 getTrafficLightCenter(const lanelet::ConstLineString3d & traffic_li
   return (top_left + bottom_right) / 2;
 }
 
-}  // namespace traffic_light_utils
+}  // namespace autoware::traffic_light_utils

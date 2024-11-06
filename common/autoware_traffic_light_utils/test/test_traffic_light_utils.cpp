@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/traffic_light_utils/traffic_light_utils.hpp"
 #include "gtest/gtest.h"
-#include "traffic_light_utils/traffic_light_utils.hpp"
 
-namespace traffic_light_utils
+namespace autoware::traffic_light_utils
 {
 
 TEST(setSignalUnknown, set_signal_element)
@@ -53,4 +53,4 @@ TEST(getTrafficLightCenter, get_signal)
   EXPECT_FLOAT_EQ(getTrafficLightCenter(test_light).z(), (float)1.5);
 }
 
-}  // namespace traffic_light_utils
+}  // namespace autoware::traffic_light_utils
