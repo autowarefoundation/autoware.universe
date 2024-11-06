@@ -270,7 +270,7 @@ public:
     if (!map_path) {
       RCLCPP_ERROR(
         get_logger(),
-        "failed to resolve %s. expected form is package://<package-name>/<resouce-path>",
+        "failed to resolve %s. expected form is package://<package-name>/<resource-path>",
         map_path_uri.c_str());
     } else if (!config_path) {
       RCLCPP_ERROR(
