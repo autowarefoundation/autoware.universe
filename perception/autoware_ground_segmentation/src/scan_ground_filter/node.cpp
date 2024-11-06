@@ -594,7 +594,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
   // run ground segmentation for the new grid
   out_no_ground_indices.indices.clear();
   {
-    constexpr float NON_GROUND_HEIGHT = 0.0f;
+    constexpr float NON_GROUND_HEIGHT = 0.2f;
 
     const auto grid_size = grid_ptr_->getGridSize();
     // loop over grid cells
@@ -602,6 +602,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       const auto & cell = grid_ptr_->getCell(idx);
       // iterate over points in the grid cell
       const auto num_points = static_cast<size_t>(cell.getPointNum());
+
       for (size_t j = 0; j < num_points; ++j) {
         const auto & pt_idx = cell.point_indices_[j];
         pcl::PointXYZ point_curr;
