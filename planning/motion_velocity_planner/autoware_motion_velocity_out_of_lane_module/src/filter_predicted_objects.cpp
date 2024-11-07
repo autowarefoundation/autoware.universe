@@ -116,7 +116,7 @@ autoware_perception_msgs::msg::PredictedObjects filter_predicted_objects(
 
     const auto is_coming_from_behind =
       motion_utils::calcSignedArcLength(
-        ego_data.trajectory_points, ego_data.first_trajectory_idx,
+        ego_data.trajectory_points, 0UL,
         object.kinematics.initial_pose_with_covariance.pose.position) < 0.0;
     if (params.objects_ignore_behind_ego && is_coming_from_behind) {
       continue;
