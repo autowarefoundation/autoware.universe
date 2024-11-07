@@ -68,3 +68,6 @@ units:
     type: and
     list:
       - { type: link, link: /autoware/system/service_log_checker }
+
+edits:
+  - { type: remove, path: /autoware/control/collision_detector }
