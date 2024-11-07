@@ -11,9 +11,6 @@ path_generator:
   enable_akima_spline_first:
     type: bool
 
-  enable_cog_on_centerline:
-    type: bool
-
   ego_nearest_dist_threshold:
     type: double
 
