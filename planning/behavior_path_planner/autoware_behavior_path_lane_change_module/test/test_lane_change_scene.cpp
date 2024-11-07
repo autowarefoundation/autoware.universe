@@ -22,11 +22,13 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include "autoware_planning_msgs/msg/lanelet_route.hpp"
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 
 #include <gtest/gtest.h>
 
 #include <memory>
 
+using autoware::behavior_path_planner::FilteredByLanesExtendedObjects;
 using autoware::behavior_path_planner::LaneChangeModuleManager;
 using autoware::behavior_path_planner::LaneChangeModuleType;
 using autoware::behavior_path_planner::NormalLaneChange;
@@ -40,6 +42,7 @@ using autoware::test_utils::get_absolute_path_to_config;
 using autoware::test_utils::get_absolute_path_to_lanelet_map;
 using autoware::test_utils::get_absolute_path_to_route;
 using autoware_map_msgs::msg::LaneletMapBin;
+using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::Pose;
 using tier4_planning_msgs::msg::PathWithLaneId;
@@ -64,8 +67,13 @@ public:
 
     ego_pose_ = autoware::test_utils::createPose(-50.0, 1.75, 0.0, 0.0, 0.0, 0.0);
     planner_data_->self_odometry = set_odometry(ego_pose_);
-    planner_data_->dynamic_object =
-      std::make_shared<autoware_perception_msgs::msg::PredictedObjects>();
+    const auto objects_file =
+      ament_index_cpp::get_package_share_directory("autoware_behavior_path_lane_change_module") +
+      "/test_data/test_object_filter.yaml";
+
+    YAML::Node yaml_node = YAML::LoadFile(objects_file);
+    const auto objects = autoware::test_utils::parse<PredictedObjects>(yaml_node);
+    planner_data_->dynamic_object = std::make_shared<PredictedObjects>(objects);
   }
 
   void init_module()
@@ -131,6 +139,10 @@ public:
     return std::make_shared<nav_msgs::msg::Odometry>(odom);
   }
 
+  [[nodiscard]] FilteredByLanesExtendedObjects & get_filtered_objects() const
+  {
+    return normal_lane_change_->filtered_objects_;
+  }
   void set_previous_approved_path()
   {
     normal_lane_change_->prev_module_output_.path = create_previous_approved_path();
@@ -210,6 +222,23 @@ TEST_F(TestNormalLaneChange, testGetPathWhenInvalid)
   const auto & lc_status = normal_lane_change_->getLaneChangeStatus();
 
   ASSERT_FALSE(lc_status.is_valid_path);
+}
+
+TEST_F(TestNormalLaneChange, testFilteredObjects)
+{
+  constexpr auto is_approved = true;
+  ego_pose_ = autoware::test_utils::createPose(1.0, 1.75, 0.0, 0.0, 0.0, 0.0);
+  planner_data_->self_odometry = set_odometry(ego_pose_);
+  set_previous_approved_path();
+
+  normal_lane_change_->update_lanes(!is_approved);
+  normal_lane_change_->update_filtered_objects();
+
+  const auto & filtered_objects = get_filtered_objects();
+  ASSERT_EQ(filtered_objects.current_lane.size(), 0);
+  ASSERT_EQ(filtered_objects.target_lane_leading.size(), 2);
+  ASSERT_EQ(filtered_objects.target_lane_trailing.size(), 0);
+  ASSERT_EQ(filtered_objects.other_lane.size(), 1);
 }
 
 TEST_F(TestNormalLaneChange, testGetPathWhenValid)
