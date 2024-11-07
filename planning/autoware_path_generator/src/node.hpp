@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__PATH_GENERATOR__NODE_HPP_
-#define AUTOWARE__PATH_GENERATOR__NODE_HPP_
+#ifndef NODE_HPP_
+#define NODE_HPP_
 
 #include "autoware/path_generator/planner_data.hpp"
 
@@ -76,4 +76,4 @@ private:
 };
 }  // namespace autoware::path_generator
 
-#endif  // AUTOWARE__PATH_GENERATOR__NODE_HPP_
+#endif  // NODE_HPP_
