@@ -50,7 +50,7 @@ namespace autoware::default_adapi
 
 RoutingNode::RoutingNode(const rclcpp::NodeOptions & options) : Node("routing", options)
 {
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   adaptor.init_pub(pub_state_);
   adaptor.init_pub(pub_route_);
@@ -74,7 +74,8 @@ RoutingNode::RoutingNode(const rclcpp::NodeOptions & options) : Node("routing", 
 
 void RoutingNode::change_stop_mode()
 {
-  using OperationModeRequest = system_interface::ChangeOperationMode::Service::Request;
+  using OperationModeRequest =
+    autoware::component_interface_specs::system::ChangeOperationMode::Service::Request;
   if (is_auto_mode_) {
     const auto req = std::make_shared<OperationModeRequest>();
     req->mode = OperationModeRequest::STOP;

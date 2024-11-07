@@ -103,7 +103,8 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   {
     const std::string decision_type =
-      "intersection" + std::to_string(module_id_) + " : " + formatDecisionResult(decision_result);
+      "intersection" + std::to_string(module_id_) + " : " +
+      formatDecisionResult(decision_result, activated_, occlusion_activated_);
     internal_debug_data_.decision_type = decision_type;
   }
 
@@ -1340,6 +1341,10 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
   const bool was_safe = [&]() {
     if (std::holds_alternative<Safe>(prev_decision_result_)) {
       return true;
+    }
+    if (std::holds_alternative<FullyPrioritized>(prev_decision_result_)) {
+      const auto & prev_decision = std::get<FullyPrioritized>(prev_decision_result_);
+      return !prev_decision.collision_detected;
     }
     if (std::holds_alternative<OccludedAbsenceTrafficLight>(prev_decision_result_)) {
       const auto & state = std::get<OccludedAbsenceTrafficLight>(prev_decision_result_);

@@ -20,6 +20,7 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_side_shift_module/utils.hpp"
 
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <algorithm>
@@ -346,7 +347,7 @@ ShiftLine SideShiftModule::calcShiftLine() const
 
   const double dist_to_end = [&]() {
     const double shift_length = requested_lateral_offset_ - getClosestShiftLength();
-    const double jerk_shifting_distance = path_shifter_.calcLongitudinalDistFromJerk(
+    const double jerk_shifting_distance = autoware::motion_utils::calc_longitudinal_dist_from_jerk(
       shift_length, p->shifting_lateral_jerk, std::max(ego_speed, p->min_shifting_speed));
     const double shifting_distance = std::max(jerk_shifting_distance, p->min_shifting_distance);
     const double dist_to_end = dist_to_start + shifting_distance;

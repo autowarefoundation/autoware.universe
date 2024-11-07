@@ -57,8 +57,9 @@ FreespacePullOver::FreespacePullOver(
 }
 
 std::optional<PullOverPath> FreespacePullOver::plan(
-  const size_t goal_id, const size_t id, const std::shared_ptr<const PlannerData> planner_data,
-  [[maybe_unused]] const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose)
+  const GoalCandidate & modified_goal_pose, const size_t id,
+  const std::shared_ptr<const PlannerData> planner_data,
+  [[maybe_unused]] const BehaviorModuleOutput & previous_module_output)
 {
   const Pose & current_pose = planner_data->self_odometry->pose.pose;
 
@@ -67,6 +68,7 @@ std::optional<PullOverPath> FreespacePullOver::plan(
   // offset goal pose to make straight path near goal for improving parking precision
   // todo: support straight path when using back
   constexpr double straight_distance = 1.0;
+  const auto & goal_pose = modified_goal_pose.goal_pose;
   const Pose end_pose =
     use_back_ ? goal_pose
               : autoware::universe_utils::calcOffsetPose(goal_pose, -straight_distance, 0.0, 0.0);
@@ -146,7 +148,7 @@ std::optional<PullOverPath> FreespacePullOver::plan(
   }
 
   auto pull_over_path_opt = PullOverPath::create(
-    getPlannerType(), goal_id, id, partial_paths, current_pose, goal_pose,
+    getPlannerType(), id, partial_paths, current_pose, modified_goal_pose,
     pairs_terminal_velocity_and_accel);
   if (!pull_over_path_opt) {
     return {};

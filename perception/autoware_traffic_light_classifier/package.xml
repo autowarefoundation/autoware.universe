@@ -14,8 +14,9 @@
 
   <build_depend>autoware_cmake</build_depend>
 
+  <depend>autoware_cuda_utils</depend>
   <depend>autoware_tensorrt_classifier</depend>
-  <depend>cuda_utils</depend>
+  <depend>autoware_tensorrt_common</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
   <depend>libboost-filesystem-dev</depend>
@@ -23,7 +24,6 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>tensorrt_common</depend>
   <depend>tier4_perception_msgs</depend>
 
   <export>

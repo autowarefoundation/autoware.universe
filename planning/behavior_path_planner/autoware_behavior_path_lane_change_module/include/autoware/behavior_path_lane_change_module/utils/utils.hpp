@@ -44,6 +44,7 @@ using autoware::behavior_path_planner::utils::path_safety_checker::
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 using autoware::route_handler::Direction;
+using autoware::universe_utils::LineString2d;
 using autoware::universe_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObject;
@@ -51,6 +52,7 @@ using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
 using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LanesPolygon;
+using behavior_path_planner::lane_change::ModuleType;
 using behavior_path_planner::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -58,33 +60,22 @@ using geometry_msgs::msg::Twist;
 using path_safety_checker::CollisionCheckDebugMap;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
+bool is_mandatory_lane_change(const ModuleType lc_type);
+
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);
 
-double calcMinimumAcceleration(
-  const double current_velocity, const double min_longitudinal_acc,
-  const LaneChangeParameters & lane_change_parameters);
-
-double calcMaximumAcceleration(
-  const double current_velocity, const double current_max_velocity,
-  const double max_longitudinal_acc, const LaneChangeParameters & lane_change_parameters);
-
 void setPrepareVelocity(
   PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity);
-
-std::vector<double> getAccelerationValues(
-  const double min_acc, const double max_acc, const size_t sampling_num);
 
 std::vector<int64_t> replaceWithSortedIds(
   const std::vector<int64_t> & original_lane_ids,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 
-std::vector<std::vector<int64_t>> getSortedLaneIds(
-  const RouteHandler & route_handler, const Pose & current_pose,
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes);
+std::vector<std::vector<int64_t>> get_sorted_lane_ids(const CommonDataPtr & common_data_ptr);
 
-lanelet::ConstLanelets getTargetNeighborLanes(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
+lanelet::ConstLanelets get_target_neighbor_lanes(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType & type);
 
 bool isPathInLanelets(
@@ -104,12 +95,9 @@ ShiftLine get_lane_changing_shift_line(
   const Pose & lane_changing_start_pose, const Pose & lane_changing_end_pose,
   const PathWithLaneId & reference_path, const double shift_length);
 
-PathWithLaneId getReferencePathFromTargetLane(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & lane_changing_start_pose, const double target_lane_length,
-  const double lane_changing_length, const double forward_path_length,
-  const double resample_interval, const bool is_goal_in_route,
-  const double next_lane_change_buffer);
+PathWithLaneId get_reference_path_from_target_Lane(
+  const CommonDataPtr & common_data_ptr, const Pose & lane_changing_start_pose,
+  const double lane_changing_length, const double resample_interval);
 
 std::vector<DrivableLanes> generateDrivableLanes(
   const std::vector<DrivableLanes> & original_drivable_lanes, const RouteHandler & route_handler,
@@ -123,9 +111,9 @@ double getLateralShift(const LaneChangePath & path);
 
 CandidateOutput assignToCandidate(
   const LaneChangePath & lane_change_path, const Point & ego_position);
-std::optional<lanelet::ConstLanelet> getLaneChangeTargetLane(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const LaneChangeModuleType type, const Direction & direction);
+
+std::optional<lanelet::ConstLanelet> get_lane_change_target_lane(
+  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes);
 
 std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & pose,
@@ -145,8 +133,7 @@ bool isParkedObject(
 
 bool passed_parked_objects(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & objects, const double minimum_lane_change_length,
-  CollisionCheckDebugMap & object_debug);
+  const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & object_debug);
 
 std::optional<size_t> getLeadingStaticObjectIdx(
   const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
@@ -202,13 +189,12 @@ rclcpp::Logger getLogger(const std::string & type);
  * The footprint is determined by the vehicle's pose and its dimensions, including the distance
  * from the base to the front and rear ends of the vehicle, as well as its width.
  *
- * @param ego_pose The current pose of the ego vehicle.
- * @param ego_info The structural information of the ego vehicle, such as its maximum longitudinal
- *                 offset, rear overhang, and width.
+ * @param common_data_ptr Shared pointer to CommonData that holds necessary ego vehicle's dimensions
+ *                        and pose information.
  *
  * @return Polygon2d A polygon representing the current 2D footprint of the ego vehicle.
  */
-Polygon2d getEgoCurrentFootprint(const Pose & ego_pose, const VehicleInfo & ego_info);
+Polygon2d get_ego_footprint(const Pose & ego_pose, const VehicleInfo & ego_info);
 
 Point getEgoFrontVertex(const Pose & ego_pose, const VehicleInfo & ego_info, bool left);
 
@@ -227,7 +213,7 @@ Point getEgoFrontVertex(const Pose & ego_pose, const VehicleInfo & ego_info, boo
  *
  * @return bool True if the polygon is within the intersection area, false otherwise.
  */
-bool isWithinIntersection(
+bool is_within_intersection(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lanelet,
   const Polygon2d & polygon);
 
@@ -244,7 +230,8 @@ bool isWithinIntersection(
  * @return bool True if the polygon is within a lane designated for turning, false if it is within a
  *              straight lane or no turn direction is specified.
  */
-bool isWithinTurnDirectionLanes(const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon);
+bool is_within_turn_direction_lanes(
+  const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon);
 
 LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr);
 
@@ -269,6 +256,93 @@ ExtendedPredictedObjects transform_to_extended_objects(
 double get_distance_to_next_regulatory_element(
   const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
   const bool ignore_intersection = false);
-}  // namespace autoware::behavior_path_planner::utils::lane_change
 
+/**
+ * @brief Calculates the minimum distance to a stationary object in the current lanes.
+ *
+ * This function determines the closest distance from the ego vehicle to a stationary object
+ * in the current lanes. It checks if the object is within the stopping criteria based on its
+ * velocity and calculates the distance while accounting for the object's size. Only objects
+ * positioned after the specified distance to the target lane's start are considered.
+ *
+ * @param common_data_ptr Pointer to the common data structure containing parameters for lane
+ * change.
+ * @param filtered_objects A collection of objects filtered by lanes, including those in the current
+ * lane.
+ * @param dist_to_target_lane_start The distance to the start of the target lane from the ego
+ * vehicle.
+ * @param path The current path of the ego vehicle, containing path points and lane information.
+ * @return The minimum distance to a stationary object in the current lanes. If no valid object is
+ * found, returns the maximum possible double value.
+ */
+double get_min_dist_to_current_lanes_obj(
+  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
+  const double dist_to_target_lane_start, const PathWithLaneId & path);
+
+/**
+ * @brief Checks if there is an object in the target lane that influences the decision to insert a
+ * stop point.
+ *
+ * This function determines whether any objects exist in the target lane that would affect
+ * the decision to place a stop point behind a blocking object in the current lane.
+ *
+ * @param common_data_ptr Pointer to the common data structure containing parameters for the lane
+ * change.
+ * @param filtered_objects A collection of objects filtered by lanes, including those in the target
+ * lane.
+ * @param stop_arc_length The arc length at which the ego vehicle is expected to stop.
+ * @param path The current path of the ego vehicle, containing path points and lane information.
+ * @return true if there is an object in the target lane that influences the stop point decision;
+ * otherwise, false.
+ */
+bool has_blocking_target_object(
+  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
+  const double stop_arc_length, const PathWithLaneId & path);
+
+/**
+ * @brief Checks if the ego vehicle has passed any turn direction within an intersection.
+ *
+ * This function determines whether the ego vehicle has exited the intersection and
+ * turn lane area based on its distance from the previous intersection. It considers
+ * whether the ego vehicle is currently in an intersection and a turn lane.
+ *
+ * @param common_data_ptr Shared pointer to CommonData containing the transient data and
+ *                        lane-change parameters required for the distance's comparison.
+ *
+ * @return true if the ego vehicle has passed the intersection turn direction, false otherwise.
+ */
+bool has_passed_intersection_turn_direction(const CommonDataPtr & common_data_ptr);
+
+/**
+ * @brief Retrieves the predicted paths of an object as 2D line strings.
+ *
+ * This function transforms each predicted path of an object into a LineString2d, representing
+ * a 2D sequence of points. Each point in the path is extracted from the predicted path's
+ * position and converted to a 2D point.
+ *
+ * @param object The predicted object whose paths will be converted into 2D line strings.
+ *
+ * @return std::vector<LineString2d> A vector of 2D line strings representing the predicted paths
+ *                                   of the object.
+ */
+std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & object);
+
+/**
+ * @brief Determines if there is an object in the turn lane that could overtake the ego vehicle.
+ *
+ * This function checks for any trailing objects in the turn lane that may attempt to overtake
+ * the ego vehicle. The check is only applicable if the ego vehicle is still within a certain
+ * distance from the previous intersection's turn lane. It evaluates whether any of the predicted
+ * paths or the initial polygon of trailing objects overlap with the target lane polygon.
+ *
+ * @param common_data_ptr Shared pointer to CommonData containing lane and polygon information
+ *                        for the ego vehicle.
+ * @param trailing_objects A collection of predicted objects trailing the ego vehicle.
+ *
+ * @return true if there is an object in the turn lane with a potential to overtake, false
+ * otherwise.
+ */
+bool has_overtaking_turn_lane_object(
+  const CommonDataPtr & common_data_ptr, const ExtendedPredictedObjects & trailing_objects);
+}  // namespace autoware::behavior_path_planner::utils::lane_change
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
