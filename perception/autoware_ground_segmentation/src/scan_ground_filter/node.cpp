@@ -602,10 +602,11 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
     // loop over grid cells
     for (size_t idx = 0; idx < grid_size; idx++) {
       auto & cell = grid_ptr_->getCell(idx);
-      if (cell.getPointNum() == 0) {
+      if (cell.is_processed_) {
         continue;
       }
-      if (cell.is_processed_) {
+      // if the cell is empty, skip
+      if (cell.getPointNum() == 0) {
         continue;
       }
 
@@ -623,12 +624,56 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         }
       }
 
-      // if the previous cell is not processed or do not have ground, try initialize ground in this
-      // cell
+      const auto & previous_cell = grid_ptr_->getCell(cell.prev_grid_idx_);
+
+      // if the previous cell is not processed or do not have ground,
+      // try initialize ground in this cell
+      if (previous_cell.is_ground_initialized_) {
+        cell.is_ground_initialized_ = true;
+      } else {
+        bool is_ground_found = false;
+        PointsCentroid ground_bin;
+
+        for (size_t j = 0; j < num_points; ++j) {
+          const auto & pt_idx = cell.point_indices_[j];
+          pcl::PointXYZ point;
+          get_point_from_data_index(in_cloud, pt_idx, point);
+          const float radius = std::hypot(point.x, point.y);
+          const float global_slope_ratio = point.z / radius;
+          if (
+            global_slope_ratio >= global_slope_max_ratio_ &&
+            point.z < non_ground_height_threshold_) {
+            // this point is obstacle
+            out_no_ground_indices.indices.push_back(pt_idx);
+          } else if (
+            abs(global_slope_ratio) < global_slope_max_ratio_ &&
+            abs(point.z) < non_ground_height_threshold_) {
+            // this point is ground
+            ground_bin.addPoint(radius, point.z, pt_idx);
+            is_ground_found = true;
+          }
+        }
+        cell.is_processed_ = true;
+        cell.has_ground_ = is_ground_found;
+        if (is_ground_found) {
+          cell.is_ground_initialized_ = true;
+          cell.avg_height_ = ground_bin.getAverageHeight();
+          cell.avg_radius_ = ground_bin.getAverageRadius();
+          cell.max_height_ = ground_bin.getMaxHeight();
+          cell.min_height_ = ground_bin.getMinHeight();
+          cell.gradient_ = cell.avg_height_ / cell.avg_radius_;
+          cell.intercept_ = 0.0f;
+        }
+        continue;
+      }
 
       // if the previous cell is processed and have ground, obtain the ground height and gradient
-
-      //
+      // recursively find previous cells until the number of cells becomes gnd_grid_buffer_size_
+      // std::vector<float> heights;
+      // std::vector<float> radii;
+      // std::vector<size_t> indices;
+      // int search_count = gnd_grid_buffer_size_;
+      // int check_cell_idx = cell.prev_grid_idx_;
     }
   }
 }

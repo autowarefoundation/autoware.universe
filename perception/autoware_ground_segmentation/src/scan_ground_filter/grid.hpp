@@ -138,11 +138,13 @@ public:
   float avg_height_;
   float max_height_;
   float min_height_;
+  float avg_radius_;
   float gradient_;
   float intercept_;
 
   // process flags
   bool is_processed_ = false;
+  bool is_ground_initialized_ = false;
   bool has_ground_ = false;
 };
 
@@ -277,24 +279,24 @@ public:
       // print previous grid, only exists
       if (cell.prev_grid_idx_ >= 0) {
         const Cell & prev_cell = cells_[cell.prev_grid_idx_];
-        std::cout << "--- prev grid id: " << prev_cell.grid_idx_
+        std::cout << "- prev grid id: " << prev_cell.grid_idx_
                   << ", position radius: " << prev_cell.center_radius_
                   << " azimuth: " << prev_cell.center_azimuth_ * 180 / M_PI << std::endl;
       }
 
       // print index of the cell
-      std::cout << "--- current grid id: " << cell.grid_idx_
-                << ", index radial: " << cell.radial_idx_ << " azimuth: " << cell.azimuth_idx_
-                << std::endl;
+      std::cout << "- current grid id: " << cell.grid_idx_
+                << "position radius: " << cell.center_radius_
+                << " azimuth: " << cell.center_azimuth_ * 180 / M_PI << std::endl;
 
       // print position of the cell
-      std::cout << "position radius: " << cell.center_radius_
-                << " azimuth: " << cell.center_azimuth_ * 180 / M_PI << std::endl;
+      std::cout << ", index radial: " << cell.radial_idx_ << " azimuth: " << cell.azimuth_idx_
+                << std::endl;
 
       // print next grid, only exists
       if (cell.next_grid_idx_ >= 0) {
         const Cell & next_cell = cells_[cell.next_grid_idx_];
-        std::cout << "--- next grid id: " << next_cell.grid_idx_
+        std::cout << "- next grid id: " << next_cell.grid_idx_
                   << ", position radius: " << next_cell.center_radius_
                   << " azimuth: " << next_cell.center_azimuth_ * 180 / M_PI << std::endl;
       }
@@ -420,11 +422,13 @@ private:
       }
 
       // number of azimuth grids per radial grid
-      const int azimuth_grid_num = std::max(static_cast<int>(2.0 * M_PI / grid_azimuth_size_), 1);
-      const float azimuth_interval_evened = 2.0f * M_PI / azimuth_grid_num;
       azimuth_grids_per_radial_.resize(grid_radial_boundaries_.size());
       azimuth_interval_per_radial_.resize(grid_radial_boundaries_.size());
-      for (size_t i = 0; i < grid_radial_boundaries_.size(); ++i) {
+      azimuth_grids_per_radial_[0] = 1;
+      azimuth_interval_per_radial_[0] = 2.0f * M_PI;
+      const int azimuth_grid_num = std::max(static_cast<int>(2.0 * M_PI / grid_azimuth_size_), 1);
+      const float azimuth_interval_evened = 2.0f * M_PI / azimuth_grid_num;
+      for (size_t i = 1; i < grid_radial_boundaries_.size(); ++i) {
         // constant azimuth interval
         azimuth_grids_per_radial_[i] = azimuth_grid_num;
         azimuth_interval_per_radial_[i] = azimuth_interval_evened;
