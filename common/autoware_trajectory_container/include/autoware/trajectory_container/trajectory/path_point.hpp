@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_PATH_POINT_HPP_
-#define AUTOWARE__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_PATH_POINT_HPP_
+#ifndef AUTOWARE__TRAJECTORY_CONTAINER__TRAJECTORY__PATH_POINT_HPP_
+#define AUTOWARE__TRAJECTORY_CONTAINER__TRAJECTORY__PATH_POINT_HPP_
 
 #include "autoware/trajectory_container/interpolator/stairstep.hpp"
 #include "autoware/trajectory_container/trajectory/detail/interpolated_array.hpp"
@@ -140,4 +140,4 @@ public:
 
 }  // namespace autoware::trajectory_container::trajectory
 
-#endif  // AUTOWARE__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_PATH_POINT_HPP_
+#endif  // AUTOWARE__TRAJECTORY_CONTAINER__TRAJECTORY__PATH_POINT_HPP_
