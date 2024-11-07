@@ -9,6 +9,7 @@ units:
       - { type: link, link: /autoware/control/performance_monitoring/lane_departure }
       - { type: link, link: /autoware/control/performance_monitoring/trajectory_deviation }
       - { type: link, link: /autoware/control/performance_monitoring/control_state }
+      - { type: link, link: /autoware/control/collision_detector }
 
   - path: /autoware/control/local
     type: and
@@ -66,3 +67,8 @@ units:
     type: diag
     node: external_cmd_converter
     name: remote_control_topic_status
+
+  - path: /autoware/control/collision_detector
+    type: diag
+    node: collision_detector
+    name: collision_detect
