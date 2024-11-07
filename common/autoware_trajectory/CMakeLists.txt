@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project(autoware_trajectory)
 
-option(BUILD_EXAMPLES "Build examples" ON)
+option(BUILD_EXAMPLES "Build examples" OFF)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
