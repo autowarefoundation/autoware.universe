@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/path_generator/node.hpp"
+#include "node.hpp"
 
-#include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include "autoware/path_generator/utils.hpp"
+
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/route_checker.hpp>
 
 namespace autoware::path_generator
 {
@@ -24,9 +26,6 @@ PathGenerator::PathGenerator(const rclcpp::NodeOptions & node_options)
 {
   param_listener_ =
     std::make_shared<::path_generator::ParamListener>(this->get_node_parameters_interface());
-
-  path_handler_ = std::make_unique<PathHandler>(
-    autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo());
 
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
@@ -38,81 +37,142 @@ PathGenerator::PathGenerator(const rclcpp::NodeOptions & node_options)
   }
 }
 
-void PathGenerator::takeData()
+void PathGenerator::run()
 {
+  const auto input_data = takeData();
+
+  const auto path = planPath(input_data);
+  if (!path) {
+    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "output path is invalid");
+  }
+
+  path_publisher_->publish(*path);
+}
+
+PathGenerator::InputData PathGenerator::takeData()
+{
+  InputData input_data;
+
   // route
   if (const auto msg = route_subscriber_.takeData()) {
     if (msg->segments.empty()) {
       RCLCPP_ERROR(get_logger(), "input route is empty, ignoring...");
     } else {
-      route_ptr_ = msg;
-      if (lanelet_map_bin_ptr_) {
-        path_handler_->setRoute(lanelet_map_bin_ptr_, route_ptr_);
-      }
+      input_data.route_ptr = msg;
     }
   }
 
   // map
   if (const auto msg = vector_map_subscriber_.takeData()) {
-    lanelet_map_bin_ptr_ = msg;
-    if (route_ptr_) {
-      path_handler_->setRoute(lanelet_map_bin_ptr_, route_ptr_);
-    }
+    input_data.lanelet_map_bin_ptr = msg;
   }
 
   // velocity
   if (const auto msg = odometry_subscriber_.takeData()) {
-    self_odometry_ptr_ = msg;
+    input_data.odometry_ptr = msg;
   }
+
+  return input_data;
 }
 
-// wait until mandatory data is ready
-bool PathGenerator::isDataReady()
+std::optional<PathWithLaneId> PathGenerator::planPath(const InputData & input_data)
 {
-  const auto is_missing = [this](const std::string & name) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for %s...", name.c_str());
-    return false;
-  };
+  if (!updatePlannerData(input_data, param_listener_->get_params())) {
+    return std::nullopt;
+  }
 
-  if (!route_ptr_) {
-    return is_missing("route");
+  auto path = utils::generateCenterLinePath(planner_data_);
+  if (!path) {
+    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "output path is invalid");
+    return std::nullopt;
+  } else if (path->points.empty()) {
+    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "output path is empty");
+    return std::nullopt;
   }
-  if (!lanelet_map_bin_ptr_) {
-    return is_missing("map");
+
+  return path;
+}
+
+bool PathGenerator::updatePlannerData(
+  const InputData & input_data, const ::path_generator::Params & param)
+{
+  if (!planner_data_.lanelet_map_ptr && !input_data.lanelet_map_bin_ptr) {
+    return false;
   }
+
+  if (!planner_data_.route_ptr && !input_data.route_ptr) {
+    return false;
+  }
+
+  if (input_data.lanelet_map_bin_ptr) {
+    lanelet::utils::conversion::fromBinMsg(
+      *input_data.lanelet_map_bin_ptr, planner_data_.lanelet_map_ptr,
+      &planner_data_.traffic_rules_ptr, &planner_data_.routing_graph_ptr);
+  }
+
+  if (input_data.route_ptr) {
+    if (!lanelet::utils::route::isRouteValid(
+          *input_data.route_ptr, planner_data_.lanelet_map_ptr)) {
+      return false;
+    }
+    setRoute(input_data.route_ptr);
+  }
+
+  if (input_data.odometry_ptr) {
+    planner_data_.current_pose = input_data.odometry_ptr->pose.pose;
+  }
+
+  planner_data_.forward_path_length = param.forward_path_length;
+  planner_data_.backward_path_length = param.backward_path_length;
+  planner_data_.input_path_interval = param.input_path_interval;
+  planner_data_.enable_akima_spline_first = param.enable_akima_spline_first;
+  planner_data_.ego_nearest_dist_threshold = param.ego_nearest_dist_threshold;
+  planner_data_.ego_nearest_yaw_threshold = param.ego_nearest_yaw_threshold;
 
   return true;
 }
 
-void PathGenerator::run()
+void PathGenerator::setRoute(const LaneletRoute::ConstSharedPtr & route_ptr)
 {
-  takeData();
-  if (!isDataReady()) {
-    return;
-  }
+  planner_data_.route_ptr = route_ptr;
 
-  const auto & current_pose = self_odometry_ptr_->pose.pose;
-  const auto param = param_listener_->get_params();
+  planner_data_.route_lanelets.clear();
+  planner_data_.preferred_lanelets.clear();
+  planner_data_.start_lanelets.clear();
+  planner_data_.goal_lanelets.clear();
 
-  auto path = path_handler_->generateCenterLinePath(current_pose, param);
-
-  if (!path.points.empty()) {
-    const auto current_seg_idx =
-      autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-        path.points, current_pose, param.ego_nearest_dist_threshold,
-        param.ego_nearest_yaw_threshold);
-    path.points = autoware::motion_utils::cropPoints(
-      path.points, current_pose.position, current_seg_idx, param.forward_path_length,
-      param.backward_path_length + param.input_path_interval);
-
-    if (!path.points.empty()) {
-      path_publisher_->publish(path);
-    } else {
-      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "path output is empty!");
+  if (!planner_data_.route_ptr->segments.empty()) {
+    size_t primitives_num = 0;
+    for (const auto & route_section : planner_data_.route_ptr->segments) {
+      primitives_num += route_section.primitives.size();
     }
-  } else {
-    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "path output is empty!");
+    planner_data_.route_lanelets.reserve(primitives_num);
+
+    for (const auto & route_section : planner_data_.route_ptr->segments) {
+      for (const auto & primitive : route_section.primitives) {
+        const auto id = primitive.id;
+        const auto & lanelet = planner_data_.lanelet_map_ptr->laneletLayer.get(id);
+        planner_data_.route_lanelets.push_back(lanelet);
+        if (id == route_section.preferred_primitive.id) {
+          planner_data_.preferred_lanelets.push_back(lanelet);
+        }
+      }
+    }
+
+    const auto set_lanelets_from_segment =
+      [&](
+        const autoware_planning_msgs::msg::LaneletSegment & segment,
+        lanelet::ConstLanelets & lanelets) {
+        lanelets.reserve(segment.primitives.size());
+        for (const auto & primitive : segment.primitives) {
+          const auto & lanelet = planner_data_.lanelet_map_ptr->laneletLayer.get(primitive.id);
+          lanelets.push_back(lanelet);
+        }
+      };
+    set_lanelets_from_segment(
+      planner_data_.route_ptr->segments.front(), planner_data_.start_lanelets);
+    set_lanelets_from_segment(
+      planner_data_.route_ptr->segments.back(), planner_data_.goal_lanelets);
   }
 }
 }  // namespace autoware::path_generator
