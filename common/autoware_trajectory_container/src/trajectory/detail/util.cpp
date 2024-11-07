@@ -54,21 +54,21 @@ geometry_msgs::msg::Point to_point(const tier4_planning_msgs::msg::PathPointWith
   return point;
 }
 
-// geometry_msgs::msg::Point to_point(const lanelet::BasicPoint2d & p)
-// {
-//   geometry_msgs::msg::Point point;
-//   point.x = p.x();
-//   point.y = p.y();
-//   return point;
-// }
+geometry_msgs::msg::Point to_point(const lanelet::BasicPoint2d & p)
+{
+  geometry_msgs::msg::Point point;
+  point.x = p.x();
+  point.y = p.y();
+  return point;
+}
 
-// geometry_msgs::msg::Point to_point(const lanelet::ConstPoint3d & p)
-// {
-//   geometry_msgs::msg::Point point;
-//   point.x = p.x();
-//   point.y = p.y();
-//   return point;
-// }
+geometry_msgs::msg::Point to_point(const lanelet::ConstPoint3d & p)
+{
+  geometry_msgs::msg::Point point;
+  point.x = p.x();
+  point.y = p.y();
+  return point;
+}
 
 std::vector<double> fill_bases(const std::vector<double> & x, const size_t & min_points)
 {

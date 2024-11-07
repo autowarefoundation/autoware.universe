@@ -87,7 +87,7 @@ void TrajectoryContainer<PointType>::align_orientation_with_trajectory_direction
 std::vector<PointType> TrajectoryContainer<PointType>::restore(const size_t & min_points) const
 {
   auto bases = detail::crop_bases(bases_, start_, end_);
-  bases = detail::fill_bases(bases, static_cast<Eigen::Index>(min_points));
+  bases = detail::fill_bases(bases, min_points);
   std::vector<PointType> points;
   points.reserve(bases.size());
   for (const auto & s : bases) {
