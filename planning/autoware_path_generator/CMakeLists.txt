@@ -9,9 +9,7 @@ generate_parameter_library(path_generator_parameters
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/node.cpp
-  src/path_handler.cpp
-  src/utils.cpp
+  DIRECTORY src
 )
 
 target_link_libraries(${PROJECT_NAME}
