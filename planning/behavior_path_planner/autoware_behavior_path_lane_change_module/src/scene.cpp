@@ -159,7 +159,8 @@ void NormalLaneChange::update_transient_data()
   transient_data.is_ego_near_current_terminal_start =
     transient_data.dist_to_terminal_start < transient_data.max_prepare_length;
 
-  transient_data.current_footprint = utils::lane_change::get_ego_current_polygon(common_data_ptr_);
+  transient_data.current_footprint = utils::lane_change::get_ego_footprint(
+    common_data_ptr_->get_ego_pose(), common_data_ptr_->bpp_param_ptr->vehicle_info);
 
   const auto & ego_lane = common_data_ptr_->lanes_ptr->ego_lane;
   const auto & route_handler_ptr = common_data_ptr_->route_handler_ptr;

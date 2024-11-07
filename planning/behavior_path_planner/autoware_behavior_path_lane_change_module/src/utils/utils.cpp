@@ -974,15 +974,13 @@ rclcpp::Logger getLogger(const std::string & type)
   return rclcpp::get_logger("lane_change").get_child(type);
 }
 
-Polygon2d get_ego_current_polygon(const CommonDataPtr & common_data_ptr)
+Polygon2d get_ego_footprint(const Pose & ego_pose, const VehicleInfo & ego_info)
 {
-  const auto & vehicle_info = common_data_ptr->bpp_param_ptr->vehicle_info;
-  const auto base_to_front = vehicle_info.max_longitudinal_offset_m;
-  const auto base_to_rear = vehicle_info.rear_overhang_m;
-  const auto width = vehicle_info.vehicle_width_m;
+  const auto base_to_front = ego_info.max_longitudinal_offset_m;
+  const auto base_to_rear = ego_info.rear_overhang_m;
+  const auto width = ego_info.vehicle_width_m;
 
-  return autoware::universe_utils::toFootprint(
-    common_data_ptr->get_ego_pose(), base_to_front, base_to_rear, width);
+  return autoware::universe_utils::toFootprint(ego_pose, base_to_front, base_to_rear, width);
 }
 
 Point getEgoFrontVertex(

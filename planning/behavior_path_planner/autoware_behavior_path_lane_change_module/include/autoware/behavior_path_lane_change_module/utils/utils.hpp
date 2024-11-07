@@ -194,7 +194,7 @@ rclcpp::Logger getLogger(const std::string & type);
  *
  * @return Polygon2d A polygon representing the current 2D footprint of the ego vehicle.
  */
-Polygon2d get_ego_current_polygon(const CommonDataPtr & common_data_ptr);
+Polygon2d get_ego_footprint(const Pose & ego_pose, const VehicleInfo & ego_info);
 
 Point getEgoFrontVertex(const Pose & ego_pose, const VehicleInfo & ego_info, bool left);
 
