@@ -15,49 +15,64 @@
 #ifndef AUTOWARE__PATH_GENERATOR__NODE_HPP_
 #define AUTOWARE__PATH_GENERATOR__NODE_HPP_
 
-#include "autoware/path_generator/path_handler.hpp"
+#include "autoware/path_generator/planner_data.hpp"
 
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
-#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
+#include <path_generator_parameters.hpp>
 
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 namespace autoware::path_generator
 {
+using autoware_map_msgs::msg::LaneletMapBin;
+using autoware_planning_msgs::msg::LaneletRoute;
+using nav_msgs::msg::Odometry;
+using tier4_planning_msgs::msg::PathWithLaneId;
+
 class PathGenerator : public rclcpp::Node
 {
 public:
   explicit PathGenerator(const rclcpp::NodeOptions & node_options);
 
 private:
+  struct InputData
+  {
+    LaneletRoute::ConstSharedPtr route_ptr{nullptr};
+    LaneletMapBin::ConstSharedPtr lanelet_map_bin_ptr{nullptr};
+    Odometry::ConstSharedPtr odometry_ptr{nullptr};
+  };
+
   // subscriber
   autoware::universe_utils::InterProcessPollingSubscriber<
-    autoware_planning_msgs::msg::LaneletRoute, universe_utils::polling_policy::Newest>
+    LaneletRoute, universe_utils::polling_policy::Newest>
     route_subscriber_{this, "~/input/route", rclcpp::QoS{1}.transient_local()};
   autoware::universe_utils::InterProcessPollingSubscriber<
-    autoware_map_msgs::msg::LaneletMapBin, universe_utils::polling_policy::Newest>
+    LaneletMapBin, universe_utils::polling_policy::Newest>
     vector_map_subscriber_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
-  autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>
-    odometry_subscriber_{this, "~/input/odometry"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> odometry_subscriber_{
+    this, "~/input/odometry"};
 
   // publisher
-  rclcpp::Publisher<tier4_planning_msgs::msg::PathWithLaneId>::SharedPtr path_publisher_;
+  rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::shared_ptr<::path_generator::ParamListener> param_listener_;
 
-  autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr route_ptr_{nullptr};
-  autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr lanelet_map_bin_ptr_{nullptr};
-  nav_msgs::msg::Odometry::ConstSharedPtr self_odometry_ptr_{nullptr};
-
-  std::unique_ptr<PathHandler> path_handler_;
-
-  void takeData();
-
-  bool isDataReady();
+  PlannerData planner_data_;
 
   void run();
+
+  InputData takeData();
+
+  std::optional<PathWithLaneId> planPath(const InputData & input_data);
+
+  bool updatePlannerData(const InputData & input_data, const ::path_generator::Params & param);
+
+  void setRoute(const LaneletRoute::ConstSharedPtr & route_ptr);
 };
 }  // namespace autoware::path_generator
 
