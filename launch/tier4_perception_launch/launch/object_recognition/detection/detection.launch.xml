@@ -5,7 +5,8 @@
 
   <!-- Pipeline junctions -->
   <arg name="mode" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
-  <arg name="lidar_detection_model" description="options: `transfusion`, `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
+  <arg name="lidar_detection_model_type" description="options: `transfusion`, `centerpoint`, `pointpainting`, `apollo`, `clustering`"/>
+  <arg name="lidar_detection_model_name" description="options: `transfusion`, `centerpoint`, `centerpoint_tiny`, `centerpoint_sigma`, `pointpainting`"/>
   <arg name="use_object_filter" description="use object filter"/>
   <arg name="objects_filter_method" description="options: `lanelet_filter` or `position_filter`"/>
   <arg name="use_pointcloud_map" description="use pointcloud map filter"/>
@@ -51,11 +52,11 @@
 
   <!-- internal interfaces -->
   <arg name="pointcloud_filter/output/pointcloud" default="$(var ns)/pointcloud_map_filtered/pointcloud"/>
-  <arg name="lidar_ml_detector/output/objects" default="$(var ns)/$(var lidar_detection_model)/objects"/>
+  <arg name="lidar_ml_detector/output/objects" default="$(var ns)/$(var lidar_detection_model_type)/objects"/>
   <arg name="lidar_rule_detector/output/objects" default="$(var ns)/clustering/objects"/>
   <arg name="camera_lidar_rule_detector/output/objects" default="$(var ns)/clustering/camera_lidar_fusion/objects"/>
   <arg name="tracker_based_detector/output/objects" default="$(var ns)/detection_by_tracker/objects"/>
-  <arg name="lidar_object_filter/output/objects" default="$(var ns)/$(var lidar_detection_model)/validation/objects"/>
+  <arg name="lidar_object_filter/output/objects" default="$(var ns)/$(var lidar_detection_model_type)/validation/objects"/>
   <arg name="camera_lidar_object_filter/output/objects" default="$(var ns)/clustering/camera_lidar_fusion/filtered/objects"/>
   <arg name="radar_pipeline/output/objects" default="$(var ns)/radar/far_objects"/>
   <arg name="radar_object_filter/output/objects" default="$(var ns)/radar/far_objects"/>
@@ -159,7 +160,8 @@
       <arg name="output/ml_detector/objects" value="$(var lidar_ml_detector/output/objects)"/>
       <arg name="output/rule_detector/objects" value="$(var camera_lidar_rule_detector/output/objects)"/>
       <arg name="node/pointcloud_container" value="$(var node/pointcloud_container)"/>
-      <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
+      <arg name="lidar_detection_model_type" value="$(var lidar_detection_model_type)"/>
+      <arg name="lidar_detection_model_name" value="$(var lidar_detection_model_name)"/>
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
       <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
@@ -173,7 +175,8 @@
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="output/objects" value="$(var lidar_ml_detector/output/objects)"/>
       <arg name="node/pointcloud_container" value="$(var node/pointcloud_container)"/>
-      <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
+      <arg name="lidar_detection_model_type" value="$(var lidar_detection_model_type)"/>
+      <arg name="lidar_detection_model_name" value="$(var lidar_detection_model_name)"/>
     </include>
   </group>
   <group if="$(var switch/detector/lidar_rule)">
@@ -283,7 +286,7 @@
       <arg name="input/radar/objects" value="radar/noise_filtered_objects"/>
       <arg name="input/radar_far/objects" value="$(var radar_pipeline/output/objects)"/>
       <arg name="output/objects" value="$(var output/objects)"/>
-      <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
+      <arg name="lidar_detection_model_type" value="$(var lidar_detection_model_type)"/>
       <arg name="use_radar_tracking_fusion" value="$(var use_radar_tracking_fusion)"/>
       <arg name="use_detection_by_tracker" value="$(var use_detection_by_tracker)"/>
       <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
@@ -333,7 +336,7 @@
       <arg name="objects_filter_method" value="$(var objects_filter_method)"/>
       <arg name="use_validator" value="$(var use_validator)"/>
       <arg name="objects_validation_method" value="$(var objects_validation_method)"/>
-      <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
+      <arg name="lidar_detection_model_type" value="$(var lidar_detection_model_type)"/>
       <arg name="use_detection_by_tracker" value="$(var use_detection_by_tracker)"/>
       <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
     </include>
@@ -348,7 +351,7 @@
         <arg name="input/lidar_ml/objects" value="$(var lidar_ml_detector/output/objects)"/>
         <arg name="input/lidar_rule/objects" value="$(var lidar_rule_detector/output/objects)"/>
         <arg name="output/objects" value="lidar/objects"/>
-        <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
+        <arg name="lidar_detection_model_type" value="$(var lidar_detection_model_type)"/>
         <arg name="use_detection_by_tracker" value="$(var use_detection_by_tracker)"/>
         <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
         <arg name="use_object_filter" value="$(var use_object_filter)"/>
@@ -376,7 +379,7 @@
       <arg name="input/lidar_rule/objects" value="$(var lidar_rule_detector/output/objects)"/>
       <arg name="input/detection_by_tracker/objects" value="$(var tracker_based_detector/output/objects)"/>
       <arg name="output/objects" value="$(var output/objects)"/>
-      <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
+      <arg name="lidar_detection_model_type" value="$(var lidar_detection_model_type)"/>
       <arg name="use_detection_by_tracker" value="$(var use_detection_by_tracker)"/>
       <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
       <arg name="use_object_filter" value="$(var use_object_filter)"/>

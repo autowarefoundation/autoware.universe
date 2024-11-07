@@ -99,10 +99,10 @@ namespace autoware::tensorrt_classifier
 {
 TrtClassifier::TrtClassifier(
   const std::string & model_path, const std::string & precision,
-  const tensorrt_common::BatchConfig & batch_config, const std::vector<float> & mean,
+  const autoware::tensorrt_common::BatchConfig & batch_config, const std::vector<float> & mean,
   const std::vector<float> & std, const size_t max_workspace_size,
-  const std::string & calibration_image_list_path, tensorrt_common::BuildConfig build_config,
-  const bool cuda)
+  const std::string & calibration_image_list_path,
+  autoware::tensorrt_common::BuildConfig build_config, const bool cuda)
 {
   src_width_ = -1;
   src_height_ = -1;
@@ -115,7 +115,7 @@ TrtClassifier::TrtClassifier(
   batch_size_ = batch_config[2];
   if (precision == "int8") {
     int max_batch_size = batch_config[2];
-    nvinfer1::Dims input_dims = tensorrt_common::get_input_dims(model_path);
+    nvinfer1::Dims input_dims = autoware::tensorrt_common::get_input_dims(model_path);
     std::vector<std::string> calibration_images;
     if (calibration_image_list_path != "") {
       calibration_images = loadImageList(calibration_image_list_path, "");
@@ -152,10 +152,10 @@ TrtClassifier::TrtClassifier(
       calibrator.reset(new autoware::tensorrt_classifier::Int8MinMaxCalibrator(
         stream, calibration_table, mean_, std_));
     }
-    trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
+    trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
       model_path, precision, std::move(calibrator), batch_config, max_workspace_size, build_config);
   } else {
-    trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
+    trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
       model_path, precision, nullptr, batch_config, max_workspace_size, build_config);
   }
   trt_common_->setup();
@@ -170,13 +170,14 @@ TrtClassifier::TrtClassifier(
     std::accumulate(input_dims.d + 1, input_dims.d + input_dims.nbDims, 1, std::multiplies<int>());
 
   const auto output_dims = trt_common_->getBindingDimensions(1);
-  input_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
+  input_d_ = autoware::cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
   out_elem_num_ = std::accumulate(
     output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
   out_elem_num_ = out_elem_num_ * batch_config[2];
   out_elem_num_per_batch_ = static_cast<int>(out_elem_num_ / batch_config[2]);
-  out_prob_d_ = cuda_utils::make_unique<float[]>(out_elem_num_);
-  out_prob_h_ = cuda_utils::make_unique_host<float[]>(out_elem_num_, cudaHostAllocPortable);
+  out_prob_d_ = autoware::cuda_utils::make_unique<float[]>(out_elem_num_);
+  out_prob_h_ =
+    autoware::cuda_utils::make_unique_host<float[]>(out_elem_num_, cudaHostAllocPortable);
 
   if (cuda) {
     m_cuda = true;

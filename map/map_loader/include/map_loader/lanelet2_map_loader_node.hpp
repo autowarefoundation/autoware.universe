@@ -15,9 +15,9 @@
 #ifndef MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
 #define MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
 
+#include <autoware/component_interface_specs/map.hpp>
+#include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware_lanelet2_extension/version.hpp>
-#include <component_interface_specs/map.hpp>
-#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
@@ -44,11 +44,12 @@ public:
     const rclcpp::Time & now);
 
 private:
-  using MapProjectorInfo = map_interface::MapProjectorInfo;
+  using MapProjectorInfo = autoware::component_interface_specs::map::MapProjectorInfo;
 
   void on_map_projector_info(const MapProjectorInfo::Message::ConstSharedPtr msg);
 
-  component_interface_utils::Subscription<MapProjectorInfo>::SharedPtr sub_map_projector_info_;
+  autoware::component_interface_utils::Subscription<MapProjectorInfo>::SharedPtr
+    sub_map_projector_info_;
   rclcpp::Publisher<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr pub_map_bin_;
 };
 

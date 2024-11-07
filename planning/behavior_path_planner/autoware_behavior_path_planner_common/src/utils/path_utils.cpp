@@ -27,7 +27,6 @@
 #include <tf2/utils.h>
 
 #include <algorithm>
-#include <limits>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -102,6 +101,7 @@ PathWithLaneId resamplePathWithSpline(
     transformed_path, 0, transformed_path.size());
   for (size_t i = 0; i < path.points.size(); ++i) {
     const double s = s_vec.at(i);
+
     for (const auto & lane_id : path.points.at(i).lane_ids) {
       if (!keep_input_points && (unique_lane_ids.find(lane_id) != unique_lane_ids.end())) {
         continue;
@@ -200,13 +200,6 @@ void clipPathLength(
     path.points.begin() + start_idx, path.points.begin() + end_idx + 1};
 
   path.points = clipped_points;
-}
-
-// TODO(murooka) This function should be replaced with autoware::motion_utils::cropPoints
-void clipPathLength(
-  PathWithLaneId & path, const size_t target_idx, const BehaviorPathPlannerParameters & params)
-{
-  clipPathLength(path, target_idx, params.forward_path_length, params.backward_path_length);
 }
 
 PathWithLaneId convertWayPointsToPathWithLaneId(
@@ -311,7 +304,7 @@ void correctDividedPathVelocity(std::vector<PathWithLaneId> & divided_paths)
 }
 
 // only two points is supported
-std::vector<double> splineTwoPoints(
+std::vector<double> spline_two_points(
   const std::vector<double> & base_s, const std::vector<double> & base_x, const double begin_diff,
   const double end_diff, const std::vector<double> & new_s)
 {
@@ -350,10 +343,10 @@ std::vector<Pose> interpolatePose(
     new_s.push_back(s);
   }
 
-  const std::vector<double> interpolated_x = splineTwoPoints(
+  const std::vector<double> interpolated_x = spline_two_points(
     base_s, base_x, std::cos(tf2::getYaw(start_pose.orientation)),
     std::cos(tf2::getYaw(end_pose.orientation)), new_s);
-  const std::vector<double> interpolated_y = splineTwoPoints(
+  const std::vector<double> interpolated_y = spline_two_points(
     base_s, base_y, std::sin(tf2::getYaw(start_pose.orientation)),
     std::sin(tf2::getYaw(end_pose.orientation)), new_s);
   for (size_t i = 0; i < interpolated_x.size(); ++i) {

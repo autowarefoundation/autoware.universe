@@ -20,8 +20,8 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
+#include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware_ad_api_specs/routing.hpp>
-#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
@@ -63,9 +63,9 @@ private:
   enum AdapiMode { Set, Change };
   AdapiMode adapi_mode_;
 
-  component_interface_utils::Client<ClearRoute>::SharedPtr cli_clear_;
-  component_interface_utils::Client<SetRoutePoints>::SharedPtr cli_set_;
-  component_interface_utils::Client<ChangeRoutePoints>::SharedPtr cli_change_;
+  autoware::component_interface_utils::Client<ClearRoute>::SharedPtr cli_clear_;
+  autoware::component_interface_utils::Client<SetRoutePoints>::SharedPtr cli_set_;
+  autoware::component_interface_utils::Client<ChangeRoutePoints>::SharedPtr cli_change_;
   void requestRoute(const PoseStamped & pose);
   void asyncSendRequest(SetRoutePoints::Service::Request::SharedPtr req);
 
