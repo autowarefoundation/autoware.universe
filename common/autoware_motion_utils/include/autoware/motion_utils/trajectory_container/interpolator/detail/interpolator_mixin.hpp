@@ -49,7 +49,7 @@ struct InterpolatorMixin : public InterpolatorInterface<T>
   {
   private:
     std::vector<double> bases_;
-    std::vector<double> values_;
+    std::vector<T> values_;
 
   public:
     [[nodiscard]] Builder & set_bases(const Eigen::Ref<const Eigen::VectorXd> & bases)
@@ -64,15 +64,9 @@ struct InterpolatorMixin : public InterpolatorInterface<T>
       return *this;
     }
 
-    [[nodiscard]] Builder & set_values(const std::vector<double> & values)
+    [[nodiscard]] Builder & set_values(const std::vector<T> & values)
     {
       values_ = values;
-      return *this;
-    }
-
-    [[nodiscard]] Builder & set_values(const Eigen::Ref<const Eigen::VectorXd> & values)
-    {
-      values_ = std::vector<double>(values.begin(), values.end());
       return *this;
     }
 

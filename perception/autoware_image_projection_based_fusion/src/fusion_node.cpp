@@ -127,6 +127,8 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
     debugger_ =
       std::make_shared<Debugger>(this, rois_number_, image_buffer_size, input_camera_topics_);
   }
+  point_project_to_unrectified_image_ =
+    declare_parameter<bool>("point_project_to_unrectified_image");
 
   // initialize debug tool
   {

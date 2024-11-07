@@ -35,6 +35,7 @@
 #include <string>
 #include <utility>
 
+class TestNormalLaneChange;
 namespace autoware::behavior_path_planner
 {
 using autoware::route_handler::Direction;
@@ -296,6 +297,8 @@ protected:
   mutable rclcpp::Clock clock_{RCL_ROS_TIME};
 
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+
+  friend class ::TestNormalLaneChange;
 };
 }  // namespace autoware::behavior_path_planner
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__BASE_CLASS_HPP_
