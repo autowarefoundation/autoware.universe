@@ -188,7 +188,7 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
       // store the point in the corresponding radial division
       out_radial_ordered_points[radial_div].emplace_back(current_point);
 
-      // store the point to the new grid
+      // [new grid] store the point to the new grid
       grid_ptr_->addPoint(input_point.x, input_point.y, data_index);
     }
   }
@@ -205,6 +205,8 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
   }
 
   {
+    // [new grid] set grid connections and statistics
+    grid_ptr_->setGridConnections();
     grid_ptr_->setGridStatistics();
   }
 }
@@ -591,7 +593,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
     }
   }
 
-  // run ground segmentation for the new grid
+  // [new grid] run ground segmentation
   out_no_ground_indices.indices.clear();
   {
     constexpr float NON_GROUND_HEIGHT = 0.2f;
@@ -599,21 +601,34 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
     const auto grid_size = grid_ptr_->getGridSize();
     // loop over grid cells
     for (size_t idx = 0; idx < grid_size; idx++) {
-      const auto & cell = grid_ptr_->getCell(idx);
+      auto & cell = grid_ptr_->getCell(idx);
+      if (cell.getPointNum() == 0) {
+        continue;
+      }
+      if (cell.is_processed_) {
+        continue;
+      }
+
       // iterate over points in the grid cell
       const auto num_points = static_cast<size_t>(cell.getPointNum());
 
+      // TEMPORARY: simple logic for now
       for (size_t j = 0; j < num_points; ++j) {
         const auto & pt_idx = cell.point_indices_[j];
         pcl::PointXYZ point_curr;
         get_point_from_data_index(in_cloud, pt_idx, point_curr);
-
-        // simple logic for now
         // if z is higher than the threshold, it is non-ground
         if (point_curr.z > NON_GROUND_HEIGHT) {
           out_no_ground_indices.indices.push_back(pt_idx);
         }
       }
+
+      // if the previous cell is not processed or do not have ground, try initialize ground in this
+      // cell
+
+      // if the previous cell is processed and have ground, obtain the ground height and gradient
+
+      //
     }
   }
 }

@@ -110,6 +110,7 @@ private:
   float grid_idx_offset_ = 0.0f;
 };
 
+// Concentric Zone Model (CZM) based polar grid
 class Cell
 {
 public:
@@ -133,16 +134,16 @@ public:
   float radial_size_;
   float azimuth_size_;
 
-  // statistics of the points in the cell
+  // ground statistics of the points in the cell
   float avg_height_;
   float max_height_;
   float min_height_;
-  // float std_dev_height_;
   float gradient_;
   float intercept_;
 
   // process flags
-  bool is_processed_;
+  bool is_processed_ = false;
+  bool has_ground_ = false;
 };
 
 class Grid
@@ -239,7 +240,7 @@ public:
   }
 
   // method to get the cell
-  const Cell & getCell(const int grid_id) const
+  Cell & getCell(const int grid_id)
   {
     // check if initialized
     if (!is_initialized_) {
@@ -256,6 +257,7 @@ public:
     }
   }
 
+  // may not needed
   void setGridStatistics()
   {
     // check if initialized
@@ -265,19 +267,25 @@ public:
 
     // debug information for new grid
 
-    // check number of points in cells, azimuth grid index of 0
-    // heading line of cells
-    for (size_t i = 0; i < radial_idx_offsets_.size(); ++i) {
-      const int radial_idx = i;
-      const int azimuth_idx = 3;
-      const int cell_idx = radial_idx_offsets_[radial_idx] + azimuth_idx;
-      const Cell & cell = cells_[cell_idx];
-      std::cout << "====== Grid id: " << cell_idx << ", Number of points: " << cell.getPointNum()
-                << std::endl;
+    // check a line of cells
+    int current_grid_idx = 3;
+    while (current_grid_idx >= 0) {
+      const Cell & cell = cells_[current_grid_idx];
+      std::cout << "====== Grid id: " << cell.grid_idx_
+                << ", Number of points: " << cell.getPointNum() << std::endl;
+
+      // print previous grid, only exists
+      if (cell.prev_grid_idx_ >= 0) {
+        const Cell & prev_cell = cells_[cell.prev_grid_idx_];
+        std::cout << "--- prev grid id: " << prev_cell.grid_idx_
+                  << ", position radius: " << prev_cell.center_radius_
+                  << " azimuth: " << prev_cell.center_azimuth_ * 180 / M_PI << std::endl;
+      }
 
       // print index of the cell
-      std::cout << "index: " << cell.grid_idx_ << " radial: " << cell.radial_idx_
-                << " azimuth: " << cell.azimuth_idx_ << std::endl;
+      std::cout << "--- current grid id: " << cell.grid_idx_
+                << ", index radial: " << cell.radial_idx_ << " azimuth: " << cell.azimuth_idx_
+                << std::endl;
 
       // print position of the cell
       std::cout << "position radius: " << cell.center_radius_
@@ -290,13 +298,68 @@ public:
                   << ", position radius: " << next_cell.center_radius_
                   << " azimuth: " << next_cell.center_azimuth_ * 180 / M_PI << std::endl;
       }
+      current_grid_idx = cell.next_grid_idx_;
+    }
+  }
 
-      // print previous grid, only exists
-      if (cell.prev_grid_idx_ >= 0) {
-        const Cell & prev_cell = cells_[cell.prev_grid_idx_];
-        std::cout << "--- prev grid id: " << prev_cell.grid_idx_
-                  << ", position radius: " << prev_cell.center_radius_
-                  << " azimuth: " << prev_cell.center_azimuth_ * 180 / M_PI << std::endl;
+  void setGridConnections()
+  {
+    // check if initialized
+    if (!is_initialized_) {
+      throw std::runtime_error("Grid is not initialized.");
+    }
+
+    // search filled cells to the next and previous cells
+    // rewrite cell.next_grid_idx_ and cell.prev_grid_idx_
+
+    // iterate over grid cells
+    for (size_t i = 0; i < cells_.size(); ++i) {
+      Cell & cell = cells_[i];
+
+      // check if the cell is empty
+      if (cell.isEmpty()) {
+        continue;
+      }
+
+      // check the next cell
+      {
+        bool is_next_found = false;
+        int next_cell_idx = cell.next_grid_idx_;
+        while (next_cell_idx >= 0) {
+          auto & next_cell = cells_[next_cell_idx];
+          if (next_cell.isEmpty()) {
+            // check next of the next cell
+            next_cell_idx = next_cell.next_grid_idx_;
+          } else {
+            // not empty, set the next cell
+            cell.next_grid_idx_ = next_cell_idx;
+            is_next_found = true;
+            break;
+          }
+        }
+        if (!is_next_found) {
+          cell.next_grid_idx_ = -1;
+        }
+      }
+      // check the previous cell
+      {
+        bool is_prev_found = false;
+        int prev_cell_idx = cell.prev_grid_idx_;
+        while (prev_cell_idx >= 0) {
+          auto & prev_cell = cells_[prev_cell_idx];
+          if (prev_cell.isEmpty()) {
+            // check previous of the previous cell
+            prev_cell_idx = prev_cell.prev_grid_idx_;
+          } else {
+            // not empty, set the previous cell
+            cell.prev_grid_idx_ = prev_cell_idx;
+            is_prev_found = true;
+            break;
+          }
+        }
+        if (!is_prev_found) {
+          cell.prev_grid_idx_ = -1;
+        }
       }
     }
   }
