@@ -450,20 +450,20 @@ void IntersectionModuleManager::deleteExpiredModules(
 {
   const auto isModuleExpired = getModuleExpiredFunction(path);
 
-  // Copy container to avoid iterator corruption
-  // due to scene_modules_.erase() in unregisterModule()
-  const auto copied_scene_modules = scene_modules_;
-
-  for (const auto & scene_module : copied_scene_modules) {
-    if (isModuleExpired(scene_module)) {
+  auto itr = scene_modules_.begin();
+  while (itr != scene_modules_.end()) {
+    if (isModuleExpired(*itr)) {
       // default
-      removeRTCStatus(getUUID(scene_module->getModuleId()));
-      removeUUID(scene_module->getModuleId());
+      removeRTCStatus(getUUID((*itr)->getModuleId()));
+      removeUUID((*itr)->getModuleId());
       // occlusion
-      const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
+      const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(*itr);
       const auto occlusion_uuid = intersection_module->getOcclusionUUID();
       occlusion_rtc_interface_.removeCooperateStatus(occlusion_uuid);
-      unregisterModule(scene_module);
+      registered_module_id_set_.erase((*itr)->getModuleId());
+      itr = scene_modules_.erase(itr);
+    } else {
+      itr++;
     }
   }
 }

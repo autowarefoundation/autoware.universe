@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
   <!-- Lidar + Camera detector parameters -->
-  <arg name="lidar_detection_model" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
+  <arg name="lidar_detection_model_type" description="options: `transfusion`, `centerpoint`, `pointpainting`, `apollo`, `clustering`"/>
+  <arg name="lidar_detection_model_name" description="options: `transfusion`, `centerpoint`, `centerpoint_tiny`, `centerpoint_sigma`, `pointpainting`"/>
   <arg name="use_roi_based_cluster"/>
   <arg name="use_low_intensity_cluster_filter"/>
   <arg name="use_image_segmentation_based_filter"/>
@@ -55,7 +56,8 @@
   </include> -->
 
   <!-- PointPainting -->
-  <group if="$(eval &quot;'$(var lidar_detection_model)'=='pointpainting'&quot;)">
+  <group if="$(eval &quot;'$(var lidar_detection_model_type)'=='pointpainting'&quot;)">
+    <let name="lidar_detection_model_name" value="$(eval &quot;'pointpainting' if ''=='$(var lidar_detection_model_name)' else '$(var lidar_detection_model_name)'&quot;)"/>
     <push-ros-namespace namespace="pointpainting"/>
     <include file="$(find-pkg-share autoware_image_projection_based_fusion)/launch/pointpainting_fusion.launch.xml">
       <arg name="input/rois_number" value="$(var number_of_cameras)"/>
@@ -86,10 +88,10 @@
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="output/objects" value="$(var output/ml_detector/objects)"/>
 
-      <arg name="model_name" value="$(var lidar_detection_model)"/>
+      <arg name="model_name" value="$(var lidar_detection_model_name)"/>
       <arg name="model_path" value="$(var pointpainting_model_path)"/>
-      <arg name="model_param_path" value="$(var lidar_model_param_path)/pointpainting.param.yaml"/>
-      <arg name="ml_package_param_path" value="$(var model_path)/pointpainting_ml_package.param.yaml"/>
+      <arg name="model_param_path" value="$(var lidar_model_param_path)/$(var lidar_detection_model_name).param.yaml"/>
+      <arg name="ml_package_param_path" value="$(var model_path)/$(var lidar_detection_model_name)_ml_package.param.yaml"/>
       <arg name="class_remapper_param_path" value="$(var model_path)/detection_class_remapper.param.yaml"/>
       <arg name="use_pointcloud_container" value="true"/>
       <arg name="pointcloud_container_name" value="$(var node/pointcloud_container)"/>
