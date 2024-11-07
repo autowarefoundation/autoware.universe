@@ -15,6 +15,12 @@
 #ifndef AUTOWARE_TEST_UTILS__MOCK_DATA_PARSER_HPP_
 #define AUTOWARE_TEST_UTILS__MOCK_DATA_PARSER_HPP_
 
+#include <builtin_interfaces/msg/duration.hpp>
+#include <builtin_interfaces/msg/time.hpp>
+
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_group_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
@@ -27,14 +33,29 @@
 #include <yaml-cpp/yaml.h>
 
 #include <array>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::test_utils
 {
+using autoware_adapi_v1_msgs::msg::OperationModeState;
+using autoware_perception_msgs::msg::ObjectClassification;
+using autoware_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObjectKinematics;
+using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedPath;
+using autoware_perception_msgs::msg::Shape;
+using autoware_perception_msgs::msg::TrafficLightElement;
+using autoware_perception_msgs::msg::TrafficLightGroup;
+using autoware_perception_msgs::msg::TrafficLightGroupArray;
+
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::LaneletSegment;
+using builtin_interfaces::msg::Duration;
+using builtin_interfaces::msg::Time;
 using geometry_msgs::msg::Accel;
 using geometry_msgs::msg::AccelWithCovariance;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
@@ -47,6 +68,7 @@ using nav_msgs::msg::Odometry;
 using std_msgs::msg::Header;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
+using unique_identifier_msgs::msg::UUID;
 
 /**
  * @brief Parses a YAML node and converts it into an object of type T.
@@ -63,6 +85,12 @@ T parse(const YAML::Node & node);
 
 template <>
 Header parse(const YAML::Node & node);
+
+template <>
+Duration parse(const YAML::Node & node);
+
+template <>
+Time parse(const YAML::Node & node);
 
 template <>
 std::vector<Point> parse(const YAML::Node & node);
@@ -106,6 +134,39 @@ std::vector<LaneletSegment> parse(const YAML::Node & node);
 template <>
 std::vector<PathPointWithLaneId> parse(const YAML::Node & node);
 
+template <>
+UUID parse(const YAML::Node & node);
+
+template <>
+PredictedPath parse(const YAML::Node & node);
+
+template <>
+ObjectClassification parse(const YAML::Node & node);
+
+template <>
+Shape parse(const YAML::Node & node);
+
+template <>
+PredictedObjectKinematics parse(const YAML::Node & node);
+
+template <>
+PredictedObject parse(const YAML::Node & node);
+
+template <>
+PredictedObjects parse(const YAML::Node & node);
+
+template <>
+TrafficLightGroupArray parse(const YAML::Node & node);
+
+template <>
+TrafficLightGroup parse(const YAML::Node & node);
+
+template <>
+TrafficLightElement parse(const YAML::Node & node);
+
+template <>
+OperationModeState parse(const YAML::Node & node);
+
 /**
  * @brief Parses a YAML file and converts it into an object of type T.
  *
@@ -124,6 +185,14 @@ LaneletRoute parse(const std::string & filename);
 
 template <>
 PathWithLaneId parse(const std::string & filename);
+
+template <typename MessageType>
+auto create_const_shared_ptr(MessageType && payload)
+{
+  using UnqualifiedType = typename std::decay_t<MessageType>;
+  return std::make_shared<const UnqualifiedType>(std::forward<MessageType>(payload));
+}
+
 }  // namespace autoware::test_utils
 
 #endif  // AUTOWARE_TEST_UTILS__MOCK_DATA_PARSER_HPP_

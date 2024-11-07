@@ -30,7 +30,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <thread>
 #include <utility>
 #include <vector>
 
@@ -93,12 +92,14 @@ protected:
   bool debug_ = false;
 
 public:
-  typedef VoxelGridEx<pcl::PointXYZ> VoxelGridPointXYZ;
-  typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
-  typedef typename PointCloud::Ptr PointCloudPtr;
+  using VoxelGridPointXYZ = VoxelGridEx<pcl::PointXYZ>;
+  using PointCloud = typename pcl::Filter<pcl::PointXYZ>::PointCloud;
+  using PointCloudPtr = typename PointCloud::Ptr;
   explicit VoxelGridMapLoader(
     rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
     std::string * tf_map_input_frame);
+
+  virtual ~VoxelGridMapLoader() = default;
 
   virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) = 0;
   static bool is_close_to_neighbor_voxels(
@@ -142,7 +143,7 @@ protected:
     pcl::search::Search<pcl::PointXYZ>::Ptr map_cell_kdtree;
   };
 
-  typedef typename std::map<std::string, struct MapGridVoxelInfo> VoxelGridDict;
+  using VoxelGridDict = typename std::map<std::string, struct MapGridVoxelInfo>;
 
   /** \brief Map to hold loaded map grid id and it's voxel filter */
   VoxelGridDict current_voxel_grid_dict_;
@@ -206,10 +207,13 @@ public:
   }
   inline std::vector<std::string> getCurrentMapIDs()
   {
-    std::vector<std::string> current_map_ids{};
-    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
-    for (auto & kv : current_voxel_grid_dict_) {
-      current_map_ids.push_back(kv.first);
+    std::vector<std::string> current_map_ids;
+    {
+      std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
+      current_map_ids.reserve(current_voxel_grid_dict_.size());
+      for (const auto & kv : current_voxel_grid_dict_) {
+        current_map_ids.push_back(kv.first);
+      }
     }
     return current_map_ids;
   }

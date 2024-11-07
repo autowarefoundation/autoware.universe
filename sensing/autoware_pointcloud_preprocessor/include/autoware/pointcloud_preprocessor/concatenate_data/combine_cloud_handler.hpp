@@ -22,7 +22,7 @@
 #include <vector>
 
 // ROS includes
-#include "autoware_point_types/types.hpp"
+#include "autoware/point_types/types.hpp"
 
 #include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -45,7 +45,7 @@
 
 namespace autoware::pointcloud_preprocessor
 {
-using autoware_point_types::PointXYZIRC;
+using autoware::point_types::PointXYZIRC;
 using point_cloud_msg_wrapper::PointCloud2Modifier;
 
 struct ConcatenatedCloudResult

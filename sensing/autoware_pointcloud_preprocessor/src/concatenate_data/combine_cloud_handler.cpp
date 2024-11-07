@@ -106,7 +106,7 @@ void CombineCloudHandler::convert_to_xyzirc_cloud(
 {
   xyzirc_cloud->header = input_cloud->header;
 
-  PointCloud2Modifier<PointXYZIRC, autoware_point_types::PointXYZIRCGenerator> output_modifier{
+  PointCloud2Modifier<PointXYZIRC, autoware::point_types::PointXYZIRCGenerator> output_modifier{
     *xyzirc_cloud, input_cloud->header.frame_id};
   output_modifier.reserve(input_cloud->width);
 
