@@ -4,9 +4,13 @@
   <name>autoware_path_generator</name>
   <version>0.1.0</version>
   <description>The autoware_path_generator package</description>
+  <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
+  <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
   <maintainer email="mitsuhiro.sakamoto@tier4.jp">Mitsuhiro Sakamoto</maintainer>
   <license>Apache License 2.0</license>
 
+  <author email="satoshi.ota@tier4.jp">Satoshi Ota</author>
+  <author email="takayuki.murooka@tier4.jp">Takayuki Murooka</author>
   <author email="mitsuhiro.sakamoto@tier4.jp">Mitsuhiro Sakamoto</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
