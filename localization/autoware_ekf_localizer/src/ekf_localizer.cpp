@@ -61,12 +61,6 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
     this, get_clock(), rclcpp::Duration::from_seconds(ekf_dt_),
     std::bind(&EKFLocalizer::timer_callback, this));
 
-  if (params_.publish_tf_) {
-    timer_tf_ = rclcpp::create_timer(
-      this, get_clock(), rclcpp::Rate(params_.tf_rate_).period(),
-      std::bind(&EKFLocalizer::timer_tf_callback, this));
-  }
-
   pub_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose", 1);
   pub_pose_cov_ =
     create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("ekf_pose_with_covariance", 1);
@@ -228,28 +222,6 @@ void EKFLocalizer::timer_callback()
 }
 
 /*
- * timer_tf_callback
- */
-void EKFLocalizer::timer_tf_callback()
-{
-  if (!is_activated_) {
-    return;
-  }
-
-  if (params_.pose_frame_id.empty()) {
-    return;
-  }
-
-  const rclcpp::Time current_time = this->now();
-
-  geometry_msgs::msg::TransformStamped transform_stamped;
-  transform_stamped = autoware::universe_utils::pose2transform(
-    ekf_module_->get_current_pose(current_time, false), "base_link");
-  transform_stamped.header.stamp = current_time;
-  tf_br_->sendTransform(transform_stamped);
-}
-
-/*
  * get_transform_from_tf
  */
 bool EKFLocalizer::get_transform_from_tf(
@@ -363,6 +335,11 @@ void EKFLocalizer::publish_estimate_result(
   odometry.pose = pose_cov.pose;
   odometry.twist = twist_cov.twist;
   pub_odom_->publish(odometry);
+
+  /* publish tf */
+  const geometry_msgs::msg::TransformStamped transform_stamped =
+    autoware::universe_utils::pose2transform(current_ekf_pose, "base_link");
+  tf_br_->sendTransform(transform_stamped);
 }
 
 void EKFLocalizer::publish_diagnostics(

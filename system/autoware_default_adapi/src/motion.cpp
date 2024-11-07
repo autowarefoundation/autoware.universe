@@ -27,7 +27,7 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
   require_accept_start_ = declare_parameter<bool>("require_accept_start");
   is_calling_set_pause_ = false;
 
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   adaptor.init_srv(srv_accept_, this, &MotionNode::on_accept);
   adaptor.init_pub(pub_state_);
@@ -121,7 +121,8 @@ void MotionNode::update_pause(const State state)
 void MotionNode::change_pause(bool pause)
 {
   if (!is_calling_set_pause_ && cli_set_pause_->service_is_ready()) {
-    const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
+    const auto req =
+      std::make_shared<autoware::component_interface_specs::control::SetPause::Service::Request>();
     req->pause = pause;
     is_calling_set_pause_ = true;
     cli_set_pause_->async_send_request(req, [this](auto) { is_calling_set_pause_ = false; });
@@ -133,14 +134,15 @@ void MotionNode::on_timer()
   update_state();
 }
 
-void MotionNode::on_is_paused(const control_interface::IsPaused::Message::ConstSharedPtr msg)
+void MotionNode::on_is_paused(
+  const autoware::component_interface_specs::control::IsPaused::Message::ConstSharedPtr msg)
 {
   is_paused_ = msg->data;
   update_state();
 }
 
 void MotionNode::on_is_start_requested(
-  const control_interface::IsStartRequested::Message::ConstSharedPtr msg)
+  const autoware::component_interface_specs::control::IsStartRequested::Message::ConstSharedPtr msg)
 {
   is_start_requested_ = msg->data;
   update_state();
@@ -152,7 +154,7 @@ void MotionNode::on_accept(
 {
   if (state_ != State::Starting) {
     using AcceptStartResponse = autoware_ad_api::motion::AcceptStart::Service::Response;
-    throw component_interface_utils::ServiceException(
+    throw autoware::component_interface_utils::ServiceException(
       AcceptStartResponse::ERROR_NOT_STARTING, "The motion state is not starting");
   }
   change_state(State::Resuming);
