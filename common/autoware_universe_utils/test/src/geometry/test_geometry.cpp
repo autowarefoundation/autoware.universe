@@ -26,9 +26,9 @@
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/difference.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/union.hpp>
 #include <boost/geometry/io/wkt/write.hpp>
-#include <boost/geometry/algorithms/distance.hpp>
 
 #include <gtest/gtest.h>
 
@@ -2345,7 +2345,8 @@ bool polygon_equal(
   double min_distance = std::numeric_limits<double>::max();
 
   for (int i = 0; i < m; ++i) {
-    double dist = boost::geometry::distance(outer_A[0], outer_B[i]) + boost::geometry::distance(outer_A[1], outer_B[i+1]);
+    double dist = boost::geometry::distance(outer_A[0], outer_B[i]) +
+                  boost::geometry::distance(outer_A[1], outer_B[i + 1]);
     if (dist < min_distance) {
       min_distance = dist;
       start_index_B = i;
@@ -2403,21 +2404,21 @@ bool polygon_equal_vector(
     double customArea = 0.0;
     double boostArea = 0.0;
 
-    for (const auto& polygon : customPolygons) {
-        customArea += boost::geometry::area(polygon);
+    for (const auto & polygon : customPolygons) {
+      customArea += boost::geometry::area(polygon);
     }
 
-    for (const auto& polygon : boostPolygons) {
-        boostArea += boost::geometry::area(polygon);
+    for (const auto & polygon : boostPolygons) {
+      boostArea += boost::geometry::area(polygon);
     }
 
     if (std::abs(customArea - boostArea) < 1) {
-        return true;
+      return true;
     } else {
-        return false;
+      return false;
     }
   }
-  
+
   for (size_t i = 0; i < customPolygons.size(); ++i) {
     if (!polygon_equal(customPolygons[i], boostPolygons[i], max_difference_threshold)) {
       return false;
