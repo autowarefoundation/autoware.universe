@@ -228,9 +228,9 @@ protected:
   void send_start_nethogs_request();
 
   /**
-   * @brief Send request to stop nethogs
+   * @brief Send request to skip nethogs
    */
-  void send_stop_nethogs_request();
+  void send_skip_nethogs_request();
 
   /**
    * @brief Get result of nethogs

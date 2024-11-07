@@ -85,7 +85,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   if (enable_traffic_monitor_) {
     send_start_nethogs_request();
   } else {
-    send_stop_nethogs_request();
+    send_skip_nethogs_request();
   }
 }
 
@@ -634,7 +634,7 @@ void NetMonitor::send_start_nethogs_request()
   close_connection();
 }
 
-void NetMonitor::send_stop_nethogs_request()
+void NetMonitor::send_skip_nethogs_request()
 {
   // Connect to boot/shutdown service
   if (!connect_service()) {
@@ -643,7 +643,7 @@ void NetMonitor::send_stop_nethogs_request()
   }
 
   // Send data to traffic-reader service
-  send_data(traffic_reader_service::STOP_NETHOGS);
+  send_data(traffic_reader_service::SKIP_NETHOGS);
 
   // Close connection with traffic-reader service
   close_connection();

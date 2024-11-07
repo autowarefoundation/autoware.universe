@@ -121,8 +121,8 @@ void TrafficReaderService::handle_message(const char * buffer)
     case Request::GET_RESULT:
       get_result();
       break;
-    case Request::STOP_NETHOGS:
-      stop_nethogs();
+    case Request::SKIP_NETHOGS:
+      skip_nethogs();
       break;
     default:
       syslog(LOG_WARNING, "Unknown message. %d\n", request_id);
@@ -157,9 +157,9 @@ void TrafficReaderService::start_nethogs(boost::archive::text_iarchive & archive
   thread_ = std::thread(&TrafficReaderService::execute_nethogs, this);
 }
 
-void TrafficReaderService::stop_nethogs()
+void TrafficReaderService::skip_nethogs()
 {
-  syslog(LOG_INFO, "Stopping nethogs...\n");
+  syslog(LOG_INFO, "Skipping nethogs...\n");
 
   if (thread_.joinable()) {
     {
