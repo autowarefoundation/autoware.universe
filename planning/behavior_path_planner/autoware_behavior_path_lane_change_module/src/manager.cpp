@@ -177,6 +177,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     getOrDeclareParameter<double>(*node, parameter("backward_length_buffer_for_end_of_lane"));
   p.backward_length_buffer_for_blocking_object =
     getOrDeclareParameter<double>(*node, parameter("backward_length_buffer_for_blocking_object"));
+  p.backward_length_from_intersection =
+    getOrDeclareParameter<double>(*node, parameter("backward_length_from_intersection"));
   p.lane_changing_lateral_jerk =
     getOrDeclareParameter<double>(*node, parameter("lane_changing_lateral_jerk"));
   p.lane_change_prepare_duration =
