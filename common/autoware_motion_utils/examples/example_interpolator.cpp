@@ -1,4 +1,4 @@
-// Copyright 2024 Tier IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@
 #include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/linear.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/nearest_neighbor.hpp"
-
-#include <autoware/motion_utils/trajectory_container/interpolator.hpp>
+#include "autoware/motion_utils/trajectory_container/interpolator/stairstep.hpp"
 
 #include <matplotlibcpp17/pyplot.h>
 

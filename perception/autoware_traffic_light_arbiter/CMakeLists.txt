@@ -13,4 +13,10 @@ rclcpp_components_register_nodes(${PROJECT_NAME}
   "autoware::TrafficLightArbiter"
 )
 
+if(BUILD_TESTING)
+  ament_auto_add_gtest(${PROJECT_NAME}_test
+    test/test_node.cpp
+  )
+endif()
+
 ament_auto_package(INSTALL_TO_SHARE launch config)
