@@ -51,10 +51,6 @@ def launch_setup(context, *args, **kwargs):
         param_file=LaunchConfiguration("time_synchronizer_node_param_path").perform(context),
         allow_substs=True,
     )
-    filter_base_param = ParameterFile(
-        param_file=LaunchConfiguration("filter_base_param_path").perform(context),
-        allow_substs=True,
-    )
     crop_box_filter_node_param = ParameterFile(
         param_file=LaunchConfiguration("crop_box_filter_node_param_path").perform(context),
         allow_substs=True,
@@ -132,7 +128,6 @@ def launch_setup(context, *args, **kwargs):
             ("output", LaunchConfiguration("output_points_raw")),
         ],
         parameters=[
-            filter_base_param,
             crop_box_filter_node_param,
             {
                 "input_frame": LaunchConfiguration("tf_output_frame"),
@@ -210,15 +205,6 @@ def generate_launch_description():
             "time_synchronizer_node.param.yaml",
         ),
         description="path to parameter file of time synchronizer node",
-    )
-    add_launch_arg(
-        "filter_base_param_path",
-        os.path.join(
-            autoware_pointcloud_preprocessor_share_dir,
-            "config",
-            "filter.param.yaml",
-        ),
-        description="path to parameter file of filter base",
     )
     add_launch_arg(
         "crop_box_filter_node_param_path",
