@@ -248,6 +248,9 @@ private:
    */
   void calcVirtualGroundOrigin(pcl::PointXYZ & point) const;
 
+  // [new grid]
+  bool recursiveSearch(const int check_idx, const int search_cnt, std::vector<int> & idx) const;
+  void fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const;
   /*!
    * Classifies Points in the PointCloud as Ground and Not Ground
    * @param in_radial_ordered_clouds Vector of an Ordered PointsCloud
@@ -255,22 +258,6 @@ private:
    * @param out_no_ground_indices Returns the indices of the points
    *     classified as not ground in the original PointCloud
    */
-
-  void initializeFirstGndGrids(
-    const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids) const;
-
-  void fitLineFromGndGrid(
-    const std::vector<GridCenter> & gnd_grids_list, const size_t start_idx, const size_t end_idx,
-    float & a, float & b) const;
-  void checkContinuousGndGrid(
-    PointData & pd, const pcl::PointXYZ & point_curr,
-    const std::vector<GridCenter> & gnd_grids_list) const;
-  void checkDiscontinuousGndGrid(
-    PointData & pd, const pcl::PointXYZ & point_curr,
-    const std::vector<GridCenter> & gnd_grids_list) const;
-  void checkBreakGndGrid(
-    PointData & pd, const pcl::PointXYZ & point_curr,
-    const std::vector<GridCenter> & gnd_grids_list) const;
   void classifyPointCloud(
     const PointCloud2ConstPtr & in_cloud,
     const std::vector<PointCloudVector> & in_radial_ordered_clouds,
@@ -279,15 +266,6 @@ private:
     const PointCloud2ConstPtr & in_cloud,
     const std::vector<PointCloudVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices) const;
-  /*!
-   * Re-classifies point of ground cluster based on their height
-   * @param gnd_cluster Input ground cluster for re-checking
-   * @param non_ground_threshold Height threshold for ground and non-ground points classification
-   * @param non_ground_indices Output non-ground PointCloud indices
-   */
-  void recheckGroundCluster(
-    const PointsCentroid & gnd_cluster, const float non_ground_threshold,
-    const bool use_lowest_point, pcl::PointIndices & non_ground_indices) const;
   /*!
    * Returns the resulting complementary PointCloud, one with the points kept
    * and the other removed as indicated in the indices

@@ -256,6 +256,15 @@ public:
   {
     for (auto & cell : cells_) {
       cell.point_indices_.clear();
+      cell.is_processed_ = false;
+      cell.is_ground_initialized_ = false;
+      cell.has_ground_ = false;
+      cell.avg_height_ = 0.0f;
+      cell.max_height_ = 0.0f;
+      cell.min_height_ = 0.0f;
+      cell.avg_radius_ = 0.0f;
+      cell.gradient_ = 0.0f;
+      cell.intercept_ = 0.0f;
     }
   }
 
@@ -285,12 +294,12 @@ public:
       }
 
       // print index of the cell
-      std::cout << "- current grid id: " << cell.grid_idx_
-                << "position radius: " << cell.center_radius_
+      std::cout << "- curr grid id: " << cell.grid_idx_
+                << ", position radius: " << cell.center_radius_
                 << " azimuth: " << cell.center_azimuth_ * 180 / M_PI << std::endl;
 
       // print position of the cell
-      std::cout << ", index radial: " << cell.radial_idx_ << " azimuth: " << cell.azimuth_idx_
+      std::cout << "index radial: " << cell.radial_idx_ << " azimuth: " << cell.azimuth_idx_
                 << std::endl;
 
       // print next grid, only exists
