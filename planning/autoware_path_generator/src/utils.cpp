@@ -34,13 +34,13 @@ bool exists(const std::vector<T> & vec, const T & item)
 
 std::optional<lanelet::ConstLanelets> get_lanelet_sequence(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
-  const geometry_msgs::msg::Pose & current_pose, const double forward_path_length,
-  const double backward_path_length)
+  const geometry_msgs::msg::Pose & current_pose, const double forward_distance,
+  const double backward_distance)
 {
   auto lanelet_sequence = [&]() -> std::optional<lanelet::ConstLanelets> {
     const auto arc_coordinate = lanelet::utils::getArcCoordinates({lanelet}, current_pose);
-    if (arc_coordinate.length < backward_path_length) {
-      return get_lanelet_sequence_up_to(lanelet, planner_data, backward_path_length);
+    if (arc_coordinate.length < backward_distance) {
+      return get_lanelet_sequence_up_to(lanelet, planner_data, backward_distance);
     }
     return lanelet::ConstLanelets{};
   }();
@@ -49,7 +49,7 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence(
   }
 
   const auto lanelet_sequence_forward =
-    get_lanelet_sequence_after(lanelet, planner_data, forward_path_length);
+    get_lanelet_sequence_after(lanelet, planner_data, forward_distance);
   if (!lanelet_sequence_forward) {
     return std::nullopt;
   }
@@ -70,8 +70,7 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence(
 }
 
 std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
-  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
-  const double forward_path_length)
+  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
   if (!planner_data.routing_graph_ptr) {
     return std::nullopt;
@@ -81,7 +80,7 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
   auto current_lanelet = lanelet;
   auto length = 0.;
 
-  while (rclcpp::ok() && length < forward_path_length) {
+  while (rclcpp::ok() && length < distance) {
     auto next_lanelet = get_next_lanelet_within_route(current_lanelet, planner_data);
     if (!next_lanelet) {
       const auto next_lanelets = planner_data.routing_graph_ptr->following(current_lanelet);
@@ -105,8 +104,7 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
 }
 
 std::optional<lanelet::ConstLanelets> get_lanelet_sequence_up_to(
-  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
-  const double backward_path_length)
+  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
   if (!planner_data.routing_graph_ptr) {
     return std::nullopt;
@@ -116,7 +114,7 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence_up_to(
   auto current_lanelet = lanelet;
   auto length = 0.;
 
-  while (rclcpp::ok() && length < backward_path_length) {
+  while (rclcpp::ok() && length < distance) {
     auto previous_lanelets = get_previous_lanelets_within_route(current_lanelet, planner_data);
     if (!previous_lanelets) {
       previous_lanelets = planner_data.routing_graph_ptr->previous(current_lanelet);

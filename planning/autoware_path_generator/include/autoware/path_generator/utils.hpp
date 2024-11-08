@@ -30,16 +30,14 @@ namespace utils
 {
 std::optional<lanelet::ConstLanelets> get_lanelet_sequence(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
-  const geometry_msgs::msg::Pose & current_pose, const double forward_path_length,
-  const double backward_path_length);
+  const geometry_msgs::msg::Pose & current_pose, const double forward_distance,
+  const double backward_distance);
 
 std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
-  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
-  const double forward_path_length);
+  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance);
 
 std::optional<lanelet::ConstLanelets> get_lanelet_sequence_up_to(
-  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
-  const double backward_path_length);
+  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance);
 
 std::optional<lanelet::ConstLanelet> get_next_lanelet_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data);
