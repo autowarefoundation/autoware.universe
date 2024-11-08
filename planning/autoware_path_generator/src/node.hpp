@@ -15,7 +15,7 @@
 #ifndef NODE_HPP_
 #define NODE_HPP_
 
-#include "autoware/path_generator/planner_data.hpp"
+#include "autoware/path_generator/common_structs.hpp"
 
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <path_generator_parameters.hpp>
@@ -30,6 +30,7 @@ namespace autoware::path_generator
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletRoute;
 using nav_msgs::msg::Odometry;
+using ::path_generator::Params;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 class PathGenerator : public rclcpp::Node
@@ -66,13 +67,25 @@ private:
 
   void run();
 
-  InputData takeData();
+  InputData take_data();
 
-  std::optional<PathWithLaneId> planPath(const InputData & input_data);
+  bool is_data_ready(const InputData & input_data);
 
-  bool updatePlannerData(const InputData & input_data, const ::path_generator::Params & param);
+  std::optional<PathWithLaneId> plan_path(const InputData & input_data);
 
-  void setRoute(const LaneletRoute::ConstSharedPtr & route_ptr);
+  void set_route(const LaneletRoute::ConstSharedPtr & route_ptr);
+
+  std::optional<PathWithLaneId> generate_centerline_path(
+    const LaneletRoute::ConstSharedPtr & route_ptr, const geometry_msgs::msg::Pose & current_pose,
+    const Params & params) const;
+
+  std::optional<PathWithLaneId> get_centerline_path(
+    const lanelet::ConstLanelets & lanelet_sequence, const LaneletRoute::ConstSharedPtr & route_ptr,
+    const geometry_msgs::msg::Pose & current_pose, const Params & params) const;
+
+  std::optional<PathWithLaneId> get_centerline_path(
+    const lanelet::ConstLanelets & lanelet_sequence, const double s_start,
+    const double s_end) const;
 };
 }  // namespace autoware::path_generator
 
