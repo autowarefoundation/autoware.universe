@@ -70,11 +70,13 @@ private:
 
   InputData take_data();
 
+  void set_planner_data(const InputData & input_data);
+
+  void set_route(const LaneletRoute::ConstSharedPtr & route_ptr);
+
   bool is_data_ready(const InputData & input_data);
 
   std::optional<PathWithLaneId> plan_path(const InputData & input_data);
-
-  void set_route(const LaneletRoute::ConstSharedPtr & route_ptr);
 
   std::optional<PathWithLaneId> generate_centerline_path(
     const geometry_msgs::msg::Pose & current_pose, const Params & params) const;
