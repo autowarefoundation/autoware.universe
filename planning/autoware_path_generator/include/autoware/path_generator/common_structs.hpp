@@ -20,6 +20,8 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
 
+#include <string>
+
 namespace autoware::path_generator
 {
 struct PlannerData
@@ -28,7 +30,8 @@ struct PlannerData
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr{nullptr};
   lanelet::routing::RoutingGraphPtr routing_graph_ptr{nullptr};
 
-  autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr route_ptr{nullptr};
+  std::string route_frame_id{};
+  geometry_msgs::msg::Pose goal_pose{};
 
   lanelet::ConstLanelets route_lanelets{};
   lanelet::ConstLanelets preferred_lanelets{};
