@@ -1,4 +1,7 @@
 path_generator:
+  planning_hz:
+    type: double
+
   forward_path_length:
     type: double
 
