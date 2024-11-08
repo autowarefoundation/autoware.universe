@@ -41,7 +41,7 @@ PathGenerator::PathGenerator(const rclcpp::NodeOptions & node_options)
 
   {
     const auto planning_hz = declare_parameter<double>("planning_hz");
-    timer_ = rclcpp::create_timer(
+  timer_ = rclcpp::create_timer(
       this, get_clock(), rclcpp::Rate(planning_hz).period(), std::bind(&PathGenerator::run, this));
   }
 }
@@ -49,6 +49,7 @@ PathGenerator::PathGenerator(const rclcpp::NodeOptions & node_options)
 void PathGenerator::run()
 {
   const auto input_data = take_data();
+  set_planner_data(input_data);
   if (!is_data_ready(input_data)) {
     return;
   }
@@ -88,32 +89,10 @@ PathGenerator::InputData PathGenerator::take_data()
   return input_data;
 }
 
-bool PathGenerator::is_data_ready(const InputData & input_data)
-{
-  const auto missing = [this](const std::string & name) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for %s", name.c_str());
-    return false;
-  };
-
-  if (!input_data.lanelet_map_bin_ptr && !planner_data_.lanelet_map_ptr) {
-    return missing("map");
-  }
-
-  if (!input_data.route_ptr && planner_data_.route_lanelets.empty()) {
-    return missing("route");
-  }
-
-  if (!input_data.odometry_ptr) {
-    return missing("odometry");
-  }
-
-  return true;
-}
-
-std::optional<PathWithLaneId> PathGenerator::plan_path(const InputData & input_data)
+void PathGenerator::set_planner_data(const InputData & input_data)
 {
   if (input_data.lanelet_map_bin_ptr) {
+    planner_data_.lanelet_map_ptr = std::make_shared<lanelet::LaneletMap>();
     lanelet::utils::conversion::fromBinMsg(
       *input_data.lanelet_map_bin_ptr, planner_data_.lanelet_map_ptr,
       &planner_data_.traffic_rules_ptr, &planner_data_.routing_graph_ptr);
@@ -122,19 +101,6 @@ std::optional<PathWithLaneId> PathGenerator::plan_path(const InputData & input_d
   if (input_data.route_ptr) {
     set_route(input_data.route_ptr);
   }
-
-  const auto path =
-    generate_centerline_path(input_data.odometry_ptr->pose.pose, param_listener_->get_params());
-
-  if (!path) {
-    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "output path is invalid");
-    return std::nullopt;
-  } else if (path->points.empty()) {
-    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "output path is empty");
-    return std::nullopt;
-  }
-
-  return path;
 }
 
 void PathGenerator::set_route(const LaneletRoute::ConstSharedPtr & route_ptr)
@@ -176,6 +142,47 @@ void PathGenerator::set_route(const LaneletRoute::ConstSharedPtr & route_ptr)
     };
   set_lanelets_from_segment(route_ptr->segments.front(), planner_data_.start_lanelets);
   set_lanelets_from_segment(route_ptr->segments.back(), planner_data_.goal_lanelets);
+}
+
+bool PathGenerator::is_data_ready(const InputData & input_data)
+{
+  const auto notify_waiting = [this](const std::string & name) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), 5000, "waiting for %s", name.c_str());
+  };
+
+  if (!planner_data_.lanelet_map_ptr) {
+    notify_waiting("map");
+    return false;
+  }
+
+  if (planner_data_.route_lanelets.empty()) {
+    notify_waiting("route");
+    return false;
+  }
+
+  if (!input_data.odometry_ptr) {
+    notify_waiting("odometry");
+    return false;
+  }
+
+  return true;
+}
+
+std::optional<PathWithLaneId> PathGenerator::plan_path(const InputData & input_data)
+{
+  const auto path =
+    generate_centerline_path(input_data.odometry_ptr->pose.pose, param_listener_->get_params());
+
+  if (!path) {
+    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "output path is invalid");
+    return std::nullopt;
+  } else if (path->points.empty()) {
+    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 5000, "output path is empty");
+    return std::nullopt;
+  }
+
+  return path;
 }
 
 std::optional<PathWithLaneId> PathGenerator::generate_centerline_path(
