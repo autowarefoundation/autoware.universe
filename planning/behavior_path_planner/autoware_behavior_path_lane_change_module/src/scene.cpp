@@ -595,13 +595,6 @@ std::optional<PathWithLaneId> NormalLaneChange::extendPath()
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   const auto path = status_.lane_change_path.path;
-  const auto lc_start_point = status_.lane_change_path.info.lane_changing_start.position;
-
-  const auto dist = calcSignedArcLength(path.points, lc_start_point, getEgoPosition());
-
-  if (dist < 0.0) {
-    return std::nullopt;
-  }
 
   auto & target_lanes = common_data_ptr_->lanes_ptr->target;
   const auto & transient_data = common_data_ptr_->transient_data;
@@ -613,22 +606,22 @@ std::optional<PathWithLaneId> NormalLaneChange::extendPath()
     forward_path_length) {
     return std::nullopt;
   }
-
   const auto is_goal_in_target = getRouteHandler()->isInGoalRouteSection(target_lanes.back());
 
+  const auto dist_to_end_of_path =
+    lanelet::utils::getArcCoordinates(target_lanes, path.points.back().point.pose).length;
   if (is_goal_in_target) {
     const auto goal_pose = getRouteHandler()->getGoalPose();
 
     const auto dist_to_goal = lanelet::utils::getArcCoordinates(target_lanes, goal_pose).length;
-    const auto dist_to_end_of_path =
-      lanelet::utils::getArcCoordinates(target_lanes, path.points.back().point.pose).length;
 
     return getRouteHandler()->getCenterLinePath(target_lanes, dist_to_end_of_path, dist_to_goal);
   }
 
   lanelet::ConstLanelet next_lane;
   if (!getRouteHandler()->getNextLaneletWithinRoute(target_lanes.back(), &next_lane)) {
-    return std::nullopt;
+    return getRouteHandler()->getCenterLinePath(
+      target_lanes, dist_to_end_of_path, transient_data.target_lane_length);
   }
 
   target_lanes.push_back(next_lane);
@@ -644,8 +637,6 @@ std::optional<PathWithLaneId> NormalLaneChange::extendPath()
 
   const auto dist_to_target_pose =
     lanelet::utils::getArcCoordinates(target_lanes, target_pose).length;
-  const auto dist_to_end_of_path =
-    lanelet::utils::getArcCoordinates(target_lanes, path.points.back().point.pose).length;
 
   return getRouteHandler()->getCenterLinePath(
     target_lanes, dist_to_end_of_path, dist_to_target_pose);
