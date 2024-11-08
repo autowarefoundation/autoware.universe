@@ -306,291 +306,272 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   // [new grid] run ground segmentation
-  {
-    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-    if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("no_ground_indicies_clear", *time_keeper_);
-    out_no_ground_indices.indices.clear();
-  }
-  {
-    const auto grid_size = grid_ptr_->getGridSize();
-    // loop over grid cells
-    for (size_t idx = 0; idx < grid_size; idx++) {
-      auto & cell = grid_ptr_->getCell(idx);
-      if (cell.is_processed_) {
-        continue;
-      }
-      // if the cell is empty, skip
-      if (cell.getPointNum() == 0) {
-        continue;
-      }
+  out_no_ground_indices.indices.clear();
+  const auto grid_size = grid_ptr_->getGridSize();
+  // loop over grid cells
+  for (size_t idx = 0; idx < grid_size; idx++) {
+    auto & cell = grid_ptr_->getCell(idx);
+    if (cell.is_processed_) {
+      continue;
+    }
+    // if the cell is empty, skip
+    if (cell.getPointNum() == 0) {
+      continue;
+    }
 
-      // iterate over points in the grid cell
-      const auto num_points = static_cast<size_t>(cell.getPointNum());
+    // iterate over points in the grid cell
+    const auto num_points = static_cast<size_t>(cell.getPointNum());
 
-      bool is_previous_initialized = false;
-      // check prev grid only exist
-      if (cell.prev_grid_idx_ >= 0) {
-        const auto & prev_cell = grid_ptr_->getCell(cell.prev_grid_idx_);
-        if (prev_cell.is_ground_initialized_) {
-          is_previous_initialized = true;
+    bool is_previous_initialized = false;
+    // set a cell pointer for the previous cell
+    const Cell * prev_cell_ptr;
+    // check prev grid only exist
+    if (cell.prev_grid_idx_ >= 0) {
+      prev_cell_ptr = &(grid_ptr_->getCell(cell.prev_grid_idx_));
+      if (prev_cell_ptr->is_ground_initialized_) {
+        is_previous_initialized = true;
+      }
+    }
+
+    if (!is_previous_initialized) {
+      // if the previous cell is not processed or do not have ground,
+      // try initialize ground in this cell
+      bool is_ground_found = false;
+      PointsCentroid ground_bin;
+
+      for (size_t j = 0; j < num_points; ++j) {
+        const auto & pt_idx = cell.point_indices_[j];
+        pcl::PointXYZ point;
+        get_point_from_data_index(in_cloud, pt_idx, point);
+        const float radius = std::hypot(point.x, point.y);
+        const float global_slope_ratio = point.z / radius;
+        if (
+          global_slope_ratio >= global_slope_max_ratio_ && point.z < non_ground_height_threshold_) {
+          // this point is obstacle
+          out_no_ground_indices.indices.push_back(pt_idx);
+        } else if (
+          abs(global_slope_ratio) < global_slope_max_ratio_ &&
+          abs(point.z) < non_ground_height_threshold_) {
+          // this point is ground
+          ground_bin.addPoint(radius, point.z, pt_idx);
+          is_ground_found = true;
         }
       }
-
-      if (!is_previous_initialized) {
-        std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-        if (time_keeper_)
-          inner_st_ptr = std::make_unique<ScopedTimeTrack>("initialize_cell_ground", *time_keeper_);
-
-        // if the previous cell is not processed or do not have ground,
-        // try initialize ground in this cell
-        bool is_ground_found = false;
-        PointsCentroid ground_bin;
-
-        for (size_t j = 0; j < num_points; ++j) {
-          const auto & pt_idx = cell.point_indices_[j];
-          pcl::PointXYZ point;
-          get_point_from_data_index(in_cloud, pt_idx, point);
-          const float radius = std::hypot(point.x, point.y);
-          const float global_slope_ratio = point.z / radius;
-          if (
-            global_slope_ratio >= global_slope_max_ratio_ &&
-            point.z < non_ground_height_threshold_) {
-            // this point is obstacle
-            out_no_ground_indices.indices.push_back(pt_idx);
-          } else if (
-            abs(global_slope_ratio) < global_slope_max_ratio_ &&
-            abs(point.z) < non_ground_height_threshold_) {
-            // this point is ground
-            ground_bin.addPoint(radius, point.z, pt_idx);
-            is_ground_found = true;
-          }
-        }
-        cell.is_processed_ = true;
-        cell.has_ground_ = is_ground_found;
-        if (is_ground_found) {
-          cell.is_ground_initialized_ = true;
-          cell.avg_height_ = ground_bin.getAverageHeight();
-          cell.avg_radius_ = ground_bin.getAverageRadius();
-          cell.max_height_ = ground_bin.getMaxHeight();
-          cell.min_height_ = ground_bin.getMinHeight();
-          cell.gradient_ = cell.avg_height_ / cell.avg_radius_;
-          cell.intercept_ = 0.0f;
-        }
-
-        // go to the next cell
-        continue;
-      } else {
-        // inherit the previous cell information
+      cell.is_processed_ = true;
+      cell.has_ground_ = is_ground_found;
+      if (is_ground_found) {
         cell.is_ground_initialized_ = true;
-        // continue to the ground segmentation
+        cell.avg_height_ = ground_bin.getAverageHeight();
+        cell.avg_radius_ = ground_bin.getAverageRadius();
+        cell.max_height_ = ground_bin.getMaxHeight();
+        cell.min_height_ = ground_bin.getMinHeight();
+        cell.gradient_ = cell.avg_height_ / cell.avg_radius_;
+        cell.intercept_ = 0.0f;
       }
 
-      // get current cell gradient and intercept
-      std::vector<int> grid_idcs;
-      {
-        std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-        if (time_keeper_)
-          inner_st_ptr = std::make_unique<ScopedTimeTrack>("get_gradient", *time_keeper_);
+      // go to the next cell
+      continue;
+    } else {
+      // inherit the previous cell information
+      cell.is_ground_initialized_ = true;
+      // continue to the ground segmentation
+    }
 
-        const int search_count = gnd_grid_buffer_size_;
-        int check_cell_idx = cell.prev_grid_idx_;
-        recursiveSearch(check_cell_idx, search_count, grid_idcs);
-        if (grid_idcs.size() > 0) {
-          // calculate the gradient and intercept by least square method
-          float a, b;
-          fitLineFromGndGrid(grid_idcs, a, b);
-          cell.gradient_ = a;
-          cell.intercept_ = b;
-        } else {
-          // initialization failed. which should not happen. print error message
-          std::cerr << "Failed to initialize ground grid at cell index: " << cell.grid_idx_
-                    << std::endl;
-        }
+    // get current cell gradient and intercept
+    std::vector<int> grid_idcs;
+    {
+      const int search_count = gnd_grid_buffer_size_;
+      int check_cell_idx = cell.prev_grid_idx_;
+      recursiveSearch(check_cell_idx, search_count, grid_idcs);
+      if (grid_idcs.size() > 0) {
+        // calculate the gradient and intercept by least square method
+        float a, b;
+        fitLineFromGndGrid(grid_idcs, a, b);
+        cell.gradient_ = a;
+        cell.intercept_ = b;
+      } else {
+        // initialization failed. which should not happen. print error message
+        std::cerr << "Failed to initialize ground grid at cell index: " << cell.grid_idx_
+                  << std::endl;
       }
+    }
 
-      // segment the ground and non-ground points
-      const auto & previous_cell = grid_ptr_->getCell(cell.prev_grid_idx_);
+    // segment the ground and non-ground points
+    bool is_continuous = true;
+    bool is_discontinuous = false;
+    bool is_break = false;
+    {
+      const int front_radial_id =
+        grid_ptr_->getCell(grid_idcs.front()).radial_idx_ + grid_idcs.size();
+      const float radial_diff_between_cells = cell.center_radius_ - prev_cell_ptr->center_radius_;
 
-      bool is_continuous = true;
-      bool is_discontinuous = false;
-      bool is_break = false;
-      {
-        std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-        if (time_keeper_)
-          inner_st_ptr = std::make_unique<ScopedTimeTrack>("determine_method", *time_keeper_);
-        const int front_radial_id =
-          grid_ptr_->getCell(grid_idcs.front()).radial_idx_ + grid_idcs.size();
-        const float radial_diff_between_cells = cell.center_radius_ - previous_cell.center_radius_;
-
-        if (radial_diff_between_cells < gnd_grid_continual_thresh_ * cell.radial_size_) {
-          if (cell.grid_idx_ - front_radial_id < gnd_grid_continual_thresh_) {
-            is_continuous = true;
-            is_discontinuous = false;
-            is_break = false;
-          } else {
-            is_continuous = false;
-            is_discontinuous = true;
-            is_break = false;
-          }
+      if (radial_diff_between_cells < gnd_grid_continual_thresh_ * cell.radial_size_) {
+        if (cell.grid_idx_ - front_radial_id < gnd_grid_continual_thresh_) {
+          is_continuous = true;
+          is_discontinuous = false;
+          is_break = false;
         } else {
           is_continuous = false;
-          is_discontinuous = false;
-          is_break = true;
+          is_discontinuous = true;
+          is_break = false;
         }
+      } else {
+        is_continuous = false;
+        is_discontinuous = false;
+        is_break = true;
       }
+    }
 
-      {
-        std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-        if (time_keeper_)
-          inner_st_ptr =
-            std::make_unique<ScopedTimeTrack>("segmenting_points_in_a_cell", *time_keeper_);
+    {
+      std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+      if (time_keeper_)
+        inner_st_ptr =
+          std::make_unique<ScopedTimeTrack>("segmenting_points_in_a_cell", *time_keeper_);
 
-        PointsCentroid ground_bin;
-        for (size_t j = 0; j < num_points; ++j) {
-          const auto & pt_idx = cell.point_indices_[j];
-          pcl::PointXYZ point;
-          get_point_from_data_index(in_cloud, pt_idx, point);
+      PointsCentroid ground_bin;
+      for (size_t j = 0; j < num_points; ++j) {
+        const auto & pt_idx = cell.point_indices_[j];
+        pcl::PointXYZ point;
+        get_point_from_data_index(in_cloud, pt_idx, point);
 
-          // 1. height is out-of-range
-          if (point.z - previous_cell.avg_height_ > detection_range_z_max_) {
-            // this point is out-of-range
+        // 1. height is out-of-range
+        if (point.z - prev_cell_ptr->avg_height_ > detection_range_z_max_) {
+          // this point is out-of-range
+          continue;
+        }
+
+        // 2. the angle is exceed the global slope threshold
+        const float radius = std::hypot(point.x, point.y);
+        const float global_slope_ratio = point.z / radius;
+        if (global_slope_ratio > global_slope_max_ratio_) {
+          // this point is obstacle
+          out_no_ground_indices.indices.push_back(pt_idx);
+          // go to the next point
+          continue;
+        }
+
+        // 3. the point is continuous with the previous grid
+        if (is_continuous) {
+          // 3-a. local slope
+          const float delta_z = point.z - prev_cell_ptr->avg_height_;
+          const float delta_radius = radius - prev_cell_ptr->avg_radius_;
+          const float local_slope_ratio = delta_z / delta_radius;
+          if (abs(local_slope_ratio) < local_slope_max_ratio_) {
+            // this point is ground
+            ground_bin.addPoint(radius, point.z, pt_idx);
+            // go to the next point
             continue;
           }
 
-          // 2. the angle is exceed the global slope threshold
-          const float radius = std::hypot(point.x, point.y);
-          const float global_slope_ratio = point.z / radius;
-          if (global_slope_ratio > global_slope_max_ratio_) {
+          // 3-b. mean of grid buffer(filtering)
+          const float gradient =
+            std::clamp(cell.gradient_, -global_slope_max_ratio_, global_slope_max_ratio_);
+          const float next_gnd_z = gradient * radius + cell.intercept_;
+          const float gnd_z_local_thresh =
+            std::tan(DEG2RAD(5.0)) * (radius - prev_cell_ptr->avg_radius_);
+          if (abs(point.z - next_gnd_z) <= non_ground_height_threshold_ + gnd_z_local_thresh) {
+            // this point is ground
+            ground_bin.addPoint(radius, point.z, pt_idx);
+            // go to the next point
+            continue;
+          }
+
+          // 3-c. the point is non-ground
+          if (point.z - next_gnd_z >= non_ground_height_threshold_ + gnd_z_local_thresh) {
             // this point is obstacle
             out_no_ground_indices.indices.push_back(pt_idx);
             // go to the next point
             continue;
           }
+        }
 
-          // 3. the point is continuous with the previous grid
-          if (is_continuous) {
-            // 3-a. local slope
-            const float delta_z = point.z - previous_cell.avg_height_;
-            const float delta_radius = radius - previous_cell.avg_radius_;
-            const float local_slope_ratio = delta_z / delta_radius;
-            if (abs(local_slope_ratio) < local_slope_max_ratio_) {
-              // this point is ground
-              ground_bin.addPoint(radius, point.z, pt_idx);
-              // go to the next point
-              continue;
-            }
-
-            // 3-b. mean of grid buffer(filtering)
-            const float gradient =
-              std::clamp(cell.gradient_, -global_slope_max_ratio_, global_slope_max_ratio_);
-            const float next_gnd_z = gradient * radius + cell.intercept_;
-            const float gnd_z_local_thresh =
-              std::tan(DEG2RAD(5.0)) * (radius - previous_cell.avg_radius_);
-            if (abs(point.z - next_gnd_z) <= non_ground_height_threshold_ + gnd_z_local_thresh) {
-              // this point is ground
-              ground_bin.addPoint(radius, point.z, pt_idx);
-              // go to the next point
-              continue;
-            }
-
-            // 3-c. the point is non-ground
-            if (point.z - next_gnd_z >= non_ground_height_threshold_ + gnd_z_local_thresh) {
-              // this point is obstacle
-              out_no_ground_indices.indices.push_back(pt_idx);
-              // go to the next point
-              continue;
-            }
+        // 4. the point is discontinuous with the previous grid
+        if (is_discontinuous) {
+          const float delta_avg_z = point.z - prev_cell_ptr->avg_height_;
+          if (abs(delta_avg_z) < non_ground_height_threshold_) {
+            // this point is ground
+            ground_bin.addPoint(radius, point.z, pt_idx);
+            // go to the next point
+            continue;
           }
-
-          // 4. the point is discontinuous with the previous grid
-          if (is_discontinuous) {
-            const float delta_avg_z = point.z - previous_cell.avg_height_;
-            if (abs(delta_avg_z) < non_ground_height_threshold_) {
-              // this point is ground
-              ground_bin.addPoint(radius, point.z, pt_idx);
-              // go to the next point
-              continue;
-            }
-            const float delta_max_z = point.z - previous_cell.max_height_;
-            if (abs(delta_max_z) < non_ground_height_threshold_) {
-              // this point is ground
-              ground_bin.addPoint(radius, point.z, pt_idx);
-              // go to the next point
-              continue;
-            }
-            const float delta_radius = radius - previous_cell.avg_radius_;
-            const float local_slope_ratio = delta_avg_z / delta_radius;
-            if (abs(local_slope_ratio) < local_slope_max_ratio_) {
-              // this point is ground
-              ground_bin.addPoint(radius, point.z, pt_idx);
-              // go to the next point
-              continue;
-            }
-            if (local_slope_ratio >= local_slope_max_ratio_) {
-              // this point is obstacle
-              out_no_ground_indices.indices.push_back(pt_idx);
-              // go to the next point
-              continue;
-            }
+          const float delta_max_z = point.z - prev_cell_ptr->max_height_;
+          if (abs(delta_max_z) < non_ground_height_threshold_) {
+            // this point is ground
+            ground_bin.addPoint(radius, point.z, pt_idx);
+            // go to the next point
+            continue;
           }
-
-          // 5. the point is break the previous grid
-          if (is_break) {
-            const float delta_avg_z = point.z - previous_cell.avg_height_;
-            const float delta_radius = radius - previous_cell.avg_radius_;
-            const float local_slope_ratio = delta_avg_z / delta_radius;
-            if (abs(local_slope_ratio) < global_slope_max_ratio_) {
-              // this point is ground
-              ground_bin.addPoint(radius, point.z, pt_idx);
-              // go to the next point
-              continue;
-            }
-            if (local_slope_ratio >= global_slope_max_ratio_) {
-              // this point is obstacle
-              out_no_ground_indices.indices.push_back(pt_idx);
-              // go to the next point
-              continue;
-            }
+          const float delta_radius = radius - prev_cell_ptr->avg_radius_;
+          const float local_slope_ratio = delta_avg_z / delta_radius;
+          if (abs(local_slope_ratio) < local_slope_max_ratio_) {
+            // this point is ground
+            ground_bin.addPoint(radius, point.z, pt_idx);
+            // go to the next point
+            continue;
+          }
+          if (local_slope_ratio >= local_slope_max_ratio_) {
+            // this point is obstacle
+            out_no_ground_indices.indices.push_back(pt_idx);
+            // go to the next point
+            continue;
           }
         }
 
-        // recheck ground bin
-        if (use_recheck_ground_cluster_) {
-          // recheck the ground cluster
-          const float reference_height =
-            use_lowest_point_ ? ground_bin.getMinHeight() : ground_bin.getAverageHeight();
-          const std::vector<size_t> & gnd_indices = ground_bin.getIndicesRef();
-          const std::vector<float> & height_list = ground_bin.getHeightListRef();
-          for (size_t j = 0; j < height_list.size(); ++j) {
-            if (height_list.at(j) >= reference_height + non_ground_height_threshold_) {
-              // fill the non-ground indices
-              out_no_ground_indices.indices.push_back(gnd_indices.at(j));
-              // remove the point from the ground bin
-              // ground_bin.removePoint(j);
-            }
+        // 5. the point is break the previous grid
+        if (is_break) {
+          const float delta_avg_z = point.z - prev_cell_ptr->avg_height_;
+          const float delta_radius = radius - prev_cell_ptr->avg_radius_;
+          const float local_slope_ratio = delta_avg_z / delta_radius;
+          if (abs(local_slope_ratio) < global_slope_max_ratio_) {
+            // this point is ground
+            ground_bin.addPoint(radius, point.z, pt_idx);
+            // go to the next point
+            continue;
+          }
+          if (local_slope_ratio >= global_slope_max_ratio_) {
+            // this point is obstacle
+            out_no_ground_indices.indices.push_back(pt_idx);
+            // go to the next point
+            continue;
           }
         }
-
-        // finalize current cell, update the cell ground information
-        if (ground_bin.getIndicesRef().size() > 0) {
-          cell.avg_height_ = ground_bin.getAverageHeight();
-          cell.avg_radius_ = ground_bin.getAverageRadius();
-          cell.max_height_ = ground_bin.getMaxHeight();
-          cell.min_height_ = ground_bin.getMinHeight();
-          cell.has_ground_ = true;
-        }
-        cell.is_processed_ = true;
       }
 
-      // // debug: cell info for all non-empty cells
-      // std::cout << "cell index: " << cell.grid_idx_
-      //            <<  " number of points: " << cell.getPointNum()
-      //             << " has ground: " << cell.has_ground_
-      //             << " avg height: " << cell.avg_height_ << " avg radius: " << cell.avg_radius_
-      //             << " gradient: " << cell.gradient_ << " intercept: " << cell.intercept_
-      //             << std::endl;
+      // recheck ground bin
+      if (use_recheck_ground_cluster_) {
+        // recheck the ground cluster
+        const float reference_height =
+          use_lowest_point_ ? ground_bin.getMinHeight() : ground_bin.getAverageHeight();
+        const std::vector<size_t> & gnd_indices = ground_bin.getIndicesRef();
+        const std::vector<float> & height_list = ground_bin.getHeightListRef();
+        for (size_t j = 0; j < height_list.size(); ++j) {
+          if (height_list.at(j) >= reference_height + non_ground_height_threshold_) {
+            // fill the non-ground indices
+            out_no_ground_indices.indices.push_back(gnd_indices.at(j));
+            // remove the point from the ground bin
+            // ground_bin.removePoint(j);
+          }
+        }
+      }
+
+      // finalize current cell, update the cell ground information
+      if (ground_bin.getIndicesRef().size() > 0) {
+        cell.avg_height_ = ground_bin.getAverageHeight();
+        cell.avg_radius_ = ground_bin.getAverageRadius();
+        cell.max_height_ = ground_bin.getMaxHeight();
+        cell.min_height_ = ground_bin.getMinHeight();
+        cell.has_ground_ = true;
+      }
+      cell.is_processed_ = true;
     }
+
+    // // debug: cell info for all non-empty cells
+    // std::cout << "cell index: " << cell.grid_idx_
+    //            <<  " number of points: " << cell.getPointNum()
+    //             << " has ground: " << cell.has_ground_
+    //             << " avg height: " << cell.avg_height_ << " avg radius: " << cell.avg_radius_
+    //             << " gradient: " << cell.gradient_ << " intercept: " << cell.intercept_
+    //             << std::endl;
   }
 }
 

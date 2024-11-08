@@ -31,7 +31,6 @@ namespace autoware::ground_segmentation
 {
 using autoware::universe_utils::ScopedTimeTrack;
 
-
 // Concentric Zone Model (CZM) based polar grid
 class Cell
 {
@@ -146,7 +145,7 @@ public:
     }
 
     // calculate the grid id
-    const float radius_sq = x*x + y*y;
+    const float radius_sq = x * x + y * y;
     const float azimuth = std::atan2(y, x);
     const int grid_id = getGridIdx(radius_sq, azimuth);
 
@@ -319,9 +318,9 @@ private:
   float grid_linearity_switch_radius_;  // meters
 
   // calculated parameters
-  float grid_radial_limit_;   // meters
-  float grid_radial_limit_sq_;   // meters
-  float grid_dist_size_rad_;  // radians
+  float grid_radial_limit_;     // meters
+  float grid_radial_limit_sq_;  // meters
+  float grid_dist_size_rad_;    // radians
   bool is_initialized_ = false;
 
   // array of grid boundaries
@@ -419,8 +418,11 @@ private:
 
     // determine the grid id
     int grid_rad_idx = -1;
+
+    // speculate the grid id from the radius, underestimate it to do not miss the grid
+    const size_t grid_idx_speculated = static_cast<size_t>(std::sqrt(radius_sq) / grid_dist_size_);
     // radial grid id
-    for (size_t i = 0; i < grid_radial_boundaries_sq_.size(); ++i) {
+    for (size_t i = grid_idx_speculated; i < grid_radial_boundaries_sq_.size(); ++i) {
       if (radius_sq < grid_radial_boundaries_sq_[i]) {
         grid_rad_idx = i;
         break;
