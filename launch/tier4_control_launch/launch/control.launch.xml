@@ -34,6 +34,7 @@
   <let name="container_executable" value="component_container" unless="$(var use_multithread)"/>
   <let name="container_executable" value="component_container_mt" if="$(var use_multithread)"/>
 
+  <!-- state check for aeb module -->
   <let name="set_autoware_state_check" value="false" if="$(var using_logging_simulator)"/>
   <let name="set_autoware_state_check" value="true" unless="$(var using_logging_simulator)"/>
 
@@ -200,8 +201,8 @@
         <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
         <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
         <param from="$(var aeb_param_path)"/>
-        <param name="check_autoware_state" value="$(var set_autoware_state_check)"></param>
-      <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
+        <param name="check_autoware_state" value="$(var set_autoware_state_check)"/>
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
     </load_composable_node>
 
