@@ -213,6 +213,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     std::chrono::duration<double>(update_period));
   timer_ =
     rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&VehicleCmdGate::onTimer, this));
+  timer_pub_status_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&VehicleCmdGate::publishStatus, this));
 
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
 
@@ -516,8 +518,6 @@ void VehicleCmdGate::onTimer()
     }
     gear_cmd_pub_->publish(gear);
   }
-
-  publishStatus();
 
   // ProcessingTime
   tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
