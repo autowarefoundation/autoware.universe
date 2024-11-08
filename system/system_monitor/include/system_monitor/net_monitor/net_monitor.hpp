@@ -323,6 +323,11 @@ protected:
    */
   const std::map<int, const char *> usage_messages_ = {
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "high load"}, {DiagStatus::ERROR, "down"}};
+
+  /**
+   * @brief Interface name for loopback
+   */
+  const std::string loopback_interface_name_ = "lo";
 };
 
 #endif  // SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_
