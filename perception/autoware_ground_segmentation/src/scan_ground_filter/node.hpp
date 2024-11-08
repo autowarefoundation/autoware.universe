@@ -37,6 +37,7 @@
 
 #include <tf2_ros/transform_listener.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -94,6 +95,7 @@ private:
     uint16_t grid_id;
     std::vector<size_t> pcl_indices;
     std::vector<float> height_list;
+    std::vector<float> radius_list;
 
     PointsCentroid()
     : radius_sum(0.0f),
@@ -119,6 +121,7 @@ private:
       grid_id = 0;
       pcl_indices.clear();
       height_list.clear();
+      radius_list.clear();
     }
 
     void addPoint(const float radius, const float height)
@@ -131,11 +134,26 @@ private:
       height_max = height_max < height ? height : height_max;
       height_min = height_min > height ? height : height_min;
     }
+
     void addPoint(const float radius, const float height, const size_t index)
     {
       pcl_indices.push_back(index);
       height_list.push_back(height);
-      addPoint(radius, height);
+      radius_list.push_back(radius);
+    }
+
+    void processAverage()
+    {
+      point_num = pcl_indices.size();
+      if (point_num == 0) {
+        return;
+      }
+      radius_sum = std::accumulate(radius_list.begin(), radius_list.end(), 0.0f);
+      height_sum = std::accumulate(height_list.begin(), height_list.end(), 0.0f);
+      height_max = std::max_element(height_list.begin(), height_list.end())[0];
+      height_min = std::min_element(height_list.begin(), height_list.end())[0];
+      radius_avg = radius_sum / point_num;
+      height_avg = height_sum / point_num;
     }
 
     float getAverageSlope() const { return std::atan2(height_avg, radius_avg); }

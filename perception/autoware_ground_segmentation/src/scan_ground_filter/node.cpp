@@ -361,6 +361,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       cell.has_ground_ = is_ground_found;
       if (is_ground_found) {
         cell.is_ground_initialized_ = true;
+        ground_bin.processAverage();
         cell.avg_height_ = ground_bin.getAverageHeight();
         cell.avg_radius_ = ground_bin.getAverageRadius();
         cell.max_height_ = ground_bin.getMaxHeight();
@@ -533,7 +534,8 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       }
 
       // recheck ground bin
-      if (use_recheck_ground_cluster_) {
+      if (ground_bin.getIndicesRef().size() > 0 && use_recheck_ground_cluster_) {
+        ground_bin.processAverage();
         // recheck the ground cluster
         const float reference_height =
           use_lowest_point_ ? ground_bin.getMinHeight() : ground_bin.getAverageHeight();
@@ -551,6 +553,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
       // finalize current cell, update the cell ground information
       if (ground_bin.getIndicesRef().size() > 0) {
+        ground_bin.processAverage();
         cell.avg_height_ = ground_bin.getAverageHeight();
         cell.avg_radius_ = ground_bin.getAverageRadius();
         cell.max_height_ = ground_bin.getMaxHeight();
