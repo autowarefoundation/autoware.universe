@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>diagnostic_converter</name>
-  <version>0.5.6</version>
+  <version>0.37.0</version>
   <description>Node for converting diagnostic messages into ParameterDeclaration messages</description>
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
   <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
