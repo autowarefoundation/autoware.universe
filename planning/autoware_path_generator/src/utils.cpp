@@ -72,10 +72,6 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence(
 std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
-  if (!planner_data.routing_graph_ptr) {
-    return std::nullopt;
-  }
-
   lanelet::ConstLanelets lanelet_sequence{};
   auto current_lanelet = lanelet;
   auto length = 0.;
@@ -106,10 +102,6 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
 std::optional<lanelet::ConstLanelets> get_lanelet_sequence_up_to(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
-  if (!planner_data.routing_graph_ptr) {
-    return std::nullopt;
-  }
-
   lanelet::ConstLanelets lanelet_sequence{};
   auto current_lanelet = lanelet;
   auto length = 0.;
@@ -165,10 +157,6 @@ std::optional<lanelet::ConstLanelet> get_next_lanelet_within_route(
 std::optional<lanelet::ConstLanelets> get_next_lanelets_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data)
 {
-  if (!planner_data.routing_graph_ptr) {
-    return std::nullopt;
-  }
-
   if (planner_data.preferred_lanelets.empty()) {
     return std::nullopt;
   }
@@ -195,10 +183,6 @@ std::optional<lanelet::ConstLanelets> get_next_lanelets_within_route(
 std::optional<lanelet::ConstLanelets> get_previous_lanelets_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data)
 {
-  if (!planner_data.routing_graph_ptr) {
-    return std::nullopt;
-  }
-
   if (exists(planner_data.start_lanelets, lanelet)) {
     return std::nullopt;
   }

@@ -215,10 +215,6 @@ std::optional<PathWithLaneId> PathGenerator::get_centerline_path(
     return std::nullopt;
   }
 
-  if (!route_ptr) {
-    return std::nullopt;
-  }
-
   const auto arc_coordinates = lanelet::utils::getArcCoordinates(lanelet_sequence, current_pose);
   const auto s = arc_coordinates.length;  // s denotes longitudinal position in Frenet coordinates
   const auto s_start = std::max(0., s - params.backward_path_length);
@@ -265,12 +261,6 @@ std::optional<PathWithLaneId> PathGenerator::get_centerline_path(
 std::optional<PathWithLaneId> PathGenerator::get_centerline_path(
   const lanelet::ConstLanelets & lanelet_sequence, const double s_start, const double s_end) const
 {
-  if (
-    !planner_data_.lanelet_map_ptr || !planner_data_.traffic_rules_ptr ||
-    !planner_data_.route_ptr) {
-    return std::nullopt;
-  }
-
   PathWithLaneId centerline_path{};
   auto & path_points = centerline_path.points;
 
