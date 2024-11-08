@@ -81,9 +81,6 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     gnd_grid_buffer_size_ = declare_parameter<int>("gnd_grid_buffer_size");
     virtual_lidar_z_ = vehicle_info_.vehicle_height_m;
 
-    // initialize grid
-    grid_.initialize(grid_size_m_, grid_mode_switch_radius_, virtual_lidar_z_);
-
     // initialize grid pointer
     {
       const float point_origin_x = vehicle_info_.wheel_base_m / 2.0f + center_pcl_shift_;
@@ -117,6 +114,9 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
           "~/debug/processing_time_detail_ms", 1);
       auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
       time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
+
+      // set time keeper to grid
+      grid_ptr_->setTimeKeeper(time_keeper_);
     }
   }
 }
@@ -306,7 +306,12 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   // [new grid] run ground segmentation
-  out_no_ground_indices.indices.clear();
+  {
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("no_ground_indicies_clear", *time_keeper_);
+    out_no_ground_indices.indices.clear();
+  }
   {
     const auto grid_size = grid_ptr_->getGridSize();
     // loop over grid cells
@@ -438,7 +443,8 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       {
         std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
         if (time_keeper_)
-          inner_st_ptr = std::make_unique<ScopedTimeTrack>("segmenting_points_in_a_cell", *time_keeper_);
+          inner_st_ptr =
+            std::make_unique<ScopedTimeTrack>("segmenting_points_in_a_cell", *time_keeper_);
 
         PointsCentroid ground_bin;
         for (size_t j = 0; j < num_points; ++j) {
@@ -792,10 +798,10 @@ rcl_interfaces::msg::SetParametersResult ScanGroundFilterComponent::onParameter(
   const std::vector<rclcpp::Parameter> & param)
 {
   if (get_param(param, "grid_size_m", grid_size_m_)) {
-    grid_.initialize(grid_size_m_, grid_mode_switch_radius_, virtual_lidar_z_);
+    grid_ptr_->initialize(grid_size_m_, radial_divider_angle_rad_, grid_mode_switch_radius_);
   }
   if (get_param(param, "grid_mode_switch_radius", grid_mode_switch_radius_)) {
-    grid_.initialize(grid_size_m_, grid_mode_switch_radius_, virtual_lidar_z_);
+    grid_ptr_->initialize(grid_size_m_, radial_divider_angle_rad_, grid_mode_switch_radius_);
   }
   double global_slope_max_angle_deg{get_parameter("global_slope_max_angle_deg").as_double()};
   if (get_param(param, "global_slope_max_angle_deg", global_slope_max_angle_deg)) {
@@ -817,6 +823,7 @@ rcl_interfaces::msg::SetParametersResult ScanGroundFilterComponent::onParameter(
   if (get_param(param, "radial_divider_angle_deg", radial_divider_angle_deg)) {
     radial_divider_angle_rad_ = deg2rad(radial_divider_angle_deg);
     radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);
+    grid_ptr_->initialize(grid_size_m_, radial_divider_angle_rad_, grid_mode_switch_radius_);
     RCLCPP_DEBUG(
       get_logger(), "Setting radial_divider_angle_rad to: %f.", radial_divider_angle_rad_);
     RCLCPP_DEBUG(get_logger(), "Setting radial_dividers_num to: %zu.", radial_dividers_num_);

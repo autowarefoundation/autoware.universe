@@ -17,98 +17,20 @@
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 
 #include <glob.h>
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
+#include <utility>
 #include <vector>
 
 namespace autoware::ground_segmentation
 {
+using autoware::universe_utils::ScopedTimeTrack;
 
-class ScanGroundGrid
-{
-public:
-  ScanGroundGrid() = default;
-  ~ScanGroundGrid() = default;
-
-  void initialize(
-    const float grid_size_m, const float grid_mode_switch_radius, const float virtual_lidar_z)
-  {
-    grid_size_m_ = grid_size_m;
-    mode_switch_radius_ = grid_mode_switch_radius;
-    virtual_lidar_z_ = virtual_lidar_z;
-
-    // calculate parameters
-    inv_grid_size_m_ = 1.0f / grid_size_m_;
-    mode_switch_grid_idx_ = mode_switch_radius_ * inv_grid_size_m_;
-    mode_switch_angle_rad_ = std::atan2(mode_switch_radius_, virtual_lidar_z_);
-
-    grid_size_rad_ = universe_utils::normalizeRadian(
-                       std::atan2(mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
-                     universe_utils::normalizeRadian(mode_switch_angle_rad_);
-    inv_grid_size_rad_ = 1.0f / grid_size_rad_;
-    tan_grid_size_rad_ = std::tan(grid_size_rad_);
-    grid_idx_offset_ = mode_switch_grid_idx_ - mode_switch_angle_rad_ * inv_grid_size_rad_;
-
-    is_initialized_ = true;
-  }
-
-  float getGridSize(const float radius, const size_t grid_id) const
-  {
-    // check if initialized
-    if (!is_initialized_) {
-      throw std::runtime_error("ScanGroundGrid is not initialized.");
-    }
-
-    float grid_size = grid_size_m_;
-    constexpr uint16_t back_steps_num = 1;
-
-    if (radius > mode_switch_radius_ && grid_id > mode_switch_grid_idx_ + back_steps_num) {
-      // equivalent to grid_size = (std::tan(gamma) - std::tan(gamma - grid_size_rad_)) *
-      // virtual_lidar_z_
-      // where gamma = normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)
-      grid_size = radius - (radius - tan_grid_size_rad_ * virtual_lidar_z_) /
-                             (1 + radius * tan_grid_size_rad_ / virtual_lidar_z_);
-    }
-    return grid_size;
-  }
-
-  uint16_t getGridId(const float radius) const
-  {
-    // check if initialized
-    if (!is_initialized_) {
-      throw std::runtime_error("ScanGroundGrid is not initialized.");
-    }
-
-    uint16_t grid_id = 0;
-    if (radius <= mode_switch_radius_) {
-      grid_id = static_cast<uint16_t>(radius * inv_grid_size_m_);
-    } else {
-      auto gamma{universe_utils::normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
-      grid_id = grid_idx_offset_ + gamma * inv_grid_size_rad_;
-    }
-    return grid_id;
-  }
-
-private:
-  bool is_initialized_ = false;
-
-  // configured parameters
-  float grid_size_m_ = 0.0f;
-  float mode_switch_radius_ = 0.0f;
-  float virtual_lidar_z_ = 0.0f;
-
-  // calculated parameters
-  float inv_grid_size_m_ = 0.0f;
-  float grid_size_rad_ = 0.0f;
-  float inv_grid_size_rad_ = 0.0f;
-  float tan_grid_size_rad_ = 0.0f;
-  float mode_switch_grid_idx_ = 0.0f;
-  float mode_switch_angle_rad_ = 0.0f;
-  float grid_idx_offset_ = 0.0f;
-};
 
 // Concentric Zone Model (CZM) based polar grid
 class Cell
@@ -156,6 +78,11 @@ public:
   {
   }
   ~Grid() = default;
+
+  void setTimeKeeper(std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_ptr)
+  {
+    time_keeper_ = std::move(time_keeper_ptr);
+  }
 
   void initialize(
     const float grid_dist_size, const float grid_azimuth_size,
@@ -254,6 +181,9 @@ public:
 
   void resetCells()
   {
+    std::unique_ptr<ScopedTimeTrack> st_ptr;
+    if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
     for (auto & cell : cells_) {
       cell.point_indices_.clear();
       cell.is_processed_ = false;
@@ -315,6 +245,9 @@ public:
 
   void setGridConnections()
   {
+    std::unique_ptr<ScopedTimeTrack> st_ptr;
+    if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
     // check if initialized
     if (!is_initialized_) {
       throw std::runtime_error("Grid is not initialized.");
@@ -398,6 +331,9 @@ private:
   // list of cells
   std::vector<Cell> cells_;
 
+  // debug information
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
+
   // Generate grid geometry
   // the grid is cylindrical mesh grid
   // azimuth interval: constant angle
@@ -405,6 +341,9 @@ private:
   //                  constant elevation angle outside mode switch radius
   void setGridBoundaries()
   {
+    std::unique_ptr<ScopedTimeTrack> st_ptr;
+    if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
     // radial boundaries
     {
       int idx = 0;
@@ -423,6 +362,7 @@ private:
         radius = tan(angle + grid_dist_size_rad_) * origin_z_;
       }
     }
+    const size_t radial_grid_num = grid_radial_boundaries_.size();
 
     // azimuth boundaries
     {
@@ -431,13 +371,13 @@ private:
       }
 
       // number of azimuth grids per radial grid
-      azimuth_grids_per_radial_.resize(grid_radial_boundaries_.size());
-      azimuth_interval_per_radial_.resize(grid_radial_boundaries_.size());
+      azimuth_grids_per_radial_.resize(radial_grid_num);
+      azimuth_interval_per_radial_.resize(radial_grid_num);
       azimuth_grids_per_radial_[0] = 1;
       azimuth_interval_per_radial_[0] = 2.0f * M_PI;
       const int azimuth_grid_num = std::max(static_cast<int>(2.0 * M_PI / grid_azimuth_size_), 1);
       const float azimuth_interval_evened = 2.0f * M_PI / azimuth_grid_num;
-      for (size_t i = 1; i < grid_radial_boundaries_.size(); ++i) {
+      for (size_t i = 1; i < radial_grid_num; ++i) {
         // constant azimuth interval
         azimuth_grids_per_radial_[i] = azimuth_grid_num;
         azimuth_interval_per_radial_[i] = azimuth_interval_evened;
@@ -445,9 +385,9 @@ private:
     }
 
     // accumulate the number of azimuth grids per radial grid, set offset for each radial grid
-    radial_idx_offsets_.resize(grid_radial_boundaries_.size());
+    radial_idx_offsets_.resize(radial_grid_num);
     radial_idx_offsets_[0] = 0;
-    for (size_t i = 1; i < grid_radial_boundaries_.size(); ++i) {
+    for (size_t i = 1; i < radial_grid_num; ++i) {
       radial_idx_offsets_[i] = radial_idx_offsets_[i - 1] + azimuth_grids_per_radial_[i - 1];
     }
   }
@@ -532,6 +472,9 @@ private:
 
   void setCellGeometry()
   {
+    std::unique_ptr<ScopedTimeTrack> st_ptr;
+    if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
     for (size_t idx = 0; idx < cells_.size(); ++idx) {
       Cell & cell = cells_[idx];
 

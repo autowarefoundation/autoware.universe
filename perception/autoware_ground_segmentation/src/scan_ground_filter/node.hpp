@@ -208,7 +208,6 @@ private:
   float virtual_lidar_z_;
 
   // grid data
-  ScanGroundGrid grid_;
   std::unique_ptr<Grid> grid_ptr_;
 
   // data access methods
