@@ -94,6 +94,7 @@ public:
 
     // calculate grid parameters
     grid_radial_limit_ = 160.0f;  // [m]
+    grid_radial_limit_sq_ = grid_radial_limit_ * grid_radial_limit_;
     grid_dist_size_rad_ = std::atan2(grid_linearity_switch_radius_ + grid_dist_size_, origin_z_) -
                           std::atan2(grid_linearity_switch_radius_, origin_z_);
 
@@ -145,9 +146,9 @@ public:
     }
 
     // calculate the grid id
-    const float radius = std::hypot(x, y);
+    const float radius_sq = x*x + y*y;
     const float azimuth = std::atan2(y, x);
-    const int grid_id = getGridIdx(radius, azimuth);
+    const int grid_id = getGridIdx(radius_sq, azimuth);
 
     // check if the point is within the grid
     if (grid_id < 0) {
@@ -319,11 +320,13 @@ private:
 
   // calculated parameters
   float grid_radial_limit_;   // meters
+  float grid_radial_limit_sq_;   // meters
   float grid_dist_size_rad_;  // radians
   bool is_initialized_ = false;
 
   // array of grid boundaries
   std::vector<float> grid_radial_boundaries_;
+  std::vector<float> grid_radial_boundaries_sq_;
   std::vector<int> azimuth_grids_per_radial_;
   std::vector<float> azimuth_interval_per_radial_;
   std::vector<int> radial_idx_offsets_;
@@ -360,6 +363,12 @@ private:
         grid_radial_boundaries_.push_back(radius);
         const float angle = std::atan2(radius, origin_z_);
         radius = tan(angle + grid_dist_size_rad_) * origin_z_;
+      }
+
+      // square of the boundaries
+      grid_radial_boundaries_sq_.resize(grid_radial_boundaries_.size());
+      for (size_t i = 0; i < grid_radial_boundaries_.size(); ++i) {
+        grid_radial_boundaries_sq_[i] = grid_radial_boundaries_[i] * grid_radial_boundaries_[i];
       }
     }
     const size_t radial_grid_num = grid_radial_boundaries_.size();
@@ -398,21 +407,21 @@ private:
     return static_cast<int>(azimuth / azimuth_interval_per_radial_[radial_idx]);
   }
 
-  int getRadialIdx(const float & radius) const
+  int getRadialIdx(const float & radius_sq) const
   {
     // check if the point is within the grid
-    if (radius > grid_radial_limit_) {
+    if (radius_sq > grid_radial_limit_sq_) {
       return -1;
     }
-    if (radius < 0) {
+    if (radius_sq < 0) {
       return -1;
     }
 
     // determine the grid id
     int grid_rad_idx = -1;
     // radial grid id
-    for (size_t i = 0; i < grid_radial_boundaries_.size(); ++i) {
-      if (radius < grid_radial_boundaries_[i]) {
+    for (size_t i = 0; i < grid_radial_boundaries_sq_.size(); ++i) {
+      if (radius_sq < grid_radial_boundaries_sq_[i]) {
         grid_rad_idx = i;
         break;
       }
@@ -429,14 +438,14 @@ private:
   // method to determine the grid id of a point
   // -1 means out of range
   // range limit is horizon angle
-  int getGridIdx(const float & radius, const float & azimuth) const
+  int getGridIdx(const float & radius_sq, const float & azimuth) const
   {
     // check if initialized
     if (!is_initialized_) {
       throw std::runtime_error("Grid is not initialized.");
     }
 
-    const int grid_rad_idx = getRadialIdx(radius);
+    const int grid_rad_idx = getRadialIdx(radius_sq);
     if (grid_rad_idx < 0) {
       return -1;
     }
