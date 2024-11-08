@@ -25,6 +25,10 @@
 
 #include <lanelet2_core/geometry/Lanelet.h>
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 namespace autoware::path_generator
 {
 PathGenerator::PathGenerator(const rclcpp::NodeOptions & node_options)
