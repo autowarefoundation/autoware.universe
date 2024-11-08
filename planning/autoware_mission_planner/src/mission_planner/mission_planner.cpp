@@ -241,7 +241,7 @@ void MissionPlanner::on_set_lanelet_route(
                               operation_mode_state_->is_autoware_control_enabled
                           : false;
 
-  if (is_reroute && !req->allow_while_using_route) {
+  if (is_reroute && is_autonomous_driving && !req->allow_while_using_route) {
     throw service_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Reroute is not allowed while using the route.");
   }
