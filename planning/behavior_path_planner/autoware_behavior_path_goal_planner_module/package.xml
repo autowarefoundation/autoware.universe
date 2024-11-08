@@ -24,6 +24,7 @@
   <depend>autoware_behavior_path_planner_common</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_rtc_interface</depend>
+  <depend>autoware_test_utils</depend>
   <depend>autoware_universe_utils</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
@@ -34,7 +35,6 @@
   <test_depend>ament_index_cpp</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
-  <test_depend>autoware_test_utils</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

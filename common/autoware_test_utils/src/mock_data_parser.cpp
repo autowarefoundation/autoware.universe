@@ -170,6 +170,16 @@ AccelWithCovarianceStamped parse(const YAML::Node & node)
 }
 
 template <>
+LaneletRoute parse(const YAML::Node & node)
+{
+  LaneletRoute lanelet_route;
+  lanelet_route.start_pose = parse<Pose>(node["start_pose"]);
+  lanelet_route.goal_pose = parse<Pose>(node["goal_pose"]);
+  lanelet_route.segments = parse<std::vector<LaneletSegment>>(node["segments"]);
+  return lanelet_route;
+}
+
+template <>
 LaneletPrimitive parse(const YAML::Node & node)
 {
   LaneletPrimitive primitive;

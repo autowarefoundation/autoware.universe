@@ -28,6 +28,7 @@
 #include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_test_utils/mock_data_parser.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
@@ -40,6 +41,8 @@
 
 #include <lanelet2_io/Io.h>
 #include <matplotlibcpp17/pyplot.h>
+#include <pybind11/pytypes.h>
+#include <yaml-cpp/yaml.h>
 
 #include <algorithm>
 #include <chrono>
@@ -65,9 +68,28 @@ using autoware::behavior_path_planner::utils::parking_departure::calcFeasibleDec
 using autoware_planning_msgs::msg::LaneletRoute;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
+std::vector<std::string> g_colors = {
+  "#F0F8FF", "#FAEBD7", "#00FFFF", "#7FFFD4", "#F0FFFF", "#F5F5DC", "#FFE4C4", "#000000", "#FFEBCD",
+  "#0000FF", "#8A2BE2", "#A52A2A", "#DEB887", "#5F9EA0", "#7FFF00", "#D2691E", "#FF7F50", "#6495ED",
+  "#FFF8DC", "#DC143C", "#00FFFF", "#00008B", "#008B8B", "#B8860B", "#A9A9A9", "#006400", "#A9A9A9",
+  "#BDB76B", "#8B008B", "#556B2F", "#FF8C00", "#9932CC", "#8B0000", "#E9967A", "#8FBC8F", "#483D8B",
+  "#2F4F4F", "#2F4F4F", "#00CED1", "#9400D3", "#FF1493", "#00BFFF", "#696969", "#696969", "#1E90FF",
+  "#B22222", "#FFFAF0", "#228B22", "#FF00FF", "#DCDCDC", "#F8F8FF", "#FFD700", "#DAA520", "#808080",
+  "#008000", "#ADFF2F", "#808080", "#F0FFF0", "#FF69B4", "#CD5C5C", "#4B0082", "#FFFFF0", "#F0E68C",
+  "#E6E6FA", "#FFF0F5", "#7CFC00", "#FFFACD", "#ADD8E6", "#F08080", "#E0FFFF", "#FAFAD2", "#D3D3D3",
+  "#90EE90", "#D3D3D3", "#FFB6C1", "#FFA07A", "#20B2AA", "#87CEFA", "#778899", "#778899", "#B0C4DE",
+  "#FFFFE0", "#00FF00", "#32CD32", "#FAF0E6", "#FF00FF", "#800000", "#66CDAA", "#0000CD", "#BA55D3",
+  "#9370DB", "#3CB371", "#7B68EE", "#00FA9A", "#48D1CC", "#C71585", "#191970", "#F5FFFA", "#FFE4E1",
+  "#FFE4B5", "#FFDEAD", "#000080", "#FDF5E6", "#808000", "#6B8E23", "#FFA500", "#FF4500", "#DA70D6",
+  "#EEE8AA", "#98FB98", "#AFEEEE", "#DB7093", "#FFEFD5", "#FFDAB9", "#CD853F", "#FFC0CB", "#DDA0DD",
+  "#B0E0E6", "#800080", "#663399", "#FF0000", "#BC8F8F", "#4169E1", "#8B4513", "#FA8072", "#F4A460",
+  "#2E8B57", "#FFF5EE", "#A0522D", "#C0C0C0", "#87CEEB", "#6A5ACD", "#708090", "#708090", "#FFFAFA",
+  "#00FF7F", "#4682B4", "#D2B48C", "#008080", "#D8BFD8", "#FF6347", "#40E0D0", "#EE82EE", "#F5DEB3",
+  "#FFFFFF", "#F5F5F5", "#FFFF00", "#9ACD32"};
+
 void plot_footprint(
   matplotlibcpp17::axes::Axes & axes, const autoware::universe_utils::LinearRing2d & footprint,
-  const std::string & color = "blue")
+  const std::string & color)
 {
   std::vector<double> xs, ys;
   for (const auto & pt : footprint) {
@@ -79,33 +101,44 @@ void plot_footprint(
   axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linestyle"_a = "dotted"));
 }
 
-void plot_goal_candidates(
-  matplotlibcpp17::axes::Axes & axes, const GoalCandidates & goals,
-  const autoware::universe_utils::LinearRing2d & local_footprint,
-  const std::string & color = "green")
+void plot_goal_candidate(
+  matplotlibcpp17::axes::Axes & axes, const GoalCandidate & goal, const size_t prio,
+  const autoware::universe_utils::LinearRing2d & local_footprint, const std::string & color)
 {
   std::vector<double> xs, ys;
   std::vector<double> yaw_cos, yaw_sin;
-  for (const auto & goal : goals) {
-    const auto goal_footprint =
-      transformVector(local_footprint, autoware::universe_utils::pose2transform(goal.goal_pose));
-    plot_footprint(axes, goal_footprint);
-    xs.push_back(goal.goal_pose.position.x);
-    ys.push_back(goal.goal_pose.position.y);
-    axes.text(Args(xs.back(), ys.back(), std::to_string(goal.id)));
-    const double yaw = autoware::universe_utils::getRPY(goal.goal_pose).z;
-    yaw_cos.push_back(std::cos(yaw));
-    yaw_sin.push_back(std::sin(yaw));
-  }
+  const auto goal_footprint =
+    transformVector(local_footprint, autoware::universe_utils::pose2transform(goal.goal_pose));
+  plot_footprint(axes, goal_footprint, color);
+  xs.push_back(goal.goal_pose.position.x);
+  ys.push_back(goal.goal_pose.position.y);
+  axes.text(Args(xs.back(), ys.back(), std::to_string(prio)));
+  const double yaw = autoware::universe_utils::getRPY(goal.goal_pose).z;
+  yaw_cos.push_back(std::cos(yaw));
+  yaw_sin.push_back(std::sin(yaw));
   axes.scatter(Args(xs, ys), Kwargs("color"_a = color));
   axes.quiver(
     Args(xs, ys, yaw_cos, yaw_sin),
-    Kwargs("angles"_a = "xy", "scale_units"_a = "xy", "scale"_a = 1.0));
+    Kwargs("angles"_a = "xy", "scale_units"_a = "xy", "scale"_a = 2.0));
+}
+
+void plot_goal_candidates(
+  matplotlibcpp17::axes::Axes & axes, const GoalCandidates & goals,
+  const std::map<size_t, size_t> & goal_id2prio,
+  const autoware::universe_utils::LinearRing2d & local_footprint,
+  const std::string & color = "green")
+{
+  for (const auto & goal : goals) {
+    const auto it = goal_id2prio.find(goal.id);
+    if (it != goal_id2prio.end()) {
+      plot_goal_candidate(axes, goal, it->second, local_footprint, color);
+    }
+  }
 }
 
 void plot_path_with_lane_id(
   matplotlibcpp17::axes::Axes & axes, const PathWithLaneId & path,
-  const std::string & color = "red", const std::string & label = "")
+  const std::string & color = "red", const std::string & label = "", const double linewidth = 1.0)
 {
   std::vector<double> xs, ys;
   for (const auto & point : path.points) {
@@ -113,9 +146,10 @@ void plot_path_with_lane_id(
     ys.push_back(point.point.pose.position.y);
   }
   if (label == "") {
-    axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linewidth"_a = 1.0));
+    axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linewidth"_a = linewidth));
   } else {
-    axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linewidth"_a = 1.0, "label"_a = label));
+    axes.plot(
+      Args(xs, ys), Kwargs("color"_a = color, "linewidth"_a = linewidth, "label"_a = label));
   }
 }
 
@@ -151,7 +185,8 @@ void plot_lanelet(
 }
 
 std::shared_ptr<PlannerData> instantiate_planner_data(
-  rclcpp::Node::SharedPtr node, const std::string & map_path, const LaneletRoute & route_msg)
+  rclcpp::Node::SharedPtr node, const std::string & map_path,
+  const std::string & sample_planner_data_yaml_path)
 {
   lanelet::ErrorMessages errors{};
   lanelet::projection::MGRSProjector projector{};
@@ -166,20 +201,21 @@ std::shared_ptr<PlannerData> instantiate_planner_data(
   lanelet::utils::conversion::toBinMsg(
     lanelet_map_ptr, &map_bin);  // TODO(soblin): pass lanelet_map_ptr to RouteHandler
 
+  YAML::Node config = YAML::LoadFile(sample_planner_data_yaml_path);
+
   auto planner_data = std::make_shared<PlannerData>();
   planner_data->init_parameters(*node);
   planner_data->route_handler->setMap(map_bin);
-  planner_data->route_handler->setRoute(route_msg);
+  planner_data->route_handler->setRoute(
+    autoware::test_utils::parse<autoware_planning_msgs::msg::LaneletRoute>(config["route"]));
 
-  nav_msgs::msg::Odometry odom;
-  odom.pose.pose = route_msg.start_pose;
-  auto odometry = std::make_shared<const nav_msgs::msg::Odometry>(odom);
+  auto odometry = autoware::test_utils::create_const_shared_ptr(
+    autoware::test_utils::parse<nav_msgs::msg::Odometry>(config["self_odometry"]));
   planner_data->self_odometry = odometry;
 
-  geometry_msgs::msg::AccelWithCovarianceStamped accel;
-  accel.accel.accel.linear.x = 0.537018510955429;
-  accel.accel.accel.linear.y = -0.2435352815388478;
-  auto accel_ptr = std::make_shared<const geometry_msgs::msg::AccelWithCovarianceStamped>(accel);
+  auto accel_ptr = autoware::test_utils::create_const_shared_ptr(
+    autoware::test_utils::parse<geometry_msgs::msg::AccelWithCovarianceStamped>(
+      config["self_acceleration"]));
   planner_data->self_acceleration = accel_ptr;
   return planner_data;
 }
@@ -390,9 +426,9 @@ std::vector<PullOverPath> selectPullOverPaths(
 }
 
 std::optional<PathWithLaneId> calculate_centerline_path(
-  const geometry_msgs::msg::Pose & original_goal_pose,
   const std::shared_ptr<PlannerData> planner_data, const GoalPlannerParameters & parameters)
 {
+  const auto original_goal_pose = planner_data->route_handler->getOriginalGoalPose();
   const auto refined_goal_opt =
     autoware::behavior_path_planner::goal_planner_utils::calcRefinedGoal(
       original_goal_pose, planner_data->route_handler, true,
@@ -434,77 +470,33 @@ std::optional<PathWithLaneId> calculate_centerline_path(
   return center_line_path;
 }
 
+struct SortByWeightedDistance
+{
+  double lateral_cost{0.0};
+  bool prioritize_goals_before_objects{false};
+
+  SortByWeightedDistance(double cost, bool prioritize_goals_before_objects)
+  : lateral_cost(cost), prioritize_goals_before_objects(prioritize_goals_before_objects)
+  {
+  }
+
+  bool operator()(const GoalCandidate & a, const GoalCandidate & b) const noexcept
+  {
+    if (prioritize_goals_before_objects) {
+      if (a.num_objects_to_avoid != b.num_objects_to_avoid) {
+        return a.num_objects_to_avoid < b.num_objects_to_avoid;
+      }
+    }
+
+    return a.distance_from_original_goal + lateral_cost * a.lateral_offset <
+           b.distance_from_original_goal + lateral_cost * b.lateral_offset;
+  }
+};
+
 int main(int argc, char ** argv)
 {
   using autoware::behavior_path_planner::utils::getReferencePath;
   rclcpp::init(argc, argv);
-
-  autoware_planning_msgs::msg::LaneletRoute route_msg;
-  route_msg.start_pose =
-    geometry_msgs::build<geometry_msgs::msg::Pose>()
-      .position(geometry_msgs::build<geometry_msgs::msg::Point>().x(729.944).y(695.124).z(381.18))
-      .orientation(
-        geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(0.437138).w(
-          0.899395));
-  route_msg.goal_pose =
-    geometry_msgs::build<geometry_msgs::msg::Pose>()
-      .position(geometry_msgs::build<geometry_msgs::msg::Point>().x(797.526).y(694.105).z(381.18))
-      .orientation(
-        geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(-0.658723).w(
-          0.752386));
-
-  route_msg.segments = std::vector<autoware_planning_msgs::msg::LaneletSegment>{
-    autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletSegment>()
-      .preferred_primitive(
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15214)
-          .primitive_type(""))
-      .primitives(std::vector<autoware_planning_msgs::msg::LaneletPrimitive>{
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15214)
-          .primitive_type("lane"),
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15213)
-          .primitive_type("lane"),
-      }),
-    autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletSegment>()
-      .preferred_primitive(
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15226)
-          .primitive_type(""))
-      .primitives(std::vector<autoware_planning_msgs::msg::LaneletPrimitive>{
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15226)
-          .primitive_type("lane"),
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15225)
-          .primitive_type("lane"),
-      }),
-    autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletSegment>()
-      .preferred_primitive(
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15228)
-          .primitive_type(""))
-      .primitives(std::vector<autoware_planning_msgs::msg::LaneletPrimitive>{
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15228)
-          .primitive_type("lane"),
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15229)
-          .primitive_type("lane"),
-      }),
-    autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletSegment>()
-      .preferred_primitive(
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15231)
-          .primitive_type(""))
-      .primitives(std::vector<autoware_planning_msgs::msg::LaneletPrimitive>{
-        autoware_planning_msgs::build<autoware_planning_msgs::msg::LaneletPrimitive>()
-          .id(15231)
-          .primitive_type("lane"),
-      }),
-  };
-  route_msg.allow_modification = false;
 
   auto node_options = rclcpp::NodeOptions{};
   node_options.parameter_overrides(
@@ -537,11 +529,12 @@ int main(int argc, char ** argv)
     node,
     ament_index_cpp::get_package_share_directory("autoware_test_utils") +
       "/test_map/road_shoulder/lanelet2_map.osm",
-    route_msg);
+    ament_index_cpp::get_package_share_directory("autoware_behavior_path_goal_planner_module") +
+      "/config/sample_planner_data.yaml");
 
   lanelet::ConstLanelet current_route_lanelet;
   planner_data->route_handler->getClosestLaneletWithinRoute(
-    route_msg.start_pose, &current_route_lanelet);
+    planner_data->self_odometry->pose.pose, &current_route_lanelet);
   const auto reference_path = getReferencePath(current_route_lanelet, planner_data);
   auto goal_planner_parameter =
     autoware::behavior_path_planner::GoalPlannerModuleManager::initGoalPlannerParameters(
@@ -555,7 +548,16 @@ int main(int argc, char ** argv)
   lane_departure_checker.setParam(lane_departure_checker_params);
   const auto footprint = vehicle_info.createFootprint();
   autoware::behavior_path_planner::GoalSearcher goal_searcher(goal_planner_parameter, footprint);
-  const auto goal_candidates = goal_searcher.search(planner_data);
+  auto goal_candidates = goal_searcher.search(planner_data);
+  std::sort(
+    goal_candidates.begin(), goal_candidates.end(),
+    SortByWeightedDistance(
+      goal_planner_parameter.minimum_weighted_distance_lateral_weight,
+      goal_planner_parameter.prioritize_goals_before_objects));
+  std::map<size_t, size_t> goal_id2prio{};
+  for (auto i = 0; i < goal_candidates.size(); ++i) {
+    goal_id2prio[goal_candidates.at(i).id] = i;
+  }
 
   pybind11::scoped_interpreter guard{};
   auto plt = matplotlibcpp17::pyplot::import();
@@ -563,20 +565,30 @@ int main(int argc, char ** argv)
 
   auto & ax1 = axes[0];
   auto & ax2 = axes[1];
-  const std::vector<lanelet::Id> ids{15213, 15214, 15225, 15226, 15224, 15227,
-                                     15228, 15229, 15230, 15231, 15232};
+  // auto & ax3 = axes[2];
+  const std::vector<lanelet::Id> ids{/*15213, 15214, */ 15225,
+                                     15226,
+                                     15224,
+                                     15227,
+                                     15228,
+                                     15229,
+                                     15230,
+                                     15231,
+                                     15232};
   for (const auto & id : ids) {
     const auto lanelet = planner_data->route_handler->getLaneletMapPtr()->laneletLayer.get(id);
     plot_lanelet(ax1, lanelet);
     plot_lanelet(ax2, lanelet);
+    // plot_lanelet(ax3, lanelet);
   }
 
-  plot_goal_candidates(ax1, goal_candidates, footprint);
+  // plot_goal_candidates(ax1, goal_candidates, footprint);
 
-  plot_path_with_lane_id(ax2, reference_path.path, "green", "reference_path");
+  // plot_path_with_lane_id(ax2, reference_path.path, "green", "reference_path");
 
   std::vector<PullOverPath> candidates;
-  for (const auto & goal_candidate : goal_candidates) {
+  for (auto i = 0; i < goal_candidates.size(); ++i) {
+    const auto & goal_candidate = goal_candidates.at(i);
     auto shift_pull_over_planner = autoware::behavior_path_planner::ShiftPullOver(
       *node, goal_planner_parameter, lane_departure_checker);
     const auto pull_over_path_opt =
@@ -585,20 +597,47 @@ int main(int argc, char ** argv)
       const auto & pull_over_path = pull_over_path_opt.value();
       const auto & full_path = pull_over_path.full_path();
       candidates.push_back(pull_over_path);
-      plot_path_with_lane_id(ax1, full_path);
+      const auto & color = g_colors.at(i % g_colors.size());
+      const auto goal_id = goal_candidate.id;
+      const auto prio = goal_id2prio[goal_id];
+      plot_path_with_lane_id(
+        ax1, full_path, color,
+        std::to_string(prio) + "-th goal(id=" + std::to_string(goal_id) + ")");
+      plot_goal_candidate(ax1, pull_over_path.modified_goal(), prio, footprint, color);
     }
   }
-  [[maybe_unused]] const auto filtered_paths = selectPullOverPaths(
-    candidates, goal_candidates, planner_data, goal_planner_parameter, reference_path);
+  const auto original_goal_pos = planner_data->route_handler->getOriginalGoalPose().position;
+  ax1.plot(
+    Args(original_goal_pos.x, original_goal_pos.y),
+    Kwargs("marker"_a = "x", "label"_a = "goal", "markersize"_a = 20, "color"_a = "red"));
 
-  const auto centerline_path =
-    calculate_centerline_path(route_msg.goal_pose, planner_data, goal_planner_parameter);
-  if (centerline_path) {
-    plot_path_with_lane_id(ax2, centerline_path.value(), "red", "centerline_path");
+  const auto filtered_paths = selectPullOverPaths(
+    candidates, goal_candidates, planner_data, goal_planner_parameter, reference_path);
+  std::cout << filtered_paths.size() << std::endl;
+  for (auto i = 0; i < filtered_paths.size(); ++i) {
+    const auto & filtered_path = filtered_paths.at(i);
+    const auto goal_id = filtered_path.goal_id();
+    const auto prio = goal_id2prio[goal_id];
+    const auto & color = (i == 0) ? "red" : g_colors.at(i % g_colors.size());
+    const auto max_parking_curvature = filtered_path.parking_path_max_curvature();
+    plot_path_with_lane_id(
+      ax2, filtered_path.full_path(), color,
+      std::to_string(prio) + "-th goal(id=" + std::to_string(goal_id) +
+        "): k_max=" + std::to_string(max_parking_curvature));
+    plot_goal_candidate(ax2, filtered_path.modified_goal(), prio, footprint, color);
+    if (i == 0) {
+      plot_path_with_lane_id(ax2, filtered_path.parking_path(), color, "most prio", 2.0);
+    }
   }
+
+  const auto centerline_path = calculate_centerline_path(planner_data, goal_planner_parameter);
+  if (centerline_path) {
+    // plot_path_with_lane_id(ax2, centerline_path.value(), "red", "centerline_path");
+  }
+
   ax1.set_aspect(Args("equal"));
-  ax2.set_aspect(Args("equal"));
   ax1.legend();
+  ax2.set_aspect(Args("equal"));
   ax2.legend();
   plt.show();
 

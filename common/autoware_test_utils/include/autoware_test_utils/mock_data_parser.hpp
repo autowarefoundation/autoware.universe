@@ -128,6 +128,9 @@ template <>
 AccelWithCovarianceStamped parse(const YAML::Node & node);
 
 template <>
+LaneletRoute parse(const YAML::Node & node);
+
+template <>
 LaneletPrimitive parse(const YAML::Node & node);
 
 template <>
