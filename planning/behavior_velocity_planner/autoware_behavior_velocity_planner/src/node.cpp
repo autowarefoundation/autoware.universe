@@ -284,9 +284,6 @@ bool BehaviorVelocityPlannerNode::processData(rclcpp::Clock clock)
   const auto map_data = sub_lanelet_map_.takeData();
   if (map_data) {
     planner_data_.route_handler_ = std::make_shared<route_handler::RouteHandler>(*map_data);
-  } else {
-    logData("map");
-    is_ready = false;
   }
 
   // optional data

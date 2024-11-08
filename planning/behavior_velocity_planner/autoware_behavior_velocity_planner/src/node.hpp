@@ -93,8 +93,9 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid>
     sub_occupancy_grid_{this, "~/input/occupancy_grid"};
 
-  autoware::universe_utils::InterProcessPollingSubscriber<LaneletMapBin> sub_lanelet_map_{
-    this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    LaneletMapBin, universe_utils::polling_policy::Newest>
+    sub_lanelet_map_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
 
   autoware::universe_utils::InterProcessPollingSubscriber<VelocityLimit>
     sub_external_velocity_limit_{
