@@ -420,7 +420,13 @@ private:
     int grid_rad_idx = -1;
 
     // speculate the grid id from the radius, underestimate it to do not miss the grid
-    const size_t grid_idx_speculated = static_cast<size_t>(std::sqrt(radius_sq) / grid_dist_size_);
+    size_t grid_idx_speculated = 0;
+    float radius = std::sqrt(radius_sq);
+    if (radius < grid_linearity_switch_radius_) {
+      grid_idx_speculated = static_cast<size_t>(std::sqrt(radius_sq) / grid_dist_size_);
+    } else {
+      grid_idx_speculated = static_cast<size_t>(grid_linearity_switch_radius_);
+    }
     // radial grid id
     for (size_t i = grid_idx_speculated; i < grid_radial_boundaries_sq_.size(); ++i) {
       if (radius_sq < grid_radial_boundaries_sq_[i]) {
