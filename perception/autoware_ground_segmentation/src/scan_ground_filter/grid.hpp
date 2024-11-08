@@ -155,7 +155,7 @@ public:
     }
 
     // add the point to the cell
-    cells_[grid_id].point_indices_.push_back(point_idx);
+    cells_[grid_id].point_indices_.emplace_back(point_idx);
   }
 
   size_t getGridSize() const

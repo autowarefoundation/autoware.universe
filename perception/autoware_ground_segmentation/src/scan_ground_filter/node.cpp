@@ -423,11 +423,6 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
     }
 
     {
-      std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-      if (time_keeper_)
-        inner_st_ptr =
-          std::make_unique<ScopedTimeTrack>("segmenting_points_in_a_cell", *time_keeper_);
-
       PointsCentroid ground_bin;
       for (size_t j = 0; j < num_points; ++j) {
         const auto & pt_idx = cell.point_indices_[j];
