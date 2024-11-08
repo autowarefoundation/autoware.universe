@@ -77,12 +77,11 @@ private:
   void set_route(const LaneletRoute::ConstSharedPtr & route_ptr);
 
   std::optional<PathWithLaneId> generate_centerline_path(
-    const LaneletRoute::ConstSharedPtr & route_ptr, const geometry_msgs::msg::Pose & current_pose,
-    const Params & params) const;
+    const geometry_msgs::msg::Pose & current_pose, const Params & params) const;
 
   std::optional<PathWithLaneId> get_centerline_path(
-    const lanelet::ConstLanelets & lanelet_sequence, const LaneletRoute::ConstSharedPtr & route_ptr,
-    const geometry_msgs::msg::Pose & current_pose, const Params & params) const;
+    const lanelet::ConstLanelets & lanelet_sequence, const geometry_msgs::msg::Pose & current_pose,
+    const Params & params) const;
 
   std::optional<PathWithLaneId> get_centerline_path(
     const lanelet::ConstLanelets & lanelet_sequence, const double s_start,
