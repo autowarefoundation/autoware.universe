@@ -68,7 +68,7 @@ struct HyperParameters
     double initial_pose_timeout_sec{};
     double initial_pose_distance_tolerance_m{};
     double initial_to_result_distance_tolerance_m{};
-    double critical_upper_bound_exe_time_ms{};
+    double critical_upper_bound_processing_time_ms{};
     int64_t skipping_publish_num{};
   } validation{};
 
@@ -137,8 +137,8 @@ public:
       node->declare_parameter<double>("validation.initial_pose_distance_tolerance_m");
     validation.initial_to_result_distance_tolerance_m =
       node->declare_parameter<double>("validation.initial_to_result_distance_tolerance_m");
-    validation.critical_upper_bound_exe_time_ms =
-      node->declare_parameter<double>("validation.critical_upper_bound_exe_time_ms");
+    validation.critical_upper_bound_processing_time_ms =
+      node->declare_parameter<double>("validation.critical_upper_bound_processing_time_ms");
     validation.skipping_publish_num =
       node->declare_parameter<int64_t>("validation.skipping_publish_num");
 

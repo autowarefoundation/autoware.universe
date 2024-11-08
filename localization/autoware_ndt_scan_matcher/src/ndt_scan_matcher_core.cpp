@@ -48,6 +48,13 @@ using autoware::localization_util::DiagnosticsModule;
 using autoware::localization_util::SmartPoseBuffer;
 using autoware::localization_util::TreeStructuredParzenEstimator;
 
+tier4_debug_msgs::msg::Float64Stamped make_float64_stamped(
+  const builtin_interfaces::msg::Time & stamp, const double data)
+{
+  using T = tier4_debug_msgs::msg::Float64Stamped;
+  return tier4_debug_msgs::build<T>().stamp(stamp).data(data);
+}
+
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)
 {
@@ -153,7 +160,7 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
   multi_ndt_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("multi_ndt_pose", 10);
   multi_initial_pose_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseArray>("multi_initial_pose", 10);
-  exe_time_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
+  processing_time_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("processing_time_ms", 10);
   transform_probability_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("transform_probability", 10);
   nearest_voxel_transformation_likelihood_pub_ =
@@ -616,18 +623,18 @@ bool NDTScanMatcher::callback_sensor_points_main(
   const auto exe_end_time = std::chrono::system_clock::now();
   const auto duration_micro_sec =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
-  const auto exe_time = static_cast<float>(duration_micro_sec) / 1000.0f;
-  diagnostics_scan_points_->add_key_value("execution_time", exe_time);
-  if (exe_time > param_.validation.critical_upper_bound_exe_time_ms) {
+  const auto processing_time = static_cast<double>(duration_micro_sec) / 1000.0;
+  diagnostics_scan_points_->add_key_value("execution_time", processing_time);
+  if (processing_time > param_.validation.critical_upper_bound_processing_time_ms) {
     std::stringstream message;
-    message << "NDT exe time is too long (took " << exe_time << " [ms]).";
+    message << "NDT exe time is too long (took " << processing_time << " [ms]).";
     diagnostics_scan_points_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
   // publish
   initial_pose_with_covariance_pub_->publish(interpolation_result.interpolated_pose);
-  exe_time_pub_->publish(make_float32_stamped(sensor_ros_time, exe_time));
+  processing_time_pub_->publish(make_float64_stamped(sensor_ros_time, processing_time));
   transform_probability_pub_->publish(
     make_float32_stamped(sensor_ros_time, ndt_result.transform_probability));
   nearest_voxel_transformation_likelihood_pub_->publish(

@@ -23,7 +23,7 @@
           "default": 3.0,
           "minimum": 0.0
         },
-        "critical_upper_bound_exe_time_ms": {
+        "critical_upper_bound_processing_time_ms": {
           "type": "number",
           "description": "The execution time which means probably NDT cannot matches scans properly. [ms]",
           "default": 100.0,
@@ -40,7 +40,7 @@
         "initial_pose_timeout_sec",
         "initial_pose_distance_tolerance_m",
         "initial_to_result_distance_tolerance_m",
-        "critical_upper_bound_exe_time_ms",
+        "critical_upper_bound_processing_time_ms",
         "skipping_publish_num"
       ],
       "additionalProperties": false
