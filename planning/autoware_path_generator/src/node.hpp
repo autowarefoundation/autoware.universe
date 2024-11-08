@@ -25,6 +25,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <memory>
 namespace autoware::path_generator
 {
 using autoware_map_msgs::msg::LaneletMapBin;
