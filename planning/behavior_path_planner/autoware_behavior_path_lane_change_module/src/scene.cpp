@@ -186,7 +186,7 @@ void NormalLaneChange::update_transient_data()
   RCLCPP_DEBUG(logger_, "dist_to_terminal_start: %.4f", transient_data.dist_to_terminal_start);
   RCLCPP_DEBUG(logger_, "dist_to_terminal_end: %.4f", transient_data.dist_to_terminal_end);
   RCLCPP_DEBUG(logger_, "max_prepare_length: %.4f", transient_data.max_prepare_length);
-  RCLCPP_DEBUG(
+  RCLCPP_WARN(
     logger_, "is_ego_near_current_terminal_start: %s",
     (transient_data.is_ego_near_current_terminal_start ? "true" : "false"));
 }
