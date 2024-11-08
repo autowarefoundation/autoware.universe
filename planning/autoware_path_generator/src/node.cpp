@@ -39,11 +39,10 @@ PathGenerator::PathGenerator(const rclcpp::NodeOptions & node_options)
 
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
 
-  {
-    const auto planning_hz = declare_parameter<double>("planning_hz");
+  const auto params = param_listener_->get_params();
   timer_ = rclcpp::create_timer(
-      this, get_clock(), rclcpp::Rate(planning_hz).period(), std::bind(&PathGenerator::run, this));
-  }
+    this, get_clock(), rclcpp::Rate(params.planning_hz).period(),
+    std::bind(&PathGenerator::run, this));
 }
 
 void PathGenerator::run()
