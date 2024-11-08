@@ -2,8 +2,8 @@
 Changelog for package mrm_comfortable_stop_operator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(mrm_comfortable_stop_operator): remove unused main file (`#7191 <https://github.com/youtalk/autoware.universe/issues/7191>`_)
 * Contributors: Takagi, Isamu, Yutaka Kondo

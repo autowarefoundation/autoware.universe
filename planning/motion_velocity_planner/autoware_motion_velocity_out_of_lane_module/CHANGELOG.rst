@@ -2,8 +2,8 @@
 Changelog for package autoware_motion_velocity_out_of_lane_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * perf(out_of_lane): use intersection with other lanes instead of difference with ego lane (`#8870 <https://github.com/youtalk/autoware.universe/issues/8870>`_)
 * chore(motion_velocity_planner): add Alqudah Mohammad as maintainer (`#8877 <https://github.com/youtalk/autoware.universe/issues/8877>`_)

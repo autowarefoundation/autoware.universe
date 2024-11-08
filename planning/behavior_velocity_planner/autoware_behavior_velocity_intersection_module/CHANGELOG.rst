@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_velocity_intersection_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(intersection): print RTC status in diagnostic debug message (`#9007 <https://github.com/youtalk/autoware.universe/issues/9007>`_)
   debug(intersection): print RTC status in diagnostic message

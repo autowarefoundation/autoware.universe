@@ -2,8 +2,8 @@
 Changelog for package autoware_image_transport_decompressor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor: image transport decompressor/autoware prefix (`#8197 <https://github.com/youtalk/autoware.universe/issues/8197>`_)
   * refactor: add `autoware` namespace prefix to image_transport_decompressor

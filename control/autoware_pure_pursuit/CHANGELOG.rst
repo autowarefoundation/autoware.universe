@@ -2,8 +2,8 @@
 Changelog for package autoware_pure_pursuit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(pure_pursuit): add autoware\_ prefix in launch file (`#8687 <https://github.com/youtalk/autoware.universe/issues/8687>`_)
 * fix(autoware_pure_pursuit): fix unusedFunction (`#8552 <https://github.com/youtalk/autoware.universe/issues/8552>`_)

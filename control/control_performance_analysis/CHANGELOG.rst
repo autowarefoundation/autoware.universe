@@ -2,8 +2,8 @@
 Changelog for package control_performance_analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(signal_processing): prefix package and namespace with autoware (`#8541 <https://github.com/youtalk/autoware.universe/issues/8541>`_)
 * fix(control_performance_analysis): fix unusedFunction (`#8557 <https://github.com/youtalk/autoware.universe/issues/8557>`_)

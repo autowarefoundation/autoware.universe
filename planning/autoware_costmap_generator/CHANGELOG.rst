@@ -2,8 +2,8 @@
 Changelog for package autoware_costmap_generator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(costmap_generator): fix include for grid_map_utils (`#9179 <https://github.com/youtalk/autoware.universe/issues/9179>`_)
 * perf(costmap_generator): manual blurring and fill polygons without OpenCV (`#9160 <https://github.com/youtalk/autoware.universe/issues/9160>`_)

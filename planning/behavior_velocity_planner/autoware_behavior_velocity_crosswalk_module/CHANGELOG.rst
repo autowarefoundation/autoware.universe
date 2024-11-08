@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_velocity_crosswalk_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(autoware_grid_map_utils): prefix folder structure with autoware/ (`#9170 <https://github.com/youtalk/autoware.universe/issues/9170>`_)
 * fix(crosswalk): fix occlusion detection range calculation and add debug markers (`#9121 <https://github.com/youtalk/autoware.universe/issues/9121>`_)

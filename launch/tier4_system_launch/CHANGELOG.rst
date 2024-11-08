@@ -2,8 +2,8 @@
 Changelog for package tier4_system_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(system): fixed to use autoware_component_interface_tools (`#9133 <https://github.com/youtalk/autoware.universe/issues/9133>`_)
   Fixed component_interface_tools

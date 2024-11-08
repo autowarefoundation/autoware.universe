@@ -2,8 +2,8 @@
 Changelog for package autoware_component_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(autoware_component_monitor): add maintainers (`#8867 <https://github.com/youtalk/autoware.universe/issues/8867>`_)
 * fix(autoware_component_monitor): fix unusedFunction (`#8582 <https://github.com/youtalk/autoware.universe/issues/8582>`_)

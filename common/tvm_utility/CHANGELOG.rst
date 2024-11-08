@@ -2,8 +2,8 @@
 Changelog for package tvm_utility
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(tvm_utility): add virtual destructor to tvm_utility (`#7759 <https://github.com/youtalk/autoware.universe/issues/7759>`_)
   * fix(tvm_utility): add virtual destructor to tvm_utility

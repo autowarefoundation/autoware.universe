@@ -2,8 +2,8 @@
 Changelog for package hazard_status_converter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat!: replace autoware_auto_msgs with autoware_msgs for system modules (`#7249 <https://github.com/youtalk/autoware.universe/issues/7249>`_)
   Co-authored-by: Cynthia Liu <cynthia.liu@autocore.ai>

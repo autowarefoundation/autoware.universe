@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_path_avoidance_by_lane_change_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(avoidance_by_lane_change, external_request_lane_change): add maintainers (`#9027 <https://github.com/youtalk/autoware.universe/issues/9027>`_)
   * add maintainers to avoidance by lane change

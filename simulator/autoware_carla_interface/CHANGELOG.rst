@@ -2,8 +2,8 @@
 Changelog for package autoware_carla_interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(autoware_carla_interface): resolve init file error and colcon marker warning (`#9115 <https://github.com/youtalk/autoware.universe/issues/9115>`_)
 * fix: removed access to unused ROS_VERSION environment variable. (`#8896 <https://github.com/youtalk/autoware.universe/issues/8896>`_)

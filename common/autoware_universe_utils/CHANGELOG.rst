@@ -2,8 +2,8 @@
 Changelog for package autoware_universe_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat(autoware_pointcloud_preprocessor): distortion corrector node update azimuth and distance (`#8380 <https://github.com/youtalk/autoware.universe/issues/8380>`_)
   * feat: add option for updating distance and azimuth value

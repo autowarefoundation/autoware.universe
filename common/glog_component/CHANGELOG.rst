@@ -2,8 +2,8 @@
 Changelog for package glog_component
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(glog): add initialization check (`#6792 <https://github.com/youtalk/autoware.universe/issues/6792>`_)
 * Contributors: Takamasa Horibe, Yutaka Kondo

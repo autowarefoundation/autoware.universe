@@ -2,8 +2,8 @@
 Changelog for package autoware_overlay_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(speed_display): always show speed positive and depend on gear for negatives (`#8957 <https://github.com/youtalk/autoware.universe/issues/8957>`_)
 * style: update state panel plugin (`#8846 <https://github.com/youtalk/autoware.universe/issues/8846>`_)

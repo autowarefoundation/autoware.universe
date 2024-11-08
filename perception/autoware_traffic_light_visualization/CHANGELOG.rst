@@ -2,8 +2,8 @@
 Changelog for package autoware_traffic_light_visualization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(docs): fix documentation for traffic light visualization (`#8303 <https://github.com/youtalk/autoware.universe/issues/8303>`_)
   fix docs traffic light visualization

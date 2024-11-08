@@ -2,8 +2,8 @@
 Changelog for package autoware_compare_map_segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(autoware_point_types): prefix namespace with autoware::point_types (`#9169 <https://github.com/youtalk/autoware.universe/issues/9169>`_)
 * refactor(autoware_compare_map_segmentation): resolve clang-tidy error in autoware_compare_map_segmentation (`#9162 <https://github.com/youtalk/autoware.universe/issues/9162>`_)

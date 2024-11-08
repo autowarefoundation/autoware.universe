@@ -2,8 +2,8 @@
 Changelog for package autoware_pose_initializer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(component_interface_specs): prefix package and namespace with autoware (`#9094 <https://github.com/youtalk/autoware.universe/issues/9094>`_)
 * feat(pose_initializer): check error initial pose and gnss pose, output diagnostics (`#8947 <https://github.com/youtalk/autoware.universe/issues/8947>`_)

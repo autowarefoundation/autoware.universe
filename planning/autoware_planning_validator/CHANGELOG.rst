@@ -2,8 +2,8 @@
 Changelog for package autoware_planning_validator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(autoware_planning_validator): fix unusedFunction (`#8646 <https://github.com/youtalk/autoware.universe/issues/8646>`_)
   fix:unusedFunction

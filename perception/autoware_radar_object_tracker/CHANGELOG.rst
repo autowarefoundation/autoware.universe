@@ -2,8 +2,8 @@
 Changelog for package autoware_radar_object_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(object_recognition_utils): add autoware prefix to object_recognition_utils (`#8946 <https://github.com/youtalk/autoware.universe/issues/8946>`_)
 * refactor(kalman_filter): prefix package and namespace with autoware (`#7787 <https://github.com/youtalk/autoware.universe/issues/7787>`_)

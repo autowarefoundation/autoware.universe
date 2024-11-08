@@ -2,8 +2,8 @@
 Changelog for package autoware_image_projection_based_fusion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(autoware_point_types): prefix namespace with autoware::point_types (`#9169 <https://github.com/youtalk/autoware.universe/issues/9169>`_)
 * fix(autoware_image_projection_based_fusion): pointpainting bug fix for point projection (`#9150 <https://github.com/youtalk/autoware.universe/issues/9150>`_)

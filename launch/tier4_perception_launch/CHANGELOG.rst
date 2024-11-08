@@ -2,8 +2,8 @@
 Changelog for package tier4_perception_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(tier4_perception_launch): enable to receive argument `centerpoint_model_name` from autoware_launch (`#9003 <https://github.com/youtalk/autoware.universe/issues/9003>`_)
   * enable to receive arguments

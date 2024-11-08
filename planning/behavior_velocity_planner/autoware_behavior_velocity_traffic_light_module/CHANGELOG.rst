@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_velocity_traffic_light_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * test(traffic_light): write test for utils (`#9046 <https://github.com/youtalk/autoware.universe/issues/9046>`_)
   * refactor: separate utils file

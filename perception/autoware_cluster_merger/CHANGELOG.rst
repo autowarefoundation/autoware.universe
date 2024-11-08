@@ -2,8 +2,8 @@
 Changelog for package autoware_cluster_merger
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(object_recognition_utils): add autoware prefix to object_recognition_utils (`#8946 <https://github.com/youtalk/autoware.universe/issues/8946>`_)
 * chore(cluster_merger): add node test (`#8810 <https://github.com/youtalk/autoware.universe/issues/8810>`_)

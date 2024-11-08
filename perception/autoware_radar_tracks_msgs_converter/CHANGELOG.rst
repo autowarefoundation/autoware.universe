@@ -2,8 +2,8 @@
 Changelog for package autoware_radar_tracks_msgs_converter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(docs): fix docs for radar tracks msgs converter (`#8305 <https://github.com/youtalk/autoware.universe/issues/8305>`_)
   * fix docs for radar tracks msgs converter

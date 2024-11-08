@@ -2,8 +2,8 @@
 Changelog for package autoware_accel_brake_map_calibrator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat(autoware_accel_brake_map_calibrator): conditional actuation data processing based on source (`#8593 <https://github.com/youtalk/autoware.universe/issues/8593>`_)
   * fix: Conditional Actuation Data Processing Based on Source

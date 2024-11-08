@@ -2,8 +2,8 @@
 Changelog for package autoware_external_cmd_converter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat(autoware_external_cmd_converter): add ext cmd converter tests (`#9118 <https://github.com/youtalk/autoware.universe/issues/9118>`_)
   * add ext cmd converter tests

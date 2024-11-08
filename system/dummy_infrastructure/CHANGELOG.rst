@@ -2,8 +2,8 @@
 Changelog for package dummy_infrastructure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(dummy_infrastructure): rework parameters (`#5275 <https://github.com/youtalk/autoware.universe/issues/5275>`_)
 * Contributors: Yuntianyi Chen, Yutaka Kondo

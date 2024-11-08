@@ -2,8 +2,8 @@
 Changelog for package autoware_planning_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(autoware_planning_evaluator): devops node dojo (`#8746 <https://github.com/youtalk/autoware.universe/issues/8746>`_)
 * feat(motion_velocity_planner,planning_evaluator): add  stop, slow_down diags (`#8503 <https://github.com/youtalk/autoware.universe/issues/8503>`_)

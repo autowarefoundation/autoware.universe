@@ -2,8 +2,8 @@
 Changelog for package autoware_motion_velocity_planner_node
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(motion_velocity_planner): add Alqudah Mohammad as maintainer (`#8877 <https://github.com/youtalk/autoware.universe/issues/8877>`_)
 * perf(motion_velocity_planner): fix heavy resampling and transform lookup (`#8839 <https://github.com/youtalk/autoware.universe/issues/8839>`_)

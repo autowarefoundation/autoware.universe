@@ -2,8 +2,8 @@
 Changelog for package autoware_object_range_splitter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(docs): fox docs for autoware object range splitter (`#8306 <https://github.com/youtalk/autoware.universe/issues/8306>`_)
   * fix docs for autoware object range splitter

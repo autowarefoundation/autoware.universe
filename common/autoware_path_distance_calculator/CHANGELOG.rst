@@ -2,8 +2,8 @@
 Changelog for package autoware_path_distance_calculator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix: add autoware prefix (`#8385 <https://github.com/youtalk/autoware.universe/issues/8385>`_)
 * refactor(autoware_path_distance_calculator): prefix package and namespace with autoware (`#8085 <https://github.com/youtalk/autoware.universe/issues/8085>`_)

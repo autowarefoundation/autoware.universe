@@ -2,8 +2,8 @@
 Changelog for package autoware_map_height_fitter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(map_height_fitter)!: prefix package and namespace with autoware  (`#8421 <https://github.com/youtalk/autoware.universe/issues/8421>`_)
   * add autoware\_ prefix

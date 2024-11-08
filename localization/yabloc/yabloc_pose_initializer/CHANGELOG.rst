@@ -2,8 +2,8 @@
 Changelog for package yabloc_pose_initializer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat(pose_initializer, ndt_scan_matcher): check initial pose result and publish diag (`#8275 <https://github.com/youtalk/autoware.universe/issues/8275>`_)
   * feat(localization): check initial pose result and publish diag

@@ -2,8 +2,8 @@
 Changelog for package mrm_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(mrm_handler, emergency_handler): remove unnecessary depend (`#8099 <https://github.com/youtalk/autoware.universe/issues/8099>`_)
   * fix(mrm_handler): remove unnecessary depends

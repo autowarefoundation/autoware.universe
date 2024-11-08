@@ -2,8 +2,8 @@
 Changelog for package fake_test_node
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(fake_test_node, osqp_interface, qp_interface): remove unnecessary cppcheck inline suppressions (`#7855 <https://github.com/youtalk/autoware.universe/issues/7855>`_)
   * fix(fake_test_node, osqp_interface, qp_interface): remove unnecessary cppcheck inline suppressions

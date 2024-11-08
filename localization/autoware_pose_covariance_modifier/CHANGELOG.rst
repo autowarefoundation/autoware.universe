@@ -2,8 +2,8 @@
 Changelog for package autoware_pose_covariance_modifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * docs(autoware_pose_covariance_modifier): fix gt symbol (`#9082 <https://github.com/youtalk/autoware.universe/issues/9082>`_)
 * docs(autoware_pose_cov_modifier): fix line breaks and dead links (`#8991 <https://github.com/youtalk/autoware.universe/issues/8991>`_)

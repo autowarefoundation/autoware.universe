@@ -2,8 +2,8 @@
 Changelog for package tier4_autoware_api_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(autoware_default_adapi)!: prefix autoware to package name (`#8533 <https://github.com/youtalk/autoware.universe/issues/8533>`_)
 * refactor(autoware_path_distance_calculator): prefix package and namespace with autoware (`#8085 <https://github.com/youtalk/autoware.universe/issues/8085>`_)

@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_path_goal_planner_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat(goal_planner): align vehicle footprint heading parallel to parking side lane boundary (`#9159 <https://github.com/youtalk/autoware.universe/issues/9159>`_)
 * chore(goal_planner): compare sampled/filtered candidate paths on plot (`#9140 <https://github.com/youtalk/autoware.universe/issues/9140>`_)

@@ -2,8 +2,8 @@
 Changelog for package yabloc_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(localization, map): remove maintainer (`#7940 <https://github.com/youtalk/autoware.universe/issues/7940>`_)
 * feat(yabloc_monitor): componentize yabloc_monitor node (`#7509 <https://github.com/youtalk/autoware.universe/issues/7509>`_)

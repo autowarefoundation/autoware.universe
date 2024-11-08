@@ -2,8 +2,8 @@
 Changelog for package autoware_pose_estimator_arbiter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(ndt_scan_matcher)!: prefix package and namespace with autoware (`#8904 <https://github.com/youtalk/autoware.universe/issues/8904>`_)
   add autoware\_ prefix

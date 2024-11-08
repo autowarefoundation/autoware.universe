@@ -2,8 +2,8 @@
 Changelog for package autoware_lidar_marker_localizer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(autoware_point_types): prefix namespace with autoware::point_types (`#9169 <https://github.com/youtalk/autoware.universe/issues/9169>`_)
 * refactor(localization_util)!: prefix package and namespace with autoware (`#8922 <https://github.com/youtalk/autoware.universe/issues/8922>`_)

@@ -2,8 +2,8 @@
 Changelog for package autoware_twist2accel
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(signal_processing): prefix package and namespace with autoware (`#8541 <https://github.com/youtalk/autoware.universe/issues/8541>`_)
 * fix(autoware_twist2accel): fix funcArgNamesDifferent (`#8391 <https://github.com/youtalk/autoware.universe/issues/8391>`_)

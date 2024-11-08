@@ -2,8 +2,8 @@
 Changelog for package autoware_joy_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(autoware_joy_controller): add virtual destructor to autoware_joy_controller (`#7760 <https://github.com/youtalk/autoware.universe/issues/7760>`_)
 * refactor(universe_utils/motion_utils)!: add autoware namespace (`#7594 <https://github.com/youtalk/autoware.universe/issues/7594>`_)

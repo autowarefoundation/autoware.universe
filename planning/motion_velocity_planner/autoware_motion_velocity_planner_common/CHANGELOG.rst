@@ -2,8 +2,8 @@
 Changelog for package autoware_motion_velocity_planner_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(motion_velocity_planner): disable randomly failing test (`#8923 <https://github.com/youtalk/autoware.universe/issues/8923>`_)
 * chore(motion_velocity_planner): add Alqudah Mohammad as maintainer (`#8877 <https://github.com/youtalk/autoware.universe/issues/8877>`_)

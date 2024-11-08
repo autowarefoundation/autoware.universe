@@ -2,8 +2,8 @@
 Changelog for package tier4_simulator_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(simple_planning_simulator): add stop_filter_param_path (`#9127 <https://github.com/youtalk/autoware.universe/issues/9127>`_)
 * refactor(pose_initializer)!: prefix package and namespace with autoware (`#8701 <https://github.com/youtalk/autoware.universe/issues/8701>`_)

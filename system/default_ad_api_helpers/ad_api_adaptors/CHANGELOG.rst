@@ -2,8 +2,8 @@
 Changelog for package ad_api_adaptors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(ad_api_adaptors): rework parameter (`#8796 <https://github.com/youtalk/autoware.universe/issues/8796>`_)
   * refactor(ad_api_adaptors): rework parameter

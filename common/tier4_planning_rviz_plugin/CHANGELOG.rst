@@ -2,8 +2,8 @@
 Changelog for package tier4_planning_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat(tier4_planning_rviz_plugin): set path colors from rviz and add fade_out feature (`#8972 <https://github.com/youtalk/autoware.universe/issues/8972>`_)
   Co-authored-by: M. Fatih Cırıt <mfc@leodrive.ai>

@@ -2,8 +2,8 @@
 Changelog for package autoware_ground_segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat(autoware_ground_segmentation): implementing linear least square fitting for local gradient calculation (`#9116 <https://github.com/youtalk/autoware.universe/issues/9116>`_)
   * refactor: calculate local ground gradient in classifyPointCloudGridScan

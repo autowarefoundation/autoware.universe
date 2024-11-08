@@ -2,8 +2,8 @@
 Changelog for package autoware_probabilistic_occupancy_grid_map
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat(probabilistic_occupancy_grid_map): add time_keeper (`#8601 <https://github.com/youtalk/autoware.universe/issues/8601>`_)
   * add time_keeper

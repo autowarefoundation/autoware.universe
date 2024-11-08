@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_velocity_occlusion_spot_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(autoware_grid_map_utils): prefix folder structure with autoware/ (`#9170 <https://github.com/youtalk/autoware.universe/issues/9170>`_)
 * refactor(autoware_interpolation): prefix package and namespace with autoware (`#8088 <https://github.com/youtalk/autoware.universe/issues/8088>`_)

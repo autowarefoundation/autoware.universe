@@ -2,8 +2,8 @@
 Changelog for package autoware_detected_object_validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(object_recognition_utils): add autoware prefix to object_recognition_utils (`#8946 <https://github.com/youtalk/autoware.universe/issues/8946>`_)
 * refactor(detected_object_validation): rework parameters (`#7750 <https://github.com/youtalk/autoware.universe/issues/7750>`_)

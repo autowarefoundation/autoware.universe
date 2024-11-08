@@ -2,8 +2,8 @@
 Changelog for package tier4_traffic_light_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat: add `autoware\_` prefix to `lanelet2_extension` (`#7640 <https://github.com/youtalk/autoware.universe/issues/7640>`_)
 * feat!: replace autoware_auto_msgs with autoware_msgs for common modules (`#7239 <https://github.com/youtalk/autoware.universe/issues/7239>`_)

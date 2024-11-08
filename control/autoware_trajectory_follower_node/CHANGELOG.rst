@@ -2,8 +2,8 @@
 Changelog for package autoware_trajectory_follower_node
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(control): align the parameters with launcher (`#8789 <https://github.com/youtalk/autoware.universe/issues/8789>`_)
   align the control parameters

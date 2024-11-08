@@ -2,8 +2,8 @@
 Changelog for package autoware_collision_detector
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(collision_detector): add maintainer  (`#9184 <https://github.com/youtalk/autoware.universe/issues/9184>`_)
   add maintainer

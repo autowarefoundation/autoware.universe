@@ -2,8 +2,8 @@
 Changelog for package autoware_radar_object_clustering
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(object_recognition_utils): add autoware prefix to object_recognition_utils (`#8946 <https://github.com/youtalk/autoware.universe/issues/8946>`_)
 * refactor(radar_tracks_msgs_converter, simple_object_merger, radar_tracks_noise_filter)!: add package name prefix of autoware\_ (`#8173 <https://github.com/youtalk/autoware.universe/issues/8173>`_)

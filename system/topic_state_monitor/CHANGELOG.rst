@@ -2,8 +2,8 @@
 Changelog for package topic_state_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(topic_state_monitor): enrich error log message (`#7236 <https://github.com/youtalk/autoware.universe/issues/7236>`_)
 * Contributors: Takamasa Horibe, Yutaka Kondo

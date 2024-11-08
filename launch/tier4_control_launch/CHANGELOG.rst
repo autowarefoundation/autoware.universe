@@ -2,8 +2,8 @@
 Changelog for package tier4_control_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(obstacle_collision_checker): move to autoware namespace (`#9047 <https://github.com/youtalk/autoware.universe/issues/9047>`_)
 * fix(tier4_control_launch): fix aeb input predicted object topic name (`#8874 <https://github.com/youtalk/autoware.universe/issues/8874>`_)

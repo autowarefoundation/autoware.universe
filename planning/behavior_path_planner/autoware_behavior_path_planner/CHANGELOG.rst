@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_path_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(autoware_behavior_path_planner): fix cppcheck unusedVariable (`#9193 <https://github.com/youtalk/autoware.universe/issues/9193>`_)
 * fix(behavior_path_planner): suppress reseting root lanelet (`#9129 <https://github.com/youtalk/autoware.universe/issues/9129>`_)

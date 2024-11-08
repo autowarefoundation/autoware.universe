@@ -2,8 +2,8 @@
 Changelog for package autoware_motion_velocity_dynamic_obstacle_stop_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * test(dynamic_obstacle_stop): add tests and do some refactoring (`#8250 <https://github.com/youtalk/autoware.universe/issues/8250>`_)
 * fix(autoware_motion_velocity_dynamic_obstacle_stop_module): fix funcArgNamesDifferent (`#8024 <https://github.com/youtalk/autoware.universe/issues/8024>`_)

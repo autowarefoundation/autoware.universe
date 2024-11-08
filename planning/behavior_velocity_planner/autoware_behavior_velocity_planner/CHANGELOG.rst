@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_velocity_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(autoware_behavior_velocity_planner): fix passedByValue (`#8213 <https://github.com/youtalk/autoware.universe/issues/8213>`_)
   fix:passedByValue

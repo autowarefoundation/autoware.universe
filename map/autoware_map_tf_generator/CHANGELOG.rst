@@ -2,8 +2,8 @@
 Changelog for package autoware_map_tf_generator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(map_tf_generator)!: prefix package and namespace with autoware (`#8422 <https://github.com/youtalk/autoware.universe/issues/8422>`_)
   * add autoware\_ prefix

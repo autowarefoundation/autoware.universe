@@ -2,8 +2,8 @@
 Changelog for package autoware_control_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat(control_evaluator): add goal accuracy longitudinal, lateral, yaw (`#9155 <https://github.com/youtalk/autoware.universe/issues/9155>`_)
   * feat(control_evaluator): add goal accuracy longitudinal, lateral, yaw

@@ -2,8 +2,8 @@
 Changelog for package autoware_livox_tag_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(autoware_livox_tag_filter): fix unusedStructMember (`#8395 <https://github.com/youtalk/autoware.universe/issues/8395>`_)
   * fix:unusedStructMember

@@ -2,8 +2,8 @@
 Changelog for package tier4_state_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(tier4_state_rviz_plugin): fix unmatchedSuppression (`#8921 <https://github.com/youtalk/autoware.universe/issues/8921>`_)
   fix:unmatchedSuppression

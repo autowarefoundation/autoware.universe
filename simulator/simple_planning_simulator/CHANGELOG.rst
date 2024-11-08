@@ -2,8 +2,8 @@
 Changelog for package simple_planning_simulator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(simple_planning_simulator): change orger of IDX in SimModelDelayS… (`#9128 <https://github.com/youtalk/autoware.universe/issues/9128>`_)
 * fix(simple_planning_simulator, raw_vehicle_cmd_converter): swap row index and column index for csv loader  (`#8963 <https://github.com/youtalk/autoware.universe/issues/8963>`_)

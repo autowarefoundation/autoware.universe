@@ -2,8 +2,8 @@
 Changelog for package tier4_adapi_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * style: update rviz plugin icons to match the theme (`#8868 <https://github.com/youtalk/autoware.universe/issues/8868>`_)
 * fix(tier4_adapi_rviz_plugin): fix unusedFunction (`#8840 <https://github.com/youtalk/autoware.universe/issues/8840>`_)

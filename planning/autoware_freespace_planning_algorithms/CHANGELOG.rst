@@ -2,8 +2,8 @@
 Changelog for package autoware_freespace_planning_algorithms
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat(freespace_planning_algorithms): implement support for multiple goal candidates in A star planner (`#8092 <https://github.com/youtalk/autoware.universe/issues/8092>`_)
   * refactor freespace planning algorithms

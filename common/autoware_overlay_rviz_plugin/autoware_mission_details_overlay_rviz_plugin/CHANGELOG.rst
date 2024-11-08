@@ -2,8 +2,8 @@
 Changelog for package autoware_mission_details_overlay_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * feat: add color customization to gear speed mission speed limit and traffic displays (`#8142 <https://github.com/youtalk/autoware.universe/issues/8142>`_)
   feat: Add color customization to gear, speed, mission,speedlimit and traffic displays

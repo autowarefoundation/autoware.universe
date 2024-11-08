@@ -2,8 +2,8 @@
 Changelog for package perception_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * chore(perception_utils): add unit test (`#8414 <https://github.com/youtalk/autoware.universe/issues/8414>`_)
 * feat(perception_utils)!: move perception_utils from common to perception folder (`#8748 <https://github.com/youtalk/autoware.universe/issues/8748>`_)

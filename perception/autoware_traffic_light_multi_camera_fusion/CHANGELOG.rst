@@ -2,8 +2,8 @@
 Changelog for package autoware_traffic_light_multi_camera_fusion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(traffic_light\_*)!: add package name prefix of autoware\_ (`#8159 <https://github.com/youtalk/autoware.universe/issues/8159>`_)
   * chore: rename traffic_light_fine_detector to autoware_traffic_light_fine_detector

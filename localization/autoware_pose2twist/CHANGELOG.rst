@@ -2,8 +2,8 @@
 Changelog for package autoware_pose2twist
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(pose2twist)!: prefix package and namespace with autoware (`#8347 <https://github.com/youtalk/autoware.universe/issues/8347>`_)
   * add autoware\_ prefix

@@ -2,8 +2,8 @@
 Changelog for package dummy_perception_publisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(dummy_perception_publisher, tier4_dummy_object_rviz_plugin): separate dummy object msg (`#8828 <https://github.com/youtalk/autoware.universe/issues/8828>`_)
   * fix: dummy object rviz plugin dependency

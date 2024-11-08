@@ -2,8 +2,8 @@
 Changelog for package autoware_stop_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(docs): autoware stop filter docs (`#8302 <https://github.com/youtalk/autoware.universe/issues/8302>`_)
   fix autoware stop filter docs

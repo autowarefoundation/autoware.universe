@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_velocity_walkway_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(behavior_velocity_planner): fix cppcheck warnings of virtualCallInConstructor (`#8376 <https://github.com/youtalk/autoware.universe/issues/8376>`_)
   Co-authored-by: Ryuta Kambe <ryuta.kambe@tier4.jp>

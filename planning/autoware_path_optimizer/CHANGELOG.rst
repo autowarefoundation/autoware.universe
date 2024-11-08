@@ -2,8 +2,8 @@
 Changelog for package autoware_path_optimizer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(osqp_interface): added autoware prefix to osqp_interface (`#8958 <https://github.com/youtalk/autoware.universe/issues/8958>`_)
 * chore(path_optimizer): add warn msg for exceptional behavior (`#9033 <https://github.com/youtalk/autoware.universe/issues/9033>`_)

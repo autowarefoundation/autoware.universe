@@ -2,8 +2,8 @@
 Changelog for package automatic_pose_initializer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(automatic_pose_initializer): fix plugin name (`#7035 <https://github.com/youtalk/autoware.universe/issues/7035>`_)
   Fixed automatic_pose_initializer plugin name

@@ -2,8 +2,8 @@
 Changelog for package autoware_detected_object_feature_remover
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * test(autoware_detected_object_feature_remover): add unit testing for the node (`#8735 <https://github.com/youtalk/autoware.universe/issues/8735>`_)
   * test: add unit testing for the node

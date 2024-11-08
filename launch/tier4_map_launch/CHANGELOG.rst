@@ -2,8 +2,8 @@
 Changelog for package tier4_map_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(tier4_map_launch): remove parameter use_intra_process (`#9138 <https://github.com/youtalk/autoware.universe/issues/9138>`_)
 * refactor(map_projection_loader)!: prefix package and namespace with autoware (`#8420 <https://github.com/youtalk/autoware.universe/issues/8420>`_)

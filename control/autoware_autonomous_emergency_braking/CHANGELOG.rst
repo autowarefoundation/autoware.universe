@@ -2,8 +2,8 @@
 Changelog for package autoware_autonomous_emergency_braking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(autonomous_emergency_braking): fix no backward imu path and wrong back distance usage (`#9141 <https://github.com/youtalk/autoware.universe/issues/9141>`_)
   * fix no backward imu path and wrong back distance usage

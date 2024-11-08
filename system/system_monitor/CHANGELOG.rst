@@ -2,8 +2,8 @@
 Changelog for package system_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * remove system_monitor/CHANGELOG.rst
 * unify package.xml version to 0.37.0
 * fix(system_monitor): fix variableScope (`#8448 <https://github.com/youtalk/autoware.universe/issues/8448>`_)

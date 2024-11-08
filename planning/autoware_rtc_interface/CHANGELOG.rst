@@ -2,8 +2,8 @@
 Changelog for package autoware_rtc_interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(rtc_interface): update cooperateStatus state transition (`#8883 <https://github.com/youtalk/autoware.universe/issues/8883>`_)
   fix state transition for failure/success

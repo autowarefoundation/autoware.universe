@@ -2,8 +2,8 @@
 Changelog for package localization_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(evaluator/localization_evaluator): rework parameters  (`#6744 <https://github.com/youtalk/autoware.universe/issues/6744>`_)
   * add param file and schema

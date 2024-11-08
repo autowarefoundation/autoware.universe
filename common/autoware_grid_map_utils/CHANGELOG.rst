@@ -2,8 +2,8 @@
 Changelog for package autoware_grid_map_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * refactor(autoware_grid_map_utils): prefix folder structure with autoware/ (`#9170 <https://github.com/youtalk/autoware.universe/issues/9170>`_)
 * refactor(universe_utils/motion_utils)!: add autoware namespace (`#7594 <https://github.com/youtalk/autoware.universe/issues/7594>`_)

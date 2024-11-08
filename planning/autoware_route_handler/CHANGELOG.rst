@@ -2,8 +2,8 @@
 Changelog for package autoware_route_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.38.0 (2024-11-08)
+-------------------
 * unify package.xml version to 0.37.0
 * fix(autoware_route_handler): fix cppcheck unusedVariable (`#9191 <https://github.com/youtalk/autoware.universe/issues/9191>`_)
 * feat(mission_planner): reroute with current route start pose when triggered by modifed goal (`#9136 <https://github.com/youtalk/autoware.universe/issues/9136>`_)
