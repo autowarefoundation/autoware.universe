@@ -70,7 +70,8 @@
 //     }
 
 //     traj_pub_ =
-//       rclcpp::create_publisher<Trajectory>(dummy_node, "/planning_evaluator/input/trajectory", 1);
+//       rclcpp::create_publisher<Trajectory>(dummy_node, "/planning_evaluator/input/trajectory",
+//       1);
 //     ref_traj_pub_ = rclcpp::create_publisher<Trajectory>(
 //       dummy_node, "/planning_evaluator/input/reference_trajectory", 1);
 //     objects_pub_ =
@@ -93,7 +94,8 @@
 //       return status.name == metric_str;
 //     };
 //     metric_sub_ = rclcpp::create_subscription<DiagnosticArray>(
-//       dummy_node, "/planning_evaluator/metrics", 1, [=](const DiagnosticArray::ConstSharedPtr msg) {
+//       dummy_node, "/planning_evaluator/metrics", 1, [=](const DiagnosticArray::ConstSharedPtr
+//       msg) {
 //         const auto it = std::find_if(msg->status.begin(), msg->status.end(), is_target_metric);
 //         if (it != msg->status.end()) {
 //           metric_value_ = boost::lexical_cast<double>(it->values[2].value);

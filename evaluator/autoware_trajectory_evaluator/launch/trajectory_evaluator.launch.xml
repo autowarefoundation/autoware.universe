@@ -1,6 +1,5 @@
 <launch>
   <group>
-    <node name="trajectory_evaluator" exec="trajectory_evaluator" pkg="autoware_trajectory_evaluator">
-    </node>
+    <node name="trajectory_evaluator" exec="trajectory_evaluator" pkg="autoware_trajectory_evaluator"/>
   </group>
 </launch>
