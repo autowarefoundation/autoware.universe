@@ -160,7 +160,7 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
   {  // grouping pointcloud by its azimuth angle
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("azimuth_angle_grouping", *time_keeper_);
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("convert_grid", *time_keeper_);
 
     // reset grid cells
     grid_ptr_->resetCells();
@@ -177,6 +177,9 @@ void ScanGroundFilterComponent::convertPointcloudGridScan(
   }
 
   {
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("connect_grid", *time_keeper_);
     // [new grid] set grid connections and statistics
     grid_ptr_->setGridConnections();
     // grid_ptr_->setGridStatistics();
@@ -330,6 +333,10 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       }
 
       if (!is_previous_initialized) {
+        std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+        if (time_keeper_)
+          inner_st_ptr = std::make_unique<ScopedTimeTrack>("initialize_cell_ground", *time_keeper_);
+
         // if the previous cell is not processed or do not have ground,
         // try initialize ground in this cell
         bool is_ground_found = false;
@@ -377,6 +384,10 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       // get current cell gradient and intercept
       std::vector<int> grid_idcs;
       {
+        std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+        if (time_keeper_)
+          inner_st_ptr = std::make_unique<ScopedTimeTrack>("get_gradient", *time_keeper_);
+
         const int search_count = gnd_grid_buffer_size_;
         int check_cell_idx = cell.prev_grid_idx_;
         recursiveSearch(check_cell_idx, search_count, grid_idcs);
@@ -400,6 +411,9 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       bool is_discontinuous = false;
       bool is_break = false;
       {
+        std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+        if (time_keeper_)
+          inner_st_ptr = std::make_unique<ScopedTimeTrack>("determine_method", *time_keeper_);
         const int front_radial_id =
           grid_ptr_->getCell(grid_idcs.front()).radial_idx_ + grid_idcs.size();
         const float radial_diff_between_cells = cell.center_radius_ - previous_cell.center_radius_;
@@ -422,6 +436,10 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       }
 
       {
+        std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+        if (time_keeper_)
+          inner_st_ptr = std::make_unique<ScopedTimeTrack>("segmenting_points_in_a_cell", *time_keeper_);
+
         PointsCentroid ground_bin;
         for (size_t j = 0; j < num_points; ++j) {
           const auto & pt_idx = cell.point_indices_[j];
