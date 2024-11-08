@@ -30,12 +30,14 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware_frenet_planner/frenet_planner.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
+#include <tier4_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
 
 #include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
 
@@ -192,28 +194,89 @@ std::optional<LaneChangePath> construct_candidate_path(
   const auto longitudinal_acceleration = lane_change_info.longitudinal_acceleration;
   const auto lane_change_velocity = lane_change_info.velocity;
 
-  PathShifter path_shifter;
-  path_shifter.setPath(target_lane_reference_path);
-  path_shifter.addShiftLine(shift_line);
-  path_shifter.setLongitudinalAcceleration(longitudinal_acceleration.lane_changing);
   ShiftedPath shifted_path;
+  if (common_data_ptr->transient_data.is_ego_near_current_terminal_start) {
+    std::vector<double> xs;
+    std::vector<double> ys;
+    xs.reserve(target_lane_reference_path.points.size());
+    ys.reserve(target_lane_reference_path.points.size());
+    for (const auto & p : target_lane_reference_path.points) {
+      xs.push_back(p.point.pose.position.x);
+      ys.push_back(p.point.pose.position.y);
+    }
+    // const auto & initial_position= std::prev(prepare_segment.points.end() -
+    // 1)->point.pose.position;
+    const auto & initial_position = prepare_segment.points.back().point.pose.position;
+    sampler_common::transform::Spline2D reference_spline(xs, ys);
+    frenet_planner::FrenetState initial_state;
+    // initial_state.position =
+    // reference_spline.frenet({prepare_segment.points.back().point.pose.position.x,
+    // prepare_segment.points.back().point.pose.position.y});
+    initial_state.position = reference_spline.frenet({initial_position.x, initial_position.y});
+    initial_state.longitudinal_velocity = lane_change_velocity.prepare;
+    initial_state.longitudinal_acceleration = longitudinal_acceleration.prepare;
+    initial_state.lateral_velocity = 0.0;
+    initial_state.lateral_acceleration = lane_change_info.lateral_acceleration;
+    frenet_planner::SamplingParameters sampling_parameters;
+    sampling_parameters.parameters.emplace_back();
+    sampling_parameters.resolution = 0.5;
+    sampling_parameters.parameters.back().target_duration = lane_change_info.duration.lane_changing;
+    auto & target_state = sampling_parameters.parameters.back().target_state;
+    target_state.position = reference_spline.frenet(
+      {lane_change_info.lane_changing_end.position.x,
+       lane_change_info.lane_changing_end.position.y});
+    target_state.longitudinal_velocity = lane_change_velocity.lane_changing;
+    target_state.longitudinal_acceleration = longitudinal_acceleration.lane_changing;
+    target_state.lateral_velocity = 0.0;
+    target_state.lateral_acceleration = 0.0;
+    std::printf(
+      "FROM s=%2.2f / d=%2.2f / s'=%2.2f / d'=%2.2f / s''=%2.2f / d''=%2.2f TO s=%2.2f / d=%2.2f / "
+      "s'=%2.2f / d'=%2.2f / s''=%2.2f / d''=%2.2f\n",
+      initial_state.position.s, initial_state.position.d, initial_state.longitudinal_velocity,
+      initial_state.lateral_velocity, initial_state.longitudinal_acceleration,
+      initial_state.lateral_acceleration, target_state.position.s, target_state.position.d,
+      target_state.longitudinal_velocity, target_state.lateral_velocity,
+      target_state.longitudinal_acceleration, target_state.lateral_acceleration);
+    const auto candidates =
+      frenet_planner::generateTrajectories(reference_spline, initial_state, sampling_parameters);
+    if (candidates.size() != 1) {
+      RCLCPP_DEBUG(get_logger(), "Failed to generate shifted path.");
+    } else {
+      const auto & candidate = candidates.front();
+      PathPointWithLaneId pp;
+      for (auto i = 0UL; i < candidate.poses.size(); ++i) {
+        // pp.point.pose.position.x = candidate.points[i].x();
+        // pp.point.pose.position.y = candidate.points[i].y();
+        pp.point.pose = candidate.poses[i];
+        pp.point.longitudinal_velocity_mps =
+          static_cast<float>(candidate.longitudinal_velocities[i]);
+        pp.point.lateral_velocity_mps = static_cast<float>(candidate.lateral_velocities[i]);
+        shifted_path.shift_length.push_back(candidate.frenet_points[i].d);
+        shifted_path.path.points.push_back(pp);
+      }
+    }
+  } else {
+    PathShifter path_shifter;
+    path_shifter.setPath(target_lane_reference_path);
+    path_shifter.addShiftLine(shift_line);
+    path_shifter.setLongitudinalAcceleration(longitudinal_acceleration.lane_changing);
 
-  // offset front side
-  bool offset_back = false;
+    // offset front side
+    bool offset_back = false;
 
-  const auto initial_lane_changing_velocity = lane_change_velocity.lane_changing;
-  path_shifter.setVelocity(initial_lane_changing_velocity);
-  path_shifter.setLateralAccelerationLimit(std::abs(lane_change_info.lateral_acceleration));
+    const auto initial_lane_changing_velocity = lane_change_velocity.lane_changing;
+    path_shifter.setVelocity(initial_lane_changing_velocity);
+    path_shifter.setLateralAccelerationLimit(std::abs(lane_change_info.lateral_acceleration));
 
-  if (!path_shifter.generate(&shifted_path, offset_back)) {
-    RCLCPP_DEBUG(get_logger(), "Failed to generate shifted path.");
-  }
-
-  // TODO(Zulfaqar Azmi): have to think of a more feasible solution for points being remove by path
-  // shifter.
-  if (shifted_path.path.points.size() < shift_line.end_idx + 1) {
-    RCLCPP_DEBUG(get_logger(), "Path points are removed by PathShifter.");
-    return std::nullopt;
+    if (!path_shifter.generate(&shifted_path, offset_back)) {
+      RCLCPP_DEBUG(get_logger(), "Failed to generate shifted path.");
+    }
+    // TODO(Zulfaqar Azmi): have to think of a more feasible solution for points being remove by
+    // path shifter.
+    if (shifted_path.path.points.size() < shift_line.end_idx + 1) {
+      RCLCPP_DEBUG(get_logger(), "Path points are removed by PathShifter.");
+      return std::nullopt;
+    }
   }
 
   LaneChangePath candidate_path;
@@ -261,7 +324,7 @@ std::optional<LaneChangePath> construct_candidate_path(
       tf2::getYaw(prepare_segment_second_last_point.orientation) -
       tf2::getYaw(lane_change_start_from_shifted.orientation)));
     if (yaw_diff2 > autoware::universe_utils::deg2rad(5.0)) {
-      RCLCPP_DEBUG(
+      RCLCPP_WARN(
         get_logger(), "Excessive yaw difference %.3f which exceeds the 5 degrees threshold.",
         autoware::universe_utils::rad2deg(yaw_diff2));
       return std::nullopt;
