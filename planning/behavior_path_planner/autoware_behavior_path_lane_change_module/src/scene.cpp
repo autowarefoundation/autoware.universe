@@ -512,7 +512,7 @@ void NormalLaneChange::insert_stop_point_on_current_lanes(PathWithLaneId & path)
     dist_to_terminal - min_dist_buffer - calculation::calc_stopping_distance(lc_param_ptr);
 
   const auto distance_to_last_fit_width = std::invoke([&]() -> double {
-    const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current;
+    const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current.value();
     if (utils::isEgoWithinOriginalLane(curr_lanes_poly, getEgoPose(), *bpp_param_ptr)) {
       return utils::lane_change::calculation::calc_dist_to_last_fit_width(
         lanes_ptr->current, path.points.front().point.pose, *bpp_param_ptr);
@@ -740,7 +740,7 @@ bool NormalLaneChange::hasFinishedLaneChange() const
   if (has_passed_end_pose) {
     const auto & lanes_polygon = common_data_ptr_->lanes_polygon_ptr->target;
     return !boost::geometry::disjoint(
-      lanes_polygon,
+      lanes_polygon.value(),
       lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(current_pose.position)));
   }
 
@@ -767,7 +767,7 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
     return false;
   }
 
-  const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current;
+  const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current.value();
   if (!utils::isEgoWithinOriginalLane(
         curr_lanes_poly, getEgoPose(), planner_data_->parameters,
         lane_change_parameters_->cancel.overhang_tolerance)) {
@@ -843,7 +843,7 @@ bool NormalLaneChange::isAbleToStopSafely() const
   const auto stop_dist =
     -(current_velocity * current_velocity / (2.0 * planner_data_->parameters.min_acc));
 
-  const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current;
+  const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current.value();
   double dist = 0.0;
   for (size_t idx = nearest_idx; idx < status_.lane_change_path.path.points.size() - 1; ++idx) {
     dist += calcSignedArcLength(status_.lane_change_path.path.points, idx, idx + 1);
@@ -1076,7 +1076,7 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
   const auto & route_handler = getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
   const auto check_optional_polygon = [](const auto & object, const auto & polygon) {
-    return !polygon.empty() && isPolygonOverlapLanelet(object, polygon);
+    return polygon && isPolygonOverlapLanelet(object, *polygon);
   };
 
   // get backward lanes
@@ -1963,7 +1963,7 @@ bool NormalLaneChange::is_collided(
   const auto & current_polygon = lanes_polygon_ptr->current;
   const auto & expanded_target_polygon = lanes_polygon_ptr->target;
 
-  if (current_polygon.empty() || expanded_target_polygon.empty()) {
+  if (!current_polygon.has_value() || !expanded_target_polygon.has_value()) {
     return !is_collided;
   }
 
@@ -1989,9 +1989,9 @@ bool NormalLaneChange::is_collided(
     }
 
     const auto collision_in_current_lanes =
-      utils::lane_change::is_collided_polygons_in_lanelet(collided_polygons, current_polygon);
-    const auto collision_in_target_lanes = utils::lane_change::is_collided_polygons_in_lanelet(
-      collided_polygons, expanded_target_polygon);
+      utils::lane_change::isCollidedPolygonsInLanelet(collided_polygons, current_polygon);
+    const auto collision_in_target_lanes =
+      utils::lane_change::isCollidedPolygonsInLanelet(collided_polygons, expanded_target_polygon);
 
     if (!collision_in_current_lanes && !collision_in_target_lanes) {
       utils::path_safety_checker::updateCollisionCheckDebugMap(
@@ -2077,7 +2077,7 @@ bool NormalLaneChange::is_valid_start_point(
   const lanelet::BasicPoint2d lc_start_point(pose.position.x, pose.position.y);
 
   const auto & target_neighbor_poly = common_data_ptr->lanes_polygon_ptr->target_neighbor;
-  const auto & target_lane_poly = common_data_ptr_->lanes_polygon_ptr->target;
+  const auto & target_lane_poly = common_data_ptr_->lanes_polygon_ptr->target.value();
 
   return boost::geometry::covered_by(lc_start_point, target_neighbor_poly) ||
          boost::geometry::covered_by(lc_start_point, target_lane_poly);
