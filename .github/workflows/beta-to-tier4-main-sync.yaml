@@ -1,0 +1,34 @@
+name: beta-to-tier4-main-sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: Source branch
+        required: true
+        type: string
+
+jobs:
+  sync-beta-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Run sync-branches
+        uses: autowarefoundation/autoware-github-actions/sync-branches@v1
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          base-branch: tier4/main
+          sync-pr-branch: beta-to-tier4-main-sync
+          sync-target-repository: https://github.com/tier4/autoware.universe.git
+          sync-target-branch: ${{ inputs.source_branch }}
+          pr-title: "chore: sync beta branch ${{ inputs.source_branch }} with tier4/main"
+          pr-labels: |
+            bot
+            sync-beta-branch
+          auto-merge-method: merge
