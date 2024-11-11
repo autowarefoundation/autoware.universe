@@ -53,6 +53,7 @@
     <group>
       <!-- set container to run all required components in the same process -->
       <node_container pkg="rclcpp_components" exec="$(var container_executable)" name="control_container" namespace=""/>
+
       <group if="$(eval &quot;'$(var trajectory_follower_mode)' == 'trajectory_follower_node'&quot;)">
         <load_composable_node target="/control/control_container">
           <composable_node pkg="autoware_trajectory_follower_node" plugin="autoware::motion::control::trajectory_follower_node::Controller" name="controller_node_exe" namespace="trajectory_follower">
