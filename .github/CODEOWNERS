@@ -1,5 +1,5 @@
 ### Automatically generated from package.xml ###
-common/autoware_ad_api_specs/** isamu.takagi@tier4.jp ryohsuke.mitsudome@tier4.jp
+common/autoware_adapi_specs/** isamu.takagi@tier4.jp ryohsuke.mitsudome@tier4.jp
 common/autoware_auto_common/** opensource@apex.ai satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 common/autoware_component_interface_specs/** isamu.takagi@tier4.jp yukihiro.saito@tier4.jp
 common/autoware_component_interface_tools/** isamu.takagi@tier4.jp
