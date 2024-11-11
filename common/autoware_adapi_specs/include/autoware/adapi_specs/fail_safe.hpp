@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__AD_API_SPECS__FAIL_SAFE_HPP_
-#define AUTOWARE__AD_API_SPECS__FAIL_SAFE_HPP_
+#ifndef AUTOWARE__ADAPI_SPECS__FAIL_SAFE_HPP_
+#define AUTOWARE__ADAPI_SPECS__FAIL_SAFE_HPP_
 
 #include <rclcpp/qos.hpp>
 
@@ -33,4 +33,4 @@ struct MrmState
 
 }  // namespace autoware::adapi_specs::fail_safe
 
-#endif  // AUTOWARE__AD_API_SPECS__FAIL_SAFE_HPP_
+#endif  // AUTOWARE__ADAPI_SPECS__FAIL_SAFE_HPP_

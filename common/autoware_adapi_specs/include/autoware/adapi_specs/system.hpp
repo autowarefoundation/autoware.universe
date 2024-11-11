@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__AD_API_SPECS__SYSTEM_HPP_
-#define AUTOWARE__AD_API_SPECS__SYSTEM_HPP_
+#ifndef AUTOWARE__ADAPI_SPECS__SYSTEM_HPP_
+#define AUTOWARE__ADAPI_SPECS__SYSTEM_HPP_
 
 #include <rclcpp/qos.hpp>
 
@@ -33,4 +33,4 @@ struct Heartbeat
 
 }  // namespace autoware::adapi_specs::system
 
-#endif  // AUTOWARE__AD_API_SPECS__SYSTEM_HPP_
+#endif  // AUTOWARE__ADAPI_SPECS__SYSTEM_HPP_

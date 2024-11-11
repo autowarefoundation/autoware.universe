@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__AD_API_SPECS__OPERATION_MODE_HPP_
-#define AUTOWARE__AD_API_SPECS__OPERATION_MODE_HPP_
+#ifndef AUTOWARE__ADAPI_SPECS__OPERATION_MODE_HPP_
+#define AUTOWARE__ADAPI_SPECS__OPERATION_MODE_HPP_
 
 #include <rclcpp/qos.hpp>
 
@@ -70,4 +70,4 @@ struct OperationModeState
 
 }  // namespace autoware::adapi_specs::operation_mode
 
-#endif  // AUTOWARE__AD_API_SPECS__OPERATION_MODE_HPP_
+#endif  // AUTOWARE__ADAPI_SPECS__OPERATION_MODE_HPP_
