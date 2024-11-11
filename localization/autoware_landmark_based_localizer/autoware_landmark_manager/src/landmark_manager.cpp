@@ -14,9 +14,9 @@
 
 #include "autoware/landmark_manager/landmark_manager.hpp"
 
+#include "autoware/localization_util/util_func.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware_lanelet2_extension/utility/message_conversion.hpp"
-#include "localization_util/util_func.hpp"
 
 #include <Eigen/Core>
 #include <tf2_eigen/tf2_eigen.hpp>
@@ -178,12 +178,14 @@ geometry_msgs::msg::Pose LandmarkManager::calculate_new_self_pose(
       }
 
       if (consider_orientation) {
-        const Eigen::Affine3d landmark_pose = pose_to_affine3d(mapped_landmark_on_map);
+        const Eigen::Affine3d landmark_pose =
+          autoware::localization_util::pose_to_affine3d(mapped_landmark_on_map);
         const Eigen::Affine3d landmark_to_base_link =
-          pose_to_affine3d(detected_landmark_on_base_link).inverse();
+          autoware::localization_util::pose_to_affine3d(detected_landmark_on_base_link).inverse();
         const Eigen::Affine3d new_self_pose_eigen = landmark_pose * landmark_to_base_link;
 
-        const Pose new_self_pose = matrix4f_to_pose(new_self_pose_eigen.matrix().cast<float>());
+        const Pose new_self_pose =
+          autoware::localization_util::matrix4f_to_pose(new_self_pose_eigen.matrix().cast<float>());
 
         // update
         min_distance = curr_distance;

@@ -34,13 +34,43 @@ namespace autoware::behavior_path_planner::utils::path_safety_checker::filter
 using autoware_perception_msgs::msg::PredictedObject;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 
+/**
+ * @brief Filters object based on velocity.
+ *
+ * @param object The predicted object to filter.
+ * @param velocity_threshold Lower bound
+ * @param max_velocity Upper bound
+ * @return Returns true when the object is within a certain velocity range.
+ */
 bool velocity_filter(
   const PredictedObject & object, double velocity_threshold, double max_velocity);
 
+/**
+ * @brief Filters object based on position.
+ *
+ * @param object The predicted object to filter.
+ * @param path_points Ego path
+ * @param current_pose Ego current pose
+ * @param forward_distance Upper bound for relative distance
+ * @param backward_distance Lower bound for relative distance
+ * @return Returns true when the object is within a certain distance.
+ */
 bool position_filter(
-  PredictedObject & object, const std::vector<PathPointWithLaneId> & path_points,
+  const PredictedObject & object, const std::vector<PathPointWithLaneId> & path_points,
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance);
+
+/**
+ * @brief Filters object by searching within a radius.
+ *
+ * @param object The predicted object to filter.
+ * @param reference_point Reference point
+ * @param search_radius Search radius
+ * @return Returns true when the object is within radius.
+ */
+bool is_within_circle(
+  const geometry_msgs::msg::Point & object_pos, const geometry_msgs::msg::Point & reference_point,
+  const double search_radius);
 
 }  // namespace autoware::behavior_path_planner::utils::path_safety_checker::filter
 
@@ -113,7 +143,7 @@ PredictedObjects filterObjects(
  */
 PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, const double velocity_threshold,
-  const bool remove_above_threshold = true);
+  const bool remove_above_threshold = false);
 
 /**
  * @brief Helper function to filter objects based on their velocity.

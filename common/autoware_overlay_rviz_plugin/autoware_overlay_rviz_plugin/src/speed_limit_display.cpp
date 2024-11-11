@@ -121,7 +121,6 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(
   painter.setRenderHint(QPainter::Antialiasing, true);
   QColor colorFromHSV;
   colorFromHSV.setHsv(bg_color.hue(), bg_color.saturation(), bg_color.value());
-  colorFromHSV.setAlphaF(bg_alpha);
   painter.setBrush(colorFromHSV);
   painter.drawEllipse(innerCircleRect);
 

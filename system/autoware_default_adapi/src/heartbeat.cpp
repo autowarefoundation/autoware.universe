@@ -29,7 +29,7 @@ HeartbeatNode::HeartbeatNode(const rclcpp::NodeOptions & options) : Node("heartb
     pub_->publish(heartbeat);
   };
 
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(pub_);
 
   const auto period = rclcpp::Rate(10.0).period();

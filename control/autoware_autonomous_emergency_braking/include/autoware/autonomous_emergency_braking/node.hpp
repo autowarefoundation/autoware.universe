@@ -33,6 +33,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -41,6 +42,7 @@
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/surface/convex_hull.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -50,6 +52,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 namespace autoware::motion::control::autonomous_emergency_braking
@@ -63,6 +66,7 @@ using sensor_msgs::msg::Imu;
 using sensor_msgs::msg::PointCloud2;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 using autoware::universe_utils::Polygon2d;
+using autoware::universe_utils::Polygon3d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
@@ -72,6 +76,7 @@ using Path = std::vector<geometry_msgs::msg::Pose>;
 using Vector3 = geometry_msgs::msg::Vector3;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
+using colorTuple = std::tuple<double, double, double, double>;
 
 /**
  * @brief Struct to store object data
@@ -83,6 +88,7 @@ struct ObjectData
   double velocity{0.0};
   double rss{0.0};
   double distance_to_object{0.0};
+  bool is_target{true};
 };
 
 /**
@@ -335,9 +341,10 @@ public:
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr info_marker_publisher_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr virtual_wall_publisher_;
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
     debug_processing_time_detail_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr debug_rss_distance_publisher_;
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
   mutable std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
@@ -432,12 +439,14 @@ public:
    * @brief Create object data using point cloud clusters
    * @param ego_path Ego vehicle path
    * @param ego_polys Polygons representing the ego vehicle footprint
+   * @param speed_calc_ego_polys Polygons representing the expanded ego vehicle footprint for speed
+   * calculation area
    * @param stamp Timestamp of the data
    * @param objects Vector to store the created object data
    * @param obstacle_points_ptr Pointer to the point cloud of obstacles
    */
   void getClosestObjectsOnPath(
-    const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
+    const Path & ego_path, const rclcpp::Time & stamp,
     const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects);
 
   /**
@@ -448,7 +457,7 @@ public:
    */
   void getPointsBelongingToClusterHulls(
     const PointCloud::Ptr obstacle_points_ptr,
-    const PointCloud::Ptr points_belonging_to_cluster_hulls);
+    const PointCloud::Ptr points_belonging_to_cluster_hulls, MarkerArray & debug_markers);
 
   /**
    * @brief Create object data using predicted objects
@@ -475,18 +484,26 @@ public:
    * @param polygons Polygons representing the ego vehicle footprint
    * @param objects Vector of object data
    * @param closest_object Optional data of the closest object
-   * @param color_r Red color component
-   * @param color_g Green color component
-   * @param color_b Blue color component
-   * @param color_a Alpha (transparency) component
+   * @param debug_colors Tuple of RGBA colors
    * @param ns Namespace for the marker
    * @param debug_markers Marker array for debugging
    */
   void addMarker(
     const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
     const std::vector<ObjectData> & objects, const std::optional<ObjectData> & closest_object,
-    const double color_r, const double color_g, const double color_b, const double color_a,
-    const std::string & ns, MarkerArray & debug_markers);
+    const colorTuple & debug_colors, const std::string & ns, MarkerArray & debug_markers);
+
+  /**
+   * @brief Add a marker of convex hulls for debugging
+   * @param current_time Current time
+   * @param hulls vector of polygons of the convex hulls
+   * @param debug_colors Tuple of RGBA colors
+   * @param ns Namespace for the marker
+   * @param debug_markers Marker array for debugging
+   */
+  void addClusterHullMarkers(
+    const rclcpp::Time & current_time, const std::vector<Polygon3d> & hulls,
+    const colorTuple & debug_colors, const std::string & ns, MarkerArray & debug_markers);
 
   /**
    * @brief Add a collision marker for debugging
@@ -539,12 +556,14 @@ public:
   bool use_object_velocity_calculation_;
   bool check_autoware_state_;
   double path_footprint_extra_margin_;
+  double speed_calculation_expansion_margin_;
   double detection_range_min_height_;
   double detection_range_max_height_margin_;
   double voxel_grid_x_;
   double voxel_grid_y_;
   double voxel_grid_z_;
-  double min_generated_path_length_;
+  double min_generated_imu_path_length_;
+  double max_generated_imu_path_length_;
   double expand_width_;
   double longitudinal_offset_;
   double t_response_;

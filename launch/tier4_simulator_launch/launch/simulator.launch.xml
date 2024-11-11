@@ -8,6 +8,7 @@
 
   <arg name="localization_error_monitor_param_path"/>
   <arg name="ekf_localizer_param_path"/>
+  <arg name="stop_filter_param_path"/>
   <arg name="pose_initializer_param_path"/>
   <arg name="twist2accel_param_path"/>
 

@@ -14,15 +14,22 @@
 
 #include "map_based_prediction/path_generator.hpp"
 
+#include <autoware/interpolation/linear_interpolation.hpp>
+#include <autoware/interpolation/spline_interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
-#include <interpolation/linear_interpolation.hpp>
 
 #include <algorithm>
 
 namespace autoware::map_based_prediction
 {
 using autoware::universe_utils::ScopedTimeTrack;
+
+PathGenerator::PathGenerator(const double sampling_time_interval)
+: sampling_time_interval_(sampling_time_interval)
+{
+  min_crosswalk_user_velocity_ = 0.1;
+}
 
 PathGenerator::PathGenerator(
   const double sampling_time_interval, const double min_crosswalk_user_velocity)
@@ -249,6 +256,15 @@ PredictedPath PathGenerator::generatePolynomialPath(
   terminal_point.d_vel = 0.0;
   terminal_point.d_acc = 0.0;
 
+  // if the object is behind of the reference path adjust the lateral_duration to reach the start of
+  // the reference path
+  double lateral_duration_adjusted = lateral_duration;
+  if (current_point.s < 0.0) {
+    const double distance_to_start = -current_point.s;
+    const double duration_to_reach = distance_to_start / terminal_point.s_vel;
+    lateral_duration_adjusted = std::max(lateral_duration, duration_to_reach);
+  }
+
   // calculate terminal d position, based on backlash width
   {
     if (backlash_width < 0.01 /*m*/) {
@@ -258,7 +274,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
     } else {
       const double return_width = path_width / 2.0;  // [m]
       const double current_momentum_d =
-        current_point.d + 0.5 * current_point.d_vel * lateral_duration;
+        current_point.d + 0.5 * current_point.d_vel * lateral_duration_adjusted;
       const double momentum_d_abs = std::abs(current_momentum_d);
 
       if (momentum_d_abs < backlash_width) {
@@ -281,8 +297,8 @@ PredictedPath PathGenerator::generatePolynomialPath(
   }
 
   // Step 2. Generate Predicted Path on a Frenet coordinate
-  const auto frenet_predicted_path =
-    generateFrenetPath(current_point, terminal_point, ref_path_len, duration, lateral_duration);
+  const auto frenet_predicted_path = generateFrenetPath(
+    current_point, terminal_point, ref_path_len, duration, lateral_duration_adjusted);
 
   // Step 3. Interpolate Reference Path for converting predicted path coordinate
   const auto interpolated_ref_path = interpolateReferencePath(ref_path, frenet_predicted_path);

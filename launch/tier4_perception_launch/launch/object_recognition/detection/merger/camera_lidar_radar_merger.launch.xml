@@ -6,7 +6,7 @@
   <arg name="far_object_merger_sync_queue_size" default="20"/>
 
   <!-- Pipeline junctions -->
-  <arg name="lidar_detection_model"/>
+  <arg name="lidar_detection_model_type"/>
   <arg name="use_radar_tracking_fusion"/>
   <arg name="use_detection_by_tracker"/>
   <arg name="use_near_radar_fusion" default="false"/>
@@ -61,18 +61,18 @@
 
   <let name="camera_roi_fusion/input/objects" value="$(var radar_objects_fusion/output/objects)" if="$(var use_near_radar_fusion)"/>
   <let name="camera_roi_fusion/input/objects" value="$(var input/lidar_ml/objects)" unless="$(var use_near_radar_fusion)"/>
-  <let name="camera_roi_fusion/output/objects" value="$(var lidar_detection_model)/roi_fusion/objects"/>
+  <let name="camera_roi_fusion/output/objects" value="$(var lidar_detection_model_type)/roi_fusion/objects"/>
 
   <let name="validator/input/objects" value="$(var camera_roi_fusion/output/objects)"/>
   <let name="validator/input/obstacle_pointcloud" value="$(var input/pointcloud_map/pointcloud)" if="$(var use_pointcloud_map)"/>
   <let name="validator/input/obstacle_pointcloud" value="$(var input/obstacle_segmentation/pointcloud)" unless="$(var use_pointcloud_map)"/>
-  <let name="validator/output/objects" value="$(var lidar_detection_model)/validation/objects"/>
+  <let name="validator/output/objects" value="$(var lidar_detection_model_type)/validation/objects"/>
 
   <let name="merger1/input/objects0" value="$(var validator/output/objects)" if="$(var use_validator)"/>
   <let name="merger1/input/objects0" value="$(var input/lidar_ml/objects)" unless="$(var use_validator)"/>
   <let name="merger1/input/objects1" value="$(var input/lidar_rule/objects)"/>
   <let name="merger1/output/objects" value="$(var output/objects)" if="$(var without_dbt_and_filter)"/>
-  <let name="merger1/output/objects" value="$(var lidar_detection_model)_roi_cluster_fusion/objects" unless="$(var without_dbt_and_filter)"/>
+  <let name="merger1/output/objects" value="$(var lidar_detection_model_type)_roi_cluster_fusion/objects" unless="$(var without_dbt_and_filter)"/>
 
   <let name="merger2/input/objects0" value="$(var merger1/output/objects)"/>
   <let name="merger2/input/objects1" value="$(var input/detection_by_tracker/objects)"/>

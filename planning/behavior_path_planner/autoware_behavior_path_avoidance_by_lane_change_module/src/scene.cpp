@@ -20,6 +20,7 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <autoware/behavior_path_lane_change_module/utils/calculation.hpp>
 #include <autoware/behavior_path_lane_change_module/utils/utils.hpp>
 #include <autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
@@ -33,13 +34,55 @@
 #include <optional>
 #include <utility>
 
+namespace
+{
+geometry_msgs::msg::Point32 create_point32(const geometry_msgs::msg::Pose & pose)
+{
+  geometry_msgs::msg::Point32 p;
+  p.x = static_cast<float>(pose.position.x);
+  p.y = static_cast<float>(pose.position.y);
+  p.z = static_cast<float>(pose.position.z);
+  return p;
+};
+
+geometry_msgs::msg::Polygon create_execution_area(
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
+  const geometry_msgs::msg::Pose & pose, double additional_lon_offset, double additional_lat_offset)
+{
+  const double & base_to_front = vehicle_info.max_longitudinal_offset_m;
+  const double & width = vehicle_info.vehicle_width_m;
+  const double & base_to_rear = vehicle_info.rear_overhang_m;
+
+  // if stationary object, extend forward and backward by the half of lon length
+  const double forward_lon_offset = base_to_front + additional_lon_offset;
+  const double backward_lon_offset = -base_to_rear;
+  const double lat_offset = width / 2.0 + additional_lat_offset;
+
+  const auto p1 =
+    autoware::universe_utils::calcOffsetPose(pose, forward_lon_offset, lat_offset, 0.0);
+  const auto p2 =
+    autoware::universe_utils::calcOffsetPose(pose, forward_lon_offset, -lat_offset, 0.0);
+  const auto p3 =
+    autoware::universe_utils::calcOffsetPose(pose, backward_lon_offset, -lat_offset, 0.0);
+  const auto p4 =
+    autoware::universe_utils::calcOffsetPose(pose, backward_lon_offset, lat_offset, 0.0);
+  geometry_msgs::msg::Polygon polygon;
+
+  polygon.points.push_back(create_point32(p1));
+  polygon.points.push_back(create_point32(p2));
+  polygon.points.push_back(create_point32(p3));
+  polygon.points.push_back(create_point32(p4));
+
+  return polygon;
+}
+}  // namespace
+
 namespace autoware::behavior_path_planner
 {
 using autoware::behavior_path_planner::Direction;
 using autoware::behavior_path_planner::LaneChangeModuleType;
 using autoware::behavior_path_planner::ObjectInfo;
 using autoware::behavior_path_planner::Point2d;
-using autoware::behavior_path_planner::utils::lane_change::debug::createExecutionArea;
 
 AvoidanceByLaneChange::AvoidanceByLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters,
@@ -81,9 +124,9 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
 
   const auto & nearest_object = data.target_objects.front();
   const auto minimum_avoid_length = calcMinAvoidanceLength(nearest_object);
-  const auto minimum_lane_change_length = calcMinimumLaneChangeLength();
+  const auto minimum_lane_change_length = calc_minimum_dist_buffer();
 
-  lane_change_debug_.execution_area = createExecutionArea(
+  lane_change_debug_.execution_area = create_execution_area(
     getCommonParam().vehicle_info, getEgoPose(),
     std::max(minimum_lane_change_length, minimum_avoid_length), calcLateralOffset());
 
@@ -272,16 +315,11 @@ double AvoidanceByLaneChange::calcMinAvoidanceLength(const ObjectData & nearest_
   return avoidance_helper_->getMinAvoidanceDistance(shift_length);
 }
 
-double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
+double AvoidanceByLaneChange::calc_minimum_dist_buffer() const
 {
-  const auto current_lanes = get_current_lanes();
-  if (current_lanes.empty()) {
-    RCLCPP_DEBUG(logger_, "no empty lanes");
-    return std::numeric_limits<double>::infinity();
-  }
-
-  return utils::lane_change::calcMinimumLaneChangeLength(
-    getRouteHandler(), current_lanes.back(), *lane_change_parameters_, direction_);
+  const auto [_, dist_buffer] = utils::lane_change::calculation::calc_lc_length_and_dist_buffer(
+    common_data_ptr_, get_current_lanes());
+  return dist_buffer.min;
 }
 
 double AvoidanceByLaneChange::calcLateralOffset() const

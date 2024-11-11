@@ -22,7 +22,7 @@ namespace autoware::default_adapi
 LocalizationNode::LocalizationNode(const rclcpp::NodeOptions & options)
 : Node("localization", options)
 {
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   adaptor.relay_message(pub_state_, sub_state_);
   adaptor.init_cli(cli_initialize_);

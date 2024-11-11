@@ -35,6 +35,7 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   base_frame_ = declare_parameter<std::string>("base_frame");
   use_imu_ = declare_parameter<bool>("use_imu");
   use_3d_distortion_correction_ = declare_parameter<bool>("use_3d_distortion_correction");
+  update_azimuth_and_distance_ = declare_parameter<bool>("update_azimuth_and_distance");
   auto has_static_tf_only =
     declare_parameter<bool>("has_static_tf_only", false);  // TODO(amadeuszsz): remove default value
 
@@ -50,39 +51,39 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   // Subscriber
   twist_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "~/input/twist", 10,
-    std::bind(&DistortionCorrectorComponent::onTwist, this, std::placeholders::_1));
+    std::bind(&DistortionCorrectorComponent::twist_callback, this, std::placeholders::_1));
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
     "~/input/imu", 10,
-    std::bind(&DistortionCorrectorComponent::onImu, this, std::placeholders::_1));
+    std::bind(&DistortionCorrectorComponent::imu_callback, this, std::placeholders::_1));
   pointcloud_sub_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
-    std::bind(&DistortionCorrectorComponent::onPointCloud, this, std::placeholders::_1));
+    std::bind(&DistortionCorrectorComponent::pointcloud_callback, this, std::placeholders::_1));
 
   // Setup the distortion corrector
 
   if (use_3d_distortion_correction_) {
-    distortion_corrector_ = std::make_unique<DistortionCorrector3D>(this, has_static_tf_only);
+    distortion_corrector_ = std::make_unique<DistortionCorrector3D>(*this, has_static_tf_only);
   } else {
-    distortion_corrector_ = std::make_unique<DistortionCorrector2D>(this, has_static_tf_only);
+    distortion_corrector_ = std::make_unique<DistortionCorrector2D>(*this, has_static_tf_only);
   }
 }
 
-void DistortionCorrectorComponent::onTwist(
+void DistortionCorrectorComponent::twist_callback(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg)
 {
-  distortion_corrector_->processTwistMessage(twist_msg);
+  distortion_corrector_->process_twist_message(twist_msg);
 }
 
-void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
+void DistortionCorrectorComponent::imu_callback(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
   if (!use_imu_) {
     return;
   }
 
-  distortion_corrector_->processIMUMessage(base_frame_, imu_msg);
+  distortion_corrector_->process_imu_message(base_frame_, imu_msg);
 }
 
-void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointcloud_msg)
+void DistortionCorrectorComponent::pointcloud_callback(PointCloud2::UniquePtr pointcloud_msg)
 {
   stop_watch_ptr_->toc("processing_time", true);
   const auto points_sub_count = undistorted_pointcloud_pub_->get_subscription_count() +
@@ -92,10 +93,25 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointclou
     return;
   }
 
-  distortion_corrector_->setPointCloudTransform(base_frame_, pointcloud_msg->header.frame_id);
-
+  distortion_corrector_->set_pointcloud_transform(base_frame_, pointcloud_msg->header.frame_id);
   distortion_corrector_->initialize();
-  distortion_corrector_->undistortPointCloud(use_imu_, *pointcloud_msg);
+
+  if (update_azimuth_and_distance_ && !angle_conversion_opt_.has_value()) {
+    angle_conversion_opt_ = distortion_corrector_->try_compute_angle_conversion(*pointcloud_msg);
+    if (angle_conversion_opt_.has_value()) {
+      RCLCPP_INFO(
+        this->get_logger(),
+        "Success to get the conversion formula between Cartesian coordinates and LiDAR azimuth "
+        "coordinates");
+    } else {
+      RCLCPP_ERROR_STREAM_THROTTLE(
+        this->get_logger(), *this->get_clock(), 10000 /* ms */,
+        "Failed to get the angle conversion between Cartesian coordinates and LiDAR azimuth "
+        "coordinates. This pointcloud will not update azimuth and distance");
+    }
+  }
+
+  distortion_corrector_->undistort_pointcloud(use_imu_, angle_conversion_opt_, *pointcloud_msg);
 
   if (debug_publisher_) {
     auto pipeline_latency_ms =

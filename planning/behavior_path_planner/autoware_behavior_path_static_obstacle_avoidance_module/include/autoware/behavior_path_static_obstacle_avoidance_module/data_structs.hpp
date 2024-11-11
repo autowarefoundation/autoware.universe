@@ -73,8 +73,6 @@ struct ObjectParameter
 
   bool is_safety_check_target{false};
 
-  size_t execute_num{1};
-
   double moving_speed_threshold{0.0};
 
   double moving_time_threshold{1.0};
@@ -595,6 +593,8 @@ struct AvoidancePlanningData
   double to_start_point{std::numeric_limits<double>::lowest()};
 
   double to_return_point{std::numeric_limits<double>::max()};
+
+  bool request_operator{false};
 };
 
 /*

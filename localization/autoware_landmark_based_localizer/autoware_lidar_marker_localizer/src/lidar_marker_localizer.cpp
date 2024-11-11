@@ -14,9 +14,9 @@
 
 #include "lidar_marker_localizer.hpp"
 
+#include <autoware/point_types/types.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
-#include <autoware_point_types/types.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/qos.hpp>
 
@@ -81,7 +81,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
   param_.save_file_name = this->declare_parameter<std::string>("save_file_name");
   param_.save_frame_id = this->declare_parameter<std::string>("save_frame_id");
 
-  ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
+  ekf_pose_buffer_ = std::make_unique<autoware::localization_util::SmartPoseBuffer>(
     this->get_logger(), param_.self_pose_timeout_sec, param_.self_pose_distance_tolerance_m);
 
   rclcpp::CallbackGroup::SharedPtr points_callback_group;
@@ -122,7 +122,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, this, false);
 
-  diagnostics_module_.reset(new DiagnosticsModule(this, "marker_detection_status"));
+  diagnostics_module_.reset(
+    new autoware::localization_util::DiagnosticsModule(this, "marker_detection_status"));
 }
 
 void LidarMarkerLocalizer::initialize_diagnostics()
@@ -195,8 +196,8 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
   }
 
   // (2) get Self Pose
-  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
-    ekf_pose_buffer_->interpolate(sensor_ros_time);
+  const std::optional<autoware::localization_util::SmartPoseBuffer::InterpolateResult>
+    interpolate_result = ekf_pose_buffer_->interpolate(sensor_ros_time);
 
   const bool is_received_self_pose = interpolate_result != std::nullopt;
   diagnostics_module_->add_key_value("is_received_self_pose", is_received_self_pose);
@@ -337,8 +338,8 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   // TODO(YamatoAndo)
   // Transform sensor_frame to base_link
 
-  pcl::PointCloud<autoware_point_types::PointXYZIRC>::Ptr points_ptr(
-    new pcl::PointCloud<autoware_point_types::PointXYZIRC>);
+  pcl::PointCloud<autoware::point_types::PointXYZIRC>::Ptr points_ptr(
+    new pcl::PointCloud<autoware::point_types::PointXYZIRC>);
   pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
 
   if (points_ptr->empty()) {
@@ -346,11 +347,11 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
     return std::vector<landmark_manager::Landmark>{};
   }
 
-  std::vector<pcl::PointCloud<autoware_point_types::PointXYZIRC>> ring_points(128);
+  std::vector<pcl::PointCloud<autoware::point_types::PointXYZIRC>> ring_points(128);
 
   float min_x = std::numeric_limits<float>::max();
   float max_x = std::numeric_limits<float>::lowest();
-  for (const autoware_point_types::PointXYZIRC & point : points_ptr->points) {
+  for (const autoware::point_types::PointXYZIRC & point : points_ptr->points) {
     ring_points[point.channel].push_back(point);
     min_x = std::min(min_x, point.x);
     max_x = std::max(max_x, point.x);
@@ -364,12 +365,12 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   std::vector<float> min_y(bin_num, std::numeric_limits<float>::max());
 
   // for each channel
-  for (const pcl::PointCloud<autoware_point_types::PointXYZIRC> & one_ring : ring_points) {
+  for (const pcl::PointCloud<autoware::point_types::PointXYZIRC> & one_ring : ring_points) {
     std::vector<double> intensity_sum(bin_num, 0.0);
     std::vector<int> intensity_num(bin_num, 0);
     std::vector<double> average_intensity(bin_num, 0.0);
 
-    for (const autoware_point_types::PointXYZIRC & point : one_ring.points) {
+    for (const autoware::point_types::PointXYZIRC & point : one_ring.points) {
       const int bin_index = static_cast<int>((point.x - min_x) / param_.resolution);
       intensity_sum[bin_index] += point.intensity;
       intensity_num[bin_index]++;
@@ -506,15 +507,15 @@ sensor_msgs::msg::PointCloud2::SharedPtr LidarMarkerLocalizer::extract_marker_po
   const geometry_msgs::msg::Pose marker_pose) const
 {
   // convert from ROSMsg to PCL
-  pcl::shared_ptr<pcl::PointCloud<autoware_point_types::PointXYZIRC>> points_ptr(
-    new pcl::PointCloud<autoware_point_types::PointXYZIRC>);
+  pcl::shared_ptr<pcl::PointCloud<autoware::point_types::PointXYZIRC>> points_ptr(
+    new pcl::PointCloud<autoware::point_types::PointXYZIRC>);
   pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
 
-  pcl::shared_ptr<pcl::PointCloud<autoware_point_types::PointXYZIRC>> marker_points_ptr(
-    new pcl::PointCloud<autoware_point_types::PointXYZIRC>);
+  pcl::shared_ptr<pcl::PointCloud<autoware::point_types::PointXYZIRC>> marker_points_ptr(
+    new pcl::PointCloud<autoware::point_types::PointXYZIRC>);
 
   // extract marker pointcloud
-  for (const autoware_point_types::PointXYZIRC & point : points_ptr->points) {
+  for (const autoware::point_types::PointXYZIRC & point : points_ptr->points) {
     const double xy_distance = std::sqrt(
       std::pow(point.x - marker_pose.position.x, 2.0) +
       std::pow(point.y - marker_pose.position.y, 2.0));
@@ -545,8 +546,8 @@ void LidarMarkerLocalizer::save_detected_marker_log(
     marker_points_msg_sensor_frame_ptr);
 
   // convert from ROSMsg to PCL
-  pcl::shared_ptr<pcl::PointCloud<autoware_point_types::PointXYZIRC>>
-    marker_points_sensor_frame_ptr(new pcl::PointCloud<autoware_point_types::PointXYZIRC>);
+  pcl::shared_ptr<pcl::PointCloud<autoware::point_types::PointXYZIRC>>
+    marker_points_sensor_frame_ptr(new pcl::PointCloud<autoware::point_types::PointXYZIRC>);
   pcl::fromROSMsg(*marker_points_msg_sensor_frame_ptr, *marker_points_sensor_frame_ptr);
 
   // to csv format
@@ -607,7 +608,7 @@ void LidarMarkerLocalizer::transform_sensor_measurement(
   const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped =
     autoware::universe_utils::transform2pose(transform);
   const Eigen::Matrix4f base_to_sensor_matrix =
-    pose_to_matrix4f(target_to_source_pose_stamped.pose);
+    autoware::localization_util::pose_to_matrix4f(target_to_source_pose_stamped.pose);
   pcl_ros::transformPointCloud(
     base_to_sensor_matrix, *sensor_points_input_ptr, *sensor_points_output_ptr);
 }
