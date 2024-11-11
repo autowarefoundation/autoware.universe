@@ -83,7 +83,6 @@ TEST(ObjectMapUtilsTest, testFillPolygonAreas)
   for (int i = 0; i < costmap.rows(); i++) {
     for (int j = 0; j < costmap.cols(); j++) {
       if (costmap(i, j) == min_value) {
-        // std::cout << "i:"<< i <<",j:"<<j<< std::endl;
         empty_grid_cell_num += 1;
       }
     }
