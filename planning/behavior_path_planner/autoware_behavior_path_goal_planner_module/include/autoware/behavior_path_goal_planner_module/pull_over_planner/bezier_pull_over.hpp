@@ -41,6 +41,19 @@ private:
   const LaneDepartureChecker lane_departure_checker_;
 
   const bool left_side_parking_;
+
+  std::optional<PullOverPath> generateBezierPath(
+    const GoalCandidate & goal_candidate, const size_t id,
+    const std::shared_ptr<const PlannerData> planner_data,
+    const BehaviorModuleOutput & previous_module_output, const lanelet::ConstLanelets & road_lanes,
+    const lanelet::ConstLanelets & shoulder_lanes, const double lateral_jerk) const;
+
+  PathWithLaneId generateReferencePath(
+    const std::shared_ptr<const PlannerData> planner_data,
+    const lanelet::ConstLanelets & road_lanes, const Pose & end_pose) const;
+
+  static double calcBeforeShiftedArcLength(
+    const PathWithLaneId & path, const double after_shifted_arc_length, const double dr);
 };
 
 }  // namespace autoware::behavior_path_planner
