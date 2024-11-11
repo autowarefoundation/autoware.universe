@@ -15,7 +15,8 @@
 #ifndef SCAN_GROUND_FILTER__NODE_HPP_
 #define SCAN_GROUND_FILTER__NODE_HPP_
 
-#include "grid.hpp"
+#include "data.hpp"
+#include "grid_ground_filter.hpp"
 
 #include <autoware/pointcloud_preprocessor/filter.hpp>
 #include <autoware/pointcloud_preprocessor/transform_info.hpp>
@@ -182,12 +183,14 @@ private:
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
-  int data_offset_x_;
-  int data_offset_y_;
-  int data_offset_z_;
-  int data_offset_intensity_;
-  int intensity_type_;
-  bool data_offset_initialized_;
+  // data accessor
+  // int data_offset_x_;
+  // int data_offset_y_;
+  // int data_offset_z_;
+  // int data_offset_intensity_;
+  // int intensity_type_;
+  // bool data_offset_initialized_;
+  PclDataAccessor data_accessor_;
 
   const uint16_t gnd_grid_continual_thresh_ = 3;
   bool elevation_grid_mode_;
@@ -206,7 +209,6 @@ private:
   float global_slope_max_ratio_;
   float local_slope_max_ratio_;
   float split_points_distance_tolerance_;  // distance in meters between concentric divisions
-  float split_points_distance_tolerance_square_;
 
   // non-grid mode parameters
   bool use_virtual_ground_point_;
@@ -226,12 +228,13 @@ private:
   float virtual_lidar_z_;
 
   // grid data
-  std::unique_ptr<Grid> grid_ptr_;
+  // std::unique_ptr<Grid> grid_ptr_;
+  std::unique_ptr<GridGroundFilter> grid_ground_filter_ptr_;
 
   // data access methods
-  void set_field_index_offsets(const PointCloud2ConstPtr & input);
-  void get_point_from_data_index(
-    const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point) const;
+  // void set_field_index_offsets(const PointCloud2ConstPtr & input);
+  // void get_point_from_data_index(
+  //   const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point) const;
 
   // time keeper related
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
@@ -256,18 +259,19 @@ private:
   void convertPointcloud(
     const PointCloud2ConstPtr & in_cloud,
     std::vector<PointCloudVector> & out_radial_ordered_points) const;
-  void convertPointcloudGridScan(
-    const PointCloud2ConstPtr & in_cloud,
-    std::vector<PointCloudVector> & out_radial_ordered_points) const;
+  // void convertPointcloudGridScan(
+  //   const PointCloud2ConstPtr & in_cloud,
+  //   std::vector<PointCloudVector> & out_radial_ordered_points) const;
   /*!
    * Output ground center of front wheels as the virtual ground point
    * @param[out] point Virtual ground origin point
    */
   void calcVirtualGroundOrigin(pcl::PointXYZ & point) const;
 
-  // [new grid]
-  bool recursiveSearch(const int check_idx, const int search_cnt, std::vector<int> & idx) const;
-  void fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const;
+  // // [new grid]
+  // bool recursiveSearch(const int check_idx, const int search_cnt, std::vector<int> & idx) const;
+  // void fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const;
+
   /*!
    * Classifies Points in the PointCloud as Ground and Not Ground
    * @param in_radial_ordered_clouds Vector of an Ordered PointsCloud
@@ -279,10 +283,10 @@ private:
     const PointCloud2ConstPtr & in_cloud,
     const std::vector<PointCloudVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices) const;
-  void classifyPointCloudGridScan(
-    const PointCloud2ConstPtr & in_cloud,
-    const std::vector<PointCloudVector> & in_radial_ordered_clouds,
-    pcl::PointIndices & out_no_ground_indices) const;
+  // void classifyPointCloudGridScan(
+  //   const PointCloud2ConstPtr & in_cloud,
+  //   const std::vector<PointCloudVector> & in_radial_ordered_clouds,
+  //   pcl::PointIndices & out_no_ground_indices) const;
   /*!
    * Returns the resulting complementary PointCloud, one with the points kept
    * and the other removed as indicated in the indices
