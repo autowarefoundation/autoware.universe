@@ -42,6 +42,8 @@ void GridGroundFilter::preprocess()
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   grid_ptr_->setGridConnections();
+
+  // debug message
   // grid_ptr_->setGridStatistics();
 }
 
@@ -58,11 +60,11 @@ bool GridGroundFilter::recursiveSearch(
   const auto & check_cell = grid_ptr_->getCell(check_idx);
   if (!check_cell.has_ground_) {
     // if the cell does not have ground, search previous cell
-    return recursiveSearch(check_cell.prev_grid_idx_, search_cnt, idx);
+    return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt, idx);
   }
   // the cell has ground, add the index to the list, and search previous cell
   idx.push_back(check_idx);
-  return recursiveSearch(check_cell.prev_grid_idx_, search_cnt - 1, idx);
+  return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt - 1, idx);
 }
 
 void GridGroundFilter::fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const
@@ -122,9 +124,9 @@ void GridGroundFilter::classify(
     bool is_previous_initialized = false;
     // set a cell pointer for the previous cell
     const Cell * prev_cell_ptr;
-    // check prev grid only exist
-    if (cell.prev_grid_idx_ >= 0) {
-      prev_cell_ptr = &(grid_ptr_->getCell(cell.prev_grid_idx_));
+    // check scan root grid
+    if (cell.scan_grid_root_idx_ >= 0) {
+      prev_cell_ptr = &(grid_ptr_->getCell(cell.scan_grid_root_idx_));
       if (prev_cell_ptr->is_ground_initialized_) {
         is_previous_initialized = true;
       }
@@ -144,7 +146,7 @@ void GridGroundFilter::classify(
         const float global_slope_ratio = point.z / radius;
         if (
           global_slope_ratio >= param_.global_slope_max_ratio &&
-          point.z < param_.non_ground_height_threshold) {
+          point.z > param_.non_ground_height_threshold) {
           // this point is obstacle
           out_no_ground_indices.indices.push_back(pt_idx);
         } else if (
@@ -180,7 +182,7 @@ void GridGroundFilter::classify(
     std::vector<int> grid_idcs;
     {
       const int search_count = param_.gnd_grid_buffer_size;
-      int check_cell_idx = cell.prev_grid_idx_;
+      int check_cell_idx = cell.scan_grid_root_idx_;
       recursiveSearch(check_cell_idx, search_count, grid_idcs);
       if (grid_idcs.size() > 0) {
         // calculate the gradient and intercept by least square method
@@ -205,7 +207,7 @@ void GridGroundFilter::classify(
       const float radial_diff_between_cells = cell.center_radius_ - prev_cell_ptr->center_radius_;
 
       if (radial_diff_between_cells < param_.gnd_grid_continual_thresh * cell.radial_size_) {
-        if (cell.grid_idx_ - front_radial_id < param_.gnd_grid_continual_thresh) {
+        if (cell.radial_idx_ - front_radial_id < param_.gnd_grid_continual_thresh) {
           is_continuous = true;
           is_discontinuous = false;
           is_break = false;
@@ -333,7 +335,7 @@ void GridGroundFilter::classify(
       }
 
       // recheck ground bin
-      if (ground_bin.getIndicesRef().size() > 0 && param_.use_recheck_ground_cluster) {
+      if (ground_bin.getGroundPointNum() > 0 && param_.use_recheck_ground_cluster) {
         ground_bin.processAverage();
         // recheck the ground cluster
         const float reference_height =
@@ -344,14 +346,14 @@ void GridGroundFilter::classify(
           if (height_list.at(j) >= reference_height + param_.non_ground_height_threshold) {
             // fill the non-ground indices
             out_no_ground_indices.indices.push_back(gnd_indices.at(j));
-            // remove the point from the ground bin
-            // ground_bin.removePoint(j);
+            // mark the point as non-ground
+            ground_bin.is_ground_list.at(j) = false;
           }
         }
       }
 
       // finalize current cell, update the cell ground information
-      if (ground_bin.getIndicesRef().size() > 0) {
+      if (ground_bin.getGroundPointNum() > 0) {
         ground_bin.processAverage();
         cell.avg_height_ = ground_bin.getAverageHeight();
         cell.avg_radius_ = ground_bin.getAverageRadius();

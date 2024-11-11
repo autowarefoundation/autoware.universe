@@ -37,43 +37,32 @@ using PointCloud2ConstPtr = sensor_msgs::msg::PointCloud2::ConstSharedPtr;
 
 struct PointsCentroid
 {
-  float radius_sum;
-  float height_sum;
   float radius_avg;
   float height_avg;
   float height_max;
   float height_min;
-  uint32_t point_num;
   uint16_t grid_id;
   std::vector<size_t> pcl_indices;
   std::vector<float> height_list;
   std::vector<float> radius_list;
+  std::vector<bool> is_ground_list;
 
   PointsCentroid()
-  : radius_sum(0.0f),
-    height_sum(0.0f),
-    radius_avg(0.0f),
-    height_avg(0.0f),
-    height_max(-10.0f),
-    height_min(10.0f),
-    point_num(0),
-    grid_id(0)
+  : radius_avg(0.0f), height_avg(0.0f), height_max(-10.0f), height_min(10.0f), grid_id(0)
   {
   }
 
   void initialize()
   {
-    radius_sum = 0.0f;
-    height_sum = 0.0f;
     radius_avg = 0.0f;
     height_avg = 0.0f;
     height_max = -10.0f;
     height_min = 10.0f;
-    point_num = 0;
     grid_id = 0;
     pcl_indices.clear();
     height_list.clear();
     radius_list.clear();
+    is_ground_list.clear();
   }
 
   void addPoint(const float radius, const float height, const size_t index)
@@ -81,20 +70,39 @@ struct PointsCentroid
     pcl_indices.push_back(index);
     height_list.push_back(height);
     radius_list.push_back(radius);
+    is_ground_list.push_back(true);
+  }
+
+  int getGroundPointNum() const
+  {
+    return std::count(is_ground_list.begin(), is_ground_list.end(), true);
   }
 
   void processAverage()
   {
-    point_num = pcl_indices.size();
-    if (point_num == 0) {
+    // process only if is_ground_list is true
+    const int ground_point_num = getGroundPointNum();
+    if (ground_point_num == 0) {
       return;
     }
-    radius_sum = std::accumulate(radius_list.begin(), radius_list.end(), 0.0f);
-    height_sum = std::accumulate(height_list.begin(), height_list.end(), 0.0f);
-    height_max = std::max_element(height_list.begin(), height_list.end())[0];
-    height_min = std::min_element(height_list.begin(), height_list.end())[0];
-    radius_avg = radius_sum / point_num;
-    height_avg = height_sum / point_num;
+
+    float radius_sum = 0.0f;
+    float height_sum = 0.0f;
+    height_max = -10.0f;
+    height_min = 10.0f;
+
+    for (size_t i = 0; i < is_ground_list.size(); ++i) {
+      if (!is_ground_list[i]) {
+        continue;
+      }
+      radius_sum += radius_list[i];
+      height_sum += height_list[i];
+      height_max = std::max(height_max, height_list[i]);
+      height_min = std::min(height_min, height_list[i]);
+    }
+
+    radius_avg = radius_sum / ground_point_num;
+    height_avg = height_sum / ground_point_num;
   }
 
   float getAverageSlope() const { return std::atan2(height_avg, radius_avg); }

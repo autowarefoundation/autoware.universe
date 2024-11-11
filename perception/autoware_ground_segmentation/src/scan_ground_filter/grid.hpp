@@ -49,6 +49,8 @@ public:
   int next_grid_idx_;
   int prev_grid_idx_;
 
+  int scan_grid_root_idx_;
+
   // geometric properties of the cell
   float center_radius_;
   float center_azimuth_;
@@ -181,6 +183,7 @@ public:
       cell.point_indices_.clear();
       cell.is_processed_ = false;
       cell.is_ground_initialized_ = false;
+      cell.scan_grid_root_idx_ = -1;
       cell.has_ground_ = false;
       cell.avg_height_ = 0.0f;
       cell.max_height_ = 0.0f;
@@ -275,24 +278,25 @@ public:
           cell.next_grid_idx_ = -1;
         }
       }
+
       // check the previous cell
       {
         bool is_prev_found = false;
-        int prev_cell_idx = cell.prev_grid_idx_;
-        while (prev_cell_idx >= 0) {
-          auto & prev_cell = cells_[prev_cell_idx];
+        int scan_grid_root_idx = cell.prev_grid_idx_;
+        while (scan_grid_root_idx >= 0) {
+          auto & prev_cell = cells_[scan_grid_root_idx];
           if (prev_cell.isEmpty()) {
             // check previous of the previous cell
-            prev_cell_idx = prev_cell.prev_grid_idx_;
+            scan_grid_root_idx = prev_cell.prev_grid_idx_;
           } else {
             // not empty, set the previous cell
-            cell.prev_grid_idx_ = prev_cell_idx;
+            cell.scan_grid_root_idx_ = scan_grid_root_idx;
             is_prev_found = true;
             break;
           }
         }
         if (!is_prev_found) {
-          cell.prev_grid_idx_ = -1;
+          cell.scan_grid_root_idx_ = -1;
         }
       }
     }
@@ -539,6 +543,7 @@ private:
         prev_grid_idx = getGridIdx(radial_idx - 1, azimuth_idx_prev_radial_grid);
       }
       cell.prev_grid_idx_ = prev_grid_idx;
+      cell.scan_grid_root_idx_ = prev_grid_idx;
     }
   }
 };
