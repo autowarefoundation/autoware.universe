@@ -1,9 +1,9 @@
 <launch>
   <!-- option -->
-  <arg name="launch_obstacle_collision_checker" default="false"/>
-  <arg name="launch_autonomous_emergency_braking" default="true"/>
-  <arg name="launch_predicted_path_checker" default="false"/>
-  <arg name="launch_collision_detector" default="false"/>
+  <arg name="enable_obstacle_collision_checker" default="false"/>
+  <arg name="enable_autonomous_emergency_braking" default="true"/>
+  <arg name="enable_predicted_path_checker" default="false"/>
+  <arg name="enable_collision_detector" default="false"/>
   <arg name="trajectory_follower_mode" default="trajectory_follower_node"/>
   <arg name="lateral_controller_mode"/>
   <arg name="longitudinal_controller_mode"/>
@@ -196,7 +196,7 @@
     </group>
 
     <!-- obstacle collision checker -->
-    <load_composable_node target="/control/control_container" if="$(var launch_obstacle_collision_checker)">
+    <load_composable_node target="/control/control_container" if="$(var enable_obstacle_collision_checker)">
       <composable_node pkg="autoware_obstacle_collision_checker" plugin="autoware::obstacle_collision_checker::ObstacleCollisionCheckerNode" name="obstacle_collision_checker">
         <remap from="input/lanelet_map_bin" to="/map/vector_map"/>
         <remap from="input/obstacle_pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
@@ -210,7 +210,7 @@
     </load_composable_node>
 
     <!-- autonomous emergency braking -->
-    <load_composable_node target="/control/control_container" if="$(var launch_autonomous_emergency_braking)">
+    <load_composable_node target="/control/control_container" if="$(var enable_autonomous_emergency_braking)">
       <composable_node pkg="autoware_autonomous_emergency_braking" plugin="autoware::motion::control::autonomous_emergency_braking::AEB" name="autonomous_emergency_braking">
         <remap from="~/input/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
         <remap from="~/input/velocity" to="/vehicle/status/velocity_status"/>
@@ -224,7 +224,7 @@
     </load_composable_node>
 
     <!-- predicted path checker -->
-    <load_composable_node target="/control/control_container" if="$(var launch_predicted_path_checker)">
+    <load_composable_node target="/control/control_container" if="$(var enable_predicted_path_checker)">
       <composable_node pkg="predicted_path_checker" plugin="autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode" name="predicted_path_checker">
         <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
         <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
@@ -251,7 +251,7 @@
     </load_composable_node>
 
     <!-- collision detector-->
-    <load_composable_node target="/control/control_container" if="$(var launch_collision_detector)">
+    <load_composable_node target="/control/control_container" if="$(var enable_collision_detector)">
       <composable_node pkg="autoware_collision_detector" plugin="autoware::collision_detector::CollisionDetectorNode" name="collision_detector">
         <remap from="~/input/odometry" to="/localization/kinematic_state"/>
         <remap from="~/input/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
