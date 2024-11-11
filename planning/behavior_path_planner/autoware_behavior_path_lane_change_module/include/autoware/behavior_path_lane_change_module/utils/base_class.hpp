@@ -279,6 +279,7 @@ protected:
   FilteredByLanesExtendedObjects filtered_objects_{};
   BehaviorModuleOutput prev_module_output_{};
   std::optional<Pose> lane_change_stop_pose_{std::nullopt};
+  mutable std::optional<LaneChangePath> terminal_lane_change_path_{std::nullopt};
 
   PathWithLaneId prev_approved_path_{};
 

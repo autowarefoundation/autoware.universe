@@ -260,6 +260,22 @@ struct Info
     terminal_lane_changing_velocity = _lc_metrics.velocity;
     shift_line = _shift_line;
   }
+
+  void set_prepare(const PhaseMetrics & _prep_metrics)
+  {
+    longitudinal_acceleration.prepare = _prep_metrics.actual_lon_accel;
+    velocity.prepare = _prep_metrics.velocity;
+    duration.prepare = _prep_metrics.duration;
+    length.prepare = _prep_metrics.length;
+  }
+
+  void set_lane_changing(const PhaseMetrics & _lc_metrics)
+  {
+    longitudinal_acceleration.prepare = _lc_metrics.actual_lon_accel;
+    velocity.prepare = _lc_metrics.velocity;
+    duration.prepare = _lc_metrics.duration;
+    length.prepare = _lc_metrics.length;
+  }
 };
 
 template <typename Object>
