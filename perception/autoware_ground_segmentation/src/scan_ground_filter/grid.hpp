@@ -139,44 +139,37 @@ public:
   // method to add a point to the grid
   void addPoint(const float x, const float y, const size_t point_idx)
   {
-    // check if initialized
-    if (!is_initialized_) {
-      throw std::runtime_error("Grid is not initialized.");
-    }
-
     // calculate the grid id
     const float radius_sq = x * x + y * y;
     const float azimuth = std::atan2(y, x);
-    const int grid_id = getGridIdx(radius_sq, azimuth);
+    const int grid_idx = getGridIdx(radius_sq, azimuth);
 
     // check if the point is within the grid
-    if (grid_id < 0) {
+    if (grid_idx < 0) {
       return;
+    }
+    const size_t grid_idx_idx = static_cast<size_t>(grid_idx);
+
+    // check cell index is valid
+    if (grid_idx_idx >= cells_.size()) {
+      throw std::runtime_error("Invalid grid id when trying to add a point.");
     }
 
     // add the point to the cell
-    cells_[grid_id].point_indices_.emplace_back(point_idx);
+    cells_[grid_idx_idx].point_indices_.emplace_back(point_idx);
   }
 
-  size_t getGridSize() const
-  {
-    // check if initialized
-    if (!is_initialized_) {
-      throw std::runtime_error("Grid is not initialized.");
-    }
-
-    return cells_.size();
-  }
+  size_t getGridSize() const { return cells_.size(); }
 
   // method to get the cell
-  Cell & getCell(const int grid_id)
+  Cell & getCell(const int grid_idx)
   {
-    // check if initialized
-    if (!is_initialized_) {
-      throw std::runtime_error("Grid is not initialized.");
+    const size_t idx = static_cast<size_t>(grid_idx);
+    if (grid_idx < 0 || idx >= cells_.size()) {
+      throw std::runtime_error("Invalid grid cell index to get.");
     }
 
-    return cells_[grid_id];
+    return cells_[idx];
   }
 
   void resetCells()
@@ -252,9 +245,6 @@ public:
     if (!is_initialized_) {
       throw std::runtime_error("Grid is not initialized.");
     }
-
-    // search filled cells to the next and previous cells
-    // rewrite cell.next_grid_idx_ and cell.prev_grid_idx_
 
     // iterate over grid cells
     for (size_t i = 0; i < cells_.size(); ++i) {
@@ -402,8 +392,16 @@ private:
 
   int getAzimuthGridIdx(const int & radial_idx, const float & azimuth) const
   {
+    const int azimuth_grid_num = azimuth_grids_per_radial_[radial_idx];
+
+    int azimuth_grid_idx =
+      static_cast<int>(std::floor(azimuth / azimuth_interval_per_radial_[radial_idx]));
+    if (azimuth_grid_idx == azimuth_grid_num) {
+      // loop back to the first grid
+      azimuth_grid_idx = 0;
+    }
     // constant azimuth interval
-    return static_cast<int>(azimuth / azimuth_interval_per_radial_[radial_idx]);
+    return azimuth_grid_idx;
   }
 
   int getRadialIdx(const float & radius_sq) const
@@ -427,12 +425,19 @@ private:
     } else {
       grid_idx_speculated = static_cast<size_t>(grid_linearity_switch_radius_);
     }
+
     // radial grid id
     for (size_t i = grid_idx_speculated; i < grid_radial_boundaries_sq_.size(); ++i) {
       if (radius_sq < grid_radial_boundaries_sq_[i]) {
         grid_rad_idx = i;
         break;
       }
+    }
+
+    // check if the grid id is valid
+    if (grid_rad_idx >= static_cast<int>(grid_radial_boundaries_sq_.size())) {
+      // throw error
+      throw std::runtime_error("Invalid radial grid index.");
     }
 
     return grid_rad_idx;
@@ -448,11 +453,6 @@ private:
   // range limit is horizon angle
   int getGridIdx(const float & radius_sq, const float & azimuth) const
   {
-    // check if initialized
-    if (!is_initialized_) {
-      throw std::runtime_error("Grid is not initialized.");
-    }
-
     const int grid_rad_idx = getRadialIdx(radius_sq);
     if (grid_rad_idx < 0) {
       return -1;
@@ -518,27 +518,27 @@ private:
       cell.center_azimuth_ = (static_cast<float>(azimuth_idx) + 0.5f) * cell.azimuth_size_;
 
       // set next grid id, which is radially next
-      int next_grid_id = -1;
+      int next_grid_idx = -1;
       // only if the next radial grid exists
       if (radial_idx < radial_grid_num) {
         // find nearest azimuth grid in the next radial grid
         const float azimuth = cell.center_azimuth_;
         const size_t azimuth_idx_next_radial_grid = getAzimuthGridIdx(radial_idx + 1, azimuth);
-        next_grid_id = getGridIdx(radial_idx + 1, azimuth_idx_next_radial_grid);
+        next_grid_idx = getGridIdx(radial_idx + 1, azimuth_idx_next_radial_grid);
       }
-      cell.next_grid_idx_ = next_grid_id;
+      cell.next_grid_idx_ = next_grid_idx;
 
       // set previous grid id, which is radially previous
-      int prev_grid_id = -1;
+      int prev_grid_idx = -1;
       // only if the previous radial grid exists
       if (radial_idx > 0) {
         // find nearest azimuth grid in the previous radial grid
         const float azimuth = cell.center_azimuth_;
         // constant azimuth interval
         const size_t azimuth_idx_prev_radial_grid = getAzimuthGridIdx(radial_idx - 1, azimuth);
-        prev_grid_id = getGridIdx(radial_idx - 1, azimuth_idx_prev_radial_grid);
+        prev_grid_idx = getGridIdx(radial_idx - 1, azimuth_idx_prev_radial_grid);
       }
-      cell.prev_grid_idx_ = prev_grid_id;
+      cell.prev_grid_idx_ = prev_grid_idx;
     }
   }
 };

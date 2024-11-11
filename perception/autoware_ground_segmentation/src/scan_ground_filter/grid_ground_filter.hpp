@@ -98,15 +98,10 @@ struct PointsCentroid
   }
 
   float getAverageSlope() const { return std::atan2(height_avg, radius_avg); }
-
   float getAverageHeight() const { return height_avg; }
-
   float getAverageRadius() const { return radius_avg; }
-
   float getMaxHeight() const { return height_max; }
-
   float getMinHeight() const { return height_min; }
-
   const std::vector<size_t> & getIndicesRef() const { return pcl_indices; }
   const std::vector<float> & getHeightListRef() const { return height_list; }
 };
@@ -167,11 +162,7 @@ public:
       data_accessor_.setField(in_cloud);
     }
   }
-
-  void convertPointcloud(const PointCloud2ConstPtr & in_cloud);
-
-  void classifyPointCloud(
-    const PointCloud2ConstPtr & in_cloud, pcl::PointIndices & out_no_ground_indices);
+  void process(const PointCloud2ConstPtr & in_cloud, pcl::PointIndices & out_no_ground_indices);
 
 private:
   // parameters
@@ -188,6 +179,10 @@ private:
 
   bool recursiveSearch(const int check_idx, const int search_cnt, std::vector<int> & idx) const;
   void fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const;
+
+  void convert(const PointCloud2ConstPtr & in_cloud);
+  void preprocess();
+  void classify(const PointCloud2ConstPtr & in_cloud, pcl::PointIndices & out_no_ground_indices);
 };
 
 }  // namespace autoware::ground_segmentation

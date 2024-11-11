@@ -184,12 +184,6 @@ private:
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
   // data accessor
-  // int data_offset_x_;
-  // int data_offset_y_;
-  // int data_offset_z_;
-  // int data_offset_intensity_;
-  // int intensity_type_;
-  // bool data_offset_initialized_;
   PclDataAccessor data_accessor_;
 
   const uint16_t gnd_grid_continual_thresh_ = 3;
@@ -227,14 +221,8 @@ private:
   uint16_t gnd_grid_buffer_size_;
   float virtual_lidar_z_;
 
-  // grid data
-  // std::unique_ptr<Grid> grid_ptr_;
+  // grid ground filter processor
   std::unique_ptr<GridGroundFilter> grid_ground_filter_ptr_;
-
-  // data access methods
-  // void set_field_index_offsets(const PointCloud2ConstPtr & input);
-  // void get_point_from_data_index(
-  //   const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point) const;
 
   // time keeper related
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
