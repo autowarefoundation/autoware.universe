@@ -97,12 +97,12 @@ std::optional<double> calcDistanceToRedTrafficLight(
       }
 
       const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
-      lanelet::ConstLineString3d stop_line = *(element->stopLine());
-      if (!stop_line.empty()) return std::nullopt;
-      const auto x = 0.5 * (stop_line.front().x() + stop_line.back().x());
-      const auto y = 0.5 * (stop_line.front().y() + stop_line.back().y());
-      const auto z = 0.5 * (stop_line.front().z() + stop_line.back().z());
+      const auto & stop_line = element->stopLine();
+      if (!stop_line || stop_line->empty()) return std::nullopt;
 
+      const auto x = 0.5 * (stop_line->front().x() + stop_line->back().x());
+      const auto y = 0.5 * (stop_line->front().y() + stop_line->back().y());
+      const auto z = 0.5 * (stop_line->front().z() + stop_line->back().z());
       return calcSignedArcLength(
         path.points, ego_pos, autoware::universe_utils::createPoint(x, y, z));
     }

@@ -48,11 +48,6 @@ double calcReedsSheppDistance(const Pose & p1, const Pose & p2, double radius)
   return rs_space.distance(pose0, pose1);
 }
 
-void setYaw(geometry_msgs::msg::Quaternion * orientation, const double yaw)
-{
-  *orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
-}
-
 Pose calcRelativePose(const Pose & base_pose, const Pose & pose)
 {
   tf2::Transform tf_transform;
