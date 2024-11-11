@@ -15,7 +15,7 @@
 #ifndef ROUTING_HPP_
 #define ROUTING_HPP_
 
-#include <autoware/ad_api_specs/routing.hpp>
+#include <autoware/adapi_specs/routing.hpp>
 #include <autoware/component_interface_specs/planning.hpp>
 #include <autoware/component_interface_specs/system.hpp>
 #include <autoware/component_interface_utils/status.hpp>
@@ -38,13 +38,13 @@ private:
   using Route = autoware::component_interface_specs::planning::LaneletRoute;
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
-  Pub<autoware::ad_api_specs::routing::RouteState> pub_state_;
-  Pub<autoware::ad_api_specs::routing::Route> pub_route_;
-  Srv<autoware::ad_api_specs::routing::SetRoutePoints> srv_set_route_points_;
-  Srv<autoware::ad_api_specs::routing::SetRoute> srv_set_route_;
-  Srv<autoware::ad_api_specs::routing::ChangeRoutePoints> srv_change_route_points_;
-  Srv<autoware::ad_api_specs::routing::ChangeRoute> srv_change_route_;
-  Srv<autoware::ad_api_specs::routing::ClearRoute> srv_clear_route_;
+  Pub<autoware::adapi_specs::routing::RouteState> pub_state_;
+  Pub<autoware::adapi_specs::routing::Route> pub_route_;
+  Srv<autoware::adapi_specs::routing::SetRoutePoints> srv_set_route_points_;
+  Srv<autoware::adapi_specs::routing::SetRoute> srv_set_route_;
+  Srv<autoware::adapi_specs::routing::ChangeRoutePoints> srv_change_route_points_;
+  Srv<autoware::adapi_specs::routing::ChangeRoute> srv_change_route_;
+  Srv<autoware::adapi_specs::routing::ClearRoute> srv_clear_route_;
   Sub<autoware::component_interface_specs::planning::RouteState> sub_state_;
   Sub<autoware::component_interface_specs::planning::LaneletRoute> sub_route_;
   Cli<autoware::component_interface_specs::planning::SetWaypointRoute> cli_set_waypoint_route_;
@@ -60,20 +60,20 @@ private:
   void on_state(const State::Message::ConstSharedPtr msg);
   void on_route(const Route::Message::ConstSharedPtr msg);
   void on_clear_route(
-    const autoware::ad_api_specs::routing::ClearRoute::Service::Request::SharedPtr req,
-    const autoware::ad_api_specs::routing::ClearRoute::Service::Response::SharedPtr res);
+    const autoware::adapi_specs::routing::ClearRoute::Service::Request::SharedPtr req,
+    const autoware::adapi_specs::routing::ClearRoute::Service::Response::SharedPtr res);
   void on_set_route_points(
-    const autoware::ad_api_specs::routing::SetRoutePoints::Service::Request::SharedPtr req,
-    const autoware::ad_api_specs::routing::SetRoutePoints::Service::Response::SharedPtr res);
+    const autoware::adapi_specs::routing::SetRoutePoints::Service::Request::SharedPtr req,
+    const autoware::adapi_specs::routing::SetRoutePoints::Service::Response::SharedPtr res);
   void on_set_route(
-    const autoware::ad_api_specs::routing::SetRoute::Service::Request::SharedPtr req,
-    const autoware::ad_api_specs::routing::SetRoute::Service::Response::SharedPtr res);
+    const autoware::adapi_specs::routing::SetRoute::Service::Request::SharedPtr req,
+    const autoware::adapi_specs::routing::SetRoute::Service::Response::SharedPtr res);
   void on_change_route_points(
-    const autoware::ad_api_specs::routing::SetRoutePoints::Service::Request::SharedPtr req,
-    const autoware::ad_api_specs::routing::SetRoutePoints::Service::Response::SharedPtr res);
+    const autoware::adapi_specs::routing::SetRoutePoints::Service::Request::SharedPtr req,
+    const autoware::adapi_specs::routing::SetRoutePoints::Service::Response::SharedPtr res);
   void on_change_route(
-    const autoware::ad_api_specs::routing::SetRoute::Service::Request::SharedPtr req,
-    const autoware::ad_api_specs::routing::SetRoute::Service::Response::SharedPtr res);
+    const autoware::adapi_specs::routing::SetRoute::Service::Request::SharedPtr req,
+    const autoware::adapi_specs::routing::SetRoute::Service::Response::SharedPtr res);
 };
 
 }  // namespace autoware::default_adapi

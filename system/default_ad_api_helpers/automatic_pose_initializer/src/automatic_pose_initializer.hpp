@@ -15,7 +15,7 @@
 #ifndef AUTOMATIC_POSE_INITIALIZER_HPP_
 #define AUTOMATIC_POSE_INITIALIZER_HPP_
 
-#include <autoware/ad_api_specs/localization.hpp>
+#include <autoware/adapi_specs/localization.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -29,8 +29,8 @@ public:
 
 private:
   void on_timer();
-  using Initialize = autoware::ad_api_specs::localization::Initialize;
-  using State = autoware::ad_api_specs::localization::InitializationState;
+  using Initialize = autoware::adapi_specs::localization::Initialize;
+  using State = autoware::adapi_specs::localization::InitializationState;
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   rclcpp::TimerBase::SharedPtr timer_;
   autoware::component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;

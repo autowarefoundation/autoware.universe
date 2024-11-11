@@ -15,7 +15,7 @@
 #ifndef OPERATION_MODE_HPP_
 #define OPERATION_MODE_HPP_
 
-#include <autoware/ad_api_specs/operation_mode.hpp>
+#include <autoware/adapi_specs/operation_mode.hpp>
 #include <autoware/component_interface_specs/system.hpp>
 #include <autoware/component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -38,13 +38,13 @@ public:
   explicit OperationModeNode(const rclcpp::NodeOptions & options);
 
 private:
-  using OperationModeState = autoware::ad_api_specs::operation_mode::OperationModeState;
-  using EnableAutowareControl = autoware::ad_api_specs::operation_mode::EnableAutowareControl;
-  using DisableAutowareControl = autoware::ad_api_specs::operation_mode::DisableAutowareControl;
-  using ChangeToStop = autoware::ad_api_specs::operation_mode::ChangeToStop;
-  using ChangeToAutonomous = autoware::ad_api_specs::operation_mode::ChangeToAutonomous;
-  using ChangeToLocal = autoware::ad_api_specs::operation_mode::ChangeToLocal;
-  using ChangeToRemote = autoware::ad_api_specs::operation_mode::ChangeToRemote;
+  using OperationModeState = autoware::adapi_specs::operation_mode::OperationModeState;
+  using EnableAutowareControl = autoware::adapi_specs::operation_mode::EnableAutowareControl;
+  using DisableAutowareControl = autoware::adapi_specs::operation_mode::DisableAutowareControl;
+  using ChangeToStop = autoware::adapi_specs::operation_mode::ChangeToStop;
+  using ChangeToAutonomous = autoware::adapi_specs::operation_mode::ChangeToAutonomous;
+  using ChangeToLocal = autoware::adapi_specs::operation_mode::ChangeToLocal;
+  using ChangeToRemote = autoware::adapi_specs::operation_mode::ChangeToRemote;
   using OperationModeRequest =
     autoware::component_interface_specs::system::ChangeOperationMode::Service::Request;
   using AutowareControlRequest =
@@ -57,13 +57,13 @@ private:
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   rclcpp::TimerBase::SharedPtr timer_;
-  Pub<autoware::ad_api_specs::operation_mode::OperationModeState> pub_state_;
-  Srv<autoware::ad_api_specs::operation_mode::ChangeToStop> srv_stop_mode_;
-  Srv<autoware::ad_api_specs::operation_mode::ChangeToAutonomous> srv_autonomous_mode_;
-  Srv<autoware::ad_api_specs::operation_mode::ChangeToLocal> srv_local_mode_;
-  Srv<autoware::ad_api_specs::operation_mode::ChangeToRemote> srv_remote_mode_;
-  Srv<autoware::ad_api_specs::operation_mode::EnableAutowareControl> srv_enable_control_;
-  Srv<autoware::ad_api_specs::operation_mode::DisableAutowareControl> srv_disable_control_;
+  Pub<autoware::adapi_specs::operation_mode::OperationModeState> pub_state_;
+  Srv<autoware::adapi_specs::operation_mode::ChangeToStop> srv_stop_mode_;
+  Srv<autoware::adapi_specs::operation_mode::ChangeToAutonomous> srv_autonomous_mode_;
+  Srv<autoware::adapi_specs::operation_mode::ChangeToLocal> srv_local_mode_;
+  Srv<autoware::adapi_specs::operation_mode::ChangeToRemote> srv_remote_mode_;
+  Srv<autoware::adapi_specs::operation_mode::EnableAutowareControl> srv_enable_control_;
+  Srv<autoware::adapi_specs::operation_mode::DisableAutowareControl> srv_disable_control_;
   Sub<autoware::component_interface_specs::system::OperationModeState> sub_state_;
   Cli<autoware::component_interface_specs::system::ChangeOperationMode> cli_mode_;
   Cli<autoware::component_interface_specs::system::ChangeAutowareControl> cli_control_;

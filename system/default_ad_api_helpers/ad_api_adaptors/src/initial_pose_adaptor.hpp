@@ -15,7 +15,7 @@
 #ifndef INITIAL_POSE_ADAPTOR_HPP_
 #define INITIAL_POSE_ADAPTOR_HPP_
 
-#include <autoware/ad_api_specs/localization.hpp>
+#include <autoware/adapi_specs/localization.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware/map_height_fitter/map_height_fitter.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -32,7 +32,7 @@ public:
 
 private:
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
-  using Initialize = autoware::ad_api_specs::localization::Initialize;
+  using Initialize = autoware::adapi_specs::localization::Initialize;
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_initial_pose_;
   autoware::component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
   std::array<double, 36> rviz_particle_covariance_;
