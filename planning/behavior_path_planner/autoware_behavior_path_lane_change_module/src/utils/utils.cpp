@@ -196,8 +196,7 @@ bool path_footprint_exceeds_target_lane_bound(
 }
 
 ShiftedPath get_frenet_shifted_path(
-  const PathWithLaneId & target_lane_reference_path,
-  const geometry_msgs::msg::Point & initial_position, const LaneChangeInfo & lane_change_info)
+  const PathWithLaneId & target_lane_reference_path, const LaneChangeInfo & lane_change_info)
 {
   const auto longitudinal_acceleration = lane_change_info.longitudinal_acceleration;
   const auto lane_change_velocity = lane_change_info.velocity;
@@ -212,31 +211,41 @@ ShiftedPath get_frenet_shifted_path(
   }
   sampler_common::transform::Spline2D reference_spline(xs, ys);
   frenet_planner::FrenetState initial_state;
+  const auto & initial_position = lane_change_info.lane_changing_start.position;
   initial_state.position = reference_spline.frenet({initial_position.x, initial_position.y});
   initial_state.longitudinal_velocity = lane_change_velocity.prepare;
   initial_state.longitudinal_acceleration = longitudinal_acceleration.prepare;
+  const auto initial_yaw = tf2::getYaw(lane_change_info.lane_changing_start.orientation);
+  const auto initial_s = initial_state.position.s + 0.001;  // add epsilon to avoid s=0
   initial_state.lateral_velocity = 0.0;
   initial_state.lateral_acceleration = 0.0;
   frenet_planner::SamplingParameters sampling_parameters;
   sampling_parameters.parameters.emplace_back();
-  sampling_parameters.resolution = 0.25;
-  sampling_parameters.parameters.back().target_duration = lane_change_info.duration.lane_changing;
+  sampling_parameters.resolution = 0.2;
+  sampling_parameters.parameters.back().target_duration =
+    lane_change_info.duration.lane_changing;  // TODO(Maxime): ignore this duration and use
+                                              // generation without a fixed duration
   auto & target_state = sampling_parameters.parameters.back().target_state;
   target_state.position = reference_spline.frenet(
     {lane_change_info.lane_changing_end.position.x, lane_change_info.lane_changing_end.position.y});
   target_state.position.d = 0.0;
   target_state.longitudinal_velocity = lane_change_velocity.lane_changing;
-  target_state.longitudinal_acceleration = longitudinal_acceleration.lane_changing;
-  target_state.lateral_velocity = 0.0;
+  target_state.longitudinal_acceleration =
+    0.0;  // it is okay to not use longitudinal_acceleration.lane_changing
+  // target lateral velocity is based on the initial lateral velocity relative to the target point
+  // TODO(Maxime): not sure if we should use curvature at initial or target s
+  target_state.lateral_velocity =
+    (1 - reference_spline.curvature(initial_s) * initial_state.position.d) *
+    std::tan(initial_yaw - reference_spline.yaw(target_state.position.s));
   target_state.lateral_acceleration = 0.0;
-  std::printf(
-    "FROM s=%2.2f / d=%2.2f / s'=%2.2f / d'=%2.2f / s''=%2.2f / d''=%2.2f TO s=%2.2f / d=%2.2f / "
-    "s'=%2.2f / d'=%2.2f / s''=%2.2f / d''=%2.2f\n",
-    initial_state.position.s, initial_state.position.d, initial_state.longitudinal_velocity,
-    initial_state.lateral_velocity, initial_state.longitudinal_acceleration,
-    initial_state.lateral_acceleration, target_state.position.s, target_state.position.d,
-    target_state.longitudinal_velocity, target_state.lateral_velocity,
-    target_state.longitudinal_acceleration, target_state.lateral_acceleration);
+  // std::printf(
+  //   "FROM s=%2.2f / d=%2.2f / s'=%2.2f / d'=%2.2f / s''=%2.2f / d''=%2.2f TO s=%2.2f / d=%2.2f /
+  //   " "s'=%2.2f / d'=%2.2f / s''=%2.2f / d''=%2.2f\n", initial_state.position.s,
+  //   initial_state.position.d, initial_state.longitudinal_velocity,
+  //   initial_state.lateral_velocity, initial_state.longitudinal_acceleration,
+  //   initial_state.lateral_acceleration, target_state.position.s, target_state.position.d,
+  //   target_state.longitudinal_velocity, target_state.lateral_velocity,
+  //   target_state.longitudinal_acceleration, target_state.lateral_acceleration);
   const auto candidates =
     frenet_planner::generateTrajectories(reference_spline, initial_state, sampling_parameters);
   if (candidates.size() != 1) {
@@ -244,22 +253,24 @@ ShiftedPath get_frenet_shifted_path(
   } else {
     const auto & candidate = candidates.front();
     PathPointWithLaneId pp;
-    std::cout << "\t(s,k) = ";
-    for (auto i = 0UL; i < candidate.poses.size(); ++i) {
-      pp.point.pose = candidate.poses[i];
-      pp.point.longitudinal_velocity_mps = static_cast<float>(candidate.longitudinal_velocities[i]);
-      pp.point.lateral_velocity_mps = static_cast<float>(candidate.lateral_velocities[i]);
-      shifted_path.shift_length.push_back(candidate.frenet_points[i].d);
-      shifted_path.path.points.push_back(pp);
-      std::printf("(%2.2f,%2.2f) ", candidate.frenet_points[i].s, candidate.curvatures[i]);
-    }
-    std::cout << std::endl;
+    // std::cout << "\t(s,d,k) = ";
+    // for (auto i = 0UL; i < candidate.poses.size(); ++i) {
+    //   pp.point.pose = candidate.poses[i];
+    //   pp.point.pose.position.z = initial_position.z;  // TODO(Maxime): more accurate z values
+    //   pp.point.longitudinal_velocity_mps =
+    //   static_cast<float>(candidate.longitudinal_velocities[i]); pp.point.lateral_velocity_mps =
+    //   static_cast<float>(candidate.lateral_velocities[i]);
+    //   shifted_path.shift_length.push_back(candidate.frenet_points[i].d);
+    //   shifted_path.path.points.push_back(pp);
+    //   std::printf("(%2.2f,%2.2f,%2.2f) ", candidate.frenet_points[i].s,
+    //   candidate.frenet_points[i].d, candidate.curvatures[i]);
+    // }
+    // std::cout << std::endl;
   }
   if (!shifted_path.path.points.empty()) {
     const auto nearest_segment_idx = autoware::motion_utils::findNearestSegmentIndex(
       target_lane_reference_path.points, shifted_path.path.points.back().point.pose.position);
     for (auto i = nearest_segment_idx + 2; i < target_lane_reference_path.points.size(); ++i) {
-      std::printf("added %lu\n", i);
       shifted_path.path.points.push_back(target_lane_reference_path.points[i]);
       shifted_path.shift_length.push_back(0.0);
     }
@@ -305,32 +316,31 @@ std::optional<LaneChangePath> construct_candidate_path(
   ShiftedPath shifted_path;
   if (common_data_ptr->transient_data.is_ego_near_current_terminal_start) {
     universe_utils::StopWatch<std::chrono::microseconds> sw;
-    shifted_path = get_frenet_shifted_path(
-      target_lane_reference_path, lane_change_info.lane_changing_start.position, lane_change_info);
+    shifted_path = get_frenet_shifted_path(target_lane_reference_path, lane_change_info);
     const auto frenet_us = sw.toc(true);
     const auto cmp_shifted_path = get_shifted_path(target_lane_reference_path, lane_change_info);
     const auto shifter_us = sw.toc();
     std::printf("runtime: frenet = %2.2fus shifted = %2.2fus\n", frenet_us, shifter_us);
     // Declare a stream and an SVG mapper
-    std::ofstream svg(
-      "/home/mclement/Pictures/image" + std::to_string(tmp_id++) + ".svg");  // /!\ CHANGE PATH
-    boost::geometry::svg_mapper<autoware::universe_utils::Point2d> mapper(svg, 400, 400);
-    for (const auto & p : shifted_path.path.points) {
-      universe_utils::Point2d pt(p.point.pose.position.x, p.point.pose.position.y);
-      mapper.add(pt);
-    }
-    for (const auto & p : cmp_shifted_path.path.points) {
-      universe_utils::Point2d pt(p.point.pose.position.x, p.point.pose.position.y);
-      mapper.add(pt);
-    }
-    for (const auto & p : shifted_path.path.points) {
-      universe_utils::Point2d pt(p.point.pose.position.x, p.point.pose.position.y);
-      mapper.map(pt, "opacity:0.5;stroke:red;stroke-width:2", 2);
-    }
-    for (const auto & p : cmp_shifted_path.path.points) {
-      universe_utils::Point2d pt(p.point.pose.position.x, p.point.pose.position.y);
-      mapper.map(pt, "opacity:0.5;stroke:black;stroke-width:2", 2);
-    }
+    // std::ofstream svg(
+    //   "/home/mclement/Pictures/image" + std::to_string(tmp_id++) + ".svg");  // /!\ CHANGE PATH
+    // boost::geometry::svg_mapper<autoware::universe_utils::Point2d> mapper(svg, 400, 400);
+    // for (const auto & p : shifted_path.path.points) {
+    //   universe_utils::Point2d pt(p.point.pose.position.x, p.point.pose.position.y);
+    //   mapper.add(pt);
+    // }
+    // for (const auto & p : cmp_shifted_path.path.points) {
+    //   universe_utils::Point2d pt(p.point.pose.position.x, p.point.pose.position.y);
+    //   mapper.add(pt);
+    // }
+    // for (const auto & p : shifted_path.path.points) {
+    //   universe_utils::Point2d pt(p.point.pose.position.x, p.point.pose.position.y);
+    //   mapper.map(pt, "opacity:0.5;stroke:red;stroke-width:2", 2);
+    // }
+    // for (const auto & p : cmp_shifted_path.path.points) {
+    //   universe_utils::Point2d pt(p.point.pose.position.x, p.point.pose.position.y);
+    //   mapper.map(pt, "opacity:0.5;stroke:black;stroke-width:2", 2);
+    // }
   } else {
     shifted_path = get_shifted_path(target_lane_reference_path, lane_change_info);
     if (shifted_path.path.points.size() < shift_line.end_idx + 1) {
