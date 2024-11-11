@@ -19,7 +19,7 @@
 
 #include <autoware_adapi_v1_msgs/msg/dynamic_object_array.hpp>
 
-namespace autoware::ad_api_specs::perception
+namespace autoware::adapi_specs::perception
 {
 
 struct DynamicObjectArray
@@ -31,6 +31,6 @@ struct DynamicObjectArray
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace autoware::ad_api_specs::perception
+}  // namespace autoware::adapi_specs::perception
 
 #endif  // AUTOWARE__AD_API_SPECS__PERCEPTION_HPP_

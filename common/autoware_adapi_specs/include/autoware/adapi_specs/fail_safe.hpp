@@ -12,32 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__AD_API_SPECS__MOTION_HPP_
-#define AUTOWARE__AD_API_SPECS__MOTION_HPP_
+#ifndef AUTOWARE__AD_API_SPECS__FAIL_SAFE_HPP_
+#define AUTOWARE__AD_API_SPECS__FAIL_SAFE_HPP_
 
 #include <rclcpp/qos.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/motion_state.hpp>
-#include <autoware_adapi_v1_msgs/srv/accept_start.hpp>
+#include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 
-namespace autoware::ad_api_specs::motion
+namespace autoware::adapi_specs::fail_safe
 {
 
-struct AcceptStart
+struct MrmState
 {
-  using Service = autoware_adapi_v1_msgs::srv::AcceptStart;
-  static constexpr char name[] = "/api/motion/accept_start";
-};
-
-struct State
-{
-  using Message = autoware_adapi_v1_msgs::msg::MotionState;
-  static constexpr char name[] = "/api/motion/state";
+  using Message = autoware_adapi_v1_msgs::msg::MrmState;
+  static constexpr char name[] = "/api/fail_safe/mrm_state";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware::ad_api_specs::motion
+}  // namespace autoware::adapi_specs::fail_safe
 
-#endif  // AUTOWARE__AD_API_SPECS__MOTION_HPP_
+#endif  // AUTOWARE__AD_API_SPECS__FAIL_SAFE_HPP_

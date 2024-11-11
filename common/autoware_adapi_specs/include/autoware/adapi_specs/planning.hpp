@@ -20,7 +20,7 @@
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 
-namespace autoware::ad_api_specs::planning
+namespace autoware::adapi_specs::planning
 {
 
 struct VelocityFactors
@@ -41,6 +41,6 @@ struct SteeringFactors
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace autoware::ad_api_specs::planning
+}  // namespace autoware::adapi_specs::planning
 
 #endif  // AUTOWARE__AD_API_SPECS__PLANNING_HPP_

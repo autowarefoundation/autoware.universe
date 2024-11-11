@@ -20,7 +20,7 @@
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/change_operation_mode.hpp>
 
-namespace autoware::ad_api_specs::operation_mode
+namespace autoware::adapi_specs::operation_mode
 {
 
 struct ChangeToStop
@@ -68,6 +68,6 @@ struct OperationModeState
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware::ad_api_specs::operation_mode
+}  // namespace autoware::adapi_specs::operation_mode
 
 #endif  // AUTOWARE__AD_API_SPECS__OPERATION_MODE_HPP_

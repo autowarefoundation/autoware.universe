@@ -24,7 +24,7 @@
 #include <autoware_adapi_v1_msgs/srv/get_vehicle_dimensions.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_door_command.hpp>
 
-namespace autoware::ad_api_specs::vehicle
+namespace autoware::adapi_specs::vehicle
 {
 
 struct VehicleKinematics
@@ -72,6 +72,6 @@ struct DoorStatus
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware::ad_api_specs::vehicle
+}  // namespace autoware::adapi_specs::vehicle
 
 #endif  // AUTOWARE__AD_API_SPECS__VEHICLE_HPP_

@@ -17,7 +17,7 @@
 
 #include <autoware_adapi_version_msgs/srv/interface_version.hpp>
 
-namespace autoware::ad_api_specs::interface
+namespace autoware::adapi_specs::interface
 {
 
 struct Version
@@ -26,6 +26,6 @@ struct Version
   static constexpr char name[] = "/api/interface/version";
 };
 
-}  // namespace autoware::ad_api_specs::interface
+}  // namespace autoware::adapi_specs::interface
 
 #endif  // AUTOWARE__AD_API_SPECS__INTERFACE_HPP_

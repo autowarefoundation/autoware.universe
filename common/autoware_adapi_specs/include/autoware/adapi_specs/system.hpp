@@ -19,7 +19,7 @@
 
 #include <autoware_adapi_v1_msgs/msg/heartbeat.hpp>
 
-namespace autoware::ad_api_specs::system
+namespace autoware::adapi_specs::system
 {
 
 struct Heartbeat
@@ -31,6 +31,6 @@ struct Heartbeat
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace autoware::ad_api_specs::system
+}  // namespace autoware::adapi_specs::system
 
 #endif  // AUTOWARE__AD_API_SPECS__SYSTEM_HPP_
