@@ -234,12 +234,6 @@ public:
       cell.is_ground_initialized_ = false;
       cell.scan_grid_root_idx_ = -1;
       cell.has_ground_ = false;
-      cell.avg_height_ = 0.0f;
-      cell.max_height_ = 0.0f;
-      cell.min_height_ = 0.0f;
-      cell.avg_radius_ = 0.0f;
-      cell.gradient_ = 0.0f;
-      cell.intercept_ = 0.0f;
     }
   }
 

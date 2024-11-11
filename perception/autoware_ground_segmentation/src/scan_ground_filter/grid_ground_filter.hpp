@@ -176,7 +176,8 @@ private:
   // parameters
   GridGroundFilterParameter param_;
 
-  // data accessor
+  // data
+  PointCloud2ConstPtr in_cloud_;
   PclDataAccessor data_accessor_;
 
   // grid data
@@ -188,9 +189,9 @@ private:
   bool recursiveSearch(const int check_idx, const int search_cnt, std::vector<int> & idx) const;
   void fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const;
 
-  void convert(const PointCloud2ConstPtr & in_cloud);
+  void convert();
   void preprocess();
-  void classify(const PointCloud2ConstPtr & in_cloud, pcl::PointIndices & out_no_ground_indices);
+  void classify(pcl::PointIndices & out_no_ground_indices);
 };
 
 }  // namespace autoware::ground_segmentation

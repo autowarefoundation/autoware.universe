@@ -19,19 +19,19 @@
 namespace autoware::ground_segmentation
 {
 
-void GridGroundFilter::convert(const PointCloud2ConstPtr & in_cloud)
+void GridGroundFilter::convert()
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  const size_t in_cloud_data_size = in_cloud->data.size();
-  const size_t in_cloud_point_step = in_cloud->point_step;
+  const size_t in_cloud_data_size = in_cloud_->data.size();
+  const size_t in_cloud_point_step = in_cloud_->point_step;
 
   for (size_t data_index = 0; data_index + in_cloud_point_step <= in_cloud_data_size;
        data_index += in_cloud_point_step) {
     // Get Point
     pcl::PointXYZ input_point;
-    data_accessor_.getPoint(in_cloud, data_index, input_point);
+    data_accessor_.getPoint(in_cloud_, data_index, input_point);
     grid_ptr_->addPoint(input_point.x, input_point.y, data_index);
   }
 }
@@ -98,8 +98,7 @@ void GridGroundFilter::fitLineFromGndGrid(const std::vector<int> & idx, float & 
   b = (sum_y - a * sum_x) / n;
 }
 
-void GridGroundFilter::classify(
-  const PointCloud2ConstPtr & in_cloud, pcl::PointIndices & out_no_ground_indices)
+void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -141,7 +140,7 @@ void GridGroundFilter::classify(
       for (size_t j = 0; j < num_points; ++j) {
         const auto & pt_idx = cell.point_indices_[j];
         pcl::PointXYZ point;
-        data_accessor_.getPoint(in_cloud, pt_idx, point);
+        data_accessor_.getPoint(in_cloud_, pt_idx, point);
         const float radius = std::hypot(point.x, point.y);
         const float global_slope_ratio = point.z / radius;
         if (
@@ -228,7 +227,7 @@ void GridGroundFilter::classify(
       for (size_t j = 0; j < num_points; ++j) {
         const auto & pt_idx = cell.point_indices_[j];
         pcl::PointXYZ point;
-        data_accessor_.getPoint(in_cloud, pt_idx, point);
+        data_accessor_.getPoint(in_cloud_, pt_idx, point);
 
         // 1. height is out-of-range
         if (point.z - prev_cell_ptr->avg_height_ > param_.detection_range_z_max) {
@@ -380,17 +379,20 @@ void GridGroundFilter::process(
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
+  // set input cloud
+  in_cloud_ = in_cloud;
+
   // reset grid cells
   grid_ptr_->resetCells();
 
   // 1. convert
-  convert(in_cloud);
+  convert();
 
   // 2. preprocess
   preprocess();
 
   // 3. classify point cloud
-  classify(in_cloud, out_no_ground_indices);
+  classify(out_no_ground_indices);
 }
 
 }  // namespace autoware::ground_segmentation
