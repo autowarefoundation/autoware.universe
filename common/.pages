@@ -25,9 +25,6 @@ nav:
       - 'Butterworth Filter': common/signal_processing/documentation/ButterworthFilter
     - 'autoware_universe_utils': common/autoware_universe_utils
     - 'traffic_light_utils': common/traffic_light_utils
-    - 'TVM Utility':
-      - 'Introduction': common/tvm_utility
-      - 'YOLOv2 Tiny Example': common/tvm_utility/tvm-utility-yolo-v2-tiny-tests
   - 'RVIZ2 Plugins':
     - 'autoware_perception_rviz_plugin': common/autoware_perception_rviz_plugin
     - 'autoware_overlay_rviz_plugin': common/autoware_overlay_rviz_plugin/autoware_overlay_rviz_plugin
