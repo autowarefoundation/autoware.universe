@@ -1233,7 +1233,6 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
   const double shift_length, const double dist_to_reg_element) const
 {
   const auto & route_handler = getRouteHandler();
-  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
   const auto & transient_data = common_data_ptr_->transient_data;
   const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
     common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor,
@@ -1244,12 +1243,8 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
       transient_data.is_ego_near_current_terminal_start
         ? transient_data.dist_to_terminal_end - prep_metric.length
         : std::min(transient_data.dist_to_terminal_end, dist_to_reg_element) - prep_metric.length;
-    auto target_lane_buffer = lane_change_parameters_->lane_change_finish_judge_buffer +
-                              transient_data.next_dist_buffer.min;
-    if (std::abs(route_handler->getNumLaneToPreferredLane(target_lanes.back(), direction_)) > 0) {
-      target_lane_buffer += lane_change_parameters_->backward_length_buffer_for_end_of_lane;
-    }
-    max_length = std::min(max_length, dist_lc_start_to_end_of_lanes - target_lane_buffer);
+    max_length =
+      std::min(max_length, dist_lc_start_to_end_of_lanes - transient_data.next_dist_buffer.min);
     return max_length;
   });
 
