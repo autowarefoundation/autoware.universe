@@ -69,15 +69,15 @@ public:
 
   size_t test_load_road_areas()
   {
-    std::vector<std::vector<geometry_msgs::msg::Point>> road_areas;
-    costmap_generator_->loadRoadAreasFromLaneletMap(lanelet_map_, &road_areas);
+    std::vector<geometry_msgs::msg::Polygon> road_areas;
+    costmap_generator_->loadRoadAreasFromLaneletMap(lanelet_map_, road_areas);
     return road_areas.size();
   }
 
   size_t test_load_parking_areas()
   {
-    std::vector<std::vector<geometry_msgs::msg::Point>> parking_areas;
-    costmap_generator_->loadParkingAreasFromLaneletMap(lanelet_map_, &parking_areas);
+    std::vector<geometry_msgs::msg::Polygon> parking_areas;
+    costmap_generator_->loadParkingAreasFromLaneletMap(lanelet_map_, parking_areas);
     return parking_areas.size();
   }
 

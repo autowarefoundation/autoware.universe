@@ -287,6 +287,7 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
   // iterate to find best fit divided object
   float highest_iou = 0.0;
   tier4_perception_msgs::msg::DetectedObjectWithFeature highest_iou_object;
+  boost::optional<geometry_msgs::msg::Pose> ref_pose = boost::none;
   for (int iter_count = 0; iter_count < iter_max_count;
        ++iter_count, cluster_range *= iter_rate, voxel_size *= iter_rate) {
     // divide under segmented cluster
@@ -304,7 +305,7 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
         label, divided_cluster,
         getReferenceYawInfo(
           label, tf2::getYaw(target_object.kinematics.pose_with_covariance.pose.orientation)),
-        getReferenceShapeSizeInfo(label, target_object.shape),
+        getReferenceShapeSizeInfo(label, target_object.shape), ref_pose,
         highest_iou_object_in_current_iter.object.shape,
         highest_iou_object_in_current_iter.object.kinematics.pose_with_covariance.pose);
       if (!is_shape_estimated) {
@@ -393,7 +394,8 @@ void DetectionByTracker::mergeOverSegmentedObjects(
       label, pcl_merged_cluster,
       getReferenceYawInfo(
         label, tf2::getYaw(tracked_object.kinematics.pose_with_covariance.pose.orientation)),
-      getReferenceShapeSizeInfo(label, tracked_object.shape), feature_object.object.shape,
+      getReferenceShapeSizeInfo(label, tracked_object.shape),
+      tracked_object.kinematics.pose_with_covariance.pose, feature_object.object.shape,
       feature_object.object.kinematics.pose_with_covariance.pose);
     if (!is_shape_estimated) {
       out_no_found_tracked_objects.objects.push_back(tracked_object);

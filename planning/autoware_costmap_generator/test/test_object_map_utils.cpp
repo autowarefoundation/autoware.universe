@@ -37,19 +37,26 @@ grid_map::GridMap construct_gridmap(
   return gm;
 }
 
-std::vector<geometry_msgs::msg::Point> get_primitive_points(
+geometry_msgs::msg::Polygon get_primitive_polygon(
   const double min_x, const double min_y, const double max_x, const double max_y)
 {
-  std::vector<geometry_msgs::msg::Point> points;
-  points.push_back(autoware::universe_utils::createPoint(min_x, min_y, 0.0));
-  points.push_back(autoware::universe_utils::createPoint(min_x, max_y, 0.0));
-  points.push_back(autoware::universe_utils::createPoint(max_x, max_y, 0.0));
-  points.push_back(autoware::universe_utils::createPoint(max_x, min_y, 0.0));
-  return points;
+  const auto get_point = [](const double x, const double y) {
+    geometry_msgs::msg::Point32 point;
+    point.x = x;
+    point.y = y;
+    point.z = 0.0;
+    return point;
+  };
+  geometry_msgs::msg::Polygon polygon;
+  polygon.points.push_back(get_point(min_x, min_y));
+  polygon.points.push_back(get_point(min_x, max_y));
+  polygon.points.push_back(get_point(max_x, max_y));
+  polygon.points.push_back(get_point(max_x, min_y));
+  return polygon;
 }
 }  // namespace
 
-namespace autoware::cosmap_generator
+namespace autoware::costmap_generator
 {
 TEST(ObjectMapUtilsTest, testFillPolygonAreas)
 {
@@ -61,15 +68,14 @@ TEST(ObjectMapUtilsTest, testFillPolygonAreas)
   grid_map::GridMap gridmap = construct_gridmap(
     grid_length_x, grid_length_y, grid_resolution, grid_position_x, grid_position_y);
 
-  std::vector<std::vector<geometry_msgs::msg::Point>> primitives_points;
-  primitives_points.emplace_back(get_primitive_points(-15.0, -2.0, 15.0, 2.0));
-  primitives_points.emplace_back(get_primitive_points(-5.0, -5.0, 5.0, 5.0));
+  std::vector<geometry_msgs::msg::Polygon> primitives_polygons;
+  primitives_polygons.emplace_back(get_primitive_polygon(-15.0, -2.0, 15.0, 2.0));
+  primitives_polygons.emplace_back(get_primitive_polygon(-5.0, -5.0, 5.0, 5.0));
 
   const double min_value = 0.0;
   const double max_value = 1.0;
 
-  object_map::FillPolygonAreas(
-    gridmap, primitives_points, "primitives", max_value, min_value, min_value, max_value);
+  object_map::fill_polygon_areas(gridmap, primitives_polygons, "primitives", max_value, min_value);
 
   const auto costmap = gridmap["primitives"];
 
@@ -83,6 +89,6 @@ TEST(ObjectMapUtilsTest, testFillPolygonAreas)
     }
   }
 
-  EXPECT_EQ(empty_grid_cell_num, 171);
+  EXPECT_EQ(empty_grid_cell_num, 144);
 }
-}  // namespace autoware::cosmap_generator
+}  // namespace autoware::costmap_generator
