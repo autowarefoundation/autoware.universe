@@ -604,7 +604,7 @@ std::vector<Polygon2d> get_collided_polygons(
     const double yaw_difference = autoware::universe_utils::normalizeRadian(ego_yaw - object_yaw);
     if (std::abs(yaw_difference) > yaw_difference_th) continue;
 
-    // check overlap
+    // check intersects
     if (boost::geometry::intersects(ego_polygon, obj_polygon)) {
       debug.unsafe_reason = "overlap_polygon";
       collided_polygons.push_back(obj_polygon);
