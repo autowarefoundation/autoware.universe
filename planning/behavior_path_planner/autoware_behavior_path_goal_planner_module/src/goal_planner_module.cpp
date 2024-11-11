@@ -208,6 +208,7 @@ void GoalPlannerModule::onTimer()
   std::optional<BehaviorModuleOutput> last_previous_module_output_opt{std::nullopt};
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map{nullptr};
   std::optional<GoalPlannerParameters> parameters_opt{std::nullopt};
+  std::optional<GoalCandidates> goal_candidates_opt{std::nullopt};
 
   // begin of critical section
   {
@@ -220,12 +221,14 @@ void GoalPlannerModule::onTimer()
       last_previous_module_output_opt = gp_planner_data.last_previous_module_output;
       occupancy_grid_map = gp_planner_data.occupancy_grid_map;
       parameters_opt = gp_planner_data.parameters;
+      goal_candidates_opt = gp_planner_data.goal_candidates;
     }
   }
   // end of critical section
   if (
     !local_planner_data || !current_status_opt || !previous_module_output_opt ||
-    !last_previous_module_output_opt || !occupancy_grid_map || !parameters_opt) {
+    !last_previous_module_output_opt || !occupancy_grid_map || !parameters_opt ||
+    !goal_candidates_opt) {
     RCLCPP_ERROR(
       getLogger(),
       "failed to get valid "
@@ -237,13 +240,14 @@ void GoalPlannerModule::onTimer()
   const auto & previous_module_output = previous_module_output_opt.value();
   const auto & last_previous_module_output = last_previous_module_output_opt.value();
   const auto & parameters = parameters_opt.value();
+  const auto & goal_candidates = goal_candidates_opt.value();
 
   if (current_status == ModuleStatus::IDLE) {
     return;
   }
 
   // goals are not yet available.
-  if (thread_safe_data_.get_goal_candidates().empty()) {
+  if (goal_candidates.empty()) {
     return;
   }
 
@@ -293,8 +297,6 @@ void GoalPlannerModule::onTimer()
   if (!need_update) {
     return;
   }
-
-  const auto goal_candidates = thread_safe_data_.get_goal_candidates();
 
   // generate valid pull over path candidates and calculate closest start pose
   const auto current_lanes = utils::getExtendedCurrentLanes(
@@ -374,6 +376,7 @@ void GoalPlannerModule::onFreespaceParkingTimer()
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map{nullptr};
   std::optional<GoalPlannerParameters> parameters_opt{std::nullopt};
   std::optional<autoware::universe_utils::LinearRing2d> vehicle_footprint_opt{std::nullopt};
+  std::optional<GoalCandidates> goal_candidates_opt{std::nullopt};
 
   // begin of critical section
   {
@@ -385,10 +388,13 @@ void GoalPlannerModule::onFreespaceParkingTimer()
       occupancy_grid_map = gp_planner_data.occupancy_grid_map;
       parameters_opt = gp_planner_data.parameters;
       vehicle_footprint_opt = gp_planner_data.vehicle_footprint;
+      goal_candidates_opt = gp_planner_data.goal_candidates;
     }
   }
   // end of critical section
-  if (!local_planner_data || !current_status_opt || !parameters_opt || !vehicle_footprint_opt) {
+  if (
+    !local_planner_data || !current_status_opt || !parameters_opt || !vehicle_footprint_opt ||
+    !goal_candidates_opt) {
     RCLCPP_ERROR(
       getLogger(),
       "failed to get valid planner_data/current_status/parameters in "
@@ -399,6 +405,7 @@ void GoalPlannerModule::onFreespaceParkingTimer()
   const auto & current_status = current_status_opt.value();
   const auto & parameters = parameters_opt.value();
   const auto & vehicle_footprint = vehicle_footprint_opt.value();
+  const auto & goal_candidates = goal_candidates_opt.value();
 
   if (current_status == ModuleStatus::IDLE) {
     return;
@@ -438,7 +445,7 @@ void GoalPlannerModule::onFreespaceParkingTimer()
       parameters)) {
     auto goal_searcher = std::make_shared<GoalSearcher>(parameters, vehicle_footprint);
 
-    planFreespacePath(local_planner_data, goal_searcher, occupancy_grid_map);
+    planFreespacePath(local_planner_data, goal_searcher, goal_candidates, occupancy_grid_map);
   }
 }
 
@@ -499,6 +506,11 @@ void GoalPlannerModule::updateData()
   thread_safe_data_.set_static_target_objects(static_target_objects);
   thread_safe_data_.set_dynamic_target_objects(dynamic_target_objects);
 
+  // update goal searcher and generate goal candidates
+  if (goal_candidates_.empty()) {
+    goal_candidates_ = generateGoalCandidates();
+  }
+
   // In PlannerManager::run(), it calls SceneModuleInterface::setData and
   // SceneModuleInterface::setPreviousModuleOutput before module_ptr->run().
   // Then module_ptr->run() invokes GoalPlannerModule::updateData and then
@@ -524,7 +536,7 @@ void GoalPlannerModule::updateData()
     // and if these two coincided, only the reference count is affected
     gp_planner_data.update(
       *parameters_, *planner_data_, getCurrentStatus(), getPreviousModuleOutput(),
-      vehicle_footprint_);
+      vehicle_footprint_, goal_candidates_);
     // NOTE: RouteHandler holds several shared pointers in it, so just copying PlannerData as
     // value does not adds the reference counts of RouteHandler.lanelet_map_ptr_ and others. Since
     // behavior_path_planner::run() updates
@@ -583,11 +595,6 @@ void GoalPlannerModule::updateData()
     dynamic_target_objects, std::move(pull_over_path_recv),
     thread_safe_data_.get_pull_over_path_candidates(), prev_decision_state);
   auto & ctx_data = context_data_.value();
-
-  // update goal searcher and generate goal candidates
-  if (thread_safe_data_.get_goal_candidates().empty()) {
-    thread_safe_data_.set_goal_candidates(generateGoalCandidates());
-  }
 
   thread_safe_data_.set_prev_data(path_decision_controller_.get_current_state());
 
@@ -758,15 +765,13 @@ double GoalPlannerModule::calcModuleRequestLength() const
 
 bool GoalPlannerModule::planFreespacePath(
   std::shared_ptr<const PlannerData> planner_data,
-  const std::shared_ptr<GoalSearcherBase> goal_searcher,
+  const std::shared_ptr<GoalSearcherBase> goal_searcher, const GoalCandidates & goal_candidates_arg,
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map)
 {
-  GoalCandidates goal_candidates{};
-  goal_candidates = thread_safe_data_.get_goal_candidates();
+  auto goal_candidates = goal_candidates_arg;
   goal_searcher->update(
     goal_candidates, occupancy_grid_map, planner_data,
     thread_safe_data_.get_static_target_objects());
-  thread_safe_data_.set_goal_candidates(goal_candidates);
   debug_data_.freespace_planner.num_goal_candidates = goal_candidates.size();
   debug_data_.freespace_planner.is_planning = true;
 
@@ -1369,7 +1374,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(
     thread_safe_data_.clearPullOverPath();
 
     // update goal candidates
-    auto goal_candidates = thread_safe_data_.get_goal_candidates();
+    auto goal_candidates = goal_candidates_;
     goal_searcher_->update(
       goal_candidates, occupancy_grid_map_, planner_data_, context_data.static_target_objects);
 
@@ -1391,7 +1396,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(
        * As the next action item, only set this selected pull_over_path to only
        * FreespaceThreadSafeData.
        */
-      thread_safe_data_.set(goal_candidates, pull_over_path);
+      thread_safe_data_.set(pull_over_path);
       if (pull_over_path_with_velocity_opt) {
         auto & pull_over_path_with_velocity = pull_over_path_with_velocity_opt.value();
         // copy the path for later setOutput()
@@ -1402,8 +1407,6 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(
       RCLCPP_DEBUG(
         getLogger(), "selected pull over path: path_id: %ld, goal_id: %ld", pull_over_path.id(),
         pull_over_path.modified_goal().id);
-    } else {
-      thread_safe_data_.set(goal_candidates);
     }
   }
 
@@ -1563,8 +1566,8 @@ PathWithLaneId GoalPlannerModule::generateStopPath(const PullOverContextData & c
   // calculate search start offset pose from the closest goal candidate pose with
   // approximate_pull_over_distance_ ego vehicle decelerates to this position. or if no feasible
   // stop point is found, stop at this position.
-  const auto closest_goal_candidate = goal_searcher_->getClosetGoalCandidateAlongLanes(
-    thread_safe_data_.get_goal_candidates(), planner_data_);
+  const auto closest_goal_candidate =
+    goal_searcher_->getClosetGoalCandidateAlongLanes(goal_candidates_, planner_data_);
   const auto decel_pose = calcLongitudinalOffsetPose(
     extended_prev_path.points, closest_goal_candidate.goal_pose.position,
     -approximate_pull_over_distance_);
@@ -1965,8 +1968,8 @@ void GoalPlannerModule::deceleratePath(PullOverPath & pull_over_path) const
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // decelerate before the search area start
-  const auto closest_goal_candidate = goal_searcher_->getClosetGoalCandidateAlongLanes(
-    thread_safe_data_.get_goal_candidates(), planner_data_);
+  const auto closest_goal_candidate =
+    goal_searcher_->getClosetGoalCandidateAlongLanes(goal_candidates_, planner_data_);
   const auto decel_pose = calcLongitudinalOffsetPose(
     pull_over_path.full_path().points, closest_goal_candidate.goal_pose.position,
     -approximate_pull_over_distance_);
@@ -2368,8 +2371,7 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
       goal_searcher_->getAreaPolygons(), header, color, z));
 
     // Visualize goal candidates
-    const auto goal_candidates = thread_safe_data_.get_goal_candidates();
-    add(goal_planner_utils::createGoalCandidatesMarkerArray(goal_candidates, color));
+    add(goal_planner_utils::createGoalCandidatesMarkerArray(goal_candidates_, color));
 
     // Visualize objects extraction polygon
     auto marker = autoware::universe_utils::createDefaultMarker(
@@ -2592,14 +2594,16 @@ GoalPlannerModule::GoalPlannerData GoalPlannerModule::GoalPlannerData::clone() c
   GoalPlannerModule::GoalPlannerData gp_planner_data(
     planner_data, parameters, last_previous_module_output);
   gp_planner_data.update(
-    parameters, planner_data, current_status, previous_module_output, vehicle_footprint);
+    parameters, planner_data, current_status, previous_module_output, vehicle_footprint,
+    goal_candidates);
   return gp_planner_data;
 }
 
 void GoalPlannerModule::GoalPlannerData::update(
   const GoalPlannerParameters & parameters_, const PlannerData & planner_data_,
   const ModuleStatus & current_status_, const BehaviorModuleOutput & previous_module_output_,
-  const autoware::universe_utils::LinearRing2d & vehicle_footprint_)
+  const autoware::universe_utils::LinearRing2d & vehicle_footprint_,
+  const GoalCandidates & goal_candidates_)
 {
   parameters = parameters_;
   vehicle_footprint = vehicle_footprint_;
@@ -2610,6 +2614,7 @@ void GoalPlannerModule::GoalPlannerData::update(
   last_previous_module_output = previous_module_output;
   previous_module_output = previous_module_output_;
   occupancy_grid_map->setMap(*(planner_data.occupancy_grid));
+  goal_candidates = goal_candidates_;
 }
 
 void PathDecisionStateController::transit_state(

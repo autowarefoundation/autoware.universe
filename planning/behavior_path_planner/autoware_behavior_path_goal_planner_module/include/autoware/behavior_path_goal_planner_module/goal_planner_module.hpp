@@ -234,6 +234,8 @@ private:
     ModuleStatus current_status;
     BehaviorModuleOutput previous_module_output;
     BehaviorModuleOutput last_previous_module_output;  //<! previous "previous_module_output"
+    GoalCandidates goal_candidates;  //<! only the positional information of goal_candidates
+
     // collision detector
     // need to be shared_ptr to be used in planner and goal searcher
     std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map;
@@ -245,7 +247,8 @@ private:
     void update(
       const GoalPlannerParameters & parameters, const PlannerData & planner_data,
       const ModuleStatus & current_status, const BehaviorModuleOutput & previous_module_output,
-      const autoware::universe_utils::LinearRing2d & vehicle_footprint);
+      const autoware::universe_utils::LinearRing2d & vehicle_footprint,
+      const GoalCandidates & goal_candidates);
 
   private:
     void initializeOccupancyGridMap(
@@ -310,6 +313,7 @@ private:
 
   // goal searcher
   std::shared_ptr<GoalSearcherBase> goal_searcher_;
+  GoalCandidates goal_candidates_{};
 
   // NOTE: this is latest occupancy_grid_map pointer which the local planner_data on
   // onFreespaceParkingTimer thread storage may point to while calculation.
@@ -410,7 +414,7 @@ private:
   // freespace parking
   bool planFreespacePath(
     std::shared_ptr<const PlannerData> planner_data,
-    const std::shared_ptr<GoalSearcherBase> goal_searcher,
+    const std::shared_ptr<GoalSearcherBase> goal_searcher, const GoalCandidates & goal_candidates,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map);
   bool canReturnToLaneParking(const PullOverContextData & context_data);
 
