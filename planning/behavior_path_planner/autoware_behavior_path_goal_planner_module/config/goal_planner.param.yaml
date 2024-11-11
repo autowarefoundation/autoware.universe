@@ -24,7 +24,7 @@
         margin_from_boundary: 0.75
         high_curvature_threshold: 0.1
         bus_stop_area:
-          use_bus_stop_area: false
+          use_bus_stop_area: true
           goal_search_interval: 0.5
           lateral_offset_interval: 0.25
 

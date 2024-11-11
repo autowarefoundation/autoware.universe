@@ -101,6 +101,18 @@ void plot_footprint(
   axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linestyle"_a = "dotted"));
 }
 
+void plot_lanelet_polyogn(matplotlibcpp17::axes::Axes & axes, const lanelet::BasicPolygon2d polygon)
+{
+  std::vector<double> xs, ys;
+  for (const auto & p : polygon) {
+    xs.push_back(p.x());
+    ys.push_back(p.y());
+  }
+  xs.push_back(xs.front());
+  ys.push_back(ys.front());
+  axes.fill(Args(xs, ys), Kwargs("color"_a = "grey", "alpha"_a = 0.5));
+}
+
 void plot_goal_candidate(
   matplotlibcpp17::axes::Axes & axes, const GoalCandidate & goal, const size_t prio,
   const autoware::universe_utils::LinearRing2d & local_footprint, const std::string & color)
@@ -470,6 +482,17 @@ std::optional<PathWithLaneId> calculate_centerline_path(
   return center_line_path;
 }
 
+std::vector<lanelet::BasicPolygon2d> getBusStopAreaPolygons(
+  const std::shared_ptr<PlannerData> planner_data, const GoalPlannerParameters & parameters)
+{
+  const auto pull_over_lanes =
+    autoware::behavior_path_planner::goal_planner_utils::getPullOverLanes(
+      *(planner_data->route_handler), true, parameters.backward_goal_search_length,
+      parameters.forward_goal_search_length);
+  return autoware::behavior_path_planner::goal_planner_utils::getBusStopAreaPolygons(
+    pull_over_lanes);
+}
+
 struct SortByWeightedDistance
 {
   double lateral_cost{0.0};
@@ -595,21 +618,9 @@ int main(int argc, char ** argv)
       shift_pull_over_planner.plan(goal_candidate, 0, planner_data, reference_path);
     if (pull_over_path_opt) {
       const auto & pull_over_path = pull_over_path_opt.value();
-      const auto & full_path = pull_over_path.full_path();
       candidates.push_back(pull_over_path);
-      const auto & color = g_colors.at(i % g_colors.size());
-      const auto goal_id = goal_candidate.id;
-      const auto prio = goal_id2prio[goal_id];
-      plot_path_with_lane_id(
-        ax1, full_path, color,
-        std::to_string(prio) + "-th goal(id=" + std::to_string(goal_id) + ")");
-      plot_goal_candidate(ax1, pull_over_path.modified_goal(), prio, footprint, color);
     }
   }
-  const auto original_goal_pos = planner_data->route_handler->getOriginalGoalPose().position;
-  ax1.plot(
-    Args(original_goal_pos.x, original_goal_pos.y),
-    Kwargs("marker"_a = "x", "label"_a = "goal", "markersize"_a = 20, "color"_a = "red"));
 
   const auto filtered_paths = selectPullOverPaths(
     candidates, goal_candidates, planner_data, goal_planner_parameter, reference_path);
@@ -620,15 +631,44 @@ int main(int argc, char ** argv)
     const auto prio = goal_id2prio[goal_id];
     const auto & color = (i == 0) ? "red" : g_colors.at(i % g_colors.size());
     const auto max_parking_curvature = filtered_path.parking_path_max_curvature();
-    plot_path_with_lane_id(
-      ax2, filtered_path.full_path(), color,
-      std::to_string(prio) + "-th goal(id=" + std::to_string(goal_id) +
-        "): k_max=" + std::to_string(max_parking_curvature));
-    plot_goal_candidate(ax2, filtered_path.modified_goal(), prio, footprint, color);
+    plot_goal_candidate(ax1, filtered_path.modified_goal(), prio, footprint, color);
     if (i == 0) {
-      plot_path_with_lane_id(ax2, filtered_path.parking_path(), color, "most prio", 2.0);
+      plot_path_with_lane_id(ax1, filtered_path.parking_path(), color, "most prio", 2.0);
+    } else {
+      plot_path_with_lane_id(
+        ax1, filtered_path.full_path(), color,
+        std::to_string(prio) + "-th goal(id=" + std::to_string(goal_id) +
+          "): k_max=" + std::to_string(max_parking_curvature),
+        0.5);
     }
   }
+  const auto original_goal_pos = planner_data->route_handler->getOriginalGoalPose().position;
+  ax1.plot(
+    Args(original_goal_pos.x, original_goal_pos.y),
+    Kwargs("marker"_a = "x", "label"_a = "goal", "markersize"_a = 20, "color"_a = "red"));
+  if (goal_planner_parameter.bus_stop_area.use_bus_stop_area) {
+    const auto bus_stop_area_polygons =
+      getBusStopAreaPolygons(planner_data, goal_planner_parameter);
+    for (const auto & bus_stop_area_polygon : bus_stop_area_polygons) {
+      plot_lanelet_polyogn(ax1, bus_stop_area_polygon);
+    }
+  }
+
+  for (auto i = 0; i < filtered_paths.size(); ++i) {
+    const auto & filtered_path = filtered_paths.at(i);
+    const auto goal_id = filtered_path.goal_id();
+    const auto prio = goal_id2prio[goal_id];
+    const auto & color = (i == 0) ? "red" : g_colors.at(i % g_colors.size());
+    const auto max_parking_curvature = filtered_path.parking_path_max_curvature();
+    plot_goal_candidate(ax1, filtered_path.modified_goal(), prio, footprint, color);
+    if (i == 0) {
+      plot_path_with_lane_id(ax2, filtered_path.full_path(), color, "most prio", 2.0);
+      break;
+    }
+  }
+  ax2.plot(
+    Args(original_goal_pos.x, original_goal_pos.y),
+    Kwargs("marker"_a = "x", "label"_a = "goal", "markersize"_a = 20, "color"_a = "red"));
 
   const auto centerline_path = calculate_centerline_path(planner_data, goal_planner_parameter);
   if (centerline_path) {
