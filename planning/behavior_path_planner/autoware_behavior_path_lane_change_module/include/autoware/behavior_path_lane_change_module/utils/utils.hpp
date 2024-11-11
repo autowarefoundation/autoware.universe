@@ -86,6 +86,7 @@ bool path_footprint_exceeds_target_lane_bound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
   const double margin = 0.1);
 
+static int tmp_id = 0;
 std::optional<LaneChangePath> construct_candidate_path(
   const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
   const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
