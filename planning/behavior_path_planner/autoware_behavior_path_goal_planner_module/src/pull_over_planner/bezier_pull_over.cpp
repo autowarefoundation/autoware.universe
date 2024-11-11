@@ -20,6 +20,7 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <autoware/motion_utils/trajectory/path_shift.hpp>
+#include <autoware_bezier_sampler/bezier_sampling.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 
 namespace autoware::behavior_path_planner
@@ -145,7 +146,39 @@ std::optional<PullOverPath> BezierPullOver::generateBezierPath(
   if (!path_shifter.generate(&shifted_path, offset_back)) {
     return {};
   }
+  const auto from_idx_opt =
+    autoware::motion_utils::findNearestIndex(shifted_path.path.points, *shift_start_pose);
+  const auto to_idx_opt =
+    autoware::motion_utils::findNearestIndex(shifted_path.path.points, shift_end_pose);
+  if (!from_idx_opt || !to_idx_opt) {
+    return {};
+  }
+  const auto from_idx = from_idx_opt.value();
+  const auto to_idx = to_idx_opt.value();
+  const auto span =
+    static_cast<unsigned>(std::max<int>(static_cast<int>(to_idx) - static_cast<int>(from_idx), 0));
+  const auto & from_pose = shifted_path.path.points[from_idx].point.pose;
+  const auto & to_pose = shifted_path.path.points[to_idx].point.pose;
+  const autoware::sampler_common::State initial{
+    {from_pose.position.x, from_pose.position.y},
+    {0.0, 0.0},
+    0.0,
+    tf2::getYaw(from_pose.orientation)};
+  const autoware::sampler_common::State final{
+    {to_pose.position.x, to_pose.position.y}, {0.0, 0.0}, 0.0, tf2::getYaw(to_pose.orientation)};
+  // setting the initial velocity to higher gives straight forwared path (the steering does not
+  // change)
+  const auto bezier_path = bezier_sampler::sample(initial, final, 0.3, 0.7, 0.0);
+  const auto bezier_points = bezier_path.cartesianWithHeading(span);
+  for (unsigned i = 0; i + 1 < span; ++i) {
+    auto & p = shifted_path.path.points[from_idx + i];
+    p.point.pose.position.x = bezier_points[i].x();
+    p.point.pose.position.y = bezier_points[i].y();
+    p.point.pose.orientation =
+      universe_utils::createQuaternionFromRPY(0.0, 0.0, bezier_points[i].z());
+  }
   shifted_path.path.points = autoware::motion_utils::removeOverlapPoints(shifted_path.path.points);
+
   autoware::motion_utils::insertOrientation(shifted_path.path.points, true);
 
   // set same orientation, because the reference center line orientation is not same to the
