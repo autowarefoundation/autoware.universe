@@ -968,6 +968,13 @@ std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
       return goal_id_to_index[a.goal_id()] < goal_id_to_index[b.goal_id()];
     });
 
+  // Sort the path only when the number of objects to avoid is the same to minimize the
+  // num_objects_to_avoid.
+  const auto isSameNumObjectsToAvoid = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
+    return goal_candidates[goal_id_to_index[a.goal_id()]].num_objects_to_avoid ==
+           goal_candidates[goal_id_to_index[b.goal_id()]].num_objects_to_avoid;
+  };
+
   // compare to sort pull_over_path_candidates based on the order in efficient_path_order
   const auto comparePathTypePriority = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
     const auto & order = parameters_->efficient_path_order;
@@ -1010,6 +1017,9 @@ std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
       [&](const size_t a_i, const size_t b_i) {
         const auto & a = pull_over_path_candidates[a_i];
         const auto & b = pull_over_path_candidates[b_i];
+        if (!isSameNumObjectsToAvoid(a, b)) {
+          return false;
+        }
         if (
           std::abs(path_id_to_rough_margin_map[a.id()] - path_id_to_rough_margin_map[b.id()]) <
           0.01) {
@@ -1042,6 +1052,10 @@ std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
       [&](const size_t a_i, const size_t b_i) {
         const auto & a = pull_over_path_candidates[a_i];
         const auto & b = pull_over_path_candidates[b_i];
+        if (!isSameNumObjectsToAvoid(a, b)) {
+          return false;
+        }
+
         // if both are soft margin or both are same hard margin, prioritize the path with lower
         // curvature.
         if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
@@ -1062,6 +1076,9 @@ std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
           // - both are same hard margin
           const auto & a = pull_over_path_candidates[a_i];
           const auto & b = pull_over_path_candidates[b_i];
+          if (!isSameNumObjectsToAvoid(a, b)) {
+            return false;
+          }
           if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
             return comparePathTypePriority(a, b);
           }
@@ -1090,6 +1107,9 @@ std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
         [&](const size_t a_i, const size_t b_i) {
           const auto & a = pull_over_path_candidates[a_i];
           const auto & b = pull_over_path_candidates[b_i];
+          if (!isSameNumObjectsToAvoid(a, b)) {
+            return false;
+          }
           return comparePathTypePriority(a, b);
         });
     }
