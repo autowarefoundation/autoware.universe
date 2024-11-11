@@ -144,7 +144,6 @@ public:
 
     // calculate grid parameters
     grid_radial_limit_ = 160.0f;  // [m]
-    grid_radial_limit_sq_ = grid_radial_limit_ * grid_radial_limit_;
     grid_dist_size_rad_ =
       pseudoArcTan2(grid_linearity_switch_radius_ + grid_dist_size_, origin_z_) -
       pseudoArcTan2(grid_linearity_switch_radius_, origin_z_);
@@ -192,9 +191,9 @@ public:
   void addPoint(const float x, const float y, const size_t point_idx)
   {
     // calculate the grid id
-    const float radius_sq = x * x + y * y;
+    const float radius = std::sqrt(x * x + y * y);
     const float azimuth = pseudoArcTan2(y, x);
-    const int grid_idx = getGridIdx(radius_sq, azimuth);
+    const int grid_idx = getGridIdx(radius, azimuth);
 
     // check if the point is within the grid
     if (grid_idx < 0) {
@@ -360,17 +359,17 @@ private:
   float grid_dist_size_;                // meters
   float grid_azimuth_size_;             // radians
   float grid_linearity_switch_radius_;  // meters
-  int grid_linearity_switch_num_;       // number of grids within the switch radius
 
   // calculated parameters
-  float grid_radial_limit_;     // meters
-  float grid_radial_limit_sq_;  // meters
-  float grid_dist_size_rad_;    // radians
+  float grid_radial_limit_;            // meters
+  float grid_dist_size_rad_;           // radians
+  int grid_linearity_switch_num_;      // number of grids within the switch radius
+  float grid_linearity_switch_angle_;  // angle at the switch radius
+  float grid_size_rad_inv_;            // inverse of the grid size in radians
   bool is_initialized_ = false;
 
   // array of grid boundaries
   std::vector<float> grid_radial_boundaries_;
-  std::vector<float> grid_radial_boundaries_sq_;
   std::vector<int> azimuth_grids_per_radial_;
   std::vector<float> azimuth_interval_per_radial_;
   std::vector<int> radial_idx_offsets_;
@@ -393,28 +392,29 @@ private:
 
     // radial boundaries
     {
-      int idx = 0;
-      float radius_initial = 1.0f;    // initial grid of 1 meter
-      float radius = radius_initial;  // initial grid of 1 meter
-      // 1. within mode switch radius, constant distance
-      while (radius < grid_linearity_switch_radius_) {
-        grid_radial_boundaries_.push_back(radius);
-        idx++;
-        radius = static_cast<float>(idx) * grid_dist_size_ + radius_initial;
+      // constant distance
+      for (int i = 0; i < grid_linearity_switch_num_; i++) {
+        grid_radial_boundaries_.push_back(i * grid_dist_size_);
       }
-      // 2. outside mode switch radius, constant elevation angle
-      while (radius < grid_radial_limit_ && radius > 0) {
-        grid_radial_boundaries_.push_back(radius);
-        const float angle = pseudoArcTan2(radius, origin_z_);
-        radius = tan(angle + grid_dist_size_rad_) * origin_z_;
-      }
-
-      // square of the boundaries
-      grid_radial_boundaries_sq_.resize(grid_radial_boundaries_.size());
-      for (size_t i = 0; i < grid_radial_boundaries_.size(); ++i) {
-        grid_radial_boundaries_sq_[i] = grid_radial_boundaries_[i] * grid_radial_boundaries_[i];
+      // at the switch radius
+      grid_radial_boundaries_.push_back(grid_linearity_switch_radius_);
+      // constant angle
+      grid_linearity_switch_angle_ = pseudoArcTan2(grid_linearity_switch_radius_, origin_z_);
+      float angle = grid_linearity_switch_angle_;
+      const float grid_angle_interval =
+        pseudoArcTan2(grid_linearity_switch_radius_ + grid_dist_size_, origin_z_) - angle;
+      grid_size_rad_inv_ = 1.0f / grid_angle_interval;
+      angle += grid_angle_interval;
+      while (angle < M_PI_2) {
+        const float dist = tan(angle) * origin_z_;
+        grid_radial_boundaries_.push_back(dist);
+        if (dist > grid_radial_limit_) {
+          break;
+        }
+        angle += grid_angle_interval;
       }
     }
+
     const size_t radial_grid_num = grid_radial_boundaries_.size();
 
     // azimuth boundaries
@@ -459,38 +459,30 @@ private:
     return azimuth_grid_idx;
   }
 
-  int getRadialIdx(const float & radius_sq) const
+  int getRadialIdx(const float & radius) const
   {
     // check if the point is within the grid
-    if (radius_sq > grid_radial_limit_sq_) {
+    if (radius > grid_radial_limit_) {
       return -1;
     }
-    if (radius_sq < 0) {
+    if (radius < 0) {
       return -1;
     }
 
     // determine the grid id
     int grid_rad_idx = -1;
 
-    // speculate the grid id from the radius, underestimate it to do not miss the grid
-    size_t grid_idx_speculated = 0;
-    float radius = std::sqrt(radius_sq);
+    // constant distance
     if (radius < grid_linearity_switch_radius_) {
-      grid_idx_speculated = static_cast<size_t>(std::sqrt(radius_sq) / grid_dist_size_);
-    } else {
-      grid_idx_speculated = static_cast<size_t>(grid_linearity_switch_radius_);
-    }
-
-    // radial grid id
-    for (size_t i = grid_idx_speculated; i < grid_radial_boundaries_sq_.size(); ++i) {
-      if (radius_sq < grid_radial_boundaries_sq_[i]) {
-        grid_rad_idx = i;
-        break;
-      }
+      grid_rad_idx = static_cast<int>(radius / grid_dist_size_);
+    } else if (radius < grid_radial_limit_) {
+      const float angle = pseudoArcTan2(radius, origin_z_);
+      grid_rad_idx = grid_linearity_switch_num_ +
+                     static_cast<int>((angle - grid_linearity_switch_angle_) * grid_size_rad_inv_);
     }
 
     // check if the grid id is valid
-    if (grid_rad_idx >= static_cast<int>(grid_radial_boundaries_sq_.size())) {
+    if (grid_rad_idx >= static_cast<int>(grid_radial_boundaries_.size())) {
       // throw error
       throw std::runtime_error("Invalid radial grid index.");
     }
@@ -506,9 +498,9 @@ private:
   // method to determine the grid id of a point
   // -1 means out of range
   // range limit is horizon angle
-  int getGridIdx(const float & radius_sq, const float & azimuth) const
+  int getGridIdx(const float & radius, const float & azimuth) const
   {
-    const int grid_rad_idx = getRadialIdx(radius_sq);
+    const int grid_rad_idx = getRadialIdx(radius);
     if (grid_rad_idx < 0) {
       return -1;
     }
