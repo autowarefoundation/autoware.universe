@@ -191,6 +191,7 @@ private:
 
   void convert();
   void preprocess();
+  void initializeGround(pcl::PointIndices & out_no_ground_indices);
   void classify(pcl::PointIndices & out_no_ground_indices);
 };
 

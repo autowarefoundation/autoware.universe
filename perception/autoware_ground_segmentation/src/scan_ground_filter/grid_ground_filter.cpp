@@ -41,6 +41,7 @@ void GridGroundFilter::preprocess()
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
+  // eliminate empty cells from connection for efficiency
   grid_ptr_->setGridConnections();
 
   // debug message
@@ -98,27 +99,87 @@ void GridGroundFilter::fitLineFromGndGrid(const std::vector<int> & idx, float & 
   b = (sum_y - a * sum_x) / n;
 }
 
+void GridGroundFilter::initializeGround(pcl::PointIndices & out_no_ground_indices)
+{
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  const auto grid_size = grid_ptr_->getGridSize();
+  // loop over grid cells
+  for (size_t idx = 0; idx < grid_size; idx++) {
+    auto & cell = grid_ptr_->getCell(idx);
+    // if the cell is empty, skip
+    if (cell.getPointNum() == 0) {
+      continue;
+    }
+    if (cell.is_ground_initialized_) {
+      continue;
+    }
+
+    // check scan root grid
+    if (cell.scan_grid_root_idx_ >= 0) {
+      const Cell & prev_cell = grid_ptr_->getCell(cell.scan_grid_root_idx_);
+      if (prev_cell.is_ground_initialized_) {
+        cell.is_ground_initialized_ = true;
+        continue;
+      }
+    }
+
+    // initialize ground in this cell
+    const auto num_points = static_cast<size_t>(cell.getPointNum());
+
+    bool is_ground_found = false;
+    PointsCentroid ground_bin;
+
+    for (size_t j = 0; j < num_points; ++j) {
+      const auto & pt_idx = cell.point_indices_[j];
+      pcl::PointXYZ point;
+      data_accessor_.getPoint(in_cloud_, pt_idx, point);
+      const float radius = std::hypot(point.x, point.y);
+      const float global_slope_ratio = point.z / radius;
+      if (
+        global_slope_ratio >= param_.global_slope_max_ratio &&
+        point.z > param_.non_ground_height_threshold) {
+        // this point is obstacle
+        out_no_ground_indices.indices.push_back(pt_idx);
+      } else if (
+        abs(global_slope_ratio) < param_.global_slope_max_ratio &&
+        abs(point.z) < param_.non_ground_height_threshold) {
+        // this point is ground
+        ground_bin.addPoint(radius, point.z, pt_idx);
+        is_ground_found = true;
+      }
+    }
+    cell.is_processed_ = true;
+    cell.has_ground_ = is_ground_found;
+    if (is_ground_found) {
+      cell.is_ground_initialized_ = true;
+      ground_bin.processAverage();
+      cell.avg_height_ = ground_bin.getAverageHeight();
+      cell.avg_radius_ = ground_bin.getAverageRadius();
+      cell.max_height_ = ground_bin.getMaxHeight();
+      cell.min_height_ = ground_bin.getMinHeight();
+      cell.gradient_ = cell.avg_height_ / cell.avg_radius_;
+      cell.intercept_ = 0.0f;
+    } else {
+      cell.is_ground_initialized_ = false;
+    }
+  }
+}
+
 void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  // [new grid] run ground segmentation
-  out_no_ground_indices.indices.clear();
   const auto grid_size = grid_ptr_->getGridSize();
   // loop over grid cells
   for (size_t idx = 0; idx < grid_size; idx++) {
     auto & cell = grid_ptr_->getCell(idx);
-    if (cell.is_processed_) {
-      continue;
-    }
     // if the cell is empty, skip
     if (cell.getPointNum() == 0) {
       continue;
     }
-
-    // iterate over points in the grid cell
-    const auto num_points = static_cast<size_t>(cell.getPointNum());
 
     bool is_previous_initialized = false;
     // set a cell pointer for the previous cell
@@ -132,49 +193,7 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
     }
 
     if (!is_previous_initialized) {
-      // if the previous cell is not processed or do not have ground,
-      // try initialize ground in this cell
-      bool is_ground_found = false;
-      PointsCentroid ground_bin;
-
-      for (size_t j = 0; j < num_points; ++j) {
-        const auto & pt_idx = cell.point_indices_[j];
-        pcl::PointXYZ point;
-        data_accessor_.getPoint(in_cloud_, pt_idx, point);
-        const float radius = std::hypot(point.x, point.y);
-        const float global_slope_ratio = point.z / radius;
-        if (
-          global_slope_ratio >= param_.global_slope_max_ratio &&
-          point.z > param_.non_ground_height_threshold) {
-          // this point is obstacle
-          out_no_ground_indices.indices.push_back(pt_idx);
-        } else if (
-          abs(global_slope_ratio) < param_.global_slope_max_ratio &&
-          abs(point.z) < param_.non_ground_height_threshold) {
-          // this point is ground
-          ground_bin.addPoint(radius, point.z, pt_idx);
-          is_ground_found = true;
-        }
-      }
-      cell.is_processed_ = true;
-      cell.has_ground_ = is_ground_found;
-      if (is_ground_found) {
-        cell.is_ground_initialized_ = true;
-        ground_bin.processAverage();
-        cell.avg_height_ = ground_bin.getAverageHeight();
-        cell.avg_radius_ = ground_bin.getAverageRadius();
-        cell.max_height_ = ground_bin.getMaxHeight();
-        cell.min_height_ = ground_bin.getMinHeight();
-        cell.gradient_ = cell.avg_height_ / cell.avg_radius_;
-        cell.intercept_ = 0.0f;
-      }
-
-      // go to the next cell
       continue;
-    } else {
-      // inherit the previous cell information
-      cell.is_ground_initialized_ = true;
-      // continue to the ground segmentation
     }
 
     // get current cell gradient and intercept
@@ -224,6 +243,7 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
 
     {
       PointsCentroid ground_bin;
+      const auto num_points = static_cast<size_t>(cell.getPointNum());
       for (size_t j = 0; j < num_points; ++j) {
         const auto & pt_idx = cell.point_indices_[j];
         pcl::PointXYZ point;
@@ -382,6 +402,9 @@ void GridGroundFilter::process(
   // set input cloud
   in_cloud_ = in_cloud;
 
+  // clear the output indices
+  out_no_ground_indices.indices.clear();
+
   // reset grid cells
   grid_ptr_->resetCells();
 
@@ -391,7 +414,10 @@ void GridGroundFilter::process(
   // 2. preprocess
   preprocess();
 
-  // 3. classify point cloud
+  // 3. initialize ground
+  initializeGround(out_no_ground_indices);
+
+  // 4. classify point cloud
   classify(out_no_ground_indices);
 }
 
