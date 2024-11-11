@@ -19,7 +19,7 @@ jobs:
           - -cuda
         include:
           - rosdistro: humble
-            container: ghcr.io/autowarefoundation/autoware:universe-devel-amd64
+            container: ghcr.io/autowarefoundation/autoware:universe-devel
             build-depends-repos: build_depends.repos
     steps:
       - name: Check out repository
