@@ -159,7 +159,7 @@ void MrmHandler::publishEmergencyHolding()
 {
   tier4_system_msgs::msg::EmergencyHoldingState msg;
   msg.stamp = this->now();
-  msg.holding = is_emergency_holding_;
+  msg.is_holding = is_emergency_holding_;
   pub_emergency_holding_->publish(msg);
 }
 
