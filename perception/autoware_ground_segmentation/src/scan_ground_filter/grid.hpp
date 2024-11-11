@@ -27,6 +27,52 @@
 #include <utility>
 #include <vector>
 
+namespace
+{
+
+float pseudoArcTan2(const float y, const float x)
+{
+  // lightweight arc tangent
+
+  // avoid divide-by-zero
+  if (y == 0.0f) {
+    if (x >= 0.0f) return 0.0f;
+    return M_PIf;
+  }
+  if (x == 0.0f) {
+    if (y >= 0.0f) return M_PI_2f;
+    return -M_PI_2f;
+  }
+
+  const float x_abs = std::abs(x);
+  const float y_abs = std::abs(y);
+
+  // divide to 8 zones
+  constexpr float one_third = 1.0f / 3.0f;
+  if (x_abs > y_abs) {
+    // calculate angle, 3rd order approximation to radian
+    const float ratio = y_abs / x_abs;
+    const float angle = ratio * (1 - one_third * ratio * ratio);
+    if (y >= 0.0f) {
+      if (x >= 0.0f) return angle;  // 1st zone
+      return M_PIf - angle;         // 2nd zone
+    } else {
+      if (x >= 0.0f) return -angle;  // 4th zone
+      return -M_PIf + angle;         // 3rd zone
+    }
+  } else {
+    const float ratio = x_abs / y_abs;
+    const float angle = ratio * (1 - one_third * ratio * ratio);
+    if (y >= 0.0f) {
+      if (x >= 0.0f) return M_PI_2f - angle;  // 1st zone
+      return M_PI_2f + angle;                 // 2nd zone
+    } else {
+      if (x >= 0.0f) return -M_PI_2f - angle;  // 4th zone
+      return -M_PI_2f + angle;                 // 3rd zone
+    }
+  }
+}
+}  // namespace
 namespace autoware::ground_segmentation
 {
 using autoware::universe_utils::ScopedTimeTrack;
@@ -91,13 +137,17 @@ public:
   {
     grid_dist_size_ = grid_dist_size;
     grid_azimuth_size_ = grid_azimuth_size;
-    grid_linearity_switch_radius_ = grid_linearity_switch_radius;
+
+    // set grid linearity switch radius
+    grid_linearity_switch_num_ = static_cast<int>(grid_linearity_switch_radius / grid_dist_size_);
+    grid_linearity_switch_radius_ = grid_linearity_switch_num_ * grid_dist_size_;
 
     // calculate grid parameters
     grid_radial_limit_ = 160.0f;  // [m]
     grid_radial_limit_sq_ = grid_radial_limit_ * grid_radial_limit_;
-    grid_dist_size_rad_ = std::atan2(grid_linearity_switch_radius_ + grid_dist_size_, origin_z_) -
-                          std::atan2(grid_linearity_switch_radius_, origin_z_);
+    grid_dist_size_rad_ =
+      pseudoArcTan2(grid_linearity_switch_radius_ + grid_dist_size_, origin_z_) -
+      pseudoArcTan2(grid_linearity_switch_radius_, origin_z_);
 
     // generate grid geometry
     setGridBoundaries();
@@ -143,7 +193,7 @@ public:
   {
     // calculate the grid id
     const float radius_sq = x * x + y * y;
-    const float azimuth = std::atan2(y, x);
+    const float azimuth = pseudoArcTan2(y, x);
     const int grid_idx = getGridIdx(radius_sq, azimuth);
 
     // check if the point is within the grid
@@ -310,6 +360,7 @@ private:
   float grid_dist_size_;                // meters
   float grid_azimuth_size_;             // radians
   float grid_linearity_switch_radius_;  // meters
+  int grid_linearity_switch_num_;       // number of grids within the switch radius
 
   // calculated parameters
   float grid_radial_limit_;     // meters
@@ -354,7 +405,7 @@ private:
       // 2. outside mode switch radius, constant elevation angle
       while (radius < grid_radial_limit_ && radius > 0) {
         grid_radial_boundaries_.push_back(radius);
-        const float angle = std::atan2(radius, origin_z_);
+        const float angle = pseudoArcTan2(radius, origin_z_);
         radius = tan(angle + grid_dist_size_rad_) * origin_z_;
       }
 
