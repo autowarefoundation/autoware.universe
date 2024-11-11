@@ -102,18 +102,6 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
 
       grid_ground_filter_ptr_ = std::make_unique<GridGroundFilter>(param);
     }
-
-    // // initialize grid pointer
-    // {
-    //   const float point_origin_x = vehicle_info_.wheel_base_m / 2.0f + center_pcl_shift_;
-    //   const float point_origin_y = 0.0f;
-    //   const float point_origin_z = virtual_lidar_z_;
-    //   grid_ptr_ = std::make_unique<Grid>(point_origin_x, point_origin_y, point_origin_z);
-    //   grid_ptr_->initialize(grid_size_m_, radial_divider_angle_rad_, grid_mode_switch_radius_);
-    // }
-
-    // data access
-    // data_offset_initialized_ = false;
   }
 
   using std::placeholders::_1;

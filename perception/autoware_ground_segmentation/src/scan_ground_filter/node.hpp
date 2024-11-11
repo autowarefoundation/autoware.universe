@@ -74,16 +74,6 @@ private:
   };
   using PointCloudVector = std::vector<PointData>;
 
-  struct GridCenter
-  {
-    float radius;
-    float avg_height;
-    float max_height;
-    float gradient;
-    float intercept;
-    uint16_t grid_id;
-  };
-
   struct PointsCentroid
   {
     float radius_sum;
@@ -122,7 +112,6 @@ private:
       grid_id = 0;
       pcl_indices.clear();
       height_list.clear();
-      radius_list.clear();
     }
 
     void addPoint(const float radius, const float height)
@@ -140,21 +129,7 @@ private:
     {
       pcl_indices.push_back(index);
       height_list.push_back(height);
-      radius_list.push_back(radius);
-    }
-
-    void processAverage()
-    {
-      point_num = pcl_indices.size();
-      if (point_num == 0) {
-        return;
-      }
-      radius_sum = std::accumulate(radius_list.begin(), radius_list.end(), 0.0f);
-      height_sum = std::accumulate(height_list.begin(), height_list.end(), 0.0f);
-      height_max = std::max_element(height_list.begin(), height_list.end())[0];
-      height_min = std::min_element(height_list.begin(), height_list.end())[0];
-      radius_avg = radius_sum / point_num;
-      height_avg = height_sum / point_num;
+      addPoint(radius, height);
     }
 
     float getAverageSlope() const { return std::atan2(height_avg, radius_avg); }
@@ -247,18 +222,12 @@ private:
   void convertPointcloud(
     const PointCloud2ConstPtr & in_cloud,
     std::vector<PointCloudVector> & out_radial_ordered_points) const;
-  // void convertPointcloudGridScan(
-  //   const PointCloud2ConstPtr & in_cloud,
-  //   std::vector<PointCloudVector> & out_radial_ordered_points) const;
+
   /*!
    * Output ground center of front wheels as the virtual ground point
    * @param[out] point Virtual ground origin point
    */
   void calcVirtualGroundOrigin(pcl::PointXYZ & point) const;
-
-  // // [new grid]
-  // bool recursiveSearch(const int check_idx, const int search_cnt, std::vector<int> & idx) const;
-  // void fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const;
 
   /*!
    * Classifies Points in the PointCloud as Ground and Not Ground
@@ -271,10 +240,6 @@ private:
     const PointCloud2ConstPtr & in_cloud,
     const std::vector<PointCloudVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices) const;
-  // void classifyPointCloudGridScan(
-  //   const PointCloud2ConstPtr & in_cloud,
-  //   const std::vector<PointCloudVector> & in_radial_ordered_clouds,
-  //   pcl::PointIndices & out_no_ground_indices) const;
   /*!
    * Returns the resulting complementary PointCloud, one with the points kept
    * and the other removed as indicated in the indices
