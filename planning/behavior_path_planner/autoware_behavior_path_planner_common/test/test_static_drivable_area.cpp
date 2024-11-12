@@ -219,3 +219,36 @@ TEST(StaticDrivableArea, cutOverlappedLanes)
     }
   }
 }
+
+TEST(StaticDrivableArea, generateDrivableLanes)
+{
+  using autoware::behavior_path_planner::utils::generateDrivableLanes;
+  lanelet::ConstLanelets lanelets;
+  lanelet::Lanelet ll;
+  {
+    const auto lanes = generateDrivableLanes(lanelets);
+    EXPECT_TRUE(lanes.empty());
+  }
+  {
+    ll.setId(0);
+    lanelets.push_back(ll);
+    const auto lanes = generateDrivableLanes(lanelets);
+    ASSERT_EQ(lanes.size(), lanelets.size());
+    EXPECT_TRUE(lanes[0].middle_lanes.empty());
+    EXPECT_EQ(lanes[0].left_lane.id(), lanelets[0].id());
+    EXPECT_EQ(lanes[0].right_lane.id(), lanelets[0].id());
+  }
+  {
+    for (auto i = 1; i < 20; ++i) {
+      ll.setId(0);
+      lanelets.push_back(ll);
+    }
+    const auto lanes = generateDrivableLanes(lanelets);
+    ASSERT_EQ(lanes.size(), lanelets.size());
+    for (auto i = 0UL; i < lanes.size(); ++i) {
+      EXPECT_TRUE(lanes[i].middle_lanes.empty());
+      EXPECT_EQ(lanes[i].left_lane.id(), lanelets[i].id());
+      EXPECT_EQ(lanes[i].right_lane.id(), lanelets[i].id());
+    }
+  }
+}

@@ -43,7 +43,12 @@ std::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & 
 std::vector<DrivableLanes> cutOverlappedLanes(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes);
 
-std::vector<DrivableLanes> generateDrivableLanes(const lanelet::ConstLanelets & current_lanes);
+/**
+ * @brief generate DrivableLanes objects from a sequence of lanelets
+ * @param [in] lanelets sequence of laneles
+ * @return a vector of DrivableLanes constructed from the given lanelets
+ */
+std::vector<DrivableLanes> generateDrivableLanes(const lanelet::ConstLanelets & lanelets);
 
 std::vector<DrivableLanes> generateDrivableLanesWithShoulderLanes(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & shoulder_lanes);

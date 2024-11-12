@@ -743,12 +743,12 @@ std::vector<DrivableLanes> cutOverlappedLanes(
   return shorten_lanes;
 }
 
-std::vector<DrivableLanes> generateDrivableLanes(const lanelet::ConstLanelets & lanes)
+std::vector<DrivableLanes> generateDrivableLanes(const lanelet::ConstLanelets & lanelets)
 {
-  std::vector<DrivableLanes> drivable_lanes(lanes.size());
-  for (size_t i = 0; i < lanes.size(); ++i) {
-    drivable_lanes.at(i).left_lane = lanes.at(i);
-    drivable_lanes.at(i).right_lane = lanes.at(i);
+  std::vector<DrivableLanes> drivable_lanes(lanelets.size());
+  for (size_t i = 0; i < lanelets.size(); ++i) {
+    drivable_lanes.at(i).left_lane = lanelets.at(i);
+    drivable_lanes.at(i).right_lane = lanelets.at(i);
   }
   return drivable_lanes;
 }
