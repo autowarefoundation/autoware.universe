@@ -20,6 +20,7 @@
 
 #include <geometry_msgs/msg/detail/point__struct.hpp>
 #include <tier4_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
+#include <tier4_planning_msgs/msg/detail/path_with_lane_id__struct.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <gtest/gtest.h>
@@ -402,4 +403,55 @@ TEST(StaticDrivableArea, getBoundWithIntersectionAreas)
   result = getBoundWithIntersectionAreas(original_bound, route_handler, drivable_lanes, is_left);
   // the expanded bound includes the intersection area so its size is larger
   EXPECT_GT(result.size(), original_bound.size());
+}
+
+TEST(StaticDrivableArea, combineDrivableAreaInfo)
+{
+  using autoware::behavior_path_planner::utils::combineDrivableAreaInfo;
+  autoware::behavior_path_planner::DrivableAreaInfo drivable_area_info1;
+  autoware::behavior_path_planner::DrivableAreaInfo drivable_area_info2;
+  {
+    const auto combined = combineDrivableAreaInfo(drivable_area_info1, drivable_area_info2);
+    EXPECT_TRUE(combined.drivable_lanes.empty());
+  }
+  {  // combination of obstacles
+    drivable_area_info1.obstacles.emplace_back().pose.position.x = 1.0;
+    drivable_area_info2.obstacles.emplace_back().pose.position.x = 2.0;
+    const auto combined = combineDrivableAreaInfo(drivable_area_info1, drivable_area_info2);
+    ASSERT_EQ(combined.obstacles.size(), 2UL);
+    EXPECT_EQ(combined.obstacles[0].pose.position.x, 1.0);
+    EXPECT_EQ(combined.obstacles[1].pose.position.x, 2.0);
+  }
+  {  // combination of the drivable lanes
+    DrivableLanes lanes;
+    lanes.middle_lanes.push_back(lanelet::Lanelet(0));
+    lanes.middle_lanes.push_back(lanelet::Lanelet(1));
+    drivable_area_info1.drivable_lanes.push_back(lanes);
+    lanes.middle_lanes.clear();
+    lanes.middle_lanes.push_back(lanelet::Lanelet(2));
+    lanes.middle_lanes.push_back(lanelet::Lanelet(3));
+    drivable_area_info2.drivable_lanes.push_back(lanes);
+    const auto combined = combineDrivableAreaInfo(drivable_area_info1, drivable_area_info2);
+    ASSERT_EQ(combined.drivable_lanes.size(), 1UL);
+    ASSERT_EQ(combined.drivable_lanes[0].middle_lanes.size(), 4UL);
+    for (auto id = 0UL; id < combined.drivable_lanes[0].middle_lanes.size(); ++id) {
+      EXPECT_EQ(combined.drivable_lanes[0].middle_lanes[id].id(), id);
+    }
+  }
+  {  // combination of the parameters
+    drivable_area_info1.drivable_margin = 5.0;
+    drivable_area_info2.drivable_margin = 2.0;
+    drivable_area_info1.enable_expanding_freespace_areas = false;
+    drivable_area_info2.enable_expanding_freespace_areas = false;
+    drivable_area_info1.enable_expanding_intersection_areas = true;
+    drivable_area_info2.enable_expanding_intersection_areas = true;
+    drivable_area_info1.enable_expanding_hatched_road_markings = false;
+    drivable_area_info2.enable_expanding_hatched_road_markings = true;
+    const auto combined = combineDrivableAreaInfo(drivable_area_info1, drivable_area_info2);
+    EXPECT_EQ(combined.drivable_margin, 5.0);  // expect the maximum of the margins
+    // expect OR of the booleans
+    EXPECT_FALSE(combined.enable_expanding_freespace_areas);
+    EXPECT_TRUE(combined.enable_expanding_intersection_areas);
+    EXPECT_TRUE(combined.enable_expanding_hatched_road_markings);
+  }
 }

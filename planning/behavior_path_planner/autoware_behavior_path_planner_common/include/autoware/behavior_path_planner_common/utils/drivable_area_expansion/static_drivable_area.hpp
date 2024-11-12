@@ -124,6 +124,12 @@ std::vector<geometry_msgs::msg::Point> postProcess(
   const std::vector<DrivableLanes> & drivable_lanes, const bool is_left,
   const bool is_driving_forward = true);
 
+/**
+ * @brief combine two drivable area info objects
+ * @param [in] drivable_area_Info1 first drivable area info
+ * @param [in] drivable_area_Info2 second drivable area info
+ * @return the combined drivable area info
+ */
 DrivableAreaInfo combineDrivableAreaInfo(
   const DrivableAreaInfo & drivable_area_info1, const DrivableAreaInfo & drivable_area_info2);
 
