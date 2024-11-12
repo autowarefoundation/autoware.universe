@@ -328,7 +328,7 @@ public:
             // check previous of the previous cell
             scan_grid_root_idx = prev_cell.prev_grid_idx_;
           } else {
-            // not empty, set the previous cell
+            // not empty, then set the previous cell
             cell.scan_grid_root_idx_ = scan_grid_root_idx;
             is_prev_found = true;
             break;
@@ -589,7 +589,7 @@ private:
         prev_grid_idx = getGridIdx(radial_idx - 1, azimuth_idx_prev_radial_grid);
       }
       cell.prev_grid_idx_ = prev_grid_idx;
-      cell.scan_grid_root_idx_ = prev_grid_idx;
+      cell.scan_grid_root_idx_ = -1;
     }
   }
 };
