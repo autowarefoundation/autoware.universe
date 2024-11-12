@@ -369,7 +369,7 @@ PredictedObjects::ConstSharedPtr transformObjects(
   const tf2_ros::Buffer & tf_buffer, const PredictedObjects::ConstSharedPtr in_objects,
   const std::string & target_frame_id, const std::string & src_frame_id)
 {
-  auto objects = new PredictedObjects();
+  auto objects = std::make_shared<PredictedObjects>();
   *objects = *in_objects;
   objects->header.frame_id = target_frame_id;
 
