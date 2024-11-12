@@ -42,13 +42,14 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ********************/
 
-#ifndef AUTOWARE_COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
-#define AUTOWARE_COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
+#ifndef AUTOWARE__COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
+#define AUTOWARE__COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
 
-#include "autoware_costmap_generator/objects_to_costmap.hpp"
-#include "autoware_costmap_generator/points_to_costmap.hpp"
+#include "autoware/costmap_generator/utils/objects_to_costmap.hpp"
+#include "autoware/costmap_generator/utils/points_to_costmap.hpp"
 #include "costmap_generator_node_parameters.hpp"
 
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/universe_utils/ros/processing_time_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware/universe_utils/system/time_keeper.hpp>
@@ -72,8 +73,12 @@
 #include <memory>
 #include <vector>
 
+class TestCostmapGenerator;
+
 namespace autoware::costmap_generator
 {
+using autoware_perception_msgs::msg::PredictedObjects;
+
 class CostmapGenerator : public rclcpp::Node
 {
 public:
@@ -82,9 +87,10 @@ public:
 private:
   std::shared_ptr<::costmap_generator_node::ParamListener> param_listener_;
   std::shared_ptr<::costmap_generator_node::Params> param_;
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
 
   lanelet::LaneletMapPtr lanelet_map_;
-  autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_;
+  PredictedObjects::ConstSharedPtr objects_;
   sensor_msgs::msg::PointCloud2::ConstSharedPtr points_;
 
   grid_map::GridMap costmap_;
@@ -95,10 +101,13 @@ private:
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_ms_;
 
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_points_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::PredictedObjects>::SharedPtr sub_objects_;
   rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_bin_map_;
-  rclcpp::Subscription<tier4_planning_msgs::msg::Scenario>::SharedPtr sub_scenario_;
+  autoware::universe_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
+    sub_points_{this, "~/input/points_no_ground", autoware::universe_utils::SingleDepthSensorQoS()};
+  autoware::universe_utils::InterProcessPollingSubscriber<PredictedObjects> sub_objects_{
+    this, "~/input/objects"};
+  autoware::universe_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::Scenario>
+    sub_scenario_{this, "~/input/scenario"};
 
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -126,17 +135,9 @@ private:
   /// \brief callback for loading lanelet2 map
   void onLaneletMapBin(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg);
 
-  /// \brief callback for DynamicObjectArray
-  /// \param[in] in_objects input DynamicObjectArray usually from prediction or perception
-  /// component
-  void onObjects(const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg);
+  void update_data();
 
-  /// \brief callback for sensor_msgs::PointCloud2
-  /// \param[in] in_points input sensor_msgs::PointCloud2. Assuming ground-filtered pointcloud
-  /// by default
-  void onPoints(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-
-  void onScenario(const tier4_planning_msgs::msg::Scenario::ConstSharedPtr msg);
+  void set_current_pose();
 
   void onTimer();
 
@@ -170,8 +171,7 @@ private:
 
   /// \brief calculate cost from DynamicObjectArray
   /// \param[in] in_objects: subscribed DynamicObjectArray
-  grid_map::Matrix generateObjectsCostmap(
-    const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects);
+  grid_map::Matrix generateObjectsCostmap(const PredictedObjects::ConstSharedPtr in_objects);
 
   /// \brief calculate cost from lanelet2 map
   grid_map::Matrix generatePrimitivesCostmap();
@@ -181,7 +181,9 @@ private:
 
   /// \brief measure processing time
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+
+  friend class ::TestCostmapGenerator;
 };
 }  // namespace autoware::costmap_generator
 
-#endif  // AUTOWARE_COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
+#endif  // AUTOWARE__COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_

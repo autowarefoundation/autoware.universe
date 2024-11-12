@@ -42,7 +42,7 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ********************/
 
-#include "autoware_costmap_generator/points_to_costmap.hpp"
+#include "autoware/costmap_generator/utils/points_to_costmap.hpp"
 
 #include <string>
 #include <vector>
