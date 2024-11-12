@@ -327,6 +327,15 @@ std::optional<PathWithLaneId> PathGenerator::get_centerline_path(
       path_point.point.longitudinal_velocity_mps = static_cast<float>(speed_limit);
       path_points.push_back(path_point);
     }
+
+    for (const auto & left_bound_point : lanelet.leftBound()) {
+      centerline_path.left_bound.push_back(
+        lanelet::utils::conversion::toGeomMsgPt(left_bound_point));
+    }
+    for (const auto & right_bound_point : lanelet.rightBound()) {
+      centerline_path.right_bound.push_back(
+        lanelet::utils::conversion::toGeomMsgPt(right_bound_point));
+    }
   }
 
   utils::remove_overlapping_points(centerline_path);
