@@ -169,16 +169,12 @@ public:
       // distance grid size and positions
       std::cout << "Grid distance size: " << grid_dist_size_ << std::endl;
       for (size_t i = 0; i < grid_radial_boundaries_.size(); ++i) {
-        std::cout << "Grid radial boundary: " << grid_radial_boundaries_[i] << std::endl;
-      }
-      std::cout << "Grid radial size: " << grid_radial_boundaries_.size() << std::endl;
-      // azimuth grid size
-      std::cout << "Grid azimuth interval: " << grid_azimuth_size_ * 180 / (M_PI) << std::endl;
-      for (size_t i = 0; i < azimuth_grids_per_radial_.size(); ++i) {
-        std::cout << "Grid azimuth number: " << azimuth_grids_per_radial_[i]
+        std::cout << "Grid radial boundary: " << grid_radial_boundaries_[i]
+                  << ", Grid azimuth number: " << azimuth_grids_per_radial_[i]
                   << ", Grid azimuth interval: " << azimuth_interval_per_radial_[i] * 180 / (M_PI)
                   << std::endl;
       }
+
       // offset list
       for (size_t i = 0; i < radial_idx_offsets_.size(); ++i) {
         std::cout << "Grid id offset: " << radial_idx_offsets_[i] << std::endl;
@@ -422,10 +418,17 @@ private:
       azimuth_interval_per_radial_.resize(radial_grid_num);
       azimuth_grids_per_radial_[0] = 1;
       azimuth_interval_per_radial_[0] = 2.0f * M_PI;
-      const int azimuth_grid_num = std::max(static_cast<int>(2.0 * M_PI / grid_azimuth_size_), 1);
-      const float azimuth_interval_evened = 2.0f * M_PI / azimuth_grid_num;
+
+      constexpr float dist_to_saturate = 20.0f;
+
       for (size_t i = 1; i < radial_grid_num; ++i) {
-        // constant azimuth interval
+        const int max_azimuth_grid_num = static_cast<int>(2.0 * M_PI / grid_azimuth_size_);
+        const float dist = grid_radial_boundaries_[i];
+        const float decay = std::min(dist / dist_to_saturate, 1.0f);
+        const int grid_num = static_cast<int>(max_azimuth_grid_num * decay);
+
+        const int azimuth_grid_num = std::max(std::min(grid_num, max_azimuth_grid_num), 1);
+        const float azimuth_interval_evened = 2.0f * M_PI / azimuth_grid_num;
         azimuth_grids_per_radial_[i] = azimuth_grid_num;
         azimuth_interval_per_radial_[i] = azimuth_interval_evened;
       }
