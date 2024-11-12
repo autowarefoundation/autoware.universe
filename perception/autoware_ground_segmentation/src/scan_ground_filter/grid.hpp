@@ -236,15 +236,10 @@ public:
   // may not needed
   void setGridStatistics()
   {
-    // check if initialized
-    if (!is_initialized_) {
-      throw std::runtime_error("Grid is not initialized.");
-    }
-
     // debug information for new grid
 
     // check a line of cells
-    int current_grid_idx = 3;
+    int current_grid_idx = 0;
     while (current_grid_idx >= 0) {
       const Cell & cell = cells_[current_grid_idx];
       std::cout << "====== Grid id: " << cell.grid_idx_
@@ -256,6 +251,13 @@ public:
         std::cout << "- prev grid id: " << prev_cell.grid_idx_
                   << ", position radius: " << prev_cell.center_radius_
                   << " azimuth: " << prev_cell.center_azimuth_ * 180 / M_PI << std::endl;
+      }
+
+      if (cell.scan_grid_root_idx_ >= 0) {
+        const Cell & scan_root_cell = cells_[cell.scan_grid_root_idx_];
+        std::cout << "- scan root grid id: " << scan_root_cell.grid_idx_
+                  << ", position radius: " << scan_root_cell.center_radius_
+                  << " azimuth: " << scan_root_cell.center_azimuth_ * 180 / M_PI << std::endl;
       }
 
       // print index of the cell

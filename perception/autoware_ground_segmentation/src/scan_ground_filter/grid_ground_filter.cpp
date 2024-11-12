@@ -45,7 +45,7 @@ void GridGroundFilter::preprocess()
   grid_ptr_->setGridConnections();
 
   // debug message
-  // grid_ptr_->setGridStatistics();
+  grid_ptr_->setGridStatistics();
 }
 
 bool GridGroundFilter::recursiveSearch(
@@ -180,6 +180,9 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
     if (cell.getPointNum() == 0) {
       continue;
     }
+    if (cell.is_processed_) {
+      continue;
+    }
 
     bool is_previous_initialized = false;
     // set a cell pointer for the previous cell
@@ -216,9 +219,8 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
     }
 
     // segment the ground and non-ground points
-    bool is_continuous = true;
-    bool is_discontinuous = false;
-    bool is_break = false;
+    enum SegmentationMode { NONE, CONTINUOUS, DISCONTINUOUS, BREAK };
+    SegmentationMode mode = SegmentationMode::NONE;
     {
       const int front_radial_id =
         grid_ptr_->getCell(grid_idcs.front()).radial_idx_ + grid_idcs.size();
@@ -226,18 +228,12 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
 
       if (radial_diff_between_cells < param_.gnd_grid_continual_thresh * cell.radial_size_) {
         if (cell.radial_idx_ - front_radial_id < param_.gnd_grid_continual_thresh) {
-          is_continuous = true;
-          is_discontinuous = false;
-          is_break = false;
+          mode = SegmentationMode::CONTINUOUS;
         } else {
-          is_continuous = false;
-          is_discontinuous = true;
-          is_break = false;
+          mode = SegmentationMode::DISCONTINUOUS;
         }
       } else {
-        is_continuous = false;
-        is_discontinuous = false;
-        is_break = true;
+        mode = SegmentationMode::BREAK;
       }
     }
 
@@ -266,7 +262,7 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
         }
 
         // 3. the point is continuous with the previous grid
-        if (is_continuous) {
+        if (mode == SegmentationMode::CONTINUOUS) {
           // 3-a. local slope
           const float delta_z = point.z - prev_cell_ptr->avg_height_;
           const float delta_radius = radius - prev_cell_ptr->avg_radius_;
@@ -302,7 +298,7 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
         }
 
         // 4. the point is discontinuous with the previous grid
-        if (is_discontinuous) {
+        if (mode == SegmentationMode::DISCONTINUOUS) {
           const float delta_avg_z = point.z - prev_cell_ptr->avg_height_;
           if (abs(delta_avg_z) < param_.non_ground_height_threshold) {
             // this point is ground
@@ -334,7 +330,7 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
         }
 
         // 5. the point is break the previous grid
-        if (is_break) {
+        if (mode == SegmentationMode::BREAK) {
           const float delta_avg_z = point.z - prev_cell_ptr->avg_height_;
           const float delta_radius = radius - prev_cell_ptr->avg_radius_;
           const float local_slope_ratio = delta_avg_z / delta_radius;
@@ -380,6 +376,7 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
         cell.min_height_ = ground_bin.getMinHeight();
         cell.has_ground_ = true;
       }
+
       cell.is_processed_ = true;
     }
 
