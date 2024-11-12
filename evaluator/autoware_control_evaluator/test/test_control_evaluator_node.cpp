@@ -19,9 +19,10 @@
 #include "tf2_ros/transform_broadcaster.h"
 
 #include <autoware/control_evaluator/control_evaluator_node.hpp>
-#include <tier4_metric_msgs/msg/metric_array.hpp>
+
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include "boost/lexical_cast.hpp"
 
@@ -81,7 +82,8 @@ protected:
     };
     metric_sub_ = rclcpp::create_subscription<MetricArrayMsg>(
       dummy_node, "/control_evaluator/metrics", 1, [=](const MetricArrayMsg::ConstSharedPtr msg) {
-        const auto it = std::find_if(msg->metric_array.begin(), msg->metric_array.end(), is_target_metric);
+        const auto it =
+          std::find_if(msg->metric_array.begin(), msg->metric_array.end(), is_target_metric);
         if (it != msg->metric_array.end()) {
           metric_value_ = boost::lexical_cast<double>(it->value);
           metric_updated_ = true;
