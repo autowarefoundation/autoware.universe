@@ -15,6 +15,9 @@
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 
+#include <autoware/route_handler/route_handler.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
+
 #include <geometry_msgs/msg/detail/point__struct.hpp>
 #include <tier4_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
@@ -370,4 +373,33 @@ TEST(StaticDrivableArea, generateDrivableArea)
   EXPECT_EQ(path.right_bound[2].y, -3.0);
   EXPECT_EQ(path.right_bound[3].x, 0.0);
   EXPECT_EQ(path.right_bound[3].y, 0.0);
+}
+
+TEST(StaticDrivableArea, getBoundWithIntersectionAreas)
+{
+  using autoware::behavior_path_planner::utils::getBoundWithIntersectionAreas;
+  std::vector<lanelet::ConstPoint3d> original_bound;
+  std::shared_ptr<autoware::route_handler::RouteHandler> route_handler =
+    std::make_shared<autoware::route_handler::RouteHandler>();
+  std::vector<DrivableLanes> drivable_lanes;
+  bool is_left = false;
+  auto result =
+    getBoundWithIntersectionAreas(original_bound, route_handler, drivable_lanes, is_left);
+  EXPECT_TRUE(result.empty());
+
+  const std::string map_path = autoware::test_utils::get_absolute_path_to_lanelet_map(
+    "autoware_test_utils", "intersection/lanelet2_map.osm");
+  route_handler->setMap(autoware::test_utils::make_map_bin_msg(map_path));
+  DrivableLanes lanes;
+  const auto lanelet_with_intersection_area = route_handler->getLaneletsFromId(3101);
+  lanes.middle_lanes = {};
+  lanes.right_lane = lanelet_with_intersection_area;
+  lanes.left_lane = lanelet_with_intersection_area;
+  for (const auto & p : lanelet_with_intersection_area.rightBound()) {
+    original_bound.push_back(p);
+  }
+  drivable_lanes.push_back(lanes);
+  result = getBoundWithIntersectionAreas(original_bound, route_handler, drivable_lanes, is_left);
+  // the expanded bound includes the intersection area so its size is larger
+  EXPECT_GT(result.size(), original_bound.size());
 }

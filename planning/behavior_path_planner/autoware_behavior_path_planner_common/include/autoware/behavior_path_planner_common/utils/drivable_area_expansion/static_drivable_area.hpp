@@ -98,6 +98,14 @@ std::vector<lanelet::ConstPoint3d> getBoundWithHatchedRoadMarkings(
   const std::vector<lanelet::ConstPoint3d> & original_bound,
   const std::shared_ptr<RouteHandler> & route_handler);
 
+/**
+ * @brief Expand the given bound to include intersection areas from the map
+ * @param [in] original_bound original bound to expand
+ * @param [in] drivable_lanes lanelets to consider
+ * @param [in] route_handler route handler with the map information
+ * @param [in] is_left whether the bound to calculate is on the left or not
+ * @return the bound including intersection areas
+ */
 std::vector<lanelet::ConstPoint3d> getBoundWithIntersectionAreas(
   const std::vector<lanelet::ConstPoint3d> & original_bound,
   const std::shared_ptr<RouteHandler> & route_handler,
