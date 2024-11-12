@@ -20,6 +20,7 @@ if(BUILD_TESTING)
     tests/test_dynamic_obstacle.cpp
     tests/test_path_utils.cpp
     tests/test_utils.cpp
+    tests/test_state_machine.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
     autoware_behavior_velocity_run_out_module
