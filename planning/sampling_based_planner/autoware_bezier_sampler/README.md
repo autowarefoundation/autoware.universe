@@ -1,3 +1,4 @@
-# Bézier sampler
+## ベジエサンプラー
 
-Implementation of bézier curves and their generation following the sampling strategy from <https://ieeexplore.ieee.org/document/8932495>
+このドキュメントでは、ベジエ曲線とその生成に関する実装について説明します。サンプリング戦略は [IEEE](https://ieeexplore.ieee.org/document/8932495) に掲載された論文に従っています。
+

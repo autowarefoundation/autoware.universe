@@ -1,26 +1,27 @@
 # bag_time_manager_rviz_plugin
 
-## Purpose
+## 目的
 
-This plugin allows publishing and controlling the ros bag time.
+このプラグインは、rosバッグの時間をパブリッシュし制御します。
 
-## Output
+## 出力
 
-tbd.
+TBD
 
-## HowToUse
+## 使用方法
 
-1. Start rviz and select panels/Add new panel.
+1. rvizを起動し、パネル／新しいパネルの追加を選択します。
 
    ![select_panel](./images/select_panels.png)
 
-2. Select BagTimeManagerPanel and press OK.
+2. BagTimeManagerPanelを選択し、OKを押します。
 
    ![select_manager_plugin](./images/add_bag_time_manager_panel.png)
 
-3. See bag_time_manager_rviz_plugin/BagTimeManagerPanel is added.
+3. bag_time_manager_rviz_plugin/BagTimeManagerPanelが追加されていることを確認します。
 
    ![manager_plugin](./images/bag_time_manager_panel.png)
 
-- Pause/Resume: pause/resume the clock.
-- ApplyRate: apply rate of the clock.
+- Pause/Resume: クロックを一時停止/再開します。
+- ApplyRate: クロックのレートを適用します。
+

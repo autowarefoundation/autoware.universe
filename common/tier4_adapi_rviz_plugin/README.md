@@ -2,28 +2,29 @@
 
 ## RoutePanel
 
-To use the panel, set the topic name from 2D Goal Pose Tool to `/rviz/routing/pose`.
-By default, when a tool publish a pose, the panel immediately sets a route with that as the goal.
-Enable or disable of allow_goal_modification option can be set with the check box.
+パネルを使用するには、2D Goal Pose Tool のトピック名を `/rviz/routing/pose` に設定します。
+既定では、ツールがポーズを公開すると、パネルはそのポーズをゴールとするルートをすぐに設定します。
+allow_goal_modification オプションの有効化または無効化はチェックボックスで設定できます。
 
-Push the mode button in the waypoint to enter waypoint mode. In this mode, the pose is added to waypoints.
-Press the apply button to set the route using the saved waypoints (the last one is a goal).
-Reset the saved waypoints with the reset button.
+ウェイポイント内のモードボタンを押してウェイポイントモードに入ります。このモードでは、ポーズがウェイポイントに追加されます。
+保存したウェイポイント (最後の一つはゴール) を使用してルートを設定するには、適用ボタンを押します。
+保存したウェイポイントをリセットするには、リセットボタンを押します。
 
-## Material Design Icons
+## Material Design アイコン
 
-This project uses [Material Design Icons](https://developers.google.com/fonts/docs/material_symbols) by Google. These icons are used under the terms of the Apache License, Version 2.0.
+このプロジェクトでは、Google の [Material Design Icons](https://developers.google.com/fonts/docs/material_symbols) を使用しています。これらのアイコンは Apache License, Version 2.0 の条項に基づいて使用されています。
 
-Material Design Icons are a collection of symbols provided by Google that are used to enhance the user interface of applications, websites, and other digital products.
+Material Design アイコンは、Google が提供するシンボルのコレクションで、アプリケーション、ウェブサイト、その他のデジタル製品のユーザーインターフェイスを強化するために使用されています。
 
-### License
+### ライセンス
 
-The Material Design Icons are licensed under the Apache License, Version 2.0. You may obtain a copy of the License at:
+Material Design アイコンは Apache License, Version 2.0 のもとでライセンスされています。ライセンスのコピーは次の場所から入手できます。
 
 <http://www.apache.org/licenses/LICENSE-2.0>
 
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+適用される法律によって要求されるか、書面により同意しない限り、ライセンスに基づいて配布されるソフトウェアは、「現状のまま」で明示的または黙示的な保証や条件なしに配布されます。ライセンスの特定の言語に準拠した許可およびライセンスに基づく制限事項を参照してください。
 
-### Acknowledgments
+### 謝辞
 
-We would like to express our gratitude to Google for making these icons available to the community, helping developers and designers enhance the visual appeal and user experience of their projects.
+これらのアイコンをコミュニティに提供し、開発者とデザイナーがプロジェクトの視覚的魅力とユーザーエクスペリエンスを強化するのに役立てている Google に感謝の意を表します。
+

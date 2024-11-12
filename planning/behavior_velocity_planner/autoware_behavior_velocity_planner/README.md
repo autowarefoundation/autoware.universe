@@ -1,11 +1,11 @@
 # Behavior Velocity Planner
 
-## Overview
+## 概要
 
-`behavior_velocity_planner` is a planner that adjust velocity based on the traffic rules.
-It loads modules as plugins. Please refer to the links listed below for detail on each module.
+`behavior_velocity_planner` は交通規則に基づいて速度を調整するプランナーです。
+モジュールをプラグインとして読み込みます。各モジュールについて詳しくは、次のリンクを参照してください。
 
-![Architecture](./docs/BehaviorVelocityPlanner-Architecture.drawio.svg)
+![アーキテクチャ](./docs/BehaviorVelocityPlanner-Architecture.drawio.svg)
 
 - [Blind Spot](../autoware_behavior_velocity_blind_spot_module/README.md)
 - [Crosswalk](../autoware_behavior_velocity_crosswalk_module/README.md)
@@ -21,49 +21,50 @@ It loads modules as plugins. Please refer to the links listed below for detail o
 - [Run Out](../autoware_behavior_velocity_run_out_module/README.md)
 - [Speed Bump](../autoware_behavior_velocity_speed_bump_module/README.md)
 
-When each module plans velocity, it considers based on `base_link`(center of rear-wheel axis) pose.
-So for example, in order to stop at a stop line with the vehicles' front on the stop line, it calculates `base_link` position from the distance between `base_link` to front and modifies path velocity from the `base_link` position.
+各モジュールが速度を計画する際は、`base_link`（後車軸の中央）の姿勢を基準として考慮します。
+たとえば、ストップラインに車の前面を向けて停止するには、`base_link`から前面までの距離から`base_link`の姿勢を計算し、`base_link`の姿勢からパス速度を変更します。
 
 ![set_stop_velocity](./docs/set_stop_velocity.drawio.svg)
 
-## Input topics
+## 入力トピック
 
-| Name                                      | Type                                                  | Description                                                                                                                     |
-| ----------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `~input/path_with_lane_id`                | tier4_planning_msgs::msg::PathWithLaneId              | path with lane_id                                                                                                               |
-| `~input/vector_map`                       | autoware_map_msgs::msg::LaneletMapBin                 | vector map                                                                                                                      |
-| `~input/vehicle_odometry`                 | nav_msgs::msg::Odometry                               | vehicle velocity                                                                                                                |
-| `~input/dynamic_objects`                  | autoware_perception_msgs::msg::PredictedObjects       | dynamic objects                                                                                                                 |
-| `~input/no_ground_pointcloud`             | sensor_msgs::msg::PointCloud2                         | obstacle pointcloud                                                                                                             |
-| `~/input/compare_map_filtered_pointcloud` | sensor_msgs::msg::PointCloud2                         | obstacle pointcloud filtered by compare map. Note that this is used only when the detection method of run out module is Points. |
-| `~input/traffic_signals`                  | autoware_perception_msgs::msg::TrafficLightGroupArray | traffic light states                                                                                                            |
+| 名前                                    | タイプ                                                  | 説明                                                                                                                     |
+| --------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `~input/path_with_lane_id`              | tier4_planning_msgs::msg::PathWithLaneId              | レーンID付きパス                                                                                                               |
+| `~input/vector_map`                     | autoware_map_msgs::msg::LaneletMapBin                 | ベクターマップ                                                                                                                      |
+| `~input/vehicle_odometry`               | nav_msgs::msg::Odometry                               | 車両の速度                                                                                                                |
+| `~input/dynamic_objects`                | autoware_perception_msgs::msg::PredictedObjects       | 動的オブジェクト                                                                                                                 |
+| `~input/no_ground_pointcloud`           | sensor_msgs::msg::PointCloud2                         | 障害物点群                                                                                                             |
+| `~/input/compare_map_filtered_pointcloud` | sensor_msgs::msg::PointCloud2                         | 比較マップでフィルタリングされた障害物点群（この実行モジュールの検出方法がPointsの場合に使用されます） |
+| `~input/traffic_signals`                | autoware_perception_msgs::msg::TrafficLightGroupArray | 信号状態                                                                                                            |
 
-## Output topics
+## 出力トピック
 
-| Name                   | Type                                      | Description                            |
-| ---------------------- | ----------------------------------------- | -------------------------------------- |
-| `~output/path`         | autoware_planning_msgs::msg::Path         | path to be followed                    |
-| `~output/stop_reasons` | tier4_planning_msgs::msg::StopReasonArray | reasons that cause the vehicle to stop |
+| 名前                   | 型                                      | 説明                             |
+| ---------------------- | ----------------------------------------- | ----------------------------------- |
+| `~output/path`         | `autoware_planning_msgs::msg::Path`         | 走行すべきパス                     |
+| `~output/stop_reasons` | `tier4_planning_msgs::msg::StopReasonArray` | 車両を停止させる理由               |
 
-## Node parameters
+## ノードパラメータ
 
-| Parameter              | Type                 | Description                                                                         |
-| ---------------------- | -------------------- | ----------------------------------------------------------------------------------- |
-| `launch_modules`       | vector&lt;string&gt; | module names to launch                                                              |
-| `forward_path_length`  | double               | forward path length                                                                 |
-| `backward_path_length` | double               | backward path length                                                                |
-| `max_accel`            | double               | (to be a global parameter) max acceleration of the vehicle                          |
-| `system_delay`         | double               | (to be a global parameter) delay time until output control command                  |
-| `delay_response_time`  | double               | (to be a global parameter) delay time of the vehicle's response to control commands |
+| パラメーター        | タイプ            | 説明                                                                                                           |
+| ------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `launch_modules`     | 文字列のベクトル | 起動するモジュール名                                                                                            |
+| `forward_path_length` | double           | フォワードパス長                                                                                                |
+| `backward_path_length` | double           | バックワードパス長                                                                                               |
+| `max_accel`          | double           | (グローバルパラメータ) 車両の最大加速度                                                                           |
+| `system_delay`       | double           | (グローバルパラメータ) 制御コマンドの出力を始めるまでの遅延時間                                                   |
+| `delay_response_time` | double           | (グローバルパラメータ) 車両が制御コマンドに応答するまでの遅延時間                                               |
 
-## Traffic Light Handling in sim/real
+## シミュレーション/実環境における信号機処理
 
-The handling of traffic light information varies depending on the usage. In the below table, the traffic signal topic element for the corresponding lane is denoted as `info`, and if `info` is not available, it is denoted as `null`.
+信号機情報の処理は用途によって異なります。以下の表では、対応する車線の信号機トピック要素を `info` とし、`info` が使用できない場合は `null` とします。
 
-| module \\ case                                                                                             | `info` is `null`         | `info` is not `null`                                                                                                                                                                                                                                                                 |
-| :--------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| intersection_occlusion(`is_simulation = *`) <ul> <li>`info` is the latest non-`null` information</li></ul> | GO(occlusion is ignored) | intersection_occlusion uses the latest non UNKNOWN observation in the queue up to present.<ul><li>If `info` is `GREEN or UNKNOWN`, occlusion is cared</li><li>If `info` is `RED or YELLOW`, occlusion is ignored(GO) </li> <li> NOTE: Currently timeout is not considered</li> </ul> |
-| traffic_light(sim, `is_simulation = true`) <ul> <li>`info` is current information</li></ul>                | GO                       | traffic_light uses the perceived traffic light information at present directly. <ul><li>If `info` is timeout, STOP whatever the color is</li> <li>If `info` is not timeout, then act according to the color. If `info` is `UNKNOWN`, STOP</li></ul> {: rowspan=2}                    |
-| traffic_light(real, `is_simulation = false`) <ul> <li>`info` is current information</li></ul>              | STOP                     | &#8288 {: style="padding:0"}                                                                                                                                                                                                                                                         |
-| crosswalk with Traffic Light(`is_simulation = *`) <ul> <li>`info` is current information</li></ul>         | default                  | <ul> <li>If `disable_yield_for_new_stopped_object` is true, each sub scene_module ignore newly detected pedestrians after module instantiation.</li> <li>If `ignore_with_traffic_light` is true, occlusion detection is skipped.</li></ul>                                           |
-| map_based_prediction(`is_simulation = *`) <ul> <li>`info` is current information</li></ul>                 | default                  | If a pedestrian traffic light is<ul> <li>RED, surrounding pedestrians are not predicted.</li> <li>GREEN, stopped pedestrians are not predicted.</li></ul>                                                                                                                            |
+| モジュール/ケース                                                                                                 | `info` が `null`                | `info` が `null` 以外                                                                                                                                                                                       |
+| :------------------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| intersection_occlusion(`is_simulation = *`) <ul> <li>`info` は最新の非 `null` 情報</li></ul>                | GO (遮蔽は無視されます)         | intersection_occlusion は現在までのキューの中で最新の UNKNOWN 以外の情報を利用します。<ul><li>`info` が `GREEN` または `UNKNOWN` の場合、遮蔽が考慮されます</li><li>`info` が `RED` または `YELLOW` の場合、遮蔽は無視されます (GO)</ li> <li> 注: 現在、タイムアウトは考慮されていません</li> </ul> |
+| traffic_light(sim, `is_simulation = true`) <ul> <li>`info` は現在の情報</li></ul>                       | GO                            | traffic_light は現在知覚している交通信号情報を直接使用します。<ul><li>`info` がタイムアウトの場合は、色に関係なく停止します</li> <li>`info` がタイムアウトでない場合は、色に応じて動作します。`info` が `UNKNOWN` の場合は、停止します</li></ul> {: rowspan=2} |
+| traffic_light(real, `is_simulation = false`) <ul> <li>`info` は現在の情報</li></ul>                      | 停止                           | {: style="padding:0"}                                                                                                                                                                                                                                                              |
+| 歩行者横断歩道と交通信号 (`is_simulation = *`) <ul> <li>`info` は現在の情報</li></ul>                   | デフォルト                     | <ul> <li>`disable_yield_for_new_stopped_object` が true の場合、各サブ scene_module はモジュールインスタンス化後に検出された新しい歩行者を無視します。</li> <li>`ignore_with_traffic_light` が true の場合、遮蔽検出はスキップされます。</li></ul> |
+| map_based_prediction(`is_simulation = *`) <ul> <li>`info` は現在の情報</li></ul>                        | デフォルト                     | 歩行者信号が<ul> <li>RED の場合、周囲の歩行者は予測されません。</li> <li>GREEN の場合、停止中の歩行者は予測されません。</li></ul>                                                                                                                        |
+

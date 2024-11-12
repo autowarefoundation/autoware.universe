@@ -1,32 +1,33 @@
-# Avoidance module for static objects
+## 静止物回避モジュール
 
 ![fig](./images/purpose/rviz.png)
 
-## Purpose/Role
+## 目的/役割
 
-This is a rule-based avoidance module, which runs based on perception output data, HDMap, current path and route. This module is designed to create avoidance paths for static (=stopped) objects in simple situations. Currently, this module doesn't support dynamic (=moving) objects.
+これはルールベースの回避モジュールで、知覚出力データ、HDマップ、現在のパスとルートに基づいて実行されます。このモジュールは、単純な状況における静止 (=停止) 物体に対する回避パスを作成するように設計されています。現在、このモジュールは動的 (=移動) 物体をサポートしていません。
 
 ![fig](./images/purpose/avoidance.png)
 
-This module has an [RTC interface](../../autoware_rtc_interface/README.md), and the user can select operation mode from MANUAL/AUTO depending on the performance of the vehicle's sensors. If the user selects MANUAL mode, this module outputs a candidate avoidance path and awaits operator approval. In the case where the sensor/perception performance is insufficient and false positives occur, we recommend MANUAL mode to prevent unnecessary avoidance maneuvers.
+このモジュールは[RTC インターフェイス](../../autoware_rtc_interface/README.md)を持ち、ユーザーは車両のセンサーの性能に応じてMANUAL/AUTOから運転モードを選択できます。ユーザーがMANUALモードを選択した場合、このモジュールは回避パスの候補を出力し、オペレーターの承認を待ちます。センサー/知覚の性能が不十分で誤検知が発生する場合は、不要な回避操作を防ぐためにMANUALモードをお勧めします。
 
-If the user selects AUTO mode, this module modifies the current following path without operator approval. If the sensor/perception performance is sufficient, use AUTO mode.
+ユーザーがAUTOモードを選択した場合、このモジュールはオペレーターの承認なしで現在の追従パスを変更します。センサー/知覚の性能が十分な場合は、AUTOモードを使用します。
 
-### Limitations
+### 制限事項
 
-This module allows developers to design vehicle behavior in avoidance planning using specific rules. Due to the property of rule-based planning, the algorithm cannot compensate for not colliding with obstacles in complex cases. This is a trade-off between "be intuitive and easy to design" and "be hard to tune but can handle many cases". This module adopts the former policy and therefore this output should be checked more strictly in the later stage. In the .iv reference implementation, there is another avoidance module in the motion planning module that uses optimization to handle the avoidance in complex cases. (Note that, the motion planner needs to be adjusted so that the behavior result will not be changed much in the simple case and this is a typical challenge for the behavior-motion hierarchical architecture.)
+このモジュールにより、開発者は特定のルールを使用した回避計画における車両の動作を設計できます。ルールベースの計画の特性上、このアルゴリズムは複雑な場合における障害物との衝突を補正できません。これは、「直感的で設計が容易」と「調整が難しいが多くのケースに対応できる」とのトレードオフです。このモジュールは前者のポリシーを採用しているため、この出力を後工程でより厳密に確認する必要があります。`.iv` リファレンス実装では、モーション計画モジュールに、複雑なケースにおける回避処理を行うための最適化を使用する別の回避モジュールがあります。(モーションプランナーは、単純なケースで動作結果があまり変わらないように調整する必要があり、これは階層的挙動・モーションアーキテクチャにおける典型的な課題です。)
 
-### Why is avoidance in behavior module?
+### 回避が挙動モジュールにある理由
 
-This module executes avoidance over lanes, and the decision requires the lane structure information to take care of traffic rules (e.g. it needs to send an indicator signal when the vehicle crosses a lane). The difference between the motion and behavior modules in the planning stack is whether the planner takes traffic rules into account, which is why this avoidance module exists in the behavior module.
+このモジュールは車線をまたぐ回避を実行し、決定には交通ルールに対応する車線構造情報が必要です(例: 車両が車線を横断するときにウィンカー信号を送信する必要があります)。計画スタックにおけるモーションモジュールと挙動モジュールの違いは、プランナーが交通ルールを考慮するかどうかであり、この回避モジュールが挙動モジュールに存在する理由です。
 
 <br>
 
-If you would like to know the overview rather than the detail, please skip the next section and refer to [FAQ](#frequently-asked-questions).
+詳細ではなく概要を知りたい場合は、次のセクションをスキップして[FAQ](#よくある質問)を参照してください。
 
-## Inner workings/Algorithms
+## 内部動作/アルゴリズム
 
-This module mainly has two parts, target filtering and path generation. At first, all objects are filtered by several conditions. In this step, the module checks avoidance feasibility and necessity. After that, this module generates avoidance path outline, which we call **shift line**, based on filtered objects. The shift lines are set into [path shifter](../autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design.md), which is a library for path generation, to create a smooth shift path. Additionally, this module has a feature to check non-target objects so that the ego can avoid target objects safely. This feature receives a generated avoidance path and surrounding objects, and judges the current situation. Lastly, this module updates current ego behavior.
+このモジュールには、主にターゲットフィルタリングとパスジェネレーションの2つの部分があります。最初に、すべてのオブジェクトがいくつかの条件でフィルタリングされます。このステップで、モジュールは回避の実現可能性と必要性をチェックします。その後、このモジュールは、フィルタリングされたオブジェクトを基に、**シフトライン**と呼ばれる回避パスの輪郭を生成します。シフトラインは[パスシフター](../autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design.md)に設定されます。パスシフターは、スムーズなシフトパスの生成に使用されるパスジェネレーション用のライブラリです。さらに、このモジュールには、エゴがターゲットオブジェクトを安全に回避できるように、ターゲット以外のオブジェクトをチェックする機能があります。この機能は、生成された回避パスと周囲のオブジェクトを受け取り、現在の状況を判断します。最後に、このモジュールは現在のエゴ挙動を更新します。
+
 
 ```plantuml
 @startuml
@@ -206,34 +207,35 @@ stop
 @enduml
 ```
 
-## Target object filtering
+## ターゲットオブジェクトフィルタリング
 
-### Overview
+### 概要
 
-The module uses the following conditions to filter avoidance target objects.
+このモジュールは、回避するターゲットオブジェクトをフィルタリングするために、以下の条件を使用します。
 
-| Check condition                                                                                | Target class             | Details                                                                                                                                                                              | If conditions are not met       |
-| ---------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
-| Is an avoidance target class object?                                                           | All                      | Use can select avoidance target class from config file.                                                                                                                              | Never avoid it.                 |
-| Is a stopped object?                                                                           | All                      | Objects keep higher speed than `th_moving_speed` for longer period of time than `th_moving_time` is judged as moving.                                                                | Never avoid it.                 |
-| Is within detection area?                                                                      | All                      | The module creates detection area to filter target objects roughly based on lateral margin in config file. (see [here](#width-of-detection-area))                                    | Never avoid it.                 |
-| Isn't there enough lateral distance between the object and path?                               | All                      | -                                                                                                                                                                                    | Never avoid it.                 |
-| Is near the centerline of ego lane?                                                            | All                      | -                                                                                                                                                                                    | It depends on other conditions. |
-| Is there a crosswalk near the object?                                                          | Pedestrian, Bicycle      | The module doesn't avoid the Pedestrian and Bicycle nearer the crosswalk because the ego should stop in front of it if they're crossing the road. (see [here](#for-crosswalk-users)) | Never avoid it.                 |
-| Is the distance between the object and traffic light along the path longer than the threshold? | Car, Truck, Bus, Trailer | The module uses this condition when there is ambiguity about whether the vehicle is parked.                                                                                          | It depends on other conditions. |
-| Is the distance between the object and crosswalk light along the path longer than threshold?   | Car, Truck, Bus, Trailer | Same as above.                                                                                                                                                                       | It depends on other conditions. |
-| Is the stopping time longer than threshold?                                                    | Car, Truck, Bus, Trailer | Same as above.                                                                                                                                                                       | It depends on other conditions. |
-| Is within intersection?                                                                        | Car, Truck, Bus, Trailer | The module assumes that there isn't any parked vehicle within intersection.                                                                                                          | It depends on other conditions. |
-| Is on ego lane?                                                                                | Car, Truck, Bus, Trailer | -                                                                                                                                                                                    | It depends on other conditions. |
-| Is a parked vehicle?                                                                           | Car, Truck, Bus, Trailer | The module judges whether the vehicle is a parked vehicle based on its lateral offset. (see [here](#judge-if-its-a-parked-vehicle))                                                  | It depends on other conditions. |
-| Is merging into ego lane from other lane?                                                      | Car, Truck, Bus, Trailer | The module judges the vehicle behavior based on its yaw angle and offset direction. (see [here](#judge-vehicle-behavior))                                                            | It depends on other conditions. |
-| Is merging into other lane from ego lane?                                                      | Car, Truck, Bus, Trailer | Same as above.                                                                                                                                                                       | It depends on other conditions. |
+| 条件の確認                                                                                                                              | ターゲットクラス                   | 詳細                                                                                                                                                                                                                 | 条件が満たされない場合                   |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| 回避対象クラスオブジェクトですか？                                                                                                           | 全て                               | 設定ファイルから回避対象クラスを選択できます。                                                                                                                                                                       | 回避しません。                               |
+| 停止中のオブジェクトですか？                                                                                                          | 全て                               | `th_moving_speed`よりも速い速度を`th_moving_time`よりも長い時間維持するオブジェクトは移動中と判断されます。                                                                                                   | 回避しません。                               |
+| 検知エリア内ですか？                                                                                                                  | 全て                               | モジュールは設定ファイルの横方向マージンに基づいて対象オブジェクトを大まかにフィルターするために検知エリアを作成します。（[こちら](#width-of-detection-area)を参照）                                                   | 回避しません。                               |
+| オブジェクトとパスの間に十分な横方向距離がないですか？                                                                              | 全て                               | -                                                                                                                                                                                                                      | 回避しません。                               |
+| 自車線のセンターラインの近くですか？                                                                                                       | 全て                               | -                                                                                                                                                                                                                      | その他の条件によって異なります。           |
+| オブジェクトの近くに横断歩道がありますか？                                                                                                    | 歩行者、自転車                    | モジュールは横断歩道の近くに歩行者と自転車を回避しません。横断歩道で道路を渡っている場合、自車は停止する必要があるからです。（[こちら](#for-crosswalk-users)を参照）                                       | 回避しません。                               |
+| パス上のオブジェクトと信号との距離がしきい値よりも長くなっていますか？                                                                  | 乗用車、トラック、バス、トレーラー | この条件は、車両が駐車されているかどうかが不明な場合に使用されます。                                                                                                                                                       | その他の条件によって異なります。           |
+| パス上のオブジェクトと横断歩道信号との距離がしきい値よりも長くなっていますか？                                                    | 乗用車、トラック、バス、トレーラー | 上記と同じ。                                                                                                                                                                                                   | その他の条件によって異なります。           |
+| 停止時間がしきい値よりも長くなっていますか？                                                                                              | 乗用車、トラック、バス、トレーラー | 上記と同じ。                                                                                                                                                                                                   | その他の条件によって異なります。           |
+| 交差点内ですか？                                                                                                                        | 乗用車、トラック、バス、トレーラー | モジュールは交差点内に駐車車両がないことを前提としています。                                                                                                                                                              | その他の条件によって異なります。           |
+| 自車線上にありますか？                                                                                                                      | 乗用車、トラック、バス、トレーラー | -                                                                                                                                                                                                                      | その他の条件によって異なります。           |
+| 駐車車両ですか？                                                                                                                          | 乗用車、トラック、バス、トレーラー | モジュールは横方向オフセットに基づいて車両が駐車車両かどうかを判断します。（[こちら](#judge-if-its-a-parked-vehicle)を参照）                                                                                    | その他の条件によって異なります。           |
+| 他車線から自車線に合流していますか？                                                                                                       | 乗用車、トラック、バス、トレーラー | モジュールはヨー角とオフセットの方向に基づいて車両の挙動を判断します。（[こちら](#judge-vehicle-behavior)を参照）                                                                                                 | その他の条件によって異なります。           |
+| 自車線から他車線に合流していますか？                                                                                                       | 乗用車、トラック、バス、トレーラー | 上記と同じ。                                                                                                                                                                                                   | その他の条件によって異なります。           |
 
-### Common conditions
+### 一般的な条件
 
-#### Detection area
+#### 検出エリア
 
-The module generates detection area for target filtering based on the following parameters:
+モジュールは、以下のパラメータに基づいて、ターゲットのフィルタリング用の検出エリアを生成します。
+
 
 ```yaml
       # avoidance is performed for the object type with true
@@ -255,16 +257,17 @@ The module generates detection area for target filtering based on the following 
           backward_distance: 10.0                       # [m]
 ```
 
-##### Width of detection area
+##### 検出領域の幅
 
-1. Get the largest lateral margin of all classes (Car, Truck, ...). The margin is the sum of `soft_margin` and `hard_margin_for_parked_vehicle`.
-2. The detection area width is the sum of ego vehicle width and the largest lateral margin.
+1. 全てのクラス（車両、トラックなど）の最大の側方マージンを取得します。マージンは`soft_margin`と`hard_margin_for_parked_vehicle`の合計です。
+2. 検出領域の幅は自車幅と最大の側方マージンの合計です。
 
-##### Longitudinal distance of detection area
+##### 検出領域の縦方向距離
 
-If the parameter `detection_area.static` is set to `true`, the module creates detection area whose longitudinal distance is `max_forward_distance`.
+パラメータ`detection_area.static`が`true`に設定されている場合、モジュールは縦方向距離が`max_forward_distance`の検出領域を作成します。
 
-If the parameter `detection_area.static` is set to `false`, the module creates a detection area so that the ego can avoid objects with minimum lateral jerk value. Thus, the longitudinal distance depends on maximum lateral shift length, lateral jerk constraints and current ego speed. Additionally, it has to consider the distance used for the preparation phase.
+パラメータ`detection_area.static`が`false`に設定されている場合、モジュールは自車が最小の側方ジャーク値でオブジェクトを回避できるように検出領域を作成します。したがって、縦方向距離は最大側方シフト長、側方ジャーク制約、および現在の自車速度によって異なります。さらに、準備段階で使用される距離も考慮する必要があります。
+
 
 ```c++
 ...
@@ -279,23 +282,20 @@ If the parameter `detection_area.static` is set to `false`, the module creates a
       parameters_->object_check_max_forward_distance);
 ```
 
-![fig](./images/target_filter/detection_area.svg)
+### 車両以外のオブジェクトの条件
 
-![fig](./images/target_filter/detection_area_rviz.png)
+#### 歩行者用横断歩道利用者の場合
 
-### Conditions for non-vehicle type objects
-
-#### For crosswalk users
-
-If Pedestrian and Bicycle are closer to crosswalk than threshold 2.0m (hard coded for now), the module judges they're crossing the road and never avoids them.
+歩行者と自転車が横断歩道に2.0m（現在はハードコーディング）未満近接した場合、このモジュールはこの歩行者らが交差点を横断していると判断し、回避しません。
 
 ![fig](./images/target_filter/crosswalk.svg)
 
-### Conditions for vehicle type objects
+### 車両タイプのオブジェクトの条件
 
-#### Judge vehicle behavior
+#### 車両の挙動の判定
 
-The module classifies vehicles into the following three behaviors based on yaw angle and offset direction.
+このモジュールは、ヨー角とオフセット方向に基づいて車両を以下の3つの挙動に分類します。
+
 
 ```yaml
 # params for filtering objects that are in intersection
@@ -303,11 +303,12 @@ intersection:
   yaw_deviation: 0.349 # [rad] (default 20.0deg)
 ```
 
-| Behavior  | Details                                                                                                          | Figure                                       |
-| --------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| NONE      | If the object's relative yaw angle to lane is less than threshold `yaw_deviation`, it is classified into `NONE`. | ![fig](./images/target_filter/none.png)      |
-| MERGING   | See following flowchart.                                                                                         | ![fig](./images/target_filter/merging.png)   |
-| DEVIATING | See following flowchart.                                                                                         | ![fig](./images/target_filter/deviating.png) |
+| 動作  | 詳細                                                                                                          | 図形                                       |
+| ------ | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| NONE  | オブジェクトの車線に対する相対的な偏角が閾値 `yaw_deviation` 未満の場合、`NONE` に分類されます。 | ![fig](./images/target_filter/none.png)      |
+| MERGING   | 以下のフローチャートを参照してください。                                                                       | ![fig](./images/target_filter/merging.png)   |
+| DEVIATING | 以下のフローチャートを参照してください。                                                                       | ![fig](./images/target_filter/deviating.png) |
+
 
 ```plantuml
 @startuml
@@ -352,40 +353,41 @@ stop
 
 ```
 
-#### Judge if it's a parked vehicle
+#### 駐車車両の判定
 
-Not only the length from the centerline, but also the length from the road shoulder is calculated and used for the filtering process. In this logic, it calculates ratio of **actual shift length** to **shiftable shift length** as follows. If the result is larger than threshold `th_shiftable_ratio`, the module judges the vehicle is a parked vehicle.
+センターラインからの距離だけでなく、路肩からの距離も計算して、フィルタリング処理に使用します。このロジックでは、次のとおり**実際のシフト長**と**シフト可能なシフト長**の比率を計算します。結果がしきい値 `th_shiftable_ratio` よりも大きい場合、このモジュールは車両が駐車車両であると判断します。
 
 $$
 L_{d} = \frac{W_{lane} - W_{obj}}{2}, \\
 ratio =  \frac{L_{a}}{L_{d}}
 $$
 
-- $L_{d}$ : shiftable length.
-- $L_{a}$ : actual shift length.
-- $W_{lane}$ : lane width.
-- $W_{obj}$ : object width.
+- $L_{d}$ : シフト可能な長さ。
+- $L_{a}$ : 実際のシフト長。
+- $W_{lane}$ : レーン幅。
+- $W_{obj}$ : オブジェクトの幅。
 
 ![fig2](./images/target_filter/parked_vehicle.svg)
 
-### Target object filtering
+### ターゲットオブジェクトのフィルタリング
 
-| Situation                                                                                                                    | Details                                                     | Ego behavior                                                                                               |
+| 状況                                                                                                                   | 詳細                                                   | 自車動作                                                                                               |
 | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Vehicle is within intersection area defined in HDMap. The module ignores vehicles following a lane or merging into ego lane. | ![fig](./images/target_filter/never_avoid_intersection.png) | Never avoid it.                                                                                            |
-| Vehicle is on ego lane. There are adjacent lanes for both sides.                                                             | ![fig](./images/target_filter/never_avoid_not_edge.png)     | Never avoid it.                                                                                            |
-| Vehicle is merging into other lane from ego lane. Most of its footprint is on ego lane.                                      | ![fig](./images/target_filter/never_avoid_deviating.png)    | Never avoid it.                                                                                            |
-| Vehicle is merging into ego lane from other lane. Most of its footprint is on ego lane.                                      | ![fig](./images/target_filter/never_avoid_merging.png)      | Never avoid it.                                                                                            |
-| Vehicle does not appear to be parked and is stopped in front of a crosswalk or traffic light.                                | ![fig](./images/target_filter/never_avoid_stop_factor.png)  | Never avoid it.                                                                                            |
-| Vehicle stops on ego lane while pulling over to the side of the road.                                                        | ![fig](./images/target_filter/avoid_on_ego_lane.png)        | Avoid it immediately.                                                                                      |
-| Vehicle stops on adjacent lane.                                                                                              | ![fig](./images/target_filter/avoid_not_on_ego_lane.png)    | Avoid it immediately.                                                                                      |
-| Vehicle stops on ego lane without pulling over to the side of the road.                                                      | ![fig](./images/target_filter/ambiguous_parallel.png)       | Set the parameter `avoidance_for_ambiguous_vehicle.enable` to `true`, the module avoids ambiguous vehicle. |
-| Vehicle is merging into ego lane from other lane.                                                                            | ![fig](./images/target_filter/ambiguous_merging.png)        | Set the parameter `avoidance_for_ambiguous_vehicle.enable` to `true`, the module avoids ambiguous vehicle. |
-| Vehicle is merging into other lane from ego lane.                                                                            | ![fig](./images/target_filter/ambiguous_deviating.png)      | Set the parameter `avoidance_for_ambiguous_vehicle.enable` to `true`, the module avoids ambiguous vehicle. |
+| 自車がHDMapで定義された交差点エリア内にある場合。このモジュールは、車線を走行中または自車線に合流中の車両を無視する | ![fig](./images/target_filter/never_avoid_intersection.png) | 回避しない。                                                                                            |
+| 自車が自車線上にいる場合、両側に隣接した車線がある | ![fig](./images/target_filter/never_avoid_not_edge.png) | 回避しない。                                                                                            |
+| 自車線から他の車線に合流中の車両。その車両のフットプリントの大部分が自車線にある | ![fig](./images/target_filter/never_avoid_deviating.png) | 回避しない。                                                                                            |
+| 他の車線から自車線に合流中の車両。その車両のフットプリントの大部分が自車線にある | ![fig](./images/target_filter/never_avoid_merging.png) | 回避しない。                                                                                            |
+| 駐車しているようには見えないが、横断歩道または信号の前に停止している車両 | ![fig](./images/target_filter/never_avoid_stop_factor.png) | 回避しない。                                                                                            |
+| 道路脇に停車しようとして自車線上で停止した車両 | ![fig](./images/target_filter/avoid_on_ego_lane.png) | すぐに回避する。                                                                                        |
+| 隣接した車線で停止した車両 | ![fig](./images/target_filter/avoid_not_on_ego_lane.png) | すぐに回避する。                                                                                        |
+| 道路脇に停車せずに自車線上で停止した車両 | ![fig](./images/target_filter/ambiguous_parallel.png) | パラメータ`avoidance_for_ambiguous_vehicle.enable`を`true`に設定すると、モジュールは不明瞭な車両を回避する。 |
+| 他の車線から自車線に合流中の車両 | ![fig](./images/target_filter/ambiguous_merging.png) | パラメータ`avoidance_for_ambiguous_vehicle.enable`を`true`に設定すると、モジュールは不明瞭な車両を回避する。 |
+| 自車線から他の車線に合流中の車両 | ![fig](./images/target_filter/ambiguous_deviating.png) | パラメータ`avoidance_for_ambiguous_vehicle.enable`を`true`に設定すると、モジュールは不明瞭な車両を回避する。 |
 
-### Flowchart
+### フローチャート
 
-There are three main filtering functions `isSatisfiedWithCommonCondition()`, `isSatisfiedWithVehicleCondition()` and `isSatisfiedWithNonVehicleCondition()`. The filtering process is executed according to the following flowchart. Additionally, the module checks avoidance necessity in `isNoNeedAvoidanceBehavior()` based on the object pose, ego path and lateral margin in the config file.
+`isSatisfiedWithCommonCondition()`, `isSatisfiedWithVehicleCondition()`, `isSatisfiedWithNonVehicleCondition()`の3つのメインフィルタリング関数があります。フィルタリングプロセスは次のフローチャートに従って実行されます。さらに、このモジュールはコンフィグファイル内のオブジェクトの姿勢、エゴパス、横マージンに基づいて`isNoNeedAvoidanceBehavior()`で回避の必要性を確認します。
+
 
 ```plantuml
 @startuml
@@ -432,9 +434,10 @@ stop
 @enduml
 ```
 
-#### Common conditions
+#### 共通条件
 
-At first, the function `isSatisfiedWithCommonCondition()` includes conditions used for all object classes.
+まず、`isSatisfiedWithCommonCondition()` 関数には、すべてのオブジェクトクラスに使用される条件が含まれます。
+
 
 ```plantuml
 @startuml
@@ -478,16 +481,17 @@ stop
 
 ```
 
-#### Conditions for vehicle
+#### 車両の条件
 
-Target class:
+対象クラス:
 
-- Car
-- Truck
-- Bus
-- Trailer
+- 乗用車
+- トラック
+- バス
+- トレーラー
 
-As a next step, the object is filtered by a condition specialized for its class.
+次のステップとして、オブジェクトはそのクラスに特化した条件でフィルタリングされます。
+
 
 ```plantuml
 @startuml
@@ -552,6 +556,7 @@ stop
 @enduml
 
 ```
+
 
 ```plantuml
 @startuml
@@ -622,6 +627,7 @@ stop
 @enduml
 ```
 
+
 ```plantuml
 @startuml
 skinparam defaultTextAlignment center
@@ -665,10 +671,11 @@ stop
 @enduml
 ```
 
-#### Conditions for non-vehicle objects
+#### 非車両オブジェクトの条件
 
-- Pedestrian
-- Bicycle
+- 歩行者
+- 自転車
+
 
 ```plantuml
 @startuml
@@ -712,33 +719,35 @@ stop
 @enduml
 ```
 
-## When target object has gone
+## ターゲット オブジェクトが消えたとき
 
-User can select the ego behavior when the target object has gone.
+ターゲット オブジェクトが消えた際のエゴの動作は、ユーザーが選択できます。
+
 
 ```yaml
 cancel:
   enable: true # [-]
 ```
 
-If the above parameter is `true`, this module reverts avoidance path when the following conditions are met.
+上記のパラメータが「真」の場合、以下の条件を満たしたときにこのモジュールは回避経路を戻します。
 
-- All target objects have gone.
-- The ego vehicle hasn't initiated avoidance maneuver yet.
+- すべてのターゲットオブジェクトが消えた
+- 主体は回避操作を開始していない
 
 ![fig](./images/cancel/cancel.png)
 
-If the parameter is `false`, this module keeps running even after the target object has gone.
+パラメータが「偽」の場合、このモジュールはターゲットオブジェクトが消えた後も実行し続けます。
 
-## Path generation
+## パス生成
 
-### How to prevent shift line chattering that is caused by perception noise
+### 知覚ノイズによるシフトラインのチャタリングを防ぐ方法
 
-Since the object recognition result contains noise related to position, orientation and polygon shape, if the module uses the raw object recognition results in path generation, the output path will be directly affected by the noise. Therefore, in order to reduce the influence of the noise, this module generates a polygon for each target object, and the output path is generated based on that.
+オブジェクト認識結果は位置、向き、多角形の形状に関連するノイズを含んでいるため、モジュールがパス生成で生のオブジェクト認識結果を使用すると、出力パスはノイズによって直接影響を受けます。そのため、このモジュールはノイズの影響を低減するために、各ターゲットオブジェクトの多角形を生成し、それをもとに出力パスを生成します。
 
 ![fig](./images/path_generation/envelope_polygon_rviz.png)
 
-The envelope polygon is a rectangle box, whose size depends on the object's polygon and buffer parameter `envelope_buffer_margin`. Additionally, it is always parallel to the reference path. When the module finds a target object for the first time, it initializes the polygon.
+エンベロープ多角形は長方形のボックスで、サイズはオブジェクトの多角形とバッファパラメータ「envelope_buffer_margin」によって異なります。さらに、常に基準パスと平行です。モジュールがターゲットオブジェクトを初めて検出したとき、多角形を初期化します。
+
 
 ```yaml
         car:
@@ -746,23 +755,24 @@ The envelope polygon is a rectangle box, whose size depends on the object's poly
           envelope_buffer_margin: 0.5                   # [m] FOR DEVELOPER
 ```
 
-![fig](./images/path_generation/envelope_polygon.png)
+### 封筒ポリゴンの生成
 
-The module creates a one-shot envelope polygon by using the latest object pose and raw polygon in every planning cycle. On the other hand, the module uses the envelope polygon information created in the last planning cycle in order to update the envelope polygon with consideration of the pose covariance.
+このモジュールは、各計画サイクルで最新のオブジェクトの姿勢と生ポリゴンを使用してワンショット封筒ポリゴンを作成します。一方で、このモジュールは前回の計画サイクルで作成された封筒ポリゴン情報を使用して、姿勢共分散を考慮して封筒ポリゴンを更新します。
 
-If the pose covariance is smaller than the threshold, the envelope polygon would be updated according to the following logic. If the one-shot envelope polygon is not within the previous envelope polygon, the module creates a new envelope polygon. Otherwise, it keeps the previous envelope polygon.
+姿勢共分散がしきい値より小さい場合、封筒ポリゴンは次のロジックに従って更新されます。ワンショット封筒ポリゴンが以前の封筒ポリゴン内にある場合、モジュールは新しい封筒ポリゴンを作成します。それ以外の場合、以前の封筒ポリゴンが維持されます。
 
 ![fig](./images/path_generation/polygon_update.png)
 
-When the pose covariance is larger than the threshold, it is compared with the maximum pose covariance of each object. If the value is smaller, the one-shot envelope polygon is used directly as the envelope polygon. Otherwise, it keeps the previous envelope polygon.
+姿勢共分散がしきい値より大きい場合、各オブジェクトの最大姿勢共分散と比較されます。値が小さい場合、ワンショット封筒ポリゴンが封筒ポリゴンとして直接使用されます。それ以外の場合、以前の封筒ポリゴンが維持されます。
 
-By doing this process, the envelope polygon size and pose will converge even if perception output includes noise in object pose or shape.
+この処理により、知覚出力がオブジェクトの姿勢または形状にノイズを含んでいても、封筒ポリゴンのサイズと姿勢は収束します。
 
-### Relationship between envelope polygon and avoidance path
+### 封筒ポリゴンと回避パスの関係
 
-The avoidance path has two shift sections, whose start or end point position depends on the envelope polygon. The end point of the avoidance shift section and start point of the return shift section are fixed based on the envelope polygon and the other side edges are dynamically changed based on ego speed, shift length, lateral jerk constraints, etc.
+回避パスには 2 つのシフトセクションがあり、その開始点または終了点の位置は封筒ポリゴンによって決まります。回避シフトセクションの終了点と帰還シフトセクションの開始点は、封筒ポリゴンと反対側のエッジに基づいて固定され、他の側面は自車速度、シフトの長さ、横方向ジャークの制約などに基づいて動的に変化します。
 
-The lateral positions of the two points are decided so that there can be enough space (=lateral margin) between ego body and the most overhang point of the envelope polygon edge points. User can adjust lateral margin with the following parameters.
+2 つの点の横方向の位置は、自車本体と封筒ポリゴン境界点の最もオーバーハングした点の間に十分なスペース (= 横方向余裕) ができるようになっています。ユーザーは、次のパラメーターを使用して横方向余裕を調整できます。
+
 
 ```yaml
         car:
@@ -773,7 +783,8 @@ The lateral positions of the two points are decided so that there can be enough 
             hard_margin_for_parked_vehicle: 0.7         # [m]
 ```
 
-The longitudinal positions depends on the envelope polygon, ego vehicle specification and the following parameters. The longitudinal distance between avoidance shift section end point and envelope polygon (=front longitudinal buffer) is the sum of `front_overhang` defined in `vehicle_info.param.yaml` and `longitudinal_margin` if the parameter `consider_front_overhang` is `true`. If `consider_front_overhang` is `false`, only `longitudinal_margin` is considered. Similarly, the distance between the return shift section start point and envelope polygon (=rear longitudinal buffer) is the sum of `rear_overhang` and `longitudinal_margin`.
+縦方向の位置は、エンベロープ多角形、自車仕様、次のパラメーターに依存します。回避シフトセクションの終点とエンベロープ多角形 (つまり前面縦方向バッファ) との縦方向距離は、`consider_front_overhang` パラメーターが `true` の場合、`vehicle_info.param.yaml` で定義された `front_overhang` と `longitudinal_margin` の合計です。`consider_front_overhang` が `false` の場合、`longitudinal_margin` のみが考慮されます。同様に、復帰シフトセクションの始点とエンベロープ多角形 (つまり後方縦方向バッファ) との距離は、`rear_overhang` と `longitudinal_margin` の合計です。
+
 
 ```yaml
 
@@ -791,11 +802,10 @@ The longitudinal positions depends on the envelope polygon, ego vehicle specific
           consider_rear_overhang: true                  # [-]
 ```
 
-![fig](./images/path_generation/margin.png)
+### 横断マージン
 
-### Lateral margin
+上記のとおり、横断マージンは次の2種類のタイプのパラメータを変更することで調整できます。`soft_margin`は横断マージンのソフト制約パラメータです。`hard_margin`と`hard_margin_for_parked_vehicle`はハード制約パラメータです。
 
-As mentioned above, user can adjust lateral margin by changing the following two types of parameters. The `soft_margin` is a soft constraint parameter for lateral margin. The `hard_margin` and `hard_margin_for_parked_vehicle` are hard constraint parameters.
 
 ```yaml
         car:
@@ -806,53 +816,56 @@ As mentioned above, user can adjust lateral margin by changing the following two
             hard_margin_for_parked_vehicle: 0.7         # [m]
 ```
 
-Basically, this module tries to generate an avoidance path in order to keep lateral distance, which is the sum of `soft_margin` and `hard_margin`/`hard_margin_for_parked_vehicle`, from the avoidance target object.
+## 回避経路生成モジュール
+
+このモジュールは基本的に、回避対象オブジェクトからの横方向距離（`soft_margin` と `hard_margin`/`hard_margin_for_parked_vehicle` の合計）を保つための回避経路を生成しようとします。
 
 ![fig](./images/path_generation/soft_hard.png)
 
-But if there isn't enough space to keep `soft_margin` distance, this module shortens soft constraint lateral margin. The parameter `soft_margin` is a maximum value of soft constraint, and actual soft margin can be a value between 0.0 and `soft_margin`. On the other hand, this module definitely keeps `hard_margin` or `hard_margin_for_parked_vehicle` depending on the situation. Thus, the minimum value of total lateral margin is `hard_margin`/`hard_margin_for_parked_vehicle`, and the maximum value is the sum of `hard_margin`/`hard_margin_for_parked_vehicle` and `soft_margin`.
+ただし、`soft_margin` 距離を維持する十分なスペースがない場合、このモジュールは制約なし横方向マージンを短くします。パラメーター `soft_margin` は制約なしの最大値で、実際の制約なしマージンは 0.0 から `soft_margin` の間の値になります。一方、このモジュールは状況に応じて `hard_margin` または `hard_margin_for_parked_vehicle` を必ず維持します。したがって、横方向全マージンの最小値は `hard_margin`/`hard_margin_for_parked_vehicle`、最大値は `hard_margin`/`hard_margin_for_parked_vehicle` と `soft_margin` の合計になります。
 
-The following figure shows the situation where this module shortens lateral soft constraint in order not to drive in the opposite lane when user sets parameter `use_lane_type` to `same_direction_lane`.
+次の図は、ユーザーがパラメーター `use_lane_type` を `same_direction_lane` に設定した場合、このモジュールが反対車線で走行しないために横方向制約なしマージンを短くする状況を示しています。
 
 ![fig](./images/path_generation/adjust_margin.png)
 
-This module avoids not only parked vehicles but also non-parked vehicles that stop temporarily for some reason (e.g. waiting for traffic light to change from red to green). Additionally, this module has two types of hard margin parameters, `hard_margin` and `hard_margin_for_parked_vehicle` and judges if it is a parked vehicle or not for each vehicle because it takes the risk of vehicle doors opening suddenly and people getting out from parked vehicles into consideration.
+このモジュールは一時的に何らかの理由で停止している駐車されていない車両（例：信号が赤から青に変わるのを待っている）だけではなく、駐車車両も回避します。さらに、このモジュールには 2 つタイプのハードマージンパラメーター `hard_margin` と `hard_margin_for_parked_vehicle` があり、車両のドアが突然開いたり、駐車車両から人が降りたりするリスクを考慮して各車両が駐車車両であるかどうかを判断します。
 
-Users should set `hard_margin_for_parked_vehicle` larger than `hard_margin` to prevent collisions with doors or people who suddenly exit a vehicle.
+ユーザーは、ドアや車両から突然降りてくる人との衝突を防ぐために、`hard_margin_for_parked_vehicle` を `hard_margin` より大きく設定する必要があります。
 
-This module has only one parameter `soft_margin` for soft lateral margin constraint.
+このモジュールには、制約なし横方向マージンに関するパラメーター `soft_margin` が 1 つだけあります。
 
 ![fig](./images/path_generation/hard_margin.png)
 
-As the hard margin parameters define the distance the user definitely wants to maintain, they are used in the logic to check whether the ego can pass the side of the target object without executing an avoidance maneuver as well.
+ハードマージンパラメーターはユーザーが確実に維持したい距離を定義するため、回避操作を実行せずにエゴが対象オブジェクトの側面を通過できるかどうかをチェックするロジックでも使用されます。
 
-If the lateral distance is less than `hard_margin`/`hard_margin_for_parked_vehicle` when assuming that the ego follows the current lane without an avoidance maneuver, this module thinks the ego can not pass the side of the object safely and the ego must avoid it. In this case, this module inserts a stop point until the avoidance maneuver is allowed to execute so that the ego can avoid the object after approval. (For example, the ego keeps stopping in front of such an object until the operator approves the avoidance maneuver if the module is in MANUAL mode.)
+回避操作なしでエゴが現在のレーンに従うと仮定した場合、横方向距離が `hard_margin`/`hard_margin_for_parked_vehicle` より小さい場合、このモジュールはエゴがオブジェクトの側面を安全に通過できないと判断し、回避する必要があります。この場合、このモジュールは回避操作の実行が許可されるまで停止点を入力し、エゴが承認後にオブジェクトを回避できるようにします。（たとえば、モジュールが MANUAL モードの場合、エゴはオペレータが回避操作を承認するまでそのようなオブジェクトの前で停止し続けます。）
 
 ![fig](./images/path_generation/must_avoid.png)
 
-On the other hand, if the lateral distance is larger than `hard_margin`/`hard_margin_for_parked_vehicle`, this module doesn't insert a stop point even when it is waiting for approval because it thinks it is possible to pass the side of the object safely.
+一方、横方向距離が `hard_margin`/`hard_margin_for_parked_vehicle` より大きい場合、このモジュールは承認を待っている場合でも停止点を挿入しません。それは、オブジェクトの側面を安全に通過できる可能性があると考えるためです。
 
 ![fig](./images/path_generation/pass_through.png)
 
-### When there is not enough space
+### スペースが不足している場合
 
-This module inserts a stop point only when the ego can potentially avoid the object. So, if it is not able to keep a distance more than `hard_margin`/`hard_margin_for_parked_vehicle`, this module does nothing. The following figure shows the situation where this module is not able to keep enough lateral distance when the user sets parameter `use_lane_type` to `same_direction_lane`.
+このモジュールは、エゴがオブジェクトを回避できる可能性がある場合にのみ停止点を挿入します。したがって、横方向距離を `hard_margin`/`hard_margin_for_parked_vehicle` より大きく維持できない場合、このモジュールは何も行いません。次の図は、ユーザーがパラメーター `use_lane_type` を `same_direction_lane` に設定した場合、このモジュールが十分な横方向距離を維持できない状況を示しています。
 
 ![fig](./images/path_generation/do_nothing.png)
 
 !!! info
 
-    In this situation, the obstacle stop feature in [obstacle_cruise_planner](../../autoware_obstacle_cruise_planner/README.md) is responsible for ego vehicle safety.
+    この状況では、[obstacle_cruise_planner](../../autoware_obstacle_cruise_planner/README.md) の障害物停止機能がエゴ車両の安全を担保します。
 
 ![fig](./images/path_generation/insufficient_drivable_space.png)
 
-### Shift length calculation
+### シフト長の計算
 
-The lateral shift length is the sum of `overhang_distance`, lateral margin, whose value is set in the config file, and half of ego vehicle width defined in `vehicle_info.param.yaml`. On the other hand, the module limits the shift length depending on the space the module can use for an avoidance maneuver and the parameters `soft_drivable_bound_margin` `hard_drivable_bound_margin`. Basically, the shift length is limited so that the ego doesn't get closer than `soft_drivable_bound_margin` to the drivable boundary. But the module allows the threshold to be relaxed from `soft_drivable_bound_margin` to `hard_drivable_bound_margin` when the road is narrow.
+横方向シフト長は、`overhang_distance`、横方向マージン（config ファイルで設定した値）、`vehicle_info.param.yaml` で定義されたエゴ車両幅の半分から構成されます。一方、このモジュールは、回避操作に使用できるスペースとパラメーター `soft_drivable_bound_margin` と `hard_drivable_bound_margin` に応じてシフト長を制限します。基本的に、シフト長はエゴが `soft_drivable_bound_margin` より近い位置に走行可能な境界線に近づかないように制限されます。ただし、モジュールは道路幅が狭い場合、しきい値を `soft_drivable_bound_margin` から `hard_drivable_bound_margin` に緩和することを許可します。
 
 ![fig](./images/path_generation/lateral.png)
 
-Usable lanes for the avoidance module can be selected using the config file.
+回避モジュールの使用可能なレーンは、config ファイルを使用して選択できます。
+
 
 ```yaml
       ...
@@ -864,19 +877,21 @@ Usable lanes for the avoidance module can be selected using the config file.
       use_lane_type: "opposite_direction_lane"
 ```
 
-When user set parameter `use_lane_type` to `opposite_direction_lane`, it is possible to use opposite lane.
+### 使用レーンのタイプの設定
+ユーザーがパラメータ `use_lane_type` を `opposite_direction_lane` に設定した場合、逆走車線を走行できます。
 
 ![fig](./images/path_generation/opposite_direction.png)
 
-When user set parameter `use_lane_type` to `same_direction_lane`, the module doesn't create path that overlaps opposite lane.
+ユーザーがパラメータ `use_lane_type` を `same_direction_lane` に設定した場合、モジュールは逆走車線を重複するパスは生成しません。
 
 ![fig](./images/path_generation/same_direction.png)
 
-### Shift line generation
+### シフトライン生成
 
-As mentioned above, the end point of the avoidance shift path and the start point of the return shift path, which are FIXED points, are calculated from envelope polygon. As a next step, the module adjusts the other side points depending on shift length, current ego speed and lateral jerk constrain params defined in the config file.
+前述のとおり、エンベロープポリゴンから回避シフトパスのエンドポイントと、リターンシフトパスのスタートポイントがFIXEDポイントとして計算されます。このモジュールでは、次に、シフト距離、現在の自車速度、コンフィグファイルで定義された横方向ジャーク制限パラメータに応じて、他のサイドポイントを調整します。
 
-Since the two points are always on the centerline of the ego lane, the module only calculates longitudinal distance between the shift start and end point based on the following function. This function is defined in the path shifter library. See [this](../autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design.md) page as well.
+2つのポイントは常に自車線の中心線上に存在するため、モジュールは次の関数に基づいてシフトのスタートポイントとエンドポイント間の縦方向距離のみを計算します。この関数はパスシフタライブラリで定義されています。[こちら](../autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design.md)のページも参照してください。
+
 
 ```c++
 double PathShifter::calcLongitudinalDistFromJerk(
@@ -892,9 +907,10 @@ double PathShifter::calcLongitudinalDistFromJerk(
 }
 ```
 
-We call the line that connects shift start and end point `shift_line`, which the avoidance path is generated from with spline completion.
+回避開始地点と終了地点を結ぶ線を `shift_line` と呼び、回避経路はスプライン補完によって生成されます。
 
-The start point of avoidance has another longitudinal constraint. In order to keep turning on the blinker for a few seconds before starting the avoidance maneuver, the avoidance start point must be further than the value (we call the distance `prepare_length`.) depending on ego speed from ego position.
+回避開始地点には、もう 1 つの縦方向拘束があります。回避操作を開始する前にウインカーを数秒間点灯し続けるために、回避開始地点は自分の位置から自己速度に応じた値（距離を `prepare_length` と呼びます）よりも遠くなければなりません。
+
 
 ```yaml
 longitudinal:
@@ -903,41 +919,42 @@ longitudinal:
   min_prepare_distance: 1.0 # [m]
 ```
 
-The `prepare_length` is calculated as the product of ego speed and `max_prepare_time`. (When the ego speed is zero, `min_prepare_distance` is used.)
+`prepare_length`は自己速度と`max_prepare_time`の積として計算されます。(自己速度がゼロの場合、`min_prepare_distance`が使用されます。)
 
 ![fig](./images/path_generation/shift_line.png)
 
-## Planning at RED traffic light
+## 赤信号でのPlanning
 
-This module takes traffic light information into account so that the ego can behave properly. Sometimes, the ego straddles the lane boundary but we want to prevent the ego from stopping in front of a red traffic signal in such a situation. This is because the ego will block adjacent lanes and it is inconvenient for other vehicles.
+このモジュールは信号情報を考慮に入れて、自己車が適切に動作できるようにします。自己車が車線境界線を超えている場合でも、そのような状況で赤信号の前に停止しないようにする必要があります。これは、自己車が隣接車線を塞いでしまい、他の車両に迷惑がかかるためです。
 
 ![fig](./images/traffic_light/traffic_light.png)
 
-So, this module controls shift length and shift start/end point in order to prevent the above situation.
+そのため、このモジュールはシフト長とシフトの開始/終了点を制御して、上記のような状況を防ぎます。
 
-### Control shift length
+### シフト長の制御
 
-At first, if the ego hasn't initiated an avoidance maneuver yet, this module limits maximum shift length and uses **ONLY** current lane during a red traffic signal. This prevents the ego from blocking other vehicles even if this module executes the avoidance maneuver and the ego is caught by a red traffic signal.
+まず、自己車が回避操作を開始していない場合、このモジュールは最大シフト長を制限し、赤信号の間は**現在の車線のみ**を使用します。これにより、このモジュールが回避操作を実行し、自己車が赤信号に捕らえられたとしても、自己車が他の車両を塞ぐのを防ぎます。
 
 ![fig](./images/traffic_light/limit_shift_length.png)
 
-### Control avoidance shift start point
+### 回避シフト開始点の制御
 
-Additionally, if the target object is farther than the stop line of the traffic light, this module sets the avoidance shift start point on the stop line in order to prevent the ego from stopping at a red traffic signal in the middle of an avoidance maneuver.
+さらに、目標物体が信号の停止線より遠方の場合は、このモジュールは回避シフト開始点を停止線に設定して、回避操作中に自己車が赤信号で停止するのを防ぎます。
 
 ![fig](./images/traffic_light/shift_from_current_pos.png)
 ![fig](./images/traffic_light/shift_from_stop_line.png)
 
-### Control return shift end point
+### 復帰シフト終了点の制御
 
-If the ego has already initiated an avoidance maneuver, this module tries to set the return shift end point on the stop line.
+自己車がすでに回避操作を開始している場合、このモジュールは復帰シフト終了点を停止線に設定しようとします。
 
 ![fig](./images/traffic_light/return_after_stop_line.png)
 ![fig](./images/traffic_light/return_before_stop_line.png)
 
-## Safety check
+## セーフティチェック
 
-This feature can be enabled by setting the following parameter to `true`.
+この機能は次のパラメータを`true`に設定することで有効にできます。
+
 
 ```yaml
       safety_check:
@@ -945,30 +962,32 @@ This feature can be enabled by setting the following parameter to `true`.
         enable: true                                    # [-]
 ```
 
-This module pays attention not only to avoidance target objects but also non-target objects that are near the avoidance path, and if the avoidance path is unsafe due to surrounding objects, it reverts the avoidance maneuver and yields the lane to them.
+このモジュールは回避対象物だけでなく、回避経路の近くに存在する非対象物にも注意を払い、周囲の物体が原因で回避経路が安全でない場合は、回避操舵を解除し、車線を譲ります。
 
 ![fig](./images/safety_check/safety_check_flow.png)
 
-### Yield maneuver
+### 譲渡操舵
 
-Additionally, this module basically inserts a stop point in front of an avoidance target during yielding maneuvers in order to keep enough distance to avoid the target when it is safe to do so. If the shift side lane is congested, the ego stops at a point and waits.
+さらに、このモジュールは譲渡操舵の際、通常、回避対象物の前に停止点を挿入し、安全に回避できるようになるまで十分な距離を保ちます。移動先の車線が渋滞している場合、自車は停止して待ちます。
 
-This feature can be enabled by setting the following parameter to `true`.
+この機能は、次のパラメーターを `true` に設定することで有効にできます。
+
 
 ```yaml
 yield:
   enable: true # [-]
 ```
 
-![fig](./images/safety_check/stop.png)
+![図](./images/safety_check/stop.png)
 
-But if the lateral margin is larger than `hard_margin` (or `hard_margin_for_parked_vehicle`), this module doesn't insert a stop point because the ego can pass the side of the object safely without an avoidance maneuver.
+ただし、横方向の余白が「`hard_margin`」を超えている場合（または「`hard_margin_for_parked_vehicle`」を超えている場合）は、このモジュールは停止点は挿入しません。エゴは回避操作なしで対象物の側面を安全に通過できるためです。
 
-![fig](./images/safety_check/not_stop.png)
+![図](./images/safety_check/not_stop.png)
 
-### Safety check target lane
+### 安全チェック対象車線
 
-User can select the safety check area with the following parameters. Basically, we recommend the following configuration to check only the shift side lane. If users want to confirm safety strictly, please set `check_current_lane` and/or `check_other_side_lane` to `true`.
+ユーザーは、以下のパラメーターを使用して安全チェックエリアを選択できます。基本的に、シフト側の車線のみを確認するための以下の設定を推奨します。安全を厳格に確認したい場合は、`check_current_lane` および/または `check_other_side_lane` を `true` に設定してください。
+
 
 ```yaml
       safety_check:
@@ -978,7 +997,8 @@ User can select the safety check area with the following parameters. Basically, 
         check_other_side_lane: false                    # [-]
 ```
 
-In the avoidance module, the function `path_safety_checker::isCentroidWithinLanelet` is used for filtering objects by lane.
+回避モジュールでは、`path_safety_checker::isCentroidWithinLanelet` 関数はレーンのオブジェクトをフィルタリングするために使用されます。
+
 
 ```c++
 bool isCentroidWithinLanelet(const PredictedObject & object, const lanelet::ConstLanelet & lanelet)
@@ -991,41 +1011,42 @@ bool isCentroidWithinLanelet(const PredictedObject & object, const lanelet::Cons
 
 !!! info
 
-    If `check_current_lane` and/or `check_other_side_lane` are set to `true`, the possibility of false positives and unnecessary yield maneuvers increase.
+    `check_current_lane` や `check_other_side_lane` を `true` に設定すると、誤検知や不必要に譲歩する可能性が高くなります。
 
-### Safety check algorithm
+### 安全確認アルゴリズム
 
-This module uses common safety check logic implemented in `path_safety_checker` library. See [this](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md) page.
+このモジュールは、`path_safety_checker` ライブラリに実装されている一般的な安全確認ロジックを使用しています。[こちら](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md) のページを参照してください。
 
-### Limitation
+### 制限事項
 
-#### Limitation-1
+#### 制限事項-1
 
-The current behavior when the module judges it is unsafe is so conservative because it is difficult to achieve aggressive maneuvers (e.g. increase speed in order to increase the distance from rear vehicle) for current planning architecture.
+モジュールがこの条件を不安全と判断したときの現在の動作はとても慎重で、これは現在の Planning アーキテクチャでは、積極的な操作（例：後続車両との距離をもっと広げるために速度を上げる）を達成することが難しいからです。
 
-#### Limitation-2
+#### 制限事項-2
 
-The yield maneuver is executed **ONLY** when the vehicle has **NOT** initiated avoidance maneuver yet. (This module checks objects in the opposite lane but it is necessary to find very far objects to judge whether it is unsafe before avoidance maneuver.) If it detects a vehicle which is approaching the ego during an avoidance maneuver, this module doesn't revert the path or insert a stop point. For now, there is no feature to deal with this situation in this module. Thus, a new module is needed to adjust the path to avoid moving objects, or an operator must override.
+譲歩操作は、車両がまだ回避操作を開始していない場合にのみ実行されます。（このモジュールは反対車線のオブジェクトを確認しますが、回避操作前に不安全であると判断するには、非常に遠くのオブジェクトを見つける必要があります。） Avoidance 操作中に ego に接近する車両を検出した場合、このモジュールはパスを元に戻したり停止点を挿入したりしません。今のところ、この状況に対処する機能はこのモジュールにはありません。そのため、移動物体との衝突を回避するためにパスを調整する新しいモジュールが必要か、オペレーターがオーバーライドする必要があります。
 
 !!! info
 
-    This module has a threshold parameter `th_avoid_execution` for the shift length, and judges that the vehicle is initiating avoidance if the vehicle current shift exceeds the value.
+    このモジュールにはシフトの長さのためのしきい値パラメータ `th_avoid_execution` があり、車両の現在のシフトがこの値を超えると車両が回避を開始していると判断します。
 
-## Other features
+## その他の特徴
 
-### Compensation for detection lost
+### 検出ロストに対する補償
 
-In order to prevent chattering of recognition results, once an obstacle is targeted, it is held for a while even if it disappears. This is effective when recognition is unstable. However, since it will result in over-detection (increases number of false-positives), it is necessary to adjust parameters according to the recognition accuracy (if `object_last_seen_threshold = 0.0`, the recognition result is 100% trusted).
+認識結果のチャタリングを防ぐため、障害物がターゲットになると、消えてもしばらく保持されます。これは、認識が不安定な場合に効果的です。ただし、過検出（偽陽性の増加）につながるため、認識精度に合わせてパラメータを調整する必要があります（`object_last_seen_threshold = 0.0` の場合、認識結果は 100% 信頼されます）。
 
-### Drivable area expansion
+### 走行可能領域の拡張
 
-This module supports drivable area expansion for following polygons defined in HDMap.
+このモジュールは、HDMap で定義された次のポリゴンの後続に対する走行可能領域の拡張をサポートしています。
 
-- Intersection area
-- Hatched road marking
-- Freespace area
+- 交差点エリア
+- ハッチングされた道路標示
+- 自由空間エリア
 
-Please set the flags to `true` when user wants to make it possible to use those areas in avoidance maneuvers.
+これらのエリアを回避操作で使用できるようにする場合は、これらのフラグを `true` に設定してください。
+
 
 ```yaml
 # drivable lane setting. This module is able to use not only current lane but also right/left lane
@@ -1040,50 +1061,52 @@ use_hatched_road_markings: true
 use_freespace_areas: true
 ```
 
-|                                        |                                                            |                                                                                                                                                                                                                                      |
-| -------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| use_lane_type: same_direction_lane     | ![fig](./images/advanced/avoidance_same_direction.png)     |                                                                                                                                                                                                                                      |
-| use_lane_type: opposite_direction_lane | ![fig](./images/advanced/avoidance_opposite_direction.png) |                                                                                                                                                                                                                                      |
-| intersection area                      | ![fig](./images/advanced/avoidance_intersection.png)       | The intersection area is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md)                               |
-| hatched road markings                  | ![fig](./images/advanced/avoidance_zebra.png)              | The hatched road marking is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md#hatched-road-markings-area) |
-| freespace area                         | ![fig](./images/advanced/avoidance_freespace.png)          | The freespace area is defined on Lanelet map. (unstable)                                                                                                                                                                             |
+|                                        |                                                            |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `use_lane_type: same_direction_lane` | ![図](./images/advanced/avoidance_same_direction.png)     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `use_lane_type: opposite_direction_lane` | ![図](./images/advanced/avoidance_opposite_direction.png) |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 交差点エリア                           | ![図](./images/advanced/avoidance_intersection.png)       | 交差点エリアはLanelet mapで定義されます。 [こちら](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md) を参照してください                                                                                                               |
+| ハッチング道路標示                     | ![図](./images/advanced/avoidance_zebra.png)              | ハッチング道路標示はLanelet mapで定義されています
 
-## Future extensions/Unimplemented parts
+## 未実装/将来の拡張
 
-- **Consideration of the speed of the avoidance target**
+- **回避対象の速度の考慮**
 
-  - In the current implementation, only stopped vehicle is targeted as an avoidance target. It is needed to support the overtaking function for low-speed vehicles, such as a bicycle. (It is actually possible to overtake the low-speed objects by changing the parameter, but the logic is not supported and thus the safety cannot be guaranteed.)
-  - Overtaking (e.g., to overtake a vehicle running in front at 20 km/h at 40 km/h) may need to be handled outside the avoidance module. It should be discussed which module should handle it.
+  - 現在の実装では、停止車両のみが回避対象としてターゲット化されています。自転車などの低速車両の追い越し機能をサポートする必要があります。(実際には、パラメータを変更することで低速オブジェクトを追い越すことは可能ですが、ロジックがサポートされていないため、安全性は保証できません。)
+  - 追い越し(例:時速20kmの先行車両を時速40kmで追い越す)は、回避モジュール外で処理する必要がある場合があります。どのモジュールで処理するかを検討する必要があります。
 
-- **Cancel avoidance when target disappears**
+- **ターゲットが消失した際の回避キャンセル**
 
-  - In the current implementation, even if the avoidance target disappears, the avoidance path will remain. If there is no longer a need to avoid, it must be canceled.
+  - 現在の仕様では、回避ターゲットが消えた場合でも、回避経路は残ったままです。回避の必要がなくなった場合はキャンセルする必要があります。
 
-- **Improved performance of avoidance target selection**
+- **回避ターゲット選択のパフォーマンス向上**
 
-  - Essentially, avoidance targets are judged based on whether they are static objects or not. For example, a vehicle waiting at a traffic light should not be avoided because we know that it will start moving in the future. However this decision cannot be made in the current Autoware due to the lack of perception functions. Therefore, the current avoidance module limits the avoidance target to vehicles parked on the shoulder of the road, and executes avoidance only for vehicles that are stopped away from the center of the lane. However, this logic cannot avoid a vehicle that has broken down and is stopped in the center of the lane, which should be recognized as a static object by the perception module. There is room for improvement in the performance of this decision.
+  - 本質的に、回避ターゲットは静止物かどうかを基準に判断されます。例えば、信号で待機している車両は、将来的に動き出すことが分かっているので、回避されるべきではありません。しかし、現在のAutowareでは、知覚機能が不足しているため、この判断は行えません。そのため、現在の回避モジュールは回避目標を路肩に駐車している車両に限定し、車線の中心から離れた場所で停止している車両に対してのみ回避を実行します。しかし、このロジックでは、故障して車線の中央で停止している車両を避けることはできず、これは知覚モジュールによって静止物として認識されるべきものです。この判断のパフォーマンスには改善の余地があります。
 
-- **Resampling path**
-  - Now the rough resolution resampling is processed to the output path in order to reduce the computational cost for the later modules. This resolution is set to a uniformly large value (e.g. `5m`), but a small resolution should be applied for complex paths.
+- **経路の再サンプリング**
 
-## Debug
+  - 現在、荒い解像度の再サンプリングは、後続のモジュールの計算コストを削減するために、出力パスに処理されています。この解像度は一様に大きな値(例:'5m')に設定されていますが、複雑な経路には小さな解像度を適用する必要があります。
 
-### Show `RCLCPP_DEBUG` on console
+## デバッグ
 
-All debug messages are logged in the following namespaces.
+### コンソールに`RCLCPP_DEBUG`を表示
 
-- `planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.static_obstacle_avoidance` or,
+すべてのデバッグメッセージは、次の名前空間に記録されます。
+
+- `planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.static_obstacle_avoidance` または,
 - `planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.static_obstacle_avoidance.utils`
 
-User can see debug information with the following command.
+ユーザーは、次のコマンドでデバッグ情報を参照できます。
+
 
 ```bash
 ros2 service call /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/config_logger logging_demo/srv/ConfigLogger "{logger_name: 'planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.static_obstacle_avoidance', level: DEBUG}"
 ```
 
-### Visualize debug markers
+### デバッグマーカーの可視化
 
-User can enable publishing of debug markers with the following parameters.
+ユーザーは、次のパラメーターを使用して、デバッグマーカーの公開を有効にできます。
+
 
 ```yaml
 debug:
@@ -1099,131 +1122,129 @@ debug:
 
 ![fig](./images/debug/debug_marker_rviz.png)
 
-### Echoing debug message to find out why the objects were ignored
+### デバッグメッセージのエコーにより、オブジェクトが無視された理由を特定する
 
-If for some reason, no shift point is generated for your object, you can check for the failure reason via `ros2 topic echo`.
+何らかの理由で、オブジェクトに対してシフトポイントが生成されない場合、`ros2 topic echo` を利用して障害が発生した理由を確認できます。
 
 ![avoidance_debug_message_array](./images/avoidance_debug_message_array.png)
 
-To print the debug message, just run the following
+デバッグメッセージを出力するには、次のコマンドを実行するだけです。
+
 
 ```bash
 ros2 topic echo /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/avoidance_debug_message_array
 ```
 
-## Frequently asked questions
+## よくある質問
 
-### Target objects
+### ターゲットオブジェクト
 
-#### Does it avoid static objects and dynamic objects?
+#### 静止オブジェクトと動的オブジェクトの両方を回避できますか？
 
-This module avoids static (stopped) objects and does not support dynamic (moving) objects avoidance. Dynamic objects are handled within the [dynamic obstacle avoidance module](../autoware_behavior_path_dynamic_obstacle_avoidance_module/README.md).
+このモジュールは静止オブジェクト（停止しているオブジェクト）を回避しますが、動的オブジェクト（動いているオブジェクト）の回避はサポートしていません。動的オブジェクトは、[動的障害物回避モジュール](../autoware_behavior_path_dynamic_obstacle_avoidance_module/README.md)内で処理されます。
 
-#### What type (class) of object would it avoid?
+#### 回避するオブジェクトのタイプ（クラス）を教えてください。
 
-It avoids cars, trucks, buses, trailers, bicycles, motorcycles, pedestrians, and unknown objects by default. Details are in the [Target object filtering section](#target-object-filtering).
-The above objects are divided into vehicle type objects and non-vehicle type objects; the target object filtering would differ for vehicle types and non-vehicle types.
+デフォルトでは、車、トラック、バス、トレーラー、自転車、オートバイ、歩行者、未知のオブジェクトを回避します。詳細は、[ターゲットオブジェクトのフィルタリングセクション](#target-object-filtering)を参照してください。
+これらのオブジェクトは、車両タイプオブジェクトと車両タイプ以外のオブジェクトに分類され、ターゲットオブジェクトのフィルタリングは車両タイプと車両タイプ以外で異なります。
 
-- Vehicle type objects: Car, Truck, Bus, Trailer, Motorcycle
-- Non-vehicle type objects: Pedestrian, Bicycle
+- 車両タイプオブジェクト: 車、トラック、バス、トレーラー、オートバイ
+- 車両タイプ以外のオブジェクト: 歩行者、自転車
 
-#### How does it judge if it is a target object or not?
+#### ターゲットオブジェクトかどうかをどのように判断しますか？
 
-The conditions for vehicle type objects and non-vehicle type objects are different. However, the main idea is that static objects on road shoulders within the planned path would be avoided.
-Below are some examples when an avoidance path is generated for vehicle type objects.
+車両タイプオブジェクトと車両タイプ以外のオブジェクトの条件は異なります。ただし、基本的な考え方は、計画された経路内の路肩にある静止オブジェクトを回避することです。
+以下は、車両タイプオブジェクトに対して回避経路が生成される場合の例です。
 
-- Vehicle stopping on ego lane while pulling over to the side of the road
-- Vehicle stopping on adjacent lane
+- 道路脇に車を停車して立ち寄る
+- 隣接する車線を走行する
+- 隣接車線を停車する
 
-For more details refer to [vehicle type object](#conditions-for-vehicle-type-objects) and [non-vehicle object](#conditions-for-non-vehicle-type-objects).
+詳細は、[車両タイプオブジェクト](#conditions-for-vehicle-type-objects)と[車両タイプ以外のオブジェクト](#conditions-for-non-vehicle-type-objects)を参照してください。
 
-#### What is an ambiguous target?
+#### 曖昧なターゲットとは何ですか？
 
-An ambiguous target refers to objects that may not be clearly identifiable as avoidance target due to limitations of current Autoware (ex. parked vehicle in the center of a lane).
-This module will avoid clearly defined static objects automatically, whereas ambiguous targets would need some operator intervention.
+曖昧なターゲットとは、Autowareの現在の制限（例：車線の真ん中に駐車された車両）により、回避ターゲットとして明確に特定できないオブジェクトを指します。
+このモジュールは、明確に定義された静止オブジェクトを自動的に回避しますが、曖昧なターゲットには一部オペレーターの介入が必要になります。
 
-#### How can I visualize the target object?
+#### ターゲットオブジェクトをどのように視覚化できますか？
 
-Target objects can be visualized using RViz, where the module's outputs, such as detected obstacles and planned avoidance paths, are displayed. For further information refer to the [debug marker section](#visualize-debug-markers).
+ターゲットオブジェクトはRVizを使用して視覚化できます。RVizでは、検出された障害物や計画された回避経路などのモジュールの出力が表示されます。詳細については、[デバッグマーカーセクション](#visualize-debug-markers)を参照してください。
 
-#### How can I check the lateral distance to an obstacle?
+#### 障害物との横方向距離を確認するにはどうすればよいですか？
 
-Currently, there isn't any topic that outputs the relative position with the ego vehicle and target object.
-Visual confirmation on RViz would be the only solution for now.
+現時点では、自車とターゲットオブジェクトの相対位置を出力するトピックはありません。
+現時点では、RVizでの視覚的な確認が唯一の解決策です。
 
-#### Does it avoid multiple objects at once?
+#### 複数のオブジェクトを同時に回避しますか？
 
-Yes, the module is capable of avoiding multiple static objects simultaneously.
-It generates multiple shift lines and calculates an avoidance path that navigates around each object.
-Details are explained in the [How to decide path shape section](#multiple-obstacle-case-one-direction).
+はい、このモジュールは複数の静止オブジェクトを同時に回避できます。
+複数のシフトラインを生成し、各オブジェクトを回避する回避経路を計算します。
+詳細は、[経路形状の決定方法セクション](#multiple-obstacle-case-one-direction)で説明しています。
 
-### Area used when avoiding
+### 回避時の使用エリア
 
-#### Which lanes are used to avoid objects?
+#### どの車線がオブジェクトの回避に使用されますか？
 
-This module is able to use not only the current lane but also adjacent lanes and opposite lanes. Usable lanes can be selected by the configuration file as noted in the [shift length calculation section](#shift-length-calculation).
-It is assumed that there are no parked vehicles on the central lane in a situation where there are lanes on the left and right.
+このモジュールは、現在の車線だけでなく、隣接車線と対向車線も使用できます。使用可能な車線は、[シフト長計算セクション](#shift-length-calculation)で説明されているように、設定ファイルで選択できます。左右に車線がある状況では、中央車線に駐車車両がないと想定されています。
 
-#### Would it avoid objects inside intersections?
+#### 交差点内のオブジェクトを回避しますか？
 
-Basically, the module assumes that there are no parked vehicles within intersections. Vehicles that follow the lane or merge into ego lane are non-target objects.
-Vehicles waiting to make a right/left turn within an intersection can be avoided by expanding the drivable area in the configuration file, as noted in the [drivable area expansion section](#drivable-area-expansion).
+基本的に、このモジュールは交差点内に駐車車両がないことを想定しています。車線に従う車両や自車線に合流する車両はターゲット外オブジェクトです。
+交差点内で右折/左折を待つ車両は、[走行可能エリアの拡張セクション](#drivable-area-expansion)で説明されているように、設定ファイルで走行可能エリアを拡張することで回避できます。
 
-#### Does it generate avoidance paths for any road type?
+走行可能なエリアは、[走行可能なエリア拡幅のセクション](#走行可能なエリア拡幅)で説明されているように、設定ファイルで拡張できます。
 
-Drivable area can be expanded in the configuration file, as noted in the [drivable area expansion section](#drivable-area-expansion).
+### パス生成
 
-### Path generation
+#### 回避パスはどのように生成されていますか？
 
-#### How is the avoidance path generated?
+回避パスは、検出された静止オブジェクトの周囲をナビゲートするように現在の参照パスを変更することで生成されます。
+これは、車両が安全な境界内に留まり、障害物を避けながら道路に従うことを保証する、ルールベースのシフトラインアプローチを使用して行われます。
+詳細は[付録](#付録-シフトライン生成パイプライン)で説明されています。
 
-The avoidance path is generated by modifying the current reference path to navigate around detected static objects.
-This is done using a rule-based shift line approach that ensures the vehicle remains within safe boundaries and follows the road while avoiding obstacles.
-Details are explained in the [appendix](#appendix-shift-line-generation-pipeline).
+#### 回避パスはどちらの方向（右または左）に生成されていますか？
 
-#### Which way (right or left) is the avoidance path generated?
+回避の動作は、目標車両の重心に依存します。
+ターゲットオブジェクトがエゴレーン（自車走行レーン）の左側にいる場合、回避は右側に生成されます。
+現在、左側から左にシフトした障害物を避けることはサポートされていません（右にシフトしたオブジェクトも同じです）。
 
-The behavior of avoiding depends on the target vehicle's center of gravity.
-If the target object is on the left side of the ego lane the avoidance would be generated on the right side.
-Currently, avoiding left-shifted obstacles from the left side is not supported (same for right-shifted objects).
+#### ターゲットオブジェクトにエンベロープポリゴンを使用するのはなぜですか？
 
-#### Why is an envelope polygon used for the target object?
+各ターゲットオブジェクトの知覚/追跡ノイズの影響を軽減するために使用されます。
+エンベロープポリゴンは長方形であり、そのサイズはオブジェクトのポリゴンとバッファーパラメータに依存し、常に参照パスに平行です。
+エンベロープポリゴンは、最新のワンショットエンベロープポリゴンと前のエンベロープポリゴンを使用して作成されます。
+詳細は[知覚ノイズによって引き起こされるシフトラインチャタリングを防ぐ方法のセクション](#知覚ノイズによって引き起こされるシフトラインチャタリングを防ぐ方法)で説明されています。
 
-It is employed to reduce the influence of the perception/tracking noise for each target object.
-The envelope polygon is a rectangle, whose size depends on the object's polygon and buffer parameter and it is always parallel to the reference path.
-The envelope polygon is created by using the latest one-shot envelope polygon and the previous envelope polygon.
-Details are explained in [How to prevent shift line chattering that is caused by perception noise section](#how-to-prevent-shift-line-chattering-that-is-caused-by-perception-noise).
+#### モジュールが安全な回避パスを見つけられない場合どうなりますか？
 
-#### What happens if the module cannot find a safe avoidance path?
+モジュールが安全な回避パスを見つけられない場合、車両は回避操作を実行せずに停止するか、現在のパスに沿って続行する場合があります。
+ターゲットオブジェクトがあり、回避するのに十分なスペースがある場合、エゴビークルは回避パスを生成できる位置で停止します。これを[譲歩操作](#譲歩操作)と呼びます。
+一方で、十分なスペースがない場合、このモジュールは何もせず、[障害物クルーズプランナー](../../autoware_obstacle_cruise_planner/README.md)オブジェクトを担当します。
 
-If the module cannot find a safe avoidance path, the vehicle may stop or continue along its current path without performing an avoidance maneuver.
-If there is a target object and there is enough space to avoid, the ego vehicle would stop at a position where an avoidance path could be generated; this is called the [yield manuever](#yield-maneuver).
-On the other hand, where there is not enough space, this module has nothing to do and the [obstacle cruise planner](../../autoware_obstacle_cruise_planner/README.md) would be in charge of the object.
+#### 回避パスがあるように見えますが、車両が停止します。何が起こっているのでしょうか？
 
-#### There seems to be an avoidance path, but the vehicle stops. What is happening?
+この状況は、モジュールがAUTOモードで動作しているときにターゲットオブジェクトがあいまいな場合、またはMANUALモードで動作しているときに発生します。
+生成された回避パスは候補として提示され、実行前にオペレーターの承認が必要です。オペレーターがパスを承認しない場合、エゴビークルは回避パスを生成できる場所で停止します。
 
-This situation occurs when the module is operating in AUTO mode and the target object is ambiguous or when operating in MANUAL mode.
-The generated avoidance path is presented as a candidate and requires operator approval before execution.
-If the operator does not approve the path the ego vehicle would stop where it is possible to generate an avoidance path.
+### 操作
 
-### Operation
+#### MANUALモードをAUTOモードよりも使用する利点は何ですか？
 
-#### What are the benefits of using MANUAL mode over AUTO mode?
+MANUALモードを使用すると、オペレーターは回避パスの承認を直接制御できます。これは、センサーデータが信頼できない場合やあいまいである場合に特に役立ちます。
+このモードは、実行前に人による検証が必要なため、不要または不適切な回避操作を防ぐのに役立ちます。偽陽性が発生する可能性がある環境や、センサー/知覚システムの性能が低い場合に推奨されます。
 
-MANUAL mode allows the operator to have direct control over the approval of avoidance paths, which is particularly useful in situations where sensor data may be unreliable or ambiguous.
-This mode helps prevent unnecessary or incorrect avoidance maneuvers by requiring human validation before execution.
-It is recommended for environments where false positives are likely or when the sensor/perception system's performance is limited.
+#### このモジュールは特定の車両タイプまたは環境に合わせてカスタマイズできますか？
 
-#### Can this module be customized for specific vehicle types or environments?
+モジュールは、障害物の特定と回避方法を定義するルールとパラメータを調整することでカスタマイズできます。
+回避操作は、特定の車両タイプによって変更されることはありません。
 
-The module can be customized by adjusting the rules and parameters that define how it identifies and avoids obstacles.
-The avoidance manuever would not be changed by specific vehicle types.
+## 付録: シフトライン生成パイプライン
 
-## Appendix: Shift line generation pipeline
-
-### Flow chart of the process
+### プロセスのフローチャート
 
 <!-- spell-checker:disable -->
+
 
 ```plantuml
 @startuml
@@ -1324,60 +1345,59 @@ stop
 @enduml
 ```
 
-<!-- spell-checker:enable -->
+### パス形状の決定方法
 
-### How to decide the path shape
+指定された横方向加速度で障害物に対するシフトポイントを生成します。これらのポイントは統合されて回避経路が生成されます。障害物の配置に対応する各ケースの詳細な処理フローを以下に示します。実際のインプリメンテーションは各ケースに分かれていませんが、常に「複数の障害物ケース（両方向）」に対応する関数が実行されています。
 
-Generate shift points for obstacles with a given lateral jerk. These points are integrated to generate an avoidance path. The detailed process flow for each case corresponding to the obstacle placement are described below. The actual implementation is not separated for each case, but the function corresponding to `multiple obstacle case (both directions)` is always running.
+#### 障害物が1つのケース
 
-#### One obstacle case
+障害物に対する横方向シフト距離が計算され、下図に示すように、自己車両の速度と指定された横方向加速度からシフトポイントが生成されます。シフトポイントに基づいて、次に円滑な回避経路が計算されます。
 
-The lateral shift distance to the obstacle is calculated, and then the shift point is generated from the ego vehicle speed and the given lateral jerk as shown in the figure below. A smooth avoidance path is then calculated based on the shift point.
+さらに、特殊な場合は以下のプロセスが実行されます。
 
-Additionally, the following processes are executed in special cases.
+#### 横方向加速度緩和条件
 
-#### Lateral jerk relaxation conditions
+- 自己車両が回避ターゲットに近い場合、横方向加速度は最大加速度まで緩和されます。
+- 回避後に中心線に戻るときに、ゴール（パスの終端）まで十分な距離が残っていない場合、上記の条件と同様に加速度条件は緩和されます。
 
-- If the ego vehicle is close to the avoidance target, the lateral jerk will be relaxed up to the maximum jerk.
-- When returning to the center line after avoidance, if there is not enough distance left to the goal (end of path), the jerk condition will be relaxed as above.
+#### 最小速度緩和条件
 
-#### Minimum velocity relaxation conditions
+回避中に実際の速度を事前に認識できないという問題があります。これは、特に自己車両の速度が0のときに重要です。
+それを解決するために、このモジュールは最小回避速度用のパラメータを提供します。これは、車両速度が低いときに加速度を計算するために使用されます。
 
-There is a problem that we cannot know the actual speed during avoidance in advance. This is especially critical when the ego vehicle speed is 0.
-To solve that, this module provides a parameter for the minimum avoidance speed, which is used for the lateral jerk calculation when the vehicle speed is low.
-
-- If the ego vehicle speed is lower than "nominal" minimum speed, use the minimum speed in the calculation of the jerk.
-- If the ego vehicle speed is lower than "sharp" minimum speed and a nominal lateral jerk is not enough for avoidance (the case where the ego vehicle is stopped close to the obstacle), use the "sharp" minimum speed in the calculation of the jerk (it should be lower than "nominal" speed).
+- 自己車両速度が「公称」最小速度より低い場合、加速度の計算に最小速度を使用します。
+- 自己車両速度が「鋭い」最小速度よりも低く、公称の横方向加速度が回避に十分でない場合（自己車両が障害物近くで停止している場合）、加速度の計算に「鋭い」最小速度を使用します（「公称」速度より低くする必要があります）。
 
 ![fig](./images/how_to_decide_path_shape_one_object.drawio.svg)
 
-#### Multiple obstacle case (one direction)
+#### 障害物が複数あるケース（一方向）
 
-Generate shift points for multiple obstacles. All of them are merged to generate new shift points along the reference path. The new points are filtered (e.g. remove small-impact shift points), and the avoidance path is computed for the filtered shift points.
+障害物が複数の場合は、シフトポイントを生成します。それらすべてはマージされ、リファレンスパスに沿って新しいシフトポイントが生成されます。新しいポイントはフィルタリングされ（たとえば、影響の小さいシフトポイントは削除され）、フィルタリングされたシフトポイントに対して回避経路が計算されます。
 
-**Merge process of raw shift points**: check the shift length on each path point. If the shift points are overlapped, the maximum shift value is selected for the same direction.
+**生シフトポイントのマージプロセス**: 各パスポイントのシフト長を確認します。シフトポイントが重なっている場合、同じ方向に対して最大シフト値が選択されます。
 
-For the details of the shift point filtering, see [filtering for shift points](#filtering-for-shift-points).
+シフトポイントフィルタリングの詳細については、[#シフトポイントのフィルタリング](#filtering-for-shift-points)を参照してください。
 
 ![fig](./images/how_to_decide_path_shape_multi_object_one_direction.drawio.svg)
 
-#### Multiple obstacle case (both direction)
+#### 障害物が複数あるケース（両方向）
 
-Generate shift points for multiple obstacles. All of them are merged to generate new shift points. If there are areas where the desired shifts conflict in different directions, the sum of the maximum shift amounts of these areas is used as the final shift amount. The rest of the process is the same as in the case of one direction.
+障害物が複数の場合は、シフトポイントを生成します。それらすべてはマージされて新しいシフトポイントが生成されます。異なる方向で目的のシフトが競合する領域がある場合、これらの領域の最大シフト量の合計が最終的なシフト量として使用されます。プロセスの残りの部分は、単一方向の場合と同じです。
 
 ![fig](./images/how_to_decide_path_shape_multi_object_both_direction.drawio.svg)
 
-#### Filtering for shift points
+#### シフトポイントのフィルタリング
 
-The shift points are modified by a filtering process in order to get the expected shape of the avoidance path. It contains the following filters.
+シフトポイントは、期待される回避経路的形状を取得するためにフィルタリングプロセスによって修正されます。次のフィルタが含まれます。
 
-- Quantization: Quantize the avoidance width in order to ignore small shifts.
-- Small shifts removal: Shifts with small changes with respect to the previous shift point are unified in the previous shift width.
-- Similar gradient removal: Connect two shift points with a straight line, and remove the shift points in between if their shift amount is in the vicinity of the straight line.
-- Remove momentary returns: For shift points that reduce the avoidance width (for going back to the center line), if there is enough long distance in the longitudinal direction, remove them.
+- 量子化: 小さなシフトを無視するために、回避幅を量子化します。
+- 小さなシフトの削除: 前のシフトポイントに対する小さな変化を伴うシフトは、前のシフト幅に統合されます。
+- 類似勾配の削除: シフトポイントを2つ直線で接続し、直線の近傍にシフト量がある場合は、間のシフトポイントを削除します。
+- 一時的な戻りの削除: 回避幅を（中心線に戻るために）削減するシフトポイントの場合、縦方向に十分な距離がある場合はそれらを削除します。
 
-## Appendix: All parameters
+## 付録: すべてのパラメータ
 
-Location of the avoidance specific parameter configuration file: `src/autoware/launcher/planning_launch/config/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/autoware_behavior_path_static_obstacle_avoidance_module/static_obstacle_avoidance.param.yaml`.
+回避固有のパラメータ設定ファイルの場所: `src/autoware/launcher/planning_launch/config/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/autoware_behavior_path_static_obstacle_avoidance_module/static_obstacle_avoidance.param.yaml`。
 
 {{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_static_obstacle_avoidance_module/schema/static_obstacle_avoidance.schema.json") }}
+

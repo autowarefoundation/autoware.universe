@@ -1,13 +1,13 @@
-# Signal Processing Methods
+# 信号処理手法
 
-In this package, we present signal processing related methods for the Autoware applications. The following
-functionalities are available in the current version.
+本パッケージでは、Autowareアプリケーション向けの信号処理関連の手法を紹介しています。現在のバージョンでは、以下の機能が利用できます。
 
-- an 1-D Low-pass filter,
-- [Butterworth low-pass filter tools.](documentation/ButterworthFilter.md)
+- 1次元ローパスフィルタ
+- [バターワースローパスフィルタツール](documentation/ButterworthFilter.md)
 
-low-pass filter currently supports only the 1-D low pass filtering.
+ローパスフィルタは現在、1次元ローパスフィルタリングのみをサポートしています。
 
-## Assumptions / Known limits
+## 想定 / 既知の制限
 
-TBD.
+未定です。
+

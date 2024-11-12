@@ -1,49 +1,70 @@
-# dummy_perception_publisher
+## ダミー・パーセプション・パブリッシャー
 
-## Purpose
+## 目的
 
-This node publishes the result of the dummy detection with the type of perception.
+このノードはPerceptionタイプのダミー検出の結果をパブリッシュします。
 
-## Inner-workings / Algorithms
+## 動作 / アルゴリズム
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name           | Type                                      | Description             |
-| -------------- | ----------------------------------------- | ----------------------- |
-| `/tf`          | `tf2_msgs/TFMessage`                      | TF (self-pose)          |
-| `input/object` | `tier4_simulation_msgs::msg::DummyObject` | dummy detection objects |
+| 名称           | タイプ                                     | 説明                                       |
+| -------------- | ---------------------------------------- | ----------------------------------------- |
+| `/tf`          | `tf2_msgs/TFMessage`                      | TF (自車位置)                             |
+| `input/object` | `tier4_simulation_msgs::msg::DummyObject` | ダミー検出オブジェクト                        |
 
-### Output
+### 出力
 
-| Name                                | Type                                                     | Description             |
-| ----------------------------------- | -------------------------------------------------------- | ----------------------- |
-| `output/dynamic_object`             | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | dummy detection objects |
-| `output/points_raw`                 | `sensor_msgs::msg::PointCloud2`                          | point cloud of objects  |
-| `output/debug/ground_truth_objects` | `autoware_perception_msgs::msg::TrackedObjects`          | ground truth objects    |
+#### Vehicle Model](ビークルモデル)
 
-## Parameters
+`post resampling`のレーザースキャンに対するビークルモデルは、以下のとおりです。
 
-| Name                        | Type   | Default Value | Explanation                                      |
-| --------------------------- | ------ | ------------- | ------------------------------------------------ |
-| `visible_range`             | double | 100.0         | sensor visible range [m]                         |
-| `detection_successful_rate` | double | 0.8           | sensor detection rate. (min) 0.0 - 1.0(max)      |
-| `enable_ray_tracing`        | bool   | true          | if True, use ray tracking                        |
-| `use_object_recognition`    | bool   | true          | if True, publish objects topic                   |
-| `use_base_link_z`           | bool   | true          | if True, node uses z coordinate of ego base_link |
-| `publish_ground_truth`      | bool   | false         | if True, publish ground truth objects            |
-| `use_fixed_random_seed`     | bool   | false         | if True, use fixed random seed                   |
-| `random_seed`               | int    | 0             | random seed                                      |
+- 車両形状を表すポリゴン
+- 自車位置
+- ハンドル角度
+- 車両速度
+- 車両加速度
+- ピッチ角、ロール角、ヨー角の回転行列
+- ヨー角とローリング角の角速度
 
-### Node Parameters
+#### Planning Module](Planningモジュール)
 
-None.
+`Octomap`は、以下の逸脱量を計算するために使用されます。
 
-### Core Parameters
+- 速度逸脱量
+- 加速度逸脱量
+- ヨー逸脱量
 
-None.
+| 名前                                 | タイプ                                                      | 説明                                                         |
+| ------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------- |
+| `output/dynamic_object`              | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | ダミー検出オブジェクト                                      |
+| `output/points_raw`                  | `sensor_msgs::msg::PointCloud2`                           | オブジェクトの点群                                             |
+| `output/debug/ground_truth_objects` | `autoware_perception_msgs::msg::TrackedObjects`           | グランドトゥルースオブジェクト                                |
 
-## Assumptions / Known limits
+## パラメータ
 
-TBD.
+| 名前                        | タイプ   | デフォルト値 | 説明                                        |
+| --------------------------- | ------ | ------------- | ------------------------------------------- |
+| `visible_range`             | double | 100.0         | センサー視界範囲 [m]                      |
+| `detection_successful_rate` | double | 0.8           | センサー検出率。(最小値) 0.0 - 1.0(最大値) |
+| `enable_ray_tracing`        | bool   | true          | True の場合、レイ追跡を使用する              |
+| `use_object_recognition`    | bool   | true          | True の場合、物体トピックを公開する            |
+| `use_base_link_z`           | bool   | true          | True の場合、ノードはエゴ base_link の Z 座標を使用する |
+| `publish_ground_truth`      | bool   | false         | True の場合、グランドトゥルースオブジェクトを公開する |
+| `use_fixed_random_seed`     | bool   | false         | True の場合、固定ランダムシードを使用する     |
+| `random_seed`               | int    | 0             | ランダムシード                            |
+
+### Node パラメータ
+
+なし
+
+### コアパラメータ
+
+なし
+
+## 想定/既知の制限事項
+
+TBD
+

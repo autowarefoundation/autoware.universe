@@ -2,41 +2,42 @@
 
 ## scenario_selector_node
 
-`scenario_selector_node` is a node that switches trajectories from each scenario.
+`scenario_selector_node`は、各シナリオの経路を切り替えるノードです。
 
-### Input topics
+### 入力トピック
 
-| Name                             | Type                                  | Description                                           |
-| -------------------------------- | ------------------------------------- | ----------------------------------------------------- |
-| `~input/lane_driving/trajectory` | autoware_planning_msgs::Trajectory    | trajectory of LaneDriving scenario                    |
-| `~input/parking/trajectory`      | autoware_planning_msgs::Trajectory    | trajectory of Parking scenario                        |
-| `~input/lanelet_map`             | autoware_map_msgs::msg::LaneletMapBin |                                                       |
-| `~input/route`                   | autoware_planning_msgs::LaneletRoute  | route and goal pose                                   |
-| `~input/odometry`                | nav_msgs::Odometry                    | for checking whether vehicle is stopped               |
-| `is_parking_completed`           | bool (implemented as rosparam)        | whether all split trajectory of Parking are published |
+| 名称 | タイプ | 説明 |
+|---|---|---|
+| `~input/lane_driving/trajectory` | `autoware_planning_msgs::Trajectory` | LaneDriving シナリオの軌道 |
+| `~input/parking/trajectory` | `autoware_planning_msgs::Trajectory` | Parking シナリオの軌道 |
+| `~input/lanelet_map` | `autoware_map_msgs::msg::LaneletMapBin` | |
+| `~input/route` | `autoware_planning_msgs::LaneletRoute` | ルートと目標位置 |
+| `~input/odometry` | `nav_msgs::Odometry` | 車両が停止しているかどうかを確認するため |
+| `is_parking_completed` | ブール型（ROS のパラメータとして実装） | Parking の分割された軌跡がすべて公開されているかどうか |
 
-### Output topics
+### 出力トピック
 
-| Name                 | Type                               | Description                                    |
+| 名前                 | タイプ                                | 説明                                    |
 | -------------------- | ---------------------------------- | ---------------------------------------------- |
-| `~output/scenario`   | tier4_planning_msgs::Scenario      | current scenario and scenarios to be activated |
-| `~output/trajectory` | autoware_planning_msgs::Trajectory | trajectory to be followed                      |
+| `~output/scenario`   | tier4_planning_msgs::Scenario      | 自車位置とアクティブ化されるシナリオ              |
+| `~output/trajectory` | autoware_planning_msgs::Trajectory | 通過する軌跡                                  |
 
-### Output TFs
+### 出力TFs
 
-None
+なし
 
-### How to launch
+### 起動方法
 
-1. Write your remapping info in `scenario_selector.launch` or add args when executing `roslaunch`
+1. `scenario_selector.launch`でリマッピング情報を書き込むか、`roslaunch`を実行するときに引数を追加してください。
 2. `roslaunch autoware_scenario_selector scenario_selector.launch`
-   - If you would like to use only a single scenario, `roslaunch autoware_scenario_selector dummy_scenario_selector_{scenario_name}.launch`
+   - 1つのシナリオのみを使用する場合は、`roslaunch autoware_scenario_selector dummy_scenario_selector_{シナリオ名}.launch`
 
-### Parameters
+### パラメータ
 
 {{ json_to_markdown("planning/autoware_scenario_selector/schema/scenario_selector.schema.json") }}
 
-### Flowchart
+### フローチャート
+
 
 ```plantuml
 @startuml
@@ -69,6 +70,7 @@ endif
 stop
 @enduml
 ```
+
 
 ```plantuml
 @startuml
@@ -113,3 +115,4 @@ endif
 stop
 @enduml
 ```
+

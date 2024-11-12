@@ -1,7 +1,6 @@
-# TensorRT Classification for Efficient Dynamic Batched Inference
+# 高効率動的バッチ推論のための TensorRT Classification
 
-## Purpose
+## 目的
 
-This package classifies arbitrary categories using TensorRT for efficient and faster inference.
-Specifically, this optimizes preprocessing for efficient inference on embedded platform.
-Moreover, we support dynamic batched inference in GPUs and DLAs.
+このパッケージは TensorRT を利用して任意のカテゴリの分類を実施し、高効率・高速推論を実現します。具体的には、組み込みプラットフォームの効率的な推論のための前処理を最適化します。さらに、GPU と DLA での動的バッチ推論をサポートします。
+

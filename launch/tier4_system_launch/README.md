@@ -1,16 +1,17 @@
 # tier4_system_launch
 
-## Structure
+## 構造
 
 ![tier4_system_launch](./system_launch.drawio.svg)
 
-## Package Dependencies
+## パッケージ依存
 
-Please see `<exec_depend>` in `package.xml`.
+`package.xml` に含まれる `<exec_depend>` を参照してください。
 
-## Usage
+## 使い方
 
-Note that you should provide parameter paths as `PACKAGE_param_path`. The list of parameter paths you should provide is written at the top of `system.launch.xml`.
+パラメータパスを `PACKAGE_param_path` として指定する必要があります。必要となるパラメータパスのリストは `system.launch.xml` の先頭に記述されています。
+
 
 ```xml
   <include file="$(find-pkg-share tier4_system_launch)/launch/system.launch.xml">
@@ -23,3 +24,4 @@ Note that you should provide parameter paths as `PACKAGE_param_path`. The list o
     ...
   </include>
 ```
+

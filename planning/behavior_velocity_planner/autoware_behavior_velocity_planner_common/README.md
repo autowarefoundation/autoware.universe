@@ -1,3 +1,4 @@
-# Behavior Velocity Planner Common
+# Behavior Velocity Planner (共通)
 
-This package provides common functions as a library, which are used in the `behavior_velocity_planner` node and modules.
+このパッケージはライブラリとして共通関数を提供し、`behavior_velocity_planner` ノードとモジュールで使用されます。
+

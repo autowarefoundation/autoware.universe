@@ -1,24 +1,25 @@
-# Motion Utils package
+# モーションユーティリティパッケージ
 
-## Definition of terms
+## 用語の定義
 
-### Segment
+### セグメント
 
-`Segment` in Autoware is the line segment between two successive points as follows.
+Autowareにおける`セグメント`は、次のような2つの連続したポイント間の線分です。
 
 ![segment](./media/segment.svg){: style="width:600px"}
 
-The nearest segment index and nearest point index to a certain position is not always th same.
-Therefore, we prepare two different utility functions to calculate a nearest index for points and segments.
+特定の位置に対する最近接セグメントインデックスと最近接ポイントインデックスは、常に同じではありません。
+そのため、ポイントとセグメントの最近接インデックスを計算するための2つの異なるユーティリティ関数を用意しています。
 
-## Nearest index search
+## 最近接インデックス検索
 
-In this section, the nearest index and nearest segment index search is explained.
+このセクションでは、最近接インデックス検索と最近接セグメントインデックス検索について説明します。
 
-We have the same functions for the nearest index search and nearest segment index search.
-Taking for the example the nearest index search, we have two types of functions.
+最近接インデックス検索と最近接セグメントインデックス検索には同じ関数を使用します。
+最も近いインデックス検索の例を挙げると、2種類の関数があります。
 
-The first function finds the nearest index with distance and yaw thresholds.
+最初の関数は、距離とヨーのしきい値を使用して最近接インデックスを見つけるものです。
+
 
 ```cpp
 template <class T>
@@ -28,22 +29,22 @@ size_t findFirstNearestIndexWithSoftConstraints(
   const double yaw_threshold = std::numeric_limits<double>::max());
 ```
 
-This function finds the first local solution within thresholds.
-The reason to find the first local one is to deal with some edge cases explained in the next subsection.
+この関数はしきい値内の最初のローカルソリューションを求めます。最初のローカルソリューションを求める理由は、次の小節で説明するエッジケースを処理するためです。
 
-There are default parameters for thresholds arguments so that you can decide which thresholds to pass to the function.
+しきい値引数にはデフォルトのパラメータがあるので、関数の呼び出し時にどのしきい値を渡すかを決定できます。
 
-1. When both the distance and yaw thresholds are given.
-   - First, try to find the nearest index with both the distance and yaw thresholds.
-   - If not found, try to find again with only the distance threshold.
-   - If not found, find without any thresholds.
-2. When only distance are given.
-   - First, try to find the nearest index the distance threshold.
-   - If not found, find without any thresholds.
-3. When no thresholds are given.
-   - Find the nearest index.
+1. 距離とヨーの両方のしきい値が指定されている場合
+   - まず、距離とヨーの両方のしきい値を持つ最も近いインデックスを見つけようとします。
+   - 見つからない場合、距離のしきい値のみで再度見つけようとします。
+   - 見つからない場合、しきい値なしで見つけます。
+2. 距離のみが指定されている場合
+   - まず、距離のしきい値を持つ最も近いインデックスを見つけようとします。
+   - 見つからない場合、しきい値なしで見つけます。
+3. しきい値が指定されていない場合
+   - 最も近いインデックスを見つけます。
 
-The second function finds the nearest index in the lane whose id is `lane_id`.
+2 番目の関数は、`lane_id`であるレーンの最も近いインデックスを見付けます。
+
 
 ```cpp
 size_t findNearestIndexFromLaneId(
@@ -51,45 +52,48 @@ size_t findNearestIndexFromLaneId(
   const geometry_msgs::msg::Point & pos, const int64_t lane_id);
 ```
 
-### Application to various object
+### さまざまなオブジェクトへの適用
 
-Many node packages often calculate the nearest index of objects.
-We will explain the recommended method to calculate it.
+多くのノードパッケージは、オブジェクトの最近接インデックスを計算することがよくあります。
+推奨される計算方法について説明します。
 
-#### Nearest index for the ego
+#### 自車に対する最近接インデックス
 
-Assuming that the path length before the ego is short enough, we expect to find the correct nearest index in the following edge cases by `findFirstNearestIndexWithSoftConstraints` with both distance and yaw thresholds.
-Blue circles describes the distance threshold from the base link position and two blue lines describe the yaw threshold against the base link orientation.
-Among points in these cases, the correct nearest point which is red can be found.
+自車の前方のパス長が十分に短い場合、距離とヨー角の両方の閾値を使用して`findFirstNearestIndexWithSoftConstraints`を使用して、次のエッジケースで正しい最近接インデックスが得られることが期待されます。
+青い円は、ベースリンク位置からの距離閾値を表し、2つの青い線はベースリンクの向きに対してヨー角の閾値を表します。
+これらのケース内の点の中で、赤い正しい最近接点が検出できます。
 
 ![ego_nearest_search](./media/ego_nearest_search.svg)
 
-Therefore, the implementation is as follows.
+したがって、実装は以下のようになります。
+
 
 ```cpp
 const size_t ego_nearest_idx = findFirstNearestIndexWithSoftConstraints(points, ego_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
 const size_t ego_nearest_seg_idx = findFirstNearestIndexWithSoftConstraints(points, ego_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
 ```
 
-#### Nearest index for dynamic objects
+#### 動的オブジェクトの nearest index
 
-For the ego nearest index, the orientation is considered in addition to the position since the ego is supposed to follow the points.
-However, for the dynamic objects (e.g., predicted object), sometimes its orientation may be different from the points order, e.g. the dynamic object driving backward although the ego is driving forward.
+エゴの nearest index では、エゴが点に従うことが想定されるため、位置に加えて向きも考慮されます。
+ただし、動的オブジェクト (たとえば、予測オブジェクト) の場合、動的オブジェクトが後退していても、エゴが前進していても、オブジェクトの向きが点の順序と異なる場合があります。
 
-Therefore, the yaw threshold should not be considered for the dynamic object.
-The implementation is as follows.
+したがって、動的オブジェクトではヨー閾値は考慮されるべきではありません。
+実装は次のようになります。
+
 
 ```cpp
 const size_t dynamic_obj_nearest_idx = findFirstNearestIndexWithSoftConstraints(points, dynamic_obj_pose, dynamic_obj_nearest_dist_threshold);
 const size_t dynamic_obj_nearest_seg_idx = findFirstNearestIndexWithSoftConstraints(points, dynamic_obj_pose, dynamic_obj_nearest_dist_threshold);
 ```
 
-#### Nearest index for traffic objects
+#### 交通対象の最近インデックス
 
-In lanelet maps, traffic objects belong to the specific lane.
-With this specific lane's id, the correct nearest index can be found.
+Laneletマップでは、交通対象は特定のレーンに属しています。
+この特定のレーンのIDにより、正しい最近インデックスを検索できます。
 
-The implementation is as follows.
+実装方法は次のとおりです。
+
 
 ```cpp
 // first extract `lane_id` which the traffic object belong to.
@@ -97,8 +101,9 @@ const size_t traffic_obj_nearest_idx = findNearestIndexFromLaneId(path_with_lane
 const size_t traffic_obj_nearest_seg_idx = findNearestSegmentIndexFromLaneId(path_with_lane_id, traffic_obj_pos, lane_id);
 ```
 
-## For developers
+## 開発者向け
 
-Some of the template functions in `trajectory.hpp` are mostly used for specific types (`autoware_planning_msgs::msg::PathPoint`, `autoware_planning_msgs::msg::PathPoint`, `autoware_planning_msgs::msg::TrajectoryPoint`), so they are exported as `extern template` functions to speed-up compilation time.
+`trajectory.hpp` の一部テンプレート関数は、主に特定の型 (`autoware_planning_msgs::msg::PathPoint`, `autoware_planning_msgs::msg::PathPoint`, `autoware_planning_msgs::msg::TrajectoryPoint`) で使用されるため、コンパイル時間を短縮するために `extern template` 関数としてエクスポートされています。
 
-`autoware_motion_utils.hpp` header file was removed because the source files that directly/indirectly include this file took a long time for preprocessing.
+`autoware_motion_utils.hpp` ヘッダーファイルは、このファイルを直接/間接的に含むソースファイルがプリプロセスに時間がかかったため削除されました。
+

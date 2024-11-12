@@ -1,33 +1,33 @@
 # diagnostic_graph_aggregator
 
-## Overview
+## 概要
 
-The diagnostic graph aggregator node subscribes to diagnostic array and publishes aggregated diagnostic graph.
-As shown in the diagram below, this node introduces extra diagnostic status for intermediate functional units.
+diagnostic_graph_aggregatorノードは診断配列をサブスクライブして、集計した診断グラフをパブリッシュします。
+下の図に示すように、このノードは中間的な機能単位のための追加の診断ステータスを導入します。
 
 ![overview](./doc/overview.drawio.svg)
 
-## Diagnostic graph structures
+## 診断グラフの構造
 
-The diagnostic graph is actually a set of fault tree analysis (FTA) for each operation mode of Autoware.
-Since the status of the same node may be referenced by multiple nodes, the overall structure is a directed acyclic graph (DAG).
-Each node in the diagnostic graph represents the diagnostic status of a specific functional unit, including the input diagnostics.
-So we define this as "unit", and call the unit corresponding to the input diagnosis "diag unit" and the others "node unit".
+診断グラフは、実際にはAutowareの各オペレーションモードに対するフォールトツリー解析（FTA）のセットです。
+同じノードのステータスは複数のノードによって参照される可能性があるため、全体的な構造は有向非巡回グラフ（DAG）です。
+診断グラフ内の各ノードは、入力診断を含む特定の機能単位の診断ステータスを表します。
+そのため、これを「ユニット」と定義し、入力診断に対応するユニットを「diagユニット」、その他を「ノードユニット」と呼びます。
 
-Every unit has an error level that is the same as DiagnosticStatus, a unit type, and optionally a unit path.
-In addition, every diag unit has a message, a hardware_id, and values that are the same as DiagnosticStatus.
-The unit type represents how the unit status is calculated, such as AND or OR.
-The unit path is any unique string that represents the functionality of the unit.
+すべてのユニットには、DiagnosticStatusと同じエラーレベル、ユニットタイプ、ユニットパス（オプション）があります。
+さらに、すべてのdiagユニットには、DiagnosticStatusと同じメッセージ、hardware_id、および値があります。
+ユニットタイプは、ユニットステータスがANDまたはORなどの方法で計算される方法を表します。
+ユニットパスは、ユニットの機能を表す一意の文字列です。
 
-NOTE: This feature is currently under development.
-The diagnostic graph also supports "link" because there are cases where connections between units have additional status.
-For example, it is natural that many functional units will have an error status until initialization is complete.
+**注意:** この機能は現在開発中です。
+ユニット間の接続にステータスが追加されるケースがあるため、診断グラフは「リンク」もサポートしています。
+たとえば、多くの機能ユニットは、初期化が完了するまでエラーステータスになるのは当然です。
 
-## Operation mode availability
+## オペレーションモードの可用性
 
-For MRM, this node publishes the status of the top-level functional units in the dedicated message.
-Therefore, the diagnostic graph must contain functional units with the following names.
-This feature breaks the generality of the graph and may be changed to a plugin or another node in the future.
+MRMでは、このノードは専用のメッセージに最上位の機能単位のステータスをパブリッシュします。
+そのため、診断グラフには次の名前の機能単位が含まれている必要があります。
+この機能はグラフの一般的な性質を損ない、将来的にはプラグインまたは別のノードに変更される可能性があります。
 
 - /autoware/operation/stop
 - /autoware/operation/autonomous
@@ -37,54 +37,57 @@ This feature breaks the generality of the graph and may be changed to a plugin o
 - /autoware/operation/comfortable-stop
 - /autoware/operation/pull-over
 
-## Interfaces
+## インターフェイス
 
-| Interface Type | Interface Name                        | Data Type                                         | Description                        |
-| -------------- | ------------------------------------- | ------------------------------------------------- | ---------------------------------- |
-| subscription   | `/diagnostics`                        | `diagnostic_msgs/msg/DiagnosticArray`             | Diagnostics input.                 |
-| publisher      | `/diagnostics_graph/unknowns`         | `diagnostic_msgs/msg/DiagnosticArray`             | Diagnostics not included in graph. |
-| publisher      | `/diagnostics_graph/struct`           | `tier4_system_msgs/msg/DiagGraphStruct`           | Diagnostic graph (static part).    |
-| publisher      | `/diagnostics_graph/status`           | `tier4_system_msgs/msg/DiagGraphStatus`           | Diagnostic graph (dynamic part).   |
-| publisher      | `/system/operation_mode/availability` | `tier4_system_msgs/msg/OperationModeAvailability` | Operation mode availability.       |
+| インターフェイス種別 | インターフェイス名 | データ型 | 説明 |
+|---|---|---|---|
+| サブスクリプション | `/diagnostics` | `diagnostic_msgs/msg/DiagnosticArray` | 診断入力 |
+| パブリッシャー | `/diagnostics_graph/unknowns` | `diagnostic_msgs/msg/DiagnosticArray` | グラフに含まれない診断 |
+| パブリッシャー | `/diagnostics_graph/struct` | `tier4_system_msgs/msg/DiagGraphStruct` | 診断グラフ（静的部分） |
+| パブリッシャー | `/diagnostics_graph/status` | `tier4_system_msgs/msg/DiagGraphStatus` | 診断グラフ（動的部分） |
+| パブリッシャー | `/system/operation_mode/availability` | `tier4_system_msgs/msg/OperationModeAvailability` | オペレーションモードの可用性 |
 
-## Parameters
+## パラメータ
 
-| Parameter Name                    | Data Type | Description                                |
-| --------------------------------- | --------- | ------------------------------------------ |
-| `graph_file`                      | `string`  | Path of the config file.                   |
-| `rate`                            | `double`  | Rate of aggregation and topic publication. |
-| `input_qos_depth`                 | `uint`    | QoS depth of input array topic.            |
-| `graph_qos_depth`                 | `uint`    | QoS depth of output graph topic.           |
-| `use_operation_mode_availability` | `bool`    | Use operation mode availability publisher. |
+| パラメータ名 | データ型 | 説明 |
+|---|---|---|
+| `graph_file` | `string` | コンフィグファイルのパス |
+| `rate` | `double` | 集計とトピック公開のレート |
+| `input_qos_depth` | `uint` | 入力配列トピックのQoS深度 |
+| `graph_qos_depth` | `uint` | 出力グラフトピックのQoS深度 |
+| `use_operation_mode_availability` | `bool` | 運転モード利用可能パブリッシャーを使用する |
 
-## Examples
+## 例
 
-This is an example of a diagnostic graph configuration. The configuration can be split into multiple files.
+これは診断グラフ構成の例です。構成は複数のファイルに分割できます。
 
 - [main.yaml](./example/graph/main.yaml)
 - [module1.yaml](./example/graph/module1.yaml)
 - [module2.yaml](./example/graph/module2.yaml)
 
+
 ```bash
 ros2 launch diagnostic_graph_aggregator example-main.launch.xml
 ```
 
-You can reuse the graph by making partial edits. For example, disable hardware checks for simulation.
+シミュレーションではハードウェアチェックを無効化することで、グラフを部分的に編集して再利用できます。
 
 - [edit.yaml](./example/graph/edit.yaml)
+
 
 ```bash
 ros2 launch diagnostic_graph_aggregator example-edit.launch.xml
 ```
 
-## Debug tools
+## デバッグツール
 
 - [tree](./doc/tool/tree.md)
 - [diagnostic_graph_utils](../diagnostic_graph_utils/README.md)
 
-## Graph file format
+## グラフファイル形式
 
 - [graph](./doc/format/graph.md)
 - [path](./doc/format/path.md)
 - [unit](./doc/format/unit.md)
 - [edit](./doc/format/edit.md)
+

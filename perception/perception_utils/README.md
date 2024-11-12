@@ -1,5 +1,6 @@
 # perception_utils
 
-## Purpose
+## 目的
 
-This package contains a library of common functions that are useful across the perception module.
+このパッケージには、知覚モジュール全体で役立つ一般的な関数のライブラリが含まれています。
+

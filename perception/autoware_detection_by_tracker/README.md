@@ -1,74 +1,119 @@
 # autoware_detection_by_tracker
 
-## Purpose
+## 用途
 
-This package feeds back the tracked objects to the detection module to keep it stable and keep detecting objects.
+このパッケージはトラッキングされたオブジェクトを検出モジュールにフィードバックし、安定してオブジェクトを検出し続けることを目的としています。
 ![purpose](image/purpose.svg)
 
-The autoware detection by tracker takes as input an unknown object containing a cluster of points and a tracker.
-The unknown object is optimized to fit the size of the tracker so that it can continue to be detected.
+Autowareの detection by tracker は、点群とトラッカーを含む未知のオブジェクトを入力として受け取ります。
+未知のオブジェクトは、検出され続けることができるようにトラッカーのサイズに合うように最適化されます。
 
-## Inner-workings / Algorithms
+## 内部動作 / アルゴリズム
 
-The autoware detection by tracker receives an unknown object containing a point cloud and a tracker, where the unknown object is mainly shape-fitted using euclidean clustering.
-Shape fitting using euclidean clustering and other methods has a problem called under segmentation and over segmentation.
+Autowareの detection by tracker は、点群とトラッカーを含む未知のオブジェクトを受け取ります。ここで未知のオブジェクトは、主にユークリッドクラスタリングを使用して形状適合されています。
+ユークリッドクラスタリングやその他の方法を使用した形状適合には、過分割と過分割という問題があります。
 
 [![segmentation_fail](image/segmentation_fail.png)](https://www.researchgate.net/figure/Examples-of-an-undersegmentation-error-top-and-an-oversegmentation-error-bottom-Each_fig1_304533062)
-_Adapted from [3]_
+_[3]から改変]_
 
-Simply looking at the overlap between the unknown object and the tracker does not work. We need to take measures for under segmentation and over segmentation.
+未知のオブジェクトとトラッカーのオーバーラップだけを見るのは不十分です。過分割と過分割の対策を講じる必要があります。
 
-### Policy for dealing with over segmentation
+### 過分割に対処するためのポリシー
 
-1. Merge the unknown objects in the tracker as a single object.
-2. Shape fitting using the tracker information such as angle and size as reference information.
+1. トラッカー内の未知のオブジェクトを単一のオブジェクトとしてマージします。
+2. トラッカー情報（角度やサイズなど）をリファレンス情報として使用して形状適合を行います。
 
-### Policy for dealing with under segmentation
+### 過分割に対処するためのポリシー
 
-1. Compare the tracker and unknown objects, and determine that those with large recall and small precision are under segmented objects.
-2. In order to divide the cluster of under segmented objects, it iterate the parameters to make small clusters.
-3. Adjust the parameters several times and adopt the one with the highest IoU.
+1. トラッカーと未知のオブジェクトを比較し、リコールが大きく、適合率が小さいものを過分割オブジェクトと判断します。
+2. 過分割オブジェクトのクラスタを分割するために、小さなクラスタを作成するようにパラメータを反復処理します。
+3. パラメータを数回調整し、最も IoU が高いものを採用します。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                      | Type                                                     | Description     |
-| ------------------------- | -------------------------------------------------------- | --------------- |
-| `~/input/initial_objects` | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | unknown objects |
-| `~/input/tracked_objects` | `tier4_perception_msgs::msg::TrackedObjects`             | trackers        |
+| 名称 | 型 | 説明 |
+|---|---|---|
+| `~/input/initial_objects` | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | 未知のオブジェクト |
+| `~/input/tracked_objects` | `tier4_perception_msgs::msg::TrackedObjects` | トラッカー |
 
-### Output
+### 出力
 
-| Name       | Type                                             | Description |
-| ---------- | ------------------------------------------------ | ----------- |
-| `~/output` | `autoware_perception_msgs::msg::DetectedObjects` | objects     |
+**自己位置推定**
 
-## Parameters
+以下の方法は自己位置推定およびマッピングを処理します。
 
-| Name                              | Type   | Description                                                           | Default value |
-| --------------------------------- | ------ | --------------------------------------------------------------------- | ------------- |
-| `tracker_ignore_label.UNKNOWN`    | `bool` | If true, the node will ignore the tracker if its label is unknown.    | `true`        |
-| `tracker_ignore_label.CAR`        | `bool` | If true, the node will ignore the tracker if its label is CAR.        | `false`       |
-| `tracker_ignore_label.PEDESTRIAN` | `bool` | If true, the node will ignore the tracker if its label is pedestrian. | `false`       |
-| `tracker_ignore_label.BICYCLE`    | `bool` | If true, the node will ignore the tracker if its label is bicycle.    | `false`       |
-| `tracker_ignore_label.MOTORCYCLE` | `bool` | If true, the node will ignore the tracker if its label is MOTORCYCLE. | `false`       |
-| `tracker_ignore_label.BUS`        | `bool` | If true, the node will ignore the tracker if its label is bus.        | `false`       |
-| `tracker_ignore_label.TRUCK`      | `bool` | If true, the node will ignore the tracker if its label is truck.      | `false`       |
-| `tracker_ignore_label.TRAILER`    | `bool` | If true, the node will ignore the tracker if its label is TRAILER.    | `false`       |
+**Localization and Mapping (ローカライゼーションとマッピング)**:
+- 現在の姿勢を推定および追跡します。
+- 環境マップを作成および更新します。
 
-## Assumptions / Known limits
+**Planning (プランニング)**
+- 安全で効率的な経路を計画します。
+- 速度、加速度、ステアリングコマンドを生成します。
 
-## (Optional) Error detection and handling
+**Behavior Planning (動作プランニング)**
+- 衝突回避のための障害物認識と回避を行います。
+- 交通規則とエチケットに従います。
 
-## (Optional) Performance characterization
+**Behavior Prediction (動作予測)**
+- 歩行者、自転車、他の車両の動きを予測します。
+- 交差点、人混み、その他の複雑な状況での安全な行動を可能にします。
 
-## (Optional) References/External links
+**Controller (コントローラ)**
+- 運転操作を実行します。
+- ブレーキ、アクセル、ステアリングの制御を管理します。
 
-[1] M. Himmelsbach, et al. "Tracking and classification of arbitrary objects with bottom-up/top-down detection." (2012).
+**Perception (パーセプション)**
+- カメラ、レーダー、LiDARセンサーからのデータを処理します。
+- 物体、車線、信号などの周辺環境を認識および分類します。
 
-[2] Arya Senna Abdul Rachman, Arya. "3D-LIDAR Multi Object Tracking for Autonomous Driving: Multi-target Detection and Tracking under Urban Road Uncertainties." (2017).
+**センサー**
+- レーダー、LiDAR、カメラなどのセンサーを使用します。
+- 検出距離、精度、視野などのセンサー特性を考慮します。
 
-[3] David Held, et al. "A Probabilistic Framework for Real-time 3D Segmentation using Spatial, Temporal, and Semantic Cues." (2016).
+**データアグリゲーション**
+- 複数のセンサーからのデータを統合します。
+- `post resampling`を使用して時間同期された一貫したビューを作成します。
 
-## (Optional) Future extensions / Unimplemented parts
+**データアソシエーション**
+- 異なるセンサーからの測定結果を同一の対象物に関連付けます。
+- KF（カルマンフィルタ）やHD（ハフ距離）などの手法を使用します。
+
+**ステート推定**
+- Kalmanフィルタを使用し、センサー測定値から状態を推定します。
+- 速度逸脱量、加速度逸脱量などの状態変数を考慮します。
+
+| 名前       | 種類                                           | 説明 |
+| ---------- | ---------------------------------------------- | ----------- |
+| `~/output` | `autoware_perception_msgs::msg::DetectedObjects` | オブジェクト     |
+
+## パラメータ
+
+| 名称 | タイプ | 説明 | デフォルト値 |
+|---|---|---|---|
+| `tracker_ignore_label.UNKNOWN` | `bool` | ラベルが不明の場合は、ノードがトラッカーを無視するかどうか | `true` |
+| `tracker_ignore_label.CAR` | `bool` | ラベルが CAR の場合は、ノードがトラッカーを無視するかどうか | `false` |
+| `tracker_ignore_label.PEDESTRIAN` | `bool` | ラベルが歩行者の場合は、ノードがトラッカーを無視するかどうか | `false` |
+| `tracker_ignore_label.BICYCLE` | `bool` | ラベルが自転車の場合は、ノードがトラッカーを無視するかどうか | `false` |
+| `tracker_ignore_label.MOTORCYCLE` | `bool` | ラベルがオートバイの場合は、ノードがトラッカーを無視するかどうか | `false` |
+| `tracker_ignore_label.BUS` | `bool` | ラベルがバスの場合は、ノードがトラッカーを無視するかどうか | `false` |
+| `tracker_ignore_label.TRUCK` | `bool` | ラベルがトラックの場合は、ノードがトラッカーを無視するかどうか | `false` |
+| `tracker_ignore_label.TRAILER` | `bool` | ラベルがトレーラーの場合は、ノードがトラッカーを無視するかどうか | `false` |
+
+## 前提条件と既知の制限事項
+
+## (省略可能) エラー検出と処理
+
+## (省略可能) 性能特性
+
+## (省略可能) 参照文献/外部リンク
+
+[1] M. ヒメルスバッハら. "ボトムアップ/トップダウン検出を用いた任意物体の追跡と分類." (2012).
+
+[2] アリア・セナ・アブドゥル・ラクマン, アリア. "自動運転における 3D LIDAR マルチオブジェクトトラッキング: 都市道路の不確実性におけるマルチターゲットの検出および追跡." (2017).
+
+[3] デイビッド・ヘルドら. "空間的、時間的、セマンティックな手がかりを用いたリアルタイム 3D セグメンテーションのための確率的フレームワーク." (2016).
+
+## (省略可能) 将来の拡張機能/未実装部分
+

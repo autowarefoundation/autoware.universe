@@ -1,24 +1,24 @@
-# Overview
+# 概要
 
-The **Extend Kalman Filter Localizer** estimates robust and less noisy robot pose and twist by integrating the 2D vehicle dynamics model with input ego-pose and ego-twist messages. The algorithm is designed especially for fast-moving robots such as autonomous driving systems.
+**拡張カルマンフィルタローカライザー**は、2D車両力学モデルを入力エゴポーズとエゴツイストメッセージと統合して、堅牢でより少ないノイズを持つロボットのポーズと捻じれを推定します。このアルゴリズムは、自律走行システムなどの高速移動ロボットのために特別に設計されています。
 
-## Flowchart
+## フローチャート
 
-The overall flowchart of the autoware_ekf_localizer is described below.
+autoware_ekf_localizerの全体的なフローチャートを以下に示します。
 
 <p align="center">
   <img src="./media/ekf_flowchart.png" width="800">
 </p>
 
-## Features
+## 機能
 
-This package includes the following features:
+このパッケージには、次の機能があります。
 
-- **Time delay compensation** for input messages, which enables proper integration of input information with varying time delays. This is important especially for high-speed moving robots, such as autonomous driving vehicles. (see the following figure).
-- **Automatic estimation of yaw bias** prevents modeling errors caused by sensor mounting angle errors, which can improve estimation accuracy.
-- **Mahalanobis distance gate** enables probabilistic outlier detection to determine which inputs should be used or ignored.
-- **Smooth update**, the Kalman Filter measurement update is typically performed when a measurement is obtained, but it can cause large changes in the estimated value, especially for low-frequency measurements. Since the algorithm can consider the measurement time, the measurement data can be divided into multiple pieces and integrated smoothly while maintaining consistency (see the following figure).
-- **Calculation of vertical correction amount from pitch** mitigates localization instability on slopes. For example, when going uphill, it behaves as if it is buried in the ground (see the left side of the "Calculate delta from pitch" figure) because EKF only considers 3DoF(x,y,yaw). Therefore, EKF corrects the z-coordinate according to the formula (see the right side of the "Calculate delta from pitch" figure).
+- **タイム遅延補償**入力メッセージに対して、さまざまな遅延時間で入力情報を適切に統合できます。これは、自動運転車などの高速で移動するロボットでは特に重要です（次の図を参照）。
+- **ヨーバイアスの自動推定**センサー取り付け角度の誤差によるモデリングエラーを防ぎ、推定精度を向上させることができます。
+- **マハラノビス距離ゲート**確率的な外れ値検出を可能にし、使用する入力と無視する入力を判断できます。
+- **スムーズな更新**カルマンフィルタの測定値更新は通常、測定値を取得したときに実行されますが、特に低周波測定値の場合、推定値に大きな変化をもたらす可能性があります。このアルゴリズムは測定時間を考慮できるため、測定データは複数の部分に分割し、一貫性を維持しながらスムーズに統合できます（次の図を参照）。
+- **ピッチからの垂直訂正量の計算**勾配でのローカライゼーションの不安定性を軽減します。たとえば、上り坂では、EKFは3自由度（x、y、ヨー）のみを考慮するため、まるで地面に埋もれているかのように動作します（「ピッチからのデルタの計算」図の左側を参照）。したがって、EKFは公式に従ってz座標を修正します（「ピッチからのデルタの計算」図の右側を参照）。
 
 <p align="center">
 <img src="./media/ekf_delay_comp.png" width="800">
@@ -32,114 +32,112 @@ This package includes the following features:
   <img src="./media/calculation_delta_from_pitch.png" width="800">
 </p>
 
-## Node
+## ノード
 
-### Subscribed Topics
+### サブスクライブするトピック
 
-| Name                             | Type                                             | Description                                                                                                                              |
-| -------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `measured_pose_with_covariance`  | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Input pose source with the measurement covariance matrix.                                                                                |
-| `measured_twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | Input twist source with the measurement covariance matrix.                                                                               |
-| `initialpose`                    | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Initial pose for EKF. The estimated pose is initialized with zeros at the start. It is initialized with this message whenever published. |
+| 名前                                   | タイプ                                                             | 説明                                                                                                                                           |
+| -------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `measured_pose_with_covariance`          | `geometry_msgs::msg::PoseWithCovarianceStamped`                      | 測定共分散行列を持つ入力ポーズソース                                                                                                        |
+| `measured_twist_with_covariance`     | `geometry_msgs::msg::TwistWithCovarianceStamped`                     | 測定共分散行列を持つ入力ツイストソース                                                                                                    |
+| `initialpose`                            | `geometry_msgs::msg::PoseWithCovarianceStamped`                      | EKF の初期ポーズ。推定ポーズは開始時にゼロで初期化されます。公開されるたびにこのメッセージで初期化されます。                            |
 
-### Published Topics
+### 公開トピック
 
-| Name                              | Type                                             | Description                                           |
-| --------------------------------- | ------------------------------------------------ | ----------------------------------------------------- |
-| `ekf_odom`                        | `nav_msgs::msg::Odometry`                        | Estimated odometry.                                   |
-| `ekf_pose`                        | `geometry_msgs::msg::PoseStamped`                | Estimated pose.                                       |
-| `ekf_pose_with_covariance`        | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Estimated pose with covariance.                       |
-| `ekf_biased_pose`                 | `geometry_msgs::msg::PoseStamped`                | Estimated pose including the yaw bias                 |
-| `ekf_biased_pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Estimated pose with covariance including the yaw bias |
-| `ekf_twist`                       | `geometry_msgs::msg::TwistStamped`               | Estimated twist.                                      |
-| `ekf_twist_with_covariance`       | `geometry_msgs::msg::TwistWithCovarianceStamped` | The estimated twist with covariance.                  |
-| `diagnostics`                     | `diagnostics_msgs::msg::DiagnosticArray`         | The diagnostic information.                           |
+| 名前                              | タイプ                                             | 説明                                          |
+| --------------------------------- | ------------------------------------------------ | -------------------------------------------- |
+| `ekf_odom`                        | `nav_msgs::msg::Odometry`                        | 推定オドメトリ。                               |
+| `ekf_pose`                        | `geometry_msgs::msg::PoseStamped`                | 推定ポーズ。                                  |
+| `ekf_pose_with_covariance`        | `geometry_msgs::msg::PoseWithCovarianceStamped`  | 共分散を含む推定ポーズ。                      |
+| `ekf_biased_pose`                 | `geometry_msgs::msg::PoseStamped`                | Yawバイアスを含む推定ポーズ。                 |
+| `ekf_biased_pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped`  | Yawバイアスを含む共分散付き推定ポーズ。      |
+| `ekf_twist`                       | `geometry_msgs::msg::TwistStamped`               | 推定ツイスト。                                 |
+| `ekf_twist_with_covariance`       | `geometry_msgs::msg::TwistWithCovarianceStamped` | 共分散を含む推定ツイスト。                   |
+| `diagnostics`                     | `diagnostics_msgs::msg::DiagnosticArray`         | 診断情報。                                   |
 
-### Published TF
+### 公開 TF
 
 - base_link
-  TF from `map` coordinate to estimated pose.
+  `map` 座標から推定姿勢への TF。
 
-## Functions
+## 関数
 
-### Predict
+### 予測
 
-The current robot state is predicted from previously estimated data using a given prediction model. This calculation is called at a constant interval (`predict_frequency [Hz]`). The prediction equation is described at the end of this page.
+現在のロボットの状態は、指定された予測モデルを使用して、これまで推定されたデータから予測されます。この計算は一定の間隔（`predict_frequency [Hz]`）で呼び出されます。予測式はこのページの最後に記載されています。
 
-### Measurement Update
+### 測定値更新
 
-Before the update, the Mahalanobis distance is calculated between the measured input and the predicted state, the measurement update is not performed for inputs where the Mahalanobis distance exceeds the given threshold.
+更新前に、測定された入力値と予測された状態との間でマハラノビス距離が計算されます。測定値更新は、マハラノビス距離が所定のしきい値を超える入力値に対しては実行されません。
 
-The predicted state is updated with the latest measured inputs, measured_pose, and measured_twist. The updates are performed with the same frequency as prediction, usually at a high frequency, in order to enable smooth state estimation.
+予測された状態は、最新の測定入力、measured_pose、measured_twistを使用して更新されます。更新は、通常は高周波で予測と同じ周波数で行われ、スムーズな状態推定を実行できます。
 
-## Parameter description
+## パラメータの説明
 
-The parameters are set in `launch/ekf_localizer.launch` .
+パラメータは `launch/ekf_localizer.launch` で設定されます。
 
-### For Node
+### ノードの場合
 
 {{ json_to_markdown("localization/autoware_ekf_localizer/schema/sub/node.sub_schema.json") }}
 
-### For pose measurement
+### ポーズの測定値の場合
 
 {{ json_to_markdown("localization/autoware_ekf_localizer/schema/sub/pose_measurement.sub_schema.json") }}
 
-### For twist measurement
+### ツイストの測定値の場合
 
 {{ json_to_markdown("localization/autoware_ekf_localizer/schema/sub/twist_measurement.sub_schema.json") }}
 
-### For process noise
+### プロセスノイズの場合
 
 {{ json_to_markdown("localization/autoware_ekf_localizer/schema/sub/process_noise.sub_schema.json") }}
 
-note: process noise for positions x & y are calculated automatically from nonlinear dynamics.
+注: 位置 x と y のプロセスノイズは非線形動特性から自動的に計算されます。
 
-### Simple 1D Filter Parameters
+### 1 次元単純フィルタのパラメータ
 
 {{ json_to_markdown("localization/autoware_ekf_localizer/schema/sub/simple_1d_filter_parameters.sub_schema.json") }}
 
-### For diagnostics
+### 診断の場合
 
 {{ json_to_markdown("localization/autoware_ekf_localizer/schema/sub/diagnostics.sub_schema.json") }}
 
-### Misc
+### 諸々
 
 {{ json_to_markdown("localization/autoware_ekf_localizer/schema/sub/misc.sub_schema.json") }}
 
-## How to tune EKF parameters
+## EKF パラメータの調整方法
 
-### 0. Preliminaries
+### 0. 準備
 
-- Check header time in pose and twist message is set to sensor time appropriately, because time delay is calculated from this value. If it is difficult to set an appropriate time due to the timer synchronization problem, use `twist_additional_delay` and `pose_additional_delay` to correct the time.
-- Check if the relation between measurement pose and twist is appropriate (whether the derivative of the pose has a similar value to twist). This discrepancy is caused mainly by unit error (such as confusing radian/degree) or bias noise, and it causes large estimation errors.
+- ポーズとツイストのメッセージヘッダーの時間が適切にセンサー時間に設定されていることを確認します。時間遅延はこの値から計算されるためです。タイマの同期に関する問題から適切な時間を設定するのが難しい場合は、`twist_additional_delay` と `pose_additional_delay` を使用して時間を修正してください。
+- 測定ポーズとツイストの関係が適切であるかどうかを確認します（ポーズの微分がツイストと同様の値になるかどうか）。この差異は主に単位の誤り（ラジアンと度数の混同など）またはバイアスノイズが原因であり、大きな推定誤差につながります。
 
-### 1. Tune sensor parameters
+### 1. センサーパラメータの調整
 
-Set standard deviation for each sensor. The `pose_measure_uncertainty_time` is for the uncertainty of the header timestamp data.
-You can also tune a number of steps for smoothing for each observed sensor data by tuning `*_smoothing_steps`.
-Increasing the number will improve the smoothness of the estimation, but may have an adverse effect on the estimation performance.
+各センサの標準偏差を設定します。ヘッダーのタイムスタンプデータの不確かさに対する`pose_measure_uncertainty_time`です。各観測センサデータの`*_smoothing_steps`を設定することで、スムージングのステップ数を調整できます。数を増やすと推定値のスムーズさが向上しますが、推定パフォーマンスに悪影響が出る可能性があります。
 
 - `pose_measure_uncertainty_time`
 - `pose_smoothing_steps`
 - `twist_smoothing_steps`
 
-### 2. Tune process model parameters
+### 2. プロセスモデルパラメータの調整
 
-- `proc_stddev_vx_c` : set to maximum linear acceleration
-- `proc_stddev_wz_c` : set to maximum angular acceleration
-- `proc_stddev_yaw_c` : This parameter describes the correlation between the yaw and yaw rate. A large value means the change in yaw does not correlate to the estimated yaw rate. If this is set to 0, it means the change in estimated yaw is equal to yaw rate. Usually, this should be set to 0.
-- `proc_stddev_yaw_bias_c` : This parameter is the standard deviation for the rate of change in yaw bias. In most cases, yaw bias is constant, so it can be very small, but must be non-zero.
+- `proc_stddev_vx_c` : 最大線形加速度に設定
+- `proc_stddev_wz_c` : 最大角加速度に設定
+- `proc_stddev_yaw_c` : このパラメータはヨーとヨーレート間の相関を表します。値が大きいほど、ヨーの変化が推定ヨーレートと相関しません。これを0に設定すると、推定ヨーの変化がヨーレートと等しくなります。通常は0に設定する必要があります。
+- `proc_stddev_yaw_bias_c` : このパラメータはヨーバイアスの変化率の標準偏差です。ほとんどの場合、ヨーバイアスは一定であるため、非常に小さくなければなりませんが、ゼロではありません。
 
-### 3. Tune gate parameters
+### 3. ゲートパラメータの調整
 
-EKF performs gating using Mahalanobis distance before updating by observation. The gate size is determined by the `pose_gate_dist` parameter and the `twist_gate_dist`. If the Mahalanobis distance is larger than this value, the observation is ignored.
+EKFは観測による更新前にマハラノビス距離を使用してゲーティングを実行します。ゲートサイズは`pose_gate_dist`パラメータと`twist_gate_dist`によって決定されます。マハラノビス距離がこの値よりも大きい場合、観測は無視されます。
 
-This gating process is based on a statistical test using the chi-square distribution. As modeled, we assume that the Mahalanobis distance follows a chi-square distribution with 3 degrees of freedom for pose and 2 degrees of freedom for twist.
+このゲーティングプロセスは、カイ二乗分布を使用した統計的テストに基づいています。モデル化されたように、マハラノビス距離はヨーの自由度が3、ねじれの自由度が2のカイ二乗分布に従うものと仮定しています。
 
-Currently, the accuracy of covariance estimation itself is not very good, so it is recommended to set the significance level to a very small value to reduce rejection due to false positives.
+現在のところ、共分散推定の精度はあまり良くないため、偽陽性による拒否を減らすために、有意水準を非常に小さい値に設定することをお勧めします。
 
-| Significance level | Threshold for 2 dof | Threshold for 3 dof |
-| ------------------ | ------------------- | ------------------- |
+| 重要度レベル | 2 次元結果の閾値 | 3 次元結果の閾値 |
+| ---------------- | -------------------- | -------------------- |
 | $10 ^ {-2}$        | 9.21                | 11.3                |
 | $10 ^ {-3}$        | 13.8                | 16.3                |
 | $10 ^ {-4}$        | 18.4                | 21.1                |
@@ -150,31 +148,31 @@ Currently, the accuracy of covariance estimation itself is not very good, so it 
 | $10 ^ {-9}$        | 41.4                | 44.8                |
 | $10 ^ {-10}$       | 46.1                | 49.5                |
 
-## Kalman Filter Model
+## カルマンフィルタモデル
 
-### kinematics model in update function
+### 更新関数における運動モデル
 
 <img src="./media/ekf_dynamics.png" width="320">
 
-where, $\theta_k$ represents the vehicle's heading angle, including the mounting angle bias.
-$b_k$ is a correction term for the yaw bias, and it is modeled so that $(\theta_k+b_k)$ becomes the heading angle of the base_link.
-The pose_estimator is expected to publish the base_link in the map coordinate system. However, the yaw angle may be offset due to calibration errors. This model compensates this error and improves estimation accuracy.
+ここで、$\theta_k$ は車体の進行方向の角度で、取り付け角度のバイアスを含みます。
+$b_k$ はヨーバイアスの補正項であり、$(\theta_k+b_k)$が base_link の進行方向の角度になるようにモデル化されます。
+pose_estimator は base_link を地図座標系で公開すると予想されています。ただし、ヨー角はキャリブレーションのエラーによりずれる場合があります。このモデルは、このエラーを補正し、推定精度を向上させます。
 
-### time delay model
+### タイム遅延モデル
 
-The measurement time delay is handled by an augmented state [1] (See, Section 7.3 FIXED-LAG SMOOTHING).
+測定タイム遅延は、拡張状態 [1] (セクション 7.3 固定遅延スムージングを参照) で処理されます。
 
 <img src="./media/delay_model_eq.png" width="320">
 
-Note that, although the dimension gets larger since the analytical expansion can be applied based on the specific structures of the augmented states, the computational complexity does not significantly change.
+拡張状態の特定の構造に基づいて解析的な展開を適用できるため、次元は大きくなりますが、計算の複雑さは大幅には変わりません。
 
-## Test Result with Autoware NDT
+## Autoware NDT によるテスト結果
 
 <p align="center">
 <img src="./media/ekf_autoware_res.png" width="600">
 </p>
 
-## Diagnostics
+## 診断
 
 <p align="center">
 <img src="./media/ekf_diagnostics.png" width="320">
@@ -187,23 +185,24 @@ Note that, although the dimension gets larger since the analytical expansion can
 <img src="./media/ekf_diagnostics_callback_twist.png" width="320">
 </p>
 
-### The conditions that result in a WARN state
+### WARN 状態になる条件
 
-- The node is not in the activate state.
-- The number of consecutive no measurement update via the Pose/Twist topic exceeds the `pose_no_update_count_threshold_warn`/`twist_no_update_count_threshold_warn`.
-- The timestamp of the Pose/Twist topic is beyond the delay compensation range.
-- The Pose/Twist topic is beyond the range of Mahalanobis distance for covariance estimation.
-- The covariance ellipse is bigger than threshold `warn_ellipse_size` for long axis or `warn_ellipse_size_lateral_direction` for lateral_direction.
+- ノードがアクティブ状態ではありません。
+- Pose/Twist トピックによる連続的な測定更新の数が `pose_no_update_count_threshold_warn`/`twist_no_update_count_threshold_warn` を超えています。
+- Pose/Twist トピックのタイムスタンプが遅延補正範囲を超えています。
+- Pose/Twist トピックが共分散推定のためのマハラノビス距離の範囲を超えています。
+- 共分散楕円が `warn_ellipse_size` (長軸) または `warn_ellipse_size_lateral_direction` (横方向) のしきい値を超えています。
 
-### The conditions that result in an ERROR state
+### ERROR 状態になる条件
 
-- The number of consecutive no measurement update via the Pose/Twist topic exceeds the `pose_no_update_count_threshold_error`/`twist_no_update_count_threshold_error`.
-- The covariance ellipse is bigger than threshold `error_ellipse_size` for long axis or `error_ellipse_size_lateral_direction` for lateral_direction.
+- Pose/Twist トピックによる連続的な測定更新の数が `pose_no_update_count_threshold_error`/`twist_no_update_count_threshold_error` を超えています。
+- 共分散楕円が `error_ellipse_size` (長軸) または `error_ellipse_size_lateral_direction` (横方向) のしきい値を超えています。
 
-## Known issues
+## 既知の問題
 
-- If multiple pose_estimators are used, the input to the EKF will include multiple yaw biases corresponding to each source. However, the current EKF assumes the existence of only one yaw bias. Therefore, yaw bias `b_k` in the current EKF state would not make any sense and cannot correctly handle these multiple yaw biases. Thus, future work includes introducing yaw bias for each sensor with yaw estimation.
+- 複数の pose_estimators が使用されている場合、EKF への入力には各ソースに対応する複数のヨーバイアスが含まれます。ただし、現在の EKF はヨーバイアスが 1 つしか存在しないと想定しています。したがって、現在の EKF 状態のヨーバイアス `b_k` は意味がなく、これらの複数のヨーバイアスを正しく処理することはできません。そのため、今後の作業では、ヨー推定値を持つ各センサーのヨーバイアスを導入する予定です。
 
-## reference
+## 参考資料
 
 [1] Anderson, B. D. O., & Moore, J. B. (1979). Optimal filtering. Englewood Cliffs, NJ: Prentice-Hall.
+

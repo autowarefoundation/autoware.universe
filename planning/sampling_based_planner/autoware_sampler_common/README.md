@@ -1,6 +1,5 @@
-# Sampler Common
+## Sampler Common
 
-Common functions for sampling based planners.
-This includes classes for representing paths and trajectories,
-hard and soft constraints,
-conversion between cartesian and frenet frames, ...
+Samplerベースのプランナーの共通関数です。
+パスや軌跡、強く柔らかい制約、カルテシアンフレームとフロネフレームの変換を表現するためのクラスが含まれます。
+

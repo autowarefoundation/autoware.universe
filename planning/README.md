@@ -1,49 +1,51 @@
-# Planning Components
+# Planning コンポーネント
 
-## Getting Started
+## 概要
 
-The Autoware.Universe Planning Modules represent a cutting-edge component within the broader open-source autonomous driving software stack. These modules play a pivotal role in autonomous vehicle navigation, skillfully handling route planning, dynamic obstacle avoidance, and real-time adaptation to varied traffic conditions.
+Autoware.Universe Planning モジュールは、広範なオープンソース自動運転ソフトウェアスタックにおける最先端のコンポーネントです。これらのモジュールは自動車両のナビゲーションにおいて重要な役割を果たし、ルートプランニング、動的障害物回避、さまざまな交通状況へのリアルタイム適応を巧みに処理します。
 
-- For high level concept of Planning Components, please refer to [Planning Component Design Document](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/planning/)
-- To understand how Planning Components interacts with other components, please refer to [Planning Component Interface Document](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/components/planning/)
-- The [Node Diagram](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/node-diagram/) illustrates the interactions, inputs, and outputs of all modules in the Autoware.Universe, including planning modules.
+- Planning コンポーネントの高レベル概念については、[Planning コンポーネント設計ドキュメント](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/planning/)を参照してください。
+- Planning コンポーネントが他のコンポーネントとどのように連携するかを理解するには、[Planning コンポーネントのインターフェイスドキュメント](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/components/planning/)を参照してください。
+- [ノードダイアグラム](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-architecture/node-diagram/)は、Planning モジュールを含む Autoware.Universe のすべてのモジュールの相互作用、入力、出力を図示しています。
 
-## Planning Module
+## Planning モジュール
 
-The **Module** in the Planning Component refers to the various components that collectively form the planning system of the software. These modules cover a range of functionalities necessary for autonomous vehicle planning. Autoware's planning modules are modularized, meaning users can customize which functions are enabled by changing the configuration. This modular design allows for flexibility and adaptability to different scenarios and requirements in autonomous vehicle operations.
+Planning コンポーネントの **モジュール** は、ソフトウェアのプランニングシステムを共同で形成するさまざまなコンポーネントを指します。これらのモジュールは、自動車両のプランニングに必要なさまざまな機能をカバーしています。Autoware の Planning モジュールはモジュール化されており、ユーザーは構成を変更することでどの機能を有効にするかをカスタマイズできます。このモジュール設計により、自動車両での運用におけるさまざまなシナリオと要件に柔軟に適応できます。
 
-### How to Enable or Disable Planning Module
+### Planning モジュールの有効化または無効化
 
-Enabling and disabling modules involves managing settings in key configuration and launch files.
+モジュールの有効化と無効化には、キー構成ファイルと起動ファイルの設定を管理することが必要です。
 
-### Key Files for Configuration
+### 構成のキーファイル
 
-The `default_preset.yaml` file acts as the primary configuration file, where planning modules can be disable or enabled. Furthermore, users can also set the type of motion planner across various motion planners. For example:
+`default_preset.yaml`ファイルはプライマリ構成ファイルとして機能し、そこで Planning モジュールを無効化または有効化できます。さらに、ユーザーはさまざまなモーションプランナー間でモーションプランナーの種類を設定することもできます。たとえば:
 
-- `launch_avoidance_module`: Set to `true` to enable the avoidance module, or `false` to disable it.
-- `motion_stop_planner_type`: Set `default` to either `obstacle_stop_planner` or `obstacle_cruise_planner`.
+- `launch_avoidance_module`: Avoidance モジュールを有効にする場合は `true` に設定し、無効にする場合は `false` に設定します。
+- `motion\_stop\_planner\_type`: `default` を `obstacle\_stop\_planner` または `obstacle\_cruise\_planner` のいずれかに設定します。
 
 !!! note
 
-    Click [here](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/preset/default_preset.yaml) to view the `default_preset.yaml`.
+    `default_preset.yaml` を表示するには [ここ](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/preset/default_preset.yaml)をクリックします。
 
-The [launch files](https://github.com/autowarefoundation/autoware.universe/tree/main/launch/tier4_planning_launch/launch/scenario_planning/lane_driving) reference the settings defined in `default_preset.yaml` to apply the configurations when the behavior path planner's node is running. For instance, the parameter `avoidance.enable_module` in
+[起動ファイル](https://github.com/autowarefoundation/autoware.universe/tree/main/launch/tier4_planning_launch/launch/scenario_planning/lane_driving) は、`default_preset.yaml` で定義された設定を参照して、動作経路プランナーのノードが実行されているときに構成を適用します。
+
 
 ```xml
 <param name="avoidance.enable_module" value="$(var launch_avoidance_module)"/>
 ```
 
-corresponds to launch_avoidance_module from `default_preset.yaml`.
+launch_avoidance_module から `default_preset.yaml` に対応。
 
-### Parameters configuration
+### パラメータ設定
 
-There are multiple parameters available for configuration, and users have the option to modify them in [here](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning). It's important to note that not all parameters are adjustable via `rqt_reconfigure`. To ensure the changes are effective, modify the parameters and then restart Autoware. Additionally, detailed information about each parameter is available in the corresponding documents under the planning tab.
+設定可能なパラメータが数多く用意されており、ユーザーは [こちら](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning) で変更できます。すべてのモジュールが `rqt_reconfigure` を介して調整できるわけではないことに注意してください。変更を有効にするには、パラメータを変更してから Autoware を再起動します。さらに、各パラメータの詳細情報は、プランニングタブの下にある対応するドキュメントに記載されています。
 
-### Integrating a Custom Module into Autoware: A Step-by-Step Guide
+### Autoware へのカスタムモジュールの統合: 段階的なガイド
 
-This guide outlines the steps for integrating your custom module into Autoware:
+このガイドでは、カスタムモジュールを Autoware に統合する手順について説明します。
 
-- Add your modules to the `default_preset.yaml` file. For example
+- デフォルトパラメータ `default_preset.yaml` ファイルにモジュールを追加します。例:
+
 
 ```yaml
 - arg:
@@ -51,7 +53,8 @@ This guide outlines the steps for integrating your custom module into Autoware:
   default: "true"
 ```
 
-- Incorporate your modules into the [launcher](https://github.com/autowarefoundation/autoware.universe/tree/main/launch/tier4_planning_launch/launch/scenario_planning). For example in [behavior_planning.launch.xml](https://github.com/autowarefoundation/autoware.universe/blob/main/launch/tier4_planning_launch/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.xml):
+- モジュールを [launcher](https://github.com/autowarefoundation/autoware.universe/tree/main/launch/tier4_planning_launch/launch/scenario_planning) に統合します。例: [behavior_planning.launch.xml](https://github.com/autowarefoundation/autoware.universe/blob/main/launch/tier4_planning_launch/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.xml)
+
 
 ```xml
 <arg name="launch_intersection_module" default="true"/>
@@ -63,53 +66,56 @@ This guide outlines the steps for integrating your custom module into Autoware:
 />
 ```
 
-- If applicable, place your parameter folder within the appropriate existing parameter folder. For example [intersection_module's parameters](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/intersection.param.yaml) is in [behavior_velocity_planner](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner).
-- Insert the path of your parameters in the [tier4_planning_component.launch.xml](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/launch/components/tier4_planning_component.launch.xml). For example `behavior_velocity_planner_intersection_module_param_path` is used.
+- 適用可能な場合、パラメータフォルダを適切な既存のパラメータフォルダ内に配置します。たとえば、次のような[交差点モジュールのパラメータ](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/intersection.param.yaml)は[behavior_velocity_planner](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner)内にあります。
+- [tier4_planning_component.launch.xml](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/launch/components/tier4_planning_component.launch.xml)に、パラメータのパスを挿入します。たとえば、次のような`behavior_velocity_planner_intersection_module_param_path`を使用します。
+
 
 ```xml
 <arg name="behavior_velocity_planner_intersection_module_param_path" value="$(var behavior_velocity_config_path)/intersection.param.yaml"/>
 ```
 
-- Define your parameter path variable within the corresponding launcher. For example in [behavior_planning.launch.xml](https://github.com/autowarefoundation/autoware.universe/blob/04aa54bf5fb0c88e70198ca74b9ac343cc3457bf/launch/tier4_planning_launch/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.xml#L191)
+- 対応するランチャー内でパラメータパスの変数を定義します。たとえば、[behavior_planning.launch.xml](https://github.com/autowarefoundation/autoware.universe/blob/04aa54bf5fb0c88e70198ca74b9ac343cc3457bf/launch/tier4_planning_launch/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.xml#L191)
+
 
 ```xml
 <param from="$(var behavior_velocity_planner_intersection_module_param_path)"/>
 ```
 
-!!! note
+!!! 注意
 
-    Depending on the specific module you wish to add, the relevant files and steps may vary. This guide provides a general overview and serves as a starting point. It's important to adapt these instructions to the specifics of your module.
+    追加したい特定のモジュールに応じて、関連ファイルと手順が異なる場合があります。このガイドは、一般的な概要を提供し、出発点として機能します。これらの手順をモジュールの詳細に合わせて調整することが重要です。
 
-## Join Our Community-Driven Effort
+## コミュニティ主導の取り組みに参加する
 
-Autoware thrives on community collaboration. Every contribution, big or small, is invaluable to us. Whether it's reporting bugs, suggesting improvements, offering new ideas, or anything else you can think of – we welcome it all with open arms.
+Autoware はコミュニティコラボレーションを重視しています。大小を問わず、すべての貢献は私たちにとって貴重です。バグの報告、改善の提案、新しいアイデアの提供、その他考えられることなど、すべてを歓迎します。
 
-### How to Contribute?
+### 貢献の仕方
 
-Ready to contribute? Great! To get started, simply visit our [Contributing Guidelines](https://autowarefoundation.github.io/autoware-documentation/main/contributing/) where you'll find all the information you need to jump in. This includes instructions on submitting bug reports, proposing feature enhancements, and even contributing to the codebase.
+貢献する準備はできていますか？素晴らしい！まず、[貢献ガイドライン](https://autowarefoundation.github.io/autoware-documentation/main/contributing/) にアクセスして、参加に必要なすべての情報を入手してください。これには、バグレポートの提出、機能強化の提案、コードベースへの貢献に関する手順が含まれます。
 
-### Join Our Planning & Control Working Group Meetings
+### Planning & Control ワーキンググループミーティングに参加する
 
-The Planning & Control working group is an integral part of our community. We meet bi-weekly to discuss our current progress, upcoming challenges, and brainstorm new ideas. These meetings are a fantastic opportunity to directly contribute to our discussions and decision-making processes.
+Planning & Control ワーキンググループは、コミュニティの不可欠な部分です。私たちは 2 週間ごとに会合して、現在の進捗状況、今後の課題について話し合い、新しいアイデアについてブレインストーミングを行います。これらのミーティングは、私たちの議論や意思決定プロセスに直接貢献する素晴らしい機会です。
 
-Meeting Details:
+ミーティングの詳細：
 
-- **Frequency:** Bi-weekly
-- **Day:** Thursday
-- **Time:** 08:00 AM UTC (05:00 PM JST)
-- **Agenda:** Discuss current progress, plan future developments. You can view and comment on the minutes of past meetings [here](https://github.com/orgs/autowarefoundation/discussions?discussions_q=is%3Aopen+label%3Ameeting%3Aplanning-control-wg+).
+- **頻度:** 2 週間ごと
+- **曜日:** 木曜日
+- **時間:** 午前 8 時 UTC（午後 5 時 JST）
+- **議題:** 現在の進捗状況を議論し、今後の開発を計画します。過去のミーティングの議事録は [こちら](https://github.com/orgs/autowarefoundation/discussions?discussions_q=is%3Aopen+label%3Ameeting%3Aplanning-control-wg+) で確認できます。
 
-Interested in joining our meetings? We’d love to have you! For more information on how to participate, visit the following link: [How to participate in the working group](https://github.com/autowarefoundation/autoware-projects/wiki/Autoware-Planning-Control-Working-Group#how-to-participate-in-the-working-group).
+私たちのミーティングに参加することに興味がありますか？ぜひ参加してください！参加方法の詳細については、次のリンクをご覧ください。[ワーキンググループに参加する方法](https://github.com/autowarefoundation/autoware-projects/wiki/Autoware-Planning-Control-Working-Group#how-to-participate-in-the-working-group)。
 
-### Citations
+### 引用
 
-Occasionally, we publish papers specific to the Planning Component in Autoware. We encourage you to explore these publications and find valuable insights for your work. If you find them useful and incorporate any of our methodologies or algorithms in your projects, citing our papers would be immensely helpful. This support allows us to reach a broader audience and continue contributing to the field.
+時々、Autoware の Planning Component に特化した論文を公開しています。これらの出版物を閲覧し、あなたの仕事に役立つ貴重な洞察を得ることをお勧めします。それらが役に立ち、プロジェクトで私たちの方法論やアルゴリズムの一部を組み込んだ場合、私たちの論文を引用していただけると非常に助かります。このサポートにより、より広い視聴者にリーチし、この分野への貢献を続けることができます。
 
-If you use the Jerk Constrained Velocity Planning algorithm in [Motion Velocity Smoother](./autoware_velocity_smoother/README.md) module in the Planning Component, we kindly request you to cite the relevant paper.
+Planning Component の [Motion Velocity Smoother](./autoware_velocity_smoother/README.md) モジュールでジャーク制約速度計画アルゴリズムを使用する場合は、関連する論文を引用していただけるようお願いします。
 
 <!-- cspell:ignore Shimizu, Horibe, Watanabe, Kato -->
 
-Y. Shimizu, T. Horibe, F. Watanabe and S. Kato, "[Jerk Constrained Velocity Planning for an Autonomous Vehicle: Linear Programming Approach](https://arxiv.org/abs/2202.10029)," 2022 International Conference on Robotics and Automation (ICRA)
+Y. 清水、T. 堀部、F. 渡辺、加藤正樹、"[自律移動体のジャーク制約速度計画: 線形計画法アプローチ](https://arxiv.org/abs/2202.10029)"、2022 年国際ロボット工学および自動化会議 (ICRA)
+
 
 ```tex
 @inproceedings{shimizu2022,
@@ -120,3 +126,4 @@ Y. Shimizu, T. Horibe, F. Watanabe and S. Kato, "[Jerk Constrained Velocity Plan
   pages={5814-5820},
   doi={10.1109/ICRA46639.2022.9812155}}
 ```
+

@@ -1,69 +1,96 @@
 # traffic_light_fine_detector
 
-## Purpose
+## 目的
 
-It is a package for traffic light detection using YoloX-s.
+YoloX-sを利用した交通信号灯検出用パッケージです。
 
-## Training Information
+## トレーニング情報
 
-### Pretrained Model
+### 事前トレーニングされたモデル
 
-The model is based on [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) and the pretrained model could be downloaded from [here](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.pth).
+このモデルは [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) をベースにしており、事前トレーニングされたモデルは [こちら](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.pth) からダウンロードできます。
 
-### Training Data
+### トレーニングデータ
 
-The model was fine-tuned on around 17,000 TIER IV internal images of Japanese traffic lights.
+このモデルは、日本における TIER IV の約 17,000 枚の内部交通信号灯画像でファインチューニングが行われました。
 
-### Trained Onnx model
+### トレーニング済みの ONNX モデル
 
-You can download the ONNX file using these instructions.  
-Please visit [autoware-documentation](https://github.com/autowarefoundation/autoware-documentation/blob/main/docs/models/index.md) for more information.
+以下の手順を使用して ONNX ファイルをダウンロードできます。詳細については [autoware-documentation](https://github.com/autowarefoundation/autoware-documentation/blob/main/docs/models/index.md) を参照してください。
 
-## Inner-workings / Algorithms
+## 内部仕様 / アルゴリズム
 
-Based on the camera image and the global ROI array detected by `map_based_detection` node, a CNN-based detection method enables highly accurate traffic light detection.
+カメラ画像と `map_based_detection` ノードによって検出されたグローバル ROI アレイに基づき、CNN ベースの検出方法によって非常に正確な交通信号灯検出が可能になります。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name            | Type                                               | Description                                                         |
-| --------------- | -------------------------------------------------- | ------------------------------------------------------------------- |
-| `~/input/image` | `sensor_msgs/Image`                                | The full size camera image                                          |
-| `~/input/rois`  | `tier4_perception_msgs::msg::TrafficLightRoiArray` | The array of ROIs detected by map_based_detector                    |
-| `~/expect/rois` | `tier4_perception_msgs::msg::TrafficLightRoiArray` | The array of ROIs detected by map_based_detector without any offset |
+| 名前          | 型                                                 | 説明                                                            |
+| ----------- | ------------------------------------------------- | --------------------------------------------------------------- |
+| `~/input/image` | `sensor_msgs/Image`                                | フルサイズカメラ画像                                           |
+| `~/input/rois`  | `tier4_perception_msgs::msg::TrafficLightRoiArray` | map_based_detectorで検出されたROIの配列                      |
+| `~/expect/rois` | `tier4_perception_msgs::msg::TrafficLightRoiArray` | オフセットのないmap_based_detectorで検出されたROIの配列         |
 
-### Output
+### 出力
 
-| Name                  | Type                                               | Description                  |
-| --------------------- | -------------------------------------------------- | ---------------------------- |
-| `~/output/rois`       | `tier4_perception_msgs::msg::TrafficLightRoiArray` | The detected accurate rois   |
-| `~/debug/exe_time_ms` | `tier4_debug_msgs::msg::Float32Stamped`            | The time taken for inference |
+**自動運転ソフトウェア**
 
-## Parameters
+**概要**
 
-### Core Parameters
+このドキュメントでは、AutowareのPlanningコンポーネント/モジュールの動作について説明します。Planningは、Perceptionから受信した認識データを処理し、将来の経路を計画します。
 
-| Name                         | Type   | Default Value | Description                                                            |
-| ---------------------------- | ------ | ------------- | ---------------------------------------------------------------------- |
-| `fine_detector_score_thresh` | double | 0.3           | If the objectness score is less than this value, the object is ignored |
-| `fine_detector_nms_thresh`   | double | 0.65          | IoU threshold to perform Non-Maximum Suppression                       |
+**動作**
 
-### Node Parameters
+Planningコンポーネントは、次のステップに従って動作します。
 
-| Name                       | Type    | Default Value               | Description                                                        |
-| -------------------------- | ------- | --------------------------- | ------------------------------------------------------------------ |
-| `data_path`                | string  | "$(env HOME)/autoware_data" | packages data and artifacts directory path                         |
-| `fine_detector_model_path` | string  | ""                          | The onnx file name for yolo model                                  |
-| `fine_detector_label_path` | string  | ""                          | The label file with label names for detected objects written on it |
-| `fine_detector_precision`  | string  | "fp32"                      | The inference mode: "fp32", "fp16"                                 |
-| `approximate_sync`         | bool    | false                       | Flag for whether to ues approximate sync policy                    |
-| `gpu_id`                   | integer | 0                           | ID for the selecting CUDA GPU device                               |
+1. **認識データの受信:** Perceptionコンポーネントから、障害物、走行可能な領域、交通標識などの認識データを受信します。
+2. **ローカルパス計画:** 受信した認識データを使用して、自車位置周辺のローカルパスを生成します。
+3. **グローバルパス計画:** ローカルパスをグローバルパスに拡張し、目的地までの中長期的な経路を作成します。
+4. **再サンプル:** 生成されたパスを調整し、'post resampling'を実行して滑らかで実行可能なパスにします。
+5. **Planningの決定:** velocity逸脱量、acceleration逸脱量、操舵角など、Planningの決定を計算します。
+6. **Controlへの送信:** 計算されたPlanningの決定をControlコンポーネントに送信します。
 
-## Assumptions / Known limits
+**機能**
 
-## Reference repositories
+Planningコンポーネントには、次の機能があります。
 
-YOLOX github repository
+* 障害物回避のためのリアルタイムパス計画
+* 交通規則の遵守
+* 速度と加速度の最適化
+* 複数のパスオプションの生成
+* 高速道路と都市部の両方での動作
 
-- <https://github.com/Megvii-BaseDetection/YOLOX>
+| 名                  | 型                                                | 説明                  |
+| --------------------- | --------------------------------------------------- | ---------------------------- |
+| `~/output/rois`       | `tier4_perception_msgs::msg::TrafficLightRoiArray` | 検出された正確な枠   |
+| `~/debug/exe_time_ms` | `tier4_debug_msgs::msg::Float32Stamped`            | 推論にかかった時間   |
+
+## パラメータ
+
+### コアパラメータ
+
+| 名称                       | 種類   | デフォルト値 | 説明                                                          |
+| --------------------------- | ------ | ------------ | ---------------------------------------------------------------- |
+| `fine_detector_score_thresh` | double | 0.3           | オブジェクトスコアがこの値未満の場合、オブジェクトは無視されます |
+| `fine_detector_nms_thresh`   | double | 0.65          | Non-Maximum Suppressionを実行するためのIoU閾値                  |
+
+### ノードパラメータ
+
+| 名前                        | 型     | 初期値                         | 説明                                                            |
+| -------------------------- | ------- | ----------------------------- | ---------------------------------------------------------------- |
+| `data_path`                  | 文字列  | "$(env HOME)/autoware_data"   | パッケージのデータとアーティファクトのディレクトリパス             |
+| `fine_detector_model_path`   | 文字列  | ""                            | Yoloモデルのonnxファイル名                                     |
+| `fine_detector_label_path`   | 文字列  | ""                            | 検出されたオブジェクトのラベル名を記載したラベルファイル         |
+| `fine_detector_precision`    | 文字列  | "fp32"                        | 推論モード: "fp32", "fp16"                                     |
+| `approximate_sync`           | ブール   | false                         | 近似同期ポリシーを使用するかどうかを指定するフラグ                  |
+| `gpu_id`                     | 整数    | 0                             | CUDA GPUデバイスを選択するためのID                              |
+
+## 仮定 / 既知の制限
+
+## 参照リポジトリ
+
+YOLOX GitHub リポジトリ
+
+- https://github.com/Megvii-BaseDetection/YOLOX
+

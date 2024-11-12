@@ -1,54 +1,55 @@
 # autoware_overlay_rviz_plugin
 
-Plugin for displaying 2D overlays over the RViz2 3D scene.
+RViz2の3Dシーン上に2Dオーバーレイを表示するためのプラグイン。
 
-Based on the [jsk_visualization](https://github.com/jsk-ros-pkg/jsk_visualization)
-package, under the 3-Clause BSD license.
+[jsk_visualization](https://github.com/jsk-ros-pkg/jsk_visualization)
+パッケージをベースとしており、3条項BSDライセンスに従っています。
 
-## Purpose
+## 目的
 
-This plugin provides a visual and easy-to-understand display of vehicle speed, turn signal, steering status and gears.
+このプラグインは、車両速度、ウィンカー、ステアリング状態、ギアの視覚的かつわかりやすい表示を提供します。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                                                    | Type                                                    | Description                          |
-| ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------ |
-| `/vehicle/status/velocity_status`                       | `autoware_vehicle_msgs::msg::VelocityReport`            | The topic is vehicle velocity        |
-| `/vehicle/status/turn_indicators_status`                | `autoware_vehicle_msgs::msg::TurnIndicatorsReport`      | The topic is status of turn signal   |
-| `/vehicle/status/hazard_status`                         | `autoware_vehicle_msgs::msg::HazardReport`              | The topic is status of hazard        |
-| `/vehicle/status/steering_status`                       | `autoware_vehicle_msgs::msg::SteeringReport`            | The topic is status of steering      |
-| `/vehicle/status/gear_status`                           | `autoware_vehicle_msgs::msg::GearReport`                | The topic is status of gear          |
-| `/planning/scenario_planning/current_max_velocity`      | `tier4_planning_msgs::msg::VelocityLimit`               | The topic is velocity limit          |
-| `/perception/traffic_light_recognition/traffic_signals` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | The topic is status of traffic light |
+| 名前                                                 | 種類                                                      | 説明                                         |
+| -------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------- |
+| `/vehicle/status/velocity_status`                  | `autoware_vehicle_msgs::msg::VelocityReport`          | 車両速度のトピック                                  |
+| `/vehicle/status/turn_indicators_status`           | `autoware_vehicle_msgs::msg::TurnIndicatorsReport`     | ウインカーの状態のトピック                             |
+| `/vehicle/status/hazard_status`                     | `autoware_vehicle_msgs::msg::HazardReport`             | ハザードランプの状態のトピック                          |
+| `/vehicle/status/steering_status`                  | `autoware_vehicle_msgs::msg::SteeringReport`           | ステアリングの状態のトピック                               |
+| `/vehicle/status/gear_status`                      | `autoware_vehicle_msgs::msg::GearReport`               | ギアのステータスに関するトピック                              |
+| `/planning/scenario_planning/current_max_velocity`   | `tier4_planning_msgs::msg::VelocityLimit`              | 速度制限に関するトピック                                    |
+| `/perception/traffic_light_recognition/traffic_signals` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | 信号機のステータスに関するトピック                          |
 
-## Parameter
+## パラメータ
 
-### Core Parameters
+### 中核パラメータ
 
 #### SignalDisplay
 
-| Name                     | Type   | Default Value        | Description                       |
+| 名称                     | タイプ | デフォルト値        | 説明                       |
 | ------------------------ | ------ | -------------------- | --------------------------------- |
-| `property_width_`        | int    | 128                  | Width of the plotter window [px]  |
-| `property_height_`       | int    | 128                  | Height of the plotter window [px] |
-| `property_left_`         | int    | 128                  | Left of the plotter window [px]   |
-| `property_top_`          | int    | 128                  | Top of the plotter window [px]    |
-| `property_signal_color_` | QColor | QColor(25, 255, 240) | Turn Signal color                 |
+| `property_width_`        | int    | 128                  | プロッターウィンドウの幅 [px]  |
+| `property_height_`       | int    | 128                  | プロッターウィンドウの高さ [px] |
+| `property_left_`         | int    | 128                  | プロッターウィンドウの左 [px]   |
+| `property_top_`          | int    | 128                  | プロッターウィンドウの上 [px]    |
+| `property_signal_color_` | QColor | QColor(25, 255, 240) | ターンシグナルの色                 |
 
-## Assumptions / Known limits
+## 前提条件 / 制約
 
 TBD.
 
-## Usage
+## 使用法
 
-1. Start `rviz2` and click `Add` button under the `Displays` panel.
+1. `rviz2`を起動し、`Displays`パネルの`追加`ボタンをクリックします。
 
    ![select_add](./assets/images/select_add.png)
 
-2. Under `By display type` tab, select `autoware_overlay_rviz_plugin/SignalDisplay` and press OK.
+2. `By display type`タブで、`autoware_overlay_rviz_plugin/SignalDisplay`を選択し、OKを押します。
 
-3. Enter the names of the topics if necessary.
+3. 必要に応じて、トピックの名前を入力します。
 
    ![select_topic_name](./assets/images/select_topic_name.png)
+

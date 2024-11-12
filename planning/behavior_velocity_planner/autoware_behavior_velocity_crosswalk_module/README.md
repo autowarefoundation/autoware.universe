@@ -1,14 +1,15 @@
-# Crosswalk
+# 横断歩道
 
-## Role
+## 役割
 
-This module judges whether the ego should stop in front of the crosswalk in order to provide safe passage for crosswalk users, such as pedestrians and bicycles, based on the objects' behavior and surround traffic.
+本モジュールは、歩行者や自転車などの横断歩道利用者が安全に通行するために、車両が横断歩道前で停止する必要があるかどうかを、オブジェクトの挙動や周囲の交通状況に基づいて判断します。
 
 <figure markdown>
   ![crosswalk_module](docs/crosswalk_module.svg){width=1100}
 </figure>
 
-## Flowchart
+## フローチャート
+
 
 ```plantuml
 @startuml
@@ -41,6 +42,7 @@ stop
 @enduml
 ```
 
+
 ```plantuml
 @startuml
 
@@ -70,39 +72,38 @@ stop
 @enduml
 ```
 
-## Features
+## 機能
 
-### Yield the Way to the Pedestrians
+### 歩行者への優先権の譲与
 
-#### Target Object
+#### ターゲットオブジェクト
 
-The crosswalk module handles objects of the types defined by the following parameters in the `object_filtering.target_object` namespace.
+crosswalkモジュールは、`object_filtering.target_object` 名前空間で定義された次のパラメータのタイプを持つオブジェクトを処理します。
 
-| Parameter    | Unit | Type | Description                                    |
+| パラメータ    | 単位 | 型 | 説明                                    |
 | ------------ | ---- | ---- | ---------------------------------------------- |
-| `unknown`    | [-]  | bool | whether to look and stop by UNKNOWN objects    |
-| `pedestrian` | [-]  | bool | whether to look and stop by PEDESTRIAN objects |
-| `bicycle`    | [-]  | bool | whether to look and stop by BICYCLE objects    |
-| `motorcycle` | [-]  | bool | whether to look and stop by MOTORCYCLE objects |
+| `unknown`    | [-]  | bool | `UNKNOWN` 物体を探して停止するかどうか    |
+| `pedestrian` | [-]  | bool | `PEDESTRIAN` 物体を探して停止するかどうか |
+| `bicycle`    | [-]  | bool | `BICYCLE` 物体を探して停止するかどうか    |
+| `motorcycle` | [-]  | bool | `MOTORCYCLE` 物体を探して停止するかどうか |
 
-In order to handle the crosswalk users crossing the neighborhood but outside the crosswalk, the crosswalk module creates an attention area around the crosswalk, shown as the yellow polygon in the figure. If the object's predicted path collides with the attention area, the object will be targeted for yield.
+横断歩道外の周囲を横断する歩行者を処理するために、横断歩道モジュールは横断歩道周囲に注意領域を作成し、図の黄色の多角形で示されます。オブジェクトの予測パスが注意領域と衝突した場合、オブジェクトは譲歩の対象となります。
 
 <figure markdown>
-  ![crosswalk_attention_range](docs/crosswalk_attention_range.svg){width=600}
+  ![crosswalk_attention_range-ja](docs/crosswalk_attention_range-ja.svg){width=600}
 </figure>
 
-The neighborhood is defined by the following parameter in the `object_filtering.target_object` namespace.
+周囲は `object_filtering.target_object` ネームスペース内の次のパラメータによって定義されます。
 
-| Parameter                   | Unit | Type   | Description                                                                                       |
-| --------------------------- | ---- | ------ | ------------------------------------------------------------------------------------------------- |
-| `crosswalk_attention_range` | [m]  | double | the detection area is defined as -X meters before the crosswalk to +X meters behind the crosswalk |
+| パラメータ | 単位 | 型 | 説明 |
+|---|---|---|---|
+| `crosswalk_attention_range` | [m] | double | 検出エリアは -X メートルから +X メートルの間の横断歩道として定義されます |
 
-#### Stop Position
+#### 停止位置
 
-First of all, `stop_distance_from_object [m]` is always kept at least between the ego and the target object for safety.
+まず、安全性のため自己位置と対象物体の距離は常に `stop_distance_from_object [m]` 以上維持されます。
 
-When the stop line exists in the lanelet map, the stop position is calculated based on the line.
-When the stop line does **NOT** exist in the lanelet map, the stop position is calculated by keeping `stop_distance_from_crosswalk [m]` between the ego and the crosswalk.
+レーンのマップに停止線が存在する場合、停止位置は線に基づいて算出されます。レーンのマップに停止線が **存在しない** 場合、停止位置は自己位置と横断歩道の距離を `stop_distance_from_crosswalk [m]` に保つことで算出されます。
 
 <div align="center">
     <table>
@@ -113,37 +114,37 @@ When the stop line does **NOT** exist in the lanelet map, the stop position is c
     </table>
 </div>
 
-As an exceptional case, if a pedestrian (or bicycle) is crossing **wide** crosswalks seen in scramble intersections, and the pedestrian position is more than `far_object_threshold` meters away from the stop line, the actual stop position is determined by `stop_distance_from_object` and pedestrian position, not at the stop line.
+例外ケースとして、 スクランブル交差点で見られる**幅広の**横断歩道を歩行者（または自転車）が横断しており、歩行者の位置が停止線から `far_object_threshold` メートル以上離れている場合、実際の停止位置は停止線ではなく、`stop_distance_from_object` と歩行者の位置によって決まります。
 
 <figure markdown>
   ![far_object_threshold](docs/far_object_threshold.drawio.svg){width=700}
 </figure>
 
-In the `stop_position` namespace, the following parameters are defined.
+`stop_position` 名前空間では、以下のパラメータが定義されています。
 
-| Parameter                      |     | Type   | Description                                                                                                                                                                                                               |
-| ------------------------------ | --- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stop_position_threshold`      | [m] | double | If the ego vehicle has stopped near the stop line than this value, this module assumes itself to have achieved yielding.                                                                                                  |
-| `stop_distance_from_crosswalk` | [m] | double | make stop line away from crosswalk for the Lanelet2 map with no explicit stop lines                                                                                                                                       |
-| `far_object_threshold`         | [m] | double | If objects cross X meters behind the stop line, the stop position is determined according to the object position (stop_distance_from_object meters before the object) for the case where the crosswalk width is very wide |
-| `stop_distance_from_object`    | [m] | double | the vehicle decelerates to be able to stop in front of object with margin                                                                                                                                                 |
+| パラメータ                      |     | 型   | 説明                                                                                                                                                                                                                         |
+| ------------------------------ | --- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stop_position_threshold`      | [m] | double | 自車位置が停止線からこの値よりも近い場合は、このモジュールは自車が譲歩を完了したとみなします。                                                                                                        |
+| `stop_distance_from_crosswalk` | [m] | double | 明示的な停止線が設定されていないLanelet2マップの場合、停止線を横断歩道から離す                                                                                                                                         |
+| `far_object_threshold`         | [m] | double | 物体が停止線のXメートル後ろを通過した場合、停止位置は、横断歩道の幅が非常に広い場合のケースに対して、オブジェクト位置に基づいて決定されます（オブジェクトの`stop_distance_from_object`メートル前） |
+| `stop_distance_from_object`    | [m] | double | Vehicle decelerates to be able to stop in front of object with margin |
 
-#### Yield decision
+#### Yield判断
 
-The module makes a decision to yield only when the pedestrian traffic light is **GREEN** or **UNKNOWN**.
-The decision is based on the following variables, along with the calculation of the collision point.
+モジュールは歩行者信号が**緑**または**不明**の場合にのみ譲る判断を行います。
+判断は、衝突点の計算とともに、以下の変数に基づきます。
 
-- Time-To-Collision (TTC): The time for the **ego** to reach the virtual collision point.
-- Time-To-Vehicle (TTV): The time for the **object** to reach the virtual collision point.
+- Time-To-Collision (TTC): **自車**が仮想衝突点に到達する時間。
+- Time-To-Vehicle (TTV): **対象物**が仮想衝突点に到達する時間。
 
-We classify ego behavior at crosswalks into three categories according to the relative relationship between TTC and TTV [1].
+TTCとTTVの相対的な関係に基づき、横断歩道での**自車**の挙動を3つのカテゴリに分類します[1]。
 
-- A. **TTC >> TTV**: The object has enough time to cross before the ego.
-  - No stop planning.
-- B. **TTC ≒ TTV**: There is a risk of collision.
-  - **Stop point is inserted in the ego's path**.
-- C. **TTC << TTV**: Ego has enough time to cross before the object.
-  - No stop planning.
+- A. **TTC >> TTV**: 対象物は**自車**よりも先に横断する十分な時間があります。
+  - 停止計画なし。
+- B. **TTC ≒ TTV**: 衝突の危険性があります。
+  - **自車の経路に停止点が挿入されます。**
+- C. **TTC << TTV**: **自車**は対象物よりも先に横断する十分な時間があります。
+  - 停止計画なし。
 
 <div align="center">
     <table>
@@ -154,12 +155,12 @@ We classify ego behavior at crosswalks into three categories according to the re
     </table>
 </div>
 
-The boundary of A and B is interpolated from `ego_pass_later_margin_x` and `ego_pass_later_margin_y`.
-In the case of the upper figure, `ego_pass_later_margin_x` is `{0, 1, 2}` and `ego_pass_later_margin_y` is `{1, 4, 6}`.
-In the same way, the boundary of B and C is calculated from `ego_pass_first_margin_x` and `ego_pass_first_margin_y`.
-In the case of the upper figure, `ego_pass_first_margin_x` is `{3, 5}` and `ego_pass_first_margin_y` is `{0, 1}`.
+AとBの境界は、`ego_pass_later_margin_x`と`ego_pass_later_margin_y`から補間されます。
+上の図の場合、`ego_pass_later_margin_x`は`{0, 1, 2}`で、`ego_pass_later_margin_y`は`{1, 4, 6}`です。
+同様に、BとCの境界は`ego_pass_first_margin_x`と`ego_pass_first_margin_y`から計算されます。
+上の図の場合、`ego_pass_first_margin_x`は`{3, 5}`で、`ego_pass_first_margin_y`は`{0, 1}`です。
 
-If the red signal is indicating to the corresponding crosswalk, the ego do not yield against the pedestrians.
+横断歩道に対応する赤信号が表示されている場合、**自車**は歩行者に対して譲りません。
 
 <div align="center">
     <table>
@@ -170,203 +171,195 @@ If the red signal is indicating to the corresponding crosswalk, the ego do not y
     </table>
 </div>
 
-In the `pass_judge` namespace, the following parameters are defined.
+`pass_judge`ネームスペースで、以下のパラメータが定義されています。
 
-| Parameter                          |       | Type   | Description                                                                                                                                     |
+| パラメーター                         |       | 型   | 説明                                                                                                                                     |
 | ---------------------------------- | ----- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ego_pass_first_margin_x`          | [[s]] | double | time to collision margin vector for ego pass first situation (the module judges that ego don't have to stop at TTC + MARGIN < TTV condition)    |
-| `ego_pass_first_margin_y`          | [[s]] | double | time to vehicle margin vector for ego pass first situation (the module judges that ego don't have to stop at TTC + MARGIN < TTV condition)      |
-| `ego_pass_first_additional_margin` | [s]   | double | additional time margin for ego pass first situation to suppress chattering                                                                      |
-| `ego_pass_later_margin_x`          | [[s]] | double | time to vehicle margin vector for object pass first situation (the module judges that ego don't have to stop at TTV + MARGIN < TTC condition)   |
-| `ego_pass_later_margin_y`          | [[s]] | double | time to collision margin vector for object pass first situation (the module judges that ego don't have to stop at TTV + MARGIN < TTC condition) |
-| `ego_pass_later_additional_margin` | [s]   | double | additional time margin for object pass first situation to suppress chattering                                                                   |
+| `ego_pass_first_margin_x`          | [[s]] | double | ego_pass_first状況のタイム・トゥ・コリジョン・マージンベクトル（モジュールは、TTC + マージン < TTV条件ではegoが停止する必要がないと判断します） |
+| `ego_pass_first_margin_y`          | [[s]] | double | ego_pass_first状況のタイム・トゥ・ビークル・マージンベクトル（モジュールは、TTC + マージン < TTV条件ではegoが停止する必要がないと判断します） |
+| `ego_pass_first_additional_margin` | [s]   | double | チャッタリングを抑止するための、ego_pass_first状況の追加タイムマージン                                                                      |
+| `ego_pass_later_margin_x`          | [[s]] | double | オブジェクトパスファースト状況のタイム・トゥ・ビークル・マージンベクトル（モジュールは、TTV + マージン < TTC条件ではegoが停止する必要がないと判断します） |
+| `ego_pass_later_margin_y`          | [[s]] | double | オブジェクトパスファースト状況のタイム・トゥ・コリジョン・マージンベクトル（モジュールは、TTV + マージン < TTC条件ではegoが停止する必要がないと判断します） |
+| `ego_pass_later_additional_margin` | [s]   | double | チャッタリングを抑止するための、オブジェクトパスファースト状況の追加タイムマージン                                                                   |
 
-#### Smooth Yield Decision
+#### スムーズ歩行者譲り判定
 
-If the object is stopped near the crosswalk but has no intention of walking, a situation can arise in which the ego continues to yield the right-of-way to the object.
-To prevent such a deadlock situation, the ego will cancel yielding depending on the situation.
+歩行者が横断歩道付近で停止しており、歩行の意図がない場合、自車が歩行者に通行権を譲り続ける状況が発生することがあります。
+このようなデッドロック状態を防ぐため、自車は状況に応じて譲歩をキャンセルします。
 
-For the object stopped around the crosswalk but has no intention to walk (\*1), after the ego has keep stopping to yield for a specific time (\*2), the ego cancels the yield and starts driving.
+横断歩道付近で停止しており、歩行の意図が（\*1）ない歩行者については、自車が一定時間（\*2）譲歩のため停車を継続した後、譲歩をキャンセルして走行を開始します。
 
-\*1:
-The time is calculated by the interpolation of distance between the object and crosswalk with `distance_set_for_no_intention_to_walk` and `timeout_set_for_no_intention_to_walk`.
+\*1：
+時間は、物体と横断歩道間の距離を `distance_set_for_no_intention_to_walk` と `timeout_set_for_no_intention_to_walk` で補間して計算されます。
 
-In the `pass_judge` namespace, the following parameters are defined.
+`pass_judge` 名前空間では、以下のパラメータが定義されています。
 
-| Parameter                               |       | Type   | Description                                                                     |
-| --------------------------------------- | ----- | ------ | ------------------------------------------------------------------------------- |
-| `distance_set_for_no_intention_to_walk` | [[m]] | double | key sets to calculate the timeout for no intention to walk with interpolation   |
-| `timeout_set_for_no_intention_to_walk`  | [[s]] | double | value sets to calculate the timeout for no intention to walk with interpolation |
+| パラメータ                                   |       | タイプ   | 説明                                                                                            |
+| -------------------------------------------- | ----- | ------ | -------------------------------------------------------------------------------------------------- |
+| `distance_set_for_no_intention_to_walk`     | [[m]] | double | 歩行の意思なしのタイムアウトを補間で計算するためのキーを設定します                            |
+| `timeout_set_for_no_intention_to_walk`      | [[s]] | double | 歩行の意思なしのタイムアウトを補間で計算するための値を設定します                              |
 
-\*2:
-In the `pass_judge` namespace, the following parameters are defined.
+**パス判定**
 
-| Parameter                    |     | Type   | Description                                                                                                             |
-| ---------------------------- | --- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `timeout_ego_stop_for_yield` | [s] | double | If the ego maintains the stop for this amount of time, then the ego proceeds, assuming it has stopped long time enough. |
+`pass_judge`名前空間に、以下のパラメータが定義されています。
 
-#### New Object Handling
+| パラメータ | | タイプ | 説明 |
+|---|---|---|---|
+| `timeout_ego_stop_for_yield` | [s] | double | 自動運転車が停止を保持する時間がこの期間に達した場合、自動運転車は十分な時間停止したとみなし、走行を再開します。 |
 
-Due to the perception's limited performance where the tree or poll is recognized as a pedestrian or the tracking failure in the crowd or occlusion, even if the surrounding environment does not change, the new pedestrian (= the new ID's pedestrian) may suddenly appear unexpectedly.
-If this happens while the ego is going to pass the crosswalk, the ego will stop suddenly.
+#### 新規オブジェクトの取り扱い
 
-To deal with this issue, the option `disable_yield_for_new_stopped_object` is prepared.
-If true is set, the yield decisions around the crosswalk with a traffic light will ignore the new stopped object.
+認識の限界のため、木や電柱が歩行者として認識された場合、あるいは群衆や閉塞状況により追跡が失敗した場合、周囲の環境が変わっていないにもかかわらず、新しい歩行者（= 新しいIDの歩行者）が突然出現することがあります。
+これが自車が横断歩道を通り抜けようとしているときに発生すると、自車は急停止します。
 
-In the `pass_judge` namespace, the following parameters are defined.
+この問題に対処するために、オプション「disable_yield_for_new_stopped_object」が用意されています。
+trueを設定すると、信号機のある横断歩道の周辺における減速決定は、新しい停止オブジェクトを無視します。
 
-| Parameter                              |     | Type | Description                                                                                      |
-| -------------------------------------- | --- | ---- | ------------------------------------------------------------------------------------------------ |
-| `disable_yield_for_new_stopped_object` | [-] | bool | If set to true, the new stopped object will be ignored around the crosswalk with a traffic light |
+`pass_judge`ネームスペースでは、以下のパラメータが定義されています。
 
-### Stuck Prevention on the Crosswalk
+| パラメータ                               |       |      タイプ | 説明                                                                                  |
+|------------------------------------------|--------|---------|------------------------------------------------------------------------------------------|
+| `disable_yield_for_new_stopped_object`  |   [X]  | bool | trueの場合、信号機の付いた横断歩道付近にある停止中の新しい障害物は無視されます |
 
-The feature will make the ego not to stop on the crosswalk.
-When there is a low-speed or stopped vehicle ahead of the crosswalk, and there is not enough space between the crosswalk and the vehicle, the crosswalk module plans to stop before the crosswalk even if there are no pedestrians or bicycles.
+### 歩行者横断歩道での停止防止
 
-`min_acc`, `min_jerk`, and `max_jerk` are met. If the ego cannot stop before the crosswalk with these parameters, the stop position will move forward.
+この機能は、自車が歩行者横断歩道上で停止しないようにします。
+歩行者横断歩道の直前に低速または停止している車両があり、歩行者横断歩道と車両との間に十分なスペースがない場合、歩行者や自転車がいない場合でも、歩行者横断歩道手前で停止するようPlanningモジュールが計画します。
+
+`min_acc`、`min_jerk`、および`max_jerk`が満たされます。これらのパラメータを使用して自車が歩行者横断歩道手前で停止できない場合、停止位置は前進します。
 
 <figure markdown>
   ![stuck_vehicle_attention_range](docs/stuck_vehicle_detection.svg){width=600}
 </figure>
 
-In the `stuck_vehicle` namespace, the following parameters are defined.
+`stuck_vehicle`名前空間で、次のパラメータが定義されます。
 
-| Parameter                          | Unit    | Type   | Description                                                             |
-| ---------------------------------- | ------- | ------ | ----------------------------------------------------------------------- |
-| `stuck_vehicle_velocity`           | [m/s]   | double | maximum velocity threshold whether the target vehicle is stopped or not |
-| `max_stuck_vehicle_lateral_offset` | [m]     | double | maximum lateral offset of the target vehicle position                   |
-| `required_clearance`               | [m]     | double | clearance to be secured between the ego and the ahead vehicle           |
-| `min_acc`                          | [m/ss]  | double | minimum acceleration to stop                                            |
-| `min_jerk`                         | [m/sss] | double | minimum jerk to stop                                                    |
-| `max_jerk`                         | [m/sss] | double | maximum jerk to stop                                                    |
+| パラメータ                               | 単位 | 型       | 説明                                                                 |
+| ---------------------------------------- | ---- | -------- | --------------------------------------------------------------------- |
+| `stuck_vehicle_velocity`                  | [m/s] | double   | 車両停止状態の最大速度しきい値                                    |
+| `max_stuck_vehicle_lateral_offset`       | [m]   | double   | 目標車両の最大横方向オフセット                                      |
+| `required_clearance`                     | [m]   | double   | 自車と前方の車両との確保するクリアランス                            |
+| `min_acc`                                | [m/ss] | double   | 停止するための最小加速度                                            |
+| `min_jerk`                               | [m/sss] | double   | 停止するための最小ジャーク                                          |
+| `max_jerk`                               | [m/sss] | double   | 停止するための最大ジャーク                                          |
 
-### Safety Slow Down Behavior
+### 安全減速挙動
 
-In the current autoware implementation, if no target object is detected around a crosswalk, the ego vehicle will not slow down for the crosswalk.
-However, it may be desirable to slow down in situations, for example, where there are blind spots.
-Such a situation can be handled by setting some tags to the related crosswalk as instructed in the [lanelet2_format_extension.md](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md)
-document.
+現在の Autoware の実装では、横断歩道の周辺にターゲット オブジェクトが検出されない場合、自車位置は横断歩道で減速しません。
+ただし、たとえば死角がある場合など、減速することも考えられます。
+この状況は、[lanelet2_format_extension.md](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md)
+ドキュメントの指示に従って、関連する横断歩道にタグを設定することによって処理できます。
 
-| Parameter             |         | Type   | Description                                                                                                           |
-| --------------------- | ------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
-| `slow_velocity`       | [m/s]   | double | target vehicle velocity when module receive slow down command from FOA                                                |
-| `max_slow_down_jerk`  | [m/sss] | double | minimum jerk deceleration for safe brake                                                                              |
-| `max_slow_down_accel` | [m/ss]  | double | minimum accel deceleration for safe brake                                                                             |
-| `no_relax_velocity`   | [m/s]   | double | if the current velocity is less than X m/s, ego always stops at the stop position(not relax deceleration constraints) |
+| パラメーター             | 単位 | タイプ | 説明                                                                                                             |
+| --------------------- | ---- | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| `slow_velocity`       | m/s   | double | モジュールが FOA から減速コマンドを受信したときのターゲット車両速度                                               |
+| `max_slow_down_jerk`  | m/sss | double | 安全なブレーキのための最小ジャーク減速度                                                                               |
+| `max_slow_down_accel` | m/ss  | double | 安全なブレーキのための最小アクセル減速度                                                                              |
+| `no_relax_velocity`   | m/s   | double | 現在速度が X m/s 未満の場合、エゴは常に停止位置で停止する（減速制約を緩和しない）                                  |
 
-### Occlusion
+### オクルージョン
 
-This feature makes ego slow down for a crosswalk that is occluded.
+この機能を有効にすると、自動運転車は遮られた横断歩道手前で減速します。
 
-Occlusion of the crosswalk is determined using the occupancy grid.
-An occlusion is a square of size `min_size` of occluded cells
-(i.e., their values are between `free_space_max` and `occupied_min`)
-of size `min_size`.
-If an occlusion is found within range of the crosswalk,
-then the velocity limit at the crosswalk is set to `slow_down_velocity` (or more to not break limits set by `max_slow_down_jerk` and `max_slow_down_accel`).
-The range is calculated from the intersection between the ego path and the crosswalk and is equal to the time taken by ego to reach the crosswalk times the `occluded_object_velocity`.
-This range is meant to be large when ego is far from the crosswalk and small when ego is close.
+横断歩道のオクルージョンは、オキュパンシーグリッドを使用して判断されます。
+オクルージョンとは、`min_size`サイズの正方形のオクルージョンセルです（つまり、その値は`free_space_max`と`occupied_min`の間）。
+横断歩道範囲内にオクルージョンが見つかった場合、横断歩道での速度制限は`slow_down_velocity`に設定されます。（ただし、`max_slow_down_jerk`と`max_slow_down_accel`で設定された制限を超えない範囲）
+この範囲は、自動運転車の走行経路と横断歩道の交点から算出され、自動運転車が横断歩道に到達するまでの時間と`occluded_object_velocity`を掛けたものになります。
+この範囲は、自動運転車が横断歩道から遠い場合は大きく、近い場合は小さくなります。
 
-In order to avoid flickering decisions, a time buffer can be used such that the decision to add (or remove) the slow down is only taken
-after an occlusion is detected (or not detected) for a consecutive time defined by the `time_buffer` parameter.
+ちらつきを伴う判断を避けるために、時間バッファを使用できます。これにより、「減速を追加する（または削除する）」という決定は、オクルージョンが`time_buffer`パラメーターで定義された連続した時間検出（または未検出）された後にのみ行われます。
 
-To ignore occlusions when the crosswalk has a traffic light, `ignore_with_traffic_light` should be set to true.
+横断歩道の信号が赤のときにオクルージョンを無視するには、`ignore_with_traffic_light`をtrueに設定する必要があります。
 
-To ignore temporary occlusions caused by moving objects,
-`ignore_behind_predicted_objects` should be set to true.
-By default, occlusions behind an object with velocity higher than `ignore_velocity_thresholds.default` are ignored.
-This velocity threshold can be specified depending on the object type by specifying the object class label and velocity threshold in the parameter lists `ignore_velocity_thresholds.custom_labels` and `ignore_velocity_thresholds.custom_thresholds`.
-To inflate the masking behind objects, their footprint can be made bigger using `extra_predicted_objects_size`.
+移動中のオブジェクトによる一時的なオクルージョンを無視するには、
+`ignore_behind_predicted_objects`をtrueに設定する必要があります。
+デフォルトでは、`ignore_velocity_thresholds.default`より速度の高いオブジェクトの背後のオクルージョンは無視されます。
+この速度閾値は、パラメータリスト`ignore_velocity_thresholds.custom_labels`と`ignore_velocity_thresholds.custom_thresholds`でオブジェクトクラスのラベルと速度閾値を指定することによって、オブジェクトタイプに応じて指定できます。
+オブジェクトのマスクを膨らませるには、`extra_predicted_objects_size`を使用してフットプリントを大きくすることができます。
 
 <figure markdown>
   ![stuck_vehicle_attention_range](docs/with_occlusion.svg){width=600}
 </figure>
 
-| Parameter                                      | Unit  | Type        | Description                                                                                                                                |
-| ---------------------------------------------- | ----- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `enable`                                       | [-]   | bool        | if true, ego will slow down around crosswalks that are occluded                                                                            |
-| `occluded_object_velocity`                     | [m/s] | double      | assumed velocity of objects that may come out of the occluded space                                                                        |
-| `slow_down_velocity`                           | [m/s] | double      | slow down velocity                                                                                                                         |
-| `time_buffer`                                  | [s]   | double      | consecutive time with/without an occlusion to add/remove the slowdown                                                                      |
-| `min_size`                                     | [m]   | double      | minimum size of an occlusion (square side size)                                                                                            |
-| `free_space_max`                               | [-]   | double      | maximum value of a free space cell in the occupancy grid                                                                                   |
-| `occupied_min`                                 | [-]   | double      | minimum value of an occupied cell in the occupancy grid                                                                                    |
-| `ignore_with_traffic_light`                    | [-]   | bool        | if true, occlusions at crosswalks with traffic lights are ignored                                                                          |
-| `ignore_behind_predicted_objects`              | [-]   | bool        | if true, occlusions behind predicted objects are ignored                                                                                   |
-| `ignore_velocity_thresholds.default`           | [m/s] | double      | occlusions are only ignored behind objects with a higher or equal velocity                                                                 |
-| `ignore_velocity_thresholds.custom_labels`     | [-]   | string list | labels for which to define a non-default velocity threshold (see `autoware_perception_msgs::msg::ObjectClassification` for all the labels) |
-| `ignore_velocity_thresholds.custom_thresholds` | [-]   | double list | velocities of the custom labels                                                                                                            |
-| `extra_predicted_objects_size`                 | [m]   | double      | extra size added to the objects for masking the occlusions                                                                                 |
+| パラメータ                                      | 単位 | タイプ        | 説明                                                                                                                                  |
+| ---------------------------------------------- | ------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enable`                                       | [-]   | ブール型        | trueの場合、エゴは、遮蔽されている横断歩道の周囲で減速します。                                                                              |
+| `occluded_object_velocity`                     | [m/s] | ダブル型      | 遮蔽された空間から現れる可能性のあるオブジェクトの想定速度                                                                           |
+| `slow_down_velocity`                           | [m/s] | ダブル型      | 減速速度                                                                                                                          |
+| `time_buffer`                                  | [s]   | ダブル型      | 減速を追加/削除するための、遮蔽あり/なしの連続時間                                                                                |
+| `min_size`                                     | [m]   | ダブル型      | 遮蔽の最小サイズ（正方形の1辺の長さ）                                                                                             |
+| `free_space_max`                               | [-]   | ダブル型      | オキュパンシーグリッド内の空きセルの最大値                                                                                         |
+| `occupied_min`                                 | [-]   | ダブル型      | オキュパンシーグリッド内の占有セルの最小値                                                                                         |
+| `ignore_with_traffic_light`                    | [-]   | ブール型        | trueの場合、信号機のある横断歩道の遮蔽は無視されます。                                                                               |
+| `ignore_behind_predicted_objects`              | [-]   | ブール型        | trueの場合、予測されたオブジェクトの背後にある遮蔽は無視されます。                                                                  |
+| `ignore_velocity_thresholds.default`           | [m/s] | ダブル型      | 遮蔽は、速度が同じかそれよりも高いオブジェクトの背後でのみ無視されます。                                                           |
+| `ignore_velocity_thresholds.custom_labels`     | [-]   | 文字列リスト | 既定以外の速度しきい値を定義するラベル（すべてのラベルについては、`autoware_perception_msgs::msg::ObjectClassification`を参照してください） |
+| `ignore_velocity_thresholds.custom_thresholds` | [-]   | ダブルリスト | カスタムラベルの速度                                                                                                                |
+| `extra_predicted_objects_size`                 | [m]   | ダブル型      | 遮蔽をマスクするためにオブジェクトに追加される余分なサイズ                                                                         |
 
-### Others
+### その他
 
-In the `common` namespace, the following parameters are defined.
+`common` 名前空間では、以下のパラメータが定義されています。
 
-| Parameter                     | Unit | Type   | Description                                                                                                                                     |
-| ----------------------------- | ---- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `show_processing_time`        | [-]  | bool   | whether to show processing time                                                                                                                 |
-| `traffic_light_state_timeout` | [s]  | double | timeout threshold for traffic light signal                                                                                                      |
-| `enable_rtc`                  | [-]  | bool   | if true, the scene modules should be approved by (request to cooperate)rtc function. if false, the module can be run without approval from rtc. |
+| パラメータ                      | ユニット | 種類   | 説明                                                                                                                                                  |
+| ------------------------------- | ------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `show_processing_time`          | [-]     | ブール値 | 処理時間を表示するかどうか                                                                                                                        |
+| `traffic_light_state_timeout`   | [s]     | double | 信号のタイムアウトしきい値                                                                                                                        |
+| `enable_rtc`                    | [-]     | ブール値 | true の場合、シーンモジュールは (rtc 関数の協力を要求して) rtc によって承認される必要があります。false の場合、モジュールは rtc から承認なしに実行できます。 |
 
-## Known Issues
+##既知の問題
 
-- The yield decision may be sometimes aggressive or conservative depending on the case.
-  - The main reason is that the crosswalk module does not know the ego's position in the future. The detailed ego's position will be determined after the whole planning.
-  - Currently the module assumes that the ego will move with a constant velocity.
+- ケースによっては譲歩の決定が積極的または消極的になることがあります。
+  - 主な理由は、横断歩道モジュールが車両の将来の位置を知らないことです。車両の正確な位置は、すべての計画の後で決定されます。
+  - 現在、このモジュールは車両が一定の速度で移動すると想定しています。
 
-## Debugging
+##デバッグ
 
-### Visualization of debug markers
+### デバッグマーカーの可視化
 
-`/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/crosswalk` shows the following markers.
+`/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/crosswalk` は、次のマーカーを表示します。
 
 <figure markdown>
-  ![limitation](docs/debug_markers.png){width=1000}
+  ![ limitation](docs/debug_markers.png){width=1000}
 </figure>
 
-- Yellow polygons
-  - Ego footprints' polygon to calculate the collision check.
-- Pink polygons
-  - Object footprints' polygon to calculate the collision check.
-- The color of crosswalks
-  - Considering the traffic light's color, red means the target crosswalk, and white means the ignored crosswalk.
-- Texts
-  - It shows the module ID, TTC, TTV, and the module state.
+- 黄色い多角形
+  - 衝突チェックを計算するための車両フットプリントの多角形。
+- ピンクの多角形
+  - 衝突チェックを計算するためのオブジェクトフットプリントの多角形。
+- 横断歩道の色
+  - 信号の色を考慮して、赤はターゲットの横断歩道を、白は無視される横断歩道を示します。
+- テキスト
+  - モジュールID、TTC、TTV、およびモジュールの状態を示します。
 
-### Visualization of Time-To-Collision
+### 衝突時間（TTC）の可視化
+
 
 ```sh
 ros2 run autoware_behavior_velocity_crosswalk_module time_to_collision_plotter.py
 ```
 
-enables you to visualize the following figure of the ego and pedestrian's time to collision.
-The label of each plot is `<crosswalk module id>-<pedestrian uuid>`.
+## **Troubleshooting**
 
-<figure markdown>
-  ![limitation](docs/time_to_collision_plot.png){width=1000}
-</figure>
+### **Behavior**
 
-## Trouble Shooting
+- Q. 交差点ユーザーオブジェクトがいないのに、自車位置が交差点付近で停止した
+  - A. [スタックビークル検出](https://autowarefoundation.github.io/autoware.universe/pr-5583/planning/autoware_behavior_velocity_crosswalk_module/#stuck-vehicle-detection)を参照してください。
+- Q. 交差点仮想ウォールが突然現れて、急停止した
+  - A. 自車位置が交差点の近くにいたときに、交差点ユーザーが動き始めた可能性があります。
+- Q. 歩行者信号が赤色でも、交差点モジュールが停止を決定する
+  - A. レーンレットマップが正しくない可能性があります。歩行者信号と交差点は関連付けられている必要があります。
+- Q. Planningシミュレーションで、交差点モジュールがすべての交差点で停止する譲渡動作を行う
+  - A. これは、歩行者信号が既定で不明であるためです。この場合、交差点は安全のために譲渡動作を行います。
 
-### Behavior
+### **パラメータ調整**
 
-- Q. The ego stopped around the crosswalk even though there were no crosswalk user objects.
-  - A. See [Stuck Vehicle Detection](https://autowarefoundation.github.io/autoware.universe/pr-5583/planning/autoware_behavior_velocity_crosswalk_module/#stuck-vehicle-detection).
-- Q. The crosswalk virtual wall suddenly appeared resulting in the sudden stop.
-  - A. There may be a crosswalk user started moving when the ego was close to the crosswalk.
-- Q. The crosswalk module decides to stop even when the pedestrian traffic light is red.
-  - A. The lanelet map may be incorrect. The pedestrian traffic light and the crosswalk have to be related.
-- Q. In the planning simulation, the crosswalk module does the yield decision to stop on all the crosswalks.
-  - A. This is because the pedestrian traffic light is unknown by default. In this case, the crosswalk does the yield decision for safety.
+- Q. 自車の譲渡動作が保守的すぎる
+  - A. [譲渡決定](https://autowarefoundation.github.io/autoware.universe/pr-5583/planning/autoware_behavior_velocity_crosswalk_module/#stuck-vehicle-detection)に記載されている「`ego_pass_later_margin`」を調整します。
+- Q. 自車の譲渡動作が攻撃的すぎる
+  - A. [譲渡決定](https://autowarefoundation.github.io/autoware.universe/pr-5583/planning/autoware_behavior_velocity_crosswalk_module/#stuck-vehicle-detection)に記載されている「`ego_pass_later_margin`」を調整します。
 
-### Parameter Tuning
-
-- Q. The ego's yield behavior is too conservative.
-  - A. Tune `ego_pass_later_margin` described in [Yield Decision](https://autowarefoundation.github.io/autoware.universe/pr-5583/planning/autoware_behavior_velocity_crosswalk_module/#stuck-vehicle-detection)
-- Q. The ego's yield behavior is too aggressive.
-  - A. Tune `ego_pass_later_margin` described in [Yield Decision](https://autowarefoundation.github.io/autoware.universe/pr-5583/planning/autoware_behavior_velocity_crosswalk_module/#stuck-vehicle-detection)
-
-## References/External links
+## **参考文献/外部リンク**
 
 [1] 佐藤 みなみ, 早坂 祥一, 清水 政行, 村野 隆彦, 横断歩行者に対するドライバのリスク回避行動のモデル化, 自動車技術会論文集, 2013, 44 巻, 3 号, p. 931-936.
+

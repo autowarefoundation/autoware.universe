@@ -1,107 +1,146 @@
 # autoware_tensorrt_yolox
 
-## Purpose
+## 目的
 
-This package detects target objects e.g., cars, trucks, bicycles, and pedestrians and segment target objects such as cars, trucks, buses and pedestrian, building, vegetation, road, sidewalk on a image based on [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) model with multi-header structure.
+このパッケージは、[YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) モデルに基づく、マルチヘッダー構造で、車、トラック、自転車、歩行者などの対象のオブジェクトを検出し、車、トラック、バス、歩行者、建屋、植生、道路、歩道などの対象のオブジェクトをセグメントします。
 
-## Inner-workings / Algorithms
+## 内部動作 / アルゴリズム
 
-### Cite
+### 引用
 
 <!-- cspell: ignore Zheng, Songtao, Feng, Zeming, Jian, semseg -->
 
-Zheng Ge, Songtao Liu, Feng Wang, Zeming Li, Jian Sun, "YOLOX: Exceeding YOLO Series in 2021", arXiv preprint arXiv:2107.08430, 2021 [[ref](https://arxiv.org/abs/2107.08430)]
+鄭 Ge、劉 鬆涛、王 鋒、李 則明、孫 健、「YOLOX: 2021 年に YOLO シリーズを超える」、arXiv プレプリント arXiv:2107.08430、2021 [[ref](https://arxiv.org/abs/2107.08430)]
 
-## Inputs / Outputs
+## 入力 / 出力
 
-### Input
+### 入力
 
-| Name       | Type                | Description     |
+| 名称       | 型                | 説明     |
 | ---------- | ------------------- | --------------- |
-| `in/image` | `sensor_msgs/Image` | The input image |
+| `in/image` | `sensor_msgs/Image` | 入力画像 |
 
-### Output
+### 出力
 
-| Name             | Type                                               | Description                                                         |
-| ---------------- | -------------------------------------------------- | ------------------------------------------------------------------- |
-| `out/objects`    | `tier4_perception_msgs/DetectedObjectsWithFeature` | The detected objects with 2D bounding boxes                         |
-| `out/image`      | `sensor_msgs/Image`                                | The image with 2D bounding boxes for visualization                  |
-| `out/mask`       | `sensor_msgs/Image`                                | The semantic segmentation mask                                      |
-| `out/color_mask` | `sensor_msgs/Image`                                | The colorized image of semantic segmentation mask for visualization |
+**自動運転ソフトウェアドキュメント**
 
-## Parameters
+Autowareは、オープンソース自動運転ソフトウェアスタックです。このドキュメントでは、Autowareのさまざまなコンポーネントとモジュールについて説明します。
+
+**Planningコンポーネント**
+
+* **Path Planning:** 目的地までの経路を生成します。
+* **Speed Planning:** 経路上の最適速度プロファイルを作成します。
+* **Trajectory Planning:** 経路と速度プロファイルを組み合わせた、車両の軌跡を生成します。
+
+**Perceptionコンポーネント**
+
+* **Localization:** 自車位置と周囲環境の地図を特定します。
+* **Object Detection:** 周囲の車両、歩行者、障害物を検出します。
+* **Obstacle Tracking:** 時間とともに動いている物体を追跡します。
+
+**Controlコンポーネント**
+
+* **Longitudinal Control:** 車両の速度を制御します。
+* **Lateral Control:** 車両の向きを制御します。
+* **Model Predictive Control (MPC):** 車両の挙動を予測し、最適な制御入力を決定します。
+
+**Drivingポリシー**
+
+* **Lane Keeping Assist:** 車両が車線内を維持するのに役立ちます。
+* **Adaptive Cruise Control:** 前方車両との安全な間隔を維持します。
+* **Collision Avoidance:** 衝突の可能性を検出し、回避策を実行します。
+
+**安全機能**
+
+* **Velocity Violation Check:** `post resampling`による速度逸脱量を確認します。
+* **Acceleration Violation Check:** 加速度逸脱量を確認します。
+* **Obstacle Proximity Check:** 障害物との近接性を監視します。
+
+| 名称             | タイプ                                                | 説明                                                           |
+| ---------------- | ----------------------------------------------------- | -------------------------------------------------------------------- |
+| `out/objects`    | `tier4_perception_msgs/DetectedObjectsWithFeature` | 2Dバウンディングボックス付きの検出オブジェクト                         |
+| `out/image`      | `sensor_msgs/Image`                                | 視覚化のための2Dバウンディングボックス付きのイメージ                    |
+| `out/mask`       | `sensor_msgs/Image`                                | セマンティックセグメンテーションマスク                                |
+| `out/color_mask` | `sensor_msgs/Image`                                | 視覚化のためのセマンティックセグメンテーションマスクの色付けイメージ |
+
+## パラメータ
 
 {{ json_to_markdown("perception/autoware_tensorrt_yolox/schema/yolox_s_plus_opt.schema.json") }}
 {{ json_to_markdown("perception/autoware_tensorrt_yolox/schema/yolox_tiny.schema.json") }}
 
-## Assumptions / Known limits
+## 前提条件／既知の制限
 
-The label contained in detected 2D bounding boxes (i.e., `out/objects`) will be either one of the followings:
+検出された 2D バウンディングボックス（例: `out/objects`）に含まれるラベルは、次のいずれかになります。
 
 - CAR
-- PEDESTRIAN ("PERSON" will also be categorized as "PEDESTRIAN")
+- PEDESTRIAN（"PERSON" も "PEDESTRIAN" として分類されます。）
 - BUS
 - TRUCK
 - BICYCLE
 - MOTORCYCLE
 
-If other labels (case insensitive) are contained in the file specified via the `label_file` parameter,
-those are labeled as `UNKNOWN`, while detected rectangles are drawn in the visualization result (`out/image`).
+他のラベル（大文字小文字の区別はしない）が `label_file` パラメータで指定されたファイルに含まれる場合、それらは `UNKNOWN` としてラベル付けされ、検出された四角形は視覚化結果（`out/image`）に描画されます。
 
-The semantic segmentation mask is a gray image whose each pixel is index of one following class:
+セマンティックセグメンテーションマスクは、各ピクセルが次のクラスのいずれかのインデックスであるグレースケール画像です。
 
-| index | semantic name    |
-| ----- | ---------------- |
-| 0     | road             |
-| 1     | building         |
-| 2     | wall             |
-| 3     | obstacle         |
-| 4     | traffic_light    |
-| 5     | traffic_sign     |
-| 6     | person           |
-| 7     | vehicle          |
-| 8     | bike             |
-| 9     | road             |
-| 10    | sidewalk         |
-| 11    | roadPaint        |
-| 12    | curbstone        |
-| 13    | crosswalk_others |
-| 14    | vegetation       |
-| 15    | sky              |
+| インデックス | シマンティック名 |
+|---|---|
+| 0     | 道路 |
+| 1     | 建物 |
+| 2     | 壁 |
+| 3     | 障害物 |
+| 4     | 交通信号 |
+| 5     | 交通標識 |
+| 6     | 歩行者 |
+| 7     | 車両 |
+| 8     | 自転車 |
+| 9     | 道路 |
+| 10    | 歩道 |
+| 11    | 道路ペイント |
+| 12    | 側石 |
+| 13    | 交差点（その他） |
+| 14    | 草木 |
+| 15    | 空 |
 
-## Onnx model
+## Onnxモデル
 
-A sample model (named `yolox-tiny.onnx`) is downloaded by ansible script on env preparation stage, if not, please, follow [Manual downloading of artifacts](https://github.com/autowarefoundation/autoware/tree/main/ansible/roles/artifacts).
-To accelerate Non-maximum-suppression (NMS), which is one of the common post-process after object detection inference,
-`EfficientNMS_TRT` module is attached after the ordinal YOLOX (tiny) network.
-The `EfficientNMS_TRT` module contains fixed values for `score_threshold` and `nms_threshold` in it,
-hence these parameters are ignored when users specify ONNX models including this module.
+Ansibleスクリプトによって準備段階の環境でサンプルモデル(`yolox-tiny.onnx`)がダウンロードされます。ダウンロードされない場合は、[成果物の手動ダウンロード](https://github.com/autowarefoundation/autoware/tree/main/ansible/roles/artifacts)に従ってください。
 
-This package accepts both `EfficientNMS_TRT` attached ONNXs and [models published from the official YOLOX repository](https://github.com/Megvii-BaseDetection/YOLOX/tree/main/demo/ONNXRuntime#download-onnx-models) (we referred to them as "plain" models).
+オブジェクト検出推論後の一般的な後処理の1つである非最大値抑制(NMS)を高速化するために、通常のYOLOX(tiny)ネットワークの後には`EfficientNMS_TRT`モジュールが組み込まれています。
 
-In addition to `yolox-tiny.onnx`, a custom model named `yolox-sPlus-opt-pseudoV2-T4-960x960-T4-seg16cls` is either available.
-This model is multi-header structure model which is based on YOLOX-s and tuned to perform more accurate detection with almost comparable execution speed with `yolox-tiny`.
-To get better results with this model, users are recommended to use some specific running arguments
-such as `precision:=int8`, `calibration_algorithm:=Entropy`, `clip_value:=6.0`.
-Users can refer `launch/yolox_sPlus_opt.launch.xml` to see how this model can be used.
-Beside detection result, this model also output image semantic segmentation result for pointcloud filtering purpose.
+`EfficientNMS_TRT`モジュールには`score_threshold`と`nms_threshold`の固定値が含まれているため、ユーザーがこのモジュールを含むONNXモデルを指定した場合、これらのパラメーターは無視されます。
 
-All models are automatically converted to TensorRT format.
-These converted files will be saved in the same directory as specified ONNX files
-with `.engine` filename extension and reused from the next run.
-The conversion process may take a while (**typically 10 to 20 minutes**) and the inference process is blocked
-until complete the conversion, so it will take some time until detection results are published (**even until appearing in the topic list**) on the first run
+このパッケージは、`EfficientNMS_TRT`を組み込んだONNXと[公式のYOLOXリポジトリから公開されているモデル](https://github.com/Megvii-BaseDetection/YOLOX/tree/main/demo/ONNXRuntime#download-onnx-models)（「プレーン」モデルと呼ぶ）の両方を許可します。
 
-### Package acceptable model generation
+`yolox-tiny.onnx`に加えて、`yolox-sPlus-opt-pseudoV2-T4-960x960-T4-seg16cls`という名前のカスタムモデルを利用することもできます。
 
-To convert users' own model that saved in PyTorch's `pth` format into ONNX,
-users can exploit the converter offered by the official repository.
-For the convenience, only procedures are described below.
-Please refer [the official document](https://github.com/Megvii-BaseDetection/YOLOX/tree/main/demo/ONNXRuntime#convert-your-model-to-onnx) for more detail.
+このモデルはYOLOX-sをベースとしたマルチヘッダー構造モデルであり、`yolox-tiny`とほぼ同等の実行速度でより正確な検出を実行するように調整されています。
 
-#### For plain models
+このモデルでより良い結果を得るには、`precision:=int8`、`calibration_algorithm:=Entropy`、`clip_value:=6.0`などの特定の実行引数を使用することをお勧めします。
 
-1. Install dependency
+ユーザーは`launch/yolox_sPlus_opt.launch.xml`を参照して、このモデルを使用する方法を確認できます。
+
+検出結果に加えて、このモデルはポイントクラウドのフィルタリングに使用できる画像セマンティックセグメンテーション結果も出力します。
+
+すべてのモデルは、TensorRT形式に自動的に変換されます。
+
+変換後のファイルは、指定されたONNXファイルと同じディレクトリに`engine`ファイル名拡張子で保存され、次回の実行から再利用されます。
+
+変換プロセスには時間がかかる場合があります（**通常10〜20分**）。また、変換が完了するまでは推論プロセスがブロックされるため、検出結果が公開されるまでに時間がかかります（**トピックリストに表示されるまで**）。
+
+### パッケージで許容されるモデルの生成
+
+PyTorchの`pth`フォーマットで保存されたユーザー独自のモデルをONNXに変換するには、公式リポジトリで提供されているコンバーターを利用できます。
+
+便宜上、手順のみ以下に示します。
+
+詳細については、[公式ドキュメント](https://github.com/Megvii-BaseDetection/YOLOX/tree/main/demo/ONNXRuntime#convert-your-model-to-onnx)を参照してください。
+
+#### プレーンモデルの場合
+
+1. 依存関係をインストール
+
+
 
    ```shell
    git clone git@github.com:Megvii-BaseDetection/YOLOX.git
@@ -109,7 +148,8 @@ Please refer [the official document](https://github.com/Megvii-BaseDetection/YOL
    python3 setup.py develop --user
    ```
 
-2. Convert pth into ONNX
+2. pth を ONNX に変換する
+
 
    ```shell
    python3 tools/export_onnx.py \
@@ -118,9 +158,10 @@ Please refer [the official document](https://github.com/Megvii-BaseDetection/YOL
      -c YOUR_YOLOX.pth
    ```
 
-#### For EfficientNMS_TRT embedded models
+#### EfficientNMS_TRT埋め込みモデル向け
 
-1. Install dependency
+1. 依存関係のインストール
+
 
    ```shell
    git clone git@github.com:Megvii-BaseDetection/YOLOX.git
@@ -129,7 +170,8 @@ Please refer [the official document](https://github.com/Megvii-BaseDetection/YOL
    pip3 install git+ssh://git@github.com/wep21/yolox_onnx_modifier.git --user
    ```
 
-2. Convert pth into ONNX
+2. pth を ONNX に変換する
+
 
    ```shell
    python3 tools/export_onnx.py \
@@ -139,23 +181,23 @@ Please refer [the official document](https://github.com/Megvii-BaseDetection/YOL
      --decode_in_inference
    ```
 
-3. Embed `EfficientNMS_TRT` to the end of YOLOX
+3. YOLOX の最後に `EfficientNMS_TRT` を埋め込む
+
 
    ```shell
    yolox_onnx_modifier YOUR_YOLOX.onnx -o YOUR_YOLOX_WITH_NMS.onnx
    ```
 
-## Label file
+## ラベルファイル
 
-A sample label file (named `label.txt`) and semantic segmentation color map file (name `semseg_color_map.csv`) are also downloaded automatically during env preparation process
-(**NOTE:** This file is incompatible with models that output labels for the COCO dataset (e.g., models from the official YOLOX repository)).
+env準備プロセスの際に、サンプルラベルファイル（`label.txt`という名前）とセマンティックセグメンテーションカラーマップファイル（`semseg_color_map.csv`という名前）も自動的にダウンロードされます
+(**注:** このファイルはCOCOデータセット（例：公式YOLOXリポジトリのモデル）のラベルを出力するモデルとは互換性がありません)。
 
-This file represents the correspondence between class index (integer outputted from YOLOX network) and
-class label (strings making understanding easier). This package maps class IDs (incremented from 0)
-with labels according to the order in this file.
+このファイルは、クラスインデックス（YOLOXネットワークから出力される整数）とクラスラベル（理解を容易にする文字列）との対応を表します。このパッケージは、このファイルの順序に従って、クラスID（0から増加）をラベルにマッピングします。
 
-## Reference repositories
+## 参照リポジトリ
 
 - <https://github.com/Megvii-BaseDetection/YOLOX>
 - <https://github.com/wep21/yolox_onnx_modifier>
 - <https://github.com/tier4/trt-yoloXP>
+

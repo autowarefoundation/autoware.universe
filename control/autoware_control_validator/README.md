@@ -1,65 +1,83 @@
-# Control Validator
+# 制御検証器
 
-The `control_validator` is a module that checks the validity of the output of the control component. The status of the validation can be viewed in the `/diagnostics` topic.
+`control_validator` は制御コンポーネントの出力の妥当性を確認するモジュールです。検証のステータスは `/diagnostics` トピックで確認できます。
 
 ![control_validator](./image/control_validator.drawio.svg)
 
-## Supported features
+## サポート対象機能
 
-The following features are supported for the validation and can have thresholds set by parameters.
-The listed features below does not always correspond to the latest implementation.
+検証に対して、次の機能がサポートされており、しきい値をパラメータによって設定できます。
+以下にリストされている機能は常に最新のインプリメンテーションに対応しているわけではありません。
 
-| Description                                                                        | Arguments                                                                                       |                  Diagnostic equation                  |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | :---------------------------------------------------: |
-| Inverse velocity: Measured velocity has a different sign from the target velocity. | measured velocity $v$, target velocity $\hat{v}$, and velocity parameter $c$                    |      $v \hat{v} < 0, \quad \lvert v \rvert > c$       |
-| Overspeed: Measured speed exceeds target speed significantly.                      | measured velocity $v$, target velocity $\hat{v}$, ratio parameter $r$, and offset parameter $c$ | $\lvert v \rvert > (1 + r) \lvert \hat{v} \rvert + c$ |
+| 説明                                                                     | 引数                                                                                   | 診断式                                           |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | :--------------------------------------------------: |
+| 逆速度: 計測速度が目標速度と符号が異なる。                           | 計測速度 $v$、目標速度 $\hat{v}$、および速度パラメータ $c$                      | $v \hat{v} < 0, \quad \lvert v \rvert > c$        |
+| 過速度: 計測速度が目標速度を著しく上回る。                           | 計測速度 $v$、目標速度 $\hat{v}$、比率パラメータ $r$、およびオフセットパラメータ $c$ | $\lvert v \rvert > (1 + r) \lvert \hat{v} \rvert + c$ |
 
-- **Deviation check between reference trajectory and predicted trajectory** : invalid when the largest deviation between the predicted trajectory and reference trajectory is greater than the given threshold.
+- **基準軌跡と予測軌跡の逸脱量チェック**: 予測軌跡と基準軌跡との間の最大逸脱量が指定されたしきい値を超えている場合、無効になります。
 
 ![trajectory_deviation](./image/trajectory_deviation.drawio.svg)
 
-## Inputs/Outputs
+## 入出力
 
-### Inputs
+### 入力量
 
-The `control_validator` takes in the following inputs:
+`control_validator` には、次の入力量があります。
 
-| Name                           | Type                              | Description                                                                    |
-| ------------------------------ | --------------------------------- | ------------------------------------------------------------------------------ |
-| `~/input/kinematics`           | nav_msgs/Odometry                 | ego pose and twist                                                             |
-| `~/input/reference_trajectory` | autoware_planning_msgs/Trajectory | reference trajectory which is outputted from planning module to to be followed |
-| `~/input/predicted_trajectory` | autoware_planning_msgs/Trajectory | predicted trajectory which is outputted from control module                    |
+| 名前                               | タイプ                                | 説明                                                                             |
+| ----------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
+| `~/input/kinematics`                    | nav_msgs/Odometry                      | 自車位置とツイスト                                                                  |
+| `~/input/reference_trajectory`          | autoware_planning_msgs/Trajectory       | Planningモジュールから出力され、追従すべきリファレンストラジェクトリ               |
+| `~/input/predicted_trajectory`         | autoware_planning_msgs/Trajectory       | Controlモジュールから出力された予測軌跡                                                |
 
-### Outputs
+### 出力
 
-It outputs the following:
+以下の値を出力します。
 
-| Name                         | Type                                     | Description                                                               |
-| ---------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
-| `~/output/validation_status` | control_validator/ControlValidatorStatus | validator status to inform the reason why the trajectory is valid/invalid |
-| `/diagnostics`               | diagnostic_msgs/DiagnosticStatus         | diagnostics to report errors                                              |
+- **Planning経路:** Planningモジュールによって生成された経路。経路はポリラインで表現され、各地点は世界座標系で指定されます。
+- **Planningコマンド:** Planningモジュールによって生成されたコマンド。コマンドは、ハンドル角、加速度、速度などの車両動作を指定します。
+- **現在の自己位置:** GNSSやIMUなどのセンサから得られた車両の位置と姿勢。
+- **地図:** 地形、道路、建物などの環境に関する情報。
+- **障害物情報:** ライダー、カメラ、レーダーなどのセンサから得られた障害物の位置と形状。
+- **センサー情報:** Rawセンサデータ（オプション）。
 
-## Parameters
+### 内部処理
 
-The following parameters can be set for the `control_validator`:
+Autoware.Autoは、以下のような内部処理を実行します。
 
-### System parameters
+- **環境認識:** センサーデータから車両の周囲を認識します。
+- **Planning:** Planning経路とPlanningコマンドを生成します。
+- **制御:** Planningコマンドに基づいて車両を制御します。
+- **状態推定:** GNSS、IMU、オドメトリなどのセンサから自車位置を推定します。
+- **センサフュージョン:** 複数のセンサからデータを統合して、より正確でロバストな推定を行います。
 
-| Name                         | Type | Description                                                                                                                                                                                                                                | Default value |
-| :--------------------------- | :--- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `publish_diag`               | bool | if true, diagnostics msg is published.                                                                                                                                                                                                     | true          |
-| `diag_error_count_threshold` | int  | the Diag will be set to ERROR when the number of consecutive invalid trajectory exceeds this threshold. (For example, threshold = 1 means, even if the trajectory is invalid, the Diag will not be ERROR if the next trajectory is valid.) | true          |
-| `display_on_terminal`        | bool | show error msg on terminal                                                                                                                                                                                                                 | true          |
+| 名前 | タイプ | 説明 |
+| -------------------------- | ---------------------------------------- | -------------------------------------------------------------------- |
+| `~/output/validation_status` | control_validator/ControlValidatorStatus | 経路の有効性/無効性の理由を知らせるバリデーターの状態 |
+| `/diagnostics` | diagnostic_msgs/DiagnosticStatus | エラーを報告する診断 |
 
-### Algorithm parameters
+## パラメータ
 
-#### Thresholds
+以下のパラメータを `control_validator` に設定できます。
 
-The input trajectory is detected as invalid if the index exceeds the following thresholds.
+### システムパラメータ
 
-| Name                                | Type   | Description                                                                                                 | Default value |
-| :---------------------------------- | :----- | :---------------------------------------------------------------------------------------------------------- | :------------ |
-| `thresholds.max_distance_deviation` | double | invalid threshold of the max distance deviation between the predicted path and the reference trajectory [m] | 1.0           |
-| `thresholds.rolling_back_velocity`  | double | threshold velocity to valid the vehicle velocity [m/s]                                                      | 0.5           |
-| `thresholds.over_velocity_offset`   | double | threshold velocity offset to valid the vehicle velocity [m/s]                                               | 2.0           |
-| `thresholds.over_velocity_ratio`    | double | threshold ratio to valid the vehicle velocity [*]                                                           | 0.2           |
+| 名前                         | 型   | 説明                                                                                                                                                                                                                            | デフォルト値 |
+| :--------------------------- | :--- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------ |
+| `publish_diag`               | bool | trueの場合、診断msgが公開されます。                                                                                                                                                                                               | true          |
+| `diag_error_count_threshold` | int  | 連続して無効な軌跡の数がこのしきい値を超えた場合、diagはERRORに設定されます（例：しきい値= 1の場合、軌跡が無効であっても、次の軌跡が有効な場合はdiagはERRORになりません）。 | true          |
+| `display_on_terminal`        | bool | エラーメッセージをターミナルに表示します。                                                                                                                                                                                          | true          |
+
+### アルゴリズムパラメータ
+
+#### しきい値
+
+インデックスが以下のしきい値を超えた場合、入力軌跡は無効と検出されます。
+
+| 名称                                | タイプ   | 説明                                                                                                           | デフォルト値 |
+| :---------------------------------- | :----- | :--------------------------------------------------------------------------------------------------------- | :------------ |
+| `thresholds.max_distance_deviation` | double | 予測パスと基準軌道間の最大距離逸脱量の無効なしきい値 [m] | 1.0           |
+| `thresholds.rolling_back_velocity`  | double | 自車速度の有効性を検証するためのしきい値速度 [m/s]                                                          | 0.5           |
+| `thresholds.over_velocity_offset`   | double | 自車速度の有効性を検証するためのしきい値速度オフセット [m/s]                                             | 2.0           |
+| `thresholds.over_velocity_ratio`    | double | 自車速度の有効性を検証するためのしきい値速度比率 [*]                                                        | 0.2           |
+

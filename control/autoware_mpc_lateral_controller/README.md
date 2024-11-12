@@ -1,273 +1,418 @@
-# MPC Lateral Controller
+# MPC横方向コントローラ
 
-This is the design document for the lateral controller node
-in the `autoware_trajectory_follower_node` package.
+これは`autoware_trajectory_follower_node`パッケージ内の横方向コントローラのノードに関する設計文書です。
 
-## Purpose / Use cases
+## 目的 / ユースケース
 
-<!-- Required -->
-<!-- Things to consider:
-    - Why did we implement this feature? -->
+<!-- 必須 -->
+<!-- 考慮事項:
+    - なぜこの機能を実装したのか -->
 
-This node is used to general lateral control commands (steering angle and steering rate)
-when following a path.
+このノードは、パスに従っているときに横方向の制御コマンド（ステアリング角とステアリング速度）を作成するために使用されます。
 
-## Design
+## 設計
 
-<!-- Required -->
-<!-- Things to consider:
-    - How does it work? -->
+<!-- 必須 -->
+<!-- 考慮事項:
+    - どのように動作するのか -->
 
-The node uses an implementation of linear model predictive control (MPC) for accurate path tracking.
-The MPC uses a model of the vehicle to simulate the trajectory resulting from the control command.
-The optimization of the control command is formulated as a Quadratic Program (QP).
+このノードは、正確なパストラック用に線形モデル予測制御（MPC）の実装を使用しています。 MPCは車両モデルを使用して、制御コマンドから得られる軌道をシミュレーションします。制御コマンドの最適化は2次計画問題（QP）として定式化されます。
 
-Different vehicle models are implemented:
+さまざまな車両モデルが実装されています。
 
-- kinematics : bicycle kinematics model with steering 1st-order delay.
-- kinematics_no_delay : bicycle kinematics model without steering delay.
-- dynamics : bicycle dynamics model considering slip angle.
-  The kinematics model is being used by default. Please see the reference [1] for more details.
+- kinematics：ステアリング1次の遅れを持つ自転車運動学モデル。
+- kinematics_no_delay：ステアリング遅れのない自転車運動学モデル。
+- dynamics：スリップ角を考慮する自転車動力学モデル。
+運動学モデルがデフォルトで使用されています。詳細については、参照 [1]を参照してください。
 
-For the optimization, a Quadratic Programming (QP) solver is used and two options are currently implemented:
+最適化には2次計画問題（QP）ソルバーが使用され、現在2つのオプションが実装されています。
 
 <!-- cspell: ignore ADMM -->
 
-- unconstraint_fast : use least square method to solve unconstraint QP with eigen.
-- [osqp](https://osqp.org/): run the [following ADMM](https://web.stanford.edu/~boyd/papers/admm_distr_stats.html)
-  algorithm (for more details see the related papers at
-  the [Citing OSQP](https://web.stanford.edu/~boyd/papers/admm_distr_stats.html) section):
+- unconstraint_fast：eigenで拘束のないQPを解くために最小二乗法を使用します。
+- [osqp](https://osqp.org/)：次の[ADMM](https://web.stanford.edu/~boyd/papers/admm_distr_stats.html)アルゴリズムを実行します（詳細については、[OSQPの引用](https: //web.stanford.edu/~boyd/papers/admm_distr_stats.html)セクションを参照してください）。
 
-### Filtering
+### フィルタリング
 
-Filtering is required for good noise reduction.
-A [Butterworth filter](https://en.wikipedia.org/wiki/Butterworth_filter) is employed for processing the yaw and lateral errors, which are used as inputs for the MPC, as well as for refining the output steering angle.
-Other filtering methods can be considered as long as the noise reduction performances are good
-enough.
-The moving average filter for example is not suited and can yield worse results than without any
-filtering.
+適切なノイズ低減にはフィルタリングが必要です。
+バターワースフィルタを使用して、MPCの入力として使用されるヨーエラーと横方向エラーを処理し、出力ステアリング角を調整します。
+ノイズ低減性能が十分であれば、他のフィルタリング方法を検討できます。
+たとえば、移動平均フィルタは適しておらず、フィルタリングなしよりも悪い結果を生じる可能性があります。
 
-## Assumptions / Known limits
+## 想定 / 既知の制限
 
-<!-- Required -->
+<!-- 必須 -->
 
-The tracking is not accurate if the first point of the reference trajectory is at or in front of the current ego pose.
+リファレンストラジェクトの最初の点が現在の自車位置にあるか、その前方に位置している場合、追跡は正確ではありません。
 
-## Inputs / Outputs / API
+## 入力 / 出力 / API
 
-<!-- Required -->
-<!-- Things to consider:
-    - How do you use the package / API? -->
+- 入力:
+  - trajectory :リファレンストラジェクト（`autoware_api_msgs/Trajectory`）
+  - vehicle_state :現在の車両のステータス（`autoware_auto_msgs/VehicleState`）
+  - current_pose :自車位置（`geometry_msgs/PoseStamped`）
+  - prev_pose :前の自車位置（`geometry_msgs/PoseStamped`）
+  - planned_trajectory :計画された軌道（`autoware_msgs/PlannedTrajectory`）
 
-### Inputs
+- 出力:
+  - vehicle_control_cmd :車両制御コマンド（`autoware_auto_msgs/VehicleControlCommand`）
 
-Set the following from the [controller_node](../autoware_trajectory_follower_node/README.md)
+- API:
+  - 車両制御コマンドを取得するためのAPIはありません。
 
-- `autoware_planning_msgs/Trajectory` : reference trajectory to follow.
-- `nav_msgs/Odometry`: current odometry
-- `autoware_vehicle_msgs/SteeringReport`: current steering
+### 入力
 
-### Outputs
+次のものを [controller_node](../autoware_trajectory_follower_node/README.md) から設定します
 
-Return LateralOutput which contains the following to the controller node
+- `autoware_planning_msgs/Trajectory` : 追従する基準軌跡
+- `nav_msgs/Odometry`: 現在のオドメトリ
+- `autoware_vehicle_msgs/SteeringReport`: 現在のステア
+
+### 出力
+
+次の内容を含む LateralOutput を controller node に返します
 
 - `autoware_control_msgs/Lateral`
 - LateralSyncData
-  - steer angle convergence
+  - ステア角収束
 
-### MPC class
+### MPC クラス
 
-The `MPC` class (defined in `mpc.hpp`) provides the interface with the MPC algorithm.
-Once a vehicle model, a QP solver, and the reference trajectory to follow have been set
-(using `setVehicleModel()`, `setQPSolver()`, `setReferenceTrajectory()`), a lateral control command
-can be calculated by providing the current steer, velocity, and pose to function `calculateMPC()`.
+`MPC` クラス (`mpc.hpp` で定義) は、MPC アルゴリズムとのインターフェイスを提供します。
+車両モデル、QP ソルバー、および追従する基準軌跡が設定されると (`setVehicleModel()`, `setQPSolver()`, `setReferenceTrajectory()`)
+、現在のステア、速度、位相を `calculateMPC()` 関数に提供することで、横方向制御コマンドを計算できます。
 
-### Parameter description
+### パラメーターの説明
 
-The default parameters defined in `param/lateral_controller_defaults.param.yaml` are adjusted to the
-AutonomouStuff Lexus RX 450h for under 40 km/h driving.
+`param/lateral_controller_defaults.param.yaml` で定義された既定のパラメーターは、40km/h 未満の走行に対応するように自律走行用 Lexus RX 450h に調整されています。
 
-#### System
+#### システム
 
-| Name                      | Type    | Description                                                                 | Default value |
-| :------------------------ | :------ | :-------------------------------------------------------------------------- | :------------ |
-| traj_resample_dist        | double  | distance of waypoints in resampling [m]                                     | 0.1           |
-| use_steer_prediction      | boolean | flag for using steer prediction (do not use steer measurement)              | false         |
-| admissible_position_error | double  | stop vehicle when following position error is larger than this value [m]    | 5.0           |
-| admissible_yaw_error_rad  | double  | stop vehicle when following yaw angle error is larger than this value [rad] | 1.57          |
-| use_delayed_initial_state | boolean | flag to use x0_delayed as initial state for predicted trajectory            | true          |
+| 名前                      | タイプ    | 説明                                                                                 | デフォルト値 |
+| :------------------------ | :------ | :------------------------------------------------------------------------------------ | :------------ |
+| traj_resample_dist        | double  | 再サンプリングにおけるウェイポイント間の距離 [m]                                   | 0.1           |
+| use_steer_prediction      | boolean | ステアリング予測を使用するフラグ（ステアリング測定値は使用しない）                | false         |
+| admissible_position_error | double  | 追従位置誤差がこの値 [m] より大きい場合に車両を停止する                             | 5.0           |
+| admissible_yaw_error_rad  | double  | 追従ヨー角誤差がこの値 [rad] より大きい場合に車両を停止する                          | 1.57          |
+| use_delayed_initial_state | boolean | 予測軌道の初期状態として `x0_delayed` を使用するフラグ                             | true          |
 
-#### Path Smoothing
+#### パススムージング
 
-| Name                              | Type    | Description                                                                                                                                          | Default value |
+このモジュールでは、`post resampling`時に発生する経路の不連続性につながる目標経路の僅かな 'jerk' を排除します。この不連続性は、経路上の他の車両や障害物との衝突を避けるために必要です。
+
+トリガーは、自車位置の更新、経路の変更、経路の`post resampling`の更新です。
+
+#### レベル0の経路
+レベル0のレイヤーでは、Smoothed Path Providerによって、パスのスムージングによって生成された経路が提供されます。
+
+#### レベル1のPlanning
+レベル1のPlanningコンポーネントは、以下を行います。
+- スムーズな経路を`post resampling`に使用します。
+- スムーズな経路に基づいて、velocity 逸脱量とacceleration 逸脱量を計算します。
+- Velocity ControllerとAcceleration Controllerに逸脱量を通知します。
+
+| 名称                              | タイプ    | 説明                                                                                                                                          | デフォルト値 |
 | :-------------------------------- | :------ | :--------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_path_smoothing             | boolean | path smoothing flag. This should be true when uses path resampling to reduce resampling noise.                                                       | false         |
-| path_filter_moving_ave_num        | int     | number of data points moving average filter for path smoothing                                                                                       | 25            |
-| curvature_smoothing_num_traj      | int     | index distance of points used in curvature calculation for trajectory: p(i-num), p(i), p(i+num). larger num makes less noisy values.                 | 15            |
-| curvature_smoothing_num_ref_steer | int     | index distance of points used in curvature calculation for reference steering command: p(i-num), p(i), p(i+num). larger num makes less noisy values. | 15            |
+| path_smoothingを有効にする         | boolean | パスの平滑化フラグ。リサンプリングノイズを低減するためにパスリサンプリングを使用する場合は、`True`にします。                                  | `False`         |
+| path_filter_moving_ave_num        | int     | path smoothingのために移動平均フィルタのデータポイントの数                                                                                     | `25`            |
+| curvature_smoothing_num_traj      | int     | 軌道の曲率計算に使用される点のインデックス距離：p(i-num)、p(i)、p(i+num)。`num`が大きいほどノイズの少ない値になります。               | `15`            |
+| curvature_smoothing_num_ref_steer | int     | 参照ステアリングコマンドの曲率計算に使用される点のインデックス距離：p(i-num)、p(i)、p(i+num)。`num`が大きいほどノイズの少ない値になります。 | `15`            |
 
-#### Trajectory Extending
+#### 軌道予測
 
-| Name                                  | Type    | Description                                   | Default value |
-| :------------------------------------ | :------ | :-------------------------------------------- | :------------ |
-| extend_trajectory_for_end_yaw_control | boolean | trajectory extending flag for end yaw control | true          |
+### Planningコンポーネントの目的
 
-#### MPC Optimization
+Planningコンポーネントは、自車位置と目的地などの高レベルの目標に基づいて、最適な軌道生成を行い、それを経路プランに沿って実施する。
 
-| Name                                                | Type   | Description                                                                                                  | Default value |
-| :-------------------------------------------------- | :----- | :----------------------------------------------------------------------------------------------------------- | :------------ |
-| qp_solver_type                                      | string | QP solver option. described below in detail.                                                                 | "osqp"        |
-| mpc_prediction_horizon                              | int    | total prediction step for MPC                                                                                | 50            |
-| mpc_prediction_dt                                   | double | prediction period for one step [s]                                                                           | 0.1           |
-| mpc_weight_lat_error                                | double | weight for lateral error                                                                                     | 1.0           |
-| mpc_weight_heading_error                            | double | weight for heading error                                                                                     | 0.0           |
-| mpc_weight_heading_error_squared_vel                | double | weight for heading error \* velocity                                                                         | 0.3           |
-| mpc_weight_steering_input                           | double | weight for steering error (steer command - reference steer)                                                  | 1.0           |
-| mpc_weight_steering_input_squared_vel               | double | weight for steering error (steer command - reference steer) \* velocity                                      | 0.25          |
-| mpc_weight_lat_jerk                                 | double | weight for lateral jerk (steer(i) - steer(i-1)) \* velocity                                                  | 0.1           |
-| mpc_weight_steer_rate                               | double | weight for steering rate [rad/s]                                                                             | 0.0           |
-| mpc_weight_steer_acc                                | double | weight for derivatives of the steering rate [rad/ss]                                                         | 0.000001      |
-| mpc_low_curvature_weight_lat_error                  | double | [used in a low curvature trajectory] weight for lateral error                                                | 0.1           |
-| mpc_low_curvature_weight_heading_error              | double | [used in a low curvature trajectory] weight for heading error                                                | 0.0           |
-| mpc_low_curvature_weight_heading_error_squared_vel  | double | [used in a low curvature trajectory] weight for heading error \* velocity                                    | 0.3           |
-| mpc_low_curvature_weight_steering_input             | double | [used in a low curvature trajectory] weight for steering error (steer command - reference steer)             | 1.0           |
-| mpc_low_curvature_weight_steering_input_squared_vel | double | [used in a low curvature trajectory] weight for steering error (steer command - reference steer) \* velocity | 0.25          |
-| mpc_low_curvature_weight_lat_jerk                   | double | [used in a low curvature trajectory] weight for lateral jerk (steer(i) - steer(i-1)) \* velocity             | 0.0           |
-| mpc_low_curvature_weight_steer_rate                 | double | [used in a low curvature trajectory] weight for steering rate [rad/s]                                        | 0.0           |
-| mpc_low_curvature_weight_steer_acc                  | double | [used in a low curvature trajectory] weight for derivatives of the steering rate [rad/ss]                    | 0.000001      |
-| mpc_low_curvature_thresh_curvature                  | double | threshold of curvature to use "low_curvature" parameter                                                      | 0.0           |
-| mpc_weight_terminal_lat_error                       | double | terminal lateral error weight in matrix Q to improve mpc stability                                           | 1.0           |
-| mpc_weight_terminal_heading_error                   | double | terminal heading error weight in matrix Q to improve mpc stability                                           | 0.1           |
-| mpc_zero_ff_steer_deg                               | double | threshold that feed-forward angle becomes zero                                                               | 0.5           |
-| mpc_acceleration_limit                              | double | limit on the vehicle's acceleration                                                                          | 2.0           |
-| mpc_velocity_time_constant                          | double | time constant used for velocity smoothing                                                                    | 0.3           |
-| mpc_min_prediction_length                           | double | minimum prediction length                                                                                    | 5.0           |
+### 経路プランニング
 
-#### Vehicle Model
+#### 経路検索
 
-| Name                                 | Type     | Description                                                                        | Default value        |
-| :----------------------------------- | :------- | :--------------------------------------------------------------------------------- | :------------------- |
-| vehicle_model_type                   | string   | vehicle model type for mpc prediction                                              | "kinematics"         |
-| input_delay                          | double   | steering input delay time for delay compensation                                   | 0.24                 |
-| vehicle_model_steer_tau              | double   | steering dynamics time constant (1d approximation) [s]                             | 0.3                  |
-| steer_rate_lim_dps_list_by_curvature | [double] | steering angle rate limit list depending on curvature [deg/s]                      | [40.0, 50.0, 60.0]   |
-| curvature_list_for_steer_rate_lim    | [double] | curvature list for steering angle rate limit interpolation in ascending order [/m] | [0.001, 0.002, 0.01] |
-| steer_rate_lim_dps_list_by_velocity  | [double] | steering angle rate limit list depending on velocity [deg/s]                       | [60.0, 50.0, 40.0]   |
-| velocity_list_for_steer_rate_lim     | [double] | velocity list for steering angle rate limit interpolation in ascending order [m/s] | [10.0, 15.0, 20.0]   |
-| acceleration_limit                   | double   | acceleration limit for trajectory velocity modification [m/ss]                     | 2.0                  |
-| velocity_time_constant               | double   | velocity dynamics time constant for trajectory velocity modification [s]           | 0.3                  |
+経路検索は、始点と終点の間の経路を計算するプロセスです。経路検索アルゴリズムには、Dijkstraアルゴリズム、A*アルゴリズム、Floyd-Warshallアルゴリズムなどがあります。
 
-#### Lowpass Filter for Noise Reduction
+##### コスト関数
 
-| Name                      | Type   | Description                                                         | Default value |
-| :------------------------ | :----- | :------------------------------------------------------------------ | :------------ |
-| steering_lpf_cutoff_hz    | double | cutoff frequency of lowpass filter for steering output command [hz] | 3.0           |
-| error_deriv_lpf_cutoff_hz | double | cutoff frequency of lowpass filter for error derivative [Hz]        | 5.0           |
+経路検索アルゴリズムは、ノード間のコストに基づいて経路を生成します。コスト関数は、距離、時間、エネルギー消費など、さまざまなファクターを考慮できます。
 
-#### Stop State
+#### 経路フィッティング
 
-| Name                                         | Type    | Description                                                                                     | Default value |
-| :------------------------------------------- | :------ | :---------------------------------------------------------------------------------------------- | :------------ |
-| stop_state_entry_ego_speed <sup>\*1</sup>    | double  | threshold value of the ego vehicle speed used to the stop state entry condition                 | 0.001         |
-| stop_state_entry_target_speed <sup>\*1</sup> | double  | threshold value of the target speed used to the stop state entry condition                      | 0.001         |
-| converged_steer_rad                          | double  | threshold value of the steer convergence                                                        | 0.1           |
-| keep_steer_control_until_converged           | boolean | keep steer control until steer is converged                                                     | true          |
-| new_traj_duration_time                       | double  | threshold value of the time to be considered as new trajectory                                  | 1.0           |
-| new_traj_end_dist                            | double  | threshold value of the distance between trajectory ends to be considered as new trajectory      | 0.3           |
-| mpc_converged_threshold_rps                  | double  | threshold value to be sure output of the optimization is converged, it is used in stopped state | 0.01          |
+経路フィッティングは、経路検索結果を滑らかな経路に変換するプロセスです。経路フィッティングアルゴリズムには、三次スプライン、NURBS、ベジェ曲線などがあります。
 
-(\*1) To prevent unnecessary steering movement, the steering command is fixed to the previous value in the stop state.
+### 軌道生成
+
+#### 軌道生成のフェーズ
+
+軌道生成には、次の3つのフェーズがあります。
+
+1. **計画**：経路プランと自車位置に基づいて、軌道を生成します。
+2. **実行**：軌道を追従し、自車を制御します。
+3. **再計画**：必要に応じて軌道プランを更新します。
+
+#### 軌道生成アルゴリズム
+
+軌道生成アルゴリズムには、以下のようなものがあります。
+
+* **レファレンストラジャクトリ追従**：レファレンストラジャクトリを生成し、自車をそれに追従させます。
+* **最適制御**：最適化手法を使用して、コスト関数を最小化する軌道生成します。
+* **機械学習**：機械学習モデルを使用して、軌道を予測します。
+
+### 経路プランの実行
+
+#### 経路プラン追従
+
+経路プラン追従は、自車を経路プランに沿って制御するプロセスです。経路プラン追従コントローラーには、以下のようなものがあります。
+
+* **制約性モデル予測制御（MPC）**：制約を考慮して自車を制御します。
+* **占有空間パス計画（OCPP）**：障害物を避けながら自車を制御します。
+
+#### 軌道追従
+
+軌道追従は、自車を軌道に沿って制御するプロセスです。軌道追従コントローラーには、以下のようなものがあります。
+
+* **PIDコントローラー**：誤差を最小化するフィードバック制御を行います。
+* **カルマンフィルター**：雑音を推定してより正確な制御を実現します。
+
+### 安全性評価
+
+#### 運動学的検証
+
+運動学的検証は、軌道が物理的に実行可能であることを確認するプロセスです。運動学的検証では、以下の要素を考慮します。
+
+* **速度逸脱量**
+* **加速度逸脱量**
+* **ジャーク逸脱量**
+
+#### 動力学的検証
+
+動力学的検証は、軌道が車両の動力学を考慮して実行可能であることを確認するプロセスです。動力学的検証では、以下の要素を考慮します。
+
+* **タイヤの滑り**
+* **車両の安定性**
+* **サスペンションの影響**
+
+#### 障害物検出
+
+障害物検出は、軌道上の障害物を検出するプロセスです。障害物検出には、以下の方法があります。
+
+* **センサーデータ（LiDAR、カメラ、レーダーなど）**
+* **地図データ**
+* **'post resampling'（前回のサンプルからの差分）**による検出
+
+| 名称                               | 種類 | 説明                                                           | デフォルト値 |
+| :---------------------------------- | :------ | :----------------------------------------------------------- | :------------ |
+| extend_trajectory_for_end_yaw_control | boolean | end yaw 制御のための軌道の延伸フラグ                           | true          |
+
+#### MPC最適化
+
+| 名前                                               | タイプ   | 説明                                                                                                                                                    | デフォルト値 |
+| :-------------------------------------------------- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| qp_solver_type                                      | 文字列 | QPソルバーオプション。以下で詳細に説明します。                                                                                                                               | "osqp"        |
+| mpc_prediction_horizon                              | 整数    | MPCのステップごとの合計予測                                                                                                                                         | 50            |
+| mpc_prediction_dt                                   | float   | 1ステップあたりの予測時間[単位：秒]                                                                                                                               | 0.1           |
+| mpc_weight_lat_error                                | float   | 横方向の逸脱量の重み                                                                                                                                           | 1.0           |
+| mpc_weight_heading_error                            | float   | ヘディングの逸脱量の重み                                                                                                                                           | 0.0           |
+| mpc_weight_heading_error_squared_vel                | float   | ヘディングの逸脱量 * 速度の重み                                                                                                                                   | 0.3           |
+| mpc_weight_steering_input                           | float   | ステアリングの逸脱量の重み（ステアリングコマンド - 参照ステアリング）                                                                                                 | 1.0           |
+| mpc_weight_steering_input_squared_vel               | float   | ステアリングの逸脱量の重み（ステアリングコマンド - 参照ステアリング） * 速度                                                                                        | 0.25          |
+| mpc_weight_lat_jerk                                 | float   | 横方向のジャーク（steer(i) - steer(i-1)) * 速度 の重み                                                                                                                 | 0.1           |
+| mpc_weight_steer_rate                               | float   | ステアリング速度の重み[単位：rad/s]                                                                                                                              | 0.0           |
+| mpc_weight_steer_acc                                | float   | ステアリング速度の微分の重み[rad/ss]                                                                                                                             | 0.000001      |
+| mpc_low_curvature_weight_lat_error                  | float   | [低曲率軌道で使用] 横方向の逸脱量の重み                                                                                                                               | 0.1           |
+| mpc_low_curvature_weight_heading_error              | float   | [低曲率軌道で使用] ヘディングの逸脱量の重み                                                                                                                             | 0.0           |
+| mpc_low_curvature_weight_heading_error_squared_vel  | float   | [低曲率軌道で使用] ヘディングの逸脱量 * 速度の重み                                                                                                                     | 0.3           |
+| mpc_low_curvature_weight_steering_input             | float   | [低曲率軌道で使用] ステアリングの逸脱量の重み（ステアリングコマンド - 参照ステアリング）                                                                                      | 1.0           |
+| mpc_low_curvature_weight_steering_input_squared_vel | float   | [低曲率軌道で使用] ステアリングの逸脱量の重み（ステアリングコマンド - 参照ステアリング） * 速度                                                                            | 0.25          |
+| mpc_low_curvature_weight_lat_jerk                   | float   | [低曲率軌道で使用] 横方向のジャーク（steer(i) - steer(i-1)) * 速度 の重み                                                                                                         | 0.0           |
+| mpc_low_curvature_weight_steer_rate                 | float   | [低曲率軌道で使用] ステアリング速度の重み[単位：rad/s]                                                                                                                    | 0.0           |
+| mpc_low_curvature_weight_steer_acc                  | float   | [低曲率軌道で使用] ステアリング速度の微分の重み[rad/ss]                                                                                                                | 0.000001      |
+| mpc_low_curvature_thresh_curvature                  | float   | "low_curvature"パラメータを使用するための曲率のしきい値                                                                                                               | 0.0           |
+| mpc_weight_terminal_lat_error                       | float   | mpcの安定性を向上させるための行列Qの最終横方向の逸脱量の重み                                                                                                          | 1.0           |
+| mpc_weight_terminal_heading_error                   | float   | mpcの安定性を向上させるための行列Qの最終ヘディングの逸脱量の重み                                                                                                        | 0.1           |
+| mpc_zero_ff_steer_deg                               | float   | フィードフォワード角度がゼロになるしきい値                                                                                                                               | 0.5           |
+| mpc_acceleration_limit                              | float   | 車両加速度の制限                                                                                                                                                   | 2.0           |
+| mpc_velocity_time_constant                          | float   | 速度スムージングに使用される時定数                                                                                                                                     | 0.3           |
+| mpc_min_prediction_length                           | float   | 最小予測の長さ                                                                                                                                                   | 5.0           |
+
+#### 車両モデル
+
+| 名称 | 種別 | 説明 | デフォルト値 |
+|---|---|---|---|
+| vehicle_model_type | 文字列 | mpc予測のための車両モデルの種別 | "kinematics" |
+| input_delay | 倍精度 | 遅延補正のためのステアリング入力遅延時間 | 0.24 |
+| vehicle_model_steer_tau | 倍精度 | ステアリングの動特性時間定数 (1d近似) [秒] | 0.3 |
+| steer_rate_lim_dps_list_by_curvature | 倍精度配列 | 曲率に応じて制限されるステアリング角速度の制限値のリスト [deg/s] | [40.0, 50.0, 60.0] |
+| curvature_list_for_steer_rate_lim | 倍精度配列 | アセンディング順の曲率のリストにより、ステアリング角速度の制限値の補間が決定される [/m] | [0.001, 0.002, 0.01] |
+| steer_rate_lim_dps_list_by_velocity | 倍精度配列 | 速度に応じて制限されるステアリング角速度の制限値のリスト [deg/s] | [60.0, 50.0, 40.0] |
+| velocity_list_for_steer_rate_lim | 倍精度配列 | アセンディング順の速度のリストにより、ステアリング角速度の制限値の補間が決定される [m/s] | [10.0, 15.0, 20.0] |
+| acceleration_limit | 倍精度 | 軌道速度の変更のための加速度の制限 [m/ss] | 2.0 |
+| velocity_time_constant | 倍精度 | 軌道速度の変更のための速度の動特性時間定数 [s] | 0.3 |
+
+#### ノイズリダクションのローパスフィルタ
+
+| 名前                      | タイプ   | 説明                                                                           | デフォルト値 |
+| :------------------------ | :----- | :------------------------------------------------------------------------------ | :------------ |
+| steering_lpf_cutoff_hz    | double | ステアリング出力コマンドに対するローパスフィルタのカットオフ周波数 [hz] | 3.0           |
+| error_deriv_lpf_cutoff_hz | double | エラー微分にローパスフィルタを適用する際のカットオフ周波数 [Hz]          | 5.0           |
+
+#### 停止状態
+
+| 名前                                       | タイプ  | 説明                                                                                    | デフォルト値 |
+| :--------------------------------------- | :------ | :------------------------------------------------------------------------------------------- | :----------: |
+| stop_state_entry_ego_speed <sup>\*1</sup>    | double  | 停止状態への移行条件に使用される自車速度のしきい値                                      | 0.001         |
+| stop_state_entry_target_speed <sup>\*1</sup> | double  | 停止状態への移行条件に使用される目標速度のしきい値                                       | 0.001         |
+| converged_steer_rad                         | double  | 操舵の収束に使用されるしきい値                                                          | 0.1           |
+| keep_steer_control_until_converged | boolean | 操舵が収束するまで操舵制御を維持する                                                   | true          |
+| new_traj_duration_time                    | double  | 新しい経路と見なされる時間のしきい値                                                      | 1.0           |
+| new_traj_end_dist                         | double  | 新しい経路と見なされる軌道終端間の距離のしきい値                                       | 0.3           |
+| mpc_converged_threshold_rps               | double  | 最適化の出力が収束したと判断するためのしきい値、停止状態で使用される                | 0.01          |
+
+(\*1) 不要なステアリング操作を防止するため、ステアリングコマンドは停止状態では前の値に固定されます。
 
 #### Steer Offset
 
-Defined in the `steering_offset` namespace. This logic is designed as simple as possible, with minimum design parameters.
+`steering_offset` 名前空間で定義します。このロジックは、最小設計パラメータで可能な限りシンプルに設計されています。
 
-| Name                                | Type    | Description                                                                                      | Default value |
-| :---------------------------------- | :------ | :----------------------------------------------------------------------------------------------- | :------------ |
-| enable_auto_steering_offset_removal | boolean | Estimate the steering offset and apply compensation                                              | true          |
-| update_vel_threshold                | double  | If the velocity is smaller than this value, the data is not used for the offset estimation       | 5.56          |
-| update_steer_threshold              | double  | If the steering angle is larger than this value, the data is not used for the offset estimation. | 0.035         |
-| average_num                         | int     | The average of this number of data is used as a steering offset.                                 | 1000          |
-| steering_offset_limit               | double  | The angle limit to be applied to the offset compensation.                                        | 0.02          |
+| 名前                                  | 種類 | 説明                                                                                                              | デフォルト値 |
+| :-------------------------------------- | :------ | :--------------------------------------------------------------------------------------------------------------- | :------------ |
+| enable_auto_steering_offset_removal | boolean | ステアリングオフセットを推定して補正を適用する                                                                   | true          |
+| update_vel_threshold                | double  | 速度がこの値より小さい場合、データはオフセット推定に使用されない                                                | 5.56          |
+| update_steer_threshold              | double  | ステアリング角度がこの値より大きい場合、データはオフセット推定に使用されない                                  | 0.035         |
+| average_num                         | int     | この数字の平均がステアリングオフセットとして使用される                                                        | 1000          |
+| steering_offset_limit               | double  | オフセット補正に適用する角度制限                                                                                | 0.02          |
 
-##### For dynamics model (WIP)
+##### 力学モデル（WIP）
 
-| Name          | Type   | Description                                 | Default value |
-| :------------ | :----- | :------------------------------------------ | :------------ |
-| cg_to_front_m | double | distance from baselink to the front axle[m] | 1.228         |
-| cg_to_rear_m  | double | distance from baselink to the rear axle [m] | 1.5618        |
-| mass_fl       | double | mass applied to front left tire [kg]        | 600           |
-| mass_fr       | double | mass applied to front right tire [kg]       | 600           |
-| mass_rl       | double | mass applied to rear left tire [kg]         | 600           |
-| mass_rr       | double | mass applied to rear right tire [kg]        | 600           |
-| cf            | double | front cornering power [N/rad]               | 155494.663    |
-| cr            | double | rear cornering power [N/rad]                | 155494.663    |
+| 名称                        | 種類 | 説明                                                                 | デフォルト値 |
+| :--------------------------- | :------ | :-------------------------------------------------------------------| :------------ |
+| `cg_to_front_m`              | double | ベースリンクからフロントアクスルまでの距離 　　　　　　　　　　　　| 1.228        |
+| `cg_to_rear_m`                | double | ベースリンクからリアアクスルまでの距離 　　　　　　　　　　　　　| 1.5618       |
+| `mass_fl`                    | double | フロント左タイヤに加わる質量 　　　　　　　　　　　　　　　　　　　　| 600          |
+| `mass_fr`                    | double | フロント右タイヤに加わる質量 　　　　　　　　　　　　　　　　　　　　| 600          |
+| `mass_rl`                    | double | リア左タイヤに加わる質量 　　　　　　　　　　　　　　　　　　　　| 600          |
+| `mass_rr`                    | double | リア右タイヤに加わる質量 　　　　　　　　　　　　　　　　　　　　| 600          |
+| `cf`                         | double | フロントコーナリングパワー 　　　　　　　　　　　　　　　　　　　　| 155494.663   |
+| `cr`                         | double | リアコーナリングパワー 　　　　　　　　　　　　　　　　　　　　| 155494.663   |
 
-#### Debug
+#### デバッグ
 
-| Name                       | Type    | Description                                                                       | Default value |
+| 名前                       | 種類   | 説明                                                                                                      | デフォルト値 |
 | :------------------------- | :------ | :-------------------------------------------------------------------------------- | :------------ |
-| publish_debug_trajectories | boolean | publish predicted trajectory and resampled reference trajectory for debug purpose | true          |
+| publish_debug_trajectories | ブール | デバッグ目的で予測軌跡と再サンプリングされた基準軌跡を公開                                     | true          |
 
-### How to tune MPC parameters
+### MPCパラメータのチューニング方法
 
-#### Set kinematics information
+#### 運動特性情報の設定
 
-First, it's important to set the appropriate parameters for vehicle kinematics. This includes parameters like `wheelbase`, which represents the distance between the front and rear wheels, and `max_steering_angle`, which indicates the maximum tire steering angle. These parameters should be set in the `vehicle_info.param.yaml`.
+最初に、車両の運動特性に適したパラメータを設定することが重要です。これらには、前輪と後輪の間の距離を表す`wheelbase`や、タイヤの最大操舵角を示す`max_steering_angle`などのパラメータが含まれます。これらのパラメータは`vehicle_info.param.yaml`に設定する必要があります。
 
-#### Set dynamics information
+#### 動力特性情報の設定
 
-Next, you need to set the proper parameters for the dynamics model. These include the time constant `steering_tau` and time delay `steering_delay` for steering dynamics, and the maximum acceleration `mpc_acceleration_limit` and the time constant `mpc_velocity_time_constant` for velocity dynamics.
+次に、ダイナミクスモデルに適したパラメータを設定する必要があります。これらには、ステアリングダイナミクスに対する時定数`steering_tau`と時間遅れ`steering_delay`、速度ダイナミクスに対する最大加速度`mpc_acceleration_limit`と時定数`mpc_velocity_time_constant`などが含まれます。
 
-#### Confirmation of the input information
+#### 入力情報の確認
 
-It's also important to make sure the input information is accurate. Information such as the velocity of the center of the rear wheel [m/s] and the steering angle of the tire [rad] is required. Please note that there have been frequent reports of performance degradation due to errors in input information. For instance, there are cases where the velocity of the vehicle is offset due to an unexpected difference in tire radius, or the tire angle cannot be accurately measured due to a deviation in the steering gear ratio or midpoint. It is suggested to compare information from multiple sensors (e.g., integrated vehicle speed and GNSS position, steering angle and IMU angular velocity), and ensure the input information for MPC is appropriate.
+入力情報が正確であることを確認することも重要です。後輪の中心の速度[m/s]やタイヤの操舵角[rad]などの情報が必要です。入力情報の誤りによりパフォーマンスが低下するという報告が頻繁にあります。たとえば、予期しないタイヤ半径の差のために車両の速度がオフセットされる場合や、ステアリングギア比またはミッドポイントの偏差によりタイヤ角度を正確に測定できない場合があります。複数のセンサーからの情報を比較し（例：統合された車両速度とGNSS位置、ステアリング角とIMU角速度）、MPCの入力情報が適切であることを確認することをお勧めします。
 
-#### MPC weight tuning
+#### MPC重みのチューニング
 
-Then, tune the weights of the MPC. One simple approach of tuning is to keep the weight for the lateral deviation (`weight_lat_error`) constant, and vary the input weight (`weight_steering_input`) while observing the trade-off between steering oscillation and control accuracy.
+次に、MPCの重みをチューニングします。チューニングの簡単なアプローチとしては、横方向偏差の重み（`weight_lat_error`）を一定に保ち、ステアリングオシレーションと制御精度のトレードオフを観察しながら入力重み（`weight_steering_input`）を変化させることです。
 
-Here, `weight_lat_error` acts to suppress the lateral error in path following, while `weight_steering_input` works to adjust the steering angle to a standard value determined by the path's curvature. When `weight_lat_error` is large, the steering moves significantly to improve accuracy, which can cause oscillations. On the other hand, when `weight_steering_input` is large, the steering doesn't respond much to tracking errors, providing stable driving but potentially reducing tracking accuracy.
+ここで、`weight_lat_error`はパス追従における横方向誤差を抑えるのに対し、`weight_steering_input`はステアリング角をパスの曲率によって決まる標準値に調整するために働きます。`weight_lat_error`が大きいと、精度を高めるためにステアリングが大きく動き、オシレーションが発生する可能性があります。逆に、`weight_steering_input`が大きいと、ステアリングは追従誤差に対してあまり反応せず、安定した走行になりますが、追従精度が低下する可能性があります。
 
-The steps are as follows:
+手順は次のとおりです。
 
-1. Set `weight_lat_error` = 0.1, `weight_steering_input` = 1.0 and other weights to 0.
-2. If the vehicle oscillates when driving, set `weight_steering_input` larger.
-3. If the tracking accuracy is low, set `weight_steering_input` smaller.
+1. `weight_lat_error` = 0.1、`weight_steering_input` = 1.0、その他の重み = 0に設定します。
+2. 走行時に車両がオシレーションする場合は、`weight_steering_input`を大きくします。
+3. 追従精度が低い場合は、`weight_steering_input`を小さくします。
 
-If you want to adjust the effect only in the high-speed range, you can use `weight_steering_input_squared_vel`. This parameter corresponds to the steering weight in the high-speed range.
+高速レンジでのみ効果を調整したい場合は、`weight_steering_input_squared_vel`を使用できます。このパラメータは、高速レンジでのステアリング重みに対応します。
 
-#### Descriptions for weights
+#### 重みについての説明
 
-- `weight_lat_error`: Reduce lateral tracking error. This acts like P gain in PID.
-- `weight_heading_error`: Make a drive straight. This acts like D gain in PID.
-- `weight_heading_error_squared_vel_coeff` : Make a drive straight in high speed range.
-- `weight_steering_input`: Reduce oscillation of tracking.
-- `weight_steering_input_squared_vel_coeff`: Reduce oscillation of tracking in high speed range.
-- `weight_lat_jerk`: Reduce lateral jerk.
-- `weight_terminal_lat_error`: Preferable to set a higher value than normal lateral weight `weight_lat_error` for stability.
-- `weight_terminal_heading_error`: Preferable to set a higher value than normal heading weight `weight_heading_error` for stability.
+- `weight_lat_error`：横方向追従誤差を減らします。これはPIDのPゲインのように動作します。
+- `weight_heading_error`：直進します。これはPIDのDゲインのように動作します。
+- `weight_heading_error_squared_vel_coeff`：高速レンジで直進します。
+- `weight_steering_input`：追従のオシレーションを減らします。
+- `weight_steering_input_squared_vel_coeff`：高速レンジでの追従のオシレーションを減らします。
+- `weight_lat_jerk`：横方向ジャークを減らします。
+- `weight_terminal_lat_error`：安定性のために通常の横方向の重み`weight_lat_error`よりも高い値を設定することを推奨します。
+- `weight_terminal_heading_error`：安定性のために通常のヘディングの重み`weight_heading_error`よりも高い値を設定することを推奨します。
 
-#### Other tips for tuning
+#### その他のチューニングのヒント
 
-Here are some tips for adjusting other parameters:
+他のパラメータを調整するためのヒントを以下に示します。
 
-- In theory, increasing terminal weights, `weight_terminal_lat_error` and `weight_terminal_heading_error`, can enhance the tracking stability. This method sometimes proves effective.
-- A larger `prediction_horizon` and a smaller `prediction_sampling_time` are efficient for tracking performance. However, these come at the cost of higher computational costs.
-- If you want to modify the weight according to the trajectory curvature (for instance, when you're driving on a sharp curve and want a larger weight), use `mpc_low_curvature_thresh_curvature` and adjust `mpc_low_curvature_weight_**` weights.
-- If you want to adjust the steering rate limit based on the vehicle speed and trajectory curvature, you can modify the values of `steer_rate_lim_dps_list_by_curvature`, `curvature_list_for_steer_rate_lim`, `steer_rate_lim_dps_list_by_velocity`, `velocity_list_for_steer_rate_lim`. By doing this, you can enforce the steering rate limit during high-speed driving or relax it while curving.
-- In case your target curvature appears jagged, adjusting `curvature_smoothing` becomes critically important for accurate curvature calculations. A larger value yields a smooth curvature calculation which reduces noise but can cause delay in feedforward computation and potentially degrade performance.
-- Adjusting the `steering_lpf_cutoff_hz` value can also be effective to forcefully reduce computational noise. This refers to the cutoff frequency in the second order Butterworth filter installed in the final layer. The smaller the cutoff frequency, the stronger the noise reduction, but it also induce operation delay.
-- If the vehicle consistently deviates laterally from the trajectory, it's most often due to the offset of the steering sensor or self-position estimation. It's preferable to eliminate these biases before inputting into MPC, but it's also possible to remove this bias within MPC. To utilize this, set `enable_auto_steering_offset_removal` to true and activate the steering offset remover. The steering offset estimation logic works when driving at high speeds with the steering close to the center, applying offset removal.
-- If the onset of steering in curves is late, it's often due to incorrect delay time and time constant in the steering model. Please recheck the values of `input_delay` and `vehicle_model_steer_tau`. Additionally, as a part of its debug information, MPC outputs the current steering angle assumed by the MPC model, so please check if that steering angle matches the actual one.
+- 理論的には、ターミナル重み`weight_terminal_lat_error`と`weight_terminal_heading_error`を大きくすると、追従安定性が向上します。この手法は効果的な場合があります。
+- `prediction_horizon`を大きくし、`prediction_sampling_time`を小さくすると、追従性能が向上します。ただし、計算コストが高くなります。
+- trajectoryの曲率に応じて重みを変えたい場合（たとえば、急曲線で走行していて大きな重みが必要な場合）、`mpc_low_curvature_thresh_curvature`を使用して`mpc_low_curvature_weight_**`重みを調整します。
+- 車両速度と軌跡曲率に基づいてステアリングレート制限を調整したい場合は、`steer_rate_lim_dps_list_by_curvature`、`curvature_list_for_steer_rate_lim`、`steer_rate_lim_dps_list_by_velocity`、`velocity_list_for_steer_rate_lim`の値を変更できます。これにより、高速走行中はステアリングレート制限を強制したり、曲線中は緩めたりできます。
+- ターゲット曲率がギザギザに見える場合は、`curvature_smoothing`を調整することが、曲率の正確な計算に非常に重要になります。値が大きいほど曲率の計算が滑らかになり、ノイズが減りますが、フィードフォワード計算の遅延が発生し、性能が低下する可能性があります。
+- `steering_lpf_cutoff_hz`の値を調整することも、計算ノイズを強制的に減らすのに効果的です。これは最後のレイヤーにインストールされた2次バターワースフィルターのカットオフ周波数を指します。カットオフ周波数が低いほどノイズの低減が大きくなりますが、動作に遅延が発生します。
+- 車両が軌道から横方向に一貫して逸脱する場合は、ほとんどの場合、ステアリングセンサーのオフセットまたは自車位置推定のオフセットが原因です。これらバイアスをMPCに入力する前に排除することを推奨しますが、MPC内でこのバイアスを削除することもできます。これを使用するには、`enable_auto_steering_offset_removal`をtrueに設定してステアリングオフセット除去器を有効にします。ステアリングオフセット推定ロジックは、ステアリングが中心付近で高速走行しているときに機能し、オフセット除去を適用します。
+- 曲線でのステアリングの開始が遅れる場合は、ステアリングモデルの遅延時間と時定数が正しくないことがよくあります。`input_delay`と`vehicle_model_steer_tau`の値を再確認してください。さらに、MPCはデバッグ情報の一部としてMPCモデルによって想定される現在のステアリング角を出力するため、そのステアリング角が実際のステアリング角と一致しているかどうかを確認してください。
 
-## References / External links
+## 参照/外部リンク
 
-<!-- Optional -->
+<!-- オプション -->
 
 - [1] Jarrod M. Snider, "Automatic Steering Methods for Autonomous Automobile Path Tracking",
   Robotics Institute, Carnegie Mellon University, February 2009.
 
-## Related issues
+## 自動運転ソフトウェアに関するドキュメント
 
-<!-- Required -->
+### Planningコンポーネントの概要
+
+Planningコンポーネントは、自動運転システムの主要な機能の1つであり、システムが安全で効率的な経路を計画するために必要です。
+
+### Planningコンポーネントの動作
+
+Planningコンポーネントは、以下のタスクを実行します。
+
+- 自車位置の Estimation
+- 環境の検出とマッピング
+- 感知された障害物の追跡
+- 安全で快適な経路の生成
+- 各制御器への経路の伝送
+
+### Planningコンポーネントの構成
+
+Autoware Planningコンポーネントは、以下のようなモジュールで構成されています。
+
+- **WaypointGenerator:** Waypointを生成し、経路を形成します。
+- **TrajectoryGenerator:** Waypointに基づいて、滑らかな経路を生成します。
+- **MotionPredictor:** 障害物の将来の動きを予測します。
+- **CollisionChecker:** 生成された経路が環境の障害物と衝突しないことを確認します。
+
+### Planningコンポーネントの入力
+
+Planningコンポーネントは、以下の情報を入力として受け取ります。
+
+- 自車位置の Estimation
+- 感知された障害物のリスト
+- 環境マップ
+- 車両の動力学モデル
+
+### Planningコンポーネントの出力
+
+Planningコンポーネントは、以下の情報を出力として生成します。
+
+- **Target Path:** 自動運転車が追従する経路
+- **Target Velocity:** 経路上の各点での希望速度
+- **Target Acceleration:** 経路上の各点での希望加速度
+
+### Planningコンポーネントの性能要件
+
+Planningコンポーネントは、以下のような性能要件を満たす必要があります。
+
+- **安全性:** Planningコンポーネントは、車両が安全に操作されるように経路を計画する必要があります。
+- **効率性:** Planningコンポーネントは、計算効率が高く、リアルタイムで動作する必要があります。
+- ** robustness:** Planningコンポーネントは、不完全な情報や予測不可能なイベントに対しても堅牢である必要があります。
+
+### Planningコンポーネントの検証
+
+Planningコンポーネントは、シミュレーションと実車テストの両方によって検証する必要があります。検証には以下が含まれます。
+
+- **path planning**の正確性
+- **Trajectory planning**の滑らかさと効率性
+- **Collision avoidance**の有効性
+

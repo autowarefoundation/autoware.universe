@@ -1,11 +1,12 @@
 # tier4_system_rviz_plugin
 
-## Purpose
+## 目的
 
-This plugin display the Hazard information from Autoware; and output notices when emergencies are from initial localization and route setting.
+このプラグインはAutowareから収集した障害情報を表示します。また、当初位置決めや経路設定時に緊急事態が発生した場合は通知を出力します。
 
-## Input
+## 入力
 
-| Name                              | Type                                             | Description                                                  |
+| 名前                              | タイプ                                             | 説明                                                  |
 | --------------------------------- | ------------------------------------------------ | ------------------------------------------------------------ |
-| `/system/emergency/hazard_status` | `autoware_system_msgs::msg::HazardStatusStamped` | The topic represents the emergency information from Autoware |
+| `/system/emergency/hazard_status` | `autoware_system_msgs::msg::HazardStatusStamped` | このトピックは Autoware からの緊急情報を表します |
+

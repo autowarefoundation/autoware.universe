@@ -1,98 +1,187 @@
 # Path Sampler
 
-## Purpose
+## 目的
 
-This package implements a node that uses sampling based planning to generate a drivable trajectory.
+このパッケージは、サンプリングベースのPlaningを使用して、走行可能な軌跡を作成するノードを実装します。
 
-## Feature
+## 機能
 
-This package is able to:
+このパッケージを使用すると、次のことができます。
 
-- make the trajectory smooth;
-- keep the trajectory inside the drivable area;
-- avoid static obstacles;
-- stop if no valid trajectory can be generated.
+- 軌跡をスムーズにする
+- 軌跡を走行可能領域内に保持する
+- 静的障害物を回避する
+- 有効な軌跡を生成できない場合に停止する
 
-Note that the velocity is just taken over from the input path.
+速度は入力パスから取得されることに注意してください。
 
-## Inputs / Outputs
+## 入出力
 
-### input
+### 入力
 
-| Name               | Type                                          | Description                                        |
+| 名前               | タイプ                                          | 説明                                        |
 | ------------------ | --------------------------------------------- | -------------------------------------------------- |
-| `~/input/path`     | autoware_planning_msgs/msg/Path               | Reference path and the corresponding drivable area |
-| `~/input/odometry` | nav_msgs/msg/Odometry                         | Current state of the ego vehicle                   |
-| `~/input/objects`  | autoware_perception_msgs/msg/PredictedObjects | objects to avoid                                   |
+| `~/input/path`     | autoware_planning_msgs/msg/Path               | 基準経路と対応する走行可能領域 |
+| `~/input/odometry` | nav_msgs/msg/Odometry                         | 自車位置の現在の状態                   |
+| `~/input/objects`  | autoware_perception_msgs/msg/PredictedObjects | 回避すべきオブジェクト                           |
 
-### output
+### 自動運転ソフトウェアのドキュメント
 
-| Name                  | Type                                  | Description                                                       |
+#### Planning コンポーネント
+
+Planning コンポーネントは、センシングと知覚から得られた環境情報を使用して、車両の経路を計画しています。 Planning モジュールは、以下のタスクを実行します。
+
+* 自車位置の確立
+* 障害物の検出と分類
+* 目的地の決定
+* 経路の計画
+* 経路の追跡
+
+Planning コンポーネントは、センサーからのリアルタイムデータを処理して、車両の周囲を正確に把握しています。この情報は、衝突回避や効率的なルートプランニングのために使用されています。
+
+#### Motion Planning モジュール
+
+Motion Planning モジュールは、Planning コンポーネントが生成した経路に基づいて、車両の動きを制御しています。 Motion Planning モジュールは、以下のタスクを実行します。
+
+* 車両の運動学モデルの確立
+* 経路追従の生成
+* 経路追従エラーの最小化
+* 障害物回避の計画
+
+Motion Planning モジュールは、車両の運動学を考慮して、安全かつ効率的な車両の動きを計画しています。このモジュールは、衝突を回避し、快適な乗り心地を提供する最適な軌跡を生成しています。
+
+#### Control モジュール
+
+Control モジュールは、Motion Planning モジュールが生成した軌跡に基づいて、車両を制御しています。 Control モジュールは、以下のタスクを実行します。
+
+* ステアリングの制御
+* アクセルの制御
+* ブレーキの制御
+* 横滑り防止制御
+
+Control モジュールは、車両のactuatorにシグナルを送信して、車両の実際の動きを計画された軌跡に一致させています。このモジュールは、車両の安定性と安全性を確保しながら、正確な制御を実現しています。
+
+#### Perception モジュール
+
+Perception モジュールは、車両の周囲を検知し、障害物を識別しています。 Perception モジュールは、以下のタスクを実行します。
+
+* センサーデータの収集
+* データの処理とフィルタリング
+* 障害物の検出と分類
+
+Perception モジュールは、レーダー、カメラ、LIDAR などのセンサーからのデータを処理して、車両の周囲の正確な地図を作成しています。この情報は、衝突回避や障害物回避のために使用されています。
+
+#### Localization モジュール
+
+Localization モジュールは、車両の自車位置と姿勢を決定しています。 Localization モジュールは、以下のタスクを実行します。
+
+* センサーデータの収集
+* データの処理とフィルタリング
+* 自車位置と姿勢の推定
+
+Localization モジュールは、GPS、IMU、車輪速度センサーなどのセンサーからのデータを処理して、車両の自車位置を正確に特定しています。この情報は、経路プランニングや障害物回避のために使用されています。
+
+#### Health Monitoring モジュール
+
+Health Monitoring モジュールは、システムのヘルス状態を監視しています。 Health Monitoring モジュールは、以下のタスクを実行します。
+
+* センサーの健康状態の監視
+* データの健全性のチェック
+* 障害の検出
+* 復旧メカニズムの起動
+
+Health Monitoring モジュールは、システムの健全性を確保し、障害が発生した場合に適切な措置を講じています。このモジュールは、システムの信頼性と安全性を向上させています。
+
+#### Safety モジュール
+
+Safety モジュールは、システムの安全性を確保しています。 Safety モジュールは、以下のタスクを実行します。
+
+* 障害物逸脱量の監視
+* 加速度逸脱量の監視
+* 速度逸脱量の監視
+* システムのシャットダウン
+
+Safety モジュールは、システムの安全パラメータを監視し、逸脱量が許容範囲を超えた場合にシステムをシャットダウンしています。このモジュールは、乗客と周囲の安全を確保しています。
+
+#### Autoware
+
+Autoware は、オープンソースの自動運転ソフトウェアプラットフォームです。 Autoware は、以下のモジュールを含むコンポーネントベースのアーキテクチャを採用しています。
+
+* Planning
+* Motion Planning
+* Control
+* Perception
+* Localization
+* Health Monitoring
+* Safety
+
+Autoware は、自動運転車両の開発を加速化するために設計されており、用途の広い柔軟なプラットフォームを提供しています。
+
+| 名称                  | タイプ                                  | 説明                                                       |
 | --------------------- | ------------------------------------- | ----------------------------------------------------------------- |
-| `~/output/trajectory` | autoware_planning_msgs/msg/Trajectory | generated trajectory that is feasible to drive and collision-free |
+| `~/output/trajectory` | autoware_planning_msgs/msg/Trajectory | Drivingを実行可能かつ衝突のない生成された軌跡                        |
 
-## Algorithm
+## アルゴリズム
 
-Sampling based planning is decomposed into 3 successive steps:
+サンプリングベースプランニングは、3つの連続した手順に分解されます。
 
-1. Sampling: candidate trajectories are generated.
-2. Pruning: invalid candidates are discarded.
-3. Selection: the best remaining valid candidate is selected.
+1. サンプリング: 実行可能経路の候補が生成されます。
+2. プルーニング: 無効な候補が破棄されます。
+3. 選択: 残りの有効な最適候補が選択されます。
 
-### Sampling
+### サンプリング
 
-Candidate trajectories are generated based on the current ego state and some target state.
-2 sampling algorithms are currently implemented: sampling with bézier curves or with polynomials in the frenet frame.
+実行可能経路の候補は、現在の自車状態とターゲット状態に基づいて生成されます。
+現在、2つのサンプリングアルゴリズムが実装されています。ベジェ曲線を使用したサンプリングと、フレネフレーム内の多項式を使用したサンプリングです。
 
-### Pruning
+### プルーニング
 
-The validity of each candidate trajectory is checked using a set of hard constraints.
+各実行可能経路の候補の有効性は、一連のハード制約を使用してチェックされます。
 
-- collision: ensure no collision with static obstacles;
-- curvature: ensure smooth curvature;
-- drivable area: ensure the trajectory stays within the drivable area.
+- 衝突: 静的障害物との衝突がないことを確認
+- 曲率: 滑らかな曲率を確保
+- 走行可能エリア: 経路が走行可能エリア内にあることを確認
 
-### Selection
+### 選択
 
-Among the valid candidate trajectories, the _best_ one is determined using a set of soft constraints (i.e., objective functions).
+有効な実行可能経路の候補の中から、一連のソフト制約（つまり、目的関数）を使用して最良の候補が決定されます。
 
-- curvature: prefer smoother trajectories;
-- length: prefer longer trajectories;
-- lateral deviation: prefer trajectories close to the reference path.
+- 曲率: より滑らかな経路を優先
+- 長さ: より長い経路を優先
+- 横偏差: 基準パスに近い経路を優先
 
-Each soft constraint is associated with a weight to allow tuning of the preferences.
+各ソフト制約には重みが関連付けられており、優先度の調整が可能です。
 
-## Limitations
+## 制限
 
-The quality of the candidates generated with polynomials in frenet frame greatly depend on the reference path.
-If the reference path is not smooth, the resulting candidates will probably be undriveable.
+フレネフレーム内の多項式で生成された候補の品質は、基準パスに大きく依存します。
+基準パスが滑らかでない場合、生成された候補はおそらく走行できません。
 
-Failure to find a valid trajectory current results in a suddenly stopping trajectory.
+有効な経路を見つけることができない場合、現在は突然停止する経路が発生します。
 
-## Comparison with the `autoware_path_optimizer`
+## `autoware_path_optimizer`との比較
 
-The `autoware_path_optimizer` uses an optimization based approach,
-finding the optimal solution of a mathematical problem if it exists.
-When no solution can be found, it is often hard to identify the issue due to the intermediate mathematical representation of the problem.
+`autoware_path_optimizer`は、最適化ベースのアプローチを使用しており、数学的問題の最適解が存在する場合にそれを求めます。
+解が見つからない場合、問題の中間数学的表現が原因で、しばしば問題を特定するのが困難です。
 
-In comparison, the sampling based approach cannot guarantee an optimal solution but is much more straightforward,
-making it easier to debug and tune.
+比較すると、サンプリングベースアプローチは最適解を保証できませんが、はるかに簡単で、デバッグと調整が容易です。
 
-## How to Tune Parameters
+## パラメータの調整方法
 
-The sampling based planner mostly offers a trade-off between the consistent quality of the trajectory and the computation time.
-To guarantee that a good trajectory is found requires generating many candidates which linearly increases the computation time.
+サンプリングベースプランナーは、主に経路の一貫した品質と計算時間のトレードオフを提供します。
+良好な経路が見つかることを保証するには、多くの候補を生成する必要があり、それにより計算時間が線形的に増加します。
 
 TODO
 
-### Drivability in narrow roads
+### 狭い道での走行性
 
-### Computation time
+### 計算時間
 
-### Robustness
+### ロバスト性
 
-### Other options
+### その他オプション
 
-## How To Debug
+## デバッグ方法
 
 TODO
+

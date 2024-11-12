@@ -1,5 +1,6 @@
-# Evaluator Utils
+# エバリュエータユーティル
 
-## Purpose
+## 目的
 
-This package provides utils functions for other evaluator packages
+このパッケージは、他のエバリュエータパッケージ向けのユーティリティ関数を提供します。
+

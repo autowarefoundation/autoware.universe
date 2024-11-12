@@ -1,73 +1,74 @@
 # external_cmd_converter
 
-`external_cmd_converter` is a node that converts desired mechanical input to acceleration and velocity by using accel/brake map.
+`external_cmd_converter` は、アクセル/ブレーキマップを使用して目的のメカニカル入力を加速度と速度に変換するノードです。
 
-## Algorithm
+## アルゴリズム
 
-### How to calculate reference acceleration and velocity
+### 参照加速度と速度の計算方法
 
-A reference acceleration and velocity are derived from the throttle and brake values of external control commands.
+参照加速度と速度は、外部制御コマンドのアクセルとブレーキ値から導出されます。
 
-#### Reference Acceleration
+#### 参照加速度
 
-A reference acceleration is calculated from accel_brake_map based on values of a desired_pedal and a current velocity;
-
-$$
-    pedal_d = throttle_d - brake_d,
-$$
+参照加速度は、目的ペダル値と現在の速度に基づいて accel_brake_map から計算されます。
 
 $$
-    acc_{ref} = Acc(pedal_d, v_{x,current}).
+    ペダル_d = スロットル_d - ブレーキ_d,
 $$
 
-| Parameter       | Description                                                                               |
+$$
+    acc_{ref} = Acc(ペダル_d, v_{x,現在}).
+$$
+
+| パラメーター       | 説明                                                                               |
 | --------------- | ----------------------------------------------------------------------------------------- |
-| $throttle_d$    | throttle value of external control command (`~/in/external_control_cmd.control.throttle`) |
-| $brake_d$       | brake value of external control command (`~/in/external_control_cmd.control.brake`)       |
-| $v_{x,current}$ | current longitudinal velocity (`~/in/odometry.twist.twist.linear.x`)                      |
+| $throttle_d$    | 外部制御コマンドのアクセル値 (`~/in/external_control_cmd.control.throttle`) |
+| $brake_d$       | 外部制御コマンドのブレーキ値 (`~/in/external_control_cmd.control.brake`)       |
+| $v_{x,current}$ | 現在縦速度 (`~/in/odometry.twist.twist.linear.x`)                      |
 | Acc             | accel_brake_map                                                                           |
 
-#### Reference Velocity
+#### リファレンス速度
 
-A reference velocity is calculated based on a current velocity and a reference acceleration:
+リファレンス速度は、現在の速度とリファレンス加速度に基づいて計算されます。
 
 $$
 v_{ref} =
     v_{x,current} + k_{v_{ref}} \cdot \text{sign}_{gear} \cdot acc_{ref}.
 $$
 
-| Parameter            | Description                                                           |
-| -------------------- | --------------------------------------------------------------------- |
-| $acc_{ref}$          | reference acceleration                                                |
-| $k_{v_{ref}}$        | reference velocity gain                                               |
-| $\text{sign}_{gear}$ | gear command (`~/in/shift_cmd`) (Drive/Low: 1, Reverse: -1, Other: 0) |
+| パラメータ            | 説明                                                                 |
+| -------------------- | --------------------------------------------------------------------------- |
+| $acc_{ref}$          | 基準加速度                                                                |
+| $k_{v_{ref}}$        | 基準速度ゲイン                                                          |
+| $\text{sign}_{gear}$ | ギアコマンド (`~/in/shift_cmd`) (Drive/Low: 1, Reverse: -1, その他: 0) |
 
-## Input topics
+## 入力トピック
 
-| Name                        | Type                                         | Description                                                                                                       |
-| --------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `~/in/external_control_cmd` | tier4_external_api_msgs::msg::ControlCommand | target `throttle/brake/steering_angle/steering_angle_velocity` is necessary to calculate desired control command. |
-| `~/input/shift_cmd"`        | autoware_vehicle_msgs::GearCommand           | current command of gear.                                                                                          |
-| `~/input/emergency_stop`    | tier4_external_api_msgs::msg::Heartbeat      | emergency heart beat for external command.                                                                        |
-| `~/input/current_gate_mode` | tier4_control_msgs::msg::GateMode            | topic for gate mode.                                                                                              |
-| `~/input/odometry`          | navigation_msgs::Odometry                    | twist topic in odometry is used.                                                                                  |
+| 名称                        | タイプ                                          | 説明                                                                                                    |
+| --------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `~/in/external_control_cmd` | tier4_external_api_msgs::msg::ControlCommand | 目標`スロットル/ブレーキ/操舵角/操舵角速度`は、目的制御コマンドを計算するために必要。             |
+| `~/input/shift_cmd"`        | autoware_vehicle_msgs::GearCommand            | 現在のギア状態。                                                                                         |
+| `~/input/emergency_stop`    | tier4_external_api_msgs::msg::Heartbeat       | 外部コマンドに対する緊急ハートビート。                                                                    |
+| `~/input/current_gate_mode` | tier4_control_msgs::msg::GateMode             | ゲートモード用のトピック。                                                                                  |
+| `~/input/odometry`          | navigation_msgs::Odometry                     | オドメトリ内のツイストトピックが使用される。                                                               |
 
-## Output topics
+## 出力トピック
 
-| Name                | Type                                | Description                                                        |
+| 名称                | タイプ                                | 説明                                                        |
 | ------------------- | ----------------------------------- | ------------------------------------------------------------------ |
-| `~/out/control_cmd` | autoware_control_msgs::msg::Control | ackermann control command converted from selected external command |
+| `~/out/control_cmd` | autoware_control_msgs::msg::Control | 外部コマンドから変換したアッカーマン型制御コマンド |
 
-## Parameters
+## パラメータ
 
-| Parameter                 | Type   | Description                                           |
+| パラメータ                 | タイプ   | 説明                                           |
 | ------------------------- | ------ | ----------------------------------------------------- |
-| `ref_vel_gain_`           | double | reference velocity gain                               |
-| `timer_rate`              | double | timer's update rate                                   |
-| `wait_for_first_topic`    | double | if time out check is done after receiving first topic |
-| `control_command_timeout` | double | time out check for control command                    |
-| `emergency_stop_timeout`  | double | time out check for emergency stop command             |
+| `ref_vel_gain_`           | double | 基準速度ゲイン                                   |
+| `timer_rate`              | double | タイマーの更新レート                                 |
+| `wait_for_first_topic`    | double | 最初のトピック受信後にタイムアウトチェックを行う場合 |
+| `control_command_timeout` | double | 制御コマンドのタイムアウトチェック                     |
+| `emergency_stop_timeout`  | double | エマージェンシーストップコマンドのタイムアウトチェック |
 
-## Limitation
+## 制限事項
 
-tbd.
+未定
+

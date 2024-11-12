@@ -1,103 +1,122 @@
-# control_performance_analysis
+## コントロールパフォーマンス分析
 
-## Purpose
+## 目的
 
-`control_performance_analysis` is the package to analyze the tracking performance of a control module and monitor the driving status of the vehicle.
+`control_performance_analysis`は、制御モジュールの追従性能を分析し、車両の走行状況を監視するためのパッケージです。
 
-This package is used as a tool to quantify the results of the control module.
-That's why it doesn't interfere with the core logic of autonomous driving.
+このパッケージは、制御モジュールの結果を定量化するためのツールとして使用されます。
+そのため、自動運転のコアロジックに干渉しません。
 
-Based on the various input from planning, control, and vehicle, it publishes the result of analysis as `control_performance_analysis::msg::ErrorStamped` defined in this package.
+プランニング、制御、車両からのさまざまな入力に基づいて、このパッケージで定義された`control_performance_analysis::msg::ErrorStamped`として分析の結果を公開します。
 
-All results in `ErrorStamped` message are calculated in Frenet Frame of curve. Errors and velocity errors are calculated by using paper below.
+`ErrorStamped`メッセージのすべての結果は、曲線のフレネフレームで計算されます。エラーと速度エラーは、次の論文を使用して計算されます。
 
 <!-- cspell: ignore Werling Moritz Groell Lutz Bretthauer Georg -->
 
 `Werling, Moritz & Groell, Lutz & Bretthauer, Georg. (2010). Invariant Trajectory Tracking With a Full-Size Autonomous Road Vehicle. IEEE Transactions on Robotics. 26. 758 - 765. 10.1109/TRO.2010.2052325.`
 
-If you are interested in calculations, you can see the error and error velocity calculations in section `C. Asymptotical Trajectory Tracking With Orientation Control`.
+計算に興味がある場合は、「C. Asymptotical Trajectory Tracking With Orientation Control」セクションでエラーと速度エラーの計算を参照できます。
 
-Error acceleration calculations are made based on the velocity calculations above. You can see below the calculation of error acceleration.
+エラー加速度の計算は、上記の速度の計算に基づいて行われます。次のエラー加速度の計算を参照できます。
 
 ![CodeCogsEqn](https://user-images.githubusercontent.com/45468306/169027099-ef15b306-2868-4084-a350-0e2b652c310f.png)
 
-## Input / Output
+## 入出力
 
-### Input topics
+### 入力トピック
 
-| Name                                     | Type                                       | Description                                 |
-| ---------------------------------------- | ------------------------------------------ | ------------------------------------------- |
-| `/planning/scenario_planning/trajectory` | autoware_planning_msgs::msg::Trajectory    | Output trajectory from planning module.     |
-| `/control/command/control_cmd`           | autoware_control_msgs::msg::Control        | Output control command from control module. |
-| `/vehicle/status/steering_status`        | autoware_vehicle_msgs::msg::SteeringReport | Steering information from vehicle.          |
-| `/localization/kinematic_state`          | nav_msgs::msg::Odometry                    | Use twist from odometry.                    |
-| `/tf`                                    | tf2_msgs::msg::TFMessage                   | Extract ego pose from tf.                   |
+| 名前                                   | タイプ                                   | 説明                                   |
+| ------------------------------------ | --------------------------------------- | --------------------------------------- |
+| `/planning/scenario_planning/trajectory` | `autoware_planning_msgs::msg::Trajectory` | Planningモジュールからの出力軌道           |
+| `/control/command/control_cmd`         | `autoware_control_msgs::msg::Control`  | Controlモジュールからの出力制御コマンド      |
+| `/vehicle/status/steering_status`      | `autoware_vehicle_msgs::msg::SteeringReport` | 車両からのステアリング情報                     |
+| `/localization/kinematic_state`        | `nav_msgs::msg::Odometry`               | オドメトリからツイストを使用                  |
+| `/tf`                                  | `tf2_msgs::msg::TFMessage`             | TFから自車位置を抽出                       |
 
-### Output topics
+## 出力トピック
 
-| Name                                    | Type                                                     | Description                                         |
-| --------------------------------------- | -------------------------------------------------------- | --------------------------------------------------- |
-| `/control_performance/performance_vars` | control_performance_analysis::msg::ErrorStamped          | The result of the performance analysis.             |
-| `/control_performance/driving_status`   | control_performance_analysis::msg::DrivingMonitorStamped | Driving status (acceleration, jerk etc.) monitoring |
+**AutowareのAPIバージョン：** 1.16.0-rc0
 
-### Outputs
+| トピック | データタイプ | 説明 |
+|---|---|---|
+| `/vehicle/localization/current_pose` | `geometry_msgs/PoseStamped` | 自車位置の現在の推定値。このトピックにパブリッシュされるデータは、誤差を軽減するために、センサーデータから後処理やフィルタリングを経て得られたものです。 |
+| `/trajectory/planning/lane_waypoints` | `autoware_planning_msgs/Lane` | 計画されたパス内のウェイポイントを格納します。|
+| `/trajectory/planning/lattice_waypoints` | `autoware_planning_msgs/Lattice` | 速度と横方向位置（逸脱量）の組み合わせに対する、計画されたパスのウェイポイントを格納します。|
+| `/trajectory/planning/optimized_trajectory` | `autoware_planning_msgs/OptimizedTrajectory` | 経路最適化モジュールによって最適化された経路のウェイポイントを格納します。|
+| `/planning/planning_flag` | `autoware_planning_msgs/PlanningFlag` | 計画状態に関するフラグを格納します。0：停止、1：フォロー、2：計画中です。|
+| `/planning/velocity_plan` | `autoware_planning_msgs/VelocityPlan` | 速度計画モジュールによって計算された車速と加速度の値を格納します。|
+| `/control_command` | `autoware_msgs/ControlCommandStamped` | 制御モジュールへ送信される、モーターとステアリングの制御コマンドを格納します。|
+| `/localization/odometry` | `nav_msgs/Odometry` | オドメトリ情報。|
+| `/localization/estimation` | `geometry_msgs/PoseWithCovarianceStamped` | オドメトリ推定値。|
+| `/velodyne_points` | `sensor_msgs/PointCloud2` | Velodyneセンサーからの点群。|
+| `/image/front_camera/image_raw` | `sensor_msgs/Image` | フロントカメラからの生の画像データ。|
+| `/image/rear_camera/image_raw` | `sensor_msgs/Image` | リアカメラからの生の画像データ。|
+
+| 名称                                    | タイプ                                                     | 説明                                             |
+| --------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------- |
+| `/control_performance/performance_vars` | control_performance_analysis::msg::ErrorStamped          | パフォーマンス解析の結果                          |
+| `/control_performance/driving_status`   | control_performance_analysis::msg::DrivingMonitorStamped | 走行ステータス（加速度、ジャークなど）のモニタリング |
+
+### 出力
 
 #### control_performance_analysis::msg::DrivingMonitorStamped
 
-| Name                         | Type  | Description                                              |
-| ---------------------------- | ----- | -------------------------------------------------------- |
-| `longitudinal_acceleration`  | float | [m / s^2]                                                |
-| `longitudinal_jerk`          | float | [m / s^3]                                                |
-| `lateral_acceleration`       | float | [m / s^2]                                                |
-| `lateral_jerk`               | float | [m / s^3]                                                |
-| `desired_steering_angle`     | float | [rad]                                                    |
-| `controller_processing_time` | float | Timestamp between last two control command messages [ms] |
+| 名称                         | タイプ  | 説明                                                        |
+| ---------------------------- | ----- | ---------------------------------------------------------- |
+| `longitudinal_acceleration`  | float | [m/s^2]                                                     |
+| `longitudinal_jerk`          | float | [m/s^3]                                                     |
+| `lateral_acceleration`       | float | [m/s^2]                                                     |
+| `lateral_jerk`               | float | [m/s^3]                                                     |
+| `desired_steering_angle`     | float | [rad]                                                        |
+| `controller_processing_time` | float | 2つの制御コマンドメッセージ間のタイムスタンプ [ms] |
 
 #### control_performance_analysis::msg::ErrorStamped
 
-| Name                                       | Type  | Description                                                                                                       |
+
+| 名称                                       | タイプ  | 説明                                                                                                       |
 | ------------------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------- |
 | `lateral_error`                            | float | [m]                                                                                                               |
-| `lateral_error_velocity`                   | float | [m / s]                                                                                                           |
-| `lateral_error_acceleration`               | float | [m / s^2]                                                                                                         |
+| `lateral_error_velocity`                   | float | [m/s]                                                                                                           |
+| `lateral_error_acceleration`               | float | [m/s^2]                                                                                                         |
 | `longitudinal_error`                       | float | [m]                                                                                                               |
-| `longitudinal_error_velocity`              | float | [m / s]                                                                                                           |
-| `longitudinal_error_acceleration`          | float | [m / s^2]                                                                                                         |
+| `longitudinal_error_velocity`              | float | [m/s]                                                                                                           |
+| `longitudinal_error_acceleration`          | float | [m/s^2]                                                                                                         |
 | `heading_error`                            | float | [rad]                                                                                                             |
-| `heading_error_velocity`                   | float | [rad / s]                                                                                                         |
+| `heading_error_velocity`                   | float | [rad/s]                                                                                                         |
 | `control_effort_energy`                    | float | [u * R * u^T]                                                                                                     |
 | `error_energy`                             | float | lateral_error^2 + heading_error^2                                                                                 |
-| `value_approximation`                      | float | V = xPx' ; Value function from DARE Lyap matrix P                                                                 |
-| `curvature_estimate`                       | float | [1 / m]                                                                                                           |
-| `curvature_estimate_pp`                    | float | [1 / m]                                                                                                           |
-| `vehicle_velocity_error`                   | float | [m / s]                                                                                                           |
-| `tracking_curvature_discontinuity_ability` | float | Measures the ability to tracking the curvature changes [`abs(delta(curvature)) / (1 + abs(delta(lateral_error))`] |
+| `value_approximation`                      | float | V = xPx' ; 自車位置に基づく状態空間のパフォーマンス指数を近似した値                                                        |
+| `curvature_estimate`                       | float | [1/m]                                                                                                           |
+| `curvature_estimate_pp`                    | float | [1/m]                                                                                                           |
+| `vehicle_velocity_error`                   | float | [m/s]                                                                                                           |
+| `tracking_curvature_discontinuity_ability` | float | 曲率変化を追従する能力を測定 [`abs(delta(curvature)) / (1 + abs(delta(lateral_error))`] |
 
-## Parameters
+## パラメータ
 
-| Name                                  | Type             | Description                                                       |
-| ------------------------------------- | ---------------- | ----------------------------------------------------------------- |
-| `curvature_interval_length`           | double           | Used for estimating current curvature                             |
-| `prevent_zero_division_value`         | double           | Value to avoid zero division. Default is `0.001`                  |
-| `odom_interval`                       | unsigned integer | Interval between odom messages, increase it for smoother curve.   |
-| `acceptable_max_distance_to_waypoint` | double           | Maximum distance between trajectory point and vehicle [m]         |
-| `acceptable_max_yaw_difference_rad`   | double           | Maximum yaw difference between trajectory point and vehicle [rad] |
-| `low_pass_filter_gain`                | double           | Low pass filter gain                                              |
+| 名称                                    | 型             | 説明                                                           |
+| --------------------------------------- | ---------------- | --------------------------------------------------------------------- |
+| `curvature_interval_length`              | double           | current curvature 推定に使用                                            |
+| `prevent_zero_division_value`            | double           | ゼロ除算を回避するための値（デフォルトは `0.001`）                |
+| `odom_interval`                          | unsigned integer | odom メッセージ間のインターバル（より滑らかな曲線には大きくする） |
+| `acceptable_max_distance_to_waypoint`    | double           | 軌道ポイントと車両の最大距離 [m]                                 |
+| `acceptable_max_yaw_difference_rad`      | double           | 軌道ポイントと車両の最大ヨー角差 [rad]                              |
+| `low_pass_filter_gain`                    | double           | ローパスフィルタのゲイン                                              |
 
-## Usage
+## 操作方法
 
-- After launched simulation and control module, launch the `control_performance_analysis.launch.xml`.
-- You should be able to see the driving monitor and error variables in topics.
-- If you want to visualize the results, you can use `Plotjuggler` and use `config/controller_monitor.xml` as layout.
-- After import the layout, please specify the topics that are listed below.
+- シミュレーションと制御モジュールを起動した後、`control_performance_analysis.launch.xml` を起動します。
+- 走行モニタとエラー変数がトピックに表示されます。
+- 結果を視覚化するには、`Plotjuggler` を使用し、レイアウトとして `config/controller_monitor.xml` を使用します。
+- レイアウトをインポートした後、以下のトピックを指定します。
 
 > - /localization/kinematic_state
 > - /vehicle/status/steering_status
 > - /control_performance/driving_status
 > - /control_performance/performance_vars
 
-- In `Plotjuggler` you can export the statistic (max, min, average) values as csv file. Use that statistics to compare the control modules.
+- `Plotjuggler` では、統計情報（最大、最小、平均）値を csv ファイルとしてエクスポートできます。この統計情報を使用して、制御モジュールを比較します。
 
-## Future Improvements
+## 今後の改善
 
-- Implement a LPF by cut-off frequency, differential equation and discrete state space update.
+- カットオフ周波数、微分方程式、離散状態空間の更新を使用して LPF を実装します。
+

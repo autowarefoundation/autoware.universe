@@ -1,66 +1,65 @@
-# Autonomous Emergency Braking (AEB)
+# 自動緊急ブレーキ (AEB)
 
-## Purpose / Role
+## 目的/役割
 
-`autonomous_emergency_braking` is a module that prevents collisions with obstacles on the predicted path created by a control module or sensor values estimated from the control module.
+`autonomous_emergency_braking` は、制御モジュールによって作成された予測経路上の障害物や、制御モジュールから推定されたセンサー値との衝突を防ぐモジュールです。
 
-### Assumptions
+### 前提条件
 
-This module has following assumptions.
+このモジュールは以下の前提条件に基づいています。
 
-- The predicted path of the ego vehicle can be made from either the path created from sensors or the path created from a control module, or both.
+- 自車の予測経路は、センサーから作成された経路、制御モジュールから作成された経路、またはその両方のいずれかから作成できます。
 
-- The current speed and angular velocity can be obtained from the sensors of the ego vehicle, and it uses points as obstacles.
+- 自車の現在の速度と角速度は、自車のセンサーから取得でき、点として障害物が使用されます。
 
-- The AEBs target obstacles are 2D points that can be obtained from the input point cloud or by obtaining the intersection points between the predicted ego footprint path and a predicted object's shape.
+- AEBs の対象障害物は、入力された点群から取得するか、予測された自車のフットプリント経路と予測されたオブジェクトの形状との交点を求めることで取得できる 2D 点です。
 
-### IMU path generation: steering angle vs IMU's angular velocity
+### IMU パス生成: ステアリング角度と IMU の角速度
 
-Currently, the IMU-based path is generated using the angular velocity obtained by the IMU itself. It has been suggested that the steering angle could be used instead onf the angular velocity.
+現在、IMU ベースのパスは、IMU 自体によって取得された角速度を使用して生成されています。角速度の代わりにステアリング角度を使用することが提案されています。
 
-The pros and cons of both approaches are:
+両方のアプローチの長所と短所は次のとおりです。
 
-IMU angular velocity:
+IMU 角速度:
 
-- (+) Usually, it has high accuracy
-- (-) Vehicle vibration might introduce noise.
+- (+) 一般的に高精度
+- (-) 車両の振動によりノイズが発生する可能性があります。
 
-Steering angle:
+ステアリング角度:
 
-- (+) Not so noisy
-- (-) May have a steering offset or a wrong gear ratio, and the steering angle of Autoware and the real steering may not be the same.
+- (+) ノイズが少ない
+- (-) ステアリングオフセットまたは間違ったギアレシオが発生する可能性があり、Autoware のステアリング角度と実際のステアリングが同じではない場合があります。
 
-For the moment, there are no plans to implement the steering angle on the path creation process of the AEB module.
+現時点では、AEB モジュールのパス作成プロセスにステアリング角度を実装する予定はありません。
 
-## Inner-workings / Algorithms
+## 内部処理/アルゴリズム
 
-AEB has the following steps before it outputs the emergency stop signal.
+AEB は、緊急停止信号を出力する前に次の手順を実行します。
 
-1. Activate AEB if necessary.
+1. 必要に応じて AEB をアクティブ化します。
 
-2. Generate a predicted path of the ego vehicle.
+2. 自車の予測経路を生成します。
 
-3. Get target obstacles from the input point cloud and/or predicted object data.
+3. 入力点群や予測されたオブジェクトデータから対象障害物を入手します。
 
-4. Estimate the closest obstacle speed.
+4. 最も近い障害物の速度を推定します。
 
-5. Collision check with target obstacles.
+5. 対象障害物との衝突チェックを行います。
 
-6. Send emergency stop signals to `/diagnostics`.
+6. `/diagnostics` に緊急停止信号を送信します。
 
-We give more details of each section below.
+以下に、各セクションの詳細を示します。
 
-### 1. Activate AEB if necessary
+### 1. 必要に応じて AEB をアクティブ化する
 
-We do not activate AEB module if it satisfies the following conditions.
+次の条件を満たしている場合は、AEB モジュールをアクティブ化しません。
 
-- Ego vehicle is not in autonomous driving state
+- 自車が自動運転状態にない場合
+- 自車が動いていない場合 (現在の速度が 0.1 m/s のしきい値を下回る場合)
 
-- When the ego vehicle is not moving (Current Velocity is below a 0.1 m/s threshold)
+### 2. 自車走行経路の予測
 
-### 2. Generate a predicted path of the ego vehicle
-
-AEB generates a predicted footprint path based on current velocity and current angular velocity obtained from attached sensors. Note that if `use_imu_path` is `false`, it skips this step. This predicted path is generated as:
+AEBは、搭載センサーから取得した現在の速度および現在の角速度に基づいて、予測したフットプリント経路を生成します。`use_imu_path`が`false`の場合、このステップはスキップされることに注意してください。この予測経路は以下のように生成されます。
 
 $$
 x_{k+1} = x_k + v cos(\theta_k) dt \\
@@ -68,59 +67,58 @@ y_{k+1} = y_k + v sin(\theta_k) dt \\
 \theta_{k+1} = \theta_k + \omega dt
 $$
 
-where $v$ and $\omega$ are current longitudinal velocity and angular velocity respectively. $dt$ is time interval that users can define in advance.
+ここで、$v$と$\omega$はそれぞれ現在の縦断速度および角速度です。$dt$はユーザーが事前に定義できる時間間隔です。
 
-On the other hand, if `use_predicted_trajectory` is set to true, the AEB module will use the predicted path from the MPC as a base to generate a footprint path. Both the IMU footprint path and the MPC footprint path can be used at the same time.
+一方、`use_predicted_trajectory`がtrueに設定されている場合、AEBモジュールはMPCからの予測経路をベースとしてフットプリント経路を生成します。IMUフットプリント経路とMPCフットプリント経路は同時に使用できます。
 
-### 3. Get target obstacles
+### 3. ターゲット障害物の取得
 
-After generating the ego footprint path(s), the target obstacles are identified. There are two methods to find target obstacles: using the input point cloud, or using the predicted object information coming from perception modules.
+自車フットプリント経路を生成した後、ターゲット障害物が特定されます。ターゲット障害物を検索するには、入力点群を使用するか、知覚モジュールから来る予測オブジェクト情報を使用する2つの方法があります。
 
-#### Pointcloud obstacle filtering
+#### 点群障害物フィルタリング
 
-The AEB module can filter the input pointcloud to find target obstacles with which the ego vehicle might collide. This method can be enable if the `use_pointcloud_data` parameter is set to true. The pointcloud obstacle filtering has three major steps, which are rough filtering, noise filtering with clustering and rigorous filtering.
+AEBモジュールは、入力点群をフィルタリングして、自車が衝突する可能性のあるターゲット障害物を見つけることができます。この方法は、`use_pointcloud_data`パラメーターをtrueに設定すると有効になります。点群障害物フィルタリングには、粗フィルタリング、クラスタリングによるノイズフィルタリング、厳密フィルタリングの3つの主要ステップがあります。
 
-##### Rough filtering
+##### 粗フィルタリング
 
-In rough filtering step, we select target obstacle with simple filter. Create a search area up to a certain distance (default is half of the ego vehicle width plus the `path_footprint_extra_margin` parameter) away from the predicted path of the ego vehicle and ignore the point cloud that are not within it. The rough filtering step is illustrated below.
+粗フィルタリングステップでは、単純なフィルタを使用してターゲット障害物を選択します。自車の予測経路から一定の距離（デフォルトは自車幅の半分に`path_footprint_extra_margin`パラメーターを加えたもの）まで検索エリアを作成し、その範囲内にない点群は無視します。粗フィルタリングステップは以下に示されています。
 
 ![rough_filtering](./image/obstacle_filtering_1.drawio.svg)
 
-##### Noise filtering with clustering and convex hulls
+##### クラスタリングと凸包によるノイズフィルタリング
 
-To prevent the AEB from considering noisy points, euclidean clustering is performed on the filtered point cloud. The points in the point cloud that are not close enough to other points to form a cluster are discarded. Furthermore, each point in a cluster is compared against the `cluster_minimum_height` parameter, if no point inside a cluster has a height/z value greater than `cluster_minimum_height`, the whole cluster of points is discarded. The parameters `cluster_tolerance`, `minimum_cluster_size` and `maximum_cluster_size` can be used to tune the clustering and the size of objects to be ignored, for more information about the clustering method used by the AEB module, please check the official documentation on euclidean clustering of the PCL library: <https://pcl.readthedocs.io/projects/tutorials/en/master/cluster_extraction.html>.
+AEBがノイズのある点を考慮するのを防ぐため、フィルタリングされた点群に対してユークリッドクラスタリングが実行されます。クラスタを形成するには他の点に十分近くない点群内の点は破棄されます。さらに、クラスタ内の各点は`cluster_minimum_height`パラメーターと比較され、クラスタ内のどの点も`cluster_minimum_height`より大きい高さ/z値を持たない場合、点のクラスタ全体が破棄されます。`cluster_tolerance`、`minimum_cluster_size`、`maximum_cluster_size`パラメーターを使用して、クラスタリングと無視するオブジェクトのサイズを調整できます。AEBモジュールで使用されるクラスタリング方法の詳細については、PCLライブラリのユークリッドクラスタリングに関する公式ドキュメントを確認してください：<https://pcl.readthedocs.io/projects/tutorials/en/master/cluster_extraction.html>
 
-Furthermore, a 2D convex hull is created around each detected cluster, the vertices of each hull represent the most extreme/outside points of the cluster. These vertices are then checked in the next step.
+さらに、検出された各クラスタの周囲に2D凸包が作成され、各包の頂点はクラスタの最も外側の点を表します。次に、これらの頂点は次のステップでチェックされます。
 
-##### Rigorous filtering
+##### 厳密フィルタリング
 
-After Noise filtering, the module performs a geometric collision check to determine whether the filtered obstacles/hull vertices actually have possibility to collide with the ego vehicle. In this check, the ego vehicle is represented as a rectangle, and the point cloud obstacles are represented as points. Only the vertices with a possibility of collision are kept.
+ノイズフィルタリング後、モジュールは幾何学的衝突チェックを実行して、フィルタリングされた障害物/包の頂点が実際に自車と衝突する可能性があるかどうかを判断します。このチェックでは、自車は長方形として、点群障害物は点として表されます。衝突の可能性がある頂点のみが保持されます。
 
 ![rigorous_filtering](./image/obstacle_filtering_2.drawio.svg)
 
-#### Using predicted objects to get target obstacles
+#### ターゲット障害物の取得における予測オブジェクトの使用
 
-If the `use_predicted_object_data` parameter is set to true, the AEB can use predicted object data coming from the perception modules, to get target obstacle points. This is done by obtaining the 2D intersection points between the ego's predicted footprint path and each of the predicted objects enveloping polygon or bounding box.
+`use_predicted_object_data`パラメーターをtrueに設定すると、AEBは知覚モジュールから来る予測オブジェクトデータを使用してターゲット障害物点を取得できます。これは、自車の予測フットプリント経路と各予測オブジェクトの包囲多角形またはバウンディングボックスとの2D交点を取得することで行われます。
 
 ![predicted_object_and_path_intersection](./image/using-predicted-objects.drawio.svg)
 
-### Finding the closest target obstacle
+### ターゲット障害物との最接近の特定
 
-Once all target obstacles have been identified, the AEB module chooses the point that is closest to the ego vehicle as the candidate for collision checking. Only the closest point is considered because RSS distance is used to judge if a collision will happen or not, and if the closest vertex to the ego is deemed to be safe from collision, the rest of the target obstacles will also be safe.
+すべてのターゲット障害物が特定されたら、AEBモジュールは自車に最も近い点を衝突チェックの候補として選択します。RSS距離は衝突が発生するかどうかを判断するために使用され、自車への最も近い頂点が衝突から安全とみなされる場合、残りのターゲット障害物も衝突から安全であるため、最も近い点のみが考慮されます。
 
 ![closest_object](./image/closest-point.drawio.svg)
 
-### 4. Obstacle velocity estimation
+### 4. 障害物速度推定
 
-To begin calculating the target point's velocity, the point must enter the speed calculation area,
-which is defined by the `speed_calculation_expansion_margin` parameter.
-Depending on the operational environment,
-this margin can reduce unnecessary autonomous emergency braking
-caused by velocity miscalculations during the initial calculation steps.
+ターゲットポイントの速度の計算を開始するには、ポイントは速度計算エリアに入る必要があります。これは、`speed_calculation_expansion_margin`パラメーターによって定義されます。
+運用環境によっては、このマージンは初期計算ステップ中に速度の誤算によって引き起こされる不必要な自動緊急ブレーキを軽減することができます。
+
+## 自動運転ソフトウェアドキュメント
 
 ![speed_calculation_expansion](./image/speed_calculation_expansion.drawio.svg)
 
-Once the position of the closest obstacle/point is determined, the AEB modules uses the history of previously detected objects to estimate the closest object relative speed using the following equations:
+最も近い障害物/ポイントの位置が決定されると、AEBモジュールは、以下の式を使用して、過去に検出されたオブジェクトの履歴から、最も近いオブジェクトの相対速度を推定します。
 
 $$
 d_{t} = t_{1} - t_{0}
@@ -134,107 +132,108 @@ $$
 v_{norm} = d_{x} / d_{t}
 $$
 
-Where $t_{1}$ and $t_{0}$ are the timestamps of the point clouds used to detect the current closest object and the closest object of the previous point cloud frame, and $o_{x}$ and $prev_{x}$ are the positions of those objects, respectively.
+ここで、$t_{1}$と$t_{0}$は、現在の最も近いオブジェクトと、直前のポイントクラウドフレームの最も近いオブジェクトを検出するために使用したポイントクラウドのタイムスタンプであり、$o_{x}$と$prev_{x}$は、それらのオブジェクトの位置です。
 
 ![relative_speed](./image/object_relative_speed.drawio.svg)
 
-Note that, when the closest obstacle/point comes from using predicted object data, $v_{norm}$ is calculated by directly computing the norm of the predicted object's velocity in the x and y axes.
+最も近い障害物/ポイントが予測されたオブジェクトデータを使用して得られる場合、$v_{norm}$は、x軸とy軸で予測されたオブジェクトの速度のノルムを直接計算することで計算されます。
 
-The velocity vector is then compared against the ego's predicted path to get the longitudinal velocity $v_{obj}$:
+次に、速度ベクトルをエゴの予測経路と比較して、縦方向速度$v_{ego}$を取得します。
 
 $$
 v_{obj} = v_{norm} * Cos(yaw_{diff}) + v_{ego}
 $$
 
-where $yaw_{diff}$ is the difference in yaw between the ego path and the displacement vector $$v_{pos} = o_{pos} - prev_{pos} $$ and $v_{ego}$ is the ego's current speed, which accounts for the movement of points caused by the ego moving and not the object. All these equations are performed disregarding the z axis (in 2D).
+ここで、$yaw_{diff}$は、エゴパスと移動ベクトルとの間のヨー差で、$$v_{pos} = o_{pos} - prev_{pos} $$、$v_{ego}$は、エゴの現在の速度で、エゴの移動によるポイントの移動を考慮していますが、オブジェクトによる移動は考慮していません。これらすべての式は、z軸（2D）を無視して実行されます。
 
-Note that, the object velocity is calculated against the ego's current movement direction. If the object moves in the opposite direction to the ego's movement, the object velocity will be negative, which will reduce the rss distance on the next step.
+オブジェクト速度は、エゴの現在の移動方向に対して計算されていることに注意してください。オブジェクトがエゴの移動とは逆方向に移動する場合、オブジェクト速度は負になり、次のステップでのrss距離が短くなります。
 
-The resulting estimated object speed is added to a queue of speeds with timestamps. The AEB then checks for expiration of past speed estimations and eliminates expired speed measurements from the queue, the object expiration is determined by checking if the time elapsed since the speed was first added to the queue is larger than the parameter `previous_obstacle_keep_time`. Finally, the median speed of the queue is calculated. The median speed will be used to calculate the RSS distance used for collision checking.
+推定されたオブジェクト速度の結果は、タイムスタンプ付きの速度のキューに追加されます。次に、AEBは過去の速度推定の有効期限を確認し、期限切れの速度測定をキューから削除します。オブジェクトの有効期限は、速度が最初にキューに追加されてからの経過時間が、パラメーター`previous_obstacle_keep_time`より大きいかどうかを確認することによって決定されます。最後に、キューの平均速度が計算されます。平均速度は、衝突確認に使用されるRSS距離を計算するために使用されます。
 
-### 5. Collision check with target obstacles using RSS distance
+### 5. RSS距離を使用したターゲット障害物との衝突チェック
 
-In the fourth step, it checks the collision with the closest obstacle point using RSS distance. RSS distance is formulated as:
+第4ステップでは、RSS距離を使用して最も近い障害物ポイントとの衝突をチェックします。RSS距離は次のように定式化されます。
 
 $$
 d = v_{ego}*t_{response} + v_{ego}^2/(2*a_{min}) -(sign(v_{obj})) * v_{obj}^2/(2*a_{obj_{min}}) + offset
 $$
 
-where $v_{ego}$ and $v_{obj}$ is current ego and obstacle velocity, $a_{min}$ and $a_{obj_{min}}$ is ego and object minimum acceleration (maximum deceleration), $t_{response}$ is response time of the ego vehicle to start deceleration. Therefore the distance from the ego vehicle to the obstacle is smaller than this RSS distance $d$, the ego vehicle send emergency stop signals. This is illustrated in the following picture.
+ここで、$v_{ego}$と$v_{obj}$は現在のエゴと障害物の速度、$a_{min}$と$a_{obj_{min}}$はエゴとオブジェクトの最小加速度（最大減速）、$t_{response}$は減速を開始するエゴ車両の応答時間です。したがって、エゴ車両から障害物までの距離がこのRSS距離$d$よりも小さい場合、エゴ車両は緊急停止信号を送信します。これは次の図に示されています。
 
 ![rss_check](./image/rss_check.drawio.svg)
 
-### 6. Send emergency stop signals to `/diagnostics`
+### 6. `/diagnostics`に対する緊急停止信号の送信
 
-If AEB detects collision with point cloud obstacles in the previous step, it sends emergency signal to `/diagnostics` in this step. Note that in order to enable emergency stop, it has to send ERROR level emergency. Moreover, AEB user should modify the setting file to keep the emergency level, otherwise Autoware does not hold the emergency state.
+AEBが前のステップでポイントクラウド障害物との衝突を検出した場合、このステップで`/diagnostics`に緊急信号を送信します。緊急停止を有効にするには、ERRORレベルの緊急事態を送信する必要があります。さらに、AEBユーザーは設定ファイルを修正して緊急レベルを維持する必要があります。そうしないと、Autowareは緊急状態を保持しません。
 
-## Use cases
+## ユースケース
 
-### Front vehicle suddenly brakes
+### 前方の車両が急ブレーキ
 
-The AEB can activate when a vehicle in front suddenly brakes, and a collision is detected by the AEB module. Provided the distance between the ego vehicle and the front vehicle is large enough and the ego’s emergency acceleration value is high enough, it is possible to avoid or soften collisions with vehicles in front that suddenly brake. NOTE: the acceleration used by the AEB to calculate rss_distance is NOT necessarily the acceleration used by the ego while doing an emergency brake. The acceleration used by the real vehicle can be tuned by changing the [mrm_emergency stop jerk and acceleration values](https://github.com/tier4/autoware_launch/blob/d1b2688f2788acab95bb9995d72efd7182e9006a/autoware_launch/config/system/mrm_emergency_stop_operator/mrm_emergency_stop_operator.param.yaml#L4).
+前方車両が急ブレーキをかけ、AEBモジュールによって衝突が検出されると、AEBを起動できます。エゴ車両と前方車両の距離が十分に大きく、エゴの緊急加速度値が十分に高い場合、急ブレーキをかける前方車両との衝突を回避または緩和することができます。注意: AEBがrss距離の計算に使用した加速度は、緊急ブレーキ中にエゴが使用する加速度とは必ずしも同じではありません。実際の車両で使用される加速度は、[mrm_emergency stop jerkとacceleration値](https://github.com/tier4/autoware_launch/blob/d1b2688f2788acab95bb9995d72efd7182e9006a/autoware_launch/config/system/mrm_emergency_stop_operator/mrm_emergency_stop_operator.param.yaml#L4)を変更することで調整できます。
 
 ![front vehicle collision prevention](./image/front_vehicle_collision.drawio.svg)
 
-### Stop for objects that appear suddenly
+### 急に登場したオブジェクトへの停止
 
-When an object appears suddenly, the AEB can act as a fail-safe to stop the ego vehicle when other modules fail to detect the object on time. If sudden object cut ins are expected, it might be useful for the AEB module to detect collisions of objects BEFORE they enter the real ego vehicle path by increasing the `expand_width` parameter.
+突然物体が現れた場合、他のモジュールが時間内に物体を検出できなかったとき、AEB は自動運転車両を停止するためにフェイルセーフとして動作できます。オブジェクトによる急な割り込みが予想される場合は、`expand_width` パラメータを増やすことで、AEB モジュールがオブジェクトが自動運転車両の実際のパスに入る前に衝突を検出するのに役立つ場合があります。
 
-![occluded object collision prevention](./image/occluded_space.drawio.svg)
+![後方車両との衝突防止](./image/occluded_space.drawio.svg)
 
-### Preventing Collisions with rear objects
+### 後方オブジェクトとの衝突の防止
 
-The AEB module can also prevent collisions when the ego vehicle is moving backwards.
+AEB モジュールは、自動運転車両が後退している場合にも衝突を防止できます。
 
-![backward driving](./image/backward-driving.drawio.svg)
+![後退運転](./image/backward-driving.drawio.svg)
 
-### Preventing collisions in case of wrong Odometry (IMU path only)
+### オドメータの誤りによる衝突の防止（IMU パスのみ）
 
-When vehicle odometry information is faulty, it is possible that the MPC fails to predict a correct path for the ego vehicle. If the MPC predicted path is wrong, collision avoidance will not work as intended on the planning modules. However, the AEB’s IMU path does not depend on the MPC and could be able to predict a collision when the other modules cannot. As an example you can see a figure of a hypothetical case in which the MPC path is wrong and only the AEB’s IMU path detects a collision.
+車両オドメータの情報に誤りがある場合、MPC が自動運転車両の正しいパスを予測できない可能性があります。MPC が予測したパスが間違っていると、衝突回避が計画モジュールで意図したとおりに機能しません。ただし、AEB の IMU パスは MPC に依存せず、他のモジュールが衝突を検出できない場合に衝突を予測できる可能性があります。たとえば、MPC パスが間違っており、AEB の IMU パスのみが衝突を検出する仮想ケースの図を示します。
 
-![wrong mpc](./image/wrong-mpc.drawio.svg)
+![間違った mpc](./image/wrong-mpc.drawio.svg)
 
-## Parameters
+## パラメータ
 
-| Name                               | Unit   | Type   | Description                                                                                                                                                                                     | Default value |
-| :--------------------------------- | :----- | :----- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| publish_debug_markers              | [-]    | bool   | flag to publish debug markers                                                                                                                                                                   | true          |
-| publish_debug_pointcloud           | [-]    | bool   | flag to publish the point cloud used for debugging                                                                                                                                              | false         |
-| use_predicted_trajectory           | [-]    | bool   | flag to use the predicted path from the control module                                                                                                                                          | true          |
-| use_imu_path                       | [-]    | bool   | flag to use the predicted path generated by sensor data                                                                                                                                         | true          |
-| use_object_velocity_calculation    | [-]    | bool   | flag to use the object velocity calculation. If set to false, object velocity is set to 0 [m/s]                                                                                                 | true          |
-| check_autoware_state               | [-]    | bool   | flag to enable or disable autoware state check. If set to false, the AEB module will run even when the ego vehicle is not in AUTONOMOUS state.                                                  | true          |
-| detection_range_min_height         | [m]    | double | minimum hight of detection range used for avoiding the ghost brake by false positive point clouds                                                                                               | 0.0           |
-| detection_range_max_height_margin  | [m]    | double | margin for maximum hight of detection range used for avoiding the ghost brake by false positive point clouds. `detection_range_max_height = vehicle_height + detection_range_max_height_margin` | 0.0           |
-| voxel_grid_x                       | [m]    | double | down sampling parameters of x-axis for voxel grid filter                                                                                                                                        | 0.05          |
-| voxel_grid_y                       | [m]    | double | down sampling parameters of y-axis for voxel grid filter                                                                                                                                        | 0.05          |
-| voxel_grid_z                       | [m]    | double | down sampling parameters of z-axis for voxel grid filter                                                                                                                                        | 100000.0      |
-| cluster tolerance                  | [m]    | double | maximum allowable distance between any two points to be considered part of the same cluster                                                                                                     | 0.15          |
-| cluster_minimum_height             | [m]    | double | at least one point in a cluster must be higher than this value for the cluster to be included in the set of possible collision targets                                                          | 0.1           |
-| minimum_cluster_size               | [-]    | int    | minimum required amount of points contained by a cluster for it to be considered as a possible target obstacle                                                                                  | 10            |
-| maximum_cluster_size               | [-]    | int    | maximum amount of points contained by a cluster for it to be considered as a possible target obstacle                                                                                           | 10000         |
-| min_generated_imu_path_length      | [m]    | double | minimum distance for a predicted path generated by sensors                                                                                                                                      | 0.5           |
-| max_generated_imu_path_length      | [m]    | double | maximum distance for a predicted path generated by sensors                                                                                                                                      | 10.0          |
-| expand_width                       | [m]    | double | expansion width of the ego vehicle for the collision check                                                                                                                                      | 0.1           |
-| longitudinal_offset                | [m]    | double | longitudinal offset distance for collision check                                                                                                                                                | 2.0           |
-| t_response                         | [s]    | double | response time for the ego to detect the front vehicle starting deceleration                                                                                                                     | 1.0           |
-| a_ego_min                          | [m/ss] | double | maximum deceleration value of the ego vehicle                                                                                                                                                   | -3.0          |
-| a_obj_min                          | [m/ss] | double | maximum deceleration value of objects                                                                                                                                                           | -3.0          |
-| imu_prediction_time_horizon        | [s]    | double | time horizon of the predicted path generated by sensors                                                                                                                                         | 1.5           |
-| imu_prediction_time_interval       | [s]    | double | time interval of the predicted path generated by sensors                                                                                                                                        | 0.1           |
-| mpc_prediction_time_horizon        | [s]    | double | time horizon of the predicted path generated by mpc                                                                                                                                             | 1.5           |
-| mpc_prediction_time_interval       | [s]    | double | time interval of the predicted path generated by mpc                                                                                                                                            | 0.1           |
-| aeb_hz                             | [-]    | double | frequency at which AEB operates per second                                                                                                                                                      | 10            |
-| speed_calculation_expansion_margin | [m]    | double | expansion width of the ego vehicle for the beginning speed calculation                                                                                                                          | 0.1           |
+| Name                               | 単位   | タイプ   | 説明                                                                                                                                                                                                 | デフォルト値 |
+| :--------------------------------- | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| publish_debug_markers              | [なし] | ブール   | デバッグマーカーを発行するフラグ                                                                                                                                                               | true          |
+| publish_debug_pointcloud           | [なし] | ブール   | デバッグに使用されるポイントクラウドを発行するフラグ                                                                                                                                              | false         |
+| use_predicted_trajectory           | [なし] | ブール   | コントロールモジュールからの予測パスの使用フラグ                                                                                                                                                  | true          |
+| use_imu_path                       | [なし] | ブール   | センサーデータによって生成された予測パスの使用フラグ                                                                                                                                                 | true          |
+| use_object_velocity_calculation    | [なし] | ブール   | オブジェクト速度計算の使用フラグ。 `false` に設定すると、オブジェクト速度は 0 [m/s] に設定されます。                                                                                            | true          |
+| check_autoware_state               | [なし] | ブール   | Autoware ステートチェックの有効/無効フラグ。 `false` に設定すると、エゴ車が AUTONOMOUS ステートにない場合でも AEB モジュールは動作します。                                       | true          |
+| detection_range_min_height         | [m]    | 倍精度   | 誤検出によるゴーストブレーキを回避するために使用される検出範囲の最小高さ                                                                                                                              | 0.0           |
+| detection_range_max_height_margin  | [m]    | 倍精度   | 誤検出によるゴーストブレーキを回避するために使用される検出範囲の最大高さのマージン。 `detection_range_max_height = vehicle_height + detection_range_max_height_margin` | 0.0           |
+| voxel_grid_x                       | [m]    | 倍精度   | ボクセルグリッドフィルタの X 軸ダウンサンプリングパラメータ                                                                                                                                        | 0.05          |
+| voxel_grid_y                       | [m]    | 倍精度   | ボクセルグリッドフィルタの Y 軸ダウンサンプリングパラメータ                                                                                                                                        | 0.05          |
+| voxel_grid_z                       | [m]    | 倍精度   | ボクセルグリッドフィルタの Z 軸ダウンサンプリングパラメータ                                                                                                                                        | 減速         |
+| cluster tolerance                  | [m]    | 倍精度   | 2 つの点の間に許容可能な最大距離。それ以下の距離では、同じクラスタの一部とみなされます。                                                                                                    | 0.15          |
+| cluster_minimum_height             | [m]    | 倍精度   | クラスタ内の少なくとも 1 つの点が衝突対象の可能性のあるクラスタに含まれるために、この値よりも高くする必要があります。                                                                       | 0.1           |
+| minimum_cluster_size               | [なし] | 整数    | 対象の障害物として考慮されるためには、クラスタに必要最低限のポイント数                                                                                                                              | 10            |
+| maximum_cluster_size               | [なし] | 整数    | 対象の障害物として考慮されるためには、クラスタに含まれる最大ポイント数                                                                                                                            | 10000         |
+| min_generated_imu_path_length      | [m]    | 倍精度   | センサーによって生成された予測パスの最小距離                                                                                                                                                      | 0.5           |
+| max_generated_imu_path_length      | [m]    | 倍精度   | センサーによって生成された予測パスの最大距離                                                                                                                                                      | 10.0          |
+| expand_width                       | [m]    | 倍精度   | 衝突チェック時のエゴ車両の拡張幅                                                                                                                                                            | 0.1           |
+| longitudinal_offset                | [m]    | 倍精度   | 衝突チェック時の縦方向オフセット距離                                                                                                                                                         | 2.0           |
+| t_response                         | [s]    | 倍精度   | エゴ車が前方の車両を検知してから減速を開始するまでの反応時間                                                                                                                                   | 1.0           |
+| a_ego_min                          | [m/ss] | 倍精度   | エゴ車両の最大減速度                                                                                                                                                                          | -3.0          |
+| a_obj_min                          | [m/ss] | 倍精度   | オブジェクトの最大減速度                                                                                                                                                                          | -3.0          |
+| imu_prediction_time_horizon        | [s]    | 倍精度   | センサーによって生成された予測パスの時間範囲                                                                                                                                                   | 1.5           |
+| imu_prediction_time_interval       | [s]    | 倍精度   | センサーによって生成された予測パスの時間間隔                                                                                                                                                   | Planning       |
+| mpc_prediction_time_horizon        | [s]    | 倍精度   | mpc によって生成された予測パスの時間範囲                                                                                                                                                      | 1.5           |
+| mpc_prediction_time_interval       | [s]    | 倍精度   | mpc によって生成された予測パスの時間間隔                                                                                                                                                      | 0.1           |
+| aeb_hz                             | [なし] | 倍精度   | AEBが1秒間に動作する頻度                                                                                                                                                                  | 10            |
+| speed_calculation_expansion_margin | [m]    | 倍精度   | 開始速度計算時のエゴ車両の拡張幅                                                                                                                                                            | 0.1           |
 
-## Limitations
+## 制約事項
 
-- The distance required to stop after collision detection depends on the ego vehicle's speed and deceleration performance. To avoid collisions, it's necessary to increase the detection distance and set a higher deceleration rate. However, this creates a trade-off as it may also increase the number of unnecessary activations. Therefore, it's essential to consider what role this module should play and adjust the parameters accordingly.
+- 衝突検出後の停止に必要な距離は、自車速度と減速性能によって異なります。衝突を回避するには、検出距離を長くし、より高い減速率を設定する必要があります。ただし、不要なアクティベーションの数を増やす可能性があるため、トレードオフが生じます。したがって、このモジュールが果たすべき役割を考慮し、それに応じてパラメータを調整することが不可欠です。
 
-- AEB might not be able to react with obstacles that are close to the ground. It depends on the performance of the pre-processing methods applied to the point cloud.
+- AEBは、地上に近い障害物に対しては反応できない場合があります。これは、点群に適用される前処理方法のパフォーマンスに依存します。
 
-- Longitudinal acceleration information obtained from sensors is not used due to the high amount of noise.
+- センサーから取得した縦方向加速度の情報は、ノイズが大きいので使用されていません。
 
-- The accuracy of the predicted path created from sensor data depends on the accuracy of sensors attached to the ego vehicle.
+- センサーデータから作成された予測経路の精度は、自車に搭載されたセンサーの精度に依存します。
 
 ![aeb_range](./image/range.drawio.svg)
+

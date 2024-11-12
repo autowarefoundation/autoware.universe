@@ -1,50 +1,53 @@
-## No Drivable Lane
+## 走行可能な車線がなし
 
-### Role
+### 役割
 
-This module plans the velocity of the related part of the path in case there is a no drivable lane referring to it.
+このモジュールは、走行可能な車線を参照していない場合に、パスに関連する部分の速度を計画します。
 
-A no drivable lane is a lanelet or more that are out of operation design domain (ODD), i.e., the vehicle **must not** drive autonomously in this lanelet.  
-A lanelet can be no drivable (out of ODD) due to many reasons, either technical limitations of the SW and/or HW, business requirements, safety considerations, .... etc, or even a combination of those.
+走行可能な車線とは、運用設計ドメイン(ODD)の対象外である車線または車線以上のことであり、車両は**自**動この車線で運転してはいけません。
 
-Some examples of No Drivable Lanes
+車線が走行不能(ODDの対象外)になる理由は、SWやHWの技術的限界、業務上の要件、安全上の考慮事項、さらにはそれらの組み合わせなど、さまざまです。
 
-- Closed road intentionally, due to construction work for example
-- Underpass road that goes under a railway, for safety reasons
-- Road with slope/inclination that the vehicle is not be able to drive autonomously due to technical limitations. And lots of other examples.
+走行不能な車線の例を次に示します。
+
+- 建設作業などにより意図的に閉鎖された道路
+- 安全上の理由から鉄道路線の真下を通るアンダーパスの道路
+- 技術的な制限により車両が自**動的に**運転できない勾配の道路
+- その他多数の例
 
 ![no-drivable-lane-design.svg](./docs/no_drivable_lane_design.svg)
 
-A lanelet becomes invalid by adding a new tag under the relevant lanelet in the map file `<tag k="no_drivable_lane" v="yes"/>`.
+車線は、マップファイル`<tag k="no_drivable_lane" v="yes"/>` に関連する車線に新しいタグを追加することで無効になります。
 
-The target of this module is to stop the vehicle before entering the no drivable lane (with configurable stop margin) or keep the vehicle stationary if autonomous mode started inside a no drivable lane. Then ask the human driver to take the responsibility of the driving task (Takeover Request / Request to Intervene)
+このモジュールの目標は、車両が走行不能な車線に入る前に停止させること(構成可能な停止マージンを使用)、または走行不能な車線内で自動モードが開始された場合に車両を停止させることです。次に、人間の運転手に運転操作の責任を取ってもらうよう求めます(テイクオーバーリクエスト/介入リクエスト)。
 
-### Activation Timing
+### アクティベーションタイミング
 
-This function is activated when the lane id of the target path has an no drivable lane label (i.e. the `no_drivable_lane` attribute is `yes`).
+この機能は、ターゲットパスの車線 ID に走行不能な車線のラベル(つまり`no_drivable_lane` 属性が`yes` )がある場合にアクティブになります。
 
-### Module Parameters
+### モジュールパラメータ
 
-| Parameter          | Type   | Description                                          |
-| ------------------ | ------ | ---------------------------------------------------- |
-| `stop_margin`      | double | [m] margin for ego vehicle to stop before speed_bump |
-| `print_debug_info` | bool   | whether debug info will be printed or not            |
+| Parameter          | 型   | 説明                                           |
+| ------------------ | ---- | ------------------------------------------------- |
+| `stop_margin`      | double | 自車位置が速度抑制帯前で停止するためのマージン [m] |
+| `print_debug_info` | bool   | デバッグ情報を印刷するかどうか                   |
 
-### Inner-workings / Algorithms
+### 仕組み / アルゴリズム
 
-- Get no_drivable_lane attribute on the path from lanelet2 map
-- The no drivable lane state machine starts in `INIT` state
-- Get the intersection points between path and no drivable lane polygon
-- Assign the state to `APPROACHING` toward a no drivable lane if:
-  - the distance from front of the ego vehicle till the first intersection point between the ego path and the no drivable lane polygon is more than the `stop_margin`
-- Assign the state to `INSIDE_NO_DRIVABLE_LANE` if:
-  - the first point of the ego path is inside the no drivable lane polygon, or
-  - the distance from front of the ego vehicle till the first intersection point between the ego path and the no drivable lane polygon is less than the `stop_margin`
-- Assign the state to `STOPPED` when the vehicle is completely stopped
+- lanelet2 マップから経路上の no_drivable_lane 属性を取得
+- no_drivable_lane ステートマシンは `INIT` ステートから開始
+- 経路と no_drivable_lane ポリゴンの交点を取得
+- 次の場合に、no_drivable_lane に対して `APPROACHING` ステートを割り当て:
+  - 自車の前から自車の経路と no_drivable_lane ポリゴンの最初の交点までの距離が `stop_margin` より大きい
+- 次の場合に、`INSIDE_NO_DRIVABLE_LANE` ステートを割り当て:
+  - 自車の経路の最初の点が no_drivable_lane ポリゴン内にある場合、または
+  - 自車の前から自車の経路と no_drivable_lane ポリゴンの最初の交点までの距離が `stop_margin` より小さい場合
+- 車両が完全に停止したときに、`STOPPED` ステートを割り当て
 
 ![no_drivable_lane_scenarios.svg](./docs/no_drivable_lane_scenarios.svg)
 
-### Future Work
+### 今後の課題
 
-- As [Request to Intervene API](https://github.com/autowarefoundation/autoware/issues/3487) is not implemented yet, this will be handled to notify the driver to takeover the driving task responsibility after the vehicle stops due to `no_drivable_lane`
-- Handle the case when the vehicle stops before a no drivable lane but part of its footprint intersects with the no drivable lane polygon.
+- [Request to Intervene API](https://github.com/autowarefoundation/autoware/issues/3487) はまだ実装されていないため、この機能は `no_drivable_lane` により車両が停止した後、運転作業の引き継ぎをドライバーに通知するために処理されます
+- 車両が no_drivable_lane の前で停止するが、その一部が no_drivable_lane ポリゴンと交差するケースを処理
+

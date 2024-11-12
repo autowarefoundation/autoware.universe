@@ -1,266 +1,263 @@
 # PID Longitudinal Controller
 
-## Purpose / Use cases
+## 目的 / ユースケース
 
-The longitudinal_controller computes the target acceleration to achieve the target velocity set at each point of the target trajectory using a feed-forward/back control.
+longitudinal_controllerは、フィードフォワード / フィードバック制御を使用して、目標軌道の各点で設定された目標速度を実現するために目標加速度を計算します。
 
-It also contains a slope force correction that takes into account road slope information, and a delay compensation function.
-It is assumed that the target acceleration calculated here will be properly realized by the vehicle interface.
+また、道路傾斜情報を考慮する傾斜力補正機能と遅延補償機能も搭載されています。ここで計算された目標加速度が車両インターフェースによって適切に実現されることが想定されています。
 
-Note that the use of this module is not mandatory for Autoware if the vehicle supports the "target speed" interface.
+車両が「目標速度」インターフェースをサポートしている場合、Autowareではこのモジュールの使用は必須ではないことに注意してください。
 
-## Design / Inner-workings / Algorithms
+## 設計 / 内部動作 / アルゴリズム
 
-### States
+### 状態
 
-This module has four state transitions as shown below in order to handle special processing in a specific situation.
+このモジュールには、特定の状況で特殊な処理を処理するために、以下に示す4つの状態遷移があります。
 
 - **DRIVE**
-  - Executes target velocity tracking by PID control.
-  - It also applies the delay compensation and slope compensation.
+  - PID制御による目標速度追従を実行します。
+  - また、遅延補償と傾斜補償も適用します。
 - **STOPPING**
-  - Controls the motion just before stopping.
-  - Special sequence is performed to achieve accurate and smooth stopping.
+  - 停止直前の動きを制御します。
+  - 正確かつスムーズな停止を実現するために特別なシーケンスが実行されます。
 - **STOPPED**
-  - Performs operations in the stopped state (e.g. brake hold)
-- **EMERGENCY**.
-  - Enters an emergency state when certain conditions are met (e.g., when the vehicle has crossed a certain distance of a stop line).
-  - The recovery condition (whether or not to keep emergency state until the vehicle completely stops) or the deceleration in the emergency state are defined by parameters.
+  - 停止状態での操作を行います（例：ブレーキホールド）
+- **EMERGENCY**
+  - 特定の条件が満たされた場合（例：車両が停止線の一定距離を超えた場合）、緊急状態に入ります。
+  - 回復条件（車両が完全に停止するまで緊急状態を維持するかどうかの条件）または緊急状態での減速度はパラメータによって定義されます。
 
-The state transition diagram is shown below.
+状態遷移図を以下に示します。
 
 ![LongitudinalControllerStateTransition](./media/LongitudinalControllerStateTransition.drawio.svg)
 
-### Logics
+### ロジック
 
-#### Control Block Diagram
+#### 制御ブロックダイアグラム
 
 ![LongitudinalControllerDiagram](./media/LongitudinalControllerDiagram.drawio.svg)
 
-#### FeedForward (FF)
+#### フィードフォワード（FF）
 
-The reference acceleration set in the trajectory and slope compensation terms are output as a feedforward. Under ideal conditions with no modeling error, this FF term alone should be sufficient for velocity tracking.
+軌道に設定された基準加速度と傾斜補正項をフィードフォワードとして出力します。モデリングエラーのない理想的な条件下では、このFF項のみで速度追従に十分です。
 
-Tracking errors causing modeling or discretization errors are removed by the feedback control (now using PID).
+モデリングエラーまたは離散化エラーを引き起こす追従エラーは、フィードバック制御（現在はPIDを使用）によって除去されます。
 
-##### Brake keeping
+##### ブレーキ保持
 
-From the viewpoint of ride comfort, stopping with 0 acceleration is important because it reduces the impact of braking. However, if the target acceleration when stopping is 0, the vehicle may cross over the stop line or accelerate a little in front of the stop line due to vehicle model error or gradient estimation error.
+乗り心地の観点からは、加速0で停止することが重要です。なぜなら、ブレーキによる衝撃が低減されるからです。ただし、停止時の目標加速度が0の場合、車両モデルエラーまたは勾配推定エラーにより、車両が停止線を越えてしまったり、停止線の前で少し加速したりする可能性があります。
 
-For reliable stopping, the target acceleration calculated by the FeedForward system is limited to a negative acceleration when stopping.
+信頼性の高い停止を実現するために、フィードフォワードシステムによって計算された目標加速度は、停止時には負の加速度に制限されます。
 
 ![BrakeKeepingDiagram](./media/BrakeKeeping.drawio.svg)
 
-#### Slope compensation
+#### 傾斜補正
 
-Based on the slope information, a compensation term is added to the target acceleration.
+傾斜情報に基づき、補正項が目標加速度に追加されます。
 
-There are two sources of the slope information, which can be switched by a parameter.
+倾斜情報には2つの情報源があり、パラメータによって切り替えることができます。
 
-- Pitch of the estimated ego-pose (default)
-  - Calculates the current slope from the pitch angle of the estimated ego-pose
-  - Pros: Easily available
-  - Cons: Cannot extract accurate slope information due to the influence of vehicle vibration.
-- Z coordinate on the trajectory
-  - Calculates the road slope from the difference of z-coordinates between the front and rear wheel positions in the target trajectory
-  - Pros: More accurate than pitch information, if the z-coordinates of the route are properly maintained
-  - Pros: Can be used in combination with delay compensation (not yet implemented)
-  - Cons: z-coordinates of high-precision map is needed.
-  - Cons: Does not support free space planning (for now)
+  - 傾斜角から現在の勾配を計算します
+  - 長所: 容易に入手可能
+  - 短所: 車両の振動の影響により、正確な勾配情報を抽出できません
+- 軌道の Z 座標
+  - ターゲット軌跡における前輪と後輪位置の Z 座標の差から道路勾配を計算します
+  - 長所: 経路の Z 座標が適切に維持されている場合、ピッチ情報よりも正確
+  - 長所: 遅延補正との併用が可能（現時点では未実装）
+  - 短所: 高精度マップの Z 座標が必要
+  - 短所: 自由空間計画をサポートしていない（現時点では）
 
-**Notation:** This function works correctly only in a vehicle system that does not have acceleration feedback in the low-level control system.
+**記号:** この関数は、低レベル制御システムに加速フィードバックがない車両システムでのみ正常に動作します。
 
-This compensation adds gravity correction to the target acceleration, resulting in an output value that is no longer equal to the target acceleration that the autonomous driving system desires. Therefore, it conflicts with the role of the acceleration feedback in the low-level controller.
-For instance, if the vehicle is attempting to start with an acceleration of `1.0 m/s^2` and a gravity correction of `-1.0 m/s^2` is applied, the output value will be `0`. If this output value is mistakenly treated as the target acceleration, the vehicle will not start.
+この補正は、ターゲット加速度に重力補正を加え、自立走行システムが求めるターゲット加速度と等しくなくなる出力値を出力します。そのため、低レベルコントローラーの加速フィードバックの役割と矛盾します。
+たとえば、車両が「1.0 m/s^2」の加速度で始動しようとしており、「-1.0 m/s^2」の重力補正が適用されると、出力値は「0」になります。この出力値を誤ってターゲット加速度として扱えば、車両は始動しません。
 
-A suitable example of a vehicle system for the slope compensation function is one in which the output acceleration from the longitudinal_controller is converted into target accel/brake pedal input without any feedbacks. In this case, the output acceleration is just used as a feedforward term to calculate the target pedal, and hence the issue mentioned above does not arise.
+勾配補正機能に適した車両システムの例は、 longitudinal_controller からの出力加速度をフィードバックなしでターゲットアクセル/ブレーキペダル入力に変換するシステムです。この場合、出力加速度はターゲットペダルの計算のためのフィードフォワード項としてのみ使用されるため、上記の点は問題になりません。
 
-Note: The angle of the slope is defined as positive for an uphill slope, while the pitch angle of the ego pose is defined as negative when facing upward. They have an opposite definition.
+注: 勾配の角度は上り坂で正、自車位置のピッチ角は上向きで負と定義されます。定義は逆です。
 
 ![slope_definition](./media/slope_definition.drawio.svg)
 
-#### PID control
+#### PID 制御
 
-For deviations that cannot be handled by FeedForward control, such as model errors, PID control is used to construct a feedback system.
+フィードフォワード制御で処理できない偏差、たとえばモデル誤差に対しては、フィードバックシステムを構築するために PID 制御が使用されます。
 
-This PID control calculates the target acceleration from the deviation between the current ego-velocity and the target velocity.
+この PID 制御は、現在の自車速度とターゲット速度の偏差からターゲット加速度を計算します。
 
-This PID logic has a maximum value for the output of each term. This is to prevent the following:
+この PID 処理は、各項の出力に最大値があります。これは次のことを防ぐためです。
 
-- Large integral terms may cause unintended behavior by users.
-- Unintended noise may cause the output of the derivative term to be very large.
+- 大きい積分項は、ユーザーによる予期しない動作を引き起こす可能性があります。
+- 予期しないノイズは、微分項の出力の値を非常に高くする可能性があります。
 
-Note: by default, the integral term in the control system is not accumulated when the vehicle is stationary. This precautionary measure aims to prevent unintended accumulation of the integral term in scenarios where Autoware assumes the vehicle is engaged, but an external system has immobilized the vehicle to initiate startup procedures.
+注: デフォルトでは、車両が停止している場合、制御システムの積分項は蓄積されません。この予防措置は、Autoware は車両がエンゲージしていることを想定していますが、起動手順を開始するために外部システムが車両を固定している場合に、積分項の予期しない累積を防ぐことを目的としています。
 
-However, certain situations may arise, such as when the vehicle encounters a depression in the road surface during startup or if the slope compensation is inaccurately estimated (lower than necessary), leading to a failure to initiate motion. To address these scenarios, it is possible to activate error integration even when the vehicle is at rest by setting the `enable_integration_at_low_speed` parameter to true.
+ただし、車両が起動時に路面の陥没部に遭遇したり、勾配補正が不正確に推定されたり（必要以上に小さくなったり）すると、動作を開始できない場合があります。これらのシナリオに対処するために、`enable_integration_at_low_speed` パラメータを true に設定することで、車両が静止している場合でもエラーの積分をアクティブにすることができます。
 
-When `enable_integration_at_low_speed` is set to true, the PID controller will initiate integration of the acceleration error after a specified duration defined by the `time_threshold_before_pid_integration` parameter has elapsed without the vehicle surpassing a minimum velocity set by the `current_vel_threshold_pid_integration` parameter.
+`enable_integration_at_low_speed` が true に設定されている場合、PID コントローラーは、`time_threshold_before_pid_integration` パラメータで定義された特定の時間が経過し、車両が `current_vel_threshold_pid_integration` パラメータで設定された最小速度を超えていない場合に、加速度誤差の積分を開始します。
 
-The presence of the `time_threshold_before_pid_integration` parameter is important for practical PID tuning. Integrating the error when the vehicle is stationary or at low speed can complicate PID tuning. This parameter effectively introduces a delay before the integral part becomes active, preventing it from kicking in immediately. This delay allows for more controlled and effective tuning of the PID controller.
+`time_threshold_before_pid_integration` パラメータがあることは、実用的な PID チューニングにとって重要です。車両が停止中または低速時に誤差を積分すると、PID のチューニングが複雑になる可能性があります。このパラメータは効果的に積分部分がアクティブになるまでの遅延を導入し、瞬時に開始することを防ぎます。この遅延により、PID コントローラーのより制御された効果的なチューニングが可能になります。
 
-At present, PID control is implemented from the viewpoint of trade-off between development/maintenance cost and performance.
-This may be replaced by a higher performance controller (adaptive control or robust control) in future development.
+現在、PID 制御は、開発/保守コストとパフォーマンスのトレードオフの観点から実装されています。
+将来的には、より高性能なコントローラー（適応制御またはロバスト制御）に置き換えられる場合があります。
 
-#### Time delay compensation
+#### 時間遅延補正
 
-At high speeds, the delay of actuator systems such as gas pedals and brakes has a significant impact on driving accuracy.
-Depending on the actuating principle of the vehicle, the mechanism that physically controls the gas pedal and brake typically has a delay of about a hundred millisecond.
+高速では、アクセルペダルやブレーキなどのアクチュエータシステムの遅延が走行精度に大きな影響を与えます。
+車両の作動原理に応じて、アクセルペダルとブレーキを物理的に制御するメカニズムには通常、約 100 ミリ秒の遅延があります。
 
-In this controller, the predicted ego-velocity and the target velocity after the delay time are calculated and used for the feedback to address the time delay problem.
+このコントローラーでは、予測自車速度と遅延時間後のターゲット速度が計算され、遅延時間の問題に対処するためのフィードバックに使用されます。
 
-### Slope compensation
+### 勾配補正
 
-Based on the slope information, a compensation term is added to the target acceleration.
+勾配情報に基づいて、補正項がターゲット加速度に追加されます。
 
-There are two sources of the slope information, which can be switched by a parameter.
+勾配情報のソースは 2 つあり、パラメータで切り替えることができます。
 
-- Pitch of the estimated ego-pose (default)
-  - Calculates the current slope from the pitch angle of the estimated ego-pose
-  - Pros: Easily available
-  - Cons: Cannot extract accurate slope information due to the influence of vehicle vibration.
-- Z coordinate on the trajectory
-  - Calculates the road slope from the difference of z-coordinates between the front and rear wheel positions in the target trajectory
-  - Pros: More accurate than pitch information, if the z-coordinates of the route are properly maintained
-  - Pros: Can be used in combination with delay compensation (not yet implemented)
-  - Cons: z-coordinates of high-precision map is needed.
-  - Cons: Does not support free space planning (for now)
+- 推定自車位置のピッチ（デフォルト）
+  - 傾斜角から現在の勾配を計算します
 
-## Assumptions / Known limits
+## 軌道の Z 座標
+  - ターゲット軌道の前輪と後輪位置の Z 座標の差から道路勾配を計算
+  - 長所: 経路の Z 座標が適切に維持されていれば、ピッチ情報よりも正確
+  - 長所: (まだ実装されていない) 遅延補正と組み合わせて使用できる
+  - 短所: 高精細マップの Z 座標が必要
+  - 短所: (現時点では) フリースペースプランニングに対応していない
 
-1. Smoothed target velocity and its acceleration shall be set in the trajectory
-   1. The velocity command is not smoothed inside the controller (only noise may be removed).
-   2. For step-like target signal, tracking is performed as fast as possible.
-2. The vehicle velocity must be an appropriate value
-   1. The ego-velocity must be a signed-value corresponding to the forward/backward direction
-   2. The ego-velocity should be given with appropriate noise processing.
-   3. If there is a large amount of noise in the ego-velocity, the tracking performance will be significantly reduced.
-3. The output of this controller must be achieved by later modules (e.g. vehicle interface).
-   1. If the vehicle interface does not have the target velocity or acceleration interface (e.g., the vehicle only has a gas pedal and brake interface), an appropriate conversion must be done after this controller.
+## 前提 / 制限事項
 
-## Inputs / Outputs / API
+1. スムーズ化された目標速度とその加速度は軌跡に設定される必要がある
+   1. 速度コマンドはコントローラー内でスムージングされない (ノイズのみが除去される場合がある)。
+   2. ステップ状のターゲット信号の場合、トラッキングは可能な限り高速に実行されます。
+2. 車両速度は適切な値でなければならない
+   1. 自車速度は、前進/後進方向に対応する符号付き値でなければならない
+   2. 自車速度は適切なノイズ処理で与えられるべきである。
+   3. 自車速度に大きなノイズが含まれる場合、追従性能が大幅に低下する。
+3. このコントローラからの出力を後続モジュール (例: 車両インターフェース) で実現する必要がある。
+   1. 車両インターフェースに目標速度または目標加速度インターフェイスがない場合 (例: 車両にアクセルペダルとブレーキインターフェースのみがある場合)、このコントローラの後に適切な変換を行う必要がある。
 
-### Input
+## 入出力 / API
 
-Set the following from the [controller_node](../autoware_trajectory_follower_node/README.md)
+### 入力
 
-- `autoware_planning_msgs/Trajectory` : reference trajectory to follow.
-- `nav_msgs/Odometry`: current odometry
+[controller_node](../autoware_trajectory_follower_node/README.md) から次を設定
 
-### Output
+- `autoware_planning_msgs/Trajectory`: フォローするリファレンストラジェクトリ。
+- `nav_msgs/Odometry`: 現在のオドメトリ
 
-Return LongitudinalOutput which contains the following to the controller node
+### 出力
 
-- `autoware_control_msgs/Longitudinal`: command to control the longitudinal motion of the vehicle. It contains the target velocity and target acceleration.
+次の情報を格納した LongitudinalOutput をコントローラノードに返却
+
+- `autoware_control_msgs/Longitudinal`: 車両の縦運動を制御するコマンド。目標速度と目標加速度が含まれます。
 - LongitudinalSyncData
-  - velocity convergence(currently not used)
+  - 速度収束 (現在は使用されていません)
 
-### PIDController class
+### PIDController クラス
 
-The `PIDController` class is straightforward to use.
-First, gains and limits must be set (using `setGains()` and `setLimits()`) for the proportional (P), integral (I), and derivative (D) components.
-Then, the velocity can be calculated by providing the current error and time step duration to the `calculate()` function.
+`PIDController` クラスは簡単に使用できます。
+最初に、比例 (P)、積分 (I)、および微分 (D) 成分のゲインと制限を `setGains()` と `setLimits()` を使用して設定する必要があります。
+次に、現在の誤差とタイムステップ時間を `calculate()` 関数に提供することで速度を計算できます。
 
-## Parameter description
+## パラメータの説明
 
-The default parameters defined in `param/lateral_controller_defaults.param.yaml` are adjusted to the
-AutonomouStuff Lexus RX 450h for under 40 km/h driving.
+`param/lateral_controller_defaults.param.yaml` で定義されている既定のパラメータは、時速 40 km 未満の運転のために AutonomouStuff Lexus RX 450h に調整されています。
 
-| Name                                        | Type   | Description                                                                                                                                                                             | Default value |
-| :------------------------------------------ | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| delay_compensation_time                     | double | delay for longitudinal control [s]                                                                                                                                                      | 0.17          |
-| enable_smooth_stop                          | bool   | flag to enable transition to STOPPING                                                                                                                                                   | true          |
-| enable_overshoot_emergency                  | bool   | flag to enable transition to EMERGENCY when the ego is over the stop line with a certain distance. See `emergency_state_overshoot_stop_dist`.                                           | true          |
-| enable_large_tracking_error_emergency       | bool   | flag to enable transition to EMERGENCY when the closest trajectory point search is failed due to a large deviation between trajectory and ego pose.                                     | true          |
-| enable_slope_compensation                   | bool   | flag to modify output acceleration for slope compensation. The source of the slope angle can be selected from ego-pose or trajectory angle. See `use_trajectory_for_pitch_calculation`. | true          |
-| enable_brake_keeping_before_stop            | bool   | flag to keep a certain acceleration during DRIVE state before the ego stops. See [Brake keeping](#brake-keeping).                                                                       | false         |
-| enable_keep_stopped_until_steer_convergence | bool   | flag to keep stopped condition until until the steer converges.                                                                                                                         | true          |
-| max_acc                                     | double | max value of output acceleration [m/s^2]                                                                                                                                                | 3.0           |
-| min_acc                                     | double | min value of output acceleration [m/s^2]                                                                                                                                                | -5.0          |
-| max_jerk                                    | double | max value of jerk of output acceleration [m/s^3]                                                                                                                                        | 2.0           |
-| min_jerk                                    | double | min value of jerk of output acceleration [m/s^3]                                                                                                                                        | -5.0          |
-| use_trajectory_for_pitch_calculation        | bool   | If true, the slope is estimated from trajectory z-level. Otherwise the pitch angle of the ego pose is used.                                                                             | false         |
-| lpf_pitch_gain                              | double | gain of low-pass filter for pitch estimation                                                                                                                                            | 0.95          |
-| max_pitch_rad                               | double | max value of estimated pitch [rad]                                                                                                                                                      | 0.1           |
-| min_pitch_rad                               | double | min value of estimated pitch [rad]                                                                                                                                                      | -0.1          |
+| 名称                        | 型   | 説明                                                                                                                                                                             | デフォルト値 |
+| :-------------------------- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `delay_compensation_time` | double | 縦制御の遅延 [s]                                                                                                                                                      | 0.17          |
+| `enable_smooth_stop`        | bool   | STOPPING への遷移を有効にするフラグ                                                                                                                                                   | true          |
+| `enable_overshoot_emergency` | bool   | `emergency_state_overshoot_stop_dist` で指定された距離でエゴが停止線を超えた場合に EMERGENCY への遷移を有効にするフラグ | true          |
+| `enable_large_tracking_error_emergency` | bool   | 軌道とエゴの姿勢の大きなずれにより、最も近い軌跡ポイントの検索が失敗した場合に EMERGENCY への遷移を有効にするフラグ | true          |
+| `enable_slope_compensation` | bool   | 勾配補正のための出力加速度を変更するフラグ。勾配角のソースはエゴの姿勢または軌道の角度から選択できます。 `use_trajectory_for_pitch_calculation` を参照してください。 | true          |
+| `enable_brake_keeping_before_stop` | bool   | エゴが停止する前の DRIVE 状態中に特定の加速度を維持するフラグ。 [ブレーキの維持](#brake-keeping) を参照 | false         |
+| `enable_keep_stopped_until_steer_convergence` | bool   | ステアが収束するまで停止状態を維持するフラグ                                                                                                                         | true          |
+| `max_acc`                  | double | 出力加速度の最大値 [m/s^2]                                                                                                                                                | 3.0           |
+| `min_acc`                  | double | 出力加速度の最小値 [m/s^2]                                                                                                                                                | -5.0          |
+| `max_jerk`                 | double | 出力加速度のジャークの最大値 [m/s^3]                                                                                                                                        | 2.0           |
+| `min_jerk`                 | double | 出力加速度のジャークの最小値 [m/s^3]                                                                                                                                        | -5.0          |
+| `use_trajectory_for_pitch_calculation` | bool   | true の場合、勾配は軌跡の z レベルから推定されます。それ以外の場合は、エゴの姿勢のピッチ角が使用されます。                                                                             | false         |
+| `lpf_pitch_gain`            | double | ピッチ推定用のローパスフィルターのゲイン                                                                                                                                            | 0.95          |
+| `max_pitch_rad`             | double | 推定ピッチの最大値 [rad]                                                                                                                                                      | 0.1           |
+| `min_pitch_rad`             | double | 推定ピッチの最小値 [rad]                                                                                                                                                      | -0.1          |
 
-### State transition
+### 状態遷移
 
-| Name                                | Type   | Description                                                                                                                                                          | Default value |
-| :---------------------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| drive_state_stop_dist               | double | The state will transit to DRIVE when the distance to the stop point is longer than `drive_state_stop_dist` + `drive_state_offset_stop_dist` [m]                      | 0.5           |
-| drive_state_offset_stop_dist        | double | The state will transit to DRIVE when the distance to the stop point is longer than `drive_state_stop_dist` + `drive_state_offset_stop_dist` [m]                      | 1.0           |
-| stopping_state_stop_dist            | double | The state will transit to STOPPING when the distance to the stop point is shorter than `stopping_state_stop_dist` [m]                                                | 0.5           |
-| stopped_state_entry_vel             | double | threshold of the ego velocity in transition to the STOPPED state [m/s]                                                                                               | 0.01          |
-| stopped_state_entry_acc             | double | threshold of the ego acceleration in transition to the STOPPED state [m/s^2]                                                                                         | 0.1           |
-| emergency_state_overshoot_stop_dist | double | If `enable_overshoot_emergency` is true and the ego is `emergency_state_overshoot_stop_dist`-meter ahead of the stop point, the state will transit to EMERGENCY. [m] | 1.5           |
-| emergency_state_traj_trans_dev      | double | If the ego's position is `emergency_state_traj_tran_dev` meter away from the nearest trajectory point, the state will transit to EMERGENCY. [m]                      | 3.0           |
-| emergency_state_traj_rot_dev        | double | If the ego's orientation is `emergency_state_traj_rot_dev` rad away from the nearest trajectory point orientation, the state will transit to EMERGENCY. [rad]        | 0.784         |
+| 名称                               | タイプ | 説明                                                                                                                                                               | デフォルト値 |
+| :---------------------------------- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| drive_state_stop_dist               | double | 停止位置までの距離が`drive_state_stop_dist` + `drive_state_offset_stop_dist` [m]を超えると、DRIVE状態に移行します。                                  | 0.5           |
+| drive_state_offset_stop_dist        | double | 停止位置までの距離が`drive_state_stop_dist` + `drive_state_offset_stop_dist` [m]を超えると、DRIVE状態に移行します。                                  | 1.0           |
+| stopping_state_stop_dist            | double | 停止位置までの距離が`stopping_state_stop_dist` [m]未満になるとSTOPPING状態に移行します。                                                              | 0.5           |
+| stopped_state_entry_vel             | double | STOPPED状態への遷移時の自車速度のしきい値 [m/s]                                                                                                       | 0.01          |
+| stopped_state_entry_acc             | double | STOPPED状態への遷移時の自車加速度のしきい値 [m/s^2]                                                                                                     | 0.1           |
+| emergency_state_overshoot_stop_dist | double | `enable_overshoot_emergency`が真の場合、自車が停止位置から`emergency_state_overshoot_stop_dist`メートル先にあるとEMERGENCY状態に移行します。 [m] | 1.5           |
+| emergency_state_traj_trans_dev      | double | 自車位置が最寄りの軌跡ポイントから`emergency_state_traj_tran_dev`メートル離れているとEMERGENCY状態に移行します。 [m]                             | 3.0           |
+| emergency_state_traj_rot_dev        | double | 自車の方位が最寄りの軌跡ポイントの方位から`emergency_state_traj_rot_dev`ラジアン離れているとEMERGENCY状態に移行します。 [rad]                     | 0.784         |
 
-### DRIVE Parameter
+### DRIVE パラメータ
 
-| Name                                  | Type   | Description                                                                                                                                                        | Default value |
-| :------------------------------------ | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| kp                                    | double | p gain for longitudinal control                                                                                                                                    | 1.0           |
-| ki                                    | double | i gain for longitudinal control                                                                                                                                    | 0.1           |
-| kd                                    | double | d gain for longitudinal control                                                                                                                                    | 0.0           |
-| max_out                               | double | max value of PID's output acceleration during DRIVE state [m/s^2]                                                                                                  | 1.0           |
-| min_out                               | double | min value of PID's output acceleration during DRIVE state [m/s^2]                                                                                                  | -1.0          |
-| max_p_effort                          | double | max value of acceleration with p gain                                                                                                                              | 1.0           |
-| min_p_effort                          | double | min value of acceleration with p gain                                                                                                                              | -1.0          |
-| max_i_effort                          | double | max value of acceleration with i gain                                                                                                                              | 0.3           |
-| min_i_effort                          | double | min value of acceleration with i gain                                                                                                                              | -0.3          |
-| max_d_effort                          | double | max value of acceleration with d gain                                                                                                                              | 0.0           |
-| min_d_effort                          | double | min value of acceleration with d gain                                                                                                                              | 0.0           |
-| lpf_vel_error_gain                    | double | gain of low-pass filter for velocity error                                                                                                                         | 0.9           |
-| enable_integration_at_low_speed       | bool   | Whether to enable integration of acceleration errors when the vehicle speed is lower than `current_vel_threshold_pid_integration` or not.                          | false         |
-| current_vel_threshold_pid_integration | double | Velocity error is integrated for I-term only when the absolute value of current velocity is larger than this parameter. [m/s]                                      | 0.5           |
-| time_threshold_before_pid_integration | double | How much time without the vehicle moving must past to enable PID error integration. [s]                                                                            | 5.0           |
-| brake_keeping_acc                     | double | If `enable_brake_keeping_before_stop` is true, a certain acceleration is kept during DRIVE state before the ego stops [m/s^2] See [Brake keeping](#brake-keeping). | 0.2           |
+| 名称                                  | 型   | 説明                                                                                                                                                       | デフォルト値 |
+| :------------------------------------ | :----- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| kp                                    | double | Longitudinal制御のPゲイン                                                                                                                                      | 1.0           |
+| ki                                    | double | Longitudinal制御のIゲイン                                                                                                                                      | 0.1           |
+| kd                                    | double | Longitudinal制御のDゲイン                                                                                                                                      | 0.0           |
+| max_out                               | double | DRIVE状態におけるPID出力加速度の最大値[m/s²]                                                                                                              | 1.0           |
+| min_out                               | double | DRIVE状態におけるPID出力加速度の最小値[m/s²]                                                                                                              | -1.0          |
+| max_p_effort                          | double | Pゲインにおける加速度の最大値                                                                                                                              | 1.0           |
+| min_p_effort                          | double | Pゲインにおける加速度の最小値                                                                                                                              | -1.0          |
+| max_i_effort                          | double | Iゲインにおける加速度の最大値                                                                                                                              | 0.3           |
+| min_i_effort                          | double | Iゲインにおける加速度の最小値                                                                                                                              | -0.3          |
+| max_d_effort                          | double | Dゲインにおける加速度の最大値                                                                                                                              | 0.0           |
+| min_d_effort                          | double | Dゲインにおける加速度の最小値                                                                                                                              | 0.0           |
+| lpf_vel_error_gain                    | double | 速度誤差のローパスフィルタのゲイン                                                                                                                           | 0.9           |
+| enable_integration_at_low_speed       | bool   | 車両速度が`current_vel_threshold_pid_integration`未満の場合に、加速度誤差の積分を有効にするか否か                                                                          | false         |
+| current_vel_threshold_pid_integration | double | 現在の速度の絶対値がこのパラメータより大きい場合にのみ、I項に対して速度誤差を積分します。 [m/s]                                                              | 0.5           |
+| time_threshold_before_pid_integration | double | PID誤差の積分を有効にするまでに車両の無移動が経過する必要がある時間。 [s]                                                                                  | 5.0           |
+| brake_keeping_acc                     | double | `enable_brake_keeping_before_stop`が真の場合、自我が停止する前にDRIVE状態中に特定の加速度が維持されます [m/s²] [ブレーキキープ](#brake-keeping)を参照 | 0.2           |
 
-### STOPPING Parameter (smooth stop)
+### STOPPING パラメーター（スムーズストップ）
 
-Smooth stop is enabled if `enable_smooth_stop` is true.
-In smooth stop, strong acceleration (`strong_acc`) will be output first to decrease the ego velocity.
-Then weak acceleration (`weak_acc`) will be output to stop smoothly by decreasing the ego jerk.
-If the ego does not stop in a certain time or some-meter over the stop point, weak acceleration to stop right (`weak_stop_acc`) now will be output.
-If the ego is still running, strong acceleration (`strong_stop_acc`) to stop right now will be output.
+`enable_smooth_stop` が真の場合、スムーズストップが有効になります。
+スムーズストップでは、まず車両の速度を下げるために強い加速度（`strong_acc`）が生成されます。
+次に、弱い加速度（`weak_acc`）が生成されて車両のジャークを下げながらスムーズに停止します。
+車両がある一定時間停止しなかったり、停止位置を何メートルか超えた場合は、すぐに停止するための弱い加速度（`weak_stop_acc`）が生成されます。
+車両がまだ走っている場合は、すぐに停止するための強い加速度（`strong_stop_acc`）が生成されます。
 
-| Name                         | Type   | Description                                                                                                          | Default value |
-| :--------------------------- | :----- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
-| smooth_stop_max_strong_acc   | double | max strong acceleration [m/s^2]                                                                                      | -0.5          |
-| smooth_stop_min_strong_acc   | double | min strong acceleration [m/s^2]                                                                                      | -0.8          |
-| smooth_stop_weak_acc         | double | weak acceleration [m/s^2]                                                                                            | -0.3          |
-| smooth_stop_weak_stop_acc    | double | weak acceleration to stop right now [m/s^2]                                                                          | -0.8          |
-| smooth_stop_strong_stop_acc  | double | strong acceleration to be output when the ego is `smooth_stop_strong_stop_dist`-meter over the stop point. [m/s^2]   | -3.4          |
-| smooth_stop_max_fast_vel     | double | max fast vel to judge the ego is running fast [m/s]. If the ego is running fast, strong acceleration will be output. | 0.5           |
-| smooth_stop_min_running_vel  | double | min ego velocity to judge if the ego is running or not [m/s]                                                         | 0.01          |
-| smooth_stop_min_running_acc  | double | min ego acceleration to judge if the ego is running or not [m/s^2]                                                   | 0.01          |
-| smooth_stop_weak_stop_time   | double | max time to output weak acceleration [s]. After this, strong acceleration will be output.                            | 0.8           |
-| smooth_stop_weak_stop_dist   | double | Weak acceleration will be output when the ego is `smooth_stop_weak_stop_dist`-meter before the stop point. [m]       | -0.3          |
-| smooth_stop_strong_stop_dist | double | Strong acceleration will be output when the ego is `smooth_stop_strong_stop_dist`-meter over the stop point. [m]     | -0.5          |
+| 名前                        | タイプ   | 説明                                                                                                                       | デフォルト値 |
+| :--------------------------- | :----- | :-------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| smooth_stop_max_strong_acc   | double | 最大強加速 [m/s^2]                                                                                                         | -0.5          |
+| smooth_stop_min_strong_acc   | double | 最小強加速 [m/s^2]                                                                                                         | -0.8          |
+| smooth_stop_weak_acc         | double | 弱加速 [m/s^2]                                                                                                             | -0.3          |
+| smooth_stop_weak_stop_acc    | double | 弱停止加速 [m/s^2]                                                                                                          | -0.8          |
+| smooth_stop_strong_stop_acc  | double | 自車が停止ポイントから `smooth_stop_strong_stop_dist` メートル離れたときに出力される強加速 [m/s^2] | -3.4          |
+| smooth_stop_max_fast_vel     | double | 自車が高速走行中とみなす、最大の高速限界速度 [m/s]。高速走行中とみなされると、強加速が出力されます。 | 0.5           |
+| smooth_stop_min_running_vel  | double | 自車が走行中とみなす、最低走行速度 [m/s]                                                                                | 0.01          |
+| smooth_stop_min_running_acc  | double | 自車が走行中とみなす、最低走行加速度 [m/s^2]                                                                              | 0.01          |
+| smooth_stop_weak_stop_time   | double | 弱加速を出力する最大時間 [s]。時間を超えると強加速が出力されます。                                                       | 0.8           |
+| smooth_stop_weak_stop_dist   | double | 自車が停止ポイントから `smooth_stop_weak_stop_dist` メートルの距離にあるとき、弱加速が出力されます [m]                   | -0.3          |
+| smooth_stop_strong_stop_dist | double | 自車が停止ポイントから `smooth_stop_strong_stop_dist` メートルの距離にあるとき、強加速が出力されます [m]                  | -0.5          |
 
-### STOPPED Parameter
+### STOPPED パラメーター
 
-The `STOPPED` state assumes that the vehicle is completely stopped with the brakes fully applied.
-Therefore, `stopped_acc` should be set to a value that allows the vehicle to apply the strongest possible brake.
-If `stopped_acc` is not sufficiently low, there is a possibility of sliding down on steep slopes.
+`STOPPED` 状態では、車両が完全に停止しており、ブレーキが完全に作動していることを想定しています。
+そのため、`stopped_acc` には、車両に最大のブレーキを適用することを可能にする値を設定する必要があります。
+`stopped_acc` が十分に低いと、急勾配で滑落する可能性があります。
 
-| Name         | Type   | Description                                  | Default value |
-| :----------- | :----- | :------------------------------------------- | :------------ |
-| stopped_vel  | double | target velocity in STOPPED state [m/s]       | 0.0           |
-| stopped_acc  | double | target acceleration in STOPPED state [m/s^2] | -3.4          |
-| stopped_jerk | double | target jerk in STOPPED state [m/s^3]         | -5.0          |
+| Name         | Type   | Description                                                                        | Default value |
+| :----------- | :----- | :----------------------------------------------------------------------------------- | :------------ |
+| stopped_vel  | double | STOPPED状態における目標速度 [m/s]                                               | 0.0           |
+| stopped_acc  | double | STOPPED状態における目標加速度 [m/s^2]                                             | -3.4          |
+| stopped_jerk | double | STOPPED状態における目標ジャーク [m/s^3]                                            | -5.0          |
 
-### EMERGENCY Parameter
+### EMERGENCYパラメータ
 
-| Name           | Type   | Description                                       | Default value |
+| 名称           | タイプ   | 説明                                       | デフォルト値 |
 | :------------- | :----- | :------------------------------------------------ | :------------ |
-| emergency_vel  | double | target velocity in EMERGENCY state [m/s]          | 0.0           |
-| emergency_acc  | double | target acceleration in an EMERGENCY state [m/s^2] | -5.0          |
-| emergency_jerk | double | target jerk in an EMERGENCY state [m/s^3]         | -3.0          |
+| emergency_vel  | 倍精度浮動小数点 | EMERGENCY状態での目標速度 [m/s]          | 0.0           |
+| emergency_acc  | 倍精度浮動小数点 | EMERGENCY状態での目標加速度 [m/s^2] | -5.0          |
+| emergency_jerk | 倍精度浮動小数点 | EMERGENCY状態での目標ジャーク [m/s^3]         | -3.0          |
 
-## References / External links
+## 参考文献 / 外部リンク
 
-## Future extensions / Unimplemented parts
+## 今後の拡張 / 未実装の部分
 
-## Related issues
+## 関連する課題
+

@@ -1,46 +1,47 @@
-# Obstacle Cruise Planner
+# 障害物巡航プランナー
 
-## Overview
+## 概要
 
-The `autoware_obstacle_cruise_planner` package has following modules.
+`autoware_obstacle_cruise_planner` パッケージには、以下のモジュールが含まれています。
 
-- Stop planning
-  - stop when there is a static obstacle near the trajectory.
-- Cruise planning
-  - cruise a dynamic obstacle in front of the ego.
-- Slow down planning
-  - slow down when there is a static/dynamic obstacle near the trajectory.
+- 停止プランニング
+  - 進行経路の近くに静止した障害物がある場合に停止します。
+- 巡航プランニング
+  - 自車の前にある動的な障害物を巡航します。
+- 減速プランニング
+  - 進行経路の近くに静止した障害物や動的な障害物がある場合に減速します。
 
-## Interfaces
+## インターフェース
 
-### Input topics
+### 入力トピック
 
-| Name                 | Type                                       | Description      |
-| -------------------- | ------------------------------------------ | ---------------- |
-| `~/input/trajectory` | autoware_planning_msgs::Trajectory         | input trajectory |
-| `~/input/objects`    | autoware_perception_msgs::PredictedObjects | dynamic objects  |
-| `~/input/odometry`   | nav_msgs::msg::Odometry                    | ego odometry     |
+| 名称               | 種類                                       | 説明                                   |
+| -------------------- | ------------------------------------------ | -------------------------------------- |
+| `~/input/trajectory` | `autoware_planning_msgs::Trajectory`       | 入力軌道                                |
+| `~/input/objects`    | `autoware_perception_msgs::PredictedObjects` | 動的オブジェクト                        |
+| `~/input/odometry`   | `nav_msgs::msg::Odometry`                    | 自車オドメトリ                          |
 
-### Output topics
+### 出力トピック
 
-| Name                            | Type                                           | Description                           |
-| ------------------------------- | ---------------------------------------------- | ------------------------------------- |
-| `~/output/trajectory`           | autoware_planning_msgs::Trajectory             | output trajectory                     |
-| `~/output/velocity_limit`       | tier4_planning_msgs::VelocityLimit             | velocity limit for cruising           |
-| `~/output/clear_velocity_limit` | tier4_planning_msgs::VelocityLimitClearCommand | clear command for velocity limit      |
-| `~/output/stop_reasons`         | tier4_planning_msgs::StopReasonArray           | reasons that make the vehicle to stop |
+| 名前                            | 型                                           | 説明                                |
+| ------------------------------- | ---------------------------------------------- | -------------------------------------- |
+| `~/output/trajectory`           | autoware_planning_msgs::Trajectory             | 出力軌跡                              |
+| `~/output/velocity_limit`       | tier4_planning_msgs::VelocityLimit             | 巡行時の速度制限                      |
+| `~/output/clear_velocity_limit` | tier4_planning_msgs::VelocityLimitClearCommand | 速度制限のクリアコマンド                  |
+| `~/output/stop_reasons`         | tier4_planning_msgs::StopReasonArray           | 車両を停止させる理由                      |
 
-## Design
+## 設計
 
-Design for the following functions is defined here.
+以下の機能の設計がここに定義されています。
 
-- Behavior determination against obstacles
-- Stop planning
-- Cruise planning
-- Slow down planning
+- 障害物対策
+- 停止計画
+- クルーズ計画
+- 減速計画
 
-A data structure for cruise and stop planning is as follows.
-This planner data is created first, and then sent to the planning algorithm.
+クルーズ計画と停止計画のデータ構造は次のとおりです。
+このプランナーデータは最初に作成され、その後、計画アルゴリズムに送信されます。
+
 
 ```cpp
 struct PlannerData
@@ -53,6 +54,7 @@ struct PlannerData
   std::vector<Obstacle> target_obstacles;
 };
 ```
+
 
 ```cpp
 struct Obstacle
@@ -69,158 +71,156 @@ struct Obstacle
 };
 ```
 
-### Behavior determination against obstacles
+### 障害物に対する動作決定
 
-Obstacles for cruising, stopping and slowing down are selected in this order based on their pose and velocity.
-The obstacles not in front of the ego will be ignored.
+巡航、停止、減速の障害物は、自車位置と速度に基づいてこの順序で選択されます。
+自車の前方にない障害物は無視されます。
 
 ![determine_cruise_stop_slow_down](./media/determine_cruise_stop_slow_down.drawio.svg)
 
-#### Determine cruise vehicles
+#### 巡航車両の決定
 
-The obstacles meeting the following condition are determined as obstacles for cruising.
+次の条件を満たす障害物は、巡航障害物として決定されます。
 
-- The lateral distance from the object to the ego's trajectory is smaller than `behavior_determination.cruise.max_lat_margin`.
+- 物体から自車の軌道までの横方向距離が`behavior_determination.cruise.max_lat_margin`未満であること。
 
-- The object type is for cruising according to `common.cruise_obstacle_type.*`.
-- The object is not crossing the ego's trajectory (\*1).
-- If the object is inside the trajectory.
-  - The object type is for inside cruising according to `common.cruise_obstacle_type.inside.*`.
-  - The object velocity is larger than `behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop`.
-- If the object is outside the trajectory.
-  - The object type is for outside cruising according to `common.cruise_obstacle_type.outside.*`.
-  - The object velocity is larger than `behavior_determination.cruise.outside_obstacle.obstacle_velocity_threshold`.
-  - The highest confident predicted path collides with the ego's trajectory.
-  - Its collision's period is larger than `behavior_determination.cruise.outside_obstacle.ego_obstacle_overlap_time_threshold`.
+- 物体タイプが`common.cruise_obstacle_type.*`に従って巡航用であること。
+- 物体は自車の軌道を横断していない（\*1）。
+- 物体が軌道内にある場合。
+  - 物体タイプが`common.cruise_obstacle_type.inside.*`に従って巡航内部用であること。
+  - 物体速度が`behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop`を超えていること。
+- 物体が軌道外にある場合。
+  - 物体タイプが`common.cruise_obstacle_type.outside.*`に従って巡航外部用であること。
+  - 物体速度が`behavior_determination.cruise.outside_obstacle.obstacle_velocity_threshold`を超えていること。
+  - 最も信頼性の高い予測経路が自車の軌道と衝突すること。
+  - その衝突期間が`behavior_determination.cruise.outside_obstacle.ego_obstacle_overlap_time_threshold`を超えていること。
 
-| Parameter                                                                            | Type   | Description                                                          |
-| ------------------------------------------------------------------------------------ | ------ | -------------------------------------------------------------------- |
-| `common.cruise_obstacle_type.inside.unknown`                                         | bool   | flag to consider unknown objects for cruising                        |
-| `common.cruise_obstacle_type.inside.car`                                             | bool   | flag to consider unknown objects for cruising                        |
-| `common.cruise_obstacle_type.inside.truck`                                           | bool   | flag to consider unknown objects for cruising                        |
-| ...                                                                                  | bool   | ...                                                                  |
-| `common.cruise_obstacle_type.outside.unknown`                                        | bool   | flag to consider unknown objects for cruising                        |
-| `common.cruise_obstacle_type.outside.car`                                            | bool   | flag to consider unknown objects for cruising                        |
-| `common.cruise_obstacle_type.outside.truck`                                          | bool   | flag to consider unknown objects for cruising                        |
-| ...                                                                                  | bool   | ...                                                                  |
-| `behavior_determination.cruise.max_lat_margin`                                       | double | maximum lateral margin for cruise obstacles                          |
-| `behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop`             | double | maximum obstacle velocity for cruise obstacle inside the trajectory  |
-| `behavior_determination.cruise.outside_obstacle.obstacle_velocity_threshold`         | double | maximum obstacle velocity for cruise obstacle outside the trajectory |
-| `behavior_determination.cruise.outside_obstacle.ego_obstacle_overlap_time_threshold` | double | maximum overlap time of the collision between the ego and obstacle   |
+| パラメータ | 型 | 説明 |
+|---|---|---|
+| `common.cruise_obstacle_type.inside.unknown` | bool | クルーズに対して、不明なオブジェクトを考慮するフラグ |
+| `common.cruise_obstacle_type.inside.car` | bool | クルーズに対して、乗用車オブジェクトを考慮するフラグ |
+| `common.cruise_obstacle_type.inside.truck` | bool | クルーズに対して、トラックオブジェクトを考慮するフラグ |
+| ... | bool | ... |
+| `common.cruise_obstacle_type.outside.unknown` | bool | クルーズに対して、不明なオブジェクトを考慮するフラグ |
+| `common.cruise_obstacle_type.outside.car` | bool | クルーズに対して、乗用車オブジェクトを考慮するフラグ |
+| `common.cruise_obstacle_type.outside.truck` | bool | クルーズに対して、トラックオブジェクトを考慮するフラグ |
+| ... | bool | ... |
+| `behavior_determination.cruise.max_lat_margin` | double | クルーズ障害物の最大横方向マージン |
+| `behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop` | double | 軌道内のクルーズ障害物の最大障害物速度 |
+| `behavior_determination.cruise.outside_obstacle.obstacle_velocity_threshold` | double | 軌道外のクルーズ障害物の最大障害物速度 |
+| `behavior_determination.cruise.outside_obstacle.ego_obstacle_overlap_time_threshold` | double | 自車と障害物が衝突する最大重複時間 |
 
-##### Yield for vehicles that might cut in into the ego's lane
+##### エゴ車の車線へ割り込んでくる可能性のある車両への譲歩
 
-It is also possible to yield (cruise) behind vehicles in neighbor lanes if said vehicles might cut in the ego vehicle's current lane.
+他車線の車両がエゴ車の現在の車線に割り込んでくる可能性がある場合、それらの車両の後ろで譲歩（巡航）することもできます。
 
-The obstacles meeting the following condition are determined as obstacles for yielding (cruising).
+以下の条件を満たす障害物は、譲歩（巡航）の障害物として判断されます。
 
-- The object type is for cruising according to `common.cruise_obstacle_type.*` and it is moving with a speed greater than `behavior_determination.cruise.yield.stopped_obstacle_velocity_threshold`.
-- The object is not crossing the ego's trajectory (\*1).
-- There is another object of type `common.cruise_obstacle_type.*` stopped in front of the moving obstacle.
-- The lateral distance (using the ego's trajectory as reference) between both obstacles is less than `behavior_determination.cruise.yield.max_lat_dist_between_obstacles`
-- Both obstacles, moving and stopped, are within `behavior_determination.cruise.yield.lat_distance_threshold` and `behavior_determination.cruise.yield.lat_distance_threshold` + `behavior_determination.cruise.yield.max_lat_dist_between_obstacles` lateral distance from the ego's trajectory respectively.
+- 物体タイプが `common.cruise_obstacle_type.*` に従って巡航用であり、速度が `behavior_determination.cruise.yield.stopped_obstacle_velocity_threshold` より大きい。
+- 物体がエゴ車の軌跡を横断していない（*1）。
+- 移動中の障害物の前に `common.cruise_obstacle_type.*` タイプの別の停止障害物がある。
+- 両方の障害物間の横方向距離（エゴ車の軌跡を基準とする）が `behavior_determination.cruise.yield.max_lat_dist_between_obstacles` 未満である。
+- 移動中および停止中の障害物は両方、エゴ車の軌跡からそれぞれ横方向距離で `behavior_determination.cruise.yield.lat_distance_threshold` と `behavior_determination.cruise.yield.lat_distance_threshold` + `behavior_determination.cruise.yield.max_lat_dist_between_obstacles` 内にある。
 
-If the above conditions are met, the ego vehicle will cruise behind the moving obstacle, yielding to it so it can cut in into the ego's lane to avoid the stopped obstacle.
+上記の条件を満たしている場合、エゴ車は移動障害物の後ろを巡航し、停止障害物を避けるためにエゴ車の車線に割り込んでくるのを譲歩します。
 
-#### Determine stop vehicles
+#### 停止車両の特定
 
-Among obstacles which are not for cruising, the obstacles meeting the following condition are determined as obstacles for stopping.
+巡航用ではない障害物の中で、以下の条件を満たす障害物は停止用の障害物として特定されます。
 
-- The object type is for stopping according to `common.stop_obstacle_type.*`.
-- The lateral distance from the object to the ego's trajectory is smaller than `behavior_determination.stop.max_lat_margin`.
-- The object velocity along the ego's trajectory is smaller than `behavior_determination.obstacle_velocity_threshold_from_stop_to_cruise`.
-- The object
-  - does not cross the ego's trajectory (\*1)
-  - with the velocity smaller than `behavior_determination.crossing_obstacle.obstacle_velocity_threshold`
-  - and its collision time margin is large enough (\*2).
+- 物体タイプが `common.stop_obstacle_type.*` に従って停止用である。
+- 物体からエゴ車の軌跡への横方向距離が `behavior_determination.stop.max_lat_margin` 未満である。
+- エゴ車の軌跡に沿った物体速度が `behavior_determination.obstacle_velocity_threshold_from_stop_to_cruise` より小さい。
+- 物体は
+  - エゴ車の軌跡を横断していない（*1）
+  - 速度が `behavior_determination.crossing_obstacle.obstacle_velocity_threshold` 未満
+  - 衝突時刻マージンが十分に大きい（*2）。
 
-| Parameter                                                                | Type   | Description                                   |
-| ------------------------------------------------------------------------ | ------ | --------------------------------------------- |
-| `common.stop_obstacle_type.unknown`                                      | bool   | flag to consider unknown objects for stopping |
-| `common.stop_obstacle_type.car`                                          | bool   | flag to consider unknown objects for stopping |
-| `common.stop_obstacle_type.truck`                                        | bool   | flag to consider unknown objects for stopping |
-| ...                                                                      | bool   | ...                                           |
-| `behavior_determination.stop.max_lat_margin`                             | double | maximum lateral margin for stop obstacles     |
-| `behavior_determination.crossing_obstacle.obstacle_velocity_threshold`   | double | maximum crossing obstacle velocity to ignore  |
-| `behavior_determination.obstacle_velocity_threshold_from_stop_to_cruise` | double | maximum obstacle velocity for stop            |
+| パラメーター                                                        | 型   | 説明                                         |
+| -------------------------------------------------------------------- | ------ | -------------------------------------------- |
+| `common.stop_obstacle_type.unknown`                                   | ブール | 停止時の未知の障害物として考慮するフラグ     |
+| `common.stop_obstacle_type.car`                                      | ブール | 停止時の不明な障害物として考慮するフラグ     |
+| `common.stop_obstacle_type.truck`                                    | ブール | 停止時の不明な障害物として考慮するフラグ     |
+| ...                                                                 | ブール | ...                                         |
+| `behavior_determination.stop.max_lat_margin`                          | double | 停止障害物の最大横方向マージン             |
+| `behavior_determination.crossing_obstacle.obstacle_velocity_threshold` | double | 無視する最大横断障害物速度                  |
+| `behavior_determination.obstacle_velocity_threshold_from_stop_to_cruise` | double | 停止時の最大障害物速度                     |
 
-#### Determine slow down vehicles
+#### 減速対象車両の特定
 
-Among obstacles which are not for cruising and stopping, the obstacles meeting the following condition are determined as obstacles for slowing down.
+巡航および停止の妨げにならない障害物の中で、以下条件を満たす障害物が減速対象の障害物として特定されます。
 
-- The object type is for slowing down according to `common.slow_down_obstacle_type.*`.
-- The lateral distance from the object to the ego's trajectory is smaller than `behavior_determination.slow_down.max_lat_margin`.
+- オブジェクトタイプが `common.slow_down_obstacle_type.*` に従って減速対象である。
+- オブジェクトから自車軌跡までの横方向距離が `behavior_determination.slow_down.max_lat_margin` 未満である。
 
-| Parameter                                         | Type   | Description                                       |
-| ------------------------------------------------- | ------ | ------------------------------------------------- |
-| `common.slow_down_obstacle_type.unknown`          | bool   | flag to consider unknown objects for slowing down |
-| `common.slow_down_obstacle_type.car`              | bool   | flag to consider unknown objects for slowing down |
-| `common.slow_down_obstacle_type.truck`            | bool   | flag to consider unknown objects for slowing down |
-| ...                                               | bool   | ...                                               |
-| `behavior_determination.slow_down.max_lat_margin` | double | maximum lateral margin for slow down obstacles    |
+| パラメータ                                       | 型     | 説明                                                   |
+| ---------------------------------------------- | ------ | ------------------------------------------------------ |
+| `common.slow_down_obstacle_type.unknown`        | bool   | 不明なオブジェクトを減速で考慮するフラグ                   |
+| `common.slow_down_obstacle_type.car`            | bool   | 不明なオブジェクトを減速で考慮するフラグ                   |
+| `common.slow_down_obstacle_type.truck`          | bool   | 不明なオブジェクトを減速で考慮するフラグ                   |
+| ...                                             | bool   | ...                                                    |
+| `behavior_determination.slow_down.max_lat_margin` | double | 減速障害物の最大横マージン                                |
 
-#### NOTE
+#### メモ
 
-##### \*1: Crossing obstacles
+##### \*1: 交差障害物
 
-Crossing obstacle is the object whose orientation's yaw angle against the ego's trajectory is smaller than `behavior_determination.crossing_obstacle.obstacle_traj_angle_threshold`.
+交差障害物は、自己車両の軌道に対するヨー角が `behavior_determination.crossing_obstacle.obstacle_traj_angle_threshold` より小さい物体である。
 
-| Parameter                                                                | Type   | Description                                                                                       |
-| ------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------- |
-| `behavior_determination.crossing_obstacle.obstacle_traj_angle_threshold` | double | maximum angle against the ego's trajectory to judge the obstacle is crossing the trajectory [rad] |
+| Parameter | Type | Description |
+|---|---|---|
+| `behavior_determination.crossing_obstacle.obstacle_traj_angle_threshold` | double | 自車軌跡に対する障害物の最大角度。この角度を超えると障害物が軌跡を横切っていると判断する [rad] |
 
-##### \*2: Enough collision time margin
+##### \*2: 충돌 시간 여유 부족
 
-We predict the collision area and its time by the ego with a constant velocity motion and the obstacle with its predicted path.
-Then, we calculate a collision time margin which is the difference of the time when the ego will be inside the collision area and the obstacle will be inside the collision area.
-When this time margin is smaller than `behavior_determination.stop.crossing_obstacle.collision_time_margin`, the margin is not enough.
+우리는 자차가 일정한 속도로 이동하고 장애물이 예측 경로로 이동하는 경우 충돌 영역과 그 시간을 예측합니다.
+그런 다음 충돌 영역 내에 자차가 진입할 시간과 장애물이 충돌 영역 내에 진입하는 시간의 차이인 충돌 시간 여유를 계산합니다.
+이 여유 시간이 `behavior_determination.stop.crossing_obstacle.collision_time_margin`보다 작으면 여유가 부족합니다.
 
-| Parameter                                                             | Type   | Description                                           |
-| --------------------------------------------------------------------- | ------ | ----------------------------------------------------- |
-| `behavior_determination.stop.crossing_obstacle.collision_time_margin` | double | maximum collision time margin of the ego and obstacle |
+| パラメータ                                           | タイプ | 説明                                                     |
+| ------------------------------------------------- | ------ | ------------------------------------------------------- |
+| `behavior_determination.stop.crossing_obstacle.collision_time_margin` | double | 自車と障害物との最大衝突時間マージン                   |
 
-### Stop planning
+### Stop Planning
 
-| Parameter                              | Type   | Description                                                                                |
+| パラメータ                              | 型     | 説明                                                                                 |
 | -------------------------------------- | ------ | ------------------------------------------------------------------------------------------ |
-| `common.min_strong_accel`              | double | ego's minimum acceleration to stop [m/ss]                                                  |
-| `common.safe_distance_margin`          | double | distance with obstacles for stop [m]                                                       |
-| `common.terminal_safe_distance_margin` | double | terminal_distance with obstacles for stop, which cannot be exceed safe distance margin [m] |
+| `common.min_strong_accel`              | double | 自車の停止に必要な最小加速度 [m/ss]                                                  |
+| `common.safe_distance_margin`          | double | 障害物との安全距離 [m]                                                               |
+| `common.terminal_safe_distance_margin` | double | 安全距離の範囲を超えない、障害物との最終安全距離 [m]                                |
 
-The role of the stop planning is keeping a safe distance with static vehicle objects or dynamic/static non vehicle objects.
+停止計画の役割は、静止車両物体または動的/静止非車両物体と安全な距離を保つことです。
 
-The stop planning just inserts the stop point in the trajectory to keep a distance with obstacles.
-The safe distance is parameterized as `common.safe_distance_margin`.
-When it stops at the end of the trajectory, and obstacle is on the same point, the safe distance becomes `terminal_safe_distance_margin`.
+停止計画は、障害物との距離を保つために停止点を軌道に挿入するだけです。安全距離は `common.safe_distance_margin` としてパラメータ化されます。軌道の最後に停止し、停止点に障害物が存在する場合、安全距離は `terminal_safe_distance_margin` になります。
 
-When inserting the stop point, the required acceleration for the ego to stop in front of the stop point is calculated.
-If the acceleration is less than `common.min_strong_accel`, the stop planning will be cancelled since this package does not assume a strong sudden brake for emergency.
+停止点を挿入すると、自車が停止点の前で停止するために必要な加速度が計算されます。加速度が `common.min_strong_accel` より小さい場合、このパッケージは緊急時の急ブレーキを想定していないため、停止計画はキャンセルされます。
 
-### Cruise planning
+### クルーズプランニング
 
-| Parameter                     | Type   | Description                                    |
-| ----------------------------- | ------ | ---------------------------------------------- |
-| `common.safe_distance_margin` | double | minimum distance with obstacles for cruise [m] |
+| パラメータ                      | 型   | 説明                                          |
+| ------------------------------ | ------ | --------------------------------------------- |
+| `common.safe_distance_margin` | double | 定速走行時の障害物との最小距離 [m]       |
 
-The role of the cruise planning is keeping a safe distance with dynamic vehicle objects with smoothed velocity transition.
-This includes not only cruising a front vehicle, but also reacting a cut-in and cut-out vehicle.
+**クルーズプランニング**
 
-The safe distance is calculated dynamically based on the Responsibility-Sensitive Safety (RSS) by the following equation.
+クルーズプランニングの役割は、滑らかな速度遷移により動的な車両オブジェクトとの安全車間距離を維持することです。これには、先行車両の追従だけでなく、割り込み・割り出し車両への対応も含まれます。
+
+安全車間距離は、次の方程式による責任感応型安全（RSS）に基づいて動的に計算されます。
 
 $$
 d_{rss} = v_{ego} t_{idling} + \frac{1}{2} a_{ego} t_{idling}^2 + \frac{v_{ego}^2}{2 a_{ego}} - \frac{v_{obstacle}^2}{2 a_{obstacle}},
 $$
 
-assuming that $d_{rss}$ is the calculated safe distance, $t_{idling}$ is the idling time for the ego to detect the front vehicle's deceleration, $v_{ego}$ is the ego's current velocity, $v_{obstacle}$ is the front obstacle's current velocity, $a_{ego}$ is the ego's acceleration, and $a_{obstacle}$ is the obstacle's acceleration.
-These values are parameterized as follows. Other common values such as ego's minimum acceleration is defined in `common.param.yaml`.
+ここで、$d_{rss}$ は計算された安全車間距離、$t_{idling}$ は先行車両の減速を自己車両が検出するまでのアイドリング時間、$v_{ego}$ は自己車両の現在の速度、$v_{obstacle}$ は先行障害物の現在の速度、$a_{ego}$ は自己車両の加速度、$a_{obstacle}$ は障害物の加速度と仮定します。
+これらの値は以下のとおりにパラメータ化されます。自己車両の最小加速度などの他の一般的な値は `common.param.yaml` で定義されています。
 
-| Parameter                         | Type   | Description                                                                   |
-| --------------------------------- | ------ | ----------------------------------------------------------------------------- |
-| `common.idling_time`              | double | idling time for the ego to detect the front vehicle starting deceleration [s] |
-| `common.min_ego_accel_for_rss`    | double | ego's acceleration for RSS [m/ss]                                             |
-| `common.min_object_accel_for_rss` | double | front obstacle's acceleration for RSS [m/ss]                                  |
+| パラメータ | タイプ | 説明 |
+|---|---|---|
+| `common.idling_time` | double | 前走車の減速開始を自己車両が検出するまでのアイドル時間 [s] |
+| `common.min_ego_accel_for_rss` | double | RSS時の自己車両の加速度 [m/ss] |
+| `common.min_object_accel_for_rss` | double | RSS時の前方の障害物の加速度 [m/ss] |
 
-The detailed formulation is as follows.
+詳細な定式は以下のとおりです。
 
 $$
 \begin{align}
@@ -233,63 +233,103 @@ v_{target} & = max(v_{ego} + v_{add}, v_{min, cruise})
 \end{align}
 $$
 
-| Variable          | Description                             |
+| 変数          | 説明                             |
 | ----------------- | --------------------------------------- |
-| `d`               | actual distance to obstacle             |
-| `d_{rss}`         | ideal distance to obstacle based on RSS |
+| `d`               |障害物までの実際の距離             |
+| `d_{rss}`         |RSSに基づく障害物までの理想的な距離 |
 | `v_{min, cruise}` | `min_cruise_target_vel`                 |
 | `w_{acc}`         | `output_ratio_during_accel`             |
-| `lpf(val)`        | apply low-pass filter to `val`          |
-| `pid(val)`        | apply pid to `val`                      |
+| `lpf(val)`        | `val`にローパスフィルタを適用           |
+| `pid(val)`        | `val`にPIDを適用                      |
 
-### Slow down planning
+### 減速計画
 
-| Parameter                                                         | Type           | Description                                                                                                                                                                                                                                                                                                  |
+Autowareの減速計画では、障害物やその他の危険な状況を回避するために、減速または停止する経路を計画します。
+
+**コンポーネント**
+
+* **Planningコンポーネント:** 障害物を検出し、減速計画を計算します。
+* **Executionコンポーネント:** 減速計画を実行し、車両を所定の速度まで減速します。
+
+**アルゴリズム**
+
+減速計画アルゴリズムは次の手順で動作します。
+
+1. **障害物の検出:** Planningコンポーネントは、ライダーセンサーやカメラからのデータを使用して障害物を検出します。
+2. **危険性の評価:** 障害物との衝突の可能性と、その重症度を評価します。
+3. **最適な減速計画の計算:** 障害物との衝突を回避しながら、所定の速度まで減速するための最適な計画を計算します。
+4. **減速計画の実行:** Executionコンポーネントは、ブレーキやスロットルを制御して減速計画を実行します。
+
+**パラメータ**
+
+減速計画アルゴリズムは、次のパラメータで構成できます。
+
+* **最小減速距離:** 障害物との衝突を回避するために必要とされる最小減速距離
+* **最大減速率:** 車両が減速できる最大減速率
+* **目標速度:** 障害物との衝突を回避するために減速する目標速度
+
+**制限事項**
+
+減速計画アルゴリズムには次のような制限があります。
+
+* **センサーの制限:** 障害物の検出は、ライダーセンサーやカメラの能力に依存します。
+* **計算コスト:** 減速計画の計算は、大量の計算リソースを必要とする場合があります。
+* **環境の動的性:** 減速計画は、周囲環境の変化を考慮しません。
+
+**アプリケーション**
+
+減速計画は、次のような自動運転アプリケーションに使用できます。
+
+* **衝突回避:** 障害物との衝突を回避します。
+* **渋滞への対応:** 渋滞で安全な速度を維持します。
+* **停止交差点での停止:** 交差点で安全に停止します。
+
+| パラメーター                                                         | タイプ           | 説明                                                                                                                                                                                                                                                                                                  |
 | ----------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `slow_down.labels`                                                | vector(string) | A vector of labels for customizing obstacle-label-based slow down behavior. Each label represents an obstacle type that will be treated differently when applying slow down. The possible labels are ("default" (Mandatory), "unknown","car","truck","bus","trailer","motorcycle","bicycle" or "pedestrian") |
-| `slow_down.default.static.min_lat_velocity`                       | double         | minimum velocity to linearly calculate slow down velocity [m]. Note: This default value will be used when the detected obstacle label does not match any of the slow_down.labels and the obstacle is considered to be static, or not moving                                                                  |
-| `slow_down.default.static.max_lat_velocity`                       | double         | maximum velocity to linearly calculate slow down velocity [m]. Note: This default value will be used when the detected obstacle label does not match any of the slow_down.labels and the obstacle is considered to be static, or not moving                                                                  |
-| `slow_down.default.static.min_lat_margin`                         | double         | minimum lateral margin to linearly calculate slow down velocity [m]. Note: This default value will be used when the detected obstacle label does not match any of the slow_down.labels and the obstacle is considered to be static, or not moving                                                            |
-| `slow_down.default.static.max_lat_margin`                         | double         | maximum lateral margin to linearly calculate slow down velocity [m]. Note: This default value will be used when the detected obstacle label does not match any of the slow_down.labels and the obstacle is considered to be static, or not moving                                                            |
-| `slow_down.default.moving.min_lat_velocity`                       | double         | minimum velocity to linearly calculate slow down velocity [m]. Note: This default value will be used when the detected obstacle label does not match any of the slow_down.labels and the obstacle is considered to be moving                                                                                 |
-| `slow_down.default.moving.max_lat_velocity`                       | double         | maximum velocity to linearly calculate slow down velocity [m]. Note: This default value will be used when the detected obstacle label does not match any of the slow_down.labels and the obstacle is considered to be moving                                                                                 |
-| `slow_down.default.moving.min_lat_margin`                         | double         | minimum lateral margin to linearly calculate slow down velocity [m]. Note: This default value will be used when the detected obstacle label does not match any of the slow_down.labels and the obstacle is considered to be moving                                                                           |
-| `slow_down.default.moving.max_lat_margin`                         | double         | maximum lateral margin to linearly calculate slow down velocity [m]. Note: This default value will be used when the detected obstacle label does not match any of the slow_down.labels and the obstacle is considered to be moving                                                                           |
-| `(optional) slow_down."label".(static & moving).min_lat_velocity` | double         | minimum velocity to linearly calculate slow down velocity [m]. Note: only for obstacles specified in `slow_down.labels`. Requires a `static` and a `moving` value                                                                                                                                            |
-| `(optional) slow_down."label".(static & moving).max_lat_velocity` | double         | maximum velocity to linearly calculate slow down velocity [m]. Note: only for obstacles specified in `slow_down.labels`. Requires a `static` and a `moving` value                                                                                                                                            |
-| `(optional) slow_down."label".(static & moving).min_lat_margin`   | double         | minimum lateral margin to linearly calculate slow down velocity [m]. Note: only for obstacles specified in `slow_down.labels`. Requires a `static` and a `moving` value                                                                                                                                      |
-| `(optional) slow_down."label".(static & moving).max_lat_margin`   | double         | maximum lateral margin to linearly calculate slow down velocity [m]. Note: only for obstacles specified in `slow_down.labels`. Requires a `static` and a `moving` value                                                                                                                                      |
+| `slow_down.labels`                                                | vector(文字列) | 障害物のラベルに基づいた減速動作をカスタマイズするためのラベルのベクトル。各ラベルは、減速の適用時に異なる扱いを受ける障害物のタイプを表します。使用可能なラベルは次のとおりです（「default」（必須）、「unknown」、「car」、「truck」、「bus」、「trailer」、「motorcycle」、「bicycle」または「pedestrian」） |
+| `slow_down.default.static.min_lat_velocity`                       | double         | 減速速度を線形に計算するための最小速度 [m]。注: 検出された障害物のラベルが `slow_down.labels` のいずれとも一致せず、障害物が静止または移動していないと見なされた場合に、このデフォルト値が使用されます                                                                  |
+| `slow_down.default.static.max_lat_velocity`                       | double         | 減速速度を線形に計算するための最大速度 [m]。注: 検出された障害物のラベルが `slow_down.labels` のいずれとも一致せず、障害物が静止または移動していないと見なされた場合に、このデフォルト値が使用されます                                                                  |
+| `slow_down.default.static.min_lat_margin`                         | double         | 減速速度を線形に計算するための最小横方向のマージン [m]。注: 検出された障害物のラベルが `slow_down.labels` のいずれとも一致せず、障害物が静止または移動していないと見なされた場合に、このデフォルト値が使用されます                                                            |
+| `slow_down.default.static.max_lat_margin`                         | double         | 減速速度を線形に計算するための最大横方向のマージン [m]。注: 検出された障害物のラベルが `slow_down.labels` のいずれとも一致せず、障害物が静止または移動していないと見なされた場合に、このデフォルト値が使用されます                                                            |
+| `slow_down.default.moving.min_lat_velocity`                       | double         | 減速速度を線形に計算するための最小速度 [m]。注: 検出された障害物のラベルが `slow_down.labels` のいずれとも一致せず、障害物が移動していると見なされた場合に、このデフォルト値が使用されます                                                                                 |
+| `slow_down.default.moving.max_lat_velocity`                       | double         | 減速速度を線形に計算するための最大速度 [m]。注: 検出された障害物のラベルが `slow_down.labels` のいずれとも一致せず、障害物が移動していると見なされた場合に、このデフォルト値が使用されます                                                                                 |
+| `slow_down.default.moving.min_lat_margin`                         | double         | 減速速度を線形に計算するための最小横方向のマージン [m]。注: 検出された障害物のラベルが `slow_down.labels` のいずれとも一致せず、障害物が移動していると見なされた場合に、このデフォルト値が使用されます                                                                           |
+| `slow_down.default.moving.max_lat_margin`                         | double         | 減速速度を線形に計算するための最大横方向のマージン [m]。注: 検出された障害物のラベルが `slow_down.labels` のいずれとも一致せず、障害物が移動していると見なされた場合に、このデフォルト値が使用されます                                                                           |
+| `(オプション) slow_down."ラベル".(static & moving).min_lat_velocity` | double         | 減速速度を線形に計算するための最小速度 [m]。注: `slow_down.labels` で指定された障害物のみを使用します。`static` と `moving` の値が必要です                                                                                                                                            |
+| `(オプション) slow_down."ラベル".(static & moving).max_lat_velocity` | double         | 減速速度を線形に計算するための最大速度 [m]。注: `slow_down.labels` で指定された障害物のみを使用します。`static` と `moving` の値が必要です                                                                                                                                            |
+| `(オプション) slow_down."ラベル".(static & moving).min_lat_margin`   | double         | 減速速度を線形に計算するための最小横方向のマージン [m]。注: `slow_down.labels` で指定された障害物のみを使用します。`static` と `moving` の値が必要です                                                                                                                                      |
+| `(オプション) slow_down."ラベル".(static & moving).max_lat_margin`   | double         | 減速速度を線形に計算するための最大横方向のマージン [m]。注: `slow_down.labels` で指定された障害物のみを使用します。`static` と `moving` の値が必要です                                                                                                                                      |
 
-The role of the slow down planning is inserting slow down velocity in the trajectory where the trajectory points are close to the obstacles. The parameters can be customized depending on the obstacle type (see `slow_down.labels`), making it possible to adjust the slow down behavior depending if the obstacle is a pedestrian, bicycle, car, etc. Each obstacle type has a `static` and a `moving` parameter set, so it is possible to customize the slow down response of the ego vehicle according to the obstacle type and if it is moving or not. If an obstacle is determined to be moving, the corresponding `moving` set of parameters will be used to compute the vehicle slow down, otherwise, the `static` parameters will be used. The `static` and `moving` separation is useful for customizing the ego vehicle slow down behavior to, for example, slow down more significantly when passing stopped vehicles that might cause occlusion or that might suddenly open its doors.
+減速プランニングの役割は、障害物に近い軌跡のポイントに減速速度を挿入することです。障害物の種類（「slow_down.labels」を参照）に応じてパラメーターをカスタマイズすることができ、障害物が歩行者、自転車、車などであるかによって減速の動作を調整できます。各障害物タイプには「static」と「moving」のパラメーターセットがあり、障害物タイプとその動きに合わせて自己車両の減速レスポンスをカスタマイズできます。障害物が移動していると判断された場合、対応する「moving」パラメーターセットを使用して車両の減速を計算しますが、そうでない場合は「static」パラメーターを使用します。静的な「static」と移動中の「moving」の分離は、たとえば、視界を遮る可能性のある停止車両や、突然ドアを開ける可能性のある停止車両を追い越すときに大幅に減速するなど、自己車両の減速動作をカスタマイズするのに役立ちます。
 
-An obstacle is classified as `static` if its total speed is less than the `moving_object_speed_threshold` parameter. Furthermore, a hysteresis based approach is used to avoid chattering, it uses the `moving_object_hysteresis_range` parameter range and the obstacle's previous state (`moving` or `static`) to determine if the obstacle is moving or not. In other words, if an obstacle was previously classified as `static`, it will not change its classification to `moving` unless its total speed is greater than `moving_object_speed_threshold` + `moving_object_hysteresis_range`. Likewise, an obstacle previously classified as `moving`, will only change to `static` if its speed is lower than `moving_object_speed_threshold` - `moving_object_hysteresis_range`.
+障害物の合計速度が「moving_object_speed_threshold」パラメーター未満の場合、障害物は「static」に分類されます。さらに、ヒステリシスに基づくアプローチを使用してチャタリングを回避します。これには、「moving_object_hysteresis_range」パラメーター範囲および障害物の前の状態（「moving」または「static」）を使用して、障害物が移動しているかどうかを判断します。言い換えれば、障害物が以前に「static」として分類されていた場合、合計速度が「moving_object_speed_threshold」+「moving_object_hysteresis_range」より大きくならない限り、その分類は「moving」に変更されません。同様に、以前に「moving」として分類された障害物は、速度が「moving_object_speed_threshold」-「moving_object_hysteresis_range」より低くならない限り「static」に変更されません。
 
-The closest point on the obstacle to the ego's trajectory is calculated.
-Then, the slow down velocity is calculated by linear interpolation with the distance between the point and trajectory as follows.
+自己の軌跡に対する障害物上で自己の位置に最も近い点が計算されます。次に、減速速度は次のようにポイントと軌跡間の距離との線形補間によって計算されます。
 
 ![slow_down_velocity_calculation](./media/slow_down_velocity_calculation.svg)
 
-| Variable   | Description                                       |
-| ---------- | ------------------------------------------------- |
-| `v_{out}`  | calculated velocity for slow down                 |
-| `v_{min}`  | `slow_down.min_lat_velocity`                      |
-| `v_{max}`  | `slow_down.max_lat_velocity`                      |
-| `l_{min}`  | `slow_down.min_lat_margin`                        |
-| `l_{max}`  | `slow_down.max_lat_margin`                        |
+| 変数   | 説明                                               |
+| ---------- | ------------------------------------------------------ |
+| `v_{out}`  | 減速の計算速度                                       |
+| `v_{min}`  | `slow_down.min_lat_velocity`                            |
+| `v_{max}`  | `slow_down.max_lat_velocity`                            |
+| `l_{min}`  | `slow_down.min_lat_margin`                              |
+| `l_{max}`  | `slow_down.max_lat_margin`                              |
 | `l'_{max}` | `behavior_determination.slow_down.max_lat_margin` |
 
-The calculated velocity is inserted in the trajectory where the obstacle is inside the area with `behavior_determination.slow_down.max_lat_margin`.
+計算された速度は、障害物が「behavior_determination.slow_down.max_lat_margin」のある領域内にある軌跡に挿入されます。
 
 ![slow_down_planning](./media/slow_down_planning.drawio.svg)
 
-## Implementation
+## 実装
 
-### Flowchart
+### フローチャート
 
-Successive functions consist of `autoware_obstacle_cruise_planner` as follows.
+連続的な機能は、以下のように「autoware_obstacle_cruise_planner」で構成されます。
 
-Various algorithms for stop and cruise planning will be implemented, and one of them is designated depending on the use cases.
-The core algorithm implementation `generateTrajectory` depends on the designated algorithm.
+停止およびクルーズプランニング用のさまざまなアルゴリズムが実装され、ユースケースに応じてそのうちの1つが指定されます。
+コアアルゴリズム実装「generateTrajectory」は、指定されたアルゴリズムに依存します。
+
 
 ```plantuml
 @startuml
@@ -331,82 +371,86 @@ stop
 @enduml
 ```
 
-### Algorithm selection for cruise planner
+### クルーズプランナ用のアルゴリズム選択
 
-Currently, only a PID-based planner is supported.
-Each planner will be explained in the following.
+現在は、PIDベースのプランナのみがサポートされています。
+各プランナについては以下で説明します。
 
-| Parameter                | Type   | Description                                                  |
-| ------------------------ | ------ | ------------------------------------------------------------ |
-| `common.planning_method` | string | cruise and stop planning algorithm, selected from "pid_base" |
+| パラメータ                | タイプ   | 説明                                          |
+| ------------------------ | ------ | ------------------------------------------------- |
+| `common.planning_method` | string | CruiseとStop計画アルゴリズム。「pid_base」から選択 |
 
-### PID-based planner
+### PIDベースプランナ
 
-#### Stop planning
+#### 停止プランニング
 
-In the `pid_based_planner` namespace,
+`pid_based_planner`名前空間で、
 
-| Parameter                                         | Type   | Description                                                  |
-| ------------------------------------------------- | ------ | ------------------------------------------------------------ |
-| `obstacle_velocity_threshold_from_cruise_to_stop` | double | obstacle velocity threshold to be stopped from cruised [m/s] |
+| パラメーター | タイプ | 説明 |
+|---|---|---|
+| `obstacle_velocity_threshold_from_cruise_to_stop` | double | 定速走行から停止へと移行する際の障害物速度閾値 [m/s] |
 
-Only one obstacle is targeted for the stop planning.
-It is the obstacle among obstacle candidates whose velocity is less than `obstacle_velocity_threshold_from_cruise_to_stop`, and which is the nearest to the ego along the trajectory. A stop point is inserted keeping`common.safe_distance_margin` distance between the ego and obstacle.
+停止プランニングでは、障害物を1つだけ対象にします。
 
-Note that, as explained in the stop planning design, a stop planning which requires a strong acceleration (less than `common.min_strong_accel`) will be canceled.
+対象となる障害物候補から、速度が `obstacle_velocity_threshold_from_cruise_to_stop` 未満で、軌道上で自車に最も近い障害物を選択します。自車と障害物の間隔を `common.safe_distance_margin` 分確保した停止地点が挿入されます。
 
-#### Cruise planning
+停止プランニングの設計で説明したように、強い加速度を必要とする停止プランニング（`common.min_strong_accel` 未満）はキャンセルされますのでご注意ください。
 
-In the `pid_based_planner` namespace,
+#### クルーズプランニング
 
-| Parameter                   | Type   | Description                                                                                              |
+`pid_based_planner` 名前空間では、
+
+| パラメータ                   | 型   | 説明                                                                                                |
 | --------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
-| `kp`                        | double | p gain for pid control [-]                                                                               |
-| `ki`                        | double | i gain for pid control [-]                                                                               |
-| `kd`                        | double | d gain for pid control [-]                                                                               |
-| `output_ratio_during_accel` | double | The output velocity will be multiplied by the ratio during acceleration to follow the front vehicle. [-] |
-| `vel_to_acc_weight`         | double | target acceleration is target velocity \* `vel_to_acc_weight` [-]                                        |
-| `min_cruise_target_vel`     | double | minimum target velocity during cruise [m/s]                                                              |
+| `kp`                        | double | PID制御のPゲイン [-]                                                                                     |
+| `ki`                        | double | PID制御のIゲイン [-]                                                                                     |
+| `kd`                        | double | PID制御のDゲイン [-]                                                                                     |
+| `output_ratio_during_accel` | double | 加速時に、先行車両を追従するために、出力速度にこの係数を乗算します。 [-]                               |
+| `vel_to_acc_weight`         | double | 目標加速度は目標速度 \* `vel_to_acc_weight` です。 [-]                                                   |
+| `min_cruise_target_vel`     | double | 定速走行中の最低目標速度 [m/s]                                                                      |
 
-In order to keep the safe distance, the target velocity and acceleration is calculated and sent as an external velocity limit to the velocity smoothing package (`motion_velocity_smoother` by default).
-The target velocity and acceleration is respectively calculated with the PID controller according to the error between the reference safe distance and the actual distance.
+安全距離を確保するために、目標速度と加速度が計算され、外部速度制限として速度平滑化パッケージ (`motion_velocity_smoother` が初期値) に送信されます。
+目標速度と加速度はそれぞれ、基準安全距離と実際の距離の誤差に従って PID コントローラで計算されます。
 
-### Optimization-based planner
+### 最適化ベース計画
 
-under construction
+作成中
 
-## Minor functions
+## マイナー関数
 
-### Prioritization of behavior module's stop point
+### 挙動モジュールの停止ポイントの優先順位
 
-When stopping for a pedestrian walking on the crosswalk, the behavior module inserts the zero velocity in the trajectory in front of the crosswalk.
-Also `autoware_obstacle_cruise_planner`'s stop planning also works, and the ego may not reach the behavior module's stop point since the safe distance defined in `autoware_obstacle_cruise_planner` may be longer than the behavior module's safe distance.
-To resolve this non-alignment of the stop point between the behavior module and `autoware_obstacle_cruise_planner`, `common.min_behavior_stop_margin` is defined.
-In the case of the crosswalk described above, `autoware_obstacle_cruise_planner` inserts the stop point with a distance `common.min_behavior_stop_margin` at minimum between the ego and obstacle.
+横断歩道で歩行している歩行者に対して停止する場合、挙動モジュールは横断歩道の前に軌道に 0 速度を挿入します。
+`autoware_obstacle_cruise_planner` の停止計画も機能しますが、`autoware_obstacle_cruise_planner` で定義された安全距離が挙動モジュールの安全距離よりも長くなる可能性があるため、エゴは挙動モジュールの停止ポイントに到達しない場合があります。
+挙動モジュールと `autoware_obstacle_cruise_planner` 間の停止ポイントの非整合を解決するために、`common.min_behavior_stop_margin` が定義されています。
+先に説明した横断歩道の場合は、`autoware_obstacle_cruise_planner` は、エゴと障害物の間に少なくとも `common.min_behavior_stop_margin` の距離で停止ポイントを挿入します。
 
-| Parameter                         | Type   | Description                                                            |
+| パラメータ                         | 型   | 説明                                                            |
 | --------------------------------- | ------ | ---------------------------------------------------------------------- |
-| `common.min_behavior_stop_margin` | double | minimum stop margin when stopping with the behavior module enabled [m] |
+| `common.min_behavior_stop_margin` | 数値 | ビヘイビアモジュールが有効な状態で停止した場合の最小停止マージン [m] |
 
-### A function to keep the closest stop obstacle in target obstacles
+### ターゲット障害物内の最も近い停止障害物を保持する機能
 
-In order to keep the closest stop obstacle in the target obstacles, we check whether it is disappeared or not from the target obstacles in the `checkConsistency` function.
-If the previous closest stop obstacle is remove from the lists, we keep it in the lists for `stop_obstacle_hold_time_threshold` seconds.
-Note that if a new stop obstacle appears and the previous closest obstacle removes from the lists, we do not add it to the target obstacles again.
+ターゲット障害物内の最も近い停止障害物を保持するために、`checkConsistency` 関数において、その障害物がターゲット障害物から消去されたかどうかを確認します。
 
-| Parameter                                                  | Type   | Description                                        |
-| ---------------------------------------------------------- | ------ | -------------------------------------------------- |
-| `behavior_determination.stop_obstacle_hold_time_threshold` | double | maximum time for holding closest stop obstacle [s] |
+前回の最も近い停止障害物がリストから削除された場合、`stop_obstacle_hold_time_threshold` 秒間リスト内に保持します。
 
-## How To Debug
+新しい停止障害物が現れて以前の最も近い障害物がリストから削除された場合、その障害物をターゲット障害物に再び追加しないことに注意してください。
 
-How to debug can be seen [here](docs/debug.md).
+| パラメータ                                                | タイプ   | 説明                                          |
+| ------------------------------------------------------------ | ------ | ------------------------------------------------ |
+| `behavior_determination.stop_obstacle_hold_time_threshold` | double | 最近接停止障害物を保持する最大時間 [s] |
 
-## Known Limits
+## デバッグ方法
 
-- Common
-  - When the obstacle pose or velocity estimation has a delay, the ego sometimes will go close to the front vehicle keeping deceleration.
-  - Current implementation only uses predicted objects message for static/dynamic obstacles and does not use pointcloud. Therefore, if object recognition is lost, the ego cannot deal with the lost obstacle.
-  - The current predicted paths for obstacle's lane change does not have enough precision for obstacle_cruise_planner. Therefore, we set `rough_detection_area` a small value.
-- PID-based planner
-  - The algorithm strongly depends on the velocity smoothing package (`motion_velocity_smoother` by default) whether or not the ego realizes the designated target speed. If the velocity smoothing package is updated, please take care of the vehicle's behavior as much as possible.
+デバッグ方法は[こちら](docs/debug.md)を参照のこと。
+
+## 既知の制限事項
+
+- 共通
+  - 障害物の位置や速度推定に遅れがあると、自車が減速を維持しながら前方の車両に接近することがあります。
+  - 現在の実装では静的・動的障害物の予測オブジェクトのメッセージのみを使用し、ポイントクラウドは使用しません。したがって、オブジェクト認識が失われると、自車は消失した障害物に対処できません。
+  - 現在、障害物の車線変更の予測パスでは障害物クルーズプランナーの精度を確保できません。したがって、`rough_detection_area`は小さい値に設定します。
+- PIDベースプランナー
+  - アルゴリズムは、自車が指定された目標速度を実現するかどうかが、速度スムージングパッケージ（既定では`motion_velocity_smoother`）に大きく依存します。速度スムージングパッケージを更新した場合は、車両の挙動を可能な限り注意してください。
+

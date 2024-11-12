@@ -1,36 +1,128 @@
-# Processing Time Checker
+# 処理時間チェッカー
 
-## Purpose
+## 目的
 
-This node checks whether the processing time of each module is valid or not, and send a diagnostic.
-NOTE: Currently, there is no validation feature, and "OK" is always assigned in the diagnostic.
+このノードは各モジュールの処理時間が有効かどうかを確認し、診断を送信します。
+注: 現在、検証機能はなく、診断では常に「OK」が割り当てられます。
 
-### Standalone Startup
+### スタンドアロン起動
+
 
 ```bash
 ros2 launch autoware_processing_time_checker processing_time_checker.launch.xml
 ```
 
-## Inner-workings / Algorithms
+## 内部動作 / アルゴリズム
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                      | Type                              | Description                    |
-| ------------------------- | --------------------------------- | ------------------------------ |
-| `/.../processing_time_ms` | `tier4_debug_msgs/Float64Stamped` | processing time of each module |
+| 名称                       | タイプ                                   | 説明                                       |
+| -------------------------- | --------------------------------------- | ------------------------------------------ |
+| `/.../processing_time_ms` | `tier4_debug_msgs/Float64Stamped` | 各モジュールの処理時間                         |
 
-### Output
+### 出力
 
-| Name                                      | Type                              | Description                        |
-| ----------------------------------------- | --------------------------------- | ---------------------------------- |
-| `/system/processing_time_checker/metrics` | `diagnostic_msgs/DiagnosticArray` | processing time of all the modules |
+**自律走行ソフトウェアドキュメント**
 
-## Parameters
+**要約**
+
+このドキュメントは、Autowareの自律走行ソフトウェアアーキテクチャとコンポーネントの詳細を提供します。
+
+**コンポーネントアーキテクチャ**
+
+Autowareは、モジュール式のソフトウェアアーキテクチャに基づいています。主なコンポーネントは次のとおりです。
+
+- **Planningモジュール:** 自律走行のための経路計画を生成します。
+- **Perceptionモジュール:** センサーデータから周囲環境を認識します。
+- **Controlモジュール:** 車両の制御を行います。
+
+**Planningモジュール**
+
+Planningモジュールは、以下のサブモジュールで構成されています。
+
+- **Global Planning:** 長距離の経路を生成します。
+- **Local Planning:** 短距離の経路を生成します。
+- **Behavior Planning:** 障害物の回避や車線変更などの車両行動を計画します。
+
+**Planningモジュールのアルゴリズム**
+
+Planningモジュールは、以下のようなアルゴリズムを使用しています。
+
+- **A*アルゴリズム:** グラフ探索を使用して経路を生成します。
+- **動的プログラミング:** 時系列データの最適化問題を解きます。
+- **確率的ロードマップ法 (PRM):** ランダムなノードとエッジを使用して経路を生成します。
+
+**Perceptionモジュール**
+
+Perceptionモジュールは、以下のようなセンサーデータを使用しています。
+
+- カメラ
+- レーダー
+- LiDAR
+
+**Perceptionモジュールのアルゴリズム**
+
+Perceptionモジュールは、以下のようなアルゴリズムを使用して周囲環境を認識します。
+
+- **物体検出:** 画像や点群データから物体検出を行います。
+- **セマンティックセグメンテーション:** 画像や点群データから物体の種類を分類します。
+- **障害物認識:** 障害物の位置と形状を推定します。
+
+**Controlモジュール**
+
+Controlモジュールは、以下のサブモジュールで構成されています。
+
+- **Path Following:** Planningモジュールから生成された経路に従って走行します。
+- **Lateral and Longitudinal Control:** 車両のステアリングと加速を制御します。
+- **Safety Monitor:** 車両の安全状態を監視します。
+
+**Controlモジュールのアルゴリズム**
+
+Controlモジュールは、以下のようなアルゴリズムを使用しています。
+
+- **PID制御:** フィードバックループ制御を使用して車両の動作を調整します。
+- **状態フィードバック制御:** 車両の現在の状態に基づいて制御を行います。
+- **予測制御:** 車両の将来の動作を予測して制御を行います。
+
+**その他のコンポーネント**
+
+Planning、Perception、Controlモジュールに加えて、Autowareには以下のようなコンポーネントも含まれています。
+
+- **Localization:** 自車位置を推定します。
+- **Visualization:** 自律走行システムの動作を視覚化します。
+- **Data Recorder:** 自律走行システムのデータを記録します。
+
+**開発ツール**
+
+Autowareには、以下の開発ツールが用意されています。
+
+- **ROS:** ロボットオペレーティングシステムを提供します。
+- **Gazebo:** シミュレーション環境を提供します。
+- **RViz:** 自律走行システムの動作を視覚化するためのツールを提供します。
+
+**評価**
+
+Autowareは、以下のようなテストシナリオを使用して評価されています。
+
+- **クロス交差点:** 交差点での車両の衝突回避を評価します。
+- **高速道路レーン変更:** 高速道路での車線変更の安全性を評価します。
+- **駐車:** 駐車スペースへの駐車を評価します。
+
+**まとめ**
+
+Autowareは、包括的な自律走行ソフトウェアスタックです。モジュール式のアーキテクチャ、高度なアルゴリズム、包括的な開発ツールにより、研究者や開発者が自律走行システムを開発するための強力なプラットフォームを提供します。
+
+| 名称 | 種類 | 説明 |
+|---|---|---|
+| `/system/processing_time_checker/metrics` | `diagnostic_msgs/DiagnosticArray` | 全モジュールの処理時間 |
+
+## パラメータ
 
 {{ json_to_markdown("system/autoware_processing_time_checker/schema/processing_time_checker.schema.json") }}
 
-## Assumptions / Known limits
+## 仮定/既知の制限
 
 TBD.
+

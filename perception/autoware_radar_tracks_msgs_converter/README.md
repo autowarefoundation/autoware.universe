@@ -1,24 +1,24 @@
-# radar_tracks_msgs_converter
+## radar_tracks_msgs_converter
 
-This package converts from [radar_msgs/msg/RadarTracks](https://github.com/ros-perception/radar_msgs/blob/ros2/msg/RadarTracks.msg) into [autoware_perception_msgs/msg/DetectedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/DetectedObject.msg) and [autoware_perception_msgs/msg/TrackedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/TrackedObject.msg).
+このパッケージは、[radar_msgs/msg/RadarTracks](https://github.com/ros-perception/radar_msgs/blob/ros2/msg/RadarTracks.msg) から [autoware_perception_msgs/msg/DetectedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/DetectedObject.msg) および [autoware_perception_msgs/msg/TrackedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/TrackedObject.msg) へと変換します。
 
-- Calculation cost is O(n).
-  - n: The number of radar objects
+- 計算コストは O(n) です。
+  - n: レーダーオブジェクトの個数
 
-## Design
+## 設計
 
-### Background
+### 背景
 
-Autoware uses [radar_msgs/msg/RadarTracks.msg](https://github.com/ros-perception/radar_msgs/blob/ros2/msg/RadarTracks.msg) as radar objects input data.
-To use radar objects data for Autoware perception module easily, `radar_tracks_msgs_converter` converts message type from `radar_msgs/msg/RadarTracks.msg` to `autoware_perception_msgs/msg/DetectedObject`.
-In addition, because many detection module have an assumption on base_link frame, `radar_tracks_msgs_converter` provide the functions of transform frame_id.
+Autoware はレーダーオブジェクト入力データとして [radar_msgs/msg/RadarTracks.msg](https://github.com/ros-perception/radar_msgs/blob/ros2/msg/RadarTracks.msg) を使用します。
+レーダーオブジェクトデータを Autoware perception モジュールで簡単に使用するために、`radar_tracks_msgs_converter` はメッセージタイプを `radar_msgs/msg/RadarTracks.msg` から `autoware_perception_msgs/msg/DetectedObject` へと変換します。
+さらに、多くの検出モジュールは `base_link` フレームをベースとしていると想定しているため、`radar_tracks_msgs_converter` は `frame_id` を変換する機能を提供します。
 
-### Note
+### 注意
 
-`Radar_tracks_msgs_converter` converts the label from `radar_msgs/msg/RadarTrack.msg` to Autoware label.
-Label id is defined as below.
+`Radar_tracks_msgs_converter` はラベルを `radar_msgs/msg/RadarTrack.msg` から Autoware ラベルへと変換します。
+ラベル ID は以下のように定義されています。
 
-|            | RadarTrack | Autoware |
+|            | レーダートラック | Autoware |
 | ---------- | ---------- | -------- |
 | UNKNOWN    | 32000      | 0        |
 | CAR        | 32001      | 1        |
@@ -29,60 +29,61 @@ Label id is defined as below.
 | BICYCLE    | 32006      | 6        |
 | PEDESTRIAN | 32007      | 7        |
 
-Additional vendor-specific classifications are permitted starting from 32000 in [radar_msgs/msg/RadarTrack.msg](https://github.com/ros-perception/radar_msgs/blob/ros2/msg/RadarTrack.msg).
-Autoware objects label is defined in [ObjectClassification](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/ObjectClassification.msg)
+追加のベンダー固有分類は、32000 から [radar_msgs/msg/RadarTrack.msg](https://github.com/ros-perception/radar_msgs/blob/ros2/msg/RadarTrack.msg) で許可されています。
+Autoware オブジェクト ラベルは [ObjectClassification](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/ObjectClassification.msg) で定義されています。
 
-## Interface
+## インターフェイス
 
-### Input
+### 入力
 
 - `~/input/radar_objects` (`radar_msgs/msg/RadarTracks.msg`)
-  - Input radar topic
+  - レーダー入力トピック
 - `~/input/odometry` (`nav_msgs/msg/Odometry.msg`)
-  - Ego vehicle odometry topic
+  - 自車オドメトリー トピック
 
-### Output
+### 出力
 
 - `~/output/radar_detected_objects` (`autoware_perception_msgs/msg/DetectedObject.idl`)
-  - DetectedObject topic converted to Autoware message.
-  - This is used for radar sensor fusion detection and radar detection.
+  - Autoware メッセージに変換された DetectedObject トピック。
+  - レーダーセンサーフュージョン検出とレーダー検出に使用されます。
 - `~/output/radar_tracked_objects` (`autoware_perception_msgs/msg/TrackedObject.idl`)
-  - TrackedObject topic converted to Autoware message.
-  - This is used for tracking layer sensor fusion.
+  - Autoware メッセージに変換された TrackedObject トピック。
+  - 追跡レイヤーのセンサーフュージョンに使用されます。
 
-### Parameters
+### パラメーター
 
-#### Parameter Summary
+#### パラメーター概要
 
 {{ json_to_markdown("perception/autoware_radar_tracks_msgs_converter/schema/radar_tracks_msgs_converter.schema.json") }}
 
-#### Parameter Description
+#### パラメーターの説明
 
-- `update_rate_hz` (double) [hz]
-  - Default parameter is 20.0
+- `update_rate_hz` (倍) [hz]
+  - デフォルト パラメーターは 20.0 です。
 
-This parameter is update rate for the `onTimer` function.
-This parameter should be same as the frame rate of input topics.
+このパラメーターは `onTimer` 関数の更新レートです。
+このパラメーターは入力トピックのフレームレートと同じにする必要があります。
 
-- `new_frame_id` (string)
-  - Default parameter is "base_link"
+- `new_frame_id` (文字列)
+  - デフォルト パラメーターは "base_link" です。
 
-This parameter is the header frame_id of the output topic.
+このパラメーターは出力トピックのヘッダー `frame_id` です。
 
-- `use_twist_compensation` (bool)
-  - Default parameter is "true"
+- `use_twist_compensation` (boolean)
+  - デフォルト パラメーターは "true" です。
 
-This parameter is the flag to use the compensation to linear of ego vehicle's twist.
-If the parameter is true, then the twist of the output objects' topic is compensated by the ego vehicle linear motion.
+このパラメーターは自車のツイストの直線運動に対する補正を使用するフラグです。
+パラメーターが `true` の場合、出力对象的トピックのツイストは自車の直線運動によって補正されます。
 
-- `use_twist_yaw_compensation` (bool)
-  - Default parameter is "false"
+- `use_twist_yaw_compensation` (boolean)
+  - デフォルト パラメーターは "false" です。
 
-This parameter is the flag to use the compensation to yaw rotation of ego vehicle's twist.
-If the parameter is true, then the ego motion compensation will also consider yaw motion of the ego vehicle.
+このパラメーターは自車のツイストのヨー回転に対する補正を使用するフラグです。
+パラメーターが `true` の場合、自車のヨー運動もエゴモーション補正の対象となります。
 
 - `static_object_speed_threshold` (float) [m/s]
-  - Default parameter is 1.0
+  - デフォルトのパラメーターは 1.0 です。
 
-This parameter is the threshold to determine the flag `is_stationary`.
-If the velocity is lower than this parameter, the flag `is_stationary` of DetectedObject is set to `true` and dealt as a static object.
+このパラメーターはフラグ `is_stationary` を決定するしきい値です。
+速度がこのパラメーターよりも低い場合、DetectedObject のフラグ `is_stationary` は `true` に設定され、静的オブジェクトとして扱われます。
+

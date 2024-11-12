@@ -1,30 +1,31 @@
-# Lane Change design
+# 車線変更設計
 
-The Lane Change module is activated when lane change is needed and can be safely executed.
+車線変更モジュールは、車線変更が必要かつ安全に実行可能な場合にアクティベートされます。
 
-## Lane Change Requirement
+## 車線変更要件
 
-- As the prerequisite, the type of lane boundary in the HD map has to be one of the following:
-  - Dashed lane marking: Lane changes are permitted in both directions.
-  - Dashed marking on the left and solid on the right: Lane changes are allowed from left to right.
-  - Dashed marking on the right and solid on the left: Lane changes are allowed from right to left.
-  - `allow_lane_change` tags is set as `true`
-- During lane change request condition
-  - The ego-vehicle isn’t on a `preferred_lane`.
-  - The ego-vehicle isn't approaching a traffic light. (condition parameterized)
-  - The ego-vehicle isn't approaching a crosswalk. (condition parameterized)
-  - The ego-vehicle isn't approaching an intersection. (condition parameterized)
-- lane change ready condition
-  - Path of the lane change does not collide with other dynamic objects (see the figure below)
-  - Lane change candidate path is approved by an operator.
+- 前提条件として、HDマップ内の車線境界のタイプが次のいずれかにする必要があります。
+  - 破線路面表示: 車線変更が両方向で許可されています。
+  - 左側が破線で右側は実線: 車線変更は左から右に許可されています。
+  - 右側が破線で左側が実線: 車線変更は右から左に許可されています。
+  - `allow_lane_change` タグが `true` に設定されています
+- 車線変更リクエスト条件の期間
+  - 自車が `preferred_lane` 上にありません。
+  - 自車が信号機に近づいていません (条件はパラメータ化されています)。
+  - 自車が横断歩道に近づいていません (条件はパラメータ化されています)。
+  - 自車が交差点に近づいていません (条件はパラメータ化されています)。
+- 車線変更準備条件
+  - 車線変更の経路が他の可動物体と衝突しない (以下の図を参照)
+  - 車線変更候補経路はオペレーターによって承認されている。
 
-## Generating Lane Change Candidate Path
+## 車線変更候補経路の生成
 
-The lane change candidate path is divided into two phases: preparation and lane-changing. The following figure illustrates each phase of the lane change candidate path.
+車線変更候補経路は、準備と車線変更の2つのフェーズに分けられます。以下の図は車線変更候補経路の各フェーズを示しています。
 
-![lane-change-phases](./images/lane_change-lane_change_phases.png)
+![车线変更阶段](./images/lane_change-lane_change_phases.png)
 
-The following chart illustrates the process of sampling candidate paths for lane change.
+以下のグラフは、車線変更の候補経路をサンプリングするプロセスを示しています。
+
 
 ```plantuml
 @startuml
@@ -89,7 +90,8 @@ stop
 @enduml
 ```
 
-While the following chart demonstrates the process of generating a valid candidate path.
+以下の図では、有効な候補経路の生成プロセスを示しています。
+
 
 ```plantuml
 @startuml
@@ -126,50 +128,54 @@ endif
 @enduml
 ```
 
-### Preparation phase
+### 準備フェーズ
 
-The preparation trajectory is the candidate path's first and the straight portion generated along the ego vehicle's current lane. The length of the preparation trajectory is computed as follows.
+準備軌道とは候補パスの中で最初で、自車位置に沿って生成される直線部分です。準備軌道の長さは、以下のように計算します。
+
 
 ```C++
 lane_change_prepare_distance = current_speed * lane_change_prepare_duration + 0.5 * deceleration * lane_change_prepare_duration^2
 ```
 
-During the preparation phase, the turn signal will be activated when the remaining distance is equal to or less than `lane_change_search_distance`.
+準備段階では、残り距離が`lane_change_search_distance`以下になるとウインカーが作動します。
 
-### Lane-changing phase
+### レーン変更の段階
 
-The lane-changing phase consist of the shifted path that moves ego from current lane to the target lane. Total distance of lane-changing phase is as follows. Note that during the lane changing phase, the ego vehicle travels at a constant speed.
+レーン変更の段階は、自車の現在の車線から目標の車線に移動するシフトパスで構成されています。レーン変更の段階の総距離を以下に示します。レーン変更の段階では、自車は一定速度で走行します。
+
 
 ```C++
 lane_change_prepare_velocity = std::max(current_speed + deceleration * lane_change_prepare_duration, minimum_lane_changing_velocity)
 lane_changing_distance = lane_change_prepare_velocity * lane_changing_duration
 ```
 
-The `backward_length_buffer_for_end_of_lane` is added to allow some window for any possible delay, such as control or mechanical delay during brake lag.
+`backward_length_buffer_for_end_of_lane` は、ブレーキ時の遅れなどの制御または機械的な遅れなどの可能性のある遅延のため、ある程度のバッファーを追加するために追加されました。
 
-#### Multiple candidate path samples (longitudinal acceleration)
+#### 候補パスサンプルの複数（縦方向加速度）
 
-Lane change velocity is affected by the ego vehicle's current velocity. High velocity requires longer preparation and lane changing distance. However we also need to plan lane changing trajectories in case ego vehicle slows down.
-Computing candidate paths that assumes ego vehicle's slows down is performed by substituting predetermined deceleration value into `prepare_length`, `prepare_velocity` and `lane_changing_length` equation.
+レーン変更速度は、自我車両の現在の速度の影響を受けます。高速は、より長い準備時間とレーン変更距離を必要とします。ただし、自我車両が減速する場合に備えて、レーン変更の軌道も計画する必要があります。自我車両が減速すると仮定する候補パスを計算するには、事前決定された減速値を `prepare_length`、`prepare_velocity`、および `lane_changing_length` の計算式に代入します。
 
-The predetermined longitudinal acceleration values are a set of value that starts from `longitudinal_acceleration = maximum_longitudinal_acceleration`, and decrease by `longitudinal_acceleration_resolution` until it reaches `longitudinal_acceleration = -maximum_longitudinal_deceleration`. Both `maximum_longitudinal_acceleration` and `maximum_longitudinal_deceleration` are calculated as: defined in the `common.param` file as `normal.min_acc`.
+事前決定された縦方向加速度値は、`longitudinal_acceleration = maximum_longitudinal_acceleration` から開始されるセットと、`longitudinal_acceleration = -maximum_longitudinal_deceleration` に達するまで `longitudinal_acceleration_resolution` ずつ減少するセットです。`maximum_longitudinal_acceleration` と `maximum_longitudinal_deceleration` の両方が、`common.param` ファイルで `normal.min_acc` として定義されているように計算されます。
+
 
 ```C++
 maximum_longitudinal_acceleration = min(common_param.max_acc, lane_change_param.max_acc)
 maximum_longitudinal_deceleration = max(common_param.min_acc, lane_change_param.min_acc)
 ```
 
-where `common_param` is vehicle common parameter, which defines vehicle common maximum longitudinal acceleration and deceleration. Whereas, `lane_change_param` has maximum longitudinal acceleration and deceleration for the lane change module. For example, if a user set and `common_param.max_acc=1.0` and `lane_change_param.max_acc=0.0`, `maximum_longitudinal_acceleration` becomes `0.0`, and the lane change does not accelerate in the lane change phase.
+ここで、`common_param` は車両の一般的な最大縦加速度および最大減速度を定義する車両の一般的なパラメータです。一方、`lane_change_param` には車線変更モジュールの最大縦加速度および最大減速度があります。たとえば、ユーザーが `common_param.max_acc=1.0` および `lane_change_param.max_acc=0.0` を設定すると、`maximum_longitudinal_acceleration` は `0.0` となり、車線変更フェーズで車線変更は加速しません。
 
-The `longitudinal_acceleration_resolution` is determine by the following
+`longitudinal_acceleration_resolution` は次によって決定されます。
+
 
 ```C++
 longitudinal_acceleration_resolution = (maximum_longitudinal_acceleration - minimum_longitudinal_acceleration) / longitudinal_acceleration_sampling_num
 ```
 
-Note that when the `current_velocity` is lower than `minimum_lane_changing_velocity`, the vehicle needs to accelerate its velocity to `minimum_lane_changing_velocity`. Therefore, longitudinal acceleration becomes positive value (not decelerate).
+`現在の速度` が `最低車線変更速度` より小さい場合、車両は速度を `最低車線変更速度` まで加速する必要があることに注意してください。したがって、縦加速度は正の値（減速しない）になります。
 
-The chart illustrates the conditions under which longitudinal acceleration values are sampled.
+グラフは縦加速度の値がサンプリングされる条件を示しています。
+
 
 ```plantuml
 @startuml
@@ -222,7 +228,8 @@ stop
 
 ```
 
-while the following describes the process by which longitudinal accelerations are sampled.
+このドキュメントでは、縦断加速度をサンプリングするプロセスについて説明します。
+
 
 ```plantuml
 @startuml
@@ -252,45 +259,125 @@ stop
 @enduml
 ```
 
-The following figure illustrates when `longitudinal_acceleration_sampling_num = 4`. Assuming that `maximum_deceleration = 1.0` then `a0 == 0.0 == no deceleration`, `a1 == 0.25`, `a2 == 0.5`, `a3 == 0.75` and `a4 == 1.0 == maximum_deceleration`. `a0` is the expected lane change trajectories should ego vehicle do not decelerate, and `a1`'s path is the expected lane change trajectories should ego vehicle decelerate at `0.25 m/s^2`.
+次の図は `longitudinal_acceleration_sampling_num = 4` の場合を示しています。`maximum_deceleration = 1.0` とすると、`a0 == 0.0 == 減速なし`、`a1 == 0.25`、`a2 == 0.5`、`a3 == 0.75`、`a4 == 1.0 == maximum_deceleration` となります。`a0` は自車が減速しない場合の想定される車線変更軌跡であり、`a1` の経路は自車が `0.25 m/s^2` で減速する場合の想定される車線変更軌跡です。
 
 ![path_samples](./images/lane_change-candidate_path_samples.png)
 
-Which path will be chosen will depend on validity and collision check.
+どの経路が選択されるかは、妥当性と衝突判定によって異なります。
 
-#### Multiple candidate path samples (lateral acceleration)
+#### 候補経路サンプル複数（横断加速度）
 
-In addition to sampling longitudinal acceleration, we also sample lane change paths by adjusting the value of lateral acceleration. Since lateral acceleration influences the duration of a lane change, a lower lateral acceleration value results in a longer lane change path, while a higher lateral acceleration value leads to a shorter lane change path. This allows the lane change module to generate a shorter lane change path by increasing the lateral acceleration when there is limited space for the lane change.
+縦断加速度のサンプルに加え、横断加速度の値を調整することで車線変更経路のサンプリングも行います。横断加速度は車線変更の持続時間に影響するため、横断加速度の値が低いと車線変更経路が長くなり、横断加速度の値が高いと車線変更経路が短くなります。これにより、車線変更の余裕が少ない場合に横断加速度を増加させることで、車線変更モジュールはより短い車線変更経路を生成できます。
 
-The maximum and minimum lateral accelerations are defined in the lane change parameter file as a map. The range of lateral acceleration is determined for each velocity by linearly interpolating the values in the map. Let's assume we have the following map
+最大横断加速度と最小横断加速度は、車線変更パラメータファイルでマップとして定義されています。横断加速度の範囲は、マップ内の値を線形補間することで各速度について決定されます。次のようなマップがあるとします。
 
-| Ego Velocity | Minimum lateral acceleration | Maximum lateral acceleration |
-| :----------- | ---------------------------- | ---------------------------- |
-| 0.0          | 0.2                          | 0.3                          |
-| 2.0          | 0.2                          | 0.4                          |
-| 4.0          | 0.3                          | 0.4                          |
-| 6.0          | 0.3                          | 0.5                          |
+## 自動運転ソフトウェア設計仕様
 
-In this case, when the current velocity of the ego vehicle is 3.0, the minimum and maximum lateral accelerations are 0.25 and 0.4 respectively. These values are obtained by linearly interpolating the second and third rows of the map, which provide the minimum and maximum lateral acceleration values.
+### Overview
 
-Within this range, we sample the lateral acceleration for the ego vehicle. Similar to the method used for sampling longitudinal acceleration, the resolution of lateral acceleration (lateral_acceleration_resolution) is determined by the following:
+このドキュメントは、Autowareの自動運転ソフトウェアの設計仕様を定義します。ここでは、Planningコンポーネントの動作を定義します。
+
+### Planningコンポーネント
+
+Planningコンポーネントは、周囲環境を認識し、現在の位置を考慮して、車両の安全で効率的な経路を計画します。Planningコンポーネントの主な機能を次に示します。
+
+- **経路生成:** 目的地を考慮した、安全で最適な経路の生成。
+- **障害物回避:** 障害物を検出し、安全に回避するための経路の調整。
+- **速度制御:** 目標速度の維持と速度制限の遵守のための速度制御。
+
+### 設計仕様
+
+#### 経路生成
+
+**経路生成の制約条件:**
+
+- 車両の物理的制約（速度、加速度、旋回限界など）を遵守する。
+- 交通規則と法規に従う。
+- 障害物を安全に回避する。
+
+**経路生成パラメータ:**
+
+次のパラメータは、経路生成アルゴリズムに影響を与えます。
+
+- `post resampling`後の距離
+- `post resampling`後のHeading
+- `post resampling`後の旋回角度
+
+**経路生成アルゴリズム:**
+
+経路生成アルゴリズムは、さまざまな技術を使用できます（例：最適化、グラフ探索）。アルゴリズムは、上記の制約条件とパラメータを満たす経路を生成する必要があります。
+
+#### 障害物回避
+
+**障害物検出:**
+
+Planningコンポーネントは、センサーデータを使用して障害物を検出します（例：LiDAR、カメラ）。検出された障害物は、タイプ、サイズ、位置で分類されます。
+
+**障害物回避アルゴリズム:**
+
+障害物回避アルゴリズムは、検出された障害物を考慮して、経路を安全に調整します。アルゴリズムは、障害物との衝突を回避しながら、元の経路からの逸脱を最小限に抑える必要があります。
+
+#### 速度制御
+
+**速度制御の制約条件:**
+
+- 車両のマキシマム速度と加速/減速能力を遵守する。
+- 速度制限に従う。
+- 安全で快適な運転体験を提供する。
+
+**速度制御パラメータ:**
+
+次のパラメータは、速度制御アルゴリズムに影響を与えます。
+
+- 自車位置
+- 目標速度
+- 速度逸脱量
+- 加速度逸脱量
+
+**速度制御アルゴリズム:**
+
+速度制御アルゴリズムは、車両の速度を制御するために使用されます。アルゴリズムは、上記の制約条件とパラメータを満たす必要があります。
+
+#### その他の仕様
+
+**安全対策:**
+
+Planningコンポーネントは、次の安全対策を実装する必要があります。
+
+- **障害物検出の冗長性:** 衝突を回避するために、複数のセンサーを使用します。
+- **経路の検証:** 経路が安全で妥当であることを検証します。
+- **異常検出:** 予期しない動作を検出し、車両を安全な状態に停止させます。
+
+**効率性:**
+
+Planningコンポーネントは、効率的に動作し、リアルタイムの要件を満たす必要があります。
+
+**拡張性:**
+
+Planningコンポーネントは、将来の機能拡張や改善のために設計されています。
+
+このケースでは、自車位置の現在の速度が 3.0 であるとき、最小と最大の横加速度はそれぞれ 0.25 と 0.4 になります。この値は、最小と最大の横加速度値を提供するマップの 2 行目と 3 行目を線形補間することで得られます。
+
+この範囲内で、自車位置の横加速度をサンプリングします。縦加速度のサンプリングに使用された方法と同様、横加速度の分解能 (lateral_acceleration_resolution) は以下の方法で決定されます。
+
 
 ```C++
 lateral_acceleration_resolution = (maximum_lateral_acceleration - minimum_lateral_acceleration) / lateral_acceleration_sampling_num
 ```
 
-#### Candidate Path's validity check
+#### 候補パス有効性チェック
 
-A candidate path is considered valid if it meets the following criteria:
+候補パスは、以下の条件を満たす場合、有効とみなされます。
 
-1. The distance from the ego vehicle's current position to the end of the current lanes is sufficient to perform a single lane change.
-2. The distance from the ego vehicle's current position to the goal along the current lanes is adequate to complete multiple lane changes.
-3. The distance from the ego vehicle's current position to the end of the target lanes is adequate for completing multiple lane changes.
-4. The distance from the ego vehicle's current position to the next regulatory element is adequate to perform a single lane change.
-5. The lane change can be completed after passing a parked vehicle.
-6. The lane change is deemed safe to execute.
+1. 自車位置から現在の車線の終わりまでの距離は、車線変更一回分を完了するには十分である。
+2. 自車位置から現在の車線に沿った目標までの距離は、複数の車線変更を完了するには十分である。
+3. 自車位置から目標車線の終わりまでの距離は、複数の車線変更を完了するには十分である。
+4. 自車位置から次の規制要素までの距離は、車線変更一回分を完了するには十分である。
+5. 駐車車両を通過してから車線変更を完了可能である。
+6. 車線変更を実行するのが安全とみなされる。
 
-The following flow chart illustrates the validity check.
+以下のフローチャートは、有効性チェックを示しています。
+
 
 ```plantuml
 @startuml
@@ -353,38 +440,39 @@ stop
 
 #### Candidate Path's Safety check
 
-See [safety check utils explanation](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
+[安全チェックユーティリティの説明](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)を参照
 
-#### Objects selection and classification
+#### オブジェクトの選択と分類
 
-First, we divide the target objects into obstacles in the target lane, obstacles in the current lane, and obstacles in other lanes. Target lane indicates the lane that the ego vehicle is going to reach after the lane change and current lane mean the current lane where the ego vehicle is following before the lane change. Other lanes are lanes that do not belong to the target and current lanes. The following picture describes objects on each lane. Note that users can remove objects either on current and other lanes from safety check by changing the flag, which are `check_objects_on_current_lanes` and `check_objects_on_other_lanes`.
+まず、ターゲットオブジェクトをターゲットレーンの障害物、現在のレーンの障害物、および他のレーンの障害物に分割します。ターゲットレーンは、レーン変更後に自車が到達するレーンを示しており、現在のレーンとはレーン変更前の自車が走行中の現在のレーンを意味します。他のレーンは、ターゲットレーンと現在のレーンに属さないレーンです。次の図は、各レーンのオブジェクトを示しています。`check_objects_on_current_lanes`フラグと`check_objects_on_other_lanes`フラグを変更することにより、安全チェックから現在のレーンと他のレーンのオブジェクトを除外できることに注意してください。
 
-![object lanes](./images/lane_objects.drawio.svg)
+![オブジェクトレーン](./images/lane_objects.drawio.svg)
 
-Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light. The explanation for parked car detection is written in [documentation for avoidance module](../autoware_behavior_path_static_obstacle_avoidance_module/README.md).
+さらに、信号で待機している車両の後ろでレーン変更を行うために、信号付近の停止している車両に対する安全チェックをスキップします。駐車車両の検出に関する説明は、[回避モジュールのドキュメント](../autoware_behavior_path_static_obstacle_avoidance_module/README.md)に記載されています。
 
-The detection area for the target lane can be expanded beyond its original boundaries to enable detection of objects that are outside the target lane's limits.
+ターゲットレーンの検出範囲は、ターゲットレーンの境界を越えるオブジェクトを検出できるように元の境界を超えて拡張できます。
 
 <div align="center">
   <table>
     <tr>
       <td>
         <div style="text-align: center;">
-          <div style="color: black; font-size: 20px; margin-bottom: 10px;">Without Lane Expansion</div>
-          <img src="./images/lane_change-lane_expansion-without.png" alt="Without lane expansion">
+          <div style="color: black; font-size: 20px; margin-bottom: 10px;">レーン拡張なし</div>
+          <img src="./images/lane_change-lane_expansion-without.png" alt="レーン拡張なし">
         </div>
       </td>
       <td>
         <div style="text-align: center;">
-          <div style="color: black; font-size: 20px; margin-bottom: 10px;">With Lane Expansion</div>
-          <img src="./images/lane_change-lane_expansion-with.png" alt="With lane expansion">
+          <div style="color: black; font-size: 20px; margin-bottom: 10px;">レーン拡張あり</div>
+          <img src="./images/lane_change-lane_expansion-with.png" alt="レーン拡張あり">
         </div>
       </td>
     </tr>
   </table>
 </div>
 
-##### Object filtering
+##### オブジェクトフィルタリング
+
 
 ```plantuml
 @startuml
@@ -519,32 +607,34 @@ stop
 @enduml
 ```
 
-##### Collision check in prepare phase
+##### prepareフェーズでの衝突確認
 
-The ego vehicle may need to secure ample inter-vehicle distance ahead of the target vehicle before attempting a lane change. The flag `enable_collision_check_at_prepare_phase` can be enabled to gain this behavior. The following image illustrates the differences between the `false` and `true` cases.
+自車位置をターゲット車両の直前まで十分に確保してから、車線変更しようとすることがあります。この動作を実現するには、フラグ`enable_collision_check_at_prepare_phase`を有効にすることができます。次の画像は、`false`と`true`の場合の違いを示しています。
 
-![enable collision check at prepare phase](./images/lane_change-enable_collision_check_at_prepare_phase.png)
+![prepareフェーズでの衝突チェックの有効化](./images/lane_change-enable_collision_check_at_prepare_phase.png)
 
-The parameter `prepare_phase_ignore_target_speed_thresh` can be configured to ignore the prepare phase collision check for targets whose speeds are less than a specific threshold, such as stationary or very slow-moving objects.
+パラメータ`prepare_phase_ignore_target_speed_thresh`は、停止または非常に低速で走行するオブジェクトなど、速度が特定の閾値未満のターゲットに対してprepareフェーズの衝突チェックを無視するように設定できます。
 
-#### If the lane is blocked and multiple lane changes
+#### 車線がブロックされている場合と複数の車線変更
 
-When driving on the public road with other vehicles, there exist scenarios where lane changes cannot be executed. Suppose the candidate path is evaluated as unsafe, for example, due to incoming vehicles in the adjacent lane. In that case, the ego vehicle can't change lanes, and it is impossible to reach the goal. Therefore, the ego vehicle must stop earlier at a certain distance and wait for the adjacent lane to be evaluated as safe. The minimum stopping distance can be computed from shift length and minimum lane changing velocity.
+他の車両と一緒に公道を走行する場合は、車線変更が実行できないシナリオがあります。例えば、近隣の車線に進入車両があるため、候補パスが安全でない場合が考えられます。その場合、自車位置は車線変更することができず、ゴールに到達することはできません。そのため、自車位置は特定の距離で早めに停止し、近隣の車線が安全と評価されるまで待つ必要があります。最小停止距離は、シフトの長さと車線変更の最小速度から計算できます。
+
 
 ```C++
 lane_changing_time = f(shift_length, lat_acceleration, lat_jerk)
 minimum_lane_change_distance = minimum_prepare_length + minimum_lane_changing_velocity * lane_changing_time + lane_change_finish_judge_buffer
 ```
 
-The following figure illustrates when the lane is blocked in multiple lane changes cases.
+以下の図は、複数車線変更時に車線が塞がれている場合を示しています。
 
 ![multiple-lane-changes](./images/lane_change-when_cannot_change_lanes.png)
 
-### Stopping behavior
+### 停車動作
 
-The stopping behavior of the ego vehicle is determined based on various factors, such as the number of lane changes required, the presence of obstacles, and the position of blocking objects in relation to the lane change plan. The objective is to choose a suitable stopping point that allows for a safe and effective lane change while adapting to different traffic scenarios.
+自車の停車動作は、必要な車線変更回数、障害物の有無、および車線変更計画に関する障害物の位置など、さまざまな要素に基づいて決定されます。目的は、さまざまな交通状況に適応しながら、安全かつ効果的な車線変更を可能にする適切な停止地点を選択することです。
 
-The following flowchart and subsections explain the conditions for deciding where to insert a stop point when an obstacle is ahead.
+次のフローチャートとサブセクションでは、障害物が前方にある場合に停止地点を挿入する場所の決定条件について説明します。
+
 
 ```plantuml
 @startuml
@@ -592,78 +682,79 @@ stop
 @enduml
 ```
 
-#### Ego vehicle's stopping position when an object exists ahead
+#### 自車の前方に障害物がある場合の停止位置
 
-When the ego vehicle encounters an obstacle ahead, it stops while maintaining a safe distance to prepare for a possible lane change. The exact stopping position depends on factors like whether the target lane is clear or if the lane change needs to be delayed. The following explains how different stopping scenarios are handled:
+自車が前方に障害物に遭遇した場合は、車線変更の可能性に備えて安全な距離を保ちながら停止します。正確な停止位置は、ターゲット車線が空いているかどうかや、車線変更が遅れる必要があるかに左右されます。以下に、さまざまな停止シナリオの処理方法を示します。
 
-##### When the near the end of the lane change
+##### 車線変更終了間近の場合
 
-Whether the target lane has obstacles or is clear, the ego vehicle stops while keeping a safe distance from the obstacle ahead, ensuring there is enough room for the lane change.
-
-![stop_at_terminal_no_block](./images/lane_change-stop_at_terminal_no_block.drawio.svg)
-
-![stop_at_terminal](./images/lane_change-stop_at_terminal.drawio.svg)
-
-##### When the ego vehicle is not near the end of the lane change
-
-The ego vehicle stops while maintaining a safe distance from the obstacle ahead, ensuring there is enough space for a lane change.
-
-![stop_not_at_terminal_no_blocking_object](./images/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
-
-#### Ego vehicle's stopping position when an object exists in the lane changing section
-
-If there are objects within the lane change section of the target lane, the ego vehicle stops closer to the obstacle ahead, without maintaining the usual distance for a lane change.
-
-##### When near the end of the lane change
-
-Regardless of whether there are obstacles in the target lane, the ego vehicle stops while keeping a safe distance from the obstacle ahead, allowing for the lane change.
+ターゲット車線に障害物があるかどうかに関係なく、自車は前方の障害物から安全な距離を保ちながら停止し、車線変更に十分なスペースが確保されます。
 
 ![stop_at_terminal_no_block](./images/lane_change-stop_at_terminal_no_block.drawio.svg)
 
 ![stop_at_terminal](./images/lane_change-stop_at_terminal.drawio.svg)
 
-##### When not near the end of the lane change
+##### 自車が車線変更終了間近でない場合
 
-If there are no obstacles in the lane change section of the target lane, the ego vehicle stops while keeping a safe distance from the obstacle ahead to accommodate the lane change.
+自車は前方の障害物から安全な距離を保ちながら停止し、車線変更に十分なスペースが確保されます。
 
 ![stop_not_at_terminal_no_blocking_object](./images/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
 
-If there are obstacles within the lane change section of the target lane, the ego vehicle stops closer to the obstacle ahead, without keeping the usual distance needed for a lane change.
+#### 車線変更セクションに障害物がある場合の自車停止位置
+
+ターゲット車線の車線変更セクションに障害物がある場合、自車は通常の車線変更距離を維持せず、前方の障害物に近い場所で停止します。
+
+##### 車線変更終了間近の場合
+
+ターゲット車線に障害物があるかどうかに関係なく、自車は前方の障害物から安全な距離を保ちながら停止し、車線変更を可能にします。
+
+![stop_at_terminal_no_block](./images/lane_change-stop_at_terminal_no_block.drawio.svg)
+
+![stop_at_terminal](./images/lane_change-stop_at_terminal.drawio.svg)
+
+##### 車線変更終了間近でない場合
+
+ターゲット車線の車線変更セクションに障害物がない場合、自車は前方の障害物から安全距離を確保しながら停止し、車線変更に対応します。
+
+![stop_not_at_terminal_no_blocking_object](./images/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
+
+ターゲット車線の車線変更セクション内に障害物がある場合、自車は通常の車線変更に必要な距離を維持せず、前方の障害物に近い場所で停止します。
 
 ![stop_not_at_terminal](./images/lane_change-stop_not_at_terminal.drawio.svg)
 
-#### When the target lane is far away
+#### ターゲット車線が遠い場合
 
-If the target lane for the lane change is far away and not next to the current lane, the ego vehicle stops closer to the obstacle ahead, as maintaining the usual distance for a lane change is not necessary.
+車線変更用のターゲット車線が遠く、現在の車線に隣接していない場合、自車は車線変更用の通常の距離を維持する必要がないため、前方の障害物に近づいて停止します。
 
 ![stop_far_from_target_lane](./images/lane_change-stop_far_from_target_lane.drawio.svg)
 
 ![stop_not_at_terminal](./images/lane_change-stop_not_at_terminal.drawio.svg)
 
-### Lane Change When Stuck
+### スタック時の車線変更
 
-The ego vehicle is considered stuck if it is stopped and meets any of the following conditions:
+自車が停止していて、次のいずれかの条件を満たす場合、スタックしていると見なされます。
 
-- There is an obstacle in front of the current lane
-- The ego vehicle is at the end of the current lane
+- 現在の車線の前方に障害物がある
+- 自車が現在の車線の末端に位置している
 
-In this case, the safety check for lane change is relaxed compared to normal times.
-Please refer to the 'stuck' section under the 'Collision checks during lane change' for more details.
-The function to stop by keeping a margin against forward obstacle in the previous section is being performed to achieve this feature.
+この場合、通常の時間と比較して車線変更の安全確認は緩和されます。
+詳細は、「車線変更時の衝突確認」の「stuck」セクションを参照してください。
+この機能を実現するために、前述のセクションで前進する障害物に対してある程度のマージンを保って停止する機能が実行されます。
 
-### Lane change regulations
+### 車線変更に関する制御
 
-If you want to regulate lane change on crosswalks, intersections, or traffic lights, the lane change module is disabled near any of them.
-To regulate lane change on crosswalks, intersections, or traffic lights, set `regulation.crosswalk`, `regulation.intersection` or `regulation.traffic_light` to `true`.
-If the ego vehicle gets stuck, to avoid stuck, it enables lane change in crosswalk/intersection.
-If the ego vehicle stops more than `stuck_detection.stop_time` seconds, it is regarded as a stuck.
-If the ego vehicle velocity is smaller than `stuck_detection.velocity`, it is regarded as stopping.
+交差点や信号で車線変更を制御する場合、車線変更モジュールはそれらの付近で無効になります。
+交差点や信号で車線変更を制御するには、`regulation.crosswalk`, `regulation.intersection`または`regulation.traffic_light`を`true`に設定します。
+自車がスタックした場合、スタックを避けるため車線変更が交差点/交差点で有効になります。
+自車が`stuck_detection.stop_time`秒以上停止すると、スタックと見なされます。
+自車の速度が`stuck_detection.velocity`未満の場合、停止していると見なされます。
 
-### Aborting lane change
+### 車線変更の中断
 
-The abort process may result in three different outcome; Cancel, Abort and Stop/Cruise.
+中断プロセスは、取り消し、中断、停止/巡航の3つの異なる結果をもたらす可能性があります。
 
-The following depicts the flow of the abort lane change check.
+以下は、車線変更の中断チェックの流れを示しています。
+
 
 ```plantuml
 @startuml
@@ -709,9 +800,10 @@ detach
 @enduml
 ```
 
-During a lane change, a safety check is made in consideration of the deceleration of the ego vehicle, and a safety check is made for `cancel.deceleration_sampling_num` deceleration patterns, and the lane change will be canceled if the abort condition is satisfied for all deceleration patterns.
+車線変更中は、自車減速を考慮した安全確認が実施され、`cancel.deceleration_sampling_num` 個の減速パターンの安全確認を実施し、すべての減速パターンで中止条件が満たされた場合は、車線変更がキャンセルされます。
 
-To preventive measure for lane change path oscillations caused by alternating safe and unsafe conditions, an additional hysteresis count check is implemented before executing an abort or cancel maneuver. If unsafe, the `unsafe_hysteresis_count_` is incremented and compared against `unsafe_hysteresis_threshold`; exceeding it prompts an abort condition check, ensuring decisions are made with consideration to recent safety assessments as shown in flow chart above. This mechanism stabilizes decision-making, preventing abrupt changes due to transient unsafe conditions.
+安全と危険な状態の交互によって発生する車線変更経路の振動に対する予防策として、中止またはキャンセル操作を実行する前に、ヒステリシスカウントチェックが追加で実装されています。安全でない場合は、`unsafe_hysteresis_count_` がインクリメントされ、`unsafe_hysteresis_threshold` と比較されます。これを超えると中止条件のチェックが促され、最近の安全評価を考慮に入れて決定が下されるようにします（上のフローチャートで示されています）。このメカニズムは意思決定を安定させ、一時的な安全でない状態による急激な変化を防ぎます。
+
 
 ```plantuml
 @startuml
@@ -734,37 +826,38 @@ endif
 @enduml
 ```
 
-#### Cancel
+## キャンセル
 
-Suppose the lane change trajectory is evaluated as unsafe. In that case, if the ego vehicle has not departed from the current lane yet, the trajectory will be reset, and the ego vehicle will resume the lane following the maneuver.
+車線変更軌道が安全ではないと評価された場合、自車位置が現在の車線をまだ離れていない場合、軌道がリセットされ、自車位置は車線フォロー操作を再開します。
 
-The function can be enabled by setting `enable_on_prepare_phase` to `true`.
+`enable_on_prepare_phase` を `true` に設定することでこの関数を有効化できます。
 
-The following image illustrates the cancel process.
+次の図はキャンセル処理を示しています。
 
 ![cancel](./images/lane_change-cancel.png)
 
-#### Abort
+## 中断
 
-Assume the ego vehicle has already departed from the current lane. In that case, it is dangerous to cancel the path, and it will cause the ego vehicle to change the heading direction abruptly. In this case, planning a trajectory that allows the ego vehicle to return to the current path while minimizing the heading changes is necessary. In this case, the lane change module will generate an abort path. The following images show an example of the abort path. Do note that the function DOESN'T GUARANTEE a safe abort process, as it didn't check the presence of the surrounding objects and/or their reactions. The function can be enable manually by setting both `enable_on_prepare_phase` and `enable_on_lane_changing_phase` to `true`. The parameter `max_lateral_jerk` need to be set to a high value in order for it to work.
+自車位置が既に現在の車線を離れているとします。その場合、パスをキャンセルすることは危険であり、自車位置が急激に進行方向を変えることになります。この場合、進行方向の変更を最小限に抑えながら、自車位置が現在のパスに戻ることを可能にする軌道を計画する必要があります。この場合、車線変更モジュールは中断パスを生成します。次の図は中断パスの例を示しています。この関数は周囲にある物体の有無やその反応を確認しないため、安全な中断処理が保障されません。`enable_on_prepare_phase` と `enable_on_lane_changing_phase` の両方を `true` に設定することで、この関数を手動で有効化できます。この機能を動作させるには、`max_lateral_jerk` パラメータを大きな値に設定する必要があります。
 
 ![abort](./images/lane_change-abort.png)
 
-#### Stop/Cruise
+## 停止/巡航
 
-The last behavior will also occur if the ego vehicle has departed from the current lane. If the abort function is disabled or the abort is no longer possible, the ego vehicle will attempt to stop or transition to the obstacle cruise mode. Do note that the module DOESN'T GUARANTEE safe maneuver due to the unexpected behavior that might've occurred during these critical scenarios. The following images illustrate the situation.
+この最後の動作は、自車位置が現在の車線を離れた場合にも発生します。中断関数が無効化されているか、中断がもはや不可能な場合、自車位置は停止するか障害物巡航モードに移行しようとします。これらの重要なシナリオ中に発生する予期しない動作により、このモジュールは安全な操作を保障しません。次の図は状況を示しています。
 
 ![stop](./images/lane_change-cant_cancel_no_abort.png)
 
-## Lane change completion checks
+## 車線変更完了チェック
 
-To determine if the ego vehicle has successfully changed lanes, one of two criteria must be met: either the longitudinal or the lateral criteria.
+自車位置が車線変更に成功したかどうかを判断するには、縦方向基準または横方向基準のいずれかが満たされている必要があります。
 
-For the longitudinal criteria, the ego vehicle must pass the lane-changing end pose and be within the `finish_judge_buffer` distance from it. The module then checks if the ego vehicle is in the target lane. If true, the module returns success. This check ensures that the planner manager updates the root lanelet correctly based on the ego vehicle's current pose. Without this check, if the ego vehicle is changing lanes while avoiding an obstacle and its current pose is in the original lane, the planner manager might set the root lanelet as the original lane. This would force the ego vehicle to perform the lane change again. With the target lane check, the ego vehicle is confirmed to be in the target lane, and the planner manager can correctly update the root lanelets.
+縦方向基準では、自車位置は車線変更の終端ポーズを通過し、その距離が `finish_judge_buffer` 内にある必要があります。モジュールはその後、自車位置が目標車線にあるかどうかを確認します。true の場合、モジュールは success を返します。このチェックにより、プランナーマネージャーが自車位置の現在のポーズに基づいてルートレーンレットを正しく更新します。このチェックがない場合、自車位置が障害物を回避しながら車線変更を行っていて現在のポーズが元の車線にある場合、プランナーマネージャーはルートレーンレットを元の車線として設定します。これにより、自車位置はもう一度車線変更を実行することになります。目標車線チェックがあれば、自車位置が目標車線にあることが確認され、プランナーマネージャーはルートレーンレットを正しく更新できます。
 
-If the longitudinal criteria are not met, the module evaluates the lateral criteria. For the lateral criteria, the ego vehicle must be within `finish_judge_lateral_threshold` distance from the target lane's centerline, and the angle deviation must be within `finish_judge_lateral_angle_deviation` degrees. The angle deviation check ensures there is no sudden steering. If the angle deviation is set too high, the ego vehicle's orientation could deviate significantly from the centerline, causing the trajectory follower to aggressively correct the steering to return to the centerline. Keeping the angle deviation value as small as possible avoids this issue.
+縦方向基準が満たされない場合、モジュールは横方向基準を評価します。横方向基準では、自車位置は目標車線のセンターラインから `finish_judge_lateral_threshold` 距離以内にある必要があり、角度偏差が `finish_judge_lateral_angle_deviation` 度以内である必要があります。角度偏差チェックにより、急激な操舵がないことが保証されます。角度偏差が大きすぎると、自車位置の向きがセンターラインから大きく逸脱し、軌道追従器が積極的に操舵を修正してセンターラインに戻ろうとします。角度偏差の値を可能な限り小さくすることで、この問題を回避できます。
 
-The process of determining lane change completion is shown in the following diagram.
+車線変更完了の判定プロセスは、次の図に示します。
+
 
 ```plantuml
 @startuml
@@ -811,196 +904,228 @@ endif
 @enduml
 ```
 
-## Parameters
+## パラメータ
 
-### Essential lane change parameters
+### 必須車線変更パラメータ
 
-The following parameters are configurable in [lane_change.param.yaml](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/lane_change/lane_change.param.yaml)
+以下のパラメータは [lane_change.param.yaml](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/lane_change/lane_change.param.yaml) で構成できます。
 
-| Name                                         | Unit   | Type   | Description                                                                                                            | Default value      |
-| :------------------------------------------- | ------ | ------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `backward_lane_length`                       | [m]    | double | The backward length to check incoming objects in lane change target lane.                                              | 200.0              |
-| `prepare_duration`                           | [m]    | double | The preparation time for the ego vehicle to be ready to perform lane change.                                           | 4.0                |
-| `backward_length_buffer_for_end_of_lane`     | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change                                  | 3.0                |
-| `backward_length_buffer_for_blocking_object` | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change when there is an object in front | 3.0                |
-| `lane_change_finish_judge_buffer`            | [m]    | double | The additional buffer used to confirm lane change process completion                                                   | 2.0                |
-| `lane_changing_lateral_jerk`                 | [m/s3] | double | Lateral jerk value for lane change path generation                                                                     | 0.5                |
-| `minimum_lane_changing_velocity`             | [m/s]  | double | Minimum speed during lane changing process.                                                                            | 2.78               |
-| `prediction_time_resolution`                 | [s]    | double | Time resolution for object's path interpolation and collision check.                                                   | 0.5                |
-| `longitudinal_acceleration_sampling_num`     | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by longitudinal acceleration                   | 3                  |
-| `lateral_acceleration_sampling_num`          | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by lateral acceleration                        | 3                  |
-| `object_check_min_road_shoulder_width`       | [m]    | double | Width considered as a road shoulder if the lane does not have a road shoulder                                          | 0.5                |
-| `object_shiftable_ratio_threshold`           | [-]    | double | Vehicles around the center line within this distance ratio will be excluded from parking objects                       | 0.6                |
-| `min_length_for_turn_signal_activation`      | [m]    | double | Turn signal will be activated if the ego vehicle approaches to this length from minimum lane change length             | 10.0               |
-| `length_ratio_for_turn_signal_deactivation`  | [-]    | double | Turn signal will be deactivated if the ego vehicle approaches to this length ratio for lane change finish point        | 0.8                |
-| `max_longitudinal_acc`                       | [-]    | double | maximum longitudinal acceleration for lane change                                                                      | 1.0                |
-| `min_longitudinal_acc`                       | [-]    | double | maximum longitudinal deceleration for lane change                                                                      | -1.0               |
-| `lateral_acceleration.velocity`              | [m/s]  | double | Reference velocity for lateral acceleration calculation (look up table)                                                | [0.0, 4.0, 10.0]   |
-| `lateral_acceleration.min_values`            | [m/ss] | double | Min lateral acceleration values corresponding to velocity (look up table)                                              | [0.4, 0.4, 0.4]    |
-| `lateral_acceleration.max_values`            | [m/ss] | double | Max lateral acceleration values corresponding to velocity (look up table)                                              | [0.65, 0.65, 0.65] |
+| 名前 | 単位 | 型 | 説明 | デフォルト値 |
+|---|---|---|---|---|
+| `backward_lane_length` | [m] | double | 車線変更のターゲット車線を後方からチェックする長さ | 200.0 |
+| `prepare_duration` | [m] | double | 自動運転車が車線変更の準備をするための時間 | 4.0 |
+| `backward_length_buffer_for_end_of_lane` | [m] | double | 車線変更を開始するために自動運転車が十分な距離を確保するための、車線末端のバッファ | 3.0 |
+| `backward_length_buffer_for_blocking_object` | [m] | double | 車両の正面に障害物がある場合に車線変更を開始するために自動運転車が十分な距離を確保するための、車線末端のバッファ | 3.0 |
+| `backward_length_from_intersection` | [m] | double | 最後の交差点からの距離のしきい値。この距離以内では車線変更経路が無効またはキャンセルされる | 5.0 |
+| `lane_change_finish_judge_buffer` | [m] | double | 車線変更プロセスの完了を確認するために使用される追加のバッファ | 2.0 |
+| `lane_changing_lateral_jerk` | [m/s3] | double | 車線変更経路を生成するための横方向加速度値 | 0.5 |
+| `minimum_lane_changing_velocity` | [m/s] | double | 車線変更プロセス中の最小速度 | 2.78 |
+| `prediction_time_resolution` | [s] | double | 障害物の経路補間と衝突チェックのための時間分解能 | 0.5 |
+| `longitudinal_acceleration_sampling_num` | [-] | int | 縦方向加速度の影響を受ける車線変更可能な経路の数 | 3 |
+| `lateral_acceleration_sampling_num` | [-] | int | 横方向加速度の影響を受ける車線変更可能な経路の数 | 3 |
+| `object_check_min_road_shoulder_width` | [m] | double | 車線に路側帯がない場合、路側帯と見なされる幅 | 0.5 |
+| `object_shiftable_ratio_threshold` | [-] | double | 中心線からこの距離比内にある車両は、駐車車両から除外される | 0.6 |
+| `min_length_for_turn_signal_activation` | [m] | double | 自動運転車が車線変更の最小距離にこの長さまで近づいたら、ターンシグナルが有効になる | 10.0 |
+| `length_ratio_for_turn_signal_deactivation` | [-] | double | 自動運転車が車線変更の終了点にこの距離比まで近づいたら、ターンシグナルが無効になる | 0.8 |
+| `max_longitudinal_acc` | [-] | double | 車線変更の最大縦方向加速度 | 1.0 |
+| `min_longitudinal_acc` | [-] | double | 車線変更の最大縦方向減速度 | -1.0 |
+| `lateral_acceleration.velocity` | [m/s] | double | 横方向加速度計算のための基準速度（参照テーブル） | [0.0, 4.0, 10.0] |
+| `lateral_acceleration.min_values` | [m/ss] | double | 速度に対応する最小横方向加速度値（参照テーブル） | [0.4, 0.4, 0.4] |
+| `lateral_acceleration.max_values` | [m/ss] | double | 速度に対応する最大横方向加速度値（参照テーブル） | [0.65, 0.65, 0.65] |
 
-### Parameter to judge if lane change is completed
+### 車線変更完了判定パラメータ
 
-The following parameters are used to judge lane change completion.
+車線変更完了を判定するために、以下のパラメータを使用します。
 
-| Name                                   | Unit  | Type   | Description                                                                                                            | Default value |
+| 名称                                   | 単位  | タイプ   | 説明                                                                                                            | デフォルト値 |
 | :------------------------------------- | ----- | ------ | ---------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `lane_change_finish_judge_buffer`      | [m]   | double | The longitudinal distance starting from the lane change end pose.                                                      | 2.0           |
-| `finish_judge_lateral_threshold`       | [m]   | double | The lateral distance from targets lanes' centerline. Used in addition with `finish_judge_lateral_angle_deviation`      | 0.1           |
-| `finish_judge_lateral_angle_deviation` | [deg] | double | Ego angle deviation with reference to target lanes' centerline. Used in addition with `finish_judge_lateral_threshold` | 2.0           |
+| `lane_change_finish_judge_buffer`      | [m]   | double | レーン変更終了姿勢からの縦方向距離                                                                                 | 2.0           |
+| `finish_judge_lateral_threshold`       | [m]   | double | ターゲットレーンの中心線からの横方向距離。`finish_judge_lateral_angle_deviation`と併用する                       | 0.1           |
+| `finish_judge_lateral_angle_deviation` | [度] | double | ターゲットレーンの中心線に対する自車角度偏差。`finish_judge_lateral_threshold`と併用する                       | 2.0           |
 
-### Lane change regulations
+### 車線変更規制
 
-| Name                       | Unit | Type    | Description                                                | Default value |
-| :------------------------- | ---- | ------- | ---------------------------------------------------------- | ------------- |
-| `regulation.crosswalk`     | [-]  | boolean | Allow lane change in between crosswalks                    | true          |
-| `regulation.intersection`  | [-]  | boolean | Allow lane change in between intersections                 | true          |
-| `regulation.traffic_light` | [-]  | boolean | Allow lane change to be performed in between traffic light | true          |
+| 名称                      | 単位 | タイプ    | 説明                                                                               | デフォルト値 |
+| :------------------------- | ---- | ------- | ----------------------------------------------------------------------------------- | ------------- |
+| `regulation.crosswalk`     | [-]  | ブール値 | 横断歩道間での車線変更を許可する                                                  | true          |
+| `regulation.intersection`  | [-]  | ブール値 | 交差点間での車線変更を許可する                                                     | true          |
+| `regulation.traffic_light` | [-]  | ブール値 | 信号間での車線変更の実行を許可する                                                  | true          |
 
-### Ego vehicle stuck detection
+### 自車位置検出
 
-| Name                        | Unit  | Type   | Description                                         | Default value |
+---
+
+障害物が自車を完全に包囲して動作不可能にした状態を検出します。
+
+| 名称                        | 単位  | 型   | 説明                                         | 初期値 |
 | :-------------------------- | ----- | ------ | --------------------------------------------------- | ------------- |
-| `stuck_detection.velocity`  | [m/s] | double | Velocity threshold for ego vehicle stuck detection  | 0.1           |
-| `stuck_detection.stop_time` | [s]   | double | Stop time threshold for ego vehicle stuck detection | 3.0           |
+| `stuck_detection.velocity`  | [m/s] | double | 自車位置の静止検出における速度しきい値  | 0.1           |
+| `stuck_detection.stop_time` | [秒]   | double | 自車位置の静止検出における停止時間しきい値 | 3.0           |
 
-### Collision checks
+### 衝突チェック
 
-#### Target Objects
+#### 目標オブジェクト
 
-| Name                       | Unit | Type    | Description                                 | Default value |
-| :------------------------- | ---- | ------- | ------------------------------------------- | ------------- |
-| `target_object.car`        | [-]  | boolean | Include car objects for safety check        | true          |
-| `target_object.truck`      | [-]  | boolean | Include truck objects for safety check      | true          |
-| `target_object.bus`        | [-]  | boolean | Include bus objects for safety check        | true          |
-| `target_object.trailer`    | [-]  | boolean | Include trailer objects for safety check    | true          |
-| `target_object.unknown`    | [-]  | boolean | Include unknown objects for safety check    | true          |
-| `target_object.bicycle`    | [-]  | boolean | Include bicycle objects for safety check    | true          |
-| `target_object.motorcycle` | [-]  | boolean | Include motorcycle objects for safety check | true          |
-| `target_object.pedestrian` | [-]  | boolean | Include pedestrian objects for safety check | true          |
+| 名前                       | 単位 | 型      | 説明                                               | デフォルト値 |
+| :------------------------- | ---- | ------- | -------------------------------------------------- | ------------- |
+| `target_object.car`        | [-]  | boolean | 安全チェックに自動車オブジェクトを含める           | true          |
+| `target_object.truck`      | [-]  | boolean | 安全チェックにトラックオブジェクトを含める         | true          |
+| `target_object.bus`        | [-]  | boolean | 安全チェックにバスオブジェクトを含める           | true          |
+| `target_object.trailer`    | [-]  | boolean | 安全チェックにトレーラーオブジェクトを含める       | true          |
+| `target_object.unknown`    | [-]  | boolean | 安全チェックに不明オブジェクトを含める             | true          |
+| `target_object.bicycle`    | [-]  | boolean | 安全チェックに自転車オブジェクトを含める           | true          |
+| `target_object.motorcycle` | [-]  | boolean | 安全チェックにオートバイオブジェクトを含める       | true          |
+| `target_object.pedestrian` | [-]  | boolean | 安全チェックに歩行者オブジェクトを含める           | true          |
 
 #### common
 
-| Name                                       | Unit | Type   | Description                                                                                                                                 | Default value |
-| :----------------------------------------- | ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `safety_check.lane_expansion.left_offset`  | [m]  | double | Expand the left boundary of the detection area, allowing objects previously outside on the left to be detected and registered as targets.   | 0.0           |
-| `safety_check.lane_expansion.right_offset` | [m]  | double | Expand the right boundary of the detection area, allowing objects previously outside on the right to be detected and registered as targets. | 0.0           |
+| 名称                                        | 単位 | タイプ   | 説明                                                                                                                                 | デフォルト値 |
+| :---------------------------------------- | ---- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `safety_check.lane_expansion.left_offset`  | [m]  | 倍精度浮動小数点 | 検出領域の左側の境界を拡大し、以前は左側にあったオブジェクトの検出とターゲットへの登録を可能にする。   | 0.0           |
+| `safety_check.lane_expansion.right_offset` | [m]  | 倍精度浮動小数点 | 検出領域の右側の境界を拡大し、以前は右側にあったオブジェクトの検出とターゲットへの登録を可能にする。 | 0.0           |
 
-#### Additional parameters
+#### 追加パラメータ
 
-| Name                                                     | Unit  | Type    | Description                                                                                                                                                                                                | Default value |
-| :------------------------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `enable_collision_check_for_prepare_phase.general_lanes` | [-]   | boolean | Perform collision check starting from the prepare phase for situations not explicitly covered by other settings (e.g., intersections). If `false`, collision check only evaluated for lane changing phase. | false         |
-| `enable_collision_check_for_prepare_phase.intersection`  | [-]   | boolean | Perform collision check starting from prepare phase when ego is in intersection. If `false`, collision check only evaluated for lane changing phase.                                                       | true          |
-| `enable_collision_check_for_prepare_phase.turns`         | [-]   | boolean | Perform collision check starting from prepare phase when ego is in lanelet with turn direction tags. If `false`, collision check only evaluated for lane changing phase.                                   | true          |
-| `prepare_phase_ignore_target_speed_thresh`               | [m/s] | double  | Ignore collision check in prepare phase of object speed that is lesser that the configured value. `enable_collision_check_at_prepare_phase` must be `true`                                                 | 0.1           |
-| `check_objects_on_current_lanes`                         | [-]   | boolean | If true, the lane change module check objects on current lanes when performing collision assessment.                                                                                                       | false         |
-| `check_objects_on_other_lanes`                           | [-]   | boolean | If true, the lane change module include objects on other lanes. when performing collision assessment                                                                                                       | false         |
-| `use_all_predicted_path`                                 | [-]   | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                                                                     | true          |
-| `safety_check.collision_check_yaw_diff_threshold`        | [rad] | double  | Maximum yaw difference between ego and object when executing rss-based collision checking                                                                                                                  | 3.1416        |
+| Name                                                    | Unit  | Type    | Description                                                                                                                                                                                             | Default value |
+| :------------------------------------------------------- | ----- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `enable_collision_check_for_prepare_phase.general_lanes` | [-]   | boolean | Planningコンポーネントの準備フェーズから衝突チェックを実行します（交差点など、他の設定で明示的にカバーされていない状況の場合）。`false`の場合、衝突チェックは車線変更フェーズのみで評価されます。 | false         |
+| `enable_collision_check_for_prepare_phase.intersection`  | [-]   | boolean | 自車が交差点にいる場合、準備フェーズから衝突チェックを実行します。`false`の場合、衝突チェックは車線変更フェーズのみで評価されます。                                                | true          |
+| `enable_collision_check_for_prepare_phase.turns`         | [-]   | boolean | 自車が旋回方向タグのあるLaneletにいる場合、準備フェーズから衝突チェックを実行します。`false`の場合、衝突チェックは車線変更フェーズのみで評価されます。                               | true          |
+| `prepare_phase_ignore_target_speed_thresh`               | [m/s] | double  | 設定された値より小さいオブジェクトの速度について、準備フェーズでの衝突チェックを無視します。`enable_collision_check_at_prepare_phase`が`true`である必要があります。         | 0.1           |
+| `check_objects_on_current_lanes`                         | [-]   | boolean | trueの場合、車線変更モジュールは衝突評価を実行する際、現在の車線上のオブジェクトをチェックします。                                                                                               | false         |
+| `check_objects_on_other_lanes`                           | [-]   | boolean | trueの場合、車線変更モジュールは衝突評価を実行する際、他の車線上のオブジェクトを含めます。                                                                                               | false         |
+| `use_all_predicted_path`                                 | [-]   | boolean | falseの場合、信頼度が最も高い予測パスのみを使用します。                                                                                                                                   | true          |
+| `safety_check.collision_check_yaw_diff_threshold`        | [rad] | double  | RSSベースの衝突チェックを実行する際の自車とオブジェクト間の最大ヨー角差                                                                                                             | 3.1416        |
 
-#### safety constraints during lane change path is computed
+#### 車線変更経路が計算中の安全性制約
 
-| Name                                                         | Unit    | Type   | Description                                                                                                                                                    | Default value |
-| :----------------------------------------------------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `safety_check.execution.expected_front_deceleration`         | [m/s^2] | double | The front object's maximum deceleration when the front vehicle perform sudden braking. (\*1)                                                                   | -1.0          |
-| `safety_check.execution.expected_rear_deceleration`          | [m/s^2] | double | The rear object's maximum deceleration when the rear vehicle perform sudden braking. (\*1)                                                                     | -1.0          |
-| `safety_check.execution.rear_vehicle_reaction_time`          | [s]     | double | The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle until the driver step on the brake. | 2.0           |
-| `safety_check.execution.rear_vehicle_safety_time_margin`     | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 1.0           |
-| `safety_check.execution.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 2.0           |
-| `safety_check.execution.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
-| `safety_check.cancel.longitudinal_velocity_delta_time`       | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
+```
+```
 
-#### safety constraints specifically for stopped or parked vehicles
+| 名称                                                       | 単位    | 型   | 説明                                                                                                                                                      | デフォルト値 |
+| :--------------------------------------------------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `safety_check.execution.expected_front_deceleration`         | [m/s²] | double | 前方の車両が急ブレーキを行った場合の前方対象物の最大減速度。(\*1)                                                                                      | -1.0          |
+| `safety_check.execution.expected_rear_deceleration`          | [m/s²] | double | 後方の車両が急ブレーキを行った場合の後方対象物の最大減速度。(\*1)                                                                                        | -1.0          |
+| `safety_check.execution.rear_vehicle_reaction_time`          | [s]     | double | 前方車両の急ブレーキに気付いた時点からブレーキを踏むまでの後方車両の運転者の反応時間。                                                                  | 2.0           |
+| `safety_check.execution.rear_vehicle_safety_time_margin`     | [s]     | double | 後方車両の運転者が急ブレーキを行ったときに完全停止状態になるまでの時間バッファ。                                                                         | 1.0           |
+| `safety_check.execution.lateral_distance_max_threshold`      | [m]     | double | 2 つの対象物間の横方向距離が十分で、車線変更が安全かどうかを判断するために使用される横方向距離のしきい値。                                              | 2.0           |
+| `safety_check.execution.longitudinal_distance_min_threshold` | [m]     | double | 2 つの対象物間の縦方向距離が十分で、車線変更が安全かどうかを判断するために使用される縦方向距離のしきい値。                                            | 3.0           |
+| `safety_check.cancel.longitudinal_velocity_delta_time`       | [m]     | double | 予測された各時点での車両間の実際のギャップを計算するために使用される時間乗数（RSS 距離ではない）。                                                | 0.8           |
 
-| Name                                                      | Unit    | Type   | Description                                                                                                                                                    | Default value |
+#### 停止または駐車車両に対する安全制約
+
+| 名前                                                      | 単位    | 型     | 説明                                                                                                                                                    | デフォルト値 |
 | :-------------------------------------------------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `safety_check.parked.expected_front_deceleration`         | [m/s^2] | double | The front object's maximum deceleration when the front vehicle perform sudden braking. (\*1)                                                                   | -1.0          |
-| `safety_check.parked.expected_rear_deceleration`          | [m/s^2] | double | The rear object's maximum deceleration when the rear vehicle perform sudden braking. (\*1)                                                                     | -2.0          |
-| `safety_check.parked.rear_vehicle_reaction_time`          | [s]     | double | The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle until the driver step on the brake. | 1.0           |
-| `safety_check.parked.rear_vehicle_safety_time_margin`     | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 0.8           |
-| `safety_check.parked.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 1.0           |
-| `safety_check.parked.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
-| `safety_check.parked.longitudinal_velocity_delta_time`    | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
+| `safety_check.parked.expected_front_deceleration`         | [m/s^2] | double | 前走車が急ブレーキをかけたときの前方の物体の最大の減速度。(\*1)                                                                   | -1.0          |
+| `safety_check.parked.expected_rear_deceleration`          | [m/s^2] | double | 後続車が急ブレーキをかけたときの後方の物体の最大の減速度。(\*1)                                                                     | -2.0          |
+| `safety_check.parked.rear_vehicle_reaction_time`          | [s]     | double | 後続車のドライバーが、前走車の急ブレーキに気づいてからブレーキを踏むまでの反応時間。                                                            | 1.0           |
+| `safety_check.parked.rear_vehicle_safety_time_margin`     | [s]     | double | 後続車のドライバーが急ブレーキをかけたときに完全に停止するための時間バッファ。                                                        | 0.8           |
+| `safety_check.parked.lateral_distance_max_threshold`      | [m]     | double | 2つの物体間の横方向距離が十分かどうか、また車線変更が安全かどうかを判断するために使用される横方向距離のしきい値。                | 1.0           |
+| `safety_check.parked.longitudinal_distance_min_threshold` | [m]     | double | 2つの物体間の縦方向距離が十分かどうか、また車線変更が安全かどうかを判断するために使用される縦方向距離のしきい値。                      | 3.0           |
+| `safety_check.parked.longitudinal_velocity_delta_time`    | [m]     | double | 予測された各ポイントにおける車両間の実際のギャップを計算するために使用される時間乗数（RSS距離ではなく）。                                         | 0.8           |
 
-##### safety constraints to cancel lane change path
+##### 車線変更パスのキャンセルに対するセーフティ制約
 
-| Name                                                      | Unit    | Type   | Description                                                                                                                                                    | Default value |
-| :-------------------------------------------------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `safety_check.cancel.expected_front_deceleration`         | [m/s^2] | double | The front object's maximum deceleration when the front vehicle perform sudden braking. (\*1)                                                                   | -1.0          |
-| `safety_check.cancel.expected_rear_deceleration`          | [m/s^2] | double | The rear object's maximum deceleration when the rear vehicle perform sudden braking. (\*1)                                                                     | -2.0          |
-| `safety_check.cancel.rear_vehicle_reaction_time`          | [s]     | double | The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle until the driver step on the brake. | 1.5           |
-| `safety_check.cancel.rear_vehicle_safety_time_margin`     | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 0.8           |
-| `safety_check.cancel.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 1.0           |
-| `safety_check.cancel.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 2.5           |
-| `safety_check.cancel.longitudinal_velocity_delta_time`    | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.6           |
+| 名前 | ユニット | タイプ | 説明 | デフォルト値 |
+|---|---|---|---|---|
+| `safety_check.cancel.expected_front_deceleration` | [m/s^2] | double | 前方車両が急ブレーキをかけたときの前方車両の最大減速度。(＊1) | -1.0 |
+| `safety_check.cancel.expected_rear_deceleration` | [m/s^2] | double | 後方車両が急ブレーキをかけたときの後方車両の最大減速度。(＊1) | -2.0 |
+| `safety_check.cancel.rear_vehicle_reaction_time` | [s] | double | 前方車両の急ブレーキに気づいてブレーキを踏むまでの後方車両のドライバーの反応時間 | 1.5 |
+| `safety_check.cancel.rear_vehicle_safety_time_margin` | [s] | double | 後方車両のドライバーが急ブレーキをかけたときに完全に停止するまでの時間バッファ | 0.8 |
+| `safety_check.cancel.lateral_distance_max_threshold` | [m] | double | 2つの車両間の横距離が十分であり、車線変更が安全かどうかを判断するために使用される横距離のしきい値 | 1.0 |
+| `safety_check.cancel.longitudinal_distance_min_threshold` | [m] | double | 2つの車両間の縦距離が十分であり、車線変更が安全かどうかを判断するために使用される縦距離のしきい値 | 2.5 |
+| `safety_check.cancel.longitudinal_velocity_delta_time` | [m] | double | 各予測点での車両間の実際のギャップを計算するために使用される時間倍率（RSS距離ではない） | 0.6 |
 
-##### safety constraints used during lane change path is computed when ego is stuck
+##### 車両が動けなくなった場合にレーンチェンジパスの計算に使用​​される安全制約
 
-| Name                                                     | Unit    | Type   | Description                                                                                                                                                    | Default value |
-| :------------------------------------------------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `safety_check.stuck.expected_front_deceleration`         | [m/s^2] | double | The front object's maximum deceleration when the front vehicle perform sudden braking. (\*1)                                                                   | -1.0          |
-| `safety_check.stuck.expected_rear_deceleration`          | [m/s^2] | double | The rear object's maximum deceleration when the rear vehicle perform sudden braking. (\*1)                                                                     | -1.0          |
-| `safety_check.stuck.rear_vehicle_reaction_time`          | [s]     | double | The reaction time of the rear vehicle driver which starts from the driver noticing the sudden braking of the front vehicle until the driver step on the brake. | 2.0           |
-| `safety_check.stuck.rear_vehicle_safety_time_margin`     | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 1.0           |
-| `safety_check.stuck.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 2.0           |
-| `safety_check.stuck.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
-| `safety_check.stuck.longitudinal_velocity_delta_time`    | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
+| 名前                                                  | 単位 | タイプ | 説明                                                                                                                                                                | デフォルト値 |
+| :---------------------------------------------------- | ----- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `safety_check.stuck.expected_front_deceleration`      | [m/s^2] | double | 前方車両が急ブレーキを実行した場合の前方オブジェクトの最大減速度。(\*1)                                                                                | -1.0          |
+| `safety_check.stuck.expected_rear_deceleration`       | [m/s^2] | double | 後方車両が急ブレーキを実行した場合の後方オブジェクトの最大減速度。(\*1)                                                                                | -1.0          |
+| `safety_check.stuck.rear_vehicle_reaction_time`       | [s] | double | 後方車両の運転手が前方の車両の急ブレーキに気付く瞬間からブレーキを踏む瞬間までの反応時間。                                                               | 2.0           |
+| `safety_check.stuck.rear_vehicle_safety_time_margin`  | [s] | double | 後方車両の運転手が急ブレーキを実行したときに完全に停止するためのタイムバッファ。                                                                                 | 1.0           |
+| `safety_check.stuck.lateral_distance_max_threshold`   | [m] | double | 2つのオブジェクト間の横方向の距離が十分かどうか、および車線変更が安全かどうかを判断するために使用される横方向距離の閾値。                           | 2.0           |
+| `safety_check.stuck.longitudinal_distance_min_threshold` | [m] | double | 2つのオブジェクト間の縦方向の距離が十分かどうか、および車線変更が安全かどうかを判断するために使用される縦方向距離の閾値。                              | 3.0           |
+| `safety_check.stuck.longitudinal_velocity_delta_time` | [m] | double | 各予測ポイントでの車両間の実際のギャップを計算するために使用される時間乗数（RSS距離ではない）。                                                         | 0.8           |
 
-(\*1) the value must be negative.
+(\*1) この値は負の値でなければなりません。
 
-### Abort lane change
+### 車線変更の中止
 
-The following parameters are configurable in `lane_change.param.yaml`.
+次のパラメータは `lane_change.param.yaml` で構成できます。
 
-| Name                                   | Unit    | Type    | Description                                                                                                      | Default value |
-| :------------------------------------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------- | ------------- |
-| `cancel.enable_on_prepare_phase`       | [-]     | boolean | Enable cancel lane change                                                                                        | true          |
-| `cancel.enable_on_lane_changing_phase` | [-]     | boolean | Enable abort lane change.                                                                                        | false         |
-| `cancel.delta_time`                    | [s]     | double  | The time taken to start steering to return to the center line.                                                   | 3.0           |
-| `cancel.duration`                      | [s]     | double  | The time taken to complete returning to the center line.                                                         | 3.0           |
-| `cancel.max_lateral_jerk`              | [m/sss] | double  | The maximum lateral jerk for abort path                                                                          | 1000.0        |
-| `cancel.overhang_tolerance`            | [m]     | double  | Lane change cancel is prohibited if the vehicle head exceeds the lane boundary more than this tolerance distance | 0.0           |
-| `cancel.unsafe_hysteresis_threshold`   | [-]     | int     | threshold that helps prevent frequent switching between safe and unsafe decisions                                | 10            |
-| `cancel.deceleration_sampling_num`     | [-]     | int     | Number of deceleration patterns to check safety to cancel lane change                                            | 5             |
+| 名称                                   | 単位    | タイプ    | 説明                                                                                                                | デフォルト値 |
+| :------------------------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `cancel.enable_on_prepare_phase`       | [-]     | boolean | レーン変更のキャンセルを許可                                                                                         | true          |
+| `cancel.enable_on_lane_changing_phase` | [-]     | boolean | レーン変更の中断を許可                                                                                         | false         |
+| `cancel.delta_time`                    | [s]     | double  | センタラインに戻るステアリングを開始するのにかかる時間                                                           | 3.0           |
+| `cancel.duration`                      | [s]     | double  | センタラインに戻るために要する時間                                                                               | 3.0           |
+| `cancel.max_lateral_jerk`              | [m/sss] | double  | 中断パスの最大横方向ジャーク                                                                                   | 1000.0        |
+| `cancel.overhang_tolerance`            | [m]     | double  | 車両ヘッドがこの許容距離を超えて車線境界を超えた場合、レーン変更のキャンセルは禁止される                   | 0.0           |
+| `cancel.unsafe_hysteresis_threshold`   | [-]     | int     | 安全と不安全の決定の間の頻繁な切り替えを防ぐのに役立つしきい値                                              | 10            |
+| `cancel.deceleration_sampling_num`     | [-]     | int     | レーン変更のキャンセルを安全にするためにチェックする 減速度パターンの数                                        | 5             |
 
-### Debug
+### デバッグ
 
-The following parameters are configurable in `lane_change.param.yaml`.
+以下のパラメータは `lane_change.param.yaml` で設定できます。
 
-| Name                   | Unit | Type    | Description                  | Default value |
-| :--------------------- | ---- | ------- | ---------------------------- | ------------- |
-| `publish_debug_marker` | [-]  | boolean | Flag to publish debug marker | false         |
+| 名称 | 単位 | タイプ | 説明 | デフォルト値 |
+| --- | --- | --- | --- | --- |
+| `publish_debug_marker` | [-] | ブール型 | デバッグマーカーの公開を設定 | `false` |
 
-## Debug Marker & Visualization
+## デバッグマーカーと可視化
 
-To enable the debug marker, execute (no restart is needed)
+デバッグマーカーを有効にするには、（再起動は不要です）を実行します。
+
 
 ```shell
 ros2 param set /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner lane_change.publish_debug_marker true
 
 ```
 
-or simply set the `publish_debug_marker` to `true` in the `lane_change.param.yaml` for permanent effect (restart is needed).
+LaneChangeモジュール内の`publish_debug_marker`を`lane_change.param.yaml`で`true`に設定すれば、永続的に効果をもたらします（再起動が必要）。
 
-Then add the marker
+次に、マーカーを追加します。
+
 
 ```shell
 /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/lane_change_left
 ```
 
-in `rviz2`.
+## 自動運転ソフトウェアのドキュメント
 
-![debug](./images/lane_change-debug-1.png)
+### 車線変更戦略
 
-![debug2](./images/lane_change-debug-2.png)
+#### 概要
+この戦略では、車両の車線変更に関する予測、決定、実行のためのコンポーネントが提供されます。戦略は、環境内のオブジェクトに関する情報を考慮して、車線変更を実施するかどうかを決定します。
 
-![debug3](./images/lane_change-debug-3.png)
+#### コンポーネント
+- **Planning Planner**
+  - 車両の軌道と車線変更の実行時間に関する情報を生成します。
+- **Safety Checker**
+  - 車両の周囲にある物体の安全性を評価し、車線変更が安全かどうかを判断します。
+- **Supervisor**
+  - PlannerとSafety Checkerからの情報を統合し、車線変更を実施するかどうかを決定します。
 
-Available information
+### 起動要件
+この戦略を起動するには、次の情報を提供する必要があります。
+- **自車位置**
+- **周囲の物体の情報**
+- **目標車線**
 
-1. Ego to object relation, plus safety check information
-2. Ego vehicle interpolated pose up to the latest safety check position.
-3. Object is safe or not, shown by the color of the polygon (Green = Safe, Red = unsafe)
-4. Valid candidate paths.
-5. Position when lane changing start and end.
+### 利用可能な情報
+**rviz2**で利用できる情報。
+
+![デバッグ](./images/lane_change-debug-1.png)
+
+![デバッグ2](./images/lane_change-debug-2.png)
+
+![デバッグ3](./images/lane_change-debug-3.png)
+
+**提供される情報:**
+1. 自車と物体の関係、および安全チェック情報
+2. 最新の安全チェック位置までの自車位置（補間）
+3. オブジェクトの安全性（ポリゴンの色で表示：緑 = 安全、赤 = 安全でない）
+4. 有効な候補パス
+5. 車線変更の開始および終了位置
+

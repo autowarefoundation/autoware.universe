@@ -1,35 +1,94 @@
 # image_transport_decompressor
 
-## Purpose
+## 目的
 
-The `image_transport_decompressor` is a node that decompresses images.
+`image_transport_decompressor`は画像を解凍するノードです。
 
-## Inner-workings / Algorithms
+## 内部処理/アルゴリズム
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                       | Type                                | Description      |
+| 名前                       | 型                                | 説明      |
 | -------------------------- | ----------------------------------- | ---------------- |
-| `~/input/compressed_image` | `sensor_msgs::msg::CompressedImage` | compressed image |
+| `~/input/compressed_image` | `sensor_msgs::msg::CompressedImage` | 圧縮画像 |
 
-### Output
+**自動運転ソフトウェアドキュメント**
 
-| Name                 | Type                      | Description        |
-| -------------------- | ------------------------- | ------------------ |
-| `~/output/raw_image` | `sensor_msgs::msg::Image` | decompressed image |
+**Planningコンポーネント**
 
-## Parameters
+このコンポーネントは、以下の責務を担います。
+
+- 車両の現在の状態に基づく安全で効率的なパス生成
+- パスを速度と加速度のコマンドに変換
+- 周囲環境とのやり取りの統合
+
+**主な機能**
+
+- **グローバルパスプランニング:** 高レベルなパス生成で、出発点から目的地までの大まかなパスを計算します。
+- **ローカルパスプランニング:** より細かいパス生成で、車両の自車位置の周辺でのパスを計算します。
+- **Motion Planning:** 速度と加速度のコマンドを生成し、車両をパスに沿って誘導します。
+- **回避:** 障害物検出と回避、およびセンサーの制約を考慮します。
+- **トラフィック予測:** 周囲の車両の動きを予測し、パスをそれに応じて調整します。
+
+**アルゴリズム**
+
+Planningコンポーネントは、以下を含むさまざまなアルゴリズムを使用します。
+
+- Dijkstraアルゴリズム
+- A*アルゴリズム
+- Velocity-Obstacle法
+- モデル予測制御
+
+**インターフェース**
+
+Planningコンポーネントは、他のコンポーネントと以下のインターフェースを介して相互作用します。
+
+- **Perceptionコンポーネント:** センサーデータ、障害物リストを提供します。
+- **Controlコンポーネント:** 速度と加速度のコマンドを受け取ります。
+- **Localizationコンポーネント:** 自車位置と姿勢を提供します。
+
+**制限事項**
+
+Planningコンポーネントには、以下を含むいくつかの制限事項があります。
+
+- データの精度とセンサー範囲によって制約されます。
+- 予測は不確実性を伴います。
+- すべての状況下での完全な自動運転を保証することはできません。
+
+**Autowareでのインプリメンテーション**
+
+Planningコンポーネントは、Autowareフレームワークの重要なモジュールとして実装されています。AutowareのPlanningモジュールは、以下を提供します。
+
+- さまざまなアルゴリズムとインターフェース
+- 'post resampling'を使用したバイアス補正
+- 道路網の統合
+- 効率的な実装
+
+**テストと検証**
+
+Planningコンポーネントのテストと検証は、以下の方法を使用して行われます。
+
+- シミュレーション
+- 実車両テスト
+- 速度逸脱量、加速度逸脱量の監視
+
+| Name                     | Type                          | Description                          |
+| ------------------------ | ---------------------------- | ------------------------------------ |
+| `~/output/raw_image`       | `sensor_msgs::msg::Image`     | 非圧縮画像                          |
+
+## パラメータ
 
 {{ json_to_markdown("sensing/autoware_image_transport_decompressor/schema/image_transport_decompressor.schema.json") }}
 
-## Assumptions / Known limits
+## 想定 / 既知の制限
 
-## (Optional) Error detection and handling
+## (任意) エラーの検出と処理
 
-## (Optional) Performance characterization
+## (任意) パフォーマンス特性評価
 
-## (Optional) References/External links
+## (任意) 参照 / 外部リンク
 
-## (Optional) Future extensions / Unimplemented parts
+## (任意) 将来の拡張 / 未実装部分
+

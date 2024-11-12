@@ -1,31 +1,32 @@
-### Virtual Traffic Light
+### バーチャル交通信号機
 
-#### Role
+#### 役割
 
-Autonomous vehicles have to cooperate with the infrastructures such as:
+自動運転車は、以下のようなインフラと連携する必要があります。
 
-- Warehouse shutters
-- Traffic lights with V2X support
-- Communication devices at intersections
-- Fleet Management Systems (FMS)
+- 倉庫のシャッター
+- V2X対応信号機
+- 交差点の通信機器
+- フリート管理システム (FMS)
 
-The following items are example cases:
+例を以下に示します。
 
-1. Traffic control by traffic lights with V2X support
+1. V2X対応信号機による交通制御
    ![traffic_light](docs/V2X_support_traffic_light.png)
 
-2. Intersection coordination of multiple vehicles by FMS.
+2. FMSによる複数の車両の交差点調整
    ![FMS](docs/intersection-coordination.png)
 
-It's possible to make each function individually, however, the use cases can be generalized with these three elements.
+これらの機能は個別に実現することもできますが、ユースケースは次の3つの要素で一般化できます。
 
-1. `start`: Start a cooperation procedure after the vehicle enters a certain zone.
-2. `stop`: Stop at a defined stop line according to the status received from infrastructures.
-3. `end`: Finalize the cooperation procedure after the vehicle reaches the exit zone. This should be done within the range of stable communication.
+1. `start`: 車両が特定のゾーンに入った後、連携手順を開始します。
+2. `stop`: インフラから受信したステータスに従って、定義された停止線で停止します。
+3. `end`: 車両が終了ゾーンに到達した後、連携手順を完了します。これは、安定した通信範囲内で行う必要があります。
 
-This module sends/receives status from infrastructures and plans the velocity of the cooperation result.
+このモジュールは、インフラからステータスを送受信し、連携結果の速度を計画します。
 
-### System Configuration Diagram
+### システム構成図
+
 
 ```plantuml
 @startuml
@@ -83,31 +84,32 @@ remote_controllable_traffic_light -[hidden]right-> warning_light
 @enduml
 ```
 
-Planner and each infrastructure communicate with each other using common abstracted messages.
+プランナーと各インフラストラクチャは共通抽象メッセージを使用して相互に通信します。
 
-- Special handling for each infrastructure is not scalable. The interface is defined as an Autoware API.
-- The requirements for each infrastructure are slightly different, but will be handled flexibly.
+- 各インフラストラクチャに対する特別な処理は拡張性がありません。インターフェイスは Autoware API として定義されています。
+- 各インフラストラクチャの要件はわずかに異なりますが、柔軟に対応します。
 
-FMS: Intersection coordination when multiple vehicles are in operation and the relevant lane is occupied
+FMS: 複数の車両が運用中で関連レーンの占有がある場合の交差点調整
 
-- Automatic shutter: Open the shutter when approaching/close it when leaving
-- Manual shutter: Have the driver open and close the shutter.
-- Remote control signal: Have the driver change the signal status to match the direction of travel.
-- Warning light: Activate the warning light
+- 自動シャッター: 接近時にシャッターを開き、離開時に閉じる
+- 手動シャッター: ドライバーにシャッターを開閉してもらう。
+- リモートコントロール信号: ドライバーに進行方向に合わせて信号状態を変更してもらう。
+- 警告灯: 警告灯を作動させる。
 
-Support different communication methods for different infrastructures
+インフラストラクチャごとに異なる通信方法をサポートする
 
 - HTTP
 - Bluetooth
 - ZigBee
 
-Have different meta-information for each geographic location
+地理的な場所ごとに異なるメタ情報を保有する
 
-- Associated lane ID
-- Hardware ID
-- Communication method
+- 関連するレーン ID
+- ハードウェア ID
+- 通信方式
 
-FMS: Fleet Management System
+FMS: フリートマネジメントシステム
+
 
 ```plantuml
 @startuml
@@ -204,38 +206,41 @@ remote_controllable_traffic_light -[hidden]down-> warning_light
 @enduml
 ```
 
-#### Module Parameters
+#### モジュールパラメータ
 
-| Parameter                       | Type   | Description                                                           |
-| ------------------------------- | ------ | --------------------------------------------------------------------- |
-| `max_delay_sec`                 | double | [s] maximum allowed delay for command                                 |
-| `near_line_distance`            | double | [m] threshold distance to stop line to check ego stop.                |
-| `dead_line_margin`              | double | [m] threshold distance that this module continue to insert stop line. |
-| `hold_stop_margin_distance`     | double | [m] parameter for restart prevention (See following section)          |
-| `check_timeout_after_stop_line` | bool   | [-] check timeout to stop when linkage is disconnected                |
+## 自動運転ソフトウェア パラメータ
 
-#### Restart prevention
+| パラメータ | 型 | 説明 |
+|---|---|---|
+| `max_delay_sec` | double | [秒] コマンドの最大許容遅延 |
+| `near_line_distance` | double | [m] 停車線を停止するために停止線までの距離のしきい値 |
+| `dead_line_margin` | double | [m] このモジュールが停止線を挿入し続けるしきい値 |
+| `hold_stop_margin_distance` | double | [m] 再起動防止のパラメータ（以降のセクションを参照） |
+| `check_timeout_after_stop_line` | bool | [-] リンクが切断されたときに停止するタイムアウトの確認 |
 
-If it needs X meters (e.g. 0.5 meters) to stop once the vehicle starts moving due to the poor vehicle control performance, the vehicle goes over the stopping position that should be strictly observed when the vehicle starts to moving in order to approach the near stop point (e.g. 0.3 meters away).
+#### 再始動防止
 
-This module has parameter `hold_stop_margin_distance` in order to prevent from these redundant restart. If the vehicle is stopped within `hold_stop_margin_distance` meters from stop point of the module (\_front_to_stop_line < hold_stop_margin_distance), the module judges that the vehicle has already stopped for the module's stop point and plans to keep stopping current position even if the vehicle is stopped due to other factors.
+車両の制御性能が低下するために、車両の動き始め時に停止するのに X メートル（例: 0.5 メートル）を要する場合、車両は停止点に近づこうとして動き始めるときは厳守すべき停止位置を超過します（例: 0.3 メートル距離）。
+
+このモジュールには、これらの余分な再始動を防止するためのパラメータ `hold_stop_margin_distance` があります。車両がモジュールの停止位置（_front_to_stop_line < hold_stop_margin_distance）から `hold_stop_margin_distance` メーター以内に停止した場合、モジュールは車両がモジュールの停止位置で既に停止していると判断し、他の要素により車両が停止した場合にも、現在の位置で停止し続けることを計画します。
 
 <figure markdown>
-  ![example](docs/restart_prevention.svg){width=1000}
-  <figcaption>parameters</figcaption>
+  ![例](docs/restart_prevention.svg){width=1000}
+  <figcaption>パラメータ</figcaption>
 </figure>
 
 <figure markdown>
-  ![example](docs/restart.svg){width=1000}
-  <figcaption>outside the hold_stop_margin_distance</figcaption>
+  ![例](docs/restart.svg){width=1000}
+  <figcaption>hold_stop_margin_distanceの外側</figcaption>
 </figure>
 
 <figure markdown>
-  ![example](docs/keep_stopping.svg){width=1000}
-  <figcaption>inside the hold_stop_margin_distance</figcaption>
+  ![例](docs/keep_stopping.svg){width=1000}
+  <figcaption>hold_stop_margin_distanceの内側</figcaption>
 </figure>
 
-#### Flowchart
+#### フローチャート
+
 
 ```plantuml
 @startuml
@@ -284,9 +289,9 @@ stop
 @enduml
 ```
 
-#### Map Format
+#### マップフォーマット
 
-- To avoid sudden braking, the length between the start line and stop line of a virtual traffic light must be longer than $l_{\mathrm{min}}$ calculated as follows, assuming that $v_0$ is the velocity when passing the start line and $a_{\mathrm{min}}$ is minimum acceleration defined in Autoware.
+- 急ブレーキを回避するため、仮想信号機の始点と停止線の距離は、始点通過時の速度が$v_0$で、Autowareで定義された最小加速度が$a_{\mathrm{min}}$と仮定して計算される$l_{\mathrm{min}}$よりも長くなければなりません。
 
 $$
 \begin{align}
@@ -294,6 +299,7 @@ l_{\mathrm{min}} = -\frac{v_0^2}{2 a_{\mathrm{min}}}
 \end{align}
 $$
 
-#### Known Limits
+#### 制限事項
 
-- tbd.
+- 未定
+

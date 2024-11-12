@@ -1,47 +1,48 @@
-## Blind Spot
+## ブラインドスポット
 
-### Role
+### 役割
 
-Blind spot module checks possible collisions with bicycles and pedestrians running on its left/right side while turing left/right before junctions.
+ブラインドスポットモジュールは、交差点での左折/右折時、左/右側に走行する自転車や歩行者との衝突可能性をチェックします。
 
 ![brief](./docs/blind-spot.drawio.svg)
 
-### Activation Timing
+### 起動タイミング
 
-This function is activated when the lane id of the target path has an intersection label (i.e. the `turn_direction` attribute is `left` or `right`).
+この機能は、ターゲットパスのレーンIDに交差点ラベル（すなわち「`turn_direction`」属性が「`left`」または「`right`」）がある場合に起動されます。
 
-### Inner-workings / Algorithms
+### 内部動作/アルゴリズム
 
-Sets a stop line, a pass judge line, a detection area and conflict area based on a map information and a self position.
+マップ情報と自車位置に基づいて、停止線、通過判定線、検出エリア、衝突エリアを設定します。
 
-- Stop line : Automatically created based on crossing lane information.
+- 停止線: 交差するレーンの情報に基づいて自動作成されます。
 
-- Pass judge line : A position to judge if stop or not to avoid a rapid brake.
+- 通過判定線: 急ブレーキを回避するために、停止するかしないかを判断する位置です。
 
-- Detection area : Right/left side area of the self position.
+- 検出エリア: 自車位置の左右のエリアです。
 
-- Conflict area : Right/left side area from the self position to the stop line.
+- 衝突エリア: 自車位置から停止線までの左右のエリアです。
 
-Stop/Go state: When both conditions are met for any of each object, this module state is transited to the "stop" state and insert zero velocity to stop the vehicle.
+停止/走行状態: 各オブジェクトのいずれかで両方の条件が満たされた場合、このモジュールの状態は「停止」状態に移行し、ゼロ速度を挿入して車両を停止します。
 
-- Object is on the detection area
-- Object’s predicted path is on the conflict area
+- オブジェクトが検出エリア上にあります
+- オブジェクトの予測パスが衝突エリアにあります
 
-In order to avoid a rapid stop, the “stop” judgement is not executed after the judgment line is passed.
+急停止を避けるために、「停止」判定は判定線が通過された後には実行されません。
 
-Once a "stop" is judged, it will not transit to the "go" state until the "go" judgment continues for a certain period in order to prevent chattering of the state (e.g. 2 seconds).
+「停止」が判定されると、状態のチャタリング（例: 2秒）を防ぐため、「走行」判定が一定時間継続するまで「走行」状態に移行しません。
 
-### Module Parameters
+### モジュールパラメータ
 
-| Parameter                       | Type   | Description                                                                                    |
+| パラメータ                       | タイプ   | 説明                                                                                      |
 | ------------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
-| `stop_line_margin`              | double | [m] a margin that the vehicle tries to stop before stop_line                                   |
-| `backward_length`               | double | [m] distance from closest path point to the edge of beginning point.                           |
-| `ignore_width_from_center_line` | double | [m] ignore threshold that vehicle behind is collide with ego vehicle or not                    |
-| `max_future_movement_time`      | double | [s] maximum time for considering future movement of object                                     |
-| `adjacent_extend_width`         | double | [m] if adjacent lane e.g. bicycle only lane exists, blind_spot area is expanded by this length |
+| `stop_line_margin`              | double | [m] 車両が停止線手前で停止しようとするマージン                                              |
+| `backward_length`               | double | [m] 最も近いパスポイントから始点のエッジまでの距離                                            |
+| `ignore_width_from_center_line` | double | [m] 自車の後方の車両が自車と衝突するかどうかを無視するしきい値                                 |
+| `max_future_movement_time`      | double | [s] オブジェクトの将来の移動を考慮するための最大時間                                       |
+| `adjacent_extend_width`         | double | [m] 隣接する車線（例：自転車専用車線）が存在する場合、死角領域はこの長さだけ拡張される |
 
-### Flowchart
+### フローチャート
+
 
 ```plantuml
 @startuml
@@ -97,3 +98,4 @@ endif
 stop
 @enduml
 ```
+

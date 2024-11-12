@@ -1,21 +1,23 @@
 # tier4_autoware_api_launch
 
-## Description
+## 概要
 
-This package contains launch files that run nodes to convert Autoware internal topics into consistent API used by external software (e.g., fleet management system, simulator).
+このパッケージには、Autoware内部トピックを外部ソフトウェア（例：フリート管理システム、シミュレーター）で使用される一貫したAPIに変換するノードを実行する起動ファイルが含まれています。
 
-## Package Dependencies
+## パッケージの依存関係
 
-Please see `<exec_depend>` in `package.xml`.
+`package.xml`の`<exec_depend>`を参照してください。
 
-## Usage
+## 使用方法
 
-You can include as follows in `*.launch.xml` to use `autoware_api.launch.xml`.
+`autoware_api.launch.xml`を使用するには、以下のように`*.launch.xml`に含めることができます。
+
 
 ```xml
   <include file="$(find-pkg-share tier4_autoware_api_launch)/launch/autoware_api.launch.xml"/>
 ```
 
-## Notes
+## 注意
 
-For reducing processing load, we use the [Component](https://docs.ros.org/en/galactic/Concepts/About-Composition.html) feature in ROS 2 (similar to Nodelet in ROS 1 )
+処理負荷を軽減するため、ROS 2 の [Component](https://docs.ros.org/en/galactic/Concepts/About-Composition.html) 機能（ROS 1 の Nodelet に類似）を使用しています。
+

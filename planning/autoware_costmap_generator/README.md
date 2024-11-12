@@ -2,60 +2,61 @@
 
 ## costmap_generator_node
 
-This node reads `PointCloud` and/or `DynamicObjectArray` and creates an `OccupancyGrid` and `GridMap`. `VectorMap(Lanelet2)` is optional.
+このノードは`PointCloud`と/または`DynamicObjectArray`を読み込み、`OccupancyGrid`と`GridMap`を作成します。`VectorMap(Lanelet2)`はオプションです。
 
-### Input topics
+### 入力トピック
 
-| Name                      | Type                                       | Description                                                                  |
-| ------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- |
-| `~input/objects`          | autoware_perception_msgs::PredictedObjects | predicted objects, for obstacles areas                                       |
-| `~input/points_no_ground` | sensor_msgs::PointCloud2                   | ground-removed points, for obstacle areas which can't be detected as objects |
-| `~input/vector_map`       | autoware_map_msgs::msg::LaneletMapBin      | vector map, for drivable areas                                               |
-| `~input/scenario`         | tier4_planning_msgs::Scenario              | scenarios to be activated, for node activation                               |
+| 名称 | タイプ | 説明 |
+| --- | ---- | --- |
+| `~input/objects` | `autoware_perception_msgs::PredictedObjects` | 障害物エリアの予測オブジェクト |
+| `~input/points_no_ground` | `sensor_msgs::PointCloud2` | オブジェクトとして検出できない障害物エリアの地上除去ポイント |
+| `~input/vector_map` | `autoware_map_msgs::msg::LaneletMapBin` | 走行可能エリアのベクターマップ |
+| `~input/scenario` | `tier4_planning_msgs::Scenario` | ノードの有効化に使用するアクティブ化するシナリオ |
 
-### Output topics
+### 出力トピック
 
-| Name                     | Type                    | Description                                        |
-| ------------------------ | ----------------------- | -------------------------------------------------- |
-| `~output/grid_map`       | grid_map_msgs::GridMap  | costmap as GridMap, values are from 0.0 to 1.0     |
-| `~output/occupancy_grid` | nav_msgs::OccupancyGrid | costmap as OccupancyGrid, values are from 0 to 100 |
+| 名前                     | タイプ                    | 説明                                                  |
+| ------------------------ | ----------------------- | ------------------------------------------------------- |
+| `~output/grid_map`       | grid_map_msgs::GridMap  | costmapをGridMapとして表したもの、値の範囲は0.0から1.0 |
+| `~output/occupancy_grid` | nav_msgs::OccupancyGrid | costmapをOccupancyGridとして表したもの、値の範囲は0から100 |
 
-### Output TFs
+### 出力 TF
 
-None
+なし
 
-### How to launch
+### 実行方法
 
-1. Execute the command `source install/setup.bash` to setup the environment
+1. 環境をセットアップするには、コマンド `source install/setup.bash` を実行します。
 
-2. Run `ros2 launch costmap_generator costmap_generator.launch.xml` to launch the node
+2. ノードを実行するには、`ros2 launch costmap_generator costmap_generator.launch.xml` を実行します。
 
-### Parameters
+### パラメータ
 
-| Name                         | Type   | Description                                                                                    |
-| ---------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
-| `update_rate`                | double | timer's update rate                                                                            |
-| `activate_by_scenario`       | bool   | if true, activate by scenario = parking. Otherwise, activate if vehicle is inside parking lot. |
-| `use_objects`                | bool   | whether using `~input/objects` or not                                                          |
-| `use_points`                 | bool   | whether using `~input/points_no_ground` or not                                                 |
-| `use_wayarea`                | bool   | whether using `wayarea` from `~input/vector_map` or not                                        |
-| `use_parkinglot`             | bool   | whether using `parkinglot` from `~input/vector_map` or not                                     |
-| `costmap_frame`              | string | created costmap's coordinate                                                                   |
-| `vehicle_frame`              | string | vehicle's coordinate                                                                           |
-| `map_frame`                  | string | map's coordinate                                                                               |
-| `grid_min_value`             | double | minimum cost for gridmap                                                                       |
-| `grid_max_value`             | double | maximum cost for gridmap                                                                       |
-| `grid_resolution`            | double | resolution for gridmap                                                                         |
-| `grid_length_x`              | int    | size of gridmap for x direction                                                                |
-| `grid_length_y`              | int    | size of gridmap for y direction                                                                |
-| `grid_position_x`            | int    | offset from coordinate in x direction                                                          |
-| `grid_position_y`            | int    | offset from coordinate in y direction                                                          |
-| `maximum_lidar_height_thres` | double | maximum height threshold for pointcloud data                                                   |
-| `minimum_lidar_height_thres` | double | minimum height threshold for pointcloud data                                                   |
-| `expand_rectangle_size`      | double | expand object's rectangle with this value                                                      |
-| `size_of_expansion_kernel`   | int    | kernel size for blurring effect on object's costmap                                            |
+| 名前 | タイプ | 説明 |
+|---|---|---|
+| `update_rate` | double | タイマーの更新レート |
+| `activate_by_scenario` | bool | true の場合、シナリオ（パーキング）によってアクティブ化します。それ以外の場合は、車両がパーキングロット内にある場合にアクティブ化します。 |
+| `use_objects` | bool | `~input/objects` を使用するかどうかのフラグ |
+| `use_points` | bool | `~input/points_no_ground` を使用するかどうかのフラグ |
+| `use_wayarea` | bool | `~input/vector_map` の `wayarea` を使用するかどうかのフラグ |
+| `use_parkinglot` | bool | `~input/vector_map` の `parkinglot` を使用するかどうかのフラグ |
+| `costmap_frame` | string | 作成された Costmap の座標系 |
+| `vehicle_frame` | string | 車両の座標系 |
+| `map_frame` | string | マップの座標系 |
+| `grid_min_value` | double | Gridmap の最小コスト |
+| `grid_max_value` | double | Gridmap の最大コスト |
+| `grid_resolution` | double | Gridmap の解像度 |
+| `grid_length_x` | int | Gridmap の x 方向のサイズ |
+| `grid_length_y` | int | Gridmap の y 方向のサイズ |
+| `grid_position_x` | int | 座標系から x 方向へのオフセット |
+| `grid_position_y` | int | 座標系から y 方向へのオフセット |
+| `maximum_lidar_height_thres` | double | 点群データの最大高さしきい値 |
+| `minimum_lidar_height_thres` | double | 点群データの最小高さしきい値 |
+| `expand_rectangle_size` | double | オブジェクトの矩形をこの値で拡大します |
+| `size_of_expansion_kernel` | int | オブジェクトの Costmap に対するぼかし効果のカーネルサイズ |
 
-### Flowchart
+### フローチャート
+
 
 ```plantuml
 @startuml
@@ -90,3 +91,4 @@ endif
 stop
 @enduml
 ```
+

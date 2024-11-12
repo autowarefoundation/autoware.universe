@@ -1,275 +1,403 @@
-# Velocity Smoother
+## 速度スムージング
 
-## Purpose
+## 目的
 
-`autoware_velocity_smoother` outputs a desired velocity profile on a reference trajectory.
-This module plans a velocity profile within the limitations of the velocity, the acceleration and the jerk to realize both the maximization of velocity and the ride quality.
-We call this module `autoware_velocity_smoother` because the limitations of the acceleration and the jerk means the smoothness of the velocity profile.
+`autoware_velocity_smoother` は、基準軌道の要望速度プロファイルを出力します。
+このモジュールは、速度、加速度、ジャークの限界内で、速度の最大化と乗り心地の両方を達成する速度プロファイルを計画します。
+加速とジャークの限界により速度プロファイルの滑らかさが保証されるため、このモジュールを `autoware_velocity_smoother` と呼びます。
 
-## Inner-workings / Algorithms
+## 仕組み / アルゴリズム
 
-### Flow chart
+### フローチャート
 
 ![motion_velocity_smoother_flow](./media/motion_velocity_smoother_flow.drawio.svg)
 
-#### Extract trajectory
+#### 軌道抽出
 
-For the point on the reference trajectory closest to the center of the rear wheel axle of the vehicle, it extracts the reference path between `extract_behind_dist` behind and `extract_ahead_dist` ahead.
+車両の後輪軸中心に最も近い基準軌道上の点を基準に、`extract_behind_dist` 後方と `extract_ahead_dist` 前方の間の基準パスを抽出します。
 
-#### Apply external velocity limit
+#### 外部速度制限の適用
 
-It applies the velocity limit input from the external of `autoware_velocity_smoother`.
-Remark that the external velocity limit is different from the velocity limit already set on the map and the reference trajectory.
-The external velocity is applied at the position that it is able to reach the velocity limit with the deceleration and the jerk constraints set as the parameter.
+`autoware_velocity_smoother` 外部からの速度制限を入力として適用します。
+外部速度制限は、マップと基準軌道にすでに設定されている速度制限とは異なることに注意してください。
+外部速度は、パラメータとして設定された減速とジャークの制約で速度制限に達することができる位置に適用されます。
 
-#### Apply stop approaching velocity
+#### 停止接近速度の適用
 
-It applies the velocity limit near the stopping point.
-This function is used to approach near the obstacle or improve the accuracy of stopping.
+停止点付近に速度制限を適用します。
+この関数は、障害物に接近したり、停止の精度を向上させるために使用されます。
 
-#### Apply lateral acceleration limit
+#### 横加速度制限の適用
 
-It applies the velocity limit to decelerate at the curve.
-It calculates the velocity limit from the curvature of the reference trajectory and the maximum lateral acceleration `max_lateral_accel`.
-The velocity limit is set as not to fall under `min_curve_velocity`.
+カーブで減速するための速度制限を適用します。
+基準軌道の曲率と最大横加速度 `max_lateral_accel` から速度制限を計算します。
+速度制限は `min_curve_velocity` を下回らないように設定されています。
 
-Note: velocity limit that requests larger than `nominal.jerk` is not applied. In other words, even if a sharp curve is planned just in front of the ego, no deceleration is performed.
+注: `nominal.jerk` より大きな減速を要求する速度制限は適用されません。つまり、自分の目の前に急カーブが計画されていても、減速は行われません。
 
-#### Apply steering rate limit
+#### ステアリング レート制限の適用
 
-It calculates the desired steering angles of trajectory points. and it applies the steering rate limit. If the (`steering_angle_rate` > `max_steering_angle_rate`), it decreases the velocity of the trajectory point to acceptable velocity.
+軌跡点の所望ステアリング角度を計算し、ステアリング レート制限を適用します。 (`steering_angle_rate` > `max_steering_angle_rate`) の場合、軌跡点の速度を許容可能な速度まで低下させます。
 
-#### Resample trajectory
+#### 軌道の再サンプリング
 
-It resamples the points on the reference trajectory with designated time interval.
-Note that the range of the length of the trajectory is set between `min_trajectory_length` and `max_trajectory_length`, and the distance between two points is longer than `min_trajectory_interval_distance`.
-It samples densely up to the distance traveled between `resample_time` with the current velocity, then samples sparsely after that.
-By sampling according to the velocity, both calculation load and accuracy are achieved since it samples finely at low velocity and coarsely at high velocity.
+基準軌道上の点を指定された時間間隔で再サンプリングします。
+軌道の長さの範囲は `min_trajectory_length` と `max_trajectory_length` の間で設定され、2 点間の距離は `min_trajectory_interval_distance` より長いことに注意してください。
+現在の速度で移動する距離まで `resample_time` ごとに密にサンプリングし、それ以降は疎にサンプリングします。
+速度に応じてサンプリングすることで、低速では細かく、高速では粗くサンプリングされるため、計算負荷と精度が向上します。
 
-#### Calculate initial state
+#### 初期状態の計算
 
-Calculate initial values for velocity planning.
-The initial values are calculated according to the situation as shown in the following table.
+速度計画の初期値を計算します。
+状況に応じた初期値が次の表のように計算されます。
 
-| Situation                                                     | Initial velocity       | Initial acceleration   |
+| シチュエーション                                                     | 初期速度       | 初期加速度   |
 | ------------------------------------------------------------- | ---------------------- | ---------------------- |
-| First calculation                                             | Current velocity       | 0.0                    |
-| Engaging                                                      | `engage_velocity`      | `engage_acceleration`  |
-| Deviate between the planned velocity and the current velocity | Current velocity       | Previous planned value |
-| Normal                                                        | Previous planned value | Previous planned value |
+| 第1計算                                             | 自車速度       | 0.0                    |
+| エンゲージ                                                      | `エンゲージ速度`      | `エンゲージ加速度`  |
+| 計画速度と自車速度の逸脱 | 自車速度       | 前回の計画値 |
+| ノーマル                                                        | 前回の計画値 | 前回の計画値 |
 
-#### Smooth velocity
+#### 滑らかな速度
 
-It plans the velocity.
-The algorithm of velocity planning is chosen from `JerkFiltered`, `L2` and `Linf`, and it is set in the launch file.
-In these algorithms, they use OSQP[1] as the solver of the optimization.
+速度を計画します。
+速度計画のアルゴリズムは `JerkFiltered`, `L2` および `Linf` から選択され、起動ファイルに設定します。
+これらのアルゴリズムでは、最適化のソルバーとして OSQP[1] を使用します。
 
 ##### JerkFiltered
 
-It minimizes the sum of the minus of the square of the velocity and the square of the violation of the velocity limit, the acceleration limit and the jerk limit.
+速度の 2 乗と速度制限逸脱量、加速度制限逸脱量、ジャーク制限逸脱量の 2 乗の合計を最小化します。
 
 ##### L2
 
-It minimizes the sum of the minus of the square of the velocity, the square of the the pseudo-jerk[2] and the square of the violation of the velocity limit and the acceleration limit.
+速度の 2 乗、擬似ジャーク[2]の 2 乗、速度制限逸脱量および加速度制限逸脱量の 2 乗の合計を最小化します。
 
 ##### Linf
 
-It minimizes the sum of the minus of the square of the velocity, the maximum absolute value of the the pseudo-jerk[2] and the square of the violation of the velocity limit and the acceleration limit.
+速度の 2 乗、擬似ジャーク[2] の絶対値の最大値および速度制限逸脱量と加速度制限逸脱量の 2 乗の合計を最小化します。
 
-#### Post process
+#### 後処理
 
-It performs the post-process of the planned velocity.
+計画速度の後処理を実行します。
 
-- Set zero velocity ahead of the stopping point
-- Set maximum velocity given in the config named `max_velocity`
-- Set velocity behind the current pose
-- Resample trajectory (`post resampling`)
-- Output debug data
+- 停止地点より前の速度を 0 に設定します。
+- `max_velocity` という config で指定された最大速度を設定します。
+- 自車位置より後の速度を設定します。
+- 軌道を再サンプリングします(`'post resampling'`)。
+- デバッグデータを出力します。
 
-After the optimization, a resampling called `post resampling` is performed before passing the optimized trajectory to the next node. Since the required path interval from optimization may be different from the one for the next module, `post resampling` helps to fill this gap. Therefore, in `post resampling`, it is necessary to check the path specification of the following module to determine the parameters. Note that if the computational load of the optimization algorithm is high and the path interval is sparser than the path specification of the following module in the first resampling, `post resampling` would resample the trajectory densely. On the other hand, if the computational load of the optimization algorithm is small and the path interval is denser than the path specification of the following module in the first resampling, the path is sparsely resampled according to the specification of the following module.
+最適化後、最適化された軌道を次のノードに渡す前に `'post resampling'` と呼ばれる再サンプリングを実行します。最適化に必要なパス間隔が次のモジュールのパス間隔と異なる場合があるため、`'post resampling'` はこのギャップを埋めます。したがって、`'post resampling'` では、パラメータを決定するために後続モジュールのパス仕様を確認する必要があります。最適化アルゴリズムの計算負荷が高く、最初の再サンプリングにおいてパス間隔が後続モジュールのパス仕様よりも疎な場合、`'post resampling'` は軌道を濃密に再サンプリングします。一方で、最適化アルゴリズムの計算負荷が小さく、最初の再サンプリングにおいてパス間隔が後続モジュールのパス仕様よりも密な場合、パスは後続モジュールの仕様に従って疎に再サンプリングされます。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                                       | Type                                | Description                   |
-| ------------------------------------------ | ----------------------------------- | ----------------------------- |
-| `~/input/trajectory`                       | `autoware_planning_msgs/Trajectory` | Reference trajectory          |
-| `/planning/scenario_planning/max_velocity` | `std_msgs/Float32`                  | External velocity limit [m/s] |
-| `/localization/kinematic_state`            | `nav_msgs/Odometry`                 | Current odometry              |
-| `/tf`                                      | `tf2_msgs/TFMessage`                | TF                            |
-| `/tf_static`                               | `tf2_msgs/TFMessage`                | TF static                     |
+| 名称                                    | 種別                               | 説明                     |
+| --------------------------------------- | ------------------------------------ | -------------------------- |
+| `~/input/trajectory` (*)                 | `autoware_planning_msgs/Trajectory` | 基準走行軌跡             |
+| `/planning/scenario_planning/max_velocity` | `std_msgs/Float32`                   | 外部速度制限 [m/s]         |
+| `/localization/kinematic_state`          | `nav_msgs/Odometry`                  | 自車位置                 |
+| `/tf` (*)                                  | `tf2_msgs/TFMessage`                 | TF                     |
+| `/tf_static` (*)                            | `tf2_msgs/TFMessage`                 | TF static                |
 
-### Output
+## 自動運転ソフトウェアに関するドキュメント
 
-| Name                                               | Type                                | Description                                                                                               |
-| -------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `~/output/trajectory`                              | `autoware_planning_msgs/Trajectory` | Modified trajectory                                                                                       |
-| `/planning/scenario_planning/current_max_velocity` | `std_msgs/Float32`                  | Current external velocity limit [m/s]                                                                     |
-| `~/closest_velocity`                               | `std_msgs/Float32`                  | Planned velocity closest to ego base_link (for debug)                                                     |
-| `~/closest_acceleration`                           | `std_msgs/Float32`                  | Planned acceleration closest to ego base_link (for debug)                                                 |
-| `~/closest_jerk`                                   | `std_msgs/Float32`                  | Planned jerk closest to ego base_link (for debug)                                                         |
-| `~/debug/trajectory_raw`                           | `autoware_planning_msgs/Trajectory` | Extracted trajectory (for debug)                                                                          |
-| `~/debug/trajectory_external_velocity_limited`     | `autoware_planning_msgs/Trajectory` | External velocity limited trajectory (for debug)                                                          |
-| `~/debug/trajectory_lateral_acc_filtered`          | `autoware_planning_msgs/Trajectory` | Lateral acceleration limit filtered trajectory (for debug)                                                |
-| `~/debug/trajectory_steering_rate_limited`         | `autoware_planning_msgs/Trajectory` | Steering angle rate limit filtered trajectory (for debug)                                                 |
-| `~/debug/trajectory_time_resampled`                | `autoware_planning_msgs/Trajectory` | Time resampled trajectory (for debug)                                                                     |
-| `~/distance_to_stopline`                           | `std_msgs/Float32`                  | Distance to stop line from current ego pose (max 50 m) (for debug)                                        |
-| `~/stop_speed_exceeded`                            | `std_msgs/Bool`                     | It publishes `true` if planned velocity on the point which the maximum velocity is zero is over threshold |
+このドキュメントでは、Autowareの自動運転ソフトウェアの設計と実装について説明します。このソフトウェアは、Planningモジュール、Controlモジュール、Perceptionモジュールで構成されています。
 
-## Parameters
+### Planningモジュール
 
-### Constraint parameters
+Planningモジュールは、自動運転車両の経路計画を行います。以下のような機能があります。
 
-| Name           | Type     | Description                                    | Default value |
-| :------------- | :------- | :--------------------------------------------- | :------------ |
-| `max_velocity` | `double` | Max velocity limit [m/s]                       | 20.0          |
-| `max_accel`    | `double` | Max acceleration limit [m/ss]                  | 1.0           |
-| `min_decel`    | `double` | Min deceleration limit [m/ss]                  | -0.5          |
-| `stop_decel`   | `double` | Stop deceleration value at a stop point [m/ss] | 0.0           |
-| `max_jerk`     | `double` | Max jerk limit [m/sss]                         | 1.0           |
-| `min_jerk`     | `double` | Min jerk limit [m/sss]                         | -0.5          |
+* マップデータに基づく経路の生成
+* 障害物回避
+* 交通ルール遵守
 
-### External velocity limit parameter
+### Controlモジュール
 
-| Name                                       | Type     | Description                                           | Default value |
-| :----------------------------------------- | :------- | :---------------------------------------------------- | :------------ |
-| `margin_to_insert_external_velocity_limit` | `double` | margin distance to insert external velocity limit [m] | 0.3           |
+Controlモジュールは、車両の制御を行います。以下のような機能があります。
 
-### Curve parameters
+* ステアリング制御
+* 加速制御
+* ブレーキ制御
 
-| Name                                   | Type     | Description                                                                                                                                                                                                  | Default value |
-| :------------------------------------- | :------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `enable_lateral_acc_limit`             | `bool`   | To toggle the lateral acceleration filter on and off. You can switch it dynamically at runtime.                                                                                                              | true          |
-| `max_lateral_accel`                    | `double` | Max lateral acceleration limit [m/ss]                                                                                                                                                                        | 0.5           |
-| `min_curve_velocity`                   | `double` | Min velocity at lateral acceleration limit [m/ss]                                                                                                                                                            | 2.74          |
-| `decel_distance_before_curve`          | `double` | Distance to slowdown before a curve for lateral acceleration limit [m]                                                                                                                                       | 3.5           |
-| `decel_distance_after_curve`           | `double` | Distance to slowdown after a curve for lateral acceleration limit [m]                                                                                                                                        | 2.0           |
-| `min_decel_for_lateral_acc_lim_filter` | `double` | Deceleration limit to avoid sudden braking by the lateral acceleration filter [m/ss]. Strong limitation degrades the deceleration response to the appearance of sharp curves due to obstacle avoidance, etc. | -2.5          |
+### Perceptionモジュール
 
-### Engage & replan parameters
+Perceptionモジュールは、車両周囲の環境を認識します。以下のような機能があります。
 
-| Name                           | Type     | Description                                                                                                                        | Default value |
+* LiDARデータの処理
+* カメラ画像の処理
+* レーダーデータの処理
+
+### システムアーキテクチャ
+
+Autowareのシステムアーキテクチャは以下のような階層構造になっています。
+
+* **Perception層:** Perceptionモジュールが含まれます。
+* **Planning層:** Planningモジュールが含まれます。
+* **Control層:** Controlモジュールが含まれます。
+
+### データフロー
+
+システム内のデータフローは以下のような流れで行われます。
+
+1. Perceptionモジュールは、周囲環境に関するデータを収集します。
+2. Planningモジュールは、Perceptionモジュールから収集したデータに基づく経路を生成します。
+3. Controlモジュールは、Planningモジュールから生成された経路に基づいて車両を制御します。
+
+### 安全性機能
+
+Autowareには、以下のような安全性機能を備えています。
+
+* **障害物回避:** 障害物を検出し、自動的に回避します。
+* **衝突回避:** 車両との衝突を検出し、回避します。
+* **速度制限遵守:** 道路の速度制限を遵守します。
+
+### パフォーマンス評価
+
+Autowareのパフォーマンスは、以下のような指標に基づいて評価されます。
+
+* **平均到達時間:** 目的地に到着するまでの平均時間
+* **走行距離:** 走行距離
+* **post resampling**障害物逸脱量
+* **post resampling**速度逸脱量
+* **post resampling**加速度逸脱量
+
+### 自車位置の推定
+
+Autowareでは、以下のような方法で自車位置を推定しています。
+
+* GPS
+* IMU
+* オドメーター
+
+| 名前                                             | 型                                 | 説明                                                                                                         |
+| ------------------------------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `~/output/trajectory`                            | `autoware_planning_msgs/Trajectory` | 変更された経路                                                                                                   |
+| `/planning/scenario_planning/current_max_velocity` | `std_msgs/Float32`                  | 現在の外部速度制限 [m/s]                                                                                    |
+| `~/closest_velocity`                             | `std_msgs/Float32`                  | 自車ベースリンクに最も近い計画速度 (デバッグ用)                                                               |
+| `~/closest_acceleration`                          | `std_msgs/Float32`                  | 自車ベースリンクに最も近い計画加速度 (デバッグ用)                                                             |
+| `~/closest_jerk`                                 | `std_msgs/Float32`                  | 自車ベースリンクに最も近い計画ジャーク (デバッグ用)                                                           |
+| `~/debug/trajectory_raw`                           | `autoware_planning_msgs/Trajectory` | 抽出された経路 (デバッグ用)                                                                                      |
+| `~/debug/trajectory_external_velocity_limited`     | `autoware_planning_msgs/Trajectory` | 外部速度制限経路 (デバッグ用)                                                                                   |
+| `~/debug/trajectory_lateral_acc_filtered`          | `autoware_planning_msgs/Trajectory` | 横加速度制限経路 (デバッグ用)                                                                                |
+| `~/debug/trajectory_steering_rate_limited`         | `autoware_planning_msgs/Trajectory` | ステアリング角速度制限経路 (デバッグ用)                                                                     |
+| `~/debug/trajectory_time_resampled`                | `autoware_planning_msgs/Trajectory` | `post resampling`された経路 (デバッグ用)                                                                        |
+| `~/distance_to_stopline`                           | `std_msgs/Float32`                  | 自車位置から停止線までの距離 (最大 50 m) (デバッグ用)                                                       |
+| `~/stop_speed_exceeded`                            | `std_msgs/Bool`                     | 最大速度が 0 の地点における計画速度がしきい値を超えている場合に `true` を公開する                                |
+
+## パラメータ
+
+### 制約パラメータ
+
+| 名称 | タイプ | 説明 | デフォルト値 |
+|---|---|---|---|
+| `max_velocity` | `double` | 最大速度制限 [m/s] | 20.0 |
+| `max_accel` | `double` | 最大加速度制限 [m/ss] | 1.0 |
+| `min_decel` | `double` | 最小減速度制限 [m/ss] | -0.5 |
+| `stop_decel` | `double` | 停止点での停止減速度値 [m/ss] | 0.0 |
+| `max_jerk` | `double` | 最大ジャーク制限 [m/sss] | 1.0 |
+| `min_jerk` | `double` | 最小ジャーク制限 [m/sss] | -0.5 |
+
+### 外部速度制限パラメータ
+
+| 名称                                       | 型     | 説明                                                 | デフォルト値 |
+| :----------------------------------------- | :------- | :-------------------------------------------------- | :------------ |
+| `margin_to_insert_external_velocity_limit` | `double` | 外部速度制限を挿入するマージン距離 [m]         | 0.3           |
+
+### カーブパラメータ
+
+| 名前                                   | タイプ     | 説明                                                                                                                                                                                                    | デフォルト値   |
+|:-------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------- |
+| `enable_lateral_acc_limit`             | `bool`   | 横方向加速度フィルタのオンとオフを切り替える。実行時に動的に切り替えることができる。                                                                                                          | true          |
+| `max_lateral_accel`                    | `double` | 最大横方向加速度限界 [m/ss]                                                                                                                                                                    | 0.5           |
+| `min_curve_velocity`                   | `double` | 横方向加速度限界での最小速度 [m/ss]                                                                                                                                                             | 2.74          |
+| `decel_distance_before_curve`          | `double` | 横方向加速度限界のためにカーブの前で減速する距離 [m]                                                                                                                                           | 3.5           |
+| `decel_distance_after_curve`           | `double` | 横方向加速度限界のためにカーブの後で減速する距離 [m]                                                                                                                                            | 2.0           |
+| `min_decel_for_lateral_acc_lim_filter` | `double` | 横方向加速度フィルタによる急ブレーキを避ける減速限界 [m/ss]。強い制限は、障害物回避などによる急カーブ出現に対する減速応答を低下させる。                                  | -2.5          |
+
+### 結合と再計画パラメータ
+
+| 名前                           | タイプ     | 説明                                                                                                                        | デフォルト値 |
 | :----------------------------- | :------- | :--------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `replan_vel_deviation`         | `double` | Velocity deviation to replan initial velocity [m/s]                                                                                | 5.53          |
-| `engage_velocity`              | `double` | Engage velocity threshold [m/s] (if the trajectory velocity is higher than this value, use this velocity for engage vehicle speed) | 0.25          |
-| `engage_acceleration`          | `double` | Engage acceleration [m/ss] (use this acceleration when engagement)                                                                 | 0.1           |
-| `engage_exit_ratio`            | `double` | Exit engage sequence to normal velocity planning when the velocity exceeds engage_exit_ratio x engage_velocity.                    | 0.5           |
-| `stop_dist_to_prohibit_engage` | `double` | If the stop point is in this distance, the speed is set to 0 not to move the vehicle [m]                                           | 0.5           |
+| `replan_vel_deviation`         | `double` | 初期速度を再計画する速度逸脱量 [m/s]                                                                                | 5.53          |
+| `engage_velocity`              | `double` | エンゲージ速度閾値 [m/s]（軌跡速度がこの値より大きい場合、エンゲージ車両速度にこの速度を使用） | 0.25          |
+| `engage_acceleration`          | `double` | エンゲージ時使用する加速度 [m/ss]                                                                 | 0.1           |
+| `engage_exit_ratio`            | `double` | 速度が engage_exit_ratio x engage_velocity を超えた場合、エンゲージシーケンスを通常の速度計画に戻す                    | 0.5           |
+| `stop_dist_to_prohibit_engage` | `double` | 停止点がこの距離にある場合、車両が移動しないように速度を 0 に設定する [m]                                           | 0.5           |
 
-### Stopping velocity parameters
+### 停止速度パラメータ
 
-| Name                | Type     | Description                                                                           | Default value |
-| :------------------ | :------- | :------------------------------------------------------------------------------------ | :------------ |
-| `stopping_velocity` | `double` | change target velocity to this value before v=0 point [m/s]                           | 2.778         |
-| `stopping_distance` | `double` | distance for the stopping_velocity [m]. 0 means the stopping velocity is not applied. | 0.0           |
+| 名              | タイプ     | 説明                                                                              | デフォルト値 |
+| :-------------- | :------- | :------------------------------------------------------------------------------------- | :------------ |
+| `stopping_velocity` | `double` | v=0 点に達する前にターゲット速度をこの値に変更します [m/s]                            | 2.778         |
+| `stopping_distance` | `double` | `stopping_velocity` の距離 [m]。0 は `stopping_velocity` が適用されないことを表します。 | 0.0           |
 
-### Extraction parameters
+### 抽出パラメータ
 
-| Name                  | Type     | Description                                                     | Default value |
-| :-------------------- | :------- | :-------------------------------------------------------------- | :------------ |
-| `extract_ahead_dist`  | `double` | Forward trajectory distance used for planning [m]               | 200.0         |
-| `extract_behind_dist` | `double` | backward trajectory distance used for planning [m]              | 5.0           |
-| `delta_yaw_threshold` | `double` | Allowed delta yaw between ego pose and trajectory pose [radian] | 1.0472        |
+| 名前                  | 型     | 説明                                                            | デフォルト値 |
+| :-------------------- | :------- | :--------------------------------------------------------------- | :------------ |
+| `extract_ahead_dist`  | `double` | Planningに使用される前方軌跡距離 [m]                       | 200.0         |
+| `extract_behind_dist` | `double` | Planningに使用される後方軌跡距離 [m]                        | 5.0           |
+| `delta_yaw_threshold` | `double` | 自車位置と軌跡位置間の許容差変位角 [ラジアン]              | 1.0472        |
 
-### Resampling parameters
+### 再サンプルパラメータ
 
-| Name                           | Type     | Description                                            | Default value |
-| :----------------------------- | :------- | :----------------------------------------------------- | :------------ |
-| `max_trajectory_length`        | `double` | Max trajectory length for resampling [m]               | 200.0         |
-| `min_trajectory_length`        | `double` | Min trajectory length for resampling [m]               | 30.0          |
-| `resample_time`                | `double` | Resample total time [s]                                | 10.0          |
-| `dense_dt`                     | `double` | resample time interval for dense sampling [s]          | 0.1           |
-| `dense_min_interval_distance`  | `double` | minimum points-interval length for dense sampling [m]  | 0.1           |
-| `sparse_dt`                    | `double` | resample time interval for sparse sampling [s]         | 0.5           |
-| `sparse_min_interval_distance` | `double` | minimum points-interval length for sparse sampling [m] | 4.0           |
+| 名前                           | タイプ     | 説明                                                 | デフォルト値 |
+| :----------------------------- | :------- | :---------------------------------------------------- | :------------ |
+| `max_trajectory_length`        | `double` | 軌道の再サンプリングのための最大長 [m]              | 200.0         |
+| `min_trajectory_length`        | `double` | 軌道の再サンプリングのための最小長 [m]              | 30.0          |
+| `resample_time`                | `double` | 再サンプリングの全体の時間 [s]                    | 10.0          |
+| `dense_dt`                     | `double` | 緻密なサンプリングのための再サンプリングの時間間隔 [s] | 0.1           |
+| `dense_min_interval_distance`  | `double` | 緻密なサンプリングのための最小ポイント間距離 [m]   | 0.1           |
+| `sparse_dt`                    | `double` | まばらなサンプリングのための再サンプリングの時間間隔 [s] | 0.5           |
+| `sparse_min_interval_distance` | `double` | まばらなサンプリングのための最小ポイント間距離 [m] | 4.0           |
 
-### Resampling parameters for post process
+### 'post resampling'用の再サンプリングパラメーター
 
-| Name                                | Type     | Description                                            | Default value |
-| :---------------------------------- | :------- | :----------------------------------------------------- | :------------ |
-| `post_max_trajectory_length`        | `double` | max trajectory length for resampling [m]               | 300.0         |
-| `post_min_trajectory_length`        | `double` | min trajectory length for resampling [m]               | 30.0          |
-| `post_resample_time`                | `double` | resample total time for dense sampling [s]             | 10.0          |
-| `post_dense_dt`                     | `double` | resample time interval for dense sampling [s]          | 0.1           |
-| `post_dense_min_interval_distance`  | `double` | minimum points-interval length for dense sampling [m]  | 0.1           |
-| `post_sparse_dt`                    | `double` | resample time interval for sparse sampling [s]         | 0.1           |
-| `post_sparse_min_interval_distance` | `double` | minimum points-interval length for sparse sampling [m] | 1.0           |
+| 名称 | タイプ | 説明 | デフォルト値 |
+|---|---|---|---|
+| `post_max_trajectory_length` | `double` | 再サンプリングの最大軌道長 [m] | 300.0 |
+| `post_min_trajectory_length` | `double` | 再サンプリングの最小軌道長 [m] | 30.0 |
+| `post_resample_time` | `double` | 密サンプリングの合計再サンプリング時間 [s] | 10.0 |
+| `post_dense_dt` | `double` | 密サンプリングの再サンプリング時間間隔 [s] | 0.1 |
+| `post_dense_min_interval_distance` | `double` | 密サンプリングの最小ポイント間隔 [m] | 0.1 |
+| `post_sparse_dt` | `double` | 疎サンプリングの再サンプリング時間間隔 [s] | 0.1 |
+| `post_sparse_min_interval_distance` | `double` | 疎サンプリングの最小ポイント間隔 [m] | 1.0 |
 
-### Limit steering angle rate parameters
+### ステアリング角変化率パラメータの制限
 
-| Name                             | Type     | Description                                                                           | Default value |
-| :------------------------------- | :------- | :------------------------------------------------------------------------------------ | :------------ |
-| `enable_steering_rate_limit`     | `bool`   | To toggle the steer rate filter on and off. You can switch it dynamically at runtime. | true          |
-| `max_steering_angle_rate`        | `double` | Maximum steering angle rate [degree/s]                                                | 40.0          |
-| `resample_ds`                    | `double` | Distance between trajectory points [m]                                                | 0.1           |
-| `curvature_threshold`            | `double` | If curvature > curvature_threshold, steeringRateLimit is triggered [1/m]              | 0.02          |
-| `curvature_calculation_distance` | `double` | Distance of points while curvature is calculating [m]                                 | 1.0           |
+```
+```
 
-### Weights for optimization
+| 名称                             | タイプ     | 説明                                                                                  | デフォルト値 |
+| :------------------------------- | :------- | :--------------------------------------------------------------------------------------- | :------------ |
+| `enable_steering_rate_limit`     | `bool`   | ステアリング速度フィルタのオン/オフを切り替えます。ランタイム時に動的に切り替えられます。 | true          |
+| `max_steering_angle_rate`        | `double` | 最大ステアリング角度速度 [degree/s]                                                   | 40.0          |
+| `resample_ds`                    | `double` | Trajectory `post resampling` ポイント間の距離 [m]                                      | 0.1           |
+| `curvature_threshold`            | `double` | 曲率 > `curvature_threshold` の場合、`steeringRateLimit` がトリガされます [1/m]          | 0.02          |
+| `curvature_calculation_distance` | `double` | 曲率計算中のポイントの距離 [m]                                                        | 1.0           |
+
+### 最適化用の重み
 
 #### JerkFiltered
 
-| Name            | Type     | Description                           | Default value |
-| :-------------- | :------- | :------------------------------------ | :------------ |
-| `jerk_weight`   | `double` | Weight for "smoothness" cost for jerk | 10.0          |
-| `over_v_weight` | `double` | Weight for "over speed limit" cost    | 100000.0      |
-| `over_a_weight` | `double` | Weight for "over accel limit" cost    | 5000.0        |
-| `over_j_weight` | `double` | Weight for "over jerk limit" cost     | 1000.0        |
+| 名称              | 型      | 説明                                        | デフォルト値 |
+| :--------------- | :------ | :------------------------------------------- | :---------- |
+| `jerk_weight`   | `double` | ジャークの「滑らかさ」コストの重み         | 10.0          |
+| `over_v_weight` | `double` | 「速度制限逸脱」コストの重み              | 100000.0      |
+| `over_a_weight` | `double` | 「加速度逸脱量」コストの重み              | 5000.0        |
+| `over_j_weight` | `double` | 「ジャーク逸脱量」コストの重み             | 1000.0        |
 
 #### L2
 
-| Name                 | Type     | Description                        | Default value |
+** Planning**
+- トラジェクトリプランナーの最適化
+- 制約の追加によってトラジェクトリプランニングの安定化
+- クロスロードでの渋滞時の挙動の改善
+- Scalingレイヤーでの速度、加速度の逸脱量に関するチェックの追加
+
+** Localization**
+- ランタイムのパフォーマンスと精度を向上させるための改善
+- ランタイムの更新によってIMUのバイアス推定の精度を高める
+- 障害物検知の性能を向上させるため、点群データを活用した道路のセグメンテーションの改善
+
+** perception**
+- 深層学習モデルを更新する
+- 物体検出の精度を向上させるために、データセットの拡張
+- 『post resampling』におけるデータの品質向上
+
+** Control**
+- 車両の挙動をよりスムーズにする、ステアリング制御の改善
+- 加速度、ヨー変化率に関する制御の改善
+- Autowareのコントローラーのドメイン固有言語であるCLARAtyで、コントローラーの再実装
+
+** reality sensors**
+- LiDARのノイズ低減のために、データ処理パイプラインの最適化
+- カメラの露出制御の改善による、夜間や低照度条件における画像の品質向上
+- センサーキャリブレーションに関するパイプラインの改善
+
+** visualization**
+- 可視化ツールのアップグレードによる、より正確で情報が豊富な可視化
+- データの取得と処理の効率を高めるキャッシュメカニズムの追加
+
+** core utils**
+- シミュレーションとテスト用に、独自のデータ駆動型テストフレームワークの導入
+- より効率的な『post resampling』のための、ポイントクラウドライブラリの最適化
+
+** self-driving**
+- 自車位置推定の向上による、全体的なパフォーマンスの向上
+- パラメータの最適化による、様々な運転シナリオにおけるRobust性を向上
+- Autowareのアーキテクチャのモジュール化と拡張性向上
+
+| 名前                 | 型     | 説明                        | デフォルト値 |
 | :------------------- | :------- | :--------------------------------- | :------------ |
-| `pseudo_jerk_weight` | `double` | Weight for "smoothness" cost       | 100.0         |
-| `over_v_weight`      | `double` | Weight for "over speed limit" cost | 100000.0      |
-| `over_a_weight`      | `double` | Weight for "over accel limit" cost | 1000.0        |
+| `pseudo_jerk_weight` | `double` | 「スムーズさ」コストの重み       | 100.0         |
+| `over_v_weight`      | `double` | 「速度制限超過」コストの重み | 100000.0      |
+| `over_a_weight`      | `double` | 「加速度制限超過」コストの重み | 1000.0        |
 
 #### Linf
 
-| Name                 | Type     | Description                        | Default value |
-| :------------------- | :------- | :--------------------------------- | :------------ |
-| `pseudo_jerk_weight` | `double` | Weight for "smoothness" cost       | 100.0         |
-| `over_v_weight`      | `double` | Weight for "over speed limit" cost | 100000.0      |
-| `over_a_weight`      | `double` | Weight for "over accel limit" cost | 1000.0        |
+**概要**
 
-### Others
+Linfは、経路計画における障害物回避に用いられる Planning モジュールです。本モジュールは、自己位置と目標値に基づき、障害物を回避する経路を計画します。
 
-| Name                          | Type     | Description                                                                                       | Default value |
-| :---------------------------- | :------- | :------------------------------------------------------------------------------------------------ | :------------ |
-| `over_stop_velocity_warn_thr` | `double` | Threshold to judge that the optimized velocity exceeds the input velocity on the stop point [m/s] | 1.389         |
+**入力**
 
-<!-- Write parameters of this package.
+* 自車位置
+* 目標位置
+* 周囲の障害物情報
 
-Example:
-  ### Node Parameters
+**処理**
 
-  | Name                   | Type | Description                     |
-  | ---------------------- | ---- | ------------------------------- |
-  | `output_debug_markers` | bool | whether to output debug markers |
+1. **障害物マージ:** 周辺の障害物情報をマージして、障害物マップを作成します。
+2. **経路生成:** 障害物マップに基づき、障害物を回避する経路を生成します。
+3. **'post resampling':** 生成された経路をリサンプルして、滑らかな経路にします。
 
-  ### Core Parameters
+**出力**
 
-  | Name                 | Type     | Description                                                          |
-  | -------------------- | -------- | -------------------------------------------------------------------- |
-  | `min_object_size_m`  | `double` | minimum object size to be selected as avoidance target obstacles [m] |
-  | `avoidance_margin_m` | `double` | avoidance margin to obstacles [m]                                    |
--->
+* 障害物回避経路
 
-## Assumptions / Known limits
+**制約事項**
 
-- Assume that the velocity limit or the stopping point is properly set at the point on the reference trajectory
-- If the velocity limit set in the reference path cannot be achieved by the designated constraints of the deceleration and the jerk, decelerate while suppressing the velocity, the acceleration and the jerk deviation as much as possible
-- The importance of the deviations is set in the config file
+* **速度逸脱量:** 本モジュールは、速度逸脱量を考慮しません。
+* **加速度逸脱量:** 本モジュールは、加速度逸脱量を考慮しません。
+* **予測:** 本モジュールは、障害物の予測移動を考慮しません。
 
-## (Optional) Error detection and handling
+**依存関係**
 
-## (Optional) Performance characterization
+* **障害物検出モジュール:** 障害物マップの作成に使用されます。
+* **経路生成モジュール:** 障害物回避経路の生成に使用されます。
 
-## (Optional) References/External links
+**Autowareにおける用途**
+
+Autowareでは、Linfモジュールは、障害物回避Planningにおける重要なコンポーネントです。本モジュールは、障害物マップから安全で効率的な経路を計算し、自動運転車両に安全なナビゲーションを提供します。
+
+| 名前 | タイプ | 説明 | デフォルト値 |
+|---|---|---|---|
+| `pseudo_jerk_weight` | `double` | 「スムーズ性」コストの重み | 100.0 |
+| `over_v_weight` | `double` | 「速度制限逸脱量」コストの重み | 100000.0 |
+| `over_a_weight` | `double` | 「加速度制限逸脱量」コストの重み | 1000.0 |
+
+### その他
+
+| 名称                          | 型     | 説明                                                                                                      | デフォルト値 |
+| :---------------------------- | :------- | :------------------------------------------------------------------------------------------------------- | :------------ |
+| `over_stop_velocity_warn_thr` | `double` | 停止点における最適化速度が入力速度を超えていると判断するための閾値 [m/s] | 1.389         |
+
+## 仮定 / 既知の限界
+
+- 参照軌道上での速度制限または停止点が適切に設定されていると仮定する
+- 指定された減速およびジャークの制約により参照経路に設定された速度制限が達成できない場合は、速度、加速度、ジャークの逸脱を可能な限り抑えつつ減速する
+- 逸脱の重要度は設定ファイルで設定する
+
+## (オプション) エラー検出および処理
+
+## (オプション) パフォーマンスの特性評価
+
+## (オプション) 参考文献/外部リンク
 
 [1] B. Stellato, et al., "OSQP: an operator splitting solver for quadratic programs", Mathematical Programming Computation, 2020, [10.1007/s12532-020-00179-2](https://link.springer.com/article/10.1007/s12532-020-00179-2).
 
 [2] Y. Zhang, et al., "Toward a More Complete, Flexible, and Safer Speed Planning for Autonomous Driving via Convex Optimization", Sensors, vol. 18, no. 7, p. 2185, 2018, [10.3390/s18072185](https://doi.org/10.3390/s18072185)
 
-## (Optional) Future extensions / Unimplemented parts
+## (オプション) 将来の拡張 / 未実装の部分

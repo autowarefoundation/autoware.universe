@@ -1,124 +1,125 @@
-# Intersection
+## 交差点
 
-## Role
+### 役割
 
-The intersection module is responsible for safely passing urban intersections by:
+交差点モジュールは、以下の方法により都市部の交差点を安全に通過する責任を負っています。
 
-1. checking collisions with upcoming vehicles
-2. recognizing the occluded area in the intersection
-3. reacting to each color/shape of associated traffic lights
+1. 前方の車両との衝突を確認する
+2. 交差点内の隠れたエリアを認識する
+3. 関連する信号機の各色/形状に対応する
 
-This module is designed to be agnostic to left-hand/right-hand traffic rules and work for crossroads, T-shape junctions, etc. Roundabout is not formally supported in this module.
+このモジュールは左ハンドル/右ハンドルの交通規則に依存せず、十字路、T字路などで動作するように設計されています。このモジュールではラウンドアバウトは正式にサポートされていません。
 
 ![topology](./docs/intersection-topology.drawio.svg)
 
-## Activation condition
+### アクティブ条件
 
-This module is activated when the path contains the lanes with turn_direction tag. More precisely, if the lane_ids of the path contain the ids of those lanes, corresponding instances of intersection module are activated on each lane respectively.
+このモジュールは、パスに `turn_direction` タグを持つレーンが含まれる場合にアクティブになります。より正確には、パスの `lane_ids` がこれらのレーンの `id` を含む場合、対応する交差点モジュールのインスタンスがそれぞれレーンごとにアクティブになります。
 
-## Requirements/Limitations
+### 要件/制限事項
 
-- The HDMap needs to have the information of turn_direction tag (which should be one of straight, left, right) for all the lanes in intersections and right_of_way tag for specific lanes (refer to [RightOfWay](#how-towhy-set-rightofway-tag) section for more details). See [autoware_lanelet2_extension document](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md) for more detail.
-- WIP(perception requirements/limitations)
-- WIP(sensor visibility requirements/limitations)
+- HDマップには、交差点内のすべてのレーンに関する `turn_direction` タグ（`straight`、`left`、`right` のいずれか）の情報と、特定のレーンに関する `right_of_way` タグ（詳細については [RightOfWay](#how-towhy-set-rightofway-tag) セクションを参照）が必要です。詳細については、[autoware_lanelet2_extension ドキュメント](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md) を参照してください。
+- WIP(認識要件/制限事項)
+- WIP(センサー視認性の要件/制限事項)
 
-## Attention area
+### 注視領域
 
-The attention area in the intersection is defined as the set of lanes that are conflicting with ego path and their preceding lanes up to `common.attention_area_length` meters. By default RightOfWay tag is not set, so the attention area covers all the conflicting lanes and its preceding lanes as shown in the first row. RightOfWay tag is used to rule out the lanes that each lane has priority given the traffic light relation and turn_direction priority. In the second row, purple lanes are set as the yield_lane of the ego_lane in the RightOfWay tag.
+交差点内の注視領域は、エゴパスと競合するレーンとその先行する最大 `common.attention_area_length` メートルのレーンとして定義されます。既定では `RightOfWay` タグが設定されていないため、注視領域は最初の行に示すように、すべての競合するレーンとその先行するレーンをカバーします。`RightOfWay` タグは、信号機の関係と `turn_direction` の優先順位に基づいて各レーンが優先権を持つレーンを除外するために使用されます。2 行目では、紫色のレーンは `RightOfWay` タグ内のエゴレーンの `yield_lane` として設定されています。
 
 ![attention_area](./docs/intersection-attention.drawio.svg)
 
-intersection_area, which is supposed to be defined on the HDMap, is an area converting the entire intersection.
+HDマップ上に定義されている `intersection_area` は、交差点全体を変換する領域です。
 
-### In-phase/Anti-phase signal group
+### 同相/逆相信号群
 
-The terms "in-phase signal group" and "anti-phase signal group" are introduced to distinguish the lanes by the timing of traffic light regulation as shown in below figure.
+「同相信号群」と「逆相信号群」という用語は、次図に示すように、信号機規制のタイミングによってレーンを区別するために導入されました。
 
 ![phase signal group](./docs/signal-phase-group.drawio.svg)
 
-The set of intersection lanes whose color is in sync with lane L1 is called the in-phase signal group of L1, and the set of remaining lanes is called the anti-phase signal group.
+レーン L1 と色が同期している交差点レーン群を L1 の同相信号群と呼び、残りのレーン群を逆相信号群と呼びます。
 
-### How-to/Why set RightOfWay tag
+### RightOfWay タグの設定方法/理由
 
-Ideally RightOfWay tag is unnecessary if ego has perfect knowledge of all traffic signal information because:
+理想的には、エゴがすべての信号情報に完全にアクセスできる場合、RightOfWay タグは不要です。なぜなら：
 
-- it can distinguish which conflicting lanes should be checked because they are GREEN currently and possible collision occur with the vehicles on those lanes
-- it can distinguish which conflicting lanes can be ignored because they are RED currently and there is no chance of collision with the vehicles on those lanes unless they violate the traffic rule
+- 現在 GREEN であるためにチェックする必要がある競合レーンと、そのレーン上の車両との衝突が発生する可能性があります。
+- 現在 RED であるために無視できる競合レーンと、そのレーン上の車両との衝突は、交通規則に違反しない限り発生しません。
 
-That allows ego to generate the attention area dynamically using the real time traffic signal information. However this ideal condition rarely holds unless the traffic signal information is provided through the infrastructure. Also there maybe be very complicated/bad intersection maps where multiple lanes overlap in a complex manner.
+これにより、エゴはリアルタイムの信号情報を使用して注視領域を動的に生成できます。ただし、この理想的な条件は、信号情報がインフラストラクチャを介して提供されない限り、ほとんど満たされません。また、複数のレーンが複雑に重なる非常に複雑で悪い交差点のマップがある可能性があります。
 
-- If there is an perfect access to entire traffic light signal, then you can set `common.use_map_right_of_way` to false and there is no need to set RightOfWay tag on the map. The intersection module will generate the attention area by checking traffic signal and corresponding conflicting lanes. This feature is not implemented yet.
-- If traffic signal information is not perfect, then set `common.use_map_right_of_way` to true. If you do not want to detect vehicles on the anti-phase signal group lanes, set them as yield_lane for ego lane.
-- Even if there are no traffic lights if the intersection lanes are overlapped in a ugly manner, you may need to set RightOfWay tag. For example if adjacent intersection lanes of the same in-phase group are not sharing the boundary line and overlapped a little bit, you may need to set RightOfWay to each other for them in order to avoid unnecessary stop for vehicle on such unrelated lane.
+- 完全な信号機信号に完璧にアクセスできる場合は、`common.use_map_right_of_way` を false に設定できます。RightOfWay タグをマップ上に設定する必要はありません。交差点モジュールは、信号機と対応する競合レーンを確認して注視領域を生成します。この機能はまだ実装されていません。
+- 信号情報が完璧でない場合は、`common.use_map_right_of_way` を true に設定します。逆相信号群レーンの車両を検出しない場合は、それらをエゴレーンの `yield_lane` として設定します。
+- 信号がなくても、交差点レーンが醜い方法で重なっている場合は、RightOfWay タグを設定する必要がある場合があります。たとえば、同じ同相群の隣接する交差点レーンが境界線を共有せず、少し重なっている場合は、そのような無関係なレーンで不必要に停止しないようにお互いに RightOfWay を設定する必要がある場合があります。
 
-To help the intersection module care only a set of limited lanes, RightOfWay tag needs to be properly set.
+交差点モジュールが限られたレーンのセットのみを処理できるようにするには、RightOfWay タグを適切に設定する必要があります。
 
-Following table shows an **example** of how to set yield_lanes to each lane in a intersection w/o traffic lights. Since it is not apparent how to uniquely determine signal phase group for a set of intersection lanes in geometric/topological manner, yield_lane needs to be set manually. Straight lanes with traffic lights are exceptionally handled to detect no lanes because commonly it has priority over all the other lanes, so no RightOfWay setting is required.
+次の表は、**例**として、信号のない交差点の各レーンに `yield_lane` を設定する方法を示しています。幾何学的/トポロジ的な方法で交差点レーンのセットの一意の信号位相グループを決定する方法は明らかでないため、`yield_lane` を手動で設定する必要があります。信号機のある直進レーンは、通常他のすべてのレーンよりも優先順位が高いため、レーンの検出がされないように特別に処理されます。したがって、RightOfWay の設定は必要ありません。
 
-| turn direction of right_of_way | yield_lane(with traffic light)                                                              | yield_lane(without traffic light)              |
-| ------------------------------ | ------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| straight                       | not need to set yield_lane(this case is special)                                            | left/right conflicting lanes of in-phase group |
-| left(Left hand traffic)        | all conflicting lanes of the anti-phase group and right conflicting lanes of in-phase group | right conflicting lanes of in-phase group      |
-| right(Left hand traffic)       | all conflicting lanes of the anti-phase group                                               | no yield_lane                                  |
-| left(Right hand traffic)       | all conflicting lanes of the anti-phase group                                               | no yield_lane                                  |
-| right(Right hand traffic)      | all conflicting lanes of the anti-phase group and right conflicting lanes of in-phase group | left conflicting lanes of in-phase group       |
+| 進路と優先道路の関係 | 交差点での減速車線（信号有り）                                                       | 交差点での減速車線（信号無し）                    |
+| ---------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 直進                   | 減速車線を設定する必要はない（このケースは特殊）                                      | 同相車の対向車線                                  |
+| 左折（左ハンドル車）   | 反相車の対抗車線と対向車線の同相車の右側から対抗する車線                              | 同相車の対向車線の右側の車線                      |
+| 右折（左ハンドル車）   | 反相車の対抗車線                                                                 | 減速車線を設定しない                                |
+| 左折（右ハンドル車）   | 反相車の対抗車線                                                                 | 減速車線を設定しない                                |
+| 右折（右ハンドル車）   | 反相車の対抗車線と対向車線の同相車の右側から対抗する車線                              | 同相車の対向車線の左側の車線                      |
 
-This setting gives the following `attention_area` configurations.
+この設定は、次の `attention_area` 設定を提供します。
 
 ![attention_area_straight](./docs/intersection-attention-straight.drawio.svg)
 ![attention_area_ll_rr](./docs/intersection-attention-ll-rr.drawio.svg)
 ![attention_area_lr_rl](./docs/intersection-attention-lr-rl.drawio.svg)
 
-For complex/bad intersection map like the one illustrated below, additional RightOfWay setting maybe necessary.
+以下のように示される複雑/不良な交差点のマップの場合、追加の RightOfWay 設定が必要になる場合があります。
 
 ![bad-map](./docs/ugly-intersection.drawio.svg)
 
-The bad points are:
+不良な点は次のとおりです。
 
-1. ego lane is overlapped with adjacent lane of the in-phase group. In this case you need to set this lane as yield_lane additionally because otherwise attention area is generated for its preceding lanes as well, which may cause unwanted stop.
-2. ego lane is overlapped with unrelated lane. In this case the lane is right-turn only and there is no chance of collision in theory. But you need to set this lane as yield_lane additionally for the same reason as (1).
+1. ego 車線は同期グループの隣接車線と重複しています。この場合、他に注意領域が先行車線にも生成され、望ましくない停止が発生する可能性があるため、この車線を yield_lane として追加で設定する必要があります。
+2. ego 車線は無関係な車線と重複しています。この場合、理論的には右折専用車線であり、衝突の可能性はありません。ただし、(1) と同じ理由でこの車線を yield_lane として追加設定する必要があります。
 
-## Possible stop lines
+## 停止線
 
-Following figure illustrates important positions used in the intersection module. Note that each solid line represents ego front line position and the corresponding dot represents the actual inserted stop point position for the vehicle frame, namely the center of the rear wheel.
+次の図は、交差点モジュールで使用される重要な位置を示しています。各実線は ego 車両のフロントラインの位置を表し、対応するドットは車両フレームの実際の挿入停止点の位置、つまり後輪の中心を表しています。
 
 ![data structure](./docs/intersection-stoplines.drawio.svg)
 
-To precisely calculate stop positions, the path is interpolated at the certain interval of `common.path_interpolation_ds`.
+停止位置を正確に計算するために、経路は `common.path_interpolation_ds` の特定の間隔で補間されます。
 
-- closest_idx denotes the path point index which is closest to ego position.
-- first_attention_stopline denotes the first path point where ego footprint intersects with the attention_area.
-- If a stopline is associated with the intersection lane on the map, that line is used as default_stopline for collision detection. Otherwise the point which is `common.default_stopline_margin` meters behind first_attention_stopline is defined as default_stopline instead.
-- occlusion_peeking_stopline is a bit ahead of first_attention_stopline as described later.
-- occlusion_wo_tl_pass_judge_line is the first position where ego footprint intersects with the centerline of the first attention_area lane.
+- closest_idx は、ego 位置に最も近い経路ポイントインデックスを示します。
+- first_attention_stopline は、ego フットプリントが attention_area と交差する最初の経路ポイントを示します。
+- 停止線がマップ上の交差点車線に関連付けられている場合、その線は衝突検出用の default_stopline として使用されます。そうでない場合、first_attention_stopline の `common.default_stopline_margin` メートル後ろの点が代わりに default_stopline として定義されます。
+- occlusion_peeking_stopline は、後で説明するように、first_attention_stopline より少し先です。
+- occlusion_wo_tl_pass_judge_line は、ego フットプリントが最初の attention_area 車線のセンターラインと交差する最初の位置です。
 
-## Target objects
+## 標的オブジェクト
 
-For [stuck vehicle detection](#stuck-vehicle-detection) and [collision detection](#collision-detection), this module checks **car**, **bus**, **truck**, **trailer**, **motor cycle**, and **bicycle** type objects.
+[立ち往生車両の検出](#stuck-vehicle-detection) と [衝突検出](#collision-detection) の場合、このモジュールは **乗用車**、**バス**、**トラック**、**トレーラー**、**モーターサイクル**、**自転車** タイプのオブジェクトを確認します。
 
-Objects that satisfy all of the following conditions are considered as target objects (possible collision objects):
+次の条件をすべて満たすオブジェクトは、標的オブジェクト（衝突の可能性のあるオブジェクト）と見なされます。
 
-- The center of the object is **within a certain distance** from the attention lane (threshold = `common.attention_area_margin`) .
-  - (Optional condition) The center of the object is in the **intersection area**.
-    - To deal with objects that is in the area not covered by the lanelets in the intersection.
-- The posture of object is **the same direction as the attention lane** (threshold = `common.attention_area_angle_threshold`).
-- Not being **in the adjacent lanes of ego**.
+- オブジェクトの中心は注目車線から **一定の距離以内** にある (しきい値 = `common.attention_area_margin`)。
+  - (オプションの条件) オブジェクトの中心が **交差点エリア** にある。
+    - 交差点内の車線でカバーされていない領域にあるオブジェクトを処理するため。
+- オブジェクトの姿勢は **注目車線と同じ方向** である (しきい値 = `common.attention_area_angle_threshold`)。
+- ego の **隣接車線にいない**。
 
-## Overview of decision process
+## 意思決定プロセスの概要
 
-There are several behaviors depending on the scene.
+シーンに応じて、いくつかの動作があります。
 
-| behavior                 | scene                                                                                             | action                                                                              |
-| ------------------------ | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Safe                     | Ego detected no occlusion and collision                                                           | Ego passes the intersection                                                         |
-| StuckStop                | The exit of the intersection is blocked by traffic jam                                            | Ego stops before the intersection or the boundary of attention area                 |
-| YieldStuck               | Another vehicle stops to yield ego                                                                | Ego stops before the intersection or the boundary of attention area                 |
-| NonOccludedCollisionStop | Ego detects no occlusion but detects collision                                                    | Ego stops at default_stopline                                                       |
-| FirstWaitBeforeOcclusion | Ego detected occlusion when entering the intersection                                             | Ego stops at default_stopline at first                                              |
-| PeekingTowardOcclusion   | Ego detected occlusion and but no collision within the FOV (after FirstWaitBeforeOcclusion)       | Ego approaches the boundary of the attention area slowly                            |
-| OccludedCollisionStop    | Ego detected both occlusion and collision (after FirstWaitBeforeOcclusion)                        | Ego stops immediately                                                               |
-| FullyPrioritized         | Ego is fully prioritized by the RED/Arrow signal                                                  | Ego only cares vehicles still running inside the intersection. Occlusion is ignored |
-| OverPassJudgeLine        | Ego is already inside the attention area and/or cannot stop before the boundary of attention area | Ego does not detect collision/occlusion anymore and passes the intersection         |
+| 挙動             | シーン                                                                                            | アクション                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 安全             | 自車が遮蔽と衝突を検出しない                                                           | 自車が交差点を通過する                                                        |
+| 停止維持         | 交差点の出口が渋滞によって塞がれている                                                    | 自車が交差点または注意領域の境界手前で停止する                               |
+| 譲歩による停止     | 他の車両が自車に道を譲るために停車する                                                         | 自車が交差点または注意領域の境界手前で停止する                               |
+| 遮蔽なし衝突停止 | 自車が遮蔽を検出しないが衝突を検出する                                                    | 自車がデフォルトの停止線で停止する                                               |
+| 遮蔽範囲前に待機する | 交差点への進入時に自車が遮蔽を検出する                                                      | 自車が最初にデフォルトの停止線で停止する                                       |
+| 遮蔽のほうを伺う     | 自車が遮蔽を検出し、視野内では衝突を検出しない（遮蔽範囲前に待機した後）                | 自車が注意領域の境界にゆっくりと接近する                                   |
+| 遮蔽により衝突停止 | 自車が遮蔽と衝突の両方を検出する（遮蔽範囲前に待機した後）                              | 自車が直ちに停止する                                                          |
+| 完全優先          | 自車が赤/矢印信号によって完全に優先されている                                                | 自車は交差点内でまだ走行中の車両のみを考慮する。遮蔽は無視される                |
+| 通過判断線通過     | 自車がすでに注意領域内にある、または注意領域の境界手前で停止できないことを検出している | 自車は衝突/遮蔽を検出せず、交差点を通過する                                    |
+
 
 ```plantuml
 @startuml
@@ -178,38 +179,39 @@ OccludedCollisionStop --> PeekingTowardOcclusion: IF not collision detected
 @enduml
 ```
 
-## Stuck Vehicle Detection
+## スタック車両検出
 
-If there is any object on the path inside the intersection and at the exit of the intersection (up to `stuck_vehicle.stuck_vehicle_detect_dist`) lane and its velocity is less than the threshold (`stuck_vehicle.stuck_vehicle_velocity_threshold`), the object is regarded as a stuck vehicle. If stuck vehicles exist, this module inserts a stopline a certain distance (=`default_stopline_margin`) before the overlapped region with other lanes. The stuck vehicle detection area is generated based on the planned path, so the stuck vehicle stopline is not inserted if the upstream module generated an avoidance path.
+交差点内部および交差点出口（最大 `stuck_vehicle.stuck_vehicle_detect_dist` レーン）の経路上にオブジェクトがあり、その速度がしきい値（`stuck_vehicle.stuck_vehicle_velocity_threshold`）未満の場合、オブジェクトはスタック車両とみなされます。スタック車両が存在する場合、このモジュールは他のレーンとの重複領域より手前の特定の距離（=`default_stopline_margin`）に停止線を挿入します。スタック車両検出領域は計画された経路に基づいて生成されるため、上流のモジュールが回避経路を生成している場合はスタック車両停止線は挿入されません。
 
 ![stuck_vehicle_detection](./docs/stuck-vehicle.drawio.svg)
 
-## Yield stuck vehicle detection
+## 一時停止車両検出
 
-If there is any stopped object on the attention lanelet between the intersection point with ego path and the position which is `yield_stuck.distance_threshold` before that position, the object is regarded as yielding to ego vehicle. In this case ego is given the right-of-way by the yielding object but this module inserts stopline to prevent entry into the intersection. This scene happens when the object is yielding against ego or the object is waiting before the crosswalk around the exit of the intersection.
+エゴパスとの交差点点と、その位置から `yield_stuck.distance_threshold` 前の位置の間の注意レーンの停止オブジェクトがある場合、オブジェクトはエゴ車両に対して一時停止していると見なされます。この場合、エゴは一時停止オブジェクトによって優先権を与えられますが、このモジュールは交差点への進入を防ぐ停止線を挿入します。このシーンは、オブジェクトがエゴに対して一時停止しているか、交差点の出口付近の横断歩道前でオブジェクトが待機しているときに発生します。
 
 ![yield_stuck_detection](./docs/yield-stuck.drawio.svg)
 
-## Collision detection
+## 衝突検出
 
-The following process is performed for the targets objects to determine whether ego can pass the intersection safely. If it is judged that ego cannot pass the intersection with enough margin, this module inserts a stopline on the path.
+エゴが交差点を安全に通過できるかどうかを判断するために、次の処理がターゲットオブジェクトに対して行われます。エゴが十分な余裕をもって交差点を通過できないと判断された場合、このモジュールは経路上に停止線を挿入します。
 
-1. predict the time $t$ when the object intersects with ego path for the first time from the predicted path time step. Only the predicted whose confidence is greater than `collision_detection.min_predicted_path_confidence` is used.
-2. detect collision between the predicted path and ego's predicted path in the following process
-   1. calculate the collision interval of [$t$ - `collision_detection.collision_start_margin_time`, $t$ + `collision_detection.collision_end_margin_time`]
-   2. calculate the passing area of ego during the collision interval from the array of (time, distance) obtained by smoothed velocity profile
-   3. check if ego passing area and object predicted path interval collides
-3. if collision is detected, the module inserts a stopline
-4. if ego is over the [pass_judge_line](#pass-judge-line), collision checking is skipped to avoid sudden braking and/or unnecessary stop in the middle of the intersection
+1. 予測された経路時間ステップから、オブジェクトが最初にエゴパスと交差する時間`t`を予測します。信頼度が`collision_detection.min_predicted_path_confidence`よりも大きい予測のみが使用されます。
+2. 以下のプロセスで予測された経路とエゴの予測された経路間の衝突を検出します
+   1. [$t$ - `collision_detection.collision_start_margin_time`, $t$ + `collision_detection.collision_end_margin_time`]の衝突インターバルを計算します
+   2. 平滑化された速度プロファイルによって取得された（時間、距離）の配列から、衝突インターバル中のエゴ通過領域を計算します。
+   3. エゴ通過領域とオブジェクトの予測パスインターバルが衝突するかどうかをチェックします
+3. 衝突が検出された場合、モジュールは停止線を挿入します
+4. エゴが[通過判定ライン](#通過判定ライン)を超えている場合、急ブレーキや交差点の中央での不要な停止を避けるために、衝突チェックはスキップされます
 
-The parameters `collision_detection.collision_start_margin_time` and `collision_detection.collision_end_margin_time` can be interpreted as follows:
+パラメータ`collision_detection.collision_start_margin_time`と`collision_detection.collision_end_margin_time`は次のように解釈できます。
 
-- If ego was to pass the intersection earlier than the target object, collision would be detected if the time difference between the two was less than `collision_detection.collision_start_margin_time`.
-- If ego was to pass the intersection later than the target object, collision would be detected if the time difference between the two was less than `collision_detection.collision_end_margin_time`.
+- エゴがターゲットオブジェクトよりも早く交差点を通過する場合は、2つの間の時間差が`collision_detection.collision_start_margin_time`未満の場合に衝突が検出されます。
+- エゴがターゲットオブジェクトよりも遅く交差点を通過する場合は、2つの間の時間差が`collision_detection.collision_end_margin_time`未満の場合に衝突が検出されます。
 
-If collision is detected, the state transits to "STOP" immediately. On the other hand, the state does not transit to "GO" unless safe judgement continues for a certain period `collision_detection.collision_detection_hold_time` to prevent the chattering of decisions.
+衝突が検出されると、状態はすぐに「STOP」に移行します。一方、決定のチャタリングを防ぐために、セーフな判断が一定期間`collision_detection.collision_detection_hold_time`にわたって続かない限り、状態は「GO」に移行しません。
 
-Currently, the intersection module uses `motion_velocity_smoother` feature to precisely calculate ego velocity profile along the intersection lane under longitudinal/lateral constraints. If the flag `collision_detection.velocity_profile.use_upstream` is true, the target velocity profile of the original path is used. Otherwise the target velocity is set to `collision.velocity_profile.default_velocity`. In the trajectory smoothing process the target velocity at/before ego trajectory points are set to ego current velocity. The smoothed trajectory is then converted to an array of (time, distance) which indicates the arrival time to each trajectory point on the path from current ego position. You can visualize this array by adding the lane id to `debug.ttc` and running
+現在、交差点モジュールは`motion_velocity_smoother`機能を使用して、縦方向/横方向の制約の下で交差点レーンに沿ったエゴの速度プロファイルを正確に計算しています。フラグ`collision_detection.velocity_profile.use_upstream`がtrueの場合、元々のパスのターゲット速度プロファイルが使用されます。そうでない場合、ターゲット速度は`collision.velocity_profile.default_velocity`に設定されます。軌跡平滑化処理では、エゴの軌跡ポイントで/その前のターゲット速度は、エゴの現在の速度に設定されます。滑らかにされた軌跡はその後、現在のエゴの位置から経路上の各軌跡ポイントへの到着時間を示す（時間、距離）の配列に変換されます。レーンIDを`debug.ttc`に追加して実行することでこの配列を視覚化できます。
+
 
 ```bash
 ros2 run behavior_velocity_intersection_module ttc.py --lane_id <lane_id>
@@ -217,128 +219,125 @@ ros2 run behavior_velocity_intersection_module ttc.py --lane_id <lane_id>
 
 ![ego ttc profile](./docs/ttc.gif)
 
-### about use_upstream_velocity flag
+### upstream_velocity フラグについて
 
-There are some use cases where ego should check collision before entering the intersection considering the temporal stop by walkway/crosswalk module around the exit of the intersection, because their stop position can be inside the intersection and it could bother upcoming vehicles. By setting the flag `collision_detection.velocity_profile.use_upstream` to true and running the walkway/crosswalk module prior to this module, ego velocity profile is calculated considering their velocity and stop positions.
+一部のユースケースでは、交差点の出口付近の歩道/横断歩道モジュールにより一時停止が考慮されるため、その停止位置が交差点内にある可能性があり、進行中の車両に影響を与える可能性があるため、ego が交差点に入る前に衝突を確認する必要があります。フラグ `collision_detection.velocity_profile.use_upstream` を true に設定し、このモジュールより前に歩道/横断歩道モジュールを実行すると、ego の速度プロファイルがそれらの速度と停止位置を考慮して計算されます。
 
-As illustrated in below figure if upstream module inserted a stopline, ego position profile will remain there for the infinite time, thus it leads to the judgement that ego cannot exit the intersection during the interval [$t$ - `collision_detection.collision_start_margin_time`, $t$ + `collision_detection.collision_end_margin_time`]. In this way this feature considers possible collision for the infinite time if stoplines exist ahead of ego position (practically the prediction horizon is limited so the collision check horizon is bounded).
+下図に示すように、アップストリームモジュールが停止線を追加した場合、ego の位置プロファイルはそこには無限に残り、このため ego が [$t$ - `collision_detection.collision_start_margin_time`, $t$ + `collision_detection.collision_end_margin_time`] の間隔で交差点から出られないと判断されます。この方法では、ego の位置より先に停止線が存在する場合、無限に衝突の可能性を考慮します（実際には予測の範囲は制限されているため、衝突チェックの範囲は限定されています）。
 ![upstream_velocity](./docs/upstream-velocity.drawio.svg)
 
-## Occlusion detection
+## オクルージョン検出
 
-If the flag `occlusion.enable` is true this module checks if there is sufficient field of view (FOV) on the attention area up to `occlusion.occlusion_attention_area_length`. If FOV is not clear enough ego first makes a brief stop at default_stopline for `occlusion.temporal_stop_time_before_peeking`, and then slowly creeps toward occlusion_peeking_stopline. If `occlusion.creep_during_peeking.enable` is true `occlusion.creep_during_peeking.creep_velocity` is inserted up to occlusion_peeking_stopline. Otherwise only stop line is inserted.
+フラグ `occlusion.enable` が true の場合、このモジュールは `occlusion.occlusion_attention_area_length` までの注目範囲の視野 (FOV) が十分にあるかどうかを確認します。FOV が十分にクリアでない場合、ego は最初に `occlusion.temporal_stop_time_before_peeking` の間 default_stopline で短時間停止し、その後オクルージョン_ピーキング_ストップラインにゆっくりと進みます。`occlusion.creep_during_peeking.enable` が true の場合、`occlusion.creep_during_peeking.creep_velocity` がオクルージョン_ピーキング_ストップラインまで挿入されます。そうでない場合、停止線のみが挿入されます。
 
-During the creeping if collision is detected this module inserts a stop line in front of ego immediately, and if the FOV gets sufficiently clear the intersection_occlusion wall will disappear. If occlusion is cleared and no collision is detected ego will pass the intersection.
+忍び寄っている間に衝突が検出された場合、このモジュールはすぐに ego の前に停止線を追加し、FOV が十分にクリアになると交差点_オクルージョン壁は消えます。オクルージョンがクリアされ、衝突が検出されなかった場合、ego は交差点を通過します。
 
-The occlusion is detected as the common area of occlusion attention area(which is partially the same as the normal attention area) and the unknown cells of the occupancy grid map. The occupancy grid map is denoised using morphology with the window size of `occlusion.denoise_kernel`. The occlusion attention area lanes are discretized to line strings and they are used to generate a grid whose each cell represents the distance from ego path along the lane as shown below.
+オクルージョンは、オクルージョン注目範囲（通常注目範囲と部分的に同じ）と占有グリッドマップの不明セルとの共通領域として検出されます。占有グリッドマップは `occlusion.denoise_kernel` のウィンドウサイズを使用して形態学を用いてノイズを除去されます。オクルージョン注目範囲のレーンは直線ストリングに離散化され、それらを使用して、下の図のように各セルがレーンに沿った ego パスの距離を表すグリッドを生成します。
 
 ![occlusion_detection](./docs/occlusion_grid.drawio.svg)
 
-If the nearest occlusion cell value is below the threshold `occlusion.occlusion_required_clearance_distance`, it means that the FOV of ego is not clear. It is expected that the occlusion gets cleared as the vehicle approaches the occlusion peeking stop line.
+最も近いオクルージョンセル値がしきい値 `occlusion.occlusion_required_clearance_distance` よりも低い場合、ego の FOV はクリアではないことを意味します。オクルージョンは、車両がオクルージョン監視停止線に近づくとクリアされると予想されます。
 
-### Occlusion source estimation at intersection with traffic light
+### 信号機のある交差点でのオクルージョンソースの推定
 
-At intersection with traffic light, the whereabout of occlusion is estimated by checking if there are any objects between ego and the nearest occlusion cell. While the occlusion is estimated to be caused by some object (DYNAMICALLY occluded), intersection_wall appears at all times. If no objects are found between ego and the nearest occlusion cell (STATICALLY occluded), after ego stopped for the duration of `occlusion.static_occlusion_with_traffic_light_timeout` plus `occlusion.occlusion_detection_hold_time`, occlusion is intentionally ignored to avoid stuck.
+信号機のある交差点では、ego と最も近いオクルージョンセルとの間に物体があるかどうかをチェックすることで、オクルージョンの所在推定が行われます。オクルージョンが何らかの物体によって引き起こされていると推定される間 (動的にオクルージョンされる)、交差点_ウォールは常に表示されます。ego と最も近いオクルージョンセルとの間に物体が見つからない場合（静的にオクルージョンされる）、ego は `occlusion.static_occlusion_with_traffic_light_timeout` の期間と `occlusion.occlusion_detection_hold_time` の期間停止した後、意図的にオクルージョンを無視してスタックを回避します。
 
-![occlusion_detection](./docs/occlusion-with-tl.drawio.svg)
-
-The remaining time is visualized on the intersection_occlusion virtual wall.
+残り時間は交差点_オクルージョン仮想ウォールに視覚化されます。
 
 ![static-occlusion-timeout](./docs/static-occlusion-timeout.png)
 
-### Occlusion handling at intersection without traffic light
+### 信号機のない交差点でのオクルージョン処理
 
-At intersection without traffic light, if occlusion is detected, ego makes a brief stop at default_stopline and first_attention_stopline respectively. After stopping at the first_attention_area_stopline this module inserts `occlusion.absence_traffic_light.creep_velocity` velocity between ego and occlusion_wo_tl_pass_judge_line while occlusion is not cleared. If collision is detected, ego immediately stops. Once the occlusion is cleared or ego has passed occlusion_wo_tl_pass_judge_line this module does not detect collision and occlusion because ego footprint is already inside the intersection.
+信号機のない交差点でオクルージョンが検出された場合、ego は default_stopline と first_attention_stopline でそれぞれ短時間停止します。first_attention_area_stopline で停止した後、このモジュールはオクルージョンがクリアされない間、ego と occlusion_wo_tl_pass_judge_line の間に `occlusion.absence_traffic_light.creep_velocity` の速度を挿入します。衝突が検出された場合、ego はすぐに停止します。オクルージョンがクリアされたか、ego が occlusion_wo_tl_pass_judge_line を通過すると、ego のフットプリントはすでに交差点内にあるため、このモジュールは衝突やオクルージョンを検出しません。
 
 ![occlusion_detection](./docs/occlusion-without-tl.drawio.svg)
 
-While ego is creeping, yellow intersection_wall appears in front ego.
+ego が進んでいる間、黄色の交差点_ウォールが ego の前に表示されます。
 
 ![occlusion-wo-tl-creeping](./docs/occlusion-wo-tl-creeping.png)
 
-## Traffic signal specific behavior
+## 交通信号固有の挙動
 
-### Collision detection
+### 衝突検出
 
-TTC parameter varies depending on the traffic light color/shape as follows.
+TTC パラメータは信号機の色や形状によって次のように変化します。
 
-| traffic light color | ttc(start)                                                             | ttc(end)                                                               |
+| 交通信号色 | ttc(開始)                                                               | ttc(終了)                                                               |
 | ------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | GREEN               | `collision_detection.not_prioritized.collision_start_margin`           | `collision_detection.not_prioritized.collision_end_margin`             |
 | AMBER               | `collision_detection.partially_prioritized.collision_start_end_margin` | `collision_detection.partially_prioritized.collision_start_end_margin` |
 | RED / Arrow         | `collision_detection.fully_prioritized.collision_start_end_margin`     | `collision_detection.fully_prioritized.collision_start_end_margin`     |
 
-### yield on GREEN
+### グリーンスロー中での譲り
 
-If the traffic light color changed to GREEN and ego approached the entry of the intersection lane within the distance `collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start` and there is any object whose distance to its stopline is less than `collision_detection.yield_on_green_traffic_light.object_dist_to_stopline`, this module commands to stop for the duration of `collision_detection.yield_on_green_traffic_light.duration` at default_stopline.
+信号がグリーンに変化し、自分車が交差点レーン入り口に `collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start` 以内で接近し、ストップラインまでの距離が `collision_detection.yield_on_green_traffic_light.object_dist_to_stopline` 未満のオブジェクトがある場合、このモジュールはデフォルト・ストップラインに `collision_detection.yield_on_green_traffic_light.duration` 間停止することを指示します。
 
-### skip on AMBER
+### アンバー中でのスキップ
 
-If the traffic light color is AMBER but the object is expected to stop before its stopline under the deceleration of `collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration`, collision checking is skipped.
+信号がアンバーですが、オブジェクトが `collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration` の減速度でストップラインより手前で停止すると予想される場合、衝突チェックはスキップされます。
 
-### skip on RED
+### レッド中でのスキップ
 
-If the traffic light color is RED or Arrow signal is turned on, the attention lanes which are not conflicting with ego lane are not used for detection. And even if the object stops with a certain overshoot from its stopline, but its expected stop position under the deceleration of `collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration` is more than the distance `collision_detection.ignore_on_red_traffic_light.object_margin_to_path` from collision point, the object is ignored.
+信号がレッドまたは矢印信号が点灯している場合、自分車レーンと交差しない注意レーンは検出に使用されません。さらに、オブジェクトがストップラインからある程度オーバーシュートして停止する場合でも、`collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration` の減速度で予想される停止位置が衝突地点から `collision_detection.ignore_on_red_traffic_light.object_margin_to_path` 以上の距離にある場合、そのオブジェクトは無視されます。
 
-### Occlusion detection
+### オクルージョン検出
 
-When the traffic light color/shape is RED/Arrow, occlusion detection is skipped.
+信号の色/形状がレッド/矢印の場合、オクルージョン検出はスキップされます。
 
 ![traffic-light-specific-behavior](./docs/traffic-light-specific-behavior.drawio.svg)
 
-## Pass Judge Line
+## パス判定線
 
-Generally it is not tolerable for vehicles that have lower traffic priority to stop in the middle of the unprotected area in intersections, and they need to stop at the stop line beforehand if there will be any risk of collision, which introduces two requirements:
+一般的に、交差点内の無保護領域の真ん中に交通優先順位の低い車両が停車することは許容されず、衝突の危険がある場合はその前に停止する必要があります。これにより次の2つの要件が生じます。
 
-1. The vehicle must start braking before the boundary of the unprotected area at least by the braking distance if it is supposed to stop
-2. The vehicle must recognize upcoming vehicles and check safety beforehand with enough braking distance margin if it is supposed to go
-   1. And the SAFE decision must be absolutely certain and remain to be valid for the future horizon so that the safety condition will be always satisfied while ego is driving inside the unprotected area.
-3. (TODO): Since it is almost impossible to make perfectly safe decision beforehand given the limited detection range/velocity tracking performance, intersection module should plan risk-evasive acceleration velocity profile AND/OR relax lateral acceleration limit while ego is driving inside the unprotected area, if the safety decision is "betrayed" later due to the following reasons:
-   1. The situation _turned out to be dangerous_ later, mainly because velocity tracking was underestimated or the object accelerated beyond TTC margin
-   2. The situation _turned dangerous_ later, mainly because the object is suddenly detected out of nowhere
-
-The position which is before the boundary of unprotected area by the braking distance which is obtained by
+1. 車両は、停止する場合、少なくとも制動距離分、無保護領域の境界線より手前でブレーキを開始する必要がある
+2. 車両は、走行する場合、十分な制動距離マージンで先行車両を認識し、安全性を事前に確認する必要がある
+  1. そして、安全の判断は絶対に確実であり、将来の予測期間にわたって有効である必要がある。そのため、安全条件は、自分車が無保護領域内を走行している間、常に満たされる必要があります。
+3. (TODO): 制限された検出範囲/速度追跡性能を考慮すると、完璧に安全な判断を事前に下すことはほとんど不可能であるため、交差点モジュールは、安全上の判断が次の理由により後に "裏切られた" 場合に、リスク回避的加速速度プロファイルの計画と/または横方向加速度制限の緩和を行う必要があります。
+  1. 状況がその後に危険になった場合、主に速度追跡が過小評価されたか、またはオブジェクトが TTC マージンを超えて加速したため
+  2. 状況がその後に危険になった場合、主にオブジェクトが突然どこからともなく検出されたため
 
 $$
 \dfrac{v_{\mathrm{ego}}^{2}}{2a_{\mathrm{max}}} + v_{\mathrm{ego}} * t_{\mathrm{delay}}
 $$
 
-is called pass_judge_line, and safety decision must be made before ego passes this position because ego does not stop anymore.
+によって得られる制動距離分、無保護領域の境界線より手前の位置をパス判定線と呼び、自分車がこの位置を通過する前に安全上の判断が行われなければなりません。自分車はこれ以上停車しなくなるからです。
 
-1st_pass_judge_line is before the first upcoming lane, and at intersections with multiple upcoming lanes, 2nd_pass_judge_line is defined as the position which is before the centerline of the first attention lane by the braking distance. 1st/2nd_pass_judge_line are illustrated in the following figure.
+1st_pass_判定線は最初の先行レーンより手前にあり、複数の先行レーンがある交差点では、2nd_pass_判定線は制動距離分、最初の注意レーンのセンターラインより手前の位置として定義されます。1st/2nd_pass_判定線は次の図で示されています。
 
 ![pass-judge-line](./docs/pass-judge-line.drawio.svg)
 
-Intersection module will command to GO if
+交差点モジュールは次の場合に走行を指示します。
 
-- ego is over default_stopline(or `common.enable_pass_judge_before_default_stopline` is true) AND
-- ego is over 1st_pass judge line AND
-- ego judged SAFE previously AND
-- (ego is over 2nd_pass_judge_line OR ego is between 1st and 2nd pass_judge_line but most probable collision is expected to happen in the 1st attention lane)
+- 自分車がデフォルト・ストップラインを越えている場合 (または `common.enable_pass_judge_before_default_stopline` が true の場合)
+- 自分車が 1st_pass_判定線を越えている場合
+- 自分車が以前に SAFE と判断されている場合
+- (自分車が 2nd_pass_判定線を越えている場合、または自分車が 1st と 2nd のパス判定線の間にあるが、最も可能性の高い衝突が 1st の注意レーンで発生すると予想される場合)
 
-because it is expected to stop or continue stop decision if
+以下の場合は、停止するか停止判断を継続すると予想されるためです。
 
-1. ego is before default_stopline && `common.enable_pass_judge_before_default_stopline` is false OR
-   1. reason: default_stopline is defined on the map and should be respected
-2. ego is before 1st_pass_judge_line OR
-   1. reason: it has enough braking distance margin
-3. ego judged UNSAFE previously
-   1. reason: ego is now trying to stop and should continue stop decision if collision is detected in later calculation
-4. (ego is between 1st and 2nd pass_judge_line and the most probable collision is expected to happen in the 2nd attention lane)
+1. 自分車がデフォルト・ストップラインより前で `common.enable_pass_judge_before_default_stopline` が false の場合
+  1. 理由: デフォルト・ストップラインはマップ上に定義されており、尊重する必要があります
+2. 自分車が 1st_pass_判定線より前
+  1. 理由: 制動距離マージンが十分にある
+3. 自分車は以前に UNSAFE と判断されました
+  1. 理由: 自分車は現在停止しようとしており、減速中に 1st_pass_判定線を越えたとしても、衝突が検出されたら停止判断を続ける必要があります
+4. (自分車は 1st と 2nd のパス判定線の間で、最も可能性の高い衝突が 2nd の注意レーンで発生すると予想される)
 
-For the 3rd condition, it is possible that ego stops with some overshoot to the unprotected area while it is trying to stop for collision detection, because ego should keep stop decision while UNSAFE decision is made even if it passed 1st_pass_judge_line during deceleration.
+3 番目の条件では、自分車が衝突検出のために停止しようとしている場合、無保護領域にオーバーシュートして停止する可能性があります。これは、自分車が減速中に 1st_pass_判定線を越えた場合でも UNSAFE 判断が行われたままで、停止判断を続ける必要があるためです。
 
-For the 4th condition, at intersections with 2nd attention lane, even if ego is over the 1st pass_judge_line, still intersection module commands to stop if the most probable collision is expected to happen in the 2nd attention lane.
+交差点の4番目の条件では、2番目の注意車線が交わる交差点で、自車が1番目のpass_judge_lineを超えたとしても、2番目の注意車線で最も衝突が起こりそうな場合は、交差点モジュールは停止するように指示します。
 
-Also if `occlusion.enable` is true, the position of 1st_pass_judge line changes to occlusion_peeking_stopline if ego passed the original 1st_pass_judge_line position while ego is peeking. Otherwise ego could inadvertently judge that it passed 1st_pass_judge during peeking and then abort peeking.
+また、`occlusion.enable`がtrueの場合、1st_pass_judgeラインの位置は、自車がのぞき見中に元の1st_pass_judgeラインの位置を通過した場合は、occlusion_peeking_stoplineに変更されます。そうしないと、自車がのぞき見中に無意識のうちに1st_pass_judgeを超えたと判断し、のぞき見を中止してしまう可能性があります。
 
-## Data Structure
+## データ構造
 
-Each data structure is defined in `util_type.hpp`.
+各データ構造は`util_type.hpp`で定義されています。
 
 ![data-structure](./docs/data-structure.drawio.svg)
 
 ### `IntersectionLanelets`
+
 
 ```plantuml
 @startuml
@@ -364,7 +363,8 @@ entity IntersectionLanelets {
 
 ### `IntersectionStopLines`
 
-Each stop lines are generated from interpolated path points to obtain precise positions.
+各停止線は、補間されたパス点から生成され、正確な位置を取得します。
+
 
 ```plantuml
 @startuml
@@ -392,7 +392,8 @@ entity IntersectionStopLines {
 
 ### `TargetObject`
 
-`TargetObject` holds the object, its belonging lane and corresponding stopline information.
+`TargetObject` は、対象物、その所属車線、および対応する停止線情報を保持します。
+
 
 ```plantuml
 @startuml
@@ -409,121 +410,129 @@ entity TargetObject {
 @enduml
 ```
 
-## Module Parameters
+## モジュールパラメータ
 
-### common
+### 共通
 
-| Parameter                                    | Type   | Description                                                                      |
-| -------------------------------------------- | ------ | -------------------------------------------------------------------------------- |
-| `.attention_area_length`                     | double | [m] range for object detection                                                   |
-| `.attention_area_margin`                     | double | [m] margin for expanding attention area width                                    |
-| `.attention_area_angle_threshold`            | double | [rad] threshold of angle difference between the detected object and lane         |
-| `.use_intersection_area`                     | bool   | [-] flag to use intersection_area for collision detection                        |
-| `.default_stopline_margin`                   | double | [m] margin before_stop_line                                                      |
-| `.stopline_overshoot_margin`                 | double | [m] margin for the overshoot from stopline                                       |
-| `.max_accel`                                 | double | [m/ss] max acceleration for stop                                                 |
-| `.max_jerk`                                  | double | [m/sss] max jerk for stop                                                        |
-| `.delay_response_time`                       | double | [s] action delay before stop                                                     |
-| `.enable_pass_judge_before_default_stopline` | bool   | [-] flag not to stop before default_stopline even if ego is over pass_judge_line |
+| パラメータ                                 | タイプ | 説明 |
+| ------------------------------------------- | ------ | ---------------------------------------- |
+| `.attention_area_length`                     | double | [m] 物体検出範囲                       |
+| `.attention_area_margin`                     | double | [m] アテンションエリアの幅の拡張マージン |
+| `.attention_area_angle_threshold`            | double | [rad] 検出オブジェクトと車線の角度差の閾値 |
+| `.use_intersection_area`                     | bool   | [-] 衝突検出に交差領域を使用するフラグ |
+| `.default_stopline_margin`                   | double | [m] 停止線手前マージン                    |
+| `.stopline_overshoot_margin`                 | double | [m] 停止線への進入マージン                  |
+| `.max_accel`                                 | double | [m/ss] 停止時の最大加速度                |
+| `.max_jerk`                                  | double | [m/sss] 停止時の最大ジャーク             |
+| `.delay_response_time`                       | double | [s] 停止前のアクション遅延時間            |
+| `.enable_pass_judge_before_default_stopline` | bool   | [-] ego が pass_judge_line を超えていても default_stopline で停止しないフラグ |
 
 ### stuck_vehicle/yield_stuck
 
-| Parameter                                        | Type   | Description                                                                  |
-| ------------------------------------------------ | ------ | ---------------------------------------------------------------------------- |
-| `stuck_vehicle.turn_direction`                   | -      | [-] turn_direction specifier for stuck vehicle detection                     |
-| `stuck_vehicle.stuck_vehicle_detect_dist`        | double | [m] length toward from the exit of intersection for stuck vehicle detection  |
-| `stuck_vehicle.stuck_vehicle_velocity_threshold` | double | [m/s] velocity threshold for stuck vehicle detection                         |
-| `yield_stuck.distance_threshold`                 | double | [m/s] distance threshold of yield stuck vehicle from ego path along the lane |
+自動車が駐車されたり、故障したりして動けなくなっている車両に遭遇した場合の対処法を定義する。
 
-### collision_detection
+| パラメータ | 型 | 説明 |
+|---|---|---|
+| `stuck_vehicle.turn_direction` | - | [-] 自動停止車両検出のための turn_direction 指定 |
+| `stuck_vehicle.stuck_vehicle_detect_dist` | double | [m] 自動停止車両検出のための交差点出口からの方向 |
+| `stuck_vehicle.stuck_vehicle_velocity_threshold` | double | [m/s] 自動停止車両検出のための速度しきい値 |
+| `yield_stuck.distance_threshold` | double | [m/s] 自車経路に沿って停止車両から ego まで距離しきい値 |
 
-| Parameter                                     | Type   | Description                                                                          |
-| --------------------------------------------- | ------ | ------------------------------------------------------------------------------------ |
-| `.consider_wrong_direction_vehicle`           | bool   | [-] flag to detect objects in the wrong direction                                    |
-| `.collision_detection_hold_time`              | double | [s] hold time of collision detection                                                 |
-| `.min_predicted_path_confidence`              | double | [-] minimum confidence value of predicted path to use for collision detection        |
-| `.keep_detection_velocity_threshold`          | double | [s] ego velocity threshold for continuing collision detection before pass judge line |
-| `.velocity_profile.use_upstream`              | bool   | [-] flag to use velocity profile planned by upstream modules                         |
-| `.velocity_profile.minimum_upstream_velocity` | double | [m/s] minimum velocity of upstream velocity profile to avoid zero division           |
-| `.velocity_profile.default_velocity`          | double | [m/s] constant velocity profile when use_upstream is false                           |
-| `.velocity_profile.minimum_default_velocity`  | double | [m/s] minimum velocity of default velocity profile to avoid zero division            |
-| `.yield_on_green_traffic_light`               | -      | [-] [description](#yield-on-green)                                                   |
-| `.ignore_amber_traffic_light`                 | -      | [-] [description](#skip-on-amber)                                                    |
-| `.ignore_on_red_traffic_light`                | -      | [-] [description](#skip-on-red)                                                      |
+### 衝突検出
 
-### occlusion
+このコンポーネントは、自車位置、検出可能なオブジェクト、およびPlanningモジュールによって生成されたパスから、衝突のリスクを評価します。
+衝突リスク評価は、衝突確率とその衝突までの時間、衝突した場合の逸脱量を考慮して行われます。
+衝突は、自車および周囲のオブジェクトの間の距離が一定のしきい値を下回った場合に検出されます。
+検出された衝突は、`post resampling`によって調整されます。
 
-| Parameter                                      | Type     | Description                                                                                 |
-| ---------------------------------------------- | -------- | ------------------------------------------------------------------------------------------- |
-| `.enable`                                      | bool     | [-] flag to calculate occlusion detection                                                   |
-| `.occlusion_attention_area_length`             | double   | [m] the length of attention are for occlusion detection                                     |
-| `.free_space_max`                              | int      | [-] maximum value of occupancy grid cell to treat at occluded                               |
-| `.occupied_min`                                | int      | [-] minimum value of occupancy grid cell to treat at occluded                               |
-| `.denoise_kernel`                              | double   | [m] morphology window size for preprocessing raw occupancy grid                             |
-| `.attention_lane_crop_curvature_threshold`     | double   | [m] curvature threshold for trimming curved part of the lane                                |
-| `.attention_lane_crop_curvature_ds`            | double   | [m] discretization interval of centerline for lane curvature calculation                    |
-| `.creep_during_peeking.enable`                 | bool     | [-] flag to insert `creep_velocity` while peeking to intersection occlusion stopline        |
-| `.creep_during_peeking.creep_velocity`         | double   | [m/s] the command velocity while peeking to intersection occlusion stopline                 |
-| `.peeking_offset`                              | double   | [m] the offset of the front of the vehicle into the attention area for peeking to occlusion |
-| `.occlusion_required_clearance_distance`       | double   | [m] threshold for the distance to nearest occlusion cell from ego path                      |
-| `.possible_object_bbox`                        | [double] | [m] minimum bounding box size for checking if occlusion polygon is small enough             |
-| `.ignore_parked_vehicle_speed_threshold`       | double   | [m/s] velocity threshold for checking parked vehicle                                        |
-| `.occlusion_detection_hold_time`               | double   | [s] hold time of occlusion detection                                                        |
-| `.temporal_stop_time_before_peeking`           | double   | [s] temporal stop duration at default_stopline before starting peeking                      |
-| `.temporal_stop_before_attention_area`         | bool     | [-] flag to temporarily stop at first_attention_stopline before peeking into attention_area |
-| `.creep_velocity_without_traffic_light`        | double   | [m/s] creep velocity to occlusion_wo_tl_pass_judge_line                                     |
-| `.static_occlusion_with_traffic_light_timeout` | double   | [s] the timeout duration for ignoring static occlusion at intersection with traffic light   |
+| パラメータ | 種類 | 説明 |
+|---|---|---|
+| `.consider_wrong_direction_vehicle` | bool | [-] 逆走車両を検出するためのフラグ |
+| `.collision_detection_hold_time` | double | [s] 衝突検出のホールド時間 |
+| `.min_predicted_path_confidence` | double | [-] 衝突検出に使用される予測パスの最小信頼値 |
+| `.keep_detection_velocity_threshold` | double | [s] パスジャッジラインを通過するまでの衝突検出を継続するための自車速度閾値 |
+| `.velocity_profile.use_upstream` | bool | [-] 上流モジュールで計画された速度プロファイルを使用するためのフラグ |
+| `.velocity_profile.minimum_upstream_velocity` | double | [m/s] ゼロ除算を回避するための上流速度プロファイルの最小速度 |
+| `.velocity_profile.default_velocity` | double | [m/s] use_upstreamがfalseの場合の一定速度プロファイル |
+| `.velocity_profile.minimum_default_velocity` | double | [m/s] ゼロ除算を回避するためのデフォルト速度プロファイルの最小速度 |
+| `.yield_on_green_traffic_light` | - | [-] [説明](#yield-on-green) |
+| `.ignore_amber_traffic_light` | - | [-] [説明](#skip-on-amber) |
+| `.ignore_on_red_traffic_light` | - | [-] [説明](#skip-on-red) |
 
-## Trouble shooting
+### 閉塞
 
-### Intersection module stops against unrelated vehicles
+| パラメータ                                     | 型     | 説明                                                                                         |
+| --------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `.enable`                                     | bool     | [-] オクルージョン検出を計算するフラグ                                                         |
+| `.occlusion_attention_area_length`            | double   | [m] オクルージョン検出のための注目領域の長さ                                                   |
+| `.free_space_max`                             | int      | [-] オクルージョンとして扱うために、占有グリッドセルの最大値                                      |
+| `.occupied_min`                               | int      | [-] オクルージョンとして扱うために、占有グリッドセルの最小値                                      |
+| `.denoise_kernel`                             | double   | [m] 生の占有グリッドを前処理するための形態学的ウィンドウサイズ                               |
+| `.attention_lane_crop_curvature_threshold`    | double   | [m] レーンの曲線部を切り取るための曲率のしきい値                                              |
+| `.attention_lane_crop_curvature_ds`           | double   | [m] レーンの曲率を計算するためのセンターラインの離散化間隔                                 |
+| `.creep_during_peeking.enable`              | bool     | [-] 交差点のオクルージョン停止線にピーキング中に `creep_velocity` を挿入するためのフラグ       |
+| `.creep_during_peeking.creep_velocity`        | double   | [m/s] 交差点のオクルージョン停止線にピーキング中に使用するコマンド速度                          |
+| `.peeking_offset`                            | double   | [m] ピーキング中のオクルージョンのために、車両前面を注意領域にオフセットする距離                  |
+| `.occlusion_required_clearance_distance`     | double   | [m] エゴパスからの最寄りのオクルージョンセルまでの距離のしきい値                               |
+| `.possible_object_bbox`                       | [double] | [m] オクルージョンポリゴンが十分に小さいかどうかを確認するための最小バウンディングボックスサイズ |
+| `.ignore_parked_vehicle_speed_threshold`      | double   | [m/s] 駐車車両の確認のための速度しきい値                                                    |
+| `.occlusion_detection_hold_time`              | double   | [s] オクルージョン検出のホールド時間                                                            |
+| `.temporal_stop_time_before_peeking`          | double   | [s] ピーキングを開始する前に、`default_stopline` でのタイムスタンプの停止時間              |
+| `.temporal_stop_before_attention_area`        | bool     | [-] `attention_area` にピーキングする前に、`first_attention_stopline` で一時停止するフラグ |
+| `.creep_velocity_without_traffic_light`      | double   | [m/s] `occlusion_wo_tl_pass_judge_line` へのクリープ速度                                      |
+| `.static_occlusion_with_traffic_light_timeout` | double   | [s] 交通信号のある交差点での静的オクルージョンを無視するためのタイムアウトの期間                  |
 
-In this case, first visualize `/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection` topic and check the `attention_area` polygon. Intersection module performs collision checking for vehicles running on this polygon, so if it extends to unintended lanes, it needs to have [RightOfWay tag](#how-towhy-set-rightofway-tag).
+## トラブルシューティング
 
-By lowering `common.attention_area_length` you can check which lanes are conflicting with the intersection lane. Then set part of the conflicting lanes as the yield_lane.
+### 交差点モジュールが関係のない車両に対して停止してしまう
 
-### The stop line of intersection is chattering
+この場合は、まず `/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection` トピックを視覚化し、`attention_area` ポリゴンを確認します。交差点モジュールはこのポリゴン上で走行する車両に対して衝突チェックを実行するため、意図しない車線にまで拡張されている場合は、[RightOfWay タグ](#how-towhy-set-rightofway-tag) を付ける必要があります。
 
-The parameter `collision_detection.collision_detection_hold_time` suppresses the chattering by keeping UNSAFE decision for this duration until SAFE decision is finally made. The role of this parameter is to account for unstable detection/tracking of objects. By increasing this value you can suppress the chattering. However it could elongate the stopping duration excessively.
+`common.attention_area_length` を下げることで、どの車線が交差点車線とコンフリクトしているかを調べることができます。次に、コンフリクトしている車線の部分を Yield Lane として設定します。
 
-If the chattering arises from the acceleration/deceleration of target vehicles, increase `collision_detection.collision_detection.collision_end_margin_time` and/or `collision_detection.collision_detection.collision_end_margin_time`.
+### 交差点の停止線がフラフラする
 
-### The stop line is released too fast/slow
+パラメータ `collision_detection.collision_detection_hold_time` は、SAFE 決定が最終的に行われるまで UNSAFE 決定をこの時間保持することでフラッターを抑えます。このパラメータの役割は、対象物の不安定な検出/追跡を考慮することです。この値を増やすことでチャタリングを抑えることができます。ただし、停止時間が過度に長くなる可能性があります。
 
-If the intersection wall appears too fast, or ego tends to stop too conservatively for upcoming vehicles, lower the parameter `collision_detection.collision_detection.collision_start_margin_time`. If it lasts too long after the target vehicle passed, then lower the parameter `collision_detection.collision_detection.collision_end_margin_time`.
+チャタリングが対象車両の加速度/減速度に起因する場合は、`collision_detection.collision_detection.collision_end_margin_time` と/または `collision_detection.collision_detection.collision_end_margin_time` を増やします。
 
-### Ego suddenly stops at intersection with traffic light
+### 停止線が早すぎたり遅すぎたり解除される
 
-If the traffic light color changed from AMBER/RED to UNKNOWN, the intersection module works in the GREEN color mode. So collision and occlusion are likely to be detected again.
+交差点壁があまりにも早く現れたり、自我は前方車両に対してあまりにも保守的に停止する傾向がある場合は、パラメータ `collision_detection.collision_detection.collision_start_margin_time` を下げます。対象車両が通過した後に停止が長すぎる場合は、パラメータ `collision_detection.collision_detection.collision_end_margin_time` を下げます。
 
-### Occlusion is detected overly
+### 自己が信号のある交差点で突然停止する
 
-You can check which areas are detected as occlusion by visualizing `/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection/occlusion_polygons`.
+信号の色が AMBER/RED から UNKNOWN に変わると、交差点モジュールは GREEN カラーモードで動作します。したがって、衝突と遮蔽が再び検出される可能性があります。
 
-If you do not want to detect / do want to ignore occlusion far from ego or lower the computational cost of occlusion detection, `occlusion.occlusion_attention_area_length` should be set to lower value.
+### 遮蔽が過剰検出される
 
-If you want to care the occlusion nearby ego more cautiously, set `occlusion.occlusion_required_clearance_distance` to a larger value. Then ego will approach the occlusion_peeking_stopline more closely to assure more clear FOV.
+`/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection/occlusion_polygons` を可視化することで、どの領域が遮蔽として検出されているかを確認できます。
 
-`occlusion.possible_object_bbox` is used for checking if detected occlusion area is small enough that no vehicles larger than this size can exist inside. By decreasing this size ego will ignore small occluded area.
+自我から遠くの遮蔽を検出し nech6たい/無視したい場合、または遮蔽検出の計算コストを下げたい場合は、`occlusion.occlusion_attention_area_length` を低い値に設定する必要があります。
 
-#### occupancy grid map tuning
+自我近くの遮蔽をより慎重に配慮したい場合は、`occlusion.occlusion_required_clearance_distance` をより大きな値に設定します。次に、自己は遮蔽のぞき見停止線により近づいて、より明確な FOV が確保されます。
 
-Refer to the document of [autoware_probabilistic_occupancy_grid_map](https://autowarefoundation.github.io/autoware.universe/main/perception/autoware_probabilistic_occupancy_grid_map/) for details. If occlusion tends to be detected at apparently free space, increase `occlusion.free_space_max` to ignore them.
+`occlusion.possible_object_bbox` は、検出された遮蔽領域が小さすぎて、このサイズよりも大きい車両が内部に存在できないかどうかをチェックするために使用されます。このサイズを小さくすると、自己は小さな遮蔽領域を無視します。
 
-#### in simple_planning_simulator
+#### オキュパンシー グリッド マップの調整
 
-intersection_occlusion feature is **not recommended** for use in planning_simulator because the laserscan_based_occupancy_grid_map generates unnatural UNKNOWN cells in 2D manner:
+詳細については、[autoware_probabilistic_occupancy_grid_map](https://autowarefoundation.github.io/autoware.universe/main/perception/autoware_probabilistic_occupancy_grid_map/) のドキュメントを参照してください。明らかに自由なスペースで遮蔽が検出される傾向がある場合は、`occlusion.free_space_max` を増やしてそれらを無視します。
 
-- all the cells behind pedestrians are UNKNOWN
-- no ground point clouds are generated
+#### simple_planning_simulator の場合
 
-Also many users do not set traffic light information frequently although it is very critical for intersection_occlusion (and in real traffic environment too).
+laserscan_based_occupancy_grid_map は 2D 方式で不自然な UNKNOWN セルを生成するため、intersection_occlusion 機能は Planning Simulator での使用はお勧めしません。
 
-For these reasons, `occlusion.enable` is false by default.
+- 歩行者の後ろのすべてのセルは UNKNOWN です
+- グラウンド ポイント クラウドは生成されません
 
-#### on real vehicle / in end-to-end simulator
+また、多くのユーザーは非常に重要な交差点の遮蔽（および実際の交通環境でも）のために頻繁に信号情報を設定しません。
 
-On real vehicle or in end-to-end simulator like [AWSIM](https://tier4.github.io/AWSIM/) the following pointcloud_based_occupancy_grid_map configuration is highly recommended:
+これらの理由により、`occlusion.enable` はデフォルトで false です。
+
+#### 実車 / エンドツーエンドシミュレータの場合
+
+実車または [AWSIM](https://tier4.github.io/AWSIM/) などのエンドツーエンドシミュレータでは、次の pointcloud_based_occupancy_grid_map 設定を強くお勧めします。
+
 
 ```yaml
 scan_origin_frame: "velodyne_top"
@@ -534,11 +543,12 @@ OccupancyGridMapProjectiveBlindSpot:
   obstacle_separation_threshold: 1.0 # [m] fill the interval between obstacles with unknown for this length
 ```
 
-You should set the top lidar link as the `scan_origin_frame`. In the example it is `velodyne_top`. The method `OccupancyGridMapProjectiveBlindSpot` estimates the FOV by running projective ray-tracing from `scan_origin` to obstacle or up to the ground and filling the cells on the "shadow" of the object as UNKNOWN.
+`scan_origin_frame`として最上部のLiDARリンクを設定する必要があります。例では`velodyne_top`です。`OccupancyGridMapProjectiveBlindSpot`メソッドは、`scan_origin`から障害物までまたは地面までの射影線投影を実行し、オブジェクトの「影」上のセルをUNKNOWNとして埋めて視野を推定します。
 
-## Flowchart
+## フローチャート
 
-WIP
+作業中
+
 
 ```plantuml
 @startuml
@@ -621,41 +631,40 @@ stop
 @enduml
 ```
 
-## Merge From Private
+## 私有地からの合流
 
-### Role
+### 機能
 
-When an ego enters a public road from a private road (e.g. a parking lot), it needs to face and stop before entering the public road to make sure it is safe.
+自車が私有地（例：駐車場）から公道に入る場合、安全を確認するために公道手前で停止する必要があります。
 
-This module is activated when there is an intersection at the private area from which the vehicle enters the public road. The stop line is generated both when the goal is in the intersection lane and when the path goes beyond the intersection lane. The basic behavior is the same as the intersection module, but ego must stop once at the stop line.
+このモジュールは、車が公道に進入する私有地エリアに交差点がある場合に有効になります。停止線は、目標地点が交差点車線にあるときと、経路が交差点車線を越えるときの両方で生成されます。基本的な動作は交差点モジュールと同じですが、自車は停止線で1回停止する必要があります。
 
 ![merge-from-private](docs/merge_from_private.png)
 
-### Activation Timing
+### 起動タイミング
 
-This module is activated when the following conditions are met:
+このモジュールは、次の条件を満たしている場合に起動します。
 
-- ego-lane has a `private` tag
-- ego-lane has a conflict with other no-private lanelets
+- 自車線に「private」タグが付けられている
+- 自車線は、他の非私有レーンレットと衝突している
 
-### Module Parameters
+| パラメータ                               | 型   | 説明                     |
+| ------------------------------------------ | ------ | ------------------------ |
+| `merge_from_private_road/stop_duration_sec` | double | 状態変更のマージンタイム |
 
-| Parameter                                   | Type   | Description                     |
-| ------------------------------------------- | ------ | ------------------------------- |
-| `merge_from_private_road/stop_duration_sec` | double | [m] time margin to change state |
+### 既知の問題
 
-### Known Issue
+自車が停止線を超過すると、停止状態から遷移しません。
 
-If ego go over the stop line for a certain distance, then it will not transit from STOP.
+## テストマップ
 
-## Test Maps
+交差点レーンのマップには、次のようなさまざまな交差点があります。
 
-The intersections lanelet map consist of a variety of intersections including:
-
-- 4-way crossing with traffic light
-- 4-way crossing without traffic light
-- T-shape crossing without traffic light
-- intersection with a loop
-- complicated intersection
+- 信号機のある4方向交差点
+- 信号機のない4方向交差点
+- 信号のないT字路
+- ラウンドアバウトのある交差点
+- 複雑な交差点
 
 ![intersection_test](./docs/intersection_test_map.png)
+

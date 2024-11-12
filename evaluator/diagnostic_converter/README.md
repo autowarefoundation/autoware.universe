@@ -1,53 +1,51 @@
-# Planning Evaluator
+# 計画評価器
 
-## Purpose
+## 目的
 
-This package provides a node to convert `diagnostic_msgs::msg::DiagnosticArray` messages
-into `tier4_simulation_msgs::msg::UserDefinedValue` messages.
+このパッケージは、`diagnostic_msgs::msg::DiagnosticArray` メッセージを `tier4_simulation_msgs::msg::UserDefinedValue` メッセージに変換するノードを提供します。
 
-## Inner-workings / Algorithms
+## 内部処理/アルゴリズム
 
-The node subscribes to all topics listed in the parameters and assumes they publish
-`DiagnosticArray` messages.
-Each time such message is received,
-it is converted into as many `UserDefinedValue` messages as the number of `KeyValue` objects.
-The format of the output topic is detailed in the _output_ section.
+このノードは、パラメータにリストされたすべてのトピックを購読し、それらが `DiagnosticArray` メッセージを発行すると想定します。
+そのようなメッセージが受信されるたびに、`KeyValue` オブジェクトの数と同じ数の `UserDefinedValue` メッセージに変換されます。
+出力トピックの形式は「出力」セクションで詳細に説明します。
 
-## Inputs / Outputs
+## インプット/アウトプット
 
-### Inputs
+### インプット
 
-The node listens to `DiagnosticArray` messages on the topics specified in the parameters.
+このノードは、パラメータで指定されたトピックの `DiagnosticArray` メッセージをリッスンします。
 
-### Outputs
+### アウトプット
 
-The node outputs `UserDefinedValue` messages that are converted from the received `DiagnosticArray`.
+このノードは、受信した `DiagnosticArray` から変換された `UserDefinedValue` メッセージを出力します。
 
-The name of the output topics are generated from the corresponding input topic, the name of the diagnostic status, and the key of the diagnostic.
-For example, we might listen to topic `/diagnostic_topic` and receive a `DiagnosticArray` with 2 status:
+出力トピック名は、対応するインプットトピック、診断ステータスの名前、および診断のキーから生成されます。
+たとえば、`/diagnostic_topic` トピックをリッスンし、2 つのステータスを持つ `DiagnosticArray` を受信する場合があります。
 
-- Status with `name: "x"`.
-  - Key: `a`.
-  - Key: `b`.
-- Status with `name: "y"`.
-  - Key: `a`.
-  - Key: `c`.
+- ステータス `name: "x"`.
+  - キー: `a`.
+  - キー: `b`.
+- ステータス `name: "y"`.
+  - キー: `a`.
+  - キー: `c`.
 
-The resulting topics to publish the `UserDefinedValue` are as follows:
+`UserDefinedValue` をパブリッシュするための結果的なトピックは次のとおりです。
 
 - `/metrics_x_a`.
 - `/metrics_x_b`.
 - `/metrics_y_a`.
 - `/metrics_y_c`.
 
-## Parameters
+## パラメータ
 
-| Name                | Type             | Description                                                   |
+| 名前                | 型             | 説明                                                   |
 | :------------------ | :--------------- | :------------------------------------------------------------ |
-| `diagnostic_topics` | list of `string` | list of DiagnosticArray topics to convert to UserDefinedValue |
+| `diagnostic_topics` | 文字列のリスト | UserDefinedValueに変換するDiagnosticArrayトピックのリスト |
 
-## Assumptions / Known limits
+## 想定 / 既知の制限
 
-Values in the `KeyValue` objects of a `DiagnosticStatus` are assumed to be of type `double`.
+`DiagnosticStatus` の `KeyValue` オブジェクト内の値は、`double` 型であると想定されています。
 
-## Future extensions / Unimplemented parts
+## 将来の拡張 / 未実装部分
+

@@ -1,12 +1,13 @@
-# RTC Interface
+# RTCインタフェース
 
-## Purpose
+## 目的
 
-RTC Interface is an interface to publish the decision status of behavior planning modules and receive execution command from external of an autonomous driving system.
+RTCインタフェースは、ビヘイビアプランニングモジュールの決定ステータスを公開し、自動運転システム外部からの実行コマンドを受け取るインターフェースです。
 
-## Inner-workings / Algorithms
+## 内部動作/アルゴリズム
 
-### Usage example
+### 使用例
+
 
 ```c++
 // Generate instance (in this example, "intersection" is selected)
@@ -46,149 +47,157 @@ while (...) {
 rtc_interface.removeCooperateStatus(uuid);
 ```
 
-## Inputs / Outputs
+## 入出力
 
-### RTCInterface (Constructor)
+### RTCInterface (コンストラクター)
+
 
 ```c++
 autoware::rtc_interface::RTCInterface(rclcpp::Node & node, const std::string & name);
 ```
 
-#### Description
+#### 説明
 
-A constructor for `autoware::rtc_interface::RTCInterface`.
+`autoware::rtc_interface::RTCInterface` のコンストラクタです。
 
-#### Input
+#### 入力
 
-- `node` : Node calling this interface
-- `name` : Name of cooperate status array topic and cooperate commands service
-  - Cooperate status array topic name : `~/{name}/cooperate_status`
-  - Cooperate commands service name : `~/{name}/cooperate_commands`
+- `node` : このインターフェースを呼び出すノード
+- `name` : 協調ステータスの配列のトピック名と協調コマンドのサービス名
+  - 協調ステータスの配列のトピック名 : `~/{name}/cooperate_status`
+  - 協調コマンドのサービス名 : `~/{name}/cooperate_commands`
 
-#### Output
+#### 出力
 
-An instance of `RTCInterface`
+`RTCInterface` のインスタンス
 
 ### publishCooperateStatus
+
+
 
 ```c++
 autoware::rtc_interface::publishCooperateStatus(const rclcpp::Time & stamp)
 ```
 
-#### Description
+#### 説明
 
-Publish registered cooperate status.
+登録された協調状態を公開します。
 
-#### Input
+#### 入力
 
-- `stamp` : Time stamp
+- `stamp` : タイムスタンプ
 
-#### Output
+#### 出力
 
-Nothing
+なし
 
 ### updateCooperateStatus
+
 
 ```c++
 autoware::rtc_interface::updateCooperateStatus(const unique_identifier_msgs::msg::UUID & uuid, const bool safe, const double start_distance, const double finish_distance, const rclcpp::Time & stamp)
 ```
 
-#### Description
+#### 概要
 
-Update cooperate status corresponding to `uuid`.
-If cooperate status corresponding to `uuid` is not registered yet, add new cooperate status.
+`uuid` に対応する連携状態を更新します。
+`uuid` に対応する連携状態が未登録の場合は、新しい連携状態を追加します。
 
-#### Input
+#### 入力
 
-- `uuid` : UUID for requesting module
-- `safe` : Safety status of requesting module
-- `start_distance` : Distance to the start object from ego vehicle
-- `finish_distance` : Distance to the finish object from ego vehicle
-- `stamp` : Time stamp
+- `uuid` : リクエストするモジュールの UUID
+- `safe` : リクエストするモジュールの安全状態
+- `start_distance` : 自車位置から開始オブジェクトまでの距離
+- `finish_distance` : 自車位置から終了オブジェクトまでの距離
+- `stamp` : タイムスタンプ
 
-#### Output
+#### 出力
 
-Nothing
+なし
 
 ### removeCooperateStatus
+
 
 ```c++
 autoware::rtc_interface::removeCooperateStatus(const unique_identifier_msgs::msg::UUID & uuid)
 ```
 
-#### Description
+#### 説明
 
-Remove cooperate status corresponding to `uuid` from registered statuses.
+登録済みステータスから `uuid` に相当する協調ステータスを削除する。
 
-#### Input
+#### 入力
 
-- `uuid` : UUID for expired module
+- `uuid` : 有効期限切れモジュールの UUID
 
-#### Output
+#### 出力
 
-Nothing
+なし
 
 ### clearCooperateStatus
+
 
 ```c++
 autoware::rtc_interface::clearCooperateStatus()
 ```
 
-#### Description
+#### 概要
 
-Remove all cooperate statuses.
+すべての協調ステータスを削除します。
 
-#### Input
+#### 入力
 
-Nothing
+なし
 
-#### Output
+#### 出力
 
-Nothing
+なし
 
 ### isActivated
+
 
 ```c++
 autoware::rtc_interface::isActivated(const unique_identifier_msgs::msg::UUID & uuid)
 ```
 
-#### Description
+#### 説明
 
-Return received command status corresponding to `uuid`.
+`uuid` に対応する受信コマンドステータスを返します。
 
-#### Input
+#### 入力
 
-- `uuid` : UUID for checking module
+- `uuid` : モジュールを確認するための UUID
 
-#### Output
+#### 出力
 
-If auto mode is enabled, return based on the safety status.
-If not, if received command is `ACTIVATED`, return `true`.
-If not, return `false`.
+自動モードが有効な場合は、安全ステータスに基づいて返します。
+それ以外の場合は、受信コマンドが `ACTIVATED` の場合、`true` を返します。
+それ以外の場合は、`false` を返します。
 
 ### isRegistered
+
 
 ```c++
 autoware::rtc_interface::isRegistered(const unique_identifier_msgs::msg::UUID & uuid)
 ```
 
-#### Description
+#### 概要
 
-Return `true` if `uuid` is registered.
+`uuid`が登録されている場合に`true`を返します。
 
-#### Input
+#### 入力
 
-- `uuid` : UUID for checking module
+- `uuid` : モジュールチェック用UUID
 
-#### Output
+#### 出力
 
-If `uuid` is registered, return `true`.
-If not, return `false`.
+`uuid`が登録されている場合に`true`を返します。登録されていない場合は`false`を返します。
 
-## Debugging Tools
+## デバッグツール
 
-There is a debugging tool called [RTC Replayer](https://autowarefoundation.github.io/autoware_tools/main/planning/autoware_rtc_replayer/) for the RTC interface.
+RTCインターフェース用の[RTC Replayer](https://autowarefoundation.github.io/autoware_tools/main/planning/autoware_rtc_replayer/)というデバッグツールがあります。
 
-## Assumptions / Known limits
+## 想定/既知の制限
 
-## Future extensions / Unimplemented parts
+## 将来の拡張/未実装の部分
+

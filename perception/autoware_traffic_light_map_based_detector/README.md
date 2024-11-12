@@ -1,42 +1,43 @@
-# The `autoware_traffic_light_map_based_detector` Package
+# `autoware_traffic_light_map_based_detector` パッケージ
 
-## Overview
+## 概要
 
-`autoware_traffic_light_map_based_detector` calculates where the traffic lights will appear in the image based on the HD map.
+`autoware_traffic_light_map_based_detector` は、HDマップに基づいて画像内に交通信号が表示される位置を計算します。
 
-Calibration and vibration errors can be entered as parameters, and the size of the detected RegionOfInterest will change according to the error.
+キャリブレーションと振動の誤差をパラメータとして入力できます。誤差に応じて検出された領域のサイズが変化します。
 
 ![traffic_light_map_based_detector_result](./docs/traffic_light_map_based_detector_result.svg)
 
-If the node receives route information, it only looks at traffic lights on that route.
-If the node receives no route information, it looks at a radius of 200 meters and the angle between the traffic light and the camera is less than 40 degrees.
+ノードがルート情報を取得する場合、そのルート上の交通信号のみを対象にします。
+ノードがルート情報を取得しない場合、半径200メートル以内の交通信号で、交通信号とカメラ間の角度が40度未満のもののみを対象にします。
 
-## Input topics
+## 入力トピック
 
-| Name                 | Type                                  | Description             |
-| -------------------- | ------------------------------------- | ----------------------- |
-| `~input/vector_map`  | autoware_map_msgs::msg::LaneletMapBin | vector map              |
-| `~input/camera_info` | sensor_msgs::CameraInfo               | target camera parameter |
-| `~input/route`       | autoware_planning_msgs::LaneletRoute  | optional: route         |
+| 名称                  | タイプ                                   | 説明                      |
+| ---------------------| -------------------------------------- | -------------------------- |
+| `~input/vector_map`    | autoware_map_msgs::msg::LaneletMapBin  | ベクタマップ               |
+| `~input/camera_info`  | sensor_msgs::CameraInfo               | ターゲットカメラパラメータ |
+| `~input/route`        | autoware_planning_msgs::LaneletRoute  | オプション: ルート         |
 
-## Output topics
+## 出力トピック
 
-| Name             | Type                                        | Description                                                          |
+| 名前             | 型                                        | 説明                                                          |
 | ---------------- | ------------------------------------------- | -------------------------------------------------------------------- |
-| `~output/rois`   | tier4_perception_msgs::TrafficLightRoiArray | location of traffic lights in image corresponding to the camera info |
-| `~expect/rois`   | tier4_perception_msgs::TrafficLightRoiArray | location of traffic lights in image without any offset               |
-| `~debug/markers` | visualization_msgs::MarkerArray             | visualization to debug                                               |
+| `~output/rois`   | tier4_perception_msgs::TrafficLightRoiArray | カメラ情報に対応する画像中の信号機の位置                        |
+| `~expect/rois`   | tier4_perception_msgs::TrafficLightRoiArray | オフセットなしで画像内の信号機の位置                            |
+| `~debug/markers` | visualization_msgs::MarkerArray             | デバッグ用の可視化                                               |
 
-## Node parameters
+## ノードパラメータ
 
-| Parameter              | Type   | Description                                                           |
-| ---------------------- | ------ | --------------------------------------------------------------------- |
-| `max_vibration_pitch`  | double | Maximum error in pitch direction. If -5~+5, it will be 10.            |
-| `max_vibration_yaw`    | double | Maximum error in yaw direction. If -5~+5, it will be 10.              |
-| `max_vibration_height` | double | Maximum error in height direction. If -5~+5, it will be 10.           |
-| `max_vibration_width`  | double | Maximum error in width direction. If -5~+5, it will be 10.            |
-| `max_vibration_depth`  | double | Maximum error in depth direction. If -5~+5, it will be 10.            |
-| `max_detection_range`  | double | Maximum detection range in meters. Must be positive                   |
-| `min_timestamp_offset` | double | Minimum timestamp offset when searching for corresponding tf          |
-| `max_timestamp_offset` | double | Maximum timestamp offset when searching for corresponding tf          |
-| `timestamp_sample_len` | double | sampling length between min_timestamp_offset and max_timestamp_offset |
+| パラメータ              | 型   | 説明                                                                                                     |
+| ---------------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
+| `max_vibration_pitch`  | double | ピッチ方向の最大誤差。-5~+5の場合、10になります。                                                                 |
+| `max_vibration_yaw`    | double | ヨー方向の最大誤差。-5~+5の場合、10になります。                                                                    |
+| `max_vibration_height` | double | 高さ方向の最大誤差。-5~+5の場合、10になります。                                                                  |
+| `max_vibration_width`  | double | 幅方向の最大誤差。-5~+5の場合、10になります。                                                                   |
+| `max_vibration_depth`  | double | 奥行き方向の最大誤差。-5~+5の場合、10になります。                                                                  |
+| `max_detection_range`  | double | メートル単位の最大検出範囲。正数でなければなりません                                                                  |
+| `min_timestamp_offset` | double | 対応するtfを検索するときの最小タイムスタンプオフセット                                                               |
+| `max_timestamp_offset` | double | 対応するtfを検索するときの最大タイムスタンプオフセット                                                               |
+| `timestamp_sample_len` | double | `min_timestamp_offset`と`max_timestamp_offset`の間の`'post resampling'`のサンプル長                               |
+

@@ -1,43 +1,76 @@
 # mrm_emergency_stop_operator
 
-## Purpose
+## 目的
 
-MRM emergency stop operator is a node that generates emergency stop commands according to the emergency stop MRM order.
+MRM emergency stop operatorは、緊急停止MRM順序に基づいて緊急停止コマンドを生成するノードです。
 
-## Inner-workings / Algorithms
+## 内部動作/アルゴリズム
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                                 | Type                                  | Description                                                                                                                   |
-| ------------------------------------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `~/input/mrm/emergency_stop/operate` | `tier4_system_msgs::srv::OperateMrm`  | MRM execution order                                                                                                           |
-| `~/input/control/control_cmd`        | `autoware_control_msgs::msg::Control` | Control command output from the last node of the control component. Used for the initial value of the emergency stop command. |
-|                                      |                                       |                                                                                                                               |
+| 名前                                     | タイプ                                                               | 説明                                                                                                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `~/input/mrm/emergency_stop/operate` | `tier4_system_msgs::srv::OperateMrm`                                | MRM 実行命令                                                                                                                                    |
+| `~/input/control/control_cmd`          | `autoware_control_msgs::msg::Control`                               | 制御コンポーネントの最後のノードから出力される制御コマンド。緊急停止コマンドの初期値に使用されます。                                     |
 
-### Output
+### 出力
 
-| Name                                      | Type                                        | Description            |
-| ----------------------------------------- | ------------------------------------------- | ---------------------- |
-| `~/output/mrm/emergency_stop/status`      | `tier4_system_msgs::msg::MrmBehaviorStatus` | MRM execution status   |
-| `~/output/mrm/emergency_stop/control_cmd` | `autoware_control_msgs::msg::Control`       | Emergency stop command |
+このドキュメントでは、AutowareのPlanningコンポーネントの技術的詳細について説明します。
 
-## Parameters
+#### Planning Framework
 
-### Node Parameters
+Planningコンポーネントは、次のようなサブコンポーネントで構成されています。
 
-| Name        | Type | Default value | Explanation                   |
-| ----------- | ---- | ------------- | ----------------------------- |
-| update_rate | int  | `30`          | Timer callback frequency [Hz] |
+- **Motion Generator:** 自車位置と目標速度に基づいて、滑らかな軌跡を生成します。
+- **Path Planning:** 環境の障害物や道路構造を考慮しながら、軌跡を最適化します。
+- **Trajectory Planning:** 自車位置、目標速度、障害物に対して安全で快適な軌跡を作成します。
 
-### Core Parameters
+#### Dynamic Obstacle Avoidance
 
-| Name                | Type   | Default value | Explanation                                    |
+このモジュールは、周囲の動的障害物（車両、歩行者など）を検出し、衝突回避を計画します。以下のような戦略を使用します。
+
+- **Velocity Smoothing:** 障害物との衝突を回避するために、速度逸脱量を最小限に抑えます。
+- **Acceleration Smoothing:** 障害物との衝突を回避するために、加速度逸脱量を最小限に抑えます。
+- **Lateral Avoidance:** 障害物との衝突を回避するために、横方向の回避動作を計画します。
+
+#### Static Obstacle Handling
+
+このモジュールは、静的障害物（道路標識、ガードレールなど）を考慮して、軌跡を安全かつ効率的に計画します。以下のアルゴリズムを使用します：
+
+- **'Post Resampling':** 障害物周辺の軌跡を再サンプリングして、より正確な衝突予測を行います。
+- **Rejection Sampling:** 障害物との衝突の可能性が最も低い軌跡をランダムに選択します。
+
+#### その他の機能
+
+Planningコンポーネントには、以下を含むその他の機能もあります：
+
+- **Goal Planning:** 目的地に到達するための高レベルの軌跡を計画します。
+- **Velocity Planning:** 安全で快適な速度プロファイルを決定します。
+- **Safety Checks:** 軌跡が安全で、車両の制限内であることを確認します。
+
+| 名称                                      | タイプ                                      | 説明                                        |
+| ----------------------------------------- | ------------------------------------------ | ------------------------------------------- |
+| `~/output/mrm/emergency_stop/status`      | `tier4_system_msgs::msg::MrmBehaviorStatus` | MRM 実行ステータス                        |
+| `~/output/mrm/emergency_stop/control_cmd` | `autoware_control_msgs::msg::Control`     | 緊急停止コマンド                          |
+
+## パラメータ
+
+### ノードパラメータ
+
+| 名称       | 種別 | デフォルト値 | 説明                                       |
+| ---------- | ---- | ------------ | ------------------------------------------ |
+| update_rate | int  | `30`         | タイマーコールバック周波数 [Hz]             |
+
+### コアパラメーター
+
+| 名称                | タイプ   | デフォルト値 | 説明                                    |
 | ------------------- | ------ | ------------- | ---------------------------------------------- |
-| target_acceleration | double | `-2.5`        | Target acceleration for emergency stop [m/s^2] |
-| target_jerk         | double | `-1.5`        | Target jerk for emergency stop [m/s^3]         |
+| target_acceleration | double | `-2.5`        | 緊急停止時の目標加速度 [m/s^2]         |
+| target_jerk         | double | `-1.5`        | 緊急停止時の目標ジャーク [m/s^3]         |
 
-## Assumptions / Known limits
+## 前提条件/既知の制限
 
-TBD.
+未定。
+

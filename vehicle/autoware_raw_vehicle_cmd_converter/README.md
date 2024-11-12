@@ -1,38 +1,39 @@
 # autoware_raw_vehicle_cmd_converter
 
-## Overview
+## 概要
 
-The raw_vehicle_command_converter is a crucial node in vehicle automation systems, responsible for translating desired steering and acceleration inputs into specific vehicle control commands. This process is achieved through a combination of a lookup table and an optional feedback control system.
+raw_vehicle_command_converter は、望ましいステアリングおよび加速度入力を具体的な車両制御コマンドに変換する、車両自動化システムにおける重要なノードです。この処理は、ルックアップテーブルとオプションのフィードバック制御システムの組み合わせによって実現されます。
 
-### Lookup Table
+### ルックアップテーブル
 
-The core of the converter's functionality lies in its use of a CSV-formatted lookup table. This table encapsulates the relationship between the throttle/brake pedal (depending on your vehicle control interface) and the corresponding vehicle acceleration across various speeds. The converter utilizes this data to accurately translate target accelerations into appropriate throttle/brake values.
+変換器の機能の中心は、CSV 形式のルックアップテーブルを使用することです。このテーブルは、スロットル/ブレーキペダル（車両制御インターフェイスによって異なります）と、さまざまな速度における対応する車両加速度との関係性をカプセル化します。変換器はこのデータを使用して、目標加速度を適切なスロットル/ブレーキ値に正確に変換します。
 
 ![accel-brake-map-table](./figure/accel-brake-map-table.png)
 
-### Creation of Reference Data
+### 基準データの作成
 
-Reference data for the lookup table is generated through the following steps:
+ルックアップテーブルの基準データは、次の手順で生成されます。
 
-1. **Data Collection**: On a flat road, a constant value command (e.g., throttle/brake pedal) is applied to accelerate or decelerate the vehicle.
-2. **Recording Data**: During this phase, both the IMU acceleration and vehicle velocity data are recorded.
-3. **CSV File Generation**: A CSV file is created, detailing the relationship between command values, vehicle speed, and resulting acceleration.
+1. **データ収集**: 平坦な道路で、一定値のコマンド（例: スロットル/ブレーキペダル）が適用されて車両を加速または減速させます。
+2. **データ記録**: この段階で、IMU 加速度と車両速度の両方のデータが記録されます。
+3. **CSV ファイル生成**: コマンド値、車両速度、および結果として得られた加速度の関係を示す CSV ファイルが作成されます。
 
-Once the acceleration map is crafted, it should be loaded when the RawVehicleCmdConverter node is launched, with the file path defined in the launch file.
+アクセルマップが作成されると、RawVehicleCmdConverter ノードを起動するときにロードされ、起動ファイルでファイルパスが定義されます。
 
-### Auto-Calibration Tool
+### 自動キャリブレーションツール
 
-For ease of calibration and adjustments to the lookup table, an auto-calibration tool is available. More information and instructions for this tool can be found [here](https://github.com/autowarefoundation/autoware.universe/blob/main/vehicle/autoware_accel_brake_map_calibrator/README.md).
+ルックアップテーブルのキャリブレーションと調整を容易にするために、自動キャリブレーションツールが用意されています。このツールの詳細と手順は [こちら](https://github.com/autowarefoundation/autoware.universe/blob/main/vehicle/autoware_accel_brake_map_calibrator/README.md) で確認できます。
 
-### Variable Gear Ratio (VGR)
+### 可変ギア比 (VGR)
 
-This is a gear ratio for converting tire angle to steering angle. Generally, to improve operability, the gear ratio becomes dynamically larger as the speed increases or the steering angle becomes smaller. For a certain vehicle, data was acquired and the gear ratio was approximated by the following formula.
+これは、タイヤ角をステアリング角に変換するためのギア比です。一般的に、操作性を向上させるために、速度が上がるにつれて、またはステアリング角が小さくなるにつれて、ギア比が動的に大きくなります。特定の車両では、データが収集され、ギア比は次の公式で近似されました。
 
 $$
 a + b \times v^2 - c \times \lvert \delta \rvert
 $$
 
-For that vehicle, the coefficients were as follows.
+その車両の場合、係数は次のとおりでした。
+
 
 ```yaml
 vgr_coef_a: 15.713
@@ -42,29 +43,29 @@ vgr_coef_c: 0.042
 
 ![vgr](./figure/vgr.svg)
 
-When `convert_steer_cmd_method: "vgr"` is selected, the node receives the control command from the controller as the desired tire angle and calculates the desired steering angle to output.
-Also, when `convert_actuation_to_steering_status: true`, this node receives the `actuation_status` topic and calculates the steer tire angle from the `steer_wheel_angle` and publishes it.
+`convert_steer_cmd_method: "vgr"`が選択されている場合、このノードはコントローラーからの制御コマンドを目的タイヤ角として受け取り、出力する目的操舵角を計算します。また、`convert_actuation_to_steering_status: true`の場合、このノードは`actuation_status`トピックを受信し、`steer_wheel_angle`から操舵タイヤ角を計算してパブリッシュします。
 
-## Input topics
+## 入力トピック
 
-| Name                       | Type                                       | Description                                                                                                                                                                                                                                                                                       |
-| -------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `~/input/control_cmd`      | autoware_control_msgs::msg::Control        | target `velocity/acceleration/steering_angle/steering_angle_velocity` is necessary to calculate actuation command.                                                                                                                                                                                |
-| `~/input/steering"`        | autoware_vehicle_msgs::msg::SteeringReport | subscribe only when `convert_actuation_to_steering_status: false`. current status of steering used for steering feed back control                                                                                                                                                                 |
-| `~/input/odometry`         | navigation_msgs::Odometry                  | twist topic in odometry is used.                                                                                                                                                                                                                                                                  |
-| `~/input/actuation_status` | tier4_vehicle_msgs::msg::ActuationStatus   | actuation status is assumed to receive the same type of status as sent to the vehicle side. For example, if throttle/brake pedal/steer_wheel_angle is sent, the same type of status is received. In the case of steer_wheel_angle, it is used to calculate steer_tire_angle and VGR in this node. |
+| 名称                       | タイプ                                       | 説明                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| -------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `~/input/control_cmd`      | `autoware_control_msgs::msg::Control` | ターゲットの速度/加速度/ステアリング角度/ステアリング角度速度は、アクチュエータコマンドを計算するために必要です。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `~/input/steering"`        | `autoware_vehicle_msgs::msg::SteeringReport` | `convert_actuation_to_steering_status: false` の場合のみサブスクライブします。ステアリングフィードバック制御に使用されるステアリングの現在の状態                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `~/input/odometry`         | `navigation_msgs::Odometry`                  | オドメトリの `twist` トピックが使用されます。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `~/input/actuation_status` | `tier4_vehicle_msgs::msg::ActuationStatus`   | アクチュエータステータスは、車両側に送信されるのと同じタイプのステータスを受信すると想定されています。たとえば、スロットル/ブレーキペダル/ステアリングホイール角度が送信された場合、同じタイプのステータスが受信されます。ステアリングホイール角度の場合は、このノードでステアリングタイヤ角度と VGR の計算に使用されます。 |
 
-## Output topics
+## 出力トピック
 
-| Name                       | Type                                             | Description                                                                                                                          |
-| -------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `~/output/actuation_cmd`   | tier4_vehicle_msgs::msg::ActuationCommandStamped | actuation command for vehicle to apply mechanical input                                                                              |
-| `~/output/steering_status` | autoware_vehicle_msgs::msg::SteeringReport       | publish only when `convert_actuation_to_steering_status: true`. steer tire angle is calculated from steer wheel angle and published. |
+| 名称                       | タイプ                                             | 説明                                                                                                                         |
+| -------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `~/output/actuation_cmd`   | `tier4_vehicle_msgs::msg::ActuationCommandStamped` | 車両が機械的入力を適用するためのアクチュエーションコマンド                                                                            |
+| `~/output/steering_status` | `autoware_vehicle_msgs::msg::SteeringReport`       | `convert_actuation_to_steering_status: true` の場合のみ公開されます。ステアリングタイヤ角度はステアリングホイール角度から計算されて公開されます。 |
 
-## Parameters
+## パラメータ
 
 {{ json_to_markdown("vehicle/autoware_raw_vehicle_cmd_converter/schema/raw_vehicle_cmd_converter.schema.json") }}
 
-## Limitation
+## 制限事項
 
-The current feed back implementation is only applied to steering control.
+現在のフィードバック実装は、操舵制御のみに適用されます。
+

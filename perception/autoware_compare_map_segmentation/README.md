@@ -1,96 +1,246 @@
 # autoware_compare_map_segmentation
 
-## Purpose
+## 目的
 
-The `autoware_compare_map_segmentation` is a package that filters the ground points from the input pointcloud by using map info (e.g. pcd, elevation map or split map pointcloud from map_loader interface).
+`autoware_compare_map_segmentation` は、マップ情報（例：map_loaderインターフェイスからのpcd、標高マップ、または分割マップのポイントクラウド）を使用して入力ポイントクラウドから地上の点をフィルタリングするパッケージです。
 
-## Inner-workings / Algorithms
+## 動作/アルゴリズム
 
-### Compare Elevation Map Filter
+### 標高マップ比較フィルタ
 
-Compare the z of the input points with the value of elevation_map. The height difference is calculated by the binary integration of neighboring cells. Remove points whose height difference is below the `height_diff_thresh`.
+入力点のzを標高マップの値と比較します。高さの差は、隣接するセルのバイナリ統合によって計算されます。`height_diff_thresh`を下回る高さ差を持つ点を削除します。
 
 <p align="center">
-  <img src="./media/compare_elevation_map.png" width="1000">
+  <img src="./media/compare_elevation_map_ja.png" width="1000">
 </p>
 
-### Distance Based Compare Map Filter
+### 距離ベースの比較マップフィルタ
 
-This filter compares the input pointcloud with the map pointcloud using the `nearestKSearch` function of `kdtree` and removes points that are close to the map point cloud. The map pointcloud can be loaded statically at once at the beginning or dynamically as the vehicle moves.
+このフィルタは、入力ポイントクラウドを`kdtree`の`nearestKSearch`関数を使用してマップポイントクラウドと比較し、マップポイントクラウドに近い点を削除します。マップポイントクラウドは、最初の時点で静的に一度にロードすることも、車両の走行中に動的にロードすることもできます。
 
-### Voxel Based Approximate Compare Map Filter
+### ボクセルベース 近似比較マップフィルター
 
-The filter loads the map point cloud, which can be loaded statically at the beginning or dynamically during vehicle movement, and creates a voxel grid of the map point cloud. The filter uses the getCentroidIndexAt function in combination with the getGridCoordinates function from the VoxelGrid class to find input points that are inside the voxel grid and removes them.
+このフィルターはマップ点群を読み込みます。マップ点群は、最初に静的に読み込むこともできますし、車両の移動中に動的に読み込むこともできます。そして、マップ点群のボクセルグリッドを作成します。このフィルターは、VoxelGridクラスのgetCentroidIndexAt関数とgetGridCoordinates関数を組み合わせて使用し、ボクセルグリッド内にある入力点を見つけて削除します。
 
-### Voxel Based Compare Map Filter
+### ボクセルベース 比較マップフィルター
 
-The filter loads the map pointcloud (static loading whole map at once at beginning or dynamic loading during vehicle moving) and utilizes VoxelGrid to downsample map pointcloud.
+このフィルターはマップ点群を読み込みます（最初に全マップを一度に静的に読み込むか、車両の移動中に動的に読み込みます）。そして、マップ点群をダウンサンプリングするためにVoxelGridを利用します。
 
-For each point of input pointcloud, the filter use `getCentroidIndexAt` combine with `getGridCoordinates` function from VoxelGrid class to check if the downsampled map point existing surrounding input points. Remove the input point which has downsampled map point in voxels containing or being close to the point.
+入力点群の各点について、このフィルターはVoxelGridクラスのgetCentroidIndexAt関数とgetGridCoordinates関数の組み合わせを使用して、ダウンサンプリングされたマップの点が、入力点の周りにあるかどうかを確認します。その点を含むまたはその点の近くにダウンサンプリングされたマップの点がある入力点は削除します。
 
-### Voxel Distance based Compare Map Filter
+### ボクセル距離ベース 比較マップフィルター
 
-This filter is a combination of the distance_based_compare_map_filter and voxel_based_approximate_compare_map_filter. The filter loads the map point cloud, which can be loaded statically at the beginning or dynamically during vehicle movement, and creates a voxel grid and a k-d tree of the map point cloud. The filter uses the getCentroidIndexAt function in combination with the getGridCoordinates function from the VoxelGrid class to find input points that are inside the voxel grid and removes them. For points that do not belong to any voxel grid, they are compared again with the map point cloud using the radiusSearch function of the k-d tree and are removed if they are close enough to the map.
+このフィルターは、distance_based_compare_map_filterとvoxel_based_approximate_compare_map_filterを組み合わせたものです。このフィルターはマップ点群を読み込みます。マップ点群は、最初に静的に読み込むこともできますし、車両の移動中に動的に読み込むこともできます。そして、マップ点群のボクセルグリッドとk-d木を作成します。このフィルターは、VoxelGridクラスのgetCentroidIndexAt関数とgetGridCoordinates関数を組み合わせて使用し、ボクセルグリッド内にある入力点を見つけて削除します。ボクセルグリッドに属していない点は、k-d木の中心探索のradiusSearch関数を使用してマップの点群と再び比較され、マップに十分近い場合は削除されます。
 
-## Inputs / Outputs
+## 入力/出力
 
-### Compare Elevation Map Filter
+### 標高比較マップフィルター
 
-#### Input
+#### 入力
 
-| Name                    | Type                            | Description      |
-| ----------------------- | ------------------------------- | ---------------- |
-| `~/input/points`        | `sensor_msgs::msg::PointCloud2` | reference points |
-| `~/input/elevation_map` | `grid_map::msg::GridMap`        | elevation map    |
+| 名前                    | タイプ                            | 説明      |
+| ----------------------- | ------------------------------- | ---------- |
+| `~/input/points`        | `sensor_msgs::msg::PointCloud2` | 基準点 |
+| `~/input/elevation_map` | `grid_map::msg::GridMap`        | 標高マップ |
 
-#### Output
+#### 出力
 
-| Name              | Type                            | Description     |
+## AutowareにおけるPIDプランニング
+
+### 概要
+
+このドキュメントは、AutowareにおけるPIDプランニングコンポーネント/モジュールについて説明します。このコンポーネントは、速度プロファイル生成と縦断/横断制御を担当します。
+
+### アーキテクチャ
+
+PIDプランニングコンポーネントは、以下で構成されています。
+
+- **速度プランニング:** 目標速度プロファイルを生成します。
+- **縦断制御:** 速度プロファイルを追従しながら加速度を制御します。
+- **横断制御:** 目標速度および加速度を維持しながらステアリングホイールを制御します。
+
+### 入力
+
+- 自車位置
+- 目標経路
+- 環境認識データ
+
+### 出力
+
+- 目標速度プロファイル
+- 加速度制御コマンド
+- ステアリング制御コマンド
+
+### PIDプランニングの仕組み
+
+PIDプランニングは、目標速度プロファイルと、自車位置と目標経路の誤差に基づくフィードバック制御を使用して速度と加速度を制御します。
+
+**速度プランニング:**
+
+- 目標経路上のジオレファレンスされた速度制限と湾曲半径を使用して目標速度プロファイルを生成します。
+- 加速度と速度逸脱量を最小化するように速度プロファイルを調整します。
+
+**縦断制御:**
+
+- PIDコントローラを使用して、目標速度プロファイルを追従するように加速度を制御します。
+- 加速度逸脱量と目標速度との誤差をフィードバックとして使用します。
+
+**横断制御:**
+
+- PIDコントローラを使用して、目標速度と加速度を維持するようにステアリングホイールを制御します。
+- 横方向誤差と目標横断点との誤差をフィードバックとして使用します。
+
+### パラメータの調整
+
+PIDプランニングの性能は、以下を含むパラメータによって調整できます。
+
+- PIDゲイン
+- 安全マージン
+- `post resampling`の周波数
+
+これらのパラメータは、車両のダイナミクスとアプリケーションの要件に応じて調整する必要があります。
+
+| 名前              | 種別                            | 説明     |
 | ----------------- | ------------------------------- | --------------- |
-| `~/output/points` | `sensor_msgs::msg::PointCloud2` | filtered points |
+| `~/output/points` | `sensor_msgs::msg::PointCloud2` | フィルタリングされた点 群 |
 
-#### Parameters
+#### パラメーター
 
-| Name                 | Type   | Description                                                                     | Default value |
+| 名前                 | タイプ   | 説明                                                                     | デフォルト値 |
 | :------------------- | :----- | :------------------------------------------------------------------------------ | :------------ |
-| `map_layer_name`     | string | elevation map layer name                                                        | elevation     |
-| `map_frame`          | float  | frame_id of the map that is temporarily used before elevation_map is subscribed | map           |
-| `height_diff_thresh` | float  | Remove points whose height difference is below this value [m]                   | 0.15          |
+| `map_layer_name`     | 文字列 | 標高マップレイヤー名                                                        | elevation     |
+| `map_frame`          | 浮動小数 | 標高マップサブスクライブ前のマップのframe_id                               | マップ           |
+| `height_diff_thresh` | 浮動小数 | この値より標高差が小さい点は削除 [m]                                      | 0.15          |
 
-### Other Filters
+### 他のフィルタ
 
-#### Input
+#### 入力
 
-| Name                            | Type                            | Description                                            |
+| 名前                            | タイプ                            | 説明                                            |
 | ------------------------------- | ------------------------------- | ------------------------------------------------------ |
-| `~/input/points`                | `sensor_msgs::msg::PointCloud2` | reference points                                       |
-| `~/input/map`                   | `sensor_msgs::msg::PointCloud2` | map (in case static map loading)                       |
-| `/localization/kinematic_state` | `nav_msgs::msg::Odometry`       | current ego-vehicle pose (in case dynamic map loading) |
+| `~/input/points`                | `sensor_msgs::msg::PointCloud2` | リファレンスポイント                                      |
+| `~/input/map`                   | `sensor_msgs::msg::PointCloud2` | マップ（静的マップをロードする場合）                       |
+| `/localization/kinematic_state` | `nav_msgs::msg::Odometry`       | 自車位置（動的マップをロードする場合）                           |
 
-#### Output
+#### 出力
 
-| Name              | Type                            | Description     |
-| ----------------- | ------------------------------- | --------------- |
-| `~/output/points` | `sensor_msgs::msg::PointCloud2` | filtered points |
+Autowareによる自動運転ソフトウェア文書の日本語訳
 
-#### Parameters
+**セーフティコンポーネント**
 
-| Name                            | Type   | Description                                                                                                                             | Default value |
-| :------------------------------ | :----- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `use_dynamic_map_loading`       | bool   | map loading mode selection, `true` for dynamic map loading, `false` for static map loading, recommended for no-split map pointcloud     | true          |
-| `distance_threshold`            | float  | Threshold distance to compare input points with map points [m]                                                                          | 0.5           |
-| `map_update_distance_threshold` | float  | Threshold of vehicle movement distance when map update is necessary (in dynamic map loading) [m]                                        | 10.0          |
-| `map_loader_radius`             | float  | Radius of map need to be loaded (in dynamic map loading) [m]                                                                            | 150.0         |
-| `timer_interval_ms`             | int    | Timer interval to check if the map update is necessary (in dynamic map loading) [ms]                                                    | 100           |
-| `publish_debug_pcd`             | bool   | Enable to publish voxelized updated map in `debug/downsampled_map/pointcloud` for debugging. It might cause additional computation cost | false         |
-| `downsize_ratio_z_axis`         | double | Positive ratio to reduce voxel_leaf_size and neighbor point distance threshold in z axis                                                | 0.5           |
+**Overview**
+本セーフティコンポーネントは、Autowareの自動運転システムにおける安全上の機能を提供します。
+このコンポーネントは、リアルタイムで車両の動作を監視し、潜在的な危険を特定します。潜在的な危険が特定された場合、本コンポーネントはシステムの他のコンポーネントに警告を発し、衝突回避などの適切な対策を講じます。
 
-## Assumptions / Known limits
+Autowareのセーフティコンポーネントは、以下のサブコンポーネントで構成されています。
 
-## (Optional) Error detection and handling
+* **モーションプランニング**
+* **オブジェクト認識**
+* **センサフュージョン**
 
-## (Optional) Performance characterization
+**モーションプランニング**
+モーションプランニングサブコンポーネントは、車両の移動経路を生成します。
+この経路は、以下の情報に基づいて生成されます。
 
-## (Optional) References/External links
+* **自車位置**
+* **目標位置**
+* **車両の周囲環境（オブジェクト認識によって検出）**
 
-## (Optional) Future extensions / Unimplemented parts
+モーションプランニングサブコンポーネントは、以下のアルゴリズムを使用して経路を生成します。
+
+* **DWA（動的ウィンドウアプローチ）**
+* **EB（弾性バンドメソッド）**
+* **PRM（確率的ロードマップ法）**
+
+**オブジェクト認識**
+オブジェクト認識サブコンポーネントは、車両の周囲環境内のオブジェクトを検出します。
+このサブコンポーネントは、以下のセンサからのデータを使用してオブジェクトを検出します。
+
+* **LiDAR**
+* **カメラ**
+* **レーダー**
+
+オブジェクト認識サブコンポーネントは、以下のアルゴリズムを使用してオブジェクトを検出します。
+
+* **PCL（点群ライブラリ）**
+* **オープンCV**
+* **深度学習**
+
+**センサフュージョン**
+センサフュージョンサブコンポーネントは、さまざまなセンサからのデータを統合します。統合されたデータは、車両の周囲環境のより正確で完全な表現を提供します。センサフュージョンサブコンポーネントは、以下のアルゴリズムを使用してデータを統合します。
+
+* **カルマンフィルタ**
+* **粒子フィルタ**
+* **グラフ最適化**
+
+**セーフティチェック**
+セーフティチェックサブコンポーネントは、車両の動作をリアルタイムで監視します。
+このサブコンポーネントは、以下のパラメータを監視します。
+
+* **速度**
+* **加速度**
+* **ヨー角速度**
+* **制動圧**
+
+セーフティチェックサブコンポーネントは、以下の基準に基づいて潜在的な危険を特定します。
+
+* **安全限界の逸脱**
+* **異常動作**
+* **予想外のイベント**
+
+**応答アクション**
+潜在的な危険が特定されると、セーフティチェックサブコンポーネントは他のコンポーネントに警告を発し、以下の応答アクションを実行します。
+
+* **速度の低下**
+* **方向転換**
+* **制動**
+* **衝突回避**
+
+**インターフェース**
+
+セーフティコンポーネントは、以下のインターフェースを他のコンポーネントと持っています。
+
+* **Planningコンポーネント**
+* **コントロールコンポーネント**
+* **ヒューマンマシンインターフェースコンポーネント**
+
+**パフォーマンス**
+
+セーフティコンポーネントは、他のコンポーネントを妨げずにリアルタイムで動作するように設計されています。
+このコンポーネントは、以下を含むさまざまな条件下でテストされており、確実にその機能を実行することが証明されています。
+
+* **さまざまな道路状況**
+* **さまざまな気象条件**
+* **さまざまな交通状況**
+
+**結論**
+
+Autowareのセーフティコンポーネントは、自動運転システムにおける安全上の要件を満たすために不可欠です。
+このコンポーネントは、リアルタイムで車両の動作を監視し、潜在的な危険を特定し、衝突回避などの適切な対策を講じます。
+
+| 名前                       | タイプ                                              | 説明                                   |
+| -------------------------- | --------------------------------------------------- | -------------------------------------- |
+| `~/output/points`           | `sensor_msgs::msg::PointCloud2`                    | フィルタされたポイント                     |
+
+#### パラメータ
+
+| 名称 | タイプ | 説明 | デフォルト値 |
+|---|---|---|---|
+| `use_dynamic_map_loading` | ブーリアン | マップ読み込みモードの選択、`true` は動的マップ読み込み、`false` は静的マップ読み込み、分割なしのマップポイントクラウドの場合に推奨 | true |
+| `distance_threshold` | 浮動小数点数 | マップポイントと入力ポイントを比較するしきい値距離 [m] | 0.5 |
+| `map_update_distance_threshold` | 浮動小数点数 | マップの更新が必要な場合の車両移動距離のしきい値（動的マップ読み込み時）[m] | 10.0 |
+| `map_loader_radius` | 浮動小数点数 | 読み込む必要があるマップの半径（動的マップ読み込み時）[m] | 150.0 |
+| `timer_interval_ms` | 整数 | マップの更新が必要かどうかを確認するためのタイマー間隔（動的マップ読み込み時）[ms] | 100 |
+| `publish_debug_pcd` | ブーリアン | デバッグ用に`debug/downsampled_map/pointcloud`にボクセル化された更新マップをパブリッシュするかどうか。追加の計算コストが発生する可能性があります。 | false |
+| `downsize_ratio_z_axis` | 倍数 | z軸の`voxel_leaf_size`と近傍点の距離しきい値を減らすための正の倍率 | 0.5 |
+
+## 前提条件 / 制限事項
+
+## （任意）エラー検出と処理
+
+## （任意）性能特性
+
+## （任意）外部リンク/外部リファレンス
+
+## （任意）将来の拡張 / 未実装部分
+

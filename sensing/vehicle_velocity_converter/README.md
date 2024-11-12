@@ -1,28 +1,93 @@
+## 自動運転ソフトウェアドキュメント
+
 # vehicle_velocity_converter
 
-## Purpose
+## 目的
 
-This package converts autoware_vehicle_msgs::msg::VehicleReport message to geometry_msgs::msg::TwistWithCovarianceStamped for gyro odometer node.
+このパッケージは、autoware_vehicle_msgs::msg::VehicleReportメッセージを、ジャイロオドメーターノード用にgeometry_msgs::msg::TwistWithCovarianceStampedに変換します。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name              | Type                                        | Description      |
-| ----------------- | ------------------------------------------- | ---------------- |
-| `velocity_status` | `autoware_vehicle_msgs::msg::VehicleReport` | vehicle velocity |
+| 名称            | タイプ                                        | 説明      |
+|-----------------|-------------------------------------------|--------------|
+| `velocity_status` | `autoware_vehicle_msgs::msg::VehicleReport` | 車両速度 |
 
-### Output
+### 出力
 
-| Name                    | Type                                             | Description                                        |
+**自動運転ソフトウェア**
+
+**概要**
+
+このドキュメントでは、自動運転ソフトウェアのアーキテクチャとモジュールについて説明します。
+
+**アーキテクチャ**
+
+ソフトウェアは以下で構成されています。
+
+- **Perception:** センサーからのデータを処理し、周囲環境に関する情報を抽出します。
+- **Planning:** 車両の経路を計画し、障害物回避を行います。
+- **Control:** Planningモジュールからの入力を基に車両を制御します。
+- **Localization:** 自車位置を推定します。
+
+**モジュール**
+
+**Perceptionモジュール**
+
+- **カメラモジュール:** カメラからの画像を処理し、物体検出、セマンティックセグメンテーション、奥行き推定を行います。
+- **Lidarモジュール:** Lidarからの点群を処理し、物体検出、地形マッピング、3次元再構築を行います。
+- **レーダーモジュール:** レーダーからの反射を処理し、物体検出、速度推定、追跡を行います。
+
+**Planningモジュール**
+
+- **Motion Planning:** 障害物回避、経路最適化、軌跡生成を行います。
+- **Behavior Planning:** 車両の速度、加速度、旋回角を決定します。
+
+**Controlモジュール**
+
+- **横方向制御:** ステアリングシステムを制御し、指定された軌跡に従います。
+- **縦方向制御:** 加減速システムを制御し、指定された速度と加速度に従います。
+
+**Localizationモジュール**
+
+- **GPSとIMUモジュール:** GPSとIMUからのデータを融合して、自車位置を推定します。
+- **Lidarと地図モジュール:** Lidar点群と地図データをマッチングさせて、自車位置を推定します。
+
+**処理フロー**
+
+1. Perceptionモジュールは、周囲環境の情報を生成します。
+2. Planningモジュールは、Perceptionモジュールの情報に基づいて車両の経路を計画します。
+3. Controlモジュールは、Planningモジュールの情報に基づいて車両を制御します。
+4. Localizationモジュールは、自車位置を継続的に推定します。
+
+**パフォーマンス測定**
+
+ソフトウェアのパフォーマンスは以下のメトリクスで測定されます。
+
+- **経路逸脱量:** Planningモジュールの計画経路と実際の車両経路の差異。
+- **速度逸脱量:** Controlモジュールの制御速度と目標速度の差異。
+- **加速度逸脱量:** Controlモジュールの制御加速度と目標加速度の差異。
+- **自車位置推定誤差:** Localizationモジュールの推定自車位置と実際の自車位置の差異。
+
+**Autowareとの統合**
+
+このソフトウェアは、Autowareオープンソース自動運転プラットフォームと統合できます。
+
+**追加情報**
+
+詳細については、GitHubリポジトリを参照してください。
+
+| 名称                    | 型                                             | 説明                                        |
 | ----------------------- | ------------------------------------------------ | -------------------------------------------------- |
-| `twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | twist with covariance converted from VehicleReport |
+| `twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | `VehicleReport`から変換した共分散付きツイスト |
 
-## Parameters
+## パラメータ
 
-| Name                         | Type   | Description                             |
+| 名前                         | タイプ   | 説明                             |
 | ---------------------------- | ------ | --------------------------------------- |
-| `speed_scale_factor`         | double | speed scale factor (ideal value is 1.0) |
-| `frame_id`                   | string | frame id for output message             |
-| `velocity_stddev_xx`         | double | standard deviation for vx               |
-| `angular_velocity_stddev_zz` | double | standard deviation for yaw rate         |
+| `speed_scale_factor`         | double | 速度スケール係数（理想値: 1.0） |
+| `frame_id`                   | string | 出力メッセージのフレーム ID             |
+| `velocity_stddev_xx`         | double | vx の標準偏差               |
+| `angular_velocity_stddev_zz` | double | ヨーレートの標準偏差         |
+

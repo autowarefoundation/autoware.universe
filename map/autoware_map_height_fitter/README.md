@@ -1,21 +1,34 @@
-# autoware_map_height_fitter
+## autoware_map_height_fitter
 
-This library fits the given point with the ground of the point cloud map.
-The map loading operation is switched by the parameter `enable_partial_load` of the node specified by `map_loader_name`.
-The node using this library must use multi thread executor.
+このライブラリは、与えられた点とその点のポイントクラウドマップの地面に適合させます。
+マップの読み込み操作は、`map_loader_name`で指定されたノードのパラメータ`enable_partial_load`によって切り替えられます。
+このライブラリを使用するノードはマルチスレッドエグゼキュータを使用する必要があります。
 
-## Parameters
+## パラメータ
 
 {{ json_to_markdown("map/autoware_map_height_fitter/schema/map_height_fitter.schema.json") }}
 
-## Topic subscription
+## トピックサブスクリプション
 
-| Topic Name       | Description                                                                                  |
+| Topic Name       | 説明                                                                                    |
 | ---------------- | -------------------------------------------------------------------------------------------- |
-| ~/pointcloud_map | The topic containing the whole pointcloud map (only used when `enable_partial_load = false`) |
+| ~/pointcloud_map | `enable_partial_load = false` の場合のみ使用される、ポイントクラウド マップ全体を含んだトピック |
 
-## Service client
+## サービスクライアント
 
-| Service Name       | Description                         |
-| ------------------ | ----------------------------------- |
-| ~/partial_map_load | The service to load the partial map |
+### Planningモジュール
+
+#### 制御信号の生成
+- **概要**
+  - Planningモジュールは、障害物検出、経路計画、経路追従に基づいて、制御信号を生成します。
+- **入力**
+  - 地図データ
+  - Sensorからのセンシングデータ
+  - `post resampling`後の自車位置
+- **出力**
+  - 車両の速度、加速度、操舵角度のコマンド
+
+## サービス名 | 説明
+---|---|
+| ~/partial_map_load | 局部地図を読み込むサービス
+

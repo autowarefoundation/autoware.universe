@@ -1,69 +1,171 @@
 # autoware_lidar_transfusion
 
-## Purpose
+## 目的
 
-The `autoware_lidar_transfusion` package is used for 3D object detection based on lidar data (x, y, z, intensity).
+`autoware_lidar_transfusion`パッケージは、LiDARデータ(x, y, z、強度)に基づく3Dオブジェクト検出に使用されます。
 
-## Inner-workings / Algorithms
+## 内部動作/アルゴリズム
 
-The implementation bases on TransFusion [1] work. It uses TensorRT library for data process and network inference.
+実装は[1]のTransFusionの作業に基づいています。データ処理とネットワーク推論にはTensorRTライブラリを使用しています。
 
-We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
+モデルは<https://github.com/open-mmlab/mmdetection3d>を使用してトレーニングしました。
 
-## Inputs / Outputs
+## 入力/出力
 
-### Input
+### 入力
 
-| Name                 | Type                            | Description       |
+| 名称                 | タイプ                            | 説明       |
 | -------------------- | ------------------------------- | ----------------- |
-| `~/input/pointcloud` | `sensor_msgs::msg::PointCloud2` | Input pointcloud. |
+| `~/input/pointcloud` | `sensor_msgs::msg::PointCloud2` | 入力点群。 |
 
-### Output
+### 出力
 
-| Name                                   | Type                                             | Description                 |
-| -------------------------------------- | ------------------------------------------------ | --------------------------- |
-| `~/output/objects`                     | `autoware_perception_msgs::msg::DetectedObjects` | Detected objects.           |
-| `debug/cyclic_time_ms`                 | `tier4_debug_msgs::msg::Float64Stamped`          | Cyclic time (ms).           |
-| `debug/pipeline_latency_ms`            | `tier4_debug_msgs::msg::Float64Stamped`          | Pipeline latency time (ms). |
-| `debug/processing_time/preprocess_ms`  | `tier4_debug_msgs::msg::Float64Stamped`          | Preprocess (ms).            |
-| `debug/processing_time/inference_ms`   | `tier4_debug_msgs::msg::Float64Stamped`          | Inference time (ms).        |
-| `debug/processing_time/postprocess_ms` | `tier4_debug_msgs::msg::Float64Stamped`          | Postprocess time (ms).      |
-| `debug/processing_time/total_ms`       | `tier4_debug_msgs::msg::Float64Stamped`          | Total processing time (ms). |
+**自己位置推定モジュール**
 
-## Parameters
+**目的:**
 
-### TransFusion node
+* センサーからのセンサデータから自己位置を推定する。
+* Planningモジュールに自己位置を提供する。
+
+**入力:**
+
+* IMUデータ
+* GNSSデータ
+* オドメトリデータ
+* カメラ画像（オプション）
+
+**出力:**
+
+* 自車位置
+* 自己位置の不確かさ
+
+**アルゴリズム:**
+
+自己位置推定モジュールは、次のステップで動作します。
+
+1. IMU、GNSS、オドメトリデータの統合。
+2. カメラ画像（使用可能な場合）を使用した自己位置の強化。
+3. エKFまたはPFを使用して自己位置と不確かさを推定する。
+
+**障害検出モジュール**
+
+**目的:**
+
+* センサーからのデータを処理し、エゴカーの周囲の障害物を検出する。
+* Planningモジュールに障害物の情報を提供する。
+
+**入力:**
+
+* レーダーデータ
+* カメラ画像
+* LIDARデータ
+
+**出力:**
+
+* 障害物の位置と形状
+* 障害物の速度と加速度
+
+**アルゴリズム:**
+
+障害検出モジュールは、次のアルゴリズムを使用して障害物を検出します。
+
+* **点群処理:** LIDARデータを使用して点群を作成します。
+* **クラスタリング:** 点群をクラスタ（障害物）にグループ化します。
+* **分類:** カメラ画像とレーダーデータを使用して、クラスタを障害物として分類します。
+
+**Planningモジュール**
+
+**目的:**
+
+* 自車位置と障害物の情報に基づき、経路を計画し、次のような制御コマンドを生成する。
+* ステアリング角
+* アクセル/ブレーキコマンド
+
+**入力:**
+
+* 自車位置
+* 障害物の情報
+* 地図データ
+
+**出力:**
+
+* 制御コマンド
+
+**アルゴリズム:**
+
+Planningモジュールは、次のアルゴリズムを使用して経路を計画し、制御コマンドを生成します。
+
+* **空間探索法:** 次の目的地までの可能な経路を探索します。
+* **コスト関数:** 各経路のコストを計算し、障害物逸脱量、速度逸脱量、加速度逸脱量を考慮します。
+* **最適化アルゴリズム:** コストが最小となる経路を選択します。
+* **'post resampling'` による経路の平滑化。
+
+**制御モジュール**
+
+**目的:**
+
+* Planningモジュールから生成された制御コマンドを実行する。
+* ステアリングシステムと動力伝達システムを制御する。
+
+**入力:**
+
+* 制御コマンド
+
+**出力:**
+
+* 車両の運動（ステアリング角、速度、加速度）
+
+**アルゴリズム:**
+
+制御モジュールは、PID制御器または状態フィードバックコントローラを使用して制御コマンドを実行します。
+
+| 名称 | タイプ | 説明 |
+|---|---|---|
+| `/output/objects` | `autoware_perception_msgs::msg::DetectedObjects` | 検出されたオブジェクト |
+| `debug/cyclic_time_ms` | `tier4_debug_msgs::msg::Float64Stamped` | サイクル時間 (ms) |
+| `debug/pipeline_latency_ms` | `tier4_debug_msgs::msg::Float64Stamped` | パイプライン遅延時間 (ms) |
+| `debug/processing_time/preprocess_ms` | `tier4_debug_msgs::msg::Float64Stamped` | 前処理時間 (ms) |
+| `debug/processing_time/inference_ms` | `tier4_debug_msgs::msg::Float64Stamped` | 推論時間 (ms) |
+| `debug/processing_time/postprocess_ms` | `tier4_debug_msgs::msg::Float64Stamped` | 後処理時間 (ms) |
+| `debug/processing_time/total_ms` | `tier4_debug_msgs::msg::Float64Stamped` | 総処理時間 (ms) |
+
+## パラメーター
+
+### TransFusionノード
 
 {{ json_to_markdown("perception/autoware_lidar_transfusion/schema/transfusion.schema.dummy.json") }}
 
-### TransFusion model
+### TransFusionモデル
 
 {{ json_to_markdown("perception/autoware_lidar_transfusion/schema/transfusion_ml_package.schema.json") }}
 
-### Detection class remapper
+### 検出クラスリマッパー
 
 {{ json_to_markdown("perception/autoware_lidar_transfusion/schema/detection_class_remapper.schema.json") }}
 
-### The `build_only` option
+### `build_only`オプション
 
-The `autoware_lidar_transfusion` node has `build_only` option to build the TensorRT engine file from the ONNX file.
-Although it is preferred to move all the ROS parameters in `.param.yaml` file in Autoware Universe, the `build_only` option is not moved to the `.param.yaml` file for now, because it may be used as a flag to execute the build as a pre-task. You can execute with the following command:
+`autoware_lidar_transfusion`ノードには、ONNXファイルからTensorRTエンジンファイルを構築するための`build_only`オプションがあります。
+Autoware Universeの`.param.yaml`ファイルにすべてのROSパラメータを移動することが望ましいですが、`build_only`オプションは現在`.param.yaml`ファイルに移動されていません。これは、ビルドを事前タスクとして実行するためのフラグとして使用される可能性があるためです。次のコマンドで実行できます。
+
 
 ```bash
 ros2 launch autoware_lidar_transfusion lidar_transfusion.launch.xml build_only:=true
 ```
 
-### The `log_level` option
+### `log_level` オプション
 
-The default logging severity level for `autoware_lidar_transfusion` is `info`. For debugging purposes, the developer may decrease severity level using `log_level` parameter:
+`autoware_lidar_transfusion` のデフォルトのログ重要度レベルは `info` です。デバッグの目的では、開発者は `log_level` パラメータを使用して重要度のレベルを下げることができます:
+
 
 ```bash
 ros2 launch autoware_lidar_transfusion lidar_transfusion.launch.xml log_level:=debug
 ```
 
-## Assumptions / Known limits
+## 仮定 / 公知の制限
 
-This library operates on raw cloud data (bytes). It is assumed that the input pointcloud message has following format:
+このライブラリは、生のクラウドデータ (バイト) で動作します。入力ポイントクラウドメッセージのフォーマットは次のとおりであると想定されます。
+
 
 ```python
 [
@@ -74,46 +176,47 @@ This library operates on raw cloud data (bytes). It is assumed that the input po
 ]
 ```
 
-This input may consist of other fields as well - shown format is required minimum.
-For debug purposes, you can validate your pointcloud topic using simple command:
+この入力には、他のフィールドが含まれる場合もあります。表示されている形式は必要な最小限です。
+デバッグの目的で、次のシンプルなコマンドを使用してポイントクラウド・トピックを検証することができます。
+
 
 ```bash
 ros2 topic echo <input_topic> --field fields
 ```
 
-## Trained Models
+## 学習済みモデル
 
-You can download the onnx format of trained models by clicking on the links below.
+以下のリンクをクリックすると、学習済みモデルのonnx形式をダウンロードできます。
 
 - TransFusion: [transfusion.onnx](https://awf.ml.dev.web.auto/perception/models/transfusion/t4xx1_90m/v2/transfusion.onnx)
 
-The model was trained in TIER IV's internal database (~11k lidar frames) for 50 epochs.
+このモデルは、TIER IV社内データベース（約 11,000 個のLiDARフレーム）で 50 エポックの学習を行いました。
 
-### Changelog
+### 更新履歴
 
-## (Optional) Error detection and handling
+## (任意) エラー検出と処理
 
-<!-- Write how to detect errors and how to recover from them.
+<!-- エラーを検出し、回復する方法を記載します。
 
-Example:
-  This package can handle up to 20 obstacles. If more obstacles found, this node will give up and raise diagnostic errors.
+例:
+  このパッケージは最大 20 個の障害物に対応できます。障害物が多い場合、このノードは機能を放棄し、診断エラーを発生させます。
 -->
 
-## (Optional) Performance characterization
+## (任意) パフォーマンス特性評価
 
-<!-- Write performance information like complexity. If it wouldn't be the bottleneck, not necessary.
+<!-- 複雑度などパフォーマンス情報を記載します。ボトルネックとならない場合は、不要です。
 
-Example:
-  ### Complexity
+例:
+  ### 複雑度
 
-  This algorithm is O(N).
+  このアルゴリズムは O(N) です。
 
-  ### Processing time
+  ### 処理時間
 
   ...
 -->
 
-## References/External links
+## 参考文献/外部リンク
 
 [1] Xuyang Bai, Zeyu Hu, Xinge Zhu, Qingqiu Huang, Yilun Chen, Hongbo Fu and Chiew-Lan Tai. "TransFusion: Robust LiDAR-Camera Fusion for 3D Object Detection with Transformers." arXiv preprint arXiv:2203.11496 (2022). <!-- cspell:disable-line -->
 
@@ -125,11 +228,12 @@ Example:
 
 [5] <https://www.nuscenes.org/nuscenes>
 
-## (Optional) Future extensions / Unimplemented parts
+## (任意) 将来の拡張機能/未実装部分
 
-<!-- Write future extensions of this package.
+<!-- このパッケージの将来の拡張機能を記載します。
 
-Example:
-  Currently, this package can't handle the chattering obstacles well. We plan to add some probabilistic filters in the perception layer to improve it.
-  Also, there are some parameters that should be global(e.g. vehicle size, max steering, etc.). These will be refactored and defined as global parameters so that we can share the same parameters between different nodes.
+例:
+  現在、このパッケージは揺れる障害物を適切に処理できません。この問題を改善するために、知覚レイヤーに確率フィルターを追加する予定です。
+  また、グローバル化する必要があるパラメータがいくつかあります（例: 車両サイズ、最大ステアリングなど）。これらはリファクタリングされてグローバルパラメータとして定義されるため、異なるノード間で同じパラメータを共有できます。
 -->
+

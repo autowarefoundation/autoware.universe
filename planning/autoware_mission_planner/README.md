@@ -1,102 +1,134 @@
-# Mission Planner
+# ミッションプランナー
 
-## Purpose
+## 目的
 
-`Mission Planner` calculates a route that navigates from the current ego pose to the goal pose following the given check points.
-The route is made of a sequence of lanes on a static map.
-Dynamic objects (e.g. pedestrians and other vehicles) and dynamic map information (e.g. road construction which blocks some lanes) are not considered during route planning.
-Therefore, the output topic is only published when the goal pose or check points are given and will be latched until the new goal pose or check points are given.
+`Mission Planner` は、所与のチェックポイントにしたがって目標位置まで自車位置から移動するための経路を算出します。
+経路は、静的な地図上の車線のシーケンスで構成されています。
+動的な物体（歩行者や他の車両など）や動的な地図情報（一部の車線を塞ぐ道路工事など）は、経路計画時に考慮されません。
+したがって、出力トピックは、目標位置またはチェックポイントが与えられた場合にのみ発行され、新しい目標位置またはチェックポイントが与えられるまでラッチされます。
 
-The core implementation does not depend on a map format. Any planning algorithms can be added as plugin modules.
-In current Autoware.universe, only the plugin for Lanelet2 map format is supported.
+コア実装は、地図フォーマットに依存しません。任意の計画アルゴリズムをプラグインモジュールとして追加できます。
+現在の Autoware.universe では、Lanelet2 地図フォーマットのプラグインのみがサポートされています。
 
-This package also manages routes for MRM. The `route_selector` node duplicates the `mission_planner` interface and provides it for normal and MRM respectively.
-It distributes route requests and planning results according to current MRM operation state.
+このパッケージは、MRM のルートも管理します。 `route_selector` ノードは `mission_planner` インターフェイスを複製し、通常の MRM と MRM のそれぞれに提供します。
+現在の MRM 操作ステータスに応じて、経路要求と計画結果を配信します。
 
 ![architecture](./media/architecture.drawio.svg)
 
-## Interfaces
+## インターフェイス
 
-### Parameters
+### パラメーター
 
-| Name                               | Type   | Description                                                                                                                |
-| ---------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `map_frame`                        | string | The frame name for map                                                                                                     |
-| `arrival_check_angle_deg`          | double | Angle threshold for goal check                                                                                             |
-| `arrival_check_distance`           | double | Distance threshold for goal check                                                                                          |
-| `arrival_check_duration`           | double | Duration threshold for goal check                                                                                          |
-| `goal_angle_threshold`             | double | Max goal pose angle for goal approve                                                                                       |
-| `enable_correct_goal_pose`         | bool   | Enabling correction of goal pose according to the closest lanelet orientation                                              |
-| `reroute_time_threshold`           | double | If the time to the rerouting point at the current velocity is greater than this threshold, rerouting is possible           |
-| `minimum_reroute_length`           | double | Minimum Length for publishing a new route                                                                                  |
-| `consider_no_drivable_lanes`       | bool   | This flag is for considering no_drivable_lanes in planning or not.                                                         |
-| `allow_reroute_in_autonomous_mode` | bool   | This is a flag to allow reroute in autonomous driving mode. If false, reroute fails. If true, only safe reroute is allowed |
+| 名称                               | 型   | 説明                                                                                                                                                                 |
+| ---------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `map_frame`                        | 文字列 | マップのフレーム名                                                                                                                                                                         |
+| `arrival_check_angle_deg`          | double | ゴール点検の角度閾値                                                                                                                                                                  |
+| `arrival_check_distance`           | double | ゴール点検の距離閾値                                                                                                                                                                |
+| `arrival_check_duration`           | double | ゴール点検の期間閾値                                                                                                                                                               |
+| `goal_angle_threshold`             | double | ゴールの承認のための目標ポーズの最大角度                                                                                                                                                   |
+| `enable_correct_goal_pose`         | ブーリアン | 最も近いレーンレットの向きに従ってゴールポーズを修正するかどうか                                                                                                                    |
+| `reroute_time_threshold`           | double | 現在速度での経路変更ポイントまでの時間がこの閾値よりも大きい場合、経路変更が可能となる                                                                                           |
+| `minimum_reroute_length`           | double | 新しい経路を発行するための最小長                                                                                                                                                              |
+| `consider_no_drivable_lanes`       | ブーリアン | 計画に走行不可のレーンレットを考慮するかどうかのフラグ                                                                                                                            |
+| `allow_reroute_in_autonomous_mode` | ブーリアン | 自律運転モードでの経路変更を許可するフラグ。falseの場合は経路変更は失敗し、trueの場合は安全な経路変更のみが許可される                                                             |
 
-### Services
+### サービス
 
-| Name                                                                | Type                                     | Description                                |
-| ------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------ |
-| `/planning/mission_planning/mission_planner/clear_route`            | tier4_planning_msgs/srv/ClearRoute       | route clear request                        |
-| `/planning/mission_planning/mission_planner/set_waypoint_route`     | tier4_planning_msgs/srv/SetWaypointRoute | route request with lanelet waypoints.      |
-| `/planning/mission_planning/mission_planner/set_lanelet_route`      | tier4_planning_msgs/srv/SetLaneletRoute  | route request with pose waypoints.         |
-| `/planning/mission_planning/route_selector/main/clear_route`        | tier4_planning_msgs/srv/ClearRoute       | main route clear request                   |
-| `/planning/mission_planning/route_selector/main/set_waypoint_route` | tier4_planning_msgs/srv/SetWaypointRoute | main route request with lanelet waypoints. |
-| `/planning/mission_planning/route_selector/main/set_lanelet_route`  | tier4_planning_msgs/srv/SetLaneletRoute  | main route request with pose waypoints.    |
-| `/planning/mission_planning/route_selector/mrm/clear_route`         | tier4_planning_msgs/srv/ClearRoute       | mrm route clear request                    |
-| `/planning/mission_planning/route_selector/mrm/set_waypoint_route`  | tier4_planning_msgs/srv/SetWaypointRoute | mrm route request with lanelet waypoints.  |
-| `/planning/mission_planning/route_selector/mrm/set_lanelet_route`   | tier4_planning_msgs/srv/SetLaneletRoute  | mrm route request with pose waypoints.     |
+- **Planning (生成器)**
+  - 経路生成
+  - 自車位置予測
+  - 障害物予測
+- **Sensor Fusion (センサーフュージョン)**
+  - センサーデータの融合
+  - オプティカルフローによる自車位置推定
+- **ObjDet (物体検出)**
+  - 前方および周囲の物体検出
+  - 2D/3D物体検出
+- **CanBus (CANバス)**
+  - 車両ステータスの読み書き
+  - ステアリング角と速度制御
+- **ROS通信 (ROS通信)**
+  - 他のAutowareノードとの通信
+- **Localization (局在化)**
+  - IMU/GNSS/カメラによる自車位置推定
+  - SLAMによるマップ構築と局在化
 
-### Subscriptions
+| Name                                                                | Type                                     | Description                                         |
+| ------------------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------- |
+| `/planning/mission_planning/mission_planner/clear_route`            | tier4_planning_msgs/srv/ClearRoute       | ルートクリア要求                                   |
+| `/planning/mission_planning/mission_planner/set_waypoint_route`     | tier4_planning_msgs/srv/SetWaypointRoute | レーンレットウェイポイントを伴うルート要求       |
+| `/planning/mission_planning/mission_planner/set_lanelet_route`      | tier4_planning_msgs/srv/SetLaneletRoute  | 座標ベースのウェイポイントを伴うルート要求        |
+| `/planning/mission_planning/route_selector/main/clear_route`        | tier4_planning_msgs/srv/ClearRoute       | メインルートクリア要求                                |
+| `/planning/mission_planning/route_selector/main/set_waypoint_route` | tier4_planning_msgs/srv/SetWaypointRoute | レーンレットウェイポイントを伴うメインルート要求      |
+| `/planning/mission_planning/route_selector/main/set_lanelet_route`  | tier4_planning_msgs/srv/SetLaneletRoute  | 座標ベースのウェイポイントを伴うメインルート要求    |
+| `/planning/mission_planning/route_selector/mrm/clear_route`         | tier4_planning_msgs/srv/ClearRoute       | MRMルートクリア要求                                 |
+| `/planning/mission_planning/route_selector/mrm/set_waypoint_route`  | tier4_planning_msgs/srv/SetWaypointRoute | レーンレットウェイポイントを伴うMRMルート要求      |
+| `/planning/mission_planning/route_selector/mrm/set_lanelet_route`   | tier4_planning_msgs/srv/SetLaneletRoute  | 座標ベースのウェイポイントを伴うMRMルート要求    |
 
-| Name                         | Type                                      | Description            |
+### サブスクリプション
+
+- `/current_pose` : ドライブ中に更新される`自車位置`
+- `/planning/local_path` : Autoware Planningが計算した局所パス
+- `/control/curvature` : Autoware Controlが計算した曲率
+- `/control/acceleration` : Autoware Controlが計算した加速度
+- `/control/deceleration` : Autoware Controlが計算した減速度
+- `/control/jerk` : Autoware Controlが計算したジャーク
+- `/control/steering_angle` : Autoware Controlが計算した操舵角
+- `/carla/ego_vehicle/odometry` : CARLAエミュレータによって提供されるオドメトリデータ
+- `/carla/ego_vehicle/sensor/camera/rgb/front/image` : CARLAエミュレータによって提供されるフロントRGBカメラの画像
+- `/carla/ego_vehicle/sensor/lidar/top/front/point_cloud` : CARLAエミュレータによって提供されるフロントLiDARの点群
+
+| 名前                         | 種類                                      | 説明            |
 | ---------------------------- | ----------------------------------------- | ---------------------- |
-| `input/vector_map`           | autoware_map_msgs/msg/LaneletMapBin       | vector map of Lanelet2 |
-| `input/modified_goal`        | geometry_msgs/PoseWithUuidStamped         | modified goal pose     |
-| `input/operation_mode_state` | autoware_adapi_v1_msgs/OperationModeState | operation mode state   |
+| `input/vector_map`           | autoware_map_msgs/msg/LaneletMapBin       | Lanelet2のベクトルマップ |
+| `input/modified_goal`        | geometry_msgs/PoseWithUuidStamped         | 修正されたゴールの姿勢     |
+| `input/operation_mode_state` | autoware_adapi_v1_msgs/OperationModeState | 操作モードの状態   |
 
-### Publications
+### 資料
 
-| Name                                                   | Type                                | Description              |
-| ------------------------------------------------------ | ----------------------------------- | ------------------------ |
-| `/planning/mission_planning/state`                     | tier4_planning_msgs/msg/RouteState  | route state              |
-| `/planning/mission_planning/route`                     | autoware_planning_msgs/LaneletRoute | route                    |
-| `/planning/mission_planning/route_selector/main/state` | tier4_planning_msgs/msg/RouteState  | main route state         |
-| `/planning/mission_planning/route_selector/main/route` | autoware_planning_msgs/LaneletRoute | main route               |
-| `/planning/mission_planning/route_selector/mrm/state`  | tier4_planning_msgs/msg/RouteState  | mrm route state          |
-| `/planning/mission_planning/route_selector/mrm/route`  | autoware_planning_msgs/LaneletRoute | mrm route                |
-| `~/debug/route_marker`                                 | visualization_msgs/msg/MarkerArray  | route marker for debug   |
-| `~/debug/goal_footprint`                               | visualization_msgs/msg/MarkerArray  | goal footprint for debug |
+- [Autoware tutorial: Introduction](https://arxiv.org/abs/2002.07901)
+- [Open Robotics: Autoware.Auto](https://arxiv.org/abs/2204.09611)
+- [Experimental validation of the Autoware.Auto planning module in simulated scenarios](https://arxiv.org/abs/2204.10510)
 
-## Route section
+| 名称                                                  | タイプ                               | 説明                                             |
+| ------------------------------------------------------ | ----------------------------------- | ------------------------------------------------ |
+| `/planning/mission_planning/state`                    | tier4_planning_msgs/msg/RouteState | ルートの状態                                     |
+| `/planning/mission_planning/route`                    | autoware_planning_msgs/LaneletRoute | ルート                                             |
+| `/planning/mission_planning/route_selector/main/state` | tier4_planning_msgs/msg/RouteState | メインルートの状態                                  |
+| `/planning/mission_planning/route_selector/main/route` | autoware_planning_msgs/LaneletRoute | メインルート                                       |
+| `/planning/mission_planning/route_selector/mrm/state`  | tier4_planning_msgs/msg/RouteState | MRMルートの状態                                   |
+| `/planning/mission_planning/route_selector/mrm/route`  | autoware_planning_msgs/LaneletRoute | MRMルート                                          |
+| `~/debug/route_marker`                                | visualization_msgs/msg/MarkerArray | デバッグ用のルートマーカー                           |
+| `~/debug/goal_footprint`                              | visualization_msgs/msg/MarkerArray | デバッグ用の目標フットプリント                       |
+
+## ルートセクション
 
 ![route_sections](./media/route_sections.svg)
 
-Route section, whose type is `autoware_planning_msgs/LaneletSegment`, is a "slice" of a road that bundles lane changeable lanes.
-Note that the most atomic unit of route is `autoware_planning_msgs/LaneletPrimitive`, which has the unique id of a lane in a vector map and its type.
-Therefore, route message does not contain geometric information about the lane since we did not want to have planning module’s message to have dependency on map data structure.
+タイプが `autoware_planning_msgs/LaneletSegment` のルートセクションは、レーンを変更可能な複数のレーンをまとめた道路の「スライス」です。ルートの最小単位は `autoware_planning_msgs/LaneletPrimitive` であることに注意してください。この単位は、ベクターマップ内のレーンの固有 ID とそのタイプを持ちます。したがって、ルートメッセージにはレーンの幾何学的情報を含みません。これは、Planningモジュールのメッセージがマップデータ構造に依存しないようにするためです。
 
-The ROS message of route section contains following three elements for each route section.
+ルートセクションの ROS メッセージには、各ルートセクションに対して次の 3 つの要素が含まれます。
 
-- `preferred_primitive`: Preferred lane to follow towards the goal.
-- `primitives`: All neighbor lanes in the same direction including the preferred lane.
+- `preferred_primitive`: 目標に向かう車線の追従優先レーン。
+- `primitives`: 優先レーンを含む同じ方向のすべての近接レーン。
 
-## Goal Validation
+## ゴール検証
 
-The mission planner has control mechanism to validate the given goal pose and create a route. If goal pose angle between goal pose lanelet and goal pose' yaw is greater than `goal_angle_threshold` parameter, the goal is rejected.
-Another control mechanism is the creation of a footprint of the goal pose according to the dimensions of the vehicle and checking whether this footprint is within the lanelets. If goal footprint exceeds lanelets, then the goal is rejected.
+Mission Planner は、与えられたゴールポーズを検証してルートを作成するための制御メカニズムを備えています。ゴールポーズのレーンのゴールポーズ角度とゴールポーズのヨーが `goal_angle_threshold` パラメータより大きい場合、ゴールは拒否されます。もう 1 つの制御メカニズムは、車両の寸法に基づいてゴールポーズのフットプリントを作成し、このフットプリントがレーンの内側にあるかどうかを確認することです。ゴールのフットプリントがレーンを超えると、ゴールは拒否されます。
 
-At the image below, there are sample goal pose validation cases.
+次の画像は、ゴールポーズ検証のサンプルケースです。
 
 ![goal_footprints](./media/goal_footprints.svg)
 
-## Implementation
+## 実装
 
 ### Mission Planner
 
-Two callbacks (goal and check points) are a trigger for route planning.
-Routing graph, which plans route in Lanelet2, must be created before those callbacks, and this routing graph is created in vector map callback.
+2 つのコールバック（ゴールとチェックポイント）がルートプランニングのトリガーです。
+レーンのルートを計画するルーティンググラフは、それらのコールバックの前に作成する必要があり、このルーティンググラフはベクターマップコールバックで作成されます。
 
-`plan route` is explained in detail in the following section.
+`plan route` の詳細については、次のセクションで説明します。
+
 
 ```plantuml
 @startuml
@@ -120,9 +152,10 @@ stop
 @enduml
 ```
 
-### Route Planner
+### ルートプランナー
 
-`plan route` is executed with check points including current ego pose and goal pose.
+`plan route`は、自車位置と目標位置を含むチェックポイントで実行されます。
+
 
 ```plantuml
 @startuml
@@ -153,54 +186,55 @@ stop
 @enduml
 ```
 
-`plan path between each check points` firstly calculates closest lanes to start and goal pose.
-Then routing graph of Lanelet2 plans the shortest path from start and goal pose.
+`各チェックポイント間のパスを計画` はまず、スタートとゴールの自車位置に最も近い車線を計算します。
+次に、Lanelet2 のルーティンググラフがスタートとゴールの自車位置から最短経路を計画します。
 
-`initialize route lanelets` initializes route handler, and calculates `route_lanelets`.
-`route_lanelets`, all of which will be registered in route sections, are lanelets next to the lanelets in the planned path, and used when planning lane change.
-To calculate `route_lanelets`,
+`ルート車線を初期化` はルートハンドラーを初期化し、`route_lanelets` を計算します。
+`route_lanelets` はすべてルートセクションに登録され、車線変更を計画するときに使用される、計画されたパスの車線に隣接する車線です。
+`route_lanelets` を計算するには、
 
-1. All the neighbor (right and left) lanes for the planned path which is lane-changeable is memorized as `route_lanelets`.
-2. All the neighbor (right and left) lanes for the planned path which is not lane-changeable is memorized as `candidate_lanelets`.
-3. If the following and previous lanelets of each `candidate_lanelets` are `route_lanelets`, the `candidate_lanelet` is registered as `route_lanelets`
-   - This is because even though `candidate_lanelet` (an adjacent lane) is not lane-changeable, we can pass the `candidate_lanelet` without lane change if the following and previous lanelets of the `candidate_lanelet` are `route_lanelets`
+1. 車線変更可能な計画されたパスに対するすべての隣接車線 (右と左) が `route_lanelets` として記憶されます。
+2. 車線変更できない計画されたパスに対するすべての隣接車線 (右と左) が `candidate_lanelets` として記憶されます。
+3. 各 `candidate_lanelets` の前後車線が `route_lanelets` である場合、`candidate_lanelet` は `route_lanelets` として登録されます。
+    - これは、`candidate_lanelet` (隣接車線) が車線変更できない場合でも、`candidate_lanelet` の前後車線が `route_lanelets` であれば車線変更せずに `candidate_lanelet` を通過できるためです。
 
-`get preferred lanelets` extracts `preferred_primitive` from `route_lanelets` with the route handler.
+`優先車線を取得` はルートハンドラーを使用して `route_lanelets` から `preferred_primitive` を抽出します。
 
-`create route sections` extracts `primitives` from `route_lanelets` for each route section with the route handler, and creates route sections.
+`ルートセクションの作成` はルートハンドラーを使用して各ルートセクションの `route_lanelets` から `primitives` を抽出し、ルートセクションを作成します。
 
-### Rerouting
+### 再ルーティング
 
-Reroute here means changing the route while driving. Unlike route setting, it is required to keep a certain distance from vehicle to the point where the route is changed.
-If the ego vehicle is not on autonomous driving state, the safety checking process will be skipped.
+ここで再ルーティングとは、走行中にルートを変更することを意味します。ルートの設定とは異なり、車両からルート変更地点までの一定の距離を維持する必要があります。
+自車が自動運転状態ではない場合、安全確認プロセスはスキップされます。
 
 ![rerouting_safety](./media/rerouting_safety.svg)
 
-And there are three use cases that require reroute.
+そして、再ルーティングが必要となるユースケースは 3 つあります。
 
-- Route change API
-- Emergency route
-- Goal modification
+- ルート変更 API
+- 緊急ルート
+- ゴール変更
 
-#### Route change API
+#### ルート変更 API
 
-It is used when changing the destination while driving or when driving a divided loop route. When the vehicle is driving on a MRM route, normal rerouting by this interface is not allowed.
+走行中に目的地を変更したり、分岐ループルートを走行したりするときに使用されます。車両が MRM ルートで走行している場合、このインターフェイスによる通常の再ルーティングは許可されません。
 
-#### Emergency route
+#### 緊急ルート
 
-The interface for the MRM that pulls over the road shoulder. It has to be stopped as soon as possible, so a reroute is required. The MRM route has priority over the normal route. And if MRM route is cleared, try to return to the normal route also with a rerouting safety check.
+MRM が路肩に停車するためのインターフェイスです。できるだけ早く停止する必要があるため、再ルーティングが必要です。MRM ルートは通常ルートよりも優先されます。また、MRM ルートがクリアされた場合は、再ルーティング安全確認でも通常ルートに戻ろうとします。
 
-##### Goal modification
+##### ゴール変更
 
-This is a goal change to pull over, avoid parked vehicles, and so on by a planning component. If the modified goal is outside the calculated route, a reroute is required. This goal modification is executed by checking the local environment and path safety as the vehicle actually approaches the destination. And this modification is allowed for both normal_route and mrm_route.
-The new route generated here is sent to the AD API so that it can also be referenced by the application. Note, however, that the specifications here are subject to change in the future.
+これは、プランニングコンポーネントによる停車、駐車車両の回避などのためのゴール変更です。修正されたゴールが計算されたルートの外にある場合、再ルーティングが必要です。このゴール変更は、車両が実際に目的地に近づくと、周辺環境とパスの安全性を確認して実行されます。また、この変更は通常ルートと mrm ルートの両方に対して許可されます。
+ここで生成された新しいルートは AD API に送信されるため、アプリケーションからも参照できます。ただし、ここでの仕様は今後変更される可能性があることに注意してください。
 
-#### Rerouting Limitations
+#### 再ルーティングの制約
 
-- The safety judgment of rerouting is not guaranteed to the level of trajectory or control. Therefore, the distance to the reroute change must be large for the safety.
-- The validity of the `modified_goal` needs to be guaranteed by the behavior_path_planner, e.g., that it is not placed in the wrong lane, that it can be safely rerouted, etc.
+- 再ルーティングの安全判断は、軌跡または制御のレベルでは保証されません。したがって、安全のために再ルーティング変更までの距離は十分に長くなければなりません。
+- `modified_goal` の有効性は、それが誤った車線に配置されていない、安全に再ルーティングできるなど、behavior_path_planner によって保証される必要があります。
 
-## Limitations
+## 制限
 
-- Dynamic objects (e.g. pedestrians and other vehicles) and dynamic map information (e.g. road construction which blocks some lanes) are not considered during route planning.
-- Looped route is not supported.
+- 動的オブジェクト (例: 歩行者や他の車両) や動的マップ情報 (例: 一部の車線を塞ぐ道路工事) はルート計画中に考慮されません。
+- ループルートはサポートされていません。
+

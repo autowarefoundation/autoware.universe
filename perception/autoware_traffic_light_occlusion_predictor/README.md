@@ -1,36 +1,37 @@
-# The `autoware_traffic_light_occlusion_predictor` Package
+# Autowareの`autoware_traffic_light_occlusion_predictor`パッケージ
 
-## Overview
+## 概要
 
-`autoware_traffic_light_occlusion_predictor` receives the detected traffic lights rois and calculates the occlusion ratios of each roi with point cloud.
+`autoware_traffic_light_occlusion_predictor`は、検出された信号機領域（ROI）を受信し、点群を使用して各領域の閉塞率を計算します。
 
-For each traffic light roi, hundreds of pixels would be selected and projected into the 3D space. Then from the camera point of view, the number of projected pixels that are occluded by the point cloud is counted and used for calculating the occlusion ratio for the roi. As shown in follow image, the red pixels are occluded and the occlusion ratio is the number of red pixels divided by the total pixel numbers.
+各信号機ROIに対して、数百個のピクセルが選択され、3D空間に投影されます。次に、カメラの視点から、点群によって遮られている投影ピクセルの数がカウントされ、ROIの閉塞率を計算するために使用されます。次の画像に示すように、赤いピクセルは遮られ、閉塞率は赤いピクセルの数全体のピクセル数で割ったものです。
 
 ![image](images/occlusion.png)
 
-If no point cloud is received or all point clouds have very large stamp difference with the camera image, the occlusion ratio of each roi would be set as 0.
+点群が受信されない場合、またはすべての点群がカメラ画像と非常に大きなタイムスタンプの違いがある場合、各ROIの閉塞率は0に設定されます。
 
-## Input topics
+## 入力トピック
 
-| Name                 | Type                                           | Description              |
-| -------------------- | ---------------------------------------------- | ------------------------ |
-| `~input/vector_map`  | autoware_map_msgs::msg::LaneletMapBin          | vector map               |
-| `~/input/rois`       | autoware_perception_msgs::TrafficLightRoiArray | traffic light detections |
-| `~input/camera_info` | sensor_msgs::CameraInfo                        | target camera parameter  |
-| `~/input/cloud`      | sensor_msgs::PointCloud2                       | LiDAR point cloud        |
+| 名前                 | タイプ                                             | 説明              |
+| -------------------- | ------------------------------------------------ | ------------------- |
+| `~input/vector_map`  | `autoware_map_msgs::msg::LaneletMapBin`           | vector map           |
+| `~/input/rois`       | `autoware_perception_msgs::TrafficLightRoiArray` | traffic light detections |
+| `~input/camera_info` | `sensor_msgs::CameraInfo`                        | target camera parameter |
+| `~/input/cloud`      | `sensor_msgs::PointCloud2`                       | LiDAR point cloud      |
 
-## Output topics
+## 出力トピック
 
-| Name                 | Type                                                 | Description                  |
-| -------------------- | ---------------------------------------------------- | ---------------------------- |
-| `~/output/occlusion` | autoware_perception_msgs::TrafficLightOcclusionArray | occlusion ratios of each roi |
+| 名称                 | タイプ                                                   | 説明                  |
+| -------------------- | ------------------------------------------------------- | ---------------------------- |
+| `~/output/occlusion` | autoware_perception_msgs::TrafficLightOcclusionArray | 各ROIの遮蔽率            |
 
-## Node parameters
+## ノードパラメーター
 
-| Parameter                            | Type   | Description                                                   |
-| ------------------------------------ | ------ | ------------------------------------------------------------- |
-| `azimuth_occlusion_resolution_deg`   | double | azimuth resolution of LiDAR point cloud (degree)              |
-| `elevation_occlusion_resolution_deg` | double | elevation resolution of LiDAR point cloud (degree)            |
-| `max_valid_pt_dist`                  | double | The points within this distance would be used for calculation |
-| `max_image_cloud_delay`              | double | The maximum delay between LiDAR point cloud and camera image  |
-| `max_wait_t`                         | double | The maximum time waiting for the LiDAR point cloud            |
+| パラメータ                            | 型   | 説明                                                                   |
+| ------------------------------------ | ------ | ----------------------------------------------------------------------- |
+| `azimuth_occlusion_resolution_deg`   | double | LiDARポイントクラ​​ウドの方位分解能 (度)                               |
+| `elevation_occlusion_resolution_deg` | double | LiDARポイントクラ​​ウドの仰角分解能 (度)                                |
+| `max_valid_pt_dist`                  | double | この距離内のポイントは計算に使用される                               |
+| `max_image_cloud_delay`              | double | LiDARポイントクラ​​ウドとカメラ画像の最大遅延                         |
+| `max_wait_t`                         | double | LiDARポイントクラ​​ウドを待機する最大時間                            |
+

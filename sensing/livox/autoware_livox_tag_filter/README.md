@@ -1,65 +1,115 @@
 # livox_tag_filter
 
-## Purpose
+## 目的
 
-The `livox_tag_filter` is a node that removes noise from pointcloud by using the following tags:
+`livox_tag_filter`は、次のタグを使用して点群からノイズを除去するノードです。
 
-- Point property based on spatial position
-- Point property based on intensity
-- Return number
+- 空間位置に基づいた点の特性
+- 強度に基づいた点の特性
+- リターン番号
 
-## Inner-workings / Algorithms
+## 内部動作 / アルゴリズム
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name      | Type                            | Description      |
-| --------- | ------------------------------- | ---------------- |
-| `~/input` | `sensor_msgs::msg::PointCloud2` | reference points |
+| Name            | Type                                                   | Description              |
+|----------------|---------------------------------------------------------|------------------------|
+| `~/input`       | `sensor_msgs::msg::PointCloud2`                             | リファレンスポイント  |
 
-### Output
+### 出力
+### Localizerについて
 
-| Name       | Type                            | Description     |
-| ---------- | ------------------------------- | --------------- |
-| `~/output` | `sensor_msgs::msg::PointCloud2` | filtered points |
+このドキュメントでは、AutowareのLocalizerの機能と実装について説明します。Localizerモジュールは、SLAMの結果を出力として受け取り、自車位置と自身の周囲地図を推定します。
 
-## Parameters
+#### 機能
 
-### Node Parameters
+Localizerの主な機能は次のとおりです。
 
-| Name          | Type            | Description                            |
+- Lidar、カメラ、IMUセンサーデータの統合
+- 移動・静止物体の検出
+- オドメトリとSLAMによる自車位置の推定
+- 車線および障害物の周囲地図の抽出
+
+#### 実装
+
+Localizerモジュールは、次のコンポーネントで構成されています。
+
+- **Sensor Preprocessor：**センサーデータの前処理とフィルタリングを行います。
+- **Odometry：**オドメトリ情報とIMUデータを使用して、自車位置を推定します。
+- **SLAM：**Lidarデータを使用して、周囲環境の地図と自車位置を推定します。
+- **Moving Object Detector：**Lidarデータを使用して、移動物体を検出します。
+- **Lane Extractor：**Lidarデータを使用して、車線を抽出します。
+- **Obstacle Extractor：**Lidarデータを使用して、障害物を抽出します。
+
+#### 入出力インターフェース
+
+Localizerモジュールは、次のインターフェースで入出力を処理します。
+
+**入力：**
+
+- Lidarデータ
+- カメラデータ（オプション）
+- IMUデータ
+- GPSデータ（オプション）
+
+**出力：**
+
+- 自車位置推定値
+- 自身周囲地図
+- 移動物体リスト
+- 車線リスト
+- 障害物リスト
+
+#### パラメーター
+
+Localizerモジュールの動作を制御するには、次のパラメーターを使用します。
+
+- `post resampling`：SLAMの再標本化後に自車位置を更新するかどうかを決定します。
+- `use imu`：自車位置推定にIMUデータを使用するかどうかを決定します。
+- `vel_range_violation`：速度逸脱量のしきい値です。
+- `acc_range_violation`：加速度逸脱量のしきい値です。
+
+| 名前       | 型                            | 説明     |
+| ---------- | ------------------------------- | ----------- |
+| `~/output` | `sensor_msgs::msg::PointCloud2` | フィルタされた点 |
+
+## パラメータ
+
+### ノードパラメータ
+
+| 名前          | タイプ            | 説明                            |
 | ------------- | --------------- | -------------------------------------- |
-| `ignore_tags` | vector<int64_t> | ignored tags (See the following table) |
+| `ignore_tags` | vector<int64_t> | 除外されたタグ (以下の表を参照) |
 
-### Tag Parameters
+### タグパラメータ
 
-| Bit | Description                              | Options                                    |
-| --- | ---------------------------------------- | ------------------------------------------ |
-| 0~1 | Point property based on spatial position | 00: Normal                                 |
-|     |                                          | 01: High confidence level of the noise     |
-|     |                                          | 10: Moderate confidence level of the noise |
-|     |                                          | 11: Low confidence level of the noise      |
-| 2~3 | Point property based on intensity        | 00: Normal                                 |
-|     |                                          | 01: High confidence level of the noise     |
-|     |                                          | 10: Moderate confidence level of the noise |
-|     |                                          | 11: Reserved                               |
-| 4~5 | Return number                            | 00: return 0                               |
-|     |                                          | 01: return 1                               |
-|     |                                          | 10: return 2                               |
-|     |                                          | 11: return 3                               |
-| 6~7 | Reserved                                 |                                            |
+| ビット | 空間的位置に基づく点の特性 | オプション |
+| --- | ---------------------------- | ---------- |
+| 0~1 | ノーマル | |
+|     | ノイズの信頼度が高い | |
+|     | ノイズの信頼度が中程度 | |
+|     | ノイズの信頼度が低い | |
+| 2~3 | 強度の点の特性 | ノーマル |
+|     | ノイズの信頼度が高い | |
+|     | ノイズの信頼度が中程度 | |
+|     | 予約 | |
+| 4~5 | 戻り値 | 0を返す |
+|     | 1を返す | |
+|     | 2を返す | |
+|     | 3を返す | |
+| 6~7 | 予約 | |
 
-You can download more detail description about the livox from external link [1].
+## 想定 / 既知の制限事項
 
-## Assumptions / Known limits
+## (任意) エラー検出および処理
 
-## (Optional) Error detection and handling
+## (任意) パフォーマンス特性評価
 
-## (Optional) Performance characterization
-
-## (Optional) References/External links
+## (任意) 参照 / 外部リンク
 
 [1] <https://www.livoxtech.com/downloads>
 
-## (Optional) Future extensions / Unimplemented parts
+## (任意) 将来の拡張 / 未実装部分
+

@@ -1,60 +1,91 @@
 # topic_state_monitor
 
-## Purpose
+## 目的
 
-This node monitors input topic for abnormalities such as timeout and low frequency.
-The result of topic status is published as diagnostics.
+このノードは異常なタイムアウトや低周波などの入力トピックを監視します。
+トピックステータスの結果は診断として公開されます。
 
-## Inner-workings / Algorithms
+## 内部処理 / アルゴリズム
 
-The types of topic status and corresponding diagnostic status are following.
+トピックステータスの種類と対応する診断ステータスは次のとおりです。
 
-| Topic status  | Diagnostic status | Description                                          |
-| ------------- | ----------------- | ---------------------------------------------------- |
-| `OK`          | OK                | The topic has no abnormalities                       |
-| `NotReceived` | ERROR             | The topic has not been received yet                  |
-| `WarnRate`    | WARN              | The frequency of the topic is dropped                |
-| `ErrorRate`   | ERROR             | The frequency of the topic is significantly dropped  |
-| `Timeout`     | ERROR             | The topic subscription is stopped for a certain time |
+| トピック状態 | 診断状態 | 説明 |
+|---|---|---|
+| `OK` | OK | トピックに異常なし |
+| `NotReceived` | ERROR | トピックが未受信 |
+| `WarnRate` | WARN | トピックの受信頻度が低下 |
+| `ErrorRate` | ERROR | トピックの受信頻度が大幅に低下 |
+| `Timeout` | ERROR | トピックサブスクリプションが一定時間停止 |
 
-## Inputs / Outputs
+## 入力 / 出力
 
-### Input
+### 入力
 
-| Name     | Type     | Description                       |
-| -------- | -------- | --------------------------------- |
-| any name | any type | Subscribe target topic to monitor |
+| 名前 | タイプ | 説明 |
+|---|---|---|
+| 任意の名前 | 任意のタイプ | 監視対象のトピックを購読 |
 
-### Output
+### 出力
 
-| Name           | Type                              | Description         |
+Autowareの自動運転ソフトウェアは、Perception、Planning、Controlの3つの主要なコンポーネントで構成されています。これらのコンポーネントは、次のタスクを実行します。
+
+**Perception**
+
+* センサーからの生のデータを処理し、車載環境の3Dモデルを作成します。
+* 物体検出、物体分類、セグメンテーションなどのタスクを実行します。
+
+**Planning**
+
+* 環境マップを使用し、自車位置を決定します。
+* 障害物を回避し、安全な経路を生成する、経路計画と軌跡生成を行います。
+
+**Control**
+
+* 経路に従って車両を制御し、加速、ブレーキング、ステアリングを行います。
+* 速度、加速度、ヨー角などの逸脱量を最小限に抑えます。
+
+**Autoware**では、Planningコンポーネントが以下を行います。
+
+* Planningモジュールの主な機能は'post resampling'後のパス生成です。
+* パス生成は、'post resampling'後の以下の情報に基づいて行われます。
+* 'post resampling'後の自車位置と周囲環境のマップ
+* 経路制約（速度制限、道路標識など）
+* 障害物の検出結果と予測された経路
+
+**Autoware**では、以下のPlanningアルゴリズムが実装されています。
+
+* **ダイナミックウィンドウアプローチ（DWA）:** リアルタイムで経路を生成し、障害物を回避するためのアルゴリズムです。
+* **モデル予測制御（MPC）:** 制御入力のシーケンスを最適化して、 заданную経路を追従するためのアルゴリズムです。
+
+| 名前           | 型                               | 説明         |
 | -------------- | --------------------------------- | ------------------- |
-| `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | Diagnostics outputs |
+| `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | 診断結果出力 |
 
-## Parameters
+## パラメータ
 
-### Node Parameters
+### ノードパラメータ
 
-| Name              | Type   | Default Value | Description                                                   |
-| ----------------- | ------ | ------------- | ------------------------------------------------------------- |
-| `topic`           | string | -             | Name of target topic                                          |
-| `topic_type`      | string | -             | Type of target topic (used if the topic is not transform)     |
-| `frame_id`        | string | -             | Frame ID of transform parent (used if the topic is transform) |
-| `child_frame_id`  | string | -             | Frame ID of transform child (used if the topic is transform)  |
-| `transient_local` | bool   | false         | QoS policy of topic subscription (Transient Local/Volatile)   |
-| `best_effort`     | bool   | false         | QoS policy of topic subscription (Best Effort/Reliable)       |
-| `diag_name`       | string | -             | Name used for the diagnostics to publish                      |
-| `update_rate`     | double | 10.0          | Timer callback period [Hz]                                    |
+| 名称               | 型     | デフォルト値 | 説明                                                              |
+| ----------------- | ------ | ------------- | ------------------------------------------------------------------- |
+| `topic`            | 文字列 | -             | ターゲット・トピック名                                             |
+| `topic_type`       | 文字列 | -             | ターゲット・トピックの型 (トピックが変換でない場合に使用する)      |
+| `frame_id`         | 文字列 | -             | 変換親のフレーム ID (トピックが変換の場合に使用する)                |
+| `child_frame_id`   | 文字列 | -             | 変換子のフレーム ID (トピックが変換の場合に使用する)                |
+| `transient_local`  | ブール | false         | トピック・サブスクリプションの QoS ポリシー (Transient Local/Volatile) |
+| `best_effort`      | ブール | false         | トピック・サブスクリプションの QoS ポリシー (Best Effort/Reliable)     |
+| `diag_name`        | 文字列 | -             | 診断の発行に使用される名前                                         |
+| `update_rate`      | double | 10.0          | タイマー・コールバック期間 [Hz]                                     |
 
-### Core Parameters
+### コアパラメータ
 
-| Name          | Type   | Default Value | Description                                                                                          |
-| ------------- | ------ | ------------- | ---------------------------------------------------------------------------------------------------- |
-| `warn_rate`   | double | 0.5           | If the topic rate is lower than this value, the topic status becomes `WarnRate`                      |
-| `error_rate`  | double | 0.1           | If the topic rate is lower than this value, the topic status becomes `ErrorRate`                     |
-| `timeout`     | double | 1.0           | If the topic subscription is stopped for more than this time [s], the topic status becomes `Timeout` |
-| `window_size` | int    | 10            | Window size of target topic for calculating frequency                                                |
+| 名称          | タイプ   | デフォルト値 | 説明                                                                                                    |
+| ------------- | ------ | ------------- | ---------------------------------------------------------------------------------------------------------- |
+| `warn_rate`   | double | 0.5           | トピックレートがこの値を下回ると、トピックステータスは`WarnRate`になる                                    |
+| `error_rate`  | double | 0.1           | トピックレートがこの値を下回ると、トピックステータスは`ErrorRate`になる                                 |
+| `timeout`     | double | 1.0           | トピックサブスクリプションがこの時間を超えて停止すると、トピックステータスは`Timeout`になる             |
+| `window_size` | int    | 10            | 周波数の計算用のターゲットトピックのウィンドウサイズ                                                        |
 
-## Assumptions / Known limits
+## 想定条件 / 制約
 
 TBD.
+

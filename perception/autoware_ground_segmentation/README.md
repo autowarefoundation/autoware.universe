@@ -1,52 +1,92 @@
 # autoware_ground_segmentation
 
-## Purpose
+## 目的
 
-The `autoware_ground_segmentation` is a node that remove the ground points from the input pointcloud.
+`autoware_ground_segmentation`は、入力ポイントクラウドから地上の点を削除するノードです。
 
-## Inner-workings / Algorithms
+## 内部処理 / アルゴリズム
 
-Detail description of each ground segmentation algorithm is in the following links.
+各地面セグメンテーションアルゴリズムの詳細な説明は、次のリンクを参照してください。
 
-| Filter Name          | Description                                                                                                | Detail                               |
-| -------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| ray_ground_filter    | A method of removing the ground based on the geometrical relationship between points lined up on radiation | [link](docs/ray-ground-filter.md)    |
-| scan_ground_filter   | Almost the same method as `ray_ground_filter`, but with slightly improved performance                      | [link](docs/scan-ground-filter.md)   |
-| ransac_ground_filter | A method of removing the ground by approximating the ground to a plane                                     | [link](docs/ransac-ground-filter.md) |
+| フィルタの名称           | 説明                                                                                                    | 詳細                                   |
+| ------------------------ | --------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `ray_ground_filter`     | 放射状に並んだ点の幾何学的関係に基づいて地面を取り除く方法                                              | [リンク](docs/ray-ground-filter.md)    |
+| `scan_ground_filter`    | `ray_ground_filter`とほぼ同じ方法だが、パフォーマンスがわずかに向上                                              | [リンク](docs/scan-ground-filter.md)   |
+| `ransac_ground_filter` | 平面に対して地上の近似を行うことで地面を取り除く方法                                                    | [リンク](docs/ransac-ground-filter.md) |
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name              | Type                            | Description       |
+| 名前              | タイプ                            | 説明       |
 | ----------------- | ------------------------------- | ----------------- |
-| `~/input/points`  | `sensor_msgs::msg::PointCloud2` | reference points  |
-| `~/input/indices` | `pcl_msgs::msg::Indices`        | reference indices |
+| `~/input/points`  | `sensor_msgs::msg::PointCloud2` | 基準点  |
+| `~/input/indices` | `pcl_msgs::msg::Indices`        | 基準インデックス |
 
-### Output
+### 自動運転ソフトウェアドキュメント
 
-| Name              | Type                            | Description     |
-| ----------------- | ------------------------------- | --------------- |
-| `~/output/points` | `sensor_msgs::msg::PointCloud2` | filtered points |
+**Planning** コンポーネントは、**HAD Map** と**localization** による**current pose** 情報を使用して、周囲の環境を認識し、安全で快適な経路を決定します。
 
-## Parameters
+**Planning** コンポーネントには、次の主要モジュールが含まれます。
 
-### Node Parameters
+- **Trajectory Planner**：**HAD Map** と**localization** データを使用して、車両の安全で効率的な経路を生成します。
+- **Path Smoother**：**Trajectory Planner** によって生成された経路を滑らかにし、車両の快適性を向上させます。
+- **Speed Planner**：**Trajectory Planner** と**Path Smoother** によって生成された経路に基づいて、車両の速度プロファイルを決定します。
 
-| Name                 | Type   | Default Value | Description                           |
+**Perception** コンポーネントは、**HAD Map** と**localization** 情報を組み合わせて、障害物やその他の車両などの周囲の環境を認識します。
+
+**Perception** コンポーネントには、次の主要モジュールが含まれます。
+
+- **Object Detector**: LiDAR、カメラ、レーダーから収集されたデータを処理して、物体や障害物を検出します。
+- **Obstacle Estimator**: 検出された物体の速度と加速度を推定します。
+- **Localizer**: 物体の位置と姿勢を**localization** 情報との関連付けを支援します。
+
+**Control** コンポーネントは、**Planning** と**Perception** コンポーネントから提供される情報を使用して、車両を安全かつ効率的に制御します。
+
+**Control** コンポーネントには、次の主要モジュールが含まれます：
+
+- **Lateral Control**: ステアリングを制御して、車両が**Trajectory Planner** によって生成された経路に沿って走行できるようにします。
+- **Longitudinal Control**: ブレーキとアクセルを制御して、車両の速度と加速度が**Speed Planner** によって決定されたプロファイルに従うようにします。
+
+**HAD Map** は、高精度な地図データを提供し、**Planning** コンポーネントと**Perception** コンポーネントが周囲の環境を正確に認識できるようにします。
+
+**Autoware** の**Localization** コンポーネントは、**HAD Map** を利用して、車両の**current pose** と姿勢を決定します。
+
+**Autoware** の**Visualization** コンポーネントは、**Planning**、**Perception**、**Control** コンポーネントによって生成された情報をユーザーに表示します。
+
+### 考慮事項
+
+**Planning** コンポーネントは、次の考慮事項を考慮します。
+
+- **Collision Avoidance**: 車両が障害物や他の車両と衝突しないようにします。
+- **Velocity Violation**: 車両の速度が許容範囲を超えないようにします。
+- **Acceleration Violation**: 車両の加速度が許容範囲を超えないようにします。
+- **Path 'post resampling'**: **Path Smoother** によって生成された経路が**Trajectory Planner** によって生成された経路を正確に表していることを確認します。
+- **Vehicle Dynamics**: 車両の運動特性を考慮して、安全で快適な走行を確保します。
+
+| 名称                      | 型                                | 説明                       |
+|----------------------|-----------------------------------|---------------------|
+| `~/output/points` | `sensor_msgs::msg::PointCloud2` | フィルタリングされた点群 |
+
+## パラメータ
+
+### ノードのパラメータ
+
+| 名前                 | 型   | デフォルト値 | 説明                                |
 | -------------------- | ------ | ------------- | ------------------------------------- |
-| `input_frame`        | string | " "           | input frame id                        |
-| `output_frame`       | string | " "           | output frame id                       |
-| `has_static_tf_only` | bool   | false         | flag to listen TF only once           |
-| `max_queue_size`     | int    | 5             | max queue size of input/output topics |
-| `use_indices`        | bool   | false         | flag to use pointcloud indices        |
-| `latched_indices`    | bool   | false         | flag to latch pointcloud indices      |
-| `approximate_sync`   | bool   | false         | flag to use approximate sync option   |
+| `input_frame`        | 文字列 | " "           | 入力フレーム ID                        |
+| `output_frame`       | 文字列 | " "           | 出力フレーム ID                       |
+| `has_static_tf_only` | ブール | false         | TF を一度だけリスンするフラグ            |
+| `max_queue_size`     | 整数  | 5             | 入力/出力トピックの最大キューサイズ |
+| `use_indices`        | ブール | false         | ポイントクラウドのインデックスを使用するフラグ |
+| `latched_indices`    | ブール | false         | ポイントクラウドのインデックスをラッチするフラグ |
+| `approximate_sync`   | ブール | false         | 近似同期オプションを使用するフラグ   |
 
-## Assumptions / Known limits
+## 前提 / 制限事項
 
-`autoware::pointcloud_preprocessor::Filter` is implemented based on pcl_perception [1] because of [this issue](https://github.com/ros-perception/perception_pcl/issues/9).
+`autoware::pointcloud_preprocessor::Filter`は、[この問題](https://github.com/ros-perception/perception_pcl/issues/9)のため、pcl_perception [1]に基づいて実装されています。
 
-## References/External links
+## 参考文献/外部リンク
 
 [1] <https://github.com/ros-perception/perception_pcl/blob/ros2/pcl_ros/src/pcl_ros/filters/filter.cpp>
+

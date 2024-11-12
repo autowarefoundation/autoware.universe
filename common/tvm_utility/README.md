@@ -1,27 +1,21 @@
-# TVM Utility
+# TVMユーティリティ
 
-This is the design document for the `tvm_utility` package. For instructions on how to build the tests for YOLOv2 Tiny,
-see the [YOLOv2 Tiny Example Pipeline](tvm-utility-yolo-v2-tiny-tests.md).
-For information about where to store test artifacts see the [TVM Utility Artifacts](artifacts/README.md).
+これは`tvm_utility`パッケージの設計文書です。YOLOv2 Tinyのテストを作成する方法については、[YOLOv2 Tiny例パイプライン](tvm-utility-yolo-v2-tiny-tests.md)を参照してください。テストアーティファクトを保存する場所については、[TVMユーティリティアーティファクト](artifacts/README.md)を参照してください。
 
-## Purpose / Use cases
+## 目的/ユースケース
 
-A set of c++ utilities to help build a TVM based machine learning inference pipeline. The library contains a pipeline
-class which helps building the pipeline and a number of utility functions that are common in machine learning.
+TVMベースの機械学習推論パイプラインを構築するために役立つ、C++ユーティリティのセットです。ライブラリにはパイプラインの構築に役立つパイプラインクラスと、機械学習によくある多数のユーティリティ関数が含まれます。
 
-## Design
+## 設計
 
-The Pipeline Class is a standardized way to write an inference pipeline. The pipeline class contains 3 different stages:
-the pre-processor, the inference engine and the post-processor. The TVM implementation of an inference engine stage is
-provided.
+パイプラインクラスは推論パイプラインを作成するための標準化された方法です。パイプラインクラスには、プリプロセッサ、推論エンジン、およびポストプロセッサの3つの異なるステージが含まれています。TVMの推論エンジンステージの実装が提供されます。
 
 ### API
 
-The pre-processor and post-processor need to be implemented by the user before instantiating the pipeline. You can see example
-usage in the example pipeline at `test/yolo_v2_tiny`.
+プリプロセッサとポストプロセッサは、パイプラインをインスタンス化する前にユーザによって実装される必要があります。`test/yolo_v2_tiny`のサンプルパイプラインで、使用例を確認できます。
 
-Each stage in the pipeline has a `schedule` function which takes input data as a parameter and return the output data.
-Once the pipeline object is created, `pipeline.schedule` is called to run the pipeline.
+パイプラインの各ステージには、入力データをパラメータとして取得し、出力データを返す`schedule`関数があります。パイプラインオブジェクトが作成されると、`pipeline.schedule`が呼び出されてパイプラインが実行されます。
+
 
 ```{cpp}
 int main() {
@@ -31,32 +25,30 @@ int main() {
 }
 ```
 
-#### Version checking
+#### バージョンチェック
 
-The `InferenceEngineTVM::version_check` function can be used to check the version of the neural network in use against the range of earliest to latest supported versions.
+`InferenceEngineTVM::version_check` 関数は、使用中のニューラルネットワークのバージョンが、サポートされているバージョン範囲（古いものから新しいものまで）に含まれているかどうかをチェックするために使用できます。
 
-The `InferenceEngineTVM` class holds the latest supported version, which needs to be updated when the targeted version changes; after having tested the effect of the version change on the packages dependent on this one.
+`InferenceEngineTVM` クラスは、サポートされている最新のバージョンを保持しており、ターゲットバージョンが変更された場合は更新する必要があります。ただし、このバージョン変更の影響が、このバージョンの依存パッケージに及ぼされるかどうかをテストした後で変更してください。
 
-The earliest supported version depends on each package making use of the inference, and so should be defined (and maintained) in those packages.
+最も古いサポートされているバージョンは、推論を利用する各パッケージによって異なります。したがって、これらのパッケージで定義（および維持）する必要があります。
 
-#### Models
+#### モデル
 
-Dependent packages are expected to use the `get_neural_network` cmake function from this package in order to build proper external dependency.
+依存パッケージでは、このパッケージの `get_neural_network` cmake 関数を使用して、適切な外部依存関係を構築する必要があります。
 
-### Error detection and handling
+### エラーの検出と処理
 
-`std::runtime_error` should be thrown whenever an error is encountered. It should be populated with an appropriate text
-error description.
+エラーが発生した場合はいつでも `std::runtime_error` がスローされる必要があります。適切なテキストエラーの説明を入力する必要があります。
 
-### Neural Networks Provider
+### ニューラルネットワークプロバイダー
 
-The neural networks are compiled as part of the
-[Model Zoo](https://github.com/autowarefoundation/modelzoo/) CI pipeline and saved to an S3 bucket.
+ニューラルネットワークは [Model Zoo](https://github.com/autowarefoundation/modelzoo/) CI パイプラインの一部としてコンパイルされ、S3 バケットに保存されます。
 
-The `get_neural_network` function creates an abstraction for the artifact management.
-Users should check if model configuration header file is under "data/user/${MODEL_NAME}/". Otherwise, nothing happens and compilation of the package will be skipped.
+`get_neural_network` 関数は、アーティファクト管理のための抽象化を作成します。ユーザーはモデル構成のヘッダーファイルが "data/user/${MODEL_NAME}/" にあるかどうかを確認する必要があります。見つからない場合、何も起こらず、パッケージのコンパイルはスキップされます。
 
-The structure inside of the source directory of the package making use of the function is as follow:
+関数を活用するパッケージのソースディレクトリの構造は次のとおりです。
+
 
 ```{text}
 .
@@ -69,69 +61,67 @@ The structure inside of the source directory of the package making use of the fu
 │           └── ...
 ```
 
-The `inference_engine_tvm_config.hpp` file needed for compilation by dependent packages should be available under "data/models/${MODEL_NAME}/inference_engine_tvm_config.hpp".
-Dependent packages can use the cmake `add_dependencies` function with the name provided in the `DEPENDENCY` output parameter of `get_neural_network` to ensure this file is created before it gets used.
+`inference_engine_tvm_config.hpp` ファイルは依存パッケージでコンパイルするために必要なので、「data/models/${MODEL_NAME}/inference_engine_tvm_config.hpp」に対して準備できます。
+依存パッケージは、`get_neural_network` の `DEPENDENCY` 出力パラメータで提供される名前で cmake の `add_dependencies` 関数を使用して、このファイルが使用される前に作成されるようにできます。
 
-The other `deploy_*` files are installed to "models/${MODEL_NAME}/" under the `share` directory of the package.
+他の `deploy_*` ファイルは、パッケージの `share` ディレクトリの下の「models/${MODEL_NAME}/」にインストールされます。
 
-The other model files should be stored in autoware_data folder under package folder with the structure:
+他のモデルファイルはパッケージフォルダの下の autoware_data フォルダ内に、次の構造を使用して格納する必要があります。
+
 
 ```{text}
 $HOME/autoware_data
-|     └──${package}
-|        └──models
-|           ├── ${MODEL 1}
-|           |    ├── deploy_graph.json
-|           |    ├── deploy_lib.so
-|           |    └── deploy_param.params
+
+|     └──${パッケージ}
+|        └──モデル
+|           ├── ${モデル 1}
+|           |    ├── デプロイ_グラフ.json
+|           |    ├── デプロイ_ライブラリ.so
+|           |    └── デプロイ_パラメータ.params
 |           ├── ...
-|           └── ${MODEL ...}
+|           └── ${モデル ...}
 |                └── ...
-```
 
-#### Inputs / Outputs
+#### 入力/出力
 
-Outputs:
+出力:
 
-- `get_neural_network` cmake function; create proper external dependency for a package with use of the model provided by the user.
+- `get_neural_network` cmake関数: ユーザーが提供するモデルを使用するパッケージ用の適切な外部依存関係を作成します。
 
-In/Out:
+入出力:
 
-- The `DEPENDENCY` argument of `get_neural_network` can be checked for the outcome of the function.
-  It is an empty string when the neural network wasn't provided by the user.
+- `get_neural_network`の`DEPENDENCY`引数は、関数の結果を確認できます。
+  ユーザーがニューラルネットワークを提供しなかった場合、空文字列になります。
 
-## Security considerations
+## セキュリティの考慮事項
 
-### Pipeline
+### パイプライン
 
-Both the input and output are controlled by the same actor, so the following security concerns are out-of-scope:
+入力と出力の両方が同じアクタによって制御されるため、以下のセキュリティ上の懸念事項は対象外です:
 
-- Spoofing
-- Tampering
+- なりすまし
+- 改ざん
 
-Leaking data to another actor would require a flaw in TVM or the host operating system that allows arbitrary memory to
-be read, a significant security flaw in itself. This is also true for an external actor operating the pipeline early:
-only the object that initiated the pipeline can run the methods to receive its output.
+データを別のアクタに漏洩するには、任意のメモリを読み取ることができるTVMまたはホストオペレーティングシステムの欠陥、それ自体が重大なセキュリティ上の欠陥を必要とします。これは、パイプラインを早期に操作する外部アクタにも当てはまります。パイプラインを開始したオブジェクトのみが出力を受け取るためのメソッドを実行できます。
 
-A Denial-of-Service attack could make the target hardware unusable for other pipelines but would require being able to
-run code on the CPU, which would already allow a more severe Denial-of-Service attack.
+サービス妨害攻撃は、対象のハードウェアを他のパイプラインで使用できなくする可能性がありますが、CPUでコードを実行できる必要があるため、より深刻なサービス妨害攻撃をすでに可能にします。
 
-No elevation of privilege is required for this package.
+このパッケージには権限の昇格は必要ありません。
 
-### Network provider
+### ネットワークプロバイダー
 
-The pre-compiled networks are downloaded from an S3 bucket and are under threat of spoofing,
-tampering and denial of service.
-Spoofing is mitigated by using an https connection.
-Mitigations for tampering and denial of service are left to AWS.
+事前コンパイルされたネットワークはS3バケットからダウンロードされ、なりすまし、改ざん、サービス妨害の脅威にさらされています。
+なりすましはhttps接続を使用することで軽減されます。
+改ざんとサービス妨害に対する軽減策はAWSに委ねられています。
 
-The user-provided networks are installed as they are on the host system.
-The user is in charge of securing the files they provide with regard to information disclosure.
+ユーザー提供のネットワークは、ホストシステムにそのままインストールされます。
+ユーザーは、情報開示に関して提供するファイルのセキュリティを確保する責任があります。
 
-## Future extensions / Unimplemented parts
+## 今後の拡張/実装されていない部分
 
-Future packages will use tvm_utility as part of the perception stack to run machine learning workloads.
+将来のパッケージは、Perceptionスタックの一部としてtvm_utilityを使用して、機械学習の処理を実行します。
 
-## Related issues
+## 関連する問題
 
 <https://github.com/autowarefoundation/autoware/discussions/2557>
+

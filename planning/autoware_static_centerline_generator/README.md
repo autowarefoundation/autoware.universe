@@ -1,83 +1,83 @@
-# Static Centerline Generator
+# 静的センターライン生成器
 
-## Purpose
+## 目的
 
-This package statically calculates the centerline satisfying path footprints inside the drivable area.
+このパッケージは、走行可能な領域内にパスフットプリントを収めたセンターラインを静的に計算します。
 
-On narrow-road driving, the default centerline, which is the middle line between lanelets' right and left boundaries, often causes path footprints outside the drivable area.
-To make path footprints inside the drivable area, we use online path shape optimization by [the autoware_path_optimizer package](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/autoware_path_optimizer/).
+狭い道路での走行では、車線の左右の境界線の中間線であるデフォルトのセンターラインは、しばしばパスフットプリントを走行可能領域の外に出してしまいます。パスフットプリントを走行可能領域内に収めるために、[autoware_path_optimizerパッケージ](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/autoware_path_optimizer/)によるオンラインパス形状最適化を使用します。
 
-Instead of online path shape optimization, we introduce static centerline optimization.
-With this static centerline optimization, we have following advantages.
+オンラインパス形状最適化の代わりに、静的センターライン最適化を導入します。この静的センターライン最適化により、次の利点があります。
 
-- We can see the optimized centerline shape in advance.
-  - With the default autoware, path shape is not determined until the vehicle drives there.
-  - This enables offline path shape evaluation.
-- We do not have to calculate a heavy and sometimes unstable path optimization since the path footprints are already inside the drivable area.
+- 最適化されたセンターライン形状を事前に確認できます。
+  - デフォルトのAutowareでは、車両がそこを走行するまでパス形状は決定されません。
+  - これにより、オフラインパス形状評価が可能になります。
+- パスフットプリントが走行可能領域内にあるため、重く不安定なパス最適化を計算する必要がありません。
 
-## Use cases
+## ユースケース
 
-There are two interfaces to communicate with the centerline optimizer.
+センターライン最適化と通信するためのインターフェイスが2つあります。
 
-### Vector Map Builder Interface
+### ベクトルマップビルダーインターフェイス
 
-Note: This function of Vector Map Builder has not been released. Please wait for a while.
-Currently there is no documentation about Vector Map Builder's operation for this function.
+注: Vector Map Builderのこの機能はリリースされていません。しばらくお待ちください。
+現在、この機能に関するベクターマップビルダーの操作に関するドキュメントはありません。
 
-The optimized centerline can be generated from Vector Map Builder's operation.
+最適化されたセンターラインは、ベクターマップビルダーの操作から生成できます。
 
-We can run
+次のコマンドで`<vehicle_model>`を指定して実行できます。
+```bash
+# path planning server
+rosrun autoware_path_optimizer path_optimizer_node <vehicle_model> --api_path /autoware_path_optimizer/path_optimizer
+# http server to connect path planning server and Vector Map Builder
+rosrun autoware_path_optimizer center_line_generator_node
+```
 
-- path planning server
-- http server to connect path planning server and Vector Map Builder
-
-with the following command by designating `<vehicle_model>`
 
 ```sh
 ros2 launch autoware_static_centerline_generator run_planning_server.launch.xml vehicle_model:=<vehicle-model>
 ```
 
-FYI, port ID of the http server is 4010 by default.
+FYI、HTTPサーバのポートIDはデフォルトで4010です。
 
-### Command Line Interface
+### コマンドラインインターフェイス
 
-The optimized centerline can be generated from the command line interface by designating
+最適化されたcenterlineは、コマンドラインインターフェイスから指定することで生成できます。
 
 - `<input-osm-path>`
-- `<output-osm-path>` (not mandatory)
+- `<output-osm-path>`（必須ではありません）
 - `<start-lanelet-id>`
 - `<end-lanelet-id>`
 - `<vehicle-model>`
+
 
 ```sh
 ros2 launch autoware_static_centerline_generator static_centerline_generator.launch.xml run_backgrond:=false lanelet2_input_file_path:=<input-osm-path> lanelet2_output_file_path:=<output-osm-path> start_lanelet_id:=<start-lane-id> end_lanelet_id:=<end-lane-id> vehicle_model:=<vehicle-model>
 ```
 
-The default output map path containing the optimized centerline locates `/tmp/lanelet2_map.osm`.
-If you want to change the output map path, you can remap the path by designating `<output-osm-path>`.
+既定の最適化されたセンターラインを含む出力マップパスの場所は `/tmp/lanelet2_map.osm` です。出力マップパスを変更したい場合は、`<output-osm-path>` を指定することでパスを再マップできます。
 
-## Visualization
+## 可視化
 
-When launching the path planning server, rviz is launched as well as follows.
+パスプランニングサーバを起動すると、rviz も次のように起動します。
 ![rviz](./media/rviz.png)
 
-- The yellow footprints are the original ones from the osm map file.
-  - FYI: Footprints are generated based on the centerline and vehicle size.
-- The red footprints are the optimized ones.
-- The gray area is the drivable area.
-- You can see that the red footprints are inside the drivable area although the yellow ones are outside.
+- 黄色のフットプリントは osm マップファイルからのオリジナルのフットプリントです。
+  - FYI: フットプリントはセンターラインと車輌のサイズに基づいて生成されます。
+- 赤色のフットプリントは最適化されたフットプリントです。
+- 灰色領域は走行可能な領域です。
+- 黄色のフットプリントは走行可能領域の外側にあるのに対し、赤いフットプリントは走行可能領域の内側にあることがわかります。
 
-### Unsafe footprints
+### セーフティに欠けるフットプリント
 
-Sometimes the optimized centerline footprints are close to the lanes' boundaries.
-We can check how close they are with `unsafe footprints` marker as follows.
+場合によっては、最適化されたセンターラインのフットプリントが車線の境界線に近くなります。`unsafe footprints` マーカーを使って、それらがどの程度近いかを確認することができます。
 
-Footprints' color depends on its distance to the boundaries, and text expresses its distance.
+フットプリントの色は境界線からの距離によって決まり、テキストはこの距離を表します。
 
 ![rviz](./media/unsafe_footprints.png)
 
-By default, footprints' color is
+既定では、フットプリントの色は次のようになります。
 
-- when the distance is less than 0.1 [m] : red
-- when the distance is less than 0.2 [m] : green
-- when the distance is less than 0.3 [m] : blue
+- 距離が 0.1 [m] 未満の場合: 赤
+- 距離が 0.2 [m] 未満の場合: 緑
+- 距離が 0.3 [m] 未満の場合: 青
+

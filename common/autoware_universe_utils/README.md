@@ -1,12 +1,12 @@
-# autoware_universe_utils
+## autoware_universe_utils
 
-## Purpose
+## 目的
 
-This package contains many common functions used by other packages, so please refer to them as needed.
+このパッケージには、他のパッケージで一般的に使用される関数が多数含まれているため、必要に応じて参照してください。
 
-## For developers
+## 開発者向け
 
-`autoware_universe_utils.hpp` header file was removed because the source files that directly/indirectly include this file took a long time for preprocessing.
+プリプロセスに時間がかかるため、`autoware_universe_utils.hpp` ヘッダーファイルは削除されました。
 
 ## `autoware::universe_utils`
 
@@ -14,49 +14,51 @@ This package contains many common functions used by other packages, so please re
 
 #### `autoware::universe_utils::TimeKeeper`
 
-##### Constructor
+##### コンストラクタ
+
 
 ```cpp
 template <typename... Reporters>
 explicit TimeKeeper(Reporters... reporters);
 ```
 
-- Initializes the `TimeKeeper` with a list of reporters.
+- `TimeKeeper`をリポーターのリストで初期化します。
 
-##### Methods
+##### メソッド
 
 - `void add_reporter(std::ostream * os);`
 
-  - Adds a reporter to output processing times to an `ostream`.
-  - `os`: Pointer to the `ostream` object.
+  - `ostream`に出力処理時間をレポートするリポーターを追加します。
+  - `os`: `ostream`オブジェクトへのポインタ。
 
 - `void add_reporter(rclcpp::Publisher<ProcessingTimeDetail>::SharedPtr publisher);`
 
-  - Adds a reporter to publish processing times to an `rclcpp` publisher.
-  - `publisher`: Shared pointer to the `rclcpp` publisher.
+  - 処理時間を`rclcpp`パブリッシャーにパブリッシュするリポーターを追加します。
+  - `publisher`: `rclcpp`パブリッシャーへの共有ポインタ。
 
 - `void add_reporter(rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher);`
 
-  - Adds a reporter to publish processing times to an `rclcpp` publisher with `std_msgs::msg::String`.
-  - `publisher`: Shared pointer to the `rclcpp` publisher.
+  - 処理時間を`std_msgs::msg::String`を使用した`rclcpp`パブリッシャーにパブリッシュするリポーターを追加します。
+  - `publisher`: `rclcpp`パブリッシャーへの共有ポインタ。
 
 - `void start_track(const std::string & func_name);`
 
-  - Starts tracking the processing time of a function.
-  - `func_name`: Name of the function to be tracked.
+  - 関数の処理時間を追跡し始めます。
+  - `func_name`: 追跡する関数の名前。
 
 - `void end_track(const std::string & func_name);`
 
-  - Ends tracking the processing time of a function.
-  - `func_name`: Name of the function to end tracking.
+  - 関数の処理時間の追跡を終了します。
+  - `func_name`: 追跡を終了する関数の名前。
 
 - `void comment(const std::string & comment);`
-  - Adds a comment to the current function being tracked.
-  - `comment`: Comment to be added.
+  - 追跡中の現在の関数にコメントを追加します。
+  - `comment`: 追加するコメント。
 
-##### Note
+##### 注釈
 
-- It's possible to start and end time measurements using `start_track` and `end_track` as shown below:
+- 以下に示すように、`start_track`と`end_track`を使用して時間測定を開始および終了できます。
+
 
   ```cpp
   time_keeper.start_track("example_function");
@@ -64,9 +66,10 @@ explicit TimeKeeper(Reporters... reporters);
   time_keeper.end_track("example_function");
   ```
 
-- For safety and to ensure proper tracking, it is recommended to use `ScopedTimeTrack`.
+- 安全性と適切な追跡を確保するために、`ScopedTimeTrack`の使用を推奨します。
 
-##### Example
+##### 例
+
 
 ```cpp
 #include <rclcpp/rclcpp.hpp>
@@ -138,7 +141,8 @@ int main(int argc, char ** argv)
 }
 ```
 
-- Output (console)
+- 出力（コンソール）
+
 
   ```text
   ==========================
@@ -147,7 +151,8 @@ int main(int argc, char ** argv)
           └── func_c (3.055ms) : This is a comment for func_c
   ```
 
-- Output (`ros2 topic echo /processing_time`)
+- 出力 (`ros2 topic echo /processing_time`)
+
 
   ```text
   ---
@@ -171,23 +176,26 @@ int main(int argc, char ** argv)
 
 #### `autoware::universe_utils::ScopedTimeTrack`
 
-##### Description
+##### 説明
 
-Class for automatically tracking the processing time of a function within a scope.
+スコープ内の関数の処理時間を自動的に追跡するためのクラスです。
 
-##### Constructor
+##### コンストラクタ
+
 
 ```cpp
 ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keeper);
 ```
 
-- `func_name`: Name of the function to be tracked.
-- `time_keeper`: Reference to the `TimeKeeper` object.
+- `func_name`: 追跡する関数の名前。
+- `time_keeper`: `TimeKeeper` オブジェクトへの参照。
 
-##### Destructor
+##### デストラクター
+
 
 ```cpp
 ~ScopedTimeTrack();
 ```
 
-- Destroys the `ScopedTimeTrack` object, ending the tracking of the function.
+- `ScopedTimeTrack`オブジェクトを破壊し、関数の追跡を終了します。
+

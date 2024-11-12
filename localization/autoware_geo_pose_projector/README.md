@@ -1,28 +1,29 @@
 # autoware_geo_pose_projector
 
-## Overview
+## 概要
 
-This node is a simple node that subscribes to the geo-referenced pose topic and publishes the pose in the map frame.
+このノードは、地理参照された姿勢トピックを購読し、マップフレーム内の姿勢を公開するシンプルなノードです。
 
-## Subscribed Topics
+## 購読トピック
 
-| Name                      | Type                                                 | Description         |
-| ------------------------- | ---------------------------------------------------- | ------------------- |
-| `input_geo_pose`          | `geographic_msgs::msg::GeoPoseWithCovarianceStamped` | geo-referenced pose |
-| `/map/map_projector_info` | `tier4_map_msgs::msg::MapProjectedObjectInfo`        | map projector info  |
+| 名前                      | タイプ                                                 | 説明                 |
+| ------------------------- | ---------------------------------------------------- | -------------------- |
+| `input_geo_pose`          | `geographic_msgs::msg::GeoPoseWithCovarianceStamped` | 地理参照された位置 |
+| `/map/map_projector_info` | `tier4_map_msgs::msg::MapProjectedObjectInfo`        | マッププロジェクター情報 |
 
-## Published Topics
+## 公開トピック
 
-| Name          | Type                                            | Description                           |
-| ------------- | ----------------------------------------------- | ------------------------------------- |
-| `output_pose` | `geometry_msgs::msg::PoseWithCovarianceStamped` | pose in map frame                     |
-| `/tf`         | `tf2_msgs::msg::TFMessage`                      | tf from parent link to the child link |
+| 名称          | 型                                                | 説明                                   |
+| ------------- | ------------------------------------------------- | ---------------------------------------- |
+| `output_pose` | `geometry_msgs::msg::PoseWithCovarianceStamped` | マップフレーム内のポーズ                |
+| `/tf`         | `tf2_msgs::msg::TFMessage`                        | 親リンクと子リンク間のtf              |
 
-## Parameters
+## パラメータ
 
 {{ json_to_markdown("localization/autoware_geo_pose_projector/schema/geo_pose_projector.schema.json") }}
 
-## Limitations
+## 制限事項
 
-The covariance conversion may be incorrect depending on the projection type you are using. The covariance of input topic is expressed in (Latitude, Longitude, Altitude) as a diagonal matrix.
-Currently, we assume that the x axis is the east direction and the y axis is the north direction. Thus, the conversion may be incorrect when this assumption breaks, especially when the covariance of latitude and longitude is different.
+使用する投影タイプによっては、共分散を変換できない可能性があります。入力トピックの共分散は、対角行列として(緯度、経度、高度)で表されます。
+現在、x軸を東向き、y軸を北向きと想定しています。そのため、この仮定が破られると、特に緯度と経度の共分散が異なる場合は、変換が正しく処理されない可能性があります。
+

@@ -1,62 +1,62 @@
-# autoware_simple_object_merger
+## autoware_simple_object_merger
 
-This package can merge multiple topics of [autoware_perception_msgs/msg/DetectedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/DetectedObject.msg) with low calculation cost.
+このパッケージは、低計算コストで複数のトピックの [autoware_perception_msgs/msg/DetectedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/DetectedObject.msg) をマージすることができます。
 
-## Design
+## 設計
 
-### Background
+### 背景
 
-[Object_merger](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/object_merger) is mainly used for merge process with DetectedObjects. There are 2 characteristics in `Object_merger`. First, `object_merger` solve data association algorithm like Hungarian algorithm for matching problem, but it needs computational cost. Second, `object_merger` can handle only 2 DetectedObjects topics and cannot handle more than 2 topics in one node. To merge 6 DetectedObjects topics, 6 `object_merger` nodes need to stand for now.
+[Object_merger](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/object_merger) は主に DetectedObjects のマージ処理に使用されます。`Object_merger` には 2 つの特性があります。1 つ目は、`object_merger` はハンガリアンアルゴリズムなどのデータ関連付けアルゴリズムを使用してマッチングの問題を解決しますが、計算コストが必要になります。2 つ目は、`object_merger` は 2 つだけの DetectedObjects トピックを処理でき、1 つのノードで 2 つを超えるトピックを処理できません。現時点で 6 つの DetectedObjects トピックをマージするには、6 つの `object_merger` ノードが必要になります。
 
-Therefore, `autoware_simple_object_merger` aim to merge multiple DetectedObjects with low calculation cost.
-The package do not use data association algorithm to reduce the computational cost, and it can handle more than 2 topics in one node to prevent launching a large number of nodes.
+したがって、`autoware_simple_object_merger` は複数の DetectedObjects を低計算コストでマージすることを目的としています。このパッケージは、計算コストを削減するためにデータ関連付けアルゴリズムを使用せず、大量のノードを立ち上げることなく、1 つのノードで 2 つを超えるトピックを処理できます。
 
-### Use case
+### ユースケース
 
-- Multiple radar detection
+- 複数のレーダー検出
 
-`autoware_simple_object_merger` can be used for multiple radar detection. By combining them into one topic from multiple radar topics, the pipeline for faraway detection with radar can be simpler.
+`autoware_simple_object_merger` は複数のレーダー検出に使用できます。複数のレーダートピックから 1 つのトピックにそれらをまとめることで、レーダーを使用した遠距離検出のパイプラインを簡略化できます。
 
-### Limitation
+### 制約事項
 
-- Sensor data drops and delay
+- センサーデータのドロップと遅延
 
-Merged objects will not be published until all topic data is received when initializing. In addition, to care sensor data drops and delayed, this package has a parameter to judge timeout. When the latest time of the data of a topic is older than the timeout parameter, it is not merged for output objects. For now specification of this package, if all topic data is received at first and after that the data drops, and the merged objects are published without objects which is judged as timeout.The timeout parameter should be determined by sensor cycle time.
+初期化時にすべてのトピックデータが受信されるまで、マージされたオブジェクトはパブリッシュされません。さらに、センサーデータのドロップと遅延に対処するために、このパッケージにはタイムアウトを判断するパラメータがあります。トピックのデータの最新時刻がタイムアウトパラメータよりも古い場合、出力オブジェクトにマージされません。現時点では、このパッケージの仕様上、最初はすべてのトピックデータを受信し、その後データがドロップした場合、タイムアウトと判断されたオブジェクトを含まないマージされたオブジェクトがパブリッシュされます。このタイムアウトパラメータは、センサーの周期時間によって決定する必要があります。
 
-- Post-processing
+- 後処理
 
-Because this package does not have matching processing, there are overlapping objects depending on the input objects. So output objects can be used only when post-processing is used. For now, [clustering processing](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/autoware_radar_object_clustering) can be used as post-processing.
+このパッケージにはマッチング処理がないため、入力オブジェクトによってはオブジェクトが重複します。そのため、出力オブジェクトは後処理を使用する場合にのみ使用できます。現時点で、[クラスタ処理](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/autoware_radar_object_clustering) を後処理として使用できます。
 
-## Interface
+## インターフェイス
 
-### Input
+### 入力
 
-Input topics is defined by the parameter of `input_topics` (List[string]). The type of input topics is `std::vector<autoware_perception_msgs/msg/DetectedObjects.msg>`.
+入力トピックは `input_topics` (List[string]) のパラメータによって定義されます。入力トピックの型は `std::vector<autoware_perception_msgs/msg/DetectedObjects.msg>` です。
 
-### Output
+### 出力
 
 - `~/output/objects` (`autoware_perception_msgs/msg/DetectedObjects.msg`)
-  - Merged objects combined from input topics.
+  - 入力トピックから結合されたマージされたオブジェクト。
 
-### Parameters
+### パラメータ
 
 - `update_rate_hz` (double) [hz]
-  - Default parameter: 20.0
+  - デフォルトパラメータ: 20.0
 
-This parameter is update rate for the `onTimer` function.
-This parameter should be same as the frame rate of input topics.
+このパラメータは `onTimer` 関数の更新レートです。
+このパラメータは、入力トピックのフレームレートと同じにする必要があります。
 
 - `new_frame_id` (string)
-  - Default parameter: "base_link"
+  - デフォルトパラメータ: "base_link"
 
-This parameter is the header frame_id of the output topic.
-If output topics use for perception module, it should be set for "base_link"
+このパラメータは、出力トピックのヘッダーの frame_id です。
+出力トピックが Planningモジュールに使用される場合は、"base_link" に設定する必要があります。
 
-- `timeout_threshold` (double) [s]
-  - Default parameter: 0.1
+- `timeout_threshold` (double) [秒]
+  - デフォルトパラメータ: 0.1
 
-This parameter is the threshold for timeout judgement.
-If the time difference between the first topic of `input_topics` and an input topic is exceeded to this parameter, then the objects of topic is not merged to output objects.
+このパラメータは、タイムアウト判定のしきい値です。
+`input_topics` の最初のトピックと入力トピックの時差がこのパラメータを超えると、トピックのオブジェクトは出力オブジェクトにマージされません。
+
 
 ```cpp
   for (size_t i = 0; i < input_topic_size; i++) {
@@ -68,11 +68,12 @@ If the time difference between the first topic of `input_topics` and an input to
   }
 ```
 
-- `input_topics` (List[string])
-  - Default parameter: "[]"
+- `input_topics`（リスト[文字列]）
+  - デフォルトパラメータ： "[]"
 
-This parameter is the name of input topics.
-For example, when this packages use for radar objects,
+このパラメータは、入力トピックの名前です。
+たとえば、このパッケージをレーダーオブジェクトに使用する場合、
+
 
 ```yaml
 input_topics:
@@ -86,5 +87,6 @@ input_topics:
   ]
 ```
 
-can be set in config yaml file.
-For now, the time difference is calculated by the header time between the first topic of `input_topics` and the input topics, so the most important objects to detect should be set in the first of `input_topics` list.
+config yaml ファイル内で設定できます。
+現時点では、時間差は `input_topics` の最初のトピックと入力トピック間のヘッダー時間で計算されるため、検出する最も重要なオブジェクトは `input_topics` リストの最初の部分に設定する必要があります。
+

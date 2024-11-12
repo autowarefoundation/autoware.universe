@@ -1,20 +1,21 @@
 # tier4_localization_launch
 
-## Structure
+## 構造
 
 ![tier4_localization_launch](./localization_launch.drawio.svg)
 
-## Package Dependencies
+## パッケージ依存関係
 
-Please see `<exec_depend>` in `package.xml`.
+`package.xml`の`<exec_depend>`を参照してください。
 
-## Usage
+## 使用方法
 
-Include `localization.launch.xml` in other launch files as follows.
+`localization.launch.xml`を他の`launch`ファイルに次のように含めます。
 
-You can select which methods in localization to launch as `pose_estimator` or `twist_estimator` by specifying `pose_source` and `twist_source`.
+`pose_source`と`twist_source`を指定して、位置推定または速度推定のロカライゼーション方式を選択できます。
 
-In addition, you should provide parameter paths as `PACKAGE_param_path`. The list of parameter paths you should provide is written at the top of `localization.launch.xml`.
+さらに、`PACKAGE_param_path`としてパラメータのパスを提供する必要があります。提供する必要のあるパラメータパスのリストは、`localization.launch.xml`の先頭に記載されています。
+
 
 ```xml
   <include file="$(find-pkg-share tier4_localization_launch)/launch/localization.launch.xml">
@@ -28,3 +29,4 @@ In addition, you should provide parameter paths as `PACKAGE_param_path`. The lis
     ...
   </include>
 ```
+

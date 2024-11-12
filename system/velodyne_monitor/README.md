@@ -1,83 +1,80 @@
 # velodyne_monitor
 
-## Purpose
+## 目的
 
-This node monitors the status of Velodyne LiDARs.
-The result of the status is published as diagnostics.
-Take care not to use this diagnostics to decide the lidar error.
-Please read [Assumptions / Known limits](#assumptions--known-limits) for the detail reason.
+このノードは、Velodyne LiDAR のステータスを監視します。
+ステータスの結果は診断として公開されます。この診断を使用して LiDAR エラーを判定することは避けてください。
+詳細な理由については[前提条件/既知の制限事項](#assumptions--known-limits) をお読みください。
 
-## Inner-workings / Algorithms
+## 内部動作 / アルゴリズム
 
-The status of Velodyne LiDAR can be retrieved from `http://[ip_address]/cgi/{info, settings, status, diag}.json`.
+Velodyne LiDAR のステータスは `http://[ip_address]/cgi/{info, settings, status, diag}.json` から取得できます。
 
-The types of abnormal status and corresponding diagnostics status are following.
+異常ステータスと対応する診断ステータスのタイプは次のとおりです。
 
-| Abnormal status                                     | Diagnostic status |
-| --------------------------------------------------- | ----------------- |
-| No abnormality                                      | OK                |
-| Top board temperature is too cold                   | ERROR             |
-| Top board temperature is cold                       | WARN              |
-| Top board temperature is too hot                    | ERROR             |
-| Top board temperature is hot                        | WARN              |
-| Bottom board temperature is too cold                | ERROR             |
-| Bottom board temperature is cold                    | WARN              |
-| Bottom board temperature is too hot                 | ERROR             |
-| Bottom board temperature is hot                     | WARN              |
-| Rpm(Rotations per minute) of the motor is too low   | ERROR             |
-| Rpm(Rotations per minute) of the motor is low       | WARN              |
-| Connection error (cannot get Velodyne LiDAR status) | ERROR             |
+| 異常状態 | 診断ステータス |
+| -------------------------------------------------- | ---------------- |
+| 異常なし | OK |
+| 基板の上面の温度が低すぎる | ERROR |
+| 基板の上面の温度が低い | WARN |
+| 基板の上面の温度が高すぎる | ERROR |
+| 基板の上面の温度が高い | WARN |
+| 基板の下面の温度が低すぎる | ERROR |
+| 基板の下面の温度が低い | WARN |
+| 基板の下面の温度が高すぎる | ERROR |
+| 基板の下面の温度が高い | WARN |
+| モーターの回転数（rpm）が低すぎる | ERROR |
+| モーターの回転数（rpm）が低い | WARN |
+| 接続エラー（Velodyne LiDARステータスを取得できない） | ERROR |
 
-## Inputs / Outputs
+## 入力 / 出力
 
-### Input
+### 入力
 
-None
+なし
 
-### Output
+### 出力
 
-| Name           | Type                              | Description         |
+| Name           | Type                              | 説明         |
 | -------------- | --------------------------------- | ------------------- |
-| `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | Diagnostics outputs |
+| `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | 診断出力 |
 
-## Parameters
+## パラメータ
 
-### Node Parameters
+### ノードパラメータ
 
-| Name      | Type   | Default Value | Description                                               |
-| --------- | ------ | ------------- | --------------------------------------------------------- |
-| `timeout` | double | 0.5           | Timeout for HTTP request to get Velodyne LiDAR status [s] |
+| 名前      | 型      | デフォルト値 | 説明                                                     |
+| --------- | ------ | ------------- | -------------------------------------------------------- |
+| `timeout` | double | 0.5           | Velodyne LiDAR のステータスを取得するための HTTP リクエストのタイムアウト [s] |
 
-### Core Parameters
+### 主要パラメータ
 
-| Name              | Type   | Default Value   | Description                                                                                                               |
+| 名前              | 型   | デフォルト値   | 説明                                                                                                                |
 | ----------------- | ------ | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `ip_address`      | string | "192.168.1.201" | IP address of target Velodyne LiDAR                                                                                       |
-| `temp_cold_warn`  | double | -5.0            | If the temperature of Velodyne LiDAR is lower than this value, the diagnostics status becomes WARN [°C]                   |
-| `temp_cold_error` | double | -10.0           | If the temperature of Velodyne LiDAR is lower than this value, the diagnostics status becomes ERROR [°C]                  |
-| `temp_hot_warn`   | double | 75.0            | If the temperature of Velodyne LiDAR is higher than this value, the diagnostics status becomes WARN [°C]                  |
-| `temp_hot_error`  | double | 80.0            | If the temperature of Velodyne LiDAR is higher than this value, the diagnostics status becomes ERROR [°C]                 |
-| `rpm_ratio_warn`  | double | 0.80            | If the rpm rate of the motor (= current rpm / default rpm) is lower than this value, the diagnostics status becomes WARN  |
-| `rpm_ratio_error` | double | 0.70            | If the rpm rate of the motor (= current rpm / default rpm) is lower than this value, the diagnostics status becomes ERROR |
+| `ip_address`      | 文字列 | "192.168.1.201" | ターゲット Velodyne LiDAR の IP アドレス                                                                                     |
+| `temp_cold_warn`  | double | -5.0            | Velodyne LiDAR の温度がこの値を下回ると、診断ステータスが WARN になります [°C]                                        |
+| `temp_cold_error` | double | -10.0           | Velodyne LiDAR の温度がこの値を下回ると、診断ステータスが ERROR になります [°C]                                     |
+| `temp_hot_warn`   | double | 75.0            | Velodyne LiDAR の温度がこの値を超えると、診断ステータスが WARN になります [°C]                                        |
+| `temp_hot_error`  | double | 80.0            | Velodyne LiDAR の温度がこの値を超えると、診断ステータスが ERROR になります [°C]                                     |
+| `rpm_ratio_warn`  | double | 0.80            | モーターの回転数率（= 現在の回転数 / デフォルト回転数）がこの値を下回ると、診断ステータスが WARN になります  |
+| `rpm_ratio_error` | double | 0.70            | モーターの回転数率（= 現在の回転数 / デフォルト回転数）がこの値を下回ると、診断ステータスが ERROR になります |
 
-### Config files
+### 設定ファイル
 
-Config files for several velodyne models are prepared.
-The `temp_***` parameters are set with reference to the operational temperature from each datasheet.
-Moreover, the `temp_hot_***` of each model are set highly as 20 from operational temperature.
-Now, `VLP-16.param.yaml` is used as default argument because it is lowest spec.
+いくつかの Velodyne モデルの設定ファイルは準備されています。
+`temp_***` パラメータは各データシートの動作温度を基準に設定されています。
+さらに、各モデルの `temp_hot_***` は動作温度より 20 高く設定されています。
+現在、`VLP-16.param.yaml` が最も低い仕様であるためデフォルト引数として使用されています。
 
-| Model Name     | Config name               | Operational Temperature [℃] |
-| -------------- | ------------------------- | --------------------------- |
-| VLP-16         | VLP-16.param.yaml         | -10 to 60                   |
-| VLP-32C        | VLP-32C.param.yaml        | -20 to 60                   |
-| VLS-128        | VLS-128.param.yaml        | -20 to 60                   |
-| Velarray M1600 | Velarray_M1600.param.yaml | -40 to 85                   |
-| HDL-32E        | HDL-32E.param.yaml        | -10 to 60                   |
+| モデル名              | 設定名                                | 実稼働温度 [℃]           |
+| --------------------- | -------------------------------------- | ------------------------- |
+| VLP-16                  | VLP-16.param.yaml                     | -10 ～ 60                 |
+| VLP-32C                 | VLP-32C.param.yaml                    | -20 ～ 60                 |
+| VLS-128                 | VLS-128.param.yaml                    | -20 ～ 60                 |
+| Velarray M1600          | Velarray_M1600.param.yaml             | -40 ～ 85                 |
+| HDL-32E                 | HDL-32E.param.yaml                    | -10 ～ 60                 |
 
-## Assumptions / Known limits
+## 前提 / 制限事項
 
-This node uses the [http_client](https://github.com/microsoft/cpprestsdk) and request results by GET method.
-It takes a few seconds to get results, or generate a timeout exception if it does not succeed the GET request.
-This occurs frequently and the diagnostics aggregator output STALE.
-Therefore I recommend to stop using this results to decide the lidar error, and only monitor it to confirm lidar status.
+このノードは[http_client](https://github.com/microsoft/cpprestsdk)を使用し、結果をGETメソッドで要求します。このノードは結果を取得するのに数秒かかります。GETリクエストが成功しない場合はタイムアウト例外を生成します。これは頻繁に発生し、診断アグリゲータが出力を古くしたと判断します。そのため、この結果をレーザスキャナのエラーを判断するために使用しなくなり、レーザスキャナのステータスを確認するためにのみ監視することをお勧めします。
+

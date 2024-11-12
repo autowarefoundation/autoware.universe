@@ -1,35 +1,36 @@
 # autoware_mission_details_overlay_rviz_plugin
 
-This RViz plugin displays the remaining distance and time for the current mission.
+このRVizプラグインは、現在のミッションの残り距離と時間を表示します。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                                        | Type                                                        | Description                                          |
-| ------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------- |
-| `/planning/mission_remaining_distance_time` | `autoware_planning_msgs::msg::MissionRemainingDistanceTime` | The topic is for mission remaining distance and time |
+| 名称                                       | 種類                                                        | 説明                                               |
+| ------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------ |
+| `/planning/mission_remaining_distance_time` | `autoware_planning_msgs::msg::MissionRemainingDistanceTime` | ミッションの残り距離と時間を表すトピック            |
 
-## Overlay Parameters
+## オーバーレイパラメータ
 
-| Name     | Type | Default Value | Description                       |
+| 名前     | タイプ | デフォルト値 | 説明                       |
 | -------- | ---- | ------------- | --------------------------------- |
-| `Width`  | int  | 170           | Width of the overlay [px]         |
-| `Height` | int  | 100           | Height of the overlay [px]        |
-| `Right`  | int  | 10            | Margin from the right border [px] |
-| `Top`    | int  | 10            | Margin from the top border [px]   |
+| `Width`  | int  | 170           | オーバーレイの幅 [`px`]         |
+| `Height` | int  | 100           | オーバーレイの高さ [`px`]        |
+| `Right`  | int  | 10            | 右端からの余白 [`px`] |
+| `Top`    | int  | 10            | 上端からの余白 [`px`]   |
 
-The mission details display is aligned with top right corner of the screen.
+ミッションの詳細表示は、画面の右上に配置されています。
 
-## Usage
+## 使用方法
 
-Similar to [autoware_overlay_rviz_plugin](../autoware_overlay_rviz_plugin/README.md)
+[autoware_overlay_rviz_plugin](../autoware_overlay_rviz_plugin/README.md)に似ています。
 
-## Credits
+## クレジット
 
-Based on the [jsk_visualization](https://github.com/jsk-ros-pkg/jsk_visualization) package.
+[jsk_visualization](https://github.com/jsk-ros-pkg/jsk_visualization)パッケージをベースにしています。
 
-### Icons
+### アイコン
 
 - <https://fonts.google.com/icons?selected=Material+Symbols+Outlined:conversion_path:FILL@1;wght@400;GRAD@200;opsz@20&icon.size=20&icon.color=%23e8eaed&icon.query=path>
 - <https://fonts.google.com/icons?selected=Material+Symbols+Outlined:av_timer:FILL@1;wght@400;GRAD@200;opsz@20&icon.size=20&icon.color=%23e8eaed&icon.query=av+timer>
+

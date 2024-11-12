@@ -2,14 +2,15 @@
 
 !!! warning
 
-    Under Construction
+    計画中
 
-## Purpose
+## 目的
 
-## Inner-workings / Algorithms
+## 内部動作 / アルゴリズム
 
-## Inputs / Outputs
+## 入力 / 出力
 
-## Assumptions / Known limits
+## 仮定 / わかっている制限事項
 
-## Future extensions / Unimplemented parts
+## 将来の拡張 / 未実装の部分
+

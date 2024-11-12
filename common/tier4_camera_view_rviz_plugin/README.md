@@ -1,27 +1,28 @@
 # tier4_camera_view_rviz_plugin
 
-## ThirdPersonView Tool
+## 第三者ビューツール
 
-Add the `tier4_camera_view_rviz_plugin/ThirdPersonViewTool` tool to the RViz. Push the button, the camera will focus on the vehicle and set the target frame to `base_link`. Short cut key 'o'.
+RVizに`tier4_camera_view_rviz_plugin/ThirdPersonViewTool`ツールを追加します。ボタンを押すと、カメラが車両にフォーカスされ、ターゲットフレームが「base_link」に設定されます。ショートカットキーは「o」です。
 
-## BirdEyeView Tool
+## 鳥瞰図ビューツール
 
-Add the `tier4_camera_view_rviz_plugin/BirdEyeViewTool` tool to the RViz. Push the button, the camera will turn to the BEV view, the target frame is consistent with the latest frame. Short cut key 'r'.
+RVizに`tier4_camera_view_rviz_plugin/BirdEyeViewTool`ツールを追加します。ボタンを押すと、カメラがBEVビューに切り替わり、ターゲットフレームは最新のフレームと一致します。ショートカットキーは「r」です。
 
-## Material Design Icons
+## マテリアルデザインアイコン
 
-This project uses [Material Design Icons](https://developers.google.com/fonts/docs/material_symbols) by Google. These icons are used under the terms of the Apache License, Version 2.0.
+このプロジェクトではGoogleの [マテリアルデザインアイコン](https://developers.google.com/fonts/docs/material_symbols)を使用しています。これらのアイコンはApache License、バージョン2.0の条項に従って使用されています。
 
-Material Design Icons are a collection of symbols provided by Google that are used to enhance the user interface of applications, websites, and other digital products.
+マテリアルデザインアイコンは、アプリケーション、Webサイト、その他のデジタル製品のユーザーインターフェイスを向上させるためにGoogleによって提供される記号のコレクションです。
 
-### License
+### ライセンス
 
-The Material Design Icons are licensed under the Apache License, Version 2.0. You may obtain a copy of the License at:
+マテリアルデザインアイコンは、Apache License、バージョン2.0のライセンスが付与されています。ライセンスのコピーは次のURLから入手できます。
 
 <http://www.apache.org/licenses/LICENSE-2.0>
 
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+適用される法律により要求されない限り、または書面による合意がない限り、ライセンスに基づいて配布されるソフトウェアは、「現状のまま」の状態で配布され、明示的または黙示的な保証や条件はありません。ライセンスに記載されている特定の言語に記載される許可と制限事項を参照してください。
 
-### Acknowledgments
+### 謝辞
 
-We would like to express our gratitude to Google for making these icons available to the community, helping developers and designers enhance the visual appeal and user experience of their projects.
+これらのアイコンをコミュニティに提供し、開発者やデザイナーがプロジェクトのビジュアルアピールとユーザーエクスペリエンスを向上させることができるよう支援するGoogleに感謝の意を表します。
+

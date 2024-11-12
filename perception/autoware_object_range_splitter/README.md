@@ -1,95 +1,150 @@
 # `autoware_object_range_splitter`
 
-## Purpose
+## 目的
 
-autoware_object_range_splitter is a package to divide detected objects into two messages by the distance from the origin.
+`autoware_object_range_splitter`は、検出されたオブジェクトを起点からの距離で2つのメッセージに分割するためのパッケージです。
 
-## Inner-workings / Algorithms
+## 内部処理/アルゴリズム
 
-<!-- Write how this package works. Flowcharts and figures are great. Add sub-sections as you like.
+<!-- このパッケージのしくみについて、フローチャート、図などの資料を追加してください。サブセクションも適宜追加してください。
 
-Example:
-  ### Flowcharts
+例:
+  ### フローチャート
 
-  ...(PlantUML or something)
+  ...(PlantUMLなど)
 
-  ### State Transitions
+  ### ステートトランジション
 
-  ...(PlantUML or something)
+  ...(PlantUMLなど)
 
-  ### How to filter target obstacles
+  ### ターゲット障害物のフィルタ方法
 
   ...
 
-  ### How to optimize trajectory
+  ### 軌道の最適化方法
 
   ...
 -->
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name           | Type                                             | Description      |
-| -------------- | ------------------------------------------------ | ---------------- |
-| `input/object` | `autoware_perception_msgs::msg::DetectedObjects` | detected objects |
+| 名称       | 種別                                        | 説明       |
+| ---------- | ------------------------------------------- | ---------- |
+| `input/object` | `autoware_perception_msgs::msg::DetectedObjects` | 検出オブジェクト |
 
-### Output
+### 出力
 
-| Name                        | Type                                             | Description                  |
-| --------------------------- | ------------------------------------------------ | ---------------------------- |
-| `output/long_range_object`  | `autoware_perception_msgs::msg::DetectedObjects` | long range detected objects  |
-| `output/short_range_object` | `autoware_perception_msgs::msg::DetectedObjects` | short range detected objects |
+**自動運転ソフトウェア**
 
-## Parameters
+**仕様**
+
+**Planning コンポーネント**
+
+**概要**
+
+Planning コンポーネントは、現在の状況や高レベルの目標に基づいて、車両の将来の経路を計画します。
+
+**機能**
+
+* 安全で衝突を回避する経路の生成
+* 交通規則の遵守
+* 車両の制約（速度、加速度など）を考慮した経路生成
+* 動的障害物（歩行者、車両など）への対応
+* 高レベルの目標（目的地、レーンキープなど）への追従
+* 予測可能な経路生成
+
+**実装**
+
+Planning コンポーネントは、Autoware の __Planning モジュール__ によって実装されています。このモジュールは、以下を実行します。
+
+* センサデータの処理と解析
+* 自車位置の推定
+* 環境のモデリング
+* 経路の探索と最適化
+* 経路の可視化
+
+**安全性**
+
+Planning コンポーネントは、次の特徴により安全な動作を確保します。
+
+* 複数のセンサからのデータフュージョン
+* 予測可能な経路生成
+* 冗長性の確保
+* 逸脱量の制限（速度逸脱量、加速度逸脱量など）
+
+**性能**
+
+Planning コンポーネントは、以下のようなパフォーマンス目標を達成するように設計されています。
+
+* 低遅延の経路生成
+* `post resampling` 後の経路の正確さ
+* さまざまな運転シナリオへの適応性
+
+**依存関係**
+
+Planning コンポーネントは、以下のコンポーネントに依存しています。
+
+*センシングコンポーネント*
+* ローカライゼーションコンポーネント*
+* コントロールコンポーネント*
+
+| 名称 | 型 | 説明 |
+|---|---|---|
+| `output/long_range_object` | `autoware_perception_msgs::msg::DetectedObjects` | 長距離検出オブジェクト |
+| `output/short_range_object` | `autoware_perception_msgs::msg::DetectedObjects` | 短距離検出オブジェクト |
+
+## パラメータ
 
 {{ json_to_markdown("perception/autoware_object_range_splitter/schema/object_range_splitter.schema.json") }}
 
-## Assumptions / Known limits
+## 想定 / 既知の制限
 
-<!-- Write assumptions and limitations of your implementation.
+<!-- 実装の想定事項と制限事項を記載してください。
 
-Example:
-  This algorithm assumes obstacles are not moving, so if they rapidly move after the vehicle started to avoid them, it might collide with them.
-  Also, this algorithm doesn't care about blind spots. In general, since too close obstacles aren't visible due to the sensing performance limit, please take enough margin to obstacles.
+例:
+  このアルゴリズムは障害物が動かないことを想定しているので、障害物が車両が回避し始めてから急に動いた場合、車両が障害物と衝突する可能性があります。
+  また、このアルゴリズムは死角を考慮しません。一般に、障害物が近すぎるとセンシングのパフォーマンスの限界により見えなくなるため、障害物に対して十分なマージンを取ってください。
 -->
 
-## (Optional) Error detection and handling
+## (オプション) エラーの検出と処理
 
-<!-- Write how to detect errors and how to recover from them.
+<!-- エラーの検出方法と回復方法を記載してください。
 
-Example:
-  This package can handle up to 20 obstacles. If more obstacles found, this node will give up and raise diagnostic errors.
+例:
+  このパッケージでは、最大20個の障害物を処理できます。それ以上の障害物が検出された場合、このノードは処理を放棄し、診断エラーを発生させます。
 -->
 
-## (Optional) Performance characterization
+## (オプション) パフォーマンス特性評価
 
-<!-- Write performance information like complexity. If it wouldn't be the bottleneck, not necessary.
+<!-- 複雑さなどのパフォーマンス情報を記載してください。ボトルネックにならない場合は不要です。
 
-Example:
-  ### Complexity
+例:
+  ### 複雑さ
 
-  This algorithm is O(N).
+  このアルゴリズムの複雑さは O(N) です。
 
-  ### Processing time
+  ### 処理時間
 
   ...
 -->
 
-## (Optional) References/External links
+## (オプション) 参考文献 / 外部リンク
 
-<!-- Write links you referred to when you implemented.
+<!-- 実装の際に参照したリンクを記載してください。
 
-Example:
+例:
   [1] {link_to_a_thesis}
   [2] {link_to_an_issue}
 -->
 
-## (Optional) Future extensions / Unimplemented parts
+## (オプション) 将来の拡張機能 / 未実装部分
 
-<!-- Write future extensions of this package.
+<!-- このパッケージの将来の拡張機能を記載してください。
 
-Example:
-  Currently, this package can't handle the chattering obstacles well. We plan to add some probabilistic filters in the perception layer to improve it.
-  Also, there are some parameters that should be global(e.g. vehicle size, max steering, etc.). These will be refactored and defined as global parameters so that we can share the same parameters between different nodes.
+例:
+  現在、このパッケージは障害物のチャタリングをうまく処理できません。知覚レイヤーに確率的フィルタを追加して、これを改善する予定です。
+  また、グローバルにする必要があるパラメータ (例: 車両サイズ、最大操舵角度など) がいくつかあります。これらはリファクタリングされ、グローバルパラメータとして定義されるため、異なるノード間で同じパラメータを共有できます。
 -->
+

@@ -1,79 +1,82 @@
 # bluetooth_monitor
 
-## Description
+## 説明
 
-This node monitors a Bluetooth connection to a wireless device by using L2ping.<br>
-L2ping generates PING echo command on Bluetooth L2CAP layer, and it is able to receive and check echo response from a wireless device.
+このノードは、L2pingを使用したワイヤレスデバイスへのBluetooth接続を監視します。<br>
+L2pingはBluetooth L2CAPレイヤーでPINGエコーコマンドを生成し、ワイヤレスデバイスからのエコーレスポンスを受信して確認できます。
 
-## Block diagram
+## ブロックダイアグラム
 
-L2ping is only allowed for root by default, so this package provides the following approach to minimize security risks as much as possible:
+L2pingはデフォルトではrootユーザーのみ許可されているため、このパッケージは次のアプローチを提供して、可能な限りセキュリティリスクを最小限に抑えます。
 
-- Provide a small program named `l2ping_service` which performs L2ping and provides wireless device information to `bluetooth_monitor` by using socket programming.
-- `bluetooth_monitor` is able to know wireless device information and L2ping status as an unprivileged user since those information are sent by socket communication.
+- L2pingを実行し、ソケットプログラミングを使用してワイヤレスデバイス情報を`bluetooth_monitor`に提供する`l2ping_service`という名前の小さなプログラムを提供します。
+- `bluetooth_monitor`は、ソケット通信によってこれらの情報が送信されるため、非特権ユーザーとしてワイヤレスデバイス情報とL2pingステータスを知ることができます。
 
 ![block_diagram](docs/block_diagram.drawio.svg)
 
-## Output
+## 出力
 
 ### <u>bluetooth_monitor: bluetooth_connection</u>
 
-<b>[summary]</b>
+<b>[概要]</b>
 
-| level | message        |
-| ----- | -------------- |
-| OK    | OK             |
-| WARN  | RTT warning    |
-| ERROR | Lost           |
-|       | Function error |
+| レベル | メッセージ |
+| ----- | -------- |
+| OK    | OK |
+| WARN  | RTT警告 |
+| ERROR | ロスト |
+|       | 関数エラー |
 
-<b>[values]</b>
+**[値]**
 
-| key                        | value (example)                                                         |
-| -------------------------- | ----------------------------------------------------------------------- |
-| Device [0-9]: Status       | OK / RTT warning / Verify error / Lost / Ping rejected / Function error |
-| Device [0-9]: Name         | Wireless Controller                                                     |
-| Device [0-9]: Manufacturer | MediaTek, Inc.                                                          |
-| Device [0-9]: Address      | AA:BB:CC:DD:EE:FF                                                       |
-| Device [0-9]: RTT          | 0.00ms                                                                  |
+| キー                          | 値 (例)                                                               |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| デバイス [0-9]: ステータス | OK / RTT 警告 / 検証エラー / ロスト / Ping 拒否 / 機能エラー |
+| デバイス [0-9]: 名称         | ワイヤレスコントローラー                                                   |
+| デバイス [0-9]: 製造元       | MediaTek, Inc.                                                          |
+| デバイス [0-9]: アドレス      | AA:BB:CC:DD:EE:FF                                                       |
+| デバイス [0-9]: RTT          | 0.00ms                                                                  |
 
-- The following key will be added when `bluetooth_monitor` reports `Function error`.<br>
-  ex.) The `connect` system call failed.
+- 「bluetooth_monitor」が「機能エラー」をレポートすると、次のキーが追加されます。<br>
+  例) 「connect」システムコールが失敗する。
 
-| key (example)         | value (example)           |
-| --------------------- | ------------------------- |
-| Device [0-9]: connect | No such file or directory |
+| キー（例）          | 値（例）             |
+| -------------------- | ---------------------- |
+| デバイス [0-9]: 接続 | そのようなファイルまたはディレクトリはありません |
 
-## Parameters
+## パラメータ
 
 {{ json_to_markdown("system/bluetooth_monitor/schema/bluetooth_monitor.schema.json") }}
 
 - `rtt_warn`
 
-  - **0.00(zero)**: Disable checking RTT
-  - **otherwise**: Check RTT with specified seconds
+  - **0.00(ゼロ)**: RTTのチェックを無効化
+  - **それ以外**: 指定した秒数でRTTをチェック
 
 - `addresses`
-  - **\***: All connected devices
-  - **AA:BB:CC:DD:EE:FF**: You can specify a device to monitor by setting a Bluetooth address
+  - **\***: すべての接続デバイス
+  - **AA:BB:CC:DD:EE:FF**: Bluetoothアドレスを設定することで監視するデバイスを指定できます
 
-## Instructions before starting
+## 開始前の手順
 
-- You can skip this instructions if you run `l2ping_service` as root user.
+- ルートユーザーとして`l2ping_service`を実行する場合は、以下の手順をスキップできます。
 
-1. Assign capability to `l2ping_service` since L2ping requires `cap_net_raw+eip` capability.
+1. L2pingは`cap_net_raw+eip`機能を必要とするため、`cap_net_raw+eip`機能を`l2ping_service`に割り当てます。
+
 
    ```sh
    sudo setcap 'cap_net_raw+eip' ./build/bluetooth_monitor/l2ping_service
    ```
 
-2. Run `l2ping_service` and `bluetooth_monitor`.
+2. `l2ping_service` と `bluetooth_monitor` を実行します。
+
 
    ```sh
    ./build/bluetooth_monitor/l2ping_service
    ros2 launch bluetooth_monitor bluetooth_monitor.launch.xml
    ```
 
-## Known limitations and issues
+## 周知の制限と問題
 
-None.
+なし。
+

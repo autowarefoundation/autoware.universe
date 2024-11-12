@@ -1,41 +1,40 @@
-# Interpolation package
+# 補間パッケージ
 
-This package supplies linear and spline interpolation functions.
+このパッケージでは、線形およびスプライン補間関数が提供されます。
 
-## Linear Interpolation
+## 線形補間
 
-`lerp(src_val, dst_val, ratio)` (for scalar interpolation) interpolates `src_val` and `dst_val` with `ratio`.
-This will be replaced with `std::lerp(src_val, dst_val, ratio)` in `C++20`.
+`lerp(src_val, dst_val, ratio)`（スカラー補間用）は、`ratio`を使用して`src_val`と`dst_val`を補間します。
+これは`C++20`で`std::lerp(src_val, dst_val, ratio)`に置き換えられます。
 
-`lerp(base_keys, base_values, query_keys)` (for vector interpolation) applies linear regression to each two continuous points whose x values are`base_keys` and whose y values are `base_values`.
-Then it calculates interpolated values on y-axis for `query_keys` on x-axis.
+`lerp(base_keys, base_values, query_keys)`（ベクトル補間用）は、x値が`base_keys`で、y値が`base_values`である2つの連続点それぞれに線形回帰を適用します。
+その後、x軸の`query_keys`に対してy軸の補間値を計算します。
 
-## Spline Interpolation
+## スプライン補間
 
-`spline(base_keys, base_values, query_keys)` (for vector interpolation) applies spline regression to each two continuous points whose x values are`base_keys` and whose y values are `base_values`.
-Then it calculates interpolated values on y-axis for `query_keys` on x-axis.
+`spline(base_keys, base_values, query_keys)`（ベクトル補間用）は、x値が`base_keys`で、y値が`base_values`である2つの連続点それぞれにスプライン回帰を適用します。
+その後、x軸の`query_keys`に対してy軸の補間値を計算します。
 
-### Evaluation of calculation cost
+### 計算コストの評価
 
-We evaluated calculation cost of spline interpolation for 100 points, and adopted the best one which is tridiagonal matrix algorithm.
-Methods except for tridiagonal matrix algorithm exists in `spline_interpolation` package, which has been removed from Autoware.
+100点に対するスプライン補間の計算コストを評価し、3対角行列アルゴリズムという最良のものを採用しました。
+3対角行列アルゴリズム以外の方法は`spline_interpolation`パッケージに存在しますが、Autowareからは削除されています。
 
-| Method                            | Calculation time |
+| 手法                            | 計算時間 |
 | --------------------------------- | ---------------- |
-| Tridiagonal Matrix Algorithm      | 0.007 [ms]       |
-| Preconditioned Conjugate Gradient | 0.024 [ms]       |
-| Successive Over-Relaxation        | 0.074 [ms]       |
+| 三対角行列アルゴリズム            | 0.007 [ms]       |
+| 前処理共役勾配法                   | 0.024 [ms]       |
+| 逐次過剰緩和法                   | 0.074 [ms]       |
 
-### Spline Interpolation Algorithm
+### スプライン補間アルゴリズム
 
-Assuming that the size of `base_keys` ($x_i$) and `base_values` ($y_i$) are $N + 1$, we aim to calculate spline interpolation with the following equation to interpolate between $y_i$ and $y_{i+1}$.
+`base_keys` ($x_i$) と `base_values` ($y_i$) のサイズが $N + 1$ であると仮定すると、以下の式でスプライン補間を計算し、$y_i$ と $y_{i+1}$ の間に補間します。
 
 $$
 Y_i(x) = a_i (x - x_i)^3 + b_i (x - x_i)^2 + c_i (x - x_i) + d_i \ \ \ (i = 0, \dots, N-1)
 $$
 
-Constraints on spline interpolation are as follows.
-The number of constraints is $4N$, which is equal to the number of variables of spline interpolation.
+スプライン補間の制約条件は以下のとおりです。制約条件の数は $4N$ であり、これはスプライン補間の変数の数と等しいです。
 
 $$
 \begin{align}
@@ -48,7 +47,7 @@ Y''_{N-1} (x_N) & = 0
 \end{align}
 $$
 
-According to [this article](https://www.mk-mode.com/rails/docs/INTERPOLATION_SPLINE.pdf), spline interpolation is formulated as the following linear equation.
+[この記事](https://www.mk-mode.com/rails/docs/INTERPOLATION_SPLINE.pdf) によると、スプライン補間は次の線形方程式として定式化されます。
 
 $$
 \begin{align}
@@ -67,7 +66,7 @@ $$
 \end{align}
 $$
 
-where
+ここで、
 
 $$
 \begin{align}
@@ -76,22 +75,21 @@ w_i & = 6 \left(\frac{y_{i+1} - y_{i+1}}{h_i} - \frac{y_i - y_{i-1}}{h_{i-1}}\ri
 \end{align}
 $$
 
-The coefficient matrix of this linear equation is tridiagonal matrix. Therefore, it can be solve with tridiagonal matrix algorithm, which can solve linear equations without gradient descent methods.
+この線形方程式の係数行列は三対角行列です。そのため、降下勾配法を使用せずに線形方程式を解くことができる三対角行列アルゴリズムで解くことができます。
 
-Solving this linear equation with tridiagonal matrix algorithm, we can calculate coefficients of spline interpolation as follows.
+三対角行列アルゴリズムを使用してこの線形方程式を解くと、スプライン補間の係数を次のように計算できます。
 
 $$
 \begin{align}
 a_i & = \frac{v_{i+1} - v_i}{6 (x_{i+1} - x_i)} \ \ \ (i = 0, \dots, N-1) \\
 b_i & = \frac{v_i}{2} \ \ \ (i = 0, \dots, N-1) \\
 c_i & = \frac{y_{i+1} - y_i}{x_{i+1} - x_i} - \frac{1}{6}(x_{i+1} - x_i)(2 v_i + v_{i+1}) \ \ \ (i = 0, \dots, N-1) \\
-d_i & = y_i \ \ \ (i = 0, \dots, N-1)
 \end{align}
 $$
 
-### Tridiagonal Matrix Algorithm
+### 三対角行列アルゴリズム
 
-We solve tridiagonal linear equation according to [this article](https://www.iist.ac.in/sites/default/files/people/tdma.pdf) where variables of linear equation are expressed as follows in the implementation.
+線形方程式は[こちら](https://www.iist.ac.in/sites/default/files/people/tdma.pdf)の記事に従い、三対角行列アルゴリズムで解いていきます。実装上は、線形方程式の変数は以下のようになります。
 
 $$
 \begin{align}
@@ -107,3 +105,4 @@ x =
  \end{pmatrix}
 \end{align}
 $$
+

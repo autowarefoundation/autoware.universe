@@ -1,33 +1,34 @@
-## Stop Line
+## 停止線
 
-### Role
+### 役割
 
-This module plans velocity so that the vehicle can stop right before stop lines and restart driving after stopped.
+このモジュールは、車両が停止線の手前で停止し、停止後に再発進できるように速度を計画します。
 
-![stop line](docs/stop_line.svg)
+![停止線](docs/stop_line.svg)
 
-### Activation Timing
+### 作動タイミング
 
-This module is activated when there is a stop line in a target lane.
+このモジュールは、ターゲット車線に停止線があるときに作動します。
 
-### Module Parameters
+### モジュールパラメータ
 
-| Parameter                        | Type   | Description                                                                                                                                                                       |
+| パラメータ                        | タイプ   | 説明                                                                                                                                                                       |
 | -------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stop_margin`                    | double | a margin that the vehicle tries to stop before stop_line                                                                                                                          |
-| `stop_duration_sec`              | double | [s] time parameter for the ego vehicle to stop in front of a stop line                                                                                                            |
-| `hold_stop_margin_distance`      | double | [m] parameter for restart prevention (See Algorithm section). Also, when the ego vehicle is within this distance from a stop line, the ego state becomes STOPPED from APPROACHING |
-| `use_initialization_stop_state`  | bool   | A flag to determine whether to return to the approaching state when the vehicle moves away from a stop line.                                                                      |
-| `show_stop_line_collision_check` | bool   | A flag to determine whether to show the debug information of collision check with a stop line                                                                                     |
+| `stop_margin`                    | 倍精度 | 車両が停止線前に停止しようとするマージン                                                                                                                          |
+| `stop_duration_sec`              | 倍精度 | [秒] 自己車両が停止線の前で停止する時間パラメータ                                                                                                            |
+| `hold_stop_margin_distance`      | 倍精度 | [メートル] 再始動防止パラメータ（アルゴリズムセクションを参照）。また、自己車両がこの距離より停止線に近い場合、自己状態は接近から停止に変わります |
+| `use_initialization_stop_state`  | ブール | 車両が停止線から離れる場合に接近状態に戻すかどうかを決定するフラグ                                                                      |
+| `show_stop_line_collision_check` | ブール | 停止線との衝突チェックのデバッグ情報を表示するかどうかを決定するフラグ                                                                                     |
 
-### Inner-workings / Algorithms
+### 内部動作 / アルゴリズム
 
-- Gets a stop line from map information.
-- insert a stop point on the path from the stop line defined in the map and the ego vehicle length.
-- Sets velocities of the path after the stop point to 0[m/s].
-- Release the inserted stop velocity when the vehicle stops at the stop point for `stop_duration_sec` seconds.
+- 地図情報から停止線を取得します。
+- 地図で定義された停止線と自車長からパス上に停止点を挿入します。
+- 停止点以降のパスの速度を 0[m/s] に設定します。
+- 車両が停止点で `stop_duration_sec` 秒間停止しているときに、挿入された停止速度を解除します。
 
-#### Flowchart
+#### フローチャート
+
 
 ```plantuml
 @startuml
@@ -69,43 +70,44 @@ stop
 @enduml
 ```
 
-This algorithm is based on `segment`.
-`segment` consists of two node points. It's useful for removing boundary conditions because if `segment(i)` exists we can assume `node(i)` and `node(i+1)` exist.
+このアルゴリズムは「セグメント」に基づいています。
+「セグメント」は2つのノードポイントで構成されています。`セグメント(i)`が存在すれば、`ノード(i)`と`ノード(i+1)`が存在すると仮定できるため、境界条件を削除するのに役立ちます。
 
 ![node_and_segment](docs/./node_and_segment.drawio.svg)
 
-First, this algorithm finds a collision between reference path and stop line.
-Then, we can get `collision segment` and `collision point`.
+最初に、このアルゴリズムはリファレンスパスと停止線間の衝突を検出します。
+次に、「衝突セグメント」と「衝突ポイント」を取得できます。
 
 ![find_collision_segment](docs/./find_collision_segment.drawio.svg)
 
-Next, based on `collision point`, it finds `offset segment` by iterating backward points up to a specific offset length.
-The offset length is `stop_margin`(parameter) + `base_link to front`(to adjust head pose to stop line).
-Then, we can get `offset segment` and `offset from segment start`.
+次に、「衝突ポイント」に基づいて、「post resampling」ポイントを特定のオフセット長まで後方ポイントを反復処理することによって「オフセットセグメント」を検出します。
+オフセットの長さは、`停止マージン`（パラメータ）+ `base_link～前方`（先頭ポーズを停止線に調整するため）です。
+次に、「オフセットセグメント」と「セグメント開始からのオフセット」を取得できます。
 
 ![find_offset_segment](docs/./find_offset_segment.drawio.svg)
 
-After that, we can calculate a offset point from `offset segment` and `offset`. This will be `stop_pose`.
+その後、「オフセットセグメント」と「オフセット」からオフセットポイントを計算できます。 これが「停止ポーズ」です。
 
 ![calculate_stop_pose](docs/./calculate_stop_pose.drawio.svg)
 
-#### Restart prevention
+#### 再始動防止
 
-If it needs X meters (e.g. 0.5 meters) to stop once the vehicle starts moving due to the poor vehicle control performance, the vehicle goes over the stopping position that should be strictly observed when the vehicle starts to moving in order to approach the near stop point (e.g. 0.3 meters away).
+車両の制御性能が低下しているため、車両が動き始めると停止するために X メートル（例: 0.5 メートル）が必要な場合、車両は停止点を通過します。車両が動き始めて停止点に近づく（例: 0.3 メートル先）ときに、厳守する必要があります。
 
-This module has parameter `hold_stop_margin_distance` in order to prevent from these redundant restart. If the vehicle is stopped within `hold_stop_margin_distance` meters from stop point of the module (\_front_to_stop_line < hold_stop_margin_distance), the module judges that the vehicle has already stopped for the module's stop point and plans to keep stopping current position even if the vehicle is stopped due to other factors.
+このモジュールには、これらの不要な再始動を防ぐためのパラメータ `hold_stop_margin_distance` があります。車両がモジュールの停止点から `hold_stop_margin_distance` メートル以内で停止している場合（\_front_to_stop_line < hold_stop_margin_distance）、車両はモジュールの停止点に対してすでに停止していると判断し、車両が他の要因で停止している場合でも、現在の位置で停止し続けるように計画します。
 
 <figure markdown>
   ![example](docs/restart_prevention.svg){width=1000}
-  <figcaption>parameters</figcaption>
+  <figcaption>パラメータ</figcaption>
 </figure>
 
 <figure markdown>
   ![example](docs/restart.svg){width=1000}
-  <figcaption>outside the hold_stop_margin_distance</figcaption>
+  <figcaption>hold_stop_margin_distance の外部</figcaption>
 </figure>
 
 <figure markdown>
   ![example](docs/keep_stopping.svg){width=1000}
-  <figcaption>inside the hold_stop_margin_distance</figcaption>
+  <figcaption>hold_stop_margin_distance の内部</figcaption>
 </figure>
+

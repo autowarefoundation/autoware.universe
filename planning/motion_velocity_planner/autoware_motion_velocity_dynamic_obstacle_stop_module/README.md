@@ -1,97 +1,93 @@
-## Dynamic Obstacle Stop
+## 動的障害物停止
 
-### Role
+### 役割
 
-`dynamic_obstacle_stop` is a module that stops the ego vehicle from entering the _immediate_ path of a dynamic object.
+`dynamic_obstacle_stop` は、自律走行車がダイナミックオブジェクトの _直近の_ パスに進入することを防止するモジュールです。
 
-The _immediate_ path of an object is the area that the object would traverse during a given time horizon, assuming constant velocity and heading.
+オブジェクトの _直近の_ パスとは、一定の速度と向きを想定した場合に、そのオブジェクトが特定の時間枠内に移動する領域のことです。
 
-![rviz example](docs/dynamic_obstacle_stop_rviz.png)
+![rviz の例](docs/dynamic_obstacle_stop_rviz.png)
 
-### Activation Timing
+### 起動タイミング
 
-This module is activated if the launch parameter `launch_dynamic_obstacle_stop_module` is set to true in the motion planning launch file.
+このモジュールは、モーションプランニング起動ファイルで起動パラメータ `launch_dynamic_obstacle_stop_module` が true に設定されている場合に起動します。
 
-### Inner-workings / Algorithms
+### 内部構造/アルゴリズム
 
-The module insert a stop point where the ego trajectory collides with the immediate path of an object.
-The overall module flow can be summarized with the following 4 steps.
+このモジュールは、自律走行車の軌跡とオブジェクトの直近のパスが衝突する位置に停止点を挿入します。
+このモジュールの全体的な流れは、次の 4 つのステップで要約できます。
 
-1. Filter dynamic objects.
-2. Calculate immediate path rectangles of the dynamic objects.
-3. Find earliest collision where ego collides with an immediate path rectangle.
-4. Insert stop point before the collision.
+1. 動的オブジェクトのフィルタリング
+2. 動的オブジェクトの直近のパス矩形の計算
+3. 自律走行車が直近のパス矩形と衝突する、最も早い衝突箇所の検出
+4. 衝突前に停止点を挿入
 
-In addition to these 4 steps, 2 mechanisms are in place to make the stop point of this module more stable: an hysteresis and a decision duration buffer.
+これらの 4 つのステップに加えて、2 つのメカニズムが、このモジュールの停止点をより安定させるために用意されています。ヒステリシスと決定期間のバッファです。
 
-The `hysteresis` parameter is used when a stop point was already being inserted in the previous iteration
-and it increases the range where dynamic objects are considered close enough to the ego trajectory to be used by the module.
+`hysteresis` パラメータは、前のイテレーションで停止点が既に挿入されていた場合に使用され、動的オブジェクトがモジュールで使用するための自律走行車の軌跡に十分近いとみなされる範囲を拡大します。
 
-#### Filter dynamic objects
+#### 動的オブジェクトのフィルタリング
 
-![filtering example](docs/DynamicObstacleStop-Filtering.drawio.svg)
+![フィルタリングの例](docs/DynamicObstacleStop-Filtering.drawio.svg)
 
-An object is considered by the module only if it meets all of the following conditions:
+オブジェクトは、次の条件をすべて満たす場合にのみモジュールによって考慮されます。
 
-- it is a vehicle (pedestrians are ignored);
-- it is moving at a velocity higher than defined by the `minimum_object_velocity` parameter;
-- it is not too close to the current position of the ego vehicle;
-- it is not unavoidable (only if parameter `ignore_unavoidable_collisions` is set to `true`);
-- it is close to the ego trajectory.
+- 車両である（歩行者は無視する）
+- `minimum_object_velocity` パラメータで定義されている以上の速度で走行している
+- 自律走行車の現在位置にあまりにも近くない
+- 回避不可能ではない（`ignore_unavoidable_collisions` パラメータが `true` に設定されている場合のみ）
+- 自律走行車の軌跡に近い
 
-An object is considered unavoidable if it is heading towards the ego vehicle such that even if ego stops, a collision would still occur (assuming the object keeps driving in a straight line).
+自律走行車が停止しても衝突が発生する（オブジェクトが直線走行を続けると仮定した場合）ため、オブジェクトは自律走行車の方向に走行している場合に回避不可能とみなされます。
 
-For the last condition,
-the object is considered close enough if its lateral distance from the ego trajectory is less than the threshold parameter `minimum_object_distance_from_ego_trajectory` plus half the width of ego and of the object (including the `extra_object_width` parameter).
-In addition, the value of the `hysteresis` parameter is added to the minimum distance if a stop point was inserted in the previous iteration.
+最後の条件では、自律走行車の軌跡からのオブジェクトの側方距離が、`minimum_object_distance_from_ego_trajectory` パラメータのしきい値に自律走行車とオブジェクトの幅の半分（`extra_object_width` パラメータを含む）を足した値未満の場合に、オブジェクトは十分に近いとみなされます。
+さらに、前のイテレーションで停止点が挿入されていた場合は、`hysteresis` パラメータの値が最小距離に追加されます。
 
-#### Calculate immediate path rectangles
+#### 直近のパス矩形の計算
 
-![Immediate paths example](docs/DynamicObstacleStop-ImmediatePaths.drawio.svg)
+![直近のパス例](docs/DynamicObstacleStop-ImmediatePaths.drawio.svg)
 
-For each considered object, a rectangle is created representing its _immediate_ path.
-The rectangle has the width of the object plus the `extra_object_width` parameter
-and its length is the current speed of the object multiplied by the `time_horizon`.
+考慮される各オブジェクトについて、その _直近の_ パスを表す矩形が作成されます。
+矩形の幅は、オブジェクトの幅に `extra_object_width` パラメータを加えたもので、長さは、オブジェクトの現在の速度に `time_horizon` を掛けたものです。
 
-#### Find earliest collision
+#### 最も早い衝突箇所の検出
 
-![Earliest collision example](docs/DynamicObstacleStop-Collision.drawio.svg)
+![最も早い衝突箇所の例](docs/DynamicObstacleStop-Collision.drawio.svg)
 
-We build the ego trajectory footprints as the set of ego footprint polygons projected on each trajectory point.
-We then calculate the intersections between these ego trajectory footprints and the previously calculated immediate path rectangles.
-An intersection is ignored if the object is not driving toward ego, i.e., the absolute angle between the object and the trajectory point is larger than $\frac{3 \pi}{4}$.
+次に、これらの自車軌跡フットプリントと、以前に計算された直近経路長方形との交差点を計算します。
+交差点は、オブジェクトが自車に向かって走行していない場合（つまり、オブジェクトと軌跡点の間の絶対角度が $\frac{3 \pi}{4}$ より大きい場合）無視されます。
 
-The collision point with the lowest arc length when projected on the ego trajectory will be used to calculate the final stop point.
+自車軌跡に投影したときの距離が最も短い衝突点は、最終停止点の計算に使用されます。
 
-#### Insert stop point
+#### 停止点を挿入する
 
-![Stop point example](docs/DynamicObstacleStop-StopPoint.drawio.svg)
+![停止点の例](docs/DynamicObstacleStop-StopPoint.drawio.svg)
 
-Before inserting a stop point, we calculate the range of trajectory arc lengths where it can be inserted.
-The minimum is calculated to satisfy the acceleration and jerk constraints of the vehicle.
-If a stop point was inserted in the previous iteration of the module, its arc length is used as the maximum.
-Finally,
-the stop point arc length is calculated to be the arc length of the previously found collision point minus the `stop_distance_buffer` and the ego vehicle longitudinal offset, clamped between the minimum and maximum values.
+停止点を挿入する前に、挿入可能な軌跡距離範囲を計算します。
+最小値は、車両の加速度とジャークの制約を満たすように計算されます。
+前のモジュール反復に停止点が挿入された場合、その距離の範囲が最大値として使用されます。
+最後に、停止点の距離の範囲は、以前に検出された衝突点の距離の範囲から「`stop_distance_buffer`」と自車車両の車軸方向のオフセットを減じたもので、最小値と最大値の間でクリッピングされます。
 
-#### Duration buffer
+#### 持続時間バッファ
 
-To prevent chatter caused by noisy perception, two duration parameters are used.
+ノイズの多い認識によるチャタリングを防ぐために、2 つの持続時間パラメータが使用されます。
 
-- `add_stop_duration_buffer` represents the duration of consecutive collision detection with an object for the corresponding stop point to be added.
-- `remove_stop_duration_buffer` represents the duration of consecutive non-detection of collision with an object for the corresponding stop point to be removed.
+- `add_stop_duration_buffer` は、対応する停止点が追加されるオブジェクトとの連続衝突検出の持続時間を表します。
+- `remove_stop_duration_buffer` は、対応する停止点が削除されるオブジェクトとの衝突の非検出の連続持続時間を表します。
 
-Timers and collision points are tracked for each dynamic object independently.
+タイマーと衝突点は、各ダイナミックオブジェクトに対して独立して追跡されます。
 
-### Module Parameters
+### モジュールパラメータ
 
-| Parameter                                     | Type   | Description                                                                                                        |
-| --------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
-| `extra_object_width`                          | double | [m] extra width around detected objects                                                                            |
-| `minimum_object_velocity`                     | double | [m/s] objects with a velocity bellow this value are ignored                                                        |
-| `stop_distance_buffer`                        | double | [m] extra distance to add between the stop point and the collision point                                           |
-| `time_horizon`                                | double | [s] time horizon used for collision checks                                                                         |
-| `hysteresis`                                  | double | [m] once a collision has been detected, this hysteresis is used on the collision detection                         |
-| `add_stop_duration_buffer`                    | double | [s] duration where a collision must be continuously detected before a stop decision is added                       |
-| `remove_stop_duration_buffer`                 | double | [s] duration between no collision being detected and the stop decision being remove                                |
-| `minimum_object_distance_from_ego_trajectory` | double | [m] minimum distance between the footprints of ego and an object to consider for collision                         |
-| `ignore_unavoidable_collisions`               | bool   | [-] if true, ignore collisions that cannot be avoided by stopping (assuming the obstacle continues going straight) |
+| パラメーター                                   | タイプ   | 説明                                                                                                                     |
+| ---------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `extra_object_width`                          | double | [m] 検出したオブジェクト周辺の余分な幅                                                                                |
+| `minimum_object_velocity`                     | double | [m/s] この値以下の速度のオブジェクトは無視されます                                                                   |
+| `stop_distance_buffer`                        | double | [m] 停止点と衝突点の間に追加する余分な距離                                                                              |
+| `time_horizon`                                | double | [s] 衝突チェックに使用される時間的視野                                                                                  |
+| `hysteresis`                                  | double | [m] 衝突が検出されると、このヒステリシスが衝突検出に使用されます                                                       |
+| `add_stop_duration_buffer`                    | double | [s] 停止の判断が追加される前に、衝突が継続的に検出されなければならない時間                                            |
+| `remove_stop_duration_buffer`                 | double | [s] 衝突が検出されなくなってから停止の判断が削除されるまでの時間                                                     |
+| `minimum_object_distance_from_ego_trajectory` | double | [m] 衝突を考慮する場合の、自己軌跡とオブジェクトの足跡間の最小距離                                               |
+| `ignore_unavoidable_collisions`               | bool   | [-] trueの場合、停止では回避できない衝突を無視します（障害物が直進し続けると仮定した場合）                        |
+

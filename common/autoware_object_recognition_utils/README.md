@@ -1,6 +1,8 @@
 # autoware_object_recognition_utils
 
-## Purpose
+## 目的
 
-This package contains a library of common functions that are useful across the object recognition module.  
-This package may include functions for converting between different data types, msg types, and performing common operations on them.
+このパッケージには、オブジェクト認識モジュール全体に有用な共通関数のライブラリが含まれています。
+
+このパッケージには、さまざまなデータ型、メッセージ型間の相互変換や、それらに対する一般的な操作の実行を行う関数が含まれる場合があります。
+

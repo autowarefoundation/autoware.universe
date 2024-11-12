@@ -1,16 +1,17 @@
 # tier4_sensing_launch
 
-## Structure
+## 構成
 
 ![tier4_sensing_launch](./sensing_launch.drawio.svg)
 
-## Package Dependencies
+## パッケージの依存関係
 
-Please see `<exec_depend>` in `package.xml`.
+`<package.xml>` の `<exec_depend>` を参照してください。
 
-## Usage
+## 使用方法
 
-You can include as follows in `*.launch.xml` to use `sensing.launch.xml`.
+`sensing.launch.xml` を使用するには、`*.launch.xml` に以下のように含めることができます。
+
 
 ```xml
   <include file="$(find-pkg-share tier4_sensing_launch)/launch/sensing.launch.xml">
@@ -21,9 +22,10 @@ You can include as follows in `*.launch.xml` to use `sensing.launch.xml`.
   </include>
 ```
 
-## Launch Directory Structure
+## 起動画構成
 
-This package finds sensor settings of specified sensor model in `launch`.
+このパッケージは、`launch`で指定されたセンサーモデルのセンサー設定を見つけます。
+
 
 ```bash
 launch/
@@ -36,12 +38,14 @@ launch/
 ...
 ```
 
-## Notes
+## 注釈
 
-This package finds settings with variables.
+このパッケージは、変数を使用した設定を見つけます。
 
-ex.)
+例）
+
 
 ```xml
 <include file="$(find-pkg-share tier4_sensing_launch)/launch/$(var sensor_model)/lidar.launch.xml">
 ```
+

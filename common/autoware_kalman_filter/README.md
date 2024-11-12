@@ -1,9 +1,10 @@
 # kalman_filter
 
-## Purpose
+## 目的
 
-This common package contains the kalman filter with time delay and the calculation of the kalman filter.
+この共通パッケージには、時差付きカルマンフィルタとカルマンフィルの計算が含まれます。
 
-## Assumptions / Known limits
+## 想定 / 既知の制限
 
 TBD.
+

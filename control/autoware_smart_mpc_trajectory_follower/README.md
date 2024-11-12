@@ -1,15 +1,16 @@
+# マークダウン形式で書かれた自動運転ソフトウェアに関するドキュメントの日本語訳
+
 <p align="center">
   <a href="https://proxima-ai-tech.com/">
     <img width="500px" src="./images/proxima_logo.png">
   </a>
 </p>
-<!-- cspell: ignore numba ipynb LSTM -->
 
-# Smart MPC Trajectory Follower
+## スマート MPC トレジャクサリー追従
 
-Smart MPC (Model Predictive Control) is a control algorithm that combines model predictive control and machine learning. While inheriting the advantages of model predictive control, it solves its disadvantage of modeling difficulty with a data-driven method using machine learning.
+スマート MPC (Model Predictive Control) は、モデル予測制御と機械学習を組み合わせた制御アルゴリズムです。モデル予測制御の利点を継承すると同時に、機械学習を利用したデータドリブン手法でモデリングの難しさを解決します。
 
-This technology makes it relatively easy to operate model predictive control, which is expensive to implement, as long as an environment for collecting data can be prepared.
+この技術により、環境データの収集が可能な限り、実装コストの高いモデル予測制御を比較的容易に運用できます。
 
 <p align="center">
   <a href="https://youtu.be/j7bgK8m4-zg?si=p3ipJQy_p-5AJHOP)">
@@ -17,48 +18,52 @@ This technology makes it relatively easy to operate model predictive control, wh
   </a>
 </p>
 
-## Provided features
+## 提供されている機能
 
-This package provides smart MPC logic for path-following control as well as mechanisms for learning and evaluation. These features are described below.
+このパッケージは、パス追従制御向けのスマート MPC ロジックと、学習および評価の仕組みを提供します。これらの機能を以下に示します。
 
-### Trajectory following control based on iLQR/MPPI
+### iLQR/MPPI ベースのトレジャクサリー追従制御
 
-The control mode can be selected from "ilqr", "mppi", or "mppi_ilqr", and can be set as `mpc_parameter:system:mode` in [mpc_param.yaml](./autoware_smart_mpc_trajectory_follower/param/mpc_param.yaml).
-In "mppi_ilqr" mode, the initial value of iLQR is given by the MPPI solution.
+制御モードは "ilqr"、"mppi"、"mppi_ilqr" から選択でき、[mpc_param.yaml](./autoware_smart_mpc_trajectory_follower/param/mpc_param.yaml) の `mpc_parameter:system:mode` として設定できます。
+"mppi_ilqr" モードでは、iLQR の初期値が MPPI ソリューションによって与えられます。
 
-> [!NOTE]
-> With the default settings, the performance of "mppi" mode is limited due to an insufficient number of samples. This issue is being addressed with ongoing work to introduce GPU support.
+> [!注意]
+> デフォルト設定では、"mppi" モードのパフォーマンスがサンプル数の不足により制限されます。この問題は、GPU サポートを導入する継続的な作業によって解決されています。
 
-To perform a simulation, run the following command:
+シミュレーションを実行するには、次のコマンドを実行します。
+
 
 ```bash
 ros2 launch autoware_launch planning_simulator.launch.xml map_path:=$HOME/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit trajectory_follower_mode:=smart_mpc_trajectory_follower
 ```
 
-> [!NOTE]
-> When running with the nominal model set in [nominal_param.yaml](./autoware_smart_mpc_trajectory_follower/param/nominal_param.yaml), set `trained_model_parameter:control_application:use_trained_model` to `false` in [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml). To run using the trained model, set `trained_model_parameter:control_application:use_trained_model` to `true`, but the trained model must have been generated according to the following procedure.
+[!NOTE]
+> 名目モデルの[nominal_param.yaml](./autoware_smart_mpc_trajectory_follower/param/nominal_param.yaml)が設定されている場合は、[trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml)の`trained_model_parameter:control_application:use_trained_model`を`false`に設定してください。学習済みモデルを使用して実行するには、`trained_model_parameter:control_application:use_trained_model`を`true`に設定しますが、学習済みモデルは次の手順に従って生成する必要があります。
 
-### Training of model and reflection in control
+### モデルの学習と制御への反映
 
-To obtain training data, start autoware, perform a drive, and record rosbag data with the following commands.
+学習データを収集するには、autowareを起動して、走行を行い、次のコマンドでrosbagデータを記録します。
+
 
 ```bash
 ros2 bag record /localization/kinematic_state /localization/acceleration /vehicle/status/steering_status /control/command/control_cmd /control/trajectory_follower/control_cmd /control/trajectory_follower/lane_departure_checker_node/debug/deviation/lateral /control/trajectory_follower/lane_departure_checker_node/debug/deviation/yaw /system/operation_mode/state /vehicle/status/control_mode /sensing/imu/imu_data /debug_mpc_x_des /debug_mpc_y_des /debug_mpc_v_des /debug_mpc_yaw_des /debug_mpc_acc_des /debug_mpc_steer_des /debug_mpc_X_des_converted /debug_mpc_x_current /debug_mpc_error_prediction /debug_mpc_max_trajectory_err /debug_mpc_emergency_stop_mode /debug_mpc_goal_stop_mode /debug_mpc_total_ctrl_time /debug_mpc_calc_u_opt_time
 ```
 
-Move [rosbag2.bash](./autoware_smart_mpc_trajectory_follower/training_and_data_check/rosbag2.bash) to the rosbag directory recorded above and execute the following command on the directory
+rosbagのディレクトリに[rosbag2.bash](./autoware_smart_mpc_trajectory_follower/training_and_data_check/rosbag2.bash)を移動させて、ディレクトリで下記コマンドを実行します
+
 
 ```bash
 bash rosbag2.bash
 ```
 
-This converts rosbag data into CSV format for training models.
+rosbagデータをCSV形式に変換してモデルをトレーニングします。
 
 > [!NOTE]
-> Note that a large number of terminals are automatically opened at runtime, but they are automatically closed after rosbag data conversion is completed.
-> From the time you begin this process until all terminals are closed, autoware should not be running.
+> 実行時に大量の端末が自動的に開きますが、rosbagデータの変換が完了すると自動的に閉じられます。
+> このプロセスを開始してからすべての端末が閉じられるまで、Autowareは実行しないでください。
 
-Instead, the same result can be obtained by executing the following command in a python environment:
+代わりに、Python環境で次のコマンドを実行することで同様の結果を得ることができます。
+
 
 ```python
 from autoware_smart_mpc_trajectory_follower.training_and_data_check import train_drive_NN_model
@@ -66,14 +71,15 @@ model_trainer = train_drive_NN_model.train_drive_NN_model()
 model_trainer.transform_rosbag_to_csv(rosbag_dir)
 ```
 
-Here, `rosbag_dir` represents the rosbag directory.
-At this time, all CSV files in `rosbag_dir` are automatically deleted first.
+`rosbag_dir` は rosbag ディレクトリを表します。
+この時、`rosbag_dir` 内のすべての CSV ファイルは最初に自動的に削除されます。
 
-We move on to an explanation of how the model is trained.
-If `trained_model_parameter:memory_for_training:use_memory_for_training` in [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) is set to `true`, training is performed on models that include LSTM, and if it is set to `false`, training is performed on models that do not include LSTM.
-When using LSTM, cell states and hidden states are updated based on historical time series data and reflected in the prediction.
+モデルのトレーニングの方法について説明します。
+[trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) の `trained_model_parameter:memory_for_training:use_memory_for_training` が `true` に設定されている場合、LSTM を含むモデルに対するトレーニングが行われ、`false` に設定されている場合、LSTM を含まないモデルに対するトレーニングが行われます。
+LSTM を使用すると、セル状態および隠れ状態は履歴時系列データに基づいて更新され、予測に反映されます。
 
-The paths of the rosbag directories used for training and validation, `dir_0`, `dir_1`, `dir_2`,..., `dir_val_0`, `dir_val_1`, `dir_val_2`,... and the directory `save_dir` where you save the models, the model can be saved in the python environment as follows:
+トレーニングと検証に使用される rosbag ディレクトリのパス (`dir_0`、`dir_1`、`dir_2`、`dir_val_0`、`dir_val_1`、`dir_val_2`...) と、モデルを保存するディレクトリ (`save_dir`) から、Python 環境で次のようにモデルを保存できます。
+
 
 ```python
 from autoware_smart_mpc_trajectory_follower.training_and_data_check import train_drive_NN_model
@@ -90,168 +96,182 @@ model_trainer.get_trained_model()
 model_trainer.save_models(save_dir)
 ```
 
-If `add_mode` is not specified or validation data is not added, the training data is split to be used for training and validation.
+`add_mode`が指定されなかった場合、または検証データが追加されなかった場合、トレーニングデータはトレーニングおよび検証に使用するために分割されます。
 
-After performing the polynomial regression, the NN can be trained on the residuals as follows:
+多項式回帰の実行後は、次のとおり、NNを残差でトレーニングできます。
+
 
 ```python
 model_trainer.get_trained_model(use_polynomial_reg=True)
 ```
 
 > [!NOTE]
-> In the default setting, regression is performed by several preselected polynomials.
-> When `use_selected_polynomial=False` is set as the argument of get_trained_model, the `deg` argument allows setting the maximum degree of the polynomial to be used.
+> デフォルト設定では、回帰はいくつかの事前に選択された多項式によって実行されます。
+> `get_trained_model` の引数として `use_selected_polynomial=False` が設定されている場合、`deg` 引数によって使用される多項式の最大次数を設定できます。
 
-If only polynomial regression is performed and no NN model is used, run the following command:
+NN モデルが使用されず、多項式回帰のみが実行される場合は、次のコマンドを実行します:
+
 
 ```python
 model_trainer.get_trained_model(use_polynomial_reg=True,force_NN_model_to_zero=True)
 ```
 
-Move `model_for_test_drive.pth` and `polynomial_reg_info.npz` saved in `save_dir` to the home directory and set `trained_model_parameter:control_application:use_trained_model` in [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) to `true` to reflect the trained model in the control.
+`model_for_test_drive.pth`と`polynomial_reg_info.npz`を`save_dir`からホームディレクトリに移動し、Trained Modelの反映のため、[trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml)内の`trained_model_parameter:control_application:use_trained_model`を `true` に設定します。
 
-### Performance evaluation
+### 性能評価
 
-Here, as an example, we describe the verification of the adaptive performance when the wheel base of the sample_vehicle is 2.79 m, but an incorrect value of 2.0 m is given to the controller side.
-To give the controller 2.0 m as the wheel base, set the value of `nominal_parameter:vehicle_info:wheel_base` in [nominal_param.yaml](./autoware_smart_mpc_trajectory_follower/param/nominal_param.yaml) to 2.0, and run the following command:
+ここではサンプル車両のホイールベースが2.79 mであるところ、コントローラ側に2.0 mという誤った値を入力した場合の適応性能の検証を例として示します。
+コントローラに2.0 mのホイールベースを与えるため、[nominal_param.yaml](./autoware_smart_mpc_trajectory_follower/param/nominal_param.yaml)の`nominal_parameter:vehicle_info:wheel_base`の値を2.0に設定し、次のコマンドを実行します。
+
 
 ```bash
 python3 -m smart_mpc_trajectory_follower.clear_pycache
 ```
 
-#### Test on autoware
+#### Autoware でのテスト
 
-To perform a control test on autoware with the nominal model before training, make sure that `trained_model_parameter:control_application:use_trained_model` in [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) is `false` and launch autoware in the manner described in "Trajectory following control based on iLQR/MPPI". This time, the following route will be used for the test:
+トレーニング前に公称モデルで Autoware に対する制御テストを実行するには、[trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) 内の `trained_model_parameter:control_application:use_trained_model` が `false` であることを確認し、「iLQR/MPPI に基づく Trajectory 以下の制御」で説明した方法で Autoware を起動します。今回は、次のルートをテストに使用します。
 
-<p><img src="images/test_route.png" width=712pix></p>
+<p><img src="images/test_route.png" width=712px></p>
 
-Record rosbag and train the model in the manner described in "Training of model and reflection in control", and move the generated files `model_for_test_drive.pth` and `polynomial_reg_info.npz` to the home directory.
-Sample models, which work under the condition that`trained_model_parameter:memory_for_training:use_memory_for_training` in [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) is set to `true`, can be obtained at [sample_models/wheel_base_changed](./sample_models/wheel_base_changed/).
+ROS バッグを記録し、ROS バッグを記録し、「モデルのトレーニングと制御への反映」で説明した方法でモデルをトレーニングし、生成されたファイル `model_for_test_drive.pth` と `polynomial_reg_info.npz` をホームディレクトリに移動します。サンプルモデルは [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) 内の `trained_model_parameter:memory_for_training:use_memory_for_training` が `true` に設定された条件下で動作します。[sample_models/wheel_base_changed](./sample_models/wheel_base_changed/) から取得できます。
 
 > [!NOTE]
-> Although the data used for training is small, for the sake of simplicity, we will see how much performance can be improved with this amount of data.
+> トレーニングに使用されるデータは少量ですが、簡略化するために、このデータ量でどの程度のパフォーマンスが向上するかを確認します。
 
-To control using the trained model obtained here, set `trained_model_parameter:control_application:use_trained_model` to `true`, start autoware in the same way, and drive the same route recording rosbag.
-After the driving is complete, convert the rosbag file to CSV format using the method described in "Training of model and reflection in control".
-A plot of the lateral deviation is obtained by running the `lateral_error_visualize` function in `control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/training_and_data_check/data_checker.ipynb` for the nominal and training model rosbag files `rosbag_nominal` and `rosbag_trained`, respectively, as follows:
+ここで取得したトレーニング済みモデルを使用して制御するには、`trained_model_parameter:control_application:use_trained_model` を `true` に設定し、同様に Autoware を起動し、同じルートで ROS バッグを記録しながら走行します。
+走行が完了したら、「モデルのトレーニングと制御への反映」で説明した方法を使用して ROS バッグファイルを CSV 形式に変換します。`control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/training_and_data_check/data_checker.ipynb` で `lateral_error_visualize` 関数を公称の ROS バッグファイル `rosbag_nominal` とトレーニング済み ROS バッグファイル `rosbag_trained` に対して実行すると、次のように横方向偏差のグラフを取得できます。
+
 
 ```python
 lateral_error_visualize(dir_name=rosbag_nominal,ylim=[-1.2,1.2])
 lateral_error_visualize(dir_name=rosbag_trained,ylim=[-1.2,1.2])
 ```
 
-The following results were obtained.
+以下の結果が得られました。
 
 <div style="display: flex; justify-content: center; align-items: center;">
     <img src="images/lateral_error_nominal_model.png">
     <img src="images/lateral_error_trained_model.png">
 </div>
 
-#### Test on python simulator
+#### Pythonシミュレータでのテスト
 
-First, to give wheel base 2.79 m in the python simulator, create the following file and save it in `control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/python_simulator` with the name `sim_setting.json`:
+まず、Pythonシミュレータでホイールベースを2.79 mにするには、次のファイルを作成し、名前を`sim_setting.json`にして`control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/python_simulator`に保存します。
+
+```
+{
+  "wheelbase": 2.79
+}
+```
+
 
 ```json
 { "wheel_base": 2.79 }
 ```
 
-Next, after moving to `control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/python_simulator`, run the following commands to test the slalom driving on the python simulator with the nominal control:
+次に、`control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/python_simulator` に移動した後、以下のコマンドを実行してパイソンシミュレータ上でスラローム走行をノミナル制御を使用してテストします。
+
 
 ```bash
 python3 run_python_simulator.py nominal_test
 ```
 
-The result of the driving is stored in `test_python_nominal_sim`.
+運転の結果は `test_python_nominal_sim` に格納されます。
 
-The following results were obtained.
+以下の結果が得られました。
 
 <p style="text-align: center;">
     <img src="images/python_sim_lateral_error_nominal_model_wheel_base.png" width="712px">
 </p>
 
-The center of the upper row represents the lateral deviation.
+最上段の中央は横方向逸脱量を表します。
 
-Run the following commands to perform training using figure eight driving data under the control of pure pursuit.
+純粋追従の制御下で、8の字走行データを使用してトレーニングを実行するには、以下のコマンドを実行します。
 
-To perform training using a figure eight driving and driving based on the obtained model, run the following commands:
+得られたモデルに基づく8の字走行と運転を使用してトレーニングを実行するには、以下のコマンドを実行します。
+
 
 ```bash
 python3 run_python_simulator.py
 ```
 
-The result of the driving is stored in `test_python_trined_sim`.
+運転の結果は `test_python_trined_sim` に格納されています。
 
-When `trained_model_parameter:memory_for_training:use_memory_for_training` in [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) is set to `true`, the following results were obtained.
+[trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) の `trained_model_parameter:memory_for_training:use_memory_for_training` が `true` に設定された場合、以下の結果が得られました。
 
 <p style="text-align: center;">
     <img src="images/python_sim_lateral_error_trained_model_lstm_wheel_base.png" width="712px">
 </p>
 
-When `trained_model_parameter:memory_for_training:use_memory_for_training` in [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) is set to `false`, the following results were obtained.
+[trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) の `trained_model_parameter:memory_for_training:use_memory_for_training` が `false` に設定された場合、以下の結果が得られました。
 
 <p style="text-align: center;">
     <img src="images/python_sim_lateral_error_trained_model_wheel_base.png" width="712px">
 </p>
 
-It can be seen that the lateral deviation has improved significantly.
-However, the difference in driving with and without LSTM is not very apparent.
+横方向偏差が大幅に改善されていることがわかります。
+ただし、LSTM の有無による運転の違いはあまり明らかではありません。
 
-To see the difference, for example, we can experiment with parameters such as steer_time_delay.
+違いを明確にするために、例として `steer_time_delay` などのパラメータを試行できます。
 
-First, to restore nominal model settings to default values, set the value of `nominal_parameter:vehicle_info:wheel_base` in [nominal_param.yaml](./autoware_smart_mpc_trajectory_follower/param/nominal_param.yaml) to 2.79, and run the following command:
+まず、公称モデル設定の値をデフォルト値に戻すために、[nominal_param.yaml](./autoware_smart_mpc_trajectory_follower/param/nominal_param.yaml) の `nominal_parameter:vehicle_info:wheel_base` の値を 2.79 に設定して、次のコマンドを実行します。
+
 
 ```bash
 python3 -m smart_mpc_trajectory_follower.clear_pycache
 ```
 
-Next, modify `sim_setting.json` as follows:
+次に、`sim_setting.json` を次のように修正します:
+
 
 ```json
 { "steer_time_delay": 1.01 }
 ```
 
-In this way, an experiment is performed when `steer_time_delay` is set to 1.01 sec.
+ このように、`steer_time_delay` を 1.01 秒に設定して実験を実施します。
 
-The result of the driving using the nominal model is as follows:
+公称モデルを使用した走行の結果は次のとおりです。
 
 <p style="text-align: center;">
     <img src="images/python_sim_lateral_error_nominal_model_steer_time_delay.png" width="712px">
 </p>
 
-The result of the driving using the trained model with LSTM is as follows:
+LSTM を使用した学習済みモデルを使用した走行の結果は次のとおりです。
 
 <p style="text-align: center;">
     <img src="images/python_sim_lateral_error_trained_model_lstm_steer_time_delay.png" width="712px">
 </p>
 
-The result of the driving using the trained model without LSTM is as follows:
+LSTM を使用しない学習済みモデルを使用した走行の結果は次のとおりです。
 
 <p style="text-align: center;">
     <img src="images/python_sim_lateral_error_trained_model_steer_time_delay.png" width="712px">
 </p>
 
-It can be seen that the performance with the model that includes LSTM is significantly better than with the model that does not.
+LSTM を含むモデルを使用したパフォーマンスは、含まないモデルを使用したパフォーマンスよりも大幅に良好であることがわかります。
 
-The parameters that can be passed to the python simulator are as follows.
+Python シミュレータに渡すことができるパラメータは次のとおりです。
 
-| Parameter                | Type        | Description                                                                                                                                                                                                                                                                                  |
-| ------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| steer_bias               | float       | steer bias [rad]                                                                                                                                                                                                                                                                             |
-| steer_rate_lim           | float       | steer rate limit [rad/s]                                                                                                                                                                                                                                                                     |
-| vel_rate_lim             | float       | acceleration limit [m/s^2]                                                                                                                                                                                                                                                                   |
-| wheel_base               | float       | wheel base [m]                                                                                                                                                                                                                                                                               |
-| steer_dead_band          | float       | steer dead band [rad]                                                                                                                                                                                                                                                                        |
-| adaptive_gear_ratio_coef | list[float] | List of floats of length 6 specifying information on speed-dependent gear ratios from tire angle to steering wheel angle.                                                                                                                                                                    |
-| acc_time_delay           | float       | acceleration time delay [s]                                                                                                                                                                                                                                                                  |
-| steer_time_delay         | float       | steer time delay [s]                                                                                                                                                                                                                                                                         |
-| acc_time_constant        | float       | acceleration time constant [s]                                                                                                                                                                                                                                                               |
-| steer_time_constant      | float       | steer time constant [s]                                                                                                                                                                                                                                                                      |
-| accel_map_scale          | float       | Parameter that magnifies the corresponding distortion from acceleration input values to actual acceleration realizations. <br> Correspondence information is kept in `control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/python_simulator/accel_map.csv`. |
-| acc_scaling              | float       | acceleration scaling                                                                                                                                                                                                                                                                         |
-| steer_scaling            | float       | steer scaling                                                                                                                                                                                                                                                                                |
-| vehicle_type             | int         | Take values from 0 to 4 for pre-designed vehicle types. <br> A description of each vehicle type is given below.                                                                                                                                                                              |
+| パラメータ                | 型        | 説明                                                                                                                                                                                                                                                                              |
+| ------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| steer_bias               | 浮動      | ステアリングバイアス [rad]                                                                                                                                                                                                                                                        |
+| steer_rate_lim           | 浮動      | ステアリングレートの制限 [rad/s]                                                                                                                                                                                                                                                        |
+| vel_rate_lim             | 浮動      | 加速度制限 [m/s^2]                                                                                                                                                                                                                                                        |
+| wheel_base               | 浮動      | ホイールベース [m]                                                                                                                                                                                                                                                        |:
+| steer_dead_band          | 浮動      | ステアリングデッドバンド [rad]                                                                                                                                                                                                                                                        |
+| adaptive_gear_ratio_coef | リスト[浮動] | タイヤ角からステアリングホイール角への速度依存ギア比に関する情報を指定する 6 個の長さを持つフローティングポイントのリスト                                                                                                                                             |
+| acc_time_delay           | 浮動      | 加速度遅延時間 [s]                                                                                                                                                                                                                                                          |
+| steer_time_delay         | 浮動      | ステアリング遅延時間 [s]                                                                                                                                                                                                                                                          |
+| acc_time_constant        | 浮動      | 加速度時定数 [s]                                                                                                                                                                                                                                                            |
+| steer_time_constant      | 浮動      | ステアリング時定数 [s]                                                                                                                                                                                                                                                           |
+| accel_map_scale          | 浮動      | 加速度入力値から実際の加速度の実現への対応する歪みを拡大するパラメータ。 <br>対応情報は `control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/python_simulator/accel_map.csv` に格納されています。 |
+| acc_scaling              | 浮動      | 加速度スケーリング                                                                                                                                                                                                                                                          |
+| steer_scaling            | 浮動      | ステアリングスケーリング                                                                                                                                                                                                                                                         |
+| vehicle_type             | 整数      | 0 から 4 までの値を取ります。 <br>各車両タイプについては以下で説明します。                                                                                                                                                                                                              |
 
-For example, to give the simulation side 0.01 [rad] of steer bias and 0.001 [rad] of steer dead band, edit the `sim_setting.json` as follows.
+例えば、シミュレーション側に0.01 [rad]のステア係数バイアスと0.001 [rad]のステアデッドバンドを与える場合は、`sim_setting.json`を次のように編集します。
+
 
 ```json
 { "steer_bias": 0.01, "steer_dead_band": 0.001 }
@@ -259,189 +279,205 @@ For example, to give the simulation side 0.01 [rad] of steer bias and 0.001 [rad
 
 ##### vehicle_type_0
 
-This vehicle type matches the default vehicle type used in the control.
+この車両タイプは、コントローラーで使用される既定の車両タイプと一致します。
 
-| Parameter           | value |
-| ------------------- | ----- |
-| wheel_base          | 2.79  |
-| acc_time_delay      | 0.1   |
-| steer_time_delay    | 0.27  |
-| acc_time_constant   | 0.1   |
-| steer_time_constant | 0.24  |
-| acc_scaling         | 1.0   |
+## 自動運転ソフトウェアのパラメータ設定
+
+| パラメータ | 値 |
+|---|---|
+| ホイールベース | 2.79 |
+| 加速度応答遅れ時間 | 0.1 |
+| ステアリング応答遅れ時間 | 0.27 |
+| 加速度応答時間定数 | 0.1 |
+| ステアリング応答時間定数 | 0.24 |
+| 加速度スケーリング | 1.0 |
 
 ##### vehicle_type_1
 
-This vehicle type is intended for a heavy bus.
+このvehicle typeは大型バスを想定しています。
 
-| Parameter           | value |
-| ------------------- | ----- |
-| wheel_base          | 4.76  |
-| acc_time_delay      | 1.0   |
-| steer_time_delay    | 1.0   |
-| acc_time_constant   | 1.0   |
-| steer_time_constant | 1.0   |
-| acc_scaling         | 0.2   |
+## 自動運転ソフトウェアに関するドキュメントの翻訳
+
+### パラメータ
+
+| パラメータ | 値 |
+|---|---|
+| ホイールベース | 4.76 |
+| 加速度タイム遅延 | 1.0 |
+| ステアリングタイム遅延 | 1.0 |
+| 加速度タイム定数 | 1.0 |
+| ステアリングタイム定数 | 1.0 |
+| 加速度スケーリング | 0.2 |
 
 ##### vehicle_type_2
 
-This vehicle type is intended for a light bus.
+この車両タイプは、小型バスを想定しています。
 
-| Parameter           | value |
+| パラメータ           | 値 |
 | ------------------- | ----- |
-| wheel_base          | 4.76  |
-| acc_time_delay      | 0.5   |
-| steer_time_delay    | 0.5   |
-| acc_time_constant   | 0.5   |
-| steer_time_constant | 0.5   |
-| acc_scaling         | 0.5   |
+| ホイールベース          | 4.76 |
+| 加速度遅延時間      | 0.5 |
+| 操舵遅延時間       | 0.5 |
+| 加速度タイムコンスタント   | 0.5 |
+| 操舵タイムコンスタント   | 0.5 |
+| 加速度スケーリング         | 0.5 |
 
 ##### vehicle_type_3
 
-This vehicle type is intended for a small vehicle.
+この車両種は小型車両を想定しています。
 
-| Parameter           | value |
-| ------------------- | ----- |
-| wheel_base          | 1.335 |
-| acc_time_delay      | 0.3   |
-| steer_time_delay    | 0.3   |
-| acc_time_constant   | 0.3   |
-| steer_time_constant | 0.3   |
-| acc_scaling         | 1.5   |
+## 自動運転ソフトウェア
+
+### パラメータ
+
+| パラメータ | 値 |
+|---|---|
+| ホイーベース | 1.335 |
+| 加速度時間遅延 | 0.3 |
+| 操舵時間遅延 | 0.3 |
+| 加速度時間定数 | 0.3 |
+| 操舵時間定数 | 0.3 |
+| 加速度スケーリング | 1.5 |
 
 ##### vehicle_type_4
 
-This vehicle type is intended for a small robot.
+この車両タイプは小型ロボット向けです。
 
-| Parameter           | value |
-| ------------------- | ----- |
-| wheel_base          | 0.395 |
-| acc_time_delay      | 0.2   |
-| steer_time_delay    | 0.2   |
-| acc_time_constant   | 0.2   |
-| steer_time_constant | 0.2   |
-| acc_scaling         | 1.0   |
+| パラメータ           | 値 |
+| ------------------- | ---- |
+| ホイールベース          | 0.395 |
+| 加速遅延時間      | 0.2   |
+| ステアリング遅延時間    | 0.2   |
+| 加速時間定数   | 0.2   |
+| ステアリング時間定数 | 0.2   |
+| 加速度スケーリング         | 1.0   |
 
-#### Auto test on python simulator
+#### Pythonシミュレーターでの自動テスト
 
-Here, we describe a method for testing adaptive performance by giving the simulation side a predefined range of model parameters while the control side is given constant model parameters.
+ここでは、シミュレーション側にモデルパラメータの事前定義された範囲を提供し、制御側に定数モデルパラメータを提供することで、適応性能をテストする方法について説明します。
 
-To run a driving experiment within the parameter change range set in [run_sim.py](./autoware_smart_mpc_trajectory_follower/python_simulator/run_sim.py), for example, move to `control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/python_simulator` and run the following command:
+[run_sim.py](./autoware_smart_mpc_trajectory_follower/python_simulator/run_sim.py)で設定されたパラメータ変更範囲内で走行実験を実行するには、`control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/python_simulator`に移動し、次のコマンドを実行します。
+
 
 ```bash
 python3 run_sim.py --param_name steer_bias
 ```
 
-Here we described the experimental procedure for steer bias, and the same method can be used for other parameters.
+実験手順はステアバイアスについて説明しましたが、他のパラメーターでも同様の方法を使用できます。
 
-To run the test for all parameters except limits at once, run the following command:
+一度に制限値以外のすべてのパラメーターのテストを実行するには、次のコマンドを実行します:
+
 
 ```bash
 python3 run_auto_test.py
 ```
 
-The results are stored in the `auto_test` directory.
-After the executions were completed, the following results were obtained by running [plot_auto_test_result.ipynb](./autoware_smart_mpc_trajectory_follower/python_simulator/plot_auto_test_result.ipynb):
+Auto_testの実行結果を`auto_test`ディレクトリに保存しています。
+実行が完了したら、[plot_auto_test_result.ipynb](./autoware_smart_mpc_trajectory_follower/python_simulator/plot_auto_test_result.ipynb)を実行して次の結果を取得してください。
 
 <p style="text-align: center;">
     <img src="images/proxima_test_result_with_lstm.png" width="712px">
 </p>
 
-The orange line shows the intermediate model trained using pure pursuit figure eight drive, and the blue line shows the final model trained using data from both the intermediate model and the figure eight drive.
-In most cases, sufficient performance is obtained, but for `vehicle_type_1`, which is intended for a heavy bus, a lateral deviation of about 2 m was observed, which is not satisfactory.
+オレンジの線は純粋追従のフィギュラエイト走行を使用してトレーニングされた中間モデルを示しており、青い線は中間モデルとフィギュラエイト走行の両方からのデータを使用してトレーニングされた最終モデルを示しています。
+ほとんどの場合、十分な性能が得られますが、大型バスを想定した`vehicle_type_1`では、横方向逸脱量はおよそ2 mで、納得のいくものではありません。
 
-In `run_sim.py`, the following parameters can be set:
+`run_sim.py`で次のパラメータを設定できます。
 
-| Parameter                 | Type               | Description                                                                                                                                                                                                                                                                                                                                                               |
-| ------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| USE_TRAINED_MODEL_DIFF    | bool               | Whether the derivative of the trained model is reflected in the control                                                                                                                                                                                                                                                                                                   |
-| DATA_COLLECTION_MODE      | DataCollectionMode | Which method will be used to collect the training data　<br> "DataCollectionMode.ff": Straight line driving with feed-forward input <br> "DataCollectionMode.pp": Figure eight driving with pure pursuit control <br> "DataCollectionMode.mpc": Slalom driving with mpc                                                                                                   |
-| USE_POLYNOMIAL_REGRESSION | bool               | Whether to perform polynomial regression before NN                                                                                                                                                                                                                                                                                                                        |
-| USE_SELECTED_POLYNOMIAL   | bool               | When USE_POLYNOMIAL_REGRESSION is True, perform polynomial regression using only some preselected polynomials. <br> The choice of polynomials is intended to be able to absorb the contribution of some parameter shifts based on the nominal model of the vehicle.                                                                                                       |
-| FORCE_NN_MODEL_TO_ZERO    | bool               | Whether to force the NN model to zero (i.e., erase the contribution of the NN model). <br> When USE_POLYNOMIAL_REGRESSION is True, setting FORCE_MODEL_TO_ZERO to True allows the control to reflect the results of polynomial regression only, without using NN models.                                                                                                  |
-| FIT_INTERCEPT             | bool               | Whether to include bias in polynomial regression. <br> If it is False, perform the regression with a polynomial of the first degree or higher.                                                                                                                                                                                                                            |
-| USE_INTERCEPT             | bool               | When a polynomial regression including bias is performed, whether to use or discard the resulting bias information. <br> It is meaningful only if FIT_INTERCEPT is True.<br> If it is False, discard the bias in the polynomial regression in the hope that the NN model can remove the bias term, even if the polynomial regression is performed with the bias included. |
+| パラメータ                  | 型               | 説明                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| USE_TRAINED_MODEL_DIFF    | bool               | トレーニングされたモデルの導関数が制御に反映されるか?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| DATA_COLLECTION_MODE      | DataCollectionMode | どの方式でトレーニングデータを収集するか <br> "DataCollectionMode.ff": フィードフォワード入力で直線走行 <br> "DataCollectionMode.pp": ピュアパーシュート制御で8の字走行 <br> "DataCollectionMode.mpc": mpcでスラローム走行                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| USE_POLYNOMIAL_REGRESSION | bool               | NNの前に多項式回帰を実行するか?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| USE_SELECTED_POLYNOMIAL   | bool               | USE_POLYNOMIAL_REGRESSIONがTrueの場合、あらかじめ選択された多項式のみを使用して多項式回帰を実行する。 <br> 多項式の選択は、車両の公称モデルに基づくいくつかパラメータのシフトを吸収できるように意図されている。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 
-> [!NOTE]
-> When `run_sim.py` is run, the `use_trained_model_diff` set in `run_sim.py` takes precedence over the `trained_model_parameter:control_application:use_trained_model_diff` set in [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml).
+> [!注意]
+> `run_sim.py` を実行すると、`run_sim.py` で設定された `use_trained_model_diff` が [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) で設定された `trained_model_parameter:control_application:use_trained_model_diff` より優先されます。
 
-#### Kernel density estimation of pure pursuit driving data
+#### Pure Pursuit の走行データのカーネル密度推定
 
-The distribution of data obtained from pure pursuit runs can be displayed using Kernel density estimation. To do this, run [density_estimation.ipynb](./autoware_smart_mpc_trajectory_follower/python_simulator/density_estimation.ipynb).
+Pure Pursuit 走行から取得したデータの分布は、カーネル密度推定を使用して表示できます。これを行うには、[density_estimation.ipynb](./autoware_smart_mpc_trajectory_follower/python_simulator/density_estimation.ipynb) を実行します。
 
-The correlation between the minimum value of the density estimate and the lateral deviation of the run results is low. A scalar indicator that better predicts the value of lateral deviation is under development.
+密度推定の最小値と走行結果の横方向逸脱の相関関係は低くなっています。横方向逸脱値をより適切に予測するスカラー指標を開発中です。
 
-## Change of nominal parameters and their reloading
+## 公称パラメータの変更とその再ロード
 
-The nominal parameters of vehicle model can be changed by editing the file [nominal_param.yaml](./autoware_smart_mpc_trajectory_follower/param/nominal_param.yaml).
-After changing the nominal parameters, the cache must be deleted by running the following command:
+車両モデルの公称パラメータは、[nominal_param.yaml](./autoware_smart_mpc_trajectory_follower/param/nominal_param.yaml) ファイルを編集することで変更できます。
+公称パラメータを変更した後、次のコマンドを実行してキャッシュを削除する必要があります。
+```bash
+rm ~/.cache/autoware/autoware_smart_mpc_trajectory_follower/params/
+```
+
 
 ```bash
 python3 -m smart_mpc_trajectory_follower.clear_pycache
 ```
 
-The nominal parameters include the following:
+**通常パラメータは次のとおりです。**
 
-| Parameter                                        | Type  | Description                    |
-| ------------------------------------------------ | ----- | ------------------------------ |
-| nominal_parameter:vehicle_info:wheel_base        | float | wheel base [m]                 |
-| nominal_parameter:acceleration:acc_time_delay    | float | acceleration time delay [s]    |
-| nominal_parameter:acceleration:acc_time_constant | float | acceleration time constant [s] |
-| nominal_parameter:steering:steer_time_delay      | float | steer time delay [s]           |
-| nominal_parameter:steering:steer_time_constant   | float | steer time constant [s]        |
+| パラメータ                                        | 型  | 説明                                     |
+| ------------------------------------------------ | ----- | -------------------------------------- |
+| nominal_parameter:vehicle_info:wheel_base        | float | ホイールベース [m]                           |
+| nominal_parameter:acceleration:acc_time_delay    | float | 加速度タイム遅延 [s]                       |
+| nominal_parameter:acceleration:acc_time_constant | float | 加速度タイム定数 [s]                      |
+| nominal_parameter:steering:steer_time_delay      | float | ステアリングタイム遅延 [s]      |
+| nominal_parameter:steering:steer_time_constant   | float | ステアリングタイム定数 [s]         |
 
-## Change of control parameters and their reloading
+## コントロールパラメータの変更と再読み込み
 
-The control parameters can be changed by editing files [mpc_param.yaml](./autoware_smart_mpc_trajectory_follower/param/mpc_param.yaml) and [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml).
-Although it is possible to reflect parameter changes by restarting autoware, the following command allows us to do so without leaving autoware running:
+制御パラメータは、ファイル[mpc_param.yaml](./autoware_smart_mpc_trajectory_follower/param/mpc_param.yaml)と[trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml)を変更することで変更できます。
+パラメータの変更はAutowareを再起動することで反映できますが、次のコマンドを使用することでAutowareを実行中のまま反映できます。
+
 
 ```bash
 ros2 topic pub /pympc_reload_mpc_param_trigger std_msgs/msg/String "data: ''" --once
 ```
 
-The main parameters among the control parameters are as follows.
+主な制御パラメータは次のとおりです。
 
 ### `mpc_param.yaml`
 
-| Parameter                                  | Type        | Description                                                                                                                                                                                                                                        |
-| ------------------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| mpc_parameter:system:mode                  | str         | control mode <br>"ilqr": iLQR mode <br> "mppi": MPPI mode <br> "mppi_ilqr": the initial value of iLQR is given by the MPPI solution.                                                                                                               |
-| mpc_parameter:cost_parameters:Q            | list[float] | Stage cost for states. <br> List of length 8, in order: straight deviation, lateral deviation, velocity deviation, yaw angle deviation, acceleration deviation, steer deviation, acceleration input deviation, steer input deviation cost weights. |
-| mpc_parameter:cost_parameters:Q_c          | list[float] | Cost in the horizon corresponding to the following timing_Q_c for the states. <br> The correspondence of the components of the list is the same as for Q.                                                                                          |
-| mpc_parameter:cost_parameters:Q_f          | list[float] | Termination cost for the states. <br> The correspondence of the components of the list is the same as for Q.                                                                                                                                       |
-| mpc_parameter:cost_parameters:R            | list[float] | A list of length 2 where R[0] is weight of cost for the change rate of acceleration input value and R[1] is weight of cost for the change rate of steer input value.                                                                               |
-| mpc_parameter:mpc_setting:timing_Q_c       | list[int]   | Horizon numbers such that the stage cost for the states is set to Q_c.                                                                                                                                                                             |
-| mpc_parameter:compensation:acc_fb_decay    | float       | Coefficient of damping in integrating the error between the observed and predicted acceleration values in the compensator outside the MPC.                                                                                                         |
-| mpc_parameter:compensation:acc_fb_gain     | float       | Gain of acceleration compensation.                                                                                                                                                                                                                 |
-| mpc_parameter:compensation:max_error_acc   | float       | Maximum acceleration compensation (m/s^2)                                                                                                                                                                                                          |
-| mpc_parameter:compensation:steer_fb_decay  | float       | Coefficient of damping in integrating the error between the observed and predicted steering values in the compensator outside the MPC.                                                                                                             |
-| mpc_parameter:compensation:steer_fb_gain   | float       | Gain of steering compensation.                                                                                                                                                                                                                     |
-| mpc_parameter:compensation:max_error_steer | float       | Maximum steering compensation (rad)                                                                                                                                                                                                                |
+| パラメータ                               | 型         | 説明 |
+| ----------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| mpc_parameter:system:mode                | str         | 制御モード <br>"ilqr": iLQRモード <br>"mppi": MPPIモード <br>"mppi_ilqr": iLQRの初期値はMPPIソリューションによって与えられる |
+| mpc_parameter:cost_parameters:Q            | list[float] | 状態のステージコスト <br>長さ8のリスト、順に: 直線偏差、横方向偏差、速度偏差、偏航角偏差、加速度偏差、ステア偏差、加速度入力偏差、ステア入力偏差のコスト重み |
+| mpc_parameter:cost_parameters:Q_c          | list[float] | 状態の次のtiming_Q_cに相当するhorizon内のコスト <br>リストの構成要素の対応はQの場合と同じ |
+| mpc_parameter:cost_parameters:Q_f          | list[float] | 状態の終端コスト <br>リストの構成要素の対応はQの場合と同じ |
+| mpc_parameter:cost_parameters:R            | list[float] | 長さ2のリスト、R[0]は加速度入力値の変化率のコストの重み、R[1]はステア入力値の変化率のコストの重み |
+| mpc_parameter:mpc_setting:timing_Q_c       | list[int]   | 状態のステージコストがQ_cに設定されるhorizon番号 |
+| mpc_parameter:compensation:acc_fb_decay    | float       | MPC外部のコンペンセータの観測された加速度値と予測加速度値の間の誤差を積分する際の減哀係数 |
+| mpc_parameter:compensation:acc_fb_gain     | float       | 加速度補償のゲイン |
+| mpc_parameter:compensation:max_error_acc   | float       | 最大加速度補償 (m/s^2) |
+| mpc_parameter:compensation:steer_fb_decay  | float       | MPC外部のコンペンセータにおける観測ステアリング値と予測ステアリング値の間の誤差を積分する際の減衰係数 |
+| mpc_parameter:compensation:steer_fb_gain   | float       | ステアリング補償のゲイン |
+| mpc_parameter:compensation:max_error_steer | float       | 最大ステアリング補償 (rad) |
 
 ### `trained_model_param.yaml`
 
-| Parameter                                                           | Type | Description                                                                                                                                                                                                                                                           |
-| ------------------------------------------------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| trained_model_parameter:control_application:use_trained_model       | bool | Whether the trained model is reflected in the control or not.                                                                                                                                                                                                         |
-| trained_model_parameter:control_application:use_trained_model_diff  | bool | Whether the derivative of the trained model is reflected on the control or not. <br> It is meaningful only when use_trained_model is True, and if False, the nominal model is used for the derivative of the dynamics, and trained model is used only for prediction. |
-| trained_model_parameter:memory_for_training:use_memory_for_training | bool | Whether to use the model that includes LSTM for learning or not.                                                                                                                                                                                                      |
-| trained_model_parameter:memory_for_training:use_memory_diff         | bool | Whether the derivative with respect to the cell state and hidden state at the previous time of LSTM is reflected in the control or not.                                                                                                                               |
+| パラメータ                                                           | 型   | 説明                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| trained_model_parameter:control_application:use_trained_model       | bool | 学習済みモデルが制御に反映されるかどうかを示します。                                                                                                                                                                                                                                                    |
+| trained_model_parameter:control_application:use_trained_model_diff  | bool | 学習済みモデルの微分値が制御に反映されるかどうかを示します。 <br> use_trained_modelがTrueの場合にのみ意味があり、Falseの場合は、運動の方程式の微分には公称モデルが使用され、学習済みモデルは予測にのみ使用されます。 |
+| trained_model_parameter:memory_for_training:use_memory_for_training | bool | 学習のためにLSTMを含むモデルを使用するかどうかを示します。                                                                                                                                                                                                                                                        |
+| trained_model_parameter:memory_for_training:use_memory_diff         | bool | LSTMの前時点でのセル状態および隠れ状態に対する微分が制御に反映されるかどうかを示します。                                                                                                                                                                                                            |
 
-## Request to release the slow stop mode
+## 減速停止モードの解除要求
 
-If the predicted trajectory deviates too far from the target trajectory, the system enters a slow stop mode and the vehicle stops moving.
-To cancel the slow stop mode and make the vehicle ready to run again, run the following command:
+予測軌跡がターゲット軌跡から大きく逸脱した場合、システムは減速停止モードに入り、車両は停止します。
+減速停止モードをキャンセルして車両を走行可能にするには、次のコマンドを実行します。
+
 
 ```bash
 ros2 topic pub /pympc_stop_mode_reset_request std_msgs/msg/String "data: ''" --once
 ```
 
-## Limitation
+## 制限事項
 
-- May not be able to start when initial position/posture is far from the target.
+- 初期位置/姿勢が目標から大きく離れている場合は開始できない可能性があります。
 
-- It may take some time until the end of the planning to compile numba functions at the start of the first control.
+- 最初の制御の開始時に numba 関数をコンパイルするまで、Plannin の終了まで少し時間がかかる場合があります。
 
-- In the stopping action near the goal our control switches to another simple control law. As a result, the stopping action may not work except near the goal. Stopping is also difficult if the acceleration map is significantly shifted.
+- ゴール付近の停止動作では、制御が別の簡単な制御則に切り替わります。結果として、停止動作はゴール付近を除いて機能しない場合があります。加速度マップが大幅にシフトしている場合も停止は困難です。
 
-- If the dynamics deviates too much from the nominal model, as in `vehicle_type_1`, which is intended for heavy buses, it may not be well controlled.
+- `vehicle_type_1` のように大型バス向けに想定されているように、ダイナミクスが公称モデルから大きく逸脱している場合、うまく制御できない可能性があります。
+

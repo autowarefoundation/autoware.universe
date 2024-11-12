@@ -1,16 +1,17 @@
-# Goal Planner design
+# ゴールプランナー設計
 
-## Purpose / Role
+## 目的 / 役割
 
-Plan path around the goal.
+ゴール周辺のパスを計画する。
 
-- Arrive at the designated goal.
-- Modify the goal to avoid obstacles or to pull over at the side of the lane.
+- 指定されたゴールに到着する。
+- 障害物を回避するため、または車線の脇に停車するため、ゴールを変更する。
 
-## Design
+## 設計
 
-If goal modification is not allowed, park at the designated fixed goal. (`fixed_goal_planner` in the figure below)
-When allowed, park in accordance with the specified policy(e.g pull over on left/right side of the lane). (`rough_goal_planner` in the figure below). Currently rough goal planner only support pull_over feature, but it would be desirable to be able to accommodate various parking policies in the future.
+ゴール変更が許可されていない場合は、指定された固定ゴールに駐車する（下の図の `fixed_goal_planner`）。
+許可されている場合は、指定されたポリシー（例：車線の左右に駐車）に従って駐車する（下の図の `rough_goal_planner`）。現在、ラフゴールプランナーはプルオーバー機能のみをサポートしているが、将来的にはさまざまな駐車ポリシーに対応できることが望ましい。
+
 
 ```plantuml
 @startuml
@@ -80,20 +81,20 @@ GoalCandidates --o GoalSearcherBase
 @enduml
 ```
 
-## start condition
+## 開始条件
 
 ### fixed_goal_planner
 
-This is a very simple function that plans a smooth path to a specified goal. This function does not require approval and always runs with the other modules.
-_NOTE: this planner does not perform the several features described below, such as "goal search", "collision check", "safety check", etc._
+これは、指定された目標にスムーズな経路を計画する非常にシンプルな関数です。この関数は承認を必要とせず、常に他のモジュールと一緒に実行されます。
+_注意: このプランナーは、「目標探索」、「衝突チェック」、「安全チェック」など、以下で説明するいくつかの機能は実行しません。_
 
-Executed when both conditions are met.
+両方の条件が満たされると実行されます。
 
-- Route is set with `allow_goal_modification=false`. This is the default.
-- The goal is set in the normal lane. In other words, it is NOT `road_shoulder`.
-- Ego-vehicle exists in the same lane sequence as the goal.
+- ルートは `allow_goal_modification=false` で設定されています。これはデフォルトです。
+- 目標は通常の車線に設定されています。つまり、`road_shoulder` ではありません。
+- 自車は目標と同じ車線シーケンスに存在します。
 
-If the target path contains a goal, modify the points of the path so that the path and the goal are connected smoothly. This process will change the shape of the path by the distance of `refine_goal_search_radius_range` from the goal. Note that this logic depends on the interpolation algorithm that will be executed in a later module (at the moment it uses spline interpolation), so it needs to be updated in the future.
+目標経路に目標が含まれている場合、経路のポイントを変更して、経路と目標がスムーズにつながるようにします。この処理により、経路の形状が目標から `refine_goal_search_radius_range` の距離だけ変化します。このロジックは、後続のモジュールで実行される補間アルゴリズム（現時点ではスプライン補間を使用）に依存するため、将来的にはアップデートする必要があります。
 
 ![path_goal_refinement](./images/path_goal_refinement.drawio.svg)
 
@@ -101,269 +102,269 @@ If the target path contains a goal, modify the points of the path so that the pa
 
 ### rough_goal_planner
 
-#### pull over on road lane
+#### 路側端に寄せる
 
-- The distance between the goal and ego-vehicle is shorter than `pull_over_minimum_request_length`.
-- Route is set with `allow_goal_modification=true` .
-  - We can set this option with [SetRoute](https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2) api service.
-  - We support `2D Rough Goal Pose` with the key bind `r` in RViz, but in the future there will be a panel of tools to manipulate various Route API from RViz.
-- The terminal point of the current path is in the same lane sequence as the goal. If goal is on the road shoulder, then it is in the adjacent road lane sequence.
+- 目標と自車間の距離が `pull_over_minimum_request_length` よりも短い。
+- ルートは `allow_goal_modification=true` で設定されています。
+  - [SetRoute](https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2) API サービスでこのオプションを設定できます。
+  - RVizで `r` にキーバインドされた `2D Rough Goal Pose` をサポートしていますが、将来的にはRVizからさまざまなルートAPIを操作するためのツールパネルを用意する予定です。
+- 現在のパスにおける終点は、目標と同じ車線シーケンス内にあります。目標が路側肩にある場合は、隣接する車線シーケンス内にあります。
 
 <img src="https://user-images.githubusercontent.com/39142679/237929950-989ca6c3-d48c-4bb5-81e5-e8d6a38911aa.png" width="600">
 
-#### pull over on shoulder lane
+#### 路側肩に寄せる
 
-- The distance between the goal and ego-vehicle is shorter than `pull_over_minimum_request_length`.
-- Goal is set in the `road_shoulder`.
+- 目標と自車間の距離が `pull_over_minimum_request_length` よりも短い。
+- ゴールは `road_shoulder` に設定されています。
 
 <img src="https://user-images.githubusercontent.com/39142679/237929941-2ce26ea5-c84d-4d17-8cdc-103f5246db90.png" width="600">
 
-## finish condition
+## 終了条件
 
-- The distance to the goal from your vehicle is lower than threshold (default: < `1m`).
-- The ego-vehicle is stopped.
-  - The speed is lower than threshold (default: < `0.01m/s`).
+- 自車から目標までの距離がしきい値（デフォルト: < `1m`）より低い。
+- 自車が停止している。
+  - 速度がしきい値（デフォルト: < `0.01m/s`）より低い。
 
-## General parameters for goal_planner
+## goal_planner の一般的なパラメータ
 
-| Name                      | Unit  | Type   | Description                                        | Default value |
-| :------------------------ | :---- | :----- | :------------------------------------------------- | :------------ |
-| th_arrived_distance       | [m]   | double | distance threshold for arrival of path termination | 1.0           |
-| th_stopped_velocity       | [m/s] | double | velocity threshold for arrival of path termination | 0.01          |
-| th_stopped_time           | [s]   | double | time threshold for arrival of path termination     | 2.0           |
-| center_line_path_interval | [m]   | double | reference center line path point interval          | 1.0           |
+| 名前                      | 単位  | タイプ   | 説明                                                                    | デフォルト値 |
+| :------------------------ | :---- | :----- | :---------------------------------------------------------------------- | :------------ |
+| th_arrived_distance       | [m]   | 数値   | パス終了に到着するための距離閾値                                        | 1.0           |
+| th_stopped_velocity       | [m/s] | 数値   | パス終了に到着するための速度閾値                                        | 0.01          |
+| th_stopped_time           | [s]   | 数値   | パス終了に到着するための時間閾値                                          | 2.0           |
+| center_line_path_interval | [m]   | 数値   | 参照センターラインパスのポイント間隔                                     | 1.0           |
 
 ## **Goal Search**
 
-To realize pull over even when an obstacle exists near the original goal, a collision free area is searched within a certain range around the original goal. The goal found will be published as `/planning/scenario_planning/modified_goal`.
+障害物が当初の目標付近にある場合でもハザードランプ消灯を実現するために、当初の目標の周囲の特定範囲内で衝突しない領域を検索します。見つかった目標は `/planning/scenario_planning/modified_goal` として公開されます。
 
-[goal search video](https://user-images.githubusercontent.com/39142679/188359594-c6724e3e-1cb7-4051-9a18-8d2c67d4dee9.mp4)
+[Goal Search Video](https://user-images.githubusercontent.com/39142679/188359594-c6724e3e-1cb7-4051-9a18-8d2c67d4dee9.mp4)
 
-1. The original goal is set, and the refined goal pose is obtained by moving in the direction normal to the lane center line and keeping `margin_from_boundary` from the edge of the lane.
+1. 当初目標が設定され、レファインド目標のポーズが車線の中心線に対して垂直方向に移動し、『レーン境界から『 `margin_from_boundary` 』離れた距離を保つことで取得されます。
    ![refined_goal](./images/goal_planner-refined_goal.drawio.svg)
 
-2. Using `refined_goal` as the base goal, search for candidate goals in the range of `-forward_goal_search_length` to `backward_goal_search_length` in the longitudinal direction and `longitudinal_margin` to `longitudinal_margin+max_lateral_offset` in th lateral direction based on refined_goal.
+2. 『レファインド目標』をベース目標として使用して、精度を高めた目標に基づいて、縦方向に『 `-forward_goal_search_length` 』から『 `backward_goal_search_length` 』、横方向に『 `longitudinal_margin` 』から『 `longitudinal_margin` + `max_lateral_offset` 』の範囲で候補目標を検索します。
    ![goal_candidates](./images/goal_planner-goal_candidates.drawio.svg)
 
-3. Each candidate goal is prioritized and a path is generated for each planner for each goal. The priority of a candidate goal is determined by its distance from the base goal. The ego vehicle tries to park for the highest possible goal. The distance is determined by the selected policy. In case `minimum_longitudinal_distance`, sort with smaller longitudinal distances taking precedence over smaller lateral distances. In case `minimum_weighted_distance`, sort with the sum of weighted lateral distance and longitudinal distance. This means the distance is calculated by `longitudinal_distance + lateral_cost*lateral_distance`
+3. 各候補目標に優先順位が付けられ、各目標に対して各プランナーでパスが生成されます。候補目標の優先順位は、ベース目標からの距離によって決まります。車両は可能な限り最も高い目標に向けて駐車しようします。距離は選択したポリシーによって定義されます。 『 `minimum_longitudinal_distance` 』の場合は、縦方向の距離が小さい方が小さい横方向の距離よりも優先されるようにソートします。 『 `minimum_weighted_distance` 』の場合は、加重横方向距離と縦方向距離の合計でソートします。これは、距離が `longitudinal_distance + lateral_cost*lateral_distance` によって計算されることを意味します。
    ![goal_distance](./images/goal_planner-goal_distance.drawio.svg)
-   The following figure is an example of minimum_weighted_distance.​ The white number indicates the goal candidate priority, and the smaller the number, the higher the priority. the 0 goal indicates the base goal.
+   次の図は `minimum_weighted_distance` の例です。白い数字は目標候補の優先順位を表し、数字が小さいほど優先順位が高くなります。目標 0 はベース目標を表します。
    ![goal_priority_rviz_with_goal](./images/goal_priority_with_goal.png)
    ![goal_priority_rviz](./images/goal_priority_rviz.png)
 
-4. If the footprint in each goal candidate is within `object_recognition_collision_check_margin` of that of the object, it is determined to be unsafe. These goals are not selected. If `use_occupancy_grid_for_goal_search` is enabled, collision detection on the grid is also performed with `occupancy_grid_collision_check_margin`.
+4. 各目標候補のフットプリントがオブジェクトのフットプリントから `object_recognition_collision_check_margin` 以内に収まると安全でないと判断されます。これらの目標は選択されません。 `use_occupancy_grid_for_goal_search` が有効になっている場合、グリッド上の衝突検出も `occupancy_grid_collision_check_margin` で実行されます。
 
-Red goals candidates in the image indicate unsafe ones.
+画像内の赤色の目標候補は安全でないことを示しています。
 
 ![is_safe](./images/goal_planner-is_safe.drawio.svg)
 
-It is possible to keep `longitudinal_margin` in the longitudinal direction apart from the collision margin for obstacles from the goal candidate. This is intended to provide natural spacing for parking and efficient departure.
+目標候補では、縦方向に `longitudinal_margin` を障害物から衝突マージンとは離しておくことが可能です。これは、駐車時の自然な間隔と効率的な出発を確保することを目的としています。
 
 ![longitudinal_margin](./images/goal_planner-longitudinal_margin.drawio.svg)
 
-Also, if `prioritize_goals_before_objects` is enabled, To arrive at each goal, the number of objects that need to be avoided in the target range is counted, and those with the lowest number are given priority.
+また、 `prioritize_goals_before_objects` が有効になっている場合は、各目標に到着するために対象範囲内で回避する必要のあるオブジェクトの数をカウントし、数が最も少ないものに優先順位を付けます。
 
-The images represent a count of objects to be avoided at each range, with priority given to those with the lowest number, regardless of the aforementioned distances.
+画像は、前述の距離に関係なく、回避する必要があるオブジェクトの数を各範囲でカウントしたものであり、数が最も少ないものに優先順位が付けられています。
 
 ![object_to_avoid](./images/goal_planner-object_to_avoid.drawio.svg)
 
-The gray numbers represent objects to avoid, and you can see that the goal in front has a higher priority in this case.
+グレーの数字は回避対象のオブジェクトを表しており、この場合、前の目標の優先順位が高いことがわかります。
 
 ![goal_priority_object_to_avoid_rviz.png](./images/goal_priority_object_to_avoid_rviz.png)
 
-### Parameters for goal search
+### Goal Search のパラメータ
 
-| Name                            | Unit | Type   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Default value               |
+| 名称                            | 単位 | タイプ   | 説明                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | デフォルト値               |
 | :------------------------------ | :--- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------- |
-| goal_priority                   | [-]  | string | In case `minimum_longitudinal_distance`, sort with smaller longitudinal distances taking precedence over smaller lateral distances. In case `minimum_weighted_distance`, sort with the sum of weighted lateral distance and longitudinal distance                                                                                                                                                                                                                                | `minimum_weighted_distance` |
-| lateral_weight                  | [-]  | double | Weight for lateral distance used when `minimum_weighted_distance`                                                                                                                                                                                                                                                                                                                                                                                                                | 40.0                        |
-| prioritize_goals_before_objects | [-]  | bool   | If there are objects that may need to be avoided, prioritize the goal in front of them                                                                                                                                                                                                                                                                                                                                                                                           | true                        |
-| forward_goal_search_length      | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                                                                                                                                                                                                                                                                                    | 20.0                        |
-| backward_goal_search_length     | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                                                                                                                                                                                                                                                                                   | 20.0                        |
-| goal_search_interval            | [m]  | double | distance interval for goal search                                                                                                                                                                                                                                                                                                                                                                                                                                                | 2.0                         |
-| longitudinal_margin             | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                                                                                                                                                                                                                                                                                    | 3.0                         |
-| max_lateral_offset              | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                                                                                                                                                                                                                                                                           | 0.5                         |
-| lateral_offset_interval         | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                                                                                                                                                                                                                                                                        | 0.25                        |
-| ignore_distance_from_lane_start | [m]  | double | This parameter ensures that the distance between the start of the shoulder lane and the goal is not less than the specified value. It's used to prevent setting goals too close to the beginning of the shoulder lane, which might lead to unsafe or impractical pull-over maneuvers. Increasing this value will force the system to ignore potential goal positions near the start of the shoulder lane, potentially leading to safer and more comfortable pull-over locations. | 0.0                         |
-| margin_from_boundary            | [m]  | double | distance margin from edge of the shoulder lane                                                                                                                                                                                                                                                                                                                                                                                                                                   | 0.5                         |
+| goal_priority                   | [－]  | string | longitudinal distancesを優先し小さい距離を優先する `minimum_longitudinal_distance`、weighted lateral distanceとlongitudinal distanceの総和を優先する `minimum_weighted_distance` | `minimum_weighted_distance` |
+| lateral_weight                  | [－]  | double | `minimum_weighted_distance`時に使用されるlateral distanceの重み                                                                                                                                                                                                                                                                                                                                                                                                                | 40.0                        |
+| prioritize_goals_before_objects | [－]  | bool   | 回避すべきオブジェクトがある場合、それらの前面にある目標を優先                                                                                                                                                                                                                                                                                                                                                                                           | true                        |
+| forward_goal_search_length      | [m]  | double | 元の目標から探索する前方範囲の長さ                                                                                                                                                                                                                                                                                                                                                                                                                    | 20.0                        |
+| backward_goal_search_length     | [m]  | double | 元の目標から探索する後方範囲の長さ                                                                                                                                                                                                                                                                                                                                                                                                                   | 20.0                        |
+| goal_search_interval            | [m]  | double | 目標検索の距離間隔                                                                                                                                                                                                                                                                                                                                                                                                                                                | 2.0                         |
+| longitudinal_margin             | [m]  | double | 目標位置の自車と障害物間の距離マージン                                                                                                                                                                                                                                                                                                                                                                                                                    | 3.0                         |
+| max_lateral_offset              | [m]  | double | lateral方向の目標検索の最大オフセット                                                                                                                                                                                                                                                                                                                                                                                                                           | 0.5                         |
+| lateral_offset_interval         | [m]  | double | lateral方向の目標検索の距離間隔                                                                                                                                                                                                                                                                                                                                                                                                                        | 0.25                        |
+| ignore_distance_from_lane_start | [m]  | double | このパラメータによって、車線路の開始位置と目標間の距離が指定した値以上になることが保証されます。これは、目標を車線路の開始位置にかなり近い位置に設定することを防ぐために使用され、安全でない、または実用的な路肩への車両移動につながる可能性があります。この値を増やすと、システムは車線路の開始位置近くの潜在的な目標位置を無視せざるを得なくなり、安全で快適な路肩への車両移動につながる可能性があります。 | 0.0                         |
+| margin_from_boundary            | [m]  | double | 車線路の端からの距離マージン                                                                                                                                                                                                                                                                                                                                                                                                                                   | 0.5                         |
 
-## **Pull Over**
+## **路肩駐車**
 
-There are three path generation methods.
-The path is generated with a certain margin (default: `0.75 m`) from the boundary of shoulder lane.
+経路生成方法が 3 つあります。
+経路は路肩の境界線から一定の余白（デフォルト: `0.75 m`）を設けて生成されます。
 
-The process is time consuming because multiple planners are used to generate path for each candidate goal. Therefore, in this module, the path generation is performed in a thread different from the main thread.
-Path generation is performed at the timing when the shape of the output path of the previous module changes. If a new module launches, it is expected to go to the previous stage before the goal planner, in which case the goal planner re-generates the path. The goal planner is expected to run at the end of multiple modules, which is achieved by `keep_last` in the planner manager.
+各候補のゴールに対して複数の Plannar を使用して経路を生成するため、プロセスには時間がかかります。したがって、このモジュールでは経路生成はメインスレッドとは異なるスレッドで実行されます。経路生成は、前のモジュールの出力経路の形状が変更されたタイミングで実行されます。新しいモジュールが起動すると、通常はゴールプランナより前の段階に移行し、その場合、ゴールプランナは経路を再生成します。ゴールプランナは複数のモジュールの最後で実行されることを想定しており、これはプランナマネージャの `keep_last` によって実現されます。
 
-Threads in the goal planner are shown below.
+ゴールプランナの threads は次のとおりです。
 
 ![threads.png](./images/goal_planner-threads.drawio.svg)
 
-The main thread will be the one called from the planner manager flow.
+メインスレッドは、プランナマネージャフローから呼び出されるスレッドになります。
 
-- The goal candidate generation and path candidate generation are done in a separate thread(lane path generation thread).
-- The path candidates generated there are referred to by the main thread, and the one judged to be valid for the current planner data (e.g. ego and object information) is selected from among them. valid means no sudden deceleration, no collision with obstacles, etc. The selected path will be the output of this module.
-- If there is no path selected, or if the selected path is collision and ego is stuck, a separate thread(freespace path generation thread) will generate a path using freespace planning algorithm. If a valid free space path is found, it will be the output of the module. If the object moves and the pull over path generated along the lane is collision-free, the path is used as output again. See also the section on freespace parking for more information on the flow of generating freespace paths.
+- ゴール候補の生成と経路候補の生成は、別のスレッド（車線経路生成スレッド）で行われます。
+- そこで生成された経路候補はメインスレッドで参照され、現在のプランナーのデータ（例: 自車と障害物の情報）に対して有効と判断された候補がその中から選択されます。有効とは、急減速なし、障害物との衝突なしなどを意味します。選択された経路がこのモジュールの出力になります。
+- 選択された経路がない場合、または選択された経路が衝突で自車が停止した場合、別のスレッド（フリースペース経路生成スレッド）がフリースペース Plannar アルゴリズムを使用して経路を生成します。有効なフリースペース経路が見つかった場合、それはモジュールの出力になります。障害物が移動して車線に沿って生成された路肩駐車の経路が衝突フリーの場合、経路は再び出力として使用されます。フリースペース経路の生成フローの詳細については、フリースペース駐車に関するセクションも参照してください。
 
-| Name                                  | Unit   | Type   | Description                                                                                                                                                                    | Default value                            |
-| :------------------------------------ | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- |
-| pull_over_minimum_request_length      | [m]    | double | when the ego-vehicle approaches the goal by this distance or a safe distance to stop, pull over is activated.                                                                  | 100.0                                    |
-| pull_over_velocity                    | [m/s]  | double | decelerate to this speed by the goal search area                                                                                                                               | 3.0                                      |
-| pull_over_minimum_velocity            | [m/s]  | double | speed of pull_over after stopping once. this prevents excessive acceleration.                                                                                                  | 1.38                                     |
-| decide_path_distance                  | [m]    | double | decide path if it approaches this distance relative to the parking position. after that, no path planning and goal search are performed                                        | 10.0                                     |
-| maximum_deceleration                  | [m/s2] | double | maximum deceleration. it prevents sudden deceleration when a parking path cannot be found suddenly                                                                             | 1.0                                      |
-| path_priority                         | [-]    | string | In case `efficient_path` use a goal that can generate an efficient path which is set in `efficient_path_order`. In case `close_goal` use the closest goal to the original one. | efficient_path                           |
-| efficient_path_order                  | [-]    | string | efficient order of pull over planner along lanes excluding freespace pull over                                                                                                 | ["SHIFT", "ARC_FORWARD", "ARC_BACKWARD"] |
-| lane_departure_check_expansion_margin | [m]    | double | margin to expand the ego vehicle footprint when doing lane departure checks                                                                                                    | 0.0                                      |
+| 名称                                        | 単位   | 種類   | 説明                                                                                                                                                                | デフォルト値                           |
+| ------------------------------------------ | ------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| pull_over_minimum_request_length           | [m]    | double | 自動車が目標地点にこの距離まで接近するか、停止する安全距離に達すると、プルオーバーが有効になる。                                                             | 100.0                                   |
+| pull_over_velocity                        | [m/s]  | double | 目標検索エリアまでにこの速度に減速する                                                                                                                              | 3.0                                     |
+| pull_over_minimum_velocity                | [m/s]  | double | 一度停止した後のプルオーバーの速度。過度の加速度を防止する。                                                                                                                 | 1.38                                    |
+| decide_path_distance                      | [m]    | double | 駐車位置にこの距離まで接近した場合に経路を決定する。その後、経路計画と目標検索は実行されません                                                                     | 10.0                                    |
+| maximum_deceleration                      | [m/s2] | double | 最大減速度。駐車経路が急に検出できない場合に急減速を防ぐ。                                                                                                       | 1.0                                     |
+| path_priority                             | [-]    | string | `efficient_path`を使用する場合、`efficient_path_order`に設定された効率的な経路を生成できる目標を使用します。`close_goal`を使用する場合、元の目標に最も近い目標を使用します。 | efficient_path                         |
+| efficient_path_order                      | [-]    | string | フリースペースでのプルオーバーを除くレーンに沿ったプルオーバープランナーの効率的な順序                                                                                          | ["SHIFT", "ARC_FORWARD", "ARC_BACKWARD"] |
+| lane_departure_check_expansion_margin     | [m]    | double | 車線逸脱チェックを実行するときの自動車両のフットプリントを拡大するためのマージン                                                                                     | 0.0                                     |
 
-### **shift parking**
+### **路肩駐車**
 
-Pull over distance is calculated by the speed, lateral deviation, and the lateral jerk.
-The lateral jerk is searched for among the predetermined minimum and maximum values, and the one satisfies ready conditions described above is output.
+寄せる距離は、速度、横方向偏差、横方向ジャークから計算されます。
+横方向ジャークは、事前に設定された最小値と最大値の間で検索され、上記の条件を満たすものが出力されます。
 
-1. Apply uniform offset to centerline of shoulder lane for ensuring margin
-2. In the section between merge start and end, path is shifted by a method that is used to generate avoidance path (four segmental constant jerk polynomials)
-3. Combine this path with center line of road lane
+1. 余白を確保するために、路肩車線の路側線セグメントに一様なオフセットを適用する
+2. 合流開始と終了の間のセクションでは、回避経路の生成に使用される方法（4セグメント定数ジャーク多項式）で経路をシフトする
+3. この経路と車線の中心線を組み合わせる
 
 ![shift_parking](./images/shift_parking.drawio.svg)
 
 [shift_parking video](https://user-images.githubusercontent.com/39142679/178034101-4dc61a33-bc49-41a0-a9a8-755cce53cbc6.mp4)
 
-#### Parameters for shift parking
+#### 路肩駐車のパラメータ
 
-| Name                          | Unit   | Type   | Description                                                         | Default value |
-| :---------------------------- | :----- | :----- | :------------------------------------------------------------------ | :------------ |
-| enable_shift_parking          | [-]    | bool   | flag whether to enable shift parking                                | true          |
-| shift_sampling_num            | [-]    | int    | Number of samplings in the minimum to maximum range of lateral_jerk | 4             |
-| maximum_lateral_jerk          | [m/s3] | double | maximum lateral jerk                                                | 2.0           |
-| minimum_lateral_jerk          | [m/s3] | double | minimum lateral jerk                                                | 0.5           |
-| deceleration_interval         | [m]    | double | distance of deceleration section                                    | 15.0          |
-| after_shift_straight_distance | [m]    | double | straight line distance after pull over end point                    | 1.0           |
+| 名称                          | 単位   | 型         | 説明                                                                 | デフォルト値   |
+| :----------------------------- | :----- | :--------- | :-------------------------------------------------------------------- | :------------- |
+| enable_shift_parking          | [-]    | ブール型    | シフトパーキングを有効にするフラグ                                  | true          |
+| shift_sampling_num            | [-]    | 整数型     | lateral_jerkの最小および最大範囲内のサンプリング数                   | 4             |
+| maximum_lateral_jerk          | [m/s3] | 倍精度浮動小数点数型 | 最大横方向ジャーク                                                   | 2.0           |
+| minimum_lateral_jerk          | [m/s3] | 倍精度浮動小数点数型 | 最小横方向ジャーク                                                   | 0.5           |
+| deceleration_interval         | [m]    | 倍精度浮動小数点数型 | 減速区間の距離                                                    | 15.0          |
+| after_shift_straight_distance | [m]    | 倍精度浮動小数点数型 | 引き寄せ終了後の直線距離                                          | 1.0           |
 
 ### **geometric parallel parking**
 
-Generate two arc paths with discontinuous curvature. It stops twice in the middle of the path to control the steer on the spot. There are two path generation methods: forward and backward.
-See also [[1]](https://www.sciencedirect.com/science/article/pii/S1474667015347431) for details of the algorithm. There is also [a simple python implementation](https://github.com/kosuke55/geometric-parallel-parking).
+2つの不連続曲率円弧パスを生成します。パスの途中で2回停止し、この時点でステアリングを制御します。2つのパス生成方法：前進と後進があります。
+アルゴリズムの詳細については、[[1]](https://www.sciencedirect.com/science/article/pii/S1474667015347431) を参照してください。また、[シンプルなPython実装](https://github.com/kosuke55/geometric-parallel-parking) もあります。
 
-#### Parameters geometric parallel parking
+#### geometric parallel parkingのパラメータ
 
-| Name                    | Unit  | Type   | Description                                                                                                                         | Default value |
-| :---------------------- | :---- | :----- | :---------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| arc_path_interval       | [m]   | double | interval between arc path points                                                                                                    | 1.0           |
-| pull_over_max_steer_rad | [rad] | double | maximum steer angle for path generation. it may not be possible to control steer up to max_steer_angle in vehicle_info when stopped | 0.35          |
+| 名称                    | 単位  | 型   | 説明                                                                                                              | デフォルト値 |
+| :---------------------- | :---- | :----- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
+| arc_path_interval       | [m]   | double | アークパスポイント間の距離                                                                                 | 1.0           |
+| pull_over_max_steer_rad | [rad] | double | Path生成時の最大ステアリング角度。停止中はvehicle_infoでmax_steer_angleまでステアリングを制御できない場合がある | 0.35          |
 
-#### arc forward parking
+#### アークフォワードパーキング
 
-Generate two forward arc paths.
+2つの前方アークパスを生成します。
 
 ![arc_forward_parking](./images/arc_forward_parking.drawio.svg)
 
 [arc_forward_parking video](https://user-images.githubusercontent.com/39142679/178034128-4754c401-8aff-4745-b69a-4a69ca29ce4b.mp4)
 
-#### Parameters arc forward parking
+#### アークフォワードパーキングのパラメータ
 
-| Name                                    | Unit  | Type   | Description                                                                     | Default value |
-| :-------------------------------------- | :---- | :----- | :------------------------------------------------------------------------------ | :------------ |
-| enable_arc_forward_parking              | [-]   | bool   | flag whether to enable arc forward parking                                      | true          |
-| after_forward_parking_straight_distance | [m]   | double | straight line distance after pull over end point                                | 2.0           |
-| forward_parking_velocity                | [m/s] | double | velocity when forward parking                                                   | 1.38          |
-| forward_parking_lane_departure_margin   | [m/s] | double | lane departure margin for front left corner of ego-vehicle when forward parking | 0.0           |
+| 名前                                    | 単位  | 型   | 説明                                                                                                | デフォルト値 |
+| :-------------------------------------- | :---- | :----- | :-------------------------------------------------------------------------------------------------- | :------------ |
+| `enable_arc_forward_parking`              | [-]   | ブール | 円弧前進駐車を有効にするかどうか                                                                       | true          |
+| `after_forward_parking_straight_distance` | [m]   | double | 引き上げ終了地点から直線距離                                                                          | 2.0           |
+| `forward_parking_velocity`                | [m/s] | double | 前進駐車時の速度                                                                                       | 1.38          |
+| `forward_parking_lane_departure_margin`   | [m/s] | double | 前進駐車時の車両左前角の車線逸脱マージン                                                              | 0.0           |
 
-#### arc backward parking
+#### アーク後退駐車
 
-Generate two backward arc paths.
+後退アークパスを2つ生成します。
 
-![arc_backward_parking](./images/arc_backward_parking.drawio.svg).
+![後退アーク駐車](./images/arc_backward_parking.drawio.svg)
 
-[arc_backward_parking video](https://user-images.githubusercontent.com/39142679/178034280-4b6754fe-3981-4aee-b5e0-970f34563c6d.mp4)
+[後退アーク駐車ビデオ](https://user-images.githubusercontent.com/39142679/178034280-4b6754fe-3981-4aee-b5e0-970f34563c6d.mp4)
 
-#### Parameters arc backward parking
+#### 後退アーク駐車のパラメータ
 
-| Name                                     | Unit  | Type   | Description                                                               | Default value |
-| :--------------------------------------- | :---- | :----- | :------------------------------------------------------------------------ | :------------ |
-| enable_arc_backward_parking              | [-]   | bool   | flag whether to enable arc backward parking                               | true          |
-| after_backward_parking_straight_distance | [m]   | double | straight line distance after pull over end point                          | 2.0           |
-| backward_parking_velocity                | [m/s] | double | velocity when backward parking                                            | -1.38         |
-| backward_parking_lane_departure_margin   | [m/s] | double | lane departure margin for front right corner of ego-vehicle when backward | 0.0           |
+| 名称                                   | 単位 | タイプ | 説明                                                                  | デフォルト値 |
+| :--------------------------------------- | :---- | :----- | :----------------------------------------------------------------------- | :----------- |
+| enable_arc_backward_parking              | [-]   | bool   | アーク後退駐車を有効にするフラグ                                    | true         |
+| after_backward_parking_straight_distance | [m]   | double | 駐車終了地点後の直線距離                                             | 2.0          |
+| backward_parking_velocity                | [m/s] | double | 後退駐車時の速度                                                      | -1.38        |
+| backward_parking_lane_departure_margin   | [m/s] | double | 自車の前右隅が後退駐車時に車線から逸脱するマージン                    | 0.0          |
 
-### freespace parking
+### 無人駐車（Freespace Parking）
 
-If the vehicle gets stuck with `lane_parking`, run `freespace_parking`.
-To run this feature, you need to set `parking_lot` to the map, `activate_by_scenario` of [costmap_generator](../costmap_generator/README.md) to `false` and `enable_freespace_parking` to `true`
+車両が「車線駐車」でスタックした場合は、「無人駐車」を実行します。
+この機能を実行するには、マップに「駐車場」を設定し、[costmap_generator](../costmap_generator/README.md) の `activate_by_scenarion` を `false` に、`enable_freespace_parking` を `true` に設定する必要があります。
 
 ![pull_over_freespace_parking_flowchart](./images/pull_over_freespace_parking_flowchart.drawio.svg)
 
-Simultaneous execution with `avoidance_module` in the flowchart is under development.
+フローチャート内の `avoidance_module` との同時実行は現在開発中です。
 
 <img src="https://user-images.githubusercontent.com/39142679/221167581-9a654810-2460-4a0c-8afd-7943ca877cf5.png" width="600">
 
-#### Parameters freespace parking
+#### 無人駐車パラメーター
 
-| Name                     | Unit | Type | Description                                                                                                          | Default value |
-| :----------------------- | :--- | :--- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_freespace_parking | [-]  | bool | This flag enables freespace parking, which runs when the vehicle is stuck due to e.g. obstacles in the parking area. | true          |
+| 名称                     | 単位 | 型 | 説明                                                                                                         | デフォルト値 |
+| :----------------------- | :--- | :--- | :---------------------------------------------------------------------------------------------------------------- | :------------ |
+| enable_freespace_parking | [-]  | ブール値 | 障害物などにより駐車スペースで車両がスタックした場合にfreespace駐車が有効になるフラグです。                        | true          |
 
-See [freespace_planner](../autoware_freespace_planner/README.md) for other parameters.
+[freespace_planner](../autoware_freespace_planner/README.md)の他のパラメータについては、参照してください。
 
-## **collision check for path generation**
+## **経路生成のための衝突チェック**
 
-To select a safe one from the path candidates, a collision check with obstacles is performed.
+経路候補の中から安全なものを選択するために、障害物との衝突チェックが行われます。
 
-### **occupancy grid based collision check**
+### **オキュパンシーグリッドベースの衝突チェック**
 
-Generate footprints from ego-vehicle path points and determine obstacle collision from the value of occupancy_grid of the corresponding cell.
+自車位置経路点からフットプリントを生成し、対応するセルのオキュパンシーグリッドの値から障害物の衝突を判定します。
 
-#### Parameters for occupancy grid based collision check
+#### オキュパンシーグリッドベースの衝突チェックに関するパラメータ
 
-| Name                                            | Unit | Type   | Description                                                                                                     | Default value |
-| :---------------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
-| use_occupancy_grid_for_goal_search              | [-]  | bool   | flag whether to use occupancy grid for goal search collision check                                              | true          |
-| use_occupancy_grid_for_goal_longitudinal_margin | [-]  | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
-| use_occupancy_grid_for_path_collision_check     | [-]  | bool   | flag whether to use occupancy grid for collision check                                                          | false         |
-| occupancy_grid_collision_check_margin           | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
-| theta_size                                      | [-]  | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
-| obstacle_threshold                              | [-]  | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
+| 名前                                                    | 単位 | タイプ | 説明                                                                                                     | デフォルト値 |
+| :------------------------------------------------------ | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
+| use_occupancy_grid_for_goal_search              | -     | bool   | 目標探索衝突確認のためオキューパンシーグリッドを使用するかどうか            | true          |
+| use_occupancy_grid_for_goal_longitudinal_margin | -     | bool   | 縦方向マージンを保持するためオキューパンシーグリッドを使用するかどうか | false         |
+| use_occupancy_grid_for_path_collision_check     | -     | bool   | 衝突確認のためオキューパンシーグリッドを使用するかどうか | false         |
+| occupancy_grid_collision_check_margin           | m     | double | フットプリントから自車セルを計算するためのマージン | 0.0           |
+| theta_size                                      | -     | int    | 考慮するシータ角のサイズ。衝突確認の角度分解能は 2$\pi$ / theta_size [rad] となります。 | 360           |
+| obstacle_threshold                              | -     | int    | 障害物と見なされるセルの値のしきい値 | 60            |
 
-### **object recognition based collision check**
+### **オブジェクト認識ベースの衝突確認**
 
-A collision decision is made for each of the path candidates, and a collision-free path is selected.
-There are three main margins at this point.
+各経路候補に対して衝突判定が行われ、衝突のない経路が選択されます。
+現時点では、3 つの主なマージンがあります。
 
-- `object_recognition_collision_check_margin` is margin in all directions of ego.
-- In the forward direction, a margin is added by the braking distance calculated from the current speed and maximum deceleration. The maximum distance is The maximum value of the distance is suppressed by the `object_recognition_collision_check_max_extra_stopping_margin`
-- In curves, the lateral margin is larger than in straight lines.This is because curves are more prone to control errors or to fear when close to objects (The maximum value is limited by `object_recognition_collision_check_max_extra_stopping_margin`, although it has no basis.)
+- `object_recognition_collision_check_margin` は、自車の全方向のマージンです。
+- 前進方向では、現在の速度と最大減速度から計算された制動距離によってマージンが追加されます。距離の最大値は、`object_recognition_collision_check_max_extra_stopping_margin` によって抑えられます。
+- 曲線では、横方向のマージンは直線よりも大きくなります。これは、曲線では制御エラーが発生しやすかったり、物体に近くても不安定になったりするためです（理論的根拠はありませんが、最大値は `object_recognition_collision_check_max_extra_stopping_margin` によって制限されています）。
 
 ![collision_check_margin](./images/goal_planner-collision_check_margin.drawio.svg)
 
-Then there is the concept of soft and hard margins. Although not currently parameterized, if a collision-free path can be generated by a margin several times larger than `object_recognition_collision_check_margin`, then the priority is higher.
+また、ソフトマージンとハードマージンのコンセプトがあります。現時点ではパラメータ化されていませんが、`object_recognition_collision_check_margin` よりも数倍大きいマージンで衝突のない経路を生成できる場合、優先順位が高くなります。
 
-#### Parameters for object recognition based collision check
+#### オブジェクト認識ベースの衝突確認のパラメータ
 
-| Name                                                         | Unit | Type           | Description                                                                                                                                                            | Default value                                 |
-| :----------------------------------------------------------- | :--- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- |
-| use_object_recognition                                       | [-]  | bool           | flag whether to use object recognition for collision check                                                                                                             | true                                          |
-| object_recognition_collision_check_soft_margins              | [m]  | vector[double] | soft margins for collision check when path generation. It is not strictly the distance between footprints, but the maximum distance when ego and objects are oriented. | [5.0, 4.5, 4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0] |
-| object_recognition_collision_check_hard_margins              | [m]  | vector[double] | hard margins for collision check when path generation                                                                                                                  | [0.6]                                         |
-| object_recognition_collision_check_max_extra_stopping_margin | [m]  | double         | maximum value when adding longitudinal distance margin for collision check considering stopping distance                                                               | 1.0                                           |
-| detection_bound_offset                                       | [m]  | double         | expand pull over lane with this offset to make detection area for collision check of path generation                                                                   | 15.0                                          |
+| 名称                                                         | 単位 | 入力種別            | 説明                                                                                                                                                                                                                                                                                                                                                                                                                                                   | デフォルト値                                   |
+| :----------------------------------------------------------- | :--- | :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------ |
+| use_object_recognition                                       | [-]  | bool                 | 障害物チェックに物体認識を使用するかどうか                                                                                                                                                                                | true                                              |
+| object_recognition_collision_check_soft_margins              | [m]  | vector[double]       | パス生成時の衝突チェックのソフトマージン。厳密にはフットプリント間の距離ではなく、自己位置と物体が向き合っているときの最大距離。 | [5.0, 4.5, 4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0] |
+| object_recognition_collision_check_hard_margins              | [m]  | vector[double]       | パス生成時の衝突チェックのハードマージン                                                                                                                                                                                                                                                       | [0.6]                                             |
+| object_recognition_collision_check_max_extra_stopping_margin | [m]  | double               | 停止距離を考慮した衝突チェックのための縦方向距離マージンの追加時の最大値                                                                                                                                                                                                    | 1.0                                               |
+| detection_bound_offset                                       | [m]  | double               | パス生成の衝突チェック検出エリアを作るため、待避レーンをこのオフセットで拡張                                                                                                                                                                                                                        | 15.0                                              |
 
 ## **safety check**
 
-Perform safety checks on moving objects. If the object is determined to be dangerous, no path decision is made and no approval is given,
+走行オブジェクトに対して安全チェックを実施します。オブジェクトが危険と判断された場合、経路意思決定が行われず、承認も与えられません。
 
-- path decision is not made and approval is not granted.
-- After approval, the ego vehicle stops under deceleration and jerk constraints.
+- 経路意思決定が行われず、承認は許可されません。
+- 承認後、自動運転車は減速制約とジャーク制約に従って停止します。
 
-This module has two methods of safety check, `RSS` and `integral_predicted_polygon`.
+本モジュールでは、`RSS`と`integral_predicted_polygon`の2つの安全チェック手法を使用します。
 
-`RSS` method is a method commonly used by other behavior path planner modules, see [RSS based safety check utils explanation](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md).
+`RSS`手法は、他の動作経路プランナーモジュールで一般的に使用される手法です。[RSSベースの安全チェックユーティリティに関する説明](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)を参照してください。
 
-`integral_predicted_polygon` is a more safety-oriented method. This method is implemented because speeds during pull over are lower than during driving, and fewer objects travel along the edge of the lane. (It is sometimes too reactive and may be less available.)
-This method integrates the footprints of egos and objects at a given time and checks for collisions between them.
+`integral_predicted_polygon`は、より安全指向の手法です。この手法は、走行中の速度が運転中の場合よりも低く、車線の縁を走行するオブジェクトが少ない場合に実装されます。（反応が良すぎて利用頻度が少ない場合があります。）
+この手法は、特定の時点における自車位置とオブジェクトのフットプリントを統合し、それらの衝突をチェックします。
 
 ![safety_check](./images/goal_planner-safety_check.drawio.svg)
 
-In addition, the safety check has a time hysteresis, and if the path is judged "safe" for a certain period of time(`keep_unsafe_time`), it is finally treated as "safe".
+また、安全チェックには時間のヒステリシスがあり、一定期間（`keep_unsafe_time`）経路が「安全」と判断されると、最終的に「安全」として扱われます。
+
 
 ```txt
                          ==== is_safe
@@ -380,51 +381,52 @@ In addition, the safety check has a time hysteresis, and if the path is judged "
       0 =========================-------==========--> t
 ```
 
-### Parameters for safety check
+### 安全チェックのパラメータ
 
-| Name                                 | Unit  | Type   | Description                                                                                              | Default value                |
-| :----------------------------------- | :---- | :----- | :------------------------------------------------------------------------------------------------------- | :--------------------------- |
-| enable_safety_check                  | [-]   | bool   | flag whether to use safety check                                                                         | true                         |
-| method                               | [-]   | string | method for safety check. `RSS` or `integral_predicted_polygon`                                           | `integral_predicted_polygon` |
-| keep_unsafe_time                     | [s]   | double | safety check Hysteresis time. if the path is judged "safe" for the time it is finally treated as "safe". | 3.0                          |
-| check_all_predicted_path             | -     | bool   | Flag to check all predicted paths                                                                        | true                         |
-| publish_debug_marker                 | -     | bool   | Flag to publish debug markers                                                                            | false                        |
-| `collision_check_yaw_diff_threshold` | [rad] | double | Maximum yaw difference between ego and object when executing rss-based collision checking                | 3.1416                       |
+| 名前                               | 単位 | タイプ | 説明                                                                                                                                                          | デフォルト値                                  |
+| :----------------------------------- | :---- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------- |
+| enable_safety_check                  | [-]   | bool   | セーフティチェックを使用するかどうか                                                                                                                            | true                                         |
+| method                               | [-]   | 文字列 | セーフティチェックの方法. RSSまたはintegral_predicted_polygon                                                                                           | integral_predicted_polygon                    |
+| keep_unsafe_time                     | [s]   | double | セーフティチェックヒステリシス時間. その時間だけ経路が"安全"と判定されれば、最終的に"安全"とみなされる | 3.0                                          |
+| check_all_predicted_path             | -     | bool   | 予測経路のすべてを確認するためのフラグ                                                                                                                     | true                                         |
+| publish_debug_marker                 | -     | bool   | デバッグマーカーを公開するためのフラグ                                                                                                                   | false                                        |
+| collision_check_yaw_diff_threshold | [rad] | double | RSSベースの衝突チェックを実行するときの、自己位置と物体との最大ヨーの違い                                                                                      | 3.1416                                       |
 
-#### Parameters for RSS safety check
+#### RSS 安全性検査パラメータ
 
-| Name                                | Unit | Type   | Description                             | Default value |
-| :---------------------------------- | :--- | :----- | :-------------------------------------- | :------------ |
-| rear_vehicle_reaction_time          | [s]  | double | Reaction time for rear vehicles         | 2.0           |
-| rear_vehicle_safety_time_margin     | [s]  | double | Safety time margin for rear vehicles    | 1.0           |
-| lateral_distance_max_threshold      | [m]  | double | Maximum lateral distance threshold      | 2.0           |
-| longitudinal_distance_min_threshold | [m]  | double | Minimum longitudinal distance threshold | 3.0           |
-| longitudinal_velocity_delta_time    | [s]  | double | Delta time for longitudinal velocity    | 0.8           |
+| 名前                                        | 単位 | 型   | 説明                                              | デフォルト値 |
+| :------------------------------------------- | :--- | :----- | :------------------------------------------------- | :------------ |
+| `rear_vehicle_reaction_time`                  | [s]  | double | 後方車両の反応時間                               | 2.0           |
+| `rear_vehicle_safety_time_margin`             | [s]  | double | 後方車両の安全時間マージン                           | 1.0           |
+| `lateral_distance_max_threshold`              | [m]  | double | 最大横方向距離閾値                                 | 2.0           |
+| `longitudinal_distance_min_threshold`         | [m]  | double | 最小縦方向距離閾値                                 | 3.0           |
+| `longitudinal_velocity_delta_time`            | [s]  | double | 縦方向速度のデルタ時間                               | 0.8           |
 
-#### Parameters for integral_predicted_polygon safety check
+#### インテグラル予測ポリゴン安全性チェック用パラメーター
 
-| Name            | Unit | Type   | Description                            | Default value |
+| 名称            | 単位 | タイプ | 説明 | デフォルト値 |
 | :-------------- | :--- | :----- | :------------------------------------- | :------------ |
-| forward_margin  | [m]  | double | forward margin for ego footprint       | 1.0           |
-| backward_margin | [m]  | double | backward margin for ego footprint      | 1.0           |
-| lat_margin      | [m]  | double | lateral margin for ego footprint       | 1.0           |
-| time_horizon    | [s]  | double | Time width to integrate each footprint | 10.0          |
+| forward_margin  | [m]  | double | 自己位置の前面の余裕 | 1.0           |
+| backward_margin | [m]  | double | 自己位置の後面の余裕 | 1.0           |
+| lat_margin      | [m]  | double | 自己位置の側面の余裕 | 1.0           |
+| time_horizon    | [s]  | double | 各フットプリントを統合する時間幅 | 10.0          |
 
-## **path deciding**
+## **パス決定**
 
-When `decide_path_distance` closer to the start of the pull over, if it is collision-free at that time and safe for the predicted path of the objects, it transitions to DECIDING. If it is safe for a certain period of time, it moves to DECIDED.
+`decide_path_distance` が停車開始位置に近づくと、その時点で衝突がなく、オブジェクトの予測パスに対して安全な場合、DECIDING に遷移します。一定期間安全であれば、DECIDED に移行します。
 
 ![path_deciding](./images/goal_planner-deciding_path.drawio.svg)
 
-## Unimplemented parts / limitations
+## 未実装部分 / 制限事項
 
-- Only shift pull over can be executed concurrently with other modules
-- Parking in tight spots and securing margins are traded off. A mode is needed to reduce the margin by using a slower speed depending on the situation, but there is no mechanism for dynamic switching of speeds.
-- Parking space available depends on visibility of objects, and sometimes parking decisions cannot be made properly.
-- Margin to unrecognized objects(Not even unknown objects) depends on the occupancy grid. May get too close to unrecognized ground objects because the objects that are allowed to approach (e.g., grass, leaves) are indistinguishable.
+- Shift pull over のみ他のモジュールと同時に実行可能
+- 駐車スペースの確保とマージンの確保のトレードオフ。状況に応じた低速走行によるマージン削減モードが必要だが、速度の動的切替メカニズムはない。
+- 駐車可能なスペースはオブジェクトの可視性に依存するため、適切な駐車決定ができない場合があります。
+- 未認識オブジェクト（未知のオブジェクトですらないもの）に対するマージンはオキュパンシグリッドに依存します。接近が許可されているオブジェクト（例：芝生、葉）は区別できないため、未認識の地上オブジェクトに近づきすぎる場合があります。
 
-Unimplemented parts / limitations for freespace parking
+縦列駐車の未実装部分 / 制限事項
 
-- When a short path is generated, the ego does can not drive with it.
-- Complex cases take longer to generate or fail.
-- The drivable area is not guaranteed to fit in the parking_lot.
+- 短いパスが生成された場合、エゴカーは走行できません。
+- 複雑なケースでは、生成に時間がかかったり、失敗したりします。
+- 走行可能なエリアは `parking_lot` に収まることが保証されていません。
+

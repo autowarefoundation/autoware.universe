@@ -1,83 +1,78 @@
-### Traffic Light
+### 信号機
 
-#### Role
+#### 役割
 
-Judgement whether a vehicle can go into an intersection or not by traffic light status, and planning a velocity of the stop if necessary.
-This module is designed for rule-based velocity decision that is easy for developers to design its behavior. It generates proper velocity for traffic light scene.
+車両が交差点に進入できるかどうかを信号機の状態によって判断し、必要に応じて停止時の速度を計画します。このモジュールは、開発者が挙動を設計しやすいルールベースの速度決定のために設計されています。信号機シーンに適した速度を生成します。
 
 ![brief](./docs/traffic_light.svg)
 
-### Limitations
+### 制限事項
 
-This module allows developers to design STOP/GO in traffic light module using specific rules. Due to the property of rule-based planning, the algorithm is greatly depends on object detection and perception accuracy considering traffic light. Also, this module only handles STOP/Go at traffic light scene, so rushing or quick decision according to traffic condition is future work.
+このモジュールにより、開発者は特定のルールを使用して、信号機モジュールでの停止/進行を設計できます。ルールベースの計画の性質により、このアルゴリズムは、信号機を考慮した物体検出と認識の精度に大きく依存します。また、このモジュールは信号機シーンでの停止/進行のみを処理します。したがって、交通状況に応じた急ぎ足または迅速な決定は今後の課題です。
 
-#### Activation Timing
+#### 起動タイミング
 
-This module is activated when there is traffic light in ego lane.
+このモジュールは、自車レーンに信号機があるときに起動します。
 
-#### Algorithm
+#### アルゴリズム
 
-1. Obtains a traffic light mapped to the route and a stop line correspond to the traffic light from a map information.
+1. 地図情報から、ルートにマップされた信号機と信号機に対応する停止線を取得します。
 
-   - If a corresponding traffic light signal have never been found, it treats as a signal to pass.
+   - 対応する信号機信号が一度も検出されない場合、通過する信号として扱います。
 
-   - If a corresponding traffic light signal is found but timed out, it treats as a signal to stop.
+   - 対応する信号機信号が検出されるがタイムアウトした場合、停止する信号として扱います。
 
-2. Uses the highest reliability one of the traffic light recognition result and if the color of that was not green or corresponding arrow signal, generates a stop point.
+2. 信号機認識結果の中で最も信頼性の高いものを採用し、その色が緑または対応する矢印信号ではなかった場合、停止点を生成します。
 
-   - If an elapsed time to receive stop signal is less than `stop_time_hysteresis`, it treats as a signal to pass. This feature is to prevent chattering.
+   - 停止信号を受信する経過時間が `stop_time_hysteresis` 未満の場合、通過する信号として扱います。この機能は、チャタリングを防ぐためのものです。
 
-3. When vehicle current velocity is
+3. 車両の現在の速度が
 
-   - higher than 2.0m/s ⇒ pass judge(using next slide formula)
+   - 2.0m/s 以上 ⇒ 通過判断（次のスライドの式を使用して）
 
-   - lower than 2.0m/s ⇒ stop
+   - 2.0m/s 未満 ⇒ 停止
 
-4. When it to be judged that vehicle can’t stop before stop line, autoware chooses one of the following behaviors
+4. 車両が停止線までに停止できないと判断された場合、Autoware は次のいずれかの動作を選択します。
 
-   - "can pass through" stop line during yellow lamp => pass
+   - 黄信号中に停止線を「通過可能」 => 通過
 
-   - "can’t pass through" stop line during yellow lamp => emergency stop
+   - 黄信号中に停止線を「通過不可」 => 緊急停止
 
-#### Dilemma Zone
+#### ジレンマゾーン
 
 ![brief](./docs/traffic_light_dilemma.svg)
 
-- yellow lamp line
+- 黄信号線
 
-  It’s called “yellow lamp line” which shows the distance traveled by the vehicle during yellow lamp.
+  黄信号中に車両が移動する距離を示す「黄信号線」と呼ばれます。
 
-- dilemma zone
+- ジレンマゾーン
 
-  It’s called “dilemma zone” which satisfies following conditions:
+  次の条件を満たす「ジレンマゾーン」と呼ばれます。
 
-  - vehicle can’t pass through stop line during yellow lamp.(right side of the yellow lamp line)
+  - 車両は黄信号中に停止線を通過できません（黄信号線の右側）。
 
-  - vehicle can’t stop under deceleration and jerk limit.(left side of the pass judge curve)
+  - 車両は減速とジャーク限界内では停止できません（通過判断曲線の左側）。
 
-    ⇒emergency stop(relax deceleration and jerk limitation in order to observe the traffic regulation)
+    ⇒ 緊急停止（交通規則を守るために減速とジャークの制限を緩和）
 
-- optional zone
+「オプションゾーン」と呼ばれ、以下の条件を満たすものです。
 
-  It’s called “optional zone” which satisfies following conditions:
+- 車両は黄色のランプ線（黄色いランプ線の左側）の間に停止線を通過できます。
+- 車両は減速およびジャークの限界で停止できます。（パス判定曲線の右側） ⇒ 停止（Autowareが安全な選択肢を選択します）
 
-  - vehicle can pass through stop line during yellow lamp.(left side of the yellow lamp line)
+#### モジュールパラメータ
 
-  - vehicle can stop under deceleration and jerk limit.(right side of the pass judge curve)
+| パラメータ | 型 | 説明 |
+|---|---|---|
+| `stop_margin` | double | [m] 停止点手前の余裕 |
+| `tl_state_timeout` | double | [s] 検出された信号機の結果のタイムアウト |
+| `stop_time_hysteresis` | double | [s] チャタリング防止のための停止計画の決定に関する時間閾値 |
+| `yellow_lamp_period` | double | [s] 黄色のランプ時間 |
+| `enable_pass_judge` | bool | [-] 通過判定を使用するかどうか |
 
-    ⇒ stop(autoware selects the safety choice)
+#### フローチャート
 
-#### Module Parameters
-
-| Parameter              | Type   | Description                                                          |
-| ---------------------- | ------ | -------------------------------------------------------------------- |
-| `stop_margin`          | double | [m] margin before stop point                                         |
-| `tl_state_timeout`     | double | [s] time out for detected traffic light result.                      |
-| `stop_time_hysteresis` | double | [s] time threshold to decide stop planning for chattering prevention |
-| `yellow_lamp_period`   | double | [s] time for yellow lamp                                             |
-| `enable_pass_judge`    | bool   | [-] whether to use pass judge                                        |
-
-#### Flowchart
 
 ```plantuml
 @startuml
@@ -119,6 +114,7 @@ endif
 @enduml
 ```
 
-##### Known Limits
+##### 既知の限界
 
-- tbd.
+- 現在確認中
+

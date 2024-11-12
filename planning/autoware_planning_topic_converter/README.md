@@ -1,14 +1,15 @@
-# Planning Topic Converter
+## Planningトピックコンバータ
 
-## Purpose
+## 目的
 
-This package provides tools that convert topic type among types are defined in <https://github.com/autowarefoundation/autoware_msgs>.
+このパッケージは、`<https://github.com/autowarefoundation/autoware_msgs>`で定義されている型間のトピック型変換を行うツールを提供します。
 
-## Inner-workings / Algorithms
+## 内部動作/アルゴリズム
 
-### Usage example
+### 使用例
 
-The tools in this package are provided as composable ROS 2 component nodes, so that they can be spawned into an existing process, launched from launch files, or invoked from the command line.
+このパッケージ内のツールは、合成可能なROS 2コンポーネントノードとして提供されるので、既存のプロセスにスポーンしたり、起動ファイルから起動したり、コマンドラインから呼び出すことができます。
+
 
 ```xml
 <load_composable_node target="container_name">
@@ -22,13 +23,14 @@ The tools in this package are provided as composable ROS 2 component nodes, so t
 </load_composable_node>
 ```
 
-## Parameters
+## パラメータ
 
-| Name           | Type   | Description        |
-| :------------- | :----- | :----------------- |
-| `input_topic`  | string | input topic name.  |
-| `output_topic` | string | output topic name. |
+| 名前          | 種別    | 説明                                   |
+| :------------- | :----- | :--------------------------------------- |
+| `input_topic`  | 文字列 | 入力トピック名                             |
+| `output_topic` | 文字列 | 出力トピック名                            |
 
-## Assumptions / Known limits
+## 想定条件／既知の限界
 
-## Future extensions / Unimplemented parts
+## 将来的に拡張予定の部分／未実装の部分
+

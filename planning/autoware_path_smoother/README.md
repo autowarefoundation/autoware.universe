@@ -1,11 +1,12 @@
-# Path Smoothing
+# パススムージング
 
-## Purpose
+## 目的
 
-This package contains code to smooth a path or trajectory.
+このパッケージには、パスや軌跡を滑らかにするコードが含まれています。
 
-## Features
+## 機能
 
-### Elastic Band
+### エラスティックバンド
 
-More details about the elastic band can be found [here](docs/eb.md).
+エラスティックバンドの詳細については、[こちら](docs/eb.md)を参照してください。
+

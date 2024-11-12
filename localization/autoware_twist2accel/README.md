@@ -1,28 +1,68 @@
 # autoware_twist2accel
 
-## Purpose
+## 目的
 
-This package is responsible for estimating acceleration using the output of `ekf_localizer`. It uses lowpass filter to mitigate the noise.
+このパッケージは、`ekf_localizer` の出力を利用して加速度を推定するものです。低域通過フィルタを用いてノイズを軽減しています。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name          | Type                                             | Description           |
-| ------------- | ------------------------------------------------ | --------------------- |
-| `input/odom`  | `nav_msgs::msg::Odometry`                        | localization odometry |
-| `input/twist` | `geometry_msgs::msg::TwistWithCovarianceStamped` | twist                 |
+| 名前          | タイプ                                          | 説明           |
+| ------------- | ----------------------------------------------- | --------------- |
+| `input/odom`  | `nav_msgs::msg::Odometry`                        | ローカリゼーションオドメトリ |
+| `input/twist` | `geometry_msgs::msg::TwistWithCovarianceStamped` | ツイスト                 |
 
-### Output
+### 出力
 
-| Name           | Type                                             | Description            |
+**自動運転ソフトウェア**
+
+**1. システム概観**
+
+このドキュメントは、Autoware内で使用される自動運転ソフトウェアのシステム構成の概要を提供します。このソフトウェアは、Planningモジュール、Predictionモジュール、Controlモジュールで構成される階層型アーキテクチャを採用しています。
+
+**2. Planningモジュール**
+
+Planningモジュールは、自車の将来的なパスを生成する責任を負います。以下のサブモジュールで構成されます。
+
+* **Path Planning:** 自車の経路を生成します。
+* **Behavior Planning:** 自車の速度と加速度のトラジェクトリを生成します。
+* **Trajectory Optimization:** `post resampling`と加速度滑ら化を使用して、トラジェクトリを最適化します。
+
+**3. Predictionモジュール**
+
+Predictionモジュールは、周囲環境の動的物体を予測する責任を負います。次のサブモジュールで構成されます。
+
+* **Object Tracking:** レーザーセンサーとカメラ画像を使用して、周囲の物体を追跡します。
+* **Motion Forecasting:** 物体の将来的な運動を予測します。
+* **Intent Recognition:** 物体の意図を認識し、それらの将来的な行動を予測します。
+
+**4. Controlモジュール**
+
+Controlモジュールは、Planningモジュールで生成されたパスおよびトラジェクトリに基づいて、車両を制御します。次のサブモジュールで構成されます。
+
+* **Lateral Control:** 車両の横方向の運動を制御します。
+* **Longitudinal Control:** 車両の縦方向の運動を制御します。
+* **Safety Monitor:** 安全性を確保し、必要に応じて緊急停止します。
+
+**5. パフォーマンス評価**
+
+自動運転ソフトウェアのパフォーマンスは、以下の指標を使用して評価されます。
+
+* **障害物回避距離:** 自車が障害物を検出して回避するまでの距離。
+* **速度逸脱量:** 自車の実際の速度と理想的な速度との差。
+* **加速度逸脱量:** 自車の実際の加速度と理想的な加速度との差。
+* **追従距離逸脱量:** 自車と前走車との距離の差。
+
+| 名称           | 型                                             | 説明            |
 | -------------- | ------------------------------------------------ | ---------------------- |
-| `output/accel` | `geometry_msgs::msg::AccelWithCovarianceStamped` | estimated acceleration |
+| `output/accel` | `geometry_msgs::msg::AccelWithCovarianceStamped` | 推定加速度 |
 
-## Parameters
+## パラメータ
 
 {{ json_to_markdown("localization/autoware_twist2accel/schema/twist2accel.schema.json") }}
 
-## Future work
+## 今後の取り組み
 
-Future work includes integrating acceleration into the EKF state.
+今後の取り組みとしては、加速度を EKF 状態に統合することが含まれます。
+

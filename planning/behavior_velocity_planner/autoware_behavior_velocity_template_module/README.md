@@ -1,76 +1,77 @@
-## Template
+## テンプレート
 
-A template for behavior velocity modules based on the autoware_behavior_velocity_speed_bump_module.
+`autoware_behavior_velocity_speed_bump_module` に基づく動作速度モジュールのテンプレート。
 
-# Autoware Behavior Velocity Module Template
+# Autoware 動作速度モジュールテンプレート
 
 ## `Scene`
 
-### `TemplateModule` Class
+### `TemplateModule` クラス
 
-The `TemplateModule` class serves as a foundation for creating a scene module within the Autoware behavior velocity planner. It defines the core methods and functionality needed for the module's behavior. You should replace the placeholder code with actual implementations tailored to your specific behavior velocity module.
+`TemplateModule` クラスは Autoware 動作速度プランナー内のシーンモジュールを作成するための基盤として機能します。モジュールの動作に必要なコアメソッドと機能を定義します。プレースホルダーコードは、特定の動作速度モジュールに合わせた実際のインプリメンテーションに置き換える必要があります。
 
-#### Constructor
+#### コンストラクタ
 
-- The constructor for `TemplateModule` takes the essential parameters to create a module: `const int64_t module_id`, `const rclcpp::Logger & logger`, and `const rclcpp::Clock::SharedPtr clock`. These parameters are supplied by the `TemplateModuleManager` when registering a new module. Other parameters can be added to the constructor, if required by your specific module implementation.
+- `TemplateModule` のコンストラクタはモジュールを作成するための重要なパラメータを受け取ります: `const int64_t module_id`, `const rclcpp::Logger & logger`, and `const rclcpp::Clock::SharedPtr clock`。これらのパラメータは、新しいモジュールを登録するときに `TemplateModuleManager` によって供給されます。特定のモジュールインプリメンテーションで必要に応じて、他のパラメータをコンストラクタに追加できます。
 
-#### `modifyPathVelocity` Method
+#### `modifyPathVelocity` メソッド
 
-- This method, defined in the `TemplateModule` class, is expected to modify the velocity of the input path based on certain conditions. In the provided code, it logs an informational message once when the template module is executing.
-- The specific logic for velocity modification should be implemented in this method based on the module's requirements.
+- `TemplateModule` クラスで定義されたこのメソッドは、特定の条件に基づいて入力パスの速度を変更することが期待されています。提供されるコードでは、テンプレートモジュールが実行されるときに一度だけ情報メッセージをログに記録します。
+- 速度変更の特定のロジックは、モジュールの要件に基づいてこのメソッドにインプリメントする必要があります。
 
-#### `createDebugMarkerArray` Method
+#### `createDebugMarkerArray` メソッド
 
-- This method, also defined in the `TemplateModule` class, is responsible for creating a visualization of debug markers and returning them as a `visualization_msgs::msg::MarkerArray`. In the provided code, it returns an empty `MarkerArray`.
-- You should implement the logic to generate debug markers specific to your module's functionality.
+- `TemplateModule` クラスで定義されているこのメソッドは、デバッグマーカーのビジュアライゼーションを作成し、`visualization_msgs::msg::MarkerArray` として返します。提供されるコードでは、空の `MarkerArray` を返します。
+- モジュールの機能に固有のデバッグマーカーを生成するロジックを実装する必要があります。
 
-#### `createVirtualWalls` Method
+#### `createVirtualWalls` メソッド
 
-- The `createVirtualWalls` method creates virtual walls for the scene and returns them as `autoware::motion_utils::VirtualWalls`. In the provided code, it returns an empty `VirtualWalls` object.
-- You should implement the logic to create virtual walls based on your module's requirements.
+- `createVirtualWalls` メソッドはシーンの仮想壁を作成し、`autoware::motion_utils::VirtualWalls` として返します。提供されるコードでは、空の `VirtualWalls` オブジェクトが返されます。
+- モジュールの要件に基づいて仮想壁を作成するロジックを実装する必要があります。
 
 ## `Manager`
 
-The managing of your modules is defined in manager.hpp and manager.cpp. The managing is handled by two classes:
+モジュールの管理は manager.hpp と manager.cpp で定義されます。管理は 2 つのクラスによって処理されます:
 
-- The `TemplateModuleManager` class defines the core logic for managing and launching the behavior_velocity_template scenes (defined in behavior_velocity_template_module/src/scene.cpp/hpp). It inherits essential manager attributes from its parent class `SceneModuleManagerInterface`.
-- The `TemplateModulePlugin` class provides a way to integrate the `TemplateModuleManager` into the logic of the Behavior Velocity Planner.
+- `TemplateModuleManager` クラスは、動作速度テンプレートシーンの管理と起動 (behavior_velocity_template_module/src/scene.cpp/hpp で定義) のコアロジックを定義します。親クラス `SceneModuleManagerInterface` から重要なマネージャー属性を継承します。
+- `TemplateModulePlugin` クラスは、`TemplateModuleManager` を動作速度プランナーのロジックに統合する方法を提供します。
 
-### `TemplateModuleManager` Class
+### `TemplateModuleManager` クラス
 
-#### Constructor `TemplateModuleManager`
+#### コンストラクタ `TemplateModuleManager`
 
-- This is the constructor of the `TemplateModuleManager` class, and it takes an `rclcpp::Node` reference as a parameter.
-- It initializes a member variable `dummy_parameter_` to 0.0.
+- これは `TemplateModuleManager` クラスのコンストラクタであり、パラメータとして `rclcpp::Node` 参照を受け取ります。
+- メンバー変数 `dummy_parameter_` を 0.0 に初期化します。
 
-#### `getModuleName()` Method
+#### `getModuleName()` メソッド
 
-- This method is an override of a virtual method from the `SceneModuleManagerInterface` class.
-- It returns a pointer to a constant character string, which is the name of the module. In this case, it returns "template" as the module name.
+- このメソッドは `SceneModuleManagerInterface` クラスの仮想メソッドのオーバーライドです。
+- モジュールの名前である定数文字列へのポインタを返します。この場合、モジュール名を「テンプレート」として返します。
 
-#### `launchNewModules()` Method
+#### `launchNewModules()` メソッド
 
-- This is a private method that takes an argument of type `tier4_planning_msgs::msg::PathWithLaneId`.
-- It is responsible for launching new modules based on the provided path information (PathWithLaneId). The implementation of this method involves initializing and configuring modules specific to your behavior velocity planner by using the `TemplateModule` class.
-- In the provided source code, it initializes a `module_id` to 0 and checks if a module with the same ID is already registered. If not, it registers a new `TemplateModule` with the module ID. Note that each module managed by the `TemplateModuleManager` should have a unique ID. The template code registers a single module, so the `module_id` is set as 0 for simplicity.
+- これは `tier4_planning_msgs::msg::PathWithLaneId` 型の引数を取るプライベートメソッドです。
+- 与えられたパス情報 (PathWithLaneId) に基づいて新しいモジュールを起動する責任があります。このメソッドの実装には、`TemplateModule` クラスを使用して動作速度プランナーに固有のモジュールの初期化と設定が含まれます。
+- 提供されるソースコードでは、`module_id` を 0 に初期化し、同じ ID を持つモジュールがすでに登録されているかどうかを確認します。登録されていない場合、`TemplateModule` をモジュール ID で新しく登録します。`TemplateModuleManager` によって管理される各モジュールは一意の ID を持つ必要があることに注意してください。テンプレートコードは単一のモジュールを登録するため、`module_id` は単純さのために 0 に設定されます。
 
-#### `getModuleExpiredFunction()` Method
+#### `getModuleExpiredFunction()` メソッド
 
-- This is a private method that takes an argument of type `tier4_planning_msgs::msg::PathWithLaneId`.
-- It returns a `std::function<bool(const std::shared_ptr<SceneModuleInterface>&)>`. This function is used by the behavior velocity planner to determine whether a particular module has expired or not based on the given path.
-- The implementation of this method is expected to return a function that can be used to check the expiration status of modules.
+- これは `tier4_planning_msgs::msg::PathWithLaneId` 型の引数を取るプライベートメソッドです。
 
-Please note that the specific functionality of the methods `launchNewModules()` and `getModuleExpiredFunction()` would depend on the details of your behavior velocity modules and how they are intended to be managed within the Autoware system. You would need to implement these methods according to your module's requirements.
+- このメソッドの実装は、モジュールの有効期限ステータスを確認するために使用できる関数を返すことが期待されています。
 
-### `TemplateModulePlugin` Class
+メソッド `launchNewModules()` と `getModuleExpiredFunction()` の具体的な機能は、ビヘイビア速度モジュールの詳細とその Autoware システム内での管理方法によって異なります。モジュールの要件に従ってこれらのメソッドを実装する必要があります。
 
-#### `TemplateModulePlugin` Class
+### `TemplateModulePlugin` クラス
 
-- This class inherits from `PluginWrapper<TemplateModuleManager>`. It essentially wraps your `TemplateModuleManager` class within a plugin, which can be loaded and managed dynamically.
+#### `TemplateModulePlugin` クラス
+
+- このクラスは `PluginWrapper<TemplateModuleManager>` から継承します。これは本質的に、動的にロードおよび管理できるプラグイン内への `TemplateModuleManager` クラスをラップします。
 
 ## `Example Usage`
 
-In the following example, we take each point of the path, and multiply it by 2. Essentially duplicating the speed. Note that the velocity smoother will further modify the path speed after all the behavior velocity modules are executed.
+次の例では、パスの各点を取得して 2 倍にします。つまり、速度を複製します。すべてのビヘイビア速度モジュールが実行された後、Velocity Smoother がパス速度をさらに変更することに注意してください。
+
 
 ```cpp
 bool TemplateModule::modifyPathVelocity(
@@ -83,3 +84,4 @@ bool TemplateModule::modifyPathVelocity(
   return false;
 }
 ```
+

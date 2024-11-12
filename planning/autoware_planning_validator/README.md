@@ -1,87 +1,94 @@
-# Planning Validator
+## Planning Validator
 
-The `autoware_planning_validator` is a module that checks the validity of a trajectory before it is published. The status of the validation can be viewed in the `/diagnostics` and `/validation_status` topics. When an invalid trajectory is detected, the `autoware_planning_validator` will process the trajectory following the selected option: "0. publish the trajectory as it is", "1. stop publishing the trajectory", "2. publish the last validated trajectory".
+`autoware_planning_validator` は、パブリッシュされる前に軌道が有効であることを確認するモジュールです。有効化のステータスは `/diagnostics` と `/validation_status` トピックで確認できます。無効な軌道が検出された場合、`autoware_planning_validator` は選択されたオプションに従って軌道を処理します: "0. 軌道そのままパブリッシュ", "1. 軌道のパブリッシュを停止", "2. 最後に検証された軌道をパブリッシュ".
 
 ![autoware_planning_validator](./image/planning_validator.drawio.svg)
 
-## Supported features
+## サポートしている機能
 
-The following features are supported for trajectory validation and can have thresholds set by parameters:
+軌道検証でサポートしている機能は次の通りで、パラメータでしきい値を設定できます。
 
-- **Invalid field** : e.g. Inf, Nan
-- **Trajectory points interval** : invalid if any of the distance of trajectory points is too large
-- **Curvature** : invalid if the trajectory has too sharp turns that is not feasible for the given vehicle kinematics
-- **Relative angle** : invalid if the yaw angle changes too fast in the sequence of trajectory points
-- **Lateral acceleration** : invalid if the expected lateral acceleration/deceleration is too large
-- **Longitudinal acceleration/deceleration** : invalid if the acceleration/deceleration in the trajectory point is too large
-- **Steering angle** : invalid if the expected steering value is too large estimated from trajectory curvature
-- **Steering angle rate** : invalid if the expected steering rate value is too large
-- **Velocity deviation** : invalid if the planning velocity is too far from the ego velocity
-- **Distance deviation** : invalid if the ego is too far from the trajectory
-- **Longitudinal distance deviation** : invalid if the trajectory is too far from ego in longitudinal direction
-- **Forward trajectory length** : invalid if the trajectory length is not enough to stop within a given deceleration
+- **無効なフィールド** : 例: 無限大、NaN
+- **軌道ポイント間隔** : 軌道ポイントの間隔が大きすぎる場合無効
+- **曲率** : 与えられた車両の運動特性上実行不可能なほど軌道に急カーブがある場合無効
+- **相対角度** : 軌道ポイントのシーケンスでヨー角が急激に変化した場合無効
+- **側方加速度** : 予想される側方加速度/減速度が大きすぎる場合無効
+- **縦方向加速度/減速度** : 軌道ポイントの加速度/減速度が大きすぎる場合無効
+- **ステアリング角度** : 軌道曲率から推定される予想ステアリング値が大きすぎる場合無効
+- **ステアリング角速度** : 予想ステアリング角速度値が大きすぎる場合無効
+- **速度偏差** : 計画速度が自車速度からかけ離れている場合無効
+- **距離偏差** : 自車が軌道から離れすぎている場合無効
+- **縦方向距離偏差** : 軌道が自車から縦方向に離れすぎている場合無効
+- **前方軌道長** : 与えられた減速度内で停止するため軌道長が十分でない場合無効
 
-The following features are to be implemented.
+次の機能は実装される予定です。
 
-- **(TODO) TTC calculation** : invalid if the expected time-to-collision is too short on the trajectory
+- **(TODO) TTC 計算** : 軌道上の予想時間交通距離が短すぎる場合無効
 
-## Inputs/Outputs
+## 出力/入出力
 
-### Inputs
+### 出力
 
-The `autoware_planning_validator` takes in the following inputs:
+`autoware_planning_validator` は次の出力を出力します:
+- **/diagnostics** : このモジュールの診断ステータスに関する情報
+- **/validation_status** : 軌道の検証ステータス
 
-| Name                 | Type                              | Description                                    |
+### 入出力
+
+`autoware_planning_validator` は次の入力を取ります:
+
+| 名称                 | タイプ                              | 説明                                    |
 | -------------------- | --------------------------------- | ---------------------------------------------- |
-| `~/input/kinematics` | nav_msgs/Odometry                 | ego pose and twist                             |
-| `~/input/trajectory` | autoware_planning_msgs/Trajectory | target trajectory to be validated in this node |
+| `~/input/kinematics` | nav_msgs/Odometry                 | 自車位置と速度                             |
+| `~/input/trajectory` | autoware_planning_msgs/Trajectory | 本ノードで検証するターゲット軌跡 |
 
-### Outputs
+### 出力
 
-It outputs the following:
+次のものを出力します。
 
-| Name                         | Type                                       | Description                                                               |
+| 名称                         | タイプ                                       | 説明                                                                      |
 | ---------------------------- | ------------------------------------------ | ------------------------------------------------------------------------- |
-| `~/output/trajectory`        | autoware_planning_msgs/Trajectory          | validated trajectory                                                      |
-| `~/output/validation_status` | planning_validator/PlanningValidatorStatus | validator status to inform the reason why the trajectory is valid/invalid |
-| `/diagnostics`               | diagnostic_msgs/DiagnosticStatus           | diagnostics to report errors                                              |
+| `~/output/trajectory`       | autoware_planning_msgs/Trajectory           | 検証済みの走行軌跡                                                     |
+| `~/output/validation_status` | planning_validator/PlanningValidatorStatus | バリデータのステータスで、走行軌跡が有効/無効の理由を通知します |
+| `/diagnostics`              | diagnostic_msgs/DiagnosticStatus            | エラーを報告する診断                                                     |
 
-## Parameters
+## パラメータ
 
-The following parameters can be set for the `autoware_planning_validator`:
+`autoware_planning_validator` には、以下のパラメータを設定できます。
 
-### System parameters
+### システムパラメータ
 
-| Name                               | Type | Description                                                                                                                                                                                                                                | Default value |
-| :--------------------------------- | :--- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `invalid_trajectory_handling_type` | int  | set the operation when the invalid trajectory is detected. <br>0: publish the trajectory even if it is invalid, <br>1: stop publishing the trajectory, <br>2: publish the last validated trajectory.                                       | 0             |
-| `publish_diag`                     | bool | the Diag will be set to ERROR when the number of consecutive invalid trajectory exceeds this threshold. (For example, threshold = 1 means, even if the trajectory is invalid, the Diag will not be ERROR if the next trajectory is valid.) | true          |
-| `diag_error_count_threshold`       | int  | if true, diagnostics msg is published.                                                                                                                                                                                                     | true          |
-| `display_on_terminal`              | bool | show error msg on terminal                                                                                                                                                                                                                 | true          |
+| 名前 | タイプ | 説明 | デフォルト値 |
+|---|---|---|---|
+| `invalid_trajectory_handling_type` | int | 無効な経路が見つかった場合の処理を設定します。 <br>0: 無効でも経路を公開する <br>1: 経路の公開を停止する <br>2: 最後に検証済の経路を公開する。 | 0 |
+| `publish_diag` | bool | 連続した無効な経路の数がこの閾値を超えると、DiagがERRORに設定されます。(例: threshold = 1の場合、たとえ経路が無効でも、次の経路が有効であればDiagはERRORになりません。) | true |
+| `diag_error_count_threshold` | int | trueの場合、診断メッセージが公開されます。 | true |
+| `display_on_terminal` | bool | エラーメッセージをターミナルに表示する | true |
 
-### Algorithm parameters
+### アルゴリズムパラメータ
 
-#### Thresholds
+#### スレッショルド
 
-The input trajectory is detected as invalid if the index exceeds the following thresholds.
+インデックスが以下の閾値を超えた場合、入力軌跡は無効として検出されます。
 
-| Name                                         | Type   | Description                                                                                                        | Default value |
-| :------------------------------------------- | :----- | :----------------------------------------------------------------------------------------------------------------- | :------------ |
-| `thresholds.interval`                        | double | invalid threshold of the distance of two neighboring trajectory points [m]                                         | 100.0         |
-| `thresholds.relative_angle`                  | double | invalid threshold of the relative angle of two neighboring trajectory points [rad]                                 | 2.0           |
-| `thresholds.curvature`                       | double | invalid threshold of the curvature in each trajectory point [1/m]                                                  | 1.0           |
-| `thresholds.lateral_acc`                     | double | invalid threshold of the lateral acceleration in each trajectory point [m/ss]                                      | 9.8           |
-| `thresholds.longitudinal_max_acc`            | double | invalid threshold of the maximum longitudinal acceleration in each trajectory point [m/ss]                         | 9.8           |
-| `thresholds.longitudinal_min_acc`            | double | invalid threshold of the minimum longitudinal deceleration in each trajectory point [m/ss]                         | -9.8          |
-| `thresholds.steering`                        | double | invalid threshold of the steering angle in each trajectory point [rad]                                             | 1.414         |
-| `thresholds.steering_rate`                   | double | invalid threshold of the steering angle rate in each trajectory point [rad/s]                                      | 10.0          |
-| `thresholds.velocity_deviation`              | double | invalid threshold of the velocity deviation between the ego velocity and the trajectory point closest to ego [m/s] | 100.0         |
-| `thresholds.distance_deviation`              | double | invalid threshold of the distance deviation between the ego position and the trajectory point closest to ego [m]   | 100.0         |
-| `parameters.longitudinal_distance_deviation` | double | invalid threshold of the longitudinal distance deviation between the ego position and the trajectory [m]           | 2.0           |
+| 名前 | タイプ | 説明 | デフォルト値 |
+|---|---|---|---|
+| `thresholds.interval` | 数値 | 2つの近隣の経路ポイント間の距離の無効しきい値 [`m`] | 100.0 |
+| `thresholds.relative_angle` | 数値 | 2つの近隣の経路ポイント間の相対角度の無効しきい値 [`rad`] | 2.0 |
+| `thresholds.curvature` | 数値 | 各経路ポイントの曲率の無効しきい値 [`1/m`] | 1.0 |
+| `thresholds.lateral_acc` | 数値 | 各経路ポイントの横加速度の無効しきい値 [`m/ss`] | 9.8 |
+| `thresholds.longitudinal_max_acc` | 数値 | 各経路ポイントの最大縦加速度の無効しきい値 [`m/ss`] | 9.8 |
+| `thresholds.longitudinal_min_acc` | 数値 | 各経路ポイントの最小縦減速度の無効しきい値 [`m/ss`] | -9.8 |
+| `thresholds.steering` | 数値 | 各経路ポイントの操舵角の無効しきい値 [`rad`] | 1.414 |
+| `thresholds.steering_rate` | 数値 | 各経路ポイントの操舵角速度の無効しきい値 [`rad/s`] | 10.0 |
+| `thresholds.velocity_deviation` | 数値 | エゴの速度とエゴに最も近い経路ポイント間の速度偏差の無効しきい値 [`m/s`] | 100.0 |
+| `thresholds.distance_deviation` | 数値 | エゴの位置とエゴに最も近い経路ポイント間の距離偏差の無効しきい値 [`m`] | 100.0 |
+| `parameters.longitudinal_distance_deviation` | 数値 | エゴの位置と経路間の縦方向距離偏差の無効しきい値 [`m`] | 2.0 |
 
-#### Parameters
+#### パラメータ
 
-For parameters used e.g. to calculate threshold.
+しきい値の計算などに使用されるパラメータ
 
-| `parameters.forward_trajectory_length_acceleration` | double | This value is used to calculate required trajectory length. | -5.0 |
-| `parameters.forward_trajectory_length_margin` | double | A margin of the required trajectory length not to raise an error when the ego slightly exceeds the trajectory end point. | 2.0 |
+| `parameters.forward_trajectory_length_acceleration` | double | この値は、必要な軌道長の算出に使用されます。 | -5.0 |
+| `parameters.forward_trajectory_length_margin` | double | 自車が軌道の終点をわずかに過ぎてもエラーが発生しないようにするための、必要な軌道長の余白。 | 2.0 |
+

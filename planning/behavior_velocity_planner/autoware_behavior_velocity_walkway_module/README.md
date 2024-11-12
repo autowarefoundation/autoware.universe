@@ -1,5 +1,6 @@
-## Walkway
+## 歩道
 
-### Role
+### 役割
 
-This module decide to stop before the ego will cross the walkway including crosswalk to enter or exit the private area.
+このモジュールは、自車が私有地に進入または離脱するために横断歩道を含む横断施設を横断する前に停止することを決定します。
+

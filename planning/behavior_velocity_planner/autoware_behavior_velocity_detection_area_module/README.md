@@ -1,36 +1,38 @@
-## Detection Area
+## 検知領域
 
-### Role
+### 役割
 
-If pointcloud is detected in a detection area defined on a map, the stop planning will be executed at the predetermined point.
+地図上に定義された検知領域で点群が検知された場合、設定された地点で停止するプランニングが実行されます。
 
 ![brief](./docs/detection_area.svg)
 
-### Activation Timing
+### 稼働タイミング
 
-This module is activated when there is a detection area on the target lane.
+このモジュールは、対象レーン上に検知領域が存在する場合に稼働します。
 
-### Module Parameters
+### モジュールパラメータ
 
-| Parameter                          | Type   | Description                                                                                        |
-| ---------------------------------- | ------ | -------------------------------------------------------------------------------------------------- |
-| `use_dead_line`                    | bool   | [-] weather to use dead line or not                                                                |
-| `use_pass_judge_line`              | bool   | [-] weather to use pass judge line or not                                                          |
-| `state_clear_time`                 | double | [s] when the vehicle is stopping for certain time without incoming obstacle, move to STOPPED state |
-| `stop_margin`                      | double | [m] a margin that the vehicle tries to stop before stop_line                                       |
-| `dead_line_margin`                 | double | [m] ignore threshold that vehicle behind is collide with ego vehicle or not                        |
-| `hold_stop_margin_distance`        | double | [m] parameter for restart prevention (See Algorithm section)                                       |
-| `distance_to_judge_over_stop_line` | double | [m] parameter for judging that the stop line has been crossed                                      |
+| パラメータ                           | 型   | 説明                                                                                                      |
+| ----------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------- |
+| `use_dead_line`                     | 論理型 | [-] デッドラインを使用するかどうか                                                                            |
+| `use_pass_judge_line`               | 論理型 | [-] 通過判定ラインを使用するかどうか                                                                          |
+| `state_clear_time`                  | double | [s] オブジェクトが一定時間検出されず、車両が停止している場合、STOPPED 状態に遷移する                       |
+| `stop_margin`                       | double | [m] 車両が停止線前に停止しようとするマージン                                                               |
+| `dead_line_margin`                  | double | [m] 後続車が自車と衝突するかどうかを無視するしきい値                                                             |
+| `hold_stop_margin_distance`         | double | [m] 再始動防止のための設定 (アルゴリズム セクションを参照)                                                     |
+| `distance_to_judge_over_stop_line`  | double | [m] 停止線を越えたことを判定するためのパラメータ                                                               |
+| `suppress_pass_judge_when_stopping` | 論理型 | [m] 停止時に通過判定を抑制するためのパラメータ                                                                 |
 
-### Inner-workings / Algorithm
+### 内部動作/アルゴリズム
 
-1. Gets a detection area and stop line from map information and confirms if there is pointcloud in the detection area
-2. Inserts stop point l[m] in front of the stop line
-3. Inserts a pass judge point to a point where the vehicle can stop with a max deceleration
-4. Sets velocity as zero behind the stop line when the ego-vehicle is in front of the pass judge point
-5. If the ego vehicle has passed the pass judge point already, it doesn’t stop and pass through.
+1. マップ情報から検出領域と停止線を取得し、検出領域に点群があることを確認する
+2. 停止線から前方 l[m] に停止点を挿入する
+3. 車両が最大減速度で停止可能な点に通過判定点を挿入する
+4. 自車位置が通過判定点前方にいる場合、停止線後方に速度をゼロに設定する
+5. 自車位置が通過判定点をすでに通過している場合、停止せずに通過する
 
-#### Flowchart
+#### フローチャート
+
 
 ```plantuml
 @startuml
@@ -47,7 +49,9 @@ endif
 :get clear stop state duration;
 
 if (clear stop state duration is more than state_clear_time?) then (yes)
-  :set current state GO;
+  if (suppress_pass_judge_when_stopping is false or ego is moving) then (yes)
+    :set current state GO;
+  endif
   :reset clear stop state duration;
   stop
 else (no)
@@ -90,23 +94,24 @@ stop
 @enduml
 ```
 
-#### Restart prevention
+#### 再始動防止
 
-If it needs X meters (e.g. 0.5 meters) to stop once the vehicle starts moving due to the poor vehicle control performance, the vehicle goes over the stopping position that should be strictly observed when the vehicle starts to moving in order to approach the near stop point (e.g. 0.3 meters away).
+車両制御性能が低いため、動き始めたら0.5メートルなどの距離（Xメートル）が必要な場合、車両は停止地点を超えて進み、停止寸前の地点（例：0.3メートル先）に近づくため、厳守する必要があります。
 
-This module has parameter `hold_stop_margin_distance` in order to prevent from these redundant restart. If the vehicle is stopped within `hold_stop_margin_distance` meters from stop point of the module (\_front_to_stop_line < hold_stop_margin_distance), the module judges that the vehicle has already stopped for the module's stop point and plans to keep stopping current position even if the vehicle is stopped due to other factors.
+このモジュールには、このような重複する再始動を防ぐためのパラメーター「hold_stop_margin_distance」があります。車両がモジュール停止位置（_front_to_stop_line < hold_stop_margin_distance）から「hold_stop_margin_distance」メートル以内で停止した場合、車両はモジュールの停止位置で停止していると判断し、車両が他の要因で停止した場合でも現在の位置で停止を続けることを計画します。
 
 <figure markdown>
-  ![example](restart_prevention.svg){width=1000}
-  <figcaption>parameters</figcaption>
+  ![例](restart_prevention.svg){width=1000}
+  <figcaption>パラメーター</figcaption>
 </figure>
 
 <figure markdown>
-  ![example](restart.svg){width=1000}
-  <figcaption>outside the hold_stop_margin_distance</figcaption>
+  ![例](restart.svg){width=1000}
+  <figcaption>hold_stop_margin_distanceの外側</figcaption>
 </figure>
 
 <figure markdown>
-  ![example](keep_stopping.svg){width=1000}
-  <figcaption>inside the hold_stop_margin_distance</figcaption>
+  ![例](keep_stopping.svg){width=1000}
+  <figcaption>hold_stop_margin_distanceの内側</figcaption>
 </figure>
+

@@ -1,101 +1,90 @@
-# freespace planning algorithms
+# フリースペースのパスプランニングアルゴリズム
 
-## Role
+## 役割
 
-This package is for development of path planning algorithms in free space.
+このパッケージはフリースペースにおけるパスプランニングアルゴリズムの開発用です。
 
-### Implemented algorithms
+### 実装されたアルゴリズム
 
-- Hybrid A\* and RRT\* (includes RRT and informed RRT\*)
+- Hybrid A\*とRRT\*(RRTとinformed RRT\*を含む)
 
-Please see [rrtstar.md](rrtstar.md) for a note on the implementation for informed-RRT\*.
+informed-RRT\*の実装に関する詳細は、[rrtstar.md](rrtstar.md)を参照してください。
 
 <!-- cspell:ignore Gammell -->
 
-NOTE: As for RRT\*, one can choose whether update after feasible solution found in RRT\*.
-If not doing so, the algorithm is the almost (but exactly because of rewiring procedure) same as vanilla RRT.
-If you choose update, then you have option if the sampling after feasible solution found is "informed".
-If set true, then the algorithm is equivalent to `informed RRT\* of Gammell et al. 2014`.
+注: RRT\*については、RRT\*で実行可能な解が見つかった後に更新するかどうかを選択できます。
+そうしない場合、アルゴリズムはバニラRRTと同じになります（リワイヤリング手順は違います）。
+更新する場合は、実行可能な解が見つかった後のサンプリングが「informed」であるかどうかを選択できます。
+これを真に設定すると、アルゴリズムは「2014年のGammellらによるinformed RRT\*」と同じになります。
 
-## Algorithm selection
+## アルゴリズムの選択
 
-There is a trade-off between algorithm speed and resulting solution quality.
-When we sort the algorithms by the spectrum of (high quality solution/ slow) -> (low quality solution / fast) it would be
-A\* -> informed RRT\* -> RRT. Note that in almost all case informed RRT\* is
-better than RRT\* for solution quality given the same computational time budget. So, RRT\* is omitted in the comparison.
+アルゴリズムの速度と結果の解の品質にはトレードオフがあります。
+アルゴリズムを(高品質解/低速)から(低品質解/高速)の範囲で並べると、次のようになります。
+A\* -> informed RRT\* -> RRT。ほとんどの場合において、informed RRT\*は、同じ計算時間バジェットでRRT\*よりも解の品質が優れています。そのため、RRT\*は比較で省略されています。
 
-Some selection criteria would be:
+選択基準は次のとおりです。
 
-- If obstacle geometry is complex: -> avoid RRT and RRT\*. The resulting path could be too messy.
-- If goal location is far from the start: -> avoid A\*. Take too long time because it based on grid discretization.
+- 障害物の形状が複雑な場合: -> RRTとRRT\*を回避します。結果のパスが乱雑になる可能性があります。
+- 目標位置がスタートから遠い場合: -> A\*を回避します。グリッドの離散化に基づいているため、時間がかかりすぎます。
 
-## Guide to implement a new algorithm
+## 新規アルゴリズムの実装ガイド
 
-- All planning algorithm class in this package must inherit `AbstractPlanningAlgorithm`
-  class. If necessary, please overwrite the virtual functions.
-- All algorithms must use `nav_msgs::OccupancyGrid`-typed costmap.
-  Thus, `AbstractPlanningAlgorithm` class mainly implements the collision checking
-  using the costmap, grid-based indexing, and coordinate transformation related to
-  costmap.
-- All algorithms must take both `PlannerCommonParam`-typed and algorithm-specific-
-  type structs as inputs of the constructor. For example, `AstarSearch` class's
-  constructor takes both `PlannerCommonParam` and `AstarParam`.
+- このパッケージ内のすべてのプランニングアルゴリズムクラスは、`AbstractPlanningAlgorithm`クラスを継承する必要があります。必要に応じて、仮想関数をオーバーライドしてください。
+- すべてのアルゴリズムは`nav_msgs::OccupancyGrid`タイプのコストマップを使用する必要があります。
+したがって、`AbstractPlanningAlgorithm`クラスは主に、コストマップを使用した衝突チェック、グリッドベースのインデックス作成、コストマップに関連する座標変換を実装します。
+- すべてのアルゴリズムは、`PlannerCommonParam`タイプの構造とアルゴリズム固有タイプの構造の両方をコンストラクタの入力として受け取る必要があります。たとえば、`AstarSearch`クラスのコンストラクタは、`PlannerCommonParam`と`AstarParam`の両方を受け取ります。
 
-## Running the standalone tests and visualization
+## スタンドアロンテストと可視化の実行
 
-Building the package with ros-test and run tests:
+パッケージをros-testでビルドし、テストを実行します。
+
 
 ```sh
 colcon build --packages-select autoware_freespace_planning_algorithms
 colcon test --packages-select autoware_freespace_planning_algorithms
 ```
 
-<!-- cspell: ignore fpalgos -->
-<!-- "fpalgos" means Free space Planning ALGOrithmS -->
+テストでは、シミュレーション結果は `/tmp/fpalgos-{アルゴリズムタイプ}-case{シナリオ番号}` に Rosbag として格納されます。
+[test/debug_plot.py](test/debug_plot.py) を使用してこれらの結果ファイルをロードすることで、以下に示す図のように、経路と障害物を視覚化するプロットを作成できます。作成された図は `/tmp` に再度保存されます。
 
-Inside the test, simulation results are stored in `/tmp/fpalgos-{algorithm_type}-case{scenario_number}` as a rosbag.
-Loading these resulting files, by using [test/debug_plot.py](test/debug_plot.py),
-one can create plots visualizing the path and obstacles as shown
-in the figures below. The created figures are then again saved in `/tmp`.
+### A\* (単曲率ケース)
 
-### A\* (single curvature case)
+![サンプル出力図](figs/summary-astar_single.png)
 
-![sample output figure](figs/summary-astar_single.png)
+### 200msec の時間予算のある情報ベース RRT\*
 
-### informed RRT\* with 200 msec time budget
+![サンプル出力図](figs/summary-rrtstar_informed_update.png)
 
-![sample output figure](figs/summary-rrtstar_informed_update.png)
+### 更新のない RRT\* (RRT とほぼ同じ)
 
-### RRT\* without update (almost same as RRT)
+![サンプル出力図](figs/summary-rrtstar_fastest.png)
 
-![sample output figure](figs/summary-rrtstar_fastest.png)
+それぞれ、黒いセル、緑色のボックス、赤色のボックスは、障害物、開始コンフィギュレーション、目標コンフィギュレーションを示しています。
+青いボックスのシーケンスはソリューションパスを示しています。
 
-The black cells, green box, and red box, respectively, indicate obstacles,
-start configuration, and goal configuration.
-The sequence of the blue boxes indicate the solution path.
+## Python モジュールへの拡張（A\* のみサポート）
 
-## Extension to Python module (only A\* supported)
+Python モジュールへの拡張の実装があります。
+以下を設定することで、Python 経由で A\* 検索を試すことができます:
 
-There is an implementation of the extension to the python module.
-You can try A\* search via Python by setting follows:
+- パラメーター
+- コストマップ
+- 自車位置
+- ゴール位置
 
-- parameters,
-- costmap,
-- start pose,
-- goal pose.
+すると、次のものを入手できます:
 
-Then, you can get
+- 成功または失敗
+- 探索された軌跡
 
-- success or failure,
-- searched trajectory.
+サンプルコードは [scripts/example/example.py](scripts/example/example.py) です。
+このパッケージを事前にビルドして、セットアップシェルのスクリプトをソースする必要があることに注意してください。
 
-The example code is [scripts/example/example.py](scripts/example/example.py).
-Note that you need to build this package and source the setup shell script in advance.
+## ライセンスの通知
 
-## License notice
+ファイル `src/reeds_shepp.cpp` および `include/astar_search/reeds_shepp.h`
+は [pyReedsShepp](https://github.com/ghliu/pyReedsShepp) から取得されています。
+`pyReedsShepp` の実装も [ompl](https://github.com/ompl/ompl) のコードを大いに基にしていることに注意してください。
+`pyReedsShepp` と `ompl` はどちらも 3 項 BSD ライセンスで配布されています。
 
-Files `src/reeds_shepp.cpp` and `include/astar_search/reeds_shepp.h`
-are fetched from [pyReedsShepp](https://github.com/ghliu/pyReedsShepp).
-Note that the implementation in `pyReedsShepp` is also heavily based on
-the code in [ompl](https://github.com/ompl/ompl).
-Both `pyReedsShepp` and `ompl` are distributed under 3-clause BSD license.

@@ -1,16 +1,17 @@
 # tier4_datetime_rviz_plugin
 
-## Purpose
+## 目的
 
-This plugin displays the ROS Time and Wall Time in rviz.
+このプラグインは、ROS時刻とウォール時刻をrvizに表示します。
 
-## Assumptions / Known limits
+## 想定/既知の制限
 
-TBD.
+TBD。
 
-## Usage
+## 使用方法
 
-1. Start rviz and select panels/Add new panel.
+1. rvizを起動して、パネル/新しいパネルを追加を選択します。
    ![select_panel](./images/select_panels.png)
-2. Select tier4_datetime_rviz_plugin/AutowareDateTimePanel and press OK.
+2. tier4_datetime_rviz_plugin/AutowareDateTimePanelを選択して、OKを押します。
    ![select_datetime_plugin](./images/select_datetime_plugin.png)
+

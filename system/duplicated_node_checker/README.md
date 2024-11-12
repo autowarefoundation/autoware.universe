@@ -1,37 +1,39 @@
-# Duplicated Node Checker
+# 重複ノードチェッカー
 
-## Purpose
+## 目的
 
-This node monitors the ROS 2 environments and detect duplication of node names in the environment.
-The result is published as diagnostics.
+このノードは ROS 2 環境をモニタリングし、環境内のノード名の重複を検出します。
+結果は診断として公開されます。
 
-### Standalone Startup
+### スタンドアロン起動
+
 
 ```bash
 ros2 launch duplicated_node_checker duplicated_node_checker.launch.xml
 ```
 
-## Inner-workings / Algorithms
+## インナーワーキング / アルゴリズム
 
-The types of topic status and corresponding diagnostic status are following.
+トピックステータスとその診断ステータスの対応は次のとおりです。
 
-| Duplication status    | Diagnostic status | Description                |
-| --------------------- | ----------------- | -------------------------- |
-| `OK`                  | OK                | No duplication is detected |
-| `Duplicated Detected` | ERROR             | Duplication is detected    |
+| **重複ステータス** | **診断ステータス** | **説明** |
+|---|---|---|
+| `OK` | OK | 重複は検出されません |
+| `重複検出` | エラー | 重複が検出されました |
 
-## Inputs / Outputs
+## 入出力
 
-### Output
+### 出力
 
-| Name           | Type                              | Description         |
+| 名称           | 型                              | 説明         |
 | -------------- | --------------------------------- | ------------------- |
-| `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | Diagnostics outputs |
+| `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | 診断出力 |
 
-## Parameters
+## パラメーター
 
 {{ json_to_markdown("system/duplicated_node_checker/schema/duplicated_node_checker.schema.json") }}
 
-## Assumptions / Known limits
+## 想定事項 / 制限事項
 
-TBD.
+未定
+

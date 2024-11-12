@@ -1,14 +1,15 @@
 # tier4_simulator_launch
 
-## Structure
+## 構成
 
 ![tier4_simulator_launch](./simulator_launch.drawio.svg)
 
-## Package Dependencies
+## パッケージ依存関係
 
-Please see `<exec_depend>` in `package.xml`.
+詳細については、`package.xml` の `<exec_depend>` を参照してください。
 
-## Usage
+## 使用方法
+
 
 ```xml
   <include file="$(find-pkg-share tier4_simulator_launch)/launch/simulator.launch.xml">
@@ -17,4 +18,5 @@ Please see `<exec_depend>` in `package.xml`.
   </include>
 ```
 
-The simulator model used in simple_planning_simulator is loaded from "config/simulator_model.param.yaml" in the "`VEHICLE_MODEL`\_description" package.
+simple\_planning\_simulator で使用されるシミュレータ モデルは、パッケージ "`VEHICLE\_MODEL`\_description" の "config/simulator\_model.param.yaml" からロードされています。
+

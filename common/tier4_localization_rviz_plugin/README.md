@@ -1,71 +1,71 @@
-# tier4_localization_rviz_plugin
+## tier4_localization_rviz_plugin
 
-## Purpose
+## 目的
 
-This plugin can display the localization history obtained by ekf_localizer, ndt_scan_matching, and GNSS.
-If the uncertainty of the estimated pose is given, it can also be displayed.
+このプラグインは、ekf_localizer、ndt_scan_matching、GNSSによって取得されたローカリゼーションの履歴を表示できます。推定ポーズの不確かさが与えられた場合、それも表示できます。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-### Pose History
+### Pose履歴
 
-| Name         | Type                              | Description                                                                                           |
-| ------------ | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `input/pose` | `geometry_msgs::msg::PoseStamped` | In input/pose, put the result of localization calculated by ekf_localizer, ndt_scan_matching, or GNSS |
+| 名称 | タイプ | 説明 |
+| ---- | ----- | ------------------------------------------------------------------------------------------------- |
+| `input/pose` | `geometry_msgs::msg::PoseStamped` | `input/pose` には、ekf_localizer、ndt_scan_matching、または GNSS で計算された局所化の結果を入れます |
 
-### Pose With Covariance History
+### 共分散を持つ自車位置履歴
 
-| Name                         | Type                                            | Description                                                                                                           |
+| 名称                         | 型                                            | 説明                                                                                                           |
 | ---------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `input/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | In input/pose_with_covariance, put the result of localization calculated by ekf_localizer, ndt_scan_matching, or GNSS |
+| `input/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | `input/pose_with_covariance` には、ekf_localizer、ndt_scan_matching、GNSS によって計算された、ローカリゼーションの結果を配置します。 |
 
-## Parameters
+## パラメータ
 
-### Core Parameters
+### コアパラメータ
 
-### Pose History
+### 自車位置履歴
 
-| Name                    | Type   | Default Value | Description                |
-| ----------------------- | ------ | ------------- | -------------------------- |
-| `property_buffer_size_` | int    | 100           | Buffer size of topic       |
-| `property_line_view_`   | bool   | true          | Use Line property or not   |
-| `property_line_width_`  | float  | 0.1           | Width of Line property [m] |
-| `property_line_alpha_`  | float  | 1.0           | Alpha of Line property     |
-| `property_line_color_`  | QColor | Qt::white     | Color of Line property     |
+| 名称 | タイプ | デフォルト値 | 説明 |
+| ----------------------- | ------ | ------------- | ------------------------- |
+| `property_buffer_size_` | int    | 100           | トピックのバッファサイズ |
+| `property_line_view_`   | bool   | true          | Lineプロパティを使用 |
+| `property_line_width_`  | float  | 0.1           | Lineプロパティの幅 [m] |
+| `property_line_alpha_`  | float  | 1.0           | Lineプロパティのアルファ |
+| `property_line_color_`  | QColor | Qt::white     | Lineプロパティの色 |
 
-### Pose With Covariance History
+### 自車位置の共分散履歴
 
-| Name                            | Type   | Default Value  | Description                      |
-| ------------------------------- | ------ | -------------- | -------------------------------- |
-| `property_buffer_size_`         | int    | 100            | Buffer size of topic             |
-| `property_path_view_`           | bool   | true           | Use path property or not         |
-| `property_shape_type_`          | string | Line           | Line or Arrow                    |
-| `property_line_width_`          | float  | 0.1            | Width of Line property [m]       |
-| `property_line_alpha_`          | float  | 1.0            | Alpha of Line property           |
-| `property_line_color_`          | QColor | Qt::white      | Color of Line property           |
-| `property_arrow_shaft_length`   | float  | 0.3            | Shaft length of Arrow property   |
-| `property_arrow_shaft_diameter` | float  | 0.15           | Shaft diameter of Arrow property |
-| `property_arrow_head_length`    | float  | 0.2            | Head length of Arrow property    |
-| `property_arrow_head_diameter`  | float  | 0.3            | Head diameter of Arrow property  |
-| `property_arrow_alpha_`         | float  | 1.0            | Alpha of Arrow property          |
-| `property_arrow_color_`         | QColor | Qt::white      | Color of Arrow property          |
-| `property_sphere_scale_`        | float  | 1.0            | Scale of Sphere property         |
-| `property_sphere_alpha_`        | float  | 0.5            | Alpha of Sphere property         |
-| `property_sphere_color_`        | QColor | (204, 51, 204) | Color of Sphere property         |
+| 名称                          | タイプ   | デフォルト値  | 説明                                    |
+| ----------------------------- | ------ | ------------ | --------------------------------------- |
+| `property_buffer_size_`        | int    | 100          | トピックのバッファサイズ                    |
+| `property_path_view_`          | bool   | true         | パスプロパティを使用するか否か               |
+| `property_shape_type_`         | string | Line         | LineまたはArrow                           |
+| `property_line_width_`         | float  | 0.1          | Lineプロパティの幅 [m]                    |
+| `property_line_alpha_`         | float  | 1.0          | Lineプロパティのアルファ                   |
+| `property_line_color_`         | QColor | Qt::white    | Lineプロパティの色                        |
+| `property_arrow_shaft_length`  | float  | 0.3          | Arrowプロパティのシャフトの長さ               |
+| `property_arrow_shaft_diameter` | float  | 0.15         | Arrowプロパティのシャフトの直径               |
+| `property_arrow_head_length`   | float  | 0.2          | Arrowプロパティのヘッドの長さ                  |
+| `property_arrow_head_diameter` | float  | 0.3          | Arrowプロパティのヘッドの直径                  |
+| `property_arrow_alpha_`        | float  | 1.0          | Arrowプロパティのアルファ                    |
+| `property_arrow_color_`        | QColor | Qt::white    | Arrowプロパティの色                        |
+| `property_sphere_scale_`       | float  | 1.0          | Sphereプロパティのスケール                   |
+| `property_sphere_alpha_`       | float  | 0.5          | Sphereプロパティのアルファ                    |
+| `property_sphere_color_`       | QColor | (204, 51, 204) | Sphereプロパティの色                        |
 
-## Assumptions / Known limits
+## 想定/既知の制限
 
 TBD.
 
-## Usage
+## 使用方法
 
-1. Start rviz and select Add under the Displays panel.
+1. rvizを起動し、[Displays]パネルで[Add]を選択します。
    ![select_add](./images/select_add.png)
-2. Select tier4_localization_rviz_plugin/PoseHistory or PoseWithCovarianceHistory. Next, press OK.
+2. [tier4_localization_rviz_plugin/PoseHistory]または[PoseWithCovarianceHistory]を選択します。次に、[OK]を押します。
    ![select_localization_plugin](./images/select_localization_plugin.png)
-3. Enter the name of the topic where you want to view the trajectory and the covariance.
+3. 軌道と共分散を表示するトピックの名前を入力します。
    ![select_topic_name](./images/select_topic_name.png)
-4. You can view the trajectory and the covariance.
+4. 軌道と共分散を表示できます。
    ![ex_pose_with_covariance_history](./images/ex_pose_with_covariance_history.png)
+

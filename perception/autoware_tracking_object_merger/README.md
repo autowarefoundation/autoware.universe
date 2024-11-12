@@ -1,70 +1,71 @@
-# Tracking Object Merger
+# トラッキングオブジェクトマージャー
 
-## Purpose
+## 目的
 
-This package try to merge two tracking objects from different sensor.
+このパッケージは、異なるセンサーの2つのトラッキングオブジェクトをマージしようとします。
 
-## Inner-workings / Algorithms
+## 内部処理/アルゴリズム
 
-Merging tracking objects from different sensor is a combination of data association and state fusion algorithms.
+異なるセンサーのトラッキングオブジェクトをマージすることは、データ関連付けと状態フュージョンのアルゴリズムの組み合わせです。
 
-Detailed process depends on the merger policy.
+詳細なプロセスは、マージャーポリシーによって異なります。
 
 ### decorative_tracker_merger
 
-In decorative_tracker_merger, we assume there are dominant tracking objects and sub tracking objects.
-The name `decorative` means that sub tracking objects are used to complement the main objects.
+`decorative_tracker_merger`では、ドミナントなトラッキングオブジェクトとサブトラッキングオブジェクトがあると仮定します。
+`decorative`という名前は、サブトラッキングオブジェクトがメインオブジェクトを補完するために使用されることを意味します。
 
-Usually the dominant tracking objects are from LiDAR and sub tracking objects are from Radar or Camera.
+通常、ドミナントなトラッキングオブジェクトはLiDARから、サブトラッキングオブジェクトはレーダーまたはカメラから取得されます。
 
-Here show the processing pipeline.
+以下に処理パイプラインを示します。
 
 ![decorative_tracker_merger](./image/decorative_tracker_merger.drawio.svg)
 
-#### time sync
+#### タイムシンク
 
-Sub object(Radar or Camera) often has higher frequency than dominant object(LiDAR). So we need to sync the time of sub object to dominant object.
+サブオブジェクト（レーダーまたはカメラ）は、ドミナントオブジェクト（LiDAR）よりも高い頻度で取得されることがよくあります。したがって、サブオブジェクトの時間をドミナントオブジェクトに同期させる必要があります。
 
-![time sync](image/time_sync.drawio.svg)
+![タイムシンク](image/time_sync.drawio.svg)
 
-#### data association
+#### データ関連付け
 
-In the data association, we use the following rules to determine whether two tracking objects are the same object.
+データ関連付けでは、以下のルールを使用して2つのトラッキングオブジェクトが同じオブジェクトかどうかを判別します。
 
-- gating
-  - `distance gate`: distance between two tracking objects
-  - `angle gate`: angle between two tracking objects
-  - `mahalanobis_distance_gate`: Mahalanobis distance between two tracking objects
-  - `min_iou_gate`: minimum IoU between two tracking objects
-  - `max_velocity_gate`: maximum velocity difference between two tracking objects
-- score
-  - score used in matching is equivalent to the distance between two tracking objects
+- ゲーティング
+  - `distance gate`: 2つのトラッキングオブジェクト間の距離
+  - `angle gate`: 2つのトラッキングオブジェクト間の角度
+  - `mahalanobis_distance_gate`: 2つのトラッキングオブジェクト間のマハラノビス距離
+  - `min_iou_gate`: 2つのトラッキングオブジェクト間の最小IoU
+  - `max_velocity_gate`: 2つのトラッキングオブジェクト間の最大速度差
+- スコア
+  - マッチングで使用されるスコアは、2つのトラッキングオブジェクト間の距離と同等です
 
-#### tracklet update
+#### トラックレット更新
 
-Sub tracking objects are merged into dominant tracking objects.
+サブトラッキングオブジェクトはドミナントトラッキングオブジェクトにマージされます。
 
-Depends on the tracklet input sensor state, we update the tracklet state with different rules.
+トラックレットの入力センサー状態に応じて、異なるルールでトラックレット状態を更新します。
 
-| state\priority             | 1st    | 2nd   | 3rd    |
+| ステート/優先度             | 1番目 | 2番目 | 3番目 |
 | -------------------------- | ------ | ----- | ------ |
-| Kinematics except velocity | LiDAR  | Radar | Camera |
-| Forward velocity           | Radar  | LiDAR | Camera |
-| Object classification      | Camera | LiDAR | Radar  |
+| キネマティクス（速度以外） | LiDAR  | レーダー | カメラ |
+| 前方速度                   | レーダー  | LiDAR | カメラ |
+| オブジェクト分類           | カメラ | LiDAR | レーダー |
 
-#### tracklet management
+#### トラックレットマネジメント
 
-We use the `existence_probability` to manage tracklet.
+トラックレットの管理には`existence_probability`を使用します。
 
-- When we create a new tracklet, we set the `existence_probability` to $p_{sensor}$ value.
-- In each update with specific sensor, we set the `existence_probability` to $p_{sensor}$ value.
-- When tracklet does not have update with specific sensor, we reduce the `existence_probability` by `decay_rate`
-- Object can be published if `existence_probability` is larger than `publish_probability_threshold` and time from last update is smaller than `max_dt`
-- Object will be removed if `existence_probability` is smaller than `remove_probability_threshold` and time from last update is larger than `max_dt`
+- 新しいトラックレットを作成するときは、`existence_probability`を$p_{sensor}$値に設定します。
+- 特定のセンサーでの各更新で、`existence_probability`を$p_{sensor}$値に設定します。
+- トラックレットが特定のセンサーでの更新がない場合は、`existence_probability`を`decay_rate`だけ減らします。
+- `existence_probability`が`publish_probability_threshold`より大きく、前回の更新からの時間が`max_dt`より小さい場合は、オブジェクトをパブリッシュできます。
+- `existence_probability`が`remove_probability_threshold`より小さく、前回の更新からの時間が`max_dt`より大きい場合は、オブジェクトは削除されます。
 
 ![tracklet_management](./image/tracklet_management.drawio.svg)
 
-These parameter can be set in `config/decorative_tracker_merger.param.yaml`.
+これらのパラメーターは`config/decorative_tracker_merger.param.yaml`で設定できます。
+
 
 ```yaml
 tracker_state_parameter:
@@ -77,38 +78,39 @@ tracker_state_parameter:
   max_dt: 1.0
 ```
 
-#### input/parameters
+#### 入力/パラメータ
 
-| topic name                      | message type                               | description                                                                           |
+| トピック名                      | メッセージタイプ                               | 説明                                                                           |
 | ------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `~input/main_object`            | `autoware_perception_msgs::TrackedObjects` | Dominant tracking objects. Output will be published with this dominant object stamps. |
-| `~input/sub_object`             | `autoware_perception_msgs::TrackedObjects` | Sub tracking objects.                                                                 |
-| `output/object`                 | `autoware_perception_msgs::TrackedObjects` | Merged tracking objects.                                                              |
-| `debug/interpolated_sub_object` | `autoware_perception_msgs::TrackedObjects` | Interpolated sub tracking objects.                                                    |
+| `~input/main_object`            | `autoware_perception_msgs::TrackedObjects` | 主要な追跡対象。この主要な対象のスタンプで出力がパブリッシュされます。 |
+| `~input/sub_object`             | `autoware_perception_msgs::TrackedObjects` | サブ追跡対象。                                                                 |
+| `output/object`                 | `autoware_perception_msgs::TrackedObjects` | マージされた追跡対象。                                                              |
+| `debug/interpolated_sub_object` | `autoware_perception_msgs::TrackedObjects` | 補間されたサブ追跡対象。                                                    |
 
-Default parameters are set in [config/decorative_tracker_merger.param.yaml](./config/decorative_tracker_merger.param.yaml).
+デフォルトパラメータは [config/decorative_tracker_merger.param.yaml](./config/decorative_tracker_merger.param.yaml) に設定されています。
 
-| parameter name            | description                                                                                                                                                      | default value |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `base_link_frame_id`      | base link frame id. This is used to transform the tracking object.                                                                                               | "base_link"   |
-| `time_sync_threshold`     | time sync threshold. If the time difference between two tracking objects is smaller than this value, we consider these two tracking objects are the same object. | 0.05          |
-| `sub_object_timeout_sec`  | sub object timeout. If the sub object is not updated for this time, we consider this object is not exist.                                                        | 0.5           |
-| `main_sensor_type`        | main sensor type. This is used to determine the dominant tracking object.                                                                                        | "lidar"       |
-| `sub_sensor_type`         | sub sensor type. This is used to determine the sub tracking object.                                                                                              | "radar"       |
-| `tracker_state_parameter` | tracker state parameter. This is used to manage the tracklet.                                                                                                    |               |
+| パラメーター名                | 説明                                                                                                                                                              | デフォルト値 |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `base_link_frame_id`          | ベースリンクフレームID。追跡対象の変換に使用されます。                                                                                                                | "base_link"   |
+| `time_sync_threshold`         | 時間同期しきい値。2つの追跡対象の差が小さければ、それらは同一対象とみなされます。                                                                                               | 0.05          |
+| `sub_object_timeout_sec`      | サブオブジェクトタイムアウト。サブオブジェクトがこの時間更新されなければ、存在しないとみなされます。                                                                                | 0.5           |
+| `main_sensor_type`            | メインセンサータイプ。主な追跡対象を判別するために使用します。                                                                                                              | "lidar"       |
+| `sub_sensor_type`             | サブセンサータイプ。サブ追跡対象を判別するために使用します。                                                                                                              | "radar"       |
+| `tracker_state_parameter`     | トラッカー状態パラメーター。トラッキングに使用されます。                                                                                                                          |               |
 
-- the detail of `tracker_state_parameter` is described in [tracklet management](#tracklet-management)
+- `tracker_state_parameter` の詳細については、[Tracklet Management](#tracklet-management) で説明しています。
 
-#### tuning
+#### 調整
 
-As explained in [tracklet management](#tracklet-management), this tracker merger tend to maintain the both input tracking objects.
+[Tracklet Management](#tracklet-management) で説明したように、この Tracker Merger は通常、両方の入力トラッキングオブジェクトを維持します。
 
-If there are many false positive tracking objects,
+誤検出のトラッキングオブジェクトが多い場合、
 
-- decrease `default_<sensor>_existence_probability` of that sensor
-- increase `decay_rate`
-- increase `publish_probability_threshold` to publish only reliable tracking objects
+- そのセンサの `default_<sensor>_existence_probability` を下げる
+- `decay_rate` を上げる
+- 信頼できるトラッキングオブジェクトのみを公開するために `publish_probability_threshold` を上げる
 
 ### equivalent_tracker_merger
 
-This is future work.
+これは今後の予定です。
+

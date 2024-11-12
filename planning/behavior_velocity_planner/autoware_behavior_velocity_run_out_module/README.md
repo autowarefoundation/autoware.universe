@@ -1,18 +1,19 @@
-## Run Out
+## 障害物回避
 
-### Role
+### 役割
 
-`run_out` is the module that decelerates and stops for dynamic obstacles such as pedestrians, bicycles and motorcycles.
+`run_out` は、歩行者、自転車、オートバイなどの動的障害物に対して減速・停止を行うモジュールです。
 
 ![brief](./docs/run_out_overview.svg)
 
-### Activation Timing
+### 起動タイミング
 
-This module is activated if `launch_run_out` becomes true
+このモジュールは、`launch_run_out` が True になると起動します。
 
-### Inner-workings / Algorithms
+### 内部動作 / アルゴリズム
 
-#### Flow chart
+#### フローチャート
+
 
 ```plantuml
 @startuml
@@ -43,125 +44,108 @@ stop
 @enduml
 ```
 
-#### Preprocess path
+#### パスを事前処理する
 
-##### Calculate the expected target velocity for ego vehicle
+##### 自車に対する予測目標速度を計算する
 
-Calculate the expected target velocity for the ego vehicle path to calculate time to collision with obstacles more precisely.
-The expected target velocity is calculated with [autoware velocity smoother module](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/autoware_velocity_smoother) by using current velocity, current acceleration and velocity limits directed by the map and external API.
+障害物との衝突時間をより正確に計算するために、自車パスの予測目標速度を計算します。
+予測目標速度は、現在の速度、現在の加速度、マップと外部APIによって指示された速度制限を使用して、[autoware velocity smootherモジュール](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/autoware_velocity_smoother)で計算されます。
 
 ![brief](./docs/calculate_expected_target_velocity.svg)
 
-##### Extend the path
+##### パスを延長する
 
-The path is extended by the length of base link to front to consider obstacles after the goal.
+パスは目標地点の後の障害物を考慮するために、ベースリンクの長さの前方に延長されます。
 
-##### Trim path from ego position
+##### 自車位置からパスをトリムする
 
-The path is trimmed from ego position to a certain distance to reduce calculation time.
-Trimmed distance is specified by parameter of `detection_distance`.
+計算時間を削減するため、自車位置からある程度距離があるパスはトリムされます。
+トリム距離は`detection_distance`のパラメータで指定されます。
 
-#### Preprocess obstacles
+#### 障害物を事前処理する
 
-##### Create data of abstracted dynamic obstacle
+##### 動的障害物を抽象化したデータを作成する
 
-This module can handle multiple types of obstacles by creating abstracted dynamic obstacle data layer. Currently we have 3 types of detection method (Object, ObjectWithoutPath, Points) to create abstracted obstacle data.
+このモジュールは、障害物の抽象化されたダイナミックデータレイヤーを作成することによって、複数のタイプの障害物に対処できます。現在、抽象障害物データを作成するための3タイプの検出方法（Object、ObjectWithoutPath、Points）があります。
 
-###### Abstracted dynamic obstacle
+###### 抽象化されたダイナミック障害物
 
-Abstracted obstacle data has following information.
+障害物の抽象化されたデータには、次の情報が含まれています。
 
-| Name             | Type                                                               | Description                                                                                                            |
-| ---------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| pose             | `geometry_msgs::msg::Pose`                                         | pose of the obstacle                                                                                                   |
-| classifications  | `std::vector<autoware_perception_msgs::msg::ObjectClassification>` | classifications with probability                                                                                       |
-| shape            | `autoware_perception_msgs::msg::Shape`                             | shape of the obstacle                                                                                                  |
-| predicted_paths  | `std::vector<DynamicObstacle::PredictedPath>`                      | predicted paths with confidence. this data doesn't have time step because we use minimum and maximum velocity instead. |
-| min_velocity_mps | `float`                                                            | minimum velocity of the obstacle. specified by parameter of `dynamic_obstacle.min_vel_kmph`                            |
-| max_velocity_mps | `float`                                                            | maximum velocity of the obstacle. specified by parameter of `dynamic_obstacle.max_vel_kmph`                            |
+| 名称             | 型                                                                | 説明                                                                                                                                                   |
+| ---------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 位置             | `geometry_msgs::msg::Pose`                                          | 障害物の位置                                                                                                                                                |
+| 分類             | `std::vector<autoware_perception_msgs::msg::ObjectClassification>` | 確率のある分類                                                                                                                                             |
+| 形状             | `autoware_perception_msgs::msg::Shape`                             | 障害物の形状                                                                                                                                                |
+| 予測経路         | `std::vector<DynamicObstacle::PredictedPath>`                       | 信頼度のある予測経路。このデータには、最小速度と最大速度を使用するため、タイムステップがありません。                                                   |
+| 最小速度 (m/s)     | `float`                                                             | 障害物の最小速度。パラメータ `dynamic_obstacle.min_vel_kmph` で指定されています。                                                                       |
+| 最大速度 (m/s)     | `float`                                                             | 障害物の最大速度。パラメータ `dynamic_obstacle.max_vel_kmph` で指定されています。                                                                       |
 
-Enter the maximum/minimum velocity of the object as a parameter, adding enough margin to the expected velocity. This parameter is used to create polygons for [collision detection](.#Collision-detection).
+オブジェクトの最大/最小速度をパラメータとして入力し、予想速度に十分なマージンを追加します。このパラメータは、[衝突検出](.#衝突検出)の多角形を作成するために使用されます。
 
-Future work: Determine the maximum/minimum velocity from the estimated velocity with covariance of the object
+将来の作業: オブジェクトの共分散に基づいて予測速度から最大/最小速度を特定します。
 
-###### 3 types of detection method
+###### 3種類の検出方法
 
-We have 3 types of detection method to meet different safety and availability requirements. The characteristics of them are shown in the table below.
-Method of `Object` has high availability (less false positive) because it detects only objects whose predicted path is on the lane. However, sometimes it is not safe because perception may fail to detect obstacles or generate incorrect predicted paths.
-On the other hand, method of `Points` has high safety (less false negative) because it uses pointcloud as input. Since points don't have a predicted path, the path that moves in the direction normal to the path of ego vehicle is considered to be the predicted path of abstracted dynamic obstacle data. However, without proper adjustment of filter of points, it may detect a lot of points and it will result in very low availability.
-Method of `ObjectWithoutPath` has the characteristics of an intermediate of `Object` and `Points`.
+私たちは異なる安全性と可用性の要件を満たすために3種類の検出方法を用意しています。その特性は下の表に示されています。
+`Object`の方法は、予測経路が車線上のオブジェクトのみを検出するため、高い可用性(誤検出が少ない)があります。しかし、認識が障害物を検出できなかったり、予測経路が不正になったりする場合には安全ではないことがあります。
+一方、`Points`の方法は、入力として点群を使用するため、高い安全性(誤認が少ない)があります。点は予測経路を持たないため、自車経路に垂直な方向に移動する経路が抽象化された動的障害物データの予測経路と見なされます。しかし、ポイントフィルタを適切に調整しなければ、多くのポイントを検出する可能性があり、可用性が非常に低くなります。
+`ObjectWithoutPath`は、`Object`と`Points`の中間に位置する特性を持っています。
 
-| Method            | Description                                                                                                                                                           |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Object            | use an object with the predicted path for collision detection.                                                                                                        |
-| ObjectWithoutPath | use an object but not use the predicted path for collision detection. replace the path assuming that an object jumps out to the lane at specified velocity.           |
-| Points            | use filtered points for collision detection. the path is created assuming that points jump out to the lane. points are regarded as an small circular shaped obstacle. |
+| 手法 | 説明 |
+|---|---|---|
+| オブジェクト | 衝突検出に予測パス付きのオブジェクトを使用する。 |
+| ObjectWithoutPath | オブジェクトを使用するが、衝突検出に予測パスを使用しない。オブジェクトが指定された速度で車線に飛び出すことを前提にパスを置き換える。 |
+| ポイント | 衝突検出にフィルタされたポイントを使用する。ポイントは車線に飛び出すことを前提にパスが作成される。ポイントは小さな円形の障害物とみなされる。 |
 
-![brief](./docs/create_dynamic_obstacle.svg)
+## 自動運転ソフトウェアドキュメント
 
-##### Exclude obstacles outside of partition
+### 動的障害物
 
-This module can exclude the obstacles outside of partition such as guardrail, fence, and wall.
-We need lanelet map that has the information of partition to use this feature.
-By this feature, we can reduce unnecessary deceleration by obstacles that are unlikely to jump out to the lane.
-You can choose whether to use this feature by parameter of `use_partition_lanelet`.
+#### パーティション外の障害物の除外
 
-![brief](./docs/exclude_obstacles_by_partition.svg)
+このモジュールは、ガードレール、フェンス、壁などのパーティション外の障害物を除外できます。この機能を使用するには、パーティションの情報を持つレーンレットマップが必要です。この機能により、車線に飛び出す可能性が低い障害物による不要な減速を減らすことができます。`use_partition_lanelet`パラメータを使用して、この機能を使用するかどうかを選択できます。
 
-##### Exclude obstacles by label
+#### ラベルによる障害物の除外
 
-This module only acts on target obstacles defined by the `target_obstacle_types` parameter. If an obstacle of a type not specified by said parameter is detected, it will be ignored by this module.
+このモジュールは、`target_obstacle_types`パラメータで定義されたターゲット障害物にのみ作用します。このパラメータで指定されていないタイプの障害物が検出された場合、このモジュールによって無視されます。
 
-##### Exclude obstacles that are already on the ego vehicle's path
+#### 自車走行経路上にある障害物の除外
 
-In the cases were an obstacle is already on the ego vehicle's path, it cannot "cut in" into the ego's path anymore (which is the situation this module tries to handle) so it might be useful to exclude obstacles already on the vehicle's footprint path. By setting the parameter `exclude_obstacles_already_in_path` to true, this module will exclude the obstacles that are considered to be already on the ego vehicle's path for more than `keep_obstacle_on_path_time_threshold`. The module considers the ego vehicle's closest path point to each obstacle's current position, and determines the lateral distance between the obstacle and the right and left sides of the ego vehicle. If the obstacle is located within the left and right extremes of the vehicle for that pose, then it is considered to be inside the ego vehicle's footprint path and it is excluded. The virtual width of the vehicle used to detect if an obstacle is within the path or not, can be adjusted by the `ego_footprint_extra_margin` parameter.
+障害物がすでに自車走行経路上に存在する場合、障害物は自車の経路に「割り込む」ことはできないため（このモジュールで処理しようとしている状況です）、自車のフットプリント経路上にすでに存在する障害物を除外すると有用な場合があります。`exclude_obstacles_already_in_path`パラメータを`true`に設定すると、このモジュールは`keep_obstacle_on_path_time_threshold`を超えて自車走行経路上にあると見なされる障害物を除外します。このモジュールは、各障害物の現在の位置に対して自車の最寄りの経路ポイントを考慮し、障害物と自車の左右の側の間の横方向距離を決定します。障害物がそのポーズに対して車の左端と右端の間に位置する場合、それは自車のフットプリント経路内にあると見なされ、除外されます。障害物が経路内にあるかどうかを検出するために使用される車両の仮想幅は、`ego_footprint_extra_margin`パラメータで調整できます。
 
-##### Exclude obstacles that cross the ego vehicle's "cut line"
+#### 自車の「カットライン」を横断する障害物の除外
 
-This module can exclude obstacles that have predicted paths that will cross the back side of the ego vehicle. It excludes obstacles if their predicted path crosses the ego's "cut line". The "cut line" is a virtual line segment that is perpendicular to the ego vehicle and that passes through the ego's base link.
+このモジュールは、自車の後部を横断する予測経路を持つ障害物を除外できます。予測経路が自車の「カットライン」を横断する場合に障害物を除外します。「カットライン」は自車に垂直で、自車のベースリンクを通過する仮想線分です。
 
-You can choose whether to use this feature by setting the parameter `use_ego_cut_line` to `true` or `false`. The width of the line can be tuned with the parameter `ego_cut_line_length`.
+`use_ego_cut_line`パラメータを`true`または`false`に設定することで、この機能を使用するかどうかを選択できます。線の幅は、`ego_cut_line_length`パラメータで調整できます。
 
-![brief](./docs/ego_cut_line.svg)
+#### 衝突検出
 
-#### Collision detection
+#### 動的障害物との衝突検出
 
-##### Detect collision with dynamic obstacles
+自車走行経路に沿って、各`detection_span`で衝突検出を実行するポイントを決定します。
 
-Along the ego vehicle path, determine the points where collision detection is to be performed for each `detection_span`.
+各ポイントまでの移動時間は、[自車予想ターゲット速度](.#Calculate-the-expected-target-velocity-for-ego-vehicle)から計算されます。
 
-The travel times to the each points are calculated from [the expected target velocity](.#Calculate-the-expected-target-velocity-for-ego-vehicle).
+各ポイントについて、自車のフットプリントポリゴンと障害物の予測位置のポリゴンを使用して衝突検出を実行します。障害物の予測位置は、最小速度、最大速度、およびその点に対する自車の移動時間で計算される範囲を持つ長方形またはポリゴンとして記述されます。動的障害物の入力タイプが`Points`の場合、障害物形状は小さな円筒として定義されます。
 
-![brief](./docs/create_polygon_on_path_point.svg)
+衝突検出は2つのポリゴン間で計算されるため、複数のポイントが衝突ポイントとして検出されます。そのため、障害物と同じ側で自車に近いポイントを衝突ポイントとして選択します。
 
-For the each points, collision detection is performed using the footprint polygon of the ego vehicle and the polygon of the predicted location of the obstacles.
-The predicted location of the obstacles is described as rectangle or polygon that has the range calculated by min velocity, max velocity and the ego vehicle's travel time to the point.
-If the input type of the dynamic obstacle is `Points`, the obstacle shape is defined as a small cylinder.
+#### 速度の挿入
 
-![brief](./docs/collision_detection_for_shape.svg)
+#### 障害物に対して減速する速度の挿入
 
-Multiple points are detected as collision points because collision detection is calculated between two polygons.
-So we select the point that is on the same side as the obstacle and close to ego vehicle as the collision point.
+衝突が検出された場合、選択された衝突ポイントからベースリンクから前方までの距離+停止マージンに停止点が挿入されます。ベースリンクから前方とは、ベースリンク（後輪軸の中央）と車の前面の間の距離を意味します。停止マージンは`stop_margin`パラメータで決定されます。
 
-![brief](./docs/collision_points.svg)
+#### 障害物に接近するための速度の挿入
 
-#### Insert velocity
+`Points`または`ObjectWithoutPath`の方法を選択すると、自車が障害物の前で停止し続ける場合があります。
 
-##### Insert velocity to decelerate for obstacles
-
-If the collision is detected, stop point is inserted on distance of base link to front + stop margin from the selected collision point. The base link to front means the distance between base_link (center of rear-wheel axis) and front of the car. Stop margin is determined by the parameter of `stop_margin`.
-
-![brief](./docs/insert_velocity.svg)
-
-#### Insert velocity to approach the obstacles
-
-If you select the method of `Points` or `ObjectWithoutPath`, sometimes ego keeps stopping in front of the obstacle.
-To avoid this problem, This feature has option to approach the obstacle with slow velocity after stopping.
-If the parameter of `approaching.enable` is set to true, ego will approach the obstacle after ego stopped for `state.stop_time_thresh` seconds.
-The maximum velocity of approaching can be specified by the parameter of `approaching.limit_vel_kmph`.
-The decision to approach the obstacle is determined by a simple state transition as following image.
+`approaching.enable` のパラメータが true に設定されると、エゴは `state.stop_time_thresh` 秒間停止した後、障害物に接近します。接近時の最大速度は `approaching.limit_vel_kmph` のパラメータで指定できます。障害物に接近するかどうかの決定は、次の図のような単純な状態遷移によって決定されます。
 
 ![brief](./docs/insert_velocity_to_approach.svg)
+
 
 ```plantuml
 @startuml
@@ -179,71 +163,71 @@ APPROACH --> APPROACH : Approach duration is less than threshold
 @enduml
 ```
 
-##### Limit velocity with specified jerk and acc limit
+##### 指定ジャークおよび加速度極限を使用して速度を制限
 
-The maximum slowdown velocity is calculated in order not to slowdown too much.
-See the [Occlusion Spot document](../autoware_behavior_velocity_occlusion_spot_module/#maximum-slowdown-velocity) for more details.
-You can choose whether to use this feature by parameter of `slow_down_limit.enable`.
+急減速しすぎないように最大減速速度を計算します。詳細については、[閉塞スポットドキュメント](../autoware_behavior_velocity_occlusion_spot_module/#maximum-slowdown-velocity)を参照してください。
+この機能を使用するかどうかは `slow_down_limit.enable` パラメータで選択できます。
 
-### Module Parameters
+### モジュールパラメータ
 
-| Parameter               | Type             | Description                                                                                                                                                                                          |
-| ----------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `detection_method`      | string           | [-] candidate: Object, ObjectWithoutPath, Points                                                                                                                                                     |
-| `target_obstacle_types` | vector of string | [-] specifies which obstacle types will be considered by the module, if the obstacles classification type is not written here, it will be ignored. candidate: ["PEDESTRIAN", "BICYCLE","MOTORCYCLE"] |
-| `use_partition_lanelet` | bool             | [-] whether to use partition lanelet map data                                                                                                                                                        |
-| `specify_decel_jerk`    | bool             | [-] whether to specify jerk when ego decelerates                                                                                                                                                     |
-| `stop_margin`           | double           | [m] the vehicle decelerates to be able to stop with this margin                                                                                                                                      |
-| `passing_margin`        | double           | [m] the vehicle begins to accelerate if the vehicle's front in predicted position is ahead of the obstacle + this margin                                                                             |
-| `deceleration_jerk`     | double           | [m/s^3] ego decelerates with this jerk when stopping for obstacles                                                                                                                                   |
-| `detection_distance`    | double           | [m] ahead distance from ego to detect the obstacles                                                                                                                                                  |
-| `detection_span`        | double           | [m] calculate collision with this span to reduce calculation time                                                                                                                                    |
-| `min_vel_ego_kmph`      | double           | [km/h] min velocity to calculate time to collision                                                                                                                                                   |
+| パラメータ名 | タイプ | 説明 |
+|---|---|---|
+| `detection_method` | 文字列 | [-] 候補: Object, ObjectWithoutPath, Points |
+| `target_obstacle_types` | 文字ベクトル | [-] モジュールが考慮する障害物タイプを指定します。障害物の分類タイプがここに記載されていない場合、無視されます。候補: ["PEDESTRIAN", "BICYCLE","MOTORCYCLE"] |
+| `use_partition_lanelet` | ブール | [-] 分割laneletマップデータを使用するかどうか |
+| `specify_decel_jerk` | ブール | [-] 自車が減速するときのジャークを指定するかどうか |
+| `stop_margin` | double | [m] 車両はこのマージンを保持して停止できるよう減速します |
+| `passing_margin` | double | [m] 障害物より先に予測位置にある車両の前方が障害物 + このマージンに達したときに車両の加速を開始します |
+| `deceleration_jerk` | double | [m/s^3] 障害物のために停止するときに自車がこのジャークで減速します |
+| `detection_distance` | double | [m] 自車の前方距離から障害物を検出します |
+| `detection_span` | double | [m] 計算時間を短縮するために、この間隔で衝突を計算します |
+| `min_vel_ego_kmph` | double | [km/h] 衝突までの時間を計算するための最小速度 |
 
-| Parameter /detection_area | Type   | Description                                  |
-| ------------------------- | ------ | -------------------------------------------- |
-| `margin_ahead`            | double | [m] ahead margin for detection area polygon  |
-| `margin_behind`           | double | [m] behind margin for detection area polygon |
+| パラメータ /detection_area | 型   | 説明                                      |
+| ------------------------- | ------ | ----------------------------------------- |
+| `margin_ahead`            | double | 検出エリア多角形の前方マージン [m]       |
+| `margin_behind`           | double | 検出エリア多角形の後方マージン [m]      |
 
-| Parameter /dynamic_obstacle          | Type   | Description                                                                                                                   |
-| ------------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `use_mandatory_area`                 | double | [-] whether to use mandatory detection area                                                                                   |
-| `assume_fixed_velocity.enable`       | double | [-] If enabled, the obstacle's velocity is assumed to be within the minimum and maximum velocity values specified below       |
-| `assume_fixed_velocity.min_vel_kmph` | double | [km/h] minimum velocity for dynamic obstacles                                                                                 |
-| `assume_fixed_velocity.max_vel_kmph` | double | [km/h] maximum velocity for dynamic obstacles                                                                                 |
-| `diameter`                           | double | [m] diameter of obstacles. used for creating dynamic obstacles from points                                                    |
-| `height`                             | double | [m] height of obstacles. used for creating dynamic obstacles from points                                                      |
-| `max_prediction_time`                | double | [sec] create predicted path until this time                                                                                   |
-| `time_step`                          | double | [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path                   |
-| `points_interval`                    | double | [m] divide obstacle points into groups with this interval, and detect only lateral nearest point. used only for Points method |
+| パラメータ | タイプ | 説明 |
+|---|---|---|
+| `use_mandatory_area` | double | [-] 強制検出領域を使用するかどうか |
+| `assume_fixed_velocity.enable` | double | [-] 有効な場合、障害物の速度は以下に指定した最小速度と最大速度の範囲内と見なされます |
+| `assume_fixed_velocity.min_vel_kmph` | double | [km/h] 動的障害物の最小速度 |
+| `assume_fixed_velocity.max_vel_kmph` | double | [km/h] 動的障害物の最大速度 |
+| `diameter` | double | [m] 障害物の直径。ポイントから動的障害物を作成するために使用されます |
+| `height` | double | [m] 障害物の高さ。ポイントから動的障害物を作成するために使用されます |
+| `max_prediction_time` | double | [秒] この時間まで予測経路を作成します |
+| `time_step` | double | [秒] 各パスステップのタイムステップ。パスを含まないポイントまたはオブジェクトから動的障害物を作成するために使用されます |
+| `points_interval` | double | [m] この間隔で障害物ポイントをグループに分割し、最も近くにある横方向のポイントのみを検出します。ポイントメソッドでのみ使用されます |
 
-| Parameter /approaching | Type   | Description                                           |
-| ---------------------- | ------ | ----------------------------------------------------- |
-| `enable`               | bool   | [-] whether to enable approaching after stopping      |
-| `margin`               | double | [m] distance on how close ego approaches the obstacle |
-| `limit_vel_kmph`       | double | [km/h] limit velocity for approaching after stopping  |
+| パラメータ /approaching | タイプ | 説明 |
+| ------------------------ | ------ | ----------------------------------------------------- |
+| `enable`                 | bool   | [-] 停止後に接近を有効にするかどうか |
+| `margin`                 | double | [m] 自車が障害物に接近する方法の距離 |
+| `limit_vel_kmph`       | double | [km/h] 停止後に接近するための速度制限 |
 
-| Parameter /state         | Type   | Description                                                                         |
-| ------------------------ | ------ | ----------------------------------------------------------------------------------- |
-| `stop_thresh`            | double | [m/s] threshold to decide if ego is stopping                                        |
-| `stop_time_thresh`       | double | [sec] threshold for stopping time to transit to approaching state                   |
-| `disable_approach_dist`  | double | [m] end the approaching state if distance to the obstacle is longer than this value |
-| `keep_approach_duration` | double | [sec] keep approach state for this duration to avoid chattering of state transition |
+| パラメータ/状態         | 型   | 説明                                                                          |
+| ------------------------ | ------ | ---------------------------------------------------------------------------------- |
+| `stop_thresh`            | double | [m/s] エゴが停止状態であると判定するための閾値                                       |
+| `stop_time_thresh`       | double | [sec] 停止状態から接近状態に移行するための停止時間閾値                             |
+| `disable_approach_dist`  | double | [m] 障害物との距離がこの値より長い場合に接近状態を終了する                           |
+| `keep_approach_duration` | double | [sec] 状態遷移のチャタリングを避けるため、接近状態をこの期間保持する                     |
 
-| Parameter /slow_down_limit | Type   | Description                                                   |
-| -------------------------- | ------ | ------------------------------------------------------------- |
-| `enable`                   | bool   | [-] whether to enable to limit velocity with max jerk and acc |
-| `max_jerk`                 | double | [m/s^3] minimum jerk deceleration for safe brake.             |
-| `max_acc`                  | double | [m/s^2] minimum accel deceleration for safe brake.            |
+| パラメータ /slow\_down\_limit | 型   | 説明                                                     |
+| ----------------------------- | ------ | -------------------------------------------------------- |
+| `enable`                     | bool   | [-] 最大ジャークと加速度で速度を制限するかどうか          |
+| `max\_jerk`                 | double | [m/s^3] 安全なブレーキのための最小ジャーク減速度。        |
+| `max\_acc`                  | double | [m/s^2] 安全なブレーキのための最小加速度減速度。        |
 
-| Parameter /ignore_momentary_detection | Type   | Description                                                       |
-| ------------------------------------- | ------ | ----------------------------------------------------------------- |
-| `enable`                              | bool   | [-] whether to ignore momentary detection                         |
-| `time_threshold`                      | double | [sec] ignores detections that persist for less than this duration |
+| パラメーター /ignore_momentary_detection | タイプ   | 説明                                                           |
+|------------------------------------------|-----------|-----------------------------------------------------------------|
+| `enable`                                   | bool      |[-] 一時的な検出を無視するかどうか                         |
+| `time_threshold`                           | double    | [秒] この期間より短い検出を無視する |
 
-### Future extensions / Unimplemented parts
+### 今後の拡張 / 未実装の部分
 
-- Calculate obstacle's min velocity and max velocity from covariance
-- Detect collisions with polygon object
-- Handle the case when the predicted path of obstacles are not straight line
-  - Currently collision check is calculated based on the assumption that the predicted path of the obstacle is a straight line
+- 共分散から障害物の最小速度と最大速度を計算する
+- ポリゴンオブジェクトとの衝突を検出する
+- 障害物の予測経路が直線でない場合の処理
+  - 現在、衝突チェックは障害物の予測経路が直線であるという仮定に基づいて計算されています
+

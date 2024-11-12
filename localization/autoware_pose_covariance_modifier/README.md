@@ -1,58 +1,56 @@
 # Autoware Pose Covariance Modifier Node
 
-## Purpose
+## 目的
 
-This package makes it possible to use GNSS and NDT poses together in real time localization.
+このパッケージは、リアルタイムの位置推定で GNSS と NDT ポーズを併用することを可能にします。
 
-## Function
+## 機能
 
-This package takes in GNSS (Global Navigation Satellite System)
-and NDT (Normal Distribution Transform) poses with covariances.
+このパッケージは、共分散を持つ GNSS（全地球測位システム）と NDT（正規分布変換）ポーズを受け取ります。
 
-It outputs a single pose with covariance:
+共分散を持つ単一のポーズを出力します。
 
-- Directly the GNSS pose and its covariance.
-- Directly the NDT pose and its covariance.
-- Both GNSS and NDT poses with modified covariances.
+- GNSS ポーズとその共分散を直接出力します。
+- NDT ポーズとその共分散を直接出力します。
+- 共分散が変更された GNSS ポーズと NDT ポーズの両方を出力します。
 
-> - This package doesn't modify the pose information it receives.
-> - It only modifies NDT covariance values under certain conditions.
+> - このパッケージは、受信するポーズ情報を変更しません。
+> - 特定の条件下でのみ NDT 共分散値を変更します。
 
-## Assumptions
+## 仮定
 
-- The NDT matcher provides a pose with a fixed covariance.
-- The NDT matcher is unable to provide a dynamic, reliable covariance value.
+- NDT マッチャは、固定された共分散を持つポーズを提供します。
+- NDT マッチャは、動的で信頼性の高い共分散値を提供できません。
 
-## Requirements
+## 要件
 
-- The GNSS/INS module must provide standard deviation values (its error / RMSE) for the position and orientation.
-- It probably needs RTK support to provide accurate position and orientation information.
-- You need to have a geo-referenced map.
-- GNSS/INS module and the base_link frame must be calibrated well enough.
-- In an environment where GNSS/INS and NDT systems work well, the `base_link` poses from both systems should be close to
-  each other.
+- GNSS/INS モジュールは、位置と姿勢の標準偏差値（その誤差/RMSE）を提供する必要があります。
+- 正確な位置と姿勢情報を提供するには、RTK サポートが必要になると思われます。
+- 地理参照されたマップが必要です。
+- GNSS/INS モジュールと base_link フレームは、十分に較正されている必要があります。
+- GNSS/INS と NDT システムがうまく機能する環境では、両方のシステムの `base_link` ポーズは互いに近くにある必要があります。
 
-## Description
+## 説明
 
-GNSS and NDT nodes provide the pose with covariance data utilized in an Extended Kalman Filter (EKF).
+GNSS と NDT ノードは、拡張カルマンフィルター（EKF）で使用される共分散データを持つポーズを提供します。
 
-Accurate covariance values are crucial for the effectiveness of the EKF in estimating the state.
+正確な共分散値は、EKF が状態を推定する有効性にとって非常に重要です。
 
-The GNSS system generates reliable standard deviation values, which can be transformed into covariance measures.
+GNSS システムは、共分散測定に変換できる信頼性の高い標準偏差値を生成します。
 
-But we currently don't have a reliable way to determine the covariance values for the NDT poses.
-And the NDT matching system in Autoware outputs poses with preset covariance values.
+しかし、現在 NDT ポーズの共分散値を決定する信頼できる方法がありません。
+そして、Autoware の NDT マッチングシステムは、事前設定された共分散値を持つポーズを出力します。
 
-For this reason, this package is designed to manage the selection of the pose source,
-based on the standard deviation values provided by the GNSS system.
+この理由から、このパッケージは、GNSS システムによって提供される標準偏差値に基づいて、ポーズソースの選択を管理するように設計されています。
 
-It also tunes the covariance values of the NDT poses, based on the GNSS standard deviation values.
+また、GNSS 標準偏差値に基づいて NDT ポーズの共分散値も調整します。
 
-## Flowcharts
+## フローチャート
 
-### Without this package
+### このパッケージを使用しない場合
 
-Only NDT pose is used in localization. GNSS pose is only used for initialization.
+ローカリゼーションでは NDT ポーズのみが使用されます。GNSS ポーズは初期化にのみ使用されます。
+
 
 ```mermaid
 graph TD
@@ -64,12 +62,12 @@ class ndt_scan_matcher cl_node;
 class ekf_localizer cl_node;
 ```
 
-### With this package
+### このパッケージの使用
 
-Both NDT and GNSS poses are used in localization, depending on the standard deviation values coming from the GNSS
-system.
+ローカライゼーションでは、GNSSから得られる標準偏差値に応じて、NDTとGNSSの両方の姿勢が使用されます。
 
-Here is a flowchart depicting the process and the predefined thresholds:
+以下に、プロセスと定義済みの閾値を示すフローチャートを示します。
+
 
 ```mermaid
 graph TD
@@ -108,106 +106,121 @@ class gnss_pose cl_output;
 class gnss_ndt_pose cl_output;
 ```
 
-## How to use this package
+## 本パッケージの使用方法
 
-> **This package is disabled by default in Autoware, you need to manually enable it.**
+> **本パッケージはAutowareでデフォルトでは無効になっています。手動で有効化を行う必要があります。**
 
-To enable this package, you need to change the `use_autoware_pose_covariance_modifier` parameter to `true` within
-the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/launch/pose_twist_estimator/pose_twist_estimator.launch.xml#L3).
+本パッケージを有効化するために、[pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/launch/pose_twist_estimator/pose_twist_estimator.launch.xml#L3)内の`use_autoware_pose_covariance_modifier`パラメータを`true`に変更する必要があります。
 
-### Without this condition (default)
+### 条件を満たさない場合（デフォルト）
 
-- The output of the [ndt_scan_matcher](../../localization/autoware_ndt_scan_matcher) is directly sent
-  to [ekf_localizer](../../localization/autoware_ekf_localizer).
-  - It has a preset covariance value.
-  - **topic name:** `/localization/pose_estimator/pose_with_covariance`
-- The GNSS pose does not enter the ekf_localizer.
-- This node does not launch.
+- [ndt_scan_matcher](../../localization/autoware_ndt_scan_matcher)の出力が、[ekf_localizer](../../localization/autoware_ekf_localizer)に直接送信されます。
+  - 事前に設定された共分散値があります。
+  - **トピック名:** `/localization/pose_estimator/pose_with_covariance`
+- GNSSの姿勢がekf_localizerに入りません。
+- このノードは起動しません。
 
-### With this condition
+### 条件を満たす場合
 
-- The output of the [ndt_scan_matcher](../../localization/autoware_ndt_scan_matcher) is renamed
-  - **from:** `/localization/pose_estimator/pose_with_covariance`.
-  - **to:** `/localization/pose_estimator/ndt_scan_matcher/pose_with_covariance`.
-- The `ndt_scan_matcher` output enters the `autoware_pose_covariance_modifier`.
-- The output of this package goes to [ekf_localizer](../../localization/autoware_ekf_localizer) with:
-  - **topic name:** `/localization/pose_estimator/pose_with_covariance`.
+- [ndt_scan_matcher](../../localization/autoware_ndt_scan_matcher)の出力がリネームされます
+  - **変更前:** `/localization/pose_estimator/pose_with_covariance`
+  - **変更後:** `/localization/pose_estimator/ndt_scan_matcher/pose_with_covariance`
+- `ndt_scan_matcher`の出力が`autoware_pose_covariance_modifier`に入ります。
+- 本パッケージの出力が、以下とともに[ekf_localizer](../../localization/autoware_ekf_localizer)に出力されます。
+  - **トピック名:** `/localization/pose_estimator/pose_with_covariance`
 
-## Node
+## ノード
 
-### Subscribed topics
+### サブスクライブするトピック
 
-| Name                             | Type                                            | Description            |
-| -------------------------------- | ----------------------------------------------- | ---------------------- |
-| `input_gnss_pose_with_cov_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input GNSS pose topic. |
-| `input_ndt_pose_with_cov_topic`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input NDT pose topic.  |
+| 名称                            | タイプ                                         | 説明                        |
+| ------------------------------- | -------------------------------------------- | --------------------------- |
+| `input_gnss_pose_with_cov_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | GNSSポーズ入力トピック。       |
+| `input_ndt_pose_with_cov_topic`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | NDTポーズ入力トピック。       |
 
-### Published topics
+### 発行トピック
 
-| Name                                | Type                                            | Description                                                                                                            |
-| ----------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `output_pose_with_covariance_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Output pose topic. This topic is used by the ekf_localizer package.                                                    |
-| `selected_pose_type`                | `std_msgs::msg::String`                         | Declares which pose sources are used in the output of this package                                                     |
-| `output/ndt_position_stddev`        | `std_msgs::msg::Float64`                        | Output pose ndt average standard deviation in position xy. It is published only when the enable_debug_topics is true.  |
-| `output/gnss_position_stddev`       | `std_msgs::msg::Float64`                        | Output pose gnss average standard deviation in position xy. It is published only when the enable_debug_topics is true. |
+| 名称                                  | 型                                          | 説明                                                                                                                  |
+| ------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `output_pose_with_covariance_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | 出力姿勢トピック。このトピックはekf_localizerパッケージで使用されます。                                          |
+| `selected_pose_type`                  | `std_msgs::msg::String`                     | このパッケージの出力でどの姿勢ソースが使用されるかを宣言します。                                                  |
+| `output/ndt_position_stddev`          | `std_msgs::msg::Float64`                    | 出力姿勢のndt位置標準偏差の平均（x-y）。enable_debug_topicsがtrueの場合にのみ公開されます。                  |
+| `output/gnss_position_stddev`         | `std_msgs::msg::Float64`                    | 出力姿勢のGNSS位置標準偏差の平均（x-y）。enable_debug_topicsがtrueの場合にのみ公開されます。                  |
 
-### Parameters
+### パラメーター
 
-The parameters are set
-in [config/pose_covariance_modifier.param.yaml](config/pose_covariance_modifier.param.yaml) .
+パラメーターは [config/pose_covariance_modifier.param.yaml](config/pose_covariance_modifier.param.yaml) に設定されています。
 
 {{ json_to_markdown(
   "localization/autoware_pose_covariance_modifier/schema/pose_covariance_modifier.schema.json") }}
 
 ## FAQ
 
-### How are varying frequency rates handled?
+### さまざまな周波数レートはどのように処理されますか?
 
-The GNSS and NDT pose topics may have different frequencies.
-The GNSS pose topic may have a higher frequency than the NDT.
+GNSSとNDTのポーズトピックは異なる周波数を持つ場合があります。
+GNSSポーズトピックはNDTよりも高い周波数を持つ場合があります。
 
-Let's assume that the inputs have the following frequencies:
+入力が次の周波数を持つと仮定します。
 
-| Source | Frequency |
+| 情報源 | 周波数 |
 | ------ | --------- |
 | GNSS   | 200 Hz    |
 | NDT    | 10 Hz     |
 
-This package publishes the output poses as they come in, depending on the mode.
+このパッケージは、モードに応じて出力のポーズを発行します。
 
-End result:
+最終的な結果:
 
-| Mode       | Output Freq |
-| ---------- | ----------- |
-| GNSS Only  | 200 Hz      |
-| GNSS + NDT | 210 Hz      |
-| NDT Only   | 10 Hz       |
+| モード | 出力周波数 |
+|---|---|
+| GNSSのみ | 200 Hz |
+| GNSS + NDT | 210 Hz |
+| NDTのみ | 10 Hz |
 
-### How and when are the NDT covariance values overwritten?
+### NDT共分散値の上書き方法および時期
 
-| Mode       | Outputs, Covariance                         |
+**概要**
+
+NDT（正規分布変換）共分散値は、前方障害物の検出に使用されます。これらは、リレーショナルデータベース（レダンド）内でNDTで提供されます。
+
+**詳細**
+
+NDT共分散値は、以下の条件を満たした場合に上書きされます。
+
+- `ndt`サブスクライバーが新しいNDTに変換された点群を受信したとき
+- Planningモジュールが、`post resampling`結果をNDTに変換し、システムが低速モード（つまり速度が0 m/s以下）にいるとき
+
+これらの共分散値は、常にサブスクライバーに提供されます。ただし、サブスクライバーは、Planningモジュールが低速モードで動作している場合にのみNDTに変換された点群の共分散値を考慮します。これにより、低速で走行中の微妙な物体との衝突を避けることができます。
+
+**注意:**
+
+オブジェクトの障害物逸脱量がvelocity逸脱量よりも著しく大きい場合、速度が0である場合でも、オブジェクトの障害物逸脱量はゼロにはなりません。
+
+| モード       | 出力、共分散                         |
 | ---------- | ------------------------------------------- |
-| GNSS Only  | GNSS, Unmodified                            |
-| GNSS + NDT | **GNSS:** Unmodified, **NDT:** Interpolated |
-| NDT Only   | NDT, Unmodified                             |
+| GNSS のみ  | GNSS、修正なし                            |
+| GNSS + NDT | **GNSS:** 修正なし、**NDT:** 補間 |
+| NDT のみ   | NDT、修正なし                             |
 
-NDT covariance values overwritten only for the `GNSS + NDT` mode.
+NDT 共分散値は `GNSS + NDT` モードでのみ上書きされます。
 
-This enables a smooth transition between `GNSS Only` and `NDT Only` modes.
+これにより、`GNSS のみ` モードと `NDT のみ` モードとの間のスムーズな遷移が可能になります。
 
-In this mode, both NDT and GNSS poses are published from this node.
+このモードでは、NDT と GNSS の両方のポーズがこのノードから公開されます。
 
-#### NDT covariance calculation
+#### NDT 共分散計算
 
-As the `gnss_std_dev` increases within its bounds, `ndt_std_dev` should proportionally decrease within its own bounds.
+`gnss_std_dev` が境界値内で増加すると、`ndt_std_dev` は独自境界内で比例して減少する必要があります。
 
-To achieve this, we first linearly interpolate:
+これを実現するには、まず線形補間を行います。
 
-- Base value: `gnss_std_dev`
-- Base range: [`threshold_gnss_stddev_xy_bound_lower`, `threshold_gnss_stddev_xy_bound_upper`]
-- Target range: [`ndt_std_dev_bound_lower`, `ndt_std_dev_bound_upper`]
-- Target value: `ndt_std_dev_target`
+- 基準値: `gnss_std_dev`
+- 基準範囲: [`threshold_gnss_stddev_xy_bound_lower`, `threshold_gnss_stddev_xy_bound_upper`]
+- 目標範囲: [`ndt_std_dev_bound_lower`, `ndt_std_dev_bound_upper`]
+- 目標値: `ndt_std_dev_target`
 
-- Final value = `ndt_std_dev_bound_lower` + `ndt_std_dev_bound_upper` - `ndt_std_dev_target` (to get the inverse)
+- 最終値 = `ndt_std_dev_bound_lower` + `ndt_std_dev_bound_upper` - `ndt_std_dev_target` (逆数を求める)
 
-<img width="300" src="doc/range_lerp.svg" alt="range to range lerp animation">
+<img width="300" src="doc/range_lerp.svg" alt="範囲から範囲への lerp アニメーション">
+

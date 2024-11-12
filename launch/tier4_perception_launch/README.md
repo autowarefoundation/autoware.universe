@@ -1,18 +1,19 @@
 # tier4_perception_launch
 
-## Structure
+## 構造
 
 ![tier4_perception_launch](./perception_launch.drawio.svg)
 
-## Package Dependencies
+## パッケージの依存関係
 
-Please see `<exec_depend>` in `package.xml`.
+`<exec_depend>` を `package.xml` で参照してください。
 
-## Usage
+## 使用方法
 
-You can include as follows in `*.launch.xml` to use `perception.launch.xml`.
+`perception.launch.xml` を使用するには、次のように `*.launch.xml` に含めます。
 
-Note that you should provide parameter paths as `PACKAGE_param_path`. The list of parameter paths you should provide is written at the top of `perception.launch.xml`.
+パラメータパスを `PACKAGE_param_path` として指定する必要があることに注意してください。指定する必要のあるパラメータパスのリストは、`perception.launch.xml` の先頭部に記載されています。
+
 
 ```xml
   <include file="$(find-pkg-share tier4_perception_launch)/launch/perception.launch.xml">
@@ -25,3 +26,4 @@ Note that you should provide parameter paths as `PACKAGE_param_path`. The list o
     ...
   </include>
 ```
+

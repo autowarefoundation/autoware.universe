@@ -2,10 +2,11 @@
 
 ## automatic_pose_initializer
 
-This node calls localization initialize API when the localization initialization state is uninitialized.
-Since the API uses GNSS pose when no pose is specified, initialization using GNSS can be performed automatically.
+このノードは、ローカリゼーション初期化状態が初期化されていない場合にローカリゼーション初期化APIを呼び出します。
+APIは、ポーズが指定されていない場合にGNSSポーズを使用するため、GNSSを使用した初期化を自動的に実行できます。
 
-| Interface    | Local Name | Global Name                            | Description                                |
-| ------------ | ---------- | -------------------------------------- | ------------------------------------------ |
-| Subscription | -          | /api/localization/initialization_state | The localization initialization state API. |
-| Client       | -          | /api/localization/initialize           | The localization initialize API.           |
+| インターフェース | ローカル名 | グローバル名 | 説明 |
+| ---------------- | ---------- | ----------------------------------- | --------------------------------------- |
+| サブスクリプション | - | /api/localization/initialization_state | ローカリゼーションの初期状態API |
+| クライアント | - | /api/localization/initialize | ローカリゼーションの初期化API |
+

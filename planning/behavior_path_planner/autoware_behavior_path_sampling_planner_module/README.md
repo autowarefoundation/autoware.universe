@@ -1,78 +1,77 @@
-# Behavior Path Sampling Based Planner
+# 振る舞い経路サンプルベースプランナー
 
-WARNING: This module is experimental and has not been properly tested on a real vehicle, use only on simulations.
+警告: このモジュールは実験的であり、実車両では適切にテストされていません。シミュレーションでのみ使用してください。
 
-## Purpose
+## 目的
 
-This package implements a node that uses sampling based planning to generate a drivable trajectory for the behavior path planner. It is heavily based off the [sampling_based_planner module](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/sampling_based_planner).
+このパッケージでは、サンプリングベースプランニングを使用して、振る舞い経路プランナーのための走行可能なトラジェクトリを生成するノードを実装しています。[sampling_based_plannerモジュール](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/sampling_based_planner)を大幅にベースにしています。
 
-## Features
+## 特徴
 
-This package is able to:
+このパッケージでは、次のことができます。
 
-- create a smooth trajectory to avoid static obstacles.
-- guarantees the generated trajectory (if any) complies with customizable hard constraints.
-- transitions to a success state after the ego vehicle merges to its goal lane.
-- re-use previously generated outputs to re-sample new alternative paths
+- 静的障害物を避けるスムースなトラジェクトリを作成する。
+- 生成されたトラジェクトリ（存在する場合）がカスタマイズ可能なハード制約に確実に準拠するようにする。
+- 自車がゴールレーンに合流した後、成功状態に移行する。
+- 以前生成した出力を再利用して、新しい代替経路を再サンプリングする
 
-Note that the velocity is just taken over from the input path.
+ここで速度は入力経路からそのまま引き継がれることに注意してください。
 
-## Algorithm
+## アルゴリズム
 
-Sampling based planning is decomposed into 3 successive steps:
+サンプリングベースプランニングは、3つの連続した手順に分解されます。
 
-1. Sampling: candidate trajectories are generated.
-2. Pruning: invalid candidates are discarded.
-3. Selection: the best remaining valid candidate is selected.
+1. サンプリング: 候補のトラジェクトリが生成されます。
+2. プルーニング: 無効な候補は破棄されます。
+3. 選択: 残りの有効な候補の中で最適なものが選択されます。
 
-### Sampling
+### サンプリング
 
-Candidate trajectories are generated based on the current ego state and some target state.
-1 sampling algorithms is currently implemented: polynomials in the frenet frame.
+候補のトラジェクトリは、現在の車両状態とターゲット状態に基づいて生成されます。
+現在実装されているサンプリングアルゴリズムは1つです。フレネフレームにおける多項式
 
-### Pruning
+### プルーニング
 
-The validity of each candidate trajectory is checked using a set of hard constraints.
+各候補トラジェクトリの有効性は、一連のハード制約を使用してチェックされます。
 
-- collision: ensure no collision with static obstacles;
-- curvature: ensure smooth curvature;
-- drivable area: ensure the trajectory stays within the drivable area.
+- 衝突: 静的障害物との衝突がないことを保証する。
+- 曲率: 滑らかな曲率を保証する。
+- 走行可能領域: トラジェクトリが走行可能領域内にとどまることを保証する。
 
-### Selection
+### 選択
 
-Among the valid candidate trajectories, the _best_ one is determined using a set of soft constraints (i.e., objective functions).
+有効な候補のトラジェクトリの中から、一連のソフト制約（つまり目的関数）を使用して最適なものが決定されます。
 
-- curvature: prefer smoother trajectories;
-- length: prefer trajectories with longer remaining path length;
-- lateral deviation: prefer trajectories close to the goal.
+- 曲率: よりスムーズなトラジェクトリを優先する。
+- 長さ: 残り経路長が長いトラジェクトリを優先する。
+- 横方向逸脱: ゴールに近いトラジェクトリを優先する。
 
-Each soft constraint is associated with a weight to allow tuning of the preferences.
+各ソフト制約には重み付けが関連付けられており、プリファレンスの調整が可能です。
 
-## Limitations
+## 制限事項
 
-The quality of the candidates generated with polynomials in frenet frame greatly depend on the reference path.
-If the reference path is not smooth, the resulting candidates will probably be un-drivable.
+フレネフレーム内の多項式で生成された候補の品質は、参照経路に大きく依存します。
+参照経路がスムースでない場合、生成された候補は走行不能になる可能性が高くなります。
 
-Failure to find a valid trajectory current results in a suddenly stopping trajectory.
+現在、有効なトラジェクトリが見つからないと、突然停止するトラジェクトリが発生します。
 
-The module has troubles generating paths that converge rapidly to the goal lanelet. Basically, after overcoming all obstacles, the module should prioritize paths that rapidly make the ego vehicle converge back to its goal lane (ie. paths with low average and final lateral deviation). However, this does not function properly at the moment.
+このモジュールは、ゴールレーンのレットに素早く収束する経路を生成することに問題があります。基本的には、すべての障害物を克服した後、このモジュールは車両をゴールレーンに素早く収束させる経路（つまり、平均横方向逸脱と最終横方向逸脱が低い経路）を優先するはずです。ただし、現時点では正しく機能していません。
 
-Detection of proper merging can be rough: Sometimes, the module when detects that the ego has converged on the goal lanelet and that there are no more obstacles, the planner transitions to the goal planner, but the transition is not very smooth and could cause discomfort for the user.
+## 今後の取り組み
 
-## Future works
+このモジュールには次のような潜在的な改善事項が含まれます。
 
-Some possible improvements for this module include:
+*動的重み調整アルゴリズムの実装: 全ての障害物が回避された後、シチュエーションに応じて重みを動的に変更する (つまり、曲率が低く、平均横方向逸脱量が低いパスを優先する)。
 
--Implementing a dynamic weight tuning algorithm: Dynamically change weights depending on the scenario (ie. to prioritize more the paths with low curvature and low avg. lat. deviation after all obstacles have been avoided).
+*コンピューティング時間を改善し、より動的なソフト制約の重み調整を行うことができる、多目的最適化の実装 [関連出版物](https://ieeexplore.ieee.org/abstract/document/10180226)。
 
--Implementing multi-objective optimization to improve computing time and possibly make a more dynamic soft constraints weight tuning. [Related publication](https://ieeexplore.ieee.org/abstract/document/10180226).
+*別のサンプル取得手法としてベジエ曲線を実装する [sampling_based_plannerモジュール](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/sampling_based_planner)を参照。
 
--Implement bezier curves as another method to obtain samples, see the [sampling_based_planner module](https://github.com/autowarefoundation/autoware.universe/tree/main/planning/sampling_based_planner).
+*サンプリングベースの行動経路モジュールで他のいくつかの行動経路モジュールを置き換えることができる可能性を検討する。
 
--Explore the possibility to replace several or other behavior path modules with the sampling based behavior path module.
+*このモジュールが成熟し、いくつかの制限が解決されたら、このモジュールのリアルライフテストを実施する。
 
--Perform real-life tests of this module once it has matured and some of its limitations have been solved.
+## その他の可能性
 
-## Other possibilities
+現在、このモジュールは静的障害物回避用パスの作成を目的としています。ただし、サンプリングプランナーの性質により、このモジュールを車線変更、動的回避、目標への一般的な到達などの他のタスクに拡張または転用できます。適切な候補の剪定とソフト制約の適切な重み調整を前提に、サンプリングプランニングの手法を他の行動経路モジュールの代替として使用することが可能です。
 
-The module is currently aimed at creating paths for static obstacle avoidance. However, the nature of sampling planner allows this module to be expanded or repurposed to other tasks such as lane changes, dynamic avoidance and general reaching of a goal. It is possible, with a good dynamic/scenario dependant weight tuning to use the sampling planning approach as a replacement for the other behavior path modules, assuming good candidate pruning and good soft constraints weight tuning.

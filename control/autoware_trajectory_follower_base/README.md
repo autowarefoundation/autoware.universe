@@ -1,53 +1,54 @@
-# Trajectory Follower
+## Trajectory Follower
 
-This is the design document for the `trajectory_follower` package.
+これは `trajectory_follower` パッケージのデザインドキュメントです。
 
-## Purpose / Use cases
-
-<!-- Required -->
-<!-- Things to consider:
-    - Why did we implement this feature? -->
-
-This package provides the interface of longitudinal and lateral controllers used by the node of the `autoware_trajectory_follower_node` package.
-We can implement a detailed controller by deriving the longitudinal and lateral base interfaces.
-
-## Design
-
-There are lateral and longitudinal base interface classes and each algorithm inherits from this class to implement.
-The interface class has the following base functions.
-
-- `isReady()`: Check if the control is ready to compute.
-- `run()`: Compute control commands and return to [Trajectory Follower Nodes](../autoware_trajectory_follower_node/README.md). This must be implemented by inherited algorithms.
-- `sync()`: Input the result of running the other controller.
-  - steer angle convergence
-    - allow keeping stopped until steer is converged.
-  - velocity convergence(currently not used)
-
-See [the Design of Trajectory Follower Nodes](../autoware_trajectory_follower_node/README.md#Design) for how these functions work in the node.
-
-## Separated lateral (steering) and longitudinal (velocity) controls
-
-This longitudinal controller assumes that the roles of lateral and longitudinal control are separated as follows.
-
-- Lateral control computes a target steering to keep the vehicle on the trajectory, assuming perfect velocity tracking.
-- Longitudinal control computes a target velocity/acceleration to keep the vehicle velocity on the trajectory speed, assuming perfect trajectory tracking.
-
-Ideally, dealing with the lateral and longitudinal control as a single mixed problem can achieve high performance. In contrast, there are two reasons to provide velocity controller as a stand-alone function, described below.
-
-### Complex requirements for longitudinal motion
-
-The longitudinal vehicle behavior that humans expect is difficult to express in a single logic. For example, the expected behavior just before stopping differs depending on whether the ego-position is ahead/behind of the stop line, or whether the current speed is higher/lower than the target speed to achieve a human-like movement.
-
-In addition, some vehicles have difficulty measuring the ego-speed at extremely low speeds. In such cases, a configuration that can improve the functionality of the longitudinal control without affecting the lateral control is important.
-
-There are many characteristics and needs that are unique to longitudinal control. Designing them separately from the lateral control keeps the modules less coupled and improves maintainability.
-
-### Nonlinear coupling of lateral and longitudinal motion
-
-The lat-lon mixed control problem is very complex and uses nonlinear optimization to achieve high performance. Since it is difficult to guarantee the convergence of the nonlinear optimization, a simple control logic is also necessary for development.
-
-Also, the benefits of simultaneous longitudinal and lateral control are small if the vehicle doesn't move at high speed.
-
-## Related issues
+## 目的/ユースケース
 
 <!-- Required -->
+<!-- 検討事項:
+    - なぜこの機能を実装したのか -->
+
+このパッケージは、`autoware_trajectory_follower_node` パッケージのノードが使用する縦方向および横方向コントローラのインターフェイスを提供します。
+縦方向および横方向の基本インターフェイスを導出することで、詳細なコントローラを実装できます。
+
+## 設計
+
+横方向と縦方向の基本インターフェイスクラスがあり、各アルゴリズムはこれを継承して実装されています。
+インターフェイスクラスには、次の基本機能があります。
+
+- `isReady()`: 制御が計算の準備ができているかどうかを確認します。
+- `run()`: 制御コマンドを計算し、[Trajectory Followerノード](../autoware_trajectory_follower_node/README.md) に返します。これは継承されたアルゴリズムによって実装する必要があります。
+- `sync()`: 他のコントローラの実行結果を入力します。
+  - 操舵角の収束
+    - 操舵角が収束するまで停止を維持できます。
+  - 速度の収束（現在使用されていません）
+
+これらの関数がノード内でどのように機能するかについては、[Trajectory Followerノードの設計](../autoware_trajectory_follower_node/README.md#Design)を参照してください。
+
+## 横方向（ステアリング）と縦方向（速度）制御の分離
+
+この縦方向コントローラは、横方向と縦方向の制御の役割が次のように分離されていることを前提としています。
+
+- 横方向制御は、完全な速度追従を仮定して、車両を軌道上に維持するための目標ステアリングを計算します。
+- 縦方向制御は、完全な軌跡追従を仮定して、軌跡速度に車両速度を維持するための目標速度/加速度を計算します。
+
+理想的には、横方向と縦方向の制御を単一の混合問題として扱うことで、高性能を実現できます。対照的に、2つの理由から速度コントローラをスタンドアロン関数として提供する必要があります。以下に説明します。
+
+### 縦方向の運動に対する複雑な要件
+
+人間が期待する縦方向の車両挙動は、単一の論理で表現するのが困難です。たとえば、停止直前の予想される挙動は、現在位置が停止線の前後にあるか、現在の速度が人間の動きを実現するための目標速度より速いか遅いかによって異なります。
+
+さらに、一部の車両は極低速では自車の速度を測定するのが困難です。そのような場合、横方向の制御に影響を与えることなく縦方向制御の機能を向上させることができる設定が重要です。
+
+縦方向制御には独自の特性やニーズが多くあります。それらを横方向制御から別々に設計することで、モジュールの結合度を低くし、メンテナンス性を向上させることができます。
+
+### 横方向運動と縦方向運動の非線形結合
+
+横縦混合制御問題は非常に複雑であり、高性能を実現するために非線形最適化を使用します。非線形最適化の収束を保証することは困難であるため、開発には単純な制御論理も必要です。
+
+また、車両が高速で移動しない場合、縦横同時制御の利点は小さくなります。
+
+## 関連する問題
+
+<!-- Required -->
+

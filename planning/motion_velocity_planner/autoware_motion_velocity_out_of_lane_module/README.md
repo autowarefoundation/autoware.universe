@@ -1,142 +1,139 @@
-# Out of Lane
+# レーン逸脱
 
-## Role
+## 役割
 
-There are cases where the ego vehicle footprint goes out of the driving lane,
-for example when taking a narrow turn with a large vehicle.
-The `out_of_lane` module adds deceleration and stop points to the ego trajectory in order to prevent collisions from occurring in these out of lane cases.
+自車のフットプリントが車線を逸脱する場合があります。たとえば、大型車両で狭い角を曲がるときです。
+`out_of_lane`モジュールは、このような車線逸脱時に衝突が発生しないようにするために、車両軌跡に減速ポイントと停止ポイントを追加します。
 
-## Activation
+## アクティベーション
 
-This module is activated if the launch parameter `launch_out_of_lane_module` is set to true.
+このモジュールは、起動パラメータ`launch_out_of_lane_module`が`true`に設定されている場合にアクティベートされます。
 
-## Inner-workings / Algorithms
+## 内部動作/アルゴリズム
 
-This module calculates if out of lane collisions occur and insert stop point before the collisions if necessary.
+このモジュールは、車線逸脱衝突が発生するかどうかを計算し、必要に応じて衝突前に停止ポイントを挿入します。
 
-The algorithm assumes the input ego trajectory contains accurate `time_from_start`
-values in order to calculate accurate time to collisions with the predicted objects.
+アルゴリズムでは、入力車両軌跡に正確な`time_from_start`値が含まれているものとして、予測オブジェクトとの衝突時刻を正確に計算します。
 
-Next we explain the inner-workings of the module in more details.
+次に、モジュールの内部動作についてさらに詳しく説明します。
 
-### 1. Ego trajectory footprints
+### 1. 車両軌跡フットプリント
 
-In this first step, the ego footprint is projected at each trajectory point and its size is modified based on the `ego.extra_..._offset` parameters.
+この最初のステップでは、車両フットプリントが各軌跡ポイントに投影され、そのサイズは`ego.extra_..._offset`パラメータに基づいて修正されます。
 
-The length of the trajectory used for generating the footprints is limited by the `max_arc_length` parameter.
+フットプリントの生成に使用される軌跡の長さは、`max_arc_length`パラメータによって制限されます。
 
 ![ego_footprints](./docs/footprints.png)
 
-### 2. Other lanelets
+### 2. 他のレーンのレレット
 
-In the second step, we calculate the lanelets where collisions should be avoided.
-We consider all lanelets around the ego vehicle that are not crossed by the trajectory linestring (sequence of trajectory points) or their preceding lanelets.
+2番目のステップでは、衝突を回避する必要があるレーンのレレットを計算します。軌跡のラインストリング（軌跡ポイントのシーケンス）またはその先行するレーンのレレットによって横切られない、車両周辺のすべてのレーンのレレットを考慮します。
 
 ![other_lanes](./docs/other_lanes.png)
 
-In the debug visualization, these other lanelets are shown as blue polygons.
+デバッグの可視化では、これらの他のレーンのレレットは青い多角形として表示されます。
 
-### 3. Out of lane areas
+### 3. 車線逸脱エリア
 
-Next, for each trajectory point, we create the corresponding out of lane areas by intersection the other lanelets (from step 2) with the trajectory point footprint (from step 1).
-Each area is associated with the lanelets overlapped by the area and with the corresponding ego trajectory point.
+次に、各軌跡ポイントについて、他のレーンのレレット（ステップ 2 から）を軌跡ポイントのフットプリント（ステップ 1 から）と交差させて、対応する車線逸脱エリアを作成します。
+各エリアは、エリアと重なるレーンのレレットと、対応する車両軌跡ポイントに関連付けられています。
 
 ![out_of_lane_areas](./docs/out_of_lane_areas.png)
 
-In the debug visualization, the out of lane area polygon is connected to the corresponding trajectory point by a line.
+デバッグの可視化では、車線逸脱エリアの多角形は、線で対応する軌跡ポイントに接続されています。
 
-### 4. Predicted objects filtering
+### 4. 予測オブジェクトのフィルタリング
 
-We filter objects and their predicted paths with the following conditions:
+オブジェクトとその予測パスは、以下の条件でフィルタリングされます。
 
-- ignore objects with a speed bellow the `minimum_velocity` parameter;
-- ignore objects coming from behind the ego vehicle if parameter `ignore_behind_ego` is set to true;
-- ignore predicted paths whose confidence value is bellow the `predicted_path_min_confidence` parameter;
-- cut the points of predicted paths going beyond the stop line of a red traffic light if parameter `cut_predicted_paths_beyond_red_lights` is set to `true`.
+- `minimum_velocity`パラメータ以下の速度のオブジェクトは無視します。
+- パラメータ`ignore_behind_ego`が`true`に設定されている場合は、自車両の後ろから来るオブジェクトを無視します。
+- 信頼度値が`predicted_path_min_confidence`パラメータを下回る予測パスは無視します。
+- パラメータ`cut_predicted_paths_beyond_red_lights`が`true`に設定されている場合は、赤信号の停止線を超える予測パスのポイントをカットします。
 
 | `cut_predicted_paths_beyond_red_lights = false` | `cut_predicted_paths_beyond_red_lights = true` |
-| :---------------------------------------------: | :--------------------------------------------: |
-|        ![](./docs/path_green_light.png)         |         ![](./docs/path_red_light.png)         |
+| :----------------------------------------------------: | :---------------------------------------------------: |
+| ![](./docs/path_green_light.png) | ![](./docs/path_red_light.png) |
 
-In the debug visualization, the filtered predicted paths are shown in green and the stop lines of red traffic lights are shown in red.
+デバッグ可視化では、予測パスは緑、赤信号の停止線は赤で表示されます。
 
-### 5. Time to collisions
+### 5. 衝突までの時間
 
-For each out of lane area, we calculate the times when a dynamic object will overlap the area based on its filtered predicted paths.
+各車線逸脱領域について、予測パスに基づいて、ダイナミックオブジェクトがその領域と重複するまでの時間を計算します。
 
-In the case where parameter `mode` is set to `threshold` and the calculated time is less than `threshold.time_threshold` parameter, then we decide to avoid the out of lane area.
+パラメータ `mode` が `threshold` に設定され、計算された時間が `threshold.time_threshold` パラメータよりも小さい場合、車線逸脱領域を回避すると判断されます。
 
-In the case where parameter `mode` is set to `ttc`,
-we calculate the time to collision by comparing the predicted time of the object with the `time_from_start` field contained in the trajectory point.
-If the time to collision is bellow the `ttc.threshold` parameter value, we decide to avoid the out of lane area.
+パラメータ `mode` が `ttc` に設定されている場合、
+オブジェクトの予測時間と、軌跡ポイントに含まれる `time_from_start` フィールドを比較して衝突までの時間を計算します。
+衝突までの時間が `ttc.threshold` パラメータ値を下回っている場合、车線逸脱領域の回避が決定されます。
 
 ![ttcs](./docs/ttcs.png)
 
-In the debug visualization, the ttc (in seconds) is displayed on top of its corresponding trajectory point.
-The color of the text is red if the collision should be avoided and green otherwise.
+デバッグの可視化では、ttc（秒）が対応する軌跡ポイントの上に表示されます。
+衝突を回避する必要がある場合はテキストは赤色、そうでない場合は緑色になります。
 
-### 6. Calculate the stop or slowdown point
+### 6. 停止または減速ポイントの計算
 
-First, the minimum stopping distance of the ego vehicle is calculated based on the jerk and deceleration constraints set by the velocity smoother parameters.
+まず、車両滑らかさパラメータで設定されたジャークおよび減速の制約に基づいて、自車の最小停止距離を計算します。
 
-We then search for the furthest pose along the trajectory where the ego footprint stays inside of the ego lane (calculate in step 2) and constraint the search to be between the minimum stopping distance and the 1st trajectory point with a collision to avoid (as determined in the previous step).
-The search is done by moving backward along the trajectory with a distance step set by the `action.precision` parameter.
+次に、軌跡に沿って、自車のフットプリントが自車車線内に留まる最長ポイントを探し、最小停止距離と回避すべき衝突が発生する最初の軌跡ポイント（前の手順で決定）の間に検索範囲を制限します。
+検索は、`action.precision` パラメータで設定されたステップ距離で、軌跡に沿って後方に移動することで実行されます。
 
-We first do this search for a footprint expanded with the `ego.extra_..._offset`, `action.longitudinal_distance_buffer` and `action.lateral_distance_buffer` parameters.
-If no valid pose is found, we search again while only considering the extra offsets but without considering the distance buffers.
-If still no valid pose is found, we use the base ego footprint without any offset.
-In case no pose is found, we fallback to using the pose before the detected collision without caring if it is out of lane or not.
+最初に、この検索を `ego.extra_..._offset`、`action.longitudinal_distance_buffer`、および `action.lateral_distance_buffer` パラメータで拡張されたフットプリントに対して実行します。
+有効なポイントが見つからない場合、超オフセットのみを考慮し、距離バッファは考慮せずに再度検索します。
+それでも有効なポイントが見つからない場合は、オフセットなしのベースの自車フットプリントを使用します。
+ポイントが見つからない場合は、車線逸脱の有無にかかわらず、衝突が検出される前のポイントを使用します。
 
-Whether it is decided to slow down or stop is determined by the distance between the ego vehicle and the trajectory point to avoid.
-If this distance is bellow the `actions.slowdown.threshold`, a velocity of `actions.slowdown.velocity` will be used.
-If the distance is bellow the `actions.stop.threshold`, a velocity of `0`m/s will be used.
+減速するか停止するかを決定するのは、自車と回避する必要がある軌跡ポイントとの距離です。
+この距離が `actions.slowdown.threshold` を下回ると、`actions.slowdown.velocity` の速度が使用されます。
+距離が `actions.stop.threshold` を下回ると、`0` m/s の速度が使用されます。
 
 ![avoid_collision](./docs/ttcs_avoid.png)
 
-### About stability of the stop/slowdown pose
+### 停止/減速ポイントの安定性について
 
-As the input trajectory can change significantly between iterations,
-it is expected that the decisions of this module will also change.
-To make the decision more stable, a stop or slowdown pose is used for a minimum duration set by the `action.min_duration` parameter.
-If during that time a new pose closer to the ego vehicle is generated, then it replaces the previous one.
-Otherwise, the stop or slowdown pose will only be discarded after no out of lane collision is detection for the set duration.
+入力軌跡は反復間で大幅に変更される可能性があるため、このモジュールの決定も変更されることが想定されます。
+決定をより安定させるため、停止または減速ポイントは `action.min_duration` パラメータで設定された最小時間使用されます。
+その間に自車に近い新しいポイントが生成された場合、古いポイントと置き換えられます。
+それ以外の場合は、設定された時間の間、車線逸脱の衝突が検出されない場合にのみ、停止または減速ポイントは破棄されます。
 
-## Module Parameters
+## モジュールパラメータ
 
-| Parameter                     | Type   | Description                                                                       |
-| ----------------------------- | ------ | --------------------------------------------------------------------------------- |
-| `mode`                        | string | [-] mode used to consider a dynamic object. Candidates: threshold, intervals, ttc |
-| `skip_if_already_overlapping` | bool   | [-] if true, do not run this module when ego already overlaps another lane        |
-| `max_arc_length`              | double | [m] maximum trajectory arc length that is checked for out_of_lane collisions      |
+| パラメータ | 型 | 説明 |
+| ---------------- | ---- | ---------------------------------------- |
+| `mode` | 文字列 | 動的対象の考慮に使用するモード。候補: threshold, intervals, ttc |
+| `skip_if_already_overlapping` | ブール値 | 真の場合、自車が既に他の車線と重複している場合、このモジュールを実行しない |
+| `max_arc_length` | double | 車線逸脱衝突の確認に使用される最大軌跡弧長 |
 
-| Parameter /threshold | Type   | Description                                                      |
+| パラメータ/しきい値 | 型   | 説明                                                           |
 | -------------------- | ------ | ---------------------------------------------------------------- |
-| `time_threshold`     | double | [s] consider objects that will reach an overlap within this time |
+| `time_threshold`     | double | [s] この時間内に重なりが生じる可能性のあるオブジェクトを考慮する |
 
-| Parameter /ttc | Type   | Description                                                                                            |
-| -------------- | ------ | ------------------------------------------------------------------------------------------------------ |
-| `threshold`    | double | [s] consider objects with an estimated time to collision bellow this value while ego is on the overlap |
+| Parameter /ttc | Type   | Description                                                                                           |
+| -------------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| `threshold`    | double | egoが重なっている間に、この値よりも推定衝突時間（TTC）が短いオブジェクトを考慮します。 |
 
-| Parameter /objects                      | Type   | Description                                                                     |
-| --------------------------------------- | ------ | ------------------------------------------------------------------------------- |
-| `minimum_velocity`                      | double | [m/s] ignore objects with a velocity lower than this value                      |
-| `predicted_path_min_confidence`         | double | [-] minimum confidence required for a predicted path to be considered           |
-| `cut_predicted_paths_beyond_red_lights` | bool   | [-] if true, predicted paths are cut beyond the stop line of red traffic lights |
-| `ignore_behind_ego`                     | bool   | [-] if true, objects behind the ego vehicle are ignored                         |
+| パラメータ / オブジェクト | データ型 | 説明 |
+|---|---|---|
+| `minimum_velocity` | double | [m/s] この値以下の速度のオブジェクトを無視 |
+| `predicted_path_min_confidence` | double | [-] 予測パスが有効と見なされるための最小信頼度 |
+| `cut_predicted_paths_beyond_red_lights` | bool | [-] trueの場合、赤信号の停止線の向こう側の予測パスは切断 |
+| `ignore_behind_ego` | bool | [-] trueの場合、自車後方のオブジェクトは無視 |
 
-| Parameter /action              | Type   | Description                                                           |
-| ------------------------------ | ------ | --------------------------------------------------------------------- |
-| `precision`                    | double | [m] precision when inserting a stop pose in the trajectory            |
-| `longitudinal_distance_buffer` | double | [m] safety distance buffer to keep in front of the ego vehicle        |
-| `lateral_distance_buffer`      | double | [m] safety distance buffer to keep on the side of the ego vehicle     |
-| `min_duration`                 | double | [s] minimum duration needed before a decision can be canceled         |
-| `slowdown.distance_threshold`  | double | [m] insert a slow down when closer than this distance from an overlap |
-| `slowdown.velocity`            | double | [m] slow down velocity                                                |
-| `stop.distance_threshold`      | double | [m] insert a stop when closer than this distance from an overlap      |
+| パラメータ/アクション             | タイプ | 説明                                                                     |
+| -------------------------------- | ------ | ------------------------------------------------------------------------ |
+| `precision`                     | double | 停止点を軌跡に挿入するときの[m]精度                                     |
+| `longitudinal_distance_buffer` | double | 自車の前方に保持する[m]の安全距離バッファ                                 |
+| `lateral_distance_buffer`      | double | 自車の側面に保持する[m]の安全距離バッファ                                 |
+| `min_duration`                 | double | 決定をキャンセルできるようになるまでに必要な[s]の最小継続時間           |
+| `slowdown.distance_threshold`  | double | オーバーラップからこの距離よりも近づいたときに減速を挿入する               |
+| `slowdown.velocity`            | double | 減速速度                                                                 |
+| `stop.distance_threshold`      | double | オーバーラップからこの距離よりも近づいたときに停止を挿入する              |
 
-| Parameter /ego       | Type   | Description                                          |
-| -------------------- | ------ | ---------------------------------------------------- |
-| `extra_front_offset` | double | [m] extra front distance to add to the ego footprint |
-| `extra_rear_offset`  | double | [m] extra rear distance to add to the ego footprint  |
-| `extra_left_offset`  | double | [m] extra left distance to add to the ego footprint  |
-| `extra_right_offset` | double | [m] extra right distance to add to the ego footprint |
+| パラメータ/自車 | タイプ | 説明 |
+| ---------------- | ----- | ---------------------------------------------------- |
+| `extra_front_offset` | double | 自車フットプリントに追加する前方距離[m] |
+| `extra_rear_offset`  | double | 自車フットプリントに追加する後方距離[m]  |
+| `extra_left_offset`  | double | 自車フットプリントに追加する左側距離[m]  |
+| `extra_right_offset` | double | 自車フットプリントに追加する右側距離[m] |
+

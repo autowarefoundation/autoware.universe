@@ -1,74 +1,110 @@
-# Test Utils
+# テストユーティリティ
 
-## Background
+## 背景
 
-Several Autoware's components and modules have already adopted unit testing, so a common library to ease the process of writing unit tests is necessary.
+Autowareのいくつかのコンポーネント・モジュールに既に単体テストが導入されており、単体テストの記述プロセスを容易にする共通ライブラリが必要です。
 
-## Purpose
+## 目的
 
-The objective of the `test_utils` is to develop a unit testing library for the Autoware components. This library will include
+`test_utils`の目的は、Autowareコンポーネント用の単体テストライブラリの開発です。このライブラリには以下が含まれます。
 
-- commonly used functions
-- input/mock data parser
-- maps for testing
-- common routes and mock data for testing.
+- 一般的に使用される関数
+- 入力/モックデータパーサー
+- テスト用のマップ
+- 一般的な経路およびテスト用モックデータ
 
-## Available Maps
+## 利用可能なマップ
 
-The following maps are available [here](https://github.com/autowarefoundation/autoware.universe/tree/main/common/autoware_test_utils/test_map)
+次のマップは[こちら](https://github.com/autowarefoundation/autoware.universe/tree/main/common/autoware_test_utils/test_map)で利用できます。
 
 ### Common
 
-The common map contains multiple types of usable inputs, including shoulder lanes, intersections, and some regulatory elements. The common map is named `lanelet2_map.osm` in the folder.
+共通マップには、肩レーン、交差点、いくつかの規制要素など、使用可能なさまざまなタイプの入力が含まれています。共通マップはフォルダー内で`lanelet2_map.osm`という名前です。
 
 ![common](./images/common.png)
 
 ### 2 km Straight
 
-The 2 km straight lanelet map consists of two lanes that run in the same direction. The map is named `2km_test.osm`.
+2 km直線レーンレットマップは、同じ方向に走る2つの車線で構成されています。マップは`2km_test.osm`という名前です。
 
 ![two_km](./images/2km-test.png)
 
-The following illustrates the design of the map.
+以下にマップの設計を示します。
 
 ![straight_diagram](./images/2km-test.svg)
 
 ### road_shoulders
 
-The road_shoulders lanelet map consist of a variety of pick-up/drop-off site maps with road_shoulder tags including:
+road_shouldersレーンレットマップは、次のようなroad_shoulderタグが付いたさまざまなピックアップ/ドロップオフサイトマップで構成されています。
 
-- pick-up/drop-off sites on the side of street lanes
-- pick-up/drop-off sites on the side of curved lanes
-- pick-up/drop-off sites inside a private area
+- 側道車線の横にあるピックアップ/ドロップオフサイト
+- 曲線車線の横にあるピックアップ/ドロップオフサイト
+- 私有区域内のピックアップ/ドロップオフサイト
 
 ![road_shoulder_test](./images/road_shoulder_test_map.png)
 
-You can easily launch planning_simulator by
+planning_simulatorを次のように簡単に起動できます。
+
 
 ```bash
 ros2 launch autoware_test_utils psim_road_shoulder.launch.xml vehicle_model:=<> sensor_model:=<> use_sim_time:=true
 ```
 
-### intersection
+### 交差点
 
-The intersections lanelet map consist of a variety of intersections including:
+交差点のレーンレットマップには、以下を含むさまざまな交差点があります。
 
-- 4-way crossing with traffic light
-- 4-way crossing without traffic light
-- T-shape crossing without traffic light
-- intersection with a loop
-- complicated intersection
+- 交通信号機付き4車線交差点
+- 交通信号機のない4車線交差点
+- 交通信号機のないT字路交差点
+- ループのある交差点
+- 複雑な交差点
 
 ![intersection_test](./images/intersection_test_map.png)
 
-You can easily launch planning_simulator by
+次のようにして簡単にplanning_simulatorを起動できます
+
 
 ```bash
 ros2 launch autoware_test_utils psim_intersection.launch.xml vehicle_model:=<> sensor_model:=<> use_sim_time:=true
 ```
 
-## Example use cases
+## 使用例
 
 ### Autoware Planning Test Manager
 
-The goal of the [Autoware Planning Test Manager](https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_planning_test_manager/) is to test planning module nodes. The `PlanningInterfaceTestManager` class ([source code](https://github.com/autowarefoundation/autoware.universe/blob/main/planning/autoware_planning_test_manager/src/autoware_planning_test_manager.cpp)) creates wrapper functions based on the `test_utils` functions.
+[Autoware Planning Test Manager](https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_planning_test_manager/)の目標は、Planningモジュールノードをテストすることです。 `PlanningInterfaceTestManager`クラス([ソースコード](https://github.com/autowarefoundation/autoware.universe/blob/main/planning/autoware_planning_test_manager/src/autoware_planning_test_manager.cpp))は、`test_utils`関数をベースにラッパー関数を生成します。
+
+### 単体テスト用のテストデータ生成
+
+[PR説明](https://github.com/autowarefoundation/autoware.universe/pull/9207)で提示されているように、ユーザーはテストマップ上でPlanning Simulationを実行中にシーンのスナップショットをyamlファイルに保存することができます。
+
+
+```bash
+ros2 launch autoware_test_utils psim_road_shoulder.launch.xml vehicle_model:=<vehicle-model> sensor_model:=<sensor-model>
+ros2 launch autoware_test_utils psim_intersection.launch.xml vehicle_model:=<vehicle-model> sensor_model:=<sensor-model>
+```
+
+
+```bash
+ros2 service call /autoware_test_utils/topic_snapshot_saver std_srvs/srv/Empty \{\}
+```
+
+トピックを保存するトピックのリストとフィールド名は、`config/sample_topic_snapshot.yaml` で指定されています。
+
+
+```yaml
+# setting
+fields:
+  - name: self_odometry # this is the field name for this topic
+    type: Odometry # the abbreviated type name of this topic
+    topic: /localization/kinematic_state # the name of this topic
+
+# output
+self_odometry:
+  - header: ...
+    ...
+```
+
+各フィールドは、`autoware_test_utils/mock_data_parser.hpp` で定義された関数を使用して ROS メッセージタイプに解析できます。
+

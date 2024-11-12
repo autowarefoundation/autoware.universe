@@ -1,38 +1,103 @@
-# Path optimizer
+# パスオプティマイザ
 
-## Purpose
+## 目的
 
-This package generates a trajectory that is kinematically-feasible to drive and collision-free based on the input path, drivable area.
-Only position and orientation of trajectory are updated in this module, and velocity is just taken over from the one in the input path.
+このパッケージは、入力パスと走行可能エリアに基づいて、運転可能な運動学的可能性のある経路と衝突のない経路を生成します。
+このモジュールでは、経路の位置と姿勢のみが更新され、速度は入力パス内の速度を引き継ぎます。
 
-## Feature
+## 特徴
 
-This package is able to
+このパッケージは、以下のことができます。
 
-- make the trajectory inside the drivable area as much as possible
-  - NOTE: Static obstacles to avoid can be removed from the drivable area.
-- insert stop point before the planned footprint will be outside the drivable area
+- 経路を可能な限り走行可能エリア内に収める
+  - 注: 回避すべき静止障害物は走行可能エリアから削除できます。
+- 計画されたフットプリントが走行可能エリア外になる前に停止点を挿入する
 
-Note that the velocity is just taken over from the input path.
+速度は入力パスから引き継がれることに注意してください。
 
-## Inputs / Outputs
+## 入出力
 
-### input
+### 入力
 
-| Name               | Type                            | Description                                        |
-| ------------------ | ------------------------------- | -------------------------------------------------- |
-| `~/input/path`     | autoware_planning_msgs/msg/Path | Reference path and the corresponding drivable area |
-| `~/input/odometry` | nav_msgs/msg/Odometry           | Current Velocity of ego vehicle                    |
+| 名前              | タイプ                            | 説明                                                  |
+| ----------------- | ------------------------------- | ------------------------------------------------------ |
+| `~/input/path`     | autoware_planning_msgs/msg/Path | 参照パスと対応する走行可能領域                      |
+| `~/input/odometry` | nav_msgs/msg/Odometry           | 自車の現在の速度                                       |
 
-### output
+### 出力
 
-| Name                  | Type                                  | Description                                                       |
-| --------------------- | ------------------------------------- | ----------------------------------------------------------------- |
-| `~/output/trajectory` | autoware_planning_msgs/msg/Trajectory | Optimized trajectory that is feasible to drive and collision-free |
+**自動運転ソフトウェア**
 
-## Flowchart
+## 計画（Planning）コンポーネント
 
-Flowchart of functions is explained here.
+**動作**
+
+計画コンポーネントは、センサーからのデータに基づき、自律車両の走行経路を決定します。以下の要素を考慮します。
+
+- 環境マップ
+- 自車位置
+- 障害物
+- 交通規則
+
+計画コンポーネントは、次のような判断を行います。
+
+- 走行する経路
+- 目的地への速度と加速度の調整
+- 障害物の回避
+- 交通規制への遵守
+
+## 経路検索アルゴリズム
+
+計画コンポーネントは、次の経路検索アルゴリズムを使用します。
+
+- *Dijkstra法*
+- *A*法
+
+## 経路最適化
+
+計画コンポーネントは、以下の基準に基づいて経路を最適化します。
+
+- 走行距離
+- 所要時間
+- 燃料消費
+- 安全性
+
+## 障害物回避
+
+計画コンポーネントは、以下の方法で障害物を回避します。
+
+- 障害物検知
+- 最小の『速度逸脱量』と『加速度逸脱量』が発生する動作の算出
+- 安全な経路への再計画
+
+## 交通規制への遵守
+
+計画コンポーネントは、交通規制を遵守するように動作します。
+
+- 速度制限の遵守
+- 停止線の遵守
+- 信号機の遵守
+
+**Autowareでの実装**
+
+Autowareの計画コンポーネントは、ROSベースのアーキテクチャで実装されています。主要なノードは次のとおりです。
+
+- Trajectory Planner
+- Local Planner
+- Behavior Planner
+
+**追加資料**
+
+- [Autoware 計画コンポーネントドキュメント](https://autoware.gitbooks.io/autoware.ai/content/wiki/planning.html)
+
+| 名称                  | 種類                             | 説明                                                                   |
+| --------------------- | ---------------------------------  | ---------------------------------------------------------------------- |
+| `~/output/trajectory` | autoware_planning_msgs/msg/Trajectory | 走行可能で衝突のない最適化された経路                                  |
+
+## フローチャート
+
+機能のフローチャートについては、以下で説明します。
+
 
 ```plantuml
 @startuml
@@ -76,7 +141,8 @@ stop
 
 ### createPlannerData
 
-The following data for planning is created.
+以下のデータがプランニング用に作成されます。
+
 
 ```cpp
 struct PlannerData
@@ -93,128 +159,126 @@ struct PlannerData
 };
 ```
 
-### check replan
+### replanの確認
 
-When one of the following conditions are met, trajectory optimization will be executed.
-Otherwise, previously optimized trajectory is used with updating the velocity from the latest input path.
+以下の条件のいずれかが満たされた場合、軌道の最適化が実行されます。それ以外は、最新の入力パスの速度を使用して、以前に最適化された軌道を適用します。
 
 max_path_shape_around_ego_lat_dist
 
-- Ego moves longer than `replan.max_ego_moving_dist` in one cycle. (default: 3.0 [m])
-  - This is for when the ego pose is set again in the simulation.
-- Trajectory's end, which is considered as the goal pose, moves longer than `replan.max_goal_moving_dist` in one cycle. (default: 15.0 [ms])
-  - When the goal pose is set again, the planning should be reset.
-- Time passes. (default: 1.0 [s])
-  - The optimization is skipped for a while sine the optimization is sometimes heavy.
-- The input path changes laterally longer than `replan.max_path_shape_around_ego_lat_dist` in one cycle. (default: 2.0)
+- エゴが1サイクルで`replan.max_ego_moving_dist`を超えて移動する場合（デフォルト：3.0 [m]）
+  - これは、シミュレーションでエゴの姿勢が再び設定された場合に使用されます。
+- 目標姿勢と見なされる軌道の終点が1サイクルで`replan.max_goal_moving_dist`を超えて移動する場合（デフォルト：15.0 [ms]）
+  - 目標姿勢が再び設定された場合、Planningはリセットする必要があります。
+- 時間の経過（デフォルト：1.0 [s]）
+  - 最適化は少しの間スキップされます。なぜなら、最適化は時々重いからです。
+- 入力パスが1サイクルで横方向に`replan.max_path_shape_around_ego_lat_dist`を超えて変更する場合（デフォルト：2.0）
 
-### getModelPredictiveTrajectory
+### getModelPredictiveTrajectoryの取得
 
-This module makes the trajectory kinematically-feasible and collision-free.
-We define vehicle pose in the frenet coordinate, and minimize tracking errors by optimization.
-This optimization considers vehicle kinematics and collision checking with road boundary and obstacles.
-To decrease the computation cost, the optimization is applied to the shorter trajectory (default: 50 [m]) than the whole trajectory, and concatenate the remained trajectory with the optimized one at last.
+このモジュールは、軌道を運動学的に実現可能かつ衝突のないものにします。
+フレネ座標系で車両の姿勢を定義し、最適化によって追従誤差を最小化します。
+この最適化では、車両の運動特性と道路境界や障害物との衝突チェックが考慮されます。
+計算コストを削減するために、最適化は全体の軌道より短い軌道（デフォルト：50 [m]）に適用され、最後に残りの軌道と最適化された軌道を連結します。
 
-The trajectory just in front of the ego must not be changed a lot so that the steering wheel will be stable.
-Therefore, we use the previously generated trajectory in front of the ego.
+車両の真前の軌道はあまり変更しないようにする必要があります。そうすることでステアリングホイールが安定します。
+したがって、車両の前面に以前生成された軌道を適用します。
 
-Optimization center on the vehicle, that tries to locate just on the trajectory, can be tuned along side the vehicle vertical axis.
-This parameter `mpt.kinematics.optimization center offset` is defined as the signed length from the back-wheel center to the optimization center.
-Some examples are shown in the following figure, and it is shown that the trajectory of vehicle shape differs according to the optimization center even if the reference trajectory (green one) is the same.
+車両上に設置され、軌道の真上に位置しようとする最適化の中心は、車両の縦軸に沿って調整できます。
+このパラメータ`mpt.kinematics.optimization center offset`は、後輪の中心から最適化の中心までの正負の距離として定義されます。
+次の図にいくつかの例を示します。参照軌道（緑色）が同じ場合でも、最適化の中心によって車両形状の軌跡が異なることがわかります。
 
 ![mpt_optimization_offset](./media/mpt_optimization_offset.svg)
 
-More details can be seen [here](docs/mpt.md).
+詳細については[こちら](docs/mpt.md)を参照してください。
 
 ### applyInputVelocity
 
-Velocity is assigned in the optimized trajectory from the velocity in the behavior path.
-The shapes of the optimized trajectory and the path are different, therefore the each nearest trajectory point to the path is searched and the velocity is interpolated with zero-order hold.
+速度は、最適化された軌跡に、行動パスの速度から割り当てます。
+最適化された軌跡とパスの形状は異なるため、パスに対する最も近い各軌跡点が検索され、速度はゼロ次ホールドで補間されます。
 
 ### insertZeroVelocityOutsideDrivableArea
 
-Optimized trajectory is too short for velocity planning, therefore extend the trajectory by concatenating the optimized trajectory and the behavior path considering drivability.
-Generated trajectory is checked if it is inside the drivable area or not, and if outside drivable area, output a trajectory inside drivable area with the behavior path or the previously generated trajectory.
+最適化された軌道は速度計画には短すぎるため、走行可能性を考慮して最適化された軌道と行動パスを連結することで軌道を延長します。
+生成された軌道は走行可能領域内にあるかどうかがチェックされ、走行可能領域外にある場合は、走行可能領域内の軌道を出力するか、行動パスまたは以前に生成された軌道を適用します。
 
-As described above, the behavior path is separated into two paths: one is for optimization and the other is the remain. The first path becomes optimized trajectory, and the second path just is transformed to a trajectory. Then a trajectory inside the drivable area is calculated as follows.
+上記のように、行動パスは2つのパスに分割されます。1つは最適化用、もう1つは残りの部分です。最初のパスが最適化された軌道になり、2番目のパスは単に変換されます。走行可能領域内の軌道は次のように計算されます。
 
-- If optimized trajectory is **inside the drivable area**, and the remained trajectory is inside/outside the drivable area,
-  - the output trajectory will be just concatenation of those two trajectories.
-  - In this case, we do not care if the remained trajectory is inside or outside the drivable area since generally it is outside the drivable area (especially in a narrow road), but we want to pass a trajectory as long as possible to the latter module.
-- If optimized trajectory is **outside the drivable area**, and the remained trajectory is inside/outside the drivable area,
-  - and if the previously generated trajectory **is memorized**,
-    - the output trajectory will be the previously generated trajectory, where zero velocity is inserted to the point firstly going outside the drivable area.
-  - and if the previously generated trajectory **is not memorized**,
-    - the output trajectory will be a part of trajectory just transformed from the behavior path, where zero velocity is inserted to the point firstly going outside the drivable area.
+- 最適化された軌道が**走行可能領域内**で、残りの軌道が走行可能領域内/外にある場合
+  - 出力軌道はその2つの軌道の連結になります。
+  - この場合、残りの軌道が走行可能領域内にあるか外にあるかは考慮しません。一般的に走行可能領域外にあるため（特に狭い道で）ですが、後続のモジュールにできるだけ長い軌道を渡したいと考えています。
+- 最適化された軌道が**走行可能領域外**で、残りの軌道が走行可能領域内/外にある場合
+  - 以前生成された軌跡が**記憶されている**場合は、
+    - 出力軌道は、以前に生成された軌道になり、走行可能領域外に出た最初にゼロ速度が挿入されます。
+  - 以前生成された軌跡が**記憶されていない**場合は、
+    - 出力軌道は、行動パスから変換された軌道のうち、走行可能領域外に出た最初にゼロ速度が挿入された部分になります。
 
-Optimization failure is dealt with the same as if the optimized trajectory is outside the drivable area.
-The output trajectory is memorized as a previously generated trajectory for the next cycle.
+最適化の失敗は、最適化された軌道が走行可能領域外である場合と同じように処理されます。出力軌道は、次のサイクルの以前生成された軌跡として記憶されます。
 
-_Rationale_
-In the current design, since there are some modelling errors, the constraints are considered to be soft constraints.
-Therefore, we have to make sure that the optimized trajectory is inside the drivable area or not after optimization.
+_理由_
 
-## Limitation
+最適化したトラジェクトリが、最適化後に運転可能領域内に収まっているかどうかを確認する必要があります。
 
-- Computation cost is sometimes high.
-- Because of the approximation such as linearization, some narrow roads cannot be run by the planner.
-- Roles of planning for `behavior_path_planner` and `path_optimizer` are not decided clearly. Both can avoid obstacles.
+## 制限事項
 
-## Comparison to other methods
+- 計算コストが高くなる場合があります。
+- 線形化などの近似により、一部の狭い道路はプランナーによって走行できません。
+- `behavior_path_planner` と `path_optimizer` のプランニングの役割が明確に定義されていません。どちらも障害物を回避できます。
 
-Trajectory planning problem that satisfies kinematically-feasibility and collision-free has two main characteristics that makes hard to be solved: one is non-convex and the other is high dimension.
-Based on the characteristics, we investigate pros/cons of the typical planning methods: optimization-based, sampling-based, and learning-based method.
+## 他の手法との比較
 
-### Optimization-based method
+運動学的実現可能性と衝突回避を満たすトラジェクトリ計画の問題には、解決が困難な 2 つの主な特性があります。1 つは非凸性、もう 1 つは高次元です。
+これらの特性に基づいて、一般的なプランニング手法の利点と欠点を調査します。最適化ベース、サンプリングベース、学習ベースの手法です。
 
-- pros: comparatively fast against high dimension by leveraging the gradient descent
-- cons: often converge to the local minima in the non-convex problem
+### 最適化ベースの手法
 
-### Sampling-based method
+- 長所: 勾配降下を活用することで、高次元に対して比較的高速です。
+- 短所: 非凸問題では、多くの場合局所最小値に収束します。
 
-- pros: realize global optimization
-- cons: high computation cost especially in the complex case
+### サンプリングベースの手法
 
-### Learning-based method
+- 長所: グローバル最適化を実現します。
+- 短所: 特に複雑なケースでは計算コストが高くなります。
 
-- under research yet
+### 学習ベースの手法
 
-Based on these pros/cons, we chose the optimization-based planner first.
-Although it has a cons to converge to the local minima, it can get a good solution by the preprocessing to approximate the problem to convex that almost equals to the original non-convex problem.
+- まだ研究中
 
-## How to Tune Parameters
+これらの利点と欠点に基づいて、まず最適化ベースのプランナーを選択しました。
+局所最小値に収束する欠点がありますが、問題をほぼ元の非凸問題と同じ凸問題に近似するための前処理によって、適切な解を得ることができます。
 
-### Drivability in narrow roads
+## パラメーターの調整方法
 
-- modify `mpt.clearance.soft_clearance_from_road`
-  - This parameter describes how much margin to make between the trajectory and road boundaries.
-  - Due to the model error for optimization, the constraint such as collision-free is not fully met.
-    - By making this parameter larger, the is for narrow-road driving may be resolved. 12180
-- modify `mpt.kinematics.optimization_center_offset`
+### 狭い道路での運転可能性
 
-  - The point on the vehicle, offset forward with this parameter from the base link` tries to follow the reference path.
+- `mpt.clearance.soft_clearance_from_road` を変更する
+  - このパラメーターは、トラジェクトリと道路の境界との間隔をどの程度確保する必要があるかを指定します。
+  - 最適化のためのモデル誤差により、衝突回避などの制約は完全に満たされません。
+    - このパラメーターを大きくすることで、狭い道路走行の問題が解決される場合があります。 12180
+- `mpt.kinematics.optimization_center_offset` を変更する
 
-- change or tune the method to approximate footprints with a set of circles.
-  - See [here](https://autowarefoundation.github.io/autoware.universe/main/planning/path_optimizer/docs/mpt/#collision-free)
-  - Tuning means changing the ratio of circle's radius.
+  - このパラメーターによってベースリンクから前方へオフセットされた車両の位置が、基準経路を追従しようとします。
 
-### Computation time
+- フットプリントを一連の円を使用して近似する方法を変更または調整する。
+  - [こちら](https://autowarefoundation.github.io/autoware.universe/main/planning/path_optimizer/docs/mpt/#collision-free) を参照してください。
+  - 調整とは、円の半径の比率を変更することを意味します。
 
-- under construction
+### 計算時間
 
-### Robustness
+- 検討中
 
-- Check if the trajectory before or after MPT is not robust
-  - if the trajectory before MPT is not robust
-  - if the trajectory after MPT is not robust
-    - make `mpt.weight.steer_input_weight` or `mpt.weight.steer_rate_weight` larger, which are stability of steering wheel along the trajectory.
+### ロバスト性
 
-### Other options
+- MPT の前後のトラジェクトリがロバストでないかどうかを確認する
+  - MPT の前のトラジェクトリがロバストでない場合
+  - MPT の後のトラジェクトリがロバストでない場合
+    - `mpt.weight.steer_input_weight` または `mpt.weight.steer_rate_weight` を大きくする。これらは、トラジェクトリに沿ったステアリングホイールの安定性を表します。
 
-- `option.enable_skip_optimization` skips MPT optimization.
-- `option.enable_calculation_time_info` enables showing each calculation time for functions and total calculation time on the terminal.
-- `option.enable_outside_drivable_area_stop` enables stopping just before the generated trajectory point will be outside the drivable area.
+### その他のオプション
 
-## How To Debug
+- `option.enable_calculation_time_info` は、各関数の計算時間と合計計算時間をターミナルで表示できるようにします。
+- `option.enable_outside_drivable_area_stop` は、生成された経路点が走行可能エリアの外に出る直前に停止できるようにします。
 
-How to debug can be seen [here](docs/debug.md).
+## デバッグ方法
+
+デバッグ方法は [こちら](docs/debug.md) に記載されています。
+

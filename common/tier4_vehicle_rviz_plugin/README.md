@@ -1,93 +1,98 @@
-# tier4_vehicle_rviz_plugin
+## Tier4 vehicle RVIZ プラグイン
 
-This package is including jsk code.  
-Note that jsk_overlay_utils.cpp and jsk_overlay_utils.hpp are BSD license.
+このパッケージには jsk コードが含まれています。
+jsk_overlay_utils.cpp および jsk_overlay_utils.hpp は BSD ライセンスであることに注意してください。
 
-## Purpose
+## 目的
 
-This plugin provides a visual and easy-to-understand display of vehicle speed, turn signal, steering status and acceleration.
+このプラグインは、車両速度、ターンシグナル、ステアリングステータス、加速度をビジュアルかつ分かりやすく表示します。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                              | Type                                               | Description                        |
-| --------------------------------- | -------------------------------------------------- | ---------------------------------- |
-| `/vehicle/status/velocity_status` | `autoware_vehicle_msgs::msg::VelocityReport`       | The topic is vehicle twist         |
-| `/control/turn_signal_cmd`        | `autoware_vehicle_msgs::msg::TurnIndicatorsReport` | The topic is status of turn signal |
-| `/vehicle/status/steering_status` | `autoware_vehicle_msgs::msg::SteeringReport`       | The topic is status of steering    |
-| `/localization/acceleration`      | `geometry_msgs::msg::AccelWithCovarianceStamped`   | The topic is the acceleration      |
+| 名前                                | タイプ                                                   | 説明                                 |
+| ------------------------------------ | ---------------------------------------------------------- | -------------------------------------- |
+| `/vehicle/status/velocity_status`    | `autoware_vehicle_msgs::msg::VelocityReport`                 | 車両の捻じれ                             |
+| `/control/turn_signal_cmd`           | `autoware_vehicle_msgs::msg::TurnIndicatorsReport`         | ターンシグナルのステータス                 |
+| `/vehicle/status/steering_status`   | `autoware_vehicle_msgs::msg::SteeringReport`              | ステアリングのステータス                   |
+| `/localization/acceleration`         | `geometry_msgs::msg::AccelWithCovarianceStamped`            | 加速度                                   |
 
-## Parameter
+## パラメータ
 
-### Core Parameters
+### コアパラメータ
 
 #### ConsoleMeter
 
-| Name                            | Type   | Default Value        | Description                              |
-| ------------------------------- | ------ | -------------------- | ---------------------------------------- |
-| `property_text_color_`          | QColor | QColor(25, 255, 240) | Text color                               |
-| `property_left_`                | int    | 128                  | Left of the plotter window [px]          |
-| `property_top_`                 | int    | 128                  | Top of the plotter window [px]           |
-| `property_length_`              | int    | 256                  | Height of the plotter window [px]        |
-| `property_value_height_offset_` | int    | 0                    | Height offset of the plotter window [px] |
-| `property_value_scale_`         | float  | 1.0 / 6.667          | Value scale                              |
+| 名                                 | 型     | デフォルト値                  | 説明                                    |
+| --------------------------------- | ------ | ---------------------------- | ----------------------------------------- |
+| `property_text_color_`            | QColor | QColor(25, 255, 240)         | テキストの色                               |
+| `property_left_`                  | int    | 128                          | プロッタウィンドウの左 [px]                  |
+| `property_top_`                   | int    | 128                          | プロッタウィンドウの上 [px]                    |
+| `property_length_`                | int    | 256                          | プロッタウィンドウの高さ [px]                |
+| `property_value_height_offset_`   | int    | 0                            | プロッタウィンドウの高さオフセット [px]      |
+| `property_value_scale_`           | float  | 1.0 / 6.667                  | 値のスケール                               |
 
 #### SteeringAngle
 
 | Name                            | Type   | Default Value        | Description                              |
 | ------------------------------- | ------ | -------------------- | ---------------------------------------- |
-| `property_text_color_`          | QColor | QColor(25, 255, 240) | Text color                               |
-| `property_left_`                | int    | 128                  | Left of the plotter window [px]          |
-| `property_top_`                 | int    | 128                  | Top of the plotter window [px]           |
-| `property_length_`              | int    | 256                  | Height of the plotter window [px]        |
-| `property_value_height_offset_` | int    | 0                    | Height offset of the plotter window [px] |
-| `property_value_scale_`         | float  | 1.0 / 6.667          | Value scale                              |
-| `property_handle_angle_scale_`  | float  | 3.0                  | Scale is steering angle to handle angle  |
+| `property_text_color_`          | QColor | QColor(25, 255, 240) | テキストの色                             |
+| `property_left_`                | int    | 128                  | プロッタウィンドウの左辺 [px]            |
+| `property_top_`                 | int    | 128                  | プロッタウィンドウの上辺 [px]           |
+| `property_length_`              | int    | 256                  | プロッタウィンドウの高さ [px]           |
+| `property_value_height_offset_` | int    | 0                    | プロッタウィンドウの高さオフセット [px] |
+| `property_value_scale_`         | float  | 1.0 / 6.667          | 値のスケール                            |
+| `property_handle_angle_scale_`  | float  | 3.0                  | ハンドル角に対する操舵角のスケール    |
 
 #### TurnSignal
 
-| Name               | Type | Default Value | Description                      |
-| ------------------ | ---- | ------------- | -------------------------------- |
-| `property_left_`   | int  | 128           | Left of the plotter window [px]  |
-| `property_top_`    | int  | 128           | Top of the plotter window [px]   |
-| `property_width_`  | int  | 256           | Left of the plotter window [px]  |
-| `property_height_` | int  | 256           | Width of the plotter window [px] |
+Planningモジュールは、 поворотный сигнал からの情報を消費します。
 
-#### VelocityHistory
+| 名称               | タイプ | 初期値 | 説明                                     |
+| ------------------ | ---- | ------ | ---------------------------------------- |
+| `property_left_`   | int  | 128     | プロッタウィンドウの左端 [px]            |
+| `property_top_`    | int  | 128     | プロッタウィンドウの上端 [px]            |
+| `property_width_`  | int  | 256     | プロッタウィンドウの左幅 [px]            |
+| `property_height_` | int  | 256     | プロッタウィンドウの高さ [px]             |
 
-| Name                            | Type   | Default Value | Description                |
+#### 速度履歴
+
+
+| Name                            | Type   | Default Value | 説明                |
 | ------------------------------- | ------ | ------------- | -------------------------- |
-| `property_velocity_timeout_`    | float  | 10.0          | Timeout of velocity [s]    |
-| `property_velocity_alpha_`      | float  | 1.0           | Alpha of velocity          |
-| `property_velocity_scale_`      | float  | 0.3           | Scale of velocity          |
-| `property_velocity_color_view_` | bool   | false         | Use Constant Color or not  |
-| `property_velocity_color_`      | QColor | Qt::black     | Color of velocity history  |
-| `property_vel_max_`             | float  | 3.0           | Color Border Vel Max [m/s] |
+| `property_velocity_timeout_`    | float  | 10.0          | 速度タイムアウト [秒]    |
+| `property_velocity_alpha_`      | float  | 1.0           | 速度のアルファ          |
+| `property_velocity_scale_`      | float  | 0.3           | 速度のスケール          |
+| `property_velocity_color_view_` | bool   | false         | 定色を使用      |
+| `property_velocity_color_`      | QColor | Qt::black     | 速度履歴の色  |
+| `property_vel_max_`             | float  | 3.0           | 色の境界速度の最大値 [m/s] |
 
-#### AccelerationMeter
+#### 加速度計
 
-| Name                                | Type   | Default Value        | Description                                      |
-| ----------------------------------- | ------ | -------------------- | ------------------------------------------------ |
-| `property_normal_text_color_`       | QColor | QColor(25, 255, 240) | Normal text color                                |
-| `property_emergency_text_color_`    | QColor | QColor(255, 80, 80)  | Emergency acceleration color                     |
-| `property_left_`                    | int    | 896                  | Left of the plotter window [px]                  |
-| `property_top_`                     | int    | 128                  | Top of the plotter window [px]                   |
-| `property_length_`                  | int    | 256                  | Height of the plotter window [px]                |
-| `property_value_height_offset_`     | int    | 0                    | Height offset of the plotter window [px]         |
-| `property_value_scale_`             | float  | 1 / 6.667            | Value text scale                                 |
-| `property_emergency_threshold_max_` | float  | 1.0                  | Max acceleration threshold for emergency [m/s^2] |
-| `property_emergency_threshold_min_` | float  | -2.5                 | Min acceleration threshold for emergency [m/s^2] |
 
-## Assumptions / Known limits
+| 名前                                | タイプ   | デフォルト値        | 説明                                               |
+| ----------------------------------- | ------ | -------------------- | --------------------------------------------------- |
+| `property_normal_text_color_`       | QColor | QColor(25, 255, 240) | 通常のテキストの色                                |
+| `property_emergency_text_color_`    | QColor | QColor(255, 80, 80)  | 緊急時の加速度の色                                |
+| `property_left_`                    | int    | 896                  | プロッターウィンドウの左端 [px]                   |
+| `property_top_`                     | int    | 128                  | プロッターウィンドウの上端 [px]                  |
+| `property_length_`                  | int    | 256                  | プロッターウィンドウの高さ [px]                 |
+| `property_value_height_offset_`     | int    | 0                    | プロッターウィンドウの高さオフセット [px]         |
+| `property_value_scale_`             | float  | 1 / 6.667            | 値テキストのスケール                               |
+| `property_emergency_threshold_max_` | float  | 1.0                  | 緊急時の最大加速度のしきい値 [m/s^2]            |
+| `property_emergency_threshold_min_` | float  | -2.5                 | 緊急時の最小加速度のしきい値 [m/s^2]            |
 
-TBD.
+## 既定値 / 既知の制約
 
-## Usage
+未定。
 
-1. Start rviz and select Add under the Displays panel.
+## 使用方法
+
+1. rvizを起動し、DisplaysパネルでAddを選択します。
    ![select_add](./images/select_add.png)
-2. Select any one of the tier4_vehicle_rviz_plugin and press OK.
+2. tier4_vehicle_rviz_pluginのいずれかを選択し、OKを押します。
    ![select_vehicle_plugin](./images/select_vehicle_plugin.png)
-3. Enter the name of the topic where you want to view the status.
+3. ステータスを表示するトピックの名前を入力します。
    ![select_topic_name](./images/select_topic_name.png)
+

@@ -1,63 +1,64 @@
-# Landmark Based Localizer
+# ランドマークベースの局在化
 
-This directory contains packages for landmark-based localization.
+このディレクトリにはランドマークベースの局在化用のパッケージが含まれています。
 
-Landmarks are, for example
+たとえばランドマークには次のものがあります。
 
-- AR tags detected by camera
-- Boards characterized by intensity detected by LiDAR
+- カメラで検出されたARタグ
+- LiDARで検出された強度によって特徴付けられたボード
 
-etc.
+など
 
-Since these landmarks are easy to detect and estimate pose, the ego pose can be calculated from the pose of the detected landmark if the pose of the landmark is written on the map in advance.
+これらのランドマークは検出と推定の姿勢が容易であるため、ランドマークの姿勢が事前にマップに記載されている場合、検出されたランドマークの姿勢から自己姿勢を計算できます。
 
-Currently, landmarks are assumed to be flat.
+現在、ランドマークは平面であると想定されています。
 
-The following figure shows the principle of localization in the case of `ar_tag_based_localizer`.
+次の図は、`ar_tag_based_localizer` の場合の局在化の原理を示しています。
 
 ![principle](./doc_image/principle.png)
 
-This calculated ego pose is passed to the EKF, where it is fused with the twist information and used to estimate a more accurate ego pose.
+この計算された自己姿勢はEKFに渡され、ねじれ情報と融合されてより正確な自己姿勢を推定するために使用されます。
 
-## Node diagram
+## ノード図
 
 ![node diagram](./doc_image/node_diagram.drawio.svg)
 
 ### `landmark_manager`
 
-The definitions of the landmarks written to the map are introduced in the next section. See `Map Specifications`.
+マップに書き込まれたランドマークの定義については、次のセクションの「マップ仕様」を参照してください。
 
-The `landmark_manager` is a utility package to load landmarks from the map.
+`landmark_manager` はマップからランドマークを読み込むためのユーティリティパッケージです。
 
-- Translation : The center of the four vertices of the landmark
-- Rotation : Let the vertex numbers be 1, 2, 3, 4 counterclockwise as shown in the next section. Direction is defined as the cross product of the vector from 1 to 2 and the vector from 2 to 3.
+- 並進: ランドマークの4つの頂点の中心
+- 回転: 頂点番号を次のセクションで示すように反時計回りに1、2、3、4とします。方向は、1から2へのベクトルと、2から3へのベクトルの外積として定義されます。
 
-Users can define landmarks as Lanelet2 4-vertex polygons.
-In this case, it is possible to define an arrangement in which the four vertices cannot be considered to be on the same plane. The direction of the landmark in that case is difficult to calculate.
-So, if the 4 vertices are considered as forming a tetrahedron and its volume exceeds the `volume_threshold` parameter, the landmark will not publish tf_static.
+ユーザーはランドマークをLanelet2の4頂点ポリゴンとして定義できます。
+この場合、4つの頂点が同じ平面にあるとは見なせない配置を定義できます。その場合のランドマークの方向は計算が困難です。
+したがって、4つの頂点を四面体として形成し、その体積が`volume_threshold` パラメーターを超えると、ランドマークはtf_staticをパブリッシュしません。
 
-### Landmark based localizer packages
+### ランドマークベースの局在化パッケージ
 
 - ar_tag_based_localizer
-- etc.
+- など
 
-## Map specifications
+## マップ仕様
 
-See <https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md#localization-landmarks>
+<https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md#localization-landmarks>を参照してください。
 
-## About `consider_orientation`
+## `consider_orientation` について
 
-The `calculate_new_self_pose` function in the `LandmarkManager` class includes a boolean argument named `consider_orientation`. This argument determines the method used to calculate the new self pose based on detected and mapped landmarks. The following image illustrates the difference between the two methods.
+`LandmarkManager` クラスの`calculate_new_self_pose` 関数は、`consider_orientation` という名前のブーリアン引数を含みます。この引数は、検出されたランドマークとマッピングされたランドマークに基づいて新しい自己姿勢を計算するために使用される手法を決定します。次の画像は、2つの方法の違いを示します。
 
 ![consider_orientation_figure](./doc_image/consider_orientation.drawio.svg)
 
 ### `consider_orientation = true`
 
-In this mode, the new self pose is calculated so that the relative Pose of the "landmark detected from the current self pose" is equal to the relative Pose of the "landmark mapped from the new self pose".
-This method can correct for orientation, but is strongly affected by the orientation error of the landmark detection.
+このモードでは、新しい自己姿勢は、「現在位置から検出されたランドマーク」の相対姿勢が「新しい自己姿勢からマッピングされたランドマーク」の相対姿勢と等しくなるように計算されます。
+この方法は、向きを補正できますが、ランドマーク検出の向き誤差の影響を強く受けます。
 
 ### `consider_orientation = false`
 
-In this mode, the new self pose is calculated so that only the relative position is correct for x, y, and z.
+このモードでは、x、y、z の相対位置だけが正しいように、新しい自車位置を計算します。
 
-This method can not correct for orientation, but it is not affected by the orientation error of the landmark detection.
+この手法では、方位の補正は行えませんが、マーカー検出の方位誤差の影響を受けません。
+

@@ -1,17 +1,18 @@
 # autoware_map_projection_loader
 
-## Feature
+## 特徴
 
-`autoware_map_projection_loader` is responsible for publishing `map_projector_info` that defines in which kind of coordinate Autoware is operating.
-This is necessary information especially when you want to convert from global (geoid) to local coordinate or the other way around.
+`autoware_map_projection_loader` は、Autoware が動作する座標系を定義する `map_projector_info` をパブリッシュする役割を持ちます。
+これは、特に座標を地図（ジオイド）から局所座標に変換する場合、またはその逆を行う場合に必要です。
 
-- If `map_projector_info_path` DOES exist, this node loads it and publishes the map projection information accordingly.
-- If `map_projector_info_path` does NOT exist, the node assumes that you are using the `MGRS` projection type, and loads the lanelet2 map instead to extract the MGRS grid.
-  - **DEPRECATED WARNING: This interface that uses the lanelet2 map is not recommended. Please prepare the YAML file instead.**
+- `map_projector_info_path` が存在する場合、このノードはそれをロードしてそれに応じて地図投影情報をパブリッシュします。
+- `map_projector_info_path` が存在しない場合、ノードはあなたが `MGRS` 投影タイプを使用していることを想定し、代わりにレーンレット 2 マップをロードして MGRS グリッドを抽出します。
+  - **非推奨の警告: レーンレット 2 マップを使用するこのインターフェイスは推奨されません。代わりに YAML ファイルを準備してください。**
 
-## Map projector info file specification
+## 地図投影情報ファイルの仕様
 
-You need to provide a YAML file, namely `map_projector_info.yaml` under the `map_path` directory. For `pointcloud_map_metadata.yaml`, please refer to the Readme of `map_loader`.
+`map_path` ディレクトリに `map_projector_info.yaml` という名前の YAML ファイルを用意する必要があります。 `pointcloud_map_metadata.yaml` については、`map_loader` の Readme を参照してください。
+
 
 ```bash
 sample-map-rosbag
@@ -21,29 +22,32 @@ sample-map-rosbag
 └── pointcloud_map_metadata.yaml
 ```
 
-There are three types of transformations from latitude and longitude to XYZ coordinate system as shown in the figure below. Please refer to the following details for the necessary parameters for each projector type.
+緯度経度からXYZ座標系への変換は、次の図に示すように3種類あります。各プロジェクタータイプに必要なパラメータの詳細については、以下を参照してください。
 
 ![node_diagram](docs/map_projector_type.svg)
 
-### Using local coordinate
+### ローカル座標を使用
+
+
 
 ```yaml
 # map_projector_info.yaml
 projector_type: local
 ```
 
-#### Limitation
+#### 制限事項
 
-The functionality that requires latitude and longitude will become unavailable.
+経度と緯度を必要とする機能は利用できなくなります。
 
-The currently identified unavailable functionalities are:
+現在、利用できないことが判明している機能は次のとおりです。
 
-- GNSS localization
-- Sending the self-position in latitude and longitude using ADAPI
+- GNSS局所化
+- ADAPIを使用した経度と緯度での自車位置の送信
 
-### Using MGRS
+### MGRSの使用
 
-If you want to use MGRS, please specify the MGRS grid as well.
+MGRSを使用する場合は、MGRSグリッドも指定してください。
+
 
 ```yaml
 # map_projector_info.yaml
@@ -52,13 +56,14 @@ vertical_datum: WGS84
 mgrs_grid: 54SUE
 ```
 
-#### Limitation
+#### 制限
 
-It cannot be used with maps that span across two or more MGRS grids. Please use it only when it falls within the scope of a single MGRS grid.
+2つ以上のMGRSグリッドにまたがるマップでは使用できません。単一のMGRSグリッドの範囲内でのみ使用してください。
 
-### Using LocalCartesianUTM
+### LocalCartesianUTMを使用する場合
 
-If you want to use local cartesian UTM, please specify the map origin as well.
+ローカルカートシャンUTMを使用する場合は、マップの原点も指定してください。
+
 
 ```yaml
 # map_projector_info.yaml
@@ -70,9 +75,10 @@ map_origin:
   altitude: 0.0 # [m]
 ```
 
-### Using TransverseMercator
+#### TransverseMercatorの使用
 
-If you want to use Transverse Mercator projection, please specify the map origin as well.
+TransverseMercator投影を使用する場合は、マップ原点も指定してください。
+
 
 ```yaml
 # map_projector_info.yaml
@@ -84,12 +90,13 @@ map_origin:
   altitude: 0.0 # [m]
 ```
 
-## Published Topics
+## 送信トピック
 
-- `~/map_projector_info` (tier4_map_msgs/MapProjectorInfo) : This topic shows the definition of map projector information
+- `~/map_projector_info` (tier4\_map\_msgs/MapProjectorInfo): このトピックは、マッププロジェクターの定義情報を示します。
 
-## Parameters
+## パラメーター
 
-Note that these parameters are assumed to be passed from launch arguments, and it is not recommended to directly write them in `map_projection_loader.param.yaml`.
+これらのパラメーターは起動引数から渡されると想定されており、`map_projection_loader.param.yaml`に直接書き込むことを推奨しません。
 
 {{ json_to_markdown("map/autoware_map_projection_loader/schema/map_projection_loader.schema.json") }}
+

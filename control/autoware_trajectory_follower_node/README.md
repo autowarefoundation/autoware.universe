@@ -1,14 +1,15 @@
-# Trajectory Follower Nodes
+# 軌道追随ノード
 
-## Purpose
+## 目的
 
-Generate control commands to follow a given Trajectory.
+与えられた軌道に従う制御コマンドを生成します。
 
-## Design
+## 設計
 
-This is a node of the functionalities implemented in the controller class derived from [autoware_trajectory_follower_base](../autoware_trajectory_follower_base/README.md#trajectory-follower) package. It has instances of those functionalities, gives them input data to perform calculations, and publishes control commands.
+これは、[autoware_trajectory_follower_base](../autoware_trajectory_follower_base/README.md#trajectory-follower) パッケージから派生したコントローラクラスで実装された機能のノードです。これにはこれらの機能のインスタンスがあり、それらに計算を実行するための入力データを渡し、制御コマンドをパブリッシュします。
 
-By default, the controller instance with the `Controller` class as follows is used.
+デフォルトでは、次の `Controller` クラスのコントローラインスタンスが使用されます。
+
 
 ```plantuml
 @startuml
@@ -90,7 +91,8 @@ InputData ..> Controller
 @enduml
 ```
 
-The process flow of `Controller` class is as follows.
+`Controller` クラスのプロセスフローは次のとおりです。
+
 
 ```cpp
 // 1. create input data
@@ -118,39 +120,42 @@ lateral_controller_->sync(lon_out.sync_data);
 control_cmd_pub_->publish(out);
 ```
 
-Giving the longitudinal controller information about steer convergence allows it to control steer when stopped if following parameters are `true`
+自動運転ソフトウェアに関するドキュメント
 
-- lateral controller
+ステアリングの収束に関する情報を縦方向制御器に提供すると、次のパラメータが `true` の場合に停止中でもステアリングを制御できます。
+
+- 横方向制御器
   - `keep_steer_control_until_converged`
-- longitudinal controller
+- 縦方向制御器
   - `enable_keep_stopped_until_steer_convergence`
 
-### Inputs / Outputs / API
+### 入出力 / API
 
-#### Inputs
+#### 入力
 
-- `autoware_planning_msgs/Trajectory` : reference trajectory to follow.
-- `nav_msgs/Odometry`: current odometry
-- `autoware_vehicle_msgs/SteeringReport` current steering
+- `autoware_planning_msgs/Trajectory` : 追跡する基準経路
+- `nav_msgs/Odometry`: 現在のオドメトリ
+- `autoware_vehicle_msgs/SteeringReport` 現在のステアリング
 
-#### Outputs
+#### 出力
 
-- `autoware_control_msgs/Control`: message containing both lateral and longitudinal commands.
+- `autoware_control_msgs/Control`: 横方向および縦方向のコマンドを含むメッセージ
 
-#### Parameter
+#### パラメータ
 
-- `ctrl_period`: control commands publishing period
-- `timeout_thr_sec`: duration in second after which input messages are discarded.
-  - Each time the node receives lateral and longitudinal commands from each controller, it publishes an `Control` if the following two conditions are met.
-    1. Both commands have been received.
-    2. The last received commands are not older than defined by `timeout_thr_sec`.
-- `lateral_controller_mode`: `mpc` or `pure_pursuit`
-  - (currently there is only `PID` for longitudinal controller)
+- `ctrl_period`: 制御コマンドの発行周期
+- `timeout_thr_sec`: 入力メッセージが破棄されるまでの期間（秒）
+  - 各コントローラから横方向および縦方向のコマンドを受け取ると、次の2つの条件が満たされた場合に `Control` を発行します。
+    1. コマンドの両方が受信された。
+    2. 最新に受信したコマンドが `timeout_thr_sec` で定義された時間よりも古くない。
+- `lateral_controller_mode`: `mpc` または `pure_pursuit`
+  - （現在は縦方向制御器には `PID` のみを使用）
 
-## Debugging
+## デバッグ
 
-Debug information are published by the lateral and longitudinal controller using `tier4_debug_msgs/Float32MultiArrayStamped` messages.
+横方向および縦方向の制御器によるデバッグ情報は、`tier4_debug_msgs/Float32MultiArrayStamped` メッセージを使用して発行されます。
 
-A configuration file for [PlotJuggler](https://github.com/facontidavide/PlotJuggler) is provided in the `config` folder which, when loaded, allow to automatically subscribe and visualize information useful for debugging.
+[PlotJuggler](https://github.com/facontidavide/PlotJuggler) の設定ファイルが `config` フォルダに用意されており、読み込むとデバッグに役立つ情報を自動的に購読して視覚化できます。
 
-In addition, the predicted MPC trajectory is published on topic `output/lateral/predicted_trajectory` and can be visualized in Rviz.
+さらに、予測された MPC 経路が `output/lateral/predicted_trajectory` トピックに発行され、Rviz で視覚化できます。
+

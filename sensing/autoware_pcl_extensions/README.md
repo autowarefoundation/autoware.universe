@@ -1,35 +1,36 @@
 # autoware_pcl_extensions
 
-## Purpose
+## 目的
 
-The `autoware_pcl_extensions` is a pcl extension library. The voxel grid filter in this package works with a different algorithm than the original one.
+`autoware_pcl_extensions` は pcl 拡張ライブラリです。このパッケージ内のボクセルグリッドフィルターは、元のアルゴリズムとは異なるアルゴリズムで機能します。
 
-## Inner-workings / Algorithms
+## 内部機構 / アルゴリズム
 
-### Original Algorithm [1]
+### 元のアルゴリズム [1]
 
-1. create a 3D voxel grid over the input pointcloud data
-2. calculate centroid in each voxel
-3. all the points are approximated with their centroid
+1. 入力点群データの上に 3D ボクセルグリッドを作成します
+2. 各ボクセルの重心を計算します
+3. すべての点が重心で近似されます
 
-### Extended Algorithm
+### 拡張アルゴリズム
 
-1. create a 3D voxel grid over the input pointcloud data
-2. calculate centroid in each voxel
-3. **all the points are approximated with the closest point to their centroid**
+1. 入力点群データの上に 3D ボクセルグリッドを作成します
+2. 各ボクセルの重心を計算します
+3. **すべての点が重心への最も近い点で近似されます**
 
-## Inputs / Outputs
+## 入力 / 出力
 
-## Parameters
+## パラメータ
 
-## Assumptions / Known limits
+## 仮定 / 既知の制限事項
 
-## (Optional) Error detection and handling
+## （省略可）エラー検出および処理
 
-## (Optional) Performance characterization
+## （省略可）パフォーマンス特性
 
-## (Optional) References/External links
+## （省略可）参考文献 / 外部リンク
 
 [1] <https://pointclouds.org/documentation/tutorials/voxel_grid.html>
 
-## (Optional) Future extensions / Unimplemented parts
+## （省略可）将来の拡張 / 実装されていない部分
+

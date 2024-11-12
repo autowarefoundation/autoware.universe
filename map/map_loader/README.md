@@ -1,37 +1,37 @@
-# map_loader package
+## map_loader パッケージ
 
-This package provides the features of loading various maps.
+このパッケージは、さまざまなマップをロードする機能を提供します。
 
 ## pointcloud_map_loader
 
-### Feature
+### 機能
 
-`pointcloud_map_loader` provides pointcloud maps to the other Autoware nodes in various configurations.
-Currently, it supports the following two types:
+`pointcloud_map_loader` は、さまざまな構成でその他の Autoware ノードにポイントクラウド マップを提供します。
+現在、次の 2 つのタイプをサポートしています。
 
-- Publish raw pointcloud map
-- Publish downsampled pointcloud map
-- Send partial pointcloud map loading via ROS 2 service
-- Send differential pointcloud map loading via ROS 2 service
+- Raw ポイントクラウド マップを公開します
+- ダウンサンプリングされたポイントクラウド マップを公開します
+- ROS 2 サービス経由で一部ポイントクラウド マップのローディングを送信します
+- ROS 2 サービス経由で差分ポイントクラウド マップのローディングを送信します
 
-NOTE: **We strongly recommend to use divided maps when using large pointcloud map to enable the latter two features (partial and differential load). Please go through the prerequisites section for more details, and follow the instruction for dividing the map and preparing the metadata.**
+注意: **大規模ポイントクラウド マップを使用する場合、後者の 2 つの機能 (部分および差分ロード) を有効にするには分割されたマップを使用することを強くお勧めします。詳細は前提条件セクションを参照し、マップを分割してメタデータの準備に関する指示に従ってください。**
 
-### Prerequisites
+### 前提条件
 
-#### Prerequisites on pointcloud map file(s)
+#### ポイントクラウド マップ ファイルの前提条件
 
-You may provide either a single .pcd file or multiple .pcd files. If you are using multiple PCD data, it MUST obey the following rules:
+単一の .pcd ファイルまたは複数の .pcd ファイルを提供できます。複数の PCD データを使用する場合は、次のルールに従う必要があります。
 
-1. **The pointcloud map should be projected on the same coordinate defined in `map_projection_loader`**, in order to be consistent with the lanelet2 map and other packages that converts between local and geodetic coordinates. For more information, please refer to [the readme of `map_projection_loader`](https://github.com/autowarefoundation/autoware.universe/tree/main/map/autoware_map_projection_loader/README.md).
-2. **It must be divided by straight lines parallel to the x-axis and y-axis**. The system does not support division by diagonal lines or curved lines.
-3. **The division size along each axis should be equal.**
-4. **The division size should be about 20m x 20m.** Particularly, care should be taken as using too large division size (for example, more than 100m) may have adverse effects on dynamic map loading features in [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/autoware_ndt_scan_matcher) and [autoware_compare_map_segmentation](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/autoware_compare_map_segmentation).
-5. **All the split maps should not overlap with each other.**
-6. **Metadata file should also be provided.** The metadata structure description is provided below.
+1. **ポイントクラウド マップは、`map_projection_loader` で定義された同じ座標に投影する必要があります**。これは、車線マップと、局所座標と測地座標を変換する他のパッケージと整合性を保つためです。詳細については、[``map_projection_loader`` の README](https://github.com/autowarefoundation/autoware.universe/tree/main/map/autoware_map_projection_loader/README.md) を参照してください。
+2. **x 軸と y 軸に平行な直線で分割する必要があります**。このシステムは、対角線または曲線による分割をサポートしていません。
+3. **各軸に沿った分割サイズは等しくする必要があります**。特に、分割サイズが大きすぎる (たとえば、100 m 以上) 場合は、[ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/autoware_ndt_scan_matcher) と [autoware_compare_map_segmentation](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/autoware_compare_map_segmentation) の動的マップのローディング機能に悪影響を与える可能性があるため注意してください。
+4. **すべての分割マップは互いに重複しないようにする必要があります**。
+5. **メタデータ ファイルも提供する必要があります。**メタデータ構造の説明を以下に示します。
 
-#### Metadata structure
+#### メタデータ構造
 
-The metadata should look like this:
+メタデータは次のようになります。
+
 
 ```yaml
 x_resolution: 20.0
@@ -42,17 +42,26 @@ C.pcd: [1200, 2520] # -> 1200 < x < 1220, 2520 < y < 2540
 D.pcd: [1240, 2520] # -> 1240 < x < 1260, 2520 < y < 2540
 ```
 
-where,
+**点群マップのフォーマット**
 
-- `x_resolution` and `y_resolution`
-- `A.pcd`, `B.pcd`, etc, are the names of PCD files.
-- List such as `[1200, 2500]` are the values indicate that for this PCD file, x coordinates are between 1200 and 1220 (`x_resolution` + `x_coordinate`) and y coordinates are between 2500 and 2520 (`y_resolution` + `y_coordinate`).
+`open_planner.voxel_grid.VoxelGridConfig`を使用して、点群マップ`voxel grid`を作成します。詳細については、`open_planner.voxel_grid.VoxelGridConfig`のドキュメントを参照してください。
 
-You may use [pointcloud_divider](https://github.com/autowarefoundation/autoware_tools/tree/main/map/autoware_pointcloud_divider) for dividing pointcloud map as well as generating the compatible metadata.yaml.
+点群マップのフォーマットは次のとおりです。
 
-#### Directory structure of these files
+````
+<PCDファイル名>.pcd
+````
 
-If you only have one pointcloud map, Autoware will assume the following directory structure by default.
+- `x_resolution`と`y_resolution`
+- `A.pcd`, `B.pcd`などはPCDファイルの名前です。
+- `[1200, 2500]`などのリストは、このPCDファイルのx座標が1200～1220（`x_resolution` + `x_coordinate`）の間、y座標が2500～2520（`y_resolution` + `y_coordinate`）の間にあることを示す値です。
+
+点群マップを分割したり、互換性のある`metadata.yaml`を生成したりするには、[pointcloud_divider](https://github.com/autowarefoundation/autoware_tools/tree/main/map/autoware_pointcloud_divider)を使用できます。
+
+**これらのファイルのディレクトリ構造**
+
+点群マップが1つしかない場合、Autowareはデフォルトで次のディレクトリ構造を使用します。
+
 
 ```bash
 sample-map-rosbag
@@ -60,7 +69,8 @@ sample-map-rosbag
 ├── pointcloud_map.pcd
 ```
 
-If you have multiple rosbags, an example directory structure would be as follows. Note that you need to have a metadata when you have multiple pointcloud map files.
+複数ロズバッグがある場合は、次のようになります。マルチポイントクラウドマップファイルがある場合はメタデータを用意する必要があります。
+
 
 ```bash
 sample-map-rosbag
@@ -74,101 +84,98 @@ sample-map-rosbag
 └── pointcloud_map_metadata.yaml
 ```
 
-### Specific features
+### 固有の機能
 
-#### Publish raw pointcloud map (ROS 2 topic)
+#### 生の点群マップを公開（ROS 2トピック）
 
-The node publishes the raw pointcloud map loaded from the `.pcd` file(s).
+ノードは、`.pcd` ファイルから読み込まれた生の点群マップを公開します。`leaf_size` パラメーターを変更することで、ダウンサンプルの解像度を指定できます。
 
-#### Publish downsampled pointcloud map (ROS 2 topic)
+#### ダウンサンプルされた点群マップを公開（ROS 2トピック）
 
-The node publishes the downsampled pointcloud map loaded from the `.pcd` file(s). You can specify the downsample resolution by changing the `leaf_size` parameter.
+ノードは、`.pcd` ファイルから読み込まれたダウンサンプルされた点群マップを公開します。`leaf_size` パラメーターを変更することで、ダウンサンプルの解像度を指定できます。
 
-#### Publish metadata of pointcloud map (ROS 2 topic)
+#### 点群マップのメタデータを公開（ROS 2トピック）
 
-The node publishes the pointcloud metadata attached with an ID. Metadata is loaded from the `.yaml` file. Please see [the description of `PointCloudMapMetaData.msg`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#pointcloudmapmetadatamsg) for details.
+ノードは、IDが添付された点群メタデータを公開します。メタデータは `.yaml` ファイルから読み込まれます。詳細については、[PointCloudMapMetaData.msg の説明](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#pointcloudmapmetadatamsg) を参照してください。
 
-#### Send partial pointcloud map (ROS 2 service)
+#### 部分的な点群マップを送信（ROS 2サービス）
 
-Here, we assume that the pointcloud maps are divided into grids.
+ここでは、点群マップがグリッドに分割されていると仮定します。
 
-Given a query from a client node, the node sends a set of pointcloud maps that overlaps with the queried area.
-Please see [the description of `GetPartialPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getpartialpointcloudmapsrv) for details.
+クライアントノードからのクエリを受け取ると、ノードはクエリされた領域と重複する点群マップのセットを送信します。詳細については、[GetPartialPointCloudMap.srv の説明](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getpartialpointcloudmapsrv) を参照してください。
 
-#### Send differential pointcloud map (ROS 2 service)
+#### 差分点群マップを送信（ROS 2サービス）
 
-Here, we assume that the pointcloud maps are divided into grids.
+ここでは、点群マップがグリッドに分割されていると仮定します。
 
-Given a query and set of map IDs, the node sends a set of pointcloud maps that overlap with the queried area and are not included in the set of map IDs.
-Please see [the description of `GetDifferentialPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getdifferentialpointcloudmapsrv) for details.
+クエリとマップIDのセットを受け取ると、ノードはクエリされた領域と重複し、マップIDのセットに含まれていない点群マップのセットを送信します。詳細については、[GetDifferentialPointCloudMap.srv の説明](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getdifferentialpointcloudmapsrv) を参照してください。
 
-#### Send selected pointcloud map (ROS 2 service)
+#### 選択された点群マップを送信（ROS 2サービス）
 
-Here, we assume that the pointcloud maps are divided into grids.
+ここでは、点群マップがグリッドに分割されていると仮定します。
 
-Given IDs query from a client node, the node sends a set of pointcloud maps (each of which attached with unique ID) specified by query.
-Please see [the description of `GetSelectedPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getselectedpointcloudmapsrv) for details.
+クライアントノードからのクエリを受け取ると、ノードはクエリによって指定された一意のIDが添付された点群マップのセットを送信します。詳細については、[GetSelectedPointCloudMap.srv の説明](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getselectedpointcloudmapsrv) を参照してください。
 
-### Parameters
+### パラメーター
 
 {{ json_to_markdown("map/map_loader/schema/pointcloud_map_loader.schema.json") }}
 
-### Interfaces
+### インターフェース
 
-- `output/pointcloud_map` (sensor_msgs/msg/PointCloud2) : Raw pointcloud map
-- `output/pointcloud_map_metadata` (autoware_map_msgs/msg/PointCloudMapMetaData) : Metadata of pointcloud map
-- `output/debug/downsampled_pointcloud_map` (sensor_msgs/msg/PointCloud2) : Downsampled pointcloud map
-- `service/get_partial_pcd_map` (autoware_map_msgs/srv/GetPartialPointCloudMap) : Partial pointcloud map
-- `service/get_differential_pcd_map` (autoware_map_msgs/srv/GetDifferentialPointCloudMap) : Differential pointcloud map
-- `service/get_selected_pcd_map` (autoware_map_msgs/srv/GetSelectedPointCloudMap) : Selected pointcloud map
-- pointcloud map file(s) (.pcd)
-- metadata of pointcloud map(s) (.yaml)
+- `output/pointcloud_map`（sensor_msgs/msg/PointCloud2）：生の点群マップ
+- `output/pointcloud_map_metadata`（autoware_map_msgs/msg/PointCloudMapMetaData）：点群マップのメタデータ
+- `output/debug/downsampled_pointcloud_map`（sensor_msgs/msg/PointCloud2）：ダウンサンプルされた点群マップ
+- `service/get_partial_pcd_map`（autoware_map_msgs/srv/GetPartialPointCloudMap）：部分的な点群マップ
+- `service/get_differential_pcd_map`（autoware_map_msgs/srv/GetDifferentialPointCloudMap）：差分点群マップ
+- `service/get_selected_pcd_map`（autoware_map_msgs/srv/GetSelectedPointCloudMap）：選択された点群マップ
+- 点群マップファイル（.pcd）
+- 点群マップのメタデータ（.yaml）
 
 ---
 
 ## lanelet2_map_loader
 
-### Feature
+### 特徴
 
-lanelet2_map_loader loads Lanelet2 file and publishes the map data as autoware_map_msgs/LaneletMapBin message.
-The node projects lan/lon coordinates into arbitrary coordinates defined in `/map/map_projector_info` from `map_projection_loader`.
-Please see [tier4_autoware_msgs/msg/MapProjectorInfo.msg](https://github.com/tier4/tier4_autoware_msgs/blob/tier4/universe/tier4_map_msgs/msg/MapProjectorInfo.msg) for supported projector types.
+lanelet2_map_loaderはLanelet2ファイルを読み込み、マップデータをautoware_map_msgs/LaneletMapBinメッセージとして公開します。
+このノードは、`map_projection_loader`からの`/map/map_projector_info`で定義された任意の座標系にlan/lon座標を投影します。
 
-### How to run
+### 実行方法
 
 `ros2 run map_loader lanelet2_map_loader --ros-args -p lanelet2_map_path:=path/to/map.osm`
 
-### Subscribed Topics
+### サブスクライブするトピック
 
-- ~input/map_projector_info (tier4_map_msgs/MapProjectorInfo) : Projection type for Autoware
+- ~input/map_projector_info (tier4_map_msgs/MapProjectorInfo) : Autowareの射影タイプ
 
-### Published Topics
+### パブリッシュするトピック
 
-- ~output/lanelet2_map (autoware_map_msgs/LaneletMapBin) : Binary data of loaded Lanelet2 Map
+- ~output/lanelet2_map (autoware_map_msgs/LaneletMapBin) : ロードされたLanelet2マップのバイナリデータ
 
-### Parameters
+### パラメーター
 
 {{ json_to_markdown("map/map_loader/schema/lanelet2_map_loader.schema.json") }}
 
-`use_waypoints` decides how to handle a centerline.
-This flag enables to use the `overwriteLaneletsCenterlineWithWaypoints` function instead of `overwriteLaneletsCenterline`. Please see [the document of the autoware_lanelet2_extension package](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md#centerline) in detail.
+`use_waypoints`はセンターラインの処理方法を決定します。
+このフラグは、`overwriteLaneletsCenterline`ではなく`overwriteLaneletsCenterlineWithWaypoints`関数を使用できます。詳細は [autoware_lanelet2_extensionパッケージのドキュメント](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md#centerline) を参照してください。
 
 ---
 
 ## lanelet2_map_visualization
 
-### Feature
+### 機能
 
-lanelet2_map_visualization visualizes autoware_map_msgs/LaneletMapBin messages into visualization_msgs/MarkerArray.
+lanelet2_map_visualizationは、autoware_map_msgs/LaneletMapBinメッセージをvisualization_msgs/MarkerArrayに可視化します。
 
-### How to Run
+### 実行方法
 
 `ros2 run map_loader lanelet2_map_visualization`
 
-### Subscribed Topics
+### サブスクライブするトピック
 
-- ~input/lanelet2_map (autoware_map_msgs/LaneletMapBin) : binary data of Lanelet2 Map
+- ~input/lanelet2_map (autoware_map_msgs/LaneletMapBin) : Lanelet2マップのバイナリデータ
 
-### Published Topics
+### パブリッシュするトピック
 
-- ~output/lanelet2_map_marker (visualization_msgs/MarkerArray) : visualization messages for RViz
+- ~output/lanelet2_map_marker (visualization_msgs/MarkerArray) : RViz用の可視化メッセージ
+

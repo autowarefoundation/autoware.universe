@@ -1,14 +1,14 @@
 # Perception Evaluator
 
-A node for evaluating the output of perception systems.
+知覚システムの出力評価用ノードです。
 
-## Purpose
+## 目的
 
-This module allows for the evaluation of how accurately perception results are generated without the need for annotations. It is capable of confirming performance and can evaluate results from a few seconds prior, enabling online execution.
+このモジュールでは、アノテーションなしで知覚結果がどれだけ正確に生成されているかを評価できます。性能を確認でき、数秒前の結果を評価してオンライン実行を可能にします。
 
-## Inner-workings / Algorithms
+## 仕組み / アルゴリズム
 
-The evaluated metrics are as follows:
+評価されるメトリクスは次のとおりです。
 
 - predicted_path_deviation
 - predicted_path_deviation_variance
@@ -19,12 +19,12 @@ The evaluated metrics are as follows:
 - average_objects_count
 - interval_objects_count
 
-### Predicted Path Deviation / Predicted Path Deviation Variance
+### predicted_path_deviation / predicted_path_deviation_variance
 
-Compare the predicted path of past objects with their actual traveled path to determine the deviation for **MOVING OBJECTS**. For each object, calculate the mean distance between the predicted path points and the corresponding points on the actual path, up to the specified time step. In other words, this calculates the Average Displacement Error (ADE). The target object to be evaluated is the object from $T_N$ seconds ago, where $T_N$ is the maximum value of the prediction time horizon $[T_1, T_2, ..., T_N]$.
+過去のオブジェクトの予測経路と実際の移動経路を比較して、**移動中のオブジェクト**の逸脱量を算出します。各オブジェクトについて、予測経路のポイントと実際の経路の対応するポイント間の平均距離を、指定された時間ステップまで計算します。言い換えると、平均変位誤差（ADE）を計算します。評価対象のオブジェクトは $T_N$ 秒前のオブジェクトで、$T_N$ は予測時間幅 $[T_1, T_2, ..., T_N]$ の最大値です。
 
 > [!NOTE]
-> The object from $T_N$ seconds ago is the target object for all metrics. This is to unify the time of the target object across metrics.
+> $T_N$ 秒前のオブジェクトは、すべてのメトリクスで対象オブジェクトです。これは、メトリクス全体で対象オブジェクトの時間を統一するためです。
 
 ![path_deviation_each_object](./images/path_deviation_each_object.drawio.svg)
 
@@ -36,14 +36,14 @@ Var = \Sigma_{i=1}^{n_{points}} (d_i - ADE)^2 / n_{points}
 \end{align}
 $$
 
-- $n_{points}$ : Number of points in the predicted path
-- $T$ : Time horizon for prediction evaluation.
-- $dt$ : Time interval of the predicted path
-- $d_i$ : Distance between the predicted path and the actual traveled path at path point $i$
-- $ADE$ : Mean deviation of the predicted path for the target object.
-- $Var$ : Variance of the predicted path deviation for the target object.
+- $n_{points}$ : 予測経路のポイント数
+- $T$ : 予測評価の時間幅。
+- $dt$ : 予測経路の時間間隔
+- $d_i$ : 経路ポイント $i$ での予測経路と実際の移動経路との距離
+- $ADE$ : 対象オブジェクトの予測経路の平均逸脱量。
+- $Var$ : 対象オブジェクトの予測経路逸脱量の分散。
 
-The final predicted path deviation metrics are calculated by averaging the mean deviation of the predicted path for all objects of the same class, and then calculating the mean, maximum, and minimum values of the mean deviation.
+最終的な予測経路逸脱量のメトリクスは、同じクラスのすべてのオブジェクトの予測経路の平均逸脱量を平均して計算した後、その平均逸脱量の平均、最大、最小値を計算します。
 
 ![path_deviation](./images/path_deviation.drawio.svg)
 
@@ -55,141 +55,139 @@ ADE_{min} = min(ADE_j)
 \end{align}
 $$
 
-$$
-\begin{align}
-Var_{mean} = \Sigma_{j=1}^{n_{objects}} Var_j / n_{objects} \\
 Var_{max} = max(Var_j) \\
 Var_{min} = min(Var_j)
 \end{align}
 $$
 
-- $n_{objects}$ : Number of objects
-- $ADE_{mean}$ : Mean deviation of the predicted path through all objects
-- $ADE_{max}$ : Maximum deviation of the predicted path through all objects
-- $ADE_{min}$ : Minimum deviation of the predicted path through all objects
-- $Var_{mean}$ : Mean variance of the predicted path deviation through all objects
-- $Var_{max}$ : Maximum variance of the predicted path deviation through all objects
-- $Var_{min}$ : Minimum variance of the predicted path deviation through all objects
+- $n_{objects}$: オブジェクト数
+- $ADE_{mean}$: すべてのオブジェクトを通じた予測パスの平均偏差
+- $ADE_{max}$: すべてのオブジェクトを通じた予測パスの最大偏差
+- $ADE_{min}$: すべてのオブジェクトを通じた予測パスの最小偏差
+- $Var_{mean}$: すべてのオブジェクトを通じた予測パス偏差の平均分散
+- $Var_{max}$: すべてのオブジェクトを通じた予測パス偏差の最大分散
+- $Var_{min}$: すべてのオブジェクトを通じた予測パス偏差の最小分散
 
-The actual metric name is determined by the object class and time horizon. For example, `predicted_path_deviation_variance_CAR_5.00`
+実際の指標名は、オブジェクトクラスと時間視野によって決まります。たとえば、`predicted_path_deviation_variance_CAR_5.00`
 
-### Lateral Deviation
+### 横偏差
 
-Calculates lateral deviation between the smoothed traveled trajectory and the perceived position to evaluate the stability of lateral position recognition for **MOVING OBJECTS**. The smoothed traveled trajectory is calculated by applying a centered moving average filter whose window size is specified by the parameter `smoothing_window_size`. The lateral deviation is calculated by comparing the smoothed traveled trajectory with the perceived position of the past object whose timestamp is $T=T_n$ seconds ago. For stopped objects, the smoothed traveled trajectory is unstable, so this metric is not calculated.
+**移動オブジェクト**の安定性を評価するために、滑らかな走行軌跡と認識された位置の横偏差を計算します。滑らかな走行軌跡は、パラメータ`smoothing_window_size`で指定されたウィンドウサイズを持つ中央移動平均フィルタをかけることで計算されます。横偏差は、`T`秒前のタイムスタンプを持つ過去のオブジェクトの認識された位置と、滑らかな走行軌跡を比較することで計算されます。停止しているオブジェクトでは、滑らかな走行軌跡が不安定なため、この指標は計算されません。
 
 ![lateral_deviation](./images/lateral_deviation.drawio.svg)
 
-### Yaw Deviation
+### ヨー偏差
 
-Calculates the deviation between the recognized yaw angle of an past object and the yaw azimuth angle of the smoothed traveled trajectory for **MOVING OBJECTS**. The smoothed traveled trajectory is calculated by applying a centered moving average filter whose window size is specified by the parameter `smoothing_window_size`. The yaw deviation is calculated by comparing the yaw azimuth angle of smoothed traveled trajectory with the perceived orientation of the past object whose timestamp is $T=T_n$ seconds ago.
-For stopped objects, the smoothed traveled trajectory is unstable, so this metric is not calculated.
+**移動オブジェクト**の過去のオブジェクトの認識されたヨー角と、滑らかな走行軌跡のヨー方位角の偏差を計算します。滑らかな走行軌跡は、パラメータ`smoothing_window_size`で指定されたウィンドウサイズを持つ中央移動平均フィルタをかけることで計算されます。ヨー偏差は、`T`秒前のタイムスタンプを持つ過去のオブジェクトの認識された向きと滑らかな走行軌跡のヨー方位角を比較することで計算されます。
+停止しているオブジェクトでは、滑らかな走行軌跡が不安定なため、この指標は計算されません。
 
 ![yaw_deviation](./images/yaw_deviation.drawio.svg)
 
-### Yaw Rate
+### ヨーレート
 
-Calculates the yaw rate of an object based on the change in yaw angle from the previous time step. It is evaluated for **STATIONARY OBJECTS** and assesses the stability of yaw rate recognition. The yaw rate is calculated by comparing the yaw angle of the past object with the yaw angle of the object received in the previous cycle. Here, t2 is the timestamp that is $T_n$ seconds ago.
+前回のタイムステップからのヨー角の変化に基づいて、オブジェクトのヨーレートを計算します。**静止オブジェクト**で評価され、ヨーレート認識の安定性を評価します。ヨーレートは、過去のオブジェクトのヨー角と、前回のサイクルで受信されたオブジェクトのヨー角を比較することで計算されます。ここで、t2は`T_n`秒前のタイムスタンプです。
 
 ![yaw_rate](./images/yaw_rate.drawio.svg)
 
-### Object Counts
+### オブジェクトカウント
 
-Counts the number of detections for each object class within the specified detection range. These metrics are measured for the most recent object not past objects.
+指定された検出範囲内の各オブジェクトクラスの検出数をカウントします。これらの指標は最新のオブジェクトに対して測定され、過去のオブジェクトではありません。
 
 ![detection_counts](./images/detection_counts.drawio.svg)
 
-In the provided illustration, the range $R$ is determined by a combination of lists of radii (e.g., $r_1, r_2, \ldots$) and heights (e.g., $h_1, h_2, \ldots$).
-For example,
+図では、範囲`R`は半径のリスト（例：`r_1, r_2, ...`）と高さのリスト（例：`h_1, h_2, ...`）の組み合わせによって決まります。
+たとえば、
 
-- the number of CAR in range $R = (r_1, h_1)$ equals 1
-- the number of CAR in range $R = (r_1, h_2)$ equals 2
-- the number of CAR in range $R = (r_2, h_1)$ equals 3
-- the number of CAR in range $R = (r_2, h_2)$ equals 4
+- 範囲の`R = (r_1, h_1)`のCARの数は1
+- 範囲の`R = (r_1, h_2)`のCARの数は2
+- 範囲の`R = (r_2, h_1)`のCARの数は3
+- 範囲の`R = (r_2, h_2)`のCARの数は4
 
-#### Total Object Count
+#### 全オブジェクトカウント
 
-Counts the number of unique objects for each class within the specified detection range. The total object count is calculated as follows:
-
-$$
-\begin{align}
-\text{Total Object Count (Class, Range)} = \left| \bigcup_{t=0}^{T_{\text{now}}} \{ \text{uuid} \mid \text{class}(t, \text{uuid}) = C \wedge \text{position}(t, \text{uuid}) \in R \} \right|
-\end{align}
-$$
-
-where:
-
-- $\bigcup$ represents the union across all frames from $t = 0$ to $T_{\text{now}}$, which ensures that each uuid is counted only once.
-- $\text{class}(t, \text{uuid}) = C$ specifies that the object with uuid at time $t$ belongs to class $C$.
-- $\text{position}(t, \text{uuid}) \in R$ indicates that the object with uuid at time $t$ is within the specified range $R$.
-- $\left| \{ \ldots \} \right|$ denotes the cardinality of the set, which counts the number of unique uuids that meet the class and range criteria across all considered times.
-
-#### Average Object Count
-
-Counts the average number of objects for each class within the specified detection range. This metric measures how many objects were detected in one frame, without considering uuids. The average object count is calculated as follows:
+指定された検出範囲内の各クラスの一意のオブジェクトの数をカウントします。全オブジェクトカウントは次のように計算されます。
 
 $$
 \begin{align}
-\text{Average Object Count (Class, Range)} = \frac{1}{N} \sum_{t=0}^{T_{\text{now}}} \left| \{ \text{object} \mid \text{class}(t, \text{object}) = C \wedge \text{position}(t, \text{object}) \in R \} \right|
+\text{全オブジェクトカウント (クラス、範囲)} & = \left| \bigcup_{t=0}^{T_{\text{now}}} \{ \text{uuid} \mid \text{class}(t, \text{uuid}) = C \wedge \text{position}(t, \text{uuid}) \in R \} \right|
 \end{align}
 $$
 
-where:
+ここで、
 
-- $N$ represents the total number of frames within the time period time to $T\_{\text{now}}$ (it is precisely `detection_count_purge_seconds`)
-- $text{object}$ denotes the number of objects that meet the class and range criteria at time $t$.
+- $\bigcup$ は、$t = 0$ から $T_{\text{now}}$ までのすべてのフレームにおける結合を表し、各 uuid が一度のみカウントされるようにします。
+- $\text{class}(t, \text{uuid}) = C$ は、時刻 $t$ で uuid を持つオブジェクトがクラス $C$ に属することを示します。
+- $\text{position}(t, \text{uuid}) \in R$ は、時刻 $t$ に uuid を持つオブジェクトが指定範囲 $R$ 内にあることを示します。
+- $\left| \{ \ldots \} \right|$ は集合の濃度を示し、すべての考慮対象時間でクラスと範囲の基準を満たすすべての固有 uuid の数をカウントします。
 
-#### Interval Object Count
+#### 平均オブジェクト数
 
-Counts the average number of objects for each class within the specified detection range over the last `objects_count_window_seconds`. This metric measures how many objects were detected in one frame, without considering uuids. The interval object count is calculated as follows:
+指定された検出範囲内の各クラスのオブジェクトの平均数をカウントします。この指標は、uuid を考慮せずに 1 フレームで検出されたオブジェクトの数を測定します。平均オブジェクト数は次のように計算されます。
 
 $$
 \begin{align}
-\text{Interval Object Count (Class, Range)} = \frac{1}{W} \sum_{t=T_{\text{now}} - T_W}^{T_{\text{now}}} \left| \{ \text{object} \mid \text{class}(t, \text{object}) = C \wedge \text{position}(t, \text{object}) \in R \} \right|
+\text{平均オブジェクト数(クラス、範囲)} = \frac{1}{N} \sum_{t=0}^{T_{\text{now}}} \left| \{ \text{object} \mid \text{class}(t, \text{object}) = C \wedge \text{position}(t, \text{object}) \in R \} \right|
 \end{align}
 $$
 
-where:
+ここで、
 
-- $W$ represents the total number of frames within the last `objects_count_window_seconds`.
-- $T_W$ represents the time window `objects_count_window_seconds`
+- $N$ は時間間隔 $T\_{\text{now}}$ までのフレームの総数を表します（正確には `detection_count_purge_seconds`）。
+- $text{object}$ は、時刻 $t$ でクラスと範囲の基準を満たすオブジェクトの数を表します。
 
-## Inputs / Outputs
+#### 区間オブジェクト数
 
-| Name              | Type                                              | Description                                       |
-| ----------------- | ------------------------------------------------- | ------------------------------------------------- |
-| `~/input/objects` | `autoware_perception_msgs::msg::PredictedObjects` | The predicted objects to evaluate.                |
-| `~/metrics`       | `diagnostic_msgs::msg::DiagnosticArray`           | Diagnostic information about perception accuracy. |
-| `~/markers`       | `visualization_msgs::msg::MarkerArray`            | Visual markers for debugging and visualization.   |
+最後の `objects_count_window_seconds` において、指定された検出範囲内の各クラスのオブジェクトの平均数をカウントします。この指標は、uuid を考慮せずに 1 フレームで検出されたオブジェクトの数を測定します。区間オブジェクト数は次のように計算されます。
 
-## Parameters
+$$
+\begin{align}
+\text{区間オブジェクト数(クラス、範囲)} = \frac{1}{W} \sum_{t=T_{\text{now}} - T_W}^{T_{\text{now}}} \left| \{ \text{object} \mid \text{class}(t, \text{object}) = C \wedge \text{position}(t, \text{object}) \in R \} \right|
+\end{align}
+$$
 
-| Name                                                   | Type         | Description                                                                                                                                     |
+ここで、
+
+- $W$ は最後の `objects_count_window_seconds` 内のフレームの総数を表します。
+- $T_W$ は時間窓 `objects_count_window_seconds` を表します。
+
+## 入出力
+
+| 名前              | タイプ                                              | 説明                                            |
+| ----------------- | ------------------------------------------------- | ----------------------------------------------- |
+| `~/input/objects` | `autoware_perception_msgs::msg::PredictedObjects` | 評価する予測オブジェクト                         |
+| `~/metrics`       | `diagnostic_msgs::msg::DiagnosticArray`           | 知覚精度の診断情報                            |
+| `~/markers`       | `visualization_msgs::msg::MarkerArray`            | デバッグと視覚化のためのビジュアルマーカー      |
+
+## パラメータ
+
+| 名称                                                    | 型         | 説明                                                                                                                                      |
 | ------------------------------------------------------ | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `selected_metrics`                                     | List         | Metrics to be evaluated, such as lateral deviation, yaw deviation, and predicted path deviation.                                                |
-| `smoothing_window_size`                                | Integer      | Determines the window size for smoothing path, should be an odd number.                                                                         |
-| `prediction_time_horizons`                             | list[double] | Time horizons for prediction evaluation in seconds.                                                                                             |
-| `stopped_velocity_threshold`                           | double       | threshold velocity to check if vehicle is stopped                                                                                               |
-| `detection_radius_list`                                | list[double] | Detection radius for objects to be evaluated.(used for objects count only)                                                                      |
-| `detection_height_list`                                | list[double] | Detection height for objects to be evaluated. (used for objects count only)                                                                     |
-| `detection_count_purge_seconds`                        | double       | Time window for purging object detection counts.                                                                                                |
-| `objects_count_window_seconds`                         | double       | Time window for keeping object detection counts. The number of object detections within this time window is stored in `detection_count_vector_` |
-| `target_object.*.check_lateral_deviation`              | bool         | Whether to check lateral deviation for specific object types (car, truck, etc.).                                                                |
-| `target_object.*.check_yaw_deviation`                  | bool         | Whether to check yaw deviation for specific object types (car, truck, etc.).                                                                    |
-| `target_object.*.check_predicted_path_deviation`       | bool         | Whether to check predicted path deviation for specific object types (car, truck, etc.).                                                         |
-| `target_object.*.check_yaw_rate`                       | bool         | Whether to check yaw rate for specific object types (car, truck, etc.).                                                                         |
-| `target_object.*.check_total_objects_count`            | bool         | Whether to check total object count for specific object types (car, truck, etc.).                                                               |
-| `target_object.*.check_average_objects_count`          | bool         | Whether to check average object count for specific object types (car, truck, etc.).                                                             |
-| `target_object.*.check_interval_average_objects_count` | bool         | Whether to check interval average object count for specific object types (car, truck, etc.).                                                    |
-| `debug_marker.*`                                       | bool         | Debugging parameters for marker visualization (history path, predicted path, etc.).                                                             |
+| `selected_metrics`                                     | リスト         | 横逸脱量、ヨー逸脱量、予測経路逸脱量などの評価する指標。                                                                                   |
+| `smoothing_window_size`                                | 整数      | 経路の平滑化のためのウィンドウサイズを決定し、奇数にする必要があります。                                                                  |
+| `prediction_time_horizons`                             | doubleリスト | 秒単位の予測評価のためのタイムホライゾン。                                                                                                 |
+| `stopped_velocity_threshold`                           | double       | 車両の停止を確認するためのしきい値速度。                                                                                                  |
+| `detection_radius_list`                                | doubleリスト | 評価対象のオブジェクトの検出半径。（オブジェクトカウント専用）                                                                               |
+| `detection_height_list`                                | doubleリスト | 評価対象のオブジェクトの検出高さ。（オブジェクトカウント専用）                                                                                |
+| `detection_count_purge_seconds`                        | double       | オブジェクト検出カウントを削除するためのタイムウィンドウ。                                                                                   |
+| `objects_count_window_seconds`                         | double       | オブジェクト検出カウントを保持するためのタイムウィンドウ。このタイムウィンドウ内のオブジェクト検出数は `detection_count_vector_` に保存されます。 |
+| `target_object.*.check_lateral_deviation`              | ブール値       | 特定のオブジェクトの種類（車、トラックなど）の横逸脱を確認するかどうか。                                                                   |
+| `target_object.*.check_yaw_deviation`                  | ブール値       | 特定のオブジェクトの種類（車、トラックなど）のヨー逸脱を確認するかどうか。                                                                 |
+| `target_object.*.check_predicted_path_deviation`       | ブール値       | 特定のオブジェクトの種類（車、トラックなど）の予測経路逸脱を確認するかどうか。                                                            |
+| `target_object.*.check_yaw_rate`                       | ブール値       | 特定のオブジェクトの種類（車、トラックなど）のヨーレートを確認するかどうか。                                                               |
+| `target_object.*.check_total_objects_count`            | ブール値       | 特定のオブジェクトの種類（車、トラックなど）の合計オブジェクト数をチェックするかどうか。                                                    |
+| `target_object.*.check_average_objects_count`          | ブール値       | 特定のオブジェクトの種類（車、トラックなど）の平均オブジェクト数をチェックするかどうか。                                                  |
+| `target_object.*.check_interval_average_objects_count` | ブール値       | 特定のオブジェクトの種類（車、トラックなど）の区間平均オブジェクト数をチェックするかどうか。                                               |
+| `debug_marker.*`                                       | ブール値       | マーカー可視化（履歴パス、予測パスなど）のデバッグパラメーター。                                                                             |
 
-## Assumptions / Known limits
+## 仮定 / 既知の制限
 
-It is assumed that the current positions of PredictedObjects are reasonably accurate.
+予測オブジェクトの現在の位置は、おおむね正確であると想定されています。
 
-## Future extensions / Unimplemented parts
+## 将来の拡張 / 未実装部分
 
-- Increase rate in recognition per class
-- Metrics for objects with strange physical behavior (e.g., going through a fence)
-- Metrics for splitting objects
-- Metrics for problems with objects that are normally stationary but move
-- Disappearing object metrics
+- クラスごとの認識率を向上
+- 異常な物理的挙動を示すオブジェクトのメトリクス（例：フェンスを突き抜ける）
+- オブジェクトの分割に対するメトリクス
+- 通常は静止しているが移動するオブジェクトに対するメトリクス
+- 消滅したオブジェクトのメトリクス
+

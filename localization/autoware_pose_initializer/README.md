@@ -1,72 +1,103 @@
 # autoware_pose_initializer
 
-## Purpose
+## 目的
 
-The `autoware_pose_initializer` is the package to send an initial pose to `ekf_localizer`.
-It receives roughly estimated initial pose from GNSS/user.
-Passing the pose to `ndt_scan_matcher`, and it gets a calculated ego pose from `ndt_scan_matcher` via service.
-Finally, it publishes the initial pose to `ekf_localizer`.
-This node depends on the map height fitter library.
-[See here for more details.](../../map/autoware_map_height_fitter/README.md)
+`autoware_pose_initializer` は `ekf_localizer` に初期ポーズを送信するパッケージです。GNSS/ユーザーから初期ポーズの概算値を受け取ります。このポーズを `ndt_scan_matcher` に渡すと、`ndt_scan_matcher` がサービス経由で計算した自車位置を取得します。最後に、初期ポーズを `ekf_localizer` にパブリッシュします。このノードは、地図高さフィッターライブラリに依存しています。[詳細はこちらを参照してください。](../../map/autoware_map_height_fitter/README.md)
 
-## Interfaces
+## インターフェイス
 
-### Parameters
+### パラメータ
 
 {{ json_to_markdown("localization/autoware_pose_initializer/schema/pose_initializer.schema.json") }}
 
-### Services
+### サービス
 
-| Name                       | Type                                                 | Description           |
-| -------------------------- | ---------------------------------------------------- | --------------------- |
-| `/localization/initialize` | tier4_localization_msgs::srv::InitializeLocalization | initial pose from api |
+| 名前                      | タイプ                                                 | 説明                  |
+| -------------------------- | ---------------------------------------------------- | ----------------------- |
+| `/localization/initialize` | tier4_localization_msgs::srv::InitializeLocalization | APIからの初期位置       |
 
-### Clients
+### クライアント
 
-| Name                                         | Type                                                    | Description             |
-| -------------------------------------------- | ------------------------------------------------------- | ----------------------- |
-| `/localization/pose_estimator/ndt_align_srv` | tier4_localization_msgs::srv::PoseWithCovarianceStamped | pose estimation service |
+| 名称                                       | タイプ                                                   | 説明                       |
+| --------------------------------------- | --------------------------------------------------------- | ------------------------- |
+| `/localization/pose_estimator/ndt_align_srv` | tier4_localization_msgs::srv::PoseWithCovarianceStamped | 位推定サービス            |
 
-### Subscriptions
+### サブスクリプション
 
-| Name                                                        | Type                                          | Description          |
-| ----------------------------------------------------------- | --------------------------------------------- | -------------------- |
-| `/sensing/gnss/pose_with_covariance`                        | geometry_msgs::msg::PoseWithCovarianceStamped | pose from gnss       |
-| `/sensing/vehicle_velocity_converter/twist_with_covariance` | geometry_msgs::msg::TwistStamped              | twist for stop check |
 
-### Publications
 
-| Name                                 | Type                                                         | Description                 |
+| 名称 | タイプ | 説明 |
+|---|---|---|
+| `/sensing/gnss/pose_with_covariance` | geometry_msgs::msg::PoseWithCovarianceStamped | GNSSから取得した自車位置 |
+| `/sensing/vehicle_velocity_converter/twist_with_covariance` | geometry_msgs::msg::TwistStamped | 停止確認用の速度 |
+
+### 論文
+
+### Autoware の技術スタック
+Autoware は、自動運転車両の開発と実装のためのオープンソースソフトウェアプラットフォームです。以下に、主なコンポーネントとモジュールをリストします。
+
+#### Planning
+* **Motion Planning:** 車両の安全で効率的な経路を生成します。
+* **Behavior Planning:** 車両の挙動を決定し、障害物回避や速度調整を行います。
+
+#### Perception
+* **Object Detection (2D/3D):** センサーからのデータを使用して、車両周辺の物体（歩行者、車両、障害物など）を検出します。
+* **Lane Detection:** カメラ画像を使用して、道路上の車線を検出します。
+* **Free Space Estimation:** 車両周辺の走行可能な領域を推定します。
+
+#### Control
+* **Longitudinal Control:** 車両の縦方向運動（加速度、減速度）を制御します。
+* **Lateral Control:** 車両の横方向運動（ステアリング）を制御します。
+* **Path Tracking:** 生成されたパスに従って車両を誘導します。
+
+#### Localization
+* **Odometry:** IMUやGNSSなどのセンサーを使用して、自車位置を推定します。
+* **Mapping:** 環境の地図を作成し、自車位置をローカライズするために使用します。
+* **Loop Closure Detection:** 地図内のループを検出し、ローカライゼーションの精度を向上させます。
+
+#### Sensor Interface
+* **Sensor Fusion:** 複数のセンサーからのデータを統合し、より正確で堅牢な認識情報を作成します。
+* **'Post Resampling' Sensor Fusion:** センサーデータの処理を最適化して、リアルタイムパフォーマンスを向上させます。
+
+#### Software Architecture
+* **ROS 2:** Autoware のコアアーキテクチャとして使用される、堅牢でスケーラブルなミドルウェア。
+* **DDS:** データをリアルタイムで配信するための高性能ミドルウェア。
+* **Python:** スクリプティングや構成に使用されます。
+* **C++:** リアルタイムコンポーネントやカーネルモジュールに使用されます。
+
+| 名称                                 | 型                                                         | 説明                 |
 | ------------------------------------ | ------------------------------------------------------------ | --------------------------- |
-| `/localization/initialization_state` | autoware_adapi_v1_msgs::msg::LocalizationInitializationState | pose initialization state   |
-| `/initialpose3d`                     | geometry_msgs::msg::PoseWithCovarianceStamped                | calculated initial ego pose |
-| `/diagnostics`                       | diagnostic_msgs::msg::DiagnosticArray                        | diagnostics                 |
+| `/localization/initialization_state` | autoware_adapi_v1_msgs::msg::LocalizationInitializationState | 位相初期化状態   |
+| `/initialpose3d`                     | geometry_msgs::msg::PoseWithCovarianceStamped                | 計算された自車初期位相 |
+| `/diagnostics`                       | diagnostic_msgs::msg::DiagnosticArray                        | 診断                 |
 
-## Diagnostics
+## 診断
 
 ### pose_initializer_status
 
-If the score of initial pose estimation result is lower than score threshold, ERROR message is output to the `/diagnostics` topic.
+初期位置推定結果のスコアがスコアしきい値より低い場合、`/diagnostics` トピックにERRORメッセージが出力されます。
 
 <img src="./media/diagnostic_pose_reliability.png" alt="drawing" width="400"/>
 
-## Connection with Default AD API
+## デフォルトAD APIとの接続
 
-This `autoware_pose_initializer` is used via default AD API. For detailed description of the API description, please refer to [the description of `autoware_default_adapi`](https://github.com/autowarefoundation/autoware.universe/blob/main/system/autoware_default_adapi/document/localization.md).
+この`autoware_pose_initializer` はデフォルトAD APIを介して使用されます。APIの説明の詳細については、[`autoware_default_adapi` の説明](https://github.com/autowarefoundation/autoware.universe/blob/main/system/autoware_default_adapi/document/localization.md)を参照してください。
 
 <img src="../../system/autoware_default_adapi/document/images/localization.drawio.svg" alt="drawing" width="800"/>
 
-## Initialize pose via CLI
+## CLIを介したポーズの初期化
 
-### Using the GNSS estimated position
+### GNSS推定位置の使用
+
 
 ```bash
 ros2 service call /localization/initialize tier4_localization_msgs/srv/InitializeLocalization
 ```
 
-The GNSS estimated position is used as the initial guess, and the localization algorithm automatically estimates a more accurate position.
+GNSS 推定位置は初期推測として使用され、局所化アルゴリズムは自動的にさらに正確な位置を推定します。
 
-### Using the input position
+### 入力位置の使用
+
 
 ```bash
 ros2 service call /localization/initialize tier4_localization_msgs/srv/InitializeLocalization "
@@ -89,9 +120,10 @@ method: 0
 "
 ```
 
-The input position is used as the initial guess, and the localization algorithm automatically estimates a more accurate position.
+入力位置は初期推定値として使用され、ローカライゼーションアルゴリズムによって自動的により正確な位置が推定されます。
 
-### Direct initial position set
+### 直接的な初期位置セット
+
 
 ```bash
 ros2 service call /localization/initialize tier4_localization_msgs/srv/InitializeLocalization "
@@ -114,9 +146,10 @@ method: 1
 "
 ```
 
-The initial position is set directly by the input position without going through localization algorithm.
+初期位置は、局在化アルゴリズムを通さずに、入力位置から直接設定されます。
 
-### Via ros2 topic pub
+### Via ros2 トピックの送信
+
 
 ```bash
 ros2 topic pub --once /initialpose geometry_msgs/msg/PoseWithCovarianceStamped "
@@ -136,5 +169,6 @@ pose:
 "
 ```
 
-It behaves the same as "initialpose (from rviz)".
-The position.z and the covariance will be overwritten by [ad_api_adaptors](https://github.com/autowarefoundation/autoware.universe/tree/main/system/default_ad_api_helpers/ad_api_adaptors), so there is no need to input them.
+「initialpose (rviz から)」と同じ動作をします。
+[ad_api_adaptors](https://github.com/autowarefoundation/autoware.universe/tree/main/system/default_ad_api_helpers/ad_api_adaptors) によって position.z と共分散が上書きされるため、それらを入力する必要はありません。
+

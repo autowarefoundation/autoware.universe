@@ -1,18 +1,18 @@
-# tier4_traffic_light_rviz_plugin
+## tier4_traffic_light_rviz_plugin
 
-## Purpose
+## 目的
 
-This plugin panel publishes dummy traffic light signals.
+このプラグインパネルは、ダミー信号機信号をパブリッシュします。
 
-## Inputs / Outputs
+## 入出力
 
-### Output
+### 出力
 
-| Name                                                    | Type                                                    | Description                   |
-| ------------------------------------------------------- | ------------------------------------------------------- | ----------------------------- |
-| `/perception/traffic_light_recognition/traffic_signals` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | Publish traffic light signals |
+| 名称                                                   | 型                                                   | 説明                   |
+| ------------------------------------------------------ | ------------------------------------------------------ | ----------------------------- |
+| `/perception/traffic_light_recognition/traffic_signals` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | 交通信号の公開 |
 
-## HowToUse
+## 操作方法
 
 <div align="center">
   <img src="images/select_panels.png" width=50%>
@@ -24,11 +24,12 @@ This plugin panel publishes dummy traffic light signals.
   <img src="images/select_traffic_light_id.png" width=50%>
 </div>
 
-1. Start rviz and select panels/Add new panel.
-2. Select TrafficLightPublishPanel and press OK.
-3. Set `Traffic Light ID` & `Traffic Light Status` and press `SET` button.
-4. Traffic light signals are published, while `PUBLISH` button is pushed.
+1. rvizを起動して[パネル]->[新しいパネルを追加]を選択します。
+2. TrafficLightPublishPanelを選択してOKを押します。
+3. [`Traffic Light ID`]と[`Traffic Light Status`]を設定して[`SET`]ボタンを押します。
+4. [`PUBLISH`]ボタンが押されている間、信号機信号がパブリッシュされます。
 
 <div align="center">
   <img src="images/traffic_light_publish_panel.gif">
 </div>
+

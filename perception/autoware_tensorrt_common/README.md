@@ -1,6 +1,7 @@
 # autoware_tensorrt_common
 
-## Purpose
+## 目的
 
-This package contains a library of common functions related to TensorRT.  
-This package may include functions for handling TensorRT engine and calibration algorithm used for quantization
+このパッケージには、TensorRT に関連する共通関数のライブラリが含まれています。
+このパッケージには、TensorRT エンジンの処理や、量子化に使用される較正アルゴリズムの関数が含まれます。
+

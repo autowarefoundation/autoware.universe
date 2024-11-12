@@ -1,30 +1,31 @@
-# Learned Model
+# 学習済みモデル
 
-This is the design document for the Python learned model used in the `simple_planning_simulator` package.
+これは、`simple_planning_simulator`パッケージで使用される、Python学習済みモデルの設計ドキュメントです。
 
-## Purpose / Use cases
+## 目的/ユースケース
 
-<!-- Required -->
-<!-- Things to consider:
-    - Why did we implement this feature? -->
+<!-- 必須 -->
+<!-- 考慮事項:
+    - この機能を実装した理由は? -->
 
-This library creates an interface between models in Python and PSIM (C++). It is used to quickly deploy learned Python models in PSIM without a need for complex C++ implementation.
+このライブラリは、PythonのモデルとPSIM（C++）のインタフェースを作成します。複雑なC++の実装をせずにPython学習済みモデルをPSIMに迅速に展開するために使用されます。
 
-## Design
+## 設計
 
-<!-- Required -->
-<!-- Things to consider:
-    - How does it work? -->
+<!-- 必須 -->
+<!-- 考慮事項:
+    - どのように機能するのか -->
 
-The idea behind this package is that the model we want to use for simulation consists of multiple sub-models (e.g., steering model, drive model, vehicle kinematics, etc.). These sub-models are implemented in Python and can be trainable. Each sub-model has string names for all of its inputs/outputs, which are used to create model interconnections automatically (see image below). This allows us to easily switch sub-models for better customization of the simulator.
+このパッケージのアイデアは、シミュレーションに使用したいモデルが複数のサブモデル（例：ステアリングモデル、駆動モデル、車両運動学など）で構成されていることです。これらのサブモデルはPythonで実装されており、トレーニング可能です。各サブモデルには、すべての入出力用文字列名が用意されており、それらを使用してモデルを自動的に接続します（下の画像を参照）。これにより、サブモデルを簡単に切り替えて、シミュレータをよりカスタマイズできます。
 
-![py_model_interface](./image/python_model_interface.png "PyModel interface")
+![py_model_interface](./image/python_model_interface.png "PyModelインタフェース")
 
-## Assumptions / Known limits
+## 仮定/既知の制限
 
-<!-- Required -->
+<!-- 必須 -->
 
-To use this package `python3` and `pybind11` need to be installed. The only assumption on Python sub-models is their interface.
+このパッケージを使用するには、`python3`と`pybind11`をインストールする必要があります。Pythonサブモデルの唯一の仮定は、それらのインタフェースです。
+
 
 ```python
 class PythonSubmodelInterface:
@@ -74,83 +75,82 @@ class PythonSubmodelInterface:
 
 <!-- Required -->
 <!-- Things to consider:
-    - How do you use the package / API? -->
+    - パッケージ / API の使用方法 -->
 
-To successfully create a vehicle model an InterconnectedModel class needs to be set up correctly.
+車両モデルを正常に作成するには、`InterconnectedModel` クラスを適切に設定する必要があります。
 
-### InterconnectedModel class
+### `InterconnectedModel` クラス
 
-#### `Constructor`
+#### `コンストラクタ`
 
-The constructor takes no arguments.
+コンストラクタは引数を受け取りません。
 
 #### `void addSubmodel(std::tuple<std::string, std::string, std::string> model_descriptor)`
 
-Add a new sub-model to the model.
+モデルに新しいサブモデルを追加します。
 
-Inputs:
+入力:
 
-- model_descriptor: Describes what model should be used. The model descriptor contains three strings:
-  - The first string is a path to a python module where the model is implemented.
-  - The second string is a path to the file where model parameters are stored.
-  - The third string is the name of the class that implements the model.
+- `model_descriptor`: 使用するモデルを示します。モデル記述子は 3 つの文字列を含みます。
+  - 最初の文字列は、モデルが実装されている Python モジュールのパスです。
+  - 2 番目の文字列は、モデルのパラメータが格納されているファイルのパスです。
+  - 3 番目の文字列は、モデルを実装するクラスの名前です。
 
-Outputs:
+出力:
 
-- None
+- なし
 
 #### `void generateConnections(std::vector<char *> in_names, std::vector<char*> out_names)`
 
-Generate connections between sub-models and inputs/outputs of the model.
+サブモデルとモデルの入力/出力の接続を生成します。
 
-Inputs:
+入力:
 
-- in_names: String names for all of the model inputs in order.
-- out_names: String names for all of the model outputs in order.
+- `in_names`: モデルのすべての入力の文字列名（順序あり）。
+- `out_names`: モデルのすべての出力の文字列名（順序あり）。
 
-Outputs:
+出力:
 
-- None
+- なし
 
 #### `void initState(std::vector<double> new_state)`
 
-Set the initial state of the model.
+モデルの初期状態を設定します。
 
-Inputs:
+入力:
 
-- new_state: New state of the model.
+- `new_state`: モデルの新しい状態。
 
-Outputs:
+出力:
 
-- None
+- なし
 
 #### `std::vector<double> updatePyModel(std::vector<double> psim_input)`
 
-Calculate the next state of the model by calculating the next state of all of the sub-models.
+すべてのサブモデルの次状態を計算して、モデルの次状態を計算します。
 
-Inputs:
+- psim_input: モデルへの入力。
 
-- psim_input: Input to the model.
+出力:
 
-Outputs:
-
-- next_state: Next state of the model.
+- next_state: モデルの次の状態。
 
 #### `dtSet(double dt)`
 
-Set the time step of the model.
+モデルの時間ステップを設定します。
 
-Inputs:
+入力:
 
-- dt: time step
+- dt: 時間ステップ
 
-Outputs:
+出力:
 
-- None
+- なし
 
-### Example
+### 例
 
-Firstly we need to set up the model.
+最初にモデルを設定する必要があります。
+
 
 ```C++
 InterconnectedModel vehicle;
@@ -183,7 +183,8 @@ vehicle.generateConnections(input_names, state_names);
 vehicle.dtSet(dt);
 ```
 
-After the model is correctly set up, we can use it the following way.
+モデルが正しく設定された後、以下のように使用できます。
+
 
 ```C++
 // Example of an model input
@@ -199,10 +200,11 @@ vehicle.initState(current_state);
 std::vector<double> next_state = vehicle.updatePyModel(vehicle_input);
 ```
 
-## References / External links
+## 参考文献 / 外部リンク
 
-<!-- Optional -->
+<!-- オプション -->
 
-## Related issues
+## 関連する問題
 
-<!-- Required -->
+<!-- 必須 -->
+

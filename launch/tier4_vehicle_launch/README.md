@@ -1,16 +1,17 @@
 # tier4_vehicle_launch
 
-## Structure
+## 構成
 
 ![tier4_vehicle_launch](./vehicle_launch.drawio.svg)
 
-## Package Dependencies
+## パッケージの依存関係
 
-Please see `<exec_depend>` in `package.xml`.
+`<exec_depend>` in `package.xml` をご参照ください。
 
-## Usage
+## 使用方法
 
-You can include as follows in `*.launch.xml` to use `vehicle.launch.xml`.
+`*.launch.xml` に次のように含めることで、`vehicle.launch.xml` を使用できます。
+
 
 ```xml
   <arg name="vehicle_model" default="sample_vehicle" description="vehicle model name"/>
@@ -22,15 +23,17 @@ You can include as follows in `*.launch.xml` to use `vehicle.launch.xml`.
   </include>
 ```
 
-## Notes
+## 注釈
 
-This package finds some external packages and settings with variables and package names.
+このパッケージは変数やパッケージ名でいくつかの外部パッケージや設定を検出します。
 
-ex.)
+例)
+
 
 ```xml
 <let name="vehicle_model_pkg" value="$(find-pkg-share $(var vehicle_model)_description)"/>
 ```
+
 
 ```xml
 <arg name="config_dir" default="$(find-pkg-share individual_params)/config/$(var vehicle_id)/$(var sensor_model)"/>
@@ -38,16 +41,17 @@ ex.)
 
 ## vehicle.xacro
 
-### Arguments
+### 引数
 
-| Name          | Type   | Description        | Default |
+| 名称          | タイプ   | 説明        | デフォルト |
 | ------------- | ------ | ------------------ | ------- |
-| sensor_model  | String | sensor model name  | ""      |
-| vehicle_model | String | vehicle model name | ""      |
+| sensor_model  | 文字列 | センサーモデル名  | 空文字      |
+| vehicle_model | 文字列 | 車両モデル名 | 空文字      |
 
-### Usage
+### 使用方法
 
-You can write as follows in `*.launch.xml`.
+`*.launch.xml`に次のように記述できます。
+
 
 ```xml
   <arg name="vehicle_model" default="sample_vehicle" description="vehicle model name"/>
@@ -59,3 +63,4 @@ You can write as follows in `*.launch.xml`.
   </node>
 
 ```
+

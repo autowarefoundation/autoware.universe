@@ -1,188 +1,243 @@
-# Obstacle Velocity Limiter
+# 障害物速度制限機能
 
-## Purpose
+## 目的
 
-This node limits the velocity when driving in the direction of an obstacle.
-For example, it allows to reduce the velocity when driving close to a guard rail in a curve.
+このノードは、障害物の方向へ走行している際の速度を制限します。
+例えば、カーブでガードレールに接近しているときに速度を下げることができます。
 
-|                                     Without this node | With this node                                      |
-| ----------------------------------------------------: | :-------------------------------------------------- |
-| ![obstacle_velocity_limiter_off](./media/ovl_off.png) | ![obstacle_velocity_limiter_on](./media/ovl_on.png) |
+## 自動運転ソフトウェアドキュメント
 
-## Inner-workings / Algorithms
+### **障害物速度制限器**
 
-Using a parameter `min_ttc` (minimum time to collision), the node set velocity limits such that
-no collision with an obstacle would occur, even without new control inputs for a duration of `min_ttc`.
+障害物速度制限器ノードは、障害物との衝突を回避するために車両の速度を制限します。このノードを有効にすると、車両は障害物との衝突を回避するために次の操作を行います。
 
-To achieve this, the motion of the ego vehicle is simulated forward in time at each point of the trajectory to create a corresponding footprint.
-If the footprint collides with some obstacle, the velocity at the trajectory point is reduced such that the new simulated footprint do not have any collision.
+- 障害物との距離が指定されたしきい値よりも小さい場合、車両の速度を制限します。
+- 障害物が車両の走行経路にある場合、車両の経路を再計画します。
 
-### Simulated Motion, Footprint, and Collision Distance
+障害物速度制限器ノードは、次のコンポーネントを使用して障害物との衝突を検出します。
 
-The motion of the ego vehicle is simulated at each trajectory point using the `heading`, `velocity`, and `steering` defined at the point.
-Footprints are then constructed from these simulations and checked for collision.
-If a collision is found, the distance from the trajectory point is used to calculate the adjusted velocity that would produce a collision-free footprint. Parameter `simulation.distance_method` allow to switch between an exact distance calculation and a less expensive approximation using a simple euclidean distance.
+- **自車位置**
+- **障害物検出**
+- **経路計画**
 
-Two models can be selected with parameter `simulation.model` for simulating the motion of the vehicle: a simple particle model and a more complicated bicycle model.
+障害物速度制限器ノードは、障害物との衝突を回避するために次のコンポーネントを使用して車両の速度を制限します。
 
-#### Particle Model
+- **速度計画**
+- **速度制御**
 
-The particle model uses the constant heading and velocity of the vehicle at a trajectory point to simulate the future motion.
-The simulated forward motion corresponds to a straight line and the footprint to a rectangle.
+### **機能**
 
-##### Footprint
+障害物速度制限器ノードには、次の機能があります。
 
-The rectangle footprint is built from 2 lines parallel to the simulated forward motion and at a distance of half the vehicle width.
+- 障害物との衝突を回避するための車両速度の制限
+- 障害物との衝突を回避するための車両経路の再計画
+- 障害物との衝突を回避するための車両速度の`post resampling`
+
+### **設定**
+
+障害物速度制限器ノードは以下のパラメータで設定できます。
+
+- 障害物との衝突回避のための最小距離しきい値
+- 車両の速度を制限するための最大速度
+- 車両の速度を`post resampling`するための間隔
+
+### **使用方法**
+
+障害物速度制限器ノードを使用するには、次の手順に従います。
+
+1. Autowareの「障害物速度制限器」ノードを起動します。
+2. 障害物との衝突回避のための最小距離しきい値、車両の速度を制限するための最大速度、車両の速度を`post resampling`するための間隔を設定します。
+3. 「障害物速度制限器」ノードを車両の他のコンポーネントに接続します。
+
+### **例**
+
+障害物速度制限器ノードは、次のようなシナリオで使用できます。
+
+- 車両が他の車両や歩行者に近づきすぎている場合
+- 車両が交差点に近づきすぎている場合
+- 車両が障害物のある道路を走行している場合
+
+### **制約事項**
+
+障害物速度制限器ノードには、次の制約事項があります。
+
+- 障害物を正確に検出できない場合があります。
+- 車両の速度を制限できない場合があります。
+- 車両の経路を再計画できない場合があります。
+
+### **トラブルシューティング**
+
+障害物速度制限器ノードに問題がある場合は、次の手順に従います。
+
+1. 障害物との衝突回避のための最小距離しきい値が適切に設定されていることを確認します。
+2. 車両の速度を制限するための最大速度が適切に設定されていることを確認します。
+3. 車両の速度を`post resampling`するための間隔が適切に設定されていることを確認します。
+4. 障害物速度制限器ノードが車両の他のコンポーネントに適切に接続されていることを確認します。
+
+## 内部機構/アルゴリズム
+
+パラメータ`min_ttc`(衝突までの最小時間)を使用し、ノードは速度制限を設定して、`min_ttc`の期間、新しい制御入力がなくても障害物との衝突が発生しないようにします。
+
+これを達成するために、各軌跡のポイントで自車位置が時間的にシミュレートされ、対応するフットプリントを作成します。
+フットプリントが障害物と衝突した場合、軌跡のポイントの速度が低減されて、新しいシミュレートされたフットプリントが衝突しなくなります。パラメータ`simulation.distance_method`により、正確な距離計算と、単純なユークリッド距離を使用したより安価な近似との切り替えが可能になります。
+
+パラメータ`simulation.model`により、車両の動作をシミュレートするための2つのモデルが選択できます。簡単なパーティクルモデルと、より複雑な自転車モデルです。
+
+#### パーティクルモデル
+
+パーティクルモデルは、軌跡のポイントにおける車両の一定の進行方向と速度を使用して、将来の動作をシミュレートします。
+シミュレートされた前方動作は直線で、フットプリントは長方形になります。
+
+##### フットプリント
+
+長方形のフットプリントは、シミュレートされた前方動作に平行で、車両の幅の半分だけ離れた2本の線で形成されます。
 
 ![particle_footprint_image](./media/particle_footprint.png)
 
-##### Distance
+##### 距離
 
-When a collision point is found within the footprint, the distance is calculated as described in the following figure.
+衝突点がフットプリント内にある場合、次の図に示すようにして距離が計算されます。
 
 ![particle_collision_distance_image](./media/particle_distance.png)
 
-#### Bicycle Model
+#### 自転車モデル
 
-The bicycle model uses the constant heading, velocity, and steering of the vehicle at a trajectory point to simulate the future motion.
-The simulated forward motion corresponds to an arc around the circle of curvature associated with the steering.
-Uncertainty in the steering can be introduced with the `simulation.steering_offset` parameter which will generate a range of motion from a left-most to a right-most steering.
-This results in 3 curved lines starting from the same trajectory point.
-A parameter `simulation.nb_points` is used to adjust the precision of these lines, with a minimum of `2` resulting in straight lines and higher values increasing the precision of the curves.
+自転車モデルは、軌跡のポイントにおける車両の一定の進行方向、速度、およびステアリングを使用して、将来の動作をシミュレートします。
+シミュレートされた前方動作は、ステアリングに関連付けられた曲率円の周囲の円弧になります。
+ステアリングの不確実性は、`simulation.steering_offset`パラメータを使用して導入できます。このパラメータは、左端のステアリングから右端のステアリングまでの動作の範囲を生成します。
+これにより、同じ軌跡のポイントから始まる3本の曲線が生成されます。
+パラメータ`simulation.nb_points`は、これらの線の精度を調整するために使用され、最小の`2`は直線になり、値が高くなると曲線の精度が向上します。
 
-By default, the steering values contained in the trajectory message are used.
-Parameter `trajectory_preprocessing.calculate_steering_angles` allows to recalculate these values when set to `true`.
+デフォルトでは、軌跡メッセージに含まれるステアリング値が使用されます。
+パラメータ`trajectory_preprocessing.calculate_steering_angles`を`true`に設定すると、これらの値を再計算できます。
 
-##### Footprint
+##### フットプリント
 
-The footprint of the bicycle model is created from lines parallel to the left and right simulated motion at a distance of half the vehicle width.
-In addition, the two points on the left and right of the end point of the central simulated motion are used to complete the polygon.
+自転車モデルのフットプリントは、シミュレートされた左および右の動作に平行で、車両の幅の半分だけ離れた線で作成されます。
+さらに、中央シミュレートされた動作の終点の左と右にある2つの点が使用されて、多角形が完成されます。
 
 ![bicycle_footprint_image](./media/bicycle_footprint.png)
 
-##### Distance
+##### 距離
 
-The distance to a collision point is calculated by finding the curvature circle passing through the trajectory point and the collision point.
+衝突点までの距離は、軌跡のポイントと衝突点を通過する曲率円を求めることによって計算されます。
 
 ![bicycle_collision_distance_image](./media/bicycle_distance.png)
 
-### Obstacle Detection
+### 障害物検出
 
-Obstacles are represented as points or linestrings (i.e., sequence of points) around the obstacles and are constructed from an occupancy grid, a pointcloud, or the lanelet map.
-The lanelet map is always checked for obstacles but the other source is switched using parameter `obstacles.dynamic_source`.
+レーンレットマップは常に障害物をチェックしていますが、他のソースはパラメーター `obstacles.dynamic_source` を使用して切り替えられます。
 
-To efficiently find obstacles intersecting with a footprint, they are stored in a [R-tree](https://www.boost.org/doc/libs/1_80_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree.html).
-Two trees are used, one for the obstacle points, and one for the obstacle linestrings (which are decomposed into segments to simplify the R-tree).
+フットプリントと交差する障害物を効率的に探すために、それらは R-ツリー ([https://www.boost.org/doc/libs/1_80_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree.html](https://www.boost.org/doc/libs/1_80_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree.html)) に格納されます。
+2 つのツリーが使用されます。1 つは障害物点用で、1 つは障害物ラインストリング用です (R-ツリーを簡素化するために、ラインストリングはセグメントに分解されます)。
 
-#### Obstacle masks
+#### オブスタクルマスク
 
-##### Dynamic obstacles
+##### 動的障害物
 
-Moving obstacles such as other cars should not be considered by this module.
-These obstacles are detected by the perception modules and represented as polygons.
-Obstacles inside these polygons are ignored.
+他の車などの移動障害物は、このモジュールでは考慮されません。
+これらの障害物は知覚モジュールで検出され、ポリゴンとして表現されます。
+これらのポリゴン内の障害物は無視されます。
 
-Only dynamic obstacles with a velocity above parameter `obstacles.dynamic_obstacles_min_vel` are removed.
+パラメーター `obstacles.dynamic_obstacles_min_vel` よりも速度が高い動的障害物のみが削除されます。
 
-To deal with delays and precision errors, the polygons can be enlarged with parameter `obstacles.dynamic_obstacles_buffer`.
+遅延や精度のエラーに対処するために、パラメーター `obstacles.dynamic_obstacles_buffer` でポリゴンを拡大できます。
 
-##### Obstacles outside of the safety envelope
+##### 安全範囲外の障害物
 
-Obstacles that are not inside any forward simulated footprint are ignored if parameter `obstacles.filter_envelope` is set to true.
-The safety envelope polygon is built from all the footprints and used as a positive mask on the occupancy grid or pointcloud.
+パラメーター `obstacles.filter_envelope` が `true` に設定されている場合、横断シミュレートフットプリント内に入っていない障害物は無視されます。
+安全範囲ポリゴンはすべてのフットプリントから構築され、占有グリッドまたは点群上で正マスクとして使用されます。
 
-This option can reduce the total number of obstacles which reduces the cost of collision detection.
-However, the cost of masking the envelope is usually too high to be interesting.
+このオプションは障害物の総数を減らすことができ、衝突検出のコストを削減します。
+ただし、範囲を覆うコストは通常、検討するには高すぎます。
 
-##### Obstacles on the ego path
+##### エゴパス上の障害物
 
-If parameter `obstacles.ignore_obstacles_on_path` is set to `true`, a polygon mask is built from the trajectory and the vehicle dimension. Any obstacle in this polygon is ignored.
+パラメーター `obstacles.ignore_obstacles_on_path` が `true` に設定されている場合、軌道と車両寸法からポリゴンマスクが構築されます。
+このポリゴン内の障害物はすべて無視されます。
 
-The size of the polygon can be increased using parameter `obstacles.ignore_extra_distance` which is added to the vehicle lateral offset.
+ポリゴンのサイズは、車両の横方向オフセットに追加される `obstacles.ignore_extra_distance` パラメーターを使用して増やすことができます。
 
-This option is a bit expensive and should only be used in case of noisy dynamic obstacles where obstacles are wrongly detected on the ego path, causing unwanted velocity limits.
+このオプションは少しコストが高く、不適切な動的障害物がエゴパス上で検出され、不要な速度制限が発生するような、ノイズの多い動的障害物がある場合にのみ使用​​する必要があります。
 
-#### Lanelet Map
+#### レーンレットマップ
 
-Information about static obstacles can be stored in the Lanelet map using the value of the `type` tag of linestrings.
-If any linestring has a `type` with one of the value from parameter `obstacles.static_map_tags`, then it will be used as an obstacle.
+静的障害物に関する情報は、ラインストリングの `type` タグの値を使用してレーンレットマップに格納できます。
+ラインストリングに `type` がパラメーター `obstacles.static_map_tags` の値のいずれかがある場合、それは障害物として使用されます。
 
-Obstacles from the lanelet map are not impacted by the masks.
+レーンレットマップからの障害物はマスクの影響を受けません。
 
-#### Occupancy Grid
+#### 占有グリッド
 
-Masking is performed by iterating through the cells inside each polygon mask using the [`autoware::grid_map_utils::PolygonIterator`](https://github.com/autowarefoundation/autoware.universe/tree/main/common/autoware_grid_map_utils) function.
-A threshold is then applied to only keep cells with an occupancy value above parameter `obstacles.occupancy_grid_threshold`.
-Finally, the image is converted to an image and obstacle linestrings are extracted using the opencv function
-[`findContour`](https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga17ed9f5d79ae97bd4c7cf18403e1689a).
+マスキングは [`autoware::grid_map_utils::PolygonIterator`](https://github.com/autowarefoundation/autoware.universe/tree/main/common/autoware_grid_map_utils) 関数を使用して、各ポリゴンマスク内のセルを反復処理することで実行されます。
+次に、パラメーター `obstacles.occupancy_grid_threshold` よりも高い占有値を持つセルのみを保持するようにしきい値が適用されます。
+最後に、イメージはイメージに変換され、障害物ラインストリングは opencv 関数
+[`findContour`](https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga17ed9f5d79ae97bd4c7cf18403e1689a) を使用して抽出されます。
 
-#### Pointcloud
+#### 点群
 
-Masking is performed using the [`pcl::CropHull`](https://pointclouds.org/documentation/classpcl_1_1_crop_hull.html) function.
-Points from the pointcloud are then directly used as obstacles.
+マスキングは [`pcl::CropHull`](https://pointclouds.org/documentation/classpcl_1_1_crop_hull.html) 関数を使用して実行されます。
+次に、点群からの点が障害物として直接使用されます。
 
-### Velocity Adjustment
+### 速度調節
 
-If a collision is found, the velocity at the trajectory point is adjusted such that the resulting footprint would no longer collide with an obstacle:
+衝突が検出された場合、軌跡のポイントでの速度は、その結果のフットプリントが障害物に衝突しなくなるように調整されます:
 $velocity = \frac{dist\_to\_collision}{min\_ttc}$
 
-To prevent sudden deceleration of the ego vehicle, the parameter `max_deceleration` limits the deceleration relative to the current ego velocity.
-For a trajectory point occurring at a duration `t` in the future (calculated from the original velocity profile),
-the adjusted velocity cannot be set lower than $v_{current} - t * max\_deceleration$.
+エゴ車両の急激な減速を防ぐために、`max_deceleration` パラメーターは、現在のエゴ速度に対する減速を制限します。
+未来の期間 `t` で発生する軌跡点の場合 (元の速度プロファイルから計算されます)、
 
-Furthermore, a parameter `min_adjusted_velocity`
-provides a lower bound on the modified velocity.
+さらに、`min_adjusted_velocity` パラメータは修正された速度の下限を指定します。
 
-### Trajectory preprocessing
+### 軌道の前処理
 
-The node only modifies part of the input trajectory, starting from the current ego position.
-Parameter `trajectory_preprocessing.start_distance` is used to adjust how far ahead of the ego position the velocities will start being modified.
-Parameters `trajectory_preprocessing.max_length` and `trajectory_preprocessing.max_duration` are used to control how much of the trajectory will see its velocity adjusted.
+このノードは、自車位置からの入力軌跡の一部のみを変更します。
+パラメータ `trajectory_preprocessing.start_distance` は、自車位置のどれだけ前から速度が修正され始めるかを調整するために使用されます。
+パラメータ `trajectory_preprocessing.max_length` および `trajectory_preprocessing.max_duration` は、速度が調整される軌道の量を制御するために使用されます。
 
-To reduce computation cost at the cost of precision, the trajectory can be downsampled using parameter `trajectory_preprocessing.downsample_factor`.
-For example a value of `1` means all trajectory points will be evaluated while a value of `10` means only 1/10th of the points will be evaluated.
+`trajectory_preprocessing.downsample_factor` パラメータを使用して、精度を犠牲にしてコンピューティングコストを削減するために、軌跡をダウンサンプリングできます。
+たとえば、値 `1` はすべての軌跡点が評価されることを意味し、値 `10` はポイントの 1/10 のみ評価されることを意味します。
 
-## Parameters
+## パラメータ
 
-| Name                                                | Type        | Description                                                                                                                             |
-| --------------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `min_ttc`                                           | float       | [s] required minimum time with no collision at each point of the trajectory assuming constant heading and velocity.                     |
-| `distance_buffer`                                   | float       | [m] required distance buffer with the obstacles.                                                                                        |
-| `min_adjusted_velocity`                             | float       | [m/s] minimum adjusted velocity this node can set.                                                                                      |
-| `max_deceleration`                                  | float       | [m/s²] maximum deceleration an adjusted velocity can cause.                                                                             |
-| `trajectory_preprocessing.start_distance`           | float       | [m] controls from which part of the trajectory (relative to the current ego pose) the velocity is adjusted.                             |
-| `trajectory_preprocessing.max_length`               | float       | [m] controls the maximum length (starting from the `start_distance`) where the velocity is adjusted.                                    |
-| `trajectory_preprocessing.max_distance`             | float       | [s] controls the maximum duration (measured from the `start_distance`) where the velocity is adjusted.                                  |
-| `trajectory_preprocessing.downsample_factor`        | int         | trajectory downsampling factor to allow tradeoff between precision and performance.                                                     |
-| `trajectory_preprocessing.calculate_steering_angle` | bool        | if true, the steering angles of the trajectory message are not used but are recalculated.                                               |
-| `simulation.model`                                  | string      | model to use for forward simulation. Either "particle" or "bicycle".                                                                    |
-| `simulation.distance_method`                        | string      | method to use for calculating distance to collision. Either "exact" or "approximation".                                                 |
-| `simulation.steering_offset`                        | float       | offset around the steering used by the bicycle model.                                                                                   |
-| `simulation.nb_points`                              | int         | number of points used to simulate motion with the bicycle model.                                                                        |
-| `obstacles.dynamic_source`                          | string      | source of dynamic obstacle used for collision checking. Can be "occupancy_grid", "point_cloud", or "static_only" (no dynamic obstacle). |
-| `obstacles.occupancy_grid_threshold`                | int         | value in the occupancy grid above which a cell is considered an obstacle.                                                               |
-| `obstacles.dynamic_obstacles_buffer`                | float       | buffer around dynamic obstacles used when masking an obstacle in order to prevent noise.                                                |
-| `obstacles.dynamic_obstacles_min_vel`               | float       | velocity above which to mask a dynamic obstacle.                                                                                        |
-| `obstacles.static_map_tags`                         | string list | linestring of the lanelet map with this tags are used as obstacles.                                                                     |
-| `obstacles.filter_envelope`                         | bool        | wether to use the safety envelope to filter the dynamic obstacles source.                                                               |
+| 名前 | 型 | 説明 |
+|---|---|---|
+| `min_ttc` | float | 各軌跡点で一定の向きと速度を想定した場合、衝突しないために必要な最低時間 [秒] |
+| `distance_buffer` | float | 障害物との必要な距離バッファ [m] |
+| `min_adjusted_velocity` | float | このノードが設定できる最小調整速度 [m/s] |
+| `max_deceleration` | float | 調整速度が発生させることができる最大減速 [m/s²] |
+| `trajectory_preprocessing.start_distance` | float | 軌道の一部 (現在の自車位置に対する相対距離) から速度を調整するコントロールの開始点 [m] |
+| `trajectory_preprocessing.max_length` | float | 速度を調整する最大距離 (`start_distance` から開始) [m] |
+| `trajectory_preprocessing.max_distance` | float | 速度を調整する最大時間 (`start_distance` から測定) [秒] |
+| `trajectory_preprocessing.downsample_factor` | int | 軌跡のダウンサンプリング係数。精度と性能のトレードオフに使用できます。 |
+| `trajectory_preprocessing.calculate_steering_angle` | bool | True の場合、軌跡メッセージの操舵角は使用されず、再計算されます。 |
+| `simulation.model` | string | シミュレーションに使用するモデル。 "particle" か "bicycle" のいずれか。 |
+| `simulation.distance_method` | string | 衝突までの距離の計算に使用するメソッド。 "exact" か "approximation" のいずれか。 |
+| `simulation.steering_offset` | float | bicycle モデルで使用する操舵の周りにオフセット。 |
+| `simulation.nb_points` | int | bicycle モデルでモーションをシミュレートするために使用するポイント数。 |
+| `obstacles.dynamic_source` | string | 障害物チェックに使用される動的障害物のソース。 "occupancy_grid"、"point_cloud"、または "static_only" (動的障害物なし) のいずれか。 |
+| `obstacles.occupancy_grid_threshold` | int | 占用グリッドでセルが障害物と見なされる値。 |
+| `obstacles.dynamic_obstacles_buffer` | float | 障害物マスク時に障害物の周りに使用するバッファ。ノイズを防ぎます。 |
+| `obstacles.dynamic_obstacles_min_vel` | float | 動的障害物をマスクする最小速度。 |
+| `obstacles.static_map_tags` | 文字列リスト | このタグを持つレーンのマップの直線は障害物として使用されます。 |
+| `obstacles.filter_envelope` | bool | 安全エンベロープを使用して動的障害物ソースをフィルタリングするかどうか。 |
 
-## Assumptions / Known limits
+## 仮定 / 制約
 
-The velocity profile produced by this node is not meant to be a realistic velocity profile
-and can contain sudden jumps of velocity with no regard for acceleration and jerk.
-This velocity profile is meant to be used as an upper bound on the actual velocity of the vehicle.
+このノードが出力する速度プロファイルは現実的なものではなく、加速度やジャークの考慮なく速度が急変することがあります。
+この速度プロファイルは、車両の実際の速度の上限として使用するものとして意図されています。
 
-## (Optional) Error detection and handling
+## (オプション) エラー検出と処理
 
-The critical case for this node is when an obstacle is falsely detected very close to the trajectory such that
-the corresponding velocity suddenly becomes very low.
-This can cause a sudden brake and two mechanisms can be used to mitigate these errors.
+このノードにとって重要なケースは、障害物が軌道に非常に近距離で誤って検出され、それに対応する速度が非常に低下する場合です。
+これは急ブレーキを引き起こす可能性があり、これらのエラーを軽減するために2つのメカニズムを使用できます。
 
-Parameter `min_adjusted_velocity` allow to set a minimum to the adjusted velocity, preventing the node to slow down the vehicle too much.
-Parameter `max_deceleration` allow to set a maximum deceleration (relative to the _current_ ego velocity) that the adjusted velocity would incur.
+パラメーター「min_adjusted_velocity」は調整された速度に最小値を設定し、ノードが車両を減速しすぎないようにします。
+パラメーター「max_deceleration」は、調整された速度で発生する最大減速度（現在の自車速度に対する相対値）を設定できます。
 
-## (Optional) Performance characterization
+## (オプション) パフォーマンスの特徴付け
 
-## (Optional) References/External links
+## (オプション) 参照 / 外部リンク
 
-## (Optional) Future extensions / Unimplemented parts
+## (オプション) 今後の拡張 / 実装されていない部分
+

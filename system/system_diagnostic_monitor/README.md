@@ -1,16 +1,17 @@
 # system_diagnostic_monitor
 
-This package contains default configurations of diagnostic graph and scripts for system integration.
+このパッケージには、システム統合のための診断グラフの既定の設定とスクリプトが含まれています。
 
-## Configs
+## 設定
 
-| Name                                              | Description                                                  |
-| ------------------------------------------------- | ------------------------------------------------------------ |
-| [autoware-main.yaml](./config/autoware-main.yaml) | Diagnostic graphs for basic monitoring of Autoware.          |
-| [autoware-psim.yaml](./config/autoware-psim.yaml) | Diagnostic graph with some units disabled for the simulator. |
+| 名称                                              | 説明                                                |
+| ------------------------------------------------- | ----------------------------------------------------- |
+| [autoware-main.yaml](./config/autoware-main.yaml) | Autowareの基本モニタリングのための診断グラフ。  |
+| [autoware-psim.yaml](./config/autoware-psim.yaml) | シミュレーター用に一部ユニットを無効にした診断グラフ。 |
 
-## Scripts
+## スクリプト
 
-| Name                                                                   | Description                                         |
-| ---------------------------------------------------------------------- | --------------------------------------------------- |
-| [component_state_diagnostics](./script/component_state_diagnostics.py) | Node that converts component states to diagnostics. |
+| 名称                                                                | 説明                                           |
+| -------------------------------------------------------------------- | ------------------------------------------------ |
+| [component_state_diagnostics](./script/component_state_diagnostics.py) | コンポーネント状態を変換するノード。 |
+

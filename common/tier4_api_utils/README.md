@@ -1,4 +1,5 @@
 # tier4_api_utils
 
-This is an old implementation of a class that logs when calling a service.
-Please use [component_interface_utils](../component_interface_utils/README.md) instead.
+これはサービスを呼び出したときにログを記録するクラスの古い実装です。
+代わりに[component_interface_utils](../component_interface_utils/README.md)を使用してください。
+

@@ -1,18 +1,19 @@
 # tier4_control_launch
 
-## Structure
+## 構造
 
 ![tier4_control_launch](./control_launch.drawio.svg)
 
-## Package Dependencies
+## パッケージ依存関係
 
-Please see `<exec_depend>` in `package.xml`.
+`<exec_depend>` の詳細については `package.xml` を参照してください。
 
-## Usage
+## 使用方法
 
-You can include as follows in `*.launch.xml` to use `control.launch.py`.
+`control.launch.py` を `*.launch.xml` に含めるには、以下のように記述します。
 
-Note that you should provide parameter paths as `PACKAGE_param_path`. The list of parameter paths you should provide is written at the top of `planning.launch.xml`.
+`PACKAGE_param_path` としてパラメータパスを設定する必要があります。設定するパラメータパスのリストは `planning.launch.xml` の先頭に記載されています。
+
 
 ```xml
 <include file="$(find-pkg-share tier4_control_launch)/launch/control.launch.py">
@@ -25,6 +26,7 @@ Note that you should provide parameter paths as `PACKAGE_param_path`. The list o
 </include>
 ```
 
-## Notes
+## 注釈
 
-For reducing processing load, we use the [Component](https://docs.ros.org/en/galactic/Concepts/About-Composition.html) feature in ROS 2 (similar to Nodelet in ROS 1 )
+処理負荷を削減するため、ROS 2における[Component](https://docs.ros.org/en/galactic/Concepts/About-Composition.html)の機能（ROS 1におけるNodeletに類似）を使用します。
+

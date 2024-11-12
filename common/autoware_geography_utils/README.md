@@ -1,5 +1,6 @@
 # geography_utils
 
-## Purpose
+## 目的
 
-This package contains geography-related functions used by other packages, so please refer to them as needed.
+このパッケージには、その他の package で使用される地理関連関数があります。必要に応じて参照してください。
+

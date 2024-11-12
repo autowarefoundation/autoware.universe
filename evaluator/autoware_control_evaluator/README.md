@@ -1,17 +1,18 @@
-# Control Evaluator
+# 制御評価器
 
-## Purpose
+## 目的
 
-This package provides nodes that generate metrics to evaluate the quality of control.
+このパッケージは、制御の品質を評価するためのメトリクスを生成するノードを提供します。
 
-It publishes diagnostic information about control modules' outputs as well as the ego vehicle's current kinematics and position.
+制御モジュール出力に関する診断情報を、自車位置と現在の運動学的情報を公開します。
 
-## Evaluated metrics
+## 評価メトリクス
 
-The control evaluator uses the metrics defined in `include/autoware/control_evaluator/metrics/deviation_metrics.hpp`to calculate deviations in yaw and lateral distance from the ego's set-point. The control_evaluator can also be customized to offer metrics/evaluation about other control modules. Currently, the control_evaluator offers a simple diagnostic output based on the autonomous_emergency_braking node's output, but this functionality can be extended to evaluate other control modules' performance.
+制御評価器は、`include/autoware/control_evaluator/metrics/deviation_metrics.hpp` で定義されたメトリクスを使用して、自車基準点からのヨー方向および横方向距離の逸脱量を計算します。制御評価器は、他の制御モジュールのメトリクスや評価を提供するようにカスタマイズすることもできます。現在、制御評価器は autonomous_emergency_braking ノードの出力に基づいて簡単な診断出力を提供していますが、この機能を拡張して他の制御モジュールの性能を評価できます。
 
-## Kinematics output
+## 運動学的出力
 
-The control evaluator module also constantly publishes information regarding the ego vehicle's kinematics and position. It publishes the current ego lane id with the longitudinal `s` and lateral `t` arc coordinates. It also publishes the current ego speed, acceleration and jerk in its diagnostic messages.
+制御評価器モジュールは、自車の運動学的および位置に関する情報を絶えず公開します。経路弧補正座標の縦方向 `s` と横方向 `t` を使用して、現在の自車レーン ID を公開します。また、現在の自車の速度、加速度、ジャークを診断メッセージで公開します。
 
-This information can be used by other nodes to establish automated evaluation using rosbags: by crosschecking the ego position and kinematics with the evaluated control module's output, it is possible to judge if the evaluated control modules reacted in a satisfactory way at certain interesting points of the rosbag reproduction.
+この情報は、他のノードが ROSbag を使用した自動評価を実行するために使用できます。自車位置と運動学的情報を評価された制御モジュールの出力と照合することで、ROSbag 再現の特定の興味深いポイントにおいて評価された制御モジュールが適切に対応したかどうかを判断できます。
+

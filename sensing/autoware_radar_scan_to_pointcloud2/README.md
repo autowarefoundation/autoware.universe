@@ -2,32 +2,34 @@
 
 ## radar_scan_to_pointcloud2_node
 
-- Convert from `radar_msgs::msg::RadarScan` to `sensor_msgs::msg::PointCloud2`
-- Calculation cost O(n)
-  - n: The number of radar return
+- `radar_msgs::msg::RadarScan` から `sensor_msgs::msg::PointCloud2` に変換
+- 計算コスト O(n)
+  - n: レーダーリターンの数
 
-### Input topics
+### 入力トピック
 
-| Name        | Type                       | Description |
+| 名          | タイプ                       | 説明 |
 | ----------- | -------------------------- | ----------- |
-| input/radar | radar_msgs::msg::RadarScan | RadarScan   |
+| input/radar | radar_msgs::msg::RadarScan     | RadarScan   |
 
-### Output topics
+### 出力トピック
 
-| Name                        | Type                          | Description                                                       |
-| --------------------------- | ----------------------------- | ----------------------------------------------------------------- |
-| output/amplitude_pointcloud | sensor_msgs::msg::PointCloud2 | PointCloud2 radar pointcloud whose intensity is amplitude.        |
-| output/doppler_pointcloud   | sensor_msgs::msg::PointCloud2 | PointCloud2 radar pointcloud whose intensity is doppler velocity. |
+| 名前 | 型 | 説明 |
+|---|---|---|
+| output/amplitude_pointcloud | sensor_msgs::msg::PointCloud2 | 強度が振幅のPointCloud2レーダー点群 |
+| output/doppler_pointcloud | sensor_msgs::msg::PointCloud2 | 強度がドップラー速度のPointCloud2レーダー点群 |
 
-### Parameters
+### パラメータ
 
-| Name                         | Type | Description                                                                               |
-| ---------------------------- | ---- | ----------------------------------------------------------------------------------------- |
-| publish_amplitude_pointcloud | bool | Whether publish radar pointcloud whose intensity is amplitude. Default is `true`.         |
-| publish_doppler_pointcloud   | bool | Whether publish radar pointcloud whose intensity is doppler velocity. Default is `false`. |
+| 名称 | タイプ | 説明 |
+|---|---|---|
+| publish_amplitude_pointcloud | bool | レーダーの点群の強度を振幅で公開するかどうか。初期値は `true` です。 |
+| publish_doppler_pointcloud | bool | レーダーの点群の強度をドップラー速度で公開するかどうか。初期値は `false` です。 |
 
-### How to launch
+### 起動方法
+
 
 ```sh
 ros2 launch autoware_radar_scan_to_pointcloud2 radar_scan_to_pointcloud2.launch.xml
 ```
+

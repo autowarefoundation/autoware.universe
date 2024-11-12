@@ -1,7 +1,8 @@
-# autoware_component_interface_tools
+## autoware_component_interface_tools
 
-This package provides the following tools for component interface.
+このパッケージでは、コンポーネント・インターフェイスに関する次のツールを提供します。
 
 ## service_log_checker
 
-Monitor the service log of component_interface_utils and display if the response status is an error.
+`component_interface_utils`のサービスログを監視し、レスポンスステータスがエラーかどうかを表示します。
+

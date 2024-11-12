@@ -1,41 +1,43 @@
 # dummy_infrastructure
 
-This is a debug node for infrastructure communication.
+こちらは、インフラストラクチャ通信用のデバッグノードです。
 
-## Usage
+## 使用方法
+
 
 ```sh
 ros2 launch dummy_infrastructure dummy_infrastructure.launch.xml
 ros2 run rqt_reconfigure rqt_reconfigure
 ```
 
-## Inputs / Outputs
+## 入力 / 出力
 
-### Inputs
+### 入力
 
-| Name                    | Type                                              | Description            |
-| ----------------------- | ------------------------------------------------- | ---------------------- |
-| `~/input/command_array` | `tier4_v2x_msgs::msg::InfrastructureCommandArray` | Infrastructure command |
+| 名称                    | 種別                                               | 説明            |
+| ----------------------- | ---------------------------------------------------- | ---------------------- |
+| `~/input/command_array` | `tier4_v2x_msgs::msg::InfrastructureCommandArray` | V2Xインフラコマンド |
 
-### Outputs
+### 出力
 
-| Name                   | Type                                                 | Description                 |
-| ---------------------- | ---------------------------------------------------- | --------------------------- |
-| `~/output/state_array` | `tier4_v2x_msgs::msg::VirtualTrafficLightStateArray` | Virtual traffic light array |
+| 名前                   | タイプ                                                               | 説明                         |
+| -------------------------- | ---------------------------------------------------------------------- | ------------------------------ |
+| `~/output/state_array` | `tier4_v2x_msgs::msg::VirtualTrafficLightStateArray` | バーチャルトラフィックライトアレイ |
 
-## Parameters
+## パラメーター
 
-### Node Parameters
+### ノードパラメーター
 
-| Name                | Type   | Default Value | Explanation                                       |
-| ------------------- | ------ | ------------- | ------------------------------------------------- |
-| `update_rate`       | double | `10.0`        | Timer callback period [Hz]                        |
-| `use_first_command` | bool   | `true`        | Consider instrument id or not                     |
-| `use_command_state` | bool   | `false`       | Consider command state or not                     |
-| `instrument_id`     | string | ``            | Used as command id                                |
-| `approval`          | bool   | `false`       | set approval filed to ros param                   |
-| `is_finalized`      | bool   | `false`       | Stop at stop_line if finalization isn't completed |
+| 名称                  | 種別   | デフォルト値 | 説明                                                   |
+| ------------------- | ------ | ------------- | ------------------------------------------------------ |
+| `update_rate`       | double | `10.0`        | タイマーコールバック周期 [Hz]                          |
+| `use_first_command` | bool   | `true`        | インスト読み取り ID を考慮するかどうするか                  |
+| `use_command_state` | bool   | `false`       | コマンドの状態を考慮するかどうするか                  |
+| `instrument_id`     | string | ``            | コマンド ID として使用                                 |
+| `approval`          | bool   | `false`       | `approval` フィールドを ROS パラメータに設定する       |
+| `is_finalized`      | bool   | `false`       | `finalization` が完了していない場合、一時停止線で停止する |
 
-## Assumptions / Known limits
+## 仮定 / 既知の限界
 
-TBD.
+未定です。
+

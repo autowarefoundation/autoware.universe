@@ -1,43 +1,112 @@
 # mrm_comfortable_stop_operator
 
-## Purpose
+## 目的
 
-MRM comfortable stop operator is a node that generates comfortable stop commands according to the comfortable stop MRM order.
+MRM comfortable stop operatorは、MRM comfortable stopコマンドに従って快適な停止コマンドを生成するノードです。
 
-## Inner-workings / Algorithms
+## 内部動作 / アルゴリズム
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                                   | Type                                 | Description         |
-| -------------------------------------- | ------------------------------------ | ------------------- |
-| `~/input/mrm/comfortable_stop/operate` | `tier4_system_msgs::srv::OperateMrm` | MRM execution order |
+| 名称                                | 型                               | 説明 |
+| ------------------------------------ | ----------------------------------- | ----------------- |
+| `~/input/mrm/comfortable_stop/operate` | `tier4_system_msgs::srv::OperateMrm` | MRM実行オーダー |
 
-### Output
+### 出力
 
-| Name                                   | Type                                                  | Description                  |
-| -------------------------------------- | ----------------------------------------------------- | ---------------------------- |
-| `~/output/mrm/comfortable_stop/status` | `tier4_system_msgs::msg::MrmBehaviorStatus`           | MRM execution status         |
-| `~/output/velocity_limit`              | `tier4_planning_msgs::msg::VelocityLimit`             | Velocity limit command       |
-| `~/output/velocity_limit/clear`        | `tier4_planning_msgs::msg::VelocityLimitClearCommand` | Velocity limit clear command |
+**自己位置推定**
 
-## Parameters
+自己位置推定モジュールは、センサからの測定値に基づいて、車両の現在の位置と姿勢を推定します。このモジュールは、以下を含むさまざまなセンサのデータを統合します。
 
-### Node Parameters
+- GPS
+- IMU
+- 車輪速センサ
+- カメラ
 
-| Name        | Type | Default value | Explanation                   |
+統合されたデータは、状態推定器を使用して、車両の現在の状態を推定するために使用されます。
+
+**経路計画**
+
+経路計画モジュールは、起点と終点の間の経路を計画します。このモジュールは、以下を含むさまざまな要因を考慮します。
+
+- 交通規則
+- 地図データ
+- 障害物
+
+計画された経路は、経路追従モジュールに渡されます。
+
+**経路追従**
+
+経路追従モジュールは、計画された経路に従って車両を制御します。このモジュールは、以下を使用して、車両のステアリングとアクセル/ブレーキを制御します。
+
+- 自車位置
+- 目標経路
+- センサからの測定値
+
+**障害物回避**
+
+障害物回避モジュールは、車両の周囲の障害物を検出し、回避します。このモジュールは、以下を使用して、障害物を検出します。
+
+- カメラ
+- レーダー
+- 超音波センサ
+
+障害物が検出されると、回避モジュールは、障害物を回避するための回避策を生成します。
+
+**安全**
+
+安全モジュールは、車両の安全な動作を確保します。このモジュールは、以下を行います。
+
+- モニタリングシステムの健全性
+- 障害物の存在の検出
+- 衝突の回避
+
+**Autowareのアーキテクチャ**
+
+Autowareのアーキテクチャは、以下を含むモジュール構造に基づいています。
+
+- Perception: センサデータの処理と物体認識
+- Planning: 経路の計画と経路追従
+- Control: 車両の制御
+- Safety: 安全の確保
+
+これらのモジュールは、モジュール間インターフェースを使用して相互に通信します。
+
+**Autowareの機能**
+
+Autowareは、以下を含むさまざまな機能を提供します。
+
+- 車線逸脱防止
+- 衝突警告
+- 自動緊急ブレーキ
+- アダプティブクルーズコントロール
+- 自動運転
+
+| 名前                                 | 型                                                       | 説明                                    |
+| ------------------------------------ | -------------------------------------------------------- | ---------------------------------------- |
+| `~/output/mrm/comfortable_stop/status` | `tier4_system_msgs::msg::MrmBehaviorStatus`           | MRM実行状態                          |
+| `~/output/velocity_limit`            | `tier4_planning_msgs::msg::VelocityLimit`             | 速度制限コマンド                        |
+| `~/output/velocity_limit/clear`        | `tier4_planning_msgs::msg::VelocityLimitClearCommand` | 速度制限クリアコマンド                    |
+
+## パラメーター
+
+### ノードパラメーター
+
+| 名称        | 型 | デフォルト値 | 説明                   |
 | ----------- | ---- | ------------- | ----------------------------- |
-| update_rate | int  | `10`          | Timer callback frequency [Hz] |
+| update_rate | int  | `10`          | タイマーコールバック頻度 [Hz] |
 
-### Core Parameters
+### コアパラメータ
 
-| Name             | Type   | Default value | Explanation                                       |
-| ---------------- | ------ | ------------- | ------------------------------------------------- |
-| min_acceleration | double | `-1.0`        | Minimum acceleration for comfortable stop [m/s^2] |
-| max_jerk         | double | `0.3`         | Maximum jerk for comfortable stop [m/s^3]         |
-| min_jerk         | double | `-0.3`        | Minimum jerk for comfortable stop [m/s^3]         |
+| 名前             | 型   | デフォルト値 | 説明                                             |
+| ---------------- | ------ | ------------- | --------------------------------------------------- |
+| min_acceleration | double | `-1.0`        | 快適な停止のための最低加速度 [m/s^2]       |
+| max_jerk         | double | `0.3`         | 快適な停止のための最大ジャーク [m/s^3]         |
+| min_jerk         | double | `-0.3`        | 快適な停止のための最小ジャーク [m/s^3]         |
 
-## Assumptions / Known limits
+## 想定事項／既知の制限
 
 TBD.
+

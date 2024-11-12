@@ -1,13 +1,14 @@
 # fault_injection
 
-## Purpose
+## 目的
 
-This package is used to convert pseudo system faults from PSim to Diagnostics and notify Autoware.
-The component diagram is as follows:
+このパッケージは、PSimからDiagnosticsに疑似システムの障害を変換して、それをAutowareに通知するために使用されます。
+コンポーネントのダイアグラムを以下に示します。
 
-![Component diagram of fault_injection package](img/component.drawio.svg)
+![fault_injectionパッケージのコンポーネントダイアグラム](img/component.drawio.svg)
 
-## Test
+## テスト
+
 
 ```bash
 source install/setup.bash
@@ -15,34 +16,139 @@ cd fault_injection
 launch_test test/test_fault_injection_node.test.py
 ```
 
-## Inner-workings / Algorithms
+## 内部構造 / アルゴリズム
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                        | Type                                           | Description       |
+| 名称                        | タイプ                                           | 説明       |
 | --------------------------- | ---------------------------------------------- | ----------------- |
-| `~/input/simulation_events` | `tier4_simulation_msgs::msg::SimulationEvents` | simulation events |
+| `~/input/simulation_events` | `tier4_simulation_msgs::msg::SimulationEvents` | シミュレーションイベント |
 
-### Output
+### 出力
 
-| Name           | Type                                    | Description       |
-| -------------- | --------------------------------------- | ----------------- |
-| `/diagnostics` | `diagnostic_msgs::msg::DiagnosticArray` | Dummy diagnostics |
+**自動運転ソフトウェアのドキュメント**
 
-## Parameters
+**目次**
 
-None.
+* [はじめに](#はじめに)
+* [アーキテクチャ](#アーキテクチャ)
+    * [Planningコンポーネント](#planningコンポーネント)
+    * [Controlモジュール](#controlモジュール)
+* [インターフェース](#インターフェース)
+    * [API](#api)
+    * [パラメータ](#パラメータ)
+* [使用方法](#使用方法)
+    * [インストール](#インストール)
+    * [設定](#設定)
+    * [実行](#実行)
+* [トラブルシューティング](#トラブルシューティング)
+    * [一般的な問題](#一般的な問題)
+    * [高度な問題](#高度な問題)
+* [寄稿](#寄稿)
 
-### Node Parameters
+**はじめに**
 
-None.
+このドキュメントは、Autoware内の自動運転ソフトウェアのアーキテクチャ、インターフェース、使用方法の概要を提供します。このソフトウェアは、車両の自律走行に必要なPlanningとControl機能を提供します。
 
-### Core Parameters
+**アーキテクチャ**
 
-None.
+**Planningコンポーネント**
 
-## Assumptions / Known limits
+Planningコンポーネントは、車両の経路を生成します。次のような複数の要素で構成されています。
 
-TBD.
+* **PathPlanningモジュール:** 車両の経路を生成します。
+* **TrajectoryPlanningモジュール:** PathPlanningモジュールで生成された経路を滑らかな軌跡に変換します。
+* **BehaviorPlanningモジュール:** 障害物回避やレーン維持などの高レベルの挙動を決定します。
+
+**Controlモジュール**
+
+Controlモジュールは、車両の挙動を制御します。次のような複数の要素で構成されています。
+
+* **LongitudinalControlモジュール:** 車両の速度を制御します。
+* **LateralControlモジュール:** 車両の方向を制御します。
+
+**インターフェース**
+
+**API**
+
+Autowareソフトウェアは、次のようなAPIを提供します。
+
+* **`planning/planning_interface`:** Planningコンポーネントとのインターフェースを提供します。
+* **`control/control_interface`:** Controlモジュールとのインターフェースを提供します。
+
+**パラメータ**
+
+PlanningとControlコンポーネントは、次のような構成可能なパラメータを備えています。
+
+* **Planningコンポーネント:**
+    * パス生成パラメータ
+    * 軌跡生成パラメータ
+    * 挙動計画パラメータ
+* **Controlモジュール:**
+    * 速度制御パラメータ
+    * ステアリング制御パラメータ
+
+**使用方法**
+
+**インストール**
+
+Autowareソフトウェアは、次のようにインストールできます。
+
+```
+git clone https://github.com/autowarefoundation/autoware.git
+cd autoware
+./setup/install_autoware.sh
+```
+
+**設定**
+
+インストール後、`autoware.conf`ファイルを使用してソフトウェアを設定する必要があります。このファイルには、インターフェース、パラメータ、その他の設定が含まれています。
+
+**実行**
+
+ソフトウェアを実行するには、次のコマンドを使用します。
+
+```
+./launch/all.launch
+```
+
+**トラブルシューティング**
+
+**一般的な問題**
+
+* **`post resampling`の障害:** Planningコンポーネントが経路を生成できない可能性があります。PathPlanningモジュールのパラメータを確認してください。
+* **速度逸脱量の増加:** Controlモジュールが車両の速度を適切に制御できない可能性があります。LongitudinalControlモジュールの速度制御パラメータを確認してください。
+* **加速度逸脱量の増加:** Controlモジュールが車両の方向を適切に制御できない可能性があります。LateralControlモジュールのステアリング制御パラメータを確認してください。
+
+**高度な問題**
+
+* **自車位置の精度が悪い:** GPSまたはIMUセンサーからのデータが適切でない可能性があります。センサーの校正と設定を確認してください。
+* **障害物の認識が不十分:** センサーからのデータが不完全またはノイズが多い可能性があります。センサーの配置と感度を確認してください。
+* **経路生成の遅延:** Planningコンポーネントが過負荷になっている可能性があります。Planningコンポーネントのリソース消費を確認してください。
+
+**寄稿**
+
+Autowareプロジェクトはオープンソースであり、寄稿を歓迎します。詳細については、[寄稿ガイドライン](https://github.com/autowarefoundation/autoware/blob/master/CONTRIBUTING.md)を参照してください。
+
+| 名称          | タイプ                                   | 説明             |
+|--------------|----------------------------------------|------------------|
+| `/diagnostics` | `diagnostic_msgs::msg::DiagnosticArray` | ダミー診断         |
+
+## パラメータ
+
+なし。
+
+### ノードパラメータ
+
+なし。
+
+### コアパラメータ
+
+なし。
+
+## 前提条件 / 制限事項
+
+TBD。
+

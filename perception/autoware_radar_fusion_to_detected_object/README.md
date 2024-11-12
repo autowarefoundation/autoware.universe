@@ -1,137 +1,141 @@
 # `autoware_radar_fusion_to_detected_object`
 
-This package contains a sensor fusion module for radar-detected objects and 3D detected objects.
+このパッケージには、レーダー検出オブジェクトと 3D 検出オブジェクトをセンサーフュージョするモジュールが含まれます。
 
-The fusion node can:
+フュージョンノードは以下のことができます。
 
-- Attach velocity to 3D detections when successfully matching radar data. The tracking modules use the velocity information to enhance the tracking results while planning modules use it to execute actions like adaptive cruise control.
-- Improve the low confidence 3D detections when corresponding radar detections are found.
+- レーダーデータが正常にマッチした場合、3D 検出に速度を付加します。追跡モジュールは、速度情報を活用することで追跡結果を向上し、Planning モジュールはアダプティブクルーズコントロールなどのアクションを実行するために速度情報を使用します。
+- 対応するレーダー検出が見つかった場合、信頼度の低い 3D 検出を改善します。
 
 ![process_low_confidence](docs/radar_fusion_to_detected_object_6.drawio.svg)
 
-## Design
+## 設計
 
-### Background
+### 背景
 
-This package is the fusion with LiDAR-based 3D detection output and radar data.
-LiDAR based 3D detection can estimate position and size of objects with high precision, but it cannot estimate velocity of objects.
-Radar data can estimate doppler velocity of objects, but it cannot estimate position and size of objects with high precision
-This fusion package is aim to fuse these characteristic data, and to estimate position, size, velocity of objects with high precision.
+このパッケージは LiDAR ベースの 3D 検出結果とレーダーデータをフュージョンします。
+LiDAR ベースの 3D 検出は、オブジェクトの位置とサイズを高精度で推定できますが、オブジェクトの速度は推定できません。
+レーダーデータは、オブジェクトのドップラー速度を推定できますが、オブジェクトの位置とサイズを高精度で推定できません。
+このフュージョンパッケージの目的は、これらの特性データをフュージョンし、オブジェクトの位置、サイズ、速度を高精度で推定することです。
 
-### Algorithm
+### アルゴリズム
 
-The document of core algorithm is [here](docs/algorithm.md)
+コアアルゴリズムに関するドキュメントは [こちら](docs/algorithm.md) です。
 
-## Interface for core algorithm
+## コアアルゴリズムのインターフェース
 
-The parameters for core algorithm can be set as `core_params`.
+コアアルゴリズムのパラメータは `core_params` として設定できます。
 
-### Parameters for sensor fusion
+### センサーフュージョンのパラメータ
 
-- `bounding_box_margin` (double) [m]
-  - Default parameter is 2.0.
+- `bounding_box_margin`（double、[m]）
+  - デフォルトパラメータは 2.0 です。
 
-This parameter is the distance to extend the 2D bird's-eye view bounding box on each side.
-This parameter is used as a threshold to find radar centroids falling inside the extended box.
+このパラメータは、2D バードビューバウンディングボックスを各辺に延ばす距離です。
+このパラメータは、拡張されたボックス内に含まれるレーダー重心を検索するためのしきい値として使用されます。
 
-- `split_threshold_velocity` (double) [m/s]
-  - Default parameter is 5.0.
+- `split_threshold_velocity`（double、[m/s]）
+  - デフォルトパラメータは 5.0 です。
 
-This parameter is the object's velocity threshold to decide to split for two objects from radar information.
-Note that this feature is not currently implemented.
+このパラメータは、レーダー情報から 2 つのオブジェクトに分割することを決定するオブジェクトの速度しきい値です。
+この機能は現在実装されていませんのでご注意ください。
 
-- `threshold_yaw_diff` (double) [rad]
-  - Default parameter is 0.35.
+- `threshold_yaw_diff`（double、[rad]）
+  - デフォルトパラメータは 0.35 です。
 
-This parameter is the yaw orientation threshold.
-If the difference of yaw degree between from a LiDAR-based detection object and radar velocity, radar information is attached to output objects.
+このパラメータはヨーの向きのしきい値です。
+LiDAR ベースの検出オブジェクトとレーダー速度のヨーの差がこのしきい値を下回る場合、レーダー情報が出力オブジェクトに追加されます。
 
-### Weight parameters for velocity estimation
+### 速度推定の重みパラメータ
 
-To tune these weight parameters, please see [document](docs/algorithm.md) in detail.
+これらの重みパラメータを調整するには、詳細については [ドキュメント](docs/algorithm.md) を参照してください。
 
-- `velocity_weight_average` (double)
-- Default parameter is 0.0.
+- `velocity_weight_average`（double）
+- デフォルトパラメータは 0.0 です。
 
-This parameter is the twist coefficient of average twist of radar data in velocity estimation.
+このパラメータは速度推定におけるレーダーデータの平均のねじれ係数です。
 
-- `velocity_weight_median` (double)
-- Default parameter is 0.0.
+- `velocity_weight_median`（double）
+- デフォルトパラメータは 0.0 です。
 
-This parameter is the twist coefficient of median twist of radar data in velocity estimation.
+**速度推定におけるレーダーデータの中央値のツイスト係数**
 
 - `velocity_weight_min_distance` (double)
-- Default parameter is 1.0.
+  - デフォルトパラメータは 1.0 です。
 
-This parameter is the twist coefficient of radar data nearest to the center of bounding box in velocity estimation.
+**速度推定におけるバウンディングボックスの中心に最も近いレーダーデータのツイスト係数**
 
 - `velocity_weight_target_value_average` (double)
-- Default parameter is 0.0.
+  - デフォルトパラメータは 0.0 です。
 
-This parameter is the twist coefficient of target value weighted average in velocity estimation. Target value is amplitude if using radar pointcloud. Target value is probability if using radar objects.
+**速度推定におけるターゲット値の加重平均のツイスト係数**
+レーダーポイントクラウドを使用している場合、ターゲット値は振幅です。レーダーオブジェクトを使用している場合、ターゲット値は確率です。
 
 - `velocity_weight_target_value_top` (double)
-- Default parameter is 0.0.
+  - デフォルトパラメータは 0.0 です。
 
-This parameter is the twist coefficient of top target value radar data in velocity estimation. Target value is amplitude if using radar pointcloud. Target value is probability if using radar objects.
+**速度推定におけるトップターゲット値レーダーデータのツイスト係数**
+レーダーポイントクラウドを使用している場合、ターゲット値は振幅です。レーダーオブジェクトを使用している場合、ターゲット値は確率です。
 
-### Parameters for fixed object information
+### 固定オブジェクト情報の**パラメータ
 
 - `convert_doppler_to_twist` (bool)
-  - Default parameter is false.
+  - デフォルトパラメータは false です。
 
-This parameter is the flag whether convert doppler velocity to twist using the yaw information of a detected object.
+**検出されたオブジェクトのヨー情報を使用して、ドップラー速度をツイストに変換するフラグ**
 
 - `threshold_probability` (float)
-  - Default parameter is 0.4.
+  - デフォルトパラメータは 0.4 です。
 
-This parameter is the threshold to filter output objects.
-If the probability of an output object is lower than this parameter, and the output object does not have radar points/objects, then delete the object.
+**出力オブジェクトをフィルタリングするためのしきい値**
+出力オブジェクトの確率がこのパラメータよりも低く、出力オブジェクトにレーダーポイント/オブジェクトがない場合、オブジェクトを削除します。
 
 - `compensate_probability` (bool)
-  - Default parameter is false.
+  - デフォルトパラメータは false です。
 
-This parameter is the flag to use probability compensation.
-If this parameter is true, compensate probability of objects to threshold probability.
+**確率補償を使用するフラグ**
+このパラメータが true の場合、オブジェクトの確率をしきい値確率に補償します。
 
-## Interface for `autoware_radar_object_fusion_to_detected_object`
+## **`autoware_radar_object_fusion_to_detected_object`** のインターフェイス
 
-Sensor fusion with radar objects and a detected object.
+レーダーオブジェクトと検出されたオブジェクトとのセンサーフュージョン
 
-- Calculation cost is O(nm).
-  - n: the number of radar objects.
-  - m: the number of objects from 3d detection.
+- 計算コストは O(nm) です。
+  - n: レーダーオブジェクトの数。
+  - m: 3D 検出からのオブジェクトの数。
 
-### How to launch
+### 実行方法
+
 
 ```sh
 ros2 launch autoware_radar_fusion_to_detected_object radar_object_to_detected_object.launch.xml
 ```
 
-### Input
+### 入力
 
 - `~/input/objects` (`autoware_perception_msgs/msg/DetectedObjects.msg`)
-  - 3D detected objects.
+  - 3Dで認識されたオブジェクト
 - `~/input/radar_objects` (`autoware_perception_msgs/msg/DetectedObjects.msg`)
-  - Radar objects. Note that frame_id need to be same as `~/input/objects`
+  - レーダーオブジェクト。フレームIDは`~/input/objects`と同じである必要がある
 
-### Output
+### 出力
 
 - `~/output/objects` (`autoware_perception_msgs/msg/DetectedObjects.msg`)
-  - 3D detected object with twist.
+  - ツイスト付き3D認識オブジェクト
 - `~/debug/low_confidence_objects` (`autoware_perception_msgs/msg/DetectedObjects.msg`)
-  - 3D detected object that doesn't output as `~/output/objects` because of low confidence
+  - 信頼度が低いため`~/output/objects`として出力されない3D認識オブジェクト
 
-### Parameters
+### パラメータ
 
-The parameters for core algorithm can be set as `node_params`.
+コアアルゴリズムのパラメータは`node_params`として設定できます。
 
 - `update_rate_hz` (double) [hz]
-  - Default parameter is 20.0
+  - デフォルトパラメータは20.0です
 
-This parameter is update rate for the `onTimer` function.
-This parameter should be same as the frame rate of input topics.
+このパラメータは`onTimer`関数の更新率です。
+このパラメータは入力トピックのフレームレートと同じである必要があります。
 
-## Interface for radar_scan_fusion_to_detected_object (TBD)
+## radar_scan_fusion_to_detected_objectインターフェイス（未定）
 
-Under implement
+未実装
+

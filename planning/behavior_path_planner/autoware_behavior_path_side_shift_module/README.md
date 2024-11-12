@@ -1,31 +1,32 @@
-# Side Shift design
+# 側方シフト設計
 
-(For remote control) Shift the path to left or right according to an external instruction.
+（リモート制御用）外部の指示に従って経路を左右にシフトします。
 
-## Overview of the Side Shift Module Process
+## 側方シフトモジュール処理の概要
 
-1. Receive the required lateral offset input.
-2. Update the `requested_lateral_offset_` under the following conditions:
-   a. Verify if the last update time has elapsed.
-   b. Ensure the required lateral offset value is different from the previous one.
-3. Insert the shift points into the path if the side shift module's status is not in the SHIFTING status.
+1. 必要な横方向オフセット入力を受信します。
+2. 次の条件下で`requested_lateral_offset_`を更新します。
+  a. 最後の更新時刻が経過したか確認します。
+  b. 必要な横方向オフセット値が前の値と異なることを確認します。
+3. 側方シフトモジュールのステータスがSHIFTINGステータスの場合は、シフトポイントをパスに挿入します。
 
-Please be aware that `requested_lateral_offset_` is continuously updated with the latest values and is not queued.
+`requested_lateral_offset_`は最新の値で常に更新され、キューに入れられないことに注意してください。
 
-## Statuses of the Side Shift
+## 側方シフトのステータス
 
-The side shift has three distinct statuses. Note that during the SHIFTING status, the path cannot be updated:
+側方シフトには3つの異なるステータスがあります。SHIFTINGステータスの間はパスを更新できないことに注意してください。
 
-1. BEFORE_SHIFT: Preparing for shift.
-2. SHIFTING: Currently in the process of shifting.
-3. AFTER_SHIFT: Shift completed.
+1. BEFORE_SHIFT：シフトの準備。
+2. SHIFTING：現在シフト処理中。
+3. AFTER_SHIFT：シフト完了。
 
 <figure markdown>
   ![case1](images/side_shift_status.drawio.svg){width=1000}
-  <figcaption>side shift status</figcaption>
+  <figcaption>側方シフトのステータス</figcaption>
 </figure>
 
-## Flowchart
+## フローチャート
+
 
 ```plantuml
 @startuml
@@ -49,6 +50,7 @@ else ( false)
 stop
 @enduml
 ```
+
 
 ```plantuml
 @startuml
@@ -75,6 +77,7 @@ endif
 stop
 @enduml
 ```
+
 
 ```plantuml
 @startuml
@@ -113,3 +116,4 @@ partition updateState {
 
 @enduml
 ```
+

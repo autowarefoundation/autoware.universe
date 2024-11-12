@@ -2,119 +2,226 @@
 
 ## ROS 2/Autoware.universe bridge for CARLA simulator
 
-Thanks to <https://github.com/gezp> for ROS 2 Humble support for CARLA Communication.
-This ros package enables communication between Autoware and CARLA for autonomous driving simulation.
+<https://github.com/gezp>によるROS 2 Humble対応のCARLA Communicationに感謝いたします。
+このROSパッケージにより、自律走行シミュレーションのためのAutowareとCARLA間の通信が可能になります。
 
-## Supported Environment
+## サポートされている環境
 
 | ubuntu |  ros   | carla  | autoware |
 | :----: | :----: | :----: | :------: |
 | 22.04  | humble | 0.9.15 |   Main   |
 
-## Setup
+## 自動運転ソフトウェアドキュメント
 
-### Install
+### Planningコンポーネント
 
-- [CARLA Installation](https://carla.readthedocs.io/en/latest/start_quickstart/)
-- [Carla Lanelet2 Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/)
-- [Python Package for CARLA 0.9.15 ROS 2 Humble communication](https://github.com/gezp/carla_ros/releases/tag/carla-0.9.15-ubuntu-22.04)
+#### Sensingモジュール
 
-  - Install the wheel using pip.
-  - OR add the egg file to the `PYTHONPATH`.
+このモジュールは、センサーデータから車線を検出してトラッキングします。
 
-1. Download maps (y-axis inverted version) to arbitrary location
-2. Change names and create the map folder (example: Town01) inside `autoware_map`. (`point_cloud/Town01.pcd` -> `autoware_map/Town01/pointcloud_map.pcd`, `vector_maps/lanelet2/Town01.osm`-> `autoware_map/Town01/lanelet2_map.osm`)
-3. Create `map_projector_info.yaml` on the folder and add `projector_type: local` on the first line.
+#### Planningモジュール
 
-### Build
+このモジュールは、以下に基づいて、自車位置と目標地点を考慮した、安全な経路を生成します。
+
+- 車両の速度と加速度
+- 周囲の環境
+- 交通規則
+
+#### Controlモジュール
+
+このモジュールは、Planningモジュールから生成された経路を元に、ステアリング、アクセル、ブレーキを制御します。
+
+### レイヤーのインターフェース
+
+各レイヤーは、以下のようなインターフェースを介して相互に通信します。
+
+- **Sensing**
+  - `current pose`
+  - センサーデータ
+- **Planning**
+  - `current pose`
+  - 経路
+- **Control**
+  - 経路
+  - `post resampling`車両状態
+
+### エラー処理
+
+以下のようなエラーが発生した場合、次の対応が行われます。
+
+- **センサーの障害**
+  - エラーが検出されると、Planningモジュールは経路生成を停止します。
+- **Planningの障害**
+  - 経路逸脱量の逸脱量が許容値を超えると、Controlモジュールは車両を停止します。
+- **Controlの障害**
+  - アクセルまたはブレーキの逸脱量が許容値を超えると、Planningモジュールは経路を再計算します。
+
+### パラメータのチューニング
+
+次のパラメータは、ソフトウェアの動作を調整するためにチューニングできます。
+
+- **Sensing**
+  - 車線検出手法の閾値
+- **Planning**
+  - 安全マージンの大きさ
+  - 目標速度
+- **Control**
+  - ステアリングゲイン
+  - 加速および減速率
+
+## 設定
+
+### インストール
+
+- [CARLA インストール](https://carla.readthedocs.io/en/latest/start_quickstart/)
+- [Carla Lanelet2 マップ](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/)
+- [CARLA 0.9.15 ROS 2 Humble コミュニケーション用 Python パッケージ](https://github.com/gezp/carla_ros/releases/tag/carla-0.9.15-ubuntu-22.04)
+
+  - pip を使用して wheel をインストールします。
+  - または egg ファイルを `PYTHONPATH` に追加します。
+
+1. マップを任意の場所にダウンロード（y 軸反転バージョン）
+2. 名前を変更し、`autoware_map` 内にマップフォルダーを作成（例：Town01）。（`point_cloud/Town01.pcd` -> `autoware_map/Town01/pointcloud_map.pcd`、`vector_maps/lanelet2/Town01.osm`-> `autoware_map/Town01/lanelet2_map.osm`）
+3. フォルダーに `map_projector_info.yaml` を作成し、最初の行に `projector_type: local` を追加。
+
+### ビルド
+
 
 ```bash
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 
-### Run
+### 実行
 
-1. Run carla, change map, spawn object if you need
-   <!--- cspell:ignore prefernvidia -->
+1. carlaを実行し、マップを変更し、必要に応じてオブジェクトを生成する
+
 
    ```bash
    cd CARLA
    ./CarlaUE4.sh -prefernvidia -quality-level=Low -RenderOffScreen
    ```
 
-2. Run ros nodes
+## 2. rosノードの実行
+
+```bash
+$ roslaunch autoware ai_node.launch
+```
+
+`Autoware`を起動すると、以下のノードが実行されます。
+- `Planning` コンポーネント
+- `localization` コンポーネント
+- `visualization` コンポーネント
+- `util` コンポーネント
+
+`current pose` は、`planning` コンポーネントによって自動生成されます。
+`current pose` の受信には以下のトピックを使用します。
+
+```
+/current_pose
+```
+
+`planning` コンポーネントは、`current pose` を元に経路を計画します。
+`planning` コンポーネントが計画した経路は、以下のトピックで受信できます。
+
+```
+/planned_path
+```
+
+`visualization` コンポーネントは、`planning` コンポーネントが計画した経路を視覚化します。
+
+```
+/planned_path
+```
+
+`visualization` コンポーネントは、以下のトピックで自車位置を受信します。
+
+```
+/current_pose
+```
+
+`util` コンポーネントは、`post resampling` された経路を出力します。
+`post resampling` された経路は、以下のトピックで受信できます。
+
+```
+/resampled_path
+```
+
+`util` コンポーネントは、以下のトピックで経路の逸脱量を出力します。
+
+```
+/path_offset
+```
+
 
    ```bash
    ros2 launch autoware_launch e2e_simulator.launch.xml map_path:=$HOME/autoware_map/Town01 vehicle_model:=sample_vehicle sensor_model:=awsim_sensor_kit simulator_type:=carla carla_map:=Town01
    ```
 
-3. Set initial pose (Init by GNSS)
-4. Set goal position
-5. Wait for planning
-6. Engage
+### 内部メカニズム / アルゴリズム
 
-## Inner-workings / Algorithms
+`InitializeInterface`クラスは、CARLAワールドと自動運転車両の両方を設定するために重要です。このクラスは、`autoware_carla_interface.launch.xml`を通じて設定パラメータを取得します。
 
-The `InitializeInterface` class is key to setting up both the CARLA world and the ego vehicle. It fetches configuration parameters through the `autoware_carla_interface.launch.xml`.
+メインのシミュレーションループは`carla_ros2_interface`クラス内で実行されます。このループは、CARLAシミュレータ内のシミュレーション時間を`fixed_delta_seconds`で刻み、データを受信してROS 2メッセージとして`self.sensor_frequencies`で定義された周波数で公開します。
 
-The main simulation loop runs within the `carla_ros2_interface` class. This loop ticks simulation time inside the CARLA simulator at `fixed_delta_seconds` time, where data is received and published as ROS 2 messages at frequencies defined in `self.sensor_frequencies`.
+Autowareからの自動運転車の指令は、`autoware_raw_vehicle_cmd_converter`を通じて処理され、これらの指令はCARLAに合わせて調整されます。調整された指令はその後、`CarlaDataProvider`を介してCARLA制御に直接フィードされます。
 
-Ego vehicle commands from Autoware are processed through the `autoware_raw_vehicle_cmd_converter`, which calibrates these commands for CARLA. The calibrated commands are then fed directly into CARLA control via `CarlaDataProvider`.
+### ワールドロード用の設定可能なパラメータ
 
-### Configurable Parameters for World Loading
+すべての主要パラメータは、`autoware_carla_interface.launch.xml`で設定できます。
 
-All the key parameters can be configured in `autoware_carla_interface.launch.xml`.
+| 名称                       | タイプ | デフォルト値                                                                                  | 説明                                                                                                                                                                                                                  |
+| -------------------------- | ------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `host`                     | 文字列 | "localhost"                                                                                    | CARLA サーバーのホスト名                                                                                                                                                                                                  |
+| `port`                     | 整数   | "2000"                                                                                       | CARLA サーバーのポート番号                                                                                                                                                                                             |
+| `timeout`                  | 整数   | 20                                                                                           | CARLA クライアントのタイムアウト                                                                                                                                                                                    |
+| `ego_vehicle_role_name`    | 文字列 | "ego_vehicle"                                                                                  | 自車ロールの名称                                                                                                                                                                                                |
+| `vehicle_type`             | 文字列 | "vehicle.toyota.prius"                                                                           | スポーンさせる車両のブループリント ID。車両のブループリント ID は [CARLA ブループリント ID](https://carla.readthedocs.io/en/latest/catalogue_vehicles/) で見つけることができる                       |
+| `spawn_point`              | 文字列 | なし                                                                                        | 自車をスポーンさせる座標（なしの場合はランダム）。形式 = [x, y, z, roll, pitch, yaw]                                                                                                                                     |
+| `carla_map`                | 文字列 | "Town01"                                                                                     | CARLA にロードするマップの名称                                                                                                                                                                                    |
+| `sync_mode`                | ブール | True                                                                                           | CARLA に同期モードを設定するためのブールフラグ                                                                                                                                                                       |
+| `fixed_delta_seconds`      | double | 0.05                                                                                           | シミュレーションのタイムステップ（クライアント FPS に関連付けられている）                                                                                                                                             |
+| `objects_definition_file`  | 文字列 | "$(find-pkg-share autoware_carla_interface)/objects.json"                                     | CARLA でセンサーをスポーンするために使用されるセンサーパラメーターファイル                                                                                                                                        |
+| `use_traffic_manager`      | ブール | True                                                                                           | CARLA にトラフィックマネージャーを設定するためのブールフラグ                                                                                                                                                                   |
+| `max_real_delta_seconds`   | double | 0.05                                                                                           | `fixed_delta_seconds` よりもシミュレーション速度を制限するためのパラメーター                                                                                                                                             |
+| `config_file`              | 文字列 | "$(find-pkg-share autoware_carla_interface)/raw_vehicle_cmd_converter.param.yaml"           | `autoware_raw_vehicle_cmd_converter` で使用される制御マッピングファイル。現在の制御は CARLA の `vehicle.toyota.prius` ブループリント ID に基づいてキャリブレーションされている。車両タイプを変更する場合は再キャリブレーションが必要になる可能性がある |
 
-| Name                      | Type   | Default Value                                                                     | Description                                                                                                                                                                                                         |
-| ------------------------- | ------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `host`                    | string | "localhost"                                                                       | Hostname for the CARLA server                                                                                                                                                                                       |
-| `port`                    | int    | "2000"                                                                            | Port number for the CARLA server                                                                                                                                                                                    |
-| `timeout`                 | int    | 20                                                                                | Timeout for the CARLA client                                                                                                                                                                                        |
-| `ego_vehicle_role_name`   | string | "ego_vehicle"                                                                     | Role name for the ego vehicle                                                                                                                                                                                       |
-| `vehicle_type`            | string | "vehicle.toyota.prius"                                                            | Blueprint ID of the vehicle to spawn. The Blueprint ID of vehicles can be found in [CARLA Blueprint ID](https://carla.readthedocs.io/en/latest/catalogue_vehicles/)                                                 |
-| `spawn_point`             | string | None                                                                              | Coordinates for spawning the ego vehicle (None is random). Format = [x, y, z, roll, pitch, yaw]                                                                                                                     |
-| `carla_map`               | string | "Town01"                                                                          | Name of the map to load in CARLA                                                                                                                                                                                    |
-| `sync_mode`               | bool   | True                                                                              | Boolean flag to set synchronous mode in CARLA                                                                                                                                                                       |
-| `fixed_delta_seconds`     | double | 0.05                                                                              | Time step for the simulation (related to client FPS)                                                                                                                                                                |
-| `objects_definition_file` | string | "$(find-pkg-share autoware_carla_interface)/objects.json"                         | Sensor parameters file that are used for spawning sensor in CARLA                                                                                                                                                   |
-| `use_traffic_manager`     | bool   | True                                                                              | Boolean flag to set traffic manager in CARLA                                                                                                                                                                        |
-| `max_real_delta_seconds`  | double | 0.05                                                                              | Parameter to limit the simulation speed below `fixed_delta_seconds`                                                                                                                                                 |
-| `config_file`             | string | "$(find-pkg-share autoware_carla_interface)/raw_vehicle_cmd_converter.param.yaml" | Control mapping file to be used in `autoware_raw_vehicle_cmd_converter`. Current control are calibrated based on `vehicle.toyota.prius` Blueprints ID in CARLA. Changing the vehicle type may need a recalibration. |
+### センサーの構成可能なパラメータ
 
-### Configurable Parameters for Sensors
+以下のパラメータは `carla_ros.py` で構成できます。
 
-Below parameters can be configured in `carla_ros.py`.
-
-| Name                      | Type | Default Value                                                                          | Description                                                                                                                                                                                                                       |
+| 名称                      | タイプ | デフォルト値                                                                          | 説明                                                                                                                                                                                                                       |
 | ------------------------- | ---- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `self.sensor_frequencies` | dict | {"top": 11, "left": 11, "right": 11, "camera": 11, "imu": 50, "status": 50, "pose": 2} | (line 67) Calculates the time interval since the last publication and checks if this interval meets the minimum required to not exceed the desired frequency. It will only affect ROS publishing frequency not CARLA sensor tick. |
+| `self.sensor_frequencies` | dict | {"top": 11, "left": 11, "right": 11, "camera": 11, "imu": 50, "status": 50, "pose": 2} | (line 67) 前回の公開以降の時間間隔を計算し、この間隔が、所定の頻度を超過しないために必要な最小限度を満たしているかどうかを確認します。これは ROS の公開頻度のみ影響し、CARLA のセンサーの更新には影響しません。 |
 
-- CARLA sensor parameters can be configured in `config/objects.json`.
-  - For more details regarding the parameters that can be modified in CARLA are explained in [Carla Ref Sensor](https://carla.readthedocs.io/en/latest/ref_sensors/).
+- CARLAセンサーパラメータは`config/objects.json`で設定できます。
+  - CARLAで設定可能なパラメータの詳細については、[Carla Ref Sensor](https://carla.readthedocs.io/en/latest/ref_sensors/)で説明されています。
 
-### World Loading
+### ワールドのロード
 
-The `carla_ros.py` sets up the CARLA world:
+`carla_ros.py` はCARLAワールドを設定します。
 
-1. **Client Connection**:
+1. **クライアント接続**:
+
 
    ```python
    client = carla.Client(self.local_host, self.port)
    client.set_timeout(self.timeout)
    ```
 
-2. **Load the Map**:
+2. **マップのロード**:
 
-   Map loaded in CARLA world with map according to `carla_map` parameter.
+   `carla_map`パラメータに従って、マップをCARLAワールドにロード。
+
 
    ```python
    client.load_world(self.map_name)
    self.world = client.get_world()
    ```
 
-3. **Spawn Ego Vehicle**:
+3. **自車生成**:
 
-   Vehicle are spawn according to `vehicle_type`, `spawn_point`, and `agent_role_name` parameter.
+   車両は `vehicle_type`, `spawn_point`, `agent_role_name` のパラメーターに従って生成されます。
+
 
    ```python
    spawn_point = carla.Transform()
@@ -129,33 +236,34 @@ The `carla_ros.py` sets up the CARLA world:
    CarlaDataProvider.request_new_actor(self.vehicle_type, spawn_point, self.agent_role_name)
    ```
 
-## Traffic Light Recognition
+## 信号認識
 
-The maps provided by the Carla Simulator ([Carla Lanelet2 Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/)) currently lack proper traffic light components for Autoware and have different latitude and longitude coordinates compared to the pointcloud map. To enable traffic light recognition, follow the steps below to modify the maps.
+Carla シミュレータ ([Carla Lanelet2 Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/)) によって提供される地図は現在、Autoware に対する適切な信号コンポーネントが欠けており、点群地図と比較して緯度と経度の座標が異なります。信号認識を可能にするには、以下の手順に従って地図を修正します。
 
-- Options to Modify the Map
+- 地図を修正するオプション
 
-  - A. Create a New Map from Scratch
-  - Use the [Tier4 Vector Map Builder](https://tools.tier4.jp/feature/vector_map_builder_ll2/) to create a new map.
+  - A. ゼロから新しい地図を作成する
+  - [Tier4 Vector Map Builder](https://tools.tier4.jp/feature/vector_map_builder_ll2/) を使用して、新しい地図を作成します。
 
-  - B. Modify the Existing Carla Lanelet2 Maps
-  - Adjust the longitude and latitude of the [Carla Lanelet2 Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/) to align with the PCD (origin).
-    - Use this [tool](https://github.com/mraditya01/offset_lanelet2/tree/main) to modify the coordinates.
-    - Snap Lanelet with PCD and add the traffic lights using the [Tier4 Vector Map Builder](https://tools.tier4.jp/feature/vector_map_builder_ll2/).
+  - B. 既存の Carla Lanelet2 Maps を修正する
+  - PCD (原点) と整列するよう、[Carla Lanelet2 Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/) の経度と緯度を調整します。
+    - 座標を変更するにはこの [ツール](https://github.com/mraditya01/offset_lanelet2/tree/main) を使用します。
+    - Lanelet を PCD とスナップし、[Tier4 Vector Map Builder](https://tools.tier4.jp/feature/vector_map_builder_ll2/) を使用して信号を追加します。
 
-- When using the Tier4 Vector Map Builder, you must convert the PCD format from `binary_compressed` to `ascii`. You can use `pcl_tools` for this conversion.
-- For reference, an example of Town01 with added traffic lights at one intersection can be downloaded [here](https://drive.google.com/drive/folders/1QFU0p3C8NW71sT5wwdnCKXoZFQJzXfTG?usp=sharing).
+- Tier4 Vector Map Builder を使用する場合、PCD フォーマットを `binary_compressed` から `ascii` に変換する必要があります。この変換には `pcl_tools` を使用できます。
+- 参考として、1 つの交差点に信号を追加した Town01 の例は [こちら](https://drive.google.com/drive/folders/1QFU0p3C8NW71sT5wwdnCKXoZFQJzXfTG?usp=sharing) からダウンロードできます。
 
-## Tips
+## ヒント
 
-- Misalignment might occurs during initialization, pressing `init by gnss` button should fix it.
-- Changing the `fixed_delta_seconds` can increase the simulation tick (default 0.05 s), some sensors params in `objects.json` need to be adjusted when it is changed (example: LIDAR rotation frequency have to match the FPS).
+- 初期化中に位置ずれが発生することがありますが、`init by gnss` ボタンを押せば修正できます。
+- `fixed_delta_seconds` を変更するとシミュレーションのティックが増加します (デフォルト 0.05 秒)。変更すると、`objects.json` の一部のセンサーのパラメータを調整する必要があります (例: LIDAR 回転周波数は FPS と一致する必要があります)。
 
-## Known Issues and Future Works
+## 既知の問題と今後の作業
 
-- Testing on procedural map (Adv Digital Twin).
-  - Currently unable to test it due to failing in the creation of the Adv digital twin map.
-- Automatic sensor configuration of the CARLA sensors from the Autoware sensor kit.
-  - Sensor currently not automatically configured to have the same location as the Autoware Sensor kit. The current work around is to create a new frame of each sensors with (0, 0, 0, 0, 0, 0) coordinate relative to base_link and attach each sensor on the new frame (`autoware_carla_interface.launch.xml` Line 28). This work around is very limited and restrictive, as when the sensor_kit is changed the sensor location will be wrongly attached.
-- Traffic light recognition.
-  - Currently the HDmap of CARLA did not have information regarding the traffic light which is necessary for Autoware to conduct traffic light recognition.
+- 手続き型マップ (Adv Digital Twin) のテストを行います。
+  - 現在、Adv Digital Twin map の作成に失敗するためテストできません。
+- Autoware センサーキットから CARLA センサーを自動的に設定します。
+  - センサーは現在、Autoware センサーキットと同じ場所に配置されるように自動的に設定されていません。現在の回避策は、各センサーの新しいフレームを (0, 0, 0, 0, 0, 0) 座標 (base_link に相対的) で作成し、各センサーを新しいフレームにアタッチすることです (`autoware_carla_interface.launch.xml` 行 28)。この回避策は非常に限定的で制約があります。センサーキットが変更されると、センサーの場所は正しくアタッチされません。
+- 信号認識。
+  - 現在、CARLA の HDmap には、Autoware が信号認識を行うために必要な信号に関する情報がありません。
+

@@ -1,55 +1,159 @@
 # image_diagnostics
 
-## Purpose
+## 目的
 
-The `image_diagnostics` is a node that check the status of the input raw image.
+`image_diagnostics`は、入力された生画像のステータスをチェックするためのノードです。
 
-## Inner-workings / Algorithms
+## 内部動作/アルゴリズム
 
-Below figure shows the flowchart of image diagnostics node. Each image is divided into small blocks for block state assessment.
+下図は、image diagnosticsノードのフローチャートを示しています。各画像は、ブロック状態の評価用に小さなブロックに分割されます。
 
-![image diagnostics flowchart ](./image/image_diagnostics_overview.svg)
+![image diagnosticsフローチャート ](./image/image_diagnostics_overview.svg)
 
-Each small image block state is assessed as below figure.
+各小さな画像ブロックのステータスは、下図のように評価されます。
 
-![block status decision tree ](./image/block_state_decision.svg)
+![ブロックステータス決定ツリー ](./image/block_state_decision.svg)
 
-After all image's blocks state are evaluated, the whole image status is summarized as below.
+すべての画像ブロックのステータスが評価されると、画像全体のステータスは以下のように要約されます。
 
-![whole image state decision tree](./image/image_status_decision.svg)
+![画像全体のステータス決定ツリー](./image/image_status_decision.svg)
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name              | Type                      | Description |
+| 名称              | 型                      | 説明 |
 | ----------------- | ------------------------- | ----------- |
-| `input/raw_image` | `sensor_msgs::msg::Image` | raw image   |
+| `input/raw_image` | `sensor_msgs::msg::Image` | 生画像   |
 
-### Output
+### 出力
 
-| Name                                | Type                                    | Description                           |
+**自動運転ソフトウェアのドキュメント**
+
+**目的**
+
+本ドキュメントは、Autowareの自動運転ソフトウェアの設計とアーキテクチャを説明するものです。
+
+**アーキテクチャ**
+
+Autowareのアーキテクチャはモジュール式で、個々のモジュールが特定の機能を担当しています。主なモジュールは以下の通りです。
+
+- **Perception (知覚)**: センサーデータから周囲環境のモデルを作成します。
+- **Planning (プランニング)**: 目的地への安全かつ効率的な経路を計画します。
+- **Control (制御)**: 計画に基づいて車両を制御します。
+
+**Planningモジュール**
+
+Planningモジュールは、以下のようなタスクを担当します。
+
+- **経路計画**: 目的地への経路を生成します。
+- **モーション計画**: 障害物を避けながら車両を移動させる方法を計画します。
+- **安全確認**: 車両の動きが衝突リスクを含まないことを確認します。
+
+**制御モジュール**
+
+制御モジュールは、以下のようなタスクを担当します。
+
+- **ステアリング制御**: 車両のステアリングを制御します。
+- **アクセル/ブレーキ制御**: 車両の速度を制御します。
+- **Stabilization (姿勢安定化)**: 車両の姿勢を安定させます。
+
+**センサーデータの処理**
+
+Autowareは、以下を含むさまざまなセンサーからのデータを処理します。
+
+- レーダー
+- LiDAR
+- カメラ
+
+センサーデータは、Perceptionモジュールによって周囲環境のモデルを作成するために使用されます。
+
+**自車位置の推定**
+
+自車位置は、以下のセンサーからのデータを使用して推定されます。
+
+- GPS
+- IMU
+- オドメトリ
+
+**障害物検出**
+
+障害物は、知覚モジュールによってセンサーデータから検出されます。障害物は以下に分類されます。
+
+- 静的（例: ビル、木）
+- 動的（例: 車両、歩行者）
+
+**衝突リスクの評価**
+
+衝突リスクは、以下に基づいてPlanningモジュールによって評価されます。
+
+- 自車と障害物の相対運動
+- 障害物のサイズ
+- 障害物の形状
+
+**経路計画**
+
+経路は、以下を考慮して生成されます。
+
+- 目的地
+- 障害物
+- 交通規制
+
+**モーション計画**
+
+モーション計画は、以下を使用して生成されます。
+
+- 経路
+- 車両の運動力学
+- 障害物
+
+**安全確認**
+
+安全確認は、以下を使用して行われます。
+
+- 衝突リスクの評価
+- 障害物の逸脱量
+- 加速度逸脱量
+
+**制御**
+
+制御は以下を使用して行われます。
+
+- モーション計画
+- 車両の状態
+- センサーデータ
+
+**今後の開発**
+
+Autowareは継続的に開発されており、以下を含む機能の向上が計画されています。
+
+- 高精度地図の統合
+- より堅牢な障害物検出
+- より効率的な経路計画
+
+| 名前                                | タイプ                                    | 説明                                |
 | ----------------------------------- | --------------------------------------- | ------------------------------------- |
-| `image_diag/debug/gray_image`       | `sensor_msgs::msg::Image`               | gray image                            |
-| `image_diag/debug/dft_image`        | `sensor_msgs::msg::Image`               | discrete Fourier transformation image |
-| `image_diag/debug/diag_block_image` | `sensor_msgs::msg::Image`               | each block state colorization         |
-| `image_diag/image_state_diag`       | `tier4_debug_msgs::msg::Int32Stamped`   | image diagnostics status value        |
-| `/diagnostics`                      | `diagnostic_msgs::msg::DiagnosticArray` | diagnostics                           |
+| `image_diag/debug/gray_image`       | `sensor_msgs::msg::Image`               | グレー画像                            |
+| `image_diag/debug/dft_image`        | `sensor_msgs::msg::Image`               | 離散フーリエ変換画像                |
+| `image_diag/debug/diag_block_image` | `sensor_msgs::msg::Image`               | 各ブロック状態のカラー化             |
+| `image_diag/image_state_diag`       | `tier4_debug_msgs::msg::Int32Stamped`   | 画像診断のステータス値              |
+| `/diagnostics`                      | `diagnostic_msgs::msg::DiagnosticArray` | 診断                                |
 
-## Parameters
+## パラメータ
 
-## Assumptions / Known limits
+## 想定 / 既知の限界
 
-- This is proof of concept for image diagnostics and the algorithms still under further improvement.
+- これは画像診断の概念実証であり、アルゴリズムは現在さらなる改善中です。
 
-## (Optional) Error detection and handling
+## (オプション) エラー検出と処理
 
-## (Optional) Performance characterization
+## (オプション) パフォーマンスの特性評価
 
-## (Optional) References/External links
+## (オプション) 参照 / 外部リンク
 
-## (Optional) Future extensions / Unimplemented parts
+## (オプション) 今後の拡張 / 未実装部分
 
-- Consider more specific image distortion/occlusion type, for instance raindrop or dust.
+- 降雨や埃などの、より具体的な画像の歪み / 遮蔽タイプを検討する。
 
-- Consider degraded visibility under fog or rain condition from optical point of view
+- 光学的な観点からの霧や雨による視界の悪化を検討する
+

@@ -1,95 +1,123 @@
 # `autoware_radar_object_tracker`
 
-## Purpose
+## 目的
 
-This package provides a radar object tracking node that processes sequences of detected objects to assign consistent identities to them and estimate their velocities.
+このパッケージはレーダーオブジェクト追跡ノードを提供し、検出されたオブジェクトのシーケンスを処理してオブジェクトに一貫性のあるIDを割り当て、その速度を推定します。
 
-## Inner-workings / Algorithms
+## 内部処理 / アルゴリズム
 
-This radar object tracker is a combination of data association and tracking algorithms.
+このレーダーオブジェクト追跡器は、データ関連付けアルゴリズムと追跡アルゴリズムの組み合わせです。
 
-<!-- In the future, you can add an overview image here -->
+<!-- 将来的にはここに概要イメージを追加できます -->
 <!-- ![radar_object_tracker_overview](image/radar_object_tracker_overview.svg) -->
 
-### Data Association
+### データ関連付け
 
-The data association algorithm matches detected objects to existing tracks.
+データ関連付けアルゴリズムは、検出されたオブジェクトを既存の軌道と照合します。
 
-### Tracker Models
+### 追跡モデル
 
-The tracker models used in this package vary based on the class of the detected object.
-See more details in the [models.md](models.md).
+このパッケージで使用される追跡モデルは、検出されたオブジェクトのクラスによって異なります。詳細については、[models.md](models.md) を参照してください。
 
-<!-- In the future, you can add flowcharts, state transitions, and other details about how this package works. -->
+<!-- 将来的には、フローチャート、状態遷移、およびこのパッケージの仕組みについての詳細を追加できます。 -->
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name          | Type                                             | Description      |
-| ------------- | ------------------------------------------------ | ---------------- |
-| `~/input`     | `autoware_perception_msgs::msg::DetectedObjects` | Detected objects |
-| `/vector/map` | `autoware_map_msgs::msg::LaneletMapBin`          | Map data         |
+| 名前            | 型                                             | 説明      |
+| ------------- | ------------------------------------------------ | ---------- |
+| `~/input`     | `autoware_perception_msgs::msg::DetectedObjects` | 検出物体 |
+| `/vector/map` | `autoware_map_msgs::msg::LaneletMapBin`          | 地図データ |
 
-### Output
+### 出力
 
-| Name       | Type                                            | Description     |
-| ---------- | ----------------------------------------------- | --------------- |
-| `~/output` | `autoware_perception_msgs::msg::TrackedObjects` | Tracked objects |
+このドキュメントは、**Autoware** ソフトウェアの Planning モジュールの技術仕様を記述しています。Planning モジュールは、自車のパスを生成し、目標速度を決定する責任を負います。
 
-## Parameters
+### 機能
 
-### Node Parameters
+Planning モジュールは、次のような機能を提供します。
 
-| Name                                 | Type   | Default Value               | Description                                                                                                     |
-| ------------------------------------ | ------ | --------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `publish_rate`                       | double | 10.0                        | The rate at which to publish the output messages                                                                |
-| `world_frame_id`                     | string | "map"                       | The frame ID of the world coordinate system                                                                     |
-| `enable_delay_compensation`          | bool   | false                       | Whether to enable delay compensation. If set to `true`, output topic is published by timer with `publish_rate`. |
-| `tracking_config_directory`          | string | "./config/tracking/"        | The directory containing the tracking configuration files                                                       |
-| `enable_logging`                     | bool   | false                       | Whether to enable logging                                                                                       |
-| `logging_file_path`                  | string | "/tmp/association_log.json" | The path to the file where logs should be written                                                               |
-| `tracker_lifetime`                   | double | 1.0                         | The lifetime of the tracker in seconds                                                                          |
-| `use_distance_based_noise_filtering` | bool   | true                        | Whether to use distance based filtering                                                                         |
-| `minimum_range_threshold`            | double | 70.0                        | Minimum distance threshold for filtering in meters                                                              |
-| `use_map_based_noise_filtering`      | bool   | true                        | Whether to use map based filtering                                                                              |
-| `max_distance_from_lane`             | double | 5.0                         | Maximum distance from lane for filtering in meters                                                              |
-| `max_angle_diff_from_lane`           | double | 0.785398                    | Maximum angle difference from lane for filtering in radians                                                     |
-| `max_lateral_velocity`               | double | 5.0                         | Maximum lateral velocity for filtering in m/s                                                                   |
-| `can_assign_matrix`                  | array  |                             | An array of integers used in the data association algorithm                                                     |
-| `max_dist_matrix`                    | array  |                             | An array of doubles used in the data association algorithm                                                      |
-| `max_area_matrix`                    | array  |                             | An array of doubles used in the data association algorithm                                                      |
-| `min_area_matrix`                    | array  |                             | An array of doubles used in the data association algorithm                                                      |
-| `max_rad_matrix`                     | array  |                             | An array of doubles used in the data association algorithm                                                      |
-| `min_iou_matrix`                     | array  |                             | An array of doubles used in the data association algorithm                                                      |
+* 感知データからの動的障害物の検出
+* 自車位置に基づく周囲環境のマップ構築
+* 目標速度とステアリングの計算
 
-See more details in the [models.md](models.md).
+### Planning アーキテクチャ
 
-### Tracker parameters
+Planning モジュールは、以下のコンポーネントで構成されています。
 
-Currently, this package supports the following trackers:
+* **Perception:** ダイナミック障害物を検出します。
+* **Map:** 自車位置に基づいて周囲環境のマップを構築します。
+* **Motion Planning:** 目標速度と軌跡を計算します。
+* **Speed Planning:** 目標速度を決定します。
+* **Decision Making:** 感知データとマップ情報を統合し、パスを生成します。
+
+### Planning パイプライン
+
+Planning パイプラインは、以下の手順で構成されています。
+
+1. **Perception 更新:** ダイナミック障害物が検出されます。
+2. **Map 更新:** 自車位置に基づいてマップが構築されます。
+3. **目標速度計算:** 目標速度が決定されます。
+4. **軌跡生成:** 障害物を回避する軌跡が生成されます。
+5. **パス生成:** 軌跡からパスが生成されます。
+
+| 名前       | タイプ                                            | 説明     |
+| ---------- | ----------------------------------------------- | -------- |
+| `~/output` | `autoware_perception_msgs::msg::TrackedObjects` | 追跡対象 |
+
+## パラメータ
+
+### ノードパラメータ
+
+| 名前 | タイプ | デフォルト値 | 説明 |
+| ------ | ------ | --------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `publish_rate` | double | 10.0 | 出力メッセージをパブリッシュするレート |
+| `world_frame_id` | string | "map" | ワールド座標系のフレームID |
+| `enable_delay_compensation` | bool | false | ディレイ補正を有効にするかどうか。`True`に設定すると、出力トピックは`publish_rate`でタイマーによりパブリッシュされます。 |
+| `tracking_config_directory` | string | "./config/tracking/" | トラッキング設定ファイルを含むディレクトリ |
+| `enable_logging` | bool | false | ロギングを有効にするかどうか |
+| `logging_file_path` | string | "/tmp/association_log.json" | ログを書き込むファイルのパス |
+| `tracker_lifetime` | double | 1.0 | トラッカーの有効期間（秒） |
+| `use_distance_based_noise_filtering` | bool | true | 距離ベースのフィルタリングを使用するかどうか |
+| `minimum_range_threshold` | double | 70.0 | フィルタリングの最小距離しきい値（メートル） |
+| `use_map_based_noise_filtering` | bool | true | マップベースのフィルタリングを使用するかどうか |
+| `max_distance_from_lane` | double | 5.0 | フィルタリングのためのレーンからの最大距離（メートル） |
+| `max_angle_diff_from_lane` | double | 0.785398 | フィルタリングのためのレーンからの最大角度差（ラジアン） |
+| `max_lateral_velocity` | double | 5.0 | フィルタリングのための最大側方速度（m/s） |
+| `can_assign_matrix` | array | | データアソシエーションアルゴリズムで使用される整数配列 |
+| `max_dist_matrix` | array | | データアソシエーションアルゴリズムで使用されるdouble配列 |
+| `max_area_matrix` | array | | データアソシエーションアルゴリズムで使用されるdouble配列 |
+| `min_area_matrix` | array | | データアソシエーションアルゴリズムで使用されるdouble配列 |
+| `max_rad_matrix` | array | | データアソシエーションアルゴリズムで使用されるdouble配列 |
+| `min_iou_matrix` | array | | データアソシエーションアルゴリズムで使用されるdouble配列 |
+
+## トラッカーのパラメータ
+
+このパッケージは現在、以下のトラッカーをサポートしています。
 
 - `linear_motion_tracker`
 - `constant_turn_rate_motion_tracker`
 
-Default settings for each tracker are defined in the [./config/tracking/](./config/tracking/), and described in [models.md](models.md).
+それぞれのトラッカーの初期設定は [./config/tracking/](./config/tracking/) で定義されており、[models.md](models.md) に記載されています。
 
-## Assumptions / Known limits
+## 仮定と既知の限界
 
-<!-- In the future, you can add assumptions and known limitations of this package. -->
+<!-- 将来的には、このパッケージの仮定と既知の制限を追加できます。 -->
 
-## (Optional) Error detection and handling
+## (省略可) エラーの検出と処理
 
-<!-- In the future, you can add details about how this package detects and handles errors. -->
+<!-- 将来的には、このパッケージがエラーを検出して処理する方法について詳細を追加できます。 -->
 
-## (Optional) Performance characterization
+## (省略可) パフォーマンスの評価
 
-<!-- In the future, you can add details about the performance of this package. -->
+<!-- 将来的には、このパッケージのパフォーマンスに関する詳細を追加できます。 -->
 
-## (Optional) References/External links
+## (省略可) 参照/外部リンク
 
-<!-- In the future, you can add references and links to external code used in this package. -->
+<!-- 将来的には、このパッケージで使用されている外部コードへの参照とリンクを追加できます。 -->
 
-## (Optional) Future extensions / Unimplemented parts
+## (省略可) 将来の拡張機能/未実装部分
 
-<!-- In the future, you can add details about planned extensions or unimplemented parts of this package. -->
+<!-- 将来的には、このパッケージの計画中の拡張機能や未実装の部分について詳細を追加できます。 -->
+

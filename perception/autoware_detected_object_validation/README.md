@@ -1,30 +1,31 @@
 # detected_object_validation
 
-## Purpose
+## 目的
 
-The purpose of this package is to eliminate obvious false positives of DetectedObjects.
+このパッケージの目的は、DetectedObjects の明らかな誤検知を除去することです。
 
-## References/External links
+## 参照/外部リンク
 
-- [Obstacle pointcloud based validator](obstacle-pointcloud-based-validator.md)
-- [Occupancy grid based validator](occupancy-grid-based-validator.md)
-- [Object lanelet filter](object-lanelet-filter.md)
-- [Object position filter](object-position-filter.md)
+- [障害物点群ベースのバリデータ](obstacle-pointcloud-based-validator-ja.md)
+- [占有グリッドベースのバリデータ](occupancy-grid-based-validator-ja.md)
+- [オブジェクトレーンレットフィルタ](object-lanelet-filter-ja.md)
+- [オブジェクト位置フィルタ](object-position-filter-ja.md)
 
-### Node Parameters
+### ノードパラメータ
 
 #### object_lanelet_filter
 
-{{ json_to_markdown("perception/autoware_detected_object_validation/schema/object_lanelet_filter.schema.json") }}
+{{ json_to_markdown("perception/autoware_detected_object_validation/schema/object_lanelet_filter.schema.json", "ja") }}
 
 #### object_position_filter
 
-{{ json_to_markdown("perception/autoware_detected_object_validation/schema/object_position_filter.schema.json") }}
+{{ json_to_markdown("perception/autoware_detected_object_validation/schema/object_position_filter.schema.json", "ja") }}
 
 #### obstacle_pointcloud_based_validator
 
-{{ json_to_markdown("perception/autoware_detected_object_validation/schema/obstacle_pointcloud_based_validator.schema.json") }}
+{{ json_to_markdown("perception/autoware_detected_object_validation/schema/obstacle_pointcloud_based_validator.schema.json", "ja") }}
 
 #### occupancy_grid_based_validator
 
-{{ json_to_markdown("perception/autoware_detected_object_validation/schema/occupancy_grid_based_validator.schema.json") }}
+{{ json_to_markdown("perception/autoware_detected_object_validation/schema/occupancy_grid_based_validator.schema.json", "ja") }}
+

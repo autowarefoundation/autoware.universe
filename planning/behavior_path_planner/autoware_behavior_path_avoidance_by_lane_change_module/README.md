@@ -1,40 +1,41 @@
-# Avoidance by lane change design
+# 車線変更設計による回避
 
-This is a sub-module to avoid obstacles by lane change maneuver.
+これは車線変更操作で障害物を避けるサブモジュールです。
 
-## Purpose / Role
+## 目的/役割
 
-This module is designed as one of the obstacle avoidance features and generates a lane change path if the following conditions are satisfied.
+このモジュールは障害物回避機能の1つとして設計されており、以下の条件が満たされる場合に車線変更パスを生成します。
 
-- Exist lane changeable lanelet.
-- Exist avoidance target objects on ego driving lane.
+- 車線変更可能なレーンレットが存在する。
+- 自車走行車線上に回避対象物が存在する。
 
 ![avoidance_by_lane_change](./images/avoidance_by_lane_change.svg)
 
-## Inner-workings / Algorithms
+## 内部動作/アルゴリズム
 
-Basically, this module is implemented by reusing the avoidance target filtering logic of the existing [Static Object Avoidance Module](../autoware_behavior_path_static_obstacle_avoidance_module/README.md) and the path generation logic of the [Normal Lane Change Module](../autoware_behavior_path_lane_change_module/README.md). On the other hand, the conditions under which the module is activated differ from those of a normal avoidance module.
+基本的に、このモジュールは既存の[静的障害物回避モジュール](../autoware_behavior_path_static_obstacle_avoidance_module/README.md)の回避対象フィルタリングロジックと[通常車線変更モジュール](../autoware_behavior_path_lane_change_module/README.md)のパス生成ロジックを再利用して実装されています。一方、モジュールが有効になる条件は通常の回避モジュールとは異なります。
 
-Check that the following conditions are satisfied after the filtering process for the avoidance target.
+回避対象のフィルタリング処理後、以下の条件が満たされていることを確認します。
 
-### Number of the avoidance target objects
+### 回避対象オブジェクトの数
 
-This module is launched when the number of avoidance target objects on **EGO DRIVING LANE** is greater than `execute_object_num`. If there are no avoidance targets in the ego driving lane or their number is less than the parameter, the obstacle is avoided by normal avoidance behavior (if the normal avoidance module is registered).
+このモジュールは、**自車走行車線**上の回避対象オブジェクトの数が`execute_object_num`より大きい場合に起動します。自車走行車線に回避対象がなかったり、その数がパラメータより少ない場合は、通常の回避挙動（通常の回避モジュールが登録されている場合）による障害物回避を行います。
 
 ![trigger_1](./images/avoidance_by_lc_trigger_1.svg)
 
-### Lane change end point condition
+### 車線変更終了点条件
 
-Unlike the normal avoidance module, which specifies the shift line end point, this module does not specify its end point when generating a lane change path. On the other hand, setting `execute_only_when_lane_change_finish_before_object` to `true` will activate this module only if the lane change can be completed before the avoidance target object.
+シフトライン終了点を指定する通常の回避モジュールとは異なり、このモジュールは車線変更パスを生成するときに終了点を指定しません。一方、`execute_only_when_lane_change_finish_before_object`を`true`に設定すると、車線変更を回避対象オブジェクトよりも前に完了できる場合にのみ、このモジュールが有効になります。
 
-Although setting the parameter to `false` would increase the scene of avoidance by lane change, it is assumed that sufficient lateral margin may not be ensured in some cases because the vehicle passes by the side of obstacles during the lane change.
+パラメータを`false`に設定すると車線変更による回避の場面が増えますが、車線変更中に障害物の脇を通過するため、十分な横方向マージンが確保できない場合があります。
 
 ![trigger_2](./images/avoidance_by_lc_trigger_2.svg)
 
-## Parameters
+## パラメータ
 
-| Name                                               | Unit | Type   | Description                                                                                                                              | Default value |
-| :------------------------------------------------- | ---- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| execute_object_num                                 | [-]  | int    | Number of avoidance target objects on ego driving lane is greater than this value, this module will be launched.                         | 1             |
-| execute_object_longitudinal_margin                 | [m]  | double | [maybe unused] Only when distance between the ego and avoidance target object is longer than this value, this module will be launched.   | 0.0           |
-| execute_only_when_lane_change_finish_before_object | [-]  | bool   | If this flag set `true`, this module will be launched only when the lane change end point is **NOT** behind the avoidance target object. | true          |
+| 名称                                           | 単位 | タイプ | 説明                                                                                                                                | デフォルト値 |
+| :------------------------------------------- | ---- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| execute_object_num                          | [-]  | int    | 自車進行車線上の回避対象の数がこの値より多い場合、本モジュールが起動します。                                                    | 1           |
+| execute_object_longitudinal_margin           | [m]  | double | [おそらく未使用] 自車と回避対象の距離がこの値よりも長い場合のみ、本モジュールが起動します。                                              | 0.0         |
+| execute_only_when_lane_change_finish_before_object | [-]  | bool   | このフラグが`true`に設定されている場合、本モジュールは車線変更の終了点が回避対象の **後ろではない** 場合にのみ起動します。 | true        |
+

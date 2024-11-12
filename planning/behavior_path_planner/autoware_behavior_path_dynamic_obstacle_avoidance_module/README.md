@@ -1,134 +1,136 @@
-# Avoidance module for dynamic objects
+## 回避モジュール（動的物体用）
 
-This module is under development.
+本モジュールは開発中です。
 
-## Purpose / Role
+## 目的 / 役割
 
-This module provides avoidance functions for vehicles, pedestrians, and obstacles in the vicinity of the ego's path in combination with the [autoware_path_optimizer](https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_path_optimizer/).
-Each module performs the following roles.
-Dynamic Avoidance module cuts off the drivable area according to the position and velocity of the target to be avoided.
-Obstacle Avoidance module modifies the path to be followed so that it fits within the received drivable area.
+本モジュールは、自身経路の周辺にある車両、歩行者、および障害物を回避する機能を [autoware_path_optimizer](https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_path_optimizer/) と併用して提供します。
+各モジュールは以下のような役割を果たします。
+動的回避モジュールは回避対象の目標位置と速度に基づき、走行可能領域を切り取ります。
+障害物回避モジュールは送信された走行可能領域の範囲に収まるように、走行経路を修正します。
 
-Static obstacle's avoidance functions are also provided by the [Static Avoidance module](https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_behavior_path_static_obstacle_avoidance_module/), but these modules have different roles.
-The Static Obstacle Avoidance module performs avoidance through the outside of own lanes but cannot avoid the moving objects.
-On the other hand, this module can avoid moving objects.
-For this reason, the word "dynamic" is used in the module's name.
-The table below lists the avoidance modules that can handle each situation.
+[静的回避モジュール](https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_behavior_path_static_obstacle_avoidance_module/) によって、静的障害物回避機能も提供されますが、これらのモジュールは役割が異なります。
+静的障害物回避モジュールは、自身の車線の外側を介して回避を実行しますが、移動中の物体を回避することはできません。
+一方、このモジュールは移動中の物体を回避できます。
+そのため、本モジュールの名称には「動的」という言葉が使用されています。
+以下の表に、各状況に対応する回避モジュールを記載します。
 
-|                          |                         avoid within the own lane                          | avoid through the outside of own lanes |
+|                          |                         車線内での回避                         | 車線外の外側からの回避 |
 | :----------------------- | :------------------------------------------------------------------------: | :------------------------------------: |
-| avoid not-moving objects | Avoidance Module <br> Dynamic Avoidance Module + Obstacle Avoidance Module |            Avoidance Module            |
-| avoid moving objects     |            Dynamic Avoidance Module + Obstacle Avoidance Module            |     No Module (Under Development)      |
+| 未稼働オブジェクトの回避 | Avoidance Module <br> Dynamic Avoidance Module + Obstacle Avoidance Module |            Avoidance Module            |
+| 稼働オブジェクトの回避 |            Dynamic Avoidance Module + Obstacle Avoidance Module            |     モジュールなし (開発中)      |
 
-## Policy of algorithms
+## アルゴリズムのポリシー
 
-Here, we describe the policy of inner algorithms.
-The inner algorithms can be separated into two parts: The first decides whether to avoid the obstacles and the second cuts off the drivable area against the corresponding obstacle.
+ここでは、内部アルゴリズムのポリシーについて説明します。
+内部アルゴリズムは 2 つの部分に分けることができます。1 つ目は障害物を回避するかどうかを判断し、2 つ目は対応する障害物に対する走行可能領域を切り取ります。
 
-### Select obstacles to avoid
+### 回避する障害物の選択
 
-To decide whether to avoid an object, both the predicted path and the state (pose and twist) of each object are used.
-The type of objects the user wants this module to avoid is also required.
-Using this information, the module decides to _avoid_ objects that _obstruct the ego's passage_ and _can be avoided_.
+オブジェクトを回避するかを判断するためには、予測されたパスと各オブジェクトの状態（ポーズとツイスト）の両方が使用されます。
+このモジュールに回避してほしいオブジェクトの種類も必要です。
+この情報を使用して、モジュールは自車の進行を妨げ、回避可能なオブジェクトを回避することを決定します。
 
-The definition of _obstruct the ego's passage_ is implemented as the object that collides within seconds.
-The other, _can be avoided_ denotes whether it can be avoided without risk to the passengers or the other vehicles.
-For this purpose, the module judges whether the obstacle can be avoided with satisfying the constraints of lateral acceleration and lateral jerk.
-For example, the module decides not to avoid an object that is too close or fast in the lateral direction.
+自車の進行を妨げるという定義は、数秒以内に衝突するオブジェクトとして実装されています。
+もう 1 つ、「回避可能」は、乗客や他の車両にリスクを与えることなく回避できるかどうかを示します。
+この目的のために、モジュールは障害物が横加速度と横ジャークの制約を満たして回避できるかどうかを判断します。
+例えば、横方向に近すぎるか速すぎるオブジェクトは回避しないことを決定します。
 
-### Cuts off the drivable area against the selected vehicles
+### 選択された車両に対する走行可能領域の切り取り
 
-For the selected obstacles to be avoided, the module cuts off the drivable area.
-As inputs to decide the shapes of cut-off polygons, poses of the obstacles are mainly used, assuming they move in parallel to the ego's path, instead of its predicted path.
-This design arises from that the predicted path of objects is not accurate enough to use the path modifications (at least currently).
-Furthermore, the output drivable area shape is designed as a rectangular cutout along the ego's path to make the computation scalar rather than planar.
+回避するために選択された障害物に対して、モジュールは走行可能領域を切り取ります。
+切り取りポリゴンの形状を決定するための入力として、障害物のポーズが主に使用されます。ただし、予測されたパスではなく、それらが自車のパスと並行に移動すると想定されます。
+この設計は、オブジェクトの予測されたパスは（少なくとも現在は）パス変更を使用するほど正確ではないというところから来ています。
+さらに、出力の走行可能領域の形状は、計算を平面ではなくスカラーで行うために、自車のパスに沿った長方形の切り取りとして設計されています。
 
-#### Determination of lateral dimension
+#### 横方向の寸法の決定
 
-The lateral dimensions of the polygon are calculated as follows.
-The polygon's width to extract from the drivable area is the obstacle width and `drivable_area_generation.lat_offset_from_obstacle`.
-We can limit the lateral shift length by `drivable_area_generation.max_lat_offset_to_avoid`.
+ポリゴンの横方向の寸法は次のように計算されます。
+走行可能領域から抽出するポリゴンの幅は、障害物の幅と `drivable_area_generation.lat_offset_from_obstacle` です。
+`drivable_area_generation.max_lat_offset_to_avoid` によって横方向のシフトの長さを制限できます。
 
 ![drivable_area_extraction_width](./image/drivable_area_extraction_width.drawio.svg)
 
-#### Determination of longitudinal dimension
+#### 縦方向の寸法の決定
 
-Then, extracting the same directional and opposite directional obstacles from the drivable area will work as follows considering TTC (time to collision).
+次に、走行可能領域から同じ方向と反対方向の障害物を取り出すのは、TTC（衝突時間）を考慮して次のように機能します。
 
-Regarding the same directional obstacles, obstacles whose TTC is negative will be ignored (e.g., The obstacle is in front of the ego, and the obstacle's velocity is larger than the ego's velocity.).
+同じ方向の障害物に関して、TTC が負の障害物は無視されます（例: 障害物が自車の前にあり、障害物の速度が自車の速度よりも大きい）。
 
-Same directional obstacles (Parameter names may differ from implementation)
+**同じ方向の障害物**（実装によってパラメータ名が異なる場合があります）
 ![same_directional_object](./image/same_directional_object.svg)
 
-Opposite directional obstacles (Parameter names may differ from implementation)
+**反対方向の障害物**（実装によってパラメータ名が異なる場合があります）
 ![opposite_directional_object](./image/opposite_directional_object.svg)
 
-### Cuts off the drivable area against the selected pedestrians
+### 選択された歩行者に対する走行可能領域の切り取り
 
-Then, we describe the logic to generate the drivable areas against pedestrians to be avoided.
-Objects of this type are considered to have priority right of way over the ego's vehicle while ensuring a minimum safety of the ego's vehicle.
-In other words, the module assigns a drivable area to an obstacle with a specific margin based on the predicted paths with specific confidences for a specific time interval, as shown in the following figure.
+次に、回避すべき歩行者に走行可能領域を生成するロジックについて説明します。
+このタイプのオブジェクトは、自車の安全を確保しつつ、自車に対して優先権を持つものとみなされます。
+言い換えれば、モジュールは次図に示すように、特定の時間の予測されたパスに基づいて特定の確信度で、特定の余裕を持った障害物に走行可能領域を割り当てます。
 
 <figure>
     <img src="./image/2024-04-18_15-13-01.png" width="600">
-    <figcaption> Restriction areas are generated from each pedestrian's predicted paths</figcaption>
+    <figcaption>制限領域は歩行者の予測されたパスから生成されます</figcaption>
 </figure>
 
-Apart from polygons for objects, the module also generates another polygon to ensure the ego's safety, i.e., to avoid abrupt steering or significant changes from the path.
-This is similar to avoidance against the vehicles and takes precedence over keeping a safe distance from the object to be avoided.
-As a result, as shown in the figure below, the polygons around the objects reduced by the secured polygon of the ego are subtracted from the ego's drivable area.
+モジュールは、オブジェクト用のポリゴンとは別に、自車の安全性を確保するための別のポリゴンも生成します。つまり、急な操舵またはパスからの大幅な変化を回避します。
+これは、車両に対する回避動作と似ており、回避すべきオブジェクトとの安全距離の確保よりも優先されます。
+その結果、下の図に示すように、オブジェクトの周りのポリゴンが自車の安全なポリゴンによって縮小されたものが自車の走行可能領域から引き算されます。
 
 <figure>
-    <img src="./image/2024-04-18_15-32-03.png" width="600">
-    <figcaption> Ego's minimum requirements are prioritized against object margin</figcaption>
-</figure>
 
-## Example
+## 図
+
+<figcaption>自車の最小要求を対象物軌跡との余裕で優先する</figcaption>
+
+## 例
 
 <figure>
     <img src="./image/image-20230807-151945.png" width="800">
-    <figcaption>Avoidance for the bus departure</figcaption>
+    <figcaption>バスの出発に対する回避</figcaption>
 </figure>
 
 <figure>  
     <img src="./image/image-20230807-152835.png" width="800">
-    <figcaption>Avoidance on curve </figcaption>
+    <figcaption>曲線上の回避</figcaption>
 </figure>
 
 <figure>
     <img src="./image/image-20230808-095936.png" width="800">
-    <figcaption>Avoidance against the opposite direction vehicle</figcaption>
+    <figcaption>対向車に対する回避</figcaption>
 </figure>
 
 <figure>
     <img src="./image/image-20230808-152853.png" width="800">
-    <figcaption>Avoidance for multiple vehicle</figcaption>
+    <figcaption>複数の車に対する回避</figcaption>
 </figure>
 
-## Future works
+## 今後の課題
 
-Currently, the path shifting length is limited to 0.5 meters or less by `drivable_area_generation.max_lat_offset_to_avoid`.
-This is caused by the lack of functionality to work with other modules and the structure of the planning component.
-Due to this issue, this module can only handle situations where a small avoidance width is sufficient.
-This issue is the most significant for this module.
-In addition, the ability of this module to extend the drivable area as needed is also required.
+現在、経路シフト長は `drivable_area_generation.max_lat_offset_to_avoid` によって0.5メートル以内に制限されています。
+これは、他のモジュールやPlanningコンポーネントの構造と連携する機能がないことが原因です。
+この問題により、このモジュールは回避幅が小さい状況でのみ処理できます。
+この問題は、このモジュールにとって最も重要です。
+また、このモジュールが必要に応じて走行可能領域を拡張する能力も必要です。
 
-## Parameters
+## パラメーター
 
-Under development
+開発中
 
-| Name                                                                  | Unit  | Type   | Description                                                | Default value |
-| :-------------------------------------------------------------------- | :---- | :----- | :--------------------------------------------------------- | :------------ |
-| target_object.car                                                     | [-]   | bool   | The flag whether to avoid cars or not                      | true          |
-| target_object.truck                                                   | [-]   | bool   | The flag whether to avoid trucks or not                    | true          |
-| ...                                                                   | [-]   | bool   | ...                                                        | ...           |
-| target_object.min_obstacle_vel                                        | [m/s] | double | Minimum obstacle velocity to avoid                         | 1.0           |
-| drivable_area_generation.lat_offset_from_obstacle                     | [m]   | double | Lateral offset to avoid from obstacles                     | 0.8           |
-| drivable_area_generation.max_lat_offset_to_avoid                      | [m]   | double | Maximum lateral offset to avoid                            | 0.5           |
-| drivable_area_generation.overtaking_object.max_time_to_collision      | [s]   | double | Maximum value when calculating time to collision           | 3.0           |
-| drivable_area_generation.overtaking_object.start_duration_to_avoid    | [s]   | double | Duration to consider avoidance before passing by obstacles | 4.0           |
-| drivable_area_generation.overtaking_object.end_duration_to_avoid      | [s]   | double | Duration to consider avoidance after passing by obstacles  | 5.0           |
-| drivable_area_generation.overtaking_object.duration_to_hold_avoidance | [s]   | double | Duration to hold avoidance after passing by obstacles      | 3.0           |
-| drivable_area_generation.oncoming_object.max_time_to_collision        | [s]   | double | Maximum value when calculating time to collision           | 3.0           |
-| drivable_area_generation.oncoming_object.start_duration_to_avoid      | [s]   | double | Duration to consider avoidance before passing by obstacles | 9.0           |
-| drivable_area_generation.oncoming_object.end_duration_to_avoid        | [s]   | double | Duration to consider avoidance after passing by obstacles  | 0.0           |
+| 名称                                                              | 単位 | 型    | 説明                                                              | デフォルト値 |
+| :--------------------------------------------------------------- | :---- | :----- | :------------------------------------------------------------------ | :------------ |
+| `target_object.car`                                             | [-]   | bool   | 車の回避フラグ                                                          | true          |
+| `target_object.truck`                                            | [-]   | bool   | トラックの回避フラグ                                                        | true          |
+| ...                                                            | [-]   | bool   | ...                                                                   | ...           |
+| `target_object.min_obstacle_vel`                                | [m/s] | double | 回避する際の最小障害物速度                                               | 1.0           |
+| `drivable_area_generation.lat_offset_from_obstacle`              | [m]   | double | 障害物からの回避用横方向オフセット                                       | 0.8           |
+| `drivable_area_generation.max_lat_offset_to_avoid`              | [m]   | double | 回避する際の最大横方向オフセット                                         | 0.5           |
+| `drivable_area_generation.overtaking_object.max_time_to_collision` | [s]   | double | タイムトゥーコリジョンを計算する際の最大値                               | 3.0           |
+| `drivable_area_generation.overtaking_object.start_duration_to_avoid` | [s]   | double | 障害物を通過する前に回避を考慮する期間                              | 4.0           |
+| `drivable_area_generation.overtaking_object.end_duration_to_avoid` | [s]   | double | 障害物を通過した後に回避を考慮する期間                            | 5.0           |
+| `drivable_area_generation.overtaking_object.duration_to_hold_avoidance` | [s]   | double | 障害物を通過した後に回避を保持する期間                            | 3.0           |
+| `drivable_area_generation.oncoming_object.max_time_to_collision`   | [s]   | double | タイムトゥーコリジョンを計算する際の最大値                               | 3.0           |
+| `drivable_area_generation.oncoming_object.start_duration_to_avoid` | [s]   | double | 障害物を通過する前に回避を考慮する期間                              | 9.0           |
+| `drivable_area_generation.oncoming_object.end_duration_to_avoid`   | [s]   | double | 障害物を通過した後に回避を考慮する期間                            | 0.0           |
+

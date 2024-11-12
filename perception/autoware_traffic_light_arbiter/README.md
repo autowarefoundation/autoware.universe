@@ -1,49 +1,86 @@
 # autoware_traffic_light_arbiter
 
-## Purpose
+## 目的
 
-This package receives traffic signals from perception and external (e.g., V2X) components and combines them using either a confidence-based or a external-preference based approach.
+このパッケージは、認識コンポーネントや外部（例：V2X）のコンポーネントから受信した交通信号を、信頼度ベースまたは外部優先ベースのアプローチを使用して結合します。
 
 ## TrafficLightArbiter
 
-A node that merges traffic light/signal state from image recognition and external (e.g., V2X) systems to provide to a planning component.
+画像認識と外部（例：V2X）システムからの交通信号状態をマージし、Planningコンポーネントに提供するノードです。
 
 ### Signal Match Validator
 
-When `enable_signal_matching` is set to true, this node validates the match between perception signals and external signals.
-The table below outlines how the matching process determines the output based on the combination of perception and external signal colors. Each cell represents the outcome when a specific color from a perception signal (columns) intersects with a color from an external signal (rows).
+`enable_signal_matching` が true に設定されている場合、このノードは認識信号と外部信号の一致を検証します。
+以下の表は、認識信号（列）の特定の色が外部信号（行）の色と交差したときに、どのような色の組み合わせで一致のプロセスがアウトプットを決定するかを概説しています。各セルは、認識信号の特定の色（列）と外部信号の色（行）が交差したときの結果を表しています。
 
-| External \ Perception | RED     | AMBER   | GREEN   | UNKNOWN | Not Received |
-| --------------------- | ------- | ------- | ------- | ------- | ------------ |
-| RED                   | RED     | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN      |
-| AMBER                 | UNKNOWN | AMBER   | UNKNOWN | UNKNOWN | UNKNOWN      |
-| GREEN                 | UNKNOWN | UNKNOWN | GREEN   | UNKNOWN | UNKNOWN      |
-| UNKNOWN               | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN      |
-| Not Received          | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN      |
+| 外部知覚 | 赤信号     | 黄信号   | 緑信号   | 未知 | 受信なし |
+|---|---|---|---|---|---|
+| 赤信号                   | 赤信号     | 未知 | 未知 | 未知 | 未知      |
+| 黄信号                 | 未知 | 黄信号   | 未知 | 未知 | 未知      |
+| 緑信号                 | 未知 | 未知 | 緑信号   | 未知 | 未知      |
+| 未知               | 未知 | 未知 | 未知 | 未知 | 未知      |
+| 受信なし          | 未知 | 未知 | 未知 | 未知 | 未知      |
 
-### Inputs / Outputs
+### 入力/出力
 
-#### Input
+#### 入力
 
-| Name                             | Type                                                  | Description                                              |
-| -------------------------------- | ----------------------------------------------------- | -------------------------------------------------------- |
-| ~/sub/vector_map                 | autoware_map_msgs::msg::LaneletMapBin                 | The vector map to get valid traffic signal ids.          |
-| ~/sub/perception_traffic_signals | autoware_perception_msgs::msg::TrafficLightGroupArray | The traffic signals from the image recognition pipeline. |
-| ~/sub/external_traffic_signals   | autoware_perception_msgs::msg::TrafficLightGroupArray | The traffic signals from an external system.             |
+| 名称                              | タイプ                   | 説明                                                         |
+| -------------------------------- | ------------------------- | -------------------------------------------------------------- |
+| ~/sub/vector_map                | autoware_map_msgs::msg::LaneletMapBin | 有効な信号 ID を取得するためのベクターマップ                   |
+| ~/sub/perception_traffic_signals | autoware_perception_msgs::msg::TrafficLightGroupArray | 画像認識パイプラインからの信号                              |
+| ~/sub/external_traffic_signals  | autoware_perception_msgs::msg::TrafficLightGroupArray | 外部システムからの信号                                       |
 
-#### Output
+#### 出力
 
-| Name                  | Type                                                  | Description                      |
-| --------------------- | ----------------------------------------------------- | -------------------------------- |
-| ~/pub/traffic_signals | autoware_perception_msgs::msg::TrafficLightGroupArray | The merged traffic signal state. |
+autoware ナビゲーションモジュールは、以下を含む自動運転ソフトウェアの主要コンポーネントです。
+- Planning
+- Perception
+- Control
 
-## Parameters
+各モジュールは、センサーデータと周辺環境の情報を処理し、車両の動作を決定するために相互作用します。
 
-### Core Parameters
+#### Planningモジュール
 
-| Name                        | Type   | Default Value | Description                                                                                                                                                                    |
-| --------------------------- | ------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `external_time_tolerance`   | double | 5.0           | The duration in seconds an external message is considered valid for merging                                                                                                    |
-| `perception_time_tolerance` | double | 1.0           | The duration in seconds a perception message is considered valid for merging                                                                                                   |
-| `external_priority`         | bool   | false         | Whether or not externals signals take precedence over perception-based ones. If false, the merging uses confidence as a criteria                                               |
-| `enable_signal_matching`    | bool   | false         | Decide whether to validate the match between perception signals and external signals. If set to true, verify that the colors match and only publish them if they are identical |
+Planningモジュールは、車両の経路と速度計画を作成します。センサーデータ、地図データ、自車位置に基づいて、モジュールは以下を行います。
+- 衝突回避パス計画
+- 交通規則遵守
+- 速度制御
+
+#### Perceptionモジュール
+
+Perceptionモジュールは、周囲環境を解釈します。センサーデータを使用して、モジュールは以下を行います。
+- 物体検出と分類
+- 路面状況認識
+- 静止物と動的物体の識別
+
+#### Controlモジュール
+
+Controlモジュールは、Planningモジュールからのコマンドに基づいて、車両を操作します。モジュールは、以下の制御入力を生成します。
+- ステアリング制御
+- 加速度/減速度制御
+- 変速制御
+
+#### その他の重要なコンポーネント
+
+Planning、Perception、Controlモジュールの他に、autowareには以下のような重要なコンポーネントも含まれます。
+- **Decision Making**：車両の動作を決定する高レベルコントローラー
+- **Localization**：車両の位置を特定するシステム
+- **Sensor Fusion**：さまざまなセンサーからのデータを統合するモジュール
+- **Communication**：他の車両、インフラストラクチャ、交通機関の管理システムとのデータをやり取りするインターフェイス
+
+| 名前                  | タイプ                                                 | 説明                      |
+| --------------------- | ----------------------------------------------------- | --------------------------- |
+| ~/pub/traffic_signals | autoware_perception_msgs::msg::TrafficLightGroupArray | 統合された信号機の状態。 |
+
+## パラメータ
+
+### コアパラメータ
+
+| 名称                         | 型              | デフォルト値 | 説明                                                                                                                       |
+| -------------------------- | ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `external_time_tolerance`    | double          | 5.0         | 外部メッセージがマージに有効と見なされる秒数                                                                                   |
+| `perception_time_tolerance`  | double          | 1.0         | Perceptionメッセージがマージに有効と見なされる秒数                                                                               |
+| `external_priority`          | bool            | false       | 外部のシグナルがPerceptionベースのシグナルより優先されるかどうか。falseの場合、マージは基準として信頼性を使用する |
+| `enable_signal_matching`     | bool            | false       | Perceptionシグナルと外部シグナルの一致を検証するかどうか。trueに設定した場合、色が一致していることを確認し、一致する場合のみ公開する |
+

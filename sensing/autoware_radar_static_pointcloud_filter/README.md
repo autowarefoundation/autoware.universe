@@ -2,35 +2,37 @@
 
 ## radar_static_pointcloud_filter_node
 
-Extract static/dynamic radar pointcloud by using doppler velocity and ego motion.
-Calculation cost is O(n). `n` is the number of radar pointcloud.
+Doppler速度と自車運動を使用して、静的および動的なレーダーポイントクラウドを抽出します。
+計算コストはO(n)で、`n`はレーダーポイントクラウドの数です。
 
-### Input topics
+### 入力トピック
 
-| Name           | Type                       | Description                |
+| 名称           | 型                       | 説明                |
 | -------------- | -------------------------- | -------------------------- |
 | input/radar    | radar_msgs::msg::RadarScan | RadarScan                  |
-| input/odometry | nav_msgs::msg::Odometry    | Ego vehicle odometry topic |
+| input/odometry | nav_msgs::msg::Odometry    | 自車オドメトリトピック |
 
-### Output topics
+### 出力トピック
 
-| Name                      | Type                       | Description              |
-| ------------------------- | -------------------------- | ------------------------ |
-| output/static_radar_scan  | radar_msgs::msg::RadarScan | static radar pointcloud  |
-| output/dynamic_radar_scan | radar_msgs::msg::RadarScan | dynamic radar pointcloud |
+| 名称                     | タイプ                      | 説明                               |
+| ------------------------- | -------------------------- | -------------------------------- |
+| output/static_radar_scan  | radar_msgs::msg::RadarScan | 静的レーダーポイントクラウド        |
+| output/dynamic_radar_scan | radar_msgs::msg::RadarScan | 動的レーダーポイントクラウド        |
 
-### Parameters
+### パラメータ
 
-| Name                | Type   | Description                                          |
+| 名前                | タイプ   | 説明                                          |
 | ------------------- | ------ | ---------------------------------------------------- |
-| doppler_velocity_sd | double | Standard deviation for radar doppler velocity. [m/s] |
+| doppler_velocity_sd | double | レーダー・ドップラー速度の標準偏差。 [m/s] |
 
-### How to launch
+### 起動方法
+
 
 ```sh
 ros2 launch autoware_radar_static_pointcloud_filter radar_static_pointcloud_filter.launch.xml
 ```
 
-### Algorithm
+### アルゴリズム
 
 ![algorithm](docs/radar_static_pointcloud_filter.drawio.svg)
+

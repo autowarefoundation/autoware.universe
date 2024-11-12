@@ -1,30 +1,30 @@
-# autoware_component_monitor
+## autoware_component_monitor
 
-The `autoware_component_monitor` package allows monitoring system usage of component containers.
-The composable node inside the package is attached to a component container, and it publishes CPU and memory usage of
-the container.
+`autoware_component_monitor` パッケージは、コンポーネントコンテナのシステム使用量を監視できます。
+パッケージ内のコンポーザブルノードはコンポーネントコンテナに接続され、コンテナの CPU およびメモリ使用量を発行します。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-None.
+なし
 
-### Output
+### 出力
 
-| Name                       | Type                                               | Description            |
-| -------------------------- | -------------------------------------------------- | ---------------------- |
-| `~/component_system_usage` | `autoware_internal_msgs::msg::ResourceUsageReport` | CPU, Memory usage etc. |
+| 名称                       | タイプ                                              | 説明              |
+| -------------------------- | ------------------------------------------------- | ----------------- |
+| `~/component_system_usage` | `autoware_internal_msgs::msg::ResourceUsageReport` | CPU、メモリ使用量など |
 
-## Parameters
+## パラメーター
 
-### Core Parameters
+### コアパラメーター
 
 {{ json_to_markdown("system/autoware_component_monitor/schema/component_monitor.schema.json") }}
 
-## How to use
+## 使用方法
 
-Add it as a composable node in your launch file:
+起動ファイルにコンポーザブルノードとして追加します。
+
 
 ```xml
 
@@ -46,9 +46,10 @@ Add it as a composable node in your launch file:
 </launch>
 ```
 
-### Quick testing
+### クイックテスト
 
-You can test the package by running the following command:
+次のコマンドを実行することでパッケージをテストできます。
+
 
 ```bash
 ros2 component load <container_name> autoware_component_monitor autoware::component_monitor::ComponentMonitor -p publish_rate:=10.0 --node-namespace <namespace>
@@ -57,18 +58,18 @@ ros2 component load <container_name> autoware_component_monitor autoware::compon
 ros2 component load /pointcloud_container autoware_component_monitor autoware::component_monitor::ComponentMonitor -p publish_rate:=10.0 --node-namespace /pointcloud_container
 ```
 
-## How it works
+## 動作原理
 
-The package uses the `top` command under the hood.
-`top -b -n 1 -E k -p PID` command is run at 10 Hz to get the system usage of the process.
+このパッケージでは、内部で `top` コマンドを使用しています。
+`top -b -n 1 -E k -p PID` コマンドが 10 Hz で実行され、プロセスのシステム使用状況を取得します。
 
-- `-b` activates the batch mode. By default, `top` doesn't exit and prints to stdout periodically. Batch mode allows
-  exiting the program.
-- `-n` number of times should `top` prints the system usage in batch mode.
-- `-p` specifies the PID of the process to monitor.
-- `-E k` changes the memory unit in the summary section to KiB.
+- `-b` はバッチモードを有効にします。デフォルトでは、`top` は終了せず、定期的に標準出力に出力します。バッチモードではプログラムの終了が許可されます。
+- `-n` はバッチモードで `top` がシステム使用状況を出力する回数です。
+- `-p` は監視するプロセスの PID を指定します。
+- `-E k` は要約セクションのメモリ単位を KiB に変更します。
 
-Here is a sample output:
+サンプル出力は次のとおりです。
+
 
 ```text
 top - 13:57:26 up  3:14,  1 user,  load average: 1,09, 1,10, 1,04
@@ -81,4 +82,5 @@ KiB Swap: 39062524 total, 39062524 free,        0 used. 45520816 avail Mem
    3352 meb       20   0 2905940   1,2g  39292 S   0,0   2,0  23:24.01 awesome
 ```
 
-We get 5th, 8th fields from the last line, which are RES, %CPU respectively.
+5行目の最後にある5番目、8番目のフィールド（それぞれRES、%CPU）を取得します。
+

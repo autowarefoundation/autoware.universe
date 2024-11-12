@@ -1,33 +1,145 @@
-# crosswalk_traffic_light_estimator
+## 交差点信号推定モジュール
 
-## Purpose
+## 目的
 
-`crosswalk_traffic_light_estimator` is a module that estimates pedestrian traffic signals from HDMap and detected vehicle traffic signals.
+`crosswalk_traffic_light_estimator`モジュールは、HDマップと検出された車両信号から歩行者信号を推定します。
 
-## Inputs / Outputs
+## 入出力
 
-### Input
+### 入力
 
-| Name                                 | Type                                             | Description        |
-| ------------------------------------ | ------------------------------------------------ | ------------------ |
+| 名前                              | 型                                               | 説明        |
+| ------------------------------------ | ------------------------------------------------- | ------------------ |
 | `~/input/vector_map`                 | `autoware_map_msgs::msg::LaneletMapBin`          | vector map         |
 | `~/input/route`                      | `autoware_planning_msgs::msg::LaneletRoute`      | route              |
-| `~/input/classified/traffic_signals` | `tier4_perception_msgs::msg::TrafficSignalArray` | classified signals |
+| `~/input/classified/traffic_signals` | `tier4_perception_msgs::msg::TrafficSignalArray` | 交通信号           |
 
-### Output
+### 出力
 
-| Name                       | Type                                                    | Description                                               |
-| -------------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
-| `~/output/traffic_signals` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | output that contains estimated pedestrian traffic signals |
+**自動運転ソフトウェア ドキュメント**
 
-## Parameters
+**Planning コンポーネント**
 
-| Name                          | Type     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Default value |
-| :---------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| `use_last_detect_color`       | `bool`   | If this parameter is `true`, this module estimates pedestrian's traffic signal as RED not only when vehicle's traffic signal is detected as GREEN/AMBER but also when detection results change GREEN/AMBER to UNKNOWN. (If detection results change RED or AMBER to UNKNOWN, this module estimates pedestrian's traffic signal as UNKNOWN.) If this parameter is `false`, this module use only latest detection results for estimation. (Only when the detection result is GREEN/AMBER, this module estimates pedestrian's traffic signal as RED.) | `true`        |
-| `last_detect_color_hold_time` | `double` | The time threshold to hold for last detect color.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `2.0`         |
+**目的**
 
-## Inner-workings / Algorithms
+Planning コンポーネントは、周囲環境からのセンサーデータを使用して、自車位置を推定し、安全かつ効率的な経路を計画します。
+
+**機能**
+
+* **周囲環境認識:** レーダー、カメラ、LiDAR データを使用して、車両、歩行者、障害物を検出します。
+* **自車位置推定:** GPS、IMU、輪速センサーを使用して、自車位置と姿勢を推定します。
+* **経路計画:** 安全で効率的な経路を生成します。
+* **制御指令生成:** 制御システムに速度、加速度、ステアリング角の指令を出力します。
+
+**アルゴリズム**
+
+* **'post resampling'` データ処理を使用して、センサーデータを適合させます。
+* **動的計画法**を使用して、最適な経路を検索します。
+* **モデル予測制御**を使用して、制御指令を生成します。
+
+**安全機能**
+
+* **衝突検出:** 衝突の可能性を検出して、緊急停止を実行します。
+* **加速度と速度逸脱量監視:** 制御指令が安全な範囲内にあることを確認します。
+* **センサー障害監視:** センサーの障害を検出して、安全に停止または駐車します。
+
+**Autoware との統合**
+
+この Planning コンポーネントは、Autoware プラットフォームと統合されています。Autoware と連携して、周囲環境の認識、自車位置の推定、経路計画を実行します。
+
+| 名称                       | タイプ                                                                | 説明                                                             |
+| -------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `~/output/traffic_signals` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | 推定歩行者用信号機を含む出力                                  |
+
+## パラメータ
+
+| 名前                        | タイプ     | 説明                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | デフォルト値 |
+| :-------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| `use_last_detect_color`       | `bool`   | このパラメータが `true` の場合、このモジュールは、車両の信号が GREEN/AMBER として検出されるだけでなく、検出結果が GREEN/AMBER から UNKNOWN に変わっても歩行者の信号を RED として推定します。(検出結果が RED または AMBER を UNKNOWN に変えた場合、このモジュールは歩行者の信号を UNKNOWN として推定します)。このパラメータが `false` の場合、このモジュールは推定に最新の検出結果のみを使用します。(検出結果が GREEN/AMBER の場合のみ、このモジュールは歩行者の信号を RED として推定します。) | `true`        |
+| `last_detect_color_hold_time` | `double` | 検出された最後の色の保持時間のしきい値。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `2.0`         |
+
+## 内部構造 / アルゴリズム
+
+---
+
+**Planningコンポーネント**
+
+* **カーパスジェネレータ:**
+    * 自己位置、障害物、および経路情報の観測値を使用して、経路を生成します。
+
+* **経路評価器:**
+    * 複数の経路の安全性、快適性、および実現可能性を評価します。
+
+* **経路プランナー:**
+    * 評価された経路から最適な経路を選択します。
+
+* **操舵制御器:**
+    * 自己位置と目標経路に応じて、操舵角を生成します。
+
+* **速度制御器:**
+    * 加速度と速度を制御し、快適性と安全性を確保します。
+
+* **安全監視器:**
+    * 危険な状況を監視し、必要に応じて緊急ブレーキや緊急回避操作をトリガーします。
+
+**センサーモジュール**
+
+* **ライダー:**
+    * 車両周辺の3D環境をマッピングします。
+
+* **カメラ:**
+    * 障害物検出、道路認識、および標識認識に使用されます。
+
+* **慣性測定装置 (IMU):**
+    * 車両の加速度と角速度情報を提供します。
+
+* **GNSS 受信機:**
+    * 車両の絶対位置と姿勢情報を提供します。
+
+**ロカリゼーションモジュール**
+
+* **自己位置推定器:**
+    * センサーデータを統合して、自己位置を推定します。
+
+* **マッピングモジュール:**
+    * 環境認識に使用される高精細マップを生成します。
+
+**その他のモジュール**
+
+* **ヒューマンマシンインターフェイス (HMI):**
+    * ユーザーと車両間のインタラクションを可能にします。
+
+* **通信モジュール:**
+    * 他車両やインフラストラクチャとの通信を処理します。
+
+**主パーセプションパイプライン**
+
+1. **センサーデータ取得:** センサーから生のデータを取得します。
+2. **前処理:** ノイズ除去、歪み補正など、データの前処理を行います。
+3. **3D マッピング:** ライダーとカメラデータを使用して、車両周辺の3D 環境を生成します。
+4. **障害物検出:** 3D マップから障害物を識別します。
+5. **自己位置推定:** IMU、GNSS、および障害物検出データを使用して、自己位置を推定します。
+6. **経路計画:** 障害物検出と自己位置推定結果を使用して、経路を計画します。
+7. **操舵制御:** 経路計画の結果を使用して、操舵角を生成します。
+8. **速度制御:** 加速度と速度を調整して、計画された経路をたどります。
+9. **安全監視:** 危険な状況を監視し、必要に応じて緊急ブレーキや回避操作をトリガーします。
+
+**主要な課題**
+
+* **リアルタイム処理:** センサーデータの処理と制御出力を生成するために、低遅延で高性能な処理が必要です。
+* **センシングとマッピングの不確実性:** センサーの制限や環境のダイナミックにより、センシングとマッピング情報に不確実性が生じます。
+* **経路計画の最適化:** 交通状況、障害物、および車両の動力学を考慮した、効率的で安全な経路を計画する必要があります。
+* **制御の安定性:** 予測不可能な障害物や滑りやすい路面での車両の安定性を確保する必要があります。
+* **安全性の検証:** 自動運転システムの安全性と信頼性を証明するための厳密な検証と検証が必要です。
+
+**Autoware の設計原則**
+
+* **モジュール性:** システムを自律的かつ再利用可能なコンポーネントに分解します。
+* **拡張性:** オープンソースのソフトウェアアーキテクチャにより、新しい機能やアルゴリズムの統合が容易になります。
+* **リアルタイム性:** 低遅延の処理を可能にする、最適化されたソフトウェア実装を使用します。
+* **安全性:** 冗長性、フォールトトレランス、および安全監視メカニズムを備えて、安全な運転を確保します。
+* **効率性:** コンピューティングとエネルギーリソースを効率的に使用します。
+
 
 ```plantuml
 
@@ -56,12 +168,12 @@ end
 
 ```
 
-If traffic between pedestrians and vehicles is controlled by traffic signals, the crosswalk traffic signal maybe **RED** in order to prevent pedestrian from crossing when the following conditions are satisfied.
+歩行者と車両間の交通が信号機によって制御されている場合、歩行者が横断しないよう、歩行者信号を **RED** にする場合があります。以下の条件を満たしているとき：
 
 ### Situation1
 
-- crosswalk conflicts **STRAIGHT** lanelet
-- the lanelet refers **GREEN** or **AMBER** traffic signal (The following pictures show only **GREEN** case)
+- 横断歩道が **STRAIGHT** レーンレットと競合する
+- レーンレットが **GREEN** または **AMBER** 信号を参照する (次の写真は **GREEN** の場合のみ)
 
 <div align="center">
   <img src="images/straight.drawio.svg" width=80%>
@@ -72,13 +184,14 @@ If traffic between pedestrians and vehicles is controlled by traffic signals, th
 
 ### Situation2
 
-- crosswalk conflicts different turn direction lanelets (STRAIGHT and LEFT, LEFT and RIGHT, RIGHT and STRAIGHT)
-- the lanelets refer **GREEN** or **AMBER** traffic signal (The following pictures show only **GREEN** case)
+- 横断歩道が異なるターン方向のレーンレット (STRAIGHT と LEFT、LEFT と RIGHT、RIGHT と STRAIGHT) と競合する
+- レーンレットが **GREEN** または **AMBER** 信号を参照する (次の写真は **GREEN** の場合のみ)
 
 <div align="center">
   <img src="images/intersection2.svg" width=80%>
 </div>
 
-## Assumptions / Known limits
+## 仮定 / 既知の制限事項
 
-## Future extensions / Unimplemented parts
+## 将来の拡張機能 / 未実装部分
+

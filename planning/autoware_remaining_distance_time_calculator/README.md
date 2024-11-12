@@ -1,39 +1,40 @@
-## Remaining Distance and Time Calculator
+## 残り距離と時間計算
 
-### Role
+### 役割
 
-This package aims to provide mission remaining distance and remaining time calculations.
+このパッケージは、ミッションの残り距離と所要時間の計算を提供することを目的としています。
 
-### Activation and Timing
+### 起動とタイミング
 
-- The calculations are activated once we have a route planned for a mission in Autoware.
-- The calculations are triggered timely based on the `update_rate` parameter.
+- Autowareのミッションでルートが計画されると、計算が起動されます。
+- 計算は`update_rate`パラメータに基づいて適時トリガーされます。
 
-### Module Parameters
+### モジュールパラメータ
 
-| Name          | Type   | Default Value | Explanation                 |
+| 名称          | 型   | デフォルト値 | 説明                 |
 | ------------- | ------ | ------------- | --------------------------- |
-| `update_rate` | double | 10.0          | Timer callback period. [Hz] |
+| `update_rate` | double | 10.0          | タイマーコールバック周期 [Hz] |
 
-### Inner-workings
+### 内部動作
 
-#### Remaining Distance Calculation
+#### 距離残計算
 
-- The remaining distance calculation is based on getting the remaining shortest path between the current vehicle pose and goal pose using `lanelet2` routing APIs.
-- The remaining distance is calculated by summing the 2D length of remaining shortest path, with exception to current lanelet and goal lanelet.
-  - For the current lanelet, the distance is calculated from the current vehicle position to the end of that lanelet.
-  - For the goal lanelet, the distance is calculated from the start of the lanelet to the goal pose in this lanelet.
-- When there is only one lanelet remaining, the distance is calculated by getting the 2D distance between the current vehicle pose and goal pose.
-- Checks are added to handle cases when current lanelet, goal lanelet, or routing graph are not valid to prevent node process die.
-  - In such cases when, last valid remaining distance and time are maintained.
+- 距離残計算は、`lanelet2`ルーティングAPIを使用して現在の自車位置と目標位置の間の最短残経路を取得することによって行われます。
+- 距離残は、現在の車線と目標車線を除いた残最短経路の2D長さを合計することによって計算されます。
+  - 現在の車線では、距離は現在の車両位置からその車線の終点までの距離で計算されます。
+  - 目標車線では、距離は車線の開始位置からその車線内の目標位置までの距離で計算されます。
+- 車線が1つだけ残っているとき、距離は現在の自車位置と目標位置の間の2D距離を取得することによって計算されます。
+- ノードプロセスが終了しないように、現在の車線、目標車線、またはルーティンググラフが無効な場合を処理するためのチェックが追加されます。
+  - そのようなケースでは、最後の有効な距離残と時間が保持されます。
 
-#### Remaining Time Calculation
+#### 時間残計算
 
-- The remaining time currently depends on a simple equation of motion by getting the maximum velocity limit.
-- The remaining distance is calculated by dividing the remaining distance by the maximum velocity limit.
-- A check is added to the remaining time calculation to make sure that maximum velocity limit is greater than zero. This prevents division by zero or getting negative time value.
+- 時間残は現在、最大速度制限を取得することによって、単純な運動方程式に依存しています。
+- 距離残は、距離残を最大速度制限で割ることによって計算されます。
+- 時間残計算には、最大速度制限が0より大きいことを確認するためのチェックが追加されます。これにより、ゼロによる除算や負の時間値の取得が防止されます。
 
-### Future Work
+### 今後の作業
 
-- Find a more efficient way for remaining distance calculation instead of regularly searching the graph for finding the remaining shortest path.
-- Engage more sophisticated motion models for more accurate remaining time calculations.
+- 残最短経路を検索するために定期的にグラフを探索するのではなく、より効率的な方法で距離残を計算します。
+- より正確な時間残計算のために、より高度なモーションモデルに取り組みます。
+

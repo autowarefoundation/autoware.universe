@@ -1,42 +1,35 @@
-# autoware_radar_crossing_objects_noise_filter
+## autoware_radar_crossing_objects_noise_filter
 
-This package contains a radar noise filter module for [autoware_perception_msgs/msg/DetectedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/DetectedObject.idl).
-This package can filter the noise objects which cross to the ego vehicle.
+このパッケージは、[autoware_perception_msgs/msg/DetectedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/DetectedObject.idl) に対するレーダーノイズフィルタモジュールを提供します。このパッケージは、自車と交差するノイズオブジェクトを除去できます。
 
-## Design
+## 設計
 
-### Background
+### 背景
 
-This package aim to filter the noise objects which cross from the ego vehicle.
-The reason why these objects are noise is as below.
+このパッケージは、自車から交差するノイズオブジェクトを除去することを目的としています。これらのオブジェクトがノイズである理由は次のとおりです。
 
-- 1. The objects with doppler velocity can be trusted more than those with vertical velocity to it.
+- 1. ドップラー速度を持つオブジェクトは、垂直速度を持つオブジェクトよりも信頼できます。
 
-Radars can get velocity information of objects as doppler velocity, but cannot get vertical velocity to doppler velocity directory.
-Some radars can output the objects with not only doppler velocity but also vertical velocity by estimation.
-If the vertical velocity estimation is poor, it leads to output noise objects.
-In other words, the above situation is that the objects which has vertical twist viewed from ego vehicle can tend to be noise objects.
+レーダーは、ドップラー速度としてオブジェクトの速度情報を取得できますが、垂直速度をドップラー速度から直接取得することはできません。一部のレーダーは、推定によってドップラー速度だけでなく垂直速度を持つオブジェクトを出力できます。垂直速度の推定が不十分な場合、ノイズオブジェクトが出力されます。言い換えると、上記の状況は、自車から見たときに垂直方向のひねりがあるオブジェクトがノイズオブジェクトになりやすいということです。
 
-The example is below figure.
-Velocity estimation fails on static objects, resulting in ghost objects crossing in front of ego vehicles.
+例を次の図に示します。静止したオブジェクトの速度推定が失敗し、自車の真の前方を通過するゴーストオブジェクトが発生します。
 
 ![vertical_velocity_objects](docs/vertical_velocity_objects.png)
 
-- 2. Turning around by ego vehicle affect the output from radar.
+- 2. 自車の旋回はレーダーからの出力を影響します。
 
-When the ego vehicle turns around, the radars outputting at the object level sometimes fail to estimate the twist of objects correctly even if [radar_tracks_msgs_converter](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/autoware_radar_tracks_msgs_converter) compensates by the ego vehicle twist.
-So if an object detected by radars has circular motion viewing from base_link, it is likely that the speed is estimated incorrectly and that the object is a static object.
+自車が旋回すると、オブジェクトレベルで出力を生成するレーダーは、[radar_tracks_msgs_converter](https://github.com/autowarefoundation/autoware.universe/tree/main/perception/autoware_radar_tracks_msgs_converter) が自車ひねりで補正する場合でも、オブジェクトのひねりを正しく推定できないことがあります。そのため、レーダーによって検出されたオブジェクトがベースリンクから見て円運動している場合、速度が正しく推定されず、オブジェクトが静止している可能性があります。
 
-The example is below figure.
-When the ego vehicle turn right, the surrounding objects have left circular motion.
+例を次の図に示します。自車が右折すると、周囲のオブジェクトは左回りの円運動をします。
 
 ![turning_around](docs/turning_around.png)
 
-### Algorithm
+### アルゴリズム
 
-To filter the objects crossing to ego vehicle, this package filter the objects as below algorithm.
+自車と交差するオブジェクトを除去するために、このパッケージは次のアルゴリズムを使用してオブジェクトを除去します。
 
 ![algorithm](docs/radar_crossing_objects_noise_filter.drawio.svg)
+
 
 ```cpp
   // If velocity of an object is rather than the velocity_threshold,
@@ -51,30 +44,31 @@ To filter the objects crossing to ego vehicle, this package filter the objects a
   }
 ```
 
-## Interface
+## インターフェース
 
-### Input
+### 入力
 
 - `~/input/objects` (`autoware_perception_msgs/msg/DetectedObjects.msg`)
-  - Input radar objects
+  - レーダー検出オブジェクト
 
-### Output
+### 出力
 
 - `~/output/noise_objects` (`autoware_perception_msgs/msg/DetectedObjects.msg`)
-  - Noise objects
+  - ノイズオブジェクト
 - `~/output/filtered_objects` (`autoware_perception_msgs/msg/DetectedObjects.msg`)
-  - Filtered objects
+  - フィルタリングされたオブジェクト
 
-### Parameters
+### パラメーター
 
 - `angle_threshold` (double) [rad]
-  - Default parameter is 1.0472.
+  - デフォルトパラメーターは1.0472です。
 
-This parameter is the angle threshold to filter. It has condition that 0 < `angle_threshold` < pi / 2. If the crossing angle is larger than this parameter, it can be a candidate for noise object. In other words, if it is smaller than this parameter, it is a filtered object.
-If this parameter is set smaller, more objects are considered noise. In detail, see algorithm chapter.
+このパラメーターは、フィルタリングする角度のしきい値です。0 < `angle_threshold` < pi / 2という条件があります。交差角がこのパラメーターより大きい場合、ノイズオブジェクトの候補となります。言い換えると、このパラメーターより小さい場合は、フィルタリングされたオブジェクトです。
+このパラメーターを小さく設定すると、より多くのオブジェクトがノイズと見なされます。詳細については、アルゴリズムの章を参照してください。
 
 - `velocity_threshold` (double) [m/s]
-  - Default parameter is 3.0.
+  - デフォルトパラメーターは3.0です。
 
-This parameter is the velocity threshold to filter. If velocity of an object is larger than this parameter, it can be a candidate for noise object. In other words, if velocity of an object is smaller than this parameter, it is a filtered object.
-If this parameter is set smaller, more objects are considered noise. In detail, see algorithm chapter.
+このパラメーターは、フィルタリングする速度のしきい値です。オブジェクトの速度がこのパラメーターより大きい場合、ノイズオブジェクトの候補となります。言い換えると、オブジェクトの速度がこのパラメーターより小さい場合は、フィルタリングされたオブジェクトです。
+このパラメーターを小さく設定すると、より多くのオブジェクトがノイズと見なされます。詳細については、アルゴリズムの章を参照してください。
+

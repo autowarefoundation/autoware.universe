@@ -1,130 +1,116 @@
-# Obstacle Stop Planner
+# 障害物停止計画
 
-## Overview
+## 概要
 
-`obstacle_stop_planner` has following modules
+`obstacle_stop_planner` には次のモジュールがあります。
 
-- Obstacle Stop Planner
-  - inserts a stop point in trajectory when there is a static point cloud on the trajectory.
-- Slow Down Planner
-  - inserts a deceleration section in trajectory when there is a point cloud near the trajectory.
-- Adaptive Cruise Controller (ACC)
-  - embeds target velocity in trajectory when there is a dynamic point cloud on the trajectory.
+- 障害物停止計画
+  - 静的な点群が経路にある場合に、軌跡に停止点を入れます。
+- 減速計画
+  - 点群が経路近くにある場合に、軌跡に減速区間を入れます。
+- アダプティブクルーズコントロール (ACC)
+  - 動的な点群が経路にある場合に、軌跡に目標速度を組み込みます。
 
-### Input topics
+### 入力トピック
 
-| Name                        | Type                                       | Description         |
-| --------------------------- | ------------------------------------------ | ------------------- |
-| `~/input/pointcloud`        | sensor_msgs::PointCloud2                   | obstacle pointcloud |
-| `~/input/trajectory`        | autoware_planning_msgs::Trajectory         | trajectory          |
-| `~/input/vector_map`        | autoware_map_msgs::msg::LaneletMapBin      | vector map          |
-| `~/input/odometry`          | nav_msgs::Odometry                         | vehicle velocity    |
-| `~/input/dynamic_objects`   | autoware_perception_msgs::PredictedObjects | dynamic objects     |
-| `~/input/expand_stop_range` | tier4_planning_msgs::msg::ExpandStopRange  | expand stop range   |
+| 名称                        | タイプ                                       | 説明         |
+| --------------------------- | ------------------------------------------ | ------------ |
+| `~/input/pointcloud`        | `sensor_msgs::PointCloud2`                   | 障害物点群   |
+| `~/input/trajectory`        | `autoware_planning_msgs::Trajectory`         | 経路          |
+| `~/input/vector_map`        | `autoware_map_msgs::msg::LaneletMapBin`      | ベクターマップ |
+| `~/input/odometry`          | `nav_msgs::Odometry`                         | 車両速度    |
+| `~/input/dynamic_objects`   | `autoware_perception_msgs::PredictedObjects` | 動的物体     |
+| `~/input/expand_stop_range` | `tier4_planning_msgs::msg::ExpandStopRange`  | 停止範囲の拡張 |
 
-### Output topics
+### 出力トピック
 
-| Name                   | Type                                 | Description                            |
-| ---------------------- | ------------------------------------ | -------------------------------------- |
-| `~output/trajectory`   | autoware_planning_msgs::Trajectory   | trajectory to be followed              |
-| `~output/stop_reasons` | tier4_planning_msgs::StopReasonArray | reasons that cause the vehicle to stop |
+| 名称 | タイプ | 説明 |
+|---|---|---|
+| `~output/trajectory` | autoware_planning_msgs::Trajectory | 走行軌跡 |
+| `~output/stop_reasons` | tier4_planning_msgs::StopReasonArray | 停止を引き起こす理由 |
 
-### Common Parameter
+### 共通パラメータ
 
-{{ json_to_markdown("planning/autoware_obstacle_stop_planner/schema/common.schema.json") }}
+{{ json_to_markdown("planning/autoware_obstacle_stop_planner/schema/common.schema.json") | ja-markdown }}
 
-| Parameter                              | Type   | Description                                                                               |
-| -------------------------------------- | ------ | ----------------------------------------------------------------------------------------- |
-| `enable_slow_down`                     | bool   | enable slow down planner [-]                                                              |
-| `max_velocity`                         | double | max velocity [m/s]                                                                        |
-| `chattering_threshold`                 | double | even if the obstacle disappears, the stop judgment continues for chattering_threshold [s] |
-| `enable_z_axis_obstacle_filtering`     | bool   | filter obstacles in z axis (height) [-]                                                   |
-| `z_axis_filtering_buffer`              | double | additional buffer for z axis filtering [m]                                                |
-| `use_predicted_objects`                | bool   | whether to use predicted objects for collision and slowdown detection [-]                 |
-| `predicted_object_filtering_threshold` | double | threshold for filtering predicted objects [valid only publish_obstacle_polygon true] [m]  |
-| `publish_obstacle_polygon`             | bool   | if use_predicted_objects is true, node publishes collision polygon [-]                    |
+| パラメータ | 型 | 説明 |
+|---|---|---|
+| `enable_slow_down` | bool | 低速化プランナを有効にする [-] |
+| `max_velocity` | double | 最大速度 [m/s] |
+| `chattering_threshold` | double | 障害物が消滅しても、停止判定を一定時間続ける [s]（チャタリング防止） |
+| `enable_z_axis_obstacle_filtering` | bool | z軸（高さ）方向の障害物をフィルタする [-] |
+| `z_axis_filtering_buffer` | double | z軸フィルタのための追加バッファ [m] |
+| `use_predicted_objects` | bool | 衝突検出と減速検出に予測オブジェクトを使用する [-] |
+| `predicted_object_filtering_threshold` | double | 予測オブジェクトをフィルタするための閾値 [有効なのはpublish_obstacle_polygon trueの場合のみ] [m] |
+| `publish_obstacle_polygon` | bool | use_predicted_objectsがtrueの場合、ノードが衝突ポリゴンを公開する [-] |
 
-## Obstacle Stop Planner
+## 障害物停止プランナー
 
-### Role
+### 役割
 
-This module inserts the stop point before the obstacle with margin. In nominal case, the margin is the sum
-of `baselink_to_front` and `max_longitudinal_margin`. The `baselink_to_front` means the distance between `baselink`(
-center of rear-wheel axis) and front of the car. The detection area is generated along the processed trajectory as
-following figure. (This module cut off the input trajectory behind the ego position and decimates the trajectory points
-for reducing computational costs.)
+このモジュールは、障害物に一定のマージンを持たせ、停止点を障害物の前に挿入します。通常、マージンは `baselink_to_front` と `max_longitudinal_margin` の合計です。`baselink_to_front` は `baselink`（後輪軸の中心）と車の前面との距離です。検出エリアは、次に示すように処理済みの軌跡に沿って生成されます（このモジュールは自己位置の後ろの軌跡をカットオフし、計算コストを削減するために軌跡ポイントを間引きします）。
 
 <figure markdown>
   ![example](./docs/collision_parameters.svg){width=1000}
-  <figcaption>parameters for obstacle stop planner</figcaption>
+  <figcaption>障害物停止プランナーのパラメーター</figcaption>
 </figure>
 
 <figure markdown>
   ![example](./docs/stop_target.svg){width=1000}
-  <figcaption>target for obstacle stop planner</figcaption>
+  <figcaption>障害物停止プランナーのターゲット</figcaption>
 </figure>
 
-If another stop point has already been inserted by other modules within `max_longitudinal_margin`, the margin is the sum
-of `baselink_to_front` and `min_longitudinal_margin`. This feature exists to avoid stopping unnaturally position. (For
-example, the ego stops unnaturally far away from stop line of crosswalk that pedestrians cross to without this feature.)
+他のモジュールによって `max_longitudinal_margin` 内に別の停止点が挿入されている場合は、マージンは `baselink_to_front` と `min_longitudinal_margin` の合計になります。この機能は、不自然な位置での停止を防ぐために存在します（たとえば、歩行者が横断する横断歩道の停止線から、不自然に離れたところで自己停止します）。
 
 <figure markdown>
   ![example](./docs/min_longitudinal_margin.svg){width=1000}
-  <figcaption>minimum longitudinal margin</figcaption>
+  <figcaption>最小縦方向マージン</figcaption>
 </figure>
 
-The module searches the obstacle pointcloud within detection area. When the pointcloud is
-found, `Adaptive Cruise Controller` modules starts to work. only when `Adaptive Cruise Controller` modules does not
-insert target velocity, the stop point is inserted to the trajectory. The stop point means the point with 0 velocity.
+このモジュールは、検出エリア内の障害物ポイントクラウドを検索します。ポイントクラウドが見つかると、`Adaptive Cruise Controller` モジュールが動作し始めます。`Adaptive Cruise Controller` モジュールがターゲット速度を挿入しない場合にのみ、停止点が軌跡に挿入されます。停止点は、速度が 0 のポイントを意味します。
 
-### Restart prevention
+### 再起動防止
 
-If it needs X meters (e.g. 0.5 meters) to stop once the vehicle starts moving due to the poor vehicle control
-performance, the vehicle goes over the stopping position that should be strictly observed when the vehicle starts to
-moving in order to approach the near stop point (e.g. 0.3 meters away).
+車両の制御性能が悪い場合、車両が動き始めると停止するまでに X メートル（例: 0.5 メートル）が必要となるため、車両は、近くの停止点に接近するために動き始めると厳守すべき停止位置を超過します（例: 0.3 メートル離れています）。
 
-This module has parameter `hold_stop_margin_distance` in order to prevent from these redundant restart. If the vehicle
-is stopped within `hold_stop_margin_distance` meters from stop point of the module, the module judges that the vehicle
-has already stopped for the module's stop point and plans to keep stopping current position even if the vehicle is
-stopped due to other factors.
+このモジュールには、これらの冗長な再起動を防ぐために `hold_stop_margin_distance` パラメーターがあります。車両がモジュールの停止点から `hold_stop_margin_distance` メートル以内で停止した場合、モジュールは車両がすでにモジュールの停止点で停止していると判断し、他の要因で車両が停止しても停止を維持することを計画します。
 
 <figure markdown>
   ![example](./docs/restart_prevention.svg){width=1000}
-  <figcaption>parameters</figcaption>
+  <figcaption>パラメーター</figcaption>
 </figure>
 
 <figure markdown>
   ![example](./docs/restart.svg){width=1000}
-  <figcaption>outside the hold_stop_margin_distance</figcaption>
+  <figcaption>hold_stop_margin_distance の外側</figcaption>
 </figure>
 
 <figure markdown>
   ![example](./docs/keep_stopping.svg){width=1000}
-  <figcaption>inside the hold_stop_margin_distance</figcaption>
+  <figcaption>hold_stop_margin_distance の内側</figcaption>
 </figure>
 
-### Parameters
+{{ json_to_markdown("planning/autoware_obstacle_stop_planner/schema/obstacle_stop_planner.schema.json", "ja") }}
 
-{{ json_to_markdown("planning/autoware_obstacle_stop_planner/schema/obstacle_stop_planner.schema.json") }}
+#### 停止位置
 
-#### Stop position
+| パラメータ | データ型 | 説明 |
+|---|---|---|
+| `max_longitudinal_margin` | double | 障害物と本車両前面とのマージン [m] |
+| `max_longitudinal_margin_behind_goal` | double | 停止点がゴールの後ろにある場合の障害物と本車両前面とのマージン [m] |
+| `min_longitudinal_margin` | double | `max_longitudinal_margin` 内に障害物がある場合、モジュールは停止マージンの値を `min_longitudinal_margin` [m] に設定します |
+| `hold_stop_margin_distance` | double | 再起動防止のパラメータ（上のセクションを参照） [m] |
 
-| Parameter                             | Type   | Description                                                                                                                                    |
-| ------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `max_longitudinal_margin`             | double | margin between obstacle and the ego's front [m]                                                                                                |
-| `max_longitudinal_margin_behind_goal` | double | margin between obstacle and the ego's front when the stop point is behind the goal[m]                                                          |
-| `min_longitudinal_margin`             | double | if any obstacle exists within `max_longitudinal_margin`, this module set margin as the value of _stop margin_ to `min_longitudinal_margin` [m] |
-| `hold_stop_margin_distance`           | double | parameter for restart prevention (See above section) [m]                                                                                       |
+#### 障害物検出領域
 
-#### Obstacle detection area
+| パラメータ                              | 型          | 説明                                                                                         |
+| -------------------------------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `lateral_margin`                       | double     | 障害物検知領域の車輪軌跡からの横マージン [m]                                         |
+| `step_length`                          | double     | 点群検索範囲のステップ長 [m]                                                           |
+| `enable_stop_behind_goal_for_obstacle` | bool       | 障害物検出のためにゴールレーンを超えてトラジェクトリを延長                                 |
 
-| Parameter                              | Type   | Description                                                                         |
-| -------------------------------------- | ------ | ----------------------------------------------------------------------------------- |
-| `lateral_margin`                       | double | lateral margin from the vehicle footprint for collision obstacle detection area [m] |
-| `step_length`                          | double | step length for pointcloud search range [m]                                         |
-| `enable_stop_behind_goal_for_obstacle` | bool   | enabling extend trajectory after goal lane for obstacle detection                   |
+### フローチャート
 
-### Flowchart
 
 ```plantuml
 @startuml
@@ -157,62 +143,59 @@ stop
 @enduml
 ```
 
-## Slow Down Planner
+## スローダウン プランナー
 
-### Role
+### 役割
 
-This module inserts the slow down section before the obstacle with forward margin and backward margin. The forward
-margin is the sum of `baselink_to_front` and `longitudinal_forward_margin`, and the backward margin is the sum
-of `baselink_to_front` and `longitudinal_backward_margin`. The ego keeps slow down velocity in slow down section. The
-velocity is calculated the following equation.
+このモジュールは、前進マージンと後進マージンを使用して障害物前に減速区間を挿入します。前進マージンは `baselink_to_front` と `longitudinal_forward_margin` の合計であり、後退マージンは `baselink_to_front` と `longitudinal_backward_margin` の合計です。自車は減速区間に減速速度を維持します。速度は次の式で計算されます。
 
 $v_{target} = v_{min} + \frac{l_{ld} - l_{vw}/2}{l_{margin}} (v_{max} - v_{min} )$
 
-- $v_{target}$ : slow down target velocity [m/s]
+- $v_{target}$ : 減速目標速度 [m/s]
 - $v_{min}$ : `min_slow_down_velocity` [m/s]
 - $v_{max}$ : `max_slow_down_velocity` [m/s]
-- $l_{ld}$ : lateral deviation between the obstacle and the ego footprint [m]
+- $l_{ld}$ : 障害物と自車フットプリント間の横断偏差 [m]
 - $l_{margin}$ : `lateral_margin` [m]
-- $l_{vw}$ : width of the ego footprint [m]
+- $l_{vw}$ : 自車フットプリントの幅 [m]
 
-The above equation means that the smaller the lateral deviation of the pointcloud, the lower the velocity of the slow
-down section.
+上記の式は、ポイントクラウドの横断偏差が小さいほど、減速区間の速度が低くなることを意味します。
 
 <figure markdown>
-  ![example](./docs/slow_down_parameters.svg){width=1000}
-  <figcaption>parameters for slow down planner</figcaption>
+  ![例](./docs/slow_down_parameters.svg){width=1000}
+  <figcaption>減速プランナーのパラメータ</figcaption>
 </figure>
 
 <figure markdown>
-  ![example](./docs/slow_down_target.svg){width=1000}
-  <figcaption>target for slow down planner</figcaption>
+  ![例](./docs/slow_down_target.svg){width=1000}
+  <figcaption>減速プランナーの目標</figcaption>
 </figure>
 
-### Parameters
+### パラメータ
 
 {{ json_to_markdown("planning/autoware_obstacle_stop_planner/schema/adaptive_cruise_control.schema.json") }}
 
-#### Slow down section
+#### 減速区間
 
-| Parameter                      | Type   | Description                                     |
+| パラメーター                      | 型   | 説明                                     |
 | ------------------------------ | ------ | ----------------------------------------------- |
-| `longitudinal_forward_margin`  | double | margin between obstacle and the ego's front [m] |
-| `longitudinal_backward_margin` | double | margin between obstacle and the ego's rear [m]  |
+| `longitudinal_forward_margin`  | double | 自車前面と障害物間のマージン [m] |
+| `longitudinal_backward_margin` | double | 自車後面と障害物間のマージン [m]  |
 
-#### Obstacle detection area
+#### 障害物検知領域
 
-| Parameter        | Type   | Description                                                                         |
+| パラメータ        | タイプ   | 説明                                                                               |
 | ---------------- | ------ | ----------------------------------------------------------------------------------- |
-| `lateral_margin` | double | lateral margin from the vehicle footprint for slow down obstacle detection area [m] |
+| `lateral_margin` | double | 減速障害検出エリアの車両フットプリントからの横方向マージン [m]                      |
 
-#### Slow down target velocity
+#### 減速目標速度
 
-| Parameter                | Type   | Description                  |
-| ------------------------ | ------ | ---------------------------- |
-| `max_slow_down_velocity` | double | max slow down velocity [m/s] |
-| `min_slow_down_velocity` | double | min slow down velocity [m/s] |
+| パラメータ名              | 型   | 説明                                 |
+| ------------------------- | ------ | ----------------------------------- |
+| `max_slow_down_velocity` | double | 最大減速速度 [m/s]                  |
+| `min_slow_down_velocity` | double | 最小減速速度 [m/s]                  |
 
-### Flowchart
+### フローチャート
+
 
 ```plantuml
 @startuml
@@ -240,48 +223,47 @@ stop
 @enduml
 ```
 
-## Adaptive Cruise Controller
+## アダプティブ・クルーズ・コントローラー
 
-### Role
+### 役割
 
-`Adaptive Cruise Controller` module embeds maximum velocity in trajectory when there is a dynamic point cloud on the
-trajectory. The value of maximum velocity depends on the own velocity, the velocity of the point cloud ( = velocity of
-the front car), and the distance to the point cloud (= distance to the front car).
+`Adaptive Cruise Controller`モジュールは、軌道上に動的点群がある場合、軌道内の最大速度を組み込みます。最大速度の値は、自車速度、点群速度（=前走車速度）、および点群までの距離（=前走車までの距離）によって異なります。
 
-| Parameter                                                        | Type   | Description                                                                                                       |
-| ---------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------- |
-| `adaptive_cruise_control.use_object_to_estimate_vel`             | bool   | use dynamic objects for estimating object velocity or not (valid only if osp.use_predicted_objects false)         |
-| `adaptive_cruise_control.use_pcl_to_estimate_vel`                | bool   | use raw pointclouds for estimating object velocity or not (valid only if osp.use_predicted_objects false)         |
-| `adaptive_cruise_control.consider_obj_velocity`                  | bool   | consider forward vehicle velocity to calculate target velocity in adaptive cruise or not                          |
-| `adaptive_cruise_control.obstacle_velocity_thresh_to_start_acc`  | double | start adaptive cruise control when the velocity of the forward obstacle exceeds this value [m/s]                  |
-| `adaptive_cruise_control.obstacle_velocity_thresh_to_stop_acc`   | double | stop acc when the velocity of the forward obstacle falls below this value [m/s]                                   |
-| `adaptive_cruise_control.emergency_stop_acceleration`            | double | supposed minimum acceleration (deceleration) in emergency stop [m/ss]                                             |
-| `adaptive_cruise_control.emergency_stop_idling_time`             | double | supposed idling time to start emergency stop [s]                                                                  |
-| `adaptive_cruise_control.min_dist_stop`                          | double | minimum distance of emergency stop [m]                                                                            |
-| `adaptive_cruise_control.obstacle_emergency_stop_acceleration`   | double | supposed minimum acceleration (deceleration) in emergency stop [m/ss]                                             |
-| `adaptive_cruise_control.max_standard_acceleration`              | double | supposed maximum acceleration in active cruise control [m/ss]                                                     |
-| `adaptive_cruise_control.min_standard_acceleration`              | double | supposed minimum acceleration (deceleration) in active cruise control [m/ss]                                      |
-| `adaptive_cruise_control.standard_idling_time`                   | double | supposed idling time to react object in active cruise control [s]                                                 |
-| `adaptive_cruise_control.min_dist_standard`                      | double | minimum distance in active cruise control [m]                                                                     |
-| `adaptive_cruise_control.obstacle_min_standard_acceleration`     | double | supposed minimum acceleration of forward obstacle [m/ss]                                                          |
-| `adaptive_cruise_control.margin_rate_to_change_vel`              | double | rate of margin distance to insert target velocity [-]                                                             |
-| `adaptive_cruise_control.use_time_compensation_to_calc_distance` | bool   | use time-compensation to calculate distance to forward vehicle                                                    |
-| `adaptive_cruise_control.p_coefficient_positive`                 | double | coefficient P in PID control (used when target dist -current_dist >=0) [-]                                        |
-| `adaptive_cruise_control.p_coefficient_negative`                 | double | coefficient P in PID control (used when target dist -current_dist &lt;0) [-]                                      |
-| `adaptive_cruise_control.d_coefficient_positive`                 | double | coefficient D in PID control (used when delta_dist >=0) [-]                                                       |
-| `adaptive_cruise_control.d_coefficient_negative`                 | double | coefficient D in PID control (used when delta_dist &lt;0) [-]                                                     |
-| `adaptive_cruise_control.object_polygon_length_margin`           | double | The distance to extend the polygon length the object in pointcloud-object matching [m]                            |
-| `adaptive_cruise_control.object_polygon_width_margin`            | double | The distance to extend the polygon width the object in pointcloud-object matching [m]                             |
-| `adaptive_cruise_control.valid_estimated_vel_diff_time`          | double | Maximum time difference treated as continuous points in speed estimation using a point cloud [s]                  |
-| `adaptive_cruise_control.valid_vel_que_time`                     | double | Time width of information used for speed estimation in speed estimation using a point cloud [s]                   |
-| `adaptive_cruise_control.valid_estimated_vel_max`                | double | Maximum value of valid speed estimation results in speed estimation using a point cloud [m/s]                     |
-| `adaptive_cruise_control.valid_estimated_vel_min`                | double | Minimum value of valid speed estimation results in speed estimation using a point cloud [m/s]                     |
-| `adaptive_cruise_control.thresh_vel_to_stop`                     | double | Embed a stop line if the maximum speed calculated by ACC is lower than this speed [m/s]                           |
-| `adaptive_cruise_control.lowpass_gain_of_upper_velocity`         | double | Lowpass-gain of target velocity                                                                                   |
-| `adaptive_cruise_control.use_rough_velocity_estimation:`         | bool   | Use rough estimated velocity if the velocity estimation is failed (valid only if osp.use_predicted_objects false) |
-| `adaptive_cruise_control.rough_velocity_rate`                    | double | In the rough velocity estimation, the velocity of front car is estimated as self current velocity \* this value   |
+| パラメータ                                                      | 型 | 説明                                                                                                                                                                                                                 |
+| -------------------------------------------------------------- | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `adaptive_cruise_control.use_object_to_estimate_vel`             | bool | 物体の速度を推定するために動的な物体を使用するかどうか（osp.use_predicted_objectsがfalseの場合にのみ有効）                                                                                                        |
+| `adaptive_cruise_control.use_pcl_to_estimate_vel`                | bool | 物体の速度を推定するために生の点群を使用するかどうか（osp.use_predicted_objectsがfalseの場合にのみ有効）                                                                                                        |
+| `adaptive_cruise_control.consider_obj_velocity`                  | bool | 追従走行時に目標速度を計算するために車両の速度を考慮するかどうか                                                                                                                                            |
+| `adaptive_cruise_control.obstacle_velocity_thresh_to_start_acc`  | double | 前方障害物の速度がこの値を超えると追従走行を開始する [m/s]                                                                                                                                                         |
+| `adaptive_cruise_control.obstacle_velocity_thresh_to_stop_acc`   | double | 前方障害物の速度がこの値を下回るとACCを停止する [m/s]                                                                                                                                                            |
+| `adaptive_cruise_control.emergency_stop_acceleration`            | double | 緊急停止時の想定最小加速度（減速度）[m/ss]                                                                                                                                                                  |
+| `adaptive_cruise_control.emergency_stop_idling_time`             | double | 緊急停止を開始するための想定停止時間 [s]                                                                                                                                                                    |
+| `adaptive_cruise_control.min_dist_stop`                          | double | 緊急停止の最小距離 [m]                                                                                                                                                                                            |
+| `adaptive_cruise_control.obstacle_emergency_stop_acceleration`   | double | 緊急停止時の想定最小加速度（減速度）[m/ss]                                                                                                                                                                  |
+| `adaptive_cruise_control.max_standard_acceleration`              | double | 追従走行時の想定最大加速度 [m/ss]                                                                                                                                                                             |
+| `adaptive_cruise_control.min_standard_acceleration`              | double | 追従走行時の想定最小加速度（減速度）[m/ss]                                                                                                                                                                   |
+| `adaptive_cruise_control.standard_idling_time`                   | double | 追従走行時に物体に対して反応する想定停止時間 [s]                                                                                                                                                                 |
+| `adaptive_cruise_control.min_dist_standard`                      | double | 追従走行時の最小距離 [m]                                                                                                                                                                                            |
+| `adaptive_cruise_control.obstacle_min_standard_acceleration`     | double | 前方障害物の想定最小加速度 [m/ss]                                                                                                                                                                          |
+| `adaptive_cruise_control.margin_rate_to_change_vel`              | double | 目標速度を挿入するための余裕距離率 [-]                                                                                                                                                                           |
+| `adaptive_cruise_control.use_time_compensation_to_calc_distance` | bool | 前方車両との距離を計算するために時間補正を使用する                                                                                                                                                                |
+| `adaptive_cruise_control.p_coefficient_positive`                 | double | PID制御における係数P（target_dist - current_dist &gt;=0の場合に使用）[-]                                                                                                                               |
+| `adaptive_cruise_control.p_coefficient_negative`                 | double | PID制御における係数P（target_dist - current_dist &lt;0の場合に使用）[-]                                                                                                                                   |
+| `adaptive_cruise_control.d_coefficient_positive`                 | double | PID制御における係数D（delta_dist &gt;=0の場合に使用）[-]                                                                                                                                                     |
+| `adaptive_cruise_control.d_coefficient_negative`                 | double | PID制御における係数D（delta_dist &lt;0の場合に使用）[-]                                                                                                                                                       |
+| `adaptive_cruise_control.object_polygon_length_margin`           | double | 点群オブジェクトマッチングでオブジェクトの多角形の長さを延長する距離 [m]                                                                                                                                            |
+| `adaptive_cruise_control.object_polygon_width_margin`            | double | 点群オブジェクトマッチングでオブジェクトの多角形の幅を延長する距離 [m]                                                                                                                                             |
+| `adaptive_cruise_control.valid_estimated_vel_diff_time`          | double | 点群を使用した速度推定で連続したポイントとして扱われる最大時間差 [s]                                                                                                                                 |
+| `adaptive_cruise_control.valid_vel_que_time`                     | double | 点群を使用した速度推定で使用される情報の時間幅 [s]                                                                                                                                                            |
+| `adaptive_cruise_control.valid_estimated_vel_max`                | double | 点群を使用した速度推定で有効な速度推定結果の最大値 [m/s]                                                                                                                                                |
+| `adaptive_cruise_control.valid_estimated_vel_min`                | double | 点群を使用した速度推定で有効な速度推定結果の最小値 [m/s]                                                                                                                                                |
+| `adaptive_cruise_control.thresh_vel_to_stop`                     | double | ACCにより計算された最大速度がこの速度よりも低い場合、停止線を埋め込む [m/s]                                                                                                                                 |
+| `adaptive_cruise_control.lowpass_gain_of_upper_velocity`         | double | 目標速度のローパスゲイン                                                                                                                                                                                            |
+| `adaptive_cruise_control.use_rough_velocity_estimation:`         | bool | 速度推定に失敗した場合にラフに速度を推定する（osp.use_predicted_objectsがfalseの場合にのみ有効）                                                                                                     |
+| `adaptive_cruise_control.rough_velocity_rate`                    | double | ラフな速度推定では、前方の車両の速度は自車位置の現在の速度 ＊ この値として推定される                                                                                                                             |
 
-### Flowchart
+### フローチャート
+
 
 ```plantuml
 @startuml
@@ -336,86 +318,76 @@ stop
 @enduml
 ```
 
-(\*1) The target vehicle point is calculated as a closest obstacle PointCloud from ego along the trajectory.
+**自動運転ソフトウェア**
 
-(\*2) The sources of velocity estimation can be changed by the following ROS parameters.
+**内容**
+
+**目標車両点の算出**
+
+(\*1) 目標車両点は、経路に沿った自己位置からの最近傍障害物点群として算出されます。
+
+(\*2) 速度推定のソースは、以下の ROS パラメータで変更できます。
 
 - `adaptive_cruise_control.use_object_to_estimate_vel`
 - `adaptive_cruise_control.use_pcl_to_estimate_vel`
 
-This module works only when the target point is found in the detection area of the `Obstacle stop planner` module.
+**目標車両点の速度推定**
 
-The first process of this module is to estimate the velocity of the target vehicle point. The velocity estimation uses
-the velocity information of dynamic objects or the travel distance of the target vehicle point from the previous step.
-The dynamic object information is primal, and the travel distance estimation is used as a backup in case of the
-perception failure.
-If the target vehicle point is contained in the bounding box of a dynamic object geometrically, the velocity of the
-dynamic object is used as the target point velocity.
-Otherwise, the target point velocity is calculated by the travel distance of the target point from the previous step;
-that is `(current_position - previous_position) / dt`. Note that this travel distance based estimation fails when the
-target point is detected in the first time (it mainly happens in the cut-in situation). To improve the stability of the
-estimation, the median of the calculation result for several steps is used.
+このモジュールは、「障害物停止プランナー」モジュールの検出領域内に目標点が検出された場合にのみ動作します。
 
-If the calculated velocity is within the threshold range, it is used as the target point velocity.
+このモジュールの最初の処理は、目標車両点の速度を推定することです。速度推定には、動的オブジェクトの速度情報または前のステップからの目標車両点の移動距離を使用します。
 
-Only when the estimation is succeeded and the estimated velocity exceeds the value of `obstacle_stop_velocity_thresh_*`,
-the distance to the pointcloud from self-position is calculated. For prevent chattering in the mode
-transition, `obstacle_velocity_thresh_to_start_acc` is used for the threshold to start adaptive cruise,
-and `obstacle_velocity_thresh_to_stop_acc` is used for the threshold to stop adaptive cruise. When the calculated
-distance value exceeds the emergency distance $d\_{emergency}$ calculated by emergency_stop parameters, target velocity
-to insert is calculated.
+動的オブジェクト情報は一次的なものであり、移動距離推定は知覚障害時のバックアップとして使用されます。
 
-The emergency distance $d\_{emergency}$ is calculated as follows.
+目標車両点が動的オブジェクトの境界ボックスに幾何学的に含まれている場合、動的オブジェクトの速度が目標点速度として使用されます。
+
+それ以外の場合は、目標点速度は、前のステップからの目標点の移動距離によって計算されます。つまり、`(current_position - previous_position) / dt` です。この移動距離ベースの推定は、目標点が最初に検出されたときに失敗することに注意してください（主に割り込み状況で発生します）。推定の安定性を向上させるために、複数のステップの計算結果のメディアンが使用されています。
+
+計算された速度がしきい値範囲内であれば、目標点速度として使用されます。
+
+**目標車両点への追従**
+
+推定が成功し、推定速度が `obstacle_stop_velocity_thresh_*` の値を超えた場合のみ、自己位置から点群までの距離が計算されます。モード遷移時のチャタリングを防ぐために、`obstacle_velocity_thresh_to_start_acc` はアダプティブクルーズを開始するためのしきい値として使用され、`obstacle_velocity_thresh_to_stop_acc` はアダプティブクルーズを停止するためのしきい値として使用されます。計算された距離値が、緊急停止パラメータによって計算された緊急距離 $d\_{emergency}$ を超えると、挿入する目標速度が計算されます。
+
+緊急距離 $d\_{emergency}$ は次のように計算されます。
 
 $d_{emergency} = d_{margin_{emergency}} + t_{idling_{emergency}} \cdot v_{ego} + (-\frac{v_{ego}^2}{2 \cdot a_{ego_
 {emergency}}}) - (-\frac{v_{obj}^2}{2 \cdot a_{obj_{emergency}}})$
 
-- $d_{margin_{emergency}}$ is a minimum margin to the obstacle pointcloud. The value of $d_{margin_{emergency}}$ depends
-  on the parameter `min_dist_stop`
-- $t_{idling_{emergency}}$ is a supposed idling time. The value of $t_{idling_{emergency}}$ depends on the
-  parameter `emergency_stop_idling_time`
-- $v_{ego}$ is a current velocity of own vehicle
-- $a_{ego_{_{emergency}}}$ is a minimum acceleration (maximum deceleration) of own vehicle. The value of $a_{ego_{_
-  {emergency}}}$ depends on the parameter `emergency_stop_acceleration`
-- $v_{obj}$ is a current velocity of obstacle pointcloud.
-- $a_{obj_{_{emergency}}}$ is a supposed minimum acceleration of obstacle pointcloud. The value of $a_{obj_{_
-  {emergency}}}$ depends on the parameter `obstacle_emergency_stop_acceleration`
-- \*Above $X_{_{emergency}}$ parameters are used only in emergency situation.
+- $d_{margin_{emergency}}$ は、障害物点群に対する最小マージンです。$d_{margin_{emergency}}$ の値は、パラメータ `min_dist_stop` に依存します。
+- $t_{idling_{emergency}}$ は、想定されるアイドリング時間です。$t_{idling_{emergency}}$ の値は、パラメータ `emergency_stop_idling_time` に依存します。
+- $v_{ego}$ は、自己車両の現在の速度です。
+- $a_{ego_{_{emergency}}}$ は、自己車両の最小加速度（最大減速）です。$a_{ego_{_
+  {emergency}}}$ の値は、パラメータ `emergency_stop_acceleration` に依存します。
+- $v_{obj}$ は、障害物点群の現在の速度です。
+- $a_{obj_{_{emergency}}}$ は、障害物点群の想定される最小加速度です。$a_{obj_{_
+  {emergency}}}$ の値は、パラメータ `obstacle_emergency_stop_acceleration` に依存します。
+- \*上記の $X_{_{emergency}}$ パラメータは、緊急時のみ使用されます。
 
-The target velocity is determined to keep the distance to the obstacle pointcloud from own vehicle at the standard
-distance $d\_{standard}$ calculated as following. Therefore, if the distance
-to the obstacle pointcloud is longer than standard distance, The target velocity becomes higher than the current
-velocity, and vice versa. For keeping the distance, a PID controller is used.
+目標速度は、障害物点群から自己車両までの距離を計算された標準距離 $d\_{standard}$ に維持するように決定されます。したがって、障害物点群までの距離が標準距離よりも長い場合、目標速度は現在の速度よりも高くなり、その逆も同様です。距離を維持するために、PID 制御器が使用されます。
 
 $d_{standard} = d_{margin_{standard}} + t_{idling_{standard}} \cdot v_{ego} + (-\frac{v_{ego}^2}{2 \cdot a_{ego_
 {standard}}}) - (-\frac{v_{obj}^2}{2 \cdot a_{obj_{standard}}})$
 
-- $d_{margin_{standard}}$ is a minimum margin to the obstacle pointcloud. The value of $d_{margin_{standard}}$ depends
-  on the parameter `min_dist_stop`
-- $t_{idling_{standard}}$ is a supposed idling time. The value of $t_{idling_{standard}}$ depends on the
-  parameter `standard_stop_idling_time`
-- $v_{ego}$ is a current velocity of own vehicle
-- $a_{ego_{_{standard}}}$ is a minimum acceleration (maximum deceleration) of own vehicle. The value of $a_{ego_{_
-  {standard}}}$ depends on the parameter `min_standard_acceleration`
-- $v_{obj}$ is a current velocity of obstacle pointcloud.
-- $a_{obj_{_{standard}}}$ is a supposed minimum acceleration of obstacle pointcloud. The value of $a_{obj_{_
-  {standard}}}$ depends on the parameter `obstacle_min_standard_acceleration`
-- \*Above $X_{_{standard}}$ parameters are used only in non-emergency situation.
+- $d_{margin_{standard}}$ は、障害物点群に対する最小マージンです。$d_{margin_{standard}}$ の値は、パラメータ `min_dist_stop` に依存します。
+- $t_{idling_{standard}}$ は、想定されるアイドリング時間です。$t_{idling_{standard}}$ の値は、パラメータ `standard_stop_idling_time` に依存します。
+
+- $a_{ego_{_{標準}}}$ は自車の最小加速度（最大減速度）です。$a_{ego_{_
+  {標準}}}$ の値はパラメーター `min_standard_acceleration` に依存します。
+- $v_{obj}$ は障害物の点群の現在の速度です。
+- $a_{obj_{_{標準}}}$ は障害物の点群の想定される最小加速度です。$a_{obj_{_
+  {標準}}}$ の値はパラメーター `obstacle_min_standard_acceleration` に依存します。
+- \*上記の $X_{_{標準}}$ パラメーターは非緊急状態でのみ使用されます。
 
 ![adaptive_cruise](./docs/adaptive_cruise.drawio.svg)
 
-If the target velocity exceeds the value of `thresh_vel_to_stop`, the target velocity is embedded in the trajectory.
+ターゲット速度が `thresh_vel_to_stop` の値を超えた場合、ターゲット速度が軌道に埋め込まれます。
 
-## Known Limits
+## 制限事項
 
-- It is strongly depends on velocity planning module whether or not it moves according to the target speed embedded
-  by `Adaptive Cruise Controller` module. If the velocity planning module is updated, please take care of the vehicle's
-  behavior as much as possible and always be ready for overriding.
+- `自適巡航制御` モジュールにより埋め込まれた目標速度に従って車が動くかどうかは、速度計画モジュールに大きく依存しています。速度計画モジュールが更新された場合は、可能な限り車両の挙動に注意し、常にオーバーライドの準備をしてください。
 
-- The velocity estimation algorithm in `Adaptive Cruise Controller` is depend on object tracking module. Please note
-  that if the object-tracking fails or the tracking result is incorrect, it the possibility that the vehicle behaves
-  dangerously.
+- `自適巡航制御` の速度推定アルゴリズムは、オブジェクト追跡モジュールに依存しています。オブジェクト追跡が失敗したり、追跡結果が誤っている場合、車両が危険な挙動をする可能性があることに注意してください。
 
-- It does not work for backward driving, but publishes the path of the input as it is. Please
-  use [obstacle_cruise_planner](../autoware_obstacle_cruise_planner/README.md) if you want to stop against an obstacle when
-  backward driving.
+- 後退走行では動作しませんが、入力されたパスをそのまま公開します。後退走行時に障害物に対して停止したい場合は、[obstacle_cruise_planner](../autoware_obstacle_cruise_planner/README.md) を使用してください。
+
