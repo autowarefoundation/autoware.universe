@@ -192,12 +192,12 @@ void MechanicalController::set_steer(const double steer)
 }
 
 [[maybe_unused]] double MechanicalController::update_euler(
-  const double input_angle, const double speed, const double prev_input_angle, const double dt)
+  const double input_angle, const double speed, const double prev_input_angle, const double dt, const double elapsed_time)
 {
   const auto dynamics_state = steering_dynamics_.get_state();
 
   const auto d_state =
-    run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, steering_dynamics_);
+    run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, steering_dynamics_, elapsed_time);
 
   const double d_angular_position = d_state.dynamics_d_state.d_angular_position;
   const double d_angular_velocity = d_state.dynamics_d_state.d_angular_velocity;
@@ -219,12 +219,13 @@ void MechanicalController::set_steer(const double steer)
 }
 
 double MechanicalController::update_runge_kutta(
-  const double input_angle, const double speed, const double prev_input_angle, const double dt)
+  const double input_angle, const double speed, const double prev_input_angle, const double dt, 
+  const double elapsed_time)
 {
   const auto dynamics_state = steering_dynamics_.get_state();
 
   const auto k1 =
-    run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, steering_dynamics_);
+    run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, steering_dynamics_, elapsed_time);
 
   auto dynamics_for_k2 = steering_dynamics_;
   auto dynamics_state_for_k2 = steering_dynamics_.get_state();
@@ -234,7 +235,7 @@ double MechanicalController::update_runge_kutta(
     dynamics_state.angular_velocity + k1.dynamics_d_state.d_angular_velocity * 0.5 * dt;
   dynamics_for_k2.set_state(dynamics_state_for_k2);
   const auto k2 =
-    run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, dynamics_for_k2);
+    run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, dynamics_for_k2, elapsed_time);
 
   auto dynamics_for_k3 = steering_dynamics_;
   auto dynamics_state_for_k3 = steering_dynamics_.get_state();
@@ -244,7 +245,7 @@ double MechanicalController::update_runge_kutta(
     dynamics_state.angular_velocity + k2.dynamics_d_state.d_angular_velocity * 0.5 * dt;
   dynamics_for_k3.set_state(dynamics_state_for_k3);
   const auto k3 =
-    run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, dynamics_for_k3);
+    run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, dynamics_for_k3, elapsed_time);
 
   auto dynamics_for_k4 = steering_dynamics_;
   auto dynamics_state_for_k4 = steering_dynamics_.get_state();
@@ -254,7 +255,7 @@ double MechanicalController::update_runge_kutta(
     dynamics_state.angular_velocity + k3.dynamics_d_state.d_angular_velocity * dt;
   dynamics_for_k4.set_state(dynamics_state_for_k4);
   const auto k4 =
-    run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, dynamics_for_k4);
+    run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, dynamics_for_k4, elapsed_time);
 
   const double d_angular_position =
     (k1.dynamics_d_state.d_angular_position + 2.0 * k2.dynamics_d_state.d_angular_position +
@@ -284,7 +285,7 @@ double MechanicalController::update_runge_kutta(
 StepResult MechanicalController::run_one_step(
   const double input_angle, const double speed, const double prev_input_angle, const double dt,
   const DelayBuffer & delay_buffer, const PIDController & pid,
-  const SteeringDynamics & dynamics) const
+  const SteeringDynamics & dynamics, const double elapsed_time) const
 {
   const auto dynamics_state = dynamics.get_state();
   const auto pid_state = pid.get_state();
@@ -308,7 +309,6 @@ StepResult MechanicalController::run_one_step(
       params_.poly_e, params_.poly_f, params_.poly_g, params_.poly_h),
     -params_.steering_torque_limit, params_.steering_torque_limit);
 
-  const double elapsed_time = delay_buffer.empty() ? dt : delay_buffer.back().second + dt;
   const auto [delayed_torque_opt, delay_buffer_new] =
     delay(steering_torque, params_.torque_delay_time, delay_buffer, elapsed_time);
 
