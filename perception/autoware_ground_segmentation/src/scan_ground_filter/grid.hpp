@@ -143,7 +143,7 @@ public:
     grid_linearity_switch_radius_ = grid_linearity_switch_num_ * grid_dist_size_;
 
     // calculate grid parameters
-    grid_radial_limit_ = 160.0f;  // [m]
+    grid_radial_limit_ = 200.0f;  // [m]
     grid_dist_size_rad_ =
       pseudoArcTan2(grid_linearity_switch_radius_ + grid_dist_size_, origin_z_) -
       pseudoArcTan2(grid_linearity_switch_radius_, origin_z_);
