@@ -42,7 +42,6 @@ common/tier4_traffic_light_rviz_plugin/** satoshi.ota@tier4.jp
 common/tier4_vehicle_rviz_plugin/** yukihiro.saito@tier4.jp
 common/traffic_light_recognition_marker_publisher/** shumpei.wakabayashi@tier4.jp takeshi.miura@tier4.jp tomoya.kimura@tier4.jp
 common/traffic_light_utils/** kotaro.uetake@tier4.jp satoshi.ota@tier4.jp shunsuke.miura@tier4.jp
-common/tvm_utility/** ambroise.vincent@arm.com xinyu.wang@tier4.jp
 control/autoware_autonomous_emergency_braking/** daniel.sanchez@tier4.jp kyoichi.sugahara@tier4.jp mamoru.sobue@tier4.jp takamasa.horibe@tier4.jp tomoya.kimura@tier4.jp
 control/autoware_collision_detector/** go.sakayori@tier4.jp kyoichi.sugahara@tier4.jp tomohito.ando@tier4.jp
 control/autoware_control_validator/** kyoichi.sugahara@tier4.jp makoto.kurihara@tier4.jp mamoru.sobue@tier4.jp takamasa.horibe@tier4.jp takayuki.murooka@tier4.jp
