@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3) # Ubuntu 20.04 default CMake version
 
-project(diagnostic_converter)
+project(scenario_simulator_v2_adapter)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
@@ -21,7 +21,7 @@ ament_auto_add_library(${PROJECT_NAME}_node SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_node
-  PLUGIN "diagnostic_converter::DiagnosticConverter"
+  PLUGIN "scenario_simulator_v2_adapter::MetricConverter"
   EXECUTABLE ${PROJECT_NAME}
 )
 
