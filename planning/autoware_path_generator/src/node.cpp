@@ -227,10 +227,11 @@ std::optional<PathWithLaneId> PathGenerator::get_centerline_path(
       s_end = std::clamp(s_end, 0.0, lane_length);
     }
 
-    if (
-      std::find(
-        planner_data_.goal_lanelets.begin(), planner_data_.goal_lanelets.end(),
-        lanelet_sequence.back()) != planner_data_.goal_lanelets.end()) {
+    if (std::any_of(
+          planner_data_.goal_lanelets.begin(), planner_data_.goal_lanelets.end(),
+          [&](const auto & goal_lanelet) {
+            return lanelet_sequence.back().id() == goal_lanelet.id();
+          })) {
       const auto goal_arc_coordinates =
         lanelet::utils::getArcCoordinates(lanelet_sequence, planner_data_.goal_pose);
       s_end = std::clamp(s_end, 0.0, goal_arc_coordinates.length);

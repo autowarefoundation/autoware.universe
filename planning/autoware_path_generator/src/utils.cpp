@@ -37,6 +37,10 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence(
   const geometry_msgs::msg::Pose & current_pose, const double forward_distance,
   const double backward_distance)
 {
+  if (!exists(planner_data.route_lanelets, lanelet)) {
+    return std::nullopt;
+  }
+
   auto lanelet_sequence = [&]() -> std::optional<lanelet::ConstLanelets> {
     const auto arc_coordinate = lanelet::utils::getArcCoordinates({lanelet}, current_pose);
     if (arc_coordinate.length < backward_distance) {
@@ -72,6 +76,10 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence(
 std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
+  if (!exists(planner_data.route_lanelets, lanelet)) {
+    return std::nullopt;
+  }
+
   lanelet::ConstLanelets lanelet_sequence{};
   auto current_lanelet = lanelet;
   auto length = 0.;
@@ -79,11 +87,7 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
   while (rclcpp::ok() && length < distance) {
     auto next_lanelet = get_next_lanelet_within_route(current_lanelet, planner_data);
     if (!next_lanelet) {
-      const auto next_lanelets = planner_data.routing_graph_ptr->following(current_lanelet);
-      if (next_lanelets.empty()) {
-        break;
-      }
-      next_lanelet = next_lanelets.front();
+      break;
     }
 
     // loop check
@@ -102,6 +106,10 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
 std::optional<lanelet::ConstLanelets> get_lanelet_sequence_up_to(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
+  if (!exists(planner_data.route_lanelets, lanelet)) {
+    return std::nullopt;
+  }
+
   lanelet::ConstLanelets lanelet_sequence{};
   auto current_lanelet = lanelet;
   auto length = 0.;
@@ -109,10 +117,7 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence_up_to(
   while (rclcpp::ok() && length < distance) {
     auto previous_lanelets = get_previous_lanelets_within_route(current_lanelet, planner_data);
     if (!previous_lanelets) {
-      previous_lanelets = planner_data.routing_graph_ptr->previous(current_lanelet);
-      if (previous_lanelets->empty()) {
-        break;
-      }
+      break;
     }
 
     if (
