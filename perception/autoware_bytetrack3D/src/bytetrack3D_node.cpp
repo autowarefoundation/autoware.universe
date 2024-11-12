@@ -55,13 +55,12 @@ ByteTrack3DNode::ByteTrack3DNode(const rclcpp::NodeOptions & node_options)
   int track_buffer_length = declare_parameter("track_buffer_length", 30);
 
   this->bytetrack3D_ = std::make_unique<bytetrack3D::ByteTrack3D>(track_buffer_length);
-  
-  detection_rect_sub_ =
-          this->create_subscription<autoware_perception_msgs::msg::DetectedObjects>(
-            "~/in/objects", 1, std::bind(&ByteTrack3DNode::on_rect, this, _1));
 
-  objects_pub_ = this->create_publisher<autoware_perception_msgs::msg::TrackedObjects>(
-    "~/out/objects", 1);
+  detection_rect_sub_ = this->create_subscription<autoware_perception_msgs::msg::DetectedObjects>(
+    "~/in/objects", 1, std::bind(&ByteTrack3DNode::on_rect, this, _1));
+
+  objects_pub_ =
+    this->create_publisher<autoware_perception_msgs::msg::TrackedObjects>("~/out/objects", 1);
 }
 
 void ByteTrack3DNode::on_rect(
@@ -79,7 +78,8 @@ void ByteTrack3DNode::on_rect(
     obj.y = feat_obj.kinematics.pose_with_covariance.pose.position.y;
     obj.z = feat_obj.kinematics.pose_with_covariance.pose.position.z;
     auto q = feat_obj.kinematics.pose_with_covariance.pose.orientation;
-    obj.yaw = std::atan2(2.0*(q.x*q.y + q.w*q.z), q.w*q.w + q.x*q.x - q.y*q.y - q.z*q.z);
+    obj.yaw =
+      std::atan2(2.0 * (q.x * q.y + q.w * q.z), q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z);
     obj.l = feat_obj.shape.dimensions.x;
     obj.w = feat_obj.shape.dimensions.y;
     obj.h = feat_obj.shape.dimensions.z;
@@ -102,7 +102,7 @@ void ByteTrack3DNode::on_rect(
     object.kinematics.pose_with_covariance.pose.position.y = tracked_object.y;
     object.kinematics.pose_with_covariance.pose.position.z = tracked_object.z;
     tf2::Quaternion q;
-    q.setRPY(0.0,0.0,tracked_object.yaw);
+    q.setRPY(0.0, 0.0, tracked_object.yaw);
     object.kinematics.pose_with_covariance.pose.orientation = tf2::toMsg(q);
     object.shape.dimensions.x = tracked_object.l;
     object.shape.dimensions.y = tracked_object.w;
@@ -111,7 +111,7 @@ void ByteTrack3DNode::on_rect(
     object.kinematics.twist_with_covariance.twist.linear.y = tracked_object.vy;
     object.kinematics.twist_with_covariance.twist.linear.z = tracked_object.vz;
     object.kinematics.twist_with_covariance.twist.angular.z = tracked_object.vyaw;
-    
+
     out_objects.objects.push_back(object);
   }
 

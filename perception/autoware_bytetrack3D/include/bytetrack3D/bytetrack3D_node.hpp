@@ -26,16 +26,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__BYTETRACK__BYTETRACK3D_NODE_HPP_
-#define AUTOWARE__BYTETRACK__BYTETRACK3D_NODE_HPP_
+#ifndef BYTETRACK3D__BYTETRACK3D_NODE_HPP_
+#define BYTETRACK3D__BYTETRACK3D_NODE_HPP_
 
 #include <bytetrack3D/bytetrack3D.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
-#include <tier4_perception_msgs/msg/dynamic_object_array.hpp>
 #include "autoware_perception_msgs/msg/detected_objects.hpp"
 #include "autoware_perception_msgs/msg/tracked_objects.hpp"
+#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
+#include <tier4_perception_msgs/msg/dynamic_object_array.hpp>
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
 #include <cv_bridge/cv_bridge.hpp>
 #else
@@ -66,10 +66,9 @@ private:
   rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     detection_rect_sub_;
 
-
   std::unique_ptr<bytetrack3D::ByteTrack3D> bytetrack3D_;
 };
 
 }  // namespace bytetrack3D
 
-#endif  // AUTOWARE__BYTETRACK__BYTETRACK3D_NODE_HPP_
+#endif  // BYTETRACK3D__BYTETRACK3D_NODE_HPP_

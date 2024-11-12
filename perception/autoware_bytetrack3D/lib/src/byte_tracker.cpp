@@ -102,7 +102,7 @@ std::vector<STrack> ByteTracker::update(const std::vector<ByteTrackObject> & obj
     }
   }
 
-  // Add newly detected tracklets to tracked_stracks 
+  // Add newly detected tracklets to tracked_stracks
   for (size_t i = 0; i < this->tracked_stracks.size(); i++) {
     if (!this->tracked_stracks[i].is_activated)
       unconfirmed.push_back(&this->tracked_stracks[i]);
@@ -118,7 +118,7 @@ std::vector<STrack> ByteTracker::update(const std::vector<ByteTrackObject> & obj
   for (size_t i = 0; i < strack_pool.size(); i++) {
     strack_pool[i]->predict();
   }
-  
+
   std::vector<std::vector<float> > dists;
   int dist_size = 0, dist_size_size = 0;
   dists = distance(strack_pool, detections, dist_size, dist_size_size);
@@ -126,11 +126,11 @@ std::vector<STrack> ByteTracker::update(const std::vector<ByteTrackObject> & obj
   std::vector<std::vector<int> > matches;
   std::vector<int> u_track, u_detection;
   linear_assignment(dists, dist_size, dist_size_size, match_thresh, matches, u_track, u_detection);
-  
+
   for (size_t i = 0; i < matches.size(); i++) {
     STrack * track = strack_pool[matches[i][0]];
     STrack * det = &detections[matches[i][1]];
-   
+
     if (track->state == TrackState::Tracked) {
       track->update(*det, this->frame_id);
       activated_stracks.push_back(*track);
@@ -159,17 +159,17 @@ std::vector<STrack> ByteTracker::update(const std::vector<ByteTrackObject> & obj
   matches.clear();
   u_track.clear();
   u_detection.clear();
-  linear_assignment(dists, dist_size, dist_size_size, match_thresh-0.5, matches, u_track, u_detection);
+  linear_assignment(
+    dists, dist_size, dist_size_size, match_thresh - 0.5, matches, u_track, u_detection);
 
   for (size_t i = 0; i < matches.size(); i++) {
     STrack * track = r_tracked_stracks[matches[i][0]];
     STrack * det = &detections[matches[i][1]];
-   
+
     if (track->state == TrackState::Tracked) {
       track->update(*det, this->frame_id);
       activated_stracks.push_back(*track);
     } else {
-     
       track->re_activate(*det, this->frame_id, false);
       refind_stracks.push_back(*track);
     }
@@ -193,10 +193,11 @@ std::vector<STrack> ByteTracker::update(const std::vector<ByteTrackObject> & obj
   matches.clear();
   std::vector<int> u_unconfirmed;
   u_detection.clear();
-  linear_assignment(dists, dist_size, dist_size_size, match_thresh-0.7, matches, u_unconfirmed, u_detection);
+  linear_assignment(
+    dists, dist_size, dist_size_size, match_thresh - 0.7, matches, u_unconfirmed, u_detection);
 
   for (size_t i = 0; i < matches.size(); i++) {
-    if(unconfirmed[matches[i][0]]->state==TrackState::New){
+    if (unconfirmed[matches[i][0]]->state == TrackState::New) {
       unconfirmed[matches[i][0]]->activate(this->frame_id);
     }
     unconfirmed[matches[i][0]]->update(detections[matches[i][1]], this->frame_id);
@@ -207,29 +208,27 @@ std::vector<STrack> ByteTracker::update(const std::vector<ByteTrackObject> & obj
     STrack * track = unconfirmed[u_unconfirmed[i]];
     track->mark_removed();
     removed_stracks.push_back(*track);
-  
   }
 
   ////////////////// Step 4: Init new stracks //////////////////
   std::vector<STrack> low_conf_tracks;
   for (size_t i = 0; i < u_detection.size(); i++) {
     STrack * track = &detections[u_detection[i]];
-    if(track->score < this->high_thresh){
-      if(track->score > track_thresh){
+    if (track->score < this->high_thresh) {
+      if (track->score > track_thresh) {
         low_conf_tracks.push_back(*track);
       }
-    }
-    else{
+    } else {
       track->activate(this->frame_id);
       activated_stracks.push_back(*track);
     }
-    
   }
 
   ////////////////// Step 5: Update state //////////////////
   for (size_t i = 0; i < this->lost_stracks.size(); i++) {
-    if (this->frame_id - this->lost_stracks[i].end_frame() > this->max_time_lost || 
-        this->lost_stracks[i].state==TrackState::New) {
+    if (
+      this->frame_id - this->lost_stracks[i].end_frame() > this->max_time_lost ||
+      this->lost_stracks[i].state == TrackState::New) {
       this->lost_stracks[i].mark_removed();
       removed_stracks.push_back(this->lost_stracks[i]);
     }
@@ -257,14 +256,13 @@ std::vector<STrack> ByteTracker::update(const std::vector<ByteTrackObject> & obj
   }
 
   remove_duplicate_stracks(resa, resb, this->tracked_stracks, this->lost_stracks);
-  
+
   this->tracked_stracks.clear();
   this->tracked_stracks.assign(resa.begin(), resa.end());
   this->lost_stracks.clear();
   this->lost_stracks.assign(resb.begin(), resb.end());
 
-  for(auto& track:low_conf_tracks)
-  {
+  for (auto & track : low_conf_tracks) {
     this->tracked_stracks.push_back(track);
   }
 

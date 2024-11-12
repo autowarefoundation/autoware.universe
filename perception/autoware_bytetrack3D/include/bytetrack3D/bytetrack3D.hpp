@@ -26,8 +26,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__BYTETRACK__BYTETRACK3D_HPP_
-#define AUTOWARE__BYTETRACK__BYTETRACK3D_HPP_
+#ifndef BYTETRACK3D__BYTETRACK3D_HPP_
+#define BYTETRACK3D__BYTETRACK3D_HPP_
 
 #include "byte_tracker.h"
 #include "strack.h"
@@ -72,4 +72,4 @@ private:
 
 }  // namespace bytetrack3D
 
-#endif  // AUTOWARE__BYTETRACK__BYTETRACK3D_HPP_
+#endif  // BYTETRACK3D__BYTETRACK3D_HPP_

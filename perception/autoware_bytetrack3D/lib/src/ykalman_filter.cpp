@@ -13,38 +13,36 @@
 // limitations under the License.
 
 #include "ykalman_filter.h"
+
 #include "math.h"
 
-void  yKalmanFilter::setX(Eigen::MatrixXd state)
+void yKalmanFilter::setX(Eigen::MatrixXd state)
 {
-    this->x_ = state;
-} 
+  this->x_ = state;
+}
 
-                
 float yKalmanFilter::normalize_theta(float theta)
 {
-    if (theta >= M_PI) theta -= M_PI * 2;   
-    if (theta < -M_PI) theta += M_PI * 2;
+  if (theta >= M_PI) theta -= M_PI * 2;
+  if (theta < -M_PI) theta += M_PI * 2;
 
-    return theta;
+  return theta;
 }
 
 float yKalmanFilter::yaw_correction(float pre_yaw, float obs_yaw)
 {
+  obs_yaw = normalize_theta(obs_yaw);
+  pre_yaw = normalize_theta(pre_yaw);
+
+  if (std::abs(obs_yaw - pre_yaw) > M_PI / 2.0 && std::abs(obs_yaw - pre_yaw) < M_PI * 3 / 2.0) {
+    obs_yaw += M_PI;
     obs_yaw = normalize_theta(obs_yaw);
-    pre_yaw = normalize_theta(pre_yaw);
+  }
 
-    if (std::abs(obs_yaw - pre_yaw) >  M_PI / 2.0 && std::abs(obs_yaw - pre_yaw) < M_PI * 3 / 2.0)
-    {
-        obs_yaw += M_PI;
-        obs_yaw = normalize_theta(obs_yaw);
-    }    
+  if (std::abs(obs_yaw - pre_yaw) >= M_PI * 3 / 2.0) {
+    obs_yaw = -obs_yaw;
+    obs_yaw = normalize_theta(obs_yaw);
+  }
 
-    if (std::abs(obs_yaw - pre_yaw) >= M_PI * 3 / 2.0)
-    {
-        obs_yaw = -obs_yaw;
-        obs_yaw = normalize_theta(obs_yaw);
-    }
-
-    return obs_yaw;
+  return obs_yaw;
 }

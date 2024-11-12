@@ -193,7 +193,8 @@ std::vector<std::vector<float>> ByteTracker::distance(
   for (int i = 0; i < dist_size; i++) {
     std::vector<float> _iou;
     for (int j = 0; j < dist_size_size; j++) {
-      _iou.push_back(std::sqrt(std::pow(atracks[i]->pose[0] - btracks[j].pose[0], 2) + 
+      _iou.push_back(std::sqrt(
+        std::pow(atracks[i]->pose[0] - btracks[j].pose[0], 2) +
         std::pow(atracks[i]->pose[1] - btracks[j].pose[1], 2) +
         std::pow(atracks[i]->pose[2] - btracks[j].pose[2], 2)));
     }
@@ -203,7 +204,6 @@ std::vector<std::vector<float>> ByteTracker::distance(
   return cost_matrix;
 }
 
-
 std::vector<std::vector<float>> ByteTracker::distance(
   std::vector<STrack> & atracks, std::vector<STrack> & btracks)
 {
@@ -211,13 +211,14 @@ std::vector<std::vector<float>> ByteTracker::distance(
   for (size_t i = 0; i < atracks.size(); i++) {
     std::vector<float> _iou;
     for (size_t j = 0; j < btracks.size(); j++) {
-      _iou.push_back(std::sqrt(std::pow(atracks[i].pose[0] - btracks[j].pose[0], 2) + 
+      _iou.push_back(std::sqrt(
+        std::pow(atracks[i].pose[0] - btracks[j].pose[0], 2) +
         std::pow(atracks[i].pose[1] - btracks[j].pose[1], 2) +
         std::pow(atracks[i].pose[2] - btracks[j].pose[2], 2)));
     }
     cost_matrix.push_back(_iou);
   }
-  
+
   return cost_matrix;
 }
 

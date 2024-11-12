@@ -38,9 +38,7 @@
 
 #pragma once
 
-
 #include <autoware/kalman_filter/kalman_filter.hpp>
-
 #include <opencv2/opencv.hpp>
 
 #include <boost/uuid/uuid.hpp>
@@ -75,7 +73,7 @@ public:
   void predict();
 
   void load_parameters(const std::string & filename);
-  
+
   void init_kf_params();
 
   float normalize_theta(float theta);
@@ -89,9 +87,9 @@ public:
   int state;
 
   // std::vector<float> original_pose;  // x,y,z,yaw
-  std::vector<float> pose;           // x,y,z,yaw
-  std::vector<float> lwh;            // l,w,h
-  std::vector<float> velocity;       // vx,xy,vz
+  std::vector<float> pose;      // x,y,z,yaw
+  std::vector<float> lwh;       // l,w,h
+  std::vector<float> velocity;  // vx,xy,vz
   float time_elapsed;
   // 构造时不需要赋值，只在最后将速度读出来
 
@@ -108,7 +106,7 @@ private:
   {
     // dimension
     char dim_x = 11;
-    char dim_z =  7;
+    char dim_z = 7;
     // system noise
     float q_cov_p;
     float q_cov_yaw;
@@ -130,7 +128,7 @@ private:
   };
   static KfParams _kf_parameters;
   static bool _parameters_loaded;
-  enum IDX { X = 0, Y = 1, Z = 2, Yaw = 3, L = 4, W = 5, H = 6, VX = 7, VY = 8, VZ = 9, VYaw= 10};
+  enum IDX { X = 0, Y = 1, Z = 2, Yaw = 3, L = 4, W = 5, H = 6, VX = 7, VY = 8, VZ = 9, VYaw = 10 };
 
   Eigen::MatrixXd A;
   Eigen::MatrixXd u;
@@ -139,5 +137,4 @@ private:
   Eigen::MatrixXd R;
   Eigen::MatrixXd Q;
   Eigen::MatrixXd P0;
-  
 };

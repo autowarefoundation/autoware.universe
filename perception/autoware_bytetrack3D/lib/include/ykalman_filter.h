@@ -18,13 +18,12 @@
 
 using autoware::kalman_filter::KalmanFilter;
 
-class yKalmanFilter: public KalmanFilter
+class yKalmanFilter : public KalmanFilter
 {
-    public:
-        void setX(Eigen::MatrixXd state);
-                
-        float normalize_theta(float theta);
-     
-        float yaw_correction(float pre_yaw, float obs_yaw);
-       
+public:
+  void setX(Eigen::MatrixXd state);
+
+  float normalize_theta(float theta);
+
+  float yaw_correction(float pre_yaw, float obs_yaw);
 };

@@ -17,7 +17,7 @@ r_cov_d: 0.1
 
 # State Transition Noise Covariance
 p0_cov_p: 0.1     # pose
-p0_cov_yaw: 0.1 #  
+p0_cov_yaw: 0.1 #
 p0_cov_d: 0.1     # dimension
 p0_cov_v: 0.1     # velocity
-p0_cov_vyaw: 0.01 # 
+p0_cov_vyaw: 0.01 #

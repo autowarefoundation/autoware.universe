@@ -30,15 +30,15 @@ Kalman filter settings can be controlled by the parameters in `config/kalman_fil
 
 #### Input
 
-| Name      | Type                                               | Description                                 |
-| --------- | -------------------------------------------------- | ------------------------------------------- |
+| Name         | Type                                             | Description                                 |
+| ------------ | ------------------------------------------------ | ------------------------------------------- |
 | `in/objects` | `autoware_perception_msgs::msg::DetectedObjects` | The detected objects with 3D bounding boxes |
 
 #### Output
 
-| Name                     | Type                                               | Description                                               |
-| ------------------------ | -------------------------------------------------- | --------------------------------------------------------- |
-| `out/objects`            | `autoware_perception_msgs::msg::TrackedObjects` | The 3D tracking bounding boxes |
+| Name          | Type                                            | Description                    |
+| ------------- | ----------------------------------------------- | ------------------------------ |
+| `out/objects` | `autoware_perception_msgs::msg::TrackedObjects` | The 3D tracking bounding boxes |
 
 ## Parameters
 

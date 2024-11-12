@@ -77,7 +77,6 @@ STrack::STrack(std::vector<float> in_pose, std::vector<float> in_lwh, float scor
   init_kf_params();
 
   init_kalman_filter();
-
 }
 
 STrack::~STrack()
@@ -124,13 +123,13 @@ void STrack::re_activate(STrack & new_track, int frame_id, bool new_id)
 {
   Eigen::MatrixXd measurement = Eigen::MatrixXd::Zero(_kf_parameters.dim_z, 1);
   measurement << new_track.pose[0], new_track.pose[1], new_track.pose[2], new_track.pose[3],
-                  new_track.lwh[0], new_track.lwh[1], new_track.lwh[2];
+    new_track.lwh[0], new_track.lwh[1], new_track.lwh[2];
 
-  measurement(3) = yaw_correction(kalman_filter_.getXelement(IDX::Yaw),new_track.pose[3]);
+  measurement(3) = yaw_correction(kalman_filter_.getXelement(IDX::Yaw), new_track.pose[3]);
 
   update_kalman_filter(measurement);
 
-  if(std::abs(measurement(3)-this->pose[3])>M_PI*0.1){
+  if (std::abs(measurement(3) - this->pose[3]) > M_PI * 0.1) {
     this->pose[3] = measurement(3);
   }
 
@@ -178,17 +177,17 @@ void STrack::update(STrack & new_track, int frame_id)
 
   Eigen::MatrixXd measurement = Eigen::MatrixXd::Zero(_kf_parameters.dim_z, 1);
   measurement << new_track.pose[0], new_track.pose[1], new_track.pose[2], new_track.pose[3],
-                  new_track.lwh[0], new_track.lwh[1], new_track.lwh[2];
+    new_track.lwh[0], new_track.lwh[1], new_track.lwh[2];
 
-  measurement(3) = yaw_correction(kalman_filter_.getXelement(IDX::Yaw),new_track.pose[3]);
+  measurement(3) = yaw_correction(kalman_filter_.getXelement(IDX::Yaw), new_track.pose[3]);
 
   update_kalman_filter(measurement);
-  
+
   Eigen::MatrixXd state = Eigen::MatrixXd::Zero(_kf_parameters.dim_x, 1);
 
   reflect_state();
 
-  if(std::abs(measurement(3)-this->pose[3])>M_PI*0.1){
+  if (std::abs(measurement(3) - this->pose[3]) > M_PI * 0.1) {
     this->pose[3] = measurement(3);
   }
 
@@ -206,9 +205,9 @@ void STrack::reflect_state()
   this->pose[0] = state(IDX::X);
   this->pose[1] = state(IDX::Y);
   this->pose[2] = state(IDX::Z);
- 
+
   this->pose[3] = state(IDX::Yaw);
-  
+
   this->lwh[0] = state(IDX::L);
   this->lwh[1] = state(IDX::W);
   this->lwh[2] = state(IDX::H);
@@ -238,11 +237,10 @@ void STrack::update_kalman_filter(const Eigen::MatrixXd & measurement)
 void STrack::predict()
 {
   // prediction
-    if (!this->kalman_filter_.predict(u, A, B, Q)) {
-      std::cerr << "Cannot predict" << std::endl;
-    }
-    reflect_state();
-    
+  if (!this->kalman_filter_.predict(u, A, B, Q)) {
+    std::cerr << "Cannot predict" << std::endl;
+  }
+  reflect_state();
 }
 
 void STrack::load_parameters(const std::string & path)
@@ -266,7 +264,6 @@ void STrack::load_parameters(const std::string & path)
   _kf_parameters.p0_cov_vyaw = config["p0_cov_vyaw"].as<float>();
 
   _kf_parameters.dt = config["dt"].as<float>();
-
 }
 
 void STrack::init_kf_params()
@@ -277,10 +274,10 @@ void STrack::init_kf_params()
   A(IDX::Y, IDX::VY) = _kf_parameters.dt;
   A(IDX::Z, IDX::VZ) = _kf_parameters.dt;
   A(IDX::Yaw, IDX::VYaw) = _kf_parameters.dt;
-  
+
   u = Eigen::MatrixXd::Zero(_kf_parameters.dim_x, 1);
   B = Eigen::MatrixXd::Zero(_kf_parameters.dim_x, _kf_parameters.dim_x);
-  
+
   C = Eigen::MatrixXd::Zero(_kf_parameters.dim_z, _kf_parameters.dim_x);
   C(IDX::X, IDX::X) = 1;
   C(IDX::Y, IDX::Y) = 1;
@@ -324,55 +321,51 @@ void STrack::init_kf_params()
   P0(IDX::VY, IDX::VY) = _kf_parameters.p0_cov_v;
   P0(IDX::VZ, IDX::VZ) = _kf_parameters.p0_cov_v;
   P0(IDX::VYaw, IDX::VYaw) = _kf_parameters.p0_cov_vyaw;
-
 }
-
 
 float STrack::normalize_theta(float theta)
 {
-    if (theta >= M_PI) theta -= M_PI * 2;   
-    if (theta < -M_PI) theta += M_PI * 2;
+  if (theta >= M_PI) theta -= M_PI * 2;
+  if (theta < -M_PI) theta += M_PI * 2;
 
-    return theta;
+  return theta;
 }
 
 float STrack::yaw_correction(float pre_yaw, float obs_yaw)
 {
+  obs_yaw = normalize_theta(obs_yaw);
+  pre_yaw = normalize_theta(pre_yaw);
+
+  if (std::abs(obs_yaw - pre_yaw) >= M_PI / 2) {
+    float ref_vel;
+    bool wrong_obs = true;
+    if (std::abs(obs_yaw - M_PI / 2) <= M_PI * 2 / 3) {
+      ref_vel = this->velocity[0];
+      if (std::abs(ref_vel) > 0.2) {
+        wrong_obs = (std::abs(obs_yaw) - M_PI / 2) > 0.0;
+      }
+
+    } else {
+      ref_vel = this->velocity[1];
+      if (std::abs(ref_vel) > 1.0) {
+        wrong_obs = (std::abs(obs_yaw - M_PI / 2) - M_PI / 2.0) > 0.0;
+      }
+    }
+    if (wrong_obs) {
+      if (
+        std::abs(obs_yaw - pre_yaw) > M_PI / 2.0 && std::abs(obs_yaw - pre_yaw) < M_PI * 3 / 2.0) {
+        if (obs_yaw < pre_yaw) {
+          obs_yaw += M_PI;
+        } else {
+          obs_yaw -= M_PI;
+        }
+      }
+
+      if (std::abs(obs_yaw - pre_yaw) >= M_PI * 3 / 2.0) {
+        obs_yaw = -obs_yaw;
+      }
+    }
     obs_yaw = normalize_theta(obs_yaw);
-    pre_yaw = normalize_theta(pre_yaw);
-   
-    if(std::abs(obs_yaw - pre_yaw) >= M_PI/2){
-      float ref_vel;
-      bool wrong_obs = true;
-      if(std::abs(obs_yaw - M_PI/2) <= M_PI*2/3){
-        ref_vel = this->velocity[0];
-        if(std::abs(ref_vel)>0.2){
-          wrong_obs = (std::abs(obs_yaw)-M_PI/2)>0.0;
-        }
-       
-      }
-      else{
-        ref_vel = this->velocity[1];
-        if(std::abs(ref_vel)>1.0){
-          wrong_obs = (std::abs(obs_yaw-M_PI/2)-M_PI/2.0)>0.0;
-        }
-      }
-      if(wrong_obs){
-        if (std::abs(obs_yaw - pre_yaw) >  M_PI / 2.0 && std::abs(obs_yaw - pre_yaw) < M_PI * 3 / 2.0){
-            if(obs_yaw<pre_yaw){
-              obs_yaw += M_PI;
-            }
-            else{
-              obs_yaw -= M_PI;
-            }
-        }    
-
-        if (std::abs(obs_yaw - pre_yaw) >= M_PI * 3 / 2.0){
-            obs_yaw = -obs_yaw;
-        }
-
-      }
-      obs_yaw = normalize_theta(obs_yaw);
-    } 
-    return obs_yaw;
+  }
+  return obs_yaw;
 }

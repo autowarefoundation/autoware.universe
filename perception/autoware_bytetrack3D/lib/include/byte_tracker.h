@@ -54,9 +54,9 @@ class ByteTracker
 {
 public:
   ByteTracker(
-    int track_buffer = 30,    // Matching queue length
-    float track_thresh = 0.35, // detection score thresh
-    float high_thresh = 0.6,  // init new obj thresh
+    int track_buffer = 30,      // Matching queue length
+    float track_thresh = 0.35,  // detection score thresh
+    float high_thresh = 0.6,    // init new obj thresh
     float match_thresh = 5.0);  // Euclidean distance(meter)
   ~ByteTracker();
 
