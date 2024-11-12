@@ -495,7 +495,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> CollisionDetectorNode::get
     transform_stamped =
       tf_buffer_.lookupTransform(source, target, stamp, tf2::durationFromSec(duration_sec));
   } catch (const tf2::TransformException & ex) {
-    RCLCPP_INFO(this->get_logger(),"%s",ex.what());
+    RCLCPP_INFO(this->get_logger(), "%s", ex.what());
     return {};
   }
 
