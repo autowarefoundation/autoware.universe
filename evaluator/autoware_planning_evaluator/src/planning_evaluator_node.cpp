@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -75,6 +76,8 @@ PlanningEvaluatorNode::~PlanningEvaluatorNode()
   if (!output_file_str_.empty()) {
     // column width is the maximum size we might print + 1 for the space between columns
     // Write data using format
+    std::filesystem::path p(output_file_str_);
+    std::filesystem::create_directories(p.parent_path());
     std::ofstream f(output_file_str_);
     f << std::fixed << std::left;
     // header
