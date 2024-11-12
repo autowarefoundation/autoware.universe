@@ -419,11 +419,11 @@ grid_map::Matrix CostmapGenerator::generatePrimitivesCostmap()
     RCLCPP_ERROR(rclcpp::get_logger("costmap_generator"), "%s", ex.what());
   }
 
-  const auto transformed_primitives_points =
+  const auto transformed_primitives =
     getTransformedPrimitives(primitives_polygons_, primitives2costmap);
 
   object_map::fill_polygon_areas(
-    lanelet2_costmap, primitives_polygons_, LayerName::primitives, param_->grid_max_value,
+    lanelet2_costmap, transformed_primitives, LayerName::primitives, param_->grid_max_value,
     param_->grid_min_value);
 
   return lanelet2_costmap[LayerName::primitives];
