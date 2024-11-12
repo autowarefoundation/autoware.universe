@@ -43,9 +43,6 @@ void GridGroundFilter::preprocess()
 
   // eliminate empty cells from connection for efficiency
   grid_ptr_->setGridConnections();
-
-  // debug message
-  // grid_ptr_->setGridStatistics();
 }
 
 bool GridGroundFilter::recursiveSearch(
@@ -390,14 +387,6 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
 
       cell.is_processed_ = true;
     }
-
-    // // debug: cell info for all non-empty cells
-    // std::cout << "cell index: " << cell.grid_idx_
-    //            <<  " number of points: " << cell.getPointNum()
-    //             << " has ground: " << cell.has_ground_
-    //             << " avg height: " << cell.avg_height_ << " avg radius: " << cell.avg_radius_
-    //             << " gradient: " << cell.gradient_ << " intercept: " << cell.intercept_
-    //             << std::endl;
   }
 }
 

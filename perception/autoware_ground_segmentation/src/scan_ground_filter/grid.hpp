@@ -160,27 +160,6 @@ public:
 
     // set initialized flag
     is_initialized_ = true;
-
-    {
-      // print debug information, size,
-      std::cout << "Grid initialized." << std::endl;
-      // grid_radial_limit_
-      std::cout << "Grid radial limit: " << grid_radial_limit_ << std::endl;
-      // distance grid size and positions
-      std::cout << "Grid distance size: " << grid_dist_size_ << std::endl;
-      for (size_t i = 0; i < grid_radial_boundaries_.size(); ++i) {
-        std::cout << "Grid radial boundary: " << grid_radial_boundaries_[i]
-                  << ", Grid azimuth number: " << azimuth_grids_per_radial_[i]
-                  << ", Grid azimuth interval: " << azimuth_interval_per_radial_[i] * 180 / (M_PI)
-                  << std::endl;
-      }
-
-      // offset list
-      for (size_t i = 0; i < radial_idx_offsets_.size(); ++i) {
-        std::cout << "Grid id offset: " << radial_idx_offsets_[i] << std::endl;
-      }
-      std::cout << "Grid size: " << cells_.size() << std::endl;
-    }
   }
 
   // method to add a point to the grid
@@ -228,53 +207,6 @@ public:
       cell.is_ground_initialized_ = false;
       cell.scan_grid_root_idx_ = -1;
       cell.has_ground_ = false;
-    }
-  }
-
-  // may not needed
-  void setGridStatistics()
-  {
-    // debug information for new grid
-
-    // check a line of cells
-    int current_grid_idx = 2;
-    while (current_grid_idx >= 0) {
-      const Cell & cell = cells_[current_grid_idx];
-      std::cout << "====== Grid id: " << cell.grid_idx_
-                << ", Number of points: " << cell.getPointNum() << std::endl;
-
-      // print previous grid, only exists
-      if (cell.prev_grid_idx_ >= 0) {
-        const Cell & prev_cell = cells_[cell.prev_grid_idx_];
-        std::cout << "- prev grid id: " << prev_cell.grid_idx_
-                  << ", position radius: " << prev_cell.center_radius_
-                  << " azimuth: " << prev_cell.center_azimuth_ * 180 / M_PI << std::endl;
-      }
-
-      if (cell.scan_grid_root_idx_ >= 0) {
-        const Cell & scan_root_cell = cells_[cell.scan_grid_root_idx_];
-        std::cout << "- scan root grid id: " << scan_root_cell.grid_idx_
-                  << ", position radius: " << scan_root_cell.center_radius_
-                  << " azimuth: " << scan_root_cell.center_azimuth_ * 180 / M_PI << std::endl;
-      }
-
-      // print index of the cell
-      std::cout << "- curr grid id: " << cell.grid_idx_
-                << ", position radius: " << cell.center_radius_
-                << " azimuth: " << cell.center_azimuth_ * 180 / M_PI << std::endl;
-
-      // print position of the cell
-      std::cout << "index radial: " << cell.radial_idx_ << " azimuth: " << cell.azimuth_idx_
-                << std::endl;
-
-      // print next grid, only exists
-      if (cell.next_grid_idx_ >= 0) {
-        const Cell & next_cell = cells_[cell.next_grid_idx_];
-        std::cout << "- next grid id: " << next_cell.grid_idx_
-                  << ", position radius: " << next_cell.center_radius_
-                  << " azimuth: " << next_cell.center_azimuth_ * 180 / M_PI << std::endl;
-      }
-      current_grid_idx = cell.next_grid_idx_;
     }
   }
 
