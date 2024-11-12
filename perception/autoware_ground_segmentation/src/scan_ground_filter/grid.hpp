@@ -48,11 +48,11 @@ float pseudoArcTan2(const float y, const float x)
   const float y_abs = std::abs(y);
 
   // divide to 8 zones
-  constexpr float one_third = 1.0f / 3.0f;
+  constexpr float c3 = 0.32175f;
   if (x_abs > y_abs) {
     // calculate angle, 3rd order approximation to radian
     const float ratio = y_abs / x_abs;
-    const float angle = ratio * (1 - one_third * ratio * ratio);
+    const float angle = ratio * (1 - c3 * ratio * ratio);
     if (y >= 0.0f) {
       if (x >= 0.0f) return angle;  // 1st zone
       return M_PIf - angle;         // 2nd zone
@@ -62,7 +62,7 @@ float pseudoArcTan2(const float y, const float x)
     }
   } else {
     const float ratio = x_abs / y_abs;
-    const float angle = ratio * (1 - one_third * ratio * ratio);
+    const float angle = ratio * (1 - c3 * ratio * ratio);
     if (y >= 0.0f) {
       if (x >= 0.0f) return M_PI_2f - angle;  // 1st zone
       return M_PI_2f + angle;                 // 2nd zone

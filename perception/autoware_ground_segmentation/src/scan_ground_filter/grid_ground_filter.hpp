@@ -65,7 +65,7 @@ struct PointsCentroid
     is_ground_list.clear();
   }
 
-  void addPoint(const float radius, const float height, const size_t index)
+  inline void addPoint(const float radius, const float height, const size_t index)
   {
     pcl_indices.push_back(index);
     height_list.push_back(height);

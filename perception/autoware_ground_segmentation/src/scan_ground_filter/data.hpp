@@ -46,7 +46,7 @@ public:
     data_offset_initialized_ = true;
   }
 
-  void getPoint(
+  inline void getPoint(
     const PointCloud2ConstPtr & input, const size_t data_index, pcl::PointXYZ & point) const
   {
     point.x = *reinterpret_cast<const float *>(&input->data[data_index + data_offset_x_]);

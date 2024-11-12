@@ -133,15 +133,10 @@ private:
     }
 
     float getAverageSlope() const { return std::atan2(height_avg, radius_avg); }
-
     float getAverageHeight() const { return height_avg; }
-
     float getAverageRadius() const { return radius_avg; }
-
     float getMaxHeight() const { return height_max; }
-
     float getMinHeight() const { return height_min; }
-
     const std::vector<size_t> & getIndicesRef() const { return pcl_indices; }
     const std::vector<float> & getHeightListRef() const { return height_list; }
   };
