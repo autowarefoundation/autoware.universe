@@ -312,6 +312,14 @@ bool CollisionDetectorNode::shouldBeExcluded(
 
 void CollisionDetectorNode::checkCollision(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  odometry_ptr_ = sub_odometry_.takeData();
+
+  if (!odometry_ptr_) {
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), 5000 /* ms */, "waiting for current odometry...");
+    return;
+  }
+
   pointcloud_ptr_ = sub_pointcloud_.takeData();
   object_ptr_ = sub_dynamic_objects_.takeData();
   operation_mode_ptr_ = sub_operation_mode_.takeData();
@@ -487,6 +495,7 @@ boost::optional<geometry_msgs::msg::TransformStamped> CollisionDetectorNode::get
     transform_stamped =
       tf_buffer_.lookupTransform(source, target, stamp, tf2::durationFromSec(duration_sec));
   } catch (const tf2::TransformException & ex) {
+    RCLCPP_INFO(this->get_logger(),"%s",ex.what());
     return {};
   }
 
