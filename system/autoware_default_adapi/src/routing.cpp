@@ -116,52 +116,52 @@ void RoutingNode::on_route(const Route::Message::ConstSharedPtr msg)
 }
 
 void RoutingNode::on_clear_route(
-  const autoware_ad_api::routing::ClearRoute::Service::Request::SharedPtr req,
-  const autoware_ad_api::routing::ClearRoute::Service::Response::SharedPtr res)
+  const autoware::adapi_specs::routing::ClearRoute::Service::Request::SharedPtr req,
+  const autoware::adapi_specs::routing::ClearRoute::Service::Response::SharedPtr res)
 {
   change_stop_mode();
   res->status = conversion::convert_call(cli_clear_route_, req);
 }
 
 void RoutingNode::on_set_route_points(
-  const autoware_ad_api::routing::SetRoutePoints::Service::Request::SharedPtr req,
-  const autoware_ad_api::routing::SetRoutePoints::Service::Response::SharedPtr res)
+  const autoware::adapi_specs::routing::SetRoutePoints::Service::Request::SharedPtr req,
+  const autoware::adapi_specs::routing::SetRoutePoints::Service::Response::SharedPtr res)
 {
   if (state_.state != State::Message::UNSET) {
-    res->status = route_already_set<autoware_ad_api::routing::SetRoutePoints>();
+    res->status = route_already_set<autoware::adapi_specs::routing::SetRoutePoints>();
     return;
   }
   res->status = conversion::convert_call(cli_set_waypoint_route_, req);
 }
 
 void RoutingNode::on_set_route(
-  const autoware_ad_api::routing::SetRoute::Service::Request::SharedPtr req,
-  const autoware_ad_api::routing::SetRoute::Service::Response::SharedPtr res)
+  const autoware::adapi_specs::routing::SetRoute::Service::Request::SharedPtr req,
+  const autoware::adapi_specs::routing::SetRoute::Service::Response::SharedPtr res)
 {
   if (state_.state != State::Message::UNSET) {
-    res->status = route_already_set<autoware_ad_api::routing::SetRoute>();
+    res->status = route_already_set<autoware::adapi_specs::routing::SetRoute>();
     return;
   }
   res->status = conversion::convert_call(cli_set_lanelet_route_, req);
 }
 
 void RoutingNode::on_change_route_points(
-  const autoware_ad_api::routing::SetRoutePoints::Service::Request::SharedPtr req,
-  const autoware_ad_api::routing::SetRoutePoints::Service::Response::SharedPtr res)
+  const autoware::adapi_specs::routing::SetRoutePoints::Service::Request::SharedPtr req,
+  const autoware::adapi_specs::routing::SetRoutePoints::Service::Response::SharedPtr res)
 {
   if (state_.state != State::Message::SET) {
-    res->status = route_is_not_set<autoware_ad_api::routing::SetRoutePoints>();
+    res->status = route_is_not_set<autoware::adapi_specs::routing::SetRoutePoints>();
     return;
   }
   res->status = conversion::convert_call(cli_set_waypoint_route_, req);
 }
 
 void RoutingNode::on_change_route(
-  const autoware_ad_api::routing::SetRoute::Service::Request::SharedPtr req,
-  const autoware_ad_api::routing::SetRoute::Service::Response::SharedPtr res)
+  const autoware::adapi_specs::routing::SetRoute::Service::Request::SharedPtr req,
+  const autoware::adapi_specs::routing::SetRoute::Service::Response::SharedPtr res)
 {
   if (state_.state != State::Message::SET) {
-    res->status = route_is_not_set<autoware_ad_api::routing::SetRoute>();
+    res->status = route_is_not_set<autoware::adapi_specs::routing::SetRoute>();
     return;
   }
   res->status = conversion::convert_call(cli_set_lanelet_route_, req);

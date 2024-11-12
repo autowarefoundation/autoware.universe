@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_AD_API_SPECS__PLANNING_HPP_
-#define AUTOWARE_AD_API_SPECS__PLANNING_HPP_
+#ifndef AUTOWARE__ADAPI_SPECS__PLANNING_HPP_
+#define AUTOWARE__ADAPI_SPECS__PLANNING_HPP_
 
 #include <rclcpp/qos.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 
-namespace autoware_ad_api::planning
+namespace autoware::adapi_specs::planning
 {
 
 struct VelocityFactors
@@ -41,6 +41,6 @@ struct SteeringFactors
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace autoware_ad_api::planning
+}  // namespace autoware::adapi_specs::planning
 
-#endif  // AUTOWARE_AD_API_SPECS__PLANNING_HPP_
+#endif  // AUTOWARE__ADAPI_SPECS__PLANNING_HPP_

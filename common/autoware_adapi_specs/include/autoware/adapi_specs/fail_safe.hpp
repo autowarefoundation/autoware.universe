@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_AD_API_SPECS__FAIL_SAFE_HPP_
-#define AUTOWARE_AD_API_SPECS__FAIL_SAFE_HPP_
+#ifndef AUTOWARE__ADAPI_SPECS__FAIL_SAFE_HPP_
+#define AUTOWARE__ADAPI_SPECS__FAIL_SAFE_HPP_
 
 #include <rclcpp/qos.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 
-namespace autoware_ad_api::fail_safe
+namespace autoware::adapi_specs::fail_safe
 {
 
 struct MrmState
@@ -31,6 +31,6 @@ struct MrmState
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware_ad_api::fail_safe
+}  // namespace autoware::adapi_specs::fail_safe
 
-#endif  // AUTOWARE_AD_API_SPECS__FAIL_SAFE_HPP_
+#endif  // AUTOWARE__ADAPI_SPECS__FAIL_SAFE_HPP_

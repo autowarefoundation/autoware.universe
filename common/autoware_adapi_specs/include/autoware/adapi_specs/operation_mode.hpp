@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_AD_API_SPECS__OPERATION_MODE_HPP_
-#define AUTOWARE_AD_API_SPECS__OPERATION_MODE_HPP_
+#ifndef AUTOWARE__ADAPI_SPECS__OPERATION_MODE_HPP_
+#define AUTOWARE__ADAPI_SPECS__OPERATION_MODE_HPP_
 
 #include <rclcpp/qos.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/change_operation_mode.hpp>
 
-namespace autoware_ad_api::operation_mode
+namespace autoware::adapi_specs::operation_mode
 {
 
 struct ChangeToStop
@@ -68,6 +68,6 @@ struct OperationModeState
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware_ad_api::operation_mode
+}  // namespace autoware::adapi_specs::operation_mode
 
-#endif  // AUTOWARE_AD_API_SPECS__OPERATION_MODE_HPP_
+#endif  // AUTOWARE__ADAPI_SPECS__OPERATION_MODE_HPP_

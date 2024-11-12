@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_AD_API_SPECS__SYSTEM_HPP_
-#define AUTOWARE_AD_API_SPECS__SYSTEM_HPP_
+#ifndef AUTOWARE__ADAPI_SPECS__SYSTEM_HPP_
+#define AUTOWARE__ADAPI_SPECS__SYSTEM_HPP_
 
 #include <rclcpp/qos.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/heartbeat.hpp>
 
-namespace autoware_ad_api::system
+namespace autoware::adapi_specs::system
 {
 
 struct Heartbeat
@@ -31,6 +31,6 @@ struct Heartbeat
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace autoware_ad_api::system
+}  // namespace autoware::adapi_specs::system
 
-#endif  // AUTOWARE_AD_API_SPECS__SYSTEM_HPP_
+#endif  // AUTOWARE__ADAPI_SPECS__SYSTEM_HPP_
