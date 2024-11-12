@@ -5,12 +5,12 @@ Changelog for package traffic_light_utils
 0.38.0 (2024-11-08)
 -------------------
 * unify package.xml version to 0.37.0
-* fix(traffic_light_utils): fix unusedFunction (`#8605 <https://github.com/youtalk/autoware.universe/issues/8605>`_)
+* fix(traffic_light_utils): fix unusedFunction (`#8605 <https://github.com/autowarefoundation/autoware.universe/issues/8605>`_)
   * fix:unusedFunction
   * fix:unusedFunction
   ---------
-* feat: add `autoware\_` prefix to `lanelet2_extension` (`#7640 <https://github.com/youtalk/autoware.universe/issues/7640>`_)
-* feat!: replace autoware_auto_msgs with autoware_msgs for common modules (`#7239 <https://github.com/youtalk/autoware.universe/issues/7239>`_)
+* feat: add `autoware\_` prefix to `lanelet2_extension` (`#7640 <https://github.com/autowarefoundation/autoware.universe/issues/7640>`_)
+* feat!: replace autoware_auto_msgs with autoware_msgs for common modules (`#7239 <https://github.com/autowarefoundation/autoware.universe/issues/7239>`_)
   Co-authored-by: Cynthia Liu <cynthia.liu@autocore.ai>
   Co-authored-by: NorahXiong <norah.xiong@autocore.ai>
   Co-authored-by: beginningfan <beginning.fan@autocore.ai>
@@ -18,24 +18,24 @@ Changelog for package traffic_light_utils
 
 0.26.0 (2024-04-03)
 -------------------
-* chore(perception modules): remove maintainer... (`#6499 <https://github.com/youtalk/autoware.universe/issues/6499>`_)
+* chore(perception modules): remove maintainer... (`#6499 <https://github.com/autowarefoundation/autoware.universe/issues/6499>`_)
   * change maintainer
   * add uetake san as maintainer
   ---------
-* refactor(tier4_perception_msgs): rename traffic_signal to traffic_light (`#6375 <https://github.com/youtalk/autoware.universe/issues/6375>`_)
+* refactor(tier4_perception_msgs): rename traffic_signal to traffic_light (`#6375 <https://github.com/autowarefoundation/autoware.universe/issues/6375>`_)
   * rename traffic_signal to traffic_light
   * style(pre-commit): autofix
   * fix(crosswalk_traffic_light_estimator): remove unused include, readme
   * rename traffic_signal_array to traffic_light_array
   ---------
   Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
-* fix(avoidance, lane_change): modules handle unknown traffic signal in the same way as red signal (`#6013 <https://github.com/youtalk/autoware.universe/issues/6013>`_)
+* fix(avoidance, lane_change): modules handle unknown traffic signal in the same way as red signal (`#6013 <https://github.com/autowarefoundation/autoware.universe/issues/6013>`_)
   * fix(avoidance, lane_change): modules handle unknown traffic signal in the same way as red signal
   * feat(traffic_light_utils): add util functions
   * refactor(bpp): use traffic light utils
   * refactor(bvp): use traffic light utils
   ---------
-* feat(crosswalk_traffic_light): add detector and classifier for pedestrian traffic light  (`#5871 <https://github.com/youtalk/autoware.universe/issues/5871>`_)
+* feat(crosswalk_traffic_light): add detector and classifier for pedestrian traffic light  (`#5871 <https://github.com/autowarefoundation/autoware.universe/issues/5871>`_)
   * add: crosswalk traffic light recognition
   * fix: set conf=0 when occluded
   * fix: clean code
@@ -99,7 +99,7 @@ Changelog for package traffic_light_utils
   ---------
   Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
   Co-authored-by: Yusuke Muramatsu <yukke42@users.noreply.github.com>
-* test(traffic_light_utils): add test_traffic_light_utils (`#4643 <https://github.com/youtalk/autoware.universe/issues/4643>`_)
+* test(traffic_light_utils): add test_traffic_light_utils (`#4643 <https://github.com/autowarefoundation/autoware.universe/issues/4643>`_)
   * test(traffic_light_utils): add test_traffic_light_utils
   * style(pre-commit): autofix
   * fix(traffic_light_utils): fix magic number
@@ -108,8 +108,8 @@ Changelog for package traffic_light_utils
   * style(pre-commit): autofix
   ---------
   Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
-* docs: add readme to perception related utils (`#4265 <https://github.com/youtalk/autoware.universe/issues/4265>`_)
-* chore: separate traffic_light_utils from perception_utils (`#4207 <https://github.com/youtalk/autoware.universe/issues/4207>`_)
+* docs: add readme to perception related utils (`#4265 <https://github.com/autowarefoundation/autoware.universe/issues/4265>`_)
+* chore: separate traffic_light_utils from perception_utils (`#4207 <https://github.com/autowarefoundation/autoware.universe/issues/4207>`_)
   * separate traffic_light_utils from perception_utils
   * style(pre-commit): autofix
   * fix namespace bug
