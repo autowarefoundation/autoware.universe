@@ -22,6 +22,7 @@
 
   <depend>autoware_behavior_path_planner</depend>
   <depend>autoware_behavior_path_planner_common</depend>
+  <depend>autoware_bezier_sampler</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_rtc_interface</depend>
   <depend>autoware_universe_utils</depend>
