@@ -37,8 +37,8 @@ using EvalNode = control_diagnostics::ControlEvaluatorNode;
 using Trajectory = autoware_planning_msgs::msg::Trajectory;
 using TrajectoryPoint = autoware_planning_msgs::msg::TrajectoryPoint;
 using MetricArrayMsg = tier4_metric_msgs::msg::MetricArray;
-using nav_msgs::msg::Odometry;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
+using nav_msgs::msg::Odometry;
 
 constexpr double epsilon = 1e-6;
 
@@ -232,7 +232,6 @@ TEST_F(EvalTest, TestKinematicStateAcc)
   publishTrajectory(t);
   publishEgoPose(0.0, 0.0, 0.0);
   EXPECT_NEAR(publishEgoAccAndGetMetric(2.0), 2.0, epsilon);
-
 }
 
 TEST_F(EvalTest, TestKinematicStateJerk)
