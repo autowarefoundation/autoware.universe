@@ -45,7 +45,7 @@ void GridGroundFilter::preprocess()
   grid_ptr_->setGridConnections();
 
   // debug message
-  grid_ptr_->setGridStatistics();
+  // grid_ptr_->setGridStatistics();
 }
 
 bool GridGroundFilter::recursiveSearch(
@@ -76,10 +76,11 @@ void GridGroundFilter::fitLineFromGndGrid(const std::vector<int> & idx, float & 
     b = 0.0f;
     return;
   }
-  // if the idx is length of 1, the line is horizontal
+  // if the idx is length of 1, the line is zero-crossing line
   if (idx.size() == 1) {
-    a = 0.0f;
-    b = grid_ptr_->getCell(idx.front()).avg_height_;
+    const auto & cell = grid_ptr_->getCell(idx.front());
+    a = cell.avg_height_ / cell.avg_radius_;
+    b = 0.0f;
     return;
   }
   // calculate the line by least square method
@@ -350,7 +351,9 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
       }
 
       // recheck ground bin
-      if (ground_bin.getGroundPointNum() > 0 && param_.use_recheck_ground_cluster) {
+      if (
+        ground_bin.getGroundPointNum() > 0 && param_.use_recheck_ground_cluster &&
+        cell.avg_radius_ > param_.grid_mode_switch_radius) {
         ground_bin.processAverage();
         // recheck the ground cluster
         const float reference_height =

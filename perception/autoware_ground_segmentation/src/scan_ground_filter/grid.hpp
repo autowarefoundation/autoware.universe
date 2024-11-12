@@ -187,9 +187,7 @@ public:
   void addPoint(const float x, const float y, const size_t point_idx)
   {
     // calculate the grid id
-    const float radius = std::sqrt(x * x + y * y);
-    const float azimuth = pseudoArcTan2(y, x);
-    const int grid_idx = getGridIdx(radius, azimuth);
+    const int grid_idx = getGridIdx(x, y);
 
     // check if the point is within the grid
     if (grid_idx < 0) {
@@ -239,7 +237,7 @@ public:
     // debug information for new grid
 
     // check a line of cells
-    int current_grid_idx = 0;
+    int current_grid_idx = 2;
     while (current_grid_idx >= 0) {
       const Cell & cell = cells_[current_grid_idx];
       std::cout << "====== Grid id: " << cell.grid_idx_
@@ -497,8 +495,14 @@ private:
   // method to determine the grid id of a point
   // -1 means out of range
   // range limit is horizon angle
-  int getGridIdx(const float & radius, const float & azimuth) const
+  int getGridIdx(const float & x, const float & y) const
   {
+    const float x_fixed = x - origin_x_;
+    const float y_fixed = y - origin_y_;
+
+    const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
+    const float azimuth = pseudoArcTan2(y_fixed, x_fixed);
+
     const int grid_rad_idx = getRadialIdx(radius);
     if (grid_rad_idx < 0) {
       return -1;
