@@ -854,6 +854,9 @@ void generateDrivableArea(
       }
     }
   }
+  if (resampled_path.points.empty()) {
+    return;
+  }
   // add last point of path if enough far from the one of resampled path
   constexpr double th_last_point_distance = 0.3;
   if (

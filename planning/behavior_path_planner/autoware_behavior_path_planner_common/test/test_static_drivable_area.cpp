@@ -15,6 +15,8 @@
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 
+#include <geometry_msgs/msg/detail/point__struct.hpp>
+#include <tier4_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <gtest/gtest.h>
@@ -48,6 +50,11 @@ DrivableLanes make_drivable_lanes(const lanelet::ConstLanelet & ll)
   l.right_lane = ll;
   l.middle_lanes = {ll};
   return l;
+}
+
+bool equal(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
+{
+  return p1.x == p2.x && p1.y == p2.y && p1.z == p2.z;
 }
 
 bool equal(const DrivableLanes & l1, const DrivableLanes & l2)
@@ -251,4 +258,116 @@ TEST(StaticDrivableArea, generateDrivableLanes)
       EXPECT_EQ(lanes[i].right_lane.id(), lanelets[i].id());
     }
   }
+}
+
+TEST(StaticDrivableArea, generateDrivableArea)
+{
+  using autoware::behavior_path_planner::utils::generateDrivableArea;
+  tier4_planning_msgs::msg::PathWithLaneId path;
+  tier4_planning_msgs::msg::PathPointWithLaneId p;
+  generateDrivableArea(path, 0.0, 0.0, true);
+  EXPECT_TRUE(path.left_bound.empty());
+  EXPECT_TRUE(path.right_bound.empty());
+  // add only 1 point : drivable area with 1 point
+  p.point.pose.position.set__x(0.0).set__y(0.0);
+  path.points.push_back(p);
+  auto lon_offset = 0.0;
+  auto lat_offset = 0.0;
+  generateDrivableArea(path, lon_offset, lat_offset, true);
+  // 3 points in the resulting drivable area: 1 for the path point and 2 for front/rear offset
+  ASSERT_EQ(path.left_bound.size(), 3UL);
+  ASSERT_EQ(path.right_bound.size(), 3UL);
+  // no offset so we expect exactly the same points
+  for (auto i = 0UL; i < 3UL; ++i) {
+    EXPECT_TRUE(equal(path.points.front().point.pose.position, path.left_bound[i]));
+    EXPECT_TRUE(equal(path.points.front().point.pose.position, path.right_bound[i]));
+  }
+  // add some offset
+  lon_offset = 1.0;
+  lat_offset = 0.5;
+  generateDrivableArea(path, lon_offset, lat_offset, true);
+  ASSERT_EQ(path.left_bound.size(), 3UL);
+  ASSERT_EQ(path.right_bound.size(), 3UL);
+  EXPECT_EQ(path.left_bound[0].x, -lon_offset);
+  EXPECT_EQ(path.left_bound[1].x, 0.0);
+  EXPECT_EQ(path.left_bound[2].x, lon_offset);
+  EXPECT_EQ(path.right_bound[0].x, -lon_offset);
+  EXPECT_EQ(path.right_bound[1].x, 0.0);
+  EXPECT_EQ(path.right_bound[2].x, lon_offset);
+  EXPECT_EQ(path.left_bound[0].y, lat_offset);
+  EXPECT_EQ(path.left_bound[1].y, lat_offset);
+  EXPECT_EQ(path.left_bound[2].y, lat_offset);
+  EXPECT_EQ(path.right_bound[0].y, -lat_offset);
+  EXPECT_EQ(path.right_bound[1].y, -lat_offset);
+  EXPECT_EQ(path.right_bound[2].y, -lat_offset);
+  // set driving_forward to false: longitudinal offset is inversely applied
+  generateDrivableArea(path, lon_offset, lat_offset, false);
+  ASSERT_EQ(path.left_bound.size(), 3UL);
+  ASSERT_EQ(path.right_bound.size(), 3UL);
+  EXPECT_EQ(path.left_bound[0].x, lon_offset);
+  EXPECT_EQ(path.left_bound[1].x, 0.0);
+  EXPECT_EQ(path.left_bound[2].x, -lon_offset);
+  EXPECT_EQ(path.right_bound[0].x, lon_offset);
+  EXPECT_EQ(path.right_bound[1].x, 0.0);
+  EXPECT_EQ(path.right_bound[2].x, -lon_offset);
+  EXPECT_EQ(path.left_bound[0].y, lat_offset);
+  EXPECT_EQ(path.left_bound[1].y, lat_offset);
+  EXPECT_EQ(path.left_bound[2].y, lat_offset);
+  EXPECT_EQ(path.right_bound[0].y, -lat_offset);
+  EXPECT_EQ(path.right_bound[1].y, -lat_offset);
+  EXPECT_EQ(path.right_bound[2].y, -lat_offset);
+  // add more points
+  for (auto x = 1; x < 10; ++x) {
+    // space points by more than 2m to avoid resampling
+    p.point.pose.position.set__x(x * 3.0).set__y(0.0);
+    path.points.push_back(p);
+  }
+  generateDrivableArea(path, lon_offset, lat_offset, true);
+  ASSERT_EQ(path.left_bound.size(), path.points.size() + 2UL);
+  ASSERT_EQ(path.right_bound.size(), path.points.size() + 2UL);
+  EXPECT_EQ(path.left_bound.front().x, -lon_offset);
+  EXPECT_EQ(path.right_bound.front().x, -lon_offset);
+  EXPECT_EQ(path.left_bound.back().x, path.points.back().point.pose.position.x + lon_offset);
+  EXPECT_EQ(path.right_bound.back().x, path.points.back().point.pose.position.x + lon_offset);
+  EXPECT_EQ(path.left_bound.front().y, lat_offset);
+  EXPECT_EQ(path.right_bound.front().y, -lat_offset);
+  EXPECT_EQ(path.left_bound.back().y, lat_offset);
+  EXPECT_EQ(path.right_bound.back().y, -lat_offset);
+  for (auto i = 1UL; i + 1 < path.points.size(); ++i) {
+    const auto & path_p = path.points[i - 1].point.pose.position;
+    EXPECT_EQ(path.left_bound[i].x, path_p.x);
+    EXPECT_EQ(path.right_bound[i].x, path_p.x);
+    EXPECT_EQ(path.left_bound[i].y, path_p.y + lat_offset);
+    EXPECT_EQ(path.right_bound[i].y, path_p.y - lat_offset);
+  }
+  // case with self intersections
+  path.points.clear();
+  p.point.pose.position.set__x(0.0).set__y(0.0);
+  path.points.push_back(p);
+  p.point.pose.position.set__x(3.0).set__y(0.0);
+  path.points.push_back(p);
+  p.point.pose.position.set__x(0.0).set__y(3.0);
+  path.points.push_back(p);
+  lon_offset = 0.0;
+  lat_offset = 3.0;
+  generateDrivableArea(path, lon_offset, lat_offset, false);
+  // TODO(Anyone): self intersection case looks buggy
+  ASSERT_EQ(path.left_bound.size(), path.points.size() + 2UL);
+  ASSERT_EQ(path.right_bound.size(), path.points.size() + 2UL);
+  EXPECT_TRUE(equal(path.left_bound[0], path.left_bound[1]));
+  EXPECT_TRUE(equal(path.right_bound[0], path.right_bound[1]));
+  EXPECT_TRUE(equal(path.left_bound[3], path.left_bound[4]));
+  EXPECT_TRUE(equal(path.right_bound[3], path.right_bound[4]));
+  EXPECT_EQ(path.left_bound[1].x, 0.0);
+  EXPECT_EQ(path.left_bound[1].y, 3.0);
+  EXPECT_EQ(path.left_bound[2].x, 3.0);
+  EXPECT_EQ(path.left_bound[2].y, 3.0);
+  EXPECT_EQ(path.left_bound[3].x, 0.0);
+  EXPECT_EQ(path.left_bound[3].y, 6.0);
+  EXPECT_EQ(path.right_bound[1].x, 0.0);
+  EXPECT_EQ(path.right_bound[1].y, -3.0);
+  EXPECT_EQ(path.right_bound[2].x, 3.0);
+  EXPECT_EQ(path.right_bound[2].y, -3.0);
+  EXPECT_EQ(path.right_bound[3].x, 0.0);
+  EXPECT_EQ(path.right_bound[3].y, 0.0);
 }

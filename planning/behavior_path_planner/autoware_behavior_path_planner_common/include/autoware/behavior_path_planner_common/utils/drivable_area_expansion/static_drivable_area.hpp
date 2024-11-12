@@ -62,6 +62,14 @@ void generateDrivableArea(
   const bool enable_expanding_freespace_areas,
   const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward = true);
 
+/**
+ * @brief generate the drivable area of the given path by applying the given offsets to its points
+ * @param [inout] path path whose center line is used to calculate the drivable area and whose
+ * left/right bound are generated
+ * @param [in] vehicle_length [m] length of the ego vehicle
+ * @param [in] offset [m] lateral offset between the path points and the drivable area
+ * @param [in] is_driving_forward true if the ego vehicle drives in the forward direction
+ */
 void generateDrivableArea(
   PathWithLaneId & path, const double vehicle_length, const double offset,
   const bool is_driving_forward = true);
