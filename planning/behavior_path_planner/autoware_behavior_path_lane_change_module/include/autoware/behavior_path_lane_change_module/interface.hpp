@@ -104,8 +104,6 @@ protected:
 
   bool canTransitFailureState() override;
 
-  ModuleStatus setInitState() const override { return ModuleStatus::WAITING_APPROVAL; };
-
   void updateRTCStatus(
     const double start_distance, const double finish_distance, const bool safe,
     const uint8_t & state)
