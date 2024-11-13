@@ -154,11 +154,13 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   publish_debug_markers_ = declare_parameter<bool>("publish_debug_markers");
   use_predicted_trajectory_ = declare_parameter<bool>("use_predicted_trajectory");
   use_imu_path_ = declare_parameter<bool>("use_imu_path");
+  limit_steering_for_imu_path_ = declare_parameter<bool>("limit_steering_for_imu_path");
   use_pointcloud_data_ = declare_parameter<bool>("use_pointcloud_data");
   use_predicted_object_data_ = declare_parameter<bool>("use_predicted_object_data");
   use_object_velocity_calculation_ = declare_parameter<bool>("use_object_velocity_calculation");
   check_autoware_state_ = declare_parameter<bool>("check_autoware_state");
   path_footprint_extra_margin_ = declare_parameter<double>("path_footprint_extra_margin");
+  imu_path_steering_limit_ = declare_parameter<double>("imu_path_steering_limit");
   speed_calculation_expansion_margin_ =
     declare_parameter<double>("speed_calculation_expansion_margin");
   detection_range_min_height_ = declare_parameter<double>("detection_range_min_height");
@@ -216,12 +218,13 @@ rcl_interfaces::msg::SetParametersResult AEB::onParameter(
   updateParam<bool>(parameters, "publish_debug_markers", publish_debug_markers_);
   updateParam<bool>(parameters, "use_predicted_trajectory", use_predicted_trajectory_);
   updateParam<bool>(parameters, "use_imu_path", use_imu_path_);
+  updateParam<bool>(parameters, "limit_steering_for_imu_path", limit_steering_for_imu_path_);
   updateParam<bool>(parameters, "use_pointcloud_data", use_pointcloud_data_);
   updateParam<bool>(parameters, "use_predicted_object_data", use_predicted_object_data_);
   updateParam<bool>(
     parameters, "use_object_velocity_calculation", use_object_velocity_calculation_);
   updateParam<bool>(parameters, "check_autoware_state", check_autoware_state_);
-  updateParam<double>(parameters, "path_footprint_extra_margin", path_footprint_extra_margin_);
+  updateParam<double>(parameters, "imu_path_steering_limit", imu_path_steering_limit_);
   updateParam<double>(
     parameters, "speed_calculation_expansion_margin", speed_calculation_expansion_margin_);
   updateParam<double>(parameters, "detection_range_min_height", detection_range_min_height_);
@@ -680,10 +683,12 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
 
     t += dt;
     path_arc_length += distance_between_points;
-
+    const bool yaw_threshold_surpassed =
+      limit_steering_for_imu_path_ && std::abs(curr_yaw) > imu_path_steering_limit_;
     finished_creating_path = (t > horizon) && (path_arc_length > min_generated_imu_path_length_);
-    finished_creating_path =
-      (finished_creating_path) || (path_arc_length > max_generated_imu_path_length_);
+    finished_creating_path = (finished_creating_path) ||
+                             (path_arc_length > max_generated_imu_path_length_) ||
+                             yaw_threshold_surpassed;
     path.push_back(current_pose);
   }
   return path;

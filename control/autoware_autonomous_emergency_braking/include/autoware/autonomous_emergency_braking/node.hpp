@@ -553,13 +553,14 @@ public:
   // Member variables
   bool publish_debug_pointcloud_;
   bool publish_debug_markers_;
-  bool publish_debug_time_;
   bool use_predicted_trajectory_;
   bool use_imu_path_;
+  bool limit_steering_for_imu_path_;
   bool use_pointcloud_data_;
   bool use_predicted_object_data_;
   bool use_object_velocity_calculation_;
   bool check_autoware_state_;
+  double imu_path_steering_limit_;
   double path_footprint_extra_margin_;
   double speed_calculation_expansion_margin_;
   double detection_range_min_height_;
