@@ -18,7 +18,6 @@
 #include "scene.hpp"
 #include "utils.hpp"
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
@@ -32,9 +31,6 @@
 #include <geometry_msgs/msg/detail/point__struct.hpp>
 #include <tier4_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
 #include <tier4_planning_msgs/msg/detail/path_with_lane_id__struct.hpp>
-
-#include <boost/geometry/algorithms/covered_by.hpp>
-#include <boost/geometry/algorithms/envelope.hpp>
 
 #include <Eigen/src/Core/Matrix.h>
 #include <gtest/gtest.h>
@@ -116,7 +112,7 @@ pcl::PointCloud<pcl::PointXYZ> generate_pointcloud(
     }
   }
   return point_cloud;
-}
+};
 namespace autoware::behavior_velocity_planner
 {
 TEST_F(TestDynamicObstacleMethods, testCreateQuaternionFacingToTrajectory)
