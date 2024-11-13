@@ -25,13 +25,13 @@ limitations under the License.
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>cuda</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
 
   <!-- NVIDIA third-party libraries -->
-  <depend>cuda</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
