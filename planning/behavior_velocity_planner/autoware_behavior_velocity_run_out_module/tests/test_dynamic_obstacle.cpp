@@ -116,7 +116,7 @@ pcl::PointCloud<pcl::PointXYZ> generate_pointcloud(
     }
   }
   return point_cloud;
-};
+}
 namespace autoware::behavior_velocity_planner
 {
 TEST_F(TestDynamicObstacleMethods, testCreateQuaternionFacingToTrajectory)

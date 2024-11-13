@@ -82,7 +82,7 @@ TEST_F(TestStateMachine, testToString)
   state = State::UNKNOWN;
   state_string = state_machine_ptr_->toString(state);
   EXPECT_EQ(state_string, "UNKNOWN");
-};
+}
 
 TEST_F(TestStateMachine, testUpdateState)
 {
@@ -106,6 +106,6 @@ TEST_F(TestStateMachine, testUpdateState)
   state_machine_ptr_->updateState(state_input, clock);
   EXPECT_TRUE(state_machine_ptr_->getCurrentState() == State::APPROACH);
   rclcpp::shutdown();
-};
+}
 
 }  // namespace autoware::behavior_velocity_planner
