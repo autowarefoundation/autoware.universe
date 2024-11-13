@@ -376,17 +376,6 @@ TrackedObject parse(const YAML::Node & node)
 }
 
 template <>
-TrackedObjects parse(const YAML::Node & node)
-{
-  TrackedObjects msg;
-  msg.header = parse<Header>(node["header"]);
-  for (const auto & object_node : node["objects"]) {
-    msg.objects.push_back(parse<TrackedObject>(object_node));
-  }
-  return msg;
-}
-
-template <>
 TrafficLightElement parse(const YAML::Node & node)
 {
   TrafficLightElement msg;
