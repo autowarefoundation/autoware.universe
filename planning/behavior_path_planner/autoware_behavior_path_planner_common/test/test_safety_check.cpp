@@ -392,6 +392,16 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, get_interpolated_pose_with_velocity_an
   EXPECT_TRUE(interpolation_result.has_value());
 }
 
+TEST(BehaviorPathPlanningSafetyUtilsTest, checkSafetyWithRSS)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS;
+}
+
+TEST(BehaviorPathPlanningSafetyUtilsTest, get_collided_polygons)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::get_collided_polygons;
+}
+
 TEST(BehaviorPathPlanningSafetyUtilsTest, checkPolygonsIntersects)
 {
   using autoware::behavior_path_planner::utils::path_safety_checker::checkPolygonsIntersects;

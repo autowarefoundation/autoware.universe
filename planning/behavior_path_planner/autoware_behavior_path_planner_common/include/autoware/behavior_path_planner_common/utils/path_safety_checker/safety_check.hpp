@@ -131,6 +131,21 @@ ExtendedPredictedObjects filterObjectPredictedPathByTimeHorizon(
 std::vector<PoseWithVelocityStamped> filterPredictedPathAfterTargetPose(
   const std::vector<PoseWithVelocityStamped> & path, const Pose & target_pose);
 
+/**
+ * @brief Iterate the points in the ego and target's predicted path and
+ *        perform safety check for each of the iterated points using RSS parameters
+ * @param planned_path The planned path of the ego vehicle.
+ * @param ego_predicted_path Ego vehicle's predicted path
+ * @param objects Detected objects.
+ * @param debug_map Map for collision check debug.
+ * @param target_object_path The predicted path of the target object.
+ * @param parameters The common parameters used in behavior path planner.
+ * @param rss_params The parameters used in RSS
+ * @param check_all_predicted_path If true, uses all predicted path
+ * @param hysteresis_factor Hysteresis factor
+ * @param yaw_difference_th Threshold for yaw difference
+ * @return True if distance is safe.
+ */
 bool checkSafetyWithRSS(
   const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
@@ -166,16 +181,17 @@ bool checkCollision(
 /**
  * @brief Iterate the points in the ego and target's predicted path and
  *        perform safety check for each of the iterated points.
- * @param planned_path The predicted path of the ego vehicle.
+ * @param planned_path The planned path of the ego vehicle.
  * @param predicted_ego_path Ego vehicle's predicted path
- * @param ego_current_velocity Current velocity of the ego vehicle.
  * @param target_object The predicted object to check collision with.
  * @param target_object_path The predicted path of the target object.
- * @param common_parameters The common parameters used in behavior path planner.
- * @param front_object_deceleration The deceleration of the object in the front.(used in RSS)
- * @param rear_object_deceleration The deceleration of the object in the rear.(used in RSS)
+ * @param vehicle_info Ego vehicle information.
+ * @param rss_parameters The parameters used in RSS.
+ * @param hysteresis_factor Hysteresis factor.
+ * @param max_velocity_limit Maximum velocity of ego vehicle.
+ * @param yaw_difference_th Threshold of yaw difference.
  * @param debug The debug information for collision checking.
- * @return a list of polygon when collision is expected.
+ * @return List of polygon which collision is expected.
  */
 std::vector<Polygon2d> get_collided_polygons(
   const PathWithLaneId & planned_path,
