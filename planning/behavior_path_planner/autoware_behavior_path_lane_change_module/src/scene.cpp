@@ -222,6 +222,10 @@ std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) 
   bool found_safe_path = get_lane_change_paths(valid_paths);
   // if no safe path is found and ego is stuck, try to find a path with a small margin
 
+  if (valid_paths.empty() && terminal_lane_change_path_) {
+    valid_paths.push_back(terminal_lane_change_path_.value());
+  }
+
   lane_change_debug_.valid_paths = valid_paths;
 
   if (valid_paths.empty()) {
@@ -1486,13 +1490,8 @@ std::optional<PathWithLaneId> NormalLaneChange::get_terminal_lane_change_path() 
 
   const auto max_lane_changing_length = std::invoke([&]() {
     double max_length = transient_data.dist_to_terminal_end - prep_metric.length;
-    auto target_lane_buffer = lane_change_parameters_->lane_change_finish_judge_buffer +
-                              transient_data.next_dist_buffer.min;
-    if (
-      std::abs(getRouteHandler()->getNumLaneToPreferredLane(target_lanes.back(), direction_)) > 0) {
-      target_lane_buffer += lane_change_parameters_->backward_length_buffer_for_end_of_lane;
-    }
-    max_length = std::min(max_length, dist_lc_start_to_end_of_lanes - target_lane_buffer);
+    max_length =
+      std::min(max_length, dist_lc_start_to_end_of_lanes - transient_data.next_dist_buffer.min);
     return max_length;
   });
 
