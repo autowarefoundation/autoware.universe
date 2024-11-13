@@ -44,10 +44,7 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence_up_to(
 std::optional<lanelet::ConstLanelet> get_next_lanelet_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data);
 
-std::optional<lanelet::ConstLanelets> get_next_lanelets_within_route(
-  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data);
-
-std::optional<lanelet::ConstLanelets> get_previous_lanelets_within_route(
+std::optional<lanelet::ConstLanelet> get_previous_lanelet_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data);
 
 std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> get_waypoint_groups(
