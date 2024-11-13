@@ -57,7 +57,25 @@ When network issues occur or when point clouds experience delays in the previous
 
 #### lidar_timestamp_offsets
 
-Since different vehicles have varied designs for LiDAR scanning, the timestamps of each LiDAR may differ. Users need to know the offsets between each LiDAR and set the values in `lidar_timestamp_offsets`. For instance, if there are three LiDARs (left, right, top), and the timestamps for the left, right, and top point clouds are 0.01, 0.05, and 0.09 seconds respectively, the parameters should be set as [0.0, 0.04, 0.08]. This reflects the timestamp differences between the current point cloud and the point cloud with the earliest timestamp. Note that the order of the `lidar_timestamp_offsets` corresponds to the order of the `input_topics`.
+Since different vehicles have varied designs for LiDAR scanning, the timestamps of each LiDAR may differ. Users need to know the offsets between each LiDAR and set the values in `lidar_timestamp_offsets`.
+
+To monitor the timestamps of each LiDAR, run the following command:
+
+```bash
+ros2 topic echo "pointcloud_topic" --field header
+```
+
+The timestamps should increase steadily by approximately 100 ms, as per the Autoware default. You should see output like this:
+
+```bash
+nanosec: 156260951
+nanosec: 257009560
+nanosec: 355444581
+```
+
+This pattern indicates a LiDAR timestamp is 0.05.
+
+If there are three LiDARs (left, right, top), and the timestamps for the left, right, and top point clouds are `0.01`, `0.05`, and `0.09` seconds respectively, the parameters should be set as [0.0, 0.04, 0.08]. This reflects the timestamp differences between the current point cloud and the point cloud with the earliest timestamp. Note that the order of the `lidar_timestamp_offsets` corresponds to the order of the `input_topics`.
 
 The figure below demonstrates how `lidar_timestamp_offsets` works with `concatenate_and_time_sync_node`.
 
