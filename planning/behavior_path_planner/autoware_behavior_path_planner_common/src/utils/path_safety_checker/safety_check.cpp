@@ -489,6 +489,22 @@ ExtendedPredictedObjects filterObjectPredictedPathByTimeHorizon(
   return filtered_objects;
 }
 
+std::vector<PoseWithVelocityStamped> filterPredictedPathAfterTargetPose(
+  const std::vector<PoseWithVelocityStamped> & path, const Pose & target_pose)
+{
+  std::vector<PoseWithVelocityStamped> filtered_path;
+
+  const auto target_idx =
+    std::min_element(path.begin(), path.end(), [&target_pose](const auto & a, const auto & b) {
+      return calcDistance2d(a.pose.position, target_pose.position) <
+             calcDistance2d(b.pose.position, target_pose.position);
+    });
+
+  std::copy(target_idx, path.end(), std::back_inserter(filtered_path));
+
+  return filtered_path;
+};
+
 bool checkSafetyWithRSS(
   const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & ego_predicted_path,

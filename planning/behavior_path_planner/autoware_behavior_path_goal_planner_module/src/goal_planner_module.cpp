@@ -2158,6 +2158,10 @@ bool GoalPlannerModule::isSafePath(
   const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
   const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
 {
+  using autoware::behavior_path_planner::utils::path_safety_checker::createPredictedPath;
+  using autoware::behavior_path_planner::utils::path_safety_checker::
+    filterPredictedPathAfterTargetPose;
+
   if (!found_pull_over_path || !pull_over_path_opt) {
     return false;
   }
@@ -2175,7 +2179,6 @@ bool GoalPlannerModule::isSafePath(
   const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
     *route_handler, left_side_parking_, parameters.backward_goal_search_length,
     parameters.forward_goal_search_length);
-  const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(current_pull_over_path.points);
   const std::pair<double, double> terminal_velocity_and_accel =
     pull_over_path.getPairsTerminalVelocityAndAccel();
   RCLCPP_DEBUG(
@@ -2186,10 +2189,12 @@ bool GoalPlannerModule::isSafePath(
   // TODO(Sugahara): shoule judge is_object_front properly
   const bool is_object_front = true;
   const bool limit_to_max_velocity = true;
-  const auto ego_predicted_path =
-    autoware::behavior_path_planner::utils::path_safety_checker::createPredictedPath(
-      ego_predicted_path_params, current_pull_over_path.points, current_pose, current_velocity,
-      ego_seg_idx, is_object_front, limit_to_max_velocity);
+  const auto ego_seg_idx = planner_data->findEgoIndex(current_pull_over_path.points);
+  const auto ego_predicted_path_from_current_pose = createPredictedPath(
+    ego_predicted_path_params, current_pull_over_path.points, current_pose, current_velocity,
+    ego_seg_idx, is_object_front, limit_to_max_velocity);
+  const auto ego_predicted_path = filterPredictedPathAfterTargetPose(
+    ego_predicted_path_from_current_pose, pull_over_path.start_pose());
 
   // ==========================================================================================
   // if ego is before the entry of pull_over_lanes, the beginning of the safety check area
