@@ -205,6 +205,17 @@ std::vector<LaneletSegment> parse(const YAML::Node & node)
 }
 
 template <>
+LaneletRoute parse(const YAML::Node & node)
+{
+  LaneletRoute route;
+
+  route.start_pose = parse<Pose>(node["start_pose"]);
+  route.goal_pose = parse<Pose>(node["goal_pose"]);
+  route.segments = parse<std::vector<LaneletSegment>>(node["segments"]);
+  return route;
+}
+
+template <>
 std::vector<PathPointWithLaneId> parse<std::vector<PathPointWithLaneId>>(const YAML::Node & node)
 {
   std::vector<PathPointWithLaneId> path_points;
@@ -327,6 +338,32 @@ PredictedObjects parse(const YAML::Node & node)
   for (const auto & object_node : node["objects"]) {
     msg.objects.push_back(parse<PredictedObject>(object_node));
   }
+  return msg;
+}
+
+template <>
+TrackedObjectKinematics parse(const YAML::Node & node)
+{
+  TrackedObjectKinematics msg;
+  msg.pose_with_covariance = parse<PoseWithCovariance>(node["pose_with_covariance"]);
+  msg.twist_with_covariance = parse<TwistWithCovariance>(node["twist_with_covariance"]);
+  msg.acceleration_with_covariance = parse<AccelWithCovariance>(node["accel_with_covariance"]);
+  msg.orientation_availability = node["orientation_availability"].as<uint8_t>();
+  msg.is_stationary = node["is_stationary"].as<bool>();
+  return msg;
+}
+
+template <>
+TrackedObject parse(const YAML::Node & node)
+{
+  TrackedObject msg;
+  msg.object_id = parse<UUID>(node["object_id"]);
+  msg.existence_probability = node["existence_probability"].as<float>();
+  for (const auto & classification_node : node["classification"]) {
+    msg.classification.push_back(parse<ObjectClassification>(classification_node));
+  }
+  msg.kinematics = parse<TrackedObjectKinematics>(node["kinematics"]);
+  msg.shape = parse<Shape>(node["shape"]);
   return msg;
 }
 
