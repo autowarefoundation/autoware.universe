@@ -90,10 +90,10 @@
           "default": true,
           "description": "If true, will use type_adaptation to transfer images in GPU."
         },
-        "is_publish_debug_rois_image_": {
+        "is_publish_debug_rois_image": {
           "type": "boolean",
           "default": true,
-          "description": "If true, will draw ROIs in the image."
+          "description": "If true, will draw ROIs in the image and publish it for debugging"
         }
       },
       "required": [
