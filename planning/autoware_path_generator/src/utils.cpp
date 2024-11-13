@@ -200,17 +200,18 @@ std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> get_wa
 
 void remove_overlapping_points(PathWithLaneId & path)
 {
-  auto & filtered_path_end = path.points.front();
+  auto filtered_path_end_it = path.points.begin();
   for (auto it = std::next(path.points.begin()); it != path.points.end();) {
     constexpr auto min_interval = 0.001;
     if (
-      autoware::universe_utils::calcDistance3d(filtered_path_end.point, it->point) < min_interval) {
-      filtered_path_end.lane_ids.push_back(it->lane_ids.front());
-      filtered_path_end.point.longitudinal_velocity_mps = std::min(
-        it->point.longitudinal_velocity_mps, filtered_path_end.point.longitudinal_velocity_mps);
+      autoware::universe_utils::calcDistance3d(filtered_path_end_it->point, it->point) <
+      min_interval) {
+      filtered_path_end_it->lane_ids.push_back(it->lane_ids.front());
+      filtered_path_end_it->point.longitudinal_velocity_mps = std::min(
+        filtered_path_end_it->point.longitudinal_velocity_mps, it->point.longitudinal_velocity_mps);
       it = path.points.erase(it);
     } else {
-      filtered_path_end = *it;
+      filtered_path_end_it = it;
       ++it;
     }
   }
