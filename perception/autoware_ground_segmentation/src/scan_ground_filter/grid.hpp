@@ -123,6 +123,14 @@ public:
   Grid(const float origin_x, const float origin_y, const float origin_z)
   : origin_x_(origin_x), origin_y_(origin_y), origin_z_(origin_z)
   {
+    grid_dist_size_ = 1.0f;
+    grid_azimuth_size_ = 0.1f;
+    grid_linearity_switch_radius_ = 20.0f;
+    grid_radial_limit_ = 200.0f;  // meters
+    grid_dist_size_rad_ = 0.0f;
+    grid_linearity_switch_num_ = 0;
+    grid_linearity_switch_angle_ = 0.0f;
+    grid_size_rad_inv_ = 0.0f;
   }
   ~Grid() = default;
 
@@ -143,7 +151,6 @@ public:
     grid_linearity_switch_radius_ = grid_linearity_switch_num_ * grid_dist_size_;
 
     // calculate grid parameters
-    grid_radial_limit_ = 200.0f;  // [m]
     grid_dist_size_rad_ =
       pseudoArcTan2(grid_linearity_switch_radius_ + grid_dist_size_, origin_z_) -
       pseudoArcTan2(grid_linearity_switch_radius_, origin_z_);

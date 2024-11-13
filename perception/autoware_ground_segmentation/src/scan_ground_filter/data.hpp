@@ -56,11 +56,11 @@ public:
 
 private:
   // data field offsets
-  int data_offset_x_;
-  int data_offset_y_;
-  int data_offset_z_;
-  int data_offset_intensity_;
-  int intensity_type_;
+  int data_offset_x_ = 0;
+  int data_offset_y_ = 0;
+  int data_offset_z_ = 0;
+  int data_offset_intensity_ = 0;
+  int intensity_type_ = 0;
   bool data_offset_initialized_ = false;
 };
 

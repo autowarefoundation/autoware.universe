@@ -58,13 +58,13 @@ bool GridGroundFilter::recursiveSearch(
     return true;
   }
   const auto & check_cell = grid_ptr_->getCell(check_idx);
-  if (!check_cell.has_ground_) {
-    // if the cell does not have ground, search previous cell
-    return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt, idx);
+  if (check_cell.has_ground_) {
+    // the cell has ground, add the index to the list, and search previous cell
+    idx.push_back(check_idx);
+    return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt - 1, idx);
   }
-  // the cell has ground, add the index to the list, and search previous cell
-  idx.push_back(check_idx);
-  return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt - 1, idx);
+  // if the cell does not have ground, search previous cell
+  return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt, idx);
 }
 
 void GridGroundFilter::fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const
@@ -204,8 +204,7 @@ void GridGroundFilter::SegmentContinuousCell(
       continue;
     }
 
-    // 3. the point is continuous with the previous grid
-    // 3-a. local slope
+    // 3. local slope
     const float delta_radius = radius - prev_cell.avg_radius_;
     const float local_slope_ratio = delta_z / delta_radius;
     if (abs(local_slope_ratio) < param_.local_slope_max_ratio) {
@@ -215,12 +214,12 @@ void GridGroundFilter::SegmentContinuousCell(
       continue;
     }
 
-    // 3-b. mean of grid buffer(filtering)
+    // 3. height from the estimated ground
     const float next_gnd_z = gradient * radius + cell.intercept_;
     const float gnd_z_local_thresh = local_thresh_angle_ratio * delta_radius;
     const float delta_gnd_z = point.z - next_gnd_z;
     const float gnd_z_threshold = param_.non_ground_height_threshold + gnd_z_local_thresh;
-    if (delta_gnd_z >= gnd_z_threshold) {
+    if (delta_gnd_z > gnd_z_threshold) {
       // this point is obstacle
       out_no_ground_indices.indices.push_back(pt_idx);
       // go to the next point
@@ -265,9 +264,16 @@ void GridGroundFilter::SegmentDiscontinuousCell(
       // go to the next point
       continue;
     }
-
-    // 3. the point is discontinuous with the previous grid
-    // 3-a. local slope
+    // 3. local slope
+    const float delta_radius = radius - prev_cell.avg_radius_;
+    const float local_slope_ratio = delta_avg_z / delta_radius;
+    if (abs(local_slope_ratio) < param_.local_slope_max_ratio) {
+      // this point is ground
+      ground_bin.addPoint(radius, point.z, pt_idx);
+      // go to the next point
+      continue;
+    }
+    // 4. height from the estimated ground
     if (abs(delta_avg_z) < param_.non_ground_height_threshold) {
       // this point is ground
       ground_bin.addPoint(radius, point.z, pt_idx);
@@ -281,14 +287,7 @@ void GridGroundFilter::SegmentDiscontinuousCell(
       // go to the next point
       continue;
     }
-    const float delta_radius = radius - prev_cell.avg_radius_;
-    const float local_slope_ratio = delta_avg_z / delta_radius;
-    if (abs(local_slope_ratio) < param_.local_slope_max_ratio) {
-      // this point is ground
-      ground_bin.addPoint(radius, point.z, pt_idx);
-      // go to the next point
-      continue;
-    }
+    // 5. obstacle from local slope
     if (local_slope_ratio >= param_.local_slope_max_ratio) {
       // this point is obstacle
       out_no_ground_indices.indices.push_back(pt_idx);
@@ -403,7 +402,7 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
     SegmentationMode mode = SegmentationMode::NONE;
     {
       const int front_radial_id =
-        grid_ptr_->getCell(grid_idcs.front()).radial_idx_ + grid_idcs.size();
+        grid_ptr_->getCell(grid_idcs.back()).radial_idx_ + grid_idcs.size();
       const float radial_diff_between_cells = cell.center_radius_ - prev_cell_ptr->center_radius_;
 
       if (radial_diff_between_cells < param_.gnd_grid_continual_thresh * cell.radial_size_) {
@@ -418,9 +417,9 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
     }
 
     {
-      // std::unique_ptr<ScopedTimeTrack> sub_st_ptr;
-      // if (time_keeper_)
-      //   sub_st_ptr = std::make_unique<ScopedTimeTrack>("segmentation", *time_keeper_);
+      std::unique_ptr<ScopedTimeTrack> sub_st_ptr;
+      if (time_keeper_)
+        sub_st_ptr = std::make_unique<ScopedTimeTrack>("segmentation", *time_keeper_);
 
       PointsCentroid ground_bin;
       if (mode == SegmentationMode::CONTINUOUS) {
