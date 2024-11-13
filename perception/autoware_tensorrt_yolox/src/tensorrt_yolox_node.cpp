@@ -159,7 +159,7 @@ void TrtYoloXNode::setUpImageSubscriber()
 uint32_t TrtYoloXNode::getNumOutputConnections()
 {
   uint32_t num_subscribers = 0;
-  // Image output topic conenctions
+  // Image output topic connection
   if (is_using_image_transport_) {
     num_subscribers = image_pub_.getNumSubscribers() + mask_pub_.getNumSubscribers() +
                       color_mask_pub_.getNumSubscribers();

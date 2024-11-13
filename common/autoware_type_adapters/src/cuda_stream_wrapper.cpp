@@ -15,6 +15,8 @@
 
 #include "type_adapters/cuda_stream_wrapper.hpp"
 
+// cspell:ignore nvtx
+
 #include "cuda.h"          // NOLINT
 #include "cuda_runtime.h"  // NOLINT
 

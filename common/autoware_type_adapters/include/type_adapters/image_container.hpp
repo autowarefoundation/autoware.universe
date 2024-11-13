@@ -105,10 +105,10 @@ using ImageContainerUniquePtr = std::unique_ptr<ImageContainer>;
 }  // namespace autoware
 
 /**
- * @brief ROS2 Type Adapter specialization for ImageContainer
+ * @brief ROS Type Adapter specialization for ImageContainer
  *
  * Enables automatic conversion between ROS sensor_msgs::Image and ImageContainer
- * for seamless integration with ROS2 publish/subscribe system
+ * for seamless integration with ROS publish/subscribe system
  */
 template <>
 struct rclcpp::TypeAdapter<

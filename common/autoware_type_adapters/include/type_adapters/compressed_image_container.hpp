@@ -102,10 +102,10 @@ using CompressedImageContainerUniquePtr = std::unique_ptr<CompressedImageContain
 }  // namespace autoware
 
 /**
- * @brief ROS2 Type Adapter specialization for CompressedImageContainer
+ * @brief ROS Type Adapter specialization for CompressedImageContainer
  *
  * Enables automatic conversion between ROS sensor_msgs::CompressedImage and
- * CompressedImageContainer for seamless integration with ROS2 publish/subscribe system
+ * CompressedImageContainer for seamless integration with ROS publish/subscribe system
  */
 template <>
 struct rclcpp::TypeAdapter<

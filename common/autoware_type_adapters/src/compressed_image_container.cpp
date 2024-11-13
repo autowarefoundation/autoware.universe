@@ -15,6 +15,8 @@
 
 #include "type_adapters/compressed_image_container.hpp"
 
+// cspell:ignore nvtx
+
 #include "cuda.h"          // NOLINT
 #include "cuda_runtime.h"  // NOLINT
 
