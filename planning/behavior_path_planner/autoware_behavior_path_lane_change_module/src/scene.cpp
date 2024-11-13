@@ -75,6 +75,13 @@ void NormalLaneChange::update_lanes(const bool is_approved)
     return;
   }
 
+  lanelet::ConstLanelet current_lane;
+  if (!common_data_ptr_->route_handler_ptr->getClosestLaneletWithinRoute(
+        common_data_ptr_->get_ego_pose(), &current_lane)) {
+    return;
+  }
+
+  common_data_ptr_->lanes_ptr->ego_lane = current_lane;
   const auto is_same_lanes_with_prev_iteration =
     utils::lane_change::is_same_lane_with_prev_iteration(
       common_data_ptr_, current_lanes, target_lanes);
@@ -93,6 +100,8 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   common_data_ptr_->lanes_ptr->target_neighbor = utils::lane_change::get_target_neighbor_lanes(
     *route_handler_ptr, current_lanes, common_data_ptr_->lc_type);
 
+  common_data_ptr_->current_lanes_path =
+    route_handler_ptr->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
   common_data_ptr_->lanes_ptr->current_lane_in_goal_section =
     route_handler_ptr->isInGoalRouteSection(current_lanes.back());
   common_data_ptr_->lanes_ptr->target_lane_in_goal_section =
@@ -149,6 +158,18 @@ void NormalLaneChange::update_transient_data()
 
   transient_data.is_ego_near_current_terminal_start =
     transient_data.dist_to_terminal_start < transient_data.max_prepare_length;
+
+  transient_data.current_footprint = utils::lane_change::get_ego_footprint(
+    common_data_ptr_->get_ego_pose(), common_data_ptr_->bpp_param_ptr->vehicle_info);
+
+  const auto & ego_lane = common_data_ptr_->lanes_ptr->ego_lane;
+  const auto & route_handler_ptr = common_data_ptr_->route_handler_ptr;
+  transient_data.in_intersection = utils::lane_change::is_within_intersection(
+    route_handler_ptr, ego_lane, transient_data.current_footprint);
+  transient_data.in_turn_direction_lane =
+    utils::lane_change::is_within_turn_direction_lanes(ego_lane, transient_data.current_footprint);
+
+  update_dist_from_intersection();
 
   updateStopTime();
   transient_data.is_ego_stuck = is_ego_stuck();
@@ -754,6 +775,10 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
     return false;
   }
 
+  if (common_data_ptr_->transient_data.in_turn_direction_lane) {
+    return true;
+  }
+
   const auto nearest_idx = autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     status_.lane_change_path.path.points, getEgoPose(),
     planner_data_->parameters.ego_nearest_dist_threshold,
@@ -1208,7 +1233,6 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
   const double shift_length, const double dist_to_reg_element) const
 {
   const auto & route_handler = getRouteHandler();
-  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
   const auto & transient_data = common_data_ptr_->transient_data;
   const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
     common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor,
@@ -1219,12 +1243,8 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
       transient_data.is_ego_near_current_terminal_start
         ? transient_data.dist_to_terminal_end - prep_metric.length
         : std::min(transient_data.dist_to_terminal_end, dist_to_reg_element) - prep_metric.length;
-    auto target_lane_buffer = lane_change_parameters_->lane_change_finish_judge_buffer +
-                              transient_data.next_dist_buffer.min;
-    if (std::abs(route_handler->getNumLaneToPreferredLane(target_lanes.back(), direction_)) > 0) {
-      target_lane_buffer += lane_change_parameters_->backward_length_buffer_for_end_of_lane;
-    }
-    max_length = std::min(max_length, dist_lc_start_to_end_of_lanes - target_lane_buffer);
+    max_length =
+      std::min(max_length, dist_lc_start_to_end_of_lanes - transient_data.next_dist_buffer.min);
     return max_length;
   });
 
@@ -1404,6 +1424,11 @@ bool NormalLaneChange::check_candidate_path_safety(
   const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const
 {
   const auto is_stuck = common_data_ptr_->transient_data.is_ego_stuck;
+  if (utils::lane_change::has_overtaking_turn_lane_object(
+        common_data_ptr_, filtered_objects_.target_lane_trailing)) {
+    throw std::logic_error("Ego is nearby intersection, and there might be overtaking vehicle.");
+  }
+
   if (
     !is_stuck && !utils::lane_change::passed_parked_objects(
                    common_data_ptr_, candidate_path, filtered_objects_.target_lane_leading,
@@ -1578,6 +1603,13 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
   const auto target_objects = get_target_objects(filtered_objects_, current_lanes);
 
   CollisionCheckDebugMap debug_data;
+
+  const auto has_overtaking_object = utils::lane_change::has_overtaking_turn_lane_object(
+    common_data_ptr_, filtered_objects_.target_lane_trailing);
+
+  if (has_overtaking_object) {
+    return {false, true};
+  }
 
   const auto has_passed_parked_objects = utils::lane_change::passed_parked_objects(
     common_data_ptr_, path, filtered_objects_.target_lane_leading, debug_data);
@@ -2076,7 +2108,6 @@ void NormalLaneChange::updateStopTime()
 bool NormalLaneChange::check_prepare_phase() const
 {
   const auto & route_handler = getRouteHandler();
-  const auto & vehicle_info = getCommonParam().vehicle_info;
 
   const auto check_in_general_lanes =
     lane_change_parameters_->enable_collision_check_for_prepare_phase_in_general_lanes;
@@ -2089,24 +2120,52 @@ bool NormalLaneChange::check_prepare_phase() const
     return check_in_general_lanes;
   }
 
-  const auto ego_footprint = utils::lane_change::getEgoCurrentFootprint(getEgoPose(), vehicle_info);
+  const auto check_in_intersection =
+    lane_change_parameters_->enable_collision_check_for_prepare_phase_in_intersection &&
+    common_data_ptr_->transient_data.in_intersection;
 
-  const auto check_in_intersection = std::invoke([&]() {
-    if (!lane_change_parameters_->enable_collision_check_for_prepare_phase_in_intersection) {
-      return false;
-    }
-
-    return utils::lane_change::isWithinIntersection(route_handler, current_lane, ego_footprint);
-  });
-
-  const auto check_in_turns = std::invoke([&]() {
-    if (!lane_change_parameters_->enable_collision_check_for_prepare_phase_in_turns) {
-      return false;
-    }
-
-    return utils::lane_change::isWithinTurnDirectionLanes(current_lane, ego_footprint);
-  });
+  const auto check_in_turns =
+    lane_change_parameters_->enable_collision_check_for_prepare_phase_in_turns &&
+    common_data_ptr_->transient_data.in_turn_direction_lane;
 
   return check_in_intersection || check_in_turns || check_in_general_lanes;
+}
+
+void NormalLaneChange::update_dist_from_intersection()
+{
+  auto & transient_data = common_data_ptr_->transient_data;
+  const auto & route_handler_ptr = common_data_ptr_->route_handler_ptr;
+
+  if (
+    transient_data.in_intersection && transient_data.in_turn_direction_lane &&
+    path_after_intersection_.empty()) {
+    auto path_after_intersection = route_handler_ptr->getCenterLinePath(
+      common_data_ptr_->lanes_ptr->target_neighbor, 0.0, std::numeric_limits<double>::max());
+    path_after_intersection_ = std::move(path_after_intersection.points);
+    transient_data.dist_from_prev_intersection = 0.0;
+    return;
+  }
+
+  if (
+    transient_data.in_intersection || transient_data.in_turn_direction_lane ||
+    path_after_intersection_.empty()) {
+    return;
+  }
+
+  const auto & path_points = path_after_intersection_;
+  const auto & front_point = path_points.front().point.pose.position;
+  const auto & ego_position = common_data_ptr_->get_ego_pose().position;
+  transient_data.dist_from_prev_intersection =
+    calcSignedArcLength(path_points, front_point, ego_position);
+
+  if (
+    transient_data.dist_from_prev_intersection >= 0.0 &&
+    transient_data.dist_from_prev_intersection <=
+      common_data_ptr_->lc_param_ptr->backward_length_from_intersection) {
+    return;
+  }
+
+  path_after_intersection_.clear();
+  transient_data.dist_from_prev_intersection = std::numeric_limits<double>::max();
 }
 }  // namespace autoware::behavior_path_planner

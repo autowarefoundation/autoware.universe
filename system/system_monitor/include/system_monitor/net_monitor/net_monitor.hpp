@@ -228,6 +228,11 @@ protected:
   void send_start_nethogs_request();
 
   /**
+   * @brief Send request to skip nethogs
+   */
+  void send_skip_nethogs_request();
+
+  /**
    * @brief Get result of nethogs
    * @param [out] result result of nethogs
    */
@@ -291,6 +296,7 @@ protected:
   int getifaddrs_error_code_;                    //!< @brief Error code set by getifaddrs()
   std::vector<NetworkInfomation> network_list_;  //!< @brief List of Network information
 
+  bool enable_traffic_monitor_;         //!< @brief enable nethogs
   std::string monitor_program_;         //!< @brief nethogs monitor program name
   std::string socket_path_;             //!< @brief Path of UNIX domain socket
   boost::asio::io_service io_service_;  //!< @brief Core I/O functionality
@@ -323,6 +329,11 @@ protected:
    */
   const std::map<int, const char *> usage_messages_ = {
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "high load"}, {DiagStatus::ERROR, "down"}};
+
+  /**
+   * @brief Interface name for loopback
+   */
+  const std::string loopback_interface_name_ = "lo";
 };
 
 #endif  // SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_
