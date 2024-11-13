@@ -1496,9 +1496,10 @@ std::optional<PathWithLaneId> NormalLaneChange::get_terminal_lane_change_path() 
   });
 
   const auto max_path_velocity = prepare_segment.points.back().point.longitudinal_velocity_mps;
+  constexpr double lane_changing_lon_accel{0.0};
   const auto lane_changing_metrics = calculation::calc_shift_phase_metrics(
     common_data_ptr_, shift_length, prep_metric.velocity, max_path_velocity,
-    prep_metric.sampled_lon_accel, max_lane_changing_length);
+    lane_changing_lon_accel, max_lane_changing_length);
 
   const auto sorted_lane_ids = utils::lane_change::get_sorted_lane_ids(common_data_ptr_);
 
