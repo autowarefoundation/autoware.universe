@@ -574,7 +574,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
   }
 
   const auto registered_sl_force_deactivated =
-    [&](const std::string & direction, const RegisteredShiftLineArray shift_line_array) {
+    [&](const std::string & direction, const RegisteredShiftLineArray & shift_line_array) {
       return std::any_of(
         shift_line_array.begin(), shift_line_array.end(), [&](const auto & shift_line) {
           return rtc_interface_ptr_map_.at(direction)->isForceDeactivated(shift_line.uuid);
@@ -611,7 +611,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
   };
 
   auto registered_sl_force_activated =
-    [&](const std::string & direction, const RegisteredShiftLineArray shift_line_array) {
+    [&](const std::string & direction, const RegisteredShiftLineArray & shift_line_array) {
       return std::any_of(
         shift_line_array.begin(), shift_line_array.end(), [&](const auto & shift_line) {
           return rtc_interface_ptr_map_.at(direction)->isForceActivated(shift_line.uuid);
@@ -1245,8 +1245,8 @@ void StaticObstacleAvoidanceModule::updatePathShifter(const AvoidLineArray & shi
   generator_.setRawRegisteredShiftLine(shift_lines, avoid_data_);
 
   const auto sl = helper_->getMainShiftLine(shift_lines);
-  const auto sl_front = shift_lines.front();
-  const auto sl_back = shift_lines.back();
+  const auto & sl_front = shift_lines.front();
+  const auto & sl_back = shift_lines.back();
   const auto relative_longitudinal = sl_back.end_longitudinal - sl_front.start_longitudinal;
 
   if (helper_->getRelativeShiftToPath(sl) > 0.0) {

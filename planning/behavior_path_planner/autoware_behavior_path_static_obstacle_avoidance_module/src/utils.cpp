@@ -545,11 +545,7 @@ bool isParkedVehicle(
 
   object.to_centerline =
     lanelet::utils::getArcCoordinates(data.current_lanelets, object.getPose()).distance;
-  if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
-    return false;
-  }
-
-  return true;
+  return std::abs(object.to_centerline) >= parameters->threshold_distance_object_is_on_center;
 }
 
 bool isCloseToStopFactor(
@@ -1301,7 +1297,7 @@ std::vector<UUID> calcParentIds(const AvoidLineArray & lines1, const AvoidLine &
   for (const auto & al : lines1) {
     const auto p_s = al.start_longitudinal;
     const auto p_e = al.end_longitudinal;
-    const auto has_overlap = !(p_e < lines2.start_longitudinal || lines2.end_longitudinal < p_s);
+    const auto has_overlap = p_e >= lines2.start_longitudinal && lines2.end_longitudinal >= p_s;
 
     if (!has_overlap) {
       continue;
@@ -1315,10 +1311,11 @@ std::vector<UUID> calcParentIds(const AvoidLineArray & lines1, const AvoidLine &
 double lerpShiftLengthOnArc(double arc, const AvoidLine & ap)
 {
   if (ap.start_longitudinal <= arc && arc < ap.end_longitudinal) {
-    if (std::abs(ap.getRelativeLongitudinal()) < 1.0e-5) {
+    const auto relative_longitudinal = ap.getRelativeLongitudinal();
+    if (std::abs(relative_longitudinal) < 1.0e-5) {
       return ap.end_shift_length;
     }
-    const auto start_weight = (ap.end_longitudinal - arc) / ap.getRelativeLongitudinal();
+    const auto start_weight = (ap.end_longitudinal - arc) / relative_longitudinal;
     return start_weight * ap.start_shift_length + (1.0 - start_weight) * ap.end_shift_length;
   }
   return 0.0;
@@ -1339,7 +1336,6 @@ void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
   }
   obj.longitudinal = min_distance;
   obj.length = max_distance - min_distance;
-  return;
 }
 
 std::vector<std::pair<double, Point>> calcEnvelopeOverhangDistance(
@@ -2220,9 +2216,9 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
     });
   };
 
-  const auto to_predicted_objects = [&p, &parameters](const auto & objects) {
+  const auto to_predicted_objects = [&parameters](const auto & objects) {
     PredictedObjects ret{};
-    std::for_each(objects.begin(), objects.end(), [&p, &ret, &parameters](const auto & object) {
+    std::for_each(objects.begin(), objects.end(), [&ret, &parameters](const auto & object) {
       if (filtering_utils::isSafetyCheckTargetObjectType(object.object, parameters)) {
         // check only moving objects
         if (filtering_utils::isMovingObject(object, parameters) || !object.is_parked) {
