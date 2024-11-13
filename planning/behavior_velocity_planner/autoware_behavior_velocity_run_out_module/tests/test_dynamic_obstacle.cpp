@@ -318,6 +318,8 @@ TEST_F(TestDynamicObstacleMethods, testConcatPointCloud)
   pcl::PointCloud<pcl::PointXYZ> point_cloud_2 =
     generate_pointcloud(n_points * 2, points_resolution * 2.0);
   auto point_cloud_concat = concatPointCloud(point_cloud_1, point_cloud_2);
+  // the pcl method used by this function generates a pointcloud that has a way bigger size than
+  // just the sum of both point clouds
   EXPECT_TRUE(point_cloud_concat.data.size() >= point_cloud_1.size() + point_cloud_2.size());
 
   Eigen::Matrix3f R;
