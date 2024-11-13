@@ -384,17 +384,11 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
       const int search_count = param_.gnd_grid_buffer_size;
       const int check_cell_idx = cell.scan_grid_root_idx_;
       recursiveSearch(check_cell_idx, search_count, grid_idcs);
-      if (grid_idcs.size() > 0) {
-        // calculate the gradient and intercept by least square method
-        float a, b;
-        fitLineFromGndGrid(grid_idcs, a, b);
-        cell.gradient_ = a;
-        cell.intercept_ = b;
-      } else {
-        // initialization failed. which should not happen. print error message
-        std::cerr << "Failed to initialize ground grid at cell index: " << cell.grid_idx_
-                  << std::endl;
-      }
+      // calculate the gradient and intercept by least square method
+      float a, b;
+      fitLineFromGndGrid(grid_idcs, a, b);
+      cell.gradient_ = a;
+      cell.intercept_ = b;
     }
 
     // segment the ground and non-ground points

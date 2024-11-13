@@ -342,7 +342,7 @@ void ScanGroundFilterComponent::faster_filter(
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   std::scoped_lock lock(mutex_);
-  stop_watch_ptr_->toc("processing_time", true);
+  if (stop_watch_ptr_) stop_watch_ptr_->toc("processing_time", true);
 
   if (!data_accessor_.isInitialized()) {
     data_accessor_.setField(input);
