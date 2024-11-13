@@ -420,6 +420,9 @@ std::size_t eliminate_holes(
   std::vector<std::size_t> queue;
 
   for (const auto & ring : inners) {
+    if (ring.empty()) {
+      continue;
+    }
     auto inner_index = linked_list(ring, false, vertices, points);
 
     if (points[inner_index].next_index.value() == inner_index) {
@@ -617,10 +620,6 @@ std::vector<alt::ConvexPolygon2d> triangulate(const alt::Polygon2d & poly)
 std::vector<Polygon2d> triangulate(const Polygon2d & poly)
 {
   const auto alt_poly = alt::Polygon2d::create(poly);
-  if (!alt_poly.has_value()) {
-    return {};
-  }
-
   const auto alt_triangles = triangulate(alt_poly.value());
   std::vector<Polygon2d> triangles;
   for (const auto & alt_triangle : alt_triangles) {

@@ -4,6 +4,7 @@
   <arg name="lateral_controller_mode"/>
   <arg name="longitudinal_controller_mode"/>
   <arg name="enable_autonomous_emergency_braking"/>
+  <arg name="use_aeb_autoware_state_check"/>
   <arg name="check_external_emergency_heartbeat"/>
   <arg name="trajectory_follower_mode" default="trajectory_follower_node"/>
   <arg name="enable_collision_detector"/>
@@ -197,6 +198,7 @@
         <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
         <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
         <param from="$(var aeb_param_path)"/>
+        <param name="check_autoware_state" value="$(var use_aeb_autoware_state_check)"/>
         <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
       </composable_node>
     </load_composable_node>

@@ -140,7 +140,7 @@ void VehicleNode::publish_kinematics()
 {
   if (!kinematic_state_msgs_ || !acceleration_msgs_ || !map_projector_info_) return;
 
-  autoware_ad_api::vehicle::VehicleKinematics::Message vehicle_kinematics;
+  autoware::adapi_specs::vehicle::VehicleKinematics::Message vehicle_kinematics;
   vehicle_kinematics.pose.header = kinematic_state_msgs_->header;
   vehicle_kinematics.pose.pose = kinematic_state_msgs_->pose;
   vehicle_kinematics.twist.header = kinematic_state_msgs_->header;
@@ -176,7 +176,7 @@ void VehicleNode::publish_status()
     !hazard_light_status_msgs_)
     return;
 
-  autoware_ad_api::vehicle::VehicleStatus::Message vehicle_status;
+  autoware::adapi_specs::vehicle::VehicleStatus::Message vehicle_status;
   vehicle_status.stamp = now();
   vehicle_status.steering_tire_angle = steering_status_msgs_->steering_tire_angle;
   vehicle_status.gear.status = mapping(gear_type_, gear_status_msgs_->report, ApiGear::UNKNOWN);
