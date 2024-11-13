@@ -25,9 +25,6 @@ nav:
       - 'Butterworth Filter': common/signal_processing/documentation/ButterworthFilter
     - 'autoware_universe_utils': common/autoware_universe_utils
     - 'traffic_light_utils': common/traffic_light_utils
-    - 'TVM Utility':
-      - 'Introduction': common/tvm_utility
-      - 'YOLOv2 Tiny Example': common/tvm_utility/tvm-utility-yolo-v2-tiny-tests
   - 'RVIZ2 Plugins':
     - 'autoware_perception_rviz_plugin': common/autoware_perception_rviz_plugin
     - 'autoware_overlay_rviz_plugin': common/autoware_overlay_rviz_plugin/autoware_overlay_rviz_plugin
@@ -49,7 +46,7 @@ nav:
     - 'Goal Distance Calculator': common/goal_distance_calculator/Readme
     - 'Path Distance Calculator': common/autoware_path_distance_calculator/Readme
   - 'Others':
-    - 'autoware_ad_api_specs': common/autoware_ad_api_specs
+    - 'autoware_adapi_specs': common/autoware_adapi_specs
     - 'component_interface_specs': common/component_interface_specs
     - 'component_interface_tools': common/component_interface_tools
     - 'component_interface_utils': common/component_interface_utils
