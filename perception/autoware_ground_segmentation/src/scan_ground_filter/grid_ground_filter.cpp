@@ -16,6 +16,8 @@
 
 #include "data.hpp"
 
+#include <pcl/PointIndices.h>
+
 namespace autoware::ground_segmentation
 {
 
@@ -168,6 +170,181 @@ void GridGroundFilter::initializeGround(pcl::PointIndices & out_no_ground_indice
   }
 }
 
+void GridGroundFilter::SegmentContinuousCell(
+  const Cell & cell, PointsCentroid & ground_bin, pcl::PointIndices & out_no_ground_indices)
+{
+  const Cell & prev_cell = grid_ptr_->getCell(cell.scan_grid_root_idx_);
+  const float gradient =
+    std::clamp(cell.gradient_, -param_.global_slope_max_ratio, param_.global_slope_max_ratio);
+  const float local_thresh_angle_ratio = std::tan(DEG2RAD(5.0));
+
+  // loop over points in the cell
+  const auto num_points = static_cast<size_t>(cell.getPointNum());
+  for (size_t j = 0; j < num_points; ++j) {
+    const auto & pt_idx = cell.point_indices_[j];
+    pcl::PointXYZ point;
+    data_accessor_.getPoint(in_cloud_, pt_idx, point);
+
+    // 1. height is out-of-range
+    const float delta_z = point.z - prev_cell.avg_height_;
+    if (delta_z > param_.detection_range_z_max) {
+      // this point is out-of-range
+      continue;
+    }
+
+    // 2. the angle is exceed the global slope threshold
+    const float x_fixed = point.x - param_.virtual_lidar_x;
+    const float y_fixed = point.y - param_.virtual_lidar_y;
+    const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
+    const float global_slope_ratio = point.z / radius;
+    if (global_slope_ratio > param_.global_slope_max_ratio) {
+      // this point is obstacle
+      out_no_ground_indices.indices.push_back(pt_idx);
+      // go to the next point
+      continue;
+    }
+
+    // 3. the point is continuous with the previous grid
+    // 3-a. local slope
+    const float delta_radius = radius - prev_cell.avg_radius_;
+    const float local_slope_ratio = delta_z / delta_radius;
+    if (abs(local_slope_ratio) < param_.local_slope_max_ratio) {
+      // this point is ground
+      ground_bin.addPoint(radius, point.z, pt_idx);
+    }
+
+    // 3-b. mean of grid buffer(filtering)
+    const float next_gnd_z = gradient * radius + cell.intercept_;
+    const float gnd_z_local_thresh = local_thresh_angle_ratio * (radius - prev_cell.avg_radius_);
+    if (abs(point.z - next_gnd_z) <= param_.non_ground_height_threshold + gnd_z_local_thresh) {
+      // this point is ground
+      ground_bin.addPoint(radius, point.z, pt_idx);
+      // go to the next point
+      continue;
+    }
+
+    // 3-c. the point is non-ground
+    if (point.z - next_gnd_z >= param_.non_ground_height_threshold + gnd_z_local_thresh) {
+      // this point is obstacle
+      out_no_ground_indices.indices.push_back(pt_idx);
+      // go to the next point
+      continue;
+    }
+  }
+}
+
+void GridGroundFilter::SegmentDiscontinuousCell(
+  const Cell & cell, PointsCentroid & ground_bin, pcl::PointIndices & out_no_ground_indices)
+{
+  const Cell & prev_cell = grid_ptr_->getCell(cell.scan_grid_root_idx_);
+
+  // loop over points in the cell
+  const auto num_points = static_cast<size_t>(cell.getPointNum());
+  for (size_t j = 0; j < num_points; ++j) {
+    const auto & pt_idx = cell.point_indices_[j];
+    pcl::PointXYZ point;
+    data_accessor_.getPoint(in_cloud_, pt_idx, point);
+
+    // 1. height is out-of-range
+    const float delta_avg_z = point.z - prev_cell.avg_height_;
+    if (delta_avg_z > param_.detection_range_z_max) {
+      // this point is out-of-range
+      continue;
+    }
+
+    // 2. the angle is exceed the global slope threshold
+    const float x_fixed = point.x - param_.virtual_lidar_x;
+    const float y_fixed = point.y - param_.virtual_lidar_y;
+    const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
+    const float global_slope_ratio = point.z / radius;
+    if (global_slope_ratio > param_.global_slope_max_ratio) {
+      // this point is obstacle
+      out_no_ground_indices.indices.push_back(pt_idx);
+      // go to the next point
+      continue;
+    }
+
+    // 3. the point is discontinuous with the previous grid
+    // 3-a. local slope
+    if (abs(delta_avg_z) < param_.non_ground_height_threshold) {
+      // this point is ground
+      ground_bin.addPoint(radius, point.z, pt_idx);
+      // go to the next point
+      continue;
+    }
+    const float delta_max_z = point.z - prev_cell.max_height_;
+    if (abs(delta_max_z) < param_.non_ground_height_threshold) {
+      // this point is ground
+      ground_bin.addPoint(radius, point.z, pt_idx);
+      // go to the next point
+      continue;
+    }
+    const float delta_radius = radius - prev_cell.avg_radius_;
+    const float local_slope_ratio = delta_avg_z / delta_radius;
+    if (abs(local_slope_ratio) < param_.local_slope_max_ratio) {
+      // this point is ground
+      ground_bin.addPoint(radius, point.z, pt_idx);
+      // go to the next point
+      continue;
+    }
+    if (local_slope_ratio >= param_.local_slope_max_ratio) {
+      // this point is obstacle
+      out_no_ground_indices.indices.push_back(pt_idx);
+      // go to the next point
+      continue;
+    }
+  }
+}
+
+void GridGroundFilter::SegmentBreakCell(
+  const Cell & cell, PointsCentroid & ground_bin, pcl::PointIndices & out_no_ground_indices)
+{
+  const Cell & prev_cell = grid_ptr_->getCell(cell.scan_grid_root_idx_);
+
+  // loop over points in the cell
+  const auto num_points = static_cast<size_t>(cell.getPointNum());
+  for (size_t j = 0; j < num_points; ++j) {
+    const auto & pt_idx = cell.point_indices_[j];
+    pcl::PointXYZ point;
+    data_accessor_.getPoint(in_cloud_, pt_idx, point);
+
+    // 1. height is out-of-range
+    const float delta_z = point.z - prev_cell.avg_height_;
+    if (delta_z > param_.detection_range_z_max) {
+      // this point is out-of-range
+      continue;
+    }
+
+    // 2. the angle is exceed the global slope threshold
+    const float x_fixed = point.x - param_.virtual_lidar_x;
+    const float y_fixed = point.y - param_.virtual_lidar_y;
+    const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
+    const float global_slope_ratio = point.z / radius;
+    if (global_slope_ratio > param_.global_slope_max_ratio) {
+      // this point is obstacle
+      out_no_ground_indices.indices.push_back(pt_idx);
+      // go to the next point
+      continue;
+    }
+
+    // 3. the point is break the previous grid
+    const float delta_radius = radius - prev_cell.avg_radius_;
+    const float local_slope_ratio = delta_z / delta_radius;
+    if (abs(local_slope_ratio) < param_.global_slope_max_ratio) {
+      // this point is ground
+      ground_bin.addPoint(radius, point.z, pt_idx);
+      // go to the next point
+      continue;
+    }
+    if (local_slope_ratio >= param_.global_slope_max_ratio) {
+      // this point is obstacle
+      out_no_ground_indices.indices.push_back(pt_idx);
+      // go to the next point
+      continue;
+    }
+  }
+}
+
 void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -204,7 +381,7 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
     std::vector<int> grid_idcs;
     {
       const int search_count = param_.gnd_grid_buffer_size;
-      int check_cell_idx = cell.scan_grid_root_idx_;
+      const int check_cell_idx = cell.scan_grid_root_idx_;
       recursiveSearch(check_cell_idx, search_count, grid_idcs);
       if (grid_idcs.size() > 0) {
         // calculate the gradient and intercept by least square method
@@ -239,115 +416,17 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
     }
 
     {
+      // std::unique_ptr<ScopedTimeTrack> sub_st_ptr;
+      // if (time_keeper_)
+      //   sub_st_ptr = std::make_unique<ScopedTimeTrack>("segmentation", *time_keeper_);
+
       PointsCentroid ground_bin;
-      const auto num_points = static_cast<size_t>(cell.getPointNum());
-      for (size_t j = 0; j < num_points; ++j) {
-        const auto & pt_idx = cell.point_indices_[j];
-        pcl::PointXYZ point;
-        data_accessor_.getPoint(in_cloud_, pt_idx, point);
-
-        // 1. height is out-of-range
-        if (point.z - prev_cell_ptr->avg_height_ > param_.detection_range_z_max) {
-          // this point is out-of-range
-          continue;
-        }
-
-        // 2. the angle is exceed the global slope threshold
-        const float x_fixed = point.x - param_.virtual_lidar_x;
-        const float y_fixed = point.y - param_.virtual_lidar_y;
-        const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
-        const float global_slope_ratio = point.z / radius;
-        if (global_slope_ratio > param_.global_slope_max_ratio) {
-          // this point is obstacle
-          out_no_ground_indices.indices.push_back(pt_idx);
-          // go to the next point
-          continue;
-        }
-
-        // 3. the point is continuous with the previous grid
-        if (mode == SegmentationMode::CONTINUOUS) {
-          // 3-a. local slope
-          const float delta_z = point.z - prev_cell_ptr->avg_height_;
-          const float delta_radius = radius - prev_cell_ptr->avg_radius_;
-          const float local_slope_ratio = delta_z / delta_radius;
-          if (abs(local_slope_ratio) < param_.local_slope_max_ratio) {
-            // this point is ground
-            ground_bin.addPoint(radius, point.z, pt_idx);
-          }
-
-          // 3-b. mean of grid buffer(filtering)
-          const float gradient = std::clamp(
-            cell.gradient_, -param_.global_slope_max_ratio, param_.global_slope_max_ratio);
-          const float next_gnd_z = gradient * radius + cell.intercept_;
-          const float gnd_z_local_thresh =
-            std::tan(DEG2RAD(5.0)) * (radius - prev_cell_ptr->avg_radius_);
-          if (
-            abs(point.z - next_gnd_z) <= param_.non_ground_height_threshold + gnd_z_local_thresh) {
-            // this point is ground
-            ground_bin.addPoint(radius, point.z, pt_idx);
-            // go to the next point
-            continue;
-          }
-
-          // 3-c. the point is non-ground
-          if (point.z - next_gnd_z >= param_.non_ground_height_threshold + gnd_z_local_thresh) {
-            // this point is obstacle
-            out_no_ground_indices.indices.push_back(pt_idx);
-            // go to the next point
-            continue;
-          }
-        }
-
-        // 4. the point is discontinuous with the previous grid
-        if (mode == SegmentationMode::DISCONTINUOUS) {
-          const float delta_avg_z = point.z - prev_cell_ptr->avg_height_;
-          if (abs(delta_avg_z) < param_.non_ground_height_threshold) {
-            // this point is ground
-            ground_bin.addPoint(radius, point.z, pt_idx);
-            // go to the next point
-            continue;
-          }
-          const float delta_max_z = point.z - prev_cell_ptr->max_height_;
-          if (abs(delta_max_z) < param_.non_ground_height_threshold) {
-            // this point is ground
-            ground_bin.addPoint(radius, point.z, pt_idx);
-            // go to the next point
-            continue;
-          }
-          const float delta_radius = radius - prev_cell_ptr->avg_radius_;
-          const float local_slope_ratio = delta_avg_z / delta_radius;
-          if (abs(local_slope_ratio) < param_.local_slope_max_ratio) {
-            // this point is ground
-            ground_bin.addPoint(radius, point.z, pt_idx);
-            // go to the next point
-            continue;
-          }
-          if (local_slope_ratio >= param_.local_slope_max_ratio) {
-            // this point is obstacle
-            out_no_ground_indices.indices.push_back(pt_idx);
-            // go to the next point
-            continue;
-          }
-        }
-
-        // 5. the point is break the previous grid
-        if (mode == SegmentationMode::BREAK) {
-          const float delta_avg_z = point.z - prev_cell_ptr->avg_height_;
-          const float delta_radius = radius - prev_cell_ptr->avg_radius_;
-          const float local_slope_ratio = delta_avg_z / delta_radius;
-          if (abs(local_slope_ratio) < param_.global_slope_max_ratio) {
-            // this point is ground
-            ground_bin.addPoint(radius, point.z, pt_idx);
-            // go to the next point
-            continue;
-          }
-          if (local_slope_ratio >= param_.global_slope_max_ratio) {
-            // this point is obstacle
-            out_no_ground_indices.indices.push_back(pt_idx);
-            // go to the next point
-            continue;
-          }
-        }
+      if (mode == SegmentationMode::CONTINUOUS) {
+        SegmentContinuousCell(cell, ground_bin, out_no_ground_indices);
+      } else if (mode == SegmentationMode::DISCONTINUOUS) {
+        SegmentDiscontinuousCell(cell, ground_bin, out_no_ground_indices);
+      } else if (mode == SegmentationMode::BREAK) {
+        SegmentBreakCell(cell, ground_bin, out_no_ground_indices);
       }
 
       // recheck ground bin
