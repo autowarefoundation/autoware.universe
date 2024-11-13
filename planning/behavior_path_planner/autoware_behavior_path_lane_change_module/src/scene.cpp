@@ -361,7 +361,7 @@ BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
     return prev_module_output_;
   }
 
-  const auto terminal_lc_path = get_terminal_lane_change_path();
+  const auto terminal_lc_path = compute_terminal_lane_change_path();
 
   if (!terminal_lc_path) {
     RCLCPP_DEBUG(logger_, "Terminal path not found. Returning previous module's path as output.");
@@ -1441,7 +1441,7 @@ bool NormalLaneChange::check_candidate_path_safety(
   return safety_check_with_normal_rss.is_safe;
 }
 
-std::optional<PathWithLaneId> NormalLaneChange::get_terminal_lane_change_path() const
+std::optional<PathWithLaneId> NormalLaneChange::compute_terminal_lane_change_path() const
 {
   const auto & transient_data = common_data_ptr_->transient_data;
   const auto dist_to_terminal_start = transient_data.dist_to_terminal_start;

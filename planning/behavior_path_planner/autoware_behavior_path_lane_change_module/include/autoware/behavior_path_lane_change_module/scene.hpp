@@ -154,7 +154,7 @@ protected:
   bool check_candidate_path_safety(
     const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const;
 
-  std::optional<PathWithLaneId> get_terminal_lane_change_path() const;
+  std::optional<PathWithLaneId> compute_terminal_lane_change_path() const;
 
   bool isValidPath(const PathWithLaneId & path) const override;
 
