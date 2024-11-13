@@ -195,7 +195,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
 
   // Create legacy StopReason
   {
-    double stop_path_point_distance = autoware::motion_utils::calcSignedArcLength(
+    const double stop_path_point_distance = autoware::motion_utils::calcSignedArcLength(
       path->points, 0, stop_pose.position, stop_point->first);
 
     if (
