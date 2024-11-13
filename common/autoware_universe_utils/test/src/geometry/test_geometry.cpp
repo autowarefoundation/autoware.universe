@@ -2760,7 +2760,10 @@ TEST(geometry, RandomUnionIntersectPolygon)
     polygons.clear();
 
     for (auto i = 0; i < polygons_nb; ++i) {
-      polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
+      auto polygon_opt = autoware::universe_utils::random_concave_polygon(vertices, max_values);
+      if (polygon_opt.has_value()) {
+        polygons.push_back(polygon_opt.value());
+      }
     }
 
     for (auto i = 0UL; i < polygons.size(); ++i) {
