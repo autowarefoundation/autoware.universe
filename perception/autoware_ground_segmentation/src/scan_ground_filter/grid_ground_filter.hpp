@@ -105,6 +105,18 @@ struct PointsCentroid
     height_avg = height_sum / ground_point_num;
   }
 
+  float getMinHeightOnly() const
+  {
+    float min_height = 10.0f;
+    for (size_t i = 0; i < is_ground_list.size(); ++i) {
+      if (!is_ground_list[i]) {
+        continue;
+      }
+      min_height = std::min(min_height, height_list[i]);
+    }
+    return min_height;
+  }
+
   float getAverageSlope() const { return std::atan2(height_avg, radius_avg); }
   float getAverageHeight() const { return height_avg; }
   float getAverageRadius() const { return radius_avg; }

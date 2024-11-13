@@ -211,22 +211,24 @@ void GridGroundFilter::SegmentContinuousCell(
     if (abs(local_slope_ratio) < param_.local_slope_max_ratio) {
       // this point is ground
       ground_bin.addPoint(radius, point.z, pt_idx);
-    }
-
-    // 3-b. mean of grid buffer(filtering)
-    const float next_gnd_z = gradient * radius + cell.intercept_;
-    const float gnd_z_local_thresh = local_thresh_angle_ratio * (radius - prev_cell.avg_radius_);
-    if (abs(point.z - next_gnd_z) <= param_.non_ground_height_threshold + gnd_z_local_thresh) {
-      // this point is ground
-      ground_bin.addPoint(radius, point.z, pt_idx);
       // go to the next point
       continue;
     }
 
-    // 3-c. the point is non-ground
-    if (point.z - next_gnd_z >= param_.non_ground_height_threshold + gnd_z_local_thresh) {
+    // 3-b. mean of grid buffer(filtering)
+    const float next_gnd_z = gradient * radius + cell.intercept_;
+    const float gnd_z_local_thresh = local_thresh_angle_ratio * delta_radius;
+    const float delta_gnd_z = point.z - next_gnd_z;
+    const float gnd_z_threshold = param_.non_ground_height_threshold + gnd_z_local_thresh;
+    if (delta_gnd_z >= gnd_z_threshold) {
       // this point is obstacle
       out_no_ground_indices.indices.push_back(pt_idx);
+      // go to the next point
+      continue;
+    }
+    if (abs(delta_gnd_z) <= gnd_z_threshold) {
+      // this point is ground
+      ground_bin.addPoint(radius, point.z, pt_idx);
       // go to the next point
       continue;
     }
@@ -431,16 +433,21 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
 
       // recheck ground bin
       if (
-        ground_bin.getGroundPointNum() > 0 && param_.use_recheck_ground_cluster &&
-        cell.avg_radius_ > param_.grid_mode_switch_radius) {
-        ground_bin.processAverage();
+        param_.use_recheck_ground_cluster && cell.avg_radius_ > param_.grid_mode_switch_radius &&
+        ground_bin.getGroundPointNum() > 0) {
         // recheck the ground cluster
-        const float reference_height =
-          param_.use_lowest_point ? ground_bin.getMinHeight() : ground_bin.getAverageHeight();
+        float reference_height = 0;
+        if (param_.use_lowest_point) {
+          reference_height = ground_bin.getMinHeightOnly();
+        } else {
+          ground_bin.processAverage();
+          reference_height = ground_bin.getAverageHeight();
+        }
+        const float threshold = reference_height + param_.non_ground_height_threshold;
         const std::vector<size_t> & gnd_indices = ground_bin.getIndicesRef();
         const std::vector<float> & height_list = ground_bin.getHeightListRef();
         for (size_t j = 0; j < height_list.size(); ++j) {
-          if (height_list.at(j) >= reference_height + param_.non_ground_height_threshold) {
+          if (height_list.at(j) >= threshold) {
             // fill the non-ground indices
             out_no_ground_indices.indices.push_back(gnd_indices.at(j));
             // mark the point as non-ground
