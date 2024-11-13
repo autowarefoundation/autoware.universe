@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
-#define AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
+#ifndef AUTOWARE__COSTMAP_GENERATOR__UTILS__OBJECT_MAP_UTILS_HPP_
+#define AUTOWARE__COSTMAP_GENERATOR__UTILS__OBJECT_MAP_UTILS_HPP_
 
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -55,16 +55,12 @@ namespace autoware::costmap_generator::object_map
  * @param[in] in_grid_layer_name Name to assign to the layer
  * @param[in] in_layer_background_value Empty state value
  * @param[in] in_fill_value Value to fill inside the given polygons
- * @param[in] in_tf_target_frame Target frame to transform the points
- * @param[in] in_tf_source_frame Source frame, where the points are located
- * @param[in] in_tf_listener Valid listener to obtain the transformation
  */
 void fill_polygon_areas(
   grid_map::GridMap & out_grid_map, const std::vector<geometry_msgs::msg::Polygon> & in_polygons,
   const std::string & in_grid_layer_name, const float in_layer_background_value,
-  const float in_fill_value, const std::string & in_tf_target_frame,
-  const std::string & in_tf_source_frame, const tf2_ros::Buffer & in_tf_buffer);
+  const float in_fill_value);
 
 }  // namespace autoware::costmap_generator::object_map
 
-#endif  // AUTOWARE_COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
+#endif  // AUTOWARE__COSTMAP_GENERATOR__UTILS__OBJECT_MAP_UTILS_HPP_
