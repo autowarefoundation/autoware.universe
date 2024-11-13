@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# cspell:ignore NVTX
+# cspell:ignore NVTX funwind
 
 cmake_minimum_required(VERSION 3.5)
 
@@ -25,7 +25,6 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # cspell:ignore-next-line
   add_compile_options(-Wall -Wextra -Wpedantic -g -funwind-tables)
 endif()
 
