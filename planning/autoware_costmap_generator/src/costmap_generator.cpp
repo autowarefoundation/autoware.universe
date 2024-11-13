@@ -51,6 +51,7 @@
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <pcl_ros/transforms.hpp>
+#include <rclcpp/logging.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -353,7 +354,8 @@ grid_map::Matrix CostmapGenerator::generatePointsCostmap(
     points2costmap = tf_buffer_.lookupTransform(
       param_->costmap_frame, in_points->header.frame_id, tf2::TimePointZero);
   } catch (const tf2::TransformException & ex) {
-    RCLCPP_ERROR(rclcpp::get_logger("costmap_generator"), "%s", ex.what());
+    RCLCPP_ERROR_THROTTLE(
+      rclcpp::get_logger("costmap_generator"), *get_clock(), 1000, "%s", ex.what());
   }
 
   const auto transformed_points = getTransformedPointCloud(*in_points, points2costmap.transform);
