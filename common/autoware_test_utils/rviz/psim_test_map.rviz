@@ -24,6 +24,8 @@ Panels:
     Name: AutowareStatePanel
   - Class: rviz_plugins::SimulatedClockPanel
     Name: SimulatedClockPanel
+  - Class: rviz_plugins::TrafficLightPublishPanel
+    Name: TrafficLightPublishPanel
 Visualization Manager:
   Class: ""
   Displays:
@@ -4557,6 +4559,8 @@ Window Geometry:
   SimulatedClockPanel:
     collapsed: false
   Tool Properties:
+    collapsed: false
+  TrafficLightPublishPanel:
     collapsed: false
   Views:
     collapsed: false
