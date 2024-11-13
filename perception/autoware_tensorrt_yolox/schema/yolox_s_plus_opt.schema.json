@@ -79,6 +79,21 @@
           "type": "string",
           "default": "",
           "description": "Path to a file which contains path to images. Those images will be used for int8 quantization."
+        },
+        "is_using_image_transport": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, will use image_transport, false -> will only publish raw images"
+        },
+        "type_adaptation_activated": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, will use type_adaptation to transfer images in GPU."
+        },
+        "is_publish_debug_rois_image_": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, will draw ROIs in the image."
         }
       },
       "required": [

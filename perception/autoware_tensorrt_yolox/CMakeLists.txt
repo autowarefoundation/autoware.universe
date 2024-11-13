@@ -32,6 +32,7 @@ if(CUDA_FOUND)
   #       In LibTorch, CUDA_cublas_device_LIBRARY is used.
   unset(CUDA_cublas_device_LIBRARY CACHE)
   set(CUDA_AVAIL ON)
+  find_package(autoware_type_adapters)
 else()
   message("CUDA NOT FOUND")
   set(CUDA_AVAIL OFF)
@@ -88,6 +89,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 
 ament_target_dependencies(${PROJECT_NAME}
   OpenCV
+  autoware_type_adapters
 )
 
 if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
