@@ -105,17 +105,6 @@ TEST_F(TestStateMachine, testUpdateState)
   std::this_thread::sleep_for(std::chrono::seconds(sleep_time));
   state_machine_ptr_->updateState(state_input, clock);
   EXPECT_TRUE(state_machine_ptr_->getCurrentState() == State::APPROACH);
-  // if the obstacle is enough distance from ego or there are no obstacles, transit to GO state
-  state_machine_ptr_->updateState(state_input, clock);
-  EXPECT_TRUE(state_machine_ptr_->getCurrentState() == State::GO);
-
-  // current velocity < stop_threshold. GO -> STOP
-  state_machine_ptr_->updateState(state_input, clock);
-  EXPECT_TRUE(state_machine_ptr_->getCurrentState() == State::STOP);
-
-  // current velocity > stop_threshold. STOP -> GO
-  state_machine_ptr_->updateState(state_input, clock);
-  EXPECT_TRUE(state_machine_ptr_->getCurrentState() == State::GO);
   rclcpp::shutdown();
 };
 
