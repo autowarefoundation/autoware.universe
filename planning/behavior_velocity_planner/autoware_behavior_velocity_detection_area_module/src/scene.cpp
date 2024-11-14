@@ -112,8 +112,10 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   setSafe(detection_area::can_clear_stop_state(
     last_obstacle_found_time_, clock_->now(), planner_param_.state_clear_time));
   if (isActivated()) {
-    state_ = State::GO;
     last_obstacle_found_time_ = {};
+    if (!planner_param_.suppress_pass_judge_when_stopping || !is_stopped) {
+      state_ = State::GO;
+    }
     return true;
   }
 

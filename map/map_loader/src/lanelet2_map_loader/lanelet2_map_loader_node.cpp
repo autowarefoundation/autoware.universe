@@ -58,7 +58,7 @@ using tier4_map_msgs::msg::MapProjectorInfo;
 Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options)
 : Node("lanelet2_map_loader", options)
 {
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
 
   // subscription
   adaptor.init_sub(
