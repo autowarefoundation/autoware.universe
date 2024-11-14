@@ -1392,7 +1392,6 @@ LaneChangePath NormalLaneChange::get_candidate_path(
 
   LaneChangeInfo lane_change_info{prep_metrics, lc_metrics, lc_start_pose, lc_end_pose, shift_line};
 
-  utils::lane_change::tmp_id = 0;
   const auto candidate_path = utils::lane_change::construct_candidate_path(
     common_data_ptr_, lane_change_info, prep_segment, target_lane_reference_path, sorted_lane_ids);
 
