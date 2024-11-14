@@ -292,7 +292,7 @@ tier4_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
   size_t insert_index = insert_target_point_idx;
   planning_utils::insertVelocity(modified_path, target_point_with_lane_id, 0.0, insert_index);
 
-  double target_velocity_point_distance = autoware::motion_utils::calcArcLength(std::vector(
+  const double target_velocity_point_distance = autoware::motion_utils::calcArcLength(std::vector(
     modified_path.points.begin(), modified_path.points.begin() + target_velocity_point_idx));
   if (target_velocity_point_distance < first_stop_path_point_distance_) {
     first_stop_path_point_distance_ = target_velocity_point_distance;
