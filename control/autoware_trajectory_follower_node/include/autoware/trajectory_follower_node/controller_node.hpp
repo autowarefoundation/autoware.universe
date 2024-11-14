@@ -141,7 +141,17 @@ private:
   void publishDebugMarker(
     const trajectory_follower::InputData & input_data,
     const trajectory_follower::LateralOutput & lat_out) const;
-  static std::optional<ControlHorizon> createControlHorizon(
+  /**
+   * @brief merge lateral and longitudinal horizons
+   * @details If one of the commands has only one control, repeat the control to match the other
+   *          horizon. If each horizon has different time intervals, resample them to match the size
+   *          with the greatest common divisor.
+   * @param lateral_horizon lateral horizon
+   * @param longitudinal_horizon longitudinal horizon
+   * @param stamp stamp
+   * @return merged control horizon
+   */
+  static std::optional<ControlHorizon> mergeLatLonHorizon(
     const LateralHorizon & lateral_horizon, const LongitudinalHorizon & longitudinal_horizon,
     const rclcpp::Time & stamp);
 

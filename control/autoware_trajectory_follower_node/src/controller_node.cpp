@@ -31,18 +31,20 @@
 namespace
 {
 template <typename T>
-std::vector<T> resizeHorizonByZeroOrderHold(
+std::vector<T> resampleHorizonByZeroOrderHold(
   const std::vector<T> & original_horizon, const double original_time_step_ms,
   const double new_time_step_ms)
 {
-  std::vector<T> resized_horizon;
-  const int step_factor = static_cast<int>(original_time_step_ms / new_time_step_ms);
+  std::vector<T> resampled_horizon{};
+  const size_t step_factor = static_cast<size_t>(original_time_step_ms / new_time_step_ms);
+  const size_t resampled_size = original_horizon.size() * step_factor;
+  resampled_horizon.reserve(resampled_size);
   for (const auto & command : original_horizon) {
-    for (int i = 0; i < step_factor; ++i) {
-      resized_horizon.push_back(command);
+    for (size_t i = 0; i < step_factor; ++i) {
+      resampled_horizon.push_back(command);
     }
   }
-  return resized_horizon;
+  return resampled_horizon;
 }
 }  // namespace
 
@@ -243,7 +245,7 @@ void Controller::callbackTimerControl()
   // NOTE: It is possible that using control_horizon could be expected to enhance performance,
   // but it is not a formal interface topic, only an experimental one.
   const auto control_horizon =
-    createControlHorizon(lat_out.control_cmd_horizon, lon_out.control_cmd_horizon, this->now());
+    mergeLatLonHorizon(lat_out.control_cmd_horizon, lon_out.control_cmd_horizon, this->now());
   if (control_horizon.has_value()) {
     control_cmd_horizon_pub_->publish(control_horizon.value());
   }
@@ -286,7 +288,7 @@ void Controller::publishProcessingTime(
   pub->publish(msg);
 }
 
-std::optional<ControlHorizon> Controller::createControlHorizon(
+std::optional<ControlHorizon> Controller::mergeLatLonHorizon(
   const LateralHorizon & lateral_horizon, const LongitudinalHorizon & longitudinal_horizon,
   const rclcpp::Time & stamp)
 {
@@ -335,9 +337,9 @@ std::optional<ControlHorizon> Controller::createControlHorizon(
     gcd_double(lateral_horizon.time_step_ms, longitudinal_horizon.time_step_ms);
   control_horizon.time_step_ms = time_step_ms;
 
-  const auto lateral_controls = resizeHorizonByZeroOrderHold(
+  const auto lateral_controls = resampleHorizonByZeroOrderHold(
     lateral_horizon.controls, lateral_horizon.time_step_ms, time_step_ms);
-  const auto longitudinal_controls = resizeHorizonByZeroOrderHold(
+  const auto longitudinal_controls = resampleHorizonByZeroOrderHold(
     longitudinal_horizon.controls, longitudinal_horizon.time_step_ms, time_step_ms);
 
   if (lateral_controls.size() != longitudinal_controls.size()) {
