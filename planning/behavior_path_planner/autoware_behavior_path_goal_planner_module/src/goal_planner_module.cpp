@@ -63,9 +63,8 @@ GoalPlannerModule::GoalPlannerModule(
   const std::shared_ptr<GoalPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map,
-  std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, steering_factor_interface_ptr},  // NOLINT
+    objects_of_interest_marker_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{parameters},
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
   thread_safe_data_{mutex_, clock_},
@@ -134,6 +133,8 @@ GoalPlannerModule::GoalPlannerModule(
   if (parameters_->safety_check_params.enable_safety_check) {
     initializeSafetyCheckParameters();
   }
+
+  steering_factor_interface_.init(PlanningBehavior::GOAL_PLANNER);
 
   /**
    * NOTE: Add `universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);` to functions called
@@ -1262,8 +1263,7 @@ void GoalPlannerModule::updateSteeringFactor(
     return SteeringFactor::STRAIGHT;
   });
 
-  steering_factor_interface_ptr_->updateSteeringFactor(
-    pose, distance, PlanningBehavior::GOAL_PLANNER, steering_factor_direction, type, "");
+  steering_factor_interface_.set(pose, distance, steering_factor_direction, type, "");
 }
 
 void GoalPlannerModule::decideVelocity()
