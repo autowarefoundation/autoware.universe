@@ -295,7 +295,6 @@ TEST_F(TestRunOutUtils, testTrimPathFromSelfPose)
 
 TEST_F(TestRunOutUtils, testToEnum)
 {
-  std::string detection_method;
   EXPECT_EQ(toEnum("Object"), DetectionMethod::Object);
   EXPECT_EQ(toEnum("ObjectWithoutPath"), DetectionMethod::ObjectWithoutPath);
   EXPECT_EQ(toEnum("Points"), DetectionMethod::Points);

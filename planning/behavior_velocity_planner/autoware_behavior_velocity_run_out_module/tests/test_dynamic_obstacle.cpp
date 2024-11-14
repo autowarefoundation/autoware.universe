@@ -91,7 +91,7 @@ class TestDynamicObstacle : public ::testing::Test
   void init_param()
   {
     auto node_options = rclcpp::NodeOptions{};
-    auto node_ptr_ = std::make_shared<rclcpp::Node>(name_, node_options);
+    node_ptr_ = std::make_shared<rclcpp::Node>(name_, node_options);
     debug_ptr_ = std::make_shared<RunOutDebug>(*node_ptr_);
     object_creator_for_points_ =
       std::make_shared<DynamicObstacleCreatorForPoints>(*node_ptr_, debug_ptr_, param_);
@@ -301,9 +301,10 @@ TEST_F(TestDynamicObstacleMethods, testCalculateLateralNearestPoint)
   EXPECT_TRUE(lateral_nearest_points.size() <= n_path_points);
   for (size_t i = 0; i < lateral_nearest_points.size(); ++i) {
     const auto p = path.at(i);
-    const auto nearest_point = lateral_nearest_points.at(i);
+    const auto curr_nearest_point = lateral_nearest_points.at(i);
     auto deviation = std::abs(autoware::universe_utils::calcLateralDeviation(
-      p.point.pose, autoware::universe_utils::createPoint(nearest_point.x, nearest_point.y, 0)));
+      p.point.pose,
+      autoware::universe_utils::createPoint(curr_nearest_point.x, curr_nearest_point.y, 0)));
     EXPECT_DOUBLE_EQ(deviation, 0.0);
   }
 
