@@ -512,7 +512,7 @@ void NormalLaneChange::insert_stop_point_on_current_lanes(PathWithLaneId & path)
     dist_to_terminal - min_dist_buffer - calculation::calc_stopping_distance(lc_param_ptr);
 
   const auto distance_to_last_fit_width = std::invoke([&]() -> double {
-    const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current.value();
+    const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current;
     if (utils::isEgoWithinOriginalLane(curr_lanes_poly, getEgoPose(), *bpp_param_ptr)) {
       return utils::lane_change::calculation::calc_dist_to_last_fit_width(
         lanes_ptr->current, path.points.front().point.pose, *bpp_param_ptr);
@@ -595,13 +595,6 @@ std::optional<PathWithLaneId> NormalLaneChange::extendPath()
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   const auto path = status_.lane_change_path.path;
-  const auto lc_start_point = status_.lane_change_path.info.lane_changing_start.position;
-
-  const auto dist = calcSignedArcLength(path.points, lc_start_point, getEgoPosition());
-
-  if (dist < 0.0) {
-    return std::nullopt;
-  }
 
   auto & target_lanes = common_data_ptr_->lanes_ptr->target;
   const auto & transient_data = common_data_ptr_->transient_data;
@@ -613,22 +606,21 @@ std::optional<PathWithLaneId> NormalLaneChange::extendPath()
     forward_path_length) {
     return std::nullopt;
   }
+  const auto dist_to_end_of_path =
+    lanelet::utils::getArcCoordinates(target_lanes, path.points.back().point.pose).length;
 
-  const auto is_goal_in_target = getRouteHandler()->isInGoalRouteSection(target_lanes.back());
-
-  if (is_goal_in_target) {
+  if (common_data_ptr_->lanes_ptr->target_lane_in_goal_section) {
     const auto goal_pose = getRouteHandler()->getGoalPose();
 
     const auto dist_to_goal = lanelet::utils::getArcCoordinates(target_lanes, goal_pose).length;
-    const auto dist_to_end_of_path =
-      lanelet::utils::getArcCoordinates(target_lanes, path.points.back().point.pose).length;
 
     return getRouteHandler()->getCenterLinePath(target_lanes, dist_to_end_of_path, dist_to_goal);
   }
 
   lanelet::ConstLanelet next_lane;
   if (!getRouteHandler()->getNextLaneletWithinRoute(target_lanes.back(), &next_lane)) {
-    return std::nullopt;
+    return getRouteHandler()->getCenterLinePath(
+      target_lanes, dist_to_end_of_path, transient_data.target_lane_length);
   }
 
   target_lanes.push_back(next_lane);
@@ -644,8 +636,6 @@ std::optional<PathWithLaneId> NormalLaneChange::extendPath()
 
   const auto dist_to_target_pose =
     lanelet::utils::getArcCoordinates(target_lanes, target_pose).length;
-  const auto dist_to_end_of_path =
-    lanelet::utils::getArcCoordinates(target_lanes, path.points.back().point.pose).length;
 
   return getRouteHandler()->getCenterLinePath(
     target_lanes, dist_to_end_of_path, dist_to_target_pose);
@@ -740,7 +730,7 @@ bool NormalLaneChange::hasFinishedLaneChange() const
   if (has_passed_end_pose) {
     const auto & lanes_polygon = common_data_ptr_->lanes_polygon_ptr->target;
     return !boost::geometry::disjoint(
-      lanes_polygon.value(),
+      lanes_polygon,
       lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(current_pose.position)));
   }
 
@@ -767,7 +757,7 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
     return false;
   }
 
-  const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current.value();
+  const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current;
   if (!utils::isEgoWithinOriginalLane(
         curr_lanes_poly, getEgoPose(), planner_data_->parameters,
         lane_change_parameters_->cancel.overhang_tolerance)) {
@@ -843,7 +833,7 @@ bool NormalLaneChange::isAbleToStopSafely() const
   const auto stop_dist =
     -(current_velocity * current_velocity / (2.0 * planner_data_->parameters.min_acc));
 
-  const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current.value();
+  const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current;
   double dist = 0.0;
   for (size_t idx = nearest_idx; idx < status_.lane_change_path.path.points.size() - 1; ++idx) {
     dist += calcSignedArcLength(status_.lane_change_path.path.points, idx, idx + 1);
@@ -1076,7 +1066,7 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
   const auto & route_handler = getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
   const auto check_optional_polygon = [](const auto & object, const auto & polygon) {
-    return polygon && isPolygonOverlapLanelet(object, *polygon);
+    return !polygon.empty() && isPolygonOverlapLanelet(object, polygon);
   };
 
   // get backward lanes
@@ -1233,7 +1223,6 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
   const double shift_length, const double dist_to_reg_element) const
 {
   const auto & route_handler = getRouteHandler();
-  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
   const auto & transient_data = common_data_ptr_->transient_data;
   const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
     common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor,
@@ -1244,12 +1233,8 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
       transient_data.is_ego_near_current_terminal_start
         ? transient_data.dist_to_terminal_end - prep_metric.length
         : std::min(transient_data.dist_to_terminal_end, dist_to_reg_element) - prep_metric.length;
-    auto target_lane_buffer = lane_change_parameters_->lane_change_finish_judge_buffer +
-                              transient_data.next_dist_buffer.min;
-    if (std::abs(route_handler->getNumLaneToPreferredLane(target_lanes.back(), direction_)) > 0) {
-      target_lane_buffer += lane_change_parameters_->backward_length_buffer_for_end_of_lane;
-    }
-    max_length = std::min(max_length, dist_lc_start_to_end_of_lanes - target_lane_buffer);
+    max_length =
+      std::min(max_length, dist_lc_start_to_end_of_lanes - transient_data.next_dist_buffer.min);
     return max_length;
   });
 
@@ -1963,7 +1948,7 @@ bool NormalLaneChange::is_collided(
   const auto & current_polygon = lanes_polygon_ptr->current;
   const auto & expanded_target_polygon = lanes_polygon_ptr->target;
 
-  if (!current_polygon.has_value() || !expanded_target_polygon.has_value()) {
+  if (current_polygon.empty() || expanded_target_polygon.empty()) {
     return !is_collided;
   }
 
@@ -1989,9 +1974,9 @@ bool NormalLaneChange::is_collided(
     }
 
     const auto collision_in_current_lanes =
-      utils::lane_change::isCollidedPolygonsInLanelet(collided_polygons, current_polygon);
-    const auto collision_in_target_lanes =
-      utils::lane_change::isCollidedPolygonsInLanelet(collided_polygons, expanded_target_polygon);
+      utils::lane_change::is_collided_polygons_in_lanelet(collided_polygons, current_polygon);
+    const auto collision_in_target_lanes = utils::lane_change::is_collided_polygons_in_lanelet(
+      collided_polygons, expanded_target_polygon);
 
     if (!collision_in_current_lanes && !collision_in_target_lanes) {
       utils::path_safety_checker::updateCollisionCheckDebugMap(
@@ -2077,7 +2062,7 @@ bool NormalLaneChange::is_valid_start_point(
   const lanelet::BasicPoint2d lc_start_point(pose.position.x, pose.position.y);
 
   const auto & target_neighbor_poly = common_data_ptr->lanes_polygon_ptr->target_neighbor;
-  const auto & target_lane_poly = common_data_ptr_->lanes_polygon_ptr->target.value();
+  const auto & target_lane_poly = common_data_ptr_->lanes_polygon_ptr->target;
 
   return boost::geometry::covered_by(lc_start_point, target_neighbor_poly) ||
          boost::geometry::covered_by(lc_start_point, target_lane_poly);

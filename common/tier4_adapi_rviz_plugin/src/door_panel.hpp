@@ -18,8 +18,8 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <autoware/adapi_specs/vehicle.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
-#include <autoware_ad_api_specs/vehicle.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
@@ -31,9 +31,9 @@ namespace tier4_adapi_rviz_plugins
 class DoorPanel : public rviz_common::Panel
 {
   Q_OBJECT
-  using DoorCommand = autoware_ad_api::vehicle::DoorCommand;
-  using DoorLayout = autoware_ad_api::vehicle::DoorLayout;
-  using DoorStatus = autoware_ad_api::vehicle::DoorStatus;
+  using DoorCommand = autoware::adapi_specs::vehicle::DoorCommand;
+  using DoorLayout = autoware::adapi_specs::vehicle::DoorLayout;
+  using DoorStatus = autoware::adapi_specs::vehicle::DoorStatus;
 
 public:
   explicit DoorPanel(QWidget * parent = nullptr);

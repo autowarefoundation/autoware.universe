@@ -48,7 +48,7 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
   if (path->points.empty()) return true;
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   debug_data_.base_link2front = base_link2front;
-  first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
+  first_stop_path_point_distance_ = autoware::motion_utils::calcArcLength(path->points);
   *stop_reason = planning_utils::initializeStopReason(StopReason::STOP_LINE);
 
   const LineString2d stop_line = planning_utils::extendLine(
@@ -91,7 +91,8 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
       planning_utils::insertStopPoint(stop_pose.position, stop_line_seg_idx, *path);
 
       // Update first stop index
-      first_stop_path_point_index_ = static_cast<int>(stop_point_idx);
+      first_stop_path_point_distance_ = autoware::motion_utils::calcSignedArcLength(
+        path->points, 0, stop_pose.position, stop_line_seg_idx);
       debug_data_.stop_pose = stop_pose;
 
       // Get stop point and stop factor

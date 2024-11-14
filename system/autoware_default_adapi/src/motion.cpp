@@ -88,7 +88,7 @@ void MotionNode::update_state()
 
 void MotionNode::change_state(const State state)
 {
-  using MotionState = autoware_ad_api::motion::State::Message;
+  using MotionState = autoware::adapi_specs::motion::State::Message;
   static const auto mapping = std::unordered_map<State, MotionState::_state_type>(
     {{State::Unknown, MotionState::UNKNOWN},
      {State::Pausing, MotionState::STOPPED},
@@ -149,11 +149,11 @@ void MotionNode::on_is_start_requested(
 }
 
 void MotionNode::on_accept(
-  const autoware_ad_api::motion::AcceptStart::Service::Request::SharedPtr,
-  const autoware_ad_api::motion::AcceptStart::Service::Response::SharedPtr res)
+  const autoware::adapi_specs::motion::AcceptStart::Service::Request::SharedPtr,
+  const autoware::adapi_specs::motion::AcceptStart::Service::Response::SharedPtr res)
 {
   if (state_ != State::Starting) {
-    using AcceptStartResponse = autoware_ad_api::motion::AcceptStart::Service::Response;
+    using AcceptStartResponse = autoware::adapi_specs::motion::AcceptStart::Service::Response;
     throw autoware::component_interface_utils::ServiceException(
       AcceptStartResponse::ERROR_NOT_STARTING, "The motion state is not starting");
   }
