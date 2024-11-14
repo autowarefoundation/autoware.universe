@@ -1087,16 +1087,17 @@ double getRoadShoulderDistance(
     return 0.0;
   }
 
+  const auto centerline_pose =
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object.getPosition());
+  // TODO(Satoshi OTA): check if the basic point is on right or left of bound.
+  const auto bound = isOnRight(object) ? data.left_bound : data.right_bound;
+  const auto envelope_polygon_width = boost::geometry::area(object.envelope_poly) /
+                                      std::max(object.length, 1e-3);  // prevent division by zero
+
   std::vector<std::tuple<double, Point, Point>> intersects;
   for (const auto & p1 : object.overhang_points) {
-    const auto centerline_pose =
-      lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object.getPosition());
     const auto p_tmp =
       geometry_msgs::build<Pose>().position(p1.second).orientation(centerline_pose.orientation);
-
-    // TODO(Satoshi OTA): check if the basic point is on right or left of bound.
-    const auto bound = isOnRight(object) ? data.left_bound : data.right_bound;
-
     for (size_t i = 1; i < bound.size(); i++) {
       {
         const auto p2 =
@@ -1110,11 +1111,6 @@ double getRoadShoulderDistance(
           break;
         }
       }
-
-      const auto envelope_polygon_width =
-        boost::geometry::area(object.envelope_poly) /
-        std::max(object.length, 1e-3);  // prevent division by zero
-
       {
         const auto p2 =
           calcOffsetPose(p_tmp, 0.0, (isOnRight(object) ? -0.5 : 0.5) * envelope_polygon_width, 0.0)
