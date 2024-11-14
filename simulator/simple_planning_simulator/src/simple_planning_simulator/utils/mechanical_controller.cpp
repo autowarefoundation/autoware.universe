@@ -95,6 +95,14 @@ void PIDController::update_state(const double error, const double dt)
   state_.error = error;
 };
 
+void PIDController::update_state(
+  const double k1_error, const double k2_error, const double k3_error, const double k4_error,
+  const double dt)
+{
+  state_.error = (k1_error + 2 * k2_error + 2 * k3_error + k4_error) / 6.0;
+  state_.integral += state_.error * dt;
+};
+
 PIDControllerState PIDController::get_state() const
 {
   return state_;
@@ -266,6 +274,7 @@ double MechanicalController::update_runge_kutta(
      2.0 * k3.dynamics_d_state.d_angular_velocity + k4.dynamics_d_state.d_angular_velocity) /
     6.0;
 
+  // update steering dynamics/controller internal state
   auto dynamics_state_new = dynamics_state;
   dynamics_state_new.angular_position = std::clamp(
     dynamics_state.angular_position + d_angular_position * dt, -params_.angle_limit,
@@ -273,11 +282,24 @@ double MechanicalController::update_runge_kutta(
   dynamics_state_new.angular_velocity = std::clamp(
     dynamics_state.angular_velocity + d_angular_velocity * dt, -params_.rate_limit,
     params_.rate_limit);
-  dynamics_state_new.is_in_dead_zone = k4.is_in_dead_zone;
+  pid_.update_state(k1.pid_error, k2.pid_error, k3.pid_error, k4.pid_error, dt);
+  if (
+    k1.delay_buffer.empty() || k2.delay_buffer.empty() || k3.delay_buffer.empty() ||
+    k4.delay_buffer.empty()) {
+    // This condition is assumed to never be met because it is always pushed by
+    // the delay() function.
+    return dynamics_state.angular_position;
+  }
+  const double delayed_signal =
+    (k1.delay_buffer.back().first + 2.0 * k2.delay_buffer.back().first +
+     2.0 * k3.delay_buffer.back().first + k4.delay_buffer.back().first) /
+    6.0;
+  const double elapsed_time = delay_buffer_.empty() ? dt : delay_buffer_.back().second + dt;
+  delay_buffer_ =
+    delay(delayed_signal, params_.torque_delay_time, delay_buffer_, elapsed_time).second;
+  dynamics_state_new.is_in_dead_zone =
+    steering_dynamics_.is_in_dead_zone(dynamics_state_new, delayed_signal);
   steering_dynamics_.set_state(dynamics_state_new);
-
-  pid_.update_state(k4.pid_error, dt);
-  delay_buffer_ = k4.delay_buffer;
 
   return dynamics_state_new.angular_position;
 }

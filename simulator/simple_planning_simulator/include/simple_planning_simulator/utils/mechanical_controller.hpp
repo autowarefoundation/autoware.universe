@@ -66,6 +66,10 @@ public:
 
   void update_state(const double error, const double dt);
 
+  void update_state(
+    const double k1_error, const double k2_error, const double k3_error, const double k4_error,
+    const double dt);
+
   [[nodiscard]] PIDControllerState get_state() const;
 
   void clear_state();
