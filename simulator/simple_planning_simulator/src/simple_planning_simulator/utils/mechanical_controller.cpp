@@ -223,6 +223,7 @@ double MechanicalController::update_runge_kutta(
 {
   const auto dynamics_state = steering_dynamics_.get_state();
 
+  // NOTE: k1, k2, k3, k4 suffix denote the intermediate points of RK4
   const auto k1 =
     run_one_step(input_angle, speed, prev_input_angle, dt, delay_buffer_, pid_, steering_dynamics_);
 

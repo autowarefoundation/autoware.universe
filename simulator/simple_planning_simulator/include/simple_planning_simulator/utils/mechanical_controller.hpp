@@ -129,11 +129,11 @@ public:
 
 private:
   SteeringDynamicsState state_;
-  double inertia_{0.0};
-  double damping_{0.0};
-  double stiffness_{0.0};
-  double friction_{0.0};
-  double dead_zone_threshold_{0.0};
+  const double inertia_;
+  const double damping_;
+  const double stiffness_;
+  const double friction_;
+  const double dead_zone_threshold_;
 };
 
 struct StepResult
@@ -191,7 +191,7 @@ private:
   DelayBuffer delay_buffer_;
   PIDController pid_;
   SteeringDynamics steering_dynamics_;
-  MechanicalParams params_;
+  const MechanicalParams params_;
 
   [[nodiscard]] StepResult run_one_step(
     const double input_angle, const double speed, const double prev_input_angle, const double dt,
