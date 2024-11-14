@@ -56,6 +56,11 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
 
   const double ctrl_period = declare_parameter<double>("ctrl_period");
   timeout_thr_sec_ = declare_parameter<double>("timeout_thr_sec");
+  // NOTE: It is possible that using control_horizon could be expected to enhance performance,
+  // but it is not a formal interface topic, only an experimental one.
+  // So it is disabled by default.
+  enable_control_cmd_horizon_pub_ =
+    declare_parameter<bool>("enable_control_cmd_horizon_pub", false);
 
   const auto lateral_controller_mode =
     getLateralControllerMode(declare_parameter<std::string>("lateral_controller_mode"));
@@ -96,8 +101,10 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
   debug_marker_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_marker", rclcpp::QoS{1});
 
-  control_cmd_horizon_pub_ = create_publisher<autoware_control_msgs::msg::ControlHorizon>(
-    "~/experimental/control_cmd_horizon", 1);
+  if (enable_control_cmd_horizon_pub_) {
+    control_cmd_horizon_pub_ = create_publisher<autoware_control_msgs::msg::ControlHorizon>(
+      "~/experimental/control_cmd_horizon", 1);
+  }
 
   // Timer
   {
@@ -242,12 +249,12 @@ void Controller::callbackTimerControl()
   publishDebugMarker(*input_data, lat_out);
 
   // 7. publish experimental topic
-  // NOTE: It is possible that using control_horizon could be expected to enhance performance,
-  // but it is not a formal interface topic, only an experimental one.
-  const auto control_horizon =
-    mergeLatLonHorizon(lat_out.control_cmd_horizon, lon_out.control_cmd_horizon, this->now());
-  if (control_horizon.has_value()) {
-    control_cmd_horizon_pub_->publish(control_horizon.value());
+  if (enable_control_cmd_horizon_pub_) {
+    const auto control_horizon =
+      mergeLatLonHorizon(lat_out.control_cmd_horizon, lon_out.control_cmd_horizon, this->now());
+    if (control_horizon.has_value()) {
+      control_cmd_horizon_pub_->publish(control_horizon.value());
+    }
   }
 }
 
