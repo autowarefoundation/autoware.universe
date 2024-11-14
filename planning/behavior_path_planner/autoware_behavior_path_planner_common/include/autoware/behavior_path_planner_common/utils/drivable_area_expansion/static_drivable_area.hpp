@@ -56,6 +56,22 @@ std::vector<DrivableLanes> generateDrivableLanesWithShoulderLanes(
 std::vector<DrivableLanes> getNonOverlappingExpandedLanes(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
   const DrivableAreaExpansionParameters & parameters);
+
+/**
+ * @brief generate the drivable area of the given path
+ * @param [inout] path path whose center line is used to calculate the drivable area and whose
+ * left/right bound are generated
+ * @param [in] lanes lanes driven by the ego vehicle
+ * @param [in] enable_expanding_hatched_road_markings if true, expand the drivable area into hatched
+ * road markings
+ * @param [in] enable_expanding_intersection_areas if true, expand the drivable area into
+ * intersection areas
+ * @param [in] enable_expanding_freespace_areas if true, expand the drivable area into freespace
+ * areas
+ * @param [in] planner_data planner data with the route handler (and map), the parameters, the ego
+ * pose, etc
+ * @param [in] is_driving_forward true if the ego vehicle drives in the forward direction
+ */
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,

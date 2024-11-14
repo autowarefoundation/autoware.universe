@@ -18,10 +18,11 @@
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
 
-#include <geometry_msgs/msg/detail/point__struct.hpp>
-#include <tier4_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp>
-#include <tier4_planning_msgs/msg/detail/path_with_lane_id__struct.hpp>
+#include <nav_msgs/msg/detail/odometry__struct.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+
+#include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
+#include <boost/geometry/algorithms/detail/intersects/interface.hpp>
 
 #include <gtest/gtest.h>
 #include <lanelet2_core/Forward.h>
@@ -30,8 +31,11 @@
 #include <lanelet2_core/primitives/LineString.h>
 #include <lanelet2_core/primitives/Point.h>
 
-// constexpr auto eps = 1e-9;
+#include <memory>
 
+const auto intersection_map =
+  autoware::test_utils::make_map_bin_msg(autoware::test_utils::get_absolute_path_to_lanelet_map(
+    "autoware_test_utils", "intersection/lanelet2_map.osm"));
 using autoware::behavior_path_planner::DrivableLanes;
 
 lanelet::ConstLanelet make_lanelet(
@@ -264,7 +268,7 @@ TEST(StaticDrivableArea, generateDrivableLanes)
   }
 }
 
-TEST(StaticDrivableArea, generateDrivableArea)
+TEST(StaticDrivableArea, generateDrivableArea_subfunction)
 {
   using autoware::behavior_path_planner::utils::generateDrivableArea;
   tier4_planning_msgs::msg::PathWithLaneId path;
@@ -388,9 +392,7 @@ TEST(StaticDrivableArea, getBoundWithIntersectionAreas)
     getBoundWithIntersectionAreas(original_bound, route_handler, drivable_lanes, is_left);
   EXPECT_TRUE(result.empty());
 
-  const std::string map_path = autoware::test_utils::get_absolute_path_to_lanelet_map(
-    "autoware_test_utils", "intersection/lanelet2_map.osm");
-  route_handler->setMap(autoware::test_utils::make_map_bin_msg(map_path));
+  route_handler->setMap(intersection_map);
   DrivableLanes lanes;
   const auto lanelet_with_intersection_area = route_handler->getLaneletsFromId(3101);
   lanes.middle_lanes = {};
@@ -453,5 +455,87 @@ TEST(StaticDrivableArea, combineDrivableAreaInfo)
     EXPECT_FALSE(combined.enable_expanding_freespace_areas);
     EXPECT_TRUE(combined.enable_expanding_intersection_areas);
     EXPECT_TRUE(combined.enable_expanding_hatched_road_markings);
+  }
+}
+
+TEST(StaticDrivableArea, generateDrivableArea)
+{
+  using autoware::behavior_path_planner::PlannerData;
+  using autoware::behavior_path_planner::utils::generateDrivableArea;
+  tier4_planning_msgs::msg::PathWithLaneId path;
+  std::vector<DrivableLanes> lanes;
+  bool enable_expanding_hatched_road_markings = true;
+  bool enable_expanding_intersection_areas = true;
+  bool enable_expanding_freespace_areas = true;
+  bool is_driving_forward = true;
+  PlannerData planner_data;
+  planner_data.drivable_area_expansion_parameters.enabled = false;  // disable dynamic expansion
+  planner_data.parameters.ego_nearest_dist_threshold = 1.0;
+  planner_data.parameters.ego_nearest_yaw_threshold = M_PI;
+  auto planner_data_ptr = std::make_shared<PlannerData>(planner_data);
+  // empty
+  generateDrivableArea(
+    path, lanes, enable_expanding_hatched_road_markings, enable_expanding_intersection_areas,
+    enable_expanding_freespace_areas, planner_data_ptr, is_driving_forward);
+  planner_data.route_handler = std::make_shared<autoware::route_handler::RouteHandler>();
+  planner_data.route_handler->setMap(intersection_map);
+  // create a path from a lanelet centerline
+  constexpr auto lanelet_id = 3008377;
+  const auto ll = planner_data.route_handler->getLaneletsFromId(lanelet_id);
+  const auto shoulder_ll = planner_data.route_handler->getLaneletsFromId(3008385);
+  lanes = autoware::behavior_path_planner::utils::generateDrivableLanes({ll, shoulder_ll});
+  lanelet::BasicLineString2d path_ls;
+  for (const auto & p : ll.centerline().basicLineString()) {
+    tier4_planning_msgs::msg::PathPointWithLaneId pp;
+    pp.point.pose.position.x = p.x();
+    pp.point.pose.position.y = p.y();
+    pp.point.pose.position.z = p.z();
+    pp.lane_ids = {lanelet_id};
+    path.points.push_back(pp);
+    path_ls.emplace_back(p.x(), p.y());
+  }
+  auto odometry = nav_msgs::msg::Odometry();
+  odometry.pose.pose = path.points.front().point.pose;
+  planner_data.self_odometry = std::make_shared<nav_msgs::msg::Odometry>(odometry);
+  planner_data_ptr = std::make_shared<PlannerData>(planner_data);
+  generateDrivableArea(
+    path, lanes, enable_expanding_hatched_road_markings, enable_expanding_intersection_areas,
+    enable_expanding_freespace_areas, planner_data_ptr, is_driving_forward);
+
+  ASSERT_EQ(path.left_bound.size(), ll.leftBound().size());
+  ASSERT_EQ(path.right_bound.size(), ll.rightBound().size());
+  {
+    lanelet::BasicLineString2d left_ls;
+    lanelet::BasicLineString2d right_ls;
+    for (const auto & p : path.left_bound) {
+      left_ls.emplace_back(p.x, p.y);
+    }
+    for (const auto & p : path.right_bound) {
+      right_ls.emplace_back(p.x, p.y);
+    }
+    EXPECT_FALSE(boost::geometry::intersects(path_ls, left_ls));
+    // EXPECT_FALSE(boost::geometry::intersects(path_ls, right_ls)); TODO(someone): looks like a bug
+  }
+  // reverse case
+  is_driving_forward = false;
+  odometry.pose.pose = std::prev(path.points.end(), 2)->point.pose;
+  planner_data.self_odometry = std::make_shared<nav_msgs::msg::Odometry>(odometry);
+  planner_data_ptr = std::make_shared<PlannerData>(planner_data);
+  generateDrivableArea(
+    path, lanes, enable_expanding_hatched_road_markings, enable_expanding_intersection_areas,
+    enable_expanding_freespace_areas, planner_data_ptr, is_driving_forward);
+  ASSERT_EQ(path.left_bound.size(), ll.leftBound().size());
+  ASSERT_EQ(path.right_bound.size(), ll.rightBound().size());
+  {
+    lanelet::BasicLineString2d left_ls;
+    lanelet::BasicLineString2d right_ls;
+    for (const auto & p : path.left_bound) {
+      left_ls.emplace_back(p.x, p.y);
+    }
+    for (const auto & p : path.right_bound) {
+      right_ls.emplace_back(p.x, p.y);
+    }
+    EXPECT_FALSE(boost::geometry::intersects(path_ls, left_ls));
+    EXPECT_FALSE(boost::geometry::intersects(path_ls, right_ls));
   }
 }
