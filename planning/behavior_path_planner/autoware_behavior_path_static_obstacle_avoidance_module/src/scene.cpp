@@ -24,6 +24,7 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/debug.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/system/time_keeper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
@@ -916,13 +917,14 @@ PathWithLaneId StaticObstacleAvoidanceModule::extendBackwardLength(
   }
 
   size_t clip_idx = 0;
-  for (size_t i = 0; i < prev_ego_idx; ++i) {
-    if (
-      backward_length >
-      autoware::motion_utils::calcSignedArcLength(previous_path.points, clip_idx, *prev_ego_idx)) {
+  double accumulated_length = 0.0;
+  for (size_t i = prev_ego_idx.value(); i > 0; i--) {
+    accumulated_length += autoware::universe_utils::calcDistance2d(
+      previous_path.points.at(i - 1), previous_path.points.at(i));
+    if (accumulated_length > backward_length) {
+      clip_idx = i;
       break;
     }
-    clip_idx = i;
   }
 
   PathWithLaneId extended_path{};
