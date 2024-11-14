@@ -30,7 +30,7 @@
  *
  */
 
-#include "autoware_costmap_generator/object_map_utils.hpp"
+#include "autoware/costmap_generator/utils/object_map_utils.hpp"
 
 #include <autoware/grid_map_utils/polygon_iterator.hpp>
 #include <grid_map_core/Polygon.hpp>
@@ -46,23 +46,16 @@ namespace autoware::costmap_generator::object_map
 void fill_polygon_areas(
   grid_map::GridMap & out_grid_map, const std::vector<geometry_msgs::msg::Polygon> & in_polygons,
   const std::string & in_grid_layer_name, const float in_layer_background_value,
-  const float in_fill_value, const std::string & in_tf_target_frame,
-  const std::string & in_tf_source_frame, const tf2_ros::Buffer & in_tf_buffer)
+  const float in_fill_value)
 {
   if (!out_grid_map.exists(in_grid_layer_name)) {
     out_grid_map.add(in_grid_layer_name);
   }
   out_grid_map[in_grid_layer_name].setConstant(in_layer_background_value);
 
-  const geometry_msgs::msg::TransformStamped transform =
-    in_tf_buffer.lookupTransform(in_tf_target_frame, in_tf_source_frame, tf2::TimePointZero);
-
   for (const auto & poly : in_polygons) {
-    // transform from Map to GridMap coordinates
-    geometry_msgs::msg::Polygon transformed_poly;
-    tf2::doTransform(poly, transformed_poly, transform);
     grid_map::Polygon grid_map_poly;
-    for (const auto & p : transformed_poly.points) {
+    for (const auto & p : poly.points) {
       grid_map_poly.addVertex({p.x, p.y});
     }
     for (grid_map_utils::PolygonIterator it(out_grid_map, grid_map_poly); !it.isPastEnd(); ++it) {

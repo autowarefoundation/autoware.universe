@@ -208,7 +208,6 @@ void GoalPlannerModule::onTimer()
   std::optional<BehaviorModuleOutput> last_previous_module_output_opt{std::nullopt};
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map{nullptr};
   std::optional<GoalPlannerParameters> parameters_opt{std::nullopt};
-  std::shared_ptr<GoalSearcherBase> goal_searcher{nullptr};
 
   // begin of critical section
   {
@@ -221,18 +220,17 @@ void GoalPlannerModule::onTimer()
       last_previous_module_output_opt = gp_planner_data.last_previous_module_output;
       occupancy_grid_map = gp_planner_data.occupancy_grid_map;
       parameters_opt = gp_planner_data.parameters;
-      goal_searcher = gp_planner_data.goal_searcher;
     }
   }
   // end of critical section
   if (
     !local_planner_data || !current_status_opt || !previous_module_output_opt ||
-    !last_previous_module_output_opt || !occupancy_grid_map || !parameters_opt || !goal_searcher) {
+    !last_previous_module_output_opt || !occupancy_grid_map || !parameters_opt) {
     RCLCPP_ERROR(
       getLogger(),
       "failed to get valid "
-      "local_planner_data/current_status/previous_module_output/occupancy_grid_map/parameters_opt/"
-      "goal_searcher in onTimer");
+      "local_planner_data/current_status/previous_module_output/occupancy_grid_map/parameters_opt "
+      "in onTimer");
     return;
   }
   const auto & current_status = current_status_opt.value();
@@ -375,7 +373,7 @@ void GoalPlannerModule::onFreespaceParkingTimer()
   std::optional<ModuleStatus> current_status_opt{std::nullopt};
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map{nullptr};
   std::optional<GoalPlannerParameters> parameters_opt{std::nullopt};
-  std::shared_ptr<GoalSearcherBase> goal_searcher{nullptr};
+  std::optional<autoware::universe_utils::LinearRing2d> vehicle_footprint_opt{std::nullopt};
 
   // begin of critical section
   {
@@ -386,20 +384,21 @@ void GoalPlannerModule::onFreespaceParkingTimer()
       current_status_opt = gp_planner_data.current_status;
       occupancy_grid_map = gp_planner_data.occupancy_grid_map;
       parameters_opt = gp_planner_data.parameters;
-      goal_searcher = gp_planner_data.goal_searcher;
+      vehicle_footprint_opt = gp_planner_data.vehicle_footprint;
     }
   }
   // end of critical section
-  if (!local_planner_data || !current_status_opt || !parameters_opt || !goal_searcher) {
+  if (!local_planner_data || !current_status_opt || !parameters_opt || !vehicle_footprint_opt) {
     RCLCPP_ERROR(
       getLogger(),
-      "failed to get valid planner_data/current_status/parameters/goal_searcher in "
+      "failed to get valid planner_data/current_status/parameters in "
       "onFreespaceParkingTimer");
     return;
   }
 
   const auto & current_status = current_status_opt.value();
   const auto & parameters = parameters_opt.value();
+  const auto & vehicle_footprint = vehicle_footprint_opt.value();
 
   if (current_status == ModuleStatus::IDLE) {
     return;
@@ -437,6 +436,8 @@ void GoalPlannerModule::onFreespaceParkingTimer()
     needPathUpdate(
       local_planner_data->self_odometry->pose.pose, path_update_duration, modified_goal_opt,
       parameters)) {
+    auto goal_searcher = std::make_shared<GoalSearcher>(parameters, vehicle_footprint);
+
     planFreespacePath(local_planner_data, goal_searcher, occupancy_grid_map);
   }
 }
@@ -522,7 +523,7 @@ void GoalPlannerModule::updateData()
     // **re-pointing** by `planner_data_->foo = msg` in behavior_path_planner::onCallbackFor(msg)
     // and if these two coincided, only the reference count is affected
     gp_planner_data.update(
-      *parameters_, *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), goal_searcher_,
+      *parameters_, *planner_data_, getCurrentStatus(), getPreviousModuleOutput(),
       vehicle_footprint_);
     // NOTE: RouteHandler holds several shared pointers in it, so just copying PlannerData as
     // value does not adds the reference counts of RouteHandler.lanelet_map_ptr_ and others. Since
@@ -585,14 +586,6 @@ void GoalPlannerModule::updateData()
 
   // update goal searcher and generate goal candidates
   if (thread_safe_data_.get_goal_candidates().empty()) {
-    const auto refined_goal = goal_planner_utils::calcRefinedGoal(
-      planner_data_->route_handler->getOriginalGoalPose(), planner_data_->route_handler,
-      left_side_parking_, planner_data_->parameters.vehicle_width,
-      planner_data_->parameters.base_link2front, planner_data_->parameters.base_link2rear,
-      *parameters_);
-    if (refined_goal) {
-      goal_searcher_->setReferenceGoal(refined_goal.value());
-    }
     thread_safe_data_.set_goal_candidates(generateGoalCandidates());
   }
 
@@ -2210,6 +2203,10 @@ bool GoalPlannerModule::isSafePath(
   const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
   const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
 {
+  using autoware::behavior_path_planner::utils::path_safety_checker::createPredictedPath;
+  using autoware::behavior_path_planner::utils::path_safety_checker::
+    filterPredictedPathAfterTargetPose;
+
   if (!found_pull_over_path || !pull_over_path_opt) {
     return false;
   }
@@ -2227,7 +2224,6 @@ bool GoalPlannerModule::isSafePath(
   const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
     *route_handler, left_side_parking_, parameters.backward_goal_search_length,
     parameters.forward_goal_search_length);
-  const size_t ego_seg_idx = planner_data->findEgoSegmentIndex(current_pull_over_path.points);
   const std::pair<double, double> terminal_velocity_and_accel =
     pull_over_path.getPairsTerminalVelocityAndAccel();
   RCLCPP_DEBUG(
@@ -2238,10 +2234,12 @@ bool GoalPlannerModule::isSafePath(
   // TODO(Sugahara): shoule judge is_object_front properly
   const bool is_object_front = true;
   const bool limit_to_max_velocity = true;
-  const auto ego_predicted_path =
-    autoware::behavior_path_planner::utils::path_safety_checker::createPredictedPath(
-      ego_predicted_path_params, current_pull_over_path.points, current_pose, current_velocity,
-      ego_seg_idx, is_object_front, limit_to_max_velocity);
+  const auto ego_seg_idx = planner_data->findEgoIndex(current_pull_over_path.points);
+  const auto ego_predicted_path_from_current_pose = createPredictedPath(
+    ego_predicted_path_params, current_pull_over_path.points, current_pose, current_velocity,
+    ego_seg_idx, is_object_front, limit_to_max_velocity);
+  const auto ego_predicted_path = filterPredictedPathAfterTargetPose(
+    ego_predicted_path_from_current_pose, pull_over_path.start_pose());
 
   // ==========================================================================================
   // if ego is before the entry of pull_over_lanes, the beginning of the safety check area
@@ -2594,15 +2592,13 @@ GoalPlannerModule::GoalPlannerData GoalPlannerModule::GoalPlannerData::clone() c
   GoalPlannerModule::GoalPlannerData gp_planner_data(
     planner_data, parameters, last_previous_module_output);
   gp_planner_data.update(
-    parameters, planner_data, current_status, previous_module_output, goal_searcher,
-    vehicle_footprint);
+    parameters, planner_data, current_status, previous_module_output, vehicle_footprint);
   return gp_planner_data;
 }
 
 void GoalPlannerModule::GoalPlannerData::update(
   const GoalPlannerParameters & parameters_, const PlannerData & planner_data_,
   const ModuleStatus & current_status_, const BehaviorModuleOutput & previous_module_output_,
-  const std::shared_ptr<GoalSearcherBase> goal_searcher_,
   const autoware::universe_utils::LinearRing2d & vehicle_footprint_)
 {
   parameters = parameters_;
@@ -2614,11 +2610,6 @@ void GoalPlannerModule::GoalPlannerData::update(
   last_previous_module_output = previous_module_output;
   previous_module_output = previous_module_output_;
   occupancy_grid_map->setMap(*(planner_data.occupancy_grid));
-  // to create a deepcopy of GoalPlanner(not GoalPlannerBase), goal_searcher_ is not enough, so
-  // recreate it here
-  goal_searcher = std::make_shared<GoalSearcher>(parameters, vehicle_footprint);
-  // and then copy the reference goal
-  goal_searcher->setReferenceGoal(goal_searcher_->getReferenceGoal());
 }
 
 void PathDecisionStateController::transit_state(
