@@ -125,7 +125,7 @@ tier4_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager::planPat
     }
   }
 
-  geometry_msgs::msg::Pose stop_pose = autoware::motion_utils::calcInterpolatedPose(
+  const geometry_msgs::msg::Pose stop_pose = autoware::motion_utils::calcInterpolatedPose(
     output_path_msg.points, first_stop_path_point_distance);
 
   stop_reason_diag_ = makeStopReasonDiag(stop_reason_msg, stop_pose);
