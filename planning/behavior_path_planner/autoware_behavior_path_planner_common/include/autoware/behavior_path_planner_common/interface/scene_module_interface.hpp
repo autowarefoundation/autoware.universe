@@ -74,6 +74,7 @@ using tier4_rtc_msgs::msg::State;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
+using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 
 enum class ModuleStatus {
   IDLE = 0,
@@ -90,15 +91,13 @@ public:
     const std::string & name, rclcpp::Node & node,
     std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>
-      objects_of_interest_marker_interface_ptr_map,
-    std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
+      objects_of_interest_marker_interface_ptr_map)
   : name_{name},
     logger_{node.get_logger().get_child(name)},
     clock_{node.get_clock()},
     rtc_interface_ptr_map_(std::move(rtc_interface_ptr_map)),
     objects_of_interest_marker_interface_ptr_map_(
       std::move(objects_of_interest_marker_interface_ptr_map)),
-    steering_factor_interface_ptr_{steering_factor_interface_ptr},
     time_keeper_(std::make_shared<universe_utils::TimeKeeper>())
   {
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
@@ -189,7 +188,8 @@ public:
     clearWaitingApproval();
     unlockNewModuleLaunch();
     unlockOutputPath();
-    steering_factor_interface_ptr_->clearSteeringFactors();
+
+    reset_factor();
 
     stop_reason_ = StopReason();
 
@@ -203,14 +203,6 @@ public:
         ptr->publishMarkerArray();
       }
     }
-  }
-
-  void publishSteeringFactor()
-  {
-    if (!steering_factor_interface_ptr_) {
-      return;
-    }
-    steering_factor_interface_ptr_->publishSteeringFactor(clock_->now());
   }
 
   void lockRTCCommand()
@@ -274,6 +266,10 @@ public:
   ModuleStatus getCurrentStatus() const { return current_state_; }
 
   StopReason getStopReason() const { return stop_reason_; }
+
+  void reset_factor() { steering_factor_interface_.reset(); }
+
+  auto get_steering_factor() const -> SteeringFactor { return steering_factor_interface_.get(); }
 
   std::string name() const { return name_; }
 
@@ -631,7 +627,7 @@ protected:
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>
     objects_of_interest_marker_interface_ptr_map_;
 
-  std::shared_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
+  mutable SteeringFactorInterface steering_factor_interface_;
 
   mutable std::optional<Pose> stop_pose_{std::nullopt};
 
