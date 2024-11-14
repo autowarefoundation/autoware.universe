@@ -17,7 +17,7 @@
 /// \copyright Copyright 2021 Apex.AI, Inc.
 /// All rights reserved.
 
-#include <fake_test_node/fake_test_node.hpp>
+#include <autoware/fake_test_node/fake_test_node.hpp>
 
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/int32.hpp>
@@ -30,8 +30,8 @@
 
 using bool8_t = bool;
 
-using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
-using FakeNodeFixtureParametrized = autoware::tools::testing::FakeTestNodeParametrized<bool8_t>;
+using FakeNodeFixture = autoware::fake_test_node::FakeTestNode;
+using FakeNodeFixtureParametrized = autoware::fake_test_node::FakeTestNodeParametrized<bool8_t>;
 using std_msgs::msg::Bool;
 using std_msgs::msg::Int32;
 

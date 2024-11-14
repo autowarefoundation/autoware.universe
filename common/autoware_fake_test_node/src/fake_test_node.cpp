@@ -17,12 +17,12 @@
 /// \copyright Copyright 2021 Apex.AI, Inc.
 /// All rights reserved.
 
-#include <fake_test_node/fake_test_node.hpp>
+#include <autoware/fake_test_node/fake_test_node.hpp>
 
 #include <memory>
 #include <string>
 
-namespace
+namespace autoware::fake_test_node
 {
 constexpr auto kSpinThread = false;
 constexpr auto kArgc = 0;
@@ -33,15 +33,6 @@ std::string sanitize_test_name(const std::string & name)
   std::replace(sanitize_test_name.begin(), sanitize_test_name.end(), '/', '_');
   return sanitize_test_name;
 }
-
-}  // namespace
-
-namespace autoware
-{
-namespace tools
-{
-namespace testing
-{
 
 void detail::FakeNodeCore::set_up(const std::string & test_name)
 {
@@ -76,6 +67,4 @@ void FakeTestNode::TearDown()
   tear_down();
 }
 
-}  // namespace testing
-}  // namespace tools
-}  // namespace autoware
+}  // namespace autoware::fake_test_node

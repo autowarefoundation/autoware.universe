@@ -17,8 +17,8 @@
 /// \copyright Copyright 2021 Apex.AI, Inc.
 /// All rights reserved.
 
-#ifndef FAKE_TEST_NODE__VISIBILITY_CONTROL_HPP_
-#define FAKE_TEST_NODE__VISIBILITY_CONTROL_HPP_
+#ifndef AUTOWARE__FAKE_TEST_NODE__VISIBILITY_CONTROL_HPP_
+#define AUTOWARE__FAKE_TEST_NODE__VISIBILITY_CONTROL_HPP_
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(__WIN32)
@@ -39,4 +39,4 @@
 #error "Unsupported Build Configuration"
 #endif  // defined(__WIN32)
 
-#endif  // FAKE_TEST_NODE__VISIBILITY_CONTROL_HPP_
+#endif  // AUTOWARE__FAKE_TEST_NODE__VISIBILITY_CONTROL_HPP_

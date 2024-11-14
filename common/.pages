@@ -2,7 +2,7 @@ nav:
   - 'Introduction': common
   - 'Testing Libraries':
     - 'autoware_testing': common/autoware_testing/design/autoware_testing-design
-    - 'fake_test_node': common/fake_test_node/design/fake_test_node-design
+    - 'autoware_fake_test_node': common/autoware_fake_test_node/design/fake_test_node-design
     - 'Test Utils': common/autoware_test_utils
   - 'Common Libraries':
     - 'autoware_auto_common':
