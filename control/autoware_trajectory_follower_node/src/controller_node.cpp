@@ -103,7 +103,7 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
 
   if (enable_control_cmd_horizon_pub_) {
     control_cmd_horizon_pub_ = create_publisher<autoware_control_msgs::msg::ControlHorizon>(
-      "~/experimental/control_cmd_horizon", 1);
+      "~/debug/control_cmd_horizon", 1);
   }
 
   // Timer
