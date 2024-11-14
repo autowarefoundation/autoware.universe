@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "dynamic_obstacle.hpp"
 #include "path_utils.hpp"
 #include "utils.hpp"
 
@@ -35,7 +36,9 @@
 #include <string>
 #include <vector>
 
+using autoware::behavior_velocity_planner::DynamicObstacle;
 using autoware::behavior_velocity_planner::run_out_utils::createBoostPolyFromMsg;
+using autoware::behavior_velocity_planner::run_out_utils::createExtendPathPoint;
 using autoware::behavior_velocity_planner::run_out_utils::decimatePathPoints;
 using autoware::behavior_velocity_planner::run_out_utils::DetectionMethod;
 using autoware::behavior_velocity_planner::run_out_utils::findFirstStopPointIdx;
@@ -47,6 +50,8 @@ using autoware::behavior_velocity_planner::run_out_utils::insertPathVelocityFrom
 using autoware::behavior_velocity_planner::run_out_utils::isSamePoint;
 using autoware::behavior_velocity_planner::run_out_utils::lerpByPose;
 using autoware::behavior_velocity_planner::run_out_utils::pathIntersectsEgoCutLine;
+using autoware::behavior_velocity_planner::run_out_utils::PathPointsWithLaneId;
+using autoware::behavior_velocity_planner::run_out_utils::PredictedPath;
 using autoware::behavior_velocity_planner::run_out_utils::toEnum;
 using autoware::behavior_velocity_planner::run_out_utils::trimPathFromSelfPose;
 
@@ -59,8 +64,7 @@ class TestRunOutUtils : public ::testing::Test
 {
   void SetUp() override {}
 };
-namespace autoware::behavior_velocity_planner::run_out_utils
-{
+
 TEST_F(TestRunOutUtils, testFindLongitudinalNearestPoint)
 {
   std::vector<geometry_msgs::msg::Point> poly;
@@ -297,5 +301,3 @@ TEST_F(TestRunOutUtils, testToEnum)
   EXPECT_EQ(toEnum("Points"), DetectionMethod::Points);
   EXPECT_EQ(toEnum("Autoware"), DetectionMethod::Unknown);
 }
-
-}  // namespace autoware::behavior_velocity_planner::run_out_utils

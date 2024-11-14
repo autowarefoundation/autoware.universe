@@ -33,6 +33,7 @@
 #include <optional>
 #include <vector>
 
+using autoware::behavior_velocity_planner::DynamicObstacle;
 using autoware::behavior_velocity_planner::run_out_utils::StateMachine;
 using autoware::behavior_velocity_planner::run_out_utils::StateParam;
 
@@ -59,9 +60,6 @@ public:
   float keep_approach_duration_{1.0};
   float disable_approach_dist_{1.0};
 };
-
-namespace autoware::behavior_velocity_planner
-{
 
 TEST_F(TestStateMachine, testToString)
 {
@@ -107,5 +105,3 @@ TEST_F(TestStateMachine, testUpdateState)
   EXPECT_TRUE(state_machine_ptr_->getCurrentState() == State::APPROACH);
   rclcpp::shutdown();
 }
-
-}  // namespace autoware::behavior_velocity_planner

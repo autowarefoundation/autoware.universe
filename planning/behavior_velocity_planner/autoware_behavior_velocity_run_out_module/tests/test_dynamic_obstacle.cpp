@@ -19,6 +19,7 @@
 #include "utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
@@ -44,25 +45,39 @@
 #include <string>
 #include <vector>
 
+using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::ObjectClassification;
 using geometry_msgs::msg::Point;
+using Polygons2d = std::vector<Polygon2d>;
+
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
+using PathPointsWithLaneId = std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>;
 
 using autoware::behavior_velocity_planner::applyVoxelGridFilter;
 using autoware::behavior_velocity_planner::createPredictedPath;
 using autoware::behavior_velocity_planner::createQuaternionFacingToTrajectory;
 using autoware::behavior_velocity_planner::extractLateralNearestPoints;
 using autoware::behavior_velocity_planner::extractObstaclePointsWithinPolygon;
-using autoware::behavior_velocity_planner::isAheadOf;
-using autoware::behavior_velocity_planner::run_out_utils::createExtendPathPoint;
+using autoware::behavior_velocity_planner::groupPointsWithNearestSegmentIndex;
 
+using autoware::behavior_velocity_planner::calculateLateralNearestPoint;
+using autoware::behavior_velocity_planner::calculateMinAndMaxVelFromCovariance;
+using autoware::behavior_velocity_planner::concatPointCloud;
+using autoware::behavior_velocity_planner::convertDurationToDouble;
+using autoware::behavior_velocity_planner::createPathToPredictionTime;
+using autoware::behavior_velocity_planner::DynamicObstacle;
 using autoware::behavior_velocity_planner::DynamicObstacleCreatorForObject;
 using autoware::behavior_velocity_planner::DynamicObstacleCreatorForObjectWithoutPath;
 using autoware::behavior_velocity_planner::DynamicObstacleCreatorForPoints;
 using autoware::behavior_velocity_planner::DynamicObstacleParam;
-
+using autoware::behavior_velocity_planner::isAheadOf;
+using autoware::behavior_velocity_planner::PointCloud2;
 using autoware::behavior_velocity_planner::RunOutDebug;
+using autoware::behavior_velocity_planner::selectLateralNearestPoints;
+using autoware::behavior_velocity_planner::transformPointCloud;
+using autoware::behavior_velocity_planner::run_out_utils::createExtendPathPoint;
 
 class TestDynamicObstacleMethods : public ::testing::Test
 {
@@ -113,8 +128,7 @@ pcl::PointCloud<pcl::PointXYZ> generate_pointcloud(
   }
   return point_cloud;
 };
-namespace autoware::behavior_velocity_planner
-{
+
 TEST_F(TestDynamicObstacleMethods, testCreateQuaternionFacingToTrajectory)
 {
   constexpr size_t n_path_points{10};
@@ -387,5 +401,3 @@ TEST_F(TestDynamicObstacleMethods, testCreatePathToPredictionTime)
       time_step * max_velocity_mps + std::numeric_limits<double>::epsilon());
   }
 }
-
-}  // namespace autoware::behavior_velocity_planner
