@@ -40,6 +40,7 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace autoware::behavior_velocity_planner
