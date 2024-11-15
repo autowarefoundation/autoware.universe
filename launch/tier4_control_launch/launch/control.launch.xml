@@ -1,25 +1,27 @@
 <launch>
-  <!-- option -->
-  <arg name="enable_obstacle_collision_checker" default="false"/>
-  <arg name="launch_autonomous_emergency_braking" default="true"/>
-  <arg name="launch_predicted_path_checker" default="false"/>
-  <arg name="launch_collision_detector" default="false"/>
+
   <arg name="trajectory_follower_mode" default="trajectory_follower_node"/>
   <arg name="lateral_controller_mode"/>
   <arg name="longitudinal_controller_mode"/>
-  <arg name="use_aeb_autoware_state_check"/>
   <arg name="check_external_emergency_heartbeat"/>
+  <arg name="use_aeb_autoware_state_check"/>
 
-  <!-- option available for test/debug only -->
-  <arg name="launch_lane_departure_checker" default="true"/>
+  <!-- control-related modules, turn off only when debugging/testing. -->
   <arg name="launch_shift_decider" default="true"/>
   <arg name="launch_vehicle_cmd_gate" default="true"/>
   <arg name="launch_operation_mode_transition_manager" default="true"/>
   <arg name="launch_external_cmd_selector" default="true"/>
   <arg name="launch_external_cmd_converter" default="true"/>
-  <arg name="launch_control_evaluator" default="true"/>
+
+  <!-- control-check modules, optional -->
+  <arg name="launch_lane_departure_checker" default="true"/>
   <arg name="launch_control_validator" default="true"/>
-  
+  <arg name="launch_autonomous_emergency_braking" default="true"/>
+  <arg name="launch_collision_detector" default="true"/>
+  <arg name="launch_obstacle_collision_checker" default="false"/>
+  <arg name="launch_predicted_path_checker" default="false"/>
+  <arg name="launch_control_evaluator" default="true"/>
+
   <!-- common param path -->
   <arg name="vehicle_param_file"/>
   <arg name="nearest_search_param_path"/>
@@ -50,10 +52,10 @@
     <push-ros-namespace namespace="control"/>
 
     <group>
-      <!-- set container to run all required components in the same process -->
+      <!-- set a control container to run all required components in the same process -->
       <node_container pkg="rclcpp_components" exec="$(var container_executable)" name="control_container" namespace="">
-        <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_component"/>
-      <node_container/>
+        <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_control_container_component"/>
+      </node_container>
 
       <!-- trajectory_follower_node -->
       <group if="$(eval &quot;'$(var trajectory_follower_mode)' == 'trajectory_follower_node'&quot;)">
@@ -82,21 +84,9 @@
         </load_composable_node>
       </group>
 
-      <!-- lane departure checker -->
-      <group if="$(var launch_lane_departure_checker)">
-        <load_composable_node target="/control/control_container">
-          <composable_node pkg="autoware_lane_departure_checker" plugin="autoware::lane_departure_checker::LaneDepartureCheckerNode" name="lane_departure_checker_node" namespace="trajectory_follower">
-            <remap from="~/input/odometry" to="/localization/kinematic_state"/>
-            <remap from="~/input/lanelet_map_bin" to="/map/vector_map"/>
-            <remap from="~/input/route" to="/planning/mission_planning/route"/>
-            <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
-            <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
-            <param from="$(var nearest_search_param_path)"/>
-            <param from="$(var lane_departure_checker_param_path)"/>
-            <param from="$(var vehicle_param_file)"/>
-            <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
-          </composable_node>
-        </load_composable_node>
+      <!-- smart_mpc, under development -->
+      <group if="$(eval &quot;'$(var trajectory_follower_mode)' == 'smart_mpc_trajectory_follower'&quot;)">
+        <node pkg="autoware_smart_mpc_trajectory_follower" exec="pympc_trajectory_follower.py" name="controller_node_exe"/>
       </group>
 
       <!-- shift decider -->
@@ -184,119 +174,135 @@
           </composable_node>
         </load_composable_node>
       </group>
+
+      <!-- external cmd selector -->
+      <group if="$(var launch_external_cmd_selector)">
+        <include file="$(find-pkg-share autoware_external_cmd_selector)/launch/external_cmd_selector.launch.py">
+          <arg name="use_intra_process" value="$(var use_intra_process)"/>
+          <arg name="target_container" value="/control/control_container"/>
+          <arg name="external_cmd_selector_param_path" value="$(var external_cmd_selector_param_path)"/>
+        </include>
+      </group>
+
+      <!-- external cmd converter -->
+      <group if="$(var launch_external_cmd_converter)">
+        <include file="$(find-pkg-share autoware_external_cmd_converter)/launch/external_cmd_converter.launch.py">
+          <arg name="use_intra_process" value="$(var use_intra_process)"/>
+          <arg name="target_container" value="/control/control_container"/>
+        </include>
+      </group>
     </group>
 
-    <!-- external cmd selector -->
-    <group if="$(var launch_external_cmd_selector)">
-      <include file="$(find-pkg-share autoware_external_cmd_selector)/launch/external_cmd_selector.launch.py">
-        <arg name="use_intra_process" value="$(var use_intra_process)"/>
-        <arg name="target_container" value="/control/control_container"/>
-        <arg name="external_cmd_selector_param_path" value="$(var external_cmd_selector_param_path)"/>
-      </include>
+    <group>
+      <!-- set a control check container to run all control checker components in the same process -->
+      <node_container pkg="rclcpp_components" exec="$(var container_executable)" name="control_check_container" namespace="">
+        <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_control_check_container_component"/>
+      </node_container>
+
+      <!-- lane departure checker -->
+      <group if="$(var launch_lane_departure_checker)">
+        <load_composable_node target="/control/control_check_container">
+          <composable_node pkg="autoware_lane_departure_checker" plugin="autoware::lane_departure_checker::LaneDepartureCheckerNode" name="lane_departure_checker_node" namespace="trajectory_follower">
+            <remap from="~/input/odometry" to="/localization/kinematic_state"/>
+            <remap from="~/input/lanelet_map_bin" to="/map/vector_map"/>
+            <remap from="~/input/route" to="/planning/mission_planning/route"/>
+            <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+            <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
+            <param from="$(var nearest_search_param_path)"/>
+            <param from="$(var lane_departure_checker_param_path)"/>
+            <param from="$(var vehicle_param_file)"/>
+            <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
+          </composable_node>
+        </load_composable_node>
+      </group>
+
+      <!-- control validator checker -->
+      <group if="$(var launch_control_validator)">
+        <load_composable_node target="/control/control_check_container">
+          <composable_node pkg="autoware_control_validator" plugin="autoware::control_validator::ControlValidator" name="control_validator">
+            <remap from="~/input/kinematics" to="/localization/kinematic_state"/>
+            <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+            <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
+            <remap from="~/output/validation_status" to="~/validation_status"/>
+            <param from="$(var control_validator_param_path)"/>
+          </composable_node>
+        </load_composable_node>
+      </group>
+
+      <!-- autonomous emergency braking -->
+      <group if="$(var launch_autonomous_emergency_braking)">
+        <load_composable_node target="/control/control_check_container" >
+          <composable_node pkg="autoware_autonomous_emergency_braking" plugin="autoware::motion::control::autonomous_emergency_braking::AEB" name="autonomous_emergency_braking">
+            <remap from="~/input/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
+            <remap from="~/input/velocity" to="/vehicle/status/velocity_status"/>
+            <remap from="~/input/imu" to="/sensing/imu/imu_data"/>
+            <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
+            <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
+            <param from="$(var aeb_param_path)"/>
+            <param name="check_autoware_state" value="$(var use_aeb_autoware_state_check)"/>
+            <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
+          </composable_node>
+        </load_composable_node>
+      </group>
+
+      <!-- collision detector-->
+      <group if="$(var launch_collision_detector)">
+        <load_composable_node target="/control/control_check_container">
+          <composable_node pkg="autoware_collision_detector" plugin="autoware::collision_detector::CollisionDetectorNode" name="collision_detector">
+            <remap from="~/input/odometry" to="/localization/kinematic_state"/>
+            <remap from="~/input/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
+            <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
+            <param from="$(var collision_detector_param_path)"/>
+          </composable_node>
+        </load_composable_node>
+      </group>
+
+      <!-- obstacle collision checker -->
+      <group if="$(var launch_obstacle_collision_checker)">
+        <load_composable_node target="/control/control_check_container">
+          <composable_node pkg="autoware_obstacle_collision_checker" plugin="autoware::obstacle_collision_checker::ObstacleCollisionCheckerNode" name="obstacle_collision_checker">
+            <remap from="input/lanelet_map_bin" to="/map/vector_map"/>
+            <remap from="input/obstacle_pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
+            <remap from="input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+            <remap from="input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
+            <remap from="input/odometry" to="/localization/kinematic_state"/>
+            <param from="$(var obstacle_collision_checker_param_path)"/>
+            <param from="$(var vehicle_param_file)"/>
+            <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
+          </composable_node>
+        </load_composable_node>
+      </group>
+
+      <!-- predicted path checker -->
+      <group if="$(var launch_predicted_path_checker)">
+        <load_composable_node target="/control/control_check_container">
+          <composable_node pkg="predicted_path_checker" plugin="autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode" name="predicted_path_checker">
+            <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
+            <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+            <remap from="~/input/current_accel" to="/localization/acceleration"/>
+            <remap from="~/input/odometry" to="/localization/kinematic_state"/>
+            <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
+            <param from="$(var vehicle_param_file)"/>
+            <param from="$(var predicted_path_checker_param_path)"/>
+            <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
+          </composable_node>
+        </load_composable_node>
+      </group>
+
+      <!-- control evaluator -->
+      <group if="$(var launch_control_evaluator)">
+        <load_composable_node target="/control/control_check_container">
+          <composable_node pkg="autoware_control_evaluator" plugin="control_diagnostics::ControlEvaluatorNode" name="control_evaluator">
+            <remap from="~/input/diagnostics" to="/diagnostics"/>
+            <remap from="~/input/odometry" to="/localization/kinematic_state"/>
+            <remap from="~/input/acceleration" to="/localization/acceleration"/>
+            <remap from="~/input/trajectory" to="/planning/scenario_planning/trajectory"/>
+            <remap from="~/metrics" to="/control/control_evaluator/metrics"/>
+            <remap from="~/input/vector_map" to="/map/vector_map"/>
+            <remap from="~/input/route" to="/planning/mission_planning/route"/>
+          </composable_node>
+        </load_composable_node>
+      </group>
     </group>
-
-    <!-- external cmd converter -->
-    <group if="$(var launch_external_cmd_converter)">
-      <include file="$(find-pkg-share autoware_external_cmd_converter)/launch/external_cmd_converter.launch.py">
-        <arg name="use_intra_process" value="$(var use_intra_process)"/>
-        <arg name="target_container" value="/control/control_container"/>
-      </include>
-    </group>
-
-    <!-- obstacle collision checker -->
-    <group if="$(var enable_obstacle_collision_checker)">
-      <load_composable_node target="/control/control_container">
-        <composable_node pkg="autoware_obstacle_collision_checker" plugin="autoware::obstacle_collision_checker::ObstacleCollisionCheckerNode" name="obstacle_collision_checker">
-          <remap from="input/lanelet_map_bin" to="/map/vector_map"/>
-          <remap from="input/obstacle_pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
-          <remap from="input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
-          <remap from="input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
-          <remap from="input/odometry" to="/localization/kinematic_state"/>
-          <param from="$(var obstacle_collision_checker_param_path)"/>
-          <param from="$(var vehicle_param_file)"/>
-          <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
-        </composable_node>
-      </load_composable_node>
-    </group>
-
-    <!-- autonomous emergency braking -->
-    <group if="$(var launch_autonomous_emergency_braking)">
-      <load_composable_node target="/control/control_container" >
-        <composable_node pkg="autoware_autonomous_emergency_braking" plugin="autoware::motion::control::autonomous_emergency_braking::AEB" name="autonomous_emergency_braking">
-          <remap from="~/input/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
-          <remap from="~/input/velocity" to="/vehicle/status/velocity_status"/>
-          <remap from="~/input/imu" to="/sensing/imu/imu_data"/>
-          <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
-          <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
-          <param from="$(var aeb_param_path)"/>
-          <param name="check_autoware_state" value="$(var use_aeb_autoware_state_check)"/>
-          <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
-        </composable_node>
-      </load_composable_node>
-    </group>
-
-    <!-- predicted path checker -->
-    <group if="$(var launch_predicted_path_checker)">
-      <load_composable_node target="/control/control_container">
-        <composable_node pkg="predicted_path_checker" plugin="autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode" name="predicted_path_checker">
-          <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
-          <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
-          <remap from="~/input/current_accel" to="/localization/acceleration"/>
-          <remap from="~/input/odometry" to="/localization/kinematic_state"/>
-          <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
-          <param from="$(var vehicle_param_file)"/>
-          <param from="$(var predicted_path_checker_param_path)"/>
-          <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>
-        </composable_node>
-      </load_composable_node>
-    </group>
-
-    <!-- control evaluator -->
-    <group if="$(var launch_control_evaluator)">
-      <load_composable_node target="/control/control_container">
-        <composable_node pkg="autoware_control_evaluator" plugin="control_diagnostics::ControlEvaluatorNode" name="control_evaluator">
-          <remap from="~/input/diagnostics" to="/diagnostics"/>
-          <remap from="~/input/odometry" to="/localization/kinematic_state"/>
-          <remap from="~/input/acceleration" to="/localization/acceleration"/>
-          <remap from="~/input/trajectory" to="/planning/scenario_planning/trajectory"/>
-          <remap from="~/metrics" to="/control/control_evaluator/metrics"/>
-          <remap from="~/input/vector_map" to="/map/vector_map"/>
-          <remap from="~/input/route" to="/planning/mission_planning/route"/>
-        </composable_node>
-      </load_composable_node>
-    </group>
-
-    <!-- collision detector-->
-    <group if="$(var launch_collision_detector)">
-      <load_composable_node target="/control/control_container">
-        <composable_node pkg="autoware_collision_detector" plugin="autoware::collision_detector::CollisionDetectorNode" name="collision_detector">
-          <remap from="~/input/odometry" to="/localization/kinematic_state"/>
-          <remap from="~/input/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
-          <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
-          <param from="$(var collision_detector_param_path)"/>
-        </composable_node>
-      </load_composable_node>
-    </group>
-  </group>
-
-  <group if="$(var launch_control_validator)">
-    <push-ros-namespace namespace="control"/>
-
-    <!-- control validator checker -->
-    <node_container pkg="rclcpp_components" exec="$(var container_executable)" name="control_validator_container" namespace="">
-      <composable_node pkg="autoware_control_validator" plugin="autoware::control_validator::ControlValidator" name="control_validator">
-        <remap from="~/input/kinematics" to="/localization/kinematic_state"/>
-        <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
-        <remap from="~/input/predicted_trajectory" to="/control/trajectory_follower/lateral/predicted_trajectory"/>
-        <remap from="~/output/validation_status" to="~/validation_status"/>
-        <param from="$(var control_validator_param_path)"/>
-      </composable_node>
-
-      <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_validator_component"/>
-    </node_container>
-  </group>
-
-  <group if="$(eval &quot;'$(var trajectory_follower_mode)' == 'smart_mpc_trajectory_follower'&quot;)">
-    <node pkg="autoware_smart_mpc_trajectory_follower" exec="pympc_trajectory_follower.py" name="controller_node_exe"/>
   </group>
 </launch>
