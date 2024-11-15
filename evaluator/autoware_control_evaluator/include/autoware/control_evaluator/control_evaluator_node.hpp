@@ -19,12 +19,14 @@
 
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
 #include <deque>
 #include <optional>
@@ -88,6 +90,7 @@ private:
     vector_map_subscriber_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
 
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_pub_;
 
   // update Route Handler
   void getRouteData();
