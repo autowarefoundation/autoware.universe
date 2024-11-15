@@ -17,8 +17,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include "tier4_debug_msgs/msg/float64_stamped.hpp"
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <tier4_metric_msgs/msg/metric.hpp>
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include <string>
 #include <unordered_map>
@@ -26,8 +27,8 @@
 
 namespace autoware::processing_time_checker
 {
-using diagnostic_msgs::msg::DiagnosticArray;
-using diagnostic_msgs::msg::DiagnosticStatus;
+using MetricMsg = tier4_metric_msgs::msg::Metric;
+using MetricArrayMsg = tier4_metric_msgs::msg::MetricArray;
 using tier4_debug_msgs::msg::Float64Stamped;
 
 class ProcessingTimeChecker : public rclcpp::Node
@@ -40,7 +41,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
 
-  rclcpp::Publisher<DiagnosticArray>::SharedPtr diag_pub_;
+  rclcpp::Publisher<MetricArrayMsg>::SharedPtr metrics_pub_;
   std::vector<rclcpp::Subscription<Float64Stamped>::SharedPtr> processing_time_subscribers_;
 
   // topic name - module name
