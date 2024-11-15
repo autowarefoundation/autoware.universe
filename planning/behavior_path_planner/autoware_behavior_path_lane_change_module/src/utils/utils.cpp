@@ -918,9 +918,9 @@ ExtendedPredictedObject transform(
   ExtendedPredictedObject extended_object(object);
 
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
-  const auto & time_resolution = lc_param_ptr->prediction_time_resolution;
-  const auto & velocity_threshold = lc_param_ptr->stopped_object_velocity_threshold;
-  const auto & prepare_duration = common_data_ptr->transient_data.lane_change_prepare_duration;
+  const auto time_resolution = lc_param_ptr->prediction_time_resolution;
+  const auto velocity_threshold = lc_param_ptr->stopped_object_velocity_threshold;
+  const auto prepare_duration = common_data_ptr->transient_data.lane_change_prepare_duration;
   const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
   const double obj_vel_norm =
     std::hypot(extended_object.initial_twist.linear.x, extended_object.initial_twist.linear.y);
