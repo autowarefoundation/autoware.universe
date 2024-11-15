@@ -59,6 +59,8 @@ void SceneModuleManagerInterface::initInterface(
       "~/processing_time/" + name_, 20);
     pub_steering_factors_ =
       node->create_publisher<SteeringFactorArray>("/planning/steering_factor/" + name_, 1);
+    pub_velocity_factors_ =
+      node->create_publisher<VelocityFactorArray>("/planning/velocity_factors/" + name_, 1);
   }
 
   // misc
