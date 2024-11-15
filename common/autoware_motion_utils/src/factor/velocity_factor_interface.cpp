@@ -37,7 +37,7 @@ void VelocityFactorInterface::set(
 }
 
 void VelocityFactorInterface::set(
-  const double & distance, const VelocityFactorStatus status, const std::string & detail)
+  const double & distance, const VelocityFactorStatus & status, const std::string & detail)
 {
   velocity_factor_.behavior = behavior_;
   velocity_factor_.distance = static_cast<float>(distance);

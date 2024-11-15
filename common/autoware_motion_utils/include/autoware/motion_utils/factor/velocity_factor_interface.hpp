@@ -45,7 +45,7 @@ public:
     const VelocityFactorStatus status, const std::string & detail = "");
 
   void set(
-    const double & distance, const VelocityFactorStatus status, const std::string & detail = "");
+    const double & distance, const VelocityFactorStatus & status, const std::string & detail = "");
 
 private:
   VelocityFactorBehavior behavior_{VelocityFactor::UNKNOWN};

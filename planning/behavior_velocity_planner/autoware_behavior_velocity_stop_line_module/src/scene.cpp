@@ -55,8 +55,9 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
   const LineString2d stop_line = planning_utils::extendLine(
     stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
 
-  // Calculate stop pose and insert index
-  auto trajectory_stop_line_intersection = trajectory->crossed(stop_line.front(), stop_line.back());
+  // Calculate intersection with stop line
+  const auto trajectory_stop_line_intersection =
+    trajectory->crossed(stop_line.front(), stop_line.back());
 
   // If no collision found, do nothing
   if (!trajectory_stop_line_intersection) {
@@ -89,7 +90,7 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
       // Insert stop pose
       trajectory->longitudinal_velocity_mps.range(stop_point_s, trajectory->length()).set(0.0);
 
-      // Update first stop index
+      // Update first stop path point distance
       first_stop_path_point_distance_ = stop_point_s;
       debug_data_.stop_pose = stop_pose.point.pose;
 
@@ -124,7 +125,7 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
       // Insert stop pose
       trajectory->longitudinal_velocity_mps.range(ego_on_trajectory_s, trajectory->length())
         .set(0.0);
-      auto ego_pos_on_path = trajectory->compute(ego_on_trajectory_s).point.pose;
+      const auto ego_pos_on_path = trajectory->compute(ego_on_trajectory_s).point.pose;
       debug_data_.stop_pose = ego_pos_on_path;
 
       // Get stop point and stop factor
