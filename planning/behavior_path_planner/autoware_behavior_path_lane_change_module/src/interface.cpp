@@ -47,6 +47,7 @@ LaneChangeInterface::LaneChangeInterface(
   module_type_->setTimeKeeper(getTimeKeeper());
   logger_ = utils::lane_change::getLogger(module_type_->getModuleTypeStr());
   steering_factor_interface_.init(PlanningBehavior::LANE_CHANGE);
+  velocity_factor_interface_.init(PlanningBehavior::LANE_CHANGE);
 }
 
 void LaneChangeInterface::processOnExit()
@@ -145,6 +146,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
     }
   }
 
+  setVelocityFactor(output.path);
+
   return output;
 }
 
@@ -178,6 +181,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
     candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
     isExecutionReady(), State::WAITING_FOR_EXECUTION);
   is_abort_path_approved_ = false;
+
+  setVelocityFactor(out.path);
 
   return out;
 }
