@@ -46,8 +46,7 @@ public:
     const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map,
-    std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr);
+      objects_of_interest_marker_interface_ptr_map);
 
   CandidateOutput planCandidate() const override;
   BehaviorModuleOutput plan() override;
@@ -130,9 +129,9 @@ private:
       }
 
       if (finish_distance > -1.0e-03) {
-        steering_factor_interface_ptr_->updateSteeringFactor(
+        steering_factor_interface_.set(
           {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
-          PlanningBehavior::AVOIDANCE, SteeringFactor::LEFT, SteeringFactor::TURNING, "");
+          SteeringFactor::LEFT, SteeringFactor::TURNING, "");
       }
     }
 
@@ -150,9 +149,9 @@ private:
       }
 
       if (finish_distance > -1.0e-03) {
-        steering_factor_interface_ptr_->updateSteeringFactor(
+        steering_factor_interface_.set(
           {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
-          PlanningBehavior::AVOIDANCE, SteeringFactor::RIGHT, SteeringFactor::TURNING, "");
+          SteeringFactor::RIGHT, SteeringFactor::TURNING, "");
       }
     }
   }
