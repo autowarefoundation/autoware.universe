@@ -234,8 +234,6 @@ ShiftedPath get_frenet_shifted_path(
     pp.point.pose = candidate.poses[i];
     pp.point.longitudinal_velocity_mps = static_cast<float>(candidate.longitudinal_velocities[i]);
     pp.point.lateral_velocity_mps = static_cast<float>(candidate.lateral_velocities[i]);
-    shifted_path.shift_length.push_back(candidate.frenet_points[i].d);
-    shifted_path.path.points.push_back(pp);
     // copy from original reference path
     while (ref_s < s && ref_i + 1 < target_lane_reference_path.points.size()) {
       ++ref_i;
@@ -244,6 +242,9 @@ ShiftedPath get_frenet_shifted_path(
     }
     pp.point.pose.position.z = target_lane_reference_path.points[ref_i].point.pose.position.z;
     pp.lane_ids = target_lane_reference_path.points[ref_i].lane_ids;
+
+    shifted_path.shift_length.push_back(candidate.frenet_points[i].d);
+    shifted_path.path.points.push_back(pp);
   }
   if (!shifted_path.path.points.empty()) {
     const auto nearest_segment_idx = autoware::motion_utils::findNearestSegmentIndex(
