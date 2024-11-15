@@ -292,7 +292,7 @@ void MultiCameraFusion::multiCameraFusion(std::map<IdType, FusionRecord> & fused
 }
 
 void MultiCameraFusion::groupFusion(
-  std::map<IdType, FusionRecord> & fused_record_map,
+  const std::map<IdType, FusionRecord> & fused_record_map,
   std::map<IdType, FusionRecord> & grouped_record_map)
 {
   grouped_record_map.clear();
