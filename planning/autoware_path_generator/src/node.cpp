@@ -224,7 +224,7 @@ std::optional<PathWithLaneId> PathGenerator::get_centerline_path(
 
     if (!utils::get_next_lanelet_within_route(lanelet_sequence.back(), planner_data_)) {
       const auto lane_length = lanelet::utils::getLaneletLength2d(lanelet_sequence);
-      s_end = std::clamp(s_end, 0.0, lane_length);
+      s_end = std::min(s_end, lane_length);
     }
 
     if (std::any_of(
@@ -234,27 +234,27 @@ std::optional<PathWithLaneId> PathGenerator::get_centerline_path(
           })) {
       const auto goal_arc_coordinates =
         lanelet::utils::getArcCoordinates(lanelet_sequence, planner_data_.goal_pose);
-      s_end = std::clamp(s_end, 0.0, goal_arc_coordinates.length);
+      s_end = std::min(s_end, goal_arc_coordinates.length);
     }
 
     return s_end;
   }();
 
-  const auto raw_centerline_path = get_centerline_path(lanelet_sequence, s_start, s_end);
-  if (!raw_centerline_path) {
+  auto centerline_path = get_centerline_path(lanelet_sequence, s_start, s_end);
+  if (!centerline_path) {
     return std::nullopt;
   }
 
-  auto centerline_path = autoware::motion_utils::resamplePath(
-    *raw_centerline_path, params.input_path_interval, params.enable_akima_spline_first);
+  centerline_path = autoware::motion_utils::resamplePath(
+    *centerline_path, params.input_path_interval, params.enable_akima_spline_first);
 
   const auto current_seg_idx =
     autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      centerline_path.points, current_pose, params.ego_nearest_dist_threshold,
+      centerline_path->points, current_pose, params.ego_nearest_dist_threshold,
       params.ego_nearest_yaw_threshold);
 
-  centerline_path.points = autoware::motion_utils::cropPoints(
-    centerline_path.points, current_pose.position, current_seg_idx, params.forward_path_length,
+  centerline_path->points = autoware::motion_utils::cropPoints(
+    centerline_path->points, current_pose.position, current_seg_idx, params.forward_path_length,
     params.backward_path_length + params.input_path_interval);
 
   return centerline_path;
@@ -321,6 +321,7 @@ std::optional<PathWithLaneId> PathGenerator::get_centerline_path(
 
     const auto speed_limit =
       planner_data_.traffic_rules_ptr->speedLimit(lanelet).speedLimit.value();
+
     for (const auto & reference_point : reference_points) {
       PathPointWithLaneId path_point{};
       path_point.point.pose.position = reference_point;
