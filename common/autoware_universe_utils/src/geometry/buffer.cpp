@@ -89,7 +89,7 @@ autoware::universe_utils::Polygon2d _offset_segment(
   std::cout << "angleBetween " << angle_current_next << "\n";
 
   if (2 * M_PI - angle_current_next > M_PI) {
-    createArc(vertices, v2, dist, offset_v1, offset_v2, offset_v1next, segments, skip);
+    create_arc(vertices, v2, dist, offset_v1, offset_v2, offset_v1next, segments, skip);
   } else if (2 * M_PI - angle_current_next < M_PI) {
     auto intersection_point =
       autoware::universe_utils::intersection(offset_v1, offset_v2, offset_v1next, offset_v2next);
