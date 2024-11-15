@@ -682,6 +682,8 @@ std::vector<Polygon2d> get_collided_polygons(
         debug.unsafe_reason = "overlap_extended_polygon";
         debug.rss_longitudinal = rss_dist;
         debug.inter_vehicle_distance = min_lon_length;
+        debug.expected_ego_pose = ego_pose;
+        debug.expected_obj_pose = obj_pose;
         debug.extended_ego_polygon = extended_ego_polygon;
         debug.extended_obj_polygon = extended_obj_polygon;
         debug.is_front = is_object_front;
