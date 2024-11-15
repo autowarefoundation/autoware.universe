@@ -36,20 +36,9 @@
 const auto intersection_map =
   autoware::test_utils::make_map_bin_msg(autoware::test_utils::get_absolute_path_to_lanelet_map(
     "autoware_test_utils", "intersection/lanelet2_map.osm"));
-using autoware::behavior_path_planner::DrivableLanes;
 
-lanelet::ConstLanelet make_lanelet(
-  const lanelet::BasicPoint2d & left0, const lanelet::BasicPoint2d & left1,
-  const lanelet::BasicPoint2d & right0, const lanelet::BasicPoint2d & right1)
-{
-  lanelet::LineString3d left_bound;
-  left_bound.push_back(lanelet::Point3d(lanelet::InvalId, left0.x(), left0.y(), 0.0));
-  left_bound.push_back(lanelet::Point3d(lanelet::InvalId, left1.x(), left1.y(), 0.0));
-  lanelet::LineString3d right_bound;
-  right_bound.push_back(lanelet::Point3d(lanelet::InvalId, right0.x(), right0.y(), 0.0));
-  right_bound.push_back(lanelet::Point3d(lanelet::InvalId, right1.x(), right1.y(), 0.0));
-  return {lanelet::utils::getId(), left_bound, right_bound};
-}
+using autoware::behavior_path_planner::DrivableLanes;
+using autoware::test_utils::make_lanelet;
 
 DrivableLanes make_drivable_lanes(const lanelet::ConstLanelet & ll)
 {
