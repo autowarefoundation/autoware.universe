@@ -163,8 +163,8 @@ TEST(StaticDrivableArea, cutOverlappedLanes)
     EXPECT_TRUE(result.empty());
     ASSERT_EQ(path.points.size(), path_size);
     for (auto i = 0UL; i < path_size; ++i) {
-      EXPECT_EQ(path.points[i].point.pose.position.x, i * 1.0);
-      EXPECT_EQ(path.points[i].point.pose.position.y, 0.0);
+      EXPECT_DOUBLE_EQ(path.points[i].point.pose.position.x, i * 1.0);
+      EXPECT_DOUBLE_EQ(path.points[i].point.pose.position.y, 0.0);
     }
   }
   {  // add some drivable lanes without any overlap (no overlap -> path is not modified)
@@ -176,8 +176,8 @@ TEST(StaticDrivableArea, cutOverlappedLanes)
     EXPECT_TRUE(equal(result.front(), lanes.front()));
     ASSERT_EQ(path.points.size(), path_size);
     for (auto i = 0UL; i < path_size; ++i) {
-      EXPECT_EQ(path.points[i].point.pose.position.x, i * 1.0);
-      EXPECT_EQ(path.points[i].point.pose.position.y, 0.0);
+      EXPECT_DOUBLE_EQ(path.points[i].point.pose.position.x, i * 1.0);
+      EXPECT_DOUBLE_EQ(path.points[i].point.pose.position.y, 0.0);
     }
   }
   {  // add more drivable lanes without an overlap (no overlap -> path is not modified)
@@ -193,8 +193,8 @@ TEST(StaticDrivableArea, cutOverlappedLanes)
     }
     ASSERT_EQ(path.points.size(), path_size);
     for (auto i = 0UL; i < path_size; ++i) {
-      EXPECT_EQ(path.points[i].point.pose.position.x, i * 1.0);
-      EXPECT_EQ(path.points[i].point.pose.position.y, 0.0);
+      EXPECT_DOUBLE_EQ(path.points[i].point.pose.position.x, i * 1.0);
+      EXPECT_DOUBLE_EQ(path.points[i].point.pose.position.y, 0.0);
     }
   }
   {  // add an overlapping lane
@@ -229,8 +229,8 @@ TEST(StaticDrivableArea, cutOverlappedLanes)
     cutOverlappedLanes(path, lanes);
     ASSERT_EQ(path.points.size(), filtered_size);
     for (auto i = 0UL; i < filtered_size; ++i) {
-      EXPECT_EQ(path.points[i].point.pose.position.x, (i + filtered_start) * 1.0);
-      EXPECT_EQ(path.points[i].point.pose.position.y, 0.0);
+      EXPECT_DOUBLE_EQ(path.points[i].point.pose.position.x, (i + filtered_start) * 1.0);
+      EXPECT_DOUBLE_EQ(path.points[i].point.pose.position.y, 0.0);
     }
   }
 }
@@ -296,34 +296,34 @@ TEST(StaticDrivableArea, generateDrivableArea_subfunction)
   generateDrivableArea(path, lon_offset, lat_offset, true);
   ASSERT_EQ(path.left_bound.size(), 3UL);
   ASSERT_EQ(path.right_bound.size(), 3UL);
-  EXPECT_EQ(path.left_bound[0].x, -lon_offset);
-  EXPECT_EQ(path.left_bound[1].x, 0.0);
-  EXPECT_EQ(path.left_bound[2].x, lon_offset);
-  EXPECT_EQ(path.right_bound[0].x, -lon_offset);
-  EXPECT_EQ(path.right_bound[1].x, 0.0);
-  EXPECT_EQ(path.right_bound[2].x, lon_offset);
-  EXPECT_EQ(path.left_bound[0].y, lat_offset);
-  EXPECT_EQ(path.left_bound[1].y, lat_offset);
-  EXPECT_EQ(path.left_bound[2].y, lat_offset);
-  EXPECT_EQ(path.right_bound[0].y, -lat_offset);
-  EXPECT_EQ(path.right_bound[1].y, -lat_offset);
-  EXPECT_EQ(path.right_bound[2].y, -lat_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound[0].x, -lon_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound[1].x, 0.0);
+  EXPECT_DOUBLE_EQ(path.left_bound[2].x, lon_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound[0].x, -lon_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound[1].x, 0.0);
+  EXPECT_DOUBLE_EQ(path.right_bound[2].x, lon_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound[0].y, lat_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound[1].y, lat_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound[2].y, lat_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound[0].y, -lat_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound[1].y, -lat_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound[2].y, -lat_offset);
   // set driving_forward to false: longitudinal offset is inversely applied
   generateDrivableArea(path, lon_offset, lat_offset, false);
   ASSERT_EQ(path.left_bound.size(), 3UL);
   ASSERT_EQ(path.right_bound.size(), 3UL);
-  EXPECT_EQ(path.left_bound[0].x, lon_offset);
-  EXPECT_EQ(path.left_bound[1].x, 0.0);
-  EXPECT_EQ(path.left_bound[2].x, -lon_offset);
-  EXPECT_EQ(path.right_bound[0].x, lon_offset);
-  EXPECT_EQ(path.right_bound[1].x, 0.0);
-  EXPECT_EQ(path.right_bound[2].x, -lon_offset);
-  EXPECT_EQ(path.left_bound[0].y, lat_offset);
-  EXPECT_EQ(path.left_bound[1].y, lat_offset);
-  EXPECT_EQ(path.left_bound[2].y, lat_offset);
-  EXPECT_EQ(path.right_bound[0].y, -lat_offset);
-  EXPECT_EQ(path.right_bound[1].y, -lat_offset);
-  EXPECT_EQ(path.right_bound[2].y, -lat_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound[0].x, lon_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound[1].x, 0.0);
+  EXPECT_DOUBLE_EQ(path.left_bound[2].x, -lon_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound[0].x, lon_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound[1].x, 0.0);
+  EXPECT_DOUBLE_EQ(path.right_bound[2].x, -lon_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound[0].y, lat_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound[1].y, lat_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound[2].y, lat_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound[0].y, -lat_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound[1].y, -lat_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound[2].y, -lat_offset);
   // add more points
   for (auto x = 1; x < 10; ++x) {
     // space points by more than 2m to avoid resampling
@@ -333,20 +333,21 @@ TEST(StaticDrivableArea, generateDrivableArea_subfunction)
   generateDrivableArea(path, lon_offset, lat_offset, true);
   ASSERT_EQ(path.left_bound.size(), path.points.size() + 2UL);
   ASSERT_EQ(path.right_bound.size(), path.points.size() + 2UL);
-  EXPECT_EQ(path.left_bound.front().x, -lon_offset);
-  EXPECT_EQ(path.right_bound.front().x, -lon_offset);
-  EXPECT_EQ(path.left_bound.back().x, path.points.back().point.pose.position.x + lon_offset);
-  EXPECT_EQ(path.right_bound.back().x, path.points.back().point.pose.position.x + lon_offset);
-  EXPECT_EQ(path.left_bound.front().y, lat_offset);
-  EXPECT_EQ(path.right_bound.front().y, -lat_offset);
-  EXPECT_EQ(path.left_bound.back().y, lat_offset);
-  EXPECT_EQ(path.right_bound.back().y, -lat_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound.front().x, -lon_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound.front().x, -lon_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound.back().x, path.points.back().point.pose.position.x + lon_offset);
+  EXPECT_DOUBLE_EQ(
+    path.right_bound.back().x, path.points.back().point.pose.position.x + lon_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound.front().y, lat_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound.front().y, -lat_offset);
+  EXPECT_DOUBLE_EQ(path.left_bound.back().y, lat_offset);
+  EXPECT_DOUBLE_EQ(path.right_bound.back().y, -lat_offset);
   for (auto i = 1UL; i + 1 < path.points.size(); ++i) {
     const auto & path_p = path.points[i - 1].point.pose.position;
-    EXPECT_EQ(path.left_bound[i].x, path_p.x);
-    EXPECT_EQ(path.right_bound[i].x, path_p.x);
-    EXPECT_EQ(path.left_bound[i].y, path_p.y + lat_offset);
-    EXPECT_EQ(path.right_bound[i].y, path_p.y - lat_offset);
+    EXPECT_DOUBLE_EQ(path.left_bound[i].x, path_p.x);
+    EXPECT_DOUBLE_EQ(path.right_bound[i].x, path_p.x);
+    EXPECT_DOUBLE_EQ(path.left_bound[i].y, path_p.y + lat_offset);
+    EXPECT_DOUBLE_EQ(path.right_bound[i].y, path_p.y - lat_offset);
   }
   // case with self intersections
   path.points.clear();
@@ -366,18 +367,18 @@ TEST(StaticDrivableArea, generateDrivableArea_subfunction)
   EXPECT_TRUE(equal(path.right_bound[0], path.right_bound[1]));
   EXPECT_TRUE(equal(path.left_bound[3], path.left_bound[4]));
   EXPECT_TRUE(equal(path.right_bound[3], path.right_bound[4]));
-  EXPECT_EQ(path.left_bound[1].x, 0.0);
-  EXPECT_EQ(path.left_bound[1].y, 3.0);
-  EXPECT_EQ(path.left_bound[2].x, 3.0);
-  EXPECT_EQ(path.left_bound[2].y, 3.0);
-  EXPECT_EQ(path.left_bound[3].x, 0.0);
-  EXPECT_EQ(path.left_bound[3].y, 6.0);
-  EXPECT_EQ(path.right_bound[1].x, 0.0);
-  EXPECT_EQ(path.right_bound[1].y, -3.0);
-  EXPECT_EQ(path.right_bound[2].x, 3.0);
-  EXPECT_EQ(path.right_bound[2].y, -3.0);
-  EXPECT_EQ(path.right_bound[3].x, 0.0);
-  EXPECT_EQ(path.right_bound[3].y, 0.0);
+  EXPECT_DOUBLE_EQ(path.left_bound[1].x, 0.0);
+  EXPECT_DOUBLE_EQ(path.left_bound[1].y, 3.0);
+  EXPECT_DOUBLE_EQ(path.left_bound[2].x, 3.0);
+  EXPECT_DOUBLE_EQ(path.left_bound[2].y, 3.0);
+  EXPECT_DOUBLE_EQ(path.left_bound[3].x, 0.0);
+  EXPECT_DOUBLE_EQ(path.left_bound[3].y, 6.0);
+  EXPECT_DOUBLE_EQ(path.right_bound[1].x, 0.0);
+  EXPECT_DOUBLE_EQ(path.right_bound[1].y, -3.0);
+  EXPECT_DOUBLE_EQ(path.right_bound[2].x, 3.0);
+  EXPECT_DOUBLE_EQ(path.right_bound[2].y, -3.0);
+  EXPECT_DOUBLE_EQ(path.right_bound[3].x, 0.0);
+  EXPECT_DOUBLE_EQ(path.right_bound[3].y, 0.0);
 }
 
 TEST(StaticDrivableArea, getBoundWithIntersectionAreas)
@@ -421,8 +422,8 @@ TEST(StaticDrivableArea, combineDrivableAreaInfo)
     drivable_area_info2.obstacles.emplace_back().pose.position.x = 2.0;
     const auto combined = combineDrivableAreaInfo(drivable_area_info1, drivable_area_info2);
     ASSERT_EQ(combined.obstacles.size(), 2UL);
-    EXPECT_EQ(combined.obstacles[0].pose.position.x, 1.0);
-    EXPECT_EQ(combined.obstacles[1].pose.position.x, 2.0);
+    EXPECT_DOUBLE_EQ(combined.obstacles[0].pose.position.x, 1.0);
+    EXPECT_DOUBLE_EQ(combined.obstacles[1].pose.position.x, 2.0);
   }
   {  // combination of the drivable lanes
     DrivableLanes lanes;
@@ -450,7 +451,7 @@ TEST(StaticDrivableArea, combineDrivableAreaInfo)
     drivable_area_info1.enable_expanding_hatched_road_markings = false;
     drivable_area_info2.enable_expanding_hatched_road_markings = true;
     const auto combined = combineDrivableAreaInfo(drivable_area_info1, drivable_area_info2);
-    EXPECT_EQ(combined.drivable_margin, 5.0);  // expect the maximum of the margins
+    EXPECT_DOUBLE_EQ(combined.drivable_margin, 5.0);  // expect the maximum of the margins
     // expect OR of the booleans
     EXPECT_FALSE(combined.enable_expanding_freespace_areas);
     EXPECT_TRUE(combined.enable_expanding_intersection_areas);
