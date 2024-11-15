@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__INTERFACE__STEERING_FACTOR_INTERFACE_HPP_
-#define AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__INTERFACE__STEERING_FACTOR_INTERFACE_HPP_
-
-#include <rclcpp/rclcpp.hpp>
+#ifndef AUTOWARE__MOTION_UTILS__FACTOR__STEERING_FACTOR_INTERFACE_HPP_
+#define AUTOWARE__MOTION_UTILS__FACTOR__STEERING_FACTOR_INTERFACE_HPP_
 
 #include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/steering_factor.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
-#include <mutex>
 #include <string>
 
-namespace steering_factor_interface
+namespace autoware::motion_utils
 {
 
 using autoware_adapi_v1_msgs::msg::PlanningBehavior;
@@ -49,6 +46,6 @@ private:
   SteeringFactor steering_factor_{};
 };
 
-}  // namespace steering_factor_interface
+}  // namespace autoware::motion_utils
 
-#endif  // AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__INTERFACE__STEERING_FACTOR_INTERFACE_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__FACTOR__STEERING_FACTOR_INTERFACE_HPP_

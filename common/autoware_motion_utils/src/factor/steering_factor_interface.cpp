@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/behavior_path_planner_common/interface/steering_factor_interface.hpp"
+#include <autoware/motion_utils/factor/steering_factor_interface.hpp>
 
-namespace steering_factor_interface
+namespace autoware::motion_utils
 {
 void SteeringFactorInterface::set(
   const std::array<Pose, 2> & pose, const std::array<double, 2> distance, const uint16_t direction,
@@ -29,4 +29,4 @@ void SteeringFactorInterface::set(
   steering_factor_.status = status;
   steering_factor_.detail = detail;
 }
-}  // namespace steering_factor_interface
+}  // namespace autoware::motion_utils
