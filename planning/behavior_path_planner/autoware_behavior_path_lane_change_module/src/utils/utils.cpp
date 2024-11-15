@@ -198,6 +198,7 @@ ShiftedPath get_frenet_shifted_path(
     ys.push_back(p.point.pose.position.y);
   }
   sampler_common::transform::Spline2D reference_spline(xs, ys);
+  
   frenet_planner::FrenetState initial_state;
   const auto & initial_position = lane_change_info.lane_changing_start.position;
   initial_state.position = reference_spline.frenet({initial_position.x, initial_position.y});
@@ -207,10 +208,12 @@ ShiftedPath get_frenet_shifted_path(
   const auto initial_s = initial_state.position.s + 0.001;  // add epsilon to avoid s=0
   initial_state.lateral_velocity = 0.0;
   initial_state.lateral_acceleration = 0.0;
+  
   frenet_planner::SamplingParameters sampling_parameters;
   sampling_parameters.parameters.emplace_back();
   sampling_parameters.resolution = 0.2;
   sampling_parameters.parameters.back().target_duration = lane_change_info.duration.lane_changing;
+  
   auto & target_state = sampling_parameters.parameters.back().target_state;
   target_state.position = reference_spline.frenet(
     {lane_change_info.lane_changing_end.position.x, lane_change_info.lane_changing_end.position.y});
@@ -223,9 +226,11 @@ ShiftedPath get_frenet_shifted_path(
     (1 - reference_spline.curvature(initial_s) * initial_state.position.d) *
     std::tan(initial_yaw - reference_spline.yaw(target_state.position.s));
   target_state.lateral_acceleration = 0.0;
+  
   const auto candidates =
     frenet_planner::generateTrajectories(reference_spline, initial_state, sampling_parameters);
   const auto & candidate = candidates.front();
+  
   PathPointWithLaneId pp;
   auto ref_s = 0.0;
   auto ref_i = 0UL;
