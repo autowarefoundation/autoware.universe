@@ -118,13 +118,11 @@ std::vector<PullOverPath> BezierPullOver::generateBezierPath(
   const lanelet::ConstLanelets & shoulder_lanes, const double lateral_jerk) const
 {
   const double pull_over_velocity = parameters_.pull_over_velocity;
-  const double after_shift_straight_distance = parameters_.after_shift_straight_distance;
 
   const auto & goal_pose = goal_candidate.goal_pose;
 
   // shift end pose is longitudinal offset from goal pose to improve parking angle accuracy
-  const Pose shift_end_pose =
-    autoware::universe_utils::calcOffsetPose(goal_pose, -after_shift_straight_distance, 0, 0);
+  const Pose shift_end_pose = goal_pose;
 
   // calculate lateral shift of previous module path terminal pose from road lane reference path
   const auto road_lane_reference_path_to_shift_end = utils::resamplePathWithSpline(
@@ -174,12 +172,13 @@ std::vector<PullOverPath> BezierPullOver::generateBezierPath(
     -before_shifted_pull_over_distance);
 
   std::vector<std::tuple<double, double, double>> params;
-  for (unsigned i = 0; i < 10; ++i) {
-    for (unsigned j = 0; j < 10; j++) {
-      for (unsigned k = 0; k < 10; k++) {
-        const double v_init_coeff = 1.0 / 10 * i;
-        const double v_final_coeff = 1.0 / 10 * j;
-        const double acc_coeff = 10.0 / 20 * k;
+  const size_t n_sample = 5;
+  for (unsigned i = 0; i < n_sample; ++i) {
+    for (unsigned j = 0; j < n_sample; j++) {
+      for (unsigned k = 0; k < n_sample; k++) {
+        const double v_init_coeff = 1.0 / n_sample * i;
+        const double v_final_coeff = 1.0 / n_sample * j;
+        const double acc_coeff = 10.0 / n_sample * k;
         params.emplace_back(v_init_coeff, v_final_coeff, acc_coeff);
       }
     }
@@ -239,21 +238,6 @@ std::vector<PullOverPath> BezierPullOver::generateBezierPath(
 
     autoware::motion_utils::insertOrientation(shifted_path.path.points, true);
 
-    // set same orientation, because the reference center line orientation is not same to the
-    shifted_path.path.points.back().point.pose.orientation = shift_end_pose.orientation;
-
-    // for debug. result of shift is not equal to the target
-    const Pose actual_shift_end_pose = shifted_path.path.points.back().point.pose;
-
-    // interpolate between shift end pose to goal pose
-    std::vector<Pose> interpolated_poses =
-      utils::interpolatePose(shifted_path.path.points.back().point.pose, goal_pose, 0.5);
-    for (const auto & pose : interpolated_poses) {
-      PathPointWithLaneId p = shifted_path.path.points.back();
-      p.point.pose = pose;
-      shifted_path.path.points.push_back(p);
-    }
-
     // set goal pose with velocity 0
     {
       PathPointWithLaneId p{};
@@ -300,13 +284,6 @@ std::vector<PullOverPath> BezierPullOver::generateBezierPath(
       continue;
     }
     auto & pull_over_path = pull_over_path_opt.value();
-    pull_over_path.debug_poses.push_back(shift_end_pose_prev_module_path);
-    pull_over_path.debug_poses.push_back(actual_shift_end_pose);
-    pull_over_path.debug_poses.push_back(goal_pose);
-    pull_over_path.debug_poses.push_back(shift_end_pose);
-    pull_over_path.debug_poses.push_back(
-      road_lane_reference_path_to_shift_end.points.back().point.pose);
-    pull_over_path.debug_poses.push_back(prev_module_path_terminal_pose);
 
     // check if the parking path will leave drivable area and lanes
     const bool is_in_parking_lots = std::invoke([&]() -> bool {
@@ -344,6 +321,7 @@ std::vector<PullOverPath> BezierPullOver::generateBezierPath(
     if (!is_in_parking_lots && !is_in_lanes) {
       continue;
     }
+    bezier_paths.push_back(std::move(pull_over_path));
   }
 
   return bezier_paths;
@@ -391,7 +369,6 @@ double BezierPullOver::calcBeforeShiftedArcLength(
   std::reverse_copy(
     path.points.begin(), path.points.end(), std::back_inserter(reversed_path.points));
 
-  double before_arc_length{0.0};
   double after_arc_length{0.0};
 
   const auto curvature_and_segment_length =
@@ -411,14 +388,13 @@ double BezierPullOver::calcBeforeShiftedArcLength(
       k > 0 ? segment_length * (1 + k * dr) : segment_length / (1 - k * dr);
     if (after_arc_length + after_segment_length > target_after_arc_length) {
       const double offset = target_after_arc_length - after_arc_length;
-      before_arc_length += k > 0 ? offset / (1 + k * dr) : offset * (1 - k * dr);
-      break;
+      after_arc_length += k > 0 ? offset * (1 + k * dr) : offset / (1 - k * dr);
+      return after_arc_length;
     }
-    before_arc_length += segment_length;
     after_arc_length += after_segment_length;
   }
 
-  return before_arc_length;
+  return after_arc_length;
 }
 
 }  // namespace autoware::behavior_path_planner

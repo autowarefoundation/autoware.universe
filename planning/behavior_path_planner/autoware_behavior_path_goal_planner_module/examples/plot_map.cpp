@@ -154,10 +154,20 @@ void plot_path_with_lane_id(
   const std::string & color = "red", const std::string & label = "", const double linewidth = 1.0)
 {
   std::vector<double> xs, ys;
+  std::vector<double> yaw_cos, yaw_sin;
   for (const auto & point : path.points) {
     xs.push_back(point.point.pose.position.x);
     ys.push_back(point.point.pose.position.y);
+    const double yaw = autoware::universe_utils::getRPY(point.point.pose).z;
+    yaw_cos.push_back(std::cos(yaw));
+    yaw_sin.push_back(std::sin(yaw));
+    axes.scatter(
+      Args(xs.back(), ys.back()), Kwargs("marker"_a = "o", "color"_a = "blue", "s"_a = 10));
   }
+  axes.quiver(
+    Args(xs, ys, yaw_cos, yaw_sin),
+    Kwargs("angles"_a = "xy", "scale_units"_a = "xy", "scale"_a = 2.0));
+
   if (label == "") {
     axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linewidth"_a = linewidth));
   } else {
@@ -627,6 +637,7 @@ int main(int argc, char ** argv)
   const auto filtered_paths = selectPullOverPaths(
     candidates, goal_candidates, planner_data, goal_planner_parameter, reference_path);
   std::cout << filtered_paths.size() << std::endl;
+  /*
   for (auto i = 0; i < filtered_paths.size(); ++i) {
     const auto & filtered_path = filtered_paths.at(i);
     const auto goal_id = filtered_path.goal_id();
@@ -644,6 +655,7 @@ int main(int argc, char ** argv)
         0.5);
     }
   }
+  */
   const auto original_goal_pos = planner_data->route_handler->getOriginalGoalPose().position;
   ax1.plot(
     Args(original_goal_pos.x, original_goal_pos.y),
@@ -662,10 +674,18 @@ int main(int argc, char ** argv)
     const auto prio = goal_id2prio[goal_id];
     const auto & color = (i == 0) ? "red" : g_colors.at(i % g_colors.size());
     const auto max_parking_curvature = filtered_path.parking_path_max_curvature();
-    plot_goal_candidate(ax1, filtered_path.modified_goal(), prio, footprint, color);
     if (i == 0) {
+      plot_goal_candidate(ax1, filtered_path.modified_goal(), prio, footprint, color);
       plot_path_with_lane_id(ax2, filtered_path.full_path(), color, "most prio", 2.0);
-      break;
+      for (const auto & path_point : filtered_path.full_path().points) {
+        const auto pose_footprint = transformVector(
+          footprint, autoware::universe_utils::pose2transform(path_point.point.pose));
+        plot_footprint(ax2, pose_footprint, "blue");
+      }
+    } else if (i % 500 == 0) {
+      std::cout << "plotting " << i << "-th filtered path" << std::endl;
+      plot_goal_candidate(ax1, filtered_path.modified_goal(), prio, footprint, color);
+      plot_path_with_lane_id(ax1, filtered_path.full_path(), color, "", 2.0);
     }
   }
   ax2.plot(
