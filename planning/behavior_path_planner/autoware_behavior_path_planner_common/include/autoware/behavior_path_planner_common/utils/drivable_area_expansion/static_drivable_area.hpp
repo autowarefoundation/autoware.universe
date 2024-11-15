@@ -45,7 +45,7 @@ std::vector<DrivableLanes> cutOverlappedLanes(
 
 /**
  * @brief generate DrivableLanes objects from a sequence of lanelets
- * @param [in] lanelets sequence of laneles
+ * @param [in] lanelets sequence of lanelets
  * @return a vector of DrivableLanes constructed from the given lanelets
  */
 std::vector<DrivableLanes> generateDrivableLanes(const lanelet::ConstLanelets & lanelets);
