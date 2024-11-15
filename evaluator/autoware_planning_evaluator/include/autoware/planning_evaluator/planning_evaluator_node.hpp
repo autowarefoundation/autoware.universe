@@ -23,6 +23,7 @@
 
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp"
@@ -33,6 +34,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <diagnostic_msgs/msg/detail/diagnostic_status__struct.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
 #include <array>
 #include <deque>
@@ -164,6 +166,7 @@ private:
     this, "~/input/acceleration"};
 
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_pub_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   autoware::route_handler::RouteHandler route_handler_;

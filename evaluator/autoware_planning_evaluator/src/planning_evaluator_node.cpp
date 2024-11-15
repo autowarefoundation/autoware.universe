@@ -60,6 +60,8 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
 
   planning_diag_sub_ = create_subscription<DiagnosticArray>(
     "~/input/diagnostics", 1, std::bind(&PlanningEvaluatorNode::onDiagnostics, this, _1));
+  processing_time_pub_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 
   // List of metrics to calculate and publish
   metrics_pub_ = create_publisher<DiagnosticArray>("~/metrics", 1);
@@ -253,6 +255,8 @@ DiagnosticStatus PlanningEvaluatorNode::generateDiagnosticStatus(
 
 void PlanningEvaluatorNode::onTimer()
 {
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+
   metrics_msg_.header.stamp = now();
 
   const auto ego_state_ptr = odometry_sub_.takeData();
@@ -296,6 +300,12 @@ void PlanningEvaluatorNode::onTimer()
     metrics_pub_->publish(metrics_msg_);
   }
   metrics_msg_ = DiagnosticArray{};
+
+  // ProcessingTime
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = stop_watch.toc();
+  processing_time_pub_->publish(processing_time_msg);
 }
 
 void PlanningEvaluatorNode::onTrajectory(
