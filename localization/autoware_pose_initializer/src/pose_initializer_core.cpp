@@ -31,7 +31,7 @@ namespace autoware::pose_initializer
 PoseInitializer::PoseInitializer(const rclcpp::NodeOptions & options)
 : rclcpp::Node("pose_initializer", options)
 {
-  const auto node = component_interface_utils::NodeAdaptor(this);
+  const auto node = autoware::component_interface_utils::NodeAdaptor(this);
   group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   node.init_pub(pub_state_);
   node.init_srv(srv_initialize_, this, &PoseInitializer::on_initialize, group_srv_);

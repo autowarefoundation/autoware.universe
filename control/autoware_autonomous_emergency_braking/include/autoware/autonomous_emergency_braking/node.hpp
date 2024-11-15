@@ -34,6 +34,8 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
+#include <tier4_metric_msgs/msg/metric.hpp>
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -77,6 +79,8 @@ using Vector3 = geometry_msgs::msg::Vector3;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using colorTuple = std::tuple<double, double, double, double>;
+using Metric = tier4_metric_msgs::msg::Metric;
+using MetricArray = tier4_metric_msgs::msg::MetricArray;
 
 /**
  * @brief Struct to store object data
@@ -341,10 +345,11 @@ public:
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr info_marker_publisher_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr virtual_wall_publisher_;
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
     debug_processing_time_detail_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr debug_rss_distance_publisher_;
+  rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
   mutable std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
@@ -562,7 +567,8 @@ public:
   double voxel_grid_x_;
   double voxel_grid_y_;
   double voxel_grid_z_;
-  double min_generated_path_length_;
+  double min_generated_imu_path_length_;
+  double max_generated_imu_path_length_;
   double expand_width_;
   double longitudinal_offset_;
   double t_response_;

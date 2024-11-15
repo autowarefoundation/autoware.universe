@@ -41,6 +41,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   device_params_(
     declare_parameter<std::vector<std::string>>("devices", std::vector<std::string>())),
   getifaddrs_error_code_(0),
+  enable_traffic_monitor_(declare_parameter<bool>("enable_traffic_monitor", true)),
   monitor_program_(declare_parameter<std::string>("monitor_program", "greengrass")),
   socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path)),
   crc_error_check_duration_(declare_parameter<int>("crc_error_check_duration", 1)),
@@ -81,7 +82,11 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   get_reassembles_failed_column_index();
 
   // Send request to start nethogs
-  send_start_nethogs_request();
+  if (enable_traffic_monitor_) {
+    send_start_nethogs_request();
+  } else {
+    send_skip_nethogs_request();
+  }
 }
 
 NetMonitor::~NetMonitor()
@@ -234,38 +239,43 @@ void NetMonitor::monitor_traffic(diagnostic_updater::DiagnosticStatusWrapper & s
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
-  // Get result of nethogs
-  traffic_reader_service::Result result;
-  get_nethogs_result(result);
+  if (enable_traffic_monitor_) {
+    // Get result of nethogs
+    traffic_reader_service::Result result;
+    get_nethogs_result(result);
 
-  // traffic_reader result to output
-  if (result.error_code != EXIT_SUCCESS) {
-    status.summary(DiagStatus::ERROR, "traffic_reader error");
-    status.add("error", result.output);
-  } else {
-    status.summary(DiagStatus::OK, "OK");
-
-    if (result.output.empty()) {
-      status.add("nethogs: result", fmt::format("No data monitored: {}", monitor_program_));
+    // traffic_reader result to output
+    if (result.error_code != EXIT_SUCCESS) {
+      status.summary(DiagStatus::ERROR, "traffic_reader error");
+      status.add("error", result.output);
     } else {
-      std::stringstream lines{result.output};
-      std::string line;
-      std::vector<std::string> list;
-      int index = 0;
-      while (std::getline(lines, line)) {
-        if (line.empty()) continue;
+      status.summary(DiagStatus::OK, "OK");
 
-        boost::split(list, line, boost::is_any_of("\t"), boost::token_compress_on);
-        if (list.size() > 3) {
-          status.add(fmt::format("nethogs {}: program", index), list[3].c_str());
-          status.add(fmt::format("nethogs {}: sent (KB/s)", index), list[1].c_str());
-          status.add(fmt::format("nethogs {}: received (KB/sec)", index), list[2].c_str());
-        } else {
-          status.add(fmt::format("nethogs {}: result", index), line);
+      if (result.output.empty()) {
+        status.add("nethogs: result", fmt::format("No data monitored: {}", monitor_program_));
+      } else {
+        std::stringstream lines{result.output};
+        std::string line;
+        std::vector<std::string> list;
+        int index = 0;
+        while (std::getline(lines, line)) {
+          if (line.empty()) continue;
+
+          boost::split(list, line, boost::is_any_of("\t"), boost::token_compress_on);
+          if (list.size() > 3) {
+            status.add(fmt::format("nethogs {}: program", index), list[3].c_str());
+            status.add(fmt::format("nethogs {}: sent (KB/s)", index), list[1].c_str());
+            status.add(fmt::format("nethogs {}: received (KB/sec)", index), list[2].c_str());
+          } else {
+            status.add(fmt::format("nethogs {}: result", index), line);
+          }
+          ++index;
         }
-        ++index;
       }
     }
+  } else {
+    status.summary(DiagStatus::OK, "OK");
+    status.add("nethogs: result", "traffic monitor is NOT activated");
   }
 
   // Measure elapsed time since start time and report
@@ -375,14 +385,21 @@ void NetMonitor::update_network_list()
     return;
   }
 
+  const bool use_loopback =
+    std::any_of(device_params_.begin(), device_params_.end(), [this](const std::string & device) {
+      return device == loopback_interface_name_ || device == "*";
+    });
+
   for (const auto * interface = interfaces; interface; interface = interface->ifa_next) {
     // Skip no addr
     if (!interface->ifa_addr) {
       continue;
     }
-    // Skip loopback
-    if (interface->ifa_flags & IFF_LOOPBACK) {
-      continue;
+    if (!use_loopback) {
+      // Skip loopback
+      if (interface->ifa_flags & IFF_LOOPBACK) {
+        continue;
+      }
     }
     // Skip non AF_PACKET
     if (interface->ifa_addr->sa_family != AF_PACKET) {
@@ -458,6 +475,12 @@ void NetMonitor::update_network_capacity(NetworkInfomation & network, int socket
     return;
   }
 
+  // capacity is not available for loopback
+  if (network.interface_name == loopback_interface_name_) {
+    network.speed = -1;
+    return;
+  }
+
   // Possibly wireless connection, get bitrate(MBit/s)
   float ret = nl80211_.getBitrate(network.interface_name.c_str());
   if (ret <= 0) {
@@ -495,8 +518,10 @@ void NetMonitor::update_traffic(
       to_mbit(stats->rx_bytes - bytes_entry->second.rx_bytes) / duration.seconds();
     network.tx_traffic =
       to_mbit(stats->tx_bytes - bytes_entry->second.tx_bytes) / duration.seconds();
-    network.rx_usage = network.rx_traffic / network.speed;
-    network.tx_usage = network.tx_traffic / network.speed;
+    if (network.speed > 0) {
+      network.rx_usage = network.rx_traffic / network.speed;
+      network.tx_usage = network.tx_traffic / network.speed;
+    }
   }
 
   bytes_[network.interface_name].rx_bytes = stats->rx_bytes;
@@ -612,6 +637,7 @@ void NetMonitor::send_start_nethogs_request()
   for (const auto & network : network_list_) {
     // Skip if network is not supported
     if (network.is_invalid) continue;
+    if (network.interface_name == loopback_interface_name_) continue;
 
     interface_names.push_back(network.interface_name);
   }
@@ -619,6 +645,21 @@ void NetMonitor::send_start_nethogs_request()
   // Send data to traffic-reader service
   send_data_with_parameters(
     traffic_reader_service::START_NETHOGS, interface_names, monitor_program_);
+
+  // Close connection with traffic-reader service
+  close_connection();
+}
+
+void NetMonitor::send_skip_nethogs_request()
+{
+  // Connect to boot/shutdown service
+  if (!connect_service()) {
+    close_connection();
+    return;
+  }
+
+  // Send data to traffic-reader service
+  send_data(traffic_reader_service::SKIP_NETHOGS);
 
   // Close connection with traffic-reader service
   close_connection();

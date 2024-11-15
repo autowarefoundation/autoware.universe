@@ -29,6 +29,7 @@
 #include <diagnostic_msgs/msg/key_value.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -86,7 +87,10 @@ private:
     const std::string & source, const std::string & target, const rclcpp::Time & stamp,
     double duration_sec) const;
 
-  bool isStopRequired(const bool is_obstacle_found, const bool is_vehicle_stopped);
+  auto isStopRequired(
+    const bool is_obstacle_found, const bool is_vehicle_stopped, const State & state,
+    const std::optional<rclcpp::Time> & last_obstacle_found_time,
+    const double time_threshold) const -> std::pair<bool, std::optional<rclcpp::Time>>;
 
   // ros
   mutable tf2_ros::Buffer tf_buffer_{get_clock()};
@@ -103,6 +107,7 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr pub_stop_reason_;
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_;
 
   // parameter callback result
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -124,11 +129,14 @@ private:
 
   // State Machine
   State state_ = State::PASS;
-  std::shared_ptr<const rclcpp::Time> last_obstacle_found_time_;
+  std::optional<rclcpp::Time> last_obstacle_found_time_;
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
   std::unordered_map<int, std::string> label_map_;
+
+public:
+  friend class SurroundObstacleCheckerNodeTest;
 };
 }  // namespace autoware::surround_obstacle_checker
 

@@ -18,8 +18,9 @@ namespace autoware::behavior_path_planner
 {
 
 std::optional<PullOverPath> PullOverPath::create(
-  const PullOverPlannerType & type, const size_t goal_id, const size_t id,
-  const std::vector<PathWithLaneId> & partial_paths, const Pose & start_pose, const Pose & end_pose,
+  const PullOverPlannerType & type, const size_t id,
+  const std::vector<PathWithLaneId> & partial_paths, const Pose & start_pose,
+  const GoalCandidate & modified_goal_pose,
   const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel)
 {
   if (partial_paths.empty()) {
@@ -73,20 +74,19 @@ std::optional<PullOverPath> PullOverPath::create(
   double parking_path_max_curvature{};
   std::tie(full_path_curvatures, full_path_max_curvature) = calculateCurvaturesAndMax(full_path);
   std::tie(parking_path_curvatures, parking_path_max_curvature) =
-    calculateCurvaturesAndMax(full_path);
+    calculateCurvaturesAndMax(parking_path);
 
   return PullOverPath(
-    type, goal_id, id, start_pose, end_pose, partial_paths, full_path, parking_path,
+    type, id, start_pose, modified_goal_pose, partial_paths, full_path, parking_path,
     full_path_curvatures, parking_path_curvatures, full_path_max_curvature,
     parking_path_max_curvature, pairs_terminal_velocity_and_accel);
 }
 
 PullOverPath::PullOverPath(const PullOverPath & other)
 : type_(other.type_),
-  goal_id_(other.goal_id_),
+  modified_goal_pose_(other.modified_goal_pose_),
   id_(other.id_),
   start_pose_(other.start_pose_),
-  end_pose_(other.end_pose_),
   partial_paths_(other.partial_paths_),
   full_path_(other.full_path_),
   parking_path_(other.parking_path_),
@@ -100,18 +100,17 @@ PullOverPath::PullOverPath(const PullOverPath & other)
 }
 
 PullOverPath::PullOverPath(
-  const PullOverPlannerType & type, const size_t goal_id, const size_t id, const Pose & start_pose,
-  const Pose & end_pose, const std::vector<PathWithLaneId> & partial_paths,
+  const PullOverPlannerType & type, const size_t id, const Pose & start_pose,
+  const GoalCandidate & modified_goal_pose, const std::vector<PathWithLaneId> & partial_paths,
   const PathWithLaneId & full_path, const PathWithLaneId & parking_path,
   const std::vector<double> & full_path_curvatures,
   const std::vector<double> & parking_path_curvatures, const double full_path_max_curvature,
   const double parking_path_max_curvature,
   const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel)
 : type_(type),
-  goal_id_(goal_id),
+  modified_goal_pose_(modified_goal_pose),
   id_(id),
   start_pose_(start_pose),
-  end_pose_(end_pose),
   partial_paths_(partial_paths),
   full_path_(full_path),
   parking_path_(parking_path),

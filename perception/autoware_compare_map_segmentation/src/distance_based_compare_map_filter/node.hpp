@@ -24,14 +24,13 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace autoware::compare_map_segmentation
 {
 
-typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
-typedef typename PointCloud::Ptr PointCloudPtr;
-typedef typename PointCloud::ConstPtr PointCloudConstPtr;
+using PointCloud = typename pcl::Filter<pcl::PointXYZ>::PointCloud;
+using PointCloudPtr = typename PointCloud::Ptr;
+using PointCloudConstPtr = typename PointCloud::ConstPtr;
 
 class DistanceBasedStaticMapLoader : public VoxelGridStaticMapLoader
 {
@@ -41,8 +40,8 @@ private:
 
 public:
   DistanceBasedStaticMapLoader(
-    rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex)
-  : VoxelGridStaticMapLoader(node, leaf_size, 1.0, tf_map_input_frame, mutex)
+    rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame)
+  : VoxelGridStaticMapLoader(node, leaf_size, 1.0, tf_map_input_frame)
   {
     RCLCPP_INFO(logger_, "DistanceBasedStaticMapLoader initialized.\n");
   }
@@ -55,9 +54,9 @@ class DistanceBasedDynamicMapLoader : public VoxelGridDynamicMapLoader
 {
 public:
   DistanceBasedDynamicMapLoader(
-    rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame, std::mutex * mutex,
+    rclcpp::Node * node, double leaf_size, std::string * tf_map_input_frame,
     rclcpp::CallbackGroup::SharedPtr main_callback_group)
-  : VoxelGridDynamicMapLoader(node, leaf_size, 1.0, tf_map_input_frame, mutex, main_callback_group)
+  : VoxelGridDynamicMapLoader(node, leaf_size, 1.0, tf_map_input_frame, main_callback_group)
   {
     RCLCPP_INFO(logger_, "DistanceBasedDynamicMapLoader initialized.\n");
   }
@@ -94,17 +93,16 @@ public:
     current_voxel_grid_list_item.map_cell_kdtree = tree_tmp;
 
     // add
-    (*mutex_ptr_).lock();
+    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     current_voxel_grid_dict_.insert({map_cell_to_add.cell_id, current_voxel_grid_list_item});
-    (*mutex_ptr_).unlock();
   }
 };
 
 class DistanceBasedCompareMapFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
 protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
 private:
   double distance_threshold_;
