@@ -23,6 +23,8 @@
 #include <autoware_bezier_sampler/bezier_sampling.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 
+#include <iterator>
+
 namespace autoware::behavior_path_planner
 {
 BezierPullOver::BezierPullOver(
@@ -63,15 +65,53 @@ std::optional<PullOverPath> BezierPullOver::plan(
     const auto pull_over_path = generateBezierPath(
       modified_goal_pose, id, planner_data, previous_module_output, road_lanes, pull_over_lanes,
       lateral_jerk);
-    if (pull_over_path) {
-      return pull_over_path.value();
+    if (!pull_over_path.empty()) {
+      return pull_over_path.at(0);
     }
   }
 
   return std::nullopt;
 }
 
-std::optional<PullOverPath> BezierPullOver::generateBezierPath(
+std::vector<PullOverPath> BezierPullOver::plans(
+  [[maybe_unused]] const GoalCandidate & modified_goal_pose, [[maybe_unused]] const size_t id,
+  [[maybe_unused]] const std::shared_ptr<const PlannerData> planner_data,
+  [[maybe_unused]] const BehaviorModuleOutput & previous_module_output)
+{
+  const auto & route_handler = planner_data->route_handler;
+  const double min_jerk = parameters_.minimum_lateral_jerk;
+  const double max_jerk = parameters_.maximum_lateral_jerk;
+  const double backward_search_length = parameters_.backward_goal_search_length;
+  const double forward_search_length = parameters_.forward_goal_search_length;
+  const int shift_sampling_num = parameters_.shift_sampling_num;
+  [[maybe_unused]] const double jerk_resolution =
+    std::abs(max_jerk - min_jerk) / shift_sampling_num;
+
+  const auto road_lanes = utils::getExtendedCurrentLanesFromPath(
+    previous_module_output.path, planner_data, backward_search_length, forward_search_length,
+    /*forward_only_in_route*/ false);
+
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    *route_handler, left_side_parking_, backward_search_length, forward_search_length);
+  if (road_lanes.empty() || pull_over_lanes.empty()) {
+    return {};
+  }
+
+  // find safe one from paths with different jerk
+  std::vector<PullOverPath> paths;
+  for (double lateral_jerk = min_jerk; lateral_jerk <= max_jerk; lateral_jerk += jerk_resolution) {
+    auto pull_over_paths = generateBezierPath(
+      modified_goal_pose, id, planner_data, previous_module_output, road_lanes, pull_over_lanes,
+      lateral_jerk);
+    std::copy(
+      std::make_move_iterator(pull_over_paths.begin()),
+      std::make_move_iterator(pull_over_paths.end()), std::back_inserter(paths));
+  }
+
+  return paths;
+}
+
+std::vector<PullOverPath> BezierPullOver::generateBezierPath(
   const GoalCandidate & goal_candidate, const size_t id,
   const std::shared_ptr<const PlannerData> planner_data,
   const BehaviorModuleOutput & previous_module_output, const lanelet::ConstLanelets & road_lanes,
@@ -133,160 +173,180 @@ std::optional<PullOverPath> BezierPullOver::generateBezierPath(
     processed_prev_module_path->points, shift_end_pose_prev_module_path.position,
     -before_shifted_pull_over_distance);
 
-  // set path shifter and generate shifted path
-  PathShifter path_shifter{};
-  path_shifter.setPath(processed_prev_module_path.value());
-  ShiftLine shift_line{};
-  shift_line.start = *shift_start_pose;
-  shift_line.end = shift_end_pose;
-  shift_line.end_shift_length = shift_end_road_to_target_distance;
-  path_shifter.addShiftLine(shift_line);
-  ShiftedPath shifted_path{};
-  const bool offset_back = true;  // offset front side from reference path
-  if (!path_shifter.generate(&shifted_path, offset_back)) {
-    return {};
-  }
-  const auto from_idx_opt =
-    autoware::motion_utils::findNearestIndex(shifted_path.path.points, *shift_start_pose);
-  const auto to_idx_opt =
-    autoware::motion_utils::findNearestIndex(shifted_path.path.points, shift_end_pose);
-  if (!from_idx_opt || !to_idx_opt) {
-    return {};
-  }
-  const auto from_idx = from_idx_opt.value();
-  const auto to_idx = to_idx_opt.value();
-  const auto span =
-    static_cast<unsigned>(std::max<int>(static_cast<int>(to_idx) - static_cast<int>(from_idx), 0));
-  const auto & from_pose = shifted_path.path.points[from_idx].point.pose;
-  const auto & to_pose = shifted_path.path.points[to_idx].point.pose;
-  const autoware::sampler_common::State initial{
-    {from_pose.position.x, from_pose.position.y},
-    {0.0, 0.0},
-    0.0,
-    tf2::getYaw(from_pose.orientation)};
-  const autoware::sampler_common::State final{
-    {to_pose.position.x, to_pose.position.y}, {0.0, 0.0}, 0.0, tf2::getYaw(to_pose.orientation)};
-  // setting the initial velocity to higher gives straight forwared path (the steering does not
-  // change)
-  const auto bezier_path = bezier_sampler::sample(initial, final, 0.3, 0.7, 0.0);
-  const auto bezier_points = bezier_path.cartesianWithHeading(span);
-  for (unsigned i = 0; i + 1 < span; ++i) {
-    auto & p = shifted_path.path.points[from_idx + i];
-    p.point.pose.position.x = bezier_points[i].x();
-    p.point.pose.position.y = bezier_points[i].y();
-    p.point.pose.orientation =
-      universe_utils::createQuaternionFromRPY(0.0, 0.0, bezier_points[i].z());
-  }
-  shifted_path.path.points = autoware::motion_utils::removeOverlapPoints(shifted_path.path.points);
-
-  autoware::motion_utils::insertOrientation(shifted_path.path.points, true);
-
-  // set same orientation, because the reference center line orientation is not same to the
-  shifted_path.path.points.back().point.pose.orientation = shift_end_pose.orientation;
-
-  // for debug. result of shift is not equal to the target
-  const Pose actual_shift_end_pose = shifted_path.path.points.back().point.pose;
-
-  // interpolate between shift end pose to goal pose
-  std::vector<Pose> interpolated_poses =
-    utils::interpolatePose(shifted_path.path.points.back().point.pose, goal_pose, 0.5);
-  for (const auto & pose : interpolated_poses) {
-    PathPointWithLaneId p = shifted_path.path.points.back();
-    p.point.pose = pose;
-    shifted_path.path.points.push_back(p);
-  }
-
-  // set goal pose with velocity 0
-  {
-    PathPointWithLaneId p{};
-    p.point.longitudinal_velocity_mps = 0.0;
-    p.point.pose = goal_pose;
-    p.lane_ids = shifted_path.path.points.back().lane_ids;
-    for (const auto & lane : shoulder_lanes) {
-      p.lane_ids.push_back(lane.id());
-    }
-    shifted_path.path.points.push_back(p);
-  }
-
-  // set lane_id and velocity to shifted_path
-  for (size_t i = path_shifter.getShiftLines().front().start_idx;
-       i < shifted_path.path.points.size() - 1; ++i) {
-    auto & point = shifted_path.path.points.at(i);
-    // set velocity
-    point.point.longitudinal_velocity_mps =
-      std::min(point.point.longitudinal_velocity_mps, static_cast<float>(pull_over_velocity));
-
-    // add target lanes to points after shift start
-    // add road lane_ids if not found
-    for (const auto id : shifted_path.path.points.back().lane_ids) {
-      if (std::find(point.lane_ids.begin(), point.lane_ids.end(), id) == point.lane_ids.end()) {
-        point.lane_ids.push_back(id);
-      }
-    }
-    // add shoulder lane_id if not found
-    for (const auto & lane : shoulder_lanes) {
-      if (
-        std::find(point.lane_ids.begin(), point.lane_ids.end(), lane.id()) ==
-        point.lane_ids.end()) {
-        point.lane_ids.push_back(lane.id());
+  std::vector<std::tuple<double, double, double>> params;
+  for (unsigned i = 0; i < 10; ++i) {
+    for (unsigned j = 0; j < 10; j++) {
+      for (unsigned k = 0; k < 10; k++) {
+        const double v_init_coeff = 1.0 / 10 * i;
+        const double v_final_coeff = 1.0 / 10 * j;
+        const double acc_coeff = 10.0 / 20 * k;
+        params.emplace_back(v_init_coeff, v_final_coeff, acc_coeff);
       }
     }
   }
 
-  // set pull over path
-  auto pull_over_path_opt = PullOverPath::create(
-    getPlannerType(), id, {shifted_path.path}, path_shifter.getShiftLines().front().start,
-    goal_candidate, {std::make_pair(pull_over_velocity, 0)});
+  std::vector<PullOverPath> bezier_paths;
+  for (const auto & [v_init_coeff, v_final_coeff, acc_coeff] : params) {
+    // set path shifter and generate shifted path
+    PathShifter path_shifter{};
+    path_shifter.setPath(processed_prev_module_path.value());
+    ShiftLine shift_line{};
+    shift_line.start = *shift_start_pose;
+    shift_line.end = shift_end_pose;
+    shift_line.end_shift_length = shift_end_road_to_target_distance;
+    path_shifter.addShiftLine(shift_line);
+    ShiftedPath shifted_path{};
+    const bool offset_back = true;  // offset front side from reference path
+    if (!path_shifter.generate(&shifted_path, offset_back)) {
+      continue;
+    }
+    const auto from_idx_opt =
+      autoware::motion_utils::findNearestIndex(shifted_path.path.points, *shift_start_pose);
+    const auto to_idx_opt =
+      autoware::motion_utils::findNearestIndex(shifted_path.path.points, shift_end_pose);
+    if (!from_idx_opt || !to_idx_opt) {
+      continue;
+    }
+    const auto from_idx = from_idx_opt.value();
+    const auto to_idx = to_idx_opt.value();
+    const auto span = static_cast<unsigned>(
+      std::max<int>(static_cast<int>(to_idx) - static_cast<int>(from_idx), 0));
+    const auto reference_curvature =
+      autoware::motion_utils::calcCurvature(processed_prev_module_path->points);
+    const auto & from_pose = shifted_path.path.points[from_idx].point.pose;
+    const auto & to_pose = shifted_path.path.points[to_idx].point.pose;
+    const autoware::sampler_common::State initial{
+      {from_pose.position.x, from_pose.position.y},
+      {0.0, 0.0},
+      reference_curvature.at(from_idx),
+      tf2::getYaw(from_pose.orientation)};
+    const autoware::sampler_common::State final{
+      {to_pose.position.x, to_pose.position.y}, {0.0, 0.0}, 0.0, tf2::getYaw(to_pose.orientation)};
+    // setting the initial velocity to higher gives straight forwared path (the steering does not
+    // change)
+    const auto bezier_path =
+      bezier_sampler::sample(initial, final, v_init_coeff, v_final_coeff, acc_coeff);
+    const auto bezier_points = bezier_path.cartesianWithHeading(span);
+    for (unsigned i = 0; i + 1 < span; ++i) {
+      auto & p = shifted_path.path.points[from_idx + i];
+      p.point.pose.position.x = bezier_points[i].x();
+      p.point.pose.position.y = bezier_points[i].y();
+      p.point.pose.orientation =
+        universe_utils::createQuaternionFromRPY(0.0, 0.0, bezier_points[i].z());
+    }
+    shifted_path.path.points =
+      autoware::motion_utils::removeOverlapPoints(shifted_path.path.points);
 
-  if (!pull_over_path_opt) {
-    return {};
-  }
-  auto & pull_over_path = pull_over_path_opt.value();
-  pull_over_path.debug_poses.push_back(shift_end_pose_prev_module_path);
-  pull_over_path.debug_poses.push_back(actual_shift_end_pose);
-  pull_over_path.debug_poses.push_back(goal_pose);
-  pull_over_path.debug_poses.push_back(shift_end_pose);
-  pull_over_path.debug_poses.push_back(
-    road_lane_reference_path_to_shift_end.points.back().point.pose);
-  pull_over_path.debug_poses.push_back(prev_module_path_terminal_pose);
+    autoware::motion_utils::insertOrientation(shifted_path.path.points, true);
 
-  // check if the parking path will leave drivable area and lanes
-  const bool is_in_parking_lots = std::invoke([&]() -> bool {
-    const auto & p = planner_data->parameters;
-    const auto parking_lot_polygons =
-      lanelet::utils::query::getAllParkingLots(planner_data->route_handler->getLaneletMapPtr());
-    const auto path_footprints = goal_planner_utils::createPathFootPrints(
-      pull_over_path.parking_path(), p.base_link2front, p.base_link2rear, p.vehicle_width);
-    const auto is_footprint_in_any_polygon = [&parking_lot_polygons](const auto & footprint) {
-      return std::any_of(
-        parking_lot_polygons.begin(), parking_lot_polygons.end(),
-        [&footprint](const auto & polygon) {
-          return lanelet::geometry::within(footprint, lanelet::utils::to2D(polygon).basicPolygon());
+    // set same orientation, because the reference center line orientation is not same to the
+    shifted_path.path.points.back().point.pose.orientation = shift_end_pose.orientation;
+
+    // for debug. result of shift is not equal to the target
+    const Pose actual_shift_end_pose = shifted_path.path.points.back().point.pose;
+
+    // interpolate between shift end pose to goal pose
+    std::vector<Pose> interpolated_poses =
+      utils::interpolatePose(shifted_path.path.points.back().point.pose, goal_pose, 0.5);
+    for (const auto & pose : interpolated_poses) {
+      PathPointWithLaneId p = shifted_path.path.points.back();
+      p.point.pose = pose;
+      shifted_path.path.points.push_back(p);
+    }
+
+    // set goal pose with velocity 0
+    {
+      PathPointWithLaneId p{};
+      p.point.longitudinal_velocity_mps = 0.0;
+      p.point.pose = goal_pose;
+      p.lane_ids = shifted_path.path.points.back().lane_ids;
+      for (const auto & lane : shoulder_lanes) {
+        p.lane_ids.push_back(lane.id());
+      }
+      shifted_path.path.points.push_back(p);
+    }
+
+    // set lane_id and velocity to shifted_path
+    for (size_t i = path_shifter.getShiftLines().front().start_idx;
+         i < shifted_path.path.points.size() - 1; ++i) {
+      auto & point = shifted_path.path.points.at(i);
+      // set velocity
+      point.point.longitudinal_velocity_mps =
+        std::min(point.point.longitudinal_velocity_mps, static_cast<float>(pull_over_velocity));
+
+      // add target lanes to points after shift start
+      // add road lane_ids if not found
+      for (const auto id : shifted_path.path.points.back().lane_ids) {
+        if (std::find(point.lane_ids.begin(), point.lane_ids.end(), id) == point.lane_ids.end()) {
+          point.lane_ids.push_back(id);
+        }
+      }
+      // add shoulder lane_id if not found
+      for (const auto & lane : shoulder_lanes) {
+        if (
+          std::find(point.lane_ids.begin(), point.lane_ids.end(), lane.id()) ==
+          point.lane_ids.end()) {
+          point.lane_ids.push_back(lane.id());
+        }
+      }
+    }
+
+    // set pull over path
+    auto pull_over_path_opt = PullOverPath::create(
+      getPlannerType(), id, {shifted_path.path}, path_shifter.getShiftLines().front().start,
+      goal_candidate, {std::make_pair(pull_over_velocity, 0)});
+
+    if (!pull_over_path_opt) {
+      continue;
+    }
+    auto & pull_over_path = pull_over_path_opt.value();
+    pull_over_path.debug_poses.push_back(shift_end_pose_prev_module_path);
+    pull_over_path.debug_poses.push_back(actual_shift_end_pose);
+    pull_over_path.debug_poses.push_back(goal_pose);
+    pull_over_path.debug_poses.push_back(shift_end_pose);
+    pull_over_path.debug_poses.push_back(
+      road_lane_reference_path_to_shift_end.points.back().point.pose);
+    pull_over_path.debug_poses.push_back(prev_module_path_terminal_pose);
+
+    // check if the parking path will leave drivable area and lanes
+    const bool is_in_parking_lots = std::invoke([&]() -> bool {
+      const auto & p = planner_data->parameters;
+      const auto parking_lot_polygons =
+        lanelet::utils::query::getAllParkingLots(planner_data->route_handler->getLaneletMapPtr());
+      const auto path_footprints = goal_planner_utils::createPathFootPrints(
+        pull_over_path.parking_path(), p.base_link2front, p.base_link2rear, p.vehicle_width);
+      const auto is_footprint_in_any_polygon = [&parking_lot_polygons](const auto & footprint) {
+        return std::any_of(
+          parking_lot_polygons.begin(), parking_lot_polygons.end(),
+          [&footprint](const auto & polygon) {
+            return lanelet::geometry::within(
+              footprint, lanelet::utils::to2D(polygon).basicPolygon());
+          });
+      };
+      return std::all_of(
+        path_footprints.begin(), path_footprints.end(),
+        [&is_footprint_in_any_polygon](const auto & footprint) {
+          return is_footprint_in_any_polygon(footprint);
         });
-    };
-    return std::all_of(
-      path_footprints.begin(), path_footprints.end(),
-      [&is_footprint_in_any_polygon](const auto & footprint) {
-        return is_footprint_in_any_polygon(footprint);
-      });
-  });
-  const bool is_in_lanes = std::invoke([&]() -> bool {
-    const auto drivable_lanes =
-      utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
-    const auto & dp = planner_data->drivable_area_expansion_parameters;
-    const auto expanded_lanes = utils::expandLanelets(
-      drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
-      dp.drivable_area_types_to_skip);
-    const auto combined_drivable = utils::combineDrivableLanes(
-      expanded_lanes, previous_module_output.drivable_area_info.drivable_lanes);
-    return !lane_departure_checker_.checkPathWillLeaveLane(
-      utils::transformToLanelets(combined_drivable), pull_over_path.parking_path());
-  });
-  if (!is_in_parking_lots && !is_in_lanes) {
-    return {};
+    });
+    const bool is_in_lanes = std::invoke([&]() -> bool {
+      const auto drivable_lanes =
+        utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
+      const auto & dp = planner_data->drivable_area_expansion_parameters;
+      const auto expanded_lanes = utils::expandLanelets(
+        drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+        dp.drivable_area_types_to_skip);
+      const auto combined_drivable = utils::combineDrivableLanes(
+        expanded_lanes, previous_module_output.drivable_area_info.drivable_lanes);
+      return !lane_departure_checker_.checkPathWillLeaveLane(
+        utils::transformToLanelets(combined_drivable), pull_over_path.parking_path());
+    });
+    if (!is_in_parking_lots && !is_in_lanes) {
+      continue;
+    }
   }
 
-  return pull_over_path;
+  return bezier_paths;
 }
 
 PathWithLaneId BezierPullOver::generateReferencePath(

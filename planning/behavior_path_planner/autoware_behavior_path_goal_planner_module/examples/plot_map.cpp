@@ -615,11 +615,12 @@ int main(int argc, char ** argv)
     const auto & goal_candidate = goal_candidates.at(i);
     auto shift_pull_over_planner = autoware::behavior_path_planner::BezierPullOver(
       *node, goal_planner_parameter, lane_departure_checker);
-    const auto pull_over_path_opt =
-      shift_pull_over_planner.plan(goal_candidate, 0, planner_data, reference_path);
-    if (pull_over_path_opt) {
-      const auto & pull_over_path = pull_over_path_opt.value();
-      candidates.push_back(pull_over_path);
+    const auto pull_over_paths =
+      shift_pull_over_planner.plans(goal_candidate, 0, planner_data, reference_path);
+    if (!pull_over_paths.empty()) {
+      std::copy(
+        std::make_move_iterator(pull_over_paths.begin()),
+        std::make_move_iterator(pull_over_paths.end()), std::back_inserter(candidates));
     }
   }
 
@@ -677,7 +678,6 @@ int main(int argc, char ** argv)
   }
 
   ax1.set_aspect(Args("equal"));
-  ax1.legend();
   ax2.set_aspect(Args("equal"));
   ax2.legend();
   plt.show();
