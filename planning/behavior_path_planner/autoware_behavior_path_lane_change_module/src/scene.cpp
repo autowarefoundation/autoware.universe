@@ -1975,12 +1975,9 @@ bool NormalLaneChange::is_collided(
     std::copy_if(
       obj_path.path.begin(), obj_path.path.end(), std::back_inserter(predicted_obj_path.path),
       [&](const auto & entry) {
-        if (
+        return !(
           entry.time < start_time ||
-          (entry.time < prepare_duration && entry.velocity < velocity_threshold)) {
-          return false;
-        }
-        return true;
+          (entry.time < prepare_duration && entry.velocity < velocity_threshold));
       });
 
     const auto collided_polygons = utils::path_safety_checker::get_collided_polygons(
