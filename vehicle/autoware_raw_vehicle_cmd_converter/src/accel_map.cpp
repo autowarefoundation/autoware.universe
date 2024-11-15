@@ -31,8 +31,8 @@ bool AccelMap::readAccelMapFromCSV(const std::string & csv_path, const bool vali
   }
 
   vehicle_name_ = table[0][0];
-  vel_index_ = CSVLoader::getRowIndex(table);
-  throttle_index_ = CSVLoader::getColumnIndex(table);
+  vel_index_ = CSVLoader::getColumnIndex(table);
+  throttle_index_ = CSVLoader::getRowIndex(table);
   accel_map_ = CSVLoader::getMap(table);
   return !validation || CSVLoader::validateMap(accel_map_, true);
 }

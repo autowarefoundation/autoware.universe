@@ -27,6 +27,7 @@
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -38,6 +39,7 @@ using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 using route_handler::Direction;
 using route_handler::RouteHandler;
+using universe_utils::Polygon2d;
 using utils::path_safety_checker::ExtendedPredictedObjects;
 
 struct LateralAccelerationMap
@@ -109,6 +111,7 @@ struct Parameters
   // lane change parameters
   double backward_length_buffer_for_end_of_lane{0.0};
   double backward_length_buffer_for_blocking_object{0.0};
+  double backward_length_from_intersection{5.0};
   double lane_changing_lateral_jerk{0.5};
   double minimum_lane_changing_velocity{5.6};
   double lane_change_prepare_duration{4.0};
@@ -218,6 +221,8 @@ struct PhaseMetrics
 struct Lanes
 {
   bool current_lane_in_goal_section{false};
+  bool target_lane_in_goal_section{false};
+  lanelet::ConstLanelet ego_lane;
   lanelet::ConstLanelets current;
   lanelet::ConstLanelets target_neighbor;
   lanelet::ConstLanelets target;
@@ -306,11 +311,52 @@ struct PathSafetyStatus
 
 struct LanesPolygon
 {
-  std::optional<lanelet::BasicPolygon2d> current;
-  std::optional<lanelet::BasicPolygon2d> target;
-  std::optional<lanelet::BasicPolygon2d> expanded_target;
+  lanelet::BasicPolygon2d current;
+  lanelet::BasicPolygon2d target;
+  lanelet::BasicPolygon2d expanded_target;
   lanelet::BasicPolygon2d target_neighbor;
   std::vector<lanelet::BasicPolygon2d> preceding_target;
+};
+
+struct MinMaxValue
+{
+  double min{std::numeric_limits<double>::infinity()};
+  double max{std::numeric_limits<double>::infinity()};
+};
+
+struct TransientData
+{
+  Polygon2d current_footprint;  // ego's polygon at current pose
+
+  MinMaxValue lane_changing_length;  // lane changing length for a single lane change
+  MinMaxValue
+    current_dist_buffer;  // distance buffer computed backward from current lanes' terminal end
+  MinMaxValue
+    next_dist_buffer;  // distance buffer computed backward  from target lanes' terminal end
+  double dist_to_terminal_end{
+    std::numeric_limits<double>::min()};  // distance from ego base link to the current lanes'
+                                          // terminal end
+  double dist_from_prev_intersection{std::numeric_limits<double>::max()};
+  // terminal end
+  double dist_to_terminal_start{
+    std::numeric_limits<double>::min()};  // distance from ego base link to the current lanes'
+                                          // terminal start
+  double max_prepare_length{
+    std::numeric_limits<double>::max()};  // maximum prepare length, starting from ego's base link
+
+  double target_lane_length{std::numeric_limits<double>::min()};
+
+  lanelet::ArcCoordinates current_lanes_ego_arc;  // arc coordinates of ego pose along current lanes
+  lanelet::ArcCoordinates target_lanes_ego_arc;   // arc coordinates of ego pose along target lanes
+
+  size_t current_path_seg_idx;   // index of nearest segment to ego along current path
+  double current_path_velocity;  // velocity of the current path at the ego position along the path
+
+  bool is_ego_near_current_terminal_start{false};
+  bool is_ego_stuck{false};
+
+  bool in_turn_direction_lane{false};
+  bool in_intersection{false};
 };
 
 using RouteHandlerPtr = std::shared_ptr<RouteHandler>;
@@ -327,12 +373,14 @@ struct CommonData
   LCParamPtr lc_param_ptr;
   LanesPtr lanes_ptr;
   LanesPolygonPtr lanes_polygon_ptr;
+  TransientData transient_data;
+  PathWithLaneId current_lanes_path;
   ModuleType lc_type;
   Direction direction;
 
-  [[nodiscard]] Pose get_ego_pose() const { return self_odometry_ptr->pose.pose; }
+  [[nodiscard]] const Pose & get_ego_pose() const { return self_odometry_ptr->pose.pose; }
 
-  [[nodiscard]] Twist get_ego_twist() const { return self_odometry_ptr->twist.twist; }
+  [[nodiscard]] const Twist & get_ego_twist() const { return self_odometry_ptr->twist.twist; }
 
   [[nodiscard]] double get_ego_speed(bool use_norm = false) const
   {
@@ -343,6 +391,18 @@ struct CommonData
     const auto x = get_ego_twist().linear.x;
     const auto y = get_ego_twist().linear.y;
     return std::hypot(x, y);
+  }
+
+  [[nodiscard]] bool is_data_available() const
+  {
+    return route_handler_ptr && self_odometry_ptr && bpp_param_ptr && lc_param_ptr && lanes_ptr &&
+           lanes_polygon_ptr;
+  }
+
+  [[nodiscard]] bool is_lanes_available() const
+  {
+    return lanes_ptr && !lanes_ptr->current.empty() && !lanes_ptr->target.empty() &&
+           !lanes_ptr->target_neighbor.empty();
   }
 };
 using CommonDataPtr = std::shared_ptr<CommonData>;

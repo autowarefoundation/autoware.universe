@@ -38,11 +38,13 @@ GeometricPullOver::GeometricPullOver(
 }
 
 std::optional<PullOverPath> GeometricPullOver::plan(
+  const GoalCandidate & modified_goal_pose, const size_t id,
   const std::shared_ptr<const PlannerData> planner_data,
-  [[maybe_unused]] const BehaviorModuleOutput & previous_module_output, const Pose & goal_pose)
+  [[maybe_unused]] const BehaviorModuleOutput & previous_module_output)
 {
   const auto & route_handler = planner_data->route_handler;
 
+  const auto & goal_pose = modified_goal_pose.goal_pose;
   // prepare road nad shoulder lanes
   const auto road_lanes = utils::getExtendedCurrentLanes(
     planner_data, parameters_.backward_goal_search_length, parameters_.forward_goal_search_length,
@@ -72,11 +74,12 @@ std::optional<PullOverPath> GeometricPullOver::plan(
   // check lane departure with road and shoulder lanes
   if (lane_departure_checker_.checkPathWillLeaveLane(lanes, arc_path)) return {};
 
-  PullOverPath pull_over_path{};
-  pull_over_path.type = getPlannerType();
-  pull_over_path.pairs_terminal_velocity_and_accel = planner_.getPairsTerminalVelocityAndAccel();
-  pull_over_path.setPaths(planner_.getPaths(), planner_.getStartPose(), planner_.getArcEndPose());
-
-  return pull_over_path;
+  auto pull_over_path_opt = PullOverPath::create(
+    getPlannerType(), id, planner_.getPaths(), planner_.getStartPose(), modified_goal_pose,
+    planner_.getPairsTerminalVelocityAndAccel());
+  if (!pull_over_path_opt) {
+    return {};
+  }
+  return pull_over_path_opt.value();
 }
 }  // namespace autoware::behavior_path_planner

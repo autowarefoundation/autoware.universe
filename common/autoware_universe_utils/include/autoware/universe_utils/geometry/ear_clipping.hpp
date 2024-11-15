@@ -15,26 +15,21 @@
 #ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EAR_CLIPPING_HPP_
 #define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__EAR_CLIPPING_HPP_
 
-#include "autoware/universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/alt_geometry.hpp"
 
 #include <optional>
 #include <vector>
 
 namespace autoware::universe_utils
 {
-
-using Polygon2d = autoware::universe_utils::Polygon2d;
-using Point2d = autoware::universe_utils::Point2d;
-using LinearRing2d = autoware::universe_utils::LinearRing2d;
-
 struct LinkedPoint
 {
-  explicit LinkedPoint(const Point2d & point)
+  explicit LinkedPoint(const alt::Point2d & point)
   : pt(point), steiner(false), prev_index(std::nullopt), next_index(std::nullopt)
   {
   }
 
-  Point2d pt;
+  alt::Point2d pt;
   bool steiner;
   std::optional<std::size_t> prev_index;
   std::optional<std::size_t> next_index;
@@ -59,7 +54,7 @@ void split_ear_clipping(
  * @return the last index of the created linked list
  */
 std::size_t linked_list(
-  const LinearRing2d & ring, const bool clockwise, std::size_t & vertices,
+  const alt::PointList2d & ring, const bool clockwise, std::size_t & vertices,
   std::vector<LinkedPoint> & points);
 
 /**
@@ -85,7 +80,7 @@ std::size_t eliminate_hole(
  * @return the updated outer_index after all holes are eliminated
  */
 std::size_t eliminate_holes(
-  const std::vector<LinearRing2d> & inners, std::size_t outer_index, std::size_t & vertices,
+  const std::vector<alt::PointList2d> & inners, std::size_t outer_index, std::size_t & vertices,
   std::vector<LinkedPoint> & points);
 
 /**
@@ -97,6 +92,12 @@ std::size_t eliminate_holes(
  * - `hole_points`: Number of points in all inner polygons.
  * - `2 * n_holes`: Additional points for bridging holes, where `n_holes` is the number of holes.
  * the final size of `points` vector is: `outer_points + hole_points + 2 * n_holes`.
+ * @return A vector of convex triangles representing the triangulated polygon.
+ */
+std::vector<alt::ConvexPolygon2d> triangulate(const alt::Polygon2d & polygon);
+
+/**
+ * @brief Boost.Geometry version of triangulate()
  * @return A vector of convex triangles representing the triangulated polygon.
  */
 std::vector<Polygon2d> triangulate(const Polygon2d & polygon);

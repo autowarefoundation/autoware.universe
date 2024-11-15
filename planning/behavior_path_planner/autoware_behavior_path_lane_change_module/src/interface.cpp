@@ -77,6 +77,7 @@ void LaneChangeInterface::updateData()
   module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
   module_type_->update_lanes(getCurrentStatus() == ModuleStatus::RUNNING);
   module_type_->update_filtered_objects();
+  module_type_->update_transient_data();
   module_type_->updateSpecialData();
 
   if (isWaitingApproval() || module_type_->isAbortState()) {
@@ -153,7 +154,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 
   BehaviorModuleOutput out = getPreviousModuleOutput();
 
-  module_type_->insertStopPoint(module_type_->get_current_lanes(), out.path);
+  module_type_->insert_stop_point(module_type_->get_current_lanes(), out.path);
   out.turn_signal_info = module_type_->get_current_turn_signal_info();
 
   const auto & lane_change_debug = module_type_->getDebugData();

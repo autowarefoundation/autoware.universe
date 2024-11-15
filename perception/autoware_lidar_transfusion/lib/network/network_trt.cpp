@@ -23,6 +23,20 @@
 namespace autoware::lidar_transfusion
 {
 
+inline NetworkIO nameToNetworkIO(const char * name)
+{
+  static const std::unordered_map<std::string_view, NetworkIO> name_to_enum = {
+    {"voxels", NetworkIO::voxels},        {"num_points", NetworkIO::num_points},
+    {"coors", NetworkIO::coors},          {"cls_score0", NetworkIO::cls_score},
+    {"bbox_pred0", NetworkIO::bbox_pred}, {"dir_cls_pred0", NetworkIO::dir_pred}};
+
+  auto it = name_to_enum.find(name);
+  if (it != name_to_enum.end()) {
+    return it->second;
+  }
+  throw std::runtime_error("Invalid input name: " + std::string(name));
+}
+
 std::ostream & operator<<(std::ostream & os, const ProfileDimension & profile)
 {
   std::string delim = "";
@@ -79,10 +93,10 @@ NetworkTRT::~NetworkTRT()
 bool NetworkTRT::init(
   const std::string & onnx_path, const std::string & engine_path, const std::string & precision)
 {
-  runtime_ =
-    tensorrt_common::TrtUniquePtr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
+  runtime_ = autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IRuntime>(
+    nvinfer1::createInferRuntime(logger_));
   if (!runtime_) {
-    tensorrt_common::LOG_ERROR(logger_) << "Failed to create runtime" << std::endl;
+    autoware::tensorrt_common::LOG_ERROR(logger_) << "Failed to create runtime" << std::endl;
     return false;
   }
 
@@ -143,15 +157,15 @@ bool NetworkTRT::setProfile(
 bool NetworkTRT::createContext()
 {
   if (!engine) {
-    tensorrt_common::LOG_ERROR(logger_)
+    autoware::tensorrt_common::LOG_ERROR(logger_)
       << "Failed to create context: Engine was not created" << std::endl;
     return false;
   }
 
-  context =
-    tensorrt_common::TrtUniquePtr<nvinfer1::IExecutionContext>(engine->createExecutionContext());
+  context = autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IExecutionContext>(
+    engine->createExecutionContext());
   if (!context) {
-    tensorrt_common::LOG_ERROR(logger_) << "Failed to create context" << std::endl;
+    autoware::tensorrt_common::LOG_ERROR(logger_) << "Failed to create context" << std::endl;
     return false;
   }
 
@@ -162,17 +176,17 @@ bool NetworkTRT::parseONNX(
   const std::string & onnx_path, const std::string & engine_path, const std::string & precision,
   const size_t workspace_size)
 {
-  auto builder =
-    tensorrt_common::TrtUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(logger_));
+  auto builder = autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IBuilder>(
+    nvinfer1::createInferBuilder(logger_));
   if (!builder) {
-    tensorrt_common::LOG_ERROR(logger_) << "Failed to create builder" << std::endl;
+    autoware::tensorrt_common::LOG_ERROR(logger_) << "Failed to create builder" << std::endl;
     return false;
   }
 
-  auto config =
-    tensorrt_common::TrtUniquePtr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
+  auto config = autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IBuilderConfig>(
+    builder->createBuilderConfig());
   if (!config) {
-    tensorrt_common::LOG_ERROR(logger_) << "Failed to create config" << std::endl;
+    autoware::tensorrt_common::LOG_ERROR(logger_) << "Failed to create config" << std::endl;
     return false;
   }
 #if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8400
@@ -182,42 +196,43 @@ bool NetworkTRT::parseONNX(
 #endif
   if (precision == "fp16") {
     if (builder->platformHasFastFp16()) {
-      tensorrt_common::LOG_INFO(logger_) << "Using TensorRT FP16 Inference" << std::endl;
+      autoware::tensorrt_common::LOG_INFO(logger_) << "Using TensorRT FP16 Inference" << std::endl;
       config->setFlag(nvinfer1::BuilderFlag::kFP16);
     } else {
-      tensorrt_common::LOG_INFO(logger_)
+      autoware::tensorrt_common::LOG_INFO(logger_)
         << "TensorRT FP16 Inference isn't supported in this environment" << std::endl;
     }
   }
 
   const auto flag =
     1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
-  auto network =
-    tensorrt_common::TrtUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(flag));
+  auto network = autoware::tensorrt_common::TrtUniquePtr<nvinfer1::INetworkDefinition>(
+    builder->createNetworkV2(flag));
   if (!network) {
-    tensorrt_common::LOG_ERROR(logger_) << "Failed to create network" << std::endl;
+    autoware::tensorrt_common::LOG_ERROR(logger_) << "Failed to create network" << std::endl;
     return false;
   }
 
-  auto parser = tensorrt_common::TrtUniquePtr<nvonnxparser::IParser>(
+  auto parser = autoware::tensorrt_common::TrtUniquePtr<nvonnxparser::IParser>(
     nvonnxparser::createParser(*network, logger_));
   parser->parseFromFile(onnx_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR));
 
   if (!setProfile(*builder, *network, *config)) {
-    tensorrt_common::LOG_ERROR(logger_) << "Failed to set profile" << std::endl;
+    autoware::tensorrt_common::LOG_ERROR(logger_) << "Failed to set profile" << std::endl;
     return false;
   }
 
-  plan_ = tensorrt_common::TrtUniquePtr<nvinfer1::IHostMemory>(
+  plan_ = autoware::tensorrt_common::TrtUniquePtr<nvinfer1::IHostMemory>(
     builder->buildSerializedNetwork(*network, *config));
   if (!plan_) {
-    tensorrt_common::LOG_ERROR(logger_) << "Failed to create serialized network" << std::endl;
+    autoware::tensorrt_common::LOG_ERROR(logger_)
+      << "Failed to create serialized network" << std::endl;
     return false;
   }
-  engine = tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine>(
+  engine = autoware::tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine>(
     runtime_->deserializeCudaEngine(plan_->data(), plan_->size()));
   if (!engine) {
-    tensorrt_common::LOG_ERROR(logger_) << "Failed to create engine" << std::endl;
+    autoware::tensorrt_common::LOG_ERROR(logger_) << "Failed to create engine" << std::endl;
     return false;
   }
 
@@ -226,7 +241,7 @@ bool NetworkTRT::parseONNX(
 
 bool NetworkTRT::saveEngine(const std::string & engine_path)
 {
-  tensorrt_common::LOG_INFO(logger_) << "Writing to " << engine_path << std::endl;
+  autoware::tensorrt_common::LOG_INFO(logger_) << "Writing to " << engine_path << std::endl;
   std::ofstream file(engine_path, std::ios::out | std::ios::binary);
   file.write(reinterpret_cast<const char *>(plan_->data()), plan_->size());
   return validateNetworkIO();
@@ -238,9 +253,10 @@ bool NetworkTRT::loadEngine(const std::string & engine_path)
   std::stringstream engine_buffer;
   engine_buffer << engine_file.rdbuf();
   std::string engine_str = engine_buffer.str();
-  engine = tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(
-    reinterpret_cast<const void *>(engine_str.data()), engine_str.size()));
-  tensorrt_common::LOG_INFO(logger_) << "Loaded engine from " << engine_path << std::endl;
+  engine =
+    autoware::tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(
+      reinterpret_cast<const void *>(engine_str.data()), engine_str.size()));
+  autoware::tensorrt_common::LOG_INFO(logger_) << "Loaded engine from " << engine_path << std::endl;
   return validateNetworkIO();
 }
 
@@ -248,20 +264,26 @@ bool NetworkTRT::validateNetworkIO()
 {
   // Whether the number of IO match the expected size
   if (engine->getNbIOTensors() != NetworkIO::ENUM_SIZE) {
-    tensorrt_common::LOG_ERROR(logger_)
+    autoware::tensorrt_common::LOG_ERROR(logger_)
       << "Invalid network IO. Expected size: " << NetworkIO::ENUM_SIZE
       << ". Actual size: " << engine->getNbIOTensors() << "." << std::endl;
     throw std::runtime_error("Failed to initialize TRT network.");
   }
+
+  // Initialize tensors_names_ with null values
+  tensors_names_.resize(NetworkIO::ENUM_SIZE, nullptr);
+
+  // Loop over the tensor names and place them in the correct positions
   for (int i = 0; i < NetworkIO::ENUM_SIZE; ++i) {
-    tensors_names_.push_back(engine->getIOTensorName(i));
+    const char * name = engine->getIOTensorName(i);
+    tensors_names_[nameToNetworkIO(name)] = name;
   }
 
   // Log the network IO
   std::string tensors = std::accumulate(
     tensors_names_.begin(), tensors_names_.end(), std::string(),
     [](const std::string & a, const std::string & b) -> std::string { return a + b + " "; });
-  tensorrt_common::LOG_INFO(logger_) << "Network IO: " << tensors << std::endl;
+  autoware::tensorrt_common::LOG_INFO(logger_) << "Network IO: " << tensors << std::endl;
 
   // Whether the current engine input profile match the config input profile
   for (int i = 0; i <= NetworkIO::coors; ++i) {
@@ -270,11 +292,11 @@ bool NetworkTRT::validateNetworkIO()
       engine->getProfileShape(tensors_names_[i], 0, nvinfer1::OptProfileSelector::kOPT),
       engine->getProfileShape(tensors_names_[i], 0, nvinfer1::OptProfileSelector::kMAX)};
 
-    tensorrt_common::LOG_INFO(logger_)
+    autoware::tensorrt_common::LOG_INFO(logger_)
       << "Profile for " << tensors_names_[i] << ": " << engine_dims << std::endl;
 
     if (engine_dims != in_profile_dims_[i]) {
-      tensorrt_common::LOG_ERROR(logger_)
+      autoware::tensorrt_common::LOG_ERROR(logger_)
         << "Invalid network input dimension. Config: " << in_profile_dims_[i]
         << ". Please change the input profile or delete the engine file and build engine again."
         << std::endl;
@@ -292,7 +314,8 @@ bool NetworkTRT::validateNetworkIO()
     NetworkIO::cls_score,
     {static_cast<int>(config_.batch_size_), static_cast<int>(config_.num_classes_),
      static_cast<int>(config_.num_proposals_)});
-  tensorrt_common::LOG_INFO(logger_) << "Network num classes: " << cls_score.d[1] << std::endl;
+  autoware::tensorrt_common::LOG_INFO(logger_)
+    << "Network num classes: " << cls_score.d[1] << std::endl;
   validateTensorShape(
     NetworkIO::dir_pred,
     {static_cast<int>(config_.batch_size_), 2, static_cast<int>(config_.num_proposals_)});  // x, y
@@ -313,14 +336,14 @@ nvinfer1::Dims NetworkTRT::validateTensorShape(NetworkIO name, const std::vector
 {
   auto tensor_shape = engine->getTensorShape(tensors_names_[name]);
   if (tensor_shape.nbDims != static_cast<int>(shape.size())) {
-    tensorrt_common::LOG_ERROR(logger_)
+    autoware::tensorrt_common::LOG_ERROR(logger_)
       << "Invalid tensor shape for " << tensors_names_[name] << ". Expected size: " << shape.size()
       << ". Actual size: " << tensor_shape.nbDims << "." << std::endl;
     throw std::runtime_error("Failed to initialize TRT network.");
   }
   for (int i = 0; i < tensor_shape.nbDims; ++i) {
     if (tensor_shape.d[i] != static_cast<int>(shape[i])) {
-      tensorrt_common::LOG_ERROR(logger_)
+      autoware::tensorrt_common::LOG_ERROR(logger_)
         << "Invalid tensor shape for " << tensors_names_[name] << ". Expected: " << shape[i]
         << ". Actual: " << tensor_shape.d[i] << "." << std::endl;
       throw std::runtime_error("Failed to initialize TRT network.");

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuda_utils/cuda_check_error.hpp"
-#include "cuda_utils/cuda_unique_ptr.hpp"
+#include "autoware/cuda_utils/cuda_check_error.hpp"
+#include "autoware/cuda_utils/cuda_unique_ptr.hpp"
 
 #include <autoware/tensorrt_yolox/calibrator.hpp>
 #include <autoware/tensorrt_yolox/preprocess.hpp>
@@ -155,10 +155,11 @@ namespace autoware::tensorrt_yolox
 {
 TrtYoloX::TrtYoloX(
   const std::string & model_path, const std::string & precision, const int num_class,
-  const float score_threshold, const float nms_threshold, tensorrt_common::BuildConfig build_config,
-  const bool use_gpu_preprocess, const uint8_t gpu_id, std::string calibration_image_list_path,
-  const double norm_factor, [[maybe_unused]] const std::string & cache_dir,
-  const tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size,
+  const float score_threshold, const float nms_threshold,
+  autoware::tensorrt_common::BuildConfig build_config, const bool use_gpu_preprocess,
+  const uint8_t gpu_id, std::string calibration_image_list_path, const double norm_factor,
+  [[maybe_unused]] const std::string & cache_dir,
+  const autoware::tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size,
   const std::string & color_map_path)
 : gpu_id_(gpu_id), is_gpu_initialized_(false)
 {
@@ -188,7 +189,7 @@ TrtYoloX::TrtYoloX(
     }
 
     int max_batch_size = batch_size_;
-    nvinfer1::Dims input_dims = tensorrt_common::get_input_dims(model_path);
+    nvinfer1::Dims input_dims = autoware::tensorrt_common::get_input_dims(model_path);
     std::vector<std::string> calibration_images;
     if (calibration_image_list_path != "") {
       calibration_images = loadImageList(calibration_image_list_path, "");
@@ -226,10 +227,10 @@ TrtYoloX::TrtYoloX(
       calibrator.reset(
         new tensorrt_yolox::Int8MinMaxCalibrator(stream, calibration_table, norm_factor_));
     }
-    trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
+    trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
       model_path, precision, std::move(calibrator), batch_config, max_workspace_size, build_config);
   } else {
-    trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
+    trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
       model_path, precision, nullptr, batch_config, max_workspace_size, build_config);
   }
   trt_common_->setup();
@@ -276,13 +277,14 @@ TrtYoloX::TrtYoloX(
     std::accumulate(input_dims.d + 1, input_dims.d + input_dims.nbDims, 1, std::multiplies<int>());
   if (needs_output_decode_) {
     const auto output_dims = trt_common_->getBindingDimensions(1);
-    input_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
+    input_d_ = autoware::cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
     out_elem_num_ = std::accumulate(
       output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
     out_elem_num_ = out_elem_num_ * batch_config[2];
     out_elem_num_per_batch_ = static_cast<int>(out_elem_num_ / batch_config[2]);
-    out_prob_d_ = cuda_utils::make_unique<float[]>(out_elem_num_);
-    out_prob_h_ = cuda_utils::make_unique_host<float[]>(out_elem_num_, cudaHostAllocPortable);
+    out_prob_d_ = autoware::cuda_utils::make_unique<float[]>(out_elem_num_);
+    out_prob_h_ =
+      autoware::cuda_utils::make_unique_host<float[]>(out_elem_num_, cudaHostAllocPortable);
     int w = input_dims.d[3];
     int h = input_dims.d[2];
     int sum_tensors = (w / 8) * (h / 8) + (w / 16) * (h / 16) + (w / 32) * (h / 32);
@@ -297,11 +299,13 @@ TrtYoloX::TrtYoloX(
   } else {
     const auto out_scores_dims = trt_common_->getBindingDimensions(3);
     max_detections_ = out_scores_dims.d[1];
-    input_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
-    out_num_detections_d_ = cuda_utils::make_unique<int32_t[]>(batch_config[2]);
-    out_boxes_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * max_detections_ * 4);
-    out_scores_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * max_detections_);
-    out_classes_d_ = cuda_utils::make_unique<int32_t[]>(batch_config[2] * max_detections_);
+    input_d_ = autoware::cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
+    out_num_detections_d_ = autoware::cuda_utils::make_unique<int32_t[]>(batch_config[2]);
+    out_boxes_d_ =
+      autoware::cuda_utils::make_unique<float[]>(batch_config[2] * max_detections_ * 4);
+    out_scores_d_ = autoware::cuda_utils::make_unique<float[]>(batch_config[2] * max_detections_);
+    out_classes_d_ =
+      autoware::cuda_utils::make_unique<int32_t[]>(batch_config[2] * max_detections_);
   }
   if (multitask_) {
     // Allocate buffer for segmentation
@@ -316,9 +320,10 @@ TrtYoloX::TrtYoloX(
     }
     segmentation_out_elem_num_per_batch_ =
       static_cast<int>(segmentation_out_elem_num_ / batch_config[2]);
-    segmentation_out_prob_d_ = cuda_utils::make_unique<float[]>(segmentation_out_elem_num_);
-    segmentation_out_prob_h_ =
-      cuda_utils::make_unique_host<float[]>(segmentation_out_elem_num_, cudaHostAllocPortable);
+    segmentation_out_prob_d_ =
+      autoware::cuda_utils::make_unique<float[]>(segmentation_out_elem_num_);
+    segmentation_out_prob_h_ = autoware::cuda_utils::make_unique_host<float[]>(
+      segmentation_out_elem_num_, cudaHostAllocPortable);
   }
   if (use_gpu_preprocess) {
     use_gpu_preprocess_ = true;
@@ -393,9 +398,10 @@ void TrtYoloX::initPreprocessBuffer(int width, int height)
       for (int b = 0; b < batch_size_; b++) {
         scales_.emplace_back(scale);
       }
-      image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
+      image_buf_h_ = autoware::cuda_utils::make_unique_host<unsigned char[]>(
         width * height * 3 * batch_size_, cudaHostAllocWriteCombined);
-      image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(width * height * 3 * batch_size_);
+      image_buf_d_ =
+        autoware::cuda_utils::make_unique<unsigned char[]>(width * height * 3 * batch_size_);
     }
     if (multitask_) {
       size_t argmax_out_elem_num = 0;
@@ -413,9 +419,9 @@ void TrtYoloX::initPreprocessBuffer(int width, int height)
         size_t out_elem_num = out_w * out_h * batch_size_;
         argmax_out_elem_num += out_elem_num;
       }
-      argmax_buf_h_ =
-        cuda_utils::make_unique_host<unsigned char[]>(argmax_out_elem_num, cudaHostAllocPortable);
-      argmax_buf_d_ = cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num);
+      argmax_buf_h_ = autoware::cuda_utils::make_unique_host<unsigned char[]>(
+        argmax_out_elem_num, cudaHostAllocPortable);
+      argmax_buf_d_ = autoware::cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num);
     }
   }
 }
@@ -467,10 +473,10 @@ void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
     if (!image_buf_h_) {
       const float scale = std::min(input_width / image.cols, input_height / image.rows);
       scales_.emplace_back(scale);
-      image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
+      image_buf_h_ = autoware::cuda_utils::make_unique_host<unsigned char[]>(
         image.cols * image.rows * 3 * batch_size, cudaHostAllocWriteCombined);
-      image_buf_d_ =
-        cuda_utils::make_unique<unsigned char[]>(image.cols * image.rows * 3 * batch_size);
+      image_buf_d_ = autoware::cuda_utils::make_unique<unsigned char[]>(
+        image.cols * image.rows * 3 * batch_size);
     }
     int index = b * image.cols * image.rows * 3;
     // Copy into pinned memory
@@ -495,11 +501,11 @@ void TrtYoloX::preprocessGpu(const std::vector<cv::Mat> & images)
 
   if (multitask_) {
     if (!argmax_buf_h_) {
-      argmax_buf_h_ =
-        cuda_utils::make_unique_host<unsigned char[]>(argmax_out_elem_num, cudaHostAllocPortable);
+      argmax_buf_h_ = autoware::cuda_utils::make_unique_host<unsigned char[]>(
+        argmax_out_elem_num, cudaHostAllocPortable);
     }
     if (!argmax_buf_d_) {
-      argmax_buf_d_ = cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num);
+      argmax_buf_d_ = autoware::cuda_utils::make_unique<unsigned char[]>(argmax_out_elem_num);
     }
   }
 
@@ -605,8 +611,8 @@ void TrtYoloX::preprocessWithRoiGpu(
   scales_.clear();
 
   if (!roi_h_) {
-    roi_h_ = cuda_utils::make_unique_host<Roi[]>(batch_size, cudaHostAllocWriteCombined);
-    roi_d_ = cuda_utils::make_unique<Roi[]>(batch_size);
+    roi_h_ = autoware::cuda_utils::make_unique_host<Roi[]>(batch_size, cudaHostAllocWriteCombined);
+    roi_d_ = autoware::cuda_utils::make_unique<Roi[]>(batch_size);
   }
 
   for (const auto & image : images) {
@@ -615,10 +621,10 @@ void TrtYoloX::preprocessWithRoiGpu(
       input_height / static_cast<float>(rois[b].height));
     scales_.emplace_back(scale);
     if (!image_buf_h_) {
-      image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
+      image_buf_h_ = autoware::cuda_utils::make_unique_host<unsigned char[]>(
         image.cols * image.rows * 3 * batch_size, cudaHostAllocWriteCombined);
-      image_buf_d_ =
-        cuda_utils::make_unique<unsigned char[]>(image.cols * image.rows * 3 * batch_size);
+      image_buf_d_ = autoware::cuda_utils::make_unique<unsigned char[]>(
+        image.cols * image.rows * 3 * batch_size);
     }
     int index = b * image.cols * image.rows * 3;
     // Copy into pinned memory
@@ -717,8 +723,8 @@ void TrtYoloX::multiScalePreprocessGpu(const cv::Mat & image, const std::vector<
   scales_.clear();
 
   if (!roi_h_) {
-    roi_h_ = cuda_utils::make_unique_host<Roi[]>(batch_size, cudaHostAllocWriteCombined);
-    roi_d_ = cuda_utils::make_unique<Roi[]>(batch_size);
+    roi_h_ = autoware::cuda_utils::make_unique_host<Roi[]>(batch_size, cudaHostAllocWriteCombined);
+    roi_d_ = autoware::cuda_utils::make_unique<Roi[]>(batch_size);
   }
 
   for (size_t b = 0; b < rois.size(); b++) {
@@ -732,9 +738,10 @@ void TrtYoloX::multiScalePreprocessGpu(const cv::Mat & image, const std::vector<
     roi_h_[b].h = rois[b].height;
   }
   if (!image_buf_h_) {
-    image_buf_h_ = cuda_utils::make_unique_host<unsigned char[]>(
+    image_buf_h_ = autoware::cuda_utils::make_unique_host<unsigned char[]>(
       image.cols * image.rows * 3 * 1, cudaHostAllocWriteCombined);
-    image_buf_d_ = cuda_utils::make_unique<unsigned char[]>(image.cols * image.rows * 3 * 1);
+    image_buf_d_ =
+      autoware::cuda_utils::make_unique<unsigned char[]>(image.cols * image.rows * 3 * 1);
   }
   int index = 0 * image.cols * image.rows * 3;
   // Copy into pinned memory

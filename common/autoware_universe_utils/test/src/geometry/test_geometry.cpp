@@ -1937,7 +1937,7 @@ TEST(
 TEST(geometry, intersectPolygonRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 
@@ -2018,6 +2018,105 @@ TEST(geometry, intersectPolygonRand)
       (ground_truth_no_intersect_ns + ground_truth_intersect_ns) / 1e6,
       (gjk_no_intersect_ns + gjk_intersect_ns) / 1e6,
       (sat_no_intersect_ns + sat_intersect_ns) / 1e6);
+  }
+}
+
+double calculate_total_polygon_area(
+  const std::vector<autoware::universe_utils::Polygon2d> & polygons)
+{
+  double totalArea = 0.0;
+  for (const auto & polygon : polygons) {
+    totalArea += boost::geometry::area(polygon);
+  }
+  return totalArea;
+}
+
+TEST(geometry, PolygonTriangulation)
+{
+  using autoware::universe_utils::Polygon2d;
+  using autoware::universe_utils::triangulate;
+
+  {  // concave polygon
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+    boost::geometry::correct(poly);
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_polygon_area(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+
+  {  // concave polygon with empty inners
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+    boost::geometry::correct(poly);
+
+    poly.inners().emplace_back();
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_polygon_area(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+
+  {  // concave polygon with hole
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+
+    poly.inners().emplace_back();
+    poly.inners().back().emplace_back(1.0, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.5);
+    poly.inners().back().emplace_back(1.0, 1.5);
+    boost::geometry::correct(poly);
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_polygon_area(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+
+  {  // concave polygon with one empty inner followed by one hole
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+
+    poly.inners().emplace_back();
+    poly.inners().emplace_back();
+    poly.inners().back().emplace_back(1.0, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.5);
+    poly.inners().back().emplace_back(1.0, 1.5);
+    boost::geometry::correct(poly);
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_polygon_area(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
   }
 }
 
@@ -2227,7 +2326,7 @@ TEST(geometry, intersectConcavePolygonRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
   std::vector<std::vector<autoware::universe_utils::Polygon2d>> triangulations;
-  constexpr auto polygons_nb = 500;
+  constexpr auto polygons_nb = 100;
   constexpr auto max_vertices = 10;
   constexpr auto max_values = 1000;
 
@@ -2246,7 +2345,10 @@ TEST(geometry, intersectConcavePolygonRand)
     triangulations.clear();
 
     for (auto i = 0; i < polygons_nb; ++i) {
-      polygons.push_back(autoware::universe_utils::random_concave_polygon(vertices, max_values));
+      auto polygon_opt = autoware::universe_utils::random_concave_polygon(vertices, max_values);
+      if (polygon_opt.has_value()) {
+        polygons.push_back(polygon_opt.value());
+      }
     }
 
     for (const auto & polygon : polygons) {

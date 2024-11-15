@@ -15,7 +15,6 @@
 #include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
 
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
-#include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
@@ -23,6 +22,8 @@
 #include "autoware_lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
 #include "autoware_lanelet2_extension/utility/query.hpp"
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
+
+#include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
 #include <boost/geometry/algorithms/union.hpp>
 
@@ -33,7 +34,6 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware::lane_departure_checker::LaneDepartureChecker;
 using autoware::universe_utils::calcOffsetPose;
 using lanelet::autoware::NoParkingArea;
 using lanelet::autoware::NoStoppingArea;
@@ -102,6 +102,16 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
 {
   GoalCandidates goal_candidates{};
 
+  const auto reference_goal_pose_opt = goal_planner_utils::calcRefinedGoal(
+    planner_data->route_handler->getOriginalGoalPose(), planner_data->route_handler,
+    left_side_parking_, planner_data->parameters.vehicle_width,
+    planner_data->parameters.base_link2front, planner_data->parameters.base_link2rear, parameters_);
+
+  if (!reference_goal_pose_opt) {
+    return goal_candidates;
+  }
+  const auto & reference_goal_pose = reference_goal_pose_opt.value();
+
   const auto & route_handler = planner_data->route_handler;
   const double forward_length = parameters_.forward_goal_search_length;
   const double backward_length = parameters_.backward_goal_search_length;
@@ -119,13 +129,10 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
   const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
     *route_handler, left_side_parking_, parameters_.backward_goal_search_length,
     parameters_.forward_goal_search_length);
-  auto lanes = utils::getExtendedCurrentLanes(
-    planner_data, backward_length, forward_length,
-    /*forward_only_in_route*/ false);
-  lanes.insert(lanes.end(), pull_over_lanes.begin(), pull_over_lanes.end());
-
+  const auto departure_check_lane = goal_planner_utils::createDepartureCheckLanelet(
+    pull_over_lanes, *route_handler, left_side_parking_);
   const auto goal_arc_coords =
-    lanelet::utils::getArcCoordinates(pull_over_lanes, reference_goal_pose_);
+    lanelet::utils::getArcCoordinates(pull_over_lanes, reference_goal_pose);
   const double s_start = std::max(0.0, goal_arc_coords.length - backward_length);
   const double s_end = goal_arc_coords.length + forward_length;
   const double longitudinal_interval = use_bus_stop_area
@@ -166,7 +173,7 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
     const Pose original_search_pose = calcOffsetPose(center_pose, 0, offset_from_center_line, 0);
     const double longitudinal_distance_from_original_goal =
       std::abs(autoware::motion_utils::calcSignedArcLength(
-        center_line_path.points, reference_goal_pose_.position, original_search_pose.position));
+        center_line_path.points, reference_goal_pose.position, original_search_pose.position));
     original_search_poses.push_back(original_search_pose);  // for createAreaPolygon
     Pose search_pose{};
     // search goal_pose in lateral direction
@@ -194,12 +201,32 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
         break;
       }
 
-      if (LaneDepartureChecker::isOutOfLane(lanes, transformed_vehicle_footprint)) {
+      if (!boost::geometry::within(
+            transformed_vehicle_footprint, departure_check_lane.polygon2d().basicPolygon())) {
         continue;
       }
 
+      // modify the goal_pose orientation so that vehicle footprint front heading is parallel to the
+      // lane boundary
+      const auto vehicle_front_midpoint =
+        (transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::FrontLeftIndex) +
+         transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::FrontRightIndex)) /
+        2.0;
+      lanelet::ConstLanelet vehicle_front_closest_lanelet;
+      lanelet::utils::query::getClosestLanelet(
+        pull_over_lanes, search_pose, &vehicle_front_closest_lanelet);
+      const auto vehicle_front_pose_for_bound_opt = goal_planner_utils::calcClosestPose(
+        left_side_parking_ ? vehicle_front_closest_lanelet.leftBound()
+                           : vehicle_front_closest_lanelet.rightBound(),
+        autoware::universe_utils::createPoint(
+          vehicle_front_midpoint.x(), vehicle_front_midpoint.y(), search_pose.position.z));
+      if (!vehicle_front_pose_for_bound_opt) {
+        continue;
+      }
+      const auto & vehicle_front_pose_for_bound = vehicle_front_pose_for_bound_opt.value();
       GoalCandidate goal_candidate{};
       goal_candidate.goal_pose = search_pose;
+      goal_candidate.goal_pose.orientation = vehicle_front_pose_for_bound.orientation;
       goal_candidate.lateral_offset = dy;
       goal_candidate.id = goal_id;
       goal_id++;
@@ -215,7 +242,7 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
 
 void GoalSearcher::countObjectsToAvoid(
   GoalCandidates & goal_candidates, const PredictedObjects & objects,
-  const std::shared_ptr<const PlannerData> & planner_data) const
+  const std::shared_ptr<const PlannerData> & planner_data, const Pose & reference_goal_pose) const
 {
   const auto & route_handler = planner_data->route_handler;
   const double forward_length = parameters_.forward_goal_search_length;
@@ -227,7 +254,7 @@ void GoalSearcher::countObjectsToAvoid(
       *route_handler, left_side_parking_, parameters_.backward_goal_search_length,
       parameters_.forward_goal_search_length);
     const auto goal_arc_coords =
-      lanelet::utils::getArcCoordinates(pull_over_lanes, reference_goal_pose_);
+      lanelet::utils::getArcCoordinates(pull_over_lanes, reference_goal_pose);
     const double s_start = std::max(0.0, goal_arc_coords.length - backward_length);
     const double s_end = goal_arc_coords.length + forward_length;
     const auto center_line_path = utils::resamplePathWithSpline(
@@ -285,8 +312,18 @@ void GoalSearcher::update(
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const std::shared_ptr<const PlannerData> & planner_data, const PredictedObjects & objects) const
 {
+  const auto refined_goal_opt = goal_planner_utils::calcRefinedGoal(
+    planner_data->route_handler->getOriginalGoalPose(), planner_data->route_handler,
+    left_side_parking_, planner_data->parameters.vehicle_width,
+    planner_data->parameters.base_link2front, planner_data->parameters.base_link2rear, parameters_);
+
+  if (!refined_goal_opt) {
+    return;
+  }
+
+  const auto & refined_goal = refined_goal_opt.value();
   if (parameters_.prioritize_goals_before_objects) {
-    countObjectsToAvoid(goal_candidates, objects, planner_data);
+    countObjectsToAvoid(goal_candidates, objects, planner_data, refined_goal);
   }
 
   if (parameters_.goal_priority == "minimum_weighted_distance") {
