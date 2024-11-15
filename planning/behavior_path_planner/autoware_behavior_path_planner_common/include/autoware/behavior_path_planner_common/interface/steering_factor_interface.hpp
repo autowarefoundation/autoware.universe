@@ -17,7 +17,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
+#include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
+#include <autoware_adapi_v1_msgs/msg/steering_factor.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <mutex>
@@ -25,29 +26,27 @@
 
 namespace steering_factor_interface
 {
+
+using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
-using autoware_adapi_v1_msgs::msg::SteeringFactorArray;
+using SteeringFactorBehavior = SteeringFactor::_behavior_type;
+using SteeringFactorStatus = SteeringFactor::_status_type;
 using geometry_msgs::msg::Pose;
 
 class SteeringFactorInterface
 {
 public:
-  SteeringFactorInterface(rclcpp::Node * node, const std::string & name);
-  void publishSteeringFactor(const rclcpp::Time & stamp);
-  void updateSteeringFactor(
-    const std::array<Pose, 2> & poses, const std::array<double, 2> distances,
-    const std::string & behavior, const uint16_t direction, const uint16_t status,
-    const std::string & detail);
-  void clearSteeringFactors();
+  [[nodiscard]] SteeringFactor get() const { return steering_factor_; }
+  void init(const SteeringFactorBehavior & behavior) { behavior_ = behavior; }
+  void reset() { steering_factor_.behavior = PlanningBehavior::UNKNOWN; }
+
+  void set(
+    const std::array<Pose, 2> & pose, const std::array<double, 2> distance,
+    const uint16_t direction, const uint16_t status, const std::string & detail = "");
 
 private:
-  rclcpp::Logger getLogger() const;
-
-  rclcpp::Publisher<SteeringFactorArray>::SharedPtr pub_steering_factors_;
-
-  std::mutex mutex_;
-  rclcpp::Logger logger_;
-  SteeringFactorArray registered_steering_factors_;
+  SteeringFactorBehavior behavior_{SteeringFactor::UNKNOWN};
+  SteeringFactor steering_factor_{};
 };
 
 }  // namespace steering_factor_interface

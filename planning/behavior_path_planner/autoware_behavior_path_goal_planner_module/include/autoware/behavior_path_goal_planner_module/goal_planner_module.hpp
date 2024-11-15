@@ -142,8 +142,7 @@ public:
     const std::shared_ptr<GoalPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map,
-    std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr);
+      objects_of_interest_marker_interface_ptr_map);
 
   ~GoalPlannerModule()
   {
@@ -237,7 +236,6 @@ private:
     // collision detector
     // need to be shared_ptr to be used in planner and goal searcher
     std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map;
-    std::shared_ptr<GoalSearcherBase> goal_searcher;
 
     const BehaviorModuleOutput & getPreviousModuleOutput() const { return previous_module_output; }
     const ModuleStatus & getCurrentStatus() const { return current_status; }
@@ -246,7 +244,6 @@ private:
     void update(
       const GoalPlannerParameters & parameters, const PlannerData & planner_data,
       const ModuleStatus & current_status, const BehaviorModuleOutput & previous_module_output,
-      const std::shared_ptr<GoalSearcherBase> goal_searcher_,
       const autoware::universe_utils::LinearRing2d & vehicle_footprint);
 
   private:

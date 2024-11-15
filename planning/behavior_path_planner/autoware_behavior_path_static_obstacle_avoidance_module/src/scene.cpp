@@ -24,6 +24,7 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/debug.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/system/time_keeper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
@@ -76,13 +77,13 @@ StaticObstacleAvoidanceModule::StaticObstacleAvoidanceModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map,
-  std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, steering_factor_interface_ptr},  // NOLINT
+    objects_of_interest_marker_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   helper_{std::make_shared<AvoidanceHelper>(parameters)},
   parameters_{parameters},
   generator_{parameters}
 {
+  steering_factor_interface_.init(PlanningBehavior::AVOIDANCE);
 }
 
 bool StaticObstacleAvoidanceModule::isExecutionRequested() const
@@ -574,7 +575,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
   }
 
   const auto registered_sl_force_deactivated =
-    [&](const std::string & direction, const RegisteredShiftLineArray shift_line_array) {
+    [&](const std::string & direction, const RegisteredShiftLineArray & shift_line_array) {
       return std::any_of(
         shift_line_array.begin(), shift_line_array.end(), [&](const auto & shift_line) {
           return rtc_interface_ptr_map_.at(direction)->isForceDeactivated(shift_line.uuid);
@@ -611,7 +612,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
   };
 
   auto registered_sl_force_activated =
-    [&](const std::string & direction, const RegisteredShiftLineArray shift_line_array) {
+    [&](const std::string & direction, const RegisteredShiftLineArray & shift_line_array) {
       return std::any_of(
         shift_line_array.begin(), shift_line_array.end(), [&](const auto & shift_line) {
           return rtc_interface_ptr_map_.at(direction)->isForceActivated(shift_line.uuid);
@@ -916,13 +917,14 @@ PathWithLaneId StaticObstacleAvoidanceModule::extendBackwardLength(
   }
 
   size_t clip_idx = 0;
-  for (size_t i = 0; i < prev_ego_idx; ++i) {
-    if (
-      backward_length >
-      autoware::motion_utils::calcSignedArcLength(previous_path.points, clip_idx, *prev_ego_idx)) {
+  double accumulated_length = 0.0;
+  for (size_t i = prev_ego_idx.value(); i > 0; i--) {
+    accumulated_length += autoware::universe_utils::calcDistance2d(
+      previous_path.points.at(i - 1), previous_path.points.at(i));
+    if (accumulated_length > backward_length) {
+      clip_idx = i;
       break;
     }
-    clip_idx = i;
   }
 
   PathWithLaneId extended_path{};
@@ -1202,10 +1204,10 @@ CandidateOutput StaticObstacleAvoidanceModule::planCandidate() const
   const uint16_t steering_factor_direction = std::invoke([&output]() {
     return output.lateral_shift > 0.0 ? SteeringFactor::LEFT : SteeringFactor::RIGHT;
   });
-  steering_factor_interface_ptr_->updateSteeringFactor(
+  steering_factor_interface_.set(
     {sl_front.start, sl_back.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
-    PlanningBehavior::AVOIDANCE, steering_factor_direction, SteeringFactor::APPROACHING, "");
+    steering_factor_direction, SteeringFactor::APPROACHING, "");
 
   output.path_candidate = shifted_path.path;
   return output;
@@ -1245,8 +1247,8 @@ void StaticObstacleAvoidanceModule::updatePathShifter(const AvoidLineArray & shi
   generator_.setRawRegisteredShiftLine(shift_lines, avoid_data_);
 
   const auto sl = helper_->getMainShiftLine(shift_lines);
-  const auto sl_front = shift_lines.front();
-  const auto sl_back = shift_lines.back();
+  const auto & sl_front = shift_lines.front();
+  const auto & sl_back = shift_lines.back();
   const auto relative_longitudinal = sl_back.end_longitudinal - sl_front.start_longitudinal;
 
   if (helper_->getRelativeShiftToPath(sl) > 0.0) {

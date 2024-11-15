@@ -16,48 +16,17 @@
 
 namespace steering_factor_interface
 {
-SteeringFactorInterface::SteeringFactorInterface(rclcpp::Node * node, const std::string & name)
-: logger_{node->get_logger().get_child("PlanningAPI[" + name + "]")}
+void SteeringFactorInterface::set(
+  const std::array<Pose, 2> & pose, const std::array<double, 2> distance, const uint16_t direction,
+  const uint16_t status, const std::string & detail)
 {
-  // Publisher
-  pub_steering_factors_ =
-    node->create_publisher<SteeringFactorArray>("/planning/steering_factor/" + name, 1);
-}
-
-void SteeringFactorInterface::publishSteeringFactor(const rclcpp::Time & stamp)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  registered_steering_factors_.header.stamp = stamp;
-  pub_steering_factors_->publish(registered_steering_factors_);
-}
-
-void SteeringFactorInterface::updateSteeringFactor(
-  const std::array<Pose, 2> & pose, const std::array<double, 2> distance,
-  const std::string & behavior, const uint16_t direction, const uint16_t status,
-  const std::string & detail)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  SteeringFactor factor;
-  factor.pose = pose;
+  steering_factor_.pose = pose;
   std::array<float, 2> converted_distance{0.0, 0.0};
   for (int i = 0; i < 2; ++i) converted_distance[i] = static_cast<float>(distance[i]);
-  factor.distance = converted_distance;
-  factor.behavior = behavior;
-  factor.direction = direction;
-  factor.status = status;
-  factor.detail = detail;
-  registered_steering_factors_.factors = {factor};
+  steering_factor_.distance = converted_distance;
+  steering_factor_.behavior = behavior_;
+  steering_factor_.direction = direction;
+  steering_factor_.status = status;
+  steering_factor_.detail = detail;
 }
-
-void SteeringFactorInterface::clearSteeringFactors()
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  registered_steering_factors_.factors.clear();
-}
-
-rclcpp::Logger SteeringFactorInterface::getLogger() const
-{
-  return logger_;
-}
-
 }  // namespace steering_factor_interface
