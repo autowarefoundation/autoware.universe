@@ -50,6 +50,7 @@ using autoware_perception_msgs::msg::PredictedPath;
 using autoware_perception_msgs::msg::Shape;
 using autoware_perception_msgs::msg::TrackedObject;
 using autoware_perception_msgs::msg::TrackedObjectKinematics;
+using autoware_perception_msgs::msg::TrackedObjects;
 using autoware_perception_msgs::msg::TrafficLightElement;
 using autoware_perception_msgs::msg::TrafficLightGroup;
 using autoware_perception_msgs::msg::TrafficLightGroupArray;
@@ -166,6 +167,9 @@ TrackedObjectKinematics parse(const YAML::Node & node);
 
 template <>
 TrackedObject parse(const YAML::Node & node);
+
+template <>
+TrackedObjects parse(const YAML::Node & node);
 
 template <>
 TrafficLightGroupArray parse(const YAML::Node & node);
