@@ -240,11 +240,11 @@ TEST(StaticDrivableArea, generateDrivableLanes)
   using autoware::behavior_path_planner::utils::generateDrivableLanes;
   lanelet::ConstLanelets lanelets;
   lanelet::Lanelet ll;
-  {
+  {  // empty case
     const auto lanes = generateDrivableLanes(lanelets);
     EXPECT_TRUE(lanes.empty());
   }
-  {
+  {  // single lanelet: it is found in the drivable lane's left/right lanes
     ll.setId(0);
     lanelets.push_back(ll);
     const auto lanes = generateDrivableLanes(lanelets);
@@ -253,7 +253,7 @@ TEST(StaticDrivableArea, generateDrivableLanes)
     EXPECT_EQ(lanes[0].left_lane.id(), lanelets[0].id());
     EXPECT_EQ(lanes[0].right_lane.id(), lanelets[0].id());
   }
-  {
+  {  // many lanelets: they are all in the calculated drivable lane
     for (auto i = 1; i < 20; ++i) {
       ll.setId(0);
       lanelets.push_back(ll);
@@ -474,10 +474,10 @@ TEST(DISABLED_StaticDrivableArea, generateDrivableArea)
   planner_data.parameters.ego_nearest_dist_threshold = 1.0;
   planner_data.parameters.ego_nearest_yaw_threshold = M_PI;
   auto planner_data_ptr = std::make_shared<PlannerData>(planner_data);
-  // empty
-  generateDrivableArea(
+  // empty: no crash
+  EXPECT_NO_FATAL_FAILURE(generateDrivableArea(
     path, lanes, enable_expanding_hatched_road_markings, enable_expanding_intersection_areas,
-    enable_expanding_freespace_areas, planner_data_ptr, is_driving_forward);
+    enable_expanding_freespace_areas, planner_data_ptr, is_driving_forward));
   planner_data.route_handler = std::make_shared<autoware::route_handler::RouteHandler>();
   planner_data.route_handler->setMap(intersection_map);
   // create a path from a lanelet centerline
