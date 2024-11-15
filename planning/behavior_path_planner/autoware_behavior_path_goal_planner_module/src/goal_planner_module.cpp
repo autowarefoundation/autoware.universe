@@ -135,6 +135,7 @@ GoalPlannerModule::GoalPlannerModule(
   }
 
   steering_factor_interface_.init(PlanningBehavior::GOAL_PLANNER);
+  velocity_factor_interface_.init(PlanningBehavior::GOAL_PLANNER);
 
   /**
    * NOTE: Add `universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);` to functions called
@@ -1467,6 +1468,8 @@ void GoalPlannerModule::postProcess()
     has_decided_path ? SteeringFactor::TURNING : SteeringFactor::APPROACHING);
 
   setStopReason(StopReason::GOAL_PLANNER, pull_over_path.full_path());
+
+  setVelocityFactor(pull_over_path.full_path());
 
   context_data_ = std::nullopt;
 }
