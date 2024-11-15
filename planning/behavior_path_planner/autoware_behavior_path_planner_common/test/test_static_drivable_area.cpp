@@ -53,11 +53,8 @@ lanelet::ConstLanelet make_lanelet(
 
 DrivableLanes make_drivable_lanes(const lanelet::ConstLanelet & ll)
 {
-  DrivableLanes l;
-  l.left_lane = ll;
-  l.right_lane = ll;
-  l.middle_lanes = {ll};
-  return l;
+  using autoware::behavior_path_planner::utils::generateDrivableLanes;
+  return generateDrivableLanes({ll}).front();
 }
 
 bool equal(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
