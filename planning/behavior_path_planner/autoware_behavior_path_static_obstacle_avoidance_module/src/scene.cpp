@@ -24,6 +24,7 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/debug.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/system/time_keeper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
@@ -574,7 +575,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
   }
 
   const auto registered_sl_force_deactivated =
-    [&](const std::string & direction, const RegisteredShiftLineArray shift_line_array) {
+    [&](const std::string & direction, const RegisteredShiftLineArray & shift_line_array) {
       return std::any_of(
         shift_line_array.begin(), shift_line_array.end(), [&](const auto & shift_line) {
           return rtc_interface_ptr_map_.at(direction)->isForceDeactivated(shift_line.uuid);
@@ -611,7 +612,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
   };
 
   auto registered_sl_force_activated =
-    [&](const std::string & direction, const RegisteredShiftLineArray shift_line_array) {
+    [&](const std::string & direction, const RegisteredShiftLineArray & shift_line_array) {
       return std::any_of(
         shift_line_array.begin(), shift_line_array.end(), [&](const auto & shift_line) {
           return rtc_interface_ptr_map_.at(direction)->isForceActivated(shift_line.uuid);
@@ -916,13 +917,14 @@ PathWithLaneId StaticObstacleAvoidanceModule::extendBackwardLength(
   }
 
   size_t clip_idx = 0;
-  for (size_t i = 0; i < prev_ego_idx; ++i) {
-    if (
-      backward_length >
-      autoware::motion_utils::calcSignedArcLength(previous_path.points, clip_idx, *prev_ego_idx)) {
+  double accumulated_length = 0.0;
+  for (size_t i = prev_ego_idx.value(); i > 0; i--) {
+    accumulated_length += autoware::universe_utils::calcDistance2d(
+      previous_path.points.at(i - 1), previous_path.points.at(i));
+    if (accumulated_length > backward_length) {
+      clip_idx = i;
       break;
     }
-    clip_idx = i;
   }
 
   PathWithLaneId extended_path{};
@@ -1245,8 +1247,8 @@ void StaticObstacleAvoidanceModule::updatePathShifter(const AvoidLineArray & shi
   generator_.setRawRegisteredShiftLine(shift_lines, avoid_data_);
 
   const auto sl = helper_->getMainShiftLine(shift_lines);
-  const auto sl_front = shift_lines.front();
-  const auto sl_back = shift_lines.back();
+  const auto & sl_front = shift_lines.front();
+  const auto & sl_back = shift_lines.back();
   const auto relative_longitudinal = sl_back.end_longitudinal - sl_front.start_longitudinal;
 
   if (helper_->getRelativeShiftToPath(sl) > 0.0) {

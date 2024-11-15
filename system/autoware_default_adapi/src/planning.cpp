@@ -81,6 +81,7 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
     "/planning/velocity_factors/obstacle_stop",
     "/planning/velocity_factors/obstacle_cruise",
     "/planning/velocity_factors/occlusion_spot",
+    "/planning/velocity_factors/run_out",
     "/planning/velocity_factors/stop_line",
     "/planning/velocity_factors/surround_obstacle",
     "/planning/velocity_factors/traffic_light",
