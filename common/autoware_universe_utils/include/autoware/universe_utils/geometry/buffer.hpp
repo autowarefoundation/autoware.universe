@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_UNIVERSE_UTILS_GEOMETRY_BUFFER_HPP
-#define AUTOWARE_UNIVERSE_UTILS_GEOMETRY_BUFFER_HPP
+#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__BUFFER_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__BUFFER_HPP_
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware/universe_utils/geometry/polygon_clip.hpp"
@@ -23,8 +23,8 @@
 #include <boost/geometry/algorithms/within.hpp>
 
 #include <cmath>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <vector>
 
 namespace autoware::universe_utils
@@ -32,43 +32,37 @@ namespace autoware::universe_utils
 
 namespace
 {
-    /**
-     * @brief create an arc between two vertices with a given radius and center
-     * @param vertices the vertices to populate with the arc points
-     * @param center the center point of the arc
-     * @param radius the radius of the arc
-     * @param start_vertex the start vertex of the arc
-     * @param end_vertex the end vertex of the arc
-     * @param start_vertex_next the next vertex after the start vertex
-     * @param segments the number of segments to divide the arc into
-     * @param skip a flag to skip adding the start vertex
-     * @return the updated Polygon2d with the arc
-     */
-    Polygon2d create_arc(autoware::universe_utils::Polygon2d& vertices, 
-                        const autoware::universe_utils::Point2d& center,
-                        double radius, 
-                        const autoware::universe_utils::Point2d& start_vertex, 
-                        const autoware::universe_utils::Point2d& end_vertex, 
-                        const autoware::universe_utils::Point2d& start_vertex_next, 
-                        double segments,
-                        bool skip);
-    
-    /**
-     * @brief offset a polygon segment between two vertices with a specified distance
-     * @param v1 the first vertex
-     * @param v2 the second vertex
-     * @param next_vertex the next vertex in the polygon
-     * @param dist the offset distance
-     * @param segments the number of segments to divide the arc into
-     * @param skip a flag to skip adding the first segment
-     * @return the offset polygon segment
-     */
-    autoware::universe_utils::Polygon2d _offset_segment(const autoware::universe_utils::Point2d& v1,
-                              const autoware::universe_utils::Point2d& v2, 
-                              const autoware::universe_utils::Point2d& next_vertex, 
-                              double dist,
-                              double segments,
-                              bool skip);
+/**
+ * @brief create an arc between two vertices with a given radius and center
+ * @param vertices the vertices to populate with the arc points
+ * @param center the center point of the arc
+ * @param radius the radius of the arc
+ * @param start_vertex the start vertex of the arc
+ * @param end_vertex the end vertex of the arc
+ * @param start_vertex_next the next vertex after the start vertex
+ * @param segments the number of segments to divide the arc into
+ * @param skip a flag to skip adding the start vertex
+ * @return the updated Polygon2d with the arc
+ */
+Polygon2d create_arc(
+  autoware::universe_utils::Polygon2d & vertices, const autoware::universe_utils::Point2d & center,
+  double radius, const autoware::universe_utils::Point2d & start_vertex,
+  const autoware::universe_utils::Point2d & end_vertex,
+  const autoware::universe_utils::Point2d & start_vertex_next, double segments, bool skip);
+
+/**
+ * @brief offset a polygon segment between two vertices with a specified distance
+ * @param v1 the first vertex
+ * @param v2 the second vertex
+ * @param next_vertex the next vertex in the polygon
+ * @param dist the offset distance
+ * @param segments the number of segments to divide the arc into
+ * @param skip a flag to skip adding the first segment
+ * @return the offset polygon segment
+ */
+autoware::universe_utils::Polygon2d _offset_segment(
+  const autoware::universe_utils::Point2d & v1, const autoware::universe_utils::Point2d & v2,
+  const autoware::universe_utils::Point2d & next_vertex, double dist, double segments, bool skip);
 }  // namespace
 
 /**
@@ -78,7 +72,8 @@ namespace
  * @param segments the number of segments to divide the arcs into
  * @return the buffered polygon
  */
-autoware::universe_utils::Polygon2d buffer(const autoware::universe_utils::Polygon2d& input_polygon, double dist, double segments);
+autoware::universe_utils::Polygon2d buffer(
+  const autoware::universe_utils::Polygon2d & input_polygon, double dist, double segments);
 
 /**
  * @brief buffer a point by a specified distance and number of segments
@@ -87,7 +82,8 @@ autoware::universe_utils::Polygon2d buffer(const autoware::universe_utils::Polyg
  * @param segments The number of segments to divide the arc into
  * @return the buffered polygon representing a circle (point buffer)
  */
-autoware::universe_utils::Polygon2d buffer(const autoware::universe_utils::Point2d& point, double distance, double segments);
+autoware::universe_utils::Polygon2d buffer(
+  const autoware::universe_utils::Point2d & point, double distance, double segments);
 
 /**
  * @brief buffer (offset) multiple points and return the union of their buffers
@@ -96,8 +92,9 @@ autoware::universe_utils::Polygon2d buffer(const autoware::universe_utils::Point
  * @param segments the number of segments to divide the arcs into
  * @return The union of all buffered polygons
  */
-autoware::universe_utils::Polygon2d buffer(const autoware::universe_utils::MultiPoint2d& multi_point, double distance, double segments);
+autoware::universe_utils::Polygon2d buffer(
+  const autoware::universe_utils::MultiPoint2d & multi_point, double distance, double segments);
 
 }  // namespace autoware::universe_utils
 
-#endif  // AUTOWARE_UNIVERSE_UTILS_GEOMETRY_BUFFER_HPP
+#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__BUFFER_HPP_
