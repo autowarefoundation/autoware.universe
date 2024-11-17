@@ -136,6 +136,19 @@ RouteSelector::RouteSelector(const rclcpp::NodeOptions & options)
   initialized_ = false;
   mrm_operating_ = false;
   main_request_ = std::monostate{};
+
+  // Processing time
+  pub_processing_time_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+}
+
+void RouteSelector::publish_processing_time(
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch)
+{
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = stop_watch.toc();
+  pub_processing_time_->publish(processing_time_msg);
 }
 
 void RouteSelector::on_state(const RouteState::ConstSharedPtr msg)
@@ -175,6 +188,7 @@ void RouteSelector::on_clear_route_main(
 void RouteSelector::on_set_waypoint_route_main(
   SetWaypointRoute::Request::SharedPtr req, SetWaypointRoute::Response::SharedPtr res)
 {
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   // Save the request and clear old route to resume from MRM.
   req->uuid = uuid::generate_if_empty(req->uuid);
   main_request_ = req;
@@ -184,6 +198,7 @@ void RouteSelector::on_set_waypoint_route_main(
   if (mrm_operating_) {
     main_.change_state(RouteState::INTERRUPTED);
     res->status.success = true;
+    publish_processing_time(stop_watch);
     return;
   }
 
@@ -194,6 +209,7 @@ void RouteSelector::on_set_waypoint_route_main(
 void RouteSelector::on_set_lanelet_route_main(
   SetLaneletRoute::Request::SharedPtr req, SetLaneletRoute::Response::SharedPtr res)
 {
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   // Save the request and clear old route to resume from MRM.
   req->uuid = uuid::generate_if_empty(req->uuid);
   main_request_ = req;
@@ -203,6 +219,7 @@ void RouteSelector::on_set_lanelet_route_main(
   if (mrm_operating_) {
     main_.change_state(RouteState::INTERRUPTED);
     res->status.success = true;
+    publish_processing_time(stop_watch);
     return;
   }
 
@@ -224,6 +241,7 @@ void RouteSelector::on_clear_route_mrm(
 void RouteSelector::on_set_waypoint_route_mrm(
   SetWaypointRoute::Request::SharedPtr req, SetWaypointRoute::Response::SharedPtr res)
 {
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   req->uuid = uuid::generate_if_empty(req->uuid);
   res->status = service_utils::sync_call(cli_set_waypoint_route_, req);
 
@@ -233,11 +251,13 @@ void RouteSelector::on_set_waypoint_route_mrm(
       main_.change_state(RouteState::INTERRUPTED);
     }
   }
+  publish_processing_time(stop_watch);
 }
 
 void RouteSelector::on_set_lanelet_route_mrm(
   SetLaneletRoute::Request::SharedPtr req, SetLaneletRoute::Response::SharedPtr res)
 {
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   req->uuid = uuid::generate_if_empty(req->uuid);
   res->status = service_utils::sync_call(cli_set_lanelet_route_, req);
 
@@ -247,6 +267,7 @@ void RouteSelector::on_set_lanelet_route_mrm(
       main_.change_state(RouteState::INTERRUPTED);
     }
   }
+  publish_processing_time(stop_watch);
 }
 
 ResponseStatus RouteSelector::resume_main_route(ClearRoute::Request::SharedPtr req)
