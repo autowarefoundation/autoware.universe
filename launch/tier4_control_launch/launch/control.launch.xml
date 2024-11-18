@@ -1,5 +1,5 @@
 <launch>
-  <!-- controler -->
+  <!-- controller -->
   <arg name="trajectory_follower_mode" default="trajectory_follower_node"/>
   <arg name="lateral_controller_mode"/>
   <arg name="longitudinal_controller_mode"/>
@@ -127,7 +127,7 @@
 
       <!-- trajectory_follower_node -->
       <group if="$(eval &quot;'$(var trajectory_follower_mode)' == 'trajectory_follower_node'&quot;)">
-        <load_composable_node target="/control/control_container" >
+        <load_composable_node target="/control/control_container">
           <composable_node pkg="autoware_trajectory_follower_node" plugin="autoware::motion::control::trajectory_follower_node::Controller" name="controller_node_exe" namespace="trajectory_follower">
             <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
             <remap from="~/input/current_odometry" to="/localization/kinematic_state"/>
@@ -212,7 +212,7 @@
 
       <!-- autonomous emergency braking -->
       <group if="$(var launch_autonomous_emergency_braking)">
-        <load_composable_node target="/control/control_check_container" >
+        <load_composable_node target="/control/control_check_container">
           <composable_node pkg="autoware_autonomous_emergency_braking" plugin="autoware::motion::control::autonomous_emergency_braking::AEB" name="autonomous_emergency_braking">
             <remap from="~/input/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
             <remap from="~/input/velocity" to="/vehicle/status/velocity_status"/>
